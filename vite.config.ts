@@ -11,6 +11,14 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true
+    open: true,
+    proxy: {
+      '/shopify-proxy': {
+        target: 'https://resolution-av-nyc.myshopify.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/shopify-proxy/, ''),
+        secure: true,
+      },
+    },
   }
 })
