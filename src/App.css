@@ -944,3 +944,332 @@
 		gap: 0.15rem;
 	}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Business Metrics Dashboard
+   Extends the existing design system (--panel, --line, --ink, --muted,
+   --accent, --accent-2, --bg)
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Container ── */
+.biz-dashboard {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+	padding-top: 0.25rem;
+}
+
+/* ── KPI card row ── */
+.biz-kpi-row {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 1rem;
+}
+
+.biz-kpi-card {
+	background: var(--panel);
+	border: 1px solid var(--line);
+	border-top: 3px solid transparent;
+	border-radius: 14px;
+	padding: 1.15rem 1.25rem 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	box-shadow: 0 1px 3px rgba(17, 32, 49, 0.06), 0 4px 14px rgba(17, 32, 49, 0.05);
+	transition: box-shadow 180ms;
+}
+.biz-kpi-card:hover {
+	box-shadow: 0 2px 6px rgba(17, 32, 49, 0.09), 0 8px 24px rgba(17, 32, 49, 0.08);
+}
+
+.biz-kpi-blue   { border-top-color: #3b82f6; }
+.biz-kpi-amber  { border-top-color: #f59e0b; }
+.biz-kpi-green  { border-top-color: #22c55e; }
+.biz-kpi-purple { border-top-color: #a855f7; }
+.biz-kpi-teal   { border-top-color: #14b8a6; }
+
+.biz-kpi-header {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.1rem;
+}
+
+.biz-kpi-label {
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+.biz-kpi-value {
+	font-size: 1.9rem;
+	font-weight: 700;
+	color: var(--ink);
+	letter-spacing: -0.02em;
+	line-height: 1;
+	margin: 0;
+}
+
+.biz-kpi-sub {
+	font-size: 0.78rem;
+	color: var(--muted);
+	margin: 0;
+	line-height: 1.5;
+}
+
+.biz-kpi-accent { color: var(--accent); font-weight: 600; }
+.biz-kpi-alert  { color: #dc2626; font-weight: 600; }
+
+/* ── Two-column sections ── */
+.biz-row2,
+.biz-row3 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+}
+
+/* ── Generic content panel ── */
+.biz-panel {
+	background: var(--panel);
+	border: 1px solid var(--line);
+	border-radius: 14px;
+	padding: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	box-shadow: 0 1px 3px rgba(17, 32, 49, 0.06), 0 4px 14px rgba(17, 32, 49, 0.05);
+}
+
+.biz-panel-title {
+	margin: 0;
+	font-size: 0.92rem;
+	font-weight: 700;
+	color: var(--ink);
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	padding-bottom: 0.75rem;
+	border-bottom: 1px solid var(--line);
+}
+
+.biz-panel-sub {
+	font-size: 0.72rem;
+	font-weight: 500;
+	color: var(--muted);
+	letter-spacing: 0.02em;
+}
+
+/* ── Submission volume bar chart ── */
+.biz-bar-chart {
+	display: flex;
+	align-items: flex-end;
+	gap: 3px;
+	height: 100px;
+	padding-bottom: 1.4rem;
+	position: relative;
+}
+
+.biz-bar-col {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-end;
+	height: 100%;
+	gap: 4px;
+}
+
+.biz-bar {
+	width: 100%;
+	background: linear-gradient(180deg, var(--accent), #5da6ff);
+	border-radius: 3px 3px 0 0;
+	min-height: 3px;
+	opacity: 0.8;
+	transition: opacity 120ms;
+}
+.biz-bar:hover { opacity: 1; }
+
+.biz-bar-label {
+	font-size: 0.58rem;
+	color: var(--muted);
+	white-space: nowrap;
+	position: absolute;
+	bottom: 0;
+}
+
+/* ── Sales performance stats grid ── */
+.biz-perf-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	column-gap: 1.5rem;
+	row-gap: 0;
+}
+
+.biz-perf-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.6rem 0;
+	border-bottom: 1px solid var(--line);
+}
+.biz-perf-item:nth-last-child(-n+2) { border-bottom: none; }
+
+.biz-perf-label {
+	font-size: 0.8rem;
+	color: var(--muted);
+}
+
+.biz-perf-val {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--ink);
+	font-variant-numeric: tabular-nums;
+}
+
+.biz-val-green { color: #15803d; }
+.biz-val-amber { color: #b45309; }
+.biz-val-muted { color: var(--muted); font-weight: 500; }
+.biz-val-red   { color: #dc2626; }
+
+/* ── Brand request bar list ── */
+.biz-brand-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+}
+
+.biz-brand-item {
+	display: grid;
+	grid-template-columns: 130px 1fr 36px;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.biz-brand-name {
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: var(--ink);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.biz-brand-bar-wrap {
+	background: #eef2f8;
+	border-radius: 99px;
+	height: 7px;
+	overflow: hidden;
+}
+
+.biz-brand-bar {
+	height: 100%;
+	background: linear-gradient(90deg, var(--accent), #5da6ff);
+	border-radius: 99px;
+	min-width: 4px;
+	transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.biz-brand-count {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--muted);
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Recent submissions activity feed ── */
+.biz-feed {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	flex: 1;
+}
+
+.biz-feed-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.6rem 0;
+	border-bottom: 1px solid var(--line);
+	gap: 0.5rem;
+}
+.biz-feed-item:last-child { border-bottom: none; }
+
+.biz-feed-new {
+	background: linear-gradient(90deg, rgba(31, 111, 235, 0.05), transparent);
+	margin: 0 -0.5rem;
+	padding: 0.6rem 0.5rem;
+	border-radius: 6px;
+}
+
+.biz-feed-left {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.biz-feed-name {
+	font-size: 0.84rem;
+	font-weight: 600;
+	color: var(--ink);
+	margin: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 190px;
+}
+
+.biz-feed-gear {
+	font-size: 0.74rem;
+	color: var(--muted);
+	margin: 0.1rem 0 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 190px;
+}
+
+.biz-feed-time {
+	font-size: 0.72rem;
+	color: var(--muted);
+	flex-shrink: 0;
+	font-variant-numeric: tabular-nums;
+}
+
+.biz-view-all {
+	align-self: flex-start;
+	background: none;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	color: var(--accent);
+	font-size: 0.78rem;
+	font-weight: 600;
+	padding: 0.38rem 0.85rem;
+	cursor: pointer;
+	transition: background 140ms, border-color 140ms;
+}
+.biz-view-all:hover {
+	background: #f0f5ff;
+	border-color: var(--accent);
+}
+
+/* ── Responsive breakpoints ── */
+@media (max-width: 1100px) {
+	.biz-kpi-row { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 860px) {
+	.biz-kpi-row { grid-template-columns: repeat(2, 1fr); }
+	.biz-row2, .biz-row3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+	.biz-kpi-row { grid-template-columns: 1fr; }
+	.biz-perf-grid { grid-template-columns: 1fr; }
+	.biz-perf-item:last-child { border-bottom: none; }
+	.biz-brand-item { grid-template-columns: 90px 1fr 30px; }
+}
