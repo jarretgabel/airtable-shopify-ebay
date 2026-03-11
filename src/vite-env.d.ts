@@ -10,6 +10,8 @@ interface ImportMetaEnv {
   readonly VITE_SHOPIFY_OAUTH_ACCESS_TOKEN?: string;
   readonly VITE_SHOPIFY_CLIENT_ID?: string;
   readonly VITE_SHOPIFY_CLIENT_SECRET?: string;
+  readonly VITE_JOTFORM_API_KEY?: string;
+  readonly VITE_JOTFORM_FORM_ID?: string;
 }
 
 interface ImportMeta {

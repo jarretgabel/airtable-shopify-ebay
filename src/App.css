@@ -80,7 +80,7 @@
 .stats-row {
 	margin-top: 1rem;
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-columns: repeat(5, minmax(0, 1fr));
 	gap: 0.9rem;
 }
 
@@ -352,13 +352,582 @@
 	}
 }
 
+/* ────────────────────────────────────────────────────────────
+   Market / HiFiShark Tab
+──────────────────────────────────────────────────────────── */
+.shark-search-panel {
+	margin-bottom: 0;
+}
+
+.shark-form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+}
+
+.shark-form-inner {
+	display: flex;
+	gap: 0.6rem;
+	align-items: flex-end;
+}
+
+.shark-input-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	flex: 1;
+}
+
+.shark-label {
+	font-size: 0.78rem;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: var(--muted);
+	font-weight: 600;
+}
+
+.shark-input {
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	padding: 0.6rem 0.9rem;
+	font-size: 0.95rem;
+	color: var(--ink);
+	background: #fff;
+	outline: none;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.shark-input:focus {
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px rgba(31,111,235,0.12);
+}
+
+.shark-hint {
+	font-size: 0.82rem;
+	color: var(--muted);
+	margin: 0;
+}
+
+.shark-hint code {
+	background: #eef3fa;
+	padding: 0.1em 0.35em;
+	border-radius: 5px;
+	font-size: 0.82em;
+}
+
+.listings-summary {
+	font-size: 0.88rem;
+	color: var(--muted);
+	margin: 0 0 0.8rem;
+}
+
+.listings-summary strong {
+	color: var(--ink);
+}
+
+.listings-summary code {
+	background: #eef3fa;
+	padding: 0.1em 0.35em;
+	border-radius: 5px;
+	font-size: 0.85em;
+}
+
+.shark-table-wrap {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.shark-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.9rem;
+}
+
+.shark-table th {
+	text-align: left;
+	padding: 0.5rem 0.75rem;
+	border-bottom: 2px solid var(--line);
+	color: var(--muted);
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.shark-table td {
+	padding: 0.6rem 0.75rem;
+	border-bottom: 1px solid var(--line);
+	vertical-align: middle;
+}
+
+.shark-row:last-child td {
+	border-bottom: none;
+}
+
+.shark-row:hover td {
+	background: #f5f8ff;
+}
+
+.shark-link {
+	color: var(--accent);
+	text-decoration: none;
+	font-weight: 500;
+	line-height: 1.4;
+}
+
+.shark-link:hover {
+	text-decoration: underline;
+}
+
+.shark-cell-muted {
+	color: var(--muted);
+	font-size: 0.87rem;
+	white-space: nowrap;
+}
+
+.shark-price {
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.shark-date {
+	white-space: nowrap;
+	font-size: 0.84rem;
+}
+
+.price-tag {
+	display: inline-block;
+	padding: 0.15em 0.5em;
+	border-radius: 6px;
+	font-size: 0.88rem;
+	font-weight: 700;
+}
+
+.price-tag.currency-usd {
+	background: #e6f4ea;
+	color: #1a7f37;
+}
+
+.price-tag.currency-eur {
+	background: #e8f0fe;
+	color: #1558d6;
+}
+
+.price-tag.currency-gbp {
+	background: #f3e8fd;
+	color: #6f42c1;
+}
+
+.price-tag.currency-jpy,
+.price-tag.currency-twd {
+	background: #fff0e5;
+	color: #b43c00;
+}
+
+.price-tag.currency-cad,
+.price-tag.currency-aud,
+.price-tag.currency-nzd {
+	background: #e6f4ea;
+	color: #0f6a2f;
+}
+
+.price-tag.currency-huf,
+.price-tag.currency-czk,
+.price-tag.currency-kzt {
+	background: #fef4e5;
+	color: #7a4800;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   JotForm — Live polling status bar
+───────────────────────────────────────────────────────────────────────── */
+.jf-status-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.55rem 0.9rem;
+	background: var(--panel);
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	margin-bottom: 0;
+	font-size: 0.84rem;
+}
+
+.jf-status-left {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	min-width: 0;
+}
+
+.jf-status-right {
+	flex-shrink: 0;
+}
+
+.jf-live-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #22c55e;
+	flex-shrink: 0;
+	box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+	animation: jf-pulse 2s ease-in-out infinite;
+}
+
+.jf-live-dot.jf-live-polling {
+	background: #f59e0b;
+	box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+	animation: none;
+}
+
+@keyframes jf-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.5; }
+}
+
+.jf-live-label {
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.jf-status-updated {
+	color: var(--muted);
+}
+
+.jf-polling-text {
+	color: #f59e0b;
+	font-weight: 600;
+	font-size: 0.8rem;
+}
+
+.jf-status-count {
+	color: var(--muted);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   JotForm — Fresh submissions banner
+───────────────────────────────────────────────────────────────────────── */
+.jf-fresh-banner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-top: 0.6rem;
+	padding: 0.7rem 1rem;
+	background: #eff6ff;
+	border: 1px solid #bfdbfe;
+	border-radius: 12px;
+	font-size: 0.9rem;
+	color: #1e40af;
+}
+
+.jf-fresh-dismiss {
+	border: 1px solid #93c5fd;
+	border-radius: 8px;
+	background: #fff;
+	color: #1d4ed8;
+	padding: 0.35rem 0.75rem;
+	font-size: 0.83rem;
+	font-weight: 600;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background 0.15s;
+	flex-shrink: 0;
+}
+
+.jf-fresh-dismiss:hover {
+	background: #dbeafe;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Tab badge (new-submission count indicator)
+───────────────────────────────────────────────────────────────────────── */
+.tab-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: 0.45rem;
+	min-width: 1.25rem;
+	height: 1.25rem;
+	padding: 0 0.35rem;
+	border-radius: 999px;
+	background: #e74c3c;
+	color: #fff;
+	font-size: 0.72rem;
+	font-weight: 700;
+	line-height: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   JotForm — Forms list
+───────────────────────────────────────────────────────────────────────── */
+.jf-forms-heading {
+	font-size: 0.82rem;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: var(--muted);
+	font-weight: 600;
+	margin: 0 0 0.75rem;
+}
+
+.jf-form-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.jf-form-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.85rem 1rem;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	cursor: pointer;
+	transition: border-color 0.15s, background 0.15s;
+}
+
+.jf-form-item:hover {
+	border-color: var(--accent);
+	background: #f5f8ff;
+}
+
+.jf-form-info {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	min-width: 0;
+}
+
+.jf-form-title {
+	font-weight: 600;
+	color: var(--ink);
+	font-size: 0.95rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.jf-form-meta {
+	font-size: 0.82rem;
+	color: var(--muted);
+}
+
+.jf-form-right {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	flex-shrink: 0;
+}
+
+.jf-new-badge {
+	background: #fff0e5;
+	color: #b44c00;
+	border-radius: 999px;
+	padding: 0.15em 0.6em;
+	font-size: 0.78rem;
+	font-weight: 700;
+}
+
+.jf-form-arrow {
+	font-size: 1.3rem;
+	color: var(--muted);
+	line-height: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   JotForm — Back row
+───────────────────────────────────────────────────────────────────────── */
+.jf-back-row {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 0.6rem;
+}
+
+.jf-back-btn {
+	background: none;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	padding: 0.4rem 0.75rem;
+	font-size: 0.85rem;
+	color: var(--accent);
+	cursor: pointer;
+	transition: background 0.15s;
+}
+
+.jf-back-btn:hover {
+	background: #f0f4fc;
+}
+
+.jf-form-label {
+	font-weight: 600;
+	color: var(--ink);
+	font-size: 0.95rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   JotForm — Submission list
+───────────────────────────────────────────────────────────────────────── */
+.jf-new-count {
+	color: #b44c00;
+	font-weight: 600;
+}
+
+.jf-sub-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.jf-sub-item {
+	border-bottom: 1px solid var(--line);
+}
+
+.jf-sub-item:last-child {
+	border-bottom: none;
+}
+
+.jf-sub-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.75rem 0;
+	cursor: pointer;
+	user-select: none;
+}
+
+.jf-sub-left {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	min-width: 0;
+}
+
+.jf-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--accent);
+	flex-shrink: 0;
+}
+
+.jf-sub-preview {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	min-width: 0;
+}
+
+.jf-sub-primary {
+	font-weight: 600;
+	color: var(--ink);
+	font-size: 0.93rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.jf-sub-new .jf-sub-primary {
+	color: var(--accent);
+}
+
+.jf-sub-secondary {
+	font-size: 0.82rem;
+	color: var(--muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.jf-sub-right {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-shrink: 0;
+}
+
+.jf-sub-date {
+	font-size: 0.82rem;
+	color: var(--muted);
+	white-space: nowrap;
+}
+
+.jf-sub-chevron {
+	font-size: 1.1rem;
+	color: var(--muted);
+	transition: transform 0.15s;
+}
+
+.jf-sub-expanded .jf-sub-chevron {
+	transform: rotate(90deg);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   JotForm — Expanded submission body
+───────────────────────────────────────────────────────────────────────── */
+.jf-sub-body {
+	padding: 0 0 1rem 1.4rem;
+}
+
+.jf-answers {
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+	margin: 0 0 0.75rem;
+}
+
+.jf-answer-row {
+	display: grid;
+	grid-template-columns: 200px 1fr;
+	gap: 0.5rem 1rem;
+}
+
+.jf-answer-label {
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: var(--muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	align-self: start;
+	padding-top: 0.05em;
+}
+
+.jf-answer-value {
+	font-size: 0.9rem;
+	color: var(--ink);
+	word-break: break-word;
+	margin: 0;
+}
+
+.jf-sub-timestamp {
+	font-size: 0.8rem;
+	color: var(--muted);
+	margin: 0;
+	border-top: 1px solid var(--line);
+	padding-top: 0.6rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Responsive
+───────────────────────────────────────────────────────────────────────── */
 @media (max-width: 860px) {
 	.dashboard-hero {
 		grid-template-columns: 1fr;
 	}
 
 	.stats-row {
-		grid-template-columns: 1fr;
+		grid-template-columns: repeat(2, 1fr);
 	}
 
 	.listing-main {
@@ -368,5 +937,10 @@
 
 	.listing-side {
 		text-align: left;
+	}
+
+	.jf-answer-row {
+		grid-template-columns: 1fr;
+		gap: 0.15rem;
 	}
 }
