@@ -1,4 +1,4 @@
-import type { JotFormForm, JotFormSubmission, JotFormApiResponse } from '@/types/jotform';
+import type { JotFormForm, JotFormSubmission, JotFormApiResponse, JotFormAnswer } from '@/types/jotform';
 
 const API_KEY = import.meta.env.VITE_JOTFORM_API_KEY as string;
 const BASE = '/jotform-proxy';

@@ -11,11 +11,11 @@ class ShopifyService {
   private accessToken: string;
 
   constructor() {
-    this.domain = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN;
+    this.domain = (import.meta.env.VITE_SHOPIFY_STORE_DOMAIN as string | undefined) ?? '';
     
     // Support both token-based auth and OAuth
-    const token = import.meta.env.VITE_SHOPIFY_ADMIN_API_TOKEN;
-    const oauthToken = import.meta.env.VITE_SHOPIFY_OAUTH_ACCESS_TOKEN;
+    const token = (import.meta.env.VITE_SHOPIFY_ADMIN_API_TOKEN as string | undefined) ?? '';
+    const oauthToken = (import.meta.env.VITE_SHOPIFY_OAUTH_ACCESS_TOKEN as string | undefined) ?? '';
 
     this.accessToken = oauthToken || token;
 

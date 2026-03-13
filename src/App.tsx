@@ -4,6 +4,10 @@ import { useShopifyProducts } from '@/hooks/useShopifyProducts';
 import { useHiFiShark } from '@/hooks/useHiFiShark';
 import { useJotFormInquiries } from '@/hooks/useJotForm';
 import { formatAnswer } from '@/services/jotform';
+import { ImageLab } from '@/components/ImageLab';
+import { EbayTab } from '@/components/EbayTab';
+import { DashboardTab } from '@/components/DashboardTab';
+import { appendElementToPdf, createPdfDocumentAsync } from '@/services/pdfExport';
 import './App.css';
 
 function displayValue(value: unknown): string {
@@ -40,7 +44,25 @@ function recordTitle(fields: Record<string, unknown>): string {
   return displayValue(fields.Brand ?? fields.Name ?? fields.Model ?? 'Untitled Listing');
 }
 
-type Tab = 'dashboard' | 'airtable' | 'shopify' | 'market' | 'jotform';
+type Tab = 'dashboard' | 'airtable' | 'shopify' | 'market' | 'jotform' | 'imagelab' | 'ebay';
+
+const EXPORT_TABS: Tab[] = ['dashboard', 'airtable', 'shopify', 'market', 'jotform', 'imagelab', 'ebay'];
+const EXPORT_TAB_LABELS: Record<Tab, string> = {
+  dashboard: 'Dashboard',
+  airtable: 'Airtable Inventory',
+  shopify: 'Shopify Products',
+  market: 'Market Prices',
+  jotform: 'JotForm Inquiries',
+  imagelab: 'Image Lab',
+  ebay: 'eBay',
+};
+
+type TrendDirection = 'up' | 'down' | 'flat';
+
+interface TrendSummary {
+  direction: TrendDirection;
+  text: string;
+}
 
 function StatusBadge({ status }: { status: string }) {
   return (
@@ -48,8 +70,56 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function parseCurrencyAmount(value: unknown): number {
+  const raw = String(value ?? '').replace(/[^0-9.]/g, '');
+  return parseFloat(raw) || 0;
+}
+
+function parseDateValue(value: unknown): number | null {
+  if (!value) return null;
+  const timestamp = new Date(String(value)).getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function isWithinWindow(timestamp: number | null, start: number, end: number): boolean {
+  return timestamp !== null && timestamp >= start && timestamp < end;
+}
+
+function getTrendSummary(current: number, previous: number, label: string): TrendSummary {
+  if (current === 0 && previous === 0) {
+    return { direction: 'flat', text: `Flat vs prior ${label}` };
+  }
+
+  if (previous === 0) {
+    return { direction: 'up', text: `Up from 0 vs prior ${label}` };
+  }
+
+  const changePct = Math.round(((current - previous) / previous) * 100);
+  if (changePct === 0) {
+    return { direction: 'flat', text: `Flat vs prior ${label}` };
+  }
+
+  return {
+    direction: changePct > 0 ? 'up' : 'down',
+    text: `${changePct > 0 ? 'Up' : 'Down'} ${Math.abs(changePct)}% vs prior ${label}`,
+  };
+}
+
+function waitForScreenRender(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.setTimeout(resolve, 120);
+      });
+    });
+  });
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportProgress, setExportProgress] = useState<{ current: number; total: number; label: string } | null>(null);
+  const shellRef = useRef<HTMLElement>(null);
 
   const tableName = import.meta.env.VITE_AIRTABLE_TABLE_NAME || 'Table 1';
   const viewId = import.meta.env.VITE_AIRTABLE_VIEW_ID;
@@ -92,13 +162,21 @@ function App() {
   const now = Date.now();
   const MS_30D = 30 * 24 * 60 * 60 * 1000;
   const MS_7D  =  7 * 24 * 60 * 60 * 1000;
+  const current30dStart = now - MS_30D;
+  const previous30dStart = now - (MS_30D * 2);
   const recentSubs = jfSubmissions.filter(s => now - new Date(s.created_at).getTime() < MS_30D);
   const thisWeekSubs = jfSubmissions.filter(s => now - new Date(s.created_at).getTime() < MS_7D);
+  const priorRecentSubs = jfSubmissions.filter((submission) => {
+    const createdAt = parseDateValue(submission.created_at);
+    return isWithinWindow(createdAt, previous30dStart, current30dStart);
+  });
 
   // Deals in progress: Shopify draft products (sent offer / waiting)
   const draftProducts = products.filter(p => p.status === 'draft');
   const activeProducts = products.filter(p => p.status === 'active');
   const archivedProducts = products.filter(p => p.status === 'archived');
+  const recentDraftProducts = draftProducts.filter((product) => isWithinWindow(parseDateValue(product.created_at), current30dStart, now));
+  const priorDraftProducts = draftProducts.filter((product) => isWithinWindow(parseDateValue(product.created_at), previous30dStart, current30dStart));
 
   // Inventory value: sum of all active Shopify variant prices
   const inventoryValue = products.reduce((sum, p) => {
@@ -110,14 +188,40 @@ function App() {
 
   // Acquisition cost proxy: Airtable Price field summed
   const acquisitionCost = nonEmptyListings.reduce((sum, l) => {
-    const raw = String(l.fields.Price ?? l.fields['Purchase Price'] ?? l.fields.Cost ?? '').replace(/[^0-9.]/g, '');
-    return sum + (parseFloat(raw) || 0);
+    return sum + parseCurrencyAmount(l.fields.Price ?? l.fields['Purchase Price'] ?? l.fields.Cost);
+  }, 0);
+  const recentAcquisitionCost = nonEmptyListings.reduce((sum, listing) => {
+    if (!isWithinWindow(parseDateValue(listing.createdTime), current30dStart, now)) return sum;
+    return sum + parseCurrencyAmount(listing.fields.Price ?? listing.fields['Purchase Price'] ?? listing.fields.Cost);
+  }, 0);
+  const priorAcquisitionCost = nonEmptyListings.reduce((sum, listing) => {
+    if (!isWithinWindow(parseDateValue(listing.createdTime), previous30dStart, current30dStart)) return sum;
+    return sum + parseCurrencyAmount(listing.fields.Price ?? listing.fields['Purchase Price'] ?? listing.fields.Cost);
   }, 0);
 
   // Sales performance: active * avg price vs archived (completed sales)
   const avgAskPrice = activeProducts.length
     ? activeProducts.reduce((s, p) => s + (parseFloat(p.variants?.[0]?.price ?? '0') || 0), 0) / activeProducts.length
     : 0;
+
+  const recentInventoryValue = activeProducts.reduce((sum, product) => {
+    if (!isWithinWindow(parseDateValue(product.created_at), current30dStart, now)) return sum;
+    const price = parseFloat(product.variants?.[0]?.price ?? '0') || 0;
+    const qty = product.variants?.[0]?.inventory_quantity ?? 1;
+    return sum + price * Math.max(qty, 1);
+  }, 0);
+  const priorInventoryValue = activeProducts.reduce((sum, product) => {
+    if (!isWithinWindow(parseDateValue(product.created_at), previous30dStart, current30dStart)) return sum;
+    const price = parseFloat(product.variants?.[0]?.price ?? '0') || 0;
+    const qty = product.variants?.[0]?.inventory_quantity ?? 1;
+    return sum + price * Math.max(qty, 1);
+  }, 0);
+
+  const sellThroughPct = products.length
+    ? Math.round((archivedProducts.length / products.length) * 100)
+    : null;
+  const recentArchivedProducts = archivedProducts.filter((product) => isWithinWindow(parseDateValue(product.updated_at), current30dStart, now));
+  const priorArchivedProducts = archivedProducts.filter((product) => isWithinWindow(parseDateValue(product.updated_at), previous30dStart, current30dStart));
 
   // Profit margin proxy: (inventory value - acquisition cost) / inventory value
   const profitableItems = activeProducts.filter(p => {
@@ -128,6 +232,27 @@ function App() {
   const grossMarginPct = acquisitionCost > 0 && totalAsk > 0
     ? Math.round(((totalAsk - acquisitionCost) / totalAsk) * 100)
     : null;
+  const recentAskValue = activeProducts.reduce((sum, product) => {
+    if (!isWithinWindow(parseDateValue(product.created_at), current30dStart, now)) return sum;
+    return sum + (parseFloat(product.variants?.[0]?.price ?? '0') || 0);
+  }, 0);
+  const priorAskValue = activeProducts.reduce((sum, product) => {
+    if (!isWithinWindow(parseDateValue(product.created_at), previous30dStart, current30dStart)) return sum;
+    return sum + (parseFloat(product.variants?.[0]?.price ?? '0') || 0);
+  }, 0);
+  const recentMarginPct = recentAcquisitionCost > 0 && recentAskValue > 0
+    ? Math.round(((recentAskValue - recentAcquisitionCost) / recentAskValue) * 100)
+    : 0;
+  const priorMarginPct = priorAcquisitionCost > 0 && priorAskValue > 0
+    ? Math.round(((priorAskValue - priorAcquisitionCost) / priorAskValue) * 100)
+    : 0;
+
+  const submissionsTrend = getTrendSummary(recentSubs.length, priorRecentSubs.length, '30d');
+  const dealsTrend = getTrendSummary(recentDraftProducts.length, priorDraftProducts.length, '30d');
+  const acquisitionTrend = getTrendSummary(recentAcquisitionCost, priorAcquisitionCost, '30d');
+  const inventoryTrend = getTrendSummary(recentInventoryValue, priorInventoryValue, '30d');
+  const salesTrend = getTrendSummary(recentArchivedProducts.length, priorArchivedProducts.length, '30d');
+  const marginTrend = getTrendSummary(recentMarginPct, priorMarginPct, '30d');
 
   // Submission trend for sparkline-style bar chart (last 14 days, grouped by day)
   const submissionDays = Array.from({ length: 14 }, (_, i) => {
@@ -156,8 +281,142 @@ function App() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8);
 
+  const airtableInventoryValue = nonEmptyListings.reduce(
+    (sum, listing) => sum + parseCurrencyAmount(listing.fields.Price),
+    0,
+  );
+  const uniqueAirtableBrands = new Set(
+    nonEmptyListings
+      .map((listing) => String(listing.fields.Brand ?? '').trim())
+      .filter(Boolean),
+  ).size;
+  const uniqueAirtableTypes = new Set(
+    nonEmptyListings
+      .map((listing) => String(listing.fields['Component Type'] ?? '').trim())
+      .filter(Boolean),
+  ).size;
+
+  const componentTypeCounts = nonEmptyListings.reduce<Record<string, number>>((acc, listing) => {
+    const key = String(listing.fields['Component Type'] ?? 'Uncategorized').trim() || 'Uncategorized';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const componentTypeSummary = Object.entries(componentTypeCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6);
+
+  const airtableBrandCounts = nonEmptyListings.reduce<Record<string, number>>((acc, listing) => {
+    const key = String(listing.fields.Brand ?? 'Unknown').trim() || 'Unknown';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const airtableBrandSummary = Object.entries(airtableBrandCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6);
+
+  const airtableDistributorSummary = Object.entries(
+    nonEmptyListings.reduce<Record<string, { count: number; total: number }>>((acc, listing) => {
+      const distributor = String(listing.fields.Distributor ?? 'Unknown').trim() || 'Unknown';
+      const price = parseCurrencyAmount(listing.fields.Price);
+      if (!acc[distributor]) {
+        acc[distributor] = { count: 0, total: 0 };
+      }
+      acc[distributor].count += 1;
+      acc[distributor].total += price;
+      return acc;
+    }, {}),
+  )
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 8);
+
+  const airtableTypeTable = Object.entries(
+    nonEmptyListings.reduce<Record<string, { count: number; total: number; brands: Set<string> }>>((acc, listing) => {
+      const type = String(listing.fields['Component Type'] ?? 'Uncategorized').trim() || 'Uncategorized';
+      const brand = String(listing.fields.Brand ?? '').trim();
+      const price = parseCurrencyAmount(listing.fields.Price);
+      if (!acc[type]) {
+        acc[type] = { count: 0, total: 0, brands: new Set<string>() };
+      }
+      acc[type].count += 1;
+      acc[type].total += price;
+      if (brand) acc[type].brands.add(brand);
+      return acc;
+    }, {}),
+  )
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 8)
+    .map(([type, summary]) => ({
+      type,
+      count: summary.count,
+      brandCount: summary.brands.size,
+      averagePrice: summary.count ? summary.total / summary.count : 0,
+      totalPrice: summary.total,
+    }));
+
+  const maxComponentTypeCount = Math.max(...componentTypeSummary.map(([, count]) => count), 1);
+  const maxAirtableBrandCount = Math.max(...airtableBrandSummary.map(([, count]) => count), 1);
+
+  async function handleExportPdf() {
+    if (exportingPdf || !shellRef.current) {
+      return;
+    }
+
+    const previousTab = activeTab;
+    const previousScrollX = window.scrollX;
+    const previousScrollY = window.scrollY;
+
+    setExportingPdf(true);
+
+    try {
+      const pdf = await createPdfDocumentAsync();
+      let firstScreen = true;
+      const exportedAt = new Date().toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+
+      for (const [index, tab] of EXPORT_TABS.entries()) {
+        setExportProgress({
+          current: index + 1,
+          total: EXPORT_TABS.length,
+          label: EXPORT_TAB_LABELS[tab],
+        });
+        setActiveTab(tab);
+        await waitForScreenRender();
+
+        if (!shellRef.current) {
+          continue;
+        }
+
+        await appendElementToPdf(pdf, shellRef.current, firstScreen, {
+          title: EXPORT_TAB_LABELS[tab],
+          subtitle: 'Listing Control Center export',
+          exportedAt,
+        });
+        firstScreen = false;
+      }
+
+      pdf.save(`listing-control-center-${new Date().toISOString().slice(0, 10)}.pdf`);
+    } finally {
+      setActiveTab(previousTab);
+      await waitForScreenRender();
+      window.scrollTo(previousScrollX, previousScrollY);
+      setExportProgress(null);
+      setExportingPdf(false);
+    }
+  }
+
+  const shellClassName = [
+    'dashboard-shell',
+    'dashboard-dark',
+    exportingPdf ? 'dashboard-exporting' : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <main className="dashboard-shell">
+    <main ref={shellRef} className={shellClassName}>
       <section className="dashboard-container">
         <header className="dashboard-hero">
           <div>
@@ -201,304 +460,136 @@ function App() {
             <button
               className={`tab-btn${activeTab === 'dashboard' ? ' tab-active' : ''}`}
               onClick={() => setActiveTab('dashboard')}
+              disabled={exportingPdf}
             >
               Dashboard
             </button>
             <button
               className={`tab-btn${activeTab === 'airtable' ? ' tab-active' : ''}`}
               onClick={() => setActiveTab('airtable')}
+              disabled={exportingPdf}
             >
               Airtable Inventory
             </button>
             <button
               className={`tab-btn${activeTab === 'shopify' ? ' tab-active' : ''}`}
               onClick={() => setActiveTab('shopify')}
+              disabled={exportingPdf}
             >
               Shopify Products
             </button>
             <button
               className={`tab-btn${activeTab === 'market' ? ' tab-active' : ''}`}
               onClick={() => setActiveTab('market')}
+              disabled={exportingPdf}
             >
               Market Prices
             </button>
             <button
               className={`tab-btn${activeTab === 'jotform' ? ' tab-active' : ''}${totalNewSubmissions > 0 ? ' tab-has-badge' : ''}`}
               onClick={() => setActiveTab('jotform')}
+              disabled={exportingPdf}
             >
               Inquiries
               {totalNewSubmissions > 0 && (
                 <span className="tab-badge">{totalNewSubmissions}</span>
               )}
             </button>
+            <button
+              className={`tab-btn${activeTab === 'imagelab' ? ' tab-active' : ''}`}
+              onClick={() => setActiveTab('imagelab')}
+              disabled={exportingPdf}
+            >
+              Image Lab
+            </button>
+            <button
+              className={`tab-btn${activeTab === 'ebay' ? ' tab-active' : ''}`}
+              onClick={() => setActiveTab('ebay')}
+              disabled={exportingPdf}
+            >
+              eBay
+            </button>
           </div>
-          <button onClick={refetch} disabled={loading} className="refresh-button">
-            {loading ? 'Refreshing...' : 'Refresh'}
-          </button>
+          <div className="tab-actions" data-export-ignore="true">
+            <button onClick={refetch} disabled={loading || exportingPdf} className="refresh-button">
+              {loading ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              disabled={exportingPdf}
+              className="utility-button utility-button-accent"
+            >
+              {exportingPdf ? 'Exporting PDF...' : 'Download PDF'}
+            </button>
+          </div>
         </div>
+
+        {exportingPdf && exportProgress && (
+          <div className="export-overlay" data-export-ignore="true">
+            <div className="export-overlay-card">
+              <p className="export-overlay-kicker">Preparing PDF export</p>
+              <h2 className="export-overlay-title">{exportProgress.label}</h2>
+              <p className="export-overlay-copy">
+                Capturing screen {exportProgress.current} of {exportProgress.total} and adding it to a single PDF.
+              </p>
+              <div className="export-progress-track">
+                <div
+                  className="export-progress-fill"
+                  style={{ width: `${Math.round((exportProgress.current / exportProgress.total) * 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Image Lab Tab ── */}
+        {activeTab === 'imagelab' && <ImageLab />}
+
+        {/* ── eBay Tab ── */}
+        {activeTab === 'ebay' && <EbayTab />}
 
         {/* ── Business Metrics Dashboard Tab ── */}
         {activeTab === 'dashboard' && (
-          <div className="biz-dashboard">
-
-            {/* Row 1: KPI cards */}
-            <div className="biz-kpi-row">
-
-              {/* Incoming Gear Submissions */}
-              <article className="biz-kpi-card biz-kpi-blue">
-                <div className="biz-kpi-header">
-                  <span className="biz-kpi-label">Incoming Submissions</span>
-                </div>
-                <p className="biz-kpi-value">{jfLoading ? '…' : jfSubmissions.length.toLocaleString()}</p>
-                <p className="biz-kpi-sub">
-                  <strong className="biz-kpi-accent">{thisWeekSubs.length}</strong> this week
-                  &nbsp;·&nbsp;
-                  <strong className="biz-kpi-accent">{recentSubs.length}</strong> last 30 days
-                  {totalNewSubmissions > 0 && (
-                    <>
-                      &nbsp;·&nbsp;
-                      <span className="biz-kpi-alert">{totalNewSubmissions} unread</span>
-                    </>
-                  )}
-                </p>
-              </article>
-
-              {/* Deals in Progress */}
-              <article className="biz-kpi-card biz-kpi-amber">
-                <div className="biz-kpi-header">
-                  <span className="biz-kpi-label">Deals in Progress</span>
-                </div>
-                <p className="biz-kpi-value">{spLoading ? '…' : draftProducts.length}</p>
-                <p className="biz-kpi-sub">
-                  <strong className="biz-kpi-accent">{activeProducts.length}</strong> active
-                  &nbsp;·&nbsp;
-                  <strong className="biz-kpi-accent">{archivedProducts.length}</strong> archived/sold
-                </p>
-              </article>
-
-              {/* Inventory Value */}
-              <article className="biz-kpi-card biz-kpi-green">
-                <div className="biz-kpi-header">
-                  <span className="biz-kpi-label">Inventory Value</span>
-                </div>
-                <p className="biz-kpi-value">
-                  {spLoading ? '…' : inventoryValue > 0
-                    ? `$${inventoryValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
-                    : '—'
-                  }
-                </p>
-                <p className="biz-kpi-sub">
-                  Active listings at ask price
-                  &nbsp;·&nbsp;
-                  avg <strong className="biz-kpi-accent">
-                    {spLoading ? '…' : avgAskPrice > 0 ? `$${Math.round(avgAskPrice).toLocaleString()}` : '—'}
-                  </strong>
-                </p>
-              </article>
-
-              {/* Acquisition Cost */}
-              <article className="biz-kpi-card biz-kpi-purple">
-                <div className="biz-kpi-header">
-                  <span className="biz-kpi-label">Acquisition Costs</span>
-                </div>
-                <p className="biz-kpi-value">
-                  {atLoading ? '…' : acquisitionCost > 0
-                    ? `$${acquisitionCost.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
-                    : '—'
-                  }
-                </p>
-                <p className="biz-kpi-sub">
-                  From <strong className="biz-kpi-accent">{nonEmptyListings.length}</strong> Airtable records
-                </p>
-              </article>
-
-              {/* Profit Margin */}
-              <article className="biz-kpi-card biz-kpi-teal">
-                <div className="biz-kpi-header">
-                  <span className="biz-kpi-label">Profit Margin</span>
-                </div>
-                <p className="biz-kpi-value">
-                  {grossMarginPct !== null ? `${grossMarginPct}%` : '—'}
-                </p>
-                <p className="biz-kpi-sub">
-                  {grossMarginPct !== null
-                    ? `Ask vs acquisition across active inventory`
-                    : 'Add prices to Airtable to calculate'
-                  }
-                </p>
-              </article>
-
-            </div>{/* end kpi-row */}
-
-            {/* Row 2: two-column layout */}
-            <div className="biz-row2">
-
-              {/* Submission volume chart */}
-              <section className="biz-panel">
-                <h2 className="biz-panel-title">Submission Volume <span className="biz-panel-sub">Last 14 days</span></h2>
-                {jfLoading ? (
-                  <div className="loading-panel" style={{ padding: '1.5rem 0' }}>
-                    <div className="loader" />
-                    <p>Loading…</p>
-                  </div>
-                ) : (
-                  <div className="biz-bar-chart">
-                    {submissionDays.map((d, i) => (
-                      <div key={i} className="biz-bar-col">
-                        <div
-                          className="biz-bar"
-                          style={{ height: `${Math.round((d.count / maxDayCount) * 100)}%` }}
-                          title={`${d.label}: ${d.count}`}
-                        />
-                        <span className="biz-bar-label">{d.label.split(' ')[1]}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              {/* Sales performance */}
-              <section className="biz-panel">
-                <h2 className="biz-panel-title">Sales Performance</h2>
-                <div className="biz-perf-grid">
-                  <div className="biz-perf-item">
-                    <span className="biz-perf-label">Total Listings</span>
-                    <span className="biz-perf-val">{spLoading ? '…' : products.length}</span>
-                  </div>
-                  <div className="biz-perf-item">
-                    <span className="biz-perf-label">Active</span>
-                    <span className="biz-perf-val biz-val-green">{spLoading ? '…' : activeProducts.length}</span>
-                  </div>
-                  <div className="biz-perf-item">
-                    <span className="biz-perf-label">Draft / Pending</span>
-                    <span className="biz-perf-val biz-val-amber">{spLoading ? '…' : draftProducts.length}</span>
-                  </div>
-                  <div className="biz-perf-item">
-                    <span className="biz-perf-label">Sold / Archived</span>
-                    <span className="biz-perf-val biz-val-muted">{spLoading ? '…' : archivedProducts.length}</span>
-                  </div>
-                  <div className="biz-perf-item">
-                    <span className="biz-perf-label">Avg Ask Price</span>
-                    <span className="biz-perf-val">
-                      {spLoading ? '…' : avgAskPrice > 0 ? `$${Math.round(avgAskPrice).toLocaleString()}` : '—'}
-                    </span>
-                  </div>
-                  <div className="biz-perf-item">
-                    <span className="biz-perf-label">Total Ask Value</span>
-                    <span className="biz-perf-val biz-val-green">
-                      {spLoading ? '…' : inventoryValue > 0 ? `$${inventoryValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}
-                    </span>
-                  </div>
-                  <div className="biz-perf-item">
-                    <span className="biz-perf-label">Gross Margin</span>
-                    <span className={`biz-perf-val${grossMarginPct !== null && grossMarginPct > 0 ? ' biz-val-green' : ''}`}>
-                      {grossMarginPct !== null ? `${grossMarginPct}%` : '—'}
-                    </span>
-                  </div>
-                  <div className="biz-perf-item">
-                    <span className="biz-perf-label">Potential Profit</span>
-                    <span className="biz-perf-val biz-val-green">
-                      {acquisitionCost > 0 && totalAsk > 0
-                        ? `$${(totalAsk - acquisitionCost).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
-                        : '—'
-                      }
-                    </span>
-                  </div>
-                </div>
-              </section>
-
-            </div>{/* end row2 */}
-
-            {/* Row 3: Top brands + recent submissions */}
-            <div className="biz-row3">
-
-              {/* Top requested brands */}
-              <section className="biz-panel">
-                <h2 className="biz-panel-title">Top Requested Brands <span className="biz-panel-sub">From last 500 submissions</span></h2>
-                {jfLoading ? (
-                  <div className="loading-panel" style={{ padding: '1rem 0' }}>
-                    <div className="loader" /><p>Loading…</p>
-                  </div>
-                ) : topBrands.length > 0 ? (
-                  <ul className="biz-brand-list">
-                    {topBrands.map(([brand, count]) => (
-                      <li key={brand} className="biz-brand-item">
-                        <span className="biz-brand-name">{brand}</span>
-                        <div className="biz-brand-bar-wrap">
-                          <div
-                            className="biz-brand-bar"
-                            style={{ width: `${Math.round((count / topBrands[0][1]) * 100)}%` }}
-                          />
-                        </div>
-                        <span className="biz-brand-count">{count}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p style={{ color: 'var(--muted)', margin: 0 }}>No brand data yet.</p>
-                )}
-              </section>
-
-              {/* Recent submissions feed */}
-              <section className="biz-panel">
-                <h2 className="biz-panel-title">Recent Submissions <span className="biz-panel-sub">Latest 8</span></h2>
-                {jfLoading ? (
-                  <div className="loading-panel" style={{ padding: '1rem 0' }}>
-                    <div className="loader" /><p>Loading…</p>
-                  </div>
-                ) : (
-                  <ul className="biz-feed">
-                    {jfSubmissions.slice(0, 8).map(sub => {
-                      const sortedAnswers = Object.values(sub.answers)
-                        .filter(a => formatAnswer(a.answer))
-                        .sort((a, b) => Number(a.order) - Number(b.order));
-                      const name = formatAnswer(sortedAnswers.find(a => /name/i.test(a.text || ''))?.answer) || formatAnswer(sortedAnswers[0]?.answer) || 'Unknown';
-                      const brandAnswer = sortedAnswers.find(a => /brand/i.test(a.text || ''));
-                      const modelAnswer = sortedAnswers.find(a => /model/i.test(a.text || ''));
-                      const brand = formatAnswer(brandAnswer?.answer);
-                      const model = formatAnswer(modelAnswer?.answer);
-                      const submittedAt = new Date(sub.created_at);
-                      const isNew = sub.new === '1';
-                      const minutesAgo = Math.round((now - submittedAt.getTime()) / 60000);
-                      const timeLabel = minutesAgo < 60
-                        ? `${minutesAgo}m ago`
-                        : minutesAgo < 1440
-                          ? `${Math.round(minutesAgo / 60)}h ago`
-                          : submittedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-                      return (
-                        <li key={sub.id} className={`biz-feed-item${isNew ? ' biz-feed-new' : ''}`}>
-                          <div className="biz-feed-left">
-                            {isNew && <span className="jf-dot" style={{ flexShrink: 0 }} />}
-                            <div>
-                              <p className="biz-feed-name">{name}</p>
-                              {(brand || model) && (
-                                <p className="biz-feed-gear">
-                                  {[brand, model].filter(Boolean).join(' · ')}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <span className="biz-feed-time">{timeLabel}</span>
-                        </li>
-                      );
-                    })}
-                    {jfSubmissions.length === 0 && (
-                      <li style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>No submissions loaded.</li>
-                    )}
-                  </ul>
-                )}
-                <button
-                  className="biz-view-all"
-                  onClick={() => setActiveTab('jotform')}
-                >
-                  View all {jfSubmissions.length.toLocaleString()} submissions →
-                </button>
-              </section>
-
-            </div>{/* end row3 */}
-
-          </div>
+          <DashboardTab
+            atLoading={atLoading}
+            spLoading={spLoading}
+            jfLoading={jfLoading}
+            nonEmptyListings={nonEmptyListings}
+            products={products}
+            jfSubmissions={jfSubmissions}
+            totalNewSubmissions={totalNewSubmissions}
+            thisWeekSubs={thisWeekSubs}
+            recentSubs={recentSubs}
+            draftProducts={draftProducts}
+            activeProducts={activeProducts}
+            archivedProducts={archivedProducts}
+            acquisitionCost={acquisitionCost}
+            inventoryValue={inventoryValue}
+            avgAskPrice={avgAskPrice}
+            sellThroughPct={sellThroughPct}
+            grossMarginPct={grossMarginPct}
+            submissionsTrend={submissionsTrend}
+            dealsTrend={dealsTrend}
+            acquisitionTrend={acquisitionTrend}
+            inventoryTrend={inventoryTrend}
+            salesTrend={salesTrend}
+            marginTrend={marginTrend}
+            submissionDays={submissionDays}
+            maxDayCount={maxDayCount}
+            topBrands={topBrands}
+            now={now}
+            airtableInventoryValue={airtableInventoryValue}
+            uniqueAirtableBrands={uniqueAirtableBrands}
+            uniqueAirtableTypes={uniqueAirtableTypes}
+            componentTypeSummary={componentTypeSummary}
+            airtableBrandSummary={airtableBrandSummary}
+            airtableDistributorSummary={airtableDistributorSummary}
+            airtableTypeTable={airtableTypeTable}
+            maxComponentTypeCount={maxComponentTypeCount}
+            maxAirtableBrandCount={maxAirtableBrandCount}
+            onSelectTab={setActiveTab}
+          />
         )}
 
         {/* ── Airtable Tab ── */}
