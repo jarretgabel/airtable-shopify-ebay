@@ -48,7 +48,7 @@ export function ConnectScreen({ error, loading }: { error: string | null; loadin
         {authUrl ? (
           <a className="inline-flex cursor-pointer rounded-[10px] border-0 bg-[#E53238] px-7 py-[0.65rem] text-[0.9rem] font-bold text-white no-underline transition-colors hover:bg-[#c8272d]" href={authUrl} rel="noreferrer">Connect with eBay -&gt;</a>
         ) : (
-          <button className="inline-flex cursor-default rounded-[10px] border-0 bg-gray-300 px-7 py-[0.65rem] text-[0.9rem] font-bold text-gray-400" disabled>Enter RuName above to connect</button>
+          <button className="inline-flex cursor-default rounded-[10px] border border-[var(--line)] bg-[var(--line)] px-7 py-[0.65rem] text-[0.9rem] font-bold text-[var(--muted)]" disabled>Enter RuName above to connect</button>
         )}
 
         {error && <div className="w-full rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-left text-[0.82rem] text-[var(--error-text)]"><strong>Auth error:</strong> {error}</div>}
@@ -65,15 +65,15 @@ export function RecentEbayCard({ listing }: { listing: EbayPublishedListing }) {
 
   return (
     <article className="flex flex-col overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--panel)] shadow-[0_1px_4px_rgba(17,32,49,0.06)] transition-shadow duration-150 hover:shadow-[0_4px_16px_rgba(17,32,49,0.10)]">
-      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-        {thumbUrl ? <img src={thumbUrl} alt={listing.item.product?.title ?? listing.item.sku} className="h-full w-full object-cover" onError={() => setImgError(true)} /> : <div className="flex h-full w-full items-center justify-center text-slate-300"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
-        <span className="absolute right-2 top-2 rounded-md bg-green-100 px-2 py-[0.2em] text-[0.65rem] font-extrabold uppercase tracking-[0.05em] text-green-700">Live</span>
+      <div className="relative aspect-[4/3] overflow-hidden bg-[var(--bg)]">
+        {thumbUrl ? <img src={thumbUrl} alt={listing.item.product?.title ?? listing.item.sku} className="h-full w-full object-cover" onError={() => setImgError(true)} /> : <div className="flex h-full w-full items-center justify-center text-[var(--muted)]"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
+        <span className="absolute right-2 top-2 rounded-md border border-green-400/35 bg-green-500/20 px-2 py-[0.2em] text-[0.65rem] font-extrabold uppercase tracking-[0.05em] text-green-200">Live</span>
       </div>
       <div className="flex flex-1 flex-col gap-1.5 px-4 py-3.5">
         <p className="m-0 font-mono text-[0.65rem] font-bold uppercase tracking-[0.04em] text-[var(--muted)]">{listing.offer.listingId ?? listing.offer.offerId ?? listing.item.sku}</p>
         {listing.item.product?.brand && <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.06em] text-[var(--accent)]">{listing.item.product.brand}</p>}
         <p className="m-0 line-clamp-2 text-[0.88rem] font-bold leading-[1.35] text-[var(--ink)]" title={listing.item.product?.title}>{listing.item.product?.title ?? 'Untitled'}</p>
-        {listing.offer.pricingSummary?.price && <div className="text-[1.05rem] font-extrabold text-green-600">{listing.offer.pricingSummary.price.currency === 'USD' ? '$' : listing.offer.pricingSummary.price.currency}{Number(listing.offer.pricingSummary.price.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>}
+        {listing.offer.pricingSummary?.price && <div className="text-[1.05rem] font-extrabold text-green-300">{listing.offer.pricingSummary.price.currency === 'USD' ? '$' : listing.offer.pricingSummary.price.currency}{Number(listing.offer.pricingSummary.price.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>}
         {listing.item.condition && <p className="m-0 text-[0.74rem] font-semibold text-sky-500">{listing.item.condition.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</p>}
         {ebayListingUrl && <div className="mt-1 flex items-center gap-2"><a className="inline-flex items-center justify-center rounded-lg bg-[#E53238] px-3 py-1.5 text-[0.76rem] font-bold text-white no-underline transition-colors duration-150 hover:bg-[#c8272d]" href={ebayListingUrl} target="_blank" rel="noreferrer">View on eBay</a></div>}
       </div>
@@ -90,8 +90,8 @@ export function EbayCard({ item, offer }: { item: EbayInventoryItem; offer?: Eba
 
   return (
     <article className="flex flex-col overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--panel)] shadow-[0_1px_4px_rgba(17,32,49,0.06)] transition-shadow duration-150 hover:shadow-[0_4px_16px_rgba(17,32,49,0.10)]">
-      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-        {thumbUrl ? <img src={thumbUrl} alt={item.product?.title ?? item.sku} className="h-full w-full object-cover" onError={() => setImgError(true)} /> : <div className="flex h-full w-full items-center justify-center text-slate-300"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
+      <div className="relative aspect-[4/3] overflow-hidden bg-[var(--bg)]">
+        {thumbUrl ? <img src={thumbUrl} alt={item.product?.title ?? item.sku} className="h-full w-full object-cover" onError={() => setImgError(true)} /> : <div className="flex h-full w-full items-center justify-center text-[var(--muted)]"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
         <span className={`absolute right-2 top-2 rounded-md px-2 py-[0.2em] text-[0.65rem] font-extrabold uppercase tracking-[0.05em] ${statusColor(offer?.status)}`}>{statusLabel(offer?.status)}</span>
       </div>
 
@@ -101,23 +101,23 @@ export function EbayCard({ item, offer }: { item: EbayInventoryItem; offer?: Eba
         <p className="m-0 line-clamp-2 text-[0.88rem] font-bold leading-[1.35] text-[var(--ink)]" title={item.product?.title}>{item.product?.title ?? 'Untitled'}</p>
 
         <div className="mt-0.5 flex items-center gap-3">
-          {price ? <span className="text-[1.05rem] font-extrabold text-green-600">{price.currency === 'USD' ? '$' : price.currency}{Number(price.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span> : <span className="text-[0.82rem] font-normal text-[var(--muted)]">No price</span>}
+          {price ? <span className="text-[1.05rem] font-extrabold text-green-300">{price.currency === 'USD' ? '$' : price.currency}{Number(price.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span> : <span className="text-[0.82rem] font-normal text-[var(--muted)]">No price</span>}
           <span className="text-[0.76rem] text-[var(--muted)]">Qty: {qty}</span>
         </div>
 
         {item.condition && <p className="m-0 text-[0.74rem] font-semibold text-sky-500">{item.condition.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</p>}
-        {item.product?.description && <p className="m-0 line-clamp-3 text-[0.78rem] leading-[1.5] text-[var(--muted)]" dangerouslySetInnerHTML={{ __html: item.product.description.replace(/<[^>]*>/g, ' ').slice(0, 150) + '...' }} />}
+        {offer?.categoryId && <p className="m-0 text-[0.72rem] text-[var(--muted)]">Category ID: <span className="font-mono">{offer.categoryId}</span></p>}
 
         {item.product?.aspects && Object.keys(item.product.aspects).length > 0 && (
           <div className="mt-0.5 flex flex-wrap gap-1">
             {Object.entries(item.product.aspects).slice(0, 4).map(([k, v]) => (
-              <span key={k} className="rounded-full border border-blue-200 bg-blue-50 px-2 py-[0.12em] text-[0.68rem] font-semibold text-blue-700" title={k}>{v[0]}</span>
+              <span key={k} className="rounded-full border border-blue-400/35 bg-blue-500/20 px-2 py-[0.12em] text-[0.68rem] font-semibold text-blue-200" title={k}>{v[0]}</span>
             ))}
           </div>
         )}
 
         {ebayListingUrl && <div className="mt-1 flex items-center gap-2"><a className="inline-flex items-center justify-center rounded-lg bg-[#E53238] px-3 py-1.5 text-[0.76rem] font-bold text-white no-underline transition-colors duration-150 hover:bg-[#c8272d]" href={ebayListingUrl} target="_blank" rel="noreferrer">View on eBay</a></div>}
-        {offer?.offerId && <p className="m-0 mt-1 text-[0.65rem] font-mono text-slate-400">Offer {offer.offerId}</p>}
+        {offer?.offerId && <p className="m-0 mt-1 text-[0.65rem] font-mono text-[var(--muted)]">Offer {offer.offerId}</p>}
       </div>
     </article>
   );

@@ -20,8 +20,9 @@ export interface AppFrameProps {
   shellRef?: Ref<HTMLElement>;
   currentUserLabel: string;
   tabs: AppTab[];
-  postEbayTabs: AppTab[];
   ebayTabs: AppTab[];
+  shopifyTabs: AppTab[];
+  postEbayTabs: AppTab[];
   utilityTabs: AppTab[];
   refreshLabel: string;
   refreshDisabled: boolean;
@@ -35,4 +36,4 @@ export interface AppFrameProps {
   children: ReactNode;
 }
 
-export type OpenDropdown = 'pdf' | 'ebay' | 'utilities' | null;
+export type OpenDropdown = 'pdf' | 'ebay' | 'shopify' | 'utilities' | null;

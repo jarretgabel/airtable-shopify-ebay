@@ -34,21 +34,37 @@ export function useAuthRouteGuard({
     }
 
     const isKnownTabPath = isTab(normalizedPath.slice(1));
-    const isApprovalDetailPath = /^\/approval\/[^/]+$/.test(normalizedPath);
+    const isApprovalDetailPath = /^\/ebay\/approval\/[^/]+$/.test(normalizedPath);
+    const isShopifyApprovalDetailPath = /^\/shopify\/approval\/[^/]+$/.test(normalizedPath);
     const isUserDetailPath = /^\/users\/[^/]+$/.test(normalizedPath);
-    if (!isKnownTabPath && normalizedPath !== '/approval' && !isApprovalDetailPath && normalizedPath !== '/users' && !isUserDetailPath) {
+    const isKnownSubPath =
+      normalizedPath === '/ebay/listings' ||
+      normalizedPath === '/ebay/approval' ||
+      isApprovalDetailPath ||
+      normalizedPath === '/shopify/products' ||
+      normalizedPath === '/shopify/approval' ||
+      isShopifyApprovalDetailPath ||
+      normalizedPath === '/users' ||
+      isUserDetailPath;
+    if (!isKnownTabPath && !isKnownSubPath) {
       navigate(TAB_PATHS[firstAccessibleTab], { replace: true });
       return;
     }
 
     const requestedTab: Tab | null =
-      normalizedPath === '/approval' || isApprovalDetailPath
+      normalizedPath === '/ebay/approval' || isApprovalDetailPath
         ? 'approval'
-        : normalizedPath === '/users' || isUserDetailPath
-          ? 'users'
-          : isKnownTabPath
-            ? (normalizedPath.slice(1) as Tab)
-            : null;
+        : normalizedPath === '/shopify/approval' || isShopifyApprovalDetailPath
+          ? 'shopify-approval'
+          : normalizedPath === '/ebay/listings'
+            ? 'ebay'
+            : normalizedPath === '/shopify/products'
+              ? 'shopify'
+              : normalizedPath === '/users' || isUserDetailPath
+                ? 'users'
+                : isKnownTabPath
+                  ? (normalizedPath.slice(1) as Tab)
+                  : null;
 
     if (requestedTab && !canAccessPage(requestedTab)) {
       navigate(TAB_PATHS[firstAccessibleTab], { replace: true });

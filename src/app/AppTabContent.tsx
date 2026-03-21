@@ -22,9 +22,12 @@ import { ShopifyTab } from '@/components/tabs/ShopifyTab';
 export function AppTabContent({
   activeTab,
   approvalRecordId,
+  shopifyApprovalRecordId,
   userRecordId,
   navigateToApprovalRecord,
   navigateToApprovalList,
+  navigateToShopifyApprovalRecord,
+  navigateToShopifyApprovalList,
   navigateToUserRecord,
   navigateToUsersList,
   navigateToTab,
@@ -161,6 +164,12 @@ export function AppTabContent({
     navigateToApprovalList,
   });
 
+  const shopifyApprovalViewModel = buildApprovalTabViewModel({
+    approvalRecordId: shopifyApprovalRecordId,
+    navigateToApprovalRecord: navigateToShopifyApprovalRecord,
+    navigateToApprovalList: navigateToShopifyApprovalList,
+  });
+
   const usersViewModel = buildUsersTabViewModel({
     userRecordId,
     navigateToUserRecord,
@@ -174,6 +183,17 @@ export function AppTabContent({
       return <EbayTab viewModel={ebayViewModel} />;
     case 'approval':
       return <ListingApprovalTab viewModel={approvalViewModel} />;
+    case 'shopify-approval': {
+      const shopifyApprovalTableRef = (import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF as string | undefined)?.trim();
+      const shopifyApprovalTableName = (import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME as string | undefined)?.trim();
+      return (
+        <ListingApprovalTab
+          viewModel={shopifyApprovalViewModel}
+          tableReference={shopifyApprovalTableRef}
+          tableName={shopifyApprovalTableName}
+        />
+      );
+    }
     case 'users':
       return <UserManagementTab viewModel={usersViewModel} />;
     case 'dashboard':

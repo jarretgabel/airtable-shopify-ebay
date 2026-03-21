@@ -38,13 +38,13 @@ export function AirtableTab({ viewModel }: AirtableTabProps) {
           subtitle={<>Model: <code className={mutedCodeClass}>{displayValue(listing.fields.Model)}</code></>}
           side={(
             <>
-              <p className="m-0 text-lg font-bold text-slate-900">{displayValue(listing.fields.Price)}</p>
+              <p className="m-0 text-lg font-bold text-[var(--ink)]">{displayValue(listing.fields.Price)}</p>
               <p className="mt-1 text-sm text-[var(--muted)]">Distributor: {displayValue(listing.fields.Distributor)}</p>
             </>
           )}
         >
-          <h4 className="m-0 mb-3 text-base font-semibold text-slate-900">Record Details</h4>
-          <div className="space-y-2 text-sm text-slate-700">
+          <h4 className="m-0 mb-3 text-base font-semibold text-[var(--ink)]">Record Details</h4>
+          <div className="space-y-2 text-sm text-[var(--ink)]">
             <p className="m-0"><strong>ID:</strong> <code className={mutedCodeClass}>{listing.id}</code></p>
             <p className="m-0"><strong>Created:</strong> {new Date(listing.createdTime).toLocaleString()}</p>
             {hasValue(listing.fields.Component ?? listing.fields['Component Type']) && (

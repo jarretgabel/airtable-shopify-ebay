@@ -23,6 +23,7 @@ function App() {
     isResetPasswordPath,
     resetToken,
     approvalRecordId,
+    shopifyApprovalRecordId,
     userRecordId,
     activeTab,
     firstAccessibleTab,
@@ -39,6 +40,8 @@ function App() {
     navigateToTab,
     navigateToApprovalRecord,
     navigateToApprovalList,
+    navigateToShopifyApprovalRecord,
+    navigateToShopifyApprovalList,
     navigateToUserRecord,
     navigateToUsersList,
     handleLogout,
@@ -53,14 +56,15 @@ function App() {
     canAccessPage,
     navigate,
   });
-  const { airtable, shopify, market, ebay, approval, jotform, metrics, visibleTabs, totalNewSubmissions, aiProvider, adminCount } = useAppData({
+  const { airtable, shopify, market, ebay, approval, shopifyApproval, jotform, metrics, visibleTabs, totalNewSubmissions, aiProvider, adminCount } = useAppData({
     canAccessPage,
     users,
   });
-  const { loading, onRefresh, onExportCurrentPage, onExportAllPages, tabs, ebayNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
+  const { loading, onRefresh, onExportCurrentPage, onExportAllPages, tabs, ebayNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
     activeTab,
     visibleTabs,
     approvalPending: approval.pending,
+    shopifyApprovalPending: shopifyApproval.pending,
     totalNewSubmissions,
     exportingPdf,
     dashboardRefreshing,
@@ -77,6 +81,7 @@ function App() {
     jotformRefetch: jotform.refetch,
     ebayRefetch: ebay.refetch,
     approvalRefetch: approval.refetch,
+    shopifyApprovalRefetch: shopifyApproval.refetch,
     sharkSearch: market.search,
     currentSlug: market.currentSlug,
     atLoading: airtable.loading,
@@ -103,8 +108,9 @@ function App() {
       shellRef={shellRef}
       currentUserLabel={`${currentUser.name} · ${currentUser.role}`}
       tabs={tabs}
-      postEbayTabs={postEbayNavTabs}
       ebayTabs={ebayNavTabs}
+      shopifyTabs={shopifyNavTabs}
+      postEbayTabs={postEbayNavTabs}
       utilityTabs={utilityNavTabs}
       refreshLabel={loading ? 'Refreshing...' : 'Refresh'}
       refreshDisabled={loading || exportingPdf}
@@ -119,9 +125,12 @@ function App() {
       <AppTabContent
         activeTab={activeTab}
         approvalRecordId={approvalRecordId}
+        shopifyApprovalRecordId={shopifyApprovalRecordId}
         userRecordId={userRecordId}
         navigateToApprovalRecord={navigateToApprovalRecord}
         navigateToApprovalList={navigateToApprovalList}
+        navigateToShopifyApprovalRecord={navigateToShopifyApprovalRecord}
+        navigateToShopifyApprovalList={navigateToShopifyApprovalList}
         navigateToUserRecord={navigateToUserRecord}
         navigateToUsersList={navigateToUsersList}
         navigateToTab={navigateToTab}

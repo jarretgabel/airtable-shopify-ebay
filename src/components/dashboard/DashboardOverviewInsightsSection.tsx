@@ -3,7 +3,7 @@ import type { DashboardInsight, DashboardTargetTab, TrendSummary } from './dashb
 
 const kpiCardClass = 'w-full appearance-none rounded-[14px] border border-[var(--line)] border-t-[3px] bg-[var(--panel)] px-4 pb-3 pt-3 text-left text-[var(--ink)] shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)] transition hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(17,32,49,0.09),0_8px_24px_rgba(17,32,49,0.08)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-blue-200';
 const trendToneClass = {
-  up: 'text-green-700',
+  up: 'text-green-300',
   down: 'text-amber-400',
   flat: 'text-[var(--muted)]',
 } as const satisfies Record<TrendSummary['direction'], string>;

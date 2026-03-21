@@ -7,8 +7,9 @@ export function AppFrame({
   shellRef,
   currentUserLabel,
   tabs,
-  postEbayTabs,
   ebayTabs,
+  shopifyTabs,
+  postEbayTabs,
   utilityTabs,
   refreshLabel,
   refreshDisabled,
@@ -58,8 +59,9 @@ export function AppFrame({
         headerRef={shellContainerRef}
         currentUserLabel={currentUserLabel}
         tabs={tabs}
-        postEbayTabs={postEbayTabs}
         ebayTabs={ebayTabs}
+        shopifyTabs={shopifyTabs}
+        postEbayTabs={postEbayTabs}
         utilityTabs={utilityTabs}
         refreshLabel={refreshLabel}
         refreshDisabled={refreshDisabled}

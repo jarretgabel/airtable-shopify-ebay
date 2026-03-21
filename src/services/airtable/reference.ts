@@ -22,7 +22,7 @@ function normalizeId(raw: string, prefix: 'app' | 'tbl' | 'viw'): string {
  */
 export function parseAirtableReferenceCandidates(
   reference: string,
-  fallbackTableName: string,
+  fallbackTableName: string | undefined,
   defaultBaseId: string,
 ): ParsedAirtableReference[] {
   const trimmed = reference.trim();
@@ -86,6 +86,15 @@ export function parseAirtableReferenceCandidates(
       tableName: normalizeId(firstPart, 'tbl'),
       viewId,
     });
+
+    if (fallback) {
+      // Also try interpreting the first segment as a base shorthand.
+      pushUniqueCandidate({
+        baseId:    normalizeId(firstPart, 'app'),
+        tableName: fallback,
+        viewId,
+      });
+    }
 
     if (fallback) {
       pushUniqueCandidate({

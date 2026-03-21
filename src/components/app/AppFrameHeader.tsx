@@ -6,8 +6,9 @@ interface AppFrameHeaderProps {
   headerRef: Ref<HTMLElement>;
   currentUserLabel: string;
   tabs: AppTab[];
-  postEbayTabs: AppTab[];
   ebayTabs: AppTab[];
+  shopifyTabs: AppTab[];
+  postEbayTabs: AppTab[];
   utilityTabs: AppTab[];
   refreshLabel: string;
   refreshDisabled: boolean;
@@ -120,8 +121,9 @@ export function AppFrameHeader({
   headerRef,
   currentUserLabel,
   tabs,
-  postEbayTabs,
   ebayTabs,
+  shopifyTabs,
+  postEbayTabs,
   utilityTabs,
   refreshLabel,
   refreshDisabled,
@@ -135,10 +137,12 @@ export function AppFrameHeader({
   onCloseDropdowns,
 }: AppFrameHeaderProps): ReactNode {
   const ebayMenuRef = useRef<HTMLDivElement>(null);
+  const shopifyMenuRef = useRef<HTMLDivElement>(null);
   const utilitiesMenuRef = useRef<HTMLDivElement>(null);
   const pdfMenuRef = useRef<HTMLDivElement>(null);
 
   const hasActiveEbayTab = ebayTabs.some((tab) => tab.active);
+  const hasActiveShopifyTab = shopifyTabs.some((tab) => tab.active);
   const hasActiveUtilityTab = utilityTabs.some((tab) => tab.active);
 
   useEffect(() => {
@@ -146,9 +150,11 @@ export function AppFrameHeader({
 
     const menuRef = openDropdown === 'ebay'
       ? ebayMenuRef
-      : openDropdown === 'utilities'
-        ? utilitiesMenuRef
-        : pdfMenuRef;
+      : openDropdown === 'shopify'
+        ? shopifyMenuRef
+        : openDropdown === 'utilities'
+          ? utilitiesMenuRef
+          : pdfMenuRef;
 
     const firstEnabledButton = menuRef.current?.querySelector<HTMLButtonElement>('button:not([disabled])');
     firstEnabledButton?.focus();
@@ -243,6 +249,30 @@ export function AppFrameHeader({
                     className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
                   >
                     <DropdownTabList tabs={ebayTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {shopifyTabs.length > 0 && (
+              <div className="relative flex-shrink-0" data-export-ignore="true">
+                <DropdownTrigger
+                  active={hasActiveShopifyTab}
+                  expanded={openDropdown === 'shopify'}
+                  label="Shopify"
+                  menuId="shopify-menu"
+                  onClick={() => onToggleDropdown('shopify')}
+                  onKeyDown={(event) => handleTriggerKeyDown(event, 'shopify')}
+                />
+                {openDropdown === 'shopify' && (
+                  <div
+                    id="shopify-menu"
+                    role="menu"
+                    aria-label="Shopify tabs"
+                    ref={shopifyMenuRef}
+                    className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+                  >
+                    <DropdownTabList tabs={shopifyTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} />
                   </div>
                 )}
               </div>

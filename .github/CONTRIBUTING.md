@@ -14,6 +14,7 @@ This project uses a strict implementation baseline so the app remains visually c
 - Keep UI state and rendering concerns in components.
 - Preserve existing data contracts and API payload shapes unless requirements demand changes.
 - Keep auth and route/page access checks aligned with AuthContext and src/auth/pages.ts.
+- Implement changes with an advanced senior-level quality bar: prioritize durable architecture, clear separation of concerns, and long-term maintainability.
 
 ## Accessibility Requirements
 - Preserve semantic elements and labels.

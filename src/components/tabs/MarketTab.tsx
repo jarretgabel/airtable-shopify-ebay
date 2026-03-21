@@ -1,7 +1,7 @@
 import { FormEvent, useRef } from 'react';
 import type { MarketTabViewModel } from '@/app/appTabViewModels';
 import { primaryActionButtonClass } from '@/components/app/buttonStyles';
-import { emptySurfaceClass, errorSurfaceClass, listingSummaryClass, loadingSurfaceClass, panelSurfaceClass, spinnerClass } from '@/components/tabs/uiClasses';
+import { darkTableHeaderClass, darkTableRowHoverClass, emptySurfaceClass, errorSurfaceClass, listingSummaryClass, loadingSurfaceClass, mutedCodeClass, panelSurfaceClass, spinnerClass } from '@/components/tabs/uiClasses';
 
 interface MarketTabProps {
   viewModel: MarketTabViewModel;
@@ -43,7 +43,7 @@ export function MarketTab({ viewModel }: MarketTabProps) {
           </div>
           <p className="m-0 text-sm text-[var(--muted)]">
             Enter a HiFiShark model slug from{' '}
-            <code className="rounded bg-slate-200/70 px-1.5 py-0.5 text-[0.85em] text-slate-900">hifishark.com/model/accuphase-e-530</code>.
+            <code className={mutedCodeClass}>hifishark.com/model/accuphase-e-530</code>.
             You can also click a model in the Airtable tab to pre-fill.
           </p>
         </form>
@@ -66,7 +66,7 @@ export function MarketTab({ viewModel }: MarketTabProps) {
       {!loading && listings.length > 0 && (
         <section className={panelSurfaceClass}>
           <p className={listingSummaryClass}>
-            <strong>{listings.length}</strong> listings found for <code className="rounded bg-slate-200/70 px-1.5 py-0.5 text-[0.85em] text-slate-900">{currentSlug}</code>
+            <strong>{listings.length}</strong> listings found for <code className={mutedCodeClass}>{currentSlug}</code>
             {' · '}
             {listings.filter((listing) => listing.price).length} with prices
             {' · '}
@@ -83,7 +83,7 @@ export function MarketTab({ viewModel }: MarketTabProps) {
 
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
-              <thead>
+              <thead className={darkTableHeaderClass}>
                 <tr>
                   <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Listing</th>
                   <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Site</th>
@@ -94,7 +94,7 @@ export function MarketTab({ viewModel }: MarketTabProps) {
               </thead>
               <tbody>
                 {listings.map((listing) => (
-                  <tr key={listing.id} className="transition hover:bg-slate-50/70">
+                  <tr key={listing.id} className={darkTableRowHoverClass}>
                     <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle">
                       <a href={listing.url} target="_blank" rel="noreferrer" className="font-medium text-[var(--accent)] hover:underline">
                         {listing.title || '(no title)'}
@@ -122,7 +122,7 @@ export function MarketTab({ viewModel }: MarketTabProps) {
       {!currentSlug && !loading && (
         <section className={emptySurfaceClass}>
           <p className="m-0 font-bold text-[var(--ink)]">Search for a model above</p>
-          <p>Example slugs: <code className="rounded bg-slate-200/70 px-1.5 py-0.5 text-[0.85em] text-slate-900">accuphase-e-530</code>, <code className="rounded bg-slate-200/70 px-1.5 py-0.5 text-[0.85em] text-slate-900">naim-nac-282</code>, <code className="rounded bg-slate-200/70 px-1.5 py-0.5 text-[0.85em] text-slate-900">wilson-audio-sasha</code></p>
+          <p>Example slugs: <code className={mutedCodeClass}>accuphase-e-530</code>, <code className={mutedCodeClass}>naim-nac-282</code>, <code className={mutedCodeClass}>wilson-audio-sasha</code></p>
         </section>
       )}
     </>

@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import airtableService from '@/services/airtable';
 
-const DEFAULT_TABLE_REFERENCE = '3yTb0JkzUMFNnS/viw21kEduXKNub4Vn';
-
 function isApprovedValue(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'number') return value === 1;
@@ -14,7 +12,7 @@ function isApprovedValue(value: unknown): boolean {
   return false;
 }
 
-interface ApprovalSummaryStoreState {
+interface ShopifyApprovalSummaryStoreState {
   enabled: boolean;
   loading: boolean;
   error: string | null;
@@ -25,7 +23,7 @@ interface ApprovalSummaryStoreState {
   refetch: () => Promise<void>;
 }
 
-export const useApprovalSummaryStore = create<ApprovalSummaryStoreState>((set, get) => ({
+export const useShopifyApprovalSummaryStore = create<ShopifyApprovalSummaryStoreState>((set, get) => ({
   enabled: true,
   loading: true,
   error: null,
@@ -50,9 +48,18 @@ export const useApprovalSummaryStore = create<ApprovalSummaryStoreState>((set, g
       return;
     }
 
-    const tableReference = (import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_REF as string | undefined)?.trim()
-      || DEFAULT_TABLE_REFERENCE;
-    const tableName = (import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_NAME as string | undefined)?.trim();
+    const tableReference = (import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF as string | undefined)?.trim();
+    const tableName = (import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME as string | undefined)?.trim();
+    if (!tableReference) {
+      set({
+        loading: false,
+        error: 'Missing VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF',
+        total: 0,
+        approved: 0,
+        pending: 0,
+      });
+      return;
+    }
 
     try {
       set({ loading: true, error: null });
@@ -68,7 +75,7 @@ export const useApprovalSummaryStore = create<ApprovalSummaryStoreState>((set, g
         pending: Math.max(0, records.length - approvedCount),
       });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to load approval queue' });
+      set({ error: err instanceof Error ? err.message : 'Failed to load Shopify approval queue' });
     } finally {
       set({ loading: false });
     }

@@ -1,4 +1,4 @@
-import { Tab, EBAY_TAB_SET, UTILITY_TAB_SET, navLabel } from './appNavigation';
+import { Tab, EBAY_TAB_SET, SHOPIFY_TAB_SET, UTILITY_TAB_SET, navLabel } from './appNavigation';
 
 interface NavTab {
   key: Tab;
@@ -14,6 +14,7 @@ interface BuildNavTabsInput {
   activeTab: Tab;
   exportingPdf: boolean;
   approvalPending: number;
+  shopifyApprovalPending: number;
   totalNewSubmissions: number;
   navigateToTab: (tab: Tab) => void;
   navigateToApprovalList: () => void;
@@ -23,6 +24,7 @@ interface BuildNavTabsInput {
 export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
   tabs: NavTab[];
   ebayNavTabs: NavTab[];
+  shopifyNavTabs: NavTab[];
   postEbayNavTabs: NavTab[];
   utilityNavTabs: NavTab[];
 } {
@@ -31,15 +33,17 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     activeTab,
     exportingPdf,
     approvalPending,
+    shopifyApprovalPending,
     totalNewSubmissions,
     navigateToTab,
     navigateToApprovalList,
     navigateToUsersList,
   } = input;
 
-  const mainTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab) && tab !== 'market');
+  const mainTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab) && !SHOPIFY_TAB_SET.has(tab) && tab !== 'market');
   const postEbayTabs = visibleTabs.filter((tab) => tab === 'market');
   const ebayTabs = visibleTabs.filter((tab) => EBAY_TAB_SET.has(tab));
+  const shopifyTabs = visibleTabs.filter((tab) => SHOPIFY_TAB_SET.has(tab));
   const utilityTabs = visibleTabs.filter((tab) => UTILITY_TAB_SET.has(tab));
 
   const tabs = mainTabs.map((tab) => ({
@@ -60,6 +64,15 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     onClick: () => (tab === 'approval' ? navigateToApprovalList() : navigateToTab(tab)),
   }));
 
+  const shopifyNavTabs = shopifyTabs.map((tab) => ({
+    key: tab,
+    label: navLabel(tab),
+    active: activeTab === tab,
+    badgeCount: tab === 'shopify-approval' ? shopifyApprovalPending : undefined,
+    disabled: exportingPdf,
+    onClick: () => navigateToTab(tab),
+  }));
+
   const postEbayNavTabs = postEbayTabs.map((tab) => ({
     key: tab,
     label: navLabel(tab),
@@ -78,5 +91,5 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     onClick: () => (tab === 'users' ? navigateToUsersList() : navigateToTab(tab)),
   }));
 
-  return { tabs, ebayNavTabs, postEbayNavTabs, utilityNavTabs };
+  return { tabs, ebayNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs };
 }

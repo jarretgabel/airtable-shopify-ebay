@@ -3,6 +3,8 @@
 ## Visual Direction
 - Keep the app's high-contrast dashboard aesthetic: dark shell, elevated cards, cyan/blue accent actions.
 - Always design and implement UI in dark mode by default; only add light-mode support when explicitly requested.
+- Treat dark mode as a hard requirement for all screens and components, including listing grids/tables and hover states.
+- Avoid light-theme utility choices (for example `text-slate-900` on light surfaces) unless an explicit requirement calls for it.
 - Use the design tokens already in use (`--ink`, `--muted`, `--panel`, `--line`, `--accent`) when token-driven color is needed.
 
 ## Tailwind v4 Standards
@@ -14,6 +16,7 @@
 - Buttons: include visible hover and disabled states.
 - Inputs/selects: include clear focus ring or border transition.
 - Cards/lists: preserve current spacing rhythm and content hierarchy.
+- Tables/list rows: include visible dark-theme hover treatment (for example `hover:bg-white/5`) and preserve contrast.
 
 ## Responsive Standards
 - Build mobile-first and verify at small, medium, and large breakpoints.

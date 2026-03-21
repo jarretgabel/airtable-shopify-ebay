@@ -14,7 +14,7 @@ function locationFor(pathname: string, search = ''): Location {
 
 describe('useAppRouteState', () => {
   it('maps approval detail route and decodes id', () => {
-    const state = useAppRouteState(locationFor('/approval/abc%20123'), ['dashboard']);
+    const state = useAppRouteState(locationFor('/ebay/approval/abc%20123'), ['dashboard']);
     expect(state.activeTab).toBe('approval');
     expect(state.approvalRecordId).toBe('abc 123');
   });

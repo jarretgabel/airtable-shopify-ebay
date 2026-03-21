@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import type { AppPage } from '@/auth/pages';
 import { hasNonEmptyFields, TAB_VALUES } from '@/app/appNavigation';
+import { requireEnv } from '@/config/runtimeEnv';
 import { useApprovalQueueSummary } from '@/hooks/useApprovalQueueSummary';
+import { useShopifyApprovalQueueSummary } from '@/hooks/useShopifyApprovalQueueSummary';
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
 import { useEbayListings } from '@/hooks/useEbayListings';
 import { useHiFiShark } from '@/hooks/useHiFiShark';
@@ -16,7 +18,7 @@ interface AppDataParams {
 }
 
 export function useAppData({ canAccessPage, users }: AppDataParams) {
-  const tableName = import.meta.env.VITE_AIRTABLE_TABLE_NAME || 'Table 1';
+  const tableName = requireEnv('VITE_AIRTABLE_TABLE_NAME');
   const viewId = import.meta.env.VITE_AIRTABLE_VIEW_ID;
   const airtable = useListings(tableName, viewId);
   const nonEmptyListings = airtable.listings.filter((listing) => hasNonEmptyFields(listing.fields));
@@ -25,6 +27,7 @@ export function useAppData({ canAccessPage, users }: AppDataParams) {
   const market = useHiFiShark();
   const ebay = useEbayListings(canAccessPage('ebay'));
   const approval = useApprovalQueueSummary(canAccessPage('approval'));
+  const shopifyApproval = useShopifyApprovalQueueSummary(canAccessPage('shopify-approval'));
 
   const JOTFORM_FORM_ID = import.meta.env.VITE_JOTFORM_FORM_ID || '213604252654047';
   const jotform = useJotFormInquiries(JOTFORM_FORM_ID);
@@ -52,6 +55,7 @@ export function useAppData({ canAccessPage, users }: AppDataParams) {
       draftCount: ebayDraftCount,
     },
     approval,
+    shopifyApproval,
     jotform,
     metrics,
     visibleTabs,

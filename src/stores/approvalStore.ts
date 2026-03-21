@@ -76,10 +76,10 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
     set({ formValues: nextValues, fieldKinds: nextKinds });
   },
 
-  async loadRecords(tableReference, fallbackTableName) {
+  async loadRecords(tableReference, tableName) {
     set({ loading: true, error: null });
     try {
-      const data = await airtableService.getRecordsFromReference(tableReference, fallbackTableName);
+      const data = await airtableService.getRecordsFromReference(tableReference, tableName);
       set({ records: data });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Failed to load listing records' });
@@ -106,7 +106,7 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
     }
   },
 
-  async saveRecord(forceApproved, selectedRecord, tableReference, fallbackTableName, approvedFieldName, onSuccess) {
+  async saveRecord(forceApproved, selectedRecord, tableReference, tableName, approvedFieldName, onSuccess) {
     set({ saving: true, error: null });
     try {
       const { formValues, fieldKinds } = get();
@@ -126,12 +126,12 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
 
       await airtableService.updateRecordFromReference(
         tableReference,
-        fallbackTableName,
+        tableName,
         selectedRecord.id,
         payload,
       );
 
-      await get().loadRecords(tableReference, fallbackTableName);
+      await get().loadRecords(tableReference, tableName);
       onSuccess();
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Failed to save listing record' });

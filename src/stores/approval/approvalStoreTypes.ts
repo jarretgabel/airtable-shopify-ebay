@@ -12,13 +12,13 @@ export interface ApprovalStore {
 
   setFormValue: (fieldName: string, value: string) => void;
   hydrateForm: (record: AirtableRecord, allFieldNames: string[], approvedFieldName: string) => void;
-  loadRecords: (tableReference: string, fallbackTableName: string) => Promise<void>;
+  loadRecords: (tableReference: string, tableName?: string) => Promise<void>;
   loadListingFormatOptions: () => Promise<void>;
   saveRecord: (
     forceApproved: boolean,
     selectedRecord: AirtableRecord,
     tableReference: string,
-    fallbackTableName: string,
+    tableName: string | undefined,
     approvedFieldName: string,
     onSuccess: () => void,
   ) => Promise<void>;

@@ -20,9 +20,9 @@ export function ImageLabCard({ item, apiKeyPresent, isCopied, onIdentify, onProc
     <article
       className={[
         'flex flex-col overflow-hidden rounded-[14px] border bg-[var(--panel)] shadow-[0_1px_4px_rgba(17,32,49,0.07)] transition-shadow hover:shadow-[0_3px_12px_rgba(17,32,49,0.11)]',
-        status === 'done' ? 'border-green-200' : '',
-        status === 'error' ? 'border-red-300' : '',
-        status === 'identifying' ? 'border-blue-200' : '',
+        status === 'done' ? 'border-green-400/35' : '',
+        status === 'error' ? 'border-red-400/35' : '',
+        status === 'identifying' ? 'border-blue-400/35' : '',
         status !== 'done' && status !== 'error' && status !== 'identifying' ? 'border-[var(--line)]' : '',
       ]
         .filter(Boolean)
@@ -53,7 +53,7 @@ export function ImageLabCard({ item, apiKeyPresent, isCopied, onIdentify, onProc
             <>
               {' -> '}
               <span className="font-semibold text-[var(--ink)]">{formatBytes(processed.processedBytes)}</span>{' '}
-              <span className="font-semibold text-green-700">({Math.round((1 - processed.processedBytes / item.file.size) * 100)}% smaller)</span>
+              <span className="font-semibold text-green-300">({Math.round((1 - processed.processedBytes / item.file.size) * 100)}% smaller)</span>
               {' · '}
               {processed.width}×{processed.height}
             </>
@@ -69,17 +69,17 @@ export function ImageLabCard({ item, apiKeyPresent, isCopied, onIdentify, onProc
             </div>
 
             {(aiResult.msrp_original || aiResult.price_range_sold) && (
-              <div className="flex flex-wrap gap-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+              <div className="flex flex-wrap gap-3 rounded-lg border border-green-400/35 bg-green-500/15 px-3 py-2">
                 {aiResult.msrp_original && aiResult.msrp_original !== 'Unknown' && (
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.04em] text-green-700">MSRP (new)</span>
+                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.04em] text-green-300">MSRP (new)</span>
                     <span className="text-[0.82rem] font-semibold text-[var(--ink)]">{aiResult.msrp_original}</span>
                   </div>
                 )}
                 {aiResult.price_range_sold && aiResult.price_range_sold !== 'Unknown' && (
-                  <div className="flex flex-col gap-0.5 border-l-2 border-green-300 pl-3">
-                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.04em] text-green-700">Typical used sold</span>
-                    <span className="text-[0.82rem] font-semibold text-green-600">{aiResult.price_range_sold}</span>
+                  <div className="flex flex-col gap-0.5 border-l-2 border-green-400/45 pl-3">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.04em] text-green-300">Typical used sold</span>
+                    <span className="text-[0.82rem] font-semibold text-green-200">{aiResult.price_range_sold}</span>
                   </div>
                 )}
               </div>
@@ -96,7 +96,7 @@ export function ImageLabCard({ item, apiKeyPresent, isCopied, onIdentify, onProc
               <div className="overflow-hidden rounded-lg border border-[var(--line)]">
                 <p className="m-0 border-b border-[var(--line)] bg-[var(--panel)] px-2.5 py-1.5 text-[0.68rem] font-bold uppercase tracking-[0.05em] text-[var(--muted)]">Specifications</p>
                 <table className="w-full border-collapse text-[0.76rem]"><tbody>{Object.entries(aiResult.specifications).map(([key, val]) => (
-                  <tr key={key} className="even:bg-slate-50">
+                  <tr key={key} className="even:bg-white/5">
                     <td className="w-[42%] whitespace-nowrap border-r border-[var(--line)] px-2.5 py-1 font-semibold text-[var(--ink)]">{key}</td>
                     <td className="px-2.5 py-1 text-[var(--muted)]">{val}</td>
                   </tr>
@@ -106,7 +106,7 @@ export function ImageLabCard({ item, apiKeyPresent, isCopied, onIdentify, onProc
 
             <div className="flex flex-wrap gap-2">
               {aiResult.suggested_sku && <span className="rounded-[5px] bg-slate-800 px-2 py-[0.15em] text-[0.72rem] font-bold text-slate-200">{aiResult.suggested_sku}</span>}
-              {aiResult.shopify_product_type && <span className="rounded-[5px] bg-blue-50 px-2 py-[0.15em] text-[0.72rem] font-semibold text-blue-700">{aiResult.shopify_product_type}</span>}
+              {aiResult.shopify_product_type && <span className="rounded-[5px] border border-blue-400/35 bg-blue-500/20 px-2 py-[0.15em] text-[0.72rem] font-semibold text-blue-200">{aiResult.shopify_product_type}</span>}
             </div>
 
             {aiResult.suggested_tags?.length > 0 && (
@@ -116,7 +116,7 @@ export function ImageLabCard({ item, apiKeyPresent, isCopied, onIdentify, onProc
         )}
 
         {error && (
-          <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-[0.8rem] leading-[1.5] text-red-700"><strong>Error</strong> - {error}</div>
+          <div className="rounded-lg border border-red-400/40 bg-red-500/15 px-3 py-2 text-[0.8rem] leading-[1.5] text-red-200"><strong>Error</strong> - {error}</div>
         )}
 
         {busy && (
@@ -160,12 +160,12 @@ function StatusBadge({ status }: { status: ItemStatus }) {
     error: 'Error',
   };
   const statusClass = {
-    idle: 'bg-slate-100 text-slate-500',
-    identifying: 'bg-blue-100 text-blue-700',
-    identified: 'bg-teal-100 text-teal-700',
-    processing: 'bg-amber-100 text-amber-700',
-    done: 'bg-green-100 text-green-700',
-    error: 'bg-red-100 text-red-700',
+    idle: 'border border-slate-400/35 bg-slate-500/20 text-slate-200',
+    identifying: 'border border-blue-400/35 bg-blue-500/20 text-blue-200',
+    identified: 'border border-teal-400/35 bg-teal-500/20 text-teal-200',
+    processing: 'border border-amber-400/35 bg-amber-500/20 text-amber-200',
+    done: 'border border-green-400/35 bg-green-500/20 text-green-200',
+    error: 'border border-red-400/35 bg-red-500/20 text-red-200',
   } as const;
 
   return <span className={`inline-block shrink-0 whitespace-nowrap rounded-full px-[0.65em] py-[0.18em] text-[0.68rem] font-bold uppercase tracking-[0.06em] ${statusClass[status]}`}>{labels[status]}</span>;

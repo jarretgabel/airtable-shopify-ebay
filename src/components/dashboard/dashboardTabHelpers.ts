@@ -97,6 +97,49 @@ export function buildEbayWorkflowCards({
   return cards;
 }
 
+export function buildShopifyWorkflowCards({
+  accessiblePages,
+  shopifyLoading,
+  shopifyProductsCount,
+  shopifyActiveCount,
+  shopifyDraftCount,
+  shopifyArchivedCount,
+}: Pick<
+  DashboardWorkflowSource,
+  | 'accessiblePages'
+  | 'shopifyLoading'
+  | 'shopifyProductsCount'
+  | 'shopifyActiveCount'
+  | 'shopifyDraftCount'
+  | 'shopifyArchivedCount'
+>): WorkflowCard[] {
+  const cards: WorkflowCard[] = [];
+
+  if (accessiblePages.includes('shopify')) {
+    cards.push({
+      id: 'shopify',
+      title: 'Shopify Listings',
+      eyebrow: shopifyLoading ? 'Syncing Shopify products' : `${shopifyProductsCount} listing${shopifyProductsCount === 1 ? '' : 's'} tracked`,
+      detail: 'Manage Shopify product statuses, clean up drafts, and monitor active vs archived listing flow.',
+      stats: shopifyLoading
+        ? ['Loading Shopify data…']
+        : [`${shopifyActiveCount} active`, `${shopifyDraftCount} draft`, `${shopifyArchivedCount} archived`],
+    });
+  }
+
+  if (accessiblePages.includes('shopify-approval')) {
+    cards.push({
+      id: 'shopify-approval',
+      title: 'Listing Approval Queue',
+      eyebrow: shopifyLoading ? 'Syncing Shopify queue' : `${shopifyDraftCount} awaiting review`,
+      detail: 'Review pending Shopify listing records, validate mapped fields, and approve records for Shopify publishing workflow.',
+      stats: shopifyLoading ? ['Loading Shopify data…'] : [`${shopifyDraftCount} in queue`, `${shopifyActiveCount} active`, `${shopifyArchivedCount} archived`],
+    });
+  }
+
+  return cards;
+}
+
 export function buildMarketWorkflowCards({
   accessiblePages,
   marketCurrentSlug,
@@ -157,6 +200,7 @@ export function buildDashboardSections({
 }): DashboardSection[] {
   const sections: DashboardSection[] = [
     { id: 'overview', label: 'Dashboard' },
+    { id: 'listing-status', label: 'Listings' },
     { id: 'insights', label: 'Insights' },
     { id: 'inventory', label: 'Airtable' },
     { id: 'pipeline', label: 'Shopify' },

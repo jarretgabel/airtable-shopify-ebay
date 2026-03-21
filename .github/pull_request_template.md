@@ -6,6 +6,7 @@
 - [ ] Uses Tailwind CSS v4 utilities for UI changes.
 - [ ] Does not add component-scoped global CSS in src/App.css.
 - [ ] Keeps dark mode as the default theme (no light variant unless explicitly requested).
+- [ ] Uses dark-theme-compatible table/list row hover states where applicable (no light-only hover palettes).
 - [ ] Preserves existing behavior, data flow, API payload shapes, and user-visible copy unless required.
 - [ ] Preserves accessibility semantics (labels, focus states, keyboard support, button types, contrast).
 - [ ] Keeps auth/page access gates enforced through AuthContext and src/auth/pages.ts.

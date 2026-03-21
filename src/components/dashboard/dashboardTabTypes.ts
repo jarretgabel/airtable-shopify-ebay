@@ -53,6 +53,7 @@ export interface WorkflowCard {
 
 export type DashboardSectionId =
   | 'overview'
+  | 'listing-status'
   | 'insights'
   | 'inventory'
   | 'pipeline'
@@ -146,6 +147,11 @@ export interface DashboardWorkflowSource {
   userCount: number;
   adminCount: number;
   approvalLoading: boolean;
+  shopifyLoading: boolean;
+  shopifyProductsCount: number;
+  shopifyActiveCount: number;
+  shopifyDraftCount: number;
+  shopifyArchivedCount: number;
   ebayLoading: boolean;
   marketLoading: boolean;
 }

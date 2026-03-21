@@ -7,6 +7,7 @@ interface AppRouteState {
   isResetPasswordPath: boolean;
   resetToken: string | null;
   approvalRecordId: string | null;
+  shopifyApprovalRecordId: string | null;
   userRecordId: string | null;
   activeTab: Tab;
   firstAccessibleTab: Tab;
@@ -17,12 +18,16 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const isLoginPath = normalizedPath === '/login';
   const isResetPasswordPath = normalizedPath === '/reset-password';
   const resetToken = new URLSearchParams(location.search).get('token');
-  const approvalRecordMatch = normalizedPath.match(/^\/approval\/([^/]+)$/);
+  const approvalRecordMatch = normalizedPath.match(/^\/ebay\/approval\/([^/]+)$/);
+  const shopifyApprovalRecordMatch = normalizedPath.match(/^\/shopify\/approval\/([^/]+)$/);
   const userRecordMatch = normalizedPath.match(/^\/users\/([^/]+)$/);
   const firstAccessibleTab = (accessiblePages[0] ?? 'dashboard') as Tab;
 
   const activeTab: Tab = (() => {
-    if (normalizedPath === '/approval' || approvalRecordMatch) return 'approval';
+    if (normalizedPath === '/ebay/approval' || approvalRecordMatch) return 'approval';
+    if (normalizedPath === '/shopify/approval' || shopifyApprovalRecordMatch) return 'shopify-approval';
+    if (normalizedPath === '/ebay/listings') return 'ebay';
+    if (normalizedPath === '/shopify/products') return 'shopify';
     if (normalizedPath === '/users' || userRecordMatch) return 'users';
 
     const tabFromPath = normalizedPath.slice(1);
@@ -35,6 +40,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     isResetPasswordPath,
     resetToken,
     approvalRecordId: approvalRecordMatch ? decodeURIComponent(approvalRecordMatch[1]) : null,
+    shopifyApprovalRecordId: shopifyApprovalRecordMatch ? decodeURIComponent(shopifyApprovalRecordMatch[1]) : null,
     userRecordId: userRecordMatch ? decodeURIComponent(userRecordMatch[1]) : null,
     activeTab,
     firstAccessibleTab,

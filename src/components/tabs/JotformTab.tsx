@@ -34,17 +34,17 @@ export function JotformTab({ viewModel }: JotformTabProps) {
         {!loading && submissions.length > 0 && (
           <span className="text-[var(--muted)]">
             {submissions.length.toLocaleString()} submissions
-            {totalNewSubmissions > 0 && <span className="text-amber-600"> · {totalNewSubmissions.toLocaleString()} unread</span>}
+            {totalNewSubmissions > 0 && <span className="text-amber-300"> · {totalNewSubmissions.toLocaleString()} unread</span>}
           </span>
         )}
       </div>
 
       {freshCount > 0 && (
-        <div className="mt-3 flex flex-col gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-3 flex flex-col gap-3 rounded-xl border border-blue-400/35 bg-blue-500/15 px-4 py-3 text-sm text-blue-100 sm:flex-row sm:items-center sm:justify-between">
           <span>🔔 <strong>{freshCount}</strong> new submission{freshCount !== 1 ? 's' : ''} received since you opened this page</span>
           <button
             type="button"
-            className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+            className="rounded-lg border border-blue-300/45 bg-white/5 px-3 py-1.5 text-xs font-semibold text-blue-100 transition hover:bg-white/10"
             onClick={() => {
               clearFresh();
               refetch();

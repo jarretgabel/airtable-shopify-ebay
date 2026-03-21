@@ -8,6 +8,7 @@ interface AppShellControlsParams {
   activeTab: Tab;
   visibleTabs: Tab[];
   approvalPending: number;
+  shopifyApprovalPending: number;
   totalNewSubmissions: number;
   exportingPdf: boolean;
   dashboardRefreshing: boolean;
@@ -24,6 +25,7 @@ interface AppShellControlsParams {
   jotformRefetch: () => void | Promise<void>;
   ebayRefetch: () => void | Promise<void>;
   approvalRefetch: () => Promise<void>;
+  shopifyApprovalRefetch: () => Promise<void>;
   sharkSearch: (slug: string) => void;
   currentSlug: string;
   atLoading: boolean;
@@ -35,6 +37,7 @@ export function useAppShellControls({
   activeTab,
   visibleTabs,
   approvalPending,
+  shopifyApprovalPending,
   totalNewSubmissions,
   exportingPdf,
   dashboardRefreshing,
@@ -51,6 +54,7 @@ export function useAppShellControls({
   jotformRefetch,
   ebayRefetch,
   approvalRefetch,
+  shopifyApprovalRefetch,
   sharkSearch,
   currentSlug,
   atLoading,
@@ -68,12 +72,13 @@ export function useAppShellControls({
         Promise.resolve(jotformRefetch()),
         Promise.resolve(canAccessPage('ebay') ? ebayRefetch() : undefined),
         approvalRefetch(),
+        Promise.resolve(canAccessPage('shopify-approval') ? shopifyApprovalRefetch() : undefined),
         Promise.resolve(currentSlug ? sharkSearch(currentSlug) : undefined),
       ]);
     } finally {
       setDashboardRefreshing(false);
     }
-  }, [airtableRefetch, approvalRefetch, canAccessPage, currentSlug, dashboardRefreshing, ebayRefetch, jotformRefetch, setDashboardRefreshing, sharkSearch, shopifyRefetch]);
+  }, [airtableRefetch, approvalRefetch, canAccessPage, currentSlug, dashboardRefreshing, ebayRefetch, jotformRefetch, setDashboardRefreshing, sharkSearch, shopifyApprovalRefetch, shopifyRefetch]);
 
   const tabLoadingState: Partial<Record<Tab, boolean>> = {
     dashboard: dashboardRefreshing,
@@ -104,11 +109,12 @@ export function useAppShellControls({
     });
   }, [activeTab, canAccessPage, exportingPdf, navigateToTab, setExportProgress, setExportingPdf, shellRef]);
 
-  const { tabs, ebayNavTabs, postEbayNavTabs, utilityNavTabs } = buildAppFrameNavTabs({
+  const { tabs, ebayNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs } = buildAppFrameNavTabs({
     visibleTabs,
     activeTab,
     exportingPdf,
     approvalPending,
+    shopifyApprovalPending,
     totalNewSubmissions,
     navigateToTab: (tab) => navigateToTab(tab),
     navigateToApprovalList: () => navigateToApprovalList(),
@@ -122,6 +128,7 @@ export function useAppShellControls({
     onExportAllPages: () => void handleExportPdf('all'),
     tabs,
     ebayNavTabs,
+    shopifyNavTabs,
     postEbayNavTabs,
     utilityNavTabs,
   };

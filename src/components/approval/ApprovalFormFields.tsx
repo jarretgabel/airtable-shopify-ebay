@@ -12,6 +12,7 @@ const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[
 
 interface ApprovalFormFieldsProps {
   allFieldNames: string[];
+  approvedFieldName: string;
   formValues: Record<string, string>;
   fieldKinds: Record<string, 'boolean' | 'number' | 'json' | 'text'>;
   listingFormatOptions: string[];
@@ -21,6 +22,7 @@ interface ApprovalFormFieldsProps {
 
 export function ApprovalFormFields({
   allFieldNames,
+  approvedFieldName,
   formValues,
   fieldKinds,
   listingFormatOptions,
@@ -30,9 +32,8 @@ export function ApprovalFormFields({
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
       {allFieldNames.map((fieldName) => {
-        if (isShippingServiceField(fieldName)) {
-          return null;
-        }
+        if (isShippingServiceField(fieldName)) return null;
+        if (fieldName === approvedFieldName) return null;
 
         const value = formValues[fieldName] ?? '';
         const kind = fieldKinds[fieldName] ?? 'text';
@@ -50,8 +51,8 @@ export function ApprovalFormFields({
                 onChange={(event) => setFormValue(fieldName, event.target.value)}
                 disabled={saving}
               >
-                <option value="true">{isAllowOffersField(fieldName) ? 'True' : 'true'}</option>
-                <option value="false">{isAllowOffersField(fieldName) ? 'False' : 'false'}</option>
+                <option value="true">True</option>
+                <option value="false">False</option>
               </select>
             </label>
           );

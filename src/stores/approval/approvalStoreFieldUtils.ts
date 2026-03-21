@@ -1,7 +1,24 @@
 import {
+  EBAY_CONDITION_OPTIONS,
+  EBAY_DIMENSION_UNIT_OPTIONS,
+  EBAY_FORMAT_OPTIONS,
+  EBAY_LISTING_DURATION_OPTIONS,
+  EBAY_MARKETPLACE_ID_OPTIONS,
+  EBAY_RESPONSIBLE_PERSON_TYPE_OPTIONS,
+  EBAY_WEIGHT_UNIT_OPTIONS,
   FALLBACK_LISTING_FORMAT_OPTIONS,
   ITEM_CONDITION_OPTIONS,
   SHIPPING_SERVICE_FIELD,
+  SHOPIFY_COMBINED_LISTING_ROLE_OPTIONS,
+  SHOPIFY_FULFILLMENT_SERVICE_OPTIONS,
+  SHOPIFY_GRAPHQL_STATUS_OPTIONS,
+  SHOPIFY_INVENTORY_MANAGEMENT_OPTIONS,
+  SHOPIFY_INVENTORY_POLICY_OPTIONS,
+  SHOPIFY_MEDIA_CONTENT_TYPE_OPTIONS,
+  SHOPIFY_METAFIELD_TYPE_OPTIONS,
+  SHOPIFY_PUBLISHED_SCOPE_OPTIONS,
+  SHOPIFY_REST_STATUS_OPTIONS,
+  SHOPIFY_WEIGHT_UNIT_OPTIONS,
 } from '@/stores/approval/approvalStoreConstants';
 
 export type ApprovalFieldKind = 'boolean' | 'number' | 'json' | 'text';
@@ -51,7 +68,48 @@ export function fromFormValue(raw: string, kind: ApprovalFieldKind): unknown {
 }
 
 export function getDropdownOptions(fieldName: string): string[] | null {
-  if (fieldName.trim().toLowerCase() === 'item condition') return ITEM_CONDITION_OPTIONS;
+  const n = fieldName.trim().toLowerCase();
+
+  // Legacy humanized field names (old Airtable schema)
+  if (n === 'item condition') return ITEM_CONDITION_OPTIONS;
+
+  // Shopify: product status
+  if (n === 'shopify rest status' || n === 'shopify status') return SHOPIFY_REST_STATUS_OPTIONS;
+  if (n === 'shopify graphql status') return SHOPIFY_GRAPHQL_STATUS_OPTIONS;
+
+  // Shopify: published scope
+  if (n === 'shopify rest published scope') return SHOPIFY_PUBLISHED_SCOPE_OPTIONS;
+
+  // Shopify: variant fields (pattern: "shopify rest variant N <field>")
+  if (n.startsWith('shopify rest variant') && n.endsWith('inventory management')) return SHOPIFY_INVENTORY_MANAGEMENT_OPTIONS;
+  if (n.startsWith('shopify rest variant') && n.endsWith('inventory policy')) return SHOPIFY_INVENTORY_POLICY_OPTIONS;
+  if (n.startsWith('shopify rest variant') && n.endsWith('weight unit')) return SHOPIFY_WEIGHT_UNIT_OPTIONS;
+  if (n.startsWith('shopify rest variant') && n.endsWith('fulfillment service')) return SHOPIFY_FULFILLMENT_SERVICE_OPTIONS;
+
+  // Shopify: metafield type (both REST and GraphQL)
+  if (n.includes('metafield') && n.endsWith('type')) return SHOPIFY_METAFIELD_TYPE_OPTIONS;
+
+  // Shopify: combined listing role
+  if (n === 'shopify graphql combined listing role') return SHOPIFY_COMBINED_LISTING_ROLE_OPTIONS;
+
+  // Shopify: media content type
+  if (n.includes('shopify') && n.includes('media') && n.endsWith('content type')) return SHOPIFY_MEDIA_CONTENT_TYPE_OPTIONS;
+
+  // eBay: inventory condition (API field name)
+  if (n === 'ebay inventory condition') return EBAY_CONDITION_OPTIONS;
+
+  // eBay: package units
+  if (n === 'ebay inventory package dimension unit') return EBAY_DIMENSION_UNIT_OPTIONS;
+  if (n === 'ebay inventory package weight unit') return EBAY_WEIGHT_UNIT_OPTIONS;
+
+  // eBay: offer fields
+  if (n === 'ebay offer format') return EBAY_FORMAT_OPTIONS;
+  if (n === 'ebay offer marketplace id') return EBAY_MARKETPLACE_ID_OPTIONS;
+  if (n === 'ebay offer listing duration') return EBAY_LISTING_DURATION_OPTIONS;
+
+  // eBay: responsible person type
+  if (n.includes('ebay offer responsible person') && n.endsWith('type')) return EBAY_RESPONSIBLE_PERSON_TYPE_OPTIONS;
+
   return null;
 }
 

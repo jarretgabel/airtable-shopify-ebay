@@ -1,0 +1,115 @@
+
+technics-direct-drive-turntable-system-sl-1200g-s,Technics Direct Drive Turntable System SL-1200G-S,"<p dir=""ltr""><span>The Technics SL-1200G-S is a reference-grade direct drive turntable engineered for exceptional rotational accuracy and vibration control. It features a coreless direct-drive motor with no iron core and advanced motor control technology for smooth, highly stable playback.</span></p>
+<p dir=""ltr""><span>A three-layer platter with resonance-reducing deadening rubber and a four-layer cabinet with a hairline-finished aluminum top panel provide rigidity and vibration suppression. Each unit is factory-balanced using high-precision adjustment equipment for consistent performance.</span></p>
+<p dir=""ltr""><span>The magnesium tonearm uses a traditional gimbal suspension and high-precision bearings for accurate groove tracking. Gold-plated phono terminals and internal shielding help preserve signal integrity. The SL-1200G-S supports 33-1/3, 45, and 78 rpm playback.</span><b></b></p>
+<h3 dir=""ltr""><span>Key Features</span></h3>
+<ul>
+<li role=""presentation"" dir=""ltr""><span>Coreless direct-drive motor with no iron core</span></li>
+<li role=""presentation"" dir=""ltr""><span>Advanced motor control technology</span></li>
+<li role=""presentation"" dir=""ltr""><span>Three-layer resonance-controlled platter</span></li>
+<li role=""presentation"" dir=""ltr""><span>Four-layer vibration-controlled chassis</span></li>
+<li role=""presentation"" dir=""ltr""><span>Factory precision balance adjustment</span></li>
+<li role=""presentation"" dir=""ltr""><span>Magnesium gimbal-suspended tonearm</span></li>
+<li role=""presentation"" dir=""ltr""><span>Gold-plated phono and ground terminals</span></li>
+<li role=""presentation"" dir=""ltr""><span>33-1/3, 45, and 78 rpm support</span></li>
+</ul>
+<h3 dir=""ltr""><span>Technical Specifications</span></h3>
+<ul>
+<li role=""presentation"" dir=""ltr""><span>Drive Type: Direct drive, manual</span></li>
+<li role=""presentation"" dir=""ltr""><span>Speeds: 33-1/3, 45, 78 rpm</span></li>
+<li role=""presentation"" dir=""ltr""><span>Wow &amp; Flutter: 0.025% WRMS</span></li>
+<li role=""presentation"" dir=""ltr""><span>Rumble: 78 dB (IEC 98A weighted)</span></li>
+<li role=""presentation"" dir=""ltr""><span>Platter: Brass &amp; aluminum die-cast, 332 mm</span></li>
+<li role=""presentation"" dir=""ltr""><span>Platter Weight: Approx. 3.6 kg (incl. rubber sheet)</span></li>
+<li role=""presentation"" dir=""ltr""><span>Tonearm: Universal static balance, 230 mm effective length</span></li>
+<li role=""presentation"" dir=""ltr""><span>Power Supply: AC 120 V, 60 Hz</span></li>
+<li role=""presentation"" dir=""ltr""><span>Power Consumption: 14 W (0.2 W standby)</span></li>
+<li role=""presentation"" dir=""ltr""><span>Dimensions (W × H × D): 17-27/32 × 6-13/16 × 14-21/32 in</span></li>
+<li role=""presentation"" dir=""ltr""><span>Weight: Approx. 39.7 lb</span></li>
+</ul>
+<p> </p>",Resolution Audio Video NYC,Electronics > Audio > Audio Players & Recorders > Turntables & Record Players,Turntable,"Turntable, Turntables",TRUE,Title,Default Title,,,,,,,,SL-1200G-S,0,shopify,2,deny,manual,4999.99,,TRUE,TRUE,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL-1200G_5_1300x_jpg.webp?v=1768239666,1,,FALSE,,,256,,,,,,,,,,,,,,,,,,,,,moving-magnet,silver,rca,wired,,,,,,,,,ac-powered,,,,,,,,,,,,,lb,,,active
+technics-direct-drive-turntable-system-sl-1200g-s,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/ShopifySL-1200G_-S__1_1300x_jpg.webp?v=1768239666,2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-direct-drive-turntable-system-sl-1200g-s,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/ShopifySL-1200G_-S__2_1300x_jpg.webp?v=1768239666,3,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-direct-drive-turntable-system-sl-1200g-s,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/ShopifySL-1200G_-S__3_1300x_jpg.webp?v=1768239666,4,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-direct-drive-turntable-system-sl-1200g-s,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/ShopifySL-1200G_-S__4_1300x_jpg.webp?v=1768239666,5,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-direct-drive-turntable-system-ii-sl-1210gr2,Technics Direct Drive Turntable System II - SL-1210GR2,"<p dir=""ltr""><span>The Technics SL-1210GR2 Direct Drive Turntable System is part of Technics’ next generation of direct-drive turntables, engineered to deliver refined analog playback with enhanced rotational precision. Featuring a newly developed ΔΣ-Drive (Delta Sigma Drive) control method and a coreless direct drive motor, this system achieves smoother, more accurate rotation with reduced vibration and noise.</span></p>
+<p dir=""ltr""><span>A low-noise, low-voltage power circuit with a switching power supply and a two-layer platter with vibration damping support stable, high-fidelity performance, while a tonearm designed for high initial-motion sensitivity ensures precise groove tracking. The high-rigidity chassis and silicon insulators help isolate the system from external vibration.</span></p>
+<h3 dir=""ltr""><span>Key Features</span></h3>
+<ul>
+<li role=""presentation"" dir=""ltr""><span>ΔΣ-Drive (Delta Sigma Drive) for smooth, accurate rotation</span></li>
+<li role=""presentation"" dir=""ltr""><span>Coreless direct drive motor for enhanced stability</span></li>
+<li role=""presentation"" dir=""ltr""><span>Low-noise power circuit with switching supply</span></li>
+<li role=""presentation"" dir=""ltr""><span>Two-layer rigid platter with vibration damping</span></li>
+<li role=""presentation"" dir=""ltr""><span>High-sensitivity tonearm</span></li>
+<li role=""presentation"" dir=""ltr"">
+<span>High-rigidity body with high-damping silicon insulators</span><span></span>
+</li>
+</ul>
+<h3><span>Technical Specifications</span></h3>
+<ul>
+<li role=""presentation"" dir=""ltr""><span>Drive Method: Direct drive</span></li>
+<li role=""presentation"" dir=""ltr""><span>Motor: Brushless DC motor</span></li>
+<li role=""presentation"" dir=""ltr""><span>Speeds: 33-1/3, 45, 78 rpm</span></li>
+<li role=""presentation"" dir=""ltr""><span>Pitch Adjustment Range: ±8%, ±16%</span></li>
+<li role=""presentation"" dir=""ltr""><span>Starting Torque: 2.2 kg·cm</span></li>
+<li role=""presentation"" dir=""ltr""><span>Build-up Time: 0.7 s to 33-1/3 rpm</span></li>
+<li role=""presentation"" dir=""ltr""><span>Wow &amp; Flutter: 0.025% WRMS</span></li>
+<li role=""presentation"" dir=""ltr""><span>Platter: Aluminum die-cast, Ø 332 mm approximate, ~2.5 kg including rubber sheet</span></li>
+<li role=""presentation"" dir=""ltr""><span>Tonearm: Static balance, 230 mm effective length</span></li>
+<li role=""presentation"" dir=""ltr""><span>Power Supply: AC 120 V, 60 Hz</span></li>
+<li role=""presentation"" dir=""ltr""><span>Power Consumption: 11 W (approx. 0.3 W standby)</span></li>
+<li role=""presentation"" dir=""ltr""><span>Dimensions (W×H×D): 453 × 173 × 372 mm (17-27/32 × 6-13/16 × 14-21/32 in)</span></li>
+<li role=""presentation"" dir=""ltr""><span>Weight: Approx. 11.5 kg (25.35 lb)</span></li>
+</ul>
+<p> </p>",Resolution Audio Video NYC,Electronics > Audio > Audio Players & Recorders > Turntables & Record Players,Turntable,"Turntable, Turntables",TRUE,Title,Default Title,,,,,,,,SL-1210GR2,0,shopify,2,deny,manual,2499.99,,TRUE,TRUE,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL1210GR2_2_1300x_jpg.webp?v=1768243061,1,,FALSE,,,256,,,,,,,,,,,,,,,,,,,,,moving-magnet,black,rca,wired,,,,,,,,,ac-powered,,,,,,,,,,,,,lb,,,active
+technics-direct-drive-turntable-system-ii-sl-1210gr2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/ShopifySL-1210GR2_1300x_jpg.webp?v=1768243061,2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-direct-drive-turntable-system-ii-sl-1210gr2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL1210GR2_3_1300x_jpg.webp?v=1768241749,3,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-direct-drive-turntable-system-ii-sl-1210gr2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL1210GR2_4_1300x_jpg.webp?v=1768241749,4,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-direct-drive-turntable-system-sl-1200g-s-copy,Technics SL-1200GR2 Direct Drive Turntable System,"<p dir=""ltr""><span style=""font-size: 0.875rem;"">The Technics SL-1200GR2 is a next-generation direct drive turntable that blends classic analog engineering with modern rotational precision. Powered by the newly developed ΔΣ-Drive (Delta Sigma Drive) and a coreless direct drive motor, it delivers smooth, accurate rotation with reduced noise. A low-noise power circuit and advanced switching supply further enhance clarity, while a rigid two-layer platter and vibration-damped chassis support stable playback.</span></p>
+<p dir=""ltr""><span>A high-sensitivity tonearm ensures precise tracking, and silicon insulators on the body isolate external vibration. Designed to engage both enthusiasts and everyday listeners, the SL-1200GR2 brings refined, expressive analog performance to a broader audience.</span></p>
+<h3 dir=""ltr""><span>Key Features</span></h3>
+<ul>
+<li dir=""ltr""><span>ΔΣ-Drive (Delta Sigma Drive) system</span></li>
+<li dir=""ltr""><span>Coreless direct drive motor</span></li>
+<li dir=""ltr""><span>Low-noise, low-voltage power circuit with switching supply</span></li>
+<li dir=""ltr""><span>Two-layer rigid platter with vibration damping</span></li>
+<li dir=""ltr""><span>High-sensitivity tonearm</span></li>
+<li dir=""ltr""><span>High-rigidity chassis with silicon insulators</span></li>
+</ul>
+<h3 dir=""ltr""><span>Technical Specifications</span></h3>
+<ul>
+<li dir=""ltr""><span>Drive Method: Direct drive</span></li>
+<li dir=""ltr""><span>Speeds: 33-1/3, 45, 78 rpm</span></li>
+<li dir=""ltr""><span>Wow &amp; Flutter: 0.025% WRMS</span></li>
+<li dir=""ltr""><span>Platter: Aluminum diecast, 332 mm; approx. 2.5 kg</span></li>
+<li dir=""ltr""><span>Tonearm: Static balance, 230 mm effective length</span></li>
+<li dir=""ltr""><span>Power Supply: AC 120 V, 60 Hz</span></li>
+<li dir=""ltr""><span>Power Consumption: 11 W (0.3 W standby)</span></li>
+<li dir=""ltr""><span>Dimensions (W × H × D): 17-27/32 × 6-13/16 × 14-21/32 in</span></li>
+<li dir=""ltr""><span>Weight: Approx. 25.35 lb</span></li>
+</ul>
+<p dir=""ltr""> </p>",Resolution Audio Video NYC,Electronics > Audio > Audio Players & Recorders > Turntables & Record Players,Turntable,"Turntable, Turntables",TRUE,Title,Default Title,,,,,,,,,0,shopify,2,deny,manual,2499.99,,TRUE,TRUE,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL1200GR2_2_1300x_jpg.webp?v=1768248509,1,,FALSE,,,256,,,,,,,,,,,,,,,,,,,,,moving-magnet,silver,rca,wired,,,,,,,,,ac-powered,,,,,,,,,,,,,lb,,,active
+technics-direct-drive-turntable-system-sl-1200g-s-copy,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL1200GR2_3_1300x_jpg.webp?v=1768248509,2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-direct-drive-turntable-system-sl-1200g-s-copy,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL1200GR2_4_1300x_jpg.webp?v=1768248509,3,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-direct-drive-turntable-system-sl-1200g-s-copy,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL1200GR2_5_1300x_jpg.webp?v=1768248509,4,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-direct-drive-turntable-system-sl-1200g-s-copy,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/ShopifySL-1200GR2_1300x_jpg.webp?v=1768248509,5,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-new-generation-grand-class-turntable-sl-1300g,Technics New Generation Grand Class Turntable - SL-1300G,"<p data-start=""339"" data-end=""662"">The Technics SL-1300G Grand Class turntable is a high-performance direct-drive record player engineered for serious vinyl enthusiasts and audiophiles. Designed with precision motor control and advanced vibration suppression, the SL-1300G delivers stable rotation, low noise performance, and highly accurate analog playback.</p>
+<p data-start=""664"" data-end=""1072"">At the heart of the SL-1300G is a coreless direct-drive motor that eliminates cogging for smooth, consistent platter rotation. Technics’ proprietary Delta Sigma (ΔΣ) Drive system enhances motor control accuracy while reducing unwanted motor noise. The three-layer brass and aluminum die-cast platter increases rigidity and rotational stability, contributing to improved sonic clarity and dynamic performance.</p>
+<p data-start=""1074"" data-end=""1455"">The high-sensitivity static balance tonearm is designed for precise groove tracing and accurate tracking. A high-rigidity chassis combined with silicon-based insulators helps minimize external vibration, allowing the cartridge to retrieve maximum musical detail from vinyl records. With support for 33-1/3, 45, and 78 RPM playback, the SL-1300G is built for serious analog systems.</p>
+<p data-start=""1074"" data-end=""1455""><b id=""docs-internal-guid-d6be09e3-7fff-fa4e-5101-6b238e41f9dd""><span>Technical Specifications</span></b></p>
+<ul>
+<li data-start=""1074"" data-end=""1455""><span>Drive Method: Direct Drive</span></li>
+<li data-start=""1074"" data-end=""1455""><span>Motor: Coreless Brushless DC</span></li>
+<li data-start=""1074"" data-end=""1455""><span>Speeds: 33-1/3, 45, 78 RPM</span></li>
+<li data-start=""1074"" data-end=""1455""><span>Wow &amp; Flutter: 0.025% W.R.M.S.</span></li>
+<li data-start=""1074"" data-end=""1455""><span>Tonearm Effective Length: 230 mm</span></li>
+<li data-start=""1074"" data-end=""1455""><span>Platter Construction: Brass &amp; Aluminum Die-Cast (Three-Layer)</span></li>
+<li data-start=""1074"" data-end=""1455""><span>Weight: Approx. 13 kg (28.7 lbs)</span></li>
+<li data-start=""1074"" data-end=""1455""><span>Terminals: PHONO output, Earth terminal</span></li>
+</ul>",Resolution Audio Video NYC,Electronics > Audio > Audio Players & Recorders > Turntables & Record Players,Turntable,"Turntable, Turntables",TRUE,Color,black,product.metafields.shopify.color-pattern,,,,,,,,0,shopify,3,deny,manual,3999,,TRUE,TRUE,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL-1300Gmain_1300x_jpg.webp?v=1771953264,1,,FALSE,,,256,,,,,,,,,,,,,,,,,,,,,,black; silver,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL-1300Gmain_1300x_jpg.webp?v=1771953264,lb,,,active
+technics-new-generation-grand-class-turntable-sl-1300g,,,,,,,,,silver,,,,,,,,,0,shopify,3,deny,manual,3999,,TRUE,TRUE,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL1300Gtop_1300x_jpg.webp?v=1771953372,2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL-1300G-S_main_1300x_jpg.webp?v=1771953372,lb,,,
+technics-new-generation-grand-class-turntable-sl-1300g,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/Sl1300GK_slantdown_1300x_jpg.webp?v=1771953372,3,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-new-generation-grand-class-turntable-sl-1300g,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL-1300G-S_main_1300x_jpg.webp?v=1771953372,4,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-new-generation-grand-class-turntable-sl-1300g,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/SL-1300GS_1300x_jpg.webp?v=1771953361,5,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-new-generation-grand-class-turntable-sl-1300g,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/Sl-1300G-S_side_1300x_jpg.webp?v=1771953360,6,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+technics-new-generation-grand-class-turntable-sl-1300g,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0903/2099/4626/files/Sl-1300G-S_top_1300x_jpg.webp?v=1771953360,7,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,

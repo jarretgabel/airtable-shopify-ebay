@@ -7,6 +7,7 @@ export const APP_PAGES = [
   'imagelab',
   'ebay',
   'approval',
+  'shopify-approval',
   'users',
 ] as const;
 
@@ -21,12 +22,13 @@ export interface PageDefinition {
 export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   dashboard: { label: 'Dashboard', path: '/dashboard' },
   airtable: { label: 'Airtable Inventory', path: '/airtable' },
-  shopify: { label: 'Shopify Products', path: '/shopify' },
+  shopify: { label: 'Shopify Products', path: '/shopify/products' },
   market: { label: 'Market Prices', path: '/market' },
   jotform: { label: 'Inquiries', path: '/jotform' },
   imagelab: { label: 'Image Lab', path: '/imagelab' },
-  ebay: { label: 'eBay', path: '/ebay' },
-  approval: { label: 'eBay Listings Approvals', path: '/approval' },
+  ebay: { label: 'eBay', path: '/ebay/listings' },
+  approval: { label: 'eBay Listings Approvals', path: '/ebay/approval' },
+  'shopify-approval': { label: 'Shopify Listings Approvals', path: '/shopify/approval' },
   users: { label: 'User Management', path: '/users', adminOnly: true },
 };
 

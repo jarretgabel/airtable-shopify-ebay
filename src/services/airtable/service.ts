@@ -111,7 +111,7 @@ class AirtableService {
    */
   async getRecordsFromReference(
     reference: string,
-    fallbackTableName: string,
+    fallbackTableName?: string,
   ): Promise<AirtableRecord[]> {
     const candidates = parseAirtableReferenceCandidates(reference, fallbackTableName, this.baseId);
     let lastError: unknown;
@@ -141,7 +141,7 @@ class AirtableService {
    */
   async updateRecordFromReference(
     reference: string,
-    fallbackTableName: string,
+    fallbackTableName: string | undefined,
     recordId: string,
     fields: Record<string, unknown>,
   ): Promise<AirtableRecord> {

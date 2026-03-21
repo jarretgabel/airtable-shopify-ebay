@@ -2,11 +2,24 @@
 
 These are the default implementation rules for this repository.
 
+## Documentation Overview
+
+**Quick Reference:**
+- [Naming & Organization](./naming-and-organization.md) — Component/hook/store naming, folder structure, file size guidelines
+- [State Management](./state-management.md) — Zustand store patterns, hook design, selector best practices
+- [Service Organization](./service-organization.md) — Service module structure, request builders, mappers, error handling
+- [Architecture Conventions](../docs/architecture-conventions.md) — App shell, UI layer, testing patterns, accessibility
+- [Code Review Checklist](./code-review-checklist.md) — Comprehensive review guide for PRs
+- [Engineering Rules](./engineering-rules.md) — Refactor safety, API contracts, validation
+- [UI Style Rules](./ui-style-rules.md) — Tailwind v4 standards, visual direction, responsive design
+- [Contributing Standards](./CONTRIBUTING.md) — Required standards for all contributors
+
 ## Core Rules
 - Use Tailwind CSS v4 utility classes for all component styling changes.
 - Do not introduce new component-scoped global CSS in `src/App.css`.
 - Keep behavior changes separate from styling refactors unless explicitly requested.
 - Preserve existing data flow, API payload shapes, and user-visible copy unless requirements say otherwise.
+- Build changes to an advanced senior-level engineering bar: production-ready structure, clear abstractions, strong type safety, and maintainable patterns.
 
 ## UI and Styling Rules
 - Prefer expressive utility composition directly in JSX over custom class-name systems.
