@@ -13,6 +13,7 @@ import {
   type ProcessedImage,
   type ProcessingOptions,
 } from '@/services/imageProcessor';
+import { spinnerClass } from '@/components/tabs/uiClasses';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -213,11 +214,11 @@ export function ImageLab() {
   const hasBusy = items.some(i => i.status === 'identifying' || i.status === 'processing');
 
   return (
-    <div className="ilab">
+    <div className="flex flex-col gap-4 pt-1">
 
       {/* API provider status banner */}
       {!aiEnabled ? (
-        <div className="ilab-api-warn">
+        <div className="rounded-[10px] border border-amber-300 bg-amber-50 px-4 py-3 text-[0.84rem] leading-[1.6] text-amber-900 [&_a]:text-amber-800 [&_code]:rounded [&_code]:bg-black/5 [&_code]:px-[0.35em] [&_code]:py-[0.1em] [&_code]:text-[0.82em]">
           <strong>No AI key configured.</strong>{' '}
           To enable equipment identification, add one of the following to <code>.env.local</code> and restart:
           <br />
@@ -229,7 +230,7 @@ export function ImageLab() {
           Image optimization and watermarking still work without a key.
         </div>
       ) : (
-        <div className="ilab-api-ok">
+        <div className="rounded-[10px] border border-emerald-200 bg-emerald-50 px-4 py-[0.55rem] text-[0.82rem] text-emerald-800">
           AI provider: <strong>{aiProvider === 'github' ? 'GitHub Models (Copilot)' : 'OpenAI'}</strong>
           {' · '}
           <span>GPT-4o Vision</span>
@@ -237,12 +238,12 @@ export function ImageLab() {
       )}
 
       {/* Options panel */}
-      <section className="ilab-options">
-        <div className="ilab-options-grid">
-          <label className="ilab-opt-group">
-            <span className="ilab-opt-label">Max size</span>
+      <section className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] px-5 py-4 shadow-[0_1px_3px_rgba(17,32,49,0.06)]">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-[var(--muted)]">Max size</span>
             <select
-              className="ilab-select"
+              className="w-full rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-[0.88rem] text-[var(--ink)] outline-none transition-colors focus:border-[var(--accent)]"
               value={opts.maxPx}
               onChange={e => setOpts(o => ({ ...o, maxPx: Number(e.target.value) }))}
             >
@@ -253,10 +254,10 @@ export function ImageLab() {
             </select>
           </label>
 
-          <label className="ilab-opt-group">
-            <span className="ilab-opt-label">JPEG quality</span>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-[var(--muted)]">JPEG quality</span>
             <select
-              className="ilab-select"
+              className="w-full rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-[0.88rem] text-[var(--ink)] outline-none transition-colors focus:border-[var(--accent)]"
               value={opts.quality}
               onChange={e => setOpts(o => ({ ...o, quality: Number(e.target.value) }))}
             >
@@ -267,10 +268,10 @@ export function ImageLab() {
             </select>
           </label>
 
-          <label className="ilab-opt-group">
-            <span className="ilab-opt-label">Watermark text</span>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-[var(--muted)]">Watermark text</span>
             <input
-              className="ilab-input"
+              className="w-full rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-[0.88rem] text-[var(--ink)] outline-none transition-colors focus:border-[var(--accent)]"
               type="text"
               value={opts.watermarkText}
               placeholder="Resolution AV"
@@ -278,13 +279,17 @@ export function ImageLab() {
             />
           </label>
 
-          <label className="ilab-opt-group">
-            <span className="ilab-opt-label">Watermark position</span>
-            <div className="ilab-pos-grid">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-[var(--muted)]">Watermark position</span>
+            <div className="grid grid-cols-4 gap-1">
               {(['top-right', 'bottom-right', 'bottom-left', 'bottom-center'] as const).map(p => (
                 <button
                   key={p}
-                  className={`ilab-pos-btn${opts.watermarkPos === p ? ' ilab-pos-active' : ''}`}
+                  className={[
+                    'cursor-pointer rounded-md border border-[var(--line)] bg-[var(--bg)] py-1 text-base leading-none text-[var(--muted)] transition-[background,color,border-color]',
+                    'hover:bg-slate-200 hover:text-[var(--ink)]',
+                    opts.watermarkPos === p ? 'border-[var(--accent)] bg-[var(--accent)] text-white' : '',
+                  ].filter(Boolean).join(' ')}
                   onClick={() => setOpts(o => ({ ...o, watermarkPos: p }))}
                   title={p.replace(/-/g, ' ')}
                 >
@@ -301,52 +306,52 @@ export function ImageLab() {
 
       {/* Session stats bar — shown once at least one item is identified or processed */}
       {items.length > 0 && (sessionStats.identified > 0 || sessionStats.processed > 0) && (
-        <div className="ilab-stats-bar">
-          <div className="ilab-stat">
-            <span className="ilab-stat-val">{sessionStats.total}</span>
-            <span className="ilab-stat-label">Images</span>
+        <div className="flex flex-wrap items-center gap-0 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] px-5 py-3 shadow-[0_1px_3px_rgba(17,32,49,0.06)] max-[900px]:items-stretch max-[900px]:gap-3">
+          <div className="flex flex-col items-center gap-0.5 px-5 first:pl-0 max-[900px]:items-start max-[900px]:px-0">
+            <span className="whitespace-nowrap text-[1.35rem] font-extrabold leading-none text-[var(--ink)]">{sessionStats.total}</span>
+            <span className="whitespace-nowrap text-[0.65rem] font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Images</span>
           </div>
-          <div className="ilab-stat-div" />
-          <div className="ilab-stat">
-            <span className="ilab-stat-val">{sessionStats.identified}</span>
-            <span className="ilab-stat-label">Identified</span>
+          <div className="h-[2.2rem] w-px shrink-0 bg-[var(--line)] max-[900px]:hidden" />
+          <div className="flex flex-col items-center gap-0.5 px-5 max-[900px]:items-start max-[900px]:px-0">
+            <span className="whitespace-nowrap text-[1.35rem] font-extrabold leading-none text-[var(--ink)]">{sessionStats.identified}</span>
+            <span className="whitespace-nowrap text-[0.65rem] font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Identified</span>
           </div>
-          <div className="ilab-stat-div" />
-          <div className="ilab-stat">
-            <span className="ilab-stat-val">{sessionStats.processed}</span>
-            <span className="ilab-stat-label">Processed</span>
+          <div className="h-[2.2rem] w-px shrink-0 bg-[var(--line)] max-[900px]:hidden" />
+          <div className="flex flex-col items-center gap-0.5 px-5 max-[900px]:items-start max-[900px]:px-0">
+            <span className="whitespace-nowrap text-[1.35rem] font-extrabold leading-none text-[var(--ink)]">{sessionStats.processed}</span>
+            <span className="whitespace-nowrap text-[0.65rem] font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Processed</span>
           </div>
           {sessionStats.savedBytes > 0 && (
             <>
-              <div className="ilab-stat-div" />
-              <div className="ilab-stat">
-                <span className="ilab-stat-val ilab-stat-green">{formatBytes(sessionStats.savedBytes)}</span>
-                <span className="ilab-stat-label">Size saved</span>
+              <div className="h-[2.2rem] w-px shrink-0 bg-[var(--line)] max-[900px]:hidden" />
+              <div className="flex flex-col items-center gap-0.5 px-5 max-[900px]:items-start max-[900px]:px-0">
+                <span className="whitespace-nowrap text-[1.35rem] font-extrabold leading-none text-green-600">{formatBytes(sessionStats.savedBytes)}</span>
+                <span className="whitespace-nowrap text-[0.65rem] font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Size saved</span>
               </div>
             </>
           )}
           {sessionStats.hasPricing && (
             <>
-              <div className="ilab-stat-div" />
-              <div className="ilab-stat">
-                <span className="ilab-stat-val ilab-stat-accent">
+              <div className="h-[2.2rem] w-px shrink-0 bg-[var(--line)] max-[900px]:hidden" />
+              <div className="flex flex-col items-center gap-0.5 px-5 max-[900px]:items-start max-[900px]:px-0">
+                <span className="whitespace-nowrap text-[1.35rem] font-extrabold leading-none text-[var(--accent)]">
                   {sessionStats.fmtUSD(sessionStats.estLow)}
                   {sessionStats.estHigh !== sessionStats.estLow && `–${sessionStats.fmtUSD(sessionStats.estHigh)}`}
                 </span>
-                <span className="ilab-stat-label">Est. portfolio value</span>
+                <span className="whitespace-nowrap text-[0.65rem] font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Est. portfolio value</span>
               </div>
             </>
           )}
           {sessionStats.brands.length > 0 && (
             <>
-              <div className="ilab-stat-div" />
-              <div className="ilab-stat ilab-stat-brands">
-                <div className="ilab-stat-brand-chips">
+              <div className="h-[2.2rem] w-px shrink-0 bg-[var(--line)] max-[900px]:hidden" />
+              <div className="flex flex-col items-start gap-0.5 px-5 max-[900px]:px-0">
+                <div className="flex max-w-[260px] flex-wrap gap-1.5 max-[900px]:max-w-none">
                   {sessionStats.brands.map(b => (
-                    <span key={b} className="ilab-stat-brand-chip">{b}</span>
+                    <span key={b} className="whitespace-nowrap rounded-full bg-blue-50 px-[0.6em] py-[0.15em] text-[0.7rem] font-bold text-blue-700">{b}</span>
                   ))}
                 </div>
-                <span className="ilab-stat-label">Brands</span>
+                <span className="whitespace-nowrap text-[0.65rem] font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Brands</span>
               </div>
             </>
           )}
@@ -355,7 +360,12 @@ export function ImageLab() {
 
       {/* Drop zone */}
       <div
-        className={`ilab-drop${dragging ? ' ilab-drop-active' : ''}${items.length > 0 ? ' ilab-drop-compact' : ''}`}
+        className={[
+          'cursor-pointer select-none rounded-[14px] border-2 border-dashed border-[var(--line)] bg-[var(--panel)] px-8 py-8 text-center text-[var(--muted)] transition-[border-color,background,color]',
+          'flex min-h-[180px] flex-col items-center justify-center gap-2.5',
+          dragging ? 'border-[var(--accent)] bg-blue-50 text-[var(--accent)]' : '',
+          items.length > 0 ? 'min-h-[52px] flex-row px-6 py-3' : '',
+        ].filter(Boolean).join(' ')}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
@@ -375,34 +385,34 @@ export function ImageLab() {
         />
         {items.length === 0 ? (
           <>
-            <div className="ilab-drop-icon">
+            <div className={dragging ? 'text-[var(--accent)]' : 'text-[var(--muted)]'}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="17 8 12 3 7 8"/>
                 <line x1="12" y1="3" x2="12" y2="15"/>
               </svg>
             </div>
-            <p className="ilab-drop-title">Drop equipment photos here</p>
-            <p className="ilab-drop-sub">or click to browse · JPEG, PNG, HEIC, WebP accepted</p>
+            <p className="m-0 text-base font-semibold text-[var(--ink)]">Drop equipment photos here</p>
+            <p className="m-0 text-[0.82rem]">or click to browse · JPEG, PNG, HEIC, WebP accepted</p>
           </>
         ) : (
-          <span className="ilab-drop-compact-text">+ Add more images</span>
+          <span className="text-[0.87rem] font-semibold">+ Add more images</span>
         )}
       </div>
 
       {/* Bulk actions */}
       {items.length > 0 && (
-        <div className="ilab-bulk">
-          <div className="ilab-bulk-left">
-            <span className="ilab-bulk-count">
+        <div className="flex items-center justify-between gap-3 py-2 max-[600px]:flex-col max-[600px]:items-stretch">
+          <div className="flex items-center gap-2.5">
+            <span className="text-[0.84rem] font-semibold text-[var(--muted)]">
               {items.length} {items.length === 1 ? 'image' : 'images'}
             </span>
-            {hasBusy && <span className="ilab-busy-dot" />}
+            {hasBusy && <span className="h-2 w-2 rounded-full bg-[var(--accent)] animate-pulse" />}
           </div>
-          <div className="ilab-bulk-right">
+          <div className="flex items-center gap-2 max-[600px]:justify-stretch [&>button]:max-[600px]:flex-1">
             {aiEnabled && (
               <button
-                className="ilab-btn ilab-btn-ghost"
+                className="rounded-lg border border-[var(--line)] bg-[var(--panel)] px-4 py-2 text-[0.84rem] font-semibold text-[var(--ink)] transition hover:border-[var(--muted)] hover:bg-[var(--bg)] disabled:cursor-not-allowed disabled:opacity-45"
                 onClick={identifyAll}
                 disabled={hasBusy || !items.some(i => i.status === 'idle')}
               >
@@ -410,13 +420,13 @@ export function ImageLab() {
               </button>
             )}
             <button
-              className="ilab-btn ilab-btn-ghost"
+              className="rounded-lg border border-[var(--line)] bg-[var(--panel)] px-4 py-2 text-[0.84rem] font-semibold text-[var(--ink)] transition hover:border-[var(--muted)] hover:bg-[var(--bg)] disabled:cursor-not-allowed disabled:opacity-45"
               onClick={processAll}
               disabled={hasBusy || !items.some(i => i.status === 'idle' || i.status === 'identified')}
             >
               Process All
             </button>
-            <button className="ilab-btn ilab-btn-danger" onClick={clearAll}>
+            <button className="rounded-lg border border-red-300 bg-[var(--panel)] px-4 py-2 text-[0.84rem] font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-45" onClick={clearAll}>
               Clear All
             </button>
           </div>
@@ -425,7 +435,7 @@ export function ImageLab() {
 
       {/* Image cards grid */}
       {items.length > 0 && (
-        <div className="ilab-grid">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 max-[600px]:grid-cols-1">
           {items.map(item => (
             <ImageCard
               key={item.id}
@@ -463,39 +473,45 @@ function ImageCard({ item, apiKeyPresent, isCopied, onIdentify, onProcess, onRem
   const busy = status === 'identifying' || status === 'processing';
 
   return (
-    <article className={`ilab-card ilab-card-${status}`}>
+    <article className={[
+      'flex flex-col overflow-hidden rounded-[14px] border bg-[var(--panel)] shadow-[0_1px_4px_rgba(17,32,49,0.07)] transition-shadow hover:shadow-[0_3px_12px_rgba(17,32,49,0.11)]',
+      status === 'done' ? 'border-green-200' : '',
+      status === 'error' ? 'border-red-300' : '',
+      status === 'identifying' ? 'border-blue-200' : '',
+      status !== 'done' && status !== 'error' && status !== 'identifying' ? 'border-[var(--line)]' : '',
+    ].filter(Boolean).join(' ')}>
 
       {/* Preview row */}
-      <div className="ilab-card-previews">
+      <div className="flex gap-0 max-[600px]:flex-col">
         {/* Original */}
-        <div className="ilab-preview-wrap">
-          <img src={item.previewUrl} alt={item.file.name} className="ilab-preview-img" />
-          <span className="ilab-preview-badge">Original</span>
+        <div className="relative min-h-[160px] max-h-[220px] flex-1 overflow-hidden bg-[#0a121c] max-[600px]:max-h-[260px]">
+          <img src={item.previewUrl} alt={item.file.name} className="block h-full w-full object-cover" />
+          <span className="absolute left-1.5 top-1.5 rounded-full bg-[rgba(10,18,28,0.62)] px-[0.55em] py-[0.2em] text-[0.65rem] font-bold uppercase tracking-[0.07em] text-white">Original</span>
         </div>
         {/* Processed (if done) */}
         {processed && (
-          <div className="ilab-preview-wrap">
-            <img src={processed.objectUrl} alt="Processed" className="ilab-preview-img" />
-            <span className="ilab-preview-badge ilab-preview-badge-green">Processed</span>
+          <div className="relative min-h-[160px] max-h-[220px] flex-1 overflow-hidden bg-[#0a121c] max-[600px]:max-h-[260px]">
+            <img src={processed.objectUrl} alt="Processed" className="block h-full w-full object-cover" />
+            <span className="absolute left-1.5 top-1.5 rounded-full bg-[rgba(21,128,61,0.78)] px-[0.55em] py-[0.2em] text-[0.65rem] font-bold uppercase tracking-[0.07em] text-white">Processed</span>
           </div>
         )}
       </div>
 
       {/* File info */}
-      <div className="ilab-card-body">
-        <div className="ilab-card-header">
-          <p className="ilab-card-filename" title={item.file.name}>{item.file.name}</p>
+      <div className="flex flex-1 flex-col gap-2 px-4 pb-3.5 pt-3.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="m-0 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[0.82rem] font-semibold text-[var(--ink)]" title={item.file.name}>{item.file.name}</p>
           <StatusBadge status={status} />
         </div>
 
-        <p className="ilab-card-meta">
+        <p className="m-0 text-[0.75rem] text-[var(--muted)]">
           {formatBytes(item.file.size)}
           {processed && (
             <>
               {' → '}
-              <span className="ilab-size-after">{formatBytes(processed.processedBytes)}</span>
+              <span className="font-semibold text-[var(--ink)]">{formatBytes(processed.processedBytes)}</span>
               {' '}
-              <span className="ilab-size-saved">
+              <span className="font-semibold text-green-700">
                 ({Math.round((1 - processed.processedBytes / item.file.size) * 100)}% smaller)
               </span>
               {' · '}{processed.width}×{processed.height}
@@ -505,53 +521,53 @@ function ImageCard({ item, apiKeyPresent, isCopied, onIdentify, onProcess, onRem
 
         {/* AI Results */}
         {aiResult && (
-          <div className="ilab-ai-results">
-            <div className="ilab-ai-primary">
-              <span className="ilab-ai-type">{aiResult.equipment_type}</span>
-              <span className="ilab-ai-brand-model">{aiResult.brand} {aiResult.model}</span>
+          <div className="flex flex-col gap-2 rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3.5 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-md border border-[var(--line)] px-2 py-[0.15em] text-[0.7rem] font-bold uppercase tracking-[0.07em] text-[var(--muted)]">{aiResult.equipment_type}</span>
+              <span className="text-[0.92rem] font-bold text-[var(--ink)]">{aiResult.brand} {aiResult.model}</span>
               {aiResult.year_range && aiResult.year_range !== 'Unknown' && (
-                <span className="ilab-ai-year">{aiResult.year_range}</span>
+                <span className="text-[0.75rem] text-[var(--muted)]">{aiResult.year_range}</span>
               )}
             </div>
 
             {/* Pricing row */}
             {(aiResult.msrp_original || aiResult.price_range_sold) && (
-              <div className="ilab-pricing-row">
+              <div className="flex flex-wrap gap-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
                 {aiResult.msrp_original && aiResult.msrp_original !== 'Unknown' && (
-                  <div className="ilab-price-block">
-                    <span className="ilab-price-label">MSRP (new)</span>
-                    <span className="ilab-price-val">{aiResult.msrp_original}</span>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.04em] text-green-700">MSRP (new)</span>
+                    <span className="text-[0.82rem] font-semibold text-[var(--ink)]">{aiResult.msrp_original}</span>
                   </div>
                 )}
                 {aiResult.price_range_sold && aiResult.price_range_sold !== 'Unknown' && (
-                  <div className="ilab-price-block ilab-price-block-sold">
-                    <span className="ilab-price-label">Typical used sold</span>
-                    <span className="ilab-price-val ilab-price-sold">{aiResult.price_range_sold}</span>
+                  <div className="flex flex-col gap-0.5 border-l-2 border-green-300 pl-3">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.04em] text-green-700">Typical used sold</span>
+                    <span className="text-[0.82rem] font-semibold text-green-600">{aiResult.price_range_sold}</span>
                   </div>
                 )}
               </div>
             )}
 
             {aiResult.description && (
-              <p className="ilab-ai-desc">{aiResult.description}</p>
+              <p className="m-0 text-[0.8rem] leading-[1.55] text-[var(--ink)]">{aiResult.description}</p>
             )}
 
             {aiResult.condition_notes && (
-              <p className="ilab-ai-condition">
-                <span className="ilab-ai-condition-label">Condition:</span> {aiResult.condition_notes}
+              <p className="m-0 text-[0.78rem] leading-[1.5] text-[var(--muted)]">
+                <span className="font-bold text-[var(--ink)]">Condition:</span> {aiResult.condition_notes}
               </p>
             )}
 
             {/* Specifications table */}
             {aiResult.specifications && Object.keys(aiResult.specifications).length > 0 && (
-              <div className="ilab-specs">
-                <p className="ilab-specs-title">Specifications</p>
-                <table className="ilab-specs-table">
+              <div className="overflow-hidden rounded-lg border border-[var(--line)]">
+                <p className="m-0 border-b border-[var(--line)] bg-[var(--panel)] px-2.5 py-1.5 text-[0.68rem] font-bold uppercase tracking-[0.05em] text-[var(--muted)]">Specifications</p>
+                <table className="w-full border-collapse text-[0.76rem]">
                   <tbody>
                     {Object.entries(aiResult.specifications).map(([key, val]) => (
-                      <tr key={key} className="ilab-specs-row">
-                        <td className="ilab-specs-key">{key}</td>
-                        <td className="ilab-specs-val">{val}</td>
+                      <tr key={key} className="even:bg-slate-50">
+                        <td className="w-[42%] whitespace-nowrap border-r border-[var(--line)] px-2.5 py-1 text-[var(--ink)] font-semibold">{key}</td>
+                        <td className="px-2.5 py-1 text-[var(--muted)]">{val}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -559,19 +575,19 @@ function ImageCard({ item, apiKeyPresent, isCopied, onIdentify, onProcess, onRem
               </div>
             )}
 
-            <div className="ilab-ai-meta-row">
+            <div className="flex flex-wrap gap-2">
               {aiResult.suggested_sku && (
-                <span className="ilab-ai-sku">{aiResult.suggested_sku}</span>
+                <span className="rounded-[5px] bg-slate-800 px-2 py-[0.15em] text-[0.72rem] font-bold text-slate-200">{aiResult.suggested_sku}</span>
               )}
               {aiResult.shopify_product_type && (
-                <span className="ilab-ai-ptype">{aiResult.shopify_product_type}</span>
+                <span className="rounded-[5px] bg-blue-50 px-2 py-[0.15em] text-[0.72rem] font-semibold text-blue-700">{aiResult.shopify_product_type}</span>
               )}
             </div>
 
             {aiResult.suggested_tags?.length > 0 && (
-              <div className="ilab-tags">
+              <div className="flex flex-wrap gap-1.5">
                 {aiResult.suggested_tags.map(tag => (
-                  <span key={tag} className="ilab-tag">{tag}</span>
+                  <span key={tag} className="rounded-full border border-[var(--line)] bg-[var(--panel)] px-[0.6em] py-[0.15em] text-[0.68rem] font-semibold text-[var(--muted)]">{tag}</span>
                 ))}
               </div>
             )}
@@ -580,24 +596,24 @@ function ImageCard({ item, apiKeyPresent, isCopied, onIdentify, onProcess, onRem
 
         {/* Error */}
         {error && (
-          <div className="ilab-error">
+          <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-[0.8rem] leading-[1.5] text-red-700">
             <strong>Error</strong> — {error}
           </div>
         )}
 
         {/* Busy indicator */}
         {busy && (
-          <div className="ilab-card-busy">
-            <div className="loader" />
+          <div className="flex items-center gap-2.5 text-[0.82rem] text-[var(--muted)]">
+            <div className={spinnerClass} />
             <span>{status === 'identifying' ? 'Analyzing with AI…' : 'Processing image…'}</span>
           </div>
         )}
 
         {/* Action buttons */}
-        <div className="ilab-card-actions">
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
           {apiKeyPresent && (
             <button
-              className="ilab-btn ilab-btn-sm ilab-btn-accent"
+              className="rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-3 py-1.5 text-[0.78rem] font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45"
               onClick={onIdentify}
               disabled={busy}
             >
@@ -606,7 +622,7 @@ function ImageCard({ item, apiKeyPresent, isCopied, onIdentify, onProcess, onRem
           )}
 
           <button
-            className="ilab-btn ilab-btn-sm ilab-btn-primary"
+            className="rounded-lg border border-transparent bg-[linear-gradient(90deg,var(--accent),#2b8cff)] px-3 py-1.5 text-[0.78rem] font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45"
             onClick={onProcess}
             disabled={busy}
           >
@@ -616,14 +632,14 @@ function ImageCard({ item, apiKeyPresent, isCopied, onIdentify, onProcess, onRem
           {processed && (
             <>
               <a
-                className="ilab-btn ilab-btn-sm ilab-btn-green"
+                className="inline-flex items-center rounded-lg border border-transparent bg-green-700 px-3 py-1.5 text-[0.78rem] font-semibold text-white no-underline transition hover:brightness-110"
                 href={processed.objectUrl}
                 download={processed.filename}
               >
                 Download
               </a>
               {aiResult && (
-                <button className="ilab-btn ilab-btn-sm ilab-btn-ghost" onClick={onCopy}>
+                <button className="rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 py-1.5 text-[0.78rem] font-semibold text-[var(--ink)] transition hover:border-[var(--muted)] hover:bg-[var(--bg)]" onClick={onCopy}>
                   {isCopied ? 'Copied ✓' : 'Copy details'}
                 </button>
               )}
@@ -631,7 +647,7 @@ function ImageCard({ item, apiKeyPresent, isCopied, onIdentify, onProcess, onRem
           )}
 
           <button
-            className="ilab-btn ilab-btn-sm ilab-btn-ghost ilab-btn-remove"
+            className="ml-auto rounded-lg border border-[var(--line)] bg-[var(--panel)] px-2 py-1.5 text-[0.78rem] font-semibold text-[var(--muted)] transition hover:border-red-300 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-45"
             onClick={onRemove}
             disabled={busy}
             aria-label="Remove"
@@ -653,5 +669,14 @@ function StatusBadge({ status }: { status: ItemStatus }) {
     done: 'Done',
     error: 'Error',
   };
-  return <span className={`ilab-status ilab-status-${status}`}>{labels[status]}</span>;
+  const statusClass = {
+    idle: 'bg-slate-100 text-slate-500',
+    identifying: 'bg-blue-100 text-blue-700',
+    identified: 'bg-teal-100 text-teal-700',
+    processing: 'bg-amber-100 text-amber-700',
+    done: 'bg-green-100 text-green-700',
+    error: 'bg-red-100 text-red-700',
+  } as const;
+
+  return <span className={`inline-block shrink-0 whitespace-nowrap rounded-full px-[0.65em] py-[0.18em] text-[0.68rem] font-bold uppercase tracking-[0.06em] ${statusClass[status]}`}>{labels[status]}</span>;
 }

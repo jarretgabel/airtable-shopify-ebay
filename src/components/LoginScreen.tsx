@@ -1,0 +1,115 @@
+import { FormEvent, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+
+interface LoginScreenProps {
+  onLoggedIn: () => void;
+}
+
+export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
+  const { login, requestPasswordReset } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetStatus, setResetStatus] = useState<string | null>(null);
+  const [resetLink, setResetLink] = useState<string | null>(null);
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    const result = login(email, password);
+    if (!result.success) {
+      setError(result.message);
+      return;
+    }
+
+    setError(null);
+    onLoggedIn();
+  }
+
+  function handleForgotPassword(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    const result = requestPasswordReset(resetEmail);
+    setResetStatus(result.message);
+    setResetLink(result.resetLink ?? null);
+  }
+
+  const labelClassName = 'text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300';
+  const inputClassName = 'w-full rounded-xl border border-white/15 bg-slate-950/55 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30';
+
+  return (
+    <main className="min-h-screen bg-[radial-gradient(circle_at_16%_12%,rgba(31,111,235,0.2),transparent_34%),radial-gradient(circle_at_84%_88%,rgba(14,165,163,0.16),transparent_40%),linear-gradient(180deg,#061122,#0b1b2f_52%,#06111f)] px-5 py-8 text-slate-100">
+      <section className="mx-auto w-full max-w-xl rounded-[1.4rem] border border-white/15 bg-slate-950/70 p-6 shadow-[0_24px_48px_rgba(6,13,23,0.45)] backdrop-blur">
+        <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-sky-200/80">Listing Control Center</p>
+        <h1 className="mt-2 text-4xl font-semibold tracking-tight text-white">Sign in</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-300">Access is permission-based per user account.</p>
+
+        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-2.5">
+          <label className={labelClassName} htmlFor="login-email">Email</label>
+          <input
+            id="login-email"
+            className={inputClassName}
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            autoComplete="email"
+          />
+
+          <label className={`${labelClassName} mt-2`} htmlFor="login-password">Password</label>
+          <input
+            id="login-password"
+            className={inputClassName}
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            autoComplete="current-password"
+          />
+
+          {error && <p className="mt-1 text-sm text-rose-300">{error}</p>}
+
+          <button type="submit" className="mt-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-blue-400">
+            Log In
+          </button>
+        </form>
+
+        <button
+          type="button"
+          className="mt-4 text-left text-sm font-medium text-sky-300 transition hover:text-sky-200"
+          onClick={() => setShowForgotPassword((value) => !value)}
+        >
+          Forgot password?
+        </button>
+
+        {showForgotPassword && (
+          <form onSubmit={handleForgotPassword} className="mt-4 flex flex-col gap-2.5 border-t border-white/10 pt-4">
+            <label className={labelClassName} htmlFor="forgot-email">Account email</label>
+            <input
+              id="forgot-email"
+              className={inputClassName}
+              type="email"
+              value={resetEmail}
+              onChange={(event) => setResetEmail(event.target.value)}
+              required
+              autoComplete="email"
+            />
+            <button type="submit" className="rounded-xl border border-white/15 bg-white/8 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/12">
+              Send reset email
+            </button>
+            {resetStatus && <p className="text-sm text-emerald-300">{resetStatus}</p>}
+            {resetLink && (
+              <p className="break-all text-xs text-slate-300">
+                Development reset link: <a className="text-sky-300 underline underline-offset-2" href={resetLink}>{resetLink}</a>
+              </p>
+            )}
+          </form>
+        )}
+
+        <p className="mt-4 text-xs text-slate-400">
+          Default admin login: admin@example.com / Admin123!
+        </p>
+      </section>
+    </main>
+  );
+}

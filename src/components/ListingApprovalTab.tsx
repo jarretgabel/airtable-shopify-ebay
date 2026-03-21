@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
+import { errorSurfaceClass, loadingSurfaceClass, panelSurfaceClass, spinnerClass } from '@/components/tabs/uiClasses';
 import airtableService from '@/services/airtable';
 import { getOffers } from '@/services/ebay';
 import { AirtableRecord } from '@/types/airtable';
@@ -15,6 +17,9 @@ const SHIPPING_SERVICE_OPTIONS = [
   'eBay International Standard Delivery',
 ];
 const FALLBACK_LISTING_FORMAT_OPTIONS = ['Buy It Now', 'Auction'];
+
+const inputBaseClass = 'w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-70';
+const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
 
 interface ListingApprovalTabProps {
   selectedRecordId: string | null;
@@ -270,31 +275,31 @@ export function ListingApprovalTab({
 
   if (selectedRecord) {
     return (
-      <section className="panel listings-panel">
-        <div className="approval-header">
+      <section className={panelSurfaceClass}>
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <button
             type="button"
-            className="utility-button"
+            className={secondaryActionButtonClass}
             onClick={onBackToList}
             disabled={saving}
           >
             Back to Listings
           </button>
           <div>
-            <p className="approval-kicker">Listing Update</p>
-            <h3 className="listing-title">{displayValue(selectedRecord.fields['Item Title'])}</h3>
-            <p className="listing-subtitle">Record ID: <code>{selectedRecord.id}</code></p>
+            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Listing Update</p>
+            <h3 className="m-0 mt-1 text-[1.08rem] font-semibold text-[var(--ink)]">{displayValue(selectedRecord.fields['Item Title'])}</h3>
+            <p className="m-0 mt-1 text-sm text-[var(--muted)]">Record ID: <code>{selectedRecord.id}</code></p>
           </div>
         </div>
 
         {error && (
-          <div className="error-panel" style={{ marginBottom: '0.9rem' }}>
-            <p className="error-title">Save Error</p>
-            <p className="error-message">{error}</p>
-          </div>
+          <section className={`${errorSurfaceClass} mb-4`}>
+            <p className="m-0 font-bold text-[var(--error-text)]">Save Error</p>
+            <p className="mt-2 text-[var(--error-text)]/85">{error}</p>
+          </section>
         )}
 
-        <div className="approval-form-grid">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {allFieldNames.map((fieldName) => {
             if (isShippingServiceField(fieldName)) {
               return null;
@@ -309,10 +314,10 @@ export function ListingApprovalTab({
 
             if (isAllowOffersField(fieldName)) {
               return (
-                <label key={fieldName} className="approval-field">
-                  <span className="approval-label">{fieldName}</span>
+                <label key={fieldName} className="flex flex-col gap-1.5">
+                  <span className={labelClass}>{fieldName}</span>
                   <select
-                    className="approval-input"
+                    className={inputBaseClass}
                     value={value || 'false'}
                     onChange={(event) => {
                       setFormValues((prev) => ({
@@ -331,10 +336,10 @@ export function ListingApprovalTab({
 
             if (kind === 'boolean') {
               return (
-                <label key={fieldName} className="approval-field">
-                  <span className="approval-label">{fieldName}</span>
+                <label key={fieldName} className="flex flex-col gap-1.5">
+                  <span className={labelClass}>{fieldName}</span>
                   <select
-                    className="approval-input"
+                    className={inputBaseClass}
                     value={value || 'false'}
                     onChange={(event) => {
                       setFormValues((prev) => ({ ...prev, [fieldName]: event.target.value }));
@@ -355,10 +360,10 @@ export function ListingApprovalTab({
                 : dropdownOptions;
 
               return (
-                <label key={fieldName} className="approval-field">
-                  <span className="approval-label">{fieldName}</span>
+                <label key={fieldName} className="flex flex-col gap-1.5">
+                  <span className={labelClass}>{fieldName}</span>
                   <select
-                    className="approval-input"
+                    className={inputBaseClass}
                     value={value}
                     onChange={(event) => {
                       setFormValues((prev) => ({ ...prev, [fieldName]: event.target.value }));
@@ -376,10 +381,10 @@ export function ListingApprovalTab({
 
             if (isLongText) {
               return (
-                <label key={fieldName} className="approval-field approval-field-full">
-                  <span className="approval-label">{fieldName}</span>
+                <label key={fieldName} className="col-span-1 flex flex-col gap-1.5 md:col-span-2">
+                  <span className={labelClass}>{fieldName}</span>
                   <textarea
-                    className="approval-input approval-input-textarea"
+                    className={`${inputBaseClass} min-h-[110px] resize-y font-mono leading-[1.4]`}
                     value={value}
                     onChange={(event) => {
                       setFormValues((prev) => ({ ...prev, [fieldName]: event.target.value }));
@@ -391,10 +396,10 @@ export function ListingApprovalTab({
             }
 
             return (
-              <label key={fieldName} className="approval-field">
-                <span className="approval-label">{fieldName}</span>
+              <label key={fieldName} className="flex flex-col gap-1.5">
+                <span className={labelClass}>{fieldName}</span>
                 <input
-                  className="approval-input"
+                  className={inputBaseClass}
                   type={kind === 'number' ? 'number' : 'text'}
                   value={value}
                   onChange={(event) => {
@@ -406,10 +411,10 @@ export function ListingApprovalTab({
             );
           })}
 
-          <label className="approval-field">
-            <span className="approval-label">Shipping Services</span>
+          <label className="flex flex-col gap-1.5">
+            <span className={labelClass}>Shipping Services</span>
             <select
-              className="approval-input"
+              className={inputBaseClass}
               value={formValues[SHIPPING_SERVICE_FIELD] ?? ''}
               onChange={(event) => {
                 setFormValues((prev) => ({ ...prev, [SHIPPING_SERVICE_FIELD]: event.target.value }));
@@ -424,10 +429,10 @@ export function ListingApprovalTab({
           </label>
         </div>
 
-        <div className="approval-actions">
+        <div className="mt-4 flex flex-wrap justify-end gap-3">
           <button
             type="button"
-            className="refresh-button"
+            className={primaryActionButtonClass}
             onClick={() => {
               const confirmed = window.confirm('Are you sure you want to save the listing details?');
               if (!confirmed) return;
@@ -439,7 +444,7 @@ export function ListingApprovalTab({
           </button>
           <button
             type="button"
-            className="utility-button utility-button-accent"
+            className={accentActionButtonClass}
             onClick={() => {
               const confirmed = window.confirm('Are you sure you want to approve this listing for publishing?');
               if (!confirmed) return;
@@ -457,64 +462,64 @@ export function ListingApprovalTab({
   return (
     <>
       {error && (
-        <section className="panel error-panel">
-          <p className="error-title">Error loading approval workflow</p>
-          <p className="error-message">{error}</p>
+        <section className={errorSurfaceClass}>
+          <p className="m-0 font-bold text-[var(--error-text)]">Error loading approval workflow</p>
+          <p className="mt-2 text-[var(--error-text)]/85">{error}</p>
         </section>
       )}
 
       {loading ? (
-        <section className="panel loading-panel">
-          <div className="loader" />
+        <section className={loadingSurfaceClass}>
+          <div className={spinnerClass} />
           <p>Loading listing approval queue...</p>
         </section>
       ) : (
-        <section className="panel listings-panel">
-          <div className="approval-header">
+        <section className={panelSurfaceClass}>
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="approval-kicker">Workflow</p>
-              <h3 className="listing-title">Listing Update & Approval</h3>
-              <p className="listing-subtitle">
+              <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow</p>
+              <h3 className="m-0 mt-1 text-[1.08rem] font-semibold text-[var(--ink)]">Listing Update & Approval</h3>
+              <p className="m-0 mt-1 text-sm text-[var(--muted)]">
                 Source: <code>{tableReference}</code> · Table fallback: <code>{fallbackTableName}</code>
               </p>
             </div>
-            <button type="button" className="refresh-button" onClick={loadRecords}>
+            <button type="button" className={primaryActionButtonClass} onClick={loadRecords}>
               Refresh Queue
             </button>
           </div>
 
-          <p className="listings-summary">
+          <p className="m-0 mb-4 text-sm text-[var(--muted)]">
             <strong>{records.length}</strong> listing rows loaded.
           </p>
 
-          <div className="shark-table-wrap">
-            <table className="shark-table">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
               <thead>
                 <tr>
-                  <th>Item Title</th>
-                  <th>SKU</th>
-                  <th>Approved</th>
-                  <th>Condition</th>
-                  <th>Format</th>
-                  <th>Action</th>
+                  <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Item Title</th>
+                  <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">SKU</th>
+                  <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Approved</th>
+                  <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Condition</th>
+                  <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Format</th>
+                  <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {records.map((record) => (
                   <tr
                     key={record.id}
-                    className="shark-row approval-row"
+                    className="cursor-pointer transition hover:bg-slate-50/70"
                     onClick={() => openRecord(record)}
                   >
-                    <td>{displayValue(record.fields['Item Title'])}</td>
-                    <td>{displayValue(record.fields['Custom Label SKU'])}</td>
-                    <td>{displayValue(record.fields[approvedFieldName])}</td>
-                    <td>{displayValue(record.fields['Item Condition'])}</td>
-                    <td>{displayValue(record.fields['Listing Format'])}</td>
-                    <td>
+                    <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle">{displayValue(record.fields['Item Title'])}</td>
+                    <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle">{displayValue(record.fields['Custom Label SKU'])}</td>
+                    <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle">{displayValue(record.fields[approvedFieldName])}</td>
+                    <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle">{displayValue(record.fields['Item Condition'])}</td>
+                    <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle">{displayValue(record.fields['Listing Format'])}</td>
+                    <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle">
                       <button
                         type="button"
-                        className="approval-view-btn"
+                        className="rounded-lg border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-xs font-bold text-[var(--ink)] transition hover:border-blue-200 hover:bg-slate-100"
                         onClick={(event) => {
                           event.stopPropagation();
                           onSelectRecord(record.id);

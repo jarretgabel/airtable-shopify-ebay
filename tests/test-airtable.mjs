@@ -1,4 +1,4 @@
-import airtableService from './src/services/airtable.js';
+import airtableService from '../src/services/airtable.js';
 
 (async () => {
   try {

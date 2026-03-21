@@ -106,7 +106,7 @@ const server = http.createServer(async (req, res) => {
     writeFileSync('.env.local', envContent);
 
     console.log(`\n✓ Saved to .env.local as VITE_SHOPIFY_OAUTH_ACCESS_TOKEN`);
-    console.log(`\nRun: node test-shopify-connection.mjs`);
+    console.log(`\nRun: node tests/test-shopify-connection.mjs`);
 
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`

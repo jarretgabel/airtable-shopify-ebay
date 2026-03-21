@@ -1,6 +1,6 @@
 /**
  * eBay Sandbox connection test — verifies credentials and gets an app token.
- * Run with: nvm use 20 && node test-ebay-connection.mjs
+ * Run with: nvm use 20 && node tests/test-ebay-connection.mjs
  *
  * Note: This tests the Application Token (Client Credentials) only.
  * Seller operations (create listings, view inventory) require a User Token
@@ -9,7 +9,7 @@
 
 import { readFileSync } from 'fs';
 
-const ENV_PATH = new URL('.env.local', import.meta.url).pathname;
+const ENV_PATH = new URL('../.env.local', import.meta.url).pathname;
 const env = Object.fromEntries(
   readFileSync(ENV_PATH, 'utf-8')
     .split('\n')

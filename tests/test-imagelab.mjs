@@ -1,13 +1,13 @@
 /**
  * Tests the Image Lab AI pipeline end-to-end using GitHub Models (GPT-4o Vision).
  * Downloads a test JPEG and sends it as base64 (required — GitHub Models cannot
- * fetch external URLs). Run with: nvm use 20 && node test-imagelab.mjs
+ * fetch external URLs). Run with: nvm use 20 && node tests/test-imagelab.mjs
  */
 
 import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { execSync } from 'child_process';
 
-const ENV_PATH = new URL('.env.local', import.meta.url).pathname;
+const ENV_PATH = new URL('../.env.local', import.meta.url).pathname;
 const env = Object.fromEntries(
   readFileSync(ENV_PATH, 'utf-8')
     .split('\n')

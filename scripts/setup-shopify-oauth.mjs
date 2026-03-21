@@ -76,7 +76,7 @@ Add to your .env.local:
   VITE_SHOPIFY_OAUTH_ACCESS_TOKEN=<the-token-from-step-3>
 
 Then test the connection:
-  node test-shopify-connection.mjs
+  node tests/test-shopify-connection.mjs
 `);
   process.exit(0);
 }
@@ -124,7 +124,7 @@ if (step === 'token') {
     console.log('✓ Token exchange successful!\n');
     console.log('Add this to your .env.local:\n');
     console.log(`  VITE_SHOPIFY_OAUTH_ACCESS_TOKEN=${accessToken}\n`);
-    console.log('Then run: node test-shopify-connection.mjs');
+    console.log('Then run: node tests/test-shopify-connection.mjs');
   } catch (err) {
     console.error('✗ Token exchange failed:');
     console.error(err.response?.data ?? err.message);

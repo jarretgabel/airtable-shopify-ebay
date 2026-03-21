@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 
 const env = Object.fromEntries(
-  readFileSync(new URL('.env.local', import.meta.url), 'utf-8')
+  readFileSync(new URL('../.env.local', import.meta.url), 'utf-8')
     .split('\n')
     .filter(line => line.trim() && !line.startsWith('#'))
     .map(line => {

@@ -2,13 +2,13 @@
  * eBay Production — OAuth + Create Draft Listing CLI Tool
  *
  * Usage:
- *   Step 1: nvm use 20 && node test-create-ebay-listing.mjs --api=inventory
+ *   Step 1: nvm use 20 && node tests/test-create-ebay-listing.mjs --api=inventory
  *           → Prints the OAuth URL. Visit it in your browser.
  *
  *   Step 2: After eBay redirects to http://localhost:3000?code=XXX&state=ebay_oauth,
  *           copy the `code` value from the URL bar (everything after `code=` and before `&`).
  *
- *   Step 3: nvm use 20 && node test-create-ebay-listing.mjs --api=inventory --code=YOUR_CODE_HERE
+ *   Step 3: nvm use 20 && node tests/test-create-ebay-listing.mjs --api=inventory --code=YOUR_CODE_HERE
  *           → Exchanges code for tokens, saves refresh token to .env.local, creates listing.
  *
  *   Optional: Use --api=trading to create a live fixed-price listing via Trading API.
@@ -18,7 +18,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 
 // ── Load .env.local ────────────────────────────────────────────────────────────
-const ENV_PATH = new URL('.env.local', import.meta.url).pathname;
+const ENV_PATH = new URL('../.env.local', import.meta.url).pathname;
 const rawEnv = readFileSync(ENV_PATH, 'utf-8');
 const env = Object.fromEntries(
   rawEnv
@@ -470,7 +470,7 @@ if (args.code) {
   console.log('  http://localhost:3000?code=XXXX&state=ebay_oauth');
   console.log('');
   console.log('Step 2: Copy the `code` value from the URL bar, then run:\n');
-  console.log('  node test-create-ebay-listing.mjs --code=PASTE_CODE_HERE');
+  console.log('  node tests/test-create-ebay-listing.mjs --code=PASTE_CODE_HERE');
   console.log('');
   console.log('Note: The app at localhost:3000 will ALSO auto-handle the code — you');
   console.log('      only need this script if the app\'s connect flow isn\'t working.');

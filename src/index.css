@@ -1,18 +1,30 @@
-html,
-body,
-#root {
-	margin: 0;
-	padding: 0;
-	min-height: 100%;
+@import "tailwindcss";
+
+@theme {
+	--font-sans: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
 }
 
-body {
-	font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', sans-serif;
-	background: #f2f4f8;
-	color: #112031;
-	line-height: 1.45;
-}
+@layer base {
+	html,
+	body,
+	#root {
+		margin: 0;
+		padding: 0;
+		min-height: 100%;
+	}
 
-* {
-	box-sizing: border-box;
+	body {
+		font-family: var(--font-sans);
+		background: #f2f4f8;
+		color: #112031;
+		line-height: 1.45;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	a {
+		color: inherit;
+	}
 }
