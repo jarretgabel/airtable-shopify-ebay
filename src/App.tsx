@@ -1,4 +1,5 @@
-import { useState, useRef, FormEvent } from 'react';
+import { useEffect, useState, useRef, FormEvent } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useListings } from '@/hooks/useListings';
 import { useShopifyProducts } from '@/hooks/useShopifyProducts';
 import { useHiFiShark } from '@/hooks/useHiFiShark';
@@ -7,6 +8,7 @@ import { formatAnswer } from '@/services/jotform';
 import { ImageLab } from '@/components/ImageLab';
 import { EbayTab } from '@/components/EbayTab';
 import { DashboardTab } from '@/components/DashboardTab';
+import { ListingApprovalTab } from '@/components/ListingApprovalTab';
 import { appendElementToPdf, createPdfDocumentAsync } from '@/services/pdfExport';
 import './App.css';
 
@@ -44,7 +46,22 @@ function recordTitle(fields: Record<string, unknown>): string {
   return displayValue(fields.Brand ?? fields.Name ?? fields.Model ?? 'Untitled Listing');
 }
 
-type Tab = 'dashboard' | 'airtable' | 'shopify' | 'market' | 'jotform' | 'imagelab' | 'ebay';
+type Tab = 'dashboard' | 'airtable' | 'shopify' | 'market' | 'jotform' | 'imagelab' | 'ebay' | 'approval';
+const TAB_VALUES: Tab[] = ['dashboard', 'airtable', 'shopify', 'market', 'jotform', 'imagelab', 'ebay', 'approval'];
+const TAB_PATHS: Record<Tab, string> = {
+  dashboard: '/dashboard',
+  airtable: '/airtable',
+  shopify: '/shopify',
+  market: '/market',
+  jotform: '/jotform',
+  imagelab: '/imagelab',
+  ebay: '/ebay',
+  approval: '/approval',
+};
+
+function isTab(value: string | null): value is Tab {
+  return Boolean(value && TAB_VALUES.includes(value as Tab));
+}
 
 const EXPORT_TABS: Tab[] = ['dashboard', 'airtable', 'shopify', 'market', 'jotform', 'imagelab', 'ebay'];
 const EXPORT_TAB_LABELS: Record<Tab, string> = {
@@ -55,6 +72,7 @@ const EXPORT_TAB_LABELS: Record<Tab, string> = {
   jotform: 'JotForm Inquiries',
   imagelab: 'Image Lab',
   ebay: 'eBay',
+  approval: 'Listing Approval',
 };
 
 type TrendDirection = 'up' | 'down' | 'flat';
@@ -116,10 +134,46 @@ function waitForScreenRender(): Promise<void> {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
+  const approvalRecordMatch = normalizedPath.match(/^\/approval\/([^/]+)$/);
+
+  const activeTab: Tab = (() => {
+    if (normalizedPath === '/approval' || approvalRecordMatch) return 'approval';
+    const tabFromPath = normalizedPath.slice(1);
+    return isTab(tabFromPath) ? tabFromPath : 'dashboard';
+  })();
+
+  const approvalRecordId = approvalRecordMatch ? decodeURIComponent(approvalRecordMatch[1]) : null;
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportProgress, setExportProgress] = useState<{ current: number; total: number; label: string } | null>(null);
   const shellRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (normalizedPath === '/') {
+      navigate(TAB_PATHS.dashboard, { replace: true });
+      return;
+    }
+
+    const isKnownTabPath = isTab(normalizedPath.slice(1));
+    const isApprovalDetailPath = /^\/approval\/[^/]+$/.test(normalizedPath);
+    if (!isKnownTabPath && normalizedPath !== '/approval' && !isApprovalDetailPath) {
+      navigate(TAB_PATHS.dashboard, { replace: true });
+    }
+  }, [normalizedPath, navigate]);
+
+  function navigateToTab(tab: Tab, replace = false): void {
+    navigate(TAB_PATHS[tab], { replace });
+  }
+
+  function navigateToApprovalRecord(recordId: string, replace = false): void {
+    navigate(`/approval/${encodeURIComponent(recordId)}`, { replace });
+  }
+
+  function navigateToApprovalList(replace = false): void {
+    navigate(TAB_PATHS.approval, { replace });
+  }
 
   const tableName = import.meta.env.VITE_AIRTABLE_TABLE_NAME || 'Table 1';
   const viewId = import.meta.env.VITE_AIRTABLE_VIEW_ID;
@@ -384,7 +438,7 @@ function App() {
           total: EXPORT_TABS.length,
           label: EXPORT_TAB_LABELS[tab],
         });
-        setActiveTab(tab);
+        navigateToTab(tab, true);
         await waitForScreenRender();
 
         if (!shellRef.current) {
@@ -401,7 +455,7 @@ function App() {
 
       pdf.save(`listing-control-center-${new Date().toISOString().slice(0, 10)}.pdf`);
     } finally {
-      setActiveTab(previousTab);
+      navigateToTab(previousTab, true);
       await waitForScreenRender();
       window.scrollTo(previousScrollX, previousScrollY);
       setExportProgress(null);
@@ -459,35 +513,35 @@ function App() {
           <div className="tab-bar">
             <button
               className={`tab-btn${activeTab === 'dashboard' ? ' tab-active' : ''}`}
-              onClick={() => setActiveTab('dashboard')}
+              onClick={() => navigateToTab('dashboard')}
               disabled={exportingPdf}
             >
               Dashboard
             </button>
             <button
               className={`tab-btn${activeTab === 'airtable' ? ' tab-active' : ''}`}
-              onClick={() => setActiveTab('airtable')}
+              onClick={() => navigateToTab('airtable')}
               disabled={exportingPdf}
             >
               Airtable Inventory
             </button>
             <button
               className={`tab-btn${activeTab === 'shopify' ? ' tab-active' : ''}`}
-              onClick={() => setActiveTab('shopify')}
+              onClick={() => navigateToTab('shopify')}
               disabled={exportingPdf}
             >
               Shopify Products
             </button>
             <button
               className={`tab-btn${activeTab === 'market' ? ' tab-active' : ''}`}
-              onClick={() => setActiveTab('market')}
+              onClick={() => navigateToTab('market')}
               disabled={exportingPdf}
             >
               Market Prices
             </button>
             <button
               className={`tab-btn${activeTab === 'jotform' ? ' tab-active' : ''}${totalNewSubmissions > 0 ? ' tab-has-badge' : ''}`}
-              onClick={() => setActiveTab('jotform')}
+              onClick={() => navigateToTab('jotform')}
               disabled={exportingPdf}
             >
               Inquiries
@@ -497,17 +551,24 @@ function App() {
             </button>
             <button
               className={`tab-btn${activeTab === 'imagelab' ? ' tab-active' : ''}`}
-              onClick={() => setActiveTab('imagelab')}
+              onClick={() => navigateToTab('imagelab')}
               disabled={exportingPdf}
             >
               Image Lab
             </button>
             <button
               className={`tab-btn${activeTab === 'ebay' ? ' tab-active' : ''}`}
-              onClick={() => setActiveTab('ebay')}
+              onClick={() => navigateToTab('ebay')}
               disabled={exportingPdf}
             >
               eBay
+            </button>
+            <button
+              className={`tab-btn${activeTab === 'approval' ? ' tab-active' : ''}`}
+              onClick={() => navigateToApprovalList()}
+              disabled={exportingPdf}
+            >
+              Listing Approval
             </button>
           </div>
           <div className="tab-actions" data-export-ignore="true">
@@ -549,6 +610,15 @@ function App() {
         {/* ── eBay Tab ── */}
         {activeTab === 'ebay' && <EbayTab />}
 
+        {/* ── Listing Approval Workflow Tab ── */}
+        {activeTab === 'approval' && (
+          <ListingApprovalTab
+            selectedRecordId={approvalRecordId}
+            onSelectRecord={navigateToApprovalRecord}
+            onBackToList={navigateToApprovalList}
+          />
+        )}
+
         {/* ── Business Metrics Dashboard Tab ── */}
         {activeTab === 'dashboard' && (
           <DashboardTab
@@ -588,7 +658,7 @@ function App() {
             airtableTypeTable={airtableTypeTable}
             maxComponentTypeCount={maxComponentTypeCount}
             maxAirtableBrandCount={maxAirtableBrandCount}
-            onSelectTab={setActiveTab}
+            onSelectTab={navigateToTab}
           />
         )}
 

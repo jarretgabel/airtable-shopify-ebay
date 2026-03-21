@@ -621,6 +621,129 @@
 	background: rgba(96, 165, 250, 0.28);
 }
 
+/* Listing approval workflow */
+.approval-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	flex-wrap: wrap;
+}
+
+.approval-kicker {
+	margin: 0;
+	font-size: 0.72rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--muted);
+	font-weight: 700;
+}
+
+.approval-row {
+	cursor: pointer;
+}
+
+.approval-row:hover td {
+	background: #f6faff;
+}
+
+.approval-view-btn {
+	border: 1px solid var(--line);
+	background: var(--panel);
+	color: var(--ink);
+	border-radius: 8px;
+	padding: 0.28rem 0.62rem;
+	font-size: 0.76rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s;
+}
+
+.approval-view-btn:hover {
+	background: #f0f4fa;
+	border-color: #bfd4ee;
+}
+
+.dashboard-dark .approval-view-btn {
+	background: rgba(19, 33, 49, 0.92);
+	border-color: #35506e;
+	color: #e8f1fb;
+}
+
+.dashboard-dark .approval-view-btn:hover {
+	background: rgba(27, 46, 69, 0.98);
+	border-color: #68a4ff;
+}
+
+.approval-form-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.9rem;
+}
+
+.approval-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.approval-field-full {
+	grid-column: 1 / -1;
+}
+
+.approval-label {
+	font-size: 0.78rem;
+	font-weight: 700;
+	color: var(--muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.approval-checkbox-row {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.55rem;
+	font-size: 0.9rem;
+	color: var(--ink);
+}
+
+.approval-checkbox-row input[type="checkbox"] {
+	width: 1rem;
+	height: 1rem;
+	accent-color: var(--accent);
+}
+
+.approval-input {
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	padding: 0.6rem 0.7rem;
+	font-size: 0.92rem;
+	background: var(--panel);
+	color: var(--ink);
+}
+
+.approval-input-textarea {
+	min-height: 110px;
+	resize: vertical;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace;
+	line-height: 1.4;
+}
+
+.approval-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.75rem;
+	margin-top: 1.1rem;
+	flex-wrap: wrap;
+}
+
+@media (max-width: 920px) {
+	.approval-form-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
 .dashboard-dark .biz-bar-guide-label,
 .dashboard-dark .biz-bar-chart-note,
 .dashboard-dark .biz-bar-label,
@@ -890,6 +1013,11 @@
 
 .shark-row:hover td {
 	background: #f5f8ff;
+}
+
+.dashboard-dark .shark-row:hover td,
+.dashboard-dark .approval-row:hover td {
+	background: #132131;
 }
 
 .shark-link {
@@ -3560,6 +3688,119 @@
 	color: #94a3b8;
 	font-family: monospace;
 	margin: 0.2rem 0 0;
+}
+
+/* ── eBay tab dark-mode overrides ── */
+.dashboard-dark .ebay-connect-card,
+.dashboard-dark .ebay-header,
+.dashboard-dark .ebay-publish-setup,
+.dashboard-dark .ebay-api-mode-card,
+.dashboard-dark .ebay-debug-panel,
+.dashboard-dark .ebay-card,
+.dashboard-dark .ebay-seller-row {
+	background: linear-gradient(180deg, rgba(16, 26, 40, 0.98), rgba(11, 20, 31, 0.98));
+	box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+}
+
+.dashboard-dark .ebay-config-row {
+	background: rgba(19, 33, 49, 0.9);
+	border-color: #2b4259;
+}
+
+.dashboard-dark .ebay-runame-input {
+	background: rgba(19, 33, 49, 0.92);
+	border-color: #35506e;
+	color: #e8f1fb;
+}
+
+.dashboard-dark .ebay-runame-input:focus {
+	background: rgba(23, 39, 59, 0.96);
+	border-color: #68a4ff;
+}
+
+.dashboard-dark .ebay-setup-needed {
+	background: rgba(76, 29, 20, 0.72);
+	border-color: rgba(251, 146, 60, 0.45);
+	color: #fed7aa;
+}
+
+.dashboard-dark .ebay-setup-steps code,
+.dashboard-dark .ebay-draft-success code {
+	background: rgba(15, 23, 42, 0.48);
+	color: #dbeafe;
+}
+
+.dashboard-dark .ebay-api-switch {
+	background: rgba(19, 33, 49, 0.92);
+	border-color: #35506e;
+}
+
+.dashboard-dark .ebay-api-switch-btn-active {
+	background: rgba(27, 46, 69, 0.98);
+	color: #e8f1fb;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-dark .ebay-inline-note,
+.dashboard-dark .ebay-card-offer-id {
+	color: #a6bdd4;
+}
+
+.dashboard-dark .ebay-trading-warning {
+	background: rgba(76, 29, 20, 0.72);
+	border-color: rgba(251, 146, 60, 0.45);
+	color: #fdba74;
+}
+
+.dashboard-dark .ebay-trading-warning-safe {
+	background: rgba(30, 58, 138, 0.4);
+	border-color: rgba(96, 165, 250, 0.55);
+	color: #bfdbfe;
+}
+
+.dashboard-dark .ebay-badge-label {
+	color: #86efac;
+	background: rgba(22, 101, 52, 0.42);
+}
+
+.dashboard-dark .ebay-btn-ghost:hover:not(:disabled) {
+	background: rgba(27, 46, 69, 0.98);
+}
+
+.dashboard-dark .ebay-draft-success {
+	background: rgba(20, 83, 45, 0.45);
+	border-color: rgba(74, 222, 128, 0.42);
+	color: #bbf7d0;
+}
+
+.dashboard-dark .ebay-error-box {
+	background: rgba(127, 29, 29, 0.45);
+	border-color: rgba(248, 113, 113, 0.52);
+	color: #fecaca;
+}
+
+.dashboard-dark .ebay-debug-head {
+	background: rgba(19, 33, 49, 0.9);
+	border-bottom-color: #2b4259;
+}
+
+.dashboard-dark .ebay-debug-row {
+	border-top-color: rgba(69, 93, 119, 0.55);
+}
+
+.dashboard-dark .ebay-card-img-wrap {
+	background: #132131;
+}
+
+.dashboard-dark .ebay-status-none {
+	background: rgba(51, 65, 85, 0.75);
+	color: #cbd5e1;
+}
+
+.dashboard-dark .ebay-aspect-chip {
+	background: rgba(30, 58, 138, 0.45);
+	color: #bfdbfe;
+	border-color: rgba(96, 165, 250, 0.45);
 }
 
 @media (max-width: 960px) {
