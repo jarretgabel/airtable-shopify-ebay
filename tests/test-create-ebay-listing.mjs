@@ -16,6 +16,13 @@
  */
 
 import { readFileSync, writeFileSync } from 'fs';
+import {
+  createDraftListing,
+  createTradingListing,
+  normalizeCode,
+  normalizeToken,
+  saveRefreshToken,
+} from './helpers/ebay-listing-cli-helpers.mjs';
 
 // ── Load .env.local ────────────────────────────────────────────────────────────
 const ENV_PATH = new URL('../.env.local', import.meta.url).pathname;
@@ -78,290 +85,6 @@ const args = Object.fromEntries(
   const PAYMENT_POLICY_ID = env['VITE_EBAY_PAYMENT_POLICY_ID'] ?? '';
   const RETURN_POLICY_ID = env['VITE_EBAY_RETURN_POLICY_ID'] ?? '';
 
-function normalizeCode(code) {
-  if (!code) return code;
-  try {
-    return decodeURIComponent(code);
-  } catch {
-    return code;
-  }
-}
-
-function normalizeToken(token) {
-  if (!token) return token;
-  try {
-    return decodeURIComponent(token);
-  } catch {
-    return token;
-  }
-}
-
-function escapeXml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&apos;');
-}
-
-function extractXmlTag(xml, tagName) {
-  const match = xml.match(new RegExp(`<${tagName}[^>]*>([\\s\\S]*?)</${tagName}>`));
-  return match?.[1]?.replace(/<!\[CDATA\[|\]\]>/g, '').trim() ?? '';
-}
-
-function extractTradingErrors(xml) {
-  return Array.from(xml.matchAll(/<LongMessage>([\s\S]*?)<\/LongMessage>/g))
-    .map(match => match[1].trim())
-    .filter(Boolean)
-    .join(' | ');
-}
-
-// ── Helper: save refresh token back to .env.local ─────────────────────────────
-function saveRefreshToken(refreshToken) {
-  const normalized = normalizeToken(refreshToken);
-  let updated = rawEnv;
-  if (updated.includes('VITE_EBAY_REFRESH_TOKEN=')) {
-    updated = updated.replace(/^VITE_EBAY_REFRESH_TOKEN=.*$/m, `VITE_EBAY_REFRESH_TOKEN=${normalized}`);
-  } else {
-    updated = updated.replace(
-      /^VITE_EBAY_ENV=/m,
-      `VITE_EBAY_REFRESH_TOKEN=${normalized}\nVITE_EBAY_ENV=`
-    );
-  }
-  writeFileSync(ENV_PATH, updated);
-  console.log('✓ Refresh token saved to .env.local (VITE_EBAY_REFRESH_TOKEN)');
-}
-
-// ── Helper: create draft inventory item + offer ───────────────────────────────
-const SAMPLE_SKU = 'RAVMCINTOSHMA8900001';
-
-async function createDraftListing(accessToken) {
-  console.log('\nStep 3: Creating inventory item…');
-  const itemRes = await fetch(`${API_BASE}/sell/inventory/v1/inventory_item/${encodeURIComponent(SAMPLE_SKU)}`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Accept-Language': 'en-US',
-      'Content-Type': 'application/json',
-      'Content-Language': 'en-US',
-    },
-    body: JSON.stringify({
-      product: {
-        title: 'McIntosh MA8900 Integrated Amplifier — Resolution AV',
-        description:
-          '<p>The McIntosh MA8900 is a premium 200-watt-per-channel integrated amplifier combining solid-state power with vacuum tube inputs. ' +
-          'Features include a built-in DAC, MM/MC phono stage, and McIntosh\'s iconic illuminated watt meters.</p>',
-        imageUrls: [
-          'https://images.crutchfieldonline.com/ImageHandler/trim/3000/1950/products/2018/45/793/g793MA8900/0.jpg',
-        ],
-        aspects: {
-          Brand: ['McIntosh'],
-          Model: ['MA8900'],
-          Type: ['Integrated Amplifier'],
-          'Power Output': ['200W per channel'],
-          Color: ['Black/Silver'],
-        },
-        brand: 'McIntosh',
-        mpn: 'MA8900',
-      },
-      condition: 'USED_EXCELLENT',
-      conditionDescription: 'Excellent cosmetic condition. No visible scratches or wear. Original remote and manual included.',
-      availability: {
-        shipToLocationAvailability: { quantity: 1 },
-      },
-    }),
-  });
-
-  if (!itemRes.ok) {
-    const err = await itemRes.json().catch(() => ({}));
-    console.error(`✗ Create inventory item failed: HTTP ${itemRes.status}`);
-    console.error(JSON.stringify(err, null, 2));
-    return;
-  }
-  console.log(`✓ Inventory item created — SKU: ${SAMPLE_SKU}`);
-
-  console.log('\nStep 4: Creating draft offer (UNPUBLISHED)…');
-  const offerRes = await fetch(`${API_BASE}/sell/inventory/v1/offer`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Accept-Language': 'en-US',
-      'Content-Type': 'application/json',
-      'Content-Language': 'en-US',
-    },
-    body: JSON.stringify({
-      sku: SAMPLE_SKU,
-      marketplaceId: 'EBAY_US',
-      format: 'FIXED_PRICE',
-      categoryId: '3276',
-      listingDescription: '<p>McIntosh MA8900 200W Integrated Amplifier — Resolution AV, NYC luxury HiFi dealer.</p>',
-      pricingSummary: {
-        price: { value: '4999.00', currency: 'USD' },
-      },
-      quantityLimitPerBuyer: 1,
-      includeCatalogProductDetails: false,
-    }),
-  });
-
-  if (!offerRes.ok) {
-    const err = await offerRes.json().catch(() => ({}));
-    // Production may report an existing offer as 400/errorId 25002 instead of 409.
-    if (offerRes.status === 409 || err.errors?.some(error => error.errorId === 25002)) {
-      console.log('  ℹ Offer already exists for this SKU.');
-      const listRes = await fetch(
-        `${API_BASE}/sell/inventory/v1/offer?sku=${encodeURIComponent(SAMPLE_SKU)}&limit=1`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Accept-Language': 'en-US',
-          },
-        }
-      );
-      if (listRes.ok) {
-        const listData = await listRes.json();
-        const existing = listData.offers?.[0];
-        if (existing) {
-          console.log(`✓ Existing draft offer found — Offer ID: ${existing.offerId}`);
-          console.log(`  Status: ${existing.status}`);
-        }
-      }
-      return;
-    }
-    console.error(`✗ Create offer failed: HTTP ${offerRes.status}`);
-    console.error(JSON.stringify(err, null, 2));
-    return;
-  }
-
-  const offerData = await offerRes.json();
-  console.log(`✓ Draft offer created — Offer ID: ${offerData.offerId}`);
-  console.log('  Status: UNPUBLISHED (draft — not visible on eBay.com)');
-  console.log('');
-  console.log('  ┌──────────────────────────────────────────────────');
-  console.log(`  │ SKU      : ${SAMPLE_SKU}`);
-  console.log(`  │ Offer ID : ${offerData.offerId}`);
-  console.log(`  │ Price    : $4,999.00 USD`);
-  console.log(`  │ Status   : UNPUBLISHED`);
-  console.log('  └──────────────────────────────────────────────────');
-}
-
-async function callTradingApi(accessToken, callName, body) {
-  const res = await fetch(`${API_BASE}/ws/api.dll`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/xml',
-      'X-EBAY-API-CALL-NAME': callName,
-      'X-EBAY-API-COMPATIBILITY-LEVEL': '1231',
-      'X-EBAY-API-SITEID': '0',
-      'X-EBAY-API-IAF-TOKEN': accessToken,
-    },
-    body,
-  });
-
-  const text = await res.text();
-  const ack = extractXmlTag(text, 'Ack');
-  if (!res.ok || (ack && ack !== 'Success' && ack !== 'Warning')) {
-    const errorMessage = extractTradingErrors(text) || text.slice(0, 500);
-    throw new Error(`${callName} ${res.status}: ${errorMessage}`);
-  }
-
-  return text;
-}
-
-async function createTradingListing(accessToken, mode = 'trading') {
-  if (!LOCATION_POSTAL_CODE.trim()) {
-    throw new Error('Trading API listing requires VITE_EBAY_LOCATION_POSTAL_CODE in .env.local');
-  }
-
-  const sku = `RAVTRADING${Date.now()}`;
-  const locationLabel = [LOCATION_CITY, LOCATION_STATE].filter(Boolean).join(', ') || LOCATION_NAME;
-  const sellerProfiles = FULFILLMENT_POLICY_ID && PAYMENT_POLICY_ID && RETURN_POLICY_ID
-    ? [
-        '<SellerProfiles>',
-        `<SellerShippingProfile><ShippingProfileID>${escapeXml(FULFILLMENT_POLICY_ID)}</ShippingProfileID></SellerShippingProfile>`,
-        `<SellerPaymentProfile><PaymentProfileID>${escapeXml(PAYMENT_POLICY_ID)}</PaymentProfileID></SellerPaymentProfile>`,
-        `<SellerReturnProfile><ReturnProfileID>${escapeXml(RETURN_POLICY_ID)}</ReturnProfileID></SellerReturnProfile>`,
-        '</SellerProfiles>',
-      ].join('')
-    : '';
-
-  const itemPayload = [
-    '<Item>',
-    `<Title>${escapeXml(`Resolution AV Demo Listing ${new Date().toISOString().slice(0, 10)}`)}</Title>`,
-    `<Description>${escapeXml('Resolution AV Trading API sample listing for a McIntosh MA8900 integrated amplifier.')}</Description>`,
-    `<SKU>${escapeXml(sku)}</SKU>`,
-    '<PrimaryCategory><CategoryID>14990</CategoryID></PrimaryCategory>',
-    '<StartPrice currencyID="USD">4999.00</StartPrice>',
-    '<CategoryMappingAllowed>true</CategoryMappingAllowed>',
-    '<ConditionID>3000</ConditionID>',
-    '<Country>US</Country>',
-    '<Currency>USD</Currency>',
-    '<DispatchTimeMax>3</DispatchTimeMax>',
-    '<ListingDuration>GTC</ListingDuration>',
-    '<ListingType>FixedPriceItem</ListingType>',
-    `<Location>${escapeXml(locationLabel || 'United States')}</Location>`,
-    `<PostalCode>${escapeXml(LOCATION_POSTAL_CODE)}</PostalCode>`,
-    '<PictureDetails><PictureURL>https://images.crutchfieldonline.com/ImageHandler/trim/3000/1950/products/2018/45/793/g793MA8900/0.jpg</PictureURL></PictureDetails>',
-    '<Quantity>1</Quantity>',
-    '<ItemSpecifics>',
-    '<NameValueList><Name>Brand</Name><Value>McIntosh</Value></NameValueList>',
-    '<NameValueList><Name>Connectivity</Name><Value>Wired</Value></NameValueList>',
-    '<NameValueList><Name>Model</Name><Value>MA8900</Value></NameValueList>',
-    '<NameValueList><Name>Type</Name><Value>Integrated Amplifier</Value></NameValueList>',
-    '</ItemSpecifics>',
-    '<ReturnPolicy>',
-    '<ReturnsAcceptedOption>ReturnsAccepted</ReturnsAcceptedOption>',
-    '<RefundOption>MoneyBack</RefundOption>',
-    '<ReturnsWithinOption>Days_30</ReturnsWithinOption>',
-    '<ShippingCostPaidByOption>Buyer</ShippingCostPaidByOption>',
-    '</ReturnPolicy>',
-    '<ShippingDetails>',
-    '<ShippingType>Flat</ShippingType>',
-    '<ShippingServiceOptions>',
-    '<ShippingServicePriority>1</ShippingServicePriority>',
-    '<ShippingService>ShippingMethodStandard</ShippingService>',
-    '<ShippingServiceCost currencyID="USD">0.00</ShippingServiceCost>',
-    '</ShippingServiceOptions>',
-    '</ShippingDetails>',
-    sellerProfiles,
-    '</Item>',
-  ].join('');
-
-  console.log('\nStep 3: Verifying Trading API listing payload…');
-  await callTradingApi(
-    accessToken,
-    'VerifyAddFixedPriceItem',
-    `<?xml version="1.0" encoding="utf-8"?><VerifyAddFixedPriceItemRequest xmlns="urn:ebay:apis:eBLBaseComponents"><WarningLevel>High</WarningLevel>${itemPayload}</VerifyAddFixedPriceItemRequest>`
-  );
-  console.log('✓ Trading payload verified');
-
-  if (mode === 'trading-verify') {
-    console.log('');
-    console.log('  ┌──────────────────────────────────────────────────');
-    console.log(`  │ SKU        : ${sku}`);
-    console.log('  │ Status     : VERIFIED');
-    console.log('  │ API        : Trading Verify Only');
-    console.log('  └──────────────────────────────────────────────────');
-    return;
-  }
-
-  console.log('\nStep 4: Creating Trading API fixed-price listing…');
-  const addResponse = await callTradingApi(
-    accessToken,
-    'AddFixedPriceItem',
-    `<?xml version="1.0" encoding="utf-8"?><AddFixedPriceItemRequest xmlns="urn:ebay:apis:eBLBaseComponents"><WarningLevel>High</WarningLevel>${itemPayload}</AddFixedPriceItemRequest>`
-  );
-
-  const listingId = extractXmlTag(addResponse, 'ItemID');
-  console.log('✓ Trading listing created');
-  console.log('');
-  console.log('  ┌──────────────────────────────────────────────────');
-  console.log(`  │ SKU        : ${sku}`);
-  console.log(`  │ Listing ID : ${listingId || '(missing from response)'}`);
-  console.log('  │ Status     : ACTIVE');
-  console.log('  │ API        : Trading');
-  console.log('  └──────────────────────────────────────────────────');
-}
 
 // ── Main flow ─────────────────────────────────────────────────────────────────
 
@@ -398,15 +121,31 @@ if (args.code) {
 
   if (tokenData.refresh_token) {
     console.log('\nStep 2: Saving refresh token to .env.local…');
-    saveRefreshToken(tokenData.refresh_token);
+    saveRefreshToken(ENV_PATH, tokenData.refresh_token);
   }
 
   if (API_MODE === 'trading') {
-    await createTradingListing(tokenData.access_token, API_MODE);
+    await createTradingListing(tokenData.access_token, API_MODE, API_BASE, {
+      locationName: LOCATION_NAME,
+      locationPostalCode: LOCATION_POSTAL_CODE,
+      locationCity: LOCATION_CITY,
+      locationState: LOCATION_STATE,
+      fulfillmentPolicyId: FULFILLMENT_POLICY_ID,
+      paymentPolicyId: PAYMENT_POLICY_ID,
+      returnPolicyId: RETURN_POLICY_ID,
+    });
   } else if (API_MODE === 'trading-verify') {
-    await createTradingListing(tokenData.access_token, API_MODE);
+    await createTradingListing(tokenData.access_token, API_MODE, API_BASE, {
+      locationName: LOCATION_NAME,
+      locationPostalCode: LOCATION_POSTAL_CODE,
+      locationCity: LOCATION_CITY,
+      locationState: LOCATION_STATE,
+      fulfillmentPolicyId: FULFILLMENT_POLICY_ID,
+      paymentPolicyId: PAYMENT_POLICY_ID,
+      returnPolicyId: RETURN_POLICY_ID,
+    });
   } else {
-    await createDraftListing(tokenData.access_token);
+    await createDraftListing(tokenData.access_token, API_BASE);
   }
 
 } else if (env['VITE_EBAY_REFRESH_TOKEN']) {
@@ -434,14 +173,30 @@ if (args.code) {
 
   const tokenData = await tokenRes.json();
   console.log(`✓ Access token refreshed — expires in ${tokenData.expires_in}s`);
-  if (tokenData.refresh_token) saveRefreshToken(tokenData.refresh_token);
+  if (tokenData.refresh_token) saveRefreshToken(ENV_PATH, tokenData.refresh_token);
 
   if (API_MODE === 'trading') {
-    await createTradingListing(tokenData.access_token, API_MODE);
+    await createTradingListing(tokenData.access_token, API_MODE, API_BASE, {
+      locationName: LOCATION_NAME,
+      locationPostalCode: LOCATION_POSTAL_CODE,
+      locationCity: LOCATION_CITY,
+      locationState: LOCATION_STATE,
+      fulfillmentPolicyId: FULFILLMENT_POLICY_ID,
+      paymentPolicyId: PAYMENT_POLICY_ID,
+      returnPolicyId: RETURN_POLICY_ID,
+    });
   } else if (API_MODE === 'trading-verify') {
-    await createTradingListing(tokenData.access_token, API_MODE);
+    await createTradingListing(tokenData.access_token, API_MODE, API_BASE, {
+      locationName: LOCATION_NAME,
+      locationPostalCode: LOCATION_POSTAL_CODE,
+      locationCity: LOCATION_CITY,
+      locationState: LOCATION_STATE,
+      fulfillmentPolicyId: FULFILLMENT_POLICY_ID,
+      paymentPolicyId: PAYMENT_POLICY_ID,
+      returnPolicyId: RETURN_POLICY_ID,
+    });
   } else {
-    await createDraftListing(tokenData.access_token);
+    await createDraftListing(tokenData.access_token, API_BASE);
   }
 
 } else {

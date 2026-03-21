@@ -2,22 +2,19 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   hasValidSession,
   getValidUserToken,
-  getInventoryItems,
-  getOffers,
-  getOffersForInventorySkus,
-  isValidEbaySku,
   exchangeCodeForToken,
   saveUserToken,
   clearUserToken,
   type EbayInventoryItem,
   type EbayOffer,
-  type EbayOfferPage,
 } from '@/services/ebay';
+import {
+  isEbayAuthError,
+  loadEbayListingsSnapshot,
+  type EbayPublishedListing,
+} from '@/hooks/ebayListingsHelpers';
 
-export interface EbayPublishedListing {
-  item: EbayInventoryItem;
-  offer: EbayOffer;
-}
+export type { EbayPublishedListing } from '@/hooks/ebayListingsHelpers';
 
 export interface EbayListingsState {
   authenticated: boolean;
@@ -32,33 +29,6 @@ export interface EbayListingsState {
   disconnect: () => void;
 }
 
-const MAX_VISIBLE_LISTINGS = 20;
-
-function statusRank(status?: EbayOffer['status']): number {
-  if (status === 'UNPUBLISHED') return 0;
-  if (status === 'PUBLISHED') return 1;
-  return 2;
-}
-
-function offerRecencyRank(offer: EbayOffer): number {
-  const numericId = Number(offer.listingId ?? offer.offerId ?? 0);
-  return Number.isFinite(numericId) ? numericId : 0;
-}
-
-function buildPublishedListings(items: EbayInventoryItem[], offers: EbayOffer[]): EbayPublishedListing[] {
-  const itemBySku = new Map(items.map(item => [item.sku, item]));
-
-  return offers
-    .filter(offer => offer.status === 'PUBLISHED')
-    .map(offer => {
-      const item = itemBySku.get(offer.sku);
-      return item ? { item, offer } : null;
-    })
-    .filter((listing): listing is EbayPublishedListing => listing !== null)
-    .sort((a, b) => offerRecencyRank(b.offer) - offerRecencyRank(a.offer))
-    .slice(0, MAX_VISIBLE_LISTINGS);
-}
-
 export function useEbayListings(enabled = true): EbayListingsState {
   const hasEnvRefreshToken = Boolean(import.meta.env.VITE_EBAY_REFRESH_TOKEN);
   const oauthParams = new URLSearchParams(window.location.search);
@@ -71,6 +41,31 @@ export function useEbayListings(enabled = true): EbayListingsState {
   const [offers, setOffers] = useState<EbayOffer[]>([]);
   const [recentListings, setRecentListings] = useState<EbayPublishedListing[]>([]);
   const [total, setTotal] = useState(0);
+
+  function clearListingData() {
+    setInventoryItems([]);
+    setOffers([]);
+    setRecentListings([]);
+    setTotal(0);
+  }
+
+  function applyListingSnapshot(snapshot: Awaited<ReturnType<typeof loadEbayListingsSnapshot>>) {
+    setInventoryItems(snapshot.inventoryItems);
+    setOffers(snapshot.offers);
+    setRecentListings(snapshot.recentListings);
+    setTotal(snapshot.total);
+
+    if (snapshot.warning) {
+      setError(snapshot.warning);
+    }
+  }
+
+  function handleAuthFailure(message: string) {
+    clearUserToken();
+    setAuthenticated(false);
+    clearListingData();
+    setError(message);
+  }
 
   // Handle OAuth callback — detect ?code= in URL on page load
   useEffect(() => {
@@ -121,40 +116,15 @@ export function useEbayListings(enabled = true): EbayListingsState {
       .then(() => {
         setAuthenticated(true);
 
-        return getInventoryItems(100).then(async itemsPage => {
-          let offersPage: EbayOfferPage = { offers: [] as EbayOffer[], total: 0 };
-          let offersWarning: string | null = null;
-
-          try {
-            offersPage = await getOffers(undefined, 100);
-          } catch {
-            offersPage = await getOffersForInventorySkus(itemsPage.inventoryItems.map(item => item.sku));
-            offersWarning = 'Loaded inventory. Some eBay offer details were skipped because at least one legacy SKU is invalid.';
-          }
-
-          const offerBySku = new Map(offersPage.offers.map(o => [o.sku, o]));
-          const sorted = [...itemsPage.inventoryItems].sort(
-            (a, b) => statusRank(offerBySku.get(a.sku)?.status) - statusRank(offerBySku.get(b.sku)?.status)
-          );
-          const visibleItems = sorted.filter(item => isValidEbaySku(item.sku));
-
-          setInventoryItems(visibleItems.slice(0, MAX_VISIBLE_LISTINGS));
-          setOffers(offersPage.offers);
-          setRecentListings(buildPublishedListings(visibleItems, offersPage.offers));
-          setTotal(visibleItems.length);
-
-          if (offersWarning) {
-            setError(offersWarning);
-          }
-        });
+        return loadEbayListingsSnapshot().then(applyListingSnapshot);
       })
       .catch(err => {
-        const e = err as Error & { code?: string };
-        if (e.code === 'auth_required' || e.code === 'invalid_grant') {
-          clearUserToken();
-          setAuthenticated(false);
+        if (isEbayAuthError(err)) {
+          handleAuthFailure(err.message);
+          return;
         }
-        setError(e.message);
+
+        setError((err as Error).message);
       })
       .finally(() => {
         setLoading(false);
@@ -168,44 +138,12 @@ export function useEbayListings(enabled = true): EbayListingsState {
     setLoading(true);
     setError(null);
     try {
-      const itemsPage = await getInventoryItems(100);
-      let offersPage: EbayOfferPage = { offers: [] as EbayOffer[], total: 0 };
-      let offersWarning: string | null = null;
-
-      try {
-        offersPage = await getOffers(undefined, 100);
-      } catch {
-        offersPage = await getOffersForInventorySkus(itemsPage.inventoryItems.map(item => item.sku));
-        offersWarning = 'Loaded inventory. Some eBay offer details were skipped because at least one legacy SKU is invalid.';
-      }
-
-      const offerBySku = new Map(offersPage.offers.map(o => [o.sku, o]));
-      const sorted = [...itemsPage.inventoryItems].sort(
-        (a, b) => statusRank(offerBySku.get(a.sku)?.status) - statusRank(offerBySku.get(b.sku)?.status)
-      );
-      const visibleItems = sorted.filter(item => isValidEbaySku(item.sku));
-
-      setInventoryItems(visibleItems.slice(0, MAX_VISIBLE_LISTINGS));
-      setOffers(offersPage.offers);
-      setRecentListings(buildPublishedListings(visibleItems, offersPage.offers));
-      setTotal(visibleItems.length);
-
-      if (offersWarning) {
-        setError(offersWarning);
-      }
+      applyListingSnapshot(await loadEbayListingsSnapshot());
     } catch (err) {
-      const e = err as Error & { code?: string };
-      if (e.code === 'auth_required' || e.code === 'invalid_grant') {
-        // Token is bad — wipe state and show connect screen
-        clearUserToken();
-        setAuthenticated(false);
-        setInventoryItems([]);
-        setOffers([]);
-        setRecentListings([]);
-        setTotal(0);
-        setError(e.message);
+      if (isEbayAuthError(err)) {
+        handleAuthFailure(err.message);
       } else {
-        setError(e.message);
+        setError((err as Error).message);
       }
     } finally {
       setLoading(false);
@@ -222,10 +160,7 @@ export function useEbayListings(enabled = true): EbayListingsState {
     if (!enabled) return;
     clearUserToken();
     setAuthenticated(false);
-    setInventoryItems([]);
-    setOffers([]);
-    setRecentListings([]);
-    setTotal(0);
+    clearListingData();
     setError(null);
   }, [enabled]);
 

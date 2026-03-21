@@ -1,14 +1,9 @@
 import { FormEvent, useMemo, useRef, useState } from 'react';
-import { ASSIGNABLE_PAGES, AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
+import { AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
 import { AppUser, useAuth } from '@/context/AuthContext';
-
-interface NewUserFormState {
-  name: string;
-  email: string;
-  password: string;
-  role: 'admin' | 'user';
-  allowedPages: AppPage[];
-}
+import { UserDetailPanel } from '@/components/users/UserDetailPanel';
+import { UserDirectoryPanel } from '@/components/users/UserDirectoryPanel';
+import { NewUserFormState, RoleFilter, UserSortKey } from '@/components/users/userManagementTypes';
 
 function defaultFormState(): NewUserFormState {
   return {
@@ -25,9 +20,6 @@ interface UserManagementTabProps {
   onSelectUser: (userId: string) => void;
   onBackToList: () => void;
 }
-
-type RoleFilter = 'all' | 'admin' | 'user';
-type UserSortKey = 'name' | 'email' | 'role' | 'pages';
 
 function roleBadgeClassName(role: AppUser['role']): string {
   return role === 'admin'
@@ -168,263 +160,48 @@ export function UserManagementTab({ selectedUserId, onSelectUser, onBackToList }
 
   if (selectedUser) {
     return (
-      <section className="mt-3 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4">
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-          <button
-            type="button"
-            className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
-            onClick={onBackToList}
-          >
-            Back to Users List
-          </button>
-          <div>
-            <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300">User Detail</p>
-            <h2 className="m-0 mt-1 text-xl font-semibold text-[var(--ink)]">{selectedUser.name}</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">{selectedUser.email}</p>
-          </div>
-          <span className={roleBadgeClassName(selectedUser.role)}>{selectedUser.role}</span>
-        </div>
-
-        {statusMessage && <p className="mb-4 rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{statusMessage}</p>}
-
-        <article className="flex flex-col gap-4 rounded-2xl border border-white/15 bg-slate-950/45 p-4 shadow-[0_12px_26px_rgba(0,0,0,0.28)]">
-          <div>
-            <p className="m-0 text-xs uppercase tracking-[0.12em] text-slate-300">User ID</p>
-            <p className="mt-1 font-mono text-sm text-slate-200">{selectedUser.id}</p>
-          </div>
-
-          <label className={labelClassName} htmlFor={`role-${selectedUser.id}`}>Role</label>
-          <select
-            id={`role-${selectedUser.id}`}
-            className={inputClassName}
-            value={selectedUser.role}
-            onChange={(event) => updateUserRole(selectedUser.id, event.target.value === 'admin' ? 'admin' : 'user')}
-          >
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-          </select>
-
-          <div>
-            <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300">Accessible Pages</p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {ASSIGNABLE_PAGES.map((page) => (
-                <label key={`${selectedUser.id}-${page}`} className="inline-flex items-center gap-2 text-sm text-[var(--ink)]">
-                  <input
-                    type="checkbox"
-                    className={checkboxClassName}
-                    checked={selectedUser.role === 'admin' ? true : selectedUser.allowedPages.includes(page)}
-                    disabled={selectedUser.role === 'admin'}
-                    onChange={() => togglePermission(selectedUser, page)}
-                  />
-                  <span>{PAGE_DEFINITIONS[page].label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
-            onClick={() => handleReset(selectedUser.email)}
-          >
-            Send Password Reset Email
-          </button>
-        </article>
-      </section>
+      <UserDetailPanel
+        selectedUser={selectedUser}
+        statusMessage={statusMessage}
+        labelClassName={labelClassName}
+        inputClassName={inputClassName}
+        checkboxClassName={checkboxClassName}
+        roleBadgeClassName={roleBadgeClassName}
+        onBackToList={onBackToList}
+        onRoleChange={(role) => updateUserRole(selectedUser.id, role)}
+        onTogglePermission={(page) => togglePermission(selectedUser, page)}
+        onSendPasswordReset={() => handleReset(selectedUser.email)}
+      />
     );
   }
 
   return (
-    <section className="mt-3 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="m-0 text-xl font-semibold text-[var(--ink)]">User Management</h2>
-          <p className="mt-2 text-sm text-[var(--muted)]">Admins can manage users in a table list and open each profile in its own URL.</p>
-        </div>
-        <button
-          type="button"
-          className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-blue-400"
-          onClick={scrollToCreateUserSection}
-        >
-          Create User
-        </button>
-      </div>
-
-      {statusMessage && <p className="mb-4 rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{statusMessage}</p>}
-
-      <section className="rounded-2xl border border-white/15 bg-slate-950/45 p-4 shadow-[0_12px_26px_rgba(0,0,0,0.28)]">
-        <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-4">
-          <label className="flex flex-col gap-1.5 lg:col-span-2">
-            <span className={labelClassName}>Search</span>
-            <input
-              type="text"
-              className={inputClassName}
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search by name, email, or pages"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <span className={labelClassName}>Role Filter</span>
-            <select
-              className={inputClassName}
-              value={roleFilter}
-              onChange={(event) => setRoleFilter(event.target.value as RoleFilter)}
-            >
-              <option value="all">All Roles</option>
-              <option value="admin">Admin</option>
-              <option value="user">User</option>
-            </select>
-          </label>
-
-          <div className="flex gap-2">
-            <label className="flex flex-1 flex-col gap-1.5">
-              <span className={labelClassName}>Sort By</span>
-              <select
-                className={inputClassName}
-                value={sortKey}
-                onChange={(event) => setSortKey(event.target.value as UserSortKey)}
-              >
-                <option value="name">Name</option>
-                <option value="email">Email</option>
-                <option value="role">Role</option>
-                <option value="pages">Accessible Pages</option>
-              </select>
-            </label>
-
-            <label className="flex w-[6.5rem] flex-col gap-1.5">
-              <span className={labelClassName}>Order</span>
-              <select
-                className={inputClassName}
-                value={sortDirection}
-                onChange={(event) => setSortDirection(event.target.value as 'asc' | 'desc')}
-              >
-                <option value="asc">Asc</option>
-                <option value="desc">Desc</option>
-              </select>
-            </label>
-          </div>
-        </div>
-
-        <p className="mb-3 text-xs text-slate-300">
-          Showing <strong>{listUsers.length}</strong> of <strong>{sortedUsers.length}</strong> users
-        </p>
-
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr>
-                <th className="border-b border-white/15 px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] text-slate-300">Name</th>
-                <th className="border-b border-white/15 px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] text-slate-300">Email</th>
-                <th className="border-b border-white/15 px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] text-slate-300">Role</th>
-                <th className="border-b border-white/15 px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] text-slate-300">Accessible Pages</th>
-                <th className="border-b border-white/15 px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] text-slate-300">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {listUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-white/5 transition">
-                  <td className="border-b border-white/10 px-3 py-2.5 text-[var(--ink)] font-medium">{user.name}</td>
-                  <td className="border-b border-white/10 px-3 py-2.5 text-[var(--muted)]">{user.email}</td>
-                  <td className="border-b border-white/10 px-3 py-2.5"><span className={roleBadgeClassName(user.role)}>{user.role}</span></td>
-                  <td className="border-b border-white/10 px-3 py-2.5 text-[var(--muted)] max-w-[380px]">{formatAccessiblePages(user)}</td>
-                  <td className="border-b border-white/10 px-3 py-2.5">
-                    <button
-                      type="button"
-                      className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/10"
-                      onClick={() => onSelectUser(user.id)}
-                    >
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {listUsers.length === 0 && (
-                <tr>
-                  <td className="px-3 py-5 text-center text-sm text-slate-300" colSpan={5}>
-                    No users match the current search/filter options.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section ref={createUserSectionRef} className="mt-6 border-t border-[var(--line)] pt-5">
-        <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Create User</h3>
-        <form onSubmit={handleCreateUser} className="mt-4 flex flex-col gap-2.5">
-          <label className={labelClassName} htmlFor="new-user-name">Name</label>
-          <input
-            id="new-user-name"
-            name="new-user-name"
-            className={inputClassName}
-            value={newUser.name}
-            onChange={(event) => setNewUser((previous) => ({ ...previous, name: event.target.value }))}
-            autoComplete="name"
-            required
-          />
-
-          <label className={`${labelClassName} mt-2`} htmlFor="new-user-email">Email</label>
-          <input
-            id="new-user-email"
-            name="new-user-email"
-            className={inputClassName}
-            type="email"
-            value={newUser.email}
-            onChange={(event) => setNewUser((previous) => ({ ...previous, email: event.target.value }))}
-            autoComplete="email"
-            required
-          />
-
-          <label className={`${labelClassName} mt-2`} htmlFor="new-user-password">Temporary Password</label>
-          <input
-            id="new-user-password"
-            name="new-user-password"
-            className={inputClassName}
-            type="password"
-            value={newUser.password}
-            onChange={(event) => setNewUser((previous) => ({ ...previous, password: event.target.value }))}
-            autoComplete="new-password"
-            required
-          />
-
-          <label className={`${labelClassName} mt-2`} htmlFor="new-user-role">Role</label>
-          <select
-            id="new-user-role"
-            name="new-user-role"
-            className={inputClassName}
-            value={newUser.role}
-            onChange={(event) => setNewUser((previous) => ({
-              ...previous,
-              role: event.target.value === 'admin' ? 'admin' : 'user',
-            }))}
-          >
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-          </select>
-
-          {newUser.role === 'user' && (
-            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {ASSIGNABLE_PAGES.map((page) => (
-                <label key={`new-${page}`} className="inline-flex items-center gap-2 text-sm text-[var(--ink)]">
-                  <input
-                    type="checkbox"
-                    className={checkboxClassName}
-                    checked={newUser.allowedPages.includes(page)}
-                    onChange={() => handleNewUserPageToggle(page)}
-                  />
-                  <span>{PAGE_DEFINITIONS[page].label}</span>
-                </label>
-              ))}
-            </div>
-          )}
-
-          <button type="submit" className="mt-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-blue-400">Create User</button>
-          {createdMessage && <p className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{createdMessage}</p>}
-        </form>
-      </section>
-    </section>
+    <UserDirectoryPanel
+      statusMessage={statusMessage}
+      createdMessage={createdMessage}
+      sortedUsers={sortedUsers}
+      listUsers={listUsers}
+      searchTerm={searchTerm}
+      roleFilter={roleFilter}
+      sortKey={sortKey}
+      sortDirection={sortDirection}
+      newUser={newUser}
+      labelClassName={labelClassName}
+      inputClassName={inputClassName}
+      checkboxClassName={checkboxClassName}
+      roleBadgeClassName={roleBadgeClassName}
+      formatAccessiblePages={formatAccessiblePages}
+      createUserSectionRef={createUserSectionRef}
+      onSearchTermChange={setSearchTerm}
+      onRoleFilterChange={setRoleFilter}
+      onSortKeyChange={setSortKey}
+      onSortDirectionChange={setSortDirection}
+      onSelectUser={onSelectUser}
+      onCreateUserSubmit={handleCreateUser}
+      onScrollToCreateUser={scrollToCreateUserSection}
+      onNewUserFieldChange={(field, value) => setNewUser((previous) => ({ ...previous, [field]: value }))}
+      onNewUserRoleChange={(role) => setNewUser((previous) => ({ ...previous, role }))}
+      onNewUserPageToggle={handleNewUserPageToggle}
+    />
   );
 }

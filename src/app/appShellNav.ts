@@ -1,0 +1,82 @@
+import { Tab, EBAY_TAB_SET, UTILITY_TAB_SET, navLabel } from './appNavigation';
+
+interface NavTab {
+  key: Tab;
+  label: string;
+  active: boolean;
+  badgeCount?: number;
+  disabled?: boolean;
+  onClick: () => void;
+}
+
+interface BuildNavTabsInput {
+  visibleTabs: Tab[];
+  activeTab: Tab;
+  exportingPdf: boolean;
+  approvalPending: number;
+  totalNewSubmissions: number;
+  navigateToTab: (tab: Tab) => void;
+  navigateToApprovalList: () => void;
+  navigateToUsersList: () => void;
+}
+
+export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
+  tabs: NavTab[];
+  ebayNavTabs: NavTab[];
+  postEbayNavTabs: NavTab[];
+  utilityNavTabs: NavTab[];
+} {
+  const {
+    visibleTabs,
+    activeTab,
+    exportingPdf,
+    approvalPending,
+    totalNewSubmissions,
+    navigateToTab,
+    navigateToApprovalList,
+    navigateToUsersList,
+  } = input;
+
+  const mainTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab) && tab !== 'market');
+  const postEbayTabs = visibleTabs.filter((tab) => tab === 'market');
+  const ebayTabs = visibleTabs.filter((tab) => EBAY_TAB_SET.has(tab));
+  const utilityTabs = visibleTabs.filter((tab) => UTILITY_TAB_SET.has(tab));
+
+  const tabs = mainTabs.map((tab) => ({
+    key: tab,
+    label: navLabel(tab),
+    active: activeTab === tab,
+    badgeCount: tab === 'jotform' ? totalNewSubmissions : undefined,
+    disabled: exportingPdf,
+    onClick: () => navigateToTab(tab),
+  }));
+
+  const ebayNavTabs = ebayTabs.map((tab) => ({
+    key: tab,
+    label: navLabel(tab),
+    active: activeTab === tab,
+    badgeCount: tab === 'approval' ? approvalPending : undefined,
+    disabled: exportingPdf,
+    onClick: () => (tab === 'approval' ? navigateToApprovalList() : navigateToTab(tab)),
+  }));
+
+  const postEbayNavTabs = postEbayTabs.map((tab) => ({
+    key: tab,
+    label: navLabel(tab),
+    active: activeTab === tab,
+    badgeCount: undefined,
+    disabled: exportingPdf,
+    onClick: () => navigateToTab(tab),
+  }));
+
+  const utilityNavTabs = utilityTabs.map((tab) => ({
+    key: tab,
+    label: navLabel(tab),
+    active: activeTab === tab,
+    badgeCount: undefined,
+    disabled: exportingPdf,
+    onClick: () => (tab === 'users' ? navigateToUsersList() : navigateToTab(tab)),
+  }));
+
+  return { tabs, ebayNavTabs, postEbayNavTabs, utilityNavTabs };
+}
