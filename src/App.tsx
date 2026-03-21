@@ -361,7 +361,8 @@ function App() {
     }
   }
 
-  const mainTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab));
+  const mainTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab) && tab !== 'market');
+  const postEbayTabs = visibleTabs.filter((tab) => tab === 'market');
   const ebayTabs = visibleTabs.filter((tab) => EBAY_TAB_SET.has(tab));
   const utilityTabs = visibleTabs.filter((tab) => UTILITY_TAB_SET.has(tab));
 
@@ -383,6 +384,15 @@ function App() {
     onClick: () => tab === 'approval' ? navigateToApprovalList() : navigateToTab(tab),
   }));
 
+  const postEbayNavTabs = postEbayTabs.map((tab) => ({
+    key: tab,
+    label: navLabel(tab),
+    active: activeTab === tab,
+    badgeCount: undefined,
+    disabled: exportingPdf,
+    onClick: () => navigateToTab(tab),
+  }));
+
   const utilityNavTabs = utilityTabs.map((tab) => ({
     key: tab,
     label: navLabel(tab),
@@ -399,6 +409,7 @@ function App() {
       shellRef={shellRef}
       currentUserLabel={`${currentUser.name} · ${currentUser.role}`}
       tabs={tabs}
+      postEbayTabs={postEbayNavTabs}
       ebayTabs={ebayNavTabs}
       utilityTabs={utilityNavTabs}
       refreshLabel={loading ? 'Refreshing...' : 'Refresh'}

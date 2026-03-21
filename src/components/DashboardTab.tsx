@@ -201,14 +201,18 @@ export function DashboardTab({
     positive: 'bg-emerald-900/50 text-emerald-300',
   } as const;
   const sectionBaseClass = 'scroll-mt-24';
-  const workflowCards = useMemo(() => {
-    const cards: Array<{
-      id: AppPage;
-      title: string;
-      eyebrow: string;
-      detail: string;
-      stats: string[];
-    }> = [];
+  const sectionHeaderClass = 'mb-4 flex items-center border-b border-[var(--line)] pb-3 pt-1';
+  const sectionHeaderLabelClass = 'm-0 text-[1.05rem] font-semibold text-[var(--ink)]';
+  type WorkflowCard = {
+    id: AppPage;
+    title: string;
+    eyebrow: string;
+    detail: string;
+    stats: string[];
+  };
+
+  const ebayCards = useMemo(() => {
+    const cards: WorkflowCard[] = [];
 
     if (accessiblePages.includes('ebay')) {
       cards.push({
@@ -248,23 +252,43 @@ export function DashboardTab({
       });
     }
 
-    if (accessiblePages.includes('market')) {
-      cards.push({
-        id: 'market',
-        title: 'Market Pricing Research',
-        eyebrow: marketCurrentSlug ? `Tracking ${marketCurrentSlug}` : 'No active lookup',
-        detail: marketError
-          ? marketError
-          : marketCurrentSlug
-            ? 'Use the saved HiFiShark lookup to compare asking prices and validate current market demand.'
-            : 'Run a model search to capture current comps before pricing inventory.',
-        stats: marketLoading
-          ? ['Searching HiFiShark…']
-          : marketCurrentSlug
-            ? [`${marketListingCount} result${marketListingCount === 1 ? '' : 's'}`, 'Price comps', 'Research linkouts']
-            : ['Model slug search', 'Recent comps', 'Pricing check'],
-      });
-    }
+    return cards;
+  }, [
+    accessiblePages,
+    approvalApproved,
+    approvalError,
+    approvalLoading,
+    approvalPending,
+    approvalTotal,
+    ebayAuthenticated,
+    ebayDraftCount,
+    ebayError,
+    ebayPublishedCount,
+    ebayRestoringSession,
+    ebayTotal,
+  ]);
+
+  const marketCard = useMemo((): WorkflowCard | null => {
+    if (!accessiblePages.includes('market')) return null;
+    return {
+      id: 'market',
+      title: 'Market Pricing Research',
+      eyebrow: marketCurrentSlug ? `Tracking ${marketCurrentSlug}` : 'No active lookup',
+      detail: marketError
+        ? marketError
+        : marketCurrentSlug
+          ? 'Use the saved HiFiShark lookup to compare asking prices and validate current market demand.'
+          : 'Run a model search to capture current comps before pricing inventory.',
+      stats: marketLoading
+        ? ['Searching HiFiShark…']
+        : marketCurrentSlug
+          ? [`${marketListingCount} result${marketListingCount === 1 ? '' : 's'}`, 'Price comps', 'Research linkouts']
+          : ['Model slug search', 'Recent comps', 'Pricing check'],
+    };
+  }, [accessiblePages, marketCurrentSlug, marketError, marketListingCount, marketLoading]);
+
+  const utilityCards = useMemo(() => {
+    const cards: WorkflowCard[] = [];
 
     if (accessiblePages.includes('imagelab')) {
       cards.push({
@@ -295,29 +319,9 @@ export function DashboardTab({
     }
 
     return cards;
-  }, [
-    accessiblePages,
-    adminCount,
-    aiProvider,
-    approvalApproved,
-    approvalError,
-    approvalLoading,
-    approvalPending,
-    approvalTotal,
-    ebayAuthenticated,
-    ebayDraftCount,
-    ebayError,
-    ebayPublishedCount,
-    ebayRestoringSession,
-    ebayTotal,
-    marketCurrentSlug,
-    marketError,
-    marketListingCount,
-    marketLoading,
-    userCount,
-  ]);
+  }, [accessiblePages, adminCount, aiProvider, userCount]);
+
   const sections = useMemo(() => {
-    const hasEbayWorkflow = workflowCards.some((card) => card.id === 'ebay');
     const baseSections = [
       { id: 'overview', label: 'Dashboard' },
       { id: 'insights', label: 'Insights' },
@@ -326,10 +330,13 @@ export function DashboardTab({
       { id: 'inquiries', label: 'JotForm' },
     ];
 
-    return workflowCards.length > 0
-      ? [...baseSections, { id: 'workflows', label: hasEbayWorkflow ? 'eBay + Utilities' : 'Utilities' }]
-      : baseSections;
-  }, [workflowCards]);
+    const extra: { id: string; label: string }[] = [];
+    if (ebayCards.length > 0) extra.push({ id: 'ebay-workflows', label: 'eBay' });
+    if (marketCard) extra.push({ id: 'market-research', label: 'HiFi Shark' });
+    if (utilityCards.length > 0) extra.push({ id: 'utility-workflows', label: 'Utilities' });
+
+    return [...baseSections, ...extra];
+  }, [ebayCards, marketCard, utilityCards]);
   const [activeSectionId, setActiveSectionId] = useState(sections[0]?.id ?? 'overview');
 
   useEffect(() => {
@@ -370,14 +377,12 @@ export function DashboardTab({
   }
 
   return (
-    <div className="flex flex-col gap-4 pt-1">
+    <div className="flex flex-col gap-12 pt-1">
       <DashboardSectionNav sections={sections} activeSectionId={activeSectionId} onSelectSection={scrollToSection} />
 
       <section id="overview" className={`${sectionBaseClass} flex flex-col gap-3`}>
-        <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-[linear-gradient(135deg,rgba(19,37,59,0.96),rgba(31,111,235,0.9))] px-4 py-2.5 text-slate-50 shadow-[0_4px_12px_rgba(17,32,49,0.12)]">
-          <span className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-white/60">Dashboard</span>
-          <span className="text-white/30">·</span>
-          <h2 className="m-0 text-[0.95rem] font-bold leading-none">Operations Snapshot</h2>
+        <div className={sectionHeaderClass}>
+          <h2 className={sectionHeaderLabelClass}>Dashboard</h2>
         </div>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -472,10 +477,9 @@ export function DashboardTab({
       </section>
 
       <section id="insights" className={`${sectionBaseClass} flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]`}>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] pb-3">
-            <h2 className="m-0 text-[0.92rem] font-bold text-[var(--ink)]">Operational Insights</h2>
-            <p className="m-0 text-[0.78rem] text-[var(--muted)]">Automated trend alerts from current dashboard metrics</p>
-          </div>
+        <div className={sectionHeaderClass}>
+          <h2 className={sectionHeaderLabelClass}>Insights</h2>
+        </div>
           {insights.length > 0 ? (
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               {insights.map((insight) => (
@@ -514,9 +518,12 @@ export function DashboardTab({
         </section>
 
       <section id="inventory" className={`${sectionBaseClass} flex flex-col gap-[1.1rem] rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]`}>
+        <div className={sectionHeaderClass}>
+          <h2 className={sectionHeaderLabelClass}>Airtable</h2>
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="m-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-bold text-[var(--ink)]">Airtable Inventory Recap <span className="text-[0.72rem] font-medium tracking-[0.02em] text-[var(--muted)]">All products in Airtable</span></h2>
+            <h3 className="m-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-bold text-[var(--ink)]">Airtable Inventory Recap <span className="text-[0.72rem] font-medium tracking-[0.02em] text-[var(--muted)]">All products in Airtable</span></h3>
           </div>
           <button type="button" className="cursor-pointer self-start rounded-lg border border-[var(--line)] bg-transparent px-[0.85rem] py-[0.38rem] text-[0.78rem] font-semibold text-[var(--accent)] transition-[background,border-color] duration-[140ms] hover:border-[var(--accent)] hover:bg-[var(--panel)]" onClick={() => onSelectTab('airtable')}>
             Open Airtable Inventory →
@@ -643,6 +650,10 @@ export function DashboardTab({
       </section>
 
       <div id="pipeline" className={`${sectionBaseClass} grid grid-cols-1 gap-4 md:grid-cols-2`}>
+        <div className={`md:col-span-2 ${sectionHeaderClass}`}>
+          <h2 className={sectionHeaderLabelClass}>Shopify</h2>
+        </div>
+
         <section className="flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]">
           <h2 className="m-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-bold text-[var(--ink)]">Submission Volume <span className="text-[0.72rem] font-medium tracking-[0.02em] text-[var(--muted)]">Last 14 days</span></h2>
           {jfLoading ? (
@@ -788,6 +799,10 @@ export function DashboardTab({
       </div>
 
       <div id="inquiries" className={`${sectionBaseClass} grid grid-cols-1 gap-4 md:grid-cols-2`}>
+        <div className={`md:col-span-2 ${sectionHeaderClass}`}>
+          <h2 className={sectionHeaderLabelClass}>JotForm</h2>
+        </div>
+
         <section className="flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]">
           <h2 className="m-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-bold text-[var(--ink)]">Top Requested Brands <span className="text-[0.72rem] font-medium tracking-[0.02em] text-[var(--muted)]">From last 500 submissions</span></h2>
           {jfLoading ? (
@@ -868,16 +883,80 @@ export function DashboardTab({
         </section>
       </div>
 
-      {workflowCards.length > 0 && (
-        <section id="workflows" className={`${sectionBaseClass} flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]`}>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] pb-3">
-            <div>
-              <h2 className="m-0 text-[0.92rem] font-bold text-[var(--ink)]">eBay and Utility Shortcuts</h2>
-              <p className="m-0 mt-1 text-[0.78rem] text-[var(--muted)]">Quick access to eBay operations and utility tools.</p>
-            </div>
+      {ebayCards.length > 0 && (
+        <section id="ebay-workflows" className={`${sectionBaseClass} flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]`}>
+          <div className={sectionHeaderClass}>
+            <h2 className={sectionHeaderLabelClass}>eBay</h2>
           </div>
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
-            {workflowCards.map((card) => (
+            {ebayCards.map((card) => (
+              <button
+                key={card.id}
+                type="button"
+                className="flex h-full flex-col gap-3 rounded-[16px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(104,164,255,0.1),transparent_56%),linear-gradient(180deg,rgba(15,23,42,0.9),rgba(8,15,26,0.96))] p-4 text-left text-[var(--ink)] transition hover:-translate-y-px hover:border-sky-400/35 hover:shadow-[0_18px_34px_rgba(2,6,23,0.28)]"
+                onClick={() => onSelectTab(card.id)}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="m-0 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-sky-200/80">{card.eyebrow}</p>
+                    <h3 className="m-0 mt-1 text-[0.98rem] font-bold text-white">{card.title}</h3>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[0.68rem] font-semibold text-white/70">{PAGE_DEFINITIONS[card.id].label}</span>
+                </div>
+                <p className="m-0 min-h-[3.6rem] text-[0.8rem] leading-[1.55] text-slate-300">{card.detail}</p>
+                <div className="mt-auto flex flex-wrap gap-2">
+                  {card.stats.map((stat) => (
+                    <span key={stat} className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2.5 py-1 text-[0.7rem] font-semibold text-sky-100">
+                      {stat}
+                    </span>
+                  ))}
+                </div>
+                <span className="text-[0.74rem] font-semibold text-[var(--accent)]">Open {PAGE_DEFINITIONS[card.id].label} →</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {marketCard && (
+        <section id="market-research" className={`${sectionBaseClass} flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]`}>
+          <div className={sectionHeaderClass}>
+            <h2 className={sectionHeaderLabelClass}>HiFi Shark</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
+            <button
+              type="button"
+              className="flex h-full flex-col gap-3 rounded-[16px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(104,164,255,0.1),transparent_56%),linear-gradient(180deg,rgba(15,23,42,0.9),rgba(8,15,26,0.96))] p-4 text-left text-[var(--ink)] transition hover:-translate-y-px hover:border-sky-400/35 hover:shadow-[0_18px_34px_rgba(2,6,23,0.28)]"
+              onClick={() => onSelectTab(marketCard.id)}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="m-0 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-sky-200/80">{marketCard.eyebrow}</p>
+                  <h3 className="m-0 mt-1 text-[0.98rem] font-bold text-white">{marketCard.title}</h3>
+                </div>
+                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[0.68rem] font-semibold text-white/70">{PAGE_DEFINITIONS[marketCard.id].label}</span>
+              </div>
+              <p className="m-0 min-h-[3.6rem] text-[0.8rem] leading-[1.55] text-slate-300">{marketCard.detail}</p>
+              <div className="mt-auto flex flex-wrap gap-2">
+                {marketCard.stats.map((stat) => (
+                  <span key={stat} className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2.5 py-1 text-[0.7rem] font-semibold text-sky-100">
+                    {stat}
+                  </span>
+                ))}
+              </div>
+              <span className="text-[0.74rem] font-semibold text-[var(--accent)]">Open {PAGE_DEFINITIONS[marketCard.id].label} →</span>
+            </button>
+          </div>
+        </section>
+      )}
+
+      {utilityCards.length > 0 && (
+        <section id="utility-workflows" className={`${sectionBaseClass} flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]`}>
+          <div className={sectionHeaderClass}>
+            <h2 className={sectionHeaderLabelClass}>Utilities</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
+            {utilityCards.map((card) => (
               <button
                 key={card.id}
                 type="button"

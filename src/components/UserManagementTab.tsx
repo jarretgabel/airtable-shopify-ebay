@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useRef, useState } from 'react';
 import { ASSIGNABLE_PAGES, AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
 import { AppUser, useAuth } from '@/context/AuthContext';
 
@@ -52,6 +52,7 @@ export function UserManagementTab({ selectedUserId, onSelectUser, onBackToList }
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [sortKey, setSortKey] = useState<UserSortKey>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const createUserSectionRef = useRef<HTMLElement>(null);
 
   const sortedUsers = useMemo(
     () => [...users].sort((a, b) => a.email.localeCompare(b.email)),
@@ -136,6 +137,10 @@ export function UserManagementTab({ selectedUserId, onSelectUser, onBackToList }
       : [...newUser.allowedPages, page];
 
     setNewUser((previous) => ({ ...previous, allowedPages }));
+  }
+
+  function scrollToCreateUserSection(): void {
+    createUserSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   const labelClassName = 'text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300';
@@ -236,6 +241,13 @@ export function UserManagementTab({ selectedUserId, onSelectUser, onBackToList }
           <h2 className="m-0 text-xl font-semibold text-[var(--ink)]">User Management</h2>
           <p className="mt-2 text-sm text-[var(--muted)]">Admins can manage users in a table list and open each profile in its own URL.</p>
         </div>
+        <button
+          type="button"
+          className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-blue-400"
+          onClick={scrollToCreateUserSection}
+        >
+          Create User
+        </button>
       </div>
 
       {statusMessage && <p className="mb-4 rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{statusMessage}</p>}
@@ -340,7 +352,7 @@ export function UserManagementTab({ selectedUserId, onSelectUser, onBackToList }
         </div>
       </section>
 
-      <section className="mt-6 border-t border-[var(--line)] pt-5">
+      <section ref={createUserSectionRef} className="mt-6 border-t border-[var(--line)] pt-5">
         <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Create User</h3>
         <form onSubmit={handleCreateUser} className="mt-4 flex flex-col gap-2.5">
           <label className={labelClassName} htmlFor="new-user-name">Name</label>

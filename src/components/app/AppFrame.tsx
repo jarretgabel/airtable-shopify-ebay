@@ -21,6 +21,7 @@ interface AppFrameProps {
   shellRef?: Ref<HTMLElement>;
   currentUserLabel: string;
   tabs: AppTab[];
+  postEbayTabs: AppTab[];
   ebayTabs: AppTab[];
   utilityTabs: AppTab[];
   refreshLabel: string;
@@ -49,6 +50,7 @@ export function AppFrame({
   shellRef,
   currentUserLabel,
   tabs,
+  postEbayTabs,
   ebayTabs,
   utilityTabs,
   refreshLabel,
@@ -65,7 +67,7 @@ export function AppFrame({
   const hasActiveEbayTab = ebayTabs.some((tab) => tab.active);
   const hasActiveUtilityTab = utilityTabs.some((tab) => tab.active);
   const [openDropdown, setOpenDropdown] = useState<OpenDropdown>(null);
-  const shellContainerRef = useRef<HTMLDivElement>(null);
+  const shellContainerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -100,13 +102,13 @@ export function AppFrame({
       ].filter(Boolean).join(' ')}
     >
       {/* Top bar */}
-      <header className="relative z-40 border-b border-[var(--line)] bg-[rgba(7,17,28,0.85)] backdrop-blur-md">
+      <header ref={shellContainerRef} className="relative z-40 border-b border-[var(--line)] bg-[rgba(7,17,28,0.85)] backdrop-blur-md">
         <div className="mx-auto flex w-[min(1200px,96vw)] items-center justify-between gap-4 py-3">
           <div>
             <span className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Inventory Operations</span>
             <h1 className="m-0 text-[1rem] font-bold leading-none text-[var(--ink)]">Listing Control Center</h1>
           </div>
-          <div ref={shellContainerRef} className="flex flex-wrap items-center gap-2" data-export-ignore="true">
+          <div className="flex flex-wrap items-center gap-2" data-export-ignore="true">
             <span className="hidden rounded-full border border-[var(--line)] px-3 py-1 text-[0.78rem] text-[var(--muted)] sm:inline">
               {currentUserLabel}
             </span>
@@ -131,28 +133,28 @@ export function AppFrame({
               </button>
               {openDropdown === 'pdf' && (
                 <div className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[230px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]">
-                <button
-                  type="button"
-                  disabled={exportDisabled}
-                  onClick={() => {
-                    closeDropdowns();
-                    onExportCurrentPage();
-                  }}
-                  className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Download Current Page
-                </button>
-                <button
-                  type="button"
-                  disabled={exportDisabled}
-                  onClick={() => {
-                    closeDropdowns();
-                    onExportAllPages();
-                  }}
-                  className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Download All Pages
-                </button>
+                  <button
+                    type="button"
+                    disabled={exportDisabled}
+                    onClick={() => {
+                      closeDropdowns();
+                      onExportCurrentPage();
+                    }}
+                    className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Download Current Page
+                  </button>
+                  <button
+                    type="button"
+                    disabled={exportDisabled}
+                    onClick={() => {
+                      closeDropdowns();
+                      onExportAllPages();
+                    }}
+                    className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Download All Pages
+                  </button>
                 </div>
               )}
             </div>
@@ -182,6 +184,7 @@ export function AppFrame({
                   )}
                 </button>
               ))}
+
               {ebayTabs.length > 0 && (
                 <div className="relative flex-shrink-0" data-export-ignore="true">
                   <button
@@ -198,7 +201,71 @@ export function AppFrame({
                   </button>
                   {openDropdown === 'ebay' && (
                     <div className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]">
-                    {ebayTabs.map((tab) => (
+                      {ebayTabs.map((tab) => (
+                        <button
+                          key={tab.key}
+                          type="button"
+                          disabled={tab.disabled}
+                          onClick={() => {
+                            closeDropdowns();
+                            tab.onClick();
+                          }}
+                          className={[
+                            'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-semibold transition',
+                            tab.active
+                              ? 'bg-sky-500/15 text-sky-200'
+                              : 'text-[var(--muted)] hover:bg-white/5 hover:text-[var(--ink)]',
+                            tab.disabled ? 'cursor-not-allowed opacity-60' : '',
+                          ].filter(Boolean).join(' ')}
+                        >
+                          <span>{tab.label}</span>
+                          {typeof tab.badgeCount === 'number' && (
+                            <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[0.65rem] font-bold leading-none text-white">
+                              {tab.badgeCount}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {postEbayTabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={tabClassName(tab.active)}
+                  disabled={tab.disabled}
+                  onClick={tab.onClick}
+                >
+                  {tab.label}
+                  {typeof tab.badgeCount === 'number' && tab.badgeCount > 0 && (
+                    <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[0.65rem] font-bold leading-none text-white">
+                      {tab.badgeCount}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {utilityTabs.length > 0 && (
+              <div className="relative flex-shrink-0" data-export-ignore="true">
+                <button
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={openDropdown === 'utilities'}
+                  onClick={() => toggleDropdown('utilities')}
+                  className={tabClassName(hasActiveUtilityTab || openDropdown === 'utilities')}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    Utilities
+                    <span className={`text-[0.72rem] transition-transform ${openDropdown === 'utilities' ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
+                  </span>
+                </button>
+                {openDropdown === 'utilities' && (
+                  <div className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[240px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]">
+                    {utilityTabs.map((tab) => (
                       <button
                         key={tab.key}
                         type="button"
@@ -223,52 +290,6 @@ export function AppFrame({
                         )}
                       </button>
                     ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            {utilityTabs.length > 0 && (
-              <div className="relative flex-shrink-0" data-export-ignore="true">
-                <button
-                  type="button"
-                  aria-haspopup="menu"
-                  aria-expanded={openDropdown === 'utilities'}
-                  onClick={() => toggleDropdown('utilities')}
-                  className={tabClassName(hasActiveUtilityTab || openDropdown === 'utilities')}
-                >
-                  <span className="inline-flex items-center gap-1.5">
-                    Utilities
-                    <span className={`text-[0.72rem] transition-transform ${openDropdown === 'utilities' ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
-                  </span>
-                </button>
-                {openDropdown === 'utilities' && (
-                  <div className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[240px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]">
-                  {utilityTabs.map((tab) => (
-                    <button
-                      key={tab.key}
-                      type="button"
-                      disabled={tab.disabled}
-                      onClick={() => {
-                        closeDropdowns();
-                        tab.onClick();
-                      }}
-                      className={[
-                        'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-semibold transition',
-                        tab.active
-                          ? 'bg-sky-500/15 text-sky-200'
-                          : 'text-[var(--muted)] hover:bg-white/5 hover:text-[var(--ink)]',
-                        tab.disabled ? 'cursor-not-allowed opacity-60' : '',
-                      ].filter(Boolean).join(' ')}
-                    >
-                      <span>{tab.label}</span>
-                      {typeof tab.badgeCount === 'number' && (
-                        <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[0.65rem] font-bold leading-none text-white">
-                          {tab.badgeCount}
-                        </span>
-                      )}
-                    </button>
-                  ))}
                   </div>
                 )}
               </div>
