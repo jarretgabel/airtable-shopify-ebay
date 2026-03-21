@@ -15,10 +15,10 @@ interface AppNavigationHandlers {
 
 function scrollToPageTop(): void {
   if (typeof window === 'undefined') return;
-  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  // Ensure position is reset after route paint as well.
+  // Defer until after React commits the new route so the scroll animates
+  // over the incoming content rather than snapping over the outgoing one.
   requestAnimationFrame(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   });
 }
 
