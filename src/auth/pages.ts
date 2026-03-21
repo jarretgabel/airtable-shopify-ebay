@@ -27,13 +27,13 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   shopify: { label: 'Shopify Products', path: '/shopify/products' },
   market: { label: 'Market Prices', path: '/market' },
   jotform: { label: 'Inquiries', path: '/jotform' },
-  settings: { label: 'Settings', path: '/settings' },
-  notifications: { label: 'Notifications', path: '/notifications' },
+  settings: { label: 'Settings', path: '/account/settings' },
+  notifications: { label: 'Notifications', path: '/account/notifications' },
   imagelab: { label: 'Image Lab', path: '/imagelab' },
   ebay: { label: 'eBay', path: '/ebay/listings' },
   approval: { label: 'eBay Listings Approvals', path: '/ebay/approval' },
   'shopify-approval': { label: 'Shopify Listings Approvals', path: '/shopify/approval' },
-  users: { label: 'User Management', path: '/users', adminOnly: true },
+  users: { label: 'User Management', path: '/account/users', adminOnly: true },
 };
 
 export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'settings');

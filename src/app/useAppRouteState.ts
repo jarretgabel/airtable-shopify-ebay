@@ -20,7 +20,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const resetToken = new URLSearchParams(location.search).get('token');
   const approvalRecordMatch = normalizedPath.match(/^\/ebay\/approval\/([^/]+)$/);
   const shopifyApprovalRecordMatch = normalizedPath.match(/^\/shopify\/approval\/([^/]+)$/);
-  const userRecordMatch = normalizedPath.match(/^\/users\/([^/]+)$/);
+  const userRecordMatch = normalizedPath.match(/^\/account\/users\/([^/]+)$/);
   const firstAccessibleTab = (accessiblePages[0] ?? 'dashboard') as Tab;
 
   const activeTab: Tab = (() => {
@@ -28,7 +28,9 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     if (normalizedPath === '/shopify/approval' || shopifyApprovalRecordMatch) return 'shopify-approval';
     if (normalizedPath === '/ebay/listings') return 'ebay';
     if (normalizedPath === '/shopify/products') return 'shopify';
-    if (normalizedPath === '/users' || userRecordMatch) return 'users';
+    if (normalizedPath === '/account/users' || userRecordMatch) return 'users';
+    if (normalizedPath === '/account/settings') return 'settings';
+    if (normalizedPath === '/account/notifications') return 'notifications';
 
     const tabFromPath = normalizedPath.slice(1);
     return isTab(tabFromPath) ? tabFromPath : 'dashboard';

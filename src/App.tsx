@@ -142,7 +142,7 @@ function App() {
       onExportCurrentPage={onExportCurrentPage}
       onExportAllPages={onExportAllPages}
       onOpenNotifications={() => navigateToTab('notifications')}
-      onOpenSettings={() => navigate('/settings?section=preferences')}
+      onOpenSettings={() => navigate('/account/settings')}
       onOpenUserManagement={() => navigateToTab('users')}
       canManageUsers={currentUser.role === 'admin'}
       onLogout={handleLogout}

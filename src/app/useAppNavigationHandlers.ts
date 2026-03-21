@@ -49,7 +49,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
   }, [navigate]);
 
   const navigateToUserRecord = useCallback((userId: string, replace = false): void => {
-    navigate(`/users/${encodeURIComponent(userId)}`, { replace });
+    navigate(`/account/users/${encodeURIComponent(userId)}`, { replace });
     scrollToPageTop();
   }, [navigate]);
 

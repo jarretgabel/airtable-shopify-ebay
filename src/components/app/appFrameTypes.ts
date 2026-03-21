@@ -40,4 +40,4 @@ export interface AppFrameProps {
   children: ReactNode;
 }
 
-export type OpenDropdown = 'pdf' | 'ebay' | 'shopify' | 'utilities' | 'account' | null;
+export type OpenDropdown = 'pdf' | 'ebay' | 'shopify' | 'utilities' | 'notifications' | 'account' | null;

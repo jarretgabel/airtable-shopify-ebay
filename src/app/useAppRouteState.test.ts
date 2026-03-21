@@ -20,7 +20,7 @@ describe('useAppRouteState', () => {
   });
 
   it('maps users detail route and decodes id', () => {
-    const state = useAppRouteState(locationFor('/users/u%40id'), ['dashboard']);
+    const state = useAppRouteState(locationFor('/account/users/u%40id'), ['dashboard']);
     expect(state.activeTab).toBe('users');
     expect(state.userRecordId).toBe('u@id');
   });

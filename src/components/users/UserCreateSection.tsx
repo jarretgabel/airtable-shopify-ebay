@@ -28,8 +28,9 @@ export function UserCreateSection({
   onNewUserPageToggle,
 }: UserCreateSectionProps) {
   return (
-    <section ref={createUserSectionRef} className="mt-6 border-t border-[var(--line)] pt-5">
-      <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Create User</h3>
+    <section ref={createUserSectionRef}>
+      <h3 className="m-0 text-[0.95rem] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Create User</h3>
+      <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Provision a new user account and page access.</p>
       <form onSubmit={onCreateUserSubmit} className="mt-4 flex flex-col gap-2.5">
         <label className={labelClassName} htmlFor="new-user-name">Name</label>
         <input

@@ -40,15 +40,8 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     navigateToUsersList,
   } = input;
 
-  const mainTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab) && !SHOPIFY_TAB_SET.has(tab) && tab !== 'market' && tab !== 'imagelab' && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
-  const postEbayTabs = visibleTabs
-    .filter((tab) => tab === 'market' || tab === 'imagelab')
-    .sort((a, b) => {
-      if (a === b) return 0;
-      if (a === 'imagelab') return 1;
-      if (b === 'imagelab') return -1;
-      return 0;
-    });
+  const mainTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab) && !SHOPIFY_TAB_SET.has(tab) && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
+  const postEbayTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab) && !SHOPIFY_TAB_SET.has(tab) && !mainTabs.includes(tab) && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
   const ebayTabs = visibleTabs.filter((tab) => EBAY_TAB_SET.has(tab));
   const shopifyTabs = visibleTabs.filter((tab) => SHOPIFY_TAB_SET.has(tab));
   const utilityTabs = visibleTabs.filter((tab) => UTILITY_TAB_SET.has(tab));

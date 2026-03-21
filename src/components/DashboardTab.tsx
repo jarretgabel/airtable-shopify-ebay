@@ -98,7 +98,9 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
     aiProvider: workflow.aiProvider,
   }), [workflow]);
 
-  const sections = useMemo(() => buildDashboardSections({ ebayCards, marketCards, utilityCards }), [ebayCards, marketCards, utilityCards]);
+  const allUtilityCards = useMemo(() => [...marketCards, ...utilityCards], [marketCards, utilityCards]);
+
+  const sections = useMemo(() => buildDashboardSections({ ebayCards, marketCards, utilityCards: allUtilityCards }), [ebayCards, marketCards, allUtilityCards]);
   const { activeSectionId, scrollToSection } = useDashboardSectionTracking(sections);
 
   return (
@@ -198,8 +200,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         ebayPublishedCount={workflow.ebayPublishedCount}
         ebayDraftCount={workflow.ebayDraftCount}
       />
-      <DashboardWorkflowSection sectionId="market-research" title="HiFi Shark" cards={marketCards} singleCardId="market" onSelect={actions.onSelectTab} />
-      <DashboardWorkflowSection sectionId="utility-workflows" title="Utilities" cards={utilityCards} onSelect={actions.onSelectTab} />
+      <DashboardWorkflowSection sectionId="utility-workflows" title="Utilities" cards={allUtilityCards} onSelect={actions.onSelectTab} />
     </div>
   );
 }

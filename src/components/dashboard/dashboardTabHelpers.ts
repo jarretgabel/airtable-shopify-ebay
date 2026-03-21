@@ -204,8 +204,9 @@ export function buildDashboardSections({
   ];
 
   if (ebayCards.length > 0) sections.push({ id: 'ebay-workflows', label: 'eBay' });
-  if (marketCards.length > 0) sections.push({ id: 'market-research', label: 'HiFi Shark' });
-  if (utilityCards.length > 0) sections.push({ id: 'utility-workflows', label: 'Utilities' });
+  
+  const combinedUtilityCards = [...marketCards, ...utilityCards];
+  if (combinedUtilityCards.length > 0) sections.push({ id: 'utility-workflows', label: 'Utilities' });
 
   return sections;
 }

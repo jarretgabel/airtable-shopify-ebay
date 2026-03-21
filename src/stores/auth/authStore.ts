@@ -238,7 +238,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     set({ emailChangeTokens: nextEmailChangeTokens });
     persistEmailChangeTokens(nextEmailChangeTokens);
 
-    const link = `${window.location.origin}/settings?emailChangeToken=${encodeURIComponent(tokenEntry.token)}`;
+    const link = `${window.location.origin}/account/settings?emailChangeToken=${encodeURIComponent(tokenEntry.token)}`;
     openEmailChangeDraft(normalizedEmail, link);
 
     return { success: true, message: `Confirmation email draft prepared for ${normalizedEmail}. Open the link to complete the update.` };
