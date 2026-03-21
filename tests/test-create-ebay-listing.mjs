@@ -42,8 +42,8 @@ const CLIENT_SECRET = env['VITE_EBAY_CLIENT_SECRET'] ?? '';
 const RU_NAME       = env['VITE_EBAY_RU_NAME'] ?? '';
 const IS_SANDBOX    = (env['VITE_EBAY_ENV'] ?? 'sandbox').toLowerCase() !== 'production';
 
-const API_BASE  = IS_SANDBOX ? 'https://api.sandbox.ebay.com' : 'https://api.ebay.com';
-const AUTH_BASE = IS_SANDBOX ? 'https://auth.sandbox.ebay.com' : 'https://auth.ebay.com';
+const API_BASE  = env['VITE_EBAY_API_BASE'] ?? (IS_SANDBOX ? 'https://api.sandbox.ebay.com' : 'https://api.ebay.com');
+const AUTH_BASE = env['VITE_EBAY_AUTH_BASE'] ?? (IS_SANDBOX ? 'https://auth.sandbox.ebay.com' : 'https://auth.ebay.com');
 
 const SCOPES = [
   'https://api.ebay.com/oauth/api_scope',

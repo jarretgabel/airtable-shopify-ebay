@@ -12,70 +12,21 @@ import {
   buildMarketWorkflowCards,
   buildUtilityWorkflowCards,
 } from '@/components/dashboard/dashboardTabHelpers';
-import type { DashboardTabProps } from '@/components/dashboard/dashboardTabTypes';
+import type { DashboardTabViewModel } from '@/app/appTabViewModels';
 import { useDashboardSectionTracking } from '@/components/dashboard/useDashboardSectionTracking';
 
-export function DashboardTab(props: DashboardTabProps) {
+interface DashboardTabProps {
+  viewModel: DashboardTabViewModel;
+}
+
+export function DashboardTab({ viewModel }: DashboardTabProps) {
   const {
-    atLoading,
-    spLoading,
-    jfLoading,
-    nonEmptyListings,
-    products,
-    jfSubmissions,
-    totalNewSubmissions,
-    thisWeekSubs,
-    recentSubs,
-    draftProducts,
-    activeProducts,
-    archivedProducts,
-    acquisitionCost,
-    inventoryValue,
-    avgAskPrice,
-    sellThroughPct,
-    grossMarginPct,
-    submissionsTrend,
-    dealsTrend,
-    acquisitionTrend,
-    inventoryTrend,
-    salesTrend,
-    marginTrend,
-    submissionDays,
-    maxDayCount,
-    topBrands,
-    now,
-    airtableInventoryValue,
-    uniqueAirtableBrands,
-    uniqueAirtableTypes,
-    componentTypeSummary,
-    airtableBrandSummary,
-    airtableDistributorSummary,
-    airtableTypeTable,
-    maxComponentTypeCount,
-    maxAirtableBrandCount,
-    insights,
-    accessiblePages,
-    approvalLoading,
-    approvalError,
-    approvalTotal,
-    approvalApproved,
-    approvalPending,
-    aiProvider,
-    ebayAuthenticated,
-    ebayRestoringSession,
-    ebayLoading,
-    ebayError,
-    ebayTotal,
-    ebayPublishedCount,
-    ebayDraftCount,
-    marketLoading,
-    marketError,
-    marketCurrentSlug,
-    marketListingCount,
-    userCount,
-    adminCount,
-    onSelectTab,
-  } = props;
+    loading,
+    data,
+    kpis,
+    workflow,
+    actions,
+  } = viewModel;
 
   const {
     totalAsk,
@@ -86,40 +37,40 @@ export function DashboardTab(props: DashboardTabProps) {
     peakSubmissionShare,
     chartGuideValues,
   } = useMemo(
-    () => buildDashboardSummaryMetrics(activeProducts, submissionDays, maxDayCount),
-    [activeProducts, maxDayCount, submissionDays],
+    () => buildDashboardSummaryMetrics(data.activeProducts, data.submissionDays, kpis.maxDayCount),
+    [data.activeProducts, data.submissionDays, kpis.maxDayCount],
   );
 
   const ebayCards = useMemo(() => buildEbayWorkflowCards({
-    accessiblePages,
-    approvalApproved,
-    approvalError,
-    approvalLoading,
-    approvalPending,
-    approvalTotal,
-    ebayAuthenticated,
-    ebayDraftCount,
-    ebayError,
-    ebayLoading,
-    ebayPublishedCount,
-    ebayRestoringSession,
-    ebayTotal,
-  }), [accessiblePages, approvalApproved, approvalError, approvalLoading, approvalPending, approvalTotal, ebayAuthenticated, ebayDraftCount, ebayError, ebayLoading, ebayPublishedCount, ebayRestoringSession, ebayTotal]);
+    accessiblePages: workflow.accessiblePages,
+    approvalApproved: workflow.approvalApproved,
+    approvalError: workflow.approvalError,
+    approvalLoading: loading.approval,
+    approvalPending: workflow.approvalPending,
+    approvalTotal: workflow.approvalTotal,
+    ebayAuthenticated: workflow.ebayAuthenticated,
+    ebayDraftCount: workflow.ebayDraftCount,
+    ebayError: workflow.ebayError,
+    ebayLoading: loading.ebay,
+    ebayPublishedCount: workflow.ebayPublishedCount,
+    ebayRestoringSession: workflow.ebayRestoringSession,
+    ebayTotal: workflow.ebayTotal,
+  }), [loading.approval, loading.ebay, workflow]);
 
   const marketCards = useMemo(() => buildMarketWorkflowCards({
-    accessiblePages,
-    marketCurrentSlug,
-    marketError,
-    marketListingCount,
-    marketLoading,
-  }), [accessiblePages, marketCurrentSlug, marketError, marketListingCount, marketLoading]);
+    accessiblePages: workflow.accessiblePages,
+    marketCurrentSlug: workflow.marketCurrentSlug,
+    marketError: workflow.marketError,
+    marketListingCount: workflow.marketListingCount,
+    marketLoading: loading.market,
+  }), [loading.market, workflow]);
 
   const utilityCards = useMemo(() => buildUtilityWorkflowCards({
-    accessiblePages,
-    adminCount,
-    aiProvider,
-    userCount,
-  }), [accessiblePages, adminCount, aiProvider, userCount]);
+    accessiblePages: workflow.accessiblePages,
+    adminCount: workflow.adminCount,
+    aiProvider: workflow.aiProvider,
+    userCount: workflow.userCount,
+  }), [workflow]);
 
   const sections = useMemo(() => buildDashboardSections({ ebayCards, marketCards, utilityCards }), [ebayCards, marketCards, utilityCards]);
   const { activeSectionId, scrollToSection } = useDashboardSectionTracking(sections);
@@ -128,70 +79,70 @@ export function DashboardTab(props: DashboardTabProps) {
     <div className="flex flex-col gap-12 pt-1">
       <DashboardSectionNav sections={sections} activeSectionId={activeSectionId} onSelectSection={scrollToSection} />
       <DashboardOverviewSection
-        jfLoading={jfLoading}
-        jfSubmissionCount={jfSubmissions.length}
-        thisWeekCount={thisWeekSubs.length}
-        recentCount={recentSubs.length}
-        totalNewSubmissions={totalNewSubmissions}
-        spLoading={spLoading}
-        draftCount={draftProducts.length}
-        activeCount={activeProducts.length}
-        archivedCount={archivedProducts.length}
-        atLoading={atLoading}
-        acquisitionCost={acquisitionCost}
-        nonEmptyListingCount={nonEmptyListings.length}
-        inventoryValue={inventoryValue}
-        avgAskPrice={avgAskPrice}
-        sellThroughPct={sellThroughPct}
-        grossMarginPct={grossMarginPct}
-        submissionsTrend={submissionsTrend}
-        dealsTrend={dealsTrend}
-        acquisitionTrend={acquisitionTrend}
-        inventoryTrend={inventoryTrend}
-        salesTrend={salesTrend}
-        marginTrend={marginTrend}
-        onSelectTab={onSelectTab}
+        jfLoading={loading.jotform}
+        jfSubmissionCount={data.jfSubmissions.length}
+        thisWeekCount={data.thisWeekSubs.length}
+        recentCount={data.recentSubs.length}
+        totalNewSubmissions={kpis.totalNewSubmissions}
+        spLoading={loading.shopify}
+        draftCount={data.draftProducts.length}
+        activeCount={data.activeProducts.length}
+        archivedCount={data.archivedProducts.length}
+        atLoading={loading.airtable}
+        acquisitionCost={kpis.acquisitionCost}
+        nonEmptyListingCount={data.nonEmptyListings.length}
+        inventoryValue={kpis.inventoryValue}
+        avgAskPrice={kpis.avgAskPrice}
+        sellThroughPct={kpis.sellThroughPct}
+        grossMarginPct={kpis.grossMarginPct}
+        submissionsTrend={kpis.submissionsTrend}
+        dealsTrend={kpis.dealsTrend}
+        acquisitionTrend={kpis.acquisitionTrend}
+        inventoryTrend={kpis.inventoryTrend}
+        salesTrend={kpis.salesTrend}
+        marginTrend={kpis.marginTrend}
+        onSelectTab={actions.onSelectTab}
       />
-      <DashboardInsightsSection insights={insights} onSelectTab={onSelectTab} />
+      <DashboardInsightsSection insights={data.insights} onSelectTab={actions.onSelectTab} />
       <DashboardAirtableSection
-        atLoading={atLoading}
-        nonEmptyListingCount={nonEmptyListings.length}
-        airtableInventoryValue={airtableInventoryValue}
-        uniqueAirtableBrands={uniqueAirtableBrands}
-        uniqueAirtableTypes={uniqueAirtableTypes}
-        componentTypeSummary={componentTypeSummary}
-        airtableBrandSummary={airtableBrandSummary}
-        airtableDistributorSummary={airtableDistributorSummary}
-        airtableTypeTable={airtableTypeTable}
-        maxComponentTypeCount={maxComponentTypeCount}
-        maxAirtableBrandCount={maxAirtableBrandCount}
-        onSelectTab={onSelectTab}
+        atLoading={loading.airtable}
+        nonEmptyListingCount={data.nonEmptyListings.length}
+        airtableInventoryValue={kpis.airtableInventoryValue}
+        uniqueAirtableBrands={kpis.uniqueAirtableBrands}
+        uniqueAirtableTypes={kpis.uniqueAirtableTypes}
+        componentTypeSummary={data.componentTypeSummary}
+        airtableBrandSummary={data.airtableBrandSummary}
+        airtableDistributorSummary={data.airtableDistributorSummary}
+        airtableTypeTable={data.airtableTypeTable}
+        maxComponentTypeCount={kpis.maxComponentTypeCount}
+        maxAirtableBrandCount={kpis.maxAirtableBrandCount}
+        onSelectTab={actions.onSelectTab}
       />
       <DashboardShopifySection
-        jfLoading={jfLoading}
-        spLoading={spLoading}
+        jfLoading={loading.jotform}
+        spLoading={loading.shopify}
         submissionWindowTotal={submissionWindowTotal}
         submissionAverage={submissionAverage}
         activeSubmissionDays={activeSubmissionDays}
         peakSubmissionDay={peakSubmissionDay}
         peakSubmissionShare={peakSubmissionShare}
         chartGuideValues={chartGuideValues}
-        maxDayCount={maxDayCount}
-        submissionDays={submissionDays}
-        productsCount={products.length}
-        activeProductsCount={activeProducts.length}
-        draftProductsCount={draftProducts.length}
-        archivedProductsCount={archivedProducts.length}
-        avgAskPrice={avgAskPrice}
-        inventoryValue={inventoryValue}
-        grossMarginPct={grossMarginPct}
-        acquisitionCost={acquisitionCost}
+        maxDayCount={kpis.maxDayCount}
+        submissionDays={data.submissionDays}
+        productsCount={data.products.length}
+        activeProductsCount={data.activeProducts.length}
+        draftProductsCount={data.draftProducts.length}
+        archivedProductsCount={data.archivedProducts.length}
+        avgAskPrice={kpis.avgAskPrice}
+        inventoryValue={kpis.inventoryValue}
+        grossMarginPct={kpis.grossMarginPct}
+        acquisitionCost={kpis.acquisitionCost}
         totalAsk={totalAsk}
       />
-      <DashboardJotformSection jfLoading={jfLoading} topBrands={topBrands} jfSubmissions={jfSubmissions} now={now} onSelectTab={onSelectTab} />
-      <DashboardWorkflowSection sectionId="ebay-workflows" title="eBay" cards={ebayCards} onSelect={onSelectTab} />
-      <DashboardWorkflowSection sectionId="market-research" title="HiFi Shark" cards={marketCards} singleCardId="market" onSelect={onSelectTab} />
-      <DashboardWorkflowSection sectionId="utility-workflows" title="Utilities" cards={utilityCards} onSelect={onSelectTab} />
+      <DashboardJotformSection jfLoading={loading.jotform} topBrands={data.topBrands} jfSubmissions={data.jfSubmissions} now={data.now} onSelectTab={actions.onSelectTab} />
+      <DashboardWorkflowSection sectionId="ebay-workflows" title="eBay" cards={ebayCards} onSelect={actions.onSelectTab} />
+      <DashboardWorkflowSection sectionId="market-research" title="HiFi Shark" cards={marketCards} singleCardId="market" onSelect={actions.onSelectTab} />
+      <DashboardWorkflowSection sectionId="utility-workflows" title="Utilities" cards={utilityCards} onSelect={actions.onSelectTab} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useRef, useState } from 'react';
+import type { UserManagementTabViewModel } from '@/app/appTabViewModels';
 import { AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
-import { useAuth } from '@/stores/auth/authStore';
+import { useAuthStore } from '@/stores/auth/authStore';
 import type { AppUser } from '@/stores/auth/authTypes';
 import { UserDetailPanel } from '@/components/users/UserDetailPanel';
 import { UserDirectoryPanel } from '@/components/users/UserDirectoryPanel';
@@ -17,9 +18,7 @@ function defaultFormState(): NewUserFormState {
 }
 
 interface UserManagementTabProps {
-  selectedUserId: string | null;
-  onSelectUser: (userId: string) => void;
-  onBackToList: () => void;
+  viewModel: UserManagementTabViewModel;
 }
 
 function roleBadgeClassName(role: AppUser['role']): string {
@@ -36,8 +35,13 @@ function formatAccessiblePages(user: AppUser): string {
   return user.allowedPages.map((page) => PAGE_DEFINITIONS[page].label).join(', ') || 'No pages assigned';
 }
 
-export function UserManagementTab({ selectedUserId, onSelectUser, onBackToList }: UserManagementTabProps) {
-  const { users, updateUserPermissions, updateUserRole, requestPasswordReset, createUser } = useAuth();
+export function UserManagementTab({ viewModel }: UserManagementTabProps) {
+  const { selectedUserId, onSelectUser, onBackToList } = viewModel;
+  const users = useAuthStore((state) => state.users);
+  const updateUserPermissions = useAuthStore((state) => state.updateUserPermissions);
+  const updateUserRole = useAuthStore((state) => state.updateUserRole);
+  const requestPasswordReset = useAuthStore((state) => state.requestPasswordReset);
+  const createUser = useAuthStore((state) => state.createUser);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [createdMessage, setCreatedMessage] = useState<string | null>(null);
   const [newUser, setNewUser] = useState<NewUserFormState>(() => defaultFormState());

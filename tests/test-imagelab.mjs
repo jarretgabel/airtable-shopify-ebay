@@ -17,12 +17,15 @@ const env = Object.fromEntries(
 
 const GITHUB_TOKEN = env['VITE_GITHUB_TOKEN'] || '';
 const OPENAI_KEY   = env['VITE_OPENAI_API_KEY'] || '';
+const GITHUB_MODELS_ENDPOINT = env['VITE_GITHUB_MODELS_ENDPOINT'] || 'https://models.inference.ai.azure.com/chat/completions';
+const OPENAI_CHAT_ENDPOINT = env['VITE_OPENAI_CHAT_ENDPOINT'] || 'https://api.openai.com/v1/chat/completions';
+const TEST_IMAGE_URL = env['VITE_TEST_IMAGE_URL'] || 'https://picsum.photos/800/600';
 
 const token    = GITHUB_TOKEN || OPENAI_KEY;
 const useGitHub = !!GITHUB_TOKEN;
 const endpoint  = useGitHub
-  ? 'https://models.inference.ai.azure.com/chat/completions'
-  : 'https://api.openai.com/v1/chat/completions';
+  ? GITHUB_MODELS_ENDPOINT
+  : OPENAI_CHAT_ENDPOINT;
 
 if (!token) {
   console.error('ERROR: No API key found in .env.local');
@@ -54,7 +57,7 @@ Use this exact schema:
 const IMG_PATH = '/tmp/test-hifi-equipment.jpg';
 if (!existsSync(IMG_PATH)) {
   console.log('Downloading test image...');
-  execSync(`curl -sLo "${IMG_PATH}" "https://picsum.photos/800/600" --max-time 20`);
+  execSync(`curl -sLo "${IMG_PATH}" "${TEST_IMAGE_URL}" --max-time 20`);
 }
 const imgBytes  = readFileSync(IMG_PATH);
 const base64Img = imgBytes.toString('base64');

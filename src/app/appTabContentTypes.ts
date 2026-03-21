@@ -22,9 +22,13 @@ export interface AppTabContentProps {
   usersCount: number;
   adminCount: number;
   nonEmptyListings: AirtableRecord[];
+  displayValue: (value: unknown) => string;
+  hasValue: (value: unknown) => boolean;
+  recordTitle: (fields: Record<string, unknown>) => string;
   atLoading: boolean;
   atError: Error | null;
   products: ReturnType<typeof useShopifyProducts>['products'];
+  storeDomain?: string;
   spLoading: boolean;
   spError: Error | null;
   jfSubmissions: JotFormSubmission[];

@@ -1,20 +1,14 @@
 import { useMemo, useState } from 'react';
-import { JotFormSubmission } from '@/types/jotform';
+import type { JotformTabViewModel } from '@/app/appTabViewModels';
 import { formatAnswer } from '@/services/jotform';
-import { emptySurfaceClass, errorSurfaceClass, loadingSurfaceClass, panelSurfaceClass, spinnerClass } from '@/components/tabs/uiClasses';
+import { EmptySurface, ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 
 interface JotformTabProps {
-  submissions: JotFormSubmission[];
-  loading: boolean;
-  polling: boolean;
-  error: Error | null;
-  refetch: () => void;
-  lastUpdated: Date | null;
-  freshCount: number;
-  clearFresh: () => void;
+  viewModel: JotformTabViewModel;
 }
 
-export function JotformTab({ submissions, loading, polling, error, refetch, lastUpdated, freshCount, clearFresh }: JotformTabProps) {
+export function JotformTab({ viewModel }: JotformTabProps) {
+  const { submissions, loading, polling, error, refetch, lastUpdated, freshCount, clearFresh } = viewModel;
   const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
 
   const activeSubmissions = useMemo(
@@ -62,24 +56,19 @@ export function JotformTab({ submissions, loading, polling, error, refetch, last
       )}
 
       {error && (
-        <section className={errorSurfaceClass}>
-          <p className="m-0 font-bold text-[var(--error-text)]">Error loading submissions</p>
-          <p className="mt-2 text-[var(--error-text)]/85">{error.message}</p>
+        <ErrorSurface title="Error loading submissions" message={error.message}>
           <p className="mt-2 text-sm text-[var(--muted)]">
             Make sure <code>VITE_JOTFORM_API_KEY</code> and <code>VITE_JOTFORM_FORM_ID</code> are set in <code>.env.local</code>.
           </p>
-        </section>
+        </ErrorSurface>
       )}
 
       {loading && (
-        <section className={loadingSurfaceClass}>
-          <div className={spinnerClass} />
-          <p>Loading submissions from JotForm...</p>
-        </section>
+        <LoadingSurface message="Loading submissions from JotForm..." />
       )}
 
       {!loading && activeSubmissions.length > 0 && (
-        <section className={panelSurfaceClass}>
+        <PanelSurface>
           <ul className="list-none m-0 p-0">
             {activeSubmissions.map((submission) => {
               const isExpanded = expandedSubmissionId === submission.id;
@@ -136,14 +125,11 @@ export function JotformTab({ submissions, loading, polling, error, refetch, last
               );
             })}
           </ul>
-        </section>
+        </PanelSurface>
       )}
 
       {!loading && !error && activeSubmissions.length === 0 && (
-        <section className={emptySurfaceClass}>
-          <p className="m-0 font-bold text-[var(--ink)]">No submissions yet</p>
-          <p>Submissions will appear here automatically as your form receives responses.</p>
-        </section>
+        <EmptySurface title="No submissions yet" message="Submissions will appear here automatically as your form receives responses." />
       )}
     </>
   );

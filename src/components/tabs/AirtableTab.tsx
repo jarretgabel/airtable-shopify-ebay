@@ -1,49 +1,31 @@
 import { useState } from 'react';
-import { AirtableRecord } from '@/types/airtable';
+import type { AirtableTabViewModel } from '@/app/appTabViewModels';
 import { ExpandableDataCard } from '@/components/app/ExpandableDataCard';
-import { emptySurfaceClass, errorSurfaceClass, listingSummaryClass, loadingSurfaceClass, mutedCodeClass, panelSurfaceClass, spinnerClass } from '@/components/tabs/uiClasses';
+import { EmptySurface, ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { listingSummaryClass, mutedCodeClass } from '@/components/tabs/uiClasses';
 
 interface AirtableTabProps {
-  loading: boolean;
-  error: Error | null;
-  listings: AirtableRecord[];
-  displayValue: (value: unknown) => string;
-  hasValue: (value: unknown) => boolean;
-  recordTitle: (fields: Record<string, unknown>) => string;
+  viewModel: AirtableTabViewModel;
 }
 
-export function AirtableTab({ loading, error, listings, displayValue, hasValue, recordTitle }: AirtableTabProps) {
+export function AirtableTab({ viewModel }: AirtableTabProps) {
+  const { loading, error, listings, displayValue, hasValue, recordTitle } = viewModel;
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (error) {
-    return (
-      <section className={errorSurfaceClass}>
-        <p className="m-0 font-bold text-[var(--error-text)]">Error loading Airtable records</p>
-        <p className="mt-2 text-[var(--error-text)]/85">{error.message}</p>
-      </section>
-    );
+    return <ErrorSurface title="Error loading Airtable records" message={error.message} />;
   }
 
   if (loading && !listings.length) {
-    return (
-      <section className={loadingSurfaceClass}>
-        <div className={spinnerClass} />
-        <p>Loading records from Airtable...</p>
-      </section>
-    );
+    return <LoadingSurface message="Loading records from Airtable..." />;
   }
 
   if (!loading && listings.length === 0) {
-    return (
-      <section className={emptySurfaceClass}>
-        <p className="m-0 font-bold text-[var(--ink)]">No non-empty rows found</p>
-        <p>Rows with empty field payloads are currently hidden.</p>
-      </section>
-    );
+    return <EmptySurface title="No non-empty rows found" message="Rows with empty field payloads are currently hidden." />;
   }
 
   return (
-    <section className={panelSurfaceClass}>
+    <PanelSurface>
       <p className={listingSummaryClass}>
         Showing <strong>{listings.length}</strong> rows with meaningful data.
       </p>
@@ -77,6 +59,6 @@ export function AirtableTab({ loading, error, listings, displayValue, hasValue, 
           </div>
         </ExpandableDataCard>
       ))}
-    </section>
+    </PanelSurface>
   );
 }

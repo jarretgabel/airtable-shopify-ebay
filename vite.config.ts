@@ -3,6 +3,12 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
+function normalizeOrigin(value: string | undefined, fallback: string): string {
+  const trimmed = value?.trim()
+  if (!trimmed) return fallback
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+}
+
 function sanitizeEbayProxyPath(requestPath: string): string {
   const rewritten = requestPath.replace(/^\/ebay-api-proxy/, '')
   const [pathname, query = ''] = rewritten.split('?')
@@ -23,6 +29,8 @@ function sanitizeEbayProxyPath(requestPath: string): string {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
+  const shopifyStoreHost = normalizeOrigin(env.VITE_SHOPIFY_STORE_DOMAIN, 'https://resolution-av-nyc.myshopify.com')
+  const shopifyAccessToken = env.VITE_SHOPIFY_OAUTH_ACCESS_TOKEN || env.VITE_SHOPIFY_ADMIN_API_TOKEN || ''
   const ebayApiHost = env.VITE_EBAY_ENV?.toLowerCase() === 'production'
     ? 'https://api.ebay.com'
     : 'https://api.sandbox.ebay.com'
@@ -39,10 +47,15 @@ export default defineConfig(({ mode }) => {
     open: true,
     proxy: {
       '/shopify-proxy': {
-        target: 'https://resolution-av-nyc.myshopify.com',
+        target: shopifyStoreHost,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/shopify-proxy/, ''),
         secure: true,
+        headers: shopifyAccessToken
+          ? {
+              'X-Shopify-Access-Token': shopifyAccessToken,
+            }
+          : undefined,
       },
       '/hifishark-proxy': {
         target: 'https://www.hifishark.com',

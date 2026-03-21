@@ -1,17 +1,14 @@
 import { FormEvent, useRef } from 'react';
-import { HiFiSharkListing } from '@/types/hifishark';
+import type { MarketTabViewModel } from '@/app/appTabViewModels';
 import { primaryActionButtonClass } from '@/components/app/buttonStyles';
 import { emptySurfaceClass, errorSurfaceClass, listingSummaryClass, loadingSurfaceClass, panelSurfaceClass, spinnerClass } from '@/components/tabs/uiClasses';
 
 interface MarketTabProps {
-  loading: boolean;
-  error: Error | null;
-  listings: HiFiSharkListing[];
-  currentSlug: string;
-  onSearch: (slug: string) => void;
+  viewModel: MarketTabViewModel;
 }
 
-export function MarketTab({ loading, error, listings, currentSlug, onSearch }: MarketTabProps) {
+export function MarketTab({ viewModel }: MarketTabProps) {
+  const { loading, error, listings, currentSlug, onSearch } = viewModel;
   const sharkInputRef = useRef<HTMLInputElement>(null);
 
   function handleSearch(event: FormEvent<HTMLFormElement>): void {

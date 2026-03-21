@@ -1,5 +1,5 @@
 import type { EbayTokenResponse } from './types';
-import { API, CLIENT_ID, CLIENT_SECRET, EBAY_AUTH_HOST, SCOPES, getRuName } from './config';
+import { API, APP_SCOPE, CLIENT_ID, CLIENT_SECRET, EBAY_AUTH_HOST, SCOPES, getRuName } from './config';
 import { clearUserToken, getStoredRefreshToken } from './tokenStorage';
 
 /** Build the authorization URL the user needs to visit to grant access. */
@@ -94,7 +94,7 @@ export async function getAppToken(): Promise<string> {
   const credentials = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
   const body = new URLSearchParams({
     grant_type: 'client_credentials',
-    scope: 'https://api.ebay.com/oauth/api_scope',
+    scope: APP_SCOPE,
   });
 
   const res = await fetch(`${API}/identity/v1/oauth2/token`, {

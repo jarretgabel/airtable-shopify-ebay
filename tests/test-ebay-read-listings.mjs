@@ -13,6 +13,8 @@ const env = Object.fromEntries(
 const clientId = env.VITE_EBAY_CLIENT_ID ?? '';
 const clientSecret = env.VITE_EBAY_CLIENT_SECRET ?? '';
 const refreshToken = env.VITE_EBAY_REFRESH_TOKEN ?? '';
+const isSandbox = (env.VITE_EBAY_ENV ?? 'sandbox').toLowerCase() !== 'production';
+const apiBase = env.VITE_EBAY_API_BASE ?? (isSandbox ? 'https://api.sandbox.ebay.com' : 'https://api.ebay.com');
 
 if (!clientId || !clientSecret || !refreshToken) {
   console.error('Missing VITE_EBAY_CLIENT_ID, VITE_EBAY_CLIENT_SECRET, or VITE_EBAY_REFRESH_TOKEN in .env.local');
@@ -21,7 +23,7 @@ if (!clientId || !clientSecret || !refreshToken) {
 
 const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
-const tokenRes = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
+const tokenRes = await fetch(`${apiBase}/identity/v1/oauth2/token`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/x-www-form-urlencoded',
@@ -43,13 +45,13 @@ if (!tokenRes.ok) {
 const accessToken = tokenData.access_token;
 
 const [inventoryRes, offersRes] = await Promise.all([
-  fetch('https://api.ebay.com/sell/inventory/v1/inventory_item?limit=10', {
+  fetch(`${apiBase}/sell/inventory/v1/inventory_item?limit=10`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Accept-Language': 'en-US',
     },
   }),
-  fetch('https://api.ebay.com/sell/inventory/v1/offer?limit=10', {
+  fetch(`${apiBase}/sell/inventory/v1/offer?limit=10`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Accept-Language': 'en-US',

@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { ShopifyProduct } from '@/types/shopify';
+import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
 import { ExpandableDataCard } from '@/components/app/ExpandableDataCard';
-import { emptySurfaceClass, errorSurfaceClass, listingSummaryClass, loadingSurfaceClass, mutedCodeClass, panelSurfaceClass, spinnerClass } from '@/components/tabs/uiClasses';
-
-type ShopifyProductFull = ShopifyProduct & { id: number; created_at: string; updated_at: string };
+import { EmptySurface, ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { listingSummaryClass, mutedCodeClass } from '@/components/tabs/uiClasses';
 
 function StatusBadge({ status }: { status: string }) {
   const normalizedStatus = status.toLowerCase();
@@ -19,44 +18,27 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 interface ShopifyTabProps {
-  loading: boolean;
-  error: Error | null;
-  products: ShopifyProductFull[];
-  storeDomain?: string;
+  viewModel: ShopifyTabViewModel;
 }
 
-export function ShopifyTab({ loading, error, products, storeDomain }: ShopifyTabProps) {
+export function ShopifyTab({ viewModel }: ShopifyTabProps) {
+  const { loading, error, products, storeDomain } = viewModel;
   const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
 
   if (error) {
-    return (
-      <section className={errorSurfaceClass}>
-        <p className="m-0 font-bold text-[var(--error-text)]">Error loading Shopify products</p>
-        <p className="mt-2 text-[var(--error-text)]/85">{error.message}</p>
-      </section>
-    );
+    return <ErrorSurface title="Error loading Shopify products" message={error.message} />;
   }
 
   if (loading && !products.length) {
-    return (
-      <section className={loadingSurfaceClass}>
-        <div className={spinnerClass} />
-        <p>Loading products from Shopify...</p>
-      </section>
-    );
+    return <LoadingSurface message="Loading products from Shopify..." />;
   }
 
   if (!loading && products.length === 0) {
-    return (
-      <section className={emptySurfaceClass}>
-        <p className="m-0 font-bold text-[var(--ink)]">No products found</p>
-        <p>Your Shopify store has no products yet.</p>
-      </section>
-    );
+    return <EmptySurface title="No products found" message="Your Shopify store has no products yet." />;
   }
 
   return (
-    <section className={panelSurfaceClass}>
+    <PanelSurface>
       <p className={listingSummaryClass}>
         <strong>{products.length}</strong> products in your Shopify store.
       </p>
@@ -103,6 +85,6 @@ export function ShopifyTab({ loading, error, products, storeDomain }: ShopifyTab
           </div>
         </ExpandableDataCard>
       ))}
-    </section>
+    </PanelSurface>
   );
 }

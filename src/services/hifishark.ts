@@ -50,7 +50,7 @@ function extractCountry(text: string): string {
 
 function extractSite(text: string): string {
   // "@ SiteName" pattern
-  const m = text.match(/@ ([A-Za-z0-9][A-Za-z0-9 \-]+?)(?=\s{2,}|\s[A-Z][a-z]{3,}|\s\d|\s*$)/);
+  const m = text.match(/@ ([A-Za-z0-9][A-Za-z0-9 -]+?)(?=\s{2,}|\s[A-Z][a-z]{3,}|\s\d|\s*$)/);
   if (m) return m[1].trim();
   // eBay fallback
   if (/ebay/i.test(text)) return 'eBay';

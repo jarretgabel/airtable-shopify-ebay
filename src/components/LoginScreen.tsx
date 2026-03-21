@@ -1,12 +1,13 @@
 import { FormEvent, useState } from 'react';
-import { useAuth } from '@/stores/auth/authStore';
+import { useAuthStore } from '@/stores/auth/authStore';
 
 interface LoginScreenProps {
   onLoggedIn: () => void;
 }
 
 export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
-  const { login, requestPasswordReset } = useAuth();
+  const login = useAuthStore((state) => state.login);
+  const requestPasswordReset = useAuthStore((state) => state.requestPasswordReset);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);

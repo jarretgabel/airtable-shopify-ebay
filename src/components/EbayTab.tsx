@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { type EbayListingsState } from '@/hooks/useEbayListings';
+import type { EbayTabViewModel } from '@/app/appTabViewModels';
 import {
   createSampleListing,
   publishSampleDraftListing,
@@ -21,12 +21,18 @@ import { ConnectScreen } from '@/components/ebay/EbayCards';
 import { EbayAuthenticatedView } from '@/components/ebay/EbayAuthenticatedView';
 import { listingUrlFromId } from '@/components/ebay/ebayTabUi';
 
-type EbayTabProps = Pick<
-  EbayListingsState,
-  'authenticated' | 'restoringSession' | 'loading' | 'error' | 'inventoryItems' | 'offers' | 'recentListings' | 'total' | 'refetch' | 'disconnect'
->;
+interface EbayTabProps {
+  viewModel: EbayTabViewModel;
+}
 
-export function EbayTab({ authenticated, restoringSession, loading, error, inventoryItems, offers, recentListings, total, refetch, disconnect }: EbayTabProps) {
+export function EbayTab({ viewModel }: EbayTabProps) {
+  const {
+    session: { authenticated, restoringSession },
+    state: { loading, error },
+    inventory: { items: inventoryItems, offers, recentListings, total },
+    actions: { refetch, disconnect },
+  } = viewModel;
+
   const [apiMode, setApiMode] = useState<EbayListingApiMode>(() => getPreferredListingApiMode());
   const [draftStatus, setDraftStatus] = useState<'idle' | 'creating' | 'done' | 'error'>('idle');
   const [draftResult, setDraftResult] = useState<EbaySampleListingResult | null>(null);

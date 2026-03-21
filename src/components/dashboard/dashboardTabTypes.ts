@@ -126,3 +126,26 @@ export interface DashboardTabProps {
   adminCount: number;
   onSelectTab: (tab: DashboardTargetTab) => void;
 }
+
+export interface DashboardWorkflowSource {
+  accessiblePages: AppPage[];
+  approvalError: string | null;
+  approvalTotal: number;
+  approvalApproved: number;
+  approvalPending: number;
+  aiProvider: 'github' | 'openai' | 'none';
+  ebayAuthenticated: boolean;
+  ebayRestoringSession: boolean;
+  ebayError: string | null;
+  ebayTotal: number;
+  ebayPublishedCount: number;
+  ebayDraftCount: number;
+  marketError: string | null;
+  marketCurrentSlug: string;
+  marketListingCount: number;
+  userCount: number;
+  adminCount: number;
+  approvalLoading: boolean;
+  ebayLoading: boolean;
+  marketLoading: boolean;
+}

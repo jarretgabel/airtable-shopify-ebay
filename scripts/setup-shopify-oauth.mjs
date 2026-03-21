@@ -31,6 +31,7 @@ const clientId = argv.find(a => a.startsWith('--client-id'))?.split('=')[1] || p
 const clientSecret = argv.find(a => a.startsWith('--client-secret'))?.split('=')[1] || process.env.VITE_SHOPIFY_CLIENT_SECRET;
 const authCode = argv.find(a => a.startsWith('--code'))?.split('=')[1];
 const storeDomain = process.env.VITE_SHOPIFY_STORE_DOMAIN || argv.find(a => a.startsWith('--store'))?.split('=')[1];
+const redirectUri = process.env.VITE_SHOPIFY_OAUTH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
 
 if (step === 'help' || !step) {
   console.log(`
@@ -87,7 +88,6 @@ if (step === 'auth') {
     process.exit(1);
   }
 
-  const redirectUri = 'http://localhost:3000/auth/callback';
   const scopes = 'write_products,read_products';
   const state = Math.random().toString(36).substring(7);
 

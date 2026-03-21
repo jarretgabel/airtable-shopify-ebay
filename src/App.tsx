@@ -1,22 +1,22 @@
 import { useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppTabContent } from '@/app/AppTabContent';
-import { type Tab } from '@/app/appNavigation';
+import { displayValue, hasValue, recordTitle, type Tab } from '@/app/appNavigation';
 import { AppFrame } from '@/components/app/AppFrame';
 import { LoginScreen } from '@/components/LoginScreen';
 import { ResetPasswordScreen } from '@/components/ResetPasswordScreen';
 import { useAppData } from '@/app/useAppData';
+import { useAuthSession } from '@/app/useAuthSession';
 import { useAppNavigationHandlers } from '@/app/useAppNavigationHandlers';
 import { useAppRouteState } from '@/app/useAppRouteState';
 import { useAppShellControls } from '@/app/useAppShellControls';
 import { useAuthRouteGuard } from '@/app/useAuthRouteGuard';
-import { useAuth } from '@/stores/auth/authStore';
 import { useAppUIStore } from '@/stores/appUIStore';
 
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentUser, users, accessiblePages, canAccessPage, logout } = useAuth();
+  const { users, currentUser, accessiblePages, canAccessPage, logout } = useAuthSession();
   const {
     normalizedPath,
     isLoginPath,
@@ -131,9 +131,13 @@ function App() {
         usersCount={users.length}
         adminCount={adminCount}
         nonEmptyListings={airtable.nonEmptyListings}
+        displayValue={displayValue}
+        hasValue={hasValue}
+        recordTitle={recordTitle}
         atLoading={airtable.loading}
         atError={airtable.error}
         products={shopify.products}
+        storeDomain={import.meta.env.VITE_SHOPIFY_STORE_DOMAIN}
         spLoading={shopify.loading}
         spError={shopify.error}
         jfSubmissions={jotform.submissions}

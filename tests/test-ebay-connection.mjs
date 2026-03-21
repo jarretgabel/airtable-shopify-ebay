@@ -25,8 +25,8 @@ const CLIENT_SECRET = env['VITE_EBAY_CLIENT_SECRET'] ?? '';
 const RU_NAME       = env['VITE_EBAY_RU_NAME'] ?? '';
 const IS_SANDBOX    = (env['VITE_EBAY_ENV'] ?? 'sandbox').toLowerCase() !== 'production';
 
-const API_BASE  = IS_SANDBOX ? 'https://api.sandbox.ebay.com' : 'https://api.ebay.com';
-const AUTH_BASE = IS_SANDBOX ? 'https://auth.sandbox.ebay.com' : 'https://auth.ebay.com';
+const API_BASE  = env['VITE_EBAY_API_BASE'] ?? (IS_SANDBOX ? 'https://api.sandbox.ebay.com' : 'https://api.ebay.com');
+const AUTH_BASE = env['VITE_EBAY_AUTH_BASE'] ?? (IS_SANDBOX ? 'https://auth.sandbox.ebay.com' : 'https://auth.ebay.com');
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error('ERROR: VITE_EBAY_CLIENT_ID and VITE_EBAY_CLIENT_SECRET must be set in .env.local');

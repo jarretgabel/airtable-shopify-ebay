@@ -1,5 +1,8 @@
 import { AxiosInstance } from 'axios';
 import { AirtableRecord, GetRecordsOptions } from '@/types/airtable';
+import { requireEnv } from '@/config/runtimeEnv';
+import { logServiceError } from '@/services/logger';
+import { createServiceError, type ServiceError } from '@/services/serviceErrors';
 import { createAirtableClient } from './client';
 import {
   fetchAllRecords,
@@ -14,12 +17,8 @@ class AirtableService {
   private client: AxiosInstance;
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_AIRTABLE_API_KEY;
-    this.baseId = import.meta.env.VITE_AIRTABLE_BASE_ID;
-
-    if (!this.apiKey || !this.baseId) {
-      throw new Error('Airtable API key and Base ID must be set in environment variables');
-    }
+    this.apiKey = requireEnv('VITE_AIRTABLE_API_KEY');
+    this.baseId = requireEnv('VITE_AIRTABLE_BASE_ID');
 
     this.client = this.createClient(this.baseId);
   }
@@ -35,8 +34,17 @@ class AirtableService {
     try {
       return await fetchAllRecords(this.client, tableName, options.view);
     } catch (error) {
-      console.error(`Error fetching records from ${tableName}:`, error);
-      throw error;
+      logServiceError('airtable', `Error fetching records from ${tableName}`, error);
+      const serviceError = createServiceError({
+        service: 'airtable',
+        code: 'AIRTABLE_GET_RECORDS_FAILED',
+        userMessage: `Failed to load Airtable records from ${tableName}.`,
+        retryable: true,
+        cause: error,
+      });
+      const typedError = new Error(serviceError.userMessage) as Error & { serviceError?: ServiceError };
+      typedError.serviceError = serviceError;
+      throw typedError;
     }
   }
 
@@ -48,7 +56,7 @@ class AirtableService {
       const response = await this.client.get(`/${tableName}/${recordId}`);
       return response.data;
     } catch (error) {
-      console.error(`Error fetching record ${recordId} from ${tableName}:`, error);
+      logServiceError('airtable', `Error fetching record ${recordId} from ${tableName}`, error);
       throw error;
     }
   }
@@ -63,7 +71,7 @@ class AirtableService {
       });
       return response.data.records[0];
     } catch (error) {
-      console.error(`Error creating record in ${tableName}:`, error);
+      logServiceError('airtable', `Error creating record in ${tableName}`, error);
       throw error;
     }
   }
@@ -80,7 +88,7 @@ class AirtableService {
       const response = await this.client.patch(`/${tableName}/${recordId}`, { fields });
       return response.data;
     } catch (error) {
-      console.error(`Error updating record ${recordId} in ${tableName}:`, error);
+      logServiceError('airtable', `Error updating record ${recordId} in ${tableName}`, error);
       throw error;
     }
   }
@@ -92,7 +100,7 @@ class AirtableService {
     try {
       await this.client.delete(`/${tableName}/${recordId}`);
     } catch (error) {
-      console.error(`Error deleting record ${recordId} from ${tableName}:`, error);
+      logServiceError('airtable', `Error deleting record ${recordId} from ${tableName}`, error);
       throw error;
     }
   }
@@ -119,12 +127,12 @@ class AirtableService {
         if (isRetryableReferenceStatus(status)) {
           continue;
         }
-        console.error(`Error fetching records from reference ${reference}:`, error);
+        logServiceError('airtable', `Error fetching records from reference ${reference}`, error);
         throw error;
       }
     }
 
-    console.error(`Error fetching records from reference ${reference}:`, lastError);
+    logServiceError('airtable', `Error fetching records from reference ${reference}`, lastError);
     throw lastError;
   }
 
@@ -152,12 +160,12 @@ class AirtableService {
         if (isRetryableReferenceStatus(status)) {
           continue;
         }
-        console.error(`Error updating record ${recordId} for reference ${reference}:`, error);
+        logServiceError('airtable', `Error updating record ${recordId} for reference ${reference}`, error);
         throw error;
       }
     }
 
-    console.error(`Error updating record ${recordId} for reference ${reference}:`, lastError);
+    logServiceError('airtable', `Error updating record ${recordId} for reference ${reference}`, lastError);
     throw lastError;
   }
 }

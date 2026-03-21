@@ -8,6 +8,7 @@ dotenv.config({ path: `${__dirname}/.env.local` });
 dotenv.config({ path: `${__dirname}/.env` });
 
 const key = process.env.VITE_JOTFORM_API_KEY;
+const jotformApiBase = process.env.VITE_JOTFORM_API_BASE || 'https://api.jotform.com';
 if (!key) {
   console.error('❌ VITE_JOTFORM_API_KEY not set in .env.local');
   process.exit(1);
@@ -15,7 +16,7 @@ if (!key) {
 
 async function apiFetch(path, params = {}) {
   const qs = new URLSearchParams({ apiKey: key, ...params });
-  const url = `https://api.jotform.com${path}?${qs}`;
+  const url = `${jotformApiBase}${path}?${qs}`;
   const res = await fetch(url);
   const json = await res.json();
   if (json.responseCode !== 200) {

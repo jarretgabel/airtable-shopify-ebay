@@ -49,7 +49,6 @@ export function AppFrame({
       ref={shellRef}
       className={[
         'dashboard-dark min-h-screen text-[var(--ink)]',
-        '[--bg:#07111c] [--ink:#e8f1fb] [--muted:#92a7be] [--panel:#101a28] [--line:#25384b] [--accent:#68a4ff] [--error-bg:#37181d] [--error-text:#ffcdc7]',
         exporting ? 'cursor-progress' : '',
       ]
         .filter(Boolean)

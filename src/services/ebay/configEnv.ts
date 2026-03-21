@@ -27,16 +27,19 @@ export const ENV_LISTING_API_MODE: EbayListingApiMode =
     : 'inventory';
 
 // API endpoints
-export const EBAY_AUTH_HOST = IS_SANDBOX
+const ENV_EBAY_AUTH_HOST = (import.meta.env.VITE_EBAY_AUTH_HOST as string | undefined)?.trim();
+export const EBAY_AUTH_HOST = ENV_EBAY_AUTH_HOST || (IS_SANDBOX
   ? 'https://auth.sandbox.ebay.com'
-  : 'https://auth.ebay.com';
+  : 'https://auth.ebay.com');
 
 export const API = '/ebay-api-proxy';
 
-export const SCOPES = [
+const DEFAULT_SCOPES = [
   'https://api.ebay.com/oauth/api_scope',
   'https://api.ebay.com/oauth/api_scope/sell.inventory',
 ].join(' ');
+export const SCOPES = ((import.meta.env.VITE_EBAY_OAUTH_SCOPES as string | undefined)?.trim()) || DEFAULT_SCOPES;
+export const APP_SCOPE = ((import.meta.env.VITE_EBAY_APP_SCOPE as string | undefined)?.trim()) || 'https://api.ebay.com/oauth/api_scope';
 
 // localStorage keys
 export const LS_ACCESS = 'ebay_access_token';

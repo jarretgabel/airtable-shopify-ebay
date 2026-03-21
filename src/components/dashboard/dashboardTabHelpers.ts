@@ -1,6 +1,6 @@
 import type {
   DashboardSection,
-  DashboardTabProps,
+  DashboardWorkflowSource,
   ShopifyProduct,
   WorkflowCard,
 } from '@/components/dashboard/dashboardTabTypes';
@@ -57,7 +57,7 @@ export function buildEbayWorkflowCards({
   ebayRestoringSession,
   ebayTotal,
 }: Pick<
-  DashboardTabProps,
+  DashboardWorkflowSource,
   | 'accessiblePages'
   | 'approvalApproved'
   | 'approvalError'
@@ -103,7 +103,7 @@ export function buildMarketWorkflowCards({
   marketError,
   marketListingCount,
   marketLoading,
-}: Pick<DashboardTabProps, 'accessiblePages' | 'marketCurrentSlug' | 'marketError' | 'marketListingCount' | 'marketLoading'>): WorkflowCard[] {
+}: Pick<DashboardWorkflowSource, 'accessiblePages' | 'marketCurrentSlug' | 'marketError' | 'marketListingCount' | 'marketLoading'>): WorkflowCard[] {
   if (!accessiblePages.includes('market')) return [];
 
   return [{
@@ -120,7 +120,7 @@ export function buildUtilityWorkflowCards({
   adminCount,
   aiProvider,
   userCount,
-}: Pick<DashboardTabProps, 'accessiblePages' | 'adminCount' | 'aiProvider' | 'userCount'>): WorkflowCard[] {
+}: Pick<DashboardWorkflowSource, 'accessiblePages' | 'adminCount' | 'aiProvider' | 'userCount'>): WorkflowCard[] {
   const cards: WorkflowCard[] = [];
 
   if (accessiblePages.includes('imagelab')) {

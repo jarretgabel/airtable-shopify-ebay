@@ -1,4 +1,3 @@
-import { useMemo, type ReactNode } from 'react';
 import { create } from 'zustand';
 import { AppPage } from '@/auth/pages';
 import {
@@ -12,7 +11,6 @@ import {
 } from './authStorage';
 import type { AppUser, CreateUserInput, PasswordResetToken, UserRole } from './authTypes';
 import type {
-  AuthContextValue,
   CreateUserResult,
   LoginResult,
   PasswordResetRequestResult,
@@ -25,7 +23,6 @@ import {
   buildUserFromInput,
   canUserAccessPage,
   findUserByNormalizedEmail,
-  getAccessiblePages,
   getCurrentUser,
   normalizeEmail,
   pruneExpiredTokens,
@@ -52,7 +49,7 @@ function persistResetTokens(resetTokens: PasswordResetToken[]): void {
 const initialResetTokens = pruneExpiredTokens(readStoredTokens());
 persistResetTokens(initialResetTokens);
 
-interface AuthStoreState {
+export interface AuthStoreState {
   users: AppUser[];
   currentUserId: string | null;
   resetTokens: PasswordResetToken[];
@@ -66,7 +63,7 @@ interface AuthStoreState {
   createUser: (input: CreateUserInput) => CreateUserResult;
 }
 
-const useAuthStore = create<AuthStoreState>((set, get) => ({
+export const useAuthStore = create<AuthStoreState>((set, get) => ({
   users: readStoredUsers(),
   currentUserId: localStorage.getItem(SESSION_KEY),
   resetTokens: initialResetTokens,
@@ -180,50 +177,3 @@ const useAuthStore = create<AuthStoreState>((set, get) => ({
     return { success: true, message: `User ${newUser.email} created.` };
   },
 }));
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  return children;
-}
-
-export function useAuth(): AuthContextValue {
-  const users = useAuthStore((state) => state.users);
-  const currentUserId = useAuthStore((state) => state.currentUserId);
-  const login = useAuthStore((state) => state.login);
-  const logout = useAuthStore((state) => state.logout);
-  const canAccessPage = useAuthStore((state) => state.canAccessPage);
-  const requestPasswordReset = useAuthStore((state) => state.requestPasswordReset);
-  const resetPassword = useAuthStore((state) => state.resetPassword);
-  const updateUserPermissions = useAuthStore((state) => state.updateUserPermissions);
-  const updateUserRole = useAuthStore((state) => state.updateUserRole);
-  const createUser = useAuthStore((state) => state.createUser);
-
-  const currentUser = getCurrentUser(users, currentUserId);
-  const accessiblePages = getAccessiblePages(currentUser);
-
-  return useMemo<AuthContextValue>(() => ({
-    currentUser,
-    users,
-    isAdmin: currentUser?.role === 'admin',
-    accessiblePages,
-    login,
-    logout,
-    canAccessPage,
-    requestPasswordReset,
-    resetPassword,
-    updateUserPermissions,
-    updateUserRole,
-    createUser,
-  }), [
-    currentUser,
-    users,
-    accessiblePages,
-    login,
-    logout,
-    canAccessPage,
-    requestPasswordReset,
-    resetPassword,
-    updateUserPermissions,
-    updateUserRole,
-    createUser,
-  ]);
-}

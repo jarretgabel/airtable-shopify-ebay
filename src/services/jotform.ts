@@ -1,6 +1,8 @@
 import type { JotFormForm, JotFormSubmission, JotFormApiResponse, JotFormAnswer } from '@/types/jotform';
+import { requireEnv } from '@/config/runtimeEnv';
+import { logServiceError } from '@/services/logger';
 
-const API_KEY = import.meta.env.VITE_JOTFORM_API_KEY as string;
+const API_KEY = requireEnv('VITE_JOTFORM_API_KEY');
 const BASE = '/jotform-proxy';
 
 function buildUrl(path: string, params: Record<string, string | number> = {}): string {
@@ -12,15 +14,20 @@ function buildUrl(path: string, params: Record<string, string | number> = {}): s
 }
 
 async function apiFetch<T>(path: string, params?: Record<string, string | number>): Promise<T> {
-  const res = await fetch(buildUrl(path, params));
-  if (!res.ok) {
-    throw new Error(`JotForm API error: HTTP ${res.status} on ${path}`);
+  try {
+    const res = await fetch(buildUrl(path, params));
+    if (!res.ok) {
+      throw new Error(`JotForm API error: HTTP ${res.status} on ${path}`);
+    }
+    const json: JotFormApiResponse<T> = await res.json();
+    if (json.responseCode !== 200) {
+      throw new Error(`JotForm API error ${json.responseCode}: ${json.message}`);
+    }
+    return json.content;
+  } catch (error) {
+    logServiceError('jotform', `Request failed for ${path}`, error);
+    throw error;
   }
-  const json: JotFormApiResponse<T> = await res.json();
-  if (json.responseCode !== 200) {
-    throw new Error(`JotForm API error ${json.responseCode}: ${json.message}`);
-  }
-  return json.content;
 }
 
 export async function getForms(): Promise<JotFormForm[]> {

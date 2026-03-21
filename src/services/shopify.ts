@@ -1,4 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
+import { requireEnv, requireOneOfEnv } from '@/config/runtimeEnv';
+import { logServiceError } from '@/services/logger';
 import {
   ShopifyProduct,
   ShopifyProductResponse,
@@ -9,41 +11,55 @@ class ShopifyService {
   private client: AxiosInstance;
   private domain: string;
   private accessToken: string;
+  private isBrowser: boolean;
 
   constructor() {
-    this.domain = (import.meta.env.VITE_SHOPIFY_STORE_DOMAIN as string | undefined) ?? '';
-    
-    // Support both token-based auth and OAuth
-    const token = (import.meta.env.VITE_SHOPIFY_ADMIN_API_TOKEN as string | undefined) ?? '';
-    const oauthToken = (import.meta.env.VITE_SHOPIFY_OAUTH_ACCESS_TOKEN as string | undefined) ?? '';
-
-    this.accessToken = oauthToken || token;
-
-    if (!this.domain || !this.accessToken) {
-      throw new Error('Shopify store domain and access token (or OAuth token) must be set in environment variables');
-    }
+    this.domain = requireEnv('VITE_SHOPIFY_STORE_DOMAIN');
+    this.accessToken = requireOneOfEnv(['VITE_SHOPIFY_OAUTH_ACCESS_TOKEN', 'VITE_SHOPIFY_ADMIN_API_TOKEN']);
 
     // In the browser, route through the Vite dev proxy to avoid CORS.
     // In a Node/test context (import.meta.env is undefined), call directly.
-    const isBrowser = typeof window !== 'undefined';
-    const baseURL = isBrowser
+    this.isBrowser = typeof window !== 'undefined';
+    const baseURL = this.isBrowser
       ? '/shopify-proxy/admin/api/2024-04'
       : `https://${this.domain}/admin/api/2024-04`;
 
     this.client = axios.create({
       baseURL,
       headers: {
-        'X-Shopify-Access-Token': this.accessToken,
+        ...(this.isBrowser ? {} : { 'X-Shopify-Access-Token': this.accessToken }),
         'Content-Type': 'application/json',
       },
     });
+
+    if (import.meta.env.DEV) {
+      console.info('[shopify] client configured', {
+        isBrowser: this.isBrowser,
+        baseURL,
+        storeDomain: this.domain,
+      });
+    }
   }
 
   async getProducts(limit = 50): Promise<ShopifyProductsResponse['products']> {
-    const response = await this.client.get<ShopifyProductsResponse>('/products.json', {
-      params: { limit },
-    });
-    return response.data.products;
+    try {
+      const response = await this.client.get<ShopifyProductsResponse>('/products.json', {
+        params: { limit },
+      });
+      return response.data.products;
+    } catch (err: unknown) {
+      if (import.meta.env.DEV && axios.isAxiosError(err)) {
+        const request = err.request as { responseURL?: string } | undefined;
+        console.error('[shopify] getProducts failed', {
+          baseURL: this.client.defaults.baseURL,
+          storeDomain: this.domain,
+          responseURL: request?.responseURL,
+          status: err.response?.status,
+          data: err.response?.data,
+        });
+      }
+      throw err;
+    }
   }
 
   async createProduct(product: ShopifyProduct): Promise<ShopifyProductResponse['product']> {
@@ -72,6 +88,7 @@ class ShopifyService {
       const response = await this.client.get('/shop.json');
       return { success: true, shopName: response.data.shop.name };
     } catch (err: unknown) {
+      logServiceError('shopify', 'Connection test failed', err);
       const message =
         axios.isAxiosError(err)
           ? err.response?.data?.errors ?? err.message

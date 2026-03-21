@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { useAuth } from '@/stores/auth/authStore';
+import { useAuthStore } from '@/stores/auth/authStore';
 
 interface ResetPasswordScreenProps {
   token: string | null;
@@ -8,7 +8,7 @@ interface ResetPasswordScreenProps {
 }
 
 export function ResetPasswordScreen({ token, onResetSuccess, onBackToLogin }: ResetPasswordScreenProps) {
-  const { resetPassword } = useAuth();
+  const resetPassword = useAuthStore((state) => state.resetPassword);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [status, setStatus] = useState<string | null>(null);

@@ -1,4 +1,4 @@
-import type { ReactNode, Ref } from 'react';
+import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type Ref } from 'react';
 import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
 import type { AppTab, OpenDropdown } from '@/components/app/appFrameTypes';
 
@@ -61,6 +61,7 @@ function DropdownTabList({
       {tabs.map((tab) => (
         <button
           key={tab.key}
+          role="menuitem"
           type="button"
           disabled={tab.disabled}
           onClick={() => onSelect(tab)}
@@ -86,15 +87,27 @@ function DropdownTrigger({
   active,
   expanded,
   label,
+  menuId,
   onClick,
+  onKeyDown,
 }: {
   active: boolean;
   expanded: boolean;
   label: string;
+  menuId: string;
   onClick: () => void;
+  onKeyDown: (event: ReactKeyboardEvent<HTMLButtonElement>) => void;
 }): ReactNode {
   return (
-    <button type="button" aria-haspopup="menu" aria-expanded={expanded} onClick={onClick} className={tabClassName(active || expanded)}>
+    <button
+      type="button"
+      aria-haspopup="menu"
+      aria-controls={menuId}
+      aria-expanded={expanded}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+      className={tabClassName(active || expanded)}
+    >
       <span className="inline-flex items-center gap-1.5">
         {label}
         <span className={`text-[0.72rem] transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
@@ -121,8 +134,48 @@ export function AppFrameHeader({
   onToggleDropdown,
   onCloseDropdowns,
 }: AppFrameHeaderProps): ReactNode {
+  const ebayMenuRef = useRef<HTMLDivElement>(null);
+  const utilitiesMenuRef = useRef<HTMLDivElement>(null);
+  const pdfMenuRef = useRef<HTMLDivElement>(null);
+
   const hasActiveEbayTab = ebayTabs.some((tab) => tab.active);
   const hasActiveUtilityTab = utilityTabs.some((tab) => tab.active);
+
+  useEffect(() => {
+    if (!openDropdown) return;
+
+    const menuRef = openDropdown === 'ebay'
+      ? ebayMenuRef
+      : openDropdown === 'utilities'
+        ? utilitiesMenuRef
+        : pdfMenuRef;
+
+    const firstEnabledButton = menuRef.current?.querySelector<HTMLButtonElement>('button:not([disabled])');
+    firstEnabledButton?.focus();
+  }, [openDropdown]);
+
+  useEffect(() => {
+    if (!openDropdown) return;
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onCloseDropdowns();
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onCloseDropdowns, openDropdown]);
+
+  function handleTriggerKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>, target: Exclude<OpenDropdown, null>) {
+    if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onToggleDropdown(target);
+    }
+    if (event.key === 'Escape') {
+      onCloseDropdowns();
+    }
+  }
 
   return (
     <header ref={headerRef} className="relative z-40 border-b border-[var(--line)] bg-[rgba(7,17,28,0.85)] backdrop-blur-md">
@@ -139,7 +192,9 @@ export function AppFrameHeader({
               type="button"
               onClick={() => !exportDisabled && onToggleDropdown('pdf')}
               aria-haspopup="menu"
+              aria-controls="pdf-menu"
               aria-expanded={openDropdown === 'pdf'}
+              onKeyDown={(event) => handleTriggerKeyDown(event, 'pdf')}
               className={`${accentActionButtonClass} ${exportDisabled ? 'pointer-events-none opacity-60' : ''}`}
             >
               <span className="inline-flex items-center gap-1.5">
@@ -148,9 +203,15 @@ export function AppFrameHeader({
               </span>
             </button>
             {openDropdown === 'pdf' && (
-              <div className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[230px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]">
-                <button type="button" disabled={exportDisabled} onClick={() => { onCloseDropdowns(); onExportCurrentPage(); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60">Download Current Page</button>
-                <button type="button" disabled={exportDisabled} onClick={() => { onCloseDropdowns(); onExportAllPages(); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60">Download All Pages</button>
+              <div
+                id="pdf-menu"
+                role="menu"
+                aria-label="PDF export options"
+                ref={pdfMenuRef}
+                className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[230px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+              >
+                <button role="menuitem" type="button" disabled={exportDisabled} onClick={() => { onCloseDropdowns(); onExportCurrentPage(); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60">Download Current Page</button>
+                <button role="menuitem" type="button" disabled={exportDisabled} onClick={() => { onCloseDropdowns(); onExportAllPages(); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60">Download All Pages</button>
               </div>
             )}
           </div>
@@ -169,10 +230,18 @@ export function AppFrameHeader({
                   active={hasActiveEbayTab}
                   expanded={openDropdown === 'ebay'}
                   label="eBay"
+                  menuId="ebay-menu"
                   onClick={() => onToggleDropdown('ebay')}
+                  onKeyDown={(event) => handleTriggerKeyDown(event, 'ebay')}
                 />
                 {openDropdown === 'ebay' && (
-                  <div className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]">
+                  <div
+                    id="ebay-menu"
+                    role="menu"
+                    aria-label="eBay tabs"
+                    ref={ebayMenuRef}
+                    className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+                  >
                     <DropdownTabList tabs={ebayTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} />
                   </div>
                 )}
@@ -188,10 +257,18 @@ export function AppFrameHeader({
                 active={hasActiveUtilityTab}
                 expanded={openDropdown === 'utilities'}
                 label="Utilities"
+                menuId="utilities-menu"
                 onClick={() => onToggleDropdown('utilities')}
+                onKeyDown={(event) => handleTriggerKeyDown(event, 'utilities')}
               />
               {openDropdown === 'utilities' && (
-                <div className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[240px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]">
+                <div
+                  id="utilities-menu"
+                  role="menu"
+                  aria-label="Utility tabs"
+                  ref={utilitiesMenuRef}
+                  className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[240px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+                >
                   <DropdownTabList tabs={utilityTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} />
                 </div>
               )}

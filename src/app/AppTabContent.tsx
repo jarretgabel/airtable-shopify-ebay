@@ -1,4 +1,13 @@
-import { buildDashboardTabProps, buildEbayTabProps } from '@/app/appTabContentMappers';
+import {
+  buildAirtableTabViewModel,
+  buildApprovalTabViewModel,
+  buildDashboardTabViewModel,
+  buildEbayTabViewModel,
+  buildJotformTabViewModel,
+  buildMarketTabViewModel,
+  buildShopifyTabViewModel,
+  buildUsersTabViewModel,
+} from '@/app/appTabContentMappers';
 import type { AppTabContentProps } from '@/app/appTabContentTypes';
 import { DashboardTab } from '@/components/DashboardTab';
 import { EbayTab } from '@/components/EbayTab';
@@ -9,7 +18,6 @@ import { AirtableTab } from '@/components/tabs/AirtableTab';
 import { JotformTab } from '@/components/tabs/JotformTab';
 import { MarketTab } from '@/components/tabs/MarketTab';
 import { ShopifyTab } from '@/components/tabs/ShopifyTab';
-import { displayValue, hasValue, recordTitle } from './appNavigation';
 
 export function AppTabContent({
   activeTab,
@@ -29,6 +37,7 @@ export function AppTabContent({
   atLoading,
   atError,
   products,
+  storeDomain,
   spLoading,
   spError,
   jfSubmissions,
@@ -62,8 +71,11 @@ export function AppTabContent({
   sharkListings,
   sharkSearch,
   currentSlug,
+  displayValue,
+  hasValue,
+  recordTitle,
 }: AppTabContentProps) {
-  const ebayTabProps = buildEbayTabProps({
+  const ebayViewModel = buildEbayTabViewModel({
     ebayAuthenticated,
     ebayRestoringSession,
     ebayLoading,
@@ -76,7 +88,7 @@ export function AppTabContent({
     ebayDisconnect,
   });
 
-  const dashboardTabProps = buildDashboardTabProps({
+  const dashboardViewModel = buildDashboardTabViewModel({
     atLoading,
     spLoading,
     jfLoading,
@@ -108,25 +120,72 @@ export function AppTabContent({
     navigateToTab,
   });
 
+  const airtableViewModel = buildAirtableTabViewModel({
+    atLoading,
+    atError,
+    nonEmptyListings,
+    displayValue,
+    hasValue,
+    recordTitle,
+  });
+
+  const shopifyViewModel = buildShopifyTabViewModel({
+    spLoading,
+    spError,
+    products,
+    storeDomain,
+  });
+
+  const marketViewModel = buildMarketTabViewModel({
+    sharkLoading,
+    sharkError,
+    sharkListings,
+    currentSlug,
+    sharkSearch,
+  });
+
+  const jotformViewModel = buildJotformTabViewModel({
+    jfSubmissions,
+    jfLoading,
+    jfPolling,
+    jfError,
+    jfRefetch,
+    jfLastUpdated,
+    jfFreshCount,
+    jfClearFresh,
+  });
+
+  const approvalViewModel = buildApprovalTabViewModel({
+    approvalRecordId,
+    navigateToApprovalRecord,
+    navigateToApprovalList,
+  });
+
+  const usersViewModel = buildUsersTabViewModel({
+    userRecordId,
+    navigateToUserRecord,
+    navigateToUsersList,
+  });
+
   switch (activeTab) {
     case 'imagelab':
       return <ImageLab />;
     case 'ebay':
-      return <EbayTab {...ebayTabProps} />;
+      return <EbayTab viewModel={ebayViewModel} />;
     case 'approval':
-      return <ListingApprovalTab selectedRecordId={approvalRecordId} onSelectRecord={navigateToApprovalRecord} onBackToList={navigateToApprovalList} />;
+      return <ListingApprovalTab viewModel={approvalViewModel} />;
     case 'users':
-      return <UserManagementTab selectedUserId={userRecordId} onSelectUser={navigateToUserRecord} onBackToList={navigateToUsersList} />;
+      return <UserManagementTab viewModel={usersViewModel} />;
     case 'dashboard':
-      return <DashboardTab {...dashboardTabProps} />;
+      return <DashboardTab viewModel={dashboardViewModel} />;
     case 'airtable':
-      return <AirtableTab loading={atLoading} error={atError} listings={nonEmptyListings} displayValue={displayValue} hasValue={hasValue} recordTitle={recordTitle} />;
+      return <AirtableTab viewModel={airtableViewModel} />;
     case 'shopify':
-      return <ShopifyTab loading={spLoading} error={spError} products={products} storeDomain={import.meta.env.VITE_SHOPIFY_STORE_DOMAIN} />;
+      return <ShopifyTab viewModel={shopifyViewModel} />;
     case 'market':
-      return <MarketTab loading={sharkLoading} error={sharkError} listings={sharkListings} currentSlug={currentSlug} onSearch={sharkSearch} />;
+      return <MarketTab viewModel={marketViewModel} />;
     case 'jotform':
-      return <JotformTab submissions={jfSubmissions} loading={jfLoading} polling={jfPolling} error={jfError} refetch={jfRefetch} lastUpdated={jfLastUpdated} freshCount={jfFreshCount} clearFresh={jfClearFresh} />;
+      return <JotformTab viewModel={jotformViewModel} />;
     default:
       return null;
   }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import type { ApprovalTabViewModel } from '@/app/appTabViewModels';
 import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
@@ -11,16 +12,13 @@ import {
 import { AirtableRecord } from '@/types/airtable';
 
 interface ListingApprovalTabProps {
-  selectedRecordId: string | null;
-  onSelectRecord: (recordId: string) => void;
-  onBackToList: () => void;
+  viewModel: ApprovalTabViewModel;
 }
 
 export function ListingApprovalTab({
-  selectedRecordId,
-  onSelectRecord,
-  onBackToList,
+  viewModel,
 }: ListingApprovalTabProps) {
+  const { selectedRecordId, onSelectRecord, onBackToList } = viewModel;
   const tableReference = (import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_REF as string | undefined)?.trim()
     || DEFAULT_APPROVAL_TABLE_REFERENCE;
   const fallbackTableName = (import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_NAME as string | undefined)?.trim()
