@@ -18,3 +18,8 @@ export interface CreateUserResult {
   success: boolean;
   message: string;
 }
+
+export interface AccountUpdateResult {
+  success: boolean;
+  message: string;
+}

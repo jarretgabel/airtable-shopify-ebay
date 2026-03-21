@@ -3,6 +3,7 @@ import { TAB_VALUES } from '@/app/appNavigation';
 import { buildAppFrameNavTabs } from '@/app/appShellNav';
 import { exportPdf } from '@/app/pdfExport';
 import type { Tab } from '@/app/appNavigation';
+import { useNotificationStore } from '@/stores/notificationStore';
 
 interface AppShellControlsParams {
   activeTab: Tab;
@@ -61,6 +62,8 @@ export function useAppShellControls({
   spLoading,
   jfLoading,
 }: AppShellControlsParams) {
+  const pushNotification = useNotificationStore((state) => state.push);
+
   const handleDashboardRefresh = useCallback(async () => {
     if (dashboardRefreshing) return;
 
@@ -75,10 +78,23 @@ export function useAppShellControls({
         Promise.resolve(canAccessPage('shopify-approval') ? shopifyApprovalRefetch() : undefined),
         Promise.resolve(currentSlug ? sharkSearch(currentSlug) : undefined),
       ]);
+      pushNotification({
+        tone: 'success',
+        title: 'Data refreshed',
+        message: 'Review approval queues and dashboard alerts for items that need action.',
+      });
+    } catch {
+      pushNotification({
+        tone: 'error',
+        title: 'Refresh failed',
+        message: 'Some data sources did not refresh. Try again and verify API credentials if the issue persists.',
+        actionLabel: 'Retry refresh',
+        onAction: () => void handleDashboardRefresh(),
+      });
     } finally {
       setDashboardRefreshing(false);
     }
-  }, [airtableRefetch, approvalRefetch, canAccessPage, currentSlug, dashboardRefreshing, ebayRefetch, jotformRefetch, setDashboardRefreshing, sharkSearch, shopifyApprovalRefetch, shopifyRefetch]);
+  }, [airtableRefetch, approvalRefetch, canAccessPage, currentSlug, dashboardRefreshing, ebayRefetch, jotformRefetch, pushNotification, setDashboardRefreshing, sharkSearch, shopifyApprovalRefetch, shopifyRefetch]);
 
   const tabLoadingState: Partial<Record<Tab, boolean>> = {
     dashboard: dashboardRefreshing,
@@ -98,16 +114,32 @@ export function useAppShellControls({
   const onRefresh = tabRefetchers[activeTab] ?? (() => {});
 
   const handleExportPdf = useCallback(async (mode: 'current' | 'all') => {
-    await exportPdf(mode, TAB_VALUES, {
-      activeTab,
-      canAccessPage,
-      exportingPdf,
-      setExportingPdf,
-      setExportProgress,
-      shellElement: shellRef.current,
-      navigateToTab,
-    });
-  }, [activeTab, canAccessPage, exportingPdf, navigateToTab, setExportProgress, setExportingPdf, shellRef]);
+    try {
+      await exportPdf(mode, TAB_VALUES, {
+        activeTab,
+        canAccessPage,
+        exportingPdf,
+        setExportingPdf,
+        setExportProgress,
+        shellElement: shellRef.current,
+        navigateToTab,
+      });
+
+      pushNotification({
+        tone: 'success',
+        title: mode === 'all' ? 'Full report exported' : 'Page report exported',
+        message: 'Open your Downloads folder and review the PDF before sharing it with your team.',
+      });
+    } catch {
+      pushNotification({
+        tone: 'error',
+        title: 'PDF export failed',
+        message: 'The report could not be generated. Retry export after refreshing the page state.',
+        actionLabel: 'Retry export',
+        onAction: () => void handleExportPdf(mode),
+      });
+    }
+  }, [activeTab, canAccessPage, exportingPdf, navigateToTab, pushNotification, setExportProgress, setExportingPdf, shellRef]);
 
   const { tabs, ebayNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs } = buildAppFrameNavTabs({
     visibleTabs,

@@ -95,9 +95,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
 
   const utilityCards = useMemo(() => buildUtilityWorkflowCards({
     accessiblePages: workflow.accessiblePages,
-    adminCount: workflow.adminCount,
     aiProvider: workflow.aiProvider,
-    userCount: workflow.userCount,
   }), [workflow]);
 
   const sections = useMemo(() => buildDashboardSections({ ebayCards, marketCards, utilityCards }), [ebayCards, marketCards, utilityCards]);

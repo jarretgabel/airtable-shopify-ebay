@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppTabContent } from '@/app/AppTabContent';
 import { displayValue, hasValue, recordTitle, type Tab } from '@/app/appNavigation';
@@ -10,8 +10,10 @@ import { useAuthSession } from '@/app/useAuthSession';
 import { useAppNavigationHandlers } from '@/app/useAppNavigationHandlers';
 import { useAppRouteState } from '@/app/useAppRouteState';
 import { useAppShellControls } from '@/app/useAppShellControls';
+import { useActionGuidanceNotifications } from '@/app/useActionGuidanceNotifications';
 import { useAuthRouteGuard } from '@/app/useAuthRouteGuard';
 import { useAppUIStore } from '@/stores/appUIStore';
+import { useNotificationStore } from '@/stores/notificationStore';
 
 function App() {
   const navigate = useNavigate();
@@ -35,6 +37,8 @@ function App() {
   const setExportingPdf = useAppUIStore((s) => s.setExportingPdf);
   const setDashboardRefreshing = useAppUIStore((s) => s.setDashboardRefreshing);
   const setExportProgress = useAppUIStore((s) => s.setExportProgress);
+  const clearNotifications = useNotificationStore((state) => state.clear);
+  const applyCurrentUserPreferences = useNotificationStore((state) => state.applyCurrentUserPreferences);
   const shellRef = useRef<HTMLElement>(null);
   const {
     navigateToTab,
@@ -89,6 +93,25 @@ function App() {
     jfLoading: jotform.loading,
   });
 
+  useActionGuidanceNotifications({
+    canAccessPage: canAccessPage as (tab: Tab) => boolean,
+    navigateToTab,
+    onRefresh,
+    approvalPending: approval.pending,
+    shopifyApprovalPending: shopifyApproval.pending,
+    totalNewSubmissions,
+    ebayAuthenticated: ebay.authenticated,
+    atError: airtable.error,
+    spError: shopify.error,
+    jfError: jotform.error,
+    ebayError: ebay.error,
+  });
+
+  useEffect(() => {
+    clearNotifications();
+    applyCurrentUserPreferences();
+  }, [applyCurrentUserPreferences, clearNotifications, currentUser?.id]);
+
   if (!currentUser && isResetPasswordPath) {
     return (
       <ResetPasswordScreen
@@ -118,6 +141,10 @@ function App() {
       exportDisabled={exportingPdf}
       onExportCurrentPage={onExportCurrentPage}
       onExportAllPages={onExportAllPages}
+      onOpenNotifications={() => navigateToTab('notifications')}
+      onOpenSettings={() => navigate('/settings?section=preferences')}
+      onOpenUserManagement={() => navigateToTab('users')}
+      canManageUsers={currentUser.role === 'admin'}
       onLogout={handleLogout}
       exportProgress={exportingPdf ? exportProgress : null}
       exporting={exportingPdf}

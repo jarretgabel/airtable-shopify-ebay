@@ -30,10 +30,14 @@ export interface AppFrameProps {
   exportDisabled: boolean;
   onExportCurrentPage: () => void;
   onExportAllPages: () => void;
+  onOpenNotifications: () => void;
+  onOpenSettings: () => void;
+  onOpenUserManagement: () => void;
+  canManageUsers: boolean;
   onLogout: () => void;
   exportProgress: ExportProgress | null;
   exporting: boolean;
   children: ReactNode;
 }
 
-export type OpenDropdown = 'pdf' | 'ebay' | 'shopify' | 'utilities' | null;
+export type OpenDropdown = 'pdf' | 'ebay' | 'shopify' | 'utilities' | 'account' | null;

@@ -4,6 +4,8 @@ export const APP_PAGES = [
   'shopify',
   'market',
   'jotform',
+  'settings',
+  'notifications',
   'imagelab',
   'ebay',
   'approval',
@@ -25,6 +27,8 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   shopify: { label: 'Shopify Products', path: '/shopify/products' },
   market: { label: 'Market Prices', path: '/market' },
   jotform: { label: 'Inquiries', path: '/jotform' },
+  settings: { label: 'Settings', path: '/settings' },
+  notifications: { label: 'Notifications', path: '/notifications' },
   imagelab: { label: 'Image Lab', path: '/imagelab' },
   ebay: { label: 'eBay', path: '/ebay/listings' },
   approval: { label: 'eBay Listings Approvals', path: '/ebay/approval' },
@@ -32,4 +36,4 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   users: { label: 'User Management', path: '/users', adminOnly: true },
 };
 
-export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users');
+export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'settings');

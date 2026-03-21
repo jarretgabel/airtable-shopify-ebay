@@ -9,7 +9,7 @@ import {
   pruneExpiredTokens,
   updateUserPassword,
 } from '@/stores/auth/authContextHelpers';
-import type { AppUser, PasswordResetToken } from '@/stores/auth/authTypes';
+import { DEFAULT_USER_NOTIFICATION_PREFERENCES, type AppUser, type PasswordResetToken } from '@/stores/auth/authTypes';
 
 describe('authContextHelpers', () => {
   const baseUsers: AppUser[] = [
@@ -20,6 +20,7 @@ describe('authContextHelpers', () => {
       role: 'admin',
       password: 'admin-pass',
       allowedPages: [...APP_PAGES],
+      notificationPreferences: { ...DEFAULT_USER_NOTIFICATION_PREFERENCES },
     },
     {
       id: '2',
@@ -28,6 +29,7 @@ describe('authContextHelpers', () => {
       role: 'user',
       password: 'user-pass',
       allowedPages: ['dashboard', 'airtable', 'users'],
+      notificationPreferences: { ...DEFAULT_USER_NOTIFICATION_PREFERENCES },
     },
   ];
 
@@ -56,7 +58,7 @@ describe('authContextHelpers', () => {
 
   it('filters users page for non-admin accessible pages', () => {
     const user = baseUsers[1];
-    expect(getAccessiblePages(user)).toEqual(['dashboard', 'airtable']);
+    expect(getAccessiblePages(user)).toEqual(['dashboard', 'airtable', 'settings']);
     expect(getAccessiblePages(baseUsers[0])).toEqual(APP_PAGES);
   });
 

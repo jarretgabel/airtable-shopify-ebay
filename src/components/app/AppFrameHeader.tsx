@@ -1,6 +1,7 @@
 import { useEffect, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type Ref } from 'react';
 import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
 import type { AppTab, OpenDropdown } from '@/components/app/appFrameTypes';
+import { useNotificationStore } from '@/stores/notificationStore';
 
 interface AppFrameHeaderProps {
   headerRef: Ref<HTMLElement>;
@@ -16,6 +17,10 @@ interface AppFrameHeaderProps {
   exportDisabled: boolean;
   onExportCurrentPage: () => void;
   onExportAllPages: () => void;
+  onOpenNotifications: () => void;
+  onOpenSettings: () => void;
+  onOpenUserManagement: () => void;
+  canManageUsers: boolean;
   onLogout: () => void;
   openDropdown: OpenDropdown;
   onToggleDropdown: (next: Exclude<OpenDropdown, null>) => void;
@@ -125,6 +130,17 @@ function DropdownTrigger({
   );
 }
 
+function userInitials(userLabel: string): string {
+  const name = userLabel.split('·')[0]?.trim() ?? '';
+  if (!name) return 'U';
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+
+  return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
+}
+
 export function AppFrameHeader({
   headerRef,
   currentUserLabel,
@@ -139,17 +155,24 @@ export function AppFrameHeader({
   exportDisabled,
   onExportCurrentPage,
   onExportAllPages,
+  onOpenNotifications,
+  onOpenSettings,
+  onOpenUserManagement,
+  canManageUsers,
   onLogout,
   openDropdown,
   onToggleDropdown,
   onCloseDropdowns,
 }: AppFrameHeaderProps): ReactNode {
+  const notifications = useNotificationStore((state) => state.notifications);
   const hasActiveEbayTab = ebayTabs.some((tab) => tab.active);
   const hasActiveShopifyTab = shopifyTabs.some((tab) => tab.active);
   const hasActiveUtilityTab = utilityTabs.some((tab) => tab.active);
   const ebayBadgeTotal = ebayTabs.reduce((sum, t) => sum + (t.badgeCount ?? 0), 0);
   const shopifyBadgeTotal = shopifyTabs.reduce((sum, t) => sum + (t.badgeCount ?? 0), 0);
   const utilityBadgeTotal = utilityTabs.reduce((sum, t) => sum + (t.badgeCount ?? 0), 0);
+  const notificationCount = notifications.filter((item) => !item.seen).length;
+  const initials = userInitials(currentUserLabel);
 
   useEffect(() => {
     if (!openDropdown) return;
@@ -182,7 +205,6 @@ export function AppFrameHeader({
           <h1 className="m-0 text-[1rem] font-bold leading-none text-[var(--ink)]">Listing Control Center</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2" data-export-ignore="true">
-          <span className="hidden rounded-full border border-[var(--line)] px-3 py-1 text-[0.78rem] text-[var(--muted)] sm:inline">{currentUserLabel}</span>
           <button type="button" onClick={onRefresh} disabled={refreshDisabled} className={primaryActionButtonClass}>{refreshLabel}</button>
           <div className="relative" data-export-ignore="true">
             <button
@@ -212,7 +234,83 @@ export function AppFrameHeader({
               </div>
             )}
           </div>
-          <button type="button" onClick={onLogout} className={secondaryActionButtonClass}>Log Out</button>
+          <div className="relative" data-export-ignore="true">
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-controls="account-menu"
+              aria-expanded={openDropdown === 'account'}
+              aria-label="Open account menu"
+              onClick={() => onToggleDropdown('account')}
+              onKeyDown={(event) => handleTriggerKeyDown(event, 'account')}
+              className={secondaryActionButtonClass}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500/20 text-[0.66rem] font-bold text-cyan-200">{initials}</span>
+                <TabBadge count={notificationCount > 0 ? notificationCount : undefined} />
+                <span className={`text-[0.72rem] transition-transform ${openDropdown === 'account' ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
+              </span>
+            </button>
+
+            {openDropdown === 'account' && (
+              <div
+                id="account-menu"
+                role="menu"
+                aria-label="Account menu"
+                className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[220px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+              >
+                {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+                <button
+                  role="menuitem"
+                  type="button"
+                  autoFocus
+                  onClick={() => {
+                    onCloseDropdowns();
+                    onOpenNotifications();
+                  }}
+                  className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5"
+                >
+                  <span>Notifications</span>
+                  <TabBadge count={notificationCount > 0 ? notificationCount : undefined} />
+                </button>
+                <button
+                  role="menuitem"
+                  type="button"
+                  onClick={() => {
+                    onCloseDropdowns();
+                    onOpenSettings();
+                  }}
+                  className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5"
+                >
+                  Settings
+                </button>
+                {canManageUsers && (
+                  <button
+                    role="menuitem"
+                    type="button"
+                    onClick={() => {
+                      onCloseDropdowns();
+                      onOpenUserManagement();
+                    }}
+                    className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5"
+                  >
+                    User Management
+                  </button>
+                )}
+                <button
+                  role="menuitem"
+                  type="button"
+                  onClick={() => {
+                    onCloseDropdowns();
+                    onLogout();
+                  }}
+                  className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5"
+                >
+                  Log Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -295,6 +393,7 @@ export function AppFrameHeader({
               )}
             </div>
           )}
+
         </div>
       </nav>
     </header>

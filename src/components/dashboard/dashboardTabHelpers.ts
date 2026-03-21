@@ -170,10 +170,8 @@ export function buildMarketWorkflowCards({
 
 export function buildUtilityWorkflowCards({
   accessiblePages,
-  adminCount,
   aiProvider,
-  userCount,
-}: Pick<DashboardWorkflowSource, 'accessiblePages' | 'adminCount' | 'aiProvider' | 'userCount'>): WorkflowCard[] {
+}: Pick<DashboardWorkflowSource, 'accessiblePages' | 'aiProvider'>): WorkflowCard[] {
   const cards: WorkflowCard[] = [];
 
   if (accessiblePages.includes('imagelab')) {
@@ -183,16 +181,6 @@ export function buildUtilityWorkflowCards({
       eyebrow: aiProvider === 'none' ? 'AI identification offline' : aiProvider === 'github' ? 'GitHub Models ready' : 'OpenAI ready',
       detail: 'Batch-identify equipment from photos, optimize exports, and prep listing-ready image assets.',
       stats: [aiProvider === 'none' ? 'Manual image processing' : 'Equipment identification', 'Resize + watermark', 'Clipboard-ready copy'],
-    });
-  }
-
-  if (accessiblePages.includes('users')) {
-    cards.push({
-      id: 'users',
-      title: 'User Management',
-      eyebrow: `${userCount} account${userCount === 1 ? '' : 's'} in workspace`,
-      detail: 'Adjust page access, reset passwords, and keep operator permissions aligned with the current workflow.',
-      stats: [`${adminCount} admin${adminCount === 1 ? '' : 's'}`, `${Math.max(0, userCount - adminCount)} operator${userCount - adminCount === 1 ? '' : 's'}`, `${accessiblePages.length} page${accessiblePages.length === 1 ? '' : 's'} available to you`],
     });
   }
 

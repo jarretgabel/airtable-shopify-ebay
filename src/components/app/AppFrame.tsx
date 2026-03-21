@@ -17,6 +17,10 @@ export function AppFrame({
   exportDisabled,
   onExportCurrentPage,
   onExportAllPages,
+  onOpenNotifications,
+  onOpenSettings,
+  onOpenUserManagement,
+  canManageUsers,
   onLogout,
   exportProgress,
   exporting,
@@ -69,6 +73,10 @@ export function AppFrame({
         exportDisabled={exportDisabled}
         onExportCurrentPage={onExportCurrentPage}
         onExportAllPages={onExportAllPages}
+        onOpenNotifications={onOpenNotifications}
+        onOpenSettings={onOpenSettings}
+        onOpenUserManagement={onOpenUserManagement}
+        canManageUsers={canManageUsers}
         onLogout={onLogout}
         openDropdown={openDropdown}
         onToggleDropdown={toggleDropdown}

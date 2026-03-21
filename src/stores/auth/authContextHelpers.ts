@@ -1,6 +1,6 @@
 import { APP_PAGES, AppPage, ASSIGNABLE_PAGES } from '@/auth/pages';
 import { normalizePages, randomToken } from './authStorage';
-import type { AppUser, CreateUserInput, PasswordResetToken, UserRole } from './authTypes';
+import { DEFAULT_USER_NOTIFICATION_PREFERENCES, type AppUser, type CreateUserInput, type PasswordResetToken, type UserRole } from './authTypes';
 import type { CreateUserResult, LoginResult } from './authContextTypes';
 
 export function normalizeEmail(value: string): string {
@@ -17,6 +17,7 @@ export function getCurrentUser(users: AppUser[], currentUserId: string | null): 
 
 export function canUserAccessPage(currentUser: AppUser | null, page: AppPage): boolean {
   if (!currentUser) return false;
+  if (page === 'settings') return true;
   if (currentUser.role === 'admin') return true;
   return currentUser.allowedPages.includes(page);
 }
@@ -24,7 +25,7 @@ export function canUserAccessPage(currentUser: AppUser | null, page: AppPage): b
 export function getAccessiblePages(currentUser: AppUser | null): AppPage[] {
   if (!currentUser) return [];
   if (currentUser.role === 'admin') return [...APP_PAGES];
-  return currentUser.allowedPages.filter((page) => page !== 'users');
+  return Array.from(new Set([...currentUser.allowedPages.filter((page) => page !== 'users' && page !== 'settings'), 'settings']));
 }
 
 export function attemptLogin(users: AppUser[], email: string, password: string): { result: LoginResult; userId: string | null } {
@@ -56,7 +57,7 @@ export function buildResetLink(token: string): string {
   return `${window.location.origin}/reset-password?token=${encodeURIComponent(token)}`;
 }
 
-export function pruneExpiredTokens(tokens: PasswordResetToken[], now = Date.now()): PasswordResetToken[] {
+export function pruneExpiredTokens<T extends { expiresAt: number }>(tokens: T[], now = Date.now()): T[] {
   return tokens.filter((token) => token.expiresAt > now);
 }
 
@@ -88,6 +89,7 @@ export function buildUserFromInput(input: CreateUserInput): { result?: CreateUse
       role,
       password: input.password,
       allowedPages,
+      notificationPreferences: { ...DEFAULT_USER_NOTIFICATION_PREFERENCES },
     },
   };
 }

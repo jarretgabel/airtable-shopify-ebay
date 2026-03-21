@@ -13,6 +13,8 @@ import { DashboardTab } from '@/components/DashboardTab';
 import { EbayTab } from '@/components/EbayTab';
 import { ImageLab } from '@/components/ImageLab';
 import { ListingApprovalTab } from '@/components/ListingApprovalTab';
+import { NotificationsTab } from '@/components/NotificationsTab';
+import { SettingsTab } from '@/components/SettingsTab';
 import { UserManagementTab } from '@/components/UserManagementTab';
 import { AirtableTab } from '@/components/tabs/AirtableTab';
 import { JotformTab } from '@/components/tabs/JotformTab';
@@ -206,6 +208,10 @@ export function AppTabContent({
     }
     case 'users':
       return <UserManagementTab viewModel={usersViewModel} />;
+    case 'settings':
+      return <SettingsTab />;
+    case 'notifications':
+      return <NotificationsTab />;
     case 'dashboard':
       return <DashboardTab viewModel={dashboardViewModel} />;
     case 'airtable':
