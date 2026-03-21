@@ -15,8 +15,11 @@
 
 	body {
 		font-family: var(--font-sans);
-		background: #f2f4f8;
-		color: #112031;
+		background: radial-gradient(circle at 90% -10%, rgba(104,164,255,0.22), transparent 38%),
+		            radial-gradient(circle at 10% 0%, rgba(46,208,195,0.18), transparent 34%),
+		            linear-gradient(180deg, #050c14, #09131f 32%, #07111c 100%);
+		background-attachment: fixed;
+		color: #e8f1fb;
 		line-height: 1.45;
 	}
 

@@ -59,7 +59,7 @@ function buildPublishedListings(items: EbayInventoryItem[], offers: EbayOffer[])
     .slice(0, MAX_VISIBLE_LISTINGS);
 }
 
-export function useEbayListings(): EbayListingsState {
+export function useEbayListings(enabled = true): EbayListingsState {
   const hasEnvRefreshToken = Boolean(import.meta.env.VITE_EBAY_REFRESH_TOKEN);
   const oauthParams = new URLSearchParams(window.location.search);
   const hasOAuthCallback = oauthParams.get('state') === 'ebay_oauth' && Boolean(oauthParams.get('code'));
@@ -74,6 +74,8 @@ export function useEbayListings(): EbayListingsState {
 
   // Handle OAuth callback — detect ?code= in URL on page load
   useEffect(() => {
+    if (!enabled) return;
+
     if (hasValidSession()) {
       setAuthenticated(true);
     }
@@ -104,9 +106,10 @@ export function useEbayListings(): EbayListingsState {
           setRestoringSession(false);
         });
     }
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
+    if (!enabled) return;
     if (hasOAuthCallback) return;
     if (!hasValidSession() && !hasEnvRefreshToken) return;
 
@@ -157,9 +160,10 @@ export function useEbayListings(): EbayListingsState {
         setLoading(false);
         setRestoringSession(false);
       });
-  }, [hasEnvRefreshToken]);
+  }, [enabled, hasEnvRefreshToken]);
 
   const fetchListings = useCallback(async () => {
+    if (!enabled) return;
     if (!hasValidSession()) return;
     setLoading(true);
     setError(null);
@@ -206,14 +210,16 @@ export function useEbayListings(): EbayListingsState {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [enabled]);
 
   // Auto-fetch when authenticated
   useEffect(() => {
+    if (!enabled) return;
     if (authenticated) fetchListings();
-  }, [authenticated, fetchListings]);
+  }, [authenticated, enabled, fetchListings]);
 
   const disconnect = useCallback(() => {
+    if (!enabled) return;
     clearUserToken();
     setAuthenticated(false);
     setInventoryItems([]);
@@ -221,7 +227,7 @@ export function useEbayListings(): EbayListingsState {
     setRecentListings([]);
     setTotal(0);
     setError(null);
-  }, []);
+  }, [enabled]);
 
   return {
     authenticated,

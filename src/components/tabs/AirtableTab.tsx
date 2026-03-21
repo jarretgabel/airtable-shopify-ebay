@@ -71,8 +71,8 @@ export function AirtableTab({ loading, error, listings, displayValue, hasValue, 
             {hasValue(listing.fields.Status) && (
               <p className="m-0"><strong>Status:</strong> {displayValue(listing.fields.Status)}</p>
             )}
-            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
-              <p className="m-0 whitespace-pre-wrap font-mono text-xs text-slate-700">{JSON.stringify(listing.fields, null, 2)}</p>
+            <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-3">
+              <p className="m-0 whitespace-pre-wrap font-mono text-xs text-[var(--muted)]">{JSON.stringify(listing.fields, null, 2)}</p>
             </div>
           </div>
         </ExpandableDataCard>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { APP_PAGES, AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
 import { AppFrame } from '@/components/app/AppFrame';
@@ -15,10 +15,13 @@ import { ShopifyTab } from '@/components/tabs/ShopifyTab';
 import { UserManagementTab } from '@/components/UserManagementTab';
 import { useAuth } from '@/context/AuthContext';
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
+import { useEbayListings } from '@/hooks/useEbayListings';
 import { useHiFiShark } from '@/hooks/useHiFiShark';
+import { useApprovalQueueSummary } from '@/hooks/useApprovalQueueSummary';
 import { useJotFormInquiries } from '@/hooks/useJotForm';
 import { useListings } from '@/hooks/useListings';
 import { useShopifyProducts } from '@/hooks/useShopifyProducts';
+import { getAIProvider } from '@/services/equipmentAI';
 import { appendElementToPdf, createPdfDocumentAsync } from '@/services/pdfExport';
 
 function displayValue(value: unknown): string {
@@ -69,16 +72,25 @@ function isTab(value: string | null): value is Tab {
   return Boolean(value && TAB_VALUES.includes(value as Tab));
 }
 
-const EXPORT_TABS = ['dashboard', 'airtable', 'shopify', 'market', 'jotform', 'imagelab', 'ebay'] as const satisfies readonly Tab[];
-const EXPORT_TAB_LABELS: Record<(typeof EXPORT_TABS)[number], string> = {
+const EBAY_TABS = ['ebay', 'approval'] as const satisfies readonly Tab[];
+const EBAY_TAB_SET = new Set<Tab>(EBAY_TABS as readonly Tab[]);
+const UTILITY_TABS = ['imagelab', 'users'] as const satisfies readonly Tab[];
+const UTILITY_TAB_SET = new Set<Tab>(UTILITY_TABS as readonly Tab[]);
+const NAV_LABELS: Partial<Record<Tab, string>> = {
   dashboard: 'Dashboard',
-  airtable: 'Airtable Inventory',
-  shopify: 'Shopify Products',
-  market: 'Market Prices',
-  jotform: 'JotForm Inquiries',
+  airtable: 'Airtable',
+  shopify: 'Shopify',
+  market: 'HiFi Shark',
+  jotform: 'JotForm',
+  ebay: 'Listings',
+  approval: 'Listing Approval',
   imagelab: 'Image Lab',
-  ebay: 'eBay',
+  users: 'User Management',
 };
+
+function navLabel(tab: Tab): string {
+  return NAV_LABELS[tab] ?? PAGE_DEFINITIONS[tab].label;
+}
 
 function waitForScreenRender(): Promise<void> {
   return new Promise((resolve) => {
@@ -93,7 +105,7 @@ function waitForScreenRender(): Promise<void> {
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentUser, accessiblePages, canAccessPage, logout } = useAuth();
+  const { currentUser, users, accessiblePages, canAccessPage, logout } = useAuth();
 
   const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
   const isLoginPath = normalizedPath === '/login';
@@ -114,6 +126,7 @@ function App() {
   const userRecordId = userRecordMatch ? decodeURIComponent(userRecordMatch[1]) : null;
 
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [dashboardRefreshing, setDashboardRefreshing] = useState(false);
   const [exportProgress, setExportProgress] = useState<{ current: number; total: number; label: string } | null>(null);
   const shellRef = useRef<HTMLElement>(null);
 
@@ -192,6 +205,26 @@ function App() {
 
   const { products, loading: spLoading, error: spError, refetch: spRefetch } = useShopifyProducts();
   const { listings: sharkListings, loading: sharkLoading, error: sharkError, search: sharkSearch, currentSlug } = useHiFiShark();
+  const {
+    authenticated: ebayAuthenticated,
+    restoringSession: ebayRestoringSession,
+    loading: ebayLoading,
+    error: ebayError,
+    inventoryItems: ebayInventoryItems,
+    offers: ebayOffers,
+    recentListings: ebayRecentListings,
+    total: ebayTotal,
+    refetch: ebayRefetch,
+    disconnect: ebayDisconnect,
+  } = useEbayListings(canAccessPage('ebay'));
+  const {
+    loading: approvalLoading,
+    error: approvalError,
+    total: approvalTotal,
+    approved: approvalApproved,
+    pending: approvalPending,
+    refetch: approvalRefetch,
+  } = useApprovalQueueSummary(canAccessPage('approval'));
 
   const JOTFORM_FORM_ID = import.meta.env.VITE_JOTFORM_FORM_ID || '213604252654047';
   const {
@@ -207,8 +240,14 @@ function App() {
 
   const totalNewSubmissions = jfSubmissions.filter((submission) => submission.new === '1').length;
   const visibleTabs = TAB_VALUES.filter((tab) => canAccessPage(tab));
+  const aiProvider = getAIProvider().provider;
+  const adminCount = useMemo(() => users.filter((user) => user.role === 'admin').length, [users]);
+  const ebayPublishedCount = useMemo(() => ebayOffers.filter((offer) => offer.status === 'PUBLISHED').length, [ebayOffers]);
+  const ebayDraftCount = useMemo(() => ebayOffers.filter((offer) => offer.status === 'UNPUBLISHED').length, [ebayOffers]);
 
-  const loading = activeTab === 'airtable'
+  const loading = activeTab === 'dashboard'
+    ? dashboardRefreshing
+    : activeTab === 'airtable'
     ? atLoading
     : activeTab === 'shopify'
       ? spLoading
@@ -216,7 +255,27 @@ function App() {
         ? jfLoading
         : false;
 
-  const refetch = activeTab === 'airtable'
+  async function handleDashboardRefresh() {
+    if (dashboardRefreshing) return;
+
+    setDashboardRefreshing(true);
+    try {
+      await Promise.all([
+        atRefetch(),
+        Promise.resolve(spRefetch()),
+        Promise.resolve(jfRefetch()),
+        Promise.resolve(canAccessPage('ebay') ? ebayRefetch() : undefined),
+        approvalRefetch(),
+        Promise.resolve(currentSlug ? sharkSearch(currentSlug) : undefined),
+      ]);
+    } finally {
+      setDashboardRefreshing(false);
+    }
+  }
+
+  const refetch = activeTab === 'dashboard'
+    ? handleDashboardRefresh
+    : activeTab === 'airtable'
     ? atRefetch
     : activeTab === 'shopify'
       ? spRefetch
@@ -240,12 +299,17 @@ function App() {
     return <LoginScreen onLoggedIn={() => navigate('/dashboard', { replace: true })} />;
   }
 
-  async function handleExportPdf() {
+  async function handleExportPdf(mode: 'current' | 'all') {
     if (exportingPdf || !shellRef.current) {
       return;
     }
 
-    const exportTabs = EXPORT_TABS.filter((tab) => canAccessPage(tab));
+    const exportTabs = mode === 'all'
+      ? TAB_VALUES.filter((tab) => canAccessPage(tab))
+      : canAccessPage(activeTab)
+        ? [activeTab]
+        : [];
+
     if (exportTabs.length === 0) {
       return;
     }
@@ -268,10 +332,11 @@ function App() {
       });
 
       for (const [index, tab] of exportTabs.entries()) {
+        const exportLabel = PAGE_DEFINITIONS[tab].label;
         setExportProgress({
           current: index + 1,
           total: exportTabs.length,
-          label: EXPORT_TAB_LABELS[tab],
+          label: exportLabel,
         });
         navigateToTab(tab, true);
         await waitForScreenRender();
@@ -279,7 +344,7 @@ function App() {
         if (!shellRef.current) continue;
 
         await appendElementToPdf(pdf, shellRef.current, firstScreen, {
-          title: EXPORT_TAB_LABELS[tab],
+          title: exportLabel,
           subtitle: 'Listing Control Center export',
           exportedAt,
         });
@@ -296,49 +361,71 @@ function App() {
     }
   }
 
-  const stats = [
-    { label: 'Airtable Records', value: nonEmptyListings.length },
-    { label: 'Shopify Products', value: products.length },
-    { label: 'Shopify Active', value: products.filter((product) => product.status === 'active').length },
-    { label: 'Market Listings', value: sharkListings.length || '—' },
-    { label: 'New Inquiries', value: jfLoading ? '…' : totalNewSubmissions || '—' },
-  ];
+  const mainTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab));
+  const ebayTabs = visibleTabs.filter((tab) => EBAY_TAB_SET.has(tab));
+  const utilityTabs = visibleTabs.filter((tab) => UTILITY_TAB_SET.has(tab));
 
-  const tabs = visibleTabs.map((tab) => ({
+  const tabs = mainTabs.map((tab) => ({
     key: tab,
-    label: PAGE_DEFINITIONS[tab].label,
+    label: navLabel(tab),
     active: activeTab === tab,
     badgeCount: tab === 'jotform' ? totalNewSubmissions : undefined,
     disabled: exportingPdf,
+    onClick: () => navigateToTab(tab),
+  }));
+
+  const ebayNavTabs = ebayTabs.map((tab) => ({
+    key: tab,
+    label: navLabel(tab),
+    active: activeTab === tab,
+    badgeCount: tab === 'approval' ? approvalPending : undefined,
+    disabled: exportingPdf,
     onClick: () => tab === 'approval' ? navigateToApprovalList() : navigateToTab(tab),
+  }));
+
+  const utilityNavTabs = utilityTabs.map((tab) => ({
+    key: tab,
+    label: navLabel(tab),
+    active: activeTab === tab,
+    badgeCount: undefined,
+    disabled: exportingPdf,
+    onClick: () => tab === 'users'
+        ? navigateToUsersList()
+        : navigateToTab(tab),
   }));
 
   return (
     <AppFrame
       shellRef={shellRef}
       currentUserLabel={`${currentUser.name} · ${currentUser.role}`}
-      stats={stats}
       tabs={tabs}
-      heroMeta={(
-        <>
-          <p className="mb-2 text-slate-200/85">Airtable: <strong>{nonEmptyListings.length}</strong> records</p>
-          <p className="mb-2 text-slate-200/85">Shopify: <strong>{products.length}</strong> products</p>
-          <p className="mb-2 text-slate-200/85">Market: <strong>{sharkListings.length}</strong> listings{currentSlug ? ` for "${currentSlug}"` : ''}</p>
-          <p className="m-0 text-slate-200/85">JotForm: <strong>{jfSubmissions.length}</strong> submissions{totalNewSubmissions > 0 ? ` · ${totalNewSubmissions} unread` : ''}</p>
-        </>
-      )}
+      ebayTabs={ebayNavTabs}
+      utilityTabs={utilityNavTabs}
       refreshLabel={loading ? 'Refreshing...' : 'Refresh'}
       refreshDisabled={loading || exportingPdf}
       onRefresh={refetch}
-      exportLabel={exportingPdf ? 'Exporting PDF...' : 'Download PDF'}
       exportDisabled={exportingPdf}
-      onExport={handleExportPdf}
+      onExportCurrentPage={() => void handleExportPdf('current')}
+      onExportAllPages={() => void handleExportPdf('all')}
       onLogout={handleLogout}
       exportProgress={exportingPdf ? exportProgress : null}
       exporting={exportingPdf}
     >
       {activeTab === 'imagelab' && <ImageLab />}
-      {activeTab === 'ebay' && <EbayTab />}
+      {activeTab === 'ebay' && (
+        <EbayTab
+          authenticated={ebayAuthenticated}
+          restoringSession={ebayRestoringSession}
+          loading={ebayLoading}
+          error={ebayError}
+          inventoryItems={ebayInventoryItems}
+          offers={ebayOffers}
+          recentListings={ebayRecentListings}
+          total={ebayTotal}
+          refetch={ebayRefetch}
+          disconnect={ebayDisconnect}
+        />
+      )}
 
       {activeTab === 'approval' && (
         <ListingApprovalTab
@@ -395,6 +482,26 @@ function App() {
           maxComponentTypeCount={metrics.maxComponentTypeCount}
           maxAirtableBrandCount={metrics.maxAirtableBrandCount}
           insights={metrics.insights}
+          accessiblePages={accessiblePages}
+          approvalLoading={approvalLoading}
+          approvalError={approvalError}
+          approvalTotal={approvalTotal}
+          approvalApproved={approvalApproved}
+          approvalPending={approvalPending}
+          aiProvider={aiProvider}
+          ebayAuthenticated={ebayAuthenticated}
+          ebayRestoringSession={ebayRestoringSession}
+          ebayLoading={ebayLoading}
+          ebayError={ebayError}
+          ebayTotal={ebayTotal}
+          ebayPublishedCount={ebayPublishedCount}
+          ebayDraftCount={ebayDraftCount}
+          marketLoading={sharkLoading}
+          marketError={sharkError?.message ?? null}
+          marketCurrentSlug={currentSlug}
+          marketListingCount={sharkListings.length}
+          userCount={users.length}
+          adminCount={adminCount}
           onSelectTab={navigateToTab}
         />
       )}

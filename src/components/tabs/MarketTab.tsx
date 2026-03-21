@@ -35,7 +35,7 @@ export function MarketTab({ loading, error, listings, currentSlug, onSearch }: M
                 id="shark-input"
                 ref={sharkInputRef}
                 type="text"
-                className="w-full rounded-xl border border-[var(--line)] bg-white px-3.5 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-200"
+                className="w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3.5 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30"
                 placeholder="e.g. accuphase-e-530"
                 defaultValue={currentSlug}
               />

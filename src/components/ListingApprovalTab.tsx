@@ -18,7 +18,7 @@ const SHIPPING_SERVICE_OPTIONS = [
 ];
 const FALLBACK_LISTING_FORMAT_OPTIONS = ['Buy It Now', 'Auction'];
 
-const inputBaseClass = 'w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-70';
+const inputBaseClass = 'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
 const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
 
 interface ListingApprovalTabProps {

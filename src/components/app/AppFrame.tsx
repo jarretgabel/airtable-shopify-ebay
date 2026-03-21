@@ -1,11 +1,6 @@
-import { ReactNode, Ref } from 'react';
+import { ReactNode, Ref, useEffect, useRef, useState } from 'react';
 import { AppPage } from '@/auth/pages';
 import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
-
-interface AppStat {
-  label: string;
-  value: ReactNode;
-}
 
 interface AppTab {
   key: AppPage;
@@ -25,15 +20,15 @@ interface ExportProgress {
 interface AppFrameProps {
   shellRef?: Ref<HTMLElement>;
   currentUserLabel: string;
-  stats: AppStat[];
   tabs: AppTab[];
-  heroMeta: ReactNode;
+  ebayTabs: AppTab[];
+  utilityTabs: AppTab[];
   refreshLabel: string;
   refreshDisabled: boolean;
   onRefresh: () => void;
-  exportLabel: string;
   exportDisabled: boolean;
-  onExport: () => void;
+  onExportCurrentPage: () => void;
+  onExportAllPages: () => void;
   onLogout: () => void;
   exportProgress: ExportProgress | null;
   exporting: boolean;
@@ -41,96 +36,249 @@ interface AppFrameProps {
 }
 
 function tabClassName(active: boolean): string {
-  const base = 'inline-flex items-center justify-center whitespace-nowrap rounded-[10px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-55';
+  const base = 'relative inline-flex items-center justify-center whitespace-nowrap px-4 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-55';
   if (active) {
-    return `${base} bg-gradient-to-r from-[var(--accent)] to-blue-500 text-white`;
+    return `${base} text-[var(--accent)] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[var(--accent)]`;
   }
-
-  return `${base} bg-transparent text-[var(--muted)] hover:bg-white/6 hover:text-[var(--ink)]`;
+  return `${base} text-[var(--muted)] hover:text-[var(--ink)]`;
 }
+
+type OpenDropdown = 'pdf' | 'ebay' | 'utilities' | null;
 
 export function AppFrame({
   shellRef,
   currentUserLabel,
-  stats,
   tabs,
-  heroMeta,
+  ebayTabs,
+  utilityTabs,
   refreshLabel,
   refreshDisabled,
   onRefresh,
-  exportLabel,
   exportDisabled,
-  onExport,
+  onExportCurrentPage,
+  onExportAllPages,
   onLogout,
   exportProgress,
   exporting,
   children,
 }: AppFrameProps) {
+  const hasActiveEbayTab = ebayTabs.some((tab) => tab.active);
+  const hasActiveUtilityTab = utilityTabs.some((tab) => tab.active);
+  const [openDropdown, setOpenDropdown] = useState<OpenDropdown>(null);
+  const shellContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!shellContainerRef.current) return;
+      if (!(event.target instanceof Node)) return;
+      if (!shellContainerRef.current.contains(event.target)) {
+        setOpenDropdown(null);
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+    };
+  }, []);
+
+  function toggleDropdown(next: Exclude<OpenDropdown, null>) {
+    setOpenDropdown((current) => current === next ? null : next);
+  }
+
+  function closeDropdowns() {
+    setOpenDropdown(null);
+  }
+
   return (
     <main
       ref={shellRef}
       className={[
-        'dashboard-dark min-h-screen bg-[radial-gradient(circle_at_90%_-10%,rgba(104,164,255,0.22),transparent_38%),radial-gradient(circle_at_10%_0%,rgba(46,208,195,0.18),transparent_34%),linear-gradient(180deg,#050c14,#09131f_32%,#07111c_100%)] text-[var(--ink)]',
+        'dashboard-dark min-h-screen text-[var(--ink)]',
         '[--bg:#07111c] [--ink:#e8f1fb] [--muted:#92a7be] [--panel:#101a28] [--line:#25384b] [--accent:#68a4ff] [--error-bg:#37181d] [--error-text:#ffcdc7]',
         exporting ? 'cursor-progress' : '',
       ].filter(Boolean).join(' ')}
     >
-      <section className="mx-auto w-[min(1100px,94vw)] px-0 py-8 sm:py-10">
-        <header className="grid gap-4 rounded-[18px] bg-[linear-gradient(135deg,#08111d,#12233a_62%,#20569e)] p-6 text-slate-50 shadow-[0_24px_48px_rgba(0,0,0,0.35)] md:grid-cols-[2fr_1fr]">
+      {/* Top bar */}
+      <header className="relative z-40 border-b border-[var(--line)] bg-[rgba(7,17,28,0.85)] backdrop-blur-md">
+        <div className="mx-auto flex w-[min(1200px,96vw)] items-center justify-between gap-4 py-3">
           <div>
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200/85">Inventory Operations</p>
-            <h1 className="mt-2 text-[clamp(1.7rem,3.6vw,2.5rem)] font-semibold leading-[1.1]">Listing Control Center</h1>
-            <p className="mt-3 max-w-[56ch] text-slate-200/85">Monitor your Airtable inventory and Shopify product catalog in one place.</p>
+            <span className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Inventory Operations</span>
+            <h1 className="m-0 text-[1rem] font-bold leading-none text-[var(--ink)]">Listing Control Center</h1>
           </div>
-          <div className="self-start rounded-xl border border-white/15 bg-[rgba(7,17,28,0.55)] p-4">
-            {heroMeta}
-          </div>
-        </header>
-
-        <section className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          {stats.map((stat) => (
-            <article key={stat.label} className="rounded-2xl border border-[var(--line)] bg-[linear-gradient(180deg,rgba(16,26,40,0.98),rgba(11,20,31,0.98))] px-4 py-4 shadow-[0_18px_36px_rgba(0,0,0,0.2)]">
-              <p className="m-0 text-[0.77rem] uppercase tracking-[0.08em] text-[var(--muted)]">{stat.label}</p>
-              <p className="mt-1 text-2xl font-bold">{stat.value}</p>
-            </article>
-          ))}
-        </section>
-
-        <div className="mt-[1.1rem] flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-1.5 rounded-xl border border-[var(--line)] bg-[linear-gradient(180deg,rgba(16,26,40,0.98),rgba(11,20,31,0.98))] p-1.5 shadow-[0_18px_36px_rgba(0,0,0,0.2)]">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                className={tabClassName(tab.active)}
-                disabled={tab.disabled}
-                onClick={tab.onClick}
-              >
-                {tab.label}
-                {typeof tab.badgeCount === 'number' && tab.badgeCount > 0 && (
-                  <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[0.72rem] font-bold leading-none text-white">
-                    {tab.badgeCount}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-3" data-export-ignore="true">
-            <span className="rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1.5 text-[0.82rem] text-[var(--muted)]">
+          <div ref={shellContainerRef} className="flex flex-wrap items-center gap-2" data-export-ignore="true">
+            <span className="hidden rounded-full border border-[var(--line)] px-3 py-1 text-[0.78rem] text-[var(--muted)] sm:inline">
               {currentUserLabel}
             </span>
             <button type="button" onClick={onRefresh} disabled={refreshDisabled} className={primaryActionButtonClass}>
               {refreshLabel}
             </button>
-            <button type="button" onClick={onExport} disabled={exportDisabled} className={accentActionButtonClass}>
-              {exportLabel}
-            </button>
+            <div className="relative" data-export-ignore="true">
+              <button
+                type="button"
+                onClick={() => {
+                  if (exportDisabled) return;
+                  toggleDropdown('pdf');
+                }}
+                aria-haspopup="menu"
+                aria-expanded={openDropdown === 'pdf'}
+                className={`${accentActionButtonClass} ${exportDisabled ? 'pointer-events-none opacity-60' : ''}`}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  Download PDF
+                  <span className={`text-[0.72rem] transition-transform ${openDropdown === 'pdf' ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
+                </span>
+              </button>
+              {openDropdown === 'pdf' && (
+                <div className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[230px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]">
+                <button
+                  type="button"
+                  disabled={exportDisabled}
+                  onClick={() => {
+                    closeDropdowns();
+                    onExportCurrentPage();
+                  }}
+                  className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Download Current Page
+                </button>
+                <button
+                  type="button"
+                  disabled={exportDisabled}
+                  onClick={() => {
+                    closeDropdowns();
+                    onExportAllPages();
+                  }}
+                  className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Download All Pages
+                </button>
+                </div>
+              )}
+            </div>
             <button type="button" onClick={onLogout} className={secondaryActionButtonClass}>
               Log Out
             </button>
           </div>
         </div>
 
+        {/* Full-width tab strip */}
+        <nav className="mx-auto w-[min(1200px,96vw)]" aria-label="Main navigation">
+          <div className="relative flex flex-wrap items-end gap-1">
+            <div className="flex min-w-0 flex-1 items-end gap-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={tabClassName(tab.active)}
+                  disabled={tab.disabled}
+                  onClick={tab.onClick}
+                >
+                  {tab.label}
+                  {typeof tab.badgeCount === 'number' && tab.badgeCount > 0 && (
+                    <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[0.65rem] font-bold leading-none text-white">
+                      {tab.badgeCount}
+                    </span>
+                  )}
+                </button>
+              ))}
+              {ebayTabs.length > 0 && (
+                <div className="relative flex-shrink-0" data-export-ignore="true">
+                  <button
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={openDropdown === 'ebay'}
+                    onClick={() => toggleDropdown('ebay')}
+                    className={tabClassName(hasActiveEbayTab || openDropdown === 'ebay')}
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      eBay
+                      <span className={`text-[0.72rem] transition-transform ${openDropdown === 'ebay' ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
+                    </span>
+                  </button>
+                  {openDropdown === 'ebay' && (
+                    <div className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]">
+                    {ebayTabs.map((tab) => (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        disabled={tab.disabled}
+                        onClick={() => {
+                          closeDropdowns();
+                          tab.onClick();
+                        }}
+                        className={[
+                          'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-semibold transition',
+                          tab.active
+                            ? 'bg-sky-500/15 text-sky-200'
+                            : 'text-[var(--muted)] hover:bg-white/5 hover:text-[var(--ink)]',
+                          tab.disabled ? 'cursor-not-allowed opacity-60' : '',
+                        ].filter(Boolean).join(' ')}
+                      >
+                        <span>{tab.label}</span>
+                        {typeof tab.badgeCount === 'number' && (
+                          <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[0.65rem] font-bold leading-none text-white">
+                            {tab.badgeCount}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            {utilityTabs.length > 0 && (
+              <div className="relative flex-shrink-0" data-export-ignore="true">
+                <button
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={openDropdown === 'utilities'}
+                  onClick={() => toggleDropdown('utilities')}
+                  className={tabClassName(hasActiveUtilityTab || openDropdown === 'utilities')}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    Utilities
+                    <span className={`text-[0.72rem] transition-transform ${openDropdown === 'utilities' ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
+                  </span>
+                </button>
+                {openDropdown === 'utilities' && (
+                  <div className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[240px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]">
+                  {utilityTabs.map((tab) => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      disabled={tab.disabled}
+                      onClick={() => {
+                        closeDropdowns();
+                        tab.onClick();
+                      }}
+                      className={[
+                        'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-semibold transition',
+                        tab.active
+                          ? 'bg-sky-500/15 text-sky-200'
+                          : 'text-[var(--muted)] hover:bg-white/5 hover:text-[var(--ink)]',
+                        tab.disabled ? 'cursor-not-allowed opacity-60' : '',
+                      ].filter(Boolean).join(' ')}
+                    >
+                      <span>{tab.label}</span>
+                      {typeof tab.badgeCount === 'number' && (
+                        <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[0.65rem] font-bold leading-none text-white">
+                          {tab.badgeCount}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </nav>
+      </header>
+
+      {/* Page content */}
+      <section className="mx-auto w-[min(1200px,96vw)] py-6 sm:py-8">
         {exportProgress && (
           <div className="fixed inset-0 z-40 grid place-items-center bg-slate-950/65 p-6 backdrop-blur-sm" data-export-ignore="true">
             <div className="w-full max-w-[480px] rounded-[28px] border border-sky-400/20 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.2),transparent_58%),linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.96))] p-7 shadow-[0_28px_70px_rgba(2,6,23,0.48)]">

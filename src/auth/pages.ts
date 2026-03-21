@@ -26,7 +26,7 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   jotform: { label: 'Inquiries', path: '/jotform' },
   imagelab: { label: 'Image Lab', path: '/imagelab' },
   ebay: { label: 'eBay', path: '/ebay' },
-  approval: { label: 'Listing Approval', path: '/approval' },
+  approval: { label: 'eBay Listings Approvals', path: '/approval' },
   users: { label: 'User Management', path: '/users', adminOnly: true },
 };
 

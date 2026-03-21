@@ -47,7 +47,7 @@ export function ResetPasswordScreen({ token, onResetSuccess, onBackToLogin }: Re
   const inputClassName = 'w-full rounded-xl border border-white/15 bg-slate-950/55 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30';
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_16%_12%,rgba(31,111,235,0.2),transparent_34%),radial-gradient(circle_at_84%_88%,rgba(14,165,163,0.16),transparent_40%),linear-gradient(180deg,#061122,#0b1b2f_52%,#06111f)] px-5 py-8 text-slate-100">
+    <main className="min-h-screen px-5 py-8 text-slate-100">
       <section className="mx-auto w-full max-w-xl rounded-[1.4rem] border border-white/15 bg-slate-950/70 p-6 shadow-[0_24px_48px_rgba(6,13,23,0.45)] backdrop-blur">
         <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-sky-200/80">Account Recovery</p>
         <h1 className="mt-2 text-4xl font-semibold tracking-tight text-white">Reset your password</h1>

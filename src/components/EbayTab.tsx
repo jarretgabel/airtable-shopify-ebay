@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useEbayListings, type EbayPublishedListing } from '@/hooks/useEbayListings';
+import { type EbayPublishedListing, type EbayListingsState } from '@/hooks/useEbayListings';
 import {
   buildAuthUrl,
   createSampleListing,
@@ -31,10 +31,10 @@ function offerForSku(offers: EbayOffer[], sku: string): EbayOffer | undefined {
 }
 
 function statusColor(status?: string) {
-  if (status === 'PUBLISHED') return 'bg-green-100 text-green-700';
-  if (status === 'UNPUBLISHED') return 'bg-yellow-100 text-yellow-800';
-  if (status === 'ENDED') return 'bg-red-100 text-red-700';
-  return 'bg-slate-100 text-slate-500';
+  if (status === 'PUBLISHED') return 'bg-green-900/40 text-green-300';
+  if (status === 'UNPUBLISHED') return 'bg-yellow-900/40 text-yellow-300';
+  if (status === 'ENDED') return 'bg-red-900/40 text-red-300';
+  return 'bg-[var(--line)] text-[var(--muted)]';
 }
 
 function statusLabel(status?: string) {
@@ -69,7 +69,7 @@ function formatMissingFields(fields: string[]): string {
   return fields.length > 0 ? fields.join(', ') : 'Ready to publish';
 }
 
-const runameInputClass = 'flex-1 rounded-lg border border-[var(--line)] bg-slate-50 px-3 py-2 font-mono text-[0.82rem] text-[var(--ink)] outline-none transition-colors focus:border-[var(--accent)] focus:bg-white';
+const runameInputClass = 'flex-1 rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 py-2 font-mono text-[0.82rem] text-[var(--ink)] outline-none transition-colors focus:border-[var(--accent)] focus:bg-[var(--bg)]';
 const buttonBaseClass = 'inline-flex cursor-pointer items-center justify-center rounded-lg px-[0.9rem] py-[0.45rem] text-[0.8rem] font-semibold transition-[background,opacity] duration-150 disabled:cursor-default disabled:opacity-50';
 const primaryButtonClass = `${buttonBaseClass} border border-transparent bg-[#E53238] text-white hover:bg-[#c8272d]`;
 const ghostButtonClass = `${buttonBaseClass} border border-[var(--line)] bg-transparent text-[var(--ink)] hover:bg-[var(--panel)]`;
@@ -112,7 +112,7 @@ function ConnectScreen({ error, loading }: { error: string | null; loading: bool
         </p>
 
         {/* Config status row */}
-        <div className="w-full rounded-[10px] border border-[var(--line)] bg-slate-50 px-4 py-3 text-left">
+        <div className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-left">
           <div className="flex items-center gap-2 text-[0.8rem] text-[var(--muted)]">
             <span className={`h-2 w-2 shrink-0 rounded-full ${ebayConfig.clientId ? 'bg-green-500' : 'bg-red-500'}`} />
             <span>Client ID: {ebayConfig.clientId ? `${ebayConfig.clientId.slice(0, 24)}…` : 'Not set'}</span>
@@ -148,7 +148,7 @@ function ConnectScreen({ error, loading }: { error: string | null; loading: bool
           </div>
 
           {/* Where to find it */}
-          <div className="w-full rounded-[10px] border border-orange-200 bg-orange-50 px-4 py-3 text-left text-[0.82rem] text-orange-900">
+          <div className="w-full rounded-[10px] border border-orange-400/30 bg-orange-950/25 px-4 py-3 text-left text-[0.82rem] text-orange-300">
             <strong>Where to find your RuName:</strong>
             <ol className="ml-[1.1rem] mt-2 p-0 leading-[1.7]">
               <li>
@@ -180,7 +180,7 @@ function ConnectScreen({ error, loading }: { error: string | null; loading: bool
         )}
 
         {error && (
-          <div className="w-full rounded-[10px] border border-red-300 bg-red-50 px-4 py-2.5 text-left text-[0.82rem] text-red-700">
+          <div className="w-full rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-left text-[0.82rem] text-[var(--error-text)]">
             <strong>Auth error:</strong> {error}
           </div>
         )}
@@ -193,9 +193,12 @@ function ConnectScreen({ error, loading }: { error: string | null; loading: bool
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function EbayTab() {
-  const { authenticated, restoringSession, loading, error, inventoryItems, offers, recentListings, total, refetch, disconnect } =
-    useEbayListings();
+type EbayTabProps = Pick<
+  EbayListingsState,
+  'authenticated' | 'restoringSession' | 'loading' | 'error' | 'inventoryItems' | 'offers' | 'recentListings' | 'total' | 'refetch' | 'disconnect'
+>;
+
+export function EbayTab({ authenticated, restoringSession, loading, error, inventoryItems, offers, recentListings, total, refetch, disconnect }: EbayTabProps) {
 
   const [apiMode, setApiMode] = useState<EbayListingApiMode>(() => getPreferredListingApiMode());
   const [draftStatus, setDraftStatus] = useState<'idle' | 'creating' | 'done' | 'error'>('idle');
@@ -279,7 +282,7 @@ export function EbayTab() {
             <div className={spinnerClass} />
             <span>{loading ? 'Loading eBay inventory…' : 'Connecting…'}</span>
           </div>
-          {error && <div className="w-full rounded-[10px] border border-red-300 bg-red-50 px-4 py-2.5 text-left text-[0.82rem] text-red-700">{error}</div>}
+          {error && <div className="w-full rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-left text-[0.82rem] text-[var(--error-text)]">{error}</div>}
         </div>
       </div>
     );
@@ -309,23 +312,23 @@ export function EbayTab() {
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2 max-[960px]:w-full max-[960px]:justify-start">
-          <div className="inline-flex items-center gap-1 rounded-[10px] border border-[var(--line)] bg-slate-50 p-[0.2rem] max-[600px]:w-full" role="group" aria-label="Choose eBay listing API">
+          <div className="inline-flex items-center gap-1 rounded-[10px] border border-[var(--line)] bg-[var(--bg)] p-[0.2rem] max-[600px]:w-full" role="group" aria-label="Choose eBay listing API">
             <button
-              className={`cursor-pointer rounded-lg border-0 px-[0.7rem] py-[0.4rem] text-[0.78rem] font-bold transition-[background,color] duration-150 max-[600px]:flex-1 ${apiMode === 'inventory' ? 'bg-white text-[var(--ink)] shadow-[0_1px_2px_rgba(15,23,42,0.08)]' : 'bg-transparent text-[var(--muted)]'}`}
+              className={`cursor-pointer rounded-lg border-0 px-[0.7rem] py-[0.4rem] text-[0.78rem] font-bold transition-[background,color] duration-150 max-[600px]:flex-1 ${apiMode === 'inventory' ? 'bg-[var(--panel)] text-[var(--ink)] shadow-[0_1px_2px_rgba(15,23,42,0.3)]' : 'bg-transparent text-[var(--muted)]'}`}
               onClick={() => handleApiModeChange('inventory')}
               type="button"
             >
               Inventory API
             </button>
             <button
-              className={`cursor-pointer rounded-lg border-0 px-[0.7rem] py-[0.4rem] text-[0.78rem] font-bold transition-[background,color] duration-150 max-[600px]:flex-1 ${apiMode === 'trading' ? 'bg-white text-[var(--ink)] shadow-[0_1px_2px_rgba(15,23,42,0.08)]' : 'bg-transparent text-[var(--muted)]'}`}
+              className={`cursor-pointer rounded-lg border-0 px-[0.7rem] py-[0.4rem] text-[0.78rem] font-bold transition-[background,color] duration-150 max-[600px]:flex-1 ${apiMode === 'trading' ? 'bg-[var(--panel)] text-[var(--ink)] shadow-[0_1px_2px_rgba(15,23,42,0.3)]' : 'bg-transparent text-[var(--muted)]'}`}
               onClick={() => handleApiModeChange('trading')}
               type="button"
             >
               Trading API
             </button>
             <button
-              className={`cursor-pointer rounded-lg border-0 px-[0.7rem] py-[0.4rem] text-[0.78rem] font-bold transition-[background,color] duration-150 max-[600px]:flex-1 ${apiMode === 'trading-verify' ? 'bg-white text-[var(--ink)] shadow-[0_1px_2px_rgba(15,23,42,0.08)]' : 'bg-transparent text-[var(--muted)]'}`}
+              className={`cursor-pointer rounded-lg border-0 px-[0.7rem] py-[0.4rem] text-[0.78rem] font-bold transition-[background,color] duration-150 max-[600px]:flex-1 ${apiMode === 'trading-verify' ? 'bg-[var(--panel)] text-[var(--ink)] shadow-[0_1px_2px_rgba(15,23,42,0.3)]' : 'bg-transparent text-[var(--muted)]'}`}
               onClick={() => handleApiModeChange('trading-verify')}
               type="button"
             >
@@ -369,7 +372,7 @@ export function EbayTab() {
 
       {/* Draft creation result */}
       {draftStatus === 'done' && draftResult && (
-        <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-green-200 bg-green-50 px-4 py-2.5 text-[0.83rem] text-green-800 max-[600px]:items-start">
+        <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-green-500/30 bg-green-950/30 px-4 py-2.5 text-[0.83rem] text-green-300 max-[600px]:items-start">
           <strong>
             {draftResult.mode === 'inventory'
               ? 'Draft listing created'
@@ -392,11 +395,11 @@ export function EbayTab() {
         </div>
       )}
       {draftStatus === 'error' && draftError && (
-        <div className="rounded-[10px] border border-red-300 bg-red-50 px-4 py-2.5 text-[0.82rem] text-red-700">{draftError}</div>
+        <div className="rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-[0.82rem] text-[var(--error-text)]">{draftError}</div>
       )}
 
       {publishStatus === 'done' && publishResult && (
-        <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-green-200 bg-green-50 px-4 py-2.5 text-[0.83rem] text-green-800 max-[600px]:items-start">
+        <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-green-500/30 bg-green-950/30 px-4 py-2.5 text-[0.83rem] text-green-300 max-[600px]:items-start">
           <strong>Sample draft published</strong> — SKU: <code>{publishResult.sku}</code>
           <> · Offer ID: <code>{publishResult.offerId}</code></>
           <> · Listing ID: <code>{publishResult.listingId}</code></>
@@ -404,18 +407,18 @@ export function EbayTab() {
         </div>
       )}
       {publishStatus === 'error' && publishError && (
-        <div className="rounded-[10px] border border-red-300 bg-red-50 px-4 py-2.5 text-[0.82rem] text-red-700">{publishError}</div>
+        <div className="rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-[0.82rem] text-[var(--error-text)]">{publishError}</div>
       )}
 
-      {error && <div className="rounded-[10px] border border-red-300 bg-red-50 px-4 py-2.5 text-[0.82rem] text-red-700">{error}</div>}
+      {error && <div className="rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-[0.82rem] text-[var(--error-text)]">{error}</div>}
 
-      <div className="rounded-[14px] border border-[var(--line)] bg-white px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+      <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
         <div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Listing API mode</div>
         <p className="mt-1.5 max-w-[72ch] text-[0.88rem] leading-[1.5] text-[var(--muted)]">
           Inventory API creates seller drafts as <strong>UNPUBLISHED</strong> offers. Trading API creates a live fixed-price listing immediately. Trading Verify Only runs the same eBay validation without creating a live listing.
         </p>
         {isTradingMode && (
-          <div className={`mt-4 rounded-[10px] border px-4 py-3 text-[0.84rem] leading-[1.5] ${isTradingVerifyMode ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-orange-300 bg-orange-50 text-orange-800'}`}>
+          <div className={`mt-4 rounded-[10px] border px-4 py-3 text-[0.84rem] leading-[1.5] ${isTradingVerifyMode ? 'border-blue-400/30 bg-blue-950/30 text-blue-300' : 'border-orange-400/30 bg-orange-950/25 text-orange-300'}`}>
             <strong>{isTradingVerifyMode ? 'Trading Verify Only' : 'Warning: Trading API is live'}</strong>
             {' '}
             {isTradingVerifyMode
@@ -425,7 +428,7 @@ export function EbayTab() {
         )}
       </div>
 
-      <div className="rounded-[14px] border border-[var(--line)] bg-white px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+      <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
         <div className="mb-4 flex items-start justify-between gap-4 max-[600px]:flex-col">
           <div>
             <div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Publish setup</div>
