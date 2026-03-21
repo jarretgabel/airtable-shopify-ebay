@@ -1,5 +1,11 @@
-import axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { AirtableRecord, GetRecordsOptions } from '@/types/airtable';
+import { createAirtableClient } from './client';
+import {
+  fetchAllRecords,
+  getAirtableErrorStatus,
+  isRetryableReferenceStatus,
+} from './records';
 import { parseAirtableReferenceCandidates } from './reference';
 
 class AirtableService {
@@ -19,13 +25,7 @@ class AirtableService {
   }
 
   private createClient(baseId: string): AxiosInstance {
-    return axios.create({
-      baseURL: `https://api.airtable.com/v0/${baseId}`,
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    return createAirtableClient(this.apiKey, baseId);
   }
 
   /**
@@ -33,28 +33,7 @@ class AirtableService {
    */
   async getRecords(tableName: string, options: GetRecordsOptions = {}): Promise<AirtableRecord[]> {
     try {
-      const records: AirtableRecord[] = [];
-      let offset: string | undefined = undefined;
-
-      while (true) {
-        const params: Record<string, string> = {};
-        if (options.view) {
-          params.view = options.view;
-        }
-        if (offset) {
-          params.offset = offset;
-        }
-
-        const response = await this.client.get(`/${tableName}`, { params });
-        records.push(...response.data.records);
-
-        if (!response.data.offset) {
-          break;
-        }
-        offset = response.data.offset;
-      }
-
-      return records;
+      return await fetchAllRecords(this.client, tableName, options.view);
     } catch (error) {
       console.error(`Error fetching records from ${tableName}:`, error);
       throw error;
@@ -133,32 +112,11 @@ class AirtableService {
       const client = this.createClient(parsed.baseId);
 
       try {
-        const records: AirtableRecord[] = [];
-        let offset: string | undefined = undefined;
-
-        while (true) {
-          const params: Record<string, string> = {};
-          if (parsed.viewId) {
-            params.view = parsed.viewId;
-          }
-          if (offset) {
-            params.offset = offset;
-          }
-
-          const response = await client.get(`/${parsed.tableName}`, { params });
-          records.push(...response.data.records);
-
-          if (!response.data.offset) {
-            break;
-          }
-          offset = response.data.offset;
-        }
-
-        return records;
+        return await fetchAllRecords(client, parsed.tableName, parsed.viewId);
       } catch (error) {
         lastError = error;
-        const status = (error as { response?: { status?: number } }).response?.status;
-        if (status === 401 || status === 403 || status === 404) {
+        const status = getAirtableErrorStatus(error);
+        if (isRetryableReferenceStatus(status)) {
           continue;
         }
         console.error(`Error fetching records from reference ${reference}:`, error);
@@ -190,8 +148,8 @@ class AirtableService {
         return response.data;
       } catch (error) {
         lastError = error;
-        const status = (error as { response?: { status?: number } }).response?.status;
-        if (status === 401 || status === 403 || status === 404) {
+        const status = getAirtableErrorStatus(error);
+        if (isRetryableReferenceStatus(status)) {
           continue;
         }
         console.error(`Error updating record ${recordId} for reference ${reference}:`, error);

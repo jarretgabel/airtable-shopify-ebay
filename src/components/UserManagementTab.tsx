@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useRef, useState } from 'react';
 import { AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
-import { AppUser, useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/stores/auth/authStore';
+import type { AppUser } from '@/stores/auth/authTypes';
 import { UserDetailPanel } from '@/components/users/UserDetailPanel';
 import { UserDirectoryPanel } from '@/components/users/UserDirectoryPanel';
 import { NewUserFormState, RoleFilter, UserSortKey } from '@/components/users/userManagementTypes';

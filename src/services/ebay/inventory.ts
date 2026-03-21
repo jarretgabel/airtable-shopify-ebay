@@ -6,6 +6,24 @@ import { isValidEbaySku } from './types';
 import { API, getSellerUsername } from './config';
 import { getValidUserToken } from './token';
 
+const EBAY_OFFERS_MAX_PAGE_SIZE = 25;
+
+function normalizeOfferLimit(limit: number): number {
+  if (!Number.isFinite(limit)) return EBAY_OFFERS_MAX_PAGE_SIZE;
+  return Math.max(1, Math.floor(limit));
+}
+
+function toProxyApiPath(pathOrUrl: string): string {
+  if (pathOrUrl.startsWith(API)) return pathOrUrl;
+  if (pathOrUrl.startsWith('/')) return `${API}${pathOrUrl}`;
+  try {
+    const parsed = new URL(pathOrUrl);
+    return `${API}${parsed.pathname}${parsed.search}`;
+  } catch {
+    return `${API}${pathOrUrl}`;
+  }
+}
+
 // ─── Inventory items ──────────────────────────────────────────────────────────
 
 /** Fetch all inventory items for the authenticated seller. */
@@ -37,11 +55,24 @@ export async function getInventoryItems(limit = 25): Promise<EbayInventoryPage> 
 
 // ─── Offers ───────────────────────────────────────────────────────────────────
 
-export async function getOffersWithToken(token: string, sku?: string, limit = 25): Promise<EbayOfferPage> {
-  const params = new URLSearchParams({ limit: String(limit) });
-  if (sku) params.set('sku', sku);
+async function getOffersPageWithToken(
+  token: string,
+  sku: string | undefined,
+  limit: number,
+  nextHref?: string,
+): Promise<EbayOfferPage & { next?: string }> {
+  let requestPath: string;
+  if (nextHref) {
+    requestPath = toProxyApiPath(nextHref);
+  } else {
+    const params = new URLSearchParams({
+      limit: String(Math.min(EBAY_OFFERS_MAX_PAGE_SIZE, normalizeOfferLimit(limit))),
+    });
+    if (sku) params.set('sku', sku);
+    requestPath = `${API}/sell/inventory/v1/offer?${params.toString()}`;
+  }
 
-  const res = await fetch(`${API}/sell/inventory/v1/offer?${params.toString()}`, {
+  const res = await fetch(requestPath, {
     headers: {
       Authorization: `Bearer ${token}`,
       'Accept-Language': 'en-US',
@@ -49,10 +80,38 @@ export async function getOffersWithToken(token: string, sku?: string, limit = 25
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(`getOffers ${res.status}: ${JSON.stringify(err)}`);
+    throw new Error(`getOffers page ${res.status}: ${JSON.stringify(err)}`);
   }
-  const data = await res.json() as { offers?: EbayOffer[]; total?: number };
-  return { offers: data.offers ?? [], total: data.total ?? 0 };
+  const data = await res.json() as { offers?: EbayOffer[]; total?: number; next?: string };
+  return { offers: data.offers ?? [], total: data.total ?? 0, next: data.next };
+}
+
+export async function getOffersWithToken(token: string, sku?: string, limit = 25): Promise<EbayOfferPage> {
+  const requestedLimit = normalizeOfferLimit(limit);
+  const offers: EbayOffer[] = [];
+  let total = 0;
+  let nextHref: string | undefined;
+
+  while (offers.length < requestedLimit) {
+    const remaining = requestedLimit - offers.length;
+    const pageLimit = Math.min(remaining, EBAY_OFFERS_MAX_PAGE_SIZE);
+    const page = await getOffersPageWithToken(token, sku, pageLimit, nextHref);
+
+    total = page.total;
+    if (page.offers.length === 0) break;
+
+    offers.push(...page.offers);
+    nextHref = page.next;
+
+    if (page.offers.length < pageLimit && !nextHref) break;
+    if (!nextHref) break;
+    if (total > 0 && offers.length >= total) break;
+  }
+
+  return {
+    offers: offers.slice(0, requestedLimit),
+    total: total || offers.length,
+  };
 }
 
 /** Fetch all offers (listings) for the authenticated seller. */

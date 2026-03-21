@@ -1,7 +1,7 @@
 import { APP_PAGES, AppPage, ASSIGNABLE_PAGES } from '@/auth/pages';
-import { normalizePages, randomToken } from '@/context/authStorage';
-import type { AppUser, CreateUserInput, PasswordResetToken, UserRole } from '@/context/authTypes';
-import type { CreateUserResult, LoginResult } from '@/context/authContextTypes';
+import { normalizePages, randomToken } from './authStorage';
+import type { AppUser, CreateUserInput, PasswordResetToken, UserRole } from './authTypes';
+import type { CreateUserResult, LoginResult } from './authContextTypes';
 
 export function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();

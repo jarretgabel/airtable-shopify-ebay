@@ -10,7 +10,7 @@ import { useAppNavigationHandlers } from '@/app/useAppNavigationHandlers';
 import { useAppRouteState } from '@/app/useAppRouteState';
 import { useAppShellControls } from '@/app/useAppShellControls';
 import { useAuthRouteGuard } from '@/app/useAuthRouteGuard';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/stores/auth/authStore';
 import { useAppUIStore } from '@/stores/appUIStore';
 
 function App() {
@@ -28,9 +28,12 @@ function App() {
     firstAccessibleTab,
   } = useAppRouteState(location, accessiblePages);
 
-  const [exportingPdf, dashboardRefreshing, exportProgress, setExportingPdf, setDashboardRefreshing, setExportProgress] = useAppUIStore(
-    (s) => [s.exportingPdf, s.dashboardRefreshing, s.exportProgress, s.setExportingPdf, s.setDashboardRefreshing, s.setExportProgress],
-  );
+  const exportingPdf = useAppUIStore((s) => s.exportingPdf);
+  const dashboardRefreshing = useAppUIStore((s) => s.dashboardRefreshing);
+  const exportProgress = useAppUIStore((s) => s.exportProgress);
+  const setExportingPdf = useAppUIStore((s) => s.setExportingPdf);
+  const setDashboardRefreshing = useAppUIStore((s) => s.setDashboardRefreshing);
+  const setExportProgress = useAppUIStore((s) => s.setExportProgress);
   const shellRef = useRef<HTMLElement>(null);
   const {
     navigateToTab,

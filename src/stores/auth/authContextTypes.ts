@@ -1,5 +1,5 @@
 import { AppPage } from '@/auth/pages';
-import type { AppUser, CreateUserInput, UserRole } from '@/context/authTypes';
+import type { AppUser, CreateUserInput, UserRole } from './authTypes';
 
 export interface LoginResult {
   success: boolean;

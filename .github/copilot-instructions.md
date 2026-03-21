@@ -25,6 +25,7 @@ These are the default implementation rules for this repository.
 - Keep components orchestration-focused: move heavy data shaping, mapping, and calculations into pure helpers (`src/app`, `src/hooks/**`, `src/components/**/helpers`).
 - Apply the same pattern to dense service modules: keep transport/orchestration entry points focused and move token/storage/request-building logic into sibling helpers in the same service folder.
 - For compatibility-safe extractions, preserve existing exported function names/signatures and barrel exports, and avoid changing API payload shapes unless explicitly requested.
+- When splitting shared utility service files, keep a thin compatibility wrapper module that re-exports the prior public surface to avoid import churn.
 - Avoid repeated array scans inside render paths; compute once and reuse derived values.
 - Prefer single-purpose helper functions with stable input/output shapes over inline multi-step blocks.
 - When refactoring large files, preserve behavior first, then reduce complexity via extractions; avoid mixing functional changes with structural cleanup.

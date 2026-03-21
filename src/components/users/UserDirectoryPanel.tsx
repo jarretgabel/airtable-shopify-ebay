@@ -1,6 +1,6 @@
 import { FormEvent, MutableRefObject } from 'react';
 import { AppPage } from '@/auth/pages';
-import { AppUser } from '@/context/AuthContext';
+import type { AppUser } from '@/stores/auth/authTypes';
 import { UserCreateSection } from '@/components/users/UserCreateSection';
 import { UserDirectoryListSection } from '@/components/users/UserDirectoryListSection';
 import { NewUserFormState, RoleFilter, UserSortKey } from '@/components/users/userManagementTypes';

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import airtableService from '@/services/airtable';
-import { getOffers } from '@/services/ebay';
+import { getInventoryItems, getOffersForInventorySkus } from '@/services/ebay';
 import {
   FALLBACK_LISTING_FORMAT_OPTIONS,
   SHIPPING_SERVICE_FIELD,
@@ -90,7 +90,8 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
 
   async loadListingFormatOptions() {
     try {
-      const offersPage = await getOffers(undefined, 100);
+      const itemsPage = await getInventoryItems(100);
+      const offersPage = await getOffersForInventorySkus(itemsPage.inventoryItems.map((item) => item.sku));
       const formats = offersPage.offers
         .map((offer) => offer.format)
         .filter((format): format is string => Boolean(format));

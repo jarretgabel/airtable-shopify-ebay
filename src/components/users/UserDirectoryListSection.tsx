@@ -1,4 +1,4 @@
-import { AppUser } from '@/context/AuthContext';
+import type { AppUser } from '@/stores/auth/authTypes';
 import { RoleFilter, UserSortKey } from '@/components/users/userManagementTypes';
 
 interface UserDirectoryListSectionProps {

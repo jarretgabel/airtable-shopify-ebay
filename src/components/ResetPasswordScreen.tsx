@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/stores/auth/authStore';
 
 interface ResetPasswordScreenProps {
   token: string | null;

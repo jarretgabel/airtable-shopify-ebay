@@ -14,6 +14,10 @@ export function useDashboardSectionTracking(sections: DashboardSection[]): Dashb
   }, [sections]);
 
   useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') {
+      return undefined;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];

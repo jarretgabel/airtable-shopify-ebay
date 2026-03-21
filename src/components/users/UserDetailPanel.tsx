@@ -1,5 +1,5 @@
 import { ASSIGNABLE_PAGES, AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
-import { AppUser } from '@/context/AuthContext';
+import type { AppUser } from '@/stores/auth/authTypes';
 
 interface UserDetailPanelProps {
   selectedUser: AppUser;

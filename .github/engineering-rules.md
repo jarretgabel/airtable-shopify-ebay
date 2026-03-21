@@ -12,6 +12,7 @@
 - Keep files bite-sized and focused: if a file approaches ~250 lines or mixes orchestration with heavy transforms, split into helper/modules in the same domain folder.
 - Use compatibility-safe extraction for dense services as well: keep the original service entry module as an orchestration wrapper and extract storage/auth/request helpers into sibling files.
 - During extraction-first refactors, preserve exported signatures and existing import paths to avoid downstream breakage.
+- Preserve default exports for shared services when they are part of existing import conventions (for example `@/services/airtable`).
 - Prefer pure computation modules for expensive or multi-step derivations, and keep React components/hooks focused on wiring and state lifecycle.
 - Reuse derived collections/aggregates instead of recomputing the same filters/reductions multiple times.
 

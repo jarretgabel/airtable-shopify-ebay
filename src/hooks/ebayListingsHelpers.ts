@@ -1,6 +1,5 @@
 import {
   getInventoryItems,
-  getOffers,
   getOffersForInventorySkus,
   isValidEbaySku,
   type EbayInventoryItem,
@@ -51,7 +50,7 @@ function buildPublishedListings(items: EbayInventoryItem[], offers: EbayOffer[])
 async function loadOffersPage(items: EbayInventoryItem[]): Promise<{ offersPage: EbayOfferPage; warning: string | null }> {
   try {
     return {
-      offersPage: await getOffers(undefined, 100),
+      offersPage: await getOffersForInventorySkus(items.map(item => item.sku)),
       warning: null,
     };
   } catch {

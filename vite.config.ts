@@ -3,6 +3,24 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
+function sanitizeEbayProxyPath(requestPath: string): string {
+  const rewritten = requestPath.replace(/^\/ebay-api-proxy/, '')
+  const [pathname, query = ''] = rewritten.split('?')
+
+  if (pathname !== '/sell/inventory/v1/offer' || !query) {
+    return rewritten
+  }
+
+  const params = new URLSearchParams(query)
+  if (!params.has('offset')) {
+    return rewritten
+  }
+
+  params.delete('offset')
+  const nextQuery = params.toString()
+  return nextQuery ? `${pathname}?${nextQuery}` : pathname
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
   const ebayApiHost = env.VITE_EBAY_ENV?.toLowerCase() === 'production'
@@ -58,7 +76,7 @@ export default defineConfig(({ mode }) => {
       '/ebay-api-proxy': {
         target: ebayApiHost,
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/ebay-api-proxy/, ''),
+        rewrite: sanitizeEbayProxyPath,
         secure: true,
       },
       '/ebay-web-proxy': {
