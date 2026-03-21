@@ -1,4 +1,4 @@
-import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type Ref } from 'react';
+import { useEffect, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type Ref } from 'react';
 import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
 import type { AppTab, OpenDropdown } from '@/components/app/appFrameTypes';
 
@@ -53,15 +53,20 @@ function TabButton({ tab }: { tab: AppTab }): ReactNode {
 function DropdownTabList({
   tabs,
   onSelect,
+  autoFocusFirst,
 }: {
   tabs: AppTab[];
   onSelect: (tab: AppTab) => void;
+  autoFocusFirst?: boolean;
 }): ReactNode {
+  const firstEnabledIndex = autoFocusFirst ? tabs.findIndex((t) => !t.disabled) : -1;
   return (
     <>
-      {tabs.map((tab) => (
+      {tabs.map((tab, index) => (
         <button
           key={tab.key}
+          // eslint-disable-next-line jsx-a11y/no-autofocus
+          autoFocus={index === firstEnabledIndex}
           role="menuitem"
           type="button"
           disabled={tab.disabled}
@@ -89,6 +94,7 @@ function DropdownTrigger({
   expanded,
   label,
   menuId,
+  badgeCount,
   onClick,
   onKeyDown,
 }: {
@@ -96,6 +102,7 @@ function DropdownTrigger({
   expanded: boolean;
   label: string;
   menuId: string;
+  badgeCount?: number;
   onClick: () => void;
   onKeyDown: (event: ReactKeyboardEvent<HTMLButtonElement>) => void;
 }): ReactNode {
@@ -111,6 +118,7 @@ function DropdownTrigger({
     >
       <span className="inline-flex items-center gap-1.5">
         {label}
+        <TabBadge count={badgeCount} />
         <span className={`text-[0.72rem] transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
       </span>
     </button>
@@ -136,29 +144,12 @@ export function AppFrameHeader({
   onToggleDropdown,
   onCloseDropdowns,
 }: AppFrameHeaderProps): ReactNode {
-  const ebayMenuRef = useRef<HTMLDivElement>(null);
-  const shopifyMenuRef = useRef<HTMLDivElement>(null);
-  const utilitiesMenuRef = useRef<HTMLDivElement>(null);
-  const pdfMenuRef = useRef<HTMLDivElement>(null);
-
   const hasActiveEbayTab = ebayTabs.some((tab) => tab.active);
   const hasActiveShopifyTab = shopifyTabs.some((tab) => tab.active);
   const hasActiveUtilityTab = utilityTabs.some((tab) => tab.active);
-
-  useEffect(() => {
-    if (!openDropdown) return;
-
-    const menuRef = openDropdown === 'ebay'
-      ? ebayMenuRef
-      : openDropdown === 'shopify'
-        ? shopifyMenuRef
-        : openDropdown === 'utilities'
-          ? utilitiesMenuRef
-          : pdfMenuRef;
-
-    const firstEnabledButton = menuRef.current?.querySelector<HTMLButtonElement>('button:not([disabled])');
-    firstEnabledButton?.focus();
-  }, [openDropdown]);
+  const ebayBadgeTotal = ebayTabs.reduce((sum, t) => sum + (t.badgeCount ?? 0), 0);
+  const shopifyBadgeTotal = shopifyTabs.reduce((sum, t) => sum + (t.badgeCount ?? 0), 0);
+  const utilityBadgeTotal = utilityTabs.reduce((sum, t) => sum + (t.badgeCount ?? 0), 0);
 
   useEffect(() => {
     if (!openDropdown) return;
@@ -213,10 +204,10 @@ export function AppFrameHeader({
                 id="pdf-menu"
                 role="menu"
                 aria-label="PDF export options"
-                ref={pdfMenuRef}
                 className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[230px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
               >
-                <button role="menuitem" type="button" disabled={exportDisabled} onClick={() => { onCloseDropdowns(); onExportCurrentPage(); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60">Download Current Page</button>
+                {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+                <button role="menuitem" type="button" autoFocus={!exportDisabled} disabled={exportDisabled} onClick={() => { onCloseDropdowns(); onExportCurrentPage(); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60">Download Current Page</button>
                 <button role="menuitem" type="button" disabled={exportDisabled} onClick={() => { onCloseDropdowns(); onExportAllPages(); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60">Download All Pages</button>
               </div>
             )}
@@ -237,6 +228,7 @@ export function AppFrameHeader({
                   expanded={openDropdown === 'ebay'}
                   label="eBay"
                   menuId="ebay-menu"
+                  badgeCount={ebayBadgeTotal > 0 ? ebayBadgeTotal : undefined}
                   onClick={() => onToggleDropdown('ebay')}
                   onKeyDown={(event) => handleTriggerKeyDown(event, 'ebay')}
                 />
@@ -245,10 +237,9 @@ export function AppFrameHeader({
                     id="ebay-menu"
                     role="menu"
                     aria-label="eBay tabs"
-                    ref={ebayMenuRef}
                     className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
                   >
-                    <DropdownTabList tabs={ebayTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} />
+                    <DropdownTabList tabs={ebayTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
                   </div>
                 )}
               </div>
@@ -261,6 +252,7 @@ export function AppFrameHeader({
                   expanded={openDropdown === 'shopify'}
                   label="Shopify"
                   menuId="shopify-menu"
+                  badgeCount={shopifyBadgeTotal > 0 ? shopifyBadgeTotal : undefined}
                   onClick={() => onToggleDropdown('shopify')}
                   onKeyDown={(event) => handleTriggerKeyDown(event, 'shopify')}
                 />
@@ -269,10 +261,9 @@ export function AppFrameHeader({
                     id="shopify-menu"
                     role="menu"
                     aria-label="Shopify tabs"
-                    ref={shopifyMenuRef}
                     className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
                   >
-                    <DropdownTabList tabs={shopifyTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} />
+                    <DropdownTabList tabs={shopifyTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
                   </div>
                 )}
               </div>
@@ -288,6 +279,7 @@ export function AppFrameHeader({
                 expanded={openDropdown === 'utilities'}
                 label="Utilities"
                 menuId="utilities-menu"
+                badgeCount={utilityBadgeTotal > 0 ? utilityBadgeTotal : undefined}
                 onClick={() => onToggleDropdown('utilities')}
                 onKeyDown={(event) => handleTriggerKeyDown(event, 'utilities')}
               />
@@ -296,10 +288,9 @@ export function AppFrameHeader({
                   id="utilities-menu"
                   role="menu"
                   aria-label="Utility tabs"
-                  ref={utilitiesMenuRef}
                   className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[240px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
                 >
-                  <DropdownTabList tabs={utilityTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} />
+                  <DropdownTabList tabs={utilityTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
                 </div>
               )}
             </div>

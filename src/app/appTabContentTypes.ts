@@ -48,6 +48,11 @@ export interface AppTabContentProps {
   approvalTotal: number;
   approvalApproved: number;
   approvalPending: number;
+  shopifyApprovalLoading: boolean;
+  shopifyApprovalError: string | null;
+  shopifyApprovalTotal: number;
+  shopifyApprovalApproved: number;
+  shopifyApprovalPending: number;
   ebayAuthenticated: boolean;
   ebayRestoringSession: boolean;
   ebayLoading: boolean;

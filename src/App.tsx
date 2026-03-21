@@ -163,6 +163,11 @@ function App() {
         approvalTotal={approval.total}
         approvalApproved={approval.approved}
         approvalPending={approval.pending}
+        shopifyApprovalLoading={shopifyApproval.loading}
+        shopifyApprovalError={shopifyApproval.error}
+        shopifyApprovalTotal={shopifyApproval.total}
+        shopifyApprovalApproved={shopifyApproval.approved}
+        shopifyApprovalPending={shopifyApproval.pending}
         ebayAuthenticated={ebay.authenticated}
         ebayRestoringSession={ebay.restoringSession}
         ebayLoading={ebay.loading}

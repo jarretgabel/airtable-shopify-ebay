@@ -104,6 +104,10 @@ export function buildShopifyWorkflowCards({
   shopifyActiveCount,
   shopifyDraftCount,
   shopifyArchivedCount,
+  shopifyApprovalLoading,
+  shopifyApprovalTotal,
+  shopifyApprovalApproved,
+  shopifyApprovalPending,
 }: Pick<
   DashboardWorkflowSource,
   | 'accessiblePages'
@@ -112,6 +116,10 @@ export function buildShopifyWorkflowCards({
   | 'shopifyActiveCount'
   | 'shopifyDraftCount'
   | 'shopifyArchivedCount'
+  | 'shopifyApprovalLoading'
+  | 'shopifyApprovalTotal'
+  | 'shopifyApprovalApproved'
+  | 'shopifyApprovalPending'
 >): WorkflowCard[] {
   const cards: WorkflowCard[] = [];
 
@@ -131,9 +139,11 @@ export function buildShopifyWorkflowCards({
     cards.push({
       id: 'shopify-approval',
       title: 'Listing Approval Queue',
-      eyebrow: shopifyLoading ? 'Syncing Shopify queue' : `${shopifyDraftCount} awaiting review`,
+      eyebrow: shopifyApprovalLoading ? 'Syncing approval queue' : `${shopifyApprovalPending} awaiting review`,
       detail: 'Review pending Shopify listing records, validate mapped fields, and approve records for Shopify publishing workflow.',
-      stats: shopifyLoading ? ['Loading Shopify data…'] : [`${shopifyDraftCount} in queue`, `${shopifyActiveCount} active`, `${shopifyArchivedCount} archived`],
+      stats: shopifyApprovalLoading
+        ? ['Loading queue…']
+        : [`${shopifyApprovalTotal} total`, `${shopifyApprovalPending} pending`, `${shopifyApprovalApproved} approved`],
     });
   }
 
@@ -199,12 +209,10 @@ export function buildDashboardSections({
   utilityCards: WorkflowCard[];
 }): DashboardSection[] {
   const sections: DashboardSection[] = [
-    { id: 'overview', label: 'Dashboard' },
-    { id: 'listing-status', label: 'Listings' },
-    { id: 'insights', label: 'Insights' },
+    { id: 'overview', label: 'Overview' },
     { id: 'inventory', label: 'Airtable' },
-    { id: 'pipeline', label: 'Shopify' },
     { id: 'inquiries', label: 'JotForm' },
+    { id: 'pipeline', label: 'Shopify' },
   ];
 
   if (ebayCards.length > 0) sections.push({ id: 'ebay-workflows', label: 'eBay' });
@@ -213,3 +221,4 @@ export function buildDashboardSections({
 
   return sections;
 }
+

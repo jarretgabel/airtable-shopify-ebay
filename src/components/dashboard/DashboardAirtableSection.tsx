@@ -1,9 +1,6 @@
 import { spinnerClass } from '@/components/tabs/uiClasses';
 import type { AirtableTypeRow, DashboardTargetTab } from './dashboardTabTypes';
-
-const sectionBaseClass = 'scroll-mt-24';
-const sectionHeaderClass = 'mb-4 flex items-center border-b border-[var(--line)] pb-3 pt-1';
-const sectionHeaderLabelClass = 'm-0 text-[1.05rem] font-semibold text-[var(--ink)]';
+import { DashboardSectionPanel } from './dashboardPrimitives';
 
 interface DashboardAirtableSectionProps {
   atLoading: boolean;
@@ -42,8 +39,7 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
   } = props;
 
   return (
-    <section id="inventory" className={`${sectionBaseClass} flex flex-col gap-[1.1rem] rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]`}>
-      <div className={sectionHeaderClass}><h2 className={sectionHeaderLabelClass}>Airtable</h2></div>
+    <DashboardSectionPanel id="inventory" title="Airtable" className="gap-[1.1rem]">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div><h3 className="m-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-bold text-[var(--ink)]">Airtable Inventory Recap <span className="text-[0.72rem] font-medium tracking-[0.02em] text-[var(--muted)]">All products in Airtable</span></h3></div>
         <button type="button" className="cursor-pointer self-start rounded-lg border border-[var(--line)] bg-transparent px-[0.85rem] py-[0.38rem] text-[0.78rem] font-semibold text-[var(--accent)] transition-[background,border-color] duration-[140ms] hover:border-[var(--accent)] hover:bg-[var(--panel)]" onClick={() => onSelectTab('airtable')}>Open Airtable Inventory →</button>
@@ -79,6 +75,6 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
       ) : (
         <p className="m-0 text-[var(--muted)]">No Airtable inventory records available yet.</p>
       )}
-    </section>
+    </DashboardSectionPanel>
   );
 }

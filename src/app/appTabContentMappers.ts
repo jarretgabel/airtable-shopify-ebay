@@ -26,6 +26,11 @@ type AppTabInput = Pick<
   | 'approvalTotal'
   | 'approvalApproved'
   | 'approvalPending'
+  | 'shopifyApprovalLoading'
+  | 'shopifyApprovalError'
+  | 'shopifyApprovalTotal'
+  | 'shopifyApprovalApproved'
+  | 'shopifyApprovalPending'
   | 'aiProvider'
   | 'ebayAuthenticated'
   | 'ebayRestoringSession'
@@ -166,6 +171,11 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
       approvalTotal: input.approvalTotal,
       approvalApproved: input.approvalApproved,
       approvalPending: input.approvalPending,
+      shopifyApprovalLoading: input.shopifyApprovalLoading,
+      shopifyApprovalError: input.shopifyApprovalError,
+      shopifyApprovalTotal: input.shopifyApprovalTotal,
+      shopifyApprovalApproved: input.shopifyApprovalApproved,
+      shopifyApprovalPending: input.shopifyApprovalPending,
       aiProvider: input.aiProvider,
       ebayAuthenticated: input.ebayAuthenticated,
       ebayRestoringSession: input.ebayRestoringSession,

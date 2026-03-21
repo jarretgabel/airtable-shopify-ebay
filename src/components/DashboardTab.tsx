@@ -6,7 +6,8 @@ import { DashboardEbaySection } from '@/components/dashboard/DashboardEbaySectio
 import { DashboardShopifySection } from '@/components/dashboard/DashboardShopifySection';
 import { DashboardJotformSection } from '@/components/dashboard/DashboardJotformSection';
 import { DashboardWorkflowSection } from '@/components/dashboard/DashboardWorkflowSections';
-import { DashboardListingsModule } from '@/components/dashboard/DashboardListingsModule';
+import { DashboardActionsSection } from '@/components/dashboard/DashboardActionsSection';
+import { DashboardSectionPanel } from '@/components/dashboard/dashboardPrimitives';
 import {
   buildDashboardSections,
   buildDashboardSummaryMetrics,
@@ -67,6 +68,10 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
     shopifyActiveCount: data.activeProducts.length,
     shopifyDraftCount: data.draftProducts.length,
     shopifyArchivedCount: data.archivedProducts.length,
+    shopifyApprovalLoading: workflow.shopifyApprovalLoading,
+    shopifyApprovalTotal: workflow.shopifyApprovalTotal,
+    shopifyApprovalApproved: workflow.shopifyApprovalApproved,
+    shopifyApprovalPending: workflow.shopifyApprovalPending,
   }), [
     data.activeProducts.length,
     data.archivedProducts.length,
@@ -74,6 +79,10 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
     data.products.length,
     loading.shopify,
     workflow.accessiblePages,
+    workflow.shopifyApprovalLoading,
+    workflow.shopifyApprovalTotal,
+    workflow.shopifyApprovalApproved,
+    workflow.shopifyApprovalPending,
   ]);
 
   const marketCards = useMemo(() => buildMarketWorkflowCards({
@@ -97,44 +106,46 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
   return (
     <div className="flex flex-col gap-12 pt-1">
       <DashboardSectionNav sections={sections} activeSectionId={activeSectionId} onSelectSection={scrollToSection} />
-      <DashboardOverviewSection
-        jfLoading={loading.jotform}
-        jfSubmissionCount={data.jfSubmissions.length}
-        thisWeekCount={data.thisWeekSubs.length}
-        recentCount={data.recentSubs.length}
-        totalNewSubmissions={kpis.totalNewSubmissions}
-        spLoading={loading.shopify}
-        draftCount={data.draftProducts.length}
-        activeCount={data.activeProducts.length}
-        archivedCount={data.archivedProducts.length}
-        atLoading={loading.airtable}
-        acquisitionCost={kpis.acquisitionCost}
-        nonEmptyListingCount={data.nonEmptyListings.length}
-        inventoryValue={kpis.inventoryValue}
-        avgAskPrice={kpis.avgAskPrice}
-        sellThroughPct={kpis.sellThroughPct}
-        grossMarginPct={kpis.grossMarginPct}
-        submissionsTrend={kpis.submissionsTrend}
-        dealsTrend={kpis.dealsTrend}
-        acquisitionTrend={kpis.acquisitionTrend}
-        inventoryTrend={kpis.inventoryTrend}
-        salesTrend={kpis.salesTrend}
-        marginTrend={kpis.marginTrend}
-        onSelectTab={actions.onSelectTab}
-      />
-      <DashboardListingsModule
-        spLoading={loading.shopify}
-        ebayLoading={loading.ebay}
-        ebayAuthenticated={workflow.ebayAuthenticated}
-        activeProductsCount={data.activeProducts.length}
-        draftProductsCount={data.draftProducts.length}
-        archivedProductsCount={data.archivedProducts.length}
-        ebayPublishedCount={workflow.ebayPublishedCount}
-        ebayDraftCount={workflow.ebayDraftCount}
-        ebayTotal={workflow.ebayTotal}
-        onSelectTab={actions.onSelectTab}
-      />
-      <DashboardInsightsSection insights={data.insights} onSelectTab={actions.onSelectTab} />
+      <DashboardSectionPanel id="overview" title="Overview">
+        <DashboardOverviewSection
+          jfLoading={loading.jotform}
+          jfSubmissionCount={data.jfSubmissions.length}
+          thisWeekCount={data.thisWeekSubs.length}
+          recentCount={data.recentSubs.length}
+          totalNewSubmissions={kpis.totalNewSubmissions}
+          spLoading={loading.shopify}
+          draftCount={data.draftProducts.length}
+          activeCount={data.activeProducts.length}
+          archivedCount={data.archivedProducts.length}
+          atLoading={loading.airtable}
+          acquisitionCost={kpis.acquisitionCost}
+          nonEmptyListingCount={data.nonEmptyListings.length}
+          inventoryValue={kpis.inventoryValue}
+          avgAskPrice={kpis.avgAskPrice}
+          sellThroughPct={kpis.sellThroughPct}
+          grossMarginPct={kpis.grossMarginPct}
+          submissionsTrend={kpis.submissionsTrend}
+          dealsTrend={kpis.dealsTrend}
+          acquisitionTrend={kpis.acquisitionTrend}
+          inventoryTrend={kpis.inventoryTrend}
+          salesTrend={kpis.salesTrend}
+          marginTrend={kpis.marginTrend}
+          onSelectTab={actions.onSelectTab}
+          embedded
+        />
+        <DashboardActionsSection
+          ebayAuthenticated={workflow.ebayAuthenticated}
+          ebayDraftCount={workflow.ebayDraftCount}
+          ebayPublishedCount={workflow.ebayPublishedCount}
+          ebayTotal={workflow.ebayTotal}
+          shopifyQueueApproved={workflow.shopifyApprovalApproved}
+          shopifyQueuePending={workflow.shopifyApprovalPending}
+          shopifyQueueTotal={workflow.shopifyApprovalTotal}
+          onSelectTab={actions.onSelectTab}
+          embedded
+        />
+        <DashboardInsightsSection insights={data.insights} onSelectTab={actions.onSelectTab} embedded />
+      </DashboardSectionPanel>
       <DashboardAirtableSection
         atLoading={loading.airtable}
         nonEmptyListingCount={data.nonEmptyListings.length}
@@ -148,20 +159,6 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         maxComponentTypeCount={kpis.maxComponentTypeCount}
         maxAirtableBrandCount={kpis.maxAirtableBrandCount}
         onSelectTab={actions.onSelectTab}
-      />
-      <DashboardShopifySection
-        shopifyCards={shopifyCards}
-        onSelectTab={actions.onSelectTab}
-        spLoading={loading.shopify}
-        productsCount={data.products.length}
-        activeProductsCount={data.activeProducts.length}
-        draftProductsCount={data.draftProducts.length}
-        archivedProductsCount={data.archivedProducts.length}
-        avgAskPrice={kpis.avgAskPrice}
-        inventoryValue={kpis.inventoryValue}
-        grossMarginPct={kpis.grossMarginPct}
-        acquisitionCost={kpis.acquisitionCost}
-        totalAsk={totalAsk}
       />
       <DashboardJotformSection
         jfLoading={loading.jotform}
@@ -177,6 +174,20 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         jfSubmissions={data.jfSubmissions}
         now={data.now}
         onSelectTab={actions.onSelectTab}
+      />
+      <DashboardShopifySection
+        shopifyCards={shopifyCards}
+        onSelectTab={actions.onSelectTab}
+        spLoading={loading.shopify}
+        productsCount={data.products.length}
+        activeProductsCount={data.activeProducts.length}
+        draftProductsCount={data.draftProducts.length}
+        archivedProductsCount={data.archivedProducts.length}
+        avgAskPrice={kpis.avgAskPrice}
+        inventoryValue={kpis.inventoryValue}
+        grossMarginPct={kpis.grossMarginPct}
+        acquisitionCost={kpis.acquisitionCost}
+        totalAsk={totalAsk}
       />
       <DashboardEbaySection
         cards={ebayCards}

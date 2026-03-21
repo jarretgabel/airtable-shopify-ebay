@@ -5,6 +5,10 @@
 - Avoid touching unrelated files during focused migrations.
 - If a migration removes legacy classes, prune matching CSS selectors in the same change.
 
+## React DOM Rules
+- Never use `querySelector`, `querySelectorAll`, `getElementById`, or any imperative DOM query against the React-rendered tree. Always use React refs (`useRef`), state, controlled props, or `autoFocus` to manage focus, read values, or interact with rendered elements.
+- Exception: `querySelector`/`querySelectorAll` on a `Document` or `Element` returned by `DOMParser` (i.e. parsing fetched server HTML) is acceptable — that is standard HTML parsing, not React DOM manipulation.
+
 ## Code Organization
 - Shared visual primitives belong in `src/components/app`.
 - Tab-specific helpers belong in `src/components/tabs`.

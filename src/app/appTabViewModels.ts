@@ -59,6 +59,11 @@ export interface DashboardTabViewModel {
     approvalTotal: number;
     approvalApproved: number;
     approvalPending: number;
+    shopifyApprovalLoading: boolean;
+    shopifyApprovalError: string | null;
+    shopifyApprovalTotal: number;
+    shopifyApprovalApproved: number;
+    shopifyApprovalPending: number;
     aiProvider: 'github' | 'openai' | 'none';
     ebayAuthenticated: boolean;
     ebayRestoringSession: boolean;

@@ -1,7 +1,7 @@
 import { PAGE_DEFINITIONS } from '@/auth/pages';
+import { DashboardKpiCard, DashboardSectionPanel, DashboardSubPanel } from './dashboardPrimitives';
 import type { DashboardInsight, DashboardTargetTab, TrendSummary } from './dashboardTabTypes';
 
-const kpiCardClass = 'w-full appearance-none rounded-[14px] border border-[var(--line)] border-t-[3px] bg-[var(--panel)] px-4 pb-3 pt-3 text-left text-[var(--ink)] shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)] transition hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(17,32,49,0.09),0_8px_24px_rgba(17,32,49,0.08)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-blue-200';
 const trendToneClass = {
   up: 'text-green-300',
   down: 'text-amber-400',
@@ -47,6 +47,7 @@ interface DashboardOverviewSectionProps {
   salesTrend: TrendSummary;
   marginTrend: TrendSummary;
   onSelectTab: (tab: DashboardTargetTab) => void;
+  embedded?: boolean;
 }
 
 export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
@@ -74,83 +75,120 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
     salesTrend,
     marginTrend,
     onSelectTab,
+    embedded,
   } = props;
+
+  const content = (
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <DashboardKpiCard
+          borderToneClass="border-t-blue-500"
+          eyebrow="Incoming Gear Submissions"
+          value={jfLoading ? '…' : jfSubmissionCount.toLocaleString()}
+          detail={<><strong className="font-semibold text-[var(--accent)]">{thisWeekCount}</strong> this week &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{recentCount}</strong> last 30 days{totalNewSubmissions > 0 && <><span>&nbsp;·&nbsp;</span><span className="font-semibold text-red-600">{totalNewSubmissions} unread</span></>}</>}
+          trend={submissionsTrend.text}
+          trendClass={trendToneClass[submissionsTrend.direction]}
+          onClick={() => onSelectTab('jotform')}
+        />
+
+        <DashboardKpiCard
+          borderToneClass="border-t-amber-500"
+          eyebrow="Deals in Progress"
+          value={spLoading ? '…' : draftCount}
+          detail={<><strong className="font-semibold text-[var(--accent)]">{activeCount}</strong> live inventory &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{archivedCount}</strong> closed out</>}
+          trend={dealsTrend.text}
+          trendClass={trendToneClass[dealsTrend.direction]}
+          onClick={() => onSelectTab('shopify')}
+        />
+
+        <DashboardKpiCard
+          borderToneClass="border-t-violet-500"
+          eyebrow="Acquisition Costs"
+          value={atLoading ? '…' : acquisitionCost > 0 ? `$${acquisitionCost.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}
+          detail={<>Using Airtable <strong className="font-semibold text-[var(--accent)]">Price</strong> from {nonEmptyListingCount} records</>}
+          trend={acquisitionTrend.text}
+          trendClass={trendToneClass[acquisitionTrend.direction]}
+          onClick={() => onSelectTab('airtable')}
+        />
+
+        <DashboardKpiCard
+          borderToneClass="border-t-emerald-500"
+          eyebrow="Inventory Value"
+          value={spLoading ? '…' : inventoryValue > 0 ? `$${inventoryValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}
+          detail={<>Active listings at ask price &nbsp;·&nbsp; avg <strong className="font-semibold text-[var(--accent)]">{spLoading ? '…' : avgAskPrice > 0 ? `$${Math.round(avgAskPrice).toLocaleString()}` : '—'}</strong></>}
+          trend={inventoryTrend.text}
+          trendClass={trendToneClass[inventoryTrend.direction]}
+          onClick={() => onSelectTab('shopify')}
+        />
+
+        <DashboardKpiCard
+          borderToneClass="border-t-slate-600"
+          eyebrow="Sales Performance"
+          value={sellThroughPct !== null ? `${sellThroughPct}%` : '—'}
+          detail={<><strong className="font-semibold text-[var(--accent)]">{archivedCount}</strong> sold or archived &nbsp;·&nbsp; sell-through rate</>}
+          trend={salesTrend.text}
+          trendClass={trendToneClass[salesTrend.direction]}
+          onClick={() => onSelectTab('shopify')}
+        />
+
+        <DashboardKpiCard
+          borderToneClass="border-t-teal-500"
+          eyebrow="Profit Margins"
+          value={grossMarginPct !== null ? `${grossMarginPct}%` : '—'}
+          detail={grossMarginPct !== null ? 'Derived from Shopify ask value and Airtable Price' : 'Add numeric Airtable prices to calculate'}
+          trend={marginTrend.text}
+          trendClass={trendToneClass[marginTrend.direction]}
+          onClick={() => onSelectTab('airtable')}
+        />
+      </div>
+  );
+
+  if (embedded) {
+    return <DashboardSubPanel title="Dashboard">{content}</DashboardSubPanel>;
+  }
 
   return (
     <section id="overview" className={`${sectionBaseClass} flex flex-col gap-3`}>
       <div className={sectionHeaderClass}>
         <h2 className={sectionHeaderLabelClass}>Dashboard</h2>
       </div>
-
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-        <button type="button" className={`${kpiCardClass} border-t-blue-500`} onClick={() => onSelectTab('jotform')}>
-          <div className="mb-0.5 flex items-center gap-2"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Incoming Gear Submissions</span></div>
-          <p className="m-0 text-[1.65rem] font-bold leading-none tracking-[-0.02em] text-[var(--ink)]">{jfLoading ? '…' : jfSubmissionCount.toLocaleString()}</p>
-          <p className="m-0 text-[0.78rem] leading-[1.5] text-[var(--muted)]"><strong className="font-semibold text-[var(--accent)]">{thisWeekCount}</strong> this week &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{recentCount}</strong> last 30 days{totalNewSubmissions > 0 && <><span>&nbsp;·&nbsp;</span><span className="font-semibold text-red-600">{totalNewSubmissions} unread</span></>}</p>
-          <p className={`mt-auto pt-1.5 text-[0.74rem] font-bold uppercase tracking-[0.02em] ${trendToneClass[submissionsTrend.direction]}`}>{submissionsTrend.text}</p>
-        </button>
-
-        <button type="button" className={`${kpiCardClass} border-t-amber-500`} onClick={() => onSelectTab('shopify')}>
-          <div className="mb-0.5 flex items-center gap-2"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Deals in Progress</span></div>
-          <p className="m-0 text-[1.65rem] font-bold leading-none tracking-[-0.02em] text-[var(--ink)]">{spLoading ? '…' : draftCount}</p>
-          <p className="m-0 text-[0.78rem] leading-[1.5] text-[var(--muted)]"><strong className="font-semibold text-[var(--accent)]">{activeCount}</strong> live inventory &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{archivedCount}</strong> closed out</p>
-          <p className={`mt-auto pt-1.5 text-[0.74rem] font-bold uppercase tracking-[0.02em] ${trendToneClass[dealsTrend.direction]}`}>{dealsTrend.text}</p>
-        </button>
-
-        <button type="button" className={`${kpiCardClass} border-t-violet-500`} onClick={() => onSelectTab('airtable')}>
-          <div className="mb-0.5 flex items-center gap-2"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Acquisition Costs</span></div>
-          <p className="m-0 text-[1.65rem] font-bold leading-none tracking-[-0.02em] text-[var(--ink)]">{atLoading ? '…' : acquisitionCost > 0 ? `$${acquisitionCost.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}</p>
-          <p className="m-0 text-[0.78rem] leading-[1.5] text-[var(--muted)]">Using Airtable <strong className="font-semibold text-[var(--accent)]">Price</strong> from {nonEmptyListingCount} records</p>
-          <p className={`mt-auto pt-1.5 text-[0.74rem] font-bold uppercase tracking-[0.02em] ${trendToneClass[acquisitionTrend.direction]}`}>{acquisitionTrend.text}</p>
-        </button>
-
-        <button type="button" className={`${kpiCardClass} border-t-emerald-500`} onClick={() => onSelectTab('shopify')}>
-          <div className="mb-0.5 flex items-center gap-2"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Value</span></div>
-          <p className="m-0 text-[1.65rem] font-bold leading-none tracking-[-0.02em] text-[var(--ink)]">{spLoading ? '…' : inventoryValue > 0 ? `$${inventoryValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}</p>
-          <p className="m-0 text-[0.78rem] leading-[1.5] text-[var(--muted)]">Active listings at ask price &nbsp;·&nbsp; avg <strong className="font-semibold text-[var(--accent)]">{spLoading ? '…' : avgAskPrice > 0 ? `$${Math.round(avgAskPrice).toLocaleString()}` : '—'}</strong></p>
-          <p className={`mt-auto pt-1.5 text-[0.74rem] font-bold uppercase tracking-[0.02em] ${trendToneClass[inventoryTrend.direction]}`}>{inventoryTrend.text}</p>
-        </button>
-
-        <button type="button" className={`${kpiCardClass} border-t-slate-600`} onClick={() => onSelectTab('shopify')}>
-          <div className="mb-0.5 flex items-center gap-2"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Sales Performance</span></div>
-          <p className="m-0 text-[1.65rem] font-bold leading-none tracking-[-0.02em] text-[var(--ink)]">{sellThroughPct !== null ? `${sellThroughPct}%` : '—'}</p>
-          <p className="m-0 text-[0.78rem] leading-[1.5] text-[var(--muted)]"><strong className="font-semibold text-[var(--accent)]">{archivedCount}</strong> sold or archived &nbsp;·&nbsp; sell-through rate</p>
-          <p className={`mt-auto pt-1.5 text-[0.74rem] font-bold uppercase tracking-[0.02em] ${trendToneClass[salesTrend.direction]}`}>{salesTrend.text}</p>
-        </button>
-
-        <button type="button" className={`${kpiCardClass} border-t-teal-500`} onClick={() => onSelectTab('airtable')}>
-          <div className="mb-0.5 flex items-center gap-2"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Profit Margins</span></div>
-          <p className="m-0 text-[1.65rem] font-bold leading-none tracking-[-0.02em] text-[var(--ink)]">{grossMarginPct !== null ? `${grossMarginPct}%` : '—'}</p>
-          <p className="m-0 text-[0.78rem] leading-[1.5] text-[var(--muted)]">{grossMarginPct !== null ? 'Derived from Shopify ask value and Airtable Price' : 'Add numeric Airtable prices to calculate'}</p>
-          <p className={`mt-auto pt-1.5 text-[0.74rem] font-bold uppercase tracking-[0.02em] ${trendToneClass[marginTrend.direction]}`}>{marginTrend.text}</p>
-        </button>
-      </div>
+      {content}
     </section>
   );
 }
 
-export function DashboardInsightsSection({ insights, onSelectTab }: { insights: DashboardInsight[]; onSelectTab: (tab: DashboardTargetTab) => void }) {
+export function DashboardInsightsSection({
+  insights,
+  onSelectTab,
+  embedded,
+}: {
+  insights: DashboardInsight[];
+  onSelectTab: (tab: DashboardTargetTab) => void;
+  embedded?: boolean;
+}) {
+  const content = insights.length > 0 ? (
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      {insights.map((insight) => (
+        <article key={insight.id} className={`rounded-xl border px-4 py-3 ${insightToneClass[insight.severity]}`}>
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <h3 className="m-0 text-[0.86rem] font-bold">{insight.title}</h3>
+            <span className={`rounded-full px-2 py-[0.15rem] text-[0.64rem] font-bold uppercase tracking-[0.07em] ${insightBadgeClass[insight.severity]}`}>{insight.severity}</span>
+          </div>
+          <p className="m-0 text-[0.8rem] leading-[1.45] opacity-90">{insight.detail}</p>
+          {insight.targetTab && <button type="button" className="mt-3 rounded-lg border border-current/30 bg-white/10 px-3 py-1.5 text-[0.72rem] font-semibold transition hover:bg-white/20" onClick={() => onSelectTab(insight.targetTab!)}>Review in {PAGE_DEFINITIONS[insight.targetTab].label} →</button>}
+        </article>
+      ))}
+    </div>
+  ) : (
+    <div className="rounded-xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-4 text-[0.84rem] text-emerald-200">No active alerts right now. The dashboard will surface warnings here when inventory, inquiries, or sales trends drift.</div>
+  );
+
+  if (embedded) {
+    return <DashboardSubPanel title="Insights">{content}</DashboardSubPanel>;
+  }
+
   return (
-    <section id="insights" className={`${sectionBaseClass} flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]`}>
-      <div className={sectionHeaderClass}>
-        <h2 className={sectionHeaderLabelClass}>Insights</h2>
-      </div>
-      {insights.length > 0 ? (
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {insights.map((insight) => (
-            <article key={insight.id} className={`rounded-xl border px-4 py-3 ${insightToneClass[insight.severity]}`}>
-              <div className="mb-1.5 flex items-center justify-between gap-2">
-                <h3 className="m-0 text-[0.86rem] font-bold">{insight.title}</h3>
-                <span className={`rounded-full px-2 py-[0.15rem] text-[0.64rem] font-bold uppercase tracking-[0.07em] ${insightBadgeClass[insight.severity]}`}>{insight.severity}</span>
-              </div>
-              <p className="m-0 text-[0.8rem] leading-[1.45] opacity-90">{insight.detail}</p>
-              {insight.targetTab && <button type="button" className="mt-3 rounded-lg border border-current/30 bg-white/10 px-3 py-1.5 text-[0.72rem] font-semibold transition hover:bg-white/20" onClick={() => onSelectTab(insight.targetTab!)}>Review in {PAGE_DEFINITIONS[insight.targetTab].label} →</button>}
-            </article>
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-4 text-[0.84rem] text-emerald-200">No active alerts right now. The dashboard will surface warnings here when inventory, inquiries, or sales trends drift.</div>
-      )}
-    </section>
+    <DashboardSectionPanel id="insights" title="Insights">
+      {content}
+    </DashboardSectionPanel>
   );
 }
