@@ -35,6 +35,7 @@ interface UserDirectoryPanelProps {
   onNewUserFieldChange: (field: keyof NewUserFormState, value: string) => void;
   onNewUserRoleChange: (role: 'admin' | 'user') => void;
   onNewUserPageToggle: (page: AppPage) => void;
+  onRegenerateTemporaryPassword: () => void;
 }
 
 export function UserDirectoryPanel({
@@ -63,6 +64,7 @@ export function UserDirectoryPanel({
   onNewUserFieldChange,
   onNewUserRoleChange,
   onNewUserPageToggle,
+  onRegenerateTemporaryPassword,
 }: UserDirectoryPanelProps) {
   const [activeSection, setActiveSection] = useState<UserManagementSection | null>(null);
   const overviewSectionRef = useRef<HTMLElement | null>(null);
@@ -157,6 +159,7 @@ export function UserDirectoryPanel({
               onNewUserFieldChange={onNewUserFieldChange}
               onNewUserRoleChange={onNewUserRoleChange}
               onNewUserPageToggle={onNewUserPageToggle}
+              onRegenerateTemporaryPassword={onRegenerateTemporaryPassword}
             />
           </section>
         </div>

@@ -53,12 +53,13 @@ describe('authContextHelpers', () => {
 
     expect(canUserAccessPage(admin, 'users')).toBe(true);
     expect(canUserAccessPage(user, 'dashboard')).toBe(true);
+    expect(canUserAccessPage(user, 'notifications')).toBe(true);
     expect(canUserAccessPage(user, 'market')).toBe(false);
   });
 
   it('filters users page for non-admin accessible pages', () => {
     const user = baseUsers[1];
-    expect(getAccessiblePages(user)).toEqual(['dashboard', 'airtable', 'settings']);
+    expect(getAccessiblePages(user)).toEqual(['dashboard', 'airtable', 'settings', 'notifications']);
     expect(getAccessiblePages(baseUsers[0])).toEqual(APP_PAGES);
   });
 

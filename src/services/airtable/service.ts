@@ -64,10 +64,15 @@ class AirtableService {
   /**
    * Create a new record
    */
-  async createRecord(tableName: string, fields: Record<string, unknown>): Promise<AirtableRecord> {
+  async createRecord(
+    tableName: string,
+    fields: Record<string, unknown>,
+    options: { typecast?: boolean } = {},
+  ): Promise<AirtableRecord> {
     try {
       const response = await this.client.post(`/${tableName}`, {
         records: [{ fields }],
+        ...(options.typecast ? { typecast: true } : {}),
       });
       return response.data.records[0];
     } catch (error) {
@@ -83,9 +88,13 @@ class AirtableService {
     tableName: string,
     recordId: string,
     fields: Record<string, unknown>,
+    options: { typecast?: boolean } = {},
   ): Promise<AirtableRecord> {
     try {
-      const response = await this.client.patch(`/${tableName}/${recordId}`, { fields });
+      const response = await this.client.patch(`/${tableName}/${recordId}`, {
+        fields,
+        ...(options.typecast ? { typecast: true } : {}),
+      });
       return response.data;
     } catch (error) {
       logServiceError('airtable', `Error updating record ${recordId} in ${tableName}`, error);
@@ -139,11 +148,11 @@ class AirtableService {
   /**
    * Update a record in a different Airtable base/table or base/view reference.
    */
-  async updateRecordFromReference(
+  async createRecordFromReference(
     reference: string,
     fallbackTableName: string | undefined,
-    recordId: string,
     fields: Record<string, unknown>,
+    options: { typecast?: boolean } = {},
   ): Promise<AirtableRecord> {
     const candidates = parseAirtableReferenceCandidates(reference, fallbackTableName, this.baseId);
     let lastError: unknown;
@@ -152,7 +161,47 @@ class AirtableService {
       const client = this.createClient(parsed.baseId);
 
       try {
-        const response = await client.patch(`/${parsed.tableName}/${recordId}`, { fields });
+        const response = await client.post(`/${parsed.tableName}`, {
+          records: [{ fields }],
+          ...(options.typecast ? { typecast: true } : {}),
+        });
+        return response.data.records[0];
+      } catch (error) {
+        lastError = error;
+        const status = getAirtableErrorStatus(error);
+        if (isRetryableReferenceStatus(status)) {
+          continue;
+        }
+        logServiceError('airtable', `Error creating record for reference ${reference}`, error);
+        throw error;
+      }
+    }
+
+    logServiceError('airtable', `Error creating record for reference ${reference}`, lastError);
+    throw lastError;
+  }
+
+  /**
+   * Update a record in a different Airtable base/table or base/view reference.
+   */
+  async updateRecordFromReference(
+    reference: string,
+    fallbackTableName: string | undefined,
+    recordId: string,
+    fields: Record<string, unknown>,
+    options: { typecast?: boolean } = {},
+  ): Promise<AirtableRecord> {
+    const candidates = parseAirtableReferenceCandidates(reference, fallbackTableName, this.baseId);
+    let lastError: unknown;
+
+    for (const parsed of candidates) {
+      const client = this.createClient(parsed.baseId);
+
+      try {
+        const response = await client.patch(`/${parsed.tableName}/${recordId}`, {
+          fields,
+          ...(options.typecast ? { typecast: true } : {}),
+        });
         return response.data;
       } catch (error) {
         lastError = error;
@@ -166,6 +215,38 @@ class AirtableService {
     }
 
     logServiceError('airtable', `Error updating record ${recordId} for reference ${reference}`, lastError);
+    throw lastError;
+  }
+
+  /**
+   * Delete a record in a different Airtable base/table or base/view reference.
+   */
+  async deleteRecordFromReference(
+    reference: string,
+    fallbackTableName: string | undefined,
+    recordId: string,
+  ): Promise<void> {
+    const candidates = parseAirtableReferenceCandidates(reference, fallbackTableName, this.baseId);
+    let lastError: unknown;
+
+    for (const parsed of candidates) {
+      const client = this.createClient(parsed.baseId);
+
+      try {
+        await client.delete(`/${parsed.tableName}/${recordId}`);
+        return;
+      } catch (error) {
+        lastError = error;
+        const status = getAirtableErrorStatus(error);
+        if (isRetryableReferenceStatus(status)) {
+          continue;
+        }
+        logServiceError('airtable', `Error deleting record ${recordId} for reference ${reference}`, error);
+        throw error;
+      }
+    }
+
+    logServiceError('airtable', `Error deleting record ${recordId} for reference ${reference}`, lastError);
     throw lastError;
   }
 }

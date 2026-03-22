@@ -3,6 +3,7 @@ import type { UserManagementTabViewModel } from '@/app/appTabViewModels';
 import { AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
 import { useAuthStore } from '@/stores/auth/authStore';
 import type { AppUser } from '@/stores/auth/authTypes';
+import { generateTemporaryPassword } from '@/stores/auth/authStorage';
 import { UserDetailPanel } from '@/components/users/UserDetailPanel';
 import { UserDirectoryPanel } from '@/components/users/UserDirectoryPanel';
 import { NewUserFormState, RoleFilter, UserSortKey } from '@/components/users/userManagementTypes';
@@ -11,7 +12,7 @@ function defaultFormState(): NewUserFormState {
   return {
     name: '',
     email: '',
-    password: '',
+    password: generateTemporaryPassword(),
     role: 'user',
     allowedPages: ['dashboard'],
   };
@@ -38,8 +39,10 @@ function formatAccessiblePages(user: AppUser): string {
 export function UserManagementTab({ viewModel }: UserManagementTabProps) {
   const { selectedUserId, onSelectUser, onBackToList } = viewModel;
   const users = useAuthStore((state) => state.users);
+  const currentUserId = useAuthStore((state) => state.currentUserId);
   const updateUserPermissions = useAuthStore((state) => state.updateUserPermissions);
   const updateUserRole = useAuthStore((state) => state.updateUserRole);
+  const deleteUser = useAuthStore((state) => state.deleteUser);
   const requestPasswordReset = useAuthStore((state) => state.requestPasswordReset);
   const createUser = useAuthStore((state) => state.createUser);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -102,7 +105,7 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
     });
   }, [searchTerm, roleFilter, sortKey, sortDirection, sortedUsers]);
 
-  function togglePermission(user: AppUser, page: AppPage): void {
+  async function togglePermission(user: AppUser, page: AppPage): Promise<void> {
     if (user.role === 'admin') return;
 
     const hasPage = user.allowedPages.includes(page);
@@ -110,7 +113,8 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
       ? user.allowedPages.filter((value) => value !== page)
       : [...user.allowedPages, page];
 
-    updateUserPermissions(user.id, nextPages);
+    const result = await updateUserPermissions(user.id, nextPages);
+    setStatusMessage(result.message);
   }
 
   function handleReset(email: string): void {
@@ -118,9 +122,9 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
     setStatusMessage(result.message);
   }
 
-  function handleCreateUser(event: FormEvent<HTMLFormElement>): void {
+  async function handleCreateUser(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    const result = createUser(newUser);
+    const result = await createUser(newUser);
     setCreatedMessage(result.message);
     if (result.success) {
       setNewUser(defaultFormState());
@@ -136,8 +140,28 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
     setNewUser((previous) => ({ ...previous, allowedPages }));
   }
 
+  function handleRegenerateTemporaryPassword(): void {
+    setNewUser((previous) => ({
+      ...previous,
+      password: generateTemporaryPassword(),
+    }));
+  }
+
   function scrollToCreateUserSection(): void {
     createUserSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function handleDeleteUser(user: AppUser): Promise<void> {
+    const confirmed = window.confirm(`Delete user ${user.email}? This action cannot be undone.`);
+    if (!confirmed) {
+      return;
+    }
+
+    const result = await deleteUser(user.id);
+    setStatusMessage(result.message);
+    if (result.success) {
+      onBackToList();
+    }
   }
 
   const labelClassName = 'text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300';
@@ -164,18 +188,36 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
   }
 
   if (selectedUser) {
+    const deletingSelf = selectedUser.id === currentUserId;
+    const deletingMainAdmin = selectedUser.id === 'u-admin';
+    const canDeleteSelectedUser = !deletingSelf && !deletingMainAdmin;
+    const deleteDisabledReason = deletingSelf
+      ? 'You cannot delete your own account.'
+      : deletingMainAdmin
+        ? 'The main admin account cannot be deleted.'
+        : undefined;
+
     return (
       <UserDetailPanel
         selectedUser={selectedUser}
+        canDeleteSelectedUser={canDeleteSelectedUser}
+        deleteDisabledReason={deleteDisabledReason}
         statusMessage={statusMessage}
         labelClassName={labelClassName}
         inputClassName={inputClassName}
         checkboxClassName={checkboxClassName}
         roleBadgeClassName={roleBadgeClassName}
         onBackToList={onBackToList}
-        onRoleChange={(role) => updateUserRole(selectedUser.id, role)}
-        onTogglePermission={(page) => togglePermission(selectedUser, page)}
+        onRoleChange={(role) => {
+          void updateUserRole(selectedUser.id, role).then((result) => setStatusMessage(result.message));
+        }}
+        onTogglePermission={(page) => {
+          void togglePermission(selectedUser, page);
+        }}
         onSendPasswordReset={() => handleReset(selectedUser.email)}
+        onDeleteUser={() => {
+          void handleDeleteUser(selectedUser);
+        }}
       />
     );
   }
@@ -207,6 +249,7 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
       onNewUserFieldChange={(field, value) => setNewUser((previous) => ({ ...previous, [field]: value }))}
       onNewUserRoleChange={(role) => setNewUser((previous) => ({ ...previous, role }))}
       onNewUserPageToggle={handleNewUserPageToggle}
+      onRegenerateTemporaryPassword={handleRegenerateTemporaryPassword}
     />
   );
 }

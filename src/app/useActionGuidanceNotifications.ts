@@ -110,7 +110,7 @@ export function useActionGuidanceNotifications({
       { tab: 'shopify' as const, message: spError },
       { tab: 'jotform' as const, message: jfError },
       { tab: 'ebay' as const, message: ebayError },
-    ].find((item) => Boolean(item.message));
+    ].find((item) => Boolean(item.message) && canAccessPage(item.tab));
 
     if (!activeError) {
       dismissByKey(ACTION_KEYS.dataError);

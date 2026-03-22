@@ -17,7 +17,7 @@ export function getCurrentUser(users: AppUser[], currentUserId: string | null): 
 
 export function canUserAccessPage(currentUser: AppUser | null, page: AppPage): boolean {
   if (!currentUser) return false;
-  if (page === 'settings') return true;
+  if (page === 'settings' || page === 'notifications') return true;
   if (currentUser.role === 'admin') return true;
   return currentUser.allowedPages.includes(page);
 }
@@ -25,7 +25,7 @@ export function canUserAccessPage(currentUser: AppUser | null, page: AppPage): b
 export function getAccessiblePages(currentUser: AppUser | null): AppPage[] {
   if (!currentUser) return [];
   if (currentUser.role === 'admin') return [...APP_PAGES];
-  return Array.from(new Set([...currentUser.allowedPages.filter((page) => page !== 'users' && page !== 'settings'), 'settings']));
+  return Array.from(new Set([...currentUser.allowedPages.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications'), 'settings', 'notifications']));
 }
 
 export function attemptLogin(users: AppUser[], email: string, password: string): { result: LoginResult; userId: string | null } {
@@ -66,7 +66,7 @@ export function updateUserPassword(users: AppUser[], userId: string, password: s
   const updatedUsers = users.map((user) => {
     if (user.id !== userId) return user;
     updated = true;
-    return { ...user, password };
+    return { ...user, password, mustChangePassword: false };
   });
 
   return { updatedUsers, updated };
@@ -88,6 +88,7 @@ export function buildUserFromInput(input: CreateUserInput): { result?: CreateUse
       email,
       role,
       password: input.password,
+      mustChangePassword: true,
       allowedPages,
       notificationPreferences: { ...DEFAULT_USER_NOTIFICATION_PREFERENCES },
     },

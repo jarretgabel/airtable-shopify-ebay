@@ -20,10 +20,12 @@ export const DEFAULT_USER_NOTIFICATION_PREFERENCES: UserNotificationPreferences 
 
 export interface AppUser {
   id: string;
+  airtableRecordId?: string;
   name: string;
   email: string;
   role: UserRole;
   password: string;
+  mustChangePassword?: boolean;
   allowedPages: AppPage[];
   notificationPreferences: UserNotificationPreferences;
 }

@@ -2,7 +2,9 @@ import { useEffect } from 'react';
 import { Tab, TAB_PATHS, isTab } from './appNavigation';
 
 interface UseAuthRouteGuardInput {
+  authReady: boolean;
   currentUser: unknown;
+  requiresPasswordChange: boolean;
   isLoginPath: boolean;
   isResetPasswordPath: boolean;
   normalizedPath: string;
@@ -12,7 +14,9 @@ interface UseAuthRouteGuardInput {
 }
 
 export function useAuthRouteGuard({
+  authReady,
   currentUser,
+  requiresPasswordChange,
   isLoginPath,
   isResetPasswordPath,
   normalizedPath,
@@ -21,6 +25,10 @@ export function useAuthRouteGuard({
   navigate,
 }: UseAuthRouteGuardInput): void {
   useEffect(() => {
+    if (!authReady) {
+      return;
+    }
+
     if (!currentUser) {
       if (!isLoginPath && !isResetPasswordPath) {
         navigate('/login', { replace: true });
@@ -76,7 +84,9 @@ export function useAuthRouteGuard({
       navigate(TAB_PATHS[firstAccessibleTab], { replace: true });
     }
   }, [
+    authReady,
     currentUser,
+    requiresPasswordChange,
     isLoginPath,
     isResetPasswordPath,
     normalizedPath,

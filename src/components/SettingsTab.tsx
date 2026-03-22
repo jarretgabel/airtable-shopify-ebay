@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
 import { SectionSubnav } from '@/components/app/SectionSubnav';
 import { useAuthStore } from '@/stores/auth/authStore';
+import { PASSWORD_POLICY_MESSAGE, validatePasswordPolicy } from '@/stores/auth/passwordPolicy';
 import { useNotificationStore } from '@/stores/notificationStore';
 import type { UserNotificationPreferences } from '@/stores/auth/authTypes';
 
@@ -29,6 +30,7 @@ const settingsSections: Array<{ key: SettingsSectionKey; label: string; detail: 
 export function SettingsTab() {
   const users = useAuthStore((state) => state.users);
   const currentUserId = useAuthStore((state) => state.currentUserId);
+  const requiresPasswordChange = useAuthStore((state) => state.requiresPasswordChange);
   const updateCurrentUserEmail = useAuthStore((state) => state.updateCurrentUserEmail);
   const confirmEmailChange = useAuthStore((state) => state.confirmEmailChange);
   const updateCurrentUserPassword = useAuthStore((state) => state.updateCurrentUserPassword);
@@ -47,11 +49,13 @@ export function SettingsTab() {
     email: currentUser?.email ?? '',
     currentPassword: '',
   });
+  const [showEmailPassword, setShowEmailPassword] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
+  const [showSecurityPasswords, setShowSecurityPasswords] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const section = new URLSearchParams(location.search).get('section') as SettingsSectionKey | null;
   const [activeSection, setActiveSection] = useState<SettingsSectionKey>(section ?? 'profile');
@@ -64,9 +68,11 @@ export function SettingsTab() {
     const token = new URLSearchParams(location.search).get('emailChangeToken');
     if (!token) return;
 
-    const result = confirmEmailChange(token);
-    setStatusMessage(result.message);
-    navigate('/account/settings', { replace: true });
+    void (async () => {
+      const result = await confirmEmailChange(token);
+      setStatusMessage(result.message);
+      navigate('/account/settings', { replace: true });
+    })();
   }, [confirmEmailChange, location.search, navigate]);
 
   useEffect(() => {
@@ -101,9 +107,9 @@ export function SettingsTab() {
 
   const isMainAdmin = currentUser.id === 'u-admin';
 
-  function handleEmailSubmit(event: FormEvent<HTMLFormElement>): void {
+  async function handleEmailSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    const result = updateCurrentUserEmail(emailForm.email, emailForm.currentPassword);
+    const result = await updateCurrentUserEmail(emailForm.email, emailForm.currentPassword);
     setStatusMessage(result.message);
 
     if (result.success) {
@@ -111,7 +117,7 @@ export function SettingsTab() {
     }
   }
 
-  function handlePasswordSubmit(event: FormEvent<HTMLFormElement>): void {
+  async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -119,19 +125,13 @@ export function SettingsTab() {
       return;
     }
 
-    const strongEnough =
-      passwordForm.newPassword.length >= 8
-      && /[a-z]/.test(passwordForm.newPassword)
-      && /[A-Z]/.test(passwordForm.newPassword)
-      && /\d/.test(passwordForm.newPassword)
-      && /[^A-Za-z0-9]/.test(passwordForm.newPassword);
-
-    if (!strongEnough) {
-      setStatusMessage('Password must be at least 8 characters and include uppercase, lowercase, number, and symbol.');
+    const passwordPolicyError = validatePasswordPolicy(passwordForm.newPassword);
+    if (passwordPolicyError) {
+      setStatusMessage(passwordPolicyError);
       return;
     }
 
-    const result = updateCurrentUserPassword(passwordForm.currentPassword, passwordForm.newPassword);
+    const result = await updateCurrentUserPassword(passwordForm.currentPassword, passwordForm.newPassword);
     setStatusMessage(result.message);
 
     if (result.success) {
@@ -143,11 +143,11 @@ export function SettingsTab() {
     }
   }
 
-  function handleNotificationPreferenceChange<K extends keyof UserNotificationPreferences>(
+  async function handleNotificationPreferenceChange<K extends keyof UserNotificationPreferences>(
     key: K,
     value: UserNotificationPreferences[K],
-  ): void {
-    const result = updateCurrentUserNotificationPreference(key, value);
+  ): Promise<void> {
+    const result = await updateCurrentUserNotificationPreference(key, value);
     setStatusMessage(result.message);
     if (result.success) {
       applyCurrentUserPreferences();
@@ -156,6 +156,7 @@ export function SettingsTab() {
 
   const labelClass = 'text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300';
   const inputClass = 'w-full rounded-xl border border-white/15 bg-slate-950/55 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30';
+  const revealButtonClass = 'shrink-0 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/10';
 
   function navigateToSection(targetSection: SettingsSectionKey): void {
     setActiveSection(targetSection);
@@ -170,6 +171,12 @@ export function SettingsTab() {
         title="Account Settings"
         description="Manage your notification preferences and account credentials."
       />
+
+      {requiresPasswordChange && (
+        <p className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          You must update your temporary password before continuing.
+        </p>
+      )}
 
       {statusMessage && (
         <p className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
@@ -213,10 +220,21 @@ export function SettingsTab() {
                 required
               />
 
-              <label className={labelClass} htmlFor="settings-email-password">Current Password</label>
+              <div className="flex items-center justify-between gap-3">
+                <label className={labelClass} htmlFor="settings-email-password">Current Password</label>
+                <button
+                  type="button"
+                  className={revealButtonClass}
+                  aria-controls="settings-email-password"
+                  aria-pressed={showEmailPassword}
+                  onClick={() => setShowEmailPassword((value) => !value)}
+                >
+                  {showEmailPassword ? 'Hide' : 'Reveal'}
+                </button>
+              </div>
               <input
                 id="settings-email-password"
-                type="password"
+                type={showEmailPassword ? 'text' : 'password'}
                 className={inputClass}
                 value={emailForm.currentPassword}
                 onChange={(event) => setEmailForm((previous) => ({ ...previous, currentPassword: event.target.value }))}
@@ -243,10 +261,21 @@ export function SettingsTab() {
               </p>
             )}
             <form className="mt-3 space-y-3" onSubmit={handlePasswordSubmit}>
-              <label className={labelClass} htmlFor="settings-current-password">Current Password</label>
+              <div className="flex items-center justify-between gap-3">
+                <label className={labelClass} htmlFor="settings-current-password">Current Password</label>
+                <button
+                  type="button"
+                  className={revealButtonClass}
+                  aria-controls="settings-current-password settings-new-password settings-confirm-password"
+                  aria-pressed={showSecurityPasswords}
+                  onClick={() => setShowSecurityPasswords((value) => !value)}
+                >
+                  {showSecurityPasswords ? 'Hide' : 'Reveal'}
+                </button>
+              </div>
               <input
                 id="settings-current-password"
-                type="password"
+                type={showSecurityPasswords ? 'text' : 'password'}
                 className={inputClass}
                 value={passwordForm.currentPassword}
                 onChange={(event) => setPasswordForm((previous) => ({ ...previous, currentPassword: event.target.value }))}
@@ -255,10 +284,21 @@ export function SettingsTab() {
                 required
               />
 
-              <label className={labelClass} htmlFor="settings-new-password">New Password</label>
+              <div className="flex items-center justify-between gap-3">
+                <label className={labelClass} htmlFor="settings-new-password">New Password</label>
+                <button
+                  type="button"
+                  className={revealButtonClass}
+                  aria-controls="settings-current-password settings-new-password settings-confirm-password"
+                  aria-pressed={showSecurityPasswords}
+                  onClick={() => setShowSecurityPasswords((value) => !value)}
+                >
+                  {showSecurityPasswords ? 'Hide' : 'Reveal'}
+                </button>
+              </div>
               <input
                 id="settings-new-password"
-                type="password"
+                type={showSecurityPasswords ? 'text' : 'password'}
                 className={inputClass}
                 value={passwordForm.newPassword}
                 onChange={(event) => setPasswordForm((previous) => ({ ...previous, newPassword: event.target.value }))}
@@ -267,10 +307,21 @@ export function SettingsTab() {
                 required
               />
 
-              <label className={labelClass} htmlFor="settings-confirm-password">Confirm New Password</label>
+              <div className="flex items-center justify-between gap-3">
+                <label className={labelClass} htmlFor="settings-confirm-password">Confirm New Password</label>
+                <button
+                  type="button"
+                  className={revealButtonClass}
+                  aria-controls="settings-current-password settings-new-password settings-confirm-password"
+                  aria-pressed={showSecurityPasswords}
+                  onClick={() => setShowSecurityPasswords((value) => !value)}
+                >
+                  {showSecurityPasswords ? 'Hide' : 'Reveal'}
+                </button>
+              </div>
               <input
                 id="settings-confirm-password"
-                type="password"
+                type={showSecurityPasswords ? 'text' : 'password'}
                 className={inputClass}
                 value={passwordForm.confirmPassword}
                 onChange={(event) => setPasswordForm((previous) => ({ ...previous, confirmPassword: event.target.value }))}
@@ -280,7 +331,7 @@ export function SettingsTab() {
               />
 
               <p className="text-[0.78rem] text-[var(--muted)]">
-                Password must include at least 8 characters, uppercase, lowercase, number, and symbol.
+                {PASSWORD_POLICY_MESSAGE}
               </p>
 
               <button type="submit" disabled={isMainAdmin} className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-blue-400 disabled:cursor-not-allowed disabled:opacity-60">
@@ -303,7 +354,9 @@ export function SettingsTab() {
                   <input
                     type="checkbox"
                     checked={currentUser.notificationPreferences[row.key]}
-                    onChange={(event) => handleNotificationPreferenceChange(row.key, event.target.checked)}
+                    onChange={(event) => {
+                      void handleNotificationPreferenceChange(row.key, event.target.checked);
+                    }}
                     className="h-4 w-4 rounded border-[var(--line)] bg-transparent accent-sky-400"
                   />
                   <span>{row.label}</span>
@@ -316,7 +369,9 @@ export function SettingsTab() {
               <select
                 id="settings-autodismiss"
                 value={String(currentUser.notificationPreferences.autoDismissMs)}
-                onChange={(event) => handleNotificationPreferenceChange('autoDismissMs', Number(event.target.value))}
+                onChange={(event) => {
+                  void handleNotificationPreferenceChange('autoDismissMs', Number(event.target.value));
+                }}
                 className="rounded-md border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1.5 text-[0.8rem] text-[var(--ink)]"
               >
                 <option value="0">Off</option>

@@ -1,17 +1,21 @@
 import { create } from 'zustand';
 import { AppPage } from '@/auth/pages';
 import {
+  createUserInAirtable,
+  deleteUserInAirtable,
   normalizePages,
   openEmailChangeDraft,
   openResetEmailDraft,
+  sendWelcomeEmail,
   EMAIL_CHANGE_KEY,
+  loadUsersFromAirtable,
   RESET_KEY,
   readStoredEmailChangeTokens,
   readStoredTokens,
   readStoredUsers,
   randomToken,
   SESSION_KEY,
-  USERS_KEY,
+  updateUserInAirtable,
 } from './authStorage';
 import type { AppUser, CreateUserInput, EmailChangeToken, PasswordResetToken, UserRole } from './authTypes';
 import type {
@@ -34,10 +38,7 @@ import {
   updateUserPassword,
 } from './authContextHelpers';
 import { DEFAULT_USER_NOTIFICATION_PREFERENCES, type UserNotificationPreferences } from './authTypes';
-
-function persistUsers(users: AppUser[]): void {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
+import { validatePasswordPolicy } from './passwordPolicy';
 
 function persistSession(currentUserId: string | null): void {
   if (currentUserId) {
@@ -63,40 +64,80 @@ persistEmailChangeTokens(initialEmailChangeTokens);
 
 export interface AuthStoreState {
   users: AppUser[];
+  usersLoading: boolean;
+  usersReady: boolean;
   currentUserId: string | null;
+  requiresPasswordChange: boolean;
   resetTokens: PasswordResetToken[];
   emailChangeTokens: EmailChangeToken[];
-  login: (email: string, password: string) => LoginResult;
+  initializeUsers: () => Promise<void>;
+  login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => void;
   canAccessPage: (page: AppPage) => boolean;
   requestPasswordReset: (email: string) => PasswordResetRequestResult;
-  resetPassword: (token: string, password: string) => PasswordResetResult;
-  updateUserPermissions: (userId: string, pages: AppPage[]) => void;
-  updateUserRole: (userId: string, role: UserRole) => void;
-  createUser: (input: CreateUserInput) => CreateUserResult;
-  updateCurrentUserEmail: (email: string, currentPassword: string) => AccountUpdateResult;
-  confirmEmailChange: (token: string) => AccountUpdateResult;
-  updateCurrentUserPassword: (currentPassword: string, nextPassword: string) => AccountUpdateResult;
-  updateCurrentUserNotificationPreference: <K extends keyof UserNotificationPreferences>(key: K, value: UserNotificationPreferences[K]) => AccountUpdateResult;
+  resetPassword: (token: string, password: string) => Promise<PasswordResetResult>;
+  updateUserPermissions: (userId: string, pages: AppPage[]) => Promise<AccountUpdateResult>;
+  updateUserRole: (userId: string, role: UserRole) => Promise<AccountUpdateResult>;
+  deleteUser: (userId: string) => Promise<AccountUpdateResult>;
+  createUser: (input: CreateUserInput) => Promise<CreateUserResult>;
+  updateCurrentUserEmail: (email: string, currentPassword: string) => Promise<AccountUpdateResult>;
+  confirmEmailChange: (token: string) => Promise<AccountUpdateResult>;
+  updateCurrentUserPassword: (currentPassword: string, nextPassword: string) => Promise<AccountUpdateResult>;
+  completeRequiredPasswordChange: (nextPassword: string) => Promise<AccountUpdateResult>;
+  updateCurrentUserNotificationPreference: <K extends keyof UserNotificationPreferences>(key: K, value: UserNotificationPreferences[K]) => Promise<AccountUpdateResult>;
 }
 
 export const useAuthStore = create<AuthStoreState>((set, get) => ({
   users: readStoredUsers(),
+  usersLoading: false,
+  usersReady: false,
   currentUserId: localStorage.getItem(SESSION_KEY),
+  requiresPasswordChange: false,
   resetTokens: initialResetTokens,
   emailChangeTokens: initialEmailChangeTokens,
-  login: (email, password) => {
-    const { users } = get();
-    const { result, userId } = attemptLogin(users, email, password);
+  initializeUsers: async () => {
+    const { usersLoading, usersReady, currentUserId } = get();
+    if (usersLoading || usersReady) return;
+
+    set({ usersLoading: true });
+    try {
+      const users = await loadUsersFromAirtable();
+      const sessionUser = currentUserId ? users.find((user) => user.id === currentUserId) ?? null : null;
+      set({
+        users,
+        usersReady: true,
+        requiresPasswordChange: Boolean(sessionUser?.mustChangePassword),
+      });
+    } catch (error) {
+      console.error('Failed to load users from Airtable:', error);
+      set({ usersReady: true });
+    } finally {
+      set({ usersLoading: false });
+    }
+  },
+  login: async (email, password) => {
+    const currentUsers = get().users;
+    let latestUsers = currentUsers;
+
+    try {
+      latestUsers = await loadUsersFromAirtable();
+      set({ users: latestUsers, usersReady: true });
+    } catch (error) {
+      console.error('Failed to refresh users during login:', error);
+    }
+
+    const { result, userId } = attemptLogin(latestUsers, email, password);
     if (userId) {
+      const matchedUser = latestUsers.find((user) => user.id === userId) ?? null;
       set({ currentUserId: userId });
+      set({ requiresPasswordChange: Boolean(matchedUser?.mustChangePassword) });
       persistSession(userId);
     }
 
     return result;
   },
   logout: () => {
-    set({ currentUserId: null });
+    set({ currentUserId: null, requiresPasswordChange: false });
     persistSession(null);
   },
   canAccessPage: (page) => {
@@ -131,7 +172,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       resetLink: link,
     };
   },
-  resetPassword: (token, password) => {
+  resetPassword: async (token, password) => {
     const { users, resetTokens } = get();
     const activeToken = resetTokens.find((entry) => entry.token === token);
     if (!activeToken || activeToken.expiresAt <= Date.now()) {
@@ -143,37 +184,122 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       return { success: false, message: 'Could not find user for this reset link.' };
     }
 
-    const nextResetTokens = resetTokens.filter((entry) => entry.token !== token);
-    set({ users: updatedUsers, resetTokens: nextResetTokens });
-    persistUsers(updatedUsers);
-    persistResetTokens(nextResetTokens);
-    return { success: true, message: 'Password reset successfully. You can now log in.' };
-  },
-  updateUserPermissions: (userId, pages) => {
-    const { users } = get();
-    const updatedUsers = users.map((user) => {
-      if (user.id !== userId) return user;
-      return { ...user, allowedPages: normalizePages(pages, user.role) };
-    });
+    const updatedUser = updatedUsers.find((user) => user.id === activeToken.userId);
+    if (!updatedUser) {
+      return { success: false, message: 'Could not find user for this reset link.' };
+    }
 
-    set({ users: updatedUsers });
-    persistUsers(updatedUsers);
-  },
-  updateUserRole: (userId, role) => {
-    const { users } = get();
-    const updatedUsers = users.map((user) => {
-      if (user.id !== userId) return user;
+    try {
+      const savedUser = await updateUserInAirtable(updatedUser);
+      const persistedUsers = updatedUsers.map((user) => (user.id === savedUser.id ? savedUser : user));
+      const nextResetTokens = resetTokens.filter((entry) => entry.token !== token);
+      set({ users: persistedUsers, resetTokens: nextResetTokens });
+      persistResetTokens(nextResetTokens);
+      return { success: true, message: 'Password reset successfully. You can now log in.' };
+    } catch (error) {
       return {
-        ...user,
-        role,
-        allowedPages: normalizePages(user.allowedPages, role),
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update password in Airtable.',
       };
-    });
-
-    set({ users: updatedUsers });
-    persistUsers(updatedUsers);
+    }
   },
-  createUser: (input) => {
+  updateUserPermissions: async (userId, pages) => {
+    const { users } = get();
+    const targetUser = users.find((user) => user.id === userId);
+    if (!targetUser) {
+      return { success: false, message: 'User not found.' };
+    }
+
+    const nextUser = {
+      ...targetUser,
+      allowedPages: normalizePages(pages, targetUser.role),
+    };
+
+    try {
+      const savedUser = await updateUserInAirtable(nextUser);
+      const updatedUsers = users.map((user) => (user.id === userId ? savedUser : user));
+      set({ users: updatedUsers });
+      return { success: true, message: 'Permissions updated.' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update permissions in Airtable.',
+      };
+    }
+  },
+  updateUserRole: async (userId, role) => {
+    const { users } = get();
+    const targetUser = users.find((user) => user.id === userId);
+    if (!targetUser) {
+      return { success: false, message: 'User not found.' };
+    }
+
+    const nextUser = {
+      ...targetUser,
+      role,
+      allowedPages: normalizePages(targetUser.allowedPages, role),
+    };
+
+    try {
+      const savedUser = await updateUserInAirtable(nextUser);
+      const updatedUsers = users.map((user) => (user.id === userId ? savedUser : user));
+      set({ users: updatedUsers });
+      return { success: true, message: 'Role updated.' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update role in Airtable.',
+      };
+    }
+  },
+  deleteUser: async (userId) => {
+    const { users, currentUserId, resetTokens, emailChangeTokens } = get();
+    const currentUser = getCurrentUser(users, currentUserId);
+    if (!currentUser || currentUser.role !== 'admin') {
+      return { success: false, message: 'Only admins can delete users.' };
+    }
+
+    const targetUser = users.find((user) => user.id === userId);
+    if (!targetUser) {
+      return { success: false, message: 'User not found.' };
+    }
+
+    if (targetUser.id === currentUser.id) {
+      return { success: false, message: 'You cannot delete your own account.' };
+    }
+
+    if (targetUser.id === 'u-admin') {
+      return { success: false, message: 'The main admin account cannot be deleted.' };
+    }
+
+    if (targetUser.role === 'admin') {
+      const remainingAdmins = users.filter((user) => user.role === 'admin' && user.id !== targetUser.id).length;
+      if (remainingAdmins === 0) {
+        return { success: false, message: 'Cannot delete the last admin account.' };
+      }
+    }
+
+    try {
+      await deleteUserInAirtable(targetUser);
+      const updatedUsers = users.filter((user) => user.id !== targetUser.id);
+      const nextResetTokens = resetTokens.filter((token) => token.userId !== targetUser.id);
+      const nextEmailChangeTokens = emailChangeTokens.filter((token) => token.userId !== targetUser.id);
+      set({
+        users: updatedUsers,
+        resetTokens: nextResetTokens,
+        emailChangeTokens: nextEmailChangeTokens,
+      });
+      persistResetTokens(nextResetTokens);
+      persistEmailChangeTokens(nextEmailChangeTokens);
+      return { success: true, message: `Deleted user ${targetUser.email}.` };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to delete user from Airtable.',
+      };
+    }
+  },
+  createUser: async (input) => {
     const { users } = get();
     const candidate = buildUserFromInput(input);
     if (candidate.result) {
@@ -189,12 +315,20 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       return { success: false, message: 'A user with that email already exists.' };
     }
 
-    const updatedUsers = [...users, newUser];
-    set({ users: updatedUsers });
-    persistUsers(updatedUsers);
-    return { success: true, message: `User ${newUser.email} created.` };
+    try {
+      const createdUser = await createUserInAirtable(newUser);
+      set({ users: [...users, createdUser] });
+      const delivery = await sendWelcomeEmail(createdUser.email, createdUser.password);
+      const deliveryNote = delivery === 'gmail' ? 'Welcome email sent.' : 'Welcome email draft opened.';
+      return { success: true, message: `User ${createdUser.email} created. ${deliveryNote}` };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to create user in Airtable.',
+      };
+    }
   },
-  updateCurrentUserEmail: (email, currentPassword) => {
+  updateCurrentUserEmail: async (email, currentPassword) => {
     const normalizedEmail = normalizeEmail(email);
     if (!normalizedEmail) {
       return { success: false, message: 'Email is required.' };
@@ -243,7 +377,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
     return { success: true, message: `Confirmation email draft prepared for ${normalizedEmail}. Open the link to complete the update.` };
   },
-  confirmEmailChange: (token) => {
+  confirmEmailChange: async (token) => {
     const { users, emailChangeTokens } = get();
     const activeToken = emailChangeTokens.find((entry) => entry.token === token);
     if (!activeToken || activeToken.expiresAt <= Date.now()) {
@@ -255,22 +389,39 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       return { success: false, message: 'Another user already uses this email address.' };
     }
 
-    const updatedUsers = users.map((user) =>
-      user.id === activeToken.userId
-        ? { ...user, email: activeToken.nextEmail }
-        : user,
-    );
+    const currentUser = users.find((user) => user.id === activeToken.userId);
+    if (!currentUser) {
+      return { success: false, message: 'Current user was not found.' };
+    }
 
-    const nextEmailChangeTokens = emailChangeTokens.filter((entry) => entry.token !== token);
-    set({ users: updatedUsers, emailChangeTokens: nextEmailChangeTokens });
-    persistUsers(updatedUsers);
-    persistEmailChangeTokens(nextEmailChangeTokens);
-    return { success: true, message: 'Email updated successfully.' };
+    const updatedUser = {
+      ...currentUser,
+      email: activeToken.nextEmail,
+    };
+
+    try {
+      const savedUser = await updateUserInAirtable(updatedUser);
+      const updatedUsers = users.map((user) => (user.id === activeToken.userId ? savedUser : user));
+      const nextEmailChangeTokens = emailChangeTokens.filter((entry) => entry.token !== token);
+      set({ users: updatedUsers, emailChangeTokens: nextEmailChangeTokens });
+      persistEmailChangeTokens(nextEmailChangeTokens);
+      return { success: true, message: 'Email updated successfully.' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update email in Airtable.',
+      };
+    }
   },
-  updateCurrentUserPassword: (currentPassword, nextPassword) => {
+  updateCurrentUserPassword: async (currentPassword, nextPassword) => {
     const trimmedNextPassword = nextPassword.trim();
     if (!trimmedNextPassword) {
       return { success: false, message: 'New password is required.' };
+    }
+
+    const passwordPolicyError = validatePasswordPolicy(trimmedNextPassword);
+    if (passwordPolicyError) {
+      return { success: false, message: passwordPolicyError };
     }
 
     const { users, currentUserId } = get();
@@ -296,36 +447,101 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     }
 
     const { updatedUsers } = updateUserPassword(users, currentUserId, trimmedNextPassword);
-    set({ users: updatedUsers });
-    persistUsers(updatedUsers);
-    return { success: true, message: 'Password updated successfully.' };
+    const nextUser = updatedUsers.find((user) => user.id === currentUserId);
+    if (!nextUser) {
+      return { success: false, message: 'Current user was not found.' };
+    }
+
+    try {
+      const savedUser = await updateUserInAirtable(nextUser);
+      const persistedUsers = updatedUsers.map((user) => (user.id === savedUser.id ? savedUser : user));
+      set({ users: persistedUsers });
+      set({ requiresPasswordChange: false });
+      return { success: true, message: 'Password updated successfully.' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update password in Airtable.',
+      };
+    }
   },
-  updateCurrentUserNotificationPreference: (key, value) => {
+  completeRequiredPasswordChange: async (nextPassword) => {
+    const trimmedNextPassword = nextPassword.trim();
+    if (!trimmedNextPassword) {
+      return { success: false, message: 'New password is required.' };
+    }
+
+    const passwordPolicyError = validatePasswordPolicy(trimmedNextPassword);
+    if (passwordPolicyError) {
+      return { success: false, message: passwordPolicyError };
+    }
+
+    const { users, currentUserId, requiresPasswordChange } = get();
+    if (!currentUserId) {
+      return { success: false, message: 'No active user session.' };
+    }
+
+    const currentUser = users.find((user) => user.id === currentUserId);
+    if (!currentUser) {
+      return { success: false, message: 'Current user was not found.' };
+    }
+
+    if (!requiresPasswordChange && !currentUser.mustChangePassword) {
+      return { success: false, message: 'Password update is not required for this account.' };
+    }
+
+    if (currentUser.password === trimmedNextPassword) {
+      return { success: false, message: 'New password must be different from your current password.' };
+    }
+
+    const { updatedUsers } = updateUserPassword(users, currentUserId, trimmedNextPassword);
+    const nextUser = updatedUsers.find((user) => user.id === currentUserId);
+    if (!nextUser) {
+      return { success: false, message: 'Current user was not found.' };
+    }
+
+    try {
+      const savedUser = await updateUserInAirtable(nextUser);
+      const persistedUsers = updatedUsers.map((user) => (user.id === savedUser.id ? savedUser : user));
+      set({ users: persistedUsers, requiresPasswordChange: false });
+      return { success: true, message: 'Password updated successfully.' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update password in Airtable.',
+      };
+    }
+  },
+  updateCurrentUserNotificationPreference: async (key, value) => {
     const { users, currentUserId } = get();
     if (!currentUserId) {
       return { success: false, message: 'No active user session.' };
     }
 
-    const hasCurrentUser = users.some((user) => user.id === currentUserId);
-    if (!hasCurrentUser) {
+    const currentUser = users.find((user) => user.id === currentUserId);
+    if (!currentUser) {
       return { success: false, message: 'Current user was not found.' };
     }
 
-    const updatedUsers = users.map((user) => {
-      if (user.id !== currentUserId) return user;
+    const currentPreferences = currentUser.notificationPreferences ?? { ...DEFAULT_USER_NOTIFICATION_PREFERENCES };
+    const nextUser = {
+      ...currentUser,
+      notificationPreferences: {
+        ...currentPreferences,
+        [key]: value,
+      },
+    };
 
-      const currentPreferences = user.notificationPreferences ?? { ...DEFAULT_USER_NOTIFICATION_PREFERENCES };
+    try {
+      const savedUser = await updateUserInAirtable(nextUser);
+      const updatedUsers = users.map((user) => (user.id === currentUserId ? savedUser : user));
+      set({ users: updatedUsers });
+      return { success: true, message: 'Notification preference updated.' };
+    } catch (error) {
       return {
-        ...user,
-        notificationPreferences: {
-          ...currentPreferences,
-          [key]: value,
-        },
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update notifications in Airtable.',
       };
-    });
-
-    set({ users: updatedUsers });
-    persistUsers(updatedUsers);
-    return { success: true, message: 'Notification preference updated.' };
+    }
   },
 }));

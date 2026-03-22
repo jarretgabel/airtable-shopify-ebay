@@ -10,15 +10,21 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
   const requestPasswordReset = useAuthStore((state) => state.requestPasswordReset);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetStatus, setResetStatus] = useState<string | null>(null);
   const [resetLink, setResetLink] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    const result = login(email, password);
+    if (submitting) return;
+
+    setSubmitting(true);
+    const result = await login(email, password);
+    setSubmitting(false);
     if (!result.success) {
       setError(result.message);
       return;
@@ -37,6 +43,7 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
 
   const labelClassName = 'text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300';
   const inputClassName = 'w-full rounded-xl border border-white/15 bg-slate-950/55 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30';
+  const revealButtonClassName = 'shrink-0 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/10';
 
   return (
     <main className="min-h-screen px-5 py-8 text-slate-100">
@@ -57,11 +64,22 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
             autoComplete="email"
           />
 
-          <label className={`${labelClassName} mt-2`} htmlFor="login-password">Password</label>
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <label className={labelClassName} htmlFor="login-password">Password</label>
+            <button
+              type="button"
+              className={revealButtonClassName}
+              aria-controls="login-password"
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((value) => !value)}
+            >
+              {showPassword ? 'Hide' : 'Reveal'}
+            </button>
+          </div>
           <input
             id="login-password"
             className={inputClassName}
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
@@ -70,8 +88,8 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
 
           {error && <p className="mt-1 text-sm text-rose-300">{error}</p>}
 
-          <button type="submit" className="mt-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-blue-400">
-            Log In
+          <button type="submit" disabled={submitting} className="mt-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-blue-400 disabled:cursor-not-allowed disabled:opacity-60">
+            {submitting ? 'Logging In...' : 'Log In'}
           </button>
         </form>
 

@@ -11,10 +11,11 @@ export function ResetPasswordScreen({ token, onResetSuccess, onBackToLogin }: Re
   const resetPassword = useAuthStore((state) => state.resetPassword);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
 
     if (!token) {
@@ -32,7 +33,7 @@ export function ResetPasswordScreen({ token, onResetSuccess, onBackToLogin }: Re
       return;
     }
 
-    const result = resetPassword(token, password);
+    const result = await resetPassword(token, password);
     if (!result.success) {
       setError(result.message);
       return;
@@ -45,6 +46,7 @@ export function ResetPasswordScreen({ token, onResetSuccess, onBackToLogin }: Re
 
   const labelClassName = 'text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300';
   const inputClassName = 'w-full rounded-xl border border-white/15 bg-slate-950/55 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30';
+  const revealButtonClassName = 'shrink-0 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/10';
 
   return (
     <main className="min-h-screen px-5 py-8 text-slate-100">
@@ -53,22 +55,44 @@ export function ResetPasswordScreen({ token, onResetSuccess, onBackToLogin }: Re
         <h1 className="mt-2 text-4xl font-semibold tracking-tight text-white">Reset your password</h1>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-2.5">
-          <label className={labelClassName} htmlFor="new-password">New password</label>
+          <div className="flex items-center justify-between gap-3">
+            <label className={labelClassName} htmlFor="new-password">New password</label>
+            <button
+              type="button"
+              className={revealButtonClassName}
+              aria-controls="new-password confirm-password"
+              aria-pressed={showPasswords}
+              onClick={() => setShowPasswords((value) => !value)}
+            >
+              {showPasswords ? 'Hide' : 'Reveal'}
+            </button>
+          </div>
           <input
             id="new-password"
             className={inputClassName}
-            type="password"
+            type={showPasswords ? 'text' : 'password'}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
             autoComplete="new-password"
           />
 
-          <label className={`${labelClassName} mt-2`} htmlFor="confirm-password">Confirm password</label>
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <label className={labelClassName} htmlFor="confirm-password">Confirm password</label>
+            <button
+              type="button"
+              className={revealButtonClassName}
+              aria-controls="new-password confirm-password"
+              aria-pressed={showPasswords}
+              onClick={() => setShowPasswords((value) => !value)}
+            >
+              {showPasswords ? 'Hide' : 'Reveal'}
+            </button>
+          </div>
           <input
             id="confirm-password"
             className={inputClassName}
-            type="password"
+            type={showPasswords ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
             required

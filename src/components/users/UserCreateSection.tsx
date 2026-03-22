@@ -1,4 +1,4 @@
-import { FormEvent, MutableRefObject } from 'react';
+import { FormEvent, MutableRefObject, useState } from 'react';
 import { ASSIGNABLE_PAGES, AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
 import { NewUserFormState } from '@/components/users/userManagementTypes';
 
@@ -13,6 +13,7 @@ interface UserCreateSectionProps {
   onNewUserFieldChange: (field: keyof NewUserFormState, value: string) => void;
   onNewUserRoleChange: (role: 'admin' | 'user') => void;
   onNewUserPageToggle: (page: AppPage) => void;
+  onRegenerateTemporaryPassword: () => void;
 }
 
 export function UserCreateSection({
@@ -26,7 +27,10 @@ export function UserCreateSection({
   onNewUserFieldChange,
   onNewUserRoleChange,
   onNewUserPageToggle,
+  onRegenerateTemporaryPassword,
 }: UserCreateSectionProps) {
+  const [showTemporaryPassword, setShowTemporaryPassword] = useState(false);
+
   return (
     <section ref={createUserSectionRef}>
       <h3 className="m-0 text-[0.95rem] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Create User</h3>
@@ -60,12 +64,28 @@ export function UserCreateSection({
           id="new-user-password"
           name="new-user-password"
           className={inputClassName}
-          type="password"
+          type={showTemporaryPassword ? 'text' : 'password'}
           value={newUser.password}
           onChange={(event) => onNewUserFieldChange('password', event.target.value)}
           autoComplete="new-password"
           required
         />
+        <div className="mt-1 flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/10"
+            onClick={() => setShowTemporaryPassword((value) => !value)}
+          >
+            {showTemporaryPassword ? 'Hide password' : 'Reveal password'}
+          </button>
+          <button
+            type="button"
+            className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/10"
+            onClick={onRegenerateTemporaryPassword}
+          >
+            Regenerate password
+          </button>
+        </div>
 
         <label className={`${labelClassName} mt-2`} htmlFor="new-user-role">Role</label>
         <select
