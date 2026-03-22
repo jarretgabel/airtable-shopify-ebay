@@ -319,7 +319,7 @@ export function ApprovalFormFields({
   ]);
 
   return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {allFieldNames.map((fieldName) => {
         if (isShippingServiceField(fieldName)) return null;
         if (fieldName === approvedFieldName) return null;
@@ -343,7 +343,7 @@ export function ApprovalFormFields({
         if (isAllowOffersField(fieldName) || kind === 'boolean' || booleanLike) {
           const normalizedBooleanValue = value.trim().toLowerCase() === 'true' ? 'true' : 'false';
           return (
-            <label key={fieldName} className="flex flex-col gap-1.5">
+            <label key={fieldName} className="flex flex-col gap-2">
               <span className={labelClass}>{toHumanReadableLabel(fieldName)}</span>
               <select
                 className={inputBaseClass}
@@ -363,7 +363,7 @@ export function ApprovalFormFields({
           const options = value && !optionSet.has(value) ? [value, ...dropdownOptions] : dropdownOptions;
 
           return (
-            <label key={fieldName} className="flex flex-col gap-1.5">
+            <label key={fieldName} className="flex flex-col gap-2">
               <span className={labelClass}>{toHumanReadableLabel(fieldName)}</span>
               <select
                 className={inputBaseClass}
@@ -397,7 +397,7 @@ export function ApprovalFormFields({
 
         if (isLongText) {
           return (
-            <label key={fieldName} className="col-span-1 flex flex-col gap-1.5 md:col-span-2">
+            <label key={fieldName} className="col-span-1 flex flex-col gap-2 md:col-span-2">
               <span className={labelClass}>{toHumanReadableLabel(fieldName)}</span>
               <textarea
                 className={`${inputBaseClass} min-h-[110px] resize-y font-mono leading-[1.4]`}
@@ -410,7 +410,7 @@ export function ApprovalFormFields({
         }
 
         return (
-          <label key={fieldName} className="flex flex-col gap-1.5">
+          <label key={fieldName} className="flex flex-col gap-2">
             <span className={labelClass}>{toHumanReadableLabel(fieldName)}</span>
             <input
               className={inputBaseClass}
@@ -424,7 +424,7 @@ export function ApprovalFormFields({
       })}
 
       {shopifyBodyDescriptionFieldName && (
-        <label className="col-span-1 flex flex-col gap-1.5 md:col-span-2">
+        <label className="col-span-1 flex flex-col gap-2 md:col-span-2">
           <span className={labelClass}>Description</span>
           <textarea
             className={`${inputBaseClass} min-h-[110px] resize-y leading-[1.4]`}
@@ -449,7 +449,7 @@ export function ApprovalFormFields({
         <ShopifyBodyHtmlPreview value={derivedShopifyBodyHtml} />
       )}
 
-      <label className="flex flex-col gap-1.5">
+      <label className="flex flex-col gap-2">
         <span className={labelClass}>Shipping Services</span>
         <select
           className={inputBaseClass}

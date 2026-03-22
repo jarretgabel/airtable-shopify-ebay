@@ -93,15 +93,12 @@ export function ShopifyKeyFeaturesEditor({
   }
 
   return (
-    <fieldset className="col-span-1 flex flex-col gap-2 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3 md:col-span-2">
-      <legend className={labelClass}>Shopify Key Features</legend>
-
-      <div className="flex flex-col gap-1.5">
-        <span className={labelClass}>Feature / Value Pairs</span>
+    <div className="col-span-1 flex flex-col gap-2 md:col-span-2">
+      <span className={labelClass}>Key Features</span>
         {rows.map((row, index) => (
           <div
             key={index}
-            className={`grid grid-cols-1 gap-2 rounded-lg border border-[var(--line)] bg-[var(--bg)] p-2 md:grid-cols-[1fr_1fr_auto] ${draggingIndex === index ? 'opacity-60' : ''}`}
+            className={`grid grid-cols-1 gap-3 rounded-lg border border-[var(--line)] bg-[var(--bg)] p-3 md:grid-cols-[1fr_1fr_auto] ${draggingIndex === index ? 'opacity-60' : ''}`}
             onDragOver={(event) => {
               if (disabled) return;
               event.preventDefault();
@@ -130,7 +127,7 @@ export function ShopifyKeyFeaturesEditor({
               disabled={disabled}
               aria-label={`Key value ${index + 1}`}
             />
-            <div className="flex items-center justify-end gap-1">
+            <div className="flex items-center justify-end gap-1.5">
               <button
                 type="button"
                 className={dragHandleClass}
@@ -189,7 +186,6 @@ export function ShopifyKeyFeaturesEditor({
         >
           Add feature
         </button>
-      </div>
-    </fieldset>
+    </div>
   );
 }

@@ -12,7 +12,7 @@ export function ShopifyBodyHtmlPreview({ value }: ShopifyBodyHtmlPreviewProps) {
   const hasValue = value.trim().length > 0;
 
   return (
-    <details className="group col-span-1 rounded-xl border border-[var(--line)] bg-[var(--panel)] md:col-span-2" open>
+    <details className="group col-span-1 rounded-xl border border-[var(--line)] bg-[var(--panel)] md:col-span-2">
       <summary className={summaryClass}>
         <span>Body HTML Preview</span>
         <span
