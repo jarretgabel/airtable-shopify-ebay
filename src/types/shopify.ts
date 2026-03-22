@@ -34,6 +34,14 @@ export interface ShopifyProductVariant {
   option3?: string | null;
 }
 
+export interface ShopifyMetafield {
+  id?: number;
+  namespace: string;
+  key: string;
+  type: string;
+  value: string;
+}
+
 export interface ShopifyProduct {
   id?: number;
   title: string;
@@ -49,6 +57,7 @@ export interface ShopifyProduct {
   options?: ShopifyProductOption[];
   variants?: ShopifyProductVariant[];
   images?: ShopifyProductImage[];
+  metafields?: ShopifyMetafield[];
 }
 
 export interface ShopifyProductResponse {

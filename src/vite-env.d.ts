@@ -17,6 +17,8 @@ interface ImportMetaEnv {
   readonly VITE_EBAY_OAUTH_SCOPES?: string;
   readonly VITE_EBAY_APP_SCOPE?: string;
   readonly VITE_HIFISHARK_WEB_BASE?: string;
+  readonly VITE_ANALYTICS_ENDPOINT?: string;
+  readonly VITE_ANALYTICS_ENABLED?: string;
 }
 
 interface ImportMeta {

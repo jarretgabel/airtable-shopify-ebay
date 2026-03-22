@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { displayValue } from '@/stores/approvalStore';
+import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { AirtableRecord } from '@/types/airtable';
 
 function ApprovedBadge({ value }: { value: unknown }) {
@@ -49,6 +50,7 @@ export function ApprovalQueueTable({
   const [search, setSearch] = useState('');
   const [approvalFilter, setApprovalFilter] = useState<'all' | 'approved' | 'pending'>('all');
   const [sortBy, setSortBy] = useState<'title-asc' | 'title-desc' | 'price-desc' | 'price-asc' | 'vendor-asc' | 'qty-desc' | 'approval'>('title-asc');
+  const deferredSearch = useDeferredValue(search);
 
   const isApprovedValue = (value: unknown): boolean => {
     const str = String(value ?? '').trim().toLowerCase();
@@ -60,81 +62,102 @@ export function ApprovalQueueTable({
     return Number.isFinite(n) ? n : 0;
   };
 
-  const filteredAndSortedRecords = useMemo(() => {
-    let list = [...records];
+  const preparedRecords = useMemo(
+    () => records.map((record) => {
+      const title = displayValue(record.fields[titleFieldName]);
+      const vendor = vendorFieldName ? displayValue(record.fields[vendorFieldName]) : '';
+      const condition = conditionFieldName ? displayValue(record.fields[conditionFieldName]) : '';
+      const format = formatFieldName ? displayValue(record.fields[formatFieldName]) : '';
+      const rawPrice = priceFieldName ? record.fields[priceFieldName] : null;
+      const rawQty = qtyFieldName ? record.fields[qtyFieldName] : null;
 
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      list = list.filter((record) => {
-        const title = displayValue(record.fields[titleFieldName]).toLowerCase();
-        const vendor = vendorFieldName ? displayValue(record.fields[vendorFieldName]).toLowerCase() : '';
-        const condition = conditionFieldName ? displayValue(record.fields[conditionFieldName]).toLowerCase() : '';
-        const format = formatFieldName ? displayValue(record.fields[formatFieldName]).toLowerCase() : '';
-        return title.includes(q) || vendor.includes(q) || condition.includes(q) || format.includes(q);
+      return {
+        record,
+        title,
+        titleLower: title.toLowerCase(),
+        vendor,
+        vendorLower: vendor.toLowerCase(),
+        condition,
+        conditionLower: condition.toLowerCase(),
+        format,
+        formatLower: format.toLowerCase(),
+        price: priceFieldName ? parseNumber(rawPrice) : 0,
+        qty: qtyFieldName ? parseNumber(rawQty) : 0,
+        approved: isApprovedValue(record.fields[approvedFieldName]),
+      };
+    }),
+    [approvedFieldName, conditionFieldName, formatFieldName, priceFieldName, qtyFieldName, records, titleFieldName, vendorFieldName],
+  );
+
+  const filteredAndSortedRecords = useMemo(() => {
+    let list = [...preparedRecords];
+
+    if (deferredSearch.trim()) {
+      const q = deferredSearch.trim().toLowerCase();
+      list = list.filter((item) => {
+        return item.titleLower.includes(q)
+          || item.vendorLower.includes(q)
+          || item.conditionLower.includes(q)
+          || item.formatLower.includes(q);
       });
     }
 
     if (approvalFilter !== 'all') {
-      list = list.filter((record) => {
-        const approved = isApprovedValue(record.fields[approvedFieldName]);
-        return approvalFilter === 'approved' ? approved : !approved;
+      list = list.filter((item) => {
+        return approvalFilter === 'approved' ? item.approved : !item.approved;
       });
     }
 
     list.sort((a, b) => {
-      const aTitle = displayValue(a.fields[titleFieldName]).toLowerCase();
-      const bTitle = displayValue(b.fields[titleFieldName]).toLowerCase();
-      const aVendor = vendorFieldName ? displayValue(a.fields[vendorFieldName]).toLowerCase() : '';
-      const bVendor = vendorFieldName ? displayValue(b.fields[vendorFieldName]).toLowerCase() : '';
-      const aPrice = priceFieldName ? parseNumber(a.fields[priceFieldName]) : 0;
-      const bPrice = priceFieldName ? parseNumber(b.fields[priceFieldName]) : 0;
-      const aQty = qtyFieldName ? parseNumber(a.fields[qtyFieldName]) : 0;
-      const bQty = qtyFieldName ? parseNumber(b.fields[qtyFieldName]) : 0;
-      const aApproved = isApprovedValue(a.fields[approvedFieldName]) ? 1 : 0;
-      const bApproved = isApprovedValue(b.fields[approvedFieldName]) ? 1 : 0;
-
       switch (sortBy) {
         case 'title-asc':
-          return aTitle.localeCompare(bTitle);
+          return a.titleLower.localeCompare(b.titleLower);
         case 'title-desc':
-          return bTitle.localeCompare(aTitle);
+          return b.titleLower.localeCompare(a.titleLower);
         case 'price-desc':
-          return bPrice - aPrice;
+          return b.price - a.price;
         case 'price-asc':
-          return aPrice - bPrice;
+          return a.price - b.price;
         case 'vendor-asc':
-          return aVendor.localeCompare(bVendor);
+          return a.vendorLower.localeCompare(b.vendorLower);
         case 'qty-desc':
-          return bQty - aQty;
+          return b.qty - a.qty;
         case 'approval':
-          return bApproved - aApproved;
+          return Number(b.approved) - Number(a.approved);
         default:
           return 0;
       }
     });
 
-    return list;
+    return list.map((item) => item.record);
   }, [
-    records,
-    search,
+    deferredSearch,
     approvalFilter,
+    preparedRecords,
     sortBy,
-    titleFieldName,
-    vendorFieldName,
-    conditionFieldName,
-    formatFieldName,
-    approvedFieldName,
-    priceFieldName,
-    qtyFieldName,
   ]);
 
+  useEffect(() => {
+    trackWorkflowEvent('approval_queue_filtered', {
+      searchLength: deferredSearch.trim().length,
+      approvalFilter,
+      sortBy,
+      visibleRows: filteredAndSortedRecords.length,
+      totalRows: records.length,
+    });
+  }, [approvalFilter, deferredSearch, filteredAndSortedRecords.length, records.length, sortBy]);
+
   // Determine which columns have data across any record
-  const hasData = (fieldName: string) => fieldName.length > 0 && records.some((r) => r.fields[fieldName] != null && r.fields[fieldName] !== '');
-  const hasCondition = hasData(conditionFieldName);
-  const hasFormat = hasData(formatFieldName);
-  const hasPrice = hasData(priceFieldName);
-  const hasVendor = hasData(vendorFieldName);
-  const hasQty = hasData(qtyFieldName);
+  const { hasCondition, hasFormat, hasPrice, hasVendor, hasQty } = useMemo(() => {
+    const hasData = (fieldName: string) => fieldName.length > 0 && records.some((r) => r.fields[fieldName] != null && r.fields[fieldName] !== '');
+    return {
+      hasCondition: hasData(conditionFieldName),
+      hasFormat: hasData(formatFieldName),
+      hasPrice: hasData(priceFieldName),
+      hasVendor: hasData(vendorFieldName),
+      hasQty: hasData(qtyFieldName),
+    };
+  }, [conditionFieldName, formatFieldName, priceFieldName, qtyFieldName, records, vendorFieldName]);
   const columnCount = 3
     + (hasPrice ? 1 : 0)
     + (hasVendor ? 1 : 0)

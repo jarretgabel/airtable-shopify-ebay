@@ -2,6 +2,7 @@ import { useCallback, type RefObject } from 'react';
 import { TAB_VALUES } from '@/app/appNavigation';
 import { buildAppFrameNavTabs } from '@/app/appShellNav';
 import { exportPdf } from '@/app/pdfExport';
+import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import type { Tab } from '@/app/appNavigation';
 import { useNotificationStore } from '@/stores/notificationStore';
 
@@ -83,6 +84,10 @@ export function useAppShellControls({
         title: 'Data refreshed',
         message: 'Review approval queues and dashboard alerts for items that need action.',
       });
+      trackWorkflowEvent('data_refreshed', {
+        tab: activeTab,
+        currentSlug,
+      });
     } catch {
       pushNotification({
         tone: 'error',
@@ -94,7 +99,7 @@ export function useAppShellControls({
     } finally {
       setDashboardRefreshing(false);
     }
-  }, [airtableRefetch, approvalRefetch, canAccessPage, currentSlug, dashboardRefreshing, ebayRefetch, jotformRefetch, pushNotification, setDashboardRefreshing, sharkSearch, shopifyApprovalRefetch, shopifyRefetch]);
+  }, [activeTab, airtableRefetch, approvalRefetch, canAccessPage, currentSlug, dashboardRefreshing, ebayRefetch, jotformRefetch, pushNotification, setDashboardRefreshing, sharkSearch, shopifyApprovalRefetch, shopifyRefetch]);
 
   const tabLoadingState: Partial<Record<Tab, boolean>> = {
     dashboard: dashboardRefreshing,
@@ -129,6 +134,10 @@ export function useAppShellControls({
         tone: 'success',
         title: mode === 'all' ? 'Full report exported' : 'Page report exported',
         message: 'Open your Downloads folder and review the PDF before sharing it with your team.',
+      });
+      trackWorkflowEvent('pdf_exported', {
+        mode,
+        tab: activeTab,
       });
     } catch {
       pushNotification({

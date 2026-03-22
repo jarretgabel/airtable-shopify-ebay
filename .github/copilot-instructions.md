@@ -19,6 +19,8 @@ These are the default implementation rules for this repository.
 - Do not introduce new component-scoped global CSS in `src/App.css`.
 - Keep behavior changes separate from styling refactors unless explicitly requested.
 - Preserve existing data flow, API payload shapes, and user-visible copy unless requirements say otherwise.
+- When updating Shopify or eBay payload mapping, update both surfaces in the same change: the viewer/debug JSON shown in the UI and the actual request payload sent to the API.
+- When adding new form fields to listing approval pages, wire save behavior so those fields update their corresponding Airtable fields when saving the listing.
 - Build changes to an advanced senior-level engineering bar: production-ready structure, clear abstractions, strong type safety, and maintainable patterns.
 
 ## UI and Styling Rules

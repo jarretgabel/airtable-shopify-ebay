@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import path from 'path'
 
 function normalizeOrigin(value: string | undefined, fallback: string): string {
   const trimmed = value?.trim()
@@ -28,7 +27,8 @@ function sanitizeEbayProxyPath(requestPath: string): string {
 }
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), 'VITE_')
+  const workspaceRoot = new URL('.', import.meta.url).pathname
+  const env = loadEnv(mode, workspaceRoot, 'VITE_')
   const shopifyStoreHost = normalizeOrigin(env.VITE_SHOPIFY_STORE_DOMAIN, 'https://resolution-av-nyc.myshopify.com')
   const shopifyAccessToken = env.VITE_SHOPIFY_OAUTH_ACCESS_TOKEN || env.VITE_SHOPIFY_ADMIN_API_TOKEN || ''
   const ebayApiHost = env.VITE_EBAY_ENV?.toLowerCase() === 'production'
@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => {
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': new URL('./src', import.meta.url).pathname,
     },
   },
   build: {

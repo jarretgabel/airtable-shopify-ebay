@@ -12,7 +12,8 @@ import type { AppTabContentProps } from '@/app/appTabContentTypes';
 import { DashboardTab } from '@/components/DashboardTab';
 import { EbayTab } from '@/components/EbayTab';
 import { ImageLab } from '@/components/ImageLab';
-import { ListingApprovalTab } from '@/components/ListingApprovalTab';
+import { EbayListingApprovalTab } from '@/components/approval/EbayListingApprovalTab';
+import { ShopifyListingApprovalTab } from '@/components/approval/ShopifyListingApprovalTab';
 import { NotificationsTab } from '@/components/NotificationsTab';
 import { SettingsTab } from '@/components/SettingsTab';
 import { UserManagementTab } from '@/components/UserManagementTab';
@@ -194,18 +195,9 @@ export function AppTabContent({
     case 'ebay':
       return <EbayTab viewModel={ebayViewModel} />;
     case 'approval':
-      return <ListingApprovalTab viewModel={approvalViewModel} />;
-    case 'shopify-approval': {
-      const shopifyApprovalTableRef = (import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF as string | undefined)?.trim();
-      const shopifyApprovalTableName = (import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME as string | undefined)?.trim();
-      return (
-        <ListingApprovalTab
-          viewModel={shopifyApprovalViewModel}
-          tableReference={shopifyApprovalTableRef}
-          tableName={shopifyApprovalTableName}
-        />
-      );
-    }
+      return <EbayListingApprovalTab viewModel={approvalViewModel} />;
+    case 'shopify-approval':
+      return <ShopifyListingApprovalTab viewModel={shopifyApprovalViewModel} />;
     case 'users':
       return <UserManagementTab viewModel={usersViewModel} />;
     case 'settings':

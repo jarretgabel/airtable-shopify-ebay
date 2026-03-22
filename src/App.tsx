@@ -12,6 +12,7 @@ import { useAppRouteState } from '@/app/useAppRouteState';
 import { useAppShellControls } from '@/app/useAppShellControls';
 import { useActionGuidanceNotifications } from '@/app/useActionGuidanceNotifications';
 import { useAuthRouteGuard } from '@/app/useAuthRouteGuard';
+import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { useAppUIStore } from '@/stores/appUIStore';
 import { useNotificationStore } from '@/stores/notificationStore';
 
@@ -111,6 +112,15 @@ function App() {
     clearNotifications();
     applyCurrentUserPreferences();
   }, [applyCurrentUserPreferences, clearNotifications, currentUser?.id]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    trackWorkflowEvent('tab_viewed', {
+      tab: activeTab,
+      userId: currentUser.id,
+      role: currentUser.role,
+    });
+  }, [activeTab, currentUser]);
 
   if (!currentUser && isResetPasswordPath) {
     return (

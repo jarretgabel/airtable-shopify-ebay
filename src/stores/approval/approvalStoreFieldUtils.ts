@@ -1,5 +1,4 @@
 import {
-  EBAY_CONDITION_OPTIONS,
   EBAY_DIMENSION_UNIT_OPTIONS,
   EBAY_FORMAT_OPTIONS,
   EBAY_LISTING_DURATION_OPTIONS,
@@ -22,6 +21,13 @@ import {
 } from '@/stores/approval/approvalStoreConstants';
 
 export type ApprovalFieldKind = 'boolean' | 'number' | 'json' | 'text';
+
+function normalizeBooleanLikeString(raw: string): string {
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === 'true') return 'TRUE';
+  if (normalized === 'false') return 'FALSE';
+  return raw;
+}
 
 export function displayValue(value: unknown): string {
   if (value === null || value === undefined || value === '') return '—';
@@ -49,7 +55,10 @@ export function toFormValue(value: unknown): string {
 export function fromFormValue(raw: string, kind: ApprovalFieldKind): unknown {
   if (raw === '') return null;
 
-  if (kind === 'boolean') return raw === 'true';
+  if (kind === 'boolean') {
+    const normalized = raw.trim().toLowerCase();
+    return normalized === 'true';
+  }
 
   if (kind === 'number') {
     const parsed = Number(raw);
@@ -60,18 +69,27 @@ export function fromFormValue(raw: string, kind: ApprovalFieldKind): unknown {
     try {
       return JSON.parse(raw);
     } catch {
-      return raw;
+      return normalizeBooleanLikeString(raw);
     }
   }
 
-  return raw;
+  return normalizeBooleanLikeString(raw);
 }
 
 export function getDropdownOptions(fieldName: string): string[] | null {
   const n = fieldName.trim().toLowerCase();
 
   // Legacy humanized field names (old Airtable schema)
-  if (n === 'item condition') return ITEM_CONDITION_OPTIONS;
+  if (
+    n === '__condition__'
+    || n === 'item condition'
+    || n === 'condition'
+    || n === 'shopify condition'
+    || n === 'shopify rest condition'
+    || n === 'ebay inventory condition'
+  ) {
+    return ITEM_CONDITION_OPTIONS;
+  }
 
   // Shopify: product status
   if (n === 'shopify rest status' || n === 'shopify status') return SHOPIFY_REST_STATUS_OPTIONS;
@@ -95,8 +113,7 @@ export function getDropdownOptions(fieldName: string): string[] | null {
   // Shopify: media content type
   if (n.includes('shopify') && n.includes('media') && n.endsWith('content type')) return SHOPIFY_MEDIA_CONTENT_TYPE_OPTIONS;
 
-  // eBay: inventory condition (API field name)
-  if (n === 'ebay inventory condition') return EBAY_CONDITION_OPTIONS;
+  // eBay: inventory condition options are normalized to ITEM_CONDITION_OPTIONS above.
 
   // eBay: package units
   if (n === 'ebay inventory package dimension unit') return EBAY_DIMENSION_UNIT_OPTIONS;
