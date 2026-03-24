@@ -4,7 +4,6 @@ import { logServiceError } from '@/services/logger';
 import {
   ShopifyMetafield,
   ShopifyProduct,
-  ShopifyProductResponse,
   ShopifyProductsResponse,
   ShopifyProductVariant,
 } from '@/types/shopify';
@@ -34,63 +33,8 @@ export interface ShopifyCollectionMatch {
   id: string;
   title: string;
   handle: string;
+  isSmartCollection?: boolean;
 }
-
-const READ_ONLY_CREATE_KEYS = new Set([
-  'id',
-  'product_id',
-  'admin_graphql_api_id',
-  'inventory_item_id',
-  'old_inventory_quantity',
-]);
-
-function normalizeBooleanLikeString(value: string): string {
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'true') return 'TRUE';
-  if (normalized === 'false') return 'FALSE';
-  return value;
-}
-
-function sanitizeForShopifyCreate(value: unknown): unknown {
-  if (value === null || value === undefined) return undefined;
-
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => sanitizeForShopifyCreate(item))
-      .filter((item) => item !== undefined);
-  }
-
-  if (typeof value === 'object') {
-    const sourceRecord = value as Record<string, unknown>;
-    const explicitBodyHtml = sourceRecord.body_html;
-    const legacyDescription = sourceRecord.description;
-    const normalizedBodyHtml = explicitBodyHtml ?? legacyDescription;
-
-    const entries = Object.entries(sourceRecord)
-      .filter(([key]) => !READ_ONLY_CREATE_KEYS.has(key) && key !== 'body_html' && key !== 'description')
-      .map(([key, child]) => [key, sanitizeForShopifyCreate(child)] as const)
-      .filter(([, child]) => child !== undefined);
-
-    if (normalizedBodyHtml !== undefined) {
-      entries.push(['body_html', sanitizeForShopifyCreate(normalizedBodyHtml)]);
-    }
-
-    return Object.fromEntries(entries);
-  }
-
-  if (typeof value === 'string') {
-    return normalizeBooleanLikeString(value);
-  }
-
-  return value;
-}
-
-export function prepareShopifyCreateProductRequest(product: ShopifyProduct): { product: ShopifyProduct } {
-  const sanitized = sanitizeForShopifyCreate(product) as ShopifyProduct;
-  return { product: sanitized };
-}
-
-export type ShopifyCreateProductRequest = ReturnType<typeof prepareShopifyCreateProductRequest>;
 
 type ShopifyGraphQlProductStatus = 'ACTIVE' | 'ARCHIVED' | 'DRAFT';
 type ShopifyGraphQlInventoryPolicy = 'CONTINUE' | 'DENY';
@@ -174,6 +118,11 @@ export interface ShopifyUnifiedProductResult {
   adminGraphqlApiId: string;
   title: string;
   status?: string | null;
+}
+
+export interface ShopifyUnifiedUpsertWithCollectionsResult {
+  product: ShopifyUnifiedProductResult;
+  collectionFailures: string[];
 }
 
 function toShopifyGraphQlStatus(status: ShopifyProduct['status'] | undefined): ShopifyGraphQlProductStatus | undefined {
@@ -374,6 +323,21 @@ function buildUnifiedVariants(
   return normalized.length > 0 ? normalized : undefined;
 }
 
+export function normalizeShopifyProductForUpsert(product: ShopifyProduct): ShopifyProduct {
+  return {
+    ...product,
+    title: typeof product.title === 'string' && product.title.trim().length > 0 ? product.title.trim() : 'Untitled Listing',
+    status: product.status ?? 'draft',
+    published_scope: typeof product.published_scope === 'string' && product.published_scope.trim().length > 0
+      ? product.published_scope
+      : 'web',
+    template_suffix: typeof product.template_suffix === 'string' && product.template_suffix.trim().length > 0
+      ? product.template_suffix
+      : 'product-template',
+    variants: ensureRequiredVariant(product),
+  };
+}
+
 export function buildShopifyUnifiedProductSetRequest(
   product: ShopifyProduct,
   options?: {
@@ -382,8 +346,9 @@ export function buildShopifyUnifiedProductSetRequest(
     existingProductId?: number;
   },
 ): ShopifyUnifiedProductSetRequest {
-  const normalizedProduct = buildShopifyCreateProductRequestWithRequiredFields(product).product;
+  const normalizedProduct = normalizeShopifyProductForUpsert(product);
   const normalizedCategoryId = options?.categoryId?.trim();
+  const isExistingProductUpdate = Boolean(options?.existingProductId);
   const unifiedOptions = buildUnifiedProductOptions(normalizedProduct.options);
   const unifiedVariants = buildUnifiedVariants(normalizedProduct.variants, normalizedProduct.options);
   const unifiedFiles = buildUnifiedProductFiles(normalizedProduct.images);
@@ -394,14 +359,12 @@ export function buildShopifyUnifiedProductSetRequest(
       descriptionHtml: normalizedProduct.body_html?.trim() || undefined,
       vendor: normalizedProduct.vendor?.trim() || undefined,
       productType: normalizedProduct.product_type?.trim() || undefined,
-      handle: normalizedProduct.handle?.trim() || undefined,
+      // On update, avoid forcing handle changes that can collide with existing products.
+      handle: isExistingProductUpdate ? undefined : (normalizedProduct.handle?.trim() || undefined),
       status: toShopifyGraphQlStatus(normalizedProduct.status),
       tags: splitShopifyTags(normalizedProduct.tags),
       templateSuffix: normalizedProduct.template_suffix?.trim() || undefined,
       category: normalizedCategoryId || undefined,
-      collectionsToJoin: options?.collectionIds && options.collectionIds.length > 0
-        ? options.collectionIds
-        : undefined,
       metafields: normalizedProduct.metafields,
       files: unifiedFiles,
       productOptions: unifiedOptions,
@@ -436,20 +399,13 @@ function ensureRequiredVariant(product: ShopifyProduct): ShopifyProduct['variant
 }
 
 export function buildShopifyCreateProductRequestWithRequiredFields(product: ShopifyProduct): ShopifyCreateProductRequest {
-  const requiredSafeProduct: ShopifyProduct = {
-    ...product,
-    title: typeof product.title === 'string' && product.title.trim().length > 0 ? product.title.trim() : 'Untitled Listing',
-    status: product.status ?? 'draft',
-    published_scope: typeof product.published_scope === 'string' && product.published_scope.trim().length > 0
-      ? product.published_scope
-      : 'web',
-    template_suffix: typeof product.template_suffix === 'string' && product.template_suffix.trim().length > 0
-      ? product.template_suffix
-      : 'product-template',
-    variants: ensureRequiredVariant(product),
+  return {
+    product: normalizeShopifyProductForUpsert(product),
   };
+}
 
-  return prepareShopifyCreateProductRequest(requiredSafeProduct);
+export interface ShopifyCreateProductRequest {
+  product: ShopifyProduct;
 }
 
 class ShopifyService {
@@ -507,28 +463,36 @@ class ShopifyService {
     }
   }
 
-  async getProduct(id: number): Promise<(ShopifyProductResponse['product']) | null> {
-    try {
-      const response = await this.client.get<ShopifyProductResponse>(`/products/${id}.json`);
-      return response.data.product;
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.status === 404) {
-        return null;
-      }
-      throw err;
+  async getProduct(id: number): Promise<ShopifyUnifiedProductResult | null> {
+    const data = await this.graphQlRequest<{
+      product: {
+        id: string;
+        title: string;
+        status?: string | null;
+      } | null;
+    }>(
+      `query GetProduct($id: ID!) {
+        product(id: $id) {
+          id
+          title
+          status
+        }
+      }`,
+      {
+        id: toShopifyProductGid(id),
+      },
+    );
+
+    if (!data.product?.id) {
+      return null;
     }
-  }
 
-  async createProduct(product: ShopifyProduct): Promise<ShopifyProductResponse['product']> {
-    const payload = prepareShopifyCreateProductRequest(product);
-    const response = await this.client.post<ShopifyProductResponse>('/products.json', payload);
-    return response.data.product;
-  }
-
-  async createProductFromRequest(payload: ShopifyCreateProductRequest): Promise<ShopifyProductResponse['product']> {
-    const normalizedPayload = prepareShopifyCreateProductRequest(payload.product);
-    const response = await this.client.post<ShopifyProductResponse>('/products.json', normalizedPayload);
-    return response.data.product;
+    return {
+      id: parseShopifyNumericId(data.product.id),
+      adminGraphqlApiId: data.product.id,
+      title: data.product.title,
+      status: data.product.status,
+    };
   }
 
   async upsertProductWithUnifiedRequest(
@@ -579,6 +543,128 @@ class ShopifyService {
       adminGraphqlApiId: product.id,
       title: product.title,
       status: product.status,
+    };
+  }
+
+  async upsertExistingProductWithCollectionsInSingleMutation(
+    request: ShopifyUnifiedProductSetRequest,
+    collectionIds: string[],
+  ): Promise<ShopifyUnifiedUpsertWithCollectionsResult> {
+    if (!request.identifier?.id) {
+      throw new Error('Single-mutation collection update requires an existing Shopify product ID identifier.');
+    }
+
+    const normalizedCollectionIds = Array.from(
+      new Set(
+        collectionIds
+          .map((collectionId) => collectionId.trim())
+          .filter((collectionId) => /^gid:\/\/shopify\/Collection\/\d+$/i.test(collectionId)),
+      ),
+    );
+
+    if (normalizedCollectionIds.length === 0) {
+      const product = await this.upsertProductWithUnifiedRequest(request);
+      return {
+        product,
+        collectionFailures: [],
+      };
+    }
+
+    const variableDefs: string[] = [
+      '$input: ProductSetInput!',
+      '$identifier: ProductSetIdentifiers!',
+      '$synchronous: Boolean',
+      '$productIds: [ID!]!',
+    ];
+
+    const mutationFields: string[] = [
+      `productSet(input: $input, identifier: $identifier, synchronous: $synchronous) {
+        product {
+          id
+          title
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }`,
+    ];
+
+    const variables: Record<string, unknown> = {
+      input: request.input,
+      identifier: request.identifier,
+      synchronous: request.synchronous,
+      productIds: [request.identifier.id],
+    };
+
+    normalizedCollectionIds.forEach((collectionId, index) => {
+      const variableName = `collectionId${index}`;
+      variableDefs.push(`$${variableName}: ID!`);
+      mutationFields.push(
+        `collectionJoin${index}: collectionAddProducts(id: $${variableName}, productIds: $productIds) {
+          userErrors {
+            field
+            message
+          }
+        }`,
+      );
+      variables[variableName] = collectionId;
+    });
+
+    const mutation = `mutation UpsertProductAndJoinCollections(${variableDefs.join(', ')}) {
+      ${mutationFields.join('\n')}
+    }`;
+
+    const data = await this.graphQlRequest<{
+      productSet: {
+        product: {
+          id: string;
+          title: string;
+          status?: string | null;
+        } | null;
+        userErrors: ShopifyGraphQlUserError[];
+      };
+      [key: string]: unknown;
+    }>(mutation, variables);
+
+    const userErrors = data.productSet.userErrors ?? [];
+    if (userErrors.length > 0) {
+      const message = userErrors
+        .map((error) => error.message?.trim())
+        .filter(Boolean)
+        .join('; ');
+      throw new Error(message || 'Shopify rejected the unified product mutation.');
+    }
+
+    const product = data.productSet.product;
+    if (!product?.id) {
+      throw new Error('Shopify product mutation returned no product ID.');
+    }
+
+    const collectionFailures: string[] = [];
+    normalizedCollectionIds.forEach((collectionId, index) => {
+      const key = `collectionJoin${index}`;
+      const mutationResult = data[key] as { userErrors?: ShopifyGraphQlUserError[] } | undefined;
+      const joinErrors = mutationResult?.userErrors ?? [];
+      if (joinErrors.length === 0) return;
+
+      const message = joinErrors
+        .map((error) => error.message?.trim())
+        .filter(Boolean)
+        .join('; ');
+
+      collectionFailures.push(`${collectionId}: ${message || 'Shopify rejected this collection assignment.'}`);
+    });
+
+    return {
+      product: {
+        id: parseShopifyNumericId(product.id),
+        adminGraphqlApiId: product.id,
+        title: product.title,
+        status: product.status,
+      },
+      collectionFailures,
     };
   }
 
@@ -674,17 +760,16 @@ class ShopifyService {
     return data.taxonomy.categories.edges.map((edge) => edge.node);
   }
 
-  async searchCollections(search: string, first = 20): Promise<ShopifyCollectionMatch[]> {
+  async searchCollections(search: string, first = 250): Promise<ShopifyCollectionMatch[]> {
     const normalizedSearch = search.trim();
     if (normalizedSearch.length === 0) {
       return this.getCollections(first);
     }
 
+    const builtQuery = `collection_type:custom ${normalizedSearch}`.trim();
     const data = await this.graphQlRequest<{
       collections: {
-        edges: Array<{
-          node: ShopifyCollectionMatch;
-        }>;
+        edges: Array<{ node: ShopifyCollectionMatch }>;
       };
     }>(
       `query SearchCollections($query: String!, $first: Int!) {
@@ -698,25 +783,26 @@ class ShopifyService {
           }
         }
       }`,
-      {
-        query: normalizedSearch,
-        first,
-      },
+      { query: builtQuery, first },
     );
 
-    return data.collections.edges.map((edge) => edge.node);
+    const collections = data.collections.edges.map((edge) => edge.node);
+    console.info('[Shopify] Manual collections fetched (search)', {
+      search: normalizedSearch,
+      count: collections.length,
+      collections: collections.map((c) => ({ id: c.id, title: c.title })),
+    });
+    return collections;
   }
 
-  async getCollections(first = 20): Promise<ShopifyCollectionMatch[]> {
+  async getCollections(first = 250): Promise<ShopifyCollectionMatch[]> {
     const data = await this.graphQlRequest<{
       collections: {
-        edges: Array<{
-          node: ShopifyCollectionMatch;
-        }>;
+        edges: Array<{ node: ShopifyCollectionMatch }>;
       };
     }>(
       `query GetCollections($first: Int!) {
-        collections(first: $first, sortKey: TITLE) {
+        collections(first: $first, query: "collection_type:custom", sortKey: TITLE) {
           edges {
             node {
               id
@@ -726,12 +812,15 @@ class ShopifyService {
           }
         }
       }`,
-      {
-        first,
-      },
+      { first },
     );
 
-    return data.collections.edges.map((edge) => edge.node);
+    const collections = data.collections.edges.map((edge) => edge.node);
+    console.info('[Shopify] Manual collections fetched (initial)', {
+      count: collections.length,
+      collections: collections.map((c) => ({ id: c.id, title: c.title })),
+    });
+    return collections;
   }
 
   async resolveTaxonomyCategory(searchOrId: string): Promise<ShopifyTaxonomyCategoryMatch | null> {
@@ -809,6 +898,8 @@ class ShopifyService {
       ),
     );
 
+    const assignmentFailures: string[] = [];
+
     for (const collectionId of normalizedCollectionIds) {
       const data = await this.graphQlRequest<{
         collectionAddProducts: {
@@ -835,19 +926,13 @@ class ShopifyService {
           .map((error) => error.message?.trim())
           .filter(Boolean)
           .join('; ');
-        throw new Error(message || `Shopify rejected collection assignment for ${collectionId}.`);
+        assignmentFailures.push(`${collectionId}: ${message || 'Shopify rejected this collection assignment.'}`);
       }
     }
-  }
 
-  async updateProduct(
-    id: number,
-    updates: Partial<ShopifyProduct>
-  ): Promise<ShopifyProductResponse['product']> {
-    const response = await this.client.put<ShopifyProductResponse>(`/products/${id}.json`, {
-      product: { id, ...updates },
-    });
-    return response.data.product;
+    if (assignmentFailures.length > 0) {
+      throw new Error(`Collection assignment failed for ${assignmentFailures.length} collection(s): ${assignmentFailures.join(' | ')}`);
+    }
   }
 
   async deleteProduct(id: number): Promise<void> {

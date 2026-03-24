@@ -880,13 +880,20 @@ export function buildShopifyCollectionIdsFromApprovalFields(fields: ApprovalFiel
   };
 
   const collectionIdCandidates = [
+    'Collection',
     'Collections',
+    'Shopify Collection',
+    'Shopify Collection ID',
     'Shopify Collections',
     'Shopify Collection IDs',
+    'Shopify GraphQL Collection ID',
     'Shopify GraphQL Collection IDs',
     'Shopify GraphQL Collections JSON',
+    'shopify_collection',
+    'shopify_collection_id',
     'shopify_collections',
     'shopify_collection_ids',
+    'shopify_graphql_collection_id',
     'shopify_graphql_collection_ids',
     'shopify_graphql_collections_json',
   ];

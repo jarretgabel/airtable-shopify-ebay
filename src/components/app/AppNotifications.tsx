@@ -69,39 +69,27 @@ function NotificationCard({
 
 export function AppNotifications(): ReactNode {
   const notifications = useNotificationStore((state) => state.notifications);
+  const visibleNotifications = notifications.slice(0, 4);
 
   return (
-    <>
-      <div className="mb-4 hidden items-center justify-between rounded-xl border border-[var(--line)] bg-[var(--panel)]/70 px-4 py-2.5 lg:flex">
-        <p className="text-[0.78rem] text-[var(--muted)]">
-          {notifications.length > 0
-            ? `${notifications.length} active notification${notifications.length === 1 ? '' : 's'} in the header menu.`
-            : 'No active notifications right now.'}
-        </p>
-        <span className="text-[0.68rem] font-extrabold uppercase tracking-[0.08em] text-[var(--muted)]">Open Notifications in nav</span>
-      </div>
-
-      <div className="mb-4 space-y-2 lg:hidden" aria-live="polite" aria-label="Action notifications">
-
-        {notifications.length === 0 ? (
-          <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-[0.82rem] text-[var(--muted)]">
-            No action notifications right now.
-          </div>
-        ) : (
-          notifications.slice(0, 4).map((notification) => (
-            <NotificationCard
-              key={notification.id}
-              id={notification.id}
-              tone={notification.tone}
-              title={notification.title}
-              message={notification.message}
-              actionLabel={notification.actionLabel}
-              onAction={notification.onAction}
-              dismissible={notification.dismissible}
-            />
-          ))
-        )}
-      </div>
-    </>
+    <div
+      className="pointer-events-none fixed right-3 top-20 z-[80] w-[min(420px,calc(100vw-1.5rem))] space-y-2 sm:right-4 sm:top-24"
+      aria-live="polite"
+      aria-label="Action notifications"
+    >
+      {visibleNotifications.map((notification) => (
+        <div key={notification.id} className="pointer-events-auto">
+          <NotificationCard
+            id={notification.id}
+            tone={notification.tone}
+            title={notification.title}
+            message={notification.message}
+            actionLabel={notification.actionLabel}
+            onAction={notification.onAction}
+            dismissible={notification.dismissible}
+          />
+        </div>
+      ))}
+    </div>
   );
 }

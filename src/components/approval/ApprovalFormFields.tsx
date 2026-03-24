@@ -10,6 +10,7 @@ import {
 } from '@/stores/approvalStore';
 import { shopifyService } from '@/services/shopify';
 import { buildShopifyBodyHtml } from '@/services/shopifyBodyHtml';
+import { buildShopifyCollectionIdsFromApprovalFields } from '@/services/shopifyDraftFromAirtable';
 import { parseShopifyTagList, serializeShopifyTagsCsv, serializeShopifyTagsJson } from '@/services/shopifyTags';
 import { ImageUrlListEditor } from './ImageUrlListEditor';
 import { ShopifyTaxonomyTypeSelect } from './ShopifyTaxonomyTypeSelect';
@@ -245,8 +246,7 @@ function isSingularCollectionAliasField(fieldName: string): boolean {
 
 function isCollectionDisplayNameField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
-  return normalized === 'collections'
-    || normalized === 'shopify collections'
+  return normalized === 'shopify collections'
     || normalized === 'shopify_collections';
 }
 
@@ -378,13 +378,15 @@ function resolveShopifyCollectionFieldStrategy(params: {
     };
   }
 
+  const canonicalCollectionsField = compoundFieldNames.find((fieldName) => fieldName.trim().toLowerCase() === 'collections') ?? 'Collections';
+
   const preferredCompound = choosePreferredShopifyCompoundCollectionField(compoundFieldNames);
   if (preferredCompound) {
     return {
       sourceSingleFields: [],
       sourceCompoundFields: [preferredCompound],
       writeSingleFields: [],
-      writeCompoundFields: [preferredCompound],
+      writeCompoundFields: [canonicalCollectionsField],
     };
   }
 
@@ -392,7 +394,7 @@ function resolveShopifyCollectionFieldStrategy(params: {
     sourceSingleFields: singleFieldNames,
     sourceCompoundFields: [],
     writeSingleFields: singleFieldNames,
-    writeCompoundFields: [],
+    writeCompoundFields: [canonicalCollectionsField],
   };
 }
 
@@ -865,18 +867,22 @@ export function ApprovalFormFields({
   const hasShopifyCollectionEditor = forceShowShopifyCollectionsEditor
     || shopifyCompoundCollectionFieldNames.length > 0
     || shopifySingleCollectionFieldNames.length > 0;
+  const shopifyCollectionSourceFieldNames = useMemo(
+    () => Array.from(new Set([
+      ...shopifyCompoundCollectionFieldNames,
+      ...shopifySingleCollectionFieldNames,
+      SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD,
+    ])),
+    [shopifyCompoundCollectionFieldNames, shopifySingleCollectionFieldNames],
+  );
   const shopifyCollectionIds = useMemo(() => {
-    const compoundCollections = shopifyCollectionStrategy.sourceCompoundFields.flatMap((fieldName) => parseShopifyCollectionIds(formValues[fieldName] ?? ''));
-    const singleCollections = shopifyCollectionStrategy.sourceSingleFields.flatMap((fieldName) => parseShopifyCollectionIds(formValues[fieldName] ?? ''));
-    return parseShopifyCollectionIds([...singleCollections, ...compoundCollections]);
-  }, [formValues, shopifyCollectionStrategy.sourceCompoundFields, shopifyCollectionStrategy.sourceSingleFields]);
+    const collectionSourceFields = Object.fromEntries(
+      shopifyCollectionSourceFieldNames.map((fieldName) => [fieldName, formValues[fieldName] ?? '']),
+    );
+    return buildShopifyCollectionIdsFromApprovalFields(collectionSourceFields);
+  }, [formValues, shopifyCollectionSourceFieldNames]);
   const shopifyCollectionDisplayNames = useMemo(() => {
-    const sourceFieldNames = [
-      ...shopifyCollectionStrategy.sourceCompoundFields,
-      ...shopifyCollectionStrategy.sourceSingleFields,
-    ];
-
-    return sourceFieldNames
+    return shopifyCollectionSourceFieldNames
       .flatMap((fieldName) => {
         const rawValue = formValues[fieldName] ?? '';
         const parsedNames = parseShopifyCollectionDisplayNames(rawValue);
@@ -890,7 +896,7 @@ export function ApprovalFormFields({
 
         return parsedNames;
       });
-  }, [formValues, shopifyCollectionStrategy.sourceCompoundFields, shopifyCollectionStrategy.sourceSingleFields]);
+  }, [formValues, shopifyCollectionSourceFieldNames]);
   const [collectionEditorFallbackIds, setCollectionEditorFallbackIds] = useState<string[]>([]);
   const [collectionEditorLabelsById, setCollectionEditorLabelsById] = useState<Record<string, string>>({});
   const collectionHydrationAttemptKeyRef = useRef<string>('');
@@ -981,6 +987,7 @@ export function ApprovalFormFields({
   function setShopifyCollectionIds(nextCollectionIds: string[], collectionLabelsById: Record<string, string> = {}) {
     const normalizedCollections = parseShopifyCollectionIds(nextCollectionIds);
     setCollectionEditorFallbackIds(normalizedCollections);
+    const canonicalCollectionsFieldName = allFieldNames.find((fieldName) => fieldName.trim().toLowerCase() === 'collections') ?? 'Collections';
 
     const effectiveCollectionLabelsById: Record<string, string> = {
       ...collectionEditorLabelsById,
@@ -1011,14 +1018,21 @@ export function ApprovalFormFields({
       setFormValue(fieldName, normalizedCollections[index] ?? '');
     });
 
+
+    const canonicalCollectionsFieldKind = fieldKinds[canonicalCollectionsFieldName] ?? 'text';
+    if (normalizedCollections.length === 0) {
+      setFormValue(canonicalCollectionsFieldName, '');
+    } else if (canonicalCollectionsFieldKind === 'json' || isShopifyCollectionJsonField(canonicalCollectionsFieldName)) {
+      setFormValue(canonicalCollectionsFieldName, JSON.stringify(normalizedCollections));
+    } else {
+      setFormValue(canonicalCollectionsFieldName, normalizedCollections.join(', '));
+    }
     const writtenCollectionFields = new Set<string>([
       ...shopifyCollectionStrategy.writeSingleFields,
       ...shopifyCollectionStrategy.writeCompoundFields,
     ].map((fieldName) => fieldName.toLowerCase()));
 
     shopifyCollectionStrategy.writeCompoundFields.forEach((fieldName) => {
-      if (isSingularCollectionAliasField(fieldName)) return;
-
       const fieldKind = fieldKinds[fieldName] ?? 'text';
 
       if (normalizedCollections.length === 0) {
@@ -1081,11 +1095,6 @@ export function ApprovalFormFields({
           normalizedCollections.join(', '),
         );
       }
-    }
-
-    const collectionsFieldName = allFieldNames.find((fieldName) => isCollectionDisplayNameField(fieldName));
-    if (collectionsFieldName) {
-      setFormValue(collectionsFieldName, normalizedCollectionLabels.join(', '));
     }
     setFormValue(
       SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD,
@@ -1281,7 +1290,7 @@ export function ApprovalFormFields({
 
       {hasShopifyCollectionEditor && (
         <ShopifyCollectionsSelect
-          fieldName={shopifyCollectionStrategy.writeCompoundFields[0] ?? shopifyCollectionStrategy.writeSingleFields[0] ?? 'collection'}
+          fieldName={shopifyCollectionStrategy.writeCompoundFields[0] ?? shopifyCollectionStrategy.writeSingleFields[0] ?? 'Collections'}
           label="Collections"
           value={effectiveShopifyCollectionIds}
           labelsById={collectionEditorLabelsById}

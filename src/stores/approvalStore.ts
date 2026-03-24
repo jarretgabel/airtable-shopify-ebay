@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import airtableService from '@/services/airtable';
 import { getInventoryItems, getOffersForInventorySkus } from '@/services/ebay';
+import { buildShopifyCollectionIdsFromApprovalFields } from '@/services/shopifyDraftFromAirtable';
 import {
   CONDITION_FIELD,
   FALLBACK_LISTING_FORMAT_OPTIONS,
@@ -38,6 +39,8 @@ export {
 
 export type { ApprovalFieldKind } from '@/stores/approval/approvalStoreFieldUtils';
 export type { ApprovalStore } from '@/stores/approval/approvalStoreTypes';
+
+const SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD = 'Shopify GraphQL Collection IDs';
 
 function resolveApprovedValue(rawValue: string, kind: ApprovalFieldKind): string {
   if (kind === 'boolean') return 'true';
@@ -151,6 +154,12 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
       nextKinds[CONDITION_FIELD] = 'text';
     }
 
+    const collectionIds = buildShopifyCollectionIdsFromApprovalFields(record.fields);
+    if (collectionIds.length > 0) {
+      nextValues[SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD] = JSON.stringify(collectionIds);
+      nextKinds[SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD] = 'json';
+    }
+
     set({ formValues: nextValues, fieldKinds: nextKinds });
   },
 
@@ -226,9 +235,6 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
           const existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, fieldName);
           const allowMissingWritableField = isAllowedMissingWritableFieldName(fieldName);
           if (!existsOnRecord && !allowMissingWritableField) return;
-
-          // Enforce canonical collection field naming in Airtable payloads.
-          if (fieldName.trim().toLowerCase() === 'collection') return;
 
           // Only send fields whose values have changed from the original record.
           // This prevents sending formula/lookup/computed fields back to Airtable,

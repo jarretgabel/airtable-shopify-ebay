@@ -50,7 +50,7 @@ export function ShopifyCollectionsSelect({
         setError('');
 
         try {
-          const matches = await shopifyService.searchCollections(query.trim(), 25);
+          const matches = await shopifyService.searchCollections(query.trim());
           if (!cancelled) {
             setOptions(matches);
             setKnownCollectionsById((current) => {
