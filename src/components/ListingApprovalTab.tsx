@@ -215,6 +215,10 @@ const EBAY_TITLE_FIELD_CANDIDATES = [
 
 const EBAY_PRICE_FIELD_CANDIDATES = [
   'eBay Offer Price Value',
+  'eBay Offer Auction Start Price Value',
+  'Buy It Now/Starting Bid',
+  'Buy It Now USD',
+  'Starting Bid USD',
   'Price',
 ] as const;
 

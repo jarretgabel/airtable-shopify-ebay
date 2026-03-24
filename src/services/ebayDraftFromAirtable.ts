@@ -313,8 +313,16 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
   const categoryId = categoryIdsFromCategoriesField[0] || primaryCategoryFromField || '3276';
   const secondaryCategoryId = categoryIdsFromCategoriesField[1] || secondaryCategoryFromField;
   const listingDuration = getField(fields, ['eBay Offer Listing Duration']) || 'GTC';
-  const priceValue = getField(fields, ['eBay Offer Price Value', 'Price']) || '0.00';
-  const currency = getField(fields, ['eBay Offer Price Currency']) || 'USD';
+  const priceValue = getField(fields, [
+    'eBay Offer Price Value',
+    'eBay Offer Auction Start Price Value',
+    'Buy It Now/Starting Bid',
+    'Buy It Now USD',
+    'Starting Bid USD',
+    'Price',
+  ]) || '0.00';
+  const currency = getField(fields, ['eBay Offer Price Currency', 'eBay Offer Auction Start Price Currency']) || 'USD';
+  const isAuction = format.trim().toUpperCase() === 'AUCTION';
   const quantityLimitPerBuyer = parseInteger(getField(fields, ['eBay Offer Quantity Limit Per Buyer']), 1);
 
   const inventoryItem: Record<string, unknown> = {
@@ -345,12 +353,9 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     secondaryCategoryId: secondaryCategoryId || undefined,
     listingDescription: description || undefined,
     listingDuration,
-    pricingSummary: {
-      price: {
-        value: priceValue,
-        currency,
-      },
-    },
+    pricingSummary: isAuction
+      ? { auctionStartPrice: { value: priceValue, currency } }
+      : { price: { value: priceValue, currency } },
     quantityLimitPerBuyer,
     includeCatalogProductDetails: false,
   };

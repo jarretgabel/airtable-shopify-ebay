@@ -29,6 +29,7 @@ const SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD = 'Shopify GraphQL Collection IDs';
 
 function toHumanReadableLabel(fieldName: string): string {
   if (fieldName === CONDITION_FIELD) return 'Condition';
+  if (fieldName.trim().toLowerCase() === 'ebay offer price value') return 'Buy It Now/Starting Bid Price';
 
   const withSpaces = fieldName
     .replace(/[_-]+/g, ' ')
