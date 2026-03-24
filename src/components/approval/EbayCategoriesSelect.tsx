@@ -21,6 +21,10 @@ type CategoryOption = {
   hasChildren: boolean;
 };
 
+function normalizeSelectionValue(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 function toCategoryOption(item: EbayCategorySuggestion | EbayCategoryTreeNode): CategoryOption {
   return {
     id: item.id,
@@ -49,10 +53,6 @@ interface EbayCategoriesSelectProps {
   value: string[];
   disabled: boolean;
   onChange: (value: string[]) => void;
-}
-
-function categoryShortId(categoryId: string): string {
-  return categoryId.length > 8 ? categoryId.slice(-8) : categoryId;
 }
 
 function reorderById(ids: string[], sourceId: string, targetId: string): string[] {
@@ -207,14 +207,19 @@ export function EbayCategoriesSelect({
     };
   }, [browseStack, disabled, isOpen, marketplaceId, query]);
 
-  const selectedSet = useMemo(() => new Set(value), [value]);
+  const normalizedSelectedSet = useMemo(
+    () => new Set(value.map((item) => normalizeSelectionValue(item))),
+    [value],
+  );
   const categoryMap = useMemo(() => {
-    const map = new Map<string, EbayCategorySuggestion>();
+    const map = new Map<string, CategoryOption>();
     Object.values(knownCategoriesById).forEach((option) => {
       map.set(option.id, option);
+      map.set(normalizeSelectionValue(option.name), option);
     });
     options.forEach((option) => {
       map.set(option.id, option);
+      map.set(normalizeSelectionValue(option.name), option);
     });
     return map;
   }, [knownCategoriesById, options]);
@@ -239,12 +244,19 @@ export function EbayCategoriesSelect({
     setBrowseStack([]);
   };
 
-  const toggleSelection = (categoryId: string) => {
-    const nextIds = selectedSet.has(categoryId)
-      ? value.filter((id) => id !== categoryId)
-      : [...value, categoryId];
+  const toggleSelection = (option: CategoryOption) => {
+    const optionNameKey = normalizeSelectionValue(option.name);
+    const optionIdKey = normalizeSelectionValue(option.id);
+    const isSelected = normalizedSelectedSet.has(optionNameKey) || normalizedSelectedSet.has(optionIdKey);
 
-    onChange(nextIds.slice(0, 2));
+    const nextValues = isSelected
+      ? value.filter((item) => {
+          const key = normalizeSelectionValue(item);
+          return key !== optionNameKey && key !== optionIdKey;
+        })
+      : [...value, option.name];
+
+    onChange(nextValues.slice(0, 2));
   };
 
   const reorderSelections = (sourceId: string, targetId: string) => {
@@ -258,7 +270,7 @@ export function EbayCategoriesSelect({
       void loadChildBrowseOptions(option, marketplaceId.trim().toUpperCase() || 'EBAY_US');
       return;
     }
-    toggleSelection(option.id);
+    toggleSelection(option);
   };
 
   return (
@@ -277,30 +289,31 @@ export function EbayCategoriesSelect({
           {value.length === 0 && (
             <span className="text-sm text-[var(--muted)]">No categories selected.</span>
           )}
-          {value.map((categoryId) => {
-            const option = categoryMap.get(categoryId);
+          {value.map((selectedValue) => {
+            const option = categoryMap.get(selectedValue) ?? categoryMap.get(normalizeSelectionValue(selectedValue));
+            const chipLabel = option?.name || selectedValue;
             return (
               <span
-                key={categoryId}
-                className={`inline-flex max-w-full items-center gap-1 rounded-full border border-sky-400/30 bg-sky-500/10 px-3 py-1 text-sm text-sky-100 ${dragOverCategoryId === categoryId ? 'ring-2 ring-sky-300/60' : ''}`}
+                key={selectedValue}
+                className={`inline-flex max-w-full items-center gap-1 rounded-full border border-sky-400/30 bg-sky-500/10 px-3 py-1 text-sm text-sky-100 ${dragOverCategoryId === selectedValue ? 'ring-2 ring-sky-300/60' : ''}`}
                 draggable={!disabled}
                 onDragStart={(event) => {
                   if (disabled) return;
                   event.dataTransfer.effectAllowed = 'move';
-                  event.dataTransfer.setData('text/plain', categoryId);
-                  setDraggingCategoryId(categoryId);
+                  event.dataTransfer.setData('text/plain', selectedValue);
+                  setDraggingCategoryId(selectedValue);
                 }}
                 onDragOver={(event) => {
-                  if (disabled || !draggingCategoryId || draggingCategoryId === categoryId) return;
+                  if (disabled || !draggingCategoryId || draggingCategoryId === selectedValue) return;
                   event.preventDefault();
-                  setDragOverCategoryId(categoryId);
+                  setDragOverCategoryId(selectedValue);
                 }}
                 onDrop={(event) => {
                   if (disabled) return;
                   event.preventDefault();
                   const sourceId = event.dataTransfer.getData('text/plain') || draggingCategoryId;
                   if (!sourceId) return;
-                  reorderSelections(sourceId, categoryId);
+                  reorderSelections(sourceId, selectedValue);
                   setDraggingCategoryId(null);
                   setDragOverCategoryId(null);
                 }}
@@ -310,14 +323,20 @@ export function EbayCategoriesSelect({
                 }}
               >
                 <span className="truncate">
-                  {option?.name || `Category ${categoryShortId(categoryId)}`}
+                  {chipLabel}
                 </span>
                 <button
                   type="button"
                   className="rounded-full text-sky-100/80 transition-colors hover:text-sky-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  onClick={() => toggleSelection(categoryId)}
+                  onClick={() => {
+                    if (option) {
+                      toggleSelection(option);
+                      return;
+                    }
+                    onChange(value.filter((item) => item !== selectedValue));
+                  }}
                   disabled={disabled}
-                  aria-label={`Remove category ${option?.name || categoryShortId(categoryId)}`}
+                  aria-label={`Remove category ${chipLabel}`}
                 >
                   ×
                 </button>
@@ -347,7 +366,7 @@ export function EbayCategoriesSelect({
 
               if (event.key === 'Enter' && options.length > 0) {
                 event.preventDefault();
-                toggleSelection(options[0].id);
+                toggleSelection(options[0]);
               }
             }}
             onBlur={() => {
@@ -428,7 +447,8 @@ export function EbayCategoriesSelect({
             </div>
           )}
           {!isLoading && !error && options.map((option) => {
-            const selected = selectedSet.has(option.id);
+            const selected = normalizedSelectedSet.has(normalizeSelectionValue(option.name))
+              || normalizedSelectedSet.has(normalizeSelectionValue(option.id));
             const browseDisabled = !selected && value.length >= 2;
             return (
               <div key={option.id} className={`mb-1 flex items-center gap-2 rounded-lg px-2 py-1 ${selected ? 'bg-white/10' : 'hover:bg-white/10'}`}>
@@ -440,7 +460,7 @@ export function EbayCategoriesSelect({
                     if (isBrowseMode) {
                       handleBrowseRowClick(option);
                     } else {
-                      toggleSelection(option.id);
+                      toggleSelection(option);
                     }
                   }}
                   role="option"
@@ -456,7 +476,7 @@ export function EbayCategoriesSelect({
                   type="button"
                   className="rounded border border-[var(--line)] px-2 py-1 text-xs text-[var(--ink)] transition hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                   onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => toggleSelection(option.id)}
+                  onClick={() => toggleSelection(option)}
                   disabled={browseDisabled}
                 >
                   {selected ? 'Selected' : 'Select'}

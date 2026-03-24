@@ -516,11 +516,17 @@ export function ListingApprovalTab({
     ].slice(0, 8)));
   };
 
-  const allFieldNames = useMemo(() => {
+  const actualFieldNames = useMemo(() => {
     const names = new Set<string>();
     records.forEach((record) => {
       Object.keys(record.fields).forEach((fieldName) => names.add(fieldName));
     });
+
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [records]);
+
+  const allFieldNames = useMemo(() => {
+    const names = new Set<string>(actualFieldNames);
 
     if (approvalChannel === 'shopify') {
       const existingNames = Array.from(names);
@@ -597,24 +603,45 @@ export function ListingApprovalTab({
 
       const preferredPrimaryCategoryField = existingNames.find((name) =>
         EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      );
       if (preferredPrimaryCategoryField) names.add(preferredPrimaryCategoryField);
 
       const preferredSecondaryCategoryField = existingNames.find((name) =>
         EBAY_SECONDARY_CATEGORY_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? EBAY_SECONDARY_CATEGORY_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      );
       if (preferredSecondaryCategoryField) names.add(preferredSecondaryCategoryField);
 
       const preferredCategoriesField = existingNames.find((name) =>
         EBAY_CATEGORIES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       );
       if (preferredCategoriesField) names.add(preferredCategoriesField);
+
+      const hasAnyCategoryField = Array.from(names).some((name) => {
+        const normalized = name.trim().toLowerCase();
+        return normalized === 'categories'
+          || normalized === 'category ids'
+          || normalized === 'category_ids'
+          || normalized === 'primary category'
+          || normalized === 'primary category id'
+          || normalized === 'primary_category'
+          || normalized === 'primary_category_id'
+          || normalized === 'secondary category'
+          || normalized === 'secondary category id'
+          || normalized === 'secondary_category'
+          || normalized === 'secondary_category_id';
+      });
+
+      if (!hasAnyCategoryField) {
+        // Airtable omits empty fields from record payloads, so expose a safe
+        // category editor fallback without adding non-existent eBay alias fields.
+        names.add('Categories');
+      }
     }
 
     names.add(CONDITION_FIELD);
 
     return Array.from(names).sort((a, b) => a.localeCompare(b));
-  }, [records, approvalChannel]);
+  }, [actualFieldNames, approvalChannel]);
 
   const selectedRecord = useMemo(
     () => records.find((record) => record.id === selectedRecordId) ?? null,
@@ -1575,6 +1602,7 @@ export function ListingApprovalTab({
                   selectedRecord,
                   tableReference,
                   tableName,
+                  actualFieldNames,
                   approvedFieldName,
                   () => undefined,
                   'full',
@@ -1744,6 +1772,7 @@ export function ListingApprovalTab({
                     selectedRecord,
                     tableReference,
                     tableName,
+                    actualFieldNames,
                     approvedFieldName,
                     onBackToList,
                     'approve-only',

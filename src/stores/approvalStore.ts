@@ -103,13 +103,119 @@ function isCollectionLikeFieldName(fieldName: string): boolean {
     || normalized.endsWith('_collections');
 }
 
+function isCategoryLikeFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'categories'
+    || normalized === 'category'
+    || normalized === 'category ids'
+    || normalized === 'category id'
+    || normalized === 'category_ids'
+    || normalized === 'category_id'
+    || normalized === 'primary category'
+    || normalized === 'secondary category'
+    || normalized === 'primary category id'
+    || normalized === 'secondary category id'
+    || normalized === 'primary_category'
+    || normalized === 'secondary_category'
+    || normalized === 'primary_category_id'
+    || normalized === 'secondary_category_id'
+    || normalized === 'ebay offer category id'
+    || normalized === 'ebay offer secondary category id'
+    || normalized === 'ebay_offer_category_id'
+    || normalized === 'ebay_offer_secondary_category_id'
+    || normalized === 'ebay_offer_categoryid'
+    || normalized === 'ebay_offer_secondarycategoryid';
+}
+
+function toCategoryTokens(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item ?? '').trim())
+      .filter((item) => item.length > 0);
+  }
+
+  const raw = typeof value === 'string' ? value : String(value ?? '');
+  if (!raw.trim()) return [];
+
+  const tokens = raw
+    .split(/[\n,;|]/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+
+  const seen = new Set<string>();
+  return tokens.filter((item) => {
+    const key = item.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function buildCategoryRetryValues(value: unknown, originalValue: unknown): unknown[] {
+  const tokens = toCategoryTokens(value);
+  const fallbackValues: unknown[] = [];
+
+  const pushUnique = (candidate: unknown) => {
+    const key = JSON.stringify(candidate);
+    if (fallbackValues.some((existing) => JSON.stringify(existing) === key)) return;
+    fallbackValues.push(candidate);
+  };
+
+  pushUnique(value);
+
+  if (tokens.length > 0) {
+    pushUnique(tokens.join(', '));
+    pushUnique(tokens);
+    pushUnique(tokens.map((token) => ({ name: token })));
+    pushUnique(tokens[0]);
+    pushUnique([{ name: tokens[0] }]);
+
+    const recordIdTokens = tokens.filter((token) => /^rec[a-zA-Z0-9]{14,}$/.test(token));
+    if (recordIdTokens.length > 0) {
+      pushUnique(recordIdTokens);
+      pushUnique(recordIdTokens.map((token) => ({ id: token })));
+      pushUnique([{ id: recordIdTokens[0] }]);
+    }
+
+    if (/^\d+$/.test(tokens[0])) {
+      pushUnique(Number(tokens[0]));
+    }
+  }
+
+  if (Array.isArray(originalValue) && tokens.length > 0) {
+    pushUnique(tokens);
+  }
+  if (typeof originalValue === 'number' && tokens.length > 0 && /^\d+$/.test(tokens[0])) {
+    pushUnique(Number(tokens[0]));
+  }
+  if (typeof originalValue === 'string' && tokens.length > 0) {
+    pushUnique(tokens.join(', '));
+  }
+
+  return fallbackValues;
+}
+
 function isAllowedMissingWritableFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return isTagLikeFieldName(fieldName)
     || normalized === 'collections'
     || normalized === 'categories'
     || normalized === 'category ids'
-    || normalized === 'category_ids';
+    || normalized === 'category_ids'
+    || normalized === 'primary category'
+    || normalized === 'secondary category'
+    || normalized === 'primary category id'
+    || normalized === 'secondary category id'
+    || normalized === 'primary_category'
+    || normalized === 'secondary_category'
+    || normalized === 'primary_category_id'
+    || normalized === 'secondary_category_id'
+    || normalized === 'ebay offer category id'
+    || normalized === 'ebay offer secondary category id'
+    || normalized === 'ebay_offer_category_id'
+    || normalized === 'ebay_offer_secondary_category_id'
+    || normalized === 'ebay_offer_categoryid'
+    || normalized === 'ebay_offer_secondarycategoryid';
 }
 
 function getAirtableErrorStatus(error: unknown): number | undefined {
@@ -132,6 +238,14 @@ function getAirtableErrorMessage(error: unknown): string | undefined {
   }).response;
 
   return response?.data?.error?.message;
+}
+
+function isLikelyComputedAirtableField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized.includes('(from ')
+    || normalized.includes('(lookup')
+    || normalized.includes('(rollup')
+    || normalized.includes('(formula');
 }
 
 export const useApprovalStore = create<ApprovalStore>((set, get) => ({
@@ -214,10 +328,11 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
     }
   },
 
-  async saveRecord(forceApproved, selectedRecord, tableReference, tableName, approvedFieldName, onSuccess, mode = 'full') {
+  async saveRecord(forceApproved, selectedRecord, tableReference, tableName, actualFieldNames, approvedFieldName, onSuccess, mode = 'full') {
     set({ saving: true, error: null });
     try {
       const { formValues, fieldKinds } = get();
+      const actualFieldLookup = new Set(actualFieldNames.map((fieldName) => fieldName.toLowerCase()));
       const resolvedApprovedFieldName = Object.keys(selectedRecord.fields)
         .find((fieldName) => fieldName.toLowerCase() === approvedFieldName.toLowerCase())
         ?? approvedFieldName;
@@ -253,9 +368,11 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
         Object.entries(mappedValues).forEach(([fieldName, rawValue]) => {
           if (fieldName === SHIPPING_SERVICE_FIELD) return;
           if (fieldName === CONDITION_FIELD) return;
+          if (isLikelyComputedAirtableField(fieldName)) return;
           const existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, fieldName);
+          const existsInSchema = actualFieldLookup.has(fieldName.toLowerCase());
           const allowMissingWritableField = isAllowedMissingWritableFieldName(fieldName);
-          if (!existsOnRecord && !allowMissingWritableField) return;
+          if (!existsOnRecord && !existsInSchema && !allowMissingWritableField) return;
 
           // Only send fields whose values have changed from the original record.
           // This prevents sending formula/lookup/computed fields back to Airtable,
@@ -270,65 +387,106 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
       }
 
       if (Object.keys(payload).length > 0) {
-        const shouldTypecast = Object.keys(payload).some(
-          (fieldName) => isTagLikeFieldName(fieldName) || isCollectionLikeFieldName(fieldName),
-        );
-        try {
-          await airtableService.updateRecordFromReference(
-            tableReference,
-            tableName,
-            selectedRecord.id,
-            payload,
-            shouldTypecast ? { typecast: true } : undefined,
-          );
-        } catch (error) {
-          const status = getAirtableErrorStatus(error);
-          if (mode === 'full' && status === 422) {
-            const updatedFields: string[] = [];
-            const skippedFields: Array<{ name: string; reason?: string }> = [];
+        if (mode === 'full') {
+          const updatedFields: string[] = [];
+          const skippedFields: Array<{ name: string; reason?: string }> = [];
 
-            for (const [fieldName, fieldValue] of Object.entries(payload)) {
-              const singleFieldPayload = { [fieldName]: fieldValue };
-              const shouldTypecastSingle =
-                isTagLikeFieldName(fieldName) || isCollectionLikeFieldName(fieldName);
+          for (const [fieldName, fieldValue] of Object.entries(payload)) {
+            const singleFieldPayload = { [fieldName]: fieldValue };
+            const shouldTypecastSingle =
+              isTagLikeFieldName(fieldName)
+              || isCollectionLikeFieldName(fieldName)
+              || isCategoryLikeFieldName(fieldName);
 
-              try {
-                await airtableService.updateRecordFromReference(
-                  tableReference,
-                  tableName,
-                  selectedRecord.id,
-                  singleFieldPayload,
-                  shouldTypecastSingle ? { typecast: true } : undefined,
-                );
-                updatedFields.push(fieldName);
-              } catch (singleFieldError) {
-                const singleFieldStatus = getAirtableErrorStatus(singleFieldError);
-                if (singleFieldStatus !== 422) {
-                  throw singleFieldError;
+            try {
+              await airtableService.updateRecordFromReference(
+                tableReference,
+                tableName,
+                selectedRecord.id,
+                singleFieldPayload,
+                shouldTypecastSingle ? { typecast: true } : undefined,
+              );
+              updatedFields.push(fieldName);
+            } catch (singleFieldError) {
+              const singleFieldStatus = getAirtableErrorStatus(singleFieldError);
+              if (singleFieldStatus !== 422) {
+                throw singleFieldError;
+              }
+
+              if (isCategoryLikeFieldName(fieldName)) {
+                const originalValue = selectedRecord.fields[fieldName];
+                const retryValues = buildCategoryRetryValues(fieldValue, originalValue);
+                let retrySucceeded = false;
+
+                for (const retryValue of retryValues) {
+                  try {
+                    await airtableService.updateRecordFromReference(
+                      tableReference,
+                      tableName,
+                      selectedRecord.id,
+                      { [fieldName]: retryValue },
+                      { typecast: true },
+                    );
+                    retrySucceeded = true;
+                    updatedFields.push(fieldName);
+                    break;
+                  } catch (retryError) {
+                    const retryStatus = getAirtableErrorStatus(retryError);
+                    if (retryStatus !== 422) {
+                      throw retryError;
+                    }
+                  }
                 }
 
-                skippedFields.push({
-                  name: fieldName,
-                  reason: getAirtableErrorMessage(singleFieldError),
-                });
+                if (retrySucceeded) {
+                  continue;
+                }
               }
-            }
 
-            logServiceInfo(
-              'airtable',
-              `Partial save for record ${selectedRecord.id}: updated ${updatedFields.length} fields, skipped ${skippedFields.length} invalid fields`,
-              {
-                updatedFields,
-                skippedFields,
-              },
-            );
-
-            if (updatedFields.length === 0 && skippedFields.length === 0) {
-              throw error;
+              skippedFields.push({
+                name: fieldName,
+                reason: getAirtableErrorMessage(singleFieldError),
+              });
             }
           }
-          if (!(mode === 'approve-only' && status === 422)) {
-            if (!(mode === 'full' && status === 422)) {
+
+          logServiceInfo(
+            'airtable',
+            `Partial save for record ${selectedRecord.id}: updated ${updatedFields.length} fields, skipped ${skippedFields.length} invalid fields`,
+            {
+              updatedFields,
+              skippedFields,
+            },
+          );
+
+          if (skippedFields.length > 0) {
+            const categorySkipMessages = skippedFields
+              .filter((field) => isCategoryLikeFieldName(field.name))
+              .map((field) => `${field.name}: ${field.reason ?? 'Airtable rejected the value shape'}`);
+
+            if (categorySkipMessages.length > 0) {
+              throw new Error(`Failed to save category fields. ${categorySkipMessages.join(' | ')}`);
+            }
+          }
+
+          if (updatedFields.length === 0 && skippedFields.length === 0) {
+            throw new Error('No Airtable fields were updated.');
+          }
+        } else {
+          const shouldTypecast = Object.keys(payload).some(
+            (fieldName) => isTagLikeFieldName(fieldName) || isCollectionLikeFieldName(fieldName),
+          );
+          try {
+            await airtableService.updateRecordFromReference(
+              tableReference,
+              tableName,
+              selectedRecord.id,
+              payload,
+              shouldTypecast ? { typecast: true } : undefined,
+            );
+          } catch (error) {
+            const status = getAirtableErrorStatus(error);
+            if (!(mode === 'approve-only' && status === 422)) {
               throw error;
             }
           }

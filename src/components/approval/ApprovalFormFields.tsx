@@ -19,6 +19,7 @@ import { ShopifyBodyHtmlPreview } from './ShopifyBodyHtmlPreview';
 import { ShopifyKeyFeaturesEditor } from './ShopifyKeyFeaturesEditor';
 import { ShopifyCollectionsSelect } from './ShopifyCollectionsSelect';
 import { ShopifyTagsEditor } from './ShopifyTagsEditor';
+import { applyEbayCategoryIds, resolveEbaySelectedCategoryIds } from './ebayCategoryFields';
 
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
@@ -272,22 +273,12 @@ function isEbayCategoriesField(fieldName: string): boolean {
   return normalized === 'categories' || normalized === 'category ids' || normalized === 'category_ids';
 }
 
-function parseEbayCategoryIds(raw: string): string[] {
-  const trimmed = raw.trim();
-  if (!trimmed) return [];
-
-  const fromDelimited = trimmed
-    .split(/[\n,;|]/)
-    .map((token) => token.trim())
-    .filter((token) => token.length > 0);
-
-  const seen = new Set<string>();
-  return fromDelimited.filter((token) => {
-    const key = token.toLowerCase();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+function isLikelyDerivedAirtableField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized.includes('(from ')
+    || normalized.includes('(lookup')
+    || normalized.includes('(rollup')
+    || normalized.includes('(formula');
 }
 
 function isShopifyCollectionJsonField(fieldName: string): boolean {
@@ -1027,33 +1018,45 @@ export function ApprovalFormFields({
       }));
     })())
     : '';
+  const writableCategoryFields = writableFieldNames.filter(
+    (fieldName) => isEbayCategoriesField(fieldName) && !isLikelyDerivedAirtableField(fieldName),
+  );
+  const allCategoryFields = allFieldNames.filter(
+    (fieldName) => isEbayCategoriesField(fieldName) && !isLikelyDerivedAirtableField(fieldName),
+  );
   const ebayCategoriesFieldName = pickPreferredField(
-    allFieldNames.filter((fieldName) => isEbayCategoriesField(fieldName)),
+    writableCategoryFields.length > 0 ? writableCategoryFields : allCategoryFields,
     ['Categories', 'categories'],
     formValues,
-  ) ?? (isEbayListingForm ? 'Categories' : undefined);
+  );
+  const ebayPrimaryCategoryFieldName = writableFieldNames.find(
+    (fieldName) => isEbayPrimaryCategoryField(fieldName) && !isLikelyDerivedAirtableField(fieldName),
+  )
+    ?? allFieldNames.find((fieldName) => isEbayPrimaryCategoryField(fieldName) && !isLikelyDerivedAirtableField(fieldName))
+    ?? writableFieldNames.find((fieldName) => isEbayPrimaryCategoryField(fieldName))
+    ?? allFieldNames.find((fieldName) => isEbayPrimaryCategoryField(fieldName));
+  const ebaySecondaryCategoryFieldName = writableFieldNames.find(
+    (fieldName) => isEbaySecondaryCategoryField(fieldName) && !isLikelyDerivedAirtableField(fieldName),
+  )
+    ?? allFieldNames.find((fieldName) => isEbaySecondaryCategoryField(fieldName) && !isLikelyDerivedAirtableField(fieldName))
+    ?? writableFieldNames.find((fieldName) => isEbaySecondaryCategoryField(fieldName))
+    ?? allFieldNames.find((fieldName) => isEbaySecondaryCategoryField(fieldName));
   const ebayMarketplaceIdFieldName = allFieldNames.find((fieldName) => isEbayMarketplaceIdField(fieldName));
-  const hasEbayCategoryEditor = Boolean(isEbayListingForm && ebayCategoriesFieldName);
+  const hasEbayCategoryEditor = Boolean(
+    isEbayListingForm && (ebayCategoriesFieldName || ebayPrimaryCategoryFieldName || ebaySecondaryCategoryFieldName),
+  );
   const ebayMarketplaceId = (ebayMarketplaceIdFieldName ? formValues[ebayMarketplaceIdFieldName] : undefined)?.trim() || 'EBAY_US';
-  const ebaySelectedCategoryIds = useMemo(() => {
-    const categories = ebayCategoriesFieldName
-      ? parseEbayCategoryIds(formValues[ebayCategoriesFieldName] ?? '')
-      : [];
-
-    const merged = [...categories];
-    const seen = new Set<string>();
-    return merged.filter((categoryId) => {
-      const key = categoryId.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).slice(0, 2);
-  }, [ebayCategoriesFieldName, formValues]);
+  const ebaySelectedCategoryIds = useMemo(() => resolveEbaySelectedCategoryIds(formValues, {
+    categoriesFieldName: ebayCategoriesFieldName,
+    primaryCategoryFieldName: ebayPrimaryCategoryFieldName,
+    secondaryCategoryFieldName: ebaySecondaryCategoryFieldName,
+  }), [ebayCategoriesFieldName, ebayPrimaryCategoryFieldName, ebaySecondaryCategoryFieldName, formValues]);
   const setEbayCategoryIds = (nextIds: string[]) => {
-    const normalizedIds = nextIds.map((id) => id.trim()).filter((id) => id.length > 0).slice(0, 2);
-    if (ebayCategoriesFieldName) {
-      setFormValue(ebayCategoriesFieldName, normalizedIds.join(', '));
-    }
+    applyEbayCategoryIds(nextIds, {
+      categoriesFieldName: ebayCategoriesFieldName,
+      primaryCategoryFieldName: ebayPrimaryCategoryFieldName,
+      secondaryCategoryFieldName: ebaySecondaryCategoryFieldName,
+    }, setFormValue);
   };
   const hasCanonicalConditionField = allFieldNames.some((fieldName) => fieldName.trim().toLowerCase() === CONDITION_FIELD.toLowerCase());
   const shopifyBodyDescriptionFieldName = allFieldNames.find((fieldName) => isShopifyBodyDescriptionField(fieldName));
@@ -1544,9 +1547,9 @@ export function ApprovalFormFields({
         />
       )}
 
-      {hasEbayCategoryEditor && ebayCategoriesFieldName && (
+      {hasEbayCategoryEditor && (
         <EbayCategoriesSelect
-          fieldName={ebayCategoriesFieldName}
+          fieldName={ebayCategoriesFieldName ?? ebayPrimaryCategoryFieldName ?? ebaySecondaryCategoryFieldName ?? 'Categories'}
           label="eBay Categories"
           marketplaceId={ebayMarketplaceId}
           value={ebaySelectedCategoryIds}

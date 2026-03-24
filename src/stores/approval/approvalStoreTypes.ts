@@ -19,6 +19,7 @@ export interface ApprovalStore {
     selectedRecord: AirtableRecord,
     tableReference: string,
     tableName: string | undefined,
+    actualFieldNames: string[],
     approvedFieldName: string,
     onSuccess: () => void,
     mode?: 'full' | 'approve-only',
