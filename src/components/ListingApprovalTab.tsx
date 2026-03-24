@@ -607,7 +607,7 @@ export function ListingApprovalTab({
 
       const preferredCategoriesField = existingNames.find((name) =>
         EBAY_CATEGORIES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? EBAY_CATEGORIES_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      );
       if (preferredCategoriesField) names.add(preferredCategoriesField);
     }
 

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import airtableService from '@/services/airtable';
 import { getInventoryItems, getOffersForInventorySkus } from '@/services/ebay';
 import { buildShopifyCollectionIdsFromApprovalFields } from '@/services/shopifyDraftFromAirtable';
+import { logServiceInfo } from '@/services/logger';
 import {
   CONDITION_FIELD,
   FALLBACK_LISTING_FORMAT_OPTIONS,
@@ -104,13 +105,33 @@ function isCollectionLikeFieldName(fieldName: string): boolean {
 
 function isAllowedMissingWritableFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
-  return isTagLikeFieldName(fieldName) || normalized === 'collections';
+  return isTagLikeFieldName(fieldName)
+    || normalized === 'collections'
+    || normalized === 'categories'
+    || normalized === 'category ids'
+    || normalized === 'category_ids';
 }
 
 function getAirtableErrorStatus(error: unknown): number | undefined {
   if (!error || typeof error !== 'object' || !('response' in error)) return undefined;
   const response = (error as { response?: { status?: number } }).response;
   return response?.status;
+}
+
+function getAirtableErrorMessage(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined;
+
+  const response = (error as {
+    response?: {
+      data?: {
+        error?: {
+          message?: string;
+        };
+      };
+    };
+  }).response;
+
+  return response?.data?.error?.message;
 }
 
 export const useApprovalStore = create<ApprovalStore>((set, get) => ({
@@ -262,8 +283,54 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
           );
         } catch (error) {
           const status = getAirtableErrorStatus(error);
+          if (mode === 'full' && status === 422) {
+            const updatedFields: string[] = [];
+            const skippedFields: Array<{ name: string; reason?: string }> = [];
+
+            for (const [fieldName, fieldValue] of Object.entries(payload)) {
+              const singleFieldPayload = { [fieldName]: fieldValue };
+              const shouldTypecastSingle =
+                isTagLikeFieldName(fieldName) || isCollectionLikeFieldName(fieldName);
+
+              try {
+                await airtableService.updateRecordFromReference(
+                  tableReference,
+                  tableName,
+                  selectedRecord.id,
+                  singleFieldPayload,
+                  shouldTypecastSingle ? { typecast: true } : undefined,
+                );
+                updatedFields.push(fieldName);
+              } catch (singleFieldError) {
+                const singleFieldStatus = getAirtableErrorStatus(singleFieldError);
+                if (singleFieldStatus !== 422) {
+                  throw singleFieldError;
+                }
+
+                skippedFields.push({
+                  name: fieldName,
+                  reason: getAirtableErrorMessage(singleFieldError),
+                });
+              }
+            }
+
+            logServiceInfo(
+              'airtable',
+              `Partial save for record ${selectedRecord.id}: updated ${updatedFields.length} fields, skipped ${skippedFields.length} invalid fields`,
+              {
+                updatedFields,
+                skippedFields,
+              },
+            );
+
+            if (updatedFields.length === 0 && skippedFields.length === 0) {
+              throw error;
+            }
+          }
           if (!(mode === 'approve-only' && status === 422)) {
-            throw error;
+            if (!(mode === 'full' && status === 422)) {
+              throw error;
+            }
           }
         }
 

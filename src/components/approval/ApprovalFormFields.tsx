@@ -791,8 +791,9 @@ function parseImageEditorRows(raw: string): ImageEditorRow[] {
 
   try {
     const parsed = JSON.parse(trimmed);
-    if (Array.isArray(parsed)) {
-      return parsed
+    if (Array.isArray(parsed) || (parsed && typeof parsed === 'object')) {
+      const values = Array.isArray(parsed) ? parsed : [parsed];
+      return values
         .map((item) => {
           if (typeof item === 'string') {
             return { src: item.trim(), alt: '' };
@@ -800,8 +801,19 @@ function parseImageEditorRows(raw: string): ImageEditorRow[] {
 
           if (item && typeof item === 'object') {
             const record = item as Record<string, unknown>;
+            const directUrl = typeof record.url === 'string' ? record.url.trim() : '';
+            const thumbnailLarge =
+              record.thumbnails
+              && typeof record.thumbnails === 'object'
+              && (record.thumbnails as Record<string, unknown>).large
+              && typeof (record.thumbnails as Record<string, unknown>).large === 'object'
+                ? ((record.thumbnails as Record<string, unknown>).large as Record<string, unknown>).url
+                : '';
             return {
-              src: typeof record.src === 'string' ? record.src.trim() : '',
+              src:
+                (typeof record.src === 'string' ? record.src.trim() : '')
+                || directUrl
+                || (typeof thumbnailLarge === 'string' ? thumbnailLarge.trim() : ''),
               alt: typeof record.alt === 'string' ? record.alt.trim() : '',
             };
           }
@@ -1015,9 +1027,11 @@ export function ApprovalFormFields({
       }));
     })())
     : '';
-  const ebayPrimaryCategoryFieldName = allFieldNames.find((fieldName) => isEbayPrimaryCategoryField(fieldName));
-  const ebaySecondaryCategoryFieldName = allFieldNames.find((fieldName) => isEbaySecondaryCategoryField(fieldName));
-  const ebayCategoriesFieldName = allFieldNames.find((fieldName) => isEbayCategoriesField(fieldName));
+  const ebayCategoriesFieldName = pickPreferredField(
+    allFieldNames.filter((fieldName) => isEbayCategoriesField(fieldName)),
+    ['Categories', 'categories'],
+    formValues,
+  ) ?? (isEbayListingForm ? 'Categories' : undefined);
   const ebayMarketplaceIdFieldName = allFieldNames.find((fieldName) => isEbayMarketplaceIdField(fieldName));
   const hasEbayCategoryEditor = Boolean(isEbayListingForm && ebayCategoriesFieldName);
   const ebayMarketplaceId = (ebayMarketplaceIdFieldName ? formValues[ebayMarketplaceIdFieldName] : undefined)?.trim() || 'EBAY_US';
@@ -1039,12 +1053,6 @@ export function ApprovalFormFields({
     const normalizedIds = nextIds.map((id) => id.trim()).filter((id) => id.length > 0).slice(0, 2);
     if (ebayCategoriesFieldName) {
       setFormValue(ebayCategoriesFieldName, normalizedIds.join(', '));
-    }
-    if (ebayPrimaryCategoryFieldName) {
-      setFormValue(ebayPrimaryCategoryFieldName, '');
-    }
-    if (ebaySecondaryCategoryFieldName) {
-      setFormValue(ebaySecondaryCategoryFieldName, '');
     }
   };
   const hasCanonicalConditionField = allFieldNames.some((fieldName) => fieldName.trim().toLowerCase() === CONDITION_FIELD.toLowerCase());

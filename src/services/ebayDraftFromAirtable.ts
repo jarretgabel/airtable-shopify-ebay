@@ -43,9 +43,17 @@ function getField(fields: ApprovalFieldMap, candidates: string[]): string {
 }
 
 function getRawField(fields: ApprovalFieldMap, candidates: string[]): unknown {
+  const hasUsableValue = (value: unknown): boolean => {
+    if (value === null || value === undefined) return false;
+    if (typeof value === 'string') return value.trim().length > 0;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'object') return Object.keys(value as Record<string, unknown>).length > 0;
+    return true;
+  };
+
   for (const candidate of candidates) {
     const direct = fields[candidate];
-    if (direct !== null && direct !== undefined) return direct;
+    if (hasUsableValue(direct)) return direct;
   }
 
   const normalizedMap = new Map<string, unknown>();
@@ -55,7 +63,7 @@ function getRawField(fields: ApprovalFieldMap, candidates: string[]): unknown {
 
   for (const candidate of candidates) {
     const value = normalizedMap.get(normalizeKey(candidate));
-    if (value !== null && value !== undefined) return value;
+    if (hasUsableValue(value)) return value;
   }
 
   return undefined;
@@ -72,12 +80,43 @@ function parseImageUrls(raw: unknown): string[] {
       .map((item) => {
         if (typeof item === 'string') return item.trim();
         if (item && typeof item === 'object') {
-          const src = (item as Record<string, unknown>).src;
-          return typeof src === 'string' ? src.trim() : '';
+          const imageLike = item as Record<string, unknown>;
+          const src = imageLike.src;
+          if (typeof src === 'string' && src.trim()) return src.trim();
+
+          const directUrl = imageLike.url;
+          if (typeof directUrl === 'string' && directUrl.trim()) return directUrl.trim();
+
+          const thumbnails = imageLike.thumbnails;
+          if (thumbnails && typeof thumbnails === 'object') {
+            const thumbnailsObj = thumbnails as Record<string, unknown>;
+            const largeThumb = thumbnailsObj.large;
+            if (largeThumb && typeof largeThumb === 'object') {
+              const largeUrl = (largeThumb as Record<string, unknown>).url;
+              if (typeof largeUrl === 'string' && largeUrl.trim()) return largeUrl.trim();
+            }
+            const fullThumb = thumbnailsObj.full;
+            if (fullThumb && typeof fullThumb === 'object') {
+              const fullUrl = (fullThumb as Record<string, unknown>).url;
+              if (typeof fullUrl === 'string' && fullUrl.trim()) return fullUrl.trim();
+            }
+          }
         }
         return '';
       })
       .filter(Boolean);
+  }
+
+  if (raw && typeof raw === 'object') {
+    const rawObject = raw as Record<string, unknown>;
+    const nestedImages = rawObject.attachments ?? rawObject.images ?? rawObject.items ?? rawObject.data;
+    if (Array.isArray(nestedImages)) {
+      const parsedNested = parseImageUrls(nestedImages);
+      if (parsedNested.length > 0) return parsedNested;
+    }
+
+    const parsedObject = parseImageUrls([raw]);
+    if (parsedObject.length > 0) return parsedObject;
   }
 
   const text = coerceToString(raw);
@@ -88,11 +127,48 @@ function parseImageUrls(raw: unknown): string[] {
     if (Array.isArray(parsed)) {
       return parseImageUrls(parsed);
     }
+    if (parsed && typeof parsed === 'object') {
+      return parseImageUrls([parsed]);
+    }
   } catch {
     // fall through
   }
 
   return text.split(/[\n,]/).map((item) => item.trim()).filter(Boolean);
+}
+
+function dedupeCaseInsensitive(values: string[]): string[] {
+  const seen = new Set<string>();
+  return values.filter((value) => {
+    const key = value.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function collectImageUrlsFromFields(fields: ApprovalFieldMap): string[] {
+  const collected: string[] = [];
+
+  Object.entries(fields).forEach(([key, value]) => {
+    const normalized = normalizeKey(key);
+    const looksLikeExplicitImageList =
+      normalized.includes('ebayinventoryproductimageurls')
+      || normalized.includes('photourls')
+      || normalized.includes('imageurls')
+      || normalized === 'images'
+      || normalized === 'image'
+      || normalized === 'imagescommaseparated';
+    const looksLikeIndexedImageUrl =
+      (normalized.includes('ebayinventoryproductimageurl') || normalized.includes('imageurl') || normalized.includes('photourl'))
+      && /\d+$/.test(normalized);
+
+    if (!looksLikeExplicitImageList && !looksLikeIndexedImageUrl) return;
+
+    collected.push(...parseImageUrls(value));
+  });
+
+  return dedupeCaseInsensitive(collected);
 }
 
 function parseCategoryIds(raw: unknown): string[] {
@@ -172,7 +248,21 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
   const imageUrls = parseImageUrls(getRawField(fields, [
     'eBay Inventory Product Image URLs JSON',
     'eBay Inventory Product ImageURLs JSON',
+    'eBay Inventory Product Image URLs',
+    'eBay Inventory Product Image URL',
+    'eBay Inventory Product Image URL 1',
+    'eBay Inventory Product Image URL 2',
+    'eBay Inventory Product Image URL 3',
     'ebay_inventory_product_imageurls_json',
+    'ebay_inventory_product_imageurls',
+    'ebay_inventory_product_imageurl',
+    'ebay_inventory_product_imageurl_1',
+    'ebay_inventory_product_imageurl_2',
+    'ebay_inventory_product_imageurl_3',
+    'Photo URLs (comma-separated)',
+    'Photo URLs',
+      'Images (comma-separated)',
+    'photo_urls',
     'Shopify REST Images JSON',
     'shopify_rest_images_json',
     'Shopify Images JSON',
@@ -184,6 +274,11 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     'image_url',
     'image_urls',
   ]));
+  const fallbackImageUrls = collectImageUrlsFromFields(fields);
+  const resolvedImageUrls = dedupeCaseInsensitive([
+    ...imageUrls,
+    ...fallbackImageUrls,
+  ]);
 
   const marketplaceId = getField(fields, ['eBay Offer Marketplace ID']) || 'EBAY_US';
   const format = getField(fields, ['eBay Offer Format']) || 'FIXED_PRICE';
@@ -192,16 +287,27 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     'categories',
   ]));
   const primaryCategoryFromField = getField(fields, [
+    'eBay Offer Primary Category ID',
+    'eBay Offer PrimaryCategoryID',
+    'Primary Category ID',
     'Primary Category',
     'primary_category',
     'eBay Offer Category ID',
     'ebay_offer_category_id',
+    'ebay_offer_primary_category_id',
+    'ebay_offer_primarycategoryid',
+    'primary_category_id',
+    'category_id',
   ]);
   const secondaryCategoryFromField = getField(fields, [
+    'eBay Offer SecondaryCategoryID',
+    'Secondary Category ID',
     'Secondary Category',
     'secondary_category',
     'eBay Offer Secondary Category ID',
     'ebay_offer_secondary_category_id',
+    'ebay_offer_secondarycategoryid',
+    'secondary_category_id',
   ]);
 
   const categoryId = categoryIdsFromCategoriesField[0] || primaryCategoryFromField || '3276';
@@ -216,7 +322,7 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     product: {
       title,
       description,
-      imageUrls,
+      imageUrls: resolvedImageUrls,
       brand: brand || undefined,
       mpn: mpn || undefined,
       aspects: brand ? { Brand: [brand] } : undefined,

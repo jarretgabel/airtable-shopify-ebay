@@ -23,9 +23,10 @@ function parseImages(raw: string): EditableImage[] {
 
   try {
     const parsed = JSON.parse(trimmed);
-    if (Array.isArray(parsed)) {
-      if (parsed.length === 0) return [{ src: '', alt: '' }];
-      const images = parsed.map((item) => {
+    if (Array.isArray(parsed) || (parsed && typeof parsed === 'object')) {
+      const values = Array.isArray(parsed) ? parsed : [parsed];
+      if (values.length === 0) return [{ src: '', alt: '' }];
+      const images = values.map((item) => {
         if (typeof item === 'string') {
           return {
             src: item,
@@ -34,8 +35,20 @@ function parseImages(raw: string): EditableImage[] {
         }
         if (item && typeof item === 'object') {
           const image = item as Record<string, unknown>;
+          const url = typeof image.url === 'string' ? image.url : '';
+          const thumbnailLarge =
+            image.thumbnails
+            && typeof image.thumbnails === 'object'
+            && (image.thumbnails as Record<string, unknown>).large
+            && typeof (image.thumbnails as Record<string, unknown>).large === 'object'
+              ? ((image.thumbnails as Record<string, unknown>).large as Record<string, unknown>).url
+              : '';
           return {
-            src: typeof image.src === 'string' ? image.src : '',
+            src:
+              (typeof image.src === 'string' && image.src)
+              || (typeof url === 'string' && url)
+              || (typeof thumbnailLarge === 'string' && thumbnailLarge)
+              || '',
             alt: typeof image.alt === 'string' ? image.alt : '',
           };
         }

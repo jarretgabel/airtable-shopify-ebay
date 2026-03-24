@@ -143,4 +143,161 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       secondaryCategoryId: '15032',
     });
   });
+
+  it('collects image URLs from indexed image fields when JSON list is absent', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-7',
+      'eBay Inventory Product Image URL 1': 'https://cdn.example.com/e1.jpg',
+      'eBay Inventory Product Image URL 2': 'https://cdn.example.com/e2.jpg',
+      'Photo URLs (comma-separated)': 'https://cdn.example.com/e2.jpg, https://cdn.example.com/e3.jpg',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-7',
+      product: {
+        imageUrls: [
+          'https://cdn.example.com/e1.jpg',
+          'https://cdn.example.com/e2.jpg',
+          'https://cdn.example.com/e3.jpg',
+        ],
+      },
+    });
+  });
+
+  it('maps primary and secondary category id aliases into offer payload', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-8',
+      'Primary Category ID': '293',
+      'Secondary Category ID': '11700',
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-8',
+      categoryId: '293',
+      secondaryCategoryId: '11700',
+    });
+  });
+
+  it('parses Airtable attachment objects into imageUrls', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-9',
+      'eBay Inventory Product Image URLs JSON': [
+        {
+          id: 'att1',
+          url: 'https://dl.airtable.com/.attachments/att1/main.jpg',
+          filename: 'main.jpg',
+        },
+        {
+          id: 'att2',
+          thumbnails: {
+            large: {
+              url: 'https://dl.airtable.com/.attachments/att2/large.jpg',
+            },
+          },
+        },
+      ],
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-9',
+      product: {
+        imageUrls: [
+          'https://dl.airtable.com/.attachments/att1/main.jpg',
+          'https://dl.airtable.com/.attachments/att2/large.jpg',
+        ],
+      },
+    });
+  });
+
+  it('parses single JSON object image payload into imageUrls', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-10',
+      'eBay Inventory Product Image URLs JSON': JSON.stringify({
+        id: 'att-single',
+        url: 'https://dl.airtable.com/.attachments/att-single/main.jpg',
+      }),
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-10',
+      product: {
+        imageUrls: ['https://dl.airtable.com/.attachments/att-single/main.jpg'],
+      },
+    });
+  });
+
+  it('falls through to Images when leading eBay image field is present but empty', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-11',
+      'eBay Inventory Product Image URLs JSON': '',
+      Images: 'https://cdn.example.com/fallback-a.jpg, https://cdn.example.com/fallback-b.jpg',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-11',
+      product: {
+        imageUrls: [
+          'https://cdn.example.com/fallback-a.jpg',
+          'https://cdn.example.com/fallback-b.jpg',
+        ],
+      },
+    });
+  });
+
+  it('falls through to Images when leading eBay image field is an empty object', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-12',
+      'eBay Inventory Product Image URLs JSON': {},
+      Images: 'https://cdn.example.com/obj-fallback-a.jpg, https://cdn.example.com/obj-fallback-b.jpg',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-12',
+      product: {
+        imageUrls: [
+          'https://cdn.example.com/obj-fallback-a.jpg',
+          'https://cdn.example.com/obj-fallback-b.jpg',
+        ],
+      },
+    });
+  });
+
+  it('maps Images (comma-separated) into eBay imageUrls', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-14',
+      'Images (comma-separated)': 'https://cdn.example.com/cs-a.jpg, https://cdn.example.com/cs-b.jpg',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-14',
+      product: {
+        imageUrls: [
+          'https://cdn.example.com/cs-a.jpg',
+          'https://cdn.example.com/cs-b.jpg',
+        ],
+      },
+    });
+  });
+
+  it('parses image URLs from attachments wrapper object payload', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-13',
+      'eBay Inventory Product Image URLs JSON': {
+        attachments: [
+          { url: 'https://dl.airtable.com/.attachments/att-wrap-1/main.jpg' },
+          { src: 'https://dl.airtable.com/.attachments/att-wrap-2/main.jpg' },
+        ],
+      },
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-13',
+      product: {
+        imageUrls: [
+          'https://dl.airtable.com/.attachments/att-wrap-1/main.jpg',
+          'https://dl.airtable.com/.attachments/att-wrap-2/main.jpg',
+        ],
+      },
+    });
+  });
 });

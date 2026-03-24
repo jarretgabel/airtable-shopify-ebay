@@ -209,7 +209,10 @@ class AirtableService {
         if (isRetryableReferenceStatus(status)) {
           continue;
         }
-        logServiceError('airtable', `Error updating record ${recordId} for reference ${reference}`, error);
+        // 422 validation errors are handled by callers that can retry with narrower payloads.
+        if (status !== 422) {
+          logServiceError('airtable', `Error updating record ${recordId} for reference ${reference}`, error);
+        }
         throw error;
       }
     }
