@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CONDITION_FIELD,
@@ -22,6 +22,7 @@ const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
 const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
 const requiredBadgeClass = 'inline-block rounded-full border border-rose-400/45 bg-rose-500/15 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-rose-200';
+const SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD = 'Shopify GraphQL Collection IDs';
 
 function toHumanReadableLabel(fieldName: string): string {
   if (fieldName === CONDITION_FIELD) return 'Condition';
@@ -112,6 +113,8 @@ function getShopifySingleCollectionFieldIndex(fieldName: string): number {
 function normalizeShopifyCollectionId(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return '';
+  const embeddedGidMatch = trimmed.match(/gid:\/\/shopify\/Collection\/\d+/i);
+  if (embeddedGidMatch) return embeddedGidMatch[0];
   if (/^gid:\/\/shopify\/Collection\/\d+$/i.test(trimmed)) return trimmed;
   if (/^\d+$/.test(trimmed)) return `gid://shopify/Collection/${trimmed}`;
   return '';
@@ -128,7 +131,13 @@ function parseShopifyCollectionIds(raw: unknown): string[] {
 
     if (!entry || typeof entry !== 'object') return;
     const record = entry as Record<string, unknown>;
-    const candidate = record.collectionId ?? record.collection_id ?? record.id;
+    const candidate = record.collectionId
+      ?? record.collection_id
+      ?? record.collectionGid
+      ?? record.collection_gid
+      ?? record.admin_graphql_api_id
+      ?? record.gid
+      ?? record.id;
     if (typeof candidate === 'string' || typeof candidate === 'number') {
       values.push(String(candidate));
     }
@@ -144,10 +153,11 @@ function parseShopifyCollectionIds(raw: unknown): string[] {
         if (Array.isArray(parsed)) {
           parsed.forEach(parseEntry);
         } else {
-          values.push(...trimmed.split(/[\n,]/).map((token) => token.trim()).filter(Boolean));
+          parseEntry(parsed);
+          values.push(...trimmed.split(/[\n,;|]/).map((token) => token.trim()).filter(Boolean));
         }
       } catch {
-        values.push(...trimmed.split(/[\n,]/).map((token) => token.trim()).filter(Boolean));
+        values.push(...trimmed.split(/[\n,;|]/).map((token) => token.trim()).filter(Boolean));
       }
     }
   }
@@ -203,6 +213,12 @@ function parseShopifyCollectionDisplayNames(raw: unknown): string[] {
   return values
     .map((value) => value.trim())
     .filter((value) => {
+      // Ignore values that are clearly collection IDs; display-name hydration should only search by labels.
+      if (/^gid:\/\/shopify\/Collection\/\d+$/i.test(value)) return false;
+      if (/^\d+$/.test(value)) return false;
+      return true;
+    })
+    .filter((value) => {
       if (!value) return false;
       const key = value.toLowerCase();
       if (seen.has(key)) return false;
@@ -216,25 +232,33 @@ function isShopifyCollectionJsonField(fieldName: string): boolean {
   return normalized.includes('collections json') || normalized.endsWith('_collections_json');
 }
 
+function isSingularCollectionAliasField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'collection'
+    || normalized === 'shopify collection'
+    || normalized === 'shopify collection id'
+    || normalized === 'shopify graphql collection id'
+    || normalized === 'shopify_collection'
+    || normalized === 'shopify_collection_id'
+    || normalized === 'shopify_graphql_collection_id';
+}
+
 function isCollectionDisplayNameField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
-  return normalized === 'collections';
+  return normalized === 'collections'
+    || normalized === 'shopify collections'
+    || normalized === 'shopify_collections';
 }
 
 function choosePreferredShopifyCompoundCollectionField(fieldNames: string[]): string | null {
   const preferredOrder = [
     'Collections',
     'Shopify Collection IDs',
-    'Shopify Collection ID',
     'Shopify GraphQL Collection IDs',
-    'Shopify GraphQL Collection ID',
     'Shopify GraphQL Collections JSON',
     'shopify_collection_ids',
-    'shopify_collection_id',
     'shopify_graphql_collection_ids',
-    'shopify_graphql_collection_id',
     'shopify_graphql_collections_json',
-    'Collection',
   ];
 
   const lowerMap = new Map(fieldNames.map((fieldName) => [fieldName.toLowerCase(), fieldName]));
@@ -263,14 +287,10 @@ function choosePreferredShopifyDisplayCollectionField(fieldNames: string[]): str
 function choosePreferredShopifyIdCollectionField(fieldNames: string[]): string | null {
   const preferredOrder = [
     'Shopify Collection IDs',
-    'Shopify Collection ID',
     'Shopify GraphQL Collection IDs',
-    'Shopify GraphQL Collection ID',
     'Shopify GraphQL Collections JSON',
     'shopify_collection_ids',
-    'shopify_collection_id',
     'shopify_graphql_collection_ids',
-    'shopify_graphql_collection_id',
     'shopify_graphql_collections_json',
   ];
 
@@ -298,24 +318,31 @@ function resolveShopifyCollectionFieldStrategy(params: {
 }): ShopifyCollectionFieldStrategy {
   const { formValues, singleFieldNames, compoundFieldNames, writableFieldNames } = params;
   const writableLookup = new Set(writableFieldNames.map((fieldName) => fieldName.toLowerCase()));
-  const writableSingles = singleFieldNames.filter((fieldName) => writableLookup.has(fieldName.toLowerCase()));
-  const writableCompounds = compoundFieldNames.filter((fieldName) => writableLookup.has(fieldName.toLowerCase()));
+  const writableSingles = singleFieldNames.filter((fieldName) => {
+    if (!writableLookup.has(fieldName.toLowerCase())) return false;
+    return !isSingularCollectionAliasField(fieldName);
+  });
+  const writableCompounds = compoundFieldNames.filter((fieldName) => {
+    if (!writableLookup.has(fieldName.toLowerCase())) return false;
+    return !isSingularCollectionAliasField(fieldName);
+  });
   const writableDisplayCompounds = writableCompounds.filter((fieldName) => isCollectionDisplayNameField(fieldName));
   const writableIdCompounds = writableCompounds.filter((fieldName) => !isCollectionDisplayNameField(fieldName));
 
   if (writableCompounds.length > 0) {
     const preferredDisplayCompound = choosePreferredShopifyDisplayCollectionField(writableDisplayCompounds);
     const preferredIdCompound = choosePreferredShopifyIdCollectionField(writableIdCompounds);
-    const writeCompoundFields = Array.from(new Set([
+    const orderedWritableCompounds = Array.from(new Set([
       preferredDisplayCompound,
       preferredIdCompound,
+      ...writableCompounds,
     ].filter((fieldName): fieldName is string => Boolean(fieldName))));
 
     return {
       sourceSingleFields: singleFieldNames,
       sourceCompoundFields: compoundFieldNames,
       writeSingleFields: writableSingles,
-      writeCompoundFields,
+      writeCompoundFields: orderedWritableCompounds,
     };
   }
 
@@ -682,6 +709,8 @@ function isImageUrlListField(fieldName: string): boolean {
 }
 
 interface ApprovalFormFieldsProps {
+  recordId?: string;
+  forceShowShopifyCollectionsEditor?: boolean;
   allFieldNames: string[];
   writableFieldNames?: string[];
   requiredFieldNames?: string[];
@@ -737,6 +766,8 @@ function prioritizeTitleBeforePrice(fieldNames: string[]): string[] {
 }
 
 export function ApprovalFormFields({
+  recordId,
+  forceShowShopifyCollectionsEditor = false,
   allFieldNames,
   writableFieldNames = [],
   requiredFieldNames = [],
@@ -831,7 +862,9 @@ export function ApprovalFormFields({
     }),
     [formValues, shopifyCompoundCollectionFieldNames, shopifySingleCollectionFieldNames, writableFieldNames],
   );
-  const hasShopifyCollectionEditor = shopifyCompoundCollectionFieldNames.length > 0 || shopifySingleCollectionFieldNames.length > 0;
+  const hasShopifyCollectionEditor = forceShowShopifyCollectionsEditor
+    || shopifyCompoundCollectionFieldNames.length > 0
+    || shopifySingleCollectionFieldNames.length > 0;
   const shopifyCollectionIds = useMemo(() => {
     const compoundCollections = shopifyCollectionStrategy.sourceCompoundFields.flatMap((fieldName) => parseShopifyCollectionIds(formValues[fieldName] ?? ''));
     const singleCollections = shopifyCollectionStrategy.sourceSingleFields.flatMap((fieldName) => parseShopifyCollectionIds(formValues[fieldName] ?? ''));
@@ -844,14 +877,37 @@ export function ApprovalFormFields({
     ];
 
     return sourceFieldNames
-      .filter((fieldName) => isCollectionDisplayNameField(fieldName))
-      .flatMap((fieldName) => parseShopifyCollectionDisplayNames(formValues[fieldName] ?? ''));
+      .flatMap((fieldName) => {
+        const rawValue = formValues[fieldName] ?? '';
+        const parsedNames = parseShopifyCollectionDisplayNames(rawValue);
+        if (parsedNames.length === 0) return [];
+
+        // Some schemas use singular "Collection" for IDs and others for display names.
+        // Keep names only when this field is explicitly display-oriented or currently has no parseable IDs.
+        if (!isCollectionDisplayNameField(fieldName) && parseShopifyCollectionIds(rawValue).length > 0) {
+          return [];
+        }
+
+        return parsedNames;
+      });
   }, [formValues, shopifyCollectionStrategy.sourceCompoundFields, shopifyCollectionStrategy.sourceSingleFields]);
   const [collectionEditorFallbackIds, setCollectionEditorFallbackIds] = useState<string[]>([]);
   const [collectionEditorLabelsById, setCollectionEditorLabelsById] = useState<Record<string, string>>({});
+  const collectionHydrationAttemptKeyRef = useRef<string>('');
   const effectiveShopifyCollectionIds = shopifyCollectionIds.length > 0
     ? shopifyCollectionIds
     : collectionEditorFallbackIds;
+
+  const shopifyCollectionDisplayNamesKey = useMemo(
+    () => `${recordId ?? ''}::${shopifyCollectionDisplayNames.map((name) => name.trim().toLowerCase()).filter(Boolean).join('|')}`,
+    [recordId, shopifyCollectionDisplayNames],
+  );
+
+  useEffect(() => {
+    collectionHydrationAttemptKeyRef.current = '';
+    setCollectionEditorFallbackIds([]);
+    setCollectionEditorLabelsById({});
+  }, [recordId]);
 
   useEffect(() => {
     if (shopifyCollectionIds.length > 0) {
@@ -861,6 +917,10 @@ export function ApprovalFormFields({
 
   useEffect(() => {
     if (shopifyCollectionIds.length > 0 || shopifyCollectionDisplayNames.length === 0) return;
+
+    const attemptKey = shopifyCollectionDisplayNamesKey;
+    if (!attemptKey || collectionHydrationAttemptKeyRef.current === attemptKey) return;
+    collectionHydrationAttemptKeyRef.current = attemptKey;
 
     let cancelled = false;
     void (async () => {
@@ -886,12 +946,17 @@ export function ApprovalFormFields({
       if (cancelled || resolvedIds.length === 0) return;
       setCollectionEditorFallbackIds(resolvedIds);
       setCollectionEditorLabelsById((current) => ({ ...current, ...resolvedLabels }));
+
+      const nextPreviewValue = JSON.stringify(resolvedIds);
+      if ((formValues[SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD] ?? '') !== nextPreviewValue) {
+        setFormValue(SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD, nextPreviewValue);
+      }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [shopifyCollectionDisplayNames, shopifyCollectionIds.length]);
+  }, [formValues, setFormValue, shopifyCollectionDisplayNames, shopifyCollectionDisplayNamesKey, shopifyCollectionIds.length]);
 
   function setShopifyTagValues(nextTags: string[]) {
     const normalizedTags = parseShopifyTagList(nextTags);
@@ -928,7 +993,7 @@ export function ApprovalFormFields({
       .filter(Boolean);
 
     shopifyCollectionStrategy.writeSingleFields.forEach((fieldName, index) => {
-      if (fieldName.trim().toLowerCase() === 'collection') return;
+      if (isSingularCollectionAliasField(fieldName)) return;
 
       if (isCollectionDisplayNameField(fieldName)) {
         const fieldKind = fieldKinds[fieldName] ?? 'text';
@@ -952,17 +1017,9 @@ export function ApprovalFormFields({
     ].map((fieldName) => fieldName.toLowerCase()));
 
     shopifyCollectionStrategy.writeCompoundFields.forEach((fieldName) => {
-      if (fieldName.trim().toLowerCase() === 'collection') return;
+      if (isSingularCollectionAliasField(fieldName)) return;
 
       const fieldKind = fieldKinds[fieldName] ?? 'text';
-      const normalizedName = fieldName.trim().toLowerCase();
-      const preferSingleValue = normalizedName === 'collection'
-        || normalizedName === 'shopify collection'
-        || normalizedName === 'shopify collection id'
-        || normalizedName === 'shopify graphql collection id'
-        || normalizedName === 'shopify_collection'
-        || normalizedName === 'shopify_collection_id'
-        || normalizedName === 'shopify_graphql_collection_id';
 
       if (normalizedCollections.length === 0) {
         setFormValue(fieldName, '');
@@ -977,9 +1034,7 @@ export function ApprovalFormFields({
 
         setFormValue(
           fieldName,
-          preferSingleValue
-            ? (normalizedCollectionLabels[0] ?? '')
-            : normalizedCollectionLabels.join(', '),
+          normalizedCollectionLabels.join(', '),
         );
         return;
       }
@@ -991,9 +1046,7 @@ export function ApprovalFormFields({
 
       setFormValue(
         fieldName,
-        preferSingleValue
-          ? (normalizedCollections[0] ?? '')
-          : normalizedCollections.join(', '),
+        normalizedCollections.join(', '),
       );
     });
 
@@ -1008,12 +1061,15 @@ export function ApprovalFormFields({
     });
 
     if (fallbackIdField) {
+      if (isSingularCollectionAliasField(fallbackIdField)) {
+        setFormValue(
+          SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD,
+          normalizedCollections.length > 0 ? JSON.stringify(normalizedCollections) : '',
+        );
+        return;
+      }
+
       const fieldKind = fieldKinds[fallbackIdField] ?? 'text';
-      const normalizedName = fallbackIdField.trim().toLowerCase();
-      const preferSingleValue = normalizedName === 'shopify collection id'
-        || normalizedName === 'shopify graphql collection id'
-        || normalizedName === 'shopify_collection_id'
-        || normalizedName === 'shopify_graphql_collection_id';
 
       if (normalizedCollections.length === 0) {
         setFormValue(fallbackIdField, '');
@@ -1022,16 +1078,19 @@ export function ApprovalFormFields({
       } else {
         setFormValue(
           fallbackIdField,
-          preferSingleValue
-            ? (normalizedCollections[0] ?? '')
-            : normalizedCollections.join(', '),
+          normalizedCollections.join(', '),
         );
       }
     }
 
-    const collectionsFieldName = allFieldNames.find((fieldName) => fieldName.trim().toLowerCase() === 'collections')
-      ?? 'Collections';
-    setFormValue(collectionsFieldName, normalizedCollectionLabels.join(', '));
+    const collectionsFieldName = allFieldNames.find((fieldName) => isCollectionDisplayNameField(fieldName));
+    if (collectionsFieldName) {
+      setFormValue(collectionsFieldName, normalizedCollectionLabels.join(', '));
+    }
+    setFormValue(
+      SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD,
+      normalizedCollections.length > 0 ? JSON.stringify(normalizedCollections) : '',
+    );
 
   }
 

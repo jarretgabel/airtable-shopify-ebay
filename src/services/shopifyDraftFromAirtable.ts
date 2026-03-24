@@ -849,6 +849,8 @@ function buildTags(fields: ApprovalFieldMap): string | undefined {
 function normalizeCollectionId(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return '';
+  const embeddedGidMatch = trimmed.match(/gid:\/\/shopify\/Collection\/\d+/i);
+  if (embeddedGidMatch) return embeddedGidMatch[0];
   if (/^gid:\/\/shopify\/Collection\/\d+$/i.test(trimmed)) return trimmed;
   if (/^\d+$/.test(trimmed)) return `gid://shopify/Collection/${trimmed}`;
   return '';
@@ -857,21 +859,34 @@ function normalizeCollectionId(value: string): string {
 export function buildShopifyCollectionIdsFromApprovalFields(fields: ApprovalFieldMap): string[] {
   const collectionIds: string[] = [];
 
+  const pushCollectionCandidate = (entry: unknown) => {
+    if (typeof entry === 'string' || typeof entry === 'number') {
+      collectionIds.push(String(entry));
+      return;
+    }
+
+    if (!entry || typeof entry !== 'object') return;
+    const record = entry as Record<string, unknown>;
+    const candidate = record.collectionId
+      ?? record.collection_id
+      ?? record.collectionGid
+      ?? record.collection_gid
+      ?? record.admin_graphql_api_id
+      ?? record.gid
+      ?? record.id;
+    if (typeof candidate === 'string' || typeof candidate === 'number') {
+      collectionIds.push(String(candidate));
+    }
+  };
+
   const collectionIdCandidates = [
-    'Collection',
     'Collections',
-    'Shopify Collection',
     'Shopify Collections',
-    'Shopify Collection ID',
     'Shopify Collection IDs',
-    'Shopify GraphQL Collection ID',
     'Shopify GraphQL Collection IDs',
     'Shopify GraphQL Collections JSON',
-    'shopify_collection',
     'shopify_collections',
-    'shopify_collection_id',
     'shopify_collection_ids',
-    'shopify_graphql_collection_id',
     'shopify_graphql_collection_ids',
     'shopify_graphql_collections_json',
   ];
@@ -888,23 +903,25 @@ export function buildShopifyCollectionIdsFromApprovalFields(fields: ApprovalFiel
     const parsedCompoundCollections = parseJsonArray<unknown>(rawValue);
     if (parsedCompoundCollections && parsedCompoundCollections.length > 0) {
       parsedCompoundCollections.forEach((entry) => {
-        if (typeof entry === 'string' || typeof entry === 'number') {
-          collectionIds.push(String(entry));
-          return;
-        }
-
-        if (!entry || typeof entry !== 'object') return;
-        const record = entry as Record<string, unknown>;
-        const candidate = record.collectionId ?? record.collection_id ?? record.id;
-        if (typeof candidate === 'string' || typeof candidate === 'number') {
-          collectionIds.push(String(candidate));
-        }
+        pushCollectionCandidate(entry);
       });
       return;
     }
 
+    if (Array.isArray(rawValue)) {
+      rawValue.forEach((entry) => {
+        pushCollectionCandidate(entry);
+      });
+      return;
+    }
+
+    if (rawValue && typeof rawValue === 'object') {
+      pushCollectionCandidate(rawValue);
+      return;
+    }
+
     const parsedDelimitedCollections = coerceStructuredToString(rawValue)
-      .split(/[\n,]/)
+      .split(/[\n,;|]/)
       .map((token) => token.trim())
       .filter(Boolean);
     collectionIds.push(...parsedDelimitedCollections);

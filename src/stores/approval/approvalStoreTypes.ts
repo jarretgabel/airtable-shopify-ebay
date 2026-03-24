@@ -22,5 +22,5 @@ export interface ApprovalStore {
     approvedFieldName: string,
     onSuccess: () => void,
     mode?: 'full' | 'approve-only',
-  ) => Promise<void>;
+  ) => Promise<boolean>;
 }

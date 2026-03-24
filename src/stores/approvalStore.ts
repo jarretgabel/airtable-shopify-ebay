@@ -191,20 +191,15 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
       const resolvedApprovedFieldName = Object.keys(selectedRecord.fields)
         .find((fieldName) => fieldName.toLowerCase() === approvedFieldName.toLowerCase())
         ?? approvedFieldName;
-      const hasApprovedField = Object.prototype.hasOwnProperty.call(selectedRecord.fields, resolvedApprovedFieldName);
       const approvedFieldKind = fieldKinds[resolvedApprovedFieldName]
         ?? inferFieldKind(selectedRecord.fields[resolvedApprovedFieldName]);
       const currentApprovedValue = formValues[resolvedApprovedFieldName]
         ?? toFormValue(selectedRecord.fields[resolvedApprovedFieldName]);
       const nextValues = {
         ...formValues,
-        ...(hasApprovedField
-          ? {
-              [resolvedApprovedFieldName]: forceApproved
-                ? resolveApprovedValue(currentApprovedValue, approvedFieldKind)
-                : currentApprovedValue,
-            }
-          : {}),
+        [resolvedApprovedFieldName]: forceApproved
+          ? resolveApprovedValue(currentApprovedValue, approvedFieldKind)
+          : currentApprovedValue,
       };
 
       const conditionValue = nextValues[CONDITION_FIELD]?.trim();
@@ -219,12 +214,10 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
       const payload: Record<string, unknown> = {};
 
       if (mode === 'approve-only') {
-        if (hasApprovedField) {
-          payload[resolvedApprovedFieldName] = fromFormValue(
-            nextValues[resolvedApprovedFieldName] ?? resolveApprovedValue(currentApprovedValue, approvedFieldKind),
-            approvedFieldKind,
-          );
-        }
+        payload[resolvedApprovedFieldName] = fromFormValue(
+          nextValues[resolvedApprovedFieldName] ?? resolveApprovedValue(currentApprovedValue, approvedFieldKind),
+          approvedFieldKind,
+        );
       } else {
 
         Object.entries(mappedValues).forEach(([fieldName, rawValue]) => {
@@ -234,15 +227,15 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
           const allowMissingWritableField = isAllowedMissingWritableFieldName(fieldName);
           if (!existsOnRecord && !allowMissingWritableField) return;
 
-          // The Airtable schema uses "Collections" (plural). Skip legacy singular aliases.
+          // Enforce canonical collection field naming in Airtable payloads.
           if (fieldName.trim().toLowerCase() === 'collection') return;
 
           // Only send fields whose values have changed from the original record.
           // This prevents sending formula/lookup/computed fields back to Airtable,
           // which rejects them with 422. The approved field is always sent.
-          if (!hasApprovedField && fieldName.toLowerCase() === resolvedApprovedFieldName.toLowerCase()) return;
           const originalValue = toFormValue(selectedRecord.fields[fieldName]);
-          if (!(hasApprovedField && fieldName.toLowerCase() === resolvedApprovedFieldName.toLowerCase()) && rawValue === originalValue) return;
+          if (fieldName.toLowerCase() === resolvedApprovedFieldName.toLowerCase() && forceApproved) return;
+          if (rawValue === originalValue) return;
 
           const fieldKind = fieldKinds[fieldName] ?? 'text';
           payload[fieldName] = fromFormValue(rawValue, fieldKind);
@@ -272,9 +265,11 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
       }
 
       onSuccess();
+      return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save listing record';
       set({ error: message });
+      return false;
     } finally {
       set({ saving: false });
     }

@@ -797,6 +797,49 @@ class ShopifyService {
     }
   }
 
+  async addProductToCollections(productId: number, collectionIds: string[]): Promise<void> {
+    if (!Number.isFinite(productId) || productId <= 0 || collectionIds.length === 0) return;
+
+    const productGid = `gid://shopify/Product/${productId}`;
+    const normalizedCollectionIds = Array.from(
+      new Set(
+        collectionIds
+          .map((collectionId) => collectionId.trim())
+          .filter((collectionId) => /^gid:\/\/shopify\/Collection\/\d+$/i.test(collectionId)),
+      ),
+    );
+
+    for (const collectionId of normalizedCollectionIds) {
+      const data = await this.graphQlRequest<{
+        collectionAddProducts: {
+          userErrors: ShopifyGraphQlUserError[];
+        };
+      }>(
+        `mutation AddProductToCollection($id: ID!, $productIds: [ID!]!) {
+          collectionAddProducts(id: $id, productIds: $productIds) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }`,
+        {
+          id: collectionId,
+          productIds: [productGid],
+        },
+      );
+
+      const userErrors = data.collectionAddProducts.userErrors ?? [];
+      if (userErrors.length > 0) {
+        const message = userErrors
+          .map((error) => error.message?.trim())
+          .filter(Boolean)
+          .join('; ');
+        throw new Error(message || `Shopify rejected collection assignment for ${collectionId}.`);
+      }
+    }
+  }
+
   async updateProduct(
     id: number,
     updates: Partial<ShopifyProduct>
