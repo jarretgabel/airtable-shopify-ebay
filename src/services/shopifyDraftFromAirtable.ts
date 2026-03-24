@@ -1,5 +1,7 @@
 import type { ShopifyMetafield, ShopifyProduct, ShopifyProductOption, ShopifyProductVariant } from '@/types/shopify';
 import { buildShopifyBodyHtml, formatKeyFeatureHtml } from '@/services/shopifyBodyHtml';
+import { parseShopifyTagList, serializeShopifyTagsCsv, SHOPIFY_DEFAULT_VENDOR } from '@/services/shopifyTags';
+import { trimShopifyProductType } from '@/services/shopifyTaxonomy';
 
 type ApprovalFieldMap = Record<string, unknown>;
 
@@ -10,6 +12,27 @@ const SHOPIFY_BODY_HTML_TEMPLATE_FIELD_CANDIDATES = [
   'Shopify Body HTML Template',
   'shopify_rest_body_html_template',
   'shopify_body_html_template',
+] as const;
+
+const SHOPIFY_PRODUCT_TYPE_FIELD_CANDIDATES = [
+  'Type',
+  'Product Type',
+  'Shopify REST Product Type',
+  'Shopify Product Type',
+  'Shopify GraphQL Product Type',
+  'Shopify REST Category',
+  'Shopify Category',
+  'Shopify Product Category',
+  'Shopify REST Product Category',
+  'Google Product Category',
+  'Product Category',
+  'Category',
+  'shopify_rest_product_type',
+  'shopify_product_type',
+  'shopify_product_category',
+  'shopify_rest_product_category',
+  'google_product_category',
+  'product_category',
 ] as const;
 
 interface ShopifyBodyDynamicTokenSpec {
@@ -42,7 +65,7 @@ const SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS: ShopifyBodyDynamicTokenSpec[] = [
   },
   {
     token: 'product_type',
-    candidates: ['Shopify REST Product Type', 'Shopify Product Type', 'Product Type', 'Type'],
+    candidates: [...SHOPIFY_PRODUCT_TYPE_FIELD_CANDIDATES],
   },
   {
     token: 'condition',
@@ -117,6 +140,20 @@ function coerceToString(value: unknown): string {
   return '';
 }
 
+function coerceStructuredToString(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value) || typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '';
+    }
+  }
+  return '';
+}
+
 function getField(fields: ApprovalFieldMap, candidates: string[]): string {
   for (const candidate of candidates) {
     const direct = coerceToString(fields[candidate]);
@@ -158,6 +195,11 @@ function getRawField(fields: ApprovalFieldMap, candidates: string[]): unknown {
   }
 
   return undefined;
+}
+
+function getFieldPreservingStructuredValues(fields: ApprovalFieldMap, candidates: string[]): string {
+  const raw = getRawField(fields, candidates);
+  return coerceStructuredToString(raw);
 }
 
 function getHandleField(fields: ApprovalFieldMap): string {
@@ -210,7 +252,7 @@ function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   if (!template) return '';
   const bodyDescriptionCandidates = SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.find((spec) => spec.token === 'body_description')?.candidates ?? [];
   const bodyKeyFeaturesCandidates = SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.find((spec) => spec.token === 'body_key_features')?.candidates ?? [];
-  const rawKeyFeatures = getField(fields, [
+  const rawKeyFeatures = getFieldPreservingStructuredValues(fields, [
     'Shopify Body Key Features JSON',
     'Shopify REST Body Key Features JSON',
     'Shopify Body Key Features',
@@ -227,7 +269,11 @@ function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
 
   const tokenValues = new Map<string, string>();
   SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.forEach((spec) => {
-    const rawValue = getField(fields, spec.candidates);
+    const rawValue = spec.token === 'vendor'
+      ? SHOPIFY_DEFAULT_VENDOR
+      : spec.token === 'body_key_features'
+      ? getFieldPreservingStructuredValues(fields, spec.candidates)
+      : getField(fields, spec.candidates);
     tokenValues.set(spec.token, spec.formatter ? spec.formatter(rawValue) : rawValue);
   });
 
@@ -774,16 +820,22 @@ function buildTags(fields: ApprovalFieldMap): string | undefined {
       `Shopify Extra Tag ${i}`,
       `shopify_rest_tag_${i}`,
     ]);
-    if (tag) tagsFromSingles.push(tag);
+    if (tag) tagsFromSingles.push(...parseShopifyTagList(tag));
   }
 
-  const compound = getField(fields, ['Shopify REST Tags', 'Shopify Tags', 'Shopify GraphQL Tags', 'shopify_rest_tags']);
-  const tagsFromCompound = compound
-    ? compound.split(',').map((item) => item.trim()).filter(Boolean)
-    : [];
+  const compound = getRawField(fields, [
+    'Shopify REST Tags',
+    'Shopify Tags',
+    'Shopify GraphQL Tags',
+    'Shopify GraphQL Tags JSON',
+    'shopify_rest_tags',
+    'shopify_graphql_tags',
+    'shopify_graphql_tags_json',
+  ]);
+  const tagsFromCompound = parseShopifyTagList(compound);
 
-  const deduped = Array.from(new Set([...tagsFromSingles, ...tagsFromCompound]));
-  return deduped.length > 0 ? deduped.join(', ') : undefined;
+  const serialized = serializeShopifyTagsCsv([...tagsFromSingles, ...tagsFromCompound]);
+  return serialized.length > 0 ? serialized : undefined;
 }
 
 function sanitizeOptions(options: ShopifyProductOption[] | undefined): ShopifyProductOption[] | undefined {
@@ -884,7 +936,7 @@ function sanitizeProductPayload(product: ShopifyProduct): ShopifyProduct {
     title: coerceToString(product.title) || 'Untitled Listing',
     body_html: coerceToString(product.body_html ?? '') || undefined,
     vendor: coerceToString(product.vendor ?? '') || undefined,
-    product_type: coerceToString(product.product_type ?? '') || undefined,
+    product_type: trimShopifyProductType(coerceToString(product.product_type ?? '')) || undefined,
     handle: coerceToString(product.handle ?? '') || undefined,
     status: normalizeStatus(product.status) ?? 'draft',
     tags: coerceToString(product.tags ?? '') || undefined,
@@ -908,8 +960,8 @@ export function buildShopifyDraftProductFromApprovalFields(fields: ApprovalField
   const candidate: ShopifyProduct = {
     title: getField(fields, ['Shopify REST Title', 'Shopify Title', 'Shopify GraphQL Title', 'Item Title', 'Title', 'Name', 'shopify_rest_title']) || 'Untitled Listing',
     body_html: resolveShopifyBodyHtml(fields) || undefined,
-    vendor: getField(fields, ['Shopify REST Vendor', 'Shopify Vendor', 'Shopify GraphQL Vendor', 'Brand', 'Vendor', 'Manufacturer', 'shopify_rest_vendor']) || undefined,
-    product_type: getField(fields, ['Shopify REST Product Type', 'Shopify GraphQL Product Type', 'Product Type', 'Type', 'shopify_rest_product_type']) || undefined,
+    vendor: SHOPIFY_DEFAULT_VENDOR,
+    product_type: trimShopifyProductType(getField(fields, [...SHOPIFY_PRODUCT_TYPE_FIELD_CANDIDATES])) || undefined,
     handle: getHandleField(fields) || undefined,
     published_at: getField(fields, ['Shopify REST Published At', 'Shopify Published At']) || undefined,
     published_scope: getField(fields, ['Shopify REST Published Scope', 'Shopify Published Scope', 'shopify_rest_published_scope']) || undefined,

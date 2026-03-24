@@ -1,17 +1,23 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import type { ApprovalTabViewModel } from '@/app/appTabViewModels';
 import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
+import { ShopifyBodyHtmlPreview } from '@/components/approval/ShopifyBodyHtmlPreview';
 import airtableService from '@/services/airtable';
 import {
+  buildShopifyUnifiedProductSetRequest,
   buildShopifyCreateProductRequestWithRequiredFields,
   shopifyService,
   type ShopifyCreateProductRequest,
+  type ShopifyTaxonomyCategoryMatch,
+  type ShopifyUnifiedProductSetRequest,
 } from '@/services/shopify';
 import { buildEbayDraftPayloadBundleFromApprovalFields } from '@/services/ebayDraftFromAirtable';
 import { buildShopifyDraftProductFromApprovalFields } from '@/services/shopifyDraftFromAirtable';
+import { SHOPIFY_DEFAULT_VENDOR } from '@/services/shopifyTags';
+import { trimShopifyProductType } from '@/services/shopifyTaxonomy';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { errorSurfaceClass, loadingSurfaceClass, panelSurfaceClass, spinnerClass } from '@/components/tabs/uiClasses';
 import {
@@ -34,79 +40,40 @@ interface ListingApprovalTabProps {
   approvalChannel?: 'shopify' | 'ebay';
 }
 
-const SHOPIFY_CREATE_PRODUCT_KEY_ORDER = [
-  'title',
-  'body_html',
-  'vendor',
-  'product_type',
-  'handle',
-  'status',
-  'tags',
-  'published_scope',
-  'template_suffix',
-  'variants',
-  'options',
-  'images',
-  'metafields',
-] as const;
+interface ShopifyCategoryResolutionState {
+  status: 'idle' | 'resolving' | 'resolved' | 'unresolved' | 'error';
+  match: ShopifyTaxonomyCategoryMatch | null;
+  error: string;
+}
 
-const SHOPIFY_CREATE_VARIANT_KEY_ORDER = [
-  'price',
-  'sku',
-  'inventory_quantity',
-  'inventory_management',
-  'inventory_policy',
-  'taxable',
-  'requires_shipping',
-] as const;
+const SHOPIFY_PRODUCT_SET_MUTATION = `mutation ProductSet($input: ProductSetInput!, $identifier: ProductSetIdentifiers, $synchronous: Boolean) {
+  productSet(input: $input, identifier: $identifier, synchronous: $synchronous) {
+    product {
+      id
+      title
+      status
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}`;
 
-const SHOPIFY_CREATE_OPTION_KEY_ORDER = [
-  'name',
-  'position',
-  'values',
-] as const;
-
-const SHOPIFY_CREATE_IMAGE_KEY_ORDER = [
-  'src',
-  'alt',
-  'position',
-] as const;
-
-const SHOPIFY_CREATE_METAFIELD_KEY_ORDER = [
-  'namespace',
-  'key',
-  'type',
-  'value',
-] as const;
-
-const EMPTY_SHOPIFY_CREATE_VARIANT_TEMPLATE: Record<string, unknown> = {
-  price: '',
-  sku: '',
-  inventory_quantity: 0,
-  inventory_management: '',
-  inventory_policy: '',
-  taxable: false,
-  requires_shipping: false,
-};
-
-const EMPTY_SHOPIFY_CREATE_OPTION_TEMPLATE: Record<string, unknown> = {
-  name: '',
-  position: 1,
-  values: [],
-};
-
-const EMPTY_SHOPIFY_CREATE_IMAGE_TEMPLATE: Record<string, unknown> = {
-  src: '',
-  alt: '',
-  position: 1,
-};
-
-const EMPTY_SHOPIFY_CREATE_METAFIELD_TEMPLATE: Record<string, unknown> = {
-  namespace: '',
-  key: '',
-  type: '',
-  value: '',
-};
+const SHOPIFY_SEARCH_TAXONOMY_CATEGORIES_QUERY = `query SearchTaxonomyCategories($search: String!, $first: Int!) {
+  taxonomy {
+    categories(first: $first, search: $search) {
+      edges {
+        node {
+          id
+          fullName
+          name
+          isLeaf
+        }
+      }
+    }
+  }
+}`;
 
 const SHOPIFY_IMAGE_LIST_FIELD_CANDIDATES = [
   'Shopify REST Images JSON',
@@ -126,10 +93,16 @@ const SHOPIFY_IMAGE_LIST_FIELD_CANDIDATES = [
 const SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES = [
   'Shopify Body Description',
   'Shopify REST Body Description',
+  'Shopify Product Description',
+  'Shopify REST Product Description',
+  'Product Description',
   'Item Description',
   'Description',
   'shopify_body_description',
   'shopify_rest_body_description',
+  'shopify_product_description',
+  'shopify_rest_product_description',
+  'product_description',
 ] as const;
 
 const SHOPIFY_BODY_KEY_FEATURES_FIELD_CANDIDATES = [
@@ -147,6 +120,36 @@ const SHOPIFY_BODY_KEY_FEATURES_FIELD_CANDIDATES = [
   'shopify_rest_body_key_features',
 ] as const;
 
+const SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES = [
+  'Type',
+  'Product Type',
+  'Shopify REST Product Type',
+  'Shopify Product Type',
+  'Shopify GraphQL Product Type',
+  'Shopify REST Category',
+  'Shopify Category',
+  'Shopify Product Category',
+  'Shopify REST Product Category',
+  'Google Product Category',
+  'Product Category',
+  'Category',
+  'shopify_rest_product_type',
+  'shopify_product_type',
+  'shopify_product_category',
+  'shopify_rest_product_category',
+  'google_product_category',
+  'product_category',
+] as const;
+
+const SHOPIFY_GRAPHQL_CATEGORY_ID_FIELD_CANDIDATES = [
+  'Shopify GraphQL Category ID',
+  'Shopify Extra Category ID',
+  'Shopify Category ID',
+  'shopify_graphql_category_id',
+  'shopify_extra_category_id',
+  'shopify_category_id',
+] as const;
+
 const EBAY_IMAGE_LIST_FIELD_CANDIDATES = [
   'eBay Inventory Product ImageURLs JSON',
   'ebay_inventory_product_imageurls_json',
@@ -158,116 +161,80 @@ const EBAY_IMAGE_LIST_FIELD_CANDIDATES = [
   'image_urls',
 ] as const;
 
-function normalizeObjectWithTemplate(
-  source: Record<string, unknown> | undefined,
-  orderedKeys: readonly string[],
-  template: Record<string, unknown>,
-): Record<string, unknown> {
-  const sourceRecord = source ?? {};
-  const normalizedEntries = orderedKeys.map((key) => {
-    const sourceValue = sourceRecord[key];
-    const templateValue = template[key];
-    const nextValue = sourceValue === undefined || sourceValue === null ? templateValue : sourceValue;
-    return [key, nextValue] as const;
-  });
-  const remainingEntries = Object.entries(sourceRecord).filter(([key]) => !orderedKeys.includes(key));
-  return Object.fromEntries([...normalizedEntries, ...remainingEntries]);
-}
-
-function normalizeShopifyCreatePayloadForViewer(payload: ShopifyCreateProductRequest): ShopifyCreateProductRequest {
-  const productRecord = payload.product as unknown as Record<string, unknown>;
-
-  const variantsSource = Array.isArray(productRecord.variants)
-    ? productRecord.variants
-    : [];
-  const optionsSource = Array.isArray(productRecord.options)
-    ? productRecord.options
-    : [];
-  const imagesSource = Array.isArray(productRecord.images)
-    ? productRecord.images
-    : [];
-  const metafieldsSource = Array.isArray(productRecord.metafields)
-    ? productRecord.metafields
-    : [];
-
-  const variants = (variantsSource.length > 0 ? variantsSource : [EMPTY_SHOPIFY_CREATE_VARIANT_TEMPLATE])
-    .map((variant) => normalizeObjectWithTemplate(variant as Record<string, unknown>, SHOPIFY_CREATE_VARIANT_KEY_ORDER, EMPTY_SHOPIFY_CREATE_VARIANT_TEMPLATE));
-  const options = (optionsSource.length > 0 ? optionsSource : [EMPTY_SHOPIFY_CREATE_OPTION_TEMPLATE])
-    .map((option) => normalizeObjectWithTemplate(option as Record<string, unknown>, SHOPIFY_CREATE_OPTION_KEY_ORDER, EMPTY_SHOPIFY_CREATE_OPTION_TEMPLATE));
-  const images = (imagesSource.length > 0 ? imagesSource : [EMPTY_SHOPIFY_CREATE_IMAGE_TEMPLATE])
-    .map((image) => normalizeObjectWithTemplate(image as Record<string, unknown>, SHOPIFY_CREATE_IMAGE_KEY_ORDER, EMPTY_SHOPIFY_CREATE_IMAGE_TEMPLATE));
-  const metafields = (metafieldsSource.length > 0 ? metafieldsSource : [EMPTY_SHOPIFY_CREATE_METAFIELD_TEMPLATE])
-    .map((metafield) => normalizeObjectWithTemplate(metafield as Record<string, unknown>, SHOPIFY_CREATE_METAFIELD_KEY_ORDER, EMPTY_SHOPIFY_CREATE_METAFIELD_TEMPLATE));
-
-  const productTemplate: Record<string, unknown> = {
-    title: '',
-    body_html: '',
-    vendor: '',
-    product_type: '',
-    handle: '',
-    status: '',
-    tags: '',
-    published_scope: 'web',
-    template_suffix: 'product-template',
-    variants,
-    options,
-    images,
-    metafields,
-  };
-
-  const normalizedProduct = normalizeObjectWithTemplate(productRecord, SHOPIFY_CREATE_PRODUCT_KEY_ORDER, productTemplate);
-
-  return {
-    product: normalizedProduct,
-  } as unknown as ShopifyCreateProductRequest;
-}
-
-const SHOPIFY_CREATE_PAYLOAD_DOCS_EXAMPLE: ShopifyCreateProductRequest = {
-  product: {
-    title: "Example Product Title",
-    body_html: "<p>Example product description in HTML.</p>",
-    vendor: "Example Vendor",
-    product_type: "Example Product Type",
-    handle: "example-product-title",
-    status: "draft",
-    tags: "Tag 1, Tag 2",
-    published_scope: "web",
-    template_suffix: "product-template",
-    variants: [
-      {
-        price: "99.99",
-        sku: "EXAMPLE-SKU-1",
-        inventory_quantity: 1,
-        inventory_management: "shopify",
-        inventory_policy: "deny",
-        taxable: true,
-        requires_shipping: true,
-      },
-    ],
-    options: [
-      {
-        name: "Condition",
-        position: 1,
-        values: ["New"],
-      },
-    ],
-    images: [
-      {
-        src: "https://example.com/image-1.jpg",
-        alt: "Example image alt text",
-        position: 1,
-      },
-    ],
-    metafields: [
-      {
-        namespace: "custom",
-        key: "example_key",
-        type: "single_line_text_field",
-        value: "Example metafield value",
-      },
-    ],
+const SHOPIFY_UNIFIED_PRODUCT_SET_DOCS_EXAMPLE: {
+  operationName: string;
+  query: string;
+  variables: ShopifyUnifiedProductSetRequest;
+} = {
+  operationName: 'ProductSet',
+  query: SHOPIFY_PRODUCT_SET_MUTATION,
+  variables: {
+    input: {
+      title: 'Example Product Title',
+      descriptionHtml: '<p>Example product description in HTML.</p>',
+      vendor: SHOPIFY_DEFAULT_VENDOR,
+      productType: 'Turntables & Record Players',
+      handle: 'example-product-title',
+      status: 'DRAFT',
+      category: 'gid://shopify/TaxonomyCategory/el-2-3-10',
+      tags: ['Vintage Audio', 'Turntable'],
+      templateSuffix: 'product-template',
+      files: [
+        {
+          originalSource: 'https://example.com/image-1.jpg',
+          alt: 'Example image alt text',
+          contentType: 'IMAGE',
+        },
+      ],
+      productOptions: [
+        {
+          name: 'Condition',
+          position: 1,
+          values: [{ name: 'New' }],
+        },
+      ],
+      variants: [
+        {
+          optionValues: [
+            {
+              optionName: 'Condition',
+              name: 'New',
+            },
+          ],
+          price: '99.99',
+          sku: 'EXAMPLE-SKU-1',
+          inventoryPolicy: 'DENY',
+          taxable: true,
+          inventoryItem: {
+            sku: 'EXAMPLE-SKU-1',
+            tracked: true,
+            requiresShipping: true,
+          },
+        },
+      ],
+      metafields: [
+        {
+          namespace: 'custom',
+          key: 'example_key',
+          type: 'single_line_text_field',
+          value: 'Example metafield value',
+        },
+      ],
+    },
+    synchronous: true,
   },
 };
+
+function isVendorFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'shopify rest vendor'
+    || normalized === 'shopify vendor'
+    || normalized === 'shopify graphql vendor'
+    || normalized === 'vendor'
+    || normalized === 'brand'
+    || normalized === 'manufacturer'
+    || normalized === 'shopify_rest_vendor';
+}
 
 const EBAY_DRAFT_PAYLOAD_DOCS_EXAMPLE = {
   inventoryItem: {
@@ -351,6 +318,12 @@ export function ListingApprovalTab({
     saveRecord,
   } = useApprovalStore();
   const pushNotification = useNotificationStore((state) => state.push);
+  const [shopifyCategoryResolution, setShopifyCategoryResolution] = useState<ShopifyCategoryResolutionState>({
+    status: 'idle',
+    match: null,
+    error: '',
+  });
+  const [formDerivedBodyHtmlPreview, setFormDerivedBodyHtmlPreview] = useState('');
 
   const allFieldNames = useMemo(() => {
     const names = new Set<string>();
@@ -425,24 +398,372 @@ export function ListingApprovalTab({
 
   const shopifyDraftCreatePayload = useMemo(() => {
     if (approvalChannel !== 'shopify' || !createShopifyDraftOnApprove || !mergedDraftSourceFields) return null;
-
     const draftProduct = buildShopifyDraftProductFromApprovalFields(mergedDraftSourceFields);
     return buildShopifyCreateProductRequestWithRequiredFields(draftProduct);
   }, [approvalChannel, createShopifyDraftOnApprove, mergedDraftSourceFields]);
-
-  const shopifyDraftCreatePayloadJson = useMemo(() => {
-    if (!shopifyDraftCreatePayload) return '';
-    try {
-      return JSON.stringify(normalizeShopifyCreatePayloadForViewer(shopifyDraftCreatePayload), null, 2);
-    } catch {
-      return '{\n  "error": "Unable to serialize payload"\n}';
-    }
-  }, [shopifyDraftCreatePayload]);
 
   const currentPageDraftProduct = useMemo(() => {
     if (approvalChannel !== 'shopify' || !mergedDraftSourceFields) return null;
     return buildShopifyDraftProductFromApprovalFields(mergedDraftSourceFields);
   }, [approvalChannel, mergedDraftSourceFields]);
+
+  const currentPageBodyHtml = useMemo(
+    () => currentPageDraftProduct?.body_html ?? '',
+    [currentPageDraftProduct],
+  );
+
+  const currentPageProductDescriptionResolution = useMemo(() => {
+    if (approvalChannel !== 'shopify' || !mergedDraftSourceFields) {
+      return {
+        sourceFieldName: '',
+        sourceType: 'none',
+        value: '',
+      };
+    }
+
+    const entries = Object.entries(mergedDraftSourceFields);
+    for (const candidate of SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES) {
+      const direct = mergedDraftSourceFields[candidate];
+      if (typeof direct === 'string' && direct.trim().length > 0) {
+        return {
+          sourceFieldName: candidate,
+          sourceType: 'exact',
+          value: direct,
+        };
+      }
+
+      const normalizedCandidate = candidate.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const match = entries.find(([key]) => key.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedCandidate);
+      if (match && typeof match[1] === 'string' && match[1].trim().length > 0) {
+        return {
+          sourceFieldName: match[0],
+          sourceType: 'normalized',
+          value: match[1],
+        };
+      }
+    }
+
+    const fuzzyDescription = entries.find(([key, value]) => {
+      if (typeof value !== 'string' || value.trim().length === 0) return false;
+      const normalized = key.toLowerCase();
+      const isDescriptionLike = normalized.includes('description');
+      const isHtmlLike = normalized.includes('html') || normalized.includes('body html');
+      const isKeyFeaturesLike = normalized.includes('key feature') || normalized.includes('features');
+      return isDescriptionLike && !isHtmlLike && !isKeyFeaturesLike;
+    });
+    if (fuzzyDescription) {
+      return {
+        sourceFieldName: fuzzyDescription[0],
+        sourceType: 'fuzzy',
+        value: fuzzyDescription[1] as string,
+      };
+    }
+
+    return {
+      sourceFieldName: '',
+      sourceType: 'none',
+      value: '',
+    };
+  }, [approvalChannel, mergedDraftSourceFields]);
+
+  const currentPageProductDescription = currentPageProductDescriptionResolution.value;
+
+  const currentPageProductCategoryResolution = useMemo(() => {
+    if (approvalChannel !== 'shopify' || !mergedDraftSourceFields) {
+      return {
+        sourceFieldName: '',
+        sourceType: 'none',
+        value: currentPageDraftProduct?.product_type ?? '',
+      };
+    }
+
+    const entries = Object.entries(mergedDraftSourceFields);
+    for (const candidate of SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES) {
+      const direct = mergedDraftSourceFields[candidate];
+      if (typeof direct === 'string' && direct.trim().length > 0) {
+        return {
+          sourceFieldName: candidate,
+          sourceType: 'exact',
+          value: direct,
+        };
+      }
+
+      const normalizedCandidate = candidate.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const match = entries.find(([key]) => key.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedCandidate);
+      if (match && typeof match[1] === 'string' && match[1].trim().length > 0) {
+        return {
+          sourceFieldName: match[0],
+          sourceType: 'normalized',
+          value: match[1],
+        };
+      }
+    }
+
+    const fuzzyCategory = entries.find(([key, value]) => {
+      if (typeof value !== 'string' || value.trim().length === 0) return false;
+      const normalized = key.toLowerCase();
+      return normalized.includes('category') || normalized.includes('product type');
+    });
+    if (fuzzyCategory) {
+      return {
+        sourceFieldName: fuzzyCategory[0],
+        sourceType: 'fuzzy',
+        value: fuzzyCategory[1] as string,
+      };
+    }
+
+    return {
+      sourceFieldName: '',
+      sourceType: 'draft-product',
+      value: currentPageDraftProduct?.product_type ?? '',
+    };
+  }, [approvalChannel, mergedDraftSourceFields, currentPageDraftProduct]);
+
+  const currentPageProductCategory = currentPageProductCategoryResolution.value;
+
+  const currentPageCategoryIdResolution = useMemo(() => {
+    if (approvalChannel !== 'shopify' || !mergedDraftSourceFields) {
+      return {
+        sourceFieldName: '',
+        sourceType: 'none',
+        value: '',
+      };
+    }
+
+    const entries = Object.entries(mergedDraftSourceFields);
+    for (const candidate of SHOPIFY_GRAPHQL_CATEGORY_ID_FIELD_CANDIDATES) {
+      const direct = mergedDraftSourceFields[candidate];
+      if (typeof direct === 'string' && direct.trim().length > 0) {
+        return {
+          sourceFieldName: candidate,
+          sourceType: 'exact',
+          value: direct,
+        };
+      }
+
+      const normalizedCandidate = candidate.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const match = entries.find(([key]) => key.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedCandidate);
+      if (match && typeof match[1] === 'string' && match[1].trim().length > 0) {
+        return {
+          sourceFieldName: match[0],
+          sourceType: 'normalized',
+          value: match[1],
+        };
+      }
+    }
+
+    return {
+      sourceFieldName: '',
+      sourceType: 'none',
+      value: '',
+    };
+  }, [approvalChannel, mergedDraftSourceFields]);
+
+  const shopifyCategoryLookupValue = currentPageCategoryIdResolution.value || currentPageProductCategory;
+
+  useEffect(() => {
+    if (approvalChannel !== 'shopify') {
+      setShopifyCategoryResolution({
+        status: 'idle',
+        match: null,
+        error: '',
+      });
+      return;
+    }
+
+    const lookupValue = shopifyCategoryLookupValue.trim();
+    if (!lookupValue) {
+      setShopifyCategoryResolution({
+        status: 'idle',
+        match: null,
+        error: '',
+      });
+      return;
+    }
+
+    let cancelled = false;
+    setShopifyCategoryResolution({
+      status: 'resolving',
+      match: null,
+      error: '',
+    });
+
+    const resolveCategory = async () => {
+      try {
+        const match = await shopifyService.resolveTaxonomyCategory(lookupValue);
+        if (cancelled) return;
+
+        if (match) {
+          setShopifyCategoryResolution({
+            status: 'resolved',
+            match,
+            error: '',
+          });
+          return;
+        }
+
+        setShopifyCategoryResolution({
+          status: 'unresolved',
+          match: null,
+          error: '',
+        });
+      } catch (resolveError) {
+        if (cancelled) return;
+        setShopifyCategoryResolution({
+          status: 'error',
+          match: null,
+          error: resolveError instanceof Error ? resolveError.message : 'Unable to resolve Shopify taxonomy category.',
+        });
+      }
+    };
+
+    void resolveCategory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [approvalChannel, shopifyCategoryLookupValue]);
+
+  const finalShopifyCreatePayload = useMemo(() => {
+    if (approvalChannel !== 'shopify' || !createShopifyDraftOnApprove || !selectedRecord) return null;
+
+    const baseCreatePayload: ShopifyCreateProductRequest = shopifyDraftCreatePayload
+      ?? buildShopifyCreateProductRequestWithRequiredFields(
+        buildShopifyDraftProductFromApprovalFields(mergedDraftSourceFields ?? selectedRecord.fields),
+      );
+    const baseProductRecord = (baseCreatePayload.product as unknown as Record<string, unknown>) ?? {};
+    const { body_html: _ignoredBodyHtml, ...baseProductWithoutBodyHtml } = baseProductRecord;
+
+    return {
+      product: {
+        ...baseProductWithoutBodyHtml,
+        body_html: (
+          currentPageBodyHtml
+          || currentPageProductDescription
+          || (typeof baseProductRecord.body_html === 'string' ? baseProductRecord.body_html : '')
+        ),
+        product_type: (
+          trimShopifyProductType(currentPageProductCategory)
+          || trimShopifyProductType(typeof baseProductWithoutBodyHtml.product_type === 'string' ? baseProductWithoutBodyHtml.product_type : '')
+        ),
+      } as unknown as ShopifyCreateProductRequest['product'],
+    } as ShopifyCreateProductRequest;
+  }, [
+    approvalChannel,
+    createShopifyDraftOnApprove,
+    selectedRecord,
+    shopifyDraftCreatePayload,
+    mergedDraftSourceFields,
+    currentPageProductDescription,
+    currentPageProductCategory,
+    currentPageBodyHtml,
+  ]);
+
+  const effectiveShopifyCreatePayload = useMemo(() => {
+    if (!finalShopifyCreatePayload) return null;
+
+    const rawExistingProductId = formValues['Shopify REST Product ID']?.trim();
+    const parsedExistingProductId = Number(rawExistingProductId);
+    const existingProductId = Number.isFinite(parsedExistingProductId) && parsedExistingProductId > 0
+      ? parsedExistingProductId
+      : undefined;
+    const explicitCategoryId = currentPageCategoryIdResolution.value.trim();
+    const previewCategoryId = explicitCategoryId
+      || shopifyCategoryResolution.match?.id
+      || (shopifyCategoryLookupValue.trim() ? '<resolved-from-taxonomy-lookup>' : undefined);
+
+    return buildShopifyUnifiedProductSetRequest(finalShopifyCreatePayload.product, {
+      categoryId: previewCategoryId,
+      existingProductId,
+    });
+  }, [
+    currentPageCategoryIdResolution.value,
+    finalShopifyCreatePayload,
+    formValues,
+    shopifyCategoryLookupValue,
+    shopifyCategoryResolution.match,
+  ]);
+
+  const shopifyDraftCreatePayloadJson = useMemo(() => {
+    if (!effectiveShopifyCreatePayload) return '';
+    try {
+      return JSON.stringify({
+        operationName: 'ProductSet',
+        query: SHOPIFY_PRODUCT_SET_MUTATION,
+        variables: effectiveShopifyCreatePayload,
+      }, null, 2);
+    } catch {
+      return '{\n  "error": "Unable to serialize payload"\n}';
+    }
+  }, [effectiveShopifyCreatePayload]);
+
+  const shopifyCategorySyncPreviewJson = useMemo(() => {
+    if (approvalChannel !== 'shopify') return '';
+    if (!shopifyCategoryLookupValue.trim()) return '';
+    if (currentPageCategoryIdResolution.value.trim() || shopifyCategoryResolution.match?.id) return '';
+
+    const preview = {
+      operationName: 'SearchTaxonomyCategories',
+      query: SHOPIFY_SEARCH_TAXONOMY_CATEGORIES_QUERY,
+      variables: {
+        search: shopifyCategoryLookupValue,
+        first: 10,
+      },
+      note: 'Only needed when the current page value is a taxonomy breadcrumb instead of a category GID.',
+    };
+
+    try {
+      return JSON.stringify(preview, null, 2);
+    } catch {
+      return '{\n  "error": "Unable to serialize GraphQL preview"\n}';
+    }
+  }, [approvalChannel, currentPageCategoryIdResolution.value, shopifyCategoryLookupValue, shopifyCategoryResolution.match]);
+
+  const resolveShopifyCategoryId = async (): Promise<string | null | undefined> => {
+    const explicitCategoryId = currentPageCategoryIdResolution.value.trim();
+    if (explicitCategoryId) return explicitCategoryId;
+
+    const lookupValue = shopifyCategoryLookupValue.trim();
+    if (!lookupValue) return undefined;
+
+    try {
+      const match = shopifyCategoryResolution.match ?? await shopifyService.resolveTaxonomyCategory(lookupValue);
+      if (match) {
+        if (shopifyCategoryResolution.match?.id !== match.id) {
+          setShopifyCategoryResolution({
+            status: 'resolved',
+            match,
+            error: '',
+          });
+        }
+        return match.id;
+      }
+
+      setShopifyCategoryResolution({
+        status: 'unresolved',
+        match: null,
+        error: '',
+      });
+      pushNotification({
+        tone: 'error',
+        title: 'Shopify category not resolved',
+        message: `Could not resolve a Shopify taxonomy category from "${lookupValue}".`,
+      });
+      return null;
+    } catch (categoryError) {
+      setShopifyCategoryResolution({
+        status: 'error',
+        match: null,
+        error: categoryError instanceof Error ? categoryError.message : 'Unable to resolve Shopify taxonomy category.',
+      });
+      pushNotification({
+        tone: 'error',
+        title: 'Shopify category resolution failed',
+        message: describeShopifyCreateError(categoryError),
+      });
+      return null;
+    }
+  };
 
   const ebayDraftPayloadBundle = useMemo(() => {
     if (approvalChannel !== 'ebay' || !mergedDraftSourceFields) return null;
@@ -459,31 +780,13 @@ export function ListingApprovalTab({
   }, [ebayDraftPayloadBundle]);
 
   const shopifyCreatePayloadDocsJson = useMemo(() => {
-    if (approvalChannel !== 'shopify') return '{\n  "product": {}\n}';
+    if (approvalChannel !== 'shopify') return '{\n  "input": {}\n}';
     try {
-      const docsVariants = SHOPIFY_CREATE_PAYLOAD_DOCS_EXAMPLE.product.variants ?? [];
-      const currentPageVariantPrice = currentPageDraftProduct?.variants?.[0]?.price || '';
-      return JSON.stringify(normalizeShopifyCreatePayloadForViewer({
-        ...SHOPIFY_CREATE_PAYLOAD_DOCS_EXAMPLE,
-        product: {
-          ...SHOPIFY_CREATE_PAYLOAD_DOCS_EXAMPLE.product,
-          handle: currentPageDraftProduct?.handle || '',
-          body_html: currentPageDraftProduct?.body_html || '',
-          variants: docsVariants.length > 0
-            ? [
-                {
-                  ...docsVariants[0],
-                  price: currentPageVariantPrice,
-                },
-                ...docsVariants.slice(1),
-              ]
-            : docsVariants,
-        },
-      }), null, 2);
+      return JSON.stringify(SHOPIFY_UNIFIED_PRODUCT_SET_DOCS_EXAMPLE, null, 2);
     } catch {
-      return '{\n  "product": {}\n}';
+      return '{\n  "input": {}\n}';
     }
-  }, [approvalChannel, currentPageDraftProduct]);
+  }, [approvalChannel]);
 
   const ebayPayloadDocsJson = useMemo(() => {
     if (approvalChannel !== 'ebay') return '{\n  "inventoryItem": {},\n  "offer": {}\n}';
@@ -585,11 +888,14 @@ export function ListingApprovalTab({
       .filter(([fieldName, currentValue]) => {
         if (fieldName === SHIPPING_SERVICE_FIELD) return false;
         if (fieldName === CONDITION_FIELD) return false;
+        const normalizedFieldName = fieldName.trim().toLowerCase();
+        if (normalizedFieldName === 'shopify rest product id' || normalizedFieldName === 'shopify product id') return false;
+          if (approvalChannel === 'shopify' && isVendorFieldName(fieldName)) return false;
         const originalValue = toFormValue(selectedRecord.fields[fieldName]);
         return currentValue !== originalValue;
       })
       .map(([fieldName]) => fieldName);
-  }, [formValues, selectedRecord]);
+        }, [approvalChannel, formValues, selectedRecord]);
 
   const hasUnsavedChanges = changedFieldNames.length > 0;
 
@@ -633,6 +939,7 @@ export function ListingApprovalTab({
 
         <ApprovalFormFields
           allFieldNames={allFieldNames}
+          writableFieldNames={Object.keys(selectedRecord.fields)}
           approvedFieldName={approvedFieldName}
           formValues={formValues}
           fieldKinds={fieldKinds}
@@ -640,6 +947,8 @@ export function ListingApprovalTab({
           saving={saving}
           setFormValue={setFormValue}
           suppressImageScalarFields={approvalChannel === 'shopify' || approvalChannel === 'ebay'}
+          showBodyHtmlPreview={false}
+          onBodyHtmlPreviewChange={setFormDerivedBodyHtmlPreview}
           originalFieldValues={Object.fromEntries(
             Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
           )}
@@ -686,7 +995,50 @@ export function ListingApprovalTab({
                 recordId: selectedRecord.id,
                 tableReference,
               });
-              void saveRecord(false, selectedRecord, tableReference, tableName, approvedFieldName, () => {}, 'full');
+
+              const runSave = async () => {
+                let saveSucceeded = false;
+                await saveRecord(false, selectedRecord, tableReference, tableName, approvedFieldName, () => {
+                  saveSucceeded = true;
+                }, 'full');
+
+                if (!saveSucceeded || approvalChannel !== 'shopify') return;
+
+                const existingProductId = formValues['Shopify REST Product ID']?.trim();
+                if (!existingProductId) return;
+
+                const parsedExistingId = Number(existingProductId);
+                if (!Number.isFinite(parsedExistingId) || parsedExistingId <= 0) return;
+
+                try {
+                  const updatePayload: ShopifyCreateProductRequest = finalShopifyCreatePayload
+                    ?? buildShopifyCreateProductRequestWithRequiredFields(
+                      buildShopifyDraftProductFromApprovalFields(mergedDraftSourceFields ?? selectedRecord.fields),
+                    );
+                  const categoryId = await resolveShopifyCategoryId();
+                  if (categoryId === null) return;
+
+                  const unifiedRequest = buildShopifyUnifiedProductSetRequest(updatePayload.product, {
+                    categoryId: categoryId ?? undefined,
+                    existingProductId: parsedExistingId,
+                  });
+
+                  await shopifyService.upsertProductWithUnifiedRequest(unifiedRequest);
+                  pushNotification({
+                    tone: 'success',
+                    title: 'Shopify draft updated',
+                    message: `Draft product #${existingProductId} was updated with the latest saved listing fields.`,
+                  });
+                } catch (updateError) {
+                  pushNotification({
+                    tone: 'error',
+                    title: 'Shopify draft update failed',
+                    message: describeShopifyCreateError(updateError),
+                  });
+                }
+              };
+
+              void runSave();
             }}
             disabled={saving}
           >
@@ -714,6 +1066,10 @@ export function ListingApprovalTab({
               const runApproval = async () => {
                 if (createShopifyDraftOnApprove) {
                   const existingProductId = formValues[SHOPIFY_PRODUCT_ID_FIELD]?.trim();
+                  const createPayload: ShopifyCreateProductRequest = finalShopifyCreatePayload
+                    ?? buildShopifyCreateProductRequestWithRequiredFields(
+                      buildShopifyDraftProductFromApprovalFields(mergedDraftSourceFields ?? selectedRecord.fields),
+                    );
                   let shouldCreateDraft = true;
 
                   if (existingProductId) {
@@ -722,10 +1078,33 @@ export function ListingApprovalTab({
                     if (Number.isFinite(parsedExistingId) && parsedExistingId > 0) {
                       const existingProduct = await shopifyService.getProduct(parsedExistingId);
                       if (existingProduct) {
+                        try {
+                          const categoryId = await resolveShopifyCategoryId();
+                          if (categoryId === null) return;
+
+                          const unifiedRequest = buildShopifyUnifiedProductSetRequest(createPayload.product, {
+                            categoryId: categoryId ?? undefined,
+                            existingProductId: parsedExistingId,
+                          });
+
+                          await shopifyService.upsertProductWithUnifiedRequest(unifiedRequest);
+                          pushNotification({
+                            tone: 'success',
+                            title: 'Shopify draft updated',
+                            message: `Draft product #${existingProductId} was updated with the latest listing fields before approval.`,
+                          });
+                        } catch (updateError) {
+                          pushNotification({
+                            tone: 'error',
+                            title: 'Shopify draft update failed',
+                            message: describeShopifyCreateError(updateError),
+                          });
+                          return;
+                        }
                         pushNotification({
                           tone: 'info',
                           title: 'Shopify draft already exists',
-                          message: `Product #${existingProductId} already created — skipping duplicate draft creation.`,
+                          message: `Product #${existingProductId} already existed, so it was updated instead of creating a duplicate draft.`,
                         });
                         shouldCreateDraft = false;
                       } else {
@@ -743,11 +1122,13 @@ export function ListingApprovalTab({
 
                   if (shouldCreateDraft) {
                     try {
-                      const createPayload: ShopifyCreateProductRequest = shopifyDraftCreatePayload
-                        ?? buildShopifyCreateProductRequestWithRequiredFields(
-                          buildShopifyDraftProductFromApprovalFields(mergedDraftSourceFields ?? selectedRecord.fields),
-                        );
-                      const createdProduct = await shopifyService.createProductFromRequest(createPayload);
+                      const categoryId = await resolveShopifyCategoryId();
+                      if (categoryId === null) return;
+
+                      const unifiedRequest = buildShopifyUnifiedProductSetRequest(createPayload.product, {
+                        categoryId: categoryId ?? undefined,
+                      });
+                      const createdProduct = await shopifyService.upsertProductWithUnifiedRequest(unifiedRequest);
                       const productIdStr = String(createdProduct.id);
                       const productIdNum = Number(createdProduct.id);
 
@@ -814,22 +1195,61 @@ export function ListingApprovalTab({
 
               void runApproval();
             }}
-            disabled={saving || hasUnsavedChanges}
+            disabled={saving || hasUnsavedChanges || isApproved}
           >
-            {saving ? 'Approving...' : hasUnsavedChanges ? 'Save Before Approve' : 'Approve Listing'}
+            {saving
+              ? 'Approving...'
+              : isApproved
+                ? 'Already Approved'
+                : hasUnsavedChanges
+                  ? 'Save Before Approve'
+                  : 'Approve Listing'}
           </button>
         </div>
 
         {approvalChannel === 'shopify' && createShopifyDraftOnApprove && (
-          <details className="mt-6 rounded-lg border border-[var(--line)] bg-white/5">
+          <div className="mt-6">
+            <ShopifyBodyHtmlPreview value={formDerivedBodyHtmlPreview || currentPageBodyHtml} />
+          </div>
+        )}
+
+        {approvalChannel === 'shopify' && createShopifyDraftOnApprove && (
+          <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
             <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
-              Shopify API Create Payload (Exact Request)
+              Shopify API Requests (Exact Send Path)
             </summary>
             <div className="border-t border-[var(--line)] px-3 py-3">
               <p className="m-0 mb-2 text-xs text-[var(--muted)]">
-                This is the exact JSON body sent to Shopify when you click Approve. Required fields are auto-enforced in this payload.
+                This is the exact GraphQL request envelope used when you click Approve: one <code>productSet</code> mutation plus an optional taxonomy lookup query when the page still has a breadcrumb instead of a category GID.
               </p>
-              <pre className="m-0 overflow-x-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{shopifyDraftCreatePayloadJson || '{\n  "product": {}\n}'}</pre>
+              <div className="mb-2 rounded-md border border-amber-400/35 bg-amber-500/10 px-2 py-2 text-xs text-amber-200/90">
+                <p className="m-0 font-semibold text-amber-200">Description Source Debug</p>
+                <p className="m-0 mt-1">Field: <code>{currentPageProductDescriptionResolution.sourceFieldName || '(none)'}</code></p>
+                <p className="m-0 mt-1">Match: <code>{currentPageProductDescriptionResolution.sourceType}</code></p>
+                <p className="m-0 mt-1">Resolved Length: <code>{String(currentPageProductDescription.length)}</code></p>
+              </div>
+              <div className="mb-2 rounded-md border border-sky-400/35 bg-sky-500/10 px-2 py-2 text-xs text-sky-100/90">
+                <p className="m-0 font-semibold text-sky-100">Category Sync Debug</p>
+                <p className="m-0 mt-1">Category Field: <code>{currentPageProductCategoryResolution.sourceFieldName || '(none)'}</code></p>
+                <p className="m-0 mt-1">Category Match: <code>{currentPageProductCategoryResolution.sourceType}</code></p>
+                <p className="m-0 mt-1">Category ID Field: <code>{currentPageCategoryIdResolution.sourceFieldName || '(none)'}</code></p>
+                <p className="m-0 mt-1">Lookup Value: <code>{shopifyCategoryLookupValue || '(none)'}</code></p>
+                <p className="m-0 mt-1">Resolution Status: <code>{shopifyCategoryResolution.status}</code></p>
+                <p className="m-0 mt-1">Resolved Category ID: <code>{currentPageCategoryIdResolution.value || shopifyCategoryResolution.match?.id || '(unresolved)'}</code></p>
+                <p className="m-0 mt-1">Resolved Category Name: <code>{shopifyCategoryResolution.match?.fullName || shopifyCategoryResolution.error || '(unresolved)'}</code></p>
+              </div>
+              <div className="mb-2 rounded-md border border-rose-400/35 bg-rose-500/10 px-2 py-2 text-xs text-rose-100/90">
+                <p className="m-0 font-semibold text-rose-100">Inventory Quantity Note</p>
+                <p className="m-0 mt-1">This unified GraphQL path does not include <code>inventory_quantity</code> because Shopify requires a location ID for inventory quantities and the current token cannot read locations.</p>
+              </div>
+              <p className="m-0 mb-2 text-xs text-[var(--muted)]">GraphQL <code>productSet</code> request</p>
+              <pre className="m-0 overflow-x-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{shopifyDraftCreatePayloadJson || '{\n  "query": "",\n  "variables": {\n    "input": {}\n  }\n}'}</pre>
+              {shopifyCategorySyncPreviewJson && (
+                <>
+                  <p className="m-0 mb-2 mt-3 text-xs text-[var(--muted)]">Optional taxonomy lookup query</p>
+                  <pre className="m-0 overflow-x-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{shopifyCategorySyncPreviewJson}</pre>
+                </>
+              )}
             </div>
           </details>
         )}
@@ -837,11 +1257,11 @@ export function ListingApprovalTab({
         {approvalChannel === 'shopify' && (
           <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
             <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
-              Shopify API Request Structure (Docs Example)
+              Shopify GraphQL Request Structure (Docs Example)
             </summary>
             <div className="border-t border-[var(--line)] px-3 py-3">
               <p className="m-0 mb-2 text-xs text-[var(--muted)]">
-                Reference example based on Shopify product create request structure for POST /admin/api/2024-04/products.json.
+                Reference example showing the full GraphQL request envelope sent to Shopify.
               </p>
               <pre className="m-0 overflow-x-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{shopifyCreatePayloadDocsJson}</pre>
             </div>

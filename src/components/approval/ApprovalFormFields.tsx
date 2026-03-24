@@ -9,9 +9,12 @@ import {
   SHIPPING_SERVICE_OPTIONS,
 } from '@/stores/approvalStore';
 import { buildShopifyBodyHtml } from '@/services/shopifyBodyHtml';
+import { parseShopifyTagList, serializeShopifyTagsCsv, serializeShopifyTagsJson } from '@/services/shopifyTags';
 import { ImageUrlListEditor } from './ImageUrlListEditor';
+import { ShopifyTaxonomyTypeSelect } from './ShopifyTaxonomyTypeSelect';
 import { ShopifyBodyHtmlPreview } from './ShopifyBodyHtmlPreview';
 import { ShopifyKeyFeaturesEditor } from './ShopifyKeyFeaturesEditor';
+import { ShopifyTagsEditor } from './ShopifyTagsEditor';
 
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
@@ -42,6 +45,142 @@ function toHumanReadableLabel(fieldName: string): string {
 function isReadOnlyApprovalField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'shopify rest product id' || normalized === 'shopify product id';
+}
+
+function isShopifyTypeField(fieldName: string): boolean {
+  return fieldName.trim().toLowerCase() === 'type';
+}
+
+function isShopifyCompoundTagsField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'shopify rest tags'
+    || normalized === 'shopify tags'
+    || normalized === 'shopify graphql tags'
+    || normalized === 'shopify graphql tags json'
+    || normalized === 'shopify_rest_tags'
+    || normalized === 'shopify_tags'
+    || normalized === 'shopify_graphql_tags'
+    || normalized === 'shopify_graphql_tags_json'
+    || normalized === 'tags';
+}
+
+function isShopifySingleTagField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return /^shopify\s+(rest|graphql|extra)?\s*tag\s+\d+$/.test(normalized)
+    || /^shopify_(rest|graphql|extra)?_tag_\d+$/.test(normalized);
+}
+
+function getShopifySingleTagFieldIndex(fieldName: string): number {
+  const normalized = fieldName.trim().toLowerCase();
+  const match = normalized.match(/tag(?:_|\s+)(\d+)$/);
+  return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+}
+
+function isShopifyTagsJsonField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized.includes('tags json') || normalized.endsWith('_tags_json');
+}
+
+function choosePreferredShopifyCompoundTagField(fieldNames: string[]): string | null {
+  const preferredOrder = [
+    'Tags',
+    'tags',
+    'Shopify REST Tags',
+    'Shopify Tags',
+    'shopify_rest_tags',
+    'shopify_tags',
+    'Shopify GraphQL Tags JSON',
+    'shopify_graphql_tags_json',
+    'Shopify GraphQL Tags',
+    'shopify_graphql_tags',
+  ];
+
+  const lowerMap = new Map(fieldNames.map((fieldName) => [fieldName.toLowerCase(), fieldName]));
+  for (const candidate of preferredOrder) {
+    const match = lowerMap.get(candidate.toLowerCase());
+    if (match) return match;
+  }
+
+  return fieldNames[0] ?? null;
+}
+
+interface ShopifyTagFieldStrategy {
+  sourceSingleFields: string[];
+  sourceCompoundFields: string[];
+  writeSingleFields: string[];
+  writeCompoundFields: string[];
+}
+
+function resolveShopifyTagFieldStrategy(params: {
+  formValues: Record<string, string>;
+  singleFieldNames: string[];
+  compoundFieldNames: string[];
+  writableFieldNames: string[];
+}): ShopifyTagFieldStrategy {
+  const { formValues, singleFieldNames, compoundFieldNames, writableFieldNames } = params;
+  const writableLookup = new Set(writableFieldNames.map((fieldName) => fieldName.toLowerCase()));
+  const writableSingles = singleFieldNames.filter((fieldName) => writableLookup.has(fieldName.toLowerCase()));
+  const writableCompounds = compoundFieldNames.filter((fieldName) => writableLookup.has(fieldName.toLowerCase()));
+
+  if (writableCompounds.length > 0) {
+    const preferredCompound = choosePreferredShopifyCompoundTagField(writableCompounds)
+      ?? writableCompounds[0];
+    return {
+      sourceSingleFields: [],
+      sourceCompoundFields: [preferredCompound],
+      writeSingleFields: [],
+      writeCompoundFields: [preferredCompound],
+    };
+  }
+
+  if (writableSingles.length > 0) {
+    return {
+      sourceSingleFields: writableSingles,
+      sourceCompoundFields: [],
+      writeSingleFields: writableSingles,
+      writeCompoundFields: [],
+    };
+  }
+
+  const singleFieldsWithValues = singleFieldNames.filter((fieldName) => parseShopifyTagList(formValues[fieldName] ?? '').length > 0);
+  const compoundFieldsWithValues = compoundFieldNames.filter((fieldName) => parseShopifyTagList(formValues[fieldName] ?? '').length > 0);
+
+  if (compoundFieldsWithValues.length > 0) {
+    const preferredCompound = choosePreferredShopifyCompoundTagField(compoundFieldsWithValues)
+      ?? compoundFieldsWithValues[0];
+    return {
+      sourceSingleFields: [],
+      sourceCompoundFields: [preferredCompound],
+      writeSingleFields: [],
+      writeCompoundFields: [preferredCompound],
+    };
+  }
+
+  if (singleFieldsWithValues.length > 0) {
+    return {
+      sourceSingleFields: singleFieldNames,
+      sourceCompoundFields: [],
+      writeSingleFields: singleFieldNames,
+      writeCompoundFields: [],
+    };
+  }
+
+  const preferredCompound = choosePreferredShopifyCompoundTagField(compoundFieldNames);
+  if (preferredCompound) {
+    return {
+      sourceSingleFields: [],
+      sourceCompoundFields: [preferredCompound],
+      writeSingleFields: [],
+      writeCompoundFields: [preferredCompound],
+    };
+  }
+
+  return {
+    sourceSingleFields: singleFieldNames,
+    sourceCompoundFields: [],
+    writeSingleFields: singleFieldNames,
+    writeCompoundFields: [],
+  };
 }
 
 function isShopifyBodyHtmlField(fieldName: string): boolean {
@@ -245,6 +384,7 @@ function isImageUrlListField(fieldName: string): boolean {
 
 interface ApprovalFormFieldsProps {
   allFieldNames: string[];
+  writableFieldNames?: string[];
   approvedFieldName: string;
   formValues: Record<string, string>;
   fieldKinds: Record<string, 'boolean' | 'number' | 'json' | 'text'>;
@@ -253,6 +393,8 @@ interface ApprovalFormFieldsProps {
   setFormValue: (fieldName: string, value: string) => void;
   suppressImageScalarFields?: boolean;
   originalFieldValues?: Record<string, string>;
+  showBodyHtmlPreview?: boolean;
+  onBodyHtmlPreviewChange?: (value: string) => void;
 }
 
 function isScalarImageField(fieldName: string): boolean {
@@ -273,6 +415,7 @@ function isConditionMirrorSourceField(fieldName: string): boolean {
 
 export function ApprovalFormFields({
   allFieldNames,
+  writableFieldNames = [],
   approvedFieldName,
   formValues,
   fieldKinds,
@@ -281,6 +424,8 @@ export function ApprovalFormFields({
   setFormValue,
   suppressImageScalarFields = false,
   originalFieldValues = {},
+  showBodyHtmlPreview = true,
+  onBodyHtmlPreviewChange,
 }: ApprovalFormFieldsProps) {
   const imageUrlSourceField = allFieldNames.find((fieldName) => isGenericImageUrlField(fieldName));
   const hasCanonicalConditionField = allFieldNames.some((fieldName) => fieldName.trim().toLowerCase() === CONDITION_FIELD.toLowerCase());
@@ -288,6 +433,52 @@ export function ApprovalFormFields({
   const shopifyKeyFeaturesFieldName = allFieldNames.find((fieldName) => isShopifyKeyFeaturesField(fieldName));
   const shopifyBodyHtmlFieldName = allFieldNames.find((fieldName) => isShopifyBodyHtmlPrimaryField(fieldName));
   const shopifyBodyHtmlTemplateFieldName = allFieldNames.find((fieldName) => isShopifyBodyHtmlTemplateField(fieldName));
+  const shopifyCompoundTagFieldNames = useMemo(
+    () => allFieldNames.filter((fieldName) => isShopifyCompoundTagsField(fieldName)),
+    [allFieldNames],
+  );
+  const shopifySingleTagFieldNames = useMemo(
+    () => allFieldNames
+      .filter((fieldName) => isShopifySingleTagField(fieldName))
+      .sort((left, right) => getShopifySingleTagFieldIndex(left) - getShopifySingleTagFieldIndex(right)),
+    [allFieldNames],
+  );
+  const shopifyTagStrategy = useMemo(
+    () => resolveShopifyTagFieldStrategy({
+      formValues,
+      singleFieldNames: shopifySingleTagFieldNames,
+      compoundFieldNames: shopifyCompoundTagFieldNames,
+      writableFieldNames,
+    }),
+    [formValues, shopifyCompoundTagFieldNames, shopifySingleTagFieldNames, writableFieldNames],
+  );
+  const hasShopifyTagEditor = shopifyCompoundTagFieldNames.length > 0 || shopifySingleTagFieldNames.length > 0;
+  const shopifyTagValues = useMemo(() => {
+    const compoundTags = shopifyTagStrategy.sourceCompoundFields.flatMap((fieldName) => parseShopifyTagList(formValues[fieldName] ?? ''));
+    const singleTags = shopifyTagStrategy.sourceSingleFields.flatMap((fieldName) => parseShopifyTagList(formValues[fieldName] ?? ''));
+    return parseShopifyTagList([...singleTags, ...compoundTags]);
+  }, [formValues, shopifyTagStrategy.sourceCompoundFields, shopifyTagStrategy.sourceSingleFields]);
+
+  function setShopifyTagValues(nextTags: string[]) {
+    const normalizedTags = parseShopifyTagList(nextTags);
+
+    shopifyTagStrategy.writeSingleFields.forEach((fieldName, index) => {
+      setFormValue(fieldName, normalizedTags[index] ?? '');
+    });
+
+    shopifyTagStrategy.writeCompoundFields.forEach((fieldName) => {
+      const fieldKind = fieldKinds[fieldName] ?? 'text';
+      setFormValue(
+        fieldName,
+        normalizedTags.length === 0
+          ? ''
+          : fieldKind === 'json' || isShopifyTagsJsonField(fieldName)
+          ? serializeShopifyTagsJson(normalizedTags)
+          : serializeShopifyTagsCsv(normalizedTags),
+      );
+    });
+  }
+
   const derivedShopifyBodyHtml = useMemo(() => {
     if (!shopifyBodyDescriptionFieldName && !shopifyKeyFeaturesFieldName) return '';
 
@@ -318,12 +509,17 @@ export function ApprovalFormFields({
     formValues,
   ]);
 
+  useEffect(() => {
+    onBodyHtmlPreviewChange?.(derivedShopifyBodyHtml);
+  }, [derivedShopifyBodyHtml, onBodyHtmlPreviewChange]);
+
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {allFieldNames.map((fieldName) => {
         if (isShippingServiceField(fieldName)) return null;
         if (fieldName === approvedFieldName) return null;
         if (isHiddenApprovalField(fieldName)) return null;
+        if (hasShopifyTagEditor && (isShopifyCompoundTagsField(fieldName) || isShopifySingleTagField(fieldName))) return null;
         if (isShopifyBodyDescriptionField(fieldName)) return null;
         if (isShopifyBodyHtmlField(fieldName)) return null;
         if (isShopifyKeyFeaturesField(fieldName)) return null;
@@ -379,6 +575,19 @@ export function ApprovalFormFields({
                 ))}
               </select>
             </label>
+          );
+        }
+
+        if (isShopifyTypeField(fieldName)) {
+          return (
+            <ShopifyTaxonomyTypeSelect
+              key={fieldName}
+              fieldName={fieldName}
+              label={toHumanReadableLabel(fieldName)}
+              value={value}
+              onChange={(nextValue) => setFormValue(fieldName, nextValue)}
+              disabled={inputDisabled}
+            />
           );
         }
 
@@ -445,7 +654,16 @@ export function ApprovalFormFields({
         />
       )}
 
-      {(shopifyBodyDescriptionFieldName || shopifyKeyFeaturesFieldName || shopifyBodyHtmlFieldName) && (
+      {hasShopifyTagEditor && (
+        <ShopifyTagsEditor
+          tags={shopifyTagValues}
+          onChange={setShopifyTagValues}
+          disabled={saving}
+          maxTags={shopifyTagStrategy.writeSingleFields.length > 0 ? shopifyTagStrategy.writeSingleFields.length : undefined}
+        />
+      )}
+
+      {showBodyHtmlPreview && (shopifyBodyDescriptionFieldName || shopifyKeyFeaturesFieldName || shopifyBodyHtmlFieldName) && (
         <ShopifyBodyHtmlPreview value={derivedShopifyBodyHtml} />
       )}
 

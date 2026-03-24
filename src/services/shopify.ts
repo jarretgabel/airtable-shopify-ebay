@@ -2,11 +2,33 @@ import axios, { AxiosInstance } from 'axios';
 import { requireEnv, requireOneOfEnv } from '@/config/runtimeEnv';
 import { logServiceError } from '@/services/logger';
 import {
+  ShopifyMetafield,
   ShopifyProduct,
   ShopifyProductResponse,
   ShopifyProductsResponse,
   ShopifyProductVariant,
 } from '@/types/shopify';
+
+interface ShopifyGraphQlError {
+  message?: string;
+}
+
+interface ShopifyGraphQlResponse<TData> {
+  data?: TData;
+  errors?: ShopifyGraphQlError[];
+}
+
+interface ShopifyGraphQlUserError {
+  field?: string[] | null;
+  message: string;
+}
+
+export interface ShopifyTaxonomyCategoryMatch {
+  id: string;
+  fullName: string;
+  name: string;
+  isLeaf: boolean;
+}
 
 const READ_ONLY_CREATE_KEYS = new Set([
   'id',
@@ -33,10 +55,19 @@ function sanitizeForShopifyCreate(value: unknown): unknown {
   }
 
   if (typeof value === 'object') {
-    const entries = Object.entries(value as Record<string, unknown>)
-      .filter(([key]) => !READ_ONLY_CREATE_KEYS.has(key))
+    const sourceRecord = value as Record<string, unknown>;
+    const explicitBodyHtml = sourceRecord.body_html;
+    const legacyDescription = sourceRecord.description;
+    const normalizedBodyHtml = explicitBodyHtml ?? legacyDescription;
+
+    const entries = Object.entries(sourceRecord)
+      .filter(([key]) => !READ_ONLY_CREATE_KEYS.has(key) && key !== 'body_html' && key !== 'description')
       .map(([key, child]) => [key, sanitizeForShopifyCreate(child)] as const)
       .filter(([, child]) => child !== undefined);
+
+    if (normalizedBodyHtml !== undefined) {
+      entries.push(['body_html', sanitizeForShopifyCreate(normalizedBodyHtml)]);
+    }
 
     return Object.fromEntries(entries);
   }
@@ -54,6 +85,323 @@ export function prepareShopifyCreateProductRequest(product: ShopifyProduct): { p
 }
 
 export type ShopifyCreateProductRequest = ReturnType<typeof prepareShopifyCreateProductRequest>;
+
+type ShopifyGraphQlProductStatus = 'ACTIVE' | 'ARCHIVED' | 'DRAFT';
+type ShopifyGraphQlInventoryPolicy = 'CONTINUE' | 'DENY';
+type ShopifyGraphQlWeightUnit = 'GRAMS' | 'KILOGRAMS' | 'OUNCES' | 'POUNDS';
+
+export interface ShopifyUnifiedProductSetIdentifier {
+  id?: string;
+  handle?: string;
+}
+
+export interface ShopifyUnifiedProductSetFileInput {
+  originalSource: string;
+  alt?: string;
+  contentType: 'IMAGE';
+}
+
+export interface ShopifyUnifiedProductSetOptionValueInput {
+  name: string;
+}
+
+export interface ShopifyUnifiedProductSetOptionInput {
+  name: string;
+  position?: number;
+  values?: ShopifyUnifiedProductSetOptionValueInput[];
+}
+
+export interface ShopifyUnifiedVariantOptionValueInput {
+  optionName: string;
+  name: string;
+}
+
+export interface ShopifyUnifiedInventoryItemInput {
+  sku?: string;
+  tracked?: boolean;
+  requiresShipping?: boolean;
+  measurement?: {
+    weight: {
+      value: number;
+      unit: ShopifyGraphQlWeightUnit;
+    };
+  };
+}
+
+export interface ShopifyUnifiedProductSetVariantInput {
+  optionValues: ShopifyUnifiedVariantOptionValueInput[];
+  price?: string;
+  sku?: string;
+  barcode?: string;
+  position?: number;
+  compareAtPrice?: string;
+  inventoryPolicy?: ShopifyGraphQlInventoryPolicy;
+  inventoryItem?: ShopifyUnifiedInventoryItemInput;
+  taxable?: boolean;
+}
+
+export interface ShopifyUnifiedProductSetInput {
+  title?: string;
+  descriptionHtml?: string;
+  vendor?: string;
+  productType?: string;
+  handle?: string;
+  status?: ShopifyGraphQlProductStatus;
+  tags?: string[];
+  templateSuffix?: string;
+  category?: string;
+  files?: ShopifyUnifiedProductSetFileInput[];
+  metafields?: ShopifyMetafield[];
+  productOptions?: ShopifyUnifiedProductSetOptionInput[];
+  variants?: ShopifyUnifiedProductSetVariantInput[];
+}
+
+export interface ShopifyUnifiedProductSetRequest {
+  input: ShopifyUnifiedProductSetInput;
+  synchronous: true;
+  identifier?: ShopifyUnifiedProductSetIdentifier;
+}
+
+export interface ShopifyUnifiedProductResult {
+  id: number;
+  adminGraphqlApiId: string;
+  title: string;
+  status?: string | null;
+}
+
+function toShopifyGraphQlStatus(status: ShopifyProduct['status'] | undefined): ShopifyGraphQlProductStatus | undefined {
+  switch (status) {
+    case 'active':
+      return 'ACTIVE';
+    case 'archived':
+      return 'ARCHIVED';
+    case 'draft':
+      return 'DRAFT';
+    default:
+      return undefined;
+  }
+}
+
+function toShopifyGraphQlInventoryPolicy(value: string | undefined): ShopifyGraphQlInventoryPolicy | undefined {
+  if (!value) return undefined;
+
+  switch (value.trim().toLowerCase()) {
+    case 'continue':
+      return 'CONTINUE';
+    case 'deny':
+      return 'DENY';
+    default:
+      return undefined;
+  }
+}
+
+function toShopifyGraphQlWeightUnit(value: string | undefined): ShopifyGraphQlWeightUnit | undefined {
+  if (!value) return undefined;
+
+  switch (value.trim().toLowerCase()) {
+    case 'g':
+    case 'gram':
+    case 'grams':
+      return 'GRAMS';
+    case 'kg':
+    case 'kilogram':
+    case 'kilograms':
+      return 'KILOGRAMS';
+    case 'oz':
+    case 'ounce':
+    case 'ounces':
+      return 'OUNCES';
+    case 'lb':
+    case 'lbs':
+    case 'pound':
+    case 'pounds':
+      return 'POUNDS';
+    default:
+      return undefined;
+  }
+}
+
+function parseShopifyNumericId(value: string | number): number {
+  if (typeof value === 'number') return value;
+
+  const match = value.match(/\/(\d+)(?:\?.*)?$/);
+  if (!match) {
+    throw new Error(`Unable to parse Shopify product ID from "${value}".`);
+  }
+
+  return Number(match[1]);
+}
+
+function toShopifyProductGid(productId: number): string {
+  return `gid://shopify/Product/${productId}`;
+}
+
+function splitShopifyTags(tags: string | undefined): string[] | undefined {
+  if (!tags) return undefined;
+
+  const normalized = tags
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function buildUnifiedProductOptions(options: ShopifyProduct['options']): ShopifyUnifiedProductSetOptionInput[] | undefined {
+  if (!options || options.length === 0) return undefined;
+
+  const normalized: ShopifyUnifiedProductSetOptionInput[] = options.reduce<ShopifyUnifiedProductSetOptionInput[]>((result, option, index) => {
+      const name = option?.name?.trim();
+      const values = Array.from(new Set((option?.values ?? []).map((value) => value.trim()).filter(Boolean)))
+        .map((value) => ({ name: value }));
+
+      if (!name || values.length === 0) return result;
+
+      result.push({
+        name,
+        position: option?.position ?? index + 1,
+        values,
+      });
+
+      return result;
+    }, []);
+
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function buildUnifiedProductFiles(images: ShopifyProduct['images']): ShopifyUnifiedProductSetFileInput[] | undefined {
+  if (!images || images.length === 0) return undefined;
+
+  const normalized = [...images]
+    .sort((left, right) => (left.position ?? 0) - (right.position ?? 0))
+    .reduce<ShopifyUnifiedProductSetFileInput[]>((result, image) => {
+      const originalSource = image?.src?.trim();
+      if (!originalSource) return result;
+
+      result.push({
+        originalSource,
+        alt: image.alt?.trim() || undefined,
+        contentType: 'IMAGE',
+      });
+
+      return result;
+    }, []);
+
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function buildUnifiedVariantInventoryItem(variant: ShopifyProductVariant): ShopifyUnifiedInventoryItemInput | undefined {
+  const sku = variant.sku?.trim() || undefined;
+  const tracked = variant.inventory_management?.trim().toLowerCase() === 'shopify' ? true : undefined;
+  const requiresShipping = typeof variant.requires_shipping === 'boolean' ? variant.requires_shipping : undefined;
+  const weightValue = typeof variant.weight === 'number' && Number.isFinite(variant.weight)
+    ? variant.weight
+    : undefined;
+  const weightUnit = toShopifyGraphQlWeightUnit(variant.weight_unit);
+
+  const inventoryItem: ShopifyUnifiedInventoryItemInput = {
+    sku,
+    tracked,
+    requiresShipping,
+    measurement: weightValue !== undefined && weightUnit
+      ? {
+          weight: {
+            value: weightValue,
+            unit: weightUnit,
+          },
+        }
+      : undefined,
+  };
+
+  if (!inventoryItem.sku && inventoryItem.tracked === undefined && inventoryItem.requiresShipping === undefined && !inventoryItem.measurement) {
+    return undefined;
+  }
+
+  return inventoryItem;
+}
+
+function buildUnifiedVariantOptionValues(
+  variant: ShopifyProductVariant,
+  options: ShopifyProduct['options'],
+): ShopifyUnifiedVariantOptionValueInput[] {
+  if (!options || options.length === 0) {
+    return [];
+  }
+
+  const variantOptionValues = [variant.option1, variant.option2, variant.option3];
+
+  return options
+    .map((option, index) => {
+      const optionName = option.name?.trim();
+      const value = variantOptionValues[index]?.trim() || option.values?.[0]?.trim() || '';
+      if (!optionName || !value) return null;
+
+      return {
+        optionName,
+        name: value,
+      } satisfies ShopifyUnifiedVariantOptionValueInput;
+    })
+    .filter((optionValue): optionValue is ShopifyUnifiedVariantOptionValueInput => optionValue !== null);
+}
+
+function buildUnifiedVariants(
+  variants: ShopifyProduct['variants'],
+  options: ShopifyProduct['options'],
+): ShopifyUnifiedProductSetVariantInput[] | undefined {
+  if (!variants || variants.length === 0) return undefined;
+
+  const normalized = variants.map((variant, index) => ({
+    optionValues: buildUnifiedVariantOptionValues(variant, options),
+    price: typeof variant.price === 'string' && variant.price.trim().length > 0 ? variant.price.trim() : undefined,
+    sku: variant.sku?.trim() || undefined,
+    barcode: variant.barcode?.trim() || undefined,
+    position: variant.position ?? index + 1,
+    compareAtPrice: typeof variant.compare_at_price === 'string' && variant.compare_at_price.trim().length > 0
+      ? variant.compare_at_price.trim()
+      : undefined,
+    inventoryPolicy: toShopifyGraphQlInventoryPolicy(variant.inventory_policy),
+    inventoryItem: buildUnifiedVariantInventoryItem(variant),
+    taxable: typeof variant.taxable === 'boolean' ? variant.taxable : undefined,
+  } satisfies ShopifyUnifiedProductSetVariantInput));
+
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+export function buildShopifyUnifiedProductSetRequest(
+  product: ShopifyProduct,
+  options?: {
+    categoryId?: string;
+    existingProductId?: number;
+  },
+): ShopifyUnifiedProductSetRequest {
+  const normalizedProduct = buildShopifyCreateProductRequestWithRequiredFields(product).product;
+  const normalizedCategoryId = options?.categoryId?.trim();
+  const unifiedOptions = buildUnifiedProductOptions(normalizedProduct.options);
+  const unifiedVariants = buildUnifiedVariants(normalizedProduct.variants, normalizedProduct.options);
+  const unifiedFiles = buildUnifiedProductFiles(normalizedProduct.images);
+
+  return {
+    input: {
+      title: normalizedProduct.title?.trim() || 'Untitled Listing',
+      descriptionHtml: normalizedProduct.body_html?.trim() || undefined,
+      vendor: normalizedProduct.vendor?.trim() || undefined,
+      productType: normalizedProduct.product_type?.trim() || undefined,
+      handle: normalizedProduct.handle?.trim() || undefined,
+      status: toShopifyGraphQlStatus(normalizedProduct.status),
+      tags: splitShopifyTags(normalizedProduct.tags),
+      templateSuffix: normalizedProduct.template_suffix?.trim() || undefined,
+      category: normalizedCategoryId || undefined,
+      metafields: normalizedProduct.metafields,
+      files: unifiedFiles,
+      productOptions: unifiedOptions,
+      variants: unifiedVariants,
+    },
+    synchronous: true,
+    identifier: options?.existingProductId
+      ? { id: toShopifyProductGid(options.existingProductId) }
+      : undefined,
+  };
+}
 
 function ensureRequiredVariant(product: ShopifyProduct): ShopifyProduct['variants'] {
   const source = Array.isArray(product.variants) && product.variants.length > 0
@@ -167,8 +515,215 @@ class ShopifyService {
   }
 
   async createProductFromRequest(payload: ShopifyCreateProductRequest): Promise<ShopifyProductResponse['product']> {
-    const response = await this.client.post<ShopifyProductResponse>('/products.json', payload);
+    const normalizedPayload = prepareShopifyCreateProductRequest(payload.product);
+    const response = await this.client.post<ShopifyProductResponse>('/products.json', normalizedPayload);
     return response.data.product;
+  }
+
+  async upsertProductWithUnifiedRequest(
+    request: ShopifyUnifiedProductSetRequest,
+  ): Promise<ShopifyUnifiedProductResult> {
+    const data = await this.graphQlRequest<{
+      productSet: {
+        product: {
+          id: string;
+          title: string;
+          status?: string | null;
+        } | null;
+        userErrors: ShopifyGraphQlUserError[];
+      };
+    }>(
+      `mutation ProductSet($input: ProductSetInput!, $identifier: ProductSetIdentifiers, $synchronous: Boolean) {
+        productSet(input: $input, identifier: $identifier, synchronous: $synchronous) {
+          product {
+            id
+            title
+            status
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }`,
+      request as unknown as Record<string, unknown>,
+    );
+
+    const userErrors = data.productSet.userErrors ?? [];
+    if (userErrors.length > 0) {
+      const message = userErrors
+        .map((error) => error.message?.trim())
+        .filter(Boolean)
+        .join('; ');
+      throw new Error(message || 'Shopify rejected the unified product mutation.');
+    }
+
+    const product = data.productSet.product;
+    if (!product?.id) {
+      throw new Error('Shopify product mutation returned no product ID.');
+    }
+
+    return {
+      id: parseShopifyNumericId(product.id),
+      adminGraphqlApiId: product.id,
+      title: product.title,
+      status: product.status,
+    };
+  }
+
+  private async graphQlRequest<TData>(query: string, variables?: Record<string, unknown>): Promise<TData> {
+    const response = await this.client.post<ShopifyGraphQlResponse<TData>>('/graphql.json', {
+      query,
+      variables,
+    });
+
+    const graphQlErrors = response.data.errors ?? [];
+    if (graphQlErrors.length > 0) {
+      const message = graphQlErrors
+        .map((error) => error.message?.trim())
+        .filter(Boolean)
+        .join('; ');
+      throw new Error(message || 'Shopify GraphQL request failed.');
+    }
+
+    if (!response.data.data) {
+      throw new Error('Shopify GraphQL request returned no data.');
+    }
+
+    return response.data.data;
+  }
+
+  async searchTaxonomyCategories(search: string, first = 10): Promise<ShopifyTaxonomyCategoryMatch[]> {
+    const normalizedSearch = search.trim();
+    if (normalizedSearch.length === 0) {
+      return this.getTaxonomyCategories(first);
+    }
+
+    const data = await this.graphQlRequest<{
+      taxonomy: {
+        categories: {
+          edges: Array<{
+            node: ShopifyTaxonomyCategoryMatch;
+          }>;
+        };
+      };
+    }>(
+      `query SearchTaxonomyCategories($search: String!, $first: Int!) {
+        taxonomy {
+          categories(first: $first, search: $search) {
+            edges {
+              node {
+                id
+                fullName
+                name
+                isLeaf
+              }
+            }
+          }
+        }
+      }`,
+      {
+        search: normalizedSearch,
+        first,
+      },
+    );
+
+    return data.taxonomy.categories.edges.map((edge) => edge.node);
+  }
+
+  async getTaxonomyCategories(first = 10): Promise<ShopifyTaxonomyCategoryMatch[]> {
+    const data = await this.graphQlRequest<{
+      taxonomy: {
+        categories: {
+          edges: Array<{
+            node: ShopifyTaxonomyCategoryMatch;
+          }>;
+        };
+      };
+    }>(
+      `query GetTaxonomyCategories($first: Int!) {
+        taxonomy {
+          categories(first: $first) {
+            edges {
+              node {
+                id
+                fullName
+                name
+                isLeaf
+              }
+            }
+          }
+        }
+      }`,
+      {
+        first,
+      },
+    );
+
+    return data.taxonomy.categories.edges.map((edge) => edge.node);
+  }
+
+  async resolveTaxonomyCategory(searchOrId: string): Promise<ShopifyTaxonomyCategoryMatch | null> {
+    const normalized = searchOrId.trim();
+    if (normalized.length === 0) return null;
+
+    if (normalized.startsWith('gid://shopify/TaxonomyCategory/')) {
+      return {
+        id: normalized,
+        fullName: normalized,
+        name: normalized.split('/').pop() ?? normalized,
+        isLeaf: true,
+      };
+    }
+
+    const matches = await this.searchTaxonomyCategories(normalized);
+    if (matches.length === 0) return null;
+
+    const normalizedLower = normalized.toLowerCase();
+    const exactFullName = matches.find((match) => match.fullName.toLowerCase() === normalizedLower);
+    if (exactFullName) return exactFullName;
+
+    const exactLeafNameMatches = matches.filter((match) => match.name.toLowerCase() === normalizedLower);
+    if (exactLeafNameMatches.length === 1) return exactLeafNameMatches[0];
+
+    if (matches.length === 1) return matches[0];
+
+    return null;
+  }
+
+  async updateProductCategory(productId: number, categoryId: string): Promise<void> {
+    const normalizedCategoryId = categoryId.trim();
+    if (!normalizedCategoryId) return;
+
+    const data = await this.graphQlRequest<{
+      productUpdate: {
+        userErrors: ShopifyGraphQlUserError[];
+      };
+    }>(
+      `mutation UpdateProductCategory($product: ProductUpdateInput!) {
+        productUpdate(product: $product) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }`,
+      {
+        product: {
+          id: `gid://shopify/Product/${productId}`,
+          category: normalizedCategoryId,
+        },
+      },
+    );
+
+    const userErrors = data.productUpdate.userErrors ?? [];
+    if (userErrors.length > 0) {
+      const message = userErrors
+        .map((error) => error.message?.trim())
+        .filter(Boolean)
+        .join('; ');
+      throw new Error(message || 'Shopify rejected the product category update.');
+    }
   }
 
   async updateProduct(

@@ -40,7 +40,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     });
 
     expect(product.title).toBe('Untitled Listing');
-    expect(product.vendor).toBeUndefined();
+    expect(product.vendor).toBe('Resolution Audio Video NYC');
     expect(product.variants?.[0]?.price).toBe('0.00');
   });
 
@@ -60,6 +60,19 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     expect(product.variants?.[0]?.option1).toBe('Open Box');
   });
 
+  it('forces the Shopify vendor and aggregates tags from Airtable tag fields', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Tag Product',
+      'Shopify REST Vendor': 'Do Not Use',
+      'Shopify REST Tag 1': 'Vintage Audio',
+      'Shopify REST Tag 2': 'Turntable',
+      'Shopify GraphQL Tags JSON': JSON.stringify(['vintage audio', 'Belt Drive']),
+    });
+
+    expect(product.vendor).toBe('Resolution Audio Video NYC');
+    expect(product.tags).toBe('Vintage Audio, Turntable, Belt Drive');
+  });
+
   it('renders Shopify body HTML from template tokens and dynamic fields', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Marantz 2230 Receiver',
@@ -72,7 +85,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       'Shopify Body Highlights': 'Serviced controls\nOriginal wood case',
     });
 
-    expect(product.body_html).toBe('<p>Restored unit with warm analog sound.</p><ul><li>Serviced controls</li><li>Original wood case</li></ul><p>Price: 1799.00</p><p>SKU: MARANTZ-2230</p><p>Marantz Marantz 2230 Receiver (Used)</p>');
+    expect(product.body_html).toBe('<p>Restored unit with warm analog sound.</p><ul><li>Serviced controls</li><li>Original wood case</li></ul><p>Price: 1799.00</p><p>SKU: MARANTZ-2230</p><p>Resolution Audio Video NYC Marantz 2230 Receiver (Used)</p>');
   });
 
   it('keeps legacy body_html unchanged when no template token is present', () => {
@@ -97,7 +110,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       ]),
     });
 
-    expect(product.body_html).toBe('<p>Freshly serviced and bench tested.</p><br>\n<ul><li><strong>Condition:</strong> Used Excellent</li><li><strong>Includes:</strong> Remote, power cable</li></ul>');
+    expect(product.body_html).toBe('<p>Freshly serviced and bench tested.</p>\n<ul><li><strong>Condition:</strong> Used Excellent</li><li><strong>Includes:</strong> Remote, power cable</li></ul>');
   });
 
   it('rebuilds body html directly from description and features when no dedicated template exists', () => {
@@ -111,7 +124,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       ]),
     });
 
-    expect(product.body_html).toBe('<p>Updated description from form.</p><br>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>');
+    expect(product.body_html).toBe('<p>Updated description from form.</p>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>');
   });
 
   it('uses the dedicated body html template when one is provided', () => {
@@ -126,7 +139,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       ]),
     });
 
-    expect(product.body_html).toBe('<p>Updated description from form.</p><br>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>');
+    expect(product.body_html).toBe('<p>Updated description from form.</p>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>');
   });
 
   it('strips dir and role attributes and unwraps spans from Airtable body html templates', () => {
@@ -140,7 +153,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       ]),
     });
 
-    expect(product.body_html).toBe('<p>Updated description from form.</p><br>\n<h3>Key Features</h3>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>');
+    expect(product.body_html).toBe('<p>Updated description from form.</p>\n<h3>Key Features</h3>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>');
   });
 
   it('wraps multi-paragraph descriptions in separate p tags before the key features heading', () => {
@@ -153,7 +166,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       ]),
     });
 
-    expect(product.body_html).toBe('<p>First paragraph.</p><br>\n<p>Second paragraph.</p><br>\n<h3>Key Features</h3>\n<ul><li><strong>Condition:</strong> Excellent</li></ul>');
+    expect(product.body_html).toBe('<p>First paragraph.</p>\n<p>Second paragraph.</p>\n<h3>Key Features</h3>\n<ul><li><strong>Condition:</strong> Excellent</li></ul>');
   });
 
   it('uses br when description is empty and does not leak old Airtable copy or features', () => {
@@ -174,6 +187,15 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       'Key Features': 'Key,Value\nCondition,Excellent\nIncludes,"Dust cover, headshell, power cable"\nFinish,Silver',
     });
 
-    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p><br>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Dust cover, headshell, power cable</li><li><strong>Finish:</strong> Silver</li></ul>');
+    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Dust cover, headshell, power cable</li><li><strong>Finish:</strong> Silver</li></ul>');
+  });
+
+  it('sends only the last segment of the Type breadcrumb as Shopify product_type', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Type Leaf Product',
+      Type: 'Electronics > Audio > Audio Players & Recorders > Turntables & Record Players',
+    });
+
+    expect(product.product_type).toBe('Turntables & Record Players');
   });
 });

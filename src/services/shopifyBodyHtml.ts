@@ -153,7 +153,7 @@ function formatDescriptionHtml(description: string): string {
     .filter(Boolean)
     .map((paragraph) => paragraph.replace(/\r?\n/g, '<br />'));
 
-  return paragraphs.map((paragraph) => `<p>${paragraph}</p><br>`).join('\n');
+  return paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join('\n');
 }
 
 function stripDirAndRoleAttributes(html: string): string {

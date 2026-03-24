@@ -72,6 +72,19 @@ function resolveConditionMirrorField(fieldNames: string[]): string | null {
   return null;
 }
 
+function isTagLikeFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'tags'
+    || normalized.includes(' tag ')
+    || normalized.endsWith(' tag')
+    || normalized.includes(' tags ')
+    || normalized.endsWith(' tags')
+    || normalized.includes('_tag_')
+    || normalized.endsWith('_tag')
+    || normalized.includes('_tags_')
+    || normalized.endsWith('_tags');
+}
+
 export const useApprovalStore = create<ApprovalStore>((set, get) => ({
   records: [],
   loading: true,
@@ -192,6 +205,7 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
         Object.entries(mappedValues).forEach(([fieldName, rawValue]) => {
           if (fieldName === SHIPPING_SERVICE_FIELD) return;
           if (fieldName === CONDITION_FIELD) return;
+          if (!Object.prototype.hasOwnProperty.call(selectedRecord.fields, fieldName)) return;
 
           // Only send fields whose values have changed from the original record.
           // This prevents sending formula/lookup/computed fields back to Airtable,
@@ -206,12 +220,14 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
       }
 
       if (Object.keys(payload).length > 0) {
+        const shouldTypecast = Object.keys(payload).some((fieldName) => isTagLikeFieldName(fieldName));
         try {
           await airtableService.updateRecordFromReference(
             tableReference,
             tableName,
             selectedRecord.id,
             payload,
+            shouldTypecast ? { typecast: true } : undefined,
           );
         } catch (error) {
           const status = typeof error === 'object' && error !== null && 'response' in error
