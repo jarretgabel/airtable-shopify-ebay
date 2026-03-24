@@ -35,6 +35,19 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     ]);
   });
 
+  it('maps shared Images and Images Alt Text columns into Shopify images payload', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Shared Images Product',
+      Images: 'https://cdn.example.com/a.jpg, https://cdn.example.com/b.jpg',
+      'Images Alt Text': 'Front view, Back view',
+    });
+
+    expect(product.images).toEqual([
+      { src: 'https://cdn.example.com/a.jpg', alt: 'Front view', position: 1 },
+      { src: 'https://cdn.example.com/b.jpg', alt: 'Back view', position: 2 },
+    ]);
+  });
+
   it('does not use eBay-specific title fallback for Shopify payloads', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'eBay Inventory Product Title': 'Should Not Be Used',

@@ -23,6 +23,7 @@ These are the default implementation rules for this repository.
 - When adding new form fields to listing approval pages, wire save behavior so those fields update their corresponding Airtable fields when saving the listing.
 - For listing form work, keep Shopify and eBay page structure aligned: use the same section order, shared UI conventions, and matching save/reset/change-tracking behavior unless channel-specific requirements explicitly differ.
 - When updating eBay listing form pages, mirror the Shopify form architecture patterns where applicable (candidate-field resolution, derived form helpers, and editor component composition) instead of introducing a one-off flow.
+- For listing grids (`ApprovalQueueTable`), suppress channel-irrelevant columns by passing `''` as the field name prop at the call site. Shopify grids hide Condition and Price; eBay grids hide Condition, Format, and Qty. See Engineering Rules for the full column matrix.
 - Build changes to an advanced senior-level engineering bar: production-ready structure, clear abstractions, strong type safety, and maintainable patterns.
 
 ## UI and Styling Rules

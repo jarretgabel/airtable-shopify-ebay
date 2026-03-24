@@ -15,4 +15,5 @@ export * from './ebay/config';
 export * from './ebay/token';
 export * from './ebay/inventory';
 export * from './ebay/listing';
+export * from './ebay/taxonomy';
 

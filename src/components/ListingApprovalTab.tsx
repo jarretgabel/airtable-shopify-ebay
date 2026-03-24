@@ -84,6 +84,8 @@ const SHOPIFY_IMAGE_LIST_FIELD_CANDIDATES = [
   'shopify_images_json',
   'Shopify REST Images',
   'shopify_rest_images',
+  'Images',
+  'images',
   'Image URL',
   'Image URLs',
   'Image-URL',
@@ -187,14 +189,71 @@ const SHOPIFY_GRAPHQL_CATEGORY_ID_FIELD_CANDIDATES = [
 ] as const;
 
 const EBAY_IMAGE_LIST_FIELD_CANDIDATES = [
+  'eBay Inventory Product Image URLs JSON',
   'eBay Inventory Product ImageURLs JSON',
   'ebay_inventory_product_imageurls_json',
+  'Shopify REST Images JSON',
+  'shopify_rest_images_json',
+  'Shopify Images JSON',
+  'shopify_images_json',
+  'Images',
+  'images',
   'Image URL',
   'Image URLs',
   'Image-URL',
   'Image-URLs',
   'image_url',
   'image_urls',
+] as const;
+
+const EBAY_TITLE_FIELD_CANDIDATES = [
+  'eBay Inventory Product Title',
+  'Item Title',
+  'Title',
+  'Name',
+] as const;
+
+const EBAY_PRICE_FIELD_CANDIDATES = [
+  'eBay Offer Price Value',
+  'Price',
+] as const;
+
+const EBAY_VENDOR_FIELD_CANDIDATES = [
+  'eBay Inventory Product Brand',
+  'Brand',
+  'Vendor',
+  'Manufacturer',
+] as const;
+
+const EBAY_QTY_FIELD_CANDIDATES = [
+  'eBay Inventory Ship To Location Quantity',
+  'Quantity',
+  'Qty',
+] as const;
+
+const EBAY_FORMAT_FIELD_CANDIDATES = [
+  'eBay Offer Format',
+  'Listing Format',
+  'Status',
+] as const;
+
+const EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES = [
+  'eBay Offer Category ID',
+  'ebay_offer_category_id',
+  'Primary Category',
+  'primary_category',
+] as const;
+
+const EBAY_SECONDARY_CATEGORY_FIELD_CANDIDATES = [
+  'eBay Offer Secondary Category ID',
+  'ebay_offer_secondary_category_id',
+  'Secondary Category',
+  'secondary_category',
+] as const;
+
+const EBAY_CATEGORIES_FIELD_CANDIDATES = [
+  'Categories',
+  'categories',
 ] as const;
 
 const SHOPIFY_UNIFIED_PRODUCT_SET_DOCS_EXAMPLE: {
@@ -520,13 +579,36 @@ export function ListingApprovalTab({
     if (approvalChannel === 'ebay') {
       const existingNames = Array.from(names);
       const existingLower = new Set(existingNames.map((name) => name.toLowerCase()));
+
+      const preferredTitleField = existingNames.find((name) =>
+        EBAY_TITLE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_TITLE_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredTitleField) names.add(preferredTitleField);
+
+      const preferredPriceField = existingNames.find((name) =>
+        EBAY_PRICE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_PRICE_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredPriceField) names.add(preferredPriceField);
+
       const preferredImageField = existingNames.find((name) =>
         EBAY_IMAGE_LIST_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       ) ?? EBAY_IMAGE_LIST_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredImageField) names.add(preferredImageField);
 
-      if (preferredImageField) {
-        names.add(preferredImageField);
-      }
+      const preferredPrimaryCategoryField = existingNames.find((name) =>
+        EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredPrimaryCategoryField) names.add(preferredPrimaryCategoryField);
+
+      const preferredSecondaryCategoryField = existingNames.find((name) =>
+        EBAY_SECONDARY_CATEGORY_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_SECONDARY_CATEGORY_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredSecondaryCategoryField) names.add(preferredSecondaryCategoryField);
+
+      const preferredCategoriesField = existingNames.find((name) =>
+        EBAY_CATEGORIES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_CATEGORIES_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredCategoriesField) names.add(preferredCategoriesField);
     }
 
     names.add(CONDITION_FIELD);
@@ -1152,42 +1234,35 @@ export function ListingApprovalTab({
   const titleFieldName = useMemo(
     () => approvalChannel === 'shopify'
       ? resolveFieldName(['Item Title', 'Shopify Title', 'Shopify REST Title', 'Title', 'Name'], 'Item Title')
-      : resolveFieldName(['eBay Inventory Product Title', 'Item Title', 'Title', 'Name'], 'Item Title'),
-    [approvalChannel, resolveFieldName],
-  );
-
-  const conditionFieldName = useMemo(
-    () => approvalChannel === 'shopify'
-      ? resolveFieldName(['Item Condition', 'Condition', 'Shopify Condition', 'Shopify REST Status'], 'Item Condition')
-      : resolveFieldName(['eBay Inventory Condition', 'Item Condition', 'Condition'], 'Item Condition'),
+      : resolveFieldName([...EBAY_TITLE_FIELD_CANDIDATES], 'Item Title'),
     [approvalChannel, resolveFieldName],
   );
 
   const formatFieldName = useMemo(
     () => approvalChannel === 'shopify'
       ? resolveFieldName(['Listing Format', 'Status', 'Shopify Status', 'Shopify REST Status'], 'Listing Format')
-      : resolveFieldName(['eBay Offer Format', 'Listing Format', 'Status'], 'Listing Format'),
+      : resolveFieldName([...EBAY_FORMAT_FIELD_CANDIDATES], 'Listing Format'),
     [approvalChannel, resolveFieldName],
   );
 
   const priceFieldName = useMemo(
     () => approvalChannel === 'shopify'
       ? resolveFieldName(['Shopify REST Variant 1 Price', 'Shopify Variant 1 Price', 'Price'], '')
-      : resolveFieldName(['eBay Offer Price Value', 'Price'], ''),
+      : resolveFieldName([...EBAY_PRICE_FIELD_CANDIDATES], ''),
     [approvalChannel, resolveFieldName],
   );
 
   const vendorFieldName = useMemo(
     () => approvalChannel === 'shopify'
       ? resolveFieldName(['Shopify REST Vendor', 'Shopify Vendor', 'Vendor', 'Manufacturer', 'Brand'], '')
-      : resolveFieldName(['eBay Inventory Product Brand', 'Brand', 'Vendor', 'Manufacturer'], ''),
+      : resolveFieldName([...EBAY_VENDOR_FIELD_CANDIDATES], ''),
     [approvalChannel, resolveFieldName],
   );
 
   const qtyFieldName = useMemo(
     () => approvalChannel === 'shopify'
       ? resolveFieldName(['Shopify REST Variant 1 Inventory Quantity', 'Shopify Variant 1 Inventory Quantity', 'Quantity', 'Qty'], '')
-      : resolveFieldName(['eBay Inventory Ship To Location Quantity', 'Quantity', 'Qty'], ''),
+      : resolveFieldName([...EBAY_QTY_FIELD_CANDIDATES], ''),
     [approvalChannel, resolveFieldName],
   );
 
@@ -1224,6 +1299,39 @@ export function ListingApprovalTab({
   }, [approvalChannel, mergedDraftSourceFields, selectedRecord, shopifyRequiredFieldNames]);
 
   const hasMissingShopifyRequiredFields = missingShopifyRequiredFieldNames.length > 0;
+
+  const ebayRequiredFieldNames = useMemo(() => {
+    if (approvalChannel !== 'ebay') return [] as string[];
+
+    const required = [
+      resolveFieldName([...EBAY_TITLE_FIELD_CANDIDATES], ''),
+      resolveFieldName([...EBAY_PRICE_FIELD_CANDIDATES], ''),
+    ].filter((fieldName): fieldName is string => fieldName.trim().length > 0);
+
+    return Array.from(new Set(required));
+  }, [approvalChannel, resolveFieldName]);
+
+  const missingEbayRequiredFieldNames = useMemo(() => {
+    if (approvalChannel !== 'ebay' || !selectedRecord) return [] as string[];
+
+    const source = mergedDraftSourceFields ?? selectedRecord.fields;
+    return ebayRequiredFieldNames.filter((fieldName) => {
+      const rawValue = source[fieldName];
+      if (rawValue === null || rawValue === undefined) return true;
+
+      const stringValue = String(rawValue).trim();
+      if (!stringValue) return true;
+
+      if (fieldName.toLowerCase().includes('price')) {
+        const numericValue = Number(stringValue);
+        return !Number.isFinite(numericValue) || numericValue <= 0;
+      }
+
+      return false;
+    });
+  }, [approvalChannel, mergedDraftSourceFields, selectedRecord, ebayRequiredFieldNames]);
+
+  const hasMissingEbayRequiredFields = missingEbayRequiredFieldNames.length > 0;
 
   function openRecord(record: AirtableRecord) {
     hydrateForm(record, allFieldNames, approvedFieldName);
@@ -1386,7 +1494,7 @@ export function ListingApprovalTab({
           forceShowShopifyCollectionsEditor={approvalChannel === 'shopify'}
           allFieldNames={allFieldNames}
           writableFieldNames={Object.keys(selectedRecord.fields)}
-          requiredFieldNames={approvalChannel === 'shopify' ? shopifyRequiredFieldNames : []}
+          requiredFieldNames={approvalChannel === 'shopify' ? shopifyRequiredFieldNames : approvalChannel === 'ebay' ? ebayRequiredFieldNames : []}
           approvedFieldName={approvedFieldName}
           formValues={formValues}
           fieldKinds={fieldKinds}
@@ -1419,6 +1527,17 @@ export function ListingApprovalTab({
             </p>
             <p className="m-0 mt-1 text-xs text-rose-200/85">
               Complete before approving: {missingShopifyRequiredFieldNames.join(', ')}
+            </p>
+          </section>
+        )}
+
+        {approvalChannel === 'ebay' && hasMissingEbayRequiredFields && (
+          <section className="mt-4 rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-2">
+            <p className="m-0 text-sm font-semibold text-rose-200">
+              eBay required fields are missing ({missingEbayRequiredFieldNames.length}).
+            </p>
+            <p className="m-0 mt-1 text-xs text-rose-200/85">
+              Complete before approving: {missingEbayRequiredFieldNames.join(', ')}
             </p>
           </section>
         )}
@@ -1510,6 +1629,11 @@ export function ListingApprovalTab({
 
               if (approvalChannel === 'shopify' && hasMissingShopifyRequiredFields) {
                 pushInlineActionNotice('warning', 'Required Shopify fields missing', `Complete required fields before approving: ${missingShopifyRequiredFieldNames.join(', ')}`);
+                return;
+              }
+
+              if (approvalChannel === 'ebay' && hasMissingEbayRequiredFields) {
+                pushInlineActionNotice('warning', 'Required eBay fields missing', `Complete required fields before approving: ${missingEbayRequiredFieldNames.join(', ')}`);
                 return;
               }
 
@@ -1641,6 +1765,7 @@ export function ListingApprovalTab({
               || hasUnsavedChanges
               || (!canUpdateApprovedShopifyListing && isApproved)
               || (approvalChannel === 'shopify' && hasMissingShopifyRequiredFields)
+              || (approvalChannel === 'ebay' && hasMissingEbayRequiredFields)
             }
           >
             {approving
@@ -1653,7 +1778,9 @@ export function ListingApprovalTab({
                 ? 'Already Approved'
                 : approvalChannel === 'shopify' && hasMissingShopifyRequiredFields
                   ? 'Complete Required Shopify Fields'
-                  : (hasExistingShopifyRestProductId ? 'Update Listing' : 'Approve Listing')}
+                  : approvalChannel === 'ebay' && hasMissingEbayRequiredFields
+                    ? 'Complete Required eBay Fields'
+                    : (hasExistingShopifyRestProductId ? 'Update Listing' : 'Approve Listing')}
           </button>
         </div>
 
@@ -1868,13 +1995,13 @@ export function ListingApprovalTab({
           <ApprovalQueueTable
             records={records}
             approvedFieldName={approvedFieldName}
-            requiredFieldNames={approvalChannel === 'shopify' ? shopifyRequiredFieldNames : []}
+            requiredFieldNames={approvalChannel === 'shopify' ? shopifyRequiredFieldNames : approvalChannel === 'ebay' ? ebayRequiredFieldNames : []}
             titleFieldName={titleFieldName}
-            conditionFieldName={conditionFieldName}
-            formatFieldName={formatFieldName}
-            priceFieldName={priceFieldName}
+            conditionFieldName=''
+            formatFieldName={approvalChannel === 'ebay' ? '' : formatFieldName}
+            priceFieldName={approvalChannel === 'shopify' ? '' : priceFieldName}
             vendorFieldName={vendorFieldName}
-            qtyFieldName={qtyFieldName}
+            qtyFieldName={approvalChannel === 'ebay' ? '' : qtyFieldName}
             openRecord={openRecord}
             onSelectRecord={onSelectRecord}
           />

@@ -318,6 +318,30 @@ function parseJsonArray<T>(raw: unknown): T[] | undefined {
   }
 }
 
+function parseImageAltTextList(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item) => {
+        if (typeof item === 'string') return item.trim();
+        if (item && typeof item === 'object') {
+          const value = (item as Record<string, unknown>).alt;
+          return typeof value === 'string' ? value.trim() : '';
+        }
+        return '';
+      })
+      .filter((value) => value.length > 0);
+  }
+
+  if (typeof raw !== 'string') return [];
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+
+  const parsed = parseJsonArray<unknown>(trimmed);
+  if (parsed) return parseImageAltTextList(parsed);
+
+  return trimmed.split(/[\n,]/).map((value) => value.trim()).filter((value) => value.length > 0);
+}
+
 function hasAnyFieldValue(fields: ApprovalFieldMap, candidates: string[]): boolean {
   return candidates.some((candidate) => {
     const raw = getRawField(fields, [candidate]);
@@ -733,12 +757,21 @@ function buildVariants(fields: ApprovalFieldMap, options: ShopifyProductOption[]
 }
 
 function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] | undefined {
+  const imageAltTexts = parseImageAltTextList(getRawField(fields, [
+    'Images Alt Text',
+    'Image Alt Text',
+    'images_alt_text',
+    'image_alt_text',
+  ]));
+
   if (!hasFlatImageFields(fields)) {
     const rawImages = getRawField(fields, [
       'Shopify REST Images JSON',
       'Shopify Images JSON',
       'shopify_rest_images_json',
       'shopify_images_json',
+      'Images',
+      'images',
       'Image URL',
       'Image URLs',
       'Image-URL',
@@ -754,7 +787,11 @@ function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] | undef
           if (typeof item === 'string') {
             const src = item.trim();
             if (!src) return null;
-            return { src, alt: '', position: index + 1 };
+            return {
+              src,
+              alt: imageAltTexts[index] ?? '',
+              position: index + 1,
+            };
           }
 
           if (!item || typeof item !== 'object') return null;
@@ -763,7 +800,8 @@ function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] | undef
           if (!src) return null;
 
           const rawAlt = image.alt;
-          const alt = typeof rawAlt === 'string' ? rawAlt : '';
+          const altFromImage = typeof rawAlt === 'string' ? rawAlt : '';
+          const alt = imageAltTexts[index] ?? altFromImage;
           const rawPosition = image.position;
           const position = typeof rawPosition === 'number' && Number.isFinite(rawPosition)
             ? rawPosition
@@ -781,7 +819,7 @@ function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] | undef
     if (typeof rawImages === 'string' && rawImages.trim()) {
       const parts = rawImages.trim().split(/[\n,]/).map((s) => s.trim()).filter(Boolean);
       if (parts.length > 0) {
-        return parts.map((url, i) => ({ src: url, alt: '', position: i + 1 }));
+        return parts.map((url, i) => ({ src: url, alt: imageAltTexts[i] ?? '', position: i + 1 }));
       }
     }
   }
@@ -806,7 +844,7 @@ function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] | undef
         `Shopify GraphQL Media ${i} Alt`,
         `Shopify Extra Media ${i} Alt`,
         `shopify_rest_image_${i}_alt`,
-      ]) || undefined,
+      ]) || imageAltTexts[i - 1] || undefined,
       position: parseInteger(getField(fields, [`Shopify REST Image ${i} Position`, `shopify_rest_image_${i}_position`])),
     });
   }

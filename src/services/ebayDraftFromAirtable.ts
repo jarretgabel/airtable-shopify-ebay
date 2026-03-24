@@ -95,6 +95,45 @@ function parseImageUrls(raw: unknown): string[] {
   return text.split(/[\n,]/).map((item) => item.trim()).filter(Boolean);
 }
 
+function parseCategoryIds(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    const seen = new Set<string>();
+    return raw
+      .map((item) => String(item ?? '').trim())
+      .filter((value) => {
+        if (!value) return false;
+        const key = value.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
+  const text = coerceToString(raw);
+  if (!text) return [];
+
+  try {
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) {
+      return parseCategoryIds(parsed);
+    }
+  } catch {
+    // fall through
+  }
+
+  const seen = new Set<string>();
+  return text
+    .split(/[\n,;|]/)
+    .map((item) => item.trim())
+    .filter((value) => {
+      if (!value) return false;
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
 function normalizeEbayCondition(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return 'USED_EXCELLENT';
@@ -131,8 +170,15 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
   const conditionDescription = getField(fields, ['eBay Inventory Condition Description']);
   const quantity = parseInteger(getField(fields, ['eBay Inventory Ship To Location Quantity', 'Quantity', 'Qty']), 1);
   const imageUrls = parseImageUrls(getRawField(fields, [
+    'eBay Inventory Product Image URLs JSON',
     'eBay Inventory Product ImageURLs JSON',
     'ebay_inventory_product_imageurls_json',
+    'Shopify REST Images JSON',
+    'shopify_rest_images_json',
+    'Shopify Images JSON',
+    'shopify_images_json',
+    'Images',
+    'images',
     'Image URL',
     'Image URLs',
     'image_url',
@@ -141,7 +187,25 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
 
   const marketplaceId = getField(fields, ['eBay Offer Marketplace ID']) || 'EBAY_US';
   const format = getField(fields, ['eBay Offer Format']) || 'FIXED_PRICE';
-  const categoryId = getField(fields, ['eBay Offer Category ID']) || '3276';
+  const categoryIdsFromCategoriesField = parseCategoryIds(getRawField(fields, [
+    'Categories',
+    'categories',
+  ]));
+  const primaryCategoryFromField = getField(fields, [
+    'Primary Category',
+    'primary_category',
+    'eBay Offer Category ID',
+    'ebay_offer_category_id',
+  ]);
+  const secondaryCategoryFromField = getField(fields, [
+    'Secondary Category',
+    'secondary_category',
+    'eBay Offer Secondary Category ID',
+    'ebay_offer_secondary_category_id',
+  ]);
+
+  const categoryId = categoryIdsFromCategoriesField[0] || primaryCategoryFromField || '3276';
+  const secondaryCategoryId = categoryIdsFromCategoriesField[1] || secondaryCategoryFromField;
   const listingDuration = getField(fields, ['eBay Offer Listing Duration']) || 'GTC';
   const priceValue = getField(fields, ['eBay Offer Price Value', 'Price']) || '0.00';
   const currency = getField(fields, ['eBay Offer Price Currency']) || 'USD';
@@ -172,6 +236,7 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     format,
     availableQuantity: quantity,
     categoryId,
+    secondaryCategoryId: secondaryCategoryId || undefined,
     listingDescription: description || undefined,
     listingDuration,
     pricingSummary: {

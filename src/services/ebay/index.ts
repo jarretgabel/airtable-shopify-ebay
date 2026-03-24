@@ -4,3 +4,4 @@ export * from './config';
 export * from './token';
 export * from './inventory';
 export * from './listing';
+export * from './taxonomy';

@@ -12,6 +12,7 @@ import { shopifyService } from '@/services/shopify';
 import { buildShopifyBodyHtml } from '@/services/shopifyBodyHtml';
 import { buildShopifyCollectionIdsFromApprovalFields } from '@/services/shopifyDraftFromAirtable';
 import { parseShopifyTagList, serializeShopifyTagsCsv, serializeShopifyTagsJson } from '@/services/shopifyTags';
+import { EbayCategoriesSelect } from './EbayCategoriesSelect';
 import { ImageUrlListEditor } from './ImageUrlListEditor';
 import { ShopifyTaxonomyTypeSelect } from './ShopifyTaxonomyTypeSelect';
 import { ShopifyBodyHtmlPreview } from './ShopifyBodyHtmlPreview';
@@ -226,6 +227,67 @@ function parseShopifyCollectionDisplayNames(raw: unknown): string[] {
       seen.add(key);
       return true;
     });
+}
+
+function isEbayPrimaryCategoryField(fieldName: string): boolean {
+  const normalized = fieldName
+    .trim()
+    .toLowerCase()
+    .replace(/\s*\([^)]*\)\s*$/g, '')
+    .trim();
+  return normalized === 'ebay offer category id'
+    || normalized === 'ebay_offer_category_id'
+    || normalized === 'ebay_offer_categoryid'
+    || normalized === 'primary category'
+    || normalized === 'primary_category';
+}
+
+function isEbaySecondaryCategoryField(fieldName: string): boolean {
+  const normalized = fieldName
+    .trim()
+    .toLowerCase()
+    .replace(/\s*\([^)]*\)\s*$/g, '')
+    .trim();
+  return normalized === 'ebay offer secondary category id'
+    || normalized === 'ebay_offer_secondary_category_id'
+    || normalized === 'ebay_offer_secondarycategoryid'
+    || normalized === 'secondary category'
+    || normalized === 'secondary_category';
+}
+
+function isEbayMarketplaceIdField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'ebay offer marketplace id'
+    || normalized === 'ebay_offer_marketplace_id'
+    || normalized === 'ebay_offer_marketplaceid';
+}
+
+function isEbayCategoriesField(fieldName: string): boolean {
+  const normalized = fieldName
+    .trim()
+    .toLowerCase()
+    .replace(/\s*\([^)]*\)\s*$/g, '')
+    .trim();
+
+  return normalized === 'categories' || normalized === 'category ids' || normalized === 'category_ids';
+}
+
+function parseEbayCategoryIds(raw: string): string[] {
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+
+  const fromDelimited = trimmed
+    .split(/[\n,;|]/)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0);
+
+  const seen = new Set<string>();
+  return fromDelimited.filter((token) => {
+    const key = token.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function isShopifyCollectionJsonField(fieldName: string): boolean {
@@ -631,9 +693,18 @@ function isBooleanLikeValue(value: string): boolean {
   return normalized === 'true' || normalized === 'false';
 }
 
+function normalizeImageFieldName(fieldName: string): string {
+  return fieldName
+    .trim()
+    .toLowerCase()
+    .replace(/\s*\([^)]*\)\s*$/g, '')
+    .trim();
+}
+
 function isGenericImageUrlField(fieldName: string): boolean {
-  const normalized = fieldName.trim().toLowerCase();
-  return normalized === 'image url'
+  const normalized = normalizeImageFieldName(fieldName);
+  return normalized === 'images'
+    || normalized === 'image url'
     || normalized === 'image urls'
     || normalized === 'image-url'
     || normalized === 'image-urls'
@@ -654,7 +725,7 @@ function isGenericImageUrlField(fieldName: string): boolean {
 }
 
 function isGenericImagePositionField(fieldName: string): boolean {
-  const normalized = fieldName.trim().toLowerCase();
+  const normalized = normalizeImageFieldName(fieldName);
   return normalized === 'image position'
     || normalized === 'image_position'
     || /^image\s+position\s+\d+$/.test(normalized)
@@ -664,11 +735,15 @@ function isGenericImagePositionField(fieldName: string): boolean {
 }
 
 function isGenericImageAltField(fieldName: string): boolean {
-  const normalized = fieldName.trim().toLowerCase();
+  const normalized = normalizeImageFieldName(fieldName);
   return normalized === 'image alt'
+    || normalized === 'images alt'
     || normalized === 'image_alt'
+    || normalized === 'images_alt'
     || normalized === 'image alt text'
+    || normalized === 'images alt text'
     || normalized === 'image_alt_text'
+    || normalized === 'images_alt_text'
     || /^image\s+alt\s+\d+$/.test(normalized)
     || /^image_alt_\d+$/.test(normalized)
     || /^image\s+alt\s+text\s+\d+$/.test(normalized)
@@ -683,6 +758,97 @@ function isGenericImageScalarField(fieldName: string): boolean {
   return isGenericImageUrlField(fieldName)
     || isGenericImagePositionField(fieldName)
     || isGenericImageAltField(fieldName);
+}
+
+function isEbayInventoryImageUrlsField(fieldName: string): boolean {
+  const normalized = normalizeImageFieldName(fieldName);
+  return normalized === 'ebay inventory product image urls json'
+    || normalized === 'ebay inventory product imageurls json'
+    || normalized === 'ebay_inventory_product_imageurls_json';
+}
+
+function isEbayPhotoCountMaxField(fieldName: string): boolean {
+  const normalized = fieldName
+    .trim()
+    .toLowerCase()
+    .replace(/\s*\([^)]*\)\s*$/g, '')
+    .trim();
+
+  return normalized === 'photo count max'
+    || normalized === 'photo_count_max'
+    || normalized === 'ebay photo count max'
+    || normalized === 'ebay_photo_count_max';
+}
+
+interface ImageEditorRow {
+  src: string;
+  alt: string;
+}
+
+function parseImageEditorRows(raw: string): ImageEditorRow[] {
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((item) => {
+          if (typeof item === 'string') {
+            return { src: item.trim(), alt: '' };
+          }
+
+          if (item && typeof item === 'object') {
+            const record = item as Record<string, unknown>;
+            return {
+              src: typeof record.src === 'string' ? record.src.trim() : '',
+              alt: typeof record.alt === 'string' ? record.alt.trim() : '',
+            };
+          }
+
+          return { src: '', alt: '' };
+        })
+        .filter((row) => row.src.length > 0 || row.alt.length > 0);
+    }
+  } catch {
+    // fall back to plain-text parsing
+  }
+
+  return trimmed
+    .split(/[\n,]/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((src) => ({ src, alt: '' }));
+}
+
+function toCommaSeparatedImageValues(values: string[]): string {
+  return values.map((value) => value.trim()).join(', ');
+}
+
+function pickPreferredField(
+  candidates: string[],
+  preferredNames: string[],
+  values: Record<string, string>,
+): string | undefined {
+  if (candidates.length === 0) return undefined;
+
+  const preferredLookup = preferredNames.map((name) => name.toLowerCase());
+  const hasValue = (fieldName: string) => (values[fieldName] ?? '').trim().length > 0;
+
+  for (const preferredName of preferredLookup) {
+    const match = candidates.find((fieldName) => fieldName.toLowerCase() === preferredName && hasValue(fieldName));
+    if (match) return match;
+  }
+
+  const firstWithValue = candidates.find((fieldName) => hasValue(fieldName));
+  if (firstWithValue) return firstWithValue;
+
+  for (const preferredName of preferredLookup) {
+    const match = candidates.find((fieldName) => fieldName.toLowerCase() === preferredName);
+    if (match) return match;
+  }
+
+  return candidates[0];
 }
 
 /**
@@ -813,7 +979,74 @@ export function ApprovalFormFields({
     </span>
   );
 
-  const imageUrlSourceField = allFieldNames.find((fieldName) => isGenericImageUrlField(fieldName));
+  const imageUrlSourceField = pickPreferredField(
+    allFieldNames.filter((fieldName) => isGenericImageUrlField(fieldName)),
+    ['Images', 'images', 'Image URLs', 'image_urls', 'Image URL', 'image_url'],
+    formValues,
+  );
+  const imageAltTextSourceField = pickPreferredField(
+    allFieldNames.filter((fieldName) => isGenericImageAltField(fieldName)),
+    ['Images Alt Text', 'images_alt_text', 'Image Alt Text', 'image_alt_text'],
+    formValues,
+  );
+  const isEbayListingForm = allFieldNames.some((fieldName) => {
+    const normalized = fieldName.toLowerCase();
+    return normalized.startsWith('ebay ') || normalized.startsWith('ebay_');
+  });
+  const useCombinedImageAltEditor = Boolean(
+    isEbayListingForm
+    && imageUrlSourceField
+    && imageAltTextSourceField
+    && imageUrlSourceField !== imageAltTextSourceField,
+  );
+  const combinedImageEditorValue = useCombinedImageAltEditor
+    ? JSON.stringify((() => {
+      const urlRows = parseImageEditorRows(formValues[imageUrlSourceField ?? ''] ?? '');
+      const altParts = (formValues[imageAltTextSourceField ?? ''] ?? '')
+        .split(/[\n,]/)
+        .map((part) => part.trim());
+      const rowCount = Math.max(urlRows.length, altParts.filter((part) => part.length > 0).length);
+
+      if (rowCount === 0) return [] as Array<{ src: string; alt: string }>;
+
+      return Array.from({ length: rowCount }, (_unused, index) => ({
+        src: urlRows[index]?.src ?? '',
+        alt: altParts[index] ?? urlRows[index]?.alt ?? '',
+      }));
+    })())
+    : '';
+  const ebayPrimaryCategoryFieldName = allFieldNames.find((fieldName) => isEbayPrimaryCategoryField(fieldName));
+  const ebaySecondaryCategoryFieldName = allFieldNames.find((fieldName) => isEbaySecondaryCategoryField(fieldName));
+  const ebayCategoriesFieldName = allFieldNames.find((fieldName) => isEbayCategoriesField(fieldName));
+  const ebayMarketplaceIdFieldName = allFieldNames.find((fieldName) => isEbayMarketplaceIdField(fieldName));
+  const hasEbayCategoryEditor = Boolean(isEbayListingForm && ebayCategoriesFieldName);
+  const ebayMarketplaceId = (ebayMarketplaceIdFieldName ? formValues[ebayMarketplaceIdFieldName] : undefined)?.trim() || 'EBAY_US';
+  const ebaySelectedCategoryIds = useMemo(() => {
+    const categories = ebayCategoriesFieldName
+      ? parseEbayCategoryIds(formValues[ebayCategoriesFieldName] ?? '')
+      : [];
+
+    const merged = [...categories];
+    const seen = new Set<string>();
+    return merged.filter((categoryId) => {
+      const key = categoryId.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 2);
+  }, [ebayCategoriesFieldName, formValues]);
+  const setEbayCategoryIds = (nextIds: string[]) => {
+    const normalizedIds = nextIds.map((id) => id.trim()).filter((id) => id.length > 0).slice(0, 2);
+    if (ebayCategoriesFieldName) {
+      setFormValue(ebayCategoriesFieldName, normalizedIds.join(', '));
+    }
+    if (ebayPrimaryCategoryFieldName) {
+      setFormValue(ebayPrimaryCategoryFieldName, '');
+    }
+    if (ebaySecondaryCategoryFieldName) {
+      setFormValue(ebaySecondaryCategoryFieldName, '');
+    }
+  };
   const hasCanonicalConditionField = allFieldNames.some((fieldName) => fieldName.trim().toLowerCase() === CONDITION_FIELD.toLowerCase());
   const shopifyBodyDescriptionFieldName = allFieldNames.find((fieldName) => isShopifyBodyDescriptionField(fieldName));
   const shopifyKeyFeaturesFieldName = allFieldNames.find((fieldName) => isShopifyKeyFeaturesField(fieldName));
@@ -1148,7 +1381,11 @@ export function ApprovalFormFields({
         if (isShopifyBodyDescriptionField(fieldName)) return null;
         if (isShopifyBodyHtmlField(fieldName)) return null;
         if (isShopifyKeyFeaturesField(fieldName)) return null;
+        if (hasEbayCategoryEditor && (isEbayPrimaryCategoryField(fieldName) || isEbaySecondaryCategoryField(fieldName) || fieldName === ebayCategoriesFieldName)) return null;
+        if (isEbayInventoryImageUrlsField(fieldName)) return null;
+        if (isEbayPhotoCountMaxField(fieldName)) return null;
         if (isGenericImageScalarField(fieldName)) return null;
+        if (useCombinedImageAltEditor && fieldName === imageAltTextSourceField) return null;
         if (suppressImageScalarFields && isScalarImageField(fieldName)) return null;
         if (hasCanonicalConditionField && fieldName !== CONDITION_FIELD && isConditionMirrorSourceField(fieldName)) return null;
 
@@ -1299,6 +1536,17 @@ export function ApprovalFormFields({
         />
       )}
 
+      {hasEbayCategoryEditor && ebayCategoriesFieldName && (
+        <EbayCategoriesSelect
+          fieldName={ebayCategoriesFieldName}
+          label="eBay Categories"
+          marketplaceId={ebayMarketplaceId}
+          value={ebaySelectedCategoryIds}
+          onChange={setEbayCategoryIds}
+          disabled={saving}
+        />
+      )}
+
       {showBodyHtmlPreview && (shopifyBodyDescriptionFieldName || shopifyKeyFeaturesFieldName || shopifyBodyHtmlFieldName) && (
         <ShopifyBodyHtmlPreview value={derivedShopifyBodyHtml} />
       )}
@@ -1324,8 +1572,20 @@ export function ApprovalFormFields({
         <ImageUrlListEditor
           key={imageUrlSourceField}
           fieldLabel="Images"
-          value={formValues[imageUrlSourceField] ?? ''}
-          onChange={(newValue) => setFormValue(imageUrlSourceField, newValue)}
+          value={useCombinedImageAltEditor ? combinedImageEditorValue : (formValues[imageUrlSourceField] ?? '')}
+          onChange={(newValue) => {
+            if (!useCombinedImageAltEditor || !imageAltTextSourceField) {
+              setFormValue(imageUrlSourceField, newValue);
+              return;
+            }
+
+            const rows = parseImageEditorRows(newValue);
+            const urls = rows.map((row) => row.src).filter((value) => value.length > 0);
+            const alts = rows.map((row) => row.alt);
+
+            setFormValue(imageUrlSourceField, toCommaSeparatedImageValues(urls));
+            setFormValue(imageAltTextSourceField, toCommaSeparatedImageValues(alts));
+          }}
           disabled={saving || isReadOnlyApprovalField(imageUrlSourceField)}
         />
       )}

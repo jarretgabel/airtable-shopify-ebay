@@ -18,6 +18,18 @@ function collectionShortId(collectionId: string): string {
   return collectionId.split('/').pop() ?? collectionId;
 }
 
+function reorderById(ids: string[], sourceId: string, targetId: string): string[] {
+  if (sourceId === targetId) return ids;
+  const sourceIndex = ids.indexOf(sourceId);
+  const targetIndex = ids.indexOf(targetId);
+  if (sourceIndex < 0 || targetIndex < 0) return ids;
+
+  const next = [...ids];
+  const [moved] = next.splice(sourceIndex, 1);
+  next.splice(targetIndex, 0, moved);
+  return next;
+}
+
 export function ShopifyCollectionsSelect({
   fieldName,
   label,
@@ -32,6 +44,8 @@ export function ShopifyCollectionsSelect({
   const [error, setError] = useState('');
   const [options, setOptions] = useState<ShopifyCollectionMatch[]>([]);
   const [knownCollectionsById, setKnownCollectionsById] = useState<Record<string, ShopifyCollectionMatch>>({});
+  const [draggingCollectionId, setDraggingCollectionId] = useState<string | null>(null);
+  const [dragOverCollectionId, setDragOverCollectionId] = useState<string | null>(null);
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
@@ -124,11 +138,20 @@ export function ShopifyCollectionsSelect({
     onChange(nextIds, buildLabelMap(nextIds));
   };
 
+  const reorderSelections = (sourceId: string, targetId: string) => {
+    const nextIds = reorderById(value, sourceId, targetId);
+    if (nextIds === value) return;
+    onChange(nextIds, buildLabelMap(nextIds));
+  };
+
   return (
     <div className="relative col-span-1 flex flex-col gap-2 md:col-span-2">
       <span className={labelClass}>{label}</span>
 
       <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3">
+        <p className="m-0 mb-2 text-xs text-[var(--muted)]">
+          Drag selected items to reorder.
+        </p>
         <div className="mb-2 flex flex-wrap items-center gap-2">
           {value.length === 0 && (
             <span className="text-sm text-[var(--muted)]">No collections selected.</span>
@@ -138,7 +161,32 @@ export function ShopifyCollectionsSelect({
             return (
               <span
                 key={collectionId}
-                className="inline-flex max-w-full items-center gap-1 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-sm text-blue-100"
+                className={`inline-flex max-w-full items-center gap-1 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-sm text-blue-100 ${dragOverCollectionId === collectionId ? 'ring-2 ring-blue-300/60' : ''}`}
+                draggable={!disabled}
+                onDragStart={(event) => {
+                  if (disabled) return;
+                  event.dataTransfer.effectAllowed = 'move';
+                  event.dataTransfer.setData('text/plain', collectionId);
+                  setDraggingCollectionId(collectionId);
+                }}
+                onDragOver={(event) => {
+                  if (disabled || !draggingCollectionId || draggingCollectionId === collectionId) return;
+                  event.preventDefault();
+                  setDragOverCollectionId(collectionId);
+                }}
+                onDrop={(event) => {
+                  if (disabled) return;
+                  event.preventDefault();
+                  const sourceId = event.dataTransfer.getData('text/plain') || draggingCollectionId;
+                  if (!sourceId) return;
+                  reorderSelections(sourceId, collectionId);
+                  setDraggingCollectionId(null);
+                  setDragOverCollectionId(null);
+                }}
+                onDragEnd={() => {
+                  setDraggingCollectionId(null);
+                  setDragOverCollectionId(null);
+                }}
               >
                 <span className="truncate">
                   {option?.title || `Collection ${collectionShortId(collectionId)}`}

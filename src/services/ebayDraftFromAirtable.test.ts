@@ -75,6 +75,21 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     });
   });
 
+  it('maps shared Images column into eBay inventory imageUrls', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-IMAGES',
+      Images: 'https://cdn.example.com/c.jpg, https://cdn.example.com/d.jpg',
+      'Images Alt Text': 'Front view, Back view',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-IMAGES',
+      product: {
+        imageUrls: ['https://cdn.example.com/c.jpg', 'https://cdn.example.com/d.jpg'],
+      },
+    });
+  });
+
   it('maps human condition labels to eBay condition enums', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-3',
@@ -84,6 +99,48 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-3',
       condition: 'FOR_PARTS_OR_NOT_WORKING',
+    });
+  });
+
+  it('uses Categories field for eBay offer category id', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-4',
+      Categories: '14990',
+      'eBay Offer Category ID': '3276',
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-4',
+      categoryId: '14990',
+    });
+  });
+
+  it('maps primary and secondary categories from Categories field', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-5',
+      Categories: '14990, 15032',
+      'eBay Offer Category ID': '3276',
+      'eBay Offer Secondary Category ID': '9999',
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-5',
+      categoryId: '14990',
+      secondaryCategoryId: '15032',
+    });
+  });
+
+  it('falls back to explicit secondary category when Categories has one value', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-6',
+      Categories: '14990',
+      'eBay Offer Secondary Category ID': '15032',
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-6',
+      categoryId: '14990',
+      secondaryCategoryId: '15032',
     });
   });
 });
