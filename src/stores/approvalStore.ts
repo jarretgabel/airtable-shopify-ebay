@@ -85,6 +85,31 @@ function isTagLikeFieldName(fieldName: string): boolean {
     || normalized.endsWith('_tags');
 }
 
+function isCollectionLikeFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'collection'
+    || normalized === 'collections'
+    || normalized.includes(' collection ')
+    || normalized.endsWith(' collection')
+    || normalized.includes(' collections ')
+    || normalized.endsWith(' collections')
+    || normalized.includes('_collection_')
+    || normalized.endsWith('_collection')
+    || normalized.includes('_collections_')
+    || normalized.endsWith('_collections');
+}
+
+function isAllowedMissingWritableFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return isTagLikeFieldName(fieldName) || normalized === 'collections';
+}
+
+function getAirtableErrorStatus(error: unknown): number | undefined {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined;
+  const response = (error as { response?: { status?: number } }).response;
+  return response?.status;
+}
+
 export const useApprovalStore = create<ApprovalStore>((set, get) => ({
   records: [],
   loading: true,
@@ -205,7 +230,12 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
         Object.entries(mappedValues).forEach(([fieldName, rawValue]) => {
           if (fieldName === SHIPPING_SERVICE_FIELD) return;
           if (fieldName === CONDITION_FIELD) return;
-          if (!Object.prototype.hasOwnProperty.call(selectedRecord.fields, fieldName)) return;
+          const existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, fieldName);
+          const allowMissingWritableField = isAllowedMissingWritableFieldName(fieldName);
+          if (!existsOnRecord && !allowMissingWritableField) return;
+
+          // The Airtable schema uses "Collections" (plural). Skip legacy singular aliases.
+          if (fieldName.trim().toLowerCase() === 'collection') return;
 
           // Only send fields whose values have changed from the original record.
           // This prevents sending formula/lookup/computed fields back to Airtable,
@@ -220,7 +250,9 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
       }
 
       if (Object.keys(payload).length > 0) {
-        const shouldTypecast = Object.keys(payload).some((fieldName) => isTagLikeFieldName(fieldName));
+        const shouldTypecast = Object.keys(payload).some(
+          (fieldName) => isTagLikeFieldName(fieldName) || isCollectionLikeFieldName(fieldName),
+        );
         try {
           await airtableService.updateRecordFromReference(
             tableReference,
@@ -230,12 +262,7 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
             shouldTypecast ? { typecast: true } : undefined,
           );
         } catch (error) {
-          const status = typeof error === 'object' && error !== null && 'response' in error
-            ? (error as { response?: { status?: number } }).response?.status
-            : undefined;
-
-          // Some approval tables expose an "Approved"-like field that is computed or
-          // type-restricted and not writable. For approve-only mode, do not block UX.
+          const status = getAirtableErrorStatus(error);
           if (!(mode === 'approve-only' && status === 422)) {
             throw error;
           }

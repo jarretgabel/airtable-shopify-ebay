@@ -21,6 +21,8 @@ These are the default implementation rules for this repository.
 - Preserve existing data flow, API payload shapes, and user-visible copy unless requirements say otherwise.
 - When updating Shopify or eBay payload mapping, update both surfaces in the same change: the viewer/debug JSON shown in the UI and the actual request payload sent to the API.
 - When adding new form fields to listing approval pages, wire save behavior so those fields update their corresponding Airtable fields when saving the listing.
+- For listing form work, keep Shopify and eBay page structure aligned: use the same section order, shared UI conventions, and matching save/reset/change-tracking behavior unless channel-specific requirements explicitly differ.
+- When updating eBay listing form pages, mirror the Shopify form architecture patterns where applicable (candidate-field resolution, derived form helpers, and editor component composition) instead of introducing a one-off flow.
 - Build changes to an advanced senior-level engineering bar: production-ready structure, clear abstractions, strong type safety, and maintainable patterns.
 
 ## UI and Styling Rules

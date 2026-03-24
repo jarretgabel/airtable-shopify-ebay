@@ -11,6 +11,7 @@ Use this checklist for pull request reviews and self-review before posting PRs. 
 - [ ] Main entry file acts as barrel export (re-exports types and helpers)
 - [ ] Test file placed adjacent to implementation: `{Module}.test.ts` or `{Module}.test.tsx`
 - [ ] All cross-domain imports use `@/` alias (no relative paths)
+- [ ] Listing form page updates keep Shopify and eBay structure aligned (section order, save/reset UX, change-tracking visibility) unless a documented channel-specific requirement exists
 
 ### File Size & Complexity
 - [ ] Components are <= 220 lines (split if heavy DOM logic + state management)
@@ -202,6 +203,7 @@ Use this checklist for pull request reviews and self-review before posting PRs. 
 - [ ] Dashboard renders correctly with all metrics
 - [ ] Airtable, Shopify, eBay listings display properly
 - [ ] Approval workflows (eBay and Shopify) function correctly
+- [ ] Listing form architecture parity is preserved across Shopify and eBay pages (no unintentional one-off form flow divergence)
 - [ ] Export to PDF works (if export flow touched)
 - [ ] Inquiry polling and display works (if JotForm touched)
 - [ ] Market prices fetch and display correctly

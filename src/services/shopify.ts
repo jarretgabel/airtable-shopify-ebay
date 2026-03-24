@@ -30,6 +30,12 @@ export interface ShopifyTaxonomyCategoryMatch {
   isLeaf: boolean;
 }
 
+export interface ShopifyCollectionMatch {
+  id: string;
+  title: string;
+  handle: string;
+}
+
 const READ_ONLY_CREATE_KEYS = new Set([
   'id',
   'product_id',
@@ -150,6 +156,7 @@ export interface ShopifyUnifiedProductSetInput {
   tags?: string[];
   templateSuffix?: string;
   category?: string;
+  collectionsToJoin?: string[];
   files?: ShopifyUnifiedProductSetFileInput[];
   metafields?: ShopifyMetafield[];
   productOptions?: ShopifyUnifiedProductSetOptionInput[];
@@ -371,6 +378,7 @@ export function buildShopifyUnifiedProductSetRequest(
   product: ShopifyProduct,
   options?: {
     categoryId?: string;
+    collectionIds?: string[];
     existingProductId?: number;
   },
 ): ShopifyUnifiedProductSetRequest {
@@ -391,6 +399,9 @@ export function buildShopifyUnifiedProductSetRequest(
       tags: splitShopifyTags(normalizedProduct.tags),
       templateSuffix: normalizedProduct.template_suffix?.trim() || undefined,
       category: normalizedCategoryId || undefined,
+      collectionsToJoin: options?.collectionIds && options.collectionIds.length > 0
+        ? options.collectionIds
+        : undefined,
       metafields: normalizedProduct.metafields,
       files: unifiedFiles,
       productOptions: unifiedOptions,
@@ -661,6 +672,66 @@ class ShopifyService {
     );
 
     return data.taxonomy.categories.edges.map((edge) => edge.node);
+  }
+
+  async searchCollections(search: string, first = 20): Promise<ShopifyCollectionMatch[]> {
+    const normalizedSearch = search.trim();
+    if (normalizedSearch.length === 0) {
+      return this.getCollections(first);
+    }
+
+    const data = await this.graphQlRequest<{
+      collections: {
+        edges: Array<{
+          node: ShopifyCollectionMatch;
+        }>;
+      };
+    }>(
+      `query SearchCollections($query: String!, $first: Int!) {
+        collections(first: $first, query: $query, sortKey: TITLE) {
+          edges {
+            node {
+              id
+              title
+              handle
+            }
+          }
+        }
+      }`,
+      {
+        query: normalizedSearch,
+        first,
+      },
+    );
+
+    return data.collections.edges.map((edge) => edge.node);
+  }
+
+  async getCollections(first = 20): Promise<ShopifyCollectionMatch[]> {
+    const data = await this.graphQlRequest<{
+      collections: {
+        edges: Array<{
+          node: ShopifyCollectionMatch;
+        }>;
+      };
+    }>(
+      `query GetCollections($first: Int!) {
+        collections(first: $first, sortKey: TITLE) {
+          edges {
+            node {
+              id
+              title
+              handle
+            }
+          }
+        }
+      }`,
+      {
+        first,
+      },
+    );
+
+    return data.collections.edges.map((edge) => edge.node);
   }
 
   async resolveTaxonomyCategory(searchOrId: string): Promise<ShopifyTaxonomyCategoryMatch | null> {

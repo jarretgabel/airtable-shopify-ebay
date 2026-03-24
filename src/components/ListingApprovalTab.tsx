@@ -15,7 +15,10 @@ import {
   type ShopifyUnifiedProductSetRequest,
 } from '@/services/shopify';
 import { buildEbayDraftPayloadBundleFromApprovalFields } from '@/services/ebayDraftFromAirtable';
-import { buildShopifyDraftProductFromApprovalFields } from '@/services/shopifyDraftFromAirtable';
+import {
+  buildShopifyCollectionIdsFromApprovalFields,
+  buildShopifyDraftProductFromApprovalFields,
+} from '@/services/shopifyDraftFromAirtable';
 import { SHOPIFY_DEFAULT_VENDOR } from '@/services/shopifyTags';
 import { trimShopifyProductType } from '@/services/shopifyTaxonomy';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
@@ -120,6 +123,28 @@ const SHOPIFY_BODY_KEY_FEATURES_FIELD_CANDIDATES = [
   'shopify_rest_body_key_features',
 ] as const;
 
+const SHOPIFY_TITLE_FIELD_CANDIDATES = [
+  'Shopify REST Title',
+  'Shopify Title',
+  'Item Title',
+  'Title',
+  'Name',
+  'shopify_rest_title',
+] as const;
+
+const SHOPIFY_PRICE_FIELD_CANDIDATES = [
+  'Shopify REST Variant 1 Price',
+  'Shopify Variant 1 Price',
+  'Shopify REST Variant 1 Compare At Price',
+  'Shopify Variant 1 Compare At Price',
+  'Variant-Compare-Price',
+  'Variant Compare Price',
+  'Price',
+  'shopify_rest_variant_1_price',
+  'shopify_rest_variant_1_compare_at_price',
+  'variant_compare_price',
+] as const;
+
 const SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES = [
   'Type',
   'Product Type',
@@ -139,6 +164,21 @@ const SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES = [
   'shopify_rest_product_category',
   'google_product_category',
   'product_category',
+] as const;
+
+const SHOPIFY_COLLECTION_FIELD_CANDIDATES = [
+  'Collections',
+  'Collection',
+  'Shopify Collection IDs',
+  'Shopify Collection ID',
+  'Shopify GraphQL Collection IDs',
+  'Shopify GraphQL Collection ID',
+  'Shopify GraphQL Collections JSON',
+  'shopify_collection_ids',
+  'shopify_collection_id',
+  'shopify_graphql_collection_ids',
+  'shopify_graphql_collection_id',
+  'shopify_graphql_collections_json',
 ] as const;
 
 const SHOPIFY_GRAPHQL_CATEGORY_ID_FIELD_CANDIDATES = [
@@ -178,6 +218,7 @@ const SHOPIFY_UNIFIED_PRODUCT_SET_DOCS_EXAMPLE: {
       status: 'DRAFT',
       category: 'gid://shopify/TaxonomyCategory/el-2-3-10',
       tags: ['Vintage Audio', 'Turntable'],
+      collectionsToJoin: ['gid://shopify/Collection/1234567890'],
       templateSuffix: 'product-template',
       files: [
         {
@@ -324,6 +365,7 @@ export function ListingApprovalTab({
     error: '',
   });
   const [formDerivedBodyHtmlPreview, setFormDerivedBodyHtmlPreview] = useState('');
+  const [creatingShopifyListing, setCreatingShopifyListing] = useState(false);
 
   const allFieldNames = useMemo(() => {
     const names = new Set<string>();
@@ -334,6 +376,38 @@ export function ListingApprovalTab({
     if (approvalChannel === 'shopify') {
       const existingNames = Array.from(names);
       const existingLower = new Set(existingNames.map((name) => name.toLowerCase()));
+      const preferredTitleField = existingNames.find((name) =>
+        SHOPIFY_TITLE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? SHOPIFY_TITLE_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+
+      if (preferredTitleField) {
+        names.add(preferredTitleField);
+      }
+
+      const preferredPriceField = existingNames.find((name) =>
+        SHOPIFY_PRICE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? SHOPIFY_PRICE_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+
+      if (preferredPriceField) {
+        names.add(preferredPriceField);
+      }
+
+      const preferredProductTypeField = existingNames.find((name) =>
+        SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+
+      if (preferredProductTypeField) {
+        names.add(preferredProductTypeField);
+      }
+
+      const preferredCollectionField = existingNames.find((name) =>
+        SHOPIFY_COLLECTION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? SHOPIFY_COLLECTION_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+
+      if (preferredCollectionField) {
+        names.add(preferredCollectionField);
+      }
+
       const preferredImageField = existingNames.find((name) =>
         SHOPIFY_IMAGE_LIST_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       ) ?? SHOPIFY_IMAGE_LIST_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
@@ -659,6 +733,11 @@ export function ListingApprovalTab({
     currentPageBodyHtml,
   ]);
 
+  const currentPageCollectionIds = useMemo(() => {
+    if (approvalChannel !== 'shopify' || !selectedRecord) return [] as string[];
+    return buildShopifyCollectionIdsFromApprovalFields(mergedDraftSourceFields ?? selectedRecord.fields);
+  }, [approvalChannel, mergedDraftSourceFields, selectedRecord]);
+
   const effectiveShopifyCreatePayload = useMemo(() => {
     if (!finalShopifyCreatePayload) return null;
 
@@ -674,9 +753,11 @@ export function ListingApprovalTab({
 
     return buildShopifyUnifiedProductSetRequest(finalShopifyCreatePayload.product, {
       categoryId: previewCategoryId,
+      collectionIds: currentPageCollectionIds,
       existingProductId,
     });
   }, [
+    currentPageCollectionIds,
     currentPageCategoryIdResolution.value,
     finalShopifyCreatePayload,
     formValues,
@@ -687,14 +768,37 @@ export function ListingApprovalTab({
   const shopifyDraftCreatePayloadJson = useMemo(() => {
     if (!effectiveShopifyCreatePayload) return '';
     try {
+      const previewVariables: ShopifyUnifiedProductSetRequest = {
+        ...effectiveShopifyCreatePayload,
+        input: {
+          ...effectiveShopifyCreatePayload.input,
+          tags: effectiveShopifyCreatePayload.input.tags ?? [],
+          collectionsToJoin: effectiveShopifyCreatePayload.input.collectionsToJoin ?? [],
+        },
+      };
+
       return JSON.stringify({
         operationName: 'ProductSet',
         query: SHOPIFY_PRODUCT_SET_MUTATION,
-        variables: effectiveShopifyCreatePayload,
+        variables: previewVariables,
       }, null, 2);
     } catch {
       return '{\n  "error": "Unable to serialize payload"\n}';
     }
+  }, [effectiveShopifyCreatePayload]);
+
+  const shopifyPayloadDebug = useMemo(() => {
+    if (!effectiveShopifyCreatePayload) {
+      return {
+        tags: [] as string[],
+        collectionsToJoin: [] as string[],
+      };
+    }
+
+    return {
+      tags: effectiveShopifyCreatePayload.input.tags ?? [],
+      collectionsToJoin: effectiveShopifyCreatePayload.input.collectionsToJoin ?? [],
+    };
   }, [effectiveShopifyCreatePayload]);
 
   const shopifyCategorySyncPreviewJson = useMemo(() => {
@@ -853,6 +957,40 @@ export function ListingApprovalTab({
     [approvalChannel, resolveFieldName],
   );
 
+  const shopifyRequiredFieldNames = useMemo(() => {
+    if (approvalChannel !== 'shopify') return [] as string[];
+
+    const required = [
+      resolveFieldName([...SHOPIFY_TITLE_FIELD_CANDIDATES], ''),
+      resolveFieldName([...SHOPIFY_PRICE_FIELD_CANDIDATES], ''),
+      resolveFieldName([...SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES], ''),
+    ].filter((fieldName): fieldName is string => fieldName.trim().length > 0);
+
+    return Array.from(new Set(required));
+  }, [approvalChannel, resolveFieldName]);
+
+  const missingShopifyRequiredFieldNames = useMemo(() => {
+    if (approvalChannel !== 'shopify' || !selectedRecord) return [] as string[];
+
+    const source = mergedDraftSourceFields ?? selectedRecord.fields;
+    return shopifyRequiredFieldNames.filter((fieldName) => {
+      const rawValue = source[fieldName];
+      if (rawValue === null || rawValue === undefined) return true;
+
+      const stringValue = String(rawValue).trim();
+      if (!stringValue) return true;
+
+      if (fieldName.toLowerCase().includes('price')) {
+        const numericValue = Number(stringValue);
+        return !Number.isFinite(numericValue) || numericValue <= 0;
+      }
+
+      return false;
+    });
+  }, [approvalChannel, mergedDraftSourceFields, selectedRecord, shopifyRequiredFieldNames]);
+
+  const hasMissingShopifyRequiredFields = missingShopifyRequiredFieldNames.length > 0;
+
   function openRecord(record: AirtableRecord) {
     hydrateForm(record, allFieldNames, approvedFieldName);
     trackWorkflowEvent('approval_record_opened', {
@@ -861,6 +999,61 @@ export function ListingApprovalTab({
     });
     onSelectRecord(record.id);
   }
+
+  const createNewShopifyListing = async () => {
+    if (approvalChannel !== 'shopify') return;
+    if (!tableReference.trim()) return;
+
+    const defaultTitle = `New Shopify Listing ${new Date().toISOString().slice(0, 10)}`;
+    const titleCandidates = Array.from(new Set([
+      titleFieldName,
+      ...SHOPIFY_TITLE_FIELD_CANDIDATES,
+    ])).filter((fieldName) => fieldName.trim().length > 0);
+
+    setCreatingShopifyListing(true);
+    try {
+      let createdRecord: AirtableRecord | null = null;
+      let lastError: unknown = null;
+
+      for (const titleField of titleCandidates) {
+        try {
+          createdRecord = await airtableService.createRecordFromReference(
+            tableReference,
+            tableName,
+            {
+              [titleField]: defaultTitle,
+            },
+            { typecast: true },
+          );
+          break;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      if (!createdRecord) {
+        throw lastError ?? new Error('Unable to create a new Shopify listing row in Airtable.');
+      }
+
+      await loadRecords(tableReference, tableName);
+      onSelectRecord(createdRecord.id);
+
+      pushNotification({
+        tone: 'success',
+        title: 'New Shopify listing created',
+        message: 'A new Airtable row is ready. Fill the required Shopify fields, save, then approve.',
+      });
+
+    } catch (createError) {
+      pushNotification({
+        tone: 'error',
+        title: 'Unable to create Shopify listing',
+        message: describeShopifyCreateError(createError),
+      });
+    } finally {
+      setCreatingShopifyListing(false);
+    }
+  };
 
   const hasTableReference = tableReference.trim().length > 0;
 
@@ -879,7 +1072,6 @@ export function ListingApprovalTab({
   const isApproved = approvedValue === true
     || String(approvedValue ?? '').toLowerCase() === 'true'
     || String(approvedValue ?? '').toLowerCase() === 'yes';
-  const hasApprovedValue = approvedValue !== null && approvedValue !== undefined && String(approvedValue).trim() !== '';
 
   const changedFieldNames = useMemo(() => {
     if (!selectedRecord) return [] as string[];
@@ -919,11 +1111,9 @@ export function ListingApprovalTab({
               <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.06em] ${
                 isApproved
                   ? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200'
-                  : hasApprovedValue
-                    ? 'border border-rose-400/35 bg-rose-500/20 text-rose-200'
-                    : 'border border-amber-400/35 bg-amber-500/20 text-amber-200'
+                  : 'border border-amber-400/35 bg-amber-500/20 text-amber-200'
               }`}>
-                {isApproved ? 'Approved' : hasApprovedValue ? displayValue(approvedValue) : 'Pending'}
+                {isApproved ? 'Approved' : 'Unapproved'}
               </span>
             </div>
             <p className="m-0 mt-1 text-sm text-[var(--muted)]">Record ID: <code>{selectedRecord.id}</code></p>
@@ -940,6 +1130,7 @@ export function ListingApprovalTab({
         <ApprovalFormFields
           allFieldNames={allFieldNames}
           writableFieldNames={Object.keys(selectedRecord.fields)}
+          requiredFieldNames={approvalChannel === 'shopify' ? shopifyRequiredFieldNames : []}
           approvedFieldName={approvedFieldName}
           formValues={formValues}
           fieldKinds={fieldKinds}
@@ -961,6 +1152,17 @@ export function ListingApprovalTab({
             </p>
             <p className="m-0 mt-1 text-xs text-amber-200/85">
               {changedFieldNames.join(', ')}
+            </p>
+          </section>
+        )}
+
+        {approvalChannel === 'shopify' && hasMissingShopifyRequiredFields && (
+          <section className="mt-4 rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-2">
+            <p className="m-0 text-sm font-semibold text-rose-200">
+              Shopify required fields are missing ({missingShopifyRequiredFieldNames.length}).
+            </p>
+            <p className="m-0 mt-1 text-xs text-rose-200/85">
+              Complete before approving: {missingShopifyRequiredFieldNames.join(', ')}
             </p>
           </section>
         )}
@@ -1020,6 +1222,7 @@ export function ListingApprovalTab({
 
                   const unifiedRequest = buildShopifyUnifiedProductSetRequest(updatePayload.product, {
                     categoryId: categoryId ?? undefined,
+                    collectionIds: currentPageCollectionIds,
                     existingProductId: parsedExistingId,
                   });
 
@@ -1048,6 +1251,15 @@ export function ListingApprovalTab({
             type="button"
             className={accentActionButtonClass}
             onClick={() => {
+              if (approvalChannel === 'shopify' && hasMissingShopifyRequiredFields) {
+                pushNotification({
+                  tone: 'warning',
+                  title: 'Required Shopify fields missing',
+                  message: `Complete required fields before approving: ${missingShopifyRequiredFieldNames.join(', ')}`,
+                });
+                return;
+              }
+
               if (hasUnsavedChanges) {
                 pushNotification({
                   tone: 'warning',
@@ -1084,6 +1296,7 @@ export function ListingApprovalTab({
 
                           const unifiedRequest = buildShopifyUnifiedProductSetRequest(createPayload.product, {
                             categoryId: categoryId ?? undefined,
+                            collectionIds: currentPageCollectionIds,
                             existingProductId: parsedExistingId,
                           });
 
@@ -1127,6 +1340,7 @@ export function ListingApprovalTab({
 
                       const unifiedRequest = buildShopifyUnifiedProductSetRequest(createPayload.product, {
                         categoryId: categoryId ?? undefined,
+                        collectionIds: currentPageCollectionIds,
                       });
                       const createdProduct = await shopifyService.upsertProductWithUnifiedRequest(unifiedRequest);
                       const productIdStr = String(createdProduct.id);
@@ -1195,12 +1409,14 @@ export function ListingApprovalTab({
 
               void runApproval();
             }}
-            disabled={saving || hasUnsavedChanges || isApproved}
+            disabled={saving || hasUnsavedChanges || isApproved || (approvalChannel === 'shopify' && hasMissingShopifyRequiredFields)}
           >
             {saving
               ? 'Approving...'
               : isApproved
                 ? 'Already Approved'
+                : approvalChannel === 'shopify' && hasMissingShopifyRequiredFields
+                  ? 'Complete Required Shopify Fields'
                 : hasUnsavedChanges
                   ? 'Save Before Approve'
                   : 'Approve Listing'}
@@ -1241,6 +1457,11 @@ export function ListingApprovalTab({
               <div className="mb-2 rounded-md border border-rose-400/35 bg-rose-500/10 px-2 py-2 text-xs text-rose-100/90">
                 <p className="m-0 font-semibold text-rose-100">Inventory Quantity Note</p>
                 <p className="m-0 mt-1">This unified GraphQL path does not include <code>inventory_quantity</code> because Shopify requires a location ID for inventory quantities and the current token cannot read locations.</p>
+              </div>
+              <div className="mb-2 rounded-md border border-emerald-400/35 bg-emerald-500/10 px-2 py-2 text-xs text-emerald-100/90">
+                <p className="m-0 font-semibold text-emerald-100">Payload Field Debug</p>
+                <p className="m-0 mt-1">Tags: <code>{shopifyPayloadDebug.tags.length > 0 ? shopifyPayloadDebug.tags.join(', ') : '(none)'}</code></p>
+                <p className="m-0 mt-1">Collections: <code>{shopifyPayloadDebug.collectionsToJoin.length > 0 ? shopifyPayloadDebug.collectionsToJoin.join(', ') : '(none)'}</code></p>
               </div>
               <p className="m-0 mb-2 text-xs text-[var(--muted)]">GraphQL <code>productSet</code> request</p>
               <pre className="m-0 overflow-x-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{shopifyDraftCreatePayloadJson || '{\n  "query": "",\n  "variables": {\n    "input": {}\n  }\n}'}</pre>
@@ -1332,18 +1553,32 @@ export function ListingApprovalTab({
                 Source: <code>{tableReference}</code>
               </p>
             </div>
-            <button
-              type="button"
-              className={primaryActionButtonClass}
-              onClick={() => {
-                trackWorkflowEvent('approval_queue_refreshed', {
-                  tableReference,
-                });
-                void loadRecords(tableReference, tableName);
-              }}
-            >
-              Refresh Queue
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {approvalChannel === 'shopify' && (
+                <button
+                  type="button"
+                  className={accentActionButtonClass}
+                  onClick={() => {
+                    void createNewShopifyListing();
+                  }}
+                  disabled={loading || saving || creatingShopifyListing}
+                >
+                  {creatingShopifyListing ? 'Creating Listing...' : 'New Shopify Listing'}
+                </button>
+              )}
+              <button
+                type="button"
+                className={primaryActionButtonClass}
+                onClick={() => {
+                  trackWorkflowEvent('approval_queue_refreshed', {
+                    tableReference,
+                  });
+                  void loadRecords(tableReference, tableName);
+                }}
+              >
+                Refresh Queue
+              </button>
+            </div>
           </div>
 
           <p className="m-0 mb-4 text-sm text-[var(--muted)]">
@@ -1353,6 +1588,7 @@ export function ListingApprovalTab({
           <ApprovalQueueTable
             records={records}
             approvedFieldName={approvedFieldName}
+            requiredFieldNames={approvalChannel === 'shopify' ? shopifyRequiredFieldNames : []}
             titleFieldName={titleFieldName}
             conditionFieldName={conditionFieldName}
             formatFieldName={formatFieldName}

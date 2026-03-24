@@ -1,4 +1,7 @@
-import { buildShopifyDraftProductFromApprovalFields } from '@/services/shopifyDraftFromAirtable';
+import {
+  buildShopifyCollectionIdsFromApprovalFields,
+  buildShopifyDraftProductFromApprovalFields,
+} from '@/services/shopifyDraftFromAirtable';
 
 describe('buildShopifyDraftProductFromApprovalFields', () => {
   it('preserves image alt text from JSON image objects', () => {
@@ -71,6 +74,15 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
 
     expect(product.vendor).toBe('Resolution Audio Video NYC');
     expect(product.tags).toBe('Vintage Audio, Turntable, Belt Drive');
+  });
+
+  it('maps generic Airtable Tags field into Shopify tags payload', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Generic Tags Product',
+      'Tags': 'Vintage Audio, Turntable',
+    });
+
+    expect(product.tags).toBe('Vintage Audio, Turntable');
   });
 
   it('renders Shopify body HTML from template tokens and dynamic fields', () => {
@@ -197,5 +209,36 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     });
 
     expect(product.product_type).toBe('Turntables & Record Players');
+  });
+
+  it('uses Airtable variant compare price as Shopify variant price in payload', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Compare Price Product',
+      'Shopify REST Variant 1 Price': '299.00',
+      'Variant-Compare-Price': '249.00',
+    });
+
+    expect(product.variants?.[0]?.price).toBe('249.00');
+    expect(product.variants?.[0]?.compare_at_price).toBe('299.00');
+  });
+  
+  it('parses collection IDs from Airtable collection fields into Shopify GIDs', () => {
+    const collectionIds = buildShopifyCollectionIdsFromApprovalFields({
+      'Collection': '1234567890',
+      'Shopify GraphQL Collection 2 ID': 'gid://shopify/Collection/222',
+      'Shopify GraphQL Collections JSON': JSON.stringify([
+        { collection_id: '333' },
+        { id: 'gid://shopify/Collection/444' },
+        '555',
+      ]),
+    });
+
+    expect(collectionIds).toEqual([
+      'gid://shopify/Collection/1234567890',
+      'gid://shopify/Collection/333',
+      'gid://shopify/Collection/444',
+      'gid://shopify/Collection/555',
+      'gid://shopify/Collection/222',
+    ]);
   });
 });

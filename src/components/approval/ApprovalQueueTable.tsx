@@ -5,8 +5,7 @@ import { AirtableRecord } from '@/types/airtable';
 
 function ApprovedBadge({ value }: { value: unknown }) {
   const str = String(value ?? '').trim();
-  const empty = value === null || value === undefined || str === '' || str === '—';
-  const approved = !empty && (str.toLowerCase() === 'true' || str.toLowerCase() === 'yes' || str === '1');
+  const approved = str.toLowerCase() === 'true' || str.toLowerCase() === 'yes' || str === '1';
 
   if (approved) {
     return (
@@ -17,7 +16,7 @@ function ApprovedBadge({ value }: { value: unknown }) {
   }
   return (
     <span className="inline-block rounded-full border border-amber-400/35 bg-amber-500/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.06em] text-amber-200">
-      {empty ? 'Pending' : displayValue(value)}
+      Unapproved
     </span>
   );
 }
@@ -25,6 +24,7 @@ function ApprovedBadge({ value }: { value: unknown }) {
 interface ApprovalQueueTableProps {
   records: AirtableRecord[];
   approvedFieldName: string;
+  requiredFieldNames?: string[];
   titleFieldName: string;
   conditionFieldName: string;
   formatFieldName: string;
@@ -38,6 +38,7 @@ interface ApprovalQueueTableProps {
 export function ApprovalQueueTable({
   records,
   approvedFieldName,
+  requiredFieldNames = [],
   titleFieldName,
   conditionFieldName,
   formatFieldName,
@@ -48,7 +49,7 @@ export function ApprovalQueueTable({
   onSelectRecord,
 }: ApprovalQueueTableProps) {
   const [search, setSearch] = useState('');
-  const [approvalFilter, setApprovalFilter] = useState<'all' | 'approved' | 'pending'>('all');
+  const [approvalFilter, setApprovalFilter] = useState<'all' | 'approved' | 'unapproved'>('all');
   const [sortBy, setSortBy] = useState<'title-asc' | 'title-desc' | 'price-desc' | 'price-asc' | 'vendor-asc' | 'qty-desc' | 'approval'>('title-asc');
   const deferredSearch = useDeferredValue(search);
 
@@ -71,6 +72,21 @@ export function ApprovalQueueTable({
       const rawPrice = priceFieldName ? record.fields[priceFieldName] : null;
       const rawQty = qtyFieldName ? record.fields[qtyFieldName] : null;
 
+      const requiredComplete = requiredFieldNames.every((fieldName) => {
+        const rawValue = record.fields[fieldName];
+        if (rawValue === null || rawValue === undefined) return false;
+
+        const stringValue = String(rawValue).trim();
+        if (!stringValue) return false;
+
+        if (fieldName.toLowerCase().includes('price')) {
+          const numericValue = Number.parseFloat(stringValue.replace(/[^0-9.-]/g, ''));
+          return Number.isFinite(numericValue) && numericValue > 0;
+        }
+
+        return true;
+      });
+
       return {
         record,
         title,
@@ -84,9 +100,10 @@ export function ApprovalQueueTable({
         price: priceFieldName ? parseNumber(rawPrice) : 0,
         qty: qtyFieldName ? parseNumber(rawQty) : 0,
         approved: isApprovedValue(record.fields[approvedFieldName]),
+        requiredComplete,
       };
     }),
-    [approvedFieldName, conditionFieldName, formatFieldName, priceFieldName, qtyFieldName, records, titleFieldName, vendorFieldName],
+    [approvedFieldName, conditionFieldName, formatFieldName, priceFieldName, qtyFieldName, records, requiredFieldNames, titleFieldName, vendorFieldName],
   );
 
   const filteredAndSortedRecords = useMemo(() => {
@@ -137,6 +154,11 @@ export function ApprovalQueueTable({
     sortBy,
   ]);
 
+  const preparedRecordById = useMemo(
+    () => new Map(preparedRecords.map((item) => [item.record.id, item])),
+    [preparedRecords],
+  );
+
   useEffect(() => {
     trackWorkflowEvent('approval_queue_filtered', {
       searchLength: deferredSearch.trim().length,
@@ -163,7 +185,8 @@ export function ApprovalQueueTable({
     + (hasVendor ? 1 : 0)
     + (hasCondition ? 1 : 0)
     + (hasFormat ? 1 : 0)
-    + (hasQty ? 1 : 0);
+    + (hasQty ? 1 : 0)
+    + (requiredFieldNames.length > 0 ? 1 : 0);
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-3 py-2.5">
@@ -183,7 +206,7 @@ export function ApprovalQueueTable({
         >
           <option value="all">All statuses</option>
           <option value="approved">Approved</option>
-          <option value="pending">Pending</option>
+          <option value="unapproved">Unapproved</option>
         </select>
         <select
           value={sortBy}
@@ -216,6 +239,7 @@ export function ApprovalQueueTable({
             {hasCondition && <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Condition</th>}
             {hasFormat && <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Format</th>}
             {hasQty && <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Qty</th>}
+            {requiredFieldNames.length > 0 && <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Shopify Fields</th>}
             <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Approved</th>
             <th className="border-b-2 border-[var(--line)] px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.07em] text-[var(--muted)]">Action</th>
           </tr>
@@ -242,6 +266,19 @@ export function ApprovalQueueTable({
               {hasFormat && <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle">{displayValue(record.fields[formatFieldName])}</td>}
               {hasQty && (
                 <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle text-center text-[var(--muted)]">{displayValue(record.fields[qtyFieldName])}</td>
+              )}
+              {requiredFieldNames.length > 0 && (
+                <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle">
+                  {preparedRecordById.get(record.id)?.requiredComplete ? (
+                    <span className="inline-block rounded-full border border-emerald-400/35 bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.06em] text-emerald-200">
+                      Complete
+                    </span>
+                  ) : (
+                    <span className="inline-block rounded-full border border-rose-400/35 bg-rose-500/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.06em] text-rose-200">
+                      Missing
+                    </span>
+                  )}
+                </td>
               )}
               <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle"><ApprovedBadge value={record.fields[approvedFieldName]} /></td>
               <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle">

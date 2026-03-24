@@ -351,6 +351,11 @@ function hasFlatVariantFields(fields: ApprovalFieldMap): boolean {
   return hasAnyFieldValue(fields, [
     'Shopify REST Variant 1 Price',
     'shopify_rest_variant_1_price',
+    'Shopify REST Variant 1 Compare At Price',
+    'shopify_rest_variant_1_compare_at_price',
+    'Variant-Compare-Price',
+    'Variant Compare Price',
+    'variant_compare_price',
     'Shopify REST Variant 1 SKU',
     'shopify_rest_variant_1_sku',
     'Shopify REST Variant 1 Option 1',
@@ -828,14 +833,107 @@ function buildTags(fields: ApprovalFieldMap): string | undefined {
     'Shopify Tags',
     'Shopify GraphQL Tags',
     'Shopify GraphQL Tags JSON',
+    'Tags',
     'shopify_rest_tags',
+    'shopify_tags',
     'shopify_graphql_tags',
     'shopify_graphql_tags_json',
+    'tags',
   ]);
   const tagsFromCompound = parseShopifyTagList(compound);
 
   const serialized = serializeShopifyTagsCsv([...tagsFromSingles, ...tagsFromCompound]);
   return serialized.length > 0 ? serialized : undefined;
+}
+
+function normalizeCollectionId(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (/^gid:\/\/shopify\/Collection\/\d+$/i.test(trimmed)) return trimmed;
+  if (/^\d+$/.test(trimmed)) return `gid://shopify/Collection/${trimmed}`;
+  return '';
+}
+
+export function buildShopifyCollectionIdsFromApprovalFields(fields: ApprovalFieldMap): string[] {
+  const collectionIds: string[] = [];
+
+  const collectionIdCandidates = [
+    'Collection',
+    'Collections',
+    'Shopify Collection',
+    'Shopify Collections',
+    'Shopify Collection ID',
+    'Shopify Collection IDs',
+    'Shopify GraphQL Collection ID',
+    'Shopify GraphQL Collection IDs',
+    'Shopify GraphQL Collections JSON',
+    'shopify_collection',
+    'shopify_collections',
+    'shopify_collection_id',
+    'shopify_collection_ids',
+    'shopify_graphql_collection_id',
+    'shopify_graphql_collection_ids',
+    'shopify_graphql_collections_json',
+  ];
+
+  const normalizedLookup = new Map<string, unknown>();
+  Object.entries(fields).forEach(([key, value]) => {
+    normalizedLookup.set(normalizeKey(key), value);
+  });
+
+  collectionIdCandidates.forEach((candidateFieldName) => {
+    const rawValue = fields[candidateFieldName] ?? normalizedLookup.get(normalizeKey(candidateFieldName));
+    if (rawValue === null || rawValue === undefined) return;
+
+    const parsedCompoundCollections = parseJsonArray<unknown>(rawValue);
+    if (parsedCompoundCollections && parsedCompoundCollections.length > 0) {
+      parsedCompoundCollections.forEach((entry) => {
+        if (typeof entry === 'string' || typeof entry === 'number') {
+          collectionIds.push(String(entry));
+          return;
+        }
+
+        if (!entry || typeof entry !== 'object') return;
+        const record = entry as Record<string, unknown>;
+        const candidate = record.collectionId ?? record.collection_id ?? record.id;
+        if (typeof candidate === 'string' || typeof candidate === 'number') {
+          collectionIds.push(String(candidate));
+        }
+      });
+      return;
+    }
+
+    const parsedDelimitedCollections = coerceStructuredToString(rawValue)
+      .split(/[\n,]/)
+      .map((token) => token.trim())
+      .filter(Boolean);
+    collectionIds.push(...parsedDelimitedCollections);
+  });
+
+  for (let i = 1; i <= 25; i += 1) {
+    const collectionId = getField(fields, [
+      `Shopify GraphQL Collection ${i} ID`,
+      `Shopify Collection ${i} ID`,
+      `Collection ${i} ID`,
+      `collection_${i}_id`,
+      `shopify_graphql_collection_${i}_id`,
+      `shopify_collection_${i}_id`,
+    ]);
+    if (collectionId) collectionIds.push(collectionId);
+  }
+
+  const seen = new Set<string>();
+  const normalized = collectionIds
+    .map(normalizeCollectionId)
+    .filter((collectionId) => {
+      if (!collectionId) return false;
+      const key = collectionId.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+  return normalized;
 }
 
 function sanitizeOptions(options: ShopifyProductOption[] | undefined): ShopifyProductOption[] | undefined {
