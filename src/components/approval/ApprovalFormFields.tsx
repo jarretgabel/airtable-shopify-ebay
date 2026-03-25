@@ -41,7 +41,7 @@ function getEbayPriceFieldLabel(listingFormat: string): string {
 
 function toHumanReadableLabel(fieldName: string): string {
   if (fieldName === CONDITION_FIELD) return 'Condition';
-  if (fieldName.trim().toLowerCase() === 'ebay offer price value') return 'Buy It Now/Starting Bid Price';
+  if (fieldName.trim().toLowerCase() === 'ebay offer price value') return 'Buy It Now/Starting Price';
 
   const withSpaces = fieldName
     .replace(/[_-]+/g, ' ')
@@ -71,6 +71,8 @@ function isCurrencyLikeField(fieldName: string): boolean {
 
   return normalized === 'ebay offer price value'
     || normalized === 'buy it now/starting bid'
+    || normalized === 'buy it now/starting price'
+    || normalized === 'buy it now / starting price'
     || normalized.includes('handling cost')
     || isShopifyPriceField
     || isGenericPriceField;

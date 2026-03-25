@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
 
 interface KeyFeatureRow {
@@ -56,21 +56,30 @@ export function KeyFeaturesEditor({
   disabled = false,
   label = 'Key Features',
 }: KeyFeaturesEditorProps) {
-  const rows = useMemo(() => parseKeyFeatures(keyFeaturesValue), [keyFeaturesValue]);
+  const [rows, setRows] = useState<KeyFeatureRow[]>(() => parseKeyFeatures(keyFeaturesValue));
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    setRows(parseKeyFeatures(keyFeaturesValue));
+  }, [keyFeaturesValue]);
+
+  function commitRows(nextRows: KeyFeatureRow[]) {
+    setRows(nextRows);
+    setFormValue(keyFeaturesFieldName, serializeKeyFeatures(nextRows));
+  }
 
   function updateRow(index: number, patch: Partial<KeyFeatureRow>) {
     const next = rows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row));
-    setFormValue(keyFeaturesFieldName, serializeKeyFeatures(next));
+    commitRows(next);
   }
 
   function addRow() {
-    setFormValue(keyFeaturesFieldName, serializeKeyFeatures([...rows, { feature: '', value: '' }]));
+    commitRows([...rows, { feature: '', value: '' }]);
   }
 
   function removeRow(index: number) {
     const next = rows.filter((_, rowIndex) => rowIndex !== index);
-    setFormValue(keyFeaturesFieldName, serializeKeyFeatures(next));
+    commitRows(next.length > 0 ? next : [{ feature: '', value: '' }]);
   }
 
   function moveRow(index: number, direction: -1 | 1) {
@@ -80,7 +89,7 @@ export function KeyFeaturesEditor({
     const next = [...rows];
     const [moved] = next.splice(index, 1);
     next.splice(target, 0, moved);
-    setFormValue(keyFeaturesFieldName, serializeKeyFeatures(next));
+    commitRows(next);
   }
 
   function moveRowToIndex(fromIndex: number, toIndex: number) {
@@ -91,7 +100,7 @@ export function KeyFeaturesEditor({
     const next = [...rows];
     const [moved] = next.splice(fromIndex, 1);
     next.splice(toIndex, 0, moved);
-    setFormValue(keyFeaturesFieldName, serializeKeyFeatures(next));
+    commitRows(next);
   }
 
   return (

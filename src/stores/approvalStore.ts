@@ -127,6 +127,58 @@ function isCategoryLikeFieldName(fieldName: string): boolean {
     || normalized === 'ebay_offer_secondarycategoryid';
 }
 
+function isPriceLikeFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'buy it now/starting price'
+    || normalized === 'buy it now / starting price'
+    || normalized === 'buy it now/starting bid'
+    || normalized === 'ebay offer price value'
+    || normalized === 'ebay offer auction start price value'
+    || normalized === 'buy it now usd'
+    || normalized === 'starting bid usd'
+    || normalized === 'price';
+}
+
+function toNumericRetryValues(value: unknown): unknown[] {
+  const asString = String(value ?? '').trim();
+  if (!asString) return [];
+
+  const cleaned = asString
+    .replace(/\$/g, '')
+    .replace(/,/g, '')
+    .trim();
+
+  const parsed = Number(cleaned);
+  if (!Number.isFinite(parsed)) return [];
+
+  const rounded2 = Math.round(parsed * 100) / 100;
+  const fixed2 = rounded2.toFixed(2);
+
+  return [rounded2, fixed2];
+}
+
+function getPriceFieldRetryNames(fieldName: string): string[] {
+  const candidates = [
+    fieldName,
+    'Buy It Now/Starting Price',
+    'Buy It Now / Starting Price',
+    'Buy It Now/Starting Bid',
+    'eBay Offer Price Value',
+    'eBay Offer Auction Start Price Value',
+    'Buy It Now USD',
+    'Starting Bid USD',
+    'Price',
+  ];
+
+  const seen = new Set<string>();
+  return candidates.filter((candidate) => {
+    const key = candidate.trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function toCategoryTokens(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value
@@ -199,6 +251,18 @@ function isAllowedMissingWritableFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return isTagLikeFieldName(fieldName)
     || normalized === 'collections'
+    || normalized === 'buy it now/starting price'
+    || normalized === 'buy it now / starting price'
+    || normalized === 'buy it now/starting bid'
+    || normalized === 'ebay offer price value'
+    || normalized === 'ebay offer auction start price value'
+    || normalized === 'buy it now usd'
+    || normalized === 'starting bid usd'
+    || normalized === 'body html'
+    || normalized === 'body (html)'
+    || normalized === 'body_html'
+    || normalized === 'ebay body html'
+    || normalized === 'ebay_body_html'
     || normalized === 'categories'
     || normalized === 'category ids'
     || normalized === 'category_ids'
@@ -396,7 +460,8 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
             const shouldTypecastSingle =
               isTagLikeFieldName(fieldName)
               || isCollectionLikeFieldName(fieldName)
-              || isCategoryLikeFieldName(fieldName);
+              || isCategoryLikeFieldName(fieldName)
+              || isPriceLikeFieldName(fieldName);
 
             try {
               await airtableService.updateRecordFromReference(
@@ -435,6 +500,42 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
                     if (retryStatus !== 422) {
                       throw retryError;
                     }
+                  }
+                }
+
+                if (retrySucceeded) {
+                  continue;
+                }
+              }
+
+              if (isPriceLikeFieldName(fieldName)) {
+                const retryValues = toNumericRetryValues(fieldValue);
+                let retrySucceeded = false;
+                const retryFieldNames = getPriceFieldRetryNames(fieldName);
+
+                for (const retryFieldName of retryFieldNames) {
+                  for (const retryValue of retryValues) {
+                    try {
+                      await airtableService.updateRecordFromReference(
+                        tableReference,
+                        tableName,
+                        selectedRecord.id,
+                        { [retryFieldName]: retryValue },
+                        { typecast: true },
+                      );
+                      retrySucceeded = true;
+                      updatedFields.push(retryFieldName);
+                      break;
+                    } catch (retryError) {
+                      const retryStatus = getAirtableErrorStatus(retryError);
+                      if (retryStatus !== 422) {
+                        throw retryError;
+                      }
+                    }
+                  }
+
+                  if (retrySucceeded) {
+                    break;
                   }
                 }
 

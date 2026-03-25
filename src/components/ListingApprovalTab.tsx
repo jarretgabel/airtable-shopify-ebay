@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import type { ApprovalTabViewModel } from '@/app/appTabViewModels';
 import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
@@ -214,9 +214,11 @@ const EBAY_TITLE_FIELD_CANDIDATES = [
 ] as const;
 
 const EBAY_PRICE_FIELD_CANDIDATES = [
+  'Buy It Now/Starting Price',
+  'Buy It Now / Starting Price',
+  'Buy It Now/Starting Bid',
   'eBay Offer Price Value',
   'eBay Offer Auction Start Price Value',
-  'Buy It Now/Starting Bid',
   'Buy It Now USD',
   'Starting Bid USD',
   'Price',
@@ -324,6 +326,78 @@ function toApprovalFieldLabel(fieldName: string, options?: { ebayListingFormat?:
       return lower.charAt(0).toUpperCase() + lower.slice(1);
     })
     .join(' ');
+}
+
+function normalizeFieldLookupKey(fieldName: string): string {
+  return fieldName.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function findEbayPriceFieldName(fieldNames: string[]): string {
+  const exact = fieldNames.find((name) =>
+    EBAY_PRICE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+  );
+  if (exact) return exact;
+
+  const fuzzy = fieldNames.find((name) => {
+    const normalized = normalizeFieldLookupKey(name);
+    return normalized === 'ebayofferpricevalue'
+      || normalized === 'ebayofferauctionstartpricevalue'
+      || normalized.includes('buyitnowstartingbid')
+      || normalized.includes('buyitnowstartingprice')
+      || normalized.includes('startingbid')
+      || normalized.includes('startingprice');
+  });
+
+  return fuzzy ?? '';
+}
+
+function findEbayBodyHtmlFieldName(fieldNames: string[]): string {
+  const exact = fieldNames.find((name) =>
+    EBAY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+  );
+  if (exact) return exact;
+
+  const fuzzy = fieldNames.find((name) => {
+    const normalized = normalizeFieldLookupKey(name);
+    return normalized === 'bodyhtml'
+      || normalized.includes('ebaybodyhtml')
+      || normalized.includes('bodyhtml');
+  });
+
+  return fuzzy ?? '';
+}
+
+function isEbayBodyHtmlFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'body html'
+    || normalized === 'body (html)'
+    || normalized === 'body_html'
+    || normalized === 'ebay body html'
+    || normalized === 'ebay_body_html';
+}
+
+function isEbayBodyHtmlSyncTriggerFieldName(fieldName: string): boolean {
+  const normalized = normalizeFieldLookupKey(fieldName);
+  if (!normalized) return false;
+
+  const titleAndDescriptionCandidates = [
+    ...EBAY_TITLE_FIELD_CANDIDATES,
+    ...EBAY_DESCRIPTION_FIELD_CANDIDATES,
+  ];
+
+  if (titleAndDescriptionCandidates.some((candidate) => normalizeFieldLookupKey(candidate) === normalized)) {
+    return true;
+  }
+
+  if (EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => normalizeFieldLookupKey(candidate) === normalized)) {
+    return true;
+  }
+
+  return normalized.includes('keyfeature')
+    || normalized.includes('featurevaluepair')
+    || normalized.includes('keyvaluepair')
+    || normalized.includes('featurepairs')
+    || normalized.includes('keypairs');
 }
 
 const SHOPIFY_UNIFIED_PRODUCT_SET_DOCS_EXAMPLE: {
@@ -577,6 +651,25 @@ export function ListingApprovalTab({
   const [approving, setApproving] = useState(false);
   const [bodyHtmlPreview, setBodyHtmlPreview] = useState('');
   const [inlineActionNotices, setInlineActionNotices] = useState<InlineActionNotice[]>([]);
+  const [fadingInlineNoticeIds, setFadingInlineNoticeIds] = useState<string[]>([]);
+  const inlineNoticeTimersRef = useRef<Record<string, { fade: number; remove: number }>>({});
+
+  const clearInlineNoticeTimer = (id: string) => {
+    const timers = inlineNoticeTimersRef.current[id];
+    if (timers !== undefined) {
+      window.clearTimeout(timers.fade);
+      window.clearTimeout(timers.remove);
+      delete inlineNoticeTimersRef.current[id];
+    }
+  };
+
+  const clearAllInlineNoticeTimers = () => {
+    Object.values(inlineNoticeTimersRef.current).forEach((timers) => {
+      window.clearTimeout(timers.fade);
+      window.clearTimeout(timers.remove);
+    });
+    inlineNoticeTimersRef.current = {};
+  };
 
   const pushInlineActionNotice = (tone: InlineActionNoticeTone, title: string, message: string) => {
     const id = `inline-notice-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -584,6 +677,19 @@ export function ListingApprovalTab({
       { id, tone, title, message },
       ...current,
     ].slice(0, 8)));
+
+    clearInlineNoticeTimer(id);
+    const fadeTimer = window.setTimeout(() => {
+      setFadingInlineNoticeIds((current) => (current.includes(id) ? current : [...current, id]));
+    }, 3700);
+
+    const removeTimer = window.setTimeout(() => {
+      setInlineActionNotices((current) => current.filter((notice) => notice.id !== id));
+      setFadingInlineNoticeIds((current) => current.filter((noticeId) => noticeId !== id));
+      clearInlineNoticeTimer(id);
+    }, 4000);
+
+    inlineNoticeTimersRef.current[id] = { fade: fadeTimer, remove: removeTimer };
   };
 
   const actualFieldNames = useMemo(() => {
@@ -661,9 +767,8 @@ export function ListingApprovalTab({
       ) ?? EBAY_TITLE_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
       if (preferredTitleField) names.add(preferredTitleField);
 
-      const preferredPriceField = existingNames.find((name) =>
-        EBAY_PRICE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? EBAY_PRICE_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      const preferredPriceField = findEbayPriceFieldName(existingNames)
+        || EBAY_PRICE_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
       if (preferredPriceField) names.add(preferredPriceField);
 
       const preferredImageField = existingNames.find((name) =>
@@ -676,9 +781,7 @@ export function ListingApprovalTab({
       ) ?? EBAY_DESCRIPTION_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
       if (preferredDescriptionField) names.add(preferredDescriptionField);
 
-      const preferredBodyHtmlField = existingNames.find((name) =>
-        EBAY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? EBAY_BODY_HTML_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      const preferredBodyHtmlField = findEbayBodyHtmlFieldName(existingNames);
       if (preferredBodyHtmlField) names.add(preferredBodyHtmlField);
 
       const preferredKeyFeaturesField = existingNames.find((name) =>
@@ -734,8 +837,14 @@ export function ListingApprovalTab({
   );
 
   useEffect(() => {
+    clearAllInlineNoticeTimers();
     setInlineActionNotices([]);
+    setFadingInlineNoticeIds([]);
   }, [selectedRecordId]);
+
+  useEffect(() => () => {
+    clearAllInlineNoticeTimers();
+  }, []);
 
   const mergedDraftSourceFields = useMemo(() => {
     if (!selectedRecord) return null;
@@ -1360,8 +1469,15 @@ export function ListingApprovalTab({
   const priceFieldName = useMemo(
     () => approvalChannel === 'shopify'
       ? resolveFieldName(['Shopify REST Variant 1 Price', 'Shopify Variant 1 Price', 'Price'], '')
-      : resolveFieldName([...EBAY_PRICE_FIELD_CANDIDATES], ''),
-    [approvalChannel, resolveFieldName],
+      : findEbayPriceFieldName(Object.keys(selectedRecord?.fields ?? {})),
+    [approvalChannel, resolveFieldName, selectedRecord],
+  );
+
+  const ebayBodyHtmlSaveFieldName = useMemo(
+    () => approvalChannel === 'ebay'
+      ? findEbayBodyHtmlFieldName(Object.keys(selectedRecord?.fields ?? {}))
+      : '',
+    [approvalChannel, selectedRecord],
   );
 
   const vendorFieldName = useMemo(
@@ -1544,6 +1660,7 @@ export function ListingApprovalTab({
       .filter(([fieldName, currentValue]) => {
         if (fieldName === SHIPPING_SERVICE_FIELD) return false;
         if (fieldName === CONDITION_FIELD) return false;
+        if (approvalChannel === 'ebay' && isEbayBodyHtmlFieldName(fieldName)) return false;
         const normalizedFieldName = fieldName.trim().toLowerCase();
         if (normalizedFieldName === 'shopify rest product id' || normalizedFieldName === 'shopify product id') return false;
         if (approvalChannel === 'shopify' && isVendorFieldName(fieldName)) return false;
@@ -1553,6 +1670,11 @@ export function ListingApprovalTab({
       })
       .map(([fieldName]) => fieldName);
   }, [approvalChannel, formValues, selectedRecord]);
+
+  const shouldForceEbayBodyHtmlSave = useMemo(
+    () => approvalChannel === 'ebay' && changedFieldNames.some((fieldName) => isEbayBodyHtmlSyncTriggerFieldName(fieldName)),
+    [approvalChannel, changedFieldNames],
+  );
 
   const hasUnsavedChanges = changedFieldNames.length > 0;
   const hasExistingShopifyRestProductId = useMemo(() => {
@@ -1700,6 +1822,112 @@ export function ListingApprovalTab({
               });
 
               const runSave = async () => {
+                if (approvalChannel === 'ebay') {
+                  const existingFieldLookup = new Map(
+                    Object.keys(selectedRecord.fields).map((fieldName) => [fieldName.toLowerCase(), fieldName]),
+                  );
+
+                  const resolveExistingFieldName = (candidates: string[]): string | null => {
+                    for (const candidate of candidates) {
+                      const key = candidate.trim().toLowerCase();
+                      if (!key) continue;
+                      const existing = existingFieldLookup.get(key);
+                      if (existing) return existing;
+                    }
+                    return null;
+                  };
+
+                  const trySaveEbayField = async (
+                    candidates: string[],
+                    rawValue: string,
+                    options?: { typecast?: boolean; coerceNumber?: boolean },
+                  ): Promise<string | null> => {
+                    const uniqueCandidates = Array.from(new Set(candidates.map((candidate) => candidate.trim()).filter(Boolean)));
+                    if (uniqueCandidates.length === 0) return null;
+
+                    const valuesToTry: Array<string | number> = [];
+                    if (options?.coerceNumber) {
+                      const cleaned = rawValue.replace(/\$/g, '').replace(/,/g, '').trim();
+                      const parsed = Number(cleaned);
+                      if (Number.isFinite(parsed)) {
+                        valuesToTry.push(parsed, parsed.toFixed(2));
+                      }
+                      valuesToTry.push(cleaned || rawValue);
+                    }
+                    valuesToTry.push(rawValue);
+
+                    const dedupedValues = Array.from(new Set(valuesToTry.map((value) => String(value)))).map((value) => {
+                      const parsed = Number(value);
+                      if (options?.coerceNumber && Number.isFinite(parsed) && value.trim() !== '' && !Number.isNaN(parsed)) {
+                        return value.includes('.') ? value : parsed;
+                      }
+                      return value;
+                    });
+
+                    let last422Error: unknown = null;
+                    for (const candidate of uniqueCandidates) {
+                      for (const value of dedupedValues) {
+                        try {
+                          await airtableService.updateRecordFromReference(
+                            tableReference,
+                            tableName,
+                            selectedRecord.id,
+                            { [candidate]: value },
+                            options?.typecast ? { typecast: true } : undefined,
+                          );
+                          return candidate;
+                        } catch (error) {
+                          if (axios.isAxiosError(error) && error.response?.status === 422) {
+                            last422Error = error;
+                            continue;
+                          }
+                          throw error;
+                        }
+                      }
+                    }
+
+                    if (last422Error) {
+                      throw last422Error;
+                    }
+
+                    return null;
+                  };
+
+                  const priceRaw = priceFieldName ? (formValues[priceFieldName] ?? '') : '';
+                  const priceCandidates = [
+                    priceFieldName,
+                    ...EBAY_PRICE_FIELD_CANDIDATES,
+                  ];
+                  const existingPriceFieldName = resolveExistingFieldName(priceCandidates);
+                  const originalPriceRaw = existingPriceFieldName ? toFormValue(selectedRecord.fields[existingPriceFieldName]) : '';
+                  const shouldSavePrice = priceRaw.trim().length > 0 && priceRaw !== originalPriceRaw;
+                  if (shouldSavePrice) {
+                    const savedPriceField = await trySaveEbayField(priceCandidates, priceRaw, { typecast: true, coerceNumber: true });
+                    if (savedPriceField && savedPriceField !== priceFieldName) {
+                      setFormValue(savedPriceField, priceRaw);
+                    }
+                  }
+
+                  const bodyHtmlRaw = bodyHtmlPreview || (ebayBodyHtmlSaveFieldName ? (formValues[ebayBodyHtmlSaveFieldName] ?? '') : '');
+                  const bodyHtmlCandidates = [
+                    ebayBodyHtmlSaveFieldName,
+                    ...EBAY_BODY_HTML_FIELD_CANDIDATES,
+                    'Body html',
+                  ];
+                  const existingBodyHtmlFieldName = resolveExistingFieldName(bodyHtmlCandidates);
+                  const originalBodyHtmlRaw = existingBodyHtmlFieldName ? toFormValue(selectedRecord.fields[existingBodyHtmlFieldName]) : '';
+                  const shouldSaveBodyHtml = bodyHtmlRaw.trim().length > 0 && (
+                    shouldForceEbayBodyHtmlSave
+                    || bodyHtmlRaw !== originalBodyHtmlRaw
+                  );
+                  if (shouldSaveBodyHtml) {
+                    const savedBodyHtmlField = await trySaveEbayField(bodyHtmlCandidates, bodyHtmlRaw, { typecast: false, coerceNumber: false });
+                    if (savedBodyHtmlField) {
+                      setFormValue(savedBodyHtmlField, bodyHtmlRaw);
+                    }
+                  }
+                }
+
                 const saveSucceeded = await saveRecord(
                   false,
                   selectedRecord,
@@ -1921,7 +2149,9 @@ export function ListingApprovalTab({
             {inlineActionNotices.map((notice) => (
               <section
                 key={notice.id}
-                className={`rounded-lg border px-3 py-2 ${
+                className={`rounded-lg border px-3 py-2 transition-opacity duration-300 ${
+                  fadingInlineNoticeIds.includes(notice.id) ? 'opacity-0' : 'opacity-100'
+                } ${
                   notice.tone === 'success'
                     ? 'border-emerald-400/35 bg-emerald-500/10'
                     : notice.tone === 'warning'
