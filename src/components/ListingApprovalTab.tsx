@@ -3,6 +3,7 @@ import axios from 'axios';
 import type { ApprovalTabViewModel } from '@/app/appTabViewModels';
 import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
+import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
 import airtableService from '@/services/airtable';
 import {
@@ -272,6 +273,21 @@ const EBAY_BODY_HTML_FIELD_CANDIDATES = [
   'body_html',
   'eBay Body HTML',
   'ebay_body_html',
+] as const;
+
+const EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES = [
+  'eBay Body Key Features JSON',
+  'eBay Body Key Features',
+  'eBay Listing Key Features JSON',
+  'eBay Listing Key Features',
+  'Key Features JSON',
+  'Key Features',
+  'Features JSON',
+  'Features',
+  'ebay_body_key_features_json',
+  'ebay_body_key_features',
+  'ebay_listing_key_features_json',
+  'ebay_listing_key_features',
 ] as const;
 
 function normalizeEbayListingFormat(value: string): string {
@@ -559,6 +575,7 @@ export function ListingApprovalTab({
   });
   const [creatingShopifyListing, setCreatingShopifyListing] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [bodyHtmlPreview, setBodyHtmlPreview] = useState('');
   const [inlineActionNotices, setInlineActionNotices] = useState<InlineActionNotice[]>([]);
 
   const pushInlineActionNotice = (tone: InlineActionNoticeTone, title: string, message: string) => {
@@ -663,6 +680,11 @@ export function ListingApprovalTab({
         EBAY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       ) ?? EBAY_BODY_HTML_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
       if (preferredBodyHtmlField) names.add(preferredBodyHtmlField);
+
+      const preferredKeyFeaturesField = existingNames.find((name) =>
+        EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredKeyFeaturesField) names.add(preferredKeyFeaturesField);
 
       const preferredPrimaryCategoryField = existingNames.find((name) =>
         EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
@@ -1614,6 +1636,7 @@ export function ListingApprovalTab({
           originalFieldValues={Object.fromEntries(
             Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
           )}
+          onBodyHtmlPreviewChange={setBodyHtmlPreview}
         />
 
         {hasUnsavedChanges && (
@@ -1939,6 +1962,16 @@ export function ListingApprovalTab({
           </div>
         )}
 
+        {bodyHtmlPreview && (
+          <div className="mt-6 space-y-3">
+            <BodyHtmlPreview
+              value={bodyHtmlPreview}
+              helperText={approvalChannel === 'ebay' ? 'Generated from the current Description and Key Features values. eBay saves the combined HTML into the listing payload.' : undefined}
+              emptyStateText={approvalChannel === 'ebay' ? 'Add a description or feature/value pairs to preview the Body HTML saved for the eBay listing.' : undefined}
+            />
+          </div>
+        )}
+
         {approvalChannel === 'shopify' && createShopifyDraftOnApprove && (
           <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
             <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
@@ -2001,7 +2034,7 @@ export function ListingApprovalTab({
 
         {approvalChannel === 'ebay' && (
           <>
-            <details className="mt-6 rounded-lg border border-[var(--line)] bg-white/5">
+            <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
               <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
                 eBay API Draft Payload (Exact Request)
               </summary>

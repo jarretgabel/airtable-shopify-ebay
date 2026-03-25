@@ -22,7 +22,7 @@ function parseDelimitedCells(line: string, delimiter: ',' | '\t'): string[] {
     }
 
     if (!inQuotes && char === delimiter) {
-      cells.push(current.trim());
+      cells.push(current);
       current = '';
       continue;
     }
@@ -30,15 +30,14 @@ function parseDelimitedCells(line: string, delimiter: ',' | '\t'): string[] {
     current += char;
   }
 
-  cells.push(current.trim());
+  cells.push(current);
   return cells;
 }
 
 function parseCsvOrTsvKeyFeatureEntries(raw: string): KeyFeatureEntry[] {
   const lines = raw
     .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+    .filter((line) => line.trim().length > 0);
 
   if (lines.length === 0) return [];
 
@@ -71,37 +70,37 @@ function parseCsvOrTsvKeyFeatureEntries(raw: string): KeyFeatureEntry[] {
     .map((line) => parseDelimitedCells(line, delimiter))
     .map((cells) => ({
       feature: cells[0] ?? '',
-      value: cells.slice(1).join(delimiter).trim(),
+      value: cells.slice(1).join(delimiter),
     }))
-    .filter((entry) => entry.feature || entry.value);
+    .filter((entry) => entry.feature.trim() || entry.value.trim());
 
   if (rows.length === 0) return [];
 
   const [first, ...rest] = rows;
-  const firstFeature = first.feature.toLowerCase();
-  const firstValue = first.value.toLowerCase();
+  const firstFeature = first.feature.trim().toLowerCase();
+  const firstValue = first.value.trim().toLowerCase();
   const hasHeader = (firstFeature === 'key' || firstFeature === 'feature') && (firstValue === 'value' || firstValue === 'pair');
   return hasHeader ? rest : rows;
 }
 
 export function parseKeyFeatureEntries(raw: string): KeyFeatureEntry[] {
-  const trimmed = raw.trim();
-  if (!trimmed) return [];
+  if (!raw.trim()) return [];
+  const jsonCandidate = raw.trim();
 
   try {
-    const parsed = JSON.parse(trimmed);
+    const parsed = JSON.parse(jsonCandidate);
     if (Array.isArray(parsed)) {
       return parsed
         .map((entry) => {
           if (!entry || typeof entry !== 'object') return null;
           const record = entry as Record<string, unknown>;
           const feature = typeof record.feature === 'string'
-            ? record.feature.trim()
+            ? record.feature
             : typeof record.name === 'string'
-              ? record.name.trim()
+              ? record.name
               : '';
-          const value = typeof record.value === 'string' ? record.value.trim() : '';
-          if (!feature && !value) return null;
+          const value = typeof record.value === 'string' ? record.value : '';
+          if (!feature.trim() && !value.trim()) return null;
           return { feature, value };
         })
         .filter((entry): entry is KeyFeatureEntry => entry !== null);
@@ -110,14 +109,13 @@ export function parseKeyFeatureEntries(raw: string): KeyFeatureEntry[] {
     // fall through to plain text parsing
   }
 
-  const csvOrTsvEntries = parseCsvOrTsvKeyFeatureEntries(trimmed);
+  const csvOrTsvEntries = parseCsvOrTsvKeyFeatureEntries(raw);
   if (csvOrTsvEntries.length > 0) {
     return csvOrTsvEntries
-      .map((entry) => ({ feature: entry.feature.trim(), value: entry.value.trim() }))
-      .filter((entry) => entry.feature || entry.value);
+      .filter((entry) => entry.feature.trim() || entry.value.trim());
   }
 
-  return trimmed
+  return raw
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)

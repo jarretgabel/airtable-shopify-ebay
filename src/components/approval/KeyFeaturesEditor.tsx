@@ -6,11 +6,12 @@ interface KeyFeatureRow {
   value: string;
 }
 
-interface ShopifyKeyFeaturesEditorProps {
+interface KeyFeaturesEditorProps {
   keyFeaturesFieldName: string;
   keyFeaturesValue: string;
   setFormValue: (fieldName: string, value: string) => void;
   disabled?: boolean;
+  label?: string;
 }
 
 const inputClass =
@@ -31,10 +32,10 @@ function parseKeyFeatures(raw: string): KeyFeatureRow[] {
 function serializeKeyFeatures(rows: KeyFeatureRow[]): string {
   const normalized = rows
     .map((row) => ({
-      feature: row.feature.trim(),
-      value: row.value.trim(),
+      feature: row.feature,
+      value: row.value,
     }))
-    .filter((row) => row.feature || row.value);
+    .filter((row) => row.feature.trim() || row.value.trim());
 
   if (normalized.length === 0) return '';
 
@@ -48,12 +49,13 @@ function serializeKeyFeatures(rows: KeyFeatureRow[]): string {
     .join('\n');
 }
 
-export function ShopifyKeyFeaturesEditor({
+export function KeyFeaturesEditor({
   keyFeaturesFieldName,
   keyFeaturesValue,
   setFormValue,
   disabled = false,
-}: ShopifyKeyFeaturesEditorProps) {
+  label = 'Key Features',
+}: KeyFeaturesEditorProps) {
   const rows = useMemo(() => parseKeyFeatures(keyFeaturesValue), [keyFeaturesValue]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
@@ -94,7 +96,7 @@ export function ShopifyKeyFeaturesEditor({
 
   return (
     <div className="col-span-1 flex flex-col gap-2 md:col-span-2">
-      <span className={labelClass}>Key Features</span>
+      <span className={labelClass}>{label}</span>
         {rows.map((row, index) => (
           <div
             key={index}

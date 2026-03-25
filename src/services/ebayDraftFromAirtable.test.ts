@@ -110,6 +110,18 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     });
   });
 
+  it('always includes an offer format and defaults to FIXED_PRICE when Airtable is blank', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-DEFAULT-FORMAT',
+      'eBay Offer Format': '',
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-DEFAULT-FORMAT',
+      format: 'FIXED_PRICE',
+    });
+  });
+
   it('maps human condition labels to eBay condition enums', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-3',

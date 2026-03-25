@@ -10,16 +10,17 @@ import {
 } from '@/stores/approvalStore';
 import { shopifyService } from '@/services/shopify';
 import { buildShopifyBodyHtml } from '@/services/shopifyBodyHtml';
+import { buildEbayBodyHtmlFromTemplate } from '@/services/ebayBodyHtml';
 import { buildShopifyCollectionIdsFromApprovalFields } from '@/services/shopifyDraftFromAirtable';
 import { parseShopifyTagList, serializeShopifyTagsCsv, serializeShopifyTagsJson } from '@/services/shopifyTags';
 import { EbayCategoriesSelect } from './EbayCategoriesSelect';
 import { ImageUrlListEditor } from './ImageUrlListEditor';
 import { ShopifyTaxonomyTypeSelect } from './ShopifyTaxonomyTypeSelect';
-import { ShopifyBodyHtmlPreview } from './ShopifyBodyHtmlPreview';
-import { ShopifyKeyFeaturesEditor } from './ShopifyKeyFeaturesEditor';
+import { KeyFeaturesEditor } from './KeyFeaturesEditor';
 import { ShopifyCollectionsSelect } from './ShopifyCollectionsSelect';
 import { ShopifyTagsEditor } from './ShopifyTagsEditor';
 import { applyEbayCategoryIds, resolveEbaySelectedCategoryIds } from './ebayCategoryFields';
+import ebayListingInsertTemplate from '../../templates/ebay/ebay-listing-insert.html?raw';
 
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
@@ -642,6 +643,32 @@ function isShopifyKeyFeaturesField(fieldName: string): boolean {
     || squashed.includes('keypairs');
 }
 
+function isEbayKeyFeaturesField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  if (normalized === 'ebay body key features'
+    || normalized === 'ebay body key features json'
+    || normalized === 'ebay listing key features'
+    || normalized === 'ebay listing key features json'
+    || normalized === 'key features'
+    || normalized === 'key features json'
+    || normalized === 'features'
+    || normalized === 'features json'
+    || normalized === 'ebay_body_key_features'
+    || normalized === 'ebay_body_key_features_json'
+    || normalized === 'ebay_listing_key_features'
+    || normalized === 'ebay_listing_key_features_json') {
+    return true;
+  }
+
+  const squashed = normalized.replace(/[^a-z0-9]/g, '');
+  return squashed.includes('ebaykeyfeature')
+    || squashed.includes('keyfeature')
+    || squashed.includes('keyvaluepair')
+    || squashed.includes('featurevaluepair')
+    || squashed.includes('featurepairs')
+    || squashed.includes('keypairs');
+}
+
 function isShopifyBodyHtmlPrimaryField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'shopify rest body html'
@@ -961,16 +988,23 @@ function isPriceLikeField(fieldName: string): boolean {
   return normalized.includes('price');
 }
 
-function prioritizeTitleBeforePrice(fieldNames: string[]): string[] {
-  return [...fieldNames].sort((left, right) => {
-    const leftIsTitle = isTitleLikeField(left);
-    const rightIsTitle = isTitleLikeField(right);
-    const leftIsPrice = isPriceLikeField(left);
-    const rightIsPrice = isPriceLikeField(right);
+function isFormatLikeField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'listing format'
+    || normalized === 'ebay offer format'
+    || normalized === 'status';
+}
 
-    if (leftIsTitle && rightIsPrice) return -1;
-    if (leftIsPrice && rightIsTitle) return 1;
-    return 0;
+function prioritizeTitleBeforePrice(fieldNames: string[], approvalChannel?: 'shopify' | 'ebay'): string[] {
+  return [...fieldNames].sort((left, right) => {
+    const getPriority = (fieldName: string): number => {
+      if (isTitleLikeField(fieldName)) return 0;
+      if (isPriceLikeField(fieldName)) return 1;
+      if (approvalChannel === 'ebay' && isFormatLikeField(fieldName)) return 2;
+      return 3;
+    };
+
+    return getPriority(left) - getPriority(right);
   });
 }
 
@@ -989,7 +1023,6 @@ export function ApprovalFormFields({
   setFormValue,
   suppressImageScalarFields = false,
   originalFieldValues = {},
-  showBodyHtmlPreview = true,
   onBodyHtmlPreviewChange,
 }: ApprovalFormFieldsProps) {
   const requiredFieldNameSet = useMemo(
@@ -999,10 +1032,16 @@ export function ApprovalFormFields({
 
   const isRequiredField = (fieldName: string): boolean => requiredFieldNameSet.has(fieldName.toLowerCase());
   const orderedFieldNames = useMemo(() => {
-    const required = prioritizeTitleBeforePrice(allFieldNames.filter((fieldName) => isRequiredField(fieldName)));
-    const optional = prioritizeTitleBeforePrice(allFieldNames.filter((fieldName) => !isRequiredField(fieldName)));
+    const required = prioritizeTitleBeforePrice(
+      allFieldNames.filter((fieldName) => isRequiredField(fieldName)),
+      approvalChannel,
+    );
+    const optional = prioritizeTitleBeforePrice(
+      allFieldNames.filter((fieldName) => !isRequiredField(fieldName)),
+      approvalChannel,
+    );
     return [...required, ...optional];
-  }, [allFieldNames, requiredFieldNameSet]);
+  }, [allFieldNames, approvalChannel, requiredFieldNameSet]);
   const requiredOrderedFieldNames = useMemo(
     () => orderedFieldNames.filter((fieldName) => isRequiredField(fieldName)),
     [orderedFieldNames, requiredFieldNameSet],
@@ -1016,6 +1055,7 @@ export function ApprovalFormFields({
     return normalized.startsWith('ebay ') || normalized.startsWith('ebay_');
   });
   const ebayFormatFieldName = allFieldNames.find((fieldName) => isEbayFormatField(fieldName));
+  const pinnedPreDescriptionFieldName = isEbayListingForm ? ebayFormatFieldName : undefined;
   const ebayListingFormat = ebayFormatFieldName ? (formValues[ebayFormatFieldName] ?? '') : '';
   const toFieldLabel = (fieldName: string): string => {
     if (isEbayListingForm && fieldName.trim().toLowerCase() === 'ebay offer price value') {
@@ -1123,6 +1163,9 @@ export function ApprovalFormFields({
   const shopifyKeyFeaturesFieldName = isShopifyApprovalForm
     ? allFieldNames.find((fieldName) => isShopifyKeyFeaturesField(fieldName))
     : undefined;
+  const ebayKeyFeaturesFieldName = isEbayApprovalForm
+    ? allFieldNames.find((fieldName) => isEbayKeyFeaturesField(fieldName))
+    : undefined;
   const shopifyBodyHtmlFieldName = isShopifyApprovalForm
     ? allFieldNames.find((fieldName) => isShopifyBodyHtmlPrimaryField(fieldName))
     : undefined;
@@ -1132,8 +1175,20 @@ export function ApprovalFormFields({
   const ebayBodyHtmlFieldName = isEbayApprovalForm
     ? allFieldNames.find((fieldName) => isEbayBodyHtmlField(fieldName))
     : undefined;
+  const ebayTitleFieldName = isEbayApprovalForm
+    ? pickPreferredField(
+      allFieldNames.filter((fieldName) => isTitleLikeField(fieldName)),
+      [
+        'eBay Inventory Product Title',
+        'eBay Product Title',
+        'eBay Title',
+        'Title',
+        'title',
+      ],
+      formValues,
+    )
+    : undefined;
   const activeBodyDescriptionFieldName = shopifyBodyDescriptionFieldName ?? ebayBodyDescriptionFieldName;
-  const activeBodyHtmlFieldName = shopifyBodyHtmlFieldName ?? ebayBodyHtmlFieldName;
   const shopifyCompoundTagFieldNames = useMemo(
     () => allFieldNames.filter((fieldName) => isShopifyCompoundTagsField(fieldName)),
     [allFieldNames],
@@ -1441,17 +1496,24 @@ export function ApprovalFormFields({
     }
 
     if (isEbayApprovalForm) {
-      if (ebayBodyDescriptionFieldName) {
-        return formValues[ebayBodyDescriptionFieldName] ?? '';
-      }
+      const titleValue = ebayTitleFieldName ? (formValues[ebayTitleFieldName] ?? '') : '';
+      const descriptionValue = ebayBodyDescriptionFieldName ? (formValues[ebayBodyDescriptionFieldName] ?? '') : '';
+      const keyFeaturesValue = ebayKeyFeaturesFieldName ? (formValues[ebayKeyFeaturesFieldName] ?? '') : '';
 
-      return ebayBodyHtmlFieldName ? (formValues[ebayBodyHtmlFieldName] ?? '') : '';
+      return buildEbayBodyHtmlFromTemplate(
+        ebayListingInsertTemplate,
+        titleValue,
+        descriptionValue,
+        keyFeaturesValue,
+      );
     }
 
     return '';
   }, [
     ebayBodyDescriptionFieldName,
     ebayBodyHtmlFieldName,
+    ebayKeyFeaturesFieldName,
+    ebayTitleFieldName,
     formValues,
     isEbayApprovalForm,
     isShopifyApprovalForm,
@@ -1479,15 +1541,15 @@ export function ApprovalFormFields({
   ]);
 
   useEffect(() => {
-    if (!ebayBodyHtmlFieldName || !ebayBodyDescriptionFieldName) return;
+    if (!ebayBodyHtmlFieldName) return;
 
-    const nextBodyHtml = formValues[ebayBodyDescriptionFieldName] ?? '';
+    const nextBodyHtml = derivedBodyHtmlPreview;
     const currentBodyHtml = formValues[ebayBodyHtmlFieldName] ?? '';
 
     if (currentBodyHtml !== nextBodyHtml) {
       setFormValue(ebayBodyHtmlFieldName, nextBodyHtml);
     }
-  }, [ebayBodyDescriptionFieldName, ebayBodyHtmlFieldName, formValues, setFormValue]);
+  }, [derivedBodyHtmlPreview, ebayBodyHtmlFieldName, formValues, setFormValue]);
 
   useEffect(() => {
     onBodyHtmlPreviewChange?.(derivedBodyHtmlPreview);
@@ -1514,6 +1576,7 @@ export function ApprovalFormFields({
     if (shopifyBodyHtmlTemplateFieldName && fieldName === shopifyBodyHtmlTemplateFieldName) return null;
     if (ebayBodyHtmlFieldName && fieldName === ebayBodyHtmlFieldName) return null;
     if (shopifyKeyFeaturesFieldName && fieldName === shopifyKeyFeaturesFieldName) return null;
+    if (ebayKeyFeaturesFieldName && fieldName === ebayKeyFeaturesFieldName) return null;
     if (hasEbayCategoryEditor && (isEbayPrimaryCategoryField(fieldName) || isEbaySecondaryCategoryField(fieldName) || fieldName === ebayCategoriesFieldName)) return null;
     if (isEbayInventoryImageUrlsField(fieldName)) return null;
     if (isEbayPhotoCountMaxField(fieldName)) return null;
@@ -1644,7 +1707,11 @@ export function ApprovalFormFields({
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      {requiredOrderedFieldNames.map(renderStandardField)}
+      {requiredOrderedFieldNames
+        .filter((fieldName) => fieldName !== pinnedPreDescriptionFieldName)
+        .map(renderStandardField)}
+
+      {pinnedPreDescriptionFieldName && renderStandardField(pinnedPreDescriptionFieldName)}
 
       {activeBodyDescriptionFieldName && (
         <label className="col-span-1 flex flex-col gap-2 md:col-span-2">
@@ -1662,11 +1729,21 @@ export function ApprovalFormFields({
       )}
 
       {shopifyKeyFeaturesFieldName && (
-        <ShopifyKeyFeaturesEditor
+        <KeyFeaturesEditor
           keyFeaturesFieldName={shopifyKeyFeaturesFieldName}
           keyFeaturesValue={formValues[shopifyKeyFeaturesFieldName] ?? ''}
           setFormValue={setFormValue}
           disabled={saving}
+        />
+      )}
+
+      {ebayKeyFeaturesFieldName && (
+        <KeyFeaturesEditor
+          keyFeaturesFieldName={ebayKeyFeaturesFieldName}
+          keyFeaturesValue={formValues[ebayKeyFeaturesFieldName] ?? ''}
+          setFormValue={setFormValue}
+          disabled={saving}
+          label="Key Features"
         />
       )}
 
@@ -1701,19 +1778,11 @@ export function ApprovalFormFields({
         />
       )}
 
-      {showBodyHtmlPreview && (activeBodyDescriptionFieldName || shopifyKeyFeaturesFieldName || activeBodyHtmlFieldName) && (
-        <ShopifyBodyHtmlPreview
-          value={derivedBodyHtmlPreview}
-          helperText={isEbayApprovalForm
-            ? 'Preview of the current Body HTML value saved to Airtable. eBay mirrors the Description editor into the Body HTML column used for the listing payload.'
-            : undefined}
-          emptyStateText={isEbayApprovalForm
-            ? 'Add Description content to preview the Body HTML saved for the eBay listing.'
-            : undefined}
-        />
-      )}
 
-      {optionalOrderedFieldNames.map(renderStandardField)}
+
+      {optionalOrderedFieldNames
+        .filter((fieldName) => fieldName !== pinnedPreDescriptionFieldName)
+        .map(renderStandardField)}
 
       <label className="flex flex-col gap-2">
         <span className={labelClass}>Shipping Services</span>

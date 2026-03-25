@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HIGH-END AUDIO AUCTIONS</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Oswald:400,300">
+    <style>
+/* eBay listing template styles */
+
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-family: Oswald, sans-serif;
+}
+
+form {
+    padding: 0;
+    margin: 0;
+}
+
+.container {
+    width: 100%;
+}
+
+.shadow {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.col-xs-12 {
+    width: 100%;
+}
+
+.spacer-2x {
+    margin-top: 20px;
+}
+
+.banner img,
+.heaa-ads,
+.heaa-mobile-ads {
+    width: 100%;
+}
+
+.banner-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    margin-top: 1rem;
+}
+
+.banner-links li {
+    margin: 5px;
+}
+
+.banner-links a {
+    color: #000;
+    text-decoration: none;
+}
+
+.header {
+    width: 100%;
+}
+
+.main-content {
+    margin-top: 15px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+.bg-color {
+    background-color: #e7e7e7;
+    border: 1px solid #ccc;
+    border-radius: 8px 8px 0 0;
+}
+
+.item-title {
+    color: #fff;
+    padding: 5px 25px;
+    background: linear-gradient(to bottom, #38635a 0%, #104438 100%);
+    border-radius: 6px 6px 0 0;
+}
+
+.item-title h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 400;
+}
+
+.content-wrapper {
+    padding: 25px;
+    color: #003333;
+}
+
+.listing-body {
+    color: #222;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.6;
+}
+
+.listing-copy {
+    margin-top: 20px;
+    color: #000;
+    font-family: Arial, sans-serif;
+    font-size: 11pt;
+    font-weight: 400;
+}
+
+.listing-copy p {
+    margin: 0 0 14px;
+}
+
+.warranty {
+    font-style: italic;
+    font-weight: 700;
+}
+
+.section-heading {
+    margin: 20px 0;
+    color: #000;
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.38;
+    text-align: center;
+}
+
+.table {
+    margin-bottom: 0;
+    font-family: Arial, sans-serif;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-full {
+    width: 100%;
+}
+
+.field-label {
+    width: 33%;
+    font-weight: 700;
+}
+
+.table > tbody > tr > td,
+.table > tbody > tr > th,
+.table > tfoot > tr > td,
+.table > tfoot > tr > th,
+.table > thead > tr > td,
+.table > thead > tr > th {
+    padding: 5px;
+}
+
+.table-bordered > tbody > tr > td,
+.table-bordered > tbody > tr > th {
+    border: 1px solid #000 !important;
+}
+
+#about {
+    margin-top: 20px;
+    color: #003333;
+    font-family: Oswald, sans-serif;
+    font-size: 17px;
+    line-height: 25px;
+    text-align: left;
+    text-decoration: none;
+}
+
+#about a {
+    text-decoration: none;
+}
+
+#note {
+    width: 100%;
+    margin: 30px auto 10px;
+    border: 1px solid #003333;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #003333;
+    font-size: 17px;
+    padding: 15px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0 25px;
+    text-align: center;
+    width: 100%;
+    margin-top: 2rem;
+    margin-bottom: 3rem;
+}
+
+.footer-wrapper {
+    font-family: Oswald, sans-serif;
+}
+
+.footer-links li {
+    display: inline-block;
+    color: #6a6666;
+    padding: 10px 2px;
+}
+
+.footer-links a {
+    color: #6a6666;
+    text-decoration: none;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+.heaa-ads,
+.heaa-mobile-ads {
+    margin-bottom: 50px;
+}
+
+.heaa-mobile-ads {
+    display: none;
+}
+
+@media (max-width: 1023px) {
+    .main-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #about,
+    #note {
+        width: 100%;
+    }
+
+    .heaa-ads {
+        display: none;
+    }
+
+    .heaa-mobile-ads {
+        display: block;
+    }
+}
+
+@media (max-width: 767px) {
+    .table-bordered > tbody > tr > th {
+        width: 50%;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container shadow">
+        <header class="row">
+            <div class="col-xs-12">
+                <div class="spacer-2x"></div>
+                <div class="banner">
+                    <a href="https://stores.ebay.com/highendaudioauctions/">
+                        <img src="https://www.highendaudioauctions.com/store-ebay/images/top-bg.jpg" alt="High End Audio Auctions banner">
+                    </a>
+                    <ul class="banner-links">
+                        <li><a href="https://www.ebay.com/usr/highendaudioauctions" title="Follow">Follow us</a></li>
+                        <li>|</li>
+                        <li><a href="https://my.ebay.com/ws/eBayISAPI.dll?AcceptSavedSeller&amp;sellerid=highendaudioauctions" title="Sign up for our newsletter">Sign up for our newsletter</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <main class="row main-content">
+            <div class="bg-color">
+                <div class="item-title">
+                    <h4>{{title}}</h4>
+                </div>
+
+                <div class="content-wrapper">
+                    <div class="listing-body">
+                        <div>{{description}}</div>
+                    </div>
+
+                    <div class="listing-copy">
+                        <p>For over 20 years High End Audio Auctions has been selling the finest HiFi online, but did you know that we <strong>BUY</strong> your HiFi equipment as well? Contact our sister company STEREOBUYERS for a fair quote today!</p>
+                        <p>All items included are pictured.</p>
+                        <p class="warranty">Items are tested fully to ensure all functions work as expected - any defects and additional service done to the item are noted below. Items are not restored or reconditioned, unless specified. All items we sell come with a 30-day warranty - your satisfaction is guaranteed. Original shipping on returns will be refunded at the seller's discretion.</p>
+                        <p><strong>Local Pickup in NYC Available</strong></p>
+                    </div>
+
+                    <div class="section-heading">
+                        <div>{{title}}</div>
+                        <div>Details &amp; Testing Notes</div>
+                    </div>
+
+                    <!-- paste table below here -->
+                    <table id="key-features" class="table table-bordered table-full">
+                        <tbody>
+                            <tr>
+                                <th class="field-label" scope="row">{{key}}:</th>
+                                <td>{{value}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!-- paste table above here -->
+
+                    <div id="about">High-End Audio Auctions has been THE trusted source for high-end, classic and vintage audio components on eBay since 2000! Our unique products, unparalleled service and "bombproof" packaging keeps our customers coming back again and again. We are experts at selling and shipping worldwide, with items ranging from $5 to $50,000. We look forward to earning your repeat business!</div>
+
+                    <div id="note">
+                        By placing a bid on any of our listings, you agree to our terms &amp; conditions<br>
+                        <a href="https://stores.ebay.com/highendaudioauctions/Store-Policies" target="_blank" rel="noopener noreferrer"><i><u>Click here to learn more</u></i></a>
+                    </div>
+                </div>
+
+                <footer class="footer-wrapper">
+                    <ul class="footer-links">
+                        <li><a href="https://stores.ebay.com/highendaudioauctions/">Home</a></li>
+                        <li>|</li>
+                        <li><a href="https://stores.ebay.com/highendaudioauctions/About-us">About Us</a></li>
+                        <li>|</li>
+                        <li><a href="https://stores.ebay.com/highendaudioauctions/Store-Policies">Store Policies</a></li>
+                        <li>|</li>
+                        <li><a href="https://stores.ebay.com/highendaudioauctions/FAQs">FAQs</a></li>
+                        <li>|</li>
+                        <li><a href="https://stores.ebay.com/highendaudioauctions/Feedback">Feedback</a></li>
+                        <li>|</li>
+                        <li><a href="https://contact.ebay.com/ws/eBayISAPI.dll?ContactUserNextGen&amp;recipient=highendaudioauctions">Contact Us</a></li>
+                        <li>|</li>
+                        <li><a href="https://stores.ebay.com/highendaudioauctions/Custom-Tuned-Cables">Custom Tuned Cables</a></li>
+                    </ul>
+                </footer>
+            </div>
+
+            <div class="spacer-2x"></div>
+            <img class="heaa-ads" src="https://www.highendaudioauctions.com/store-ebay/images/HEAA-2000-11-20.jpg" alt="High End Audio Auctions ad">
+            <img class="heaa-mobile-ads" src="https://www.highendaudioauctions.com/store-ebay/images/HEAA-2000-11-20-mobile.jpg" alt="High End Audio Auctions ad mobile">
+        </main>
+    </div>
+</body>
+</html>
