@@ -90,6 +90,26 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     });
   });
 
+  it('prefers Airtable Body HTML over Description for eBay payload descriptions', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-BODY-HTML',
+      Description: 'Plain text fallback description',
+      'Body HTML': '<p>Rich HTML description</p>',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-BODY-HTML',
+      product: {
+        description: '<p>Rich HTML description</p>',
+      },
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-BODY-HTML',
+      listingDescription: '<p>Rich HTML description</p>',
+    });
+  });
+
   it('maps human condition labels to eBay condition enums', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-3',

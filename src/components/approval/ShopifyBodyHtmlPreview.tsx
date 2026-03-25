@@ -3,9 +3,15 @@ import { useMemo } from 'react';
 
 interface ShopifyBodyHtmlPreviewProps {
   value: string;
+  helperText?: string;
+  emptyStateText?: string;
 }
 
-export function ShopifyBodyHtmlPreview({ value }: ShopifyBodyHtmlPreviewProps) {
+export function ShopifyBodyHtmlPreview({
+  value,
+  helperText = 'Generated from the current Description and Key Features values. Saved body HTML is only reused when a dedicated template field exists.',
+  emptyStateText = 'Add a description or feature/value pairs to generate the Shopify body HTML preview.',
+}: ShopifyBodyHtmlPreviewProps) {
   const sanitizedHtml = useMemo(() => DOMPurify.sanitize(value), [value]);
   const hasValue = value.trim().length > 0;
 
@@ -15,7 +21,7 @@ export function ShopifyBodyHtmlPreview({ value }: ShopifyBodyHtmlPreviewProps) {
         Body HTML Preview
       </summary>
       <div className="border-t border-[var(--line)] px-3 py-3">
-        <p className="m-0 text-sm text-[var(--muted)]">Generated from the current Description and Key Features values. Saved body HTML is only reused when a dedicated template field exists.</p>
+        <p className="m-0 text-sm text-[var(--muted)]">{helperText}</p>
 
         <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2">
           <section>
@@ -32,7 +38,7 @@ export function ShopifyBodyHtmlPreview({ value }: ShopifyBodyHtmlPreviewProps) {
               />
             ) : (
               <div className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
-                Add a description or feature/value pairs to generate the Shopify body HTML preview.
+                {emptyStateText}
               </div>
             )}
           </section>

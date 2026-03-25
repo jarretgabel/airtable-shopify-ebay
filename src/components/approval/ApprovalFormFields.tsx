@@ -27,6 +27,17 @@ const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[
 const requiredBadgeClass = 'inline-block rounded-full border border-rose-400/45 bg-rose-500/15 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-rose-200';
 const SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD = 'Shopify GraphQL Collection IDs';
 
+function normalizeEbayListingFormat(value: string): string {
+  return value.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_');
+}
+
+function getEbayPriceFieldLabel(listingFormat: string): string {
+  const normalized = normalizeEbayListingFormat(listingFormat);
+  if (normalized === 'AUCTION') return 'Starting Auction Price';
+  if (normalized === 'FIXED_PRICE' || normalized === 'BUY_IT_NOW') return 'Buy It Now Price';
+  return 'Buy It Now/Starting Bid Price';
+}
+
 function toHumanReadableLabel(fieldName: string): string {
   if (fieldName === CONDITION_FIELD) return 'Condition';
   if (fieldName.trim().toLowerCase() === 'ebay offer price value') return 'Buy It Now/Starting Bid Price';
@@ -276,6 +287,14 @@ function isEbayMarketplaceIdField(fieldName: string): boolean {
   return normalized === 'ebay offer marketplace id'
     || normalized === 'ebay_offer_marketplace_id'
     || normalized === 'ebay_offer_marketplaceid';
+}
+
+function isEbayFormatField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'ebay offer format'
+    || normalized === 'ebay_offer_format'
+    || normalized === 'listing format'
+    || normalized === 'status';
 }
 
 function isEbayCategoriesField(fieldName: string): boolean {
@@ -580,21 +599,6 @@ function resolveShopifyTagFieldStrategy(params: {
   };
 }
 
-function isShopifyBodyHtmlField(fieldName: string): boolean {
-  const normalized = fieldName.trim().toLowerCase();
-  return normalized === 'shopify rest body html'
-    || normalized === 'shopify body html'
-    || normalized === 'shopify graphql description html'
-    || normalized === 'body html'
-    || normalized === 'body (html)'
-    || normalized === 'body_html'
-    || normalized === 'shopify_rest_body_html'
-    || normalized === 'shopify rest body html template'
-    || normalized === 'shopify body html template'
-    || normalized === 'shopify_rest_body_html_template'
-    || normalized === 'shopify_body_html_template';
-}
-
 function isShopifyBodyDescriptionField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'shopify body description'
@@ -603,6 +607,14 @@ function isShopifyBodyDescriptionField(fieldName: string): boolean {
     || normalized === 'description'
     || normalized === 'shopify_body_description'
     || normalized === 'shopify_rest_body_description';
+}
+
+function isEbayBodyDescriptionField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'description'
+    || normalized === 'item description'
+    || normalized === 'ebay inventory product description'
+    || normalized === 'ebay_inventory_product_description';
 }
 
 function isShopifyKeyFeaturesField(fieldName: string): boolean {
@@ -646,6 +658,15 @@ function isShopifyBodyHtmlTemplateField(fieldName: string): boolean {
     || normalized === 'shopify body html template'
     || normalized === 'shopify_rest_body_html_template'
     || normalized === 'shopify_body_html_template';
+}
+
+function isEbayBodyHtmlField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'body html'
+    || normalized === 'body (html)'
+    || normalized === 'body_html'
+    || normalized === 'ebay body html'
+    || normalized === 'ebay_body_html';
 }
 
 function isLegacyShopifySingleImageField(fieldName: string): boolean {
@@ -897,6 +918,7 @@ function isImageUrlListField(fieldName: string): boolean {
 
 interface ApprovalFormFieldsProps {
   recordId?: string;
+  approvalChannel?: 'shopify' | 'ebay';
   forceShowShopifyCollectionsEditor?: boolean;
   allFieldNames: string[];
   writableFieldNames?: string[];
@@ -954,6 +976,7 @@ function prioritizeTitleBeforePrice(fieldNames: string[]): string[] {
 
 export function ApprovalFormFields({
   recordId,
+  approvalChannel,
   forceShowShopifyCollectionsEditor = false,
   allFieldNames,
   writableFieldNames = [],
@@ -980,7 +1003,25 @@ export function ApprovalFormFields({
     const optional = prioritizeTitleBeforePrice(allFieldNames.filter((fieldName) => !isRequiredField(fieldName)));
     return [...required, ...optional];
   }, [allFieldNames, requiredFieldNameSet]);
+  const requiredOrderedFieldNames = useMemo(
+    () => orderedFieldNames.filter((fieldName) => isRequiredField(fieldName)),
+    [orderedFieldNames, requiredFieldNameSet],
+  );
+  const optionalOrderedFieldNames = useMemo(
+    () => orderedFieldNames.filter((fieldName) => !isRequiredField(fieldName)),
+    [orderedFieldNames, requiredFieldNameSet],
+  );
+  const isEbayListingForm = allFieldNames.some((fieldName) => {
+    const normalized = fieldName.toLowerCase();
+    return normalized.startsWith('ebay ') || normalized.startsWith('ebay_');
+  });
+  const ebayFormatFieldName = allFieldNames.find((fieldName) => isEbayFormatField(fieldName));
+  const ebayListingFormat = ebayFormatFieldName ? (formValues[ebayFormatFieldName] ?? '') : '';
   const toFieldLabel = (fieldName: string): string => {
+    if (isEbayListingForm && fieldName.trim().toLowerCase() === 'ebay offer price value') {
+      return getEbayPriceFieldLabel(ebayListingFormat);
+    }
+
     const baseLabel = toHumanReadableLabel(fieldName);
     return baseLabel;
   };
@@ -1008,10 +1049,6 @@ export function ApprovalFormFields({
     ['Images Alt Text', 'images_alt_text', 'Image Alt Text', 'image_alt_text'],
     formValues,
   );
-  const isEbayListingForm = allFieldNames.some((fieldName) => {
-    const normalized = fieldName.toLowerCase();
-    return normalized.startsWith('ebay ') || normalized.startsWith('ebay_');
-  });
   const useCombinedImageAltEditor = Boolean(
     isEbayListingForm
     && imageUrlSourceField
@@ -1075,10 +1112,28 @@ export function ApprovalFormFields({
     }, setFormValue);
   };
   const hasCanonicalConditionField = allFieldNames.some((fieldName) => fieldName.trim().toLowerCase() === CONDITION_FIELD.toLowerCase());
-  const shopifyBodyDescriptionFieldName = allFieldNames.find((fieldName) => isShopifyBodyDescriptionField(fieldName));
-  const shopifyKeyFeaturesFieldName = allFieldNames.find((fieldName) => isShopifyKeyFeaturesField(fieldName));
-  const shopifyBodyHtmlFieldName = allFieldNames.find((fieldName) => isShopifyBodyHtmlPrimaryField(fieldName));
-  const shopifyBodyHtmlTemplateFieldName = allFieldNames.find((fieldName) => isShopifyBodyHtmlTemplateField(fieldName));
+  const isShopifyApprovalForm = approvalChannel === 'shopify';
+  const isEbayApprovalForm = approvalChannel === 'ebay';
+  const shopifyBodyDescriptionFieldName = isShopifyApprovalForm
+    ? allFieldNames.find((fieldName) => isShopifyBodyDescriptionField(fieldName))
+    : undefined;
+  const ebayBodyDescriptionFieldName = isEbayApprovalForm
+    ? allFieldNames.find((fieldName) => isEbayBodyDescriptionField(fieldName))
+    : undefined;
+  const shopifyKeyFeaturesFieldName = isShopifyApprovalForm
+    ? allFieldNames.find((fieldName) => isShopifyKeyFeaturesField(fieldName))
+    : undefined;
+  const shopifyBodyHtmlFieldName = isShopifyApprovalForm
+    ? allFieldNames.find((fieldName) => isShopifyBodyHtmlPrimaryField(fieldName))
+    : undefined;
+  const shopifyBodyHtmlTemplateFieldName = isShopifyApprovalForm
+    ? allFieldNames.find((fieldName) => isShopifyBodyHtmlTemplateField(fieldName))
+    : undefined;
+  const ebayBodyHtmlFieldName = isEbayApprovalForm
+    ? allFieldNames.find((fieldName) => isEbayBodyHtmlField(fieldName))
+    : undefined;
+  const activeBodyDescriptionFieldName = shopifyBodyDescriptionFieldName ?? ebayBodyDescriptionFieldName;
+  const activeBodyHtmlFieldName = shopifyBodyHtmlFieldName ?? ebayBodyHtmlFieldName;
   const shopifyCompoundTagFieldNames = useMemo(
     () => allFieldNames.filter((fieldName) => isShopifyCompoundTagsField(fieldName)),
     [allFieldNames],
@@ -1370,188 +1425,237 @@ export function ApprovalFormFields({
 
   }
 
-  const derivedShopifyBodyHtml = useMemo(() => {
-    if (!shopifyBodyDescriptionFieldName && !shopifyKeyFeaturesFieldName) return '';
+  const derivedBodyHtmlPreview = useMemo(() => {
+    if (isShopifyApprovalForm) {
+      if (!shopifyBodyDescriptionFieldName && !shopifyKeyFeaturesFieldName) return '';
 
-    const descriptionValue = shopifyBodyDescriptionFieldName ? (formValues[shopifyBodyDescriptionFieldName] ?? '') : '';
-    const keyFeaturesValue = shopifyKeyFeaturesFieldName ? (formValues[shopifyKeyFeaturesFieldName] ?? '') : '';
-    const templateValue = shopifyBodyHtmlTemplateFieldName
-      ? (originalFieldValues[shopifyBodyHtmlTemplateFieldName] ?? '')
-      : shopifyBodyHtmlFieldName
-        ? (originalFieldValues[shopifyBodyHtmlFieldName] ?? '')
-        : '';
+      const descriptionValue = shopifyBodyDescriptionFieldName ? (formValues[shopifyBodyDescriptionFieldName] ?? '') : '';
+      const keyFeaturesValue = shopifyKeyFeaturesFieldName ? (formValues[shopifyKeyFeaturesFieldName] ?? '') : '';
+      const templateValue = shopifyBodyHtmlTemplateFieldName
+        ? (originalFieldValues[shopifyBodyHtmlTemplateFieldName] ?? '')
+        : shopifyBodyHtmlFieldName
+          ? (originalFieldValues[shopifyBodyHtmlFieldName] ?? '')
+          : '';
 
-    return buildShopifyBodyHtml(descriptionValue, keyFeaturesValue, templateValue);
-  }, [formValues, originalFieldValues, shopifyBodyDescriptionFieldName, shopifyBodyHtmlTemplateFieldName, shopifyKeyFeaturesFieldName]);
+      return buildShopifyBodyHtml(descriptionValue, keyFeaturesValue, templateValue);
+    }
+
+    if (isEbayApprovalForm) {
+      if (ebayBodyDescriptionFieldName) {
+        return formValues[ebayBodyDescriptionFieldName] ?? '';
+      }
+
+      return ebayBodyHtmlFieldName ? (formValues[ebayBodyHtmlFieldName] ?? '') : '';
+    }
+
+    return '';
+  }, [
+    ebayBodyDescriptionFieldName,
+    ebayBodyHtmlFieldName,
+    formValues,
+    isEbayApprovalForm,
+    isShopifyApprovalForm,
+    originalFieldValues,
+    shopifyBodyDescriptionFieldName,
+    shopifyBodyHtmlFieldName,
+    shopifyBodyHtmlTemplateFieldName,
+    shopifyKeyFeaturesFieldName,
+  ]);
 
   useEffect(() => {
     if (!shopifyBodyHtmlFieldName) return;
 
-    const nextBodyHtml = derivedShopifyBodyHtml;
+    const nextBodyHtml = derivedBodyHtmlPreview;
     const currentBodyHtml = formValues[shopifyBodyHtmlFieldName] ?? '';
 
     if (currentBodyHtml !== nextBodyHtml) {
       setFormValue(shopifyBodyHtmlFieldName, nextBodyHtml);
     }
   }, [
-    derivedShopifyBodyHtml,
+    derivedBodyHtmlPreview,
     setFormValue,
     shopifyBodyHtmlFieldName,
     formValues,
   ]);
 
   useEffect(() => {
-    onBodyHtmlPreviewChange?.(derivedShopifyBodyHtml);
-  }, [derivedShopifyBodyHtml, onBodyHtmlPreviewChange]);
+    if (!ebayBodyHtmlFieldName || !ebayBodyDescriptionFieldName) return;
+
+    const nextBodyHtml = formValues[ebayBodyDescriptionFieldName] ?? '';
+    const currentBodyHtml = formValues[ebayBodyHtmlFieldName] ?? '';
+
+    if (currentBodyHtml !== nextBodyHtml) {
+      setFormValue(ebayBodyHtmlFieldName, nextBodyHtml);
+    }
+  }, [ebayBodyDescriptionFieldName, ebayBodyHtmlFieldName, formValues, setFormValue]);
+
+  useEffect(() => {
+    onBodyHtmlPreviewChange?.(derivedBodyHtmlPreview);
+  }, [derivedBodyHtmlPreview, onBodyHtmlPreviewChange]);
+
+  function renderSpecialLabel(label: string, fieldName?: string): JSX.Element {
+    return (
+      <span className={`${labelClass} flex items-center gap-2`}>
+        <span>{label}</span>
+        {fieldName && isRequiredField(fieldName) && <span className={requiredBadgeClass}>Required</span>}
+      </span>
+    );
+  }
+
+  function renderStandardField(fieldName: string): JSX.Element | null {
+    if (isShippingServiceField(fieldName)) return null;
+    if (fieldName === approvedFieldName) return null;
+    if (isHiddenApprovalField(fieldName)) return null;
+    if (hasShopifyTagEditor && (isShopifyCompoundTagsField(fieldName) || isShopifySingleTagField(fieldName))) return null;
+    if (hasShopifyCollectionEditor && (isShopifyCompoundCollectionField(fieldName) || isShopifySingleCollectionField(fieldName))) return null;
+    if (shopifyBodyDescriptionFieldName && fieldName === shopifyBodyDescriptionFieldName) return null;
+    if (ebayBodyDescriptionFieldName && fieldName === ebayBodyDescriptionFieldName) return null;
+    if (shopifyBodyHtmlFieldName && fieldName === shopifyBodyHtmlFieldName) return null;
+    if (shopifyBodyHtmlTemplateFieldName && fieldName === shopifyBodyHtmlTemplateFieldName) return null;
+    if (ebayBodyHtmlFieldName && fieldName === ebayBodyHtmlFieldName) return null;
+    if (shopifyKeyFeaturesFieldName && fieldName === shopifyKeyFeaturesFieldName) return null;
+    if (hasEbayCategoryEditor && (isEbayPrimaryCategoryField(fieldName) || isEbaySecondaryCategoryField(fieldName) || fieldName === ebayCategoriesFieldName)) return null;
+    if (isEbayInventoryImageUrlsField(fieldName)) return null;
+    if (isEbayPhotoCountMaxField(fieldName)) return null;
+    if (isGenericImageScalarField(fieldName)) return null;
+    if (useCombinedImageAltEditor && fieldName === imageAltTextSourceField) return null;
+    if (suppressImageScalarFields && isScalarImageField(fieldName)) return null;
+    if (hasCanonicalConditionField && fieldName !== CONDITION_FIELD && isConditionMirrorSourceField(fieldName)) return null;
+
+    const value = formValues[fieldName] ?? '';
+    const kind = fieldKinds[fieldName] ?? 'text';
+    const readOnlyField = isReadOnlyApprovalField(fieldName);
+    const inputDisabled = saving || readOnlyField;
+    const isLongText = kind === 'json' || value.length > 120;
+    const booleanLike = isBooleanLikeValue(value);
+    const dropdownOptions =
+      fieldName.trim().toLowerCase() === 'listing format' ? listingFormatOptions : getDropdownOptions(fieldName);
+
+    if (isAllowOffersField(fieldName) || kind === 'boolean' || booleanLike) {
+      const normalizedBooleanValue = value.trim().toLowerCase() === 'true' ? 'true' : 'false';
+      return (
+        <label key={fieldName} className="flex flex-col gap-2">
+          {renderFieldLabel(fieldName)}
+          <select
+            className={getInputClassName(fieldName)}
+            value={normalizedBooleanValue}
+            onChange={(event) => setFormValue(fieldName, event.target.value)}
+            disabled={inputDisabled}
+          >
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+        </label>
+      );
+    }
+
+    if (dropdownOptions) {
+      const optionSet = new Set(dropdownOptions);
+      const options = value && !optionSet.has(value) ? [value, ...dropdownOptions] : dropdownOptions;
+
+      return (
+        <label key={fieldName} className="flex flex-col gap-2">
+          {renderFieldLabel(fieldName)}
+          <select
+            className={getInputClassName(fieldName)}
+            value={value}
+            onChange={(event) => setFormValue(fieldName, event.target.value)}
+            disabled={inputDisabled}
+          >
+            <option value="">Select an option</option>
+            {options.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+      );
+    }
+
+    if (isShopifyTypeField(fieldName)) {
+      return (
+        <ShopifyTaxonomyTypeSelect
+          key={fieldName}
+          fieldName={fieldName}
+          label={isRequiredField(fieldName) ? `${toFieldLabel(fieldName)} (Required)` : toFieldLabel(fieldName)}
+          value={value}
+          onChange={(nextValue) => setFormValue(fieldName, nextValue)}
+          disabled={inputDisabled}
+        />
+      );
+    }
+
+    if (isImageUrlListField(fieldName)) {
+      return (
+        <ImageUrlListEditor
+          key={fieldName}
+          fieldLabel={isRequiredField(fieldName) ? `${toFieldLabel(fieldName)} (Required)` : toFieldLabel(fieldName)}
+          value={value}
+          onChange={(newValue) => setFormValue(fieldName, newValue)}
+          disabled={inputDisabled}
+        />
+      );
+    }
+
+    if (isLongText) {
+      return (
+        <label key={fieldName} className="col-span-1 flex flex-col gap-2 md:col-span-2">
+          {renderFieldLabel(fieldName)}
+          <textarea
+            className={getInputClassName(fieldName, 'min-h-[110px] resize-y font-mono leading-[1.4]')}
+            value={value}
+            onChange={(event) => setFormValue(fieldName, event.target.value)}
+            disabled={inputDisabled}
+          />
+        </label>
+      );
+    }
+
+    return (
+      <label key={fieldName} className="flex flex-col gap-2">
+        {renderFieldLabel(fieldName)}
+        {isCurrencyLikeField(fieldName) ? (
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--muted)]">$</span>
+            <input
+              className={getInputClassName(fieldName, 'pl-7')}
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={value}
+              onChange={(event) => setFormValue(fieldName, event.target.value)}
+              disabled={inputDisabled}
+            />
+          </div>
+        ) : (
+          <input
+            className={getInputClassName(fieldName)}
+            type={kind === 'number' ? 'number' : 'text'}
+            value={value}
+            onChange={(event) => setFormValue(fieldName, event.target.value)}
+            disabled={inputDisabled}
+          />
+        )}
+      </label>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      {orderedFieldNames.map((fieldName) => {
-        if (isShippingServiceField(fieldName)) return null;
-        if (fieldName === approvedFieldName) return null;
-        if (isHiddenApprovalField(fieldName)) return null;
-        if (hasShopifyTagEditor && (isShopifyCompoundTagsField(fieldName) || isShopifySingleTagField(fieldName))) return null;
-        if (hasShopifyCollectionEditor && (isShopifyCompoundCollectionField(fieldName) || isShopifySingleCollectionField(fieldName))) return null;
-        if (isShopifyBodyDescriptionField(fieldName)) return null;
-        if (isShopifyBodyHtmlField(fieldName)) return null;
-        if (isShopifyKeyFeaturesField(fieldName)) return null;
-        if (hasEbayCategoryEditor && (isEbayPrimaryCategoryField(fieldName) || isEbaySecondaryCategoryField(fieldName) || fieldName === ebayCategoriesFieldName)) return null;
-        if (isEbayInventoryImageUrlsField(fieldName)) return null;
-        if (isEbayPhotoCountMaxField(fieldName)) return null;
-        if (isGenericImageScalarField(fieldName)) return null;
-        if (useCombinedImageAltEditor && fieldName === imageAltTextSourceField) return null;
-        if (suppressImageScalarFields && isScalarImageField(fieldName)) return null;
-        if (hasCanonicalConditionField && fieldName !== CONDITION_FIELD && isConditionMirrorSourceField(fieldName)) return null;
+      {requiredOrderedFieldNames.map(renderStandardField)}
 
-        const value = formValues[fieldName] ?? '';
-        const kind = fieldKinds[fieldName] ?? 'text';
-        const readOnlyField = isReadOnlyApprovalField(fieldName) || isShopifyBodyHtmlField(fieldName);
-        const inputDisabled = saving || readOnlyField;
-        const isLongText = kind === 'json' || value.length > 120;
-        const booleanLike = isBooleanLikeValue(value);
-        const dropdownOptions =
-          fieldName.trim().toLowerCase() === 'listing format' ? listingFormatOptions : getDropdownOptions(fieldName);
-
-        if (isAllowOffersField(fieldName) || kind === 'boolean' || booleanLike) {
-          const normalizedBooleanValue = value.trim().toLowerCase() === 'true' ? 'true' : 'false';
-          return (
-            <label key={fieldName} className="flex flex-col gap-2">
-              {renderFieldLabel(fieldName)}
-              <select
-                className={getInputClassName(fieldName)}
-                value={normalizedBooleanValue}
-                onChange={(event) => setFormValue(fieldName, event.target.value)}
-                disabled={inputDisabled}
-              >
-                <option value="true">True</option>
-                <option value="false">False</option>
-              </select>
-            </label>
-          );
-        }
-
-        if (dropdownOptions) {
-          const optionSet = new Set(dropdownOptions);
-          const options = value && !optionSet.has(value) ? [value, ...dropdownOptions] : dropdownOptions;
-
-          return (
-            <label key={fieldName} className="flex flex-col gap-2">
-              {renderFieldLabel(fieldName)}
-              <select
-                className={getInputClassName(fieldName)}
-                value={value}
-                onChange={(event) => setFormValue(fieldName, event.target.value)}
-                disabled={inputDisabled}
-              >
-                <option value="">Select an option</option>
-                {options.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-          );
-        }
-
-        if (isShopifyTypeField(fieldName)) {
-          return (
-            <ShopifyTaxonomyTypeSelect
-              key={fieldName}
-              fieldName={fieldName}
-              label={isRequiredField(fieldName) ? `${toFieldLabel(fieldName)} (Required)` : toFieldLabel(fieldName)}
-              value={value}
-              onChange={(nextValue) => setFormValue(fieldName, nextValue)}
-              disabled={inputDisabled}
-            />
-          );
-        }
-
-        // Image URL list fields — must come before isLongText since kind === 'json' for these fields.
-        if (isImageUrlListField(fieldName)) {
-          return (
-            <ImageUrlListEditor
-              key={fieldName}
-              fieldLabel={isRequiredField(fieldName) ? `${toFieldLabel(fieldName)} (Required)` : toFieldLabel(fieldName)}
-              value={value}
-              onChange={(newValue) => setFormValue(fieldName, newValue)}
-              disabled={inputDisabled}
-            />
-          );
-        }
-
-        if (isLongText) {
-          return (
-            <label key={fieldName} className="col-span-1 flex flex-col gap-2 md:col-span-2">
-              {renderFieldLabel(fieldName)}
-              <textarea
-                className={getInputClassName(fieldName, 'min-h-[110px] resize-y font-mono leading-[1.4]')}
-                value={value}
-                onChange={(event) => setFormValue(fieldName, event.target.value)}
-                disabled={inputDisabled}
-              />
-            </label>
-          );
-        }
-
-        return (
-          <label key={fieldName} className="flex flex-col gap-2">
-            {renderFieldLabel(fieldName)}
-            {isCurrencyLikeField(fieldName) ? (
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--muted)]">$</span>
-                <input
-                  className={getInputClassName(fieldName, 'pl-7')}
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  value={value}
-                  onChange={(event) => setFormValue(fieldName, event.target.value)}
-                  disabled={inputDisabled}
-                />
-              </div>
-            ) : (
-              <input
-                className={getInputClassName(fieldName)}
-                type={kind === 'number' ? 'number' : 'text'}
-                value={value}
-                onChange={(event) => setFormValue(fieldName, event.target.value)}
-                disabled={inputDisabled}
-              />
-            )}
-          </label>
-        );
-      })}
-
-      {shopifyBodyDescriptionFieldName && (
+      {activeBodyDescriptionFieldName && (
         <label className="col-span-1 flex flex-col gap-2 md:col-span-2">
-          <span className={labelClass}>Description</span>
+          {renderSpecialLabel('Description', activeBodyDescriptionFieldName)}
           <textarea
             className={`${inputBaseClass} min-h-[110px] resize-y leading-[1.4]`}
-            value={formValues[shopifyBodyDescriptionFieldName] ?? ''}
-            onChange={(event) => setFormValue(shopifyBodyDescriptionFieldName, event.target.value)}
-            placeholder="Short product description used in listing body HTML"
+            value={formValues[activeBodyDescriptionFieldName] ?? ''}
+            onChange={(event) => setFormValue(activeBodyDescriptionFieldName, event.target.value)}
+            placeholder={isEbayApprovalForm
+              ? 'Listing description saved to Airtable Description and mirrored into Body HTML'
+              : 'Short product description used in listing body HTML'}
             disabled={saving}
           />
         </label>
@@ -1597,9 +1701,19 @@ export function ApprovalFormFields({
         />
       )}
 
-      {showBodyHtmlPreview && (shopifyBodyDescriptionFieldName || shopifyKeyFeaturesFieldName || shopifyBodyHtmlFieldName) && (
-        <ShopifyBodyHtmlPreview value={derivedShopifyBodyHtml} />
+      {showBodyHtmlPreview && (activeBodyDescriptionFieldName || shopifyKeyFeaturesFieldName || activeBodyHtmlFieldName) && (
+        <ShopifyBodyHtmlPreview
+          value={derivedBodyHtmlPreview}
+          helperText={isEbayApprovalForm
+            ? 'Preview of the current Body HTML value saved to Airtable. eBay mirrors the Description editor into the Body HTML column used for the listing payload.'
+            : undefined}
+          emptyStateText={isEbayApprovalForm
+            ? 'Add Description content to preview the Body HTML saved for the eBay listing.'
+            : undefined}
+        />
       )}
+
+      {optionalOrderedFieldNames.map(renderStandardField)}
 
       <label className="flex flex-col gap-2">
         <span className={labelClass}>Shipping Services</span>

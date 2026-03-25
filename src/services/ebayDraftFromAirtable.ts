@@ -234,7 +234,16 @@ export interface EbayDraftPayloadBundle {
 export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFieldMap): EbayDraftPayloadBundle {
   const sku = getField(fields, ['eBay Inventory SKU', 'SKU']) || 'SAMPLE-SKU';
   const title = getField(fields, ['eBay Inventory Product Title', 'Item Title', 'Title']) || 'Untitled Listing';
-  const description = getField(fields, ['eBay Inventory Product Description', 'Item Description', 'Description']);
+  const description = getField(fields, [
+    'Body HTML',
+    'Body (HTML)',
+    'body_html',
+    'eBay Body HTML',
+    'ebay_body_html',
+    'eBay Inventory Product Description',
+    'Item Description',
+    'Description',
+  ]);
   const brand = getField(fields, ['eBay Inventory Product Brand', 'Brand']);
   const mpn = getField(fields, ['eBay Inventory Product MPN', 'MPN']);
   const condition = normalizeEbayCondition(getField(fields, [

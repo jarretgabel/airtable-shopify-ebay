@@ -111,21 +111,6 @@ export function ShopifyCollectionsSelect({
           ...resolvedById,
           ...current,
         }));
-
-        const nextLabelsById: Record<string, string> = {};
-        missingIds.forEach((collectionId) => {
-          const title = resolvedById[collectionId]?.title;
-          if (title) {
-            nextLabelsById[collectionId] = title;
-          }
-        });
-
-        if (Object.keys(nextLabelsById).length > 0) {
-          onChange(value, {
-            ...labelsById,
-            ...nextLabelsById,
-          });
-        }
       } catch {
         // Keep editor usable even if Shopify collection hydration fails.
       }
@@ -134,7 +119,7 @@ export function ShopifyCollectionsSelect({
     return () => {
       cancelled = true;
     };
-  }, [knownCollectionsById, labelsById, onChange, value]);
+  }, [knownCollectionsById, labelsById, value]);
 
   const selectedCollectionSet = useMemo(() => new Set(value), [value]);
   const collectionMap = useMemo(() => {
