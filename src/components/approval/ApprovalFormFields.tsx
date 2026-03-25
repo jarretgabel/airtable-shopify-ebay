@@ -50,6 +50,20 @@ function toHumanReadableLabel(fieldName: string): string {
     .join(' ');
 }
 
+function isCurrencyLikeField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  const isShopifyPriceField = normalized.includes('shopify')
+    && normalized.includes('price')
+    && !normalized.includes('currency');
+  const isGenericPriceField = normalized === 'price' || /^variant\s+\d+\s+price$/.test(normalized);
+
+  return normalized === 'ebay offer price value'
+    || normalized === 'buy it now/starting bid'
+    || normalized.includes('handling cost')
+    || isShopifyPriceField
+    || isGenericPriceField;
+}
+
 function isReadOnlyApprovalField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'shopify rest product id' || normalized === 'shopify product id';
@@ -300,7 +314,8 @@ function isSingularCollectionAliasField(fieldName: string): boolean {
 
 function isCollectionDisplayNameField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
-  return normalized === 'shopify collections'
+  return normalized === 'collections'
+    || normalized === 'shopify collections'
     || normalized === 'shopify_collections';
 }
 
@@ -1265,8 +1280,15 @@ export function ApprovalFormFields({
 
 
     const canonicalCollectionsFieldKind = fieldKinds[canonicalCollectionsFieldName] ?? 'text';
+    const writeCanonicalAsDisplayNames = isCollectionDisplayNameField(canonicalCollectionsFieldName);
     if (normalizedCollections.length === 0) {
       setFormValue(canonicalCollectionsFieldName, '');
+    } else if (writeCanonicalAsDisplayNames) {
+      if (canonicalCollectionsFieldKind === 'json') {
+        setFormValue(canonicalCollectionsFieldName, normalizedCollectionLabels.length > 0 ? JSON.stringify(normalizedCollectionLabels) : '');
+      } else {
+        setFormValue(canonicalCollectionsFieldName, normalizedCollectionLabels.join(', '));
+      }
     } else if (canonicalCollectionsFieldKind === 'json' || isShopifyCollectionJsonField(canonicalCollectionsFieldName)) {
       setFormValue(canonicalCollectionsFieldName, JSON.stringify(normalizedCollections));
     } else {
@@ -1495,13 +1517,29 @@ export function ApprovalFormFields({
         return (
           <label key={fieldName} className="flex flex-col gap-2">
             {renderFieldLabel(fieldName)}
-            <input
-              className={getInputClassName(fieldName)}
-              type={kind === 'number' ? 'number' : 'text'}
-              value={value}
-              onChange={(event) => setFormValue(fieldName, event.target.value)}
-              disabled={inputDisabled}
-            />
+            {isCurrencyLikeField(fieldName) ? (
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--muted)]">$</span>
+                <input
+                  className={getInputClassName(fieldName, 'pl-7')}
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  value={value}
+                  onChange={(event) => setFormValue(fieldName, event.target.value)}
+                  disabled={inputDisabled}
+                />
+              </div>
+            ) : (
+              <input
+                className={getInputClassName(fieldName)}
+                type={kind === 'number' ? 'number' : 'text'}
+                value={value}
+                onChange={(event) => setFormValue(fieldName, event.target.value)}
+                disabled={inputDisabled}
+              />
+            )}
           </label>
         );
       })}

@@ -94,6 +94,48 @@ export function ShopifyCollectionsSelect({
     };
   }, [disabled, isOpen, query]);
 
+  useEffect(() => {
+    if (value.length === 0) return;
+
+    const missingIds = value.filter((collectionId) => !labelsById[collectionId] && !knownCollectionsById[collectionId]);
+    if (missingIds.length === 0) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const collections = await shopifyService.getCollections(250);
+        if (cancelled) return;
+
+        const resolvedById = Object.fromEntries(collections.map((collection) => [collection.id, collection]));
+        setKnownCollectionsById((current) => ({
+          ...resolvedById,
+          ...current,
+        }));
+
+        const nextLabelsById: Record<string, string> = {};
+        missingIds.forEach((collectionId) => {
+          const title = resolvedById[collectionId]?.title;
+          if (title) {
+            nextLabelsById[collectionId] = title;
+          }
+        });
+
+        if (Object.keys(nextLabelsById).length > 0) {
+          onChange(value, {
+            ...labelsById,
+            ...nextLabelsById,
+          });
+        }
+      } catch {
+        // Keep editor usable even if Shopify collection hydration fails.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [knownCollectionsById, labelsById, onChange, value]);
+
   const selectedCollectionSet = useMemo(() => new Set(value), [value]);
   const collectionMap = useMemo(() => {
     const map = new Map<string, ShopifyCollectionMatch>();

@@ -31,6 +31,7 @@ export const SHOPIFY_METAFIELD_TYPE_OPTIONS = [
 export const SHOPIFY_COMBINED_LISTING_ROLE_OPTIONS = ['PARENT', 'CHILD'];
 export const SHOPIFY_MEDIA_CONTENT_TYPE_OPTIONS = ['IMAGE', 'VIDEO', 'EXTERNAL_VIDEO', 'MODEL_3D'];
 export const SHOPIFY_PUBLISHED_SCOPE_OPTIONS = ['web'];
+export const CURRENCY_CODE_OPTIONS = ['USD', 'CAD', 'GBP', 'EUR', 'AUD'];
 
 // eBay field options
 export const EBAY_CONDITION_OPTIONS = [

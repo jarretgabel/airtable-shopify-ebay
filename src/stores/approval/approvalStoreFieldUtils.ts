@@ -1,4 +1,5 @@
 import {
+  CURRENCY_CODE_OPTIONS,
   EBAY_DIMENSION_UNIT_OPTIONS,
   EBAY_FORMAT_OPTIONS,
   EBAY_LISTING_DURATION_OPTIONS,
@@ -123,6 +124,10 @@ export function getDropdownOptions(fieldName: string): string[] | null {
   if (n === 'ebay offer format') return EBAY_FORMAT_OPTIONS;
   if (n === 'ebay offer marketplace id') return EBAY_MARKETPLACE_ID_OPTIONS;
   if (n === 'ebay offer listing duration') return EBAY_LISTING_DURATION_OPTIONS;
+  if (n.includes('ebay offer') && n.includes('currency')) return CURRENCY_CODE_OPTIONS;
+
+  // Shopify: currency fields
+  if (n.includes('shopify') && n.includes('currency')) return CURRENCY_CODE_OPTIONS;
 
   // eBay: responsible person type
   if (n.includes('ebay offer responsible person') && n.endsWith('type')) return EBAY_RESPONSIBLE_PERSON_TYPE_OPTIONS;
