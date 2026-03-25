@@ -222,6 +222,39 @@ class AirtableService {
   }
 
   /**
+   * Fetch a single record from a different Airtable base/table or base/view reference.
+   * This is useful when list views omit certain fields that are still needed in detail editors.
+   */
+  async getRecordFromReference(
+    reference: string,
+    fallbackTableName: string | undefined,
+    recordId: string,
+  ): Promise<AirtableRecord> {
+    const candidates = parseAirtableReferenceCandidates(reference, fallbackTableName, this.baseId);
+    let lastError: unknown;
+
+    for (const parsed of candidates) {
+      const client = this.createClient(parsed.baseId);
+
+      try {
+        const response = await client.get(`/${parsed.tableName}/${recordId}`);
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        const status = getAirtableErrorStatus(error);
+        if (isRetryableReferenceStatus(status)) {
+          continue;
+        }
+        logServiceError('airtable', `Error fetching record ${recordId} for reference ${reference}`, error);
+        throw error;
+      }
+    }
+
+    logServiceError('airtable', `Error fetching record ${recordId} for reference ${reference}`, lastError);
+    throw lastError;
+  }
+
+  /**
    * Delete a record in a different Airtable base/table or base/view reference.
    */
   async deleteRecordFromReference(

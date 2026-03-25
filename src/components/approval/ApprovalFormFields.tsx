@@ -21,12 +21,62 @@ import { ShopifyCollectionsSelect } from './ShopifyCollectionsSelect';
 import { ShopifyTagsEditor } from './ShopifyTagsEditor';
 import { applyEbayCategoryIds, resolveEbaySelectedCategoryIds } from './ebayCategoryFields';
 import ebayListingInsertTemplate from '../../templates/ebay/ebay-listing-insert.html?raw';
+import ebayListingImpactSlateTemplate from '../../templates/ebay/ebay-listing-impact-slate.html?raw';
+import ebayListingImpactLuxeTemplate from '../../templates/ebay/ebay-listing-impact-luxe.html?raw';
 
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
 const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
 const requiredBadgeClass = 'inline-block rounded-full border border-rose-400/45 bg-rose-500/15 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-rose-200';
 const SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD = 'Shopify GraphQL Collection IDs';
+type EbayListingTemplateId = 'classic' | 'impact-slate' | 'impact-luxe';
+
+const DEFAULT_EBAY_LISTING_TEMPLATE_ID: EbayListingTemplateId = 'classic';
+
+const EBAY_LISTING_TEMPLATES: ReadonlyArray<{
+  id: EbayListingTemplateId;
+  label: string;
+  template: string;
+}> = [
+  {
+    id: 'classic',
+    label: 'Classic Heritage',
+    template: ebayListingInsertTemplate,
+  },
+  {
+    id: 'impact-slate',
+    label: 'Impact Slate',
+    template: ebayListingImpactSlateTemplate,
+  },
+  {
+    id: 'impact-luxe',
+    label: 'Impact Luxe',
+    template: ebayListingImpactLuxeTemplate,
+  },
+] as const;
+
+function normalizeEbayListingTemplateId(value: string): EbayListingTemplateId {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return DEFAULT_EBAY_LISTING_TEMPLATE_ID;
+
+  if (normalized === 'classic' || normalized.includes('insert') || normalized.includes('legacy') || normalized.includes('heritage')) {
+    return 'classic';
+  }
+
+  if (normalized === 'impact-slate' || normalized === 'slate' || normalized.includes('impact slate')) {
+    return 'impact-slate';
+  }
+
+  if (normalized === 'impact-luxe' || normalized === 'luxe' || normalized.includes('impact luxe')) {
+    return 'impact-luxe';
+  }
+
+  return DEFAULT_EBAY_LISTING_TEMPLATE_ID;
+}
+
+function resolveEbayListingTemplateHtml(templateId: EbayListingTemplateId): string {
+  return EBAY_LISTING_TEMPLATES.find((option) => option.id === templateId)?.template ?? ebayListingInsertTemplate;
+}
 
 function normalizeEbayListingFormat(value: string): string {
   return value.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_');
@@ -265,9 +315,16 @@ function isEbayPrimaryCategoryField(fieldName: string): boolean {
     .toLowerCase()
     .replace(/\s*\([^)]*\)\s*$/g, '')
     .trim();
-  return normalized === 'ebay offer category id'
+  return normalized === 'ebay offer primary category id'
+    || normalized === 'ebay_offer_primary_category_id'
+    || normalized === 'ebay_offer_primarycategoryid'
+    || normalized === 'ebay offer category id'
     || normalized === 'ebay_offer_category_id'
     || normalized === 'ebay_offer_categoryid'
+    || normalized === 'category id'
+    || normalized === 'category_id'
+    || normalized === 'primary category id'
+    || normalized === 'primary_category_id'
     || normalized === 'primary category'
     || normalized === 'primary_category';
 }
@@ -281,6 +338,8 @@ function isEbaySecondaryCategoryField(fieldName: string): boolean {
   return normalized === 'ebay offer secondary category id'
     || normalized === 'ebay_offer_secondary_category_id'
     || normalized === 'ebay_offer_secondarycategoryid'
+    || normalized === 'secondary category id'
+    || normalized === 'secondary_category_id'
     || normalized === 'secondary category'
     || normalized === 'secondary_category';
 }
@@ -307,7 +366,21 @@ function isEbayCategoriesField(fieldName: string): boolean {
     .replace(/\s*\([^)]*\)\s*$/g, '')
     .trim();
 
-  return normalized === 'categories' || normalized === 'category ids' || normalized === 'category_ids';
+  if (normalized === 'category') return true;
+
+  if (normalized.includes('categor')) {
+    return normalized.includes('ebay')
+      || normalized.includes('id')
+      || normalized.includes('json')
+      || normalized.includes('primary')
+      || normalized.includes('secondary');
+  }
+
+  return normalized === 'categories'
+    || normalized === 'category ids'
+    || normalized === 'category_ids'
+    || normalized === 'category id'
+    || normalized === 'category_id';
 }
 
 function isLikelyDerivedAirtableField(fieldName: string): boolean {
@@ -698,6 +771,17 @@ function isEbayBodyHtmlField(fieldName: string): boolean {
     || normalized === 'ebay_body_html';
 }
 
+function isEbayBodyHtmlTemplateField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'ebay body html template'
+    || normalized === 'ebay listing template'
+    || normalized === 'ebay template'
+    || normalized === 'body html template'
+    || normalized === 'listing template'
+    || normalized === 'ebay_body_html_template'
+    || normalized === 'ebay_listing_template';
+}
+
 function isLegacyShopifySingleImageField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
 
@@ -962,6 +1046,8 @@ interface ApprovalFormFieldsProps {
   originalFieldValues?: Record<string, string>;
   showBodyHtmlPreview?: boolean;
   onBodyHtmlPreviewChange?: (value: string) => void;
+  selectedEbayTemplateId?: string;
+  onEbayTemplateIdChange?: (templateId: EbayListingTemplateId) => void;
 }
 
 function isScalarImageField(fieldName: string): boolean {
@@ -1026,6 +1112,8 @@ export function ApprovalFormFields({
   suppressImageScalarFields = false,
   originalFieldValues = {},
   onBodyHtmlPreviewChange,
+  selectedEbayTemplateId,
+  onEbayTemplateIdChange,
 }: ApprovalFormFieldsProps) {
   const requiredFieldNameSet = useMemo(
     () => new Set(requiredFieldNames.map((fieldName) => fieldName.toLowerCase())),
@@ -1113,42 +1201,79 @@ export function ApprovalFormFields({
       }));
     })())
     : '';
+  const formCategoryFields = Object.keys(formValues).filter(
+    (fieldName) => isEbayCategoriesField(fieldName) && !isLikelyDerivedAirtableField(fieldName),
+  );
   const writableCategoryFields = writableFieldNames.filter(
     (fieldName) => isEbayCategoriesField(fieldName) && !isLikelyDerivedAirtableField(fieldName),
   );
   const allCategoryFields = allFieldNames.filter(
     (fieldName) => isEbayCategoriesField(fieldName) && !isLikelyDerivedAirtableField(fieldName),
   );
+  const categoryFieldCandidates = Array.from(new Set([
+    ...formCategoryFields,
+    ...allCategoryFields,
+    ...writableCategoryFields,
+  ]));
   const ebayCategoriesFieldName = pickPreferredField(
-    writableCategoryFields.length > 0 ? writableCategoryFields : allCategoryFields,
-    ['Categories', 'categories'],
+    categoryFieldCandidates,
+    ['categories', 'Categories'],
     formValues,
   );
+  const formValueFieldNames = Object.keys(formValues);
   const ebayPrimaryCategoryFieldName = writableFieldNames.find(
     (fieldName) => isEbayPrimaryCategoryField(fieldName) && !isLikelyDerivedAirtableField(fieldName),
   )
     ?? allFieldNames.find((fieldName) => isEbayPrimaryCategoryField(fieldName) && !isLikelyDerivedAirtableField(fieldName))
+    ?? formValueFieldNames.find((fieldName) => isEbayPrimaryCategoryField(fieldName) && !isLikelyDerivedAirtableField(fieldName))
     ?? writableFieldNames.find((fieldName) => isEbayPrimaryCategoryField(fieldName))
-    ?? allFieldNames.find((fieldName) => isEbayPrimaryCategoryField(fieldName));
+    ?? allFieldNames.find((fieldName) => isEbayPrimaryCategoryField(fieldName))
+    ?? formValueFieldNames.find((fieldName) => isEbayPrimaryCategoryField(fieldName));
   const ebaySecondaryCategoryFieldName = writableFieldNames.find(
     (fieldName) => isEbaySecondaryCategoryField(fieldName) && !isLikelyDerivedAirtableField(fieldName),
   )
     ?? allFieldNames.find((fieldName) => isEbaySecondaryCategoryField(fieldName) && !isLikelyDerivedAirtableField(fieldName))
+    ?? formValueFieldNames.find((fieldName) => isEbaySecondaryCategoryField(fieldName) && !isLikelyDerivedAirtableField(fieldName))
     ?? writableFieldNames.find((fieldName) => isEbaySecondaryCategoryField(fieldName))
-    ?? allFieldNames.find((fieldName) => isEbaySecondaryCategoryField(fieldName));
-  const ebayMarketplaceIdFieldName = allFieldNames.find((fieldName) => isEbayMarketplaceIdField(fieldName));
-  const hasEbayCategoryEditor = Boolean(
-    isEbayListingForm && (ebayCategoriesFieldName || ebayPrimaryCategoryFieldName || ebaySecondaryCategoryFieldName),
+    ?? allFieldNames.find((fieldName) => isEbaySecondaryCategoryField(fieldName))
+    ?? formValueFieldNames.find((fieldName) => isEbaySecondaryCategoryField(fieldName));
+  const fallbackCategoryTargetFieldName = formValueFieldNames.find(
+    (fieldName) => (
+      isEbayCategoriesField(fieldName)
+      || isEbayPrimaryCategoryField(fieldName)
+      || isEbaySecondaryCategoryField(fieldName)
+    ) && !isLikelyDerivedAirtableField(fieldName),
   );
+  const effectiveEbayCategoriesFieldName = ebayCategoriesFieldName
+    ?? fallbackCategoryTargetFieldName
+    ?? 'categories';
+  const ebayMarketplaceIdFieldName = allFieldNames.find((fieldName) => isEbayMarketplaceIdField(fieldName));
+  const hasEbayCategoryEditor = isEbayListingForm;
   const ebayMarketplaceId = (ebayMarketplaceIdFieldName ? formValues[ebayMarketplaceIdFieldName] : undefined)?.trim() || 'EBAY_US';
-  const ebaySelectedCategoryIds = useMemo(() => resolveEbaySelectedCategoryIds(formValues, {
+  const ebayCategorySourceValues = useMemo(() => {
+    const merged: Record<string, string> = { ...originalFieldValues };
+
+    Object.entries(formValues).forEach(([fieldName, value]) => {
+      if (value.trim().length > 0) {
+        merged[fieldName] = value;
+        return;
+      }
+
+      if (!(fieldName in merged)) {
+        merged[fieldName] = value;
+      }
+    });
+
+    return merged;
+  }, [originalFieldValues, formValues]);
+  const ebaySelectedCategoryIds = useMemo(() => resolveEbaySelectedCategoryIds(ebayCategorySourceValues, {
     categoriesFieldName: ebayCategoriesFieldName,
     primaryCategoryFieldName: ebayPrimaryCategoryFieldName,
     secondaryCategoryFieldName: ebaySecondaryCategoryFieldName,
-  }), [ebayCategoriesFieldName, ebayPrimaryCategoryFieldName, ebaySecondaryCategoryFieldName, formValues]);
+  }), [ebayCategoriesFieldName, ebayPrimaryCategoryFieldName, ebaySecondaryCategoryFieldName, ebayCategorySourceValues]);
   const setEbayCategoryIds = (nextIds: string[]) => {
     applyEbayCategoryIds(nextIds, {
-      categoriesFieldName: ebayCategoriesFieldName,
+      categoriesFieldName: effectiveEbayCategoriesFieldName,
       primaryCategoryFieldName: ebayPrimaryCategoryFieldName,
       secondaryCategoryFieldName: ebaySecondaryCategoryFieldName,
     }, setFormValue);
@@ -1177,6 +1302,9 @@ export function ApprovalFormFields({
   const ebayBodyHtmlFieldName = isEbayApprovalForm
     ? allFieldNames.find((fieldName) => isEbayBodyHtmlField(fieldName))
     : undefined;
+  const ebayBodyHtmlTemplateFieldName = isEbayApprovalForm
+    ? allFieldNames.find((fieldName) => isEbayBodyHtmlTemplateField(fieldName))
+    : undefined;
   const ebayTitleFieldName = isEbayApprovalForm
     ? pickPreferredField(
       allFieldNames.filter((fieldName) => isTitleLikeField(fieldName)),
@@ -1190,6 +1318,62 @@ export function ApprovalFormFields({
       formValues,
     )
     : undefined;
+  const [localEbayTemplateId, setLocalEbayTemplateId] = useState<EbayListingTemplateId>(DEFAULT_EBAY_LISTING_TEMPLATE_ID);
+
+  useEffect(() => {
+    const persistedTemplate = ebayBodyHtmlTemplateFieldName
+      ? (originalFieldValues[ebayBodyHtmlTemplateFieldName] ?? '')
+      : '';
+    setLocalEbayTemplateId(normalizeEbayListingTemplateId(persistedTemplate));
+  }, [ebayBodyHtmlTemplateFieldName, originalFieldValues, recordId]);
+
+  useEffect(() => {
+    if (!selectedEbayTemplateId) return;
+    setLocalEbayTemplateId(normalizeEbayListingTemplateId(selectedEbayTemplateId));
+  }, [selectedEbayTemplateId]);
+
+  const resolvedEbayTemplateId = useMemo(() => {
+    if (!isEbayApprovalForm) return DEFAULT_EBAY_LISTING_TEMPLATE_ID;
+
+    if (selectedEbayTemplateId?.trim()) {
+      return normalizeEbayListingTemplateId(selectedEbayTemplateId);
+    }
+
+    const rawTemplateValue = ebayBodyHtmlTemplateFieldName
+      ? (formValues[ebayBodyHtmlTemplateFieldName] || originalFieldValues[ebayBodyHtmlTemplateFieldName] || '')
+      : '';
+
+    return rawTemplateValue.trim().length > 0
+      ? normalizeEbayListingTemplateId(rawTemplateValue)
+      : localEbayTemplateId;
+  }, [
+    ebayBodyHtmlTemplateFieldName,
+    formValues,
+    isEbayApprovalForm,
+    localEbayTemplateId,
+    originalFieldValues,
+    selectedEbayTemplateId,
+  ]);
+
+  useEffect(() => {
+    if (!isEbayApprovalForm) return;
+
+    if (ebayBodyHtmlTemplateFieldName) {
+      const currentTemplateValue = formValues[ebayBodyHtmlTemplateFieldName] ?? '';
+      if (normalizeEbayListingTemplateId(currentTemplateValue) !== resolvedEbayTemplateId) {
+        setFormValue(ebayBodyHtmlTemplateFieldName, resolvedEbayTemplateId);
+      }
+    }
+
+    onEbayTemplateIdChange?.(resolvedEbayTemplateId);
+  }, [
+    ebayBodyHtmlTemplateFieldName,
+    formValues,
+    isEbayApprovalForm,
+    onEbayTemplateIdChange,
+    resolvedEbayTemplateId,
+    setFormValue,
+  ]);
   const activeBodyDescriptionFieldName = shopifyBodyDescriptionFieldName ?? ebayBodyDescriptionFieldName;
   const shopifyCompoundTagFieldNames = useMemo(
     () => allFieldNames.filter((fieldName) => isShopifyCompoundTagsField(fieldName)),
@@ -1501,9 +1685,10 @@ export function ApprovalFormFields({
       const titleValue = ebayTitleFieldName ? (formValues[ebayTitleFieldName] ?? '') : '';
       const descriptionValue = ebayBodyDescriptionFieldName ? (formValues[ebayBodyDescriptionFieldName] ?? '') : '';
       const keyFeaturesValue = ebayKeyFeaturesFieldName ? (formValues[ebayKeyFeaturesFieldName] ?? '') : '';
+      const templateHtml = resolveEbayListingTemplateHtml(resolvedEbayTemplateId);
 
       return buildEbayBodyHtmlFromTemplate(
-        ebayListingInsertTemplate,
+        templateHtml,
         titleValue,
         descriptionValue,
         keyFeaturesValue,
@@ -1514,6 +1699,7 @@ export function ApprovalFormFields({
   }, [
     ebayBodyDescriptionFieldName,
     ebayBodyHtmlFieldName,
+    ebayBodyHtmlTemplateFieldName,
     ebayKeyFeaturesFieldName,
     ebayTitleFieldName,
     formValues,
@@ -1524,6 +1710,7 @@ export function ApprovalFormFields({
     shopifyBodyHtmlFieldName,
     shopifyBodyHtmlTemplateFieldName,
     shopifyKeyFeaturesFieldName,
+    resolvedEbayTemplateId,
   ]);
 
   useEffect(() => {
@@ -1577,9 +1764,15 @@ export function ApprovalFormFields({
     if (shopifyBodyHtmlFieldName && fieldName === shopifyBodyHtmlFieldName) return null;
     if (shopifyBodyHtmlTemplateFieldName && fieldName === shopifyBodyHtmlTemplateFieldName) return null;
     if (ebayBodyHtmlFieldName && fieldName === ebayBodyHtmlFieldName) return null;
+    if (ebayBodyHtmlTemplateFieldName && fieldName === ebayBodyHtmlTemplateFieldName) return null;
     if (shopifyKeyFeaturesFieldName && fieldName === shopifyKeyFeaturesFieldName) return null;
     if (ebayKeyFeaturesFieldName && fieldName === ebayKeyFeaturesFieldName) return null;
-    if (hasEbayCategoryEditor && (isEbayPrimaryCategoryField(fieldName) || isEbaySecondaryCategoryField(fieldName) || fieldName === ebayCategoriesFieldName)) return null;
+    if (hasEbayCategoryEditor && (
+      isEbayPrimaryCategoryField(fieldName)
+      || isEbaySecondaryCategoryField(fieldName)
+      || fieldName === ebayCategoriesFieldName
+      || fieldName === effectiveEbayCategoriesFieldName
+    )) return null;
     if (isEbayInventoryImageUrlsField(fieldName)) return null;
     if (isEbayPhotoCountMaxField(fieldName)) return null;
     if (isGenericImageScalarField(fieldName)) return null;
@@ -1771,7 +1964,7 @@ export function ApprovalFormFields({
 
       {hasEbayCategoryEditor && (
         <EbayCategoriesSelect
-          fieldName={ebayCategoriesFieldName ?? ebayPrimaryCategoryFieldName ?? ebaySecondaryCategoryFieldName ?? 'Categories'}
+          fieldName={effectiveEbayCategoriesFieldName}
           label="eBay Categories"
           marketplaceId={ebayMarketplaceId}
           value={ebaySelectedCategoryIds}

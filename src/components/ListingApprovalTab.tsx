@@ -244,8 +244,14 @@ const EBAY_FORMAT_FIELD_CANDIDATES = [
 ] as const;
 
 const EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES = [
+  'eBay Offer Primary Category ID',
+  'eBay Offer PrimaryCategoryID',
+  'ebay_offer_primary_category_id',
+  'ebay_offer_primarycategoryid',
   'eBay Offer Category ID',
   'ebay_offer_category_id',
+  'Primary Category ID',
+  'primary_category_id',
   'Primary Category',
   'primary_category',
 ] as const;
@@ -258,8 +264,8 @@ const EBAY_SECONDARY_CATEGORY_FIELD_CANDIDATES = [
 ] as const;
 
 const EBAY_CATEGORIES_FIELD_CANDIDATES = [
-  'Categories',
   'categories',
+  'Categories',
 ] as const;
 
 const EBAY_DESCRIPTION_FIELD_CANDIDATES = [
@@ -277,7 +283,26 @@ const EBAY_BODY_HTML_FIELD_CANDIDATES = [
   'ebay_body_html',
 ] as const;
 
+const EBAY_BODY_HTML_TEMPLATE_FIELD_CANDIDATES = [
+  'eBay Body HTML Template',
+  'eBay Listing Template',
+  'eBay Template',
+  'Body HTML Template',
+  'Listing Template',
+  'ebay_body_html_template',
+  'ebay_listing_template',
+] as const;
+
+type EbayListingTemplateId = 'classic' | 'impact-slate' | 'impact-luxe';
+
+const EBAY_LISTING_TEMPLATE_OPTIONS: ReadonlyArray<{ id: EbayListingTemplateId; label: string }> = [
+  { id: 'classic', label: 'Classic Heritage' },
+  { id: 'impact-slate', label: 'Impact Slate' },
+  { id: 'impact-luxe', label: 'Impact Luxe' },
+] as const;
+
 const EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES = [
+  'Key Features (Key, Value)',
   'eBay Body Key Features JSON',
   'eBay Body Key Features',
   'eBay Listing Key Features JSON',
@@ -374,6 +399,36 @@ function isEbayBodyHtmlFieldName(fieldName: string): boolean {
     || normalized === 'body_html'
     || normalized === 'ebay body html'
     || normalized === 'ebay_body_html';
+}
+
+function isEbayBodyHtmlTemplateFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'ebay body html template'
+    || normalized === 'ebay listing template'
+    || normalized === 'ebay template'
+    || normalized === 'body html template'
+    || normalized === 'listing template'
+    || normalized === 'ebay_body_html_template'
+    || normalized === 'ebay_listing_template';
+}
+
+function normalizeEbayListingTemplateId(value: string): EbayListingTemplateId {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return 'classic';
+
+  if (normalized === 'classic' || normalized.includes('insert') || normalized.includes('legacy') || normalized.includes('heritage')) {
+    return 'classic';
+  }
+
+  if (normalized === 'impact-slate' || normalized === 'slate' || normalized.includes('impact slate')) {
+    return 'impact-slate';
+  }
+
+  if (normalized === 'impact-luxe' || normalized === 'luxe' || normalized.includes('impact luxe')) {
+    return 'impact-luxe';
+  }
+
+  return 'classic';
 }
 
 function isEbayBodyHtmlSyncTriggerFieldName(fieldName: string): boolean {
@@ -650,6 +705,7 @@ export function ListingApprovalTab({
   const [creatingShopifyListing, setCreatingShopifyListing] = useState(false);
   const [approving, setApproving] = useState(false);
   const [bodyHtmlPreview, setBodyHtmlPreview] = useState('');
+  const [selectedEbayTemplateId, setSelectedEbayTemplateId] = useState<EbayListingTemplateId>('classic');
   const [inlineActionNotices, setInlineActionNotices] = useState<InlineActionNotice[]>([]);
   const [fadingInlineNoticeIds, setFadingInlineNoticeIds] = useState<string[]>([]);
   const inlineNoticeTimersRef = useRef<Record<string, { fade: number; remove: number }>>({});
@@ -786,7 +842,7 @@ export function ListingApprovalTab({
 
       const preferredKeyFeaturesField = existingNames.find((name) =>
         EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      ) ?? (existingLower.has('key features (key, value)') ? null : 'Key Features (Key, Value)');
       if (preferredKeyFeaturesField) names.add(preferredKeyFeaturesField);
 
       const preferredPrimaryCategoryField = existingNames.find((name) =>
@@ -809,10 +865,19 @@ export function ListingApprovalTab({
         return normalized === 'categories'
           || normalized === 'category ids'
           || normalized === 'category_ids'
+          || normalized === 'ebay offer primary category id'
+          || normalized === 'ebay_offer_primary_category_id'
+          || normalized === 'ebay_offer_primarycategoryid'
+          || normalized === 'ebay offer category id'
+          || normalized === 'ebay_offer_category_id'
+          || normalized === 'ebay_offer_categoryid'
           || normalized === 'primary category'
           || normalized === 'primary category id'
           || normalized === 'primary_category'
           || normalized === 'primary_category_id'
+          || normalized === 'ebay offer secondary category id'
+          || normalized === 'ebay_offer_secondary_category_id'
+          || normalized === 'ebay_offer_secondarycategoryid'
           || normalized === 'secondary category'
           || normalized === 'secondary category id'
           || normalized === 'secondary_category'
@@ -822,7 +887,7 @@ export function ListingApprovalTab({
       if (!hasAnyCategoryField) {
         // Airtable omits empty fields from record payloads, so expose a safe
         // category editor fallback without adding non-existent eBay alias fields.
-        names.add('Categories');
+        names.add('categories');
       }
     }
 
@@ -830,6 +895,29 @@ export function ListingApprovalTab({
 
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [actualFieldNames, approvalChannel]);
+
+  const ebayBodyHtmlTemplateFieldName = useMemo(() => {
+    if (approvalChannel !== 'ebay') return undefined;
+
+    const exact = allFieldNames.find((fieldName) =>
+      EBAY_BODY_HTML_TEMPLATE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
+    );
+    if (exact) return exact;
+
+    return allFieldNames.find((fieldName) => isEbayBodyHtmlTemplateFieldName(fieldName));
+  }, [allFieldNames, approvalChannel]);
+
+  useEffect(() => {
+    if (approvalChannel !== 'ebay') return;
+
+    const persistedTemplateValue = ebayBodyHtmlTemplateFieldName
+      ? (formValues[ebayBodyHtmlTemplateFieldName] ?? '')
+      : '';
+    if (!persistedTemplateValue.trim()) return;
+
+    const normalizedTemplateId = normalizeEbayListingTemplateId(persistedTemplateValue);
+    setSelectedEbayTemplateId((current) => (current === normalizedTemplateId ? current : normalizedTemplateId));
+  }, [approvalChannel, ebayBodyHtmlTemplateFieldName, formValues]);
 
   const selectedRecord = useMemo(
     () => records.find((record) => record.id === selectedRecordId) ?? null,
@@ -1645,8 +1733,51 @@ export function ListingApprovalTab({
 
   useEffect(() => {
     if (!selectedRecord) return;
-    hydrateForm(selectedRecord, allFieldNames, approvedFieldName);
-  }, [selectedRecord?.id, records]);
+
+    let cancelled = false;
+
+    const hydrateFromBestAvailableRecord = async () => {
+      try {
+        const fullRecord = await airtableService.getRecordFromReference(
+          tableReference,
+          tableName,
+          selectedRecord.id,
+        );
+
+        if (cancelled) return;
+
+        const mergedRecord: AirtableRecord = {
+          ...selectedRecord,
+          ...fullRecord,
+          fields: {
+            ...selectedRecord.fields,
+            ...fullRecord.fields,
+          },
+        };
+
+        const hydrateFieldNames = Array.from(new Set([
+          ...allFieldNames,
+          ...Object.keys(mergedRecord.fields),
+        ])).sort((left, right) => left.localeCompare(right));
+
+        hydrateForm(mergedRecord, hydrateFieldNames, approvedFieldName);
+      } catch {
+        if (cancelled) return;
+        const hydrateFieldNames = Array.from(new Set([
+          ...allFieldNames,
+          ...Object.keys(selectedRecord.fields),
+        ])).sort((left, right) => left.localeCompare(right));
+
+        hydrateForm(selectedRecord, hydrateFieldNames, approvedFieldName);
+      }
+    };
+
+    void hydrateFromBestAvailableRecord();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRecord?.id, records, tableReference, tableName, allFieldNames, approvedFieldName, hydrateForm]);
 
   const approvedValue = selectedRecord?.fields[approvedFieldName];
   const isApproved = approvedValue === true
@@ -1759,6 +1890,8 @@ export function ListingApprovalTab({
             Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
           )}
           onBodyHtmlPreviewChange={setBodyHtmlPreview}
+          selectedEbayTemplateId={selectedEbayTemplateId}
+          onEbayTemplateIdChange={setSelectedEbayTemplateId}
         />
 
         {hasUnsavedChanges && (
@@ -1924,6 +2057,36 @@ export function ListingApprovalTab({
                     const savedBodyHtmlField = await trySaveEbayField(bodyHtmlCandidates, bodyHtmlRaw, { typecast: false, coerceNumber: false });
                     if (savedBodyHtmlField) {
                       setFormValue(savedBodyHtmlField, bodyHtmlRaw);
+                    }
+                  }
+
+                  const keyFeaturesFieldName = resolveExistingFieldName([
+                    'Key Features (Key, Value)',
+                    ...EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES,
+                    'Key Features',
+                    'Key Features JSON',
+                  ]);
+                  const keyFeaturesRaw = keyFeaturesFieldName ? (formValues[keyFeaturesFieldName] ?? '') : '';
+                  const keyFeaturesCandidates = [
+                    keyFeaturesFieldName,
+                    'Key Features (Key, Value)',
+                    ...EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES,
+                    'Key Features',
+                    'Key Features JSON',
+                  ].filter((candidate): candidate is string => Boolean(candidate && candidate.trim().length > 0));
+                  const existingKeyFeaturesFieldName = resolveExistingFieldName(keyFeaturesCandidates);
+                  const originalKeyFeaturesRaw = existingKeyFeaturesFieldName
+                    ? toFormValue(selectedRecord.fields[existingKeyFeaturesFieldName])
+                    : '';
+                  const shouldSaveKeyFeatures = keyFeaturesRaw.trim().length > 0 && keyFeaturesRaw !== originalKeyFeaturesRaw;
+                  if (shouldSaveKeyFeatures) {
+                    const savedKeyFeaturesField = await trySaveEbayField(
+                      keyFeaturesCandidates,
+                      keyFeaturesRaw,
+                      { typecast: false, coerceNumber: false },
+                    );
+                    if (savedKeyFeaturesField) {
+                      setFormValue(savedKeyFeaturesField, keyFeaturesRaw);
                     }
                   }
                 }
@@ -2198,6 +2361,13 @@ export function ListingApprovalTab({
               value={bodyHtmlPreview}
               helperText={approvalChannel === 'ebay' ? 'Generated from the current Description and Key Features values. eBay saves the combined HTML into the listing payload.' : undefined}
               emptyStateText={approvalChannel === 'ebay' ? 'Add a description or feature/value pairs to preview the Body HTML saved for the eBay listing.' : undefined}
+              showTemplateSelector={approvalChannel === 'ebay'}
+              templateOptions={approvalChannel === 'ebay' ? EBAY_LISTING_TEMPLATE_OPTIONS : []}
+              selectedTemplateId={approvalChannel === 'ebay' ? selectedEbayTemplateId : undefined}
+              onTemplateChange={(templateId) => {
+                if (approvalChannel !== 'ebay') return;
+                setSelectedEbayTemplateId(normalizeEbayListingTemplateId(templateId));
+              }}
             />
           </div>
         )}

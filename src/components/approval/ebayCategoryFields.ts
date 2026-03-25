@@ -6,38 +6,82 @@ function normalizeCategoryToken(token: string): string {
     .trim()
 }
 
-function parseCategoryIds(raw: string): string[] {
-  const trimmed = raw.trim()
+function extractNumericCategoryIds(text: string): string[] {
+  const matches = text.match(/\b\d{3,}\b/g)
+  return matches ? matches : []
+}
+
+function parseCategoryIds(raw: unknown): string[] {
+  if (raw === null || raw === undefined) return []
+
+  if (Array.isArray(raw)) {
+    const values: string[] = []
+    raw.forEach((item) => {
+      values.push(...parseCategoryIds(item))
+    })
+
+    const seen = new Set<string>()
+    return values.filter((token) => {
+      const key = token.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
+
+  if (typeof raw === 'object') {
+    const record = raw as Record<string, unknown>
+    const direct = parseCategoryIds(
+      record.categoryId
+      ?? record.category_id
+      ?? record.primaryCategoryId
+      ?? record.primary_category_id
+      ?? record.secondaryCategoryId
+      ?? record.secondary_category_id
+      ?? record.ebayCategoryId
+      ?? record.ebay_category_id
+      ?? record.id
+      ?? record.name
+      ?? record.title
+      ?? record.value,
+    )
+    if (direct.length > 0) return direct
+
+    return Object.values(record).flatMap((value) => parseCategoryIds(value))
+  }
+
+  const text = String(raw)
+  const trimmed = text.trim()
   if (!trimmed) return []
 
   const values: string[] = []
   const pushValue = (value: unknown) => {
     if (value === null || value === undefined) return
-    const normalized = normalizeCategoryToken(String(value))
+    const stringValue = String(value)
+    const hasDelimiters = /[\n,;|]/.test(stringValue)
+    if (hasDelimiters) {
+      stringValue.split(/[\n,;|]/).forEach((part) => {
+        const normalizedPart = normalizeCategoryToken(part)
+        if (normalizedPart) values.push(normalizedPart)
+      })
+      return
+    }
+
+    const normalized = normalizeCategoryToken(stringValue)
     if (normalized) values.push(normalized)
   }
 
   try {
     const parsed = JSON.parse(trimmed)
-    if (Array.isArray(parsed)) {
-      parsed.forEach((item) => {
-        if (item && typeof item === 'object') {
-          const record = item as Record<string, unknown>
-          pushValue(record.categoryId ?? record.id ?? record.name ?? record.title ?? record.value)
-          return
-        }
-        pushValue(item)
-      })
-    } else if (parsed && typeof parsed === 'object') {
-      const record = parsed as Record<string, unknown>
-      pushValue(record.categoryId ?? record.id ?? record.name ?? record.title ?? record.value)
-    } else {
-      pushValue(parsed)
-    }
+    return parseCategoryIds(parsed)
   } catch {
     trimmed
       .split(/[\n,;|]/)
       .forEach((token) => pushValue(token))
+
+    if (values.length === 0) {
+      extractNumericCategoryIds(trimmed).forEach((token) => pushValue(token))
+    }
   }
 
   const seen = new Set<string>()
@@ -47,6 +91,46 @@ function parseCategoryIds(raw: string): string[] {
     seen.add(key)
     return true
   })
+}
+
+function isCategoryLikeFieldName(fieldName: string): boolean {
+  const normalized = fieldName
+    .trim()
+    .toLowerCase()
+    .replace(/\s*\([^)]*\)\s*$/g, '')
+    .trim()
+
+  if (normalized === 'category') return true
+
+  if (normalized.includes('categor')) {
+    return normalized.includes('ebay')
+      || normalized.includes('id')
+      || normalized.includes('json')
+      || normalized.includes('primary')
+      || normalized.includes('secondary')
+  }
+
+  return normalized === 'categories'
+    || normalized === 'category ids'
+    || normalized === 'category_ids'
+    || normalized === 'category id'
+    || normalized === 'category_id'
+    || normalized === 'ebay offer category id'
+    || normalized === 'ebay offer primary category id'
+    || normalized === 'ebay offer secondary category id'
+    || normalized === 'ebay_offer_category_id'
+    || normalized === 'ebay_offer_primary_category_id'
+    || normalized === 'ebay_offer_primarycategoryid'
+    || normalized === 'ebay_offer_secondary_category_id'
+    || normalized === 'ebay_offer_secondarycategoryid'
+    || normalized === 'primary category'
+    || normalized === 'primary category id'
+    || normalized === 'primary_category'
+    || normalized === 'primary_category_id'
+    || normalized === 'secondary category'
+    || normalized === 'secondary category id'
+    || normalized === 'secondary_category'
+    || normalized === 'secondary_category_id'
 }
 
 export interface EbayCategoryFieldState {
@@ -70,8 +154,14 @@ export function resolveEbaySelectedCategoryIds(
     ? normalizeCategoryToken(formValues[fields.secondaryCategoryFieldName] ?? '')
     : ''
 
+  const fallbackCategories = categories.length === 0 && !primaryCategory && !secondaryCategory
+    ? Object.entries(formValues)
+      .filter(([fieldName]) => isCategoryLikeFieldName(fieldName))
+      .flatMap(([, value]) => parseCategoryIds(value))
+    : []
+
   const seen = new Set<string>()
-  return [...categories, primaryCategory, secondaryCategory]
+  return [...categories, primaryCategory, secondaryCategory, ...fallbackCategories]
     .filter((categoryId) => categoryId.length > 0)
     .filter((categoryId) => {
       const key = categoryId.toLowerCase()

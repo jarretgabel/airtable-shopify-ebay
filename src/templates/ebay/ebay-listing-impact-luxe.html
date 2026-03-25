@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HIGH-END AUDIO AUCTIONS</title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;700&display=swap">
+    <style>
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background:
+        radial-gradient(circle at 0% 15%, rgba(224, 231, 238, 0.24) 0%, rgba(255, 255, 255, 0) 36%),
+        radial-gradient(circle at 100% 90%, rgba(215, 223, 232, 0.18) 0%, rgba(255, 255, 255, 0) 44%),
+        linear-gradient(180deg, #ffffff 0%, #fcfbf9 100%);
+    font-family: 'DM Sans', sans-serif;
+    color: #232b36;
+}
+
+.shell {
+    width: 100%;
+    max-width: 1260px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    padding: 36px 20px 62px;
+}
+
+.frame {
+    border: 1px solid rgba(84, 100, 125, 0.22);
+    border-radius: 22px;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(254, 253, 251, 0.99) 100%);
+    box-shadow: 0 30px 70px rgba(46, 57, 75, 0.16);
+}
+
+.banner img {
+    width: 100%;
+    display: block;
+}
+
+.nav-links {
+    margin: 0;
+    padding: 15px 18px;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(90deg, rgba(94, 113, 140, 0.06) 0%, rgba(188, 201, 219, 0.15) 50%, rgba(94, 113, 140, 0.06) 100%);
+    border-top: 1px solid rgba(95, 114, 140, 0.24);
+    border-bottom: 1px solid rgba(95, 114, 140, 0.24);
+}
+
+.nav-links li,
+.nav-links a {
+    color: #4f617a;
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.main {
+    padding: 36px 34px 32px;
+}
+
+.kicker {
+    margin: 0 0 12px;
+    color: #61728c;
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.title-band {
+    border: 1px solid rgba(90, 109, 135, 0.26);
+    border-radius: 18px;
+    padding: 28px 28px 26px;
+    background: linear-gradient(95deg, #ffffff 0%, #f7faff 58%, #eef3fb 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+        0 16px 26px rgba(53, 67, 89, 0.12);
+}
+
+.title-band h1 {
+    margin: 0;
+    color: #27364b;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 50px;
+    letter-spacing: 0.008em;
+    line-height: 1.1;
+}
+
+.title-subline {
+    margin-top: 10px;
+    color: #6a7f9e;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.description {
+    margin-top: 0;
+    padding: 20px 22px;
+    border: 1px solid rgba(92, 111, 139, 0.24);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.995) 0%, rgba(246, 250, 255, 0.99) 100%);
+    color: #34465d;
+    font-size: 13px;
+    line-height: 1.8;
+    font-weight: 500;
+}
+
+.intro-grid {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1.28fr 0.72fr;
+    gap: 18px;
+    align-items: start;
+}
+
+.copy {
+    margin-top: 0;
+    color: #3d516c;
+    font-size: 12px;
+    line-height: 1.78;
+}
+
+.copy-card {
+    border: 1px solid rgba(92, 112, 141, 0.2);
+    border-radius: 16px;
+    padding: 16px 16px 3px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.995) 0%, rgba(244, 249, 255, 0.985) 100%);
+    box-shadow: 0 14px 24px rgba(53, 69, 93, 0.11);
+}
+
+.copy p {
+    margin: 0 0 12px;
+}
+
+.copy .warranty {
+    font-style: italic;
+    font-weight: 700;
+    color: #4b607f;
+}
+
+.ruler {
+    margin: 0 0 14px;
+    height: 1px;
+    background: linear-gradient(to right, rgba(103, 121, 147, 0) 0%, rgba(103, 121, 147, 0.9) 50%, rgba(103, 121, 147, 0) 100%);
+}
+
+.heading {
+    margin: 0;
+    color: #2c3d55;
+    text-align: left;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+}
+
+.subheading {
+    margin: 7px 0 14px;
+    color: #677f9f;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.details-wrap {
+    margin-top: 32px;
+    padding: 24px;
+    border: 1px solid rgba(91, 110, 138, 0.2);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.995) 0%, rgba(245, 250, 255, 0.99) 100%);
+    box-shadow: 0 16px 30px rgba(55, 69, 92, 0.1);
+}
+
+.details-shell {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 16px;
+    align-items: stretch;
+}
+
+.details-intro {
+    border: 1px solid rgba(91, 110, 138, 0.16);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.995) 0%, rgba(245, 250, 255, 0.985) 100%);
+    padding: 14px;
+}
+
+.details-intro-label {
+    color: #627a99;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.details-intro-text {
+    margin-top: 10px;
+    color: #415675;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.features {
+    margin: 0;
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid rgba(90, 108, 136, 0.24);
+    border-radius: 12px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
+    box-shadow: 0 12px 24px rgba(55, 71, 96, 0.11);
+}
+
+.features th,
+.features td {
+    padding: 13px 14px;
+    border: 1px solid rgba(91, 110, 138, 0.18);
+    font-size: 12px;
+}
+
+.features th {
+    width: 30%;
+    color: #344962;
+    text-align: left;
+    font-weight: 700;
+    background: rgba(231, 238, 248, 0.52);
+}
+
+.features td {
+    color: #3f5371;
+}
+
+.about {
+    margin-top: 26px;
+    font-size: 14px;
+    line-height: 1.74;
+    color: #435873;
+}
+
+.about::before {
+    content: 'COLLECTOR TRUST';
+    display: block;
+    margin-bottom: 6px;
+    color: #617997;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.note {
+    margin-top: 22px;
+    padding: 18px;
+    text-align: center;
+    border: 1px solid rgba(91, 109, 137, 0.24);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.995) 0%, rgba(245, 249, 255, 0.985) 100%);
+    color: #3f5471;
+    font-size: 13px;
+}
+
+.note a {
+    color: #4f6686;
+    font-weight: 800;
+}
+
+.footer-links {
+    margin: 26px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(92, 111, 139, 0.18);
+    list-style: none;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.footer-links li,
+.footer-links a {
+    color: #556b89;
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.ads {
+    margin-top: 28px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 20px 34px rgba(55, 70, 92, 0.16);
+}
+
+.ads img {
+    width: 100%;
+    display: block;
+}
+
+.ads .mobile {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .intro-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .details-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .main {
+        padding: 18px;
+    }
+
+    .title-band h1 {
+        font-size: 38px;
+    }
+
+    .features th {
+        width: 44%;
+    }
+
+    .heading {
+        font-size: 34px;
+    }
+
+    .ads .desktop {
+        display: none;
+    }
+
+    .ads .mobile {
+        display: block;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <div class="frame">
+            <div class="banner">
+                <a href="https://stores.ebay.com/highendaudioauctions/">
+                    <img src="https://www.highendaudioauctions.com/store-ebay/images/top-bg.jpg" alt="High End Audio Auctions banner">
+                </a>
+            </div>
+
+            <ul class="nav-links">
+                <li><a href="https://www.ebay.com/usr/highendaudioauctions">Follow us</a></li>
+                <li>|</li>
+                <li><a href="https://my.ebay.com/ws/eBayISAPI.dll?AcceptSavedSeller&amp;sellerid=highendaudioauctions">Sign up for our newsletter</a></li>
+            </ul>
+
+            <div class="main">
+                <p class="kicker">Reference-grade listing design</p>
+                <div class="title-band">
+                    <h1>{{title}}</h1>
+                    <div class="title-subline">Exceptional audio / collector presentation</div>
+                </div>
+
+                <div class="intro-grid">
+                    <div class="description">{{description}}</div>
+                    <div class="copy-card">
+                        <div class="copy">
+                            <p>For over 20 years High End Audio Auctions has been selling the finest HiFi online, but did you know that we <strong>BUY</strong> your HiFi equipment as well? Contact our sister company STEREOBUYERS for a fair quote today.</p>
+                            <p>All items included are pictured.</p>
+                            <p class="warranty">Items are tested fully to ensure all functions work as expected. Any defects and additional service done to the item are noted below. All items include a 30-day warranty and your satisfaction is guaranteed.</p>
+                            <p><strong>Local Pickup in NYC Available</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="details-wrap">
+                    <div class="ruler"></div>
+                    <h2 class="heading">Details and Testing Notes</h2>
+                    <p class="subheading">Collector-grade accuracy</p>
+
+                    <div class="details-shell">
+                        <div class="details-intro">
+                            <div class="details-intro-label">Inspection summary</div>
+                            <div class="details-intro-text">
+                                All notable cosmetic and performance details are captured in the specification panel. Included accessories and condition nuances are documented for transparent decision-making.
+                            </div>
+                        </div>
+
+                        <table id="key-features" class="features">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">{{key}}:</th>
+                                    <td>{{value}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="about">High-End Audio Auctions has been THE trusted source for high-end, classic, and vintage components on eBay since 2000. Our unique products, careful service, and bombproof packaging keep collectors coming back again and again.</div>
+
+                <div class="note">
+                    By placing a bid on any listing, you agree to our terms and conditions.<br>
+                    <a href="https://stores.ebay.com/highendaudioauctions/Store-Policies" target="_blank" rel="noopener noreferrer">Click here to learn more</a>
+                </div>
+
+                <ul class="footer-links">
+                    <li><a href="https://stores.ebay.com/highendaudioauctions/">Home</a></li>
+                    <li>|</li>
+                    <li><a href="https://stores.ebay.com/highendaudioauctions/About-us">About Us</a></li>
+                    <li>|</li>
+                    <li><a href="https://stores.ebay.com/highendaudioauctions/Store-Policies">Store Policies</a></li>
+                    <li>|</li>
+                    <li><a href="https://stores.ebay.com/highendaudioauctions/FAQs">FAQs</a></li>
+                    <li>|</li>
+                    <li><a href="https://contact.ebay.com/ws/eBayISAPI.dll?ContactUserNextGen&amp;recipient=highendaudioauctions">Contact Us</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="ads">
+            <img class="desktop" src="https://www.highendaudioauctions.com/store-ebay/images/HEAA-2000-11-20.jpg" alt="High End Audio Auctions ad">
+            <img class="mobile" src="https://www.highendaudioauctions.com/store-ebay/images/HEAA-2000-11-20-mobile.jpg" alt="High End Audio Auctions ad mobile">
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HIGH-END AUDIO AUCTIONS</title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+    <style>
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background:
+        linear-gradient(135deg, rgba(220, 230, 241, 0.42) 0%, rgba(255, 255, 255, 0) 30%),
+        linear-gradient(225deg, rgba(223, 239, 235, 0.36) 0%, rgba(255, 255, 255, 0) 35%),
+        #f5f8fb;
+    color: #122136;
+    font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.form-reset {
+    margin: 0;
+    padding: 0;
+}
+
+.shell {
+    width: 100%;
+    max-width: 1260px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    padding: 34px 20px 64px;
+}
+
+.hero {
+    border: 1px solid rgba(19, 48, 88, 0.16);
+    border-radius: 18px;
+    background: #fbfdff;
+    box-shadow: 0 32px 76px rgba(23, 45, 74, 0.14);
+    overflow: hidden;
+}
+
+.hero-banner img {
+    width: 100%;
+    display: block;
+}
+
+.hero-topline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 14px 18px;
+    list-style: none;
+    border-top: 1px solid rgba(28, 64, 109, 0.11);
+    border-bottom: 1px solid rgba(28, 64, 109, 0.11);
+    background: linear-gradient(90deg, rgba(31, 101, 200, 0.04) 0%, rgba(31, 101, 200, 0.08) 50%, rgba(31, 101, 200, 0.04) 100%);
+}
+
+.hero-topline li,
+.hero-topline a {
+    color: #2a5283;
+    text-decoration: none;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.content {
+    padding: 34px 32px 30px;
+}
+
+.kicker {
+    margin: 0 0 14px;
+    color: #4a709f;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.title {
+    margin: 0;
+    padding: 22px 24px;
+    color: #0f2c4f;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 39px;
+    letter-spacing: -0.01em;
+    line-height: 1.18;
+    border: 1px solid rgba(17, 67, 134, 0.2);
+    border-radius: 14px;
+    background: linear-gradient(90deg, #ffffff 0%, #f4f9ff 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8),
+        0 12px 22px rgba(45, 78, 124, 0.09);
+}
+
+.metrics-row {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.metric-pill {
+    border: 1px solid rgba(23, 72, 136, 0.17);
+    border-radius: 10px;
+    background: #f7fbff;
+    color: #2f4f77;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 9px 8px;
+}
+
+.description {
+    margin-top: 0;
+    border-left: 3px solid #1d73c4;
+    padding: 20px 22px;
+    color: #30435d;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.78;
+    background: linear-gradient(90deg, rgba(249, 253, 255, 0.97) 0%, rgba(243, 250, 255, 0.97) 100%);
+    border-radius: 0 12px 12px 0;
+}
+
+.intro-grid {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1.34fr 0.66fr;
+    gap: 18px;
+    align-items: start;
+}
+
+.pitch {
+    margin-top: 0;
+    color: #334f70;
+    font-size: 12px;
+    line-height: 1.78;
+}
+
+.pitch-card {
+    border: 1px solid rgba(28, 79, 145, 0.16);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(244, 250, 255, 0.99) 100%);
+    border-radius: 12px;
+    padding: 16px 16px 4px;
+    box-shadow: 0 12px 22px rgba(39, 70, 114, 0.1);
+}
+
+.pitch p {
+    margin: 0 0 12px;
+}
+
+.pitch .warranty {
+    color: #165797;
+    font-weight: 700;
+    font-style: italic;
+}
+
+.section-title {
+    margin: 0 0 6px;
+    color: #153b69;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 30px;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    text-align: left;
+}
+
+.section-subtitle {
+    margin: 0 0 18px;
+    color: #58779f;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.details-wrap {
+    margin-top: 32px;
+    padding: 22px;
+    border: 1px solid rgba(23, 77, 145, 0.16);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 252, 255, 0.99) 100%);
+    box-shadow: 0 16px 30px rgba(42, 72, 116, 0.1);
+}
+
+.details-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: end;
+}
+
+.details-code {
+    color: #5b7ba1;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    white-space: nowrap;
+    padding-bottom: 5px;
+}
+
+.table {
+    margin: 0;
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid rgba(16, 61, 124, 0.2);
+    background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 12px 26px rgba(47, 71, 109, 0.1);
+}
+
+.table th,
+.table td {
+    border: 1px solid rgba(16, 61, 124, 0.14);
+    padding: 13px 14px;
+    color: #29466d;
+    font-size: 12px;
+}
+
+.table th {
+    width: 30%;
+    color: #163f70;
+    font-weight: 700;
+    text-align: left;
+    background: rgba(227, 239, 254, 0.58);
+}
+
+.about {
+    margin-top: 26px;
+    color: #334a69;
+    font-size: 14px;
+    line-height: 1.72;
+}
+
+.about::before {
+    content: 'OUR STANDARD';
+    display: block;
+    margin-bottom: 6px;
+    color: #5a7ba4;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.note {
+    margin-top: 22px;
+    padding: 18px;
+    border: 1px solid rgba(29, 79, 149, 0.2);
+    border-radius: 12px;
+    text-align: center;
+    background: linear-gradient(180deg, rgba(244, 250, 255, 0.98) 0%, rgba(234, 245, 255, 0.98) 100%);
+    color: #234064;
+    font-size: 13px;
+}
+
+.note a {
+    color: #1564b3;
+    font-weight: 800;
+}
+
+.footer-links {
+    margin: 26px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(26, 74, 138, 0.12);
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.footer-links li,
+.footer-links a {
+    color: #4f6f96;
+    text-decoration: none;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 800;
+}
+
+.promo {
+    margin-top: 26px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 20px 34px rgba(34, 56, 90, 0.16);
+}
+
+.promo img {
+    width: 100%;
+    display: block;
+}
+
+.promo .mobile {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .metrics-row {
+        grid-template-columns: 1fr;
+    }
+
+    .intro-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .content {
+        padding: 18px;
+    }
+
+    .title {
+        font-size: 30px;
+        padding: 18px 18px;
+    }
+
+    .table th {
+        width: 44%;
+    }
+
+    .section-title {
+        font-size: 28px;
+    }
+
+    .details-header {
+        grid-template-columns: 1fr;
+    }
+
+    .promo .desktop {
+        display: none;
+    }
+
+    .promo .mobile {
+        display: block;
+    }
+}
+    </style>
+</head>
+<body>
+    <form class="form-reset">
+        <div class="shell">
+            <div class="hero">
+                <div class="hero-banner">
+                    <a href="https://stores.ebay.com/highendaudioauctions/">
+                        <img src="https://www.highendaudioauctions.com/store-ebay/images/top-bg.jpg" alt="High End Audio Auctions banner">
+                    </a>
+                </div>
+
+                <ul class="hero-topline">
+                    <li><a href="https://www.ebay.com/usr/highendaudioauctions">Follow us</a></li>
+                    <li>|</li>
+                    <li><a href="https://my.ebay.com/ws/eBayISAPI.dll?AcceptSavedSeller&amp;sellerid=highendaudioauctions">Sign up for our newsletter</a></li>
+                </ul>
+
+                <div class="content">
+                    <p class="kicker">Curated component presentation</p>
+                    <h1 class="title">{{title}}</h1>
+                    <div class="metrics-row">
+                        <div class="metric-pill">Bench Tested</div>
+                        <div class="metric-pill">Insured Global Ship</div>
+                        <div class="metric-pill">30-Day Warranty</div>
+                    </div>
+
+                    <div class="intro-grid">
+                        <div class="description">{{description}}</div>
+                        <div class="pitch-card">
+                            <div class="pitch">
+                                <p>For over 20 years High End Audio Auctions has been selling the finest HiFi online, but did you know that we <strong>BUY</strong> your HiFi equipment as well? Contact our sister company STEREOBUYERS for a fair quote today.</p>
+                                <p>All items included are pictured.</p>
+                                <p class="warranty">Items are tested fully to ensure all functions work as expected. Any defects and service completed are noted below. All items include a 30-day warranty and your satisfaction is guaranteed.</p>
+                                <p><strong>Local Pickup in NYC Available</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="details-wrap">
+                        <div class="details-header">
+                            <div>
+                                <div class="section-title">Precision Details</div>
+                                <p class="section-subtitle">Testing and performance notes</p>
+                            </div>
+                            <div class="details-code">HEAA / TECHNICAL SHEET</div>
+                        </div>
+
+                        <table id="key-features" class="table">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">{{key}}:</th>
+                                    <td>{{value}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="about">High-End Audio Auctions has been a trusted source for high-end and vintage audio on eBay since 2000. We are experts at packing and shipping worldwide, with listings spanning from value finds to collector-grade statements.</div>
+
+                    <div class="note">
+                        By placing a bid on any listing, you agree to our terms and conditions.<br>
+                        <a href="https://stores.ebay.com/highendaudioauctions/Store-Policies" target="_blank" rel="noopener noreferrer">Click here to learn more</a>
+                    </div>
+
+                    <ul class="footer-links">
+                        <li><a href="https://stores.ebay.com/highendaudioauctions/">Home</a></li>
+                        <li>|</li>
+                        <li><a href="https://stores.ebay.com/highendaudioauctions/About-us">About Us</a></li>
+                        <li>|</li>
+                        <li><a href="https://stores.ebay.com/highendaudioauctions/Store-Policies">Store Policies</a></li>
+                        <li>|</li>
+                        <li><a href="https://stores.ebay.com/highendaudioauctions/FAQs">FAQs</a></li>
+                        <li>|</li>
+                        <li><a href="https://contact.ebay.com/ws/eBayISAPI.dll?ContactUserNextGen&amp;recipient=highendaudioauctions">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="promo">
+                <img class="desktop" src="https://www.highendaudioauctions.com/store-ebay/images/HEAA-2000-11-20.jpg" alt="High End Audio Auctions ad">
+                <img class="mobile" src="https://www.highendaudioauctions.com/store-ebay/images/HEAA-2000-11-20-mobile.jpg" alt="High End Audio Auctions ad mobile">
+            </div>
+        </div>
+    </form>
+</body>
+</html>

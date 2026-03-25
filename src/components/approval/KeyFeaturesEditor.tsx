@@ -29,7 +29,12 @@ function parseKeyFeatures(raw: string): KeyFeatureRow[] {
   return rows.length > 0 ? rows : [{ feature: '', value: '' }];
 }
 
-function serializeKeyFeatures(rows: KeyFeatureRow[]): string {
+function shouldSerializeKeyFeaturesAsJson(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized.includes('json') || normalized.endsWith('_json');
+}
+
+function serializeKeyFeatures(rows: KeyFeatureRow[], fieldName: string): string {
   const normalized = rows
     .map((row) => ({
       feature: row.feature,
@@ -38,6 +43,10 @@ function serializeKeyFeatures(rows: KeyFeatureRow[]): string {
     .filter((row) => row.feature.trim() || row.value.trim());
 
   if (normalized.length === 0) return '';
+
+  if (shouldSerializeKeyFeaturesAsJson(fieldName)) {
+    return JSON.stringify(normalized);
+  }
 
   const escapeCsvCell = (cell: string): string => {
     if (!/[",\n\r]/.test(cell)) return cell;
@@ -65,7 +74,7 @@ export function KeyFeaturesEditor({
 
   function commitRows(nextRows: KeyFeatureRow[]) {
     setRows(nextRows);
-    setFormValue(keyFeaturesFieldName, serializeKeyFeatures(nextRows));
+    setFormValue(keyFeaturesFieldName, serializeKeyFeatures(nextRows, keyFeaturesFieldName));
   }
 
   function updateRow(index: number, patch: Partial<KeyFeatureRow>) {
