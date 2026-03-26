@@ -33,13 +33,16 @@ interface DashboardOverviewSectionProps {
   draftCount: number;
   activeCount: number;
   archivedCount: number;
-  atLoading: boolean;
-  acquisitionCost: number;
   nonEmptyListingCount: number;
-  inventoryValue: number;
-  avgAskPrice: number;
+  approvalPending: number;
+  approvalApproved: number;
+  approvalTotal: number;
+  uniqueAirtableBrands: number;
+  uniqueAirtableTypes: number;
+  ebayPublishedCount: number;
+  ebayDraftCount: number;
+  ebayTotal: number;
   sellThroughPct: number | null;
-  grossMarginPct: number | null;
   submissionsTrend: TrendSummary;
   dealsTrend: TrendSummary;
   acquisitionTrend: TrendSummary;
@@ -61,13 +64,16 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
     draftCount,
     activeCount,
     archivedCount,
-    atLoading,
-    acquisitionCost,
     nonEmptyListingCount,
-    inventoryValue,
-    avgAskPrice,
+    approvalPending,
+    approvalApproved,
+    approvalTotal,
+    uniqueAirtableBrands,
+    uniqueAirtableTypes,
+    ebayPublishedCount,
+    ebayDraftCount,
+    ebayTotal,
     sellThroughPct,
-    grossMarginPct,
     submissionsTrend,
     dealsTrend,
     acquisitionTrend,
@@ -77,6 +83,7 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
     onSelectTab,
     embedded,
   } = props;
+  const ebayCoveragePct = ebayTotal > 0 ? Math.round(((ebayPublishedCount + ebayDraftCount) / ebayTotal) * 100) : null;
 
   const content = (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -102,22 +109,22 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
 
         <DashboardKpiCard
           borderToneClass="border-t-violet-500"
-          eyebrow="Acquisition Costs"
-          value={atLoading ? '…' : acquisitionCost > 0 ? `$${acquisitionCost.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}
-          detail={<>Using Airtable <strong className="font-semibold text-[var(--accent)]">Price</strong> from {nonEmptyListingCount} records</>}
+          eyebrow="Approval Queue"
+          value={approvalPending.toLocaleString()}
+          detail={<><strong className="font-semibold text-[var(--accent)]">{approvalApproved}</strong> approved &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvalTotal}</strong> total records</>}
           trend={acquisitionTrend.text}
           trendClass={trendToneClass[acquisitionTrend.direction]}
-          onClick={() => onSelectTab('airtable')}
+          onClick={() => onSelectTab('approval')}
         />
 
         <DashboardKpiCard
           borderToneClass="border-t-emerald-500"
-          eyebrow="Inventory Value"
-          value={spLoading ? '…' : inventoryValue > 0 ? `$${inventoryValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}
-          detail={<>Active listings at ask price &nbsp;·&nbsp; avg <strong className="font-semibold text-[var(--accent)]">{spLoading ? '…' : avgAskPrice > 0 ? `$${Math.round(avgAskPrice).toLocaleString()}` : '—'}</strong></>}
+          eyebrow="Catalog Breadth"
+          value={nonEmptyListingCount.toLocaleString()}
+          detail={<><strong className="font-semibold text-[var(--accent)]">{uniqueAirtableBrands}</strong> brands &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{uniqueAirtableTypes}</strong> component types</>}
           trend={inventoryTrend.text}
           trendClass={trendToneClass[inventoryTrend.direction]}
-          onClick={() => onSelectTab('shopify')}
+          onClick={() => onSelectTab('airtable')}
         />
 
         <DashboardKpiCard
@@ -132,12 +139,12 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
 
         <DashboardKpiCard
           borderToneClass="border-t-teal-500"
-          eyebrow="Profit Margins"
-          value={grossMarginPct !== null ? `${grossMarginPct}%` : '—'}
-          detail={grossMarginPct !== null ? 'Derived from Shopify ask value and Airtable Price' : 'Add numeric Airtable prices to calculate'}
+          eyebrow="eBay Coverage"
+          value={ebayCoveragePct !== null ? `${ebayCoveragePct}%` : '—'}
+          detail={<><strong className="font-semibold text-[var(--accent)]">{ebayPublishedCount}</strong> live &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{ebayDraftCount}</strong> draft across {ebayTotal} tracked SKU</>}
           trend={marginTrend.text}
           trendClass={trendToneClass[marginTrend.direction]}
-          onClick={() => onSelectTab('airtable')}
+          onClick={() => onSelectTab('ebay')}
         />
       </div>
   );

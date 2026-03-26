@@ -10,11 +10,6 @@ interface DashboardShopifySectionProps {
   activeProductsCount: number;
   draftProductsCount: number;
   archivedProductsCount: number;
-  avgAskPrice: number;
-  inventoryValue: number;
-  grossMarginPct: number | null;
-  acquisitionCost: number;
-  totalAsk: number;
 }
 
 export function DashboardShopifySection(props: DashboardShopifySectionProps) {
@@ -26,18 +21,13 @@ export function DashboardShopifySection(props: DashboardShopifySectionProps) {
     activeProductsCount,
     draftProductsCount,
     archivedProductsCount,
-    avgAskPrice,
-    inventoryValue,
-    grossMarginPct,
-    acquisitionCost,
-    totalAsk,
   } = props;
 
   const safeProductsCount = Math.max(productsCount, 1);
   const activeShare = productsCount > 0 ? Math.round((activeProductsCount / safeProductsCount) * 100) : 0;
   const draftShare = productsCount > 0 ? Math.round((draftProductsCount / safeProductsCount) * 100) : 0;
   const archivedShare = productsCount > 0 ? Math.round((archivedProductsCount / safeProductsCount) * 100) : 0;
-  const markupMultiple = acquisitionCost > 0 && totalAsk > 0 ? totalAsk / acquisitionCost : null;
+  const openPipelineCount = activeProductsCount + draftProductsCount;
 
   return (
     <DashboardSectionPanel id="pipeline" title="Shopify">
@@ -47,7 +37,7 @@ export function DashboardShopifySection(props: DashboardShopifySectionProps) {
           <StatTile label="Active Mix" value={spLoading ? '…' : `${activeShare}%`} />
           <StatTile label="Draft Mix" value={spLoading ? '…' : `${draftShare}%`} />
           <StatTile label="Archived Mix" value={spLoading ? '…' : `${archivedShare}%`} />
-          <StatTile label="Markup Multiple" value={spLoading ? '…' : markupMultiple ? `${markupMultiple.toFixed(2)}x` : '—'} />
+          <StatTile label="Open Pipeline" value={spLoading ? '…' : openPipelineCount} />
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 max-[520px]:grid-cols-1">
@@ -55,11 +45,10 @@ export function DashboardShopifySection(props: DashboardShopifySectionProps) {
           <MetricRow label="Active" value={spLoading ? '…' : activeProductsCount} valueClass="text-green-400" />
           <MetricRow label="Draft / Pending" value={spLoading ? '…' : draftProductsCount} valueClass="text-amber-400" />
           <MetricRow label="Sold / Archived" value={spLoading ? '…' : archivedProductsCount} valueClass="font-medium text-[var(--muted)]" />
-          <MetricRow label="Avg Ask Price" value={spLoading ? '…' : avgAskPrice > 0 ? `$${Math.round(avgAskPrice).toLocaleString()}` : '—'} />
-          <MetricRow label="Total Ask Value" value={spLoading ? '…' : inventoryValue > 0 ? `$${inventoryValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'} valueClass="text-green-400" />
-          <MetricRow label="Cost Basis" value={spLoading ? '…' : acquisitionCost > 0 ? `$${acquisitionCost.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'} />
-          <MetricRow label="Gross Margin" value={grossMarginPct !== null ? `${grossMarginPct}%` : '—'} valueClass={grossMarginPct !== null && grossMarginPct > 0 ? 'text-green-400' : 'text-[var(--ink)]'} />
-          <MetricRow label="Potential Profit" value={acquisitionCost > 0 && totalAsk > 0 ? `$${(totalAsk - acquisitionCost).toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'} valueClass="text-green-400" />
+          <MetricRow label="Open Pipeline" value={spLoading ? '…' : openPipelineCount} valueClass="text-blue-300" />
+          <MetricRow label="Active Share" value={spLoading ? '…' : `${activeShare}%`} />
+          <MetricRow label="Draft Share" value={spLoading ? '…' : `${draftShare}%`} valueClass="text-amber-400" />
+          <MetricRow label="Archived Share" value={spLoading ? '…' : `${archivedShare}%`} valueClass="font-medium text-[var(--muted)]" />
         </div>
       </DashboardSubPanel>
 

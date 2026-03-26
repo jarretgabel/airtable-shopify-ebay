@@ -1881,6 +1881,7 @@ export function ApprovalFormFields({
     )) return null;
     if (isEbayInventoryImageUrlsField(fieldName)) return null;
     if (isEbayPhotoCountMaxField(fieldName)) return null;
+    if (approvalChannel === 'shopify' && imageUrlSourceField && fieldName === imageUrlSourceField) return null;
     if (isGenericImageScalarField(fieldName)) return null;
     if (useCombinedImageAltEditor && fieldName === imageAltTextSourceField) return null;
     if (suppressImageScalarFields && isScalarImageField(fieldName)) return null;

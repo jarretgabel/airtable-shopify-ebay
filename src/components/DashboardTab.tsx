@@ -33,7 +33,6 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
   } = viewModel;
 
   const {
-    totalAsk,
     submissionWindowTotal,
     submissionAverage,
     activeSubmissionDays,
@@ -117,13 +116,16 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
           draftCount={data.draftProducts.length}
           activeCount={data.activeProducts.length}
           archivedCount={data.archivedProducts.length}
-          atLoading={loading.airtable}
-          acquisitionCost={kpis.acquisitionCost}
           nonEmptyListingCount={data.nonEmptyListings.length}
-          inventoryValue={kpis.inventoryValue}
-          avgAskPrice={kpis.avgAskPrice}
+          approvalPending={workflow.approvalPending}
+          approvalApproved={workflow.approvalApproved}
+          approvalTotal={workflow.approvalTotal}
+          uniqueAirtableBrands={kpis.uniqueAirtableBrands}
+          uniqueAirtableTypes={kpis.uniqueAirtableTypes}
+          ebayPublishedCount={workflow.ebayPublishedCount}
+          ebayDraftCount={workflow.ebayDraftCount}
+          ebayTotal={workflow.ebayTotal}
           sellThroughPct={kpis.sellThroughPct}
-          grossMarginPct={kpis.grossMarginPct}
           submissionsTrend={kpis.submissionsTrend}
           dealsTrend={kpis.dealsTrend}
           acquisitionTrend={kpis.acquisitionTrend}
@@ -149,7 +151,6 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
       <DashboardAirtableSection
         atLoading={loading.airtable}
         nonEmptyListingCount={data.nonEmptyListings.length}
-        airtableInventoryValue={kpis.airtableInventoryValue}
         uniqueAirtableBrands={kpis.uniqueAirtableBrands}
         uniqueAirtableTypes={kpis.uniqueAirtableTypes}
         componentTypeSummary={data.componentTypeSummary}
@@ -183,11 +184,6 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         activeProductsCount={data.activeProducts.length}
         draftProductsCount={data.draftProducts.length}
         archivedProductsCount={data.archivedProducts.length}
-        avgAskPrice={kpis.avgAskPrice}
-        inventoryValue={kpis.inventoryValue}
-        grossMarginPct={kpis.grossMarginPct}
-        acquisitionCost={kpis.acquisitionCost}
-        totalAsk={totalAsk}
       />
       <DashboardEbaySection
         cards={ebayCards}

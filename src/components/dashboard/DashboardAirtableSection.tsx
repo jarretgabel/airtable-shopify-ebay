@@ -5,7 +5,6 @@ import { DashboardSectionPanel } from './dashboardPrimitives';
 interface DashboardAirtableSectionProps {
   atLoading: boolean;
   nonEmptyListingCount: number;
-  airtableInventoryValue: number;
   uniqueAirtableBrands: number;
   uniqueAirtableTypes: number;
   componentTypeSummary: Array<[string, number]>;
@@ -26,7 +25,6 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
   const {
     atLoading,
     nonEmptyListingCount,
-    airtableInventoryValue,
     uniqueAirtableBrands,
     uniqueAirtableTypes,
     componentTypeSummary,
@@ -37,6 +35,7 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
     maxAirtableBrandCount,
     onSelectTab,
   } = props;
+  const distributorCount = airtableDistributorSummary.length;
 
   return (
     <DashboardSectionPanel id="inventory" title="Airtable" className="gap-[1.1rem]">
@@ -53,7 +52,7 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
             <article className="flex flex-col gap-1.5 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4 leading-tight shadow-[0_8px_24px_rgba(17,32,49,0.04)]"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Products</span><strong className="text-[1.3rem] leading-[1.1] text-[var(--ink)] [font-variant-numeric:tabular-nums]">{nonEmptyListingCount}</strong></article>
             <article className="flex flex-col gap-1.5 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4 leading-tight shadow-[0_8px_24px_rgba(17,32,49,0.04)]"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Brands</span><strong className="text-[1.3rem] leading-[1.1] text-[var(--ink)] [font-variant-numeric:tabular-nums]">{uniqueAirtableBrands}</strong></article>
             <article className="flex flex-col gap-1.5 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4 leading-tight shadow-[0_8px_24px_rgba(17,32,49,0.04)]"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Component Types</span><strong className="text-[1.3rem] leading-[1.1] text-[var(--ink)] [font-variant-numeric:tabular-nums]">{uniqueAirtableTypes}</strong></article>
-            <article className="flex flex-col gap-1.5 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4 leading-tight shadow-[0_8px_24px_rgba(17,32,49,0.04)]"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Tagged Value</span><strong className="text-[1.3rem] leading-[1.1] text-[var(--ink)] [font-variant-numeric:tabular-nums]">{airtableInventoryValue > 0 ? `$${airtableInventoryValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}</strong></article>
+            <article className="flex flex-col gap-1.5 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4 leading-tight shadow-[0_8px_24px_rgba(17,32,49,0.04)]"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Distributors</span><strong className="text-[1.3rem] leading-[1.1] text-[var(--ink)] [font-variant-numeric:tabular-nums]">{distributorCount}</strong></article>
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -64,11 +63,11 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
           <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <section className="rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4">
               <h3 className="mb-3 text-[0.9rem] font-bold text-[var(--ink)]">By Distributor</h3>
-              <div className="overflow-x-auto"><table className="w-full border-collapse text-[0.84rem]"><thead><tr><th className="border-b border-[var(--line)] px-2 py-2 text-left text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Distributor</th><th className="border-b border-[var(--line)] px-2 py-2 text-right text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Products</th><th className="border-b border-[var(--line)] px-2 py-2 text-right text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Tagged Value</th></tr></thead><tbody className="[&>tr:last-child>td]:border-b-0">{airtableDistributorSummary.map(([distributor, summary], index) => <tr key={`${distributor}-${index}`}><td className="border-b border-[var(--line)] px-2 py-2 align-middle">{distributor}</td><td className="border-b border-[var(--line)] px-2 py-2 text-right align-middle">{summary.count}</td><td className="border-b border-[var(--line)] px-2 py-2 text-right align-middle">{summary.total > 0 ? `$${summary.total.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}</td></tr>)}</tbody></table></div>
+              <div className="overflow-x-auto"><table className="w-full border-collapse text-[0.84rem]"><thead><tr><th className="border-b border-[var(--line)] px-2 py-2 text-left text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Distributor</th><th className="border-b border-[var(--line)] px-2 py-2 text-right text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Products</th><th className="border-b border-[var(--line)] px-2 py-2 text-right text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Share</th></tr></thead><tbody className="[&>tr:last-child>td]:border-b-0">{airtableDistributorSummary.map(([distributor, summary], index) => <tr key={`${distributor}-${index}`}><td className="border-b border-[var(--line)] px-2 py-2 align-middle">{distributor}</td><td className="border-b border-[var(--line)] px-2 py-2 text-right align-middle">{summary.count}</td><td className="border-b border-[var(--line)] px-2 py-2 text-right align-middle">{nonEmptyListingCount > 0 ? `${Math.round((summary.count / nonEmptyListingCount) * 100)}%` : '—'}</td></tr>)}</tbody></table></div>
             </section>
             <section className="rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4">
               <h3 className="mb-3 text-[0.9rem] font-bold text-[var(--ink)]">Component Summary</h3>
-              <div className="overflow-x-auto"><table className="w-full border-collapse text-[0.84rem]"><thead><tr><th className="border-b border-[var(--line)] px-2 py-2 text-left text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Type</th><th className="border-b border-[var(--line)] px-2 py-2 text-right text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Products</th><th className="border-b border-[var(--line)] px-2 py-2 text-right text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Brands</th><th className="border-b border-[var(--line)] px-2 py-2 text-right text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Avg Price</th><th className="border-b border-[var(--line)] px-2 py-2 text-right text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Total</th></tr></thead><tbody className="[&>tr:last-child>td]:border-b-0">{airtableTypeTable.map((row, index) => <tr key={`${row.type}-${index}`}><td className="border-b border-[var(--line)] px-2 py-2 align-middle">{row.type}</td><td className="border-b border-[var(--line)] px-2 py-2 text-right align-middle">{row.count}</td><td className="border-b border-[var(--line)] px-2 py-2 text-right align-middle">{row.brandCount}</td><td className="border-b border-[var(--line)] px-2 py-2 text-right align-middle">{row.averagePrice > 0 ? `$${Math.round(row.averagePrice).toLocaleString()}` : '—'}</td><td className="border-b border-[var(--line)] px-2 py-2 text-right align-middle">{row.totalPrice > 0 ? `$${row.totalPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'}</td></tr>)}</tbody></table></div>
+              <div className="overflow-x-auto"><table className="w-full border-collapse text-[0.84rem]"><thead><tr><th className="border-b border-[var(--line)] px-2 py-2 text-left text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Type</th><th className="border-b border-[var(--line)] px-2 py-2 text-right text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Products</th><th className="border-b border-[var(--line)] px-2 py-2 text-right text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Brands</th><th className="border-b border-[var(--line)] px-2 py-2 text-right text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Share</th></tr></thead><tbody className="[&>tr:last-child>td]:border-b-0">{airtableTypeTable.map((row, index) => <tr key={`${row.type}-${index}`}><td className="border-b border-[var(--line)] px-2 py-2 align-middle">{row.type}</td><td className="border-b border-[var(--line)] px-2 py-2 text-right align-middle">{row.count}</td><td className="border-b border-[var(--line)] px-2 py-2 text-right align-middle">{row.brandCount}</td><td className="border-b border-[var(--line)] px-2 py-2 text-right align-middle">{nonEmptyListingCount > 0 ? `${Math.round((row.count / nonEmptyListingCount) * 100)}%` : '—'}</td></tr>)}</tbody></table></div>
             </section>
           </div>
         </>
