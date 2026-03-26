@@ -263,6 +263,20 @@ const EBAY_SECONDARY_CATEGORY_FIELD_CANDIDATES = [
   'secondary_category',
 ] as const;
 
+const EBAY_PRIMARY_CATEGORY_NAME_FIELD_CANDIDATES = [
+  'Primary Category Name',
+  'primary_category_name',
+  'eBay Offer Primary Category Name',
+  'ebay_offer_primary_category_name',
+] as const;
+
+const EBAY_SECONDARY_CATEGORY_NAME_FIELD_CANDIDATES = [
+  'Secondary Category Name',
+  'secondary_category_name',
+  'eBay Offer Secondary Category Name',
+  'ebay_offer_secondary_category_name',
+] as const;
+
 const EBAY_CATEGORIES_FIELD_CANDIDATES = [
   'categories',
   'Categories',
@@ -854,6 +868,16 @@ export function ListingApprovalTab({
         EBAY_SECONDARY_CATEGORY_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       );
       if (preferredSecondaryCategoryField) names.add(preferredSecondaryCategoryField);
+
+      const preferredPrimaryCategoryNameField = existingNames.find((name) =>
+        EBAY_PRIMARY_CATEGORY_NAME_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_PRIMARY_CATEGORY_NAME_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredPrimaryCategoryNameField) names.add(preferredPrimaryCategoryNameField);
+
+      const preferredSecondaryCategoryNameField = existingNames.find((name) =>
+        EBAY_SECONDARY_CATEGORY_NAME_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_SECONDARY_CATEGORY_NAME_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredSecondaryCategoryNameField) names.add(preferredSecondaryCategoryNameField);
 
       const preferredCategoriesField = existingNames.find((name) =>
         EBAY_CATEGORIES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),

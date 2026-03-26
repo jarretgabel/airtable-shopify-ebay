@@ -11,6 +11,10 @@ function extractNumericCategoryIds(text: string): string[] {
   return matches ? matches : []
 }
 
+function looksLikeCategoryIdToken(token: string): boolean {
+  return /^\d{3,}$/.test(token) || /^rec[a-zA-Z0-9]{14,}$/.test(token)
+}
+
 function parseCategoryIds(raw: unknown): string[] {
   if (raw === null || raw === undefined) return []
 
@@ -93,6 +97,66 @@ function parseCategoryIds(raw: unknown): string[] {
   })
 }
 
+function parseCategoryNames(raw: unknown): string[] {
+  if (raw === null || raw === undefined) return []
+
+  if (Array.isArray(raw)) {
+    const values: string[] = []
+    raw.forEach((item) => {
+      values.push(...parseCategoryNames(item))
+    })
+
+    const seen = new Set<string>()
+    return values.filter((token) => {
+      const key = token.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
+
+  if (typeof raw === 'object') {
+    const record = raw as Record<string, unknown>
+    const direct = parseCategoryNames(
+      record.categoryName
+      ?? record.category_name
+      ?? record.primaryCategoryName
+      ?? record.primary_category_name
+      ?? record.secondaryCategoryName
+      ?? record.secondary_category_name
+      ?? record.name
+      ?? record.title
+      ?? record.label
+      ?? record.value,
+    )
+    if (direct.length > 0) return direct
+
+    return Object.values(record).flatMap((value) => parseCategoryNames(value))
+  }
+
+  const text = String(raw)
+  const trimmed = text.trim()
+  if (!trimmed) return []
+
+  try {
+    const parsed = JSON.parse(trimmed)
+    return parseCategoryNames(parsed)
+  } catch {
+    const values = trimmed
+      .split(/[\n,;|]/)
+      .map((token) => normalizeCategoryToken(token))
+      .filter((token) => token.length > 0 && !looksLikeCategoryIdToken(token))
+
+    const seen = new Set<string>()
+    return values.filter((token) => {
+      const key = token.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
+}
+
 function isCategoryLikeFieldName(fieldName: string): boolean {
   const normalized = fieldName
     .trim()
@@ -100,22 +164,34 @@ function isCategoryLikeFieldName(fieldName: string): boolean {
     .replace(/\s*\([^)]*\)\s*$/g, '')
     .trim()
 
-  if (normalized === 'category') return true
+  if (
+    normalized === 'category'
+    || normalized === 'categories'
+    || normalized === 'category ids'
+    || normalized === 'category_ids'
+    || normalized === 'category id'
+    || normalized === 'category_id'
+    || normalized === 'categories airtable'
+    || normalized === 'category airtable'
+  ) {
+    return true
+  }
 
   if (normalized.includes('categor')) {
+    if (normalized.includes('shopify') || normalized.includes('google') || normalized.includes('taxonomy') || normalized.includes('product type')) {
+      return false
+    }
+
     return normalized.includes('ebay')
       || normalized.includes('id')
       || normalized.includes('json')
       || normalized.includes('primary')
       || normalized.includes('secondary')
+      || normalized.includes('airtable')
+      || normalized.includes('linked')
   }
 
-  return normalized === 'categories'
-    || normalized === 'category ids'
-    || normalized === 'category_ids'
-    || normalized === 'category id'
-    || normalized === 'category_id'
-    || normalized === 'ebay offer category id'
+  return normalized === 'ebay offer category id'
     || normalized === 'ebay offer primary category id'
     || normalized === 'ebay offer secondary category id'
     || normalized === 'ebay_offer_category_id'
@@ -125,10 +201,12 @@ function isCategoryLikeFieldName(fieldName: string): boolean {
     || normalized === 'ebay_offer_secondarycategoryid'
     || normalized === 'primary category'
     || normalized === 'primary category id'
+    || normalized === 'primary category airtable'
     || normalized === 'primary_category'
     || normalized === 'primary_category_id'
     || normalized === 'secondary category'
     || normalized === 'secondary category id'
+    || normalized === 'secondary category airtable'
     || normalized === 'secondary_category'
     || normalized === 'secondary_category_id'
 }
@@ -137,6 +215,8 @@ export interface EbayCategoryFieldState {
   categoriesFieldName?: string
   primaryCategoryFieldName?: string
   secondaryCategoryFieldName?: string
+  primaryCategoryNameFieldName?: string
+  secondaryCategoryNameFieldName?: string
 }
 
 export function resolveEbaySelectedCategoryIds(
@@ -165,6 +245,39 @@ export function resolveEbaySelectedCategoryIds(
     .filter((categoryId) => categoryId.length > 0)
     .filter((categoryId) => {
       const key = categoryId.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .slice(0, 2)
+}
+
+export function resolveEbaySelectedCategoryNames(
+  formValues: Record<string, string>,
+  fields: EbayCategoryFieldState,
+): string[] {
+  const categories = fields.categoriesFieldName
+    ? parseCategoryNames(formValues[fields.categoriesFieldName] ?? '')
+    : []
+
+  const primaryCategoryName = fields.primaryCategoryNameFieldName
+    ? normalizeCategoryToken(formValues[fields.primaryCategoryNameFieldName] ?? '')
+    : ''
+  const secondaryCategoryName = fields.secondaryCategoryNameFieldName
+    ? normalizeCategoryToken(formValues[fields.secondaryCategoryNameFieldName] ?? '')
+    : ''
+
+  const fallbackCategories = categories.length === 0 && !primaryCategoryName && !secondaryCategoryName
+    ? Object.entries(formValues)
+      .filter(([fieldName]) => isCategoryLikeFieldName(fieldName))
+      .flatMap(([, value]) => parseCategoryNames(value))
+    : []
+
+  const seen = new Set<string>()
+  return [...categories, primaryCategoryName, secondaryCategoryName, ...fallbackCategories]
+    .filter((categoryName) => categoryName.length > 0 && !looksLikeCategoryIdToken(categoryName))
+    .filter((categoryName) => {
+      const key = categoryName.toLowerCase()
       if (seen.has(key)) return false
       seen.add(key)
       return true

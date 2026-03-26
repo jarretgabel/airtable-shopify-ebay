@@ -1,4 +1,4 @@
-import { applyEbayCategoryIds, resolveEbaySelectedCategoryIds } from '@/components/approval/ebayCategoryFields'
+import { applyEbayCategoryIds, resolveEbaySelectedCategoryIds, resolveEbaySelectedCategoryNames } from '@/components/approval/ebayCategoryFields'
 
 describe('ebayCategoryFields', () => {
   it('reads selected ids from primary and secondary fields when Categories is absent', () => {
@@ -84,5 +84,32 @@ describe('ebayCategoryFields', () => {
     )
 
     expect(selected).toEqual(['14990'])
+  })
+
+  it('discovers categories from Airtable-linked alias fields', () => {
+    const selected = resolveEbaySelectedCategoryIds(
+      {
+        'Categories Airtable': '["14990", "15032"]',
+      },
+      {},
+    )
+
+    expect(selected).toEqual(['14990', '15032'])
+  })
+
+  it('discovers primary and secondary category names from categories field', () => {
+    const selected = resolveEbaySelectedCategoryNames(
+      {
+        Categories: JSON.stringify([
+          { id: '14990', name: 'Receivers & Tuners' },
+          { id: '15032', name: 'Vintage Amplifiers' },
+        ]),
+      },
+      {
+        categoriesFieldName: 'Categories',
+      },
+    )
+
+    expect(selected).toEqual(['Receivers & Tuners', 'Vintage Amplifiers'])
   })
 })

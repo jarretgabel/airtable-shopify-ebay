@@ -210,6 +210,19 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     });
   });
 
+  it('maps Airtable category alias fields into offer payload', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-8A',
+      'Categories Airtable': '293, 11700',
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-8A',
+      categoryId: '293',
+      secondaryCategoryId: '11700',
+    });
+  });
+
   it('parses Airtable attachment objects into imageUrls', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-9',

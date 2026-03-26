@@ -210,6 +210,36 @@ function parseCategoryIds(raw: unknown): string[] {
     });
 }
 
+function isGenericCategoryFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  if (!normalized.includes('categor')) return false;
+  if (normalized.includes('shopify') || normalized.includes('google') || normalized.includes('taxonomy') || normalized.includes('product type')) {
+    return false;
+  }
+
+  return normalized === 'categories'
+    || normalized === 'category'
+    || normalized === 'categories airtable'
+    || normalized === 'category airtable'
+    || normalized === 'category ids'
+    || normalized === 'category id'
+    || normalized === 'category_ids'
+    || normalized === 'category_id'
+    || normalized === 'primary category'
+    || normalized === 'secondary category'
+    || normalized === 'primary category airtable'
+    || normalized === 'secondary category airtable'
+    || normalized === 'primary category id'
+    || normalized === 'secondary category id'
+    || normalized === 'primary_category'
+    || normalized === 'secondary_category'
+    || normalized === 'primary_category_id'
+    || normalized === 'secondary_category_id'
+    || normalized.includes('ebay')
+    || normalized.includes('airtable')
+    || normalized.includes('linked');
+}
+
 function normalizeEbayCondition(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return 'USED_EXCELLENT';
@@ -295,12 +325,21 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     'Categories',
     'categories',
   ]));
+  const fallbackCategoryIds = categoryIdsFromCategoriesField.length === 0
+    ? dedupeCaseInsensitive(
+      Object.entries(fields)
+        .filter(([fieldName]) => isGenericCategoryFieldName(fieldName))
+        .flatMap(([, value]) => parseCategoryIds(value)),
+    )
+    : [];
   const primaryCategoryFromField = getField(fields, [
     'eBay Offer Primary Category ID',
     'eBay Offer PrimaryCategoryID',
     'Primary Category ID',
     'Primary Category',
+    'Primary Category Airtable',
     'primary_category',
+    'primary_category_airtable',
     'eBay Offer Category ID',
     'ebay_offer_category_id',
     'ebay_offer_primary_category_id',
@@ -312,15 +351,17 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     'eBay Offer SecondaryCategoryID',
     'Secondary Category ID',
     'Secondary Category',
+    'Secondary Category Airtable',
     'secondary_category',
+    'secondary_category_airtable',
     'eBay Offer Secondary Category ID',
     'ebay_offer_secondary_category_id',
     'ebay_offer_secondarycategoryid',
     'secondary_category_id',
   ]);
 
-  const categoryId = categoryIdsFromCategoriesField[0] || primaryCategoryFromField || '3276';
-  const secondaryCategoryId = categoryIdsFromCategoriesField[1] || secondaryCategoryFromField;
+  const categoryId = categoryIdsFromCategoriesField[0] || primaryCategoryFromField || fallbackCategoryIds[0] || '3276';
+  const secondaryCategoryId = categoryIdsFromCategoriesField[1] || secondaryCategoryFromField || fallbackCategoryIds[1];
   const listingDuration = getField(fields, ['eBay Offer Listing Duration']) || 'GTC';
   const priceValue = getField(fields, [
     'eBay Offer Price Value',

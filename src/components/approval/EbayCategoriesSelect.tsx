@@ -254,7 +254,7 @@ export function EbayCategoriesSelect({
           const key = normalizeSelectionValue(item);
           return key !== optionNameKey && key !== optionIdKey;
         })
-      : [...value, option.name];
+      : [...value, option.id];
 
     onChange(nextValues.slice(0, 2));
   };
@@ -295,7 +295,7 @@ export function EbayCategoriesSelect({
             return (
               <span
                 key={selectedValue}
-                className={`inline-flex max-w-full items-center gap-1 rounded-full border border-sky-400/30 bg-sky-500/10 px-3 py-1 text-sm text-sky-100 ${dragOverCategoryId === selectedValue ? 'ring-2 ring-sky-300/60' : ''}`}
+                className={`inline-flex max-w-full items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/15 px-3 py-1 text-sm font-medium text-[var(--ink)] shadow-[0_0_0_1px_rgba(14,165,233,0.08)] ${dragOverCategoryId === selectedValue ? 'ring-2 ring-sky-400/45' : ''}`}
                 draggable={!disabled}
                 onDragStart={(event) => {
                   if (disabled) return;
@@ -327,7 +327,7 @@ export function EbayCategoriesSelect({
                 </span>
                 <button
                   type="button"
-                  className="rounded-full text-sky-100/80 transition-colors hover:text-sky-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-full text-[var(--ink)]/65 transition-colors hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => {
                     if (option) {
                       toggleSelection(option);
