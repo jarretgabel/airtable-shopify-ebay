@@ -3,6 +3,15 @@ import type { ProcessedImage } from '@/services/imageProcessor';
 
 export type ItemStatus = 'idle' | 'identifying' | 'identified' | 'processing' | 'done' | 'error';
 
+export type ImageUploadStatus = 'idle' | 'uploading' | 'done' | 'error';
+
+export interface ImageUploadState {
+  status: ImageUploadStatus;
+  url?: string;
+  error?: string;
+  assetLabel?: string;
+}
+
 export interface ImageItem {
   id: string;
   file: File;
@@ -11,6 +20,10 @@ export interface ImageItem {
   error?: string;
   aiResult?: EquipmentIdentification;
   processed?: ProcessedImage;
+  uploads?: {
+    shopify?: ImageUploadState;
+    ebay?: ImageUploadState;
+  };
 }
 
 export interface ImageLabSessionStats {

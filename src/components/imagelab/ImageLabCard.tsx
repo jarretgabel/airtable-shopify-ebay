@@ -10,11 +10,16 @@ interface CardProps {
   onProcess: () => void;
   onRemove: () => void;
   onCopy: () => void;
+  onUploadToShopify: () => void;
+  onUploadToEbay: () => void;
 }
 
-export function ImageLabCard({ item, apiKeyPresent, isCopied, onIdentify, onProcess, onRemove, onCopy }: CardProps) {
-  const { status, aiResult, processed, error } = item;
+export function ImageLabCard({ item, apiKeyPresent, isCopied, onIdentify, onProcess, onRemove, onCopy, onUploadToShopify, onUploadToEbay }: CardProps) {
+  const { status, aiResult, processed, error, uploads } = item;
   const busy = status === 'identifying' || status === 'processing';
+  const shopifyUpload = uploads?.shopify;
+  const ebayUpload = uploads?.ebay;
+  const uploadBusy = shopifyUpload?.status === 'uploading' || ebayUpload?.status === 'uploading';
 
   return (
     <article
@@ -123,6 +128,29 @@ export function ImageLabCard({ item, apiKeyPresent, isCopied, onIdentify, onProc
           <div className="flex items-center gap-2.5 text-[0.82rem] text-[var(--muted)]"><div className={spinnerClass} /><span>{status === 'identifying' ? 'Analyzing with AI…' : 'Processing image…'}</span></div>
         )}
 
+        {(shopifyUpload || ebayUpload) && (
+          <div className="flex flex-col gap-2 rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-[0.76rem]">
+            {shopifyUpload && (
+              <div className="flex flex-wrap items-center gap-2 text-[var(--muted)]">
+                <span className="font-semibold text-[var(--ink)]">Shopify</span>
+                <span>{shopifyUpload.assetLabel ?? 'Image'}</span>
+                {shopifyUpload.status === 'uploading' && <span className="text-blue-300">Uploading…</span>}
+                {shopifyUpload.status === 'done' && shopifyUpload.url && <a className="text-[var(--accent)] underline-offset-2 hover:underline" href={shopifyUpload.url} target="_blank" rel="noreferrer">Open uploaded image</a>}
+                {shopifyUpload.status === 'error' && <span className="text-red-300">{shopifyUpload.error}</span>}
+              </div>
+            )}
+            {ebayUpload && (
+              <div className="flex flex-wrap items-center gap-2 text-[var(--muted)]">
+                <span className="font-semibold text-[var(--ink)]">eBay</span>
+                <span>{ebayUpload.assetLabel ?? 'Image'}</span>
+                {ebayUpload.status === 'uploading' && <span className="text-blue-300">Uploading…</span>}
+                {ebayUpload.status === 'done' && ebayUpload.url && <a className="text-[var(--accent)] underline-offset-2 hover:underline" href={ebayUpload.url} target="_blank" rel="noreferrer">Open hosted picture</a>}
+                {ebayUpload.status === 'error' && <span className="text-red-300">{ebayUpload.error}</span>}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
           {apiKeyPresent && (
             <button className="rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-3 py-1.5 text-[0.78rem] font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45" onClick={onIdentify} disabled={busy}>
@@ -140,6 +168,14 @@ export function ImageLabCard({ item, apiKeyPresent, isCopied, onIdentify, onProc
               {aiResult && <button className="rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 py-1.5 text-[0.78rem] font-semibold text-[var(--ink)] transition hover:border-[var(--muted)] hover:bg-[var(--bg)]" onClick={onCopy}>{isCopied ? 'Copied ✓' : 'Copy details'}</button>}
             </>
           )}
+
+          <button className="rounded-lg border border-[#7dd3fc]/35 bg-[#0c4a6e]/50 px-3 py-1.5 text-[0.78rem] font-semibold text-sky-100 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45" onClick={onUploadToShopify} disabled={busy || uploadBusy}>
+            {shopifyUpload?.status === 'uploading' ? 'Uploading to Shopify…' : 'Upload to Shopify'}
+          </button>
+
+          <button className="rounded-lg border border-[#fda4af]/35 bg-[#7f1d1d]/45 px-3 py-1.5 text-[0.78rem] font-semibold text-rose-100 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45" onClick={onUploadToEbay} disabled={busy || uploadBusy}>
+            {ebayUpload?.status === 'uploading' ? 'Uploading to eBay…' : 'Upload to eBay'}
+          </button>
 
           <button className="ml-auto rounded-lg border border-[var(--line)] bg-[var(--panel)] px-2 py-1.5 text-[0.78rem] font-semibold text-[var(--muted)] transition hover:border-red-300 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-45" onClick={onRemove} disabled={busy} aria-label="Remove">
             ✕

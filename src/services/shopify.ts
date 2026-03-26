@@ -22,6 +22,22 @@ interface ShopifyGraphQlUserError {
   message: string;
 }
 
+interface ShopifyStagedUploadParameter {
+  name: string;
+  value: string;
+}
+
+interface ShopifyStagedUploadTarget {
+  url: string;
+  resourceUrl: string;
+  parameters: ShopifyStagedUploadParameter[];
+}
+
+export interface ShopifyUploadedImageResult {
+  id: string;
+  url: string;
+}
+
 export interface ShopifyTaxonomyCategoryMatch {
   id: string;
   fullName: string;
@@ -884,6 +900,134 @@ class ShopifyService {
         .join('; ');
       throw new Error(message || 'Shopify rejected the product category update.');
     }
+  }
+
+  async uploadImageFile(file: File, alt?: string): Promise<ShopifyUploadedImageResult> {
+    const stagedData = await this.graphQlRequest<{
+      stagedUploadsCreate: {
+        stagedTargets: ShopifyStagedUploadTarget[];
+        userErrors: ShopifyGraphQlUserError[];
+      };
+    }>(
+      `mutation CreateStagedImageUpload($input: [StagedUploadInput!]!) {
+        stagedUploadsCreate(input: $input) {
+          stagedTargets {
+            url
+            resourceUrl
+            parameters {
+              name
+              value
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }`,
+      {
+        input: [
+          {
+            filename: file.name,
+            mimeType: file.type || 'image/jpeg',
+            resource: 'IMAGE',
+            httpMethod: 'POST',
+            fileSize: String(file.size),
+          },
+        ],
+      },
+    );
+
+    const stagedErrors = stagedData.stagedUploadsCreate.userErrors ?? [];
+    if (stagedErrors.length > 0) {
+      throw new Error(stagedErrors.map((error) => error.message.trim()).filter(Boolean).join('; ') || 'Shopify staged upload failed.');
+    }
+
+    const stagedTarget = stagedData.stagedUploadsCreate.stagedTargets[0];
+    if (!stagedTarget?.url || !stagedTarget.resourceUrl) {
+      throw new Error('Shopify did not return a staged upload target.');
+    }
+
+    const formData = new FormData();
+    stagedTarget.parameters.forEach((parameter) => {
+      formData.append(parameter.name, parameter.value);
+    });
+    formData.append('file', file, file.name);
+
+    const stagedUploadResponse = await fetch(stagedTarget.url, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!stagedUploadResponse.ok) {
+      throw new Error(`Shopify staged binary upload failed (${stagedUploadResponse.status}).`);
+    }
+
+    const fileCreateData = await this.graphQlRequest<{
+      fileCreate: {
+        files: Array<{
+          id?: string | null;
+          fileStatus?: string | null;
+          image?: {
+            url?: string | null;
+          } | null;
+          preview?: {
+            image?: {
+              url?: string | null;
+            } | null;
+          } | null;
+        }>;
+        userErrors: ShopifyGraphQlUserError[];
+      };
+    }>(
+      `mutation CreateShopifyImageFile($files: [FileCreateInput!]!) {
+        fileCreate(files: $files) {
+          files {
+            ... on MediaImage {
+              id
+              fileStatus
+              image {
+                url
+              }
+              preview {
+                image {
+                  url
+                }
+              }
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }`,
+      {
+        files: [
+          {
+            alt: alt?.trim() || undefined,
+            contentType: 'IMAGE',
+            originalSource: stagedTarget.resourceUrl,
+          },
+        ],
+      },
+    );
+
+    const fileCreateErrors = fileCreateData.fileCreate.userErrors ?? [];
+    if (fileCreateErrors.length > 0) {
+      throw new Error(fileCreateErrors.map((error) => error.message.trim()).filter(Boolean).join('; ') || 'Shopify rejected the uploaded image.');
+    }
+
+    const createdFile = fileCreateData.fileCreate.files[0];
+    const url = createdFile?.image?.url?.trim() || createdFile?.preview?.image?.url?.trim() || stagedTarget.resourceUrl;
+    if (!createdFile?.id || !url) {
+      throw new Error('Shopify uploaded the image but returned no file URL.');
+    }
+
+    return {
+      id: createdFile.id,
+      url,
+    };
   }
 
   async addProductToCollections(productId: number, collectionIds: string[]): Promise<void> {

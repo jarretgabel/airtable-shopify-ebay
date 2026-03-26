@@ -30,6 +30,8 @@ export function ImageLab() {
     removeItem,
     clearAll,
     copyDetails,
+    uploadToShopify,
+    uploadToEbay,
     hasBusy,
     hasIdleToIdentify,
     hasItemsToProcess,
@@ -93,6 +95,8 @@ export function ImageLab() {
               onProcess={() => processItem(item.id)}
               onRemove={() => removeItem(item.id)}
               onCopy={() => item.aiResult && copyDetails(item.id, item.aiResult)}
+              onUploadToShopify={() => uploadToShopify(item.id)}
+              onUploadToEbay={() => uploadToEbay(item.id)}
             />
           ))}
         </div>

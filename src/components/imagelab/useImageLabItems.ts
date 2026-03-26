@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { fileToBase64, identifyEquipment, type EquipmentIdentification } from '@/services/equipmentAI';
 import { processImage, revokeProcessedImage, type ProcessingOptions } from '@/services/imageProcessor';
+import { shopifyService } from '@/services/shopify';
+import { uploadImageToEbayHostedPictures } from '@/services/ebay/imageUpload';
 import { buildImageLabSessionStats } from '@/components/imagelab/imageLabSessionStats';
 import type { ImageItem } from '@/components/imagelab/types';
 
@@ -25,10 +27,28 @@ interface UseImageLabItemsResult {
   removeItem: (id: string) => void;
   clearAll: () => void;
   copyDetails: (id: string, ai: EquipmentIdentification) => Promise<void>;
+  uploadToShopify: (id: string) => Promise<void>;
+  uploadToEbay: (id: string) => Promise<void>;
   hasBusy: boolean;
   hasIdleToIdentify: boolean;
   hasItemsToProcess: boolean;
   sessionStats: ReturnType<typeof buildImageLabSessionStats>;
+}
+
+function buildUploadFile(item: ImageItem): { file: File; assetLabel: string } {
+  if (item.processed) {
+    return {
+      file: new File([item.processed.blob], item.processed.filename, {
+        type: item.processed.blob.type || 'image/jpeg',
+      }),
+      assetLabel: 'Processed image',
+    };
+  }
+
+  return {
+    file: item.file,
+    assetLabel: 'Original image',
+  };
 }
 
 export function useImageLabItems(options: ProcessingOptions): UseImageLabItemsResult {
@@ -100,7 +120,12 @@ export function useImageLabItems(options: ProcessingOptions): UseImageLabItemsRe
     if (!item) return;
 
     if (item.processed) revokeProcessedImage(item.processed);
-    updateItem(id, { status: 'processing', error: undefined, processed: undefined });
+    updateItem(id, {
+      status: 'processing',
+      error: undefined,
+      processed: undefined,
+      uploads: undefined,
+    });
 
     try {
       const processed = await processImage(item.file, options);
@@ -169,6 +194,90 @@ export function useImageLabItems(options: ProcessingOptions): UseImageLabItemsRe
     setTimeout(() => setCopyId(null), 1800);
   }, []);
 
+  const uploadToShopify = useCallback(async (id: string) => {
+    const item = itemsRef.current.find((candidate) => candidate.id === id);
+    if (!item) return;
+
+    const { file, assetLabel } = buildUploadFile(item);
+    updateItem(id, {
+      uploads: {
+        ...item.uploads,
+        shopify: {
+          status: 'uploading',
+          assetLabel,
+          url: item.uploads?.shopify?.url,
+        },
+      },
+    });
+
+    try {
+      const uploaded = await shopifyService.uploadImageFile(file, item.aiResult ? `${item.aiResult.brand} ${item.aiResult.model}`.trim() : file.name);
+      updateItem(id, {
+        uploads: {
+          ...itemsRef.current.find((candidate) => candidate.id === id)?.uploads,
+          shopify: {
+            status: 'done',
+            url: uploaded.url,
+            assetLabel,
+          },
+        },
+      });
+    } catch (error) {
+      updateItem(id, {
+        uploads: {
+          ...itemsRef.current.find((candidate) => candidate.id === id)?.uploads,
+          shopify: {
+            status: 'error',
+            error: (error as Error).message,
+            assetLabel,
+          },
+        },
+      });
+    }
+  }, [updateItem]);
+
+  const uploadToEbay = useCallback(async (id: string) => {
+    const item = itemsRef.current.find((candidate) => candidate.id === id);
+    if (!item) return;
+
+    const { file, assetLabel } = buildUploadFile(item);
+    updateItem(id, {
+      uploads: {
+        ...item.uploads,
+        ebay: {
+          status: 'uploading',
+          assetLabel,
+          url: item.uploads?.ebay?.url,
+        },
+      },
+    });
+
+    try {
+      const uploaded = await uploadImageToEbayHostedPictures(file);
+      updateItem(id, {
+        uploads: {
+          ...itemsRef.current.find((candidate) => candidate.id === id)?.uploads,
+          ebay: {
+            status: 'done',
+            url: uploaded.url,
+            assetLabel,
+          },
+        },
+      });
+    } catch (error) {
+      updateItem(id, {
+        uploads: {
+          ...itemsRef.current.find((candidate) => candidate.id === id)?.uploads,
+          ebay: {
+            status: 'error',
+            error: (error as Error).message,
+            assetLabel,
+          },
+        },
+      });
+    }
+  }, [updateItem]);
+
   const sessionStats = useMemo(() => buildImageLabSessionStats(items), [items]);
   const hasBusy = items.some((item) => item.status === 'identifying' || item.status === 'processing');
   const hasIdleToIdentify = items.some((item) => item.status === 'idle');
@@ -190,6 +299,8 @@ export function useImageLabItems(options: ProcessingOptions): UseImageLabItemsRe
     removeItem,
     clearAll,
     copyDetails,
+    uploadToShopify,
+    uploadToEbay,
     hasBusy,
     hasIdleToIdentify,
     hasItemsToProcess,
