@@ -2,6 +2,7 @@ import {
   buildShopifyCollectionIdsFromApprovalFields,
   buildShopifyDraftProductFromApprovalFields,
 } from '@/services/shopifyDraftFromAirtable';
+import { buildShopifyUnifiedProductSetRequest } from '@/services/shopify';
 
 describe('buildShopifyDraftProductFromApprovalFields', () => {
   it('preserves image alt text from JSON image objects', () => {
@@ -45,6 +46,107 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     expect(product.images).toEqual([
       { src: 'https://cdn.example.com/a.jpg', alt: 'Front view', position: 1 },
       { src: 'https://cdn.example.com/b.jpg', alt: 'Back view', position: 2 },
+    ]);
+  });
+
+  it('maps Shopify REST Images list field into Shopify image objects for ProductSet files', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Shopify Images Field Product',
+      'Shopify REST Images': JSON.stringify([
+        { src: 'https://cdn.example.com/a.jpg', alt: 'Front view' },
+        { src: 'https://cdn.example.com/b.jpg', alt: 'Back view' },
+      ]),
+    });
+
+    expect(product.images).toEqual([
+      { src: 'https://cdn.example.com/a.jpg', alt: 'Front view', position: 1 },
+      { src: 'https://cdn.example.com/b.jpg', alt: 'Back view', position: 2 },
+    ]);
+  });
+
+  it('prefers image-editor source fields over legacy flat Shopify image columns', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Editor Priority Product',
+      'Shopify REST Image 1 Src': 'https://cdn.example.com/legacy.jpg',
+      Images: JSON.stringify([
+        { src: 'https://cdn.example.com/editor-a.jpg', alt: 'Editor A' },
+        { src: 'https://cdn.example.com/editor-b.jpg', alt: 'Editor B' },
+      ]),
+    });
+
+    expect(product.images).toEqual([
+      { src: 'https://cdn.example.com/editor-a.jpg', alt: 'Editor A', position: 1 },
+      { src: 'https://cdn.example.com/editor-b.jpg', alt: 'Editor B', position: 2 },
+    ]);
+  });
+
+  it('maps Airtable attachment-style image objects into Shopify images', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Attachment Images Product',
+      Images: JSON.stringify([
+        { url: 'https://cdn.example.com/attachment-a.jpg', alt: 'Attachment A' },
+        {
+          thumbnails: {
+            large: {
+              url: 'https://cdn.example.com/attachment-b-large.jpg',
+            },
+          },
+          altText: 'Attachment B',
+        },
+      ]),
+    });
+
+    expect(product.images).toEqual([
+      { src: 'https://cdn.example.com/attachment-a.jpg', alt: 'Attachment A', position: 1 },
+      { src: 'https://cdn.example.com/attachment-b-large.jpg', alt: 'Attachment B', position: 2 },
+    ]);
+  });
+
+  it('maps shared image editor rows into ProductSet files', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Combined Preview Product',
+      Images: JSON.stringify([
+        { src: 'https://cdn.example.com/combined-a.jpg', alt: 'Combined A' },
+        { url: 'https://cdn.example.com/combined-b.jpg', alt: 'Combined B' },
+      ]),
+    });
+
+    const request = buildShopifyUnifiedProductSetRequest(product);
+
+    expect(request.input.files).toEqual([
+      {
+        originalSource: 'https://cdn.example.com/combined-a.jpg',
+        alt: 'Combined A',
+        contentType: 'IMAGE',
+      },
+      {
+        originalSource: 'https://cdn.example.com/combined-b.jpg',
+        alt: 'Combined B',
+        contentType: 'IMAGE',
+      },
+    ]);
+  });
+
+  it('maps combined shared image columns into ProductSet files', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Combined Shared Columns Product',
+      'Images (comma-separated)': 'https://cdn.example.com/shared-a.jpg, https://cdn.example.com/shared-b.jpg',
+      'Images Alt Text (comma separated)': 'Shared A, Shared B',
+    });
+
+    const request = buildShopifyUnifiedProductSetRequest(product);
+
+    expect(request.input.files).toEqual([
+      {
+        originalSource: 'https://cdn.example.com/shared-a.jpg',
+        alt: 'Shared A',
+        contentType: 'IMAGE',
+      },
+      {
+        originalSource: 'https://cdn.example.com/shared-b.jpg',
+        alt: 'Shared B',
+        contentType: 'IMAGE',
+      },
     ]);
   });
 

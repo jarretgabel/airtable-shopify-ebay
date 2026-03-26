@@ -17,6 +17,7 @@ import { ShopifyTaxonomyTypeSelect } from './ShopifyTaxonomyTypeSelect';
 import { KeyFeaturesEditor } from './KeyFeaturesEditor';
 import { ShopifyCollectionsSelect } from './ShopifyCollectionsSelect';
 import { ShopifyTagsEditor } from './ShopifyTagsEditor';
+import { ApprovalSelect } from './ApprovalSelect';
 import { applyEbayCategoryIds, resolveEbaySelectedCategoryIds, resolveEbaySelectedCategoryNames } from './ebayCategoryFields';
 import ebayListingInsertTemplate from '../../templates/ebay/ebay-listing-insert.html?raw';
 import ebayListingImpactSlateTemplate from '../../templates/ebay/ebay-listing-impact-slate.html?raw';
@@ -136,6 +137,22 @@ function isCurrencyLikeField(fieldName: string): boolean {
     || normalized.includes('handling cost')
     || isShopifyPriceField
     || isGenericPriceField;
+}
+
+function isEbayHandlingCostField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase().replace(/\s+/g, ' ');
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized.includes('handling cost')
+    || compact.includes('handlingcost');
+}
+
+function isEbayGlobalShippingField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase().replace(/\s+/g, ' ');
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+
+  return (normalized.includes('global') && normalized.includes('shipping'))
+    || compact.includes('globalshipping')
+    || compact.includes('globalshippingprogram');
 }
 
 function isReadOnlyApprovalField(fieldName: string): boolean {
@@ -984,6 +1001,19 @@ function isBooleanLikeValue(value: string): boolean {
   return normalized === 'true' || normalized === 'false';
 }
 
+function isShopifyVariantBooleanField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase().replace(/\s+/g, ' ');
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+
+  const isVariantField = normalized.includes('variant') || compact.includes('variant');
+  if (!isVariantField) return false;
+
+  const isTaxableField = normalized.includes('taxable') || compact.includes('taxable');
+  const isRequiresShippingField = normalized.includes('requires shipping') || normalized.includes('requires_shipping') || compact.includes('requiresshipping');
+
+  return isTaxableField || isRequiresShippingField;
+}
+
 function normalizeImageFieldName(fieldName: string): string {
   return fieldName
     .trim()
@@ -1055,7 +1085,23 @@ function isHiddenCombinedFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase().replace(/\s+/g, ' ');
   const compact = normalized.replace(/[^a-z0-9]/g, '');
   return normalized === 'images (comma separated) 2'
-    || compact === 'imagescommaseparated2';
+    || compact === 'imagescommaseparated2'
+    || normalized === 'shopify approved'
+    || normalized === 'ebay approved'
+    || compact === 'shopifyapproved'
+    || compact === 'ebayapproved';
+}
+
+function isShopifyImagePayloadField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'shopify rest images json'
+    || normalized === 'shopify images json'
+    || normalized === 'shopify_rest_images_json'
+    || normalized === 'shopify_images_json'
+    || normalized === 'shopify rest images'
+    || normalized === 'shopify images'
+    || normalized === 'shopify_rest_images'
+    || normalized === 'shopify_images';
 }
 
 function isEbayInventoryImageUrlsField(fieldName: string): boolean {
@@ -1322,6 +1368,7 @@ export function ApprovalFormFields({
 
     return [inputBaseClass, requiredInputClass, extra].filter(Boolean).join(' ');
   };
+  const getSelectClassName = (fieldName: string): string => getInputClassName(fieldName, 'appearance-none pr-12');
   const renderFieldLabel = (fieldName: string): JSX.Element => (
     <span className={`${labelClass} flex items-center gap-2`}>
       <span>{toFieldLabel(fieldName)}</span>
@@ -1361,8 +1408,22 @@ export function ApprovalFormFields({
     ['Images Alt Text', 'images_alt_text', 'Image Alt Text', 'image_alt_text'],
     formValues,
   );
+  const shopifyImagePayloadFieldName = pickPreferredField(
+    allFieldNames.filter((fieldName) => isShopifyImagePayloadField(fieldName)),
+    [
+      'Shopify REST Images JSON',
+      'shopify_rest_images_json',
+      'Shopify Images JSON',
+      'shopify_images_json',
+      'Shopify REST Images',
+      'shopify_rest_images',
+      'Shopify Images',
+      'shopify_images',
+    ],
+    formValues,
+  );
   const useCombinedImageAltEditor = Boolean(
-    isEbayListingForm
+    (isEbayListingForm || isCombinedApproval)
     && imageUrlSourceField
     && imageAltTextSourceField
     && imageUrlSourceField !== imageAltTextSourceField,
@@ -1983,6 +2044,8 @@ export function ApprovalFormFields({
 
   function renderStandardField(fieldName: string): JSX.Element | null {
     if (isCombinedApproval && isHiddenCombinedFieldName(fieldName)) return null;
+    if (isEbayHandlingCostField(fieldName)) return null;
+    if (isEbayGlobalShippingField(fieldName)) return null;
     if (isShopifyTypesFreeformField(fieldName)) return null;
     if (approvalChannel === 'shopify' && isShopifyVariantStatusField(fieldName)) return null;
     if (approvalChannel === 'shopify' && (isShopifyTemplateVariantNameField(fieldName) || isShopifyOptionValuesField(fieldName) || isShopifyVariantOptionField(fieldName))) return null;
@@ -2053,20 +2116,20 @@ export function ApprovalFormFields({
         ? listingDurationOptions
         : getDropdownOptions(fieldName);
 
-    if (isAllowOffersField(fieldName) || kind === 'boolean' || booleanLike) {
+    if (isAllowOffersField(fieldName) || isShopifyVariantBooleanField(fieldName) || kind === 'boolean' || booleanLike) {
       const normalizedBooleanValue = value.trim().toLowerCase() === 'true' ? 'true' : 'false';
       return (
         <label key={fieldName} className="flex flex-col gap-2">
           {renderFieldLabel(fieldName)}
-          <select
-            className={getInputClassName(fieldName)}
+          <ApprovalSelect
+            selectClassName={getSelectClassName(fieldName)}
             value={normalizedBooleanValue}
             onChange={(event) => setFormValue(fieldName, event.target.value)}
             disabled={inputDisabled}
           >
             <option value="true">True</option>
             <option value="false">False</option>
-          </select>
+          </ApprovalSelect>
         </label>
       );
     }
@@ -2086,8 +2149,8 @@ export function ApprovalFormFields({
       return (
         <label key={fieldName} className="flex flex-col gap-2">
           {renderFieldLabel(fieldName)}
-          <select
-            className={getInputClassName(fieldName)}
+          <ApprovalSelect
+            selectClassName={getSelectClassName(fieldName)}
             value={displayValue}
             onChange={(event) => {
               const selectedLabel = event.target.value;
@@ -2109,7 +2172,7 @@ export function ApprovalFormFields({
                 {isListingDurationField ? getEbayListingDurationLabel(option) : isShippingTypeField ? getEbayShippingTypeLabel(option) : option}
               </option>
             ))}
-          </select>
+          </ApprovalSelect>
         </label>
       );
     }
@@ -2197,17 +2260,37 @@ export function ApprovalFormFields({
           fieldLabel="Images"
           value={useCombinedImageAltEditor ? combinedImageEditorValue : (formValues[imageUrlSourceField] ?? '')}
           onChange={(newValue) => {
+            const parsedRows = parseImageEditorRows(newValue);
+            const normalizedRows = parsedRows
+              .map((row, index) => ({
+                src: row.src.trim(),
+                alt: row.alt.trim(),
+                position: index + 1,
+              }))
+              .filter((row) => row.src.length > 0);
+
             if (!useCombinedImageAltEditor || !imageAltTextSourceField) {
               setFormValue(imageUrlSourceField, newValue);
+              if (shopifyImagePayloadFieldName && shopifyImagePayloadFieldName !== imageUrlSourceField) {
+                setFormValue(
+                  shopifyImagePayloadFieldName,
+                  normalizedRows.length > 0 ? JSON.stringify(normalizedRows) : '',
+                );
+              }
               return;
             }
 
-            const rows = parseImageEditorRows(newValue);
-            const urls = rows.map((row) => row.src).filter((value) => value.length > 0);
-            const alts = rows.map((row) => row.alt);
+            const urls = normalizedRows.map((row) => row.src);
+            const alts = parsedRows.map((row) => row.alt.trim());
 
             setFormValue(imageUrlSourceField, toCommaSeparatedImageValues(urls));
             setFormValue(imageAltTextSourceField, toCommaSeparatedImageValues(alts));
+            if (shopifyImagePayloadFieldName && shopifyImagePayloadFieldName !== imageUrlSourceField) {
+              setFormValue(
+                shopifyImagePayloadFieldName,
+                normalizedRows.length > 0 ? JSON.stringify(normalizedRows) : '',
+              );
+            }
           }}
           disabled={saving || isReadOnlyApprovalField(imageUrlSourceField)}
         />
