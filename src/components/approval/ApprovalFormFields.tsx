@@ -152,6 +152,54 @@ function isShopifyTypesFreeformField(fieldName: string): boolean {
   return fieldName.trim().toLowerCase() === 'shopify types';
 }
 
+function isShopifyTemplateVariantNameField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'shopify template variant name'
+    || compact === 'shopifytemplatevariantname';
+}
+
+function isShopifyOptionValuesField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return /^shopify\s+(rest|graphql)?\s*option\s+\d+\s+value\s+\d+$/.test(normalized)
+    || /^shopify_(rest|graphql)?_option_\d+_value_\d+$/.test(normalized)
+    || /^shopify\s+option\s+values?(?:\s+\d+)?$/.test(normalized)
+    || /^option\s+values?(?:\s+\d+)?$/.test(normalized)
+    || normalized === 'shopify option values'
+    || normalized === 'shopify_option_values'
+    || compact === 'shopifyoptionvalues'
+    || compact.startsWith('shopifyoptionvalues')
+    || compact === 'optionvalues'
+    || compact.startsWith('optionvalues');
+}
+
+function isShopifyVariantOptionField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return /^shopify\s+(rest|graphql)?\s*variant\s+\d+\s+option\s+\d+$/.test(normalized)
+    || /^shopify_(rest|graphql)?_variant_\d+_option_\d+$/.test(normalized)
+    || /^variant\s+\d+\s+option\s+\d+$/.test(normalized)
+    || /^variant\s+option(?:\s+\d+)?$/.test(normalized)
+    || normalized === 'shopify variant option'
+    || normalized === 'shopify_variant_option'
+    || compact === 'shopifyvariantoption'
+    || compact.startsWith('shopifyvariantoption')
+    || compact === 'variantoption'
+    || compact.startsWith('variantoption');
+}
+
+function isShopifyVariantStatusField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'shopify variant status'
+    || normalized === 'shopify variant status active'
+    || normalized === 'shopify_variant_status'
+    || normalized === 'shopify_variant_status_active'
+    || compact === 'shopifyvariantstatus'
+    || compact === 'shopifyvariantstatusactive';
+}
+
 function isShopifyCompoundTagsField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'shopify rest tags'
@@ -1918,6 +1966,8 @@ export function ApprovalFormFields({
   function renderStandardField(fieldName: string): JSX.Element | null {
     if (isCombinedApproval && isHiddenCombinedFieldName(fieldName)) return null;
     if (isShopifyTypesFreeformField(fieldName)) return null;
+    if (approvalChannel === 'shopify' && isShopifyVariantStatusField(fieldName)) return null;
+    if (approvalChannel === 'shopify' && (isShopifyTemplateVariantNameField(fieldName) || isShopifyOptionValuesField(fieldName) || isShopifyVariantOptionField(fieldName))) return null;
     // Allow shipping services in eBay-specific sections; hide in shared/Shopify sections
     if (isShippingServiceField(fieldName) && approvalChannel !== 'ebay') return null;
     if (fieldName === approvedFieldName) return null;

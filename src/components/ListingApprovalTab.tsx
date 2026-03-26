@@ -586,6 +586,7 @@ function isEbayOnlyFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   if (normalized === 'description') return false;
   if (normalized.includes('key feature')) return false;
+  if (fieldName === SHIPPING_SERVICE_FIELD) return true;
   return normalized.includes('ebay')
     || normalized.includes('buy it now')
     || normalized.includes('starting bid')
@@ -594,6 +595,7 @@ function isEbayOnlyFieldName(fieldName: string): boolean {
     || normalized.includes('listing format')
     || normalized.includes('format')
     || normalized === 'status'
+    || normalized.includes('shipping service')
     || normalized.includes('primary category')
     || normalized.includes('secondary category')
     || normalized.includes('merchant location')
@@ -999,6 +1001,8 @@ export function ListingApprovalTab({
         // category editor fallback without adding non-existent eBay alias fields.
         names.add('categories');
       }
+
+      names.add(SHIPPING_SERVICE_FIELD);
     }
 
     names.add(CONDITION_FIELD);
@@ -1115,9 +1119,17 @@ export function ListingApprovalTab({
     if (!isCombinedApproval) return [] as string[];
     return selectedRecordFieldNames.filter((fieldName) => {
       const normalized = fieldName.trim().toLowerCase();
+      const isCombinedEbayPriceField = EBAY_PRICE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)
+        || normalized.includes('buy it now')
+        || normalized.includes('starting bid')
+        || normalized === 'ebay offer price value'
+        || normalized === 'ebay offer auction start price value';
       if (isHiddenCombinedFieldName(fieldName)) return false;
       if (!isEbayOnlyFieldName(fieldName) || isShopifyOnlyFieldName(fieldName)) return false;
+      if (isCombinedEbayPriceField) return false;
       if (normalized.includes('primary category') || normalized.includes('secondary category')) return false;
+      if (EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
+      if (EBAY_DURATION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       if (EBAY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       return true;
     });

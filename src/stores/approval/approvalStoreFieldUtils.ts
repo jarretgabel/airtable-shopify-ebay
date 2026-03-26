@@ -9,6 +9,7 @@ import {
   FALLBACK_LISTING_FORMAT_OPTIONS,
   ITEM_CONDITION_OPTIONS,
   SHIPPING_SERVICE_FIELD,
+  SHIPPING_SERVICE_OPTIONS,
   SHOPIFY_COMBINED_LISTING_ROLE_OPTIONS,
   SHOPIFY_FULFILLMENT_SERVICE_OPTIONS,
   SHOPIFY_GRAPHQL_STATUS_OPTIONS,
@@ -81,6 +82,10 @@ export function getDropdownOptions(fieldName: string): string[] | null {
   const n = fieldName.trim().toLowerCase();
 
   // Legacy humanized field names (old Airtable schema)
+  if (n === SHIPPING_SERVICE_FIELD.trim().toLowerCase()) {
+    return SHIPPING_SERVICE_OPTIONS;
+  }
+
   if (
     n === '__condition__'
     || n === 'item condition'
