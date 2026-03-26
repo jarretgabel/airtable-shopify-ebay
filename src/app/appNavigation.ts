@@ -22,6 +22,7 @@ export const UTILITY_TAB_SET = new Set<Tab>(UTILITY_TABS as readonly Tab[]);
 const NAV_LABELS: Partial<Record<Tab, string>> = {
   dashboard: 'Dashboard',
   airtable: 'Airtable',
+  listings: 'Listings',
   shopify: 'Shopify',
   'shopify-approval': 'Listing Approval',
   market: 'HiFi Shark',

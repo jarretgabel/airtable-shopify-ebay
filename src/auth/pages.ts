@@ -1,6 +1,7 @@
 export const APP_PAGES = [
   'dashboard',
   'airtable',
+  'listings',
   'shopify',
   'market',
   'jotform',
@@ -24,6 +25,7 @@ export interface PageDefinition {
 export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   dashboard: { label: 'Dashboard', path: '/dashboard' },
   airtable: { label: 'Airtable Inventory', path: '/airtable' },
+  listings: { label: 'Listings', path: '/listings' },
   shopify: { label: 'Shopify Products', path: '/shopify/products' },
   market: { label: 'Market Prices', path: '/market' },
   jotform: { label: 'Inquiries', path: '/jotform' },

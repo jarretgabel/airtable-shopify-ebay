@@ -6,6 +6,7 @@ import { logServiceInfo } from '@/services/logger';
 import {
   CONDITION_FIELD,
   FALLBACK_LISTING_FORMAT_OPTIONS,
+  EBAY_LISTING_DURATION_OPTIONS,
   SHIPPING_SERVICE_FIELD,
 } from '@/stores/approval/approvalStoreConstants';
 import {
@@ -13,6 +14,7 @@ import {
   inferFieldKind,
   mapShippingServiceToFields,
   resolveListingFormatOptions,
+  resolveListingDurationOptions,
   toFormValue,
   type ApprovalFieldKind,
 } from '@/stores/approval/approvalStoreFieldUtils';
@@ -35,6 +37,7 @@ export {
   isAllowOffersField,
   isShippingServiceField,
   mapShippingServiceToFields,
+  resolveListingDurationOptions,
   toFormValue,
 } from '@/stores/approval/approvalStoreFieldUtils';
 
@@ -339,6 +342,7 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
   saving: false,
   error: null,
   listingFormatOptions: FALLBACK_LISTING_FORMAT_OPTIONS,
+  listingDurationOptions: resolveListingDurationOptions(EBAY_LISTING_DURATION_OPTIONS),
   formValues: {},
   fieldKinds: {},
 

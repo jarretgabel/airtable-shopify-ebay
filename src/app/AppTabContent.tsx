@@ -12,6 +12,7 @@ import type { AppTabContentProps } from '@/app/appTabContentTypes';
 import { DashboardTab } from '@/components/DashboardTab';
 import { EbayTab } from '@/components/EbayTab';
 import { ImageLab } from '@/components/ImageLab';
+import { CombinedListingsApprovalTab } from '@/components/approval/CombinedListingsApprovalTab';
 import { EbayListingApprovalTab } from '@/components/approval/EbayListingApprovalTab';
 import { ShopifyListingApprovalTab } from '@/components/approval/ShopifyListingApprovalTab';
 import { NotificationsTab } from '@/components/NotificationsTab';
@@ -24,9 +25,12 @@ import { ShopifyTab } from '@/components/tabs/ShopifyTab';
 
 export function AppTabContent({
   activeTab,
+  listingsRecordId,
   approvalRecordId,
   shopifyApprovalRecordId,
   userRecordId,
+  navigateToListingsRecord,
+  navigateToListingsList,
   navigateToApprovalRecord,
   navigateToApprovalList,
   navigateToShopifyApprovalRecord,
@@ -177,6 +181,12 @@ export function AppTabContent({
     navigateToApprovalList,
   });
 
+  const listingsViewModel = buildApprovalTabViewModel({
+    approvalRecordId: listingsRecordId,
+    navigateToApprovalRecord: navigateToListingsRecord,
+    navigateToApprovalList: navigateToListingsList,
+  });
+
   const shopifyApprovalViewModel = buildApprovalTabViewModel({
     approvalRecordId: shopifyApprovalRecordId,
     navigateToApprovalRecord: navigateToShopifyApprovalRecord,
@@ -192,6 +202,8 @@ export function AppTabContent({
   switch (activeTab) {
     case 'imagelab':
       return <ImageLab />;
+    case 'listings':
+      return <CombinedListingsApprovalTab viewModel={listingsViewModel} />;
     case 'ebay':
       return <EbayTab viewModel={ebayViewModel} />;
     case 'approval':

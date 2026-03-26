@@ -10,6 +10,7 @@ interface BodyHtmlPreviewProps {
   value: string;
   helperText?: string;
   emptyStateText?: string;
+  previewOnly?: boolean;
   showTemplateSelector?: boolean;
   templateOptions?: ReadonlyArray<BodyHtmlTemplateOption>;
   selectedTemplateId?: string;
@@ -20,6 +21,7 @@ export function BodyHtmlPreview({
   value,
   helperText = 'Generated from the current Description and Key Features values. Saved body HTML is only reused when a dedicated template field exists.',
   emptyStateText = 'Add a description or feature/value pairs to generate the body HTML preview.',
+  previewOnly = false,
   showTemplateSelector = false,
   templateOptions = [],
   selectedTemplateId,
@@ -85,6 +87,58 @@ export function BodyHtmlPreview({
     };
   }, [hasValue, isFullHtmlDocument, measureIframeHeight, sanitizedIframeDoc]);
 
+  const renderedPreview = hasValue ? (
+    isFullHtmlDocument ? (
+      <iframe
+        ref={iframeRef}
+        title="Body HTML Rendered Preview"
+        className="w-full rounded-lg border border-[var(--line)] bg-white"
+        style={{ height: `${iframeHeight}px`, overflow: 'hidden' }}
+        srcDoc={sanitizedIframeDoc}
+        sandbox="allow-same-origin"
+        scrolling="no"
+        onLoad={(event) => {
+          const iframe = event.currentTarget;
+          measureIframeHeight(iframe);
+
+          const win = iframe.contentWindow;
+          if (!win) return;
+
+          win.setTimeout(() => measureIframeHeight(iframe), 80);
+          win.setTimeout(() => measureIframeHeight(iframe), 250);
+          win.setTimeout(() => measureIframeHeight(iframe), 600);
+
+          if (resizeTimerRef.current !== null) {
+            window.clearInterval(resizeTimerRef.current);
+          }
+          resizeTimerRef.current = window.setInterval(() => {
+            measureIframeHeight(iframe);
+          }, 500);
+
+          win.setTimeout(() => {
+            if (resizeTimerRef.current !== null) {
+              window.clearInterval(resizeTimerRef.current);
+              resizeTimerRef.current = null;
+            }
+          }, 5000);
+        }}
+      />
+    ) : (
+      <div
+        className="prose prose-invert max-w-none rounded-lg border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--ink)]"
+        dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+      />
+    )
+  ) : (
+    <div className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+      {emptyStateText}
+    </div>
+  );
+
+  if (previewOnly) {
+    return <div className="col-span-1 md:col-span-2">{renderedPreview}</div>;
+  }
+
   return (
     <>
       {showTemplateSelector && templateOptions.length > 0 && (
@@ -128,53 +182,7 @@ export function BodyHtmlPreview({
           Body Rendered Preview
         </summary>
         <div className="border-t border-[var(--line)] px-3 py-3">
-          {hasValue ? (
-            isFullHtmlDocument ? (
-              <iframe
-                ref={iframeRef}
-                title="Body HTML Rendered Preview"
-                className="w-full rounded-lg border border-[var(--line)] bg-white"
-                style={{ height: `${iframeHeight}px`, overflow: 'hidden' }}
-                srcDoc={sanitizedIframeDoc}
-                sandbox="allow-same-origin"
-                scrolling="no"
-                onLoad={(event) => {
-                  const iframe = event.currentTarget;
-                  measureIframeHeight(iframe);
-
-                  const win = iframe.contentWindow;
-                  if (!win) return;
-
-                  win.setTimeout(() => measureIframeHeight(iframe), 80);
-                  win.setTimeout(() => measureIframeHeight(iframe), 250);
-                  win.setTimeout(() => measureIframeHeight(iframe), 600);
-
-                  if (resizeTimerRef.current !== null) {
-                    window.clearInterval(resizeTimerRef.current);
-                  }
-                  resizeTimerRef.current = window.setInterval(() => {
-                    measureIframeHeight(iframe);
-                  }, 500);
-
-                  win.setTimeout(() => {
-                    if (resizeTimerRef.current !== null) {
-                      window.clearInterval(resizeTimerRef.current);
-                      resizeTimerRef.current = null;
-                    }
-                  }, 5000);
-                }}
-              />
-            ) : (
-              <div
-                className="prose prose-invert max-w-none rounded-lg border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--ink)]"
-                dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
-              />
-            )
-          ) : (
-            <div className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
-              {emptyStateText}
-            </div>
-          )}
+          {renderedPreview}
         </div>
       </details>
     </>

@@ -9,9 +9,12 @@ import type { Tab } from '@/app/appNavigation';
 
 export interface AppTabContentProps {
   activeTab: Tab;
+  listingsRecordId: string | null;
   approvalRecordId: string | null;
   shopifyApprovalRecordId: string | null;
   userRecordId: string | null;
+  navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
+  navigateToListingsList: (replace?: boolean) => void;
   navigateToApprovalRecord: (recordId: string, replace?: boolean) => void;
   navigateToApprovalList: (replace?: boolean) => void;
   navigateToShopifyApprovalRecord: (recordId: string, replace?: boolean) => void;

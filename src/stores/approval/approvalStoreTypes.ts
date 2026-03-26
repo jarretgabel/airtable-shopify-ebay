@@ -7,6 +7,7 @@ export interface ApprovalStore {
   saving: boolean;
   error: string | null;
   listingFormatOptions: string[];
+  listingDurationOptions: string[];
   formValues: Record<string, string>;
   fieldKinds: Record<string, ApprovalFieldKind>;
 

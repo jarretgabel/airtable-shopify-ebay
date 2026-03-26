@@ -5,8 +5,6 @@ import {
   getDropdownOptions,
   isAllowOffersField,
   isShippingServiceField,
-  SHIPPING_SERVICE_FIELD,
-  SHIPPING_SERVICE_OPTIONS,
 } from '@/stores/approvalStore';
 import { shopifyService } from '@/services/shopify';
 import { buildShopifyBodyHtml } from '@/services/shopifyBodyHtml';
@@ -82,6 +80,14 @@ function normalizeEbayListingFormat(value: string): string {
   return value.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_');
 }
 
+function normalizeEbayListingDuration(value: string): string {
+  const trimmed = value.trim().toUpperCase();
+  if (trimmed === 'GOOD TILL CANCEL' || trimmed === 'GTC') return 'GTC';
+  if (trimmed === '7 DAYS' || trimmed === 'DAYS_7') return 'DAYS_7';
+  if (trimmed === '10 DAYS' || trimmed === 'DAYS_10') return 'DAYS_10';
+  return value.trim();
+}
+
 function getEbayPriceFieldLabel(listingFormat: string): string {
   const normalized = normalizeEbayListingFormat(listingFormat);
   if (normalized === 'AUCTION') return 'Starting Auction Price';
@@ -91,7 +97,11 @@ function getEbayPriceFieldLabel(listingFormat: string): string {
 
 function toHumanReadableLabel(fieldName: string): string {
   if (fieldName === CONDITION_FIELD) return 'Condition';
-  if (fieldName.trim().toLowerCase() === 'ebay offer price value') return 'Buy It Now/Starting Price';
+  if (fieldName.trim().toLowerCase() === 'ebay offer price value') return 'eBay Price';
+  if (fieldName.trim().toLowerCase() === 'ebay price') return 'eBay Price';
+  if (fieldName.trim().toLowerCase() === 'shopify rest variant 1 price') return 'Shopify Price';
+  if (fieldName.trim().toLowerCase() === 'shopify price') return 'Shopify Price';
+  if (fieldName.trim().toLowerCase() === 'type') return 'Shopify Type';
 
   const withSpaces = fieldName
     .replace(/[_-]+/g, ' ')
@@ -134,7 +144,12 @@ function isReadOnlyApprovalField(fieldName: string): boolean {
 }
 
 function isShopifyTypeField(fieldName: string): boolean {
-  return fieldName.trim().toLowerCase() === 'type';
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'type' || normalized === 'shopify type';
+}
+
+function isShopifyTypesFreeformField(fieldName: string): boolean {
+  return fieldName.trim().toLowerCase() === 'shopify types';
 }
 
 function isShopifyCompoundTagsField(fieldName: string): boolean {
@@ -385,18 +400,21 @@ function isEbayFormatField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'ebay offer format'
     || normalized === 'ebay_offer_format'
+    || normalized === 'ebay listing format'
+    || normalized === 'ebay_listing_format'
     || normalized === 'listing format'
-    || normalized === 'status';
+    || normalized === 'status'
+    || (normalized.includes('listing') && normalized.includes('format'))
+    || (normalized.includes('ebay') && normalized.includes('format') && !normalized.includes('body') && !normalized.includes('template'));
 }
 
 function isEbayListingDurationField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
-  return normalized === 'ebay offer listing duration'
-    || normalized === 'ebay listing duration'
+  return normalized === 'ebay listing duration'
     || normalized === 'listing duration'
     || normalized === 'duration'
-    || normalized === 'ebay_offer_listingduration'
-    || normalized === 'ebay_offer_listing_duration';
+    || (normalized.includes('listing') && normalized.includes('duration'))
+    || (normalized.includes('ebay') && normalized.includes('duration'));
 }
 
 function getEbayListingDurationLabel(value: string): string {
@@ -806,12 +824,15 @@ function isEbayKeyFeaturesField(fieldName: string): boolean {
 
 function isShopifyBodyHtmlPrimaryField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
   return normalized === 'shopify rest body html'
     || normalized === 'shopify body html'
+    || normalized === 'shopify body (html)'
     || normalized === 'body html'
     || normalized === 'body (html)'
     || normalized === 'body_html'
-    || normalized === 'shopify_rest_body_html';
+    || normalized === 'shopify_rest_body_html'
+    || compact === 'shopifybodyhtml';
 }
 
 function isShopifyBodyHtmlTemplateField(fieldName: string): boolean {
@@ -824,11 +845,14 @@ function isShopifyBodyHtmlTemplateField(fieldName: string): boolean {
 
 function isEbayBodyHtmlField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
   return normalized === 'body html'
     || normalized === 'body (html)'
     || normalized === 'body_html'
     || normalized === 'ebay body html'
-    || normalized === 'ebay_body_html';
+    || normalized === 'ebay body (html)'
+    || normalized === 'ebay_body_html'
+    || compact === 'ebaybodyhtml';
 }
 
 function isEbayBodyHtmlTemplateField(fieldName: string): boolean {
@@ -961,6 +985,13 @@ function isGenericImageScalarField(fieldName: string): boolean {
     || isGenericImageAltField(fieldName);
 }
 
+function isHiddenCombinedFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase().replace(/\s+/g, ' ');
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'images (comma separated) 2'
+    || compact === 'imagescommaseparated2';
+}
+
 function isEbayInventoryImageUrlsField(fieldName: string): boolean {
   const normalized = normalizeImageFieldName(fieldName);
   return normalized === 'ebay inventory product image urls json'
@@ -1091,8 +1122,9 @@ function isImageUrlListField(fieldName: string): boolean {
 
 interface ApprovalFormFieldsProps {
   recordId?: string;
-  approvalChannel?: 'shopify' | 'ebay';
+  approvalChannel?: 'shopify' | 'ebay' | 'combined';
   forceShowShopifyCollectionsEditor?: boolean;
+  isCombinedApproval?: boolean;
   allFieldNames: string[];
   writableFieldNames?: string[];
   requiredFieldNames?: string[];
@@ -1100,6 +1132,7 @@ interface ApprovalFormFieldsProps {
   formValues: Record<string, string>;
   fieldKinds: Record<string, 'boolean' | 'number' | 'json' | 'text'>;
   listingFormatOptions: string[];
+  listingDurationOptions?: string[];
   saving: boolean;
   setFormValue: (fieldName: string, value: string) => void;
   suppressImageScalarFields?: boolean;
@@ -1120,7 +1153,6 @@ function isScalarImageField(fieldName: string): boolean {
 function isConditionMirrorSourceField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'item condition'
-    || normalized === 'condition'
     || normalized === 'shopify condition'
     || normalized === 'shopify rest condition'
     || normalized === 'ebay inventory condition';
@@ -1143,7 +1175,7 @@ function isFormatLikeField(fieldName: string): boolean {
     || normalized === 'status';
 }
 
-function prioritizeTitleBeforePrice(fieldNames: string[], approvalChannel?: 'shopify' | 'ebay'): string[] {
+function prioritizeTitleBeforePrice(fieldNames: string[], approvalChannel?: 'shopify' | 'ebay' | 'combined'): string[] {
   return [...fieldNames].sort((left, right) => {
     const getPriority = (fieldName: string): number => {
       if (isTitleLikeField(fieldName)) return 0;
@@ -1160,6 +1192,7 @@ export function ApprovalFormFields({
   recordId,
   approvalChannel,
   forceShowShopifyCollectionsEditor = false,
+  isCombinedApproval = false,
   allFieldNames,
   writableFieldNames = [],
   requiredFieldNames = [],
@@ -1167,6 +1200,7 @@ export function ApprovalFormFields({
   formValues,
   fieldKinds,
   listingFormatOptions,
+  listingDurationOptions = [],
   saving,
   setFormValue,
   suppressImageScalarFields = false,
@@ -1229,8 +1263,30 @@ export function ApprovalFormFields({
     </span>
   );
 
+  const preferredShopifyPriceFieldName = useMemo(
+    () => pickPreferredField(
+      allFieldNames.filter((fieldName) => {
+        const normalized = fieldName.trim().toLowerCase();
+        return normalized === 'shopify rest variant 1 price'
+          || normalized === 'shopify variant 1 price'
+          || normalized === 'shopify_rest_variant_1_price'
+          || normalized === 'shopify price'
+          || normalized === 'price';
+      }),
+      [
+        'Shopify REST Variant 1 Price',
+        'Shopify Variant 1 Price',
+        'shopify_rest_variant_1_price',
+        'Shopify Price',
+        'Price',
+      ],
+      formValues,
+    ),
+    [allFieldNames, formValues],
+  );
+
   const imageUrlSourceField = pickPreferredField(
-    allFieldNames.filter((fieldName) => isGenericImageUrlField(fieldName)),
+    allFieldNames.filter((fieldName) => !isHiddenCombinedFieldName(fieldName) && isGenericImageUrlField(fieldName)),
     ['Images', 'images', 'Image URLs', 'image_urls', 'Image URL', 'image_url'],
     formValues,
   );
@@ -1363,7 +1419,7 @@ export function ApprovalFormFields({
       secondaryCategoryFieldName: ebaySecondaryCategoryFieldName,
     }, setFormValue);
   };
-  const hasCanonicalConditionField = allFieldNames.some((fieldName) => fieldName.trim().toLowerCase() === CONDITION_FIELD.toLowerCase());
+  const hasCanonicalConditionField = allFieldNames.some((fieldName) => fieldName.trim().toLowerCase() === 'condition');
   const isShopifyApprovalForm = approvalChannel === 'shopify';
   const isEbayApprovalForm = approvalChannel === 'ebay';
   useEffect(() => {
@@ -1393,10 +1449,10 @@ export function ApprovalFormFields({
   const ebayBodyDescriptionFieldName = isEbayApprovalForm
     ? allFieldNames.find((fieldName) => isEbayBodyDescriptionField(fieldName))
     : undefined;
-  const shopifyKeyFeaturesFieldName = isShopifyApprovalForm
+  const shopifyKeyFeaturesFieldName = (!isCombinedApproval && isShopifyApprovalForm)
     ? allFieldNames.find((fieldName) => isShopifyKeyFeaturesField(fieldName))
     : undefined;
-  const ebayKeyFeaturesFieldName = isEbayApprovalForm
+  const ebayKeyFeaturesFieldName = (!isCombinedApproval && isEbayApprovalForm)
     ? allFieldNames.find((fieldName) => isEbayKeyFeaturesField(fieldName))
     : undefined;
   const shopifyBodyHtmlFieldName = isShopifyApprovalForm
@@ -1860,7 +1916,10 @@ export function ApprovalFormFields({
   }
 
   function renderStandardField(fieldName: string): JSX.Element | null {
-    if (isShippingServiceField(fieldName)) return null;
+    if (isCombinedApproval && isHiddenCombinedFieldName(fieldName)) return null;
+    if (isShopifyTypesFreeformField(fieldName)) return null;
+    // Allow shipping services in eBay-specific sections; hide in shared/Shopify sections
+    if (isShippingServiceField(fieldName) && approvalChannel !== 'ebay') return null;
     if (fieldName === approvedFieldName) return null;
     if (isHiddenApprovalField(fieldName)) return null;
     if (hasShopifyTagEditor && (isShopifyCompoundTagsField(fieldName) || isShopifySingleTagField(fieldName))) return null;
@@ -1871,6 +1930,8 @@ export function ApprovalFormFields({
     if (shopifyBodyHtmlTemplateFieldName && fieldName === shopifyBodyHtmlTemplateFieldName) return null;
     if (ebayBodyHtmlFieldName && fieldName === ebayBodyHtmlFieldName) return null;
     if (ebayBodyHtmlTemplateFieldName && fieldName === ebayBodyHtmlTemplateFieldName) return null;
+    // Suppress all key features fields - they're handled by dedicated editors
+    if (isShopifyKeyFeaturesField(fieldName) || isEbayKeyFeaturesField(fieldName)) return null;
     if (shopifyKeyFeaturesFieldName && fieldName === shopifyKeyFeaturesFieldName) return null;
     if (ebayKeyFeaturesFieldName && fieldName === ebayKeyFeaturesFieldName) return null;
     if (hasEbayCategoryEditor && (
@@ -1879,13 +1940,36 @@ export function ApprovalFormFields({
       || fieldName === ebayCategoriesFieldName
       || fieldName === effectiveEbayCategoriesFieldName
     )) return null;
+    // Suppress image list fields from channel-specific sections (they belong in shared section)
+    if (approvalChannel === 'shopify') {
+      if (isImageUrlListField(fieldName)) return null;
+    }
+    if (approvalChannel === 'ebay') {
+      if (isImageUrlListField(fieldName)) return null;
+    }
     if (isEbayInventoryImageUrlsField(fieldName)) return null;
     if (isEbayPhotoCountMaxField(fieldName)) return null;
+    // Exclude non-preferred Shopify price fields to avoid duplicates
+    if (preferredShopifyPriceFieldName) {
+      const normalized = fieldName.trim().toLowerCase();
+      const isPriceCandidate = normalized === 'shopify rest variant 1 price'
+        || normalized === 'shopify variant 1 price'
+        || normalized === 'shopify_rest_variant_1_price'
+        || normalized === 'shopify price'
+        || normalized === 'price';
+      if (isPriceCandidate && fieldName !== preferredShopifyPriceFieldName) {
+        return null;
+      }
+    }
     if (approvalChannel === 'shopify' && imageUrlSourceField && fieldName === imageUrlSourceField) return null;
+    if (isCombinedApproval && imageUrlSourceField && fieldName === imageUrlSourceField) return null;
     if (isGenericImageScalarField(fieldName)) return null;
     if (useCombinedImageAltEditor && fieldName === imageAltTextSourceField) return null;
     if (suppressImageScalarFields && isScalarImageField(fieldName)) return null;
-    if (hasCanonicalConditionField && fieldName !== CONDITION_FIELD && isConditionMirrorSourceField(fieldName)) return null;
+    if (hasCanonicalConditionField && fieldName.trim().toLowerCase() !== 'condition' && isConditionMirrorSourceField(fieldName)) return null;
+    // Exclude 'Shopify Type' variants except those handled by the special type editor
+    const normalizedType = fieldName.trim().toLowerCase();
+    if (normalizedType.includes('shopify') && normalizedType.includes('type') && normalizedType !== 'shopify types' && !isShopifyTypeField(fieldName)) return null;
 
     const value = formValues[fieldName] ?? '';
     const kind = fieldKinds[fieldName] ?? 'text';
@@ -1893,8 +1977,13 @@ export function ApprovalFormFields({
     const inputDisabled = saving || readOnlyField;
     const isLongText = kind === 'json' || value.length > 120;
     const booleanLike = isBooleanLikeValue(value);
-    const dropdownOptions =
-      fieldName.trim().toLowerCase() === 'listing format' ? listingFormatOptions : getDropdownOptions(fieldName);
+    const isListingFormatField = isEbayFormatField(fieldName);
+    const isListingDurationField = isEbayListingDurationField(fieldName);
+    const dropdownOptions = isListingFormatField
+      ? listingFormatOptions
+      : (isListingDurationField && listingDurationOptions)
+        ? listingDurationOptions
+        : getDropdownOptions(fieldName);
 
     if (isAllowOffersField(fieldName) || kind === 'boolean' || booleanLike) {
       const normalizedBooleanValue = value.trim().toLowerCase() === 'true' ? 'true' : 'false';
@@ -1916,22 +2005,28 @@ export function ApprovalFormFields({
 
     if (dropdownOptions) {
       const optionSet = new Set(dropdownOptions);
-      const options = value && !optionSet.has(value) ? [value, ...dropdownOptions] : dropdownOptions;
-      const isEbayDurationSelect = isEbayListingDurationField(fieldName);
+      const options = value && !optionSet.has(value) && !optionSet.has(normalizeEbayListingDuration(value)) ? [value, ...dropdownOptions] : dropdownOptions;
+      const isListingDurationField = isEbayListingDurationField(fieldName);
+      const normalizedValue = isListingDurationField ? normalizeEbayListingDuration(value) : value;
+      const displayValue = isListingDurationField ? getEbayListingDurationLabel(normalizedValue) : normalizedValue;
 
       return (
         <label key={fieldName} className="flex flex-col gap-2">
           {renderFieldLabel(fieldName)}
           <select
             className={getInputClassName(fieldName)}
-            value={value}
-            onChange={(event) => setFormValue(fieldName, event.target.value)}
+            value={displayValue}
+            onChange={(event) => {
+              const selectedLabel = event.target.value;
+              const storeValue = isListingDurationField ? normalizeEbayListingDuration(selectedLabel) : selectedLabel;
+              setFormValue(fieldName, storeValue);
+            }}
             disabled={inputDisabled}
           >
             <option value="">Select an option</option>
-            {options.map((option) => (
+            {options.map((option: string) => (
               <option key={option} value={option}>
-                {isEbayDurationSelect ? getEbayListingDurationLabel(option) : option}
+                {option}
               </option>
             ))}
           </select>
@@ -2016,6 +2111,28 @@ export function ApprovalFormFields({
 
       {pinnedPreDescriptionFieldName && renderStandardField(pinnedPreDescriptionFieldName)}
 
+      {imageUrlSourceField && (
+        <ImageUrlListEditor
+          key={imageUrlSourceField}
+          fieldLabel="Images"
+          value={useCombinedImageAltEditor ? combinedImageEditorValue : (formValues[imageUrlSourceField] ?? '')}
+          onChange={(newValue) => {
+            if (!useCombinedImageAltEditor || !imageAltTextSourceField) {
+              setFormValue(imageUrlSourceField, newValue);
+              return;
+            }
+
+            const rows = parseImageEditorRows(newValue);
+            const urls = rows.map((row) => row.src).filter((value) => value.length > 0);
+            const alts = rows.map((row) => row.alt);
+
+            setFormValue(imageUrlSourceField, toCommaSeparatedImageValues(urls));
+            setFormValue(imageAltTextSourceField, toCommaSeparatedImageValues(alts));
+          }}
+          disabled={saving || isReadOnlyApprovalField(imageUrlSourceField)}
+        />
+      )}
+
       {activeBodyDescriptionFieldName && (
         <label className="col-span-1 flex flex-col gap-2 md:col-span-2">
           {renderSpecialLabel('Description', activeBodyDescriptionFieldName)}
@@ -2086,45 +2203,6 @@ export function ApprovalFormFields({
       {optionalOrderedFieldNames
         .filter((fieldName) => fieldName !== pinnedPreDescriptionFieldName)
         .map(renderStandardField)}
-
-      <label className="flex flex-col gap-2">
-        <span className={labelClass}>Shipping Services</span>
-        <select
-          className={inputBaseClass}
-          value={formValues[SHIPPING_SERVICE_FIELD] ?? ''}
-          onChange={(event) => setFormValue(SHIPPING_SERVICE_FIELD, event.target.value)}
-          disabled={saving}
-        >
-          <option value="">Select an option</option>
-          {SHIPPING_SERVICE_OPTIONS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      {imageUrlSourceField && (
-        <ImageUrlListEditor
-          key={imageUrlSourceField}
-          fieldLabel="Images"
-          value={useCombinedImageAltEditor ? combinedImageEditorValue : (formValues[imageUrlSourceField] ?? '')}
-          onChange={(newValue) => {
-            if (!useCombinedImageAltEditor || !imageAltTextSourceField) {
-              setFormValue(imageUrlSourceField, newValue);
-              return;
-            }
-
-            const rows = parseImageEditorRows(newValue);
-            const urls = rows.map((row) => row.src).filter((value) => value.length > 0);
-            const alts = rows.map((row) => row.alt);
-
-            setFormValue(imageUrlSourceField, toCommaSeparatedImageValues(urls));
-            setFormValue(imageAltTextSourceField, toCommaSeparatedImageValues(alts));
-          }}
-          disabled={saving || isReadOnlyApprovalField(imageUrlSourceField)}
-        />
-      )}
     </div>
   );
 }

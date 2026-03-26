@@ -44,8 +44,11 @@ export function useAuthRouteGuard({
     const isKnownTabPath = isTab(normalizedPath.slice(1));
     const isApprovalDetailPath = /^\/ebay\/approval\/[^/]+$/.test(normalizedPath);
     const isShopifyApprovalDetailPath = /^\/shopify\/approval\/[^/]+$/.test(normalizedPath);
+    const isListingsDetailPath = /^\/listings\/[^/]+$/.test(normalizedPath);
     const isUserDetailPath = /^\/account\/users\/[^/]+$/.test(normalizedPath);
     const isKnownSubPath =
+      normalizedPath === '/listings' ||
+      isListingsDetailPath ||
       normalizedPath === '/ebay/listings' ||
       normalizedPath === '/ebay/approval' ||
       isApprovalDetailPath ||
@@ -64,6 +67,8 @@ export function useAuthRouteGuard({
     const requestedTab: Tab | null =
       normalizedPath === '/ebay/approval' || isApprovalDetailPath
         ? 'approval'
+        : normalizedPath === '/listings' || isListingsDetailPath
+          ? 'listings'
         : normalizedPath === '/shopify/approval' || isShopifyApprovalDetailPath
           ? 'shopify-approval'
           : normalizedPath === '/ebay/listings'

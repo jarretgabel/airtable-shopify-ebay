@@ -10,7 +10,12 @@ import {
 } from '@/components/imagelab/ImageLabPanels';
 import { useImageLabItems } from '@/components/imagelab/useImageLabItems';
 
-export function ImageLab() {
+export interface ImageLabProps {
+  onShopifyImagesUpdate?: (imageUrls: string[]) => void;
+  onEbayImagesUpdate?: (imageUrls: string[]) => void;
+}
+
+export function ImageLab({ onShopifyImagesUpdate, onEbayImagesUpdate }: ImageLabProps) {
   const [opts, setOpts] = useState<ProcessingOptions>(DEFAULT_OPTIONS);
   const { provider: aiProvider } = getAIProvider();
   const aiEnabled = aiProvider !== 'none';
@@ -36,7 +41,7 @@ export function ImageLab() {
     hasIdleToIdentify,
     hasItemsToProcess,
     sessionStats,
-  } = useImageLabItems(opts);
+  } = useImageLabItems(opts, { onShopifyImagesUpdate, onEbayImagesUpdate });
 
   return (
     <div className="flex flex-col gap-4 pt-1">

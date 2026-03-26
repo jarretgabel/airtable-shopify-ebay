@@ -35,6 +35,11 @@ interface UseImageLabItemsResult {
   sessionStats: ReturnType<typeof buildImageLabSessionStats>;
 }
 
+interface UseImageLabItemsOptions {
+  onShopifyImagesUpdate?: (imageUrls: string[]) => void;
+  onEbayImagesUpdate?: (imageUrls: string[]) => void;
+}
+
 function buildUploadFile(item: ImageItem): { file: File; assetLabel: string } {
   if (item.processed) {
     return {
@@ -51,7 +56,7 @@ function buildUploadFile(item: ImageItem): { file: File; assetLabel: string } {
   };
 }
 
-export function useImageLabItems(options: ProcessingOptions): UseImageLabItemsResult {
+export function useImageLabItems(options: ProcessingOptions, imageUpdateCallbacks?: UseImageLabItemsOptions): UseImageLabItemsResult {
   const [items, setItems] = useState<ImageItem[]>([]);
   const [dragging, setDragging] = useState(false);
   const [copyId, setCopyId] = useState<string | null>(null);
@@ -222,6 +227,18 @@ export function useImageLabItems(options: ProcessingOptions): UseImageLabItemsRe
           },
         },
       });
+
+      // After successful upload, collect all successful Shopify uploads and invoke callback
+      if (imageUpdateCallbacks?.onShopifyImagesUpdate) {
+        const allShopifyUrls = itemsRef.current
+          .filter((item) => item.uploads?.shopify?.status === 'done' && item.uploads.shopify.url)
+          .map((item) => item.uploads!.shopify!.url!)
+          .filter((url): url is string => typeof url === 'string' && url.length > 0);
+
+        if (allShopifyUrls.length > 0) {
+          imageUpdateCallbacks.onShopifyImagesUpdate(allShopifyUrls);
+        }
+      }
     } catch (error) {
       updateItem(id, {
         uploads: {
@@ -234,7 +251,7 @@ export function useImageLabItems(options: ProcessingOptions): UseImageLabItemsRe
         },
       });
     }
-  }, [updateItem]);
+  }, [updateItem, imageUpdateCallbacks]);
 
   const uploadToEbay = useCallback(async (id: string) => {
     const item = itemsRef.current.find((candidate) => candidate.id === id);
@@ -264,6 +281,18 @@ export function useImageLabItems(options: ProcessingOptions): UseImageLabItemsRe
           },
         },
       });
+
+      // After successful upload, collect all successful eBay uploads and invoke callback
+      if (imageUpdateCallbacks?.onEbayImagesUpdate) {
+        const allEbayUrls = itemsRef.current
+          .filter((item) => item.uploads?.ebay?.status === 'done' && item.uploads.ebay.url)
+          .map((item) => item.uploads!.ebay!.url!)
+          .filter((url): url is string => typeof url === 'string' && url.length > 0);
+
+        if (allEbayUrls.length > 0) {
+          imageUpdateCallbacks.onEbayImagesUpdate(allEbayUrls);
+        }
+      }
     } catch (error) {
       updateItem(id, {
         uploads: {
@@ -276,7 +305,7 @@ export function useImageLabItems(options: ProcessingOptions): UseImageLabItemsRe
         },
       });
     }
-  }, [updateItem]);
+  }, [updateItem, imageUpdateCallbacks]);
 
   const sessionStats = useMemo(() => buildImageLabSessionStats(items), [items]);
   const hasBusy = items.some((item) => item.status === 'identifying' || item.status === 'processing');

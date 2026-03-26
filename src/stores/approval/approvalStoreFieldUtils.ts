@@ -166,6 +166,19 @@ export function resolveListingFormatOptions(formats: string[]): string[] {
     .filter((format) => format.length > 0);
 }
 
+function normalizeEbayListingDuration(raw: string): string {
+  const normalized = raw.trim().toUpperCase();
+  if (normalized === 'GTC') return 'Good Till Cancel';
+  if (normalized === 'DAYS_7') return '7 Days';
+  if (normalized === 'DAYS_10') return '10 Days';
+  return raw.trim();
+}
+
+export function resolveListingDurationOptions(durations: string[]): string[] {
+  return Array.from(new Set([...EBAY_LISTING_DURATION_OPTIONS.map(normalizeEbayListingDuration), ...durations.map(normalizeEbayListingDuration)]))
+    .filter((duration) => duration.length > 0);
+}
+
 export function mapShippingServiceToFields(values: Record<string, string>): Record<string, string> {
   const selected = values[SHIPPING_SERVICE_FIELD] ?? '';
   return {

@@ -4,6 +4,7 @@ import type { ApprovalTabViewModel } from '@/app/appTabViewModels';
 import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
+import { KeyFeaturesEditor } from '@/components/approval/KeyFeaturesEditor';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
 import airtableService from '@/services/airtable';
 import {
@@ -39,7 +40,7 @@ interface ListingApprovalTabProps {
   tableReference?: string;
   tableName?: string;
   createShopifyDraftOnApprove?: boolean;
-  approvalChannel?: 'shopify' | 'ebay';
+  approvalChannel?: 'shopify' | 'ebay' | 'combined';
 }
 
 interface ShopifyCategoryResolutionState {
@@ -77,6 +78,14 @@ const SHOPIFY_SEARCH_TAXONOMY_CATEGORIES_QUERY = `query SearchTaxonomyCategories
   }
 }`;
 
+const CONDITION_FIELD_CANDIDATES = [
+  '__Condition__',
+  'Condition',
+  'Item Condition',
+  'condition',
+  'item_condition',
+] as const;
+
 const SHOPIFY_IMAGE_LIST_FIELD_CANDIDATES = [
   'Shopify REST Images JSON',
   'shopify_rest_images_json',
@@ -112,6 +121,7 @@ const SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES = [
 const SHOPIFY_BODY_HTML_FIELD_CANDIDATES = [
   'Shopify REST Body HTML',
   'Shopify Body HTML',
+  'Shopify Body (HTML)',
   'Shopify GraphQL Description HTML',
   'Body (HTML)',
   'Body HTML',
@@ -159,6 +169,7 @@ const SHOPIFY_PRICE_FIELD_CANDIDATES = [
 ] as const;
 
 const SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES = [
+  'Shopify Type',
   'Type',
   'Product Type',
   'Shopify REST Product Type',
@@ -243,6 +254,11 @@ const EBAY_FORMAT_FIELD_CANDIDATES = [
   'Status',
 ] as const;
 
+const EBAY_DURATION_FIELD_CANDIDATES = [
+  'eBay Listing Duration',
+  'Listing Duration',
+] as const;
+
 const EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES = [
   'eBay Offer Primary Category ID',
   'eBay Offer PrimaryCategoryID',
@@ -294,6 +310,7 @@ const EBAY_BODY_HTML_FIELD_CANDIDATES = [
   'Body (HTML)',
   'body_html',
   'eBay Body HTML',
+  'eBay Body (HTML)',
   'ebay_body_html',
 ] as const;
 
@@ -308,12 +325,6 @@ const EBAY_BODY_HTML_TEMPLATE_FIELD_CANDIDATES = [
 ] as const;
 
 type EbayListingTemplateId = 'classic' | 'impact-slate' | 'impact-luxe';
-
-const EBAY_LISTING_TEMPLATE_OPTIONS: ReadonlyArray<{ id: EbayListingTemplateId; label: string }> = [
-  { id: 'classic', label: 'Classic Heritage' },
-  { id: 'impact-slate', label: 'Impact Slate' },
-  { id: 'impact-luxe', label: 'Impact Luxe' },
-] as const;
 
 const EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES = [
   'Key Features (Key, Value)',
@@ -557,6 +568,59 @@ function isShopifyGraphqlCollectionIdsFieldName(fieldName: string): boolean {
     || /^shopify_graphql_collection_\d+_id$/.test(normalized);
 }
 
+function isShopifyOnlyFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  if (normalized === 'description') return false;
+  if (normalized.includes('key feature')) return false;
+  return normalized.includes('shopify')
+    || normalized.includes('collection')
+    || normalized.includes('published scope')
+    || normalized.includes('published at')
+    || normalized.includes('template suffix')
+    || normalized.includes('metafield')
+    || normalized === 'type'
+    || normalized === 'product type';
+}
+
+function isEbayOnlyFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  if (normalized === 'description') return false;
+  if (normalized.includes('key feature')) return false;
+  return normalized.includes('ebay')
+    || normalized.includes('buy it now')
+    || normalized.includes('starting bid')
+    || normalized.includes('listing duration')
+    || normalized.includes('duration')
+    || normalized.includes('listing format')
+    || normalized.includes('format')
+    || normalized === 'status'
+    || normalized.includes('primary category')
+    || normalized.includes('secondary category')
+    || normalized.includes('merchant location')
+    || normalized.includes('fulfillment policy')
+    || normalized.includes('payment policy')
+    || normalized.includes('return policy');
+}
+
+function isGenericSharedKeyFeaturesFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'key features'
+    || normalized === 'key features json'
+    || normalized === 'features'
+    || normalized === 'features json';
+}
+
+function isHiddenCombinedFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase().replace(/\s+/g, ' ');
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'images (comma separated) 2'
+    || compact === 'imagescommaseparated2'
+    || normalized === 'primary category name'
+    || normalized === 'secondary category name'
+    || normalized === 'ebay offer primary category name'
+    || normalized === 'ebay offer secondary category name';
+}
+
 function normalizeShopifyCollectionIdForPayload(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return '';
@@ -696,6 +760,7 @@ export function ListingApprovalTab({
   const tableName = propTableName
     || (import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_NAME as string | undefined)?.trim()
     || (import.meta.env.VITE_AIRTABLE_TABLE_NAME as string | undefined)?.trim();
+  const isCombinedApproval = approvalChannel === 'combined';
 
   const {
     records,
@@ -703,6 +768,7 @@ export function ListingApprovalTab({
     saving,
     error,
     listingFormatOptions,
+    listingDurationOptions,
     formValues,
     fieldKinds,
     setFormValue,
@@ -774,7 +840,17 @@ export function ListingApprovalTab({
   const allFieldNames = useMemo(() => {
     const names = new Set<string>(actualFieldNames);
 
-    if (approvalChannel === 'shopify') {
+    // Add condition field to all approval channels
+    const existingNames = Array.from(names);
+    const existingLower = new Set(existingNames.map((name) => name.toLowerCase()));
+    const preferredConditionField = existingNames.find((name) =>
+      CONDITION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+    ) ?? CONDITION_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+    if (preferredConditionField) {
+      names.add(preferredConditionField);
+    }
+
+    if (approvalChannel === 'shopify' || approvalChannel === 'combined') {
       const existingNames = Array.from(names);
       const existingLower = new Set(existingNames.map((name) => name.toLowerCase()));
       const preferredTitleField = existingNames.find((name) =>
@@ -828,7 +904,7 @@ export function ListingApprovalTab({
       }
     }
 
-    if (approvalChannel === 'ebay') {
+    if (approvalChannel === 'ebay' || approvalChannel === 'combined') {
       const existingNames = Array.from(names);
       const existingLower = new Set(existingNames.map((name) => name.toLowerCase()));
 
@@ -858,6 +934,16 @@ export function ListingApprovalTab({
         EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       ) ?? (existingLower.has('key features (key, value)') ? null : 'Key Features (Key, Value)');
       if (preferredKeyFeaturesField) names.add(preferredKeyFeaturesField);
+
+      const preferredFormatField = existingNames.find((name) =>
+        EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_FORMAT_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredFormatField) names.add(preferredFormatField);
+
+      const preferredDurationField = existingNames.find((name) =>
+        EBAY_DURATION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_DURATION_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredDurationField) names.add(preferredDurationField);
 
       const preferredPrimaryCategoryField = existingNames.find((name) =>
         EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
@@ -948,6 +1034,116 @@ export function ListingApprovalTab({
     [records, selectedRecordId],
   );
 
+  const selectedRecordFieldNames = useMemo(() => {
+    const names = new Set<string>(allFieldNames);
+    Object.keys(selectedRecord?.fields ?? {}).forEach((fieldName) => names.add(fieldName));
+    return Array.from(names).sort((left, right) => left.localeCompare(right));
+  }, [allFieldNames, selectedRecord]);
+
+  const combinedDescriptionFieldName = useMemo(() => {
+    if (!isCombinedApproval) return '';
+    const exact = selectedRecordFieldNames.find((fieldName) => fieldName.trim().toLowerCase() === 'description');
+    if (exact) return exact;
+    return selectedRecordFieldNames.find((fieldName) =>
+      SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase())
+      || EBAY_DESCRIPTION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
+    ) ?? '';
+  }, [isCombinedApproval, selectedRecordFieldNames]);
+
+  const combinedSharedKeyFeaturesFieldName = useMemo(() => {
+    if (!isCombinedApproval) return '';
+    const exact = selectedRecordFieldNames.find((fieldName) => isGenericSharedKeyFeaturesFieldName(fieldName));
+    if (exact) return exact;
+    return selectedRecordFieldNames.find((fieldName) => fieldName.toLowerCase().includes('key feature')) ?? '';
+  }, [isCombinedApproval, selectedRecordFieldNames]);
+
+  const combinedShopifyBodyHtmlFieldName = useMemo(() => {
+    if (!isCombinedApproval) return '';
+    return selectedRecordFieldNames.find((fieldName) =>
+      SHOPIFY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
+    ) ?? '';
+  }, [isCombinedApproval, selectedRecordFieldNames]);
+
+  const combinedEbayBodyHtmlFieldName = useMemo(() => {
+    if (!isCombinedApproval) return '';
+    return findEbayBodyHtmlFieldName(selectedRecordFieldNames);
+  }, [isCombinedApproval, selectedRecordFieldNames]);
+
+  const combinedShopifyBodyHtmlValue = useMemo(
+    () => (combinedShopifyBodyHtmlFieldName ? (formValues[combinedShopifyBodyHtmlFieldName] ?? '') : ''),
+    [combinedShopifyBodyHtmlFieldName, formValues],
+  );
+
+  const combinedEbayBodyHtmlValue = useMemo(
+    () => (combinedEbayBodyHtmlFieldName ? (formValues[combinedEbayBodyHtmlFieldName] ?? '') : ''),
+    [combinedEbayBodyHtmlFieldName, formValues],
+  );
+
+  const combinedShopifyOnlyFieldNames = useMemo(() => {
+    if (!isCombinedApproval) return [] as string[];
+    const normalizedShopifyPriceCandidates = new Set(SHOPIFY_PRICE_FIELD_CANDIDATES.map((candidate) => candidate.toLowerCase()));
+    const shopifyPriceFields = selectedRecordFieldNames.filter((fieldName) =>
+      normalizedShopifyPriceCandidates.has(fieldName.toLowerCase()),
+    );
+
+    const chosenShopifyPriceFieldName = (() => {
+      if (shopifyPriceFields.length <= 1) return '';
+
+      const firstWithValue = shopifyPriceFields.find((fieldName) => {
+        const currentValue = formValues[fieldName];
+        if (typeof currentValue === 'string' && currentValue.trim().length > 0) return true;
+
+        const recordValue = selectedRecord?.fields[fieldName];
+        return toFormValue(recordValue).trim().length > 0;
+      });
+
+      return firstWithValue ?? shopifyPriceFields[0] ?? '';
+    })();
+
+    return selectedRecordFieldNames.filter((fieldName) => {
+      const normalized = fieldName.trim().toLowerCase();
+      if (isHiddenCombinedFieldName(fieldName)) return false;
+      if (!isShopifyOnlyFieldName(fieldName) || isEbayOnlyFieldName(fieldName)) return false;
+      if (chosenShopifyPriceFieldName && shopifyPriceFields.includes(fieldName) && fieldName !== chosenShopifyPriceFieldName) return false;
+      if (normalized === 'product type') return false;
+      if (SHOPIFY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
+      return true;
+    });
+  }, [formValues, isCombinedApproval, selectedRecord, selectedRecordFieldNames]);
+
+  const combinedEbayOnlyFieldNames = useMemo(() => {
+    if (!isCombinedApproval) return [] as string[];
+    return selectedRecordFieldNames.filter((fieldName) => {
+      const normalized = fieldName.trim().toLowerCase();
+      if (isHiddenCombinedFieldName(fieldName)) return false;
+      if (!isEbayOnlyFieldName(fieldName) || isShopifyOnlyFieldName(fieldName)) return false;
+      if (normalized.includes('primary category') || normalized.includes('secondary category')) return false;
+      if (EBAY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
+      return true;
+    });
+  }, [isCombinedApproval, selectedRecordFieldNames]);
+
+  const combinedSharedFieldNames = useMemo(() => {
+    if (!isCombinedApproval) return allFieldNames;
+    const shopifyOnlySet = new Set(combinedShopifyOnlyFieldNames.map((fieldName) => fieldName.toLowerCase()));
+    const ebayOnlySet = new Set(combinedEbayOnlyFieldNames.map((fieldName) => fieldName.toLowerCase()));
+    const conditionCandidateSet = new Set(CONDITION_FIELD_CANDIDATES.map((fieldName) => fieldName.toLowerCase()));
+    return selectedRecordFieldNames.filter((fieldName) => {
+      const normalized = fieldName.trim().toLowerCase();
+      if (isHiddenCombinedFieldName(fieldName)) return false;
+      if (shopifyOnlySet.has(normalized) || ebayOnlySet.has(normalized)) return false;
+      if (EBAY_CATEGORIES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
+      if (normalized === 'template name') return false;
+      if (combinedDescriptionFieldName && normalized === combinedDescriptionFieldName.toLowerCase()) return false;
+      if (combinedSharedKeyFeaturesFieldName && normalized === combinedSharedKeyFeaturesFieldName.toLowerCase()) return false;
+      if (SHOPIFY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
+      if (EBAY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
+      // Exclude duplicate real condition fields (but keep the synthetic CONDITION_FIELD) to avoid duplicates
+      if (conditionCandidateSet.has(normalized) && allFieldNames.includes(CONDITION_FIELD) && fieldName !== CONDITION_FIELD) return false;
+      return true;
+    });
+  }, [allFieldNames, combinedDescriptionFieldName, combinedEbayOnlyFieldNames, combinedSharedKeyFeaturesFieldName, combinedShopifyOnlyFieldNames, isCombinedApproval, selectedRecordFieldNames]);
+
   useEffect(() => {
     clearAllInlineNoticeTimers();
     setInlineActionNotices([]);
@@ -973,16 +1169,19 @@ export function ListingApprovalTab({
     return merged;
   }, [selectedRecord, formValues, fieldKinds]);
 
+  const isShopifyPayloadPreviewContext = approvalChannel === 'shopify' || approvalChannel === 'combined';
+  const isEbayPayloadPreviewContext = approvalChannel === 'ebay' || approvalChannel === 'combined';
+
   const normalizedShopifyDraftProduct = useMemo(() => {
-    if (approvalChannel !== 'shopify' || !createShopifyDraftOnApprove || !mergedDraftSourceFields) return null;
+    if (!isShopifyPayloadPreviewContext || !mergedDraftSourceFields) return null;
     const draftProduct = buildShopifyDraftProductFromApprovalFields(mergedDraftSourceFields);
     return normalizeShopifyProductForUpsert(draftProduct);
-  }, [approvalChannel, createShopifyDraftOnApprove, mergedDraftSourceFields]);
+  }, [isShopifyPayloadPreviewContext, mergedDraftSourceFields]);
 
   const currentPageDraftProduct = useMemo(() => {
-    if (approvalChannel !== 'shopify' || !mergedDraftSourceFields) return null;
+    if (!isShopifyPayloadPreviewContext || !mergedDraftSourceFields) return null;
     return buildShopifyDraftProductFromApprovalFields(mergedDraftSourceFields);
-  }, [approvalChannel, mergedDraftSourceFields]);
+  }, [isShopifyPayloadPreviewContext, mergedDraftSourceFields]);
 
   const currentPageBodyHtml = useMemo(
     () => currentPageDraftProduct?.body_html ?? '',
@@ -990,7 +1189,7 @@ export function ListingApprovalTab({
   );
 
   const currentPageBodyHtmlResolution = useMemo(() => {
-    if (approvalChannel !== 'shopify' || !mergedDraftSourceFields) {
+    if (!isShopifyPayloadPreviewContext || !mergedDraftSourceFields) {
       return {
         sourceFieldName: '',
         sourceType: 'draft-product',
@@ -1038,12 +1237,12 @@ export function ListingApprovalTab({
       sourceType: 'draft-product',
       value: currentPageBodyHtml,
     };
-  }, [approvalChannel, currentPageBodyHtml, mergedDraftSourceFields]);
+  }, [currentPageBodyHtml, isShopifyPayloadPreviewContext, mergedDraftSourceFields]);
 
   const currentPageResolvedBodyHtml = currentPageBodyHtmlResolution.value;
 
   const currentPageProductDescriptionResolution = useMemo(() => {
-    if (approvalChannel !== 'shopify' || !mergedDraftSourceFields) {
+    if (!isShopifyPayloadPreviewContext || !mergedDraftSourceFields) {
       return {
         sourceFieldName: '',
         sourceType: 'none',
@@ -1094,12 +1293,12 @@ export function ListingApprovalTab({
       sourceType: 'none',
       value: '',
     };
-  }, [approvalChannel, mergedDraftSourceFields]);
+  }, [isShopifyPayloadPreviewContext, mergedDraftSourceFields]);
 
   const currentPageProductDescription = currentPageProductDescriptionResolution.value;
 
   const currentPageProductCategoryResolution = useMemo(() => {
-    if (approvalChannel !== 'shopify' || !mergedDraftSourceFields) {
+    if (!isShopifyPayloadPreviewContext || !mergedDraftSourceFields) {
       return {
         sourceFieldName: '',
         sourceType: 'none',
@@ -1147,12 +1346,12 @@ export function ListingApprovalTab({
       sourceType: 'draft-product',
       value: currentPageDraftProduct?.product_type ?? '',
     };
-  }, [approvalChannel, mergedDraftSourceFields, currentPageDraftProduct]);
+  }, [isShopifyPayloadPreviewContext, mergedDraftSourceFields, currentPageDraftProduct]);
 
   const currentPageProductCategory = currentPageProductCategoryResolution.value;
 
   const currentPageCategoryIdResolution = useMemo(() => {
-    if (approvalChannel !== 'shopify' || !mergedDraftSourceFields) {
+    if (!isShopifyPayloadPreviewContext || !mergedDraftSourceFields) {
       return {
         sourceFieldName: '',
         sourceType: 'none',
@@ -1187,12 +1386,12 @@ export function ListingApprovalTab({
       sourceType: 'none',
       value: '',
     };
-  }, [approvalChannel, mergedDraftSourceFields]);
+  }, [isShopifyPayloadPreviewContext, mergedDraftSourceFields]);
 
   const shopifyCategoryLookupValue = currentPageCategoryIdResolution.value || currentPageProductCategory;
 
   useEffect(() => {
-    if (approvalChannel !== 'shopify') {
+    if (!isShopifyPayloadPreviewContext) {
       setShopifyCategoryResolution({
         status: 'idle',
         match: null,
@@ -1252,10 +1451,10 @@ export function ListingApprovalTab({
     return () => {
       cancelled = true;
     };
-  }, [approvalChannel, shopifyCategoryLookupValue]);
+  }, [isShopifyPayloadPreviewContext, shopifyCategoryLookupValue]);
 
   const finalShopifyCreatePayload = useMemo(() => {
-    if (approvalChannel !== 'shopify' || !createShopifyDraftOnApprove || !selectedRecord) return null;
+    if (!isShopifyPayloadPreviewContext || !selectedRecord) return null;
 
     const baseProduct = normalizedShopifyDraftProduct
       ?? normalizeShopifyProductForUpsert(
@@ -1276,8 +1475,7 @@ export function ListingApprovalTab({
       ),
     } as ShopifyProduct;
   }, [
-    approvalChannel,
-    createShopifyDraftOnApprove,
+    isShopifyPayloadPreviewContext,
     selectedRecord,
     normalizedShopifyDraftProduct,
     mergedDraftSourceFields,
@@ -1286,7 +1484,7 @@ export function ListingApprovalTab({
   ]);
 
   const currentPageCollectionIds = useMemo(() => {
-    if (approvalChannel !== 'shopify' || !selectedRecord) return [] as string[];
+    if (!isShopifyPayloadPreviewContext || !selectedRecord) return [] as string[];
     const previewCollections = parseCollectionIdsFromFormPreview(
       formValues[SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD]
       ?? formValues['shopify_graphql_collection_ids'],
@@ -1307,7 +1505,7 @@ export function ListingApprovalTab({
     };
 
     return buildShopifyCollectionIdsFromApprovalFields(explicitCollectionSource);
-  }, [approvalChannel, formValues, selectedRecord]);
+  }, [formValues, isShopifyPayloadPreviewContext, selectedRecord]);
 
   const effectiveShopifyCreatePayload = useMemo(() => {
     if (!finalShopifyCreatePayload) return null;
@@ -1373,7 +1571,7 @@ export function ListingApprovalTab({
   }, [effectiveShopifyCreatePayload]);
 
   const shopifyCategorySyncPreviewJson = useMemo(() => {
-    if (approvalChannel !== 'shopify') return '';
+    if (!isShopifyPayloadPreviewContext) return '';
     if (!shopifyCategoryLookupValue.trim()) return '';
     if (currentPageCategoryIdResolution.value.trim() || shopifyCategoryResolution.match?.id) return '';
 
@@ -1392,7 +1590,7 @@ export function ListingApprovalTab({
     } catch {
       return '{\n  "error": "Unable to serialize GraphQL preview"\n}';
     }
-  }, [approvalChannel, currentPageCategoryIdResolution.value, shopifyCategoryLookupValue, shopifyCategoryResolution.match]);
+  }, [currentPageCategoryIdResolution.value, isShopifyPayloadPreviewContext, shopifyCategoryLookupValue, shopifyCategoryResolution.match]);
 
   const resolveShopifyCategoryId = async (): Promise<string | undefined> => {
     const explicitCategoryId = currentPageCategoryIdResolution.value.trim();
@@ -1519,9 +1717,9 @@ export function ListingApprovalTab({
   };
 
   const ebayDraftPayloadBundle = useMemo(() => {
-    if (approvalChannel !== 'ebay' || !mergedDraftSourceFields) return null;
+    if (!isEbayPayloadPreviewContext || !mergedDraftSourceFields) return null;
     return buildEbayDraftPayloadBundleFromApprovalFields(mergedDraftSourceFields);
-  }, [approvalChannel, mergedDraftSourceFields]);
+  }, [isEbayPayloadPreviewContext, mergedDraftSourceFields]);
 
   const ebayDraftPayloadBundleJson = useMemo(() => {
     if (!ebayDraftPayloadBundle) return '';
@@ -1533,22 +1731,20 @@ export function ListingApprovalTab({
   }, [ebayDraftPayloadBundle]);
 
   const shopifyCreatePayloadDocsJson = useMemo(() => {
-    if (approvalChannel !== 'shopify') return '{\n  "input": {}\n}';
     try {
       return JSON.stringify(SHOPIFY_UNIFIED_PRODUCT_SET_DOCS_EXAMPLE, null, 2);
     } catch {
       return '{\n  "input": {}\n}';
     }
-  }, [approvalChannel]);
+  }, []);
 
   const ebayPayloadDocsJson = useMemo(() => {
-    if (approvalChannel !== 'ebay') return '{\n  "inventoryItem": {},\n  "offer": {}\n}';
     try {
       return JSON.stringify(EBAY_DRAFT_PAYLOAD_DOCS_EXAMPLE, null, 2);
     } catch {
       return '{\n  "inventoryItem": {},\n  "offer": {}\n}';
     }
-  }, [approvalChannel]);
+  }, []);
 
   const approvedFieldName = useMemo(() => {
     const match = allFieldNames.find((fieldName) => fieldName.toLowerCase() === 'approved');
@@ -1692,7 +1888,11 @@ export function ListingApprovalTab({
   const hasMissingEbayRequiredFields = missingEbayRequiredFieldNames.length > 0;
 
   function openRecord(record: AirtableRecord) {
-    hydrateForm(record, allFieldNames, approvedFieldName);
+    const hydrateFieldNames = Array.from(new Set([
+      ...allFieldNames,
+      ...Object.keys(record.fields),
+    ])).sort((left, right) => left.localeCompare(right));
+    hydrateForm(record, hydrateFieldNames, approvedFieldName);
     trackWorkflowEvent('approval_record_opened', {
       recordId: record.id,
       tableReference,
@@ -1896,27 +2096,166 @@ export function ListingApprovalTab({
           </section>
         )}
 
-        <ApprovalFormFields
-          recordId={selectedRecord.id}
-          approvalChannel={approvalChannel}
-          forceShowShopifyCollectionsEditor={approvalChannel === 'shopify'}
-          allFieldNames={allFieldNames}
-          writableFieldNames={Object.keys(selectedRecord.fields)}
-          requiredFieldNames={approvalChannel === 'shopify' ? shopifyRequiredFieldNames : approvalChannel === 'ebay' ? ebayRequiredFieldNames : []}
-          approvedFieldName={approvedFieldName}
-          formValues={formValues}
-          fieldKinds={fieldKinds}
-          listingFormatOptions={listingFormatOptions}
-          saving={saving}
-          setFormValue={setFormValue}
-          suppressImageScalarFields={approvalChannel === 'shopify' || approvalChannel === 'ebay'}
-          originalFieldValues={Object.fromEntries(
-            Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
-          )}
-          onBodyHtmlPreviewChange={setBodyHtmlPreview}
-          selectedEbayTemplateId={selectedEbayTemplateId}
-          onEbayTemplateIdChange={setSelectedEbayTemplateId}
-        />
+        {isCombinedApproval ? (
+          <div className="space-y-4">
+            {combinedDescriptionFieldName && (
+              <label className="flex flex-col gap-2">
+                <span className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Description</span>
+                <textarea
+                  className="min-h-[120px] w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70"
+                  value={formValues[combinedDescriptionFieldName] ?? ''}
+                  onChange={(event) => setFormValue(combinedDescriptionFieldName, event.target.value)}
+                  disabled={saving}
+                />
+              </label>
+            )}
+
+            <ApprovalFormFields
+              recordId={selectedRecord.id}
+              approvalChannel="combined"
+              isCombinedApproval
+              allFieldNames={combinedSharedFieldNames}
+              writableFieldNames={Object.keys(selectedRecord.fields)}
+              requiredFieldNames={[]}
+              approvedFieldName={approvedFieldName}
+              formValues={formValues}
+              fieldKinds={fieldKinds}
+              listingFormatOptions={listingFormatOptions}
+              listingDurationOptions={listingDurationOptions}
+              saving={saving}
+              setFormValue={setFormValue}
+              suppressImageScalarFields
+              originalFieldValues={Object.fromEntries(
+                Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
+              )}
+            />
+
+            {combinedSharedKeyFeaturesFieldName && (
+              <div className="rounded-lg border border-[var(--line)] bg-white/5 px-3 py-3">
+                <KeyFeaturesEditor
+                  keyFeaturesFieldName={combinedSharedKeyFeaturesFieldName}
+                  keyFeaturesValue={formValues[combinedSharedKeyFeaturesFieldName] ?? ''}
+                  setFormValue={setFormValue}
+                  disabled={saving}
+                />
+              </div>
+            )}
+
+            <details className="rounded-lg border border-[var(--line)] bg-white/5" open>
+              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify-Specific Fields</summary>
+              <div className="border-t border-[var(--line)] px-3 py-3">
+                <ApprovalFormFields
+                  recordId={selectedRecord.id}
+                  approvalChannel="shopify"
+                  forceShowShopifyCollectionsEditor
+                  allFieldNames={combinedShopifyOnlyFieldNames}
+                  writableFieldNames={Object.keys(selectedRecord.fields)}
+                  requiredFieldNames={[]}
+                  approvedFieldName={approvedFieldName}
+                  formValues={formValues}
+                  fieldKinds={fieldKinds}
+                  listingFormatOptions={listingFormatOptions}
+                  listingDurationOptions={listingDurationOptions}
+                  saving={saving}
+                  setFormValue={setFormValue}
+                  suppressImageScalarFields
+                  originalFieldValues={Object.fromEntries(
+                    Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
+                  )}
+                  onBodyHtmlPreviewChange={setBodyHtmlPreview}
+                  selectedEbayTemplateId={selectedEbayTemplateId}
+                  onEbayTemplateIdChange={setSelectedEbayTemplateId}
+                />
+              </div>
+            </details>
+
+            <details className="rounded-lg border border-[var(--line)] bg-white/5" open>
+              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">eBay-Specific Fields</summary>
+              <div className="border-t border-[var(--line)] px-3 py-3">
+                <ApprovalFormFields
+                  recordId={selectedRecord.id}
+                  approvalChannel="ebay"
+                  allFieldNames={combinedEbayOnlyFieldNames}
+                  writableFieldNames={Object.keys(selectedRecord.fields)}
+                  requiredFieldNames={[]}
+                  approvedFieldName={approvedFieldName}
+                  formValues={formValues}
+                  fieldKinds={fieldKinds}
+                  listingFormatOptions={listingFormatOptions}
+                  listingDurationOptions={listingDurationOptions}
+                  saving={saving}
+                  setFormValue={setFormValue}
+                  suppressImageScalarFields
+                  originalFieldValues={Object.fromEntries(
+                    Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
+                  )}
+                  onBodyHtmlPreviewChange={setBodyHtmlPreview}
+                  selectedEbayTemplateId={selectedEbayTemplateId}
+                  onEbayTemplateIdChange={setSelectedEbayTemplateId}
+                />
+              </div>
+            </details>
+
+            <details className="rounded-lg border border-[var(--line)] bg-white/5">
+              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify Body (HTML)</summary>
+              <div className="border-t border-[var(--line)] px-3 py-3">
+                <p className="m-0 mb-2 text-xs text-[var(--muted)]">Read-only HTML from Airtable field.</p>
+                {!combinedShopifyBodyHtmlFieldName && (
+                  <p className="m-0 mb-2 text-xs text-[var(--muted)]">No Shopify Body HTML field was found for this record.</p>
+                )}
+                <pre className="m-0 max-h-[260px] overflow-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{combinedShopifyBodyHtmlValue}</pre>
+              </div>
+            </details>
+
+            <details className="rounded-lg border border-[var(--line)] bg-white/5">
+              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify Body Rendered</summary>
+              <div className="border-t border-[var(--line)] px-3 py-3">
+                <BodyHtmlPreview value={combinedShopifyBodyHtmlValue} previewOnly />
+              </div>
+            </details>
+
+            <details className="rounded-lg border border-[var(--line)] bg-white/5">
+              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">eBay Body (HTML)</summary>
+              <div className="border-t border-[var(--line)] px-3 py-3">
+                <p className="m-0 mb-2 text-xs text-[var(--muted)]">Read-only HTML from Airtable field.</p>
+                {!combinedEbayBodyHtmlFieldName && (
+                  <p className="m-0 mb-2 text-xs text-[var(--muted)]">No eBay Body HTML field was found for this record.</p>
+                )}
+                <pre className="m-0 max-h-[260px] overflow-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{combinedEbayBodyHtmlValue}</pre>
+              </div>
+            </details>
+
+            <details className="rounded-lg border border-[var(--line)] bg-white/5">
+              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">eBay Body Rendered</summary>
+              <div className="border-t border-[var(--line)] px-3 py-3">
+                <BodyHtmlPreview value={combinedEbayBodyHtmlValue || bodyHtmlPreview} previewOnly />
+              </div>
+            </details>
+          </div>
+        ) : (
+          <ApprovalFormFields
+            recordId={selectedRecord.id}
+            approvalChannel={approvalChannel}
+            forceShowShopifyCollectionsEditor={approvalChannel === 'shopify'}
+            allFieldNames={allFieldNames}
+            writableFieldNames={Object.keys(selectedRecord.fields)}
+            requiredFieldNames={approvalChannel === 'shopify' ? shopifyRequiredFieldNames : approvalChannel === 'ebay' ? ebayRequiredFieldNames : []}
+            approvedFieldName={approvedFieldName}
+            formValues={formValues}
+            fieldKinds={fieldKinds}
+            listingFormatOptions={listingFormatOptions}
+            listingDurationOptions={listingDurationOptions}
+            saving={saving}
+            setFormValue={setFormValue}
+            suppressImageScalarFields={approvalChannel === 'shopify' || approvalChannel === 'ebay'}
+            originalFieldValues={Object.fromEntries(
+              Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
+            )}
+            onBodyHtmlPreviewChange={setBodyHtmlPreview}
+            selectedEbayTemplateId={selectedEbayTemplateId}
+            onEbayTemplateIdChange={setSelectedEbayTemplateId}
+          />
+        )}
 
         {hasUnsavedChanges && (
           <section className="mt-4 rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-2">
@@ -1959,7 +2298,11 @@ export function ListingApprovalTab({
               if (!selectedRecord) return;
               const confirmed = window.confirm('Reset page fields to the current Airtable values?');
               if (!confirmed) return;
-              hydrateForm(selectedRecord, allFieldNames, approvedFieldName);
+              const hydrateFieldNames = Array.from(new Set([
+                ...allFieldNames,
+                ...Object.keys(selectedRecord.fields),
+              ])).sort((left, right) => left.localeCompare(right));
+              hydrateForm(selectedRecord, hydrateFieldNames, approvedFieldName);
               pushInlineActionNotice('info', 'Page data reset', 'Form values were restored to current Airtable values.');
             }}
             disabled={saving || !hasUnsavedChanges}
@@ -2379,27 +2722,10 @@ export function ListingApprovalTab({
           </div>
         )}
 
-        {bodyHtmlPreview && (
-          <div className="mt-6 space-y-3">
-            <BodyHtmlPreview
-              value={bodyHtmlPreview}
-              helperText={approvalChannel === 'ebay' ? 'Generated from the current Description and Key Features values. eBay saves the combined HTML into the listing payload.' : undefined}
-              emptyStateText={approvalChannel === 'ebay' ? 'Add a description or feature/value pairs to preview the Body HTML saved for the eBay listing.' : undefined}
-              showTemplateSelector={approvalChannel === 'ebay'}
-              templateOptions={approvalChannel === 'ebay' ? EBAY_LISTING_TEMPLATE_OPTIONS : []}
-              selectedTemplateId={approvalChannel === 'ebay' ? selectedEbayTemplateId : undefined}
-              onTemplateChange={(templateId) => {
-                if (approvalChannel !== 'ebay') return;
-                setSelectedEbayTemplateId(normalizeEbayListingTemplateId(templateId));
-              }}
-            />
-          </div>
-        )}
-
-        {approvalChannel === 'shopify' && createShopifyDraftOnApprove && (
+        {(approvalChannel === 'shopify' || approvalChannel === 'combined') && (
           <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
             <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
-              Shopify API Requests (Exact Send Path)
+              Shopify Create Listing API Payload (Exact Request)
             </summary>
             <div className="border-t border-[var(--line)] px-3 py-3">
               <p className="m-0 mb-2 text-xs text-[var(--muted)]">
@@ -2442,25 +2768,25 @@ export function ListingApprovalTab({
           </details>
         )}
 
-        {approvalChannel === 'shopify' && (
+        {(approvalChannel === 'shopify' || approvalChannel === 'combined') && (
           <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
             <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
-              Shopify GraphQL Request Structure (Docs Example)
+              Shopify Create Listing API Payload (Docs Example)
             </summary>
             <div className="border-t border-[var(--line)] px-3 py-3">
               <p className="m-0 mb-2 text-xs text-[var(--muted)]">
-                Reference example showing the full GraphQL request envelope sent to Shopify.
+                Reference example showing the expected GraphQL request envelope sent to Shopify for create/update listing.
               </p>
               <pre className="m-0 overflow-x-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{shopifyCreatePayloadDocsJson}</pre>
             </div>
           </details>
         )}
 
-        {approvalChannel === 'ebay' && (
+        {(approvalChannel === 'ebay' || approvalChannel === 'combined') && (
           <>
             <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
               <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
-                eBay API Draft Payload (Exact Request)
+                eBay Create Listing API Payload (Exact Request)
               </summary>
               <div className="border-t border-[var(--line)] px-3 py-3">
                 <p className="m-0 mb-2 text-xs text-[var(--muted)]">
@@ -2472,7 +2798,7 @@ export function ListingApprovalTab({
 
             <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
               <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
-                eBay API Request Structure (Docs Example)
+                eBay Create Listing API Payload (Docs Example)
               </summary>
               <div className="border-t border-[var(--line)] px-3 py-3">
                 <p className="m-0 mb-2 text-xs text-[var(--muted)]">

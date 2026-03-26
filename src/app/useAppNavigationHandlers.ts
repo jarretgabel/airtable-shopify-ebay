@@ -4,6 +4,8 @@ import { TAB_PATHS, type Tab } from '@/app/appNavigation';
 
 interface AppNavigationHandlers {
   navigateToTab: (tab: Tab, replace?: boolean) => void;
+  navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
+  navigateToListingsList: (replace?: boolean) => void;
   navigateToApprovalRecord: (recordId: string, replace?: boolean) => void;
   navigateToApprovalList: (replace?: boolean) => void;
   navigateToShopifyApprovalRecord: (recordId: string, replace?: boolean) => void;
@@ -25,6 +27,16 @@ function scrollToPageTop(): void {
 export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () => void): AppNavigationHandlers {
   const navigateToTab = useCallback((tab: Tab, replace = false): void => {
     navigate(TAB_PATHS[tab], { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToListingsRecord = useCallback((recordId: string, replace = false): void => {
+    navigate(`/listings/${encodeURIComponent(recordId)}`, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToListingsList = useCallback((replace = false): void => {
+    navigate(TAB_PATHS.listings, { replace });
     scrollToPageTop();
   }, [navigate]);
 
@@ -65,6 +77,8 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
 
   return {
     navigateToTab,
+    navigateToListingsRecord,
+    navigateToListingsList,
     navigateToApprovalRecord,
     navigateToApprovalList,
     navigateToShopifyApprovalRecord,

@@ -27,6 +27,7 @@ function App() {
     isLoginPath,
     isResetPasswordPath,
     resetToken,
+    listingsRecordId,
     approvalRecordId,
     shopifyApprovalRecordId,
     userRecordId,
@@ -46,6 +47,8 @@ function App() {
   const shellRef = useRef<HTMLElement>(null);
   const {
     navigateToTab,
+    navigateToListingsRecord,
+    navigateToListingsList,
     navigateToApprovalRecord,
     navigateToApprovalList,
     navigateToShopifyApprovalRecord,
@@ -184,9 +187,12 @@ function App() {
         >
           <AppTabContent
             activeTab={activeTab}
+            listingsRecordId={listingsRecordId}
             approvalRecordId={approvalRecordId}
             shopifyApprovalRecordId={shopifyApprovalRecordId}
             userRecordId={userRecordId}
+            navigateToListingsRecord={navigateToListingsRecord}
+            navigateToListingsList={navigateToListingsList}
             navigateToApprovalRecord={navigateToApprovalRecord}
             navigateToApprovalList={navigateToApprovalList}
             navigateToShopifyApprovalRecord={navigateToShopifyApprovalRecord}
