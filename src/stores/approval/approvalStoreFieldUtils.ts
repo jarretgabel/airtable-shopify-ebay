@@ -123,7 +123,14 @@ export function getDropdownOptions(fieldName: string): string[] | null {
   // eBay: offer fields
   if (n === 'ebay offer format') return EBAY_FORMAT_OPTIONS;
   if (n === 'ebay offer marketplace id') return EBAY_MARKETPLACE_ID_OPTIONS;
-  if (n === 'ebay offer listing duration') return EBAY_LISTING_DURATION_OPTIONS;
+  if (
+    n === 'ebay offer listing duration'
+    || n === 'ebay listing duration'
+    || n === 'listing duration'
+    || n === 'duration'
+    || n === 'ebay_offer_listingduration'
+    || n === 'ebay_offer_listing_duration'
+  ) return EBAY_LISTING_DURATION_OPTIONS;
   if (n.includes('ebay offer') && n.includes('currency')) return CURRENCY_CODE_OPTIONS;
 
   // Shopify: currency fields

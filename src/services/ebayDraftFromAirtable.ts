@@ -1,5 +1,7 @@
 type ApprovalFieldMap = Record<string, unknown>;
 
+import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
+
 const EBAY_CONDITION_ENUMS = new Set([
   'NEW',
   'LIKE_NEW',
@@ -256,6 +258,32 @@ function normalizeEbayCondition(raw: string): string {
   return 'USED_EXCELLENT';
 }
 
+function buildEbayProductAspects(brand: string, rawKeyFeatures: string): Record<string, string[]> | undefined {
+  const aspects = new Map<string, string[]>();
+
+  const pushAspect = (name: string, value: string) => {
+    const normalizedName = name.trim();
+    const normalizedValue = value.trim();
+    if (!normalizedName || !normalizedValue) return;
+
+    const existing = aspects.get(normalizedName) ?? [];
+    if (!existing.some((entry) => entry.toLowerCase() === normalizedValue.toLowerCase())) {
+      aspects.set(normalizedName, [...existing, normalizedValue]);
+    }
+  };
+
+  if (brand.trim()) {
+    pushAspect('Brand', brand);
+  }
+
+  parseKeyFeatureEntries(rawKeyFeatures).forEach((entry) => {
+    pushAspect(entry.feature, entry.value);
+  });
+
+  if (aspects.size === 0) return undefined;
+  return Object.fromEntries(aspects.entries());
+}
+
 export interface EbayDraftPayloadBundle {
   inventoryItem: Record<string, unknown>;
   offer: Record<string, unknown>;
@@ -276,6 +304,21 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
   ]);
   const brand = getField(fields, ['eBay Inventory Product Brand', 'Brand']);
   const mpn = getField(fields, ['eBay Inventory Product MPN', 'MPN']);
+  const rawKeyFeatures = getField(fields, [
+    'Key Features (Key, Value)',
+    'eBay Body Key Features JSON',
+    'eBay Body Key Features',
+    'eBay Listing Key Features JSON',
+    'eBay Listing Key Features',
+    'Key Features JSON',
+    'Key Features',
+    'Features JSON',
+    'Features',
+    'ebay_body_key_features_json',
+    'ebay_body_key_features',
+    'ebay_listing_key_features_json',
+    'ebay_listing_key_features',
+  ]);
   const condition = normalizeEbayCondition(getField(fields, [
     '__Condition__',
     'Item Condition',
@@ -362,7 +405,14 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
 
   const categoryId = categoryIdsFromCategoriesField[0] || primaryCategoryFromField || fallbackCategoryIds[0] || '3276';
   const secondaryCategoryId = categoryIdsFromCategoriesField[1] || secondaryCategoryFromField || fallbackCategoryIds[1];
-  const listingDuration = getField(fields, ['eBay Offer Listing Duration']) || 'GTC';
+  const listingDuration = getField(fields, [
+    'eBay Offer Listing Duration',
+    'eBay Listing Duration',
+    'Listing Duration',
+    'Duration',
+    'ebay_offer_listingDuration',
+    'ebay_offer_listing_duration',
+  ]) || 'GTC';
   const priceValue = getField(fields, [
     'eBay Offer Price Value',
     'eBay Offer Auction Start Price Value',
@@ -383,7 +433,7 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
       imageUrls: resolvedImageUrls,
       brand: brand || undefined,
       mpn: mpn || undefined,
-      aspects: brand ? { Brand: [brand] } : undefined,
+      aspects: buildEbayProductAspects(brand, rawKeyFeatures),
     },
     condition,
     conditionDescription: conditionDescription || undefined,

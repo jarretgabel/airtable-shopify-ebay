@@ -75,6 +75,26 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     });
   });
 
+  it('maps key features into eBay product aspects', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-FEATURES',
+      'eBay Inventory Product Brand': 'McIntosh',
+      'Key Features (Key, Value)': 'Condition,Excellent\nIncludes,Remote and manual\nFinish,Black',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-FEATURES',
+      product: {
+        aspects: {
+          Brand: ['McIntosh'],
+          Condition: ['Excellent'],
+          Includes: ['Remote and manual'],
+          Finish: ['Black'],
+        },
+      },
+    });
+  });
+
   it('maps shared Images column into eBay inventory imageUrls', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-IMAGES',
@@ -87,6 +107,18 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       product: {
         imageUrls: ['https://cdn.example.com/c.jpg', 'https://cdn.example.com/d.jpg'],
       },
+    });
+  });
+
+  it('maps Duration alias into eBay offer listingDuration', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-DURATION',
+      Duration: 'DAYS_10',
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-DURATION',
+      listingDuration: 'DAYS_10',
     });
   });
 

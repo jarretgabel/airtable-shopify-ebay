@@ -389,6 +389,23 @@ function isEbayFormatField(fieldName: string): boolean {
     || normalized === 'status';
 }
 
+function isEbayListingDurationField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'ebay offer listing duration'
+    || normalized === 'ebay listing duration'
+    || normalized === 'listing duration'
+    || normalized === 'duration'
+    || normalized === 'ebay_offer_listingduration'
+    || normalized === 'ebay_offer_listing_duration';
+}
+
+function getEbayListingDurationLabel(value: string): string {
+  if (value === 'GTC') return 'Good Till Cancel';
+  if (value === 'DAYS_7') return '7 Days';
+  if (value === 'DAYS_10') return '10 Days';
+  return value;
+}
+
 function isEbayCategoriesField(fieldName: string): boolean {
   const normalized = fieldName
     .trim()
@@ -1899,6 +1916,7 @@ export function ApprovalFormFields({
     if (dropdownOptions) {
       const optionSet = new Set(dropdownOptions);
       const options = value && !optionSet.has(value) ? [value, ...dropdownOptions] : dropdownOptions;
+      const isEbayDurationSelect = isEbayListingDurationField(fieldName);
 
       return (
         <label key={fieldName} className="flex flex-col gap-2">
@@ -1912,7 +1930,7 @@ export function ApprovalFormFields({
             <option value="">Select an option</option>
             {options.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {isEbayDurationSelect ? getEbayListingDurationLabel(option) : option}
               </option>
             ))}
           </select>
