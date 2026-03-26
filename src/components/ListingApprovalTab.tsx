@@ -19,6 +19,7 @@ import {
   buildShopifyCollectionIdsFromApprovalFields,
   buildShopifyDraftProductFromApprovalFields,
 } from '@/services/shopifyDraftFromAirtable';
+import { buildEbayBodyHtmlFromTemplate } from '@/services/ebayBodyHtml';
 import { SHOPIFY_DEFAULT_VENDOR } from '@/services/shopifyTags';
 import { trimShopifyProductType } from '@/services/shopifyTaxonomy';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
@@ -34,6 +35,9 @@ import {
 } from '@/stores/approvalStore';
 import { AirtableRecord } from '@/types/airtable';
 import type { ShopifyProduct } from '@/types/shopify';
+import ebayListingInsertTemplate from '@/templates/ebay/ebay-listing-insert.html?raw';
+import ebayListingImpactSlateTemplate from '@/templates/ebay/ebay-listing-impact-slate.html?raw';
+import ebayListingImpactLuxeTemplate from '@/templates/ebay/ebay-listing-impact-luxe.html?raw';
 
 interface ListingApprovalTabProps {
   viewModel: ApprovalTabViewModel;
@@ -326,6 +330,18 @@ const EBAY_BODY_HTML_TEMPLATE_FIELD_CANDIDATES = [
 
 type EbayListingTemplateId = 'classic' | 'impact-slate' | 'impact-luxe';
 
+const EBAY_LISTING_TEMPLATE_OPTIONS: ReadonlyArray<{ id: EbayListingTemplateId; label: string }> = [
+  { id: 'classic', label: 'Classic Heritage' },
+  { id: 'impact-slate', label: 'Impact Slate' },
+  { id: 'impact-luxe', label: 'Impact Luxe' },
+] as const;
+
+const EBAY_LISTING_TEMPLATE_HTML_BY_ID: Record<EbayListingTemplateId, string> = {
+  classic: ebayListingInsertTemplate,
+  'impact-slate': ebayListingImpactSlateTemplate,
+  'impact-luxe': ebayListingImpactLuxeTemplate,
+};
+
 const EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES = [
   'Key Features (Key, Value)',
   'eBay Body Key Features JSON',
@@ -454,6 +470,10 @@ function normalizeEbayListingTemplateId(value: string): EbayListingTemplateId {
   }
 
   return 'classic';
+}
+
+function resolveEbayListingTemplateHtml(templateId: EbayListingTemplateId): string {
+  return EBAY_LISTING_TEMPLATE_HTML_BY_ID[templateId] ?? ebayListingInsertTemplate;
 }
 
 function isEbayBodyHtmlSyncTriggerFieldName(fieldName: string): boolean {
@@ -1083,6 +1103,61 @@ export function ListingApprovalTab({
     [combinedEbayBodyHtmlFieldName, formValues],
   );
 
+  const combinedEbayTitleFieldName = useMemo(() => {
+    if (!isCombinedApproval) return '';
+    return selectedRecordFieldNames.find((fieldName) =>
+      EBAY_TITLE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
+    ) ?? '';
+  }, [isCombinedApproval, selectedRecordFieldNames]);
+
+  const combinedEbayKeyFeaturesFieldName = useMemo(() => {
+    if (!isCombinedApproval) return '';
+    if (combinedSharedKeyFeaturesFieldName) return combinedSharedKeyFeaturesFieldName;
+    return selectedRecordFieldNames.find((fieldName) =>
+      EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
+    ) ?? '';
+  }, [combinedSharedKeyFeaturesFieldName, isCombinedApproval, selectedRecordFieldNames]);
+
+  const combinedEbayGeneratedBodyHtml = useMemo(() => {
+    if (!isCombinedApproval) return '';
+
+    const templateId = normalizeEbayListingTemplateId(selectedEbayTemplateId);
+    const templateHtml = resolveEbayListingTemplateHtml(templateId);
+    const titleValue = combinedEbayTitleFieldName ? (formValues[combinedEbayTitleFieldName] ?? '') : '';
+    const descriptionValue = combinedDescriptionFieldName ? (formValues[combinedDescriptionFieldName] ?? '') : '';
+    const keyFeaturesValue = combinedEbayKeyFeaturesFieldName ? (formValues[combinedEbayKeyFeaturesFieldName] ?? '') : '';
+
+    return buildEbayBodyHtmlFromTemplate(
+      templateHtml,
+      titleValue,
+      descriptionValue,
+      keyFeaturesValue,
+    );
+  }, [
+    combinedDescriptionFieldName,
+    combinedEbayKeyFeaturesFieldName,
+    combinedEbayTitleFieldName,
+    formValues,
+    isCombinedApproval,
+    selectedEbayTemplateId,
+  ]);
+
+  useEffect(() => {
+    if (!isCombinedApproval || !combinedEbayBodyHtmlFieldName) return;
+    if (!combinedEbayGeneratedBodyHtml.trim()) return;
+
+    const current = formValues[combinedEbayBodyHtmlFieldName] ?? '';
+    if (current !== combinedEbayGeneratedBodyHtml) {
+      setFormValue(combinedEbayBodyHtmlFieldName, combinedEbayGeneratedBodyHtml);
+    }
+  }, [
+    combinedEbayBodyHtmlFieldName,
+    combinedEbayGeneratedBodyHtml,
+    formValues,
+    isCombinedApproval,
+    setFormValue,
+  ]);
+
   const combinedShopifyOnlyFieldNames = useMemo(() => {
     if (!isCombinedApproval) return [] as string[];
     const normalizedShopifyPriceCandidates = new Set(SHOPIFY_PRICE_FIELD_CANDIDATES.map((candidate) => candidate.toLowerCase()));
@@ -1142,8 +1217,16 @@ export function ListingApprovalTab({
     const conditionCandidateSet = new Set(CONDITION_FIELD_CANDIDATES.map((fieldName) => fieldName.toLowerCase()));
     return selectedRecordFieldNames.filter((fieldName) => {
       const normalized = fieldName.trim().toLowerCase();
+      const isCombinedEbayPriceField = EBAY_PRICE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)
+        || normalized.includes('buy it now')
+        || normalized.includes('starting bid')
+        || normalized === 'ebay offer price value'
+        || normalized === 'ebay offer auction start price value';
       if (isHiddenCombinedFieldName(fieldName)) return false;
       if (shopifyOnlySet.has(normalized) || ebayOnlySet.has(normalized)) return false;
+      if (isCombinedEbayPriceField) return false;
+      if (EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
+      if (EBAY_DURATION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       if (EBAY_CATEGORIES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       if (normalized === 'template name') return false;
       if (combinedDescriptionFieldName && normalized === combinedDescriptionFieldName.toLowerCase()) return false;
@@ -2174,10 +2257,27 @@ export function ListingApprovalTab({
                   originalFieldValues={Object.fromEntries(
                     Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
                   )}
-                  onBodyHtmlPreviewChange={setBodyHtmlPreview}
                   selectedEbayTemplateId={selectedEbayTemplateId}
                   onEbayTemplateIdChange={setSelectedEbayTemplateId}
                 />
+
+                <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
+                  <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify Body (HTML)</summary>
+                  <div className="border-t border-[var(--line)] px-3 py-3">
+                    <p className="m-0 mb-2 text-xs text-[var(--muted)]">Read-only HTML from Airtable field.</p>
+                    {!combinedShopifyBodyHtmlFieldName && (
+                      <p className="m-0 mb-2 text-xs text-[var(--muted)]">No Shopify Body HTML field was found for this record.</p>
+                    )}
+                    <pre className="m-0 max-h-[260px] overflow-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{combinedShopifyBodyHtmlValue}</pre>
+                  </div>
+                </details>
+
+                <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
+                  <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify Body Rendered</summary>
+                  <div className="border-t border-[var(--line)] px-3 py-3">
+                    <BodyHtmlPreview value={combinedShopifyBodyHtmlValue} previewOnly />
+                  </div>
+                </details>
               </div>
             </details>
 
@@ -2205,42 +2305,31 @@ export function ListingApprovalTab({
                   selectedEbayTemplateId={selectedEbayTemplateId}
                   onEbayTemplateIdChange={setSelectedEbayTemplateId}
                 />
-              </div>
-            </details>
 
-            <details className="rounded-lg border border-[var(--line)] bg-white/5">
-              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify Body (HTML)</summary>
-              <div className="border-t border-[var(--line)] px-3 py-3">
-                <p className="m-0 mb-2 text-xs text-[var(--muted)]">Read-only HTML from Airtable field.</p>
-                {!combinedShopifyBodyHtmlFieldName && (
-                  <p className="m-0 mb-2 text-xs text-[var(--muted)]">No Shopify Body HTML field was found for this record.</p>
-                )}
-                <pre className="m-0 max-h-[260px] overflow-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{combinedShopifyBodyHtmlValue}</pre>
-              </div>
-            </details>
+                <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
+                  <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">eBay Body (HTML)</summary>
+                  <div className="border-t border-[var(--line)] px-3 py-3">
+                    <p className="m-0 mb-2 text-xs text-[var(--muted)]">Read-only HTML from Airtable field.</p>
+                    {!combinedEbayBodyHtmlFieldName && (
+                      <p className="m-0 mb-2 text-xs text-[var(--muted)]">No eBay Body HTML field was found for this record.</p>
+                    )}
+                    <pre className="m-0 max-h-[260px] overflow-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{combinedEbayBodyHtmlValue}</pre>
+                  </div>
+                </details>
 
-            <details className="rounded-lg border border-[var(--line)] bg-white/5">
-              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify Body Rendered</summary>
-              <div className="border-t border-[var(--line)] px-3 py-3">
-                <BodyHtmlPreview value={combinedShopifyBodyHtmlValue} previewOnly />
-              </div>
-            </details>
-
-            <details className="rounded-lg border border-[var(--line)] bg-white/5">
-              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">eBay Body (HTML)</summary>
-              <div className="border-t border-[var(--line)] px-3 py-3">
-                <p className="m-0 mb-2 text-xs text-[var(--muted)]">Read-only HTML from Airtable field.</p>
-                {!combinedEbayBodyHtmlFieldName && (
-                  <p className="m-0 mb-2 text-xs text-[var(--muted)]">No eBay Body HTML field was found for this record.</p>
-                )}
-                <pre className="m-0 max-h-[260px] overflow-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{combinedEbayBodyHtmlValue}</pre>
-              </div>
-            </details>
-
-            <details className="rounded-lg border border-[var(--line)] bg-white/5">
-              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">eBay Body Rendered</summary>
-              <div className="border-t border-[var(--line)] px-3 py-3">
-                <BodyHtmlPreview value={combinedEbayBodyHtmlValue || bodyHtmlPreview} previewOnly />
+                <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
+                  <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">eBay Body Rendered</summary>
+                  <div className="border-t border-[var(--line)] px-3 py-3">
+                    <BodyHtmlPreview
+                      value={combinedEbayGeneratedBodyHtml || bodyHtmlPreview || combinedEbayBodyHtmlValue}
+                      previewOnly
+                      showTemplateSelector
+                      templateOptions={EBAY_LISTING_TEMPLATE_OPTIONS}
+                      selectedTemplateId={selectedEbayTemplateId}
+                      onTemplateChange={(templateId) => setSelectedEbayTemplateId(normalizeEbayListingTemplateId(templateId))}
+                    />
+                  </div>
+                </details>
               </div>
             </details>
           </div>

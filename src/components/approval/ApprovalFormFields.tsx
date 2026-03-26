@@ -472,6 +472,24 @@ function getEbayListingDurationLabel(value: string): string {
   return value;
 }
 
+function getEbayShippingTypeLabel(value: string): string {
+  if (value === 'Calculated') return 'Calculated';
+  if (value === 'CalculatedDomesticFlatInternational') return 'Calculated Domestic / Flat International';
+  if (value === 'Flat') return 'Flat';
+  if (value === 'FlatDomesticCalculatedInternational') return 'Flat Domestic / Calculated International';
+  if (value === 'FreightFlat') return 'Freight';
+  if (value === 'NotSpecified') return 'Not Specified';
+  return value;
+}
+
+function isEbayShippingTypeField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'domestic shipping fees'
+    || normalized === 'ebay domestic shipping fees'
+    || normalized === 'domestic_shipping_fees'
+    || normalized === 'ebay_domestic_shipping_fees';
+}
+
 function isEbayCategoriesField(fieldName: string): boolean {
   const normalized = fieldName
     .trim()
@@ -1428,7 +1446,7 @@ export function ApprovalFormFields({
     ?? fallbackCategoryTargetFieldName
     ?? 'categories';
   const ebayMarketplaceIdFieldName = allFieldNames.find((fieldName) => isEbayMarketplaceIdField(fieldName));
-  const hasEbayCategoryEditor = isEbayListingForm;
+  const hasEbayCategoryEditor = isEbayListingForm && !isCombinedApproval;
   const ebayMarketplaceId = (ebayMarketplaceIdFieldName ? formValues[ebayMarketplaceIdFieldName] : undefined)?.trim() || 'EBAY_US';
   const ebayCategorySourceValues = useMemo(() => {
     const merged: Record<string, string> = { ...originalFieldValues };
@@ -2057,8 +2075,13 @@ export function ApprovalFormFields({
       const optionSet = new Set(dropdownOptions);
       const options = value && !optionSet.has(value) && !optionSet.has(normalizeEbayListingDuration(value)) ? [value, ...dropdownOptions] : dropdownOptions;
       const isListingDurationField = isEbayListingDurationField(fieldName);
+      const isShippingTypeField = isEbayShippingTypeField(fieldName);
       const normalizedValue = isListingDurationField ? normalizeEbayListingDuration(value) : value;
-      const displayValue = isListingDurationField ? getEbayListingDurationLabel(normalizedValue) : normalizedValue;
+      const displayValue = isListingDurationField
+        ? getEbayListingDurationLabel(normalizedValue)
+        : isShippingTypeField
+          ? getEbayShippingTypeLabel(normalizedValue)
+          : normalizedValue;
 
       return (
         <label key={fieldName} className="flex flex-col gap-2">
@@ -2068,15 +2091,22 @@ export function ApprovalFormFields({
             value={displayValue}
             onChange={(event) => {
               const selectedLabel = event.target.value;
-              const storeValue = isListingDurationField ? normalizeEbayListingDuration(selectedLabel) : selectedLabel;
+              const storeValue = isListingDurationField
+                ? normalizeEbayListingDuration(selectedLabel)
+                : isShippingTypeField
+                  ? options.find((option) => getEbayShippingTypeLabel(option) === selectedLabel) ?? selectedLabel
+                  : selectedLabel;
               setFormValue(fieldName, storeValue);
             }}
             disabled={inputDisabled}
           >
             <option value="">Select an option</option>
             {options.map((option: string) => (
-              <option key={option} value={option}>
-                {option}
+              <option
+                key={option}
+                value={isListingDurationField ? getEbayListingDurationLabel(option) : isShippingTypeField ? getEbayShippingTypeLabel(option) : option}
+              >
+                {isListingDurationField ? getEbayListingDurationLabel(option) : isShippingTypeField ? getEbayShippingTypeLabel(option) : option}
               </option>
             ))}
           </select>

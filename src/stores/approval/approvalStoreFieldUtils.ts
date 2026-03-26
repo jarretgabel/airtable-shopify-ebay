@@ -5,6 +5,7 @@ import {
   EBAY_LISTING_DURATION_OPTIONS,
   EBAY_MARKETPLACE_ID_OPTIONS,
   EBAY_RESPONSIBLE_PERSON_TYPE_OPTIONS,
+  EBAY_SHIPPING_TYPE_OPTIONS,
   EBAY_WEIGHT_UNIT_OPTIONS,
   FALLBACK_LISTING_FORMAT_OPTIONS,
   ITEM_CONDITION_OPTIONS,
@@ -136,6 +137,12 @@ export function getDropdownOptions(fieldName: string): string[] | null {
     || n === 'ebay_offer_listingduration'
     || n === 'ebay_offer_listing_duration'
   ) return EBAY_LISTING_DURATION_OPTIONS;
+  if (
+    n === 'domestic shipping fees'
+    || n === 'ebay domestic shipping fees'
+    || n === 'domestic_shipping_fees'
+    || n === 'ebay_domestic_shipping_fees'
+  ) return EBAY_SHIPPING_TYPE_OPTIONS;
   if (n.includes('ebay offer') && n.includes('currency')) return CURRENCY_CODE_OPTIONS;
 
   // Shopify: currency fields

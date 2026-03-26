@@ -136,7 +136,36 @@ export function BodyHtmlPreview({
   );
 
   if (previewOnly) {
-    return <div className="col-span-1 md:col-span-2">{renderedPreview}</div>;
+    return (
+      <div className="col-span-1 md:col-span-2">
+        {showTemplateSelector && templateOptions.length > 0 && (
+          <div className="mb-3 flex flex-col gap-2">
+            <span className="text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Listing Template</span>
+            <div className="flex flex-wrap gap-2">
+              {templateOptions.map((option) => {
+                const isActive = (selectedTemplateId ?? templateOptions[0]?.id ?? '') === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold tracking-[0.04em] transition ${
+                      isActive
+                        ? 'border-[var(--accent)] bg-[var(--accent)]/20 text-[var(--ink)]'
+                        : 'border-[var(--line)] bg-[var(--panel)] text-[var(--muted)] hover:border-[var(--accent)]/60 hover:text-[var(--ink)]'
+                    }`}
+                    onClick={() => onTemplateChange?.(option.id)}
+                    aria-pressed={isActive}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {renderedPreview}
+      </div>
+    );
   }
 
   return (

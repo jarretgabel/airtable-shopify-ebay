@@ -52,4 +52,12 @@ export const EBAY_MARKETPLACE_ID_OPTIONS = [
 ];
 export const EBAY_FORMAT_OPTIONS = ['FIXED_PRICE', 'AUCTION'];
 export const EBAY_LISTING_DURATION_OPTIONS = ['GTC', 'DAYS_7', 'DAYS_10'];
+export const EBAY_SHIPPING_TYPE_OPTIONS = [
+  'Calculated',
+  'CalculatedDomesticFlatInternational',
+  'Flat',
+  'FlatDomesticCalculatedInternational',
+  'FreightFlat',
+  'NotSpecified',
+];
 export const EBAY_RESPONSIBLE_PERSON_TYPE_OPTIONS = ['MANUFACTURER', 'IMPORTER', 'EU_RESPONSIBLE_PERSON'];
