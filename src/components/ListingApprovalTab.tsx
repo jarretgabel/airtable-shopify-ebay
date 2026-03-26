@@ -6,7 +6,9 @@ import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import { KeyFeaturesEditor } from '@/components/approval/KeyFeaturesEditor';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
+import { getMissingRequiredFieldNames, isMissingRequiredFieldValue } from '@/components/approval/requiredFieldStatus';
 import airtableService from '@/services/airtable';
+import { pushApprovalBundleToEbay } from '@/services/ebay/approvalPublish';
 import {
   buildShopifyUnifiedProductSetRequest,
   normalizeShopifyProductForUpsert,
@@ -398,6 +400,111 @@ function normalizeFieldLookupKey(fieldName: string): string {
   return fieldName.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+function isTitleLikeFieldName(fieldName: string): boolean {
+  return fieldName.trim().toLowerCase().includes('title');
+}
+
+function isPriceLikeFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized.includes('price')
+    || normalized === 'buy it now usd'
+    || normalized === 'starting bid usd'
+    || normalized === 'buy it now/starting bid'
+    || normalized === 'buy it now/starting price'
+    || normalized === 'buy it now / starting price';
+}
+
+function isShopifyCategoryLikeFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'type'
+    || normalized === 'shopify type'
+    || normalized === 'product type'
+    || normalized === 'shopify product type'
+    || normalized === 'shopify rest product type'
+    || normalized === 'shopify category'
+    || normalized === 'shopify product category'
+    || normalized === 'shopify rest product category'
+    || normalized === 'category'
+    || normalized === 'product category';
+}
+
+function fieldMatchesRequiredGroup(fieldName: string, requiredFieldName: string): boolean {
+  const normalizedField = fieldName.toLowerCase();
+  const normalizedRequiredField = requiredFieldName.toLowerCase();
+
+  if (normalizedField === normalizedRequiredField) return true;
+  if (isTitleLikeFieldName(fieldName) && isTitleLikeFieldName(requiredFieldName)) return true;
+  if (isPriceLikeFieldName(fieldName) && isPriceLikeFieldName(requiredFieldName)) return true;
+  if (isShopifyCategoryLikeFieldName(fieldName) && isShopifyCategoryLikeFieldName(requiredFieldName)) return true;
+
+  return false;
+}
+
+function getRequiredFieldGroupKey(fieldName: string): string {
+  if (isTitleLikeFieldName(fieldName)) return 'title';
+  if (isPriceLikeFieldName(fieldName)) return 'price';
+  if (isShopifyCategoryLikeFieldName(fieldName)) return 'shopify-category';
+  return normalizeFieldLookupKey(fieldName);
+}
+
+function getDrawerRequiredStatus(
+  fieldNames: string[],
+  requiredFieldNames: string[],
+  source: Record<string, unknown>,
+): { hasRequired: boolean; allFilled: boolean } {
+  if (fieldNames.length === 0 || requiredFieldNames.length === 0) {
+    return { hasRequired: false, allFilled: false };
+  }
+
+  const matchedFieldNamesByGroup = new Map<string, string>();
+
+  requiredFieldNames.forEach((requiredFieldName) => {
+    const groupKey = getRequiredFieldGroupKey(requiredFieldName);
+    if (matchedFieldNamesByGroup.has(groupKey)) return;
+
+    const exactMatch = fieldNames.find((fieldName) => fieldName.toLowerCase() === requiredFieldName.toLowerCase());
+    if (exactMatch && !isMissingRequiredFieldValue(exactMatch, source[exactMatch])) {
+      matchedFieldNamesByGroup.set(groupKey, exactMatch);
+      return;
+    }
+
+    const groupedMatches = fieldNames.filter((fieldName) => fieldMatchesRequiredGroup(fieldName, requiredFieldName));
+    if (groupedMatches.length === 0) return;
+
+    const firstFilledMatch = groupedMatches.find((fieldName) => !isMissingRequiredFieldValue(fieldName, source[fieldName]));
+    matchedFieldNamesByGroup.set(groupKey, firstFilledMatch ?? exactMatch ?? groupedMatches[0]);
+  });
+
+  const matchedFieldNames = Array.from(matchedFieldNamesByGroup.values());
+
+  if (matchedFieldNames.length === 0) {
+    return { hasRequired: false, allFilled: false };
+  }
+
+  return {
+    hasRequired: true,
+    allFilled: getMissingRequiredFieldNames(source, matchedFieldNames).length === 0,
+  };
+}
+
+function DrawerStatusIcon({ allFilled }: { allFilled: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center ${allFilled ? 'text-emerald-200' : 'text-rose-200'}`}
+      aria-label={allFilled ? 'All required fields filled' : 'Contains missing required fields'}
+      title={allFilled ? 'All required fields filled' : 'Contains missing required fields'}
+    >
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        {allFilled ? (
+          <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.78-9.97a.75.75 0 0 0-1.06-1.06L8.75 10.94 7.28 9.47a.75.75 0 0 0-1.06 1.06l2 2a.75.75 0 0 0 1.06 0l4.5-4.5Z" clipRule="evenodd" />
+        ) : (
+          <path fillRule="evenodd" d="M10 2.5a1 1 0 0 1 .874.514l6.5 12A1 1 0 0 1 16.5 16.5h-13a1 1 0 0 1-.874-1.486l6.5-12A1 1 0 0 1 10 2.5Zm0 4a1 1 0 0 0-1 1V10a1 1 0 1 0 2 0V7.5a1 1 0 0 0-1-1Zm0 7a1.125 1.125 0 1 0 0-2.25 1.125 1.125 0 0 0 0 2.25Z" clipRule="evenodd" />
+        )}
+      </svg>
+    </span>
+  );
+}
+
 function findEbayPriceFieldName(fieldNames: string[]): string {
   const exact = fieldNames.find((name) =>
     EBAY_PRICE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
@@ -640,6 +747,18 @@ function isEbayOnlyFieldName(fieldName: string): boolean {
     || normalized.includes('return policy');
 }
 
+function isRemovedCombinedEbayPriceFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase().replace(/\s+/g, ' ');
+  return normalized === 'buy it now/starting bid'
+    || normalized === 'buy it now / starting bid'
+    || normalized === 'buy it now/starting price'
+    || normalized === 'buy it now / starting price'
+    || normalized === 'ebay buy it now/starting bid'
+    || normalized === 'ebay buy it now / starting bid'
+    || normalized === 'ebay buy it now/starting price'
+    || normalized === 'ebay buy it now / starting price';
+}
+
 function isGenericSharedKeyFeaturesFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'key features'
@@ -826,6 +945,7 @@ export function ListingApprovalTab({
   });
   const [creatingShopifyListing, setCreatingShopifyListing] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [pushingTarget, setPushingTarget] = useState<'shopify' | 'ebay' | 'both' | null>(null);
   const [bodyHtmlPreview, setBodyHtmlPreview] = useState('');
   const [selectedEbayTemplateId, setSelectedEbayTemplateId] = useState<EbayListingTemplateId>('classic');
   const [inlineActionNotices, setInlineActionNotices] = useState<InlineActionNotice[]>([]);
@@ -1214,14 +1334,9 @@ export function ListingApprovalTab({
     if (!isCombinedApproval) return [] as string[];
     return selectedRecordFieldNames.filter((fieldName) => {
       const normalized = fieldName.trim().toLowerCase();
-      const isCombinedEbayPriceField = EBAY_PRICE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)
-        || normalized.includes('buy it now')
-        || normalized.includes('starting bid')
-        || normalized === 'ebay offer price value'
-        || normalized === 'ebay offer auction start price value';
+      if (isRemovedCombinedEbayPriceFieldName(fieldName)) return false;
       if (isHiddenCombinedFieldName(fieldName)) return false;
       if (!isEbayOnlyFieldName(fieldName) || isShopifyOnlyFieldName(fieldName)) return false;
-      if (isCombinedEbayPriceField) return false;
       if (normalized.includes('primary category') || normalized.includes('secondary category')) return false;
       if (EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       if (EBAY_DURATION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
@@ -1237,6 +1352,7 @@ export function ListingApprovalTab({
     const conditionCandidateSet = new Set(CONDITION_FIELD_CANDIDATES.map((fieldName) => fieldName.toLowerCase()));
     return selectedRecordFieldNames.filter((fieldName) => {
       const normalized = fieldName.trim().toLowerCase();
+      if (isRemovedCombinedEbayPriceFieldName(fieldName)) return false;
       const isCombinedEbayPriceField = EBAY_PRICE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)
         || normalized.includes('buy it now')
         || normalized.includes('starting bid')
@@ -1282,6 +1398,10 @@ export function ListingApprovalTab({
     });
 
     Object.keys(merged).forEach((fieldName) => {
+      if (isCombinedApproval && isRemovedCombinedEbayPriceFieldName(fieldName)) {
+        delete merged[fieldName];
+        return;
+      }
       if (isEbayHandlingCostFieldName(fieldName)) {
         merged[fieldName] = 0;
       }
@@ -1927,8 +2047,6 @@ export function ListingApprovalTab({
   );
 
   const shopifyRequiredFieldNames = useMemo(() => {
-    if (approvalChannel !== 'shopify') return [] as string[];
-
     const required = [
       resolveFieldName([...SHOPIFY_TITLE_FIELD_CANDIDATES], ''),
       resolveFieldName([...SHOPIFY_PRICE_FIELD_CANDIDATES], ''),
@@ -1936,26 +2054,13 @@ export function ListingApprovalTab({
     ].filter((fieldName): fieldName is string => fieldName.trim().length > 0);
 
     return Array.from(new Set(required));
-  }, [approvalChannel, resolveFieldName]);
+  }, [resolveFieldName]);
 
   const missingShopifyRequiredFieldNames = useMemo(() => {
-    if (approvalChannel !== 'shopify' || !selectedRecord) return [] as string[];
+    if ((approvalChannel !== 'shopify' && approvalChannel !== 'combined') || !selectedRecord) return [] as string[];
 
     const source = mergedDraftSourceFields ?? selectedRecord.fields;
-    return shopifyRequiredFieldNames.filter((fieldName) => {
-      const rawValue = source[fieldName];
-      if (rawValue === null || rawValue === undefined) return true;
-
-      const stringValue = String(rawValue).trim();
-      if (!stringValue) return true;
-
-      if (fieldName.toLowerCase().includes('price')) {
-        const numericValue = Number(stringValue);
-        return !Number.isFinite(numericValue) || numericValue <= 0;
-      }
-
-      return false;
-    });
+    return getMissingRequiredFieldNames(source, shopifyRequiredFieldNames);
   }, [approvalChannel, mergedDraftSourceFields, selectedRecord, shopifyRequiredFieldNames]);
 
   const missingShopifyRequiredFieldLabels = useMemo(
@@ -1966,38 +2071,23 @@ export function ListingApprovalTab({
   const hasMissingShopifyRequiredFields = missingShopifyRequiredFieldNames.length > 0;
 
   const ebayRequiredFieldNames = useMemo(() => {
-    if (approvalChannel !== 'ebay') return [] as string[];
-
     const required = [
       resolveFieldName([...EBAY_TITLE_FIELD_CANDIDATES], ''),
       resolveFieldName([...EBAY_PRICE_FIELD_CANDIDATES], ''),
     ].filter((fieldName): fieldName is string => fieldName.trim().length > 0);
 
     return Array.from(new Set(required));
-  }, [approvalChannel, resolveFieldName]);
+  }, [resolveFieldName]);
 
   const missingEbayRequiredFieldNames = useMemo(() => {
-    if (approvalChannel !== 'ebay' || !selectedRecord) return [] as string[];
+    if ((approvalChannel !== 'ebay' && approvalChannel !== 'combined') || !selectedRecord) return [] as string[];
 
     const source = mergedDraftSourceFields ?? selectedRecord.fields;
-    return ebayRequiredFieldNames.filter((fieldName) => {
-      const rawValue = source[fieldName];
-      if (rawValue === null || rawValue === undefined) return true;
-
-      const stringValue = String(rawValue).trim();
-      if (!stringValue) return true;
-
-      if (fieldName.toLowerCase().includes('price')) {
-        const numericValue = Number(stringValue);
-        return !Number.isFinite(numericValue) || numericValue <= 0;
-      }
-
-      return false;
-    });
+    return getMissingRequiredFieldNames(source, ebayRequiredFieldNames);
   }, [approvalChannel, mergedDraftSourceFields, selectedRecord, ebayRequiredFieldNames]);
 
   const currentEbayListingFormat = useMemo(() => {
-    if (approvalChannel !== 'ebay' || !selectedRecord) return '';
+    if ((approvalChannel !== 'ebay' && approvalChannel !== 'combined') || !selectedRecord) return '';
 
     const source = mergedDraftSourceFields ?? selectedRecord.fields;
     const rawValue = source[formatFieldName];
@@ -2010,6 +2100,30 @@ export function ListingApprovalTab({
   );
 
   const hasMissingEbayRequiredFields = missingEbayRequiredFieldNames.length > 0;
+  const combinedRequiredFieldNames = useMemo(
+    () => Array.from(new Set([...shopifyRequiredFieldNames, ...ebayRequiredFieldNames])),
+    [ebayRequiredFieldNames, shopifyRequiredFieldNames],
+  );
+  const drawerSourceFields = mergedDraftSourceFields ?? selectedRecord?.fields ?? {};
+  const sharedDrawerRequiredStatus = useMemo(
+    () => getDrawerRequiredStatus(combinedSharedFieldNames, combinedRequiredFieldNames, drawerSourceFields),
+    [combinedRequiredFieldNames, combinedSharedFieldNames, drawerSourceFields],
+  );
+  const shopifyDrawerRequiredStatus = useMemo(
+    () => getDrawerRequiredStatus(combinedShopifyOnlyFieldNames, shopifyRequiredFieldNames, drawerSourceFields),
+    [combinedShopifyOnlyFieldNames, drawerSourceFields, shopifyRequiredFieldNames],
+  );
+  const ebayDrawerRequiredStatus = useMemo(
+    () => getDrawerRequiredStatus(combinedEbayOnlyFieldNames, ebayRequiredFieldNames, drawerSourceFields),
+    [combinedEbayOnlyFieldNames, drawerSourceFields, ebayRequiredFieldNames],
+  );
+  const formRequiredFieldNames = approvalChannel === 'shopify'
+    ? shopifyRequiredFieldNames
+    : approvalChannel === 'ebay'
+      ? ebayRequiredFieldNames
+      : combinedRequiredFieldNames;
+  const formShopifyRequiredFieldNames = approvalChannel === 'ebay' ? [] : shopifyRequiredFieldNames;
+  const formEbayRequiredFieldNames = approvalChannel === 'shopify' ? [] : ebayRequiredFieldNames;
 
   function openRecord(record: AirtableRecord) {
     const hydrateFieldNames = Array.from(new Set([
@@ -2141,6 +2255,7 @@ export function ListingApprovalTab({
         if (fieldName === CONDITION_FIELD) return false;
         if (approvalChannel === 'ebay' && isEbayBodyHtmlFieldName(fieldName)) return false;
         const normalizedFieldName = fieldName.trim().toLowerCase();
+        if (normalizedFieldName === 'primary category name' || normalizedFieldName === 'secondary category name') return false;
         if (normalizedFieldName === 'shopify rest product id' || normalizedFieldName === 'shopify product id') return false;
         if (approvalChannel === 'shopify' && isVendorFieldName(fieldName)) return false;
         if (approvalChannel === 'shopify' && isShopifyGraphqlCollectionIdsFieldName(fieldName)) return false;
@@ -2170,6 +2285,10 @@ export function ListingApprovalTab({
     && isApproved
     && hasExistingShopifyRestProductId;
 
+  const pushShopifyDisabled = (approvalChannel !== 'combined' && approvalChannel !== 'shopify') || hasMissingShopifyRequiredFields;
+  const pushEbayDisabled = (approvalChannel !== 'combined' && approvalChannel !== 'ebay') || hasMissingEbayRequiredFields;
+  const pushBothDisabled = approvalChannel !== 'combined' || hasMissingShopifyRequiredFields || hasMissingEbayRequiredFields;
+
   const syncExistingShopifyListing = async (record: AirtableRecord, productId: number) => {
     const updatePayload = finalShopifyCreatePayload
       ?? normalizeShopifyProductForUpsert(
@@ -2182,6 +2301,134 @@ export function ListingApprovalTab({
       collectionIds: currentPageCollectionIds,
       existingProductId: productId,
     });
+  };
+
+  const pushCurrentListingToShopify = async (record: AirtableRecord): Promise<{ productId: string; mode: 'created' | 'updated' }> => {
+    const shopifyProductIdField = 'Shopify REST Product ID';
+    const existingProductId = formValues[shopifyProductIdField]?.trim();
+    const createPayload = finalShopifyCreatePayload
+      ?? normalizeShopifyProductForUpsert(
+        buildShopifyDraftProductFromApprovalFields(mergedDraftSourceFields ?? record.fields),
+      );
+
+    if (existingProductId) {
+      const parsedExistingId = Number(existingProductId);
+
+      if (Number.isFinite(parsedExistingId) && parsedExistingId > 0) {
+        const existingProduct = await shopifyService.getProduct(parsedExistingId);
+        if (existingProduct) {
+          await syncExistingShopifyListing(record, parsedExistingId);
+          return { productId: existingProductId, mode: 'updated' };
+        }
+
+        setFormValue(shopifyProductIdField, '');
+      }
+    }
+
+    const categoryId = await resolveShopifyCategoryId();
+    const createdProduct = await upsertShopifyProductWithCollectionFallback({
+      product: createPayload,
+      categoryId,
+      collectionIds: currentPageCollectionIds,
+    });
+    const productIdStr = String(createdProduct.id);
+    const productIdNum = Number(createdProduct.id);
+    const writebackAttempts: Array<Record<string, string | number>> = Number.isFinite(productIdNum)
+      ? [
+          { [shopifyProductIdField]: productIdNum },
+          { [shopifyProductIdField]: productIdStr },
+        ]
+      : [{ [shopifyProductIdField]: productIdStr }];
+
+    let writebackError: unknown = null;
+    for (const fields of writebackAttempts) {
+      try {
+        await airtableService.updateRecordFromReference(
+          tableReference,
+          tableName,
+          record.id,
+          fields,
+        );
+        writebackError = null;
+        break;
+      } catch (error) {
+        writebackError = error;
+      }
+    }
+
+    if (writebackError) {
+      pushInlineActionNotice('warning', 'Shopify publish succeeded, ID writeback failed', 'The Shopify listing was created, but writing Shopify REST Product ID to Airtable failed. You may need to save the ID manually.');
+    } else {
+      setFormValue(shopifyProductIdField, productIdStr);
+    }
+
+    return { productId: productIdStr, mode: 'created' };
+  };
+
+  const pushCurrentListingToEbay = async (): Promise<{ sku: string; offerId: string; listingId: string; mode: 'created' | 'updated' }> => {
+    if (!ebayDraftPayloadBundle) {
+      throw new Error('eBay payload preview is unavailable for this record.');
+    }
+
+    const result = await pushApprovalBundleToEbay(ebayDraftPayloadBundle);
+    return {
+      sku: result.sku,
+      offerId: result.offerId,
+      listingId: result.listingId,
+      mode: result.wasExistingOffer ? 'updated' : 'created',
+    };
+  };
+
+  const runCombinedPush = async (target: 'shopify' | 'ebay' | 'both') => {
+    if (!selectedRecord) return;
+
+    if (hasUnsavedChanges) {
+      pushInlineActionNotice('warning', 'Save updates first', 'Save page data before publishing to Shopify or eBay.');
+      return;
+    }
+
+    if ((target === 'shopify' || target === 'both') && hasMissingShopifyRequiredFields) {
+      pushInlineActionNotice('warning', 'Required Shopify fields missing', `Complete required Shopify fields before publishing: ${missingShopifyRequiredFieldLabels.join(', ')}`);
+      return;
+    }
+
+    if ((target === 'ebay' || target === 'both') && hasMissingEbayRequiredFields) {
+      pushInlineActionNotice('warning', 'Required eBay fields missing', `Complete required eBay fields before publishing: ${missingEbayRequiredFieldLabels.join(', ')}`);
+      return;
+    }
+
+    const confirmed = window.confirm(
+      target === 'both'
+        ? 'Publish this listing to both Shopify and eBay using the current page values?'
+        : `Publish this listing to ${target === 'shopify' ? 'Shopify' : 'eBay'} using the current page values?`,
+    );
+    if (!confirmed) return;
+
+    setPushingTarget(target);
+    try {
+      if (target === 'shopify' || target === 'both') {
+        const shopifyResult = await pushCurrentListingToShopify(selectedRecord);
+        pushInlineActionNotice(
+          'success',
+          shopifyResult.mode === 'updated' ? 'Shopify listing updated' : 'Shopify listing created',
+          `Shopify product #${shopifyResult.productId} was ${shopifyResult.mode}.`,
+        );
+      }
+
+      if (target === 'ebay' || target === 'both') {
+        const ebayResult = await pushCurrentListingToEbay();
+        pushInlineActionNotice(
+          'success',
+          ebayResult.mode === 'updated' ? 'eBay listing updated' : 'eBay listing published',
+          `SKU ${ebayResult.sku} is live as listing ${ebayResult.listingId} via offer ${ebayResult.offerId}.`,
+        );
+      }
+    } catch (pushError) {
+      const message = pushError instanceof Error ? pushError.message : 'Unable to push this listing.';
+      pushInlineActionNotice('error', 'Publish failed', message);
+    } finally {
+      setPushingTarget(null);
+    }
   };
 
   if (selectedRecord) {
@@ -2222,51 +2469,68 @@ export function ListingApprovalTab({
 
         {isCombinedApproval ? (
           <div className="space-y-4">
-            {combinedDescriptionFieldName && (
-              <label className="flex flex-col gap-2">
-                <span className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Description</span>
-                <textarea
-                  className="min-h-[120px] w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70"
-                  value={formValues[combinedDescriptionFieldName] ?? ''}
-                  onChange={(event) => setFormValue(combinedDescriptionFieldName, event.target.value)}
-                  disabled={saving}
-                />
-              </label>
-            )}
+            <details className="rounded-lg border border-[var(--line)] bg-white/5" open>
+              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+                <span className="inline-flex items-center gap-2">
+                  <span>Shared Fields</span>
+                  {sharedDrawerRequiredStatus.hasRequired && <DrawerStatusIcon allFilled={sharedDrawerRequiredStatus.allFilled} />}
+                </span>
+              </summary>
+              <div className="border-t border-[var(--line)] px-3 py-3 space-y-4">
+                {combinedDescriptionFieldName && (
+                  <label className="flex flex-col gap-2">
+                    <span className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Description</span>
+                    <textarea
+                      className="min-h-[120px] w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70"
+                      value={formValues[combinedDescriptionFieldName] ?? ''}
+                      onChange={(event) => setFormValue(combinedDescriptionFieldName, event.target.value)}
+                      disabled={saving}
+                    />
+                  </label>
+                )}
 
-            <ApprovalFormFields
-              recordId={selectedRecord.id}
-              approvalChannel="combined"
-              isCombinedApproval
-              allFieldNames={combinedSharedFieldNames}
-              writableFieldNames={Object.keys(selectedRecord.fields)}
-              requiredFieldNames={[]}
-              approvedFieldName={approvedFieldName}
-              formValues={formValues}
-              fieldKinds={fieldKinds}
-              listingFormatOptions={listingFormatOptions}
-              listingDurationOptions={listingDurationOptions}
-              saving={saving}
-              setFormValue={setFormValue}
-              suppressImageScalarFields
-              originalFieldValues={Object.fromEntries(
-                Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
-              )}
-            />
-
-            {combinedSharedKeyFeaturesFieldName && (
-              <div className="rounded-lg border border-[var(--line)] bg-white/5 px-3 py-3">
-                <KeyFeaturesEditor
-                  keyFeaturesFieldName={combinedSharedKeyFeaturesFieldName}
-                  keyFeaturesValue={formValues[combinedSharedKeyFeaturesFieldName] ?? ''}
+                <ApprovalFormFields
+                  recordId={selectedRecord.id}
+                  approvalChannel="combined"
+                  isCombinedApproval
+                  allFieldNames={combinedSharedFieldNames}
+                  writableFieldNames={Object.keys(selectedRecord.fields)}
+                  requiredFieldNames={combinedRequiredFieldNames}
+                  shopifyRequiredFieldNames={shopifyRequiredFieldNames}
+                  ebayRequiredFieldNames={ebayRequiredFieldNames}
+                  approvedFieldName={approvedFieldName}
+                  formValues={formValues}
+                  fieldKinds={fieldKinds}
+                  listingFormatOptions={listingFormatOptions}
+                  listingDurationOptions={listingDurationOptions}
+                  saving={saving}
                   setFormValue={setFormValue}
-                  disabled={saving}
+                  suppressImageScalarFields
+                  originalFieldValues={Object.fromEntries(
+                    Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
+                  )}
                 />
+
+                {combinedSharedKeyFeaturesFieldName && (
+                  <div className="rounded-lg border border-[var(--line)] bg-white/5 px-3 py-3">
+                    <KeyFeaturesEditor
+                      keyFeaturesFieldName={combinedSharedKeyFeaturesFieldName}
+                      keyFeaturesValue={formValues[combinedSharedKeyFeaturesFieldName] ?? ''}
+                      setFormValue={setFormValue}
+                      disabled={saving}
+                    />
+                  </div>
+                )}
               </div>
-            )}
+            </details>
 
             <details className="rounded-lg border border-[var(--line)] bg-white/5" open>
-              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify-Specific Fields</summary>
+              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+                <span className="inline-flex items-center gap-2">
+                  <span>Shopify-Specific Fields</span>
+                  {shopifyDrawerRequiredStatus.hasRequired && <DrawerStatusIcon allFilled={shopifyDrawerRequiredStatus.allFilled} />}
+                </span>
+              </summary>
               <div className="border-t border-[var(--line)] px-3 py-3">
                 <ApprovalFormFields
                   recordId={selectedRecord.id}
@@ -2274,7 +2538,9 @@ export function ListingApprovalTab({
                   forceShowShopifyCollectionsEditor
                   allFieldNames={combinedShopifyOnlyFieldNames}
                   writableFieldNames={Object.keys(selectedRecord.fields)}
-                  requiredFieldNames={[]}
+                  requiredFieldNames={shopifyRequiredFieldNames}
+                  shopifyRequiredFieldNames={shopifyRequiredFieldNames}
+                  ebayRequiredFieldNames={[]}
                   approvedFieldName={approvedFieldName}
                   formValues={formValues}
                   fieldKinds={fieldKinds}
@@ -2367,14 +2633,21 @@ export function ListingApprovalTab({
             </details>
 
             <details className="rounded-lg border border-[var(--line)] bg-white/5" open>
-              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">eBay-Specific Fields</summary>
+              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+                <span className="inline-flex items-center gap-2">
+                  <span>eBay-Specific Fields</span>
+                  {ebayDrawerRequiredStatus.hasRequired && <DrawerStatusIcon allFilled={ebayDrawerRequiredStatus.allFilled} />}
+                </span>
+              </summary>
               <div className="border-t border-[var(--line)] px-3 py-3">
                 <ApprovalFormFields
                   recordId={selectedRecord.id}
                   approvalChannel="ebay"
                   allFieldNames={combinedEbayOnlyFieldNames}
                   writableFieldNames={Object.keys(selectedRecord.fields)}
-                  requiredFieldNames={[]}
+                  requiredFieldNames={ebayRequiredFieldNames}
+                  shopifyRequiredFieldNames={[]}
+                  ebayRequiredFieldNames={ebayRequiredFieldNames}
                   approvedFieldName={approvedFieldName}
                   formValues={formValues}
                   fieldKinds={fieldKinds}
@@ -2446,10 +2719,13 @@ export function ListingApprovalTab({
           <ApprovalFormFields
             recordId={selectedRecord.id}
             approvalChannel={approvalChannel}
+            isCombinedApproval={isCombinedApproval}
             forceShowShopifyCollectionsEditor={approvalChannel === 'shopify'}
             allFieldNames={allFieldNames}
             writableFieldNames={Object.keys(selectedRecord.fields)}
-            requiredFieldNames={approvalChannel === 'shopify' ? shopifyRequiredFieldNames : approvalChannel === 'ebay' ? ebayRequiredFieldNames : []}
+            requiredFieldNames={formRequiredFieldNames}
+            shopifyRequiredFieldNames={formShopifyRequiredFieldNames}
+            ebayRequiredFieldNames={formEbayRequiredFieldNames}
             approvedFieldName={approvedFieldName}
             formValues={formValues}
             fieldKinds={fieldKinds}
@@ -2478,7 +2754,7 @@ export function ListingApprovalTab({
           </section>
         )}
 
-        {approvalChannel === 'shopify' && hasMissingShopifyRequiredFields && (
+        {(approvalChannel === 'shopify' || approvalChannel === 'combined') && hasMissingShopifyRequiredFields && (
           <section className="mt-4 rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-2">
             <p className="m-0 text-sm font-semibold text-rose-200">
               Shopify required fields are missing ({missingShopifyRequiredFieldNames.length}).
@@ -2489,7 +2765,7 @@ export function ListingApprovalTab({
           </section>
         )}
 
-        {approvalChannel === 'ebay' && hasMissingEbayRequiredFields && (
+        {(approvalChannel === 'ebay' || approvalChannel === 'combined') && hasMissingEbayRequiredFields && (
           <section className="mt-4 rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-2">
             <p className="m-0 text-sm font-semibold text-rose-200">
               eBay required fields are missing ({missingEbayRequiredFieldNames.length}).
@@ -2692,196 +2968,243 @@ export function ListingApprovalTab({
           >
             {saving ? 'Saving...' : 'Save Updates'}
           </button>
-          <button
-            type="button"
-            className={accentActionButtonClass}
-            onClick={() => {
-              if (approving) return;
+          {isCombinedApproval && (
+            <>
+              <button
+                type="button"
+                className={secondaryActionButtonClass}
+                onClick={() => { void runCombinedPush('shopify'); }}
+                disabled={saving || approving || pushingTarget !== null || hasUnsavedChanges || pushShopifyDisabled}
+              >
+                {pushingTarget === 'shopify'
+                  ? 'Publishing Shopify...'
+                  : hasUnsavedChanges
+                    ? 'Save Updates Before Publishing'
+                    : pushShopifyDisabled
+                      ? 'Complete Shopify Fields'
+                      : 'Publish Shopify'}
+              </button>
+              <button
+                type="button"
+                className={secondaryActionButtonClass}
+                onClick={() => { void runCombinedPush('ebay'); }}
+                disabled={saving || approving || pushingTarget !== null || hasUnsavedChanges || pushEbayDisabled}
+              >
+                {pushingTarget === 'ebay'
+                  ? 'Publishing eBay...'
+                  : hasUnsavedChanges
+                    ? 'Save Updates Before Publishing'
+                    : pushEbayDisabled
+                      ? 'Complete eBay Fields'
+                      : 'Publish eBay'}
+              </button>
+              <button
+                type="button"
+                className={accentActionButtonClass}
+                onClick={() => { void runCombinedPush('both'); }}
+                disabled={saving || approving || pushingTarget !== null || hasUnsavedChanges || pushBothDisabled}
+              >
+                {pushingTarget === 'both'
+                  ? 'Publishing Both...'
+                  : hasUnsavedChanges
+                    ? 'Save Updates Before Publishing'
+                    : pushBothDisabled
+                      ? 'Complete Required Fields'
+                      : 'Publish Both'}
+              </button>
+            </>
+          )}
+          {!isCombinedApproval && (
+            <button
+              type="button"
+              className={accentActionButtonClass}
+              onClick={() => {
+                if (approving) return;
 
-              if (canUpdateApprovedShopifyListing) {
-                const confirmed = window.confirm('Are you sure you want to update this Shopify listing?');
+                if (canUpdateApprovedShopifyListing) {
+                  const confirmed = window.confirm('Are you sure you want to update this Shopify listing?');
+                  if (!confirmed) return;
+                  if (!selectedRecord) return;
+
+                  const runUpdate = async () => {
+                    setApproving(true);
+                    try {
+                      const existingProductId = formValues['Shopify REST Product ID']?.trim();
+                      const parsedExistingId = Number(existingProductId);
+                      if (!Number.isFinite(parsedExistingId) || parsedExistingId <= 0) {
+                        pushInlineActionNotice('error', 'Listing update failed', 'A valid Shopify REST Product ID is required to update an approved listing.');
+                        return;
+                      }
+
+                      await syncExistingShopifyListing(selectedRecord, parsedExistingId);
+                      pushInlineActionNotice('success', 'Shopify listing updated', `Listing #${existingProductId} was updated with the latest saved fields.`);
+                    } catch (updateError) {
+                      pushInlineActionNotice('error', 'Shopify listing update failed', describeShopifyCreateError(updateError));
+                    } finally {
+                      setApproving(false);
+                    }
+                  };
+
+                  void runUpdate();
+                  return;
+                }
+
+                if (approvalChannel === 'shopify' && hasMissingShopifyRequiredFields) {
+                  pushInlineActionNotice('warning', 'Required Shopify fields missing', `Complete required fields before approving: ${missingShopifyRequiredFieldLabels.join(', ')}`);
+                  return;
+                }
+
+                if (approvalChannel === 'ebay' && hasMissingEbayRequiredFields) {
+                  pushInlineActionNotice('warning', 'Required eBay fields missing', `Complete required fields before approving: ${missingEbayRequiredFieldLabels.join(', ')}`);
+                  return;
+                }
+
+                const confirmed = window.confirm('Are you sure you want to approve this listing for publishing?');
                 if (!confirmed) return;
                 if (!selectedRecord) return;
 
-                const runUpdate = async () => {
+                const SHOPIFY_PRODUCT_ID_FIELD = 'Shopify REST Product ID';
+
+                const runApproval = async () => {
                   setApproving(true);
                   try {
-                    const existingProductId = formValues['Shopify REST Product ID']?.trim();
-                    const parsedExistingId = Number(existingProductId);
-                    if (!Number.isFinite(parsedExistingId) || parsedExistingId <= 0) {
-                      pushInlineActionNotice('error', 'Listing update failed', 'A valid Shopify REST Product ID is required to update an approved listing.');
-                      return;
+                    if (createShopifyDraftOnApprove) {
+                      const existingProductId = formValues[SHOPIFY_PRODUCT_ID_FIELD]?.trim();
+                      const createPayload = finalShopifyCreatePayload
+                        ?? normalizeShopifyProductForUpsert(
+                          buildShopifyDraftProductFromApprovalFields(mergedDraftSourceFields ?? selectedRecord.fields),
+                        );
+                      let shouldCreateDraft = true;
+
+                      if (existingProductId) {
+                        const parsedExistingId = Number(existingProductId);
+
+                        if (Number.isFinite(parsedExistingId) && parsedExistingId > 0) {
+                          const existingProduct = await shopifyService.getProduct(parsedExistingId);
+                          if (existingProduct) {
+                            try {
+                              await syncExistingShopifyListing(selectedRecord, parsedExistingId);
+                              pushInlineActionNotice('success', 'Shopify draft updated', `Draft product #${existingProductId} was updated with the latest listing fields before approval.`);
+                            } catch (updateError) {
+                              pushInlineActionNotice('error', 'Shopify draft update failed', describeShopifyCreateError(updateError));
+                              return;
+                            }
+                            pushInlineActionNotice('info', 'Shopify draft already exists', `Product #${existingProductId} already existed, so it was updated instead of creating a duplicate draft.`);
+                            shouldCreateDraft = false;
+                          } else {
+                            setFormValue(SHOPIFY_PRODUCT_ID_FIELD, '');
+                            pushInlineActionNotice('warning', 'Cleared stale Shopify product ID', `Saved product ID #${existingProductId} was not found in Shopify. Creating a new draft now.`);
+                          }
+                        } else {
+                          setFormValue(SHOPIFY_PRODUCT_ID_FIELD, '');
+                        }
+                      }
+
+                      if (shouldCreateDraft) {
+                        try {
+                          const categoryId = await resolveShopifyCategoryId();
+                          const createdProduct = await upsertShopifyProductWithCollectionFallback({
+                            product: createPayload,
+                            categoryId,
+                            collectionIds: currentPageCollectionIds,
+                          });
+                          const productIdStr = String(createdProduct.id);
+                          const productIdNum = Number(createdProduct.id);
+
+                          const writebackAttempts: Array<Record<string, string | number>> = Number.isFinite(productIdNum)
+                            ? [
+                                { [SHOPIFY_PRODUCT_ID_FIELD]: productIdNum },
+                                { [SHOPIFY_PRODUCT_ID_FIELD]: productIdStr },
+                              ]
+                            : [{ [SHOPIFY_PRODUCT_ID_FIELD]: productIdStr }];
+
+                          let writebackError: unknown = null;
+                          for (const fields of writebackAttempts) {
+                            try {
+                              await airtableService.updateRecordFromReference(
+                                tableReference,
+                                tableName,
+                                selectedRecord.id,
+                                fields,
+                              );
+                              writebackError = null;
+                              break;
+                            } catch (error) {
+                              writebackError = error;
+                            }
+                          }
+
+                          if (writebackError) {
+                            pushInlineActionNotice('warning', 'Draft created, ID writeback failed', 'Shopify draft was created, but writing Shopify REST Product ID to Airtable failed. You may need to save the ID manually.');
+                          } else {
+                            setFormValue(SHOPIFY_PRODUCT_ID_FIELD, productIdStr);
+                          }
+
+                          trackWorkflowEvent('shopify_draft_created_from_approval', {
+                            recordId: selectedRecord.id,
+                            productId: createdProduct.id,
+                          });
+                          pushInlineActionNotice('success', 'Shopify draft created', `Draft product #${productIdStr} was created before approval completion.`);
+                        } catch (draftError) {
+                          trackWorkflowEvent('shopify_draft_create_failed_from_approval', {
+                            recordId: selectedRecord.id,
+                          });
+                          pushInlineActionNotice('error', 'Shopify draft creation failed', describeShopifyCreateError(draftError));
+                          return;
+                        }
+                      }
                     }
 
-                    await syncExistingShopifyListing(selectedRecord, parsedExistingId);
-                    pushInlineActionNotice('success', 'Shopify listing updated', `Listing #${existingProductId} was updated with the latest saved fields.`);
-                  } catch (updateError) {
-                    pushInlineActionNotice('error', 'Shopify listing update failed', describeShopifyCreateError(updateError));
+                    trackWorkflowEvent('approval_approved', {
+                      recordId: selectedRecord.id,
+                      tableReference,
+                    });
+                    const approveSucceeded = await saveRecord(
+                      true,
+                      selectedRecord,
+                      tableReference,
+                      tableName,
+                      actualFieldNames,
+                      approvedFieldName,
+                      onBackToList,
+                      'approve-only',
+                    );
+
+                    if (!approveSucceeded) {
+                      pushInlineActionNotice('error', 'Approval failed', 'Could not mark this listing as approved in Airtable.');
+                    }
                   } finally {
                     setApproving(false);
                   }
                 };
 
-                void runUpdate();
-                return;
+                void runApproval();
+              }}
+              disabled={
+                saving
+                || approving
+                || pushingTarget !== null
+                || hasUnsavedChanges
+                || (!canUpdateApprovedShopifyListing && isApproved)
+                || (approvalChannel === 'shopify' && hasMissingShopifyRequiredFields)
+                || (approvalChannel === 'ebay' && hasMissingEbayRequiredFields)
               }
-
-              if (approvalChannel === 'shopify' && hasMissingShopifyRequiredFields) {
-                pushInlineActionNotice('warning', 'Required Shopify fields missing', `Complete required fields before approving: ${missingShopifyRequiredFieldLabels.join(', ')}`);
-                return;
-              }
-
-              if (approvalChannel === 'ebay' && hasMissingEbayRequiredFields) {
-                pushInlineActionNotice('warning', 'Required eBay fields missing', `Complete required fields before approving: ${missingEbayRequiredFieldLabels.join(', ')}`);
-                return;
-              }
-
-              const confirmed = window.confirm('Are you sure you want to approve this listing for publishing?');
-              if (!confirmed) return;
-              if (!selectedRecord) return;
-
-              const SHOPIFY_PRODUCT_ID_FIELD = 'Shopify REST Product ID';
-
-              const runApproval = async () => {
-                setApproving(true);
-                try {
-                  if (createShopifyDraftOnApprove) {
-                    const existingProductId = formValues[SHOPIFY_PRODUCT_ID_FIELD]?.trim();
-                    const createPayload = finalShopifyCreatePayload
-                      ?? normalizeShopifyProductForUpsert(
-                        buildShopifyDraftProductFromApprovalFields(mergedDraftSourceFields ?? selectedRecord.fields),
-                      );
-                    let shouldCreateDraft = true;
-
-                    if (existingProductId) {
-                      const parsedExistingId = Number(existingProductId);
-
-                      if (Number.isFinite(parsedExistingId) && parsedExistingId > 0) {
-                        const existingProduct = await shopifyService.getProduct(parsedExistingId);
-                        if (existingProduct) {
-                          try {
-                            await syncExistingShopifyListing(selectedRecord, parsedExistingId);
-                            pushInlineActionNotice('success', 'Shopify draft updated', `Draft product #${existingProductId} was updated with the latest listing fields before approval.`);
-                          } catch (updateError) {
-                            pushInlineActionNotice('error', 'Shopify draft update failed', describeShopifyCreateError(updateError));
-                            return;
-                          }
-                          pushInlineActionNotice('info', 'Shopify draft already exists', `Product #${existingProductId} already existed, so it was updated instead of creating a duplicate draft.`);
-                          shouldCreateDraft = false;
-                        } else {
-                          setFormValue(SHOPIFY_PRODUCT_ID_FIELD, '');
-                          pushInlineActionNotice('warning', 'Cleared stale Shopify product ID', `Saved product ID #${existingProductId} was not found in Shopify. Creating a new draft now.`);
-                        }
-                      } else {
-                        setFormValue(SHOPIFY_PRODUCT_ID_FIELD, '');
-                      }
-                    }
-
-                    if (shouldCreateDraft) {
-                      try {
-                        const categoryId = await resolveShopifyCategoryId();
-                        const createdProduct = await upsertShopifyProductWithCollectionFallback({
-                          product: createPayload,
-                          categoryId,
-                          collectionIds: currentPageCollectionIds,
-                        });
-                        const productIdStr = String(createdProduct.id);
-                        const productIdNum = Number(createdProduct.id);
-
-                        // Write product ID back to Airtable before marking approved so
-                        // re-approving this record skips duplicate draft creation.
-                        const writebackAttempts: Array<Record<string, string | number>> = Number.isFinite(productIdNum)
-                          ? [
-                              { [SHOPIFY_PRODUCT_ID_FIELD]: productIdNum },
-                              { [SHOPIFY_PRODUCT_ID_FIELD]: productIdStr },
-                            ]
-                          : [{ [SHOPIFY_PRODUCT_ID_FIELD]: productIdStr }];
-
-                        let writebackError: unknown = null;
-                        for (const fields of writebackAttempts) {
-                          try {
-                            await airtableService.updateRecordFromReference(
-                              tableReference,
-                              tableName,
-                              selectedRecord.id,
-                              fields,
-                            );
-                            writebackError = null;
-                            break;
-                          } catch (error) {
-                            writebackError = error;
-                          }
-                        }
-
-                        if (writebackError) {
-                          pushInlineActionNotice('warning', 'Draft created, ID writeback failed', 'Shopify draft was created, but writing Shopify REST Product ID to Airtable failed. You may need to save the ID manually.');
-                        } else {
-                          setFormValue(SHOPIFY_PRODUCT_ID_FIELD, productIdStr);
-                        }
-
-                        trackWorkflowEvent('shopify_draft_created_from_approval', {
-                          recordId: selectedRecord.id,
-                          productId: createdProduct.id,
-                        });
-                        pushInlineActionNotice('success', 'Shopify draft created', `Draft product #${productIdStr} was created before approval completion.`);
-                      } catch (draftError) {
-                        trackWorkflowEvent('shopify_draft_create_failed_from_approval', {
-                          recordId: selectedRecord.id,
-                        });
-                        pushInlineActionNotice('error', 'Shopify draft creation failed', describeShopifyCreateError(draftError));
-                        return;
-                      }
-                    }
-                  }
-
-                  trackWorkflowEvent('approval_approved', {
-                    recordId: selectedRecord.id,
-                    tableReference,
-                  });
-                  const approveSucceeded = await saveRecord(
-                    true,
-                    selectedRecord,
-                    tableReference,
-                    tableName,
-                    actualFieldNames,
-                    approvedFieldName,
-                    onBackToList,
-                    'approve-only',
-                  );
-
-                  if (!approveSucceeded) {
-                    pushInlineActionNotice('error', 'Approval failed', 'Could not mark this listing as approved in Airtable.');
-                  }
-                } finally {
-                  setApproving(false);
-                }
-              };
-
-              void runApproval();
-            }}
-            disabled={
-              saving
-              || approving
-              || hasUnsavedChanges
-              || (!canUpdateApprovedShopifyListing && isApproved)
-              || (approvalChannel === 'shopify' && hasMissingShopifyRequiredFields)
-              || (approvalChannel === 'ebay' && hasMissingEbayRequiredFields)
-            }
-          >
-            {approving
-              ? (canUpdateApprovedShopifyListing ? 'Updating...' : 'Approving...')
-              : hasUnsavedChanges
-                ? (canUpdateApprovedShopifyListing ? 'Save Updates Before Updating' : 'Save Updates Before Approving')
-              : canUpdateApprovedShopifyListing
-                ? 'Update Listing'
-                : isApproved
-                ? 'Already Approved'
-                : approvalChannel === 'shopify' && hasMissingShopifyRequiredFields
-                  ? 'Complete Required Shopify Fields'
-                  : approvalChannel === 'ebay' && hasMissingEbayRequiredFields
-                    ? 'Complete Required eBay Fields'
-                    : (hasExistingShopifyRestProductId ? 'Update Listing' : 'Approve Listing')}
-          </button>
+            >
+              {approving
+                ? (canUpdateApprovedShopifyListing ? 'Updating...' : 'Approving...')
+                : hasUnsavedChanges
+                  ? (canUpdateApprovedShopifyListing ? 'Save Updates Before Updating' : 'Save Updates Before Approving')
+                : canUpdateApprovedShopifyListing
+                  ? 'Update Listing'
+                  : isApproved
+                    ? 'Already Approved'
+                    : approvalChannel === 'shopify' && hasMissingShopifyRequiredFields
+                      ? 'Complete Required Shopify Fields'
+                      : approvalChannel === 'ebay' && hasMissingEbayRequiredFields
+                        ? 'Complete Required eBay Fields'
+                        : (hasExistingShopifyRestProductId ? 'Update Listing' : 'Approve Listing')}
+            </button>
+          )}
         </div>
 
         {inlineActionNotices.length > 0 && (
@@ -3091,10 +3414,14 @@ export function ListingApprovalTab({
           <ApprovalQueueTable
             records={records}
             approvedFieldName={approvedFieldName}
-            requiredFieldNames={approvalChannel === 'shopify' ? shopifyRequiredFieldNames : approvalChannel === 'ebay' ? ebayRequiredFieldNames : []}
+            requiredFieldNames={approvalChannel === 'shopify' ? shopifyRequiredFieldNames : approvalChannel === 'ebay' ? ebayRequiredFieldNames : combinedRequiredFieldNames}
+            readinessColumns={approvalChannel === 'combined' ? [
+              { key: 'shopify', label: 'Shopify Ready', requiredFieldNames: shopifyRequiredFieldNames },
+              { key: 'ebay', label: 'eBay Ready', requiredFieldNames: ebayRequiredFieldNames },
+            ] : []}
             titleFieldName={titleFieldName}
             conditionFieldName=''
-            formatFieldName={approvalChannel === 'ebay' ? '' : formatFieldName}
+            formatFieldName={approvalChannel === 'ebay' || approvalChannel === 'combined' ? '' : formatFieldName}
             priceFieldName={approvalChannel === 'shopify' ? '' : priceFieldName}
             vendorFieldName={vendorFieldName}
             qtyFieldName={approvalChannel === 'ebay' ? '' : qtyFieldName}

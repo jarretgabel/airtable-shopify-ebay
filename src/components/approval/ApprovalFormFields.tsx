@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import {
   CONDITION_FIELD,
@@ -100,6 +100,8 @@ function toHumanReadableLabel(fieldName: string): string {
   if (fieldName === CONDITION_FIELD) return 'Condition';
   if (fieldName.trim().toLowerCase() === 'ebay offer price value') return 'eBay Price';
   if (fieldName.trim().toLowerCase() === 'ebay price') return 'eBay Price';
+  if (fieldName.trim().toLowerCase() === 'buy it now usd') return 'eBay Price';
+  if (fieldName.trim().toLowerCase() === 'starting bid usd') return 'eBay Price';
   if (fieldName.trim().toLowerCase() === 'shopify rest variant 1 price') return 'Shopify Price';
   if (fieldName.trim().toLowerCase() === 'shopify price') return 'Shopify Price';
   if (fieldName.trim().toLowerCase() === 'type') return 'Shopify Type';
@@ -131,6 +133,9 @@ function isCurrencyLikeField(fieldName: string): boolean {
   const isGenericPriceField = normalized === 'price' || /^variant\s+\d+\s+price$/.test(normalized);
 
   return normalized === 'ebay offer price value'
+    || normalized === 'ebay price'
+    || normalized === 'buy it now usd'
+    || normalized === 'starting bid usd'
     || normalized === 'buy it now/starting bid'
     || normalized === 'buy it now/starting price'
     || normalized === 'buy it now / starting price'
@@ -1240,6 +1245,8 @@ interface ApprovalFormFieldsProps {
   allFieldNames: string[];
   writableFieldNames?: string[];
   requiredFieldNames?: string[];
+  shopifyRequiredFieldNames?: string[];
+  ebayRequiredFieldNames?: string[];
   approvedFieldName: string;
   formValues: Record<string, string>;
   fieldKinds: Record<string, 'boolean' | 'number' | 'json' | 'text'>;
@@ -1277,7 +1284,33 @@ function isTitleLikeField(fieldName: string): boolean {
 
 function isPriceLikeField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
-  return normalized.includes('price');
+  return normalized.includes('price')
+    || normalized === 'ebay price'
+    || normalized === 'buy it now usd'
+    || normalized === 'starting bid usd'
+    || normalized === 'buy it now/starting bid'
+    || normalized === 'buy it now/starting price'
+    || normalized === 'buy it now / starting price';
+}
+
+function isEbayPriceFieldAlias(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'price'
+    || normalized === 'ebay offer price value'
+    || normalized === 'ebay offer auction start price value'
+    || normalized === 'ebay price'
+    || normalized === 'ebay buy it now/starting bid'
+    || normalized === 'ebay buy it now / starting bid'
+    || normalized === 'ebay buy it now/starting price'
+    || normalized === 'ebay buy it now / starting price'
+    || normalized === 'buy it now usd'
+    || normalized === 'starting bid usd'
+    || normalized === 'buy it now/starting bid'
+    || normalized === 'buy it now/starting price'
+    || normalized === 'buy it now / starting price'
+    || normalized.includes('buy it now')
+    || normalized.includes('starting bid')
+    || normalized.includes('starting price');
 }
 
 function isFormatLikeField(fieldName: string): boolean {
@@ -1308,6 +1341,8 @@ export function ApprovalFormFields({
   allFieldNames,
   writableFieldNames = [],
   requiredFieldNames = [],
+  shopifyRequiredFieldNames = [],
+  ebayRequiredFieldNames = [],
   approvedFieldName,
   formValues,
   fieldKinds,
@@ -1321,12 +1356,71 @@ export function ApprovalFormFields({
   selectedEbayTemplateId,
   onEbayTemplateIdChange,
 }: ApprovalFormFieldsProps) {
-  const requiredFieldNameSet = useMemo(
-    () => new Set(requiredFieldNames.map((fieldName) => fieldName.toLowerCase())),
+  const normalizedRequiredFieldNames = useMemo(
+    () => requiredFieldNames.map((fieldName) => fieldName.toLowerCase()),
     [requiredFieldNames],
   );
+  const normalizedShopifyRequiredFieldNames = useMemo(
+    () => shopifyRequiredFieldNames.map((fieldName) => fieldName.toLowerCase()),
+    [shopifyRequiredFieldNames],
+  );
+  const normalizedEbayRequiredFieldNames = useMemo(
+    () => ebayRequiredFieldNames.map((fieldName) => fieldName.toLowerCase()),
+    [ebayRequiredFieldNames],
+  );
+  const hasEbayRequiredPriceField = useMemo(
+    () => normalizedEbayRequiredFieldNames.some((fieldName) => isPriceLikeField(fieldName)),
+    [normalizedEbayRequiredFieldNames],
+  );
 
-  const isRequiredField = (fieldName: string): boolean => requiredFieldNameSet.has(fieldName.toLowerCase());
+  const isShopifyCategoryLikeField = (fieldName: string): boolean => {
+    const normalized = fieldName.trim().toLowerCase();
+    return normalized === 'type'
+      || normalized === 'shopify type'
+      || normalized === 'product type'
+      || normalized === 'shopify product type'
+      || normalized === 'shopify rest product type'
+      || normalized === 'shopify category'
+      || normalized === 'shopify product category'
+      || normalized === 'shopify rest product category'
+      || normalized === 'category'
+      || normalized === 'product category';
+  };
+
+  const matchesRequiredFieldGroup = (fieldName: string, normalizedRequiredNames: string[]): boolean => {
+    const normalizedFieldName = fieldName.toLowerCase();
+    if (normalizedRequiredNames.includes(normalizedFieldName)) return true;
+
+    if (isTitleLikeField(fieldName)) {
+      return normalizedRequiredNames.some((requiredFieldName) => isTitleLikeField(requiredFieldName));
+    }
+
+    if (isPriceLikeField(fieldName)) {
+      return normalizedRequiredNames.some((requiredFieldName) => isPriceLikeField(requiredFieldName));
+    }
+
+    if (isShopifyCategoryLikeField(fieldName)) {
+      return normalizedRequiredNames.some((requiredFieldName) => isShopifyCategoryLikeField(requiredFieldName));
+    }
+
+    return false;
+  };
+
+  const isForcedEbayPriceRequiredField = (fieldName: string): boolean => {
+    if (!hasEbayRequiredPriceField) return false;
+    if (approvalChannel !== 'ebay' && approvalChannel !== 'combined') return false;
+    return isEbayPriceFieldAlias(fieldName);
+  };
+
+  const isRequiredField = (fieldName: string): boolean => (
+    matchesRequiredFieldGroup(fieldName, normalizedRequiredFieldNames)
+    || isForcedEbayPriceRequiredField(fieldName)
+  );
+  const isShopifyRequiredField = (fieldName: string): boolean => matchesRequiredFieldGroup(fieldName, normalizedShopifyRequiredFieldNames);
+  const isEbayRequiredField = (fieldName: string): boolean => (
+    matchesRequiredFieldGroup(fieldName, normalizedEbayRequiredFieldNames)
+    || isForcedEbayPriceRequiredField(fieldName)
+  );
   const orderedFieldNames = useMemo(() => {
     const required = prioritizeTitleBeforePrice(
       allFieldNames.filter((fieldName) => isRequiredField(fieldName)),
@@ -1337,14 +1431,14 @@ export function ApprovalFormFields({
       approvalChannel,
     );
     return [...required, ...optional];
-  }, [allFieldNames, approvalChannel, requiredFieldNameSet]);
+  }, [allFieldNames, approvalChannel, normalizedRequiredFieldNames]);
   const requiredOrderedFieldNames = useMemo(
     () => orderedFieldNames.filter((fieldName) => isRequiredField(fieldName)),
-    [orderedFieldNames, requiredFieldNameSet],
+    [orderedFieldNames, normalizedRequiredFieldNames],
   );
   const optionalOrderedFieldNames = useMemo(
     () => orderedFieldNames.filter((fieldName) => !isRequiredField(fieldName)),
-    [orderedFieldNames, requiredFieldNameSet],
+    [orderedFieldNames, normalizedRequiredFieldNames],
   );
   const isEbayListingForm = allFieldNames.some((fieldName) => {
     const normalized = fieldName.toLowerCase();
@@ -1369,10 +1463,34 @@ export function ApprovalFormFields({
     return [inputBaseClass, requiredInputClass, extra].filter(Boolean).join(' ');
   };
   const getSelectClassName = (fieldName: string): string => getInputClassName(fieldName, 'appearance-none pr-12');
+  const getLabelClassName = (fieldName?: string): string => {
+    if (fieldName && isRequiredField(fieldName)) {
+      return `${labelClass} text-rose-200`;
+    }
+
+    return labelClass;
+  };
+  const renderRequiredBadges = (fieldName: string): JSX.Element | null => {
+    const isShopifyRequired = isShopifyRequiredField(fieldName);
+    const isEbayRequired = isEbayRequiredField(fieldName);
+
+    if (!isShopifyRequired && !isEbayRequired) return null;
+
+    if (approvalChannel !== 'combined' && isRequiredField(fieldName)) {
+      return <span className={requiredBadgeClass}>Required</span>;
+    }
+
+    return (
+      <>
+        {isShopifyRequired && <span className={requiredBadgeClass}>Shopify Required</span>}
+        {isEbayRequired && <span className={requiredBadgeClass}>eBay Required</span>}
+      </>
+    );
+  };
   const renderFieldLabel = (fieldName: string): JSX.Element => (
-    <span className={`${labelClass} flex items-center gap-2`}>
+    <span className={`${getLabelClassName(fieldName)} flex items-center gap-2`}>
       <span>{toFieldLabel(fieldName)}</span>
-      {isRequiredField(fieldName) && <span className={requiredBadgeClass}>Required</span>}
+      {renderRequiredBadges(fieldName)}
     </span>
   );
 
@@ -2035,9 +2153,9 @@ export function ApprovalFormFields({
 
   function renderSpecialLabel(label: string, fieldName?: string): JSX.Element {
     return (
-      <span className={`${labelClass} flex items-center gap-2`}>
+      <span className={`${getLabelClassName(fieldName)} flex items-center gap-2`}>
         <span>{label}</span>
-        {fieldName && isRequiredField(fieldName) && <span className={requiredBadgeClass}>Required</span>}
+        {fieldName ? renderRequiredBadges(fieldName) : null}
       </span>
     );
   }
@@ -2124,7 +2242,7 @@ export function ApprovalFormFields({
           <ApprovalSelect
             selectClassName={getSelectClassName(fieldName)}
             value={normalizedBooleanValue}
-            onChange={(event) => setFormValue(fieldName, event.target.value)}
+            onChange={(event: ChangeEvent<HTMLSelectElement>) => setFormValue(fieldName, event.target.value)}
             disabled={inputDisabled}
           >
             <option value="true">True</option>
@@ -2152,7 +2270,7 @@ export function ApprovalFormFields({
           <ApprovalSelect
             selectClassName={getSelectClassName(fieldName)}
             value={displayValue}
-            onChange={(event) => {
+            onChange={(event: ChangeEvent<HTMLSelectElement>) => {
               const selectedLabel = event.target.value;
               const storeValue = isListingDurationField
                 ? normalizeEbayListingDuration(selectedLabel)
@@ -2182,7 +2300,8 @@ export function ApprovalFormFields({
         <ShopifyTaxonomyTypeSelect
           key={fieldName}
           fieldName={fieldName}
-          label={isRequiredField(fieldName) ? `${toFieldLabel(fieldName)} (Required)` : toFieldLabel(fieldName)}
+          label={toFieldLabel(fieldName)}
+          required={isRequiredField(fieldName)}
           value={value}
           onChange={(nextValue) => setFormValue(fieldName, nextValue)}
           disabled={inputDisabled}

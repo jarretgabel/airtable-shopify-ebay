@@ -5,10 +5,12 @@ import { trimShopifyProductType } from '@/services/shopifyTaxonomy';
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
 const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
+const requiredBadgeClass = 'inline-block rounded-full border border-rose-400/45 bg-rose-500/15 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-rose-200';
 
 interface ShopifyTaxonomyTypeSelectProps {
   fieldName: string;
   label: string;
+  required?: boolean;
   value: string;
   disabled: boolean;
   onChange: (value: string) => void;
@@ -17,6 +19,7 @@ interface ShopifyTaxonomyTypeSelectProps {
 export function ShopifyTaxonomyTypeSelect({
   fieldName,
   label,
+  required = false,
   value,
   disabled,
   onChange,
@@ -72,6 +75,13 @@ export function ShopifyTaxonomyTypeSelect({
   }, []);
 
   const productTypePreview = useMemo(() => trimShopifyProductType(value || query), [query, value]);
+  const labelClassName = required ? `${labelClass} text-rose-200` : labelClass;
+  const inputClassName = required
+    ? `${inputBaseClass} border-rose-400/45 bg-rose-500/5 focus:border-rose-300`
+    : inputBaseClass;
+  const toggleButtonClassName = required
+    ? 'rounded-xl border border-rose-400/45 bg-rose-500/5 px-3 py-2 text-sm text-[var(--ink)] transition hover:border-rose-300 disabled:cursor-not-allowed disabled:opacity-70'
+    : 'rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] transition hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-70';
 
   const openMenu = () => {
     if (disabled) return;
@@ -91,10 +101,13 @@ export function ShopifyTaxonomyTypeSelect({
 
   return (
     <div className="relative flex flex-col gap-2">
-      <span className={labelClass}>{label}</span>
+      <span className={`${labelClassName} flex items-center gap-2`}>
+        <span>{label}</span>
+        {required && <span className={requiredBadgeClass}>Required</span>}
+      </span>
       <div className="flex items-center gap-2">
         <input
-          className={inputBaseClass}
+          className={inputClassName}
           type="text"
           value={query}
           placeholder="Search Shopify categories"
@@ -128,7 +141,7 @@ export function ShopifyTaxonomyTypeSelect({
         />
         <button
           type="button"
-          className="rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] transition hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-70"
+          className={toggleButtonClassName}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => setIsOpen((current) => !current)}
           disabled={disabled}
