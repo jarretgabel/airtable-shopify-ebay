@@ -57,6 +57,5 @@ export const EBAY_SHIPPING_TYPE_OPTIONS = [
   'CalculatedDomesticFlatInternational',
   'Flat',
   'FlatDomesticCalculatedInternational',
-  'NotSpecified',
 ];
 export const EBAY_RESPONSIBLE_PERSON_TYPE_OPTIONS = ['MANUFACTURER', 'IMPORTER', 'EU_RESPONSIBLE_PERSON'];

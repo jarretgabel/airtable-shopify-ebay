@@ -83,11 +83,11 @@ export function EbayShippingServicesEditor({
   }
 
   return (
-    <details className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2" open>
-      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+    <section className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2">
+      <div className="border-b border-[var(--line)] px-3 py-2 text-sm font-semibold text-[var(--ink)]">
         Shipping Services
-      </summary>
-      <div className="grid grid-cols-1 gap-4 border-t border-[var(--line)] px-3 py-3 md:grid-cols-2">
+      </div>
+      <div className="grid grid-cols-1 gap-4 px-3 py-3 md:grid-cols-2">
         <section className="rounded-lg border border-[var(--line)] bg-[var(--bg)] p-3">
           <div className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Domestic</div>
           <div className="flex flex-col gap-2">
@@ -134,6 +134,6 @@ export function EbayShippingServicesEditor({
           <p className="mb-0 mt-3 text-[0.74rem] leading-5 text-[var(--muted)]">Select up to two international services.</p>
         </section>
       </div>
-    </details>
+    </section>
   );
 }

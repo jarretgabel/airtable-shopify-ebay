@@ -7,6 +7,7 @@ import {
   isAllowOffersField,
   isShippingServiceField,
 } from '@/stores/approvalStore';
+import { getEbayPackageTypes } from '@/services/ebay';
 import { shopifyService } from '@/services/shopify';
 import { buildShopifyBodyHtml } from '@/services/shopifyBodyHtml';
 import { buildEbayBodyHtmlFromTemplate } from '@/services/ebayBodyHtml';
@@ -32,6 +33,8 @@ const inputBaseClass =
 const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
 const requiredBadgeClass = 'inline-block rounded-full border border-rose-400/45 bg-rose-500/15 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-rose-200';
 const SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD = 'Shopify GraphQL Collection IDs';
+const SYNTHETIC_EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD = '__ebayDomesticShippingFlatFee__';
+const SYNTHETIC_EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD = '__ebayInternationalShippingFlatFee__';
 type EbayListingTemplateId = 'classic' | 'impact-slate' | 'impact-luxe';
 
 const DEFAULT_EBAY_LISTING_TEMPLATE_ID: EbayListingTemplateId = 'classic';
@@ -135,6 +138,9 @@ function isCurrencyLikeField(fieldName: string): boolean {
     && normalized.includes('price')
     && !normalized.includes('currency');
   const isGenericPriceField = normalized === 'price' || /^variant\s+\d+\s+price$/.test(normalized);
+  const isShippingFlatFeeField = normalized.includes('shipping')
+    && normalized.includes('flat')
+    && (normalized.includes('fee') || normalized.includes('cost') || normalized.includes('rate'));
 
   return normalized === 'ebay offer price value'
     || normalized === 'ebay price'
@@ -144,6 +150,7 @@ function isCurrencyLikeField(fieldName: string): boolean {
     || normalized === 'buy it now/starting price'
     || normalized === 'buy it now / starting price'
     || normalized.includes('handling cost')
+    || isShippingFlatFeeField
     || isShopifyPriceField
     || isGenericPriceField;
 }
@@ -503,8 +510,56 @@ function getEbayShippingTypeLabel(value: string): string {
   if (value === 'CalculatedDomesticFlatInternational') return 'Calculated Domestic / Flat International';
   if (value === 'Flat') return 'Flat';
   if (value === 'FlatDomesticCalculatedInternational') return 'Flat Domestic / Calculated International';
-  if (value === 'NotSpecified') return 'Not Specified';
   return value;
+}
+
+const EBAY_SEPARATED_SHIPPING_FEE_OPTIONS = ['Calculated', 'Flat'] as const;
+
+function parseEbayShippingFeeSelections(value: string): { domestic: string; international: string } {
+  const trimmed = value.trim();
+  const normalized = trimmed.toLowerCase().replace(/\s+/g, ' ');
+
+  if (!trimmed) {
+    return { domestic: '', international: '' };
+  }
+
+  if (trimmed === 'CalculatedDomesticFlatInternational' || normalized === 'calculated domestic / flat international') {
+    return { domestic: 'Calculated', international: 'Flat' };
+  }
+
+  if (trimmed === 'FlatDomesticCalculatedInternational' || normalized === 'flat domestic / calculated international') {
+    return { domestic: 'Flat', international: 'Calculated' };
+  }
+
+  if (trimmed === 'Calculated' || normalized === 'calculated') {
+    return { domestic: 'Calculated', international: 'Calculated' };
+  }
+
+  if (trimmed === 'Flat' || normalized === 'flat') {
+    return { domestic: 'Flat', international: 'Flat' };
+  }
+
+  if (trimmed === 'NotSpecified' || normalized === 'not specified') {
+    return { domestic: 'NotSpecified', international: 'NotSpecified' };
+  }
+
+  return { domestic: trimmed, international: trimmed };
+}
+
+function getSeparatedEbayShippingFeeValue(params: {
+  fieldName: string;
+  fieldValue: string;
+  domesticFieldValue?: string;
+}): string {
+  const { fieldName, fieldValue, domesticFieldValue = '' } = params;
+
+  if (isEbayInternationalShippingFeesField(fieldName)) {
+    const ownSelections = parseEbayShippingFeeSelections(fieldValue);
+    if (ownSelections.international) return ownSelections.international;
+    return parseEbayShippingFeeSelections(domesticFieldValue).international;
+  }
+
+  return parseEbayShippingFeeSelections(fieldValue).domestic;
 }
 
 function isEbayShippingTypeField(fieldName: string): boolean {
@@ -521,6 +576,72 @@ function isEbayInternationalShippingFeesField(fieldName: string): boolean {
     || normalized === 'ebay international shipping fees'
     || normalized === 'international_shipping_fees'
     || normalized === 'ebay_international_shipping_fees';
+}
+
+function isEbayDomesticShippingFlatFeeField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase().replace(/\s+/g, ' ');
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'domestic shipping flat fee'
+    || normalized === 'ebay domestic shipping flat fee'
+    || normalized === 'domestic shipping flat fee usd'
+    || normalized === 'ebay domestic shipping flat fee usd'
+    || normalized === 'domestic shipping flat rate'
+    || normalized === 'ebay domestic shipping flat rate'
+    || normalized === 'domestic shipping flat cost'
+    || normalized === 'ebay domestic shipping flat cost'
+    || normalized === 'domestic_shipping_flat_fee'
+    || normalized === 'ebay_domestic_shipping_flat_fee'
+    || normalized === 'domestic_shipping_flat_fee_usd'
+    || normalized === 'ebay_domestic_shipping_flat_fee_usd'
+    || normalized === 'domestic_shipping_flat_rate'
+    || normalized === 'ebay_domestic_shipping_flat_rate'
+    || normalized === 'domestic_shipping_flat_cost'
+    || normalized === 'ebay_domestic_shipping_flat_cost'
+    || compact === 'domesticshippingflatfee'
+    || compact === 'ebaydomesticshippingflatfee'
+    || compact === 'domesticshippingflatfeeusd'
+    || compact === 'ebaydomesticshippingflatfeeusd'
+    || compact === 'domesticshippingflatrate'
+    || compact === 'ebaydomesticshippingflatrate'
+    || compact === 'domesticshippingflatcost'
+    || compact === 'ebaydomesticshippingflatcost'
+    || (normalized.includes('domestic')
+      && normalized.includes('shipping')
+      && normalized.includes('flat')
+      && (normalized.includes('fee') || normalized.includes('rate') || normalized.includes('cost')));
+}
+
+function isEbayInternationalShippingFlatFeeField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase().replace(/\s+/g, ' ');
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'international shipping flat fee'
+    || normalized === 'ebay international shipping flat fee'
+    || normalized === 'international shipping flat fee usd'
+    || normalized === 'ebay international shipping flat fee usd'
+    || normalized === 'international shipping flat rate'
+    || normalized === 'ebay international shipping flat rate'
+    || normalized === 'international shipping flat cost'
+    || normalized === 'ebay international shipping flat cost'
+    || normalized === 'international_shipping_flat_fee'
+    || normalized === 'ebay_international_shipping_flat_fee'
+    || normalized === 'international_shipping_flat_fee_usd'
+    || normalized === 'ebay_international_shipping_flat_fee_usd'
+    || normalized === 'international_shipping_flat_rate'
+    || normalized === 'ebay_international_shipping_flat_rate'
+    || normalized === 'international_shipping_flat_cost'
+    || normalized === 'ebay_international_shipping_flat_cost'
+    || compact === 'internationalshippingflatfee'
+    || compact === 'ebayinternationalshippingflatfee'
+    || compact === 'internationalshippingflatfeeusd'
+    || compact === 'ebayinternationalshippingflatfeeusd'
+    || compact === 'internationalshippingflatrate'
+    || compact === 'ebayinternationalshippingflatrate'
+    || compact === 'internationalshippingflatcost'
+    || compact === 'ebayinternationalshippingflatcost'
+    || (normalized.includes('international')
+      && normalized.includes('shipping')
+      && normalized.includes('flat')
+      && (normalized.includes('fee') || normalized.includes('rate') || normalized.includes('cost')));
 }
 
 function hasNormalizedFieldName(fieldName: string, candidates: string[]): boolean {
@@ -596,7 +717,7 @@ function isItemZipCodeField(fieldName: string): boolean {
 function getEbayAdvancedOptionDefaultValue(fieldName: string): string {
   const normalized = normalizeEbayAdvancedFieldName(fieldName);
   if (normalized === 'excluded locations') return 'none';
-  if (normalized === 'handling time') return '3 days';
+  if (normalized === 'handling time' || normalized === 'handling time days') return '3 days';
   if (normalized === 'package type') return 'Package/Thick Envelope';
   if (normalized === 'shipping discount profile') return 'Untitled Calculated Discount Profile (HighEndAudioAuctions)';
   return '';
@@ -606,12 +727,17 @@ function isEbayAdvancedOptionField(fieldName: string): boolean {
   const normalized = normalizeEbayAdvancedFieldName(fieldName);
   return normalized === 'excluded locations'
     || normalized === 'handling time'
+    || normalized === 'handling time days'
     || isItemZipCodeField(fieldName)
     || normalized === 'package type'
     || normalized === 'international destinations'
     || normalized === 'combined shipping discount'
     || normalized === 'combined shipping discount enabled'
     || normalized === 'shipping discount profile';
+}
+
+function isEbayPackageTypeField(fieldName: string): boolean {
+  return normalizeEbayAdvancedFieldName(fieldName) === 'package type';
 }
 
 function isEbayCategoriesField(fieldName: string): boolean {
@@ -1755,6 +1881,7 @@ export function ApprovalFormFields({
   const ebayMarketplaceIdFieldName = allFieldNames.find((fieldName) => isEbayMarketplaceIdField(fieldName));
   const hasEbayCategoryEditor = isEbayListingForm && !isCombinedApproval;
   const ebayMarketplaceId = (ebayMarketplaceIdFieldName ? formValues[ebayMarketplaceIdFieldName] : undefined)?.trim() || 'EBAY_US';
+  const [ebayPackageTypeOptions, setEbayPackageTypeOptions] = useState<string[]>(['Package/Thick Envelope']);
   const ebayCategorySourceValues = useMemo(() => {
     const merged: Record<string, string> = { ...originalFieldValues };
 
@@ -1785,6 +1912,8 @@ export function ApprovalFormFields({
     () => (ebaySelectedCategoryIds.length > 0 ? ebaySelectedCategoryIds : ebaySelectedCategoryNames),
     [ebaySelectedCategoryIds, ebaySelectedCategoryNames],
   );
+  const hasSecondaryEbayCategory = ebaySelectedCategoryDisplayValues.length > 1
+    && ebaySelectedCategoryDisplayValues[1].trim().length > 0;
   const setEbayCategoryIds = (nextIds: string[]) => {
     applyEbayCategoryIds(nextIds, {
       categoriesFieldName: effectiveEbayCategoriesFieldName,
@@ -1816,6 +1945,20 @@ export function ApprovalFormFields({
     isEbayApprovalForm,
     setFormValue,
   ]);
+  useEffect(() => {
+    if (!(approvalChannel === 'ebay' || approvalChannel === 'combined')) return;
+
+    let cancelled = false;
+    void (async () => {
+      const options = await getEbayPackageTypes(ebayMarketplaceId);
+      if (cancelled || options.length === 0) return;
+      setEbayPackageTypeOptions(options);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [approvalChannel, ebayMarketplaceId]);
   const shopifyBodyDescriptionFieldName = isShopifyApprovalForm
     ? allFieldNames.find((fieldName) => isShopifyBodyDescriptionField(fieldName))
     : undefined;
@@ -1869,6 +2012,51 @@ export function ApprovalFormFields({
     ? allFieldNames.filter((fieldName) => isEbayShippingServiceFieldName(fieldName))
     : [];
   const hasEbayShippingServicesEditor = ebayShippingServiceFieldNames.length > 0;
+  const ebayShippingFeeFieldCandidates = Array.from(new Set([
+    ...allFieldNames,
+    ...writableFieldNames,
+    ...Object.keys(formValues),
+  ]));
+  const ebayDomesticShippingFeesFieldName = pickPreferredField(
+    ebayShippingFeeFieldCandidates.filter((fieldName) => isEbayShippingTypeField(fieldName)),
+    [
+      'eBay Domestic Shipping Fees',
+      'Domestic Shipping Fees',
+      'ebay_domestic_shipping_fees',
+      'domestic_shipping_fees',
+    ],
+    formValues,
+  );
+  const ebayInternationalShippingFeesFieldName = pickPreferredField(
+    ebayShippingFeeFieldCandidates.filter((fieldName) => isEbayInternationalShippingFeesField(fieldName)),
+    [
+      'eBay International Shipping Fees',
+      'International Shipping Fees',
+      'ebay_international_shipping_fees',
+      'international_shipping_fees',
+    ],
+    formValues,
+  );
+  const ebayDomesticShippingFlatFeeFieldName = pickPreferredField(
+    ebayShippingFeeFieldCandidates.filter((fieldName) => isEbayDomesticShippingFlatFeeField(fieldName)),
+    [
+      'eBay Domestic Shipping Flat Fee',
+      'Domestic Shipping Flat Fee',
+      'eBay Domestic Shipping Flat Fee USD',
+      'Domestic Shipping Flat Fee USD',
+    ],
+    formValues,
+  ) ?? SYNTHETIC_EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD;
+  const ebayInternationalShippingFlatFeeFieldName = pickPreferredField(
+    ebayShippingFeeFieldCandidates.filter((fieldName) => isEbayInternationalShippingFlatFeeField(fieldName)),
+    [
+      'eBay International Shipping Flat Fee',
+      'International Shipping Flat Fee',
+      'eBay International Shipping Flat Fee USD',
+      'International Shipping Flat Fee USD',
+    ],
+    formValues,
+  ) ?? SYNTHETIC_EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD;
   const domesticService1FieldName = hasEbayShippingServicesEditor
     ? pickPreferredField(
       ebayShippingServiceFieldNames.filter((fieldName) => hasNormalizedFieldName(fieldName, ['Domestic Service 1', 'eBay Domestic Service 1'])),
@@ -2357,6 +2545,128 @@ export function ApprovalFormFields({
     );
   }
 
+  function renderShippingFlatFeeInput(fieldName: string, label: string): JSX.Element {
+    const value = formValues[fieldName] ?? '';
+
+    return (
+      <label className="flex flex-col gap-2 rounded-xl border border-[var(--line)] bg-white/5 p-3">
+        {renderSpecialLabel(label, fieldName.startsWith('__') ? undefined : fieldName)}
+        <div className="relative">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--muted)]">$</span>
+          <input
+            className={getInputClassName(fieldName, 'pl-7')}
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            value={value}
+            onChange={(event) => setFormValue(fieldName, event.target.value)}
+            disabled={saving}
+          />
+        </div>
+      </label>
+    );
+  }
+
+  function renderShippingFeeSelectField(params: {
+    fieldName: string;
+    selectedValue: string;
+    inputDisabled: boolean;
+    isInternational: boolean;
+  }): JSX.Element {
+    const { fieldName, selectedValue, inputDisabled, isInternational } = params;
+
+    return (
+      <label key={fieldName} className="flex flex-col gap-2">
+        {renderFieldLabel(fieldName)}
+        <ApprovalSelect
+          selectClassName={getSelectClassName(fieldName)}
+          value={selectedValue}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+            const nextSelectedValue = event.target.value;
+            const domesticFieldName = ebayDomesticShippingFeesFieldName ?? fieldName;
+            const internationalFieldName = ebayInternationalShippingFeesFieldName;
+            const domesticStoredValue = formValues[domesticFieldName] ?? '';
+            const internationalStoredValue = internationalFieldName ? (formValues[internationalFieldName] ?? '') : '';
+            const nextDomesticValue = isInternational
+              ? getSeparatedEbayShippingFeeValue({
+                fieldName: domesticFieldName,
+                fieldValue: domesticStoredValue,
+                domesticFieldValue: domesticStoredValue,
+              })
+              : nextSelectedValue;
+            const nextInternationalValue = isInternational
+              ? nextSelectedValue
+              : getSeparatedEbayShippingFeeValue({
+                fieldName: internationalFieldName ?? fieldName,
+                fieldValue: internationalStoredValue,
+                domesticFieldValue: domesticStoredValue,
+              });
+
+            if (domesticFieldName) {
+              setFormValue(domesticFieldName, nextDomesticValue);
+            }
+
+            if (internationalFieldName) {
+              setFormValue(internationalFieldName, nextInternationalValue);
+            }
+          }}
+          disabled={inputDisabled}
+        >
+          <option value="">Select an option</option>
+          {EBAY_SEPARATED_SHIPPING_FEE_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {getEbayShippingTypeLabel(option)}
+            </option>
+          ))}
+        </ApprovalSelect>
+        {!isInternational && selectedValue === 'Flat'
+          ? renderShippingFlatFeeInput(ebayDomesticShippingFlatFeeFieldName, 'eBay Domestic Shipping Flat Fee')
+          : null}
+        {isInternational && selectedValue === 'Flat'
+          ? renderShippingFlatFeeInput(ebayInternationalShippingFlatFeeFieldName, 'eBay International Shipping Flat Fee')
+          : null}
+      </label>
+    );
+  }
+
+  function renderPairedShippingFeeFields(): JSX.Element | null {
+    if (!ebayDomesticShippingFeesFieldName && !ebayInternationalShippingFeesFieldName) return null;
+
+    const domesticFieldName = ebayDomesticShippingFeesFieldName ?? 'eBay Domestic Shipping Fees';
+    const internationalFieldName = ebayInternationalShippingFeesFieldName ?? 'eBay International Shipping Fees';
+    const domesticStoredValue = ebayDomesticShippingFeesFieldName ? (formValues[ebayDomesticShippingFeesFieldName] ?? '') : '';
+    const internationalStoredValue = ebayInternationalShippingFeesFieldName ? (formValues[ebayInternationalShippingFeesFieldName] ?? '') : '';
+    const domesticSelectedValue = getSeparatedEbayShippingFeeValue({
+      fieldName: domesticFieldName,
+      fieldValue: domesticStoredValue,
+    });
+    const internationalSelectedValue = getSeparatedEbayShippingFeeValue({
+      fieldName: internationalFieldName,
+      fieldValue: internationalStoredValue,
+      domesticFieldValue: domesticStoredValue,
+    });
+    const domesticDisabled = saving || isReadOnlyApprovalField(domesticFieldName);
+    const internationalDisabled = saving || isReadOnlyApprovalField(internationalFieldName);
+
+    return (
+      <div className="col-span-1 grid grid-cols-1 gap-4 md:col-span-2 md:grid-cols-2">
+        {renderShippingFeeSelectField({
+          fieldName: domesticFieldName,
+          selectedValue: domesticSelectedValue,
+          inputDisabled: domesticDisabled,
+          isInternational: false,
+        })}
+        {renderShippingFeeSelectField({
+          fieldName: internationalFieldName,
+          selectedValue: internationalSelectedValue,
+          inputDisabled: internationalDisabled,
+          isInternational: true,
+        })}
+      </div>
+    );
+  }
+
   function renderStandardField(fieldName: string, options?: { allowAdvancedOptionField?: boolean }): JSX.Element | null {
     if (isCombinedApproval && isHiddenCombinedFieldName(fieldName)) return null;
     if (isRemovedEbayField(fieldName)) return null;
@@ -2370,6 +2680,9 @@ export function ApprovalFormFields({
     }
     if (isEbayHandlingCostField(fieldName)) return null;
     if (isEbayGlobalShippingField(fieldName)) return null;
+    if (isEbayDomesticShippingFlatFeeField(fieldName)) return null;
+    if (isEbayInternationalShippingFlatFeeField(fieldName)) return null;
+    if (isEbayShippingTypeField(fieldName)) return null;
     if (isEbayInternationalShippingFeesField(fieldName)) return null;
     if (isShopifyTypesFreeformField(fieldName)) return null;
     if (approvalChannel === 'shopify' && isShopifyVariantStatusField(fieldName)) return null;
@@ -2440,11 +2753,14 @@ export function ApprovalFormFields({
     const booleanLike = isBooleanLikeValue(value);
     const isListingFormatField = isEbayFormatField(fieldName);
     const isListingDurationField = isEbayListingDurationField(fieldName);
+    const isPackageTypeField = isEbayPackageTypeField(fieldName);
     const dropdownOptions = isListingFormatField
       ? listingFormatOptions
       : (isListingDurationField && listingDurationOptions)
         ? listingDurationOptions
-        : getDropdownOptions(fieldName);
+        : isPackageTypeField
+          ? ebayPackageTypeOptions
+          : getDropdownOptions(fieldName);
 
     if (isAllowOffersField(fieldName) || isShopifyVariantBooleanField(fieldName) || kind === 'boolean' || booleanLike) {
       const normalizedBooleanValue = value.trim().toLowerCase() === 'true' ? 'true' : 'false';
@@ -2696,6 +3012,8 @@ export function ApprovalFormFields({
         />
       )}
 
+      {renderPairedShippingFeeFields()}
+
       {hasEbayShippingServicesEditor && (
         <EbayShippingServicesEditor
           domesticService1FieldName={domesticService1FieldName}
@@ -2736,6 +3054,11 @@ export function ApprovalFormFields({
           value={ebaySelectedCategoryDisplayValues}
           onChange={setEbayCategoryIds}
           disabled={saving}
+          helperWarning={hasSecondaryEbayCategory ? (
+            <span className="text-xs font-semibold text-rose-300">
+              Adding a second category incurrs extra fees
+            </span>
+          ) : null}
         />
       )}
 

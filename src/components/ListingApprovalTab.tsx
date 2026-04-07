@@ -267,6 +267,34 @@ const EBAY_DURATION_FIELD_CANDIDATES = [
   'Listing Duration',
 ] as const;
 
+const EBAY_DOMESTIC_SHIPPING_FEES_FIELD_CANDIDATES = [
+  'eBay Domestic Shipping Fees',
+  'Domestic Shipping Fees',
+  'ebay_domestic_shipping_fees',
+  'domestic_shipping_fees',
+] as const;
+
+const EBAY_INTERNATIONAL_SHIPPING_FEES_FIELD_CANDIDATES = [
+  'eBay International Shipping Fees',
+  'International Shipping Fees',
+  'ebay_international_shipping_fees',
+  'international_shipping_fees',
+] as const;
+
+const EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD_CANDIDATES = [
+  'eBay Domestic Shipping Flat Fee',
+  'Domestic Shipping Flat Fee',
+  'eBay Domestic Shipping Flat Fee USD',
+  'Domestic Shipping Flat Fee USD',
+] as const;
+
+const EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD_CANDIDATES = [
+  'eBay International Shipping Flat Fee',
+  'International Shipping Flat Fee',
+  'eBay International Shipping Flat Fee USD',
+  'International Shipping Flat Fee USD',
+] as const;
+
 const EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES = [
   'eBay Offer Primary Category ID',
   'eBay Offer PrimaryCategoryID',
@@ -1208,6 +1236,26 @@ export function ListingApprovalTab({
         EBAY_DURATION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       ) ?? EBAY_DURATION_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
       if (preferredDurationField) names.add(preferredDurationField);
+
+      const preferredDomesticShippingFeesField = existingNames.find((name) =>
+        EBAY_DOMESTIC_SHIPPING_FEES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_DOMESTIC_SHIPPING_FEES_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredDomesticShippingFeesField) names.add(preferredDomesticShippingFeesField);
+
+      const preferredInternationalShippingFeesField = existingNames.find((name) =>
+        EBAY_INTERNATIONAL_SHIPPING_FEES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_INTERNATIONAL_SHIPPING_FEES_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredInternationalShippingFeesField) names.add(preferredInternationalShippingFeesField);
+
+      const preferredDomesticShippingFlatFeeField = existingNames.find((name) =>
+        EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredDomesticShippingFlatFeeField) names.add(preferredDomesticShippingFlatFeeField);
+
+      const preferredInternationalShippingFlatFeeField = existingNames.find((name) =>
+        EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredInternationalShippingFlatFeeField) names.add(preferredInternationalShippingFlatFeeField);
 
       const preferredPrimaryCategoryField = existingNames.find((name) =>
         EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),

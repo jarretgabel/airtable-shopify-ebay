@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   getEbayChildCategories,
   getEbayRootCategories,
@@ -53,6 +53,7 @@ interface EbayCategoriesSelectProps {
   value: string[];
   disabled: boolean;
   onChange: (value: string[]) => void;
+  helperWarning?: ReactNode;
 }
 
 function reorderById(ids: string[], sourceId: string, targetId: string): string[] {
@@ -74,6 +75,7 @@ export function EbayCategoriesSelect({
   value,
   disabled,
   onChange,
+  helperWarning,
 }: EbayCategoriesSelectProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -281,9 +283,12 @@ export function EbayCategoriesSelect({
         <p className="m-0 mb-2 text-xs text-[var(--muted)]">
           Select up to 2 categories. First = primary category, second = secondary category.
         </p>
-        <p className="m-0 mb-2 text-xs text-[var(--muted)]">
-          Drag selected items to reorder.
-        </p>
+        <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+          <p className="m-0 text-[var(--muted)]">
+            Drag selected items to reorder.
+          </p>
+          {helperWarning}
+        </div>
 
         <div className="mb-2 flex flex-wrap items-center gap-2">
           {value.length === 0 && (
