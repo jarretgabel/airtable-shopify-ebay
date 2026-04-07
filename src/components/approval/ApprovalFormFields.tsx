@@ -16,6 +16,7 @@ import { ImageUrlListEditor } from './ImageUrlListEditor';
 import { ShopifyTaxonomyTypeSelect } from './ShopifyTaxonomyTypeSelect';
 import { KeyFeaturesEditor } from './KeyFeaturesEditor';
 import { TestingNotesEditor } from './TestingNotesEditor';
+import { EbayAttributesEditor } from './EbayAttributesEditor';
 import { ShopifyCollectionsSelect } from './ShopifyCollectionsSelect';
 import { ShopifyTagsEditor } from './ShopifyTagsEditor';
 import { ApprovalSelect } from './ApprovalSelect';
@@ -993,6 +994,24 @@ function isEbayKeyFeaturesField(fieldName: string): boolean {
     || squashed.includes('keypairs');
 }
 
+function isEbayAttributesField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'ebay inventory product aspects json'
+    || normalized === 'ebay inventory product aspects'
+    || normalized === 'ebay inventory aspects'
+    || normalized === 'ebay product aspects'
+    || normalized === 'ebay aspects'
+    || normalized === 'ebay_inventory_product_aspects_json'
+    || normalized === 'ebay_inventory_product_aspects'
+    || normalized === 'ebay_inventory_aspects'
+    || compact === 'ebayinventoryproductaspectsjson'
+    || compact === 'ebayinventoryproductaspects'
+    || compact === 'ebayinventoryaspects'
+    || compact === 'ebayproductaspects'
+    || compact === 'ebayaspects';
+}
+
 function isShopifyBodyHtmlPrimaryField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   const compact = normalized.replace(/[^a-z0-9]/g, '');
@@ -1808,6 +1827,26 @@ export function ApprovalFormFields({
   const ebayKeyFeaturesFieldName = (!isCombinedApproval && isEbayApprovalForm)
     ? allFieldNames.find((fieldName) => isEbayKeyFeaturesField(fieldName))
     : undefined;
+  const ebayAttributesCandidateFieldNames = (!isCombinedApproval && isEbayApprovalForm)
+    ? allFieldNames.filter((fieldName) => isEbayAttributesField(fieldName) && !isLikelyDerivedAirtableField(fieldName))
+    : [];
+  const ebayAttributesFieldName = (!isCombinedApproval && isEbayApprovalForm)
+    ? pickPreferredField(
+      ebayAttributesCandidateFieldNames,
+      [
+        'eBay Inventory Product Aspects JSON',
+        'eBay Inventory Product Aspects',
+        'eBay Inventory Aspects',
+        'eBay Product Aspects',
+        'eBay Aspects',
+        'ebay_inventory_product_aspects_json',
+        'ebay_inventory_product_aspects',
+        'ebay_inventory_aspects',
+      ],
+      formValues,
+    )
+    : undefined;
+  const ebayAttributesSyncFieldNames = ebayAttributesCandidateFieldNames.filter((fieldName) => fieldName !== ebayAttributesFieldName);
   const shopifyBodyHtmlFieldName = isShopifyApprovalForm
     ? allFieldNames.find((fieldName) => isShopifyBodyHtmlPrimaryField(fieldName))
     : undefined;
@@ -2300,6 +2339,7 @@ export function ApprovalFormFields({
     if (isShopifyKeyFeaturesField(fieldName) || isEbayKeyFeaturesField(fieldName)) return null;
     if (shopifyKeyFeaturesFieldName && fieldName === shopifyKeyFeaturesFieldName) return null;
     if (ebayKeyFeaturesFieldName && fieldName === ebayKeyFeaturesFieldName) return null;
+    if (ebayAttributesCandidateFieldNames.includes(fieldName)) return null;
     if (hasEbayCategoryEditor && (
       isEbayPrimaryCategoryField(fieldName)
       || isEbaySecondaryCategoryField(fieldName)
@@ -2581,6 +2621,17 @@ export function ApprovalFormFields({
           setFormValue={setFormValue}
           disabled={saving}
           label="Testing Notes"
+        />
+      )}
+
+      {ebayAttributesFieldName && (
+        <EbayAttributesEditor
+          fieldName={ebayAttributesFieldName}
+          value={formValues[ebayAttributesFieldName] ?? ''}
+          setFormValue={setFormValue}
+          syncFieldNames={ebayAttributesSyncFieldNames}
+          disabled={saving}
+          label="Attributes"
         />
       )}
 

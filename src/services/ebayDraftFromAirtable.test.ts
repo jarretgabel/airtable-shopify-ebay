@@ -95,6 +95,34 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     });
   });
 
+  it('prefers explicit eBay aspects JSON when present', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-ASPECTS',
+      'eBay Inventory Product Brand': 'Cardas',
+      'eBay Inventory Product Aspects JSON': JSON.stringify({
+        Brand: ['Cardas'],
+        'Cable Type': ['Interconnect'],
+        'Connector A Type': ['XLR Male'],
+        'Connector B Type': ['XLR Female'],
+        Model: ['Clear Beyond'],
+      }),
+      'Key Features (Key, Value)': 'Condition,Excellent\nFinish,Blue',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-ASPECTS',
+      product: {
+        aspects: {
+          Brand: ['Cardas'],
+          'Cable Type': ['Interconnect'],
+          'Connector A Type': ['XLR Male'],
+          'Connector B Type': ['XLR Female'],
+          Model: ['Clear Beyond'],
+        },
+      },
+    });
+  });
+
   it('maps shared Images column into eBay inventory imageUrls', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-IMAGES',

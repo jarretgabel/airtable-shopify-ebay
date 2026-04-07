@@ -362,6 +362,17 @@ const EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES = [
   'ebay_listing_key_features',
 ] as const;
 
+const EBAY_ATTRIBUTES_FIELD_CANDIDATES = [
+  'eBay Inventory Product Aspects JSON',
+  'eBay Inventory Product Aspects',
+  'eBay Inventory Aspects',
+  'eBay Product Aspects',
+  'eBay Aspects',
+  'ebay_inventory_product_aspects_json',
+  'ebay_inventory_product_aspects',
+  'ebay_inventory_aspects',
+] as const;
+
 function normalizeEbayListingFormat(value: string): string {
   return value.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_');
 }
@@ -753,6 +764,21 @@ function isItemZipCodeField(fieldName: string): boolean {
     || compact === 'locationpostal';
 }
 
+function isEbayAttributesFieldName(fieldName: string): boolean {
+  const normalized = normalizeCombinedFieldName(fieldName);
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'ebay inventory product aspects json'
+    || normalized === 'ebay inventory product aspects'
+    || normalized === 'ebay inventory aspects'
+    || normalized === 'ebay product aspects'
+    || normalized === 'ebay aspects'
+    || compact === 'ebayinventoryproductaspectsjson'
+    || compact === 'ebayinventoryproductaspects'
+    || compact === 'ebayinventoryaspects'
+    || compact === 'ebayproductaspects'
+    || compact === 'ebayaspects';
+}
+
 function isEbayOnlyFieldName(fieldName: string): boolean {
   const normalized = normalizeCombinedFieldName(fieldName);
   if (normalized === 'description') return false;
@@ -768,6 +794,7 @@ function isEbayOnlyFieldName(fieldName: string): boolean {
     || normalized === 'status'
     || normalized.includes('shipping service')
     || isItemZipCodeField(fieldName)
+    || isEbayAttributesFieldName(fieldName)
     || normalized.includes('primary category')
     || normalized.includes('secondary category')
     || normalized.includes('merchant location')
@@ -1166,6 +1193,11 @@ export function ListingApprovalTab({
         EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       ) ?? (existingLower.has('key features (key, value)') ? null : 'Key Features (Key, Value)');
       if (preferredKeyFeaturesField) names.add(preferredKeyFeaturesField);
+
+      const preferredAttributesField = existingNames.find((name) =>
+        EBAY_ATTRIBUTES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? EBAY_ATTRIBUTES_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredAttributesField) names.add(preferredAttributesField);
 
       const preferredFormatField = existingNames.find((name) =>
         EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),

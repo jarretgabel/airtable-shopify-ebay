@@ -1,5 +1,6 @@
 type ApprovalFieldMap = Record<string, unknown>;
 
+import { parseEbayAspects } from '@/services/ebayAspects';
 import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
 
 const EBAY_CONDITION_ENUMS = new Set([
@@ -258,7 +259,22 @@ function normalizeEbayCondition(raw: string): string {
   return 'USED_EXCELLENT';
 }
 
-function buildEbayProductAspects(brand: string, rawKeyFeatures: string): Record<string, string[]> | undefined {
+function buildEbayProductAspects(rawExplicitAspects: unknown, brand: string, rawKeyFeatures: string): Record<string, string[]> | undefined {
+  const explicitAspects = parseEbayAspects(rawExplicitAspects);
+  if (explicitAspects) {
+    if (!brand.trim()) return explicitAspects;
+
+    const existingBrandValues = explicitAspects.Brand ?? [];
+    if (existingBrandValues.some((value) => value.toLowerCase() === brand.trim().toLowerCase())) {
+      return explicitAspects;
+    }
+
+    return {
+      ...explicitAspects,
+      Brand: [...existingBrandValues, brand.trim()].filter(Boolean),
+    };
+  }
+
   const aspects = new Map<string, string[]>();
 
   const pushAspect = (name: string, value: string) => {
@@ -304,6 +320,16 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
   ]);
   const brand = getField(fields, ['eBay Inventory Product Brand', 'Brand']);
   const mpn = getField(fields, ['eBay Inventory Product MPN', 'MPN']);
+  const explicitAspects = getRawField(fields, [
+    'eBay Inventory Product Aspects JSON',
+    'eBay Inventory Product Aspects',
+    'eBay Inventory Aspects',
+    'eBay Product Aspects',
+    'eBay Aspects',
+    'ebay_inventory_product_aspects_json',
+    'ebay_inventory_product_aspects',
+    'ebay_inventory_aspects',
+  ]);
   const rawKeyFeatures = getField(fields, [
     'Key Features (Key, Value)',
     'eBay Body Key Features JSON',
@@ -433,7 +459,7 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
       imageUrls: resolvedImageUrls,
       brand: brand || undefined,
       mpn: mpn || undefined,
-      aspects: buildEbayProductAspects(brand, rawKeyFeatures),
+      aspects: buildEbayProductAspects(explicitAspects, brand, rawKeyFeatures),
     },
     condition,
     conditionDescription: conditionDescription || undefined,
