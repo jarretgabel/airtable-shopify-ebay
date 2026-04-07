@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import {
   CONDITION_FIELD,
+  SHIPPING_SERVICE_FIELD,
   getDropdownOptions,
   isAllowOffersField,
   isShippingServiceField,
@@ -17,6 +18,7 @@ import { ShopifyTaxonomyTypeSelect } from './ShopifyTaxonomyTypeSelect';
 import { KeyFeaturesEditor } from './KeyFeaturesEditor';
 import { TestingNotesEditor } from './TestingNotesEditor';
 import { EbayAttributesEditor } from './EbayAttributesEditor';
+import { EbayShippingServicesEditor } from './EbayShippingServicesEditor';
 import { ShopifyCollectionsSelect } from './ShopifyCollectionsSelect';
 import { ShopifyTagsEditor } from './ShopifyTagsEditor';
 import { ApprovalSelect } from './ApprovalSelect';
@@ -501,7 +503,6 @@ function getEbayShippingTypeLabel(value: string): string {
   if (value === 'CalculatedDomesticFlatInternational') return 'Calculated Domestic / Flat International';
   if (value === 'Flat') return 'Flat';
   if (value === 'FlatDomesticCalculatedInternational') return 'Flat Domestic / Calculated International';
-  if (value === 'FreightFlat') return 'Freight';
   if (value === 'NotSpecified') return 'Not Specified';
   return value;
 }
@@ -514,6 +515,19 @@ function isEbayShippingTypeField(fieldName: string): boolean {
     || normalized === 'ebay_domestic_shipping_fees';
 }
 
+function isEbayInternationalShippingFeesField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'international shipping fees'
+    || normalized === 'ebay international shipping fees'
+    || normalized === 'international_shipping_fees'
+    || normalized === 'ebay_international_shipping_fees';
+}
+
+function hasNormalizedFieldName(fieldName: string, candidates: string[]): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return candidates.some((candidate) => candidate.trim().toLowerCase() === normalized);
+}
+
 function getCanonicalShippingServiceAlias(fieldName: string): string | null {
   const normalized = fieldName.trim().toLowerCase().replace(/[_-]+/g, ' ');
   if (normalized === 'ebay domestic service 1') return 'domestic service 1';
@@ -521,6 +535,10 @@ function getCanonicalShippingServiceAlias(fieldName: string): string | null {
   if (normalized === 'ebay international service 1') return 'international service 1';
   if (normalized === 'ebay international service 2') return 'international service 2';
   return null;
+}
+
+function isEbayShippingServiceFieldName(fieldName: string): boolean {
+  return isShippingServiceField(fieldName) || getCanonicalShippingServiceAlias(fieldName) !== null;
 }
 
 function isRemovedEbayField(fieldName: string): boolean {
@@ -1847,6 +1865,38 @@ export function ApprovalFormFields({
     )
     : undefined;
   const ebayAttributesSyncFieldNames = ebayAttributesCandidateFieldNames.filter((fieldName) => fieldName !== ebayAttributesFieldName);
+  const ebayShippingServiceFieldNames = (!isCombinedApproval && isEbayApprovalForm)
+    ? allFieldNames.filter((fieldName) => isEbayShippingServiceFieldName(fieldName))
+    : [];
+  const hasEbayShippingServicesEditor = ebayShippingServiceFieldNames.length > 0;
+  const domesticService1FieldName = hasEbayShippingServicesEditor
+    ? pickPreferredField(
+      ebayShippingServiceFieldNames.filter((fieldName) => hasNormalizedFieldName(fieldName, ['Domestic Service 1', 'eBay Domestic Service 1'])),
+      ['Domestic Service 1', 'eBay Domestic Service 1'],
+      formValues,
+    )
+    : undefined;
+  const domesticService2FieldName = hasEbayShippingServicesEditor
+    ? pickPreferredField(
+      ebayShippingServiceFieldNames.filter((fieldName) => hasNormalizedFieldName(fieldName, ['Domestic Service 2', 'eBay Domestic Service 2'])),
+      ['Domestic Service 2', 'eBay Domestic Service 2'],
+      formValues,
+    )
+    : undefined;
+  const internationalService1FieldName = hasEbayShippingServicesEditor
+    ? pickPreferredField(
+      ebayShippingServiceFieldNames.filter((fieldName) => hasNormalizedFieldName(fieldName, ['International Service 1', 'eBay International Service 1'])),
+      ['International Service 1', 'eBay International Service 1'],
+      formValues,
+    )
+    : undefined;
+  const internationalService2FieldName = hasEbayShippingServicesEditor
+    ? pickPreferredField(
+      ebayShippingServiceFieldNames.filter((fieldName) => hasNormalizedFieldName(fieldName, ['International Service 2', 'eBay International Service 2'])),
+      ['International Service 2', 'eBay International Service 2'],
+      formValues,
+    )
+    : undefined;
   const shopifyBodyHtmlFieldName = isShopifyApprovalForm
     ? allFieldNames.find((fieldName) => isShopifyBodyHtmlPrimaryField(fieldName))
     : undefined;
@@ -2320,9 +2370,12 @@ export function ApprovalFormFields({
     }
     if (isEbayHandlingCostField(fieldName)) return null;
     if (isEbayGlobalShippingField(fieldName)) return null;
+    if (isEbayInternationalShippingFeesField(fieldName)) return null;
     if (isShopifyTypesFreeformField(fieldName)) return null;
     if (approvalChannel === 'shopify' && isShopifyVariantStatusField(fieldName)) return null;
     if (approvalChannel === 'shopify' && (isShopifyTemplateVariantNameField(fieldName) || isShopifyOptionValuesField(fieldName) || isShopifyVariantOptionField(fieldName))) return null;
+    // Render shipping services through the dedicated eBay checkbox editor.
+    if (approvalChannel === 'ebay' && hasEbayShippingServicesEditor && (isEbayShippingServiceFieldName(fieldName) || fieldName === SHIPPING_SERVICE_FIELD)) return null;
     // Allow shipping services in eBay-specific sections; hide in shared/Shopify sections
     if (isShippingServiceField(fieldName) && approvalChannel !== 'ebay') return null;
     if (fieldName === approvedFieldName) return null;
@@ -2413,9 +2466,17 @@ export function ApprovalFormFields({
 
     if (dropdownOptions) {
       const optionSet = new Set(dropdownOptions);
-      const options = value && !optionSet.has(value) && !optionSet.has(normalizeEbayListingDuration(value)) ? [value, ...dropdownOptions] : dropdownOptions;
       const isListingDurationField = isEbayListingDurationField(fieldName);
       const isShippingTypeField = isEbayShippingTypeField(fieldName);
+      const hasMatchingDurationOption = isListingDurationField
+        ? optionSet.has(getEbayListingDurationLabel(normalizeEbayListingDuration(value)))
+        : false;
+      const options = value
+        && !optionSet.has(value)
+        && !optionSet.has(normalizeEbayListingDuration(value))
+        && !hasMatchingDurationOption
+        ? [value, ...dropdownOptions]
+        : dropdownOptions;
       const normalizedValue = isListingDurationField ? normalizeEbayListingDuration(value) : value;
       const displayValue = isListingDurationField
         ? getEbayListingDurationLabel(normalizedValue)
@@ -2632,6 +2693,18 @@ export function ApprovalFormFields({
           syncFieldNames={ebayAttributesSyncFieldNames}
           disabled={saving}
           label="Attributes"
+        />
+      )}
+
+      {hasEbayShippingServicesEditor && (
+        <EbayShippingServicesEditor
+          domesticService1FieldName={domesticService1FieldName}
+          domesticService2FieldName={domesticService2FieldName}
+          internationalService1FieldName={internationalService1FieldName}
+          internationalService2FieldName={internationalService2FieldName}
+          values={formValues}
+          setFormValue={setFormValue}
+          disabled={saving}
         />
       )}
 
