@@ -15,6 +15,7 @@ import { EbayCategoriesSelect } from './EbayCategoriesSelect';
 import { ImageUrlListEditor } from './ImageUrlListEditor';
 import { ShopifyTaxonomyTypeSelect } from './ShopifyTaxonomyTypeSelect';
 import { KeyFeaturesEditor } from './KeyFeaturesEditor';
+import { TestingNotesEditor } from './TestingNotesEditor';
 import { ShopifyCollectionsSelect } from './ShopifyCollectionsSelect';
 import { ShopifyTagsEditor } from './ShopifyTagsEditor';
 import { ApprovalSelect } from './ApprovalSelect';
@@ -510,6 +511,88 @@ function isEbayShippingTypeField(fieldName: string): boolean {
     || normalized === 'ebay domestic shipping fees'
     || normalized === 'domestic_shipping_fees'
     || normalized === 'ebay_domestic_shipping_fees';
+}
+
+function getCanonicalShippingServiceAlias(fieldName: string): string | null {
+  const normalized = fieldName.trim().toLowerCase().replace(/[_-]+/g, ' ');
+  if (normalized === 'ebay domestic service 1') return 'domestic service 1';
+  if (normalized === 'ebay domestic service 2') return 'domestic service 2';
+  if (normalized === 'ebay international service 1') return 'international service 1';
+  if (normalized === 'ebay international service 2') return 'international service 2';
+  return null;
+}
+
+function isRemovedEbayField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase().replace(/[_-]+/g, ' ');
+  return normalized === 'ebay domestic service 1';
+}
+
+function normalizeEbayAdvancedFieldName(fieldName: string): string {
+  return fieldName
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/ebay/g, 'ebay')
+    .replace(/international destinations/g, 'international destinations')
+    .replace(/combined shipping discount profile/g, 'shipping discount profile')
+    .replace(/combined shipping discount enabled/g, 'combined shipping discount enabled')
+    .replace(/shipping discount profile/g, 'shipping discount profile')
+    .replace(/combined shipping discount/g, 'combined shipping discount')
+    .replace(/excluded locations/g, 'excluded locations')
+    .replace(/handling time/g, 'handling time')
+    .replace(/package type/g, 'package type')
+    .replace(/package packaging type/g, 'package type')
+    .replace(/ebay offer /g, '')
+    .replace(/ebay inventory /g, '')
+    .replace(/ebay /g, '')
+    .replace(/offer /g, '')
+    .replace(/inventory /g, '')
+    .replace(/package or thick envelope/g, 'package/thick envelope')
+    .replace(/package thick envelope/g, 'package/thick envelope')
+    .replace(/package envelope/g, 'package/thick envelope')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isItemZipCodeField(fieldName: string): boolean {
+  const normalized = normalizeEbayAdvancedFieldName(fieldName);
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'item zip code'
+    || normalized === 'item postal code'
+    || normalized === 'location zip code'
+    || normalized === 'location postal code'
+    || normalized === 'zip code'
+    || normalized === 'postal code'
+    || compact === 'itemzipcode'
+    || compact === 'zipcode'
+    || compact === 'itempostalcode'
+    || compact === 'postalcode'
+    || compact === 'locationzipcode'
+    || compact === 'locationpostalcode'
+    || compact === 'itempostal'
+    || compact === 'locationpostal';
+}
+
+function getEbayAdvancedOptionDefaultValue(fieldName: string): string {
+  const normalized = normalizeEbayAdvancedFieldName(fieldName);
+  if (normalized === 'excluded locations') return 'none';
+  if (normalized === 'handling time') return '3 days';
+  if (normalized === 'package type') return 'Package/Thick Envelope';
+  if (normalized === 'shipping discount profile') return 'Untitled Calculated Discount Profile (HighEndAudioAuctions)';
+  return '';
+}
+
+function isEbayAdvancedOptionField(fieldName: string): boolean {
+  const normalized = normalizeEbayAdvancedFieldName(fieldName);
+  return normalized === 'excluded locations'
+    || normalized === 'handling time'
+    || isItemZipCodeField(fieldName)
+    || normalized === 'package type'
+    || normalized === 'international destinations'
+    || normalized === 'combined shipping discount'
+    || normalized === 'combined shipping discount enabled'
+    || normalized === 'shipping discount profile';
 }
 
 function isEbayCategoriesField(fieldName: string): boolean {
@@ -1242,6 +1325,8 @@ interface ApprovalFormFieldsProps {
   approvalChannel?: 'shopify' | 'ebay' | 'combined';
   forceShowShopifyCollectionsEditor?: boolean;
   isCombinedApproval?: boolean;
+  hideEbayAdvancedOptions?: boolean;
+  showOnlyEbayAdvancedOptions?: boolean;
   allFieldNames: string[];
   writableFieldNames?: string[];
   requiredFieldNames?: string[];
@@ -1338,6 +1423,8 @@ export function ApprovalFormFields({
   approvalChannel,
   forceShowShopifyCollectionsEditor = false,
   isCombinedApproval = false,
+  hideEbayAdvancedOptions = false,
+  showOnlyEbayAdvancedOptions = false,
   allFieldNames,
   writableFieldNames = [],
   requiredFieldNames = [],
@@ -1439,6 +1526,10 @@ export function ApprovalFormFields({
   const optionalOrderedFieldNames = useMemo(
     () => orderedFieldNames.filter((fieldName) => !isRequiredField(fieldName)),
     [orderedFieldNames, normalizedRequiredFieldNames],
+  );
+  const ebayAdvancedOptionFieldNames = useMemo(
+    () => allFieldNames.filter((fieldName: string) => isEbayAdvancedOptionField(fieldName)),
+    [allFieldNames],
   );
   const isEbayListingForm = allFieldNames.some((fieldName) => {
     const normalized = fieldName.toLowerCase();
@@ -1694,9 +1785,26 @@ export function ApprovalFormFields({
   const ebayBodyDescriptionFieldName = isEbayApprovalForm
     ? allFieldNames.find((fieldName) => isEbayBodyDescriptionField(fieldName))
     : undefined;
+  const shopifyKeyFeaturesCandidateFieldNames = (!isCombinedApproval && isShopifyApprovalForm)
+    ? allFieldNames.filter((fieldName) => isShopifyKeyFeaturesField(fieldName))
+    : [];
   const shopifyKeyFeaturesFieldName = (!isCombinedApproval && isShopifyApprovalForm)
-    ? allFieldNames.find((fieldName) => isShopifyKeyFeaturesField(fieldName))
+    ? pickPreferredField(
+      shopifyKeyFeaturesCandidateFieldNames,
+      [
+        'Key Features',
+        'Key Features JSON',
+        'Features',
+        'Features JSON',
+        'Shopify Body Key Features JSON',
+        'Shopify REST Body Key Features JSON',
+        'Shopify Body Key Features',
+        'Shopify REST Body Key Features',
+      ],
+      formValues,
+    )
     : undefined;
+  const shopifyKeyFeaturesSyncFieldNames = shopifyKeyFeaturesCandidateFieldNames.filter((fieldName) => fieldName !== shopifyKeyFeaturesFieldName);
   const ebayKeyFeaturesFieldName = (!isCombinedApproval && isEbayApprovalForm)
     ? allFieldNames.find((fieldName) => isEbayKeyFeaturesField(fieldName))
     : undefined;
@@ -2160,8 +2268,17 @@ export function ApprovalFormFields({
     );
   }
 
-  function renderStandardField(fieldName: string): JSX.Element | null {
+  function renderStandardField(fieldName: string, options?: { allowAdvancedOptionField?: boolean }): JSX.Element | null {
     if (isCombinedApproval && isHiddenCombinedFieldName(fieldName)) return null;
+    if (isRemovedEbayField(fieldName)) return null;
+    if (!options?.allowAdvancedOptionField && approvalChannel === 'ebay' && isEbayAdvancedOptionField(fieldName)) return null;
+    const canonicalShippingServiceAlias = getCanonicalShippingServiceAlias(fieldName);
+    if (
+      canonicalShippingServiceAlias
+      && allFieldNames.some((candidateFieldName) => candidateFieldName.trim().toLowerCase() === canonicalShippingServiceAlias)
+    ) {
+      return null;
+    }
     if (isEbayHandlingCostField(fieldName)) return null;
     if (isEbayGlobalShippingField(fieldName)) return null;
     if (isShopifyTypesFreeformField(fieldName)) return null;
@@ -2220,7 +2337,9 @@ export function ApprovalFormFields({
     const normalizedType = fieldName.trim().toLowerCase();
     if (normalizedType.includes('shopify') && normalizedType.includes('type') && normalizedType !== 'shopify types' && !isShopifyTypeField(fieldName)) return null;
 
-    const value = formValues[fieldName] ?? '';
+    const storedValue = formValues[fieldName] ?? '';
+    const defaultValue = options?.allowAdvancedOptionField ? getEbayAdvancedOptionDefaultValue(fieldName) : '';
+    const value = storedValue || defaultValue;
     const kind = fieldKinds[fieldName] ?? 'text';
     const readOnlyField = isReadOnlyApprovalField(fieldName);
     const inputDisabled = saving || readOnlyField;
@@ -2365,11 +2484,26 @@ export function ApprovalFormFields({
     );
   }
 
+  const ebayAdvancedOptionsBlock = approvalChannel === 'ebay' && ebayAdvancedOptionFieldNames.length > 0 && !hideEbayAdvancedOptions ? (
+    <details className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2">
+      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+        Advanced Options
+      </summary>
+      <div className="grid grid-cols-1 gap-4 border-t border-[var(--line)] px-3 py-3 md:grid-cols-2">
+        {ebayAdvancedOptionFieldNames.map((fieldName) => renderStandardField(fieldName, { allowAdvancedOptionField: true }))}
+      </div>
+    </details>
+  ) : null;
+
+  if (showOnlyEbayAdvancedOptions) {
+    return <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">{ebayAdvancedOptionsBlock}</div>;
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {requiredOrderedFieldNames
         .filter((fieldName) => fieldName !== pinnedPreDescriptionFieldName)
-        .map(renderStandardField)}
+        .map((fieldName) => renderStandardField(fieldName))}
 
       {pinnedPreDescriptionFieldName && renderStandardField(pinnedPreDescriptionFieldName)}
 
@@ -2435,17 +2569,18 @@ export function ApprovalFormFields({
           keyFeaturesFieldName={shopifyKeyFeaturesFieldName}
           keyFeaturesValue={formValues[shopifyKeyFeaturesFieldName] ?? ''}
           setFormValue={setFormValue}
+          syncFieldNames={shopifyKeyFeaturesSyncFieldNames}
           disabled={saving}
         />
       )}
 
       {ebayKeyFeaturesFieldName && (
-        <KeyFeaturesEditor
-          keyFeaturesFieldName={ebayKeyFeaturesFieldName}
-          keyFeaturesValue={formValues[ebayKeyFeaturesFieldName] ?? ''}
+        <TestingNotesEditor
+          fieldName={ebayKeyFeaturesFieldName}
+          value={formValues[ebayKeyFeaturesFieldName] ?? ''}
           setFormValue={setFormValue}
           disabled={saving}
-          label="Key Features"
+          label="Testing Notes"
         />
       )}
 
@@ -2484,7 +2619,7 @@ export function ApprovalFormFields({
 
       {optionalOrderedFieldNames
         .filter((fieldName) => fieldName !== pinnedPreDescriptionFieldName)
-        .map(renderStandardField)}
+        .map((fieldName) => renderStandardField(fieldName))}
     </div>
   );
 }

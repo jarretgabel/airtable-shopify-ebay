@@ -5,6 +5,7 @@ import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButto
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import { KeyFeaturesEditor } from '@/components/approval/KeyFeaturesEditor';
+import { TestingNotesEditor } from '@/components/approval/TestingNotesEditor';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
 import { getMissingRequiredFieldNames, isMissingRequiredFieldValue } from '@/components/approval/requiredFieldStatus';
 import airtableService from '@/services/airtable';
@@ -21,6 +22,7 @@ import {
   buildShopifyCollectionIdsFromApprovalFields,
   buildShopifyDraftProductFromApprovalFields,
 } from '@/services/shopifyDraftFromAirtable';
+import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
 import { buildEbayBodyHtmlFromTemplate } from '@/services/ebayBodyHtml';
 import { SHOPIFY_DEFAULT_VENDOR } from '@/services/shopifyTags';
 import { trimShopifyProductType } from '@/services/shopifyTaxonomy';
@@ -725,8 +727,34 @@ function isShopifyOnlyFieldName(fieldName: string): boolean {
     || normalized === 'product type';
 }
 
+function normalizeCombinedFieldName(fieldName: string): string {
+  return fieldName
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isItemZipCodeField(fieldName: string): boolean {
+  const normalized = normalizeCombinedFieldName(fieldName);
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'item zip code'
+    || normalized === 'zip code'
+    || normalized === 'postal code'
+    || compact === 'itemzipcode'
+    || compact === 'zipcode'
+    || compact === 'itempostalcode'
+    || compact === 'postalcode'
+    || compact === 'locationzipcode'
+    || compact === 'locationpostalcode'
+    || compact === 'itempostal'
+    || compact === 'locationpostal';
+}
+
 function isEbayOnlyFieldName(fieldName: string): boolean {
-  const normalized = fieldName.trim().toLowerCase();
+  const normalized = normalizeCombinedFieldName(fieldName);
   if (normalized === 'description') return false;
   if (normalized.includes('key feature')) return false;
   if (fieldName === SHIPPING_SERVICE_FIELD) return true;
@@ -739,6 +767,7 @@ function isEbayOnlyFieldName(fieldName: string): boolean {
     || normalized.includes('format')
     || normalized === 'status'
     || normalized.includes('shipping service')
+    || isItemZipCodeField(fieldName)
     || normalized.includes('primary category')
     || normalized.includes('secondary category')
     || normalized.includes('merchant location')
@@ -765,6 +794,47 @@ function isGenericSharedKeyFeaturesFieldName(fieldName: string): boolean {
     || normalized === 'key features json'
     || normalized === 'features'
     || normalized === 'features json';
+}
+
+function normalizeKeyFeatureLabel(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
+}
+
+function shouldMoveTestingEntryToSharedKeyFeatures(feature: string): boolean {
+  const normalized = normalizeKeyFeatureLabel(feature);
+  return normalized === 'brand' || normalized === 'cable size';
+}
+
+function shouldSerializeKeyFeatureFieldAsJson(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized.includes('json') || normalized.endsWith('_json');
+}
+
+function serializeKeyFeatureEntries(
+  entries: Array<{ feature: string; value: string }>,
+  fieldName: string,
+): string {
+  const normalizedEntries = entries
+    .map((entry) => ({
+      feature: entry.feature.trim(),
+      value: entry.value.trim(),
+    }))
+    .filter((entry) => entry.feature.length > 0 && entry.value.length > 0);
+
+  if (normalizedEntries.length === 0) return '';
+
+  if (shouldSerializeKeyFeatureFieldAsJson(fieldName)) {
+    return JSON.stringify(normalizedEntries);
+  }
+
+  const escapeCsvCell = (cell: string): string => {
+    if (!/[",\n\r]/.test(cell)) return cell;
+    return `"${cell.replace(/"/g, '""')}"`;
+  };
+
+  return normalizedEntries
+    .map((entry) => `${escapeCsvCell(entry.feature)},${escapeCsvCell(entry.value)}`)
+    .join('\n');
 }
 
 function isHiddenCombinedFieldName(fieldName: string): boolean {
@@ -1218,8 +1288,35 @@ export function ListingApprovalTab({
     if (!isCombinedApproval) return '';
     const exact = selectedRecordFieldNames.find((fieldName) => isGenericSharedKeyFeaturesFieldName(fieldName));
     if (exact) return exact;
-    return selectedRecordFieldNames.find((fieldName) => fieldName.toLowerCase().includes('key feature')) ?? '';
+
+    const shopifySpecific = selectedRecordFieldNames.find((fieldName) =>
+      SHOPIFY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase())
+      && !EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
+    );
+    if (shopifySpecific) return shopifySpecific;
+
+    return selectedRecordFieldNames.find((fieldName) => {
+      const normalized = fieldName.trim().toLowerCase();
+      if (normalized.includes('ebay')) return false;
+      return normalized.includes('key feature') || normalized === 'features' || normalized === 'features json';
+    }) ?? '';
   }, [isCombinedApproval, selectedRecordFieldNames]);
+
+  const combinedSharedKeyFeaturesSyncFieldNames = useMemo(() => {
+    if (!isCombinedApproval || !combinedSharedKeyFeaturesFieldName) return [];
+
+    return selectedRecordFieldNames.filter((fieldName) => {
+      if (fieldName === combinedSharedKeyFeaturesFieldName) return false;
+
+      const normalized = fieldName.trim().toLowerCase();
+      if (normalized.includes('ebay')) return false;
+
+      return SHOPIFY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)
+        || normalized.includes('key feature')
+        || normalized === 'features'
+        || normalized === 'features json';
+    });
+  }, [combinedSharedKeyFeaturesFieldName, isCombinedApproval, selectedRecordFieldNames]);
 
   const combinedShopifyBodyHtmlFieldName = useMemo(() => {
     if (!isCombinedApproval) return '';
@@ -1252,11 +1349,11 @@ export function ListingApprovalTab({
 
   const combinedEbayKeyFeaturesFieldName = useMemo(() => {
     if (!isCombinedApproval) return '';
-    if (combinedSharedKeyFeaturesFieldName) return combinedSharedKeyFeaturesFieldName;
     return selectedRecordFieldNames.find((fieldName) =>
-      EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
+      !isGenericSharedKeyFeaturesFieldName(fieldName)
+      && EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
     ) ?? '';
-  }, [combinedSharedKeyFeaturesFieldName, isCombinedApproval, selectedRecordFieldNames]);
+  }, [isCombinedApproval, selectedRecordFieldNames]);
 
   const combinedEbayGeneratedBodyHtml = useMemo(() => {
     if (!isCombinedApproval) return '';
@@ -1280,6 +1377,50 @@ export function ListingApprovalTab({
     formValues,
     isCombinedApproval,
     selectedEbayTemplateId,
+  ]);
+
+  useEffect(() => {
+    if (!isCombinedApproval) return;
+    if (!combinedSharedKeyFeaturesFieldName || !combinedEbayKeyFeaturesFieldName) return;
+
+    const sharedEntries = parseKeyFeatureEntries(formValues[combinedSharedKeyFeaturesFieldName] ?? '');
+    const ebayEntries = parseKeyFeatureEntries(formValues[combinedEbayKeyFeaturesFieldName] ?? '');
+    const transferredEntries = ebayEntries.filter((entry) => shouldMoveTestingEntryToSharedKeyFeatures(entry.feature));
+
+    if (transferredEntries.length === 0) return;
+
+    const remainingEbayEntries = ebayEntries.filter((entry) => !shouldMoveTestingEntryToSharedKeyFeatures(entry.feature));
+    const mergedSharedEntries = [...sharedEntries];
+
+    for (const transferredEntry of transferredEntries) {
+      const existingIndex = mergedSharedEntries.findIndex(
+        (entry) => normalizeKeyFeatureLabel(entry.feature) === normalizeKeyFeatureLabel(transferredEntry.feature),
+      );
+
+      if (existingIndex === -1) {
+        mergedSharedEntries.push(transferredEntry);
+        continue;
+      }
+
+      mergedSharedEntries[existingIndex] = transferredEntry;
+    }
+
+    const nextSharedValue = serializeKeyFeatureEntries(mergedSharedEntries, combinedSharedKeyFeaturesFieldName);
+    const nextEbayValue = serializeKeyFeatureEntries(remainingEbayEntries, combinedEbayKeyFeaturesFieldName);
+
+    if ((formValues[combinedSharedKeyFeaturesFieldName] ?? '') !== nextSharedValue) {
+      setFormValue(combinedSharedKeyFeaturesFieldName, nextSharedValue);
+    }
+
+    if ((formValues[combinedEbayKeyFeaturesFieldName] ?? '') !== nextEbayValue) {
+      setFormValue(combinedEbayKeyFeaturesFieldName, nextEbayValue);
+    }
+  }, [
+    combinedEbayKeyFeaturesFieldName,
+    combinedSharedKeyFeaturesFieldName,
+    formValues,
+    isCombinedApproval,
+    setFormValue,
   ]);
 
   useEffect(() => {
@@ -1360,6 +1501,7 @@ export function ListingApprovalTab({
         || normalized === 'ebay offer auction start price value';
       if (isHiddenCombinedFieldName(fieldName)) return false;
       if (shopifyOnlySet.has(normalized) || ebayOnlySet.has(normalized)) return false;
+      if (isItemZipCodeField(fieldName)) return false;
       if (isCombinedEbayPriceField) return false;
       if (EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       if (EBAY_DURATION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
@@ -2512,15 +2654,25 @@ export function ListingApprovalTab({
                 />
 
                 {combinedSharedKeyFeaturesFieldName && (
-                  <div className="rounded-lg border border-[var(--line)] bg-white/5 px-3 py-3">
-                    <KeyFeaturesEditor
-                      keyFeaturesFieldName={combinedSharedKeyFeaturesFieldName}
-                      keyFeaturesValue={formValues[combinedSharedKeyFeaturesFieldName] ?? ''}
-                      setFormValue={setFormValue}
-                      disabled={saving}
-                    />
-                  </div>
+                  <KeyFeaturesEditor
+                    keyFeaturesFieldName={combinedSharedKeyFeaturesFieldName}
+                    keyFeaturesValue={formValues[combinedSharedKeyFeaturesFieldName] ?? ''}
+                    setFormValue={setFormValue}
+                    syncFieldNames={combinedSharedKeyFeaturesSyncFieldNames}
+                    disabled={saving}
+                  />
                 )}
+
+                {combinedEbayKeyFeaturesFieldName && (
+                  <TestingNotesEditor
+                    fieldName={combinedEbayKeyFeaturesFieldName}
+                    value={formValues[combinedEbayKeyFeaturesFieldName] ?? ''}
+                    setFormValue={setFormValue}
+                    disabled={saving}
+                    label="Testing Notes"
+                  />
+                )}
+
               </div>
             </details>
 
@@ -2643,6 +2795,32 @@ export function ListingApprovalTab({
                 <ApprovalFormFields
                   recordId={selectedRecord.id}
                   approvalChannel="ebay"
+                  hideEbayAdvancedOptions
+                  allFieldNames={combinedEbayOnlyFieldNames}
+                  writableFieldNames={Object.keys(selectedRecord.fields)}
+                  requiredFieldNames={ebayRequiredFieldNames}
+                  shopifyRequiredFieldNames={[]}
+                  ebayRequiredFieldNames={ebayRequiredFieldNames}
+                  approvedFieldName={approvedFieldName}
+                  formValues={formValues}
+                  fieldKinds={fieldKinds}
+                  listingFormatOptions={listingFormatOptions}
+                  listingDurationOptions={listingDurationOptions}
+                  saving={saving}
+                  setFormValue={setFormValue}
+                  suppressImageScalarFields
+                  originalFieldValues={Object.fromEntries(
+                    Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
+                  )}
+                  onBodyHtmlPreviewChange={setBodyHtmlPreview}
+                  selectedEbayTemplateId={selectedEbayTemplateId}
+                  onEbayTemplateIdChange={setSelectedEbayTemplateId}
+                />
+
+                <ApprovalFormFields
+                  recordId={selectedRecord.id}
+                  approvalChannel="ebay"
+                  showOnlyEbayAdvancedOptions
                   allFieldNames={combinedEbayOnlyFieldNames}
                   writableFieldNames={Object.keys(selectedRecord.fields)}
                   requiredFieldNames={ebayRequiredFieldNames}

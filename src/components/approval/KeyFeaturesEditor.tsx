@@ -10,13 +10,13 @@ interface KeyFeaturesEditorProps {
   keyFeaturesFieldName: string;
   keyFeaturesValue: string;
   setFormValue: (fieldName: string, value: string) => void;
+  syncFieldNames?: string[];
   disabled?: boolean;
   label?: string;
 }
 
 const inputClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
-const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
 const iconButtonClass = 'flex h-7 w-7 items-center justify-center rounded-md border border-[var(--line)] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-45';
 const dragHandleClass = 'flex h-7 w-7 cursor-grab items-center justify-center rounded-md border border-[var(--line)] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] active:cursor-grabbing';
 
@@ -62,6 +62,7 @@ export function KeyFeaturesEditor({
   keyFeaturesFieldName,
   keyFeaturesValue,
   setFormValue,
+  syncFieldNames = [],
   disabled = false,
   label = 'Key Features',
 }: KeyFeaturesEditorProps) {
@@ -74,7 +75,11 @@ export function KeyFeaturesEditor({
 
   function commitRows(nextRows: KeyFeatureRow[]) {
     setRows(nextRows);
-    setFormValue(keyFeaturesFieldName, serializeKeyFeatures(nextRows, keyFeaturesFieldName));
+
+    const uniqueFieldNames = Array.from(new Set([keyFeaturesFieldName, ...syncFieldNames]));
+    for (const fieldName of uniqueFieldNames) {
+      setFormValue(fieldName, serializeKeyFeatures(nextRows, fieldName));
+    }
   }
 
   function updateRow(index: number, patch: Partial<KeyFeatureRow>) {
@@ -112,9 +117,22 @@ export function KeyFeaturesEditor({
     commitRows(next);
   }
 
+  const filledRowCount = rows.filter((row) => row.feature.trim() || row.value.trim()).length;
+
   return (
-    <div className="col-span-1 flex flex-col gap-2 md:col-span-2">
-      <span className={labelClass}>{label}</span>
+    <details className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2" open>
+      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+        <span className="inline-flex items-center gap-2">
+          <span>{label}</span>
+          <span className="rounded-full border border-[var(--line)] px-2 py-0.5 text-[0.68rem] font-medium text-[var(--muted)]">
+            {filledRowCount} rows
+          </span>
+        </span>
+      </summary>
+      <div className="flex flex-col gap-2 border-t border-[var(--line)] px-3 py-3">
+        <p className="m-0 text-[0.74rem] leading-5 text-[var(--muted)]">
+          Free-form feature/value pairs for the listing highlights shown to buyers.
+        </p>
         {rows.map((row, index) => (
           <div
             key={index}
@@ -206,6 +224,7 @@ export function KeyFeaturesEditor({
         >
           Add feature
         </button>
-    </div>
+      </div>
+    </details>
   );
 }
