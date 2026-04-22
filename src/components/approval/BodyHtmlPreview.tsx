@@ -19,8 +19,8 @@ interface BodyHtmlPreviewProps {
 
 export function BodyHtmlPreview({
   value,
-  helperText = 'Generated from the current Description and Key Features values. Saved body HTML is only reused when a dedicated template field exists.',
-  emptyStateText = 'Add a description or feature/value pairs to generate the body HTML preview.',
+  helperText = 'Generated from the current Description, Key Features, and Testing Notes values. Saved body HTML is only reused when a dedicated template field exists.',
+  emptyStateText = 'Add a description, key features, or testing notes to generate the body HTML preview.',
   previewOnly = false,
   showTemplateSelector = false,
   templateOptions = [],

@@ -9,13 +9,22 @@ function replaceTemplateToken(templateHtml: string, token: string, replacement: 
   return templateHtml.replace(pattern, replacement);
 }
 
-function applyKeyFeatureRows(templateHtml: string, keyFeaturesRaw: string): string {
-  const tablePattern = /(<table\b[^>]*\bid=(['"])key-features\2[^>]*>[\s\S]*?<tbody\b[^>]*>)([\s\S]*?)(<\/tbody>[\s\S]*?<\/table>)/i;
+function applyTableRows(templateHtml: string, options: {
+  tableId: string;
+  rawValue: string;
+  keyToken?: string;
+  valueToken?: string;
+}): string {
+  const {
+    tableId,
+    rawValue,
+    keyToken = 'key',
+    valueToken = 'value',
+  } = options;
+  const tablePattern = new RegExp(`(<table\\b[^>]*\\bid=(['"])${escapeRegExp(tableId)}\\2[^>]*>[\\s\\S]*?<tbody\\b[^>]*>)([\\s\\S]*?)(<\\/tbody>[\\s\\S]*?<\\/table>)`, 'i');
   const tableMatch = templateHtml.match(tablePattern);
   if (!tableMatch) {
-    return templateHtml
-      .replace(/\{\{\s*key\s*\}\}/gi, '')
-      .replace(/\{\{\s*value\s*\}\}/gi, '');
+    return templateHtml;
   }
 
   const tablePrefix = tableMatch[1] ?? '';
@@ -29,10 +38,10 @@ function applyKeyFeatureRows(templateHtml: string, keyFeaturesRaw: string): stri
   }
 
   const templateRow = rowMatch[0];
-  const entries = parseKeyFeatureEntries(keyFeaturesRaw);
+  const entries = parseKeyFeatureEntries(rawValue);
   const renderedRows = entries.map((entry) => {
-    const withKey = replaceTemplateToken(templateRow, 'key', entry.feature);
-    return replaceTemplateToken(withKey, 'value', entry.value);
+    const withKey = replaceTemplateToken(templateRow, keyToken, entry.feature);
+    return replaceTemplateToken(withKey, valueToken, entry.value);
   }).join('\n');
 
   const nextBody = tableBodyHtml.replace(rowPattern, renderedRows);
@@ -44,8 +53,17 @@ export function buildEbayBodyHtmlFromTemplate(
   title: string,
   description: string,
   keyFeaturesRaw: string,
+  testingNotesRaw = '',
 ): string {
   const withTitle = replaceTemplateToken(templateHtml, 'title', title);
   const withDescription = replaceTemplateToken(withTitle, 'description', description);
-  return applyKeyFeatureRows(withDescription, keyFeaturesRaw).trim();
+  const withKeyFeatures = applyTableRows(withDescription, {
+    tableId: 'key-features',
+    rawValue: keyFeaturesRaw,
+  });
+
+  return applyTableRows(withKeyFeatures, {
+    tableId: 'testing-notes',
+    rawValue: testingNotesRaw,
+  }).trim();
 }

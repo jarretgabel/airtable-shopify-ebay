@@ -19,6 +19,7 @@ import { NotificationsTab } from '@/components/NotificationsTab';
 import { SettingsTab } from '@/components/SettingsTab';
 import { UserManagementTab } from '@/components/UserManagementTab';
 import { AirtableTab } from '@/components/tabs/AirtableTab';
+import { AirtableEmbeddedForm } from '@/components/tabs/AirtableEmbeddedForm.tsx';
 import { JotformTab } from '@/components/tabs/JotformTab';
 import { MarketTab } from '@/components/tabs/MarketTab';
 import { ShopifyTab } from '@/components/tabs/ShopifyTab';
@@ -224,6 +225,8 @@ export function AppTabContent({
       return <ShopifyTab viewModel={shopifyViewModel} />;
     case 'market':
       return <MarketTab viewModel={marketViewModel} />;
+    case 'request-form':
+      return <AirtableEmbeddedForm />;
     case 'jotform':
       return <JotformTab viewModel={jotformViewModel} />;
     default:

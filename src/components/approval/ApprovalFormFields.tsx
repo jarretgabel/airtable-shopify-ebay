@@ -1112,6 +1112,14 @@ function isShopifyKeyFeaturesField(fieldName: string): boolean {
     || squashed.includes('keypairs');
 }
 
+function isGenericSharedKeyFeaturesField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'key features'
+    || normalized === 'key features json'
+    || normalized === 'features'
+    || normalized === 'features json';
+}
+
 function isEbayKeyFeaturesField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   if (normalized === 'ebay body key features'
@@ -1136,6 +1144,35 @@ function isEbayKeyFeaturesField(fieldName: string): boolean {
     || squashed.includes('featurevaluepair')
     || squashed.includes('featurepairs')
     || squashed.includes('keypairs');
+}
+
+function isEbayTestingNotesField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'testing notes'
+    || normalized === 'testing notes json'
+    || normalized === 'ebay testing notes'
+    || normalized === 'ebay testing notes json'
+    || normalized === 'ebay body testing notes'
+    || normalized === 'ebay body testing notes json'
+    || normalized === 'ebay listing testing notes'
+    || normalized === 'ebay listing testing notes json'
+    || normalized === 'testing_notes'
+    || normalized === 'testing_notes_json'
+    || normalized === 'ebay_testing_notes'
+    || normalized === 'ebay_testing_notes_json'
+    || normalized === 'ebay_body_testing_notes'
+    || normalized === 'ebay_body_testing_notes_json'
+    || normalized === 'ebay_listing_testing_notes'
+    || normalized === 'ebay_listing_testing_notes_json'
+    || compact === 'testingnotes'
+    || compact === 'testingnotesjson'
+    || compact === 'ebaytestingnotes'
+    || compact === 'ebaytestingnotesjson'
+    || compact === 'ebaybodytestingnotes'
+    || compact === 'ebaybodytestingnotesjson'
+    || compact === 'ebaylistingtestingnotes'
+    || compact === 'ebaylistingtestingnotesjson';
 }
 
 function isEbayAttributesField(fieldName: string): boolean {
@@ -1985,8 +2022,44 @@ export function ApprovalFormFields({
     )
     : undefined;
   const shopifyKeyFeaturesSyncFieldNames = shopifyKeyFeaturesCandidateFieldNames.filter((fieldName) => fieldName !== shopifyKeyFeaturesFieldName);
+  const ebayKeyFeaturesCandidateFieldNames = (!isCombinedApproval && isEbayApprovalForm)
+    ? allFieldNames.filter((fieldName) => isGenericSharedKeyFeaturesField(fieldName))
+    : [];
   const ebayKeyFeaturesFieldName = (!isCombinedApproval && isEbayApprovalForm)
-    ? allFieldNames.find((fieldName) => isEbayKeyFeaturesField(fieldName))
+    ? pickPreferredField(
+      ebayKeyFeaturesCandidateFieldNames,
+      [
+        'Key Features',
+        'Key Features JSON',
+        'Features',
+        'Features JSON',
+      ],
+      formValues,
+    )
+    : undefined;
+  const ebayKeyFeaturesSyncFieldNames = ebayKeyFeaturesCandidateFieldNames.filter((fieldName) => fieldName !== ebayKeyFeaturesFieldName);
+  const ebayTestingNotesCandidateFieldNames = (!isCombinedApproval && isEbayApprovalForm)
+    ? allFieldNames.filter((fieldName) => isEbayTestingNotesField(fieldName) || (isEbayKeyFeaturesField(fieldName) && !isGenericSharedKeyFeaturesField(fieldName)))
+    : [];
+  const ebayTestingNotesFieldName = (!isCombinedApproval && isEbayApprovalForm)
+    ? pickPreferredField(
+      ebayTestingNotesCandidateFieldNames,
+      [
+        'Testing Notes',
+        'Testing Notes JSON',
+        'eBay Testing Notes',
+        'eBay Testing Notes JSON',
+        'eBay Body Testing Notes',
+        'eBay Body Testing Notes JSON',
+        'eBay Listing Testing Notes',
+        'eBay Listing Testing Notes JSON',
+        'eBay Body Key Features JSON',
+        'eBay Body Key Features',
+        'eBay Listing Key Features JSON',
+        'eBay Listing Key Features',
+      ],
+      formValues,
+    )
     : undefined;
   const ebayAttributesCandidateFieldNames = (!isCombinedApproval && isEbayApprovalForm)
     ? allFieldNames.filter((fieldName) => isEbayAttributesField(fieldName) && !isLikelyDerivedAirtableField(fieldName))
@@ -2477,6 +2550,7 @@ export function ApprovalFormFields({
       const titleValue = ebayTitleFieldName ? (formValues[ebayTitleFieldName] ?? '') : '';
       const descriptionValue = ebayBodyDescriptionFieldName ? (formValues[ebayBodyDescriptionFieldName] ?? '') : '';
       const keyFeaturesValue = ebayKeyFeaturesFieldName ? (formValues[ebayKeyFeaturesFieldName] ?? '') : '';
+      const testingNotesValue = ebayTestingNotesFieldName ? (formValues[ebayTestingNotesFieldName] ?? '') : '';
       const templateHtml = resolveEbayListingTemplateHtml(resolvedEbayTemplateId);
 
       return buildEbayBodyHtmlFromTemplate(
@@ -2484,6 +2558,7 @@ export function ApprovalFormFields({
         titleValue,
         descriptionValue,
         keyFeaturesValue,
+        testingNotesValue,
       );
     }
 
@@ -2493,6 +2568,7 @@ export function ApprovalFormFields({
     ebayBodyHtmlFieldName,
     ebayBodyHtmlTemplateFieldName,
     ebayKeyFeaturesFieldName,
+    ebayTestingNotesFieldName,
     ebayTitleFieldName,
     formValues,
     isEbayApprovalForm,
@@ -2705,6 +2781,7 @@ export function ApprovalFormFields({
     if (isShopifyKeyFeaturesField(fieldName) || isEbayKeyFeaturesField(fieldName)) return null;
     if (shopifyKeyFeaturesFieldName && fieldName === shopifyKeyFeaturesFieldName) return null;
     if (ebayKeyFeaturesFieldName && fieldName === ebayKeyFeaturesFieldName) return null;
+    if (ebayTestingNotesFieldName && fieldName === ebayTestingNotesFieldName) return null;
     if (ebayAttributesCandidateFieldNames.includes(fieldName)) return null;
     if (hasEbayCategoryEditor && (
       isEbayPrimaryCategoryField(fieldName)
@@ -2992,9 +3069,19 @@ export function ApprovalFormFields({
       )}
 
       {ebayKeyFeaturesFieldName && (
+        <KeyFeaturesEditor
+          keyFeaturesFieldName={ebayKeyFeaturesFieldName}
+          keyFeaturesValue={formValues[ebayKeyFeaturesFieldName] ?? ''}
+          setFormValue={setFormValue}
+          syncFieldNames={ebayKeyFeaturesSyncFieldNames}
+          disabled={saving}
+        />
+      )}
+
+      {ebayTestingNotesFieldName && (
         <TestingNotesEditor
-          fieldName={ebayKeyFeaturesFieldName}
-          value={formValues[ebayKeyFeaturesFieldName] ?? ''}
+          fieldName={ebayTestingNotesFieldName}
+          value={formValues[ebayTestingNotesFieldName] ?? ''}
           setFormValue={setFormValue}
           disabled={saving}
           label="Testing Notes"

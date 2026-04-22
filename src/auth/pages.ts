@@ -5,6 +5,7 @@ export const APP_PAGES = [
   'shopify',
   'market',
   'jotform',
+  'request-form',
   'settings',
   'notifications',
   'imagelab',
@@ -29,6 +30,7 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   shopify: { label: 'Shopify Products', path: '/shopify/products' },
   market: { label: 'Market Prices', path: '/market' },
   jotform: { label: 'Inquiries', path: '/jotform' },
+  'request-form': { label: 'Request Form', path: '/request-form' },
   settings: { label: 'Settings', path: '/account/settings' },
   notifications: { label: 'Notifications', path: '/account/notifications' },
   imagelab: { label: 'Image Lab', path: '/imagelab' },
@@ -38,4 +40,4 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   users: { label: 'User Management', path: '/account/users', adminOnly: true },
 };
 
-export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications');
+export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications' && page !== 'request-form');

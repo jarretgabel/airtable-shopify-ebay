@@ -390,6 +390,25 @@ const EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES = [
   'ebay_listing_key_features',
 ] as const;
 
+const EBAY_TESTING_NOTES_FIELD_CANDIDATES = [
+  'Testing Notes',
+  'Testing Notes JSON',
+  'eBay Testing Notes',
+  'eBay Testing Notes JSON',
+  'eBay Body Testing Notes',
+  'eBay Body Testing Notes JSON',
+  'eBay Listing Testing Notes',
+  'eBay Listing Testing Notes JSON',
+  'testing_notes',
+  'testing_notes_json',
+  'ebay_testing_notes',
+  'ebay_testing_notes_json',
+  'ebay_body_testing_notes',
+  'ebay_body_testing_notes_json',
+  'ebay_listing_testing_notes',
+  'ebay_listing_testing_notes_json',
+] as const;
+
 const EBAY_ATTRIBUTES_FIELD_CANDIDATES = [
   'eBay Inventory Product Aspects JSON',
   'eBay Inventory Product Aspects',
@@ -641,11 +660,16 @@ function isEbayBodyHtmlSyncTriggerFieldName(fieldName: string): boolean {
     return true;
   }
 
+  if (EBAY_TESTING_NOTES_FIELD_CANDIDATES.some((candidate) => normalizeFieldLookupKey(candidate) === normalized)) {
+    return true;
+  }
+
   return normalized.includes('keyfeature')
     || normalized.includes('featurevaluepair')
     || normalized.includes('keyvaluepair')
     || normalized.includes('featurepairs')
-    || normalized.includes('keypairs');
+    || normalized.includes('keypairs')
+    || normalized.includes('testingnotes');
 }
 
 function isEbayHandlingCostFieldName(fieldName: string): boolean {
@@ -1427,8 +1451,13 @@ export function ListingApprovalTab({
     ) ?? '';
   }, [isCombinedApproval, selectedRecordFieldNames]);
 
-  const combinedEbayKeyFeaturesFieldName = useMemo(() => {
+  const combinedEbayTestingNotesFieldName = useMemo(() => {
     if (!isCombinedApproval) return '';
+    const testingNotesField = selectedRecordFieldNames.find((fieldName) =>
+      EBAY_TESTING_NOTES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
+    );
+    if (testingNotesField) return testingNotesField;
+
     return selectedRecordFieldNames.find((fieldName) =>
       !isGenericSharedKeyFeaturesFieldName(fieldName)
       && EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
@@ -1442,17 +1471,20 @@ export function ListingApprovalTab({
     const templateHtml = resolveEbayListingTemplateHtml(templateId);
     const titleValue = combinedEbayTitleFieldName ? (formValues[combinedEbayTitleFieldName] ?? '') : '';
     const descriptionValue = combinedDescriptionFieldName ? (formValues[combinedDescriptionFieldName] ?? '') : '';
-    const keyFeaturesValue = combinedEbayKeyFeaturesFieldName ? (formValues[combinedEbayKeyFeaturesFieldName] ?? '') : '';
+    const keyFeaturesValue = combinedSharedKeyFeaturesFieldName ? (formValues[combinedSharedKeyFeaturesFieldName] ?? '') : '';
+    const testingNotesValue = combinedEbayTestingNotesFieldName ? (formValues[combinedEbayTestingNotesFieldName] ?? '') : '';
 
     return buildEbayBodyHtmlFromTemplate(
       templateHtml,
       titleValue,
       descriptionValue,
       keyFeaturesValue,
+      testingNotesValue,
     );
   }, [
     combinedDescriptionFieldName,
-    combinedEbayKeyFeaturesFieldName,
+    combinedEbayTestingNotesFieldName,
+    combinedSharedKeyFeaturesFieldName,
     combinedEbayTitleFieldName,
     formValues,
     isCombinedApproval,
@@ -1461,10 +1493,10 @@ export function ListingApprovalTab({
 
   useEffect(() => {
     if (!isCombinedApproval) return;
-    if (!combinedSharedKeyFeaturesFieldName || !combinedEbayKeyFeaturesFieldName) return;
+    if (!combinedSharedKeyFeaturesFieldName || !combinedEbayTestingNotesFieldName) return;
 
     const sharedEntries = parseKeyFeatureEntries(formValues[combinedSharedKeyFeaturesFieldName] ?? '');
-    const ebayEntries = parseKeyFeatureEntries(formValues[combinedEbayKeyFeaturesFieldName] ?? '');
+    const ebayEntries = parseKeyFeatureEntries(formValues[combinedEbayTestingNotesFieldName] ?? '');
     const transferredEntries = ebayEntries.filter((entry) => shouldMoveTestingEntryToSharedKeyFeatures(entry.feature));
 
     if (transferredEntries.length === 0) return;
@@ -1486,17 +1518,17 @@ export function ListingApprovalTab({
     }
 
     const nextSharedValue = serializeKeyFeatureEntries(mergedSharedEntries, combinedSharedKeyFeaturesFieldName);
-    const nextEbayValue = serializeKeyFeatureEntries(remainingEbayEntries, combinedEbayKeyFeaturesFieldName);
+  const nextEbayValue = serializeKeyFeatureEntries(remainingEbayEntries, combinedEbayTestingNotesFieldName);
 
     if ((formValues[combinedSharedKeyFeaturesFieldName] ?? '') !== nextSharedValue) {
       setFormValue(combinedSharedKeyFeaturesFieldName, nextSharedValue);
     }
 
-    if ((formValues[combinedEbayKeyFeaturesFieldName] ?? '') !== nextEbayValue) {
-      setFormValue(combinedEbayKeyFeaturesFieldName, nextEbayValue);
+    if ((formValues[combinedEbayTestingNotesFieldName] ?? '') !== nextEbayValue) {
+      setFormValue(combinedEbayTestingNotesFieldName, nextEbayValue);
     }
   }, [
-    combinedEbayKeyFeaturesFieldName,
+    combinedEbayTestingNotesFieldName,
     combinedSharedKeyFeaturesFieldName,
     formValues,
     isCombinedApproval,
@@ -2743,10 +2775,10 @@ export function ListingApprovalTab({
                   />
                 )}
 
-                {combinedEbayKeyFeaturesFieldName && (
+                {combinedEbayTestingNotesFieldName && (
                   <TestingNotesEditor
-                    fieldName={combinedEbayKeyFeaturesFieldName}
-                    value={formValues[combinedEbayKeyFeaturesFieldName] ?? ''}
+                    fieldName={combinedEbayTestingNotesFieldName}
+                    value={formValues[combinedEbayTestingNotesFieldName] ?? ''}
                     setFormValue={setFormValue}
                     disabled={saving}
                     label="Testing Notes"
@@ -3172,18 +3204,21 @@ export function ListingApprovalTab({
                   }
 
                   const keyFeaturesFieldName = resolveExistingFieldName([
+                    combinedSharedKeyFeaturesFieldName,
                     'Key Features (Key, Value)',
-                    ...EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES,
                     'Key Features',
                     'Key Features JSON',
+                    'Features',
+                    'Features JSON',
                   ]);
                   const keyFeaturesRaw = keyFeaturesFieldName ? (formValues[keyFeaturesFieldName] ?? '') : '';
                   const keyFeaturesCandidates = [
                     keyFeaturesFieldName,
                     'Key Features (Key, Value)',
-                    ...EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES,
                     'Key Features',
                     'Key Features JSON',
+                    'Features',
+                    'Features JSON',
                   ].filter((candidate): candidate is string => Boolean(candidate && candidate.trim().length > 0));
                   const existingKeyFeaturesFieldName = resolveExistingFieldName(keyFeaturesCandidates);
                   const originalKeyFeaturesRaw = existingKeyFeaturesFieldName
@@ -3198,6 +3233,33 @@ export function ListingApprovalTab({
                     );
                     if (savedKeyFeaturesField) {
                       setFormValue(savedKeyFeaturesField, keyFeaturesRaw);
+                    }
+                  }
+
+                  const testingNotesFieldName = resolveExistingFieldName([
+                    combinedEbayTestingNotesFieldName,
+                    ...EBAY_TESTING_NOTES_FIELD_CANDIDATES,
+                    ...EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES,
+                  ]);
+                  const testingNotesRaw = testingNotesFieldName ? (formValues[testingNotesFieldName] ?? '') : '';
+                  const testingNotesCandidates = [
+                    testingNotesFieldName,
+                    ...EBAY_TESTING_NOTES_FIELD_CANDIDATES,
+                    ...EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES,
+                  ].filter((candidate): candidate is string => Boolean(candidate && candidate.trim().length > 0));
+                  const existingTestingNotesFieldName = resolveExistingFieldName(testingNotesCandidates);
+                  const originalTestingNotesRaw = existingTestingNotesFieldName
+                    ? toFormValue(selectedRecord.fields[existingTestingNotesFieldName])
+                    : '';
+                  const shouldSaveTestingNotes = testingNotesRaw.trim().length > 0 && testingNotesRaw !== originalTestingNotesRaw;
+                  if (shouldSaveTestingNotes) {
+                    const savedTestingNotesField = await trySaveEbayField(
+                      testingNotesCandidates,
+                      testingNotesRaw,
+                      { typecast: false, coerceNumber: false },
+                    );
+                    if (savedTestingNotesField) {
+                      setFormValue(savedTestingNotesField, testingNotesRaw);
                     }
                   }
                 }

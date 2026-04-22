@@ -36,4 +36,9 @@ describe('useAppRouteState', () => {
     expect(state.isResetPasswordPath).toBe(true);
     expect(state.resetToken).toBe('123');
   });
+
+  it('maps the dedicated request-form route', () => {
+    const state = useAppRouteState(locationFor('/request-form'), ['dashboard', 'request-form']);
+    expect(state.activeTab).toBe('request-form');
+  });
 });
