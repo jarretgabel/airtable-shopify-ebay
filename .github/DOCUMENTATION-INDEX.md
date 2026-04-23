@@ -22,6 +22,9 @@ Welcome to the Airtable-Shopify-eBay project documentation! This index will help
 **I'm building a React hook with side effects**
 → [State Management § Hook-Based State](./state-management.md#hook-based-state-for-complex-logic) shows the pattern.
 
+**I'm updating the Incoming Gear or Testing forms**
+→ Use [Inventory Processing Forms](../docs/forms/README.md), then the specific form instruction doc.
+
 **I need naming conventions**
 → [Naming & Organization](./naming-and-organization.md#naming-conventions) covers all naming rules.
 
@@ -122,6 +125,18 @@ Welcome to the Airtable-Shopify-eBay project documentation! This index will help
 
 **When to use:** Understanding high-level architecture and conventions across the app.
 
+### [Inventory Processing Forms](../docs/forms/README.md)
+**What it covers:** Overview of the local `Incoming Gear`, `Testing`, and `Photos` forms, shared Airtable target, route keys, implementation files, and change checklist.
+
+**Related docs:**
+- [Incoming Gear Instructions](../docs/forms/incoming-gear.instructions.md)
+- [Testing Instructions](../docs/forms/testing.instructions.md)
+- [Photos Instructions](../docs/forms/photos.instructions.md)
+- [Inventory Processing Form Pattern](./inventory-processing-forms.instructions.md)
+- [Inventory Processing Routing Pattern](./inventory-processing-routing.instructions.md)
+
+**When to use:** Updating field order, changing form copy, adjusting Airtable mappings, or tracing where these forms are implemented.
+
 ### [Engineering Rules](./engineering-rules.md)
 **What it covers:** Refactor safety, code organization, API contracts, auth protection, validation checklist.
 
@@ -193,6 +208,7 @@ Use this matrix to find the right doc for your task:
 | How do I organize a large service? | [Service Organization](./service-organization.md) | [Service Organization Structure](./service-organization.md#service-organization-structure) |
 | How do I build request payloads? | [Service Organization](./service-organization.md) | [Request Builder Pattern](./service-organization.md#request-builder-pattern) |
 | How do I transform API responses? | [Service Organization](./service-organization.md) | [Mappers Pattern](./service-organization.md#mappers-pattern) |
+| Where are the local inventory-processing forms documented? | [Inventory Processing Forms](../docs/forms/README.md) | Full overview and per-form instruction docs |
 | What checklist before posting a PR? | [Code Review Checklist](./code-review-checklist.md) | Full checklist |
 | Where's the decision flowchart? | [Quick Decisions](./quick-decisions.md) | [Decision flowcharts](./quick-decisions.md) |
 | What Tailwind standards apply? | [UI Style Rules](./ui-style-rules.md) | [Tailwind v4 Standards](./ui-style-rules.md#tailwind-v4-standards) |

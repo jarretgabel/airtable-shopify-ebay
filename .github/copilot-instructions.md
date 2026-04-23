@@ -9,6 +9,8 @@ These are the default implementation rules for this repository.
 - [State Management](./state-management.md) — Zustand store patterns, hook design, selector best practices
 - [Service Organization](./service-organization.md) — Service module structure, request builders, mappers, error handling
 - [Architecture Conventions](../docs/architecture-conventions.md) — App shell, UI layer, testing patterns, accessibility
+- [Inventory Processing Form Pattern](./inventory-processing-forms.instructions.md) — Local Airtable-backed form structure, routing, schema, service, and documentation rules
+- [Inventory Processing Routing Pattern](./inventory-processing-routing.instructions.md) — Route, menu, auth-access, and tab-wiring rules for Inventory Processing forms
 - [Code Review Checklist](./code-review-checklist.md) — Comprehensive review guide for PRs
 - [Engineering Rules](./engineering-rules.md) — Refactor safety, API contracts, validation
 - [UI Style Rules](./ui-style-rules.md) — Tailwind v4 standards, visual direction, responsive design

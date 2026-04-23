@@ -22,6 +22,7 @@ import { AirtableTab } from '@/components/tabs/AirtableTab';
 import { AirtableEmbeddedForm } from '@/components/tabs/AirtableEmbeddedForm.tsx';
 import { JotformTab } from '@/components/tabs/JotformTab';
 import { MarketTab } from '@/components/tabs/MarketTab';
+import { PhotosFormTab } from '@/components/tabs/PhotosFormTab';
 import { ShopifyTab } from '@/components/tabs/ShopifyTab';
 import { TestingFormTab } from '@/components/tabs/TestingFormTab';
 
@@ -230,6 +231,8 @@ export function AppTabContent({
       return <AirtableEmbeddedForm />;
     case 'testing':
       return <TestingFormTab />;
+    case 'photos':
+      return <PhotosFormTab />;
     case 'jotform':
       return <JotformTab viewModel={jotformViewModel} />;
     default:

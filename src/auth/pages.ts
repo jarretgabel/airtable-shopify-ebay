@@ -7,6 +7,7 @@ export const APP_PAGES = [
   'jotform',
   'incoming-gear',
   'testing',
+  'photos',
   'settings',
   'notifications',
   'imagelab',
@@ -33,6 +34,7 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   jotform: { label: 'Inquiries', path: '/jotform' },
   'incoming-gear': { label: 'Incoming Gear', path: '/incoming-gear' },
   testing: { label: 'Testing', path: '/testing' },
+  photos: { label: 'Photos', path: '/photos' },
   settings: { label: 'Settings', path: '/account/settings' },
   notifications: { label: 'Notifications', path: '/account/notifications' },
   imagelab: { label: 'Image Lab', path: '/imagelab' },
@@ -42,4 +44,4 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   users: { label: 'User Management', path: '/account/users', adminOnly: true },
 };
 
-export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications' && page !== 'incoming-gear');
+export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications' && page !== 'incoming-gear' && page !== 'photos');

@@ -41,4 +41,9 @@ describe('useAppRouteState', () => {
     const state = useAppRouteState(locationFor('/incoming-gear'), ['dashboard', 'incoming-gear']);
     expect(state.activeTab).toBe('incoming-gear');
   });
+
+  it('maps the dedicated photos route', () => {
+    const state = useAppRouteState(locationFor('/photos'), ['dashboard', 'photos']);
+    expect(state.activeTab).toBe('photos');
+  });
 });

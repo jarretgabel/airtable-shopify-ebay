@@ -17,7 +17,7 @@ export function getCurrentUser(users: AppUser[], currentUserId: string | null): 
 
 export function canUserAccessPage(currentUser: AppUser | null, page: AppPage): boolean {
   if (!currentUser) return false;
-  if (page === 'settings' || page === 'notifications' || page === 'incoming-gear') return true;
+  if (page === 'settings' || page === 'notifications' || page === 'incoming-gear' || page === 'photos') return true;
   if (currentUser.role === 'admin') return true;
   return currentUser.allowedPages.includes(page);
 }
@@ -25,7 +25,7 @@ export function canUserAccessPage(currentUser: AppUser | null, page: AppPage): b
 export function getAccessiblePages(currentUser: AppUser | null): AppPage[] {
   if (!currentUser) return [];
   if (currentUser.role === 'admin') return [...APP_PAGES];
-  return Array.from(new Set([...currentUser.allowedPages.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications' && page !== 'incoming-gear'), 'incoming-gear', 'settings', 'notifications']));
+  return Array.from(new Set([...currentUser.allowedPages.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications' && page !== 'incoming-gear' && page !== 'photos'), 'incoming-gear', 'photos', 'settings', 'notifications']));
 }
 
 export function attemptLogin(users: AppUser[], email: string, password: string): { result: LoginResult; userId: string | null } {

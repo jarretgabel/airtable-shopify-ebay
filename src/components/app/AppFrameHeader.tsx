@@ -490,30 +490,6 @@ export function AppFrameHeader({
               </div>
             )}
 
-            {inventoryProcessingTabs.length > 0 && (
-              <div className="relative flex-shrink-0" data-export-ignore="true">
-                <DropdownTrigger
-                  active={hasActiveInventoryProcessingTab}
-                  expanded={openDropdown === 'inventory-processing'}
-                  label="Inventory Processing"
-                  menuId="inventory-processing-menu"
-                  badgeCount={inventoryProcessingBadgeTotal > 0 ? inventoryProcessingBadgeTotal : undefined}
-                  onClick={() => onToggleDropdown('inventory-processing')}
-                  onKeyDown={(event) => handleTriggerKeyDown(event, 'inventory-processing')}
-                />
-                {openDropdown === 'inventory-processing' && (
-                  <div
-                    id="inventory-processing-menu"
-                    role="menu"
-                    aria-label="Inventory Processing tabs"
-                    className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
-                  >
-                    <DropdownTabList tabs={inventoryProcessingTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
-                  </div>
-                )}
-              </div>
-            )}
-
             {shopifyTabs.length > 0 && (
               <div className="relative flex-shrink-0" data-export-ignore="true">
                 <DropdownTrigger
@@ -533,6 +509,30 @@ export function AppFrameHeader({
                     className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
                   >
                     <DropdownTabList tabs={shopifyTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {inventoryProcessingTabs.length > 0 && (
+              <div className="relative flex-shrink-0" data-export-ignore="true">
+                <DropdownTrigger
+                  active={hasActiveInventoryProcessingTab}
+                  expanded={openDropdown === 'inventory-processing'}
+                  label="Inventory Processing"
+                  menuId="inventory-processing-menu"
+                  badgeCount={inventoryProcessingBadgeTotal > 0 ? inventoryProcessingBadgeTotal : undefined}
+                  onClick={() => onToggleDropdown('inventory-processing')}
+                  onKeyDown={(event) => handleTriggerKeyDown(event, 'inventory-processing')}
+                />
+                {openDropdown === 'inventory-processing' && (
+                  <div
+                    id="inventory-processing-menu"
+                    role="menu"
+                    aria-label="Inventory Processing tabs"
+                    className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+                  >
+                    <DropdownTabList tabs={inventoryProcessingTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
                   </div>
                 )}
               </div>

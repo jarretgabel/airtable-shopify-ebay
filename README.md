@@ -68,6 +68,26 @@ The app now emits operator workflow events (tab views, refresh, exports, and app
 - Optional endpoint: set `VITE_ANALYTICS_ENDPOINT=https://your-endpoint/events` to receive POST/sendBeacon events
 - Kill switch: set `VITE_ANALYTICS_ENABLED=false` to disable analytics
 
+## Inventory Processing Forms
+
+The app includes three local Airtable-backed forms under the `Inventory Processing` menu:
+
+- `Incoming Gear` at `/incoming-gear`
+- `Testing` at `/testing`
+- `Photos` at `/photos`
+
+Form documentation:
+
+- [Inventory Processing Forms Overview](./docs/forms/README.md)
+- [Incoming Gear Instructions](./docs/forms/incoming-gear.instructions.md)
+- [Testing Instructions](./docs/forms/testing.instructions.md)
+- [Photos Instructions](./docs/forms/photos.instructions.md)
+
+Optional incoming gear source-link env vars:
+
+- `VITE_AIRTABLE_INCOMING_GEAR_FORM_URL`
+- `VITE_AIRTABLE_INCOMING_GEAR_FORM_EMBED_URL`
+
 ## Performance Notes
 
 Large approval queues use deferred search input and precomputed sort/filter values to reduce render work on heavy screens.

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import {
   createIncomingGearFormDefaults,
@@ -16,6 +16,24 @@ type IncomingGearOptionSets = Record<IncomingGearFormOptionFieldName, string[]>;
 const FIELD_CLASS = 'mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
 const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
+const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
+
+function CalendarIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 2v4" />
+      <path d="M16 2v4" />
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M8 14h.01" />
+      <path d="M12 14h.01" />
+      <path d="M16 14h.01" />
+      <path d="M8 18h.01" />
+      <path d="M12 18h.01" />
+      <path d="M16 18h.01" />
+    </svg>
+  );
+}
 
 function getIncomingGearFormUrl(): string | null {
   const rawUrl = [import.meta.env.VITE_AIRTABLE_INCOMING_GEAR_FORM_URL, import.meta.env.VITE_AIRTABLE_INCOMING_GEAR_FORM_EMBED_URL]
@@ -97,7 +115,6 @@ function IntroBlock({ block }: { block: IncomingGearFormIntroBlock }) {
 }
 
 export function AirtableEmbeddedForm() {
-  const arrivalDateInputRef = useRef<HTMLInputElement | null>(null);
   const [formValues, setFormValues] = useState<IncomingGearFormValues>(() => createIncomingGearFormDefaults());
   const [optionSets, setOptionSets] = useState<IncomingGearOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -193,35 +210,38 @@ export function AirtableEmbeddedForm() {
     }
 
     if (definition.type === 'date') {
-      const isArrivalDate = definition.name === 'arrivalDate';
+      let inputNode: HTMLInputElement | null = null;
+
+      const openDatePicker = () => {
+        if (!inputNode) return;
+
+        inputNode.focus();
+        if (typeof inputNode.showPicker === 'function') {
+          inputNode.showPicker();
+        }
+      };
 
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2">
           <input
-            ref={isArrivalDate ? arrivalDateInputRef : undefined}
-            className={`${FIELD_CLASS} mt-0 flex-1`}
+            ref={(node) => {
+              inputNode = node;
+            }}
+            className={`${FIELD_CLASS} mt-2 flex-1`}
             type="date"
             value={value as string}
             placeholder={definition.placeholder}
             onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as IncomingGearFormValues[typeof definition.name])}
           />
-          {isArrivalDate ? (
-            <button
-              type="button"
-              className="mt-0 inline-flex h-[42px] items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              onClick={() => {
-                const input = arrivalDateInputRef.current;
-                if (!input) return;
-                if (typeof input.showPicker === 'function') {
-                  input.showPicker();
-                } else {
-                  input.focus();
-                }
-              }}
-            >
-              Pick date
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className={DATE_BUTTON_CLASS}
+            onClick={openDatePicker}
+            aria-label={`Open ${definition.label} date picker`}
+            title={`Open ${definition.label} date picker`}
+          >
+            <CalendarIcon />
+          </button>
         </div>
       );
     }

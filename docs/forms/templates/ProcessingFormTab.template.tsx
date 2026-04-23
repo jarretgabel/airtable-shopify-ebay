@@ -1,49 +1,29 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ErrorSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import {
-  createTestingFormDefaults,
-  testingFormFields,
-  type TestingFormFieldDefinition,
-  type TestingFormOptionFieldName,
-  type TestingFormValues,
-} from '@/components/tabs/testing/testingFormSchema';
-import { loadTestingFormOptionSets, submitTestingForm } from '@/services/testingForm';
-import { useEffect } from 'react';
+  createProcessingFormDefaults,
+  processingFormFields,
+  type ProcessingFormFieldDefinition,
+  type ProcessingFormOptionFieldName,
+  type ProcessingFormValues,
+} from '@/components/tabs/<form-name>/processingFormSchema';
+import { loadProcessingFormOptionSets, submitProcessingForm } from '@/services/processingForm';
 
-type TestingOptionSets = Record<TestingFormOptionFieldName, string[]>;
+type ProcessingFormOptionSets = Record<ProcessingFormOptionFieldName, string[]>;
 
 const FIELD_CLASS = 'mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
 const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
-const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
 
-function CalendarIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8 2v4" />
-      <path d="M16 2v4" />
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M3 10h18" />
-      <path d="M8 14h.01" />
-      <path d="M12 14h.01" />
-      <path d="M16 14h.01" />
-      <path d="M8 18h.01" />
-      <path d="M12 18h.01" />
-      <path d="M16 18h.01" />
-    </svg>
-  );
-}
-
-function validateForm(values: TestingFormValues): string | null {
+function validateForm(values: ProcessingFormValues): string | null {
   if (!values.sku.trim()) return 'SKU is required.';
-  if (!values.status.trim()) return 'Status is required.';
   if (!values.make.trim()) return 'Make is required.';
   if (!values.model.trim()) return 'Model is required.';
   if (!values.componentType.trim()) return 'Component Type is required.';
   return null;
 }
 
-function FieldShell({ definition, children }: { definition: TestingFormFieldDefinition; children: ReactNode }) {
+function FieldShell({ definition, children }: { definition: ProcessingFormFieldDefinition; children: ReactNode }) {
   return (
     <label className="block">
       <span className={LABEL_CLASS}>
@@ -56,9 +36,9 @@ function FieldShell({ definition, children }: { definition: TestingFormFieldDefi
   );
 }
 
-export function TestingFormTab() {
-  const [formValues, setFormValues] = useState<TestingFormValues>(() => createTestingFormDefaults());
-  const [optionSets, setOptionSets] = useState<TestingOptionSets | null>(null);
+export function ProcessingFormTab() {
+  const [formValues, setFormValues] = useState<ProcessingFormValues>(() => createProcessingFormDefaults());
+  const [optionSets, setOptionSets] = useState<ProcessingFormOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -72,7 +52,7 @@ export function TestingFormTab() {
       setLoadingOptions(true);
       setOptionsError(null);
       try {
-        const nextOptionSets = await loadTestingFormOptionSets();
+        const nextOptionSets = await loadProcessingFormOptionSets();
         if (!cancelled) {
           setOptionSets(nextOptionSets);
         }
@@ -101,7 +81,7 @@ export function TestingFormTab() {
     return options.filter((option) => option.toLowerCase().includes(search)).slice(0, 12);
   }, [formValues.componentType, optionSets]);
 
-  const setFieldValue = <K extends keyof TestingFormValues>(fieldName: K, value: TestingFormValues[K]) => {
+  const setFieldValue = <K extends keyof ProcessingFormValues>(fieldName: K, value: ProcessingFormValues[K]) => {
     setFormValues((current) => ({ ...current, [fieldName]: value }));
   };
 
@@ -118,17 +98,17 @@ export function TestingFormTab() {
 
     setSubmitting(true);
     try {
-      const result = await submitTestingForm(formValues);
+      const result = await submitProcessingForm(formValues);
       setSubmitSuccess(result);
-      setFormValues(createTestingFormDefaults());
+      setFormValues(createProcessingFormDefaults());
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Unable to submit the Testing form.');
+      setSubmitError(error instanceof Error ? error.message : 'Unable to submit the form.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const renderField = (definition: TestingFormFieldDefinition) => {
+  const renderField = (definition: ProcessingFormFieldDefinition) => {
     const value = formValues[definition.name];
 
     if (definition.type === 'textarea') {
@@ -138,7 +118,7 @@ export function TestingFormTab() {
           rows={definition.rows ?? 4}
           value={value as string}
           placeholder={definition.placeholder}
-          onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as TestingFormValues[typeof definition.name])}
+          onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as ProcessingFormValues[typeof definition.name])}
         />
       );
     }
@@ -152,7 +132,7 @@ export function TestingFormTab() {
             type="file"
             accept="image/*"
             multiple
-            onChange={(event) => setFieldValue(definition.name, Array.from(event.currentTarget.files ?? []) as TestingFormValues[typeof definition.name])}
+            onChange={(event) => setFieldValue(definition.name, Array.from(event.currentTarget.files ?? []) as ProcessingFormValues[typeof definition.name])}
           />
           <p className={HELP_CLASS}>{files.length > 0 ? `${files.length} image${files.length === 1 ? '' : 's'} selected.` : 'No images selected.'}</p>
         </>
@@ -165,7 +145,7 @@ export function TestingFormTab() {
         <select
           className={FIELD_CLASS}
           value={value as string}
-          onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as TestingFormValues[typeof definition.name])}
+          onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as ProcessingFormValues[typeof definition.name])}
         >
           <option value="">Select an option</option>
           {options.map((option) => (
@@ -177,7 +157,7 @@ export function TestingFormTab() {
 
     if (definition.type === 'searchable-select') {
       const options = definition.optionFieldName && optionSets ? optionSets[definition.optionFieldName] : [];
-      const datalistId = `testing-form-${definition.name}-options`;
+      const datalistId = `processing-form-${definition.name}-options`;
       return (
         <>
           <input
@@ -185,8 +165,8 @@ export function TestingFormTab() {
             type="text"
             list={datalistId}
             value={value as string}
-            placeholder="Search component types"
-            onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as TestingFormValues[typeof definition.name])}
+            placeholder="Search options"
+            onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as ProcessingFormValues[typeof definition.name])}
           />
           <datalist id={datalistId}>
             {options.map((option) => (
@@ -196,67 +176,29 @@ export function TestingFormTab() {
           <p className={HELP_CLASS}>
             {filteredComponentTypeOptions.length > 0
               ? `Matching options: ${filteredComponentTypeOptions.join(', ')}`
-              : 'No matching component types.'}
+              : 'No matching options.'}
           </p>
         </>
       );
     }
 
-    if (definition.type === 'date') {
-      let inputNode: HTMLInputElement | null = null;
-
-      const openDatePicker = () => {
-        if (!inputNode) return;
-
-        inputNode.focus();
-        if (typeof inputNode.showPicker === 'function') {
-          inputNode.showPicker();
-        }
-      };
-
-      return (
-        <div className="flex gap-2">
-          <input
-            ref={(node) => {
-              inputNode = node;
-            }}
-            className={`${FIELD_CLASS} mt-2 flex-1`}
-            type="date"
-            value={value as string}
-            onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as TestingFormValues[typeof definition.name])}
-          />
-          <button
-            type="button"
-            className={DATE_BUTTON_CLASS}
-            onClick={openDatePicker}
-            aria-label={`Open ${definition.label} date picker`}
-            title={`Open ${definition.label} date picker`}
-          >
-            <CalendarIcon />
-          </button>
-        </div>
-      );
-    }
-
-    const inputType = definition.type === 'currency' ? 'number' : definition.type;
     return (
       <input
         className={FIELD_CLASS}
-        type={inputType}
-        step={definition.type === 'currency' ? '0.01' : definition.type === 'number' ? '1' : undefined}
+        type={definition.type}
         value={value as string}
         placeholder={definition.placeholder}
-        onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as TestingFormValues[typeof definition.name])}
+        onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as ProcessingFormValues[typeof definition.name])}
       />
     );
   };
 
   if (loadingOptions) {
-    return <PanelSurface><div className="p-4 text-sm text-[var(--muted)]">Loading Testing form configuration from Airtable...</div></PanelSurface>;
+    return <PanelSurface><div className="p-4 text-sm text-[var(--muted)]">Loading Processing Form configuration from Airtable...</div></PanelSurface>;
   }
 
   if (optionsError || !optionSets) {
-    return <ErrorSurface title="Unable to load Testing form" message={optionsError ?? 'The Airtable Testing form configuration is unavailable.'} />;
+    return <ErrorSurface title="Unable to load Processing Form" message={optionsError ?? 'The Airtable form configuration is unavailable.'} />;
   }
 
   return (
@@ -264,8 +206,8 @@ export function TestingFormTab() {
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
           <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SB Inventory</p>
-          <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Testing</h2>
-          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">In addition to general testing and service, please double check all previously entered details to ensure accuracy of information.</p>
+          <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Processing Form</h2>
+          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Replace this copy with the form-specific instruction text.</p>
         </div>
 
         {submitError ? (
@@ -276,19 +218,19 @@ export function TestingFormTab() {
 
         {submitSuccess ? (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-            Testing submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.
+            Form submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.
           </div>
         ) : null}
 
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
-          {testingFormFields.map((field) => (
+          {processingFormFields.map((field) => (
             <div key={field.airtableFieldName}>
               <FieldShell definition={field}>{renderField(field)}</FieldShell>
             </div>
           ))}
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="m-0 text-sm text-[var(--muted)]">Required fields are marked with an asterisk. Testing Time is submitted to Airtable as minutes converted to duration seconds.</p>
+            <p className="m-0 text-sm text-[var(--muted)]">Required fields are marked with an asterisk.</p>
             <div className="flex gap-3">
               <button
                 type="button"
@@ -296,7 +238,7 @@ export function TestingFormTab() {
                 onClick={() => {
                   setSubmitError(null);
                   setSubmitSuccess(null);
-                  setFormValues(createTestingFormDefaults());
+                  setFormValues(createProcessingFormDefaults());
                 }}
                 disabled={submitting}
               >
@@ -307,7 +249,7 @@ export function TestingFormTab() {
                 className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={submitting}
               >
-                {submitting ? 'Submitting...' : 'Submit Testing'}
+                {submitting ? 'Submitting...' : 'Submit'}
               </button>
             </div>
           </div>

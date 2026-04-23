@@ -54,13 +54,14 @@ describe('authContextHelpers', () => {
     expect(canUserAccessPage(admin, 'users')).toBe(true);
     expect(canUserAccessPage(user, 'dashboard')).toBe(true);
     expect(canUserAccessPage(user, 'incoming-gear')).toBe(true);
+    expect(canUserAccessPage(user, 'photos')).toBe(true);
     expect(canUserAccessPage(user, 'notifications')).toBe(true);
     expect(canUserAccessPage(user, 'market')).toBe(false);
   });
 
   it('filters users page for non-admin accessible pages', () => {
     const user = baseUsers[1];
-    expect(getAccessiblePages(user)).toEqual(['dashboard', 'airtable', 'incoming-gear', 'settings', 'notifications']);
+    expect(getAccessiblePages(user)).toEqual(['dashboard', 'airtable', 'incoming-gear', 'photos', 'settings', 'notifications']);
     expect(getAccessiblePages(baseUsers[0])).toEqual(APP_PAGES);
   });
 

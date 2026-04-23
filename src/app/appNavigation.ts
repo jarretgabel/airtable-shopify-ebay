@@ -16,7 +16,7 @@ export const EBAY_TABS = ['ebay', 'approval'] as const satisfies readonly Tab[];
 export const EBAY_TAB_SET = new Set<Tab>(EBAY_TABS as readonly Tab[]);
 export const SHOPIFY_TABS = ['shopify', 'shopify-approval'] as const satisfies readonly Tab[];
 export const SHOPIFY_TAB_SET = new Set<Tab>(SHOPIFY_TABS as readonly Tab[]);
-export const INVENTORY_PROCESSING_TABS = ['incoming-gear', 'testing'] as const satisfies readonly Tab[];
+export const INVENTORY_PROCESSING_TABS = ['incoming-gear', 'testing', 'photos'] as const satisfies readonly Tab[];
 export const INVENTORY_PROCESSING_TAB_SET = new Set<Tab>(INVENTORY_PROCESSING_TABS as readonly Tab[]);
 export const UTILITY_TABS = ['market', 'imagelab'] as const satisfies readonly Tab[];
 export const UTILITY_TAB_SET = new Set<Tab>(UTILITY_TABS as readonly Tab[]);
@@ -31,6 +31,7 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   jotform: 'JotForm',
   'incoming-gear': 'Incoming Gear',
   testing: 'Testing',
+  photos: 'Photos',
   settings: 'Settings',
   notifications: 'Notifications',
   ebay: 'Listings',
