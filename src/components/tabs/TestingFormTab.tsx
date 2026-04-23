@@ -1,5 +1,7 @@
-import { useMemo, useState, type ReactNode } from 'react';
-import { ErrorSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { useState, type ReactNode } from 'react';
+import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
+import { DatePickerField } from '@/components/tabs/date-picker-field';
 import {
   createTestingFormDefaults,
   testingFormFields,
@@ -7,7 +9,7 @@ import {
   type TestingFormOptionFieldName,
   type TestingFormValues,
 } from '@/components/tabs/testing/testingFormSchema';
-import { loadTestingFormOptionSets, submitTestingForm } from '@/services/testingForm';
+import { loadTestingFormOptionSets, loadTestingFormValues, submitTestingForm, type TestingFormSubmitResult } from '@/services/testingForm';
 import { useEffect } from 'react';
 
 type TestingOptionSets = Record<TestingFormOptionFieldName, string[]>;
@@ -16,23 +18,6 @@ const FIELD_CLASS = 'mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(
 const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
-
-function CalendarIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8 2v4" />
-      <path d="M16 2v4" />
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M3 10h18" />
-      <path d="M8 14h.01" />
-      <path d="M12 14h.01" />
-      <path d="M16 14h.01" />
-      <path d="M8 18h.01" />
-      <path d="M12 18h.01" />
-      <path d="M16 18h.01" />
-    </svg>
-  );
-}
 
 function validateForm(values: TestingFormValues): string | null {
   if (!values.sku.trim()) return 'SKU is required.';
@@ -56,13 +41,19 @@ function FieldShell({ definition, children }: { definition: TestingFormFieldDefi
   );
 }
 
-export function TestingFormTab() {
+interface TestingFormTabProps {
+  recordId?: string | null;
+  onBackToDirectory?: () => void;
+}
+
+export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabProps) {
   const [formValues, setFormValues] = useState<TestingFormValues>(() => createTestingFormDefaults());
+  const [initialFormValues, setInitialFormValues] = useState<TestingFormValues>(() => createTestingFormDefaults());
   const [optionSets, setOptionSets] = useState<TestingOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState<{ recordId: string; sku: string } | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<TestingFormSubmitResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -72,9 +63,14 @@ export function TestingFormTab() {
       setLoadingOptions(true);
       setOptionsError(null);
       try {
-        const nextOptionSets = await loadTestingFormOptionSets();
+        const [nextOptionSets, nextFormValues] = await Promise.all([
+          loadTestingFormOptionSets(),
+          recordId ? loadTestingFormValues(recordId) : Promise.resolve(createTestingFormDefaults()),
+        ]);
         if (!cancelled) {
           setOptionSets(nextOptionSets);
+          setFormValues(nextFormValues);
+          setInitialFormValues(nextFormValues);
         }
       } catch (error) {
         if (!cancelled) {
@@ -92,14 +88,7 @@ export function TestingFormTab() {
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  const filteredComponentTypeOptions = useMemo(() => {
-    const search = formValues.componentType.trim().toLowerCase();
-    const options = optionSets?.['Component Type'] ?? [];
-    if (!search) return options.slice(0, 12);
-    return options.filter((option) => option.toLowerCase().includes(search)).slice(0, 12);
-  }, [formValues.componentType, optionSets]);
+  }, [recordId]);
 
   const setFieldValue = <K extends keyof TestingFormValues>(fieldName: K, value: TestingFormValues[K]) => {
     setFormValues((current) => ({ ...current, [fieldName]: value }));
@@ -118,9 +107,17 @@ export function TestingFormTab() {
 
     setSubmitting(true);
     try {
-      const result = await submitTestingForm(formValues);
+      const result = await submitTestingForm(formValues, recordId);
       setSubmitSuccess(result);
-      setFormValues(createTestingFormDefaults());
+      if (result.action === 'updated') {
+        const nextValues = { ...formValues, imageFiles: [] };
+        setFormValues(nextValues);
+        setInitialFormValues(nextValues);
+      } else {
+        const nextValues = createTestingFormDefaults();
+        setFormValues(nextValues);
+        setInitialFormValues(nextValues);
+      }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Unable to submit the Testing form.');
     } finally {
@@ -179,62 +176,27 @@ export function TestingFormTab() {
       const options = definition.optionFieldName && optionSets ? optionSets[definition.optionFieldName] : [];
       const datalistId = `testing-form-${definition.name}-options`;
       return (
-        <>
-          <input
-            className={FIELD_CLASS}
-            type="text"
-            list={datalistId}
-            value={value as string}
-            placeholder="Search component types"
-            onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as TestingFormValues[typeof definition.name])}
-          />
-          <datalist id={datalistId}>
-            {options.map((option) => (
-              <option key={option} value={option} />
-            ))}
-          </datalist>
-          <p className={HELP_CLASS}>
-            {filteredComponentTypeOptions.length > 0
-              ? `Matching options: ${filteredComponentTypeOptions.join(', ')}`
-              : 'No matching component types.'}
-          </p>
-        </>
+        <ComponentTypeSearchField
+          className={FIELD_CLASS}
+          helpClassName={HELP_CLASS}
+          listId={datalistId}
+          options={options}
+          value={value as string}
+          onValueChange={(nextValue) => setFieldValue(definition.name, nextValue as TestingFormValues[typeof definition.name])}
+        />
       );
     }
 
     if (definition.type === 'date') {
-      let inputNode: HTMLInputElement | null = null;
-
-      const openDatePicker = () => {
-        if (!inputNode) return;
-
-        inputNode.focus();
-        if (typeof inputNode.showPicker === 'function') {
-          inputNode.showPicker();
-        }
-      };
-
       return (
-        <div className="flex gap-2">
-          <input
-            ref={(node) => {
-              inputNode = node;
-            }}
-            className={`${FIELD_CLASS} mt-2 flex-1`}
-            type="date"
-            value={value as string}
-            onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as TestingFormValues[typeof definition.name])}
-          />
-          <button
-            type="button"
-            className={DATE_BUTTON_CLASS}
-            onClick={openDatePicker}
-            aria-label={`Open ${definition.label} date picker`}
-            title={`Open ${definition.label} date picker`}
-          >
-            <CalendarIcon />
-          </button>
-        </div>
+        <DatePickerField
+          containerClassName="flex gap-2"
+          inputClassName={`${FIELD_CLASS} mt-2 flex-1`}
+          buttonClassName={DATE_BUTTON_CLASS}
+          value={value as string}
+          pickerLabel={definition.label}
+          onValueChange={(nextValue) => setFieldValue(definition.name, nextValue as TestingFormValues[typeof definition.name])}
+        />
       );
     }
 
@@ -252,7 +214,7 @@ export function TestingFormTab() {
   };
 
   if (loadingOptions) {
-    return <PanelSurface><div className="p-4 text-sm text-[var(--muted)]">Loading Testing form configuration from Airtable...</div></PanelSurface>;
+    return <LoadingSurface message="Loading Testing form configuration from Airtable..." />;
   }
 
   if (optionsError || !optionSets) {
@@ -263,9 +225,23 @@ export function TestingFormTab() {
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-          <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SB Inventory</p>
-          <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Testing</h2>
-          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">In addition to general testing and service, please double check all previously entered details to ensure accuracy of information.</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SB Inventory</p>
+              <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Testing</h2>
+              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">In addition to general testing and service, please double check all previously entered details to ensure accuracy of information.</p>
+              {recordId ? <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Editing record <strong>{recordId}</strong>. Saving here updates only the Testing fields for this inventory row.</p> : null}
+            </div>
+            {onBackToDirectory ? (
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                onClick={onBackToDirectory}
+              >
+                Back to Directory
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {submitError ? (
@@ -276,7 +252,9 @@ export function TestingFormTab() {
 
         {submitSuccess ? (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-            Testing submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.
+            {submitSuccess.action === 'updated'
+              ? <>Testing fields updated for record <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.</>
+              : <>Testing submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.</>}
           </div>
         ) : null}
 
@@ -296,7 +274,7 @@ export function TestingFormTab() {
                 onClick={() => {
                   setSubmitError(null);
                   setSubmitSuccess(null);
-                  setFormValues(createTestingFormDefaults());
+                  setFormValues(initialFormValues);
                 }}
                 disabled={submitting}
               >
@@ -307,7 +285,7 @@ export function TestingFormTab() {
                 className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={submitting}
               >
-                {submitting ? 'Submitting...' : 'Submit Testing'}
+                {submitting ? (recordId ? 'Saving...' : 'Submitting...') : (recordId ? 'Save Testing' : 'Submit Testing')}
               </button>
             </div>
           </div>

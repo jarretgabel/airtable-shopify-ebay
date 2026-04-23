@@ -1,6 +1,6 @@
 export const APP_PAGES = [
   'dashboard',
-  'airtable',
+  'inventory',
   'listings',
   'shopify',
   'market',
@@ -27,7 +27,7 @@ export interface PageDefinition {
 
 export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   dashboard: { label: 'Dashboard', path: '/dashboard' },
-  airtable: { label: 'Airtable Inventory', path: '/airtable' },
+  inventory: { label: 'Directory', path: '/inventory' },
   listings: { label: 'Listings', path: '/listings' },
   shopify: { label: 'Shopify Products', path: '/shopify/products' },
   market: { label: 'Market Prices', path: '/market' },
@@ -44,4 +44,4 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   users: { label: 'User Management', path: '/account/users', adminOnly: true },
 };
 
-export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications' && page !== 'incoming-gear' && page !== 'photos');
+export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications' && page !== 'incoming-gear' && page !== 'testing' && page !== 'photos');

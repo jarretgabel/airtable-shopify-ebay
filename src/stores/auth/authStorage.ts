@@ -139,7 +139,10 @@ function parseAllowedPages(value: unknown, role: UserRole): AppPage[] {
   }
 
   if (Array.isArray(value)) {
-    const pages = value.filter((entry): entry is AppPage => typeof entry === 'string' && isAppPage(entry));
+    const pages = value
+      .filter((entry): entry is string => typeof entry === 'string')
+      .map(normalizeLegacyPageValue)
+      .filter(isAppPage);
     return normalizePages(pages, role);
   }
 
@@ -149,7 +152,8 @@ function parseAllowedPages(value: unknown, role: UserRole): AppPage[] {
   const pages = raw
     .split(',')
     .map((page) => page.trim())
-    .filter((page): page is AppPage => isAppPage(page));
+    .map(normalizeLegacyPageValue)
+    .filter(isAppPage);
 
   return normalizePages(pages, role);
 }
@@ -338,6 +342,10 @@ export async function deleteUserInAirtable(user: AppUser): Promise<void> {
 
 function isAppPage(value: string): value is AppPage {
   return APP_PAGES.includes(value as AppPage);
+}
+
+function normalizeLegacyPageValue(value: string): string {
+  return value === 'airtable' ? 'inventory' : value;
 }
 
 export function normalizePages(pages: AppPage[], role: UserRole): AppPage[] {

@@ -519,7 +519,7 @@ export function AppFrameHeader({
                 <DropdownTrigger
                   active={hasActiveInventoryProcessingTab}
                   expanded={openDropdown === 'inventory-processing'}
-                  label="Inventory Processing"
+                  label="Inventory"
                   menuId="inventory-processing-menu"
                   badgeCount={inventoryProcessingBadgeTotal > 0 ? inventoryProcessingBadgeTotal : undefined}
                   onClick={() => onToggleDropdown('inventory-processing')}
@@ -529,7 +529,7 @@ export function AppFrameHeader({
                   <div
                     id="inventory-processing-menu"
                     role="menu"
-                    aria-label="Inventory Processing tabs"
+                    aria-label="Inventory tabs"
                     className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
                   >
                     <DropdownTabList tabs={inventoryProcessingTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />

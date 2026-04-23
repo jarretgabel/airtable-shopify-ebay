@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
+import { DatePickerField } from '@/components/tabs/date-picker-field';
 import {
   createIncomingGearFormDefaults,
   incomingGearFormFields,
@@ -9,7 +11,7 @@ import {
   type IncomingGearFormOptionFieldName,
   type IncomingGearFormValues,
 } from '@/components/tabs/incoming-gear/incomingGearFormSchema';
-import { loadIncomingGearFormOptionSets, submitIncomingGearForm } from '@/services/incomingGearForm';
+import { loadIncomingGearFormOptionSets, loadIncomingGearFormValues, submitIncomingGearForm, type IncomingGearFormSubmitResult } from '@/services/incomingGearForm';
 
 type IncomingGearOptionSets = Record<IncomingGearFormOptionFieldName, string[]>;
 
@@ -17,23 +19,6 @@ const FIELD_CLASS = 'mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(
 const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
-
-function CalendarIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8 2v4" />
-      <path d="M16 2v4" />
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M3 10h18" />
-      <path d="M8 14h.01" />
-      <path d="M12 14h.01" />
-      <path d="M16 14h.01" />
-      <path d="M8 18h.01" />
-      <path d="M12 18h.01" />
-      <path d="M16 18h.01" />
-    </svg>
-  );
-}
 
 function getIncomingGearFormUrl(): string | null {
   const rawUrl = [import.meta.env.VITE_AIRTABLE_INCOMING_GEAR_FORM_URL, import.meta.env.VITE_AIRTABLE_INCOMING_GEAR_FORM_EMBED_URL]
@@ -114,13 +99,19 @@ function IntroBlock({ block }: { block: IncomingGearFormIntroBlock }) {
   return <p className="m-0 max-w-3xl text-[14px] leading-7 text-[var(--muted)]">{block.text}</p>;
 }
 
-export function AirtableEmbeddedForm() {
+interface AirtableEmbeddedFormProps {
+  recordId?: string | null;
+  onBackToDirectory?: () => void;
+}
+
+export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEmbeddedFormProps) {
   const [formValues, setFormValues] = useState<IncomingGearFormValues>(() => createIncomingGearFormDefaults());
+  const [initialFormValues, setInitialFormValues] = useState<IncomingGearFormValues>(() => createIncomingGearFormDefaults());
   const [optionSets, setOptionSets] = useState<IncomingGearOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState<{ recordId: string; sku: string } | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<IncomingGearFormSubmitResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const incomingGearFormUrl = getIncomingGearFormUrl();
@@ -132,9 +123,14 @@ export function AirtableEmbeddedForm() {
       setLoadingOptions(true);
       setOptionsError(null);
       try {
-        const nextOptionSets = await loadIncomingGearFormOptionSets();
+        const [nextOptionSets, nextFormValues] = await Promise.all([
+          loadIncomingGearFormOptionSets(),
+          recordId ? loadIncomingGearFormValues(recordId) : Promise.resolve(createIncomingGearFormDefaults()),
+        ]);
         if (!cancelled) {
           setOptionSets(nextOptionSets);
+          setFormValues(nextFormValues);
+          setInitialFormValues(nextFormValues);
         }
       } catch (error) {
         if (!cancelled) {
@@ -153,16 +149,7 @@ export function AirtableEmbeddedForm() {
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  const filteredComponentTypeOptions = useMemo(() => {
-    const search = formValues.componentType.trim().toLowerCase();
-    const options = optionSets?.['Component Type'] ?? [];
-    if (!search) {
-      return options.slice(0, 12);
-    }
-    return options.filter((option) => option.toLowerCase().includes(search)).slice(0, 12);
-  }, [formValues.componentType, optionSets]);
+  }, [recordId]);
 
   const setFieldValue = <K extends keyof IncomingGearFormValues>(fieldName: K, value: IncomingGearFormValues[K]) => {
     setFormValues((current) => ({
@@ -184,9 +171,17 @@ export function AirtableEmbeddedForm() {
 
     setSubmitting(true);
     try {
-      const result = await submitIncomingGearForm(formValues);
+      const result = await submitIncomingGearForm(formValues, recordId);
       setSubmitSuccess(result);
-      setFormValues(createIncomingGearFormDefaults());
+      if (result.action === 'updated') {
+        const nextValues = { ...formValues, imageFiles: [] };
+        setFormValues(nextValues);
+        setInitialFormValues(nextValues);
+      } else {
+        const nextValues = createIncomingGearFormDefaults();
+        setFormValues(nextValues);
+        setInitialFormValues(nextValues);
+      }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Unable to submit the Incoming Gear form.');
     } finally {
@@ -210,39 +205,16 @@ export function AirtableEmbeddedForm() {
     }
 
     if (definition.type === 'date') {
-      let inputNode: HTMLInputElement | null = null;
-
-      const openDatePicker = () => {
-        if (!inputNode) return;
-
-        inputNode.focus();
-        if (typeof inputNode.showPicker === 'function') {
-          inputNode.showPicker();
-        }
-      };
-
       return (
-        <div className="flex gap-2">
-          <input
-            ref={(node) => {
-              inputNode = node;
-            }}
-            className={`${FIELD_CLASS} mt-2 flex-1`}
-            type="date"
-            value={value as string}
-            placeholder={definition.placeholder}
-            onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as IncomingGearFormValues[typeof definition.name])}
-          />
-          <button
-            type="button"
-            className={DATE_BUTTON_CLASS}
-            onClick={openDatePicker}
-            aria-label={`Open ${definition.label} date picker`}
-            title={`Open ${definition.label} date picker`}
-          >
-            <CalendarIcon />
-          </button>
-        </div>
+        <DatePickerField
+          containerClassName="flex gap-2"
+          inputClassName={`${FIELD_CLASS} mt-2 flex-1`}
+          buttonClassName={DATE_BUTTON_CLASS}
+          value={value as string}
+          pickerLabel={definition.label}
+          placeholder={definition.placeholder}
+          onValueChange={(nextValue) => setFieldValue(definition.name, nextValue as IncomingGearFormValues[typeof definition.name])}
+        />
       );
     }
 
@@ -285,26 +257,14 @@ export function AirtableEmbeddedForm() {
       const options = definition.optionFieldName && optionSets ? optionSets[definition.optionFieldName] : [];
       const datalistId = `incoming-gear-${definition.name}-options`;
       return (
-        <>
-          <input
-            className={FIELD_CLASS}
-            type="text"
-            list={datalistId}
-            value={value as string}
-            placeholder="Search component types"
-            onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as IncomingGearFormValues[typeof definition.name])}
-          />
-          <datalist id={datalistId}>
-            {options.map((option) => (
-              <option key={option} value={option} />
-            ))}
-          </datalist>
-          <p className={HELP_CLASS}>
-            {filteredComponentTypeOptions.length > 0
-              ? `Matching options: ${filteredComponentTypeOptions.join(', ')}`
-              : 'No matching component types.'}
-          </p>
-        </>
+        <ComponentTypeSearchField
+          className={FIELD_CLASS}
+          helpClassName={HELP_CLASS}
+          listId={datalistId}
+          options={options}
+          value={value as string}
+          onValueChange={(nextValue) => setFieldValue(definition.name, nextValue as IncomingGearFormValues[typeof definition.name])}
+        />
       );
     }
 
@@ -334,8 +294,22 @@ export function AirtableEmbeddedForm() {
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-          <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{incomingGearFormIntro.eyebrow}</p>
-          <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{incomingGearFormIntro.title}</h2>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{incomingGearFormIntro.eyebrow}</p>
+              <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{incomingGearFormIntro.title}</h2>
+              {recordId ? <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Editing record <strong>{recordId}</strong>. Saving here updates only the Incoming Gear fields for this inventory row.</p> : null}
+            </div>
+            {onBackToDirectory ? (
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                onClick={onBackToDirectory}
+              >
+                Back to Directory
+              </button>
+            ) : null}
+          </div>
           <div className="mt-4 space-y-3.5 pb-4">
             {incomingGearFormIntro.blocks.map((block, index) => (
               <IntroBlock key={`${block.type}-${index}`} block={block} />
@@ -364,7 +338,9 @@ export function AirtableEmbeddedForm() {
 
         {submitSuccess ? (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-            Submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. Temporary SKU: <strong>{submitSuccess.sku}</strong>.
+            {submitSuccess.action === 'updated'
+              ? <>Incoming Gear fields updated for record <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku || 'N/A'}</strong>.</>
+              : <>Submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. Temporary SKU: <strong>{submitSuccess.sku}</strong>.</>}
           </div>
         ) : null}
 
@@ -384,7 +360,7 @@ export function AirtableEmbeddedForm() {
                 onClick={() => {
                   setSubmitError(null);
                   setSubmitSuccess(null);
-                  setFormValues(createIncomingGearFormDefaults());
+                  setFormValues(initialFormValues);
                 }}
                 disabled={submitting}
               >
@@ -395,7 +371,7 @@ export function AirtableEmbeddedForm() {
                 className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={submitting}
               >
-                {submitting ? 'Submitting...' : 'Submit Incoming Gear'}
+                {submitting ? (recordId ? 'Saving...' : 'Submitting...') : (recordId ? 'Save Incoming Gear' : 'Submit Incoming Gear')}
               </button>
             </div>
           </div>

@@ -27,6 +27,10 @@ function App() {
     isLoginPath,
     isResetPasswordPath,
     resetToken,
+    incomingGearRecordId,
+    testingRecordId,
+    photosRecordId,
+    inventoryRecordId,
     listingsRecordId,
     approvalRecordId,
     shopifyApprovalRecordId,
@@ -47,6 +51,11 @@ function App() {
   const shellRef = useRef<HTMLElement>(null);
   const {
     navigateToTab,
+    navigateToIncomingGearForm,
+    navigateToTestingForm,
+    navigateToPhotosForm,
+    navigateToInventoryRecord,
+    navigateToInventoryList,
     navigateToListingsRecord,
     navigateToListingsList,
     navigateToApprovalRecord,
@@ -188,10 +197,19 @@ function App() {
         >
           <AppTabContent
             activeTab={activeTab}
+            incomingGearRecordId={incomingGearRecordId}
+            testingRecordId={testingRecordId}
+            photosRecordId={photosRecordId}
+            inventoryRecordId={inventoryRecordId}
             listingsRecordId={listingsRecordId}
             approvalRecordId={approvalRecordId}
             shopifyApprovalRecordId={shopifyApprovalRecordId}
             userRecordId={userRecordId}
+            navigateToInventoryRecord={navigateToInventoryRecord}
+            navigateToInventoryList={navigateToInventoryList}
+            navigateToIncomingGearForm={navigateToIncomingGearForm}
+            navigateToTestingForm={navigateToTestingForm}
+            navigateToPhotosForm={navigateToPhotosForm}
             navigateToListingsRecord={navigateToListingsRecord}
             navigateToListingsList={navigateToListingsList}
             navigateToApprovalRecord={navigateToApprovalRecord}

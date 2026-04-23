@@ -38,10 +38,10 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
   const distributorCount = airtableDistributorSummary.length;
 
   return (
-    <DashboardSectionPanel id="inventory" title="Airtable" className="gap-[1.1rem]">
+    <DashboardSectionPanel id="inventory" title="Inventory" className="gap-[1.1rem]">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div><h3 className="m-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-bold text-[var(--ink)]">Airtable Inventory Recap <span className="text-[0.72rem] font-medium tracking-[0.02em] text-[var(--muted)]">All products in Airtable</span></h3></div>
-        <button type="button" className="cursor-pointer self-start rounded-lg border border-[var(--line)] bg-transparent px-[0.85rem] py-[0.38rem] text-[0.78rem] font-semibold text-[var(--accent)] transition-[background,border-color] duration-[140ms] hover:border-[var(--accent)] hover:bg-[var(--panel)]" onClick={() => onSelectTab('airtable')}>Open Airtable Inventory →</button>
+        <div><h3 className="m-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-bold text-[var(--ink)]">Inventory Recap <span className="text-[0.72rem] font-medium tracking-[0.02em] text-[var(--muted)]">All products in Airtable</span></h3></div>
+        <button type="button" className="cursor-pointer self-start rounded-lg border border-[var(--line)] bg-transparent px-[0.85rem] py-[0.38rem] text-[0.78rem] font-semibold text-[var(--accent)] transition-[background,border-color] duration-[140ms] hover:border-[var(--accent)] hover:bg-[var(--panel)]" onClick={() => onSelectTab('inventory')}>Open Inventory →</button>
       </div>
 
       {atLoading ? (

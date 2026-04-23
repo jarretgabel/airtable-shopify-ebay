@@ -20,6 +20,7 @@ import { SettingsTab } from '@/components/SettingsTab';
 import { UserManagementTab } from '@/components/UserManagementTab';
 import { AirtableTab } from '@/components/tabs/AirtableTab';
 import { AirtableEmbeddedForm } from '@/components/tabs/AirtableEmbeddedForm.tsx';
+import { InventoryRecordEditorPage } from '@/components/tabs/InventoryRecordEditorPage';
 import { JotformTab } from '@/components/tabs/JotformTab';
 import { MarketTab } from '@/components/tabs/MarketTab';
 import { PhotosFormTab } from '@/components/tabs/PhotosFormTab';
@@ -28,10 +29,19 @@ import { TestingFormTab } from '@/components/tabs/TestingFormTab';
 
 export function AppTabContent({
   activeTab,
+  incomingGearRecordId,
+  testingRecordId,
+  photosRecordId,
+  inventoryRecordId,
   listingsRecordId,
   approvalRecordId,
   shopifyApprovalRecordId,
   userRecordId,
+  navigateToInventoryRecord,
+  navigateToInventoryList,
+  navigateToIncomingGearForm,
+  navigateToTestingForm,
+  navigateToPhotosForm,
   navigateToListingsRecord,
   navigateToListingsList,
   navigateToApprovalRecord,
@@ -221,18 +231,29 @@ export function AppTabContent({
       return <NotificationsTab />;
     case 'dashboard':
       return <DashboardTab viewModel={dashboardViewModel} />;
-    case 'airtable':
-      return <AirtableTab viewModel={airtableViewModel} />;
+    case 'inventory':
+      return inventoryRecordId
+        ? <InventoryRecordEditorPage recordId={inventoryRecordId} onBackToDirectory={() => navigateToInventoryList()} />
+        : (
+          <AirtableTab
+            viewModel={airtableViewModel}
+            onAddNewRecord={() => navigateToIncomingGearForm()}
+            onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+            onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
+            onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
+            onSelectRecord={(recordId) => navigateToInventoryRecord(recordId)}
+          />
+        );
     case 'shopify':
       return <ShopifyTab viewModel={shopifyViewModel} />;
     case 'market':
       return <MarketTab viewModel={marketViewModel} />;
     case 'incoming-gear':
-      return <AirtableEmbeddedForm />;
+      return <AirtableEmbeddedForm recordId={incomingGearRecordId} onBackToDirectory={() => navigateToInventoryList()} />;
     case 'testing':
-      return <TestingFormTab />;
+      return <TestingFormTab recordId={testingRecordId} onBackToDirectory={() => navigateToInventoryList()} />;
     case 'photos':
-      return <PhotosFormTab />;
+      return <PhotosFormTab recordId={photosRecordId} onBackToDirectory={() => navigateToInventoryList()} />;
     case 'jotform':
       return <JotformTab viewModel={jotformViewModel} />;
     default:

@@ -198,7 +198,7 @@ export function buildDashboardSections({
 }): DashboardSection[] {
   const sections: DashboardSection[] = [
     { id: 'overview', label: 'Overview' },
-    { id: 'inventory', label: 'Airtable' },
+    { id: 'inventory', label: 'Inventory' },
     { id: 'inquiries', label: 'JotForm' },
     { id: 'pipeline', label: 'Shopify' },
   ];

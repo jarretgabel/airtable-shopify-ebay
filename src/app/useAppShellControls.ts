@@ -103,14 +103,14 @@ export function useAppShellControls({
 
   const tabLoadingState: Partial<Record<Tab, boolean>> = {
     dashboard: dashboardRefreshing,
-    airtable: atLoading,
+    inventory: atLoading,
     shopify: spLoading,
     jotform: jfLoading,
   };
 
   const tabRefetchers: Partial<Record<Tab, () => void | Promise<void>>> = {
     dashboard: handleDashboardRefresh,
-    airtable: airtableRefetch,
+    inventory: airtableRefetch,
     shopify: shopifyRefetch,
     jotform: jotformRefetch,
   };

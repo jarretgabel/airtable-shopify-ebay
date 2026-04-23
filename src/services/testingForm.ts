@@ -1,7 +1,8 @@
 import airtableService from '@/services/airtable';
 import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
-import type { TestingFormOptionFieldName, TestingFormValues } from '@/components/tabs/testing/testingFormSchema';
+import { createTestingFormDefaults, type TestingFormOptionFieldName, type TestingFormValues } from '@/components/tabs/testing/testingFormSchema';
+import { extractInventoryScalarValue, loadInventoryRecord } from '@/services/inventoryDirectory';
 
 const TARGET_BASE_ID = 'appjQj8FQfFZ2ogMz';
 const TARGET_TABLE_ID = 'tblirsoRIFPDMHxb0';
@@ -20,6 +21,12 @@ const OPTION_FIELD_NAMES = [
 
 type TestingOptionSet = Record<TestingFormOptionFieldName, string[]>;
 
+export interface TestingFormSubmitResult {
+  recordId: string;
+  sku: string;
+  action: 'created' | 'updated';
+}
+
 function requireAirtableApiKey(): string {
   const apiKey = import.meta.env.VITE_AIRTABLE_API_KEY?.trim();
   if (!apiKey) {
@@ -35,6 +42,18 @@ function dedupeOptions(values: string[]): string[] {
 function trimToUndefined(value: string): string | undefined {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function dateOrUndefined(value: unknown): string {
+  const normalizedValue = extractInventoryScalarValue(value);
+  return normalizedValue ? normalizedValue.slice(0, 10) : '';
+}
+
+function formatDurationMinutes(value: unknown): string {
+  if (value == null || value === '') return '';
+  const numericValue = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numericValue)) return extractInventoryScalarValue(value);
+  return String(numericValue / 60);
 }
 
 function arrayOrUndefined(value: string): string[] | undefined {
@@ -122,6 +141,56 @@ async function fetchTargetTableMetadata() {
   return table;
 }
 
+export async function loadTestingFormValues(recordId: string): Promise<TestingFormValues> {
+  try {
+    const record = await loadInventoryRecord(recordId);
+    const defaults = createTestingFormDefaults();
+
+    return {
+      ...defaults,
+      sku: extractInventoryScalarValue(record.fields.SKU),
+      arrivalDate: dateOrUndefined(record.fields['Arrival Date']),
+      acquiredFrom: extractInventoryScalarValue(record.fields['Acquired From']),
+      make: extractInventoryScalarValue(record.fields.Make),
+      model: extractInventoryScalarValue(record.fields.Model),
+      componentType: extractInventoryScalarValue(record.fields['Component Type']),
+      cost: extractInventoryScalarValue(record.fields.Cost),
+      inventoryNotes: extractInventoryScalarValue(record.fields['Inventory Notes']),
+      serialNumber: extractInventoryScalarValue(record.fields['Serial Number']),
+      voltage: extractInventoryScalarValue(record.fields.Voltage),
+      audiogonRating: extractInventoryScalarValue(record.fields['Audiogon Rating']),
+      cosmeticConditionNotes: extractInventoryScalarValue(record.fields['Cosmetic Condition Notes']),
+      originalBox: extractInventoryScalarValue(record.fields['Original Box']),
+      manual: extractInventoryScalarValue(record.fields.Manual),
+      remote: extractInventoryScalarValue(record.fields.Remote),
+      powerCable: extractInventoryScalarValue(record.fields['Power Cable']),
+      additionalItems: extractInventoryScalarValue(record.fields['Additional Items']),
+      shippingWeight: extractInventoryScalarValue(record.fields['Shipping Weight'] ?? record.fields.Weight),
+      shippingDims: extractInventoryScalarValue(record.fields['Shipping Dims']),
+      shippingMethod: extractInventoryScalarValue(record.fields['Shipping Method']),
+      imageFiles: [],
+      testingNotes: extractInventoryScalarValue(record.fields['Testing Notes']),
+      testingTimeMinutes: formatDurationMinutes(record.fields['Testing Time']),
+      serviceNotes: extractInventoryScalarValue(record.fields['Service Notes']),
+      serviceTimeMinutes: formatDurationMinutes(record.fields['Service Time']),
+      testingDate: dateOrUndefined(record.fields.Tested),
+      status: extractInventoryScalarValue(record.fields.Status),
+    };
+  } catch (error) {
+    logServiceError('testingForm', `Error loading Testing form values for ${recordId}`, error);
+    const serviceError = createServiceError({
+      service: 'testingForm',
+      code: 'TESTING_FORM_LOAD_FAILED',
+      userMessage: 'Unable to load the selected inventory record into Testing.',
+      retryable: true,
+      cause: error,
+    });
+    const typedError = new Error(serviceError.userMessage) as Error & { serviceError?: ServiceError };
+    typedError.serviceError = serviceError;
+    throw typedError;
+  }
+}
+
 export async function loadTestingFormOptionSets(): Promise<TestingOptionSet> {
   try {
     const table = await fetchTargetTableMetadata();
@@ -154,7 +223,7 @@ export async function loadTestingFormOptionSets(): Promise<TestingOptionSet> {
   }
 }
 
-export async function submitTestingForm(values: TestingFormValues): Promise<{ recordId: string; sku: string }> {
+export async function submitTestingForm(values: TestingFormValues, recordId?: string | null): Promise<TestingFormSubmitResult> {
   const costValue = trimToUndefined(values.cost);
   const testingTimeMinutes = trimToUndefined(values.testingTimeMinutes);
   const serviceTimeMinutes = trimToUndefined(values.serviceTimeMinutes);
@@ -188,6 +257,26 @@ export async function submitTestingForm(values: TestingFormValues): Promise<{ re
   });
 
   try {
+    if (recordId) {
+      const updatedRecord = await airtableService.updateRecordFromReference(
+        TARGET_TABLE_REFERENCE,
+        TARGET_TABLE_ID,
+        recordId,
+        baseFields,
+        { typecast: true },
+      );
+
+      if (values.imageFiles.length > 0) {
+        await uploadTestingImages(updatedRecord.id, values.imageFiles);
+      }
+
+      return {
+        recordId: updatedRecord.id,
+        sku: values.sku,
+        action: 'updated',
+      };
+    }
+
     const createdRecord = await airtableService.createRecordFromReference(
       TARGET_TABLE_REFERENCE,
       TARGET_TABLE_ID,
@@ -202,13 +291,14 @@ export async function submitTestingForm(values: TestingFormValues): Promise<{ re
     return {
       recordId: createdRecord.id,
       sku: values.sku,
+      action: 'created',
     };
   } catch (error) {
-    logServiceError('testingForm', 'Error creating Testing form submission', error);
+    logServiceError('testingForm', `Error ${recordId ? 'updating' : 'creating'} Testing form submission`, error);
     const serviceError = createServiceError({
       service: 'testingForm',
-      code: 'TESTING_FORM_SUBMIT_FAILED',
-      userMessage: 'Unable to submit the Testing form to Airtable.',
+      code: recordId ? 'TESTING_FORM_UPDATE_FAILED' : 'TESTING_FORM_SUBMIT_FAILED',
+      userMessage: recordId ? 'Unable to update the Testing fields for this inventory record.' : 'Unable to submit the Testing form to Airtable.',
       retryable: true,
       cause: error,
     });

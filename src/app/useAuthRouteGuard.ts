@@ -42,14 +42,26 @@ export function useAuthRouteGuard({
     }
 
     const isKnownTabPath = isTab(normalizedPath.slice(1));
+    const isIncomingGearDetailPath = /^\/incoming-gear\/[^/]+$/.test(normalizedPath);
+    const isTestingDetailPath = /^\/testing\/[^/]+$/.test(normalizedPath);
+    const isPhotosDetailPath = /^\/photos\/[^/]+$/.test(normalizedPath);
+    const isInventoryDetailPath = /^\/inventory\/[^/]+$/.test(normalizedPath);
     const isApprovalDetailPath = /^\/ebay\/approval\/[^/]+$/.test(normalizedPath);
     const isShopifyApprovalDetailPath = /^\/shopify\/approval\/[^/]+$/.test(normalizedPath);
     const isListingsDetailPath = /^\/listings\/[^/]+$/.test(normalizedPath);
     const isUserDetailPath = /^\/account\/users\/[^/]+$/.test(normalizedPath);
     const isKnownSubPath =
+      normalizedPath === '/inventory' ||
+      isInventoryDetailPath ||
       normalizedPath === '/listings' ||
       isListingsDetailPath ||
       normalizedPath === '/ebay/listings' ||
+      normalizedPath === '/incoming-gear' ||
+      isIncomingGearDetailPath ||
+      normalizedPath === '/testing' ||
+      isTestingDetailPath ||
+      normalizedPath === '/photos' ||
+      isPhotosDetailPath ||
       normalizedPath === '/ebay/approval' ||
       isApprovalDetailPath ||
       normalizedPath === '/shopify/products' ||
@@ -75,6 +87,14 @@ export function useAuthRouteGuard({
             ? 'ebay'
             : normalizedPath === '/shopify/products'
               ? 'shopify'
+              : normalizedPath === '/incoming-gear' || isIncomingGearDetailPath
+                ? 'incoming-gear'
+              : normalizedPath === '/testing' || isTestingDetailPath
+                ? 'testing'
+              : normalizedPath === '/photos' || isPhotosDetailPath
+                ? 'photos'
+              : normalizedPath === '/inventory' || isInventoryDetailPath
+                ? 'inventory'
               : normalizedPath === '/account/settings'
                 ? 'settings'
                 : normalizedPath === '/account/notifications'

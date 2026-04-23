@@ -124,7 +124,7 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
           detail={<><strong className="font-semibold text-[var(--accent)]">{uniqueAirtableBrands}</strong> brands &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{uniqueAirtableTypes}</strong> component types</>}
           trend={inventoryTrend.text}
           trendClass={trendToneClass[inventoryTrend.direction]}
-          onClick={() => onSelectTab('airtable')}
+          onClick={() => onSelectTab('inventory')}
         />
 
         <DashboardKpiCard

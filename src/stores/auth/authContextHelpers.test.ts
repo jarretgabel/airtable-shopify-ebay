@@ -28,7 +28,7 @@ describe('authContextHelpers', () => {
       email: 'user@example.com',
       role: 'user',
       password: 'user-pass',
-      allowedPages: ['dashboard', 'airtable', 'users'],
+      allowedPages: ['dashboard', 'inventory', 'users'],
       notificationPreferences: { ...DEFAULT_USER_NOTIFICATION_PREFERENCES },
     },
   ];
@@ -54,6 +54,7 @@ describe('authContextHelpers', () => {
     expect(canUserAccessPage(admin, 'users')).toBe(true);
     expect(canUserAccessPage(user, 'dashboard')).toBe(true);
     expect(canUserAccessPage(user, 'incoming-gear')).toBe(true);
+    expect(canUserAccessPage(user, 'testing')).toBe(true);
     expect(canUserAccessPage(user, 'photos')).toBe(true);
     expect(canUserAccessPage(user, 'notifications')).toBe(true);
     expect(canUserAccessPage(user, 'market')).toBe(false);
@@ -61,7 +62,7 @@ describe('authContextHelpers', () => {
 
   it('filters users page for non-admin accessible pages', () => {
     const user = baseUsers[1];
-    expect(getAccessiblePages(user)).toEqual(['dashboard', 'airtable', 'incoming-gear', 'photos', 'settings', 'notifications']);
+    expect(getAccessiblePages(user)).toEqual(['dashboard', 'inventory', 'incoming-gear', 'testing', 'photos', 'settings', 'notifications']);
     expect(getAccessiblePages(baseUsers[0])).toEqual(APP_PAGES);
   });
 

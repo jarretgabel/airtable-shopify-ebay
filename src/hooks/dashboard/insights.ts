@@ -112,7 +112,7 @@ export function buildDashboardInsights(input: InsightInput): DashboardInsight[] 
         title: 'Inventory concentration risk',
         detail: `${airtableBrandSummary[0][0]} accounts for ${Math.round(topBrandShare * 100)}% of Airtable inventory.`,
         severity: 'info',
-        targetTab: 'airtable',
+        targetTab: 'inventory',
       });
     }
   }

@@ -106,7 +106,7 @@ export function useActionGuidanceNotifications({
 
   useEffect(() => {
     const activeError = [
-      { tab: 'airtable' as const, message: atError },
+      { tab: 'inventory' as const, message: atError },
       { tab: 'shopify' as const, message: spError },
       { tab: 'jotform' as const, message: jfError },
       { tab: 'ebay' as const, message: ebayError },

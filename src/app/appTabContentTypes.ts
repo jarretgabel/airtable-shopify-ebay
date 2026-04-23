@@ -9,10 +9,19 @@ import type { Tab } from '@/app/appNavigation';
 
 export interface AppTabContentProps {
   activeTab: Tab;
+  incomingGearRecordId: string | null;
+  testingRecordId: string | null;
+  photosRecordId: string | null;
+  inventoryRecordId: string | null;
   listingsRecordId: string | null;
   approvalRecordId: string | null;
   shopifyApprovalRecordId: string | null;
   userRecordId: string | null;
+  navigateToInventoryRecord: (recordId: string, replace?: boolean) => void;
+  navigateToInventoryList: (replace?: boolean) => void;
+  navigateToIncomingGearForm: (recordId?: string | null, replace?: boolean) => void;
+  navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
+  navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsList: (replace?: boolean) => void;
   navigateToApprovalRecord: (recordId: string, replace?: boolean) => void;

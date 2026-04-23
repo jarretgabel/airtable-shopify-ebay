@@ -4,6 +4,11 @@ import { TAB_PATHS, type Tab } from '@/app/appNavigation';
 
 interface AppNavigationHandlers {
   navigateToTab: (tab: Tab, replace?: boolean) => void;
+  navigateToIncomingGearForm: (recordId?: string | null, replace?: boolean) => void;
+  navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
+  navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
+  navigateToInventoryRecord: (recordId: string, replace?: boolean) => void;
+  navigateToInventoryList: (replace?: boolean) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsList: (replace?: boolean) => void;
   navigateToApprovalRecord: (recordId: string, replace?: boolean) => void;
@@ -27,6 +32,40 @@ function scrollToPageTop(): void {
 export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () => void): AppNavigationHandlers {
   const navigateToTab = useCallback((tab: Tab, replace = false): void => {
     navigate(TAB_PATHS[tab], { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToIncomingGearForm = useCallback((recordId?: string | null, replace = false): void => {
+    const path = recordId
+      ? `${TAB_PATHS['incoming-gear']}/${encodeURIComponent(recordId)}`
+      : TAB_PATHS['incoming-gear'];
+    navigate(path, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToTestingForm = useCallback((recordId?: string | null, replace = false): void => {
+    const path = recordId
+      ? `${TAB_PATHS.testing}/${encodeURIComponent(recordId)}`
+      : TAB_PATHS.testing;
+    navigate(path, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToPhotosForm = useCallback((recordId?: string | null, replace = false): void => {
+    const path = recordId
+      ? `${TAB_PATHS.photos}/${encodeURIComponent(recordId)}`
+      : TAB_PATHS.photos;
+    navigate(path, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToInventoryRecord = useCallback((recordId: string, replace = false): void => {
+    navigate(`/inventory/${encodeURIComponent(recordId)}`, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToInventoryList = useCallback((replace = false): void => {
+    navigate(TAB_PATHS.inventory, { replace });
     scrollToPageTop();
   }, [navigate]);
 
@@ -77,6 +116,11 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
 
   return {
     navigateToTab,
+    navigateToIncomingGearForm,
+    navigateToTestingForm,
+    navigateToPhotosForm,
+    navigateToInventoryRecord,
+    navigateToInventoryList,
     navigateToListingsRecord,
     navigateToListingsList,
     navigateToApprovalRecord,

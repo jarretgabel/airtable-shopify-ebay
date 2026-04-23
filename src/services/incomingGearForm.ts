@@ -1,7 +1,8 @@
 import airtableService from '@/services/airtable';
 import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
-import type { IncomingGearFormOptionFieldName, IncomingGearFormValues } from '@/components/tabs/incoming-gear/incomingGearFormSchema';
+import { createIncomingGearFormDefaults, type IncomingGearFormOptionFieldName, type IncomingGearFormValues } from '@/components/tabs/incoming-gear/incomingGearFormSchema';
+import { extractInventoryScalarValue, loadInventoryRecord } from '@/services/inventoryDirectory';
 
 const TARGET_BASE_ID = 'appjQj8FQfFZ2ogMz';
 const TARGET_TABLE_ID = 'tblirsoRIFPDMHxb0';
@@ -21,6 +22,12 @@ const OPTION_FIELD_NAMES = [
 
 type IncomingGearOptionSet = Record<IncomingGearFormOptionFieldName, string[]>;
 
+export interface IncomingGearFormSubmitResult {
+  recordId: string;
+  sku: string;
+  action: 'created' | 'updated';
+}
+
 function requireAirtableApiKey(): string {
   const apiKey = import.meta.env.VITE_AIRTABLE_API_KEY?.trim();
   if (!apiKey) {
@@ -36,6 +43,11 @@ function dedupeOptions(values: string[]): string[] {
 function trimToUndefined(value: string): string | undefined {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function dateOrFallback(value: unknown, fallback: string): string {
+  const normalizedValue = extractInventoryScalarValue(value);
+  return normalizedValue ? normalizedValue.slice(0, 10) : fallback;
 }
 
 function arrayOrUndefined(value: string): string[] | undefined {
@@ -133,6 +145,51 @@ async function fetchTargetTableMetadata() {
   return table;
 }
 
+export async function loadIncomingGearFormValues(recordId: string): Promise<IncomingGearFormValues> {
+  try {
+    const record = await loadInventoryRecord(recordId);
+    const defaults = createIncomingGearFormDefaults();
+
+    return {
+      ...defaults,
+      arrivalDate: dateOrFallback(record.fields['Arrival Date'], defaults.arrivalDate),
+      pickUpNumber: extractInventoryScalarValue(record.fields['Pick Up #']),
+      acquiredFrom: extractInventoryScalarValue(record.fields['Acquired From']),
+      cost: extractInventoryScalarValue(record.fields.Cost),
+      sku: extractInventoryScalarValue(record.fields.SKU),
+      status: extractInventoryScalarValue(record.fields.Status) || defaults.status,
+      make: extractInventoryScalarValue(record.fields.Make),
+      model: extractInventoryScalarValue(record.fields.Model),
+      componentType: extractInventoryScalarValue(record.fields['Component Type']),
+      serialNumber: extractInventoryScalarValue(record.fields['Serial Number']),
+      voltage: extractInventoryScalarValue(record.fields.Voltage),
+      inventoryNotes: extractInventoryScalarValue(record.fields['Inventory Notes']),
+      imageFiles: [],
+      cosmeticConditionNotes: extractInventoryScalarValue(record.fields['Cosmetic Condition Notes']),
+      originalBox: extractInventoryScalarValue(record.fields['Original Box']),
+      manual: extractInventoryScalarValue(record.fields.Manual),
+      remote: extractInventoryScalarValue(record.fields.Remote),
+      powerCable: extractInventoryScalarValue(record.fields['Power Cable']),
+      additionalItems: extractInventoryScalarValue(record.fields['Additional Items']),
+      weight: extractInventoryScalarValue(record.fields.Weight),
+      shippingDims: extractInventoryScalarValue(record.fields['Shipping Dims']),
+      shippingMethod: extractInventoryScalarValue(record.fields['Shipping Method']),
+    };
+  } catch (error) {
+    logServiceError('incomingGearForm', `Error loading Incoming Gear form values for ${recordId}`, error);
+    const serviceError = createServiceError({
+      service: 'incomingGearForm',
+      code: 'INCOMING_GEAR_LOAD_FAILED',
+      userMessage: 'Unable to load the selected inventory record into Incoming Gear.',
+      retryable: true,
+      cause: error,
+    });
+    const typedError = new Error(serviceError.userMessage) as Error & { serviceError?: ServiceError };
+    typedError.serviceError = serviceError;
+    throw typedError;
+  }
+}
+
 export async function loadIncomingGearFormOptionSets(): Promise<IncomingGearOptionSet> {
   try {
     const table = await fetchTargetTableMetadata();
@@ -165,7 +222,7 @@ export async function loadIncomingGearFormOptionSets(): Promise<IncomingGearOpti
   }
 }
 
-export async function submitIncomingGearForm(values: IncomingGearFormValues): Promise<{ recordId: string; sku: string }> {
+export async function submitIncomingGearForm(values: IncomingGearFormValues, recordId?: string | null): Promise<IncomingGearFormSubmitResult> {
   const costValue = trimToUndefined(values.cost);
   const skuValue = trimToUndefined(values.sku) ?? createTemporarySku();
   const statusValue = trimToUndefined(values.status) ?? DEFAULT_STATUS;
@@ -200,6 +257,40 @@ export async function submitIncomingGearForm(values: IncomingGearFormValues): Pr
     baseFields,
   ];
 
+  if (recordId) {
+    try {
+      const updatedRecord = await airtableService.updateRecordFromReference(
+        TARGET_TABLE_REFERENCE,
+        TARGET_TABLE_ID,
+        recordId,
+        baseFields,
+        { typecast: true },
+      );
+
+      if (values.imageFiles.length > 0) {
+        await uploadIncomingGearImages(updatedRecord.id, values.imageFiles);
+      }
+
+      return {
+        recordId: updatedRecord.id,
+        sku: skuValue,
+        action: 'updated',
+      };
+    } catch (error) {
+      logServiceError('incomingGearForm', `Error updating Incoming Gear submission ${recordId}`, error);
+      const serviceError = createServiceError({
+        service: 'incomingGearForm',
+        code: 'INCOMING_GEAR_UPDATE_FAILED',
+        userMessage: 'Unable to update the Incoming Gear fields for this inventory record.',
+        retryable: true,
+        cause: error,
+      });
+      const typedError = new Error(serviceError.userMessage) as Error & { serviceError?: ServiceError };
+      typedError.serviceError = serviceError;
+      throw typedError;
+    }
+  }
+
   let lastError: unknown = null;
 
   for (const candidate of createCandidates) {
@@ -218,6 +309,7 @@ export async function submitIncomingGearForm(values: IncomingGearFormValues): Pr
       return {
         recordId: createdRecord.id,
         sku: skuValue,
+        action: 'created',
       };
     } catch (error) {
       lastError = error;
