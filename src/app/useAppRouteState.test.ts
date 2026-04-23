@@ -37,8 +37,8 @@ describe('useAppRouteState', () => {
     expect(state.resetToken).toBe('123');
   });
 
-  it('maps the dedicated request-form route', () => {
-    const state = useAppRouteState(locationFor('/request-form'), ['dashboard', 'request-form']);
-    expect(state.activeTab).toBe('request-form');
+  it('maps the dedicated incoming-gear route', () => {
+    const state = useAppRouteState(locationFor('/incoming-gear'), ['dashboard', 'incoming-gear']);
+    expect(state.activeTab).toBe('incoming-gear');
   });
 });

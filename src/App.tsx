@@ -73,7 +73,7 @@ function App() {
     canAccessPage,
     users,
   });
-  const { loading, onRefresh, onExportCurrentPage, onExportAllPages, tabs, ebayNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
+  const { loading, onRefresh, onExportCurrentPage, onExportAllPages, tabs, ebayNavTabs, inventoryProcessingNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
     activeTab,
     visibleTabs,
     approvalPending: approval.pending,
@@ -168,6 +168,7 @@ function App() {
           currentUserLabel={`${currentUser.name} · ${currentUser.role}`}
           tabs={tabs}
           ebayTabs={ebayNavTabs}
+          inventoryProcessingTabs={inventoryProcessingNavTabs}
           shopifyTabs={shopifyNavTabs}
           postEbayTabs={postEbayNavTabs}
           utilityTabs={utilityNavTabs}

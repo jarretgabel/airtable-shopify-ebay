@@ -23,6 +23,7 @@ import { AirtableEmbeddedForm } from '@/components/tabs/AirtableEmbeddedForm.tsx
 import { JotformTab } from '@/components/tabs/JotformTab';
 import { MarketTab } from '@/components/tabs/MarketTab';
 import { ShopifyTab } from '@/components/tabs/ShopifyTab';
+import { TestingFormTab } from '@/components/tabs/TestingFormTab';
 
 export function AppTabContent({
   activeTab,
@@ -225,8 +226,10 @@ export function AppTabContent({
       return <ShopifyTab viewModel={shopifyViewModel} />;
     case 'market':
       return <MarketTab viewModel={marketViewModel} />;
-    case 'request-form':
+    case 'incoming-gear':
       return <AirtableEmbeddedForm />;
+    case 'testing':
+      return <TestingFormTab />;
     case 'jotform':
       return <JotformTab viewModel={jotformViewModel} />;
     default:

@@ -8,7 +8,7 @@ import {
   type IncomingGearFormIntroBlock,
   type IncomingGearFormOptionFieldName,
   type IncomingGearFormValues,
-} from '@/components/tabs/request-form/incomingGearFormSchema';
+} from '@/components/tabs/incoming-gear/incomingGearFormSchema';
 import { loadIncomingGearFormOptionSets, submitIncomingGearForm } from '@/services/incomingGearForm';
 
 type IncomingGearOptionSets = Record<IncomingGearFormOptionFieldName, string[]>;
@@ -17,8 +17,8 @@ const FIELD_CLASS = 'mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(
 const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 
-function getRequestFormUrl(): string | null {
-  const rawUrl = [import.meta.env.VITE_AIRTABLE_REQUEST_FORM_URL, import.meta.env.VITE_AIRTABLE_REQUEST_FORM_EMBED_URL]
+function getIncomingGearFormUrl(): string | null {
+  const rawUrl = [import.meta.env.VITE_AIRTABLE_INCOMING_GEAR_FORM_URL, import.meta.env.VITE_AIRTABLE_INCOMING_GEAR_FORM_EMBED_URL]
     .find((value) => typeof value === 'string' && value.trim().length > 0)
     ?.trim();
 
@@ -106,7 +106,7 @@ export function AirtableEmbeddedForm() {
   const [submitSuccess, setSubmitSuccess] = useState<{ recordId: string; sku: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const requestFormUrl = getRequestFormUrl();
+  const incomingGearFormUrl = getIncomingGearFormUrl();
 
   useEffect(() => {
     let cancelled = false;
@@ -324,10 +324,10 @@ export function AirtableEmbeddedForm() {
         </div>
 
         <div className="flex justify-end">
-          {requestFormUrl ? (
+          {incomingGearFormUrl ? (
             <a
               className="inline-flex items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] no-underline transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              href={requestFormUrl}
+              href={incomingGearFormUrl}
               target="_blank"
               rel="noreferrer"
             >

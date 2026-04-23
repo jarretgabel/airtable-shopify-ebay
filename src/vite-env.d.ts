@@ -7,8 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_AIRTABLE_VIEW_ID?: string;
   readonly VITE_AIRTABLE_USERS_TABLE_REF?: string;
   readonly VITE_AIRTABLE_USERS_TABLE_NAME?: string;
-  readonly VITE_AIRTABLE_REQUEST_FORM_EMBED_URL?: string;
-  readonly VITE_AIRTABLE_REQUEST_FORM_URL?: string;
+  readonly VITE_AIRTABLE_INCOMING_GEAR_FORM_EMBED_URL?: string;
+  readonly VITE_AIRTABLE_INCOMING_GEAR_FORM_URL?: string;
   readonly VITE_SHOPIFY_STORE_DOMAIN: string;
   readonly VITE_SHOPIFY_OAUTH_REDIRECT_URI?: string;
   readonly VITE_SHOPIFY_ADMIN_API_TOKEN?: string;

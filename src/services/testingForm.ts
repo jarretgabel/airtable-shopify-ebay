@@ -1,13 +1,12 @@
 import airtableService from '@/services/airtable';
 import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
-import type { IncomingGearFormOptionFieldName, IncomingGearFormValues } from '@/components/tabs/incoming-gear/incomingGearFormSchema';
+import type { TestingFormOptionFieldName, TestingFormValues } from '@/components/tabs/testing/testingFormSchema';
 
 const TARGET_BASE_ID = 'appjQj8FQfFZ2ogMz';
 const TARGET_TABLE_ID = 'tblirsoRIFPDMHxb0';
 const TARGET_TABLE_REFERENCE = `${TARGET_BASE_ID}/${TARGET_TABLE_ID}`;
 const IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
-const DEFAULT_STATUS = 'Needs Initial Processing';
 
 const OPTION_FIELD_NAMES = [
   'Status',
@@ -17,9 +16,9 @@ const OPTION_FIELD_NAMES = [
   'Remote',
   'Power Cable',
   'Shipping Method',
-] as const satisfies readonly IncomingGearFormOptionFieldName[];
+] as const satisfies readonly TestingFormOptionFieldName[];
 
-type IncomingGearOptionSet = Record<IncomingGearFormOptionFieldName, string[]>;
+type TestingOptionSet = Record<TestingFormOptionFieldName, string[]>;
 
 function requireAirtableApiKey(): string {
   const apiKey = import.meta.env.VITE_AIRTABLE_API_KEY?.trim();
@@ -43,11 +42,6 @@ function arrayOrUndefined(value: string): string[] | undefined {
   return trimmed ? [trimmed] : undefined;
 }
 
-function singleValueAsArrayOrUndefined(value: string): string[] | undefined {
-  const trimmed = trimToUndefined(value);
-  return trimmed ? [trimmed] : undefined;
-}
-
 function compactFields(fields: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(fields).filter(([, value]) => {
@@ -56,11 +50,6 @@ function compactFields(fields: Record<string, unknown>): Record<string, unknown>
       return true;
     }),
   );
-}
-
-function createTemporarySku(): string {
-  const iso = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
-  return `INTAKE-${iso}`;
 }
 
 function fileToBase64(file: File): Promise<string> {
@@ -80,7 +69,7 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-async function uploadIncomingGearImages(recordId: string, files: File[]): Promise<void> {
+async function uploadTestingImages(recordId: string, files: File[]): Promise<void> {
   const apiKey = requireAirtableApiKey();
 
   for (const file of files) {
@@ -127,17 +116,17 @@ async function fetchTargetTableMetadata() {
 
   const table = data.tables?.find((entry) => entry.id === TARGET_TABLE_ID);
   if (!table) {
-    throw new Error('Unable to find the Incoming Gear Airtable table.');
+    throw new Error('Unable to find the Testing Airtable table.');
   }
 
   return table;
 }
 
-export async function loadIncomingGearFormOptionSets(): Promise<IncomingGearOptionSet> {
+export async function loadTestingFormOptionSets(): Promise<TestingOptionSet> {
   try {
     const table = await fetchTargetTableMetadata();
 
-    return OPTION_FIELD_NAMES.reduce<IncomingGearOptionSet>((acc, fieldName) => {
+    return OPTION_FIELD_NAMES.reduce<TestingOptionSet>((acc, fieldName) => {
       const field = table.fields?.find((entry) => entry.name === fieldName);
       acc[fieldName] = dedupeOptions((field?.options?.choices ?? []).map((choice) => choice.name));
       return acc;
@@ -151,11 +140,11 @@ export async function loadIncomingGearFormOptionSets(): Promise<IncomingGearOpti
       'Shipping Method': [],
     });
   } catch (error) {
-    logServiceError('incomingGearForm', 'Error loading Incoming Gear form option sets', error);
+    logServiceError('testingForm', 'Error loading Testing form option sets', error);
     const serviceError = createServiceError({
-      service: 'incomingGearForm',
-      code: 'INCOMING_GEAR_OPTIONS_FAILED',
-      userMessage: 'Unable to load the Incoming Gear form options from Airtable.',
+      service: 'testingForm',
+      code: 'TESTING_FORM_OPTIONS_FAILED',
+      userMessage: 'Unable to load the Testing form options from Airtable.',
       retryable: true,
       cause: error,
     });
@@ -165,74 +154,66 @@ export async function loadIncomingGearFormOptionSets(): Promise<IncomingGearOpti
   }
 }
 
-export async function submitIncomingGearForm(values: IncomingGearFormValues): Promise<{ recordId: string; sku: string }> {
+export async function submitTestingForm(values: TestingFormValues): Promise<{ recordId: string; sku: string }> {
   const costValue = trimToUndefined(values.cost);
-  const skuValue = trimToUndefined(values.sku) ?? createTemporarySku();
-  const statusValue = trimToUndefined(values.status) ?? DEFAULT_STATUS;
-
+  const testingTimeMinutes = trimToUndefined(values.testingTimeMinutes);
+  const serviceTimeMinutes = trimToUndefined(values.serviceTimeMinutes);
   const baseFields = compactFields({
+    SKU: trimToUndefined(values.sku),
     'Arrival Date': trimToUndefined(values.arrivalDate),
-    'Pick Up #': trimToUndefined(values.pickUpNumber),
     'Acquired From': trimToUndefined(values.acquiredFrom),
-    Cost: costValue ? Number.parseFloat(costValue) : undefined,
-    SKU: skuValue,
-    Status: statusValue,
     Make: trimToUndefined(values.make),
     Model: trimToUndefined(values.model),
-    'Component Type': singleValueAsArrayOrUndefined(values.componentType),
+    'Component Type': arrayOrUndefined(values.componentType),
+    Cost: costValue ? Number.parseFloat(costValue) : undefined,
+    'Inventory Notes': trimToUndefined(values.inventoryNotes),
     'Serial Number': trimToUndefined(values.serialNumber),
     Voltage: trimToUndefined(values.voltage),
-    'Inventory Notes': trimToUndefined(values.inventoryNotes),
+    'Audiogon Rating': trimToUndefined(values.audiogonRating),
     'Cosmetic Condition Notes': trimToUndefined(values.cosmeticConditionNotes),
     'Original Box': arrayOrUndefined(values.originalBox),
     Manual: arrayOrUndefined(values.manual),
     Remote: arrayOrUndefined(values.remote),
     'Power Cable': arrayOrUndefined(values.powerCable),
     'Additional Items': trimToUndefined(values.additionalItems),
-    Weight: trimToUndefined(values.weight),
+    'Shipping Weight': trimToUndefined(values.shippingWeight),
     'Shipping Dims': trimToUndefined(values.shippingDims),
     'Shipping Method': arrayOrUndefined(values.shippingMethod),
+    'Testing Notes': trimToUndefined(values.testingNotes),
+    'Testing Time': testingTimeMinutes ? Number.parseFloat(testingTimeMinutes) * 60 : undefined,
+    'Service Notes': trimToUndefined(values.serviceNotes),
+    'Service Time': serviceTimeMinutes ? Number.parseFloat(serviceTimeMinutes) * 60 : undefined,
+    Tested: trimToUndefined(values.testingDate),
+    Status: trimToUndefined(values.status),
   });
 
-  const createCandidates: Array<Record<string, unknown>> = [
-    compactFields({ SKU: { text: skuValue }, ...baseFields }),
-    compactFields({ SKU: skuValue, ...baseFields }),
-    baseFields,
-  ];
+  try {
+    const createdRecord = await airtableService.createRecordFromReference(
+      TARGET_TABLE_REFERENCE,
+      TARGET_TABLE_ID,
+      baseFields,
+      { typecast: true },
+    );
 
-  let lastError: unknown = null;
-
-  for (const candidate of createCandidates) {
-    try {
-      const createdRecord = await airtableService.createRecordFromReference(
-        TARGET_TABLE_REFERENCE,
-        TARGET_TABLE_ID,
-        candidate,
-        { typecast: true },
-      );
-
-      if (values.imageFiles.length > 0) {
-        await uploadIncomingGearImages(createdRecord.id, values.imageFiles);
-      }
-
-      return {
-        recordId: createdRecord.id,
-        sku: skuValue,
-      };
-    } catch (error) {
-      lastError = error;
+    if (values.imageFiles.length > 0) {
+      await uploadTestingImages(createdRecord.id, values.imageFiles);
     }
-  }
 
-  logServiceError('incomingGearForm', 'Error creating Incoming Gear submission', lastError);
-  const serviceError = createServiceError({
-    service: 'incomingGearForm',
-    code: 'INCOMING_GEAR_SUBMIT_FAILED',
-    userMessage: 'Unable to submit the Incoming Gear form to Airtable.',
-    retryable: true,
-    cause: lastError,
-  });
-  const typedError = new Error(serviceError.userMessage) as Error & { serviceError?: ServiceError };
-  typedError.serviceError = serviceError;
-  throw typedError;
+    return {
+      recordId: createdRecord.id,
+      sku: values.sku,
+    };
+  } catch (error) {
+    logServiceError('testingForm', 'Error creating Testing form submission', error);
+    const serviceError = createServiceError({
+      service: 'testingForm',
+      code: 'TESTING_FORM_SUBMIT_FAILED',
+      userMessage: 'Unable to submit the Testing form to Airtable.',
+      retryable: true,
+      cause: error,
+    });
+    const typedError = new Error(serviceError.userMessage) as Error & { serviceError?: ServiceError };
+    typedError.serviceError = serviceError;
+    throw typedError;
+  }
 }

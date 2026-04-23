@@ -21,6 +21,7 @@ export interface AppFrameProps {
   currentUserLabel: string;
   tabs: AppTab[];
   ebayTabs: AppTab[];
+  inventoryProcessingTabs: AppTab[];
   shopifyTabs: AppTab[];
   postEbayTabs: AppTab[];
   utilityTabs: AppTab[];
@@ -40,4 +41,4 @@ export interface AppFrameProps {
   children: ReactNode;
 }
 
-export type OpenDropdown = 'pdf' | 'ebay' | 'shopify' | 'utilities' | 'notifications' | 'account' | null;
+export type OpenDropdown = 'pdf' | 'ebay' | 'inventory-processing' | 'shopify' | 'utilities' | 'notifications' | 'account' | null;
