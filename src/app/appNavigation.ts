@@ -27,7 +27,7 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   'shopify-approval': 'Listing Approval',
   market: 'HiFi Shark',
   jotform: 'JotForm',
-  'request-form': 'Request Form',
+  'request-form': 'Incoming Gear Form',
   settings: 'Settings',
   notifications: 'Notifications',
   ebay: 'Listings',
