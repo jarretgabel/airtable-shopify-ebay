@@ -9,11 +9,21 @@ import { TestingNotesEditor } from '@/components/approval/TestingNotesEditor';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
 import { getMissingRequiredFieldNames, isMissingRequiredFieldValue } from '@/components/approval/requiredFieldStatus';
 import airtableService from '@/services/airtable';
+import {
+  createRecordFromResolvedSource,
+  updateRecordFromResolvedSource,
+} from '@/services/app-api/airtable';
 import { pushApprovalBundleToEbay } from '@/services/ebay/approvalPublish';
+import {
+  addProductToCollections as addShopifyProductToCollections,
+  getProduct as getShopifyProduct,
+  resolveTaxonomyCategory as resolveShopifyTaxonomyCategory,
+  upsertExistingProductWithCollectionsInSingleMutation as upsertShopifyExistingProductWithCollections,
+  upsertProductWithUnifiedRequest as upsertShopifyProduct,
+} from '@/services/app-api/shopify';
 import {
   buildShopifyUnifiedProductSetRequest,
   normalizeShopifyProductForUpsert,
-  shopifyService,
   type ShopifyTaxonomyCategoryMatch,
   type ShopifyUnifiedProductSetRequest,
 } from '@/services/shopify';
@@ -1665,7 +1675,7 @@ export function ListingApprovalTab({
     });
 
     return merged;
-  }, [selectedRecord, formValues, fieldKinds]);
+  }, [fieldKinds, formValues, isCombinedApproval, selectedRecord]);
 
   const isShopifyPayloadPreviewContext = approvalChannel === 'shopify' || approvalChannel === 'combined';
   const isEbayPayloadPreviewContext = approvalChannel === 'ebay' || approvalChannel === 'combined';
@@ -1917,7 +1927,7 @@ export function ListingApprovalTab({
 
     const resolveCategory = async () => {
       try {
-        const match = await shopifyService.resolveTaxonomyCategory(lookupValue);
+        const match = await resolveShopifyTaxonomyCategory(lookupValue);
         if (cancelled) return;
 
         if (match) {
@@ -1959,13 +1969,13 @@ export function ListingApprovalTab({
         buildShopifyDraftProductFromApprovalFields(mergedDraftSourceFields ?? selectedRecord.fields),
       );
     const baseProductRecord = (baseProduct as unknown as Record<string, unknown>) ?? {};
-    const { body_html: _ignoredBodyHtml, ...baseProductWithoutBodyHtml } = baseProductRecord;
+    const { body_html, ...baseProductWithoutBodyHtml } = baseProductRecord;
 
     return {
       ...baseProductWithoutBodyHtml,
       body_html: (
         currentPageResolvedBodyHtml
-        || (typeof baseProductRecord.body_html === 'string' ? baseProductRecord.body_html : '')
+        || (typeof body_html === 'string' ? body_html : '')
       ),
       product_type: (
         trimShopifyProductType(currentPageProductCategory)
@@ -2098,7 +2108,7 @@ export function ListingApprovalTab({
     if (!lookupValue) return undefined;
 
     try {
-      const match = shopifyCategoryResolution.match ?? await shopifyService.resolveTaxonomyCategory(lookupValue);
+      const match = shopifyCategoryResolution.match ?? await resolveShopifyTaxonomyCategory(lookupValue);
       if (match) {
         if (shopifyCategoryResolution.match?.id !== match.id) {
           setShopifyCategoryResolution({
@@ -2155,12 +2165,12 @@ export function ListingApprovalTab({
 
     const ensureCollectionsApplied = async (productId: number) => {
       if (!Number.isFinite(productId) || productId <= 0 || normalizedCollectionIds.length === 0) return;
-      await shopifyService.addProductToCollections(productId, normalizedCollectionIds);
+      await addShopifyProductToCollections(productId, normalizedCollectionIds);
     };
 
     try {
       if (existingProductId && normalizedCollectionIds.length > 0) {
-        const combinedResult = await shopifyService.upsertExistingProductWithCollectionsInSingleMutation(
+        const combinedResult = await upsertShopifyExistingProductWithCollections(
           unifiedRequest,
           normalizedCollectionIds,
         );
@@ -2174,7 +2184,7 @@ export function ListingApprovalTab({
         return combinedResult.product;
       }
 
-      const upserted = await shopifyService.upsertProductWithUnifiedRequest(unifiedRequest);
+      const upserted = await upsertShopifyProduct(unifiedRequest);
       try {
         await ensureCollectionsApplied(upserted.id);
       } catch (collectionApplyError) {
@@ -2202,7 +2212,7 @@ export function ListingApprovalTab({
         existingProductId,
       });
 
-      const retried = await shopifyService.upsertProductWithUnifiedRequest(retryWithoutCollections);
+      const retried = await upsertShopifyProduct(retryWithoutCollections);
       try {
         await ensureCollectionsApplied(retried.id);
       } catch (collectionApplyError) {
@@ -2358,7 +2368,10 @@ export function ListingApprovalTab({
     () => Array.from(new Set([...shopifyRequiredFieldNames, ...ebayRequiredFieldNames])),
     [ebayRequiredFieldNames, shopifyRequiredFieldNames],
   );
-  const drawerSourceFields = mergedDraftSourceFields ?? selectedRecord?.fields ?? {};
+  const drawerSourceFields = useMemo(
+    () => mergedDraftSourceFields ?? selectedRecord?.fields ?? {},
+    [mergedDraftSourceFields, selectedRecord],
+  );
   const sharedDrawerRequiredStatus = useMemo(
     () => getDrawerRequiredStatus(combinedSharedFieldNames, combinedRequiredFieldNames, drawerSourceFields),
     [combinedRequiredFieldNames, combinedSharedFieldNames, drawerSourceFields],
@@ -2409,7 +2422,7 @@ export function ListingApprovalTab({
 
       for (const titleField of titleCandidates) {
         try {
-          createdRecord = await airtableService.createRecordFromReference(
+          createdRecord = await createRecordFromResolvedSource(
             tableReference,
             tableName,
             {
@@ -2493,7 +2506,7 @@ export function ListingApprovalTab({
     return () => {
       cancelled = true;
     };
-  }, [selectedRecord?.id, records, tableReference, tableName, allFieldNames, approvedFieldName, hydrateForm]);
+  }, [allFieldNames, approvedFieldName, hydrateForm, selectedRecord, tableName, tableReference]);
 
   const approvedValue = selectedRecord?.fields[approvedFieldName];
   const isApproved = approvedValue === true
@@ -2569,7 +2582,7 @@ export function ListingApprovalTab({
       const parsedExistingId = Number(existingProductId);
 
       if (Number.isFinite(parsedExistingId) && parsedExistingId > 0) {
-        const existingProduct = await shopifyService.getProduct(parsedExistingId);
+        const existingProduct = await getShopifyProduct(parsedExistingId);
         if (existingProduct) {
           await syncExistingShopifyListing(record, parsedExistingId);
           return { productId: existingProductId, mode: 'updated' };
@@ -2597,7 +2610,7 @@ export function ListingApprovalTab({
     let writebackError: unknown = null;
     for (const fields of writebackAttempts) {
       try {
-        await airtableService.updateRecordFromReference(
+        await updateRecordFromResolvedSource(
           tableReference,
           tableName,
           record.id,
@@ -3144,7 +3157,7 @@ export function ListingApprovalTab({
                     for (const candidate of uniqueCandidates) {
                       for (const value of dedupedValues) {
                         try {
-                          await airtableService.updateRecordFromReference(
+                          await updateRecordFromResolvedSource(
                             tableReference,
                             tableName,
                             selectedRecord.id,
@@ -3400,7 +3413,7 @@ export function ListingApprovalTab({
                         const parsedExistingId = Number(existingProductId);
 
                         if (Number.isFinite(parsedExistingId) && parsedExistingId > 0) {
-                          const existingProduct = await shopifyService.getProduct(parsedExistingId);
+                          const existingProduct = await getShopifyProduct(parsedExistingId);
                           if (existingProduct) {
                             try {
                               await syncExistingShopifyListing(selectedRecord, parsedExistingId);
@@ -3441,7 +3454,7 @@ export function ListingApprovalTab({
                           let writebackError: unknown = null;
                           for (const fields of writebackAttempts) {
                             try {
-                              await airtableService.updateRecordFromReference(
+                              await updateRecordFromResolvedSource(
                                 tableReference,
                                 tableName,
                                 selectedRecord.id,

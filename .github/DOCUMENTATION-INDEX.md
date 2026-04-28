@@ -19,6 +19,9 @@ Welcome to the Airtable-Shopify-eBay project documentation! This index will help
 **I'm building a service/API integration**
 → [Service Organization](./service-organization.md) covers structure, request builders, and mappers.
 
+**I'm updating the Lambda/app-api migration seam or local validation workflow**
+→ Use [AWS Lambda Write Validation](../docs/migrations/aws-lambda-write-validation.md) for the no-Docker local API pattern, guarded probes, and validation checklists.
+
 **I'm building a React hook with side effects**
 → [State Management § Hook-Based State](./state-management.md#hook-based-state-for-complex-logic) shows the pattern.
 
@@ -77,6 +80,17 @@ Welcome to the Airtable-Shopify-eBay project documentation! This index will help
 - Testing Pattern for Services
 
 **When to use:** Building a new service, integrating with an API, or refactoring existing services.
+
+### [AWS Lambda Write Validation](../docs/migrations/aws-lambda-write-validation.md)
+**What it covers:** No-Docker local `/api/*` validation, guarded Airtable/Shopify write probes, and the exact UI flows that must stay aligned with the Lambda seam.
+
+**Sections:**
+- Automated Write Probe
+- Shopify Mutation Probe
+- UI Flows To Validate
+- Exit Criteria
+
+**When to use:** Updating `src/services/app-api/*`, AWS handlers/providers, approval publish flows, or the local migration workflow.
 
 ### [Code Review Checklist](./code-review-checklist.md)
 **What it covers:** Comprehensive PR review checklist organized by concern area (architecture, types, state, code quality, UI, services, auth, testing, build).

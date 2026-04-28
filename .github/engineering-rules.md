@@ -24,6 +24,9 @@
 - Keep eBay service contracts stable (`src/services/ebay.ts`).
 - Keep Airtable/Shopify/JotForm mappings and identifier usage unchanged unless schema changes are requested.
 - Handle error states with user-readable messaging and avoid silent failures.
+- For Lambda-backed seams in `src/services/app-api/*`, preserve both direct mode and local `/api/*` mode unless the migration explicitly retires one path.
+- When changing a Lambda-backed integration, update all affected surfaces in the same change: app-api wrapper, AWS handler/provider, no-Docker local adapter, and any parity/probe script that validates that route family.
+- Keep live mutation validation opt-in. Read parity can run by default; write probes must require explicit env vars or user-provided scratch ids.
 
 ## Listing Form Parity
 - Keep Shopify and eBay listing form pages structurally parallel when implementing feature changes.
@@ -68,3 +71,4 @@ priceFieldName={approvalChannel === 'shopify' ? '' : priceFieldName}
 - No removed focus/keyboard affordances.
 - No new global CSS blocks for component styling.
 - No orphaned helper classes or dead selectors after migration.
+- For app-api/AWS migration work, verify the relevant local validation command still works (`compare:lambda`, `compare:lambda:handler`, or the guarded write probe).

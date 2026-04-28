@@ -125,5 +125,5 @@ export function useActionGuidanceNotifications({
       onAction: onRefresh,
       dismissible: true,
     });
-  }, [atError, dismissByKey, ebayError, jfError, onRefresh, spError, upsertByKey]);
+  }, [atError, canAccessPage, dismissByKey, ebayError, jfError, onRefresh, spError, upsertByKey]);
 }

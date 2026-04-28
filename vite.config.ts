@@ -31,6 +31,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, workspaceRoot, 'VITE_')
   const shopifyStoreHost = normalizeOrigin(env.VITE_SHOPIFY_STORE_DOMAIN, 'https://resolution-av-nyc.myshopify.com')
   const shopifyAccessToken = env.VITE_SHOPIFY_OAUTH_ACCESS_TOKEN || env.VITE_SHOPIFY_ADMIN_API_TOKEN || ''
+  const appApiProxyTarget = env.VITE_APP_API_PROXY_TARGET?.trim()
   const ebayApiHost = env.VITE_EBAY_ENV?.toLowerCase() === 'production'
     ? 'https://api.ebay.com'
     : 'https://api.sandbox.ebay.com'
@@ -100,6 +101,15 @@ export default defineConfig(({ mode }) => {
         rewrite: (path) => path.replace(/^\/jotform-proxy/, ''),
         secure: true,
       },
+      ...(appApiProxyTarget
+        ? {
+            '/api': {
+              target: appApiProxyTarget,
+              changeOrigin: true,
+              secure: /^https:\/\//i.test(appApiProxyTarget),
+            },
+          }
+        : {}),
       '/openai-proxy': {
         target: 'https://api.openai.com',
         changeOrigin: true,

@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import airtableService from '@/services/airtable';
+import {
+  getRecordsFromResolvedSource,
+  updateRecordFromResolvedSource,
+} from '@/services/app-api/airtable';
 import { getInventoryItems, getOffersForInventorySkus } from '@/services/ebay';
 import { buildShopifyCollectionIdsFromApprovalFields } from '@/services/shopifyDraftFromAirtable';
 import { logServiceInfo } from '@/services/logger';
@@ -350,9 +353,11 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
     set((state) => ({ formValues: { ...state.formValues, [fieldName]: value } }));
   },
 
-  hydrateForm(record, allFieldNames, _approvedFieldName) {
+  hydrateForm(record, allFieldNames, approvedFieldName) {
     const nextValues: Record<string, string> = {};
     const nextKinds: Record<string, ApprovalFieldKind> = {};
+
+    void approvedFieldName;
 
     allFieldNames.forEach((fieldName) => {
       const value = record.fields[fieldName];
@@ -390,7 +395,7 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
   async loadRecords(tableReference, tableName) {
     set({ loading: true, error: null });
     try {
-      const data = await airtableService.getRecordsFromReference(tableReference, tableName);
+      const data = await getRecordsFromResolvedSource(tableReference, tableName);
       set({ records: data });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Failed to load listing records' });
@@ -489,7 +494,7 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
               || isPriceLikeFieldName(fieldName);
 
             try {
-              await airtableService.updateRecordFromReference(
+              await updateRecordFromResolvedSource(
                 tableReference,
                 tableName,
                 selectedRecord.id,
@@ -510,7 +515,7 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
 
                 for (const retryValue of retryValues) {
                   try {
-                    await airtableService.updateRecordFromReference(
+                    await updateRecordFromResolvedSource(
                       tableReference,
                       tableName,
                       selectedRecord.id,
@@ -541,7 +546,7 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
                 for (const retryFieldName of retryFieldNames) {
                   for (const retryValue of retryValues) {
                     try {
-                      await airtableService.updateRecordFromReference(
+                      await updateRecordFromResolvedSource(
                         tableReference,
                         tableName,
                         selectedRecord.id,
@@ -603,7 +608,7 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
             (fieldName) => isTagLikeFieldName(fieldName) || isCollectionLikeFieldName(fieldName),
           );
           try {
-            await airtableService.updateRecordFromReference(
+            await updateRecordFromResolvedSource(
               tableReference,
               tableName,
               selectedRecord.id,

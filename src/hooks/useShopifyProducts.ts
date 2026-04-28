@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { shopifyService } from '@/services/shopify';
+import { getProducts } from '@/services/app-api/shopify';
 import type { ShopifyProduct } from '@/types/shopify';
 
 type ShopifyProductFull = ShopifyProduct & { id: number; created_at: string; updated_at: string };
@@ -20,7 +20,7 @@ export function useShopifyProducts(): UseShopifyProductsResult {
     setLoading(true);
     setError(null);
     try {
-      const data = await shopifyService.getProducts(250);
+      const data = await getProducts(250);
       setProducts(data as ShopifyProductFull[]);
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));

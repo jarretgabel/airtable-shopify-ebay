@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { JotFormForm, JotFormSubmission } from '@/types/jotform';
-import { getForms, getFormSubmissions } from '@/services/jotform';
+import { getForms, getFormSubmissions } from '@/services/app-api/jotform';
 
 export function useJotForms() {
   const [forms, setForms] = useState<JotFormForm[]>([]);
@@ -20,7 +20,9 @@ export function useJotForms() {
     }
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
 
   return { forms, loading, error, refetch: fetch };
 }

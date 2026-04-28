@@ -296,7 +296,7 @@ function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
     return buildShopifyBodyHtml(bodyDescription, rawKeyFeatures, explicitTemplate);
   }
 
-  let resolved = template.replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, (_match, tokenName: string) => {
+  const resolved = template.replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, (_match, tokenName: string) => {
     const normalizedTokenName = tokenName.toLowerCase();
     return tokenValues.get(normalizedTokenName) ?? '';
   });

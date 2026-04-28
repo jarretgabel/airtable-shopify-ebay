@@ -1,12 +1,17 @@
 import { APP_PAGES, AppPage } from '@/auth/pages';
-import airtableService from '@/services/airtable';
+import {
+  createConfiguredRecord,
+  deleteConfiguredRecord,
+  getConfiguredRecords,
+  updateConfiguredRecord,
+} from '@/services/app-api/airtable';
+import { sendPlainTextEmail } from '@/services/app-api/gmail';
 import { DEFAULT_USER_NOTIFICATION_PREFERENCES, type AppUser, type EmailChangeToken, type PasswordResetToken, type UserNotificationPreferences, type UserRole } from './authTypes';
 
 export const USERS_KEY = 'listing-control-center.users';
 export const SESSION_KEY = 'listing-control-center.session';
 export const RESET_KEY = 'listing-control-center.reset-tokens';
 export const EMAIL_CHANGE_KEY = 'listing-control-center.email-change-tokens';
-const DEFAULT_USERS_TABLE_NAME = 'j2Gt9USORo6Vi5';
 
 const USER_FIELD_KEYS = {
   id: ['User Id', 'User ID', 'ID'],
@@ -29,13 +34,15 @@ interface StoredPasswordPayload {
 }
 
 function getUnknownFieldName(error: unknown): string | undefined {
-  const status = (error as { response?: { status?: number } })?.response?.status;
-  const payload = (error as { response?: { data?: { error?: { type?: string; message?: string } } } })?.response?.data;
-  if (status !== 422 || payload?.error?.type !== 'UNKNOWN_FIELD_NAME') {
+  const responseStatus = (error as { response?: { status?: number } })?.response?.status;
+  const statusCode = (error as { statusCode?: number })?.statusCode;
+  const status = responseStatus ?? statusCode;
+  if (status !== 422) {
     return undefined;
   }
 
-  const message = payload.error.message ?? '';
+  const payloadMessage = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+  const message = payloadMessage ?? (error as { message?: string })?.message ?? '';
   const match = message.match(/Unknown field name:\s*"([^"]+)"/i);
   return match?.[1];
 }
@@ -202,42 +209,17 @@ function serializeUserFields(user: AppUser, includeCreatedAt: boolean): Record<s
   };
 }
 
-function getUsersTableReference(): { reference?: string; tableName: string } {
-  const envReference = (import.meta.env.VITE_AIRTABLE_USERS_TABLE_REF as string | undefined)?.trim();
-  const envTableName = (import.meta.env.VITE_AIRTABLE_USERS_TABLE_NAME as string | undefined)?.trim();
-
-  if (envReference && !envReference.includes('/')) {
-    return { tableName: envReference };
-  }
-
-  return {
-    reference: envReference,
-    tableName: envTableName || DEFAULT_USERS_TABLE_NAME,
-  };
-}
-
 async function getUserRecordsFromAirtable(): Promise<Array<{ id: string; fields: Record<string, unknown> }>> {
-  const { reference, tableName } = getUsersTableReference();
-  if (reference) {
-    const records = await airtableService.getRecordsFromReference(reference, tableName);
-    return records.map((record) => ({ id: record.id, fields: record.fields }));
-  }
-
-  const records = await airtableService.getRecords(tableName);
+  const records = await getConfiguredRecords('users');
   return records.map((record) => ({ id: record.id, fields: record.fields }));
 }
 
 async function createUserRecordInAirtable(fields: Record<string, unknown>): Promise<{ id: string; fields: Record<string, unknown> }> {
   const writableFields = { ...fields };
-  const { reference, tableName } = getUsersTableReference();
 
   for (let attempt = 0; attempt < 6; attempt += 1) {
     try {
-      if (reference) {
-        return await airtableService.createRecordFromReference(reference, tableName, writableFields, { typecast: true });
-      }
-
-      return await airtableService.createRecord(tableName, writableFields, { typecast: true });
+      return await createConfiguredRecord('users', writableFields, { typecast: true });
     } catch (error) {
       const unknownField = getUnknownFieldName(error);
       if (!unknownField || !(unknownField in writableFields)) {
@@ -252,15 +234,10 @@ async function createUserRecordInAirtable(fields: Record<string, unknown>): Prom
 
 async function updateUserRecordInAirtable(recordId: string, fields: Record<string, unknown>): Promise<{ id: string; fields: Record<string, unknown> }> {
   const writableFields = { ...fields };
-  const { reference, tableName } = getUsersTableReference();
 
   for (let attempt = 0; attempt < 6; attempt += 1) {
     try {
-      if (reference) {
-        return await airtableService.updateRecordFromReference(reference, tableName, recordId, writableFields, { typecast: true });
-      }
-
-      return await airtableService.updateRecord(tableName, recordId, writableFields, { typecast: true });
+      return await updateConfiguredRecord('users', recordId, writableFields, { typecast: true });
     } catch (error) {
       const unknownField = getUnknownFieldName(error);
       if (!unknownField || !(unknownField in writableFields)) {
@@ -274,13 +251,7 @@ async function updateUserRecordInAirtable(recordId: string, fields: Record<strin
 }
 
 async function deleteUserRecordInAirtable(recordId: string): Promise<void> {
-  const { reference, tableName } = getUsersTableReference();
-  if (reference) {
-    await airtableService.deleteRecordFromReference(reference, tableName, recordId);
-    return;
-  }
-
-  await airtableService.deleteRecord(tableName, recordId);
+  await deleteConfiguredRecord('users', recordId);
 }
 
 function mapRecordToUser(recordId: string, fields: Record<string, unknown>): AppUser {
@@ -438,53 +409,6 @@ export function generateTemporaryPassword(length = 12): string {
   return chars.join('');
 }
 
-function toBase64Url(value: string): string {
-  const bytes = new TextEncoder().encode(value);
-  let binary = '';
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
-}
-
-async function sendGoogleEmail(to: string, subject: string, body: string): Promise<boolean> {
-  const token = (import.meta.env.VITE_GOOGLE_GMAIL_ACCESS_TOKEN as string | undefined)?.trim();
-  if (!token) {
-    return false;
-  }
-
-  const fromEmail = (import.meta.env.VITE_GOOGLE_GMAIL_FROM_EMAIL as string | undefined)?.trim();
-  const mime = [
-    ...(fromEmail ? [`From: ${fromEmail}`] : []),
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    'Content-Type: text/plain; charset="UTF-8"',
-    'MIME-Version: 1.0',
-    '',
-    body,
-  ].join('\r\n');
-
-  const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ raw: toBase64Url(mime) }),
-  });
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`Failed to send Gmail message (${response.status}): ${detail}`);
-  }
-
-  return true;
-}
-
 export function openResetEmailDraft(email: string, link: string): void {
   const subject = encodeURIComponent('Password reset request');
   const body = encodeURIComponent(
@@ -540,7 +464,7 @@ export async function sendWelcomeEmail(email: string, temporaryPassword: string)
   const body = buildWelcomeEmailBody(temporaryPassword);
 
   try {
-    const sent = await sendGoogleEmail(email, subject, body);
+    const sent = await sendPlainTextEmail(email, subject, body);
     if (sent) {
       return 'gmail';
     }

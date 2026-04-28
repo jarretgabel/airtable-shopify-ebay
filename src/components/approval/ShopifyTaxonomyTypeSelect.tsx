@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { shopifyService, type ShopifyTaxonomyCategoryMatch } from '@/services/shopify';
+import { searchTaxonomyCategories } from '@/services/app-api/shopify';
+import type { ShopifyTaxonomyCategoryMatch } from '@/services/shopify';
 import { trimShopifyProductType } from '@/services/shopifyTaxonomy';
 
 const inputBaseClass =
@@ -45,7 +46,7 @@ export function ShopifyTaxonomyTypeSelect({
         setError('');
 
         try {
-          const matches = await shopifyService.searchTaxonomyCategories(query.trim(), 20);
+          const matches = await searchTaxonomyCategories(query.trim(), 20);
           if (!cancelled) {
             setOptions(matches);
           }

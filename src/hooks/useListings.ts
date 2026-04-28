@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import airtableService from '@/services/airtable';
+import { useCallback, useEffect, useState } from 'react';
+import { getListings } from '@/services/app-api/airtable';
 import { AirtableRecord } from '@/types/airtable';
 
 interface UseListingsReturn {
@@ -14,22 +14,22 @@ export function useListings(tableName: string, viewId?: string): UseListingsRetu
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchListings = async () => {
+  const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await airtableService.getRecords(tableName, { view: viewId });
+      const data = await getListings(tableName, { view: viewId });
       setListings(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch listings'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [tableName, viewId]);
 
   useEffect(() => {
     fetchListings();
-  }, [tableName, viewId]);
+  }, [fetchListings]);
 
   return {
     listings,

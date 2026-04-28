@@ -73,7 +73,6 @@ function DropdownTabList({
       {tabs.map((tab, index) => (
         <button
           key={tab.key}
-          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus={index === firstEnabledIndex}
           role="menuitem"
           type="button"
@@ -255,7 +254,6 @@ export function AppFrameHeader({
                 aria-label="PDF export options"
                 className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[230px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
               >
-                {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
                 <button role="menuitem" type="button" autoFocus={!exportDisabled} disabled={exportDisabled} onClick={() => { onCloseDropdowns(); onExportCurrentPage(); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60">Download Current Page</button>
                 <button role="menuitem" type="button" disabled={exportDisabled} onClick={() => { onCloseDropdowns(); onExportAllPages(); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60">Download All Pages</button>
               </div>
@@ -342,7 +340,6 @@ export function AppFrameHeader({
                           <div className="flex items-center gap-1">
                             {!notification.seen && (
                               <button
-                                // eslint-disable-next-line jsx-a11y/no-autofocus
                                 autoFocus={index === 0}
                                 role="menuitem"
                                 type="button"
@@ -406,7 +403,6 @@ export function AppFrameHeader({
                 aria-label="Account menu"
                 className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[220px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
               >
-                {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
                 <button
                   role="menuitem"
                   type="button"

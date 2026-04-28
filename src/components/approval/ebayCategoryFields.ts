@@ -1,8 +1,8 @@
 function normalizeCategoryToken(token: string): string {
   return token
     .trim()
-    .replace(/^['"\[{\(]+/, '')
-    .replace(/['"\]}\)]+$/, '')
+    .replace(/^['"[{(]+/, '')
+    .replace(/['"})\]]+$/, '')
     .trim()
 }
 

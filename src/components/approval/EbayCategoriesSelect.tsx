@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   getEbayChildCategories,
   getEbayRootCategories,
@@ -90,7 +90,7 @@ export function EbayCategoriesSelect({
 
   const isBrowseMode = query.trim().length === 0;
 
-  const rememberCategories = (items: CategoryOption[]) => {
+  const rememberCategories = useCallback((items: CategoryOption[]) => {
     if (items.length === 0) return;
     setKnownCategoriesById((current) => {
       const next = { ...current };
@@ -99,25 +99,25 @@ export function EbayCategoriesSelect({
       });
       return next;
     });
-  };
+  }, []);
 
-  const loadRootBrowseOptions = async (activeMarketplaceId: string): Promise<void> => {
+  const loadRootBrowseOptions = useCallback(async (activeMarketplaceId: string): Promise<void> => {
     const roots = await getEbayRootCategories(activeMarketplaceId);
     const nextOptions = roots.map(toCategoryOption);
     setBrowseStack([]);
     setOptions(nextOptions);
     rememberCategories(nextOptions);
-  };
+  }, [rememberCategories]);
 
-  const loadChildBrowseOptions = async (parent: CategoryOption, activeMarketplaceId: string): Promise<void> => {
+  const loadChildBrowseOptions = useCallback(async (parent: CategoryOption, activeMarketplaceId: string): Promise<void> => {
     const children = await getEbayChildCategories(parent.id, activeMarketplaceId);
     const nextOptions = children.map(toCategoryOption);
     setBrowseStack((current) => [...current, parent]);
     setOptions(nextOptions);
     rememberCategories(nextOptions);
-  };
+  }, [rememberCategories]);
 
-  const goToBrowseLevel = async (depth: number, activeMarketplaceId: string): Promise<void> => {
+  const goToBrowseLevel = useCallback(async (depth: number, activeMarketplaceId: string): Promise<void> => {
     if (depth <= 0) {
       await loadRootBrowseOptions(activeMarketplaceId);
       return;
@@ -135,7 +135,7 @@ export function EbayCategoriesSelect({
     setBrowseStack(targetStack);
     setOptions(nextOptions);
     rememberCategories(nextOptions);
-  };
+  }, [browseStack, loadRootBrowseOptions, rememberCategories]);
 
   useEffect(() => () => {
     if (blurTimerRef.current) {
@@ -207,7 +207,7 @@ export function EbayCategoriesSelect({
       cancelled = true;
       clearTimeout(timeoutId);
     };
-  }, [browseStack, disabled, isOpen, marketplaceId, query]);
+  }, [browseStack, disabled, isOpen, loadRootBrowseOptions, marketplaceId, query, rememberCategories]);
 
   const normalizedSelectedSet = useMemo(
     () => new Set(value.map((item) => normalizeSelectionValue(item))),

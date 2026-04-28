@@ -3,6 +3,28 @@
 ## Overview
 Services handle external API communication, transformations, and configuration. Keep them thin and orchestration-focused; extract helpers for reusability.
 
+## App API Seam Pattern
+
+For integrations that support both direct browser calls and Lambda-backed calls, use the `src/services/app-api/*` seam pattern:
+
+```text
+src/services/{vendor}.ts        # direct implementation
+src/services/app-api/{vendor}.ts # transport seam: direct mode or /api/* mode
+aws/src/handlers/{vendor}/*      # Lambda HTTP handlers
+aws/src/providers/{vendor}/*     # Lambda provider implementation
+scripts/start-local-api.mjs      # no-Docker local HTTP adapter
+scripts/compare-lambda*.mjs      # read-path parity
+scripts/probe-lambda-*.mjs       # guarded write probes
+```
+
+Rules:
+
+- keep the direct service as the source of domain behavior and payload shape
+- keep the app-api module thin; it chooses transport and preserves the public contract
+- when adding a new `/api/*` route, update the no-Docker local adapter route list in the same change
+- update parity or probe scripts in the same change so local validation stays current
+- use guarded probes for live mutations; do not add unguarded scripts that mutate external systems by default
+
 ## Service Organization Structure
 
 Large services follow a modular pattern split across multiple files in the same domain:

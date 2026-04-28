@@ -1,12 +1,14 @@
-import airtableService from '@/services/airtable';
+import {
+  createConfiguredRecord,
+  getConfiguredFieldMetadata,
+  updateConfiguredRecord,
+  uploadConfiguredAttachment,
+} from '@/services/app-api/airtable';
 import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
 import { createPhotosFormDefaults, type PhotosFormOptionFieldName, type PhotosFormValues } from '@/components/tabs/photos/photosFormSchema';
 import { extractInventoryScalarValue, loadInventoryRecord } from '@/services/inventoryDirectory';
 
-const TARGET_BASE_ID = 'appjQj8FQfFZ2ogMz';
-const TARGET_TABLE_ID = 'tblirsoRIFPDMHxb0';
-const TARGET_TABLE_REFERENCE = `${TARGET_BASE_ID}/${TARGET_TABLE_ID}`;
 const PRIMARY_IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
 const DEFAULT_STATUS = "Photo'd";
 
@@ -26,14 +28,6 @@ export interface PhotosFormSubmitResult {
   recordId: string;
   sku: string;
   action: 'created' | 'updated';
-}
-
-function requireAirtableApiKey(): string {
-  const apiKey = import.meta.env.VITE_AIRTABLE_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error('Missing VITE_AIRTABLE_API_KEY.');
-  }
-  return apiKey;
 }
 
 function dedupeOptions(values: string[]): string[] {
@@ -65,74 +59,10 @@ function compactFields(fields: Record<string, unknown>): Record<string, unknown>
   );
 }
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result !== 'string') {
-        reject(new Error(`Unable to read ${file.name}.`));
-        return;
-      }
-      const [, base64 = ''] = result.split(',');
-      resolve(base64);
-    };
-    reader.onerror = () => reject(reader.error ?? new Error(`Unable to read ${file.name}.`));
-    reader.readAsDataURL(file);
-  });
-}
-
 async function uploadImages(recordId: string, fieldId: string, files: File[]): Promise<void> {
-  const apiKey = requireAirtableApiKey();
-
   for (const file of files) {
-    const base64File = await fileToBase64(file);
-    const response = await fetch(`https://content.airtable.com/v0/${TARGET_BASE_ID}/${recordId}/${fieldId}/uploadAttachment`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        filename: file.name,
-        contentType: file.type || 'application/octet-stream',
-        file: base64File,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Unable to upload image ${file.name} (${response.status}).`);
-    }
+    await uploadConfiguredAttachment('inventory-directory', recordId, fieldId, file);
   }
-}
-
-async function fetchTargetTableMetadata() {
-  const response = await fetch(`https://api.airtable.com/v0/meta/bases/${TARGET_BASE_ID}/tables`, {
-    headers: {
-      Authorization: `Bearer ${requireAirtableApiKey()}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Unable to load Airtable metadata (${response.status}).`);
-  }
-
-  const data = (await response.json()) as {
-    tables?: Array<{
-      id: string;
-      fields?: Array<{
-        name: string;
-        options?: { choices?: Array<{ name: string }> };
-      }>;
-    }>;
-  };
-
-  const table = data.tables?.find((entry) => entry.id === TARGET_TABLE_ID);
-  if (!table) {
-    throw new Error('Unable to find the Photos Airtable table.');
-  }
-
-  return table;
 }
 
 export async function loadPhotosFormValues(recordId: string): Promise<PhotosFormValues> {
@@ -174,10 +104,10 @@ export async function loadPhotosFormValues(recordId: string): Promise<PhotosForm
 
 export async function loadPhotosFormOptionSets(): Promise<PhotosOptionSet> {
   try {
-    const table = await fetchTargetTableMetadata();
+    const fields = await getConfiguredFieldMetadata('inventory-directory');
 
     return OPTION_FIELD_NAMES.reduce<PhotosOptionSet>((acc, fieldName) => {
-      const field = table.fields?.find((entry) => entry.name === fieldName);
+      const field = fields.find((entry) => entry.name === fieldName);
       acc[fieldName] = dedupeOptions((field?.options?.choices ?? []).map((choice) => choice.name));
       return acc;
     }, {
@@ -232,9 +162,8 @@ export async function submitPhotosForm(values: PhotosFormValues, recordId?: stri
 
   if (recordId) {
     try {
-      const updatedRecord = await airtableService.updateRecordFromReference(
-        TARGET_TABLE_REFERENCE,
-        TARGET_TABLE_ID,
+      const updatedRecord = await updateConfiguredRecord(
+        'inventory-directory',
         recordId,
         baseFields,
         { typecast: true },
@@ -268,9 +197,8 @@ export async function submitPhotosForm(values: PhotosFormValues, recordId?: stri
 
   for (const candidate of createCandidates) {
     try {
-      const createdRecord = await airtableService.createRecordFromReference(
-        TARGET_TABLE_REFERENCE,
-        TARGET_TABLE_ID,
+      const createdRecord = await createConfiguredRecord(
+        'inventory-directory',
         candidate,
         { typecast: true },
       );

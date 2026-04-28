@@ -9,6 +9,7 @@ These are the default implementation rules for this repository.
 - [State Management](./state-management.md) — Zustand store patterns, hook design, selector best practices
 - [Service Organization](./service-organization.md) — Service module structure, request builders, mappers, error handling
 - [Architecture Conventions](../docs/architecture-conventions.md) — App shell, UI layer, testing patterns, accessibility
+- [AWS Lambda Write Validation](../docs/migrations/aws-lambda-write-validation.md) — No-Docker local API workflow, guarded write probes, and approval/image validation flows
 - [Inventory Processing Form Pattern](./inventory-processing-forms.instructions.md) — Local Airtable-backed form structure, routing, schema, service, and documentation rules
 - [Inventory Processing Routing Pattern](./inventory-processing-routing.instructions.md) — Route, menu, auth-access, and tab-wiring rules for Inventory Processing forms
 - [Code Review Checklist](./code-review-checklist.md) — Comprehensive review guide for PRs
@@ -58,5 +59,6 @@ These are the default implementation rules for this repository.
 ## Validation Rules
 - After meaningful UI or structural edits, run `npm run build`.
 - If changing auth, listing, or eBay logic, verify related tabs render and actions remain wired.
+- If changing a Lambda-backed integration, also verify the relevant local migration command still works (`npm run compare:lambda`, `npm run compare:lambda:handler`, `npm run probe:lambda:writes`, or `npm run probe:lambda:shopify`).
 - Remove dead style selectors/helpers when migrations eliminate their usage.
 - After extraction refactors, ensure original side effects and navigation flows are unchanged.

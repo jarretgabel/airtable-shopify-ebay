@@ -26,6 +26,55 @@ npm run dev
 
 This will start a development server on `http://localhost:3000`
 
+For local AWS validation you can keep the frontend on same-origin `/api` paths by setting `VITE_APP_API_PROXY_TARGET=http://127.0.0.1:3001` in `.env.local` while leaving `VITE_APP_API_BASE_URL=` blank.
+
+No-Docker local API option:
+
+```bash
+npm run local:api
+```
+
+This starts a local Node server on `http://127.0.0.1:3001` that mounts the compiled AWS handlers directly, without `sam local` or Docker.
+
+One-command local frontend + API workflow:
+
+```bash
+npm run dev:full
+```
+
+This starts `local:api` first and then starts Vite after the local API is listening.
+If `http://127.0.0.1:3001` is already in use by an existing local API instance, `dev:full` reuses it and starts only Vite.
+
+After starting either `sam local start-api` or `npm run local:api`, run this comparison harness from the repo root to compare direct-provider responses against the local `/api` responses, including `users`, `inventory-directory`, and approval Airtable sources when those env vars are configured:
+```bash
+npm run compare:lambda
+```
+
+If `sam` or Docker are not installed, use the in-process fallback instead:
+```bash
+npm run prepare:aws:env
+npm run compare:lambda:handler
+```
+
+Opt-in write probe for the local API:
+```bash
+npm run probe:lambda:writes
+```
+
+Opt-in Shopify mutation probe for the local API:
+```bash
+npm run probe:lambda:shopify
+```
+
+Cleanup helper for scratch Shopify probe products:
+```bash
+npm run cleanup:shopify:probe -- <productId>
+```
+
+Write validation checklist:
+
+- [AWS Lambda Write Validation](./docs/migrations/aws-lambda-write-validation.md)
+
 ## Getting Your Airtable Credentials
 
 1. **API Key**: Visit [Airtable Account](https://airtable.com/account/tokens) to generate a personal access token

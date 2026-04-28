@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { shopifyService, type ShopifyCollectionMatch } from '@/services/shopify';
+import { getCollections, searchCollections } from '@/services/app-api/shopify';
+import type { ShopifyCollectionMatch } from '@/services/shopify';
 
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
@@ -64,7 +65,7 @@ export function ShopifyCollectionsSelect({
         setError('');
 
         try {
-          const matches = await shopifyService.searchCollections(query.trim());
+          const matches = await searchCollections(query.trim());
           if (!cancelled) {
             setOptions(matches);
             setKnownCollectionsById((current) => {
@@ -103,7 +104,7 @@ export function ShopifyCollectionsSelect({
     let cancelled = false;
     void (async () => {
       try {
-        const collections = await shopifyService.getCollections(250);
+        const collections = await getCollections(250);
         if (cancelled) return;
 
         const resolvedById = Object.fromEntries(collections.map((collection) => [collection.id, collection]));

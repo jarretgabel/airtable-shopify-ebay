@@ -1,0 +1,22 @@
+{
+  "name": "airtable-shopify-ebay-aws",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "sam build --template-file template.yaml",
+    "local:start-api": "sam local start-api --template-file template.yaml --env-vars env.local.json --port 3001",
+    "local:invoke:shopify-products": "sam local invoke ShopifyGetProductsFunction --template-file template.yaml --env-vars env.local.json",
+    "local:invoke:jotform-forms": "sam local invoke JotformGetFormsFunction --template-file template.yaml --env-vars env.local.json",
+    "local:invoke:airtable-listings": "sam local invoke AirtableGetListingsFunction --template-file template.yaml --env-vars env.local.json",
+    "local:invoke:airtable-users-create": "sam local invoke AirtableCreateConfiguredRecordFunction --template-file template.yaml --env-vars env.local.json",
+    "local:invoke:ai-identify": "sam local invoke AiIdentifyEquipmentFunction --template-file template.yaml --env-vars env.local.json",
+    "local:invoke:gmail-send": "sam local invoke GmailSendFunction --template-file template.yaml --env-vars env.local.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.147",
+    "@types/node": "^22.15.17",
+    "esbuild": "^0.25.11",
+    "typescript": "^5.3.0"
+  }
+}

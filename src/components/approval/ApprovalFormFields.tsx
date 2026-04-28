@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import {
   CONDITION_FIELD,
@@ -8,7 +8,7 @@ import {
   isShippingServiceField,
 } from '@/stores/approvalStore';
 import { getEbayPackageTypes } from '@/services/ebay';
-import { shopifyService } from '@/services/shopify';
+import { searchCollections } from '@/services/app-api/shopify';
 import { buildShopifyBodyHtml } from '@/services/shopifyBodyHtml';
 import { buildEbayBodyHtmlFromTemplate } from '@/services/ebayBodyHtml';
 import { buildShopifyCollectionIdsFromApprovalFields } from '@/services/shopifyDraftFromAirtable';
@@ -1660,7 +1660,7 @@ export function ApprovalFormFields({
     [normalizedEbayRequiredFieldNames],
   );
 
-  const isShopifyCategoryLikeField = (fieldName: string): boolean => {
+  const isShopifyCategoryLikeField = useCallback((fieldName: string): boolean => {
     const normalized = fieldName.trim().toLowerCase();
     return normalized === 'type'
       || normalized === 'shopify type'
@@ -1672,9 +1672,9 @@ export function ApprovalFormFields({
       || normalized === 'shopify rest product category'
       || normalized === 'category'
       || normalized === 'product category';
-  };
+  }, []);
 
-  const matchesRequiredFieldGroup = (fieldName: string, normalizedRequiredNames: string[]): boolean => {
+  const matchesRequiredFieldGroup = useCallback((fieldName: string, normalizedRequiredNames: string[]): boolean => {
     const normalizedFieldName = fieldName.toLowerCase();
     if (normalizedRequiredNames.includes(normalizedFieldName)) return true;
 
@@ -1691,23 +1691,23 @@ export function ApprovalFormFields({
     }
 
     return false;
-  };
+  }, [isShopifyCategoryLikeField]);
 
-  const isForcedEbayPriceRequiredField = (fieldName: string): boolean => {
+  const isForcedEbayPriceRequiredField = useCallback((fieldName: string): boolean => {
     if (!hasEbayRequiredPriceField) return false;
     if (approvalChannel !== 'ebay' && approvalChannel !== 'combined') return false;
     return isEbayPriceFieldAlias(fieldName);
-  };
+  }, [approvalChannel, hasEbayRequiredPriceField]);
 
-  const isRequiredField = (fieldName: string): boolean => (
+  const isRequiredField = useCallback((fieldName: string): boolean => (
     matchesRequiredFieldGroup(fieldName, normalizedRequiredFieldNames)
     || isForcedEbayPriceRequiredField(fieldName)
-  );
-  const isShopifyRequiredField = (fieldName: string): boolean => matchesRequiredFieldGroup(fieldName, normalizedShopifyRequiredFieldNames);
-  const isEbayRequiredField = (fieldName: string): boolean => (
+  ), [isForcedEbayPriceRequiredField, matchesRequiredFieldGroup, normalizedRequiredFieldNames]);
+  const isShopifyRequiredField = useCallback((fieldName: string): boolean => matchesRequiredFieldGroup(fieldName, normalizedShopifyRequiredFieldNames), [matchesRequiredFieldGroup, normalizedShopifyRequiredFieldNames]);
+  const isEbayRequiredField = useCallback((fieldName: string): boolean => (
     matchesRequiredFieldGroup(fieldName, normalizedEbayRequiredFieldNames)
     || isForcedEbayPriceRequiredField(fieldName)
-  );
+  ), [isForcedEbayPriceRequiredField, matchesRequiredFieldGroup, normalizedEbayRequiredFieldNames]);
   const orderedFieldNames = useMemo(() => {
     const required = prioritizeTitleBeforePrice(
       allFieldNames.filter((fieldName) => isRequiredField(fieldName)),
@@ -1718,14 +1718,14 @@ export function ApprovalFormFields({
       approvalChannel,
     );
     return [...required, ...optional];
-  }, [allFieldNames, approvalChannel, normalizedRequiredFieldNames]);
+  }, [allFieldNames, approvalChannel, isRequiredField]);
   const requiredOrderedFieldNames = useMemo(
     () => orderedFieldNames.filter((fieldName) => isRequiredField(fieldName)),
-    [orderedFieldNames, normalizedRequiredFieldNames],
+    [isRequiredField, orderedFieldNames],
   );
   const optionalOrderedFieldNames = useMemo(
     () => orderedFieldNames.filter((fieldName) => !isRequiredField(fieldName)),
-    [orderedFieldNames, normalizedRequiredFieldNames],
+    [isRequiredField, orderedFieldNames],
   );
   const ebayAdvancedOptionFieldNames = useMemo(
     () => allFieldNames.filter((fieldName: string) => isEbayAdvancedOptionField(fieldName)),
@@ -2356,7 +2356,7 @@ export function ApprovalFormFields({
 
       for (const name of shopifyCollectionDisplayNames) {
         try {
-          const matches = await shopifyService.searchCollections(name, 25);
+          const matches = await searchCollections(name, 25);
           const normalizedName = name.trim().toLowerCase();
           const exactMatch = matches.find((match) => match.title.trim().toLowerCase() === normalizedName);
           const chosen = exactMatch ?? (matches.length === 1 ? matches[0] : null);
@@ -2565,8 +2565,6 @@ export function ApprovalFormFields({
     return '';
   }, [
     ebayBodyDescriptionFieldName,
-    ebayBodyHtmlFieldName,
-    ebayBodyHtmlTemplateFieldName,
     ebayKeyFeaturesFieldName,
     ebayTestingNotesFieldName,
     ebayTitleFieldName,

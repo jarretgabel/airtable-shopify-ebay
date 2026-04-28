@@ -5,9 +5,10 @@ import App from './App.tsx'
 import { logMissingOptionalEnv } from '@/config/runtimeEnv'
 import './index.css'
 
+const lambdaAiEnabled = ['1', 'true', 'yes', 'on'].includes((import.meta.env.VITE_USE_LAMBDA_AI || '').trim().toLowerCase())
+
 logMissingOptionalEnv([
-  'VITE_GITHUB_TOKEN',
-  'VITE_OPENAI_API_KEY',
+  ...(lambdaAiEnabled ? [] : ['VITE_GITHUB_TOKEN', 'VITE_OPENAI_API_KEY']),
   'VITE_EBAY_REFRESH_TOKEN',
 ])
 
