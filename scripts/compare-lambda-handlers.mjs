@@ -32,6 +32,10 @@ function getOptionalEnv(name) {
   return value || '';
 }
 
+function hasEbayRuntimeConfig() {
+  return Boolean(getOptionalEnv('VITE_EBAY_CLIENT_ID') && getOptionalEnv('VITE_EBAY_CLIENT_SECRET') && getOptionalEnv('VITE_EBAY_REFRESH_TOKEN'));
+}
+
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, options);
   const text = await response.text();
@@ -193,6 +197,13 @@ function setAwsEnv() {
   } else {
     delete process.env.ALLOWED_AIRTABLE_VIEW_ID;
   }
+
+  process.env.EBAY_ENV = getOptionalEnv('VITE_EBAY_ENV');
+  process.env.EBAY_CLIENT_ID = getOptionalEnv('VITE_EBAY_CLIENT_ID');
+  process.env.EBAY_CLIENT_SECRET = getOptionalEnv('VITE_EBAY_CLIENT_SECRET');
+  process.env.EBAY_REFRESH_TOKEN = getOptionalEnv('VITE_EBAY_REFRESH_TOKEN');
+  process.env.EBAY_AUTH_HOST = getOptionalEnv('VITE_EBAY_AUTH_HOST');
+  process.env.EBAY_APP_SCOPE = getOptionalEnv('VITE_EBAY_APP_SCOPE');
 }
 
 function buildAwsDist() {
@@ -247,6 +258,25 @@ function compareArrays(label, direct, lambda, requiredKeys) {
   const lambdaSample = sampleIds(lambda);
   if (JSON.stringify(directSample) !== JSON.stringify(lambdaSample)) {
     failures.push(`sample id mismatch: direct=${JSON.stringify(directSample)} lambda=${JSON.stringify(lambdaSample)}`);
+  }
+
+  return failures;
+}
+
+function comparePrimitiveArrays(label, direct, lambda) {
+  const failures = [];
+
+  if (!Array.isArray(direct) || !Array.isArray(lambda)) {
+    failures.push('one side did not return an array');
+    return failures;
+  }
+
+  if (direct.length !== lambda.length) {
+    failures.push(`length mismatch: direct=${direct.length}, lambda=${lambda.length}`);
+  }
+
+  if (JSON.stringify(direct.slice(0, 10)) !== JSON.stringify(lambda.slice(0, 10))) {
+    failures.push(`sample mismatch: direct=${JSON.stringify(direct.slice(0, 10))} lambda=${JSON.stringify(lambda.slice(0, 10))}`);
   }
 
   return failures;
@@ -329,7 +359,41 @@ async function main() {
     printResult(`Airtable ${source}`, failures);
   }
 
-  const allFailures = [...formFailures, ...submissionFailures, ...airtableFailures, ...usersFailures, ...inventoryFailures, ...approvalReadFailures];
+  const ebayFailures = [];
+  if (hasEbayRuntimeConfig()) {
+    const ebayProvider = await importHandler(path.join('providers', 'ebay', 'client.js'));
+    const ebayInventoryHandler = (await importHandler(path.join('handlers', 'ebay', 'getInventoryItems.js'))).handler;
+    const ebayRootCategoriesHandler = (await importHandler(path.join('handlers', 'ebay', 'getRootCategories.js'))).handler;
+    const ebayPackageTypesHandler = (await importHandler(path.join('handlers', 'ebay', 'getPackageTypes.js'))).handler;
+
+    const directInventoryPage = await ebayProvider.getInventoryItems(20);
+    const lambdaInventoryPage = await invokeHandler(ebayInventoryHandler, {
+      queryStringParameters: { limit: '20' },
+    });
+    const inventoryFailures = compareArrays('eBay inventory items', directInventoryPage.inventoryItems, lambdaInventoryPage.inventoryItems, ['sku']);
+    ebayFailures.push(...inventoryFailures);
+    printResult('eBay inventory items', inventoryFailures);
+
+    const directRootCategories = await ebayProvider.getEbayRootCategories('EBAY_US');
+    const lambdaRootCategories = await invokeHandler(ebayRootCategoriesHandler, {
+      queryStringParameters: { marketplaceId: 'EBAY_US' },
+    });
+    const rootFailures = compareArrays('eBay root categories', directRootCategories, lambdaRootCategories, ['id', 'name', 'path', 'level', 'hasChildren']);
+    ebayFailures.push(...rootFailures);
+    printResult('eBay root categories', rootFailures);
+
+    const directPackageTypes = await ebayProvider.getEbayPackageTypes('EBAY_US');
+    const lambdaPackageTypes = await invokeHandler(ebayPackageTypesHandler, {
+      queryStringParameters: { marketplaceId: 'EBAY_US' },
+    });
+    const packageFailures = comparePrimitiveArrays('eBay package types', directPackageTypes, lambdaPackageTypes);
+    ebayFailures.push(...packageFailures);
+    printResult('eBay package types', packageFailures);
+  } else {
+    console.log('SKIP  eBay handler parity checks (missing VITE_EBAY_CLIENT_ID / VITE_EBAY_CLIENT_SECRET / VITE_EBAY_REFRESH_TOKEN)');
+  }
+
+  const allFailures = [...formFailures, ...submissionFailures, ...airtableFailures, ...usersFailures, ...inventoryFailures, ...approvalReadFailures, ...ebayFailures];
   console.log('');
   if (allFailures.length > 0) {
     process.exitCode = 1;

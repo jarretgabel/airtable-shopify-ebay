@@ -50,10 +50,13 @@ Tasks:
 - Create or confirm the eBay app keys used for:
   - `VITE_EBAY_CLIENT_ID`
   - `VITE_EBAY_CLIENT_SECRET`
-- Create or confirm the RuName for the app.
-- Set the redirect URL for the RuName to `http://localhost:3000` for the current local workflow.
 - Generate a valid refresh token for the seller account and store it in `VITE_EBAY_REFRESH_TOKEN`.
 - Confirm the app is using the correct environment in `VITE_EBAY_ENV`.
+- Confirm the Lambda-side publish defaults are available:
+  - `VITE_EBAY_LOCATION_KEY`
+  - `VITE_EBAY_FULFILLMENT_POLICY_ID`
+  - `VITE_EBAY_PAYMENT_POLICY_ID`
+  - `VITE_EBAY_RETURN_POLICY_ID`
 
 Required scopes:
 
@@ -68,7 +71,8 @@ Optional but recommended:
 
 Why:
 
-- The current UI notes that it cannot auto-read policy IDs because the current token lacks Account API scope.
+- The current UI and local Lambda adapter use a server-owned refresh token and deploy-time publish defaults.
+- Account API scope remains optional unless you want future automation to discover business policies dynamically.
 
 ### eBay Seller Hub
 
@@ -165,7 +169,7 @@ Tasks:
 
 - Store Airtable, Shopify, eBay, JotForm, Gmail, and AI secrets in Secrets Manager or SSM Parameter Store.
 - Configure API Gateway routes for `/api/airtable/*`, `/api/shopify/*`, `/api/ebay/*`, `/api/jotform/*`, and other enabled domains.
-- If eBay OAuth and token ownership move fully server-side later, provision DynamoDB for token/session storage and publish-state data.
+- DynamoDB is not required for the current eBay architecture. Revisit it only if you later introduce per-user eBay sessions or durable publish-job state.
 
 Note:
 
@@ -176,6 +180,6 @@ Note:
 1. Fix Shopify app scopes and user file-create permission.
 2. Rerun `npm run probe:lambda:shopify`.
 3. Confirm Airtable refs and users table values are correct.
-4. Confirm eBay developer keys, RuName, refresh token, policies, and location values.
+4. Confirm eBay developer keys, refresh token, policies, and location values.
 5. Enable optional Gmail or AI provider settings only if you need those flows.
 6. Do AWS console setup only when you move from local validation to deployed Lambdas.

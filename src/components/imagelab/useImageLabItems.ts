@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { fileToBase64, identifyEquipment, type EquipmentIdentification } from '@/services/equipmentAI';
 import { processImage, revokeProcessedImage, type ProcessingOptions } from '@/services/imageProcessor';
+import { uploadImageToEbayHostedPictures } from '@/services/app-api/ebay';
 import { uploadImageFile as uploadShopifyImageFile } from '@/services/app-api/shopify';
-import { uploadImageToEbayHostedPictures } from '@/services/ebay/imageUpload';
 import { buildImageLabSessionStats } from '@/components/imagelab/imageLabSessionStats';
 import type { ImageItem } from '@/components/imagelab/types';
 

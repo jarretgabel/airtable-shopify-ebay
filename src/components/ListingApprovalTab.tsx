@@ -14,7 +14,7 @@ import {
   getRecordFromResolvedSource,
   updateRecordFromResolvedSource,
 } from '@/services/app-api/airtable';
-import { pushApprovalBundleToEbay } from '@/services/ebay/approvalPublish';
+import { pushApprovalBundleToEbay } from '@/services/app-api/ebay';
 import {
   addProductToCollections as addShopifyProductToCollections,
   getProduct as getShopifyProduct,

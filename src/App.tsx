@@ -257,6 +257,7 @@ function App() {
             ebayRestoringSession={ebay.restoringSession}
             ebayLoading={ebay.loading}
             ebayError={ebay.error}
+            ebayRuntimeConfig={ebay.runtimeConfig}
             ebayInventoryItems={ebay.inventoryItems}
             ebayOffers={ebay.offers}
             ebayRecentListings={ebay.recentListings}
@@ -264,7 +265,6 @@ function App() {
             ebayPublishedCount={ebay.publishedCount}
             ebayDraftCount={ebay.draftCount}
             ebayRefetch={ebay.refetch}
-            ebayDisconnect={ebay.disconnect}
             sharkLoading={market.loading}
             sharkError={market.error}
             sharkListings={market.listings}

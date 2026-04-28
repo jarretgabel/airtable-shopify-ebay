@@ -7,7 +7,7 @@ vi.mock('@/services/app-api/airtable', () => ({
   updateRecordFromResolvedSource: vi.fn(),
 }));
 
-vi.mock('@/services/ebay', () => ({
+vi.mock('@/services/app-api/ebay', () => ({
   getInventoryItems: vi.fn(),
   getOffersForInventorySkus: vi.fn(),
 }));

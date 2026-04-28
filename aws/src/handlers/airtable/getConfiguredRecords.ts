@@ -1,6 +1,5 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
-import { jsonError, jsonOk, requireQueryParam } from '../../shared/http.js';
 import { getOptionalQueryParam, jsonError, jsonOk, requireQueryParam } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
 import { getConfiguredRecords, type AirtableConfiguredRecordsSource } from '../../providers/airtable/sources.js';

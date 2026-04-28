@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import dotenv from 'dotenv';
+import { resolveLocalApiOrigin } from './local-api-origin.mjs';
+import { cleanupShopifyProbeProduct } from './cleanup-shopify-probe-product.mjs';
 
 const cwd = process.cwd();
 
@@ -48,10 +50,6 @@ function parseOptionalJsonEnv(name, fallback) {
   }
 }
 
-function normalizeOrigin(value) {
-  return (value || 'http://127.0.0.1:3001').replace(/\/$/, '');
-}
-
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, options);
   const text = await response.text();
@@ -78,7 +76,8 @@ function printHelp() {
   console.log('Optional:');
   console.log('  SHOPIFY_WRITE_PROBE_IMAGE_MIME_TYPE=image/jpeg');
   console.log('  SHOPIFY_WRITE_PROBE_IMAGE_ALT=Lambda probe image');
-  console.log('Use scratch products only. Shopify write probes do not auto-delete created products.');
+  console.log('  SHOPIFY_WRITE_PROBE_AUTO_CLEANUP=true');
+  console.log('Use scratch products only. Shopify write probes only auto-delete products created in the current run when SHOPIFY_WRITE_PROBE_AUTO_CLEANUP=true.');
 }
 
 function isMissingShopifyImageScopeError(message) {
@@ -95,11 +94,7 @@ async function main() {
     return;
   }
 
-  const lambdaOrigin = normalizeOrigin(
-    getOptionalEnv('LAMBDA_API_ORIGIN')
-      || getOptionalEnv('VITE_APP_API_PROXY_TARGET')
-      || getOptionalEnv('VITE_APP_API_BASE_URL'),
-  );
+  const lambdaOrigin = await resolveLocalApiOrigin(getOptionalEnv);
   const allowCreate = getOptionalEnv('SHOPIFY_WRITE_PROBE_ALLOW_CREATE').toLowerCase() === 'true';
   const createRequest = getOptionalEnv('SHOPIFY_WRITE_PROBE_CREATE_REQUEST_JSON')
     ? parseJsonEnv('SHOPIFY_WRITE_PROBE_CREATE_REQUEST_JSON')
@@ -113,8 +108,10 @@ async function main() {
   const imageBase64 = getOptionalEnv('SHOPIFY_WRITE_PROBE_IMAGE_BASE64');
   const imageMimeType = getOptionalEnv('SHOPIFY_WRITE_PROBE_IMAGE_MIME_TYPE') || 'image/jpeg';
   const imageAlt = getOptionalEnv('SHOPIFY_WRITE_PROBE_IMAGE_ALT');
+  const autoCleanup = getOptionalEnv('SHOPIFY_WRITE_PROBE_AUTO_CLEANUP').toLowerCase() === 'true';
 
   let productId = Number(getOptionalEnv('SHOPIFY_WRITE_PROBE_PRODUCT_ID'));
+  let createdProductId = null;
   let shouldRetryStandaloneCollectionAssignment = false;
 
   console.log(`Running Shopify write probe against ${lambdaOrigin}`);
@@ -138,8 +135,11 @@ async function main() {
     }
 
     productId = Number(createdProduct.id);
+    createdProductId = productId;
     console.log(`OK  product-set -> ${createdProduct.id}`);
-    console.log(`Manual cleanup reminder: product ${createdProduct.id} was not auto-deleted.`);
+    if (!autoCleanup) {
+      console.log(`Manual cleanup reminder: product ${createdProduct.id} was not auto-deleted.`);
+    }
   }
 
   if (combinedRequest) {
@@ -237,7 +237,17 @@ async function main() {
     console.log(`OK  image upload -> ${uploadedImage?.id ?? '<unknown>'}`);
   }
 
-  console.log('Shopify write probe finished. Review any created scratch products manually.');
+  if (autoCleanup && createdProductId) {
+    console.log(`Starting auto-cleanup for Shopify probe product ${createdProductId}.`);
+    await cleanupShopifyProbeProduct({ productId: createdProductId });
+    console.log(`OK  auto-cleanup removed product ${createdProductId}`);
+  } else if (autoCleanup) {
+    console.log('Auto-cleanup skipped because this probe did not create a new Shopify product in the current run.');
+  }
+
+  console.log(autoCleanup
+    ? 'Shopify write probe finished with auto-cleanup handling.'
+    : 'Shopify write probe finished. Review any created scratch products manually.');
 }
 
 main().catch((error) => {

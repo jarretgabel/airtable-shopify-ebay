@@ -11,6 +11,8 @@
     "compare:lambda:handler": "node scripts/compare-lambda-handlers.mjs",
     "probe:lambda:writes": "node scripts/probe-lambda-writes.mjs",
     "probe:lambda:shopify": "node scripts/probe-lambda-shopify-writes.mjs",
+    "probe:lambda:ebay": "node scripts/probe-lambda-ebay-writes.mjs",
+    "cleanup:ebay:probe": "node scripts/cleanup-ebay-probe-listings.mjs",
     "cleanup:shopify:probe": "node scripts/cleanup-shopify-probe-product.mjs",
     "prepare:aws:env": "node scripts/prepare-aws-env.mjs",
     "typecheck": "tsc --noEmit",

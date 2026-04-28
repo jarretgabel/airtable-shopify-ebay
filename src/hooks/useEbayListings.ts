@@ -1,22 +1,21 @@
 import { useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import type { EbayInventoryItem, EbayOffer } from '@/services/ebay';
-import type { EbayPublishedListing } from '@/hooks/ebayListingsHelpers';
+import type { EbayInventoryItem, EbayOffer, EbayPublishedListing, EbayRuntimeConfig } from '@/services/ebay/types';
 import { useEbayListingsStore } from '@/stores/ebay/ebayListingsStore';
 
-export type { EbayPublishedListing } from '@/hooks/ebayListingsHelpers';
+export type { EbayPublishedListing } from '@/services/ebay/types';
 
 export interface EbayListingsState {
   authenticated: boolean;
   restoringSession: boolean;
   loading: boolean;
   error: string | null;
+  runtimeConfig: EbayRuntimeConfig | null;
   inventoryItems: EbayInventoryItem[];
   offers: EbayOffer[];
   recentListings: EbayPublishedListing[];
   total: number;
   refetch: () => void;
-  disconnect: () => void;
 }
 
 export function useEbayListings(enabled = true): EbayListingsState {
@@ -25,6 +24,7 @@ export function useEbayListings(enabled = true): EbayListingsState {
     restoringSession: state.restoringSession,
     loading: state.loading,
     error: state.error,
+    runtimeConfig: state.runtimeConfig,
     inventoryItems: state.inventoryItems,
     offers: state.offers,
     recentListings: state.recentListings,
@@ -32,7 +32,6 @@ export function useEbayListings(enabled = true): EbayListingsState {
     setEnabled: state.setEnabled,
     bootstrap: state.bootstrap,
     refetch: state.refetch,
-    disconnect: state.disconnect,
   }));
 
   const {
@@ -40,6 +39,7 @@ export function useEbayListings(enabled = true): EbayListingsState {
     restoringSession,
     loading,
     error,
+    runtimeConfig,
     inventoryItems,
     offers,
     recentListings,
@@ -47,7 +47,6 @@ export function useEbayListings(enabled = true): EbayListingsState {
     setEnabled,
     bootstrap,
     refetch,
-    disconnect,
   } = useEbayListingsStore(selector);
 
   useEffect(() => {
@@ -60,11 +59,11 @@ export function useEbayListings(enabled = true): EbayListingsState {
     restoringSession,
     loading,
     error,
+    runtimeConfig,
     inventoryItems,
     offers,
     recentListings,
     total,
     refetch,
-    disconnect,
   };
 }

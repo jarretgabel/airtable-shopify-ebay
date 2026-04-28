@@ -69,6 +69,21 @@ export interface EbayOfferPage {
   total: number;
 }
 
+export interface EbayCategorySuggestion {
+  id: string;
+  name: string;
+  path: string;
+  level: number;
+}
+
+export interface EbayCategoryTreeNode {
+  id: string;
+  name: string;
+  path: string;
+  level: number;
+  hasChildren: boolean;
+}
+
 export interface EbayPublicListing {
   itemId: string;
   title: string;
@@ -93,6 +108,11 @@ export interface EbayBusinessPolicyConfig {
   returnPolicyId: string;
 }
 
+export interface EbayPublishSetup {
+  locationConfig: EbayLocationConfig;
+  policyConfig: EbayBusinessPolicyConfig;
+}
+
 export interface EbayOfferDetails extends EbayOffer {
   offerId: string;
   marketplaceId: string;
@@ -101,6 +121,41 @@ export interface EbayOfferDetails extends EbayOffer {
   includeCatalogProductDetails: boolean;
   hideBuyerDetails?: boolean;
   quantityLimitPerBuyer?: number;
+}
+
+export interface EbayApprovalPushResult {
+  sku: string;
+  offerId: string;
+  listingId: string;
+  wasExistingOffer: boolean;
+}
+
+export interface EbayUploadedImageResult {
+  url: string;
+}
+
+export interface EbayPublishedListing {
+  item: EbayInventoryItem;
+  offer: EbayOffer;
+}
+
+export interface EbayRuntimeConfig {
+  authMode: 'server';
+  environment: 'sandbox' | 'production';
+  defaultListingApiMode: EbayListingApiMode;
+  publishSetup: EbayPublishSetup;
+  missingLocationFields: string[];
+  missingPolicyFields: string[];
+  hasRequiredPublishSetup: boolean;
+}
+
+export interface EbayDashboardSnapshot {
+  inventoryItems: EbayInventoryItem[];
+  offers: EbayOffer[];
+  recentListings: EbayPublishedListing[];
+  total: number;
+  warning: string | null;
+  runtimeConfig: EbayRuntimeConfig;
 }
 
 export function isValidEbaySku(sku: string): boolean {

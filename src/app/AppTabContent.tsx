@@ -86,6 +86,7 @@ export function AppTabContent({
   ebayRestoringSession,
   ebayLoading,
   ebayError,
+  ebayRuntimeConfig,
   ebayInventoryItems,
   ebayOffers,
   ebayRecentListings,
@@ -93,7 +94,6 @@ export function AppTabContent({
   ebayPublishedCount,
   ebayDraftCount,
   ebayRefetch,
-  ebayDisconnect,
   sharkLoading,
   sharkError,
   sharkListings,
@@ -108,12 +108,12 @@ export function AppTabContent({
     ebayRestoringSession,
     ebayLoading,
     ebayError,
+    ebayRuntimeConfig,
     ebayInventoryItems,
     ebayOffers,
     ebayRecentListings,
     ebayTotal,
     ebayRefetch,
-    ebayDisconnect,
   });
 
   const dashboardViewModel = buildDashboardTabViewModel({

@@ -101,10 +101,17 @@ SHOPIFY_WRITE_PROBE_IMAGE_MIME_TYPE=image/jpeg
 SHOPIFY_WRITE_PROBE_IMAGE_ALT=Lambda probe image
 ```
 
+Optional automatic cleanup of a product created via `product-set` during the current probe run:
+
+```env
+SHOPIFY_WRITE_PROBE_AUTO_CLEANUP=true
+```
+
 Recommended practice:
 
 - use only scratch products and scratch collections
 - keep the created product in `DRAFT`
+- enable `SHOPIFY_WRITE_PROBE_AUTO_CLEANUP=true` when the probe creates a new scratch product and you want it deleted automatically at the end of that run
 - remove scratch products after probing with:
 
 ```bash
@@ -118,6 +125,69 @@ Observed probe prerequisites:
 - the no-Docker local API must export `SHOPIFY_ACCESS_TOKEN` for the AWS Shopify provider; `npm run local:api` now derives that automatically from `VITE_SHOPIFY_OAUTH_ACCESS_TOKEN` or `VITE_SHOPIFY_ADMIN_API_TOKEN`
 - `product-set-with-collections` only exercises real collection joins if the target store actually has custom collections; if `/api/shopify/collections` returns an empty array, the route still validates existing-product mutation behavior but not collection assignment
 - `/api/shopify/images` requires Shopify app scopes and permissions for file creation; if the probe returns `Access denied for fileCreate field`, treat that as an external Shopify permission issue, not a Lambda seam failure. Add one of `write_files`, `write_images`, or `write_themes` plus user create-files permission, then rerun the probe.
+
+## eBay Mutation Probe
+
+The eBay probe is opt-in and intentionally scratch-only because publish routes create or update live eBay offers and listings.
+
+The probe targets the Lambda-only eBay path backed by server-owned credentials and deploy-time publish defaults.
+
+Run it from the repo root:
+
+```bash
+npm run probe:lambda:ebay
+```
+
+Required env vars:
+
+```env
+EBAY_WRITE_PROBE_ENABLED=true
+EBAY_WRITE_PROBE_PUBLISH_SETUP_JSON={"locationConfig":{"key":"resolution-av-warehouse","name":"Resolution AV Warehouse","country":"US","postalCode":"10001","city":"New York","stateOrProvince":"NY"},"policyConfig":{"fulfillmentPolicyId":"123","paymentPolicyId":"456","returnPolicyId":"789"}}
+```
+
+Optional sample mode override:
+
+```env
+EBAY_WRITE_PROBE_SAMPLE_MODE=inventory
+```
+
+Optional approval publish probe:
+
+```env
+EBAY_WRITE_PROBE_APPROVAL_BUNDLE_JSON={"inventoryItem":{"sku":"LAMBDAEBAYPROBE001","product":{"title":"Lambda Probe Listing"},"availability":{"shipToLocationAvailability":{"quantity":1}}},"offer":{"sku":"LAMBDAEBAYPROBE001","marketplaceId":"EBAY_US","format":"FIXED_PRICE","availableQuantity":1,"categoryId":"3276","listingDescription":"<p>Lambda probe listing</p>","listingDuration":"GTC","pricingSummary":{"price":{"value":"4999.00","currency":"USD"}}}}
+```
+
+Optional image upload probe:
+
+```env
+EBAY_WRITE_PROBE_IMAGE_NAME=lambda-probe.jpg
+EBAY_WRITE_PROBE_IMAGE_BASE64=/9j/4AAQSkZJRgABAQ...
+EBAY_WRITE_PROBE_IMAGE_MIME_TYPE=image/jpeg
+```
+
+Optional automatic cleanup of the exact SKUs created by the current probe run:
+
+```env
+EBAY_WRITE_PROBE_AUTO_CLEANUP=true
+```
+
+Recommended practice:
+
+- use scratch SKUs such as `LAMBDAEBAYPROBE*`
+- prefer `inventory` or `trading-verify` sample mode unless you specifically need a live Trading API listing
+- keep approval-probe pricing compatible with the configured business shipping policy; low scratch prices can trigger eBay shipping-policy rejections that are not Lambda seam failures
+- enable `EBAY_WRITE_PROBE_AUTO_CLEANUP=true` when you want the probe to withdraw and delete the exact scratch SKUs created during that run
+- clean up created scratch offers and inventory records after probing with:
+
+```bash
+npm run cleanup:ebay:probe
+```
+
+- override the default cleanup targets if needed with exact SKUs as arguments, for example:
+
+```bash
+npm run cleanup:ebay:probe -- LAMBDAEBAYPROBE1777393818299
+```
 
 ## UI Flows To Validate
 
@@ -231,6 +301,22 @@ Validate:
 
 If the route fails with a `fileCreate` access error, fix Shopify app scopes first instead of debugging the Lambda seam.
 
+### eBay publish and image flows
+
+Code paths:
+
+- [src/components/EbayTab.tsx](/Users/user/Sites/airtable-shopify-ebay/src/components/EbayTab.tsx)
+- [src/components/ListingApprovalTab.tsx](/Users/user/Sites/airtable-shopify-ebay/src/components/ListingApprovalTab.tsx)
+- [src/components/imagelab/useImageLabItems.ts](/Users/user/Sites/airtable-shopify-ebay/src/components/imagelab/useImageLabItems.ts)
+
+Validate:
+
+- sample inventory draft creation uses `/api/ebay/sample-listings`
+- sample publish uses `/api/ebay/sample-listings/publish`
+- approval publish uses `/api/ebay/approval-listings/publish`
+- Image Lab eBay upload uses `/api/ebay/images`
+- Lambda error messages still surface the same configuration blockers for missing location or policy setup
+
 ## Exit Criteria
 
 This write slice is complete when all of the following are true:
@@ -238,5 +324,6 @@ This write slice is complete when all of the following are true:
 1. `npm run compare:lambda` remains green
 2. `npm run probe:lambda:writes` succeeds for at least one scratch source
 3. `npm run probe:lambda:shopify` succeeds for a scratch Shopify flow or approved scratch product id
-4. users, inventory processing, approval save flows, and Shopify publish/image flows work through the local API
-5. no write-path payload or error-surface mismatch remains open
+4. `npm run probe:lambda:ebay` succeeds for a scratch eBay publish or image-upload flow
+5. users, inventory processing, approval save flows, Shopify publish/image flows, and eBay publish/image flows work through the local API
+6. no write-path payload or error-surface mismatch remains open

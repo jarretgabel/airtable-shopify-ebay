@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import dotenv from 'dotenv';
+import { resolveLocalApiOrigin } from './local-api-origin.mjs';
 
 const cwd = process.cwd();
 
@@ -27,10 +28,6 @@ function requireEnv(name) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value;
-}
-
-function normalizeOrigin(value) {
-  return (value || 'http://127.0.0.1:3001').replace(/\/$/, '');
 }
 
 function parseJsonEnv(name) {
@@ -91,11 +88,7 @@ async function main() {
     return;
   }
 
-  const lambdaOrigin = normalizeOrigin(
-    getOptionalEnv('LAMBDA_API_ORIGIN')
-      || getOptionalEnv('VITE_APP_API_PROXY_TARGET')
-      || getOptionalEnv('VITE_APP_API_BASE_URL'),
-  );
+  const lambdaOrigin = await resolveLocalApiOrigin(getOptionalEnv);
   const source = validateSource(requireEnv('LAMBDA_WRITE_PROBE_SOURCE'));
   const createFields = parseJsonEnv('LAMBDA_WRITE_PROBE_CREATE_FIELDS_JSON');
   const updateFields = parseJsonEnv('LAMBDA_WRITE_PROBE_UPDATE_FIELDS_JSON');

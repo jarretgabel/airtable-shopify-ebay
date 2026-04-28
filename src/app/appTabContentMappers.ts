@@ -54,12 +54,12 @@ type EbayInput = Pick<
   | 'ebayRestoringSession'
   | 'ebayLoading'
   | 'ebayError'
+  | 'ebayRuntimeConfig'
   | 'ebayInventoryItems'
   | 'ebayOffers'
   | 'ebayRecentListings'
   | 'ebayTotal'
   | 'ebayRefetch'
-  | 'ebayDisconnect'
 >;
 
 type AirtableInput = Pick<
@@ -102,6 +102,9 @@ export function buildEbayTabViewModel(input: EbayInput): EbayTabViewModel {
       loading: input.ebayLoading,
       error: input.ebayError,
     },
+    config: {
+      runtimeConfig: input.ebayRuntimeConfig,
+    },
     inventory: {
       items: input.ebayInventoryItems,
       offers: input.ebayOffers,
@@ -110,7 +113,6 @@ export function buildEbayTabViewModel(input: EbayInput): EbayTabViewModel {
     },
     actions: {
       refetch: input.ebayRefetch,
-      disconnect: input.ebayDisconnect,
     },
   };
 }

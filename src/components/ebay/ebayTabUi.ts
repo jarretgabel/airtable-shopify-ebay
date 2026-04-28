@@ -1,4 +1,6 @@
-import { ebayConfig, type EbayOffer } from '@/services/ebay';
+import type { EbayOffer } from '@/services/ebay/types';
+
+export type EbayEnvironment = 'sandbox' | 'production';
 
 export function offerForSku(offers: EbayOffer[], sku: string): EbayOffer | undefined {
   return offers.find((offer) => offer.sku === sku);
@@ -18,15 +20,15 @@ export function statusLabel(status?: string) {
   return 'No offer';
 }
 
-export function listingUrl(offer?: EbayOffer): string | null {
+export function listingUrl(offer: EbayOffer | undefined, environment: EbayEnvironment): string | null {
   if (!offer?.listingId) return null;
-  const base = ebayConfig.env === 'production' ? 'https://www.ebay.com/itm/' : 'https://www.sandbox.ebay.com/itm/';
+  const base = environment === 'production' ? 'https://www.ebay.com/itm/' : 'https://www.sandbox.ebay.com/itm/';
   return `${base}${encodeURIComponent(offer.listingId)}`;
 }
 
-export function listingUrlFromId(listingId?: string): string | null {
+export function listingUrlFromId(listingId: string | undefined, environment: EbayEnvironment): string | null {
   if (!listingId) return null;
-  const base = ebayConfig.env === 'production' ? 'https://www.ebay.com/itm/' : 'https://www.sandbox.ebay.com/itm/';
+  const base = environment === 'production' ? 'https://www.ebay.com/itm/' : 'https://www.sandbox.ebay.com/itm/';
   return `${base}${encodeURIComponent(listingId)}`;
 }
 

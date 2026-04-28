@@ -27,6 +27,21 @@ Defined in [aws/template.yaml](/Users/user/Sites/airtable-shopify-ebay/aws/templ
   - `/api/shopify/products/{productId}/collections`
   - `/api/shopify/products/{productId}/category`
   - `/api/shopify/images`
+- eBay routes
+  - `/api/ebay/inventory-items`
+  - `/api/ebay/offers`
+  - `/api/ebay/offers/{offerId}`
+  - `/api/ebay/offers/by-skus`
+  - `/api/ebay/taxonomy/suggestions`
+  - `/api/ebay/taxonomy/root-categories`
+  - `/api/ebay/taxonomy/child-categories`
+  - `/api/ebay/package-types`
+  - `/api/ebay/runtime-config`
+  - `/api/ebay/dashboard-snapshot`
+  - `/api/ebay/sample-listings`
+  - `/api/ebay/sample-listings/publish`
+  - `/api/ebay/approval-listings/publish`
+  - `/api/ebay/images`
 - JotForm routes
   - `/api/jotform/forms`
   - `/api/jotform/forms/{formId}/submissions`
@@ -35,12 +50,11 @@ Defined in [aws/template.yaml](/Users/user/Sites/airtable-shopify-ebay/aws/templ
 - Gmail route
   - `/api/gmail/send`
 
-## What is not in the current AWS package
+## What is still not in the current AWS package
 
-- eBay Sell API routes are not currently deployed through this Lambda package.
-- Do not plan an `/api/ebay/*` production cutover from this checklist alone.
-- eBay publish/listing creation still depends on the current browser-side/token-side setup until a later migration package adds eBay Lambda routes.
-- eBay approval data can still participate in the staged cutover below because those screens save through the deployed Airtable configured-record routes rather than dedicated `/api/ebay/*` routes.
+- eBay business policy discovery is still manual. Policy IDs must be supplied through deploy-time Lambda config.
+- Scratch eBay probe cleanup is still manual. Probe-created offers and listings are not auto-deleted.
+- Approval record persistence still uses the Airtable configured-record routes; only the final eBay publish/image steps moved to dedicated eBay routes.
 
 ## Required AWS-side runtime secrets and config
 
@@ -76,6 +90,28 @@ Important external dependency:
   - `write_images`
   - `write_themes`
 - And the acting Shopify user must have create-files permission.
+
+### Required for eBay routes
+
+- `EBAY_CLIENT_ID`
+- `EBAY_CLIENT_SECRET`
+- `EBAY_REFRESH_TOKEN`
+- `EBAY_LOCATION_KEY`
+- `EBAY_FULFILLMENT_POLICY_ID`
+- `EBAY_PAYMENT_POLICY_ID`
+- `EBAY_RETURN_POLICY_ID`
+
+Optional overrides:
+
+- `EBAY_ENV`
+- `EBAY_AUTH_HOST`
+- `EBAY_APP_SCOPE`
+- `EBAY_LOCATION_NAME`
+- `EBAY_LOCATION_COUNTRY`
+- `EBAY_LOCATION_POSTAL_CODE`
+- `EBAY_LOCATION_CITY`
+- `EBAY_LOCATION_STATE`
+- `EBAY_LISTING_API`
 
 ### Required for JotForm routes
 
@@ -117,6 +153,25 @@ Use this mapping when moving from `.env.local` to deployed Lambda configuration.
 - `VITE_SHOPIFY_STORE_DOMAIN` -> `SHOPIFY_STORE_DOMAIN`
 - `VITE_SHOPIFY_OAUTH_ACCESS_TOKEN` or `VITE_SHOPIFY_ADMIN_API_TOKEN` -> `SHOPIFY_ACCESS_TOKEN`
 
+### eBay
+
+- `VITE_EBAY_ENV` -> `EBAY_ENV`
+- `VITE_EBAY_CLIENT_ID` -> `EBAY_CLIENT_ID`
+- `VITE_EBAY_CLIENT_SECRET` -> `EBAY_CLIENT_SECRET`
+- `VITE_EBAY_REFRESH_TOKEN` -> `EBAY_REFRESH_TOKEN`
+- `VITE_EBAY_AUTH_HOST` -> `EBAY_AUTH_HOST`
+- `VITE_EBAY_APP_SCOPE` -> `EBAY_APP_SCOPE`
+- `VITE_EBAY_LOCATION_KEY` -> `EBAY_LOCATION_KEY`
+- `VITE_EBAY_LOCATION_NAME` -> `EBAY_LOCATION_NAME`
+- `VITE_EBAY_LOCATION_COUNTRY` -> `EBAY_LOCATION_COUNTRY`
+- `VITE_EBAY_LOCATION_POSTAL_CODE` -> `EBAY_LOCATION_POSTAL_CODE`
+- `VITE_EBAY_LOCATION_CITY` -> `EBAY_LOCATION_CITY`
+- `VITE_EBAY_LOCATION_STATE` -> `EBAY_LOCATION_STATE`
+- `VITE_EBAY_FULFILLMENT_POLICY_ID` -> `EBAY_FULFILLMENT_POLICY_ID`
+- `VITE_EBAY_PAYMENT_POLICY_ID` -> `EBAY_PAYMENT_POLICY_ID`
+- `VITE_EBAY_RETURN_POLICY_ID` -> `EBAY_RETURN_POLICY_ID`
+- `VITE_EBAY_LISTING_API` -> `EBAY_LISTING_API`
+
 ### JotForm
 
 - `VITE_JOTFORM_API_KEY` -> `JOTFORM_API_KEY`
@@ -140,7 +195,7 @@ Use:
 - AWS Systems Manager Parameter Store `SecureString` for secrets
 - CloudWatch Logs for handler logs
 
-You do not need DynamoDB for the current package unless you are also taking on a later eBay/session redesign.
+You do not need DynamoDB for the current package.
 
 ## Deployment steps
 
@@ -213,6 +268,8 @@ VITE_USE_LAMBDA_AIRTABLE=true
 VITE_USE_LAMBDA_SHOPIFY=true
 VITE_USE_LAMBDA_JOTFORM=true
 ```
+
+The eBay UI is now app-api backed by default and no longer has a browser-direct mode.
 
 Optional:
 

@@ -1,8 +1,9 @@
 import type { AirtableRecord } from '@/types/airtable';
 import type { JotFormSubmission } from '@/types/jotform';
 import type { HiFiSharkListing } from '@/types/hifishark';
-import type { EbayInventoryItem, EbayOffer } from '@/services/ebay';
+import type { EbayInventoryItem, EbayOffer } from '@/services/ebay/types';
 import type { EbayPublishedListing } from '@/hooks/useEbayListings';
+import type { EbayRuntimeConfig } from '@/services/app-api/ebay';
 import type { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
 import type { useShopifyProducts } from '@/hooks/useShopifyProducts';
 import type { Tab } from '@/app/appNavigation';
@@ -69,6 +70,7 @@ export interface AppTabContentProps {
   ebayRestoringSession: boolean;
   ebayLoading: boolean;
   ebayError: string | null;
+  ebayRuntimeConfig: EbayRuntimeConfig | null;
   ebayInventoryItems: EbayInventoryItem[];
   ebayOffers: EbayOffer[];
   ebayRecentListings: EbayPublishedListing[];
@@ -76,7 +78,6 @@ export interface AppTabContentProps {
   ebayPublishedCount: number;
   ebayDraftCount: number;
   ebayRefetch: () => void;
-  ebayDisconnect: () => void;
   sharkLoading: boolean;
   sharkError: Error | null;
   sharkListings: HiFiSharkListing[];

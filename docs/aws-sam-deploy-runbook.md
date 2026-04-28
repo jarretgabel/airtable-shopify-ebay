@@ -10,7 +10,6 @@ This runbook covers the current SAM package in [aws/template.yaml](/Users/user/S
 
 It does not cover:
 
-- eBay Lambda deployment
 - custom domain setup
 - CI/CD pipeline automation
 - full secret rotation policy

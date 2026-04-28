@@ -3,7 +3,7 @@ import {
   getRecordsFromResolvedSource,
   updateRecordFromResolvedSource,
 } from '@/services/app-api/airtable';
-import { getInventoryItems, getOffersForInventorySkus } from '@/services/ebay';
+import { getInventoryItems, getOffersForInventorySkus } from '@/services/app-api/ebay';
 import { buildShopifyCollectionIdsFromApprovalFields } from '@/services/shopifyDraftFromAirtable';
 import { logServiceInfo } from '@/services/logger';
 import {

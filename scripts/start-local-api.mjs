@@ -11,6 +11,20 @@ const awsDir = path.join(cwd, 'aws');
 const defaultPort = Number(process.env.LOCAL_API_PORT || '3001');
 
 const ROUTES = [
+  ['GET', '/api/ebay/inventory-items', 'handlers/ebay/getInventoryItems.js', 'handler'],
+  ['GET', '/api/ebay/offers', 'handlers/ebay/getOffers.js', 'handler'],
+  ['GET', '/api/ebay/offers/{offerId}', 'handlers/ebay/getOffer.js', 'handler'],
+  ['POST', '/api/ebay/offers/by-skus', 'handlers/ebay/getOffersForInventorySkus.js', 'handler'],
+  ['GET', '/api/ebay/taxonomy/suggestions', 'handlers/ebay/searchCategorySuggestions.js', 'handler'],
+  ['GET', '/api/ebay/taxonomy/root-categories', 'handlers/ebay/getRootCategories.js', 'handler'],
+  ['GET', '/api/ebay/taxonomy/child-categories', 'handlers/ebay/getChildCategories.js', 'handler'],
+  ['GET', '/api/ebay/package-types', 'handlers/ebay/getPackageTypes.js', 'handler'],
+  ['GET', '/api/ebay/runtime-config', 'handlers/ebay/getRuntimeConfig.js', 'handler'],
+  ['GET', '/api/ebay/dashboard-snapshot', 'handlers/ebay/getDashboardSnapshot.js', 'handler'],
+  ['POST', '/api/ebay/sample-listings', 'handlers/ebay/createSampleListing.js', 'handler'],
+  ['POST', '/api/ebay/sample-listings/publish', 'handlers/ebay/publishSampleDraftListing.js', 'handler'],
+  ['POST', '/api/ebay/approval-listings/publish', 'handlers/ebay/pushApprovalBundle.js', 'handler'],
+  ['POST', '/api/ebay/images', 'handlers/ebay/uploadImage.js', 'handler'],
   ['GET', '/api/shopify/products', 'handlers/shopify/getProducts.js', 'handler'],
   ['GET', '/api/shopify/products/{productId}', 'handlers/shopify/getProduct.js', 'handler'],
   ['GET', '/api/shopify/collections', 'handlers/shopify/getCollections.js', 'handler'],
@@ -101,6 +115,23 @@ function setAwsEnv() {
   process.env.SHOPIFY_ADMIN_API_TOKEN = getOptionalEnv(mergedEnv, 'VITE_SHOPIFY_ADMIN_API_TOKEN');
   process.env.SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_OAUTH_ACCESS_TOKEN || process.env.SHOPIFY_ADMIN_API_TOKEN;
   process.env.SHOPIFY_LOCATION_ID = getOptionalEnv(mergedEnv, 'VITE_SHOPIFY_LOCATION_ID');
+
+  process.env.EBAY_ENV = getOptionalEnv(mergedEnv, 'VITE_EBAY_ENV');
+  process.env.EBAY_CLIENT_ID = getOptionalEnv(mergedEnv, 'VITE_EBAY_CLIENT_ID');
+  process.env.EBAY_CLIENT_SECRET = getOptionalEnv(mergedEnv, 'VITE_EBAY_CLIENT_SECRET');
+  process.env.EBAY_REFRESH_TOKEN = getOptionalEnv(mergedEnv, 'VITE_EBAY_REFRESH_TOKEN');
+  process.env.EBAY_AUTH_HOST = getOptionalEnv(mergedEnv, 'VITE_EBAY_AUTH_HOST');
+  process.env.EBAY_APP_SCOPE = getOptionalEnv(mergedEnv, 'VITE_EBAY_APP_SCOPE');
+  process.env.EBAY_LOCATION_KEY = getOptionalEnv(mergedEnv, 'VITE_EBAY_LOCATION_KEY');
+  process.env.EBAY_LOCATION_NAME = getOptionalEnv(mergedEnv, 'VITE_EBAY_LOCATION_NAME');
+  process.env.EBAY_LOCATION_COUNTRY = getOptionalEnv(mergedEnv, 'VITE_EBAY_LOCATION_COUNTRY');
+  process.env.EBAY_LOCATION_POSTAL_CODE = getOptionalEnv(mergedEnv, 'VITE_EBAY_LOCATION_POSTAL_CODE');
+  process.env.EBAY_LOCATION_CITY = getOptionalEnv(mergedEnv, 'VITE_EBAY_LOCATION_CITY');
+  process.env.EBAY_LOCATION_STATE = getOptionalEnv(mergedEnv, 'VITE_EBAY_LOCATION_STATE');
+  process.env.EBAY_FULFILLMENT_POLICY_ID = getOptionalEnv(mergedEnv, 'VITE_EBAY_FULFILLMENT_POLICY_ID');
+  process.env.EBAY_PAYMENT_POLICY_ID = getOptionalEnv(mergedEnv, 'VITE_EBAY_PAYMENT_POLICY_ID');
+  process.env.EBAY_RETURN_POLICY_ID = getOptionalEnv(mergedEnv, 'VITE_EBAY_RETURN_POLICY_ID');
+  process.env.EBAY_LISTING_API = getOptionalEnv(mergedEnv, 'VITE_EBAY_LISTING_API');
 
   process.env.GOOGLE_GMAIL_ACCESS_TOKEN = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_GMAIL_ACCESS_TOKEN');
   process.env.GOOGLE_GMAIL_FROM_EMAIL = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_GMAIL_FROM_EMAIL');

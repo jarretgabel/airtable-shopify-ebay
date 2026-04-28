@@ -4,6 +4,7 @@ import type { Tab } from '@/app/appNavigation';
 import type { JotFormSubmission } from '@/types/jotform';
 import type { HiFiSharkListing } from '@/types/hifishark';
 import type { EbayListingsState } from '@/hooks/useEbayListings';
+import type { EbayRuntimeConfig } from '@/services/app-api/ebay';
 import type { useShopifyProducts } from '@/hooks/useShopifyProducts';
 
 export interface DashboardTabViewModel {
@@ -91,6 +92,9 @@ export interface EbayTabViewModel {
     loading: boolean;
     error: string | null;
   };
+  config: {
+    runtimeConfig: EbayRuntimeConfig | null;
+  };
   inventory: {
     items: EbayListingsState['inventoryItems'];
     offers: EbayListingsState['offers'];
@@ -99,7 +103,6 @@ export interface EbayTabViewModel {
   };
   actions: {
     refetch: () => void;
-    disconnect: () => void;
   };
 }
 

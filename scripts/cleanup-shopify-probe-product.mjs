@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
 const cwd = process.cwd();
@@ -40,12 +41,18 @@ function normalizeStoreDomain(rawDomain) {
     .replace(/\/+$/, '');
 }
 
-async function main() {
-  const productIdRaw = process.argv[2] || getOptionalEnv('SHOPIFY_CLEANUP_PRODUCT_ID');
-  const productId = Number(productIdRaw);
+function resolveProductId(productIdInput) {
+  const productId = Number(productIdInput);
   if (!Number.isInteger(productId) || productId <= 0) {
     throw new Error('Provide a numeric Shopify product id as the first argument or SHOPIFY_CLEANUP_PRODUCT_ID.');
   }
+
+  return productId;
+}
+
+export async function cleanupShopifyProbeProduct(options = {}) {
+  const productIdRaw = options.productId ?? process.argv[2] ?? getOptionalEnv('SHOPIFY_CLEANUP_PRODUCT_ID');
+  const productId = resolveProductId(productIdRaw);
 
   const storeDomain = normalizeStoreDomain(requireEnv('VITE_SHOPIFY_STORE_DOMAIN'));
   const accessToken = getOptionalEnv('VITE_SHOPIFY_OAUTH_ACCESS_TOKEN') || getOptionalEnv('VITE_SHOPIFY_ADMIN_API_TOKEN');
@@ -67,10 +74,22 @@ async function main() {
     throw new Error(`Failed to delete Shopify product ${productId}: ${response.status} ${text}`);
   }
 
-  console.log(`Deleted Shopify scratch product ${productId}.`);
+  if (options.log !== false) {
+    console.log(`Deleted Shopify scratch product ${productId}.`);
+  }
+
+  return { productId };
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
-});
+async function main() {
+  await cleanupShopifyProbeProduct();
+}
+
+const isDirectExecution = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+
+if (isDirectExecution) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  });
+}

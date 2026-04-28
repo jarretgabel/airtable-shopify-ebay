@@ -5,7 +5,7 @@ import {
   searchEbayCategorySuggestions,
   type EbayCategorySuggestion,
   type EbayCategoryTreeNode,
-} from '@/services/ebay';
+} from '@/services/app-api/ebay';
 
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';

@@ -32,6 +32,56 @@ Parameters:
   ShopifyAccessToken:
     Type: String
     NoEcho: true
+  EbayEnv:
+    Type: String
+    Default: ''
+  EbayClientId:
+    Type: String
+    Default: ''
+  EbayClientSecret:
+    Type: String
+    NoEcho: true
+    Default: ''
+  EbayRefreshToken:
+    Type: String
+    NoEcho: true
+    Default: ''
+  EbayAuthHost:
+    Type: String
+    Default: ''
+  EbayAppScope:
+    Type: String
+    Default: ''
+  EbayLocationKey:
+    Type: String
+    Default: ''
+  EbayLocationName:
+    Type: String
+    Default: ''
+  EbayLocationCountry:
+    Type: String
+    Default: ''
+  EbayLocationPostalCode:
+    Type: String
+    Default: ''
+  EbayLocationCity:
+    Type: String
+    Default: ''
+  EbayLocationState:
+    Type: String
+    Default: ''
+  EbayFulfillmentPolicyId:
+    Type: String
+    Default: ''
+  EbayPaymentPolicyId:
+    Type: String
+    Default: ''
+  EbayReturnPolicyId:
+    Type: String
+    Default: ''
+  EbayListingApi:
+    Type: String
+    Default: inventory
   JotformApiKey:
     Type: String
     NoEcho: true
@@ -79,6 +129,22 @@ Globals:
         AIRTABLE_COMBINED_LISTINGS_TABLE_NAME: !Ref AirtableCombinedListingsTableName
         SHOPIFY_STORE_DOMAIN: !Ref ShopifyStoreDomain
         SHOPIFY_ACCESS_TOKEN: !Ref ShopifyAccessToken
+        EBAY_ENV: !Ref EbayEnv
+        EBAY_CLIENT_ID: !Ref EbayClientId
+        EBAY_CLIENT_SECRET: !Ref EbayClientSecret
+        EBAY_REFRESH_TOKEN: !Ref EbayRefreshToken
+        EBAY_AUTH_HOST: !Ref EbayAuthHost
+        EBAY_APP_SCOPE: !Ref EbayAppScope
+        EBAY_LOCATION_KEY: !Ref EbayLocationKey
+        EBAY_LOCATION_NAME: !Ref EbayLocationName
+        EBAY_LOCATION_COUNTRY: !Ref EbayLocationCountry
+        EBAY_LOCATION_POSTAL_CODE: !Ref EbayLocationPostalCode
+        EBAY_LOCATION_CITY: !Ref EbayLocationCity
+        EBAY_LOCATION_STATE: !Ref EbayLocationState
+        EBAY_FULFILLMENT_POLICY_ID: !Ref EbayFulfillmentPolicyId
+        EBAY_PAYMENT_POLICY_ID: !Ref EbayPaymentPolicyId
+        EBAY_RETURN_POLICY_ID: !Ref EbayReturnPolicyId
+        EBAY_LISTING_API: !Ref EbayListingApi
         JOTFORM_API_KEY: !Ref JotformApiKey
         GITHUB_TOKEN: !If
           - HasGithubToken
@@ -277,6 +343,217 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: POST
             Path: /api/shopify/images
+
+  EbayGetInventoryItemsFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/getInventoryItems.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/ebay/inventory-items
+
+  EbayGetOffersFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/getOffers.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/ebay/offers
+
+  EbayGetOfferFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/getOffer.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/ebay/offers/{offerId}
+
+  EbayGetOffersForInventorySkusFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/getOffersForInventorySkus.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/ebay/offers/by-skus
+
+  EbaySearchCategorySuggestionsFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/searchCategorySuggestions.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/ebay/taxonomy/suggestions
+
+  EbayGetRootCategoriesFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/getRootCategories.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/ebay/taxonomy/root-categories
+
+  EbayGetChildCategoriesFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/getChildCategories.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/ebay/taxonomy/child-categories
+
+  EbayGetPackageTypesFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/getPackageTypes.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/ebay/package-types
+
+  EbayGetRuntimeConfigFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/getRuntimeConfig.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/ebay/runtime-config
+
+  EbayGetDashboardSnapshotFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/getDashboardSnapshot.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/ebay/dashboard-snapshot
+
+  EbayCreateSampleListingFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/createSampleListing.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/ebay/sample-listings
+
+  EbayPublishSampleDraftListingFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/publishSampleDraftListing.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/ebay/sample-listings/publish
+
+  EbayPushApprovalBundleFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/pushApprovalBundle.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/ebay/approval-listings/publish
+
+  EbayUploadImageFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/uploadImage.handler
+      Timeout: 30
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/ebay/images
 
   JotformGetFormsFunction:
     Type: AWS::Serverless::Function

@@ -7,7 +7,7 @@ import {
   isAllowOffersField,
   isShippingServiceField,
 } from '@/stores/approvalStore';
-import { getEbayPackageTypes } from '@/services/ebay';
+import { getEbayPackageTypes } from '@/services/app-api/ebay';
 import { searchCollections } from '@/services/app-api/shopify';
 import { buildShopifyBodyHtml } from '@/services/shopifyBodyHtml';
 import { buildEbayBodyHtmlFromTemplate } from '@/services/ebayBodyHtml';

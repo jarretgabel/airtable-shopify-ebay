@@ -9,7 +9,6 @@ const lambdaAiEnabled = ['1', 'true', 'yes', 'on'].includes((import.meta.env.VIT
 
 logMissingOptionalEnv([
   ...(lambdaAiEnabled ? [] : ['VITE_GITHUB_TOKEN', 'VITE_OPENAI_API_KEY']),
-  'VITE_EBAY_REFRESH_TOKEN',
 ])
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

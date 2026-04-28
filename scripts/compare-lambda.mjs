@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { execFileSync } from 'node:child_process';
+import net from 'node:net';
 import { pathToFileURL } from 'node:url';
 import dotenv from 'dotenv';
 
@@ -32,9 +33,62 @@ function getOptionalEnv(name) {
   return value || '';
 }
 
+function setAwsEnv() {
+  process.env.EBAY_ENV = getOptionalEnv('VITE_EBAY_ENV');
+  process.env.EBAY_CLIENT_ID = getOptionalEnv('VITE_EBAY_CLIENT_ID');
+  process.env.EBAY_CLIENT_SECRET = getOptionalEnv('VITE_EBAY_CLIENT_SECRET');
+  process.env.EBAY_REFRESH_TOKEN = getOptionalEnv('VITE_EBAY_REFRESH_TOKEN');
+  process.env.EBAY_AUTH_HOST = getOptionalEnv('VITE_EBAY_AUTH_HOST');
+  process.env.EBAY_APP_SCOPE = getOptionalEnv('VITE_EBAY_APP_SCOPE');
+}
+
+function hasEbayRuntimeConfig() {
+  return Boolean(getOptionalEnv('VITE_EBAY_CLIENT_ID') && getOptionalEnv('VITE_EBAY_CLIENT_SECRET') && getOptionalEnv('VITE_EBAY_REFRESH_TOKEN'));
+}
+
 function normalizeLambdaOrigin(value) {
-  if (!value) return 'http://127.0.0.1:3001';
   return value.replace(/\/$/, '');
+}
+
+function isTcpPortOpen(port, host = '127.0.0.1') {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    let settled = false;
+
+    const finalize = (result) => {
+      if (settled) return;
+      settled = true;
+      socket.destroy();
+      resolve(result);
+    };
+
+    socket.setTimeout(250);
+    socket.once('connect', () => finalize(true));
+    socket.once('timeout', () => finalize(false));
+    socket.once('error', () => finalize(false));
+    socket.connect(port, host);
+  });
+}
+
+async function resolveLambdaOrigin() {
+  const explicitOrigin = getOptionalEnv('LAMBDA_API_ORIGIN') || getOptionalEnv('VITE_APP_API_PROXY_TARGET') || getOptionalEnv('VITE_APP_API_BASE_URL');
+  if (explicitOrigin) {
+    return normalizeLambdaOrigin(explicitOrigin);
+  }
+
+  const candidatePorts = [
+    Number(getOptionalEnv('LOCAL_API_PORT') || '0'),
+    3001,
+    3002,
+  ].filter((port, index, ports) => Number.isInteger(port) && port > 0 && ports.indexOf(port) === index);
+
+  for (const port of candidatePorts) {
+    if (await isTcpPortOpen(port)) {
+      return `http://127.0.0.1:${port}`;
+    }
+  }
+
+  return 'http://127.0.0.1:3001';
 }
 
 async function fetchJson(url, options = {}) {
@@ -215,6 +269,18 @@ async function fetchLambdaConfiguredRecords(lambdaOrigin, source) {
   return fetchJson(url);
 }
 
+async function fetchLambdaEbayInventoryItems(lambdaOrigin) {
+  return fetchJson(`${lambdaOrigin}/api/ebay/inventory-items?limit=20`);
+}
+
+async function fetchLambdaEbayRootCategories(lambdaOrigin) {
+  return fetchJson(`${lambdaOrigin}/api/ebay/taxonomy/root-categories?marketplaceId=EBAY_US`);
+}
+
+async function fetchLambdaEbayPackageTypes(lambdaOrigin) {
+  return fetchJson(`${lambdaOrigin}/api/ebay/package-types?marketplaceId=EBAY_US`);
+}
+
 function sampleIds(items, count = 5) {
   return items.slice(0, count).map((item) => item?.id ?? '');
 }
@@ -255,6 +321,27 @@ function compareArrays(label, direct, lambda, requiredKeys) {
   return failures;
 }
 
+function comparePrimitiveArrays(label, direct, lambda) {
+  const failures = [];
+
+  if (!Array.isArray(direct) || !Array.isArray(lambda)) {
+    failures.push('one side did not return an array');
+    return failures;
+  }
+
+  if (direct.length !== lambda.length) {
+    failures.push(`length mismatch: direct=${direct.length}, lambda=${lambda.length}`);
+  }
+
+  const directSample = direct.slice(0, 10);
+  const lambdaSample = lambda.slice(0, 10);
+  if (JSON.stringify(directSample) !== JSON.stringify(lambdaSample)) {
+    failures.push(`sample mismatch: direct=${JSON.stringify(directSample)} lambda=${JSON.stringify(lambdaSample)}`);
+  }
+
+  return failures;
+}
+
 function printResult(label, failures) {
   if (failures.length === 0) {
     console.log(`OK  ${label}`);
@@ -266,8 +353,9 @@ function printResult(label, failures) {
 }
 
 async function main() {
-  const lambdaOrigin = normalizeLambdaOrigin(getOptionalEnv('LAMBDA_API_ORIGIN') || getOptionalEnv('VITE_APP_API_PROXY_TARGET') || getOptionalEnv('VITE_APP_API_BASE_URL'));
+  const lambdaOrigin = await resolveLambdaOrigin();
 
+  setAwsEnv();
   buildAwsDist();
 
   console.log('Comparing direct provider responses to Lambda responses');
@@ -323,6 +411,41 @@ async function main() {
     printResult(`Airtable ${source}`, failures);
   }
 
+  let ebayFailures = [];
+  if (hasEbayRuntimeConfig()) {
+    const ebayProvider = await import(pathToFileURL(path.join(cwd, 'aws', 'dist', 'providers', 'ebay', 'client.js')).href);
+
+    const directInventoryPage = await ebayProvider.getInventoryItems(20);
+    const lambdaInventoryPage = await fetchLambdaEbayInventoryItems(lambdaOrigin);
+    const inventoryReadFailures = compareArrays(
+      'eBay inventory items',
+      directInventoryPage.inventoryItems,
+      lambdaInventoryPage.inventoryItems,
+      ['sku'],
+    );
+    ebayFailures.push(...inventoryReadFailures);
+    printResult('eBay inventory items', inventoryReadFailures);
+
+    const directRootCategories = await ebayProvider.getEbayRootCategories('EBAY_US');
+    const lambdaRootCategories = await fetchLambdaEbayRootCategories(lambdaOrigin);
+    const rootCategoryFailures = compareArrays(
+      'eBay root categories',
+      directRootCategories,
+      lambdaRootCategories,
+      ['id', 'name', 'path', 'level', 'hasChildren'],
+    );
+    ebayFailures.push(...rootCategoryFailures);
+    printResult('eBay root categories', rootCategoryFailures);
+
+    const directPackageTypes = await ebayProvider.getEbayPackageTypes('EBAY_US');
+    const lambdaPackageTypes = await fetchLambdaEbayPackageTypes(lambdaOrigin);
+    const packageTypeFailures = comparePrimitiveArrays('eBay package types', directPackageTypes, lambdaPackageTypes);
+    ebayFailures.push(...packageTypeFailures);
+    printResult('eBay package types', packageTypeFailures);
+  } else {
+    console.log('SKIP  eBay parity checks (missing VITE_EBAY_CLIENT_ID / VITE_EBAY_CLIENT_SECRET / VITE_EBAY_REFRESH_TOKEN)');
+  }
+
   const allFailures = [
     ...jotformFormsFailures,
     ...jotformSubmissionsFailures,
@@ -330,6 +453,7 @@ async function main() {
     ...usersFailures,
     ...inventoryFailures,
     ...approvalFailures,
+    ...ebayFailures,
   ];
 
   console.log('');

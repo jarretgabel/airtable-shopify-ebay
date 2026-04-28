@@ -76,19 +76,19 @@ Move Shopify product reads, upserts, and media-related requests behind Lambda en
 - Keep staged upload and collection assignment behavior aligned with the current flow.
 - If staged media forwarding is awkward in Lambda, isolate that subflow behind S3-presigned upload mediation rather than expanding scope for all Shopify calls.
 
-### Phase 5: eBay read proxy
+### Phase 5: eBay Lambda cutover
 
-Move eBay inventory, offers, taxonomy, and other read-only operations behind Lambda while initially preserving current browser session behavior if needed.
+Move eBay inventory, offers, taxonomy, package types, sample publish, approval publish, hosted image upload, and runtime configuration behind Lambda.
 
-- The first pass can accept the current access token or a server token reference, whichever is less disruptive.
-- The purpose of this phase is to decouple the UI from direct eBay API structure before changing OAuth or session ownership.
+- The current implementation now uses server-owned refresh credentials and deploy-time publish defaults.
+- The browser-side OAuth, refresh-token, and localStorage session path has been removed.
 
-### Phase 6: eBay OAuth and token redesign
+### Phase 6: Optional multi-user eBay session redesign
 
-Move OAuth exchange, refresh, token storage, and eBay account configuration fully server-side using DynamoDB plus encrypted secret or session storage.
+Only needed if the product later requires per-user eBay identity instead of the current server-owned seller account.
 
-- Replace localStorage-driven refresh flows with server-owned session handling.
-- Prefer secure httpOnly cookies plus server-side session storage over long-lived browser tokens.
+- A future design could use httpOnly cookies plus server-side session storage.
+- DynamoDB is not required for the current single-seller Lambda-backed architecture.
 
 ### Phase 7: Listing publish orchestration
 
@@ -115,13 +115,13 @@ Move HiFiShark and public eBay scraping behind Lambda after the critical token-b
 ### Sequential core path
 
 - Airtable reads before Airtable writes.
-- eBay reads before eBay OAuth and token redesign.
+- eBay read and write routes before any optional multi-user session redesign.
 - Publish orchestration after Shopify and eBay are already Lambda-backed.
 
 ### Safety rules
 
 - Every migration phase must ship with a feature flag or environment switch to revert that single integration.
-- Do not remove the direct or proxy implementation until the Lambda path has passed local and production-like validation.
+- Do not remove a legacy implementation until the Lambda path has passed local and production-like validation.
 
 ## AWS Target Shape
 
@@ -348,7 +348,7 @@ Validation rules:
 ## Key Decisions
 
 - Keep the current frontend hosting path and add API Gateway plus Lambda beside it.
-- Preserve current browser session behavior in early phases and redesign eBay or broader session ownership later.
+- Keep the current frontend hosting path and add API Gateway plus Lambda beside it.
 - The first package should avoid a generic Airtable passthrough.
 - The first package should avoid changing UI error presentation.
 - Because the current TypeScript config scopes do not cover Lambda code, the AWS work should have its own `aws/tsconfig.json`.
@@ -360,9 +360,6 @@ Validation rules:
 - `src/services/airtable/service.ts`
 - `src/services/inventoryDirectory.ts`
 - `src/services/shopify.ts`
-- `src/services/ebay/inventory.ts`
-- `src/services/ebay/token.ts`
-- `src/services/ebay/tokenOAuth.ts`
 - `src/services/jotform.ts`
 - `src/services/equipmentAI.ts`
 - `src/stores/auth/authStorage.ts`
