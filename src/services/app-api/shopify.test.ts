@@ -13,42 +13,13 @@ import {
 } from '@/services/app-api/shopify';
 import type { ShopifyUnifiedProductSetRequest } from '@/services/shopify';
 
-vi.mock('@/services/shopify', () => ({
-  shopifyService: {
-    getCollections: vi.fn(),
-    getProduct: vi.fn(),
-    getProducts: vi.fn(),
-    addProductToCollections: vi.fn(),
-    resolveTaxonomyCategory: vi.fn(),
-    searchCollections: vi.fn(),
-    searchTaxonomyCategories: vi.fn(),
-    updateProductCategory: vi.fn(),
-    uploadImageFile: vi.fn(),
-    upsertExistingProductWithCollectionsInSingleMutation: vi.fn(),
-    upsertProductWithUnifiedRequest: vi.fn(),
-  },
-}));
-
 describe('app-api shopify', () => {
   const fetchMock = vi.fn<typeof fetch>();
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
-    vi.stubEnv('VITE_USE_LAMBDA_SHOPIFY', 'false');
     vi.stubEnv('VITE_APP_API_BASE_URL', '');
     fetchMock.mockReset();
-    const mod = await import('@/services/shopify');
-    vi.mocked(mod.shopifyService.addProductToCollections).mockReset();
-    vi.mocked(mod.shopifyService.getCollections).mockReset();
-    vi.mocked(mod.shopifyService.getProduct).mockReset();
-    vi.mocked(mod.shopifyService.getProducts).mockReset();
-    vi.mocked(mod.shopifyService.resolveTaxonomyCategory).mockReset();
-    vi.mocked(mod.shopifyService.searchCollections).mockReset();
-    vi.mocked(mod.shopifyService.searchTaxonomyCategories).mockReset();
-    vi.mocked(mod.shopifyService.updateProductCategory).mockReset();
-    vi.mocked(mod.shopifyService.uploadImageFile).mockReset();
-    vi.mocked(mod.shopifyService.upsertExistingProductWithCollectionsInSingleMutation).mockReset();
-    vi.mocked(mod.shopifyService.upsertProductWithUnifiedRequest).mockReset();
   });
 
   afterEach(() => {
@@ -56,19 +27,7 @@ describe('app-api shopify', () => {
     vi.unstubAllGlobals();
   });
 
-  it('delegates to the direct Shopify service when Lambda mode is off', async () => {
-    const mod = await import('@/services/shopify');
-    vi.mocked(mod.shopifyService.getProducts).mockResolvedValue([{ id: 1, title: 'Amp', created_at: 'now', updated_at: 'now' } as never]);
-
-    const result = await getProducts(250);
-
-    expect(mod.shopifyService.getProducts).toHaveBeenCalledWith(250);
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(result).toEqual([{ id: 1, title: 'Amp', created_at: 'now', updated_at: 'now' }]);
-  });
-
-  it('calls the Lambda Shopify endpoint when Lambda mode is on', async () => {
-    vi.stubEnv('VITE_USE_LAMBDA_SHOPIFY', 'true');
+  it('calls the Lambda Shopify products endpoint', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify([{ id: 2, title: 'DAC', created_at: 'later', updated_at: 'later' }]), {
         status: 200,
@@ -85,7 +44,6 @@ describe('app-api shopify', () => {
   });
 
   it('rethrows Lambda Shopify failures as plain Errors', async () => {
-    vi.stubEnv('VITE_USE_LAMBDA_SHOPIFY', 'true');
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({
         message: 'Shopify API error: HTTP 401 on /products.json',
@@ -103,19 +61,7 @@ describe('app-api shopify', () => {
     });
   });
 
-  it('delegates collection search to the direct Shopify service when Lambda mode is off', async () => {
-    const mod = await import('@/services/shopify');
-    vi.mocked(mod.shopifyService.searchCollections).mockResolvedValue([{ id: 'gid://shopify/Collection/1', title: 'Pedals', handle: 'pedals' }]);
-
-    const result = await searchCollections('pedals', 25);
-
-    expect(mod.shopifyService.searchCollections).toHaveBeenCalledWith('pedals', 25);
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(result).toEqual([{ id: 'gid://shopify/Collection/1', title: 'Pedals', handle: 'pedals' }]);
-  });
-
-  it('calls the Lambda taxonomy resolve endpoint when Lambda mode is on', async () => {
-    vi.stubEnv('VITE_USE_LAMBDA_SHOPIFY', 'true');
+  it('calls the Lambda taxonomy resolve endpoint', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({
         id: 'gid://shopify/TaxonomyCategory/sg-1',
@@ -141,8 +87,7 @@ describe('app-api shopify', () => {
     });
   });
 
-  it('calls the Lambda collection and product read endpoints when Lambda mode is on', async () => {
-    vi.stubEnv('VITE_USE_LAMBDA_SHOPIFY', 'true');
+  it('calls the Lambda collection and product read endpoints', async () => {
     fetchMock
       .mockResolvedValueOnce(
         new Response(JSON.stringify([{ id: 'gid://shopify/Collection/2', title: 'Synths', handle: 'synths' }]), {
@@ -192,34 +137,7 @@ describe('app-api shopify', () => {
     expect(searchedCollections).toHaveLength(1);
   });
 
-  it('delegates write mutations to the direct Shopify service when Lambda mode is off', async () => {
-    const mod = await import('@/services/shopify');
-    const request = { input: { title: 'Amp' }, synchronous: true } as never;
-    vi.mocked(mod.shopifyService.upsertProductWithUnifiedRequest).mockResolvedValue({
-      id: 9,
-      adminGraphqlApiId: 'gid://shopify/Product/9',
-      title: 'Amp',
-      status: 'DRAFT',
-    });
-    vi.mocked(mod.shopifyService.upsertExistingProductWithCollectionsInSingleMutation).mockResolvedValue({
-      product: { id: 9, adminGraphqlApiId: 'gid://shopify/Product/9', title: 'Amp', status: 'DRAFT' },
-      collectionFailures: [],
-    });
-    vi.mocked(mod.shopifyService.addProductToCollections).mockResolvedValue();
-
-    const upserted = await upsertProductWithUnifiedRequest(request);
-    const combined = await upsertExistingProductWithCollectionsInSingleMutation(request, ['gid://shopify/Collection/1']);
-    await addProductToCollections(9, ['gid://shopify/Collection/1']);
-
-    expect(mod.shopifyService.upsertProductWithUnifiedRequest).toHaveBeenCalledWith(request);
-    expect(mod.shopifyService.upsertExistingProductWithCollectionsInSingleMutation).toHaveBeenCalledWith(request, ['gid://shopify/Collection/1']);
-    expect(mod.shopifyService.addProductToCollections).toHaveBeenCalledWith(9, ['gid://shopify/Collection/1']);
-    expect(upserted.id).toBe(9);
-    expect(combined.collectionFailures).toEqual([]);
-  });
-
-  it('calls the Lambda Shopify mutation endpoints when Lambda mode is on', async () => {
-    vi.stubEnv('VITE_USE_LAMBDA_SHOPIFY', 'true');
+  it('calls the Lambda Shopify mutation endpoints', async () => {
     const request: ShopifyUnifiedProductSetRequest = { input: { title: 'Amp' }, synchronous: true };
     fetchMock
       .mockResolvedValueOnce(
@@ -276,25 +194,7 @@ describe('app-api shopify', () => {
     expect(combined.collectionFailures).toEqual(['gid://shopify/Collection/2: denied']);
   });
 
-  it('delegates category update and image upload to the direct Shopify service when Lambda mode is off', async () => {
-    const mod = await import('@/services/shopify');
-    const file = new File(['abc'], 'photo.jpg', { type: 'image/jpeg' });
-    vi.mocked(mod.shopifyService.updateProductCategory).mockResolvedValue();
-    vi.mocked(mod.shopifyService.uploadImageFile).mockResolvedValue({
-      id: 'gid://shopify/MediaImage/1',
-      url: 'https://cdn.example.com/photo.jpg',
-    });
-
-    await updateProductCategory(11, 'gid://shopify/TaxonomyCategory/1');
-    const uploaded = await uploadImageFile(file, 'Front panel');
-
-    expect(mod.shopifyService.updateProductCategory).toHaveBeenCalledWith(11, 'gid://shopify/TaxonomyCategory/1');
-    expect(mod.shopifyService.uploadImageFile).toHaveBeenCalledWith(file, 'Front panel');
-    expect(uploaded.url).toBe('https://cdn.example.com/photo.jpg');
-  });
-
-  it('calls the Lambda Shopify category and image endpoints when Lambda mode is on', async () => {
-    vi.stubEnv('VITE_USE_LAMBDA_SHOPIFY', 'true');
+  it('calls the Lambda Shopify category and image endpoints', async () => {
     const file = new File(['abc'], 'photo.jpg', { type: 'image/jpeg' });
     fetchMock
       .mockResolvedValueOnce(

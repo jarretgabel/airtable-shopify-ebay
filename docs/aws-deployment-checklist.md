@@ -49,6 +49,16 @@ Defined in [aws/template.yaml](/Users/user/Sites/airtable-shopify-ebay/aws/templ
   - `/api/ai/identify-equipment`
 - Gmail route
   - `/api/gmail/send`
+- Auth routes
+  - `/api/auth/login`
+  - `/api/auth/session`
+  - `/api/auth/password-reset/request`
+  - `/api/auth/password-reset/confirm`
+  - `/api/auth/email-change/request`
+  - `/api/auth/email-change/confirm`
+  - `/api/auth/password/change`
+- HiFiShark route
+  - `/api/hifishark/model/{slug}`
 
 ## What is still not in the current AWS package
 
@@ -261,83 +271,60 @@ Update the frontend runtime to point at the deployed API:
 VITE_APP_API_BASE_URL=https://your-api-id.execute-api.your-region.amazonaws.com
 ```
 
-For deployed usage, enable the Lambda seams you want live:
+All supported integrations now use the backend `/api/*` seam by default.
 
-```env
-VITE_USE_LAMBDA_AIRTABLE=true
-VITE_USE_LAMBDA_SHOPIFY=true
-VITE_USE_LAMBDA_JOTFORM=true
-```
+- `VITE_APP_API_BASE_URL` is the only frontend routing variable needed for deployed split-origin setups.
+- If the frontend and API are served from the same origin, leave `VITE_APP_API_BASE_URL` blank.
+- `VITE_APP_API_PROXY_TARGET` is local-development-only and should stay unset in deployed environments.
+- AI and Gmail do not require frontend toggles; they become available when their AWS secrets are configured.
 
-The eBay UI is now app-api backed by default and no longer has a browser-direct mode.
+## Current runtime status
 
-Optional:
+Backend-routed by default:
 
-```env
-VITE_USE_LAMBDA_AI=true
-VITE_USE_LAMBDA_GMAIL=true
-```
-
-For deployed environments, `VITE_APP_API_PROXY_TARGET` is not needed.
-
-## Recommended cutover order
-
-### Phase 1: Airtable only
-
-- Set `VITE_USE_LAMBDA_AIRTABLE=true`
-- Keep the others off if you want a narrower first production cutover
-- Validate core reads/writes and approval screens
-
-Current validated scope:
-
-- inventory directory and record editor loads
+- auth/session/password reset/email change
+- Airtable reads, writes, metadata, and attachment uploads
+- Shopify reads, request shaping, publish helpers, and image upload route
 - JotForm list/detail reads
-- Shopify approval Airtable-backed reads and saves
-- eBay approval Airtable-backed reads and save/revert flows
+- eBay inventory, taxonomy, publish, image upload, runtime config, and dashboard routes
 
-### Phase 2: Shopify
+Backend-routed when AWS provider secrets are configured:
 
-- Set `VITE_USE_LAMBDA_SHOPIFY=true`
-- Validate product reads, category resolution, publish flow, and image upload
-- Do not treat `fileCreate` permission errors as Lambda failures
+- AI equipment identification
+- Gmail delivery
+
+Not yet backend-routed:
+
+- HiFiShark market scraping still goes through the Vite `/hifishark-proxy` developer proxy.
+- If that feature needs deployed support, add a dedicated `/api/hifishark/*` route and retire the proxy.
 
 Current validated scope:
 
 - Shopify approval exact request preview
 - Shopify draft/product-set request shaping
 - deployed Shopify approval reads
+- eBay Lambda-backed inventory and publish flows
 
 Open blocker before calling this fully complete:
 
 - `/api/shopify/images` still depends on Shopify admin scopes and create-files permission outside AWS
 
-### Phase 3: JotForm
-
-- Set `VITE_USE_LAMBDA_JOTFORM=true`
-
-Current validated scope:
-
-- JotForm list and detail expansion through the deployed AWS endpoint
-
-### Phase 4: Optional AI and Gmail
-
-- Turn on only if you have configured those provider secrets in AWS
-
 ## Current staged cutover status
 
-These cutovers can be completed now with the currently deployed stack and frontend flags:
+These surfaces can be completed now with the currently deployed stack:
 
-- `VITE_USE_LAMBDA_AIRTABLE=true`
-  - ready for inventory, JotForm-backed Airtable reads, Shopify approval Airtable reads/saves, and eBay approval Airtable reads/saves
-- `VITE_USE_LAMBDA_JOTFORM=true`
-  - ready for deployed JotForm list/detail reads
-- `VITE_USE_LAMBDA_SHOPIFY=true`
-  - ready for deployed Shopify read and request-build flows, with image upload still blocked by Shopify admin permissions rather than Lambda deployment
+- Airtable inventory, approvals, metadata, writes, and attachment uploads
+- JotForm list/detail reads
+- Shopify read and request-build flows, with image upload still blocked only by Shopify admin permissions rather than Lambda deployment
+- eBay read, publish, and image routes
+- auth/session and account-management routes
+  - session transport is now httpOnly cookie based
+  - frontend no longer needs browser-managed auth token storage
 
 These cutovers are not complete yet:
 
-- full eBay publish/API cutover, because the SAM package still does not provide `/api/ebay/*` server routes
 - Shopify image-upload completion, until the Shopify app token and acting user have the required file/image permissions
+- HiFiShark deployment support, until the proxy-backed scraper is moved behind Lambda
 
 ## Validation checklist after deployment
 
@@ -388,6 +375,11 @@ Add these only if you are deploying those routes now:
 - `GITHUB_TOKEN` or `OPENAI_API_KEY`
 - `GOOGLE_GMAIL_ACCESS_TOKEN`
 - `GOOGLE_GMAIL_FROM_EMAIL`
+- eBay secrets and business-policy values for publish/image flows
+- `APP_AUTH_TOKEN_SECRET` for auth/session routes
+- `APP_AUTH_COOKIE_SECURE_MODE` for auth cookie `Secure` policy: `always`, `never`, or `auto`
+- `APP_AUTH_COOKIE_SAME_SITE` for auth cookie `SameSite`: `Lax`, `Strict`, or `None`
+- `APP_AUTH_COOKIE_DOMAIN` if deployed auth should scope the session cookie to a shared parent domain
 
 Recommended storage model for this repo right now:
 
@@ -402,8 +394,6 @@ Bootstrap helpers:
 
 ## Current best next step
 
-1. Keep `VITE_USE_LAMBDA_AIRTABLE=true` for inventory and approval data flows.
-2. Keep `VITE_USE_LAMBDA_JOTFORM=true` for JotForm list/detail flows.
-3. Keep `VITE_USE_LAMBDA_SHOPIFY=true` for deployed Shopify reads and request-build flows.
-4. Fix Shopify admin file/image permissions before calling Shopify image upload complete.
-5. Do not claim eBay publish cutover yet, because `/api/ebay/*` routes are still outside the current SAM package.
+1. Keep the deployed frontend pointed at the Lambda API with `VITE_APP_API_BASE_URL`.
+2. Fix Shopify admin file/image permissions before calling Shopify image upload complete.
+3. Decide whether HiFiShark should stay a developer-only proxy flow or move behind Lambda for deployed support.

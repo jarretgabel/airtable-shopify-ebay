@@ -1,0 +1,12 @@
+HTTP/1.1 200 OK
+access-control-allow-origin: http://127.0.0.1:3000
+access-control-allow-credentials: true
+vary: origin
+access-control-allow-headers: content-type,authorization
+content-type: application/json
+set-cookie: lcc_session=eyJraW5kIjoic2Vzc2lvbiIsInVzZXJJZCI6InUtYWRtaW4iLCJtdXN0Q2hhbmdlUGFzc3dvcmQiOmZhbHNlLCJleHAiOjE3Nzg2MTg0MjYxMjV9.VcXwX89HHHV-SIk92ar7Uu67ToQGi0jfGEQoeQJrmZg; Path=/; Max-Age=1209600; HttpOnly; SameSite=Lax
+Date: Tue, 28 Apr 2026 20:40:26 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+

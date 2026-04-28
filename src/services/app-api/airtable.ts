@@ -1,15 +1,10 @@
-import airtableService from '@/services/airtable';
 import type { AirtableRecord } from '@/types/airtable';
 import {
-  INVENTORY_DIRECTORY_BASE_ID,
-  getConfiguredRecordsSourceDefinition,
   resolveConfiguredRecordsSource,
   type AirtableConfiguredRecordsSource,
-  INVENTORY_DIRECTORY_TABLE_ID,
 } from './airtableSources';
 import { isAppApiHttpError } from './errors';
 import { toServiceErrorMessage } from './errors';
-import { isLambdaAirtableEnabled } from './flags';
 import { deleteJson, getJson, patchJson, postJson } from './http';
 
 export type AirtableConfiguredWriteSource =
@@ -46,31 +41,6 @@ interface AirtableAttachmentUploadPayload {
   filename: string;
   contentType: string;
   file: string;
-}
-
-function requireAirtableApiKey(): string {
-  const apiKey = (import.meta.env.VITE_AIRTABLE_API_KEY as string | undefined)?.trim();
-  if (!apiKey) {
-    throw new Error('Missing VITE_AIRTABLE_API_KEY.');
-  }
-
-  return apiKey;
-}
-
-function getMetadataSourceTableId(source: AirtableConfiguredMetadataSource): string {
-  if (source === 'inventory-directory') {
-    return INVENTORY_DIRECTORY_TABLE_ID;
-  }
-
-  throw new Error(`Unsupported Airtable metadata source ${source}.`);
-}
-
-function getAttachmentSourceBaseId(source: AirtableConfiguredAttachmentSource): string {
-  if (source === 'inventory-directory') {
-    return INVENTORY_DIRECTORY_BASE_ID;
-  }
-
-  throw new Error(`Unsupported Airtable attachment source ${source}.`);
 }
 
 function toAirtableError(error: unknown, tableName: string) {
@@ -128,10 +98,6 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 export async function getListings(tableName: string, options?: { view?: string }): Promise<AirtableRecord[]> {
-  if (!isLambdaAirtableEnabled()) {
-    return airtableService.getRecords(tableName, { view: options?.view });
-  }
-
   try {
     return await getJson<AirtableRecord[]>('/api/airtable/listings', {
       tableName,
@@ -146,16 +112,6 @@ export async function getConfiguredRecords(
   source: AirtableConfiguredRecordsSource,
   options: AirtableConfiguredReadOptions = {},
 ): Promise<AirtableRecord[]> {
-  const definition = getConfiguredRecordsSourceDefinition(source);
-
-  if (!isLambdaAirtableEnabled()) {
-    if (definition.reference) {
-      return airtableService.getRecordsFromReference(definition.reference, definition.tableName);
-    }
-
-    return airtableService.getRecords(definition.tableName);
-  }
-
   try {
     return await getJson<AirtableRecord[]>('/api/airtable/configured-records', {
       source,
@@ -170,16 +126,6 @@ export async function getConfiguredRecord(
   source: AirtableConfiguredRecordsSource,
   recordId: string,
 ): Promise<AirtableRecord> {
-  const definition = getConfiguredRecordsSourceDefinition(source);
-
-  if (!isLambdaAirtableEnabled()) {
-    if (definition.reference) {
-      return airtableService.getRecordFromReference(definition.reference, definition.tableName, recordId);
-    }
-
-    return airtableService.getRecord(definition.tableName, recordId);
-  }
-
   try {
     return await getJson<AirtableRecord>(`/api/airtable/configured-records/${encodeURIComponent(source)}/${encodeURIComponent(recordId)}`);
   } catch (error) {
@@ -201,10 +147,6 @@ export async function getRecordsFromResolvedSource(
     throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
   }
 
-  if (!isLambdaAirtableEnabled()) {
-    return airtableService.getRecordsFromReference(tableReference, tableName);
-  }
-
   throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda read path.'), 'approval-ebay');
 }
 
@@ -217,10 +159,6 @@ export async function getRecordFromResolvedSource(
 
   if (!tableReference) {
     throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
-  }
-
-  if (!isLambdaAirtableEnabled()) {
-    return airtableService.getRecordFromReference(tableReference, tableName, recordId);
   }
 
   if (!resolvedSource) {
@@ -239,16 +177,6 @@ export async function createConfiguredRecord(
   fields: Record<string, unknown>,
   options: AirtableWriteOptions = {},
 ): Promise<AirtableRecord> {
-  const definition = getConfiguredRecordsSourceDefinition(source);
-
-  if (!isLambdaAirtableEnabled()) {
-    if (definition.reference) {
-      return airtableService.createRecordFromReference(definition.reference, definition.tableName, fields, options);
-    }
-
-    return airtableService.createRecord(definition.tableName, fields, options);
-  }
-
   try {
     return await postJson<AirtableRecord>(`/api/airtable/configured-records/${encodeURIComponent(source)}`, {
       fields,
@@ -265,16 +193,6 @@ export async function updateConfiguredRecord(
   fields: Record<string, unknown>,
   options: AirtableWriteOptions = {},
 ): Promise<AirtableRecord> {
-  const definition = getConfiguredRecordsSourceDefinition(source);
-
-  if (!isLambdaAirtableEnabled()) {
-    if (definition.reference) {
-      return airtableService.updateRecordFromReference(definition.reference, definition.tableName, recordId, fields, options);
-    }
-
-    return airtableService.updateRecord(definition.tableName, recordId, fields, options);
-  }
-
   try {
     return await patchJson<AirtableRecord>(
       `/api/airtable/configured-records/${encodeURIComponent(source)}/${encodeURIComponent(recordId)}`,
@@ -292,18 +210,6 @@ export async function deleteConfiguredRecord(
   source: AirtableConfiguredWriteSource,
   recordId: string,
 ): Promise<void> {
-  const definition = getConfiguredRecordsSourceDefinition(source);
-
-  if (!isLambdaAirtableEnabled()) {
-    if (definition.reference) {
-      await airtableService.deleteRecordFromReference(definition.reference, definition.tableName, recordId);
-      return;
-    }
-
-    await airtableService.deleteRecord(definition.tableName, recordId);
-    return;
-  }
-
   try {
     await deleteJson<AirtableDeleteResponse>(`/api/airtable/configured-records/${encodeURIComponent(source)}/${encodeURIComponent(recordId)}`);
   } catch (error) {
@@ -339,10 +245,6 @@ export async function createRecordFromResolvedSource(
     throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
   }
 
-  if (!isLambdaAirtableEnabled()) {
-    return airtableService.createRecordFromReference(tableReference, tableName, fields, options);
-  }
-
   throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda write path.'), 'approval-ebay');
 }
 
@@ -361,10 +263,6 @@ export async function updateRecordFromResolvedSource(
 
   if (!tableReference) {
     throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
-  }
-
-  if (!isLambdaAirtableEnabled()) {
-    return airtableService.updateRecordFromReference(tableReference, tableName, recordId, fields, options);
   }
 
   throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda write path.'), 'approval-ebay');
@@ -386,39 +284,12 @@ export async function deleteRecordFromResolvedSource(
     throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
   }
 
-  if (!isLambdaAirtableEnabled()) {
-    await airtableService.deleteRecordFromReference(tableReference, tableName, recordId);
-    return;
-  }
-
   throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda write path.'), 'approval-ebay');
 }
 
 export async function getConfiguredFieldMetadata(
   source: AirtableConfiguredMetadataSource,
 ): Promise<AirtableMetadataField[]> {
-  if (!isLambdaAirtableEnabled()) {
-    const response = await fetch(`https://api.airtable.com/v0/meta/bases/${INVENTORY_DIRECTORY_BASE_ID}/tables`, {
-      headers: {
-        Authorization: `Bearer ${requireAirtableApiKey()}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Unable to load Airtable metadata (${response.status}).`);
-    }
-
-    const data = await response.json() as {
-      tables?: Array<{ id: string; fields?: AirtableMetadataField[] }>;
-    };
-    const table = data.tables?.find((entry) => entry.id === getMetadataSourceTableId(source));
-    if (!table) {
-      throw new Error('Unable to locate Airtable metadata table.');
-    }
-
-    return table.fields ?? [];
-  }
-
   try {
     return await getJson<AirtableMetadataField[]>('/api/airtable/configured-metadata', { source });
   } catch (error) {
@@ -434,26 +305,6 @@ export async function uploadConfiguredAttachment(
 ): Promise<void> {
   const base64 = await fileToBase64(file);
   const payload = toAttachmentPayload(file, base64);
-
-  if (!isLambdaAirtableEnabled()) {
-    const response = await fetch(
-      `https://content.airtable.com/v0/${getAttachmentSourceBaseId(source)}/${encodeURIComponent(recordId)}/${encodeURIComponent(fieldId)}/uploadAttachment`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${requireAirtableApiKey()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`Unable to upload image ${file.name} (${response.status}).`);
-    }
-
-    return;
-  }
 
   try {
     await postJson<{ uploaded: true }>(

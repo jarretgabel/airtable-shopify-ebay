@@ -9,8 +9,8 @@ npm install
 
 2. Configure environment variables:
   - Copy `.env.example` to `.env.local`, then fill in your credentials:
-     - `VITE_AIRTABLE_API_KEY`: Your Airtable personal access token
-     - `VITE_AIRTABLE_BASE_ID`: Your Airtable base ID
+    - `VITE_AIRTABLE_API_KEY`: Your Airtable personal access token for the local API adapter
+    - `VITE_AIRTABLE_BASE_ID`: Your Airtable base ID for the local API adapter
   - `VITE_AIRTABLE_USERS_TABLE_REF` or `VITE_AIRTABLE_USERS_TABLE_NAME`: Airtable users table (auth source)
 
 3. Run setup doctor (recommended for onboarding):
@@ -45,7 +45,12 @@ npm run dev:full
 This starts `local:api` first and then starts Vite after the local API is listening.
 If `http://127.0.0.1:3001` is already in use by an existing local API instance, `dev:full` reuses it and starts only Vite.
 
-After starting either `sam local start-api` or `npm run local:api`, run this comparison harness from the repo root to compare direct-provider responses against the local `/api` responses, including `users`, `inventory-directory`, and approval Airtable sources when those env vars are configured:
+AI, Gmail, JotForm, Shopify, and Airtable browser-direct runtime access has been removed.
+
+- Use the Lambda `/api/*` routes for those integrations in local and deployed workflows.
+- Local development should run `npm run local:api` or `npm run dev:full` so the frontend can talk to the backend seam.
+
+After starting either `sam local start-api` or `npm run local:api`, run this comparison harness from the repo root to compare backend provider behavior against the local `/api` responses, including `users`, `inventory-directory`, and approval Airtable sources when those env vars are configured:
 ```bash
 npm run compare:lambda
 ```
@@ -74,6 +79,7 @@ npm run cleanup:shopify:probe -- <productId>
 Write validation checklist:
 
 - [AWS Lambda Write Validation](./docs/migrations/aws-lambda-write-validation.md)
+- [Remaining Backend Cutover Checklist](./docs/migrations/backend-cutover-checklist.md)
 
 ## Getting Your Airtable Credentials
 
@@ -104,7 +110,8 @@ Behavior:
 
 ## Project Structure
 
-- `src/services/airtable.ts` - Airtable API client
+- `src/services/app-api/airtable.ts` - frontend Airtable app-api client
+- `src/services/app-api/shopify.ts` - frontend Shopify app-api client
 - `src/hooks/useListings.ts` - React hook to fetch listings
 - `src/types/airtable.ts` - TypeScript types for Airtable records
 - `src/App.tsx` - Main application component
@@ -114,8 +121,16 @@ Behavior:
 The app now emits operator workflow events (tab views, refresh, exports, and approval actions).
 
 - Local buffer: events are stored in browser localStorage under `workflow_analytics_events`
-- Optional endpoint: set `VITE_ANALYTICS_ENDPOINT=https://your-endpoint/events` to receive POST/sendBeacon events
+- Optional server-side forwarder: set `ANALYTICS_FORWARD_ENDPOINT=https://your-endpoint/events` to have the Lambda analytics endpoint forward workflow events upstream
 - Kill switch: set `VITE_ANALYTICS_ENABLED=false` to disable analytics
+
+## Local Lambda Adapter
+
+Use the no-Docker local adapter for `/api/*` Lambda validation:
+
+- Start it with `npm run local:api`
+- Check readiness with `npm run local:api:check`
+- Direct health endpoint: `GET /health`
 
 ## Inventory Processing Forms
 

@@ -1,19 +1,12 @@
 import { sendPlainTextEmail } from '@/services/app-api/gmail';
-import * as gmailDirect from '@/services/gmailDirect';
-
-vi.mock('@/services/gmailDirect', () => ({
-  sendPlainTextEmailDirect: vi.fn(),
-}));
 
 describe('app-api gmail', () => {
   const fetchMock = vi.fn<typeof fetch>();
 
   beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
-    vi.stubEnv('VITE_USE_LAMBDA_GMAIL', 'false');
     vi.stubEnv('VITE_APP_API_BASE_URL', '');
     fetchMock.mockReset();
-    vi.mocked(gmailDirect.sendPlainTextEmailDirect).mockReset();
   });
 
   afterEach(() => {
@@ -21,18 +14,7 @@ describe('app-api gmail', () => {
     vi.unstubAllGlobals();
   });
 
-  it('delegates to the direct Gmail service when Lambda mode is off', async () => {
-    vi.mocked(gmailDirect.sendPlainTextEmailDirect).mockResolvedValue(true);
-
-    const result = await sendPlainTextEmail('user@example.com', 'Hello', 'Body');
-
-    expect(gmailDirect.sendPlainTextEmailDirect).toHaveBeenCalledWith('user@example.com', 'Hello', 'Body');
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(result).toBe(true);
-  });
-
-  it('calls the Lambda Gmail endpoint when Lambda mode is on', async () => {
-    vi.stubEnv('VITE_USE_LAMBDA_GMAIL', 'true');
+  it('calls the Lambda Gmail endpoint', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ delivered: true }), {
         status: 200,
@@ -54,7 +36,6 @@ describe('app-api gmail', () => {
   });
 
   it('rethrows Lambda Gmail failures as plain Errors', async () => {
-    vi.stubEnv('VITE_USE_LAMBDA_GMAIL', 'true');
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({
         message: 'Failed to send Gmail message (401): invalid credentials',

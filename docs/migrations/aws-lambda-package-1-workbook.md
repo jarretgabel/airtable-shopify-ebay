@@ -87,14 +87,14 @@ Deliverables:
 
 - implement `GET /api/jotform/forms`
 - implement `GET /api/jotform/forms/{formId}/submissions`
-- add JotForm Lambda branch in the app API wrapper
-- validate flag-off direct mode and flag-on Lambda mode
+- route JotForm reads through the app API seam
+- validate JotForm behavior through the backend seam
 
 Acceptance criteria:
 
 - both routes return the same shape the hook already expects
 - wrapper-level error normalization preserves current hook behavior
-- fallback direct mode still works
+- no browser-direct fallback is required in runtime
 
 ### Milestone 4: Airtable listing-read Lambda path
 
@@ -102,14 +102,15 @@ Deliverables:
 
 - implement `GET /api/airtable/listings`
 - add server-side allowlist validation for table and optional view
-- add Airtable Lambda branch in the app API wrapper
-- validate flag-off direct mode and flag-on Lambda mode
+- route Airtable listing reads through the app API seam
+- validate Airtable behavior through the backend seam
 
 Acceptance criteria:
 
 - listing screens behave the same in both modes
+- listing screens behave the same after the backend cutover
 - Airtable record shape is preserved exactly
-- fallback direct mode still works
+- no browser-direct fallback is required in runtime
 
 ## Hard Requirements
 
@@ -117,7 +118,7 @@ Acceptance criteria:
 2. Package 1 must not change API payload shapes consumed by current hooks.
 3. Lambda error responses must be normalized by the wrapper before reaching hooks.
 4. Airtable phase 1 must use server-side allowlists, not a generic passthrough.
-5. Current provider-facing services remain as fallback implementations until the Lambda path is proven.
+5. Current provider-facing behavior must be preserved while the backend seam replaces browser-owned transport.
 
 ## Dependencies And Prerequisites
 

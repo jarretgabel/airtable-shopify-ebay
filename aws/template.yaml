@@ -100,6 +100,21 @@ Parameters:
   GoogleGmailFromEmail:
     Type: String
     Default: ''
+  AnalyticsForwardEndpoint:
+    Type: String
+    Default: ''
+  AppAuthTokenSecret:
+    Type: String
+    NoEcho: true
+  AppAuthCookieSecureMode:
+    Type: String
+    Default: auto
+  AppAuthCookieSameSite:
+    Type: String
+    Default: Lax
+  AppAuthCookieDomain:
+    Type: String
+    Default: ''
 
 Conditions:
   HasGithubToken: !Not [!Equals [!Ref GithubToken, '']]
@@ -159,6 +174,11 @@ Globals:
           - !Ref GoogleGmailAccessToken
           - ''
         GOOGLE_GMAIL_FROM_EMAIL: !Ref GoogleGmailFromEmail
+        ANALYTICS_FORWARD_ENDPOINT: !Ref AnalyticsForwardEndpoint
+        APP_AUTH_TOKEN_SECRET: !Ref AppAuthTokenSecret
+        APP_AUTH_COOKIE_SECURE_MODE: !Ref AppAuthCookieSecureMode
+        APP_AUTH_COOKIE_SAME_SITE: !Ref AppAuthCookieSameSite
+        APP_AUTH_COOKIE_DOMAIN: !Ref AppAuthCookieDomain
 
 Resources:
   AppHttpApi:
@@ -171,12 +191,14 @@ Resources:
         AllowHeaders:
           - content-type
           - authorization
+          - cookie
         AllowMethods:
           - GET
           - POST
           - PATCH
           - DELETE
           - OPTIONS
+        AllowCredentials: true
 
   ShopifyGetProductsFunction:
     Type: AWS::Serverless::Function
@@ -736,6 +758,156 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: POST
             Path: /api/gmail/send
+
+  HiFiSharkGetModelFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/hifishark/getModel.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/hifishark/model/{slug}
+
+  AnalyticsPostEventFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/analytics/postEvent.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/analytics/events
+
+  AuthLoginFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/auth/login.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/auth/login
+
+  AuthResolveSessionFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/auth/resolveSession.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/auth/session
+
+  AuthRequestPasswordResetFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/auth/requestPasswordReset.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/auth/password-reset/request
+
+  AuthResetPasswordFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/auth/resetPassword.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/auth/password-reset/confirm
+
+  AuthRequestEmailChangeFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/auth/requestEmailChange.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/auth/email-change/request
+
+  AuthConfirmEmailChangeFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/auth/confirmEmailChange.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/auth/email-change/confirm
+
+  AuthUpdatePasswordFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/auth/updatePassword.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/auth/password/change
+
+  AuthLogoutFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/auth/logout.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/auth/logout
 
 Outputs:
   AppApiUrl:

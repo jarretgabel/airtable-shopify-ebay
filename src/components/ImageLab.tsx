@@ -19,6 +19,11 @@ export function ImageLab({ onShopifyImagesUpdate, onEbayImagesUpdate }: ImageLab
   const [opts, setOpts] = useState<ProcessingOptions>(DEFAULT_OPTIONS);
   const { provider: aiProvider } = getAIProvider();
   const aiEnabled = aiProvider !== 'none';
+  const aiProviderLabel = aiProvider === 'github'
+    ? 'GitHub Models'
+    : aiProvider === 'openai'
+      ? 'OpenAI'
+      : 'Backend Lambda';
   const {
     items,
     dragging,
@@ -47,19 +52,15 @@ export function ImageLab({ onShopifyImagesUpdate, onEbayImagesUpdate }: ImageLab
     <div className="flex flex-col gap-4 pt-1">
       {!aiEnabled ? (
         <div className="rounded-[10px] border border-amber-300 bg-amber-50 px-4 py-3 text-[0.84rem] leading-[1.6] text-amber-900 [&_a]:text-amber-800 [&_code]:rounded [&_code]:bg-black/5 [&_code]:px-[0.35em] [&_code]:py-[0.1em] [&_code]:text-[0.82em]">
-          <strong>No AI key configured.</strong> To enable equipment identification, add one of the following to <code>.env.local</code> and restart:
+          <strong>AI identification is unavailable.</strong> Configure the backend Lambda route and its server-side provider credentials.
           <br />
-          {' '}• <code>VITE_GITHUB_TOKEN=github_pat_...</code> - free with your Copilot subscription (<a href="https://github.com/settings/tokens" target="_blank" rel="noreferrer">generate a PAT</a>, no special scopes needed)
-          <br />
-          {' '}• <code>VITE_OPENAI_API_KEY=sk-...</code> - OpenAI paid API
-          <br />
-          Image optimization and watermarking still work without a key.
+          {' '}Image optimization and watermarking still work without AI.
         </div>
       ) : (
         <div className="rounded-[10px] border border-emerald-200 bg-emerald-50 px-4 py-[0.55rem] text-[0.82rem] text-emerald-800">
-          AI provider: <strong>{aiProvider === 'github' ? 'GitHub Models (Copilot)' : 'OpenAI'}</strong>
+          AI provider: <strong>{aiProviderLabel}{aiProvider === 'github' ? ' (Copilot)' : ''}</strong>
           {' · '}
-          <span>GPT-4o Vision</span>
+          <span>{aiProvider === 'backend' ? 'Backend-owned identification' : 'GPT-4o Vision'}</span>
         </div>
       )}
 

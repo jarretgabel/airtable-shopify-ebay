@@ -111,7 +111,7 @@ export interface DashboardTabProps {
   approvalTotal: number;
   approvalApproved: number;
   approvalPending: number;
-  aiProvider: 'github' | 'openai' | 'none';
+  aiProvider: 'github' | 'openai' | 'backend' | 'none';
   ebayAuthenticated: boolean;
   ebayRestoringSession: boolean;
   ebayLoading: boolean;
@@ -134,7 +134,7 @@ export interface DashboardWorkflowSource {
   approvalTotal: number;
   approvalApproved: number;
   approvalPending: number;
-  aiProvider: 'github' | 'openai' | 'none';
+  aiProvider: 'github' | 'openai' | 'backend' | 'none';
   ebayAuthenticated: boolean;
   ebayRestoringSession: boolean;
   ebayError: string | null;

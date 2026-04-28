@@ -20,20 +20,6 @@ const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
 
-function getIncomingGearFormUrl(): string | null {
-  const rawUrl = [import.meta.env.VITE_AIRTABLE_INCOMING_GEAR_FORM_URL, import.meta.env.VITE_AIRTABLE_INCOMING_GEAR_FORM_EMBED_URL]
-    .find((value) => typeof value === 'string' && value.trim().length > 0)
-    ?.trim();
-
-  if (!rawUrl) return null;
-
-  try {
-    return new URL(rawUrl).toString();
-  } catch {
-    return null;
-  }
-}
-
 function validateForm(values: IncomingGearFormValues): string | null {
   if (!values.arrivalDate.trim()) return 'Arrival Date is required.';
   if (!values.cost.trim()) return 'Cost is required.';
@@ -113,8 +99,6 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<IncomingGearFormSubmitResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const incomingGearFormUrl = getIncomingGearFormUrl();
 
   useEffect(() => {
     let cancelled = false;
@@ -316,20 +300,6 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
             ))}
           </div>
         </div>
-
-        <div className="flex justify-end">
-          {incomingGearFormUrl ? (
-            <a
-              className="inline-flex items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] no-underline transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              href={incomingGearFormUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open Airtable version
-            </a>
-          ) : null}
-        </div>
-
         {submitError ? (
           <div className="rounded-xl border border-[#f7c8c4] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-text)]">
             {submitError}

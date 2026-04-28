@@ -27,15 +27,28 @@ npm run local:api
 
 This builds the AWS TypeScript output, injects the same env vars used by the handlers, and serves the AWS routes directly on `http://127.0.0.1:3001`.
 
+Before parity checks or write probes, verify the adapter explicitly:
+
+```bash
+npm run local:api:check
+```
+
+Canonical health endpoint:
+
+```bash
+curl -sSf http://127.0.0.1:3001/health
+```
+
 For split-origin validation, point the frontend at the local API with `VITE_APP_API_BASE_URL=http://127.0.0.1:3001` and enable one migration flag at a time.
 
 For same-origin validation during `vite` development, leave `VITE_APP_API_BASE_URL=` blank and set `VITE_APP_API_PROXY_TARGET=http://127.0.0.1:3001` in the root `.env.local` so `/api/*` requests are proxied by Vite.
 
-From the repo root, run `npm run compare:lambda` to compare direct provider responses against the local endpoints after either `sam local start-api` or `npm run local:api` is up.
+From the repo root, run `npm run local:api:check` first, then `npm run compare:lambda` to compare direct provider responses against the local endpoints after either `sam local start-api` or `npm run local:api` is up.
 
 For guarded mutation checks against the no-Docker local API, use:
 
 ```bash
+npm run local:api:check
 npm run probe:lambda:writes
 npm run probe:lambda:shopify
 ```

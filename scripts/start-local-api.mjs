@@ -11,6 +11,14 @@ const awsDir = path.join(cwd, 'aws');
 const defaultPort = Number(process.env.LOCAL_API_PORT || '3001');
 
 const ROUTES = [
+  ['POST', '/api/auth/login', 'handlers/auth/login.js', 'handler'],
+  ['GET', '/api/auth/session', 'handlers/auth/resolveSession.js', 'handler'],
+  ['POST', '/api/auth/password-reset/request', 'handlers/auth/requestPasswordReset.js', 'handler'],
+  ['POST', '/api/auth/password-reset/confirm', 'handlers/auth/resetPassword.js', 'handler'],
+  ['POST', '/api/auth/email-change/request', 'handlers/auth/requestEmailChange.js', 'handler'],
+  ['POST', '/api/auth/email-change/confirm', 'handlers/auth/confirmEmailChange.js', 'handler'],
+  ['POST', '/api/auth/password/change', 'handlers/auth/updatePassword.js', 'handler'],
+  ['POST', '/api/auth/logout', 'handlers/auth/logout.js', 'handler'],
   ['GET', '/api/ebay/inventory-items', 'handlers/ebay/getInventoryItems.js', 'handler'],
   ['GET', '/api/ebay/offers', 'handlers/ebay/getOffers.js', 'handler'],
   ['GET', '/api/ebay/offers/{offerId}', 'handlers/ebay/getOffer.js', 'handler'],
@@ -47,6 +55,8 @@ const ROUTES = [
   ['POST', '/api/airtable/configured-attachments/{source}/{recordId}/{fieldId}', 'handlers/airtable/uploadConfiguredAttachment.js', 'handler'],
   ['POST', '/api/ai/identify-equipment', 'handlers/ai/identifyEquipment.js', 'handler'],
   ['POST', '/api/gmail/send', 'handlers/gmail/send.js', 'handler'],
+  ['POST', '/api/analytics/events', 'handlers/analytics/postEvent.js', 'handler'],
+  ['GET', '/api/hifishark/model/{slug}', 'handlers/hifishark/getModel.js', 'handler'],
 ].map(([method, routePath, modulePath, exportName]) => ({
   method,
   routePath,
@@ -135,11 +145,19 @@ function setAwsEnv() {
 
   process.env.GOOGLE_GMAIL_ACCESS_TOKEN = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_GMAIL_ACCESS_TOKEN');
   process.env.GOOGLE_GMAIL_FROM_EMAIL = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_GMAIL_FROM_EMAIL');
+  process.env.APP_AUTH_TOKEN_SECRET =
+    getOptionalEnv(mergedEnv, 'APP_AUTH_TOKEN_SECRET')
+    || getOptionalEnv(mergedEnv, 'VITE_APP_AUTH_TOKEN_SECRET')
+    || 'local-dev-auth-secret';
 
   process.env.OPENAI_API_KEY = getOptionalEnv(mergedEnv, 'VITE_OPENAI_API_KEY');
   process.env.OPENAI_MODEL = getOptionalEnv(mergedEnv, 'VITE_OPENAI_MODEL');
   process.env.GITHUB_TOKEN = getOptionalEnv(mergedEnv, 'VITE_GITHUB_TOKEN');
   process.env.AI_PROVIDER = getOptionalEnv(mergedEnv, 'VITE_AI_PROVIDER');
+  process.env.ANALYTICS_FORWARD_ENDPOINT = getOptionalEnv(mergedEnv, 'ANALYTICS_FORWARD_ENDPOINT') || getOptionalEnv(mergedEnv, 'VITE_ANALYTICS_ENDPOINT');
+  process.env.APP_AUTH_COOKIE_SECURE_MODE = getOptionalEnv(mergedEnv, 'APP_AUTH_COOKIE_SECURE_MODE') || 'never';
+  process.env.APP_AUTH_COOKIE_SAME_SITE = getOptionalEnv(mergedEnv, 'APP_AUTH_COOKIE_SAME_SITE') || 'Lax';
+  process.env.APP_AUTH_COOKIE_DOMAIN = getOptionalEnv(mergedEnv, 'APP_AUTH_COOKIE_DOMAIN');
 
   const viewId = getOptionalEnv(mergedEnv, 'VITE_AIRTABLE_VIEW_ID');
   if (viewId) {
@@ -204,6 +222,25 @@ function toSingleValueQueryParams(searchParams) {
   return Object.keys(queryStringParameters).length > 0 ? queryStringParameters : undefined;
 }
 
+function getResponseOrigin(request) {
+  return request.headers.origin || '*';
+}
+
+function parseRequestCookies(request) {
+  const rawCookieHeader = request.headers.cookie;
+  if (!rawCookieHeader) {
+    return undefined;
+  }
+
+  const joined = Array.isArray(rawCookieHeader) ? rawCookieHeader.join('; ') : rawCookieHeader;
+  const cookies = joined
+    .split(';')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  return cookies.length > 0 ? cookies : undefined;
+}
+
 async function readRequestBody(request) {
   const chunks = [];
   for await (const chunk of request) {
@@ -214,11 +251,13 @@ async function readRequestBody(request) {
   return Buffer.concat(chunks).toString('utf8');
 }
 
-function writeCorsResponse(response) {
+function writeCorsResponse(request, response) {
   response.writeHead(204, {
-    'access-control-allow-origin': '*',
+    'access-control-allow-origin': getResponseOrigin(request),
     'access-control-allow-headers': 'content-type,authorization',
     'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+    'access-control-allow-credentials': 'true',
+    vary: 'origin',
   });
   response.end();
 }
@@ -237,17 +276,35 @@ async function main() {
       }
 
       if (request.method === 'OPTIONS') {
-        writeCorsResponse(response);
+        writeCorsResponse(request, response);
         return;
       }
 
       const requestUrl = new URL(request.url, `http://${request.headers.host || '127.0.0.1'}`);
+
+      if (request.method.toUpperCase() === 'GET' && requestUrl.pathname === '/health') {
+        response.writeHead(200, {
+          'content-type': 'application/json',
+          'access-control-allow-origin': getResponseOrigin(request),
+          'access-control-allow-credentials': 'true',
+          vary: 'origin',
+        });
+        response.end(JSON.stringify({
+          ok: true,
+          service: 'local-api',
+          port: defaultPort,
+        }));
+        return;
+      }
+
       const matched = findRoute(routes, request.method.toUpperCase(), requestUrl.pathname);
 
       if (!matched) {
         response.writeHead(404, {
           'content-type': 'application/json',
-          'access-control-allow-origin': '*',
+          'access-control-allow-origin': getResponseOrigin(request),
+          'access-control-allow-credentials': 'true',
+          vary: 'origin',
         });
         response.end(JSON.stringify({
           message: `No local handler registered for ${request.method} ${requestUrl.pathname}`,
@@ -270,6 +327,7 @@ async function main() {
           }
           return value === undefined ? [] : [[key.toLowerCase(), value]];
         })),
+        cookies: parseRequestCookies(request),
         queryStringParameters: toSingleValueQueryParams(requestUrl.searchParams),
         pathParameters: Object.keys(matched.pathParameters).length > 0 ? matched.pathParameters : undefined,
         requestContext: {
@@ -293,8 +351,11 @@ async function main() {
       const lambdaResponse = await matched.route.handler(event);
       const statusCode = lambdaResponse.statusCode || 200;
       const headers = {
-        'access-control-allow-origin': '*',
+        'access-control-allow-origin': getResponseOrigin(request),
+        'access-control-allow-credentials': 'true',
+        vary: 'origin',
         ...(lambdaResponse.headers || {}),
+        ...(lambdaResponse.cookies ? { 'set-cookie': lambdaResponse.cookies } : {}),
       };
 
       response.writeHead(statusCode, headers);
@@ -303,7 +364,9 @@ async function main() {
       const message = error instanceof Error ? error.message : 'Unexpected local API server error';
       response.writeHead(500, {
         'content-type': 'application/json',
-        'access-control-allow-origin': '*',
+        'access-control-allow-origin': getResponseOrigin(request),
+        'access-control-allow-credentials': 'true',
+        vary: 'origin',
       });
       response.end(JSON.stringify({
         message,

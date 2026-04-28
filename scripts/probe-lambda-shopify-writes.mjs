@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import dotenv from 'dotenv';
-import { resolveLocalApiOrigin } from './local-api-origin.mjs';
+import { requireReadyLocalApiOrigin } from './local-api-origin.mjs';
 import { cleanupShopifyProbeProduct } from './cleanup-shopify-probe-product.mjs';
 
 const cwd = process.cwd();
@@ -94,7 +94,7 @@ async function main() {
     return;
   }
 
-  const lambdaOrigin = await resolveLocalApiOrigin(getOptionalEnv);
+  const lambdaOrigin = await requireReadyLocalApiOrigin(getOptionalEnv, { purpose: 'Shopify Lambda write probe' });
   const allowCreate = getOptionalEnv('SHOPIFY_WRITE_PROBE_ALLOW_CREATE').toLowerCase() === 'true';
   const createRequest = getOptionalEnv('SHOPIFY_WRITE_PROBE_CREATE_REQUEST_JSON')
     ? parseJsonEnv('SHOPIFY_WRITE_PROBE_CREATE_REQUEST_JSON')

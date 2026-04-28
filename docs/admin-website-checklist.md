@@ -110,8 +110,8 @@ Website:
 
 Tasks:
 
-- Generate or confirm a personal access token for `VITE_AIRTABLE_API_KEY`.
-- Confirm the Airtable base id for `VITE_AIRTABLE_BASE_ID`.
+- Generate or confirm the Airtable personal access token used by the local adapter or AWS runtime.
+- Confirm the Airtable base id used by the local adapter or AWS runtime.
 - Confirm the primary listings table and view IDs used by:
   - `VITE_AIRTABLE_TABLE_NAME`
   - `VITE_AIRTABLE_VIEW_ID`
@@ -140,8 +140,8 @@ Website:
 Tasks:
 
 - Enable Gmail API access for the sending account if you want automatic welcome emails.
-- Create or confirm the Gmail access token used by `VITE_GOOGLE_GMAIL_ACCESS_TOKEN`.
-- Confirm the sender address used by `VITE_GOOGLE_GMAIL_FROM_EMAIL`.
+- Create or confirm the Gmail access token used by the backend runtime.
+- Confirm the sender address used by the backend runtime.
 
 Skip this section if you are fine with the app falling back to opening a draft email instead of sending automatically.
 
@@ -154,8 +154,8 @@ Websites:
 
 Tasks:
 
-- If using GitHub Models, create or confirm `VITE_GITHUB_TOKEN`.
-- If using OpenAI for Image Lab identification, create or confirm `VITE_OPENAI_API_KEY`.
+- If using GitHub Models, create or confirm the backend GitHub token.
+- If using OpenAI for Image Lab identification, create or confirm the backend OpenAI API key.
 
 Skip whichever provider you are not using.
 

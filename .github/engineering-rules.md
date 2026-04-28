@@ -16,7 +16,7 @@
 - Keep files bite-sized and focused: if a file approaches ~250 lines or mixes orchestration with heavy transforms, split into helper/modules in the same domain folder.
 - Use compatibility-safe extraction for dense services as well: keep the original service entry module as an orchestration wrapper and extract storage/auth/request helpers into sibling files.
 - During extraction-first refactors, preserve exported signatures and existing import paths to avoid downstream breakage.
-- Preserve default exports for shared services when they are part of existing import conventions (for example `@/services/airtable`).
+- Preserve default exports for shared services when they are part of existing import conventions.
 - Prefer pure computation modules for expensive or multi-step derivations, and keep React components/hooks focused on wiring and state lifecycle.
 - Reuse derived collections/aggregates instead of recomputing the same filters/reductions multiple times.
 
@@ -24,7 +24,7 @@
 - Keep eBay service contracts stable (`src/services/ebay.ts`).
 - Keep Airtable/Shopify/JotForm mappings and identifier usage unchanged unless schema changes are requested.
 - Handle error states with user-readable messaging and avoid silent failures.
-- For Lambda-backed seams in `src/services/app-api/*`, preserve both direct mode and local `/api/*` mode unless the migration explicitly retires one path.
+- For Lambda-backed seams in `src/services/app-api/*`, treat `/api/*` as the runtime transport and keep local adapters, handlers, and validation scripts in sync.
 - When changing a Lambda-backed integration, update all affected surfaces in the same change: app-api wrapper, AWS handler/provider, no-Docker local adapter, and any parity/probe script that validates that route family.
 - Keep live mutation validation opt-in. Read parity can run by default; write probes must require explicit env vars or user-provided scratch ids.
 

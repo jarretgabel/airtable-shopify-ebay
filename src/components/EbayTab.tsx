@@ -11,7 +11,6 @@ import type { EbayBusinessPolicyConfig, EbayLocationConfig } from '@/services/eb
 import { spinnerClass } from '@/components/tabs/uiClasses';
 import { EbayServerConfigNotice } from '@/components/ebay/EbayCards';
 import { EbayAuthenticatedView } from '@/components/ebay/EbayAuthenticatedView';
-import { listingUrlFromId } from '@/components/ebay/ebayTabUi';
 
 interface EbayTabProps {
   viewModel: EbayTabViewModel;
@@ -91,7 +90,6 @@ export function EbayTab({ viewModel }: EbayTabProps) {
 
   const missingLocation = getMissingLocationFields(locationConfig);
   const missingPolicies = getMissingPolicyFields(policyConfig);
-  const tradingListingUrl = listingUrlFromId(draftResult?.listingId, activeRuntimeConfig.environment);
   const isTradingMode = apiMode === 'trading' || apiMode === 'trading-verify';
   const isTradingVerifyMode = apiMode === 'trading-verify';
 
@@ -181,7 +179,6 @@ export function EbayTab({ viewModel }: EbayTabProps) {
       policyConfig={policyConfig}
       missingLocation={missingLocation}
       missingPolicies={missingPolicies}
-      tradingListingUrl={tradingListingUrl}
       onApiModeChange={handleApiModeChange}
       onCreateDraft={handleCreateDraft}
       onPublishDraft={handlePublishDraft}

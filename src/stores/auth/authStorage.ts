@@ -6,12 +6,7 @@ import {
   updateConfiguredRecord,
 } from '@/services/app-api/airtable';
 import { sendPlainTextEmail } from '@/services/app-api/gmail';
-import { DEFAULT_USER_NOTIFICATION_PREFERENCES, type AppUser, type EmailChangeToken, type PasswordResetToken, type UserNotificationPreferences, type UserRole } from './authTypes';
-
-export const USERS_KEY = 'listing-control-center.users';
-export const SESSION_KEY = 'listing-control-center.session';
-export const RESET_KEY = 'listing-control-center.reset-tokens';
-export const EMAIL_CHANGE_KEY = 'listing-control-center.email-change-tokens';
+import { DEFAULT_USER_NOTIFICATION_PREFERENCES, type AppUser, type UserNotificationPreferences, type UserRole } from './authTypes';
 
 const USER_FIELD_KEYS = {
   id: ['User Id', 'User ID', 'ID'],
@@ -338,36 +333,6 @@ function normalizeNotificationPreferences(value: Partial<UserNotificationPrefere
   };
 }
 
-export function readStoredUsers(): AppUser[] {
-  return [];
-}
-
-export function readStoredTokens(): PasswordResetToken[] {
-  const raw = localStorage.getItem(RESET_KEY);
-  if (!raw) return [];
-
-  try {
-    const parsed = JSON.parse(raw) as PasswordResetToken[];
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((entry) => Number.isFinite(entry.expiresAt));
-  } catch {
-    return [];
-  }
-}
-
-export function readStoredEmailChangeTokens(): EmailChangeToken[] {
-  const raw = localStorage.getItem(EMAIL_CHANGE_KEY);
-  if (!raw) return [];
-
-  try {
-    const parsed = JSON.parse(raw) as EmailChangeToken[];
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((entry) => Number.isFinite(entry.expiresAt) && typeof entry.nextEmail === 'string');
-  } catch {
-    return [];
-  }
-}
-
 export function randomToken(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
@@ -407,36 +372,6 @@ export function generateTemporaryPassword(length = 12): string {
   }
 
   return chars.join('');
-}
-
-export function openResetEmailDraft(email: string, link: string): void {
-  const subject = encodeURIComponent('Password reset request');
-  const body = encodeURIComponent(
-    [
-      'A password reset was requested for your account.',
-      '',
-      `Use this link to reset your password: ${link}`,
-      '',
-      'If you did not request this reset, please ignore this email.',
-    ].join('\n'),
-  );
-
-  window.open(`mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`, '_blank');
-}
-
-export function openEmailChangeDraft(email: string, link: string): void {
-  const subject = encodeURIComponent('Confirm your email change');
-  const body = encodeURIComponent(
-    [
-      'An email change was requested for your account.',
-      '',
-      `Use this link to confirm your new email address: ${link}`,
-      '',
-      'If you did not request this change, you can ignore this email.',
-    ].join('\n'),
-  );
-
-  window.open(`mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`, '_blank');
 }
 
 function buildWelcomeEmailBody(temporaryPassword: string): string {

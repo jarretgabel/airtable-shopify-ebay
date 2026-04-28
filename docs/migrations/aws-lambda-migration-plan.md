@@ -9,13 +9,14 @@ Move backend-adjacent integrations out of the browser in small, reversible phase
 - `docs/migrations/aws-lambda-package-1-workbook.md`
 - `docs/migrations/aws-lambda-package-1-file-skeletons.md`
 - `docs/migrations/aws-lambda-local-workflow.md`
+- `docs/migrations/backend-cutover-checklist.md`
 
 ## Core Rules
 
 1. Add the frontend seam before moving any provider.
-2. Migrate one integration at a time behind an independent feature flag.
+2. Migrate one integration at a time behind the internal app-api seam.
 3. Preserve current response shapes and user-visible error behavior.
-4. Keep the existing direct or Vite-proxy path available until the Lambda path is validated.
+4. Validate each backend route locally before removing any legacy transport.
 5. Do not combine the server extraction with a frontend hosting migration.
 
 ## Phased Rollout
@@ -87,7 +88,8 @@ Move eBay inventory, offers, taxonomy, package types, sample publish, approval p
 
 Only needed if the product later requires per-user eBay identity instead of the current server-owned seller account.
 
-- A future design could use httpOnly cookies plus server-side session storage.
+- App auth already uses backend-issued httpOnly cookies.
+- A future eBay-specific redesign could layer separate per-user seller-session storage behind the same backend-owned session model.
 - DynamoDB is not required for the current single-seller Lambda-backed architecture.
 
 ### Phase 7: Listing publish orchestration
@@ -264,8 +266,6 @@ Validation rules:
 
 ### Add now in the frontend
 
-- `VITE_USE_LAMBDA_JOTFORM=false`
-- `VITE_USE_LAMBDA_AIRTABLE=false`
 - `VITE_APP_API_BASE_URL=`
 
 ### Keep temporarily in the frontend during migration
@@ -310,8 +310,7 @@ Validation rules:
 ### Day 4
 
 - Implement `GET /api/jotform/forms` and `GET /api/jotform/forms/{formId}/submissions`.
-- Add `VITE_USE_LAMBDA_JOTFORM` handling inside the JotForm seam.
-- Validate JotForm with the flag off first, then on.
+- Validate JotForm through the backend seam.
 
 ### Day 5
 
@@ -321,8 +320,7 @@ Validation rules:
 ### Day 6
 
 - Implement `GET /api/airtable/listings` with allowlist validation.
-- Add `VITE_USE_LAMBDA_AIRTABLE` handling inside the Airtable seam.
-- Validate list-loading screens with the flag off first, then on.
+- Validate list-loading screens through the backend seam.
 
 ### Day 7
 
@@ -331,18 +329,18 @@ Validation rules:
 
 ### Exit criteria
 
-- JotForm and Airtable listing reads can each run in direct mode or Lambda mode independently.
+- JotForm and Airtable listing reads run through the backend seam without direct-browser fallbacks.
 - The rerouted hooks do not need further import changes for the migration to continue.
 - No UI component branches on migration flags.
-- Provider-facing service modules remain available only as fallback implementations behind the seam.
+- Provider-facing service modules are owned by the backend runtime rather than the browser.
 
 ## Verification
 
 1. After the seam is introduced, prove it is a no-op abstraction by running the current frontend with unchanged behavior.
-2. For each migrated integration, run local tests and targeted manual checks with the feature flag on and off, then run `npm run build`.
+2. For each migrated integration, run local tests and targeted manual checks against the backend seam, then run `npm run build`.
 3. For each Lambda route, compare response shape and key error cases against the current browser service implementation before switching the frontend default.
 4. For Airtable and later write paths, validate create, update, retry, and partial-failure behavior explicitly with staging data.
-5. Before removing any direct provider code, run at least one release cycle with Lambda as default and the fallback path still available.
+5. Before removing any direct provider code, run at least one validation cycle with the backend seam as the only runtime transport.
 6. Before final cleanup, confirm no sensitive third-party credential remains in browser-delivered env vars.
 
 ## Key Decisions

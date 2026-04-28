@@ -1,11 +1,20 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { HttpError } from './errors.js';
 
-const JSON_HEADERS = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-headers': 'content-type,authorization',
-  'content-type': 'application/json',
-};
+interface JsonResponseOptions {
+  origin?: string;
+  cookies?: string[];
+}
+
+function buildJsonHeaders(origin?: string): Record<string, string> {
+  return {
+    'access-control-allow-origin': origin || '*',
+    'access-control-allow-headers': 'content-type,authorization',
+    'access-control-allow-credentials': 'true',
+    'content-type': 'application/json',
+    ...(origin ? { vary: 'origin' } : {}),
+  };
+}
 
 interface IntegerParamOptions {
   defaultValue: number;
@@ -15,20 +24,26 @@ interface IntegerParamOptions {
   code: string;
 }
 
-export function jsonOk(body: unknown): APIGatewayProxyResultV2 {
+export function jsonOk(body: unknown, options: JsonResponseOptions = {}): APIGatewayProxyResultV2 {
   return {
     statusCode: 200,
-    headers: JSON_HEADERS,
+    headers: buildJsonHeaders(options.origin),
+    ...(options.cookies ? { cookies: options.cookies } : {}),
     body: JSON.stringify(body),
   };
 }
 
-export function jsonError(statusCode: number, body: unknown): APIGatewayProxyResultV2 {
+export function jsonError(statusCode: number, body: unknown, options: JsonResponseOptions = {}): APIGatewayProxyResultV2 {
   return {
     statusCode,
-    headers: JSON_HEADERS,
+    headers: buildJsonHeaders(options.origin),
+    ...(options.cookies ? { cookies: options.cookies } : {}),
     body: JSON.stringify(body),
   };
+}
+
+export function getRequestOrigin(event: APIGatewayProxyEventV2): string | undefined {
+  return event.headers.origin || event.headers.Origin;
 }
 
 export function getOptionalQueryParam(event: APIGatewayProxyEventV2, name: string): string | undefined {

@@ -21,7 +21,14 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Setup SAM CLI
+        uses: aws-actions/setup-sam@v2
+
       - name: Install dependencies
+        run: npm ci
+
+      - name: Install AWS dependencies
+        working-directory: aws
         run: npm ci
 
       - name: Type check
@@ -32,6 +39,18 @@ jobs:
 
       - name: Unit tests
         run: npm run test
+
+      - name: AWS type check
+        working-directory: aws
+        run: npm run typecheck
+
+      - name: AWS tests
+        working-directory: aws
+        run: npm run test
+
+      - name: AWS build
+        working-directory: aws
+        run: npm run build
 
       - name: Build
         run: npm run build

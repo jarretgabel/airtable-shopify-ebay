@@ -96,9 +96,7 @@ export function MarketTab({ viewModel }: MarketTabProps) {
                 {listings.map((listing) => (
                   <tr key={listing.id} className={darkTableRowHoverClass}>
                     <td className="border-b border-[var(--line)] px-3 py-2.5 align-middle">
-                      <a href={listing.url} target="_blank" rel="noreferrer" className="font-medium text-[var(--accent)] hover:underline">
-                        {listing.title || '(no title)'}
-                      </a>
+                      <span className="font-medium text-[var(--ink)]">{listing.title || '(no title)'}</span>
                     </td>
                     <td className="border-b border-[var(--line)] px-3 py-2.5 text-[var(--muted)]">{listing.site || '—'}</td>
                     <td className="border-b border-[var(--line)] px-3 py-2.5 text-[var(--muted)]">{listing.country || '—'}</td>

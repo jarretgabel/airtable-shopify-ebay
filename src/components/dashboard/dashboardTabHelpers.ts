@@ -178,7 +178,13 @@ export function buildUtilityWorkflowCards({
     cards.push({
       id: 'imagelab',
       title: 'Image Lab',
-      eyebrow: aiProvider === 'none' ? 'AI identification offline' : aiProvider === 'github' ? 'GitHub Models ready' : 'OpenAI ready',
+      eyebrow: aiProvider === 'none'
+        ? 'AI identification offline'
+        : aiProvider === 'github'
+          ? 'GitHub Models ready'
+          : aiProvider === 'openai'
+            ? 'OpenAI ready'
+            : 'Lambda AI ready',
       detail: 'Batch-identify equipment from photos, optimize exports, and prep listing-ready image assets.',
       stats: [aiProvider === 'none' ? 'Manual image processing' : 'Equipment identification', 'Resize + watermark', 'Clipboard-ready copy'],
     });

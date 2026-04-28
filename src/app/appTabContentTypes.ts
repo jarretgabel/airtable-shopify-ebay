@@ -34,7 +34,7 @@ export interface AppTabContentProps {
   navigateToTab: (tab: Tab, replace?: boolean) => void;
   metrics: ReturnType<typeof useDashboardMetrics>;
   accessiblePages: Tab[];
-  aiProvider: 'github' | 'openai' | 'none';
+  aiProvider: 'github' | 'openai' | 'backend' | 'none';
   usersCount: number;
   adminCount: number;
   nonEmptyListings: AirtableRecord[];

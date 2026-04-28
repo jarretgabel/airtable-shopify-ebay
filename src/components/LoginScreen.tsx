@@ -34,9 +34,9 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
     onLoggedIn();
   }
 
-  function handleForgotPassword(event: FormEvent<HTMLFormElement>): void {
+  async function handleForgotPassword(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    const result = requestPasswordReset(resetEmail);
+    const result = await requestPasswordReset(resetEmail);
     setResetStatus(result.message);
     setResetLink(result.resetLink ?? null);
   }

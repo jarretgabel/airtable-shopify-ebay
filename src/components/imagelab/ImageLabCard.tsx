@@ -135,7 +135,7 @@ export function ImageLabCard({ item, apiKeyPresent, isCopied, onIdentify, onProc
                 <span className="font-semibold text-[var(--ink)]">Shopify</span>
                 <span>{shopifyUpload.assetLabel ?? 'Image'}</span>
                 {shopifyUpload.status === 'uploading' && <span className="text-blue-300">Uploading…</span>}
-                {shopifyUpload.status === 'done' && shopifyUpload.url && <a className="text-[var(--accent)] underline-offset-2 hover:underline" href={shopifyUpload.url} target="_blank" rel="noreferrer">Open uploaded image</a>}
+                {shopifyUpload.status === 'done' && shopifyUpload.url && <span className="text-emerald-300">Uploaded</span>}
                 {shopifyUpload.status === 'error' && <span className="text-red-300">{shopifyUpload.error}</span>}
               </div>
             )}
@@ -144,7 +144,7 @@ export function ImageLabCard({ item, apiKeyPresent, isCopied, onIdentify, onProc
                 <span className="font-semibold text-[var(--ink)]">eBay</span>
                 <span>{ebayUpload.assetLabel ?? 'Image'}</span>
                 {ebayUpload.status === 'uploading' && <span className="text-blue-300">Uploading…</span>}
-                {ebayUpload.status === 'done' && ebayUpload.url && <a className="text-[var(--accent)] underline-offset-2 hover:underline" href={ebayUpload.url} target="_blank" rel="noreferrer">Open hosted picture</a>}
+                {ebayUpload.status === 'done' && ebayUpload.url && <span className="text-emerald-300">Uploaded</span>}
                 {ebayUpload.status === 'error' && <span className="text-red-300">{ebayUpload.error}</span>}
               </div>
             )}

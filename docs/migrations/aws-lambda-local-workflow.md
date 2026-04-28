@@ -2,149 +2,69 @@
 
 ## Purpose
 
-This document defines the recommended local development and validation workflow for Package 1. The goal is to let the frontend and the first Lambda routes coexist locally without changing the production architecture decisions.
+This document defines the current local development workflow now that Airtable, Shopify, JotForm, eBay, auth, AI, Gmail, and HiFiShark all route through the backend `/api/*` seam.
 
 ## Recommended Local Topology
 
-Use a split local topology for Package 1:
+Use one of these supported local topologies:
 
-- Vite frontend on `http://localhost:3000`
-- local API on `http://127.0.0.1:3001` via either SAM or the no-Docker Node adapter
-- frontend configured with `VITE_APP_API_BASE_URL=http://127.0.0.1:3001`
+- Vite on `http://localhost:3000` plus the no-Docker local API on `http://127.0.0.1:3001`
+- Vite on `http://localhost:3000` plus `sam local start-api` on `http://127.0.0.1:3001`
+- `npm run dev:full` to start the local API first and then Vite
 
-Reason:
+Recommended frontend routing:
 
-- production should prefer same-origin routing where possible
-- local development is simpler if the frontend can target the local API directly without adding a second proxy layer to Vite
+- keep `VITE_APP_API_BASE_URL=` blank when using same-origin `/api/*` requests through Vite
+- set `VITE_APP_API_PROXY_TARGET=http://127.0.0.1:3001` so Vite forwards `/api/*` to the local backend
 
-## Package 1 Runtime Modes
+Alternative split-origin routing:
 
-### Mode A: direct-only seam validation
+- set `VITE_APP_API_BASE_URL=http://127.0.0.1:3001`
+- leave `VITE_APP_API_PROXY_TARGET` blank
 
-Use this first.
+## Local Env Model
 
-- `VITE_USE_LAMBDA_JOTFORM=false`
-- `VITE_USE_LAMBDA_AIRTABLE=false`
-- `VITE_APP_API_BASE_URL=`
+The root `.env.local` still contains provider credentials for local development, but those values now feed the backend runtime instead of browser-direct service calls.
 
-Purpose:
+Current behavior:
 
-- prove that the seam wrappers are a no-op abstraction
-- validate hook reroutes without any AWS dependency
-
-### Mode B: JotForm Lambda validation
-
-- `VITE_USE_LAMBDA_JOTFORM=true`
-- `VITE_USE_LAMBDA_AIRTABLE=false`
-- `VITE_APP_API_BASE_URL=http://127.0.0.1:3001`
-
-Purpose:
-
-- validate only the JotForm Lambda path while Airtable still uses the direct path
-
-### Mode C: Airtable Lambda validation
-
-- `VITE_USE_LAMBDA_JOTFORM=false`
-- `VITE_USE_LAMBDA_AIRTABLE=true`
-- `VITE_APP_API_BASE_URL=http://127.0.0.1:3001`
-
-Purpose:
-
-- validate only the Airtable listing-read Lambda path while JotForm still uses the direct path
-
-### Mode D: dual Lambda validation
-
-- `VITE_USE_LAMBDA_JOTFORM=true`
-- `VITE_USE_LAMBDA_AIRTABLE=true`
-- `VITE_APP_API_BASE_URL=http://127.0.0.1:3001`
-
-Purpose:
-
-- validate that both wrappers can run in Lambda mode independently at the same time
-
-## Recommended Local Files
-
-### Frontend env example additions
-
-Add these to `.env.example` when implementation starts:
-
-```env
-VITE_USE_LAMBDA_JOTFORM=false
-VITE_USE_LAMBDA_AIRTABLE=false
-VITE_APP_API_BASE_URL=
-VITE_APP_API_PROXY_TARGET=http://127.0.0.1:3001
-```
-
-Notes:
-
-- Use `VITE_APP_API_BASE_URL` for split-origin local validation.
-- Use `VITE_APP_API_PROXY_TARGET` to keep the browser on same-origin `/api/*` paths while Vite proxies to SAM.
-
-### AWS env example
-
-Create `aws/env.local.json.example` with this shape:
-
-```json
-{
-  "JotformGetFormsFunction": {
-    "JOTFORM_API_KEY": "replace-me"
-  },
-  "JotformGetFormSubmissionsFunction": {
-    "JOTFORM_API_KEY": "replace-me"
-  },
-  "AirtableGetListingsFunction": {
-    "AIRTABLE_API_KEY": "replace-me",
-    "AIRTABLE_BASE_ID": "replace-me",
-    "ALLOWED_AIRTABLE_TABLE_NAME": "replace-me",
-    "ALLOWED_AIRTABLE_VIEW_ID": "replace-me"
-  }
-}
-```
+- `npm run local:api` reads root `.env` and `.env.local`
+- it maps the `VITE_*` provider variables into backend environment variables before loading the Lambda handlers
+- the browser calls only `/api/*` routes for Airtable, Shopify, JotForm, eBay, auth, AI, Gmail, and HiFiShark
+- auth session state is carried by the backend `lcc_session` httpOnly cookie rather than frontend localStorage
+- the local adapter defaults `APP_AUTH_COOKIE_SECURE_MODE=never` so cookie auth works on plain `http://127.0.0.1:*`
 
 ## Command Workflow
 
-### Step 1: validate the seam without AWS
+### Step 1: validate the frontend build
 
 From the repo root:
 
 ```bash
+npm run typecheck
 npm run build
-npm run test
 ```
 
 Expected result:
 
-- the app still behaves the same with both Lambda flags off
+- the frontend compiles with the current app-api seam
 
 ### Step 2: validate the AWS package compiles
 
 From `aws/`:
 
 ```bash
-npm install
-sam build --template-file template.yaml
+npm run typecheck
+npm run build
 ```
 
 Expected result:
 
-- the Lambda package structure is valid enough for local execution
+- the Lambda package is valid for local execution and deployment
 
 ### Step 3: start the local API
 
-Option A: SAM local
-
-From `aws/`:
-
-```bash
-cp env.local.json.example env.local.json
-sam local start-api --template-file template.yaml --env-vars env.local.json --port 3001
-```
-
-Expected result:
-
-- local routes are reachable at `http://127.0.0.1:3001`
-
-Option B: no-Docker Node adapter
+Option A: no-Docker Node adapter
 
 From the repo root:
 
@@ -157,7 +77,7 @@ Expected result:
 - local routes are reachable at `http://127.0.0.1:3001`
 - AWS handlers run in-process without Docker
 
-Option C: one-command local frontend plus API
+Option B: one-command local frontend plus API
 
 From the repo root:
 
@@ -171,19 +91,20 @@ Expected result:
 - Vite starts after the API is listening
 - same-origin `/api/*` requests can be proxied through Vite with `VITE_APP_API_PROXY_TARGET=http://127.0.0.1:3001`
 
-If port `3001` is already serving an existing local API instance, `npm run dev:full` should reuse it and start only Vite.
+Option C: SAM local
 
-### Step 4: run the frontend against local Lambda
-
-From the repo root:
+From `aws/`:
 
 ```bash
-npm run dev
+cp env.local.json.example env.local.json
+sam local start-api --template-file template.yaml --env-vars env.local.json --port 3001
 ```
 
-Use one of the runtime modes above to switch integrations independently.
+Expected result:
 
-### Step 5: compare direct and local API responses
+- local routes are reachable at `http://127.0.0.1:3001`
+
+### Step 4: compare provider behavior against the local API
 
 From the repo root:
 
@@ -193,97 +114,41 @@ npm run compare:lambda
 
 Expected result:
 
-- JotForm forms, JotForm submissions, and Airtable listings report matching counts, required keys, and sample ids
-- users and inventory-directory Airtable sources also match when configured locally
-- approval Airtable sources also match when their env vars are configured locally
+- Airtable, Shopify, JotForm, eBay, and configured approval sources match the local backend responses where comparison coverage exists
 
-### Step 5 alternative: compare handlers without SAM
-
-Use this when `sam local` or Docker is unavailable on the machine.
-
-From the repo root:
+Alternative when `sam local` or Docker is unavailable:
 
 ```bash
 npm run prepare:aws:env
 npm run compare:lambda:handler
 ```
 
-Expected result:
+### Step 5: probe write routes safely
 
-- the generated `aws/env.local.json` contains the Package 1 runtime values derived from `.env.local`
-- the in-process Lambda handlers match the direct provider responses on shape, counts, and sample ids
-
-### Step 6: probe write routes safely
-
-Use this only when you want an explicit write-path smoke test against the local `/api/*` server.
+Use these only when you want explicit smoke tests against the local `/api/*` server.
 
 From the repo root:
 
 ```bash
 npm run probe:lambda:writes
+npm run probe:lambda:shopify
+npm run probe:lambda:ebay
 ```
 
 Expected result:
 
-- a temporary Airtable row is created
-- the row is updated
-- optional attachment upload succeeds
-- the row is deleted during normal completion or cleanup
+- temporary test records/listings are created through the backend seam
+- cleanup scripts can remove probe artifacts when needed
 
-See [aws-lambda-write-validation.md](./aws-lambda-write-validation.md) for the required env vars and the exact UI flows to validate.
+See [aws-lambda-write-validation.md](/Users/user/Sites/airtable-shopify-ebay/docs/migrations/aws-lambda-write-validation.md) for the required env vars and exact validation flows.
 
 ## Manual Validation Checklist
 
-### Milestone 1: seam only
-
 - dashboard loads
 - listing-dependent screens load
-- JotForm inquiries load
-- no UI component changes are required
-- `npm run build` passes
-
-### Milestone 3: JotForm Lambda
-
-- forms list loads through Lambda
-- submissions list loads through Lambda
-- polling still updates inquiry results
-- error handling still surfaces as the current hooks expect
-- switching the JotForm flag off returns the app to the direct path
-
-### Milestone 4: Airtable Lambda
-
-- dashboard Airtable data loads through Lambda
-- non-empty listing derivation still behaves the same
-- unsupported table or view values are rejected server-side
-- switching the Airtable flag off returns the app to the direct path
-
-## Comparison Checks
-
-Before enabling Lambda mode by default for either integration, compare:
-
-- success payload shape
-- empty-state behavior
-- error message text exposed to the hook layer
-- loading and retry behavior
-
-Package 1 should treat shape compatibility as more important than elegance.
-
-## Recommended Defaults
-
-If no stronger constraint exists, use these defaults:
-
-- same-origin in production
-- direct SAM API host in local development
-- `sam local start-api` as the first local validation tool
-- root `npm run build` as the required seam-regression check after every meaningful frontend change
-
-## Exit Signals For Moving Past Planning
-
-Planning is sufficiently complete when all of the following are true:
-
-1. the Package 1 file set is fixed
-2. the local workflow is fixed
-3. the first Airtable allowlist is fixed
-4. the team has chosen SAM versus SST and a secret source
-
-At that point, the next step should be implementation, starting with Milestone 1.
+- JotForm inquiries load and poll correctly
+- approval flows save through `/api/airtable/*`
+- Shopify publish helpers and image upload route hit `/api/shopify/*`
+- eBay inventory, taxonomy, image, and publish flows hit `/api/ebay/*`
+- auth and user-management flows hit `/api/auth/*`
+- HiFiShark model lookups hit `/api/hifishark/*`

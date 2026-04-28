@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import dotenv from 'dotenv';
-import { resolveLocalApiOrigin } from './local-api-origin.mjs';
+import { requireReadyLocalApiOrigin } from './local-api-origin.mjs';
 import { cleanupEbayProbeListings } from './cleanup-ebay-probe-listings.mjs';
 
 const cwd = process.cwd();
@@ -180,7 +180,7 @@ async function main() {
     return;
   }
 
-  const lambdaOrigin = await resolveLocalApiOrigin(getOptionalEnv);
+  const lambdaOrigin = await requireReadyLocalApiOrigin(getOptionalEnv, { purpose: 'eBay Lambda write probe' });
   const publishSetup = parseJsonEnv('EBAY_WRITE_PROBE_PUBLISH_SETUP_JSON');
   const sampleMode = (getOptionalEnv('EBAY_WRITE_PROBE_SAMPLE_MODE') || 'inventory').trim();
   const approvalBundle = getOptionalEnv('EBAY_WRITE_PROBE_APPROVAL_BUNDLE_JSON')

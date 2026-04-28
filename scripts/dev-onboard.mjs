@@ -37,7 +37,7 @@ const optional = [
   'VITE_EBAY_REFRESH_TOKEN',
   'VITE_GITHUB_TOKEN',
   'VITE_OPENAI_API_KEY',
-  'VITE_ANALYTICS_ENDPOINT',
+  'ANALYTICS_FORWARD_ENDPOINT',
   'VITE_ANALYTICS_ENABLED',
 ];
 
@@ -96,6 +96,9 @@ for (const key of optional) {
 console.log('');
 if (errorCount === 0) {
   console.log('Result: setup looks good. Run npm run dev to start the app.');
+  console.log('Optional Lambda-adapter verification:');
+  console.log('  1. Start the local adapter with `LOCAL_API_PORT=3002 npm run local:api`');
+  console.log('  2. In another terminal run `LAMBDA_API_ORIGIN=http://127.0.0.1:3002 npm run local:api:check`');
   process.exit(0);
 }
 

@@ -62,7 +62,7 @@ export function resolveListingFormatOptions(formats: string[]): string[] {
 **approvalStore.ts** — Zustand creation + orchestration
 ```typescript
 import { create } from 'zustand';
-import airtableService from '@/services/airtable';
+import { getRecordsFromResolvedSource } from '@/services/app-api/airtable';
 import {
   FALLBACK_LISTING_FORMAT_OPTIONS,
   SHIPPING_SERVICE_FIELD,
@@ -103,7 +103,7 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
   async loadRecords(tableReference, fallbackTableName) {
     set({ loading: true, error: null });
     try {
-      const records = await airtableService.getRecordsFromReference(
+      const records = await getRecordsFromResolvedSource(
         tableReference,
         fallbackTableName
       );
@@ -328,7 +328,7 @@ describe('useApprovalStore', () => {
   });
 
   it('should load records and set loading state', async () => {
-    // Mock airtableService
+    // Mock the app-api Airtable wrapper
     const { result } = renderHook(() => useApprovalStore());
     
     expect(result.current.loading).toBe(true);

@@ -1,22 +1,13 @@
 import { getAIProvider, identifyEquipment } from '@/services/app-api/ai';
-import * as aiDirect from '@/services/aiDirect';
-
-vi.mock('@/services/aiDirect', () => ({
-  getDirectAIProvider: vi.fn(),
-  identifyEquipmentDirect: vi.fn(),
-}));
 
 describe('app-api ai', () => {
   const fetchMock = vi.fn<typeof fetch>();
 
   beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
-    vi.stubEnv('VITE_USE_LAMBDA_AI', 'false');
     vi.stubEnv('VITE_APP_API_BASE_URL', '');
     vi.stubEnv('VITE_AI_PROVIDER', 'none');
     fetchMock.mockReset();
-    vi.mocked(aiDirect.identifyEquipmentDirect).mockReset();
-    vi.mocked(aiDirect.getDirectAIProvider).mockReset();
   });
 
   afterEach(() => {
@@ -24,18 +15,7 @@ describe('app-api ai', () => {
     vi.unstubAllGlobals();
   });
 
-  it('delegates to the direct AI service when Lambda mode is off', async () => {
-    vi.mocked(aiDirect.identifyEquipmentDirect).mockResolvedValue({ brand: 'McIntosh', model: 'MA8900' } as never);
-
-    const result = await identifyEquipment('base64-image', 'image/png');
-
-    expect(aiDirect.identifyEquipmentDirect).toHaveBeenCalledWith('base64-image', 'image/png');
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(result).toEqual({ brand: 'McIntosh', model: 'MA8900' });
-  });
-
-  it('calls the Lambda AI endpoint when Lambda mode is on', async () => {
-    vi.stubEnv('VITE_USE_LAMBDA_AI', 'true');
+  it('calls the Lambda AI endpoint', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ brand: 'Naim', model: 'NAP 250 DR' }), {
         status: 200,
@@ -56,15 +36,17 @@ describe('app-api ai', () => {
     expect(result).toEqual({ brand: 'Naim', model: 'NAP 250 DR' });
   });
 
-  it('uses the public provider hint in Lambda mode', () => {
-    vi.stubEnv('VITE_USE_LAMBDA_AI', 'true');
+  it('uses the public provider hint when configured', () => {
     vi.stubEnv('VITE_AI_PROVIDER', 'github');
 
     expect(getAIProvider()).toEqual({ provider: 'github', key: '' });
   });
 
+  it('reports backend AI when no public provider hint is configured', () => {
+    expect(getAIProvider()).toEqual({ provider: 'backend', key: '' });
+  });
+
   it('rethrows Lambda AI failures as plain Errors', async () => {
-    vi.stubEnv('VITE_USE_LAMBDA_AI', 'true');
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({
         message: 'OpenAI API error 401: invalid_api_key',

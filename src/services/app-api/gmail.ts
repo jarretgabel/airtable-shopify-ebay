@@ -1,6 +1,4 @@
-import { sendPlainTextEmailDirect } from '@/services/gmailDirect';
 import { isAppApiHttpError } from './errors';
-import { isLambdaGmailEnabled } from './flags';
 import { postJson } from './http';
 
 interface GmailSendResponse {
@@ -16,10 +14,6 @@ function toGmailError(error: unknown): Error {
 }
 
 export async function sendPlainTextEmail(to: string, subject: string, body: string): Promise<boolean> {
-  if (!isLambdaGmailEnabled()) {
-    return sendPlainTextEmailDirect(to, subject, body);
-  }
-
   try {
     const response = await postJson<GmailSendResponse>('/api/gmail/send', {
       to,

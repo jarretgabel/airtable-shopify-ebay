@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import type { EbayEnvironment } from './ebayTabUi';
 import type { EbayInventoryItem, EbayOffer } from '@/services/ebay/types';
 import type { EbayPublishedListing } from '@/hooks/useEbayListings';
-import { listingUrl, statusColor, statusLabel } from './ebayTabUi';
+import { statusColor, statusLabel } from './ebayTabUi';
 
 export function EbayServerConfigNotice({ error, loading }: { error: string | null; loading: boolean }) {
   const hasError = Boolean(error);
@@ -27,10 +26,9 @@ export function EbayServerConfigNotice({ error, loading }: { error: string | nul
   );
 }
 
-export function RecentEbayCard({ listing, environment }: { listing: EbayPublishedListing; environment: EbayEnvironment }) {
+export function RecentEbayCard({ listing }: { listing: EbayPublishedListing }) {
   const [imgError, setImgError] = useState(false);
   const thumbUrl = !imgError && listing.item.product?.imageUrls?.[0];
-  const ebayListingUrl = listingUrl(listing.offer, environment);
 
   return (
     <article className="flex flex-col overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--panel)] shadow-[0_1px_4px_rgba(17,32,49,0.06)] transition-shadow duration-150 hover:shadow-[0_4px_16px_rgba(17,32,49,0.10)]">
@@ -44,18 +42,16 @@ export function RecentEbayCard({ listing, environment }: { listing: EbayPublishe
         <p className="m-0 line-clamp-2 text-[0.88rem] font-bold leading-[1.35] text-[var(--ink)]" title={listing.item.product?.title}>{listing.item.product?.title ?? 'Untitled'}</p>
         {listing.offer.pricingSummary?.price && <div className="text-[1.05rem] font-extrabold text-green-300">{listing.offer.pricingSummary.price.currency === 'USD' ? '$' : listing.offer.pricingSummary.price.currency}{Number(listing.offer.pricingSummary.price.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>}
         {listing.item.condition && <p className="m-0 text-[0.74rem] font-semibold text-sky-500">{listing.item.condition.replace(/_/g, ' ').replace(/\b\w/g, (character: string) => character.toUpperCase())}</p>}
-        {ebayListingUrl && <div className="mt-1 flex items-center gap-2"><a className="inline-flex items-center justify-center rounded-lg bg-[#E53238] px-3 py-1.5 text-[0.76rem] font-bold text-white no-underline transition-colors duration-150 hover:bg-[#c8272d]" href={ebayListingUrl} target="_blank" rel="noreferrer">View on eBay</a></div>}
       </div>
     </article>
   );
 }
 
-export function EbayCard({ item, offer, environment }: { item: EbayInventoryItem; offer?: EbayOffer; environment: EbayEnvironment }) {
+export function EbayCard({ item, offer }: { item: EbayInventoryItem; offer?: EbayOffer }) {
   const [imgError, setImgError] = useState(false);
   const thumbUrl = !imgError && item.product?.imageUrls?.[0];
   const price = offer?.pricingSummary?.price;
   const qty = item.availability?.shipToLocationAvailability?.quantity ?? 0;
-  const ebayListingUrl = listingUrl(offer, environment);
 
   return (
     <article className="flex flex-col overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--panel)] shadow-[0_1px_4px_rgba(17,32,49,0.06)] transition-shadow duration-150 hover:shadow-[0_4px_16px_rgba(17,32,49,0.10)]">
@@ -85,7 +81,6 @@ export function EbayCard({ item, offer, environment }: { item: EbayInventoryItem
           </div>
         )}
 
-        {ebayListingUrl && <div className="mt-1 flex items-center gap-2"><a className="inline-flex items-center justify-center rounded-lg bg-[#E53238] px-3 py-1.5 text-[0.76rem] font-bold text-white no-underline transition-colors duration-150 hover:bg-[#c8272d]" href={ebayListingUrl} target="_blank" rel="noreferrer">View on eBay</a></div>}
         {offer?.offerId && <p className="m-0 mt-1 text-[0.65rem] font-mono text-[var(--muted)]">Offer {offer.offerId}</p>}
       </div>
     </article>

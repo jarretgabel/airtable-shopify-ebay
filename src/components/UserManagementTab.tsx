@@ -117,8 +117,8 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
     setStatusMessage(result.message);
   }
 
-  function handleReset(email: string): void {
-    const result = requestPasswordReset(email);
+  async function handleReset(email: string): Promise<void> {
+    const result = await requestPasswordReset(email);
     setStatusMessage(result.message);
   }
 
@@ -214,7 +214,9 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
         onTogglePermission={(page) => {
           void togglePermission(selectedUser, page);
         }}
-        onSendPasswordReset={() => handleReset(selectedUser.email)}
+        onSendPasswordReset={() => {
+          void handleReset(selectedUser.email);
+        }}
         onDeleteUser={() => {
           void handleDeleteUser(selectedUser);
         }}

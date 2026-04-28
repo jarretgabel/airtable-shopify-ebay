@@ -60,23 +60,22 @@ aws/
 
 Responsibilities:
 
-- centralize migration flag parsing
+- centralize stable frontend env reads for the app-api layer
 - avoid duplicating `import.meta.env` reads across wrappers
 - expose a stable app-facing config surface
 
 Recommended first shape:
 
 ```ts
-function isEnabled(value: string | undefined): boolean {
-  return typeof value === 'string' && ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase());
-}
+const AI_PROVIDER_HINTS = new Set(['github', 'openai', 'none']);
 
-export function useLambdaJotform(): boolean {
-  return isEnabled(import.meta.env.VITE_USE_LAMBDA_JOTFORM);
-}
+export function getLambdaAiProviderHint(): 'github' | 'openai' | 'none' {
+  const value = (import.meta.env.VITE_AI_PROVIDER || '').trim().toLowerCase();
+  if (AI_PROVIDER_HINTS.has(value)) {
+    return value as 'github' | 'openai' | 'none';
+  }
 
-export function useLambdaAirtable(): boolean {
-  return isEnabled(import.meta.env.VITE_USE_LAMBDA_AIRTABLE);
+  return 'none';
 }
 
 export function getAppApiBaseUrl(): string {
@@ -142,30 +141,20 @@ export async function getJson<T>(path: string, params?: Record<string, string | 
 Responsibilities:
 
 - preserve the current `useJotForm` contract
-- own all direct-versus-Lambda branching
+- route requests through the backend `/api/*` seam only
 - keep wrapper logic orchestration-only
 
 Recommended first shape:
 
 ```ts
 import type { JotFormForm, JotFormSubmission } from '@/types/jotform';
-import { getForms as getDirectForms, getFormSubmissions as getDirectFormSubmissions } from '@/services/jotform';
-import { useLambdaJotform } from './flags';
 import { getJson } from './http';
 
 export async function getForms(): Promise<JotFormForm[]> {
-  if (!useLambdaJotform()) {
-    return getDirectForms();
-  }
-
   return getJson<JotFormForm[]>('/api/jotform/forms');
 }
 
 export async function getFormSubmissions(formId: string, limit = 100, offset = 0): Promise<JotFormSubmission[]> {
-  if (!useLambdaJotform()) {
-    return getDirectFormSubmissions(formId, limit, offset);
-  }
-
   return getJson<JotFormSubmission[]>(`/api/jotform/forms/${encodeURIComponent(formId)}/submissions`, {
     limit,
     offset,
@@ -180,22 +169,15 @@ export async function getFormSubmissions(formId: string, limit = 100, offset = 0
 Responsibilities:
 
 - preserve the current `useListings` contract
-- keep the first Lambda path narrow to listing reads
-- use the existing Airtable barrel as the direct fallback
+- route reads through the backend `/api` seam only
 
 Recommended first shape:
 
 ```ts
-import airtableService from '@/services/airtable';
 import type { AirtableRecord } from '@/types/airtable';
-import { useLambdaAirtable } from './flags';
 import { getJson } from './http';
 
 export async function getListings(tableName: string, options?: { view?: string }): Promise<AirtableRecord[]> {
-  if (!useLambdaAirtable()) {
-    return airtableService.getRecords(tableName, { view: options?.view });
-  }
-
   return getJson<AirtableRecord[]>('/api/airtable/listings', {
     tableName,
     view: options?.view,

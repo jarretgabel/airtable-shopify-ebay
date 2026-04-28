@@ -29,7 +29,7 @@ export async function identifyEquipment(
  * Returns which AI provider will be used based on available env vars.
  * Priority: GitHub Models > OpenAI
  */
-export function getAIProvider(): { provider: 'github' | 'openai' | 'none'; key: string } {
+export function getAIProvider(): { provider: 'github' | 'openai' | 'backend' | 'none'; key: string } {
   return getAppApiAIProvider();
 }
 

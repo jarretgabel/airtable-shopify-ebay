@@ -20,8 +20,7 @@ interface WorkflowEvent {
   payload: WorkflowEventPayload;
 }
 
-const STORAGE_KEY = 'workflow_analytics_events';
-const STORAGE_LIMIT = 250;
+const ANALYTICS_API_PATH = '/api/analytics/events';
 
 function isAnalyticsEnabled(): boolean {
   const raw = (import.meta.env.VITE_ANALYTICS_ENABLED as string | undefined)?.trim().toLowerCase();
@@ -29,29 +28,12 @@ function isAnalyticsEnabled(): boolean {
   return raw !== 'false' && raw !== '0' && raw !== 'off';
 }
 
-function getAnalyticsEndpoint(): string {
-  return (import.meta.env.VITE_ANALYTICS_ENDPOINT as string | undefined)?.trim() ?? '';
-}
-
-function appendToLocalBuffer(event: WorkflowEvent): void {
+function postToEndpoint(event: WorkflowEvent): void {
   if (typeof window === 'undefined') return;
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const events: WorkflowEvent[] = raw ? (JSON.parse(raw) as WorkflowEvent[]) : [];
-    events.push(event);
-    const bounded = events.slice(-STORAGE_LIMIT);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(bounded));
-  } catch {
-    // Ignore storage failures in private mode / quota limits.
-  }
-}
-
-function postToEndpoint(endpoint: string, event: WorkflowEvent): void {
-  if (typeof window === 'undefined' || !endpoint) return;
 
   const body = JSON.stringify(event);
   const blob = new Blob([body], { type: 'application/json' });
+  const endpoint = ANALYTICS_API_PATH;
 
   if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
     navigator.sendBeacon(endpoint, blob);
@@ -77,11 +59,9 @@ export function trackWorkflowEvent(name: WorkflowEventName, payload: WorkflowEve
     payload,
   };
 
-  appendToLocalBuffer(event);
-
   if (import.meta.env.DEV) {
     console.info('[analytics]', event);
   }
 
-  postToEndpoint(getAnalyticsEndpoint(), event);
+  postToEndpoint(event);
 }

@@ -33,5 +33,6 @@
   "GITHUB_TOKEN": "optional-github-models-token",
   "OPENAI_API_KEY": "optional-openai-api-key",
   "GOOGLE_GMAIL_ACCESS_TOKEN": "optional-gmail-access-token",
-  "GOOGLE_GMAIL_FROM_EMAIL": "optional-sender@example.com"
+  "GOOGLE_GMAIL_FROM_EMAIL": "optional-sender@example.com",
+  "APP_AUTH_TOKEN_SECRET": "replace-with-strong-auth-token-secret"
 }

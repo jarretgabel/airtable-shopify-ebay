@@ -31,15 +31,6 @@ It is shown in the app under:
 - Generates a temporary `SKU` if the field is left blank.
 - Defaults `Status` to `Needs Initial Processing` if no status is selected.
 
-## Environment Variables
-
-Optional incoming gear form source links are read from:
-
-- `VITE_AIRTABLE_INCOMING_GEAR_FORM_URL`
-- `VITE_AIRTABLE_INCOMING_GEAR_FORM_EMBED_URL`
-
-These variables are only used to show an external Airtable link in the UI. Submission goes directly to the Airtable table through the local service.
-
 ## Current Field Order
 
 1. `Arrival Date`

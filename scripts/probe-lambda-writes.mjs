@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import dotenv from 'dotenv';
-import { resolveLocalApiOrigin } from './local-api-origin.mjs';
+import { requireReadyLocalApiOrigin } from './local-api-origin.mjs';
 
 const cwd = process.cwd();
 
@@ -88,7 +88,7 @@ async function main() {
     return;
   }
 
-  const lambdaOrigin = await resolveLocalApiOrigin(getOptionalEnv);
+  const lambdaOrigin = await requireReadyLocalApiOrigin(getOptionalEnv, { purpose: 'Lambda write probe' });
   const source = validateSource(requireEnv('LAMBDA_WRITE_PROBE_SOURCE'));
   const createFields = parseJsonEnv('LAMBDA_WRITE_PROBE_CREATE_FIELDS_JSON');
   const updateFields = parseJsonEnv('LAMBDA_WRITE_PROBE_UPDATE_FIELDS_JSON');

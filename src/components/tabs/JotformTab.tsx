@@ -58,7 +58,7 @@ export function JotformTab({ viewModel }: JotformTabProps) {
       {error && (
         <ErrorSurface title="Error loading submissions" message={error.message}>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            Make sure <code>VITE_JOTFORM_API_KEY</code> and <code>VITE_JOTFORM_FORM_ID</code> are set in <code>.env.local</code>.
+            Confirm the backend JotForm credentials are configured for your local API or deployed Lambda environment.
           </p>
         </ErrorSurface>
       )}

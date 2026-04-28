@@ -40,7 +40,7 @@ const thClass = 'px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0
 const tdClass = 'px-3 py-2 text-[var(--ink)] whitespace-nowrap';
 const tdMutedClass = 'px-3 py-2 text-[var(--muted)] whitespace-nowrap';
 
-function ProductDetail({ product, storeDomain }: { product: ShopifyProduct & { id: number }; storeDomain?: string }) {
+function ProductDetail({ product }: { product: ShopifyProduct & { id: number } }) {
   const mainVariant = product.variants?.[0];
   const tags = product.tags ? product.tags.split(',').map((t) => t.trim()).filter(Boolean) : [];
 
@@ -160,21 +160,6 @@ function ProductDetail({ product, storeDomain }: { product: ShopifyProduct & { i
           </div>
         </>
       )}
-
-      {/* Admin link */}
-      {storeDomain && (
-        <p className={`${detailRowClass} mt-2`}>
-          <strong className="text-[var(--muted)]">Admin:</strong>{' '}
-          <a
-            className="font-medium text-[var(--accent)] underline-offset-2 transition-colors hover:text-sky-300 hover:underline"
-            href={`https://${storeDomain}/admin/products/${product.id}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            View in Shopify ↗
-          </a>
-        </p>
-      )}
     </div>
   );
 }
@@ -187,7 +172,7 @@ const searchInputClass = 'flex-1 min-w-[180px] rounded-lg border border-[var(--l
 const selectClass = 'rounded-lg border border-[var(--line)] bg-[var(--panel)] px-2.5 py-2 text-[0.82rem] text-[var(--ink)] outline-none transition-colors focus:border-[var(--accent)] cursor-pointer';
 
 export function ShopifyTab({ viewModel }: ShopifyTabProps) {
-  const { loading, error, products, storeDomain } = viewModel;
+  const { loading, error, products } = viewModel;
   const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'draft' | 'archived'>('all');
@@ -277,7 +262,7 @@ export function ShopifyTab({ viewModel }: ShopifyTabProps) {
             </>
           )}
         >
-          <ProductDetail product={product as ShopifyProduct & { id: number }} storeDomain={storeDomain} />
+          <ProductDetail product={product as ShopifyProduct & { id: number }} />
         </ExpandableDataCard>
       ))}
     </PanelSurface>

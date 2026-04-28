@@ -1,0 +1,12 @@
+HTTP/1.1 200 OK
+access-control-allow-origin: http://127.0.0.1:3000
+access-control-allow-credentials: true
+vary: origin
+access-control-allow-headers: content-type,authorization
+content-type: application/json
+set-cookie: lcc_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax
+Date: Tue, 28 Apr 2026 20:40:28 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+

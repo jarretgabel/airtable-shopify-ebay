@@ -27,7 +27,6 @@ interface EbayAuthenticatedViewProps {
   policyConfig: EbayBusinessPolicyConfig;
   missingLocation: string[];
   missingPolicies: string[];
-  tradingListingUrl: string | null;
   onApiModeChange: (mode: EbayListingApiMode) => void;
   onCreateDraft: () => void;
   onPublishDraft: () => void;
@@ -58,7 +57,6 @@ export function EbayAuthenticatedView({
   policyConfig,
   missingLocation,
   missingPolicies,
-  tradingListingUrl,
   onApiModeChange,
   onCreateDraft,
   onPublishDraft,
@@ -140,7 +138,7 @@ export function EbayAuthenticatedView({
         </div>
       </div>
 
-      {draftStatus === 'done' && draftResult && <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-green-500/30 bg-green-950/30 px-4 py-2.5 text-[0.83rem] text-green-300 max-[600px]:items-start"><strong>{draftResult.mode === 'inventory' ? 'Draft listing created' : draftResult.mode === 'trading' ? 'Trading listing created' : 'Trading payload verified'}</strong> - SKU: <code>{draftResult.sku}</code>{draftResult.offerId && <> · Offer ID: <code>{draftResult.offerId}</code></>}{draftResult.listingId && <> · Listing ID: <code>{draftResult.listingId}</code></>}<span className="rounded-[5px] bg-slate-800 px-2 py-[0.15em] text-[0.68rem] font-bold text-slate-400">{draftResult.status}</span>{draftResult.mode === 'trading' && tradingListingUrl && <a className="inline-flex items-center justify-center rounded-lg bg-[#E53238] px-3 py-1.5 text-[0.76rem] font-bold text-white no-underline transition-colors duration-150 hover:bg-[#c8272d]" href={tradingListingUrl} target="_blank" rel="noreferrer">View on eBay</a>}</div>}
+      {draftStatus === 'done' && draftResult && <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-green-500/30 bg-green-950/30 px-4 py-2.5 text-[0.83rem] text-green-300 max-[600px]:items-start"><strong>{draftResult.mode === 'inventory' ? 'Draft listing created' : draftResult.mode === 'trading' ? 'Trading listing created' : 'Trading payload verified'}</strong> - SKU: <code>{draftResult.sku}</code>{draftResult.offerId && <> · Offer ID: <code>{draftResult.offerId}</code></>}{draftResult.listingId && <> · Listing ID: <code>{draftResult.listingId}</code></>}<span className="rounded-[5px] bg-slate-800 px-2 py-[0.15em] text-[0.68rem] font-bold text-slate-400">{draftResult.status}</span></div>}
       {draftStatus === 'error' && draftError && <div className="rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-[0.82rem] text-[var(--error-text)]">{draftError}</div>}
       {publishStatus === 'done' && publishResult && <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-green-500/30 bg-green-950/30 px-4 py-2.5 text-[0.83rem] text-green-300 max-[600px]:items-start"><strong>Sample draft published</strong> - SKU: <code>{publishResult.sku}</code> · Offer ID: <code>{publishResult.offerId}</code> · Listing ID: <code>{publishResult.listingId}</code><span className="rounded-[5px] bg-slate-800 px-2 py-[0.15em] text-[0.68rem] font-bold text-slate-400">LIVE</span></div>}
       {publishStatus === 'error' && publishError && <div className="rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-[0.82rem] text-[var(--error-text)]">{publishError}</div>}
@@ -200,12 +198,12 @@ export function EbayAuthenticatedView({
         </div>
       )}
 
-      {filteredRecentListings.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Last 20 published inventory-api listings{search && filteredRecentListings.length !== recentListings.length ? ` (${filteredRecentListings.length} of ${recentListings.length})` : ''}</div><div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-[600px]:grid-cols-1">{filteredRecentListings.map((listing) => <RecentEbayCard key={listing.offer.offerId ?? listing.item.sku} listing={listing} environment={environment} />)}</div></>}
+      {filteredRecentListings.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Last 20 published inventory-api listings{search && filteredRecentListings.length !== recentListings.length ? ` (${filteredRecentListings.length} of ${recentListings.length})` : ''}</div><div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-[600px]:grid-cols-1">{filteredRecentListings.map((listing) => <RecentEbayCard key={listing.offer.offerId ?? listing.item.sku} listing={listing} />)}</div></>}
 
       {loading && inventoryItems.length === 0 && <div className="flex items-center justify-center gap-3 py-8 text-[0.84rem] text-[var(--muted)]"><div className={spinnerClass} /><span>Loading eBay inventory...</span></div>}
       {!loading && inventoryItems.length === 0 && !error && <div className="py-12 text-center text-[0.9rem] text-[var(--muted)]"><p>No inventory items found. Inventory-mode sample drafts will show here after you create one.</p></div>}
 
-      {inventoryItems.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Inventory API drafts and listings{search || statusFilter !== 'all' ? ` (${filteredInventoryItems.length} of ${inventoryItems.length})` : ''}</div>{filteredInventoryItems.length === 0 ? <p className="py-6 text-center text-[0.88rem] text-[var(--muted)]">No items match your filters.</p> : <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-[600px]:grid-cols-1">{filteredInventoryItems.map((item) => <EbayCard key={item.sku} item={item} offer={offerForSku(offers, item.sku)} environment={environment} />)}</div>}</>}
+      {inventoryItems.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Inventory API drafts and listings{search || statusFilter !== 'all' ? ` (${filteredInventoryItems.length} of ${inventoryItems.length})` : ''}</div>{filteredInventoryItems.length === 0 ? <p className="py-6 text-center text-[0.88rem] text-[var(--muted)]">No items match your filters.</p> : <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-[600px]:grid-cols-1">{filteredInventoryItems.map((item) => <EbayCard key={item.sku} item={item} offer={offerForSku(offers, item.sku)} />)}</div>}</>}
     </div>
   );
 }

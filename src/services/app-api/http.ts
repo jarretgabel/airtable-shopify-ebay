@@ -48,7 +48,10 @@ async function readErrorBody(response: Response): Promise<ApiErrorBody & { messa
 }
 
 async function requestJson<T>(path: string, init: RequestInit, params?: Record<string, string | number | undefined>): Promise<T> {
-  const response = await fetch(buildUrl(path, params), init);
+  const response = await fetch(buildUrl(path, params), {
+    credentials: 'include',
+    ...init,
+  });
 
   if (!response.ok) {
     const body = await readErrorBody(response);

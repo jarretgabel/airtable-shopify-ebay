@@ -20,18 +20,6 @@ export function statusLabel(status?: string) {
   return 'No offer';
 }
 
-export function listingUrl(offer: EbayOffer | undefined, environment: EbayEnvironment): string | null {
-  if (!offer?.listingId) return null;
-  const base = environment === 'production' ? 'https://www.ebay.com/itm/' : 'https://www.sandbox.ebay.com/itm/';
-  return `${base}${encodeURIComponent(offer.listingId)}`;
-}
-
-export function listingUrlFromId(listingId: string | undefined, environment: EbayEnvironment): string | null {
-  if (!listingId) return null;
-  const base = environment === 'production' ? 'https://www.ebay.com/itm/' : 'https://www.sandbox.ebay.com/itm/';
-  return `${base}${encodeURIComponent(listingId)}`;
-}
-
 export function offerSortValue(offer: EbayOffer): number {
   const numericId = Number(offer.listingId ?? offer.offerId ?? 0);
   return Number.isFinite(numericId) ? numericId : 0;

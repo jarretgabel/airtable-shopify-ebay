@@ -30,19 +30,6 @@ export interface AppUser {
   notificationPreferences: UserNotificationPreferences;
 }
 
-export interface PasswordResetToken {
-  token: string;
-  userId: string;
-  expiresAt: number;
-}
-
-export interface EmailChangeToken {
-  token: string;
-  userId: string;
-  nextEmail: string;
-  expiresAt: number;
-}
-
 export interface CreateUserInput {
   name: string;
   email: string;

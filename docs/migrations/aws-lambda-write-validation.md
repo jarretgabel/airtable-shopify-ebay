@@ -10,6 +10,19 @@ Use this with the no-Docker local API:
 npm run local:api
 ```
 
+Canonical readiness checks:
+
+```bash
+npm run local:api:check
+curl -sSf http://127.0.0.1:3002/health
+```
+
+If a compare/probe script says the local API is not responding, restart it with the matching port, for example:
+
+```bash
+LOCAL_API_PORT=3002 npm run local:api
+```
+
 ## Automated Write Probe
 
 The write probe is intentionally opt-in so it does not mutate Airtable data unless you explicitly enable it.

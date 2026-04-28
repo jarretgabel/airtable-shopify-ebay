@@ -19,10 +19,11 @@ It does not cover:
 Confirm all of these first:
 
 1. The repo is building cleanly.
-2. `npm run compare:lambda` is passing locally.
-3. Shopify app permissions are fixed if you expect `/api/shopify/images` to work after deploy.
-4. You have AWS CLI and SAM CLI installed and authenticated.
-5. You know which AWS account and region this should deploy to.
+2. `npm run local:api:check` succeeds against the no-Docker local adapter.
+3. `npm run compare:lambda` is passing locally.
+4. Shopify app permissions are fixed if you expect `/api/shopify/images` to work after deploy.
+5. You have AWS CLI and SAM CLI installed and authenticated.
+6. You know which AWS account and region this should deploy to.
 
 Current state in this workspace:
 
@@ -284,39 +285,25 @@ Once AWS is deployed, update frontend env outside the AWS package.
 
 ```env
 VITE_APP_API_BASE_URL=https://your-api-id.execute-api.your-region.amazonaws.com
-VITE_USE_LAMBDA_AIRTABLE=true
-VITE_USE_LAMBDA_SHOPIFY=true
-VITE_USE_LAMBDA_JOTFORM=true
-VITE_USE_LAMBDA_AI=false
-VITE_USE_LAMBDA_GMAIL=false
 ```
 
 ### Staging
 
 ```env
 VITE_APP_API_BASE_URL=https://your-staging-api-id.execute-api.your-region.amazonaws.com
-VITE_USE_LAMBDA_AIRTABLE=true
-VITE_USE_LAMBDA_SHOPIFY=true
-VITE_USE_LAMBDA_JOTFORM=true
-VITE_USE_LAMBDA_AI=true
-VITE_USE_LAMBDA_GMAIL=true
 ```
 
 ### Production
 
 ```env
 VITE_APP_API_BASE_URL=https://your-prod-api-id.execute-api.your-region.amazonaws.com
-VITE_USE_LAMBDA_AIRTABLE=true
-VITE_USE_LAMBDA_SHOPIFY=true
-VITE_USE_LAMBDA_JOTFORM=true
-VITE_USE_LAMBDA_AI=true
-VITE_USE_LAMBDA_GMAIL=true
 ```
 
 Notes:
 
 - `VITE_APP_API_PROXY_TARGET` is for local proxying only and should not be used for deployed environments.
-- eBay is still separate from this AWS package.
+- all supported integrations route through the backend seam by default once the frontend points at the deployed API
+- AI and Gmail availability now depends on AWS secret configuration rather than frontend flags
 
 ## Secret storage recommendation
 
@@ -366,19 +353,18 @@ Recommended order:
 
 1. Deploy the SAM stack.
 2. Point the frontend at the deployed API with `VITE_APP_API_BASE_URL`.
-3. Turn on `VITE_USE_LAMBDA_AIRTABLE=true` first.
-4. Validate Airtable flows.
-5. Turn on `VITE_USE_LAMBDA_SHOPIFY=true`.
-6. Validate Shopify reads and publish flow.
-7. Validate image upload only after Shopify admin permissions are fixed.
-8. Turn on `VITE_USE_LAMBDA_JOTFORM=true`.
-9. Turn on AI and Gmail only if those secrets are configured.
+3. Validate Airtable, auth, and approval flows.
+4. Validate Shopify reads and publish flow.
+5. Validate image upload only after Shopify admin permissions are fixed.
+6. Validate eBay read and publish flows.
+7. Validate AI and Gmail only if those secrets are configured.
 
 ## Post-deploy validation runbook
 
 From the repo root:
 
 ```bash
+npm run local:api:check
 npm run build
 npm run compare:lambda
 npm run probe:lambda:writes
@@ -401,6 +387,7 @@ If these happen:
 
 ### `compare:lambda` fails
 
+- first rerun `npm run local:api:check`
 - check `VITE_APP_API_BASE_URL`
 - check Lambda env variable mapping
 - check whether the deployed stack is missing one of the configured Airtable refs

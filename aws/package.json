@@ -19,7 +19,11 @@
     "local:invoke:airtable-users-create": "PATH=$(pwd)/node_modules/.bin:$HOME/Library/Python/3.9/bin:$PATH sam local invoke AirtableCreateConfiguredRecordFunction --template-file template.yaml --env-vars env.local.json",
     "local:invoke:ai-identify": "PATH=$(pwd)/node_modules/.bin:$HOME/Library/Python/3.9/bin:$PATH sam local invoke AiIdentifyEquipmentFunction --template-file template.yaml --env-vars env.local.json",
     "local:invoke:gmail-send": "PATH=$(pwd)/node_modules/.bin:$HOME/Library/Python/3.9/bin:$PATH sam local invoke GmailSendFunction --template-file template.yaml --env-vars env.local.json",
+    "test": "npx tsc -p tsconfig.json && node --test $(find dist -name '*.test.js' -print)",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "cheerio": "^1.1.2"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.147",

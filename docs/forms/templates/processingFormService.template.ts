@@ -1,11 +1,13 @@
-import airtableService from '@/services/airtable';
+import {
+  createConfiguredRecord,
+  getConfiguredFieldMetadata,
+  uploadConfiguredAttachment,
+} from '@/services/app-api/airtable';
 import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
 import type { ProcessingFormOptionFieldName, ProcessingFormValues } from '@/components/tabs/<form-name>/processingFormSchema';
 
-const TARGET_BASE_ID = 'appjQj8FQfFZ2ogMz';
-const TARGET_TABLE_ID = 'tblirsoRIFPDMHxb0';
-const TARGET_TABLE_REFERENCE = `${TARGET_BASE_ID}/${TARGET_TABLE_ID}`;
+const TARGET_SOURCE = 'inventory-directory' as const;
 const IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
 
 const OPTION_FIELD_NAMES = [
@@ -15,14 +17,6 @@ const OPTION_FIELD_NAMES = [
 ] as const satisfies readonly ProcessingFormOptionFieldName[];
 
 type ProcessingFormOptionSet = Record<ProcessingFormOptionFieldName, string[]>;
-
-function requireAirtableApiKey(): string {
-  const apiKey = import.meta.env.VITE_AIRTABLE_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error('Missing VITE_AIRTABLE_API_KEY.');
-  }
-  return apiKey;
-}
 
 function dedupeOptions(values: string[]): string[] {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
@@ -66,56 +60,19 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 async function uploadProcessingFormImages(recordId: string, files: File[]): Promise<void> {
-  const apiKey = requireAirtableApiKey();
-
   for (const file of files) {
-    const base64File = await fileToBase64(file);
-    const response = await fetch(`https://content.airtable.com/v0/${TARGET_BASE_ID}/${recordId}/${IMAGE_ATTACHMENT_FIELD_ID}/uploadAttachment`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        filename: file.name,
-        contentType: file.type || 'application/octet-stream',
-        file: base64File,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Unable to upload image ${file.name} (${response.status}).`);
-    }
+    await uploadConfiguredAttachment(TARGET_SOURCE, recordId, IMAGE_ATTACHMENT_FIELD_ID, file);
   }
 }
 
 async function fetchTargetTableMetadata() {
-  const response = await fetch(`https://api.airtable.com/v0/meta/bases/${TARGET_BASE_ID}/tables`, {
-    headers: {
-      Authorization: `Bearer ${requireAirtableApiKey()}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Unable to load Airtable metadata (${response.status}).`);
-  }
-
-  const data = (await response.json()) as {
-    tables?: Array<{
-      id: string;
-      fields?: Array<{
-        name: string;
-        options?: { choices?: Array<{ name: string }> };
-      }>;
-    }>;
+  const fields = await getConfiguredFieldMetadata(TARGET_SOURCE);
+  return {
+    fields: fields.map((field) => ({
+      name: field.name,
+      options: 'options' in field ? field.options as { choices?: Array<{ name: string }> } : undefined,
+    })),
   };
-
-  const table = data.tables?.find((entry) => entry.id === TARGET_TABLE_ID);
-  if (!table) {
-    throw new Error('Unable to find the Airtable target table.');
-  }
-
-  return table;
 }
 
 export async function loadProcessingFormOptionSets(): Promise<ProcessingFormOptionSet> {
@@ -159,9 +116,8 @@ export async function submitProcessingForm(values: ProcessingFormValues): Promis
   });
 
   try {
-    const createdRecord = await airtableService.createRecordFromReference(
-      TARGET_TABLE_REFERENCE,
-      TARGET_TABLE_ID,
+    const createdRecord = await createConfiguredRecord(
+      TARGET_SOURCE,
       baseFields,
       { typecast: true },
     );
