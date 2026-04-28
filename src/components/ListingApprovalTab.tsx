@@ -7,29 +7,7 @@ import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import { KeyFeaturesEditor } from '@/components/approval/KeyFeaturesEditor';
 import { TestingNotesEditor } from '@/components/approval/TestingNotesEditor';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
-import {
-  buildApprovalFailedNotice,
-  buildCreateShopifyListingFailedNotice,
-  buildListingSaveFailedNotice,
-  buildListingUpdatedNotice,
-  buildMissingFieldsBeforeApproveNotice,
-  buildMissingFieldsBeforePublishNotice,
-  buildNewShopifyListingCreatedNotice,
-  buildPageDataResetNotice,
-  buildSaveUpdatesFirstNotice,
-  buildShopifyPublishIdWritebackFailedNotice,
-} from '@/components/approval/approvalFlowNotices';
-import {
-  buildEbayPublishSuccessNotice,
-  buildPublishFailureNotice,
-  buildShopifyPublishSuccessNotice,
-} from '@/components/approval/publishNotices';
-import { ensureShopifyDraftBeforeApproval } from '@/components/approval/shopifyDraftApproval';
-import { createNewShopifyListingRecord } from '@/components/approval/shopifyListingCreation';
-import { updateApprovedShopifyListing } from '@/components/approval/shopifyListingUpdate';
-import { resolveShopifyCategoryIdWithFeedback, type ShopifyCategoryResolutionState } from '@/components/approval/shopifyCategoryResolution';
 import { upsertShopifyProductWithCollectionFallback as runShopifyCollectionFallbackUpsert } from '@/components/approval/shopifyPublish';
-import { writeShopifyProductIdToAirtable } from '@/components/approval/shopifyWriteback';
 import { getMissingRequiredFieldNames, isMissingRequiredFieldValue } from '@/components/approval/requiredFieldStatus';
 import airtableService from '@/services/airtable';
 import {
@@ -47,6 +25,7 @@ import {
 import {
   buildShopifyUnifiedProductSetRequest,
   normalizeShopifyProductForUpsert,
+  type ShopifyTaxonomyCategoryMatch,
   type ShopifyUnifiedProductSetRequest,
 } from '@/services/shopify';
 import { buildEbayDraftPayloadBundleFromApprovalFields } from '@/services/ebayDraftFromAirtable';
@@ -81,6 +60,413 @@ interface ListingApprovalTabProps {
   tableName?: string;
   createShopifyDraftOnApprove?: boolean;
   approvalChannel?: 'shopify' | 'ebay' | 'combined';
+}
+
+interface ShopifyCategoryResolutionState {
+  status: 'idle' | 'resolving' | 'resolved' | 'unresolved' | 'error';
+  match: ShopifyTaxonomyCategoryMatch | null;
+  error: string;
+}
+
+interface ShopifyApprovalNotice {
+  tone: 'info' | 'success' | 'warning' | 'error';
+  title: string;
+  message: string;
+}
+
+async function resolveShopifyCategoryIdWithFeedback(
+  explicitCategoryId: string | undefined,
+  lookupValue: string | undefined,
+  dependencies: {
+    currentState: ShopifyCategoryResolutionState;
+    describeError: (error: unknown) => string;
+    pushNotice?: (tone: 'warning', title: string, message: string) => void;
+    resolveCategory: (nextLookupValue: string) => Promise<ShopifyTaxonomyCategoryMatch | null>;
+    setState: (nextState: ShopifyCategoryResolutionState) => void;
+  },
+): Promise<string | undefined> {
+  const normalizedExplicitCategoryId = explicitCategoryId?.trim() || '';
+  if (normalizedExplicitCategoryId) return normalizedExplicitCategoryId;
+
+  const normalizedLookupValue = lookupValue?.trim() || '';
+  if (!normalizedLookupValue) return undefined;
+
+  const { currentState, describeError, pushNotice, resolveCategory, setState } = dependencies;
+
+  try {
+    const match = currentState.match ?? await resolveCategory(normalizedLookupValue);
+    if (match) {
+      if (currentState.match?.id !== match.id) {
+        setState({
+          status: 'resolved',
+          match,
+          error: '',
+        });
+      }
+      return match.id;
+    }
+
+    setState({
+      status: 'unresolved',
+      match: null,
+      error: '',
+    });
+    pushNotice?.('warning', 'Shopify category not resolved', `Could not resolve a Shopify taxonomy category from "${normalizedLookupValue}". Continuing without category assignment.`);
+    return undefined;
+  } catch (error) {
+    setState({
+      status: 'error',
+      match: null,
+      error: error instanceof Error ? error.message : 'Unable to resolve Shopify taxonomy category.',
+    });
+    pushNotice?.('warning', 'Shopify category resolution failed', `${describeError(error)} Continuing without category assignment.`);
+    return undefined;
+  }
+}
+
+async function createNewShopifyListingRecord(params: {
+  defaultTitle: string;
+  tableReference: string;
+  tableName?: string;
+  titleCandidates: string[];
+}, dependencies: {
+  createRecord: (
+    nextTableReference: string,
+    nextTableName: string | undefined,
+    fields: Record<string, string>,
+    options: { typecast: boolean },
+  ) => Promise<AirtableRecord>;
+}): Promise<AirtableRecord> {
+  const { defaultTitle, tableReference, tableName, titleCandidates } = params;
+  const { createRecord } = dependencies;
+
+  const normalizedTitleCandidates = Array.from(new Set(
+    titleCandidates
+      .map((fieldName) => fieldName.trim())
+      .filter((fieldName) => fieldName.length > 0),
+  ));
+
+  let createdRecord: AirtableRecord | null = null;
+  let lastError: unknown = null;
+
+  for (const titleField of normalizedTitleCandidates) {
+    try {
+      createdRecord = await createRecord(
+        tableReference,
+        tableName,
+        { [titleField]: defaultTitle },
+        { typecast: true },
+      );
+      break;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (!createdRecord) {
+    throw lastError ?? new Error('Unable to create a new Shopify listing row in Airtable.');
+  }
+
+  return createdRecord;
+}
+
+function buildShopifyProductIdWritebackAttempts(
+  fieldName: string,
+  productId: number | string,
+): Array<Record<string, string | number>> {
+  const productIdStr = String(productId);
+  const productIdNum = Number(productId);
+
+  return Number.isFinite(productIdNum)
+    ? [
+        { [fieldName]: productIdNum },
+        { [fieldName]: productIdStr },
+      ]
+    : [{ [fieldName]: productIdStr }];
+}
+
+async function writeShopifyProductIdToAirtable(
+  params: {
+    fieldName: string;
+    productId: number | string;
+    recordId: string;
+    tableReference?: string;
+    tableName?: string;
+  },
+  dependencies: {
+    updateRecord: (
+      nextTableReference: string | undefined,
+      nextTableName: string | undefined,
+      recordId: string,
+      fields: Record<string, string | number>,
+    ) => Promise<unknown>;
+  },
+): Promise<{ productId: string; wrote: boolean; lastError: unknown | null }> {
+  const { fieldName, productId, recordId, tableReference, tableName } = params;
+  const { updateRecord } = dependencies;
+
+  const productIdStr = String(productId);
+  const writebackAttempts = buildShopifyProductIdWritebackAttempts(fieldName, productId);
+
+  let lastError: unknown | null = null;
+
+  for (const fields of writebackAttempts) {
+    try {
+      await updateRecord(tableReference, tableName, recordId, fields);
+      return {
+        productId: productIdStr,
+        wrote: true,
+        lastError: null,
+      };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  return {
+    productId: productIdStr,
+    wrote: false,
+    lastError,
+  };
+}
+
+async function updateApprovedShopifyListing(
+  params: {
+    existingProductId: string;
+    record: AirtableRecord;
+  },
+  dependencies: {
+    syncExistingShopifyListing: (record: AirtableRecord, productId: number) => Promise<void>;
+    describeError: (error: unknown) => string;
+  },
+): Promise<ShopifyApprovalNotice> {
+  const { existingProductId, record } = params;
+  const { describeError, syncExistingShopifyListing } = dependencies;
+
+  const normalizedProductId = existingProductId.trim();
+  const parsedExistingId = Number(normalizedProductId);
+
+  if (!Number.isFinite(parsedExistingId) || parsedExistingId <= 0) {
+    return {
+      tone: 'error',
+      title: 'Listing update failed',
+      message: 'A valid Shopify REST Product ID is required to update an approved listing.',
+    };
+  }
+
+  try {
+    await syncExistingShopifyListing(record, parsedExistingId);
+    return {
+      tone: 'success',
+      title: 'Shopify listing updated',
+      message: `Listing #${normalizedProductId} was updated with the latest saved fields.`,
+    };
+  } catch (error) {
+    return {
+      tone: 'error',
+      title: 'Shopify listing update failed',
+      message: describeError(error),
+    };
+  }
+}
+
+async function ensureShopifyDraftBeforeApproval(
+  params: {
+    existingProductId: string;
+    productIdFieldName: string;
+    createPayload: ShopifyProduct;
+    record: AirtableRecord;
+    collectionIds: string[];
+    tableReference?: string;
+    tableName?: string;
+  },
+  dependencies: {
+    getShopifyProduct: (productId: number) => Promise<unknown>;
+    syncExistingShopifyListing: (record: AirtableRecord, productId: number) => Promise<void>;
+    describeError: (error: unknown) => string;
+    resolveShopifyCategoryId: () => Promise<string | undefined>;
+    upsertShopifyProductWithCollectionFallback: (params: {
+      product: ShopifyProduct;
+      categoryId?: string;
+      collectionIds?: string[];
+      existingProductId?: number;
+    }) => Promise<{ id: number }>;
+    writeShopifyProductIdToAirtable: (params: {
+      fieldName: string;
+      productId: number | string;
+      recordId: string;
+      tableReference?: string;
+      tableName?: string;
+    }) => Promise<{ productId: string; wrote: boolean; lastError: unknown | null }>;
+  },
+): Promise<{
+  notices: ShopifyApprovalNotice[];
+  nextProductIdFieldValue?: string;
+  createdProductId?: number;
+  status: 'existing-updated' | 'created' | 'update-failed' | 'creation-failed';
+}> {
+  const {
+    collectionIds,
+    createPayload,
+    existingProductId,
+    productIdFieldName,
+    record,
+    tableName,
+    tableReference,
+  } = params;
+  const {
+    describeError,
+    getShopifyProduct,
+    resolveShopifyCategoryId,
+    syncExistingShopifyListing,
+    upsertShopifyProductWithCollectionFallback,
+    writeShopifyProductIdToAirtable,
+  } = dependencies;
+
+  const normalizedExistingProductId = existingProductId.trim();
+  let nextProductIdFieldValue: string | undefined;
+
+  if (normalizedExistingProductId) {
+    const parsedExistingId = Number(normalizedExistingProductId);
+
+    if (Number.isFinite(parsedExistingId) && parsedExistingId > 0) {
+      const existingProduct = await getShopifyProduct(parsedExistingId);
+
+      if (existingProduct) {
+        try {
+          await syncExistingShopifyListing(record, parsedExistingId);
+          return {
+            status: 'existing-updated',
+            notices: [
+              {
+                tone: 'success',
+                title: 'Shopify draft updated',
+                message: `Draft product #${normalizedExistingProductId} was updated with the latest listing fields before approval.`,
+              },
+              {
+                tone: 'info',
+                title: 'Shopify draft already exists',
+                message: `Product #${normalizedExistingProductId} already existed, so it was updated instead of creating a duplicate draft.`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            status: 'update-failed',
+            notices: [{
+              tone: 'error',
+              title: 'Shopify draft update failed',
+              message: describeError(error),
+            }],
+          };
+        }
+      }
+
+      nextProductIdFieldValue = '';
+      const categoryId = await resolveShopifyCategoryId();
+      try {
+        const createdProduct = await upsertShopifyProductWithCollectionFallback({
+          product: createPayload,
+          categoryId,
+          collectionIds,
+        });
+        const writebackResult = await writeShopifyProductIdToAirtable({
+          fieldName: productIdFieldName,
+          productId: createdProduct.id,
+          recordId: record.id,
+          tableReference,
+          tableName,
+        });
+
+        return {
+          status: 'created',
+          createdProductId: createdProduct.id,
+          nextProductIdFieldValue: writebackResult.wrote ? writebackResult.productId : '',
+          notices: [
+            {
+              tone: 'warning',
+              title: 'Cleared stale Shopify product ID',
+              message: `Saved product ID #${normalizedExistingProductId} was not found in Shopify. Creating a new draft now.`,
+            },
+            ...(writebackResult.wrote ? [] : [{
+              tone: 'warning' as const,
+              title: 'Draft created, ID writeback failed',
+              message: 'Shopify draft was created, but writing Shopify REST Product ID to Airtable failed. You may need to save the ID manually.',
+            }]),
+            {
+              tone: 'success',
+              title: 'Shopify draft created',
+              message: `Draft product #${writebackResult.productId} was created before approval completion.`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          status: 'creation-failed',
+          nextProductIdFieldValue,
+          notices: [
+            {
+              tone: 'warning',
+              title: 'Cleared stale Shopify product ID',
+              message: `Saved product ID #${normalizedExistingProductId} was not found in Shopify. Creating a new draft now.`,
+            },
+            {
+              tone: 'error',
+              title: 'Shopify draft creation failed',
+              message: describeError(error),
+            },
+          ],
+        };
+      }
+    }
+
+    nextProductIdFieldValue = '';
+  }
+
+  const categoryId = await resolveShopifyCategoryId();
+
+  try {
+    const createdProduct = await upsertShopifyProductWithCollectionFallback({
+      product: createPayload,
+      categoryId,
+      collectionIds,
+    });
+    const writebackResult = await writeShopifyProductIdToAirtable({
+      fieldName: productIdFieldName,
+      productId: createdProduct.id,
+      recordId: record.id,
+      tableReference,
+      tableName,
+    });
+
+    return {
+      status: 'created',
+      createdProductId: createdProduct.id,
+      nextProductIdFieldValue: writebackResult.wrote ? writebackResult.productId : nextProductIdFieldValue ?? '',
+      notices: [
+        ...(writebackResult.wrote ? [] : [{
+          tone: 'warning' as const,
+          title: 'Draft created, ID writeback failed',
+          message: 'Shopify draft was created, but writing Shopify REST Product ID to Airtable failed. You may need to save the ID manually.',
+        }]),
+        {
+          tone: 'success',
+          title: 'Shopify draft created',
+          message: `Draft product #${writebackResult.productId} was created before approval completion.`,
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      status: 'creation-failed',
+      nextProductIdFieldValue,
+      notices: [{
+        tone: 'error',
+        title: 'Shopify draft creation failed',
+        message: describeError(error),
+      }],
+    };
+  }
 }
 
 const SHOPIFY_PRODUCT_SET_MUTATION = `mutation ProductSet($input: ProductSetInput!, $identifier: ProductSetIdentifiers, $synchronous: Boolean) {
@@ -2357,12 +2743,10 @@ export function ListingApprovalTab({
       await loadRecords(tableReference, tableName);
       onSelectRecord(createdRecord.id);
 
-      const notice = buildNewShopifyListingCreatedNotice();
-      pushInlineActionNotice(notice.tone, notice.title, notice.message);
+      pushInlineActionNotice('success', 'New Shopify listing created', 'A new Airtable row is ready. Fill the required Shopify fields, save, then approve.');
 
     } catch (createError) {
-      const notice = buildCreateShopifyListingFailedNotice(describeShopifyCreateError(createError));
-      pushInlineActionNotice(notice.tone, notice.title, notice.message);
+      pushInlineActionNotice('error', 'Unable to create Shopify listing', describeShopifyCreateError(createError));
     } finally {
       setCreatingShopifyListing(false);
     }
@@ -2525,8 +2909,7 @@ export function ListingApprovalTab({
     });
 
     if (!writebackResult.wrote) {
-      const notice = buildShopifyPublishIdWritebackFailedNotice();
-      pushInlineActionNotice(notice.tone, notice.title, notice.message);
+      pushInlineActionNotice('warning', 'Shopify publish succeeded, ID writeback failed', 'The Shopify listing was created, but writing Shopify REST Product ID to Airtable failed. You may need to save the ID manually.');
     } else {
       setFormValue(shopifyProductIdField, writebackResult.productId);
     }
@@ -2552,20 +2935,17 @@ export function ListingApprovalTab({
     if (!selectedRecord) return;
 
     if (hasUnsavedChanges) {
-      const notice = buildSaveUpdatesFirstNotice();
-      pushInlineActionNotice(notice.tone, notice.title, notice.message);
+      pushInlineActionNotice('warning', 'Save updates first', 'Save page data before publishing to Shopify or eBay.');
       return;
     }
 
     if ((target === 'shopify' || target === 'both') && hasMissingShopifyRequiredFields) {
-      const notice = buildMissingFieldsBeforePublishNotice('shopify', missingShopifyRequiredFieldLabels);
-      pushInlineActionNotice(notice.tone, notice.title, notice.message);
+      pushInlineActionNotice('warning', 'Required Shopify fields missing', `Complete required Shopify fields before publishing: ${missingShopifyRequiredFieldLabels.join(', ')}`);
       return;
     }
 
     if ((target === 'ebay' || target === 'both') && hasMissingEbayRequiredFields) {
-      const notice = buildMissingFieldsBeforePublishNotice('ebay', missingEbayRequiredFieldLabels);
-      pushInlineActionNotice(notice.tone, notice.title, notice.message);
+      pushInlineActionNotice('warning', 'Required eBay fields missing', `Complete required eBay fields before publishing: ${missingEbayRequiredFieldLabels.join(', ')}`);
       return;
     }
 
@@ -2580,18 +2960,24 @@ export function ListingApprovalTab({
     try {
       if (target === 'shopify' || target === 'both') {
         const shopifyResult = await pushCurrentListingToShopify(selectedRecord);
-        const notice = buildShopifyPublishSuccessNotice(shopifyResult);
-        pushInlineActionNotice(notice.tone, notice.title, notice.message);
+        pushInlineActionNotice(
+          'success',
+          shopifyResult.mode === 'updated' ? 'Shopify listing updated' : 'Shopify listing created',
+          `Shopify product #${shopifyResult.productId} was ${shopifyResult.mode}.`,
+        );
       }
 
       if (target === 'ebay' || target === 'both') {
         const ebayResult = await pushCurrentListingToEbay();
-        const notice = buildEbayPublishSuccessNotice(ebayResult);
-        pushInlineActionNotice(notice.tone, notice.title, notice.message);
+        pushInlineActionNotice(
+          'success',
+          ebayResult.mode === 'updated' ? 'eBay listing updated' : 'eBay listing published',
+          `SKU ${ebayResult.sku} is live as listing ${ebayResult.listingId} via offer ${ebayResult.offerId}.`,
+        );
       }
     } catch (pushError) {
-      const notice = buildPublishFailureNotice(pushError);
-      pushInlineActionNotice(notice.tone, notice.title, notice.message);
+      const message = pushError instanceof Error ? pushError.message : 'Unable to push this listing.';
+      pushInlineActionNotice('error', 'Publish failed', message);
     } finally {
       setPushingTarget(null);
     }
@@ -2991,8 +3377,7 @@ export function ListingApprovalTab({
                 ...Object.keys(selectedRecord.fields),
               ])).sort((left, right) => left.localeCompare(right));
               hydrateForm(selectedRecord, hydrateFieldNames, approvedFieldName);
-              const notice = buildPageDataResetNotice();
-              pushInlineActionNotice(notice.tone, notice.title, notice.message);
+              pushInlineActionNotice('info', 'Page data reset', 'Form values were restored to current Airtable values.');
             }}
             disabled={saving || !hasUnsavedChanges}
           >
@@ -3189,11 +3574,9 @@ export function ListingApprovalTab({
                 );
 
                 if (saveSucceeded) {
-                  const notice = buildListingUpdatedNotice();
-                  pushInlineActionNotice(notice.tone, notice.title, notice.message);
+                  pushInlineActionNotice('success', 'Listing updated', 'Listing changes were saved to Airtable.');
                 } else {
-                  const notice = buildListingSaveFailedNotice();
-                  pushInlineActionNotice(notice.tone, notice.title, notice.message);
+                  pushInlineActionNotice('error', 'Save failed', 'Could not save listing changes to Airtable. Review the error section and try again.');
                 }
               };
 
@@ -3282,14 +3665,12 @@ export function ListingApprovalTab({
                 }
 
                 if (approvalChannel === 'shopify' && hasMissingShopifyRequiredFields) {
-                  const notice = buildMissingFieldsBeforeApproveNotice('shopify', missingShopifyRequiredFieldLabels);
-                  pushInlineActionNotice(notice.tone, notice.title, notice.message);
+                  pushInlineActionNotice('warning', 'Required Shopify fields missing', `Complete required fields before approving: ${missingShopifyRequiredFieldLabels.join(', ')}`);
                   return;
                 }
 
                 if (approvalChannel === 'ebay' && hasMissingEbayRequiredFields) {
-                  const notice = buildMissingFieldsBeforeApproveNotice('ebay', missingEbayRequiredFieldLabels);
-                  pushInlineActionNotice(notice.tone, notice.title, notice.message);
+                  pushInlineActionNotice('warning', 'Required eBay fields missing', `Complete required fields before approving: ${missingEbayRequiredFieldLabels.join(', ')}`);
                   return;
                 }
 
@@ -3367,8 +3748,7 @@ export function ListingApprovalTab({
                     );
 
                     if (!approveSucceeded) {
-                      const notice = buildApprovalFailedNotice();
-                      pushInlineActionNotice(notice.tone, notice.title, notice.message);
+                      pushInlineActionNotice('error', 'Approval failed', 'Could not mark this listing as approved in Airtable.');
                     }
                   } finally {
                     setApproving(false);
