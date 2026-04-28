@@ -2,8 +2,9 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
 Parameters:
-  AirtableApiKeySsmPath:
+  AirtableApiKey:
     Type: String
+    NoEcho: true
   AirtableBaseId:
     Type: String
   AllowedAirtableTableName:
@@ -28,27 +29,32 @@ Parameters:
     Type: String
   ShopifyStoreDomain:
     Type: String
-  ShopifyAccessTokenSsmPath:
+  ShopifyAccessToken:
     Type: String
-  JotformApiKeySsmPath:
+    NoEcho: true
+  JotformApiKey:
     Type: String
-  GithubTokenSsmPath:
+    NoEcho: true
+  GithubToken:
     Type: String
+    NoEcho: true
     Default: ''
-  OpenAiApiKeySsmPath:
+  OpenAiApiKey:
     Type: String
+    NoEcho: true
     Default: ''
-  GoogleGmailAccessTokenSsmPath:
+  GoogleGmailAccessToken:
     Type: String
+    NoEcho: true
     Default: ''
   GoogleGmailFromEmail:
     Type: String
     Default: ''
 
 Conditions:
-  HasGithubTokenSsmPath: !Not [!Equals [!Ref GithubTokenSsmPath, '']]
-  HasOpenAiApiKeySsmPath: !Not [!Equals [!Ref OpenAiApiKeySsmPath, '']]
-  HasGoogleGmailAccessTokenSsmPath: !Not [!Equals [!Ref GoogleGmailAccessTokenSsmPath, '']]
+  HasGithubToken: !Not [!Equals [!Ref GithubToken, '']]
+  HasOpenAiApiKey: !Not [!Equals [!Ref OpenAiApiKey, '']]
+  HasGoogleGmailAccessToken: !Not [!Equals [!Ref GoogleGmailAccessToken, '']]
 
 Globals:
   Function:
@@ -59,7 +65,7 @@ Globals:
       - arm64
     Environment:
       Variables:
-        AIRTABLE_API_KEY: !Sub '{{resolve:ssm-secure:${AirtableApiKeySsmPath}}}'
+        AIRTABLE_API_KEY: !Ref AirtableApiKey
         AIRTABLE_BASE_ID: !Ref AirtableBaseId
         ALLOWED_AIRTABLE_TABLE_NAME: !Ref AllowedAirtableTableName
         ALLOWED_AIRTABLE_VIEW_ID: !Ref AllowedAirtableViewId
@@ -72,25 +78,39 @@ Globals:
         AIRTABLE_COMBINED_LISTINGS_TABLE_REF: !Ref AirtableCombinedListingsTableRef
         AIRTABLE_COMBINED_LISTINGS_TABLE_NAME: !Ref AirtableCombinedListingsTableName
         SHOPIFY_STORE_DOMAIN: !Ref ShopifyStoreDomain
-        SHOPIFY_ACCESS_TOKEN: !Sub '{{resolve:ssm-secure:${ShopifyAccessTokenSsmPath}}}'
-        JOTFORM_API_KEY: !Sub '{{resolve:ssm-secure:${JotformApiKeySsmPath}}}'
+        SHOPIFY_ACCESS_TOKEN: !Ref ShopifyAccessToken
+        JOTFORM_API_KEY: !Ref JotformApiKey
         GITHUB_TOKEN: !If
-          - HasGithubTokenSsmPath
-          - !Sub '{{resolve:ssm-secure:${GithubTokenSsmPath}}}'
+          - HasGithubToken
+          - !Ref GithubToken
           - ''
         OPENAI_API_KEY: !If
-          - HasOpenAiApiKeySsmPath
-          - !Sub '{{resolve:ssm-secure:${OpenAiApiKeySsmPath}}}'
+          - HasOpenAiApiKey
+          - !Ref OpenAiApiKey
           - ''
         GOOGLE_GMAIL_ACCESS_TOKEN: !If
-          - HasGoogleGmailAccessTokenSsmPath
-          - !Sub '{{resolve:ssm-secure:${GoogleGmailAccessTokenSsmPath}}}'
+          - HasGoogleGmailAccessToken
+          - !Ref GoogleGmailAccessToken
           - ''
         GOOGLE_GMAIL_FROM_EMAIL: !Ref GoogleGmailFromEmail
 
 Resources:
   AppHttpApi:
     Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - http://127.0.0.1:3000
+          - http://localhost:3000
+        AllowHeaders:
+          - content-type
+          - authorization
+        AllowMethods:
+          - GET
+          - POST
+          - PATCH
+          - DELETE
+          - OPTIONS
 
   ShopifyGetProductsFunction:
     Type: AWS::Serverless::Function
@@ -317,6 +337,21 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: GET
             Path: /api/airtable/configured-records
+
+  AirtableGetConfiguredRecordFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/airtable/getConfiguredRecord.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/airtable/configured-records/{source}/{recordId}
 
   AirtableGetConfiguredMetadataFunction:
     Type: AWS::Serverless::Function

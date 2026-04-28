@@ -25,6 +25,10 @@ interface AirtableWriteOptions {
   typecast?: boolean;
 }
 
+interface AirtableConfiguredReadOptions {
+  fields?: string[];
+}
+
 interface AirtableDeleteResponse {
   deleted: boolean;
 }
@@ -138,7 +142,10 @@ export async function getListings(tableName: string, options?: { view?: string }
   }
 }
 
-export async function getConfiguredRecords(source: AirtableConfiguredRecordsSource): Promise<AirtableRecord[]> {
+export async function getConfiguredRecords(
+  source: AirtableConfiguredRecordsSource,
+  options: AirtableConfiguredReadOptions = {},
+): Promise<AirtableRecord[]> {
   const definition = getConfiguredRecordsSourceDefinition(source);
 
   if (!isLambdaAirtableEnabled()) {
@@ -150,7 +157,31 @@ export async function getConfiguredRecords(source: AirtableConfiguredRecordsSour
   }
 
   try {
-    return await getJson<AirtableRecord[]>('/api/airtable/configured-records', { source });
+    return await getJson<AirtableRecord[]>('/api/airtable/configured-records', {
+      source,
+      fields: options.fields?.join(',') || undefined,
+    });
+  } catch (error) {
+    throw toConfiguredSourceError(error, source);
+  }
+}
+
+export async function getConfiguredRecord(
+  source: AirtableConfiguredRecordsSource,
+  recordId: string,
+): Promise<AirtableRecord> {
+  const definition = getConfiguredRecordsSourceDefinition(source);
+
+  if (!isLambdaAirtableEnabled()) {
+    if (definition.reference) {
+      return airtableService.getRecordFromReference(definition.reference, definition.tableName, recordId);
+    }
+
+    return airtableService.getRecord(definition.tableName, recordId);
+  }
+
+  try {
+    return await getJson<AirtableRecord>(`/api/airtable/configured-records/${encodeURIComponent(source)}/${encodeURIComponent(recordId)}`);
   } catch (error) {
     throw toConfiguredSourceError(error, source);
   }

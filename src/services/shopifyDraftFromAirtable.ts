@@ -735,7 +735,7 @@ function buildVariant(fields: ApprovalFieldMap, options: ShopifyProductOption[])
   const inventoryManagement = getField(fields, ['Shopify REST Variant 1 Inventory Management', 'shopify_rest_variant_1_inventory_management']) || undefined;
 
   return {
-    price: listingPrice || '0.00',
+    ...(listingPrice ? { price: listingPrice } : {}),
     compare_at_price: shouldIncludeCompareAt ? basePrice : undefined,
     sku: getField(fields, ['Shopify REST Variant 1 SKU', 'SKU', 'shopify_rest_variant_1_sku']) || undefined,
     barcode: getField(fields, ['Shopify REST Variant 1 Barcode', 'shopify_rest_variant_1_barcode']) || undefined,
@@ -1035,10 +1035,11 @@ function sanitizeOptions(options: ShopifyProductOption[] | undefined): ShopifyPr
 }
 
 function sanitizeVariants(variants: ShopifyProductVariant[] | undefined): ShopifyProductVariant[] {
-  const source = variants && variants.length > 0 ? variants : [{ price: '0.00' }];
+  const source = variants && variants.length > 0 ? variants : [{} as ShopifyProductVariant];
 
   return source.map((variant) => {
-    const price = toMoneyString(variant.price);
+    const rawPrice = coerceToString(variant.price ?? '');
+    const price = rawPrice ? toMoneyString(rawPrice) : undefined;
     const compareAt = coerceToString(variant.compare_at_price ?? '') || undefined;
     const sku = coerceToString(variant.sku ?? '') || undefined;
     const barcode = coerceToString(variant.barcode ?? '') || undefined;
@@ -1052,7 +1053,7 @@ function sanitizeVariants(variants: ShopifyProductVariant[] | undefined): Shopif
     const weightUnit = normalizeWeightUnit(variant.weight_unit);
 
     return {
-      price,
+      ...(price ? { price } : {}),
       compare_at_price: (() => {
         if (!compareAt) return undefined;
         const normalizedCompareAt = toMoneyString(compareAt, compareAt);

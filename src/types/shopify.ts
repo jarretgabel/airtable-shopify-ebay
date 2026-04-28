@@ -17,7 +17,7 @@ export interface ShopifyProductVariant {
   id?: number;
   title?: string;
   position?: number;
-  price: string;
+  price?: string;
   compare_at_price?: string | null;
   sku?: string;
   barcode?: string;

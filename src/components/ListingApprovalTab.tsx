@@ -1014,11 +1014,14 @@ function findEbayBodyHtmlFieldName(fieldNames: string[]): string {
 
 function isEbayBodyHtmlFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
   return normalized === 'body html'
     || normalized === 'body (html)'
     || normalized === 'body_html'
     || normalized === 'ebay body html'
-    || normalized === 'ebay_body_html';
+    || normalized === 'ebay body (html)'
+    || normalized === 'ebay_body_html'
+    || compact === 'ebaybodyhtml';
 }
 
 function isEbayBodyHtmlTemplateFieldName(fieldName: string): boolean {
@@ -1480,8 +1483,10 @@ export function ListingApprovalTab({
     || (import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_REF as string | undefined)?.trim()
     || DEFAULT_APPROVAL_TABLE_REFERENCE;
   const tableName = propTableName
-    || (import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_NAME as string | undefined)?.trim()
-    || (import.meta.env.VITE_AIRTABLE_TABLE_NAME as string | undefined)?.trim();
+    ?? (propsTableReference
+      ? undefined
+      : (import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_NAME as string | undefined)?.trim()
+        || (import.meta.env.VITE_AIRTABLE_TABLE_NAME as string | undefined)?.trim());
   const isCombinedApproval = approvalChannel === 'combined';
 
   const {
@@ -3490,7 +3495,7 @@ export function ListingApprovalTab({
                   ];
                   const existingBodyHtmlFieldName = resolveExistingFieldName(bodyHtmlCandidates);
                   const originalBodyHtmlRaw = existingBodyHtmlFieldName ? toFormValue(selectedRecord.fields[existingBodyHtmlFieldName]) : '';
-                  const shouldSaveBodyHtml = bodyHtmlRaw.trim().length > 0 && (
+                  const shouldSaveBodyHtml = Boolean(existingBodyHtmlFieldName) && bodyHtmlRaw.trim().length > 0 && (
                     shouldForceEbayBodyHtmlSave
                     || bodyHtmlRaw !== originalBodyHtmlRaw
                   );

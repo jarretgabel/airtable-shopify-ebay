@@ -1,6 +1,15 @@
 import type { InventoryDirectoryData, InventoryDraftValue, InventoryFieldMetadata } from '@/components/tabs/airtable/inventoryDirectoryTypes';
-import { getConfiguredFieldMetadata, getConfiguredRecords, updateConfiguredRecord, type AirtableMetadataField } from '@/services/app-api/airtable';
+import { getConfiguredFieldMetadata, getConfiguredRecord, getConfiguredRecords, updateConfiguredRecord, type AirtableMetadataField } from '@/services/app-api/airtable';
 import type { AirtableRecord } from '@/types/airtable';
+
+const INVENTORY_DIRECTORY_LIST_FIELD_NAMES = [
+  'SKU',
+  'Make',
+  'Model',
+  'Component Type',
+  'Status',
+] as const;
+
 const PRIORITY_FIELD_ORDER = [
   'SKU',
   'Status',
@@ -211,7 +220,9 @@ export function displayInventoryValue(value: unknown): string {
 
 export async function loadInventoryDirectory(): Promise<InventoryDirectoryData> {
   const [records, fields] = await Promise.all([
-    getConfiguredRecords('inventory-directory'),
+    getConfiguredRecords('inventory-directory', {
+      fields: [...INVENTORY_DIRECTORY_LIST_FIELD_NAMES],
+    }),
     loadInventoryFieldMetadata(),
   ]);
 
@@ -219,14 +230,7 @@ export async function loadInventoryDirectory(): Promise<InventoryDirectoryData> 
 }
 
 export async function loadInventoryRecord(recordId: string): Promise<AirtableRecord> {
-  const records = await getConfiguredRecords('inventory-directory');
-  const matchingRecord = records.find((record) => record.id === recordId);
-
-  if (!matchingRecord) {
-    throw new Error(`Unable to locate SB Inventory record ${recordId}.`);
-  }
-
-  return matchingRecord;
+  return getConfiguredRecord('inventory-directory', recordId);
 }
 
 export async function saveInventoryRecord(

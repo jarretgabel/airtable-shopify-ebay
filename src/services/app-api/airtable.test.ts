@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import airtableService from '@/services/airtable';
 import {
   createConfiguredRecord,
@@ -5,17 +6,21 @@ import {
   deleteConfiguredRecord,
   deleteRecordFromResolvedSource,
   getConfiguredFieldMetadata,
+  getConfiguredRecord,
   getConfiguredRecords,
   getListings,
-  updateRecordFromResolvedSource,
+  getRecordsFromResolvedSource,
   updateConfiguredRecord,
+  updateRecordFromResolvedSource,
   uploadConfiguredAttachment,
 } from '@/services/app-api/airtable';
 
 vi.mock('@/services/airtable', () => ({
   default: {
     getRecords: vi.fn(),
+    getRecord: vi.fn(),
     getRecordsFromReference: vi.fn(),
+    getRecordFromReference: vi.fn(),
     createRecord: vi.fn(),
     updateRecord: vi.fn(),
     deleteRecord: vi.fn(),
@@ -126,6 +131,40 @@ describe('app-api airtable', () => {
       headers: { Accept: 'application/json' },
     });
     expect(result).toEqual([{ id: 'rec3', fields: { Name: 'Inventory' }, createdTime: 'later' }]);
+  });
+
+  it('supports requesting a shaped configured-records list in Lambda mode', async () => {
+    vi.stubEnv('VITE_USE_LAMBDA_AIRTABLE', 'true');
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([{ id: 'recSlim', fields: { SKU: 'ABC' }, createdTime: 'later' }]), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await getConfiguredRecords('inventory-directory', { fields: ['SKU', 'Status'] });
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=inventory-directory&fields=SKU%2CStatus', {
+      headers: { Accept: 'application/json' },
+    });
+    expect(result).toEqual([{ id: 'recSlim', fields: { SKU: 'ABC' }, createdTime: 'later' }]);
+  });
+
+  it('calls the Lambda configured single-record endpoint when Lambda mode is on', async () => {
+    vi.stubEnv('VITE_USE_LAMBDA_AIRTABLE', 'true');
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ id: 'recInv1', fields: { SKU: 'ABC' }, createdTime: 'now' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await getConfiguredRecord('inventory-directory', 'recInv1');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records/inventory-directory/recInv1', {
+      headers: { Accept: 'application/json' },
+    });
+    expect(result).toEqual({ id: 'recInv1', fields: { SKU: 'ABC' }, createdTime: 'now' });
   });
 
   it('delegates configured users writes to the direct Airtable service when Lambda mode is off', async () => {
@@ -332,6 +371,24 @@ describe('app-api airtable', () => {
     });
     expect(created).toEqual({ id: 'recApproval1', fields: { Title: 'Draft' }, createdTime: 'now' });
     expect(updated).toEqual({ id: 'recApproval1', fields: { Title: 'Published' }, createdTime: 'later' });
+  });
+
+  it('resolves Shopify approval reads by reference when the Shopify approval table name is missing', async () => {
+    vi.stubEnv('VITE_USE_LAMBDA_AIRTABLE', 'true');
+    vi.stubEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF', 'appShopify/viwShopify');
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([{ id: 'recApproval1', fields: { Title: 'Draft' }, createdTime: 'now' }]), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const records = await getRecordsFromResolvedSource('appShopify/viwShopify', undefined);
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-shopify', {
+      headers: { Accept: 'application/json' },
+    });
+    expect(records).toEqual([{ id: 'recApproval1', fields: { Title: 'Draft' }, createdTime: 'now' }]);
   });
 
   it('resolves approval deletes through the Lambda configured-record endpoint when Lambda mode is on', async () => {

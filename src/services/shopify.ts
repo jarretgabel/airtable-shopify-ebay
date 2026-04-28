@@ -400,11 +400,11 @@ function ensureRequiredVariant(product: ShopifyProduct): ShopifyProduct['variant
 
   return source.map((variant, index) => {
     const priceRaw = typeof variant?.price === 'string' ? variant.price.trim() : '';
-    const price = priceRaw.length > 0 ? priceRaw : '0.00';
+    const price = priceRaw.length > 0 ? priceRaw : undefined;
 
     return {
       ...variant,
-      price,
+      ...(price ? { price } : {}),
       inventory_management: variant?.inventory_management || (typeof variant?.inventory_quantity === 'number' ? 'shopify' : variant?.inventory_management),
       inventory_policy: variant?.inventory_policy || 'deny',
       taxable: typeof variant?.taxable === 'boolean' ? variant.taxable : true,

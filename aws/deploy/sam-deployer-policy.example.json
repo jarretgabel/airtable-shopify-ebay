@@ -1,0 +1,125 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "SamCloudFormationDeploy",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:CreateChangeSet",
+        "cloudformation:CreateStack",
+        "cloudformation:DeleteChangeSet",
+        "cloudformation:DeleteStack",
+        "cloudformation:DescribeChangeSet",
+        "cloudformation:DescribeStackEvents",
+        "cloudformation:DescribeStackResource",
+        "cloudformation:DescribeStackResources",
+        "cloudformation:DescribeStacks",
+        "cloudformation:ExecuteChangeSet",
+        "cloudformation:GetTemplate",
+        "cloudformation:GetTemplateSummary",
+        "cloudformation:ListChangeSets",
+        "cloudformation:ListStackResources",
+        "cloudformation:UpdateStack",
+        "cloudformation:ValidateTemplate"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SamArtifactBucketAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:AbortMultipartUpload",
+        "s3:CreateBucket",
+        "s3:DeleteBucketPolicy",
+        "s3:DeleteObject",
+        "s3:GetBucketLocation",
+        "s3:GetBucketPolicy",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:ListBucketMultipartUploads",
+        "s3:ListMultipartUploadParts",
+        "s3:PutBucketPolicy",
+        "s3:PutObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::aws-sam-cli-managed-default-samclisourcebucket-*",
+        "arn:aws:s3:::aws-sam-cli-managed-default-samclisourcebucket-*/*"
+      ]
+    },
+    {
+      "Sid": "LambdaStackManagement",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:AddPermission",
+        "lambda:CreateFunction",
+        "lambda:DeleteFunction",
+        "lambda:GetFunction",
+        "lambda:GetFunctionConfiguration",
+        "lambda:ListTags",
+        "lambda:RemovePermission",
+        "lambda:TagResource",
+        "lambda:UntagResource",
+        "lambda:UpdateFunctionCode",
+        "lambda:UpdateFunctionConfiguration"
+      ],
+      "Resource": "arn:aws:lambda:us-east-1:981750770208:function:airtable-shopify-ebay-*"
+    },
+    {
+      "Sid": "ApiGatewayHttpApiManagement",
+      "Effect": "Allow",
+      "Action": [
+        "apigateway:DELETE",
+        "apigateway:GET",
+        "apigateway:PATCH",
+        "apigateway:POST",
+        "apigateway:PUT",
+        "apigateway:TagResource",
+        "apigateway:UntagResource"
+      ],
+      "Resource": [
+        "arn:aws:apigateway:us-east-1::/apis",
+        "arn:aws:apigateway:us-east-1::/apis/*",
+        "arn:aws:apigateway:us-east-1::/tags/*"
+      ]
+    },
+    {
+      "Sid": "IamRoleManagementForLambdaExecutionRoles",
+      "Effect": "Allow",
+      "Action": [
+        "iam:AttachRolePolicy",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:DeleteRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:GetRole",
+        "iam:ListAttachedRolePolicies",
+        "iam:ListRolePolicies",
+        "iam:PassRole",
+        "iam:PutRolePolicy",
+        "iam:TagRole",
+        "iam:UntagRole"
+      ],
+      "Resource": "arn:aws:iam::981750770208:role/airtable-shopify-ebay-*"
+    },
+    {
+      "Sid": "LogGroupManagementForLambdaFunctions",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:DeleteLogGroup",
+        "logs:DescribeLogStreams",
+        "logs:DescribeLogGroups",
+        "logs:FilterLogEvents",
+        "logs:GetLogEvents",
+        "logs:ListTagsForResource",
+        "logs:PutRetentionPolicy",
+        "logs:TagResource",
+        "logs:UntagResource"
+      ],
+      "Resource": [
+        "arn:aws:logs:us-east-1:981750770208:log-group:/aws/lambda/airtable-shopify-ebay-*",
+        "arn:aws:logs:us-east-1:981750770208:log-group:/aws/lambda/airtable-shopify-ebay-*:log-stream:*"
+      ]
+    }
+  ]
+}

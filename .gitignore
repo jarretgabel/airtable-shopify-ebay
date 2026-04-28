@@ -24,8 +24,12 @@ dist-ssr
 *.sw?
 
 # Environment
+.env
+.env.*
+!.env.example
 .env.local
 .env.*.local
 aws/env.local.json
 aws/samconfig.toml
 aws/deploy/ssm-setup.sh
+aws/.aws-sam/

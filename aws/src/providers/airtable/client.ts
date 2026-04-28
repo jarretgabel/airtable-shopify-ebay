@@ -58,13 +58,17 @@ interface AirtableWriteOptions {
   typecast?: boolean;
 }
 
+interface AirtableListOptions {
+  fields?: string[];
+}
+
 interface AirtableAttachmentUploadPayload {
   filename: string;
   contentType: string;
   file: string;
 }
 
-function buildUrl(baseId: string, tableName: string, view?: string, offset?: string): string {
+function buildUrl(baseId: string, tableName: string, view?: string, offset?: string, options: AirtableListOptions = {}): string {
   const encodedTableName = encodeURIComponent(tableName);
   const url = new URL(`${AIRTABLE_API_BASE}/${baseId}/${encodedTableName}`);
 
@@ -76,6 +80,13 @@ function buildUrl(baseId: string, tableName: string, view?: string, offset?: str
     url.searchParams.set('offset', offset);
   }
 
+  for (const field of options.fields ?? []) {
+    const trimmed = field.trim();
+    if (trimmed) {
+      url.searchParams.append('fields[]', trimmed);
+    }
+  }
+
   return url.toString();
 }
 
@@ -85,8 +96,8 @@ function buildRecordUrl(baseId: string, tableName: string, recordId?: string): s
   return `${AIRTABLE_API_BASE}/${baseId}/${encodedTableName}${encodedRecordId}`;
 }
 
-async function fetchPage(baseId: string, tableName: string, view?: string, offset?: string): Promise<AirtableListResponse> {
-  const response = await fetch(buildUrl(baseId, tableName, view, offset), {
+async function fetchPage(baseId: string, tableName: string, view?: string, offset?: string, options: AirtableListOptions = {}): Promise<AirtableListResponse> {
+  const response = await fetch(buildUrl(baseId, tableName, view, offset, options), {
     headers: {
       Authorization: `Bearer ${requireSecret('AIRTABLE_API_KEY')}`,
     },
@@ -104,12 +115,12 @@ async function fetchPage(baseId: string, tableName: string, view?: string, offse
   return body;
 }
 
-export async function getRecords(baseId: string, tableName: string, view?: string): Promise<AirtableRecord[]> {
+export async function getRecords(baseId: string, tableName: string, view?: string, options: AirtableListOptions = {}): Promise<AirtableRecord[]> {
   const records: AirtableRecord[] = [];
   let offset: string | undefined;
 
   do {
-    const page = await fetchPage(baseId, tableName, view, offset);
+    const page = await fetchPage(baseId, tableName, view, offset, options);
     records.push(...page.records);
     offset = page.offset;
   } while (offset);
@@ -119,6 +130,29 @@ export async function getRecords(baseId: string, tableName: string, view?: strin
 
 export async function getListings(tableName: string, view?: string): Promise<AirtableRecord[]> {
   return getRecords(requireSecret('AIRTABLE_BASE_ID'), tableName, view);
+}
+
+export async function getRecord(
+  baseId: string,
+  tableName: string,
+  recordId: string,
+): Promise<AirtableRecord> {
+  const response = await fetch(buildRecordUrl(baseId, tableName, recordId), {
+    headers: {
+      Authorization: `Bearer ${requireSecret('AIRTABLE_API_KEY')}`,
+    },
+  });
+
+  const body = await response.json() as AirtableRecordResponse;
+  if (!response.ok) {
+    throw new HttpError(response.status, body.error?.message || `Airtable API error: HTTP ${response.status}`, {
+      service: 'airtable',
+      code: 'AIRTABLE_HTTP_ERROR',
+      retryable: response.status === 429 || response.status >= 500,
+    });
+  }
+
+  return body;
 }
 
 export async function createRecord(

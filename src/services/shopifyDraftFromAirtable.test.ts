@@ -159,7 +159,19 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
 
     expect(product.title).toBe('Untitled Listing');
     expect(product.vendor).toBe('Resolution Audio Video NYC');
-    expect(product.variants?.[0]?.price).toBe('0.00');
+    expect(product.variants?.[0]?.price).toBeUndefined();
+  });
+
+  it('omits variant price from the unified request when Airtable has no Shopify price', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Missing Price Product',
+      'eBay Offer Price Value': '123.45',
+    });
+
+    const request = buildShopifyUnifiedProductSetRequest(product);
+
+    expect(request.input.variants).toHaveLength(1);
+    expect(request.input.variants?.[0]?.price).toBeUndefined();
   });
 
   it('maps canonical condition field into Shopify options and variant selection', () => {

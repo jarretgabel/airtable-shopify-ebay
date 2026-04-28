@@ -37,9 +37,10 @@ Defined in [aws/template.yaml](/Users/user/Sites/airtable-shopify-ebay/aws/templ
 
 ## What is not in the current AWS package
 
-- eBay is not currently deployed through this Lambda package.
+- eBay Sell API routes are not currently deployed through this Lambda package.
 - Do not plan an `/api/ebay/*` production cutover from this checklist alone.
-- eBay still depends on the current browser-side/token-side setup until a later migration package adds eBay Lambda routes.
+- eBay publish/listing creation still depends on the current browser-side/token-side setup until a later migration package adds eBay Lambda routes.
+- eBay approval data can still participate in the staged cutover below because those screens save through the deployed Airtable configured-record routes rather than dedicated `/api/ebay/*` routes.
 
 ## Required AWS-side runtime secrets and config
 
@@ -230,19 +231,56 @@ For deployed environments, `VITE_APP_API_PROXY_TARGET` is not needed.
 - Keep the others off if you want a narrower first production cutover
 - Validate core reads/writes and approval screens
 
+Current validated scope:
+
+- inventory directory and record editor loads
+- JotForm list/detail reads
+- Shopify approval Airtable-backed reads and saves
+- eBay approval Airtable-backed reads and save/revert flows
+
 ### Phase 2: Shopify
 
 - Set `VITE_USE_LAMBDA_SHOPIFY=true`
 - Validate product reads, category resolution, publish flow, and image upload
 - Do not treat `fileCreate` permission errors as Lambda failures
 
+Current validated scope:
+
+- Shopify approval exact request preview
+- Shopify draft/product-set request shaping
+- deployed Shopify approval reads
+
+Open blocker before calling this fully complete:
+
+- `/api/shopify/images` still depends on Shopify admin scopes and create-files permission outside AWS
+
 ### Phase 3: JotForm
 
 - Set `VITE_USE_LAMBDA_JOTFORM=true`
 
+Current validated scope:
+
+- JotForm list and detail expansion through the deployed AWS endpoint
+
 ### Phase 4: Optional AI and Gmail
 
 - Turn on only if you have configured those provider secrets in AWS
+
+## Current staged cutover status
+
+These cutovers can be completed now with the currently deployed stack and frontend flags:
+
+- `VITE_USE_LAMBDA_AIRTABLE=true`
+  - ready for inventory, JotForm-backed Airtable reads, Shopify approval Airtable reads/saves, and eBay approval Airtable reads/saves
+- `VITE_USE_LAMBDA_JOTFORM=true`
+  - ready for deployed JotForm list/detail reads
+- `VITE_USE_LAMBDA_SHOPIFY=true`
+  - ready for deployed Shopify read and request-build flows, with image upload still blocked by Shopify admin permissions rather than Lambda deployment
+
+These cutovers are not complete yet:
+
+- full eBay publish/API cutover, because the SAM package still does not provide `/api/ebay/*` server routes
+- Shopify image-upload completion, until the Shopify app token and acting user have the required file/image permissions
 
 ## Validation checklist after deployment
 
@@ -294,21 +332,21 @@ Add these only if you are deploying those routes now:
 - `GOOGLE_GMAIL_ACCESS_TOKEN`
 - `GOOGLE_GMAIL_FROM_EMAIL`
 
-Recommended storage model:
+Recommended storage model for this repo right now:
 
-- store secrets as SSM `SecureString` parameters
-- pass the SSM parameter paths through SAM parameters
-- let [aws/template.yaml](/Users/user/Sites/airtable-shopify-ebay/aws/template.yaml) resolve them with `ssm-secure`
+- keep real deploy values in local ignored `aws/samconfig.toml`
+- pass secrets to SAM as direct `NoEcho` parameters during deploy
+- avoid entering Lambda environment variables manually in the AWS console
 
-Bootstrap helper:
+Bootstrap helpers:
 
-- [aws/deploy/ssm-setup.example.sh](/Users/user/Sites/airtable-shopify-ebay/aws/deploy/ssm-setup.example.sh)
+- [aws/samconfig.toml.example](/Users/user/Sites/airtable-shopify-ebay/aws/samconfig.toml.example)
+- [scripts/prepare-aws-samconfig.mjs](/Users/user/Sites/airtable-shopify-ebay/scripts/prepare-aws-samconfig.mjs)
 
 ## Current best next step
 
-1. Fix Shopify admin file/image permissions.
-2. Put the AWS runtime secrets listed above into AWS secret storage.
-3. Deploy [aws/template.yaml](/Users/user/Sites/airtable-shopify-ebay/aws/template.yaml) with SAM.
-4. Set `VITE_APP_API_BASE_URL` to the deployed `AppApiUrl`.
-5. Turn on `VITE_USE_LAMBDA_AIRTABLE`, `VITE_USE_LAMBDA_SHOPIFY`, and `VITE_USE_LAMBDA_JOTFORM`.
-6. Re-run parity and write probes against the deployed environment.
+1. Keep `VITE_USE_LAMBDA_AIRTABLE=true` for inventory and approval data flows.
+2. Keep `VITE_USE_LAMBDA_JOTFORM=true` for JotForm list/detail flows.
+3. Keep `VITE_USE_LAMBDA_SHOPIFY=true` for deployed Shopify reads and request-build flows.
+4. Fix Shopify admin file/image permissions before calling Shopify image upload complete.
+5. Do not claim eBay publish cutover yet, because `/api/ebay/*` routes are still outside the current SAM package.

@@ -30,7 +30,7 @@ Current state in this workspace:
 - `sam` CLI is installed and callable via the user Python bin path.
 - `aws` CLI is installed and callable via the user Python bin path.
 - AWS credentials are not configured on this machine yet.
-- [aws/template.yaml](/Users/user/Sites/airtable-shopify-ebay/aws/template.yaml) is parameterized for SSM-backed secret paths plus deploy-time config values and the SAM build succeeds locally.
+- [aws/template.yaml](/Users/user/Sites/airtable-shopify-ebay/aws/template.yaml) is parameterized for direct `NoEcho` secret values plus deploy-time config values and the SAM build succeeds locally.
 
 What that means:
 
@@ -71,6 +71,8 @@ Once those tools are installed, the npm scripts in [aws/package.json](/Users/use
 Reusable deploy config example:
 
 - [aws/samconfig.toml.example](/Users/user/Sites/airtable-shopify-ebay/aws/samconfig.toml.example)
+
+Important: deploy the built SAM template, not the source template. The npm deploy scripts in [aws/package.json](/Users/user/Sites/airtable-shopify-ebay/aws/package.json) now run `sam build` first and deploy [aws/.aws-sam/build/template.yaml](/Users/user/Sites/airtable-shopify-ebay/aws/.aws-sam/build/template.yaml). This avoids shipping unbuilt TypeScript handler paths to Lambda.
 
 ## Recommended stack naming
 
@@ -149,6 +151,92 @@ Record these values immediately:
 4. Any function-specific environment overrides you added
 5. Where the secrets are stored
 
+## IAM permissions required for SAM deploy
+
+If `npm run deploy:dev` fails with `cloudformation:CreateChangeSet` on `aws-sam-cli-managed-default`, the AWS user or role can authenticate but does not have enough deployment permissions for SAM-managed CloudFormation resources.
+
+The Python 3.9 deprecation warning from `boto3` is not the deploy blocker right now. It is only a warning. The actual blocking error is the CloudFormation `AccessDenied` response.
+
+Minimum CloudFormation access for SAM deploy:
+
+- `cloudformation:CreateChangeSet`
+- `cloudformation:DescribeChangeSet`
+- `cloudformation:ExecuteChangeSet`
+- `cloudformation:DescribeStacks`
+- `cloudformation:GetTemplateSummary`
+- `cloudformation:CreateStack`
+- `cloudformation:UpdateStack`
+- `cloudformation:DeleteStack`
+
+Recommended resource scope for the current account and region:
+
+```json
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"cloudformation:CreateChangeSet",
+				"cloudformation:DescribeChangeSet",
+				"cloudformation:ExecuteChangeSet",
+				"cloudformation:DescribeStacks",
+				"cloudformation:GetTemplateSummary",
+				"cloudformation:CreateStack",
+				"cloudformation:UpdateStack",
+				"cloudformation:DeleteStack"
+			],
+			"Resource": [
+				"arn:aws:cloudformation:us-east-1:981750770208:stack/aws-sam-cli-managed-default/*",
+				"arn:aws:cloudformation:us-east-1:981750770208:stack/airtable-shopify-ebay-*/*"
+			]
+		}
+	]
+}
+```
+
+In practice, full SAM deploys usually need more than CloudFormation alone. Expect to also need:
+
+- S3 access for SAM packaging artifacts
+- Lambda create and update permissions
+- API Gateway permissions
+- `iam:PassRole`
+- IAM create or update permissions if the stack creates roles and policies
+
+For this repo, a concrete policy example now lives at [aws/deploy/sam-deployer-policy.example.json](/Users/user/Sites/airtable-shopify-ebay/aws/deploy/sam-deployer-policy.example.json).
+
+This example is intentionally practical rather than ultra-minimal. It covers the actual failure modes already seen in this account:
+
+- CloudFormation change set and stack management
+- SAM artifact bucket creation and policy updates
+- Lambda function create and update
+- API Gateway HTTP API create and update
+- IAM role create, tag, attach, detach, pass, and delete for stack-created Lambda roles
+- CloudWatch log group create and tag operations
+
+Add CloudWatch Logs read access too if you want to debug deployed runtime failures from the CLI. The policy example includes `logs:FilterLogEvents`, `logs:GetLogEvents`, and `logs:DescribeLogStreams` for that reason.
+
+Where to put it:
+
+1. Open AWS Console.
+2. Go to IAM.
+3. Open Policies.
+4. Create policy.
+5. Switch to JSON.
+6. Paste the contents of [aws/deploy/sam-deployer-policy.example.json](/Users/user/Sites/airtable-shopify-ebay/aws/deploy/sam-deployer-policy.example.json).
+7. Save it as a customer managed policy, for example `AirtableShopifyEbaySamDeployer`.
+8. Attach that policy to the IAM principal that runs `sam deploy`.
+
+For this machine and current setup, that principal is the IAM user `resolutionavnyc` unless you later switch to an assumed role or SSO profile.
+
+Fastest safe attachment options:
+
+1. Attach it directly to the IAM user `resolutionavnyc` if this user is only for deployment/admin work.
+2. Prefer attaching it to a dedicated IAM group if multiple human deployers need the same access.
+3. Best long-term option is attaching it to a deployment role and using `aws sts assume-role` or AWS IAM Identity Center, but that is more setup.
+
+If you want the fastest path, ask the AWS admin for deploy rights broad enough to manage the `aws-sam-cli-managed-default` stack and the `airtable-shopify-ebay-*` stacks in `us-east-1`.
+
 ## Production env matrix
 
 This package expects plain environment variables in Lambda.
@@ -185,9 +273,9 @@ Concrete example files for the first remote deploy are included in:
 
 Primary secret path model:
 
-- secrets go in AWS Systems Manager Parameter Store as `SecureString`
-- the SAM template receives the SSM parameter paths
-- Lambda environment variables resolve from `ssm-secure` dynamic references at deploy time
+- secret values are passed as SAM parameters marked `NoEcho`
+- the local [aws/samconfig.toml](/Users/user/Sites/airtable-shopify-ebay/aws/samconfig.toml) file stays gitignored and holds the deploy-time secret values
+- this avoids manual Lambda console entry while staying compatible with Lambda environment variable support in CloudFormation
 
 ## Frontend environment matrix after deploy
 
@@ -235,8 +323,8 @@ Notes:
 
 Preferred:
 
-1. Store secrets in AWS Secrets Manager or SSM Parameter Store.
-2. Inject them as Lambda environment variables at deploy time.
+1. Keep secret values in the local gitignored [aws/samconfig.toml](/Users/user/Sites/airtable-shopify-ebay/aws/samconfig.toml).
+2. Pass them as `NoEcho` SAM parameters at deploy time.
 3. Keep stack config separate by environment.
 
 Avoid:
@@ -244,13 +332,12 @@ Avoid:
 - copying local example files directly into cloud environments
 - storing provider secrets in frontend-hosted env vars for deployed use
 
-You can now keep the deploy fully template-managed by using SAM parameters for config values and SSM SecureString parameter paths for secrets.
+You can now keep the deploy fully template-managed by using SAM parameters for both config values and secret values, without putting them in the AWS console.
 
 Recommended first pass:
 
 1. copy [aws/samconfig.toml.example](/Users/user/Sites/airtable-shopify-ebay/aws/samconfig.toml.example) to `aws/samconfig.toml`
-2. create the required SSM `SecureString` parameters in AWS Parameter Store
-3. replace the placeholder parameter values locally
+2. replace the placeholder parameter values locally, including the secret values
 4. run `npm run deploy:dev`
 
 Do not commit real secret values to source control.
@@ -258,39 +345,19 @@ Do not commit real secret values to source control.
 Local safety defaults already added in this repo:
 
 - local [aws/samconfig.toml](/Users/user/Sites/airtable-shopify-ebay/aws/samconfig.toml) copies are gitignored
-- local [aws/deploy/ssm-setup.sh](/Users/user/Sites/airtable-shopify-ebay/aws/deploy/ssm-setup.example.sh) copies are gitignored
 
-## SSM parameter naming recommendation
+## Secret parameter notes
 
-Recommended naming pattern:
+Use the local gitignored [aws/samconfig.toml](/Users/user/Sites/airtable-shopify-ebay/aws/samconfig.toml) for secret parameter values such as:
 
-- `/airtable-shopify-ebay/dev/airtable/api-key`
-- `/airtable-shopify-ebay/dev/shopify/access-token`
-- `/airtable-shopify-ebay/dev/jotform/api-key`
-- `/airtable-shopify-ebay/dev/ai/github-token`
-- `/airtable-shopify-ebay/dev/ai/openai-api-key`
-- `/airtable-shopify-ebay/dev/gmail/access-token`
+- `AirtableApiKey`
+- `ShopifyAccessToken`
+- `JotformApiKey`
+- `GithubToken`
+- `OpenAiApiKey`
+- `GoogleGmailAccessToken`
 
-Use the same pattern for `staging` and `prod`.
-
-Suggested creation examples:
-
-```bash
-aws ssm put-parameter --name /airtable-shopify-ebay/dev/airtable/api-key --type SecureString --value 'replace-me'
-aws ssm put-parameter --name /airtable-shopify-ebay/dev/shopify/access-token --type SecureString --value 'replace-me'
-aws ssm put-parameter --name /airtable-shopify-ebay/dev/jotform/api-key --type SecureString --value 'replace-me'
-```
-
-Reusable helper script:
-
-- [aws/deploy/ssm-setup.example.sh](/Users/user/Sites/airtable-shopify-ebay/aws/deploy/ssm-setup.example.sh)
-- local ignored copy: `aws/deploy/ssm-setup.sh`
-
-Recommended use:
-
-1. copy it locally to `aws/deploy/ssm-setup.sh`
-2. replace placeholders or export secret values first
-3. run `npm run ssm:setup:dev`, `npm run ssm:setup:staging`, or `npm run ssm:setup:prod` before deploy
+These parameters are declared with `NoEcho` in [aws/template.yaml](/Users/user/Sites/airtable-shopify-ebay/aws/template.yaml), which keeps them out of normal CloudFormation output while still allowing SAM deployment.
 
 ## First deployment strategy
 
@@ -370,7 +437,7 @@ Save these in your ops notes:
 
 1. Complete the Shopify admin items in [docs/admin-website-checklist.md](/Users/user/Sites/airtable-shopify-ebay/docs/admin-website-checklist.md).
 2. Run `npm run aws:whoami` from [aws](/Users/user/Sites/airtable-shopify-ebay/aws) and configure AWS credentials if it fails.
-3. create the required SSM `SecureString` parameters in AWS, preferably with `npm run ssm:setup:dev` after creating local `aws/deploy/ssm-setup.sh`.
-4. copy [aws/samconfig.toml.example](/Users/user/Sites/airtable-shopify-ebay/aws/samconfig.toml.example) to local `aws/samconfig.toml` and fill the placeholders.
+3. copy [aws/samconfig.toml.example](/Users/user/Sites/airtable-shopify-ebay/aws/samconfig.toml.example) to local `aws/samconfig.toml` and fill the placeholders, including secret values.
+4. if a prior `aws-sam-cli-managed-default` stack failed, delete it before retrying deploy.
 5. Run `npm run deploy:dev` from [aws](/Users/user/Sites/airtable-shopify-ebay/aws).
 6. Flip the frontend Lambda flags one domain at a time using [aws/deploy/dev.frontend.example.env](/Users/user/Sites/airtable-shopify-ebay/aws/deploy/dev.frontend.example.env).

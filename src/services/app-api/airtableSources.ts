@@ -85,6 +85,10 @@ export function resolveConfiguredRecordsSource(
     const referenceMatches = definitionReference ? definitionReference === inputReference : inputReference === '';
     const tableMatches = definitionTableName ? definitionTableName === inputTableName : inputTableName === '';
 
+    if (referenceMatches && (!inputTableName || !definitionTableName)) {
+      return source;
+    }
+
     if (referenceMatches && tableMatches) {
       return source;
     }

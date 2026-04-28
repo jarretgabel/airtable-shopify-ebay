@@ -2,6 +2,7 @@ import { HttpError } from '../../shared/errors.js';
 import {
   createRecord,
   deleteRecord,
+  getRecord,
   getRecords,
   getTableMetadata,
   type AirtableMetadataField,
@@ -20,6 +21,10 @@ export type AirtableConfiguredRecordsSource =
 export type AirtableConfiguredWriteSource = AirtableConfiguredRecordsSource;
 export type AirtableConfiguredMetadataSource = 'inventory-directory';
 export type AirtableConfiguredAttachmentSource = 'inventory-directory';
+
+interface AirtableConfiguredReadOptions {
+  fields?: string[];
+}
 
 const DEFAULT_USERS_TABLE_NAME = 'j2Gt9USORo6Vi5';
 const DEFAULT_APPROVAL_TABLE_REFERENCE = '3yTb0JkzUMFNnS/viw21kEduXKNub4Vn';
@@ -110,11 +115,14 @@ function isRetryableReferenceError(error: unknown): boolean {
     && (error.statusCode === 401 || error.statusCode === 403 || error.statusCode === 404);
 }
 
-export async function getConfiguredRecords(source: AirtableConfiguredRecordsSource): Promise<AirtableRecord[]> {
+export async function getConfiguredRecords(
+  source: AirtableConfiguredRecordsSource,
+  options: AirtableConfiguredReadOptions = {},
+): Promise<AirtableRecord[]> {
   const definition = getSourceDefinition(source);
 
   if (!definition.reference) {
-    return getRecords(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName);
+    return getRecords(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, undefined, options);
   }
 
   const candidates = parseAirtableReferenceCandidates(
@@ -126,13 +134,44 @@ export async function getConfiguredRecords(source: AirtableConfiguredRecordsSour
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
-      return await getRecords(candidate.baseId, candidate.tableName, candidate.viewId);
+      return await getRecords(candidate.baseId, candidate.tableName, candidate.viewId, options);
     } catch (error) {
       lastError = error;
     }
   }
 
   throw lastError ?? new Error(`Unable to resolve Airtable source ${source}.`);
+}
+
+export async function getConfiguredRecord(
+  source: AirtableConfiguredRecordsSource,
+  recordId: string,
+): Promise<AirtableRecord> {
+  const definition = getSourceDefinition(source);
+
+  if (!definition.reference) {
+    return getRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, recordId);
+  }
+
+  const candidates = parseAirtableReferenceCandidates(
+    definition.reference,
+    definition.tableName,
+    process.env.AIRTABLE_BASE_ID?.trim() || '',
+  );
+
+  let lastError: unknown;
+  for (const candidate of candidates) {
+    try {
+      return await getRecord(candidate.baseId, candidate.tableName, recordId);
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableReferenceError(error)) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError ?? new Error(`Unable to resolve Airtable record for source ${source}.`);
 }
 
 export async function createConfiguredRecord(
