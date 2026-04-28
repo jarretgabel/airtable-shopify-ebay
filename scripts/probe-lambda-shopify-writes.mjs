@@ -81,6 +81,14 @@ function printHelp() {
   console.log('Use scratch products only. Shopify write probes do not auto-delete created products.');
 }
 
+function isMissingShopifyImageScopeError(message) {
+  const normalized = message.toLowerCase();
+  return normalized.includes('access denied for filecreate field')
+    || normalized.includes('write_files access scope')
+    || normalized.includes('write_images access scope')
+    || normalized.includes('write_themes access scope');
+}
+
 async function main() {
   if (getOptionalEnv('SHOPIFY_WRITE_PROBE_ENABLED').toLowerCase() !== 'true') {
     printHelp();
@@ -107,6 +115,7 @@ async function main() {
   const imageAlt = getOptionalEnv('SHOPIFY_WRITE_PROBE_IMAGE_ALT');
 
   let productId = Number(getOptionalEnv('SHOPIFY_WRITE_PROBE_PRODUCT_ID'));
+  let shouldRetryStandaloneCollectionAssignment = false;
 
   console.log(`Running Shopify write probe against ${lambdaOrigin}`);
 
@@ -146,13 +155,18 @@ async function main() {
       }),
     });
 
+    if (Number.isFinite(Number(combinedResult?.product?.id))) {
+      productId = Number(combinedResult.product.id);
+    }
+
     console.log(`OK  product-set-with-collections -> ${combinedResult?.product?.id ?? '<unknown>'}`);
     if (Array.isArray(combinedResult?.collectionFailures) && combinedResult.collectionFailures.length > 0) {
       console.log(`Collection failures: ${combinedResult.collectionFailures.join(' | ')}`);
+      shouldRetryStandaloneCollectionAssignment = true;
     }
   }
 
-  if (categoryId || collectionIds.length > 0) {
+  if (categoryId || shouldRetryStandaloneCollectionAssignment || (!combinedRequest && collectionIds.length > 0)) {
     if (!Number.isFinite(productId) || productId <= 0) {
       throw new Error('SHOPIFY_WRITE_PROBE_PRODUCT_ID or a successful create probe is required for category/collection updates.');
     }
@@ -175,7 +189,7 @@ async function main() {
     console.log(`OK  update category -> ${productId}`);
   }
 
-  if (collectionIds.length > 0) {
+  if (shouldRetryStandaloneCollectionAssignment || (!combinedRequest && collectionIds.length > 0)) {
     const collectionResult = await fetchJson(`${lambdaOrigin}/api/shopify/products/${productId}/collections`, {
       method: 'POST',
       headers: {
@@ -197,19 +211,28 @@ async function main() {
       throw new Error('Both SHOPIFY_WRITE_PROBE_IMAGE_NAME and SHOPIFY_WRITE_PROBE_IMAGE_BASE64 are required for image upload probing.');
     }
 
-    const uploadedImage = await fetchJson(`${lambdaOrigin}/api/shopify/images`, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        filename: imageName,
-        mimeType: imageMimeType,
-        file: imageBase64,
-        alt: imageAlt || undefined,
-      }),
-    });
+    let uploadedImage;
+    try {
+      uploadedImage = await fetchJson(`${lambdaOrigin}/api/shopify/images`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filename: imageName,
+          mimeType: imageMimeType,
+          file: imageBase64,
+          alt: imageAlt || undefined,
+        }),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (isMissingShopifyImageScopeError(message)) {
+        throw new Error(`${message}\nShopify image upload is blocked by app permissions, not the Lambda seam. Add one of write_files, write_images, or write_themes, plus create-files permission, then rerun the probe.`);
+      }
+      throw error;
+    }
 
     console.log(`OK  image upload -> ${uploadedImage?.id ?? '<unknown>'}`);
   }

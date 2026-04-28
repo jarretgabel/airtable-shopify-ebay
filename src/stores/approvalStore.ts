@@ -617,7 +617,16 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
             );
           } catch (error) {
             const status = getAirtableErrorStatus(error);
-            if (!(mode === 'approve-only' && status === 422)) {
+
+            if (mode === 'approve-only' && status === 422 && !shouldTypecast) {
+              await updateRecordFromResolvedSource(
+                tableReference,
+                tableName,
+                selectedRecord.id,
+                payload,
+                { typecast: true },
+              );
+            } else {
               throw error;
             }
           }

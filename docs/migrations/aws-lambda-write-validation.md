@@ -117,7 +117,7 @@ Observed probe prerequisites:
 
 - the no-Docker local API must export `SHOPIFY_ACCESS_TOKEN` for the AWS Shopify provider; `npm run local:api` now derives that automatically from `VITE_SHOPIFY_OAUTH_ACCESS_TOKEN` or `VITE_SHOPIFY_ADMIN_API_TOKEN`
 - `product-set-with-collections` only exercises real collection joins if the target store actually has custom collections; if `/api/shopify/collections` returns an empty array, the route still validates existing-product mutation behavior but not collection assignment
-- `/api/shopify/images` requires Shopify app scopes and permissions for file creation; if the probe returns `Access denied for fileCreate field`, add one of `write_files`, `write_images`, or `write_themes` plus user create-files permission before treating the route as blocked
+- `/api/shopify/images` requires Shopify app scopes and permissions for file creation; if the probe returns `Access denied for fileCreate field`, treat that as an external Shopify permission issue, not a Lambda seam failure. Add one of `write_files`, `write_images`, or `write_themes` plus user create-files permission, then rerun the probe.
 
 ## UI Flows To Validate
 
