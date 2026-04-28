@@ -43,7 +43,7 @@ From [aws](/Users/user/Sites/airtable-shopify-ebay/aws):
 
 ```bash
 npm install
-sam build --template-file template.yaml
+npm run build
 ```
 
 Expected result:
@@ -65,6 +65,8 @@ python3 -m pip install --user awscli aws-sam-cli
 export PATH="$HOME/Library/Python/3.9/bin:$PATH"
 aws configure
 ```
+
+Once those tools are installed, the npm scripts in [aws/package.json](/Users/user/Sites/airtable-shopify-ebay/aws/package.json) already include the required PATH entries for the user-installed CLIs and local `esbuild` binary.
 
 Reusable deploy config example:
 
@@ -93,7 +95,7 @@ Suggested default:
 From [aws](/Users/user/Sites/airtable-shopify-ebay/aws):
 
 ```bash
-sam deploy --guided --template-file template.yaml
+npm run deploy:guided
 ```
 
 Use answers like these on the first run.
@@ -249,7 +251,7 @@ Recommended first pass:
 1. copy [aws/samconfig.toml.example](/Users/user/Sites/airtable-shopify-ebay/aws/samconfig.toml.example) to `aws/samconfig.toml`
 2. create the required SSM `SecureString` parameters in AWS Parameter Store
 3. replace the placeholder parameter values locally
-3. run `sam deploy --config-env dev`
+4. run `npm run deploy:dev`
 
 Do not commit real secret values to source control.
 
@@ -282,12 +284,13 @@ aws ssm put-parameter --name /airtable-shopify-ebay/dev/jotform/api-key --type S
 Reusable helper script:
 
 - [aws/deploy/ssm-setup.example.sh](/Users/user/Sites/airtable-shopify-ebay/aws/deploy/ssm-setup.example.sh)
+- local ignored copy: `aws/deploy/ssm-setup.sh`
 
 Recommended use:
 
 1. copy it locally to `aws/deploy/ssm-setup.sh`
 2. replace placeholders or export secret values first
-3. run it for the target environment before `sam deploy`
+3. run `npm run ssm:setup:dev`, `npm run ssm:setup:staging`, or `npm run ssm:setup:prod` before deploy
 
 ## First deployment strategy
 
@@ -366,8 +369,8 @@ Save these in your ops notes:
 ## Current practical next action
 
 1. Complete the Shopify admin items in [docs/admin-website-checklist.md](/Users/user/Sites/airtable-shopify-ebay/docs/admin-website-checklist.md).
-2. Configure AWS credentials on the machine that will deploy.
-3. create the required SSM `SecureString` parameters in AWS, preferably with [aws/deploy/ssm-setup.example.sh](/Users/user/Sites/airtable-shopify-ebay/aws/deploy/ssm-setup.example.sh).
+2. Run `npm run aws:whoami` from [aws](/Users/user/Sites/airtable-shopify-ebay/aws) and configure AWS credentials if it fails.
+3. create the required SSM `SecureString` parameters in AWS, preferably with `npm run ssm:setup:dev` after creating local `aws/deploy/ssm-setup.sh`.
 4. copy [aws/samconfig.toml.example](/Users/user/Sites/airtable-shopify-ebay/aws/samconfig.toml.example) to local `aws/samconfig.toml` and fill the placeholders.
-5. Run the deploy flow above.
+5. Run `npm run deploy:dev` from [aws](/Users/user/Sites/airtable-shopify-ebay/aws).
 6. Flip the frontend Lambda flags one domain at a time using [aws/deploy/dev.frontend.example.env](/Users/user/Sites/airtable-shopify-ebay/aws/deploy/dev.frontend.example.env).
