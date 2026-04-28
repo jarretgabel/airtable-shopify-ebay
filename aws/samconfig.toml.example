@@ -1,0 +1,34 @@
+version = 0.1
+
+[dev.global.parameters]
+stack_name = "airtable-shopify-ebay-dev"
+
+[dev.deploy.parameters]
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+resolve_s3 = true
+template_file = "template.yaml"
+parameter_overrides = "AirtableApiKeySsmPath=/airtable-shopify-ebay/dev/airtable/api-key AirtableBaseId=replace-with-airtable-base-id AllowedAirtableTableName=replace-with-primary-listings-table AllowedAirtableViewId=replace-with-primary-view-id AirtableUsersTableRef=replace-with-users-table-ref AirtableUsersTableName=replace-with-users-table-name AirtableApprovalTableRef=replace-with-ebay-approval-table-ref AirtableApprovalTableName=replace-with-ebay-approval-table-name AirtableShopifyApprovalTableRef=replace-with-shopify-approval-table-ref AirtableShopifyApprovalTableName=replace-with-shopify-approval-table-name AirtableCombinedListingsTableRef=replace-with-combined-listings-table-ref AirtableCombinedListingsTableName=replace-with-combined-listings-table-name ShopifyStoreDomain=your-store.myshopify.com ShopifyAccessTokenSsmPath=/airtable-shopify-ebay/dev/shopify/access-token JotformApiKeySsmPath=/airtable-shopify-ebay/dev/jotform/api-key GithubTokenSsmPath= OpenAiApiKeySsmPath= GoogleGmailAccessTokenSsmPath= GoogleGmailFromEmail="
+
+[staging.global.parameters]
+stack_name = "airtable-shopify-ebay-staging"
+
+[staging.deploy.parameters]
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+template_file = "template.yaml"
+parameter_overrides = "AirtableApiKeySsmPath=/airtable-shopify-ebay/staging/airtable/api-key AirtableBaseId=replace-with-airtable-base-id AllowedAirtableTableName=replace-with-primary-listings-table AllowedAirtableViewId=replace-with-primary-view-id AirtableUsersTableRef=replace-with-users-table-ref AirtableUsersTableName=replace-with-users-table-name AirtableApprovalTableRef=replace-with-ebay-approval-table-ref AirtableApprovalTableName=replace-with-ebay-approval-table-name AirtableShopifyApprovalTableRef=replace-with-shopify-approval-table-ref AirtableShopifyApprovalTableName=replace-with-shopify-approval-table-name AirtableCombinedListingsTableRef=replace-with-combined-listings-table-ref AirtableCombinedListingsTableName=replace-with-combined-listings-table-name ShopifyStoreDomain=your-store.myshopify.com ShopifyAccessTokenSsmPath=/airtable-shopify-ebay/staging/shopify/access-token JotformApiKeySsmPath=/airtable-shopify-ebay/staging/jotform/api-key GithubTokenSsmPath=/airtable-shopify-ebay/staging/ai/github-token OpenAiApiKeySsmPath=/airtable-shopify-ebay/staging/ai/openai-api-key GoogleGmailAccessTokenSsmPath=/airtable-shopify-ebay/staging/gmail/access-token GoogleGmailFromEmail=replace-with-from-email"
+
+[prod.global.parameters]
+stack_name = "airtable-shopify-ebay-prod"
+
+[prod.deploy.parameters]
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+template_file = "template.yaml"
+parameter_overrides = "AirtableApiKeySsmPath=/airtable-shopify-ebay/prod/airtable/api-key AirtableBaseId=replace-with-airtable-base-id AllowedAirtableTableName=replace-with-primary-listings-table AllowedAirtableViewId=replace-with-primary-view-id AirtableUsersTableRef=replace-with-users-table-ref AirtableUsersTableName=replace-with-users-table-name AirtableApprovalTableRef=replace-with-ebay-approval-table-ref AirtableApprovalTableName=replace-with-ebay-approval-table-name AirtableShopifyApprovalTableRef=replace-with-shopify-approval-table-ref AirtableShopifyApprovalTableName=replace-with-shopify-approval-table-name AirtableCombinedListingsTableRef=replace-with-combined-listings-table-ref AirtableCombinedListingsTableName=replace-with-combined-listings-table-name ShopifyStoreDomain=your-store.myshopify.com ShopifyAccessTokenSsmPath=/airtable-shopify-ebay/prod/shopify/access-token JotformApiKeySsmPath=/airtable-shopify-ebay/prod/jotform/api-key GithubTokenSsmPath=/airtable-shopify-ebay/prod/ai/github-token OpenAiApiKeySsmPath=/airtable-shopify-ebay/prod/ai/openai-api-key GoogleGmailAccessTokenSsmPath=/airtable-shopify-ebay/prod/gmail/access-token GoogleGmailFromEmail=replace-with-from-email"

@@ -27,3 +27,5 @@ dist-ssr
 .env.local
 .env.*.local
 aws/env.local.json
+aws/samconfig.toml
+aws/deploy/ssm-setup.sh

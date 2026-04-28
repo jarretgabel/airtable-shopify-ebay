@@ -1,0 +1,21 @@
+{
+  "AIRTABLE_API_KEY": "replace-with-airtable-pat",
+  "AIRTABLE_BASE_ID": "replace-with-airtable-base-id",
+  "ALLOWED_AIRTABLE_TABLE_NAME": "replace-with-primary-listings-table-id-or-name",
+  "ALLOWED_AIRTABLE_VIEW_ID": "replace-with-primary-view-id",
+  "AIRTABLE_USERS_TABLE_REF": "replace-with-users-table-ref",
+  "AIRTABLE_USERS_TABLE_NAME": "replace-with-users-table-name",
+  "AIRTABLE_APPROVAL_TABLE_REF": "replace-with-ebay-approval-table-ref",
+  "AIRTABLE_APPROVAL_TABLE_NAME": "replace-with-ebay-approval-table-name",
+  "AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF": "replace-with-shopify-approval-table-ref",
+  "AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME": "replace-with-shopify-approval-table-name",
+  "AIRTABLE_COMBINED_LISTINGS_TABLE_REF": "replace-with-combined-listings-table-ref",
+  "AIRTABLE_COMBINED_LISTINGS_TABLE_NAME": "replace-with-combined-listings-table-name",
+  "SHOPIFY_STORE_DOMAIN": "your-store.myshopify.com",
+  "SHOPIFY_ACCESS_TOKEN": "replace-with-shopify-admin-or-oauth-token",
+  "JOTFORM_API_KEY": "replace-with-jotform-api-key",
+  "GITHUB_TOKEN": "optional-github-models-token",
+  "OPENAI_API_KEY": "optional-openai-api-key",
+  "GOOGLE_GMAIL_ACCESS_TOKEN": "optional-gmail-access-token",
+  "GOOGLE_GMAIL_FROM_EMAIL": "optional-sender@example.com"
+}
