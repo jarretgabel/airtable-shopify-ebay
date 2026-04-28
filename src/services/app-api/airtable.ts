@@ -177,6 +177,32 @@ export async function getRecordsFromResolvedSource(
   throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda read path.'), 'approval-ebay');
 }
 
+export async function getRecordFromResolvedSource(
+  tableReference: string | undefined,
+  tableName: string | undefined,
+  recordId: string,
+): Promise<AirtableRecord> {
+  const resolvedSource = resolveConfiguredRecordsSource(tableReference, tableName);
+
+  if (!tableReference) {
+    throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
+  }
+
+  if (!isLambdaAirtableEnabled()) {
+    return airtableService.getRecordFromReference(tableReference, tableName, recordId);
+  }
+
+  if (!resolvedSource) {
+    throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda read path.'), 'approval-ebay');
+  }
+
+  try {
+    return await getJson<AirtableRecord>(`/api/airtable/configured-records/${encodeURIComponent(resolvedSource)}/${encodeURIComponent(recordId)}`);
+  } catch (error) {
+    throw toConfiguredSourceError(error, resolvedSource);
+  }
+}
+
 export async function createConfiguredRecord(
   source: AirtableConfiguredWriteSource,
   fields: Record<string, unknown>,

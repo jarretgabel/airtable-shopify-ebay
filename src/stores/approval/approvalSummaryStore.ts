@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import airtableService from '@/services/airtable';
+import { getRecordsFromResolvedSource } from '@/services/app-api/airtable';
 
 const DEFAULT_TABLE_REFERENCE = '3yTb0JkzUMFNnS/viw21kEduXKNub4Vn';
 
@@ -56,7 +56,7 @@ export const useApprovalSummaryStore = create<ApprovalSummaryStoreState>((set, g
 
     try {
       set({ loading: true, error: null });
-      const records = await airtableService.getRecordsFromReference(tableReference, tableName);
+      const records = await getRecordsFromResolvedSource(tableReference, tableName);
       const approvedCount = records.reduce((count, record) => {
         const approvedFieldName = Object.keys(record.fields).find((fieldName) => fieldName.toLowerCase() === 'approved');
         return count + (approvedFieldName && isApprovedValue(record.fields[approvedFieldName]) ? 1 : 0);

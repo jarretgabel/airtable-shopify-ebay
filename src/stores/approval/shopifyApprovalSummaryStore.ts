@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import airtableService from '@/services/airtable';
+import { getRecordsFromResolvedSource } from '@/services/app-api/airtable';
 
 function isApprovedValue(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
@@ -63,7 +63,7 @@ export const useShopifyApprovalSummaryStore = create<ShopifyApprovalSummaryStore
 
     try {
       set({ loading: true, error: null });
-      const records = await airtableService.getRecordsFromReference(tableReference, tableName);
+      const records = await getRecordsFromResolvedSource(tableReference, tableName);
       const approvedCount = records.reduce((count, record) => {
         const approvedFieldName = Object.keys(record.fields).find((fieldName) => fieldName.toLowerCase() === 'approved');
         return count + (approvedFieldName && isApprovedValue(record.fields[approvedFieldName]) ? 1 : 0);

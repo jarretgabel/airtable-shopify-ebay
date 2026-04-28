@@ -9,9 +9,9 @@ import { TestingNotesEditor } from '@/components/approval/TestingNotesEditor';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
 import { upsertShopifyProductWithCollectionFallback as runShopifyCollectionFallbackUpsert } from '@/components/approval/shopifyPublish';
 import { getMissingRequiredFieldNames, isMissingRequiredFieldValue } from '@/components/approval/requiredFieldStatus';
-import airtableService from '@/services/airtable';
 import {
   createRecordFromResolvedSource,
+  getRecordFromResolvedSource,
   updateRecordFromResolvedSource,
 } from '@/services/app-api/airtable';
 import { pushApprovalBundleToEbay } from '@/services/ebay/approvalPublish';
@@ -2767,7 +2767,7 @@ export function ListingApprovalTab({
 
     const hydrateFromBestAvailableRecord = async () => {
       try {
-        const fullRecord = await airtableService.getRecordFromReference(
+        const fullRecord = await getRecordFromResolvedSource(
           tableReference,
           tableName,
           selectedRecord.id,
