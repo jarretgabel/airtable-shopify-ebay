@@ -26,6 +26,7 @@ describe('app-api gmail', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/gmail/send', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',

@@ -1,14 +1,26 @@
 import type {
   ShopifyCollectionMatch,
-  ShopifyTaxonomyCategoryMatch,
   ShopifyUploadedImageResult,
   ShopifyUnifiedProductSetRequest,
   ShopifyUnifiedProductResult,
   ShopifyUnifiedUpsertWithCollectionsResult,
 } from '@/services/shopify';
+import type {
+  ShopifyApprovalPreviewResult,
+  ShopifyApprovalPublishResult,
+  ShopifyApprovalTaxonomyCategoryMatch as ShopifyTaxonomyCategoryMatch,
+} from '@contracts/shopifyApproval';
+import type { AirtableConfiguredRecordsSource } from './airtableSources';
 import type { ShopifyProductsResponse } from '@/types/shopify';
 import { isAppApiHttpError } from './errors';
 import { getJson, postJson } from './http';
+
+export type {
+  ShopifyApprovalCategoryResolution,
+  ShopifyApprovalFieldResolution,
+  ShopifyApprovalPreviewResult,
+  ShopifyApprovalPublishResult,
+} from '@contracts/shopifyApproval';
 
 function toShopifyError(error: unknown): Error {
   if (isAppApiHttpError(error)) {
@@ -103,6 +115,32 @@ export async function upsertExistingProductWithCollectionsInSingleMutation(
       request,
       collectionIds,
     });
+  } catch (error) {
+    throw toShopifyError(error);
+  }
+}
+
+export async function publishApprovalListingToShopify(
+  source: AirtableConfiguredRecordsSource,
+  recordId: string,
+  productIdFieldName = 'Shopify REST Product ID',
+): Promise<ShopifyApprovalPublishResult> {
+  try {
+    return await postJson<ShopifyApprovalPublishResult>('/api/shopify/approval-listings/publish', {
+      source,
+      recordId,
+      productIdFieldName,
+    });
+  } catch (error) {
+    throw toShopifyError(error);
+  }
+}
+
+export async function getShopifyApprovalPreview(
+  fields: Record<string, unknown>,
+): Promise<ShopifyApprovalPreviewResult> {
+  try {
+    return await postJson<ShopifyApprovalPreviewResult>('/api/shopify/approval-listings/preview', { fields });
   } catch (error) {
     throw toShopifyError(error);
   }

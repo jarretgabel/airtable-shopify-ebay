@@ -1,6 +1,7 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
-import { jsonError, jsonOk, requireQueryParam } from '../../shared/http.js';
+import { getRequestOrigin, jsonError, jsonOk, requireQueryParam } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
 import { getConfiguredFieldMetadata, type AirtableConfiguredMetadataSource } from '../../providers/airtable/sources.js';
 
@@ -17,13 +18,15 @@ function validateSource(value: string): AirtableConfiguredMetadataSource {
 }
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const origin = getRequestOrigin(event);
   try {
+    await requireRouteAccess(event);
     const source = validateSource(requireQueryParam(event, 'source', 'airtable', 'MISSING_SOURCE'));
     const fields = await getConfiguredFieldMetadata(source);
     logInfo('Fetched Airtable configured metadata', { source, count: fields.length });
-    return jsonOk(fields);
+    return jsonOk(fields, { origin });
   } catch (error) {
     logError('Failed to fetch Airtable configured metadata', error, { source: event.queryStringParameters?.source || '' });
-    return jsonError(getStatusCode(error), toApiErrorBody('airtable', error, 'AIRTABLE_GET_CONFIGURED_METADATA_FAILED'));
+    return jsonError(getStatusCode(error), toApiErrorBody('airtable', error, 'AIRTABLE_GET_CONFIGURED_METADATA_FAILED'), { origin });
   }
 }

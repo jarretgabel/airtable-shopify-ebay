@@ -1,17 +1,22 @@
 import { HttpError } from '../../shared/errors.js';
 import { sendPlainTextEmail } from '../gmail/client.js';
 import { findAuthUserByEmail, findAuthUserById, updateAuthUserEmail, updateAuthUserPassword } from './users.js';
+import { needsPasswordUpgrade, verifyStoredPassword } from './passwords.js';
 import { issueEmailChangeToken, issuePasswordResetToken, issueSessionToken, verifyToken } from './tokens.js';
 
 interface AuthLoginResult {
   userId: string;
   sessionToken: string;
   mustChangePassword: boolean;
+  role: 'admin' | 'user';
+  allowedPages: string[];
 }
 
 interface AuthSessionResult {
   userId: string;
   mustChangePassword: boolean;
+  role: 'admin' | 'user';
+  allowedPages: string[];
 }
 
 interface PasswordResetRequestResult {
@@ -73,7 +78,7 @@ function buildEmailChangeBody(link: string): string {
 
 export async function login(email: string, password: string): Promise<AuthLoginResult> {
   const user = await findAuthUserByEmail(normalizeEmail(email));
-  if (!user || user.password !== password) {
+  if (!user || !verifyStoredPassword(password, user.passwordState)) {
     throw new HttpError(401, 'Invalid email or password.', {
       service: 'auth',
       code: 'AUTH_INVALID_CREDENTIALS',
@@ -81,10 +86,16 @@ export async function login(email: string, password: string): Promise<AuthLoginR
     });
   }
 
+  if (needsPasswordUpgrade(user.passwordState)) {
+    await updateAuthUserPassword(user, password, user.mustChangePassword);
+  }
+
   return {
     userId: user.id,
     sessionToken: issueSessionToken(user.id, user.mustChangePassword),
     mustChangePassword: user.mustChangePassword,
+    role: user.role,
+    allowedPages: user.allowedPages,
   };
 }
 
@@ -102,6 +113,8 @@ export async function resolveSession(sessionToken: string): Promise<AuthSessionR
   return {
     userId: user.id,
     mustChangePassword: user.mustChangePassword,
+    role: user.role,
+    allowedPages: user.allowedPages,
   };
 }
 
@@ -169,12 +182,16 @@ export async function requestEmailChange(sessionToken: string, nextEmail: string
     });
   }
 
-  if (user.password !== currentPassword) {
+  if (!verifyStoredPassword(currentPassword, user.passwordState)) {
     throw new HttpError(400, 'Current password is incorrect.', {
       service: 'auth',
       code: 'AUTH_PASSWORD_INCORRECT',
       retryable: false,
     });
+  }
+
+  if (needsPasswordUpgrade(user.passwordState)) {
+    await updateAuthUserPassword(user, currentPassword, user.mustChangePassword);
   }
 
   const duplicate = await findAuthUserByEmail(normalizedEmail);
@@ -242,7 +259,7 @@ export async function updatePassword(sessionToken: string, currentPassword: stri
   }
 
   if (currentPassword) {
-    if (user.password !== currentPassword) {
+    if (!verifyStoredPassword(currentPassword, user.passwordState)) {
       throw new HttpError(400, 'Current password is incorrect.', {
         service: 'auth',
         code: 'AUTH_PASSWORD_INCORRECT',

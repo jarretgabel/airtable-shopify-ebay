@@ -8,6 +8,7 @@
     "onboard": "node scripts/dev-onboard.mjs",
     "local:api": "node scripts/start-local-api.mjs",
     "local:api:check": "node scripts/local-api-check.mjs",
+    "local:api:approval-check": "node scripts/local-api-approval-check.mjs",
     "compare:lambda": "node scripts/compare-lambda.mjs",
     "compare:lambda:handler": "node scripts/compare-lambda-handlers.mjs",
     "probe:lambda:writes": "node scripts/probe-lambda-writes.mjs",

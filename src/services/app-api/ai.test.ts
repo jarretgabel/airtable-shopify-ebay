@@ -27,6 +27,7 @@ describe('app-api ai', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/ai/identify-equipment', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',

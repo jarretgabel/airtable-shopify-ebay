@@ -6,13 +6,42 @@ interface JsonResponseOptions {
   cookies?: string[];
 }
 
+const DEFAULT_ALLOWED_ORIGINS = ['http://127.0.0.1:3000', 'http://localhost:3000'];
+
+function normalizeOrigin(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  try {
+    const origin = new URL(trimmed);
+    return `${origin.protocol}//${origin.host}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function getAllowedOrigins(): string[] {
+  const configured = (process.env.APP_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((value) => normalizeOrigin(value) || '')
+    .filter(Boolean);
+
+  return configured.length > 0 ? configured : DEFAULT_ALLOWED_ORIGINS;
+}
+
 function buildJsonHeaders(origin?: string): Record<string, string> {
   return {
-    'access-control-allow-origin': origin || '*',
-    'access-control-allow-headers': 'content-type,authorization',
-    'access-control-allow-credentials': 'true',
     'content-type': 'application/json',
-    ...(origin ? { vary: 'origin' } : {}),
+    ...(origin
+      ? {
+          'access-control-allow-origin': origin,
+          'access-control-allow-headers': 'content-type,authorization,x-csrf-token',
+          'access-control-allow-credentials': 'true',
+          vary: 'origin',
+        }
+      : {}),
   };
 }
 
@@ -43,7 +72,12 @@ export function jsonError(statusCode: number, body: unknown, options: JsonRespon
 }
 
 export function getRequestOrigin(event: APIGatewayProxyEventV2): string | undefined {
-  return event.headers.origin || event.headers.Origin;
+  const origin = normalizeOrigin(event.headers.origin || event.headers.Origin || '');
+  if (!origin) {
+    return undefined;
+  }
+
+  return getAllowedOrigins().includes(origin) ? origin : undefined;
 }
 
 export function getOptionalQueryParam(event: APIGatewayProxyEventV2, name: string): string | undefined {

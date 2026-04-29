@@ -25,6 +25,7 @@ describe('app-api jotform', () => {
     const result = await getForms();
 
     expect(fetchMock).toHaveBeenCalledWith('/api/jotform/forms', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(result).toEqual([{ id: '1', title: 'Form', created_at: 'now' }]);
@@ -42,7 +43,10 @@ describe('app-api jotform', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/jotform/forms/abc/submissions?limit=100&offset=0&orderby=created_at&direction=DESC',
-      { headers: { Accept: 'application/json' } },
+      {
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+      },
     );
     expect(result).toEqual([{ id: 'sub1', form_id: 'abc', created_at: 'now', answers: {} }]);
   });

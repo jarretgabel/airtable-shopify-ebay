@@ -22,9 +22,15 @@ const USER_FIELD_KEYS = {
 } as const;
 
 const PASSWORD_FIELD_PAYLOAD_PREFIX = '__LCC_PASSWORD__:';
+const PASSWORD_HASH_SCHEME = 'pbkdf2-sha256';
+const PASSWORD_HASH_ITERATIONS = 210000;
 
 interface StoredPasswordPayload {
-  password: string;
+  scheme?: string;
+  iterations?: number;
+  salt?: string;
+  hash?: string;
+  password?: string;
   mustChangePassword?: boolean;
 }
 
@@ -112,27 +118,73 @@ function decodeBase64(value: string): string {
   }
 }
 
-function serializePasswordField(password: string, mustChangePassword: boolean): string {
-  return encodeBase64(
-    `${PASSWORD_FIELD_PAYLOAD_PREFIX}${JSON.stringify({ password, mustChangePassword } satisfies StoredPasswordPayload)}`,
-  );
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
 }
 
-function parsePasswordField(value: unknown): { password: string; mustChangePassword?: boolean } {
+function parsePasswordField(value: unknown): { mustChangePassword?: boolean } {
   const decoded = decodeBase64(toSingleString(value));
   if (!decoded.startsWith(PASSWORD_FIELD_PAYLOAD_PREFIX)) {
-    return { password: decoded };
+    return {};
   }
 
   try {
     const parsed = JSON.parse(decoded.slice(PASSWORD_FIELD_PAYLOAD_PREFIX.length)) as StoredPasswordPayload;
     return {
-      password: typeof parsed.password === 'string' ? parsed.password : '',
       mustChangePassword: typeof parsed.mustChangePassword === 'boolean' ? parsed.mustChangePassword : undefined,
     };
   } catch {
-    return { password: decoded };
+    return {};
   }
+}
+
+async function hashPassword(password: string): Promise<{ salt: string; hash: string }> {
+  const cryptoApi = globalThis.crypto;
+  if (!cryptoApi?.subtle || typeof cryptoApi.getRandomValues !== 'function') {
+    throw new Error('Secure password hashing is unavailable in this browser.');
+  }
+
+  const saltBytes = cryptoApi.getRandomValues(new Uint8Array(16));
+  const key = await cryptoApi.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits'],
+  );
+  const derivedBits = await cryptoApi.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      hash: 'SHA-256',
+      salt: saltBytes,
+      iterations: PASSWORD_HASH_ITERATIONS,
+    },
+    key,
+    256,
+  );
+
+  return {
+    salt: bytesToBase64(saltBytes),
+    hash: bytesToBase64(new Uint8Array(derivedBits)),
+  };
+}
+
+async function serializePasswordField(password: string, mustChangePassword: boolean): Promise<string> {
+  const { salt, hash } = await hashPassword(password);
+
+  return encodeBase64(
+    `${PASSWORD_FIELD_PAYLOAD_PREFIX}${JSON.stringify({
+      scheme: PASSWORD_HASH_SCHEME,
+      iterations: PASSWORD_HASH_ITERATIONS,
+      salt,
+      hash,
+      mustChangePassword,
+    } satisfies StoredPasswordPayload)}`,
+  );
 }
 
 function parseAllowedPages(value: unknown, role: UserRole): AppPage[] {
@@ -186,16 +238,19 @@ function serializeAllowedPages(user: AppUser): string {
   return normalizePages(user.allowedPages, user.role).join(',');
 }
 
-function serializeUserFields(user: AppUser, includeCreatedAt: boolean): Record<string, unknown> {
+async function serializeUserFields(user: AppUser, includeCreatedAt: boolean): Promise<Record<string, unknown>> {
   const today = toDateStamp();
   const mustChangePassword = user.mustChangePassword ?? false;
+  const passwordField = user.password
+    ? { [USER_FIELD_KEYS.password[0]]: await serializePasswordField(user.password, mustChangePassword) }
+    : {};
 
   return {
     [USER_FIELD_KEYS.id[0]]: user.id,
     [USER_FIELD_KEYS.name[0]]: user.name,
     [USER_FIELD_KEYS.email[0]]: user.email,
     [USER_FIELD_KEYS.role[0]]: user.role,
-    [USER_FIELD_KEYS.password[0]]: serializePasswordField(user.password, mustChangePassword),
+    ...passwordField,
     [USER_FIELD_KEYS.mustChangePassword[0]]: mustChangePassword,
     [USER_FIELD_KEYS.allowedPages[0]]: serializeAllowedPages(user),
     [USER_FIELD_KEYS.notifications[0]]: JSON.stringify(user.notificationPreferences),
@@ -255,7 +310,6 @@ function mapRecordToUser(recordId: string, fields: Record<string, unknown>): App
   const name = toSingleString(getFieldValue(fields, USER_FIELD_KEYS.name)) || 'Unknown User';
   const email = toSingleString(getFieldValue(fields, USER_FIELD_KEYS.email)).toLowerCase();
   const passwordState = parsePasswordField(getFieldValue(fields, USER_FIELD_KEYS.password));
-  const password = passwordState.password;
   const mustChangePassword = parseBoolean(getFieldValue(fields, USER_FIELD_KEYS.mustChangePassword)) || Boolean(passwordState.mustChangePassword);
   const allowedPages = parseAllowedPages(getFieldValue(fields, USER_FIELD_KEYS.allowedPages), role);
   const notificationPreferences = parseNotificationPreferences(getFieldValue(fields, USER_FIELD_KEYS.notifications));
@@ -266,7 +320,6 @@ function mapRecordToUser(recordId: string, fields: Record<string, unknown>): App
     name,
     email,
     role,
-    password,
     mustChangePassword,
     allowedPages,
     notificationPreferences,
@@ -282,10 +335,11 @@ export async function loadUsersFromAirtable(): Promise<AppUser[]> {
 }
 
 export async function createUserInAirtable(user: AppUser): Promise<AppUser> {
-  const created = await createUserRecordInAirtable(serializeUserFields(user, true));
+  const created = await createUserRecordInAirtable(await serializeUserFields(user, true));
   return {
     ...user,
     airtableRecordId: created.id,
+    password: undefined,
   };
 }
 
@@ -294,7 +348,7 @@ export async function updateUserInAirtable(user: AppUser): Promise<AppUser> {
     throw new Error(`Missing Airtable record id for user ${user.email}.`);
   }
 
-  await updateUserRecordInAirtable(user.airtableRecordId, serializeUserFields(user, false));
+  await updateUserRecordInAirtable(user.airtableRecordId, await serializeUserFields(user, false));
   return user;
 }
 

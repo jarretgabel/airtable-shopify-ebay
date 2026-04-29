@@ -17,6 +17,7 @@ describe('app-api hifishark', () => {
     const listings = await getListingsForModel('accuphase-e-530');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/hifishark/model/accuphase-e-530', {
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
       },

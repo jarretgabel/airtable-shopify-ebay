@@ -1,5 +1,6 @@
 import {
   createSampleListing,
+  getEbayApprovalPreview,
   getEbayChildCategories,
   getEbayDashboardSnapshot,
   getEbayPackageTypes,
@@ -9,6 +10,7 @@ import {
   getOffer,
   getOffers,
   getOffersForInventorySkus,
+  publishApprovalRecordToEbay,
   publishSampleDraftListing,
   pushApprovalBundleToEbay,
   searchEbayCategorySuggestions,
@@ -48,16 +50,20 @@ describe('app-api ebay', () => {
     const dashboardSnapshot = await getEbayDashboardSnapshot();
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, expectApiPath('/api/ebay/inventory-items?limit=100'), {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, expectApiPath('/api/ebay/offers?sku=ABC123&limit=10'), {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(3, expectApiPath('/api/ebay/offers/123'), {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(4, expectApiPath('/api/ebay/offers/by-skus'), {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -65,9 +71,11 @@ describe('app-api ebay', () => {
       body: JSON.stringify({ skus: ['ABC123'] }),
     });
     expect(fetchMock).toHaveBeenNthCalledWith(5, expectApiPath('/api/ebay/runtime-config'), {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(6, expectApiPath('/api/ebay/dashboard-snapshot'), {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(inventory.total).toBe(1);
@@ -91,15 +99,19 @@ describe('app-api ebay', () => {
     const packageTypes = await getEbayPackageTypes('EBAY_US');
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, expectApiPath('/api/ebay/taxonomy/suggestions?query=amp&marketplaceId=EBAY_US'), {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, expectApiPath('/api/ebay/taxonomy/root-categories?marketplaceId=EBAY_US'), {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(3, expectApiPath('/api/ebay/taxonomy/child-categories?parentCategoryId=2&marketplaceId=EBAY_US'), {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(4, expectApiPath('/api/ebay/package-types?marketplaceId=EBAY_US'), {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(suggestions).toHaveLength(1);
@@ -148,15 +160,18 @@ describe('app-api ebay', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ mode: 'inventory', sku: 'ABC123', offerId: 'offer-1', status: 'UNPUBLISHED' }), { status: 200, headers: { 'content-type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ sku: 'ABC123', offerId: 'offer-1', listingId: 'listing-1' }), { status: 200, headers: { 'content-type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ sku: 'ABC123', offerId: 'offer-1', listingId: 'listing-1', wasExistingOffer: false }), { status: 200, headers: { 'content-type': 'application/json' } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ sku: 'ABC123', offerId: 'offer-1', listingId: 'listing-1', wasExistingOffer: false }), { status: 200, headers: { 'content-type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ url: 'https://example.com/image.jpg' }), { status: 200, headers: { 'content-type': 'application/json' } }));
 
     await createSampleListing('inventory', publishSetup);
     await publishSampleDraftListing(publishSetup);
     await pushApprovalBundleToEbay(bundle as never, publishSetup);
+    await publishApprovalRecordToEbay('approval-ebay', 'rec123', publishSetup);
     await uploadImageToEbayHostedPictures(file);
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, expectApiPath('/api/ebay/sample-listings'), {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -165,6 +180,7 @@ describe('app-api ebay', () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, expectApiPath('/api/ebay/sample-listings/publish'), {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -173,14 +189,25 @@ describe('app-api ebay', () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(3, expectApiPath('/api/ebay/approval-listings/publish'), {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ bundle, publishSetup }),
     });
-    expect(fetchMock).toHaveBeenNthCalledWith(4, expectApiPath('/api/ebay/images'), {
+    expect(fetchMock).toHaveBeenNthCalledWith(4, expectApiPath('/api/ebay/approval-listings/publish'), {
       method: 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ source: 'approval-ebay', recordId: 'rec123', publishSetup }),
+    });
+    expect(fetchMock).toHaveBeenNthCalledWith(5, expectApiPath('/api/ebay/images'), {
+      method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -191,6 +218,47 @@ describe('app-api ebay', () => {
         file: 'dGVzdA==',
       }),
     });
+  });
+
+  it('calls the Lambda eBay approval preview endpoint', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({
+        generatedBodyHtml: '<p>Preview</p>',
+        draftPayloadBundle: {
+          inventoryItem: { sku: 'ABC123' },
+          offer: { sku: 'ABC123' },
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json' } }),
+    );
+
+    const preview = await getEbayApprovalPreview(
+      { Title: 'Amp' },
+      {
+        templateHtml: '<html>{{title}}</html>',
+        title: 'Amp',
+        description: 'Great amp',
+        keyFeatures: 'Power: 100W',
+      },
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(expectApiPath('/api/ebay/approval-listings/preview'), {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        fields: { Title: 'Amp' },
+        bodyPreview: {
+          templateHtml: '<html>{{title}}</html>',
+          title: 'Amp',
+          description: 'Great amp',
+          keyFeatures: 'Power: 100W',
+        },
+      }),
+    });
+    expect(preview.generatedBodyHtml).toBe('<p>Preview</p>');
   });
 
   it('rethrows Lambda eBay failures as plain Errors', async () => {

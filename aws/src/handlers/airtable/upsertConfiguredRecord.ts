@@ -1,6 +1,7 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
-import { jsonError, jsonOk, requireJsonBody, requirePathParam } from '../../shared/http.js';
+import { getRequestOrigin, jsonError, jsonOk, requireJsonBody, requirePathParam } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
 import {
   createConfiguredRecord,
@@ -44,22 +45,26 @@ function validateFields(fields: unknown): Record<string, unknown> {
 }
 
 export async function createHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const origin = getRequestOrigin(event);
   try {
+    await requireRouteAccess(event);
     const source = validateWriteSource(requirePathParam(event, 'source', 'airtable', 'MISSING_SOURCE'));
     const body = requireJsonBody<AirtableWriteBody>(event, 'airtable', 'INVALID_AIRTABLE_REQUEST_BODY');
     const record = await createConfiguredRecord(source, validateFields(body.fields), {
       typecast: body.typecast === true,
     });
     logInfo('Created Airtable configured record', { source, recordId: record.id });
-    return jsonOk(record);
+    return jsonOk(record, { origin });
   } catch (error) {
     logError('Failed to create Airtable configured record', error, { source: event.pathParameters?.source || '' });
-    return jsonError(getStatusCode(error), toApiErrorBody('airtable', error, 'AIRTABLE_CREATE_RECORD_FAILED'));
+    return jsonError(getStatusCode(error), toApiErrorBody('airtable', error, 'AIRTABLE_CREATE_RECORD_FAILED'), { origin });
   }
 }
 
 export async function updateHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const origin = getRequestOrigin(event);
   try {
+    await requireRouteAccess(event);
     const source = validateWriteSource(requirePathParam(event, 'source', 'airtable', 'MISSING_SOURCE'));
     const recordId = requirePathParam(event, 'recordId', 'airtable', 'MISSING_RECORD_ID');
     const body = requireJsonBody<AirtableWriteBody>(event, 'airtable', 'INVALID_AIRTABLE_REQUEST_BODY');
@@ -67,12 +72,12 @@ export async function updateHandler(event: APIGatewayProxyEventV2): Promise<APIG
       typecast: body.typecast === true,
     });
     logInfo('Updated Airtable configured record', { source, recordId: record.id });
-    return jsonOk(record);
+    return jsonOk(record, { origin });
   } catch (error) {
     logError('Failed to update Airtable configured record', error, {
       source: event.pathParameters?.source || '',
       recordId: event.pathParameters?.recordId || '',
     });
-    return jsonError(getStatusCode(error), toApiErrorBody('airtable', error, 'AIRTABLE_UPDATE_RECORD_FAILED'));
+    return jsonError(getStatusCode(error), toApiErrorBody('airtable', error, 'AIRTABLE_UPDATE_RECORD_FAILED'), { origin });
   }
 }

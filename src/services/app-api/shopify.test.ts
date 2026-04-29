@@ -1,8 +1,10 @@
 import {
   addProductToCollections,
+  getShopifyApprovalPreview,
   getCollections,
   getProduct,
   getProducts,
+  publishApprovalListingToShopify,
   resolveTaxonomyCategory,
   searchCollections,
   searchTaxonomyCategories,
@@ -38,6 +40,7 @@ describe('app-api shopify', () => {
     const result = await getProducts(250);
 
     expect(fetchMock).toHaveBeenCalledWith('/api/shopify/products?limit=250', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(result).toEqual([{ id: 2, title: 'DAC', created_at: 'later', updated_at: 'later' }]);
@@ -77,6 +80,7 @@ describe('app-api shopify', () => {
     const result = await resolveTaxonomyCategory('Electric Guitars');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/shopify/taxonomy-categories/resolve?searchOrId=Electric+Guitars', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(result).toEqual({
@@ -120,15 +124,19 @@ describe('app-api shopify', () => {
     const searchedCollections = await searchCollections('', 5);
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/shopify/collections?first=100', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/shopify/taxonomy-categories/search?search=synth&first=20', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/shopify/products/44', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(4, '/api/shopify/collections/search?first=5', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(collections).toHaveLength(1);
@@ -160,14 +168,22 @@ describe('app-api shopify', () => {
           status: 200,
           headers: { 'content-type': 'application/json' },
         }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ productId: '10', mode: 'updated', warnings: [], wroteProductId: false, staleProductIdCleared: false }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
       );
 
     const upserted = await upsertProductWithUnifiedRequest(request);
     const combined = await upsertExistingProductWithCollectionsInSingleMutation(request, ['gid://shopify/Collection/2']);
     await addProductToCollections(10, ['gid://shopify/Collection/2']);
+    const published = await publishApprovalListingToShopify('approval-shopify', 'rec123');
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/shopify/product-set', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -176,6 +192,7 @@ describe('app-api shopify', () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/shopify/product-set-with-collections', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -184,14 +201,65 @@ describe('app-api shopify', () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/shopify/products/10/collections', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ collectionIds: ['gid://shopify/Collection/2'] }),
     });
+    expect(fetchMock).toHaveBeenNthCalledWith(4, '/api/shopify/approval-listings/publish', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        source: 'approval-shopify',
+        recordId: 'rec123',
+        productIdFieldName: 'Shopify REST Product ID',
+      }),
+    });
     expect(upserted.id).toBe(10);
     expect(combined.collectionFailures).toEqual(['gid://shopify/Collection/2: denied']);
+    expect(published.productId).toBe('10');
+  });
+
+  it('calls the Lambda Shopify approval preview endpoint', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({
+        draftProduct: { title: 'Amp' },
+        effectiveProduct: { title: 'Amp' },
+        tagValues: ['vintage', 'amp'],
+        collectionIds: ['gid://shopify/Collection/2'],
+        bodyHtmlResolution: { sourceFieldName: 'Body HTML', sourceType: 'exact', value: '<p>Amp</p>' },
+        productDescriptionResolution: { sourceFieldName: 'Description', sourceType: 'exact', value: 'Amp' },
+        productCategoryResolution: { sourceFieldName: 'Category', sourceType: 'exact', value: 'Amplifiers' },
+        categoryIdResolution: { sourceFieldName: 'Shopify Category ID', sourceType: 'exact', value: 'gid://shopify/TaxonomyCategory/1' },
+        categoryLookupValue: 'gid://shopify/TaxonomyCategory/1',
+        categoryResolution: { status: 'resolved', match: null, error: '' },
+        resolvedCategoryId: 'gid://shopify/TaxonomyCategory/1',
+        productSetRequest: { input: { title: 'Amp' }, synchronous: true },
+      }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const preview = await getShopifyApprovalPreview({ Title: 'Amp' });
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/shopify/approval-listings/preview', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ fields: { Title: 'Amp' } }),
+    });
+    expect(preview.effectiveProduct.title).toBe('Amp');
+    expect(preview.tagValues).toEqual(['vintage', 'amp']);
   });
 
   it('calls the Lambda Shopify category and image endpoints', async () => {
@@ -215,6 +283,7 @@ describe('app-api shopify', () => {
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/shopify/products/11/category', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -225,6 +294,7 @@ describe('app-api shopify', () => {
     const secondCall = fetchMock.mock.calls[1] as [string, RequestInit];
     expect(secondCall[0]).toBe('/api/shopify/images');
     expect(secondCall[1].method).toBe('POST');
+    expect(secondCall[1].credentials).toBe('include');
     expect(secondCall[1].headers).toEqual({
       Accept: 'application/json',
       'Content-Type': 'application/json',

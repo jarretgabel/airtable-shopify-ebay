@@ -1,4 +1,5 @@
 import type {
+  EbayPublishSetup,
   EbayApprovalPushResult,
   EbayCategorySuggestion,
   EbayCategoryTreeNode,
@@ -7,14 +8,17 @@ import type {
   EbayListingApiMode,
   EbayOfferDetails,
   EbayOfferPage,
-  EbayPublishSetup,
   EbayRuntimeConfig,
   EbaySampleListingResult,
   EbayUploadedImageResult,
 } from '@/services/ebay/types';
+import type { EbayApprovalPreviewResult } from '@contracts/ebayApproval';
 import type { EbayDraftPayloadBundle } from '@/services/ebayDraftFromAirtable';
+import type { AirtableConfiguredRecordsSource } from './airtableSources';
 import { isAppApiHttpError } from './errors';
 import { getJson, postJson } from './http';
+
+export type { EbayApprovalPreviewResult } from '@contracts/ebayApproval';
 
 function toEbayError(error: unknown): Error {
   if (isAppApiHttpError(error)) {
@@ -164,6 +168,43 @@ export async function pushApprovalBundleToEbay(
     return await postJson<EbayApprovalPushResult>('/api/ebay/approval-listings/publish', {
       bundle,
       publishSetup,
+    });
+  } catch (error) {
+    throw toEbayError(error);
+  }
+}
+
+export async function publishApprovalRecordToEbay(
+  source: AirtableConfiguredRecordsSource,
+  recordId: string,
+  publishSetup?: EbayPublishSetup,
+): Promise<EbayApprovalPushResult> {
+  try {
+    return await postJson<EbayApprovalPushResult>('/api/ebay/approval-listings/publish', {
+      source,
+      recordId,
+      publishSetup,
+    });
+  } catch (error) {
+    throw toEbayError(error);
+  }
+}
+
+export async function getEbayApprovalPreview(
+  fields: Record<string, unknown>,
+  bodyPreview?: {
+    templateHtml: string;
+    title: string;
+    description: string;
+    keyFeatures: string;
+    testingNotes?: string;
+    fieldName?: string;
+  },
+): Promise<EbayApprovalPreviewResult> {
+  try {
+    return await postJson<EbayApprovalPreviewResult>('/api/ebay/approval-listings/preview', {
+      fields,
+      bodyPreview,
     });
   } catch (error) {
     throw toEbayError(error);

@@ -26,9 +26,10 @@
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@contracts/*": ["aws/src/shared/contracts/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "aws/src/shared/contracts/**/*.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

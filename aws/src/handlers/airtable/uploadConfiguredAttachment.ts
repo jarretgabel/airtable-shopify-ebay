@@ -1,6 +1,7 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
-import { jsonError, jsonOk, requireJsonBody, requirePathParam } from '../../shared/http.js';
+import { getRequestOrigin, jsonError, jsonOk, requireJsonBody, requirePathParam } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
 import { uploadConfiguredAttachment, type AirtableConfiguredAttachmentSource } from '../../providers/airtable/sources.js';
 
@@ -23,7 +24,9 @@ function validateSource(value: string): AirtableConfiguredAttachmentSource {
 }
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const origin = getRequestOrigin(event);
   try {
+    await requireRouteAccess(event);
     const source = validateSource(requirePathParam(event, 'source', 'airtable', 'MISSING_SOURCE'));
     const recordId = requirePathParam(event, 'recordId', 'airtable', 'MISSING_RECORD_ID');
     const fieldId = requirePathParam(event, 'fieldId', 'airtable', 'MISSING_FIELD_ID');
@@ -35,7 +38,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         service: 'airtable',
         code: 'INVALID_AIRTABLE_ATTACHMENT_PAYLOAD',
         retryable: false,
-      });
+      }, { origin });
     }
 
     await uploadConfiguredAttachment(source, recordId, fieldId, {
@@ -44,13 +47,13 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       file: body.file.trim(),
     });
     logInfo('Uploaded Airtable configured attachment', { source, recordId, fieldId });
-    return jsonOk({ uploaded: true });
+    return jsonOk({ uploaded: true }, { origin });
   } catch (error) {
     logError('Failed to upload Airtable configured attachment', error, {
       source: event.pathParameters?.source || '',
       recordId: event.pathParameters?.recordId || '',
       fieldId: event.pathParameters?.fieldId || '',
     });
-    return jsonError(getStatusCode(error), toApiErrorBody('airtable', error, 'AIRTABLE_UPLOAD_ATTACHMENT_FAILED'));
+    return jsonError(getStatusCode(error), toApiErrorBody('airtable', error, 'AIRTABLE_UPLOAD_ATTACHMENT_FAILED'), { origin });
   }
 }

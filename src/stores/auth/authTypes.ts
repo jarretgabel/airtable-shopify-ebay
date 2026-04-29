@@ -24,7 +24,7 @@ export interface AppUser {
   name: string;
   email: string;
   role: UserRole;
-  password: string;
+  password?: string;
   mustChangePassword?: boolean;
   allowedPages: AppPage[];
   notificationPreferences: UserNotificationPreferences;

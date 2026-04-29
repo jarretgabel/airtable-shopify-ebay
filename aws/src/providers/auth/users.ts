@@ -1,26 +1,25 @@
 import { HttpError } from '../../shared/errors.js';
+import { APP_PAGES, isAppPage, normalizeAllowedPages, type AppPage, type UserRole } from '../../shared/appPages.js';
 import { getConfiguredRecords, updateConfiguredRecord } from '../airtable/sources.js';
+import { parseStoredPasswordField, serializePasswordField, type StoredPasswordState } from './passwords.js';
 
 const USER_FIELD_KEYS = {
   id: ['User Id', 'User ID', 'ID'],
   email: ['Email'],
+  role: ['Role'],
   password: ['Password'],
   mustChangePassword: ['MustChangePassword', 'Must Change Password'],
+  allowedPages: ['Allowed Pages', 'AllowedPages'],
 } as const;
-
-const PASSWORD_FIELD_PAYLOAD_PREFIX = '__LCC_PASSWORD__:';
 
 export interface AuthUserRecord {
   id: string;
   airtableRecordId: string;
   email: string;
-  password: string;
+  role: UserRole;
+  passwordState: StoredPasswordState;
   mustChangePassword: boolean;
-}
-
-interface StoredPasswordPayload {
-  password: string;
-  mustChangePassword?: boolean;
+  allowedPages: AppPage[];
 }
 
 function normalizeFieldName(value: string): string {
@@ -63,40 +62,31 @@ function parseBoolean(value: unknown): boolean {
   return false;
 }
 
-function decodeBase64(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) return '';
-
-  try {
-    return Buffer.from(trimmed, 'base64').toString('utf8');
-  } catch {
-    return trimmed;
-  }
+function parseRole(value: unknown): UserRole {
+  return toSingleString(value).toLowerCase() === 'admin' ? 'admin' : 'user';
 }
 
-function encodeBase64(value: string): string {
-  return Buffer.from(value, 'utf8').toString('base64');
-}
-
-function parsePasswordField(value: unknown): { password: string; mustChangePassword?: boolean } {
-  const decoded = decodeBase64(toSingleString(value));
-  if (!decoded.startsWith(PASSWORD_FIELD_PAYLOAD_PREFIX)) {
-    return { password: decoded };
+function parseAllowedPages(value: unknown, role: UserRole): AppPage[] {
+  if (role === 'admin') {
+    return [...APP_PAGES];
   }
 
-  try {
-    const parsed = JSON.parse(decoded.slice(PASSWORD_FIELD_PAYLOAD_PREFIX.length)) as StoredPasswordPayload;
-    return {
-      password: typeof parsed.password === 'string' ? parsed.password : '',
-      mustChangePassword: typeof parsed.mustChangePassword === 'boolean' ? parsed.mustChangePassword : undefined,
-    };
-  } catch {
-    return { password: decoded };
+  if (Array.isArray(value)) {
+    return normalizeAllowedPages(
+      value.filter((entry): entry is string => typeof entry === 'string').filter(isAppPage),
+      role,
+    );
   }
-}
 
-function serializePasswordField(password: string, mustChangePassword: boolean): string {
-  return encodeBase64(`${PASSWORD_FIELD_PAYLOAD_PREFIX}${JSON.stringify({ password, mustChangePassword } satisfies StoredPasswordPayload)}`);
+  const raw = toSingleString(value);
+  if (!raw) {
+    return [];
+  }
+
+  return normalizeAllowedPages(
+    raw.split(',').map((entry) => entry.trim()).filter(isAppPage),
+    role,
+  );
 }
 
 function mapUserRecord(recordId: string, fields: Record<string, unknown>): AuthUserRecord | null {
@@ -106,15 +96,19 @@ function mapUserRecord(recordId: string, fields: Record<string, unknown>): AuthU
     return null;
   }
 
-  const passwordState = parsePasswordField(getFieldValue(fields, USER_FIELD_KEYS.password));
+  const role = parseRole(getFieldValue(fields, USER_FIELD_KEYS.role));
+  const passwordState = parseStoredPasswordField(getFieldValue(fields, USER_FIELD_KEYS.password));
   const mustChangePassword = parseBoolean(getFieldValue(fields, USER_FIELD_KEYS.mustChangePassword)) || Boolean(passwordState.mustChangePassword);
+  const allowedPages = parseAllowedPages(getFieldValue(fields, USER_FIELD_KEYS.allowedPages), role);
 
   return {
     id,
     airtableRecordId: recordId,
     email,
-    password: passwordState.password,
+    role,
+    passwordState,
     mustChangePassword,
+    allowedPages,
   };
 }
 

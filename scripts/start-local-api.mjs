@@ -19,6 +19,8 @@ const ROUTES = [
   ['POST', '/api/auth/email-change/confirm', 'handlers/auth/confirmEmailChange.js', 'handler'],
   ['POST', '/api/auth/password/change', 'handlers/auth/updatePassword.js', 'handler'],
   ['POST', '/api/auth/logout', 'handlers/auth/logout.js', 'handler'],
+  ['POST', '/api/approval/normalize', 'handlers/approval/normalize.js', 'handler'],
+  ['POST', '/api/approval/publish', 'handlers/approval/publish.js', 'handler'],
   ['GET', '/api/ebay/inventory-items', 'handlers/ebay/getInventoryItems.js', 'handler'],
   ['GET', '/api/ebay/offers', 'handlers/ebay/getOffers.js', 'handler'],
   ['GET', '/api/ebay/offers/{offerId}', 'handlers/ebay/getOffer.js', 'handler'],
@@ -32,6 +34,7 @@ const ROUTES = [
   ['POST', '/api/ebay/sample-listings', 'handlers/ebay/createSampleListing.js', 'handler'],
   ['POST', '/api/ebay/sample-listings/publish', 'handlers/ebay/publishSampleDraftListing.js', 'handler'],
   ['POST', '/api/ebay/approval-listings/publish', 'handlers/ebay/pushApprovalBundle.js', 'handler'],
+  ['POST', '/api/ebay/approval-listings/preview', 'handlers/ebay/getApprovalPreview.js', 'handler'],
   ['POST', '/api/ebay/images', 'handlers/ebay/uploadImage.js', 'handler'],
   ['GET', '/api/shopify/products', 'handlers/shopify/getProducts.js', 'handler'],
   ['GET', '/api/shopify/products/{productId}', 'handlers/shopify/getProduct.js', 'handler'],
@@ -41,6 +44,8 @@ const ROUTES = [
   ['GET', '/api/shopify/taxonomy-categories/resolve', 'handlers/shopify/resolveTaxonomyCategory.js', 'handler'],
   ['POST', '/api/shopify/product-set', 'handlers/shopify/upsertProduct.js', 'handler'],
   ['POST', '/api/shopify/product-set-with-collections', 'handlers/shopify/upsertProductWithCollections.js', 'handler'],
+  ['POST', '/api/shopify/approval-listings/publish', 'handlers/shopify/publishApprovalListing.js', 'handler'],
+  ['POST', '/api/shopify/approval-listings/preview', 'handlers/shopify/getApprovalPreview.js', 'handler'],
   ['POST', '/api/shopify/products/{productId}/collections', 'handlers/shopify/addProductToCollections.js', 'handler'],
   ['POST', '/api/shopify/products/{productId}/category', 'handlers/shopify/updateProductCategory.js', 'handler'],
   ['POST', '/api/shopify/images', 'handlers/shopify/uploadImage.js', 'handler'],
@@ -223,7 +228,17 @@ function toSingleValueQueryParams(searchParams) {
 }
 
 function getResponseOrigin(request) {
-  return request.headers.origin || '*';
+  const rawOrigin = request.headers.origin;
+  if (!rawOrigin) {
+    return undefined;
+  }
+
+  const configuredOrigins = String(process.env.APP_ALLOWED_ORIGINS || 'http://127.0.0.1:3000,http://localhost:3000')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return configuredOrigins.includes(rawOrigin) ? rawOrigin : undefined;
 }
 
 function parseRequestCookies(request) {
@@ -252,9 +267,16 @@ async function readRequestBody(request) {
 }
 
 function writeCorsResponse(request, response) {
+  const origin = getResponseOrigin(request);
+  if (!origin) {
+    response.writeHead(403);
+    response.end();
+    return;
+  }
+
   response.writeHead(204, {
-    'access-control-allow-origin': getResponseOrigin(request),
-    'access-control-allow-headers': 'content-type,authorization',
+    'access-control-allow-origin': origin,
+    'access-control-allow-headers': 'content-type,authorization,x-csrf-token',
     'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
     'access-control-allow-credentials': 'true',
     vary: 'origin',
@@ -283,11 +305,16 @@ async function main() {
       const requestUrl = new URL(request.url, `http://${request.headers.host || '127.0.0.1'}`);
 
       if (request.method.toUpperCase() === 'GET' && requestUrl.pathname === '/health') {
+        const origin = getResponseOrigin(request);
         response.writeHead(200, {
           'content-type': 'application/json',
-          'access-control-allow-origin': getResponseOrigin(request),
-          'access-control-allow-credentials': 'true',
-          vary: 'origin',
+          ...(origin
+            ? {
+                'access-control-allow-origin': origin,
+                'access-control-allow-credentials': 'true',
+                vary: 'origin',
+              }
+            : {}),
         });
         response.end(JSON.stringify({
           ok: true,
@@ -300,11 +327,16 @@ async function main() {
       const matched = findRoute(routes, request.method.toUpperCase(), requestUrl.pathname);
 
       if (!matched) {
+        const origin = getResponseOrigin(request);
         response.writeHead(404, {
           'content-type': 'application/json',
-          'access-control-allow-origin': getResponseOrigin(request),
-          'access-control-allow-credentials': 'true',
-          vary: 'origin',
+          ...(origin
+            ? {
+                'access-control-allow-origin': origin,
+                'access-control-allow-credentials': 'true',
+                vary: 'origin',
+              }
+            : {}),
         });
         response.end(JSON.stringify({
           message: `No local handler registered for ${request.method} ${requestUrl.pathname}`,
@@ -351,9 +383,6 @@ async function main() {
       const lambdaResponse = await matched.route.handler(event);
       const statusCode = lambdaResponse.statusCode || 200;
       const headers = {
-        'access-control-allow-origin': getResponseOrigin(request),
-        'access-control-allow-credentials': 'true',
-        vary: 'origin',
         ...(lambdaResponse.headers || {}),
         ...(lambdaResponse.cookies ? { 'set-cookie': lambdaResponse.cookies } : {}),
       };
@@ -362,11 +391,16 @@ async function main() {
       response.end(lambdaResponse.body || '');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unexpected local API server error';
+      const origin = getResponseOrigin(request);
       response.writeHead(500, {
         'content-type': 'application/json',
-        'access-control-allow-origin': getResponseOrigin(request),
-        'access-control-allow-credentials': 'true',
-        vary: 'origin',
+        ...(origin
+          ? {
+              'access-control-allow-origin': origin,
+              'access-control-allow-credentials': 'true',
+              vary: 'origin',
+            }
+          : {}),
       });
       response.end(JSON.stringify({
         message,

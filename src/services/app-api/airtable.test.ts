@@ -39,6 +39,7 @@ describe('app-api airtable', () => {
     const result = await getListings('tbl123', { view: 'viw123' });
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/listings?tableName=tbl123&view=viw123', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(result).toEqual([{ id: 'rec2', fields: { Name: 'Item' }, createdTime: 'later' }]);
@@ -79,6 +80,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredRecords('inventory-directory');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=inventory-directory', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(result).toEqual([{ id: 'rec3', fields: { Name: 'Inventory' }, createdTime: 'later' }]);
@@ -95,6 +97,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredRecords('inventory-directory', { fields: ['SKU', 'Status'] });
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=inventory-directory&fields=SKU%2CStatus', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(result).toEqual([{ id: 'recSlim', fields: { SKU: 'ABC' }, createdTime: 'later' }]);
@@ -111,6 +114,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredRecord('inventory-directory', 'recInv1');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records/inventory-directory/recInv1', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(result).toEqual({ id: 'recInv1', fields: { SKU: 'ABC' }, createdTime: 'now' });
@@ -143,6 +147,7 @@ describe('app-api airtable', () => {
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/airtable/configured-records/users', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -151,6 +156,7 @@ describe('app-api airtable', () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/airtable/configured-records/users/user2', {
       method: 'PATCH',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -159,6 +165,7 @@ describe('app-api airtable', () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/airtable/configured-records/users/user2', {
       method: 'DELETE',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
       },
@@ -187,6 +194,7 @@ describe('app-api airtable', () => {
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/airtable/configured-records/inventory-directory', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -195,6 +203,7 @@ describe('app-api airtable', () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/airtable/configured-records/inventory-directory/recInv1', {
       method: 'PATCH',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -238,6 +247,7 @@ describe('app-api airtable', () => {
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/airtable/configured-records/approval-shopify', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -246,6 +256,7 @@ describe('app-api airtable', () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/airtable/configured-records/approval-shopify/recApproval1', {
       method: 'PATCH',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -268,6 +279,7 @@ describe('app-api airtable', () => {
     const records = await getRecordsFromResolvedSource('appShopify/viwShopify', undefined);
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-shopify', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(records).toEqual([{ id: 'recApproval1', fields: { Title: 'Draft' }, createdTime: 'now' }]);
@@ -287,6 +299,7 @@ describe('app-api airtable', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records/approval-shopify/recApproval1', {
       method: 'DELETE',
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
       },
@@ -304,6 +317,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredFieldMetadata('inventory-directory');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-metadata?source=inventory-directory', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(result).toEqual([{ id: 'fld1', name: 'Status', type: 'singleSelect', options: { choices: [{ name: 'Ready' }] } }]);
@@ -324,6 +338,7 @@ describe('app-api airtable', () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('/api/airtable/configured-attachments/inventory-directory/rec123/fldMXp0EaUHGglU8M');
     expect(init.method).toBe('POST');
+    expect(init.credentials).toBe('include');
     expect(init.headers).toEqual({
       Accept: 'application/json',
       'Content-Type': 'application/json',

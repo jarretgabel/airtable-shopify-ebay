@@ -1,5 +1,6 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { getStatusCode, toApiErrorBody } from '../../shared/errors.js';
+import { buildCsrfToken } from '../../shared/csrf.js';
 import { getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
 import { login } from '../../providers/auth/service.js';
@@ -16,7 +17,11 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     const body = requireJsonBody<LoginBody>(event, 'auth', 'INVALID_AUTH_LOGIN_BODY');
     const result = await login(String(body.email || ''), String(body.password || ''));
     logInfo('Authenticated user session', { userId: result.userId });
-    return jsonOk({ userId: result.userId, mustChangePassword: result.mustChangePassword }, {
+    return jsonOk({
+      userId: result.userId,
+      mustChangePassword: result.mustChangePassword,
+      csrfToken: buildCsrfToken(result.sessionToken),
+    }, {
       origin,
       cookies: [buildSessionCookie(result.sessionToken)],
     });

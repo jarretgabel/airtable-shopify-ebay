@@ -115,6 +115,9 @@ Parameters:
   AppAuthCookieDomain:
     Type: String
     Default: ''
+  AppAllowedOrigins:
+    Type: CommaDelimitedList
+    Default: http://127.0.0.1:3000,http://localhost:3000
 
 Conditions:
   HasGithubToken: !Not [!Equals [!Ref GithubToken, '']]
@@ -179,19 +182,19 @@ Globals:
         APP_AUTH_COOKIE_SECURE_MODE: !Ref AppAuthCookieSecureMode
         APP_AUTH_COOKIE_SAME_SITE: !Ref AppAuthCookieSameSite
         APP_AUTH_COOKIE_DOMAIN: !Ref AppAuthCookieDomain
+        APP_ALLOWED_ORIGINS: !Join [',', !Ref AppAllowedOrigins]
 
 Resources:
   AppHttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
       CorsConfiguration:
-        AllowOrigins:
-          - http://127.0.0.1:3000
-          - http://localhost:3000
+        AllowOrigins: !Ref AppAllowedOrigins
         AllowHeaders:
           - content-type
           - authorization
           - cookie
+          - x-csrf-token
         AllowMethods:
           - GET
           - POST
@@ -319,6 +322,66 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: POST
             Path: /api/shopify/product-set-with-collections
+
+  ApprovalPublishFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/approval/publish.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/approval/publish
+
+  ApprovalNormalizeFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/approval/normalize.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/approval/normalize
+
+  ShopifyPublishApprovalListingFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/shopify/publishApprovalListing.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/shopify/approval-listings/publish
+
+  ShopifyGetApprovalPreviewFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/shopify/getApprovalPreview.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/shopify/approval-listings/preview
 
   ShopifyAddProductToCollectionsFunction:
     Type: AWS::Serverless::Function
@@ -560,6 +623,21 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: POST
             Path: /api/ebay/approval-listings/publish
+
+  EbayGetApprovalPreviewFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/getApprovalPreview.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/ebay/approval-listings/preview
 
   EbayUploadImageFunction:
     Type: AWS::Serverless::Function

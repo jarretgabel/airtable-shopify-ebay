@@ -1,4 +1,5 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { requireSessionCsrf } from '../../shared/csrf.js';
 import { getStatusCode, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
@@ -13,10 +14,12 @@ interface RequestEmailChangeBody {
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   const origin = getRequestOrigin(event);
+  const sessionToken = readSessionTokenFromEvent(event) || '';
   try {
+    requireSessionCsrf(event, sessionToken);
     const body = requireJsonBody<RequestEmailChangeBody>(event, 'auth', 'INVALID_AUTH_EMAIL_CHANGE_REQUEST_BODY');
     const result = await requestEmailChange(
-      readSessionTokenFromEvent(event) || '',
+      sessionToken,
       String(body.email || ''),
       String(body.currentPassword || ''),
       String(body.origin || ''),

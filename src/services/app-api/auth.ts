@@ -1,14 +1,17 @@
 import { isAppApiHttpError } from './errors';
+import { clearCsrfToken } from './http';
 import { getJson, postJson } from './http';
 
 interface AuthLoginResponse {
   userId: string;
   mustChangePassword: boolean;
+  csrfToken?: string;
 }
 
 interface AuthSessionResponse {
   userId: string;
   mustChangePassword: boolean;
+  csrfToken?: string;
 }
 
 interface PasswordResetRequestResponse {
@@ -108,6 +111,7 @@ export async function updatePassword(nextPassword: string, currentPassword?: str
 export async function logout(): Promise<void> {
   try {
     await postJson<{ success: boolean }>('/api/auth/logout', {});
+    clearCsrfToken();
   } catch (error) {
     throw toAuthError(error);
   }

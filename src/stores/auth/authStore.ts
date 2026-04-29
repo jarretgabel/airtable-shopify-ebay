@@ -257,7 +257,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     try {
       const createdUser = await createUserInAirtable(newUser);
       set({ users: [...users, createdUser] });
-      const delivery = await sendWelcomeEmail(createdUser.email, createdUser.password);
+      const delivery = await sendWelcomeEmail(newUser.email, newUser.password || '');
       const deliveryNote = delivery === 'gmail' ? 'Welcome email sent.' : 'Welcome email draft opened.';
       return { success: true, message: `User ${createdUser.email} created. ${deliveryNote}` };
     } catch (error) {
