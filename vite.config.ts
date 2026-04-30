@@ -31,6 +31,32 @@ export default defineConfig(({ mode }) => {
 
           if (id.includes('/src/components/dashboard/') || id.includes('/src/components/DashboardTab.tsx')) return 'feature-dashboard'
           if (id.includes('/src/components/ebay/') || id.includes('/src/components/EbayTab.tsx')) return 'feature-ebay'
+          if (
+            id.includes('/src/components/approval/ApprovalFormFields.tsx')
+            || id.includes('/src/components/approval/ApprovalFormFieldGrid.tsx')
+            || id.includes('/src/components/approval/ApprovalFormField')
+            || id.includes('/src/components/approval/useApprovalForm')
+            || id.includes('/src/components/approval/approvalFormField')
+            || id.includes('/src/components/approval/approvalFormFields')
+            || id.includes('/src/components/approval/BodyHtmlPreview.tsx')
+            || id.includes('/src/components/approval/KeyFeaturesEditor.tsx')
+            || id.includes('/src/components/approval/TestingNotesEditor.tsx')
+            || id.includes('/src/components/approval/ShopifyCollectionsSelect.tsx')
+            || id.includes('/src/components/approval/ShopifyTagsEditor.tsx')
+            || id.includes('/src/components/approval/ImageUrlListEditor.tsx')
+            || id.includes('/src/components/approval/EbayAttributesEditor.tsx')
+            || id.includes('/src/components/approval/EbayCategoriesSelect.tsx')
+            || id.includes('/src/components/approval/EbayCategoriesOptionsMenu.tsx')
+            || id.includes('/src/components/approval/EbayShippingServicesEditor.tsx')
+          ) return 'feature-approval-editor'
+          if (
+            id.includes('/src/components/approval/ListingApprovalCombinedSections.tsx')
+            || id.includes('/src/components/approval/ListingApprovalCombinedSharedSection.tsx')
+            || id.includes('/src/components/approval/ListingApprovalCombinedShopifySection.tsx')
+            || id.includes('/src/components/approval/ListingApprovalCombinedEbaySection.tsx')
+            || id.includes('/src/components/approval/listingApprovalCombinedSectionTypes.ts')
+          ) return 'feature-approval-combined'
+          if (id.includes('/src/components/approval/ListingApprovalRecordPayloadPanels.tsx')) return 'feature-approval-payloads'
           if (id.includes('/src/components/approval/') || id.includes('/src/components/ListingApprovalTab.tsx')) return 'feature-approval'
           if (id.includes('/src/components/users/') || id.includes('/src/components/UserManagementTab.tsx')) return 'feature-users'
           if (id.includes('/src/components/SettingsTab.tsx') || id.includes('/src/components/NotificationsTab.tsx')) return 'feature-account'

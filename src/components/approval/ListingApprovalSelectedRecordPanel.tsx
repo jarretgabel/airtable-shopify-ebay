@@ -1,5 +1,4 @@
 import { Suspense, lazy } from 'react';
-import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { ListingApprovalRecordActions } from '@/components/approval/ListingApprovalRecordActions';
 import { ListingApprovalRecordAlerts } from '@/components/approval/ListingApprovalRecordAlerts';
 import { ListingApprovalSelectedRecordView } from '@/components/approval/ListingApprovalSelectedRecordView';
@@ -7,6 +6,7 @@ import type { buildListingApprovalSelectedRecordStatusProps } from '@/components
 import type { buildListingApprovalSelectedRecordViewProps } from '@/components/approval/listingApprovalSelectedRecordViewProps';
 import type { AirtableRecord } from '@/types/airtable';
 
+const ApprovalFormFields = lazy(async () => ({ default: (await import('@/components/approval/ApprovalFormFields')).ApprovalFormFields }));
 const ListingApprovalCombinedSections = lazy(async () => ({ default: (await import('@/components/approval/ListingApprovalCombinedSections')).ListingApprovalCombinedSections }));
 const ListingApprovalRecordPayloadPanels = lazy(async () => ({ default: (await import('@/components/approval/ListingApprovalRecordPayloadPanels')).ListingApprovalRecordPayloadPanels }));
 

@@ -1,5 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { EbayListingTemplateId } from '@/components/approval/listingApprovalEbayConstants';
+import type {
+  EbayApprovalPayloadPreviewData,
+  ShopifyApprovalPayloadPreviewData,
+} from '@/components/approval/ListingApprovalRecordPayloadPanels';
 import type { DrawerRequiredStatus } from '@/components/approval/listingApprovalCombinedSectionTypes';
 import { toFormValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
@@ -48,10 +52,8 @@ interface BuildListingApprovalSelectedRecordViewPropsParams {
     error?: string;
     match?: { fullName?: string; id?: string } | null;
   };
-  shopifyPayloadDebug: { collectionsToJoin: string[]; tags: string[] };
-  shopifyDraftCreatePayloadJson: string;
-  shopifyCategorySyncPreviewJson: string;
-  shopifyCreatePayloadDocsJson: string;
+  isShopifyPayloadPreviewContext: boolean;
+  shopifyProductSetRequest: ShopifyApprovalPayloadPreviewData['shopifyProductSetRequest'];
   combinedEbayOnlyFieldNames: string[];
   ebayDrawerRequiredStatus: DrawerRequiredStatus;
   combinedEbayGeneratedBodyHtml: string;
@@ -61,8 +63,8 @@ interface BuildListingApprovalSelectedRecordViewPropsParams {
   combinedEbayBodyHtmlFieldName: string;
   combinedEbayBodyHtmlValue: string;
   bodyHtmlPreview: string;
-  ebayDraftPayloadBundleJson: string;
-  ebayPayloadDocsJson: string;
+  isEbayPayloadPreviewContext: boolean;
+  ebayDraftPayloadBundle: EbayApprovalPayloadPreviewData['ebayDraftPayloadBundle'];
 }
 
 export function buildListingApprovalSelectedRecordViewProps({
@@ -105,10 +107,8 @@ export function buildListingApprovalSelectedRecordViewProps({
   currentPageCategoryIdResolution,
   shopifyCategoryLookupValue,
   shopifyCategoryResolution,
-  shopifyPayloadDebug,
-  shopifyDraftCreatePayloadJson,
-  shopifyCategorySyncPreviewJson,
-  shopifyCreatePayloadDocsJson,
+  isShopifyPayloadPreviewContext,
+  shopifyProductSetRequest,
   combinedEbayOnlyFieldNames,
   ebayDrawerRequiredStatus,
   combinedEbayGeneratedBodyHtml,
@@ -118,8 +118,8 @@ export function buildListingApprovalSelectedRecordViewProps({
   combinedEbayBodyHtmlFieldName,
   combinedEbayBodyHtmlValue,
   bodyHtmlPreview,
-  ebayDraftPayloadBundleJson,
-  ebayPayloadDocsJson,
+  isEbayPayloadPreviewContext,
+  ebayDraftPayloadBundle,
 }: BuildListingApprovalSelectedRecordViewPropsParams) {
   const approvalFormOriginalFieldValues = Object.fromEntries(
     Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
@@ -160,10 +160,8 @@ export function buildListingApprovalSelectedRecordViewProps({
       currentPageCategoryIdResolution,
       shopifyCategoryLookupValue,
       shopifyCategoryResolution,
-      shopifyPayloadDebug,
-      shopifyDraftCreatePayloadJson,
-      shopifyCategorySyncPreviewJson,
-      shopifyCreatePayloadDocsJson,
+      isShopifyPayloadPreviewContext,
+      shopifyProductSetRequest,
       combinedEbayOnlyFieldNames,
       ebayDrawerRequiredStatus,
       combinedEbayGeneratedBodyHtml,
@@ -173,8 +171,8 @@ export function buildListingApprovalSelectedRecordViewProps({
       combinedEbayBodyHtmlFieldName,
       combinedEbayBodyHtmlValue,
       bodyHtmlPreview,
-      ebayDraftPayloadBundleJson,
-      ebayPayloadDocsJson,
+      isEbayPayloadPreviewContext,
+      ebayDraftPayloadBundle,
     },
     approvalFormFieldsProps: {
       recordId: selectedRecord.id,
@@ -219,12 +217,10 @@ export function buildListingApprovalSelectedRecordViewProps({
       currentPageCategoryIdResolution,
       shopifyCategoryLookupValue,
       shopifyCategoryResolution,
-      shopifyPayloadDebug,
-      shopifyDraftCreatePayloadJson,
-      shopifyCategorySyncPreviewJson,
-      shopifyCreatePayloadDocsJson,
-      ebayDraftPayloadBundleJson,
-      ebayPayloadDocsJson,
+      isShopifyPayloadPreviewContext,
+      shopifyProductSetRequest,
+      isEbayPayloadPreviewContext,
+      ebayDraftPayloadBundle,
     },
   };
 }

@@ -2,12 +2,8 @@ import { useEffect, useMemo } from 'react';
 import {
   EMPTY_SHOPIFY_CATEGORY_RESOLUTION,
   EMPTY_SHOPIFY_FIELD_RESOLUTION,
-  SHOPIFY_PRODUCT_SET_MUTATION,
-  SHOPIFY_SEARCH_TAXONOMY_CATEGORIES_QUERY,
-  SHOPIFY_UNIFIED_PRODUCT_SET_DOCS_EXAMPLE,
 } from '@/components/approval/listingApprovalShopifyConstants';
 import {
-  EBAY_DRAFT_PAYLOAD_DOCS_EXAMPLE,
   resolveEbayListingTemplateHtml,
   type EbayListingTemplateId,
 } from '@/components/approval/listingApprovalEbayConstants';
@@ -17,7 +13,6 @@ import {
   isRemovedCombinedEbayPriceFieldName,
 } from '@/components/approval/listingApprovalFieldHelpers';
 import { useApprovalPreview } from '@/hooks/approval/useApprovalPreview';
-import type { ShopifyUnifiedProductSetRequest } from '@/services/shopify';
 import { fromFormValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -89,7 +84,7 @@ export function useListingApprovalPreviewState({
   const currentPageCategoryIdResolution = shopifyApprovalPreview?.categoryIdResolution ?? EMPTY_SHOPIFY_FIELD_RESOLUTION;
   const shopifyCategoryLookupValue = shopifyApprovalPreview?.categoryLookupValue ?? '';
   const shopifyCategoryResolution = shopifyApprovalPreview?.categoryResolution ?? EMPTY_SHOPIFY_CATEGORY_RESOLUTION;
-  const effectiveShopifyCreatePayload = shopifyApprovalPreview?.productSetRequest ?? null;
+  const shopifyProductSetRequest = shopifyApprovalPreview?.productSetRequest ?? null;
   const combinedEbayGeneratedBodyHtml = ebayApprovalPreview?.generatedBodyHtml ?? '';
 
   useEffect(() => {
@@ -108,94 +103,10 @@ export function useListingApprovalPreviewState({
     setFormValue,
   ]);
 
-  const shopifyDraftCreatePayloadJson = useMemo(() => {
-    if (!effectiveShopifyCreatePayload) return '';
-
-    try {
-      const previewVariables: ShopifyUnifiedProductSetRequest = {
-        ...effectiveShopifyCreatePayload,
-        input: {
-          ...effectiveShopifyCreatePayload.input,
-          tags: effectiveShopifyCreatePayload.input.tags ?? [],
-          collectionsToJoin: effectiveShopifyCreatePayload.input.collectionsToJoin ?? [],
-        },
-      };
-
-      return JSON.stringify({
-        operationName: 'ProductSet',
-        query: SHOPIFY_PRODUCT_SET_MUTATION,
-        variables: previewVariables,
-      }, null, 2);
-    } catch {
-      return '{\n  "error": "Unable to serialize payload"\n}';
-    }
-  }, [effectiveShopifyCreatePayload]);
-
-  const shopifyPayloadDebug = useMemo(() => {
-    if (!effectiveShopifyCreatePayload) {
-      return {
-        tags: [] as string[],
-        collectionsToJoin: [] as string[],
-      };
-    }
-
-    return {
-      tags: effectiveShopifyCreatePayload.input.tags ?? [],
-      collectionsToJoin: effectiveShopifyCreatePayload.input.collectionsToJoin ?? [],
-    };
-  }, [effectiveShopifyCreatePayload]);
-
-  const shopifyCategorySyncPreviewJson = useMemo(() => {
-    if (!isShopifyPayloadPreviewContext) return '';
-    if (!shopifyCategoryLookupValue.trim()) return '';
-    if (currentPageCategoryIdResolution.value.trim() || shopifyCategoryResolution.match?.id) return '';
-
-    const preview = {
-      operationName: 'SearchTaxonomyCategories',
-      query: SHOPIFY_SEARCH_TAXONOMY_CATEGORIES_QUERY,
-      variables: {
-        search: shopifyCategoryLookupValue,
-        first: 10,
-      },
-      note: 'Only needed when the current page value is a taxonomy breadcrumb instead of a category GID.',
-    };
-
-    try {
-      return JSON.stringify(preview, null, 2);
-    } catch {
-      return '{\n  "error": "Unable to serialize GraphQL preview"\n}';
-    }
-  }, [currentPageCategoryIdResolution.value, isShopifyPayloadPreviewContext, shopifyCategoryLookupValue, shopifyCategoryResolution.match]);
-
   const ebayDraftPayloadBundle = useMemo(() => {
     if (!isEbayPayloadPreviewContext) return null;
     return ebayApprovalPreview?.draftPayloadBundle ?? null;
   }, [ebayApprovalPreview, isEbayPayloadPreviewContext]);
-
-  const ebayDraftPayloadBundleJson = useMemo(() => {
-    if (!ebayDraftPayloadBundle) return '';
-    try {
-      return JSON.stringify(ebayDraftPayloadBundle, null, 2);
-    } catch {
-      return '{\n  "error": "Unable to serialize payload"\n}';
-    }
-  }, [ebayDraftPayloadBundle]);
-
-  const shopifyCreatePayloadDocsJson = useMemo(() => {
-    try {
-      return JSON.stringify(SHOPIFY_UNIFIED_PRODUCT_SET_DOCS_EXAMPLE, null, 2);
-    } catch {
-      return '{\n  "input": {}\n}';
-    }
-  }, []);
-
-  const ebayPayloadDocsJson = useMemo(() => {
-    try {
-      return JSON.stringify(EBAY_DRAFT_PAYLOAD_DOCS_EXAMPLE, null, 2);
-    } catch {
-      return '{\n  "inventoryItem": {},\n  "offer": {}\n}';
-    }
-  }, []);
 
   return {
     combinedEbayGeneratedBodyHtml,
@@ -207,16 +118,14 @@ export function useListingApprovalPreviewState({
     currentPageShopifyCollectionIds,
     currentPageShopifyCollectionLabelsById,
     currentPageShopifyTagValues,
-    ebayDraftPayloadBundleJson,
-    ebayPayloadDocsJson,
+    ebayDraftPayloadBundle,
+    isEbayPayloadPreviewContext,
+    isShopifyPayloadPreviewContext,
     loadShopifyApprovalPreviewNow,
     mergedDraftSourceFields,
     shopifyApprovalPreview,
     shopifyCategoryLookupValue,
     shopifyCategoryResolution,
-    shopifyCategorySyncPreviewJson,
-    shopifyCreatePayloadDocsJson,
-    shopifyDraftCreatePayloadJson,
-    shopifyPayloadDebug,
+    shopifyProductSetRequest,
   };
 }

@@ -135,13 +135,15 @@ function buildShopifyProps(): ListingApprovalCombinedShopifySectionProps {
         fullName: 'Amplifiers > Integrated Amplifiers',
       },
     },
-    shopifyPayloadDebug: {
-      tags: ['Vintage'],
-      collectionsToJoin: ['gid://shopify/Collection/1'],
+    isShopifyPayloadPreviewContext: true,
+    shopifyProductSetRequest: {
+      input: {
+        title: 'Combined description',
+        tags: ['Vintage'],
+        collectionsToJoin: ['gid://shopify/Collection/1'],
+      },
+      synchronous: true,
     },
-    shopifyDraftCreatePayloadJson: '{"query":"productSet"}',
-    shopifyCategorySyncPreviewJson: '{"query":"taxonomy"}',
-    shopifyCreatePayloadDocsJson: '{"docs":true}',
   };
 }
 
@@ -160,8 +162,8 @@ function buildEbayProps(): ListingApprovalCombinedEbaySectionProps {
     combinedEbayBodyHtmlFieldName: 'eBay Body HTML',
     combinedEbayBodyHtmlValue: '<p>eBay body</p>',
     bodyHtmlPreview: '<p>Preview body</p>',
-    ebayDraftPayloadBundleJson: '{"inventoryItem":{},"offer":{}}',
-    ebayPayloadDocsJson: '{"docs":true}',
+    isEbayPayloadPreviewContext: true,
+    ebayDraftPayloadBundle: { inventoryItem: {}, offer: {} },
   };
 }
 
@@ -196,7 +198,7 @@ describe('combined approval sections', () => {
     });
   });
 
-  it('renders the Shopify drawer with collection editor wiring and preview panels', () => {
+  it('renders the Shopify drawer with collection editor wiring and preview panels', async () => {
     render(<ListingApprovalCombinedShopifySection {...buildShopifyProps()} />);
 
     expect(screen.getByText('Shopify-Specific Fields')).toBeInTheDocument();
@@ -208,10 +210,12 @@ describe('combined approval sections', () => {
       allFieldNames: ['Vendor', 'Tags'],
     }));
     expect(screen.getByTestId('body-html-preview')).toHaveTextContent('<p>Shopify body</p>');
-    expect(screen.getByText('Shopify Create Listing API Payload (Exact Request)')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Shopify Create Listing API Payload (Exact Request)')).toBeInTheDocument();
+    });
   });
 
-  it('renders the eBay drawer with base and advanced field groups plus payload preview', () => {
+  it('renders the eBay drawer with base and advanced field groups plus payload preview', async () => {
     render(<ListingApprovalCombinedEbaySection {...buildEbayProps()} />);
 
     expect(screen.getByText('eBay-Specific Fields')).toBeInTheDocument();
@@ -228,6 +232,8 @@ describe('combined approval sections', () => {
       value: '<p>Rendered eBay body</p>',
       showTemplateSelector: true,
     }));
-    expect(screen.getByText('eBay Create Listing API Payload (Exact Request)')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('eBay Create Listing API Payload (Exact Request)')).toBeInTheDocument();
+    });
   });
 });

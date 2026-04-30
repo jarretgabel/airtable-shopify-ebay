@@ -76,10 +76,27 @@ function collectFeatureChunks(baseline) {
         gzipBytes,
       }];
     })
-    .filter((entry) => entry !== null)
-    .sort((left, right) => left[0].localeCompare(right[0]));
+    .filter((entry) => entry !== null);
 
-  return Object.fromEntries(chunkEntries);
+  const groupedChunks = new Map();
+
+  for (const [chunkName, chunkData] of chunkEntries) {
+    const existing = groupedChunks.get(chunkName);
+    if (existing) {
+      existing.files.push(chunkData.file);
+      existing.rawBytes += chunkData.rawBytes;
+      existing.gzipBytes += chunkData.gzipBytes;
+      continue;
+    }
+
+    groupedChunks.set(chunkName, {
+      files: [chunkData.file],
+      rawBytes: chunkData.rawBytes,
+      gzipBytes: chunkData.gzipBytes,
+    });
+  }
+
+  return Object.fromEntries(Array.from(groupedChunks.entries()).sort((left, right) => left[0].localeCompare(right[0])));
 }
 
 function writeBaselineFile(chunks) {
@@ -110,7 +127,7 @@ function printReport(chunks, baseline) {
     const previous = baseline?.chunks?.[chunkName] ?? null;
 
     if (!previous) {
-      console.log(`- ${chunkName}: ${formatKilobytes(current.rawBytes)} raw / ${formatKilobytes(current.gzipBytes)} gzip (${current.file})`);
+      console.log(`- ${chunkName}: ${formatKilobytes(current.rawBytes)} raw / ${formatKilobytes(current.gzipBytes)} gzip (${current.files.length} files)`);
       continue;
     }
 

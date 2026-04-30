@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { displayValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -31,6 +31,8 @@ export function ListingApprovalSelectedRecordView({
   actions,
   payloadPanels,
 }: ListingApprovalSelectedRecordViewProps) {
+  const [showPayloadPanels, setShowPayloadPanels] = useState(false);
+
   return (
     <>
       <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
@@ -68,7 +70,26 @@ export function ListingApprovalSelectedRecordView({
       {editor}
       {alerts}
       {actions}
-      {payloadPanels}
+      <details
+        className="mt-4 rounded-lg border border-[var(--line)] bg-white/5"
+        open={showPayloadPanels}
+      >
+        <summary
+          className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]"
+          onClick={(event) => {
+            event.preventDefault();
+            setShowPayloadPanels((current) => !current);
+          }}
+        >
+          API Payload Previews
+        </summary>
+        <div className="border-t border-[var(--line)] px-3 py-3">
+          <p className="m-0 text-xs text-[var(--muted)]">
+            Open to inspect exact request payloads, debug resolution details, and docs examples for the current listing.
+          </p>
+          {showPayloadPanels ? payloadPanels : null}
+        </div>
+      </details>
     </>
   );
 }

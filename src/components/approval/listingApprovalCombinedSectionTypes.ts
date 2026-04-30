@@ -1,6 +1,10 @@
 import type { ComponentProps, Dispatch, SetStateAction } from 'react';
 import type { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import type { EbayListingTemplateId } from '@/components/approval/listingApprovalEbayConstants';
+import type {
+  EbayApprovalPayloadPreviewData,
+  ShopifyApprovalPayloadPreviewData,
+} from '@/components/approval/ListingApprovalRecordPayloadPanels';
 import type { AirtableRecord } from '@/types/airtable';
 
 type ApprovalFormFieldsProps = ComponentProps<typeof ApprovalFormFields>;
@@ -8,11 +12,6 @@ type ApprovalFormFieldsProps = ComponentProps<typeof ApprovalFormFields>;
 export interface DrawerRequiredStatus {
   allFilled: boolean;
   hasRequired: boolean;
-}
-
-export interface ShopifyPayloadDebug {
-  collectionsToJoin: string[];
-  tags: string[];
 }
 
 export interface CombinedSectionCommonProps {
@@ -43,7 +42,7 @@ export interface ListingApprovalCombinedSharedSectionProps extends CombinedSecti
   sharedDrawerRequiredStatus: DrawerRequiredStatus;
 }
 
-export interface ListingApprovalCombinedShopifySectionProps extends CombinedSectionCommonProps {
+export interface ListingApprovalCombinedShopifySectionProps extends CombinedSectionCommonProps, ShopifyApprovalPayloadPreviewData {
   combinedShopifyOnlyFieldNames: string[];
   shopifyRequiredFieldNames: string[];
   shopifyDrawerRequiredStatus: DrawerRequiredStatus;
@@ -77,13 +76,9 @@ export interface ListingApprovalCombinedShopifySectionProps extends CombinedSect
     } | null;
     status: string;
   };
-  shopifyPayloadDebug: ShopifyPayloadDebug;
-  shopifyDraftCreatePayloadJson: string;
-  shopifyCategorySyncPreviewJson: string;
-  shopifyCreatePayloadDocsJson: string;
 }
 
-export interface ListingApprovalCombinedEbaySectionProps extends CombinedSectionCommonProps {
+export interface ListingApprovalCombinedEbaySectionProps extends CombinedSectionCommonProps, EbayApprovalPayloadPreviewData {
   combinedEbayOnlyFieldNames: string[];
   ebayRequiredFieldNames: string[];
   ebayDrawerRequiredStatus: DrawerRequiredStatus;
@@ -96,6 +91,4 @@ export interface ListingApprovalCombinedEbaySectionProps extends CombinedSection
   combinedEbayBodyHtmlFieldName: string;
   combinedEbayBodyHtmlValue: string;
   bodyHtmlPreview: string;
-  ebayDraftPayloadBundleJson: string;
-  ebayPayloadDocsJson: string;
 }

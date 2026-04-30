@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import {
@@ -6,6 +7,18 @@ import {
 } from '@/components/approval/listingApprovalEbayConstants';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
 import type { ListingApprovalCombinedEbaySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
+
+const EbayApprovalPayloadDetails = lazy(async () => ({
+  default: (await import('@/components/approval/ListingApprovalRecordPayloadPanels')).EbayApprovalPayloadDetails,
+}));
+
+function EbayPayloadFallback() {
+  return (
+    <div className="mt-4 rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 text-sm text-[var(--muted)]">
+      Loading eBay payload preview...
+    </div>
+  );
+}
 
 export function ListingApprovalCombinedEbaySection({
   selectedRecord,
@@ -30,8 +43,8 @@ export function ListingApprovalCombinedEbaySection({
   combinedEbayBodyHtmlFieldName,
   combinedEbayBodyHtmlValue,
   bodyHtmlPreview,
-  ebayDraftPayloadBundleJson,
-  ebayPayloadDocsJson,
+  isEbayPayloadPreviewContext,
+  ebayDraftPayloadBundle,
 }: ListingApprovalCombinedEbaySectionProps) {
   return (
     <details className="rounded-lg border border-[var(--line)] bg-white/5" open>
@@ -119,29 +132,12 @@ export function ListingApprovalCombinedEbaySection({
           </div>
         </details>
 
-        <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
-          <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
-            eBay Create Listing API Payload (Exact Request)
-          </summary>
-          <div className="border-t border-[var(--line)] px-3 py-3">
-            <p className="m-0 mb-2 text-xs text-[var(--muted)]">
-              Live payload preview for eBay Inventory Item and Offer requests using the current page values.
-            </p>
-            <pre className="m-0 overflow-x-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{ebayDraftPayloadBundleJson || '{\n  "inventoryItem": {},\n  "offer": {}\n}'}</pre>
-          </div>
-        </details>
-
-        <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
-          <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
-            eBay Create Listing API Payload (Docs Example)
-          </summary>
-          <div className="border-t border-[var(--line)] px-3 py-3">
-            <p className="m-0 mb-2 text-xs text-[var(--muted)]">
-              Reference example for typical Sell Inventory API inventory item and offer request bodies.
-            </p>
-            <pre className="m-0 overflow-x-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{ebayPayloadDocsJson}</pre>
-          </div>
-        </details>
+        <Suspense fallback={<EbayPayloadFallback />}>
+          <EbayApprovalPayloadDetails
+            isEbayPayloadPreviewContext={isEbayPayloadPreviewContext}
+            ebayDraftPayloadBundle={ebayDraftPayloadBundle}
+          />
+        </Suspense>
       </div>
     </details>
   );

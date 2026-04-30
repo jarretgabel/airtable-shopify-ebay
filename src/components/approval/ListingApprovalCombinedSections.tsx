@@ -48,10 +48,8 @@ export function ListingApprovalCombinedSections({
   currentPageCategoryIdResolution,
   shopifyCategoryLookupValue,
   shopifyCategoryResolution,
-  shopifyPayloadDebug,
-  shopifyDraftCreatePayloadJson,
-  shopifyCategorySyncPreviewJson,
-  shopifyCreatePayloadDocsJson,
+  isShopifyPayloadPreviewContext,
+  shopifyProductSetRequest,
   combinedEbayOnlyFieldNames,
   ebayDrawerRequiredStatus,
   combinedEbayGeneratedBodyHtml,
@@ -61,8 +59,8 @@ export function ListingApprovalCombinedSections({
   combinedEbayBodyHtmlFieldName,
   combinedEbayBodyHtmlValue,
   bodyHtmlPreview,
-  ebayDraftPayloadBundleJson,
-  ebayPayloadDocsJson,
+  isEbayPayloadPreviewContext,
+  ebayDraftPayloadBundle,
 }: ListingApprovalCombinedSectionsProps) {
   const writableFieldNames = Object.keys(selectedRecord.fields);
   const originalFieldValues = Object.fromEntries(
@@ -124,10 +122,8 @@ export function ListingApprovalCombinedSections({
         currentPageCategoryIdResolution={currentPageCategoryIdResolution}
         shopifyCategoryLookupValue={shopifyCategoryLookupValue}
         shopifyCategoryResolution={shopifyCategoryResolution}
-        shopifyPayloadDebug={shopifyPayloadDebug}
-        shopifyDraftCreatePayloadJson={shopifyDraftCreatePayloadJson}
-        shopifyCategorySyncPreviewJson={shopifyCategorySyncPreviewJson}
-        shopifyCreatePayloadDocsJson={shopifyCreatePayloadDocsJson}
+        isShopifyPayloadPreviewContext={isShopifyPayloadPreviewContext}
+        shopifyProductSetRequest={shopifyProductSetRequest}
       />
 
       <ListingApprovalCombinedEbaySection
@@ -153,8 +149,8 @@ export function ListingApprovalCombinedSections({
         combinedEbayBodyHtmlFieldName={combinedEbayBodyHtmlFieldName}
         combinedEbayBodyHtmlValue={combinedEbayBodyHtmlValue}
         bodyHtmlPreview={bodyHtmlPreview}
-        ebayDraftPayloadBundleJson={ebayDraftPayloadBundleJson}
-        ebayPayloadDocsJson={ebayPayloadDocsJson}
+        isEbayPayloadPreviewContext={isEbayPayloadPreviewContext}
+        ebayDraftPayloadBundle={ebayDraftPayloadBundle}
       />
     </div>
   );

@@ -1,5 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
+import type {
+  EbayApprovalPayloadPreviewData,
+  ShopifyApprovalPayloadPreviewData,
+} from '@/components/approval/ListingApprovalRecordPayloadPanels';
 import type { ListingApprovalSelectedRecordPanelProps } from '@/components/approval/ListingApprovalSelectedRecordPanel';
 import type { EbayListingTemplateId } from '@/components/approval/listingApprovalEbayConstants';
 import { buildListingApprovalQueuePanelProps } from '@/components/approval/listingApprovalQueuePanelProps';
@@ -54,10 +58,8 @@ interface BuildListingApprovalTabPanelsParams {
     error?: string;
     match?: { fullName?: string; id?: string } | null;
   };
-  shopifyPayloadDebug: { collectionsToJoin: string[]; tags: string[] };
-  shopifyDraftCreatePayloadJson: string;
-  shopifyCategorySyncPreviewJson: string;
-  shopifyCreatePayloadDocsJson: string;
+  isShopifyPayloadPreviewContext: boolean;
+  shopifyProductSetRequest: ShopifyApprovalPayloadPreviewData['shopifyProductSetRequest'];
   combinedEbayOnlyFieldNames: string[];
   ebayDrawerRequiredStatus: { hasRequired: boolean; allFilled: boolean };
   combinedEbayGeneratedBodyHtml: string;
@@ -67,8 +69,8 @@ interface BuildListingApprovalTabPanelsParams {
   combinedEbayBodyHtmlFieldName: string;
   combinedEbayBodyHtmlValue: string;
   bodyHtmlPreview: string;
-  ebayDraftPayloadBundleJson: string;
-  ebayPayloadDocsJson: string;
+  isEbayPayloadPreviewContext: boolean;
+  ebayDraftPayloadBundle: EbayApprovalPayloadPreviewData['ebayDraftPayloadBundle'];
   titleFieldName: string;
   isApproved: boolean;
   error: string | null;
@@ -150,10 +152,8 @@ export function buildListingApprovalTabPanels({
   currentPageCategoryIdResolution,
   shopifyCategoryLookupValue,
   shopifyCategoryResolution,
-  shopifyPayloadDebug,
-  shopifyDraftCreatePayloadJson,
-  shopifyCategorySyncPreviewJson,
-  shopifyCreatePayloadDocsJson,
+  isShopifyPayloadPreviewContext,
+  shopifyProductSetRequest,
   combinedEbayOnlyFieldNames,
   ebayDrawerRequiredStatus,
   combinedEbayGeneratedBodyHtml,
@@ -163,8 +163,8 @@ export function buildListingApprovalTabPanels({
   combinedEbayBodyHtmlFieldName,
   combinedEbayBodyHtmlValue,
   bodyHtmlPreview,
-  ebayDraftPayloadBundleJson,
-  ebayPayloadDocsJson,
+  isEbayPayloadPreviewContext,
+  ebayDraftPayloadBundle,
   titleFieldName,
   isApproved,
   error,
@@ -249,10 +249,8 @@ export function buildListingApprovalTabPanels({
       currentPageCategoryIdResolution,
       shopifyCategoryLookupValue,
       shopifyCategoryResolution,
-      shopifyPayloadDebug,
-      shopifyDraftCreatePayloadJson,
-      shopifyCategorySyncPreviewJson,
-      shopifyCreatePayloadDocsJson,
+      isShopifyPayloadPreviewContext,
+      shopifyProductSetRequest,
       combinedEbayOnlyFieldNames,
       ebayDrawerRequiredStatus,
       combinedEbayGeneratedBodyHtml,
@@ -262,8 +260,8 @@ export function buildListingApprovalTabPanels({
       combinedEbayBodyHtmlFieldName,
       combinedEbayBodyHtmlValue,
       bodyHtmlPreview,
-      ebayDraftPayloadBundleJson,
-      ebayPayloadDocsJson,
+      isEbayPayloadPreviewContext,
+      ebayDraftPayloadBundle,
     })
     : null;
 
