@@ -1,9 +1,7 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { ApprovalFormStandardField } from './ApprovalFormStandardField';
-import { ApprovalFormFieldsSupplementalEditors } from './ApprovalFormFieldsSupplementalEditors';
 
 type StandardFieldSharedProps = Omit<ComponentProps<typeof ApprovalFormStandardField>, 'fieldName'>;
-type SupplementalEditorsProps = ComponentProps<typeof ApprovalFormFieldsSupplementalEditors>;
 
 interface ApprovalFormFieldGridProps {
   showOnlyEbayAdvancedOptions: boolean;
@@ -13,7 +11,7 @@ interface ApprovalFormFieldGridProps {
   optionalOrderedFieldNames: string[];
   pinnedPreDescriptionFieldName?: string;
   standardFieldProps: StandardFieldSharedProps;
-  supplementalEditorsProps: SupplementalEditorsProps;
+  supplementalEditors: ReactNode;
 }
 
 function renderStandardField(
@@ -58,7 +56,7 @@ export function ApprovalFormFieldGrid({
   optionalOrderedFieldNames,
   pinnedPreDescriptionFieldName,
   standardFieldProps,
-  supplementalEditorsProps,
+  supplementalEditors,
 }: ApprovalFormFieldGridProps) {
   const advancedOptionsBlock = renderAdvancedOptionsBlock(
     showEbayAdvancedOptions,
@@ -78,7 +76,7 @@ export function ApprovalFormFieldGrid({
 
       {pinnedPreDescriptionFieldName && renderStandardField(pinnedPreDescriptionFieldName, standardFieldProps)}
 
-      <ApprovalFormFieldsSupplementalEditors {...supplementalEditorsProps} />
+      {supplementalEditors}
 
       {optionalOrderedFieldNames
         .filter((fieldName) => fieldName !== pinnedPreDescriptionFieldName)

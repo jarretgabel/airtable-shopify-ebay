@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { TAB_DATA_TTLS, shouldReuseTabData } from '@/app/tabDataCache';
 import { getEbayDashboardSnapshot } from '@/services/app-api/ebay';
 import type { EbayRuntimeConfig, EbayInventoryItem, EbayOffer, EbayPublishedListing } from '@/services/ebay/types';
 
@@ -14,9 +15,10 @@ interface EbayListingsStoreState {
   offers: EbayOffer[];
   recentListings: EbayPublishedListing[];
   total: number;
+  lastLoadedAt: number | null;
   setEnabled: (enabled: boolean) => void;
-  bootstrap: (enabledOverride?: boolean) => Promise<void>;
-  refetch: () => Promise<void>;
+  bootstrap: (enabledOverride?: boolean, force?: boolean) => Promise<void>;
+  refetch: (force?: boolean) => Promise<void>;
 }
 
 function clearListingData(set: (partial: Partial<EbayListingsStoreState>) => void): void {
@@ -60,13 +62,14 @@ export const useEbayListingsStore = create<EbayListingsStoreState>((set, get) =>
   offers: [],
   recentListings: [],
   total: 0,
+  lastLoadedAt: null,
   setEnabled: (enabled) => {
     set({ enabled });
     if (!enabled) {
       set({ restoringSession: false, loading: false, initializing: false });
     }
   },
-  bootstrap: async (enabledOverride) => {
+  bootstrap: async (enabledOverride, force = false) => {
     if (get().initializing) {
       return;
     }
@@ -77,11 +80,16 @@ export const useEbayListingsStore = create<EbayListingsStoreState>((set, get) =>
       return;
     }
 
+    if (!force && shouldReuseTabData(get().lastLoadedAt, TAB_DATA_TTLS.ebayDashboard, get().error === null)) {
+      set({ restoringSession: false, loading: false, initializing: false });
+      return;
+    }
+
     set({ initializing: true });
     set({ restoringSession: true, loading: true, error: null });
     try {
       const snapshot = await getEbayDashboardSnapshot();
-      set({ authenticated: true });
+      set({ authenticated: true, lastLoadedAt: Date.now() });
       applyListingSnapshot(set, snapshot);
     } catch (err) {
       handleAuthFailure(set, (err as Error).message);
@@ -89,13 +97,18 @@ export const useEbayListingsStore = create<EbayListingsStoreState>((set, get) =>
       set({ loading: false, restoringSession: false, initializing: false });
     }
   },
-  refetch: async () => {
+  refetch: async (force = true) => {
     if (!get().enabled) return;
+
+    if (!force && shouldReuseTabData(get().lastLoadedAt, TAB_DATA_TTLS.ebayDashboard, get().error === null)) {
+      set({ loading: false });
+      return;
+    }
 
     set({ loading: true, error: null });
     try {
       const snapshot = await getEbayDashboardSnapshot();
-      set({ authenticated: true });
+      set({ authenticated: true, lastLoadedAt: Date.now() });
       applyListingSnapshot(set, snapshot);
     } catch (err) {
       handleAuthFailure(set, (err as Error).message);

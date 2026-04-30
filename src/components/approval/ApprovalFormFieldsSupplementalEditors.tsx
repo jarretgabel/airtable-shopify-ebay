@@ -1,13 +1,31 @@
-import { EbayAttributesEditor } from './EbayAttributesEditor';
-import { EbayCategoriesSelect } from './EbayCategoriesSelect';
+import { Suspense, lazy } from 'react';
 import { EbayShippingServicesEditor } from './EbayShippingServicesEditor';
 import { ApprovalFormFieldsShippingEditors } from './ApprovalFormFieldsShippingEditors';
 import { ImageUrlListEditor } from './ImageUrlListEditor';
-import { KeyFeaturesEditor } from './KeyFeaturesEditor';
-import { ShopifyCollectionsSelect } from './ShopifyCollectionsSelect';
 import { ShopifyTagsEditor } from './ShopifyTagsEditor';
-import { TestingNotesEditor } from './TestingNotesEditor';
 import { parseImageEditorRows, toCommaSeparatedImageValues } from './approvalFormFieldsImageHelpers';
+
+const EbayAttributesEditor = lazy(async () => ({
+  default: (await import('./EbayAttributesEditor')).EbayAttributesEditor,
+}));
+const EbayCategoriesSelect = lazy(async () => ({
+  default: (await import('./EbayCategoriesSelect')).EbayCategoriesSelect,
+}));
+const KeyFeaturesEditor = lazy(async () => ({
+  default: (await import('./KeyFeaturesEditor')).KeyFeaturesEditor,
+}));
+const ShopifyCollectionsSelect = lazy(async () => ({
+  default: (await import('./ShopifyCollectionsSelect')).ShopifyCollectionsSelect,
+}));
+const TestingNotesEditor = lazy(async () => ({
+  default: (await import('./TestingNotesEditor')).TestingNotesEditor,
+}));
+
+const lazyEditorFallback = (
+  <div className="col-span-1 rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 text-sm text-[var(--muted)] md:col-span-2">
+    Loading editor...
+  </div>
+);
 
 export interface ApprovalFormFieldsSupplementalEditorsProps {
   imageUrlSourceField?: string;
@@ -172,44 +190,52 @@ export function ApprovalFormFieldsSupplementalEditors({
       )}
 
       {shopifyKeyFeaturesFieldName && (
-        <KeyFeaturesEditor
-          keyFeaturesFieldName={shopifyKeyFeaturesFieldName}
-          keyFeaturesValue={formValues[shopifyKeyFeaturesFieldName] ?? ''}
-          setFormValue={setFormValue}
-          syncFieldNames={shopifyKeyFeaturesSyncFieldNames}
-          disabled={saving}
-        />
+        <Suspense fallback={lazyEditorFallback}>
+          <KeyFeaturesEditor
+            keyFeaturesFieldName={shopifyKeyFeaturesFieldName}
+            keyFeaturesValue={formValues[shopifyKeyFeaturesFieldName] ?? ''}
+            setFormValue={setFormValue}
+            syncFieldNames={shopifyKeyFeaturesSyncFieldNames}
+            disabled={saving}
+          />
+        </Suspense>
       )}
 
       {ebayKeyFeaturesFieldName && (
-        <KeyFeaturesEditor
-          keyFeaturesFieldName={ebayKeyFeaturesFieldName}
-          keyFeaturesValue={formValues[ebayKeyFeaturesFieldName] ?? ''}
-          setFormValue={setFormValue}
-          syncFieldNames={ebayKeyFeaturesSyncFieldNames}
-          disabled={saving}
-        />
+        <Suspense fallback={lazyEditorFallback}>
+          <KeyFeaturesEditor
+            keyFeaturesFieldName={ebayKeyFeaturesFieldName}
+            keyFeaturesValue={formValues[ebayKeyFeaturesFieldName] ?? ''}
+            setFormValue={setFormValue}
+            syncFieldNames={ebayKeyFeaturesSyncFieldNames}
+            disabled={saving}
+          />
+        </Suspense>
       )}
 
       {ebayTestingNotesFieldName && (
-        <TestingNotesEditor
-          fieldName={ebayTestingNotesFieldName}
-          value={formValues[ebayTestingNotesFieldName] ?? ''}
-          setFormValue={setFormValue}
-          disabled={saving}
-          label="Testing Notes"
-        />
+        <Suspense fallback={lazyEditorFallback}>
+          <TestingNotesEditor
+            fieldName={ebayTestingNotesFieldName}
+            value={formValues[ebayTestingNotesFieldName] ?? ''}
+            setFormValue={setFormValue}
+            disabled={saving}
+            label="Testing Notes"
+          />
+        </Suspense>
       )}
 
       {ebayAttributesFieldName && (
-        <EbayAttributesEditor
-          fieldName={ebayAttributesFieldName}
-          value={formValues[ebayAttributesFieldName] ?? ''}
-          setFormValue={setFormValue}
-          syncFieldNames={ebayAttributesSyncFieldNames}
-          disabled={saving}
-          label="Attributes"
-        />
+        <Suspense fallback={lazyEditorFallback}>
+          <EbayAttributesEditor
+            fieldName={ebayAttributesFieldName}
+            value={formValues[ebayAttributesFieldName] ?? ''}
+            setFormValue={setFormValue}
+            syncFieldNames={ebayAttributesSyncFieldNames}
+            disabled={saving}
+            label="Attributes"
+          />
+        </Suspense>
       )}
 
       <ApprovalFormFieldsShippingEditors
@@ -249,36 +275,40 @@ export function ApprovalFormFieldsSupplementalEditors({
       )}
 
       {hasShopifyCollectionEditor && (
-        <ShopifyCollectionsSelect
-          fieldName={shopifyCollectionsFieldName}
-          label="Collections"
-          value={effectiveShopifyCollectionIds}
-          labelsById={effectiveCollectionEditorLabelsById}
-          onChange={setShopifyCollectionIds}
-          disabled={saving}
-        />
+        <Suspense fallback={lazyEditorFallback}>
+          <ShopifyCollectionsSelect
+            fieldName={shopifyCollectionsFieldName}
+            label="Collections"
+            value={effectiveShopifyCollectionIds}
+            labelsById={effectiveCollectionEditorLabelsById}
+            onChange={setShopifyCollectionIds}
+            disabled={saving}
+          />
+        </Suspense>
       )}
 
       {hasEbayCategoryEditor && (
-        <EbayCategoriesSelect
-          fieldName={effectiveEbayCategoriesFieldName}
-          label="eBay Categories"
-          marketplaceId={ebayMarketplaceId}
-          value={ebaySelectedCategoryDisplayValues}
-          labelsById={normalizedEbayCategoryLabelsById}
-          onChange={(nextIds, labelsById) => {
-            setEbayCategoryIds(nextIds);
-            if (labelsById) {
-              onEbayCategoryLabelsChange?.(labelsById);
-            }
-          }}
-          disabled={saving}
-          helperWarning={hasSecondaryEbayCategory ? (
-            <span className="text-xs font-semibold text-rose-300">
-              Adding a second category incurrs extra fees
-            </span>
-          ) : null}
-        />
+        <Suspense fallback={lazyEditorFallback}>
+          <EbayCategoriesSelect
+            fieldName={effectiveEbayCategoriesFieldName}
+            label="eBay Categories"
+            marketplaceId={ebayMarketplaceId}
+            value={ebaySelectedCategoryDisplayValues}
+            labelsById={normalizedEbayCategoryLabelsById}
+            onChange={(nextIds, labelsById) => {
+              setEbayCategoryIds(nextIds);
+              if (labelsById) {
+                onEbayCategoryLabelsChange?.(labelsById);
+              }
+            }}
+            disabled={saving}
+            helperWarning={hasSecondaryEbayCategory ? (
+              <span className="text-xs font-semibold text-rose-300">
+                Adding a second category incurrs extra fees
+              </span>
+            ) : null}
+          />
+        </Suspense>
       )}
     </>
   );

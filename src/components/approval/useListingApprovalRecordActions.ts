@@ -1,7 +1,6 @@
 import type { UseListingApprovalRecordActionsParams } from './listingApprovalRecordActionTypes';
-import { useListingApprovalApproveAction } from './useListingApprovalApproveAction';
-import { useListingApprovalPublishActions } from './useListingApprovalPublishActions';
-import { useListingApprovalSaveActions } from './useListingApprovalSaveActions';
+import { useListingApprovalPersistenceActions } from './useListingApprovalPersistenceActions';
+import { useListingApprovalPublishingActions } from './useListingApprovalPublishingActions';
 
 export function useListingApprovalRecordActions({
   selectedRecord,
@@ -33,23 +32,14 @@ export function useListingApprovalRecordActions({
   hasMissingEbayRequiredFields,
   missingShopifyRequiredFieldLabels,
   missingEbayRequiredFieldLabels,
+  changedFieldNames,
   approvalPublishSource,
   mergedDraftSourceFields,
   onBackToList,
   pushInlineActionNotice,
+  requestConfirmation,
 }: UseListingApprovalRecordActionsParams) {
-  const { pushingTarget, runCombinedPush } = useListingApprovalPublishActions({
-    selectedRecord,
-    hasMissingShopifyRequiredFields,
-    hasMissingEbayRequiredFields,
-    missingShopifyRequiredFieldLabels,
-    missingEbayRequiredFieldLabels,
-    approvalPublishSource,
-    mergedDraftSourceFields,
-    setFormValue,
-    pushInlineActionNotice,
-  });
-  const { handleResetData, handleSaveUpdates } = useListingApprovalSaveActions({
+  const { handleResetData, handleSaveUpdates } = useListingApprovalPersistenceActions({
     selectedRecord,
     approvalChannel,
     allFieldNames,
@@ -68,8 +58,10 @@ export function useListingApprovalRecordActions({
     combinedEbayTestingNotesFieldName,
     priceFieldName,
     pushInlineActionNotice,
+    changedFieldNames,
+    requestConfirmation,
   });
-  const { approving, handlePrimaryAction } = useListingApprovalApproveAction({
+  const { approving, pushingTarget, handlePrimaryAction, runCombinedPush } = useListingApprovalPublishingActions({
     selectedRecord,
     approvalChannel,
     actualFieldNames,
@@ -91,8 +83,11 @@ export function useListingApprovalRecordActions({
     hasMissingEbayRequiredFields,
     missingShopifyRequiredFieldLabels,
     missingEbayRequiredFieldLabels,
+    approvalPublishSource,
+    mergedDraftSourceFields,
     onBackToList,
     pushInlineActionNotice,
+    requestConfirmation,
   });
 
   return {

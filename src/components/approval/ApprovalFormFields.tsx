@@ -1,25 +1,24 @@
-import { useCallback, useEffect, useMemo, type ComponentProps } from 'react';
+import { Suspense, lazy, useEffect, useMemo } from 'react';
+import {
+  isReadOnlyApprovalField,
+} from './approvalFormFieldsSharedHelpers';
 import {
   type EbayListingTemplateId,
-  getEbayPriceFieldLabel,
-  isEbayPriceFieldAlias,
-  isPriceLikeField,
-  isReadOnlyApprovalField,
-  isTitleLikeField,
-  prioritizeTitleBeforePrice,
-  toHumanReadableLabel,
-} from './approvalFormFieldsBasicHelpers';
+} from './approvalFormFieldsEbayHelpersBasic';
 import {
   isEbayAdvancedOptionField,
 } from './approvalFormFieldsEbayHelpers';
 import { ApprovalFormFieldGrid } from './ApprovalFormFieldGrid';
-import { ApprovalFormFieldsSupplementalEditors } from './ApprovalFormFieldsSupplementalEditors';
+import type { ApprovalFormFieldsSupplementalEditorsProps } from './ApprovalFormFieldsSupplementalEditors';
 import { useApprovalFormFieldSetup } from './useApprovalFormFieldSetup';
+import { useApprovalFormFieldRequirements } from './useApprovalFormFieldRequirements';
+
+const ApprovalFormFieldsSupplementalEditors = lazy(async () => ({
+  default: (await import('./ApprovalFormFieldsSupplementalEditors')).ApprovalFormFieldsSupplementalEditors,
+}));
 
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
-const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
-const requiredBadgeClass = 'inline-block rounded-full border border-rose-400/45 bg-rose-500/15 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-rose-200';
 
 interface ApprovalFormFieldsProps {
   recordId?: string;
@@ -85,138 +84,9 @@ export function ApprovalFormFields({
   selectedEbayTemplateId,
   onEbayTemplateIdChange,
 }: ApprovalFormFieldsProps) {
-  const normalizedRequiredFieldNames = useMemo(
-    () => requiredFieldNames.map((fieldName) => fieldName.toLowerCase()),
-    [requiredFieldNames],
-  );
-  const normalizedShopifyRequiredFieldNames = useMemo(
-    () => shopifyRequiredFieldNames.map((fieldName) => fieldName.toLowerCase()),
-    [shopifyRequiredFieldNames],
-  );
-  const normalizedEbayRequiredFieldNames = useMemo(
-    () => ebayRequiredFieldNames.map((fieldName) => fieldName.toLowerCase()),
-    [ebayRequiredFieldNames],
-  );
-  const hasEbayRequiredPriceField = useMemo(
-    () => normalizedEbayRequiredFieldNames.some((fieldName) => isPriceLikeField(fieldName)),
-    [normalizedEbayRequiredFieldNames],
-  );
-
-  const isShopifyCategoryLikeField = useCallback((fieldName: string): boolean => {
-    const normalized = fieldName.trim().toLowerCase();
-    return normalized === 'type'
-      || normalized === 'shopify type'
-      || normalized === 'product type'
-      || normalized === 'shopify product type'
-      || normalized === 'shopify rest product type'
-      || normalized === 'shopify category'
-      || normalized === 'shopify product category'
-      || normalized === 'shopify rest product category'
-      || normalized === 'category'
-      || normalized === 'product category';
-  }, []);
-
-  const matchesRequiredFieldGroup = useCallback((fieldName: string, normalizedRequiredNames: string[]): boolean => {
-    const normalizedFieldName = fieldName.toLowerCase();
-    if (normalizedRequiredNames.includes(normalizedFieldName)) return true;
-
-    if (isTitleLikeField(fieldName)) {
-      return normalizedRequiredNames.some((requiredFieldName) => isTitleLikeField(requiredFieldName));
-    }
-
-    if (isPriceLikeField(fieldName)) {
-      return normalizedRequiredNames.some((requiredFieldName) => isPriceLikeField(requiredFieldName));
-    }
-
-    if (isShopifyCategoryLikeField(fieldName)) {
-      return normalizedRequiredNames.some((requiredFieldName) => isShopifyCategoryLikeField(requiredFieldName));
-    }
-
-    return false;
-  }, [isShopifyCategoryLikeField]);
-
-  const isForcedEbayPriceRequiredField = useCallback((fieldName: string): boolean => {
-    if (!hasEbayRequiredPriceField) return false;
-    if (approvalChannel !== 'ebay' && approvalChannel !== 'combined') return false;
-    return isEbayPriceFieldAlias(fieldName);
-  }, [approvalChannel, hasEbayRequiredPriceField]);
-
-  const isRequiredField = useCallback((fieldName: string): boolean => (
-    matchesRequiredFieldGroup(fieldName, normalizedRequiredFieldNames)
-    || isForcedEbayPriceRequiredField(fieldName)
-  ), [isForcedEbayPriceRequiredField, matchesRequiredFieldGroup, normalizedRequiredFieldNames]);
-  const isShopifyRequiredField = useCallback((fieldName: string): boolean => matchesRequiredFieldGroup(fieldName, normalizedShopifyRequiredFieldNames), [matchesRequiredFieldGroup, normalizedShopifyRequiredFieldNames]);
-  const isEbayRequiredField = useCallback((fieldName: string): boolean => (
-    matchesRequiredFieldGroup(fieldName, normalizedEbayRequiredFieldNames)
-    || isForcedEbayPriceRequiredField(fieldName)
-  ), [isForcedEbayPriceRequiredField, matchesRequiredFieldGroup, normalizedEbayRequiredFieldNames]);
-  const orderedFieldNames = useMemo(() => {
-    const required = prioritizeTitleBeforePrice(
-      allFieldNames.filter((fieldName) => isRequiredField(fieldName)),
-      approvalChannel,
-    );
-    const optional = prioritizeTitleBeforePrice(
-      allFieldNames.filter((fieldName) => !isRequiredField(fieldName)),
-      approvalChannel,
-    );
-    return [...required, ...optional];
-  }, [allFieldNames, approvalChannel, isRequiredField]);
-  const requiredOrderedFieldNames = useMemo(
-    () => orderedFieldNames.filter((fieldName) => isRequiredField(fieldName)),
-    [isRequiredField, orderedFieldNames],
-  );
-  const optionalOrderedFieldNames = useMemo(
-    () => orderedFieldNames.filter((fieldName) => !isRequiredField(fieldName)),
-    [isRequiredField, orderedFieldNames],
-  );
   const ebayAdvancedOptionFieldNames = useMemo(
     () => allFieldNames.filter((fieldName: string) => isEbayAdvancedOptionField(fieldName)),
     [allFieldNames],
-  );
-  const toFieldLabel = (fieldName: string): string => {
-    if (isEbayListingForm && fieldName.trim().toLowerCase() === 'ebay offer price value') {
-      return getEbayPriceFieldLabel(ebayListingFormat);
-    }
-
-    return toHumanReadableLabel(fieldName);
-  };
-  const getInputClassName = (fieldName: string, extra?: string): string => {
-    const requiredInputClass = isRequiredField(fieldName)
-      ? 'border-rose-400/45 bg-rose-500/5 focus:border-rose-300'
-      : '';
-
-    return [inputBaseClass, requiredInputClass, extra].filter(Boolean).join(' ');
-  };
-  const getSelectClassName = (fieldName: string): string => getInputClassName(fieldName, 'appearance-none pr-12');
-  const getLabelClassName = (fieldName?: string): string => {
-    if (fieldName && isRequiredField(fieldName)) {
-      return `${labelClass} text-rose-200`;
-    }
-
-    return labelClass;
-  };
-  const renderRequiredBadges = (fieldName: string): JSX.Element | null => {
-    const isShopifyRequired = isShopifyRequiredField(fieldName);
-    const isEbayRequired = isEbayRequiredField(fieldName);
-
-    if (!isShopifyRequired && !isEbayRequired) return null;
-
-    if (approvalChannel !== 'combined' && isRequiredField(fieldName)) {
-      return <span className={requiredBadgeClass}>Required</span>;
-    }
-
-    return (
-      <>
-        {isShopifyRequired && <span className={requiredBadgeClass}>Shopify Required</span>}
-        {isEbayRequired && <span className={requiredBadgeClass}>eBay Required</span>}
-      </>
-    );
-  };
-  const renderFieldLabel = (fieldName: string): JSX.Element => (
-    <span className={`${getLabelClassName(fieldName)} flex items-center gap-2`}>
-      <span>{toFieldLabel(fieldName)}</span>
-      {renderRequiredBadges(fieldName)}
-    </span>
   );
 
   const {
@@ -292,19 +162,35 @@ export function ApprovalFormFields({
     onEbayTemplateIdChange,
   });
   const ebayListingFormat = ebayFormatFieldName ? (formValues[ebayFormatFieldName] ?? '') : '';
+  const {
+    isRequiredField,
+    optionalOrderedFieldNames,
+    renderFieldLabel,
+    renderSpecialLabel,
+    requiredOrderedFieldNames,
+    toFieldLabel,
+  } = useApprovalFormFieldRequirements({
+    approvalChannel,
+    allFieldNames,
+    requiredFieldNames,
+    shopifyRequiredFieldNames,
+    ebayRequiredFieldNames,
+    isEbayListingForm,
+    ebayListingFormat,
+  });
+
+  const getInputClassName = (fieldName: string, extra?: string): string => {
+    const requiredInputClass = isRequiredField(fieldName)
+      ? 'border-rose-400/45 bg-rose-500/5 focus:border-rose-300'
+      : '';
+
+    return [inputBaseClass, requiredInputClass, extra].filter(Boolean).join(' ');
+  };
+  const getSelectClassName = (fieldName: string): string => getInputClassName(fieldName, 'appearance-none pr-12');
 
   useEffect(() => {
     onBodyHtmlPreviewChange?.(derivedBodyHtmlPreview);
   }, [derivedBodyHtmlPreview, onBodyHtmlPreviewChange]);
-
-  function renderSpecialLabel(label: string, fieldName?: string): JSX.Element {
-    return (
-      <span className={`${getLabelClassName(fieldName)} flex items-center gap-2`}>
-        <span>{label}</span>
-        {fieldName ? renderRequiredBadges(fieldName) : null}
-      </span>
-    );
-  }
 
   const standardFieldProps = {
     approvalChannel,
@@ -346,7 +232,7 @@ export function ApprovalFormFields({
     getSelectClassName,
     getInputClassName,
   };
-  const supplementalEditorsProps: ComponentProps<typeof ApprovalFormFieldsSupplementalEditors> = {
+  const supplementalEditorsProps: ApprovalFormFieldsSupplementalEditorsProps = {
     imageUrlSourceField,
     useCombinedImageAltEditor,
     combinedImageEditorValue,
@@ -397,6 +283,11 @@ export function ApprovalFormFields({
     getSelectClassName,
     getInputClassName,
   };
+  const supplementalEditors = (
+    <Suspense fallback={<div className="col-span-1 rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-sm text-[var(--muted)] md:col-span-2">Loading supplemental editors...</div>}>
+      <ApprovalFormFieldsSupplementalEditors {...supplementalEditorsProps} />
+    </Suspense>
+  );
 
   return (
     <ApprovalFormFieldGrid
@@ -407,7 +298,7 @@ export function ApprovalFormFields({
       optionalOrderedFieldNames={optionalOrderedFieldNames}
       pinnedPreDescriptionFieldName={pinnedPreDescriptionFieldName}
       standardFieldProps={standardFieldProps}
-      supplementalEditorsProps={supplementalEditorsProps}
+      supplementalEditors={supplementalEditors}
     />
   );
 }

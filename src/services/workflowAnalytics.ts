@@ -1,3 +1,5 @@
+import { checkOptionalEnv } from '@/config/runtimeEnv';
+
 export type WorkflowEventName =
   | 'tab_viewed'
   | 'data_refreshed'
@@ -23,7 +25,7 @@ interface WorkflowEvent {
 const ANALYTICS_API_PATH = '/api/analytics/events';
 
 function isAnalyticsEnabled(): boolean {
-  const raw = (import.meta.env.VITE_ANALYTICS_ENABLED as string | undefined)?.trim().toLowerCase();
+  const raw = checkOptionalEnv('VITE_ANALYTICS_ENABLED').toLowerCase();
   if (!raw) return true;
   return raw !== 'false' && raw !== '0' && raw !== 'off';
 }

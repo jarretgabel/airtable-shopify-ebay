@@ -51,7 +51,7 @@ export function useEbayListings(enabled = true): EbayListingsState {
 
   useEffect(() => {
     setEnabled(enabled);
-    void bootstrap(enabled);
+    void bootstrap(enabled, false);
   }, [enabled, setEnabled, bootstrap]);
 
   return {
@@ -64,6 +64,6 @@ export function useEbayListings(enabled = true): EbayListingsState {
     offers,
     recentListings,
     total,
-    refetch,
+    refetch: () => { void refetch(true); },
   };
 }

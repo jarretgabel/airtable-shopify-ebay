@@ -1,9 +1,16 @@
-import { spinnerClass } from '@/components/tabs/uiClasses';
 import type { AirtableTypeRow, DashboardTargetTab } from './dashboardTabTypes';
-import { DashboardSectionPanel } from './dashboardPrimitives';
+import {
+  DashboardBarListSkeleton,
+  DashboardLoadingBanner,
+  DashboardSectionPanel,
+  DashboardStatTileSkeletonGrid,
+  DashboardSourceWarning,
+  DashboardTableSkeleton,
+} from './dashboardPrimitives';
 
 interface DashboardAirtableSectionProps {
   atLoading: boolean;
+  errorMessage?: string | null;
   nonEmptyListingCount: number;
   uniqueAirtableBrands: number;
   uniqueAirtableTypes: number;
@@ -24,6 +31,7 @@ function toPercent(count: number, max: number): number {
 export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
   const {
     atLoading,
+    errorMessage,
     nonEmptyListingCount,
     uniqueAirtableBrands,
     uniqueAirtableTypes,
@@ -45,9 +53,32 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
       </div>
 
       {atLoading ? (
-        <div className="flex items-center gap-3 py-2 text-[var(--muted)]"><div className={spinnerClass} /><p>Loading Airtable inventory…</p></div>
+        <>
+          <DashboardLoadingBanner label="Loading Airtable inventory snapshot" />
+          <DashboardStatTileSkeletonGrid />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <section className="rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4"><h3 className="mb-3 text-[0.9rem] font-bold text-[var(--ink)]">By Component Type</h3><DashboardBarListSkeleton /></section>
+            <section className="rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4"><h3 className="mb-3 text-[0.9rem] font-bold text-[var(--ink)]">Top Brands</h3><DashboardBarListSkeleton /></section>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <section className="rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4">
+              <h3 className="mb-3 text-[0.9rem] font-bold text-[var(--ink)]">By Distributor</h3>
+              <DashboardTableSkeleton columns={3} rows={4} />
+            </section>
+            <section className="rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4">
+              <h3 className="mb-3 text-[0.9rem] font-bold text-[var(--ink)]">Component Summary</h3>
+              <DashboardTableSkeleton columns={4} rows={4} />
+            </section>
+          </div>
+        </>
       ) : nonEmptyListingCount > 0 ? (
         <>
+          {errorMessage && (
+            <DashboardSourceWarning
+              title="Inventory data is showing the last successful snapshot"
+              message={errorMessage}
+            />
+          )}
           <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <article className="flex flex-col gap-1.5 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4 leading-tight shadow-[0_8px_24px_rgba(17,32,49,0.04)]"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Products</span><strong className="text-[1.3rem] leading-[1.1] text-[var(--ink)] [font-variant-numeric:tabular-nums]">{nonEmptyListingCount}</strong></article>
             <article className="flex flex-col gap-1.5 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4 leading-tight shadow-[0_8px_24px_rgba(17,32,49,0.04)]"><span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Brands</span><strong className="text-[1.3rem] leading-[1.1] text-[var(--ink)] [font-variant-numeric:tabular-nums]">{uniqueAirtableBrands}</strong></article>
@@ -72,7 +103,15 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
           </div>
         </>
       ) : (
-        <p className="m-0 text-[var(--muted)]">No Airtable inventory records available yet.</p>
+        <>
+          {errorMessage && (
+            <DashboardSourceWarning
+              title="Inventory data is unavailable right now"
+              message={errorMessage}
+            />
+          )}
+          <p className="m-0 text-[var(--muted)]">No Airtable inventory records available yet.</p>
+        </>
       )}
     </DashboardSectionPanel>
   );

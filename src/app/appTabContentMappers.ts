@@ -13,8 +13,11 @@ import type {
 type AppTabInput = Pick<
   AppTabContentProps,
   | 'atLoading'
+  | 'atError'
   | 'spLoading'
+  | 'spError'
   | 'jfLoading'
+  | 'jfError'
   | 'nonEmptyListings'
   | 'products'
   | 'jfSubmissions'
@@ -45,6 +48,7 @@ type AppTabInput = Pick<
   | 'sharkListings'
   | 'usersCount'
   | 'adminCount'
+  | 'runtimeFeatures'
   | 'navigateToTab'
 >;
 
@@ -190,6 +194,17 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
       marketListingCount: input.sharkListings.length,
       userCount: input.usersCount,
       adminCount: input.adminCount,
+    },
+    status: {
+      sources: [
+        { key: 'airtable', label: 'Inventory', error: input.atError?.message ?? null, hasData: input.nonEmptyListings.length > 0 },
+        { key: 'shopify', label: 'Shopify', error: input.spError?.message ?? null, hasData: input.products.length > 0 },
+        { key: 'jotform', label: 'JotForm', error: input.runtimeFeatures.jotform.message ?? input.jfError?.message ?? null, hasData: input.jfSubmissions.length > 0 },
+        { key: 'approval', label: 'Approval Queue', error: input.runtimeFeatures.approvalEbay.message ?? input.approvalError, hasData: input.approvalTotal > 0 },
+        { key: 'shopify-approval', label: 'Shopify Approval Queue', error: input.runtimeFeatures.approvalShopify.message ?? input.shopifyApprovalError, hasData: input.shopifyApprovalTotal > 0 },
+        { key: 'ebay', label: 'eBay', error: input.runtimeFeatures.ebay.message ?? input.ebayError, hasData: input.ebayTotal > 0 },
+        { key: 'market', label: 'Market Research', error: input.sharkError?.message ?? null, hasData: input.sharkListings.length > 0 || Boolean(input.currentSlug) },
+      ],
     },
     actions: {
       onSelectTab: input.navigateToTab,

@@ -9,9 +9,15 @@ npm install
 
 2. Configure environment variables:
   - Copy `.env.example` to `.env.local`, then fill in your credentials:
-    - `VITE_AIRTABLE_API_KEY`: Your Airtable personal access token for the local API adapter
-    - `VITE_AIRTABLE_BASE_ID`: Your Airtable base ID for the local API adapter
+    - `VITE_AIRTABLE_API_KEY`: Your Airtable personal access token for the local API adapter only
+    - `VITE_AIRTABLE_BASE_ID`: Your Airtable base ID for the local API adapter only
   - `VITE_AIRTABLE_USERS_TABLE_REF` or `VITE_AIRTABLE_USERS_TABLE_NAME`: Airtable users table (auth source)
+
+Important:
+
+- `VITE_AIRTABLE_API_KEY`, `VITE_AIRTABLE_BASE_ID`, Gmail tokens, Shopify admin tokens, and similar secrets are not for CloudFront/S3 frontend deployment.
+- Keep secrets in the backend or local adapter only.
+- Use `public/runtime-config.json` only for browser-safe public config.
 
 3. Run setup doctor (recommended for onboarding):
 ```bash
@@ -25,6 +31,75 @@ npm run dev
 ```
 
 This will start a development server on `http://localhost:3000`
+
+## CloudFront + S3 Frontend Deployment
+
+The recommended frontend hosting target for this app is CloudFront + S3.
+
+- Use S3 for the built SPA assets.
+- Put CloudFront in front of S3.
+- Route `/api/*` to your backend origin through the same CloudFront distribution.
+- Use `public/runtime-config.json` for browser-safe deployment settings that need to change per environment.
+
+Deployment guide:
+
+- [CloudFront + S3 Frontend Hosting](./docs/cloudfront-s3-frontend.md)
+
+Helpful commands:
+
+```bash
+npm run validate:runtime-config
+npm run build
+npm run build:bundle-report
+npm run build:cloudfront
+npm run deploy:cloudfront -- --bucket YOUR_BUCKET --distribution-id YOUR_DISTRIBUTION_ID
+npm run deploy:cloudfront:runtime-only -- --bucket YOUR_BUCKET --distribution-id YOUR_DISTRIBUTION_ID
+```
+
+`build:bundle-report` runs the production build and then compares the current `feature-*` chunks in `dist/assets` against `docs/bundle-size-baseline.json` so chunk deltas stay measurable after each major phase.
+
+`build:cloudfront` writes `dist/runtime-config.json` from safe public environment variables after the Vite build completes.
+
+`deploy:cloudfront` uploads the built app to S3 with the correct cache behavior for hashed assets vs mutable files and can invalidate CloudFront for `index.html` and `runtime-config.json`.
+
+`deploy:cloudfront:runtime-only` uploads only `dist/runtime-config.json`, which is useful when you are promoting the same frontend bundle and only public runtime settings changed.
+
+For repeatable deploys, copy [cloudfront-frontend.deploy.example.json](/Users/user/Sites/airtable-shopify-ebay/cloudfront-frontend.deploy.example.json) to `.cloudfront-frontend.deploy.json`, fill in your bucket and distribution defaults, and then run:
+
+```bash
+npm run deploy:cloudfront
+```
+
+Example public runtime config files for promotion workflows:
+
+- [public/runtime-config.staging.example.json](/Users/user/Sites/airtable-shopify-ebay/public/runtime-config.staging.example.json)
+- [public/runtime-config.prod.example.json](/Users/user/Sites/airtable-shopify-ebay/public/runtime-config.prod.example.json)
+
+If you want named environment commands instead of passing flags, copy these local deploy defaults files and fill them in:
+
+- [cloudfront-frontend.staging.deploy.example.json](/Users/user/Sites/airtable-shopify-ebay/cloudfront-frontend.staging.deploy.example.json) -> `.cloudfront-frontend.staging.deploy.json`
+- [cloudfront-frontend.prod.deploy.example.json](/Users/user/Sites/airtable-shopify-ebay/cloudfront-frontend.prod.deploy.example.json) -> `.cloudfront-frontend.prod.deploy.json`
+
+Then you can run:
+
+```bash
+make deploy-staging
+make deploy-prod
+make deploy-staging-runtime
+make deploy-prod-runtime
+```
+
+Before first deploy, edit these fields in each local deploy file:
+
+- `bucket`: replace the placeholder bucket name with the real S3 bucket for that environment
+- `distributionId`: replace the placeholder CloudFront distribution id with the real one
+- `profile`: update if your AWS CLI profile name is different
+- `region`: update if the frontend bucket and distribution are managed from a different region
+- `runtimeConfigPath`: point each environment to its own runtime config file, such as `public/runtime-config.staging.json`
+
+The deploy commands now run a preflight validator and will stop if the file still contains the checked-in placeholder bucket or distribution id values.
+
+If `runtimeConfigPath` is present in the deploy config, the build and runtime-only deploy flows use that file automatically instead of requiring you to copy values into `public/runtime-config.json` first.
 
 For local AWS validation you can keep the frontend on same-origin `/api` paths by setting `VITE_APP_API_PROXY_TARGET=http://127.0.0.1:3001` in `.env.local` while leaving `VITE_APP_API_BASE_URL=` blank.
 

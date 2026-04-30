@@ -1,4 +1,11 @@
+import { readRuntimeConfigValue, type PublicRuntimeConfig } from '@/config/runtimeConfig';
+
 function readEnv(name: string): string {
+  const runtimeValue = readRuntimeConfigValue(name as keyof PublicRuntimeConfig);
+  if (runtimeValue) {
+    return runtimeValue;
+  }
+
   const value = import.meta.env[name as keyof ImportMetaEnv];
   return typeof value === 'string' ? value.trim() : '';
 }

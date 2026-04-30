@@ -18,23 +18,34 @@ interface ActionItem {
   detail: string;
   severity: 'critical' | 'warning';
   targetTab: DashboardTargetTab;
+  unavailable?: boolean;
 }
 
 function ActionButton({ item, onSelectTab }: { item: ActionItem; onSelectTab: (tab: DashboardTargetTab) => void }) {
   return (
     <button
       type="button"
-      className={`flex w-full items-start gap-3 rounded-[12px] border px-4 py-3.5 text-left transition hover:-translate-y-px ${severityClass[item.severity]}`}
-      onClick={() => onSelectTab(item.targetTab)}
+      className={[
+        'flex w-full items-start gap-3 rounded-[12px] border px-4 py-3.5 text-left transition',
+        severityClass[item.severity],
+        item.unavailable ? 'cursor-not-allowed opacity-80 hover:translate-y-0' : 'hover:-translate-y-px',
+      ].join(' ')}
+      disabled={item.unavailable}
+      title={item.unavailable ? item.detail : undefined}
+      onClick={() => {
+        if (!item.unavailable) {
+          onSelectTab(item.targetTab);
+        }
+      }}
     >
       <span className={`mt-0.5 shrink-0 rounded-full px-2.5 py-0.5 text-[0.75rem] font-bold tabular-nums ${severityCountClass[item.severity]}`}>
-        {item.count}
+        {item.unavailable ? 'Off' : item.count}
       </span>
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="text-[0.88rem] font-semibold leading-snug">{item.label}</span>
         <span className="text-[0.78rem] opacity-75">{item.detail}</span>
       </div>
-      <span className="ml-auto shrink-0 self-center text-[0.75rem] font-semibold opacity-60">Go →</span>
+      <span className="ml-auto shrink-0 self-center text-[0.75rem] font-semibold opacity-60">{item.unavailable ? 'Unavailable' : 'Go →'}</span>
     </button>
   );
 }
@@ -47,6 +58,8 @@ export interface DashboardActionsSectionProps {
   shopifyQueueApproved: number;
   shopifyQueuePending: number;
   shopifyQueueTotal: number;
+  ebayUnavailableReason?: string | null;
+  shopifyApprovalUnavailableReason?: string | null;
   onSelectTab: (tab: DashboardTargetTab) => void;
   embedded?: boolean;
 }
@@ -59,12 +72,26 @@ export function DashboardActionsSection({
   shopifyQueueApproved,
   shopifyQueuePending,
   shopifyQueueTotal,
+  ebayUnavailableReason,
+  shopifyApprovalUnavailableReason,
   onSelectTab,
   embedded,
 }: DashboardActionsSectionProps) {
   const items: ActionItem[] = [];
 
-  if (shopifyQueuePending > 0) {
+  if (shopifyApprovalUnavailableReason) {
+    items.push({
+      key: 'shopify-approval-unavailable',
+      label: 'Shopify approval queue unavailable',
+      count: 0,
+      detail: shopifyApprovalUnavailableReason,
+      severity: 'warning',
+      targetTab: 'shopify-approval',
+      unavailable: true,
+    });
+  }
+
+  if (!shopifyApprovalUnavailableReason && shopifyQueuePending > 0) {
     items.push({
       key: 'shopify-approval',
       label: `${shopifyQueuePending} listing${shopifyQueuePending === 1 ? '' : 's'} awaiting approval`,
@@ -75,7 +102,19 @@ export function DashboardActionsSection({
     });
   }
 
-  if (ebayAuthenticated && ebayDraftCount > 0) {
+  if (ebayUnavailableReason) {
+    items.push({
+      key: 'ebay-unavailable',
+      label: 'eBay publishing unavailable',
+      count: 0,
+      detail: ebayUnavailableReason,
+      severity: 'warning',
+      targetTab: 'ebay',
+      unavailable: true,
+    });
+  }
+
+  if (!ebayUnavailableReason && ebayAuthenticated && ebayDraftCount > 0) {
     items.push({
       key: 'ebay',
       label: `${ebayDraftCount} eBay draft${ebayDraftCount === 1 ? '' : 's'} ready to publish`,

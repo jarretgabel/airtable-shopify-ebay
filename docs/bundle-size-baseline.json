@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-04-30T03:01:17.898Z",
+  "chunks": {
+    "feature-account": {
+      "file": "feature-account-CMh2QQpz.js",
+      "rawBytes": 101414,
+      "gzipBytes": 31111
+    },
+    "feature-approval": {
+      "file": "feature-approval-BCuVnYKo.js",
+      "rawBytes": 381583,
+      "gzipBytes": 93002
+    },
+    "feature-dashboard": {
+      "file": "feature-dashboard-B8mXcwkp.js",
+      "rawBytes": 54765,
+      "gzipBytes": 11911
+    },
+    "feature-ebay": {
+      "file": "feature-ebay-DcCqpQ9l.js",
+      "rawBytes": 29225,
+      "gzipBytes": 6470
+    },
+    "feature-tabs": {
+      "file": "feature-tabs-C6ciLP0R.js",
+      "rawBytes": 91941,
+      "gzipBytes": 19111
+    },
+    "feature-users": {
+      "file": "feature-users-dCjubRIk.js",
+      "rawBytes": 18471,
+      "gzipBytes": 4513
+    }
+  }
+}

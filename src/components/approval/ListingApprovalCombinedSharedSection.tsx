@@ -1,8 +1,22 @@
+import { Suspense, lazy } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
-import { KeyFeaturesEditor } from '@/components/approval/KeyFeaturesEditor';
-import { TestingNotesEditor } from '@/components/approval/TestingNotesEditor';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
 import type { ListingApprovalCombinedSharedSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
+
+const KeyFeaturesEditor = lazy(async () => ({
+  default: (await import('@/components/approval/KeyFeaturesEditor')).KeyFeaturesEditor,
+}));
+const TestingNotesEditor = lazy(async () => ({
+  default: (await import('@/components/approval/TestingNotesEditor')).TestingNotesEditor,
+}));
+
+function CombinedSharedEditorFallback() {
+  return (
+    <div className="rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 text-sm text-[var(--muted)]">
+      Loading shared editor...
+    </div>
+  );
+}
 
 export function ListingApprovalCombinedSharedSection({
   selectedRecord,
@@ -73,23 +87,27 @@ export function ListingApprovalCombinedSharedSection({
         />
 
         {combinedSharedKeyFeaturesFieldName && (
-          <KeyFeaturesEditor
-            keyFeaturesFieldName={combinedSharedKeyFeaturesFieldName}
-            keyFeaturesValue={formValues[combinedSharedKeyFeaturesFieldName] ?? ''}
-            setFormValue={setFormValue}
-            syncFieldNames={combinedSharedKeyFeaturesSyncFieldNames}
-            disabled={saving}
-          />
+          <Suspense fallback={<CombinedSharedEditorFallback />}>
+            <KeyFeaturesEditor
+              keyFeaturesFieldName={combinedSharedKeyFeaturesFieldName}
+              keyFeaturesValue={formValues[combinedSharedKeyFeaturesFieldName] ?? ''}
+              setFormValue={setFormValue}
+              syncFieldNames={combinedSharedKeyFeaturesSyncFieldNames}
+              disabled={saving}
+            />
+          </Suspense>
         )}
 
         {combinedEbayTestingNotesFieldName && (
-          <TestingNotesEditor
-            fieldName={combinedEbayTestingNotesFieldName}
-            value={formValues[combinedEbayTestingNotesFieldName] ?? ''}
-            setFormValue={setFormValue}
-            disabled={saving}
-            label="Testing Notes"
-          />
+          <Suspense fallback={<CombinedSharedEditorFallback />}>
+            <TestingNotesEditor
+              fieldName={combinedEbayTestingNotesFieldName}
+              value={formValues[combinedEbayTestingNotesFieldName] ?? ''}
+              setFormValue={setFormValue}
+              disabled={saving}
+              label="Testing Notes"
+            />
+          </Suspense>
         )}
       </div>
     </details>

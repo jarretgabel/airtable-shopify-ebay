@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { recordTitle } from '@/app/appNavigation';
 import {
   ensureShopifyDraftBeforeApproval,
   updateApprovedShopifyListing,
   writeShopifyProductIdToAirtable,
 } from '@/components/approval/listingApprovalShopifyActions';
+import { getApprovalRequiredFieldValidationNotice } from '@/components/approval/listingApprovalActionValidation';
 import { updateRecordFromResolvedSource } from '@/services/app-api/airtable';
 import { getProduct as getShopifyProduct } from '@/services/app-api/shopify';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
@@ -33,6 +35,7 @@ type ApproveActionParams = Pick<UseListingApprovalRecordActionsParams,
   | 'missingEbayRequiredFieldLabels'
   | 'onBackToList'
   | 'pushInlineActionNotice'
+  | 'requestConfirmation'
 >;
 
 export function useListingApprovalApproveAction({
@@ -59,16 +62,25 @@ export function useListingApprovalApproveAction({
   missingEbayRequiredFieldLabels,
   onBackToList,
   pushInlineActionNotice,
+  requestConfirmation,
 }: ApproveActionParams) {
   const [approving, setApproving] = useState(false);
 
-  const handlePrimaryAction = () => {
+  const handlePrimaryAction = async () => {
     if (approving) return;
 
     if (canUpdateApprovedShopifyListing) {
-      const confirmed = window.confirm('Are you sure you want to update this Shopify listing?');
-      if (!confirmed) return;
       if (!selectedRecord) return;
+      const confirmed = await requestConfirmation({
+        title: 'Update approved Shopify listing',
+        message: 'Push the current page values into the already approved Shopify product.',
+        confirmLabel: 'Update listing',
+        bullets: [
+          `Record: ${recordTitle(selectedRecord.fields)}`,
+          `Existing Shopify product ID: ${formValues['Shopify REST Product ID'] || 'Not set'}`,
+        ],
+      });
+      if (!confirmed) return;
 
       const runUpdate = async () => {
         setApproving(true);
@@ -86,23 +98,38 @@ export function useListingApprovalApproveAction({
         }
       };
 
-      void runUpdate();
+      await runUpdate();
       return;
     }
 
-    if (approvalChannel === 'shopify' && hasMissingShopifyRequiredFields) {
-      pushInlineActionNotice('warning', 'Required Shopify fields missing', `Complete required fields before approving: ${missingShopifyRequiredFieldLabels.join(', ')}`);
+    const validationNotice = getApprovalRequiredFieldValidationNotice(approvalChannel, {
+      shopify: {
+        hasMissingFields: hasMissingShopifyRequiredFields,
+        missingFieldLabels: missingShopifyRequiredFieldLabels,
+      },
+      ebay: {
+        hasMissingFields: hasMissingEbayRequiredFields,
+        missingFieldLabels: missingEbayRequiredFieldLabels,
+      },
+    });
+
+    if (validationNotice) {
+      pushInlineActionNotice('warning', validationNotice.title, validationNotice.message);
       return;
     }
 
-    if (approvalChannel === 'ebay' && hasMissingEbayRequiredFields) {
-      pushInlineActionNotice('warning', 'Required eBay fields missing', `Complete required fields before approving: ${missingEbayRequiredFieldLabels.join(', ')}`);
-      return;
-    }
-
-    const confirmed = window.confirm('Are you sure you want to approve this listing for publishing?');
-    if (!confirmed) return;
     if (!selectedRecord) return;
+    const confirmed = await requestConfirmation({
+      title: 'Approve listing for publishing',
+      message: 'Mark this record as approved so it can move forward in the publishing workflow.',
+      confirmLabel: 'Approve listing',
+      bullets: [
+        `Record: ${recordTitle(selectedRecord.fields)}`,
+        `Channel: ${approvalChannel}`,
+        createShopifyDraftOnApprove ? 'A Shopify draft will be created or refreshed before approval completes.' : 'Approval will update Airtable status only.',
+      ],
+    });
+    if (!confirmed) return;
 
     const shopifyProductIdField = 'Shopify REST Product ID';
 
@@ -181,7 +208,7 @@ export function useListingApprovalApproveAction({
       }
     };
 
-    void runApproval();
+    await runApproval();
   };
 
   return {

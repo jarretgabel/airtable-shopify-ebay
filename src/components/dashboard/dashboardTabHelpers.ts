@@ -46,12 +46,14 @@ export function buildEbayWorkflowCards({
   accessiblePages,
   approvalApproved,
   approvalError,
+  approvalUnavailableReason,
   approvalLoading,
   approvalPending,
   approvalTotal,
   ebayAuthenticated,
   ebayDraftCount,
   ebayError,
+  ebayUnavailableReason,
   ebayLoading,
   ebayPublishedCount,
   ebayRestoringSession,
@@ -61,12 +63,14 @@ export function buildEbayWorkflowCards({
   | 'accessiblePages'
   | 'approvalApproved'
   | 'approvalError'
+  | 'approvalUnavailableReason'
   | 'approvalLoading'
   | 'approvalPending'
   | 'approvalTotal'
   | 'ebayAuthenticated'
   | 'ebayDraftCount'
   | 'ebayError'
+  | 'ebayUnavailableReason'
   | 'ebayLoading'
   | 'ebayPublishedCount'
   | 'ebayRestoringSession'
@@ -78,9 +82,10 @@ export function buildEbayWorkflowCards({
     cards.push({
       id: 'ebay',
       title: 'eBay Publishing',
-      eyebrow: ebayLoading ? 'Syncing seller inventory' : ebayAuthenticated ? 'Seller account connected' : ebayRestoringSession ? 'Restoring seller session' : 'Connection required',
-      detail: ebayError ? ebayError : ebayAuthenticated ? 'Review live offers, manage inventory-mode drafts, and publish sample listings.' : 'Authorize the seller account before pushing inventory or offers to eBay.',
+      eyebrow: ebayUnavailableReason ? 'Runtime config required' : ebayLoading ? 'Syncing seller inventory' : ebayAuthenticated ? 'Seller account connected' : ebayRestoringSession ? 'Restoring seller session' : 'Connection required',
+      detail: ebayUnavailableReason ?? ebayError ?? (ebayAuthenticated ? 'Review live offers, manage inventory-mode drafts, and publish sample listings.' : 'Authorize the seller account before pushing inventory or offers to eBay.'),
       stats: ebayAuthenticated ? [`${ebayPublishedCount} live offer${ebayPublishedCount === 1 ? '' : 's'}`, `${ebayDraftCount} draft${ebayDraftCount === 1 ? '' : 's'}`, `${ebayTotal} tracked SKU${ebayTotal === 1 ? '' : 's'}`] : ['OAuth setup', 'Inventory sync', 'Draft publish'],
+      unavailableReason: ebayUnavailableReason ?? null,
     });
   }
 
@@ -88,9 +93,10 @@ export function buildEbayWorkflowCards({
     cards.push({
       id: 'approval',
       title: 'Listing Approval Queue',
-      eyebrow: approvalLoading ? 'Refreshing queue' : approvalError ? 'Queue needs attention' : `${approvalPending} awaiting review`,
-      detail: approvalError ? approvalError : 'Open pending records, validate mapped listing fields, and mark approved items ready for the next step.',
+      eyebrow: approvalUnavailableReason ? 'Runtime config required' : approvalLoading ? 'Refreshing queue' : approvalError ? 'Queue needs attention' : `${approvalPending} awaiting review`,
+      detail: approvalUnavailableReason ?? approvalError ?? 'Open pending records, validate mapped listing fields, and mark approved items ready for the next step.',
       stats: approvalLoading ? ['Loading queue…'] : [`${approvalTotal} total record${approvalTotal === 1 ? '' : 's'}`, `${approvalPending} pending`, `${approvalApproved} approved`],
+      unavailableReason: approvalUnavailableReason ?? null,
     });
   }
 
@@ -105,6 +111,7 @@ export function buildShopifyWorkflowCards({
   shopifyDraftCount,
   shopifyArchivedCount,
   shopifyApprovalLoading,
+  shopifyApprovalUnavailableReason,
   shopifyApprovalTotal,
   shopifyApprovalApproved,
   shopifyApprovalPending,
@@ -117,6 +124,7 @@ export function buildShopifyWorkflowCards({
   | 'shopifyDraftCount'
   | 'shopifyArchivedCount'
   | 'shopifyApprovalLoading'
+  | 'shopifyApprovalUnavailableReason'
   | 'shopifyApprovalTotal'
   | 'shopifyApprovalApproved'
   | 'shopifyApprovalPending'
@@ -139,11 +147,12 @@ export function buildShopifyWorkflowCards({
     cards.push({
       id: 'shopify-approval',
       title: 'Listing Approval Queue',
-      eyebrow: shopifyApprovalLoading ? 'Syncing approval queue' : `${shopifyApprovalPending} awaiting review`,
-      detail: 'Review pending Shopify listing records, validate mapped fields, and approve records for Shopify publishing workflow.',
+      eyebrow: shopifyApprovalUnavailableReason ? 'Runtime config required' : shopifyApprovalLoading ? 'Syncing approval queue' : `${shopifyApprovalPending} awaiting review`,
+      detail: shopifyApprovalUnavailableReason ?? 'Review pending Shopify listing records, validate mapped fields, and approve records for Shopify publishing workflow.',
       stats: shopifyApprovalLoading
         ? ['Loading queue…']
         : [`${shopifyApprovalTotal} total`, `${shopifyApprovalPending} pending`, `${shopifyApprovalApproved} approved`],
+      unavailableReason: shopifyApprovalUnavailableReason ?? null,
     });
   }
 

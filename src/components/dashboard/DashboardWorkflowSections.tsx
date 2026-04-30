@@ -94,11 +94,20 @@ function WorkflowButton({ card, onSelect }: { card: WorkflowCard; onSelect: (tab
   return (
     <button
       type="button"
-      className="flex h-full flex-col gap-3 rounded-[16px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(104,164,255,0.1),transparent_56%),linear-gradient(180deg,rgba(15,23,42,0.9),rgba(8,15,26,0.96))] p-4 text-left text-[var(--ink)] transition hover:-translate-y-px hover:border-sky-400/35 hover:shadow-[0_18px_34px_rgba(2,6,23,0.28)]"
-      onClick={() => onSelect(card.id)}
+      className={`flex h-full flex-col gap-3 rounded-[16px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(104,164,255,0.1),transparent_56%),linear-gradient(180deg,rgba(15,23,42,0.9),rgba(8,15,26,0.96))] p-4 text-left text-[var(--ink)] transition ${card.unavailableReason ? 'cursor-not-allowed opacity-80' : 'hover:-translate-y-px hover:border-sky-400/35 hover:shadow-[0_18px_34px_rgba(2,6,23,0.28)]'}`}
+      disabled={Boolean(card.unavailableReason)}
+      title={card.unavailableReason ?? undefined}
+      onClick={() => {
+        if (!card.unavailableReason) {
+          onSelect(card.id);
+        }
+      }}
     >
       <div>
-        <p className="m-0 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-sky-200/80">{card.eyebrow}</p>
+        <p className="m-0 flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-sky-200/80">
+          <span>{card.eyebrow}</span>
+          {card.unavailableReason ? <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-[0.62rem] text-amber-200">Unavailable</span> : null}
+        </p>
         <h3 className="m-0 mt-1 text-[0.98rem] font-bold text-white">{card.title}</h3>
       </div>
       <p className="m-0 min-h-[3.6rem] text-[0.8rem] leading-[1.55] text-slate-300">{card.detail}</p>
@@ -109,7 +118,7 @@ function WorkflowButton({ card, onSelect }: { card: WorkflowCard; onSelect: (tab
           </span>
         ))}
       </div>
-      <span className="text-[0.74rem] font-semibold text-[var(--accent)]">Open {PAGE_DEFINITIONS[card.id].label} →</span>
+      <span className="text-[0.74rem] font-semibold text-[var(--accent)]">{card.unavailableReason ? `${PAGE_DEFINITIONS[card.id].label} unavailable` : `Open ${PAGE_DEFINITIONS[card.id].label} →`}</span>
     </button>
   );
 }

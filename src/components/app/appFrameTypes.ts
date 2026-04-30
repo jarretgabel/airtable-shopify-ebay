@@ -7,6 +7,7 @@ export interface AppTab {
   active: boolean;
   badgeCount?: number;
   disabled?: boolean;
+  disabledReason?: string;
   onClick: () => void;
 }
 

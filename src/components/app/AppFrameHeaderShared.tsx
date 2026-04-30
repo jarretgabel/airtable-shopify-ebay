@@ -35,11 +35,23 @@ export function TabBadge({ count }: { count?: number }): ReactNode {
   );
 }
 
+function DisabledTabIndicator({ reason }: { reason?: string }): ReactNode {
+  if (!reason) return null;
+
+  return (
+    <>
+      <span className="ml-1.5 inline-flex h-2.5 w-2.5 rounded-full bg-amber-400" aria-hidden="true" />
+      <span className="sr-only">Unavailable: {reason}</span>
+    </>
+  );
+}
+
 export function TabButton({ tab }: { tab: AppTab }): ReactNode {
   return (
-    <button type="button" className={tabClassName(tab.active)} disabled={tab.disabled} onClick={tab.onClick}>
+    <button type="button" className={tabClassName(tab.active)} disabled={tab.disabled} title={tab.disabledReason} onClick={tab.onClick}>
       {tab.label}
       <TabBadge count={tab.badgeCount} />
+      {!tab.badgeCount && <DisabledTabIndicator reason={tab.disabledReason} />}
     </button>
   );
 }
@@ -75,7 +87,10 @@ export function DropdownTabList({
             .join(' ')}
         >
           <span>{tab.label}</span>
-          <TabBadge count={tab.badgeCount} />
+          <span className="inline-flex items-center gap-2">
+            <TabBadge count={tab.badgeCount} />
+            {tab.disabledReason ? <span className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-amber-300">Unavailable</span> : null}
+          </span>
         </button>
       ))}
     </>

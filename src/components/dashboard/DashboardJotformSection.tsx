@@ -1,11 +1,18 @@
 import { formatAnswer } from '@/services/jotform';
-import { spinnerClass } from '@/components/tabs/uiClasses';
 import type { DashboardTargetTab } from './dashboardTabTypes';
 import type { JotFormSubmission } from '@/types/jotform';
-import { DashboardSectionPanel, DashboardSubPanel } from './dashboardPrimitives';
+import {
+  DashboardBarListSkeleton,
+  DashboardLoadingBanner,
+  DashboardSectionPanel,
+  DashboardSourceWarning,
+  DashboardSubPanel,
+  DashboardTableSkeleton,
+} from './dashboardPrimitives';
 
 interface DashboardJotformSectionProps {
   jfLoading: boolean;
+  errorMessage?: string | null;
   submissionWindowTotal: number;
   submissionAverage: number;
   activeSubmissionDays: number;
@@ -27,6 +34,7 @@ function toPercent(count: number, max: number): number {
 
 export function DashboardJotformSection({
   jfLoading,
+  errorMessage,
   submissionWindowTotal,
   submissionAverage,
   activeSubmissionDays,
@@ -42,9 +50,28 @@ export function DashboardJotformSection({
 }: DashboardJotformSectionProps) {
   return (
     <DashboardSectionPanel id="inquiries" title="JotForm">
+      {errorMessage && !jfLoading && (
+        <DashboardSourceWarning
+          title={jfSubmissions.length > 0 ? 'JotForm is showing the last successful snapshot' : 'JotForm data is unavailable right now'}
+          message={errorMessage}
+        />
+      )}
       <DashboardSubPanel title={<>Submission Volume <span className="text-[0.72rem] font-medium tracking-[0.02em] text-[var(--muted)]">Last 14 days</span></>}>
         {jfLoading ? (
-          <div className="flex items-center gap-3 py-6 text-[var(--muted)]"><div className={spinnerClass} /><p>Loading…</p></div>
+          <div className="space-y-4">
+            <DashboardLoadingBanner label="Loading submission trend snapshot" />
+            <div className="mb-4 grid grid-cols-1 gap-[0.8rem] sm:grid-cols-3">
+              {Array.from({ length: 3 }, (_, index) => (
+                <div key={index} className="flex flex-col gap-[0.28rem] rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-[0.85rem_0.95rem]">
+                  <div className="h-3 w-20 animate-pulse rounded-md bg-white/10" />
+                  <div className="h-5 w-24 animate-pulse rounded-md bg-white/10" />
+                </div>
+              ))}
+            </div>
+            <div className="rounded-[18px] border border-[var(--line)] bg-[radial-gradient(circle_at_top,rgba(104,164,255,0.08),transparent_55%),linear-gradient(180deg,rgba(16,26,40,0.98),rgba(11,20,31,0.98))] p-4">
+              <div className="h-[220px] animate-pulse rounded-[14px] bg-white/5" />
+            </div>
+          </div>
         ) : (
           <>
             <div className="mb-4 grid grid-cols-1 gap-[0.8rem] sm:grid-cols-3">
@@ -84,11 +111,11 @@ export function DashboardJotformSection({
       </DashboardSubPanel>
 
       <DashboardSubPanel title={<>Top Requested Brands <span className="text-[0.72rem] font-medium tracking-[0.02em] text-[var(--muted)]">From last 500 submissions</span></>}>
-        {jfLoading ? <div className="flex items-center gap-3 py-4 text-[var(--muted)]"><div className={spinnerClass} /><p>Loading…</p></div> : topBrands.length > 0 ? <ul className="m-0 flex list-none flex-col gap-[0.65rem] p-0">{topBrands.map(([brand, count], index) => <li key={`${brand}-${index}`} className="grid grid-cols-[130px_1fr_36px] items-center gap-3 max-[520px]:grid-cols-[90px_1fr_30px]"><span className="overflow-hidden text-ellipsis whitespace-nowrap text-[0.82rem] font-semibold text-[var(--ink)]">{brand}</span><div className="h-[7px] overflow-hidden rounded-full bg-[var(--line)]"><div className="h-full min-w-[4px] rounded-full bg-[linear-gradient(90deg,var(--accent),#5da6ff)] transition-[width] duration-[600ms] ease-in-out" style={{ width: `${toPercent(count, topBrands[0]?.[1] ?? 0)}%` }} /></div><span className="text-right text-[0.75rem] font-semibold text-[var(--muted)] [font-variant-numeric:tabular-nums]">{count}</span></li>)}</ul> : <p style={{ color: 'var(--muted)', margin: 0 }}>No brand data yet.</p>}
+        {jfLoading ? <DashboardBarListSkeleton count={5} /> : topBrands.length > 0 ? <ul className="m-0 flex list-none flex-col gap-[0.65rem] p-0">{topBrands.map(([brand, count], index) => <li key={`${brand}-${index}`} className="grid grid-cols-[130px_1fr_36px] items-center gap-3 max-[520px]:grid-cols-[90px_1fr_30px]"><span className="overflow-hidden text-ellipsis whitespace-nowrap text-[0.82rem] font-semibold text-[var(--ink)]">{brand}</span><div className="h-[7px] overflow-hidden rounded-full bg-[var(--line)]"><div className="h-full min-w-[4px] rounded-full bg-[linear-gradient(90deg,var(--accent),#5da6ff)] transition-[width] duration-[600ms] ease-in-out" style={{ width: `${toPercent(count, topBrands[0]?.[1] ?? 0)}%` }} /></div><span className="text-right text-[0.75rem] font-semibold text-[var(--muted)] [font-variant-numeric:tabular-nums]">{count}</span></li>)}</ul> : <p style={{ color: 'var(--muted)', margin: 0 }}>No brand data yet.</p>}
       </DashboardSubPanel>
 
       <DashboardSubPanel title={<>Recent Submissions <span className="text-[0.72rem] font-medium tracking-[0.02em] text-[var(--muted)]">Latest 8</span></>}>
-        {jfLoading ? <div className="flex items-center gap-3 py-4 text-[var(--muted)]"><div className={spinnerClass} /><p>Loading…</p></div> : <><ul className="m-0 flex-1 list-none p-0">{jfSubmissions.slice(0, 8).map((submission, index) => {
+        {jfLoading ? <DashboardTableSkeleton columns={3} rows={5} /> : <><ul className="m-0 flex-1 list-none p-0">{jfSubmissions.slice(0, 8).map((submission, index) => {
           const rawAnswers = submission.answers && typeof submission.answers === 'object' ? submission.answers : {};
           const sortedAnswers = Object.values(rawAnswers)
             .filter((answer) => formatAnswer(answer?.answer))

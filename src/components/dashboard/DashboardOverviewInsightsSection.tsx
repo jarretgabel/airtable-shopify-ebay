@@ -25,6 +25,7 @@ const sectionHeaderLabelClass = 'm-0 text-[1.05rem] font-semibold text-[var(--in
 
 interface DashboardOverviewSectionProps {
   jfLoading: boolean;
+  jotformUnavailableReason?: string | null;
   jfSubmissionCount: number;
   thisWeekCount: number;
   recentCount: number;
@@ -37,11 +38,13 @@ interface DashboardOverviewSectionProps {
   approvalPending: number;
   approvalApproved: number;
   approvalTotal: number;
+  approvalUnavailableReason?: string | null;
   uniqueAirtableBrands: number;
   uniqueAirtableTypes: number;
   ebayPublishedCount: number;
   ebayDraftCount: number;
   ebayTotal: number;
+  ebayUnavailableReason?: string | null;
   sellThroughPct: number | null;
   submissionsTrend: TrendSummary;
   dealsTrend: TrendSummary;
@@ -56,6 +59,7 @@ interface DashboardOverviewSectionProps {
 export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
   const {
     jfLoading,
+    jotformUnavailableReason,
     jfSubmissionCount,
     thisWeekCount,
     recentCount,
@@ -68,11 +72,13 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
     approvalPending,
     approvalApproved,
     approvalTotal,
+    approvalUnavailableReason,
     uniqueAirtableBrands,
     uniqueAirtableTypes,
     ebayPublishedCount,
     ebayDraftCount,
     ebayTotal,
+    ebayUnavailableReason,
     sellThroughPct,
     submissionsTrend,
     dealsTrend,
@@ -90,10 +96,11 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         <DashboardKpiCard
           borderToneClass="border-t-blue-500"
           eyebrow="Incoming Gear Submissions"
-          value={jfLoading ? '…' : jfSubmissionCount.toLocaleString()}
-          detail={<><strong className="font-semibold text-[var(--accent)]">{thisWeekCount}</strong> this week &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{recentCount}</strong> last 30 days{totalNewSubmissions > 0 && <><span>&nbsp;·&nbsp;</span><span className="font-semibold text-red-600">{totalNewSubmissions} unread</span></>}</>}
-          trend={submissionsTrend.text}
-          trendClass={trendToneClass[submissionsTrend.direction]}
+          value={jotformUnavailableReason ? 'Off' : jfLoading ? '…' : jfSubmissionCount.toLocaleString()}
+          detail={jotformUnavailableReason ? jotformUnavailableReason : <><strong className="font-semibold text-[var(--accent)]">{thisWeekCount}</strong> this week &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{recentCount}</strong> last 30 days{totalNewSubmissions > 0 && <><span>&nbsp;·&nbsp;</span><span className="font-semibold text-red-600">{totalNewSubmissions} unread</span></>}</>}
+          trend={jotformUnavailableReason ? 'Unavailable' : submissionsTrend.text}
+          trendClass={jotformUnavailableReason ? 'text-amber-300' : trendToneClass[submissionsTrend.direction]}
+          unavailableReason={jotformUnavailableReason}
           onClick={() => onSelectTab('jotform')}
         />
 
@@ -110,10 +117,11 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         <DashboardKpiCard
           borderToneClass="border-t-violet-500"
           eyebrow="Approval Queue"
-          value={approvalPending.toLocaleString()}
-          detail={<><strong className="font-semibold text-[var(--accent)]">{approvalApproved}</strong> approved &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvalTotal}</strong> total records</>}
-          trend={acquisitionTrend.text}
-          trendClass={trendToneClass[acquisitionTrend.direction]}
+          value={approvalUnavailableReason ? 'Off' : approvalPending.toLocaleString()}
+          detail={approvalUnavailableReason ? approvalUnavailableReason : <><strong className="font-semibold text-[var(--accent)]">{approvalApproved}</strong> approved &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvalTotal}</strong> total records</>}
+          trend={approvalUnavailableReason ? 'Unavailable' : acquisitionTrend.text}
+          trendClass={approvalUnavailableReason ? 'text-amber-300' : trendToneClass[acquisitionTrend.direction]}
+          unavailableReason={approvalUnavailableReason}
           onClick={() => onSelectTab('approval')}
         />
 
@@ -140,10 +148,11 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         <DashboardKpiCard
           borderToneClass="border-t-teal-500"
           eyebrow="eBay Coverage"
-          value={ebayCoveragePct !== null ? `${ebayCoveragePct}%` : '—'}
-          detail={<><strong className="font-semibold text-[var(--accent)]">{ebayPublishedCount}</strong> live &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{ebayDraftCount}</strong> draft across {ebayTotal} tracked SKU</>}
-          trend={marginTrend.text}
-          trendClass={trendToneClass[marginTrend.direction]}
+          value={ebayUnavailableReason ? 'Off' : ebayCoveragePct !== null ? `${ebayCoveragePct}%` : '—'}
+          detail={ebayUnavailableReason ? ebayUnavailableReason : <><strong className="font-semibold text-[var(--accent)]">{ebayPublishedCount}</strong> live &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{ebayDraftCount}</strong> draft across {ebayTotal} tracked SKU</>}
+          trend={ebayUnavailableReason ? 'Unavailable' : marginTrend.text}
+          trendClass={ebayUnavailableReason ? 'text-amber-300' : trendToneClass[marginTrend.direction]}
+          unavailableReason={ebayUnavailableReason}
           onClick={() => onSelectTab('ebay')}
         />
       </div>

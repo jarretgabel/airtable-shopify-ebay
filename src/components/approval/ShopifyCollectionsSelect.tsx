@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getCollections, searchCollections } from '@/services/app-api/shopify';
 import type { ShopifyCollectionMatch } from '@/services/shopify';
+import {
+  getCachedShopifyCollectionSearch,
+  getCachedShopifyCollections,
+  setCachedShopifyCollectionSearch,
+  setCachedShopifyCollections,
+} from './shopifyCollectionsCache';
 
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
@@ -58,6 +64,21 @@ export function ShopifyCollectionsSelect({
   useEffect(() => {
     if (!isOpen || disabled) return;
 
+    const cachedMatches = getCachedShopifyCollectionSearch(query);
+    if (cachedMatches) {
+      setOptions(cachedMatches);
+      setKnownCollectionsById((current) => {
+        const next = { ...current };
+        cachedMatches.forEach((match) => {
+          next[match.id] = match;
+        });
+        return next;
+      });
+      setError('');
+      setIsLoading(false);
+      return;
+    }
+
     let cancelled = false;
     const timeoutId = setTimeout(() => {
       void (async () => {
@@ -67,6 +88,7 @@ export function ShopifyCollectionsSelect({
         try {
           const matches = await searchCollections(query.trim());
           if (!cancelled) {
+            setCachedShopifyCollectionSearch(query, matches);
             setOptions(matches);
             setKnownCollectionsById((current) => {
               const next = { ...current };
@@ -101,12 +123,23 @@ export function ShopifyCollectionsSelect({
     const missingIds = value.filter((collectionId) => !labelsById[collectionId] && !knownCollectionsById[collectionId]);
     if (missingIds.length === 0) return;
 
+    const cachedCollections = getCachedShopifyCollections();
+    if (cachedCollections) {
+      const resolvedById = Object.fromEntries(cachedCollections.map((collection) => [collection.id, collection]));
+      setKnownCollectionsById((current) => ({
+        ...resolvedById,
+        ...current,
+      }));
+      return;
+    }
+
     let cancelled = false;
     void (async () => {
       try {
         const collections = await getCollections(250);
         if (cancelled) return;
 
+        setCachedShopifyCollections(collections);
         const resolvedById = Object.fromEntries(collections.map((collection) => [collection.id, collection]));
         setKnownCollectionsById((current) => ({
           ...resolvedById,

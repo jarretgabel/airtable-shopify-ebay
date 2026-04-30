@@ -1,0 +1,6 @@
+{
+  "bucket": "my-frontend-bucket",
+  "distributionId": "E123456789ABC",
+  "profile": "prod",
+  "region": "us-east-1"
+}

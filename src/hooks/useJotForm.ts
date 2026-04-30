@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { TAB_DATA_TTLS, shouldReuseTabData } from '@/app/tabDataCache';
 import type { JotFormForm, JotFormSubmission } from '@/types/jotform';
 import { getForms, getFormSubmissions } from '@/services/app-api/jotform';
 
@@ -65,13 +66,14 @@ export function useJotFormSubmissions(formId: string | null) {
  * @param formId        The JotForm form ID to watch.
  * @param pollIntervalMs  How often to poll in ms (default: 60 seconds).
  */
-export function useJotFormInquiries(formId: string, pollIntervalMs = 60_000) {
+export function useJotFormInquiries(formId: string, pollIntervalMs = 60_000, enabled = true) {
   const [submissions, setSubmissions] = useState<JotFormSubmission[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [polling, setPolling] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [freshCount, setFreshCount] = useState(0);
+  const [lastLoadedAt, setLastLoadedAt] = useState<number | null>(null);
 
   // The ID of the most-recent submission seen on the last fetch.
   // JotForm IDs are 64-bit integers; newer submissions have higher values.
@@ -102,6 +104,7 @@ export function useJotFormInquiries(formId: string, pollIntervalMs = 60_000) {
 
       setSubmissions(list);
       setLastUpdated(new Date());
+      setLastLoadedAt(Date.now());
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
@@ -111,13 +114,27 @@ export function useJotFormInquiries(formId: string, pollIntervalMs = 60_000) {
   }, [formId]);
 
   // Initial load
-  useEffect(() => { doFetch(false); }, [doFetch]);
+  useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      setPolling(false);
+      return;
+    }
+
+    if (shouldReuseTabData(lastLoadedAt, TAB_DATA_TTLS.jotformSubmissions, error === null)) {
+      setLoading(false);
+      return;
+    }
+
+    void doFetch(false);
+  }, [doFetch, enabled, error, lastLoadedAt]);
 
   // Background polling
   useEffect(() => {
+    if (!enabled) return undefined;
     const id = setInterval(() => doFetch(true), pollIntervalMs);
     return () => clearInterval(id);
-  }, [doFetch, pollIntervalMs]);
+  }, [doFetch, enabled, pollIntervalMs]);
 
   return {
     submissions,

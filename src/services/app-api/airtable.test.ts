@@ -7,8 +7,10 @@ import {
   getConfiguredFieldMetadata,
   getConfiguredRecord,
   getConfiguredRecords,
+  getConfiguredRecordsSummary,
   getListings,
   getRecordsFromResolvedSource,
+  getRecordsSummaryFromResolvedSource,
   updateConfiguredRecord,
   updateRecordFromResolvedSource,
   uploadConfiguredAttachment,
@@ -101,6 +103,23 @@ describe('app-api airtable', () => {
       headers: { Accept: 'application/json' },
     });
     expect(result).toEqual([{ id: 'recSlim', fields: { SKU: 'ABC' }, createdTime: 'later' }]);
+  });
+
+  it('calls the configured-records summary mode', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ total: 12, approved: 4, pending: 8 }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await getConfiguredRecordsSummary('approval-ebay');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-ebay&summary=queue', {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    });
+    expect(result).toEqual({ total: 12, approved: 4, pending: 8 });
   });
 
   it('calls the Lambda configured single-record endpoint when Lambda mode is on', async () => {
@@ -283,6 +302,24 @@ describe('app-api airtable', () => {
       headers: { Accept: 'application/json' },
     });
     expect(records).toEqual([{ id: 'recApproval1', fields: { Title: 'Draft' }, createdTime: 'now' }]);
+  });
+
+  it('resolves approval summary reads through the Lambda configured-records summary mode', async () => {
+    vi.stubEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF', 'appShopify/viwShopify');
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ total: 9, approved: 3, pending: 6 }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await getRecordsSummaryFromResolvedSource('appShopify/viwShopify', undefined);
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-shopify&summary=queue', {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    });
+    expect(result).toEqual({ total: 9, approved: 3, pending: 6 });
   });
 
   it('resolves approval deletes through the Lambda configured-record endpoint', async () => {

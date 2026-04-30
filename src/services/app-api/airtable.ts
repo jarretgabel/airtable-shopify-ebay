@@ -24,6 +24,12 @@ interface AirtableConfiguredReadOptions {
   fields?: string[];
 }
 
+export interface AirtableConfiguredRecordsSummary {
+  total: number;
+  approved: number;
+  pending: number;
+}
+
 interface AirtableDeleteResponse {
   deleted: boolean;
 }
@@ -122,6 +128,19 @@ export async function getConfiguredRecords(
   }
 }
 
+export async function getConfiguredRecordsSummary(
+  source: AirtableConfiguredRecordsSource,
+): Promise<AirtableConfiguredRecordsSummary> {
+  try {
+    return await getJson<AirtableConfiguredRecordsSummary>('/api/airtable/configured-records', {
+      source,
+      summary: 'queue',
+    });
+  } catch (error) {
+    throw toConfiguredSourceError(error, source);
+  }
+}
+
 export async function getConfiguredRecord(
   source: AirtableConfiguredRecordsSource,
   recordId: string,
@@ -141,6 +160,23 @@ export async function getRecordsFromResolvedSource(
 
   if (resolvedSource) {
     return getConfiguredRecords(resolvedSource);
+  }
+
+  if (!tableReference) {
+    throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
+  }
+
+  throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda read path.'), 'approval-ebay');
+}
+
+export async function getRecordsSummaryFromResolvedSource(
+  tableReference: string | undefined,
+  tableName: string | undefined,
+): Promise<AirtableConfiguredRecordsSummary> {
+  const resolvedSource = resolveConfiguredRecordsSource(tableReference, tableName);
+
+  if (resolvedSource) {
+    return getConfiguredRecordsSummary(resolvedSource);
   }
 
   if (!tableReference) {

@@ -35,7 +35,7 @@ export function useApprovalQueueSummary(enabled = true): ApprovalQueueSummarySta
   useEffect(() => {
     setEnabled(enabled);
     if (!enabled) return;
-    void refetch();
+    void refetch(false);
   }, [enabled, setEnabled, refetch]);
 
   return { loading, error, total, approved, pending, refetch };

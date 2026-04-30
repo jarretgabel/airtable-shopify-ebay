@@ -33,3 +33,6 @@ aws/env.local.json
 aws/samconfig.toml
 aws/deploy/ssm-setup.sh
 aws/.aws-sam/
+.cloudfront-frontend.deploy.json
+.cloudfront-frontend.staging.deploy.json
+.cloudfront-frontend.prod.deploy.json

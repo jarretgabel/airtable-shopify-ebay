@@ -1,8 +1,40 @@
 import { accentActionButtonClass, primaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
-import { errorSurfaceClass, loadingSurfaceClass, panelSurfaceClass, spinnerClass } from '@/components/tabs/uiClasses';
+import { errorSurfaceClass, panelSurfaceClass } from '@/components/tabs/uiClasses';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { AirtableRecord } from '@/types/airtable';
+
+function ListingApprovalQueueSkeleton() {
+  return (
+    <div className="space-y-4" aria-hidden="true">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2">
+          <div className="h-3 w-20 animate-pulse rounded-md bg-white/10" />
+          <div className="h-6 w-52 animate-pulse rounded-md bg-white/10" />
+          <div className="h-4 w-40 animate-pulse rounded-md bg-white/10" />
+        </div>
+        <div className="h-10 w-32 animate-pulse rounded-xl bg-white/10" />
+      </div>
+      <div className="h-4 w-36 animate-pulse rounded-md bg-white/10" />
+      <div className="overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--bg)]">
+        <div className="grid grid-cols-4 gap-3 border-b border-[var(--line)] px-4 py-3 max-md:grid-cols-2">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={`header-${index}`} className="h-3 animate-pulse rounded-md bg-white/10" />
+          ))}
+        </div>
+        <div className="space-y-3 px-4 py-4">
+          {Array.from({ length: 6 }, (_, index) => (
+            <div key={`row-${index}`} className="grid grid-cols-4 gap-3 max-md:grid-cols-2">
+              {Array.from({ length: 4 }, (_, columnIndex) => (
+                <div key={`cell-${index}-${columnIndex}`} className="h-4 animate-pulse rounded-md bg-white/10" />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface ListingApprovalQueuePanelProps {
   hasTableReference: boolean;
@@ -26,7 +58,7 @@ interface ListingApprovalQueuePanelProps {
   openRecord: (record: AirtableRecord) => void;
   onSelectRecord: (recordId: string) => void;
   createNewShopifyListing: () => Promise<void>;
-  loadRecords: (tableReference: string, tableName: string) => Promise<void>;
+  loadRecords: (tableReference: string, tableName?: string, force?: boolean) => Promise<void>;
 }
 
 export function ListingApprovalQueuePanel({
@@ -72,9 +104,8 @@ export function ListingApprovalQueuePanel({
       )}
 
       {hasTableReference && loading ? (
-        <section className={loadingSurfaceClass}>
-          <div className={spinnerClass} />
-          <p>Loading listing approval queue...</p>
+        <section className={panelSurfaceClass}>
+          <ListingApprovalQueueSkeleton />
         </section>
       ) : hasTableReference ? (
         <section className={panelSurfaceClass}>
@@ -106,7 +137,7 @@ export function ListingApprovalQueuePanel({
                   trackWorkflowEvent('approval_queue_refreshed', {
                     tableReference,
                   });
-                  void loadRecords(tableReference, tableName ?? '');
+                  void loadRecords(tableReference, tableName ?? '', true);
                 }}
               >
                 Refresh Queue

@@ -1,5 +1,12 @@
 import { useState } from 'react';
+import { recordTitle } from '@/app/appNavigation';
+import { getPublishRequiredFieldValidationNotice } from '@/components/approval/listingApprovalActionValidation';
 import { publishApprovalRecord } from '@/services/app-api/approval';
+import { useNotificationStore } from '@/stores/notificationStore';
+import {
+  buildListingApprovalPublishErrorNotification,
+  buildListingApprovalPublishResultNotification,
+} from './listingApprovalResultSummary';
 import type { UseListingApprovalRecordActionsParams } from './listingApprovalRecordActionTypes';
 
 type PublishActionsParams = Pick<UseListingApprovalRecordActionsParams,
@@ -12,6 +19,7 @@ type PublishActionsParams = Pick<UseListingApprovalRecordActionsParams,
   | 'mergedDraftSourceFields'
   | 'setFormValue'
   | 'pushInlineActionNotice'
+  | 'requestConfirmation'
 >;
 
 export function useListingApprovalPublishActions({
@@ -24,27 +32,46 @@ export function useListingApprovalPublishActions({
   mergedDraftSourceFields,
   setFormValue,
   pushInlineActionNotice,
+  requestConfirmation,
 }: PublishActionsParams) {
   const [pushingTarget, setPushingTarget] = useState<'shopify' | 'ebay' | 'both' | null>(null);
+  const pushResultNotification = useNotificationStore.getState().upsertByKey;
 
   const runCombinedPush = async (target: 'shopify' | 'ebay' | 'both') => {
     if (!selectedRecord) return;
 
-    if ((target === 'shopify' || target === 'both') && hasMissingShopifyRequiredFields) {
-      pushInlineActionNotice('warning', 'Required Shopify fields missing', `Complete required Shopify fields before publishing: ${missingShopifyRequiredFieldLabels.join(', ')}`);
+    const validationNotice = getPublishRequiredFieldValidationNotice(target, {
+      shopify: {
+        hasMissingFields: hasMissingShopifyRequiredFields,
+        missingFieldLabels: missingShopifyRequiredFieldLabels,
+      },
+      ebay: {
+        hasMissingFields: hasMissingEbayRequiredFields,
+        missingFieldLabels: missingEbayRequiredFieldLabels,
+      },
+    });
+
+    if (validationNotice) {
+      pushInlineActionNotice('warning', validationNotice.title, validationNotice.message);
       return;
     }
 
-    if ((target === 'ebay' || target === 'both') && hasMissingEbayRequiredFields) {
-      pushInlineActionNotice('warning', 'Required eBay fields missing', `Complete required eBay fields before publishing: ${missingEbayRequiredFieldLabels.join(', ')}`);
-      return;
-    }
-
-    const confirmed = window.confirm(
-      target === 'both'
-        ? 'Publish this listing to both Shopify and eBay using the current page values?'
-        : `Publish this listing to ${target === 'shopify' ? 'Shopify' : 'eBay'} using the current page values?`,
-    );
+    const confirmed = await requestConfirmation({
+      title: target === 'both' ? 'Publish to both channels' : `Publish to ${target === 'shopify' ? 'Shopify' : 'eBay'}`,
+      message: 'Publish using the current page values rather than the last saved backend payload.',
+      confirmLabel: target === 'both' ? 'Publish both' : `Publish ${target}`,
+      bullets: [
+        `Record: ${recordTitle(selectedRecord.fields)}`,
+        `Target: ${target === 'both' ? 'Shopify and eBay' : target === 'shopify' ? 'Shopify' : 'eBay'}`,
+        'Current in-page values will be used for the publish request.',
+      ],
+      typedConfirmation: {
+        expectedValue: target === 'both' ? 'PUBLISH BOTH' : `PUBLISH ${target.toUpperCase()}`,
+        inputLabel: 'Type the publish command to confirm',
+        helperText: 'Publishing can create or update live channel listings. Type the command exactly to continue.',
+        placeholder: target === 'both' ? 'PUBLISH BOTH' : `PUBLISH ${target.toUpperCase()}`,
+      },
+    });
     if (!confirmed) return;
 
     setPushingTarget(target);
@@ -81,9 +108,22 @@ export function useListingApprovalPublishActions({
           failure.message,
         );
       });
+
+      pushResultNotification(
+        `approval-publish-result:${selectedRecord.id}`,
+        buildListingApprovalPublishResultNotification({
+          record: selectedRecord,
+          target,
+          result: executionResult,
+        }),
+      );
     } catch (pushError) {
       const message = pushError instanceof Error ? pushError.message : 'Unable to push this listing.';
       pushInlineActionNotice('error', 'Publish failed', message);
+      pushResultNotification(
+        `approval-publish-result:${selectedRecord.id}`,
+        buildListingApprovalPublishErrorNotification(selectedRecord, target, message),
+      );
     } finally {
       setPushingTarget(null);
     }

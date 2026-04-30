@@ -49,6 +49,14 @@ export interface WorkflowCard {
   eyebrow: string;
   detail: string;
   stats: string[];
+  unavailableReason?: string | null;
+}
+
+export interface DashboardSourceStatus {
+  key: 'airtable' | 'shopify' | 'jotform' | 'approval' | 'shopify-approval' | 'ebay' | 'market';
+  label: string;
+  error: string | null;
+  hasData: boolean;
 }
 
 export type DashboardSectionId =
@@ -131,6 +139,7 @@ export interface DashboardTabProps {
 export interface DashboardWorkflowSource {
   accessiblePages: AppPage[];
   approvalError: string | null;
+  approvalUnavailableReason?: string | null;
   approvalTotal: number;
   approvalApproved: number;
   approvalPending: number;
@@ -138,6 +147,7 @@ export interface DashboardWorkflowSource {
   ebayAuthenticated: boolean;
   ebayRestoringSession: boolean;
   ebayError: string | null;
+  ebayUnavailableReason?: string | null;
   ebayTotal: number;
   ebayPublishedCount: number;
   ebayDraftCount: number;
@@ -153,6 +163,7 @@ export interface DashboardWorkflowSource {
   shopifyDraftCount: number;
   shopifyArchivedCount: number;
   shopifyApprovalLoading: boolean;
+  shopifyApprovalUnavailableReason?: string | null;
   shopifyApprovalTotal: number;
   shopifyApprovalApproved: number;
   shopifyApprovalPending: number;

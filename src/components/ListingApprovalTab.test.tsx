@@ -241,6 +241,10 @@ vi.mock('@/services/workflowAnalytics', () => ({
   trackWorkflowEvent: vi.fn(),
 }));
 
+vi.mock('@/hooks/useUnsavedChangesPrompt', () => ({
+  useUnsavedChangesPrompt: vi.fn(),
+}));
+
 describe('ListingApprovalTab', () => {
   beforeEach(() => {
     (approvalStoreModule as typeof approvalStoreModule & { __resetApprovalStoreMock: (record?: AirtableRecord) => void }).__resetApprovalStoreMock(defaultRecord);
@@ -277,8 +281,8 @@ describe('ListingApprovalTab', () => {
       expect(normalizeApprovalRecordMock).toHaveBeenCalled();
     });
 
-    fireEvent.click(screen.getByText('Shopify Create Listing API Payload (Exact Request)'));
-    fireEvent.click(screen.getByText('eBay Create Listing API Payload (Exact Request)'));
+    fireEvent.click(await screen.findByText('Shopify Create Listing API Payload (Exact Request)'));
+    fireEvent.click(await screen.findByText('eBay Create Listing API Payload (Exact Request)'));
 
     act(() => {
       approvalStoreModule.useApprovalStore.getState().setFormValue('Description', 'Updated description from backend preview');
@@ -319,7 +323,7 @@ describe('ListingApprovalTab', () => {
       expect(normalizeApprovalRecordMock).toHaveBeenCalled();
     });
 
-    fireEvent.click(screen.getByText('Shopify Create Listing API Payload (Exact Request)'));
+    fireEvent.click(await screen.findByText('Shopify Create Listing API Payload (Exact Request)'));
 
     act(() => {
       approvalStoreModule.useApprovalStore.getState().setFormValue('Category', 'Speakers > Floorstanding Speakers');
@@ -365,7 +369,7 @@ describe('ListingApprovalTab', () => {
       expect(normalizeApprovalRecordMock).toHaveBeenCalled();
     });
 
-    fireEvent.click(screen.getByText('eBay Create Listing API Payload (Exact Request)'));
+    fireEvent.click(await screen.findByText('eBay Create Listing API Payload (Exact Request)'));
 
     act(() => {
       approvalStoreModule.useApprovalStore.getState().setFormValue('Categories', '654321');

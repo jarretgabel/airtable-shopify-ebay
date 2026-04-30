@@ -1,4 +1,4 @@
-import type { DashboardTargetTab, DashboardInsight, ShopifyProduct, TrendSummary, AirtableTypeRow, AirtableListing } from '@/components/dashboard/dashboardTabTypes';
+import type { DashboardTargetTab, DashboardInsight, DashboardSourceStatus, ShopifyProduct, TrendSummary, AirtableTypeRow, AirtableListing } from '@/components/dashboard/dashboardTabTypes';
 import type { AppPage } from '@/auth/pages';
 import type { Tab } from '@/app/appNavigation';
 import type { JotFormSubmission } from '@/types/jotform';
@@ -77,6 +77,9 @@ export interface DashboardTabViewModel {
     marketListingCount: number;
     userCount: number;
     adminCount: number;
+  };
+  status: {
+    sources: DashboardSourceStatus[];
   };
   actions: {
     onSelectTab: (tab: DashboardTargetTab) => void;

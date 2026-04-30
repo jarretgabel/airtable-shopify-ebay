@@ -35,7 +35,7 @@ export function useShopifyApprovalQueueSummary(enabled = true): ShopifyApprovalQ
   useEffect(() => {
     setEnabled(enabled);
     if (!enabled) return;
-    void refetch();
+    void refetch(false);
   }, [enabled, setEnabled, refetch]);
 
   return { loading, error, total, approved, pending, refetch };

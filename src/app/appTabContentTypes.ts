@@ -7,6 +7,7 @@ import type { EbayRuntimeConfig } from '@/services/app-api/ebay';
 import type { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
 import type { useShopifyProducts } from '@/hooks/useShopifyProducts';
 import type { Tab } from '@/app/appNavigation';
+import type { RuntimeFeatureMap } from '@/config/runtimeCapabilities';
 
 export interface AppTabContentProps {
   activeTab: Tab;
@@ -32,6 +33,7 @@ export interface AppTabContentProps {
   navigateToUserRecord: (userId: string, replace?: boolean) => void;
   navigateToUsersList: (replace?: boolean) => void;
   navigateToTab: (tab: Tab, replace?: boolean) => void;
+  runtimeFeatures: RuntimeFeatureMap;
   metrics: ReturnType<typeof useDashboardMetrics>;
   accessiblePages: Tab[];
   aiProvider: 'github' | 'openai' | 'backend' | 'none';

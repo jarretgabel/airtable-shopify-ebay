@@ -1,0 +1,272 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Static frontend hosting for the Airtable Shopify eBay Vite app on S3 + CloudFront.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: airtable-shopify-ebay
+  EnvironmentName:
+    Type: String
+    Default: prod
+  PriceClass:
+    Type: String
+    Default: PriceClass_100
+    AllowedValues:
+      - PriceClass_100
+      - PriceClass_200
+      - PriceClass_All
+  CustomDomainName:
+    Type: String
+    Default: ''
+  AcmCertificateArn:
+    Type: String
+    Default: ''
+  ApiOriginDomainName:
+    Type: String
+    Default: ''
+  ApiOriginPath:
+    Type: String
+    Default: ''
+
+Conditions:
+  HasCustomDomain: !Not [!Equals [!Ref CustomDomainName, '']]
+  HasCertificate: !Not [!Equals [!Ref AcmCertificateArn, '']]
+  HasApiOrigin: !Not [!Equals [!Ref ApiOriginDomainName, '']]
+  UseCustomDomainAndCert: !And
+    - !Condition HasCustomDomain
+    - !Condition HasCertificate
+
+Resources:
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  FrontendOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${ProjectName}-${EnvironmentName}-frontend-oac'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${FrontendBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${FrontendDistribution}'
+
+  ImmutableAssetsCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub '${ProjectName}-${EnvironmentName}-immutable-assets'
+        DefaultTTL: 31536000
+        MaxTTL: 31536000
+        MinTTL: 86400
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          EnableAcceptEncodingBrotli: true
+          EnableAcceptEncodingGzip: true
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+
+  MutableFilesCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub '${ProjectName}-${EnvironmentName}-mutable-files'
+        DefaultTTL: 0
+        MaxTTL: 60
+        MinTTL: 0
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          EnableAcceptEncodingBrotli: true
+          EnableAcceptEncodingGzip: true
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+
+  ApiCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Condition: HasApiOrigin
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub '${ProjectName}-${EnvironmentName}-api-no-cache'
+        DefaultTTL: 0
+        MaxTTL: 0
+        MinTTL: 0
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: all
+          EnableAcceptEncodingBrotli: true
+          EnableAcceptEncodingGzip: true
+          HeadersConfig:
+            HeaderBehavior: whitelist
+            Headers:
+              - Authorization
+              - Content-Type
+              - Origin
+              - Referer
+              - Accept
+              - Accept-Language
+          QueryStringsConfig:
+            QueryStringBehavior: all
+
+  FrontendResponseHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub '${ProjectName}-${EnvironmentName}-frontend-security-headers'
+        SecurityHeadersConfig:
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: SAMEORIGIN
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: strict-origin-when-cross-origin
+            Override: true
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: true
+            Override: true
+            Preload: true
+
+  FrontendDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub '${ProjectName}-${EnvironmentName} frontend'
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        PriceClass: !Ref PriceClass
+        Aliases: !If [HasCustomDomain, [!Ref CustomDomainName], !Ref AWS::NoValue]
+        Origins:
+          - Id: s3Origin
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            S3OriginConfig: {}
+            OriginAccessControlId: !Ref FrontendOriginAccessControl
+          - !If
+            - HasApiOrigin
+            - Id: apiOrigin
+              DomainName: !Ref ApiOriginDomainName
+              OriginPath: !Ref ApiOriginPath
+              CustomOriginConfig:
+                OriginProtocolPolicy: https-only
+                HTTPSPort: 443
+                OriginSSLProtocols:
+                  - TLSv1.2
+            - !Ref AWS::NoValue
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+          CachePolicyId: !Ref MutableFilesCachePolicy
+          Compress: true
+          ResponseHeadersPolicyId: !Ref FrontendResponseHeadersPolicy
+          TargetOriginId: s3Origin
+          ViewerProtocolPolicy: redirect-to-https
+        CacheBehaviors:
+          - PathPattern: assets/*
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachedMethods:
+              - GET
+              - HEAD
+            CachePolicyId: !Ref ImmutableAssetsCachePolicy
+            Compress: true
+            ResponseHeadersPolicyId: !Ref FrontendResponseHeadersPolicy
+            TargetOriginId: s3Origin
+            ViewerProtocolPolicy: redirect-to-https
+          - PathPattern: runtime-config.json
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachedMethods:
+              - GET
+              - HEAD
+            CachePolicyId: !Ref MutableFilesCachePolicy
+            Compress: true
+            ResponseHeadersPolicyId: !Ref FrontendResponseHeadersPolicy
+            TargetOriginId: s3Origin
+            ViewerProtocolPolicy: redirect-to-https
+          - !If
+            - HasApiOrigin
+            - PathPattern: api/*
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - PATCH
+                - POST
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              CachePolicyId: !Ref ApiCachePolicy
+              Compress: true
+              TargetOriginId: apiOrigin
+              ViewerProtocolPolicy: redirect-to-https
+            - !Ref AWS::NoValue
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+        ViewerCertificate: !If
+          - UseCustomDomainAndCert
+          - AcmCertificateArn: !Ref AcmCertificateArn
+            MinimumProtocolVersion: TLSv1.2_2021
+            SslSupportMethod: sni-only
+          - CloudFrontDefaultCertificate: true
+
+Outputs:
+  FrontendBucketName:
+    Value: !Ref FrontendBucket
+  FrontendDistributionId:
+    Value: !Ref FrontendDistribution
+  FrontendDistributionDomainName:
+    Value: !GetAtt FrontendDistribution.DomainName

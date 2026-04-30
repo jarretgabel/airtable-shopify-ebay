@@ -12,8 +12,8 @@ interface UseListingApprovalRecordLifecycleParams {
   allFieldNames: string[];
   approvedFieldName: string;
   hydrateForm: (record: AirtableRecord, fieldNames: string[], approvedFieldName: string) => void;
-  loadListingFormatOptions: () => Promise<void>;
-  loadRecords: (tableReference: string, tableName?: string) => Promise<void>;
+  loadListingFormatOptions: (force?: boolean) => Promise<void>;
+  loadRecords: (tableReference: string, tableName?: string, force?: boolean) => Promise<void>;
   onSelectRecord: (recordId: string) => void;
   pushInlineActionNotice: (tone: 'success' | 'error', title: string, message: string) => void;
   resetInlineActionNotices: () => void;
@@ -55,8 +55,8 @@ export function useListingApprovalRecordLifecycle({
 
   useEffect(() => {
     if (!hasTableReference) return;
-    void loadRecords(tableReference, tableName);
-    void loadListingFormatOptions();
+    void loadRecords(tableReference, tableName, false);
+    void loadListingFormatOptions(false);
   }, [hasTableReference, loadListingFormatOptions, loadRecords, tableName, tableReference]);
 
   useEffect(() => {
@@ -139,7 +139,7 @@ export function useListingApprovalRecordLifecycle({
         createRecord: createRecordFromResolvedSource,
       });
 
-      await loadRecords(tableReference, tableName);
+      await loadRecords(tableReference, tableName, true);
       onSelectRecord(createdRecord.id);
       pushInlineActionNotice('success', 'New Shopify listing created', 'A new Airtable row is ready. Fill the required Shopify fields, save, then approve.');
     } catch (createError) {

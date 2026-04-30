@@ -11,7 +11,7 @@ import {
   isEbayTestingNotesField,
   isGenericSharedKeyFeaturesField,
   normalizeEbayListingTemplateId,
-} from './approvalFormFieldsBasicHelpers';
+} from './approvalFormFieldsEbayHelpersBasic';
 import {
   SYNTHETIC_EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD,
   SYNTHETIC_EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD,

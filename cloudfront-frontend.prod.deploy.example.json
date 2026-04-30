@@ -1,0 +1,7 @@
+{
+  "bucket": "my-prod-frontend-bucket",
+  "distributionId": "EPROD123456",
+  "profile": "prod",
+  "region": "us-east-1",
+  "runtimeConfigPath": "public/runtime-config.prod.json"
+}

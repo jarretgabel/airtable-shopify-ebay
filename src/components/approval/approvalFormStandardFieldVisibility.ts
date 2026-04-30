@@ -3,11 +3,15 @@ import { SHIPPING_SERVICE_FIELD, isAllowOffersField, isShippingServiceField } fr
 import {
   isBooleanLikeValue,
   isConditionMirrorSourceField,
+  isScalarImageField,
+} from './approvalFormFieldsSharedHelpers';
+import {
   isEbayGlobalShippingField,
   isEbayHandlingCostField,
   isEbayKeyFeaturesField,
+} from './approvalFormFieldsEbayHelpersBasic';
+import {
   isHiddenApprovalField,
-  isScalarImageField,
   isShopifyKeyFeaturesField,
   isShopifyOptionValuesField,
   isShopifyTemplateVariantNameField,
@@ -16,7 +20,7 @@ import {
   isShopifyVariantBooleanField,
   isShopifyVariantOptionField,
   isShopifyVariantStatusField,
-} from './approvalFormFieldsBasicHelpers';
+} from './approvalFormFieldsShopifyHelpersBasic';
 import {
   getCanonicalShippingServiceAlias,
   isEbayAdvancedOptionField,

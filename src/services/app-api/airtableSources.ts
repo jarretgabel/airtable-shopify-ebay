@@ -1,6 +1,6 @@
+import { checkOptionalEnv } from '@/config/runtimeEnv';
+
 export const DEFAULT_USERS_TABLE_NAME = 'j2Gt9USORo6Vi5';
-export const DEFAULT_APPROVAL_TABLE_REFERENCE = '3yTb0JkzUMFNnS/viw21kEduXKNub4Vn';
-export const DEFAULT_COMBINED_LISTINGS_TABLE_NAME = 'tbl0K0nFQL64jQMx8';
 
 export const INVENTORY_DIRECTORY_BASE_ID = 'appjQj8FQfFZ2ogMz';
 export const INVENTORY_DIRECTORY_TABLE_ID = 'tblirsoRIFPDMHxb0';
@@ -15,8 +15,8 @@ export type AirtableConfiguredRecordsSource =
   | 'approval-combined';
 
 export function getUsersTableReference(): { reference?: string; tableName: string } {
-  const envReference = (import.meta.env.VITE_AIRTABLE_USERS_TABLE_REF as string | undefined)?.trim();
-  const envTableName = (import.meta.env.VITE_AIRTABLE_USERS_TABLE_NAME as string | undefined)?.trim();
+  const envReference = checkOptionalEnv('VITE_AIRTABLE_USERS_TABLE_REF');
+  const envTableName = checkOptionalEnv('VITE_AIRTABLE_USERS_TABLE_NAME');
 
   if (envReference && !envReference.includes('/')) {
     return { tableName: envReference };
@@ -38,25 +38,22 @@ export function getConfiguredRecordsSourceDefinition(source: AirtableConfiguredR
 
   if (source === 'approval-ebay') {
     return {
-      reference: (import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_REF as string | undefined)?.trim() || DEFAULT_APPROVAL_TABLE_REFERENCE,
-      tableName:
-        (import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_NAME as string | undefined)?.trim()
-        || (import.meta.env.VITE_AIRTABLE_TABLE_NAME as string | undefined)?.trim()
-        || '',
+      reference: checkOptionalEnv('VITE_AIRTABLE_APPROVAL_TABLE_REF'),
+      tableName: checkOptionalEnv('VITE_AIRTABLE_APPROVAL_TABLE_NAME') || '',
     };
   }
 
   if (source === 'approval-shopify') {
     return {
-      reference: (import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF as string | undefined)?.trim(),
-      tableName: (import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME as string | undefined)?.trim() || '',
+      reference: checkOptionalEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF'),
+      tableName: checkOptionalEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME') || '',
     };
   }
 
   if (source === 'approval-combined') {
     return {
-      reference: (import.meta.env.VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF as string | undefined)?.trim(),
-      tableName: (import.meta.env.VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME as string | undefined)?.trim() || DEFAULT_COMBINED_LISTINGS_TABLE_NAME,
+      reference: checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF'),
+      tableName: checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME') || '',
     };
   }
 

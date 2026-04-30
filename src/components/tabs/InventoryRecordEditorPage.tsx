@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import { InventoryRecordEditor } from '@/components/tabs/airtable/InventoryRecordEditor';
 import type { InventoryDraftValue, InventoryFieldMetadata } from '@/components/tabs/airtable/inventoryDirectoryTypes';
+import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
+import { useUnsavedChangesPrompt } from '@/hooks/useUnsavedChangesPrompt';
 import {
   buildInventoryDraftValues,
   getInventoryEditableFields,
@@ -27,6 +29,7 @@ export function InventoryRecordEditorPage({ recordId, onBackToDirectory }: Inven
   const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const { requestConfirmation, confirmationModal } = useConfirmationDialog();
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +77,12 @@ export function InventoryRecordEditorPage({ recordId, onBackToDirectory }: Inven
       .map((field) => field.name),
     [draftValues, editableFields, initialDraftValues],
   );
+
+  useUnsavedChangesPrompt({
+    when: dirtyFieldNames.length > 0 && !saving,
+    message: 'You have unsaved inventory edits. Leave this page and discard them?',
+    requestConfirmation,
+  });
 
   const handleSave = async () => {
     if (!record || dirtyFieldNames.length === 0) return;
@@ -127,8 +136,9 @@ export function InventoryRecordEditorPage({ recordId, onBackToDirectory }: Inven
   }
 
   return (
-    <PanelSurface>
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <>
+      <PanelSurface>
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -169,7 +179,9 @@ export function InventoryRecordEditorPage({ recordId, onBackToDirectory }: Inven
             void handleSave();
           }}
         />
-      </div>
-    </PanelSurface>
+        </div>
+      </PanelSurface>
+      {confirmationModal}
+    </>
   );
 }

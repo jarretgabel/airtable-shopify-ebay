@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import type { AppPage } from '@/auth/pages';
 import { hasNonEmptyFields, TAB_VALUES } from '@/app/appNavigation';
-import { requireEnv } from '@/config/runtimeEnv';
+import { getRuntimeFeatureCapabilities } from '@/config/runtimeCapabilities';
+import { checkOptionalEnv, requireEnv } from '@/config/runtimeEnv';
 import { useApprovalQueueSummary } from '@/hooks/useApprovalQueueSummary';
 import { useShopifyApprovalQueueSummary } from '@/hooks/useShopifyApprovalQueueSummary';
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
@@ -14,23 +15,30 @@ import { getAIProvider } from '@/services/equipmentAI';
 
 interface AppDataParams {
   canAccessPage: (page: AppPage) => boolean;
+  activeTab: AppPage;
   users: Array<{ role: string }>;
 }
 
-export function useAppData({ canAccessPage, users }: AppDataParams) {
+export function useAppData({ canAccessPage, activeTab, users }: AppDataParams) {
+  const dashboardActive = activeTab === 'dashboard';
+  const airtableEnabled = dashboardActive || activeTab === 'inventory';
+  const shopifyEnabled = dashboardActive || activeTab === 'shopify';
+  const runtimeFeatures = getRuntimeFeatureCapabilities();
+  const jotformEnabled = runtimeFeatures.jotform.available && (dashboardActive || activeTab === 'jotform');
+  const ebayEnabled = runtimeFeatures.ebay.available && canAccessPage('ebay') && (dashboardActive || activeTab === 'ebay');
   const tableName = requireEnv('VITE_AIRTABLE_TABLE_NAME');
-  const viewId = import.meta.env.VITE_AIRTABLE_VIEW_ID;
-  const airtable = useListings(tableName, viewId);
+  const viewId = checkOptionalEnv('VITE_AIRTABLE_VIEW_ID');
+  const airtable = useListings(tableName, viewId, airtableEnabled);
   const nonEmptyListings = airtable.listings.filter((listing) => hasNonEmptyFields(listing.fields));
 
-  const shopify = useShopifyProducts();
+  const shopify = useShopifyProducts(shopifyEnabled);
   const market = useHiFiShark();
-  const ebay = useEbayListings(canAccessPage('ebay'));
-  const approval = useApprovalQueueSummary(canAccessPage('approval'));
-  const shopifyApproval = useShopifyApprovalQueueSummary(canAccessPage('shopify-approval'));
+  const ebay = useEbayListings(ebayEnabled);
+  const approval = useApprovalQueueSummary(canAccessPage('approval') && runtimeFeatures.approvalEbay.available);
+  const shopifyApproval = useShopifyApprovalQueueSummary(canAccessPage('shopify-approval') && runtimeFeatures.approvalShopify.available);
 
-  const JOTFORM_FORM_ID = import.meta.env.VITE_JOTFORM_FORM_ID || '213604252654047';
-  const jotform = useJotFormInquiries(JOTFORM_FORM_ID);
+  const JOTFORM_FORM_ID = runtimeFeatures.jotform.available ? checkOptionalEnv('VITE_JOTFORM_FORM_ID') : '';
+  const jotform = useJotFormInquiries(JOTFORM_FORM_ID, 60_000, jotformEnabled);
 
   const totalNewSubmissions = jotform.submissions.filter((submission) => submission.new === '1').length;
   const visibleTabs = TAB_VALUES.filter((tab) => canAccessPage(tab));
@@ -62,5 +70,6 @@ export function useAppData({ canAccessPage, users }: AppDataParams) {
     totalNewSubmissions,
     aiProvider,
     adminCount,
+    runtimeFeatures,
   };
 }

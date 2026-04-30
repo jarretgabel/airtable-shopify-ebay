@@ -1,4 +1,4 @@
-import type { EbayListingTemplateId } from './approvalFormFieldsBasicHelpers';
+import type { EbayListingTemplateId } from './approvalFormFieldsEbayHelpersBasic';
 
 export type ApprovalChannel = 'shopify' | 'ebay' | 'combined' | undefined;
 export type ApprovalFieldKind = 'boolean' | 'number' | 'json' | 'text';

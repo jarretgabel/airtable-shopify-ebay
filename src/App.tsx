@@ -13,12 +13,14 @@ import { useAppRouteState } from '@/app/useAppRouteState';
 import { useAppShellControls } from '@/app/useAppShellControls';
 import { useActionGuidanceNotifications } from '@/app/useActionGuidanceNotifications';
 import { useAuthRouteGuard } from '@/app/useAuthRouteGuard';
+import { requireEnv } from '@/config/runtimeEnv';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { useAppUIStore } from '@/stores/appUIStore';
 import { useAuthStore } from '@/stores/auth/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
 
 function App() {
+  const shopifyStoreDomain = requireEnv('VITE_SHOPIFY_STORE_DOMAIN');
   const navigate = useNavigate();
   const location = useLocation();
   const { users, usersLoading, usersReady, currentUser, requiresPasswordChange, accessiblePages, canAccessPage, logout } = useAuthSession();
@@ -78,7 +80,8 @@ function App() {
     canAccessPage,
     navigate,
   });
-  const { airtable, shopify, market, ebay, approval, shopifyApproval, jotform, metrics, visibleTabs, totalNewSubmissions, aiProvider, adminCount } = useAppData({
+  const { airtable, shopify, market, ebay, approval, shopifyApproval, jotform, metrics, visibleTabs, totalNewSubmissions, aiProvider, adminCount, runtimeFeatures } = useAppData({
+    activeTab,
     canAccessPage,
     users,
   });
@@ -88,6 +91,7 @@ function App() {
     approvalPending: approval.pending,
     shopifyApprovalPending: shopifyApproval.pending,
     totalNewSubmissions,
+    runtimeFeatures,
     exportingPdf,
     dashboardRefreshing,
     setExportingPdf,
@@ -219,6 +223,7 @@ function App() {
             navigateToUserRecord={navigateToUserRecord}
             navigateToUsersList={navigateToUsersList}
             navigateToTab={navigateToTab}
+            runtimeFeatures={runtimeFeatures}
             metrics={metrics}
             accessiblePages={accessiblePages as Tab[]}
             aiProvider={aiProvider}
@@ -231,7 +236,7 @@ function App() {
             atLoading={airtable.loading}
             atError={airtable.error}
             products={shopify.products}
-            storeDomain={import.meta.env.VITE_SHOPIFY_STORE_DOMAIN}
+            storeDomain={shopifyStoreDomain}
             spLoading={shopify.loading}
             spError={shopify.error}
             jfSubmissions={jotform.submissions}

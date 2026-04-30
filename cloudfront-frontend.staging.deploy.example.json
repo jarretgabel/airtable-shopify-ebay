@@ -1,0 +1,7 @@
+{
+  "bucket": "airtable-shopify-ebay-frontend-stag-frontendbucket-ngvkjtvtvj96",
+  "distributionId": "EF0CZD3JYXNUF",
+  "profile": "staging",
+  "region": "us-east-1",
+  "runtimeConfigPath": "public/runtime-config.staging.json"
+}

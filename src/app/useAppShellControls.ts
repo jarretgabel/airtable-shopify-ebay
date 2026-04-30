@@ -2,6 +2,7 @@ import { useCallback, type RefObject } from 'react';
 import { TAB_VALUES } from '@/app/appNavigation';
 import { buildAppFrameNavTabs } from '@/app/appShellNav';
 import { exportPdf } from '@/app/pdfExport';
+import type { RuntimeFeatureMap } from '@/config/runtimeCapabilities';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import type { Tab } from '@/app/appNavigation';
 import { useNotificationStore } from '@/stores/notificationStore';
@@ -12,6 +13,7 @@ interface AppShellControlsParams {
   approvalPending: number;
   shopifyApprovalPending: number;
   totalNewSubmissions: number;
+  runtimeFeatures: RuntimeFeatureMap;
   exportingPdf: boolean;
   dashboardRefreshing: boolean;
   setExportingPdf: (value: boolean) => void;
@@ -41,6 +43,7 @@ export function useAppShellControls({
   approvalPending,
   shopifyApprovalPending,
   totalNewSubmissions,
+  runtimeFeatures,
   exportingPdf,
   dashboardRefreshing,
   setExportingPdf,
@@ -73,10 +76,10 @@ export function useAppShellControls({
       await Promise.all([
         airtableRefetch(),
         Promise.resolve(shopifyRefetch()),
-        Promise.resolve(jotformRefetch()),
-        Promise.resolve(canAccessPage('ebay') ? ebayRefetch() : undefined),
-        approvalRefetch(),
-        Promise.resolve(canAccessPage('shopify-approval') ? shopifyApprovalRefetch() : undefined),
+        Promise.resolve(runtimeFeatures.jotform.available ? jotformRefetch() : undefined),
+        Promise.resolve(canAccessPage('ebay') && runtimeFeatures.ebay.available ? ebayRefetch() : undefined),
+        Promise.resolve(runtimeFeatures.approvalEbay.available ? approvalRefetch() : undefined),
+        Promise.resolve(canAccessPage('shopify-approval') && runtimeFeatures.approvalShopify.available ? shopifyApprovalRefetch() : undefined),
         Promise.resolve(currentSlug ? sharkSearch(currentSlug) : undefined),
       ]);
       pushNotification({
@@ -99,7 +102,7 @@ export function useAppShellControls({
     } finally {
       setDashboardRefreshing(false);
     }
-  }, [activeTab, airtableRefetch, approvalRefetch, canAccessPage, currentSlug, dashboardRefreshing, ebayRefetch, jotformRefetch, pushNotification, setDashboardRefreshing, sharkSearch, shopifyApprovalRefetch, shopifyRefetch]);
+  }, [activeTab, airtableRefetch, approvalRefetch, canAccessPage, currentSlug, dashboardRefreshing, ebayRefetch, jotformRefetch, pushNotification, runtimeFeatures, setDashboardRefreshing, sharkSearch, shopifyApprovalRefetch, shopifyRefetch]);
 
   const tabLoadingState: Partial<Record<Tab, boolean>> = {
     dashboard: dashboardRefreshing,
@@ -157,6 +160,13 @@ export function useAppShellControls({
     approvalPending,
     shopifyApprovalPending,
     totalNewSubmissions,
+    disabledTabReasons: {
+      jotform: runtimeFeatures.jotform.message ?? undefined,
+      ebay: runtimeFeatures.ebay.message ?? undefined,
+      approval: runtimeFeatures.approvalEbay.message ?? undefined,
+      'shopify-approval': runtimeFeatures.approvalShopify.message ?? undefined,
+      listings: runtimeFeatures.approvalCombined.message ?? undefined,
+    },
     navigateToTab: (tab) => navigateToTab(tab),
     navigateToApprovalList: () => navigateToApprovalList(),
     navigateToUsersList: () => navigateToUsersList(),

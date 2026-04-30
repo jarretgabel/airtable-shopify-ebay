@@ -1,16 +1,7 @@
 import { create } from 'zustand';
-import { getRecordsFromResolvedSource } from '@/services/app-api/airtable';
-
-function isApprovedValue(value: unknown): boolean {
-  if (typeof value === 'boolean') return value;
-  if (typeof value === 'number') return value === 1;
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'approved';
-  }
-
-  return false;
-}
+import { TAB_DATA_TTLS, shouldReuseTabData } from '@/app/tabDataCache';
+import { checkOptionalEnv } from '@/config/runtimeEnv';
+import { getRecordsSummaryFromResolvedSource } from '@/services/app-api/airtable';
 
 interface ShopifyApprovalSummaryStoreState {
   enabled: boolean;
@@ -19,8 +10,9 @@ interface ShopifyApprovalSummaryStoreState {
   total: number;
   approved: number;
   pending: number;
+  lastLoadedAt: number | null;
   setEnabled: (enabled: boolean) => void;
-  refetch: () => Promise<void>;
+  refetch: (force?: boolean) => Promise<void>;
 }
 
 export const useShopifyApprovalSummaryStore = create<ShopifyApprovalSummaryStoreState>((set, get) => ({
@@ -30,30 +22,32 @@ export const useShopifyApprovalSummaryStore = create<ShopifyApprovalSummaryStore
   total: 0,
   approved: 0,
   pending: 0,
+  lastLoadedAt: null,
   setEnabled: (enabled) => {
     set({ enabled });
     if (!enabled) {
       set({
         loading: false,
-        error: null,
-        total: 0,
-        approved: 0,
-        pending: 0,
       });
     }
   },
-  refetch: async () => {
+  refetch: async (force = true) => {
     if (!get().enabled) {
       set({ loading: false });
       return;
     }
 
-    const tableReference = (import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF as string | undefined)?.trim();
-    const tableName = (import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME as string | undefined)?.trim();
-    if (!tableReference) {
+    if (!force && shouldReuseTabData(get().lastLoadedAt, TAB_DATA_TTLS.shopifyApprovalSummary, get().error === null)) {
+      set({ loading: false });
+      return;
+    }
+
+    const tableReference = checkOptionalEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF');
+    const tableName = checkOptionalEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME');
+    if (!tableReference && !tableName) {
       set({
         loading: false,
-        error: 'Missing VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF',
+        error: 'Missing VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF or VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME',
         total: 0,
         approved: 0,
         pending: 0,
@@ -63,16 +57,13 @@ export const useShopifyApprovalSummaryStore = create<ShopifyApprovalSummaryStore
 
     try {
       set({ loading: true, error: null });
-      const records = await getRecordsFromResolvedSource(tableReference, tableName);
-      const approvedCount = records.reduce((count, record) => {
-        const approvedFieldName = Object.keys(record.fields).find((fieldName) => fieldName.toLowerCase() === 'approved');
-        return count + (approvedFieldName && isApprovedValue(record.fields[approvedFieldName]) ? 1 : 0);
-      }, 0);
+      const summary = await getRecordsSummaryFromResolvedSource(tableReference, tableName);
 
       set({
-        total: records.length,
-        approved: approvedCount,
-        pending: Math.max(0, records.length - approvedCount),
+        total: summary.total,
+        approved: summary.approved,
+        pending: summary.pending,
+        lastLoadedAt: Date.now(),
       });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Failed to load Shopify approval queue' });

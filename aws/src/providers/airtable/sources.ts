@@ -26,6 +26,23 @@ interface AirtableConfiguredReadOptions {
   fields?: string[];
 }
 
+export interface AirtableConfiguredRecordsSummary {
+  total: number;
+  approved: number;
+  pending: number;
+}
+
+function isApprovedValue(value: unknown): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value === 1;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'approved';
+  }
+
+  return false;
+}
+
 const DEFAULT_USERS_TABLE_NAME = 'j2Gt9USORo6Vi5';
 const DEFAULT_APPROVAL_TABLE_REFERENCE = '3yTb0JkzUMFNnS/viw21kEduXKNub4Vn';
 const DEFAULT_COMBINED_LISTINGS_TABLE_NAME = 'tbl0K0nFQL64jQMx8';
@@ -141,6 +158,22 @@ export async function getConfiguredRecords(
   }
 
   throw lastError ?? new Error(`Unable to resolve Airtable source ${source}.`);
+}
+
+export async function getConfiguredRecordsSummary(
+  source: AirtableConfiguredRecordsSource,
+): Promise<AirtableConfiguredRecordsSummary> {
+  const records = await getConfiguredRecords(source, { fields: ['Approved'] });
+  const approved = records.reduce((count, record) => {
+    const approvedValue = record.fields.Approved;
+    return count + (isApprovedValue(approvedValue) ? 1 : 0);
+  }, 0);
+
+  return {
+    total: records.length,
+    approved,
+    pending: Math.max(0, records.length - approved),
+  };
 }
 
 export async function getConfiguredRecord(

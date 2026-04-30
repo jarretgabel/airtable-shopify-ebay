@@ -3,7 +3,11 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getOptionalQueryParam, getRequestOrigin, jsonError, jsonOk, requireQueryParam } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
-import { getConfiguredRecords, type AirtableConfiguredRecordsSource } from '../../providers/airtable/sources.js';
+import {
+  getConfiguredRecords,
+  getConfiguredRecordsSummary,
+  type AirtableConfiguredRecordsSource,
+} from '../../providers/airtable/sources.js';
 
 function validateSource(value: string): AirtableConfiguredRecordsSource {
   if (
@@ -28,6 +32,14 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   try {
     await requireRouteAccess(event);
     const source = validateSource(requireQueryParam(event, 'source', 'airtable', 'MISSING_SOURCE'));
+    const summary = getOptionalQueryParam(event, 'summary');
+
+    if (summary === 'queue') {
+      const queueSummary = await getConfiguredRecordsSummary(source);
+      logInfo('Fetched Airtable configured records summary', { source, ...queueSummary });
+      return jsonOk(queueSummary, { origin });
+    }
+
     const fields = getOptionalQueryParam(event, 'fields')
       ?.split(',')
       .map((value) => value.trim())

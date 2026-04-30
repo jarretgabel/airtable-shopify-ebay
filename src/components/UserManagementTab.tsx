@@ -6,7 +6,9 @@ import type { AppUser } from '@/stores/auth/authTypes';
 import { generateTemporaryPassword } from '@/stores/auth/authStorage';
 import { UserDetailPanel } from '@/components/users/UserDetailPanel';
 import { UserDirectoryPanel } from '@/components/users/UserDirectoryPanel';
+import { buildDeleteUserConfirmationRequest } from '@/components/users/userManagementConfirmation';
 import { NewUserFormState, RoleFilter, UserSortKey } from '@/components/users/userManagementTypes';
+import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 
 function defaultFormState(): NewUserFormState {
   return {
@@ -53,6 +55,7 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
   const [sortKey, setSortKey] = useState<UserSortKey>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const createUserSectionRef = useRef<HTMLElement>(null);
+  const { requestConfirmation, confirmationModal } = useConfirmationDialog();
 
   const sortedUsers = useMemo(
     () => [...users].sort((a, b) => a.email.localeCompare(b.email)),
@@ -152,7 +155,7 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
   }
 
   async function handleDeleteUser(user: AppUser): Promise<void> {
-    const confirmed = window.confirm(`Delete user ${user.email}? This action cannot be undone.`);
+    const confirmed = await requestConfirmation(buildDeleteUserConfirmationRequest(user));
     if (!confirmed) {
       return;
     }
@@ -198,7 +201,8 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
         : undefined;
 
     return (
-      <UserDetailPanel
+      <>
+        <UserDetailPanel
         selectedUser={selectedUser}
         canDeleteSelectedUser={canDeleteSelectedUser}
         deleteDisabledReason={deleteDisabledReason}
@@ -220,38 +224,43 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
         onDeleteUser={() => {
           void handleDeleteUser(selectedUser);
         }}
-      />
+        />
+        {confirmationModal}
+      </>
     );
   }
 
   return (
-    <UserDirectoryPanel
-      statusMessage={statusMessage}
-      createdMessage={createdMessage}
-      sortedUsers={sortedUsers}
-      listUsers={listUsers}
-      searchTerm={searchTerm}
-      roleFilter={roleFilter}
-      sortKey={sortKey}
-      sortDirection={sortDirection}
-      newUser={newUser}
-      labelClassName={labelClassName}
-      inputClassName={inputClassName}
-      checkboxClassName={checkboxClassName}
-      roleBadgeClassName={roleBadgeClassName}
-      formatAccessiblePages={formatAccessiblePages}
-      createUserSectionRef={createUserSectionRef}
-      onSearchTermChange={setSearchTerm}
-      onRoleFilterChange={setRoleFilter}
-      onSortKeyChange={setSortKey}
-      onSortDirectionChange={setSortDirection}
-      onSelectUser={onSelectUser}
-      onCreateUserSubmit={handleCreateUser}
-      onScrollToCreateUser={scrollToCreateUserSection}
-      onNewUserFieldChange={(field, value) => setNewUser((previous) => ({ ...previous, [field]: value }))}
-      onNewUserRoleChange={(role) => setNewUser((previous) => ({ ...previous, role }))}
-      onNewUserPageToggle={handleNewUserPageToggle}
-      onRegenerateTemporaryPassword={handleRegenerateTemporaryPassword}
-    />
+    <>
+      <UserDirectoryPanel
+        statusMessage={statusMessage}
+        createdMessage={createdMessage}
+        sortedUsers={sortedUsers}
+        listUsers={listUsers}
+        searchTerm={searchTerm}
+        roleFilter={roleFilter}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        newUser={newUser}
+        labelClassName={labelClassName}
+        inputClassName={inputClassName}
+        checkboxClassName={checkboxClassName}
+        roleBadgeClassName={roleBadgeClassName}
+        formatAccessiblePages={formatAccessiblePages}
+        createUserSectionRef={createUserSectionRef}
+        onSearchTermChange={setSearchTerm}
+        onRoleFilterChange={setRoleFilter}
+        onSortKeyChange={setSortKey}
+        onSortDirectionChange={setSortDirection}
+        onSelectUser={onSelectUser}
+        onCreateUserSubmit={handleCreateUser}
+        onScrollToCreateUser={scrollToCreateUserSection}
+        onNewUserFieldChange={(field, value) => setNewUser((previous) => ({ ...previous, [field]: value }))}
+        onNewUserRoleChange={(role) => setNewUser((previous) => ({ ...previous, role }))}
+        onNewUserPageToggle={handleNewUserPageToggle}
+        onRegenerateTemporaryPassword={handleRegenerateTemporaryPassword}
+      />
+      {confirmationModal}
+    </>
   );
 }

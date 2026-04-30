@@ -5,9 +5,10 @@ import { DashboardAirtableSection } from '@/components/dashboard/DashboardAirtab
 import { DashboardEbaySection } from '@/components/dashboard/DashboardEbaySection';
 import { DashboardShopifySection } from '@/components/dashboard/DashboardShopifySection';
 import { DashboardJotformSection } from '@/components/dashboard/DashboardJotformSection';
+import { getDashboardDegradedSources, hasDashboardPartialData } from '@/components/dashboard/dashboardSourceHealth';
 import { DashboardWorkflowSection } from '@/components/dashboard/DashboardWorkflowSections';
 import { DashboardActionsSection } from '@/components/dashboard/DashboardActionsSection';
-import { DashboardSectionPanel } from '@/components/dashboard/dashboardPrimitives';
+import { DashboardPartialDataNotice, DashboardSectionPanel } from '@/components/dashboard/dashboardPrimitives';
 import {
   buildDashboardSections,
   buildDashboardSummaryMetrics,
@@ -44,21 +45,40 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
     [data.activeProducts, data.submissionDays, kpis.maxDayCount],
   );
 
+  const jotformUnavailableReason = useMemo(
+    () => viewModel.status.sources.find((source) => source.key === 'jotform')?.error ?? null,
+    [viewModel.status.sources],
+  );
+  const approvalUnavailableReason = useMemo(
+    () => viewModel.status.sources.find((source) => source.key === 'approval')?.error ?? null,
+    [viewModel.status.sources],
+  );
+  const shopifyApprovalUnavailableReason = useMemo(
+    () => viewModel.status.sources.find((source) => source.key === 'shopify-approval')?.error ?? null,
+    [viewModel.status.sources],
+  );
+  const ebayUnavailableReason = useMemo(
+    () => viewModel.status.sources.find((source) => source.key === 'ebay')?.error ?? null,
+    [viewModel.status.sources],
+  );
+
   const ebayCards = useMemo(() => buildEbayWorkflowCards({
     accessiblePages: workflow.accessiblePages,
     approvalApproved: workflow.approvalApproved,
     approvalError: workflow.approvalError,
+    approvalUnavailableReason,
     approvalLoading: loading.approval,
     approvalPending: workflow.approvalPending,
     approvalTotal: workflow.approvalTotal,
     ebayAuthenticated: workflow.ebayAuthenticated,
     ebayDraftCount: workflow.ebayDraftCount,
     ebayError: workflow.ebayError,
+    ebayUnavailableReason,
     ebayLoading: loading.ebay,
     ebayPublishedCount: workflow.ebayPublishedCount,
     ebayRestoringSession: workflow.ebayRestoringSession,
     ebayTotal: workflow.ebayTotal,
-  }), [loading.approval, loading.ebay, workflow]);
+  }), [approvalUnavailableReason, ebayUnavailableReason, loading.approval, loading.ebay, workflow]);
 
   const shopifyCards = useMemo(() => buildShopifyWorkflowCards({
     accessiblePages: workflow.accessiblePages,
@@ -68,6 +88,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
     shopifyDraftCount: data.draftProducts.length,
     shopifyArchivedCount: data.archivedProducts.length,
     shopifyApprovalLoading: workflow.shopifyApprovalLoading,
+    shopifyApprovalUnavailableReason,
     shopifyApprovalTotal: workflow.shopifyApprovalTotal,
     shopifyApprovalApproved: workflow.shopifyApprovalApproved,
     shopifyApprovalPending: workflow.shopifyApprovalPending,
@@ -77,6 +98,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
     data.draftProducts.length,
     data.products.length,
     loading.shopify,
+    shopifyApprovalUnavailableReason,
     workflow.accessiblePages,
     workflow.shopifyApprovalLoading,
     workflow.shopifyApprovalTotal,
@@ -98,6 +120,8 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
   }), [workflow]);
 
   const allUtilityCards = useMemo(() => [...marketCards, ...utilityCards], [marketCards, utilityCards]);
+  const degradedSources = useMemo(() => getDashboardDegradedSources(viewModel.status.sources), [viewModel.status.sources]);
+  const showPartialDataNotice = useMemo(() => hasDashboardPartialData(viewModel.status.sources), [viewModel.status.sources]);
 
   const sections = useMemo(() => buildDashboardSections({ ebayCards, marketCards, utilityCards: allUtilityCards }), [ebayCards, marketCards, allUtilityCards]);
   const { activeSectionId, scrollToSection } = useDashboardSectionTracking(sections);
@@ -105,9 +129,11 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
   return (
     <div className="flex flex-col gap-12 pt-1">
       <DashboardSectionNav sections={sections} activeSectionId={activeSectionId} onSelectSection={scrollToSection} />
+      {showPartialDataNotice && <DashboardPartialDataNotice degradedSources={degradedSources} />}
       <DashboardSectionPanel id="overview" title="Overview">
         <DashboardOverviewSection
           jfLoading={loading.jotform}
+          jotformUnavailableReason={jotformUnavailableReason}
           jfSubmissionCount={data.jfSubmissions.length}
           thisWeekCount={data.thisWeekSubs.length}
           recentCount={data.recentSubs.length}
@@ -120,11 +146,13 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
           approvalPending={workflow.approvalPending}
           approvalApproved={workflow.approvalApproved}
           approvalTotal={workflow.approvalTotal}
+          approvalUnavailableReason={approvalUnavailableReason}
           uniqueAirtableBrands={kpis.uniqueAirtableBrands}
           uniqueAirtableTypes={kpis.uniqueAirtableTypes}
           ebayPublishedCount={workflow.ebayPublishedCount}
           ebayDraftCount={workflow.ebayDraftCount}
           ebayTotal={workflow.ebayTotal}
+          ebayUnavailableReason={ebayUnavailableReason}
           sellThroughPct={kpis.sellThroughPct}
           submissionsTrend={kpis.submissionsTrend}
           dealsTrend={kpis.dealsTrend}
@@ -143,6 +171,8 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
           shopifyQueueApproved={workflow.shopifyApprovalApproved}
           shopifyQueuePending={workflow.shopifyApprovalPending}
           shopifyQueueTotal={workflow.shopifyApprovalTotal}
+          ebayUnavailableReason={viewModel.status.sources.find((source) => source.key === 'ebay')?.error ?? null}
+          shopifyApprovalUnavailableReason={viewModel.status.sources.find((source) => source.key === 'shopify-approval')?.error ?? null}
           onSelectTab={actions.onSelectTab}
           embedded
         />
@@ -150,6 +180,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
       </DashboardSectionPanel>
       <DashboardAirtableSection
         atLoading={loading.airtable}
+        errorMessage={viewModel.status.sources.find((source) => source.key === 'airtable')?.error ?? null}
         nonEmptyListingCount={data.nonEmptyListings.length}
         uniqueAirtableBrands={kpis.uniqueAirtableBrands}
         uniqueAirtableTypes={kpis.uniqueAirtableTypes}
@@ -163,6 +194,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
       />
       <DashboardJotformSection
         jfLoading={loading.jotform}
+        errorMessage={viewModel.status.sources.find((source) => source.key === 'jotform')?.error ?? null}
         submissionWindowTotal={submissionWindowTotal}
         submissionAverage={submissionAverage}
         activeSubmissionDays={activeSubmissionDays}
@@ -180,6 +212,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         shopifyCards={shopifyCards}
         onSelectTab={actions.onSelectTab}
         spLoading={loading.shopify}
+        errorMessage={viewModel.status.sources.find((source) => source.key === 'shopify')?.error ?? null}
         productsCount={data.products.length}
         activeProductsCount={data.activeProducts.length}
         draftProductsCount={data.draftProducts.length}
