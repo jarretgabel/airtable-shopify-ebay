@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import { AppFailureScreen } from './components/app/AppFailureScreen.tsx'
 import { getRuntimeHealthReport } from './config/runtimeHealth.ts'
@@ -83,6 +83,13 @@ function renderBootstrapFailure(errorState: AppBootstrapErrorState) {
   )
 }
 
+const router = createBrowserRouter([
+  {
+    path: '*',
+    element: <App />,
+  },
+])
+
 async function bootstrap() {
   try {
     await loadRuntimeConfig()
@@ -90,9 +97,7 @@ async function bootstrap() {
     ReactDOM.createRoot(document.getElementById('root')!).render(
       <React.StrictMode>
         <AppErrorBoundary>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <RouterProvider router={router} />
         </AppErrorBoundary>
       </React.StrictMode>,
     )

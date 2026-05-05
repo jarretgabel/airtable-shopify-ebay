@@ -80,7 +80,9 @@ function App() {
     canAccessPage,
     navigate,
   });
+  const appDataEnabled = usersReady && Boolean(currentUser) && !isLoginPath && !isResetPasswordPath;
   const { airtable, shopify, market, ebay, approval, shopifyApproval, jotform, metrics, visibleTabs, totalNewSubmissions, aiProvider, adminCount, runtimeFeatures } = useAppData({
+    enabled: appDataEnabled,
     activeTab,
     canAccessPage,
     users,

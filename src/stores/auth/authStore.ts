@@ -72,7 +72,6 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
     set({ usersLoading: true });
     try {
-      const users = await loadUsersFromAirtable();
       let resolvedUserId: string | null = null;
       let requiresPasswordChange = false;
 
@@ -83,6 +82,19 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       } catch {
         resolvedUserId = null;
       }
+
+      if (!resolvedUserId) {
+        set({
+          users: [],
+          usersReady: true,
+          currentUserId: null,
+          hasAuthenticatedSession: false,
+          requiresPasswordChange: false,
+        });
+        return;
+      }
+
+      const users = await loadUsersFromAirtable();
 
       const sessionUser = resolvedUserId ? users.find((user) => user.id === resolvedUserId) ?? null : null;
       set({

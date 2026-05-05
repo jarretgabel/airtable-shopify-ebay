@@ -52,6 +52,7 @@ function resetStore() {
     offers: [],
     recentListings: [],
     total: 0,
+    lastLoadedAt: null,
   });
 }
 

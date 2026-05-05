@@ -38,4 +38,44 @@ describe('ConfirmationModal', () => {
     fireEvent.click(confirmButton);
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
+
+  it('can rerender closed and reopened without violating hook order', () => {
+    const { rerender } = render(
+      <ConfirmationModal
+        open={false}
+        title="Discard changes"
+        message="Leave this page?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    rerender(
+      <ConfirmationModal
+        open
+        title="Discard changes"
+        message="Leave this page?"
+        typedConfirmation={{ expectedValue: 'DISCARD' }}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirm' })).toBeDisabled();
+
+    rerender(
+      <ConfirmationModal
+        open={false}
+        title="Discard changes"
+        message="Leave this page?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
 });

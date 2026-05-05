@@ -12,6 +12,16 @@ import {
 } from './client.js';
 import { parseAirtableReferenceCandidates } from './reference.js';
 
+export const airtableSourceDependencies = {
+  createRecord,
+  deleteRecord,
+  getRecord,
+  getRecords,
+  getTableMetadata,
+  updateRecord,
+  uploadAttachment,
+};
+
 export type AirtableConfiguredRecordsSource =
   | 'users'
   | 'inventory-directory'
@@ -30,6 +40,28 @@ export interface AirtableConfiguredRecordsSummary {
   total: number;
   approved: number;
   pending: number;
+}
+
+function getApprovedFieldCandidates(source: AirtableConfiguredRecordsSource): string[] {
+  if (source === 'approval-shopify') {
+    return ['Shopify Approved', 'Approved'];
+  }
+
+  if (source === 'approval-combined') {
+    return ['Approved', 'Shopify Approved', 'eBay Approved'];
+  }
+
+  return ['Approved', 'eBay Approved', 'Shopify Approved'];
+}
+
+function getApprovedFieldValue(record: AirtableRecord, source: AirtableConfiguredRecordsSource): unknown {
+  for (const fieldName of getApprovedFieldCandidates(source)) {
+    if (fieldName in record.fields) {
+      return record.fields[fieldName];
+    }
+  }
+
+  return undefined;
 }
 
 function isApprovedValue(value: unknown): boolean {
@@ -139,7 +171,7 @@ export async function getConfiguredRecords(
   const definition = getSourceDefinition(source);
 
   if (!definition.reference) {
-    return getRecords(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, undefined, options);
+    return airtableSourceDependencies.getRecords(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, undefined, options);
   }
 
   const candidates = parseAirtableReferenceCandidates(
@@ -151,7 +183,7 @@ export async function getConfiguredRecords(
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
-      return await getRecords(candidate.baseId, candidate.tableName, candidate.viewId, options);
+      return await airtableSourceDependencies.getRecords(candidate.baseId, candidate.tableName, candidate.viewId, options);
     } catch (error) {
       lastError = error;
     }
@@ -163,9 +195,9 @@ export async function getConfiguredRecords(
 export async function getConfiguredRecordsSummary(
   source: AirtableConfiguredRecordsSource,
 ): Promise<AirtableConfiguredRecordsSummary> {
-  const records = await getConfiguredRecords(source, { fields: ['Approved'] });
+  const records = await getConfiguredRecords(source);
   const approved = records.reduce((count, record) => {
-    const approvedValue = record.fields.Approved;
+    const approvedValue = getApprovedFieldValue(record, source);
     return count + (isApprovedValue(approvedValue) ? 1 : 0);
   }, 0);
 
@@ -183,7 +215,7 @@ export async function getConfiguredRecord(
   const definition = getSourceDefinition(source);
 
   if (!definition.reference) {
-    return getRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, recordId);
+    return airtableSourceDependencies.getRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, recordId);
   }
 
   const candidates = parseAirtableReferenceCandidates(
@@ -195,7 +227,7 @@ export async function getConfiguredRecord(
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
-      return await getRecord(candidate.baseId, candidate.tableName, recordId);
+      return await airtableSourceDependencies.getRecord(candidate.baseId, candidate.tableName, recordId);
     } catch (error) {
       lastError = error;
       if (!isRetryableReferenceError(error)) {
@@ -215,7 +247,7 @@ export async function createConfiguredRecord(
   const definition = getWriteSourceDefinition(source);
 
   if (!definition.reference) {
-    return createRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, fields, options);
+    return airtableSourceDependencies.createRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, fields, options);
   }
 
   const candidates = parseAirtableReferenceCandidates(
@@ -227,7 +259,7 @@ export async function createConfiguredRecord(
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
-      return await createRecord(candidate.baseId, candidate.tableName, fields, options);
+      return await airtableSourceDependencies.createRecord(candidate.baseId, candidate.tableName, fields, options);
     } catch (error) {
       lastError = error;
       if (!isRetryableReferenceError(error)) {
@@ -248,7 +280,7 @@ export async function updateConfiguredRecord(
   const definition = getWriteSourceDefinition(source);
 
   if (!definition.reference) {
-    return updateRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, recordId, fields, options);
+    return airtableSourceDependencies.updateRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, recordId, fields, options);
   }
 
   const candidates = parseAirtableReferenceCandidates(
@@ -260,7 +292,7 @@ export async function updateConfiguredRecord(
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
-      return await updateRecord(candidate.baseId, candidate.tableName, recordId, fields, options);
+      return await airtableSourceDependencies.updateRecord(candidate.baseId, candidate.tableName, recordId, fields, options);
     } catch (error) {
       lastError = error;
       if (!isRetryableReferenceError(error)) {
@@ -276,7 +308,7 @@ export async function deleteConfiguredRecord(source: AirtableConfiguredWriteSour
   const definition = getWriteSourceDefinition(source);
 
   if (!definition.reference) {
-    await deleteRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, recordId);
+    await airtableSourceDependencies.deleteRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, recordId);
     return;
   }
 
@@ -289,7 +321,7 @@ export async function deleteConfiguredRecord(source: AirtableConfiguredWriteSour
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
-      await deleteRecord(candidate.baseId, candidate.tableName, recordId);
+      await airtableSourceDependencies.deleteRecord(candidate.baseId, candidate.tableName, recordId);
       return;
     } catch (error) {
       lastError = error;
@@ -304,7 +336,7 @@ export async function deleteConfiguredRecord(source: AirtableConfiguredWriteSour
 
 export async function getConfiguredFieldMetadata(source: AirtableConfiguredMetadataSource): Promise<AirtableMetadataField[]> {
   const definition = getMetadataSourceDefinition(source);
-  return getTableMetadata(definition.baseId, definition.tableId);
+  return airtableSourceDependencies.getTableMetadata(definition.baseId, definition.tableId);
 }
 
 export async function uploadConfiguredAttachment(
@@ -323,5 +355,5 @@ export async function uploadConfiguredAttachment(
     });
   }
 
-  await uploadAttachment(definition.baseId, recordId, fieldId, payload);
+  await airtableSourceDependencies.uploadAttachment(definition.baseId, recordId, fieldId, payload);
 }

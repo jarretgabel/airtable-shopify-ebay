@@ -33,6 +33,10 @@ export function ConfirmationModal({
   onCancel,
 }: ConfirmationModalProps) {
   const [typedValue, setTypedValue] = useState('');
+  const typedConfirmationSatisfied = useMemo(() => {
+    if (!typedConfirmation) return true;
+    return typedValue.trim() === typedConfirmation.expectedValue;
+  }, [typedConfirmation, typedValue]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -52,11 +56,6 @@ export function ConfirmationModal({
   }, [open, typedConfirmation?.expectedValue]);
 
   if (!open) return null;
-
-  const typedConfirmationSatisfied = useMemo(() => {
-    if (!typedConfirmation) return true;
-    return typedValue.trim() === typedConfirmation.expectedValue;
-  }, [typedConfirmation, typedValue]);
 
   const confirmButtonClass = tone === 'danger'
     ? 'rounded-xl bg-gradient-to-r from-rose-600 to-red-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-rose-500 hover:to-red-400'

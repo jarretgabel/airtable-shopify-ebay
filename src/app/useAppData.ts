@@ -14,18 +14,19 @@ import { useShopifyProducts } from '@/hooks/useShopifyProducts';
 import { getAIProvider } from '@/services/equipmentAI';
 
 interface AppDataParams {
+  enabled?: boolean;
   canAccessPage: (page: AppPage) => boolean;
   activeTab: AppPage;
   users: Array<{ role: string }>;
 }
 
-export function useAppData({ canAccessPage, activeTab, users }: AppDataParams) {
-  const dashboardActive = activeTab === 'dashboard';
-  const airtableEnabled = dashboardActive || activeTab === 'inventory';
-  const shopifyEnabled = dashboardActive || activeTab === 'shopify';
+export function useAppData({ enabled = true, canAccessPage, activeTab, users }: AppDataParams) {
+  const dashboardActive = enabled && activeTab === 'dashboard';
+  const airtableEnabled = enabled && (dashboardActive || activeTab === 'inventory');
+  const shopifyEnabled = enabled && (dashboardActive || activeTab === 'shopify');
   const runtimeFeatures = getRuntimeFeatureCapabilities();
-  const jotformEnabled = runtimeFeatures.jotform.available && (dashboardActive || activeTab === 'jotform');
-  const ebayEnabled = runtimeFeatures.ebay.available && canAccessPage('ebay') && (dashboardActive || activeTab === 'ebay');
+  const jotformEnabled = enabled && runtimeFeatures.jotform.available && (dashboardActive || activeTab === 'jotform');
+  const ebayEnabled = enabled && runtimeFeatures.ebay.available && canAccessPage('ebay') && (dashboardActive || activeTab === 'ebay');
   const tableName = requireEnv('VITE_AIRTABLE_TABLE_NAME');
   const viewId = checkOptionalEnv('VITE_AIRTABLE_VIEW_ID');
   const airtable = useListings(tableName, viewId, airtableEnabled);
@@ -34,14 +35,14 @@ export function useAppData({ canAccessPage, activeTab, users }: AppDataParams) {
   const shopify = useShopifyProducts(shopifyEnabled);
   const market = useHiFiShark();
   const ebay = useEbayListings(ebayEnabled);
-  const approval = useApprovalQueueSummary(canAccessPage('approval') && runtimeFeatures.approvalEbay.available);
-  const shopifyApproval = useShopifyApprovalQueueSummary(canAccessPage('shopify-approval') && runtimeFeatures.approvalShopify.available);
+  const approval = useApprovalQueueSummary(enabled && canAccessPage('approval') && runtimeFeatures.approvalEbay.available);
+  const shopifyApproval = useShopifyApprovalQueueSummary(enabled && canAccessPage('shopify-approval') && runtimeFeatures.approvalShopify.available);
 
   const JOTFORM_FORM_ID = runtimeFeatures.jotform.available ? checkOptionalEnv('VITE_JOTFORM_FORM_ID') : '';
   const jotform = useJotFormInquiries(JOTFORM_FORM_ID, 60_000, jotformEnabled);
 
   const totalNewSubmissions = jotform.submissions.filter((submission) => submission.new === '1').length;
-  const visibleTabs = TAB_VALUES.filter((tab) => canAccessPage(tab));
+  const visibleTabs = enabled ? TAB_VALUES.filter((tab) => canAccessPage(tab)) : [];
   const aiProvider = getAIProvider().provider;
   const adminCount = useMemo(() => users.filter((user) => user.role === 'admin').length, [users]);
   const ebayPublishedCount = useMemo(() => ebay.offers.filter((offer) => offer.status === 'PUBLISHED').length, [ebay.offers]);

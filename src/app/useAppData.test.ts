@@ -175,4 +175,20 @@ describe('useAppData', () => {
     expect(mockUseJotFormInquiries).toHaveBeenCalledWith('', 60_000, false);
     expect(result.current.runtimeFeatures).toEqual(unavailableFeatures);
   });
+
+  it('disables all authenticated data sources while auth routes are active', () => {
+    renderHook(() => useAppData({
+      enabled: false,
+      activeTab: 'dashboard',
+      canAccessPage: () => true,
+      users: [{ role: 'admin' }],
+    }));
+
+    expect(mockUseListings).toHaveBeenCalledWith('Inventory', '', false);
+    expect(mockUseShopifyProducts).toHaveBeenCalledWith(false);
+    expect(mockUseEbayListings).toHaveBeenCalledWith(false);
+    expect(mockUseApprovalQueueSummary).toHaveBeenCalledWith(false);
+    expect(mockUseShopifyApprovalQueueSummary).toHaveBeenCalledWith(false);
+    expect(mockUseJotFormInquiries).toHaveBeenCalledWith('', 60_000, false);
+  });
 });

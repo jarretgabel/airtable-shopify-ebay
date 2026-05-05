@@ -22,6 +22,10 @@ export interface AuthUserRecord {
   allowedPages: AppPage[];
 }
 
+export const authUserDependencies = {
+  updateConfiguredRecord,
+};
+
 function normalizeFieldName(value: string): string {
   return value.trim().toLowerCase();
 }
@@ -89,6 +93,13 @@ function parseAllowedPages(value: unknown, role: UserRole): AppPage[] {
   );
 }
 
+function isMissingMustChangePasswordFieldError(error: unknown): boolean {
+  return error instanceof HttpError
+    && error.service === 'airtable'
+    && error.code === 'AIRTABLE_HTTP_ERROR'
+    && /Unknown field name:\s*"MustChangePassword"/i.test(error.message);
+}
+
 function mapUserRecord(recordId: string, fields: Record<string, unknown>): AuthUserRecord | null {
   const id = toSingleString(getFieldValue(fields, USER_FIELD_KEYS.id)) || recordId;
   const email = toSingleString(getFieldValue(fields, USER_FIELD_KEYS.email)).toLowerCase();
@@ -140,10 +151,22 @@ export async function findAuthUserById(userId: string): Promise<AuthUserRecord |
 }
 
 export async function updateAuthUserPassword(user: AuthUserRecord, password: string, mustChangePassword: boolean): Promise<void> {
-  await updateConfiguredRecord(user.airtableRecordId ? 'users' : 'users', user.airtableRecordId, {
-    [USER_FIELD_KEYS.password[0]]: serializePasswordField(password, mustChangePassword),
-    [USER_FIELD_KEYS.mustChangePassword[0]]: mustChangePassword,
-  }, { typecast: true });
+  const passwordFieldValue = serializePasswordField(password, mustChangePassword);
+
+  try {
+    await authUserDependencies.updateConfiguredRecord('users', user.airtableRecordId, {
+      [USER_FIELD_KEYS.password[0]]: passwordFieldValue,
+      [USER_FIELD_KEYS.mustChangePassword[0]]: mustChangePassword,
+    }, { typecast: true });
+  } catch (error) {
+    if (!isMissingMustChangePasswordFieldError(error)) {
+      throw error;
+    }
+
+    await authUserDependencies.updateConfiguredRecord('users', user.airtableRecordId, {
+      [USER_FIELD_KEYS.password[0]]: passwordFieldValue,
+    }, { typecast: true });
+  }
 }
 
 export async function updateAuthUserEmail(user: AuthUserRecord, nextEmail: string): Promise<void> {

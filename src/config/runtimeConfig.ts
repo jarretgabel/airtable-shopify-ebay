@@ -96,3 +96,9 @@ export function readRuntimeConfigValue(name: keyof PublicRuntimeConfig): string 
   const value = window.__APP_RUNTIME_CONFIG__?.[name];
   return typeof value === 'string' ? value.trim() : '';
 }
+
+export function hasRuntimeConfigValue(name: keyof PublicRuntimeConfig): boolean {
+  if (typeof window === 'undefined') return false;
+
+  return Boolean(window.__APP_RUNTIME_CONFIG__ && Object.prototype.hasOwnProperty.call(window.__APP_RUNTIME_CONFIG__, name));
+}

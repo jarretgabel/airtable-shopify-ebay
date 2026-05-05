@@ -1,12 +1,33 @@
-import { readRuntimeConfigValue, type PublicRuntimeConfig } from '@/config/runtimeConfig';
+import { hasRuntimeConfigValue, readRuntimeConfigValue, type PublicRuntimeConfig } from '@/config/runtimeConfig';
+
+const bundledEnvValues: Partial<Record<keyof PublicRuntimeConfig, string>> = {
+  VITE_AIRTABLE_TABLE_NAME: import.meta.env.VITE_AIRTABLE_TABLE_NAME,
+  VITE_AIRTABLE_VIEW_ID: import.meta.env.VITE_AIRTABLE_VIEW_ID,
+  VITE_AI_PROVIDER: import.meta.env.VITE_AI_PROVIDER,
+  VITE_AIRTABLE_USERS_TABLE_REF: import.meta.env.VITE_AIRTABLE_USERS_TABLE_REF,
+  VITE_AIRTABLE_USERS_TABLE_NAME: import.meta.env.VITE_AIRTABLE_USERS_TABLE_NAME,
+  VITE_AIRTABLE_APPROVAL_TABLE_REF: import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_REF,
+  VITE_AIRTABLE_APPROVAL_TABLE_NAME: import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_NAME,
+  VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF: import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF,
+  VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME: import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME,
+  VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF: import.meta.env.VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF,
+  VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME: import.meta.env.VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME,
+  VITE_APP_API_BASE_URL: import.meta.env.VITE_APP_API_BASE_URL,
+  VITE_SHOPIFY_STORE_DOMAIN: import.meta.env.VITE_SHOPIFY_STORE_DOMAIN,
+  VITE_JOTFORM_FORM_ID: import.meta.env.VITE_JOTFORM_FORM_ID,
+  VITE_EBAY_AUTH_HOST: import.meta.env.VITE_EBAY_AUTH_HOST,
+  VITE_EBAY_OAUTH_SCOPES: import.meta.env.VITE_EBAY_OAUTH_SCOPES,
+  VITE_EBAY_APP_SCOPE: import.meta.env.VITE_EBAY_APP_SCOPE,
+  VITE_ANALYTICS_ENABLED: import.meta.env.VITE_ANALYTICS_ENABLED,
+};
 
 function readEnv(name: string): string {
-  const runtimeValue = readRuntimeConfigValue(name as keyof PublicRuntimeConfig);
-  if (runtimeValue) {
-    return runtimeValue;
+  const runtimeConfigName = name as keyof PublicRuntimeConfig;
+  if (hasRuntimeConfigValue(runtimeConfigName)) {
+    return readRuntimeConfigValue(runtimeConfigName);
   }
 
-  const value = import.meta.env[name as keyof ImportMetaEnv];
+  const value = bundledEnvValues[runtimeConfigName];
   return typeof value === 'string' ? value.trim() : '';
 }
 
