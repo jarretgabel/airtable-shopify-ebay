@@ -14,6 +14,7 @@ interface BuildNavTabsInput {
   visibleTabs: Tab[];
   activeTab: Tab;
   exportingPdf: boolean;
+  workflowInventoryBadgeCount: number;
   approvalPending: number;
   shopifyApprovalPending: number;
   totalNewSubmissions: number;
@@ -35,6 +36,7 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     visibleTabs,
     activeTab,
     exportingPdf,
+    workflowInventoryBadgeCount,
     approvalPending,
     shopifyApprovalPending,
     totalNewSubmissions,
@@ -78,7 +80,7 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     key: tab,
     label: navLabel(tab),
     active: activeTab === tab,
-    badgeCount: undefined,
+    badgeCount: tab === 'inventory' ? workflowInventoryBadgeCount : undefined,
     ...resolveDisabledState(tab),
     onClick: () => navigateToTab(tab),
   }));

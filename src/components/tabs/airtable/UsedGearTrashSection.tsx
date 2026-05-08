@@ -252,7 +252,11 @@ export function UsedGearTrashSection({
       </div>
 
       {!loading && records.length === 0 ? (
-        <EmptySurface title="Trash queue is clear" message="No used-gear workflow rows are currently sitting in active trash." />
+        <EmptySurface title="Trash queue is clear" message="No used-gear workflow rows are currently sitting in active trash.">
+          <p className="mt-3 text-sm text-[var(--muted)]">
+            Next route: return to pending review when an intake needs re-qualification, or leave this queue alone when there is nothing to restore or delete.
+          </p>
+        </EmptySurface>
       ) : null}
 
       <div className="space-y-4">

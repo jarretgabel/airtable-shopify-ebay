@@ -19,11 +19,18 @@ This phase treats new marketplaces as follow-on work after the core workflow is 
 ### Relevant Files
 - `/Users/user/Sites/airtable-shopify-ebay/src/components/approval/CombinedListingsApprovalTab.tsx`
 - `/Users/user/Sites/airtable-shopify-ebay/src/services/inventoryDirectory.ts`
+- `/Users/user/Sites/airtable-shopify-ebay/docs/used-gear-workflow/phase-6-marketplace-evaluation.md`
 
 ### Checklist
-- [ ] Evaluate Craigslist as a future publish target.
-- [ ] Evaluate Facebook Marketplace as a future publish target.
-- [ ] Confirm that any marketplace expansion reuses the same authoritative Airtable row and does not duplicate business data.
+- [x] Evaluate Craigslist as a future publish target.
+- [x] Evaluate Facebook Marketplace as a future publish target.
+- [x] Confirm that any marketplace expansion reuses the same authoritative Airtable row and does not duplicate business data.
+
+### Implemented Evaluation Outcome
+- Phase 6 is currently a scoped evaluation, not an implementation phase.
+- Craigslist and Facebook Marketplace were reviewed against the current single-row workflow model and both are intentionally deferred until the team chooses a supported manual-assist or automation-backed expansion path.
+- Marketplace expansion remains blocked from creating a separate intake workflow, a duplicate data store, or unapproved Airtable fields.
+- The shared evaluation rules and channel-by-channel recommendations now live in `docs/used-gear-workflow/phase-6-marketplace-evaluation.md`.
 
 ### Backlog
 - [ ] Define a reusable marketplace capability checklist so future channel evaluations use the same decision criteria.

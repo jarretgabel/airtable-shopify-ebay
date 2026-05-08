@@ -115,19 +115,19 @@ Progress tracking rule:
 - [ ] Complete Phase 1. See [Phase 1: Workflow Foundation](./used-gear-workflow/phase-1-foundation.md).
 
 **Phase 2: Intake And Parking Lots**
-- [ ] Complete Phase 2. See [Phase 2: Intake And Parking Lots](./used-gear-workflow/phase-2-intake-and-parking-lots.md).
+- [x] Complete Phase 2. See [Phase 2: Intake And Parking Lots](./used-gear-workflow/phase-2-intake-and-parking-lots.md).
 
 **Phase 3: Processing Stages And Handoffs**
-- [ ] Complete Phase 3. See [Phase 3: Processing Stages And Handoffs](./used-gear-workflow/phase-3-processing-and-handoffs.md).
+- [x] Complete Phase 3. See [Phase 3: Processing Stages And Handoffs](./used-gear-workflow/phase-3-processing-and-handoffs.md).
 
 **Phase 4: Pre-Listing And Publish Readiness**
-- [ ] Complete Phase 4. See [Phase 4: Pre-Listing And Publish Readiness](./used-gear-workflow/phase-4-pre-listing-and-publish-readiness.md).
+- [x] Complete Phase 4. See [Phase 4: Pre-Listing And Publish Readiness](./used-gear-workflow/phase-4-pre-listing-and-publish-readiness.md).
 
 **Phase 5: Post-Publish Lifecycle**
-- [ ] Complete Phase 5. See [Phase 5: Post-Publish Lifecycle](./used-gear-workflow/phase-5-post-publish-lifecycle.md).
+- [x] Complete Phase 5. See [Phase 5: Post-Publish Lifecycle](./used-gear-workflow/phase-5-post-publish-lifecycle.md).
 
 **Phase 6: Marketplace Expansion**
-- [ ] Complete Phase 6. See [Phase 6: Marketplace Expansion](./used-gear-workflow/phase-6-marketplace-expansion.md).
+- [x] Complete Phase 6. See [Phase 6: Marketplace Expansion](./used-gear-workflow/phase-6-marketplace-expansion.md).
 
 **Cross-Phase Verification**
 [ ] Create a representative Airtable test matrix for the full workflow.

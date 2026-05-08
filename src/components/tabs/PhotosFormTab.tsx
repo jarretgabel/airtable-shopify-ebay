@@ -9,7 +9,29 @@ import {
   type PhotosFormOptionFieldName,
   type PhotosFormValues,
 } from '@/components/tabs/photos/photosFormSchema';
-import { loadPhotosFormOptionSets, loadPhotosFormValues, submitPhotosForm, type PhotosFormSubmitResult } from '@/services/photosForm';
+import {
+  loadPhotosFormOptionSets,
+  loadPhotosFormValues,
+  submitPhotosForm,
+  type PhotosFormContextAttachment,
+  type PhotosFormCustomerReference,
+  type PhotosFormRecordSource,
+  type PhotosFormStageContext,
+  type PhotosFormSubmitResult,
+} from '@/services/photosForm';
+
+const EMPTY_CUSTOMER_REFERENCE: PhotosFormCustomerReference = {
+  cosmeticNotes: '',
+  functionalNotes: '',
+  inclusionNotes: '',
+  submittedPhotosNotes: '',
+};
+
+const EMPTY_STAGE_CONTEXT: PhotosFormStageContext = {
+  inventoryNotes: '',
+  testingNotes: '',
+  existingAttachments: [],
+};
 
 type PhotosOptionSets = Record<PhotosFormOptionFieldName, string[]>;
 
@@ -18,16 +40,59 @@ const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
 
-function validateForm(values: PhotosFormValues): string | null {
+type InclusionConfirmationKey = 'originalBox' | 'manual' | 'remote' | 'powerCable' | 'additionalItems';
+
+interface InclusionConfirmationItem {
+  key: InclusionConfirmationKey;
+  label: string;
+  value: string;
+}
+
+function isApplicableIncludedValue(value: string): boolean {
+  const normalizedValue = value.trim().toLowerCase();
+  if (!normalizedValue) {
+    return false;
+  }
+
+  return !['no', 'none', 'n/a', 'na', 'not included', 'missing'].includes(normalizedValue);
+}
+
+function buildApplicableIncludedItems(values: PhotosFormValues): InclusionConfirmationItem[] {
+  const candidateItems: InclusionConfirmationItem[] = [
+    { key: 'originalBox', label: 'Original Box', value: values.originalBox },
+    { key: 'manual', label: 'Manual', value: values.manual },
+    { key: 'remote', label: 'Remote', value: values.remote },
+    { key: 'powerCable', label: 'Power Cable', value: values.powerCable },
+    { key: 'additionalItems', label: 'Additional Items', value: values.additionalItems },
+  ];
+
+  return candidateItems.filter((item) => isApplicableIncludedValue(item.value));
+}
+
+function validateForm(
+  values: PhotosFormValues,
+  stageContext: PhotosFormStageContext,
+  inclusionConfirmations: Partial<Record<InclusionConfirmationKey, boolean>>,
+): string | null {
   if (!values.sku.trim()) return 'SKU is required.';
   if (!values.make.trim()) return 'Make is required.';
   if (!values.model.trim()) return 'Model is required.';
   if (!values.componentType.trim()) return 'Component Type is required.';
   if (!values.photoDate.trim()) return 'Photo Date is required.';
   if (!values.status.trim()) return 'Status is required.';
-  if (values.imageFiles.length === 0) {
+  if (values.imageFiles.length === 0 && stageContext.existingAttachments.length === 0) {
     return 'Upload at least one image before submitting the Photos form.';
   }
+
+  const applicableIncludedItems = buildApplicableIncludedItems(values);
+  const missingConfirmations = applicableIncludedItems
+    .filter((item) => !inclusionConfirmations[item.key])
+    .map((item) => item.label);
+
+  if (missingConfirmations.length > 0) {
+    return `Confirm that the following included items were checked and photographed: ${missingConfirmations.join(', ')}.`;
+  }
+
   return null;
 }
 
@@ -52,6 +117,10 @@ interface PhotosFormTabProps {
 export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProps) {
   const [formValues, setFormValues] = useState<PhotosFormValues>(() => createPhotosFormDefaults());
   const [initialFormValues, setInitialFormValues] = useState<PhotosFormValues>(() => createPhotosFormDefaults());
+  const [recordSource, setRecordSource] = useState<PhotosFormRecordSource>('inventory-directory');
+  const [customerReference, setCustomerReference] = useState<PhotosFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
+  const [stageContext, setStageContext] = useState<PhotosFormStageContext>(EMPTY_STAGE_CONTEXT);
+  const [inclusionConfirmations, setInclusionConfirmations] = useState<Partial<Record<InclusionConfirmationKey, boolean>>>({});
   const [optionSets, setOptionSets] = useState<PhotosOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
@@ -68,12 +137,23 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
       try {
         const [nextOptionSets, nextFormValues] = await Promise.all([
           loadPhotosFormOptionSets(),
-          recordId ? loadPhotosFormValues(recordId) : Promise.resolve(createPhotosFormDefaults()),
+          recordId
+            ? loadPhotosFormValues(recordId)
+            : Promise.resolve({
+                source: 'inventory-directory' as const,
+                values: createPhotosFormDefaults(),
+                customerReference: EMPTY_CUSTOMER_REFERENCE,
+                stageContext: EMPTY_STAGE_CONTEXT,
+              }),
         ]);
         if (!cancelled) {
           setOptionSets(nextOptionSets);
-          setFormValues(nextFormValues);
-          setInitialFormValues(nextFormValues);
+          setRecordSource(nextFormValues.source);
+          setCustomerReference(nextFormValues.customerReference);
+          setStageContext(nextFormValues.stageContext);
+          setInclusionConfirmations({});
+          setFormValues(nextFormValues.values);
+          setInitialFormValues(nextFormValues.values);
         }
       } catch (error) {
         if (!cancelled) {
@@ -102,7 +182,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     setSubmitError(null);
     setSubmitSuccess(null);
 
-    const validationError = validateForm(formValues);
+    const validationError = validateForm(formValues, stageContext, inclusionConfirmations);
     if (validationError) {
       setSubmitError(validationError);
       return;
@@ -110,7 +190,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
 
     setSubmitting(true);
     try {
-      const result = await submitPhotosForm(formValues, recordId);
+      const result = await submitPhotosForm(formValues, recordId, { recordSource });
       setSubmitSuccess(result);
       if (result.action === 'updated') {
         const nextValues = { ...formValues, imageFiles: [] };
@@ -222,6 +302,38 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     return <ErrorSurface title="Unable to load Photos form" message={optionsError ?? 'The Airtable Photos form configuration is unavailable.'} />;
   }
 
+  const hasCustomerReference = Object.values(customerReference).some((value) => value.trim().length > 0);
+  const applicableIncludedItems = buildApplicableIncludedItems(formValues);
+  const hasOperationalContext = Boolean(stageContext.inventoryNotes.trim() || stageContext.testingNotes.trim() || stageContext.existingAttachments.length > 0);
+
+  const handleInclusionConfirmationChange = (key: InclusionConfirmationKey, checked: boolean) => {
+    setInclusionConfirmations((current) => ({
+      ...current,
+      [key]: checked,
+    }));
+  };
+
+  const renderAttachmentLink = (attachment: PhotosFormContextAttachment) => {
+    if (attachment.url) {
+      return (
+        <a
+          href={attachment.url}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+        >
+          {attachment.filename}
+        </a>
+      );
+    }
+
+    return (
+      <span className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
+        {attachment.filename}
+      </span>
+    );
+  };
+
   return (
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
@@ -259,6 +371,93 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
           </div>
         ) : null}
 
+        {hasCustomerReference ? (
+          <div className="rounded-2xl border border-sky-400/25 bg-sky-500/10 p-5">
+            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-sky-100">Customer Intake Reference</p>
+            <p className="mt-2 text-sm leading-6 text-sky-50/90">
+              Keep customer-submitted context separate from the photography assessment below so listing media notes remain clearly staff-owned.
+            </p>
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
+                <span className="font-semibold text-sky-50">Customer Cosmetic Notes:</span> {customerReference.cosmeticNotes || 'None provided'}
+              </div>
+              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
+                <span className="font-semibold text-sky-50">Customer Functional Notes:</span> {customerReference.functionalNotes || 'None provided'}
+              </div>
+              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
+                <span className="font-semibold text-sky-50">Customer Inclusion Notes:</span> {customerReference.inclusionNotes || 'None provided'}
+              </div>
+              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
+                <span className="font-semibold text-sky-50">Customer Submitted Photos Notes:</span> {customerReference.submittedPhotosNotes || 'None provided'}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Photography Context</p>
+          <div className="mt-4 grid gap-3 lg:grid-cols-3">
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-3 text-sm text-[var(--muted)]">
+              <span className="font-semibold text-[var(--ink)]">Make:</span> {formValues.make || 'Not set'}
+            </div>
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-3 text-sm text-[var(--muted)]">
+              <span className="font-semibold text-[var(--ink)]">Model:</span> {formValues.model || 'Not set'}
+            </div>
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-3 text-sm text-[var(--muted)]">
+              <span className="font-semibold text-[var(--ink)]">Component Type:</span> {formValues.componentType || 'Not set'}
+            </div>
+          </div>
+
+          {hasOperationalContext ? (
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Notes</p>
+                <p className="mt-2 leading-6 text-[var(--ink)]">{stageContext.inventoryNotes || 'No inventory notes available.'}</p>
+              </div>
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Testing Notes</p>
+                <p className="mt-2 leading-6 text-[var(--ink)]">{stageContext.testingNotes || 'No testing notes available yet.'}</p>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-4 rounded-xl border border-amber-400/25 bg-amber-500/10 p-4">
+            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-amber-100">Included Items To Photograph</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                { label: 'Original Box', value: formValues.originalBox },
+                { label: 'Manual', value: formValues.manual },
+                { label: 'Remote', value: formValues.remote },
+                { label: 'Power Cable', value: formValues.powerCable },
+                { label: 'Additional Items', value: formValues.additionalItems },
+              ].map((item) => {
+                const emphasized = isApplicableIncludedValue(item.value);
+                return (
+                  <span
+                    key={item.label}
+                    className={emphasized
+                      ? 'rounded-full border border-amber-300/35 bg-amber-400/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-amber-50'
+                      : 'rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]'}
+                  >
+                    {item.label}: {item.value || 'Not provided'}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4">
+            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Existing Workflow Images</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {stageContext.existingAttachments.length > 0
+                ? stageContext.existingAttachments.map((attachment) => (
+                    <div key={attachment.id ?? attachment.filename}>{renderAttachmentLink(attachment)}</div>
+                  ))
+                : <span className="text-sm text-[var(--muted)]">No existing workflow images are attached yet.</span>}
+            </div>
+          </div>
+        </div>
+
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
           {photosFormFields.map((field) => (
             <div key={field.airtableFieldName}>
@@ -266,8 +465,30 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
             </div>
           ))}
 
+          {applicableIncludedItems.length > 0 ? (
+            <div className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-5">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-amber-100">Required Included Item Confirmations</p>
+              <p className="mt-2 text-sm leading-6 text-amber-50/90">
+                Before the photo stage can be completed, confirm that each applicable included item was checked and photographed.
+              </p>
+              <div className="mt-4 space-y-3">
+                {applicableIncludedItems.map((item) => (
+                  <label key={item.key} className="flex items-start gap-3 rounded-xl border border-amber-300/25 bg-slate-950/20 px-4 py-3 text-sm text-amber-50/90">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 rounded border-amber-200/50 bg-transparent text-[var(--accent)] focus:ring-[var(--accent)]"
+                      checked={Boolean(inclusionConfirmations[item.key])}
+                      onChange={(event) => handleInclusionConfirmationChange(item.key, event.currentTarget.checked)}
+                    />
+                    <span>I checked and photographed <strong>{item.label}</strong> for this unit.</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="m-0 text-sm text-[var(--muted)]">Required fields are marked with an asterisk. Upload at least one image before submitting.</p>
+            <p className="m-0 text-sm text-[var(--muted)]">Required fields are marked with an asterisk. Submit requires either newly uploaded photos or existing workflow images plus any applicable included-item confirmations.</p>
             <div className="flex gap-3">
               <button
                 type="button"
@@ -276,6 +497,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
                   setSubmitError(null);
                   setSubmitSuccess(null);
                   setFormValues(initialFormValues);
+                  setInclusionConfirmations({});
                 }}
                 disabled={submitting}
               >

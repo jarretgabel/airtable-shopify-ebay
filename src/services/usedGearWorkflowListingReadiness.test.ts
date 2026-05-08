@@ -25,6 +25,7 @@ describe('usedGearWorkflowListingReadiness', () => {
     expect(readiness.description).toBe('Fresh bench check completed.');
     expect(readiness.price).toBe('4299.00');
     expect(readiness.priceFieldName).toBe('Price');
+    expect(readiness.blockers).toEqual([]);
     expect(readiness.missingRequirements).toEqual([]);
   });
 
@@ -35,9 +36,18 @@ describe('usedGearWorkflowListingReadiness', () => {
       'Inventory Notes': 'Needs pricing review.',
     });
 
-    expect(getUsedGearWorkflowListingReadiness(record).missingRequirements).toEqual([
-      'Capture a listing price before approving the row for publish.',
-    ]);
+    expect(getUsedGearWorkflowListingReadiness(record)).toMatchObject({
+      blockers: [
+        {
+          message: 'Capture a listing price before approving the row for publish.',
+          actionLabel: 'Open Price Editor',
+          actionTarget: 'inventory-editor',
+        },
+      ],
+      missingRequirements: [
+        'Capture a listing price before approving the row for publish.',
+      ],
+    });
 
     expect(() => assertUsedGearWorkflowReadyForPublish(record)).toThrow(
       'Capture a listing price before approving the row for publish.',

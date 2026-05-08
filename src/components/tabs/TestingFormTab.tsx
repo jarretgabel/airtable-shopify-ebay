@@ -6,11 +6,25 @@ import {
   createTestingFormDefaults,
   testingFormFields,
   type TestingFormFieldDefinition,
-  type TestingFormOptionFieldName,
   type TestingFormValues,
+  type TestingFormOptionFieldName,
 } from '@/components/tabs/testing/testingFormSchema';
-import { loadTestingFormOptionSets, loadTestingFormValues, submitTestingForm, type TestingFormSubmitResult } from '@/services/testingForm';
+import {
+  loadTestingFormOptionSets,
+  loadTestingFormValues,
+  submitTestingForm,
+  type TestingFormCustomerReference,
+  type TestingFormRecordSource,
+  type TestingFormSubmitResult,
+} from '@/services/testingForm';
 import { useEffect } from 'react';
+
+const EMPTY_CUSTOMER_REFERENCE: TestingFormCustomerReference = {
+  cosmeticNotes: '',
+  functionalNotes: '',
+  inclusionNotes: '',
+  submittedPhotosNotes: '',
+};
 
 type TestingOptionSets = Record<TestingFormOptionFieldName, string[]>;
 
@@ -49,6 +63,8 @@ interface TestingFormTabProps {
 export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabProps) {
   const [formValues, setFormValues] = useState<TestingFormValues>(() => createTestingFormDefaults());
   const [initialFormValues, setInitialFormValues] = useState<TestingFormValues>(() => createTestingFormDefaults());
+  const [recordSource, setRecordSource] = useState<TestingFormRecordSource>('inventory-directory');
+  const [customerReference, setCustomerReference] = useState<TestingFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
   const [optionSets, setOptionSets] = useState<TestingOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
@@ -65,12 +81,20 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
       try {
         const [nextOptionSets, nextFormValues] = await Promise.all([
           loadTestingFormOptionSets(),
-          recordId ? loadTestingFormValues(recordId) : Promise.resolve(createTestingFormDefaults()),
+          recordId
+            ? loadTestingFormValues(recordId)
+            : Promise.resolve({
+                source: 'inventory-directory' as const,
+                values: createTestingFormDefaults(),
+                customerReference: EMPTY_CUSTOMER_REFERENCE,
+              }),
         ]);
         if (!cancelled) {
           setOptionSets(nextOptionSets);
-          setFormValues(nextFormValues);
-          setInitialFormValues(nextFormValues);
+          setRecordSource(nextFormValues.source);
+          setCustomerReference(nextFormValues.customerReference);
+          setFormValues(nextFormValues.values);
+          setInitialFormValues(nextFormValues.values);
         }
       } catch (error) {
         if (!cancelled) {
@@ -107,7 +131,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
 
     setSubmitting(true);
     try {
-      const result = await submitTestingForm(formValues, recordId);
+      const result = await submitTestingForm(formValues, recordId, { recordSource });
       setSubmitSuccess(result);
       if (result.action === 'updated') {
         const nextValues = { ...formValues, imageFiles: [] };
@@ -221,6 +245,8 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
     return <ErrorSurface title="Unable to load Testing form" message={optionsError ?? 'The Airtable Testing form configuration is unavailable.'} />;
   }
 
+  const hasCustomerReference = Object.values(customerReference).some((value) => value.trim().length > 0);
+
   return (
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
@@ -255,6 +281,29 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
             {submitSuccess.action === 'updated'
               ? <>Testing fields updated for record <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.</>
               : <>Testing submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.</>}
+          </div>
+        ) : null}
+
+        {hasCustomerReference ? (
+          <div className="rounded-2xl border border-sky-400/25 bg-sky-500/10 p-5">
+            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-sky-100">Customer Intake Reference</p>
+            <p className="mt-2 text-sm leading-6 text-sky-50/90">
+              Use these customer-submitted notes as reference only. Keep testing findings and staff assessments in the Testing fields below.
+            </p>
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
+                <span className="font-semibold text-sky-50">Customer Cosmetic Notes:</span> {customerReference.cosmeticNotes || 'None provided'}
+              </div>
+              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
+                <span className="font-semibold text-sky-50">Customer Functional Notes:</span> {customerReference.functionalNotes || 'None provided'}
+              </div>
+              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
+                <span className="font-semibold text-sky-50">Customer Inclusion Notes:</span> {customerReference.inclusionNotes || 'None provided'}
+              </div>
+              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
+                <span className="font-semibold text-sky-50">Customer Submitted Photos Notes:</span> {customerReference.submittedPhotosNotes || 'None provided'}
+              </div>
+            </div>
           </div>
         ) : null}
 

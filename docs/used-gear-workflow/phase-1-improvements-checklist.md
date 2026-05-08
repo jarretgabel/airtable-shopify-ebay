@@ -7,27 +7,27 @@ This backlog is for non-blocking improvements after the major Phase 1 workflow f
 - Capture quality-of-life work that would improve workflow operations without changing the approved model.
 
 ## UX And Navigation
-- [ ] Add saved workflow views or named presets for common Inventory filter combinations.
+- [x] Add saved workflow views or named presets for common Inventory filter combinations.
 - [ ] Add one-click copy actions for individual grouped queues beyond the current page-level share tools.
 - [ ] Add optional sticky summary chips while scrolling long Inventory workflow sections.
 - [ ] Add stronger empty-state guidance that tells each team exactly which route or action is next.
 - [ ] Add lightweight keyboard shortcuts for jumping between pending review, progress, and post-publish sections.
 
 ## Queue Operations
-- [ ] Add batch actions for grouped pending-review submissions where the same decision applies to all rows.
+- [x] Add batch actions for grouped pending-review submissions where the same decision applies to all rows.
 - [ ] Add explicit assignment or ownership metadata for queue work if the team wants individual accountability beyond signoff fields.
-- [ ] Add a queue-level aging or SLA view for items sitting too long in review, processing, or stale states.
+- [x] Add a queue-level aging or SLA view for items sitting too long in review, processing, or stale states.
 - [ ] Add optional archived filters for completed/shipped workflow history instead of relying on the shared Inventory surface alone.
 
 ## Notifications And Awareness
-- [ ] Add nav or tab badges for workflow counts so users can see pending queue volume before opening Inventory.
-- [ ] Add optional notification throttling or digest behavior for high-volume workflow events.
-- [ ] Add deep links from notification to the most relevant queue subsection or grouped submission when appropriate.
+- [x] Add nav or tab badges for workflow counts so users can see pending queue volume before opening Inventory.
+- [x] Add optional notification throttling or digest behavior for high-volume workflow events.
+- [x] Add deep links from notification to the most relevant queue subsection or grouped submission when appropriate.
 
 ## Workflow Detail And Auditability
-- [ ] Add a compact workflow timeline component that shows status transitions and signoff timestamps in one place.
-- [ ] Add clearer grouped-submission summaries on the workflow detail page when multiple rows share the same submission or pickup.
-- [ ] Add operator-facing explanations for why pre-listing readiness is blocked, with direct jump links to the field that needs attention.
+- [x] Add a compact workflow timeline component that shows status transitions and signoff timestamps in one place.
+- [x] Add clearer grouped-submission summaries on the workflow detail page when multiple rows share the same submission or pickup.
+- [x] Add operator-facing explanations for why pre-listing readiness is blocked, with direct jump links to the field that needs attention.
 
 ## Listing And Marketplace Follow-Through
 - [ ] Persist eBay-specific publish metadata once approved Airtable field names exist for that data.

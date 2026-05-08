@@ -69,7 +69,16 @@ export interface UsedGearWorkflowListingReadiness {
   descriptionFieldName: string | null;
   price: string;
   priceFieldName: string | null;
+  blockers: UsedGearWorkflowListingReadinessBlocker[];
   missingRequirements: string[];
+}
+
+export type UsedGearWorkflowListingReadinessActionTarget = 'inventory-editor' | 'incoming-gear' | 'testing' | 'photos' | 'listings-approval';
+
+export interface UsedGearWorkflowListingReadinessBlocker {
+  message: string;
+  actionLabel: string;
+  actionTarget: UsedGearWorkflowListingReadinessActionTarget;
 }
 
 export function getUsedGearWorkflowListingReadiness(record: AirtableRecord): UsedGearWorkflowListingReadiness {
@@ -79,11 +88,17 @@ export function getUsedGearWorkflowListingReadiness(record: AirtableRecord): Use
 
   const title = titleMatch.value || buildDerivedTitle(record.fields);
   const description = descriptionMatch.value || buildDerivedDescription(record.fields);
-  const missingRequirements: string[] = [];
+  const blockers: UsedGearWorkflowListingReadinessBlocker[] = [];
 
   if (!priceMatch.value) {
-    missingRequirements.push('Capture a listing price before approving the row for publish.');
+    blockers.push({
+      message: 'Capture a listing price before approving the row for publish.',
+      actionLabel: 'Open Price Editor',
+      actionTarget: 'inventory-editor',
+    });
   }
+
+  const missingRequirements = blockers.map((blocker) => blocker.message);
 
   return {
     title,
@@ -92,6 +107,7 @@ export function getUsedGearWorkflowListingReadiness(record: AirtableRecord): Use
     descriptionFieldName: descriptionMatch.fieldName,
     price: priceMatch.value,
     priceFieldName: priceMatch.fieldName,
+    blockers,
     missingRequirements,
   };
 }

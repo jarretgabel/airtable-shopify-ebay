@@ -2,9 +2,10 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearPendingReviewSection } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
 
-const { loadPendingReviewQueueMock, acceptPendingReviewRecordMock, clipboardWriteTextMock } = vi.hoisted(() => ({
+const { loadPendingReviewQueueMock, acceptPendingReviewRecordMock, acceptPendingReviewGroupMock, clipboardWriteTextMock } = vi.hoisted(() => ({
   loadPendingReviewQueueMock: vi.fn(),
   acceptPendingReviewRecordMock: vi.fn(),
+  acceptPendingReviewGroupMock: vi.fn(),
   clipboardWriteTextMock: vi.fn(),
 }));
 
@@ -14,13 +15,16 @@ vi.mock('@/services/usedGearQueue', async () => {
     ...actual,
     loadPendingReviewQueue: loadPendingReviewQueueMock,
     acceptPendingReviewRecord: acceptPendingReviewRecordMock,
+    acceptPendingReviewGroup: acceptPendingReviewGroupMock,
     markPendingReviewUnqualified: vi.fn(),
+    markPendingReviewGroupUnqualified: vi.fn(),
   };
 });
 
 describe('UsedGearPendingReviewSection', () => {
   beforeEach(() => {
     acceptPendingReviewRecordMock.mockReset();
+    acceptPendingReviewGroupMock.mockReset();
     clipboardWriteTextMock.mockReset();
     Object.assign(navigator, {
       clipboard: {
@@ -141,5 +145,61 @@ describe('UsedGearPendingReviewSection', () => {
     });
 
     expect(screen.getByRole('button', { name: 'Accept Into Lot 2' })).toBeEnabled();
+  });
+
+  it('accepts an entire grouped submission with one shared decision', async () => {
+    loadPendingReviewQueueMock.mockResolvedValue([
+      {
+        id: 'rec-pending-a',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PEND-1',
+          Make: 'McIntosh',
+          Model: 'MC240',
+          'Workflow Status': 'Pending Review',
+          'Submission Group ID': 'SUB-42',
+          'Confirmed Grand Total': 1000,
+        },
+      },
+      {
+        id: 'rec-pending-b',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PEND-2',
+          Make: 'McIntosh',
+          Model: 'C28',
+          'Workflow Status': 'Pending Review',
+          'Submission Group ID': 'SUB-42',
+          'Confirmed Grand Total': 1000,
+        },
+      },
+    ]);
+    acceptPendingReviewGroupMock.mockResolvedValue([]);
+
+    render(
+      <UsedGearPendingReviewSection
+        currentUserName="Taylor Reviewer"
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Apply the same intake decision to the full group')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Shared Qualification Notes'), {
+      target: { value: 'Customer approved the full stereo pair for pickup.' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Accept Entire Group' }));
+
+    await waitFor(() => {
+      expect(acceptPendingReviewGroupMock).toHaveBeenCalledWith(expect.objectContaining({
+        submissionGroupId: 'SUB-42',
+        records: [
+          expect.objectContaining({ recordId: 'rec-pending-a' }),
+          expect.objectContaining({ recordId: 'rec-pending-b' }),
+        ],
+      }), 'Taylor Reviewer');
+    });
   });
 });

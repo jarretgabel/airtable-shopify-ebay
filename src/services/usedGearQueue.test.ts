@@ -16,12 +16,15 @@ import {
   loadWorkflowPostPublishQueue,
   loadTrashQueue,
   loadUsedGearWorkflowNotificationCounts,
+  loadUsedGearWorkflowNotificationSummary,
   loadUsedGearWorkflowRecord,
+  loadUsedGearWorkflowRecordContext,
   loadWorkflowProgressQueue,
   loadPendingReviewQueue,
   loadPendingReviewGroup,
   markWorkflowListingStale,
   markPendingReviewUnqualified,
+  markPendingReviewGroupUnqualified,
   markWorkflowShipped,
   markWorkflowSoldReadyToShip,
   permanentlyDeleteTrashRecord,
@@ -577,6 +580,57 @@ describe('usedGearQueue', () => {
     expect(record.id).toBe('rec1');
   });
 
+  it('loads grouped workflow context for a record with sibling rows', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: { 'Workflow Status': 'Pending Review', 'Submission Group ID': 'SUB-42', SKU: 'SKU-1' },
+      },
+      {
+        id: 'rec2',
+        createdTime: 'later',
+        fields: { 'Workflow Status': 'Accepted - Awaiting Arrival', 'Submission Group ID': 'SUB-42', SKU: 'SKU-2' },
+      },
+    ]);
+
+    const context = await loadUsedGearWorkflowRecordContext('rec1');
+
+    expect(context.record.id).toBe('rec1');
+    expect(context.group?.id).toBe('submission:SUB-42');
+    expect(context.group?.records).toHaveLength(2);
+  });
+
+  it('marks all rows in a pending-review group unqualified', async () => {
+    mockUpdateConfiguredRecord
+      .mockResolvedValueOnce({ id: 'rec1', createdTime: 'now', fields: { 'Workflow Status': 'Unqualified' } })
+      .mockResolvedValueOnce({ id: 'rec2', createdTime: 'now', fields: { 'Workflow Status': 'Unqualified' } });
+
+    const records = await markPendingReviewGroupUnqualified(['rec1', 'rec2'], 'Customer declined the revised offer.');
+
+    expect(records).toHaveLength(2);
+    expect(mockUpdateConfiguredRecord).toHaveBeenNthCalledWith(
+      1,
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Workflow Status': 'Unqualified',
+        'Unqualified Reason': 'Customer declined the revised offer.',
+      }),
+      { typecast: true },
+    );
+    expect(mockUpdateConfiguredRecord).toHaveBeenNthCalledWith(
+      2,
+      'used-gear-workflow',
+      'rec2',
+      expect.objectContaining({
+        'Workflow Status': 'Unqualified',
+        'Unqualified Reason': 'Customer declined the revised offer.',
+      }),
+      { typecast: true },
+    );
+  });
+
   it('completes pre-listing review and advances to approved for publish', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
@@ -791,6 +845,80 @@ describe('usedGearQueue', () => {
       photography: 2,
       preListingReview: 1,
       approvedForPublish: 1,
+    });
+  });
+
+  it('returns workflow notification targets and a unique inventory badge count', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'recPending',
+        createdTime: '2026-05-01T00:00:00.000Z',
+        fields: { 'Workflow Status': 'Pending Review' },
+      },
+      {
+        id: 'recProcessing',
+        createdTime: '2026-05-02T00:00:00.000Z',
+        fields: { 'Workflow Status': 'Accepted - Awaiting Arrival' },
+      },
+      {
+        id: 'recConcurrent',
+        createdTime: '2026-05-03T00:00:00.000Z',
+        fields: { 'Workflow Status': 'Testing and Photography In Progress' },
+      },
+      {
+        id: 'recPreListing',
+        createdTime: '2026-05-04T00:00:00.000Z',
+        fields: { 'Workflow Status': 'Awaiting Pre-Listing Review' },
+      },
+      {
+        id: 'recApproved',
+        createdTime: '2026-05-05T00:00:00.000Z',
+        fields: { 'Workflow Status': 'Approved for Publish' },
+      },
+    ]);
+
+    await expect(loadUsedGearWorkflowNotificationSummary()).resolves.toEqual({
+      counts: {
+        pendingReview: 1,
+        processing: 1,
+        testing: 1,
+        photography: 1,
+        preListingReview: 1,
+        approvedForPublish: 1,
+      },
+      targets: {
+        pendingReview: {
+          destinationTab: 'inventory',
+          recordId: 'recPending',
+          sectionId: 'used-gear-pending-review',
+        },
+        processing: {
+          destinationTab: 'inventory',
+          recordId: 'recProcessing',
+          sectionId: 'used-gear-progress-queue',
+        },
+        testing: {
+          destinationTab: 'inventory',
+          recordId: 'recConcurrent',
+          sectionId: 'used-gear-progress-queue',
+        },
+        photography: {
+          destinationTab: 'inventory',
+          recordId: 'recConcurrent',
+          sectionId: 'used-gear-progress-queue',
+        },
+        preListingReview: {
+          destinationTab: 'inventory',
+          recordId: 'recPreListing',
+          sectionId: 'used-gear-progress-queue',
+        },
+        approvedForPublish: {
+          destinationTab: 'listings',
+          recordId: 'recApproved',
+          sectionId: null,
+        },
+      },
+      workflowQueueBadgeCount: 5,
     });
   });
 });

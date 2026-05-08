@@ -1,5 +1,6 @@
 import {
   createConfiguredRecord,
+  getConfiguredRecord,
   getConfiguredFieldMetadata,
   updateConfiguredRecord,
   uploadConfiguredAttachment,
@@ -7,7 +8,8 @@ import {
 import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
 import { createTestingFormDefaults, type TestingFormOptionFieldName, type TestingFormValues } from '@/components/tabs/testing/testingFormSchema';
-import { extractInventoryScalarValue, loadInventoryRecord } from '@/services/inventoryDirectory';
+import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
+import type { AirtableRecord } from '@/types/airtable';
 
 const IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
 
@@ -22,6 +24,21 @@ const OPTION_FIELD_NAMES = [
 ] as const satisfies readonly TestingFormOptionFieldName[];
 
 type TestingOptionSet = Record<TestingFormOptionFieldName, string[]>;
+
+export type TestingFormRecordSource = 'inventory-directory' | 'used-gear-workflow';
+
+export interface TestingFormCustomerReference {
+  cosmeticNotes: string;
+  functionalNotes: string;
+  inclusionNotes: string;
+  submittedPhotosNotes: string;
+}
+
+export interface TestingFormLoadResult {
+  source: TestingFormRecordSource;
+  values: TestingFormValues;
+  customerReference: TestingFormCustomerReference;
+}
 
 export interface TestingFormSubmitResult {
   recordId: string;
@@ -71,40 +88,63 @@ async function uploadTestingImages(recordId: string, files: File[]): Promise<voi
   }
 }
 
-export async function loadTestingFormValues(recordId: string): Promise<TestingFormValues> {
+async function loadConfiguredTestingRecord(recordId: string): Promise<{ source: TestingFormRecordSource; record: AirtableRecord }> {
   try {
-    const record = await loadInventoryRecord(recordId);
+    const workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
+    return { source: 'used-gear-workflow', record: workflowRecord };
+  } catch {
+    const inventoryRecord = await getConfiguredRecord('inventory-directory', recordId);
+    return { source: 'inventory-directory', record: inventoryRecord };
+  }
+}
+
+function buildCustomerReference(record: AirtableRecord): TestingFormCustomerReference {
+  return {
+    cosmeticNotes: extractInventoryScalarValue(record.fields['Customer Cosmetic Notes']),
+    functionalNotes: extractInventoryScalarValue(record.fields['Customer Functional Notes']),
+    inclusionNotes: extractInventoryScalarValue(record.fields['Customer Inclusion Notes']),
+    submittedPhotosNotes: extractInventoryScalarValue(record.fields['Customer Submitted Photos Notes']),
+  };
+}
+
+export async function loadTestingFormValues(recordId: string): Promise<TestingFormLoadResult> {
+  try {
+    const { source, record } = await loadConfiguredTestingRecord(recordId);
     const defaults = createTestingFormDefaults();
 
     return {
-      ...defaults,
-      sku: extractInventoryScalarValue(record.fields.SKU),
-      arrivalDate: dateOrUndefined(record.fields['Arrival Date']),
-      acquiredFrom: extractInventoryScalarValue(record.fields['Acquired From']),
-      make: extractInventoryScalarValue(record.fields.Make),
-      model: extractInventoryScalarValue(record.fields.Model),
-      componentType: extractInventoryScalarValue(record.fields['Component Type']),
-      cost: extractInventoryScalarValue(record.fields.Cost),
-      inventoryNotes: extractInventoryScalarValue(record.fields['Inventory Notes']),
-      serialNumber: extractInventoryScalarValue(record.fields['Serial Number']),
-      voltage: extractInventoryScalarValue(record.fields.Voltage),
-      audiogonRating: extractInventoryScalarValue(record.fields['Audiogon Rating']),
-      cosmeticConditionNotes: extractInventoryScalarValue(record.fields['Cosmetic Condition Notes']),
-      originalBox: extractInventoryScalarValue(record.fields['Original Box']),
-      manual: extractInventoryScalarValue(record.fields.Manual),
-      remote: extractInventoryScalarValue(record.fields.Remote),
-      powerCable: extractInventoryScalarValue(record.fields['Power Cable']),
-      additionalItems: extractInventoryScalarValue(record.fields['Additional Items']),
-      shippingWeight: extractInventoryScalarValue(record.fields['Shipping Weight'] ?? record.fields.Weight),
-      shippingDims: extractInventoryScalarValue(record.fields['Shipping Dims']),
-      shippingMethod: extractInventoryScalarValue(record.fields['Shipping Method']),
-      imageFiles: [],
-      testingNotes: extractInventoryScalarValue(record.fields['Testing Notes']),
-      testingTimeMinutes: formatDurationMinutes(record.fields['Testing Time']),
-      serviceNotes: extractInventoryScalarValue(record.fields['Service Notes']),
-      serviceTimeMinutes: formatDurationMinutes(record.fields['Service Time']),
-      testingDate: dateOrUndefined(record.fields.Tested),
-      status: extractInventoryScalarValue(record.fields.Status),
+      source,
+      customerReference: buildCustomerReference(record),
+      values: {
+        ...defaults,
+        sku: extractInventoryScalarValue(record.fields.SKU),
+        arrivalDate: dateOrUndefined(record.fields['Arrival Date']),
+        acquiredFrom: extractInventoryScalarValue(record.fields['Acquired From']),
+        make: extractInventoryScalarValue(record.fields.Make),
+        model: extractInventoryScalarValue(record.fields.Model),
+        componentType: extractInventoryScalarValue(record.fields['Component Type']),
+        cost: extractInventoryScalarValue(record.fields.Cost),
+        inventoryNotes: extractInventoryScalarValue(record.fields['Inventory Notes']),
+        serialNumber: extractInventoryScalarValue(record.fields['Serial Number']),
+        voltage: extractInventoryScalarValue(record.fields.Voltage),
+        audiogonRating: extractInventoryScalarValue(record.fields['Audiogon Rating']),
+        cosmeticConditionNotes: extractInventoryScalarValue(record.fields['Cosmetic Condition Notes']),
+        originalBox: extractInventoryScalarValue(record.fields['Original Box']),
+        manual: extractInventoryScalarValue(record.fields.Manual),
+        remote: extractInventoryScalarValue(record.fields.Remote),
+        powerCable: extractInventoryScalarValue(record.fields['Power Cable']),
+        additionalItems: extractInventoryScalarValue(record.fields['Additional Items']),
+        shippingWeight: extractInventoryScalarValue(record.fields['Shipping Weight'] ?? record.fields.Weight),
+        shippingDims: extractInventoryScalarValue(record.fields['Shipping Dims']),
+        shippingMethod: extractInventoryScalarValue(record.fields['Shipping Method']),
+        imageFiles: [],
+        testingNotes: extractInventoryScalarValue(record.fields['Testing Notes']),
+        testingTimeMinutes: formatDurationMinutes(record.fields['Testing Time']),
+        serviceNotes: extractInventoryScalarValue(record.fields['Service Notes']),
+        serviceTimeMinutes: formatDurationMinutes(record.fields['Service Time']),
+        testingDate: dateOrUndefined(record.fields.Tested),
+        status: extractInventoryScalarValue(record.fields.Status),
+      },
     };
   } catch (error) {
     logServiceError('testingForm', `Error loading Testing form values for ${recordId}`, error);
@@ -153,10 +193,15 @@ export async function loadTestingFormOptionSets(): Promise<TestingOptionSet> {
   }
 }
 
-export async function submitTestingForm(values: TestingFormValues, recordId?: string | null): Promise<TestingFormSubmitResult> {
+export async function submitTestingForm(
+  values: TestingFormValues,
+  recordId?: string | null,
+  options: { recordSource?: TestingFormRecordSource } = {},
+): Promise<TestingFormSubmitResult> {
   const costValue = trimToUndefined(values.cost);
   const testingTimeMinutes = trimToUndefined(values.testingTimeMinutes);
   const serviceTimeMinutes = trimToUndefined(values.serviceTimeMinutes);
+  const recordSource = options.recordSource ?? 'inventory-directory';
   const baseFields = compactFields({
     SKU: trimToUndefined(values.sku),
     'Arrival Date': trimToUndefined(values.arrivalDate),
@@ -189,14 +234,16 @@ export async function submitTestingForm(values: TestingFormValues, recordId?: st
   try {
     if (recordId) {
       const updatedRecord = await updateConfiguredRecord(
-        'inventory-directory',
+        recordSource,
         recordId,
         baseFields,
         { typecast: true },
       );
 
       if (values.imageFiles.length > 0) {
-        await uploadTestingImages(updatedRecord.id, values.imageFiles);
+        for (const file of values.imageFiles) {
+          await uploadConfiguredAttachment(recordSource, updatedRecord.id, IMAGE_ATTACHMENT_FIELD_ID, file);
+        }
       }
 
       return {

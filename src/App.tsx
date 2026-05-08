@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppTabContent } from '@/app/AppTabContent';
 import { displayValue, hasValue, recordTitle, type Tab } from '@/app/appNavigation';
@@ -15,6 +15,7 @@ import { useActionGuidanceNotifications } from '@/app/useActionGuidanceNotificat
 import { useAuthRouteGuard } from '@/app/useAuthRouteGuard';
 import { useUsedGearWorkflowNotifications } from '@/app/useUsedGearWorkflowNotifications';
 import { requireEnv } from '@/config/runtimeEnv';
+import { createEmptyUsedGearWorkflowNotificationSummary } from '@/services/usedGearQueue';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { useAppUIStore } from '@/stores/appUIStore';
 import { useAuthStore } from '@/stores/auth/authStore';
@@ -53,9 +54,11 @@ function App() {
   const completeRequiredPasswordChange = useAuthStore((state) => state.completeRequiredPasswordChange);
   const clearNotifications = useNotificationStore((state) => state.clear);
   const applyCurrentUserPreferences = useNotificationStore((state) => state.applyCurrentUserPreferences);
+  const [workflowNotificationSummary, setWorkflowNotificationSummary] = useState(createEmptyUsedGearWorkflowNotificationSummary);
   const shellRef = useRef<HTMLElement>(null);
   const {
     navigateToTab,
+    navigateToInventorySection,
     navigateToJotformReviewGroup,
     navigateToIncomingGearForm,
     navigateToTestingForm,
@@ -96,6 +99,7 @@ function App() {
   const { loading, onRefresh, onExportCurrentPage, onExportAllPages, tabs, ebayNavTabs, inventoryProcessingNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
     activeTab,
     visibleTabs,
+    workflowInventoryBadgeCount: workflowNotificationSummary.workflowQueueBadgeCount,
     approvalPending: approval.pending,
     shopifyApprovalPending: shopifyApproval.pending,
     totalNewSubmissions,
@@ -145,7 +149,11 @@ function App() {
     currentUser,
     canAccessPage: canAccessPage as (tab: Tab) => boolean,
     navigateToTab,
+    navigateToInventorySection,
+    navigateToUsedGearWorkflowRecord,
+    navigateToListingsRecord,
     enabled: appDataEnabled,
+    onSummaryChange: setWorkflowNotificationSummary,
   });
 
   useEffect(() => {

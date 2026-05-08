@@ -168,6 +168,7 @@ describe('AirtableTab', () => {
   beforeEach(() => {
     loadInventoryDirectoryMock.mockReset();
     clipboardWriteTextMock.mockReset();
+    window.localStorage.clear();
     Object.assign(navigator, {
       clipboard: {
         writeText: clipboardWriteTextMock,
@@ -333,6 +334,62 @@ describe('AirtableTab', () => {
       expect(screen.getByTestId('pending-collapsed-groups')).toHaveTextContent('');
       expect(screen.getByTestId('progress-collapsed-groups')).toHaveTextContent('');
       expect(screen.getByTestId('post-publish-collapsed-sections')).toHaveTextContent('');
+    });
+  });
+
+  it('saves, reapplies, and deletes named workflow view presets', async () => {
+    render(
+      <MemoryRouter initialEntries={['/inventory?workflowPendingReviewSearch=mcintosh&workflowProgressSearch=marantz&workflowPostPublishBucket=stale-listing#used-gear-post-publish']}>
+        <AirtableTab
+          viewModel={{
+            loading: false,
+            error: null,
+            listings: [],
+            displayValue: (value) => String(value ?? ''),
+            hasValue: (value) => value !== null && value !== undefined && value !== '',
+            recordTitle: () => 'Inventory Record',
+          }}
+          currentUserName="Taylor Reviewer"
+          onAddNewRecord={vi.fn()}
+          onOpenIncomingGearForm={vi.fn()}
+          onOpenTestingForm={vi.fn()}
+          onOpenPhotosForm={vi.fn()}
+          onOpenWorkflowRecord={vi.fn()}
+          onOpenListingsRecord={vi.fn()}
+          onSelectRecord={vi.fn()}
+        />
+        <LocationState />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(loadInventoryDirectoryMock).toHaveBeenCalledTimes(1);
+    });
+
+    fireEvent.change(screen.getByLabelText('Workflow view preset name'), { target: { value: 'Triage View' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Workflow View' }));
+
+    expect(screen.getByRole('button', { name: 'Triage View' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset Workflow View' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Triage View' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPendingReviewSearch=mcintosh');
+      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowProgressSearch=marantz');
+      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPostPublishBucket=stale-listing');
+      expect(screen.getByTestId('location-state')).toHaveTextContent('#used-gear-post-publish');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Triage View workflow view' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Triage View' })).not.toBeInTheDocument();
     });
   });
 });

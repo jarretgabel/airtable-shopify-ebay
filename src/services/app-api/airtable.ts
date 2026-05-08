@@ -15,7 +15,7 @@ export type AirtableConfiguredWriteSource =
   | 'approval-shopify'
   | 'approval-combined';
 export type AirtableConfiguredMetadataSource = 'inventory-directory';
-export type AirtableConfiguredAttachmentSource = 'inventory-directory';
+export type AirtableConfiguredAttachmentSource = 'inventory-directory' | 'used-gear-workflow';
 
 interface AirtableWriteOptions {
   typecast?: boolean;

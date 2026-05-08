@@ -11,6 +11,7 @@ describe('buildAppFrameNavTabs', () => {
       visibleTabs: ['dashboard', 'listings', 'jotform', 'ebay', 'approval', 'shopify', 'shopify-approval', 'market'],
       activeTab: 'dashboard',
       exportingPdf: false,
+      workflowInventoryBadgeCount: 0,
       approvalPending: 3,
       shopifyApprovalPending: 2,
       totalNewSubmissions: 5,
@@ -46,5 +47,23 @@ describe('buildAppFrameNavTabs', () => {
       disabled: false,
       disabledReason: undefined,
     });
+  });
+
+  it('shows workflow queue volume on the inventory tab badge', () => {
+    const result = buildAppFrameNavTabs({
+      visibleTabs: ['dashboard', 'inventory', 'incoming-gear', 'testing', 'photos'],
+      activeTab: 'dashboard',
+      exportingPdf: false,
+      workflowInventoryBadgeCount: 7,
+      approvalPending: 0,
+      shopifyApprovalPending: 0,
+      totalNewSubmissions: 0,
+      navigateToTab: vi.fn(),
+      navigateToApprovalList: vi.fn(),
+      navigateToUsersList: vi.fn(),
+    });
+
+    expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'inventory')).toMatchObject({ badgeCount: 7 });
+    expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'testing')).toMatchObject({ badgeCount: undefined });
   });
 });

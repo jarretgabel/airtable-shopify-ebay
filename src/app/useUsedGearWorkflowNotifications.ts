@@ -1,6 +1,11 @@
 import { useEffect } from 'react';
 import type { Tab } from '@/app/appNavigation';
-import { loadUsedGearWorkflowNotificationCounts } from '@/services/usedGearQueue';
+import {
+  createEmptyUsedGearWorkflowNotificationSummary,
+  loadUsedGearWorkflowNotificationSummary,
+  type UsedGearWorkflowNotificationSummary,
+  type UsedGearWorkflowNotificationTarget,
+} from '@/services/usedGearQueue';
 import {
   USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS,
   type AppUser,
@@ -12,7 +17,11 @@ interface UsedGearWorkflowNotificationParams {
   currentUser: AppUser | null;
   canAccessPage: (tab: Tab) => boolean;
   navigateToTab: (tab: Tab, replace?: boolean) => void;
+  navigateToInventorySection: (sectionId: string, replace?: boolean) => void;
+  navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
+  navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   enabled: boolean;
+  onSummaryChange?: (summary: UsedGearWorkflowNotificationSummary) => void;
 }
 
 const WORKFLOW_NOTIFICATION_KEYS: Record<UsedGearWorkflowNotificationEvent, string> = {
@@ -69,11 +78,52 @@ function buildNotificationCopy(eventKey: UsedGearWorkflowNotificationEvent, coun
   }
 }
 
+function buildNotificationAction(
+  eventKey: UsedGearWorkflowNotificationEvent,
+  target: UsedGearWorkflowNotificationTarget | null,
+  navigateToTab: (tab: Tab, replace?: boolean) => void,
+  navigateToInventorySection: (sectionId: string, replace?: boolean) => void,
+  navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void,
+  navigateToListingsRecord: (recordId: string, replace?: boolean) => void,
+) {
+  if (target?.destinationTab === 'listings' && target.recordId) {
+    const recordId = target.recordId;
+    return {
+      actionLabel: 'Open Listing Record',
+      onAction: () => navigateToListingsRecord(recordId),
+    };
+  }
+
+  if (target?.destinationTab === 'inventory' && target.recordId) {
+    const recordId = target.recordId;
+    return {
+      actionLabel: 'Open Workflow Record',
+      onAction: () => navigateToUsedGearWorkflowRecord(recordId),
+    };
+  }
+
+  if (target?.destinationTab === 'inventory' && target.sectionId) {
+    const sectionId = target.sectionId;
+    return {
+      actionLabel: 'Open Queue Section',
+      onAction: () => navigateToInventorySection(sectionId),
+    };
+  }
+
+  return eventKey === 'approvedForPublish'
+    ? { actionLabel: 'Open Listings', onAction: () => navigateToTab('listings') }
+    : { actionLabel: 'Open Inventory', onAction: () => navigateToTab('inventory') };
+}
+
 export function useUsedGearWorkflowNotifications({
   currentUser,
   canAccessPage,
   navigateToTab,
+  navigateToInventorySection,
+  navigateToUsedGearWorkflowRecord,
+  navigateToListingsRecord,
   enabled,
+  onSummaryChange,
 }: UsedGearWorkflowNotificationParams): void {
   const upsertByKey = useNotificationStore((state) => state.upsertByKey);
   const dismissByKey = useNotificationStore((state) => state.dismissByKey);
@@ -83,6 +133,7 @@ export function useUsedGearWorkflowNotifications({
 
   useEffect(() => {
     if (!enabled || !currentUser || !canAccessPage('inventory')) {
+      onSummaryChange?.(createEmptyUsedGearWorkflowNotificationSummary());
       USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS.forEach((option) => {
         dismissByKey(WORKFLOW_NOTIFICATION_KEYS[option.key]);
       });
@@ -93,14 +144,16 @@ export function useUsedGearWorkflowNotifications({
 
     const syncNotifications = async () => {
       try {
-        const counts = await loadUsedGearWorkflowNotificationCounts();
+        const summary = await loadUsedGearWorkflowNotificationSummary();
         if (cancelled) {
           return;
         }
 
+        onSummaryChange?.(summary);
+
         USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS.forEach((option) => {
           const isEnabled = currentUser.notificationPreferences.workflowEvents[option.key];
-          const count = counts[option.key];
+          const count = summary.counts[option.key];
           const notificationKey = WORKFLOW_NOTIFICATION_KEYS[option.key];
 
           if (!isEnabled || count <= 0) {
@@ -109,12 +162,20 @@ export function useUsedGearWorkflowNotifications({
           }
 
           const copy = buildNotificationCopy(option.key, count);
+          const action = buildNotificationAction(
+            option.key,
+            summary.targets[option.key],
+            navigateToTab,
+            navigateToInventorySection,
+            navigateToUsedGearWorkflowRecord,
+            navigateToListingsRecord,
+          );
           upsertByKey(notificationKey, {
             tone: copy.tone,
             title: copy.title,
             message: copy.message,
-            actionLabel: option.key === 'approvedForPublish' ? 'Open Listings' : 'Open Inventory',
-            onAction: () => navigateToTab(option.key === 'approvedForPublish' ? 'listings' : 'inventory'),
+            actionLabel: action.actionLabel,
+            onAction: action.onAction,
             dismissible: true,
           });
         });
@@ -122,6 +183,8 @@ export function useUsedGearWorkflowNotifications({
         if (cancelled) {
           return;
         }
+
+        onSummaryChange?.(createEmptyUsedGearWorkflowNotificationSummary());
 
         USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS.forEach((option) => {
           dismissByKey(WORKFLOW_NOTIFICATION_KEYS[option.key]);
@@ -139,5 +202,5 @@ export function useUsedGearWorkflowNotifications({
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [canAccessPage, currentUser, dismissByKey, enabled, navigateToTab, upsertByKey, workflowPreferenceSignature]);
+  }, [canAccessPage, currentUser, dismissByKey, enabled, navigateToInventorySection, navigateToListingsRecord, navigateToTab, navigateToUsedGearWorkflowRecord, onSummaryChange, upsertByKey, workflowPreferenceSignature]);
 }

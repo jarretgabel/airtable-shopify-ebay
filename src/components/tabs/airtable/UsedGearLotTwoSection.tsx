@@ -284,7 +284,11 @@ export function UsedGearLotTwoSection({
       </div>
 
       {!loading && records.length === 0 ? (
-        <EmptySurface title="Parking Lot 2 is clear" message="No accepted arrival-stage workflow rows are currently waiting in Parking Lot 2." />
+        <EmptySurface title="Parking Lot 2 is clear" message="No accepted arrival-stage workflow rows are currently waiting in Parking Lot 2.">
+          <p className="mt-3 text-sm text-[var(--muted)]">
+            Next route: promote accepted intake rows out of Parking Lot 1, or reopen a workflow row by SKU when the item is already known and needs stage work.
+          </p>
+        </EmptySurface>
       ) : null}
 
       <div className="space-y-4">

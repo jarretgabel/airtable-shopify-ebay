@@ -5,6 +5,7 @@ import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkf
 
 interface AppNavigationHandlers {
   navigateToTab: (tab: Tab, replace?: boolean) => void;
+  navigateToInventorySection: (sectionId: string, replace?: boolean) => void;
   navigateToJotformReviewGroup: (groupId: string, replace?: boolean) => void;
   navigateToIncomingGearForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
@@ -36,6 +37,11 @@ function scrollToPageTop(): void {
 export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () => void): AppNavigationHandlers {
   const navigateToTab = useCallback((tab: Tab, replace = false): void => {
     navigate(TAB_PATHS[tab], { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToInventorySection = useCallback((sectionId: string, replace = false): void => {
+    navigate(`${TAB_PATHS.inventory}#${encodeURIComponent(sectionId)}`, { replace });
     scrollToPageTop();
   }, [navigate]);
 
@@ -135,6 +141,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
 
   return {
     navigateToTab,
+    navigateToInventorySection,
     navigateToJotformReviewGroup,
     navigateToIncomingGearForm,
     navigateToTestingForm,

@@ -24,11 +24,12 @@ export function LoadingSurface({ message }: { message: string }) {
   );
 }
 
-export function EmptySurface({ title, message }: { title: string; message: string }) {
+export function EmptySurface({ title, message, children }: { title: string; message: string; children?: ReactNode }) {
   return (
     <section className={emptySurfaceClass}>
       <p className="m-0 font-bold text-[var(--ink)]">{title}</p>
       <p>{message}</p>
+      {children}
     </section>
   );
 }

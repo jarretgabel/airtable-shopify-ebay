@@ -12,6 +12,10 @@ import {
   USED_GEAR_STALE_THRESHOLD_DAYS,
   type UsedGearWorkflowPostPublishBucket,
 } from '@/services/usedGearWorkflowLifecycle';
+import {
+  buildPostPublishQueueAgingSummary,
+  formatUsedGearAgeDays,
+} from '@/services/usedGearWorkflowAging';
 import { useCopyQueueLink } from '@/components/tabs/airtable/useCopyQueueLink';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -191,6 +195,7 @@ export function UsedGearWorkflowPostPublishSection({
     }));
     return nextMap;
   }, [filteredRecords, sortMode]);
+  const agingSummary = useMemo(() => buildPostPublishQueueAgingSummary(filteredRecords), [filteredRecords]);
 
   const visibleSections = useMemo(() => {
     if (selectedBucket === 'all') {
@@ -388,8 +393,31 @@ export function UsedGearWorkflowPostPublishSection({
         </div>
       ) : null}
 
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible Rows</p>
+          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{filteredRecords.length}</p>
+        </div>
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Active 30+ Days</p>
+          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{agingSummary.activeNearStaleCount}</p>
+        </div>
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Stale 14+ Days</p>
+          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{agingSummary.staleFollowUpCount}</p>
+        </div>
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Oldest Stale</p>
+          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{formatUsedGearAgeDays(agingSummary.oldestStaleAgeDays)}</p>
+        </div>
+      </div>
+
       {!loading && filteredRecords.length === 0 ? (
-        <EmptySurface title="No post-publish workflow rows" message="The used-gear workflow currently has no listed, stale, sold-ready, or shipped rows." />
+        <EmptySurface title="No post-publish workflow rows" message="The used-gear workflow currently has no listed, stale, sold-ready, or shipped rows.">
+          <p className="mt-3 text-sm text-[var(--muted)]">
+            Next route: open Listings for newly approved publish work, then return here when a live item needs stale, sold-ready, or shipped follow-through.
+          </p>
+        </EmptySurface>
       ) : null}
 
       <div className="space-y-4">

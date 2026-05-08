@@ -88,7 +88,7 @@ This phase adds the operational review step that bridges processing into the exi
 
 ### Backlog
 - [ ] Add a more explicit approved-for-publish landing page if listing volume makes the shared progress queue too noisy.
-- [ ] Add operator-facing explanations for why publish readiness is blocked, with jump links to the listing or workflow field that needs review.
+- [x] Add operator-facing explanations for why publish readiness is blocked, with jump links to the listing or workflow field that needs review.
 - [ ] Add richer workflow-to-listing diff summaries so the listing team can see what changed since pre-listing approval.
 - [ ] Add workflow-specific smoke tests for publish handoff and writeback so future approval-surface changes are easier to validate.
 - [ ] Add more granular reviewer analytics for how long rows spend waiting for pre-listing review or publish completion.

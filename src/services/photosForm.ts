@@ -1,5 +1,6 @@
 import {
   createConfiguredRecord,
+  getConfiguredRecord,
   getConfiguredFieldMetadata,
   updateConfiguredRecord,
   uploadConfiguredAttachment,
@@ -7,7 +8,8 @@ import {
 import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
 import { createPhotosFormDefaults, type PhotosFormOptionFieldName, type PhotosFormValues } from '@/components/tabs/photos/photosFormSchema';
-import { extractInventoryScalarValue, loadInventoryRecord } from '@/services/inventoryDirectory';
+import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
+import type { AirtableRecord } from '@/types/airtable';
 
 const PRIMARY_IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
 const DEFAULT_STATUS = "Photo'd";
@@ -23,6 +25,34 @@ const OPTION_FIELD_NAMES = [
 ] as const satisfies readonly PhotosFormOptionFieldName[];
 
 type PhotosOptionSet = Record<PhotosFormOptionFieldName, string[]>;
+
+export type PhotosFormRecordSource = 'inventory-directory' | 'used-gear-workflow';
+
+export interface PhotosFormCustomerReference {
+  cosmeticNotes: string;
+  functionalNotes: string;
+  inclusionNotes: string;
+  submittedPhotosNotes: string;
+}
+
+export interface PhotosFormContextAttachment {
+  id?: string;
+  url?: string;
+  filename: string;
+}
+
+export interface PhotosFormStageContext {
+  inventoryNotes: string;
+  testingNotes: string;
+  existingAttachments: PhotosFormContextAttachment[];
+}
+
+export interface PhotosFormLoadResult {
+  source: PhotosFormRecordSource;
+  values: PhotosFormValues;
+  customerReference: PhotosFormCustomerReference;
+  stageContext: PhotosFormStageContext;
+}
 
 export interface PhotosFormSubmitResult {
   recordId: string;
@@ -65,27 +95,88 @@ async function uploadImages(recordId: string, fieldId: string, files: File[]): P
   }
 }
 
-export async function loadPhotosFormValues(recordId: string): Promise<PhotosFormValues> {
+async function loadConfiguredPhotosRecord(recordId: string): Promise<{ source: PhotosFormRecordSource; record: AirtableRecord }> {
   try {
-    const record = await loadInventoryRecord(recordId);
+    const workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
+    return { source: 'used-gear-workflow', record: workflowRecord };
+  } catch {
+    const inventoryRecord = await getConfiguredRecord('inventory-directory', recordId);
+    return { source: 'inventory-directory', record: inventoryRecord };
+  }
+}
+
+function extractAttachments(value: unknown): PhotosFormContextAttachment[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object') {
+      return [];
+    }
+
+    const attachment = entry as { id?: unknown; url?: unknown; filename?: unknown; name?: unknown };
+    const filename = typeof attachment.filename === 'string'
+      ? attachment.filename
+      : typeof attachment.name === 'string'
+        ? attachment.name
+        : '';
+
+    if (!filename) {
+      return [];
+    }
+
+    return [{
+      id: typeof attachment.id === 'string' ? attachment.id : undefined,
+      url: typeof attachment.url === 'string' ? attachment.url : undefined,
+      filename,
+    }];
+  });
+}
+
+function buildCustomerReference(record: AirtableRecord): PhotosFormCustomerReference {
+  return {
+    cosmeticNotes: extractInventoryScalarValue(record.fields['Customer Cosmetic Notes']),
+    functionalNotes: extractInventoryScalarValue(record.fields['Customer Functional Notes']),
+    inclusionNotes: extractInventoryScalarValue(record.fields['Customer Inclusion Notes']),
+    submittedPhotosNotes: extractInventoryScalarValue(record.fields['Customer Submitted Photos Notes']),
+  };
+}
+
+function buildStageContext(record: AirtableRecord): PhotosFormStageContext {
+  return {
+    inventoryNotes: extractInventoryScalarValue(record.fields['Inventory Notes']),
+    testingNotes: extractInventoryScalarValue(record.fields['Testing Notes']),
+    existingAttachments: extractAttachments(record.fields['Images (Eduardo)']),
+  };
+}
+
+export async function loadPhotosFormValues(recordId: string): Promise<PhotosFormLoadResult> {
+  try {
+    const { source, record } = await loadConfiguredPhotosRecord(recordId);
     const defaults = createPhotosFormDefaults();
 
     return {
-      ...defaults,
-      sku: extractInventoryScalarValue(record.fields.SKU),
-      make: extractInventoryScalarValue(record.fields.Make),
-      model: extractInventoryScalarValue(record.fields.Model),
-      componentType: extractInventoryScalarValue(record.fields['Component Type']),
-      originalBox: extractInventoryScalarValue(record.fields['Original Box']),
-      manual: extractInventoryScalarValue(record.fields.Manual),
-      remote: extractInventoryScalarValue(record.fields.Remote),
-      powerCable: extractInventoryScalarValue(record.fields['Power Cable']),
-      additionalItems: extractInventoryScalarValue(record.fields['Additional Items']),
-      audiogonRating: extractInventoryScalarValue(record.fields['Audiogon Rating']),
-      cosmeticConditionNotes: extractInventoryScalarValue(record.fields['Cosmetic Condition Notes']),
-      imageFiles: [],
-      photoDate: dateOrFallback(record.fields["Photo'd"], defaults.photoDate),
-      status: extractInventoryScalarValue(record.fields.Status) || defaults.status,
+      source,
+      customerReference: buildCustomerReference(record),
+      stageContext: buildStageContext(record),
+      values: {
+        ...defaults,
+        sku: extractInventoryScalarValue(record.fields.SKU),
+        make: extractInventoryScalarValue(record.fields.Make),
+        model: extractInventoryScalarValue(record.fields.Model),
+        componentType: extractInventoryScalarValue(record.fields['Component Type']),
+        originalBox: extractInventoryScalarValue(record.fields['Original Box']),
+        manual: extractInventoryScalarValue(record.fields.Manual),
+        remote: extractInventoryScalarValue(record.fields.Remote),
+        powerCable: extractInventoryScalarValue(record.fields['Power Cable']),
+        additionalItems: extractInventoryScalarValue(record.fields['Additional Items']),
+        audiogonRating: extractInventoryScalarValue(record.fields['Audiogon Rating']),
+        cosmeticConditionNotes: extractInventoryScalarValue(record.fields['Cosmetic Condition Notes']),
+        imageFiles: [],
+        photoDate: dateOrFallback(record.fields["Photo'd"], defaults.photoDate),
+        status: extractInventoryScalarValue(record.fields.Status) || defaults.status,
+      },
     };
   } catch (error) {
     logServiceError('photosForm', `Error loading Photos form values for ${recordId}`, error);
@@ -134,9 +225,14 @@ export async function loadPhotosFormOptionSets(): Promise<PhotosOptionSet> {
   }
 }
 
-export async function submitPhotosForm(values: PhotosFormValues, recordId?: string | null): Promise<PhotosFormSubmitResult> {
+export async function submitPhotosForm(
+  values: PhotosFormValues,
+  recordId?: string | null,
+  options: { recordSource?: PhotosFormRecordSource } = {},
+): Promise<PhotosFormSubmitResult> {
   const skuValue = values.sku.trim();
   const statusValue = trimToUndefined(values.status) ?? DEFAULT_STATUS;
+  const recordSource = options.recordSource ?? 'inventory-directory';
 
   const baseFields = compactFields({
     SKU: skuValue,
@@ -163,14 +259,16 @@ export async function submitPhotosForm(values: PhotosFormValues, recordId?: stri
   if (recordId) {
     try {
       const updatedRecord = await updateConfiguredRecord(
-        'inventory-directory',
+        recordSource,
         recordId,
         baseFields,
         { typecast: true },
       );
 
       if (values.imageFiles.length > 0) {
-        await uploadImages(updatedRecord.id, PRIMARY_IMAGE_ATTACHMENT_FIELD_ID, values.imageFiles);
+        for (const file of values.imageFiles) {
+          await uploadConfiguredAttachment(recordSource, updatedRecord.id, PRIMARY_IMAGE_ATTACHMENT_FIELD_ID, file);
+        }
       }
 
       return {

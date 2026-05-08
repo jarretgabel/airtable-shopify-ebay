@@ -100,10 +100,10 @@ This phase implements intake triage and queue visibility without yet changing th
 - [x] Make downstream workflow entry possible by SKU and by queue selection.
 
 ### Backlog
-- [ ] Add saved queue-view presets for common intake triage filters once the parking-lot pages are stable.
-- [ ] Add batch actions for grouped pending-review submissions where one decision should apply to every row in the submission.
-- [ ] Add queue aging indicators so intake staff can spot submissions sitting too long in review or arrival states.
-- [ ] Add richer grouped-submission summaries that highlight offer allocation, missing qualifying info, and pickup context before opening detail review.
+- [x] Add saved queue-view presets for common intake triage filters once the parking-lot pages are stable.
+- [x] Add batch actions for grouped pending-review submissions where one decision should apply to every row in the submission.
+- [x] Add queue aging indicators so intake staff can spot submissions sitting too long in review or arrival states.
+- [x] Add richer grouped-submission summaries that highlight offer allocation, missing qualifying info, and pickup context before opening detail review.
 - [ ] Add optional assignment or ownership markers for purchasing work if the team later wants explicit queue ownership beyond audit fields.
 - [ ] Add clearer correlation between raw JotForm submissions and their created workflow groups once a reliable source-to-row matching strategy is available in the app.
 - [x] Add URL-backed search/share state for Parking Lot 2 and trash sections to match the more advanced Inventory queue behavior.

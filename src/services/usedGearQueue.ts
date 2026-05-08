@@ -113,6 +113,20 @@ const USED_GEAR_WORKFLOW_NOTIFICATION_FIELDS = [
 
 export type UsedGearWorkflowNotificationCounts = Record<UsedGearWorkflowNotificationEvent, number>;
 
+export interface UsedGearWorkflowNotificationTarget {
+  destinationTab: 'inventory' | 'listings';
+  recordId: string | null;
+  sectionId: string | null;
+}
+
+export type UsedGearWorkflowNotificationTargets = Record<UsedGearWorkflowNotificationEvent, UsedGearWorkflowNotificationTarget | null>;
+
+export interface UsedGearWorkflowNotificationSummary {
+  counts: UsedGearWorkflowNotificationCounts;
+  targets: UsedGearWorkflowNotificationTargets;
+  workflowQueueBadgeCount: number;
+}
+
 export interface UsedGearWorkflowPostPublishSummary {
   activeListingCount: number;
   staleListingCount: number;
@@ -132,6 +146,25 @@ function createEmptyWorkflowNotificationCounts(): UsedGearWorkflowNotificationCo
   };
 }
 
+function createEmptyWorkflowNotificationTargets(): UsedGearWorkflowNotificationTargets {
+  return {
+    pendingReview: null,
+    processing: null,
+    testing: null,
+    photography: null,
+    preListingReview: null,
+    approvedForPublish: null,
+  };
+}
+
+export function createEmptyUsedGearWorkflowNotificationSummary(): UsedGearWorkflowNotificationSummary {
+  return {
+    counts: createEmptyWorkflowNotificationCounts(),
+    targets: createEmptyWorkflowNotificationTargets(),
+    workflowQueueBadgeCount: 0,
+  };
+}
+
 export function createEmptyUsedGearWorkflowPostPublishSummary(): UsedGearWorkflowPostPublishSummary {
   return {
     activeListingCount: 0,
@@ -148,6 +181,11 @@ export interface UsedGearWorkflowGroup {
   label: string;
   description: string;
   records: AirtableRecord[];
+}
+
+export interface UsedGearWorkflowRecordContext {
+  record: AirtableRecord;
+  group: UsedGearWorkflowGroup | null;
 }
 
 export type UsedGearPendingReviewAcceptedStatus =
@@ -409,20 +447,48 @@ export async function loadUsedGearWorkflowRecord(recordId: string): Promise<Airt
   return withWorkflow(record);
 }
 
-export async function loadUsedGearWorkflowNotificationCounts(): Promise<UsedGearWorkflowNotificationCounts> {
+export async function loadUsedGearWorkflowRecordContext(recordId: string): Promise<UsedGearWorkflowRecordContext> {
+  const records = (await getConfiguredRecords('used-gear-workflow', {
+    fields: [...USED_GEAR_WORKFLOW_RECORD_FIELDS],
+  })).map(withWorkflow);
+
+  const record = records.find((candidate) => candidate.id === recordId);
+  if (!record) {
+    throw new Error('Unable to load the selected used-gear workflow record.');
+  }
+
+  const group = groupUsedGearWorkflowRecords(records).find((candidate) => candidate.id === groupKeyForRecord(record).key) ?? null;
+
+  return {
+    record,
+    group: group && group.records.length > 1 ? group : null,
+  };
+}
+
+export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGearWorkflowNotificationSummary> {
   const records = await getConfiguredRecords('used-gear-workflow', {
     fields: [...USED_GEAR_WORKFLOW_NOTIFICATION_FIELDS],
   });
 
-  return records.reduce<UsedGearWorkflowNotificationCounts>((counts, record) => {
+  const sortedRecords = [...records].sort((left, right) => left.createdTime.localeCompare(right.createdTime));
+  const summary = createEmptyUsedGearWorkflowNotificationSummary();
+  const actionableRecordIds = new Set<string>();
+
+  sortedRecords.forEach((record) => {
     const status = getUsedGearWorkflowStatus(record.fields);
     if (!status) {
-      return counts;
+      return;
     }
 
     if (status === PENDING_REVIEW_STATUS) {
-      counts.pendingReview += 1;
-      return counts;
+      summary.counts.pendingReview += 1;
+      actionableRecordIds.add(record.id);
+      summary.targets.pendingReview ??= {
+        destinationTab: 'inventory',
+        recordId: record.id,
+        sectionId: 'used-gear-pending-review',
+      };
+      return;
     }
 
     if (
@@ -430,32 +496,69 @@ export async function loadUsedGearWorkflowNotificationCounts(): Promise<UsedGear
       || status === ACCEPTED_ARRIVED_AWAITING_SKU_STATUS
       || status === ACCEPTED_ARRIVED_AWAITING_MISSING_ITEM_STATUS
     ) {
-      counts.processing += 1;
-      return counts;
+      summary.counts.processing += 1;
+      actionableRecordIds.add(record.id);
+      summary.targets.processing ??= {
+        destinationTab: 'inventory',
+        recordId: record.id,
+        sectionId: 'used-gear-progress-queue',
+      };
+      return;
     }
 
     if (status === TESTING_AND_PHOTOGRAPHY_IN_PROGRESS_STATUS) {
       const signoffs = buildUsedGearConcurrentStageSignoffs(record.fields);
       if (!signoffs.testingSignedBy || !signoffs.testingSignedAt) {
-        counts.testing += 1;
+        summary.counts.testing += 1;
+        actionableRecordIds.add(record.id);
+        summary.targets.testing ??= {
+          destinationTab: 'inventory',
+          recordId: record.id,
+          sectionId: 'used-gear-progress-queue',
+        };
       }
       if (!signoffs.photographySignedBy || !signoffs.photographySignedAt) {
-        counts.photography += 1;
+        summary.counts.photography += 1;
+        actionableRecordIds.add(record.id);
+        summary.targets.photography ??= {
+          destinationTab: 'inventory',
+          recordId: record.id,
+          sectionId: 'used-gear-progress-queue',
+        };
       }
-      return counts;
+      return;
     }
 
     if (status === AWAITING_PRE_LISTING_REVIEW_STATUS) {
-      counts.preListingReview += 1;
-      return counts;
+      summary.counts.preListingReview += 1;
+      actionableRecordIds.add(record.id);
+      summary.targets.preListingReview ??= {
+        destinationTab: 'inventory',
+        recordId: record.id,
+        sectionId: 'used-gear-progress-queue',
+      };
+      return;
     }
 
     if (status === APPROVED_FOR_PUBLISH_STATUS) {
-      counts.approvedForPublish += 1;
+      summary.counts.approvedForPublish += 1;
+      actionableRecordIds.add(record.id);
+      summary.targets.approvedForPublish ??= {
+        destinationTab: 'listings',
+        recordId: record.id,
+        sectionId: null,
+      };
     }
 
-    return counts;
-  }, createEmptyWorkflowNotificationCounts());
+    return;
+  });
+
+  summary.workflowQueueBadgeCount = actionableRecordIds.size;
+  return summary;
+}
+
+export async function loadUsedGearWorkflowNotificationCounts(): Promise<UsedGearWorkflowNotificationCounts> {
+  return (await loadUsedGearWorkflowNotificationSummary()).counts;
 }
 
 export function groupUsedGearWorkflowRecords(records: AirtableRecord[]): UsedGearWorkflowGroup[] {
@@ -611,6 +714,20 @@ export async function markPendingReviewUnqualified(recordId: string, reason: str
   );
 
   return withWorkflow(record);
+}
+
+export async function markPendingReviewGroupUnqualified(recordIds: string[], reason: string): Promise<AirtableRecord[]> {
+  if (recordIds.length === 0) {
+    throw new Error('Pending-review group unqualification requires at least one intake row.');
+  }
+
+  const updatedRecords: AirtableRecord[] = [];
+
+  for (const recordId of recordIds) {
+    updatedRecords.push(await markPendingReviewUnqualified(recordId, reason));
+  }
+
+  return updatedRecords;
 }
 
 export async function restoreTrashRecord(recordId: string): Promise<AirtableRecord> {

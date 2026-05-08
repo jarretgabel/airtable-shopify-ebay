@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { useCopyQueueLink } from '@/components/tabs/airtable/useCopyQueueLink';
+import { useAuthStore } from '@/stores/auth/authStore';
+import { useNotificationStore } from '@/stores/notificationStore';
 import {
   completePhotographyStage,
   completeProcessingStage,
@@ -11,6 +13,14 @@ import {
   loadWorkflowProgressQueue,
 } from '@/services/usedGearQueue';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
+import {
+  type UsedGearCompletedStage,
+} from '@/services/usedGearWorkflowStageNotifications';
+import { publishUsedGearStageHandoffNotification } from '@/services/usedGearWorkflowHandoffNotifier';
+import {
+  buildWorkflowProgressQueueAgingSummary,
+  formatUsedGearAgeDays,
+} from '@/services/usedGearWorkflowAging';
 import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -76,6 +86,8 @@ export function UsedGearWorkflowProgressSection({
   sortMode: controlledSortMode,
   onSortModeChange,
 }: UsedGearWorkflowProgressSectionProps) {
+  const currentUser = useAuthStore((state) => state.users.find((user) => user.id === state.currentUserId) ?? null);
+  const upsertByKey = useNotificationStore((state) => state.upsertByKey);
   const { copyingLink, copiedLink, copyLink } = useCopyQueueLink({
     sectionId: 'used-gear-progress-queue',
     successTitle: 'Queue link copied',
@@ -149,6 +161,7 @@ export function UsedGearWorkflowProgressSection({
       return left.label.localeCompare(right.label);
     });
   }, [filteredRecords, sortMode]);
+  const agingSummary = useMemo(() => buildWorkflowProgressQueueAgingSummary(filteredRecords), [filteredRecords]);
   const visibleGroupIds = useMemo(() => groupedRecords.map((group) => group.id), [groupedRecords]);
   const collapsedGroupIdSet = useMemo(() => new Set(collapsedGroupIds), [collapsedGroupIds]);
   const allVisibleGroupsCollapsed = visibleGroupIds.length > 0
@@ -171,12 +184,27 @@ export function UsedGearWorkflowProgressSection({
     setRecords((currentRecords) => currentRecords.map((record) => record.id === updatedRecord.id ? updatedRecord : record));
   };
 
-  const handleAction = async (recordId: string, action: () => Promise<AirtableRecord>) => {
+  const handleAction = async (
+    recordId: string,
+    action: () => Promise<AirtableRecord>,
+    completedStage?: UsedGearCompletedStage,
+  ) => {
     setActionRecordId(recordId);
     setError(null);
 
     try {
-      replaceRecord(await action());
+      const updatedRecord = await action();
+      replaceRecord(updatedRecord);
+
+      if (completedStage) {
+        publishUsedGearStageHandoffNotification({
+          completedStage,
+          currentUser,
+          record: updatedRecord,
+          onOpenWorkflowRecord,
+          upsertByKey,
+        });
+      }
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'Unable to update the selected workflow row.');
     } finally {
@@ -255,7 +283,6 @@ export function UsedGearWorkflowProgressSection({
           <label className="min-w-[240px] flex-1">
             <span className="sr-only">Search used gear progress queue</span>
             <input
-              type="text"
               className={inputClassName}
               value={searchTerm}
               onChange={(event) => handleSearchTermChange(event.currentTarget.value)}
@@ -309,8 +336,31 @@ export function UsedGearWorkflowProgressSection({
         </div>
       ) : null}
 
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible Rows</p>
+          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{filteredRecords.length}</p>
+        </div>
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible Groups</p>
+          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{groupedRecords.length}</p>
+        </div>
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">5+ Days In Stage</p>
+          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{agingSummary.alertCount}</p>
+        </div>
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Oldest Active Stage</p>
+          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{formatUsedGearAgeDays(agingSummary.oldestAgeDays)}</p>
+        </div>
+      </div>
+
       {!loading && groupedRecords.length === 0 ? (
-        <EmptySurface title="No active workflow rows in processing" message="The used-gear queue currently has no accepted rows in processing or concurrent stage work." />
+        <EmptySurface title="No active workflow rows in processing" message="The used-gear queue currently has no accepted rows in processing or concurrent stage work.">
+          <p className="mt-3 text-sm text-[var(--muted)]">
+            Next route: review Parking Lot 2 for newly accepted arrivals, or open Listings if the next work item is already approved for publish.
+          </p>
+        </EmptySurface>
       ) : null}
 
       <div className="space-y-4">
@@ -423,7 +473,7 @@ export function UsedGearWorkflowProgressSection({
                           type="button"
                           className="rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                           onClick={() => {
-                            void handleAction(record.id, () => completeProcessingStage(record.id, currentUserName));
+                            void handleAction(record.id, () => completeProcessingStage(record.id, currentUserName), 'processing');
                           }}
                           disabled={busy}
                         >
@@ -437,7 +487,7 @@ export function UsedGearWorkflowProgressSection({
                             type="button"
                             className="rounded-xl bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={() => {
-                              void handleAction(record.id, () => completeTestingStage(record.id, currentUserName));
+                              void handleAction(record.id, () => completeTestingStage(record.id, currentUserName), 'testing');
                             }}
                             disabled={busy || testingSigned}
                           >
@@ -447,7 +497,7 @@ export function UsedGearWorkflowProgressSection({
                             type="button"
                             className="rounded-xl bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={() => {
-                              void handleAction(record.id, () => completePhotographyStage(record.id, currentUserName));
+                              void handleAction(record.id, () => completePhotographyStage(record.id, currentUserName), 'photography');
                             }}
                             disabled={busy || photographySigned}
                           >

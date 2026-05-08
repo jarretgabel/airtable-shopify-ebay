@@ -7,6 +7,12 @@ import { UsedGearPendingReviewSection, type UsedGearPendingReviewSortMode } from
 import { UsedGearWorkflowPostPublishSection } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 import { UsedGearWorkflowProgressSection, type UsedGearWorkflowProgressSortMode } from '@/components/tabs/airtable/UsedGearWorkflowProgressSection';
 import { loadInventoryDirectory } from '@/services/inventoryDirectory';
+import {
+  deleteUsedGearWorkflowViewPreset,
+  loadUsedGearWorkflowViewPresets,
+  saveUsedGearWorkflowViewPreset,
+  type UsedGearWorkflowViewPreset,
+} from '@/services/usedGearWorkflowViewPresets';
 import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 import type { UsedGearWorkflowPostPublishSortMode } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 import { useNotificationStore } from '@/stores/notificationStore';
@@ -133,6 +139,8 @@ export function AirtableTab({
   const [directoryRefreshing, setDirectoryRefreshing] = useState(false);
   const [copyingWorkflowView, setCopyingWorkflowView] = useState(false);
   const [copiedWorkflowView, setCopiedWorkflowView] = useState(false);
+  const [workflowViewPresetName, setWorkflowViewPresetName] = useState('');
+  const [workflowViewPresets, setWorkflowViewPresets] = useState<UsedGearWorkflowViewPreset[]>([]);
   const [pendingWorkflowChipFocusTarget, setPendingWorkflowChipFocusTarget] = useState<WorkflowChipFocusTarget | null>(null);
   const workflowChipButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const resetWorkflowViewButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -201,6 +209,20 @@ export function AirtableTab({
       search: nextSearch ? `?${nextSearch}` : '',
       hash,
     }, { replace: true });
+  };
+
+  const buildWorkflowPresetSearch = () => {
+    const currentParams = new URLSearchParams(location.search);
+    const nextParams = new URLSearchParams();
+
+    WORKFLOW_ROUTE_PARAMS.forEach((paramName) => {
+      const value = currentParams.get(paramName);
+      if (value !== null) {
+        nextParams.set(paramName, value);
+      }
+    });
+
+    return nextParams.toString();
   };
 
   const updateInventoryDirectoryRouteState = (update: (params: URLSearchParams) => void) => {
@@ -306,6 +328,46 @@ export function AirtableTab({
     } finally {
       setCopyingWorkflowView(false);
     }
+  };
+
+  const saveCurrentWorkflowPreset = () => {
+    const name = workflowViewPresetName.trim();
+    const presetSearch = buildWorkflowPresetSearch();
+    if (!name || !presetSearch) {
+      return;
+    }
+
+    setWorkflowViewPresets(saveUsedGearWorkflowViewPreset({
+      name,
+      search: presetSearch,
+      hash: location.hash,
+    }));
+    setWorkflowViewPresetName('');
+    pushNotification({
+      tone: 'success',
+      title: 'Workflow view saved',
+      message: `Saved the current workflow filters as ${name}.`,
+    });
+  };
+
+  const applyWorkflowPreset = (preset: UsedGearWorkflowViewPreset) => {
+    updateWorkflowRouteState((params) => {
+      WORKFLOW_ROUTE_PARAMS.forEach((paramName) => params.delete(paramName));
+
+      const presetParams = new URLSearchParams(preset.search);
+      presetParams.forEach((value, key) => {
+        params.set(key, value);
+      });
+    }, preset.hash);
+  };
+
+  const removeWorkflowPreset = (presetId: string, presetName: string) => {
+    setWorkflowViewPresets(deleteUsedGearWorkflowViewPreset(presetId));
+    pushNotification({
+      tone: 'success',
+      title: 'Workflow view removed',
+      message: `${presetName} was removed from saved Inventory views.`,
+    });
   };
 
   const workflowStateChips = useMemo(() => {
@@ -430,6 +492,10 @@ export function AirtableTab({
   }, [pendingWorkflowChipFocusTarget, workflowStateChips]);
 
   useEffect(() => {
+    setWorkflowViewPresets(loadUsedGearWorkflowViewPresets());
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     const loadDirectoryData = async () => {
@@ -541,28 +607,84 @@ export function AirtableTab({
           </div>
         ) : null}
 
-        {hasWorkflowViewState ? (
+        {hasWorkflowViewState || workflowViewPresets.length > 0 ? (
           <div className="flex flex-col gap-3 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="m-0 text-sm font-semibold text-[var(--ink)]">Workflow view filters are active</p>
-              <p className="mt-1 text-sm text-[var(--muted)]">Shared queue searches, collapsed groups, and post-publish filters are currently applied to the Inventory workflow sections.</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {workflowStateChips.map((chip) => (
-                  <span key={chip.key} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                    <span>{chip.label}</span>
-                    <button
-                      type="button"
-                      ref={(element) => {
-                        workflowChipButtonRefs.current[chip.key] = element;
-                      }}
-                      className="rounded-full border border-[var(--line)] px-1.5 py-0.5 text-[10px] leading-none transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                      aria-label={chip.clearLabel}
-                      onClick={() => handleWorkflowChipClear(chip, workflowStateChips.findIndex((currentChip) => currentChip.key === chip.key))}
-                    >
-                      x
-                    </button>
-                  </span>
-                ))}
+            <div className="flex-1">
+              <p className="m-0 text-sm font-semibold text-[var(--ink)]">Workflow views</p>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                {hasWorkflowViewState
+                  ? 'Shared queue searches, collapsed groups, and post-publish filters are currently applied to the Inventory workflow sections.'
+                  : 'Apply a saved view to restore a common workflow filter combination across the Inventory queues.'}
+              </p>
+
+              {hasWorkflowViewState ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {workflowStateChips.map((chip) => (
+                    <span key={chip.key} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                      <span>{chip.label}</span>
+                      <button
+                        type="button"
+                        ref={(element) => {
+                          workflowChipButtonRefs.current[chip.key] = element;
+                        }}
+                        className="rounded-full border border-[var(--line)] px-1.5 py-0.5 text-[10px] leading-none transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                        aria-label={chip.clearLabel}
+                        onClick={() => handleWorkflowChipClear(chip, workflowStateChips.findIndex((currentChip) => currentChip.key === chip.key))}
+                      >
+                        x
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="mt-4 flex flex-col gap-3 border-t border-[var(--line)]/70 pt-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                  <label className="min-w-[240px] flex-1">
+                    <span className="sr-only">Workflow view preset name</span>
+                    <input
+                      type="text"
+                      className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                      value={workflowViewPresetName}
+                      onChange={(event) => setWorkflowViewPresetName(event.currentTarget.value.slice(0, 48))}
+                      placeholder="Save current workflow view as..."
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={saveCurrentWorkflowPreset}
+                    disabled={!hasWorkflowViewState || workflowViewPresetName.trim().length === 0}
+                  >
+                    Save Workflow View
+                  </button>
+                </div>
+
+                {workflowViewPresets.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {workflowViewPresets.map((preset) => (
+                      <div key={preset.id} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                        <button
+                          type="button"
+                          className="transition hover:text-[var(--accent)]"
+                          onClick={() => applyWorkflowPreset(preset)}
+                        >
+                          {preset.name}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-full border border-[var(--line)] px-1.5 py-0.5 text-[10px] leading-none transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                          aria-label={`Delete ${preset.name} workflow view`}
+                          onClick={() => removeWorkflowPreset(preset.id, preset.name)}
+                        >
+                          x
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="m-0 text-sm text-[var(--muted)]">No saved workflow views yet.</p>
+                )}
               </div>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -576,14 +698,16 @@ export function AirtableTab({
               >
                 {copyingWorkflowView ? 'Copying...' : copiedWorkflowView ? 'View Copied' : 'Copy Current Workflow View'}
               </button>
-              <button
-                ref={resetWorkflowViewButtonRef}
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={resetWorkflowViewState}
-              >
-                Reset Workflow View
-              </button>
+              {hasWorkflowViewState ? (
+                <button
+                  ref={resetWorkflowViewButtonRef}
+                  type="button"
+                  className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                  onClick={resetWorkflowViewState}
+                >
+                  Reset Workflow View
+                </button>
+              ) : null}
             </div>
           </div>
         ) : null}

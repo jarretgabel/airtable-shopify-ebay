@@ -368,6 +368,7 @@ export function AppTabContent({
               currentUserName={currentUserName}
               recordId={deferredRouteState.usedGearWorkflowRecordId}
               onBackToDirectory={() => navigateToInventoryList()}
+              onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
               onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
               onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
               onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}

@@ -10,6 +10,7 @@ import { useNotificationStore } from '@/stores/notificationStore';
 interface AppShellControlsParams {
   activeTab: Tab;
   visibleTabs: Tab[];
+  workflowInventoryBadgeCount: number;
   approvalPending: number;
   shopifyApprovalPending: number;
   totalNewSubmissions: number;
@@ -41,6 +42,7 @@ interface AppShellControlsParams {
 export function useAppShellControls({
   activeTab,
   visibleTabs,
+  workflowInventoryBadgeCount,
   approvalPending,
   shopifyApprovalPending,
   totalNewSubmissions,
@@ -160,6 +162,7 @@ export function useAppShellControls({
     visibleTabs,
     activeTab,
     exportingPdf,
+    workflowInventoryBadgeCount,
     approvalPending,
     shopifyApprovalPending,
     totalNewSubmissions,

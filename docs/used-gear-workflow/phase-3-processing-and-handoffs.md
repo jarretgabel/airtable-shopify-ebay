@@ -48,6 +48,13 @@ This phase carries the authoritative item record through processing with custome
 - Progress-queue grouped submissions can now be collapsed, and that collapsed-group state also syncs into the Inventory URL so copied links preserve the current working layout.
 - Progress-queue operators can now collapse or expand every visible group in one action when sharing or restoring a working layout.
 - Progress-queue sort mode now persists in the Inventory URL, and the active workflow-summary chips can clear progress search, sort, or collapsed-group state individually.
+- Incoming Gear, Testing, and Photos now all load from the authoritative workflow row when available, with inventory-directory fallback kept only for non-workflow records.
+- Testing and Photos now render customer-submitted cosmetic, functional, inclusion, and submitted-photo notes as a separate intake-reference panel so staff assessments stay distinct from customer-provided context.
+- Testing and Photos now save edits and attachment uploads back through the same configured source they were loaded from, so workflow-opened forms stay on the workflow write path end to end.
+- The Photos form now shows explicit photography context for Make, Model, Component Type, Inventory Notes, Testing Notes, inclusion items, and existing workflow images so photographers can work from one operational surface.
+- Included items such as Original Box, Manual, Remote, Power Cable, and Additional Items are now visually emphasized in the photo stage when applicable, and the form requires explicit confirmation that each applicable item was checked and photographed before submit.
+- Photo-stage completion validation now accepts either newly uploaded images or existing workflow images, and blocks submit until required included-item confirmations are complete.
+- Processing, Testing, and Photography completion actions now emit explicit in-app handoff notifications based on the resulting workflow row so operators see whether the item is moving to concurrent stage work, the remaining concurrent team, or pre-listing review.
 
 ### Relevant Files
 - `/Users/user/Sites/airtable-shopify-ebay/src/components/tabs/AirtableEmbeddedForm.tsx`
@@ -64,27 +71,27 @@ This phase carries the authoritative item record through processing with custome
 - `/Users/user/Sites/airtable-shopify-ebay/src/app/AppTabContent.tsx`
 
 ### Checklist
-- [ ] Prepopulate Incoming Gear from the authoritative Airtable row.
-- [ ] Prepopulate Testing from the authoritative Airtable row.
-- [ ] Prepopulate Photos from the authoritative Airtable row.
+- [x] Prepopulate Incoming Gear from the authoritative Airtable row.
+- [x] Prepopulate Testing from the authoritative Airtable row.
+- [x] Prepopulate Photos from the authoritative Airtable row.
 - [x] Add any needed testing queue or testing review pages.
 - [x] Add any needed photography queue or photography review pages.
-- [ ] Separate customer-submitted reference data from staff-assessment data in all processing stages.
+- [x] Separate customer-submitted reference data from staff-assessment data in all processing stages.
 - [x] Add processing-stage signature and date capture.
 - [x] Add testing-stage signature and date capture.
 - [x] Add photography-stage signature and date capture.
 - [x] Allow testing and photography to be worked concurrently from the same authoritative row.
-- [ ] Route in-app notifications explicitly to the correct next team at each stage handoff.
-- [ ] Make the photo stage display Make, Model, Component Type, Inventory Notes, inclusion list, and auxiliary/testing photos as context.
-- [ ] Make Box, Remote, Manual, and Additional Items visually prominent in the photo stage when applicable.
-- [ ] Require explicit confirmation that applicable included items were checked and photographed.
-- [ ] Add in-app next-team notifications for stage completion.
-- [ ] Enforce photo-stage completion requirements before submit.
+- [x] Route in-app notifications explicitly to the correct next team at each stage handoff.
+- [x] Make the photo stage display Make, Model, Component Type, Inventory Notes, inclusion list, and auxiliary/testing photos as context.
+- [x] Make Box, Remote, Manual, and Additional Items visually prominent in the photo stage when applicable.
+- [x] Require explicit confirmation that applicable included items were checked and photographed.
+- [x] Add in-app next-team notifications for stage completion.
+- [x] Enforce photo-stage completion requirements before submit.
 - [x] Transition records to `Awaiting Pre-Listing Review` only after both testing and photography are complete.
 
 ### Backlog
 - [ ] Add a compact stage timeline so operators can see processing, testing, and photography handoffs in one audit view.
-- [ ] Add stronger queue-level SLA or aging indicators for rows stuck in processing, testing, or photography.
+- [x] Add stronger queue-level SLA or aging indicators for rows stuck in processing, testing, or photography.
 - [ ] Add direct deep links from workflow notifications to the most relevant queue group or record.
-- [ ] Add clearer blocked-state messaging that links straight to the missing field or confirmation inside the active form.
+- [x] Add clearer blocked-state messaging that links straight to the missing field or confirmation inside the active form.
 - [ ] Add optional team landing views if the shared Inventory workflow surface becomes too dense for daily processing work.

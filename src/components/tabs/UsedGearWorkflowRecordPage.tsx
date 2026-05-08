@@ -1,21 +1,32 @@
 import { useEffect, useState } from 'react';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { useAuthStore } from '@/stores/auth/authStore';
+import { useNotificationStore } from '@/stores/notificationStore';
 import {
   completePreListingReviewStage,
   completePhotographyStage,
   completeProcessingStage,
   completeTestingStage,
-  loadUsedGearWorkflowRecord,
+  loadUsedGearWorkflowRecordContext,
 } from '@/services/usedGearQueue';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
+import {
+  type UsedGearCompletedStage,
+} from '@/services/usedGearWorkflowStageNotifications';
+import {
+  type UsedGearWorkflowListingReadinessActionTarget,
+} from '@/services/usedGearWorkflowListingReadiness';
+import { publishUsedGearStageHandoffNotification } from '@/services/usedGearWorkflowHandoffNotifier';
 import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
+import { buildUsedGearWorkflowTimeline } from '@/services/usedGearWorkflowTimeline';
 import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearWorkflowRecordPageProps {
   currentUserName: string;
   recordId: string;
   onBackToDirectory: () => void;
+  onOpenWorkflowRecord: (recordId: string) => void;
   onOpenIncomingGearForm: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
@@ -37,17 +48,72 @@ function statusSupportsListingsApproval(status: string | null): boolean {
   return status === 'Approved for Publish';
 }
 
+function formatTimelineTimestamp(value: string | null): string {
+  if (!value) {
+    return 'Pending';
+  }
+
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) {
+    return value;
+  }
+
+  return new Date(parsed).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function runReadinessAction(target: UsedGearWorkflowListingReadinessActionTarget, recordId: string, actions: {
+  onOpenIncomingGearForm: (recordId: string) => void;
+  onOpenTestingForm: (recordId: string) => void;
+  onOpenPhotosForm: (recordId: string) => void;
+  onOpenListingsRecord: (recordId: string) => void;
+  onOpenInventoryEditor: (recordId: string) => void;
+}) {
+  if (target === 'incoming-gear') {
+    actions.onOpenIncomingGearForm(recordId);
+    return;
+  }
+
+  if (target === 'testing') {
+    actions.onOpenTestingForm(recordId);
+    return;
+  }
+
+  if (target === 'photos') {
+    actions.onOpenPhotosForm(recordId);
+    return;
+  }
+
+  if (target === 'listings-approval') {
+    actions.onOpenListingsRecord(recordId);
+    return;
+  }
+
+  actions.onOpenInventoryEditor(recordId);
+}
+
 export function UsedGearWorkflowRecordPage({
   currentUserName,
   recordId,
   onBackToDirectory,
+  onOpenWorkflowRecord,
   onOpenIncomingGearForm,
   onOpenTestingForm,
   onOpenPhotosForm,
   onOpenListingsRecord,
   onOpenInventoryEditor,
 }: UsedGearWorkflowRecordPageProps) {
+  const currentUser = useAuthStore((state) => state.users.find((user) => user.id === state.currentUserId) ?? null);
+  const upsertByKey = useNotificationStore((state) => state.upsertByKey);
   const [record, setRecord] = useState<AirtableRecord | null>(null);
+  const [relatedGroupRecords, setRelatedGroupRecords] = useState<AirtableRecord[]>([]);
+  const [relatedGroupLabel, setRelatedGroupLabel] = useState<string | null>(null);
+  const [relatedGroupDescription, setRelatedGroupDescription] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -62,9 +128,12 @@ export function UsedGearWorkflowRecordPage({
       setError(null);
 
       try {
-        const nextRecord = await loadUsedGearWorkflowRecord(recordId);
+        const nextContext = await loadUsedGearWorkflowRecordContext(recordId);
         if (!cancelled) {
-          setRecord(nextRecord);
+          setRecord(nextContext.record);
+          setRelatedGroupRecords(nextContext.group?.records.filter((candidate) => candidate.id !== recordId) ?? []);
+          setRelatedGroupLabel(nextContext.group?.label ?? null);
+          setRelatedGroupDescription(nextContext.group?.description ?? null);
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -88,6 +157,7 @@ export function UsedGearWorkflowRecordPage({
   const testingSigned = typeof record?.fields['Testing Signed By'] === 'string' && record.fields['Testing Signed By'].trim().length > 0;
   const photographySigned = typeof record?.fields['Photography Signed By'] === 'string' && record.fields['Photography Signed By'].trim().length > 0;
   const readiness = record ? getUsedGearWorkflowListingReadiness(record) : null;
+  const timeline = record ? buildUsedGearWorkflowTimeline(record) : [];
   const canApproveForPublish = Boolean(
     statusSupportsPreListingReview(status)
       && readiness
@@ -95,18 +165,42 @@ export function UsedGearWorkflowRecordPage({
       && pricingConfirmed
       && contentConfirmed,
   );
+  const relatedGroupSummary = relatedGroupRecords.length > 0 ? {
+    pricedCount: relatedGroupRecords.filter((candidate) => {
+      const value = candidate.fields.Price;
+      return typeof value === 'string' ? value.trim().length > 0 : typeof value === 'number';
+    }).length,
+    offerCount: relatedGroupRecords.filter((candidate) => {
+      const value = candidate.fields['Offer Amount'];
+      return typeof value === 'number' || (typeof value === 'string' && value.trim().length > 0);
+    }).length,
+  } : null;
 
   useEffect(() => {
     setPricingConfirmed(false);
     setContentConfirmed(false);
   }, [recordId, status]);
 
-  const runAction = async (action: () => Promise<AirtableRecord>) => {
+  const runAction = async (
+    action: () => Promise<AirtableRecord>,
+    completedStage?: UsedGearCompletedStage,
+  ) => {
     setSaving(true);
     setError(null);
 
     try {
-      setRecord(await action());
+      const updatedRecord = await action();
+      setRecord(updatedRecord);
+
+      if (completedStage) {
+        publishUsedGearStageHandoffNotification({
+          completedStage,
+          currentUser,
+          record: updatedRecord,
+          onOpenWorkflowRecord,
+          upsertByKey,
+        });
+      }
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'Unable to update the workflow record.');
     } finally {
@@ -234,7 +328,7 @@ export function UsedGearWorkflowRecordPage({
                   type="button"
                   className="rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => {
-                    void runAction(() => completeProcessingStage(recordId, currentUserName));
+                    void runAction(() => completeProcessingStage(recordId, currentUserName), 'processing');
                   }}
                   disabled={saving}
                 >
@@ -248,7 +342,7 @@ export function UsedGearWorkflowRecordPage({
                     type="button"
                     className="rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={() => {
-                      void runAction(() => completeTestingStage(recordId, currentUserName));
+                      void runAction(() => completeTestingStage(recordId, currentUserName), 'testing');
                     }}
                     disabled={saving || testingSigned}
                   >
@@ -258,7 +352,7 @@ export function UsedGearWorkflowRecordPage({
                     type="button"
                     className="rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={() => {
-                      void runAction(() => completePhotographyStage(recordId, currentUserName));
+                      void runAction(() => completePhotographyStage(recordId, currentUserName), 'photography');
                     }}
                     disabled={saving || photographySigned}
                   >
@@ -323,7 +417,22 @@ export function UsedGearWorkflowRecordPage({
 
               {readiness && readiness.missingRequirements.length > 0 ? (
                 <div className="mt-3 rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-3 text-amber-200">
-                  {readiness.missingRequirements[0]}
+                  <p className="m-0">{readiness.missingRequirements[0]}</p>
+                  {readiness.blockers[0] ? (
+                    <button
+                      type="button"
+                      className="mt-3 rounded-xl border border-amber-300/50 bg-amber-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-amber-100 transition hover:border-amber-200 hover:text-white"
+                      onClick={() => runReadinessAction(readiness.blockers[0].actionTarget, recordId, {
+                        onOpenIncomingGearForm,
+                        onOpenTestingForm,
+                        onOpenPhotosForm,
+                        onOpenListingsRecord,
+                        onOpenInventoryEditor,
+                      })}
+                    >
+                      {readiness.blockers[0].actionLabel}
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -372,6 +481,85 @@ export function UsedGearWorkflowRecordPage({
         </section>
 
         <section className="grid gap-4 lg:grid-cols-2">
+          {relatedGroupRecords.length > 0 ? (
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 lg:col-span-2">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Grouped Submission Context</h3>
+                  <p className="mt-2 text-sm text-[var(--muted)]">This row shares a {relatedGroupDescription?.toLowerCase() ?? 'workflow group'} with {relatedGroupRecords.length} other row{relatedGroupRecords.length === 1 ? '' : 's'} under {relatedGroupLabel}.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                    Sibling rows: {relatedGroupRecords.length}
+                  </div>
+                  <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                    Siblings with offers: {relatedGroupSummary?.offerCount ?? 0}
+                  </div>
+                  <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                    Siblings with price: {relatedGroupSummary?.pricedCount ?? 0}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                {relatedGroupRecords.map((candidate) => (
+                  <div key={candidate.id} className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-semibold text-[var(--ink)]">{displayInventoryValue(candidate.fields.SKU)}</div>
+                        <div className="mt-1">{displayInventoryValue(candidate.fields.Make)} · {displayInventoryValue(candidate.fields.Model)}</div>
+                      </div>
+                      <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                        {displayInventoryValue(candidate.fields['Workflow Status'])}
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-1 sm:grid-cols-2">
+                      <div>Offer Amount: {displayInventoryValue(candidate.fields['Offer Amount'])}</div>
+                      <div>Paid Amount: {displayInventoryValue(candidate.fields['Paid Amount'])}</div>
+                      <div>Group Total: {displayInventoryValue(candidate.fields['Confirmed Grand Total'])}</div>
+                      <div>Accepted By: {displayInventoryValue(candidate.fields['Accepted By'])}</div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                        onClick={() => onOpenWorkflowRecord(candidate.id)}
+                      >
+                        Open Sibling Workflow
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+            <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Workflow Timeline</h3>
+            <div className="mt-4 space-y-3">
+              {timeline.map((entry) => (
+                <div key={entry.id} className="flex items-start gap-3 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3">
+                  <div className={[
+                    'mt-0.5 h-2.5 w-2.5 rounded-full',
+                    entry.status === 'completed' ? 'bg-emerald-400' : 'bg-[var(--line)]',
+                  ].join(' ')} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold text-[var(--ink)]">{entry.label}</span>
+                      <span className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                        {entry.status === 'completed' ? 'Completed' : 'Pending'}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-[var(--muted)]">{formatTimelineTimestamp(entry.timestamp)}</p>
+                    {entry.actor ? (
+                      <p className="m-0 text-xs uppercase tracking-[0.08em] text-[var(--muted)]">By {entry.actor}</p>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
             <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Workflow Audit</h3>
             <div className="mt-4 space-y-2 text-sm text-[var(--muted)]">

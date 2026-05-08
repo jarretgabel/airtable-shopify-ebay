@@ -2,14 +2,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import {
   acceptPendingReviewRecord,
+  acceptPendingReviewGroup,
   groupUsedGearWorkflowRecords,
   hasUsedGearPendingReviewPricingPath,
   loadPendingReviewQueue,
   markPendingReviewUnqualified,
+  markPendingReviewGroupUnqualified,
   type UsedGearPendingReviewAcceptedStatus,
 } from '@/services/usedGearQueue';
 import { useCopyQueueLink } from '@/components/tabs/airtable/useCopyQueueLink';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
+import {
+  buildPendingReviewQueueAgingSummary,
+  formatUsedGearAgeDays,
+} from '@/services/usedGearWorkflowAging';
 import type { AirtableRecord } from '@/types/airtable';
 
 export interface UsedGearPendingReviewSectionProps {
@@ -105,10 +111,13 @@ export function UsedGearPendingReviewSection({
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
   const [uncontrolledCollapsedGroupIds, setUncontrolledCollapsedGroupIds] = useState<string[]>([]);
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearPendingReviewSortMode>('group-label');
-  const [actionRecordId, setActionRecordId] = useState<string | null>(null);
+  const [actionTargetId, setActionTargetId] = useState<string | null>(null);
   const [unqualifiedReasons, setUnqualifiedReasons] = useState<Record<string, string>>({});
   const [qualificationNotes, setQualificationNotes] = useState<Record<string, string>>({});
   const [acceptStatuses, setAcceptStatuses] = useState<Record<string, UsedGearPendingReviewAcceptedStatus>>({});
+  const [groupQualificationNotes, setGroupQualificationNotes] = useState<Record<string, string>>({});
+  const [groupAcceptStatuses, setGroupAcceptStatuses] = useState<Record<string, UsedGearPendingReviewAcceptedStatus>>({});
+  const [groupUnqualifiedReasons, setGroupUnqualifiedReasons] = useState<Record<string, string>>({});
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const collapsedGroupIds = Array.isArray(controlledCollapsedGroupIds) ? controlledCollapsedGroupIds : uncontrolledCollapsedGroupIds;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
@@ -178,6 +187,7 @@ export function UsedGearPendingReviewSection({
       return left.label.localeCompare(right.label);
     });
   }, [filteredRecords, sortMode]);
+  const agingSummary = useMemo(() => buildPendingReviewQueueAgingSummary(filteredRecords), [filteredRecords]);
   const visibleGroupIds = useMemo(() => groupedRecords.map((group) => group.id), [groupedRecords]);
   const collapsedGroupIdSet = useMemo(() => new Set(collapsedGroupIds), [collapsedGroupIds]);
   const allVisibleGroupsCollapsed = visibleGroupIds.length > 0
@@ -217,7 +227,7 @@ export function UsedGearPendingReviewSection({
     acceptedStatus: UsedGearPendingReviewAcceptedStatus,
     note: string,
   ) => {
-    setActionRecordId(recordId);
+    setActionTargetId(recordId);
     setError(null);
 
     try {
@@ -229,12 +239,12 @@ export function UsedGearPendingReviewSection({
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'Unable to accept the selected intake row.');
     } finally {
-      setActionRecordId(null);
+      setActionTargetId(null);
     }
   };
 
   const handleUnqualify = async (recordId: string) => {
-    setActionRecordId(recordId);
+    setActionTargetId(recordId);
     setError(null);
 
     try {
@@ -243,7 +253,49 @@ export function UsedGearPendingReviewSection({
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'Unable to mark the selected intake row as unqualified.');
     } finally {
-      setActionRecordId(null);
+      setActionTargetId(null);
+    }
+  };
+
+  const handleGroupAccept = async (
+    groupId: string,
+    recordIds: string[],
+    acceptedStatus: UsedGearPendingReviewAcceptedStatus,
+    note: string,
+    submissionGroupId?: string,
+  ) => {
+    setActionTargetId(`group:${groupId}`);
+    setError(null);
+
+    try {
+      await acceptPendingReviewGroup({
+        submissionGroupId,
+        allocationMode: 'Equal Split',
+        records: recordIds.map((currentRecordId) => ({
+          recordId: currentRecordId,
+          acceptedStatus,
+          qualificationNotes: note,
+        })),
+      }, currentUserName);
+      setRecords((currentRecords) => currentRecords.filter((record) => !recordIds.includes(record.id)));
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Unable to accept the selected intake group.');
+    } finally {
+      setActionTargetId(null);
+    }
+  };
+
+  const handleGroupUnqualify = async (groupId: string, recordIds: string[], reason: string) => {
+    setActionTargetId(`group:${groupId}`);
+    setError(null);
+
+    try {
+      await markPendingReviewGroupUnqualified(recordIds, reason);
+      setRecords((currentRecords) => currentRecords.filter((record) => !recordIds.includes(record.id)));
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Unable to mark the selected intake group as unqualified.');
+    } finally {
+      setActionTargetId(null);
     }
   };
 
@@ -374,7 +426,7 @@ export function UsedGearPendingReviewSection({
         </div>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
           <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Pending Rows</p>
           <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{records.length}</p>
@@ -387,6 +439,14 @@ export function UsedGearPendingReviewSection({
           <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible Groups</p>
           <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{groupedRecords.length}</p>
         </div>
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">3+ Days In Review</p>
+          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{agingSummary.alertCount}</p>
+        </div>
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Oldest Pending</p>
+          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{formatUsedGearAgeDays(agingSummary.oldestAgeDays)}</p>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
@@ -394,7 +454,11 @@ export function UsedGearPendingReviewSection({
       </div>
 
       {!loading && records.length === 0 ? (
-        <EmptySurface title="Pending review queue is clear" message="No used-gear workflow rows currently need initial intake review." />
+        <EmptySurface title="Pending review queue is clear" message="No used-gear workflow rows currently need initial intake review.">
+          <p className="mt-3 text-sm text-[var(--muted)]">
+            Next route: check Parking Lot 1 for fresh customer submissions, or use the manual Incoming Gear form when intake starts inside the app.
+          </p>
+        </EmptySurface>
       ) : null}
 
       <div className="space-y-4">
@@ -406,6 +470,13 @@ export function UsedGearPendingReviewSection({
           const collapsed = collapsedGroupIdSet.has(group.id);
           const groupNeedsSubmissionId = group.records.length > 1
             && group.records.some((record) => stringFieldValue(record, 'Submission Group ID').trim().length === 0);
+          const groupHasPricingPath = group.records.every((record) => hasUsedGearPendingReviewPricingPath(record.fields));
+          const batchQualificationNote = groupQualificationNotes[group.id] ?? '';
+          const batchAcceptStatus = groupAcceptStatuses[group.id] ?? 'Accepted - Awaiting Arrival';
+          const batchUnqualifiedReason = groupUnqualifiedReasons[group.id] ?? '';
+          const groupBusy = actionTargetId === `group:${group.id}`;
+          const batchAcceptRouteDescription = ACCEPT_ROUTE_OPTIONS.find((option) => option.value === batchAcceptStatus)?.description;
+          const submissionGroupId = group.key.startsWith('submission:') ? group.label : undefined;
 
           return (
           <div key={group.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
@@ -443,14 +514,101 @@ export function UsedGearPendingReviewSection({
                 This submission group is collapsed in the current shared queue view.
               </div>
             ) : (
-            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <div className="mt-4 space-y-3">
+              {group.records.length > 1 ? (
+                <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Batch Action</p>
+                      <h5 className="mt-1 text-base font-semibold text-[var(--ink)]">Apply the same intake decision to the full group</h5>
+                      <p className="mt-1 text-sm text-[var(--muted)]">Use this when every row in the submission should route the same way or move to trash together.</p>
+                    </div>
+                    <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                      {groupHasPricingPath ? 'Pricing path ready' : 'Pricing path missing'}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(220px,auto)]">
+                    <label className="block">
+                      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Group Lot 2 Route</span>
+                      <select
+                        className={inputClassName}
+                        value={batchAcceptStatus}
+                        onChange={(event) => setGroupAcceptStatuses((currentStatuses) => ({
+                          ...currentStatuses,
+                          [group.id]: event.currentTarget.value as UsedGearPendingReviewAcceptedStatus,
+                        }))}
+                      >
+                        {ACCEPT_ROUTE_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                      {batchAcceptRouteDescription ? <p className="mt-1 text-xs text-[var(--muted)]/80">{batchAcceptRouteDescription}</p> : null}
+                    </label>
+                    <label className="block">
+                      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Shared Qualification Notes</span>
+                      <textarea
+                        className={inputClassName}
+                        rows={3}
+                        value={batchQualificationNote}
+                        onChange={(event) => setGroupQualificationNotes((currentNotes) => ({
+                          ...currentNotes,
+                          [group.id]: event.currentTarget.value,
+                        }))}
+                        placeholder="Applied to each row in this group"
+                      />
+                    </label>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={() => {
+                          void handleGroupAccept(group.id, group.records.map((record) => record.id), batchAcceptStatus, batchQualificationNote, submissionGroupId);
+                        }}
+                        disabled={groupBusy || batchQualificationNote.trim().length === 0 || !groupHasPricingPath || groupNeedsSubmissionId}
+                      >
+                        {groupBusy ? 'Saving...' : 'Accept Entire Group'}
+                      </button>
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        value={batchUnqualifiedReason}
+                        onChange={(event) => setGroupUnqualifiedReasons((currentReasons) => ({
+                          ...currentReasons,
+                          [group.id]: event.currentTarget.value,
+                        }))}
+                        placeholder="Reason before trashing the full group"
+                      />
+                      <button
+                        type="button"
+                        className="rounded-xl border border-rose-400/35 bg-rose-500/15 px-3 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={() => {
+                          void handleGroupUnqualify(group.id, group.records.map((record) => record.id), batchUnqualifiedReason);
+                        }}
+                        disabled={groupBusy || batchUnqualifiedReason.trim().length === 0}
+                      >
+                        {groupBusy ? 'Saving...' : 'Trash Entire Group'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {groupNeedsSubmissionId ? (
+                    <p className="mt-3 text-sm text-amber-300">This grouped intake still needs a shared Submission Group ID before it can be batch accepted.</p>
+                  ) : null}
+                  {!groupHasPricingPath ? (
+                    <p className="mt-2 text-sm text-amber-300">Every row in the group needs offer, paid amount, or confirmed group total data before batch Lot 2 routing.</p>
+                  ) : null}
+                </div>
+              ) : null}
+
+            <div className="grid gap-3 lg:grid-cols-2">
               {group.records.map((record) => {
                 const reason = unqualifiedReasons[record.id] ?? '';
                 const qualificationNote = Object.prototype.hasOwnProperty.call(qualificationNotes, record.id)
                   ? qualificationNotes[record.id] ?? ''
                   : stringFieldValue(record, 'Qualification Notes');
                 const acceptStatus = acceptStatuses[record.id] ?? 'Accepted - Awaiting Arrival';
-                const busy = actionRecordId === record.id;
+                const busy = actionTargetId === record.id;
                 const acceptRouteDescription = ACCEPT_ROUTE_OPTIONS.find((option) => option.value === acceptStatus)?.description;
                 const hasPricingPath = hasUsedGearPendingReviewPricingPath(record.fields);
 
@@ -565,6 +723,7 @@ export function UsedGearPendingReviewSection({
                   </article>
                 );
               })}
+            </div>
             </div>
             )}
           </div>
