@@ -3,6 +3,8 @@ import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/Sta
 import { useAuthStore } from '@/stores/auth/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
 import {
+  assignWorkflowOwner,
+  clearWorkflowOwner,
   completePreListingReviewStage,
   completePhotographyStage,
   completeProcessingStage,
@@ -88,6 +90,8 @@ const PRELISTING_CONTEXT_FIELDS = [
 ] as const;
 
 const WORKFLOW_AUDIT_FIELDS = [
+  { label: 'Workflow Owner', fieldName: 'Workflow Owner' },
+  { label: 'Workflow Owner Assigned At', fieldName: 'Workflow Owner Assigned At' },
   { label: 'Accepted By', fieldName: 'Accepted By' },
   { label: 'Accepted At', fieldName: 'Accepted At' },
   { label: 'Qualification Complete', fieldName: 'Qualification Complete' },
@@ -232,6 +236,8 @@ export function UsedGearWorkflowRecordPage({
   const staleRecoveryNotes = typeof record?.fields['Stale Recovery Notes'] === 'string' ? record.fields['Stale Recovery Notes'] : '';
   const staleRecoveryUpdatedAt = typeof record?.fields['Stale Recovery Updated At'] === 'string' ? record.fields['Stale Recovery Updated At'] : '';
   const relistedAt = typeof record?.fields['Relisted At'] === 'string' ? record.fields['Relisted At'] : '';
+  const workflowOwner = typeof record?.fields['Workflow Owner'] === 'string' ? record.fields['Workflow Owner'].trim() : '';
+  const workflowOwnerAssignedAt = typeof record?.fields['Workflow Owner Assigned At'] === 'string' ? record.fields['Workflow Owner Assigned At'] : '';
   const showStaleRecoveryPanel = status === 'Stale Listing, Shopify'
     || status === 'Stale Listing, eBay'
     || staleRecoveryStatus.length > 0
@@ -341,6 +347,11 @@ export function UsedGearWorkflowRecordPage({
                 <div>Pick Up</div>
                 <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Pick Up ID'])}</div>
               </div>
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)] sm:col-span-2">
+                <div>Workflow Owner</div>
+                <div className="mt-1 text-base font-semibold text-[var(--ink)]">{workflowOwner || 'Unassigned'}</div>
+                <div className="mt-1 text-xs uppercase tracking-[0.08em]">Assigned {displayInventoryValue(workflowOwnerAssignedAt)}</div>
+              </div>
               {WORKFLOW_HEADER_FIELDS.map((field) => (
                 <div key={field.fieldName} className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
                   <div>{field.label}</div>
@@ -380,6 +391,26 @@ export function UsedGearWorkflowRecordPage({
                 onClick={() => onOpenInventoryEditor(recordId)}
               >
                 Open Full Editor
+              </button>
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => {
+                  void runAction(() => assignWorkflowOwner(recordId, currentUserName));
+                }}
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : workflowOwner === currentUserName ? 'Refresh Owner Timestamp' : 'Assign To Me'}
+              </button>
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => {
+                  void runAction(() => clearWorkflowOwner(recordId));
+                }}
+                disabled={saving || workflowOwner.length === 0}
+              >
+                {saving ? 'Saving...' : 'Clear Owner'}
               </button>
 
               {statusSupportsListingsApproval(status) ? (

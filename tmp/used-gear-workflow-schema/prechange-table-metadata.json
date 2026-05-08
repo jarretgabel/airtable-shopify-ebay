@@ -4983,6 +4983,32 @@
       },
       "id": "fld4C9FGJzMcjMAwW",
       "name": "Shipped At"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fldyOObXogaJDLApi",
+      "name": "eBay Published At"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldTCjp1marmowkwA",
+      "name": "eBay Offer ID"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fld7rkwiAQ458GQ22",
+      "name": "eBay Listing ID"
     }
   ],
   "views": [

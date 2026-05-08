@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
 import { TAB_PATHS, type Tab } from '@/app/appNavigation';
-import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
 
 interface AppNavigationHandlers {
   navigateToTab: (tab: Tab, replace?: boolean) => void;
@@ -14,7 +14,10 @@ interface AppNavigationHandlers {
   navigateToInventoryRecord: (recordId: string, replace?: boolean) => void;
   navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
   navigateToInventoryList: (replace?: boolean) => void;
-  navigateToInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket, replace?: boolean) => void;
+  navigateToInventoryPostPublishBucket: (
+    bucket: UsedGearWorkflowPostPublishBucket,
+    options?: { replace?: boolean; ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter },
+  ) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsList: (replace?: boolean) => void;
   navigateToApprovalRecord: (recordId: string, replace?: boolean) => void;
@@ -95,8 +98,17 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     scrollToPageTop();
   }, [navigate]);
 
-  const navigateToInventoryPostPublishBucket = useCallback((bucket: UsedGearWorkflowPostPublishBucket, replace = false): void => {
-    navigate(`${TAB_PATHS.inventory}?workflowPostPublishBucket=${encodeURIComponent(bucket)}#used-gear-post-publish`, { replace });
+  const navigateToInventoryPostPublishBucket = useCallback((
+    bucket: UsedGearWorkflowPostPublishBucket,
+    options?: { replace?: boolean; ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter },
+  ): void => {
+    const params = new URLSearchParams();
+    params.set('workflowPostPublishBucket', bucket);
+    if (options?.ownerFilter && options.ownerFilter !== 'all') {
+      params.set('workflowPostPublishOwner', options.ownerFilter);
+    }
+
+    navigate(`${TAB_PATHS.inventory}?${params.toString()}#used-gear-post-publish`, { replace: options?.replace ?? false });
     scrollToPageTop();
   }, [navigate]);
 

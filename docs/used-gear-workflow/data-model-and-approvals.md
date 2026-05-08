@@ -49,6 +49,8 @@ Use this checklist to approve, reject, or revise the proposed Airtable/workflow 
 - [x] Approve `Trash Status`
 
 #### Workflow Ownership And Handoff Fields
+- [x] Approve `Workflow Owner`
+- [x] Approve `Workflow Owner Assigned At`
 - [x] Approve `Accepted By`
 - [x] Approve `Accepted At`
 - [x] Approve `Processing Signed By`
@@ -161,6 +163,12 @@ These are proposed additions or formalized workflow fields for `tbl0K0nFQL64jQMx
 	- When to use it: use this when you need to answer "what stage is this row in inside the trash workflow?"
 
 #### Workflow Ownership And Handoffs
+- `Workflow Owner`
+	- Purpose: record the current accountable operator for queue follow-through when the team wants ownership beyond signoff timestamps.
+	- Rule: optional for any active workflow row; overwrite when ownership changes and clear it when the row returns to an unowned shared queue.
+- `Workflow Owner Assigned At`
+	- Purpose: capture when the current workflow owner was assigned.
+	- Rule: paired with `Workflow Owner`; update it when ownership changes and clear it when `Workflow Owner` is cleared.
 - `Accepted By`
 	- Rule: required when `Workflow Status` first enters the accepted workflow family.
 - `Accepted At`

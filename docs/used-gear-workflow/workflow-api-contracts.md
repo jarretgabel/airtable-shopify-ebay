@@ -80,6 +80,8 @@ Primary source wiring:
     - `Awaiting Pre-Listing Review`
     - `Approved for Publish`
 - Additional field family includes:
+  - `Workflow Owner`
+  - `Workflow Owner Assigned At`
   - processing/testing/photography/pre-listing signoff fields
   - internal/customer notes used by workflow detail and readiness checks
   - pricing fields used by pre-listing gating
@@ -99,6 +101,11 @@ Primary source wiring:
   - `stale-listing`
   - `sold-ready`
   - `shipped`
+- Additional field family includes:
+  - `Workflow Owner`
+  - `Workflow Owner Assigned At`
+  - stale-recovery fields
+  - sold/shipped timestamps
 
 ### Single Workflow Record Read
 - Service: `loadUsedGearWorkflowRecord`
@@ -218,6 +225,32 @@ All mutations write through `updateConfiguredRecord('used-gear-workflow', record
 - Validation:
   - `userName` must be non-empty
   - `assertUsedGearWorkflowReadyForPublish(record)` must pass
+
+### Assign Workflow Owner
+- Service: `assignWorkflowOwner(recordId, ownerName)`
+- Purpose:
+  - assign explicit queue accountability on the authoritative workflow row
+- Writes:
+  - `Workflow Owner = ownerName`
+  - `Workflow Owner Assigned At = now`
+- Validation:
+  - `ownerName` must be non-empty
+
+### Clear Workflow Owner
+- Service: `clearWorkflowOwner(recordId)`
+- Writes:
+  - `Workflow Owner = null`
+  - `Workflow Owner Assigned At = null`
+
+### Batch Post-Publish Reconciliation
+- Services:
+  - `markWorkflowRowsSoldReadyToShip(recordIds)`
+  - `markWorkflowRowsShipped(recordIds)`
+- Purpose:
+  - apply the existing sold-ready and shipped lifecycle mutations across multiple selected post-publish rows
+- Validation:
+  - `recordIds` must be non-empty
+  - each selected row must still satisfy the underlying per-row transition guard
 - Writes:
   - pre-listing signoff fields
   - `Workflow Status = Approved for Publish`

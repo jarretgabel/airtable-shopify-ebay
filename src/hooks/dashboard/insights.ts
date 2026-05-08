@@ -14,7 +14,9 @@ interface InsightInput {
   airtableBrandSummary: Array<[string, number]>;
   nonEmptyListings: AirtableRecord[];
   workflowStaleListingCount: number;
+  workflowStaleListingUnassignedCount: number;
   workflowSoldReadyCount: number;
+  workflowSoldReadyUnassignedCount: number;
   now: number;
 }
 
@@ -37,7 +39,9 @@ export function buildDashboardInsights(input: InsightInput): DashboardInsight[] 
     airtableBrandSummary,
     nonEmptyListings,
     workflowStaleListingCount,
+    workflowStaleListingUnassignedCount,
     workflowSoldReadyCount,
+    workflowSoldReadyUnassignedCount,
     now,
   } = input;
 
@@ -96,6 +100,7 @@ export function buildDashboardInsights(input: InsightInput): DashboardInsight[] 
       severity: 'critical',
       targetTab: 'inventory',
       inventoryPostPublishBucket: 'sold-ready',
+      inventoryPostPublishOwnerFilter: workflowSoldReadyUnassignedCount > 0 ? 'unassigned' : 'all',
     });
   }
 
@@ -107,6 +112,7 @@ export function buildDashboardInsights(input: InsightInput): DashboardInsight[] 
       severity: workflowStaleListingCount >= 3 ? 'warning' : 'info',
       targetTab: 'inventory',
       inventoryPostPublishBucket: 'stale-listing',
+      inventoryPostPublishOwnerFilter: workflowStaleListingUnassignedCount > 0 ? 'unassigned' : 'all',
     });
   }
 

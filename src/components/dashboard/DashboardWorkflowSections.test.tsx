@@ -64,6 +64,8 @@ describe('DashboardWorkflowCardGrid', () => {
         loading={false}
         error={null}
         snapshot={snapshot}
+        staleListingUnassignedCount={2}
+        soldReadyUnassignedCount={1}
       />, 
     );
 
@@ -73,8 +75,10 @@ describe('DashboardWorkflowCardGrid', () => {
     expect(screen.getByText('Approved For Publish')).toBeInTheDocument();
     expect(screen.getByText('Shopify Live')).toBeInTheDocument();
     expect(screen.getByText('eBay Stale')).toBeInTheDocument();
-    expect(screen.getByText('Post-Publish Timing')).toBeInTheDocument();
+    expect(screen.getByText('Post-Publish Ops')).toBeInTheDocument();
     expect(screen.getByText('Avg Days To Sell')).toBeInTheDocument();
     expect(screen.getByText('18.5d')).toBeInTheDocument();
+    expect(screen.getByText('Stale Unassigned')).toBeInTheDocument();
+    expect(screen.getByText('Sold Ready Unassigned')).toBeInTheDocument();
   });
 });

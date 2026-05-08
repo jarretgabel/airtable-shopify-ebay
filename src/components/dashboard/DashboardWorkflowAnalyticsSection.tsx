@@ -32,6 +32,8 @@ interface DashboardWorkflowAnalyticsSectionProps {
   loading: boolean;
   error: string | null;
   snapshot: UsedGearWorkflowAnalyticsSnapshot;
+  staleListingUnassignedCount?: number;
+  soldReadyUnassignedCount?: number;
 }
 
 function formatLifecycleMetric(value: number | null): string {
@@ -42,6 +44,8 @@ export function DashboardWorkflowAnalyticsSection({
   loading,
   error,
   snapshot,
+  staleListingUnassignedCount = 0,
+  soldReadyUnassignedCount = 0,
 }: DashboardWorkflowAnalyticsSectionProps) {
   return (
     <DashboardSubPanel title="Used Gear Workflow Snapshot">
@@ -111,12 +115,14 @@ export function DashboardWorkflowAnalyticsSection({
             </section>
 
             <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
-              <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Post-Publish Timing</h4>
+              <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Post-Publish Ops</h4>
               <div className="mt-2">
                 <MetricRow label="Avg Days To Sell" value={formatLifecycleMetric(snapshot.lifecycle.averageDaysToSell)} />
                 <MetricRow label="Avg Days To Ship" value={formatLifecycleMetric(snapshot.lifecycle.averageDaysToShip)} />
                 <MetricRow label="Sold Ready Waiting" value={snapshot.lifecycle.soldReadyAwaitingShipmentCount} />
                 <MetricRow label="Oldest Sold Ready" value={formatLifecycleMetric(snapshot.lifecycle.oldestSoldReadyAgeDays)} />
+                <MetricRow label="Stale Unassigned" value={staleListingUnassignedCount} />
+                <MetricRow label="Sold Ready Unassigned" value={soldReadyUnassignedCount} />
               </div>
             </section>
           </div>

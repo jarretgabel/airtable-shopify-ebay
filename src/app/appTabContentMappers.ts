@@ -39,7 +39,9 @@ type AppTabInput = Pick<
   | 'workflowPostPublishError'
   | 'workflowActiveListingCount'
   | 'workflowStaleListingCount'
+  | 'workflowStaleListingUnassignedCount'
   | 'workflowSoldReadyCount'
+  | 'workflowSoldReadyUnassignedCount'
   | 'workflowShippedCount'
   | 'aiProvider'
   | 'ebayAuthenticated'
@@ -195,7 +197,9 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
       workflowPostPublishError: input.workflowPostPublishError,
       workflowActiveListingCount: input.workflowActiveListingCount,
       workflowStaleListingCount: input.workflowStaleListingCount,
+      workflowStaleListingUnassignedCount: input.workflowStaleListingUnassignedCount,
       workflowSoldReadyCount: input.workflowSoldReadyCount,
+      workflowSoldReadyUnassignedCount: input.workflowSoldReadyUnassignedCount,
       workflowShippedCount: input.workflowShippedCount,
       aiProvider: input.aiProvider,
       ebayAuthenticated: input.ebayAuthenticated,
@@ -223,7 +227,12 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
     },
     actions: {
       onSelectTab: input.navigateToTab,
-      onOpenInventoryPostPublishBucket: input.navigateToInventoryPostPublishBucket,
+      onOpenInventoryPostPublishBucket: (bucket, ownerFilter) => {
+        input.navigateToInventoryPostPublishBucket(
+          bucket,
+          ownerFilter ? { ownerFilter } : undefined,
+        );
+      },
     },
   };
 }

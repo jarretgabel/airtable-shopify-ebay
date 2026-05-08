@@ -9,7 +9,7 @@ import type { useShopifyProducts } from '@/hooks/useShopifyProducts';
 import type { Tab } from '@/app/appNavigation';
 import type { RuntimeFeatureMap } from '@/config/runtimeCapabilities';
 import type { UsedGearWorkflowAnalyticsSnapshotState } from '@/hooks/useUsedGearWorkflowAnalyticsSnapshot';
-import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
 
 export interface AppTabContentProps {
   activeTab: Tab;
@@ -26,7 +26,10 @@ export interface AppTabContentProps {
   navigateToInventoryRecord: (recordId: string, replace?: boolean) => void;
   navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
   navigateToInventoryList: (replace?: boolean) => void;
-  navigateToInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket, replace?: boolean) => void;
+  navigateToInventoryPostPublishBucket: (
+    bucket: UsedGearWorkflowPostPublishBucket,
+    options?: { replace?: boolean; ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter },
+  ) => void;
   navigateToIncomingGearForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
@@ -81,7 +84,9 @@ export interface AppTabContentProps {
   workflowPostPublishError: string | null;
   workflowActiveListingCount: number;
   workflowStaleListingCount: number;
+  workflowStaleListingUnassignedCount: number;
   workflowSoldReadyCount: number;
+  workflowSoldReadyUnassignedCount: number;
   workflowShippedCount: number;
   ebayAuthenticated: boolean;
   ebayRestoringSession: boolean;

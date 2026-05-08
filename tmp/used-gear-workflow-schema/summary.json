@@ -1,9 +1,8 @@
 {
-  "createdCount": 3,
+  "createdCount": 2,
   "createdFieldNames": [
-    "eBay Published At",
-    "eBay Offer ID",
-    "eBay Listing ID"
+    "Workflow Owner",
+    "Workflow Owner Assigned At"
   ],
-  "approvedWorkflowFieldCount": 43
+  "approvedWorkflowFieldCount": 45
 }

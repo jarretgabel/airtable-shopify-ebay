@@ -12,10 +12,11 @@ This backlog is for non-blocking improvements after the major Phase 1 workflow f
 - [x] Add optional sticky summary chips while scrolling long Inventory workflow sections.
 - [x] Add stronger empty-state guidance that tells each team exactly which route or action is next.
 - [x] Add lightweight keyboard shortcuts for jumping between pending review, progress, and post-publish sections.
+- [x] Add dashboard deep links that open the relevant post-publish owner view when unassigned stale or sold-ready work needs immediate triage.
 
 ## Queue Operations
 - [x] Add batch actions for grouped pending-review submissions where the same decision applies to all rows.
-- [ ] Add explicit assignment or ownership metadata for queue work if the team wants individual accountability beyond signoff fields.
+- [x] Add explicit assignment or ownership metadata for queue work if the team wants individual accountability beyond signoff fields.
 - [x] Add a queue-level aging or SLA view for items sitting too long in review, processing, or stale states.
 - [x] Add optional archived filters for completed/shipped workflow history instead of relying on the shared Inventory surface alone.
 
@@ -32,7 +33,7 @@ This backlog is for non-blocking improvements after the major Phase 1 workflow f
 ## Listing And Marketplace Follow-Through
 - [x] Persist eBay-specific publish metadata once approved Airtable field names exist for that data.
 - [x] Add richer stale-listing recovery actions once the relist workflow is defined.
-- [ ] Add explicit sold/shipped reconciliation helpers if operational volume makes the post-publish queue too manual.
+- [x] Add explicit sold/shipped reconciliation helpers if operational volume makes the post-publish queue too manual.
 
 ## Operations And Reliability
 - [x] Automate the approved backfill runbook into a repeatable internal script or ops workflow when execution is scheduled.
@@ -44,6 +45,12 @@ This backlog is for non-blocking improvements after the major Phase 1 workflow f
 - [x] Add a short operator guide for each queue section after the workflow UI stabilizes.
 - [x] Document the publish writeback behavior for Shopify and eBay once marketplace-specific edge cases are fully settled.
 - [x] Add an explicit schema-approval guide for deferred workflow fields before any new Airtable schema changes are requested.
+
+## Additional App Improvements To Consider
+- [ ] Add a dashboard "My Queue" rollup that summarizes owned work across pending review, progress, and post-publish buckets in one card.
+- [ ] Add ownership-change entries to the workflow timeline so reassignment history is visible without opening Airtable history.
+- [ ] Add owner-aware notification preferences so unassigned work alerts and personally assigned work alerts can be tuned separately.
+- [ ] Add one-click owner presets in Inventory for "Assigned To Me + Sold Ready" and "Unassigned + Stale Listings" to reduce repetitive filter setup.
 
 ## Supporting Files
 - Workflow release smoke test checklist: `/Users/user/Sites/airtable-shopify-ebay/docs/used-gear-workflow/release-smoke-test-checklist.md`

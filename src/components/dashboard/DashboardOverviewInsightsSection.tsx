@@ -1,7 +1,7 @@
 import { PAGE_DEFINITIONS } from '@/auth/pages';
 import { DashboardKpiCard, DashboardSectionPanel, DashboardSubPanel } from './dashboardPrimitives';
 import type { DashboardInsight, DashboardTargetTab, TrendSummary } from './dashboardTabTypes';
-import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
 
 const trendToneClass = {
   up: 'text-green-300',
@@ -23,6 +23,26 @@ const insightBadgeClass = {
 const sectionBaseClass = 'scroll-mt-24';
 const sectionHeaderClass = 'mb-4 flex items-center border-b border-[var(--line)] pb-3 pt-1';
 const sectionHeaderLabelClass = 'm-0 text-[1.05rem] font-semibold text-[var(--ink)]';
+
+function getPostPublishTargetLabel(bucket: UsedGearWorkflowPostPublishBucket, ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter): string {
+  const bucketLabel = bucket === 'sold-ready'
+    ? 'Sold Ready To Ship'
+    : bucket === 'stale-listing'
+      ? 'Stale Listings'
+      : bucket === 'active-listing'
+        ? 'Active Listings'
+        : 'Shipped History';
+
+  if (ownerFilter === 'unassigned') {
+    return `Unassigned ${bucketLabel}`;
+  }
+
+  if (ownerFilter === 'mine') {
+    return `My ${bucketLabel}`;
+  }
+
+  return bucketLabel;
+}
 
 interface DashboardOverviewSectionProps {
   jfLoading: boolean;
@@ -181,7 +201,7 @@ export function DashboardInsightsSection({
 }: {
   insights: DashboardInsight[];
   onSelectTab: (tab: DashboardTargetTab) => void;
-  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket) => void;
+  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket, ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter) => void;
   embedded?: boolean;
 }) {
   const content = insights.length > 0 ? (
@@ -202,7 +222,7 @@ export function DashboardInsightsSection({
             <>
               {targetTab === 'inventory' && insight.inventoryPostPublishBucket ? (
                 <span className="mt-3 inline-flex rounded-full border border-current/30 bg-white/10 px-2.5 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.07em]">
-                  Opens {insight.inventoryPostPublishBucket === 'sold-ready' ? 'Sold Ready To Ship' : insight.inventoryPostPublishBucket === 'stale-listing' ? 'Stale Listings' : insight.inventoryPostPublishBucket === 'active-listing' ? 'Active Listings' : 'Shipped History'} Bucket
+                  Opens {getPostPublishTargetLabel(insight.inventoryPostPublishBucket, insight.inventoryPostPublishOwnerFilter)} Bucket
                 </span>
               ) : null}
               <button
@@ -210,7 +230,7 @@ export function DashboardInsightsSection({
                 className="mt-3 rounded-lg border border-current/30 bg-white/10 px-3 py-1.5 text-[0.72rem] font-semibold transition hover:bg-white/20"
                 onClick={() => {
                   if (targetTab === 'inventory' && insight.inventoryPostPublishBucket) {
-                    onOpenInventoryPostPublishBucket(insight.inventoryPostPublishBucket);
+                    onOpenInventoryPostPublishBucket(insight.inventoryPostPublishBucket, insight.inventoryPostPublishOwnerFilter);
                     return;
                   }
 

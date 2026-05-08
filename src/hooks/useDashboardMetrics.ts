@@ -51,7 +51,9 @@ export function useDashboardMetrics(
       airtableBrandSummary: airtable.airtableBrandSummary,
       nonEmptyListings,
       workflowStaleListingCount: workflowPostPublishSummary?.staleListingCount ?? 0,
+      workflowStaleListingUnassignedCount: workflowPostPublishSummary?.staleListingUnassignedCount ?? 0,
       workflowSoldReadyCount: workflowPostPublishSummary?.soldReadyCount ?? 0,
+      workflowSoldReadyUnassignedCount: workflowPostPublishSummary?.soldReadyUnassignedCount ?? 0,
       now,
     });
 

@@ -299,7 +299,9 @@ function App() {
             workflowPostPublishError={usedGearWorkflowPostPublish.error}
             workflowActiveListingCount={usedGearWorkflowPostPublish.activeListingCount}
             workflowStaleListingCount={usedGearWorkflowPostPublish.staleListingCount}
+            workflowStaleListingUnassignedCount={usedGearWorkflowPostPublish.staleListingUnassignedCount}
             workflowSoldReadyCount={usedGearWorkflowPostPublish.soldReadyCount}
+            workflowSoldReadyUnassignedCount={usedGearWorkflowPostPublish.soldReadyUnassignedCount}
             workflowShippedCount={usedGearWorkflowPostPublish.shippedCount}
             ebayAuthenticated={ebay.authenticated}
             ebayRestoringSession={ebay.restoringSession}

@@ -69,6 +69,8 @@ This phase adds the listing-aging and fulfillment lifecycle after publish behavi
 - Post-publish sort mode now persists in the Inventory URL, those summary chips can clear individual workflow-state slices, and dashboard stale/sold-ready entry points now show matching bucket chips before operators open the filtered Inventory view.
 - Stale workflow rows now support Airtable-backed recovery tracking with `Stale Recovery Status`, `Stale Recovery Notes`, `Stale Recovery Updated At`, and `Relisted At`.
 - Stale rows can now be updated in place from the post-publish queue and returned to `Listed, Shopify` or `Listed, eBay` through an explicit `Mark Relisted` action.
+- Post-publish cards now support row selection with batch reconciliation helpers so operators can claim queue ownership, move multiple listed or stale rows into `Sold - Ready to Ship`, and move multiple sold-ready rows into `Shipped` without repeating one-row actions.
+- Workflow rows now support lightweight ownership metadata through `Workflow Owner` and `Workflow Owner Assigned At`, which keeps queue accountability on the authoritative Airtable row without introducing a separate staffing table.
 - The workflow detail page now surfaces the current stale-recovery state as a read-only post-publish audit panel.
 
 ### Automation Decision
@@ -80,5 +82,5 @@ This phase adds the listing-aging and fulfillment lifecycle after publish behavi
 	- Design reference: `/Users/user/Sites/airtable-shopify-ebay/docs/used-gear-workflow/stale-listing-recovery-design.md`
 - [x] Add archived or history-oriented filters so shipped workflow records can be reviewed without crowding active operational buckets.
 - [ ] Add optional digest or throttling behavior for stale and sold-ready notifications if queue volume grows.
-- [ ] Add explicit sold and shipped reconciliation helpers if manual lifecycle actions become too repetitive at scale.
+- [x] Add explicit sold and shipped reconciliation helpers if manual lifecycle actions become too repetitive at scale.
 - [x] Add post-publish analytics snapshots for stale age, sold conversion timing, and shipping follow-through.

@@ -69,10 +69,9 @@ After the Airtable field exists, update only the affected repo seams.
 - the relevant phase doc
 - `docs/used-gear-workflow/workflow-api-contracts.md` if the field changes a read/write contract
 
-## Current Deferred Schema Requests
-- ownership metadata for queue accountability
-
 ## Recently Approved And Implemented Schema
+- `Workflow Owner`
+- `Workflow Owner Assigned At`
 - `eBay Published At`
 - `eBay Offer ID`
 - `eBay Listing ID`
@@ -81,7 +80,7 @@ After the Airtable field exists, update only the affected repo seams.
 - `Stale Recovery Updated At`
 - `Relisted At`
 
-These fields were approved, created in base `apprsAm2FOohEmL2u` / table `tbl0K0nFQL64jQMx8`, and wired into the post-publish queue and workflow detail surfaces.
+These fields were approved, created in base `apprsAm2FOohEmL2u` / table `tbl0K0nFQL64jQMx8`, and wired into the workflow queue and workflow detail surfaces.
 
 See also:
 - `docs/used-gear-workflow/stale-listing-recovery-design.md`

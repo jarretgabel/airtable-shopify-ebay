@@ -16,7 +16,9 @@ describe('DashboardActionsSection', () => {
         workflowPostPublishLoading={false}
         workflowActiveListingCount={0}
         workflowStaleListingCount={0}
+        workflowStaleListingUnassignedCount={0}
         workflowSoldReadyCount={0}
+        workflowSoldReadyUnassignedCount={0}
         workflowShippedCount={0}
         ebayUnavailableReason="Missing public runtime config: VITE_EBAY_AUTH_HOST."
         shopifyApprovalUnavailableReason="Missing public runtime config: VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF."
@@ -46,7 +48,9 @@ describe('DashboardActionsSection', () => {
         workflowPostPublishLoading={false}
         workflowActiveListingCount={3}
         workflowStaleListingCount={2}
+        workflowStaleListingUnassignedCount={1}
         workflowSoldReadyCount={1}
+        workflowSoldReadyUnassignedCount={1}
         workflowShippedCount={5}
         onSelectTab={vi.fn()}
         onOpenInventoryPostPublishBucket={onOpenInventoryPostPublishBucket}
@@ -55,11 +59,12 @@ describe('DashboardActionsSection', () => {
 
     expect(screen.getByText('1 used-gear item sold and ready to ship')).toBeInTheDocument();
     expect(screen.getByText('2 used-gear listings stale')).toBeInTheDocument();
-    expect(screen.getByText('Opens Sold Ready To Ship Bucket')).toBeInTheDocument();
-    expect(screen.getByText('Opens Stale Listings Bucket')).toBeInTheDocument();
+    expect(screen.getAllByText(/1 unassigned/i).length).toBeGreaterThan(0);
+    expect(screen.getByText('Opens Unassigned Sold Ready To Ship Bucket')).toBeInTheDocument();
+    expect(screen.getByText('Opens Unassigned Stale Listings Bucket')).toBeInTheDocument();
     expect(screen.queryByText('All clear — no actions required right now.')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /1 used-gear item sold and ready to ship/i }));
-    expect(onOpenInventoryPostPublishBucket).toHaveBeenCalledWith('sold-ready');
+    expect(onOpenInventoryPostPublishBucket).toHaveBeenCalledWith('sold-ready', 'unassigned');
   });
 });

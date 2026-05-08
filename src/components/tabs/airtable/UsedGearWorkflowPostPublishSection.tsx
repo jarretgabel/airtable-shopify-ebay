@@ -2,9 +2,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
+  assignWorkflowOwner,
+  assignWorkflowOwnerBatch,
+  clearWorkflowOwner,
+  clearWorkflowOwnerBatch,
   loadWorkflowPostPublishQueue,
   markWorkflowRelisted,
   markWorkflowListingStale,
+  markWorkflowRowsShipped,
+  markWorkflowRowsSoldReadyToShip,
   saveWorkflowStaleRecovery,
   markWorkflowShipped,
   markWorkflowSoldReadyToShip,
@@ -16,6 +22,7 @@ import {
   USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS,
   type UsedGearWorkflowStaleRecoveryStatus,
   type UsedGearWorkflowPostPublishBucket,
+  type UsedGearWorkflowPostPublishOwnerFilter,
 } from '@/services/usedGearWorkflowLifecycle';
 import {
   buildPostPublishQueueAgingSummary,
@@ -25,12 +32,15 @@ import { useCopyQueueLink } from '@/components/tabs/airtable/useCopyQueueLink';
 import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearWorkflowPostPublishSectionProps {
+  currentUserName: string;
   focusedBucket?: UsedGearWorkflowPostPublishBucket | null;
   onFocusedBucketChange?: (bucket: UsedGearWorkflowPostPublishBucket | 'all') => void;
   onOpenWorkflowRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
   historyFilter?: UsedGearWorkflowPostPublishHistoryFilter;
   onHistoryFilterChange?: (value: UsedGearWorkflowPostPublishHistoryFilter) => void;
+  ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter;
+  onOwnerFilterChange?: (value: UsedGearWorkflowPostPublishOwnerFilter) => void;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
   collapsedSectionKeys?: UsedGearWorkflowPostPublishBucket[];
@@ -97,6 +107,7 @@ function recordSearchText(record: AirtableRecord): string {
     record.fields.Make,
     record.fields.Model,
     record.fields['Workflow Status'],
+    record.fields['Workflow Owner'],
     record.fields['Listed At'],
     record.fields['Submission Group ID'],
     record.fields['Pick Up ID'],
@@ -117,12 +128,15 @@ function sortByLifecycleDate(left: AirtableRecord, right: AirtableRecord): numbe
 }
 
 export function UsedGearWorkflowPostPublishSection({
+  currentUserName,
   focusedBucket = null,
   onFocusedBucketChange,
   onOpenWorkflowRecord,
   onOpenListingsRecord,
   historyFilter = 'all',
   onHistoryFilterChange,
+  ownerFilter = 'all',
+  onOwnerFilterChange,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
   collapsedSectionKeys: controlledCollapsedSectionKeys,
@@ -149,6 +163,8 @@ export function UsedGearWorkflowPostPublishSection({
   const [uncontrolledCollapsedSectionKeys, setUncontrolledCollapsedSectionKeys] = useState<UsedGearWorkflowPostPublishBucket[]>([]);
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowPostPublishSortMode>('latest-activity');
   const [actionRecordId, setActionRecordId] = useState<string | null>(null);
+  const [selectedRecordIds, setSelectedRecordIds] = useState<string[]>([]);
+  const [batchBusy, setBatchBusy] = useState(false);
   const [staleRecoveryStatuses, setStaleRecoveryStatuses] = useState<Record<string, UsedGearWorkflowStaleRecoveryStatus | ''>>({});
   const [staleRecoveryNotes, setStaleRecoveryNotes] = useState<Record<string, string>>({});
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
@@ -199,12 +215,50 @@ export function UsedGearWorkflowPostPublishSection({
 
   const filteredRecords = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
-    if (!normalizedSearch) {
-      return records;
-    }
 
-    return records.filter((record) => recordSearchText(record).includes(normalizedSearch));
-  }, [records, searchTerm]);
+    return records.filter((record) => {
+      const workflowOwner = typeof record.fields['Workflow Owner'] === 'string' ? record.fields['Workflow Owner'].trim() : '';
+
+      if (ownerFilter === 'mine' && workflowOwner !== currentUserName) {
+        return false;
+      }
+
+      if (ownerFilter === 'unassigned' && workflowOwner.length > 0) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      return recordSearchText(record).includes(normalizedSearch);
+    });
+  }, [currentUserName, ownerFilter, records, searchTerm]);
+  const filteredRecordIdSet = useMemo(() => new Set(filteredRecords.map((record) => record.id)), [filteredRecords]);
+  const selectedRecords = useMemo(
+    () => filteredRecords.filter((record) => selectedRecordIds.includes(record.id)),
+    [filteredRecords, selectedRecordIds],
+  );
+  const selectedSnapshots = useMemo(
+    () => selectedRecords.map((record) => ({ record, snapshot: getUsedGearWorkflowPostPublishSnapshot(record) })).filter((entry) => entry.snapshot),
+    [selectedRecords],
+  );
+  const unownedSoldReadyCount = useMemo(
+    () => filteredRecords.filter((record) => {
+      const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+      const owner = typeof record.fields['Workflow Owner'] === 'string' ? record.fields['Workflow Owner'].trim() : '';
+      return snapshot?.bucket === 'sold-ready' && owner.length === 0;
+    }).length,
+    [filteredRecords],
+  );
+  const unownedStaleCount = useMemo(
+    () => filteredRecords.filter((record) => {
+      const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+      const owner = typeof record.fields['Workflow Owner'] === 'string' ? record.fields['Workflow Owner'].trim() : '';
+      return snapshot?.bucket === 'stale-listing' && owner.length === 0;
+    }).length,
+    [filteredRecords],
+  );
 
   const recordsBySection = useMemo(() => {
     const entries = SECTION_DEFINITIONS.map((section) => [section.key, [] as AirtableRecord[]] as const);
@@ -228,6 +282,10 @@ export function UsedGearWorkflowPostPublishSection({
     return nextMap;
   }, [filteredRecords, sortMode]);
   const agingSummary = useMemo(() => buildPostPublishQueueAgingSummary(filteredRecords), [filteredRecords]);
+  const canBatchMarkSoldReady = selectedSnapshots.length > 0
+    && selectedSnapshots.every((entry) => entry.snapshot?.bucket === 'active-listing' || entry.snapshot?.bucket === 'stale-listing');
+  const canBatchMarkShipped = selectedSnapshots.length > 0
+    && selectedSnapshots.every((entry) => entry.snapshot?.bucket === 'sold-ready');
 
   const visibleSections = useMemo(() => {
     const sectionDefinitions = historyFilter === 'active-only'
@@ -249,6 +307,10 @@ export function UsedGearWorkflowPostPublishSection({
   const collapsedSectionKeySet = useMemo(() => new Set(collapsedSectionKeys), [collapsedSectionKeys]);
   const allVisibleSectionsCollapsed = visibleSectionKeys.length > 0
     && visibleSectionKeys.every((sectionKey) => collapsedSectionKeySet.has(sectionKey));
+
+  useEffect(() => {
+    setSelectedRecordIds((current) => current.filter((recordId) => filteredRecordIdSet.has(recordId)));
+  }, [filteredRecordIdSet]);
 
   const refreshQueue = async () => {
     setRefreshing(true);
@@ -275,6 +337,25 @@ export function UsedGearWorkflowPostPublishSection({
     }));
   };
 
+  const replaceRecords = (updatedRecords: AirtableRecord[]) => {
+    if (updatedRecords.length === 0) {
+      return;
+    }
+
+    const updatedById = new Map(updatedRecords.map((record) => [record.id, record]));
+    setRecords((currentRecords) => currentRecords.map((record) => updatedById.get(record.id) ?? record));
+    updatedRecords.forEach((record) => {
+      setStaleRecoveryStatuses((current) => ({
+        ...current,
+        [record.id]: normalizeStaleRecoveryStatus(record.fields['Stale Recovery Status']),
+      }));
+      setStaleRecoveryNotes((current) => ({
+        ...current,
+        [record.id]: typeof record.fields['Stale Recovery Notes'] === 'string' ? record.fields['Stale Recovery Notes'] : '',
+      }));
+    });
+  };
+
   const handleAction = async (recordId: string, action: () => Promise<AirtableRecord>) => {
     setActionRecordId(recordId);
     setError(null);
@@ -285,6 +366,24 @@ export function UsedGearWorkflowPostPublishSection({
       setError(actionError instanceof Error ? actionError.message : 'Unable to update the selected workflow row.');
     } finally {
       setActionRecordId(null);
+    }
+  };
+
+  const handleBatchAction = async (action: (recordIds: string[]) => Promise<AirtableRecord[]>) => {
+    if (selectedRecordIds.length === 0) {
+      return;
+    }
+
+    setBatchBusy(true);
+    setError(null);
+
+    try {
+      replaceRecords(await action(selectedRecordIds));
+      setSelectedRecordIds([]);
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Unable to update the selected workflow rows.');
+    } finally {
+      setBatchBusy(false);
     }
   };
 
@@ -314,6 +413,10 @@ export function UsedGearWorkflowPostPublishSection({
     onSearchTermChange?.(value);
   };
 
+  const handleOwnerFilterChange = (value: UsedGearWorkflowPostPublishOwnerFilter) => {
+    onOwnerFilterChange?.(value);
+  };
+
   const handleCollapsedSectionKeysChange = (keys: UsedGearWorkflowPostPublishBucket[]) => {
     if (!Array.isArray(controlledCollapsedSectionKeys)) {
       setUncontrolledCollapsedSectionKeys(keys);
@@ -336,6 +439,27 @@ export function UsedGearWorkflowPostPublishSection({
       : [...collapsedSectionKeys, sectionKey].sort((left, right) => left.localeCompare(right)) as UsedGearWorkflowPostPublishBucket[];
 
     handleCollapsedSectionKeysChange(nextKeys);
+  };
+
+  const toggleRecordSelected = (recordId: string) => {
+    setSelectedRecordIds((current) => current.includes(recordId)
+      ? current.filter((value) => value !== recordId)
+      : [...current, recordId]);
+  };
+
+  const toggleSectionSelected = (recordIds: string[]) => {
+    if (recordIds.length === 0) {
+      return;
+    }
+
+    setSelectedRecordIds((current) => {
+      const allSelected = recordIds.every((recordId) => current.includes(recordId));
+      if (allSelected) {
+        return current.filter((recordId) => !recordIds.includes(recordId));
+      }
+
+      return Array.from(new Set([...current, ...recordIds]));
+    });
   };
 
   const collapseVisibleSections = () => {
@@ -467,6 +591,30 @@ export function UsedGearWorkflowPostPublishSection({
         </button>
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${ownerFilter === 'all' ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'}`}
+          onClick={() => handleOwnerFilterChange('all')}
+        >
+          All Owners
+        </button>
+        <button
+          type="button"
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${ownerFilter === 'mine' ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'}`}
+          onClick={() => handleOwnerFilterChange('mine')}
+        >
+          Assigned To Me
+        </button>
+        <button
+          type="button"
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${ownerFilter === 'unassigned' ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'}`}
+          onClick={() => handleOwnerFilterChange('unassigned')}
+        >
+          Unassigned Only
+        </button>
+      </div>
+
       {focusedBucket ? (
         <div className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
           Dashboard shortcut opened the post-publish queue filtered to the selected lifecycle bucket.
@@ -498,6 +646,77 @@ export function UsedGearWorkflowPostPublishSection({
         </div>
       </div>
 
+      {filteredRecords.length > 0 ? (
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Reconciliation Helpers</p>
+              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+                {selectedRecordIds.length > 0
+                  ? `${selectedRecordIds.length} selected row${selectedRecordIds.length === 1 ? '' : 's'} ready for batch ownership or lifecycle updates.`
+                  : 'Select post-publish rows to batch assign ownership or reconcile sold-ready and shipped status changes.'}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+              <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1">Unowned Stale: {unownedStaleCount}</div>
+              <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1">Unowned Sold Ready: {unownedSoldReadyCount}</div>
+            </div>
+          </div>
+          {selectedRecordIds.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => {
+                  void handleBatchAction((recordIds) => assignWorkflowOwnerBatch(recordIds, currentUserName));
+                }}
+                disabled={batchBusy}
+              >
+                {batchBusy ? 'Saving...' : 'Assign Selected To Me'}
+              </button>
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => {
+                  void handleBatchAction(clearWorkflowOwnerBatch);
+                }}
+                disabled={batchBusy}
+              >
+                {batchBusy ? 'Saving...' : 'Clear Selected Owner'}
+              </button>
+              <button
+                type="button"
+                className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => {
+                  void handleBatchAction(markWorkflowRowsSoldReadyToShip);
+                }}
+                disabled={batchBusy || !canBatchMarkSoldReady}
+              >
+                {batchBusy ? 'Saving...' : 'Mark Selected Sold Ready'}
+              </button>
+              <button
+                type="button"
+                className="rounded-xl bg-sky-600 px-3 py-2 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => {
+                  void handleBatchAction(markWorkflowRowsShipped);
+                }}
+                disabled={batchBusy || !canBatchMarkShipped}
+              >
+                {batchBusy ? 'Saving...' : 'Mark Selected Shipped'}
+              </button>
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => setSelectedRecordIds([])}
+                disabled={batchBusy}
+              >
+                Clear Selection
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {!loading && filteredRecords.length === 0 ? (
         <EmptySurface title="No post-publish workflow rows" message="The used-gear workflow currently has no listed, stale, sold-ready, or shipped rows.">
           <p className="mt-3 text-sm text-[var(--muted)]">
@@ -514,6 +733,8 @@ export function UsedGearWorkflowPostPublishSection({
         ) : visibleSections.map((section) => {
           const sectionRecords = recordsBySection.get(section.key) ?? [];
           const collapsed = collapsedSectionKeySet.has(section.key);
+          const sectionRecordIds = sectionRecords.map((record) => record.id);
+          const allSectionRecordsSelected = sectionRecordIds.length > 0 && sectionRecordIds.every((recordId) => selectedRecordIds.includes(recordId));
 
           return (
             <div key={section.key} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
@@ -533,6 +754,14 @@ export function UsedGearWorkflowPostPublishSection({
                     aria-expanded={!collapsed}
                   >
                     {collapsed ? 'Expand Bucket' : 'Collapse Bucket'}
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    onClick={() => toggleSectionSelected(sectionRecordIds)}
+                    disabled={sectionRecordIds.length === 0 || batchBusy}
+                  >
+                    {allSectionRecordsSelected ? 'Clear Bucket Selection' : 'Select Bucket'}
                   </button>
                 </div>
               </div>
@@ -557,8 +786,11 @@ export function UsedGearWorkflowPostPublishSection({
                     const canMarkStale = snapshot.status === 'Listed, Shopify' || snapshot.status === 'Listed, eBay';
                     const canMarkSoldReady = snapshot.bucket === 'active-listing' || snapshot.bucket === 'stale-listing';
                     const canMarkShipped = snapshot.bucket === 'sold-ready';
+                    const workflowOwner = typeof record.fields['Workflow Owner'] === 'string' ? record.fields['Workflow Owner'].trim() : '';
+                    const workflowOwnerAssignedAt = typeof record.fields['Workflow Owner Assigned At'] === 'string' ? record.fields['Workflow Owner Assigned At'] : null;
                     const draftStaleRecoveryStatus = getDraftStaleRecoveryStatus(record);
                     const draftStaleRecoveryNotes = getDraftStaleRecoveryNotes(record);
+                    const selected = selectedRecordIds.includes(record.id);
 
                     return (
                       <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
@@ -573,6 +805,23 @@ export function UsedGearWorkflowPostPublishSection({
                           </div>
                         </div>
 
+                        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-3 text-sm text-[var(--muted)]">
+                          <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              onChange={() => toggleRecordSelected(record.id)}
+                              disabled={batchBusy}
+                              aria-label={`Select ${displayInventoryValue(record.fields.SKU)}`}
+                            />
+                            Select Row
+                          </label>
+                          <div className="text-right">
+                            <div className="font-semibold text-[var(--ink)]">{workflowOwner || 'Unassigned'}</div>
+                            <div className="text-xs uppercase tracking-[0.08em]">Owner assigned {displayInventoryValue(workflowOwnerAssignedAt)}</div>
+                          </div>
+                        </div>
+
                         <div className="mt-3 grid gap-2 text-sm text-[var(--muted)] sm:grid-cols-2">
                           <div>Listed At: {displayInventoryValue(snapshot.listedAt)}</div>
                           <div>Days Live: {snapshot.daysSinceListed ?? '—'}</div>
@@ -580,6 +829,8 @@ export function UsedGearWorkflowPostPublishSection({
                           <div>Relisted At: {displayInventoryValue(snapshot.relistedAt)}</div>
                           <div>Sold Ready At: {displayInventoryValue(snapshot.soldReadyToShipAt)}</div>
                           <div>Shipped At: {displayInventoryValue(snapshot.shippedAt)}</div>
+                          <div>Workflow Owner: {workflowOwner || 'Unassigned'}</div>
+                          <div>Owner Assigned: {displayInventoryValue(workflowOwnerAssignedAt)}</div>
                           <div>Price: {displayInventoryValue(record.fields.Price || record.fields['Shopify Price'] || record.fields['eBay Price'])}</div>
                           <div>Recovery Updated: {displayInventoryValue(snapshot.staleRecoveryUpdatedAt)}</div>
                         </div>
@@ -642,6 +893,7 @@ export function UsedGearWorkflowPostPublishSection({
                             type="button"
                             className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
                             onClick={() => onOpenWorkflowRecord(record.id)}
+                            disabled={batchBusy}
                           >
                             Workflow Detail
                           </button>
@@ -650,10 +902,31 @@ export function UsedGearWorkflowPostPublishSection({
                               type="button"
                               className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
                               onClick={() => onOpenListingsRecord(record.id)}
+                              disabled={batchBusy}
                             >
                               Open Listings Approval
                             </button>
                           ) : null}
+                          <button
+                            type="button"
+                            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={() => {
+                              void handleAction(record.id, () => assignWorkflowOwner(record.id, currentUserName));
+                            }}
+                            disabled={busy}
+                          >
+                            {busy ? 'Saving...' : workflowOwner === currentUserName ? 'Refresh Owner' : 'Assign To Me'}
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={() => {
+                              void handleAction(record.id, () => clearWorkflowOwner(record.id));
+                            }}
+                            disabled={busy || workflowOwner.length === 0}
+                          >
+                            {busy ? 'Saving...' : 'Clear Owner'}
+                          </button>
                           {canMarkStale ? (
                             <button
                               type="button"

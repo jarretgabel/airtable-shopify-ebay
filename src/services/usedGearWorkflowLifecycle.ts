@@ -12,6 +12,7 @@ export const USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS = [
 
 export type UsedGearWorkflowListingChannel = 'shopify' | 'ebay';
 export type UsedGearWorkflowPostPublishBucket = 'active-listing' | 'stale-listing' | 'sold-ready' | 'shipped';
+export type UsedGearWorkflowPostPublishOwnerFilter = 'all' | 'mine' | 'unassigned';
 export type UsedGearWorkflowStaleRecoveryStatus = (typeof USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS)[number];
 
 export interface UsedGearWorkflowPostPublishSnapshot {

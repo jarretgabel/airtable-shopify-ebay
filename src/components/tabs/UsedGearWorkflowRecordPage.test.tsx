@@ -4,13 +4,17 @@ import { UsedGearWorkflowRecordPage } from '@/components/tabs/UsedGearWorkflowRe
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useAuthStore } from '@/stores/auth/authStore';
 
-const { loadUsedGearWorkflowRecordContextMock, completePreListingReviewStageMock, completeProcessingStageMock } = vi.hoisted(() => ({
+const { assignWorkflowOwnerMock, clearWorkflowOwnerMock, loadUsedGearWorkflowRecordContextMock, completePreListingReviewStageMock, completeProcessingStageMock } = vi.hoisted(() => ({
+  assignWorkflowOwnerMock: vi.fn(),
+  clearWorkflowOwnerMock: vi.fn(),
   loadUsedGearWorkflowRecordContextMock: vi.fn(),
   completePreListingReviewStageMock: vi.fn(),
   completeProcessingStageMock: vi.fn(),
 }));
 
 vi.mock('@/services/usedGearQueue', () => ({
+  assignWorkflowOwner: assignWorkflowOwnerMock,
+  clearWorkflowOwner: clearWorkflowOwnerMock,
   completePreListingReviewStage: completePreListingReviewStageMock,
   completePhotographyStage: vi.fn(),
   completeProcessingStage: completeProcessingStageMock,
@@ -60,6 +64,8 @@ describe('UsedGearWorkflowRecordPage', () => {
       ],
       currentUserId: 'user-1',
     });
+    assignWorkflowOwnerMock.mockReset();
+    clearWorkflowOwnerMock.mockReset();
     loadUsedGearWorkflowRecordContextMock.mockReset();
     completePreListingReviewStageMock.mockReset();
     completeProcessingStageMock.mockReset();
@@ -360,5 +366,69 @@ describe('UsedGearWorkflowRecordPage', () => {
     expect(await screen.findByText('Grouped Submission Context')).toBeInTheDocument();
     expect(screen.getByText('Siblings with offers: 1')).toBeInTheDocument();
     expect(screen.getByText('SKU-2')).toBeInTheDocument();
+  });
+
+  it('supports assigning and clearing workflow ownership from the detail page', async () => {
+    loadUsedGearWorkflowRecordContextMock.mockResolvedValue({
+      record: {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          SKU: 'SKU-1',
+          Make: 'McIntosh',
+          Model: 'MC240',
+          'Workflow Status': 'Accepted - Awaiting Arrival',
+        },
+      },
+      group: null,
+    });
+    assignWorkflowOwnerMock.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: {
+        SKU: 'SKU-1',
+        Make: 'McIntosh',
+        Model: 'MC240',
+        'Workflow Status': 'Accepted - Awaiting Arrival',
+        'Workflow Owner': 'Taylor Reviewer',
+        'Workflow Owner Assigned At': '2026-05-08T08:00:00.000Z',
+      },
+    });
+    clearWorkflowOwnerMock.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: {
+        SKU: 'SKU-1',
+        Make: 'McIntosh',
+        Model: 'MC240',
+        'Workflow Status': 'Accepted - Awaiting Arrival',
+      },
+    });
+
+    render(
+      <UsedGearWorkflowRecordPage
+        currentUserName="Taylor Reviewer"
+        recordId="rec1"
+        onBackToDirectory={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenTestingForm={vi.fn()}
+        onOpenPhotosForm={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+        onOpenInventoryEditor={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Assign To Me' }));
+
+    await waitFor(() => {
+      expect(assignWorkflowOwnerMock).toHaveBeenCalledWith('rec1', 'Taylor Reviewer');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear Owner' }));
+
+    await waitFor(() => {
+      expect(clearWorkflowOwnerMock).toHaveBeenCalledWith('rec1');
+    });
   });
 });

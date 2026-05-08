@@ -216,9 +216,29 @@
       "id": "fld7rkwiAQ458GQ22",
       "name": "eBay Listing ID",
       "type": "singleLineText"
+    },
+    {
+      "id": "fldD4HgaGTHi1N1ki",
+      "name": "Workflow Owner",
+      "type": "singleLineText"
+    },
+    {
+      "id": "fldMbaeLyP2S1dBxJ",
+      "name": "Workflow Owner Assigned At",
+      "type": "dateTime"
     }
   ],
   "rollbackOrder": [
+    {
+      "id": "fldMbaeLyP2S1dBxJ",
+      "name": "Workflow Owner Assigned At",
+      "type": "dateTime"
+    },
+    {
+      "id": "fldD4HgaGTHi1N1ki",
+      "name": "Workflow Owner",
+      "type": "singleLineText"
+    },
     {
       "id": "fld7rkwiAQ458GQ22",
       "name": "eBay Listing ID",

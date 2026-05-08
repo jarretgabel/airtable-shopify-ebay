@@ -4,7 +4,7 @@ import type { Tab } from '@/app/appNavigation';
 import type { JotFormSubmission } from '@/types/jotform';
 import type { HiFiSharkListing } from '@/types/hifishark';
 import type { UsedGearWorkflowAnalyticsSnapshotState } from '@/hooks/useUsedGearWorkflowAnalyticsSnapshot';
-import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
 import type { EbayListingsState } from '@/hooks/useEbayListings';
 import type { EbayRuntimeConfig } from '@/services/app-api/ebay';
 import type { useShopifyProducts } from '@/hooks/useShopifyProducts';
@@ -72,7 +72,9 @@ export interface DashboardTabViewModel {
     workflowPostPublishError: string | null;
     workflowActiveListingCount: number;
     workflowStaleListingCount: number;
+    workflowStaleListingUnassignedCount: number;
     workflowSoldReadyCount: number;
+    workflowSoldReadyUnassignedCount: number;
     workflowShippedCount: number;
     aiProvider: 'github' | 'openai' | 'backend' | 'none';
     ebayAuthenticated: boolean;
@@ -92,7 +94,10 @@ export interface DashboardTabViewModel {
   };
   actions: {
     onSelectTab: (tab: DashboardTargetTab) => void;
-    onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket) => void;
+    onOpenInventoryPostPublishBucket: (
+      bucket: UsedGearWorkflowPostPublishBucket,
+      ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter,
+    ) => void;
   };
 }
 

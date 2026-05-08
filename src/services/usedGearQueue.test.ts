@@ -4,6 +4,9 @@ import { deleteConfiguredRecord, getConfiguredRecord, getConfiguredRecords, upda
 import {
   acceptPendingReviewRecord,
   acceptPendingReviewGroup,
+  assignWorkflowOwner,
+  assignWorkflowOwnerBatch,
+  clearWorkflowOwner,
   completePreListingReviewStage,
   completePhotographyStage,
   completeProcessingStage,
@@ -24,6 +27,8 @@ import {
   loadPendingReviewGroup,
   markWorkflowRelisted,
   markWorkflowListingStale,
+  markWorkflowRowsShipped,
+  markWorkflowRowsSoldReadyToShip,
   markPendingReviewUnqualified,
   markPendingReviewGroupUnqualified,
   saveWorkflowStaleRecovery,
@@ -242,7 +247,9 @@ describe('usedGearQueue', () => {
     expect(summary).toEqual({
       activeListingCount: 1,
       staleListingCount: 1,
+      staleListingUnassignedCount: 1,
       soldReadyCount: 1,
+      soldReadyUnassignedCount: 1,
       shippedCount: 1,
       totalCount: 4,
     });
@@ -600,6 +607,8 @@ describe('usedGearQueue', () => {
           'Workflow Source',
           'Submission Group ID',
           'Pick Up ID',
+          'Workflow Owner',
+          'Workflow Owner Assigned At',
           'Trash Status',
           'Accepted By',
           'Accepted At',
@@ -720,6 +729,70 @@ describe('usedGearQueue', () => {
         'Approved For Publish At': expect.any(String),
         'Pre-Listing Reviewed By': 'Taylor Reviewer',
       }),
+      { typecast: true },
+    );
+  });
+
+  it('assigns workflow ownership on the authoritative row', async () => {
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: { 'Workflow Owner': 'Taylor Reviewer' },
+    });
+
+    await assignWorkflowOwner('rec1', 'Taylor Reviewer');
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Workflow Owner': 'Taylor Reviewer',
+        'Workflow Owner Assigned At': expect.any(String),
+      }),
+      { typecast: true },
+    );
+  });
+
+  it('clears workflow ownership metadata from the row', async () => {
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: { 'Workflow Owner': null },
+    });
+
+    await clearWorkflowOwner('rec1');
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      {
+        'Workflow Owner': null,
+        'Workflow Owner Assigned At': null,
+      },
+      { typecast: true },
+    );
+  });
+
+  it('assigns workflow ownership across a selected batch', async () => {
+    mockUpdateConfiguredRecord
+      .mockResolvedValueOnce({ id: 'rec1', createdTime: 'now', fields: { 'Workflow Owner': 'Taylor Reviewer' } })
+      .mockResolvedValueOnce({ id: 'rec2', createdTime: 'now', fields: { 'Workflow Owner': 'Taylor Reviewer' } });
+
+    const records = await assignWorkflowOwnerBatch(['rec1', 'rec2'], 'Taylor Reviewer');
+
+    expect(records).toHaveLength(2);
+    expect(mockUpdateConfiguredRecord).toHaveBeenNthCalledWith(
+      1,
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({ 'Workflow Owner': 'Taylor Reviewer' }),
+      { typecast: true },
+    );
+    expect(mockUpdateConfiguredRecord).toHaveBeenNthCalledWith(
+      2,
+      'used-gear-workflow',
+      'rec2',
+      expect.objectContaining({ 'Workflow Owner': 'Taylor Reviewer' }),
       { typecast: true },
     );
   });
@@ -889,6 +962,65 @@ describe('usedGearQueue', () => {
       }),
       { typecast: true },
     );
+  });
+
+  it('marks a selected batch of listed workflow rows sold ready', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Listed, Shopify',
+          'Listed At': '2026-03-01T00:00:00.000Z',
+        },
+      },
+      {
+        id: 'rec2',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Stale Listing, eBay',
+          'Listed At': '2026-03-01T00:00:00.000Z',
+          'Stale Listing At': '2026-04-20T00:00:00.000Z',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord
+      .mockResolvedValueOnce({ id: 'rec1', createdTime: 'now', fields: { 'Workflow Status': 'Sold - Ready to Ship' } })
+      .mockResolvedValueOnce({ id: 'rec2', createdTime: 'now', fields: { 'Workflow Status': 'Sold - Ready to Ship' } });
+
+    const records = await markWorkflowRowsSoldReadyToShip(['rec1', 'rec2']);
+
+    expect(records).toHaveLength(2);
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledTimes(2);
+  });
+
+  it('marks a selected batch of sold-ready workflow rows shipped', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Sold - Ready to Ship',
+          'Sold Ready To Ship At': '2026-05-06T00:00:00.000Z',
+        },
+      },
+      {
+        id: 'rec2',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Sold - Ready to Ship',
+          'Sold Ready To Ship At': '2026-05-06T00:00:00.000Z',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord
+      .mockResolvedValueOnce({ id: 'rec1', createdTime: 'now', fields: { 'Workflow Status': 'Shipped' } })
+      .mockResolvedValueOnce({ id: 'rec2', createdTime: 'now', fields: { 'Workflow Status': 'Shipped' } });
+
+    const records = await markWorkflowRowsShipped(['rec1', 'rec2']);
+
+    expect(records).toHaveLength(2);
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledTimes(2);
   });
 
   it('blocks pre-listing approval when no listing price is captured', async () => {

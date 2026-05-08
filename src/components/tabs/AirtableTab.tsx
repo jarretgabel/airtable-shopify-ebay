@@ -13,7 +13,7 @@ import {
   saveUsedGearWorkflowViewPreset,
   type UsedGearWorkflowViewPreset,
 } from '@/services/usedGearWorkflowViewPresets';
-import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
 import type { UsedGearWorkflowPostPublishHistoryFilter, UsedGearWorkflowPostPublishSortMode } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 import { useNotificationStore } from '@/stores/notificationStore';
 import type { AirtableRecord } from '@/types/airtable';
@@ -32,6 +32,7 @@ const WORKFLOW_POST_PUBLISH_SORT_PARAM = 'workflowPostPublishSort';
 const WORKFLOW_PENDING_REVIEW_GROUP_PARAM = 'workflowPendingReviewGroup';
 const WORKFLOW_PROGRESS_GROUP_PARAM = 'workflowProgressGroup';
 const WORKFLOW_POST_PUBLISH_HISTORY_PARAM = 'workflowPostPublishHistory';
+const WORKFLOW_POST_PUBLISH_OWNER_PARAM = 'workflowPostPublishOwner';
 const WORKFLOW_ROUTE_PARAMS = [
   WORKFLOW_PENDING_REVIEW_SEARCH_PARAM,
   WORKFLOW_PROGRESS_SEARCH_PARAM,
@@ -45,6 +46,7 @@ const WORKFLOW_ROUTE_PARAMS = [
   WORKFLOW_PENDING_REVIEW_GROUP_PARAM,
   WORKFLOW_PROGRESS_GROUP_PARAM,
   WORKFLOW_POST_PUBLISH_HISTORY_PARAM,
+  WORKFLOW_POST_PUBLISH_OWNER_PARAM,
   'workflowPostPublishBucket',
 ] as const;
 
@@ -120,6 +122,11 @@ function parseFocusedWorkflowGroup(search: string, paramName: string): string | 
 function parsePostPublishHistoryFilter(search: string): UsedGearWorkflowPostPublishHistoryFilter {
   const value = new URLSearchParams(search).get(WORKFLOW_POST_PUBLISH_HISTORY_PARAM);
   return value === 'active-only' || value === 'history-only' ? value : 'all';
+}
+
+function parsePostPublishOwnerFilter(search: string): UsedGearWorkflowPostPublishOwnerFilter {
+  const value = new URLSearchParams(search).get(WORKFLOW_POST_PUBLISH_OWNER_PARAM);
+  return value === 'mine' || value === 'unassigned' ? value : 'all';
 }
 
 function pendingSortLabel(value: UsedGearPendingReviewSortMode): string {
@@ -218,6 +225,7 @@ export function AirtableTab({
   const workflowPendingReviewGroup = useMemo(() => parseFocusedWorkflowGroup(location.search, WORKFLOW_PENDING_REVIEW_GROUP_PARAM), [location.search]);
   const workflowProgressGroup = useMemo(() => parseFocusedWorkflowGroup(location.search, WORKFLOW_PROGRESS_GROUP_PARAM), [location.search]);
   const workflowPostPublishHistoryFilter = useMemo(() => parsePostPublishHistoryFilter(location.search), [location.search]);
+  const workflowPostPublishOwnerFilter = useMemo(() => parsePostPublishOwnerFilter(location.search), [location.search]);
   const focusedPostPublishBucket = useMemo<UsedGearWorkflowPostPublishBucket | null>(() => {
     const params = new URLSearchParams(location.search);
     const bucket = params.get('workflowPostPublishBucket');
@@ -528,6 +536,16 @@ export function AirtableTab({
         }, '#used-gear-post-publish'),
       });
     }
+    if (workflowPostPublishOwnerFilter !== 'all') {
+      chips.push({
+        key: 'post-publish-owner',
+        label: workflowPostPublishOwnerFilter === 'mine' ? 'Owner: Assigned To Me' : 'Owner: Unassigned Only',
+        clearLabel: 'Clear post-publish owner filter',
+        onClear: () => updateWorkflowRouteState((params) => {
+          params.delete(WORKFLOW_POST_PUBLISH_OWNER_PARAM);
+        }, '#used-gear-post-publish'),
+      });
+    }
 
     return chips;
   }, [
@@ -537,6 +555,7 @@ export function AirtableTab({
     workflowPendingReviewSearch,
     workflowPendingReviewSort,
     workflowPostPublishHistoryFilter,
+    workflowPostPublishOwnerFilter,
     workflowPostPublishCollapsedSections.length,
     workflowPostPublishSearch,
     workflowPostPublishSort,
@@ -954,6 +973,7 @@ export function AirtableTab({
         />
 
         <UsedGearWorkflowPostPublishSection
+          currentUserName={currentUserName}
           focusedBucket={focusedPostPublishBucket}
           onFocusedBucketChange={handlePostPublishBucketChange}
           onOpenWorkflowRecord={onOpenWorkflowRecord}
@@ -964,6 +984,14 @@ export function AirtableTab({
               params.delete(WORKFLOW_POST_PUBLISH_HISTORY_PARAM);
             } else {
               params.set(WORKFLOW_POST_PUBLISH_HISTORY_PARAM, value);
+            }
+          }, '#used-gear-post-publish')}
+          ownerFilter={workflowPostPublishOwnerFilter}
+          onOwnerFilterChange={(value) => updateWorkflowRouteState((params) => {
+            if (value === 'all') {
+              params.delete(WORKFLOW_POST_PUBLISH_OWNER_PARAM);
+            } else {
+              params.set(WORKFLOW_POST_PUBLISH_OWNER_PARAM, value);
             }
           }, '#used-gear-post-publish')}
           searchTerm={workflowPostPublishSearch}

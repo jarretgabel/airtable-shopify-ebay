@@ -1,5 +1,5 @@
 import type { DashboardTargetTab } from './dashboardTabTypes';
-import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
 import { DashboardSubPanel } from './dashboardPrimitives';
 
 const severityClass = {
@@ -20,7 +20,28 @@ interface ActionItem {
   severity: 'critical' | 'warning';
   targetTab: DashboardTargetTab;
   inventoryPostPublishBucket?: UsedGearWorkflowPostPublishBucket;
+  inventoryPostPublishOwnerFilter?: UsedGearWorkflowPostPublishOwnerFilter;
   unavailable?: boolean;
+}
+
+function getPostPublishTargetLabel(bucket: UsedGearWorkflowPostPublishBucket, ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter): string {
+  const bucketLabel = bucket === 'sold-ready'
+    ? 'Sold Ready To Ship'
+    : bucket === 'stale-listing'
+      ? 'Stale Listings'
+      : bucket === 'active-listing'
+        ? 'Active Listings'
+        : 'Shipped History';
+
+  if (ownerFilter === 'unassigned') {
+    return `Unassigned ${bucketLabel}`;
+  }
+
+  if (ownerFilter === 'mine') {
+    return `My ${bucketLabel}`;
+  }
+
+  return bucketLabel;
 }
 
 function ActionButton({
@@ -30,7 +51,7 @@ function ActionButton({
 }: {
   item: ActionItem;
   onSelectTab: (tab: DashboardTargetTab) => void;
-  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket) => void;
+  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket, ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter) => void;
 }) {
   return (
     <button
@@ -45,7 +66,7 @@ function ActionButton({
       onClick={() => {
         if (!item.unavailable) {
           if (item.targetTab === 'inventory' && item.inventoryPostPublishBucket) {
-            onOpenInventoryPostPublishBucket(item.inventoryPostPublishBucket);
+            onOpenInventoryPostPublishBucket(item.inventoryPostPublishBucket, item.inventoryPostPublishOwnerFilter);
             return;
           }
           onSelectTab(item.targetTab);
@@ -60,7 +81,7 @@ function ActionButton({
         <span className="text-[0.78rem] opacity-75">{item.detail}</span>
         {item.inventoryPostPublishBucket ? (
           <span className="mt-2 inline-flex w-fit rounded-full border border-current/25 bg-white/10 px-2.5 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.07em] opacity-90">
-            Opens {item.inventoryPostPublishBucket === 'sold-ready' ? 'Sold Ready To Ship' : item.inventoryPostPublishBucket === 'stale-listing' ? 'Stale Listings' : item.inventoryPostPublishBucket === 'active-listing' ? 'Active Listings' : 'Shipped History'} Bucket
+            Opens {getPostPublishTargetLabel(item.inventoryPostPublishBucket, item.inventoryPostPublishOwnerFilter)} Bucket
           </span>
         ) : null}
       </div>
@@ -80,12 +101,14 @@ export interface DashboardActionsSectionProps {
   workflowPostPublishLoading: boolean;
   workflowActiveListingCount: number;
   workflowStaleListingCount: number;
+  workflowStaleListingUnassignedCount: number;
   workflowSoldReadyCount: number;
+  workflowSoldReadyUnassignedCount: number;
   workflowShippedCount: number;
   ebayUnavailableReason?: string | null;
   shopifyApprovalUnavailableReason?: string | null;
   onSelectTab: (tab: DashboardTargetTab) => void;
-  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket) => void;
+  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket, ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter) => void;
   embedded?: boolean;
 }
 
@@ -100,7 +123,9 @@ export function DashboardActionsSection({
   workflowPostPublishLoading,
   workflowActiveListingCount,
   workflowStaleListingCount,
+  workflowStaleListingUnassignedCount,
   workflowSoldReadyCount,
+  workflowSoldReadyUnassignedCount,
   workflowShippedCount,
   ebayUnavailableReason,
   shopifyApprovalUnavailableReason,
@@ -161,10 +186,11 @@ export function DashboardActionsSection({
       key: 'used-gear-sold-ready',
       label: `${workflowSoldReadyCount} used-gear item${workflowSoldReadyCount === 1 ? '' : 's'} sold and ready to ship`,
       count: workflowSoldReadyCount,
-      detail: `${workflowStaleListingCount} stale listing${workflowStaleListingCount === 1 ? '' : 's'} pending review · ${workflowShippedCount} shipped`,
+      detail: `${workflowSoldReadyUnassignedCount} unassigned · ${workflowStaleListingCount} stale listing${workflowStaleListingCount === 1 ? '' : 's'} pending review · ${workflowShippedCount} shipped`,
       severity: 'critical',
       targetTab: 'inventory',
       inventoryPostPublishBucket: 'sold-ready',
+      inventoryPostPublishOwnerFilter: workflowSoldReadyUnassignedCount > 0 ? 'unassigned' : 'all',
     });
   }
 
@@ -173,10 +199,11 @@ export function DashboardActionsSection({
       key: 'used-gear-stale',
       label: `${workflowStaleListingCount} used-gear listing${workflowStaleListingCount === 1 ? '' : 's'} stale`,
       count: workflowStaleListingCount,
-      detail: `${workflowActiveListingCount} active listing${workflowActiveListingCount === 1 ? '' : 's'} · ${workflowSoldReadyCount} sold ready to ship`,
+      detail: `${workflowStaleListingUnassignedCount} unassigned · ${workflowActiveListingCount} active listing${workflowActiveListingCount === 1 ? '' : 's'} · ${workflowSoldReadyCount} sold ready to ship`,
       severity: 'warning',
       targetTab: 'inventory',
       inventoryPostPublishBucket: 'stale-listing',
+      inventoryPostPublishOwnerFilter: workflowStaleListingUnassignedCount > 0 ? 'unassigned' : 'all',
     });
   }
 

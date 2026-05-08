@@ -27,6 +27,8 @@ const USED_GEAR_PENDING_REVIEW_QUEUE_FIELDS = [
   'Workflow Status',
   'Submission Group ID',
   'Pick Up ID',
+  'Workflow Owner',
+  'Workflow Owner Assigned At',
   'Qualification Complete',
   'Qualification Notes',
   'Offer Amount',
@@ -54,6 +56,8 @@ const USED_GEAR_WORKFLOW_RECORD_FIELDS = [
   'Photography Signed At',
   'Pre-Listing Reviewed By',
   'Pre-Listing Reviewed At',
+  'Workflow Owner',
+  'Workflow Owner Assigned At',
   'Component Type',
   'Inventory Notes',
   'Customer Cosmetic Notes',
@@ -148,12 +152,22 @@ export interface UsedGearWorkflowPostPublishSummary {
   staleListingCount: number;
   soldReadyCount: number;
   shippedCount: number;
+  staleListingUnassignedCount: number;
+  soldReadyUnassignedCount: number;
   totalCount: number;
 }
 
 export interface SaveUsedGearWorkflowStaleRecoveryInput {
   staleRecoveryStatus: UsedGearWorkflowStaleRecoveryStatus | null;
   staleRecoveryNotes: string | null;
+}
+
+function normalizeOwnerName(value: string): string {
+  const normalized = value.trim();
+  if (!normalized) {
+    throw new Error('Workflow owner requires a non-empty user name.');
+  }
+  return normalized;
 }
 
 function createEmptyWorkflowNotificationCounts(): UsedGearWorkflowNotificationCounts {
@@ -192,6 +206,8 @@ export function createEmptyUsedGearWorkflowPostPublishSummary(): UsedGearWorkflo
     staleListingCount: 0,
     soldReadyCount: 0,
     shippedCount: 0,
+    staleListingUnassignedCount: 0,
+    soldReadyUnassignedCount: 0,
     totalCount: 0,
   };
 }
@@ -293,6 +309,20 @@ function normalizeAllocationText(value: string | undefined): string | null {
 function normalizeTextAreaValue(value: string | null | undefined): string | null {
   const trimmed = value?.trim() ?? '';
   return trimmed ? trimmed : null;
+}
+
+async function updateWorkflowOwnerFields(
+  recordId: string,
+  fields: Record<string, unknown>,
+): Promise<AirtableRecord> {
+  const record = await updateConfiguredRecord(
+    'used-gear-workflow',
+    recordId,
+    fields,
+    { typecast: true },
+  );
+
+  return withWorkflow(record);
 }
 
 export function hasUsedGearPendingReviewPricingPath(fields: Record<string, unknown>): boolean {
@@ -455,6 +485,7 @@ export function summarizeUsedGearWorkflowPostPublishQueue(
 ): UsedGearWorkflowPostPublishSummary {
   return records.reduce<UsedGearWorkflowPostPublishSummary>((summary, record) => {
     const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+    const workflowOwner = getTrimmedFieldValue(record, 'Workflow Owner');
     if (!snapshot) {
       return summary;
     }
@@ -468,11 +499,17 @@ export function summarizeUsedGearWorkflowPostPublishQueue(
 
     if (snapshot.bucket === 'stale-listing') {
       summary.staleListingCount += 1;
+      if (!workflowOwner) {
+        summary.staleListingUnassignedCount += 1;
+      }
       return summary;
     }
 
     if (snapshot.bucket === 'sold-ready') {
       summary.soldReadyCount += 1;
+      if (!workflowOwner) {
+        summary.soldReadyUnassignedCount += 1;
+      }
       return summary;
     }
 
@@ -826,6 +863,51 @@ export async function saveUsedGearWorkflowStageSignoff(
   return withWorkflow(record);
 }
 
+export async function assignWorkflowOwner(recordId: string, ownerName: string): Promise<AirtableRecord> {
+  const normalizedOwnerName = normalizeOwnerName(ownerName);
+
+  return updateWorkflowOwnerFields(recordId, {
+    'Workflow Owner': normalizedOwnerName,
+    'Workflow Owner Assigned At': new Date().toISOString(),
+  });
+}
+
+export async function clearWorkflowOwner(recordId: string): Promise<AirtableRecord> {
+  return updateWorkflowOwnerFields(recordId, {
+    'Workflow Owner': null,
+    'Workflow Owner Assigned At': null,
+  });
+}
+
+export async function assignWorkflowOwnerBatch(recordIds: string[], ownerName: string): Promise<AirtableRecord[]> {
+  if (recordIds.length === 0) {
+    throw new Error('Assigning workflow ownership requires at least one row.');
+  }
+
+  const normalizedOwnerName = normalizeOwnerName(ownerName);
+  const updatedRecords: AirtableRecord[] = [];
+
+  for (const recordId of recordIds) {
+    updatedRecords.push(await assignWorkflowOwner(recordId, normalizedOwnerName));
+  }
+
+  return updatedRecords;
+}
+
+export async function clearWorkflowOwnerBatch(recordIds: string[]): Promise<AirtableRecord[]> {
+  if (recordIds.length === 0) {
+    throw new Error('Clearing workflow ownership requires at least one row.');
+  }
+
+  const updatedRecords: AirtableRecord[] = [];
+
+  for (const recordId of recordIds) {
+    updatedRecords.push(await clearWorkflowOwner(recordId));
+  }
+
+  return updatedRecords;
+}
+
 export async function completeProcessingStage(recordId: string, userName: string): Promise<AirtableRecord> {
   const normalizedUserName = userName.trim();
   if (!normalizedUserName) {
@@ -1058,6 +1140,20 @@ export async function markWorkflowSoldReadyToShip(recordId: string): Promise<Air
   return withWorkflow(record);
 }
 
+export async function markWorkflowRowsSoldReadyToShip(recordIds: string[]): Promise<AirtableRecord[]> {
+  if (recordIds.length === 0) {
+    throw new Error('At least one workflow row must be selected to mark sold ready.');
+  }
+
+  const updatedRecords: AirtableRecord[] = [];
+
+  for (const recordId of recordIds) {
+    updatedRecords.push(await markWorkflowSoldReadyToShip(recordId));
+  }
+
+  return updatedRecords;
+}
+
 export async function markWorkflowShipped(recordId: string): Promise<AirtableRecord> {
   const currentRecord = await loadUsedGearWorkflowRecord(recordId);
   const currentStatus = getUsedGearWorkflowStatus(currentRecord.fields);
@@ -1077,4 +1173,18 @@ export async function markWorkflowShipped(recordId: string): Promise<AirtableRec
   );
 
   return withWorkflow(record);
+}
+
+export async function markWorkflowRowsShipped(recordIds: string[]): Promise<AirtableRecord[]> {
+  if (recordIds.length === 0) {
+    throw new Error('At least one workflow row must be selected to mark shipped.');
+  }
+
+  const updatedRecords: AirtableRecord[] = [];
+
+  for (const recordId of recordIds) {
+    updatedRecords.push(await markWorkflowShipped(recordId));
+  }
+
+  return updatedRecords;
 }

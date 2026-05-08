@@ -17,6 +17,7 @@ describe('DashboardInsightsSection', () => {
             severity: 'critical',
             targetTab: 'inventory',
             inventoryPostPublishBucket: 'sold-ready',
+            inventoryPostPublishOwnerFilter: 'unassigned',
           },
         ]}
         onSelectTab={onSelectTab}
@@ -24,11 +25,11 @@ describe('DashboardInsightsSection', () => {
       />,
     );
 
-    expect(screen.getByText('Opens Sold Ready To Ship Bucket')).toBeInTheDocument();
+    expect(screen.getByText('Opens Unassigned Sold Ready To Ship Bucket')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /review in directory/i }));
 
-    expect(onOpenInventoryPostPublishBucket).toHaveBeenCalledWith('sold-ready');
+    expect(onOpenInventoryPostPublishBucket).toHaveBeenCalledWith('sold-ready', 'unassigned');
     expect(onSelectTab).not.toHaveBeenCalled();
   });
 });

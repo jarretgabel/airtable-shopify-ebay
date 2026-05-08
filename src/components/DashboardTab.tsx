@@ -175,7 +175,9 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
           workflowPostPublishLoading={workflow.workflowPostPublishLoading}
           workflowActiveListingCount={workflow.workflowActiveListingCount}
           workflowStaleListingCount={workflow.workflowStaleListingCount}
+          workflowStaleListingUnassignedCount={workflow.workflowStaleListingUnassignedCount}
           workflowSoldReadyCount={workflow.workflowSoldReadyCount}
+          workflowSoldReadyUnassignedCount={workflow.workflowSoldReadyUnassignedCount}
           workflowShippedCount={workflow.workflowShippedCount}
           ebayUnavailableReason={viewModel.status.sources.find((source) => source.key === 'ebay')?.error ?? null}
           shopifyApprovalUnavailableReason={viewModel.status.sources.find((source) => source.key === 'shopify-approval')?.error ?? null}
@@ -188,6 +190,8 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
             loading={workflow.workflowAnalytics.loading}
             error={workflow.workflowAnalytics.error}
             snapshot={workflow.workflowAnalytics}
+            staleListingUnassignedCount={workflow.workflowStaleListingUnassignedCount}
+            soldReadyUnassignedCount={workflow.workflowSoldReadyUnassignedCount}
           />
         ) : null}
         <DashboardInsightsSection

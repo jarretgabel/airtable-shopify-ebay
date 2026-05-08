@@ -3,36 +3,26 @@
   "tableId": "tbl0K0nFQL64jQMx8",
   "created": [
     {
-      "id": "fldyOObXogaJDLApi",
-      "name": "eBay Published At",
+      "id": "fldD4HgaGTHi1N1ki",
+      "name": "Workflow Owner",
+      "type": "singleLineText"
+    },
+    {
+      "id": "fldMbaeLyP2S1dBxJ",
+      "name": "Workflow Owner Assigned At",
       "type": "dateTime"
-    },
-    {
-      "id": "fldTCjp1marmowkwA",
-      "name": "eBay Offer ID",
-      "type": "singleLineText"
-    },
-    {
-      "id": "fld7rkwiAQ458GQ22",
-      "name": "eBay Listing ID",
-      "type": "singleLineText"
     }
   ],
   "rollbackOrder": [
     {
-      "id": "fld7rkwiAQ458GQ22",
-      "name": "eBay Listing ID",
-      "type": "singleLineText"
-    },
-    {
-      "id": "fldTCjp1marmowkwA",
-      "name": "eBay Offer ID",
-      "type": "singleLineText"
-    },
-    {
-      "id": "fldyOObXogaJDLApi",
-      "name": "eBay Published At",
+      "id": "fldMbaeLyP2S1dBxJ",
+      "name": "Workflow Owner Assigned At",
       "type": "dateTime"
+    },
+    {
+      "id": "fldD4HgaGTHi1N1ki",
+      "name": "Workflow Owner",
+      "type": "singleLineText"
     }
   ]
 }

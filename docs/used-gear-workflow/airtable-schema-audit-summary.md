@@ -9,10 +9,14 @@ This report captures the post-change audit state for the approved used-gear work
 ## Audit Result
 - live schema matched the approved workflow field list
 - live select options matched the approved workflow option sets
-- approved workflow field count present live: `43`
-- latest rerun creation count: `3`
+- approved workflow field count present live: `45`
+- latest rerun creation count: `2`
 
-The latest sync added the newly approved eBay publish metadata fields:
+The latest sync added the newly approved ownership fields:
+- `Workflow Owner`
+- `Workflow Owner Assigned At`
+
+The current approved live schema also includes the previously added eBay publish metadata fields:
 - `eBay Published At`
 - `eBay Offer ID`
 - `eBay Listing ID`
@@ -44,6 +48,8 @@ The latest sync added the newly approved eBay publish metadata fields:
 | Workflow Source | singleSelect |
 | Submission Group ID | singleLineText |
 | Pick Up ID | singleLineText |
+| Workflow Owner | singleLineText |
+| Workflow Owner Assigned At | dateTime |
 | Trash Status | singleSelect |
 | Accepted By | singleLineText |
 | Accepted At | dateTime |

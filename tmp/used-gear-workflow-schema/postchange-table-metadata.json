@@ -5009,6 +5009,27 @@
       "type": "singleLineText",
       "id": "fld7rkwiAQ458GQ22",
       "name": "eBay Listing ID"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldD4HgaGTHi1N1ki",
+      "name": "Workflow Owner"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fldMbaeLyP2S1dBxJ",
+      "name": "Workflow Owner Assigned At"
     }
   ],
   "views": [

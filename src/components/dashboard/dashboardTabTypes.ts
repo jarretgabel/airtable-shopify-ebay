@@ -1,6 +1,6 @@
 import type { AppPage } from '@/auth/pages';
 import type { JotFormSubmission } from '@/types/jotform';
-import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
 
 export type DashboardTargetTab = AppPage;
 
@@ -43,6 +43,7 @@ export interface DashboardInsight {
   severity: 'critical' | 'warning' | 'info' | 'positive';
   targetTab?: DashboardTargetTab;
   inventoryPostPublishBucket?: UsedGearWorkflowPostPublishBucket;
+  inventoryPostPublishOwnerFilter?: UsedGearWorkflowPostPublishOwnerFilter;
 }
 
 export interface WorkflowCard {

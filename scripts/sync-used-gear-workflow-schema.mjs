@@ -41,6 +41,8 @@ const APPROVED_FIELD_DEFINITIONS = [
   { name: 'Workflow Source', type: 'singleSelect', options: { choices: [{ name: 'JotForm', color: 'blueLight2' }, { name: 'Manual Entry', color: 'cyanLight2' }] } },
   { name: 'Submission Group ID', type: 'singleLineText' },
   { name: 'Pick Up ID', type: 'singleLineText' },
+  { name: 'Workflow Owner', type: 'singleLineText' },
+  { name: 'Workflow Owner Assigned At', type: 'dateTime', options: ISO_DATE_TIME_OPTIONS },
   { name: 'Trash Status', type: 'singleSelect', options: { choices: [{ name: 'Active Trash', color: 'redLight1' }, { name: 'Restored', color: 'greenLight2' }, { name: 'Ready for Deletion', color: 'grayDark1' }] } },
   { name: 'Accepted By', type: 'singleLineText' },
   { name: 'Accepted At', type: 'dateTime', options: ISO_DATE_TIME_OPTIONS },
