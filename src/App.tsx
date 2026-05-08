@@ -38,8 +38,6 @@ function App() {
     inventoryRecordId,
     usedGearWorkflowRecordId,
     listingsRecordId,
-    approvalRecordId,
-    shopifyApprovalRecordId,
     userRecordId,
     activeTab,
     firstAccessibleTab,
@@ -70,10 +68,6 @@ function App() {
     navigateToInventoryPostPublishBucket,
     navigateToListingsRecord,
     navigateToListingsList,
-    navigateToApprovalRecord,
-    navigateToApprovalList,
-    navigateToShopifyApprovalRecord,
-    navigateToShopifyApprovalList,
     navigateToUserRecord,
     navigateToUsersList,
     handleLogout,
@@ -97,12 +91,10 @@ function App() {
     canAccessPage,
     users,
   });
-  const { loading, onRefresh, onExportCurrentPage, onExportAllPages, tabs, intakeNavTabs, ebayNavTabs, inventoryProcessingNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
+  const { loading, onRefresh, onExportCurrentPage, onExportAllPages, tabs, intakeNavTabs, listingsNavTabs, inventoryProcessingNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
     activeTab,
     visibleTabs,
     workflowInventoryBadgeCount: workflowNotificationSummary.workflowQueueBadgeCount,
-    approvalPending: approval.pending,
-    shopifyApprovalPending: shopifyApproval.pending,
     totalNewSubmissions,
     runtimeFeatures,
     exportingPdf,
@@ -113,7 +105,6 @@ function App() {
     canAccessPage: canAccessPage as (tab: Tab) => boolean,
     shellRef,
     navigateToTab,
-    navigateToApprovalList,
     navigateToUsersList,
     airtableRefetch: airtable.refetch,
     shopifyRefetch: shopify.refetch,
@@ -212,9 +203,8 @@ function App() {
           currentUserLabel={`${currentUser.name} · ${currentUser.role}`}
           tabs={tabs}
           intakeTabs={intakeNavTabs}
-          ebayTabs={ebayNavTabs}
+          listingsTabs={listingsNavTabs}
           inventoryProcessingTabs={inventoryProcessingNavTabs}
-          shopifyTabs={shopifyNavTabs}
           postEbayTabs={postEbayNavTabs}
           utilityTabs={utilityNavTabs}
           refreshLabel={loading ? 'Refreshing...' : 'Refresh'}
@@ -240,8 +230,6 @@ function App() {
             inventoryRecordId={inventoryRecordId}
             usedGearWorkflowRecordId={usedGearWorkflowRecordId}
             listingsRecordId={listingsRecordId}
-            approvalRecordId={approvalRecordId}
-            shopifyApprovalRecordId={shopifyApprovalRecordId}
             userRecordId={userRecordId}
             navigateToInventoryRecord={navigateToInventoryRecord}
             navigateToUsedGearWorkflowRecord={navigateToUsedGearWorkflowRecord}
@@ -252,10 +240,6 @@ function App() {
             navigateToPhotosForm={navigateToPhotosForm}
             navigateToListingsRecord={navigateToListingsRecord}
             navigateToListingsList={navigateToListingsList}
-            navigateToApprovalRecord={navigateToApprovalRecord}
-            navigateToApprovalList={navigateToApprovalList}
-            navigateToShopifyApprovalRecord={navigateToShopifyApprovalRecord}
-            navigateToShopifyApprovalList={navigateToShopifyApprovalList}
             navigateToUserRecord={navigateToUserRecord}
             navigateToUsersList={navigateToUsersList}
             navigateToTab={navigateToTab}

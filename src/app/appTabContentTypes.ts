@@ -20,8 +20,6 @@ export interface AppTabContentProps {
   inventoryRecordId: string | null;
   usedGearWorkflowRecordId: string | null;
   listingsRecordId: string | null;
-  approvalRecordId: string | null;
-  shopifyApprovalRecordId: string | null;
   userRecordId: string | null;
   navigateToInventoryRecord: (recordId: string, replace?: boolean) => void;
   navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
@@ -35,10 +33,6 @@ export interface AppTabContentProps {
   navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsList: (replace?: boolean) => void;
-  navigateToApprovalRecord: (recordId: string, replace?: boolean) => void;
-  navigateToApprovalList: (replace?: boolean) => void;
-  navigateToShopifyApprovalRecord: (recordId: string, replace?: boolean) => void;
-  navigateToShopifyApprovalList: (replace?: boolean) => void;
   navigateToUserRecord: (userId: string, replace?: boolean) => void;
   navigateToUsersList: (replace?: boolean) => void;
   navigateToTab: (tab: Tab, replace?: boolean) => void;

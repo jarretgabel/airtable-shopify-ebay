@@ -137,24 +137,24 @@ export function DashboardActionsSection({
 
   if (shopifyApprovalUnavailableReason) {
     items.push({
-      key: 'shopify-approval-unavailable',
-      label: 'Shopify approval queue unavailable',
+      key: 'listings-shopify-unavailable',
+      label: 'Shopify listings review unavailable',
       count: 0,
       detail: shopifyApprovalUnavailableReason,
       severity: 'warning',
-      targetTab: 'shopify-approval',
+      targetTab: 'listings',
       unavailable: true,
     });
   }
 
   if (!shopifyApprovalUnavailableReason && shopifyQueuePending > 0) {
     items.push({
-      key: 'shopify-approval',
-      label: `${shopifyQueuePending} listing${shopifyQueuePending === 1 ? '' : 's'} awaiting approval`,
+      key: 'listings-shopify',
+      label: `${shopifyQueuePending} listing${shopifyQueuePending === 1 ? '' : 's'} awaiting review`,
       count: shopifyQueuePending,
       detail: `${shopifyQueueApproved} approved · ${shopifyQueueTotal} total in queue`,
       severity: 'critical',
-      targetTab: 'shopify-approval',
+      targetTab: 'listings',
     });
   }
 

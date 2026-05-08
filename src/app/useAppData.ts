@@ -37,8 +37,8 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, users }: 
   const shopify = useShopifyProducts(shopifyEnabled);
   const market = useHiFiShark();
   const ebay = useEbayListings(ebayEnabled);
-  const approval = useApprovalQueueSummary(enabled && canAccessPage('approval') && runtimeFeatures.approvalEbay.available);
-  const shopifyApproval = useShopifyApprovalQueueSummary(enabled && canAccessPage('shopify-approval') && runtimeFeatures.approvalShopify.available);
+  const approval = useApprovalQueueSummary(enabled && canAccessPage('listings') && runtimeFeatures.approvalEbay.available);
+  const shopifyApproval = useShopifyApprovalQueueSummary(enabled && canAccessPage('listings') && runtimeFeatures.approvalShopify.available);
   const usedGearWorkflowAnalytics = useUsedGearWorkflowAnalyticsSnapshot(enabled && canAccessPage('inventory'));
   const usedGearWorkflowPostPublish = useUsedGearWorkflowPostPublishSummary(enabled && canAccessPage('inventory'));
 

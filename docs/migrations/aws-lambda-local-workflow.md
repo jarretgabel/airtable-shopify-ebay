@@ -114,7 +114,7 @@ npm run compare:lambda
 
 Expected result:
 
-- Airtable, Shopify, JotForm, eBay, and configured approval sources match the local backend responses where comparison coverage exists
+- Airtable, Shopify, JotForm, eBay, and configured Listings review sources match the local backend responses where comparison coverage exists
 
 Alternative when `sam local` or Docker is unavailable:
 

@@ -176,8 +176,8 @@ Practical interpretation for Package 1:
 
 ### What this intentionally does not include yet
 
-- approval table reads
-- Shopify approval table reads
+- Listings review table reads
+- Shopify Listings review table reads
 - auth user-table reads
 - reference-based Airtable reads
 - record-detail reads

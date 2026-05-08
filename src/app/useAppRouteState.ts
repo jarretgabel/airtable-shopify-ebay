@@ -12,8 +12,6 @@ interface AppRouteState {
   photosRecordId: string | null;
   inventoryRecordId: string | null;
   usedGearWorkflowRecordId: string | null;
-  approvalRecordId: string | null;
-  shopifyApprovalRecordId: string | null;
   listingsRecordId: string | null;
   userRecordId: string | null;
   activeTab: Tab;
@@ -32,15 +30,15 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const photosRecordMatch = normalizedPath.match(/^\/photos\/([^/]+)$/);
   const usedGearWorkflowRecordMatch = normalizedPath.match(/^\/inventory\/workflow\/([^/]+)$/);
   const inventoryRecordMatch = normalizedPath.match(/^\/inventory\/([^/]+)$/);
-  const approvalRecordMatch = normalizedPath.match(/^\/ebay\/approval\/([^/]+)$/);
-  const shopifyApprovalRecordMatch = normalizedPath.match(/^\/shopify\/approval\/([^/]+)$/);
+  const legacyEbayApprovalRecordMatch = normalizedPath.match(/^\/ebay\/approval\/([^/]+)$/);
+  const legacyShopifyApprovalRecordMatch = normalizedPath.match(/^\/shopify\/approval\/([^/]+)$/);
   const listingsRecordMatch = normalizedPath.match(/^\/listings\/([^/]+)$/);
   const userRecordMatch = normalizedPath.match(/^\/account\/users\/([^/]+)$/);
   const firstAccessibleTab = (accessiblePages[0] ?? 'dashboard') as Tab;
 
   const activeTab: Tab = (() => {
-    if (normalizedPath === '/ebay/approval' || approvalRecordMatch) return 'approval';
-    if (normalizedPath === '/shopify/approval' || shopifyApprovalRecordMatch) return 'shopify-approval';
+    if (normalizedPath === '/ebay/approval' || normalizedPath.startsWith('/ebay/approval/')) return 'listings';
+    if (normalizedPath === '/shopify/approval' || normalizedPath.startsWith('/shopify/approval/')) return 'listings';
     if (normalizedPath === '/listings' || listingsRecordMatch) return 'listings';
     if (normalizedPath === '/ebay/listings') return 'ebay';
     if (normalizedPath === '/shopify/products') return 'shopify';
@@ -73,9 +71,13 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     photosRecordId: photosRecordMatch ? decodeURIComponent(photosRecordMatch[1]) : null,
     usedGearWorkflowRecordId: usedGearWorkflowRecordMatch ? decodeURIComponent(usedGearWorkflowRecordMatch[1]) : null,
     inventoryRecordId: inventoryRecordMatch ? decodeURIComponent(inventoryRecordMatch[1]) : null,
-    approvalRecordId: approvalRecordMatch ? decodeURIComponent(approvalRecordMatch[1]) : null,
-    shopifyApprovalRecordId: shopifyApprovalRecordMatch ? decodeURIComponent(shopifyApprovalRecordMatch[1]) : null,
-    listingsRecordId: listingsRecordMatch ? decodeURIComponent(listingsRecordMatch[1]) : null,
+    listingsRecordId: listingsRecordMatch
+      ? decodeURIComponent(listingsRecordMatch[1])
+      : legacyEbayApprovalRecordMatch
+        ? decodeURIComponent(legacyEbayApprovalRecordMatch[1])
+        : legacyShopifyApprovalRecordMatch
+          ? decodeURIComponent(legacyShopifyApprovalRecordMatch[1])
+          : null,
     userRecordId: userRecordMatch ? decodeURIComponent(userRecordMatch[1]) : null,
     activeTab,
     firstAccessibleTab,

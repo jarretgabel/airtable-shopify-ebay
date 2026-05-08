@@ -300,9 +300,9 @@ Not yet backend-routed:
 
 Current validated scope:
 
-- Shopify approval exact request preview
+- Shopify Listings exact request preview
 - Shopify draft/product-set request shaping
-- deployed Shopify approval reads
+- deployed Shopify Listings reads
 - eBay Lambda-backed inventory and publish flows
 
 Open blocker before calling this fully complete:

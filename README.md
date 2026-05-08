@@ -229,4 +229,4 @@ Optional incoming gear source-link env vars:
 
 ## Performance Notes
 
-Large approval queues use deferred search input and precomputed sort/filter values to reduce render work on heavy screens.
+Large Listings review queues use deferred search input and precomputed sort/filter values to reduce render work on heavy screens.

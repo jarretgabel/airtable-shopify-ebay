@@ -11,8 +11,6 @@ interface AppShellControlsParams {
   activeTab: Tab;
   visibleTabs: Tab[];
   workflowInventoryBadgeCount: number;
-  approvalPending: number;
-  shopifyApprovalPending: number;
   totalNewSubmissions: number;
   runtimeFeatures: RuntimeFeatureMap;
   exportingPdf: boolean;
@@ -23,7 +21,6 @@ interface AppShellControlsParams {
   canAccessPage: (tab: Tab) => boolean;
   shellRef: RefObject<HTMLElement | null>;
   navigateToTab: (tab: Tab, replace?: boolean) => void;
-  navigateToApprovalList: (replace?: boolean) => void;
   navigateToUsersList: (replace?: boolean) => void;
   airtableRefetch: () => Promise<void>;
   shopifyRefetch: () => void | Promise<void>;
@@ -44,8 +41,6 @@ export function useAppShellControls({
   activeTab,
   visibleTabs,
   workflowInventoryBadgeCount,
-  approvalPending,
-  shopifyApprovalPending,
   totalNewSubmissions,
   runtimeFeatures,
   exportingPdf,
@@ -56,7 +51,6 @@ export function useAppShellControls({
   canAccessPage,
   shellRef,
   navigateToTab,
-  navigateToApprovalList,
   navigateToUsersList,
   airtableRefetch,
   shopifyRefetch,
@@ -84,8 +78,8 @@ export function useAppShellControls({
         Promise.resolve(shopifyRefetch()),
         Promise.resolve(runtimeFeatures.jotform.available ? jotformRefetch() : undefined),
         Promise.resolve(canAccessPage('ebay') && runtimeFeatures.ebay.available ? ebayRefetch() : undefined),
-        Promise.resolve(runtimeFeatures.approvalEbay.available ? approvalRefetch() : undefined),
-        Promise.resolve(canAccessPage('shopify-approval') && runtimeFeatures.approvalShopify.available ? shopifyApprovalRefetch() : undefined),
+        Promise.resolve(canAccessPage('listings') && runtimeFeatures.approvalEbay.available ? approvalRefetch() : undefined),
+        Promise.resolve(canAccessPage('listings') && runtimeFeatures.approvalShopify.available ? shopifyApprovalRefetch() : undefined),
         Promise.resolve(canAccessPage('inventory') ? usedGearWorkflowAnalyticsRefetch() : undefined),
         Promise.resolve(canAccessPage('inventory') ? usedGearWorkflowPostPublishRefetch() : undefined),
         Promise.resolve(currentSlug ? sharkSearch(currentSlug) : undefined),
@@ -93,7 +87,7 @@ export function useAppShellControls({
       pushNotification({
         tone: 'success',
         title: 'Data refreshed',
-        message: 'Review approval queues and dashboard alerts for items that need action.',
+        message: 'Review Listings and dashboard alerts for items that need action.',
       });
       trackWorkflowEvent('data_refreshed', {
         tab: activeTab,
@@ -161,23 +155,18 @@ export function useAppShellControls({
     }
   }, [activeTab, canAccessPage, exportingPdf, navigateToTab, pushNotification, setExportProgress, setExportingPdf, shellRef]);
 
-  const { tabs, intakeNavTabs, ebayNavTabs, inventoryProcessingNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs } = buildAppFrameNavTabs({
+  const { tabs, intakeNavTabs, listingsNavTabs, inventoryProcessingNavTabs, postEbayNavTabs, utilityNavTabs } = buildAppFrameNavTabs({
     visibleTabs,
     activeTab,
     exportingPdf,
     workflowInventoryBadgeCount,
-    approvalPending,
-    shopifyApprovalPending,
     totalNewSubmissions,
     disabledTabReasons: {
       jotform: runtimeFeatures.jotform.message ?? undefined,
       ebay: runtimeFeatures.ebay.message ?? undefined,
-      approval: runtimeFeatures.approvalEbay.message ?? undefined,
-      'shopify-approval': runtimeFeatures.approvalShopify.message ?? undefined,
       listings: runtimeFeatures.approvalCombined.message ?? undefined,
     },
     navigateToTab: (tab) => navigateToTab(tab),
-    navigateToApprovalList: () => navigateToApprovalList(),
     navigateToUsersList: () => navigateToUsersList(),
   });
 
@@ -188,9 +177,8 @@ export function useAppShellControls({
     onExportAllPages: () => void handleExportPdf('all'),
     tabs,
     intakeNavTabs,
-    ebayNavTabs,
+    listingsNavTabs,
     inventoryProcessingNavTabs,
-    shopifyNavTabs,
     postEbayNavTabs,
     utilityNavTabs,
   };

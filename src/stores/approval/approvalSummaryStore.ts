@@ -66,7 +66,7 @@ export const useApprovalSummaryStore = create<ApprovalSummaryStoreState>((set, g
         lastLoadedAt: Date.now(),
       });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to load approval queue' });
+      set({ error: err instanceof Error ? err.message : 'Failed to load eBay listings review summary' });
     } finally {
       set({ loading: false });
     }

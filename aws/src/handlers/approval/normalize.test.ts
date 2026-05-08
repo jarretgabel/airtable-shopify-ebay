@@ -97,8 +97,7 @@ test('approval normalize handler forwards fields, bodyPreview, and categoryPrevi
 
   assert.equal(response.statusCode, 200);
   assert.deepEqual(accessCalls, [
-    { anyPage: ['shopify-approval'] },
-    { anyPage: ['approval'] },
+    { anyPage: ['listings'] },
   ]);
   assert.deepEqual(normalizeCalls, [{ target: 'both', fields: { Title: 'Amp' }, bodyPreview, categoryPreview }]);
   assert.match(String(response.body), /"generatedBodyHtml":"<p>Preview<\/p>"/);

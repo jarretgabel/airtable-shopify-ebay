@@ -90,8 +90,7 @@ test('approval publish handler executes orchestration after target-specific acce
 
   assert.equal(response.statusCode, 200);
   assert.deepEqual(accessCalls, [
-    { anyPage: ['shopify-approval'] },
-    { anyPage: ['approval'] },
+    { anyPage: ['listings'] },
   ]);
   assert.deepEqual(executionCalls, [{
     target: 'both',

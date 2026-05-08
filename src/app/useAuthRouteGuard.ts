@@ -41,13 +41,22 @@ export function useAuthRouteGuard({
       return;
     }
 
+    if (normalizedPath === '/ebay/approval' || normalizedPath.startsWith('/ebay/approval/') || normalizedPath === '/shopify/approval' || normalizedPath.startsWith('/shopify/approval/')) {
+      const legacyApprovalRecordMatch = normalizedPath.match(/^\/(?:ebay|shopify)\/approval\/([^/]+)$/);
+      navigate(
+        legacyApprovalRecordMatch
+          ? `${TAB_PATHS.listings}/${encodeURIComponent(decodeURIComponent(legacyApprovalRecordMatch[1]))}`
+          : TAB_PATHS.listings,
+        { replace: true },
+      );
+      return;
+    }
+
     const isKnownTabPath = isTab(normalizedPath.slice(1));
     const isIncomingGearDetailPath = /^\/incoming-gear\/[^/]+$/.test(normalizedPath);
     const isTestingDetailPath = /^\/testing\/[^/]+$/.test(normalizedPath);
     const isPhotosDetailPath = /^\/photos\/[^/]+$/.test(normalizedPath);
     const isInventoryDetailPath = /^\/inventory\/[^/]+$/.test(normalizedPath);
-    const isApprovalDetailPath = /^\/ebay\/approval\/[^/]+$/.test(normalizedPath);
-    const isShopifyApprovalDetailPath = /^\/shopify\/approval\/[^/]+$/.test(normalizedPath);
     const isListingsDetailPath = /^\/listings\/[^/]+$/.test(normalizedPath);
     const isUserDetailPath = /^\/account\/users\/[^/]+$/.test(normalizedPath);
     const isKnownSubPath =
@@ -67,11 +76,7 @@ export function useAuthRouteGuard({
       isTestingDetailPath ||
       normalizedPath === '/photos' ||
       isPhotosDetailPath ||
-      normalizedPath === '/ebay/approval' ||
-      isApprovalDetailPath ||
       normalizedPath === '/shopify/products' ||
-      normalizedPath === '/shopify/approval' ||
-      isShopifyApprovalDetailPath ||
       normalizedPath === '/account/settings' ||
       normalizedPath === '/account/notifications' ||
       normalizedPath === '/account/users' ||
@@ -82,13 +87,9 @@ export function useAuthRouteGuard({
     }
 
     const requestedTab: Tab | null =
-      normalizedPath === '/ebay/approval' || isApprovalDetailPath
-        ? 'approval'
-        : normalizedPath === '/listings' || isListingsDetailPath
+      normalizedPath === '/listings' || isListingsDetailPath
           ? 'listings'
-        : normalizedPath === '/shopify/approval' || isShopifyApprovalDetailPath
-          ? 'shopify-approval'
-          : normalizedPath === '/ebay/listings'
+        : normalizedPath === '/ebay/listings'
             ? 'ebay'
             : normalizedPath === '/shopify/products'
               ? 'shopify'

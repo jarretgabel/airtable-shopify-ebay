@@ -16,8 +16,6 @@ const DashboardTab = lazy(async () => ({ default: (await import('@/components/Da
 const EbayTab = lazy(async () => ({ default: (await import('@/components/EbayTab')).EbayTab }));
 const ImageLab = lazy(async () => ({ default: (await import('@/components/ImageLab')).ImageLab }));
 const CombinedListingsApprovalTab = lazy(async () => ({ default: (await import('@/components/approval/CombinedListingsApprovalTab')).CombinedListingsApprovalTab }));
-const EbayListingApprovalTab = lazy(async () => ({ default: (await import('@/components/approval/EbayListingApprovalTab')).EbayListingApprovalTab }));
-const ShopifyListingApprovalTab = lazy(async () => ({ default: (await import('@/components/approval/ShopifyListingApprovalTab')).ShopifyListingApprovalTab }));
 const NotificationsTab = lazy(async () => ({ default: (await import('@/components/NotificationsTab')).NotificationsTab }));
 const SettingsTab = lazy(async () => ({ default: (await import('@/components/SettingsTab')).SettingsTab }));
 const UserManagementTab = lazy(async () => ({ default: (await import('@/components/UserManagementTab')).UserManagementTab }));
@@ -62,10 +60,6 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
       return 'Shopify';
     case 'ebay':
       return 'eBay';
-    case 'approval':
-      return 'approval queue';
-    case 'shopify-approval':
-      return 'Shopify approval queue';
     case 'jotform':
       return 'JotForm';
     case 'parking-lot-2':
@@ -118,8 +112,6 @@ export function AppTabContent({
   inventoryRecordId,
   usedGearWorkflowRecordId,
   listingsRecordId,
-  approvalRecordId,
-  shopifyApprovalRecordId,
   userRecordId,
   navigateToInventoryRecord,
   navigateToUsedGearWorkflowRecord,
@@ -130,10 +122,6 @@ export function AppTabContent({
   navigateToPhotosForm,
   navigateToListingsRecord,
   navigateToListingsList,
-  navigateToApprovalRecord,
-  navigateToApprovalList,
-  navigateToShopifyApprovalRecord,
-  navigateToShopifyApprovalList,
   navigateToUserRecord,
   navigateToUsersList,
   navigateToTab,
@@ -209,8 +197,6 @@ export function AppTabContent({
     inventoryRecordId,
     usedGearWorkflowRecordId,
     listingsRecordId,
-    approvalRecordId,
-    shopifyApprovalRecordId,
     userRecordId,
   });
   const isRouteTransitionPending = deferredRouteState.activeTab !== activeTab
@@ -221,8 +207,6 @@ export function AppTabContent({
     || deferredRouteState.inventoryRecordId !== inventoryRecordId
     || deferredRouteState.usedGearWorkflowRecordId !== usedGearWorkflowRecordId
     || deferredRouteState.listingsRecordId !== listingsRecordId
-    || deferredRouteState.approvalRecordId !== approvalRecordId
-    || deferredRouteState.shopifyApprovalRecordId !== shopifyApprovalRecordId
     || deferredRouteState.userRecordId !== userRecordId;
 
   const ebayViewModel = buildEbayTabViewModel({
@@ -324,22 +308,10 @@ export function AppTabContent({
     jfClearFresh,
   });
 
-  const approvalViewModel = buildApprovalTabViewModel({
-    approvalRecordId,
-    navigateToApprovalRecord,
-    navigateToApprovalList,
-  });
-
   const listingsViewModel = buildApprovalTabViewModel({
     approvalRecordId: listingsRecordId,
     navigateToApprovalRecord: navigateToListingsRecord,
     navigateToApprovalList: navigateToListingsList,
-  });
-
-  const shopifyApprovalViewModel = buildApprovalTabViewModel({
-    approvalRecordId: shopifyApprovalRecordId,
-    navigateToApprovalRecord: navigateToShopifyApprovalRecord,
-    navigateToApprovalList: navigateToShopifyApprovalList,
   });
 
   const usersViewModel = buildUsersTabViewModel({
@@ -362,16 +334,6 @@ export function AppTabContent({
           return <FeatureUnavailableTab title="eBay unavailable" message={runtimeFeatures.ebay.message} />;
         }
         return <EbayTab viewModel={ebayViewModel} />;
-      case 'approval':
-        if (!runtimeFeatures.approvalEbay.available && runtimeFeatures.approvalEbay.message) {
-          return <FeatureUnavailableTab title="eBay approval unavailable" message={runtimeFeatures.approvalEbay.message} />;
-        }
-        return <EbayListingApprovalTab viewModel={approvalViewModel} />;
-      case 'shopify-approval':
-        if (!runtimeFeatures.approvalShopify.available && runtimeFeatures.approvalShopify.message) {
-          return <FeatureUnavailableTab title="Shopify approval unavailable" message={runtimeFeatures.approvalShopify.message} />;
-        }
-        return <ShopifyListingApprovalTab viewModel={shopifyApprovalViewModel} />;
       case 'users':
         return <UserManagementTab viewModel={usersViewModel} />;
       case 'settings':

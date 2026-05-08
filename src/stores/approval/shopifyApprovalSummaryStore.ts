@@ -66,7 +66,7 @@ export const useShopifyApprovalSummaryStore = create<ShopifyApprovalSummaryStore
         lastLoadedAt: Date.now(),
       });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to load Shopify approval queue' });
+      set({ error: err instanceof Error ? err.message : 'Failed to load Shopify listings review summary' });
     } finally {
       set({ loading: false });
     }

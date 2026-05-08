@@ -12,8 +12,6 @@ export const APP_PAGES = [
   'notifications',
   'imagelab',
   'ebay',
-  'approval',
-  'shopify-approval',
   'users',
 ] as const;
 

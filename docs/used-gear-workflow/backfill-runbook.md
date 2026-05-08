@@ -10,7 +10,7 @@ This runbook operationalizes the approved backfill and normalization strategy fo
 ## Inputs
 - Airtable base: `apprsAm2FOohEmL2u`
 - Direct table scope: `tbl0K0nFQL64jQMx8`
-- Approval source of truth:
+- Listings review source of truth:
   - `docs/used-gear-workflow/data-model-and-approvals.md`
 
 ## Guardrails

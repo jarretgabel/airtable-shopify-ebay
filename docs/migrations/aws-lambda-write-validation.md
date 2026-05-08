@@ -277,12 +277,12 @@ Code path:
 
 Validate:
 
-- create a new Shopify approval row
-- save an existing approval row
-- save a combined approval row
+- create a new Shopify-ready Listings review row
+- save an existing Listings review row
+- save a combined Listings review row
 - confirm Shopify REST Product ID writeback still succeeds after publish
 
-### Shopify approval publish flows
+### Shopify Listings publish flows
 
 Code path:
 

@@ -8,9 +8,8 @@ export function AppFrame({
   currentUserLabel,
   tabs,
   intakeTabs,
-  ebayTabs,
+  listingsTabs,
   inventoryProcessingTabs,
-  shopifyTabs,
   postEbayTabs,
   utilityTabs,
   refreshLabel,
@@ -66,9 +65,8 @@ export function AppFrame({
         currentUserLabel={currentUserLabel}
         tabs={tabs}
         intakeTabs={intakeTabs}
-        ebayTabs={ebayTabs}
+        listingsTabs={listingsTabs}
         inventoryProcessingTabs={inventoryProcessingTabs}
-        shopifyTabs={shopifyTabs}
         postEbayTabs={postEbayTabs}
         utilityTabs={utilityTabs}
         refreshLabel={refreshLabel}

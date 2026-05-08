@@ -17,8 +17,6 @@ export const APP_PAGES = [
   'notifications',
   'imagelab',
   'ebay',
-  'approval',
-  'shopify-approval',
   'users',
 ] as const;
 
@@ -49,8 +47,6 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   notifications: { label: 'Notifications', path: '/account/notifications' },
   imagelab: { label: 'Image Lab', path: '/imagelab' },
   ebay: { label: 'eBay', path: '/ebay/listings' },
-  approval: { label: 'eBay Listings Approvals', path: '/ebay/approval' },
-  'shopify-approval': { label: 'Shopify Listings Approvals', path: '/shopify/approval' },
   users: { label: 'User Management', path: '/account/users', adminOnly: true },
 };
 

@@ -52,33 +52,33 @@ export function useActionGuidanceNotifications({
   const dismissByKey = useNotificationStore((state) => state.dismissByKey);
 
   useEffect(() => {
-    if (!canAccessPage('approval') || approvalPending <= 0) {
+    if (!canAccessPage('listings') || approvalPending <= 0) {
       dismissByKey(ACTION_KEYS.ebayApproval);
       return;
     }
 
     upsertByKey(ACTION_KEYS.ebayApproval, {
       tone: 'warning',
-      title: 'eBay approvals need review',
-      message: `${approvalPending} listing${approvalPending === 1 ? '' : 's'} are waiting for approval. Review the queue before publishing more inventory.`,
-      actionLabel: 'Review eBay queue',
-      onAction: () => navigateToTab('approval'),
+      title: 'eBay listings need review',
+      message: `${approvalPending} listing${approvalPending === 1 ? '' : 's'} are waiting for review. Open Listings to continue the combined approval workflow.`,
+      actionLabel: 'Open Listings',
+      onAction: () => navigateToTab('listings'),
       dismissible: true,
     });
   }, [approvalPending, canAccessPage, dismissByKey, navigateToTab, upsertByKey]);
 
   useEffect(() => {
-    if (!canAccessPage('shopify-approval') || shopifyApprovalPending <= 0) {
+    if (!canAccessPage('listings') || shopifyApprovalPending <= 0) {
       dismissByKey(ACTION_KEYS.shopifyApproval);
       return;
     }
 
     upsertByKey(ACTION_KEYS.shopifyApproval, {
       tone: 'warning',
-      title: 'Shopify approvals need review',
-      message: `${shopifyApprovalPending} listing${shopifyApprovalPending === 1 ? '' : 's'} are waiting in Shopify approval. Resolve these before the next sync cycle.`,
-      actionLabel: 'Review Shopify queue',
-      onAction: () => navigateToTab('shopify-approval'),
+      title: 'Shopify listings need review',
+      message: `${shopifyApprovalPending} listing${shopifyApprovalPending === 1 ? '' : 's'} are waiting for review. Open Listings to continue the combined approval workflow.`,
+      actionLabel: 'Open Listings',
+      onAction: () => navigateToTab('listings'),
       dismissible: true,
     });
   }, [canAccessPage, dismissByKey, navigateToTab, shopifyApprovalPending, upsertByKey]);

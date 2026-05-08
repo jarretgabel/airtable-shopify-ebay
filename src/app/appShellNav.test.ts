@@ -4,46 +4,36 @@ import { buildAppFrameNavTabs } from '@/app/appShellNav';
 describe('buildAppFrameNavTabs', () => {
   it('marks runtime-disabled tabs as unavailable before they are clicked', () => {
     const navigateToTab = vi.fn();
-    const navigateToApprovalList = vi.fn();
     const navigateToUsersList = vi.fn();
 
     const result = buildAppFrameNavTabs({
-      visibleTabs: ['dashboard', 'listings', 'jotform', 'ebay', 'approval', 'shopify', 'shopify-approval', 'market'],
+      visibleTabs: ['dashboard', 'listings', 'jotform', 'ebay', 'shopify', 'market'],
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
-      approvalPending: 3,
-      shopifyApprovalPending: 2,
       totalNewSubmissions: 5,
       disabledTabReasons: {
         jotform: 'Missing public runtime config: VITE_JOTFORM_FORM_ID.',
         ebay: 'Missing public runtime config: VITE_EBAY_AUTH_HOST.',
-        approval: 'Missing public runtime config: VITE_AIRTABLE_APPROVAL_TABLE_REF.',
-        'shopify-approval': 'Missing public runtime config: VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF.',
         listings: 'Missing public runtime config: VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF.',
       },
       navigateToTab,
-      navigateToApprovalList,
       navigateToUsersList,
     });
 
-    expect(result.tabs.find((tab) => tab.key === 'jotform')).toMatchObject({
+    expect(result.intakeNavTabs.find((tab) => tab.key === 'jotform')).toMatchObject({
       disabled: true,
       disabledReason: 'Missing public runtime config: VITE_JOTFORM_FORM_ID.',
     });
-    expect(result.tabs.find((tab) => tab.key === 'listings')).toMatchObject({
+    expect(result.listingsNavTabs.find((tab) => tab.key === 'listings')).toMatchObject({
       disabled: true,
       disabledReason: 'Missing public runtime config: VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF.',
     });
-    expect(result.ebayNavTabs.find((tab) => tab.key === 'ebay')).toMatchObject({
+    expect(result.listingsNavTabs.find((tab) => tab.key === 'ebay')).toMatchObject({
       disabled: true,
       disabledReason: 'Missing public runtime config: VITE_EBAY_AUTH_HOST.',
     });
-    expect(result.ebayNavTabs.find((tab) => tab.key === 'approval')).toMatchObject({
-      disabled: true,
-      disabledReason: 'Missing public runtime config: VITE_AIRTABLE_APPROVAL_TABLE_REF.',
-    });
-    expect(result.shopifyNavTabs.find((tab) => tab.key === 'shopify')).toMatchObject({
+    expect(result.listingsNavTabs.find((tab) => tab.key === 'shopify')).toMatchObject({
       disabled: false,
       disabledReason: undefined,
     });
@@ -55,11 +45,8 @@ describe('buildAppFrameNavTabs', () => {
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 7,
-      approvalPending: 0,
-      shopifyApprovalPending: 0,
       totalNewSubmissions: 0,
       navigateToTab: vi.fn(),
-      navigateToApprovalList: vi.fn(),
       navigateToUsersList: vi.fn(),
     });
 

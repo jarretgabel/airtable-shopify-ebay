@@ -39,14 +39,6 @@ vi.mock('@/components/EbayTab', () => ({
   EbayTab: () => <div>eBay content</div>,
 }));
 
-vi.mock('@/components/approval/EbayListingApprovalTab', () => ({
-  EbayListingApprovalTab: () => <div>eBay approval content</div>,
-}));
-
-vi.mock('@/components/approval/ShopifyListingApprovalTab', () => ({
-  ShopifyListingApprovalTab: () => <div>Shopify approval content</div>,
-}));
-
 vi.mock('@/components/approval/CombinedListingsApprovalTab', () => ({
   CombinedListingsApprovalTab: () => <div>Combined listings content</div>,
 }));
@@ -88,8 +80,6 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     inventoryRecordId: null,
     usedGearWorkflowRecordId: null,
     listingsRecordId: null,
-    approvalRecordId: null,
-    shopifyApprovalRecordId: null,
     userRecordId: null,
     navigateToInventoryRecord: vi.fn(),
     navigateToUsedGearWorkflowRecord: vi.fn(),
@@ -100,10 +90,6 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     navigateToPhotosForm: vi.fn(),
     navigateToListingsRecord: vi.fn(),
     navigateToListingsList: vi.fn(),
-    navigateToApprovalRecord: vi.fn(),
-    navigateToApprovalList: vi.fn(),
-    navigateToShopifyApprovalRecord: vi.fn(),
-    navigateToShopifyApprovalList: vi.fn(),
     navigateToUserRecord: vi.fn(),
     navigateToUsersList: vi.fn(),
     navigateToTab: vi.fn(),
@@ -239,8 +225,6 @@ describe('AppTabContent', () => {
       photosRecordId: null,
       inventoryRecordId: null,
       listingsRecordId: null,
-      approvalRecordId: null,
-      shopifyApprovalRecordId: null,
       userRecordId: null,
     };
 
@@ -315,42 +299,6 @@ describe('AppTabContent', () => {
 
     expect(await screen.findByText('eBay unavailable')).toBeInTheDocument();
     expect(screen.queryByText('eBay content')).not.toBeInTheDocument();
-
-    rerender(
-      <AppTabContent
-        {...buildProps({
-          activeTab: 'approval',
-          runtimeFeatures: buildRuntimeFeatures({
-            approvalEbay: {
-              available: false,
-              message: 'Missing public runtime config: VITE_AIRTABLE_APPROVAL_TABLE_REF. Configure the eBay approval Airtable source to enable the approval queue and dashboard summary.',
-              missingEnvNames: ['VITE_AIRTABLE_APPROVAL_TABLE_REF'],
-            },
-          }),
-        })}
-      />,
-    );
-
-    expect(await screen.findByText('eBay approval unavailable')).toBeInTheDocument();
-    expect(screen.queryByText('eBay approval content')).not.toBeInTheDocument();
-
-    rerender(
-      <AppTabContent
-        {...buildProps({
-          activeTab: 'shopify-approval',
-          runtimeFeatures: buildRuntimeFeatures({
-            approvalShopify: {
-              available: false,
-              message: 'Missing public runtime config: VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF. Configure the Shopify approval Airtable source to enable the approval queue and dashboard summary.',
-              missingEnvNames: ['VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF'],
-            },
-          }),
-        })}
-      />,
-    );
-
-    expect(await screen.findByText('Shopify approval unavailable')).toBeInTheDocument();
-    expect(screen.queryByText('Shopify approval content')).not.toBeInTheDocument();
 
     rerender(
       <AppTabContent

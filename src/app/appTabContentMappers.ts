@@ -96,10 +96,11 @@ type JotformInput = Pick<
   'jfSubmissions' | 'jfLoading' | 'jfPolling' | 'jfError' | 'jfRefetch' | 'jfLastUpdated' | 'jfFreshCount' | 'jfClearFresh'
 >;
 
-type ApprovalInput = Pick<
-  AppTabContentProps,
-  'approvalRecordId' | 'navigateToApprovalRecord' | 'navigateToApprovalList'
->;
+interface ApprovalInput {
+  approvalRecordId: string | null;
+  navigateToApprovalRecord: (recordId: string, replace?: boolean) => void;
+  navigateToApprovalList: (replace?: boolean) => void;
+}
 
 type UsersInput = Pick<
   AppTabContentProps,
@@ -219,8 +220,8 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
         { key: 'airtable', label: 'Inventory', error: input.atError?.message ?? null, hasData: input.nonEmptyListings.length > 0 },
         { key: 'shopify', label: 'Shopify', error: input.spError?.message ?? null, hasData: input.products.length > 0 },
         { key: 'jotform', label: 'JotForm', error: input.runtimeFeatures.jotform.message ?? input.jfError?.message ?? null, hasData: input.jfSubmissions.length > 0 },
-        { key: 'approval', label: 'Approval Queue', error: input.runtimeFeatures.approvalEbay.message ?? input.approvalError, hasData: input.approvalTotal > 0 },
-        { key: 'shopify-approval', label: 'Shopify Approval Queue', error: input.runtimeFeatures.approvalShopify.message ?? input.shopifyApprovalError, hasData: input.shopifyApprovalTotal > 0 },
+        { key: 'listings-ebay', label: 'eBay Listings Review', error: input.runtimeFeatures.approvalEbay.message ?? input.approvalError, hasData: input.approvalTotal > 0 },
+        { key: 'listings-shopify', label: 'Shopify Listings Review', error: input.runtimeFeatures.approvalShopify.message ?? input.shopifyApprovalError, hasData: input.shopifyApprovalTotal > 0 },
         { key: 'ebay', label: 'eBay', error: input.runtimeFeatures.ebay.message ?? input.ebayError, hasData: input.ebayTotal > 0 },
         { key: 'market', label: 'Market Research', error: input.sharkError?.message ?? null, hasData: input.sharkListings.length > 0 || Boolean(input.currentSlug) },
       ],

@@ -11,9 +11,8 @@ interface AppFrameHeaderProps {
   currentUserLabel: string;
   tabs: AppTab[];
   intakeTabs: AppTab[];
-  ebayTabs: AppTab[];
+  listingsTabs: AppTab[];
   inventoryProcessingTabs: AppTab[];
-  shopifyTabs: AppTab[];
   postEbayTabs: AppTab[];
   utilityTabs: AppTab[];
   refreshLabel: string;
@@ -37,9 +36,8 @@ export function AppFrameHeader({
   currentUserLabel,
   tabs,
   intakeTabs,
-  ebayTabs,
+  listingsTabs,
   inventoryProcessingTabs,
-  shopifyTabs,
   postEbayTabs,
   utilityTabs,
   refreshLabel,
@@ -128,9 +126,8 @@ export function AppFrameHeader({
       <AppFrameHeaderNavigation
         tabs={tabs}
         intakeTabs={intakeTabs}
-        ebayTabs={ebayTabs}
+        listingsTabs={listingsTabs}
         inventoryProcessingTabs={inventoryProcessingTabs}
-        shopifyTabs={shopifyTabs}
         postEbayTabs={postEbayTabs}
         utilityTabs={utilityTabs}
         openDropdown={openDropdown}

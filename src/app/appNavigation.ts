@@ -12,10 +12,8 @@ export const TAB_PATHS: Record<Tab, string> = Object.entries(PAGE_DEFINITIONS).r
   {} as Record<Tab, string>,
 );
 
-export const EBAY_TABS = ['ebay', 'approval'] as const satisfies readonly Tab[];
-export const EBAY_TAB_SET = new Set<Tab>(EBAY_TABS as readonly Tab[]);
-export const SHOPIFY_TABS = ['shopify', 'shopify-approval'] as const satisfies readonly Tab[];
-export const SHOPIFY_TAB_SET = new Set<Tab>(SHOPIFY_TABS as readonly Tab[]);
+export const LISTINGS_TABS = ['listings', 'shopify', 'ebay'] as const satisfies readonly Tab[];
+export const LISTINGS_TAB_SET = new Set<Tab>(LISTINGS_TABS as readonly Tab[]);
 export const INTAKE_TABS = ['jotform', 'parking-lot-2', 'trash-review'] as const satisfies readonly Tab[];
 export const INTAKE_TAB_SET = new Set<Tab>(INTAKE_TABS as readonly Tab[]);
 export const INVENTORY_PROCESSING_TABS = ['inventory', 'testing-queue', 'photography-queue', 'pre-listing-queue', 'incoming-gear', 'testing', 'photos'] as const satisfies readonly Tab[];
@@ -28,7 +26,6 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   inventory: 'Directory',
   listings: 'Listings',
   shopify: 'Shopify',
-  'shopify-approval': 'Listing Approval',
   market: 'HiFi Shark',
   jotform: 'Parking Lot 1',
   'parking-lot-2': 'Parking Lot 2',
@@ -42,7 +39,6 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   settings: 'Settings',
   notifications: 'Notifications',
   ebay: 'Listings',
-  approval: 'Listing Approval',
   imagelab: 'Image Lab',
   users: 'User Management',
 };

@@ -137,13 +137,13 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
 
         <DashboardKpiCard
           borderToneClass="border-t-violet-500"
-          eyebrow="Approval Queue"
+          eyebrow="Listings Review"
           value={approvalUnavailableReason ? 'Off' : approvalPending.toLocaleString()}
           detail={approvalUnavailableReason ? approvalUnavailableReason : <><strong className="font-semibold text-[var(--accent)]">{approvalApproved}</strong> approved &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvalTotal}</strong> total records</>}
           trend={approvalUnavailableReason ? 'Unavailable' : acquisitionTrend.text}
           trendClass={approvalUnavailableReason ? 'text-amber-300' : trendToneClass[acquisitionTrend.direction]}
           unavailableReason={approvalUnavailableReason}
-          onClick={() => onSelectTab('approval')}
+          onClick={() => onSelectTab('listings')}
         />
 
         <DashboardKpiCard

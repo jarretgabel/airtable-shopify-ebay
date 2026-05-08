@@ -20,10 +20,6 @@ interface AppNavigationHandlers {
   ) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsList: (replace?: boolean) => void;
-  navigateToApprovalRecord: (recordId: string, replace?: boolean) => void;
-  navigateToApprovalList: (replace?: boolean) => void;
-  navigateToShopifyApprovalRecord: (recordId: string, replace?: boolean) => void;
-  navigateToShopifyApprovalList: (replace?: boolean) => void;
   navigateToUserRecord: (userId: string, replace?: boolean) => void;
   navigateToUsersList: (replace?: boolean) => void;
   handleLogout: () => void;
@@ -122,26 +118,6 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     scrollToPageTop();
   }, [navigate]);
 
-  const navigateToApprovalRecord = useCallback((recordId: string, replace = false): void => {
-    navigate(`/ebay/approval/${encodeURIComponent(recordId)}`, { replace });
-    scrollToPageTop();
-  }, [navigate]);
-
-  const navigateToApprovalList = useCallback((replace = false): void => {
-    navigate(TAB_PATHS.approval, { replace });
-    scrollToPageTop();
-  }, [navigate]);
-
-  const navigateToShopifyApprovalRecord = useCallback((recordId: string, replace = false): void => {
-    navigate(`/shopify/approval/${encodeURIComponent(recordId)}`, { replace });
-    scrollToPageTop();
-  }, [navigate]);
-
-  const navigateToShopifyApprovalList = useCallback((replace = false): void => {
-    navigate(TAB_PATHS['shopify-approval'], { replace });
-    scrollToPageTop();
-  }, [navigate]);
-
   const navigateToUserRecord = useCallback((userId: string, replace = false): void => {
     navigate(`/account/users/${encodeURIComponent(userId)}`, { replace });
     scrollToPageTop();
@@ -171,10 +147,6 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     navigateToInventoryPostPublishBucket,
     navigateToListingsRecord,
     navigateToListingsList,
-    navigateToApprovalRecord,
-    navigateToApprovalList,
-    navigateToShopifyApprovalRecord,
-    navigateToShopifyApprovalList,
     navigateToUserRecord,
     navigateToUsersList,
     handleLogout,

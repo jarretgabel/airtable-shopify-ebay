@@ -10,9 +10,8 @@ import {
 interface AppFrameHeaderNavigationProps {
   tabs: AppTab[];
   intakeTabs: AppTab[];
-  ebayTabs: AppTab[];
+  listingsTabs: AppTab[];
   inventoryProcessingTabs: AppTab[];
-  shopifyTabs: AppTab[];
   postEbayTabs: AppTab[];
   utilityTabs: AppTab[];
   openDropdown: OpenDropdown;
@@ -23,9 +22,8 @@ interface AppFrameHeaderNavigationProps {
 export function AppFrameHeaderNavigation({
   tabs,
   intakeTabs,
-  ebayTabs,
+  listingsTabs,
   inventoryProcessingTabs,
-  shopifyTabs,
   postEbayTabs,
   utilityTabs,
   openDropdown,
@@ -33,14 +31,12 @@ export function AppFrameHeaderNavigation({
   onCloseDropdowns,
 }: AppFrameHeaderNavigationProps): ReactNode {
   const hasActiveIntakeTab = intakeTabs.some((tab) => tab.active);
-  const hasActiveEbayTab = ebayTabs.some((tab) => tab.active);
+  const hasActiveListingsTab = listingsTabs.some((tab) => tab.active);
   const hasActiveInventoryProcessingTab = inventoryProcessingTabs.some((tab) => tab.active);
-  const hasActiveShopifyTab = shopifyTabs.some((tab) => tab.active);
   const hasActiveUtilityTab = utilityTabs.some((tab) => tab.active);
   const intakeBadgeTotal = intakeTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
-  const ebayBadgeTotal = ebayTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
+  const listingsBadgeTotal = listingsTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const inventoryProcessingBadgeTotal = inventoryProcessingTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
-  const shopifyBadgeTotal = shopifyTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const utilityBadgeTotal = utilityTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
 
   return (
@@ -73,49 +69,25 @@ export function AppFrameHeaderNavigation({
             </div>
           )}
 
-          {ebayTabs.length > 0 && (
+          {listingsTabs.length > 0 && (
             <div className="relative flex-shrink-0" data-export-ignore="true">
               <DropdownTrigger
-                active={hasActiveEbayTab}
-                expanded={openDropdown === 'ebay'}
-                label="eBay"
-                menuId="ebay-menu"
-                badgeCount={ebayBadgeTotal > 0 ? ebayBadgeTotal : undefined}
-                onClick={() => onToggleDropdown('ebay')}
-                onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'ebay', onToggleDropdown, onCloseDropdowns)}
+                active={hasActiveListingsTab}
+                expanded={openDropdown === 'listings'}
+                label="Listings"
+                menuId="listings-menu"
+                badgeCount={listingsBadgeTotal > 0 ? listingsBadgeTotal : undefined}
+                onClick={() => onToggleDropdown('listings')}
+                onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'listings', onToggleDropdown, onCloseDropdowns)}
               />
-              {openDropdown === 'ebay' && (
+              {openDropdown === 'listings' && (
                 <div
-                  id="ebay-menu"
+                  id="listings-menu"
                   role="menu"
-                  aria-label="eBay tabs"
+                  aria-label="Listings tabs"
                   className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
                 >
-                  <DropdownTabList tabs={ebayTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
-                </div>
-              )}
-            </div>
-          )}
-
-          {shopifyTabs.length > 0 && (
-            <div className="relative flex-shrink-0" data-export-ignore="true">
-              <DropdownTrigger
-                active={hasActiveShopifyTab}
-                expanded={openDropdown === 'shopify'}
-                label="Shopify"
-                menuId="shopify-menu"
-                badgeCount={shopifyBadgeTotal > 0 ? shopifyBadgeTotal : undefined}
-                onClick={() => onToggleDropdown('shopify')}
-                onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'shopify', onToggleDropdown, onCloseDropdowns)}
-              />
-              {openDropdown === 'shopify' && (
-                <div
-                  id="shopify-menu"
-                  role="menu"
-                  aria-label="Shopify tabs"
-                  className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
-                >
-                  <DropdownTabList tabs={shopifyTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
+                  <DropdownTabList tabs={listingsTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
                 </div>
               )}
             </div>

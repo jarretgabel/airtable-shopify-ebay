@@ -43,7 +43,7 @@ describe('DashboardOverviewSection', () => {
     expect(screen.getAllByText('Unavailable').length).toBeGreaterThanOrEqual(3);
 
     const jotformButton = screen.getByRole('button', { name: /incoming gear submissions/i });
-    const approvalButton = screen.getByRole('button', { name: /approval queue/i });
+    const approvalButton = screen.getByRole('button', { name: /listings review/i });
     const ebayButton = screen.getByRole('button', { name: /ebay coverage/i });
     const shopifyButton = screen.getByRole('button', { name: /deals in progress/i });
 

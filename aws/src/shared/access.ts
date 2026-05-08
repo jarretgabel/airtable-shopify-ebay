@@ -49,11 +49,11 @@ function resolveAirtableRequirement(event: APIGatewayProxyEventV2): RouteAccessR
     case 'used-gear-workflow':
       return { anyPage: ['inventory'] };
     case 'approval-ebay':
-      return { anyPage: ['approval'] };
+      return { anyPage: ['listings'] };
     case 'approval-shopify':
-      return { anyPage: ['shopify-approval'] };
+      return { anyPage: ['listings'] };
     case 'approval-combined':
-      return { anyPage: ['approval', 'shopify-approval'] };
+      return { anyPage: ['listings'] };
     default:
       return { anyPage: ['inventory'] };
   }
@@ -63,7 +63,7 @@ export function resolveRouteAccessRequirement(event: APIGatewayProxyEventV2): Ro
   const path = event.rawPath || event.requestContext?.http?.path || '';
 
   if (path.startsWith('/api/shopify/approval-listings/')) {
-    return { anyPage: ['shopify-approval'] };
+    return { anyPage: ['listings'] };
   }
 
   if (path.startsWith('/api/shopify/')) {
@@ -71,7 +71,7 @@ export function resolveRouteAccessRequirement(event: APIGatewayProxyEventV2): Ro
   }
 
   if (path.startsWith('/api/ebay/approval-listings/')) {
-    return { anyPage: ['approval'] };
+    return { anyPage: ['listings'] };
   }
 
   if (path.startsWith('/api/ebay/')) {

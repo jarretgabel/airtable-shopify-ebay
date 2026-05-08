@@ -8,7 +8,7 @@ Use it as the handoff list for Shopify admin, eBay developer/seller setup, Airta
 
 - Airtable Lambda seam is validated locally.
 - Shopify runtime calls are already routed through the app-api/Lambda seam.
-- Deployed AWS-backed inventory, JotForm, Shopify approval, and eBay approval save/revert flows have been validated.
+- Deployed AWS-backed inventory, JotForm, and combined Listings save/revert flows have been validated.
 - eBay publishing still depends on valid seller/developer configuration and is not yet part of the deployed SAM package.
 - The current known blocker is Shopify image upload permissions for `/api/shopify/images`.
 

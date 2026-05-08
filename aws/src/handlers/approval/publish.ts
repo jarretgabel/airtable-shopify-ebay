@@ -22,12 +22,8 @@ async function requireTargetAccess(
   target: ApprovalPublishTarget,
   requireAccess: typeof requireRouteAccess,
 ): Promise<void> {
-  if (target === 'shopify' || target === 'both') {
-    await requireAccess(event, { anyPage: ['shopify-approval'] });
-  }
-
-  if (target === 'ebay' || target === 'both') {
-    await requireAccess(event, { anyPage: ['approval'] });
+  if (target === 'shopify' || target === 'ebay' || target === 'both') {
+    await requireAccess(event, { anyPage: ['listings'] });
   }
 }
 

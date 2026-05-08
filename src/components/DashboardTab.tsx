@@ -51,11 +51,11 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
     [viewModel.status.sources],
   );
   const approvalUnavailableReason = useMemo(
-    () => viewModel.status.sources.find((source) => source.key === 'approval')?.error ?? null,
+    () => viewModel.status.sources.find((source) => source.key === 'listings-ebay')?.error ?? null,
     [viewModel.status.sources],
   );
   const shopifyApprovalUnavailableReason = useMemo(
-    () => viewModel.status.sources.find((source) => source.key === 'shopify-approval')?.error ?? null,
+    () => viewModel.status.sources.find((source) => source.key === 'listings-shopify')?.error ?? null,
     [viewModel.status.sources],
   );
   const ebayUnavailableReason = useMemo(
@@ -180,7 +180,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
           workflowSoldReadyUnassignedCount={workflow.workflowSoldReadyUnassignedCount}
           workflowShippedCount={workflow.workflowShippedCount}
           ebayUnavailableReason={viewModel.status.sources.find((source) => source.key === 'ebay')?.error ?? null}
-          shopifyApprovalUnavailableReason={viewModel.status.sources.find((source) => source.key === 'shopify-approval')?.error ?? null}
+          shopifyApprovalUnavailableReason={viewModel.status.sources.find((source) => source.key === 'listings-shopify')?.error ?? null}
           onSelectTab={actions.onSelectTab}
           onOpenInventoryPostPublishBucket={actions.onOpenInventoryPostPublishBucket}
           embedded

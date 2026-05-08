@@ -12,7 +12,7 @@ export const USER_PAGE_ACCESS_GROUPS: UserPageAccessGroup[] = [
     key: 'core',
     title: 'Core Workspace',
     description: 'Primary day-to-day pages for dashboard, directory, listings, and marketplace work.',
-    pages: ['dashboard', 'inventory', 'listings', 'shopify', 'market', 'imagelab', 'ebay', 'approval', 'shopify-approval'],
+    pages: ['dashboard', 'inventory', 'listings', 'shopify', 'market', 'imagelab', 'ebay'],
   },
   {
     key: 'intake',

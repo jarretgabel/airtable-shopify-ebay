@@ -27,7 +27,7 @@ describe('DashboardActionsSection', () => {
       />,
     );
 
-    expect(screen.getByText('Shopify approval queue unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Shopify listings review unavailable')).toBeInTheDocument();
     expect(screen.getByText('eBay publishing unavailable')).toBeInTheDocument();
     expect(screen.getAllByText('Unavailable')).toHaveLength(2);
     expect(screen.queryByText('All clear — no actions required right now.')).not.toBeInTheDocument();

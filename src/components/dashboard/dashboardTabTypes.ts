@@ -56,7 +56,7 @@ export interface WorkflowCard {
 }
 
 export interface DashboardSourceStatus {
-  key: 'airtable' | 'shopify' | 'jotform' | 'approval' | 'shopify-approval' | 'ebay' | 'market';
+  key: 'airtable' | 'shopify' | 'jotform' | 'listings-ebay' | 'listings-shopify' | 'ebay' | 'market';
   label: string;
   error: string | null;
   hasData: boolean;

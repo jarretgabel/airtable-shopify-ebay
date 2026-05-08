@@ -13,10 +13,10 @@ function locationFor(pathname: string, search = ''): Location {
 }
 
 describe('useAppRouteState', () => {
-  it('maps approval detail route and decodes id', () => {
+  it('maps legacy approval detail routes to listings and decodes id', () => {
     const state = useAppRouteState(locationFor('/ebay/approval/abc%20123'), ['dashboard']);
-    expect(state.activeTab).toBe('approval');
-    expect(state.approvalRecordId).toBe('abc 123');
+    expect(state.activeTab).toBe('listings');
+    expect(state.listingsRecordId).toBe('abc 123');
   });
 
   it('maps users detail route and decodes id', () => {

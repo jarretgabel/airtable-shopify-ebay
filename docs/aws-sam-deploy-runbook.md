@@ -251,12 +251,12 @@ Use this matrix to populate AWS runtime config.
 | `ALLOWED_AIRTABLE_VIEW_ID` | `VITE_AIRTABLE_VIEW_ID` | Yes | Listings route guard |
 | `AIRTABLE_USERS_TABLE_REF` | `VITE_AIRTABLE_USERS_TABLE_REF` | Yes | Auth/users configured source |
 | `AIRTABLE_USERS_TABLE_NAME` | `VITE_AIRTABLE_USERS_TABLE_NAME` | Yes | Auth/users configured source |
-| `AIRTABLE_APPROVAL_TABLE_REF` | `VITE_AIRTABLE_APPROVAL_TABLE_REF` | Yes | eBay approval source |
-| `AIRTABLE_APPROVAL_TABLE_NAME` | `VITE_AIRTABLE_APPROVAL_TABLE_NAME` | Yes | eBay approval source |
-| `AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF` | `VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF` | Yes | Shopify approval source |
-| `AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME` | `VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME` | Yes | Shopify approval source |
-| `AIRTABLE_COMBINED_LISTINGS_TABLE_REF` | `VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF` | Yes | Combined approval source |
-| `AIRTABLE_COMBINED_LISTINGS_TABLE_NAME` | `VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME` | Yes | Combined approval source |
+| `AIRTABLE_APPROVAL_TABLE_REF` | `VITE_AIRTABLE_APPROVAL_TABLE_REF` | Yes | eBay-ready Listings review source |
+| `AIRTABLE_APPROVAL_TABLE_NAME` | `VITE_AIRTABLE_APPROVAL_TABLE_NAME` | Yes | eBay-ready Listings review source |
+| `AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF` | `VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF` | Yes | Shopify-ready Listings review source |
+| `AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME` | `VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME` | Yes | Shopify-ready Listings review source |
+| `AIRTABLE_COMBINED_LISTINGS_TABLE_REF` | `VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF` | Yes | combined Listings review source |
+| `AIRTABLE_COMBINED_LISTINGS_TABLE_NAME` | `VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME` | Yes | combined Listings review source |
 | `SHOPIFY_STORE_DOMAIN` | `VITE_SHOPIFY_STORE_DOMAIN` | Yes | Must match installed app store |
 | `SHOPIFY_ACCESS_TOKEN` | `VITE_SHOPIFY_OAUTH_ACCESS_TOKEN` or admin token | Yes | Needs file/image scope for image upload |
 | `JOTFORM_API_KEY` | `VITE_JOTFORM_API_KEY` | Yes | Required for JotForm routes |
