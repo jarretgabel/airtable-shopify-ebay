@@ -47,10 +47,18 @@ This backlog is for non-blocking improvements after the major Phase 1 workflow f
 - [x] Add an explicit schema-approval guide for deferred workflow fields before any new Airtable schema changes are requested.
 
 ## Additional App Improvements To Consider
-- [ ] Add a dashboard "My Queue" rollup that summarizes owned work across pending review, progress, and post-publish buckets in one card.
-- [ ] Add ownership-change entries to the workflow timeline so reassignment history is visible without opening Airtable history.
-- [ ] Add owner-aware notification preferences so unassigned work alerts and personally assigned work alerts can be tuned separately.
-- [ ] Add one-click owner presets in Inventory for "Assigned To Me + Sold Ready" and "Unassigned + Stale Listings" to reduce repetitive filter setup.
+- [ ] Priority 1: Add a dashboard "My Queue" rollup that summarizes owned work across pending review, progress, and post-publish buckets in one card.
+- [ ] Priority 2: Add dashboard views that automatically emphasize the queues, alerts, and controls each user can access and is responsible for, instead of showing the same dashboard composition to everyone.
+- [ ] Priority 3: Add owner filters and quick-claim actions to Pending Review and Progress so ownership workflows stay consistent across all active queue sections, not just post-publish.
+- [ ] Priority 4: Add one-click owner presets in Inventory for "Assigned To Me + Sold Ready" and "Unassigned + Stale Listings" to reduce repetitive filter setup.
+- [ ] Priority 5: Add dashboard shortcuts for oldest-aging work in Pending Review and Progress, not only count-based entry points, so teams can jump straight to the most overdue item.
+- [ ] Priority 6: Add user responsibility groups or permission templates so admins can grant access by team category and owned workflow area instead of managing page permissions one user at a time.
+- [ ] Priority 7: Add a "claim next unassigned" action for each major workflow bucket so operators can pull the next actionable row without manually scanning long lists.
+- [ ] Priority 8: Add queue-row "last touched" context showing the latest owner, status change, or recovery update timestamp so operators can judge whether work is already in motion.
+- [ ] Priority 9: Add common note/reason templates for repetitive queue actions such as unqualify reasons, stale-recovery updates, and shipment follow-through notes.
+- [ ] Priority 10: Add ownership-change entries to the workflow timeline so reassignment history is visible without opening Airtable history.
+- [ ] Priority 11: Add per-user default workflow landing views so Inventory can open directly to the operator's most-used queue or saved preset.
+- [ ] Priority 12: Add owner-aware notification preferences so unassigned work alerts and personally assigned work alerts can be tuned separately.
 
 ## Supporting Files
 - Workflow release smoke test checklist: `/Users/user/Sites/airtable-shopify-ebay/docs/used-gear-workflow/release-smoke-test-checklist.md`
