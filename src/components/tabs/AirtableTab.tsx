@@ -14,7 +14,7 @@ import {
   type UsedGearWorkflowViewPreset,
 } from '@/services/usedGearWorkflowViewPresets';
 import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
-import type { UsedGearWorkflowPostPublishSortMode } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
+import type { UsedGearWorkflowPostPublishHistoryFilter, UsedGearWorkflowPostPublishSortMode } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 import { useNotificationStore } from '@/stores/notificationStore';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -29,6 +29,9 @@ const WORKFLOW_POST_PUBLISH_COLLAPSED_PARAM = 'workflowPostPublishCollapsedSecti
 const WORKFLOW_PENDING_REVIEW_SORT_PARAM = 'workflowPendingReviewSort';
 const WORKFLOW_PROGRESS_SORT_PARAM = 'workflowProgressSort';
 const WORKFLOW_POST_PUBLISH_SORT_PARAM = 'workflowPostPublishSort';
+const WORKFLOW_PENDING_REVIEW_GROUP_PARAM = 'workflowPendingReviewGroup';
+const WORKFLOW_PROGRESS_GROUP_PARAM = 'workflowProgressGroup';
+const WORKFLOW_POST_PUBLISH_HISTORY_PARAM = 'workflowPostPublishHistory';
 const WORKFLOW_ROUTE_PARAMS = [
   WORKFLOW_PENDING_REVIEW_SEARCH_PARAM,
   WORKFLOW_PROGRESS_SEARCH_PARAM,
@@ -39,6 +42,9 @@ const WORKFLOW_ROUTE_PARAMS = [
   WORKFLOW_PENDING_REVIEW_SORT_PARAM,
   WORKFLOW_PROGRESS_SORT_PARAM,
   WORKFLOW_POST_PUBLISH_SORT_PARAM,
+  WORKFLOW_PENDING_REVIEW_GROUP_PARAM,
+  WORKFLOW_PROGRESS_GROUP_PARAM,
+  WORKFLOW_POST_PUBLISH_HISTORY_PARAM,
   'workflowPostPublishBucket',
 ] as const;
 
@@ -57,6 +63,25 @@ interface WorkflowStateChip {
 }
 
 type WorkflowChipFocusTarget = string | '__reset__';
+
+const WORKFLOW_SHORTCUT_HINTS = [
+  { label: 'g then 1', description: 'Pending Review' },
+  { label: 'g then 2', description: 'Progress' },
+  { label: 'g then 3', description: 'Post-Publish' },
+  { label: 'g then 0', description: 'Directory' },
+] as const;
+
+function isEditableShortcutTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  const tagName = target.tagName.toLowerCase();
+  return tagName === 'input'
+    || tagName === 'textarea'
+    || tagName === 'select'
+    || target.isContentEditable;
+}
 
 function parseWorkflowGroupIds(search: string, paramName: string): string[] {
   const params = new URLSearchParams(search);
@@ -85,6 +110,16 @@ function parseProgressSortMode(search: string): UsedGearWorkflowProgressSortMode
 function parsePostPublishSortMode(search: string): UsedGearWorkflowPostPublishSortMode {
   const value = new URLSearchParams(search).get(WORKFLOW_POST_PUBLISH_SORT_PARAM);
   return value === 'oldest-activity' || value === 'sku' ? value : 'latest-activity';
+}
+
+function parseFocusedWorkflowGroup(search: string, paramName: string): string | null {
+  const value = new URLSearchParams(search).get(paramName)?.trim() ?? '';
+  return value ? value : null;
+}
+
+function parsePostPublishHistoryFilter(search: string): UsedGearWorkflowPostPublishHistoryFilter {
+  const value = new URLSearchParams(search).get(WORKFLOW_POST_PUBLISH_HISTORY_PARAM);
+  return value === 'active-only' || value === 'history-only' ? value : 'all';
 }
 
 function pendingSortLabel(value: UsedGearPendingReviewSortMode): string {
@@ -142,6 +177,7 @@ export function AirtableTab({
   const [workflowViewPresetName, setWorkflowViewPresetName] = useState('');
   const [workflowViewPresets, setWorkflowViewPresets] = useState<UsedGearWorkflowViewPreset[]>([]);
   const [pendingWorkflowChipFocusTarget, setPendingWorkflowChipFocusTarget] = useState<WorkflowChipFocusTarget | null>(null);
+  const [awaitingWorkflowShortcut, setAwaitingWorkflowShortcut] = useState(false);
   const workflowChipButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const resetWorkflowViewButtonRef = useRef<HTMLButtonElement | null>(null);
   const inventoryDirectorySearch = useMemo(() => {
@@ -179,6 +215,9 @@ export function AirtableTab({
   const workflowPendingReviewSort = useMemo(() => parsePendingReviewSortMode(location.search), [location.search]);
   const workflowProgressSort = useMemo(() => parseProgressSortMode(location.search), [location.search]);
   const workflowPostPublishSort = useMemo(() => parsePostPublishSortMode(location.search), [location.search]);
+  const workflowPendingReviewGroup = useMemo(() => parseFocusedWorkflowGroup(location.search, WORKFLOW_PENDING_REVIEW_GROUP_PARAM), [location.search]);
+  const workflowProgressGroup = useMemo(() => parseFocusedWorkflowGroup(location.search, WORKFLOW_PROGRESS_GROUP_PARAM), [location.search]);
+  const workflowPostPublishHistoryFilter = useMemo(() => parsePostPublishHistoryFilter(location.search), [location.search]);
   const focusedPostPublishBucket = useMemo<UsedGearWorkflowPostPublishBucket | null>(() => {
     const params = new URLSearchParams(location.search);
     const bucket = params.get('workflowPostPublishBucket');
@@ -435,12 +474,32 @@ export function AirtableTab({
         onClear: () => updateCollapsedWorkflowGroups(WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM, [], '#used-gear-pending-review'),
       });
     }
+    if (workflowPendingReviewGroup) {
+      chips.push({
+        key: 'pending-group',
+        label: `Pending group: ${formatWorkflowChipValue(workflowPendingReviewGroup)}`,
+        clearLabel: 'Clear pending review group focus',
+        onClear: () => updateWorkflowRouteState((params) => {
+          params.delete(WORKFLOW_PENDING_REVIEW_GROUP_PARAM);
+        }, '#used-gear-pending-review'),
+      });
+    }
     if (workflowProgressCollapsedGroups.length > 0) {
       chips.push({
         key: 'progress-collapsed',
         label: `Progress groups collapsed: ${workflowProgressCollapsedGroups.length}`,
         clearLabel: 'Clear progress queue collapsed groups',
         onClear: () => updateCollapsedWorkflowGroups(WORKFLOW_PROGRESS_COLLAPSED_PARAM, [], '#used-gear-progress-queue'),
+      });
+    }
+    if (workflowProgressGroup) {
+      chips.push({
+        key: 'progress-group',
+        label: `Progress group: ${formatWorkflowChipValue(workflowProgressGroup)}`,
+        clearLabel: 'Clear progress queue group focus',
+        onClear: () => updateWorkflowRouteState((params) => {
+          params.delete(WORKFLOW_PROGRESS_GROUP_PARAM);
+        }, '#used-gear-progress-queue'),
       });
     }
     if (focusedPostPublishBucket) {
@@ -459,16 +518,29 @@ export function AirtableTab({
         onClear: () => updateCollapsedWorkflowGroups(WORKFLOW_POST_PUBLISH_COLLAPSED_PARAM, [], '#used-gear-post-publish'),
       });
     }
+    if (workflowPostPublishHistoryFilter !== 'all') {
+      chips.push({
+        key: 'post-publish-history',
+        label: workflowPostPublishHistoryFilter === 'history-only' ? 'History: Shipped Only' : 'History: Active Only',
+        clearLabel: 'Clear post-publish history filter',
+        onClear: () => updateWorkflowRouteState((params) => {
+          params.delete(WORKFLOW_POST_PUBLISH_HISTORY_PARAM);
+        }, '#used-gear-post-publish'),
+      });
+    }
 
     return chips;
   }, [
     focusedPostPublishBucket,
+    workflowPendingReviewGroup,
     workflowPendingReviewCollapsedGroups.length,
     workflowPendingReviewSearch,
     workflowPendingReviewSort,
+    workflowPostPublishHistoryFilter,
     workflowPostPublishCollapsedSections.length,
     workflowPostPublishSearch,
     workflowPostPublishSort,
+    workflowProgressGroup,
     workflowProgressCollapsedGroups.length,
     workflowProgressSearch,
     workflowProgressSort,
@@ -494,6 +566,85 @@ export function AirtableTab({
   useEffect(() => {
     setWorkflowViewPresets(loadUsedGearWorkflowViewPresets());
   }, []);
+
+  useEffect(() => {
+    if (!awaitingWorkflowShortcut) {
+      return;
+    }
+
+    const timeoutHandle = window.setTimeout(() => {
+      setAwaitingWorkflowShortcut(false);
+    }, 1600);
+
+    return () => window.clearTimeout(timeoutHandle);
+  }, [awaitingWorkflowShortcut]);
+
+  useEffect(() => {
+    const focusSection = (sectionId: string, hash: string) => {
+      navigate({
+        pathname: location.pathname,
+        search: location.search,
+        hash,
+      }, { replace: true });
+
+      window.requestAnimationFrame(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      if (isEditableShortcutTarget(event.target)) {
+        return;
+      }
+
+      const normalizedKey = event.key.toLowerCase();
+
+      if (awaitingWorkflowShortcut) {
+        if (normalizedKey === '1') {
+          event.preventDefault();
+          setAwaitingWorkflowShortcut(false);
+          focusSection('used-gear-pending-review', '#used-gear-pending-review');
+          return;
+        }
+
+        if (normalizedKey === '2') {
+          event.preventDefault();
+          setAwaitingWorkflowShortcut(false);
+          focusSection('used-gear-progress-queue', '#used-gear-progress-queue');
+          return;
+        }
+
+        if (normalizedKey === '3') {
+          event.preventDefault();
+          setAwaitingWorkflowShortcut(false);
+          focusSection('used-gear-post-publish', '#used-gear-post-publish');
+          return;
+        }
+
+        if (normalizedKey === '0') {
+          event.preventDefault();
+          setAwaitingWorkflowShortcut(false);
+          focusSection('inventory-directory-list', '#inventory-directory-list');
+          return;
+        }
+
+        setAwaitingWorkflowShortcut(false);
+        return;
+      }
+
+      if (normalizedKey === 'g') {
+        event.preventDefault();
+        setAwaitingWorkflowShortcut(true);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [awaitingWorkflowShortcut, location.hash, location.pathname, location.search, navigate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -589,7 +740,13 @@ export function AirtableTab({
   }
 
   if (!directoryLoading && records.length === 0) {
-    return <EmptySurface title="No inventory rows found" message="SB Inventory currently has no editable rows in this table." />;
+    return (
+      <EmptySurface title="No inventory rows found" message="SB Inventory currently has no editable rows in this table.">
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          Next route: start in Parking Lot 1 for customer-submitted intake, or open Incoming Gear when staff needs to create the first manual workflow row inside the app.
+        </p>
+      </EmptySurface>
+    );
   }
 
   return (
@@ -608,7 +765,7 @@ export function AirtableTab({
         ) : null}
 
         {hasWorkflowViewState || workflowViewPresets.length > 0 ? (
-          <div className="flex flex-col gap-3 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="sticky top-3 z-20 flex flex-col gap-3 rounded-2xl border border-[var(--line)] bg-[linear-gradient(180deg,rgba(7,17,28,0.94),rgba(7,17,28,0.82))] px-5 py-4 shadow-[0_18px_40px_rgba(2,6,23,0.35)] backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
             <div className="flex-1">
               <p className="m-0 text-sm font-semibold text-[var(--ink)]">Workflow views</p>
               <p className="mt-1 text-sm text-[var(--muted)]">
@@ -616,6 +773,19 @@ export function AirtableTab({
                   ? 'Shared queue searches, collapsed groups, and post-publish filters are currently applied to the Inventory workflow sections.'
                   : 'Apply a saved view to restore a common workflow filter combination across the Inventory queues.'}
               </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {WORKFLOW_SHORTCUT_HINTS.map((shortcut) => (
+                  <span key={shortcut.label} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                    <span>{shortcut.label}</span>
+                    <span className="text-[var(--ink)]">{shortcut.description}</span>
+                  </span>
+                ))}
+                {awaitingWorkflowShortcut ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)]/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
+                    Awaiting jump key
+                  </span>
+                ) : null}
+              </div>
 
               {hasWorkflowViewState ? (
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -716,6 +886,14 @@ export function AirtableTab({
           currentUserName={currentUserName}
           onOpenIncomingGearForm={onOpenIncomingGearForm}
           onOpenWorkflowRecord={onOpenWorkflowRecord}
+          focusedGroupId={workflowPendingReviewGroup}
+          onFocusedGroupIdChange={(groupId) => updateWorkflowRouteState((params) => {
+            if (groupId) {
+              params.set(WORKFLOW_PENDING_REVIEW_GROUP_PARAM, groupId);
+            } else {
+              params.delete(WORKFLOW_PENDING_REVIEW_GROUP_PARAM);
+            }
+          }, '#used-gear-pending-review')}
           searchTerm={workflowPendingReviewSearch}
           onSearchTermChange={(value) => updateWorkflowQueueSearch(
             WORKFLOW_PENDING_REVIEW_SEARCH_PARAM,
@@ -745,6 +923,14 @@ export function AirtableTab({
           onOpenPhotosForm={onOpenPhotosForm}
           onOpenWorkflowRecord={onOpenWorkflowRecord}
           onOpenListingsRecord={onOpenListingsRecord}
+          focusedGroupId={workflowProgressGroup}
+          onFocusedGroupIdChange={(groupId) => updateWorkflowRouteState((params) => {
+            if (groupId) {
+              params.set(WORKFLOW_PROGRESS_GROUP_PARAM, groupId);
+            } else {
+              params.delete(WORKFLOW_PROGRESS_GROUP_PARAM);
+            }
+          }, '#used-gear-progress-queue')}
           searchTerm={workflowProgressSearch}
           onSearchTermChange={(value) => updateWorkflowQueueSearch(
             WORKFLOW_PROGRESS_SEARCH_PARAM,
@@ -772,6 +958,14 @@ export function AirtableTab({
           onFocusedBucketChange={handlePostPublishBucketChange}
           onOpenWorkflowRecord={onOpenWorkflowRecord}
           onOpenListingsRecord={onOpenListingsRecord}
+          historyFilter={workflowPostPublishHistoryFilter}
+          onHistoryFilterChange={(value) => updateWorkflowRouteState((params) => {
+            if (value === 'all') {
+              params.delete(WORKFLOW_POST_PUBLISH_HISTORY_PARAM);
+            } else {
+              params.set(WORKFLOW_POST_PUBLISH_HISTORY_PARAM, value);
+            }
+          }, '#used-gear-post-publish')}
           searchTerm={workflowPostPublishSearch}
           onSearchTermChange={(value) => updateWorkflowQueueSearch(
             WORKFLOW_POST_PUBLISH_SEARCH_PARAM,
@@ -794,7 +988,7 @@ export function AirtableTab({
           }, '#used-gear-post-publish')}
         />
 
-        <section className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+        <section id="inventory-directory-list" className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Find a Record</h3>

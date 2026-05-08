@@ -10,6 +10,7 @@ const {
   mockUseEbayListings,
   mockUseApprovalQueueSummary,
   mockUseShopifyApprovalQueueSummary,
+  mockUseUsedGearWorkflowAnalyticsSnapshot,
   mockUseUsedGearWorkflowPostPublishSummary,
   mockUseJotFormInquiries,
   mockUseDashboardMetrics,
@@ -21,6 +22,7 @@ const {
   mockUseEbayListings: vi.fn(),
   mockUseApprovalQueueSummary: vi.fn(),
   mockUseShopifyApprovalQueueSummary: vi.fn(),
+  mockUseUsedGearWorkflowAnalyticsSnapshot: vi.fn(),
   mockUseUsedGearWorkflowPostPublishSummary: vi.fn(),
   mockUseJotFormInquiries: vi.fn(),
   mockUseDashboardMetrics: vi.fn(),
@@ -58,6 +60,10 @@ vi.mock('@/hooks/useApprovalQueueSummary', () => ({
 
 vi.mock('@/hooks/useShopifyApprovalQueueSummary', () => ({
   useShopifyApprovalQueueSummary: mockUseShopifyApprovalQueueSummary,
+}));
+
+vi.mock('@/hooks/useUsedGearWorkflowAnalyticsSnapshot', () => ({
+  useUsedGearWorkflowAnalyticsSnapshot: mockUseUsedGearWorkflowAnalyticsSnapshot,
 }));
 
 vi.mock('@/hooks/useUsedGearWorkflowPostPublishSummary', () => ({
@@ -131,6 +137,51 @@ describe('useAppData', () => {
     mockUseApprovalQueueSummary.mockReturnValue({ loading: false, error: null, total: 0, approved: 0, pending: 0, refetch: vi.fn() });
     mockUseShopifyApprovalQueueSummary.mockReset();
     mockUseShopifyApprovalQueueSummary.mockReturnValue({ loading: false, error: null, total: 0, approved: 0, pending: 0, refetch: vi.fn() });
+    mockUseUsedGearWorkflowAnalyticsSnapshot.mockReset();
+    mockUseUsedGearWorkflowAnalyticsSnapshot.mockReturnValue({
+      loading: false,
+      error: null,
+      totalCount: 0,
+      pendingReviewCount: 0,
+      trashCount: 0,
+      progressCount: 0,
+      postPublishCount: 0,
+      statusCounts: {
+        'Pending Review': 0,
+        'Unqualified': 0,
+        'Accepted - Awaiting Arrival': 0,
+        'Accepted - Arrived, Awaiting SKU': 0,
+        'Accepted - Arrived, Awaiting Missing Item': 0,
+        'Testing and Photography In Progress': 0,
+        'Awaiting Pre-Listing Review': 0,
+        'Approved for Publish': 0,
+        'Listed, Shopify': 0,
+        'Listed, eBay': 0,
+        'Stale Listing, Shopify': 0,
+        'Stale Listing, eBay': 0,
+        'Sold - Ready to Ship': 0,
+        'Shipped': 0,
+      },
+      marketplace: {
+        shopifyLiveCount: 0,
+        shopifyStaleCount: 0,
+        ebayLiveCount: 0,
+        ebayStaleCount: 0,
+        soldReadyCount: 0,
+        shippedCount: 0,
+      },
+      age: {
+        pendingReviewAlertCount: 0,
+        oldestPendingReviewAgeDays: null,
+        progressAlertCount: 0,
+        oldestProgressAgeDays: null,
+        activeNearStaleCount: 0,
+        staleFollowUpCount: 0,
+        oldestListedAgeDays: null,
+        oldestStaleAgeDays: null,
+      },
+      refetch: vi.fn(),
+    });
     mockUseUsedGearWorkflowPostPublishSummary.mockReset();
     mockUseUsedGearWorkflowPostPublishSummary.mockReturnValue({
       loading: false,
@@ -189,6 +240,7 @@ describe('useAppData', () => {
     expect(mockUseEbayListings).toHaveBeenCalledWith(false);
     expect(mockUseApprovalQueueSummary).toHaveBeenCalledWith(false);
     expect(mockUseShopifyApprovalQueueSummary).toHaveBeenCalledWith(false);
+    expect(mockUseUsedGearWorkflowAnalyticsSnapshot).toHaveBeenCalledWith(true);
     expect(mockUseUsedGearWorkflowPostPublishSummary).toHaveBeenCalledWith(true);
     expect(mockUseJotFormInquiries).toHaveBeenCalledWith('', 60_000, false);
     expect(result.current.runtimeFeatures).toEqual(unavailableFeatures);
@@ -207,6 +259,7 @@ describe('useAppData', () => {
     expect(mockUseEbayListings).toHaveBeenCalledWith(false);
     expect(mockUseApprovalQueueSummary).toHaveBeenCalledWith(false);
     expect(mockUseShopifyApprovalQueueSummary).toHaveBeenCalledWith(false);
+    expect(mockUseUsedGearWorkflowAnalyticsSnapshot).toHaveBeenCalledWith(false);
     expect(mockUseUsedGearWorkflowPostPublishSummary).toHaveBeenCalledWith(false);
     expect(mockUseJotFormInquiries).toHaveBeenCalledWith('', 60_000, false);
   });

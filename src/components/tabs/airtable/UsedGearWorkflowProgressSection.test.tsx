@@ -113,4 +113,42 @@ describe('UsedGearWorkflowProgressSection', () => {
 
     expect(onCollapsedGroupIdsChange).toHaveBeenCalledWith(['submission:submission-a', 'submission:submission-b']);
   });
+
+  it('copies a group-focused progress link', async () => {
+    loadWorkflowProgressQueueMock.mockResolvedValue([
+      {
+        id: 'rec-progress-a',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PROG-1',
+          Make: 'Marantz',
+          Model: '8B',
+          'Workflow Status': 'Accepted - Awaiting Arrival',
+          'Submission Group ID': 'submission-a',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearWorkflowProgressSection
+        currentUserName="Taylor Reviewer"
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenTestingForm={vi.fn()}
+        onOpenPhotosForm={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Processing And Stage Queue');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Copy Group Link' }));
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/inventory?workflowProgressGroup=submission%3Asubmission-a#used-gear-progress-queue`);
+    });
+  });
 });

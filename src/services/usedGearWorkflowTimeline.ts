@@ -42,6 +42,8 @@ export function buildUsedGearWorkflowTimeline(record: AirtableRecord): UsedGearW
     buildEntry('pre-listing', 'Pre-Listing Review Completed', fields['Pre-Listing Reviewed At'], fields['Pre-Listing Reviewed By']),
     buildEntry('approved', 'Approved For Publish', fields['Approved For Publish At'], fields['Pre-Listing Reviewed By']),
     buildEntry('listed', 'Listed', fields['Listed At']),
+    buildEntry('stale-listing', 'Marked Stale', fields['Stale Listing At']),
+    buildEntry('relisted', 'Relisted', fields['Relisted At']),
     buildEntry('sold-ready', 'Sold Ready To Ship', fields['Sold Ready To Ship At']),
     buildEntry('shipped', 'Shipped', fields['Shipped At']),
   ];

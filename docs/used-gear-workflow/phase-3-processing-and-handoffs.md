@@ -92,6 +92,6 @@ This phase carries the authoritative item record through processing with custome
 ### Backlog
 - [ ] Add a compact stage timeline so operators can see processing, testing, and photography handoffs in one audit view.
 - [x] Add stronger queue-level SLA or aging indicators for rows stuck in processing, testing, or photography.
-- [ ] Add direct deep links from workflow notifications to the most relevant queue group or record.
+- [x] Add direct deep links from workflow notifications to the most relevant queue group or record.
 - [x] Add clearer blocked-state messaging that links straight to the missing field or confirmation inside the active form.
 - [ ] Add optional team landing views if the shared Inventory workflow surface becomes too dense for daily processing work.

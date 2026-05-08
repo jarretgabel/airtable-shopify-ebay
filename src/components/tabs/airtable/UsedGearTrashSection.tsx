@@ -310,7 +310,37 @@ export function UsedGearTrashSection({
                       <span className="font-semibold text-[var(--ink)]">Paid Amount:</span> {displayInventoryValue(record.fields['Paid Amount'])}
                     </div>
                     <div>
+                      <span className="font-semibold text-[var(--ink)]">Confirmed Grand Total:</span> {displayInventoryValue(record.fields['Confirmed Grand Total'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Allocation Mode:</span> {displayInventoryValue(record.fields['Allocation Mode'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Allocation Notes:</span> {displayInventoryValue(record.fields['Allocation Notes'])}
+                    </div>
+                    <div>
                       <span className="font-semibold text-[var(--ink)]">Trash Status:</span> {displayInventoryValue(record.fields['Trash Status'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Customer Cosmetic Notes:</span> {displayInventoryValue(record.fields['Customer Cosmetic Notes'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Customer Functional Notes:</span> {displayInventoryValue(record.fields['Customer Functional Notes'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Customer Inclusion Notes:</span> {displayInventoryValue(record.fields['Customer Inclusion Notes'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Customer Submitted Photos Notes:</span> {displayInventoryValue(record.fields['Customer Submitted Photos Notes'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Internal Cosmetic Notes:</span> {displayInventoryValue(record.fields['Internal Cosmetic Notes'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Internal Functional Notes:</span> {displayInventoryValue(record.fields['Internal Functional Notes'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Internal Inclusion Notes:</span> {displayInventoryValue(record.fields['Internal Inclusion Notes'])}
                     </div>
                   </div>
 

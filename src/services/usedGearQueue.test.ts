@@ -22,9 +22,11 @@ import {
   loadWorkflowProgressQueue,
   loadPendingReviewQueue,
   loadPendingReviewGroup,
+  markWorkflowRelisted,
   markWorkflowListingStale,
   markPendingReviewUnqualified,
   markPendingReviewGroupUnqualified,
+  saveWorkflowStaleRecovery,
   markWorkflowShipped,
   markWorkflowSoldReadyToShip,
   permanentlyDeleteTrashRecord,
@@ -580,6 +582,66 @@ describe('usedGearQueue', () => {
     expect(record.id).toBe('rec1');
   });
 
+  it('requests the approved workflow field inventory when loading a single workflow record', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: { 'Workflow Status': 'Pending Review' },
+      },
+    ]);
+
+    await loadUsedGearWorkflowRecord('rec1');
+
+    expect(mockGetConfiguredRecords).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      expect.objectContaining({
+        fields: expect.arrayContaining([
+          'Workflow Source',
+          'Submission Group ID',
+          'Pick Up ID',
+          'Trash Status',
+          'Accepted By',
+          'Accepted At',
+          'Processing Signed By',
+          'Processing Signed At',
+          'Testing Signed By',
+          'Testing Signed At',
+          'Photography Signed By',
+          'Photography Signed At',
+          'Pre-Listing Reviewed By',
+          'Pre-Listing Reviewed At',
+          'Qualification Notes',
+          'Qualification Complete',
+          'Unqualified Reason',
+          'Customer Cosmetic Notes',
+          'Customer Functional Notes',
+          'Customer Inclusion Notes',
+          'Customer Submitted Photos Notes',
+          'Internal Cosmetic Notes',
+          'Internal Functional Notes',
+          'Internal Inclusion Notes',
+          'Offer Amount',
+          'Paid Amount',
+          'Confirmed Grand Total',
+          'Allocation Mode',
+          'Allocation Notes',
+          'Workflow Status',
+          'Awaiting Pre-Listing Review At',
+          'Approved For Publish At',
+          'Listed At',
+          'Stale Listing At',
+          'Stale Recovery Status',
+          'Stale Recovery Notes',
+          'Stale Recovery Updated At',
+          'Relisted At',
+          'Sold Ready To Ship At',
+          'Shipped At',
+        ]),
+      }),
+    );
+  });
+
   it('loads grouped workflow context for a record with sibling rows', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
@@ -723,6 +785,82 @@ describe('usedGearQueue', () => {
     );
   });
 
+  it('saves stale recovery details for stale workflow rows', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Stale Listing, Shopify',
+          'Listed At': '2026-03-01T00:00:00.000Z',
+          'Stale Listing At': '2026-04-20T00:00:00.000Z',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: {
+        'Workflow Status': 'Stale Listing, Shopify',
+        'Stale Recovery Status': 'Price Refresh',
+        'Stale Recovery Notes': 'Adjust pricing before relist.',
+      },
+    });
+
+    await saveWorkflowStaleRecovery('rec1', {
+      staleRecoveryStatus: 'Price Refresh',
+      staleRecoveryNotes: 'Adjust pricing before relist.',
+    });
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Stale Recovery Status': 'Price Refresh',
+        'Stale Recovery Notes': 'Adjust pricing before relist.',
+        'Stale Recovery Updated At': expect.any(String),
+      }),
+      { typecast: true },
+    );
+  });
+
+  it('returns stale workflow rows to active listed status when relisted', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Stale Listing, eBay',
+          'Listed At': '2026-03-01T00:00:00.000Z',
+          'Stale Listing At': '2026-04-20T00:00:00.000Z',
+          'Stale Recovery Status': 'Ready To Relist',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: {
+        'Workflow Status': 'Listed, eBay',
+        'Relisted At': '2026-05-07T00:00:00.000Z',
+      },
+    });
+
+    await markWorkflowRelisted('rec1');
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Workflow Status': 'Listed, eBay',
+        'Relisted At': expect.any(String),
+        'Stale Recovery Updated At': expect.any(String),
+        'Stale Recovery Status': 'Ready To Relist',
+      }),
+      { typecast: true },
+    );
+  });
+
   it('marks sold-ready workflow rows shipped', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
@@ -853,7 +991,7 @@ describe('usedGearQueue', () => {
       {
         id: 'recPending',
         createdTime: '2026-05-01T00:00:00.000Z',
-        fields: { 'Workflow Status': 'Pending Review' },
+        fields: { 'Workflow Status': 'Pending Review', 'Pick Up ID': 'pickup-100' },
       },
       {
         id: 'recProcessing',
@@ -889,33 +1027,45 @@ describe('usedGearQueue', () => {
       targets: {
         pendingReview: {
           destinationTab: 'inventory',
-          recordId: 'recPending',
+          recordId: null,
           sectionId: 'used-gear-pending-review',
+          groupId: 'pickup:pickup-100',
+          path: '/inventory?workflowPendingReviewGroup=pickup%3Apickup-100#used-gear-pending-review',
         },
         processing: {
           destinationTab: 'inventory',
           recordId: 'recProcessing',
           sectionId: 'used-gear-progress-queue',
+          groupId: null,
+          path: null,
         },
         testing: {
           destinationTab: 'inventory',
           recordId: 'recConcurrent',
           sectionId: 'used-gear-progress-queue',
+          groupId: null,
+          path: null,
         },
         photography: {
           destinationTab: 'inventory',
           recordId: 'recConcurrent',
           sectionId: 'used-gear-progress-queue',
+          groupId: null,
+          path: null,
         },
         preListingReview: {
           destinationTab: 'inventory',
           recordId: 'recPreListing',
           sectionId: 'used-gear-progress-queue',
+          groupId: null,
+          path: null,
         },
         approvedForPublish: {
           destinationTab: 'listings',
           recordId: 'recApproved',
           sectionId: null,
+          groupId: null,
+          path: null,
         },
       },
       workflowQueueBadgeCount: 5,

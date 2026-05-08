@@ -84,11 +84,12 @@ This phase adds the operational review step that bridges processing into the exi
 ### Implemented Publish Lifecycle Writeback
 - Successful publish actions now write lifecycle state back to the authoritative workflow row so `Workflow Status` advances from `Approved for Publish` into the listed workflow family.
 - The first successful publish writeback now captures `Listed At`, and Shopify publishes also populate `Shopify REST Published At` and `Shopify REST Published Scope` using the existing approved Airtable fields.
+- eBay publishes now also persist `eBay Published At`, `eBay Offer ID`, and `eBay Listing ID` on the workflow row using the approved workflow schema.
 - Workflow transition timestamps now capture `Awaiting Pre-Listing Review At` when the second concurrent signoff lands and `Approved For Publish At` when pre-listing review is completed.
 
 ### Backlog
 - [ ] Add a more explicit approved-for-publish landing page if listing volume makes the shared progress queue too noisy.
 - [x] Add operator-facing explanations for why publish readiness is blocked, with jump links to the listing or workflow field that needs review.
 - [ ] Add richer workflow-to-listing diff summaries so the listing team can see what changed since pre-listing approval.
-- [ ] Add workflow-specific smoke tests for publish handoff and writeback so future approval-surface changes are easier to validate.
+- [x] Add workflow-specific smoke tests for publish handoff and writeback so future approval-surface changes are easier to validate.
 - [ ] Add more granular reviewer analytics for how long rows spend waiting for pre-listing review or publish completion.

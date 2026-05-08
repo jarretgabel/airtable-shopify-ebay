@@ -332,6 +332,27 @@ export function UsedGearLotTwoSection({
                     <div>
                       <span className="font-semibold text-[var(--ink)]">Qualification Notes:</span> {displayInventoryValue(record.fields['Qualification Notes'])}
                     </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Accepted By:</span> {displayInventoryValue(record.fields['Accepted By'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Accepted At:</span> {displayInventoryValue(record.fields['Accepted At'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Offer Amount:</span> {displayInventoryValue(record.fields['Offer Amount'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Paid Amount:</span> {displayInventoryValue(record.fields['Paid Amount'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Confirmed Grand Total:</span> {displayInventoryValue(record.fields['Confirmed Grand Total'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Allocation Mode:</span> {displayInventoryValue(record.fields['Allocation Mode'])}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Allocation Notes:</span> {displayInventoryValue(record.fields['Allocation Notes'])}
+                    </div>
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-2">

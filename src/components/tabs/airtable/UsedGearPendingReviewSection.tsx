@@ -23,6 +23,8 @@ export interface UsedGearPendingReviewSectionProps {
   onOpenGroupReview?: (groupId: string) => void;
   onOpenIncomingGearForm: (recordId: string) => void;
   onOpenWorkflowRecord: (recordId: string) => void;
+  focusedGroupId?: string | null;
+  onFocusedGroupIdChange?: (groupId: string | null) => void;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
   collapsedGroupIds?: string[];
@@ -85,11 +87,20 @@ function makeModelSortValue(record: AirtableRecord): string {
   return `${stringFieldValue(record, 'Make')} ${stringFieldValue(record, 'Model')} ${stringFieldValue(record, 'SKU')}`.trim().toLowerCase();
 }
 
+function buildPendingReviewGroupLink(groupId: string): string {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set('workflowPendingReviewGroup', groupId);
+  nextUrl.hash = 'used-gear-pending-review';
+  return nextUrl.toString();
+}
+
 export function UsedGearPendingReviewSection({
   currentUserName,
   onOpenGroupReview,
   onOpenIncomingGearForm,
   onOpenWorkflowRecord,
+  focusedGroupId = null,
+  onFocusedGroupIdChange,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
   collapsedGroupIds: controlledCollapsedGroupIds,
@@ -187,8 +198,12 @@ export function UsedGearPendingReviewSection({
       return left.label.localeCompare(right.label);
     });
   }, [filteredRecords, sortMode]);
+  const visibleGroups = useMemo(
+    () => (focusedGroupId ? groupedRecords.filter((group) => group.id === focusedGroupId) : groupedRecords),
+    [focusedGroupId, groupedRecords],
+  );
   const agingSummary = useMemo(() => buildPendingReviewQueueAgingSummary(filteredRecords), [filteredRecords]);
-  const visibleGroupIds = useMemo(() => groupedRecords.map((group) => group.id), [groupedRecords]);
+  const visibleGroupIds = useMemo(() => visibleGroups.map((group) => group.id), [visibleGroups]);
   const collapsedGroupIdSet = useMemo(() => new Set(collapsedGroupIds), [collapsedGroupIds]);
   const allVisibleGroupsCollapsed = visibleGroupIds.length > 0
     && visibleGroupIds.every((groupId) => collapsedGroupIdSet.has(groupId));
@@ -461,12 +476,18 @@ export function UsedGearPendingReviewSection({
         </EmptySurface>
       ) : null}
 
+      {focusedGroupId ? (
+        <div className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
+          Shared link opened the pending-review queue focused on one grouped submission.
+        </div>
+      ) : null}
+
       <div className="space-y-4">
         {loading ? (
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-sm text-[var(--muted)]">
             Loading pending review queue...
           </div>
-        ) : groupedRecords.map((group) => {
+        ) : visibleGroups.map((group) => {
           const collapsed = collapsedGroupIdSet.has(group.id);
           const groupNeedsSubmissionId = group.records.length > 1
             && group.records.some((record) => stringFieldValue(record, 'Submission Group ID').trim().length === 0);
@@ -496,6 +517,25 @@ export function UsedGearPendingReviewSection({
                     onClick={() => onOpenGroupReview(group.id)}
                   >
                     Open Group Review
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    void copyLink(buildPendingReviewGroupLink(group.id));
+                  }}
+                  disabled={copyingLink}
+                >
+                  {copyingLink ? 'Copying...' : copiedLink ? 'Link Copied' : 'Copy Group Link'}
+                </button>
+                {focusedGroupId ? (
+                  <button
+                    type="button"
+                    className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    onClick={() => onFocusedGroupIdChange?.(null)}
+                  >
+                    Show All Groups
                   </button>
                 ) : null}
                 <button
@@ -631,6 +671,15 @@ export function UsedGearPendingReviewSection({
                       <div className="mt-2">Offer Amount: {displayInventoryValue(record.fields['Offer Amount'])}</div>
                       <div>Paid Amount: {displayInventoryValue(record.fields['Paid Amount'])}</div>
                       <div>Confirmed Grand Total: {displayInventoryValue(record.fields['Confirmed Grand Total'])}</div>
+                      <div>Allocation Mode: {displayInventoryValue(record.fields['Allocation Mode'])}</div>
+                      <div>Allocation Notes: {displayInventoryValue(record.fields['Allocation Notes'])}</div>
+                      <div className="mt-2">Customer Cosmetic Notes: {displayInventoryValue(record.fields['Customer Cosmetic Notes'])}</div>
+                      <div>Customer Functional Notes: {displayInventoryValue(record.fields['Customer Functional Notes'])}</div>
+                      <div>Customer Inclusion Notes: {displayInventoryValue(record.fields['Customer Inclusion Notes'])}</div>
+                      <div>Customer Submitted Photos Notes: {displayInventoryValue(record.fields['Customer Submitted Photos Notes'])}</div>
+                      <div>Internal Cosmetic Notes: {displayInventoryValue(record.fields['Internal Cosmetic Notes'])}</div>
+                      <div>Internal Functional Notes: {displayInventoryValue(record.fields['Internal Functional Notes'])}</div>
+                      <div>Internal Inclusion Notes: {displayInventoryValue(record.fields['Internal Inclusion Notes'])}</div>
                       {groupNeedsSubmissionId ? (
                         <div className="mt-2 text-amber-300">Multi-item intake needs a Submission Group ID before acceptance. Open group review to complete the gate.</div>
                       ) : null}

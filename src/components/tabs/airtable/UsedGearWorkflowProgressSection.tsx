@@ -31,6 +31,8 @@ export interface UsedGearWorkflowProgressSectionProps {
   onOpenPhotosForm: (recordId: string) => void;
   onOpenWorkflowRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
+  focusedGroupId?: string | null;
+  onFocusedGroupIdChange?: (groupId: string | null) => void;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
   collapsedGroupIds?: string[];
@@ -72,6 +74,13 @@ function isAwaitingPreListingStatus(record: AirtableRecord): boolean {
   return getUsedGearWorkflowStatus(record.fields) === 'Awaiting Pre-Listing Review';
 }
 
+function buildWorkflowProgressGroupLink(groupId: string): string {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set('workflowProgressGroup', groupId);
+  nextUrl.hash = 'used-gear-progress-queue';
+  return nextUrl.toString();
+}
+
 export function UsedGearWorkflowProgressSection({
   currentUserName,
   onOpenIncomingGearForm,
@@ -79,6 +88,8 @@ export function UsedGearWorkflowProgressSection({
   onOpenPhotosForm,
   onOpenWorkflowRecord,
   onOpenListingsRecord,
+  focusedGroupId = null,
+  onFocusedGroupIdChange,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
   collapsedGroupIds: controlledCollapsedGroupIds,
@@ -161,8 +172,12 @@ export function UsedGearWorkflowProgressSection({
       return left.label.localeCompare(right.label);
     });
   }, [filteredRecords, sortMode]);
+  const visibleGroups = useMemo(
+    () => (focusedGroupId ? groupedRecords.filter((group) => group.id === focusedGroupId) : groupedRecords),
+    [focusedGroupId, groupedRecords],
+  );
   const agingSummary = useMemo(() => buildWorkflowProgressQueueAgingSummary(filteredRecords), [filteredRecords]);
-  const visibleGroupIds = useMemo(() => groupedRecords.map((group) => group.id), [groupedRecords]);
+  const visibleGroupIds = useMemo(() => visibleGroups.map((group) => group.id), [visibleGroups]);
   const collapsedGroupIdSet = useMemo(() => new Set(collapsedGroupIds), [collapsedGroupIds]);
   const allVisibleGroupsCollapsed = visibleGroupIds.length > 0
     && visibleGroupIds.every((groupId) => collapsedGroupIdSet.has(groupId));
@@ -363,12 +378,18 @@ export function UsedGearWorkflowProgressSection({
         </EmptySurface>
       ) : null}
 
+      {focusedGroupId ? (
+        <div className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
+          Shared link opened the progress queue focused on one grouped submission.
+        </div>
+      ) : null}
+
       <div className="space-y-4">
         {loading ? (
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-sm text-[var(--muted)]">
             Loading used-gear progress queue...
           </div>
-        ) : groupedRecords.map((group) => {
+        ) : visibleGroups.map((group) => {
           const collapsed = collapsedGroupIdSet.has(group.id);
 
           return (
@@ -382,6 +403,25 @@ export function UsedGearWorkflowProgressSection({
                 <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
                   {group.records.length} row{group.records.length === 1 ? '' : 's'}
                 </div>
+                <button
+                  type="button"
+                  className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    void copyLink(buildWorkflowProgressGroupLink(group.id));
+                  }}
+                  disabled={copyingLink}
+                >
+                  {copyingLink ? 'Copying...' : copiedLink ? 'Link Copied' : 'Copy Group Link'}
+                </button>
+                {focusedGroupId ? (
+                  <button
+                    type="button"
+                    className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    onClick={() => onFocusedGroupIdChange?.(null)}
+                  >
+                    Show All Groups
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"

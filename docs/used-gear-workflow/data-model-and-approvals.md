@@ -89,6 +89,10 @@ Use this checklist to approve, reject, or revise the proposed Airtable/workflow 
 - [x] Approve `Approved For Publish At`
 - [x] Approve `Listed At`
 - [x] Approve `Stale Listing At`
+- [x] Approve `Stale Recovery Status`
+- [x] Approve `Stale Recovery Notes`
+- [x] Approve `Stale Recovery Updated At`
+- [x] Approve `Relisted At`
 - [x] Approve `Sold Ready To Ship At`
 - [x] Approve `Shipped At`
 
@@ -231,6 +235,15 @@ These are proposed additions or formalized workflow fields for `tbl0K0nFQL64jQMx
 	- Rule: set when a record first enters `Approved for Publish`.
 - `Listed At`
 	- Rule: set when the item is first listed on any marketplace.
+- `eBay Published At`
+	- Purpose: capture the first successful eBay publish timestamp on the workflow row.
+	- Rule: set only by eBay publish writeback; do not use it for Shopify publish timing.
+- `eBay Offer ID`
+	- Purpose: persist the eBay offer identifier returned by the publish flow.
+	- Rule: set only from successful eBay publish responses; treat as system-owned metadata.
+- `eBay Listing ID`
+	- Purpose: persist the eBay listing identifier returned when the offer becomes live.
+	- Rule: set only from successful eBay publish responses; treat as system-owned metadata.
 - `Stale Listing At`
 	- Rule: set when an active listing crosses the stale threshold.
 - `Sold Ready To Ship At`

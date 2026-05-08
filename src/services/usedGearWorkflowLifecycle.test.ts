@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   getUsedGearWorkflowPostPublishSnapshot,
+  getUsedGearWorkflowStaleRecoveryStatus,
   resolveWorkflowStatusAfterPublish,
   USED_GEAR_STALE_THRESHOLD_DAYS,
 } from '@/services/usedGearWorkflowLifecycle';
@@ -45,6 +46,29 @@ describe('usedGearWorkflowLifecycle', () => {
 
     expect(getUsedGearWorkflowPostPublishSnapshot(soldReady)?.bucket).toBe('sold-ready');
     expect(getUsedGearWorkflowPostPublishSnapshot(shipped)?.bucket).toBe('shipped');
+  });
+
+  it('reads stale recovery fields from the workflow row', () => {
+    const record: AirtableRecord = {
+      id: 'rec-stale',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        'Workflow Status': 'Stale Listing, Shopify',
+        'Listed At': '2026-03-01T00:00:00.000Z',
+        'Stale Listing At': '2026-04-20T00:00:00.000Z',
+        'Stale Recovery Status': 'Price Refresh',
+        'Stale Recovery Notes': 'Refresh title and pricing before relist.',
+        'Stale Recovery Updated At': '2026-05-07T10:00:00.000Z',
+        'Relisted At': '2026-05-07T12:00:00.000Z',
+      },
+    };
+
+    const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+
+    expect(getUsedGearWorkflowStaleRecoveryStatus(record.fields)).toBe('Price Refresh');
+    expect(snapshot?.staleRecoveryStatus).toBe('Price Refresh');
+    expect(snapshot?.staleRecoveryNotes).toBe('Refresh title and pricing before relist.');
+    expect(snapshot?.relistedAt).toBe('2026-05-07T12:00:00.000Z');
   });
 
   it('resolves publish writeback status for the combined publish path', () => {

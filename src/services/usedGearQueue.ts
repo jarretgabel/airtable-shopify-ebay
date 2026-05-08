@@ -10,7 +10,11 @@ import {
   USED_GEAR_WORKFLOW_STATUS_FIELD,
   type UsedGearWorkflowStage,
 } from '@/services/usedGearWorkflow';
-import { getUsedGearWorkflowPostPublishSnapshot } from '@/services/usedGearWorkflowLifecycle';
+import {
+  getUsedGearWorkflowPostPublishSnapshot,
+  isUsedGearWorkflowStaleRecoveryStatus,
+  type UsedGearWorkflowStaleRecoveryStatus,
+} from '@/services/usedGearWorkflowLifecycle';
 import { assertUsedGearWorkflowReadyForPublish } from '@/services/usedGearWorkflowListingReadiness';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -55,13 +59,21 @@ const USED_GEAR_WORKFLOW_RECORD_FIELDS = [
   'Customer Cosmetic Notes',
   'Customer Functional Notes',
   'Customer Inclusion Notes',
+  'Customer Submitted Photos Notes',
   'Internal Cosmetic Notes',
   'Internal Functional Notes',
   'Internal Inclusion Notes',
   'Awaiting Pre-Listing Review At',
   'Approved For Publish At',
   'Listed At',
+  'eBay Published At',
+  'eBay Offer ID',
+  'eBay Listing ID',
   'Stale Listing At',
+  'Stale Recovery Status',
+  'Stale Recovery Notes',
+  'Stale Recovery Updated At',
+  'Relisted At',
   'Sold Ready To Ship At',
   'Shipped At',
   'Price',
@@ -105,6 +117,8 @@ const USED_GEAR_POST_PUBLISH_STATUSES = new Set([
 
 const USED_GEAR_WORKFLOW_NOTIFICATION_FIELDS = [
   USED_GEAR_WORKFLOW_STATUS_FIELD,
+  'Submission Group ID',
+  'Pick Up ID',
   'Testing Signed By',
   'Testing Signed At',
   'Photography Signed By',
@@ -117,6 +131,8 @@ export interface UsedGearWorkflowNotificationTarget {
   destinationTab: 'inventory' | 'listings';
   recordId: string | null;
   sectionId: string | null;
+  groupId?: string | null;
+  path?: string | null;
 }
 
 export type UsedGearWorkflowNotificationTargets = Record<UsedGearWorkflowNotificationEvent, UsedGearWorkflowNotificationTarget | null>;
@@ -133,6 +149,11 @@ export interface UsedGearWorkflowPostPublishSummary {
   soldReadyCount: number;
   shippedCount: number;
   totalCount: number;
+}
+
+export interface SaveUsedGearWorkflowStaleRecoveryInput {
+  staleRecoveryStatus: UsedGearWorkflowStaleRecoveryStatus | null;
+  staleRecoveryNotes: string | null;
 }
 
 function createEmptyWorkflowNotificationCounts(): UsedGearWorkflowNotificationCounts {
@@ -172,6 +193,27 @@ export function createEmptyUsedGearWorkflowPostPublishSummary(): UsedGearWorkflo
     soldReadyCount: 0,
     shippedCount: 0,
     totalCount: 0,
+  };
+}
+
+function getNotificationGroupId(record: AirtableRecord): string | null {
+  const groupId = groupKeyForRecord(record).key;
+  return groupId.startsWith('record:') ? null : groupId;
+}
+
+function buildInventoryNotificationTarget(
+  record: AirtableRecord,
+  sectionId: string,
+  groupParamName: 'workflowPendingReviewGroup' | 'workflowProgressGroup',
+): UsedGearWorkflowNotificationTarget {
+  const groupId = getNotificationGroupId(record);
+
+  return {
+    destinationTab: 'inventory',
+    recordId: groupId ? null : record.id,
+    sectionId,
+    groupId,
+    path: groupId ? `/inventory?${groupParamName}=${encodeURIComponent(groupId)}#${sectionId}` : null,
   };
 }
 
@@ -244,6 +286,11 @@ function normalizeNullableCurrency(value: number | null | undefined): number | n
 }
 
 function normalizeAllocationText(value: string | undefined): string | null {
+  const trimmed = value?.trim() ?? '';
+  return trimmed ? trimmed : null;
+}
+
+function normalizeTextAreaValue(value: string | null | undefined): string | null {
   const trimmed = value?.trim() ?? '';
   return trimmed ? trimmed : null;
 }
@@ -483,11 +530,7 @@ export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGea
     if (status === PENDING_REVIEW_STATUS) {
       summary.counts.pendingReview += 1;
       actionableRecordIds.add(record.id);
-      summary.targets.pendingReview ??= {
-        destinationTab: 'inventory',
-        recordId: record.id,
-        sectionId: 'used-gear-pending-review',
-      };
+      summary.targets.pendingReview ??= buildInventoryNotificationTarget(record, 'used-gear-pending-review', 'workflowPendingReviewGroup');
       return;
     }
 
@@ -498,11 +541,7 @@ export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGea
     ) {
       summary.counts.processing += 1;
       actionableRecordIds.add(record.id);
-      summary.targets.processing ??= {
-        destinationTab: 'inventory',
-        recordId: record.id,
-        sectionId: 'used-gear-progress-queue',
-      };
+      summary.targets.processing ??= buildInventoryNotificationTarget(record, 'used-gear-progress-queue', 'workflowProgressGroup');
       return;
     }
 
@@ -511,20 +550,12 @@ export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGea
       if (!signoffs.testingSignedBy || !signoffs.testingSignedAt) {
         summary.counts.testing += 1;
         actionableRecordIds.add(record.id);
-        summary.targets.testing ??= {
-          destinationTab: 'inventory',
-          recordId: record.id,
-          sectionId: 'used-gear-progress-queue',
-        };
+        summary.targets.testing ??= buildInventoryNotificationTarget(record, 'used-gear-progress-queue', 'workflowProgressGroup');
       }
       if (!signoffs.photographySignedBy || !signoffs.photographySignedAt) {
         summary.counts.photography += 1;
         actionableRecordIds.add(record.id);
-        summary.targets.photography ??= {
-          destinationTab: 'inventory',
-          recordId: record.id,
-          sectionId: 'used-gear-progress-queue',
-        };
+        summary.targets.photography ??= buildInventoryNotificationTarget(record, 'used-gear-progress-queue', 'workflowProgressGroup');
       }
       return;
     }
@@ -532,11 +563,7 @@ export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGea
     if (status === AWAITING_PRE_LISTING_REVIEW_STATUS) {
       summary.counts.preListingReview += 1;
       actionableRecordIds.add(record.id);
-      summary.targets.preListingReview ??= {
-        destinationTab: 'inventory',
-        recordId: record.id,
-        sectionId: 'used-gear-progress-queue',
-      };
+      summary.targets.preListingReview ??= buildInventoryNotificationTarget(record, 'used-gear-progress-queue', 'workflowProgressGroup');
       return;
     }
 
@@ -547,6 +574,8 @@ export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGea
         destinationTab: 'listings',
         recordId: record.id,
         sectionId: null,
+        groupId: null,
+        path: null,
       };
     }
 
@@ -947,6 +976,60 @@ export async function markWorkflowListingStale(recordId: string): Promise<Airtab
     {
       [USED_GEAR_WORKFLOW_STATUS_FIELD]: nextStatus,
       'Stale Listing At': getTrimmedFieldValue(currentRecord, 'Stale Listing At') || staleAt,
+    },
+    { typecast: true },
+  );
+
+  return withWorkflow(record);
+}
+
+export async function saveWorkflowStaleRecovery(
+  recordId: string,
+  { staleRecoveryStatus, staleRecoveryNotes }: SaveUsedGearWorkflowStaleRecoveryInput,
+): Promise<AirtableRecord> {
+  const currentRecord = await loadUsedGearWorkflowRecord(recordId);
+  const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
+  if (!snapshot || (snapshot.status !== STALE_LISTING_SHOPIFY_STATUS && snapshot.status !== STALE_LISTING_EBAY_STATUS)) {
+    throw new Error('Only stale workflow rows can save stale recovery details.');
+  }
+
+  if (staleRecoveryStatus && !isUsedGearWorkflowStaleRecoveryStatus(staleRecoveryStatus)) {
+    throw new Error('Stale Recovery Status is not one of the approved recovery options.');
+  }
+
+  const recoveryUpdatedAt = new Date().toISOString();
+  const record = await updateConfiguredRecord(
+    'used-gear-workflow',
+    recordId,
+    {
+      'Stale Recovery Status': staleRecoveryStatus,
+      'Stale Recovery Notes': normalizeTextAreaValue(staleRecoveryNotes),
+      'Stale Recovery Updated At': recoveryUpdatedAt,
+    },
+    { typecast: true },
+  );
+
+  return withWorkflow(record);
+}
+
+export async function markWorkflowRelisted(recordId: string): Promise<AirtableRecord> {
+  const currentRecord = await loadUsedGearWorkflowRecord(recordId);
+  const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
+  if (!snapshot || (snapshot.status !== STALE_LISTING_SHOPIFY_STATUS && snapshot.status !== STALE_LISTING_EBAY_STATUS)) {
+    throw new Error('Only stale workflow rows can be marked relisted.');
+  }
+
+  const relistedAt = new Date().toISOString();
+  const nextStatus = snapshot.channel === 'ebay' ? LISTED_EBAY_STATUS : LISTED_SHOPIFY_STATUS;
+  const existingRecoveryStatus = getTrimmedFieldValue(currentRecord, 'Stale Recovery Status');
+  const record = await updateConfiguredRecord(
+    'used-gear-workflow',
+    recordId,
+    {
+      [USED_GEAR_WORKFLOW_STATUS_FIELD]: nextStatus,
+      'Relisted At': getTrimmedFieldValue(currentRecord, 'Relisted At') || relistedAt,
+      'Stale Recovery Updated At': relistedAt,
+      'Stale Recovery Status': existingRecoveryStatus || 'Ready To Relist',
     },
     { typecast: true },
   );

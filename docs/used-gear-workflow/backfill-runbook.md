@@ -156,13 +156,53 @@ Recommended manual-review output per row:
 - Do not continue layering corrective heuristics on top of a bad first batch without first restoring confidence in the baseline.
 
 ## Open Operational Decision
-- The app now has the runtime seams to consume normalized workflow rows, but this runbook does not prescribe a specific one-off script location yet.
-- When execution is scheduled, decide whether the batch will run through:
-  - an approved internal Airtable bulk update workflow
-  - or a one-off controlled script against the same approved table and fields
+- The repeatable script path now exists at:
+  - `scripts/used-gear-workflow-backfill.mjs`
+- The script is intentionally conservative:
+  - `plan` exports the current table snapshot and creates a reviewed mapping template
+  - `apply` only writes rows where an operator has explicitly set `apply: true`
+  - writes are hard-locked to the approved workflow table and approved field set
+
+## Script Workflow
+
+### 1. Generate A Review Package
+Run:
+
+```bash
+npm run workflow:backfill -- plan
+```
+
+Artifacts are written under `tmp/used-gear-workflow-backfill/...`:
+- `snapshot.json`
+- `mapping-template.json`
+- `summary.json`
+
+### 2. Review The Mapping Template
+- Inspect `mapping-template.json`
+- leave uncertain rows as `apply: false`
+- only set `apply: true` for rows that have been reviewed and approved for write
+
+### 3. Apply The Reviewed Batch
+Run:
+
+```bash
+npm run workflow:backfill -- apply --mapping tmp/used-gear-workflow-backfill/<run>/mapping-template.json --confirm APPLY_USED_GEAR_BACKFILL
+```
+
+Artifacts are written under a new apply run directory:
+- `snapshot-before.json`
+- `snapshot-after.json`
+- `apply-report.json`
+
+### 4. Validate After Apply
+- compare `beforeSummary` and `afterSummary` in `apply-report.json`
+- refresh the app and confirm queue counts still look correct
+- spot-check any rows that were manually classified before apply
 
 ## References
 - `docs/used-gear-workflow/data-model-and-approvals.md`
+- `docs/used-gear-workflow/schema-update-approval-guide.md`
+- `docs/used-gear-workflow/stale-listing-recovery-design.md`
 - `docs/used-gear-workflow/phase-1-foundation.md`
 - `src/services/usedGearWorkflow.ts`
 - `src/services/usedGearQueue.ts`

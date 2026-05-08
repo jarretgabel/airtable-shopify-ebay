@@ -39,6 +39,7 @@ describe('useUsedGearWorkflowNotifications', () => {
 
   it('opens the workflow record for actionable inventory-stage notifications and reports badge counts', async () => {
     const navigateToTab = vi.fn();
+    const navigateToPath = vi.fn();
     const navigateToInventorySection = vi.fn();
     const navigateToUsedGearWorkflowRecord = vi.fn();
     const navigateToListingsRecord = vi.fn();
@@ -56,8 +57,10 @@ describe('useUsedGearWorkflowNotifications', () => {
       targets: {
         pendingReview: {
           destinationTab: 'inventory',
-          recordId: 'rec-pending',
+          recordId: null,
           sectionId: 'used-gear-pending-review',
+          groupId: 'pickup:pickup-1',
+          path: '/inventory?workflowPendingReviewGroup=pickup%3Apickup-1#used-gear-pending-review',
         },
         processing: null,
         testing: null,
@@ -93,6 +96,7 @@ describe('useUsedGearWorkflowNotifications', () => {
       },
       canAccessPage: () => true,
       navigateToTab,
+      navigateToPath,
       navigateToInventorySection,
       navigateToUsedGearWorkflowRecord,
       navigateToListingsRecord,
@@ -102,13 +106,14 @@ describe('useUsedGearWorkflowNotifications', () => {
 
     await waitFor(() => {
       const notification = useNotificationStore.getState().notifications[0];
-      expect(notification?.actionLabel).toBe('Open Workflow Record');
+      expect(notification?.actionLabel).toBe('Open Queue Group');
       expect(notification?.title).toBe('Used gear pending review queue');
       notification?.onAction?.();
     });
 
     expect(onSummaryChange).toHaveBeenCalledWith(expect.objectContaining({ workflowQueueBadgeCount: 1 }));
-    expect(navigateToUsedGearWorkflowRecord).toHaveBeenCalledWith('rec-pending');
+    expect(navigateToPath).toHaveBeenCalledWith('/inventory?workflowPendingReviewGroup=pickup%3Apickup-1#used-gear-pending-review');
+    expect(navigateToUsedGearWorkflowRecord).not.toHaveBeenCalled();
     expect(navigateToInventorySection).not.toHaveBeenCalled();
     expect(navigateToTab).not.toHaveBeenCalled();
     expect(navigateToListingsRecord).not.toHaveBeenCalled();

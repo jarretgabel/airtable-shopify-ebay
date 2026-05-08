@@ -67,6 +67,59 @@ function formatTimelineTimestamp(value: string | null): string {
   });
 }
 
+const WORKFLOW_HEADER_FIELDS = [
+  { label: 'Workflow Source', fieldName: 'Workflow Source' },
+  { label: 'Trash Status', fieldName: 'Trash Status' },
+] as const;
+
+const PRELISTING_CONTEXT_FIELDS = [
+  { label: 'Processing Signed By', fieldName: 'Processing Signed By' },
+  { label: 'Processing Signed At', fieldName: 'Processing Signed At' },
+  { label: 'Testing Signed By', fieldName: 'Testing Signed By' },
+  { label: 'Testing Signed At', fieldName: 'Testing Signed At' },
+  { label: 'Photography Signed By', fieldName: 'Photography Signed By' },
+  { label: 'Photography Signed At', fieldName: 'Photography Signed At' },
+  { label: 'Pre-Listing Reviewed By', fieldName: 'Pre-Listing Reviewed By' },
+  { label: 'Pre-Listing Reviewed At', fieldName: 'Pre-Listing Reviewed At' },
+  { label: 'Inventory Notes', fieldName: 'Inventory Notes' },
+  { label: 'Internal Inclusion Notes', fieldName: 'Internal Inclusion Notes' },
+  { label: 'Internal Cosmetic Notes', fieldName: 'Internal Cosmetic Notes' },
+  { label: 'Internal Functional Notes', fieldName: 'Internal Functional Notes' },
+] as const;
+
+const WORKFLOW_AUDIT_FIELDS = [
+  { label: 'Accepted By', fieldName: 'Accepted By' },
+  { label: 'Accepted At', fieldName: 'Accepted At' },
+  { label: 'Qualification Complete', fieldName: 'Qualification Complete' },
+  { label: 'Allocation Mode', fieldName: 'Allocation Mode' },
+  { label: 'Allocation Notes', fieldName: 'Allocation Notes' },
+  { label: 'Offer Amount', fieldName: 'Offer Amount' },
+  { label: 'Paid Amount', fieldName: 'Paid Amount' },
+  { label: 'Confirmed Grand Total', fieldName: 'Confirmed Grand Total' },
+  { label: 'Awaiting Pre-Listing Review At', fieldName: 'Awaiting Pre-Listing Review At' },
+  { label: 'Approved For Publish At', fieldName: 'Approved For Publish At' },
+  { label: 'Listed At', fieldName: 'Listed At' },
+  { label: 'eBay Published At', fieldName: 'eBay Published At' },
+  { label: 'eBay Offer ID', fieldName: 'eBay Offer ID' },
+  { label: 'eBay Listing ID', fieldName: 'eBay Listing ID' },
+  { label: 'Stale Listing At', fieldName: 'Stale Listing At' },
+  { label: 'Sold Ready To Ship At', fieldName: 'Sold Ready To Ship At' },
+  { label: 'Shipped At', fieldName: 'Shipped At' },
+] as const;
+
+const REFERENCE_NOTE_FIELDS = [
+  { label: 'Qualification Notes', fieldName: 'Qualification Notes' },
+  { label: 'Unqualified Reason', fieldName: 'Unqualified Reason' },
+  { label: 'Customer Cosmetic Notes', fieldName: 'Customer Cosmetic Notes' },
+  { label: 'Customer Functional Notes', fieldName: 'Customer Functional Notes' },
+  { label: 'Customer Inclusion Notes', fieldName: 'Customer Inclusion Notes' },
+  { label: 'Customer Submitted Photos Notes', fieldName: 'Customer Submitted Photos Notes' },
+  { label: 'Internal Cosmetic Notes', fieldName: 'Internal Cosmetic Notes' },
+  { label: 'Internal Functional Notes', fieldName: 'Internal Functional Notes' },
+  { label: 'Internal Inclusion Notes', fieldName: 'Internal Inclusion Notes' },
+  { label: 'Inventory Notes', fieldName: 'Inventory Notes' },
+] as const;
+
 function runReadinessAction(target: UsedGearWorkflowListingReadinessActionTarget, recordId: string, actions: {
   onOpenIncomingGearForm: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
@@ -175,6 +228,16 @@ export function UsedGearWorkflowRecordPage({
       return typeof value === 'number' || (typeof value === 'string' && value.trim().length > 0);
     }).length,
   } : null;
+  const staleRecoveryStatus = typeof record?.fields['Stale Recovery Status'] === 'string' ? record.fields['Stale Recovery Status'] : '';
+  const staleRecoveryNotes = typeof record?.fields['Stale Recovery Notes'] === 'string' ? record.fields['Stale Recovery Notes'] : '';
+  const staleRecoveryUpdatedAt = typeof record?.fields['Stale Recovery Updated At'] === 'string' ? record.fields['Stale Recovery Updated At'] : '';
+  const relistedAt = typeof record?.fields['Relisted At'] === 'string' ? record.fields['Relisted At'] : '';
+  const showStaleRecoveryPanel = status === 'Stale Listing, Shopify'
+    || status === 'Stale Listing, eBay'
+    || staleRecoveryStatus.length > 0
+    || staleRecoveryNotes.length > 0
+    || staleRecoveryUpdatedAt.length > 0
+    || relistedAt.length > 0;
 
   useEffect(() => {
     setPricingConfirmed(false);
@@ -278,6 +341,12 @@ export function UsedGearWorkflowRecordPage({
                 <div>Pick Up</div>
                 <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Pick Up ID'])}</div>
               </div>
+              {WORKFLOW_HEADER_FIELDS.map((field) => (
+                <div key={field.fieldName} className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                  <div>{field.label}</div>
+                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields[field.fieldName])}</div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -401,14 +470,9 @@ export function UsedGearWorkflowRecordPage({
             <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
               <h4 className="m-0 text-base font-semibold text-[var(--ink)]">Stage Context</h4>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <div>Processing Signed By: {displayInventoryValue(record?.fields['Processing Signed By'])}</div>
-                <div>Testing Signed By: {displayInventoryValue(record?.fields['Testing Signed By'])}</div>
-                <div>Photography Signed By: {displayInventoryValue(record?.fields['Photography Signed By'])}</div>
-                <div>Pre-Listing Reviewed By: {displayInventoryValue(record?.fields['Pre-Listing Reviewed By'])}</div>
-                <div>Inventory Notes: {displayInventoryValue(record?.fields['Inventory Notes'])}</div>
-                <div>Internal Inclusion Notes: {displayInventoryValue(record?.fields['Internal Inclusion Notes'])}</div>
-                <div>Internal Cosmetic Notes: {displayInventoryValue(record?.fields['Internal Cosmetic Notes'])}</div>
-                <div>Internal Functional Notes: {displayInventoryValue(record?.fields['Internal Functional Notes'])}</div>
+                {PRELISTING_CONTEXT_FIELDS.map((field) => (
+                  <div key={field.fieldName}>{field.label}: {displayInventoryValue(record?.fields[field.fieldName])}</div>
+                ))}
               </div>
             </div>
 
@@ -481,6 +545,35 @@ export function UsedGearWorkflowRecordPage({
         </section>
 
         <section className="grid gap-4 lg:grid-cols-2">
+          {showStaleRecoveryPanel ? (
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 lg:col-span-2">
+              <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Stale Recovery</h3>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                  <div>Recovery Status</div>
+                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{staleRecoveryStatus || 'Not set'}</div>
+                </div>
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                  <div>Recovery Updated</div>
+                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(staleRecoveryUpdatedAt)}</div>
+                </div>
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                  <div>Relisted At</div>
+                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(relistedAt)}</div>
+                </div>
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                  <div>Current Lifecycle</div>
+                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Workflow Status'])}</div>
+                </div>
+              </div>
+              {staleRecoveryNotes ? (
+                <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm leading-6 text-[var(--ink)]">
+                  {staleRecoveryNotes}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           {relatedGroupRecords.length > 0 ? (
             <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 lg:col-span-2">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
@@ -563,24 +656,18 @@ export function UsedGearWorkflowRecordPage({
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
             <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Workflow Audit</h3>
             <div className="mt-4 space-y-2 text-sm text-[var(--muted)]">
-              <div>Accepted By: {displayInventoryValue(record?.fields['Accepted By'])}</div>
-              <div>Accepted At: {displayInventoryValue(record?.fields['Accepted At'])}</div>
-              <div>Processing Signed By: {displayInventoryValue(record?.fields['Processing Signed By'])}</div>
-              <div>Testing Signed By: {displayInventoryValue(record?.fields['Testing Signed By'])}</div>
-              <div>Photography Signed By: {displayInventoryValue(record?.fields['Photography Signed By'])}</div>
-              <div>Pre-Listing Reviewed By: {displayInventoryValue(record?.fields['Pre-Listing Reviewed By'])}</div>
+              {WORKFLOW_AUDIT_FIELDS.map((field) => (
+                <div key={field.fieldName}>{field.label}: {displayInventoryValue(record?.fields[field.fieldName])}</div>
+              ))}
             </div>
           </div>
 
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
             <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Reference Notes</h3>
             <div className="mt-4 space-y-2 text-sm text-[var(--muted)]">
-              <div>Qualification Notes: {displayInventoryValue(record?.fields['Qualification Notes'])}</div>
-              <div>Customer Cosmetic Notes: {displayInventoryValue(record?.fields['Customer Cosmetic Notes'])}</div>
-              <div>Customer Functional Notes: {displayInventoryValue(record?.fields['Customer Functional Notes'])}</div>
-              <div>Internal Cosmetic Notes: {displayInventoryValue(record?.fields['Internal Cosmetic Notes'])}</div>
-              <div>Internal Functional Notes: {displayInventoryValue(record?.fields['Internal Functional Notes'])}</div>
-              <div>Inventory Notes: {displayInventoryValue(record?.fields['Inventory Notes'])}</div>
+              {REFERENCE_NOTE_FIELDS.map((field) => (
+                <div key={field.fieldName}>{field.label}: {displayInventoryValue(record?.fields[field.fieldName])}</div>
+              ))}
             </div>
           </div>
         </section>

@@ -17,6 +17,7 @@ interface UsedGearWorkflowNotificationParams {
   currentUser: AppUser | null;
   canAccessPage: (tab: Tab) => boolean;
   navigateToTab: (tab: Tab, replace?: boolean) => void;
+  navigateToPath: (path: string, replace?: boolean) => void;
   navigateToInventorySection: (sectionId: string, replace?: boolean) => void;
   navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
@@ -82,10 +83,19 @@ function buildNotificationAction(
   eventKey: UsedGearWorkflowNotificationEvent,
   target: UsedGearWorkflowNotificationTarget | null,
   navigateToTab: (tab: Tab, replace?: boolean) => void,
+  navigateToPath: (path: string, replace?: boolean) => void,
   navigateToInventorySection: (sectionId: string, replace?: boolean) => void,
   navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void,
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void,
 ) {
+  if (target?.destinationTab === 'inventory' && target.path) {
+    const targetPath = target.path;
+    return {
+      actionLabel: target.groupId ? 'Open Queue Group' : 'Open Queue Section',
+      onAction: () => navigateToPath(targetPath),
+    };
+  }
+
   if (target?.destinationTab === 'listings' && target.recordId) {
     const recordId = target.recordId;
     return {
@@ -119,6 +129,7 @@ export function useUsedGearWorkflowNotifications({
   currentUser,
   canAccessPage,
   navigateToTab,
+  navigateToPath,
   navigateToInventorySection,
   navigateToUsedGearWorkflowRecord,
   navigateToListingsRecord,
@@ -166,6 +177,7 @@ export function useUsedGearWorkflowNotifications({
             option.key,
             summary.targets[option.key],
             navigateToTab,
+            navigateToPath,
             navigateToInventorySection,
             navigateToUsedGearWorkflowRecord,
             navigateToListingsRecord,
@@ -202,5 +214,5 @@ export function useUsedGearWorkflowNotifications({
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [canAccessPage, currentUser, dismissByKey, enabled, navigateToInventorySection, navigateToListingsRecord, navigateToTab, navigateToUsedGearWorkflowRecord, onSummaryChange, upsertByKey, workflowPreferenceSignature]);
+  }, [canAccessPage, currentUser, dismissByKey, enabled, navigateToInventorySection, navigateToListingsRecord, navigateToPath, navigateToTab, navigateToUsedGearWorkflowRecord, onSummaryChange, upsertByKey, workflowPreferenceSignature]);
 }

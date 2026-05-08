@@ -34,6 +34,7 @@ type AppTabInput = Pick<
   | 'shopifyApprovalTotal'
   | 'shopifyApprovalApproved'
   | 'shopifyApprovalPending'
+  | 'workflowAnalytics'
   | 'workflowPostPublishLoading'
   | 'workflowPostPublishError'
   | 'workflowActiveListingCount'
@@ -189,6 +190,7 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
       shopifyApprovalTotal: input.shopifyApprovalTotal,
       shopifyApprovalApproved: input.shopifyApprovalApproved,
       shopifyApprovalPending: input.shopifyApprovalPending,
+      workflowAnalytics: input.workflowAnalytics,
       workflowPostPublishLoading: input.workflowPostPublishLoading,
       workflowPostPublishError: input.workflowPostPublishError,
       workflowActiveListingCount: input.workflowActiveListingCount,

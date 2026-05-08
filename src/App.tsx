@@ -58,6 +58,7 @@ function App() {
   const shellRef = useRef<HTMLElement>(null);
   const {
     navigateToTab,
+    navigateToPath,
     navigateToInventorySection,
     navigateToJotformReviewGroup,
     navigateToIncomingGearForm,
@@ -90,7 +91,7 @@ function App() {
     navigate,
   });
   const appDataEnabled = usersReady && Boolean(currentUser) && !isLoginPath && !isResetPasswordPath;
-  const { airtable, shopify, market, ebay, approval, shopifyApproval, usedGearWorkflowPostPublish, jotform, metrics, visibleTabs, totalNewSubmissions, aiProvider, adminCount, runtimeFeatures } = useAppData({
+  const { airtable, shopify, market, ebay, approval, shopifyApproval, usedGearWorkflowAnalytics, usedGearWorkflowPostPublish, jotform, metrics, visibleTabs, totalNewSubmissions, aiProvider, adminCount, runtimeFeatures } = useAppData({
     enabled: appDataEnabled,
     activeTab,
     canAccessPage,
@@ -120,6 +121,7 @@ function App() {
     ebayRefetch: ebay.refetch,
     approvalRefetch: approval.refetch,
     shopifyApprovalRefetch: shopifyApproval.refetch,
+    usedGearWorkflowAnalyticsRefetch: usedGearWorkflowAnalytics.refetch,
     usedGearWorkflowPostPublishRefetch: usedGearWorkflowPostPublish.refetch,
     sharkSearch: market.search,
     currentSlug: market.currentSlug,
@@ -149,6 +151,7 @@ function App() {
     currentUser,
     canAccessPage: canAccessPage as (tab: Tab) => boolean,
     navigateToTab,
+    navigateToPath,
     navigateToInventorySection,
     navigateToUsedGearWorkflowRecord,
     navigateToListingsRecord,
@@ -291,6 +294,7 @@ function App() {
             shopifyApprovalTotal={shopifyApproval.total}
             shopifyApprovalApproved={shopifyApproval.approved}
             shopifyApprovalPending={shopifyApproval.pending}
+            workflowAnalytics={usedGearWorkflowAnalytics}
             workflowPostPublishLoading={usedGearWorkflowPostPublish.loading}
             workflowPostPublishError={usedGearWorkflowPostPublish.error}
             workflowActiveListingCount={usedGearWorkflowPostPublish.activeListingCount}

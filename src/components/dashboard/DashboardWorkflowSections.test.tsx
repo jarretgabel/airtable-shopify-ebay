@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { DashboardWorkflowCardGrid } from '@/components/dashboard/DashboardWorkflowSections';
+import { DashboardWorkflowAnalyticsSection } from '@/components/dashboard/DashboardWorkflowAnalyticsSection';
+import { createEmptyUsedGearWorkflowAnalyticsSnapshot } from '@/services/usedGearWorkflowAnalytics';
 
 describe('DashboardWorkflowCardGrid', () => {
   it('marks unavailable workflow cards and blocks navigation for them', () => {
@@ -41,5 +43,38 @@ describe('DashboardWorkflowCardGrid', () => {
 
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith('shopify');
+  });
+
+  it('renders the used-gear workflow analytics snapshot', () => {
+    const snapshot = createEmptyUsedGearWorkflowAnalyticsSnapshot();
+    snapshot.totalCount = 12;
+    snapshot.pendingReviewCount = 2;
+    snapshot.progressCount = 5;
+    snapshot.postPublishCount = 4;
+    snapshot.trashCount = 1;
+    snapshot.statusCounts['Approved for Publish'] = 2;
+    snapshot.marketplace.shopifyLiveCount = 2;
+    snapshot.marketplace.ebayStaleCount = 1;
+    snapshot.age.pendingReviewAlertCount = 1;
+    snapshot.lifecycle.averageDaysToSell = 18.5;
+    snapshot.lifecycle.averageDaysToShip = 2;
+
+    render(
+      <DashboardWorkflowAnalyticsSection
+        loading={false}
+        error={null}
+        snapshot={snapshot}
+      />, 
+    );
+
+    expect(screen.getByText('Used Gear Workflow Snapshot')).toBeInTheDocument();
+    expect(screen.getByText('Workflow Rows')).toBeInTheDocument();
+    expect(screen.getByText('12')).toBeInTheDocument();
+    expect(screen.getByText('Approved For Publish')).toBeInTheDocument();
+    expect(screen.getByText('Shopify Live')).toBeInTheDocument();
+    expect(screen.getByText('eBay Stale')).toBeInTheDocument();
+    expect(screen.getByText('Post-Publish Timing')).toBeInTheDocument();
+    expect(screen.getByText('Avg Days To Sell')).toBeInTheDocument();
+    expect(screen.getByText('18.5d')).toBeInTheDocument();
   });
 });

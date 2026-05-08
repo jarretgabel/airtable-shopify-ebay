@@ -31,7 +31,31 @@ This document is the app-owned surface audit for the approved used-gear workflow
 - Alignment:
   - grouped by `Pick Up ID` then `Submission Group ID`
   - supports qualification review and unqualified routing
-  - supports URL-backed search, collapse, sort, and copy-link behavior
+  - supports URL-backed search, collapse, sort, focused-group state, and copy-link behavior
+  - supports batch accept and batch trash actions for grouped submissions
+
+### Parking Lot 2 Queue
+- Status: `Done`
+- Surface:
+  - `src/components/tabs/airtable/UsedGearLotTwoSection.tsx`
+- Alignment:
+  - surfaces accepted arrival-stage rows before full workflow processing
+  - supports shared URL-backed queue state for search and triage
+
+### Trash Queue
+- Status: `Done`
+- Surface:
+  - `src/components/tabs/airtable/UsedGearTrashSection.tsx`
+- Alignment:
+  - surfaces unqualified rows retained in active trash
+  - supports restore, re-qualify, and permanent delete actions
+
+### Group Review Page
+- Status: `Done`
+- Surface:
+  - `src/components/tabs/UsedGearPendingReviewGroupPage.tsx`
+- Alignment:
+  - supports grouped submission review, shared totals, and Lot 2 acceptance for multi-row intake
 
 ### Progress Queue
 - Status: `Done`
@@ -41,6 +65,7 @@ This document is the app-owned surface audit for the approved used-gear workflow
   - supports processing, testing, photography, and pre-listing progression
   - shows approved-for-publish rows in the same workflow flow
   - exposes readiness context needed before publish handoff
+  - supports focused-group share links for grouped submission collaboration
 
 ### Workflow Detail Page
 - Status: `Done`
@@ -50,6 +75,7 @@ This document is the app-owned surface audit for the approved used-gear workflow
   - routable at `/inventory/workflow/:recordId`
   - loads a single workflow row from the configured source
   - exposes stage actions, workflow summary, and listing-readiness context
+  - surfaces grouped sibling-row context when the row belongs to a shared submission or pickup
 
 ### Post-Publish Queue
 - Status: `Done`
@@ -57,7 +83,16 @@ This document is the app-owned surface audit for the approved used-gear workflow
   - `src/components/tabs/airtable/UsedGearWorkflowPostPublishSection.tsx`
 - Alignment:
   - bucketed lifecycle view for listed, stale, sold-ready, and shipped rows
-  - supports URL-backed search, collapse, sort, focused bucket, and share-link behavior
+  - supports URL-backed search, collapse, sort, focused bucket, history filtering, and share-link behavior
+
+### Workflow Shell Navigation
+- Status: `Done`
+- Surface:
+  - `src/components/tabs/AirtableTab.tsx`
+- Alignment:
+  - sticky workflow summary chips remain visible while scrolling long queue sections
+  - named workflow presets restore current queue state
+  - keyboard shortcuts jump directly between workflow sections without leaving Inventory
 
 ## Listing And Publish Surfaces
 
@@ -120,51 +155,46 @@ This document is the app-owned surface audit for the approved used-gear workflow
 ## Existing Reuse Surfaces To Re-Check Later
 
 ### JotformTab
-- Status: `Watch`
+- Status: `Done`
 - Surface:
-  - existing inquiry/submission list reuse point noted in the workflow plan
-- Re-check when Phase 2 starts:
-  - whether grouped submission review should stay embedded here or move to a dedicated submission-review surface
-  - whether qualification notes and source/group metadata need to surface directly in this tab
+  - `src/components/tabs/JotformTab.tsx`
+- Alignment:
+  - now acts as Parking Lot 1 for intake-stage workflow review
+  - supports URL-backed intake queue state and grouped-review handoff into the dedicated group page
 - Constraint:
   - no live JotForm changes in Phase 1
 
 ### AirtableEmbeddedForm / Incoming Gear Form
-- Status: `Watch`
+- Status: `Done`
 - Surface:
-  - existing incoming gear form reuse point noted in the workflow plan
-- Re-check when Phase 2 starts:
-  - whether this form remains the arrival/update surface
-  - whether approved workflow fields should be shown directly or preserved in the workflow detail page only
+  - `src/components/tabs/AirtableEmbeddedForm.tsx`
+  - `src/services/incomingGearForm.ts`
+- Alignment:
+  - remains the arrival/update surface for workflow rows
+  - loads from the authoritative workflow row when available
 
 ### TestingFormTab
-- Status: `Watch`
+- Status: `Done`
 - Surface:
-  - existing testing form reuse point noted in the workflow plan
-- Re-check when deeper stage-specific UI is needed:
-  - internal functional notes
-  - testing signoff capture
-  - workflow route/open-back behavior
+  - `src/components/tabs/TestingFormTab.tsx`
+  - `src/services/testingForm.ts`
+- Alignment:
+  - uses the authoritative workflow row for processing-stage context and signoff follow-through
 
 ### PhotosFormTab
-- Status: `Watch`
+- Status: `Done`
 - Surface:
-  - existing photos form reuse point noted in the workflow plan
-- Re-check when deeper stage-specific UI is needed:
-  - photography signoff capture
-  - photo-reference workflow context
-  - workflow route/open-back behavior
+  - `src/components/tabs/PhotosFormTab.tsx`
+  - `src/services/photosForm.ts`
+- Alignment:
+  - uses the authoritative workflow row for photo-stage context, image reference checks, and signoff follow-through
 
 ## Later-Phase Surfaces Not Yet Implemented
 
 ### Intake And Parking-Lot Pages
-- Status: `Later Phase`
+- Status: `Done`
 - Surfaces to build or confirm:
-  - Parking Lot 1 queue page
-  - Parking Lot 2 queue page
-  - Trash page
-  - Manual entry intake page
-  - grouped submission review page if needed
+  - implemented through `JotformTab`, `UsedGearLotTwoSection`, `UsedGearTrashSection`, and `UsedGearPendingReviewGroupPage`
 
 ### Additional Listing And Lifecycle Pages
 - Status: `Later Phase`
@@ -175,14 +205,16 @@ This document is the app-owned surface audit for the approved used-gear workflow
   - dedicated sold-ready page if needed
   - shipped-history page if needed
 
-## Phase 1 Audit Outcome
-- `Done`: the current Inventory, workflow detail, approval, notification, and dashboard surfaces are aligned with the approved Phase 1 workflow model.
-- `Later Phase`: the main remaining UI alignment work is for surfaces that are planned but not yet implemented.
-- `Watch`: existing reusable forms should be explicitly re-audited before they become first-class workflow editing surfaces in later phases.
+## Audit Outcome
+- `Done`: the current Inventory, intake, workflow detail, approval, notification, dashboard, and post-publish surfaces are aligned with the implemented workflow through Phases 1-5.
+- `Later Phase`: only optional dedicated landing pages and marketplace-expansion surfaces remain outside the current audit.
+- `Watch`: marketplace-specific persistence and any future dedicated ownership surfaces still need re-audit if approved later.
 
 ## References
 - `docs/used-gear-workflow/ui-surface-map.md`
 - `docs/used-gear-workflow/data-model-and-approvals.md`
+- `docs/used-gear-workflow/operator-guide.md`
+- `docs/used-gear-workflow/publish-writeback-behavior.md`
 - `src/components/tabs/AirtableTab.tsx`
 - `src/components/tabs/UsedGearWorkflowRecordPage.tsx`
 - `src/components/approval/listingApprovalTabPanels.ts`

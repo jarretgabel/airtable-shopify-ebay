@@ -2,9 +2,17 @@ import type { AirtableRecord } from '@/types/airtable';
 import { getUsedGearWorkflowStatus, type UsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 
 export const USED_GEAR_STALE_THRESHOLD_DAYS = 45;
+export const USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS = [
+  'Needs Review',
+  'Price Refresh',
+  'Content Refresh',
+  'Ready To Relist',
+  'Do Not Relist',
+] as const;
 
 export type UsedGearWorkflowListingChannel = 'shopify' | 'ebay';
 export type UsedGearWorkflowPostPublishBucket = 'active-listing' | 'stale-listing' | 'sold-ready' | 'shipped';
+export type UsedGearWorkflowStaleRecoveryStatus = (typeof USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS)[number];
 
 export interface UsedGearWorkflowPostPublishSnapshot {
   bucket: UsedGearWorkflowPostPublishBucket;
@@ -12,6 +20,10 @@ export interface UsedGearWorkflowPostPublishSnapshot {
   status: UsedGearWorkflowStatus;
   listedAt: string | null;
   staleListingAt: string | null;
+  staleRecoveryStatus: UsedGearWorkflowStaleRecoveryStatus | null;
+  staleRecoveryNotes: string | null;
+  staleRecoveryUpdatedAt: string | null;
+  relistedAt: string | null;
   soldReadyToShipAt: string | null;
   shippedAt: string | null;
   daysSinceListed: number | null;
@@ -35,6 +47,15 @@ function getIsoTimestamp(value: unknown): string | null {
   if (!normalized) return null;
 
   return Number.isNaN(Date.parse(normalized)) ? null : normalized;
+}
+
+export function isUsedGearWorkflowStaleRecoveryStatus(value: string): value is UsedGearWorkflowStaleRecoveryStatus {
+  return (USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS as readonly string[]).includes(value);
+}
+
+export function getUsedGearWorkflowStaleRecoveryStatus(fields: Record<string, unknown>): UsedGearWorkflowStaleRecoveryStatus | null {
+  const rawValue = getTrimmedString(fields['Stale Recovery Status']);
+  return rawValue && isUsedGearWorkflowStaleRecoveryStatus(rawValue) ? rawValue : null;
 }
 
 function getDaysBetween(nowMs: number, timestamp: string | null): number | null {
@@ -71,6 +92,10 @@ export function getUsedGearWorkflowPostPublishSnapshot(
 
   const listedAt = getIsoTimestamp(record.fields['Listed At']);
   const staleListingAt = getIsoTimestamp(record.fields['Stale Listing At']);
+  const staleRecoveryStatus = getUsedGearWorkflowStaleRecoveryStatus(record.fields);
+  const staleRecoveryNotes = getTrimmedString(record.fields['Stale Recovery Notes']);
+  const staleRecoveryUpdatedAt = getIsoTimestamp(record.fields['Stale Recovery Updated At']);
+  const relistedAt = getIsoTimestamp(record.fields['Relisted At']);
   const soldReadyToShipAt = getIsoTimestamp(record.fields['Sold Ready To Ship At']);
   const shippedAt = getIsoTimestamp(record.fields['Shipped At']);
   const daysSinceListed = getDaysBetween(nowMs, listedAt);
@@ -85,6 +110,10 @@ export function getUsedGearWorkflowPostPublishSnapshot(
         status,
         listedAt,
         staleListingAt,
+        staleRecoveryStatus,
+        staleRecoveryNotes,
+        staleRecoveryUpdatedAt,
+        relistedAt,
         soldReadyToShipAt,
         shippedAt,
         daysSinceListed,
@@ -99,6 +128,10 @@ export function getUsedGearWorkflowPostPublishSnapshot(
         status,
         listedAt,
         staleListingAt,
+        staleRecoveryStatus,
+        staleRecoveryNotes,
+        staleRecoveryUpdatedAt,
+        relistedAt,
         soldReadyToShipAt,
         shippedAt,
         daysSinceListed,
@@ -112,6 +145,10 @@ export function getUsedGearWorkflowPostPublishSnapshot(
         status,
         listedAt,
         staleListingAt,
+        staleRecoveryStatus,
+        staleRecoveryNotes,
+        staleRecoveryUpdatedAt,
+        relistedAt,
         soldReadyToShipAt,
         shippedAt,
         daysSinceListed,
@@ -125,6 +162,10 @@ export function getUsedGearWorkflowPostPublishSnapshot(
         status,
         listedAt,
         staleListingAt,
+        staleRecoveryStatus,
+        staleRecoveryNotes,
+        staleRecoveryUpdatedAt,
+        relistedAt,
         soldReadyToShipAt,
         shippedAt,
         daysSinceListed,

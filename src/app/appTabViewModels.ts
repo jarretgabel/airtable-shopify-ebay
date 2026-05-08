@@ -3,6 +3,7 @@ import type { AppPage } from '@/auth/pages';
 import type { Tab } from '@/app/appNavigation';
 import type { JotFormSubmission } from '@/types/jotform';
 import type { HiFiSharkListing } from '@/types/hifishark';
+import type { UsedGearWorkflowAnalyticsSnapshotState } from '@/hooks/useUsedGearWorkflowAnalyticsSnapshot';
 import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 import type { EbayListingsState } from '@/hooks/useEbayListings';
 import type { EbayRuntimeConfig } from '@/services/app-api/ebay';
@@ -66,6 +67,7 @@ export interface DashboardTabViewModel {
     shopifyApprovalTotal: number;
     shopifyApprovalApproved: number;
     shopifyApprovalPending: number;
+    workflowAnalytics: UsedGearWorkflowAnalyticsSnapshotState;
     workflowPostPublishLoading: boolean;
     workflowPostPublishError: string | null;
     workflowActiveListingCount: number;

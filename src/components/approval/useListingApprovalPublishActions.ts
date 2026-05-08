@@ -85,6 +85,16 @@ export function useListingApprovalPublishActions({
       }
     }
 
+    if (publishedToEbay) {
+      fields['eBay Published At'] = now;
+      if (executionResult.ebay?.offerId) {
+        fields['eBay Offer ID'] = executionResult.ebay.offerId;
+      }
+      if (executionResult.ebay?.listingId) {
+        fields['eBay Listing ID'] = executionResult.ebay.listingId;
+      }
+    }
+
     if (Object.keys(fields).length === 0) {
       return;
     }

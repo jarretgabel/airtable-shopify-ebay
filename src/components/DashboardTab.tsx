@@ -5,6 +5,7 @@ import { DashboardAirtableSection } from '@/components/dashboard/DashboardAirtab
 import { DashboardEbaySection } from '@/components/dashboard/DashboardEbaySection';
 import { DashboardShopifySection } from '@/components/dashboard/DashboardShopifySection';
 import { DashboardJotformSection } from '@/components/dashboard/DashboardJotformSection';
+import { DashboardWorkflowAnalyticsSection } from '@/components/dashboard/DashboardWorkflowAnalyticsSection';
 import { getDashboardDegradedSources, hasDashboardPartialData } from '@/components/dashboard/dashboardSourceHealth';
 import { DashboardWorkflowSection } from '@/components/dashboard/DashboardWorkflowSections';
 import { DashboardActionsSection } from '@/components/dashboard/DashboardActionsSection';
@@ -182,6 +183,13 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
           onOpenInventoryPostPublishBucket={actions.onOpenInventoryPostPublishBucket}
           embedded
         />
+        {workflow.accessiblePages.includes('inventory') ? (
+          <DashboardWorkflowAnalyticsSection
+            loading={workflow.workflowAnalytics.loading}
+            error={workflow.workflowAnalytics.error}
+            snapshot={workflow.workflowAnalytics}
+          />
+        ) : null}
         <DashboardInsightsSection
           insights={data.insights}
           onSelectTab={actions.onSelectTab}

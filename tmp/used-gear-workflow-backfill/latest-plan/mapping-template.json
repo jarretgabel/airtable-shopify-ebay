@@ -1,0 +1,68 @@
+[
+  {
+    "recordId": "recKZ3WBAe7YqrQxl",
+    "apply": false,
+    "manualReviewRequired": true,
+    "reviewNotes": [
+      "Workflow Status is blank and requires manual classification."
+    ],
+    "notes": "",
+    "current": {
+      "createdTime": "2026-03-20T23:59:55.000Z",
+      "fields": {
+        "Workflow Status": null,
+        "Workflow Source": null,
+        "Submission Group ID": null,
+        "Pick Up ID": null,
+        "Trash Status": null,
+        "Qualification Complete": null,
+        "Unqualified Reason": null,
+        "Accepted At": null,
+        "Processing Signed At": null,
+        "Testing Signed At": null,
+        "Photography Signed At": null,
+        "Pre-Listing Reviewed At": null,
+        "Awaiting Pre-Listing Review At": null,
+        "Approved For Publish At": null,
+        "Listed At": null,
+        "Stale Listing At": null,
+        "Sold Ready To Ship At": null,
+        "Shipped At": null
+      }
+    },
+    "proposedFields": {}
+  },
+  {
+    "recordId": "rechqW5Pq8KsyroKB",
+    "apply": false,
+    "manualReviewRequired": true,
+    "reviewNotes": [
+      "Workflow Status is blank and requires manual classification."
+    ],
+    "notes": "",
+    "current": {
+      "createdTime": "2026-03-20T23:59:55.000Z",
+      "fields": {
+        "Workflow Status": null,
+        "Workflow Source": null,
+        "Submission Group ID": null,
+        "Pick Up ID": null,
+        "Trash Status": null,
+        "Qualification Complete": null,
+        "Unqualified Reason": null,
+        "Accepted At": null,
+        "Processing Signed At": null,
+        "Testing Signed At": null,
+        "Photography Signed At": null,
+        "Pre-Listing Reviewed At": null,
+        "Awaiting Pre-Listing Review At": null,
+        "Approved For Publish At": null,
+        "Listed At": null,
+        "Stale Listing At": null,
+        "Sold Ready To Ship At": null,
+        "Shipped At": null
+      }
+    },
+    "proposedFields": {}
+  }
+]

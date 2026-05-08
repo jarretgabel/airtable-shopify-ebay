@@ -255,6 +255,51 @@ describe('UsedGearWorkflowRecordPage', () => {
     expect(screen.getAllByText('Pending').length).toBeGreaterThan(0);
   });
 
+  it('renders approved workflow metadata fields that were added to Airtable', async () => {
+    loadUsedGearWorkflowRecordContextMock.mockResolvedValue({
+      record: {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          SKU: 'SKU-1',
+          Make: 'McIntosh',
+          Model: 'C28',
+          'Workflow Status': 'Awaiting Pre-Listing Review',
+          'Workflow Source': 'JotForm',
+          'Trash Status': 'Restored',
+          'Qualification Complete': true,
+          'Customer Inclusion Notes': 'Original cage included.',
+          'Customer Submitted Photos Notes': 'Seller sent rear panel and tube closeups.',
+          'Allocation Mode': 'Equal Split',
+          'Allocation Notes': 'Split evenly across two amps.',
+          'Stale Listing At': '2026-05-08T03:00:00.000Z',
+          'Sold Ready To Ship At': '2026-05-08T04:00:00.000Z',
+        },
+      },
+      group: null,
+    });
+
+    render(
+      <UsedGearWorkflowRecordPage
+        currentUserName="Taylor Reviewer"
+        recordId="rec1"
+        onBackToDirectory={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenTestingForm={vi.fn()}
+        onOpenPhotosForm={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+        onOpenInventoryEditor={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Workflow Source')).toBeInTheDocument();
+    expect(screen.getByText('Customer Submitted Photos Notes: Seller sent rear panel and tube closeups.')).toBeInTheDocument();
+    expect(screen.getByText('Allocation Mode: Equal Split')).toBeInTheDocument();
+    expect(screen.getByText('Qualification Complete: true')).toBeInTheDocument();
+    expect(screen.getByText('Stale Listing At: 2026-05-08T03:00:00.000Z')).toBeInTheDocument();
+  });
+
   it('shows sibling rows when the workflow record belongs to a grouped submission', async () => {
     loadUsedGearWorkflowRecordContextMock.mockResolvedValue({
       record: {

@@ -332,4 +332,62 @@ describe('approval action notifications', () => {
       expect(notification?.message).toContain('eBay: Offer creation failed');
     });
   });
+
+  it('writes approved eBay publish metadata back to the workflow row', async () => {
+    publishApprovalRecordMock.mockResolvedValue({
+      target: 'ebay',
+      ebay: {
+        sku: 'MCINTOSH-MA6900',
+        offerId: 'offer-9',
+        listingId: 'listing-9',
+        wasExistingOffer: false,
+        mode: 'created',
+      },
+      failures: [],
+    });
+
+    const requestConfirmation = vi.fn(async () => true);
+    const pushInlineActionNotice = vi.fn();
+    const setFormValue = vi.fn();
+
+    const { result } = renderHook(() => useListingApprovalPublishActions({
+      selectedRecord: record,
+      hasMissingShopifyRequiredFields: false,
+      hasMissingEbayRequiredFields: false,
+      missingShopifyRequiredFieldLabels: [],
+      missingEbayRequiredFieldLabels: [],
+      approvalPublishSource: 'approval-shopify',
+      mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
+      workflowPublishSummary: null,
+      setFormValue,
+      pushInlineActionNotice,
+      requestConfirmation,
+    }));
+
+    await act(async () => {
+      await result.current.runCombinedPush('ebay');
+    });
+
+    expect(updateConfiguredRecordMock).toHaveBeenCalledWith(
+      'approval-shopify',
+      'rec-notify-1',
+      expect.objectContaining({
+        'Workflow Status': 'Listed, eBay',
+        'Listed At': expect.any(String),
+        'eBay Published At': expect.any(String),
+        'eBay Offer ID': 'offer-9',
+        'eBay Listing ID': 'listing-9',
+      }),
+      { typecast: true },
+    );
+    expect(setFormValue).toHaveBeenCalledWith('Workflow Status', 'Listed, eBay');
+    expect(setFormValue).toHaveBeenCalledWith('eBay Published At', expect.any(String));
+    expect(setFormValue).toHaveBeenCalledWith('eBay Offer ID', 'offer-9');
+    expect(setFormValue).toHaveBeenCalledWith('eBay Listing ID', 'listing-9');
+    expect(pushInlineActionNotice).toHaveBeenCalledWith(
+      'success',
+      'eBay listing published',
+      'SKU MCINTOSH-MA6900 is live as listing listing-9 via offer offer-9.',
+    );
+  });
 });

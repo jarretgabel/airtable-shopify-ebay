@@ -23,6 +23,8 @@ describe('buildUsedGearWorkflowTimeline', () => {
       'Pre-Listing Review Completed',
       'Approved For Publish',
       'Listed',
+      'Marked Stale',
+      'Relisted',
       'Sold Ready To Ship',
       'Shipped',
     ]);

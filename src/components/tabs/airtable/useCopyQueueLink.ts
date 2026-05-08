@@ -7,6 +7,7 @@ interface UseCopyQueueLinkParams {
   successMessage: string;
   unavailableMessage: string;
   failureMessage: string;
+  buildUrl?: () => string;
 }
 
 export function useCopyQueueLink({
@@ -15,12 +16,13 @@ export function useCopyQueueLink({
   successMessage,
   unavailableMessage,
   failureMessage,
+  buildUrl,
 }: UseCopyQueueLinkParams) {
   const pushNotification = useNotificationStore((state) => state.push);
   const [copyingLink, setCopyingLink] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const copyLink = async () => {
+  const copyLink = async (urlOverride?: string) => {
     if (typeof window === 'undefined' || !navigator.clipboard) {
       pushNotification({
         tone: 'error',
@@ -33,9 +35,12 @@ export function useCopyQueueLink({
     setCopyingLink(true);
 
     try {
-      const queueUrl = new URL(window.location.href);
-      queueUrl.hash = sectionId;
-      await navigator.clipboard.writeText(queueUrl.toString());
+      const queueUrl = urlOverride ?? (buildUrl ? buildUrl() : (() => {
+        const nextUrl = new URL(window.location.href);
+        nextUrl.hash = sectionId;
+        return nextUrl.toString();
+      })());
+      await navigator.clipboard.writeText(queueUrl);
       setCopiedLink(true);
       window.setTimeout(() => setCopiedLink(false), 1800);
       pushNotification({

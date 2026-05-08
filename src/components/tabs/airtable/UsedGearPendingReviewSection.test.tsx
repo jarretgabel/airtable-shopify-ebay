@@ -202,4 +202,40 @@ describe('UsedGearPendingReviewSection', () => {
       }), 'Taylor Reviewer');
     });
   });
+
+  it('copies a group-focused pending review link', async () => {
+    loadPendingReviewQueueMock.mockResolvedValue([
+      {
+        id: 'rec-pending-a',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PEND-1',
+          Make: 'McIntosh',
+          Model: 'MC240',
+          'Workflow Status': 'Pending Review',
+          'Pick Up ID': 'pickup-a',
+          'Offer Amount': 500,
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearPendingReviewSection
+        currentUserName="Taylor Reviewer"
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Pending Review Queue');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Copy Group Link' }));
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/inventory?workflowPendingReviewGroup=pickup%3Apickup-a#used-gear-pending-review`);
+    });
+  });
 });

@@ -1,0 +1,38 @@
+{
+  "baseId": "apprsAm2FOohEmL2u",
+  "tableId": "tbl0K0nFQL64jQMx8",
+  "created": [
+    {
+      "id": "fldyOObXogaJDLApi",
+      "name": "eBay Published At",
+      "type": "dateTime"
+    },
+    {
+      "id": "fldTCjp1marmowkwA",
+      "name": "eBay Offer ID",
+      "type": "singleLineText"
+    },
+    {
+      "id": "fld7rkwiAQ458GQ22",
+      "name": "eBay Listing ID",
+      "type": "singleLineText"
+    }
+  ],
+  "rollbackOrder": [
+    {
+      "id": "fld7rkwiAQ458GQ22",
+      "name": "eBay Listing ID",
+      "type": "singleLineText"
+    },
+    {
+      "id": "fldTCjp1marmowkwA",
+      "name": "eBay Offer ID",
+      "type": "singleLineText"
+    },
+    {
+      "id": "fldyOObXogaJDLApi",
+      "name": "eBay Published At",
+      "type": "dateTime"
+    }
+  ]
+}

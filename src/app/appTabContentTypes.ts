@@ -8,6 +8,7 @@ import type { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
 import type { useShopifyProducts } from '@/hooks/useShopifyProducts';
 import type { Tab } from '@/app/appNavigation';
 import type { RuntimeFeatureMap } from '@/config/runtimeCapabilities';
+import type { UsedGearWorkflowAnalyticsSnapshotState } from '@/hooks/useUsedGearWorkflowAnalyticsSnapshot';
 import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 
 export interface AppTabContentProps {
@@ -75,6 +76,7 @@ export interface AppTabContentProps {
   shopifyApprovalTotal: number;
   shopifyApprovalApproved: number;
   shopifyApprovalPending: number;
+  workflowAnalytics: UsedGearWorkflowAnalyticsSnapshotState;
   workflowPostPublishLoading: boolean;
   workflowPostPublishError: string | null;
   workflowActiveListingCount: number;

@@ -3,13 +3,18 @@ import { EmptySurface } from '@/components/app/StateSurfaces';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
   loadWorkflowPostPublishQueue,
+  markWorkflowRelisted,
   markWorkflowListingStale,
+  saveWorkflowStaleRecovery,
   markWorkflowShipped,
   markWorkflowSoldReadyToShip,
 } from '@/services/usedGearQueue';
 import {
   getUsedGearWorkflowPostPublishSnapshot,
+  isUsedGearWorkflowStaleRecoveryStatus,
   USED_GEAR_STALE_THRESHOLD_DAYS,
+  USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS,
+  type UsedGearWorkflowStaleRecoveryStatus,
   type UsedGearWorkflowPostPublishBucket,
 } from '@/services/usedGearWorkflowLifecycle';
 import {
@@ -24,6 +29,8 @@ interface UsedGearWorkflowPostPublishSectionProps {
   onFocusedBucketChange?: (bucket: UsedGearWorkflowPostPublishBucket | 'all') => void;
   onOpenWorkflowRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
+  historyFilter?: UsedGearWorkflowPostPublishHistoryFilter;
+  onHistoryFilterChange?: (value: UsedGearWorkflowPostPublishHistoryFilter) => void;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
   collapsedSectionKeys?: UsedGearWorkflowPostPublishBucket[];
@@ -33,11 +40,27 @@ interface UsedGearWorkflowPostPublishSectionProps {
 }
 
 export type UsedGearWorkflowPostPublishSortMode = 'latest-activity' | 'oldest-activity' | 'sku';
+export type UsedGearWorkflowPostPublishHistoryFilter = 'all' | 'active-only' | 'history-only';
 
 interface PostPublishSectionDefinition {
   key: UsedGearWorkflowPostPublishBucket;
   title: string;
   description: string;
+}
+
+function getPostPublishSectionEmptyGuidance(bucket: UsedGearWorkflowPostPublishBucket): string {
+  switch (bucket) {
+    case 'active-listing':
+      return 'Next action: publish the next Approved for Publish row in Listings, or move to Stale Listings when a live marketplace item needs follow-up.';
+    case 'stale-listing':
+      return 'Next action: keep working Active Listings until an item ages into stale follow-up, or mark a listed row stale when the relist/recovery workflow needs to begin.';
+    case 'sold-ready':
+      return 'Next action: mark a listed or stale row Sold Ready To Ship after payment is confirmed, or return to Active Listings and Stale Listings for marketplace follow-through.';
+    case 'shipped':
+      return 'Next action: mark a Sold Ready To Ship row Shipped after fulfillment completes, or switch history mode back to active work when the team is triaging current lifecycle items.';
+    default:
+      return 'Next action: continue the next workflow handoff from Listings or the active lifecycle queue.';
+  }
 }
 
 const SECTION_DEFINITIONS: PostPublishSectionDefinition[] = [
@@ -62,6 +85,11 @@ const SECTION_DEFINITIONS: PostPublishSectionDefinition[] = [
     description: 'Completed shipments retained for quick workflow lookup.',
   },
 ];
+
+function normalizeStaleRecoveryStatus(value: unknown): UsedGearWorkflowStaleRecoveryStatus | '' {
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  return isUsedGearWorkflowStaleRecoveryStatus(normalized) ? normalized : '';
+}
 
 function recordSearchText(record: AirtableRecord): string {
   return [
@@ -93,6 +121,8 @@ export function UsedGearWorkflowPostPublishSection({
   onFocusedBucketChange,
   onOpenWorkflowRecord,
   onOpenListingsRecord,
+  historyFilter = 'all',
+  onHistoryFilterChange,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
   collapsedSectionKeys: controlledCollapsedSectionKeys,
@@ -119,6 +149,8 @@ export function UsedGearWorkflowPostPublishSection({
   const [uncontrolledCollapsedSectionKeys, setUncontrolledCollapsedSectionKeys] = useState<UsedGearWorkflowPostPublishBucket[]>([]);
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowPostPublishSortMode>('latest-activity');
   const [actionRecordId, setActionRecordId] = useState<string | null>(null);
+  const [staleRecoveryStatuses, setStaleRecoveryStatuses] = useState<Record<string, UsedGearWorkflowStaleRecoveryStatus | ''>>({});
+  const [staleRecoveryNotes, setStaleRecoveryNotes] = useState<Record<string, string>>({});
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const collapsedSectionKeys = Array.isArray(controlledCollapsedSectionKeys)
     ? controlledCollapsedSectionKeys
@@ -198,12 +230,18 @@ export function UsedGearWorkflowPostPublishSection({
   const agingSummary = useMemo(() => buildPostPublishQueueAgingSummary(filteredRecords), [filteredRecords]);
 
   const visibleSections = useMemo(() => {
+    const sectionDefinitions = historyFilter === 'active-only'
+      ? SECTION_DEFINITIONS.filter((section) => section.key !== 'shipped')
+      : historyFilter === 'history-only'
+        ? SECTION_DEFINITIONS.filter((section) => section.key === 'shipped')
+        : SECTION_DEFINITIONS;
+
     if (selectedBucket === 'all') {
-      return SECTION_DEFINITIONS;
+      return sectionDefinitions;
     }
 
-    return SECTION_DEFINITIONS.filter((section) => section.key === selectedBucket);
-  }, [selectedBucket]);
+    return sectionDefinitions.filter((section) => section.key === selectedBucket);
+  }, [historyFilter, selectedBucket]);
   const visibleSectionKeys = useMemo(
     () => visibleSections.map((section) => section.key),
     [visibleSections],
@@ -227,6 +265,14 @@ export function UsedGearWorkflowPostPublishSection({
 
   const replaceRecord = (updatedRecord: AirtableRecord) => {
     setRecords((currentRecords) => currentRecords.map((record) => record.id === updatedRecord.id ? updatedRecord : record));
+    setStaleRecoveryStatuses((current) => ({
+      ...current,
+      [updatedRecord.id]: normalizeStaleRecoveryStatus(updatedRecord.fields['Stale Recovery Status']),
+    }));
+    setStaleRecoveryNotes((current) => ({
+      ...current,
+      [updatedRecord.id]: typeof updatedRecord.fields['Stale Recovery Notes'] === 'string' ? updatedRecord.fields['Stale Recovery Notes'] : '',
+    }));
   };
 
   const handleAction = async (recordId: string, action: () => Promise<AirtableRecord>) => {
@@ -240,6 +286,22 @@ export function UsedGearWorkflowPostPublishSection({
     } finally {
       setActionRecordId(null);
     }
+  };
+
+  const getDraftStaleRecoveryStatus = (record: AirtableRecord): UsedGearWorkflowStaleRecoveryStatus | '' => {
+    if (typeof staleRecoveryStatuses[record.id] === 'string') {
+      return staleRecoveryStatuses[record.id];
+    }
+
+    return normalizeStaleRecoveryStatus(record.fields['Stale Recovery Status']);
+  };
+
+  const getDraftStaleRecoveryNotes = (record: AirtableRecord): string => {
+    if (typeof staleRecoveryNotes[record.id] === 'string') {
+      return staleRecoveryNotes[record.id];
+    }
+
+    return typeof record.fields['Stale Recovery Notes'] === 'string' ? record.fields['Stale Recovery Notes'] : '';
   };
 
   const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
@@ -381,6 +443,30 @@ export function UsedGearWorkflowPostPublishSection({
         ))}
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${historyFilter === 'all' ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'}`}
+          onClick={() => onHistoryFilterChange?.('all')}
+        >
+          All Lifecycle Work
+        </button>
+        <button
+          type="button"
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${historyFilter === 'active-only' ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'}`}
+          onClick={() => onHistoryFilterChange?.('active-only')}
+        >
+          Active Only
+        </button>
+        <button
+          type="button"
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${historyFilter === 'history-only' ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'}`}
+          onClick={() => onHistoryFilterChange?.('history-only')}
+        >
+          History Only
+        </button>
+      </div>
+
       {focusedBucket ? (
         <div className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
           Dashboard shortcut opened the post-publish queue filtered to the selected lifecycle bucket.
@@ -457,7 +543,8 @@ export function UsedGearWorkflowPostPublishSection({
                 </div>
               ) : sectionRecords.length === 0 ? (
                 <div className="mt-4 rounded-xl border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
-                  No rows currently match this post-publish stage.
+                  <p className="m-0">No rows currently match this post-publish stage.</p>
+                  <p className="mt-2 mb-0">{getPostPublishSectionEmptyGuidance(section.key)}</p>
                 </div>
               ) : (
                 <div className="mt-4 grid gap-3 lg:grid-cols-2">
@@ -466,9 +553,12 @@ export function UsedGearWorkflowPostPublishSection({
                     if (!snapshot) return null;
 
                     const busy = actionRecordId === record.id;
+                    const isStaleListing = snapshot.status === 'Stale Listing, Shopify' || snapshot.status === 'Stale Listing, eBay';
                     const canMarkStale = snapshot.status === 'Listed, Shopify' || snapshot.status === 'Listed, eBay';
                     const canMarkSoldReady = snapshot.bucket === 'active-listing' || snapshot.bucket === 'stale-listing';
                     const canMarkShipped = snapshot.bucket === 'sold-ready';
+                    const draftStaleRecoveryStatus = getDraftStaleRecoveryStatus(record);
+                    const draftStaleRecoveryNotes = getDraftStaleRecoveryNotes(record);
 
                     return (
                       <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
@@ -487,14 +577,63 @@ export function UsedGearWorkflowPostPublishSection({
                           <div>Listed At: {displayInventoryValue(snapshot.listedAt)}</div>
                           <div>Days Live: {snapshot.daysSinceListed ?? '—'}</div>
                           <div>Stale At: {displayInventoryValue(snapshot.staleListingAt)}</div>
+                          <div>Relisted At: {displayInventoryValue(snapshot.relistedAt)}</div>
                           <div>Sold Ready At: {displayInventoryValue(snapshot.soldReadyToShipAt)}</div>
                           <div>Shipped At: {displayInventoryValue(snapshot.shippedAt)}</div>
                           <div>Price: {displayInventoryValue(record.fields.Price || record.fields['Shopify Price'] || record.fields['eBay Price'])}</div>
+                          <div>Recovery Updated: {displayInventoryValue(snapshot.staleRecoveryUpdatedAt)}</div>
                         </div>
 
                         {snapshot.bucket !== 'shipped' && snapshot.isPastStaleThreshold && snapshot.status !== 'Stale Listing, Shopify' && snapshot.status !== 'Stale Listing, eBay' ? (
                           <div className="mt-3 rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-3 text-sm text-amber-200">
                             This listing has been live for {snapshot.daysSinceListed ?? 0} days and has crossed the {snapshot.staleThresholdDays}-day stale threshold.
+                          </div>
+                        ) : null}
+
+                        {isStaleListing ? (
+                          <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--bg)]/70 px-3 py-3 text-sm text-[var(--muted)]">
+                            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Stale Recovery</p>
+                            <div className="mt-3 grid gap-3">
+                              <label>
+                                <span className="sr-only">Stale recovery status</span>
+                                <select
+                                  className={inputClassName}
+                                  value={draftStaleRecoveryStatus}
+                                  onChange={(event) => {
+                                    const value = normalizeStaleRecoveryStatus(event.currentTarget.value);
+                                    setStaleRecoveryStatuses((current) => ({ ...current, [record.id]: value }));
+                                  }}
+                                  disabled={busy}
+                                >
+                                  <option value="">Recovery Status</option>
+                                  {USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS.map((option) => (
+                                    <option key={option} value={option}>{option}</option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label>
+                                <span className="sr-only">Stale recovery notes</span>
+                                <textarea
+                                  className={`${inputClassName} min-h-24 resize-y`}
+                                  value={draftStaleRecoveryNotes}
+                                  onChange={(event) => {
+                                    const value = event.currentTarget.value;
+                                    setStaleRecoveryNotes((current) => ({ ...current, [record.id]: value }));
+                                  }}
+                                  placeholder="Add relist, pricing, or content-refresh notes"
+                                  disabled={busy}
+                                />
+                              </label>
+                              <div className="grid gap-2 sm:grid-cols-2">
+                                <div>Recovery Status: {displayInventoryValue(snapshot.staleRecoveryStatus)}</div>
+                                <div>Recovery Updated: {displayInventoryValue(snapshot.staleRecoveryUpdatedAt)}</div>
+                              </div>
+                              {snapshot.staleRecoveryNotes ? (
+                                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-3 text-sm text-[var(--ink)]">
+                                  {snapshot.staleRecoveryNotes}
+                                </div>
+                              ) : null}
+                            </div>
                           </div>
                         ) : null}
 
@@ -525,6 +664,33 @@ export function UsedGearWorkflowPostPublishSection({
                               disabled={busy}
                             >
                               {busy ? 'Saving...' : 'Mark Stale'}
+                            </button>
+                          ) : null}
+                          {isStaleListing ? (
+                            <button
+                              type="button"
+                              className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                              onClick={() => {
+                                void handleAction(record.id, () => saveWorkflowStaleRecovery(record.id, {
+                                  staleRecoveryStatus: draftStaleRecoveryStatus || null,
+                                  staleRecoveryNotes: draftStaleRecoveryNotes || null,
+                                }));
+                              }}
+                              disabled={busy}
+                            >
+                              {busy ? 'Saving...' : 'Save Recovery'}
+                            </button>
+                          ) : null}
+                          {isStaleListing ? (
+                            <button
+                              type="button"
+                              className="rounded-xl bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                              onClick={() => {
+                                void handleAction(record.id, () => markWorkflowRelisted(record.id));
+                              }}
+                              disabled={busy}
+                            >
+                              {busy ? 'Saving...' : 'Mark Relisted'}
                             </button>
                           ) : null}
                           {canMarkSoldReady ? (

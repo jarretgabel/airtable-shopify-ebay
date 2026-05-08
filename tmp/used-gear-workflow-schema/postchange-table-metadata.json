@@ -1,0 +1,5021 @@
+{
+  "id": "tbl0K0nFQL64jQMx8",
+  "name": "Listings",
+  "primaryFieldId": "fldV1S2SUeKFhWXOF",
+  "fields": [
+    {
+      "type": "multilineText",
+      "id": "fldV1S2SUeKFhWXOF",
+      "name": "Template Name"
+    },
+    {
+      "type": "multilineText",
+      "id": "fld9ZENbDIQ00Cl7x",
+      "name": "Item Title"
+    },
+    {
+      "type": "richText",
+      "id": "fldd1kfSYaT14oKam",
+      "name": "Description"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldFWvI3YUm7V2qyz",
+      "name": "Ebay Body (HTML)"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldwopgL0IGLr9LaE",
+      "name": "Key Features (Key, Value)"
+    },
+    {
+      "type": "multilineText",
+      "id": "fld7QYSapIZk7yRso",
+      "name": "Images (comma-separated)"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fld7ZmMGShWuO3Zgt",
+      "name": "Images Alt Text (comma separated)"
+    },
+    {
+      "type": "multipleSelects",
+      "options": {
+        "choices": [
+          {
+            "id": "selu6VptqSPRBLz1R",
+            "name": "48647",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selEWGxAcfxf3KeAy",
+            "name": "14970",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selvpWxdXFG5Br8HP",
+            "name": "Car Speakers & Speaker Systems",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selytOQFhLzpFkcIv",
+            "name": "Record Players/Home Turntables",
+            "color": "blueLight2"
+          }
+        ]
+      },
+      "id": "fldNeeZXG3GME2HzO",
+      "name": "Ebay Categories"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "sel2YR4Q8OsqxkpWM",
+            "name": "Buy It Now",
+            "color": "blueLight2"
+          }
+        ]
+      },
+      "id": "fld8Z0t0Phm3CfDsN",
+      "name": "Ebay Listing Format"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "sel2LZJWpHUNL9aBz",
+            "name": "GTC",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selTdV8wmkr6YeHGF",
+            "name": "DAYS_7",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "seltjIVMsm1z5Jf3c",
+            "name": "DAYS_10",
+            "color": "tealLight2"
+          }
+        ]
+      },
+      "id": "fld7G9FHeNaGFkL0X",
+      "name": "Ebay Duration"
+    },
+    {
+      "type": "number",
+      "options": {
+        "precision": 0
+      },
+      "id": "fldeTtfdYeTsUHwcJ",
+      "name": "Ebay Quantity"
+    },
+    {
+      "type": "multilineText",
+      "id": "fld1zBgSoEgn9z2Yg",
+      "name": "Ebay Allow Offers"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selMNjjGT49u8c9u8",
+            "name": "Calculated",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selSZZdZAHvMBFMyR",
+            "name": "CalculatedDomesticFlatInternational",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "selYpsmC3WuYOJ86O",
+            "name": "Flat",
+            "color": "tealLight2"
+          },
+          {
+            "id": "selgo7l8ljXmfnmeI",
+            "name": "FlatDomesticCalculatedInternational",
+            "color": "greenLight2"
+          },
+          {
+            "id": "sel5AXSx3pgN8UdZG",
+            "name": "FreightFlat",
+            "color": "yellowLight2"
+          },
+          {
+            "id": "sel0FhKfzLdYeOhd3",
+            "name": "NotSpecified",
+            "color": "orangeLight2"
+          }
+        ]
+      },
+      "id": "fld0KqZK71sYCDAsS",
+      "name": "Ebay Domestic Shipping Fees"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selbjKzVIhEfXnaMR",
+            "name": "Package/Thick Envelope",
+            "color": "blueLight2"
+          }
+        ]
+      },
+      "id": "fldFGCW7oq5iA2oOS",
+      "name": "Ebay Package Type"
+    },
+    {
+      "type": "number",
+      "options": {
+        "precision": 0
+      },
+      "id": "fldLalQuqLFzkahY5",
+      "name": "Item Zip Code"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selgtRitIEsvanQjH",
+            "name": "UPS Ground",
+            "color": "blueLight2"
+          }
+        ]
+      },
+      "id": "fldXAuBSMyWFIrXkI",
+      "name": "Ebay Domestic Service 1"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldr8FtMz4g8m8q4i",
+      "name": "Ebay International Shipping Fees"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selKZiNfWYLQdRbf8",
+            "name": "Worldwide",
+            "color": "blueLight2"
+          }
+        ]
+      },
+      "id": "fldv4F76PiCdOSJxb",
+      "name": "Ebay International Destinations"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "sel0zY8RY4S8XMxbQ",
+            "name": "USPS Priority Mail International",
+            "color": "blueLight2"
+          }
+        ]
+      },
+      "id": "fldppaINdeaA5UqAJ",
+      "name": "Ebay International Service 1"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selI2oWRUFxBuhpP8",
+            "name": "eBay International Standard Delivery",
+            "color": "blueLight2"
+          }
+        ]
+      },
+      "id": "fldoXIqwdW70L3Gvq",
+      "name": "Ebay International Service 2"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "sel9XJCDSD3mVPD2R",
+            "name": "None",
+            "color": "blueLight2"
+          }
+        ]
+      },
+      "id": "fldsxlKhkrEs9E3mX",
+      "name": "Ebay Excluded Locations"
+    },
+    {
+      "type": "checkbox",
+      "options": {
+        "icon": "check",
+        "color": "greenBright"
+      },
+      "id": "fldesoXIfaQXnVbNZ",
+      "name": "Ebay Combined Shipping Discount Enabled"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldKXfo26Vhmnlo0U",
+      "name": "Ebay Combined Shipping Discount Profile"
+    },
+    {
+      "type": "number",
+      "options": {
+        "precision": 0
+      },
+      "id": "fldcDZ1uQilRWqfjt",
+      "name": "Ebay Handling Time Days"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "seldiwVuJfP2ajPPi",
+            "name": "TRUE",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selWRUknBChxOnyC3",
+            "name": "FALSE",
+            "color": "cyanLight2"
+          }
+        ]
+      },
+      "id": "fldhenEmy5omecoOM",
+      "name": "Ebay Approved"
+    },
+    {
+      "type": "multilineText",
+      "id": "fld4P3iBLkHyxeX9A",
+      "name": "Shopify Body (HTML)"
+    },
+    {
+      "type": "multilineText",
+      "id": "fld1nV5VvZRUGpvbX",
+      "name": "Shopify Type"
+    },
+    {
+      "type": "multipleSelects",
+      "options": {
+        "choices": [
+          {
+            "id": "selRDUT3oaVSJwVgt",
+            "name": "Turntable",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selTJDgB7AY7nD7Lp",
+            "name": "gid://shopify/Collection/486947422530",
+            "color": "blueLight2"
+          },
+          {
+            "id": "seloVubZz0BsrNDqu",
+            "name": "gid://shopify/Collection/492784943426",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "selefidcF77elTl3F",
+            "name": "gid://shopify/Collection/486926647618",
+            "color": "tealLight2"
+          },
+          {
+            "id": "selFwiYzBYryvowKP",
+            "name": "Turntables",
+            "color": "redLight1"
+          },
+          {
+            "id": "sel7uu6ucrLBKTAVj",
+            "name": "Accuphase",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selgRZvS8e7X8FnrW",
+            "name": "Amplifiers",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selOjy1GInBMkAlLO",
+            "name": "Anthem AV",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selUyYlcPk1WuMBfv",
+            "name": "gid://shopify/Collection/487012106562",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selQi785N3K9oW0iQ",
+            "name": "gid://shopify/Collection/486928646466",
+            "color": "blueLight2"
+          },
+          {
+            "id": "sel9sFYoFpX97wPn9",
+            "name": "gid://shopify/Collection/489097494850",
+            "color": "blueLight2"
+          },
+          {
+            "id": "seltDTbQoG1UgoaG5",
+            "name": "gid://shopify/Collection/509149380930",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selcyV69Zx4oK5Kta",
+            "name": "gid://shopify/Collection/514245656898",
+            "color": "blueLight2"
+          },
+          {
+            "id": "sel29CBcSg0NoRVio",
+            "name": "Klipsch",
+            "color": "blueLight2"
+          }
+        ]
+      },
+      "id": "fld5gO1tZT4ZEZtMN",
+      "name": "Shopify Collections"
+    },
+    {
+      "type": "multipleSelects",
+      "options": {
+        "choices": [
+          {
+            "id": "selMzWRlkySNBMMfD",
+            "name": "Turntable",
+            "color": "blueLight2"
+          },
+          {
+            "id": "sel8fbriXjcYO7Ngp",
+            "name": "Turntables",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "sel8Irb3sqMvS5QPi",
+            "name": "audio",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selkQaJrdyzOz58DQ",
+            "name": "Test",
+            "color": "blueLight2"
+          }
+        ]
+      },
+      "id": "fldyVh9c8b4eJediJ",
+      "name": "Shopify Tags"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldPlCAvgxqQheMWs",
+      "name": "SKU Legacy Backup"
+    },
+    {
+      "type": "number",
+      "options": {
+        "precision": 0
+      },
+      "id": "fldIJqYkjVG0Qcvyd",
+      "name": "Shopify Variant-Status"
+    },
+    {
+      "type": "multilineText",
+      "id": "fld1XC1PEpNrK5Tn1",
+      "name": "Shopify Variant-Fulfillment"
+    },
+    {
+      "type": "number",
+      "options": {
+        "precision": 2
+      },
+      "id": "fld9MWeA6sy0RGc0z",
+      "name": "Shopify Price"
+    },
+    {
+      "type": "currency",
+      "options": {
+        "precision": 2,
+        "symbol": "$"
+      },
+      "id": "fldZeptattjbUpJuf",
+      "name": "Ebay Price"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selmNeBe2ZpRwRnZe",
+            "name": "TRUE",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selQAa5TJHdRMFCgI",
+            "name": "FALSE",
+            "color": "cyanLight2"
+          }
+        ]
+      },
+      "id": "fldNQICDAhtD9KpoF",
+      "name": "Shopify Variant-Requires-Shipping"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selskVfmDwch8V33N",
+            "name": "TRUE",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selASUDIoWyW0bbeT",
+            "name": "FALSE",
+            "color": "cyanLight2"
+          }
+        ]
+      },
+      "id": "fldWqkl7TUZ4A7j7t",
+      "name": "Shopify Variant-Taxable"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldd3atq3Dk1xdlnB",
+      "name": "Images (comma-separated) 2"
+    },
+    {
+      "type": "number",
+      "options": {
+        "precision": 0
+      },
+      "id": "fldlNdSAtT3jz5dfa",
+      "name": "Image-Position"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldpJjY9jxeDQTLkj",
+      "name": "Images Alt Text (comma separated) 2"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldHcO4NCha1CewLr",
+      "name": "Shopify Variant-Barcode"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldsYErfFsJFNxu1h",
+      "name": "Shopify Variant-Status-Active"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selQ0WuvGaJZTyoTU",
+            "name": "Used",
+            "color": "blueLight2"
+          },
+          {
+            "id": "sel2BESNKJMYyY0TF",
+            "name": "New",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "selpyoJnlTZR7bo5l",
+            "name": "Open Box",
+            "color": "tealLight2"
+          },
+          {
+            "id": "selT1TjQGir5JzSV8",
+            "name": "For Parts or not working",
+            "color": "greenLight2"
+          }
+        ]
+      },
+      "id": "fld2ZD6dKnqebH2yv",
+      "name": "Condition"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "sellroi5OKJIn9bvk",
+            "name": "TRUE",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selHbbNks2g0WppwV",
+            "name": "FALSE",
+            "color": "cyanLight2"
+          }
+        ]
+      },
+      "id": "fldzxMvT3stmZXPPm",
+      "name": "Shopify Approved"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldZoNIawX9sjawoz",
+      "name": "Shopify REST Product ID"
+    },
+    {
+      "type": "date",
+      "options": {
+        "dateFormat": {
+          "name": "local",
+          "format": "l"
+        }
+      },
+      "id": "fldOaE8KS53Z1ue8g",
+      "name": "Arrival Date"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldSPlIbVpK2XQjh6",
+      "name": "Pick Up #"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldLY4TyXwFiG5QF1",
+      "name": "Acquired From"
+    },
+    {
+      "type": "currency",
+      "options": {
+        "precision": 2,
+        "symbol": "$"
+      },
+      "id": "fldKN61bnc4RZelH4",
+      "name": "Cost"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selYB8uxFufc2eiZg",
+            "name": "Waiting for Unit",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selNEXQRPyy4uDQjY",
+            "name": "Needs Initial Processing",
+            "color": "blueLight1"
+          },
+          {
+            "id": "sely146CalT5gXDNy",
+            "name": "Ready to Test",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "sel42NoLBUXZpkleU",
+            "name": "Tested",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selYTK1grfJPIiWy9",
+            "name": "Photo'd",
+            "color": "pinkLight2"
+          },
+          {
+            "id": "selCHM83iqrgQwl1n",
+            "name": "Waiting for Replacement (Box, remote, etc)",
+            "color": "redLight1"
+          },
+          {
+            "id": "selNCLPRIVERG9UV4",
+            "name": "Ready to List, Pending AW Approval",
+            "color": "greenLight2"
+          },
+          {
+            "id": "selbx3LBuOs0rez3z",
+            "name": "Listed, Active",
+            "color": "greenLight1"
+          },
+          {
+            "id": "seldB9gnY3yqsdyA5",
+            "name": "Listed, Inactive",
+            "color": "yellowLight2"
+          },
+          {
+            "id": "selAFpXozhZRwHPBL",
+            "name": "Shipped",
+            "color": "orangeLight1"
+          },
+          {
+            "id": "self0GsmTJjDcHXeQ",
+            "name": "Picked up",
+            "color": "orangeLight1"
+          },
+          {
+            "id": "sel1oL4mDAJsSZmIa",
+            "name": "Needs Repair",
+            "color": "redLight2"
+          },
+          {
+            "id": "selcPQ0Bb46S2MBnZ",
+            "name": "Craigslist / Facebook Marketplace",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selfT5S4abkAL2nj9",
+            "name": "Tossed",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selwIQWEujqDXZfP0",
+            "name": "Rented",
+            "color": "greenLight2"
+          },
+          {
+            "id": "seloL02RLJVf5HJAf",
+            "name": "Held",
+            "color": "grayDark1"
+          },
+          {
+            "id": "selGyvvaun4ueWNYJ",
+            "name": "481 Salvage",
+            "color": "redBright"
+          },
+          {
+            "id": "selsou0WMQjWLVqoP",
+            "name": "481 Salvage, Cleaned",
+            "color": "redDark1"
+          },
+          {
+            "id": "selRNFFzvCUirdT0F",
+            "name": "481 Left Behind",
+            "color": "grayDark1"
+          }
+        ]
+      },
+      "id": "fldOFI8tOfa7QoN9B",
+      "name": "Status"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldRlmyJdTOevmpfC",
+      "name": "Make"
+    },
+    {
+      "type": "singleLineText",
+      "id": "flduW1W4CYgvR8RCG",
+      "name": "Model"
+    },
+    {
+      "type": "multipleSelects",
+      "options": {
+        "choices": [
+          {
+            "id": "selG91RxMTVeCR9HM",
+            "name": "Phono Tonearm",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seloYUkt85YRUs5Gi",
+            "name": "Phono Cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selO1EJscIoePKEYn",
+            "name": "DAC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBDsKUnycE64eDQ",
+            "name": "Integrated Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selgw9Ge0V4sPRvMQ",
+            "name": "Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selDcAN7KL11j9fbM",
+            "name": "Speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXnxt2H4rx77ljM",
+            "name": "Performance Indicator",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selnUIC8DLWcjfB0g",
+            "name": "Tuner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTxxCUuH6z9JBDf",
+            "name": "Equalizer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selWs9w5mL5jnCFOg",
+            "name": "Reel to Reel",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selqz6sPCcC3CUrn0",
+            "name": "Turntable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seljwcaqqGaZxjxXB",
+            "name": "Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyYTk0pxDRPqZqy",
+            "name": "Phono Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selLoP27jG6iEQdOS",
+            "name": "Subwoofer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sele4OzEKOHr4F6VS",
+            "name": "Center Channel Speaker",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selbmCndljhashjPa",
+            "name": "Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seluZsZq4cmxhoKki",
+            "name": "CD Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selHQ7NvUeIBXBqT2",
+            "name": "SACD Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selwSzHCEndNjGRY0",
+            "name": "Integrated Headphone Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selUJ7SuylldVjbBF",
+            "name": "Power Supply",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selH9WOyb7E3MfaX2",
+            "name": "Blu Ray / Disk Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selFYiMb9T6No1tU8",
+            "name": "Cassette Tape Player / Recorder",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selQqk10jXABtqQNx",
+            "name": "Preamplifier Processor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selPiAQCia4rnDrsb",
+            "name": "Speaker Cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seljPwxdAtqKl9DfZ",
+            "name": "Record Cleaning Machine",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selleGeX3Kq2rxCdW",
+            "name": "Speaker Stands",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selvrSAI014x5kw3l",
+            "name": "Phono Dustcover",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seldizdpJE76KbdyL",
+            "name": "Ethernet Switch",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selzOyeAQz1XgbYqq",
+            "name": "Power Supply",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seluE8H7VDsef6ZOj",
+            "name": "Media Converter",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seljhkvNS06qX5QUd",
+            "name": "Transporter / Server",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTpl47ARs4dTGUd",
+            "name": "Interconnect Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel7GQDfLtmMsEyld",
+            "name": "Crossover, Active",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selPH5S7tPka4urd1",
+            "name": "Speaker Platform",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selIi3ZdfZ80aIo78",
+            "name": "Speaker Cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selIWrbkqffbeTzWd",
+            "name": "Cable Lifters",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel8YY9dEp7anSn7P",
+            "name": "Accessories",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selL4pvmmuQUYv15i",
+            "name": "Phono Cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selJ841eNbb2TOaBl",
+            "name": "Server / Streamer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selkA105XuhrbxLv1",
+            "name": "DDC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel2rMl5GO1DviHD9",
+            "name": "1.5m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selvrwXM6ocBfuH5X",
+            "name": "Power Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel1HSN5n8O61kKuX",
+            "name": "A/V Processor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selKXGCPwxtQZBKUV",
+            "name": "Hybrid Integrated Amplfier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selE2WtjiSPezwbAL",
+            "name": "Blu-ray player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXK21l6ktTVtzJN",
+            "name": "Universal Disk Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selVZtWjzYcMEyC99",
+            "name": "DSP Processor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTjlm98buVaQhsZ",
+            "name": "Power Conditioner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selb6DF96Tg1Ji6Nz",
+            "name": "Phono Stage",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel6YPkaKCHJSLl4y",
+            "name": "Processor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seljcLbEDsK4zQ45T",
+            "name": "Record Cleaner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selojUCFti1Srn8oR",
+            "name": "Integrated Amplifier/Streamer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel1NtXwmMqUpvN7N",
+            "name": "Surround Sound Processor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel8eAqsPD20SQ3Ja",
+            "name": "Accessory",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selFm1DZLvk7hJbn5",
+            "name": "Vacuum Tubes",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTAQJfocxbc4J90",
+            "name": "Integrated Amplifiert",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBjY5tOo9rAaYVu",
+            "name": "Driver",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selzzlicUn1xX5uOw",
+            "name": "CD Transport",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selRe7gC8kRx3M1po",
+            "name": "CD Player/Streamer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel5xD4OeyJX5CO2p",
+            "name": "Integrated",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selDjWtGhjVtklXhO",
+            "name": "Monoblock",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selJezCBZDto7JguU",
+            "name": "Phono",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sellvXIXdQsxs3hnp",
+            "name": "Digital/CD Tube Buffer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selaMA1JJeZbuuYXr",
+            "name": "Tube",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selOnSPCJdHsSg2KL",
+            "name": "Digital Audio",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selqxEd0vKpWBDJW0",
+            "name": "THX 5 channel",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel8vYNkTTIaeVnLn",
+            "name": "Linestage",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel8qV5d76cpOSMQa",
+            "name": "Speaker (Pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel7TOiOmvdZTgvUS",
+            "name": "Tweeter (Pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXaF4XJstQaQBW5",
+            "name": "Tweeter",
+            "color": "grayLight2"
+          },
+          {
+            "id": "self1sJ9guO66qwlp",
+            "name": "3 Way Crossover network (Pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seln2sKhvpKl4EG6v",
+            "name": "3 Way Crossover Network (Pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selRgFoBQ9k5sJswM",
+            "name": "Power Regenerator",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selxxPcJaAQ1KVvgW",
+            "name": "Preamplifier + Tuner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel2IY0JVbzn7X6S3",
+            "name": "Receiver",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel0Ma3ftoOVA1tWP",
+            "name": "Tape Deck - Console",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel7jXn5m0qZOwI1p",
+            "name": "power supply",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selv0TksVkXghdHMJ",
+            "name": "Monoblock pair",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seltp2Cbxo3gmMl8h",
+            "name": "3 dCS units in boxes",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel7waUnNBdoqqPmH",
+            "name": "Pair",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selNz8MWWiwV0DqYS",
+            "name": "Center Channel",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selqmU3iLSQkVRjKo",
+            "name": "Compression Driver",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selH4O8qvoVVdbero",
+            "name": "Power",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selAZftN1BaeTtxNf",
+            "name": "RFI Filter",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selvtCnZFoG8mekCI",
+            "name": "Cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selcQmlrEH7koJZfB",
+            "name": "Moving Coil",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel5YXkHt8u3jM3wP",
+            "name": "Moving Coil Phono",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selJdNbeZeEA281jW",
+            "name": "Mono Blocks",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selwoPyEBjS3qbQkL",
+            "name": "5 Channel. 250wpc",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selUzjCAR8xHHUgwR",
+            "name": "AV Processor/Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selZoeYSydb1fTA7L",
+            "name": "Surround Processor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selOS1GegZ0MQ7S1i",
+            "name": "5 channel.  100wpc - Class D",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selzXchqCZiwSFAi6",
+            "name": "2 Channel",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTK04O0LvGfAwhH",
+            "name": "w/ phono MM",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selHRVN4CHbXMeTvz",
+            "name": "Dynamic Range Enhancer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selj4EiigYN1F9Ip9",
+            "name": "LP Cleaner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel3KIp6SmOAbN4Rl",
+            "name": "Speaker Control Relay",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selPDJ8ld5nQONvOR",
+            "name": "Mono blocks",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seltkHaX5MDYVoGWC",
+            "name": "Digital / U-Clock",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel60mXS16CfSzzag",
+            "name": "Digital  -SACD/CD Transport",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selwCRjDlwZLM77rX",
+            "name": "Amplifier- Stereo",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel5382uEPefZ7AxV",
+            "name": "Digital - DAC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selF2J6WeurtYOjfC",
+            "name": "Parts",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selVo8g0aXdGq92XP",
+            "name": "12” Woofer (1)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selluAe88UqyYtZO2",
+            "name": "12” Woofer (matched pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selHhkTn59Gmcs2H4",
+            "name": "12” woofer (matched pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel0dqweBiytXek9O",
+            "name": "12”Woofer (matched pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selNEW3vXWfJpHLYH",
+            "name": "Stereo",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selH4Syl1le6Jt2Wd",
+            "name": "AV Receiver",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selcxrZFVIKdUHalx",
+            "name": "Cassette Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selQ5jixPEfbwEwjX",
+            "name": "Headphone Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selqW9iqsFVD6yRRt",
+            "name": "Headphones",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyJzLD2Suh4e1eN",
+            "name": "Headphone extension cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBZn25ji3VUITy3",
+            "name": "Amp- Multiroom",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selk04sQzWXSqYwEf",
+            "name": "Integrrated",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selgtNB9jozhtRtoY",
+            "name": "Speakers (Pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9e436GqAcX5tPq",
+            "name": "AV Processor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel8hVHl31noJzwuO",
+            "name": "5 channel",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sell1UCioLOarGrIj",
+            "name": "Surround",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selecSCCd7ww3uOhS",
+            "name": "Full Range",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9Vb9roa1rqbkVv",
+            "name": "Monitor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selKdlO9rjfelmQ79",
+            "name": "Accessory  /  Tweak",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSkGIPpdZws1n52",
+            "name": "Accessory / Tweak",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selIQSHTc1kgR3z8x",
+            "name": "Accessory / Upgrade",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selwKONROeHbwMHWb",
+            "name": "Woofer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selzjXDTHt4w57rdA",
+            "name": "Preamp/Surround Sound",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9lFAemN8ygsJfx",
+            "name": "MidRange",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel7ZfJUhGJozcKmV",
+            "name": "Module",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9Neqa2nn6TIFII",
+            "name": "Amplifier w/Crossover",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selGVk1NhOPwv8cE2",
+            "name": "phono stage",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selEuAIwZxY9rIHxa",
+            "name": "Universal Disc Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selWX00zMLflbWdGI",
+            "name": "Interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selkgdq9vkeBADfGV",
+            "name": "Power Cord 2M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selVKX5sfIOoYNfnJ",
+            "name": "Power Cord 1M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXr6e8sqDTHIa9q",
+            "name": "Headphone Amp",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selcLZRwtpUEihJdP",
+            "name": "Phono MC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selnaLJnqu5asADAH",
+            "name": "Power Cord",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selOTr2OrmUYKFrBc",
+            "name": "Power cord",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selvsFq4GrOvhiwV9",
+            "name": "Digital RCA .5M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4xNgJ2WtveBJKR",
+            "name": "4M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSgq9DhiykinLrx",
+            "name": "Interconnect RCA 2M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selt7yewxeO1B6Efj",
+            "name": "Interconnect. RCA 3M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel83B5Fce0q1P91i",
+            "name": "Interconnect 2M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seleULge9dzoedJ9n",
+            "name": "XLR. 1.5M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selPjBxEoL5r8e0uL",
+            "name": "BNC>RCA 1.5M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBf2muTApOeHRME",
+            "name": "Interconnect 5DIN>RCA  1.5M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seloHISBZnBvUAKmY",
+            "name": "streamer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selLIR9eZ34qiSG8O",
+            "name": "power conditioner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selVMAnPhTpkRKE1a",
+            "name": "Headphones Ribbon Nearfield Monitor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selsRBqmQBp7LWYd3",
+            "name": "+ Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sell8bfV1anWmVwkE",
+            "name": "Passive",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selMkiT7ZdtJa3Zvr",
+            "name": "Tone Control 4 band",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seluiWD2OUQ7lq6sS",
+            "name": "Power Cable 8ft.",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selmeFWs8BEbajQaR",
+            "name": "Power Cable 6ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selCTIoTFVikcOlpO",
+            "name": "6ft.",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selfgOpjM5IkA0bTv",
+            "name": "Power Cord 3.5m (137\")",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selemzPHHc0uVUUR1",
+            "name": "6ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selYMGTldRu5n50MQ",
+            "name": "Speaker Cable 10ft. pr.",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seldTlmcdBfVBLQg0",
+            "name": "Power Cord 3ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selcreIziikOY9h1P",
+            "name": "AWG",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selhklu3DvvadmCOk",
+            "name": "ungrounded",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selwjD1rNPFHuytKP",
+            "name": "female end is broken - SELL AS-IS",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selCFT6dpiaKv9PpO",
+            "name": "Interconnect Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel62bZInrAG9t66I",
+            "name": "XLR Single",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selipkXcTIPieVyRs",
+            "name": "Speaker Cable 10ft. / Single",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBhtcUYDhiYvX4v",
+            "name": "Speaker Cable 10ft. / Bananas",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selK9ePC5qFcXP3tO",
+            "name": "Digitial Power Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXmS27U8BaK7zH9",
+            "name": "4 channel",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selKU2BRKO8Eganff",
+            "name": "AV preamplifier/processor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selqYx5J8G3gqPKvW",
+            "name": "7 channel",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4MqLgTCgv7ge2M",
+            "name": "Bookshelf",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selbqprxDTVESpive",
+            "name": "Tube Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selxmBgbb8oyAVAeb",
+            "name": "Headphone Amplifier / Preamp / Streamer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seljWjO531wcXFXJI",
+            "name": "MC Phono Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selQ1lTJUyIAw9CPz",
+            "name": "Stereoi",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selLl2GTT9Qy6uFlh",
+            "name": "Surround Receiver",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selFxUj3ra6MHCDcD",
+            "name": "XLR Interconnects",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selEFszPU2LgxkJN4",
+            "name": "phono Preamp",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selAPr3L24fQnFSSg",
+            "name": "Pre amp",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selO01lUiKeSbOgZp",
+            "name": "headphone amp",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selcc9cKBe7AOxK8o",
+            "name": "Mono/dual stereo Beam Power Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selmX6127Z26a5jaw",
+            "name": "Bookshelf speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selNvK9wkMErt8fU3",
+            "name": "Floor Standing speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9pI5ekNiqkyk59",
+            "name": "A/V control center",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel3MmeRl9dmvDuVZ",
+            "name": "power cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selx4Q1kEo3CnlXuk",
+            "name": "Analog interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel1DmCsjbYXtYiPC",
+            "name": "bookshelf speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel71YSCXoCGMbjU3",
+            "name": "Tube Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selftk0cvgMdpzLNh",
+            "name": "5 Channel Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selwjIOkxJq2FumG6",
+            "name": "Utrasonic Record cleaning machine",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selrnCX4zDLRKQ1Cq",
+            "name": "DAC / Headphone / Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9RbwnnpRJU0Vrj",
+            "name": "power stereo amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selaEmDmAWXaYqrUo",
+            "name": "Preamplifier / stereo console",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selQe6ABVGkYwgN8G",
+            "name": "Console stereo amplifier / receiver",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selz5Y1OB0TarjfQg",
+            "name": "Quartz locked Tuner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selzo769Yz7VS6wrh",
+            "name": "receiver",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selFVoATImAUYiNMK",
+            "name": "tube preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel1qmNk2f86aLpZm",
+            "name": "Phono preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selqwnGetZZkyQDUC",
+            "name": "Tube Power Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyANBtswPEt8N44",
+            "name": "Stereo Tape deck (reel to reel)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selvggbYljUmdV5aK",
+            "name": "turntable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel3O1MfjdYuwoErY",
+            "name": "Originally had an SME 3012.. TT Refurbished by Scott and Andy and sold to a Resolution client.",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel0MjyMivm8d4hkt",
+            "name": "tonearm",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel3HoZ6xg7UvV1NV",
+            "name": "integrated amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selArkZBAiR6GIXX1",
+            "name": "SACD / CD player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel123iiCFgBaXiuW",
+            "name": "pair of speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selhaEVf0FQUAbhXv",
+            "name": "Balanced interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selpqZlu39OINdudK",
+            "name": "RCA  interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selDbWNI9RwTVZGI2",
+            "name": "Power conditioning cord (power cable)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selm5S0R0J6W1cBps",
+            "name": "AC Enhancer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selR31UwIMrQa2Yxc",
+            "name": "AC Line Harmonizer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSjSRKBuQYRaOMP",
+            "name": "Headphone Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selei0POAUIIwKzFn",
+            "name": "Reel-to-Reel",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selpUxZ4YIceyyzRe",
+            "name": "Monoblock Amplifiers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sell8EmQZKazAqOYR",
+            "name": "Power Generator",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selxFJsNTFZaTuLlh",
+            "name": "bookshelf/monitor speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seleklpi0HAfs79z7",
+            "name": "stereo power amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selE7auLJLHa18tEh",
+            "name": "stereo console/preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selK7cQwDWWqfE5kV",
+            "name": "Vacuum Tube CD player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyhEsqkbsrudDyF",
+            "name": "DAC/Digital media bridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selUk6bgQfNqOGaaB",
+            "name": "MM/MC Phono Stage",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9L6r1sE5uHBZ38",
+            "name": "Power conditioner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSwLPqYrEzBUAaD",
+            "name": "Pre Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selbyK97a6pscSCCQ",
+            "name": "Stereo power amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel8NpKtvydGsnwYY",
+            "name": "Integrated amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selFW6KtklUWDXOSC",
+            "name": "mono power amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selhffkhUSLjIMitp",
+            "name": "Audio Compensator",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selbMVKwPF7vRs75T",
+            "name": "Stereo FM Tuner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel1Jo1coJ6Kdv4G7",
+            "name": "mono speaker system",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel0kvzW4wb407s7U",
+            "name": "Bookshelf Speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selEf80OtFBL8ivJo",
+            "name": "integrated Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selYoHBhPDmYEV8c4",
+            "name": "Horn Speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selx55rX151aV0ZW7",
+            "name": "Tweak",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sellHRaW4YvwZ5vLy",
+            "name": "Network Audio Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4dSVFbMQdWgkTN",
+            "name": "Multi-Channel Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seliodRf1AUGqToBl",
+            "name": "Floorstanding Speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selWX8ajtTb8RbeK9",
+            "name": "CD Changer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sellsRRGGI90eQsQN",
+            "name": "power amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selsJoVl0OKdXeryc",
+            "name": "stereo preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selipHQpMm9SByNah",
+            "name": "stereo tuner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selnhFPPnBqjEL0CM",
+            "name": "Integrated Streaming Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4KqUAaH0O3oNZh",
+            "name": "pair of floorstanding speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel45Z21m9horR5Bp",
+            "name": "pair of monoblocks",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selCRTCaWGC7zopkb",
+            "name": "cd transport",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel5g5hJ8OotKXteA",
+            "name": "SACD player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4PELGnA8Mvi2FF",
+            "name": "Bluetooth transceiver",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selsFeFE0bmqER0kk",
+            "name": "speaker stands",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4ozn3EiiqO1J38",
+            "name": "Linestage Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selDi1nn52dW61pZc",
+            "name": "Upscaling digital / CD transport",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selVqnbSxwcAGAAQZ",
+            "name": "Music Playback and Archiving System",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selgFoWBtZv1TZo7r",
+            "name": "24 bit CD Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyt4kuqUsL4jNXn",
+            "name": "FM Tuner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selzFpTSVkxJbXkgZ",
+            "name": "Blu-Ray disc player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel00Qq9MFCgtkHSA",
+            "name": "AC Power Regenerator",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selpV2RoZg8hGafvB",
+            "name": "combined isolation base/ power conditioner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selMLtDbWbRtC6ZNx",
+            "name": "Floorstanding speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selKzniyMcUF3h4wq",
+            "name": "monitors / bookshelf speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selzESWPA3esbUJ5D",
+            "name": "Monoblock Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selOXE1s1VtnZWRYm",
+            "name": "Cassette Deck",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selN7eTYdp1doUMZr",
+            "name": "Cassette Desk",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selr6tbN3BaihLgOD",
+            "name": "AV Recevier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selAnPEZMSBbxNK2m",
+            "name": "Reel-to-Reel and Preamp",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel8rRuoWVULLIjvK",
+            "name": "Driver and Horn pair",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selnNv7LOUOgaDvnA",
+            "name": "tweeters",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel8ozsXaDKJeEUhT",
+            "name": "Super Audio CD Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyqJeuCcQ3PEZv7",
+            "name": "Active crossover",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selbMe6YsD4vBkXU0",
+            "name": "Floor standing Full Range Ribbon speaker",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selqnpPBCnc7UTnXP",
+            "name": "Streaming Integrated Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyuoJHkgJFru1HU",
+            "name": "Preamp-Amplifier (integrated amplifier)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selYEElHJUjkMlbbo",
+            "name": "center channel speaker",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sellyxW1mkIgfDeRn",
+            "name": "Audio Tweek",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selMPQHGY23OPP5Ro",
+            "name": "power strip",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTw6gjkskrVSRV6",
+            "name": "DAC / Preamplifier / Headphone Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selIJCHb6SBGRpvQS",
+            "name": "Remote Processor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selxryzufc5OBeu5A",
+            "name": "Turntable Plinth",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selWsmWWePY0ohUli",
+            "name": "Digital Audio Casette Recorder",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selhcnuZUQovQa3SJ",
+            "name": "Drivers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selRU8Oitz0Ooh1DV",
+            "name": "Horns",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selQWeAc9LpOlnbkI",
+            "name": "Disc Media Cleaner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selpOtOrbA2nzyMN7",
+            "name": "Preamplifier Module & Power Supply",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selAwRHVUoZIXazGX",
+            "name": "Mono blocks Power amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selKjSWOWuoKUdyAW",
+            "name": "Speaker Cables 4m (1 pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selPmazw1KEKTzbyJ",
+            "name": "Power Cables 2m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selh3qQWxjbChO8L5",
+            "name": "Tuner Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selwYW6MbBtwbdx4q",
+            "name": "Headphone",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selnRSK8h8bhuYi2i",
+            "name": "DAC / Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selKWcWyavDLVgbi8",
+            "name": "Upscaling Device",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selRfS8d7WJZ5h9G4",
+            "name": "Headphone Amp/DAC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTYsLDg9EQJNcKq",
+            "name": "Streamer / DAC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selF8zvK0QOGGidTF",
+            "name": "bookshelf speakers with stands",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel3o5xETo6Hn4moe",
+            "name": "amplifier / headphone amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selvlCXpgw44cQYRc",
+            "name": "Integrated digital amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selA5b0VxVjpFSk1i",
+            "name": "CD / SACD Transport",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selAAmCjExMgudwD7",
+            "name": "Streaming Transporter",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel6wrgCym0ojIckL",
+            "name": "external power supply",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selqc6s5rollERGhY",
+            "name": "pre amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selgMoe0ryatwTn0H",
+            "name": "pair of speaker cables 2m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selAsS2E9xP447r1p",
+            "name": "banana plugs",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selCQnoGSOG2CB4RZ",
+            "name": "1 m power cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyjUDEysCEsFhyV",
+            "name": "1.5 m power cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selX5egGXKrWdPcgN",
+            "name": "2 m power cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel6JsYCpwjZFTzes",
+            "name": "3 m bi-wired speaker cable (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selhgmiguRNTGxBmw",
+            "name": ".5 m power cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selbZPjtzTMBQIW9M",
+            "name": "3 m power cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seljsuzPKyreJM0sa",
+            "name": ".6 m power cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selU5LTUQkwHoUx1G",
+            "name": "1 m interconnect RCA (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel7ZQidrnMUnzkc2",
+            "name": "2 m interconnect RCA (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selaoekL8mvGxXXpm",
+            "name": "3 m speaker cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selLemkKApiuIhTmO",
+            "name": "spades (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel0OhbtlBKy3bTC2",
+            "name": "5 m interconnect RCA (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selOqXjgzM2KnXTn4",
+            "name": "7 ft interconnect RCA (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selzdWzTx8Agjxb9U",
+            "name": "4 ft interconnect RCA (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seldQo6uacHybPbwv",
+            "name": "17 ft speakers cable (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selw7wV2xnhVW2cus",
+            "name": "with locking banana plugs",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selhklnBSJAR4RjbL",
+            "name": "14.5 ft speaker cable (pair) spades",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selDAZHb5r2JbDjYr",
+            "name": "18 inch jumpers (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXmeaaGYXgpb6j1",
+            "name": "20-amp/120v AC Duplex Outlet",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seleWPKrxmo3G8RXw",
+            "name": "1 m interconnect XLR (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selnGzVgkegzT8AjI",
+            "name": "1 m interconnect XLR (single)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selW8TPEugDO5ygJL",
+            "name": "3 foot Coax Digital Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sels7CKLSvlntHkhY",
+            "name": "BNC (single)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selQemGjpY2tT8Nwv",
+            "name": "2.5 m speaker cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selwmcJZ43ctLASqo",
+            "name": "15.5 feet speaker cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBTxMNBZP8QBfEF",
+            "name": "bananas",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel2nPprAR62VcpSz",
+            "name": "bi-wired bananas + spades (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel2MDaQXyhXLkzlU",
+            "name": "Floor standing Speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selFzocgoCZgjyRyB",
+            "name": "center channel Speaker",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seliNjE3KnhR9q1m2",
+            "name": "Blu Ray Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selwCEQPB8nxgQvSn",
+            "name": "Streamer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seleyqeMp0UiOEAuJ",
+            "name": "bookshelf speakers (with stands)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9YQAOAZ8RD53CT",
+            "name": "Tuner/Preamp",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selo5LVhDGSXhYtsF",
+            "name": "Upscaler",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selbu0jOvXpquwjeS",
+            "name": "DAC + PS",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selqiU8pClAqbnKd6",
+            "name": "CD Player/DAC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selizhnK9gixUDdMg",
+            "name": "MC Cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selhSCE385vzEuwP6",
+            "name": "Pair of speaker cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seldEb1FQb9VPtmMx",
+            "name": "7m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selCCBJaujx8Zkmnr",
+            "name": "banana plug",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sely9phnaS9MKmDqz",
+            "name": "bi-wire",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selE87g8wf7rWlCiN",
+            "name": "2M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selEO508ihkEYq1zl",
+            "name": "1.5M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selzZ11zYTQaOXIbo",
+            "name": "RCA",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel7fuSOLC2gd5ybW",
+            "name": "pair",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel1RkBZqOtVzdKeq",
+            "name": "speaker cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9pOqgeaLr6BrMf",
+            "name": "1M",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selorChnHvum5PuO5",
+            "name": "3m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel7ff7BSr4Cg3BWA",
+            "name": "spades and banana plugs",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seljSv2wM9lopFm2T",
+            "name": "Integrated Turntable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selsX9Pt0h2CZNs6O",
+            "name": "Port",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTRxf0GEAAekovr",
+            "name": "RCA Interconnect (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selKu5L8nlpoUlq5u",
+            "name": "1m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selojuEbH6qVREafq",
+            "name": "XLR Interconnect (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selY83JOy0sQodxdR",
+            "name": "2m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSqSTDB2fMJdeNi",
+            "name": "RCA 75 ohm Digital Link (single))",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selYSmK5uYylaDljm",
+            "name": "USB (single)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selK7WtYrXRHlSVQI",
+            "name": "88 inch",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selC0kPBnBG04q7XF",
+            "name": "XLR interconnect (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSwgZRxiCafD0VR",
+            "name": "15 ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selDdg3i2m4TPvyz7",
+            "name": "banana plugs bi-wired speaker cables (pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selurRFowYRW6GgVd",
+            "name": "1.2m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selRVXp3Uewuw1cTm",
+            "name": "CDs",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selqxPj67hShPJJMQ",
+            "name": "Records",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBDZvczs8MxgpZQ",
+            "name": "Music",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selmKrMcG44dyFuvM",
+            "name": "Digital Interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selHn4nEVxpxKT6TV",
+            "name": ".5m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selPuhiKKLKcMhjXm",
+            "name": "single",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sels9uyI4KxVf6QOC",
+            "name": "RCA Interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selIhceNIbcPFj6AS",
+            "name": "XLR interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selawj06YaWiS4PzP",
+            "name": "3ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seleRXWGOUbDHjtpC",
+            "name": "Power Line Conditioner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel3cnoXN9qf98GbO",
+            "name": "CD Player Multidisc Changer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selciRFDzQVmJr77f",
+            "name": "Power Amplifiers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selc3VW9QYcHDmNC7",
+            "name": "Phonostage",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seligO4WBQxYvZO9R",
+            "name": "DVD Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seltE7PfAfL79UwD7",
+            "name": "Amplifiers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel21EU1hWEZT1Mba",
+            "name": "CD Processor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel3YMqGXI4L87RGi",
+            "name": "Reference Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4VvT59xHfVe2uk",
+            "name": "Pair of Floorstanding Speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selACewLPtxOWeBE5",
+            "name": "Solid State Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel3tO6kAhf1e15Vx",
+            "name": "Environmental Equalizer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selB5vzOQXAywyvnW",
+            "name": "XLR Interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selcnVDf9u8zEFo4l",
+            "name": "Spades to Bananas Bi-wired Speaker Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selZlwhOQMVyqdQ31",
+            "name": "18ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel0sloQARqgjDY6z",
+            "name": "RCA Digital cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seleOyvmE5Q17Uu3U",
+            "name": "Stereo Console Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selffAG6jMC1qLzJo",
+            "name": "Analog FM tuner",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selqN0kZ6bxystPMw",
+            "name": "DSP Based Intergrated CD Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel5F25N6NK6dXAjO",
+            "name": "Turntable with Ortofon OMD 5E Cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel3RfmRHSE4tAC1w",
+            "name": "CD player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel6d3SGTst8jcSpF",
+            "name": "Spades Speaker Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selsW8gYAqSfsERC9",
+            "name": "8ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel36jUtOwLTJMoQp",
+            "name": "Two 14ft runs &  Two 23ft runs",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel5G1daRX0vRvtNT",
+            "name": "with 4 adapters & 2 Bi-wire adapters",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9pKAC6EgUYNrDT",
+            "name": "4ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seltuY3OJQbLwGN5D",
+            "name": "Moving Magnet Phono Cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seluPOb1gmyLKuZxQ",
+            "name": "L/C/R Home Theater Speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel02A6ISChxepjYp",
+            "name": "Floor Standing Speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selGJ7MQfi6XRboLo",
+            "name": "Pair of Mono Block Power Amplifiers with Power Modules",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel2ljrhaf4n0QMY6",
+            "name": "Power Controller",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel0jDaZFDM75fI7n",
+            "name": "Eight Channel Power Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selmqRviqTHtfGzOK",
+            "name": "Pair of Speakers with Stands",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selUVCEygbz2QmzpO",
+            "name": "Audio Video Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selnIxu8DOKIMoaid",
+            "name": "Room Correction System",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selFejsBFCSm8O9fG",
+            "name": "Line Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seld2nMgPpeGqFWzo",
+            "name": "Stereo Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selbZMPWjlgpQOfTH",
+            "name": "1.75m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selKa4LFeUArFet5Z",
+            "name": "20 amp Power Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selacS8wW66JOloh0",
+            "name": "Pair of Mono Block Power Amplifiers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seluwXbygjSJlOumZ",
+            "name": "Digital Audio Streamer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selYLsYrKr7oWYoIA",
+            "name": "Component Stand",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selNT3Uv4Ti73WG98",
+            "name": "RCA interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel5sp6pTNXwsrPuk",
+            "name": "RCA Digital Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selxcsUCImjottqT3",
+            "name": "single 1m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel0ExVUvda5WoIR4",
+            "name": "Record Weight",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel6PPWIV11VDzkvE",
+            "name": "840g",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel2OPRGkiyWkeaQB",
+            "name": "Demagnetizer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selHpsnhLbzhru3Um",
+            "name": "7ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel1yLzG9JGhSZlyc",
+            "name": "Spades to Bananas",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selgbReiSr6cil7bz",
+            "name": "Scaler",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selLN6OPsKRAwIAMs",
+            "name": "Analogue Audio Interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seluj7hsfg9tCYDa8",
+            "name": "2 RCA to 5 pin DIN",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selGm1Pu5HPpfFPgr",
+            "name": "5 pin DIN to 5 pin DIN",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selH5m2EnZM8gwDqq",
+            "name": "interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selvievS3mxIVhCNQ",
+            "name": "4 pin DIN to 5 pin DIN",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selV0pcd4X7CgAiE7",
+            "name": "18 inches",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seliNnY0x7CgK2Gj0",
+            "name": "Roon Server",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selUCCVYF0AmEouad",
+            "name": "2 RCA to 4 pin DIN",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selmck2MYZ7h3kNU0",
+            "name": "4.5 feet",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXxAdkHJl6HXTsy",
+            "name": "6 feet",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9vafcxwKPPyzdc",
+            "name": "4 feet",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selfxGfJmAd3fisXm",
+            "name": "4 pin DIN to 4 pin DIN",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selHADhbnoVJRlE1t",
+            "name": "3 m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selQ8sxuiiCJcsF1j",
+            "name": "2 pole C7 connector",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selOQv8XFeJv1Q32B",
+            "name": "Preamp + Phono Pre",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selzzd2Lb7YXVC7Ly",
+            "name": "2 m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selnaCXR3LfbS8pjP",
+            "name": "RCA to RCA",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selag1MU7dInme7G9",
+            "name": "5 Channel Power Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selWmI5UzjsFgeffF",
+            "name": "Pair of M3X2 Isolation Bases (15'x23\") with SXRC stands (overall dims 21\"x23\"x6.5\")",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSUK24vmgE1a6tu",
+            "name": "Isolation Base",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selZTm7ZQYQZGX9rq",
+            "name": "for 0-30 lbs",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selIf5j9FOGTnWSDB",
+            "name": "21\"x19\"x2.75\"",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selZt21NgTGeYrD83",
+            "name": "Pair of Speaker Cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel0lCrDaPITBtxiu",
+            "name": "2.5m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel94CRhx91VanbQ9",
+            "name": "Loudspeaker Isolation Feet",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selGc5scZxKKnNzU5",
+            "name": "Digital Streamer DAC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selAU56SeSWLqo6rk",
+            "name": "Crossover/Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel7RjGM4m3FMIwD7",
+            "name": "Isolation Feet",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBEVS4tnZQBgZha",
+            "name": "Set of 3",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selkcbHZronlALoMB",
+            "name": "Umbilical for Power Supply",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selhSTsPEfQsIh9Of",
+            "name": "1.25m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selW6VsAuv261nQNV",
+            "name": "Electromagnetic Stabilizer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seldho8E2slUOXY40",
+            "name": "Room Tweak",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selDs7zKuPVt9c0cm",
+            "name": "72\"x12\"x12\"",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selkQAhUQT0BSUFAm",
+            "name": "Surround Sound AV Receiver",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBzegCAtPEa7s3D",
+            "name": "Ground Kit",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selAL7jwLfWxJ2qnB",
+            "name": "with two ground boxes and two 1.1m cables with 3.5mm jack connections and two RCA click-on adaptors.",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seltrWt9pPtzmbPpp",
+            "name": "Ground box with Eartha Copper cable (2.25m) and Eartha Silver cable (.7m)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4swnd1yDqFTdgC",
+            "name": "CD/SACD Transport",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seltDCO8zHwG9wTPg",
+            "name": "Upconverter/Clock Generator",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selHZmtAddoJPDbOF",
+            "name": "Dac",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selRpENOLBx0KRJzo",
+            "name": "SACD / CD Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seliQOndDb8keN3EU",
+            "name": "7 Channel Power Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selCHpWPCyPGIV02U",
+            "name": "DAC & PSU",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seliGq5T0eSGF6mZd",
+            "name": "Speaker tweak",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selp4SUKiQkQOFowU",
+            "name": "said to block electrical and RF Interference.",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selS8WOrEaMDuwv1c",
+            "name": "Preamplifier w/External PS",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selM8AkqFbd01LOKh",
+            "name": "Power Amplifier w/External PS",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXhGIyc0uI7tJ3y",
+            "name": "CD Player / DAC / Preamp",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel1qlVIKjuSl4Cag",
+            "name": "Speaker cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selrjnELeD4k0xDIY",
+            "name": "8'",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel7TbUPLnC9RHory",
+            "name": "bananas to bananas",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selHIA9IhUcbCIvrV",
+            "name": "Interconnect RCA",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSwgAl0ako4XXXt",
+            "name": "Ionizer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selmLaC9K1mQj89Me",
+            "name": "said to reduce static electricity",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel457TH88dY3UvhD",
+            "name": "for turntables.",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selEoNndT7A8o1BxR",
+            "name": "AC Line Cable Noise Eliminator",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selmVTnt89Cij6IDl",
+            "name": "Plinth and Feet",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBfNWaydLJXP1c6",
+            "name": "Synchronous Drive System",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel5vJZV2tNnPhHca",
+            "name": "Ultrasonic Record Cleaning Machine",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selZdLyReDX4o5yC7",
+            "name": "Digital Streamer / DAC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selZAqs7VJiXInWoJ",
+            "name": "Digital Streamer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selpDtX6qojl0ncOf",
+            "name": "Power Amp",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sell8vqH1hHgLJWiU",
+            "name": "Surround Sound AV Processor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel3JVFeLZQhyAw0e",
+            "name": "Digital Network Streamer/DAC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selgznU5LCYnLULeK",
+            "name": "Antenna",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seldl50aMmcBBZ9Bm",
+            "name": "Speaker + Crossover",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel63N4lfGWSS8hW1",
+            "name": "MC Phono Cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selgZceyobBhSz88U",
+            "name": "High Output MC Cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selJpNKfGWbSe3sV9",
+            "name": "Platter",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4V8PeFu5p0PbLh",
+            "name": "2.25m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selJLow1l3opCrlox",
+            "name": "Speaker Cable (Pair)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selQQIy980y4DlqGV",
+            "name": "Spades to Spades",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selm2bmm9LJOFZyUb",
+            "name": "Energy Absorption Platform (14x9x1.5)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel7GdAgSUOjZdtYy",
+            "name": "Tube Hybrid Integrated Power Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sellsjCd6IuZRnA7K",
+            "name": "XLR",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selYslGYWBziVdQEQ",
+            "name": "Power Distributor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyNvC4RtpnoYrFt",
+            "name": "Network Music Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selev24882R1AFHPW",
+            "name": "Turntable (No Tonearm)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seloC1b1idEJ0jYS2",
+            "name": "QS Sensor",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selxEPCfY4NvavIuV",
+            "name": "IP Audio Switcher Amplifier w/Savant Music Server",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selCuMwtINgyP4NQQ",
+            "name": "Tube Tester",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTVeiaDnF6bQRbS",
+            "name": "spades to bi-wire spades",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seloeraQtVkz4FVtZ",
+            "name": "DAC Preamp Headphone Amp",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selfpggcf7lt7iz7u",
+            "name": "Pair of Floorstanding Loudspeakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selVkNYNvVwPAHXcE",
+            "name": "WBT connectors - spades to spades",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel8HHJvyVCQkHURo",
+            "name": "Seven Channel Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4Fo1fEfFmdiiIt",
+            "name": "Interconnect Cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selKIRqlfgAEZG8K4",
+            "name": "XLR to XLR",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selC2Nj3pYcuggTFK",
+            "name": "Headphone Cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selr7UVFBV8b6nl2u",
+            "name": "Dual 3.5mm to 4 pin XLR",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selCIZRKHYll2pcwY",
+            "name": "headphone cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selizTowcHJj9Nl7b",
+            "name": "Dual 3.5mm connector to Eletech 4.4mm Termination",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selncFUzgxSXCrduj",
+            "name": "headphone stand",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selZTjscu5jpGmd3O",
+            "name": "4m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9fYcPXo253kbAx",
+            "name": "Toslink Fiber-Optic Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTz7ivlPR4lfftL",
+            "name": "Spades to Bi-wire Spades",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selFeBc1q0Mi8NjRm",
+            "name": "Pair of Interconnects",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTarYxbhKZ8JGDa",
+            "name": "4.5m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selq3HJTIGnRT6u1q",
+            "name": "Pair of interconnects",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selR8emunsMipS39A",
+            "name": "RCA to XLR",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel3bbPj094lGkO0p",
+            "name": "Powercable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selavtDlahCvPuGhy",
+            "name": "12\" Tonearm",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel92Fu4GFsCWgiIQ",
+            "name": "Analogue Producutions Ultra Tape",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selkPeUcnD3jgLQJo",
+            "name": "Network Streamer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seltMOiPR7vf5VHY1",
+            "name": "Blu Ray / Disc Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selOrjeLeubnK1CTN",
+            "name": "Cable Elevators",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seloWq4MFuOOxHTQj",
+            "name": "Variac",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selbwzlsVEa8GPRyn",
+            "name": "Cable Elevator",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selGStsEagpA8gztH",
+            "name": "Armboard Piece",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSBkrVf8e0uk0Kb",
+            "name": "Tonearm Lift",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selL8NtnXkEbMi8DA",
+            "name": "Direct Current Blocker",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selvXXcbsTLAbBkFt",
+            "name": "LAN-isolater (audio tweak)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selY9JzDcd5GtOeYT",
+            "name": "20A-20A IEC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selLsILOhTP9rF3xz",
+            "name": "Bananas to Bananas",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selesoMJ5kNrx5EYj",
+            "name": "XLR to RCA",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXpqRBMegn9yXF9",
+            "name": "RCA to RCA (Monster connectors)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selYV5nYWBtlhAQqV",
+            "name": "Digital Cable (single coaxial)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selPCBt0btAv9UeYw",
+            "name": "AES/EBU Digital Cable (single)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel5tBuOzKGX5NvMm",
+            "name": "3.5m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selCSF5ueuJLEvcrk",
+            "name": "High output (2.5mV) MC phono Cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selpWdDN84PamE5Ff",
+            "name": "DAC Network Streamer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selZ2LpJtLtS9sCgX",
+            "name": "Phono Preamplifier + DAC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel96gnGL9DIpSBF3",
+            "name": "bananas to spades",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selbY12kVCMDObZTo",
+            "name": "PSU",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4g4bnfGBYx1v6r",
+            "name": "Phono Step Up Transformer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selZWddxp5sgMBPq5",
+            "name": "Upsampling 24 bit 192k Dual Differential DAC CD Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selhp71PMFKx8eaZ5",
+            "name": "Preamplifier DAC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selH59mFxlZfX8dSi",
+            "name": "CD Player Transport",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selDwNpagUpuxs2yy",
+            "name": "Tonearm Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sele43ufuJZm2nxgU",
+            "name": "Step-up Transformer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selMBHePYEvg1X8fj",
+            "name": "1.5m Power Cable with removable 3rd prong (not included). Used for Shindo gear.",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selOqmjggyJVHDWB5",
+            "name": "1m Interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selbG9oQYFu86rXOo",
+            "name": ".75m Interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSePsnGIOgA6HPH",
+            "name": "Upsampler",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selLn94Lq6UxpFvJz",
+            "name": "MC Demagnetizer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seluwkfR9QwUHVPpU",
+            "name": "Blu Ray / Universal Disc Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSsQ1NKlqfUgoN6",
+            "name": "2.5m Speaker cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selVshcRNBxVjZCKU",
+            "name": "3m Speaker cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selG7Nm6LsiS1G143",
+            "name": "1.5m Power cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyACUks2xiMKOkn",
+            "name": "1.8m Power cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selb7W5ZFNRvxuImk",
+            "name": "Cassette Player Recorder",
+            "color": "grayLight2"
+          },
+          {
+            "id": "self6Cm2efvEIUx7X",
+            "name": "3.5m Speaker Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seluh31PzQoZglONY",
+            "name": "3m Speaker Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXyXUkgE0lSHhLS",
+            "name": "Reciever",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selO6F3t6dytmAnmX",
+            "name": "2.5m Speaker Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selwWWQcLCgkvakha",
+            "name": "3.5m single run (not a pair) Speaker Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selUCw9WT66Xss5Qp",
+            "name": "bananas to bi-wired spades",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selzPqv2ciKIapcpP",
+            "name": "Spades to OCOS termination",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSHYUYhTY4qyS1R",
+            "name": "High Output Phono Cartride",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selzu29KUOE2dKFDZ",
+            "name": "Turntable with Exact 2 cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selESXJFof5WoPmmV",
+            "name": "Ultra HD Blu-Ray Disc Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel58hIgPo0ZGfC6e",
+            "name": "MC cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selIVvoXfv9KZBdNM",
+            "name": "CD Player / Transport",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selm4kXXddKgc9SxZ",
+            "name": "5-Channel Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selZhLMLfT7kwNY0l",
+            "name": "AV Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSYMp4ovAgGCfXV",
+            "name": "Player + UClock",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seltfL8NjvkcVbT5w",
+            "name": "Just under 2.5m (91\") pair of speaker cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSqfc1xdIpoeuXv",
+            "name": "Interconnect .75m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selF7msigAnIBPwEp",
+            "name": "Interconnect 1m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selJrSLcU48t7QB4d",
+            "name": "Interconnect  1m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seliVBWstZGidKldd",
+            "name": "Interconnect  .5m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selIxfUn7xEU1Eac5",
+            "name": "Anti-Static device",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selrYR20GNOaZmosl",
+            "name": "Mono Power Amplifier with Power Supply unit",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel1zzNhiNkV429ee",
+            "name": "Intergrated Amplifier with preamp",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selae653849gjcHyP",
+            "name": "Speaker Cable 2.5m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sellRThgmy559WKZi",
+            "name": "Spades to Spades jumped for Bi-wire",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel0KVevem01KtkOp",
+            "name": "XLR Interconnects - 5m Pair",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seldYDVpthlTQA00z",
+            "name": "Single",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selvusGmDyXJMRjBm",
+            "name": "Smart Speaker",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel02Q3wHHR1HTMM4",
+            "name": "CD Transport Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selJc5Xifi0vdabea",
+            "name": "4\" Drivers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selF2aszZuzMnO0nT",
+            "name": "Pair - used",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel2GEPuUCLAa2EuC",
+            "name": "Interconnects",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selv3Rs4axYf7paE9",
+            "name": "Network Server / Streamer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selztT4HJFBTSVW3V",
+            "name": "Crossovers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selgBvBmDH9UTg7ej",
+            "name": "Compression Drivers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selepwJvixVEKIdPi",
+            "name": "Grounding Box",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selpiHIsjBPMCPiyY",
+            "name": "3 shelf Rack",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selEcuc93AL32AEVx",
+            "name": "Amplifier Stand",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9KMrddz3Qxfdxa",
+            "name": "Amp Stand Pair",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selUFnRf2h516J6Yc",
+            "name": "Electrostatic Super Tweeter",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selxzfiHM149IuH96",
+            "name": "Blu Ray Universal Disc Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selYF8ErM7TV7ajij",
+            "name": "Phono Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXMTBes9hVgmL4B",
+            "name": "DIN to RCA",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selt1eKI7pueCEsA5",
+            "name": "Acoustic Panel / Bass Trap",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyOjgw2f1CV29Zc",
+            "name": "XLR Interconnect Cables",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXURQbDjF5jh3cl",
+            "name": "Spades to Bi-wired Bananas",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seln9Pvo6xwZWDc2l",
+            "name": "Speakers with stands",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selL14Ej01CeCmzNj",
+            "name": "Audio Rack",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selrIxrupartdwRml",
+            "name": "Tuner/Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selPmkuWYOjdoRvwS",
+            "name": "Digital Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seljSlJvebu8Xwdfa",
+            "name": "spades to spades",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selfi7SqFqrSZN7Pl",
+            "name": "3.25m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selYLlmEujrrNAkbe",
+            "name": "bare wire to bi-wired spades",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selhwqWQZ2L60t8Is",
+            "name": "RCA to Naim connector",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selpq4q3EXgMncoTS",
+            "name": "CD Player / Tuner / Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selswghBwxenE1xLL",
+            "name": "DVD CD Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selYGY6IY6n6nEShD",
+            "name": "USB ADC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTBqHqeYlsvkJuk",
+            "name": "In-ear monitors (headphones)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selV5JkAFFQD36gVu",
+            "name": "Blu-Ray Disc Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selMkZrXtUyMFRryM",
+            "name": "Digital Coax BNC to BNC Cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4SwKqUg5VLtdwu",
+            "name": "spades to Spades",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBfbPbEqALc0KjA",
+            "name": "8 feet",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBzp0HqhCucJN99",
+            "name": "figure 8 termination",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selvJFWP0CnwmBIwy",
+            "name": ".75m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selAYX4VP0nbSdgUY",
+            "name": "IEM Cable for Astell & Kern",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel6wjDuBGtylSlu4",
+            "name": "3.5mm TRS connector",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selBOKjjZxkAHvaJ0",
+            "name": "48\"",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selpmGDyr0OYaTYFW",
+            "name": "2.5mm TRRS connector",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel69YtXT8q2WPHMY",
+            "name": "IEM - LOD to USB",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seloAh9C3UqmyDMoy",
+            "name": "bananas to bi-wired bananas",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selpikbBunqGn16kk",
+            "name": "spades to banana / spades bi-wire",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selrJVXNZsp1gKJDP",
+            "name": "20ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyIkAkakde0rQjg",
+            "name": "12ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel78MBeO1XNYZ20e",
+            "name": "spades to banana bi-wire",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selnye7RceJxj1rm2",
+            "name": "Balanced XLR",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selpXnlSt62GR85FQ",
+            "name": "medium Impedence",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel3MmxIeNgS8IOga",
+            "name": "5.8m (19ft)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selAknxH0aKhq0IqI",
+            "name": "HDCD Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selxpnSHV5inwA6OS",
+            "name": "High Current",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seldIf7FVN8v5u7AW",
+            "name": "Variable Current",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selpp6e4hZ5dhvOA3",
+            "name": "Constant Current Source",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selXvuA3gAIlbLhmy",
+            "name": "Mono Block Power Amplifiers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selEDN0aTfqg3w3yK",
+            "name": "Power Amplifier with Power Supply",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selChCaHmMXNe75gw",
+            "name": "Preamplifier with Power Supply",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel2Qc4aALf99al8u",
+            "name": "2 Channel Power Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selvM7731w3Th9L30",
+            "name": "3 Channel Power Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seliyol851uQG0O6i",
+            "name": "Spades",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selTZV9T4QoDXKNrp",
+            "name": "15ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selJtYlL1QaCnWUZy",
+            "name": "CD Player & Power Supply",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selHc3ZHrlwHOnt2O",
+            "name": "Powere Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selkS3m8879ELl4fY",
+            "name": "Floorstanding speaker",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4C08cZEJyj1sMi",
+            "name": "Power Conditioner / Isolation Transformer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seluORTfKBWEofLUj",
+            "name": "Preamplifier and Controller",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selvBqBq7pvXNsnDT",
+            "name": "20 amp",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selrk9uwcatRjzATc",
+            "name": "5ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selIP4a4Z2Lw75GUv",
+            "name": "RCA Interconnects",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selIs0zxLQKi2SSRY",
+            "name": "Phono Interconnect",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selah9fMMeWkBvX1S",
+            "name": "Audio Tweak",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selk9s6JyAUb89CUl",
+            "name": "Network Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel08JOy05BW0RwZX",
+            "name": "Network Player / DAC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel668UjDHDQMdN7J",
+            "name": "CG XLR",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selkW7Yphjxm8U619",
+            "name": "6.5m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyRXjWjo0NBB9RA",
+            "name": "5m",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selJmubs5IniQOBpf",
+            "name": "Power Distribution (Conditioner)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selLtBrcOeqtlm4dV",
+            "name": "HDMI cable",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selDqeXenMOMVeGYF",
+            "name": "2.5ft",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selF0v2QTlLvlpP6v",
+            "name": "Noise Reducer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selxd96BOfjoWdKh9",
+            "name": "Harmonizer / Noise Reducer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel6beWoNKG1cDUgm",
+            "name": "Crossover Transducer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selRWQZhvQRHFpAnj",
+            "name": "broad spectrum low-frequency resonator array",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel9u7dcRNmMFao1W",
+            "name": "Equipment Isolator",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selv6ETGX6ULYlths",
+            "name": "Power Conditioning",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selU5NaAB0lxIAXKt",
+            "name": "15A",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selxPXToUe5umrw68",
+            "name": "20A",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selB8wBy3kDYHfVlV",
+            "name": "Mechanical Iterface Grounding (Audio tweak)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selSZ1f2ELbjE5xO4",
+            "name": "To go between isolation feet and carpet",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selHLCkvS70CB6tqc",
+            "name": "Set of 4",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selrB4AEOoXZLAq5c",
+            "name": "End Audio Compensator / Noise Reducer",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selIKw0b2e1epBwaG",
+            "name": "bare wire pair for speakers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel34EuCtPB0bDzLt",
+            "name": "RCA pair for interconnects",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seldTh8XBPfEZoNJz",
+            "name": "Pair of Monoblock Amplifiers",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selibhpszDFQ71LJB",
+            "name": "CD SACD DVD Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selcHbGVVsCJ8Tlbl",
+            "name": "Room Correction",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selyN2pZ0uVDGFeXm",
+            "name": "Music Player",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selkLvbBqPcQLPgpo",
+            "name": "AV Processor Preamplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seleAR2WWAYmqQc3c",
+            "name": "SACD CD Transport",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selcgQLfbSu42r33S",
+            "name": "Moving Coil Phono Cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selftEokqEBiUSMD9",
+            "name": "Five Channel Power Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selZNZ5nxSS5AwowF",
+            "name": "SACD Transport",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selgi9bHxZtXgEBWG",
+            "name": "Preamplifier (with MC/MM phono stage)",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selwKicHxKrhmPH4Q",
+            "name": "Mono low-output moving coil cartridge",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4ysb3GGRBkCtEb",
+            "name": "Seven Channel Power Amplifier",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selgmKoYkTIApDnLY",
+            "name": "Ground Box",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selo8zRNaVMJNCYKj",
+            "name": "Digital Cable BNC-BNC",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seleSLeXw1bN5TMuj",
+            "name": "Streamer/Int. Amp",
+            "color": "grayLight2"
+          }
+        ]
+      },
+      "id": "fldxZFvzdmQxF89lO",
+      "name": "Component Type"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldN34k0d2zBvJhMr",
+      "name": "Serial Number"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldjbwD3wylEriAVN",
+      "name": "Voltage"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldfJLaSvNjw3tnvy",
+      "name": "Inventory Notes"
+    },
+    {
+      "type": "multipleAttachments",
+      "options": {
+        "isReversed": false
+      },
+      "id": "fld1zIzmZEciQECah",
+      "name": "Images (Eduardo)"
+    },
+    {
+      "type": "multilineText",
+      "id": "fld5HseHNQSaCZuRY",
+      "name": "Cosmetic Condition Notes"
+    },
+    {
+      "type": "multipleSelects",
+      "options": {
+        "choices": [
+          {
+            "id": "sel8opVEDjSYMA5zM",
+            "name": "Yes",
+            "color": "greenLight2"
+          },
+          {
+            "id": "seli9PMTOxjlkCSS2",
+            "name": "No",
+            "color": "redLight2"
+          }
+        ]
+      },
+      "id": "flda2vmvUKvxoU5L6",
+      "name": "Original Box"
+    },
+    {
+      "type": "multipleSelects",
+      "options": {
+        "choices": [
+          {
+            "id": "selUYNVeZ5GpRP2i7",
+            "name": "Yes",
+            "color": "greenLight2"
+          },
+          {
+            "id": "seluYcU3xQIZTnMPB",
+            "name": "No",
+            "color": "redLight2"
+          }
+        ]
+      },
+      "id": "fld5lK1I5RNE5jzEv",
+      "name": "Manual"
+    },
+    {
+      "type": "multipleSelects",
+      "options": {
+        "choices": [
+          {
+            "id": "sel1TziwfSZZxqiK7",
+            "name": "Yes",
+            "color": "greenLight2"
+          },
+          {
+            "id": "selaYqMPIEe1zCg4r",
+            "name": "No",
+            "color": "redLight2"
+          },
+          {
+            "id": "selJ5nBchSWWTQVKh",
+            "name": "N/A",
+            "color": "pinkBright"
+          }
+        ]
+      },
+      "id": "fldsakkVOj0W4flOP",
+      "name": "Remote"
+    },
+    {
+      "type": "multipleSelects",
+      "options": {
+        "choices": [
+          {
+            "id": "selVuu9GtmYWbOpeL",
+            "name": "Yes",
+            "color": "greenLight2"
+          },
+          {
+            "id": "selvSxE80VFyjqZry",
+            "name": "No",
+            "color": "redLight2"
+          }
+        ]
+      },
+      "id": "fldZ6SsjuBSJH72Da",
+      "name": "Power Cable"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldNsKXJVJ2xc8cL5",
+      "name": "Additional Items"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldVBqN3IbayI2hZw",
+      "name": "Weight"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldwA5dRyQSqpFrYl",
+      "name": "Shipping Dims"
+    },
+    {
+      "type": "multipleSelects",
+      "options": {
+        "choices": [
+          {
+            "id": "selK1hss1dKgA8cRc",
+            "name": "UPS Ground (Domestic) / FedEx Economy, USPS Priority, Ebay Standard Delivery (International)",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selxeLO5cJ2OvUf9Q",
+            "name": "Freight (Domestic / International)",
+            "color": "redLight2"
+          },
+          {
+            "id": "selZjgDgqMPWJJQEf",
+            "name": "Free Domestic Shipping / Ebay Standard Delivery (International)",
+            "color": "greenLight2"
+          },
+          {
+            "id": "selwMFN135H1giFCZ",
+            "name": "Media Mail (Domestic) / FedEx Economy, USPS Priority, Ebay Standard Delivery (International)",
+            "color": "tealLight2"
+          },
+          {
+            "id": "sel6Arbjb1A6nUYdC",
+            "name": "Local Pickup",
+            "color": "tealBright"
+          }
+        ]
+      },
+      "id": "fldO3ARVmpttXW6vx",
+      "name": "Shipping Method"
+    },
+    {
+      "type": "multipleSelects",
+      "options": {
+        "choices": [
+          {
+            "id": "selpf6xJSCX6OR5hD",
+            "name": "10/10: Mint - New in box, no visible imperfections.",
+            "color": "greenDark1"
+          },
+          {
+            "id": "selHNP8uG2ATNk4Sq",
+            "name": "9/10: Excellent - Light use, no visible imperfections.",
+            "color": "greenBright"
+          },
+          {
+            "id": "selOkm51wBbv1bQLL",
+            "name": "8/10: Very Good - Flawless front face, other minor imperfections.",
+            "color": "greenLight1"
+          },
+          {
+            "id": "seliL9tDfTZWSw4Nt",
+            "name": "7/10: Good - Light signs of wear, looks used but well-maintained.",
+            "color": "greenLight2"
+          },
+          {
+            "id": "selFH0Oe7Mfnvb44N",
+            "name": "6/10: Fair - Pronounced signs of wear.",
+            "color": "yellowLight2"
+          },
+          {
+            "id": "sel1MPaZzBH14JbMl",
+            "name": "5/10: Average - Noticeably used, imperfections on the front face.",
+            "color": "yellowLight1"
+          },
+          {
+            "id": "selcXODzYK2DJcqub",
+            "name": "4/10: Mediocre - Looks worn out.",
+            "color": "orangeLight2"
+          },
+          {
+            "id": "selIyvekfVuPq1XCV",
+            "name": "3/10: Poor - Looks beat up.",
+            "color": "redLight2"
+          },
+          {
+            "id": "selnRdJNPTq4F8Jot",
+            "name": "2/10: Very Poor - Looks beat up.",
+            "color": "redLight1"
+          },
+          {
+            "id": "selsOumRvgYXAgOF6",
+            "name": "1/10: Shot - For parts use only.",
+            "color": "redBright"
+          }
+        ]
+      },
+      "id": "flddFxPbEoYk8YhjN",
+      "name": "Audiogon Rating"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldHPg6f6UYsrcrYU",
+      "name": "Shipping Weight"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldOJo6L5siMvkFUf",
+      "name": "Testing Notes"
+    },
+    {
+      "type": "duration",
+      "options": {
+        "durationFormat": "h:mm"
+      },
+      "id": "fld8tjd6nnAgLLqMc",
+      "name": "Testing Time"
+    },
+    {
+      "type": "multilineText",
+      "id": "fld6ia2W0dlUQ0iHm",
+      "name": "Service Notes"
+    },
+    {
+      "type": "duration",
+      "options": {
+        "durationFormat": "h:mm"
+      },
+      "id": "fldvVB0U01uFeRtRM",
+      "name": "Service Time"
+    },
+    {
+      "type": "date",
+      "options": {
+        "dateFormat": {
+          "name": "local",
+          "format": "l"
+        }
+      },
+      "id": "fldv34Nv4OS2ss3s5",
+      "name": "Tested"
+    },
+    {
+      "type": "date",
+      "options": {
+        "dateFormat": {
+          "name": "local",
+          "format": "l"
+        }
+      },
+      "id": "fldO3obktjOuR2yXA",
+      "name": "Photo'd"
+    },
+    {
+      "type": "barcode",
+      "id": "fldFFYwqsbUSl4q06",
+      "name": "SKU"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selijAvK3FGqAb9Bt",
+            "name": "Needs Review",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel4XwYLCbSXRw4tY",
+            "name": "Price Refresh",
+            "color": "grayLight2"
+          },
+          {
+            "id": "seleXfg5WIOmzf9so",
+            "name": "Content Refresh",
+            "color": "grayLight2"
+          },
+          {
+            "id": "selsjTiyP0wRCOfKu",
+            "name": "Ready To Relist",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel5hQxPA1vVYMuQk",
+            "name": "Do Not Relist",
+            "color": "grayLight2"
+          }
+        ]
+      },
+      "id": "fldPntn6pMirQpZLX",
+      "name": "Stale Recovery Status"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldmIeSCDPoSR5U3P",
+      "name": "Stale Recovery Notes"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fld3f5Azoh2J5A1Re",
+      "name": "Stale Recovery Updated At"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fldXRg6cVBSMaPMLm",
+      "name": "Relisted At"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "sel2LrLvNHCXHFBhY",
+            "name": "JotForm",
+            "color": "blueLight2"
+          },
+          {
+            "id": "sel7kNwX3vc5b3OCs",
+            "name": "Manual Entry",
+            "color": "cyanLight2"
+          }
+        ]
+      },
+      "id": "fldTovwdyhLN1xBaw",
+      "name": "Workflow Source"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldxDNeDFkJei9k39",
+      "name": "Submission Group ID"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fld7nVEfGUlvUJUAR",
+      "name": "Pick Up ID"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selSQ2ZxRwBY59YKH",
+            "name": "Active Trash",
+            "color": "redLight1"
+          },
+          {
+            "id": "sel1JV9kd7rWgGLiV",
+            "name": "Restored",
+            "color": "greenLight2"
+          },
+          {
+            "id": "sel7JQwPV4Sm0tUNP",
+            "name": "Ready for Deletion",
+            "color": "grayDark1"
+          }
+        ]
+      },
+      "id": "fldwcpHNYJFgy3cIt",
+      "name": "Trash Status"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldux7oXFuncGiXJ4",
+      "name": "Accepted By"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fldUzYicYYuQdovSj",
+      "name": "Accepted At"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldo2z0DZTCfsCh3k",
+      "name": "Processing Signed By"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "flddfDNH7SmOXkX9D",
+      "name": "Processing Signed At"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fld2r6Bt6LH73mpYY",
+      "name": "Testing Signed By"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "flds3hHtRw5qRjQEe",
+      "name": "Testing Signed At"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldB9kAfrJLIg6AGV",
+      "name": "Photography Signed By"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fldR7HYDaV1c9VtUq",
+      "name": "Photography Signed At"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldHjRyP7IaVvm8L9",
+      "name": "Pre-Listing Reviewed By"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fld7DTdzlvxF2atqt",
+      "name": "Pre-Listing Reviewed At"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldU3AEmjYC7SJt51",
+      "name": "Qualification Notes"
+    },
+    {
+      "type": "checkbox",
+      "options": {
+        "icon": "check",
+        "color": "greenBright"
+      },
+      "id": "fldQgYvHMNONQRzYn",
+      "name": "Qualification Complete"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldIBQp9s51TiZHZJ",
+      "name": "Unqualified Reason"
+    },
+    {
+      "type": "multilineText",
+      "id": "fld0K52Ttuy6qjV0G",
+      "name": "Customer Cosmetic Notes"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldo0NyFl0OeOLVod",
+      "name": "Customer Functional Notes"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldoTKPjYjDdSCZY3",
+      "name": "Customer Inclusion Notes"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldakWWExv1ZG1UeY",
+      "name": "Customer Submitted Photos Notes"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldPIKZKJqzVXJSBk",
+      "name": "Internal Cosmetic Notes"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldWYFdLbZZOaKYrW",
+      "name": "Internal Functional Notes"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldrRx9S8Ix7M2usW",
+      "name": "Internal Inclusion Notes"
+    },
+    {
+      "type": "currency",
+      "options": {
+        "precision": 2,
+        "symbol": "$"
+      },
+      "id": "fldwuQlYa0kl1HeHR",
+      "name": "Offer Amount"
+    },
+    {
+      "type": "currency",
+      "options": {
+        "precision": 2,
+        "symbol": "$"
+      },
+      "id": "fld1vMtmSOwAsLBtC",
+      "name": "Paid Amount"
+    },
+    {
+      "type": "currency",
+      "options": {
+        "precision": 2,
+        "symbol": "$"
+      },
+      "id": "fldW71nS29yvZwF5T",
+      "name": "Confirmed Grand Total"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "sellfqHmZYfWoBYuD",
+            "name": "Equal Split",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selezQS8oOEM9T7Ui",
+            "name": "Manual Override",
+            "color": "orangeLight1"
+          }
+        ]
+      },
+      "id": "fldbeLNSw7QoKhjJQ",
+      "name": "Allocation Mode"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldsglBQuhXTLogw6",
+      "name": "Allocation Notes"
+    },
+    {
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "sel0bZ4TBbdp7Ftoe",
+            "name": "Pending Review",
+            "color": "blueLight2"
+          },
+          {
+            "id": "sel0Y2i2uyErJMI8e",
+            "name": "Unqualified",
+            "color": "redLight1"
+          },
+          {
+            "id": "sel3l4oYxUWlSVBeO",
+            "name": "Accepted - Awaiting Arrival",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "selMpuAfjpJNgDKam",
+            "name": "Accepted - Arrived, Awaiting SKU",
+            "color": "tealLight2"
+          },
+          {
+            "id": "selQWbGTXy8Nm5DLv",
+            "name": "Accepted - Arrived, Awaiting Missing Item",
+            "color": "yellowLight2"
+          },
+          {
+            "id": "selOFfEbgnUvvj4w8",
+            "name": "Testing and Photography In Progress",
+            "color": "orangeLight1"
+          },
+          {
+            "id": "selpaZZALpwQP1Q1F",
+            "name": "Awaiting Pre-Listing Review",
+            "color": "pinkLight2"
+          },
+          {
+            "id": "selssPuAAGPnRIBfB",
+            "name": "Approved for Publish",
+            "color": "greenLight1"
+          },
+          {
+            "id": "sel18HqQuLOD4j3TC",
+            "name": "Listed, Shopify",
+            "color": "greenLight2"
+          },
+          {
+            "id": "selKiNt5gj7a4Euwf",
+            "name": "Listed, eBay",
+            "color": "blueLight1"
+          },
+          {
+            "id": "sel3jRITXcazW363f",
+            "name": "Stale Listing, Shopify",
+            "color": "yellowLight2"
+          },
+          {
+            "id": "selXrtX4xsN0EhqkV",
+            "name": "Stale Listing, eBay",
+            "color": "orangeLight2"
+          },
+          {
+            "id": "sel7gVtV64KHoFw77",
+            "name": "Sold - Ready to Ship",
+            "color": "cyanLight1"
+          },
+          {
+            "id": "seldvBv0scd9eodVY",
+            "name": "Shipped",
+            "color": "grayLight2"
+          }
+        ]
+      },
+      "id": "fldReNeRPkWXo6Xvo",
+      "name": "Workflow Status"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fldvHQgNUHuyrWIL0",
+      "name": "Awaiting Pre-Listing Review At"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fld6PwtQ7CweafSK6",
+      "name": "Approved For Publish At"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fldwYzouCqgPqd32t",
+      "name": "Listed At"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fldRwyGCYH1yyg1xa",
+      "name": "Stale Listing At"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fld25QGk9V82tEieI",
+      "name": "Sold Ready To Ship At"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fld4C9FGJzMcjMAwW",
+      "name": "Shipped At"
+    },
+    {
+      "type": "dateTime",
+      "options": {
+        "dateFormat": {
+          "name": "iso",
+          "format": "YYYY-MM-DD"
+        },
+        "timeFormat": {
+          "name": "24hour",
+          "format": "HH:mm"
+        },
+        "timeZone": "utc"
+      },
+      "id": "fldyOObXogaJDLApi",
+      "name": "eBay Published At"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fldTCjp1marmowkwA",
+      "name": "eBay Offer ID"
+    },
+    {
+      "type": "singleLineText",
+      "id": "fld7rkwiAQ458GQ22",
+      "name": "eBay Listing ID"
+    }
+  ],
+  "views": [
+    {
+      "id": "viwZdrQSBohX1m35D",
+      "name": "Grid view",
+      "type": "grid"
+    }
+  ]
+}

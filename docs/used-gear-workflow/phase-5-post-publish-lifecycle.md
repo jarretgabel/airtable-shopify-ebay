@@ -67,14 +67,18 @@ This phase adds the listing-aging and fulfillment lifecycle after publish behavi
 - Post-publish lifecycle buckets can now be collapsed individually or all at once, and that collapsed-bucket layout also syncs into the Inventory URL.
 - Inventory now renders active workflow-filter summary chips so operators can confirm which queue searches, bucket filters, and collapsed layouts are active before sharing a link.
 - Post-publish sort mode now persists in the Inventory URL, those summary chips can clear individual workflow-state slices, and dashboard stale/sold-ready entry points now show matching bucket chips before operators open the filtered Inventory view.
+- Stale workflow rows now support Airtable-backed recovery tracking with `Stale Recovery Status`, `Stale Recovery Notes`, `Stale Recovery Updated At`, and `Relisted At`.
+- Stale rows can now be updated in place from the post-publish queue and returned to `Listed, Shopify` or `Listed, eBay` through an explicit `Mark Relisted` action.
+- The workflow detail page now surfaces the current stale-recovery state as a read-only post-publish audit panel.
 
 ### Automation Decision
 - Sold and shipped workflow transitions are implemented as explicit in-app operational actions for now.
 - Backend automation remains intentionally deferred until marketplace or fulfillment integrations are ready to drive those states with trustworthy events.
 
 ### Backlog
-- [ ] Add richer relist or stale-recovery actions once the team decides how stale inventory should be corrected and republished.
-- [ ] Add archived or history-oriented filters so shipped workflow records can be reviewed without crowding active operational buckets.
+- [x] Add richer relist or stale-recovery actions once the team decides how stale inventory should be corrected and republished.
+	- Design reference: `/Users/user/Sites/airtable-shopify-ebay/docs/used-gear-workflow/stale-listing-recovery-design.md`
+- [x] Add archived or history-oriented filters so shipped workflow records can be reviewed without crowding active operational buckets.
 - [ ] Add optional digest or throttling behavior for stale and sold-ready notifications if queue volume grows.
 - [ ] Add explicit sold and shipped reconciliation helpers if manual lifecycle actions become too repetitive at scale.
-- [ ] Add post-publish analytics snapshots for stale age, sold conversion timing, and shipping follow-through.
+- [x] Add post-publish analytics snapshots for stale age, sold conversion timing, and shipping follow-through.

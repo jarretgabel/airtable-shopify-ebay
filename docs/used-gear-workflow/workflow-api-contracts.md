@@ -106,6 +106,14 @@ Primary source wiring:
 - Error contract:
   - throws when the selected record id is not found in the configured source
 
+### Workflow Record Context Read
+- Service: `loadUsedGearWorkflowRecordContext`
+- Purpose:
+  - load one workflow record plus its grouped submission or pickup context when sibling rows exist
+- Returns:
+  - `record`
+  - `group` when the current row belongs to a multi-row grouped submission/pickup
+
 ### Notification Count Read
 - Service: `loadUsedGearWorkflowNotificationCounts`
 - Purpose: aggregate counts for user-configurable in-app workflow alerts
@@ -145,6 +153,16 @@ All mutations write through `updateConfiguredRecord('used-gear-workflow', record
   - `Unqualified Reason = provided reason`
   - `Trash Status = Active Trash`
 - Validation:
+  - `reason` must be non-empty
+
+### Batch Pending Review Unqualified
+- Service: `markPendingReviewGroupUnqualified(recordIds, reason)`
+- Allowed from:
+  - grouped `Pending Review` submissions where one trash decision applies to every row
+- Writes:
+  - the same unqualified mutation contract to each row in the group
+- Validation:
+  - `recordIds` must be non-empty
   - `reason` must be non-empty
 
 ### Save Generic Stage Signoff
@@ -246,8 +264,13 @@ Current supported publish lifecycle outcomes:
 - `Listed, eBay`
 - later post-publish queue transitions continue from those statuses
 
-Deferred publish writeback:
-- eBay metadata persistence beyond workflow status is intentionally deferred until approved Airtable field names exist for that data
+Current eBay publish metadata persisted to the workflow row:
+- `eBay Published At`
+- `eBay Offer ID`
+- `eBay Listing ID`
+
+Additional publish writeback reference:
+- see `docs/used-gear-workflow/publish-writeback-behavior.md`
 
 ## JotForm And Manual-Entry Intake Contract
 

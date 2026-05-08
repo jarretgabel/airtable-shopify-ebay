@@ -23,6 +23,10 @@ Implement the workflow on top of the existing Airtable-backed inventory system b
 - [Original requirements](./used-gear-workflow/original-requirements.md)
 - [Data model and approvals](./used-gear-workflow/data-model-and-approvals.md)
 - [UI surface map](./used-gear-workflow/ui-surface-map.md)
+- [Operator guide](./used-gear-workflow/operator-guide.md)
+- [Backfill runbook](./used-gear-workflow/backfill-runbook.md)
+- [Schema update approval guide](./used-gear-workflow/schema-update-approval-guide.md)
+- [Stale listing recovery design](./used-gear-workflow/stale-listing-recovery-design.md)
 - [Phase 1 improvements checklist](./used-gear-workflow/phase-1-improvements-checklist.md)
 
 **Phase Docs**

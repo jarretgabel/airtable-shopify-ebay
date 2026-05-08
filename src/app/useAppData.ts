@@ -11,6 +11,7 @@ import { useHiFiShark } from '@/hooks/useHiFiShark';
 import { useJotFormInquiries } from '@/hooks/useJotForm';
 import { useListings } from '@/hooks/useListings';
 import { useShopifyProducts } from '@/hooks/useShopifyProducts';
+import { useUsedGearWorkflowAnalyticsSnapshot } from '@/hooks/useUsedGearWorkflowAnalyticsSnapshot';
 import { useUsedGearWorkflowPostPublishSummary } from '@/hooks/useUsedGearWorkflowPostPublishSummary';
 import { getAIProvider } from '@/services/equipmentAI';
 
@@ -38,6 +39,7 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, users }: 
   const ebay = useEbayListings(ebayEnabled);
   const approval = useApprovalQueueSummary(enabled && canAccessPage('approval') && runtimeFeatures.approvalEbay.available);
   const shopifyApproval = useShopifyApprovalQueueSummary(enabled && canAccessPage('shopify-approval') && runtimeFeatures.approvalShopify.available);
+  const usedGearWorkflowAnalytics = useUsedGearWorkflowAnalyticsSnapshot(enabled && canAccessPage('inventory'));
   const usedGearWorkflowPostPublish = useUsedGearWorkflowPostPublishSummary(enabled && canAccessPage('inventory'));
 
   const JOTFORM_FORM_ID = runtimeFeatures.jotform.available ? checkOptionalEnv('VITE_JOTFORM_FORM_ID') : '';
@@ -67,6 +69,7 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, users }: 
     },
     approval,
     shopifyApproval,
+    usedGearWorkflowAnalytics,
     usedGearWorkflowPostPublish,
     jotform,
     metrics,

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "fldyOObXogaJDLApi",
+    "name": "eBay Published At",
+    "type": "dateTime"
+  },
+  {
+    "id": "fldTCjp1marmowkwA",
+    "name": "eBay Offer ID",
+    "type": "singleLineText"
+  },
+  {
+    "id": "fld7rkwiAQ458GQ22",
+    "name": "eBay Listing ID",
+    "type": "singleLineText"
+  }
+]
