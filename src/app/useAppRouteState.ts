@@ -13,6 +13,8 @@ interface AppRouteState {
   inventoryRecordId: string | null;
   usedGearWorkflowRecordId: string | null;
   listingsRecordId: string | null;
+  shopifyListingsRecordId: string | null;
+  ebayListingsRecordId: string | null;
   userRecordId: string | null;
   activeTab: Tab;
   firstAccessibleTab: Tab;
@@ -30,6 +32,8 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const photosRecordMatch = normalizedPath.match(/^\/photos\/([^/]+)$/);
   const usedGearWorkflowRecordMatch = normalizedPath.match(/^\/inventory\/workflow\/([^/]+)$/);
   const inventoryRecordMatch = normalizedPath.match(/^\/inventory\/([^/]+)$/);
+  const ebayListingsRecordMatch = normalizedPath.match(/^\/ebay\/listings\/([^/]+)$/);
+  const shopifyListingsRecordMatch = normalizedPath.match(/^\/shopify\/products\/([^/]+)$/);
   const legacyEbayApprovalRecordMatch = normalizedPath.match(/^\/ebay\/approval\/([^/]+)$/);
   const legacyShopifyApprovalRecordMatch = normalizedPath.match(/^\/shopify\/approval\/([^/]+)$/);
   const listingsRecordMatch = normalizedPath.match(/^\/listings\/([^/]+)$/);
@@ -40,8 +44,8 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     if (normalizedPath === '/ebay/approval' || normalizedPath.startsWith('/ebay/approval/')) return 'listings';
     if (normalizedPath === '/shopify/approval' || normalizedPath.startsWith('/shopify/approval/')) return 'listings';
     if (normalizedPath === '/listings' || listingsRecordMatch) return 'listings';
-    if (normalizedPath === '/ebay/listings') return 'ebay';
-    if (normalizedPath === '/shopify/products') return 'shopify';
+    if (normalizedPath === '/ebay/listings' || ebayListingsRecordMatch) return 'ebay';
+    if (normalizedPath === '/shopify/products' || shopifyListingsRecordMatch) return 'shopify';
     if (normalizedPath === '/parking-lot-2') return 'parking-lot-2';
     if (normalizedPath === '/trash-review') return 'trash-review';
     if (normalizedPath === '/workflow/testing') return 'testing-queue';
@@ -78,6 +82,8 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
         : legacyShopifyApprovalRecordMatch
           ? decodeURIComponent(legacyShopifyApprovalRecordMatch[1])
           : null,
+    shopifyListingsRecordId: shopifyListingsRecordMatch ? decodeURIComponent(shopifyListingsRecordMatch[1]) : null,
+    ebayListingsRecordId: ebayListingsRecordMatch ? decodeURIComponent(ebayListingsRecordMatch[1]) : null,
     userRecordId: userRecordMatch ? decodeURIComponent(userRecordMatch[1]) : null,
     activeTab,
     firstAccessibleTab,

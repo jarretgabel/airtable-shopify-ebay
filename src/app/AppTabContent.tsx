@@ -13,11 +13,14 @@ import type { AppTabContentProps } from '@/app/appTabContentTypes';
 import { ErrorSurface } from '@/components/app/StateSurfaces';
 
 const DashboardTab = lazy(async () => ({ default: (await import('@/components/DashboardTab')).DashboardTab }));
-const EbayTab = lazy(async () => ({ default: (await import('@/components/EbayTab')).EbayTab }));
 const ImageLab = lazy(async () => ({ default: (await import('@/components/ImageLab')).ImageLab }));
 const CombinedListingsApprovalTab = lazy(async () => ({ default: (await import('@/components/approval/CombinedListingsApprovalTab')).CombinedListingsApprovalTab }));
+const EbayListingsDirectoryTab = lazy(async () => ({ default: (await import('@/components/approval/EbayListingsDirectoryTab')).EbayListingsDirectoryTab }));
+const EbaySnapshotRecordPage = lazy(async () => ({ default: (await import('@/components/approval/EbaySnapshotRecordPage')).EbaySnapshotRecordPage }));
 const NotificationsTab = lazy(async () => ({ default: (await import('@/components/NotificationsTab')).NotificationsTab }));
 const SettingsTab = lazy(async () => ({ default: (await import('@/components/SettingsTab')).SettingsTab }));
+const ShopifySnapshotRecordPage = lazy(async () => ({ default: (await import('@/components/approval/ShopifySnapshotRecordPage')).ShopifySnapshotRecordPage }));
+const ShopifyListingsDirectoryTab = lazy(async () => ({ default: (await import('@/components/approval/ShopifyListingsDirectoryTab')).ShopifyListingsDirectoryTab }));
 const UserManagementTab = lazy(async () => ({ default: (await import('@/components/UserManagementTab')).UserManagementTab }));
 const AirtableTab = lazy(async () => ({ default: (await import('@/components/tabs/AirtableTab')).AirtableTab }));
 const AirtableEmbeddedForm = lazy(async () => ({ default: (await import('@/components/tabs/AirtableEmbeddedForm')).AirtableEmbeddedForm }));
@@ -27,7 +30,6 @@ const UsedGearPendingReviewGroupPage = lazy(async () => ({ default: (await impor
 const JotformTab = lazy(async () => ({ default: (await import('@/components/tabs/JotformTab')).JotformTab }));
 const MarketTab = lazy(async () => ({ default: (await import('@/components/tabs/MarketTab')).MarketTab }));
 const PhotosFormTab = lazy(async () => ({ default: (await import('@/components/tabs/PhotosFormTab')).PhotosFormTab }));
-const ShopifyTab = lazy(async () => ({ default: (await import('@/components/tabs/ShopifyTab')).ShopifyTab }));
 const TestingFormTab = lazy(async () => ({ default: (await import('@/components/tabs/TestingFormTab')).TestingFormTab }));
 const UsedGearLotTwoTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoTab')).UsedGearLotTwoTab }));
 const UsedGearTrashTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashTab')).UsedGearTrashTab }));
@@ -112,6 +114,8 @@ export function AppTabContent({
   inventoryRecordId,
   usedGearWorkflowRecordId,
   listingsRecordId,
+  shopifyListingsRecordId,
+  ebayListingsRecordId,
   userRecordId,
   navigateToInventoryRecord,
   navigateToUsedGearWorkflowRecord,
@@ -122,6 +126,10 @@ export function AppTabContent({
   navigateToPhotosForm,
   navigateToListingsRecord,
   navigateToListingsList,
+  navigateToShopifyList,
+  navigateToShopifyRecord,
+  navigateToEbayList,
+  navigateToEbayRecord,
   navigateToUserRecord,
   navigateToUsersList,
   navigateToTab,
@@ -197,6 +205,8 @@ export function AppTabContent({
     inventoryRecordId,
     usedGearWorkflowRecordId,
     listingsRecordId,
+    shopifyListingsRecordId,
+    ebayListingsRecordId,
     userRecordId,
   });
   const isRouteTransitionPending = deferredRouteState.activeTab !== activeTab
@@ -207,6 +217,8 @@ export function AppTabContent({
     || deferredRouteState.inventoryRecordId !== inventoryRecordId
     || deferredRouteState.usedGearWorkflowRecordId !== usedGearWorkflowRecordId
     || deferredRouteState.listingsRecordId !== listingsRecordId
+    || deferredRouteState.shopifyListingsRecordId !== shopifyListingsRecordId
+    || deferredRouteState.ebayListingsRecordId !== ebayListingsRecordId
     || deferredRouteState.userRecordId !== userRecordId;
 
   const ebayViewModel = buildEbayTabViewModel({
@@ -333,7 +345,22 @@ export function AppTabContent({
         if (!runtimeFeatures.ebay.available && runtimeFeatures.ebay.message) {
           return <FeatureUnavailableTab title="eBay unavailable" message={runtimeFeatures.ebay.message} />;
         }
-        return <EbayTab viewModel={ebayViewModel} />;
+        if (deferredRouteState.ebayListingsRecordId) {
+          return (
+            <EbaySnapshotRecordPage
+              recordId={deferredRouteState.ebayListingsRecordId}
+              viewModel={ebayViewModel}
+              onBackToSnapshot={() => navigateToEbayList()}
+              onOpenListings={() => navigateToListingsList()}
+            />
+          );
+        }
+        return (
+          <EbayListingsDirectoryTab
+            ebayViewModel={ebayViewModel}
+            onOpenSnapshotRecord={navigateToEbayRecord}
+          />
+        );
       case 'users':
         return <UserManagementTab viewModel={usersViewModel} />;
       case 'settings':
@@ -374,7 +401,22 @@ export function AppTabContent({
             />
           );
       case 'shopify':
-        return <ShopifyTab viewModel={shopifyViewModel} />;
+        if (deferredRouteState.shopifyListingsRecordId) {
+          return (
+            <ShopifySnapshotRecordPage
+              productId={deferredRouteState.shopifyListingsRecordId}
+              viewModel={shopifyViewModel}
+              onBackToSnapshot={() => navigateToShopifyList()}
+              onOpenListings={() => navigateToListingsList()}
+            />
+          );
+        }
+        return (
+          <ShopifyListingsDirectoryTab
+            shopifyViewModel={shopifyViewModel}
+            onOpenSnapshotRecord={navigateToShopifyRecord}
+          />
+        );
       case 'market':
         return <MarketTab viewModel={marketViewModel} />;
       case 'incoming-gear':

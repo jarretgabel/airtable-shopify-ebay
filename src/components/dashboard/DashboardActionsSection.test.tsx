@@ -28,9 +28,38 @@ describe('DashboardActionsSection', () => {
     );
 
     expect(screen.getByText('Shopify listings review unavailable')).toBeInTheDocument();
-    expect(screen.getByText('eBay publishing unavailable')).toBeInTheDocument();
+    expect(screen.getByText('eBay snapshot unavailable')).toBeInTheDocument();
     expect(screen.getAllByText('Unavailable')).toHaveLength(2);
     expect(screen.queryByText('All clear — no actions required right now.')).not.toBeInTheDocument();
+  });
+
+  it('routes eBay draft publishing work into combined listings', () => {
+    const onSelectTab = vi.fn();
+
+    render(
+      <DashboardActionsSection
+        ebayAuthenticated={true}
+        ebayDraftCount={2}
+        ebayPublishedCount={4}
+        ebayTotal={9}
+        shopifyQueueApproved={0}
+        shopifyQueuePending={0}
+        shopifyQueueTotal={0}
+        workflowPostPublishLoading={false}
+        workflowActiveListingCount={0}
+        workflowStaleListingCount={0}
+        workflowStaleListingUnassignedCount={0}
+        workflowSoldReadyCount={0}
+        workflowSoldReadyUnassignedCount={0}
+        workflowShippedCount={0}
+        onSelectTab={onSelectTab}
+        onOpenInventoryPostPublishBucket={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /2 ebay drafts need listings review/i }));
+
+    expect(onSelectTab).toHaveBeenCalledWith('listings');
   });
 
   it('shows used-gear lifecycle action cards when stale and sold-ready work exists', () => {

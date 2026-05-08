@@ -38,6 +38,8 @@ function App() {
     inventoryRecordId,
     usedGearWorkflowRecordId,
     listingsRecordId,
+    shopifyListingsRecordId,
+    ebayListingsRecordId,
     userRecordId,
     activeTab,
     firstAccessibleTab,
@@ -68,6 +70,10 @@ function App() {
     navigateToInventoryPostPublishBucket,
     navigateToListingsRecord,
     navigateToListingsList,
+    navigateToShopifyRecord,
+    navigateToShopifyList,
+    navigateToEbayRecord,
+    navigateToEbayList,
     navigateToUserRecord,
     navigateToUsersList,
     handleLogout,
@@ -230,6 +236,8 @@ function App() {
             inventoryRecordId={inventoryRecordId}
             usedGearWorkflowRecordId={usedGearWorkflowRecordId}
             listingsRecordId={listingsRecordId}
+            shopifyListingsRecordId={shopifyListingsRecordId}
+            ebayListingsRecordId={ebayListingsRecordId}
             userRecordId={userRecordId}
             navigateToInventoryRecord={navigateToInventoryRecord}
             navigateToUsedGearWorkflowRecord={navigateToUsedGearWorkflowRecord}
@@ -240,6 +248,10 @@ function App() {
             navigateToPhotosForm={navigateToPhotosForm}
             navigateToListingsRecord={navigateToListingsRecord}
             navigateToListingsList={navigateToListingsList}
+            navigateToShopifyRecord={navigateToShopifyRecord}
+            navigateToShopifyList={navigateToShopifyList}
+            navigateToEbayRecord={navigateToEbayRecord}
+            navigateToEbayList={navigateToEbayList}
             navigateToUserRecord={navigateToUserRecord}
             navigateToUsersList={navigateToUsersList}
             navigateToTab={navigateToTab}

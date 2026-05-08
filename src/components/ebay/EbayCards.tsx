@@ -26,12 +26,13 @@ export function EbayServerConfigNotice({ error, loading }: { error: string | nul
   );
 }
 
-export function RecentEbayCard({ listing }: { listing: EbayPublishedListing }) {
+export function RecentEbayCard({ listing, onOpen }: { listing: EbayPublishedListing; onOpen?: () => void }) {
   const [imgError, setImgError] = useState(false);
   const thumbUrl = !imgError && listing.item.product?.imageUrls?.[0];
 
   return (
     <article className="flex flex-col overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--panel)] shadow-[0_1px_4px_rgba(17,32,49,0.06)] transition-shadow duration-150 hover:shadow-[0_4px_16px_rgba(17,32,49,0.10)]">
+      <button type="button" className="w-full text-left" onClick={onOpen}>
       <div className="relative aspect-[4/3] overflow-hidden bg-[var(--bg)]">
         {thumbUrl ? <img src={thumbUrl} alt={listing.item.product?.title ?? listing.item.sku} className="h-full w-full object-cover" onError={() => setImgError(true)} /> : <div className="flex h-full w-full items-center justify-center text-[var(--muted)]"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
         <span className="absolute right-2 top-2 rounded-md border border-green-400/35 bg-green-500/20 px-2 py-[0.2em] text-[0.65rem] font-extrabold uppercase tracking-[0.05em] text-green-200">Live</span>
@@ -43,11 +44,21 @@ export function RecentEbayCard({ listing }: { listing: EbayPublishedListing }) {
         {listing.offer.pricingSummary?.price && <div className="text-[1.05rem] font-extrabold text-green-300">{listing.offer.pricingSummary.price.currency === 'USD' ? '$' : listing.offer.pricingSummary.price.currency}{Number(listing.offer.pricingSummary.price.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>}
         {listing.item.condition && <p className="m-0 text-[0.74rem] font-semibold text-sky-500">{listing.item.condition.replace(/_/g, ' ').replace(/\b\w/g, (character: string) => character.toUpperCase())}</p>}
       </div>
+      </button>
+      <div className="flex items-center justify-end border-t border-[var(--line)] bg-[var(--bg)] px-4 py-3">
+        <button
+          type="button"
+          className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100 transition hover:border-sky-300/50 hover:bg-sky-500/25"
+          onClick={onOpen}
+        >
+          Open Snapshot
+        </button>
+      </div>
     </article>
   );
 }
 
-export function EbayCard({ item, offer }: { item: EbayInventoryItem; offer?: EbayOffer }) {
+export function EbayCard({ item, offer, onOpen }: { item: EbayInventoryItem; offer?: EbayOffer; onOpen?: () => void }) {
   const [imgError, setImgError] = useState(false);
   const thumbUrl = !imgError && item.product?.imageUrls?.[0];
   const price = offer?.pricingSummary?.price;
@@ -55,6 +66,7 @@ export function EbayCard({ item, offer }: { item: EbayInventoryItem; offer?: Eba
 
   return (
     <article className="flex flex-col overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--panel)] shadow-[0_1px_4px_rgba(17,32,49,0.06)] transition-shadow duration-150 hover:shadow-[0_4px_16px_rgba(17,32,49,0.10)]">
+      <button type="button" className="w-full text-left" onClick={onOpen}>
       <div className="relative aspect-[4/3] overflow-hidden bg-[var(--bg)]">
         {thumbUrl ? <img src={thumbUrl} alt={item.product?.title ?? item.sku} className="h-full w-full object-cover" onError={() => setImgError(true)} /> : <div className="flex h-full w-full items-center justify-center text-[var(--muted)]"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
         <span className={`absolute right-2 top-2 rounded-md px-2 py-[0.2em] text-[0.65rem] font-extrabold uppercase tracking-[0.05em] ${statusColor(offer?.status)}`}>{statusLabel(offer?.status)}</span>
@@ -82,6 +94,16 @@ export function EbayCard({ item, offer }: { item: EbayInventoryItem; offer?: Eba
         )}
 
         {offer?.offerId && <p className="m-0 mt-1 text-[0.65rem] font-mono text-[var(--muted)]">Offer {offer.offerId}</p>}
+      </div>
+      </button>
+      <div className="flex items-center justify-end border-t border-[var(--line)] bg-[var(--bg)] px-4 py-3">
+        <button
+          type="button"
+          className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100 transition hover:border-sky-300/50 hover:bg-sky-500/25"
+          onClick={onOpen}
+        >
+          Open Snapshot
+        </button>
       </div>
     </article>
   );

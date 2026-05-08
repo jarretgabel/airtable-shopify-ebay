@@ -58,6 +58,8 @@ export function useAuthRouteGuard({
     const isPhotosDetailPath = /^\/photos\/[^/]+$/.test(normalizedPath);
     const isInventoryDetailPath = /^\/inventory\/[^/]+$/.test(normalizedPath);
     const isListingsDetailPath = /^\/listings\/[^/]+$/.test(normalizedPath);
+    const isEbayListingsDetailPath = /^\/ebay\/listings\/[^/]+$/.test(normalizedPath);
+    const isShopifyProductsDetailPath = /^\/shopify\/products\/[^/]+$/.test(normalizedPath);
     const isUserDetailPath = /^\/account\/users\/[^/]+$/.test(normalizedPath);
     const isKnownSubPath =
       normalizedPath === '/inventory' ||
@@ -65,6 +67,7 @@ export function useAuthRouteGuard({
       normalizedPath === '/listings' ||
       isListingsDetailPath ||
       normalizedPath === '/ebay/listings' ||
+      isEbayListingsDetailPath ||
       normalizedPath === '/parking-lot-2' ||
       normalizedPath === '/trash-review' ||
       normalizedPath === '/workflow/testing' ||
@@ -77,6 +80,7 @@ export function useAuthRouteGuard({
       normalizedPath === '/photos' ||
       isPhotosDetailPath ||
       normalizedPath === '/shopify/products' ||
+      isShopifyProductsDetailPath ||
       normalizedPath === '/account/settings' ||
       normalizedPath === '/account/notifications' ||
       normalizedPath === '/account/users' ||
@@ -89,9 +93,9 @@ export function useAuthRouteGuard({
     const requestedTab: Tab | null =
       normalizedPath === '/listings' || isListingsDetailPath
           ? 'listings'
-        : normalizedPath === '/ebay/listings'
+        : normalizedPath === '/ebay/listings' || isEbayListingsDetailPath
             ? 'ebay'
-            : normalizedPath === '/shopify/products'
+            : normalizedPath === '/shopify/products' || isShopifyProductsDetailPath
               ? 'shopify'
                 : normalizedPath === '/parking-lot-2'
                   ? 'parking-lot-2'

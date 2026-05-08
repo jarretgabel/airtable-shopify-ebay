@@ -77,6 +77,7 @@ interface BuildListingApprovalTabPanelsParams {
   isApproved: boolean;
   error: string | null;
   onBackToList: () => void;
+  backToListLabel?: string;
   approving: boolean;
   pushingTarget: 'shopify' | 'ebay' | 'both' | null;
   hasUnsavedChanges: boolean;
@@ -171,6 +172,7 @@ export function buildListingApprovalTabPanels({
   isApproved,
   error,
   onBackToList,
+  backToListLabel,
   approving,
   pushingTarget,
   hasUnsavedChanges,
@@ -329,6 +331,7 @@ export function buildListingApprovalTabPanels({
       saving,
       error,
       onBackToList,
+      backToListLabel,
       secondaryActionButtonClass,
       errorSurfaceClass,
       isCombinedApproval,

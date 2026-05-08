@@ -1,8 +1,180 @@
+import { useEffect, useMemo, useState } from 'react';
 import { accentActionButtonClass, primaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
 import { errorSurfaceClass, panelSurfaceClass } from '@/components/tabs/uiClasses';
+import { isReadyForRequiredFields } from '@/components/approval/requiredFieldStatus';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
+import { displayValue } from '@/stores/approvalStore';
 import { AirtableRecord } from '@/types/airtable';
+
+type QueueQuickFilter = 'all' | 'pending' | 'ready' | 'needs-fields' | 'approved';
+type QueueExtraFilter = 'all' | 'shopify-active' | 'shopify-draft' | 'shopify-archived' | 'ebay-live' | 'ebay-draft-offer' | 'ebay-approved-to-publish' | 'ebay-stale';
+
+interface QueueExtraFilterDefinition {
+  id: Exclude<QueueExtraFilter, 'all'>;
+  label: string;
+  matches: (record: AirtableRecord) => boolean;
+}
+
+const searchInputClass = 'flex-1 min-w-[220px] rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-[0.82rem] text-[var(--ink)] placeholder-[var(--muted)] outline-none transition-colors focus:border-[var(--accent)]';
+const FILTER_STORAGE_PREFIX = 'approval-queue-filter';
+
+function isApprovedRecord(record: AirtableRecord, approvedFieldName: string): boolean {
+  const raw = record.fields[approvedFieldName];
+  return raw === true || String(raw ?? '').toLowerCase() === 'true' || String(raw ?? '').toLowerCase() === 'yes';
+}
+
+function buildSearchableRecordText(
+  record: AirtableRecord,
+  fieldNames: string[],
+): string {
+  return fieldNames
+    .filter((fieldName) => fieldName.trim().length > 0)
+    .map((fieldName) => displayValue(record.fields[fieldName]))
+    .join(' ')
+    .toLowerCase();
+}
+
+function readStoredFilter<T extends string>(storageKey: string, fallback: T, allowedValues: readonly T[]): T {
+  if (typeof window === 'undefined') return fallback;
+
+  const raw = window.localStorage.getItem(storageKey);
+  return raw && allowedValues.includes(raw as T) ? (raw as T) : fallback;
+}
+
+function writeStoredFilter(storageKey: string, value: string): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(storageKey, value);
+}
+
+function getRecordFieldText(record: AirtableRecord, fieldNames: string[]): string {
+  for (const fieldName of fieldNames) {
+    if (!fieldName.trim()) continue;
+    const rawValue = record.fields[fieldName];
+    if (rawValue === null || rawValue === undefined || rawValue === '') continue;
+    const text = displayValue(rawValue).trim();
+    if (text && text !== '—') return text;
+  }
+
+  return '';
+}
+
+function normalizeShopifyStatus(record: AirtableRecord, formatFieldName: string): string {
+  return getRecordFieldText(record, [formatFieldName, 'Shopify REST Status', 'Shopify Status', 'Shopify GraphQL Status', 'Status']).trim().toLowerCase();
+}
+
+function normalizeEbayWorkflowStatus(record: AirtableRecord): string {
+  return getRecordFieldText(record, ['Workflow Status']).trim().toLowerCase();
+}
+
+function normalizeEbayOfferStatus(record: AirtableRecord): string {
+  return getRecordFieldText(record, ['eBay Offer Status', 'Offer Status', 'eBay Inventory Status']).trim().toLowerCase();
+}
+
+function buildExtraFilterDefinitions(
+  approvalChannel: 'shopify' | 'ebay' | 'combined',
+  records: AirtableRecord[],
+  formatFieldName: string,
+): QueueExtraFilterDefinition[] {
+  if (approvalChannel === 'shopify') {
+    const definitions: QueueExtraFilterDefinition[] = [
+      {
+        id: 'shopify-active',
+        label: 'Active',
+        matches: (record) => normalizeShopifyStatus(record, formatFieldName) === 'active',
+      },
+      {
+        id: 'shopify-draft',
+        label: 'Draft',
+        matches: (record) => normalizeShopifyStatus(record, formatFieldName) === 'draft',
+      },
+      {
+        id: 'shopify-archived',
+        label: 'Archived',
+        matches: (record) => normalizeShopifyStatus(record, formatFieldName) === 'archived',
+      },
+    ];
+
+    return definitions.filter((definition) => records.some((record) => definition.matches(record)));
+  }
+
+  if (approvalChannel === 'ebay') {
+    const definitions: QueueExtraFilterDefinition[] = [
+      {
+        id: 'ebay-live',
+        label: 'Live Offer',
+        matches: (record) => {
+          const offerStatus = normalizeEbayOfferStatus(record);
+          const workflowStatus = normalizeEbayWorkflowStatus(record);
+          return offerStatus === 'active' || offerStatus === 'published' || offerStatus === 'live' || workflowStatus === 'listed, ebay';
+        },
+      },
+      {
+        id: 'ebay-draft-offer',
+        label: 'Draft Offer',
+        matches: (record) => normalizeEbayOfferStatus(record) === 'draft',
+      },
+      {
+        id: 'ebay-approved-to-publish',
+        label: 'Approved to Publish',
+        matches: (record) => normalizeEbayWorkflowStatus(record) === 'approved for publish',
+      },
+      {
+        id: 'ebay-stale',
+        label: 'Stale',
+        matches: (record) => normalizeEbayWorkflowStatus(record) === 'stale listing, ebay',
+      },
+    ];
+
+    return definitions.filter((definition) => records.some((record) => definition.matches(record)));
+  }
+
+  return [];
+}
+
+function matchesQuickFilter(
+  record: AirtableRecord,
+  approvedFieldName: string,
+  requiredFieldNames: string[],
+  filter: QueueQuickFilter,
+): boolean {
+  const approved = isApprovedRecord(record, approvedFieldName);
+  const missingRequiredFields = !isReadyForRequiredFields(record.fields, requiredFieldNames);
+
+  switch (filter) {
+    case 'approved':
+      return approved;
+    case 'needs-fields':
+      return missingRequiredFields;
+    case 'ready':
+      return !approved && !missingRequiredFields;
+    case 'pending':
+      return !approved;
+    default:
+      return true;
+  }
+}
+
+function quickFilterLabel(filter: QueueQuickFilter): string {
+  switch (filter) {
+    case 'pending':
+      return 'Pending';
+    case 'ready':
+      return 'Ready';
+    case 'needs-fields':
+      return 'Needs Fields';
+    case 'approved':
+      return 'Approved';
+    default:
+      return 'All';
+  }
+}
+
+function defaultQuickFilterForChannel(channel: 'shopify' | 'ebay' | 'combined'): QueueQuickFilter {
+  if (channel === 'shopify') return 'pending';
+  if (channel === 'ebay') return 'ready';
+  return 'all';
+}
 
 function ListingApprovalQueueSkeleton() {
   return (
@@ -85,6 +257,101 @@ export function ListingApprovalQueuePanel({
   createNewShopifyListing,
   loadRecords,
 }: ListingApprovalQueuePanelProps) {
+  const isServiceSpecificQueue = approvalChannel !== 'combined';
+  const quickFilterStorageKey = `${FILTER_STORAGE_PREFIX}:${approvalChannel}:quick`;
+  const extraFilterStorageKey = `${FILTER_STORAGE_PREFIX}:${approvalChannel}:extra`;
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeQuickFilter, setActiveQuickFilter] = useState<QueueQuickFilter>(() => readStoredFilter(quickFilterStorageKey, defaultQuickFilterForChannel(approvalChannel), ['all', 'pending', 'ready', 'needs-fields', 'approved'] as const));
+  const [activeExtraFilter, setActiveExtraFilter] = useState<QueueExtraFilter>(() => readStoredFilter(extraFilterStorageKey, 'all', ['all', 'shopify-active', 'shopify-draft', 'shopify-archived', 'ebay-live', 'ebay-draft-offer', 'ebay-approved-to-publish', 'ebay-stale'] as const));
+  const requiredFieldNames = approvalChannel === 'shopify'
+    ? shopifyRequiredFieldNames
+    : approvalChannel === 'ebay'
+      ? ebayRequiredFieldNames
+      : combinedRequiredFieldNames;
+  const extraFilterDefinitions = useMemo(
+    () => buildExtraFilterDefinitions(approvalChannel, records, formatFieldName),
+    [approvalChannel, formatFieldName, records],
+  );
+
+  useEffect(() => {
+    if (!isServiceSpecificQueue) return;
+    writeStoredFilter(quickFilterStorageKey, activeQuickFilter);
+  }, [activeQuickFilter, isServiceSpecificQueue, quickFilterStorageKey]);
+
+  useEffect(() => {
+    if (!isServiceSpecificQueue) return;
+    const allowedExtraFilters = new Set<QueueExtraFilter>(['all', ...extraFilterDefinitions.map((definition) => definition.id)]);
+    if (!allowedExtraFilters.has(activeExtraFilter)) {
+      setActiveExtraFilter('all');
+      return;
+    }
+
+    writeStoredFilter(extraFilterStorageKey, activeExtraFilter);
+  }, [activeExtraFilter, extraFilterDefinitions, extraFilterStorageKey, isServiceSpecificQueue]);
+
+  const filteredRecords = useMemo(() => {
+    if (!isServiceSpecificQueue) return records;
+
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const searchableFieldNames = [
+      titleFieldName,
+      vendorFieldName,
+      formatFieldName,
+      priceFieldName,
+      qtyFieldName,
+      'Workflow Status',
+      'SKU',
+      'Model',
+      'Brand',
+    ];
+
+    return records.filter((record) => {
+      const passesQuickFilter = matchesQuickFilter(record, approvedFieldName, requiredFieldNames, activeQuickFilter);
+      if (!passesQuickFilter) return false;
+      const passesExtraFilter = activeExtraFilter === 'all'
+        || extraFilterDefinitions.find((definition) => definition.id === activeExtraFilter)?.matches(record)
+        || false;
+      if (!passesExtraFilter) return false;
+      if (!normalizedQuery) return true;
+
+      return buildSearchableRecordText(record, searchableFieldNames).includes(normalizedQuery);
+    });
+  }, [
+    activeExtraFilter,
+    activeQuickFilter,
+    approvedFieldName,
+    extraFilterDefinitions,
+    formatFieldName,
+    isServiceSpecificQueue,
+    priceFieldName,
+    qtyFieldName,
+    records,
+    requiredFieldNames,
+    searchQuery,
+    titleFieldName,
+    vendorFieldName,
+  ]);
+
+  const quickFilterCounts = useMemo(() => {
+    if (!isServiceSpecificQueue) return null;
+
+    return {
+      all: records.length,
+      pending: records.filter((record) => matchesQuickFilter(record, approvedFieldName, requiredFieldNames, 'pending')).length,
+      ready: records.filter((record) => matchesQuickFilter(record, approvedFieldName, requiredFieldNames, 'ready')).length,
+      'needs-fields': records.filter((record) => matchesQuickFilter(record, approvedFieldName, requiredFieldNames, 'needs-fields')).length,
+      approved: records.filter((record) => matchesQuickFilter(record, approvedFieldName, requiredFieldNames, 'approved')).length,
+    } satisfies Record<QueueQuickFilter, number>;
+  }, [approvedFieldName, isServiceSpecificQueue, records, requiredFieldNames]);
+
+  const extraFilterCounts = useMemo(() => {
+    if (!isServiceSpecificQueue || extraFilterDefinitions.length === 0) return null;
+
+    return Object.fromEntries(
+      extraFilterDefinitions.map((definition) => [definition.id, records.filter((record) => definition.matches(record)).length]),
+    ) as Record<Exclude<QueueExtraFilter, 'all'>, number>;
+  }, [extraFilterDefinitions, isServiceSpecificQueue, records]);
+
   return (
     <>
       {!hasTableReference && (
@@ -145,27 +412,91 @@ export function ListingApprovalQueuePanel({
             </div>
           </div>
 
+          {isServiceSpecificQueue ? (
+            <div className="mb-4 space-y-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  className={searchInputClass}
+                  placeholder={approvalChannel === 'shopify' ? 'Search Shopify listings, brand, vendor, or workflow status…' : 'Search eBay listings, brand, vendor, or workflow status…'}
+                  aria-label={approvalChannel === 'shopify' ? 'Search Shopify listing queue' : 'Search eBay listing queue'}
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {(['all', 'pending', 'ready', 'needs-fields', 'approved'] as const).map((filter) => {
+                  const active = activeQuickFilter === filter;
+                  const count = quickFilterCounts?.[filter] ?? 0;
+
+                  return (
+                    <button
+                      key={filter}
+                      type="button"
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${active ? 'border-sky-400/35 bg-sky-500/15 text-sky-100' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-sky-400/25 hover:text-[var(--ink)]'}`}
+                      onClick={() => setActiveQuickFilter(filter)}
+                      aria-pressed={active}
+                    >
+                      {quickFilterLabel(filter)} · {count}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {extraFilterDefinitions.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {extraFilterDefinitions.map((definition) => {
+                    const active = activeExtraFilter === definition.id;
+                    const count = extraFilterCounts?.[definition.id] ?? 0;
+
+                    return (
+                      <button
+                        key={definition.id}
+                        type="button"
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${active ? 'border-emerald-400/35 bg-emerald-500/15 text-emerald-100' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-emerald-400/25 hover:text-[var(--ink)]'}`}
+                        onClick={() => setActiveExtraFilter(active ? 'all' : definition.id)}
+                        aria-pressed={active}
+                      >
+                        {definition.label} · {count}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           <p className="m-0 mb-4 text-sm text-[var(--muted)]">
-            <strong>{records.length}</strong> listing rows loaded.
+            <strong>{filteredRecords.length}</strong>
+            {isServiceSpecificQueue && filteredRecords.length !== records.length ? ` of ${records.length}` : ''} listing rows {isServiceSpecificQueue ? 'shown' : 'loaded'}.
           </p>
 
-          <ApprovalQueueTable
-            records={records}
-            approvedFieldName={approvedFieldName}
-            requiredFieldNames={approvalChannel === 'shopify' ? shopifyRequiredFieldNames : approvalChannel === 'ebay' ? ebayRequiredFieldNames : combinedRequiredFieldNames}
-            readinessColumns={approvalChannel === 'combined' ? [
-              { key: 'shopify', label: 'Shopify Ready', requiredFieldNames: shopifyRequiredFieldNames },
-              { key: 'ebay', label: 'eBay Ready', requiredFieldNames: ebayRequiredFieldNames },
-            ] : []}
-            titleFieldName={titleFieldName}
-            conditionFieldName=""
-            formatFieldName={approvalChannel === 'ebay' || approvalChannel === 'combined' ? '' : formatFieldName}
-            priceFieldName={approvalChannel === 'shopify' ? '' : priceFieldName}
-            vendorFieldName={vendorFieldName}
-            qtyFieldName={approvalChannel === 'ebay' ? '' : qtyFieldName}
-            openRecord={openRecord}
-            onSelectRecord={onSelectRecord}
-          />
+          {isServiceSpecificQueue && filteredRecords.length === 0 ? (
+            <section className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-8 text-center text-sm text-[var(--muted)]">
+              No listing rows match the current search and quick filter.
+            </section>
+          ) : null}
+
+          {filteredRecords.length > 0 ? (
+            <ApprovalQueueTable
+              records={filteredRecords}
+              approvedFieldName={approvedFieldName}
+              requiredFieldNames={requiredFieldNames}
+              readinessColumns={approvalChannel === 'combined' ? [
+                { key: 'shopify', label: 'Shopify Ready', requiredFieldNames: shopifyRequiredFieldNames },
+                { key: 'ebay', label: 'eBay Ready', requiredFieldNames: ebayRequiredFieldNames },
+              ] : []}
+              titleFieldName={titleFieldName}
+              conditionFieldName=""
+              formatFieldName={approvalChannel === 'ebay' || approvalChannel === 'combined' ? '' : formatFieldName}
+              priceFieldName={approvalChannel === 'shopify' ? '' : priceFieldName}
+              vendorFieldName={vendorFieldName}
+              qtyFieldName={approvalChannel === 'ebay' ? '' : qtyFieldName}
+              openRecord={openRecord}
+              onSelectRecord={onSelectRecord}
+            />
+          ) : null}
         </section>
       ) : null}
     </>

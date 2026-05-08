@@ -43,6 +43,14 @@ vi.mock('@/components/approval/CombinedListingsApprovalTab', () => ({
   CombinedListingsApprovalTab: () => <div>Combined listings content</div>,
 }));
 
+vi.mock('@/components/approval/EbayListingsDirectoryTab', () => ({
+  EbayListingsDirectoryTab: () => <div>eBay directory content</div>,
+}));
+
+vi.mock('@/components/approval/EbaySnapshotRecordPage', () => ({
+  EbaySnapshotRecordPage: () => <div>eBay snapshot record page</div>,
+}));
+
 vi.mock('@/components/SettingsTab', () => ({
   SettingsTab: () => <div>Settings content</div>,
 }));
@@ -53,6 +61,14 @@ vi.mock('@/components/NotificationsTab', () => ({
 
 vi.mock('@/components/tabs/ShopifyTab', () => ({
   ShopifyTab: () => <div>Shopify content</div>,
+}));
+
+vi.mock('@/components/approval/ShopifyListingsDirectoryTab', () => ({
+  ShopifyListingsDirectoryTab: () => <div>Shopify directory content</div>,
+}));
+
+vi.mock('@/components/approval/ShopifySnapshotRecordPage', () => ({
+  ShopifySnapshotRecordPage: () => <div>Shopify snapshot record page</div>,
 }));
 
 vi.mock('@/components/tabs/JotformTab', () => ({
@@ -80,6 +96,8 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     inventoryRecordId: null,
     usedGearWorkflowRecordId: null,
     listingsRecordId: null,
+    shopifyListingsRecordId: null,
+    ebayListingsRecordId: null,
     userRecordId: null,
     navigateToInventoryRecord: vi.fn(),
     navigateToUsedGearWorkflowRecord: vi.fn(),
@@ -90,6 +108,10 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     navigateToPhotosForm: vi.fn(),
     navigateToListingsRecord: vi.fn(),
     navigateToListingsList: vi.fn(),
+    navigateToShopifyRecord: vi.fn(),
+    navigateToShopifyList: vi.fn(),
+    navigateToEbayRecord: vi.fn(),
+    navigateToEbayList: vi.fn(),
     navigateToUserRecord: vi.fn(),
     navigateToUsersList: vi.fn(),
     navigateToTab: vi.fn(),
@@ -225,13 +247,15 @@ describe('AppTabContent', () => {
       photosRecordId: null,
       inventoryRecordId: null,
       listingsRecordId: null,
+      shopifyListingsRecordId: null,
+      ebayListingsRecordId: null,
       userRecordId: null,
     };
 
     const { rerender } = render(<AppTabContent {...initialProps} />);
 
     expect(await screen.findByText('Dashboard content')).toBeInTheDocument();
-    expect(screen.queryByText('Shopify content')).not.toBeInTheDocument();
+    expect(screen.queryByText('Shopify directory content')).not.toBeInTheDocument();
 
     mockUseDeferredValue.mockImplementation(() => pendingDeferredRouteState);
 
@@ -239,14 +263,14 @@ describe('AppTabContent', () => {
 
     expect(screen.getByText('Loading Shopify...')).toBeInTheDocument();
     expect(screen.getByText('Dashboard content')).toBeInTheDocument();
-    expect(screen.queryByText('Shopify content')).not.toBeInTheDocument();
+    expect(screen.queryByText('Shopify directory content')).not.toBeInTheDocument();
 
     mockUseDeferredValue.mockImplementation((value) => value);
 
     rerender(<AppTabContent {...buildProps({ activeTab: 'shopify' })} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Shopify content')).toBeInTheDocument();
+      expect(screen.getByText('Shopify directory content')).toBeInTheDocument();
     });
     expect(screen.queryByText('Loading Shopify...')).not.toBeInTheDocument();
   });
@@ -261,6 +285,32 @@ describe('AppTabContent', () => {
 
     rerender(<AppTabContent {...buildProps({ activeTab: 'notifications', accessiblePages: ['dashboard', 'users', 'settings', 'notifications'] })} />);
     expect(await screen.findByText('Notifications content')).toBeInTheDocument();
+  });
+
+  it('renders isolated Shopify and eBay snapshot detail pages for service-specific deep links', async () => {
+    const { rerender } = render(
+      <AppTabContent
+        {...buildProps({
+          activeTab: 'shopify',
+          shopifyListingsRecordId: '12345',
+        })}
+      />,
+    );
+
+    expect(await screen.findByText('Shopify snapshot record page')).toBeInTheDocument();
+    expect(screen.queryByText('Shopify directory content')).not.toBeInTheDocument();
+
+    rerender(
+      <AppTabContent
+        {...buildProps({
+          activeTab: 'ebay',
+          ebayListingsRecordId: 'sku-123',
+        })}
+      />,
+    );
+
+    expect(await screen.findByText('eBay snapshot record page')).toBeInTheDocument();
+    expect(screen.queryByText('eBay directory content')).not.toBeInTheDocument();
   });
 
   it('renders degraded-mode guidance instead of feature tabs when runtime config is missing', async () => {

@@ -9,6 +9,7 @@ interface ListingApprovalSelectedRecordViewProps {
   saving: boolean;
   error: string | null;
   onBackToList: () => void;
+  backToListLabel?: string;
   secondaryActionButtonClass: string;
   errorSurfaceClass: string;
   workflowSummary?: ReactNode;
@@ -25,6 +26,7 @@ export function ListingApprovalSelectedRecordView({
   saving,
   error,
   onBackToList,
+  backToListLabel,
   secondaryActionButtonClass,
   errorSurfaceClass,
   workflowSummary,
@@ -44,7 +46,7 @@ export function ListingApprovalSelectedRecordView({
           onClick={onBackToList}
           disabled={saving}
         >
-          Back to Listings
+          {backToListLabel ?? 'Back to Listings'}
         </button>
         <div>
           <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Listing Update</p>

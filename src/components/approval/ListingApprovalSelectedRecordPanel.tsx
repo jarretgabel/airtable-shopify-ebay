@@ -34,6 +34,7 @@ export interface ListingApprovalSelectedRecordPanelProps {
   saving: boolean;
   error: string | null;
   onBackToList: () => void;
+  backToListLabel?: string;
   secondaryActionButtonClass: string;
   errorSurfaceClass: string;
   isCombinedApproval: boolean;
@@ -49,6 +50,7 @@ export function ListingApprovalSelectedRecordPanel({
   saving,
   error,
   onBackToList,
+  backToListLabel,
   secondaryActionButtonClass,
   errorSurfaceClass,
   isCombinedApproval,
@@ -64,6 +66,7 @@ export function ListingApprovalSelectedRecordPanel({
       saving={saving}
       error={error}
       onBackToList={onBackToList}
+      backToListLabel={backToListLabel}
       secondaryActionButtonClass={secondaryActionButtonClass}
       errorSurfaceClass={errorSurfaceClass}
       workflowSummary={workflowSummary ? <ListingApprovalWorkflowSummary summary={workflowSummary} /> : null}

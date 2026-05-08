@@ -80,7 +80,7 @@ export function DashboardShopifySection(props: DashboardShopifySectionProps) {
       {spLoading ? (
         <DashboardWorkflowCardSkeletonGrid />
       ) : shopifyCards.length > 0 && (
-        <DashboardWorkflowCardGrid title="Shopify Queue & Products" cards={shopifyCards} onSelect={onSelectTab} />
+        <DashboardWorkflowCardGrid title="Shopify Snapshot & Queue" cards={shopifyCards} onSelect={onSelectTab} />
       )}
     </DashboardSectionPanel>
   );

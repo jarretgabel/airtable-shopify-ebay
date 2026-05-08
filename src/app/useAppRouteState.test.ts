@@ -81,4 +81,16 @@ describe('useAppRouteState', () => {
     expect(state.activeTab).toBe('inventory');
     expect(state.usedGearWorkflowRecordId).toBe('rec workflow');
   });
+
+  it('maps Shopify listing detail routes and decodes id', () => {
+    const state = useAppRouteState(locationFor('/shopify/products/rec%20shopify'), ['dashboard', 'shopify']);
+    expect(state.activeTab).toBe('shopify');
+    expect(state.shopifyListingsRecordId).toBe('rec shopify');
+  });
+
+  it('maps eBay listing detail routes and decodes id', () => {
+    const state = useAppRouteState(locationFor('/ebay/listings/rec%20ebay'), ['dashboard', 'ebay']);
+    expect(state.activeTab).toBe('ebay');
+    expect(state.ebayListingsRecordId).toBe('rec ebay');
+  });
 });

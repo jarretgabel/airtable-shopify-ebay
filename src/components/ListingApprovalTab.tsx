@@ -10,6 +10,7 @@ interface ListingApprovalTabProps {
   tableName?: string;
   createShopifyDraftOnApprove?: boolean;
   approvalChannel?: 'shopify' | 'ebay' | 'combined';
+  backToListLabel?: string;
 }
 
 export function ListingApprovalTab({
@@ -18,6 +19,7 @@ export function ListingApprovalTab({
   tableName: propTableName,
   createShopifyDraftOnApprove = false,
   approvalChannel = 'ebay',
+  backToListLabel,
 }: ListingApprovalTabProps) {
   const {
     selectedRecord,
@@ -30,6 +32,7 @@ export function ListingApprovalTab({
     tableName: propTableName,
     createShopifyDraftOnApprove,
     approvalChannel,
+    backToListLabel,
   });
 
   if (selectedRecord) {

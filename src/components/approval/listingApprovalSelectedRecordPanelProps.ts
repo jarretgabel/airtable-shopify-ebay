@@ -10,6 +10,7 @@ interface BuildListingApprovalSelectedRecordPanelPropsParams {
   saving: boolean;
   error: string | null;
   onBackToList: () => void;
+  backToListLabel?: string;
   secondaryActionButtonClass: string;
   errorSurfaceClass: string;
   isCombinedApproval: boolean;
@@ -25,6 +26,7 @@ export function buildListingApprovalSelectedRecordPanelProps({
   saving,
   error,
   onBackToList,
+  backToListLabel,
   secondaryActionButtonClass,
   errorSurfaceClass,
   isCombinedApproval,
@@ -43,6 +45,7 @@ export function buildListingApprovalSelectedRecordPanelProps({
     saving,
     error,
     onBackToList,
+    backToListLabel,
     secondaryActionButtonClass,
     errorSurfaceClass,
     isCombinedApproval,

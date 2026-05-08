@@ -81,9 +81,9 @@ export function buildEbayWorkflowCards({
   if (accessiblePages.includes('ebay')) {
     cards.push({
       id: 'ebay',
-      title: 'eBay Publishing',
+      title: 'eBay Snapshot',
       eyebrow: ebayUnavailableReason ? 'Runtime config required' : ebayLoading ? 'Syncing seller inventory' : ebayAuthenticated ? 'Seller account connected' : ebayRestoringSession ? 'Restoring seller session' : 'Connection required',
-      detail: ebayUnavailableReason ?? ebayError ?? (ebayAuthenticated ? 'Review live offers, manage inventory-mode drafts, and publish sample listings.' : 'Authorize the seller account before pushing inventory or offers to eBay.'),
+      detail: ebayUnavailableReason ?? ebayError ?? (ebayAuthenticated ? 'Review live offers, draft coverage, and connection status on the read-only eBay page.' : 'Authorize the seller account on the eBay page so approved Listings records can publish later.'),
       stats: ebayAuthenticated ? [`${ebayPublishedCount} live offer${ebayPublishedCount === 1 ? '' : 's'}`, `${ebayDraftCount} draft${ebayDraftCount === 1 ? '' : 's'}`, `${ebayTotal} tracked SKU${ebayTotal === 1 ? '' : 's'}`] : ['OAuth setup', 'Inventory sync', 'Draft publish'],
       unavailableReason: ebayUnavailableReason ?? null,
     });
@@ -134,9 +134,9 @@ export function buildShopifyWorkflowCards({
   if (accessiblePages.includes('shopify')) {
     cards.push({
       id: 'shopify',
-      title: 'Shopify Listings',
+      title: 'Shopify Snapshot',
       eyebrow: shopifyLoading ? 'Syncing Shopify products' : `${shopifyProductsCount} listing${shopifyProductsCount === 1 ? '' : 's'} tracked`,
-      detail: 'Manage Shopify product statuses, clean up drafts, and monitor active vs archived listing flow.',
+      detail: 'Review Shopify product counts, status mix, and store-side publishing state on the read-only Shopify page.',
       stats: shopifyLoading
         ? ['Loading Shopify data…']
         : [`${shopifyActiveCount} active`, `${shopifyDraftCount} draft`, `${shopifyArchivedCount} archived`],

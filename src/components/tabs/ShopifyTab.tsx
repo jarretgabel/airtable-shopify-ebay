@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react';
 import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
-import { ExpandableDataCard } from '@/components/app/ExpandableDataCard';
 import { EmptySurface, ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
-import { darkTableHeaderClass, darkTableRowHoverClass, listingSummaryClass, mutedCodeClass } from '@/components/tabs/uiClasses';
-import type { ShopifyProduct } from '@/types/shopify';
+import { darkTableRowHoverClass, listingSummaryClass } from '@/components/tabs/uiClasses';
+import type { ShopifyProduct, ShopifyProductVariant } from '@/types/shopify';
 
 function StatusBadge({ status }: { status: string }) {
   const normalizedStatus = status.toLowerCase();
@@ -34,146 +33,22 @@ function formatDate(iso: string): string {
   }
 }
 
-const detailRowClass = `flex flex-wrap items-start gap-2 rounded-md px-2 py-1.5 ${darkTableRowHoverClass}`;
-const sectionHeadingClass = 'm-0 mb-2 mt-4 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]';
-const thClass = 'px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.06em] whitespace-nowrap';
-const tdClass = 'px-3 py-2 text-[var(--ink)] whitespace-nowrap';
-const tdMutedClass = 'px-3 py-2 text-[var(--muted)] whitespace-nowrap';
+const productCardButtonClass = `w-full bg-[var(--panel)] px-4 py-4 text-left transition hover:bg-[var(--line)] ${darkTableRowHoverClass}`;
 
-function ProductDetail({ product }: { product: ShopifyProduct & { id: number } }) {
-  const mainVariant = product.variants?.[0];
-  const tags = product.tags ? product.tags.split(',').map((t) => t.trim()).filter(Boolean) : [];
-
-  return (
-    <div className="space-y-1 text-sm text-[var(--ink)]">
-      {/* Basic product fields — matches Airtable: shopify_rest_* */}
-      <p className={sectionHeadingClass}>Product Info</p>
-      <p className={detailRowClass}><strong className="text-[var(--muted)]">ID:</strong> <code className={mutedCodeClass}>{product.id}</code></p>
-      <p className={detailRowClass}><strong className="text-[var(--muted)]">Status:</strong> <StatusBadge status={product.status ?? 'unknown'} /></p>
-      <p className={detailRowClass}><strong className="text-[var(--muted)]">Vendor:</strong> {product.vendor || '—'}</p>
-      <p className={detailRowClass}><strong className="text-[var(--muted)]">Product Type:</strong> {product.product_type ? trimProductType(product.product_type) : '—'}</p>
-      <p className={detailRowClass}><strong className="text-[var(--muted)]">Title:</strong> {product.title || '—'}</p>
-      <p className={detailRowClass}><strong className="text-[var(--muted)]">Published At:</strong> {product.published_at ? formatDate(product.published_at) : '—'}</p>
-      {product.published_scope && (
-        <p className={detailRowClass}><strong className="text-[var(--muted)]">Published Scope:</strong> {product.published_scope}</p>
-      )}
-      {product.template_suffix && (
-        <p className={detailRowClass}><strong className="text-[var(--muted)]">Template Suffix:</strong> {product.template_suffix}</p>
-      )}
-
-      {/* Description — shopify_rest_body_html */}
-      {product.body_html && (
-        <>
-          <p className={sectionHeadingClass}>Description</p>
-          <p className={`${detailRowClass} block`}>{stripHtml(product.body_html) || '—'}</p>
-        </>
-      )}
-
-      {/* Tags — shopify_rest_tags / airtable flat tags table */}
-      {tags.length > 0 && (
-        <>
-          <p className={sectionHeadingClass}>Tags</p>
-          <div className="flex flex-wrap gap-1.5 px-2 py-1">
-            {tags.map((tag) => (
-              <span key={tag} className="rounded-full border border-[var(--line)] bg-white/5 px-2 py-0.5 text-xs text-[var(--muted)]">{tag}</span>
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* Options — shopify_rest_option_N_name + values (airtable flat options table) */}
-      {product.options && product.options.length > 0 && !(product.options.length === 1 && product.options[0].name === 'Title') && (
-        <>
-          <p className={sectionHeadingClass}>Options</p>
-          {product.options.map((opt) => (
-            <p key={opt.name} className={detailRowClass}>
-              <strong className="text-[var(--muted)]">{opt.name}:</strong>
-              {opt.values.join(', ')}
-            </p>
-          ))}
-        </>
-      )}
-
-      {/* Variants — shopify_rest_variant_N_* fields */}
-      <p className={sectionHeadingClass}>Variants ({product.variants?.length ?? 0})</p>
-      <div className="overflow-x-auto rounded-lg border border-[var(--line)]">
-        <table className="min-w-full border-collapse text-sm">
-          <thead className={darkTableHeaderClass}>
-            <tr>
-              <th scope="col" className={thClass}>#</th>
-              <th scope="col" className={thClass}>SKU</th>
-              <th scope="col" className={thClass}>Price</th>
-              <th scope="col" className={thClass}>Compare At</th>
-              <th scope="col" className={thClass}>Qty</th>
-              <th scope="col" className={thClass}>Inv. Policy</th>
-              <th scope="col" className={thClass}>Inv. Mgmt</th>
-              <th scope="col" className={thClass}>Barcode</th>
-              <th scope="col" className={thClass}>Fulfillment</th>
-              <th scope="col" className={thClass}>Taxable</th>
-              <th scope="col" className={thClass}>Ships</th>
-              <th scope="col" className={thClass}>Weight</th>
-              {mainVariant?.option1 !== undefined && mainVariant.option1 !== null && <th scope="col" className={thClass}>Option 1</th>}
-              {mainVariant?.option2 !== undefined && mainVariant.option2 !== null && <th scope="col" className={thClass}>Option 2</th>}
-              {mainVariant?.option3 !== undefined && mainVariant.option3 !== null && <th scope="col" className={thClass}>Option 3</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {(product.variants?.length ? product.variants : []).map((v, i) => (
-              <tr key={v.id ?? i} className={`border-t border-[var(--line)] ${darkTableRowHoverClass}`}>
-                <td className={tdMutedClass}>{i + 1}</td>
-                <td className={tdMutedClass}>{v.sku || '—'}</td>
-                <td className={tdClass}>{v.price ? `$${v.price}` : '—'}</td>
-                <td className={tdMutedClass}>{v.compare_at_price ? `$${v.compare_at_price}` : '—'}</td>
-                <td className={tdClass}>{v.inventory_quantity ?? '—'}</td>
-                <td className={tdMutedClass}>{v.inventory_policy || '—'}</td>
-                <td className={tdMutedClass}>{v.inventory_management || '—'}</td>
-                <td className={tdMutedClass}>{v.barcode || '—'}</td>
-                <td className={tdMutedClass}>{v.fulfillment_service || '—'}</td>
-                <td className={tdMutedClass}>{v.taxable === undefined ? '—' : v.taxable ? 'Yes' : 'No'}</td>
-                <td className={tdMutedClass}>{v.requires_shipping === undefined ? '—' : v.requires_shipping ? 'Yes' : 'No'}</td>
-                <td className={tdMutedClass}>{v.weight != null ? `${v.weight} ${v.weight_unit ?? ''}`.trim() : '—'}</td>
-                {mainVariant?.option1 !== undefined && mainVariant.option1 !== null && <td className={tdMutedClass}>{v.option1 || '—'}</td>}
-                {mainVariant?.option2 !== undefined && mainVariant.option2 !== null && <td className={tdMutedClass}>{v.option2 || '—'}</td>}
-                {mainVariant?.option3 !== undefined && mainVariant.option3 !== null && <td className={tdMutedClass}>{v.option3 || '—'}</td>}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Images — shopify_rest_image_N_src / alt / position */}
-      {product.images && product.images.length > 0 && (
-        <>
-          <p className={sectionHeadingClass}>Images ({product.images.length})</p>
-          <div className="flex flex-wrap gap-3 px-2 py-1">
-            {product.images.map((img, i) => (
-              <div key={img.id ?? i} className="flex flex-col items-center gap-1">
-                <img
-                  src={img.src}
-                  alt={img.alt || `Product image ${i + 1}`}
-                  className="h-20 w-20 rounded-md border border-[var(--line)] object-cover"
-                  loading="lazy"
-                />
-                <span className="text-[0.65rem] text-[var(--muted)]">#{img.position ?? i + 1}</span>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
+function summarizeVariant(product: ShopifyProduct): ShopifyProductVariant | undefined {
+  return product.variants?.[0];
 }
 
 interface ShopifyTabProps {
   viewModel: ShopifyTabViewModel;
+  onOpenProduct?: (productId: string) => void;
 }
 
 const searchInputClass = 'flex-1 min-w-[180px] rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-[0.82rem] text-[var(--ink)] placeholder-[var(--muted)] outline-none transition-colors focus:border-[var(--accent)]';
 const selectClass = 'rounded-lg border border-[var(--line)] bg-[var(--panel)] px-2.5 py-2 text-[0.82rem] text-[var(--ink)] outline-none transition-colors focus:border-[var(--accent)] cursor-pointer';
 
-export function ShopifyTab({ viewModel }: ShopifyTabProps) {
+export function ShopifyTab({ viewModel, onOpenProduct }: ShopifyTabProps) {
   const { loading, error, products } = viewModel;
-  const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'draft' | 'archived'>('all');
   const [sort, setSort] = useState<'title-asc' | 'title-desc' | 'price-asc' | 'price-desc' | 'date-newest' | 'date-oldest'>('title-asc');
@@ -246,25 +121,61 @@ export function ShopifyTab({ viewModel }: ShopifyTabProps) {
       {filteredProducts.length === 0 && search && (
         <p className="py-8 text-center text-[0.88rem] text-[var(--muted)]">No products match your search.</p>
       )}
-      {filteredProducts.map((product) => (
-        <ExpandableDataCard
-          key={product.id}
-          expanded={expandedProductId === product.id}
-          onToggle={() => setExpandedProductId(expandedProductId === product.id ? null : (product.id ?? null))}
-          title={product.title}
-          subtitle={<>{product.vendor || 'No vendor'} · {product.product_type ? trimProductType(product.product_type) : 'No type'}</>}
-          side={(
-            <>
-              <p className="m-0 text-lg font-bold text-[var(--ink)]">
-                {product.variants?.[0]?.price ? `$${product.variants[0].price}` : 'No price'}
-              </p>
-              <div className="mt-1"><StatusBadge status={product.status ?? 'unknown'} /></div>
-            </>
-          )}
-        >
-          <ProductDetail product={product as ShopifyProduct & { id: number }} />
-        </ExpandableDataCard>
-      ))}
+      {filteredProducts.map((product) => {
+        const openSnapshot = () => {
+          if (product.id !== undefined) {
+            onOpenProduct?.(String(product.id));
+          }
+        };
+        const primaryVariant = summarizeVariant(product);
+        const tags = product.tags ? product.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [];
+        const descriptionPreview = product.body_html ? stripHtml(product.body_html) : '';
+
+        return (
+          <article key={product.id} className="mt-3 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)] shadow-[0_6px_20px_rgba(17,32,49,0.06)]">
+            <button type="button" onClick={openSnapshot} className={productCardButtonClass}>
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="m-0 text-[1.08rem] font-semibold text-[var(--ink)]">{product.title}</h3>
+                    <StatusBadge status={product.status ?? 'unknown'} />
+                  </div>
+                  <div className="mt-1.5 text-sm text-[var(--muted)]">{product.vendor || 'No vendor'} · {product.product_type ? trimProductType(product.product_type) : 'No type'}</div>
+                  {descriptionPreview && <p className="m-0 mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{descriptionPreview}</p>}
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
+                    <span className="rounded-full border border-[var(--line)] bg-white/5 px-2.5 py-1">{product.variants?.length ?? 0} variant{product.variants?.length === 1 ? '' : 's'}</span>
+                    <span className="rounded-full border border-[var(--line)] bg-white/5 px-2.5 py-1">{product.images?.length ?? 0} image{product.images?.length === 1 ? '' : 's'}</span>
+                    <span className="rounded-full border border-[var(--line)] bg-white/5 px-2.5 py-1">{tags.length} tag{tags.length === 1 ? '' : 's'}</span>
+                    {product.published_at && <span className="rounded-full border border-[var(--line)] bg-white/5 px-2.5 py-1">Published {formatDate(product.published_at)}</span>}
+                  </div>
+                </div>
+                <div className="text-left md:min-w-[180px] md:text-right">
+                  <p className="m-0 text-lg font-bold text-[var(--ink)]">
+                    {primaryVariant?.price ? `$${primaryVariant.price}` : 'No price'}
+                  </p>
+                  {primaryVariant?.sku && <p className="m-0 mt-2 text-[0.72rem] font-mono text-[var(--muted)]">SKU {primaryVariant.sku}</p>}
+                  {product.handle && <p className="m-0 mt-1 text-[0.72rem] font-mono text-[var(--muted)]">{product.handle}</p>}
+                </div>
+              </div>
+            </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] bg-[var(--bg)] px-4 py-3">
+              <div className="flex flex-wrap gap-1.5">
+                {tags.slice(0, 4).map((tag) => (
+                  <span key={tag} className="rounded-full border border-[var(--line)] bg-white/5 px-2 py-0.5 text-xs text-[var(--muted)]">{tag}</span>
+                ))}
+                {tags.length > 4 && <span className="rounded-full border border-[var(--line)] bg-white/5 px-2 py-0.5 text-xs text-[var(--muted)]">+{tags.length - 4} more</span>}
+              </div>
+              <button
+                type="button"
+                className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100 transition hover:border-sky-300/50 hover:bg-sky-500/25"
+                onClick={openSnapshot}
+              >
+                Open Snapshot
+              </button>
+            </div>
+          </article>
+        );
+      })}
     </PanelSurface>
   );
 }

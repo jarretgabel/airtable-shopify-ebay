@@ -20,6 +20,10 @@ interface AppNavigationHandlers {
   ) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsList: (replace?: boolean) => void;
+  navigateToShopifyRecord: (recordId: string, replace?: boolean) => void;
+  navigateToShopifyList: (replace?: boolean) => void;
+  navigateToEbayRecord: (recordId: string, replace?: boolean) => void;
+  navigateToEbayList: (replace?: boolean) => void;
   navigateToUserRecord: (userId: string, replace?: boolean) => void;
   navigateToUsersList: (replace?: boolean) => void;
   handleLogout: () => void;
@@ -118,6 +122,26 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     scrollToPageTop();
   }, [navigate]);
 
+  const navigateToShopifyRecord = useCallback((recordId: string, replace = false): void => {
+    navigate(`/shopify/products/${encodeURIComponent(recordId)}`, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToShopifyList = useCallback((replace = false): void => {
+    navigate(TAB_PATHS.shopify, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToEbayRecord = useCallback((recordId: string, replace = false): void => {
+    navigate(`/ebay/listings/${encodeURIComponent(recordId)}`, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToEbayList = useCallback((replace = false): void => {
+    navigate(TAB_PATHS.ebay, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
   const navigateToUserRecord = useCallback((userId: string, replace = false): void => {
     navigate(`/account/users/${encodeURIComponent(userId)}`, { replace });
     scrollToPageTop();
@@ -147,6 +171,10 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     navigateToInventoryPostPublishBucket,
     navigateToListingsRecord,
     navigateToListingsList,
+    navigateToShopifyRecord,
+    navigateToShopifyList,
+    navigateToEbayRecord,
+    navigateToEbayList,
     navigateToUserRecord,
     navigateToUsersList,
     handleLogout,

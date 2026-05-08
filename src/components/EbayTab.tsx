@@ -14,6 +14,7 @@ import { EbayAuthenticatedView } from '@/components/ebay/EbayAuthenticatedView';
 
 interface EbayTabProps {
   viewModel: EbayTabViewModel;
+  onOpenSnapshotRecord?: (recordId: string) => void;
 }
 
 function getMissingLocationFields(config: EbayLocationConfig): string[] {
@@ -60,7 +61,7 @@ function getFallbackRuntimeConfig(): EbayRuntimeConfig {
   };
 }
 
-export function EbayTab({ viewModel }: EbayTabProps) {
+export function EbayTab({ viewModel, onOpenSnapshotRecord }: EbayTabProps) {
   const {
     session: { authenticated, restoringSession },
     state: { loading, error },
@@ -68,6 +69,7 @@ export function EbayTab({ viewModel }: EbayTabProps) {
     inventory: { items: inventoryItems, offers, recentListings, total },
     actions: { refetch },
   } = viewModel;
+  const readOnly = true;
 
   const activeRuntimeConfig = runtimeConfig ?? getFallbackRuntimeConfig();
 
@@ -158,6 +160,7 @@ export function EbayTab({ viewModel }: EbayTabProps) {
 
   return (
     <EbayAuthenticatedView
+      readOnly={readOnly}
       loading={loading}
       error={error}
       environment={activeRuntimeConfig.environment}
@@ -185,6 +188,7 @@ export function EbayTab({ viewModel }: EbayTabProps) {
       onResetPublishSetup={handleResetPublishSetup}
       setLocationConfig={setLocationConfig}
       setPolicyConfig={setPolicyConfig}
+      onOpenSnapshotRecord={onOpenSnapshotRecord}
     />
   );
 }

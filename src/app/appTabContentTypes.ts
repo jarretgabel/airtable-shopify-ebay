@@ -20,6 +20,8 @@ export interface AppTabContentProps {
   inventoryRecordId: string | null;
   usedGearWorkflowRecordId: string | null;
   listingsRecordId: string | null;
+  shopifyListingsRecordId: string | null;
+  ebayListingsRecordId: string | null;
   userRecordId: string | null;
   navigateToInventoryRecord: (recordId: string, replace?: boolean) => void;
   navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
@@ -33,6 +35,10 @@ export interface AppTabContentProps {
   navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsList: (replace?: boolean) => void;
+  navigateToShopifyRecord: (recordId: string, replace?: boolean) => void;
+  navigateToShopifyList: (replace?: boolean) => void;
+  navigateToEbayRecord: (recordId: string, replace?: boolean) => void;
+  navigateToEbayList: (replace?: boolean) => void;
   navigateToUserRecord: (userId: string, replace?: boolean) => void;
   navigateToUsersList: (replace?: boolean) => void;
   navigateToTab: (tab: Tab, replace?: boolean) => void;

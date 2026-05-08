@@ -161,7 +161,7 @@ export function DashboardActionsSection({
   if (ebayUnavailableReason) {
     items.push({
       key: 'ebay-unavailable',
-      label: 'eBay publishing unavailable',
+      label: 'eBay snapshot unavailable',
       count: 0,
       detail: ebayUnavailableReason,
       severity: 'warning',
@@ -173,11 +173,11 @@ export function DashboardActionsSection({
   if (!ebayUnavailableReason && ebayAuthenticated && ebayDraftCount > 0) {
     items.push({
       key: 'ebay',
-      label: `${ebayDraftCount} eBay draft${ebayDraftCount === 1 ? '' : 's'} ready to publish`,
+      label: `${ebayDraftCount} eBay draft${ebayDraftCount === 1 ? '' : 's'} need listings review`,
       count: ebayDraftCount,
-      detail: `${ebayPublishedCount} currently live · ${ebayTotal} total tracked SKUs`,
+      detail: `Open Listings to approve or adjust data before publishing · ${ebayPublishedCount} currently live · ${ebayTotal} total tracked SKUs`,
       severity: 'warning',
-      targetTab: 'ebay',
+      targetTab: 'listings',
     });
   }
 

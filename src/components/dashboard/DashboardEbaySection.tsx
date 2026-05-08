@@ -83,7 +83,7 @@ export function DashboardEbaySection({
       {ebayLoading ? (
         <DashboardWorkflowCardSkeletonGrid />
       ) : (
-        <DashboardWorkflowCardGrid title="Publishing & Queue" cards={cards} onSelect={onSelectTab} />
+        <DashboardWorkflowCardGrid title="eBay Snapshot & Queue" cards={cards} onSelect={onSelectTab} />
       )}
     </DashboardSectionPanel>
   );

@@ -23,6 +23,7 @@ interface UseListingApprovalTabStateParams {
   tableName?: string;
   createShopifyDraftOnApprove?: boolean;
   approvalChannel?: 'shopify' | 'ebay' | 'combined';
+  backToListLabel?: string;
 }
 
 interface UseListingApprovalTabStateResult {
@@ -38,6 +39,7 @@ export function useListingApprovalTabState({
   tableName: propTableName,
   createShopifyDraftOnApprove = false,
   approvalChannel = 'ebay',
+  backToListLabel,
 }: UseListingApprovalTabStateParams): UseListingApprovalTabStateResult {
   const { selectedRecordId, onSelectRecord, onBackToList } = viewModel;
   const tableReference = propsTableReference || checkOptionalEnv('VITE_AIRTABLE_APPROVAL_TABLE_REF');
@@ -314,6 +316,7 @@ export function useListingApprovalTabState({
     isApproved,
     error,
     onBackToList,
+    backToListLabel,
     approving,
     pushingTarget,
     hasUnsavedChanges,

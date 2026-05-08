@@ -38,7 +38,7 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   photos: 'Photos',
   settings: 'Settings',
   notifications: 'Notifications',
-  ebay: 'Listings',
+  ebay: 'eBay',
   imagelab: 'Image Lab',
   users: 'User Management',
 };

@@ -108,8 +108,8 @@ export function useActionGuidanceNotifications({
     upsertByKey(ACTION_KEYS.ebayConnect, {
       tone: 'info',
       title: 'Connect eBay before publishing',
-      message: 'Your eBay session is disconnected. Connect your account in the eBay tab before creating or publishing listings.',
-      actionLabel: 'Open eBay tab',
+      message: 'Your eBay session is disconnected. Connect your account in the eBay page so approved Listings records can publish when ready.',
+      actionLabel: 'Open eBay page',
       onAction: () => navigateToTab('ebay'),
       dismissible: true,
     });

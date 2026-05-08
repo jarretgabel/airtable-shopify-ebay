@@ -6,6 +6,7 @@ import { EbayCard, RecentEbayCard } from './EbayCards';
 import { offerForSku, offerSortValue, statusColor, formatMissingFields, runameInputClass, primaryButtonClass, ghostButtonClass, smallButtonClass, type EbayEnvironment } from './ebayTabUi';
 
 interface EbayAuthenticatedViewProps {
+  readOnly?: boolean;
   loading: boolean;
   error: string | null;
   inventoryItems: EbayInventoryItem[];
@@ -33,9 +34,11 @@ interface EbayAuthenticatedViewProps {
   onResetPublishSetup: () => void;
   setLocationConfig: Dispatch<SetStateAction<EbayLocationConfig>>;
   setPolicyConfig: Dispatch<SetStateAction<EbayBusinessPolicyConfig>>;
+  onOpenSnapshotRecord?: (recordId: string) => void;
 }
 
 export function EbayAuthenticatedView({
+  readOnly = false,
   loading,
   error,
   inventoryItems,
@@ -63,6 +66,7 @@ export function EbayAuthenticatedView({
   onResetPublishSetup,
   setLocationConfig,
   setPolicyConfig,
+  onOpenSnapshotRecord,
 }: EbayAuthenticatedViewProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'PUBLISHED' | 'UNPUBLISHED' | 'ENDED'>('all');
@@ -118,6 +122,12 @@ export function EbayAuthenticatedView({
 
   return (
     <div className="flex flex-col gap-5 py-1">
+      {readOnly && (
+        <div className="rounded-[14px] border border-sky-400/30 bg-sky-950/25 px-5 py-4 text-[0.88rem] leading-[1.55] text-sky-100 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+          <strong className="font-semibold">Read-only eBay view.</strong> Create, approve, publish, or edit listing data from the combined Listings page. This screen is limited to inventory, offer, and connection visibility.
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] px-5 py-3 shadow-[0_1px_4px_rgba(17,32,49,0.05)]">
         <div className="flex items-center gap-4 max-[960px]:w-full max-[960px]:flex-col max-[960px]:items-start">
           <div className="flex items-center gap-2">
@@ -127,30 +137,30 @@ export function EbayAuthenticatedView({
           <span className="text-[0.82rem] leading-[1.45] text-[var(--muted)]">Last 20 published eBay listings plus your inventory drafts · {total} valid inventory item{total !== 1 ? 's' : ''} · Lambda-backed dashboard state</span>
         </div>
         <div className="flex flex-wrap items-center gap-2 max-[960px]:w-full max-[960px]:justify-start">
-          <div className="inline-flex items-center gap-1 rounded-[10px] border border-[var(--line)] bg-[var(--bg)] p-[0.2rem] max-[600px]:w-full" role="group" aria-label="Choose eBay listing API">
+          {!readOnly && <div className="inline-flex items-center gap-1 rounded-[10px] border border-[var(--line)] bg-[var(--bg)] p-[0.2rem] max-[600px]:w-full" role="group" aria-label="Choose eBay listing API">
             <button className={`cursor-pointer rounded-lg border-0 px-[0.7rem] py-[0.4rem] text-[0.78rem] font-bold transition-[background,color] duration-150 max-[600px]:flex-1 ${apiMode === 'inventory' ? 'bg-[var(--panel)] text-[var(--ink)] shadow-[0_1px_2px_rgba(15,23,42,0.3)]' : 'bg-transparent text-[var(--muted)]'}`} onClick={() => onApiModeChange('inventory')} type="button">Inventory API</button>
             <button className={`cursor-pointer rounded-lg border-0 px-[0.7rem] py-[0.4rem] text-[0.78rem] font-bold transition-[background,color] duration-150 max-[600px]:flex-1 ${apiMode === 'trading' ? 'bg-[var(--panel)] text-[var(--ink)] shadow-[0_1px_2px_rgba(15,23,42,0.3)]' : 'bg-transparent text-[var(--muted)]'}`} onClick={() => onApiModeChange('trading')} type="button">Trading API</button>
             <button className={`cursor-pointer rounded-lg border-0 px-[0.7rem] py-[0.4rem] text-[0.78rem] font-bold transition-[background,color] duration-150 max-[600px]:flex-1 ${apiMode === 'trading-verify' ? 'bg-[var(--panel)] text-[var(--ink)] shadow-[0_1px_2px_rgba(15,23,42,0.3)]' : 'bg-transparent text-[var(--muted)]'}`} onClick={() => onApiModeChange('trading-verify')} type="button">Trading Verify Only</button>
-          </div>
-          <button className={`${primaryButtonClass} max-[600px]:w-full`} onClick={onCreateDraft} disabled={draftStatus === 'creating'}>{draftStatus === 'creating' ? 'Creating...' : apiMode === 'inventory' ? '+ Create Sample Draft' : apiMode === 'trading' ? '+ Create Trading Listing' : '+ Verify Trading Payload'}</button>
-          {apiMode === 'inventory' ? <button className={`${primaryButtonClass} max-[600px]:w-full`} onClick={onPublishDraft} disabled={publishStatus === 'publishing'}>{publishStatus === 'publishing' ? 'Publishing...' : 'Publish Sample Draft'}</button> : <span className="max-w-[16rem] text-[0.76rem] leading-[1.35] text-[var(--muted)] max-[960px]:max-w-none">{isTradingVerifyMode ? 'Verify Only does not create a listing.' : 'Trading API creates a live listing immediately.'}</span>}
+          </div>}
+          {!readOnly && <button className={`${primaryButtonClass} max-[600px]:w-full`} onClick={onCreateDraft} disabled={draftStatus === 'creating'}>{draftStatus === 'creating' ? 'Creating...' : apiMode === 'inventory' ? '+ Create Sample Draft' : apiMode === 'trading' ? '+ Create Trading Listing' : '+ Verify Trading Payload'}</button>}
+          {!readOnly && (apiMode === 'inventory' ? <button className={`${primaryButtonClass} max-[600px]:w-full`} onClick={onPublishDraft} disabled={publishStatus === 'publishing'}>{publishStatus === 'publishing' ? 'Publishing...' : 'Publish Sample Draft'}</button> : <span className="max-w-[16rem] text-[0.76rem] leading-[1.35] text-[var(--muted)] max-[960px]:max-w-none">{isTradingVerifyMode ? 'Verify Only does not create a listing.' : 'Trading API creates a live listing immediately.'}</span>)}
           <button className={`${ghostButtonClass} max-[600px]:w-full`} onClick={refetch} disabled={loading}>{loading ? 'Refreshing...' : 'Refresh'}</button>
         </div>
       </div>
 
-      {draftStatus === 'done' && draftResult && <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-green-500/30 bg-green-950/30 px-4 py-2.5 text-[0.83rem] text-green-300 max-[600px]:items-start"><strong>{draftResult.mode === 'inventory' ? 'Draft listing created' : draftResult.mode === 'trading' ? 'Trading listing created' : 'Trading payload verified'}</strong> - SKU: <code>{draftResult.sku}</code>{draftResult.offerId && <> · Offer ID: <code>{draftResult.offerId}</code></>}{draftResult.listingId && <> · Listing ID: <code>{draftResult.listingId}</code></>}<span className="rounded-[5px] bg-slate-800 px-2 py-[0.15em] text-[0.68rem] font-bold text-slate-400">{draftResult.status}</span></div>}
-      {draftStatus === 'error' && draftError && <div className="rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-[0.82rem] text-[var(--error-text)]">{draftError}</div>}
-      {publishStatus === 'done' && publishResult && <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-green-500/30 bg-green-950/30 px-4 py-2.5 text-[0.83rem] text-green-300 max-[600px]:items-start"><strong>Sample draft published</strong> - SKU: <code>{publishResult.sku}</code> · Offer ID: <code>{publishResult.offerId}</code> · Listing ID: <code>{publishResult.listingId}</code><span className="rounded-[5px] bg-slate-800 px-2 py-[0.15em] text-[0.68rem] font-bold text-slate-400">LIVE</span></div>}
-      {publishStatus === 'error' && publishError && <div className="rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-[0.82rem] text-[var(--error-text)]">{publishError}</div>}
+      {!readOnly && draftStatus === 'done' && draftResult && <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-green-500/30 bg-green-950/30 px-4 py-2.5 text-[0.83rem] text-green-300 max-[600px]:items-start"><strong>{draftResult.mode === 'inventory' ? 'Draft listing created' : draftResult.mode === 'trading' ? 'Trading listing created' : 'Trading payload verified'}</strong> - SKU: <code>{draftResult.sku}</code>{draftResult.offerId && <> · Offer ID: <code>{draftResult.offerId}</code></>}{draftResult.listingId && <> · Listing ID: <code>{draftResult.listingId}</code></>}<span className="rounded-[5px] bg-slate-800 px-2 py-[0.15em] text-[0.68rem] font-bold text-slate-400">{draftResult.status}</span></div>}
+      {!readOnly && draftStatus === 'error' && draftError && <div className="rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-[0.82rem] text-[var(--error-text)]">{draftError}</div>}
+      {!readOnly && publishStatus === 'done' && publishResult && <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-green-500/30 bg-green-950/30 px-4 py-2.5 text-[0.83rem] text-green-300 max-[600px]:items-start"><strong>Sample draft published</strong> - SKU: <code>{publishResult.sku}</code> · Offer ID: <code>{publishResult.offerId}</code> · Listing ID: <code>{publishResult.listingId}</code><span className="rounded-[5px] bg-slate-800 px-2 py-[0.15em] text-[0.68rem] font-bold text-slate-400">LIVE</span></div>}
+      {!readOnly && publishStatus === 'error' && publishError && <div className="rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-[0.82rem] text-[var(--error-text)]">{publishError}</div>}
       {error && <div className="rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-[0.82rem] text-[var(--error-text)]">{error}</div>}
 
-      <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+      {!readOnly && <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
         <div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Listing API mode</div>
         <p className="mt-1.5 max-w-[72ch] text-[0.88rem] leading-[1.5] text-[var(--muted)]">Inventory API creates seller drafts as <strong>UNPUBLISHED</strong> offers. Trading API creates a live fixed-price listing immediately. Trading Verify Only runs the same eBay validation without creating a live listing.</p>
         {isTradingMode && <div className={`mt-4 rounded-[10px] border px-4 py-3 text-[0.84rem] leading-[1.5] ${isTradingVerifyMode ? 'border-blue-400/30 bg-blue-950/30 text-blue-300' : 'border-orange-400/30 bg-orange-950/25 text-orange-300'}`}><strong>{isTradingVerifyMode ? 'Trading Verify Only' : 'Warning: Trading API is live'}</strong> {isTradingVerifyMode ? 'This mode only verifies the payload with eBay and does not create a listing.' : 'This mode bypasses drafts and creates an ACTIVE eBay listing immediately.'}</div>}
-      </div>
+      </div>}
 
-      <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+      {!readOnly && <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
         <div className="mb-4 flex items-start justify-between gap-4 max-[600px]:flex-col"><div><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Publish setup</div><p className="mt-1.5 max-w-[72ch] text-[0.88rem] leading-[1.5] text-[var(--muted)]">These defaults now come from Lambda environment configuration. Changes in this form only apply to the current tab session unless the server config is updated and redeployed.</p></div><button className={`${ghostButtonClass} ${smallButtonClass}`} onClick={onResetPublishSetup}>Reset to Lambda defaults</button></div>
 
         <div className="mb-4 grid grid-cols-2 gap-3 max-[600px]:grid-cols-1">
@@ -169,7 +179,7 @@ export function EbayAuthenticatedView({
           <label className="flex flex-col gap-1.5 text-[0.8rem] font-semibold text-[var(--ink)]">Payment policy ID<input className={runameInputClass} type="text" value={policyConfig.paymentPolicyId} onChange={(event) => setPolicyConfig((current: EbayBusinessPolicyConfig) => ({ ...current, paymentPolicyId: event.target.value }))} spellCheck={false} /></label>
           <label className="flex flex-col gap-1.5 text-[0.8rem] font-semibold text-[var(--ink)]">Return policy ID<input className={runameInputClass} type="text" value={policyConfig.returnPolicyId} onChange={(event) => setPolicyConfig((current: EbayBusinessPolicyConfig) => ({ ...current, returnPolicyId: event.target.value }))} spellCheck={false} /></label>
         </div>
-      </div>
+      </div>}
 
       {offers.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Inventory API debug</div><div className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)]"><div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,0.8fr)] items-center gap-3 bg-white/5 px-4 py-3 text-[0.7rem] font-extrabold uppercase tracking-[0.05em] text-[var(--muted)] max-[600px]:grid-cols-2"><span>SKU</span><span>Offer ID</span><span>Status</span><span>Listing ID</span><span>Exists on eBay</span></div>{[...offers].sort((a, b) => offerSortValue(b) - offerSortValue(a)).map((offer) => <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,0.8fr)] items-center gap-3 border-t border-[rgba(148,163,184,0.18)] px-4 py-3 text-[0.8rem] text-[var(--ink)] first:border-t-0 max-[600px]:grid-cols-2" key={offer.offerId ?? offer.sku}><span className="break-words font-mono text-[0.73rem] text-[var(--muted)]">{offer.sku}</span><span className="break-words font-mono text-[0.73rem] text-[var(--muted)]">{offer.offerId ?? '—'}</span><span><span className={`inline-flex items-center rounded-full px-2.5 py-[0.18em] text-[0.68rem] font-extrabold uppercase tracking-[0.05em] ${statusColor(offer.status)}`}>{offer.status ?? 'UNKNOWN'}</span></span><span className="break-words font-mono text-[0.73rem] text-[var(--muted)]">{offer.listingId ?? '—'}</span><span>{offer.listingId ? 'Yes' : 'No'}</span></div>)}</div></>}
 
@@ -198,12 +208,12 @@ export function EbayAuthenticatedView({
         </div>
       )}
 
-      {filteredRecentListings.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Last 20 published inventory-api listings{search && filteredRecentListings.length !== recentListings.length ? ` (${filteredRecentListings.length} of ${recentListings.length})` : ''}</div><div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-[600px]:grid-cols-1">{filteredRecentListings.map((listing) => <RecentEbayCard key={listing.offer.offerId ?? listing.item.sku} listing={listing} />)}</div></>}
+      {filteredRecentListings.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Last 20 published inventory-api listings{search && filteredRecentListings.length !== recentListings.length ? ` (${filteredRecentListings.length} of ${recentListings.length})` : ''}</div><div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-[600px]:grid-cols-1">{filteredRecentListings.map((listing) => <RecentEbayCard key={listing.offer.offerId ?? listing.item.sku} listing={listing} onOpen={onOpenSnapshotRecord ? () => onOpenSnapshotRecord(listing.item.sku) : undefined} />)}</div></>}
 
       {loading && inventoryItems.length === 0 && <div className="flex items-center justify-center gap-3 py-8 text-[0.84rem] text-[var(--muted)]"><div className={spinnerClass} /><span>Loading eBay inventory...</span></div>}
-      {!loading && inventoryItems.length === 0 && !error && <div className="py-12 text-center text-[0.9rem] text-[var(--muted)]"><p>No inventory items found. Inventory-mode sample drafts will show here after you create one.</p></div>}
+      {!loading && inventoryItems.length === 0 && !error && <div className="py-12 text-center text-[0.9rem] text-[var(--muted)]"><p>{readOnly ? 'No inventory items found for this eBay view yet.' : 'No inventory items found. Inventory-mode sample drafts will show here after you create one.'}</p></div>}
 
-      {inventoryItems.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Inventory API drafts and listings{search || statusFilter !== 'all' ? ` (${filteredInventoryItems.length} of ${inventoryItems.length})` : ''}</div>{filteredInventoryItems.length === 0 ? <p className="py-6 text-center text-[0.88rem] text-[var(--muted)]">No items match your filters.</p> : <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-[600px]:grid-cols-1">{filteredInventoryItems.map((item) => <EbayCard key={item.sku} item={item} offer={offerForSku(offers, item.sku)} />)}</div>}</>}
+      {inventoryItems.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Inventory API drafts and listings{search || statusFilter !== 'all' ? ` (${filteredInventoryItems.length} of ${inventoryItems.length})` : ''}</div>{filteredInventoryItems.length === 0 ? <p className="py-6 text-center text-[0.88rem] text-[var(--muted)]">No items match your filters.</p> : <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-[600px]:grid-cols-1">{filteredInventoryItems.map((item) => <EbayCard key={item.sku} item={item} offer={offerForSku(offers, item.sku)} onOpen={onOpenSnapshotRecord ? () => onOpenSnapshotRecord(item.sku) : undefined} />)}</div>}</>}
     </div>
   );
 }
