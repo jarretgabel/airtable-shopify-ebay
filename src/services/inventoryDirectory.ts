@@ -1,5 +1,6 @@
 import type { InventoryDirectoryData, InventoryDraftValue, InventoryFieldMetadata } from '@/components/tabs/airtable/inventoryDirectoryTypes';
 import { getConfiguredFieldMetadata, getConfiguredRecord, getConfiguredRecords, updateConfiguredRecord, type AirtableMetadataField } from '@/services/app-api/airtable';
+import { enrichUsedGearWorkflowRecord } from '@/services/usedGearWorkflow';
 import type { AirtableRecord } from '@/types/airtable';
 
 const INVENTORY_DIRECTORY_LIST_FIELD_NAMES = [
@@ -226,11 +227,12 @@ export async function loadInventoryDirectory(): Promise<InventoryDirectoryData> 
     loadInventoryFieldMetadata(),
   ]);
 
-  return { records, fields };
+  return { records: records.map(enrichUsedGearWorkflowRecord), fields };
 }
 
 export async function loadInventoryRecord(recordId: string): Promise<AirtableRecord> {
-  return getConfiguredRecord('inventory-directory', recordId);
+  const record = await getConfiguredRecord('inventory-directory', recordId);
+  return enrichUsedGearWorkflowRecord(record);
 }
 
 export async function saveInventoryRecord(
@@ -279,10 +281,12 @@ export async function saveInventoryRecord(
     return acc;
   }, {});
 
-  return updateConfiguredRecord(
+  const record = await updateConfiguredRecord(
     'inventory-directory',
     recordId,
     payload,
     { typecast: true },
   );
+
+  return enrichUsedGearWorkflowRecord(record);
 }

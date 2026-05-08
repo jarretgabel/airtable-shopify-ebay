@@ -26,6 +26,7 @@ type PublishingActionsParams = Pick<UseListingApprovalRecordActionsParams,
   | 'missingEbayRequiredFieldLabels'
   | 'approvalPublishSource'
   | 'mergedDraftSourceFields'
+  | 'workflowPublishSummary'
   | 'onBackToList'
   | 'pushInlineActionNotice'
   | 'requestConfirmation'
@@ -55,6 +56,7 @@ export function useListingApprovalPublishingActions({
   missingEbayRequiredFieldLabels,
   approvalPublishSource,
   mergedDraftSourceFields,
+  workflowPublishSummary,
   onBackToList,
   pushInlineActionNotice,
   requestConfirmation,
@@ -67,6 +69,7 @@ export function useListingApprovalPublishingActions({
     missingEbayRequiredFieldLabels,
     approvalPublishSource,
     mergedDraftSourceFields,
+    workflowPublishSummary,
     setFormValue,
     pushInlineActionNotice,
     requestConfirmation,

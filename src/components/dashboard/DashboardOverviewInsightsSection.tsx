@@ -1,6 +1,7 @@
 import { PAGE_DEFINITIONS } from '@/auth/pages';
 import { DashboardKpiCard, DashboardSectionPanel, DashboardSubPanel } from './dashboardPrimitives';
 import type { DashboardInsight, DashboardTargetTab, TrendSummary } from './dashboardTabTypes';
+import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 
 const trendToneClass = {
   up: 'text-green-300',
@@ -175,22 +176,54 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
 export function DashboardInsightsSection({
   insights,
   onSelectTab,
+  onOpenInventoryPostPublishBucket,
   embedded,
 }: {
   insights: DashboardInsight[];
   onSelectTab: (tab: DashboardTargetTab) => void;
+  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket) => void;
   embedded?: boolean;
 }) {
   const content = insights.length > 0 ? (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {insights.map((insight) => (
         <article key={insight.id} className={`rounded-xl border px-4 py-3 ${insightToneClass[insight.severity]}`}>
+          {(() => {
+            const targetTab = insight.targetTab;
+
+            return (
+              <>
           <div className="mb-1.5 flex items-center justify-between gap-2">
             <h3 className="m-0 text-[0.86rem] font-bold">{insight.title}</h3>
             <span className={`rounded-full px-2 py-[0.15rem] text-[0.64rem] font-bold uppercase tracking-[0.07em] ${insightBadgeClass[insight.severity]}`}>{insight.severity}</span>
           </div>
           <p className="m-0 text-[0.8rem] leading-[1.45] opacity-90">{insight.detail}</p>
-          {insight.targetTab && <button type="button" className="mt-3 rounded-lg border border-current/30 bg-white/10 px-3 py-1.5 text-[0.72rem] font-semibold transition hover:bg-white/20" onClick={() => onSelectTab(insight.targetTab!)}>Review in {PAGE_DEFINITIONS[insight.targetTab].label} →</button>}
+          {targetTab ? (
+            <>
+              {targetTab === 'inventory' && insight.inventoryPostPublishBucket ? (
+                <span className="mt-3 inline-flex rounded-full border border-current/30 bg-white/10 px-2.5 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.07em]">
+                  Opens {insight.inventoryPostPublishBucket === 'sold-ready' ? 'Sold Ready To Ship' : insight.inventoryPostPublishBucket === 'stale-listing' ? 'Stale Listings' : insight.inventoryPostPublishBucket === 'active-listing' ? 'Active Listings' : 'Shipped History'} Bucket
+                </span>
+              ) : null}
+              <button
+                type="button"
+                className="mt-3 rounded-lg border border-current/30 bg-white/10 px-3 py-1.5 text-[0.72rem] font-semibold transition hover:bg-white/20"
+                onClick={() => {
+                  if (targetTab === 'inventory' && insight.inventoryPostPublishBucket) {
+                    onOpenInventoryPostPublishBucket(insight.inventoryPostPublishBucket);
+                    return;
+                  }
+
+                  onSelectTab(targetTab);
+                }}
+              >
+                Review in {PAGE_DEFINITIONS[targetTab].label} →
+              </button>
+            </>
+          ) : null}
+              </>
+            );
+          })()}
         </article>
       ))}
     </div>

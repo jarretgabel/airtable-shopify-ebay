@@ -3,6 +3,7 @@ import type { AppPage } from '@/auth/pages';
 import type { Tab } from '@/app/appNavigation';
 import type { JotFormSubmission } from '@/types/jotform';
 import type { HiFiSharkListing } from '@/types/hifishark';
+import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 import type { EbayListingsState } from '@/hooks/useEbayListings';
 import type { EbayRuntimeConfig } from '@/services/app-api/ebay';
 import type { useShopifyProducts } from '@/hooks/useShopifyProducts';
@@ -65,6 +66,12 @@ export interface DashboardTabViewModel {
     shopifyApprovalTotal: number;
     shopifyApprovalApproved: number;
     shopifyApprovalPending: number;
+    workflowPostPublishLoading: boolean;
+    workflowPostPublishError: string | null;
+    workflowActiveListingCount: number;
+    workflowStaleListingCount: number;
+    workflowSoldReadyCount: number;
+    workflowShippedCount: number;
     aiProvider: 'github' | 'openai' | 'backend' | 'none';
     ebayAuthenticated: boolean;
     ebayRestoringSession: boolean;
@@ -83,6 +90,7 @@ export interface DashboardTabViewModel {
   };
   actions: {
     onSelectTab: (tab: DashboardTargetTab) => void;
+    onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket) => void;
   };
 }
 

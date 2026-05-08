@@ -11,6 +11,7 @@ import { useListingApprovalFieldNames } from '@/components/approval/useListingAp
 import { useListingApprovalRecordActions } from '@/components/approval/useListingApprovalRecordActions';
 import { useListingApprovalRecordLifecycle } from '@/components/approval/useListingApprovalRecordLifecycle';
 import { checkOptionalEnv } from '@/config/runtimeEnv';
+import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
 import {
   useApprovalStore,
 } from '@/stores/approvalStore';
@@ -200,6 +201,13 @@ export function useListingApprovalTabState({
     describeShopifyCreateError,
   });
 
+  const workflowPublishSummary = selectedRecord && isCombinedApproval && typeof selectedRecord.fields['Workflow Status'] === 'string'
+    ? {
+      workflowStatus: selectedRecord.fields['Workflow Status'].trim(),
+      readiness: getUsedGearWorkflowListingReadiness(selectedRecord),
+    }
+    : null;
+
   const {
     approving,
     pushingTarget,
@@ -240,6 +248,7 @@ export function useListingApprovalTabState({
     changedFieldNames,
     approvalPublishSource,
     mergedDraftSourceFields,
+    workflowPublishSummary,
     onBackToList,
     pushInlineActionNotice: interactionState.pushInlineActionNotice,
     requestConfirmation: interactionState.requestConfirmation,

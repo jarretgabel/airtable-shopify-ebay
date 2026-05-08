@@ -3,6 +3,7 @@ import type { AirtableRecord } from '@/types/airtable';
 
 vi.mock('@/services/app-api/airtable', () => ({
   createConfiguredRecord: vi.fn(),
+  getConfiguredRecord: vi.fn(),
   getConfiguredFieldMetadata: vi.fn(),
   updateConfiguredRecord: vi.fn(),
   uploadConfiguredAttachment: vi.fn(),
@@ -21,13 +22,11 @@ vi.mock('@/services/inventoryDirectory', () => ({
     }
     return String(value);
   },
-  loadInventoryRecord: vi.fn(),
 }));
 
-import { createConfiguredRecord, updateConfiguredRecord, uploadConfiguredAttachment } from '@/services/app-api/airtable';
+import { createConfiguredRecord, getConfiguredRecord, updateConfiguredRecord, uploadConfiguredAttachment } from '@/services/app-api/airtable';
 import { incomingGearFormFields, type IncomingGearFormValues } from '@/components/tabs/incoming-gear/incomingGearFormSchema';
 import { loadIncomingGearFormValues, submitIncomingGearForm } from '@/services/incomingGearForm';
-import { loadInventoryRecord } from '@/services/inventoryDirectory';
 
 function buildRecord(fields: Record<string, unknown>): AirtableRecord {
   return {
@@ -43,11 +42,15 @@ describe('incomingGearForm', () => {
   });
 
   it('loads Incoming Gear values for the full schema field set', async () => {
-    vi.mocked(loadInventoryRecord).mockResolvedValue(buildRecord({
+    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
       'Arrival Date': '2026-04-01T00:00:00.000Z',
       'Pick Up #': 'PU-42',
       'Acquired From': 'Walk-in seller',
       Cost: 1499.5,
+      'Customer Cosmetic Notes': 'Seller says very clean faceplate.',
+      'Customer Functional Notes': 'Seller reports fully working on both channels.',
+      'Customer Inclusion Notes': 'Original cage and spare tubes included.',
+      'Customer Submitted Photos Notes': 'Customer sent rear-panel serial photo.',
       SKU: 'SKU-100',
       Status: 'Ready to Test',
       Make: 'McIntosh',
@@ -67,32 +70,50 @@ describe('incomingGearForm', () => {
       'Shipping Method': ['Freight'],
     }));
 
-    const values = await loadIncomingGearFormValues('recIncoming123');
+    const result = await loadIncomingGearFormValues('recIncoming123');
 
-    expect(values).toEqual({
-      arrivalDate: '2026-04-01',
-      pickUpNumber: 'PU-42',
-      acquiredFrom: 'Walk-in seller',
-      cost: '1499.5',
-      sku: 'SKU-100',
-      status: 'Ready to Test',
-      make: 'McIntosh',
-      model: 'MC275',
-      componentType: 'Amplifier',
-      serialNumber: 'SN-123',
-      voltage: '120V',
-      inventoryNotes: 'Initial notes',
-      imageFiles: [],
-      cosmeticConditionNotes: 'Very clean',
-      originalBox: 'Yes',
-      manual: 'Included',
-      remote: 'No',
-      powerCable: 'Included',
-      additionalItems: 'Spare tubes',
-      weight: '68 lbs',
-      shippingDims: '27x25x11',
-      shippingMethod: 'Freight',
+    expect(result).toEqual({
+      source: 'used-gear-workflow',
+      values: {
+        arrivalDate: '2026-04-01',
+        pickUpNumber: 'PU-42',
+        acquiredFrom: 'Walk-in seller',
+        cost: '1499.5',
+        customerCosmeticNotes: 'Seller says very clean faceplate.',
+        customerFunctionalNotes: 'Seller reports fully working on both channels.',
+        customerInclusionNotes: 'Original cage and spare tubes included.',
+        customerSubmittedPhotosNotes: 'Customer sent rear-panel serial photo.',
+        sku: 'SKU-100',
+        status: 'Ready to Test',
+        make: 'McIntosh',
+        model: 'MC275',
+        componentType: 'Amplifier',
+        serialNumber: 'SN-123',
+        voltage: '120V',
+        inventoryNotes: 'Initial notes',
+        imageFiles: [],
+        cosmeticConditionNotes: 'Very clean',
+        originalBox: 'Yes',
+        manual: 'Included',
+        remote: 'No',
+        powerCable: 'Included',
+        additionalItems: 'Spare tubes',
+        weight: '68 lbs',
+        shippingDims: '27x25x11',
+        shippingMethod: 'Freight',
+      },
     });
+  });
+
+  it('falls back to the inventory source when the workflow source misses the row', async () => {
+    vi.mocked(getConfiguredRecord)
+      .mockRejectedValueOnce(new Error('Missing workflow record'))
+      .mockResolvedValueOnce(buildRecord({ SKU: 'INV-1' }));
+
+    const result = await loadIncomingGearFormValues('recIncoming123');
+
+    expect(result.source).toBe('inventory-directory');
+    expect(result.values.sku).toBe('INV-1');
   });
 
   it('submits every non-file Incoming Gear schema field and uploads images', async () => {
@@ -101,6 +122,10 @@ describe('incomingGearForm', () => {
       pickUpNumber: 'PU-42',
       acquiredFrom: 'Walk-in seller',
       cost: '1499.5',
+      customerCosmeticNotes: 'Seller says very clean faceplate.',
+      customerFunctionalNotes: 'Seller reports no hum or crackle.',
+      customerInclusionNotes: 'Original cage included.',
+      customerSubmittedPhotosNotes: 'Customer sent front and rear photos.',
       sku: 'SKU-100',
       status: 'Ready to Test',
       make: 'McIntosh',
@@ -140,6 +165,10 @@ describe('incomingGearForm', () => {
         'Pick Up #': 'PU-42',
         'Acquired From': 'Walk-in seller',
         Cost: 1499.5,
+        'Customer Cosmetic Notes': 'Seller says very clean faceplate.',
+        'Customer Functional Notes': 'Seller reports no hum or crackle.',
+        'Customer Inclusion Notes': 'Original cage included.',
+        'Customer Submitted Photos Notes': 'Customer sent front and rear photos.',
         SKU: 'SKU-100',
         Status: 'Ready to Test',
         Make: 'McIntosh',
@@ -175,5 +204,99 @@ describe('incomingGearForm', () => {
       'fldMXp0EaUHGglU8M',
       values.imageFiles[0],
     );
+  });
+
+  it('creates manual-entry rows through the workflow source with lot-routing fields', async () => {
+    const values: IncomingGearFormValues = {
+      arrivalDate: '2026-04-01',
+      pickUpNumber: 'PU-77',
+      acquiredFrom: 'Phone deal',
+      cost: '999',
+      customerCosmeticNotes: 'Seller reports light edge wear.',
+      customerFunctionalNotes: 'Seller says both channels work.',
+      customerInclusionNotes: 'Power cable only.',
+      customerSubmittedPhotosNotes: 'Photos received by text message.',
+      sku: '',
+      status: 'Needs Initial Processing',
+      make: 'Marantz',
+      model: 'Model 8B',
+      componentType: 'Amplifier',
+      serialNumber: '',
+      voltage: '120V',
+      inventoryNotes: 'Manual intake',
+      imageFiles: [],
+      cosmeticConditionNotes: '',
+      originalBox: '',
+      manual: '',
+      remote: '',
+      powerCable: '',
+      additionalItems: '',
+      weight: '',
+      shippingDims: '',
+      shippingMethod: '',
+    };
+
+    vi.mocked(createConfiguredRecord).mockResolvedValue(buildRecord({}));
+
+    const result = await submitIncomingGearForm(values, null, {
+      manualEntryRoute: 'lot-2-awaiting-arrival',
+      submissionGroupId: 'SUB-42',
+      pickUpId: 'PU-77',
+      qualificationNotes: 'Seller already approved over phone.',
+    });
+
+    expect(result.action).toBe('created');
+    expect(createConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      expect.objectContaining({
+        'Workflow Source': 'Manual Entry',
+        'Workflow Status': 'Accepted - Awaiting Arrival',
+        'Submission Group ID': 'SUB-42',
+        'Pick Up ID': 'PU-77',
+        'Qualification Notes': 'Seller already approved over phone.',
+        'Qualification Complete': true,
+        'Customer Cosmetic Notes': 'Seller reports light edge wear.',
+        'Customer Functional Notes': 'Seller says both channels work.',
+        'Customer Inclusion Notes': 'Power cable only.',
+        'Customer Submitted Photos Notes': 'Photos received by text message.',
+      }),
+      { typecast: true },
+    );
+  });
+
+  it('requires qualification notes before routing manual entry directly to Lot 2', async () => {
+    const values: IncomingGearFormValues = {
+      arrivalDate: '2026-04-01',
+      pickUpNumber: 'PU-88',
+      acquiredFrom: 'Walk-in seller',
+      cost: '500',
+      customerCosmeticNotes: '',
+      customerFunctionalNotes: '',
+      customerInclusionNotes: '',
+      customerSubmittedPhotosNotes: '',
+      sku: '',
+      status: 'Needs Initial Processing',
+      make: 'Adcom',
+      model: 'GFA-555',
+      componentType: 'Amplifier',
+      serialNumber: '',
+      voltage: '',
+      inventoryNotes: '',
+      imageFiles: [],
+      cosmeticConditionNotes: '',
+      originalBox: '',
+      manual: '',
+      remote: '',
+      powerCable: '',
+      additionalItems: '',
+      weight: '',
+      shippingDims: '',
+      shippingMethod: '',
+    };
+
+    await expect(submitIncomingGearForm(values, null, {
+      manualEntryRoute: 'lot-2-awaiting-arrival',
+      qualificationNotes: '',
+    })).rejects.toThrow('Qualification Notes are required before routing a manual-entry intake row directly to Lot 2.');
   });
 });

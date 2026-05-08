@@ -30,6 +30,7 @@ interface AppShellControlsParams {
   ebayRefetch: () => void | Promise<void>;
   approvalRefetch: () => Promise<void>;
   shopifyApprovalRefetch: () => Promise<void>;
+  usedGearWorkflowPostPublishRefetch: () => Promise<void>;
   sharkSearch: (slug: string) => void;
   currentSlug: string;
   atLoading: boolean;
@@ -60,6 +61,7 @@ export function useAppShellControls({
   ebayRefetch,
   approvalRefetch,
   shopifyApprovalRefetch,
+  usedGearWorkflowPostPublishRefetch,
   sharkSearch,
   currentSlug,
   atLoading,
@@ -80,6 +82,7 @@ export function useAppShellControls({
         Promise.resolve(canAccessPage('ebay') && runtimeFeatures.ebay.available ? ebayRefetch() : undefined),
         Promise.resolve(runtimeFeatures.approvalEbay.available ? approvalRefetch() : undefined),
         Promise.resolve(canAccessPage('shopify-approval') && runtimeFeatures.approvalShopify.available ? shopifyApprovalRefetch() : undefined),
+        Promise.resolve(canAccessPage('inventory') ? usedGearWorkflowPostPublishRefetch() : undefined),
         Promise.resolve(currentSlug ? sharkSearch(currentSlug) : undefined),
       ]);
       pushNotification({
@@ -102,7 +105,7 @@ export function useAppShellControls({
     } finally {
       setDashboardRefreshing(false);
     }
-  }, [activeTab, airtableRefetch, approvalRefetch, canAccessPage, currentSlug, dashboardRefreshing, ebayRefetch, jotformRefetch, pushNotification, runtimeFeatures, setDashboardRefreshing, sharkSearch, shopifyApprovalRefetch, shopifyRefetch]);
+  }, [activeTab, airtableRefetch, approvalRefetch, canAccessPage, currentSlug, dashboardRefreshing, ebayRefetch, jotformRefetch, pushNotification, runtimeFeatures, setDashboardRefreshing, sharkSearch, shopifyApprovalRefetch, shopifyRefetch, usedGearWorkflowPostPublishRefetch]);
 
   const tabLoadingState: Partial<Record<Tab, boolean>> = {
     dashboard: dashboardRefreshing,

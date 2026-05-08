@@ -1,14 +1,18 @@
 import { useCallback } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
 import { TAB_PATHS, type Tab } from '@/app/appNavigation';
+import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 
 interface AppNavigationHandlers {
   navigateToTab: (tab: Tab, replace?: boolean) => void;
+  navigateToJotformReviewGroup: (groupId: string, replace?: boolean) => void;
   navigateToIncomingGearForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToInventoryRecord: (recordId: string, replace?: boolean) => void;
+  navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
   navigateToInventoryList: (replace?: boolean) => void;
+  navigateToInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket, replace?: boolean) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsList: (replace?: boolean) => void;
   navigateToApprovalRecord: (recordId: string, replace?: boolean) => void;
@@ -43,6 +47,11 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     scrollToPageTop();
   }, [navigate]);
 
+  const navigateToJotformReviewGroup = useCallback((groupId: string, replace = false): void => {
+    navigate(`/jotform/review/${encodeURIComponent(groupId)}`, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
   const navigateToTestingForm = useCallback((recordId?: string | null, replace = false): void => {
     const path = recordId
       ? `${TAB_PATHS.testing}/${encodeURIComponent(recordId)}`
@@ -64,8 +73,18 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     scrollToPageTop();
   }, [navigate]);
 
+  const navigateToUsedGearWorkflowRecord = useCallback((recordId: string, replace = false): void => {
+    navigate(`/inventory/workflow/${encodeURIComponent(recordId)}`, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
   const navigateToInventoryList = useCallback((replace = false): void => {
     navigate(TAB_PATHS.inventory, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToInventoryPostPublishBucket = useCallback((bucket: UsedGearWorkflowPostPublishBucket, replace = false): void => {
+    navigate(`${TAB_PATHS.inventory}?workflowPostPublishBucket=${encodeURIComponent(bucket)}#used-gear-post-publish`, { replace });
     scrollToPageTop();
   }, [navigate]);
 
@@ -116,11 +135,14 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
 
   return {
     navigateToTab,
+    navigateToJotformReviewGroup,
     navigateToIncomingGearForm,
     navigateToTestingForm,
     navigateToPhotosForm,
     navigateToInventoryRecord,
+    navigateToUsedGearWorkflowRecord,
     navigateToInventoryList,
+    navigateToInventoryPostPublishBucket,
     navigateToListingsRecord,
     navigateToListingsList,
     navigateToApprovalRecord,

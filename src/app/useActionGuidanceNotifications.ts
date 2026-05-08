@@ -10,7 +10,10 @@ interface ActionGuidanceParams {
   shopifyApprovalPending: number;
   totalNewSubmissions: number;
   ebayAuthenticated: boolean;
+  workflowPostPublishStaleListingCount: number;
+  workflowPostPublishSoldReadyCount: number;
   atError?: string | Error | null;
+  workflowError?: string | Error | null;
   spError?: string | Error | null;
   jfError?: string | Error | null;
   ebayError?: string | Error | null;
@@ -21,6 +24,8 @@ const ACTION_KEYS = {
   shopifyApproval: 'guidance-shopify-approval',
   jotform: 'guidance-jotform-submissions',
   ebayConnect: 'guidance-ebay-connect',
+  usedGearStale: 'guidance-used-gear-stale-listings',
+  usedGearSoldReady: 'guidance-used-gear-sold-ready',
   dataError: 'guidance-data-errors',
 } as const;
 
@@ -32,7 +37,10 @@ export function useActionGuidanceNotifications({
   shopifyApprovalPending,
   totalNewSubmissions,
   ebayAuthenticated,
+  workflowPostPublishStaleListingCount,
+  workflowPostPublishSoldReadyCount,
   atError,
+  workflowError,
   spError,
   jfError,
   ebayError,
@@ -105,8 +113,40 @@ export function useActionGuidanceNotifications({
   }, [canAccessPage, dismissByKey, ebayAuthenticated, navigateToTab, upsertByKey]);
 
   useEffect(() => {
+    if (!canAccessPage('inventory') || workflowPostPublishSoldReadyCount <= 0) {
+      dismissByKey(ACTION_KEYS.usedGearSoldReady);
+      return;
+    }
+
+    upsertByKey(ACTION_KEYS.usedGearSoldReady, {
+      tone: 'warning',
+      title: 'Used gear shipments need attention',
+      message: `${workflowPostPublishSoldReadyCount} used-gear item${workflowPostPublishSoldReadyCount === 1 ? '' : 's'} are sold and ready to ship. Move them through the post-publish workflow queue.`,
+      actionLabel: 'Open inventory',
+      onAction: () => navigateToTab('inventory'),
+      dismissible: true,
+    });
+  }, [canAccessPage, dismissByKey, navigateToTab, upsertByKey, workflowPostPublishSoldReadyCount]);
+
+  useEffect(() => {
+    if (!canAccessPage('inventory') || workflowPostPublishStaleListingCount <= 0) {
+      dismissByKey(ACTION_KEYS.usedGearStale);
+      return;
+    }
+
+    upsertByKey(ACTION_KEYS.usedGearStale, {
+      tone: 'info',
+      title: 'Used gear listings are stale',
+      message: `${workflowPostPublishStaleListingCount} used-gear listing${workflowPostPublishStaleListingCount === 1 ? ' needs' : 's need'} stale-listing review. Check pricing, marketplace coverage, and sell-through next steps.`,
+      actionLabel: 'Open inventory',
+      onAction: () => navigateToTab('inventory'),
+      dismissible: true,
+    });
+  }, [canAccessPage, dismissByKey, navigateToTab, upsertByKey, workflowPostPublishStaleListingCount]);
+
+  useEffect(() => {
     const activeError = [
-      { tab: 'inventory' as const, message: atError },
+      { tab: 'inventory' as const, message: atError ?? workflowError },
       { tab: 'shopify' as const, message: spError },
       { tab: 'jotform' as const, message: jfError },
       { tab: 'ebay' as const, message: ebayError },
@@ -125,5 +165,5 @@ export function useActionGuidanceNotifications({
       onAction: onRefresh,
       dismissible: true,
     });
-  }, [atError, canAccessPage, dismissByKey, ebayError, jfError, onRefresh, spError, upsertByKey]);
+  }, [atError, canAccessPage, dismissByKey, ebayError, jfError, onRefresh, spError, upsertByKey, workflowError]);
 }

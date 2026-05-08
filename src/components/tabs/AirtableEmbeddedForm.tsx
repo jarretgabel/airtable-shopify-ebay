@@ -11,7 +11,14 @@ import {
   type IncomingGearFormOptionFieldName,
   type IncomingGearFormValues,
 } from '@/components/tabs/incoming-gear/incomingGearFormSchema';
-import { loadIncomingGearFormOptionSets, loadIncomingGearFormValues, submitIncomingGearForm, type IncomingGearFormSubmitResult } from '@/services/incomingGearForm';
+import {
+  loadIncomingGearFormOptionSets,
+  loadIncomingGearFormValues,
+  submitIncomingGearForm,
+  type IncomingGearManualEntryRoute,
+  type IncomingGearFormSubmitResult,
+  type IncomingGearRecordSource,
+} from '@/services/incomingGearForm';
 
 type IncomingGearOptionSets = Record<IncomingGearFormOptionFieldName, string[]>;
 
@@ -90,9 +97,37 @@ interface AirtableEmbeddedFormProps {
   onBackToDirectory?: () => void;
 }
 
+const MANUAL_ENTRY_ROUTE_OPTIONS: Array<{ value: IncomingGearManualEntryRoute; label: string; description: string }> = [
+  {
+    value: 'lot-1',
+    label: 'Route to Parking Lot 1',
+    description: 'Create the row as pending review so purchasing can qualify it in-app.',
+  },
+  {
+    value: 'lot-2-awaiting-arrival',
+    label: 'Route to Lot 2: Awaiting Arrival',
+    description: 'Use when the manual deal is accepted but the item has not physically arrived yet.',
+  },
+  {
+    value: 'lot-2-awaiting-sku',
+    label: 'Route to Lot 2: Arrived, Awaiting SKU',
+    description: 'Use when the item has already arrived and still needs SKU assignment.',
+  },
+  {
+    value: 'lot-2-awaiting-missing-item',
+    label: 'Route to Lot 2: Arrived, Awaiting Missing Item',
+    description: 'Use when intake is accepted but follow-up is still required for a missing unit or missing pieces.',
+  },
+];
+
 export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEmbeddedFormProps) {
   const [formValues, setFormValues] = useState<IncomingGearFormValues>(() => createIncomingGearFormDefaults());
   const [initialFormValues, setInitialFormValues] = useState<IncomingGearFormValues>(() => createIncomingGearFormDefaults());
+  const [recordSource, setRecordSource] = useState<IncomingGearRecordSource>('used-gear-workflow');
+  const [manualEntryRoute, setManualEntryRoute] = useState<IncomingGearManualEntryRoute>('lot-1');
+  const [submissionGroupId, setSubmissionGroupId] = useState('');
+  const [pickUpId, setPickUpId] = useState('');
+  const [qualificationNotes, setQualificationNotes] = useState('');
   const [optionSets, setOptionSets] = useState<IncomingGearOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
@@ -109,12 +144,15 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
       try {
         const [nextOptionSets, nextFormValues] = await Promise.all([
           loadIncomingGearFormOptionSets(),
-          recordId ? loadIncomingGearFormValues(recordId) : Promise.resolve(createIncomingGearFormDefaults()),
+          recordId
+            ? loadIncomingGearFormValues(recordId)
+            : Promise.resolve({ source: 'used-gear-workflow' as IncomingGearRecordSource, values: createIncomingGearFormDefaults() }),
         ]);
         if (!cancelled) {
           setOptionSets(nextOptionSets);
-          setFormValues(nextFormValues);
-          setInitialFormValues(nextFormValues);
+          setRecordSource(nextFormValues.source);
+          setFormValues(nextFormValues.values);
+          setInitialFormValues(nextFormValues.values);
         }
       } catch (error) {
         if (!cancelled) {
@@ -155,7 +193,13 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
 
     setSubmitting(true);
     try {
-      const result = await submitIncomingGearForm(formValues, recordId);
+      const result = await submitIncomingGearForm(formValues, recordId, {
+        recordSource,
+        manualEntryRoute,
+        submissionGroupId,
+        pickUpId,
+        qualificationNotes,
+      });
       setSubmitSuccess(result);
       if (result.action === 'updated') {
         const nextValues = { ...formValues, imageFiles: [] };
@@ -165,6 +209,10 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
         const nextValues = createIncomingGearFormDefaults();
         setFormValues(nextValues);
         setInitialFormValues(nextValues);
+        setManualEntryRoute('lot-1');
+        setSubmissionGroupId('');
+        setPickUpId('');
+        setQualificationNotes('');
       }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Unable to submit the Incoming Gear form.');
@@ -282,7 +330,11 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
             <div>
               <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{incomingGearFormIntro.eyebrow}</p>
               <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{incomingGearFormIntro.title}</h2>
-              {recordId ? <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Editing record <strong>{recordId}</strong>. Saving here updates only the Incoming Gear fields for this inventory row.</p> : null}
+              {recordId ? (
+                <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Editing record <strong>{recordId}</strong>. Saving here updates the Incoming Gear fields for this row in the {recordSource === 'used-gear-workflow' ? 'used-gear workflow' : 'inventory directory'} source.</p>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Create a manual-entry used-gear row and route it either into Parking Lot 1 review or directly into Lot 2 when the deal is already accepted.</p>
+              )}
             </div>
             {onBackToDirectory ? (
               <button
@@ -315,6 +367,72 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
         ) : null}
 
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
+          {!recordId ? (
+            <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Manual Entry Routing</p>
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                <label className="block">
+                  <span className={LABEL_CLASS}>Workflow Source</span>
+                  <input className={FIELD_CLASS} type="text" value="Manual Entry" readOnly />
+                  <p className={HELP_CLASS}>Manual-entry creates new rows through the used-gear workflow source.</p>
+                </label>
+                <label className="block">
+                  <span className={LABEL_CLASS}>Entry Route</span>
+                  <select
+                    className={FIELD_CLASS}
+                    value={manualEntryRoute}
+                    onChange={(event) => setManualEntryRoute(event.currentTarget.value as IncomingGearManualEntryRoute)}
+                  >
+                    {MANUAL_ENTRY_ROUTE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                  <p className={HELP_CLASS}>{MANUAL_ENTRY_ROUTE_OPTIONS.find((option) => option.value === manualEntryRoute)?.description}</p>
+                </label>
+                <label className="block">
+                  <span className={LABEL_CLASS}>Submission Group ID</span>
+                  <input
+                    className={FIELD_CLASS}
+                    type="text"
+                    value={submissionGroupId}
+                    placeholder="Optional shared submission key"
+                    onChange={(event) => setSubmissionGroupId(event.currentTarget.value)}
+                  />
+                </label>
+                <label className="block">
+                  <span className={LABEL_CLASS}>Pick Up ID</span>
+                  <input
+                    className={FIELD_CLASS}
+                    type="text"
+                    value={pickUpId}
+                    placeholder="Optional pickup or arrival group key"
+                    onChange={(event) => setPickUpId(event.currentTarget.value)}
+                  />
+                </label>
+                <label className="block lg:col-span-2">
+                  <span className={LABEL_CLASS}>Qualification Notes</span>
+                  <textarea
+                    className={FIELD_CLASS}
+                    rows={3}
+                    value={qualificationNotes}
+                    placeholder="Optional routing or qualification notes for the workflow record"
+                    onChange={(event) => setQualificationNotes(event.currentTarget.value)}
+                  />
+                  <p className={HELP_CLASS}>Required when routing a manual-entry row directly into Parking Lot 2. Keep the seller-qualification summary here, then use the new customer-reference fields below to mirror the JotForm intake details.</p>
+                </label>
+              </div>
+            </section>
+          ) : null}
+
+          {!recordId ? (
+            <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Manual Intake Reference</p>
+              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+                To keep manual entry aligned with the JotForm workflow, capture seller-provided cosmetic, functional, inclusion, and photo-reference notes in the dedicated customer fields below before staff-specific corrections are added later in workflow review.
+              </p>
+            </section>
+          ) : null}
+
           {incomingGearFormFields.map((field) => (
             <div key={field.airtableFieldName}>
               <FieldShell definition={field}>{renderField(field)}</FieldShell>
@@ -331,6 +449,12 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
                   setSubmitError(null);
                   setSubmitSuccess(null);
                   setFormValues(initialFormValues);
+                  if (!recordId) {
+                    setManualEntryRoute('lot-1');
+                    setSubmissionGroupId('');
+                    setPickUpId('');
+                    setQualificationNotes('');
+                  }
                 }}
                 disabled={submitting}
               >
@@ -341,7 +465,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
                 className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={submitting}
               >
-                {submitting ? (recordId ? 'Saving...' : 'Submitting...') : (recordId ? 'Save Incoming Gear' : 'Submit Incoming Gear')}
+                {submitting ? (recordId ? 'Saving...' : 'Creating...') : (recordId ? 'Save Incoming Gear' : 'Create Manual Entry')}
               </button>
             </div>
           </div>

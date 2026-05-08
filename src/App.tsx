@@ -13,6 +13,7 @@ import { useAppRouteState } from '@/app/useAppRouteState';
 import { useAppShellControls } from '@/app/useAppShellControls';
 import { useActionGuidanceNotifications } from '@/app/useActionGuidanceNotifications';
 import { useAuthRouteGuard } from '@/app/useAuthRouteGuard';
+import { useUsedGearWorkflowNotifications } from '@/app/useUsedGearWorkflowNotifications';
 import { requireEnv } from '@/config/runtimeEnv';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { useAppUIStore } from '@/stores/appUIStore';
@@ -29,10 +30,12 @@ function App() {
     isLoginPath,
     isResetPasswordPath,
     resetToken,
+    jotformReviewGroupId,
     incomingGearRecordId,
     testingRecordId,
     photosRecordId,
     inventoryRecordId,
+    usedGearWorkflowRecordId,
     listingsRecordId,
     approvalRecordId,
     shopifyApprovalRecordId,
@@ -53,11 +56,14 @@ function App() {
   const shellRef = useRef<HTMLElement>(null);
   const {
     navigateToTab,
+    navigateToJotformReviewGroup,
     navigateToIncomingGearForm,
     navigateToTestingForm,
     navigateToPhotosForm,
     navigateToInventoryRecord,
+    navigateToUsedGearWorkflowRecord,
     navigateToInventoryList,
+    navigateToInventoryPostPublishBucket,
     navigateToListingsRecord,
     navigateToListingsList,
     navigateToApprovalRecord,
@@ -81,7 +87,7 @@ function App() {
     navigate,
   });
   const appDataEnabled = usersReady && Boolean(currentUser) && !isLoginPath && !isResetPasswordPath;
-  const { airtable, shopify, market, ebay, approval, shopifyApproval, jotform, metrics, visibleTabs, totalNewSubmissions, aiProvider, adminCount, runtimeFeatures } = useAppData({
+  const { airtable, shopify, market, ebay, approval, shopifyApproval, usedGearWorkflowPostPublish, jotform, metrics, visibleTabs, totalNewSubmissions, aiProvider, adminCount, runtimeFeatures } = useAppData({
     enabled: appDataEnabled,
     activeTab,
     canAccessPage,
@@ -110,6 +116,7 @@ function App() {
     ebayRefetch: ebay.refetch,
     approvalRefetch: approval.refetch,
     shopifyApprovalRefetch: shopifyApproval.refetch,
+    usedGearWorkflowPostPublishRefetch: usedGearWorkflowPostPublish.refetch,
     sharkSearch: market.search,
     currentSlug: market.currentSlug,
     atLoading: airtable.loading,
@@ -125,10 +132,20 @@ function App() {
     shopifyApprovalPending: shopifyApproval.pending,
     totalNewSubmissions,
     ebayAuthenticated: ebay.authenticated,
+    workflowPostPublishStaleListingCount: usedGearWorkflowPostPublish.staleListingCount,
+    workflowPostPublishSoldReadyCount: usedGearWorkflowPostPublish.soldReadyCount,
     atError: airtable.error,
+    workflowError: usedGearWorkflowPostPublish.error,
     spError: shopify.error,
     jfError: jotform.error,
     ebayError: ebay.error,
+  });
+
+  useUsedGearWorkflowNotifications({
+    currentUser,
+    canAccessPage: canAccessPage as (tab: Tab) => boolean,
+    navigateToTab,
+    enabled: appDataEnabled,
   });
 
   useEffect(() => {
@@ -203,16 +220,20 @@ function App() {
         >
           <AppTabContent
             activeTab={activeTab}
+            jotformReviewGroupId={jotformReviewGroupId}
             incomingGearRecordId={incomingGearRecordId}
             testingRecordId={testingRecordId}
             photosRecordId={photosRecordId}
             inventoryRecordId={inventoryRecordId}
+            usedGearWorkflowRecordId={usedGearWorkflowRecordId}
             listingsRecordId={listingsRecordId}
             approvalRecordId={approvalRecordId}
             shopifyApprovalRecordId={shopifyApprovalRecordId}
             userRecordId={userRecordId}
             navigateToInventoryRecord={navigateToInventoryRecord}
+            navigateToUsedGearWorkflowRecord={navigateToUsedGearWorkflowRecord}
             navigateToInventoryList={navigateToInventoryList}
+            navigateToInventoryPostPublishBucket={navigateToInventoryPostPublishBucket}
             navigateToIncomingGearForm={navigateToIncomingGearForm}
             navigateToTestingForm={navigateToTestingForm}
             navigateToPhotosForm={navigateToPhotosForm}
@@ -225,9 +246,11 @@ function App() {
             navigateToUserRecord={navigateToUserRecord}
             navigateToUsersList={navigateToUsersList}
             navigateToTab={navigateToTab}
+            navigateToJotformReviewGroup={navigateToJotformReviewGroup}
             runtimeFeatures={runtimeFeatures}
             metrics={metrics}
             accessiblePages={accessiblePages as Tab[]}
+            currentUserName={currentUser.name}
             aiProvider={aiProvider}
             usersCount={users.length}
             adminCount={adminCount}
@@ -260,6 +283,12 @@ function App() {
             shopifyApprovalTotal={shopifyApproval.total}
             shopifyApprovalApproved={shopifyApproval.approved}
             shopifyApprovalPending={shopifyApproval.pending}
+            workflowPostPublishLoading={usedGearWorkflowPostPublish.loading}
+            workflowPostPublishError={usedGearWorkflowPostPublish.error}
+            workflowActiveListingCount={usedGearWorkflowPostPublish.activeListingCount}
+            workflowStaleListingCount={usedGearWorkflowPostPublish.staleListingCount}
+            workflowSoldReadyCount={usedGearWorkflowPostPublish.soldReadyCount}
+            workflowShippedCount={usedGearWorkflowPostPublish.shippedCount}
             ebayAuthenticated={ebay.authenticated}
             ebayRestoringSession={ebay.restoringSession}
             ebayLoading={ebay.loading}

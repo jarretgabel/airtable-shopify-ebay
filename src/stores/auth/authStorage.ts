@@ -6,7 +6,14 @@ import {
   updateConfiguredRecord,
 } from '@/services/app-api/airtable';
 import { sendPlainTextEmail } from '@/services/app-api/gmail';
-import { DEFAULT_USER_NOTIFICATION_PREFERENCES, type AppUser, type UserNotificationPreferences, type UserRole } from './authTypes';
+import {
+  DEFAULT_USER_NOTIFICATION_PREFERENCES,
+  createDefaultUsedGearWorkflowNotificationPreferences,
+  createDefaultUserNotificationPreferences,
+  type AppUser,
+  type UserNotificationPreferences,
+  type UserRole,
+} from './authTypes';
 
 const USER_FIELD_KEYS = {
   id: ['User Id', 'User ID', 'ID'],
@@ -219,14 +226,14 @@ function parseNotificationPreferences(value: unknown): UserNotificationPreferenc
 
   const raw = toSingleString(value);
   if (!raw) {
-    return { ...DEFAULT_USER_NOTIFICATION_PREFERENCES };
+    return createDefaultUserNotificationPreferences();
   }
 
   try {
     const parsed = JSON.parse(raw) as Partial<UserNotificationPreferences>;
     return normalizeNotificationPreferences(parsed);
   } catch {
-    return { ...DEFAULT_USER_NOTIFICATION_PREFERENCES };
+    return createDefaultUserNotificationPreferences();
   }
 }
 
@@ -378,12 +385,17 @@ export function normalizePages(pages: AppPage[], role: UserRole): AppPage[] {
 }
 
 function normalizeNotificationPreferences(value: Partial<UserNotificationPreferences> | undefined): UserNotificationPreferences {
+  const defaultWorkflowEvents = createDefaultUsedGearWorkflowNotificationPreferences();
   return {
     infoEnabled: value?.infoEnabled ?? DEFAULT_USER_NOTIFICATION_PREFERENCES.infoEnabled,
     successEnabled: value?.successEnabled ?? DEFAULT_USER_NOTIFICATION_PREFERENCES.successEnabled,
     warningEnabled: value?.warningEnabled ?? DEFAULT_USER_NOTIFICATION_PREFERENCES.warningEnabled,
     errorEnabled: value?.errorEnabled ?? DEFAULT_USER_NOTIFICATION_PREFERENCES.errorEnabled,
     autoDismissMs: value?.autoDismissMs ?? DEFAULT_USER_NOTIFICATION_PREFERENCES.autoDismissMs,
+    workflowEvents: {
+      ...defaultWorkflowEvents,
+      ...(value?.workflowEvents ?? {}),
+    },
   };
 }
 

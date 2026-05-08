@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildDeleteUserConfirmationRequest } from '@/components/users/userManagementConfirmation';
+import { createDefaultUserNotificationPreferences } from '@/stores/auth/authTypes';
 
 describe('buildDeleteUserConfirmationRequest', () => {
   it('requires typing the user email before deletion', () => {
@@ -8,13 +9,7 @@ describe('buildDeleteUserConfirmationRequest', () => {
       name: 'Alex Parker',
       email: 'alex@example.com',
       role: 'user',
-      notificationPreferences: {
-        infoEnabled: true,
-        successEnabled: true,
-        warningEnabled: true,
-        errorEnabled: true,
-        autoDismissMs: 5000,
-      },
+      notificationPreferences: createDefaultUserNotificationPreferences(),
       allowedPages: ['dashboard'],
     });
 

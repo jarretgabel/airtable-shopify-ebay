@@ -2,6 +2,15 @@
 
 This section documents the local forms under the `Inventory Processing` menu:
 
+- [Used Gear Workflow Plan](../used-gear-workflow-plan.md)
+- [Used Gear Workflow: Phase 1 Foundation](../used-gear-workflow/phase-1-foundation.md)
+- [Used Gear Workflow: Phase 2 Intake And Parking Lots](../used-gear-workflow/phase-2-intake-and-parking-lots.md)
+- [Used Gear Workflow: Phase 3 Processing And Handoffs](../used-gear-workflow/phase-3-processing-and-handoffs.md)
+- [Used Gear Workflow: Phase 4 Pre-Listing And Publish Readiness](../used-gear-workflow/phase-4-pre-listing-and-publish-readiness.md)
+- [Used Gear Workflow: Phase 5 Post-Publish Lifecycle](../used-gear-workflow/phase-5-post-publish-lifecycle.md)
+- [Used Gear Workflow: Phase 6 Marketplace Expansion](../used-gear-workflow/phase-6-marketplace-expansion.md)
+- [Used Gear Workflow: Data Model And Approvals](../used-gear-workflow/data-model-and-approvals.md)
+- [Used Gear Workflow: UI Surface Map](../used-gear-workflow/ui-surface-map.md)
 - [Incoming Gear Instructions](./incoming-gear.instructions.md)
 - [Testing Instructions](./testing.instructions.md)
 - [Photos Instructions](./photos.instructions.md)

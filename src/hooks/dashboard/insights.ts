@@ -13,6 +13,8 @@ interface InsightInput {
   priorArchivedProducts: ShopifyProductFull[];
   airtableBrandSummary: Array<[string, number]>;
   nonEmptyListings: AirtableRecord[];
+  workflowStaleListingCount: number;
+  workflowSoldReadyCount: number;
   now: number;
 }
 
@@ -34,6 +36,8 @@ export function buildDashboardInsights(input: InsightInput): DashboardInsight[] 
     priorArchivedProducts,
     airtableBrandSummary,
     nonEmptyListings,
+    workflowStaleListingCount,
+    workflowSoldReadyCount,
     now,
   } = input;
 
@@ -81,6 +85,28 @@ export function buildDashboardInsights(input: InsightInput): DashboardInsight[] 
       detail: `${draftProducts.length} drafts vs ${activeProducts.length} active listings suggests publishing bottlenecks.`,
       severity: 'warning',
       targetTab: 'shopify',
+    });
+  }
+
+  if (workflowSoldReadyCount > 0) {
+    insights.push({
+      id: 'used-gear-sold-ready',
+      title: 'Used gear shipments are queued',
+      detail: `${workflowSoldReadyCount} used-gear item${workflowSoldReadyCount === 1 ? '' : 's'} are sold and ready to ship.`,
+      severity: 'critical',
+      targetTab: 'inventory',
+      inventoryPostPublishBucket: 'sold-ready',
+    });
+  }
+
+  if (workflowStaleListingCount > 0) {
+    insights.push({
+      id: 'used-gear-stale-listings',
+      title: 'Used gear listings need stale review',
+      detail: `${workflowStaleListingCount} used-gear listing${workflowStaleListingCount === 1 ? '' : 's'} have crossed into stale-review work.`,
+      severity: workflowStaleListingCount >= 3 ? 'warning' : 'info',
+      targetTab: 'inventory',
+      inventoryPostPublishBucket: 'stale-listing',
     });
   }
 

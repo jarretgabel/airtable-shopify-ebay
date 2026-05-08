@@ -13,6 +13,7 @@ interface BuildListingApprovalSelectedRecordPanelPropsParams {
   secondaryActionButtonClass: string;
   errorSurfaceClass: string;
   isCombinedApproval: boolean;
+  workflowSummary: ListingApprovalSelectedRecordPanelProps['workflowSummary'];
   selectedRecordViewProps: ReturnType<typeof buildListingApprovalSelectedRecordViewProps> | null;
   selectedRecordStatusProps: ReturnType<typeof buildListingApprovalSelectedRecordStatusProps> | null;
 }
@@ -27,6 +28,7 @@ export function buildListingApprovalSelectedRecordPanelProps({
   secondaryActionButtonClass,
   errorSurfaceClass,
   isCombinedApproval,
+  workflowSummary,
   selectedRecordViewProps,
   selectedRecordStatusProps,
 }: BuildListingApprovalSelectedRecordPanelPropsParams): ListingApprovalSelectedRecordPanelProps | null {
@@ -44,6 +46,7 @@ export function buildListingApprovalSelectedRecordPanelProps({
     secondaryActionButtonClass,
     errorSurfaceClass,
     isCombinedApproval,
+    workflowSummary,
     selectedRecordViewProps,
     selectedRecordStatusProps,
   };

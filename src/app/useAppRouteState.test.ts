@@ -75,4 +75,10 @@ describe('useAppRouteState', () => {
     expect(state.activeTab).toBe('inventory');
     expect(state.inventoryRecordId).toBe('rec 123');
   });
+
+  it('maps the used gear workflow detail route and decodes id', () => {
+    const state = useAppRouteState(locationFor('/inventory/workflow/rec%20workflow'), ['dashboard', 'inventory']);
+    expect(state.activeTab).toBe('inventory');
+    expect(state.usedGearWorkflowRecordId).toBe('rec workflow');
+  });
 });

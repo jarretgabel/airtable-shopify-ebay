@@ -32,7 +32,12 @@ import {
   getCurrentUser,
   normalizeEmail,
 } from './authContextHelpers';
-import { DEFAULT_USER_NOTIFICATION_PREFERENCES, type UserNotificationPreferences } from './authTypes';
+import {
+  createDefaultUserNotificationPreferences,
+  DEFAULT_USER_NOTIFICATION_PREFERENCES,
+  type UsedGearWorkflowNotificationEvent,
+  type UserNotificationPreferences,
+} from './authTypes';
 import { validatePasswordPolicy } from './passwordPolicy';
 
 export interface AuthStoreState {
@@ -57,6 +62,8 @@ export interface AuthStoreState {
   updateCurrentUserPassword: (currentPassword: string, nextPassword: string) => Promise<AccountUpdateResult>;
   completeRequiredPasswordChange: (nextPassword: string) => Promise<AccountUpdateResult>;
   updateCurrentUserNotificationPreference: <K extends keyof UserNotificationPreferences>(key: K, value: UserNotificationPreferences[K]) => Promise<AccountUpdateResult>;
+  updateCurrentUserWorkflowNotificationEvent: (eventKey: UsedGearWorkflowNotificationEvent, enabled: boolean) => Promise<AccountUpdateResult>;
+  updateUserWorkflowNotificationEvent: (userId: string, eventKey: UsedGearWorkflowNotificationEvent, enabled: boolean) => Promise<AccountUpdateResult>;
 }
 
 export const useAuthStore = create<AuthStoreState>((set, get) => ({
@@ -421,7 +428,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       return { success: false, message: 'Current user was not found.' };
     }
 
-    const currentPreferences = currentUser.notificationPreferences ?? { ...DEFAULT_USER_NOTIFICATION_PREFERENCES };
+    const currentPreferences = currentUser.notificationPreferences ?? createDefaultUserNotificationPreferences();
     const nextUser = {
       ...currentUser,
       notificationPreferences: {
@@ -439,6 +446,55 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to update notifications in Airtable.',
+      };
+    }
+  },
+  updateCurrentUserWorkflowNotificationEvent: async (eventKey, enabled) => {
+    const { currentUserId } = get();
+    if (!currentUserId) {
+      return { success: false, message: 'No active user session.' };
+    }
+
+    return get().updateUserWorkflowNotificationEvent(currentUserId, eventKey, enabled);
+  },
+  updateUserWorkflowNotificationEvent: async (userId, eventKey, enabled) => {
+    const { users, currentUserId } = get();
+    const actingUser = users.find((user) => user.id === currentUserId);
+    const targetUser = users.find((user) => user.id === userId);
+
+    if (!targetUser) {
+      return { success: false, message: 'User not found.' };
+    }
+
+    if (!actingUser) {
+      return { success: false, message: 'No active user session.' };
+    }
+
+    if (actingUser.role !== 'admin' && actingUser.id !== targetUser.id) {
+      return { success: false, message: 'Only admins can update other users.' };
+    }
+
+    const currentPreferences = targetUser.notificationPreferences ?? createDefaultUserNotificationPreferences();
+    const nextUser = {
+      ...targetUser,
+      notificationPreferences: {
+        ...currentPreferences,
+        workflowEvents: {
+          ...(currentPreferences.workflowEvents ?? DEFAULT_USER_NOTIFICATION_PREFERENCES.workflowEvents),
+          [eventKey]: enabled,
+        },
+      },
+    };
+
+    try {
+      const savedUser = await updateUserInAirtable(nextUser);
+      const updatedUsers = users.map((user) => (user.id === userId ? savedUser : user));
+      set({ users: updatedUsers });
+      return { success: true, message: 'Workflow notification preference updated.' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update workflow notifications in Airtable.',
       };
     }
   },

@@ -31,7 +31,7 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   listings: { label: 'Listings', path: '/listings' },
   shopify: { label: 'Shopify Products', path: '/shopify/products' },
   market: { label: 'Market Prices', path: '/market' },
-  jotform: { label: 'Inquiries', path: '/jotform' },
+  jotform: { label: 'Parking Lot 1', path: '/jotform' },
   'incoming-gear': { label: 'Incoming Gear', path: '/incoming-gear' },
   testing: { label: 'Testing', path: '/testing' },
   photos: { label: 'Photos', path: '/photos' },

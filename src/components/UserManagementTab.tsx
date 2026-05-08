@@ -44,6 +44,7 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
   const currentUserId = useAuthStore((state) => state.currentUserId);
   const updateUserPermissions = useAuthStore((state) => state.updateUserPermissions);
   const updateUserRole = useAuthStore((state) => state.updateUserRole);
+  const updateUserWorkflowNotificationEvent = useAuthStore((state) => state.updateUserWorkflowNotificationEvent);
   const deleteUser = useAuthStore((state) => state.deleteUser);
   const requestPasswordReset = useAuthStore((state) => state.requestPasswordReset);
   const createUser = useAuthStore((state) => state.createUser);
@@ -217,6 +218,9 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
         }}
         onTogglePermission={(page) => {
           void togglePermission(selectedUser, page);
+        }}
+        onToggleWorkflowNotificationEvent={(eventKey, enabled) => {
+          void updateUserWorkflowNotificationEvent(selectedUser.id, eventKey, enabled).then((result) => setStatusMessage(result.message));
         }}
         onSendPasswordReset={() => {
           void handleReset(selectedUser.email);

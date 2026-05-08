@@ -1,5 +1,6 @@
 import type { publishApprovalRecord } from '@/services/app-api/approval';
 import type { ConfirmationRequest } from '@/hooks/useConfirmationDialog';
+import type { UsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
 import type { AirtableRecord } from '@/types/airtable';
 import type { ShopifyProduct } from '@/types/shopify';
 
@@ -58,6 +59,10 @@ export interface UseListingApprovalRecordActionsParams {
   changedFieldNames: string[];
   approvalPublishSource: Parameters<typeof publishApprovalRecord>[0];
   mergedDraftSourceFields?: Record<string, unknown> | null;
+  workflowPublishSummary?: {
+    workflowStatus: string;
+    readiness: UsedGearWorkflowListingReadiness;
+  } | null;
   onBackToList: () => void;
   pushInlineActionNotice: (tone: InlineNoticeTone, title: string, message: string) => void;
   requestConfirmation: (request: ConfirmationRequest) => Promise<boolean>;

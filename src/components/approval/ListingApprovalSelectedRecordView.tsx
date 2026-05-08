@@ -11,6 +11,7 @@ interface ListingApprovalSelectedRecordViewProps {
   onBackToList: () => void;
   secondaryActionButtonClass: string;
   errorSurfaceClass: string;
+  workflowSummary?: ReactNode;
   editor: ReactNode;
   alerts: ReactNode;
   actions: ReactNode;
@@ -26,6 +27,7 @@ export function ListingApprovalSelectedRecordView({
   onBackToList,
   secondaryActionButtonClass,
   errorSurfaceClass,
+  workflowSummary,
   editor,
   alerts,
   actions,
@@ -66,6 +68,8 @@ export function ListingApprovalSelectedRecordView({
           <p className="mt-2 text-[var(--error-text)]/85">{error}</p>
         </section>
       )}
+
+      {workflowSummary}
 
       {editor}
       {alerts}

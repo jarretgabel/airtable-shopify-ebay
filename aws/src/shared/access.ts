@@ -46,6 +46,7 @@ function resolveAirtableRequirement(event: APIGatewayProxyEventV2): RouteAccessR
     case 'users':
       return { adminOnly: true, anyPage: ['users'] };
     case 'inventory-directory':
+    case 'used-gear-workflow':
       return { anyPage: ['inventory'] };
     case 'approval-ebay':
       return { anyPage: ['approval'] };

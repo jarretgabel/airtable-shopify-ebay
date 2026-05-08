@@ -13,6 +13,7 @@ import {
   toFormValue,
   type ApprovalFieldKind,
 } from '@/stores/approval/approvalStoreFieldUtils';
+import { applyWorkflowListingPrefills } from '@/stores/approval/approvalStoreWorkflowPrefill';
 import type { ApprovalStore } from '@/stores/approval/approvalStoreTypes';
 
 type ApprovalStoreSet = (partial: Partial<ApprovalStore> | ((state: ApprovalStore) => Partial<ApprovalStore>)) => void;
@@ -62,6 +63,8 @@ export function createHydrateFormAction(set: ApprovalStoreSet): ApprovalStore['h
         || '';
       nextKinds[CONDITION_FIELD] = 'text';
     }
+
+    applyWorkflowListingPrefills(record.fields, nextValues, nextKinds);
 
     const collectionIds = buildShopifyCollectionIdsFromApprovalFields(record.fields);
     if (collectionIds.length > 0) {

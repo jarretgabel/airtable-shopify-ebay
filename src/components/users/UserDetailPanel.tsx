@@ -1,5 +1,9 @@
 import { ASSIGNABLE_PAGES, AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
-import type { AppUser } from '@/stores/auth/authTypes';
+import {
+  USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS,
+  type AppUser,
+  type UsedGearWorkflowNotificationEvent,
+} from '@/stores/auth/authTypes';
 
 interface UserDetailPanelProps {
   selectedUser: AppUser;
@@ -13,6 +17,7 @@ interface UserDetailPanelProps {
   onBackToList: () => void;
   onRoleChange: (role: 'admin' | 'user') => void;
   onTogglePermission: (page: AppPage) => void;
+  onToggleWorkflowNotificationEvent: (eventKey: UsedGearWorkflowNotificationEvent, enabled: boolean) => void;
   onSendPasswordReset: () => void;
   onDeleteUser: () => void;
 }
@@ -29,6 +34,7 @@ export function UserDetailPanel({
   onBackToList,
   onRoleChange,
   onTogglePermission,
+  onToggleWorkflowNotificationEvent,
   onSendPasswordReset,
   onDeleteUser,
 }: UserDetailPanelProps) {
@@ -88,6 +94,28 @@ export function UserDetailPanel({
                   onChange={() => onTogglePermission(page)}
                 />
                 <span>{PAGE_DEFINITIONS[page].label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300">Used Gear Workflow Alerts</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS.map((option) => (
+              <label key={`${selectedUser.id}-${option.key}`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--ink)]">
+                <span className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    className={checkboxClassName}
+                    checked={selectedUser.notificationPreferences.workflowEvents[option.key]}
+                    onChange={(event) => onToggleWorkflowNotificationEvent(option.key, event.target.checked)}
+                  />
+                  <span>
+                    <span className="block font-semibold">{option.label}</span>
+                    <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">{option.description}</span>
+                  </span>
+                </span>
               </label>
             ))}
           </div>

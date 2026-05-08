@@ -34,6 +34,12 @@ type AppTabInput = Pick<
   | 'shopifyApprovalTotal'
   | 'shopifyApprovalApproved'
   | 'shopifyApprovalPending'
+  | 'workflowPostPublishLoading'
+  | 'workflowPostPublishError'
+  | 'workflowActiveListingCount'
+  | 'workflowStaleListingCount'
+  | 'workflowSoldReadyCount'
+  | 'workflowShippedCount'
   | 'aiProvider'
   | 'ebayAuthenticated'
   | 'ebayRestoringSession'
@@ -50,6 +56,7 @@ type AppTabInput = Pick<
   | 'adminCount'
   | 'runtimeFeatures'
   | 'navigateToTab'
+  | 'navigateToInventoryPostPublishBucket'
 >;
 
 type EbayInput = Pick<
@@ -182,6 +189,12 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
       shopifyApprovalTotal: input.shopifyApprovalTotal,
       shopifyApprovalApproved: input.shopifyApprovalApproved,
       shopifyApprovalPending: input.shopifyApprovalPending,
+      workflowPostPublishLoading: input.workflowPostPublishLoading,
+      workflowPostPublishError: input.workflowPostPublishError,
+      workflowActiveListingCount: input.workflowActiveListingCount,
+      workflowStaleListingCount: input.workflowStaleListingCount,
+      workflowSoldReadyCount: input.workflowSoldReadyCount,
+      workflowShippedCount: input.workflowShippedCount,
       aiProvider: input.aiProvider,
       ebayAuthenticated: input.ebayAuthenticated,
       ebayRestoringSession: input.ebayRestoringSession,
@@ -208,6 +221,7 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
     },
     actions: {
       onSelectTab: input.navigateToTab,
+      onOpenInventoryPostPublishBucket: input.navigateToInventoryPostPublishBucket,
     },
   };
 }

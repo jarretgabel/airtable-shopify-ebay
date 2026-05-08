@@ -18,6 +18,7 @@ function validateWriteSource(value: string): AirtableConfiguredWriteSource {
   if (
     value === 'users'
     || value === 'inventory-directory'
+    || value === 'used-gear-workflow'
     || value === 'approval-ebay'
     || value === 'approval-shopify'
     || value === 'approval-combined'

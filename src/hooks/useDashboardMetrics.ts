@@ -11,6 +11,7 @@ import {
   sliceProducts,
 } from '@/hooks/dashboard/dashboardMetricComputations';
 import type { DashboardMetrics, ShopifyProductFull } from '@/hooks/dashboard/metricsTypes';
+import type { UsedGearWorkflowPostPublishSummary } from '@/services/usedGearQueue';
 
 export type {
   DashboardInsight,
@@ -18,7 +19,12 @@ export type {
   DashboardInsightTargetTab,
 } from '@/hooks/dashboard/metricsTypes';
 
-export function useDashboardMetrics(nonEmptyListings: AirtableRecord[], products: ShopifyProductFull[], jfSubmissions: JotFormSubmission[]): DashboardMetrics {
+export function useDashboardMetrics(
+  nonEmptyListings: AirtableRecord[],
+  products: ShopifyProductFull[],
+  jfSubmissions: JotFormSubmission[],
+  workflowPostPublishSummary?: UsedGearWorkflowPostPublishSummary,
+): DashboardMetrics {
   return useMemo(() => {
     const now = Date.now();
     const windows = createMetricWindows(now);
@@ -44,6 +50,8 @@ export function useDashboardMetrics(nonEmptyListings: AirtableRecord[], products
       priorArchivedProducts: slices.priorArchivedProducts,
       airtableBrandSummary: airtable.airtableBrandSummary,
       nonEmptyListings,
+      workflowStaleListingCount: workflowPostPublishSummary?.staleListingCount ?? 0,
+      workflowSoldReadyCount: workflowPostPublishSummary?.soldReadyCount ?? 0,
       now,
     });
 
@@ -79,5 +87,5 @@ export function useDashboardMetrics(nonEmptyListings: AirtableRecord[], products
       maxAirtableBrandCount: airtable.maxAirtableBrandCount,
       insights,
     };
-  }, [jfSubmissions, nonEmptyListings, products]);
+  }, [jfSubmissions, nonEmptyListings, products, workflowPostPublishSummary]);
 }

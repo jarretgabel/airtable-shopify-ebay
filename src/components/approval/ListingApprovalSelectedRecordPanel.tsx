@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { ListingApprovalRecordActions } from '@/components/approval/ListingApprovalRecordActions';
 import { ListingApprovalRecordAlerts } from '@/components/approval/ListingApprovalRecordAlerts';
 import { ListingApprovalSelectedRecordView } from '@/components/approval/ListingApprovalSelectedRecordView';
+import { ListingApprovalWorkflowSummary, type ListingApprovalWorkflowSummaryData } from '@/components/approval/ListingApprovalWorkflowSummary';
 import type { buildListingApprovalSelectedRecordStatusProps } from '@/components/approval/listingApprovalSelectedRecordStatusProps';
 import type { buildListingApprovalSelectedRecordViewProps } from '@/components/approval/listingApprovalSelectedRecordViewProps';
 import type { AirtableRecord } from '@/types/airtable';
@@ -36,6 +37,7 @@ export interface ListingApprovalSelectedRecordPanelProps {
   secondaryActionButtonClass: string;
   errorSurfaceClass: string;
   isCombinedApproval: boolean;
+  workflowSummary: ListingApprovalWorkflowSummaryData | null;
   selectedRecordViewProps: ReturnType<typeof buildListingApprovalSelectedRecordViewProps>;
   selectedRecordStatusProps: ReturnType<typeof buildListingApprovalSelectedRecordStatusProps>;
 }
@@ -50,6 +52,7 @@ export function ListingApprovalSelectedRecordPanel({
   secondaryActionButtonClass,
   errorSurfaceClass,
   isCombinedApproval,
+  workflowSummary,
   selectedRecordViewProps,
   selectedRecordStatusProps,
 }: ListingApprovalSelectedRecordPanelProps) {
@@ -63,6 +66,7 @@ export function ListingApprovalSelectedRecordPanel({
       onBackToList={onBackToList}
       secondaryActionButtonClass={secondaryActionButtonClass}
       errorSurfaceClass={errorSurfaceClass}
+      workflowSummary={workflowSummary ? <ListingApprovalWorkflowSummary summary={workflowSummary} /> : null}
       editor={(
         <Suspense fallback={<ApprovalEditorFallback />}>
           {isCombinedApproval ? (

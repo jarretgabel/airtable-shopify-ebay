@@ -1,6 +1,6 @@
 import { APP_PAGES, AppPage, ASSIGNABLE_PAGES } from '@/auth/pages';
 import { normalizePages, randomToken } from './authStorage';
-import { DEFAULT_USER_NOTIFICATION_PREFERENCES, type AppUser, type CreateUserInput, type UserRole } from './authTypes';
+import { createDefaultUserNotificationPreferences, type AppUser, type CreateUserInput, type UserRole } from './authTypes';
 import type { CreateUserResult } from './authContextTypes';
 
 export function normalizeEmail(value: string): string {
@@ -42,7 +42,7 @@ export function buildUserFromInput(input: CreateUserInput): { result?: CreateUse
       password: input.password,
       mustChangePassword: true,
       allowedPages,
-      notificationPreferences: { ...DEFAULT_USER_NOTIFICATION_PREFERENCES },
+      notificationPreferences: createDefaultUserNotificationPreferences(),
     },
   };
 }

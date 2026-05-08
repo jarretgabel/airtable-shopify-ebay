@@ -25,6 +25,7 @@ export const airtableSourceDependencies = {
 export type AirtableConfiguredRecordsSource =
   | 'users'
   | 'inventory-directory'
+  | 'used-gear-workflow'
   | 'approval-ebay'
   | 'approval-shopify'
   | 'approval-combined';
@@ -121,6 +122,13 @@ function getSourceDefinition(source: AirtableConfiguredRecordsSource): { referen
   }
 
   if (source === 'approval-combined') {
+    return {
+      reference: process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF?.trim(),
+      tableName: process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME?.trim() || DEFAULT_COMBINED_LISTINGS_TABLE_NAME,
+    };
+  }
+
+  if (source === 'used-gear-workflow') {
     return {
       reference: process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF?.trim(),
       tableName: process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME?.trim() || DEFAULT_COMBINED_LISTINGS_TABLE_NAME,

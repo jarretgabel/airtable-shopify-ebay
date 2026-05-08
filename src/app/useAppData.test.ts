@@ -10,6 +10,7 @@ const {
   mockUseEbayListings,
   mockUseApprovalQueueSummary,
   mockUseShopifyApprovalQueueSummary,
+  mockUseUsedGearWorkflowPostPublishSummary,
   mockUseJotFormInquiries,
   mockUseDashboardMetrics,
   mockGetRuntimeFeatureCapabilities,
@@ -20,6 +21,7 @@ const {
   mockUseEbayListings: vi.fn(),
   mockUseApprovalQueueSummary: vi.fn(),
   mockUseShopifyApprovalQueueSummary: vi.fn(),
+  mockUseUsedGearWorkflowPostPublishSummary: vi.fn(),
   mockUseJotFormInquiries: vi.fn(),
   mockUseDashboardMetrics: vi.fn(),
   mockGetRuntimeFeatureCapabilities: vi.fn<() => RuntimeFeatureMap>(),
@@ -56,6 +58,10 @@ vi.mock('@/hooks/useApprovalQueueSummary', () => ({
 
 vi.mock('@/hooks/useShopifyApprovalQueueSummary', () => ({
   useShopifyApprovalQueueSummary: mockUseShopifyApprovalQueueSummary,
+}));
+
+vi.mock('@/hooks/useUsedGearWorkflowPostPublishSummary', () => ({
+  useUsedGearWorkflowPostPublishSummary: mockUseUsedGearWorkflowPostPublishSummary,
 }));
 
 vi.mock('@/hooks/useJotForm', () => ({
@@ -125,6 +131,17 @@ describe('useAppData', () => {
     mockUseApprovalQueueSummary.mockReturnValue({ loading: false, error: null, total: 0, approved: 0, pending: 0, refetch: vi.fn() });
     mockUseShopifyApprovalQueueSummary.mockReset();
     mockUseShopifyApprovalQueueSummary.mockReturnValue({ loading: false, error: null, total: 0, approved: 0, pending: 0, refetch: vi.fn() });
+    mockUseUsedGearWorkflowPostPublishSummary.mockReset();
+    mockUseUsedGearWorkflowPostPublishSummary.mockReturnValue({
+      loading: false,
+      error: null,
+      activeListingCount: 0,
+      staleListingCount: 0,
+      soldReadyCount: 0,
+      shippedCount: 0,
+      totalCount: 0,
+      refetch: vi.fn(),
+    });
     mockUseJotFormInquiries.mockReset();
     mockUseJotFormInquiries.mockReturnValue({ submissions: [], loading: false, polling: false, error: null, refetch: vi.fn(), lastUpdated: null, freshCount: 0, clearFresh: vi.fn() });
     mockUseDashboardMetrics.mockReset();
@@ -172,6 +189,7 @@ describe('useAppData', () => {
     expect(mockUseEbayListings).toHaveBeenCalledWith(false);
     expect(mockUseApprovalQueueSummary).toHaveBeenCalledWith(false);
     expect(mockUseShopifyApprovalQueueSummary).toHaveBeenCalledWith(false);
+    expect(mockUseUsedGearWorkflowPostPublishSummary).toHaveBeenCalledWith(true);
     expect(mockUseJotFormInquiries).toHaveBeenCalledWith('', 60_000, false);
     expect(result.current.runtimeFeatures).toEqual(unavailableFeatures);
   });
@@ -189,6 +207,7 @@ describe('useAppData', () => {
     expect(mockUseEbayListings).toHaveBeenCalledWith(false);
     expect(mockUseApprovalQueueSummary).toHaveBeenCalledWith(false);
     expect(mockUseShopifyApprovalQueueSummary).toHaveBeenCalledWith(false);
+    expect(mockUseUsedGearWorkflowPostPublishSummary).toHaveBeenCalledWith(false);
     expect(mockUseJotFormInquiries).toHaveBeenCalledWith('', 60_000, false);
   });
 });

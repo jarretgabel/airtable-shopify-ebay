@@ -28,7 +28,7 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   shopify: 'Shopify',
   'shopify-approval': 'Listing Approval',
   market: 'HiFi Shark',
-  jotform: 'JotForm',
+  jotform: 'Parking Lot 1',
   'incoming-gear': 'Incoming Gear',
   testing: 'Testing',
   photos: 'Photos',

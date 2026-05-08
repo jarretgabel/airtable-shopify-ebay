@@ -4,6 +4,7 @@ import type { ShopifyApprovalPreviewResult, ShopifyApprovalPublishResult } from 
 export type AirtableConfiguredRecordsSource =
   | 'users'
   | 'inventory-directory'
+  | 'used-gear-workflow'
   | 'approval-ebay'
   | 'approval-shopify'
   | 'approval-combined';
@@ -93,6 +94,7 @@ export type ContractValidationResult<TValue> = ContractValidationFailure | Contr
 const CONFIGURED_RECORD_SOURCES = new Set<AirtableConfiguredRecordsSource>([
   'users',
   'inventory-directory',
+  'used-gear-workflow',
   'approval-ebay',
   'approval-shopify',
   'approval-combined',

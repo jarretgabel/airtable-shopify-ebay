@@ -12,6 +12,10 @@ export interface IncomingGearFormValues {
   pickUpNumber: string;
   acquiredFrom: string;
   cost: string;
+  customerCosmeticNotes: string;
+  customerFunctionalNotes: string;
+  customerInclusionNotes: string;
+  customerSubmittedPhotosNotes: string;
   sku: string;
   status: string;
   make: string;
@@ -59,6 +63,10 @@ export function createIncomingGearFormDefaults(): IncomingGearFormValues {
     pickUpNumber: '',
     acquiredFrom: '',
     cost: '',
+    customerCosmeticNotes: '',
+    customerFunctionalNotes: '',
+    customerInclusionNotes: '',
+    customerSubmittedPhotosNotes: '',
     sku: '',
     status: 'Needs Initial Processing',
     make: '',
@@ -158,6 +166,38 @@ export const incomingGearFormFields: IncomingGearFormFieldDefinition[] = [
     label: 'Cost',
     type: 'currency',
     placeholder: '1500',
+  },
+  {
+    name: 'customerCosmeticNotes',
+    airtableFieldName: 'Customer Cosmetic Notes',
+    label: 'Customer Cosmetic Notes',
+    type: 'textarea',
+    rows: 3,
+    description: 'Seller-reported cosmetic details captured at intake time.',
+  },
+  {
+    name: 'customerFunctionalNotes',
+    airtableFieldName: 'Customer Functional Notes',
+    label: 'Customer Functional Notes',
+    type: 'textarea',
+    rows: 3,
+    description: 'Seller-reported functional behavior, issues, or testing claims.',
+  },
+  {
+    name: 'customerInclusionNotes',
+    airtableFieldName: 'Customer Inclusion Notes',
+    label: 'Customer Inclusion Notes',
+    type: 'textarea',
+    rows: 3,
+    description: 'Seller-reported inclusions and exclusions such as remotes, boxes, or accessories.',
+  },
+  {
+    name: 'customerSubmittedPhotosNotes',
+    airtableFieldName: 'Customer Submitted Photos Notes',
+    label: 'Customer Submitted Photos Notes',
+    type: 'textarea',
+    rows: 3,
+    description: 'Reference notes about photos provided by the seller during intake.',
   },
   {
     name: 'sku',

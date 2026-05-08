@@ -20,12 +20,14 @@ describe('app-api airtable', () => {
   const fetchMock = vi.fn<typeof fetch>();
 
   beforeEach(() => {
+    window.__APP_RUNTIME_CONFIG__ = { VITE_APP_API_BASE_URL: '' };
     vi.stubGlobal('fetch', fetchMock);
     vi.stubEnv('VITE_APP_API_BASE_URL', '');
     fetchMock.mockReset();
   });
 
   afterEach(() => {
+    window.__APP_RUNTIME_CONFIG__ = {};
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
@@ -233,9 +235,39 @@ describe('app-api airtable', () => {
     expect(updated).toEqual({ id: 'recInv1', fields: { SKU: 'XYZ' }, createdTime: 'later' });
   });
 
+  it('supports used-gear-workflow configured writes in Lambda mode', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ id: 'recWorkflow1', fields: { 'Workflow Status': 'Pending Review' }, createdTime: 'now' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const updated = await updateConfiguredRecord('used-gear-workflow', 'recWorkflow1', {
+      'Workflow Status': 'Accepted - Awaiting Arrival',
+    }, { typecast: true });
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records/used-gear-workflow/recWorkflow1', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        fields: { 'Workflow Status': 'Accepted - Awaiting Arrival' },
+        typecast: true,
+      }),
+    });
+    expect(updated).toEqual({ id: 'recWorkflow1', fields: { 'Workflow Status': 'Pending Review' }, createdTime: 'now' });
+  });
+
   it('resolves approval writes through the Lambda configured-record endpoint', async () => {
-    vi.stubEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF', 'appShopify/viwShopify');
-    vi.stubEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME', 'tblShopifyApproval');
+    window.__APP_RUNTIME_CONFIG__ = {
+      VITE_APP_API_BASE_URL: '',
+      VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF: 'appShopify/viwShopify',
+      VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME: 'tblShopifyApproval',
+    };
     fetchMock
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ id: 'recApproval1', fields: { Title: 'Draft' }, createdTime: 'now' }), {
@@ -287,7 +319,10 @@ describe('app-api airtable', () => {
   });
 
   it('resolves Shopify approval reads by reference when the Shopify approval table name is missing', async () => {
-    vi.stubEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF', 'appShopify/viwShopify');
+    window.__APP_RUNTIME_CONFIG__ = {
+      VITE_APP_API_BASE_URL: '',
+      VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF: 'appShopify/viwShopify',
+    };
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify([{ id: 'recApproval1', fields: { Title: 'Draft' }, createdTime: 'now' }]), {
         status: 200,
@@ -305,7 +340,10 @@ describe('app-api airtable', () => {
   });
 
   it('resolves approval summary reads through the Lambda configured-records summary mode', async () => {
-    vi.stubEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF', 'appShopify/viwShopify');
+    window.__APP_RUNTIME_CONFIG__ = {
+      VITE_APP_API_BASE_URL: '',
+      VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF: 'appShopify/viwShopify',
+    };
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ total: 9, approved: 3, pending: 6 }), {
         status: 200,
@@ -323,8 +361,11 @@ describe('app-api airtable', () => {
   });
 
   it('resolves approval deletes through the Lambda configured-record endpoint', async () => {
-    vi.stubEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF', 'appShopify/viwShopify');
-    vi.stubEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME', 'tblShopifyApproval');
+    window.__APP_RUNTIME_CONFIG__ = {
+      VITE_APP_API_BASE_URL: '',
+      VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF: 'appShopify/viwShopify',
+      VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME: 'tblShopifyApproval',
+    };
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ deleted: true }), {
         status: 200,

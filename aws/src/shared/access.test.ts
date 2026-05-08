@@ -54,7 +54,13 @@ test('non-user Airtable configured routes keep page-based access rules', () => {
     rawPath: '/api/airtable/configured-records/inventory-directory',
     pathParameters: { source: 'inventory-directory' },
   }));
+  const usedGearRequirement = resolveRouteAccessRequirement(createEvent({
+    rawPath: '/api/airtable/configured-records/used-gear-workflow',
+    pathParameters: { source: 'used-gear-workflow' },
+  }));
 
   assert.equal(inventoryRequirement.adminOnly, undefined);
   assert.deepEqual(inventoryRequirement.anyPage, ['inventory']);
+  assert.equal(usedGearRequirement.adminOnly, undefined);
+  assert.deepEqual(usedGearRequirement.anyPage, ['inventory']);
 });

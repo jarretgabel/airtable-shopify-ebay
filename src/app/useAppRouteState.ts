@@ -6,10 +6,12 @@ interface AppRouteState {
   isLoginPath: boolean;
   isResetPasswordPath: boolean;
   resetToken: string | null;
+  jotformReviewGroupId: string | null;
   incomingGearRecordId: string | null;
   testingRecordId: string | null;
   photosRecordId: string | null;
   inventoryRecordId: string | null;
+  usedGearWorkflowRecordId: string | null;
   approvalRecordId: string | null;
   shopifyApprovalRecordId: string | null;
   listingsRecordId: string | null;
@@ -24,9 +26,11 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const isLoginPath = normalizedPath === '/login';
   const isResetPasswordPath = normalizedPath === '/reset-password';
   const resetToken = searchParams.get('token');
+  const jotformReviewGroupMatch = normalizedPath.match(/^\/jotform\/review\/([^/]+)$/);
   const incomingGearRecordMatch = normalizedPath.match(/^\/incoming-gear\/([^/]+)$/);
   const testingRecordMatch = normalizedPath.match(/^\/testing\/([^/]+)$/);
   const photosRecordMatch = normalizedPath.match(/^\/photos\/([^/]+)$/);
+  const usedGearWorkflowRecordMatch = normalizedPath.match(/^\/inventory\/workflow\/([^/]+)$/);
   const inventoryRecordMatch = normalizedPath.match(/^\/inventory\/([^/]+)$/);
   const approvalRecordMatch = normalizedPath.match(/^\/ebay\/approval\/([^/]+)$/);
   const shopifyApprovalRecordMatch = normalizedPath.match(/^\/shopify\/approval\/([^/]+)$/);
@@ -43,7 +47,8 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     if (normalizedPath === '/incoming-gear' || incomingGearRecordMatch) return 'incoming-gear';
     if (normalizedPath === '/testing' || testingRecordMatch) return 'testing';
     if (normalizedPath === '/photos' || photosRecordMatch) return 'photos';
-    if (normalizedPath === '/inventory' || inventoryRecordMatch) return 'inventory';
+    if (normalizedPath === '/inventory' || usedGearWorkflowRecordMatch || inventoryRecordMatch) return 'inventory';
+    if (normalizedPath === '/jotform' || jotformReviewGroupMatch) return 'jotform';
     if (normalizedPath === '/account/users' || userRecordMatch) return 'users';
     if (normalizedPath === '/account/settings') return 'settings';
     if (normalizedPath === '/account/notifications') return 'notifications';
@@ -57,9 +62,11 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     isLoginPath,
     isResetPasswordPath,
     resetToken,
+    jotformReviewGroupId: jotformReviewGroupMatch ? decodeURIComponent(jotformReviewGroupMatch[1]) : null,
     incomingGearRecordId: incomingGearRecordMatch ? decodeURIComponent(incomingGearRecordMatch[1]) : null,
     testingRecordId: testingRecordMatch ? decodeURIComponent(testingRecordMatch[1]) : null,
     photosRecordId: photosRecordMatch ? decodeURIComponent(photosRecordMatch[1]) : null,
+    usedGearWorkflowRecordId: usedGearWorkflowRecordMatch ? decodeURIComponent(usedGearWorkflowRecordMatch[1]) : null,
     inventoryRecordId: inventoryRecordMatch ? decodeURIComponent(inventoryRecordMatch[1]) : null,
     approvalRecordId: approvalRecordMatch ? decodeURIComponent(approvalRecordMatch[1]) : null,
     shopifyApprovalRecordId: shopifyApprovalRecordMatch ? decodeURIComponent(shopifyApprovalRecordMatch[1]) : null,

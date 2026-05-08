@@ -11,6 +11,7 @@ import { useHiFiShark } from '@/hooks/useHiFiShark';
 import { useJotFormInquiries } from '@/hooks/useJotForm';
 import { useListings } from '@/hooks/useListings';
 import { useShopifyProducts } from '@/hooks/useShopifyProducts';
+import { useUsedGearWorkflowPostPublishSummary } from '@/hooks/useUsedGearWorkflowPostPublishSummary';
 import { getAIProvider } from '@/services/equipmentAI';
 
 interface AppDataParams {
@@ -37,6 +38,7 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, users }: 
   const ebay = useEbayListings(ebayEnabled);
   const approval = useApprovalQueueSummary(enabled && canAccessPage('approval') && runtimeFeatures.approvalEbay.available);
   const shopifyApproval = useShopifyApprovalQueueSummary(enabled && canAccessPage('shopify-approval') && runtimeFeatures.approvalShopify.available);
+  const usedGearWorkflowPostPublish = useUsedGearWorkflowPostPublishSummary(enabled && canAccessPage('inventory'));
 
   const JOTFORM_FORM_ID = runtimeFeatures.jotform.available ? checkOptionalEnv('VITE_JOTFORM_FORM_ID') : '';
   const jotform = useJotFormInquiries(JOTFORM_FORM_ID, 60_000, jotformEnabled);
@@ -47,7 +49,7 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, users }: 
   const adminCount = useMemo(() => users.filter((user) => user.role === 'admin').length, [users]);
   const ebayPublishedCount = useMemo(() => ebay.offers.filter((offer) => offer.status === 'PUBLISHED').length, [ebay.offers]);
   const ebayDraftCount = useMemo(() => ebay.offers.filter((offer) => offer.status === 'UNPUBLISHED').length, [ebay.offers]);
-  const metrics = useDashboardMetrics(nonEmptyListings, shopify.products, jotform.submissions);
+  const metrics = useDashboardMetrics(nonEmptyListings, shopify.products, jotform.submissions, usedGearWorkflowPostPublish);
 
   return {
     airtable: {
@@ -65,6 +67,7 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, users }: 
     },
     approval,
     shopifyApproval,
+    usedGearWorkflowPostPublish,
     jotform,
     metrics,
     visibleTabs,

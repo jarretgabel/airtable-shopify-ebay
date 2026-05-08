@@ -120,4 +120,30 @@ describe('approvalStore saveRecord approve-only', () => {
     expect(updateRecordFromResolvedSource).toHaveBeenCalledTimes(2);
     expect(useApprovalStore.getState().error).toBe('Airtable still rejected value');
   });
+
+  it('hydrates workflow-derived listing values into blank approval fields', () => {
+    const selectedRecord: AirtableRecord = {
+      id: 'recWorkflow1',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        'Workflow Status': 'Approved for Publish',
+        Make: 'Accuphase',
+        Model: 'E-470',
+        'Inventory Notes': 'One-owner unit with fresh service notes.',
+        'Internal Functional Notes': 'Passed all bench tests.',
+      },
+    };
+
+    useApprovalStore.getState().hydrateForm(
+      selectedRecord,
+      ['Shopify REST Title', 'Description', 'Testing Notes', 'Shopify Approved'],
+      'Shopify Approved',
+    );
+
+    expect(useApprovalStore.getState().formValues).toEqual(expect.objectContaining({
+      'Shopify REST Title': 'Accuphase E-470',
+      Description: 'One-owner unit with fresh service notes.',
+      'Testing Notes': 'Functional Notes,Passed all bench tests.',
+    }));
+  });
 });

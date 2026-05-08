@@ -10,6 +10,7 @@ export const INVENTORY_DIRECTORY_TABLE_REFERENCE = `${INVENTORY_DIRECTORY_BASE_I
 export type AirtableConfiguredRecordsSource =
   | 'users'
   | 'inventory-directory'
+  | 'used-gear-workflow'
   | 'approval-ebay'
   | 'approval-shopify'
   | 'approval-combined';
@@ -51,6 +52,13 @@ export function getConfiguredRecordsSourceDefinition(source: AirtableConfiguredR
   }
 
   if (source === 'approval-combined') {
+    return {
+      reference: checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF'),
+      tableName: checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME') || '',
+    };
+  }
+
+  if (source === 'used-gear-workflow') {
     return {
       reference: checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF'),
       tableName: checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME') || '',

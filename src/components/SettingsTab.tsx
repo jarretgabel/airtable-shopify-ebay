@@ -6,7 +6,11 @@ import { getRuntimeHealthReport, type RuntimeHealthEntry } from '@/config/runtim
 import { useAuthStore } from '@/stores/auth/authStore';
 import { PASSWORD_POLICY_MESSAGE, validatePasswordPolicy } from '@/stores/auth/passwordPolicy';
 import { useNotificationStore } from '@/stores/notificationStore';
-import type { UserNotificationPreferences } from '@/stores/auth/authTypes';
+import {
+  USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS,
+  type UsedGearWorkflowNotificationEvent,
+  type UserNotificationPreferences,
+} from '@/stores/auth/authTypes';
 
 type BooleanPreferenceKey = {
   [K in keyof UserNotificationPreferences]: UserNotificationPreferences[K] extends boolean ? K : never;
@@ -46,6 +50,7 @@ export function SettingsTab() {
   const location = useLocation();
   const navigate = useNavigate();
   const updateCurrentUserNotificationPreference = useAuthStore((state) => state.updateCurrentUserNotificationPreference);
+  const updateCurrentUserWorkflowNotificationEvent = useAuthStore((state) => state.updateCurrentUserWorkflowNotificationEvent);
   const applyCurrentUserPreferences = useNotificationStore((state) => state.applyCurrentUserPreferences);
 
   const currentUser = useMemo(
@@ -163,6 +168,11 @@ export function SettingsTab() {
     if (result.success) {
       applyCurrentUserPreferences();
     }
+  }
+
+  async function handleWorkflowNotificationEventChange(eventKey: UsedGearWorkflowNotificationEvent, enabled: boolean): Promise<void> {
+    const result = await updateCurrentUserWorkflowNotificationEvent(eventKey, enabled);
+    setStatusMessage(result.message);
   }
 
   const labelClass = 'text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300';
@@ -390,6 +400,31 @@ export function SettingsTab() {
                 <option value="5000">5 seconds</option>
                 <option value="8000">8 seconds</option>
               </select>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--bg)]/45 p-4">
+              <h4 className="m-0 text-[0.82rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Used Gear Workflow Alerts</h4>
+              <p className="mt-1 text-[0.78rem] text-[var(--muted)]">Choose which used-gear workflow queues should create in-app notifications for your account.</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS.map((option) => (
+                  <label key={option.key} className="rounded-lg border border-[var(--line)] px-3 py-3 text-[0.84rem] text-[var(--ink)]">
+                    <span className="flex items-start gap-2.5">
+                      <input
+                        type="checkbox"
+                        checked={currentUser.notificationPreferences.workflowEvents[option.key]}
+                        onChange={(event) => {
+                          void handleWorkflowNotificationEventChange(option.key, event.target.checked);
+                        }}
+                        className="mt-0.5 h-4 w-4 rounded border-[var(--line)] bg-transparent accent-sky-400"
+                      />
+                      <span>
+                        <span className="block font-semibold text-[var(--ink)]">{option.label}</span>
+                        <span className="mt-1 block text-[0.76rem] leading-5 text-[var(--muted)]">{option.description}</span>
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
           </section>
 

@@ -8,11 +8,11 @@ import type { AirtableRecord } from '@/types/airtable';
 const {
   publishApprovalRecordMock,
   trackWorkflowEventMock,
-  updateRecordFromResolvedSourceMock,
+  updateConfiguredRecordMock,
 } = vi.hoisted(() => ({
   publishApprovalRecordMock: vi.fn(),
   trackWorkflowEventMock: vi.fn(),
-  updateRecordFromResolvedSourceMock: vi.fn(),
+  updateConfiguredRecordMock: vi.fn(),
 }));
 
 vi.mock('@/services/app-api/approval', () => ({
@@ -24,7 +24,7 @@ vi.mock('@/services/workflowAnalytics', () => ({
 }));
 
 vi.mock('@/services/app-api/airtable', () => ({
-  updateRecordFromResolvedSource: updateRecordFromResolvedSourceMock,
+  updateConfiguredRecord: updateConfiguredRecordMock,
 }));
 
 const record: AirtableRecord = {
@@ -32,6 +32,7 @@ const record: AirtableRecord = {
   createdTime: '2026-04-29T00:00:00.000Z',
   fields: {
     Name: 'McIntosh MA6900',
+    'Workflow Status': 'Approved for Publish',
     'Shopify REST Product ID': '44',
   },
 };
@@ -42,7 +43,7 @@ describe('approval action notifications', () => {
     window.localStorage.clear();
     publishApprovalRecordMock.mockReset();
     trackWorkflowEventMock.mockReset();
-    updateRecordFromResolvedSourceMock.mockReset();
+    updateConfiguredRecordMock.mockReset();
   });
 
   it('publishes a save result notification after a successful save', async () => {
@@ -118,6 +119,18 @@ describe('approval action notifications', () => {
       missingEbayRequiredFieldLabels: [],
       approvalPublishSource: 'approval-shopify',
       mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
+      workflowPublishSummary: {
+        workflowStatus: 'Approved for Publish',
+        readiness: {
+          title: 'McIntosh MA6900',
+          titleFieldName: 'Name',
+          description: 'Freshly serviced and ready to publish.',
+          descriptionFieldName: 'Description',
+          price: '3499.99',
+          priceFieldName: 'Price',
+          missingRequirements: [],
+        },
+      },
       setFormValue,
       pushInlineActionNotice,
       requestConfirmation,
@@ -129,6 +142,11 @@ describe('approval action notifications', () => {
 
     expect(requestConfirmation).toHaveBeenCalledTimes(1);
     expect(requestConfirmation).toHaveBeenCalledWith(expect.objectContaining({
+      bullets: expect.arrayContaining([
+        'Workflow status: Approved for Publish',
+        'Resolved title: McIntosh MA6900',
+        'Resolved price: 3499.99',
+      ]),
       typedConfirmation: {
         expectedValue: 'PUBLISH SHOPIFY',
         inputLabel: 'Type the publish command to confirm',
@@ -145,7 +163,20 @@ describe('approval action notifications', () => {
         fields: { Name: 'McIntosh MA6900' },
       },
     );
+    expect(updateConfiguredRecordMock).toHaveBeenCalledWith(
+      'approval-shopify',
+      'rec-notify-1',
+      expect.objectContaining({
+        'Workflow Status': 'Listed, Shopify',
+        'Listed At': expect.any(String),
+        'Shopify REST Published At': expect.any(String),
+        'Shopify REST Published Scope': 'web',
+        'Shopify REST Product ID': '88',
+      }),
+      { typecast: true },
+    );
     expect(setFormValue).toHaveBeenCalledWith('Shopify REST Product ID', '88');
+    expect(setFormValue).toHaveBeenCalledWith('Workflow Status', 'Listed, Shopify');
     expect(pushInlineActionNotice).toHaveBeenCalledWith(
       'success',
       'Shopify listing created',
@@ -177,6 +208,7 @@ describe('approval action notifications', () => {
       missingEbayRequiredFieldLabels: [],
       approvalPublishSource: 'approval-shopify',
       mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
+      workflowPublishSummary: null,
       setFormValue,
       pushInlineActionNotice,
       requestConfirmation,
@@ -202,6 +234,7 @@ describe('approval action notifications', () => {
       expect(notification?.message).toContain('Network timeout');
     });
     expect(setFormValue).not.toHaveBeenCalled();
+    expect(updateConfiguredRecordMock).not.toHaveBeenCalled();
   });
 
   it('publishes a warning notification for mixed publish results', async () => {
@@ -229,6 +262,18 @@ describe('approval action notifications', () => {
       missingEbayRequiredFieldLabels: [],
       approvalPublishSource: 'approval-shopify',
       mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
+      workflowPublishSummary: {
+        workflowStatus: 'Approved for Publish',
+        readiness: {
+          title: 'McIntosh MA6900',
+          titleFieldName: 'Name',
+          description: 'Freshly serviced and ready to publish.',
+          descriptionFieldName: 'Description',
+          price: '3499.99',
+          priceFieldName: 'Price',
+          missingRequirements: [],
+        },
+      },
       setFormValue,
       pushInlineActionNotice,
       requestConfirmation,
@@ -240,6 +285,11 @@ describe('approval action notifications', () => {
 
     expect(requestConfirmation).toHaveBeenCalledTimes(1);
     expect(requestConfirmation).toHaveBeenCalledWith(expect.objectContaining({
+      bullets: expect.arrayContaining([
+        'Workflow status: Approved for Publish',
+        'Resolved title: McIntosh MA6900',
+        'Resolved price: 3499.99',
+      ]),
       typedConfirmation: {
         expectedValue: 'PUBLISH BOTH',
         inputLabel: 'Type the publish command to confirm',
@@ -248,6 +298,16 @@ describe('approval action notifications', () => {
       },
     }));
     expect(setFormValue).toHaveBeenCalledWith('Shopify REST Product ID', '88');
+    expect(updateConfiguredRecordMock).toHaveBeenCalledWith(
+      'approval-shopify',
+      'rec-notify-1',
+      expect.objectContaining({
+        'Workflow Status': 'Listed, Shopify',
+        'Listed At': expect.any(String),
+        'Shopify REST Published At': expect.any(String),
+      }),
+      { typecast: true },
+    );
     expect(pushInlineActionNotice).toHaveBeenCalledWith(
       'warning',
       'Shopify publish warning',

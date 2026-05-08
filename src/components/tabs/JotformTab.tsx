@@ -1,13 +1,37 @@
 import { useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { UsedGearLotTwoSection } from '@/components/tabs/airtable/UsedGearLotTwoSection';
+import { UsedGearPendingReviewSection } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
+import { UsedGearTrashSection } from '@/components/tabs/airtable/UsedGearTrashSection';
 import type { JotformTabViewModel } from '@/app/appTabViewModels';
 import { formatAnswer } from '@/services/jotform';
 import { EmptySurface, ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 
 interface JotformTabProps {
   viewModel: JotformTabViewModel;
+  currentUserName: string;
+  onOpenIncomingGearForm: (recordId: string) => void;
+  onOpenTestingForm: (recordId: string) => void;
+  onOpenPhotosForm: (recordId: string) => void;
+  onOpenWorkflowRecord: (recordId: string) => void;
 }
 
-export function JotformTab({ viewModel }: JotformTabProps) {
+const WORKFLOW_PENDING_REVIEW_SEARCH_PARAM = 'workflowPendingReviewSearch';
+const WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM = 'workflowPendingReviewCollapsedGroups';
+const WORKFLOW_PENDING_REVIEW_SORT_PARAM = 'workflowPendingReviewSort';
+const WORKFLOW_LOT_TWO_SEARCH_PARAM = 'workflowLotTwoSearch';
+const WORKFLOW_TRASH_SEARCH_PARAM = 'workflowTrashSearch';
+
+export function JotformTab({
+  viewModel,
+  currentUserName,
+  onOpenIncomingGearForm,
+  onOpenTestingForm,
+  onOpenPhotosForm,
+  onOpenWorkflowRecord,
+}: JotformTabProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { submissions, loading, polling, error, refetch, lastUpdated, freshCount, clearFresh } = viewModel;
   const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
 
@@ -19,13 +43,130 @@ export function JotformTab({ viewModel }: JotformTabProps) {
     () => submissions.filter((submission) => submission.new === '1').length,
     [submissions],
   );
+  const workflowLotTwoSearch = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get(WORKFLOW_LOT_TWO_SEARCH_PARAM) ?? '';
+  }, [location.search]);
+  const workflowTrashSearch = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get(WORKFLOW_TRASH_SEARCH_PARAM) ?? '';
+  }, [location.search]);
+  const workflowPendingReviewSearch = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get(WORKFLOW_PENDING_REVIEW_SEARCH_PARAM) ?? '';
+  }, [location.search]);
+  const workflowPendingReviewCollapsedGroups = useMemo(() => {
+    const value = new URLSearchParams(location.search).get(WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM) ?? '';
+    return value.split(',').map((entry) => entry.trim()).filter(Boolean);
+  }, [location.search]);
+  const workflowPendingReviewSort = useMemo(() => {
+    const value = new URLSearchParams(location.search).get(WORKFLOW_PENDING_REVIEW_SORT_PARAM);
+    return value === 'newest' || value === 'oldest' || value === 'arrival-date' || value === 'make-model' ? value : 'group-label';
+  }, [location.search]);
+
+  const updateIntakeRouteState = (update: (params: URLSearchParams) => void, hash: string) => {
+    const nextParams = new URLSearchParams(location.search);
+    update(nextParams);
+
+    const nextSearch = nextParams.toString();
+    navigate({
+      pathname: location.pathname,
+      search: nextSearch ? `?${nextSearch}` : '',
+      hash,
+    }, { replace: true });
+  };
+
+  const updateQueueSearch = (paramName: string, value: string, hash: string) => {
+    updateIntakeRouteState((params) => {
+      if (value.trim().length === 0) {
+        params.delete(paramName);
+      } else {
+        params.set(paramName, value);
+      }
+    }, hash);
+  };
+
+  const updatePendingCollapsedGroups = (groupIds: string[]) => {
+    updateIntakeRouteState((params) => {
+      if (groupIds.length === 0) {
+        params.delete(WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM);
+      } else {
+        params.set(WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM, groupIds.join(','));
+      }
+    }, '#used-gear-pending-review');
+  };
+
+  const updatePendingSort = (value: string) => {
+    updateIntakeRouteState((params) => {
+      if (value === 'group-label') {
+        params.delete(WORKFLOW_PENDING_REVIEW_SORT_PARAM);
+      } else {
+        params.set(WORKFLOW_PENDING_REVIEW_SORT_PARAM, value);
+      }
+    }, '#used-gear-pending-review');
+  };
 
   return (
     <>
+      <section className="mt-3 rounded-2xl border border-[var(--line)] bg-[var(--panel)] px-5 py-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Intake</p>
+            <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Parking Lot 1</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              This page is now the first-stop intake triage surface for JotForm-origin workflow rows. Use the pending review queue to accept qualified rows into the workflow or route unqualified rows into trash, and keep the live JotForm feed below as source reference while intake is being worked.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[360px]">
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-4 py-4">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Active Submissions</p>
+              <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{activeSubmissions.length}</p>
+            </div>
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-4 py-4">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Unread Feed</p>
+              <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{totalNewSubmissions}</p>
+            </div>
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-4 py-4">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow Reviewer</p>
+              <p className="mt-2 text-lg font-semibold text-[var(--ink)]">{currentUserName}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <UsedGearPendingReviewSection
+        currentUserName={currentUserName}
+        onOpenGroupReview={(groupId) => navigate(`/jotform/review/${encodeURIComponent(groupId)}${location.search}`, { replace: false })}
+        onOpenIncomingGearForm={onOpenIncomingGearForm}
+        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        searchTerm={workflowPendingReviewSearch}
+        onSearchTermChange={(value) => updateQueueSearch(WORKFLOW_PENDING_REVIEW_SEARCH_PARAM, value, '#used-gear-pending-review')}
+        collapsedGroupIds={workflowPendingReviewCollapsedGroups}
+        onCollapsedGroupIdsChange={updatePendingCollapsedGroups}
+        sortMode={workflowPendingReviewSort}
+        onSortModeChange={updatePendingSort}
+      />
+
+      <UsedGearLotTwoSection
+        onOpenIncomingGearForm={onOpenIncomingGearForm}
+        onOpenTestingForm={onOpenTestingForm}
+        onOpenPhotosForm={onOpenPhotosForm}
+        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        searchTerm={workflowLotTwoSearch}
+        onSearchTermChange={(value) => updateQueueSearch(WORKFLOW_LOT_TWO_SEARCH_PARAM, value, '#used-gear-lot-two')}
+      />
+
+      <UsedGearTrashSection
+        currentUserName={currentUserName}
+        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        searchTerm={workflowTrashSearch}
+        onSearchTermChange={(value) => updateQueueSearch(WORKFLOW_TRASH_SEARCH_PARAM, value, '#used-gear-trash')}
+      />
+
       <div className="mt-3 flex flex-col gap-2 rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-sm md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 flex-wrap items-center gap-2 text-[var(--muted)]">
           <span className={`inline-block h-2.5 w-2.5 rounded-full ${polling ? 'bg-amber-500' : 'bg-emerald-500'} ${polling ? '' : 'animate-pulse'}`} />
-          <span className="font-semibold text-[var(--ink)]">Live · Request a Quote</span>
+          <span className="font-semibold text-[var(--ink)]">Live JotForm Feed · Reference Only</span>
           {lastUpdated && (
             <span>Updated {lastUpdated.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' })}</span>
           )}
@@ -64,11 +205,17 @@ export function JotformTab({ viewModel }: JotformTabProps) {
       )}
 
       {loading && (
-        <LoadingSurface message="Loading submissions from JotForm..." />
+        <LoadingSurface message="Loading JotForm submission feed..." />
       )}
 
       {!loading && activeSubmissions.length > 0 && (
         <PanelSurface>
+          <div className="mb-4 border-b border-[var(--line)] pb-3">
+            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Reference Feed</p>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Keep this feed available for source verification while Parking Lot 1 workflow rows are being triaged above.
+            </p>
+          </div>
           <ul className="list-none m-0 p-0">
             {activeSubmissions.map((submission) => {
               const isExpanded = expandedSubmissionId === submission.id;
@@ -129,7 +276,7 @@ export function JotformTab({ viewModel }: JotformTabProps) {
       )}
 
       {!loading && !error && activeSubmissions.length === 0 && (
-        <EmptySurface title="No submissions yet" message="Submissions will appear here automatically as your form receives responses." />
+        <EmptySurface title="No live JotForm submissions" message="New JotForm submissions will appear here automatically as source-reference data for Parking Lot 1 intake review." />
       )}
     </>
   );

@@ -1,4 +1,5 @@
 import type { DashboardTargetTab } from './dashboardTabTypes';
+import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 import { DashboardSubPanel } from './dashboardPrimitives';
 
 const severityClass = {
@@ -18,10 +19,19 @@ interface ActionItem {
   detail: string;
   severity: 'critical' | 'warning';
   targetTab: DashboardTargetTab;
+  inventoryPostPublishBucket?: UsedGearWorkflowPostPublishBucket;
   unavailable?: boolean;
 }
 
-function ActionButton({ item, onSelectTab }: { item: ActionItem; onSelectTab: (tab: DashboardTargetTab) => void }) {
+function ActionButton({
+  item,
+  onSelectTab,
+  onOpenInventoryPostPublishBucket,
+}: {
+  item: ActionItem;
+  onSelectTab: (tab: DashboardTargetTab) => void;
+  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket) => void;
+}) {
   return (
     <button
       type="button"
@@ -34,6 +44,10 @@ function ActionButton({ item, onSelectTab }: { item: ActionItem; onSelectTab: (t
       title={item.unavailable ? item.detail : undefined}
       onClick={() => {
         if (!item.unavailable) {
+          if (item.targetTab === 'inventory' && item.inventoryPostPublishBucket) {
+            onOpenInventoryPostPublishBucket(item.inventoryPostPublishBucket);
+            return;
+          }
           onSelectTab(item.targetTab);
         }
       }}
@@ -44,6 +58,11 @@ function ActionButton({ item, onSelectTab }: { item: ActionItem; onSelectTab: (t
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="text-[0.88rem] font-semibold leading-snug">{item.label}</span>
         <span className="text-[0.78rem] opacity-75">{item.detail}</span>
+        {item.inventoryPostPublishBucket ? (
+          <span className="mt-2 inline-flex w-fit rounded-full border border-current/25 bg-white/10 px-2.5 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.07em] opacity-90">
+            Opens {item.inventoryPostPublishBucket === 'sold-ready' ? 'Sold Ready To Ship' : item.inventoryPostPublishBucket === 'stale-listing' ? 'Stale Listings' : item.inventoryPostPublishBucket === 'active-listing' ? 'Active Listings' : 'Shipped History'} Bucket
+          </span>
+        ) : null}
       </div>
       <span className="ml-auto shrink-0 self-center text-[0.75rem] font-semibold opacity-60">{item.unavailable ? 'Unavailable' : 'Go →'}</span>
     </button>
@@ -58,9 +77,15 @@ export interface DashboardActionsSectionProps {
   shopifyQueueApproved: number;
   shopifyQueuePending: number;
   shopifyQueueTotal: number;
+  workflowPostPublishLoading: boolean;
+  workflowActiveListingCount: number;
+  workflowStaleListingCount: number;
+  workflowSoldReadyCount: number;
+  workflowShippedCount: number;
   ebayUnavailableReason?: string | null;
   shopifyApprovalUnavailableReason?: string | null;
   onSelectTab: (tab: DashboardTargetTab) => void;
+  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket) => void;
   embedded?: boolean;
 }
 
@@ -72,9 +97,15 @@ export function DashboardActionsSection({
   shopifyQueueApproved,
   shopifyQueuePending,
   shopifyQueueTotal,
+  workflowPostPublishLoading,
+  workflowActiveListingCount,
+  workflowStaleListingCount,
+  workflowSoldReadyCount,
+  workflowShippedCount,
   ebayUnavailableReason,
   shopifyApprovalUnavailableReason,
   onSelectTab,
+  onOpenInventoryPostPublishBucket,
   embedded,
 }: DashboardActionsSectionProps) {
   const items: ActionItem[] = [];
@@ -125,6 +156,30 @@ export function DashboardActionsSection({
     });
   }
 
+  if (!workflowPostPublishLoading && workflowSoldReadyCount > 0) {
+    items.push({
+      key: 'used-gear-sold-ready',
+      label: `${workflowSoldReadyCount} used-gear item${workflowSoldReadyCount === 1 ? '' : 's'} sold and ready to ship`,
+      count: workflowSoldReadyCount,
+      detail: `${workflowStaleListingCount} stale listing${workflowStaleListingCount === 1 ? '' : 's'} pending review · ${workflowShippedCount} shipped`,
+      severity: 'critical',
+      targetTab: 'inventory',
+      inventoryPostPublishBucket: 'sold-ready',
+    });
+  }
+
+  if (!workflowPostPublishLoading && workflowStaleListingCount > 0) {
+    items.push({
+      key: 'used-gear-stale',
+      label: `${workflowStaleListingCount} used-gear listing${workflowStaleListingCount === 1 ? '' : 's'} stale`,
+      count: workflowStaleListingCount,
+      detail: `${workflowActiveListingCount} active listing${workflowActiveListingCount === 1 ? '' : 's'} · ${workflowSoldReadyCount} sold ready to ship`,
+      severity: 'warning',
+      targetTab: 'inventory',
+      inventoryPostPublishBucket: 'stale-listing',
+    });
+  }
+
   const content = items.length === 0 ? (
         <div className="flex items-center gap-3 rounded-[12px] border border-emerald-500/25 bg-emerald-950/20 px-4 py-4 text-[0.88rem] text-emerald-300">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -135,7 +190,12 @@ export function DashboardActionsSection({
       ) : (
         <div className="flex flex-col gap-2">
           {items.map((item) => (
-            <ActionButton key={item.key} item={item} onSelectTab={onSelectTab} />
+            <ActionButton
+              key={item.key}
+              item={item}
+              onSelectTab={onSelectTab}
+              onOpenInventoryPostPublishBucket={onOpenInventoryPostPublishBucket}
+            />
           ))}
         </div>
       );

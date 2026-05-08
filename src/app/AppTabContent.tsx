@@ -24,6 +24,8 @@ const UserManagementTab = lazy(async () => ({ default: (await import('@/componen
 const AirtableTab = lazy(async () => ({ default: (await import('@/components/tabs/AirtableTab')).AirtableTab }));
 const AirtableEmbeddedForm = lazy(async () => ({ default: (await import('@/components/tabs/AirtableEmbeddedForm')).AirtableEmbeddedForm }));
 const InventoryRecordEditorPage = lazy(async () => ({ default: (await import('@/components/tabs/InventoryRecordEditorPage')).InventoryRecordEditorPage }));
+const UsedGearWorkflowRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearWorkflowRecordPage')).UsedGearWorkflowRecordPage }));
+const UsedGearPendingReviewGroupPage = lazy(async () => ({ default: (await import('../components/tabs/UsedGearPendingReviewGroupPage')).UsedGearPendingReviewGroupPage }));
 const JotformTab = lazy(async () => ({ default: (await import('@/components/tabs/JotformTab')).JotformTab }));
 const MarketTab = lazy(async () => ({ default: (await import('@/components/tabs/MarketTab')).MarketTab }));
 const PhotosFormTab = lazy(async () => ({ default: (await import('@/components/tabs/PhotosFormTab')).PhotosFormTab }));
@@ -96,16 +98,20 @@ function FeatureUnavailableTab({ title, message }: { title: string; message: str
 
 export function AppTabContent({
   activeTab,
+  jotformReviewGroupId,
   incomingGearRecordId,
   testingRecordId,
   photosRecordId,
   inventoryRecordId,
+  usedGearWorkflowRecordId,
   listingsRecordId,
   approvalRecordId,
   shopifyApprovalRecordId,
   userRecordId,
   navigateToInventoryRecord,
+  navigateToUsedGearWorkflowRecord,
   navigateToInventoryList,
+  navigateToInventoryPostPublishBucket,
   navigateToIncomingGearForm,
   navigateToTestingForm,
   navigateToPhotosForm,
@@ -121,6 +127,7 @@ export function AppTabContent({
   runtimeFeatures,
   metrics,
   accessiblePages,
+  currentUserName,
   aiProvider,
   usersCount,
   adminCount,
@@ -150,6 +157,12 @@ export function AppTabContent({
   shopifyApprovalTotal,
   shopifyApprovalApproved,
   shopifyApprovalPending,
+  workflowPostPublishLoading,
+  workflowPostPublishError,
+  workflowActiveListingCount,
+  workflowStaleListingCount,
+  workflowSoldReadyCount,
+  workflowShippedCount,
   ebayAuthenticated,
   ebayRestoringSession,
   ebayLoading,
@@ -173,10 +186,12 @@ export function AppTabContent({
 }: AppTabContentProps) {
   const deferredRouteState = useDeferredValue({
     activeTab,
+    jotformReviewGroupId,
     incomingGearRecordId,
     testingRecordId,
     photosRecordId,
     inventoryRecordId,
+    usedGearWorkflowRecordId,
     listingsRecordId,
     approvalRecordId,
     shopifyApprovalRecordId,
@@ -184,9 +199,11 @@ export function AppTabContent({
   });
   const isRouteTransitionPending = deferredRouteState.activeTab !== activeTab
     || deferredRouteState.incomingGearRecordId !== incomingGearRecordId
+    || deferredRouteState.jotformReviewGroupId !== jotformReviewGroupId
     || deferredRouteState.testingRecordId !== testingRecordId
     || deferredRouteState.photosRecordId !== photosRecordId
     || deferredRouteState.inventoryRecordId !== inventoryRecordId
+    || deferredRouteState.usedGearWorkflowRecordId !== usedGearWorkflowRecordId
     || deferredRouteState.listingsRecordId !== listingsRecordId
     || deferredRouteState.approvalRecordId !== approvalRecordId
     || deferredRouteState.shopifyApprovalRecordId !== shopifyApprovalRecordId
@@ -228,6 +245,12 @@ export function AppTabContent({
     shopifyApprovalTotal,
     shopifyApprovalApproved,
     shopifyApprovalPending,
+    workflowPostPublishLoading,
+    workflowPostPublishError,
+    workflowActiveListingCount,
+    workflowStaleListingCount,
+    workflowSoldReadyCount,
+    workflowShippedCount,
     aiProvider,
     ebayAuthenticated,
     ebayRestoringSession,
@@ -244,6 +267,7 @@ export function AppTabContent({
     adminCount,
     runtimeFeatures,
     navigateToTab,
+    navigateToInventoryPostPublishBucket,
   });
 
   const airtableViewModel = buildAirtableTabViewModel({
@@ -338,15 +362,32 @@ export function AppTabContent({
       case 'dashboard':
         return <DashboardTab viewModel={dashboardViewModel} />;
       case 'inventory':
+        if (deferredRouteState.usedGearWorkflowRecordId) {
+          return (
+            <UsedGearWorkflowRecordPage
+              currentUserName={currentUserName}
+              recordId={deferredRouteState.usedGearWorkflowRecordId}
+              onBackToDirectory={() => navigateToInventoryList()}
+              onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+              onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
+              onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
+              onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
+              onOpenInventoryEditor={(recordId) => navigateToInventoryRecord(recordId)}
+            />
+          );
+        }
         return deferredRouteState.inventoryRecordId
           ? <InventoryRecordEditorPage recordId={deferredRouteState.inventoryRecordId} onBackToDirectory={() => navigateToInventoryList()} />
           : (
             <AirtableTab
               viewModel={airtableViewModel}
+              currentUserName={currentUserName}
               onAddNewRecord={() => navigateToIncomingGearForm()}
               onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
               onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
               onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
+              onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+              onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
               onSelectRecord={(recordId) => navigateToInventoryRecord(recordId)}
             />
           );
@@ -364,7 +405,27 @@ export function AppTabContent({
         if (!runtimeFeatures.jotform.available && runtimeFeatures.jotform.message) {
           return <FeatureUnavailableTab title="JotForm unavailable" message={runtimeFeatures.jotform.message} />;
         }
-        return <JotformTab viewModel={jotformViewModel} />;
+        if (deferredRouteState.jotformReviewGroupId) {
+          return (
+            <UsedGearPendingReviewGroupPage
+              currentUserName={currentUserName}
+              groupId={deferredRouteState.jotformReviewGroupId}
+              onBackToParkingLot={() => navigateToTab('jotform')}
+              onOpenIncomingGearForm={(recordId: string) => navigateToIncomingGearForm(recordId)}
+              onOpenWorkflowRecord={(recordId: string) => navigateToUsedGearWorkflowRecord(recordId)}
+            />
+          );
+        }
+        return (
+          <JotformTab
+            viewModel={jotformViewModel}
+            currentUserName={currentUserName}
+            onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+            onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
+            onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
+            onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+          />
+        );
       default:
         return null;
     }

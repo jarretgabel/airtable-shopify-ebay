@@ -10,6 +10,7 @@ import { deleteJson, getJson, patchJson, postJson } from './http';
 export type AirtableConfiguredWriteSource =
   | 'users'
   | 'inventory-directory'
+  | 'used-gear-workflow'
   | 'approval-ebay'
   | 'approval-shopify'
   | 'approval-combined';

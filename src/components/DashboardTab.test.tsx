@@ -102,6 +102,12 @@ function buildViewModel(): DashboardTabViewModel {
       shopifyApprovalTotal: 0,
       shopifyApprovalApproved: 0,
       shopifyApprovalPending: 0,
+      workflowPostPublishLoading: false,
+      workflowPostPublishError: null,
+      workflowActiveListingCount: 0,
+      workflowStaleListingCount: 0,
+      workflowSoldReadyCount: 0,
+      workflowShippedCount: 0,
       aiProvider: 'none',
       ebayAuthenticated: false,
       ebayRestoringSession: false,
@@ -123,6 +129,7 @@ function buildViewModel(): DashboardTabViewModel {
     },
     actions: {
       onSelectTab: vi.fn(),
+      onOpenInventoryPostPublishBucket: vi.fn(),
     },
   };
 }

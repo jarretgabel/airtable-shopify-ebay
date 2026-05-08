@@ -171,12 +171,23 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
           shopifyQueueApproved={workflow.shopifyApprovalApproved}
           shopifyQueuePending={workflow.shopifyApprovalPending}
           shopifyQueueTotal={workflow.shopifyApprovalTotal}
+          workflowPostPublishLoading={workflow.workflowPostPublishLoading}
+          workflowActiveListingCount={workflow.workflowActiveListingCount}
+          workflowStaleListingCount={workflow.workflowStaleListingCount}
+          workflowSoldReadyCount={workflow.workflowSoldReadyCount}
+          workflowShippedCount={workflow.workflowShippedCount}
           ebayUnavailableReason={viewModel.status.sources.find((source) => source.key === 'ebay')?.error ?? null}
           shopifyApprovalUnavailableReason={viewModel.status.sources.find((source) => source.key === 'shopify-approval')?.error ?? null}
           onSelectTab={actions.onSelectTab}
+          onOpenInventoryPostPublishBucket={actions.onOpenInventoryPostPublishBucket}
           embedded
         />
-        <DashboardInsightsSection insights={data.insights} onSelectTab={actions.onSelectTab} embedded />
+        <DashboardInsightsSection
+          insights={data.insights}
+          onSelectTab={actions.onSelectTab}
+          onOpenInventoryPostPublishBucket={actions.onOpenInventoryPostPublishBucket}
+          embedded
+        />
       </DashboardSectionPanel>
       <DashboardAirtableSection
         atLoading={loading.airtable}
