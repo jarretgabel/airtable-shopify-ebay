@@ -17,28 +17,28 @@ This document tracks the app-owned pages, forms, queues, and review surfaces inv
 ### Planned Surfaces
 
 #### Phase 2
-- [ ] Parking Lot 1 queue page
-- [ ] Parking Lot 2 queue page
-- [ ] Trash page
+- [x] Parking Lot 1 queue page
+- [x] Parking Lot 2 queue page
+- [x] Trash page
 - [ ] Manual entry intake page
 - [ ] Intake detail/review page for grouped submissions if needed
 
-Proposed route keys, paths, and file targets:
-- `parking-lot-1`
-	- Path: `/inventory/parking-lot-1`
-	- Likely component: `src/components/tabs/ParkingLotOneTab.tsx`
+Implemented route keys, paths, and file targets:
+- `jotform`
+	- Path: `/jotform`
+	- Component: `src/components/tabs/JotformTab.tsx`
 - `parking-lot-2`
-	- Path: `/inventory/parking-lot-2`
-	- Likely component: `src/components/tabs/ParkingLotTwoTab.tsx`
-- `used-gear-trash`
-	- Path: `/inventory/trash`
-	- Likely component: `src/components/tabs/UsedGearTrashTab.tsx`
+	- Path: `/parking-lot-2`
+	- Component: `src/components/tabs/UsedGearLotTwoTab.tsx`
+- `trash-review`
+	- Path: `/trash-review`
+	- Component: `src/components/tabs/UsedGearTrashTab.tsx`
 - `manual-intake`
 	- Path: `/inventory/manual-intake`
 	- Likely component: `src/components/tabs/ManualIntakeTab.tsx`
 - `submission-review`
-	- Path: `/inventory/submission-review/:groupId`
-	- Likely component: `src/components/tabs/SubmissionReviewPage.tsx`
+	- Path: `/jotform/review/:groupId`
+	- Component: `src/components/tabs/UsedGearPendingReviewGroupPage.tsx`
 
 Likely shared helpers/services:
 - `src/services/parkingLots.ts`
@@ -46,22 +46,22 @@ Likely shared helpers/services:
 - `src/components/tabs/parking-lots/parkingLotColumns.ts`
 
 #### Phase 3
-- [x] Testing queue/review support added inside the inventory used-gear workflow surface
-- [x] Photography queue/review support added inside the inventory used-gear workflow surface
+- [x] Testing queue page
+- [x] Photography queue page
 
-Proposed route keys, paths, and file targets:
+Implemented route keys, paths, and file targets:
 - `testing-queue`
-	- Path: `/testing/queue`
-	- Likely component: `src/components/tabs/TestingQueueTab.tsx`
+	- Path: `/workflow/testing`
+	- Component: `src/components/tabs/UsedGearWorkflowQueueTab.tsx`
 - `testing-review`
-	- Path: `/testing/review/:recordId`
-	- Likely component: `src/components/tabs/TestingReviewPage.tsx`
+	- Path: `/testing/:recordId`
+	- Component: `src/components/tabs/TestingFormTab.tsx`
 - `photo-queue`
-	- Path: `/photos/queue`
-	- Likely component: `src/components/tabs/PhotoQueueTab.tsx`
+	- Path: `/workflow/photography`
+	- Component: `src/components/tabs/UsedGearWorkflowQueueTab.tsx`
 - `photo-review`
-	- Path: `/photos/review/:recordId`
-	- Likely component: `src/components/tabs/PhotoReviewPage.tsx`
+	- Path: `/photos/:recordId`
+	- Component: `src/components/tabs/PhotosFormTab.tsx`
 
 Implemented Phase 3 surfaces in the current app:
 - `inventory workflow detail`
@@ -70,19 +70,28 @@ Implemented Phase 3 surfaces in the current app:
 - `used-gear progress queue`
 	- Path: embedded in `/inventory`
 	- Component: `src/components/tabs/airtable/UsedGearWorkflowProgressSection.tsx`
+- `used-gear testing queue`
+	- Path: `/workflow/testing`
+	- Component: `src/components/tabs/UsedGearWorkflowQueueTab.tsx`
+- `used-gear photography queue`
+	- Path: `/workflow/photography`
+	- Component: `src/components/tabs/UsedGearWorkflowQueueTab.tsx`
 - `pending review grouped queue`
-	- Path: embedded in `/inventory`
-	- Component: `src/components/tabs/airtable/UsedGearPendingReviewSection.tsx`
+	- Path: `/jotform/review/:groupId`
+	- Component: `src/components/tabs/UsedGearPendingReviewGroupPage.tsx`
 
 #### Phase 4
-- [x] Pre-listing review action added inside the inventory workflow detail and progress queue surfaces
+- [x] Pre-listing queue page added
 - [x] Approved-for-publish rows shown inside the inventory workflow progress queue
 - [ ] Listing-prep landing or review detail page if needed
 
 Implemented Phase 4 surfaces in the current app:
+- `pre-listing queue`
+	- Path: `/workflow/pre-listing`
+	- Component: `src/components/tabs/UsedGearWorkflowQueueTab.tsx`
 - `pre-listing completion action`
-	- Path: embedded in `/inventory`
-	- Components: `src/components/tabs/airtable/UsedGearWorkflowProgressSection.tsx`, `src/components/tabs/UsedGearWorkflowRecordPage.tsx`
+	- Path: `/workflow/pre-listing` and `/inventory/workflow/:recordId`
+	- Components: `src/components/tabs/UsedGearWorkflowQueueTab.tsx`, `src/components/tabs/UsedGearWorkflowRecordPage.tsx`
 - `workflow notification preference management`
 	- Path: `/account/settings` and `/users/:userId`
 	- Components: `src/components/SettingsTab.tsx`, `src/components/users/UserDetailPanel.tsx`
@@ -90,10 +99,10 @@ Implemented Phase 4 surfaces in the current app:
 	- Path: global in-app notification system
 	- Hook: `src/app/useUsedGearWorkflowNotifications.ts`
 
-Proposed route keys, paths, and file targets:
-- `pre-listing`
-	- Path: `/listings/pre-listing`
-	- Likely component: `src/components/tabs/PreListingReviewTab.tsx`
+Implemented route keys, paths, and file targets:
+- `pre-listing-queue`
+	- Path: `/workflow/pre-listing`
+	- Component: `src/components/tabs/UsedGearWorkflowQueueTab.tsx`
 - `approved-for-publish`
 	- Path: `/listings/approved-for-publish`
 	- Likely component: `src/components/tabs/ApprovedForPublishQueueTab.tsx`
@@ -118,12 +127,12 @@ Proposed route keys, paths, and file targets:
 	- Likely component: `src/components/tabs/ShippedHistoryTab.tsx`
 
 ### Route And Navigation Checklist
-- [ ] Add all new surfaces to `src/auth/pages.ts` as needed.
-- [ ] Add all new surfaces to `src/app/appNavigation.ts` as needed.
-- [ ] Add all new surfaces to `src/app/AppTabContent.tsx` as needed.
-- [ ] Confirm auth access behavior for each new route.
-- [ ] Confirm direct-link behavior for each new route.
-- [ ] Update docs for each new surface added.
+- [x] Add all new surfaces to `src/auth/pages.ts` as needed.
+- [x] Add all new surfaces to `src/app/appNavigation.ts` as needed.
+- [x] Add all new surfaces to `src/app/AppTabContent.tsx` as needed.
+- [x] Confirm auth access behavior for each new route.
+- [x] Confirm direct-link behavior for each new route.
+- [x] Update docs for each new surface added.
 
 ### Initial Route Wiring Proposal
 - Add proposed Phase 2 route keys to `APP_PAGES` and `PAGE_DEFINITIONS` only when implementation begins.

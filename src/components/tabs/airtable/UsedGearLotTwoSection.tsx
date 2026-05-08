@@ -10,6 +10,8 @@ interface UsedGearLotTwoSectionProps {
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
   onOpenWorkflowRecord: (recordId: string) => void;
+  focusedGroupId?: string | null;
+  onFocusedGroupIdChange?: (groupId: string | null) => void;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
 }
@@ -29,11 +31,20 @@ function recordSearchText(record: AirtableRecord): string {
     .toLowerCase();
 }
 
+function buildWorkflowLotTwoGroupLink(groupId: string): string {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set('workflowLotTwoGroup', groupId);
+  nextUrl.hash = 'used-gear-lot-two';
+  return nextUrl.toString();
+}
+
 export function UsedGearLotTwoSection({
   onOpenIncomingGearForm,
   onOpenTestingForm,
   onOpenPhotosForm,
   onOpenWorkflowRecord,
+  focusedGroupId = null,
+  onFocusedGroupIdChange,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
 }: UsedGearLotTwoSectionProps) {
@@ -94,6 +105,10 @@ export function UsedGearLotTwoSection({
   }, [records, searchTerm]);
 
   const groupedRecords = useMemo(() => groupUsedGearWorkflowRecords(filteredRecords), [filteredRecords]);
+  const visibleGroups = useMemo(
+    () => (focusedGroupId ? groupedRecords.filter((group) => group.id === focusedGroupId) : groupedRecords),
+    [focusedGroupId, groupedRecords],
+  );
   const selectedRecord = useMemo(
     () => records.find((record) => record.id === selectedRecordId) ?? null,
     [records, selectedRecordId],
@@ -200,6 +215,21 @@ export function UsedGearLotTwoSection({
         </div>
       ) : null}
 
+      {focusedGroupId ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+          <span>Focused on one Parking Lot 2 group from a shared workflow link.</span>
+          {onFocusedGroupIdChange ? (
+            <button
+              type="button"
+              className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+              onClick={() => onFocusedGroupIdChange(null)}
+            >
+              Clear Group Focus
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -279,7 +309,7 @@ export function UsedGearLotTwoSection({
         </div>
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
           <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible Groups</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{groupedRecords.length}</p>
+          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{visibleGroups.length}</p>
         </div>
       </div>
 
@@ -296,15 +326,35 @@ export function UsedGearLotTwoSection({
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-sm text-[var(--muted)]">
             Loading Parking Lot 2 queue...
           </div>
-        ) : groupedRecords.map((group) => (
+        ) : visibleGroups.map((group) => (
           <div key={group.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{group.description}</p>
                 <h4 className="mt-1 text-lg font-semibold text-[var(--ink)]">{group.label}</h4>
               </div>
-              <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                {group.records.length} row{group.records.length === 1 ? '' : 's'}
+              <div className="flex flex-wrap items-center gap-2">
+                {onFocusedGroupIdChange ? (
+                  <button
+                    type="button"
+                    className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    onClick={() => onFocusedGroupIdChange(group.id)}
+                  >
+                    {focusedGroupId === group.id ? 'Focused Group' : 'Focus Group'}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                  onClick={() => {
+                    void copyLink(buildWorkflowLotTwoGroupLink(group.id));
+                  }}
+                >
+                  Copy Group Link
+                </button>
+                <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                  {group.records.length} row{group.records.length === 1 ? '' : 's'}
+                </div>
               </div>
             </div>
 

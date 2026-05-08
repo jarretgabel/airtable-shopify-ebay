@@ -44,6 +44,11 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     if (normalizedPath === '/listings' || listingsRecordMatch) return 'listings';
     if (normalizedPath === '/ebay/listings') return 'ebay';
     if (normalizedPath === '/shopify/products') return 'shopify';
+    if (normalizedPath === '/parking-lot-2') return 'parking-lot-2';
+    if (normalizedPath === '/trash-review') return 'trash-review';
+    if (normalizedPath === '/workflow/testing') return 'testing-queue';
+    if (normalizedPath === '/workflow/photography') return 'photography-queue';
+    if (normalizedPath === '/workflow/pre-listing') return 'pre-listing-queue';
     if (normalizedPath === '/incoming-gear' || incomingGearRecordMatch) return 'incoming-gear';
     if (normalizedPath === '/testing' || testingRecordMatch) return 'testing';
     if (normalizedPath === '/photos' || photosRecordMatch) return 'photos';

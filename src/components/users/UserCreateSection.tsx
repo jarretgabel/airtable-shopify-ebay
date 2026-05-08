@@ -1,5 +1,6 @@
 import { FormEvent, MutableRefObject, useState } from 'react';
-import { ASSIGNABLE_PAGES, AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
+import { type AppPage } from '@/auth/pages';
+import { UserPageAccessEditor } from '@/components/users/UserPageAccessEditor';
 import { NewUserFormState } from '@/components/users/userManagementTypes';
 
 interface UserCreateSectionProps {
@@ -100,18 +101,12 @@ export function UserCreateSection({
         </select>
 
         {newUser.role === 'user' && (
-          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {ASSIGNABLE_PAGES.map((page) => (
-              <label key={`new-${page}`} className="inline-flex items-center gap-2 text-sm text-[var(--ink)]">
-                <input
-                  type="checkbox"
-                  className={checkboxClassName}
-                  checked={newUser.allowedPages.includes(page)}
-                  onChange={() => onNewUserPageToggle(page)}
-                />
-                <span>{PAGE_DEFINITIONS[page].label}</span>
-              </label>
-            ))}
+          <div className="mt-2">
+            <UserPageAccessEditor
+              selectedPages={newUser.allowedPages}
+              checkboxClassName={checkboxClassName}
+              onTogglePage={onNewUserPageToggle}
+            />
           </div>
         )}
 

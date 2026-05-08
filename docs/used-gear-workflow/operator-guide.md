@@ -22,7 +22,7 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 
 ### Pending Review Queue
 - Surface:
-  - `Inventory > Used Gear Workflow > Pending Review Queue`
+  - `Intake > Parking Lot 1`
 - Use this queue when:
   - a new workflow row still needs qualification review
   - the intake decision is not yet accepted into Lot 2 or sent to trash
@@ -45,7 +45,7 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 - Surface:
   - `Inventory > Used Gear Workflow > Processing And Stage Queue`
 - Use this queue when:
-  - a row is accepted and still in arrival, processing, testing, photography, pre-listing review, or approved-for-publish flow
+  - a row is accepted and still in broad arrival, processing, or cross-stage triage flow
 - Main actions:
   - open Incoming Gear, Testing, Photos, or Workflow Detail
   - complete processing
@@ -77,7 +77,7 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 
 ### Parking Lot 2
 - Surface:
-  - `Inventory > Parking Lot 2`
+  - `Intake > Parking Lot 2`
 - Use this queue when:
   - an intake is accepted but has not fully entered the processing/test/photo workflow
 - Main actions:
@@ -87,13 +87,43 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 
 ### Trash Queue
 - Surface:
-  - `Inventory > Trash`
+  - `Intake > Trash Review`
 - Use this queue when:
   - a pending-review row was marked unqualified and needs audit, restore, re-qualify, or permanent deletion
 - Main actions:
   - restore to pending review
   - re-qualify into the accepted workflow
   - permanently delete when operationally appropriate
+
+### Testing Queue
+- Surface:
+  - `Workflow > Testing Queue`
+- Use this queue when:
+  - a row is in concurrent stage work and still needs testing signoff
+- Main actions:
+  - open the Testing form directly
+  - open Workflow Detail when a row is blocked or grouped context matters
+  - copy a focused group link for teammate handoff
+
+### Photography Queue
+- Surface:
+  - `Workflow > Photography Queue`
+- Use this queue when:
+  - a row is in concurrent stage work and still needs photography signoff
+- Main actions:
+  - open the Photos form directly
+  - open Workflow Detail when readiness or grouped context matters
+  - copy a focused group link for teammate handoff
+
+### Pre-Listing Queue
+- Surface:
+  - `Workflow > Pre-Listing Queue`
+- Use this queue when:
+  - both concurrent stage signoffs are complete and the row needs final workflow review before listing handoff
+- Main actions:
+  - open Workflow Detail for final readiness review
+  - jump to listing work once the row is approved for publish
+  - copy a focused group link for teammate handoff
 
 ## Review And Detail Guides
 
@@ -135,7 +165,8 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 
 ## Suggested Daily Flow
 1. Start in Pending Review for new intake.
-2. Move accepted rows through Parking Lot 2 and then the Progress queue.
-3. Use Workflow Detail whenever a row needs readiness review, grouped sibling context, or blocker resolution.
-4. Hand approved rows into Combined Listing Approval.
-5. Work stale, sold-ready, and shipped transitions from Post-Publish.
+2. Move accepted rows through Parking Lot 2 and complete arrival-stage processing.
+3. Work concurrent signoffs from Testing Queue and Photography Queue, or use the broader Progress Queue when cross-stage triage is needed.
+4. Use Pre-Listing Queue and Workflow Detail whenever a row needs final readiness review, grouped sibling context, or blocker resolution.
+5. Hand approved rows into Combined Listing Approval.
+6. Work stale, sold-ready, and shipped transitions from Post-Publish.

@@ -31,6 +31,9 @@ export interface UsedGearWorkflowProgressSectionProps {
   onOpenPhotosForm: (recordId: string) => void;
   onOpenWorkflowRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
+  queueMode?: UsedGearWorkflowProgressQueueMode;
+  sectionId?: string;
+  groupParamName?: string;
   focusedGroupId?: string | null;
   onFocusedGroupIdChange?: (groupId: string | null) => void;
   searchTerm?: string;
@@ -42,6 +45,21 @@ export interface UsedGearWorkflowProgressSectionProps {
 }
 
 export type UsedGearWorkflowProgressSortMode = 'group-label' | 'newest' | 'oldest';
+export type UsedGearWorkflowProgressQueueMode = 'all' | 'testing' | 'photography' | 'pre-listing';
+
+interface ProgressQueuePresentation {
+  eyebrow: string;
+  title: string;
+  description: string;
+  emptyTitle: string;
+  emptyMessage: string;
+  emptyGuidance: string;
+  copySuccessTitle: string;
+  copySuccessMessage: string;
+  copyUnavailableMessage: string;
+  copyFailureMessage: string;
+  sharedFocusMessage: string;
+}
 
 function recordSearchText(record: AirtableRecord): string {
   return [
@@ -74,11 +92,75 @@ function isAwaitingPreListingStatus(record: AirtableRecord): boolean {
   return getUsedGearWorkflowStatus(record.fields) === 'Awaiting Pre-Listing Review';
 }
 
-function buildWorkflowProgressGroupLink(groupId: string): string {
+function buildWorkflowProgressGroupLink(groupId: string, groupParamName: string, sectionId: string): string {
   const nextUrl = new URL(window.location.href);
-  nextUrl.searchParams.set('workflowProgressGroup', groupId);
-  nextUrl.hash = 'used-gear-progress-queue';
+  nextUrl.searchParams.set(groupParamName, groupId);
+  nextUrl.hash = sectionId;
   return nextUrl.toString();
+}
+
+function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): ProgressQueuePresentation {
+  if (queueMode === 'testing') {
+    return {
+      eyebrow: 'Used Gear Workflow',
+      title: 'Testing Queue',
+      description: 'Focus only on rows still waiting for testing signoff. Related rows stay grouped by pickup or submission so multi-item work stays coherent.',
+      emptyTitle: 'No rows currently need testing',
+      emptyMessage: 'The testing queue is clear. Rows that still need testing will appear here automatically.',
+      emptyGuidance: 'Next route: move accepted rows through Parking Lot 2 and complete processing so testing work can begin.',
+      copySuccessTitle: 'Testing queue link copied',
+      copySuccessMessage: 'The testing queue link is ready to share.',
+      copyUnavailableMessage: 'This browser cannot copy the testing queue link automatically.',
+      copyFailureMessage: 'The testing queue link could not be copied. Try again or copy the URL from the browser address bar.',
+      sharedFocusMessage: 'Shared link opened the testing queue focused on one grouped submission.',
+    };
+  }
+
+  if (queueMode === 'photography') {
+    return {
+      eyebrow: 'Used Gear Workflow',
+      title: 'Photography Queue',
+      description: 'Focus only on rows still waiting for photography signoff. Related rows stay grouped by pickup or submission so staging work can be handed off cleanly.',
+      emptyTitle: 'No rows currently need photography',
+      emptyMessage: 'The photography queue is clear. Rows that still need photography will appear here automatically.',
+      emptyGuidance: 'Next route: use Parking Lot 2 or the testing queue until rows are ready for photo-stage completion.',
+      copySuccessTitle: 'Photography queue link copied',
+      copySuccessMessage: 'The photography queue link is ready to share.',
+      copyUnavailableMessage: 'This browser cannot copy the photography queue link automatically.',
+      copyFailureMessage: 'The photography queue link could not be copied. Try again or copy the URL from the browser address bar.',
+      sharedFocusMessage: 'Shared link opened the photography queue focused on one grouped submission.',
+    };
+  }
+
+  if (queueMode === 'pre-listing') {
+    return {
+      eyebrow: 'Used Gear Workflow',
+      title: 'Pre-Listing Queue',
+      description: 'Focus only on rows that cleared testing and photography and are ready for pre-listing review before publish handoff.',
+      emptyTitle: 'No rows currently need pre-listing review',
+      emptyMessage: 'The pre-listing queue is clear. Rows that finish both concurrent stages will appear here automatically.',
+      emptyGuidance: 'Next route: finish testing and photography work so rows can advance into pre-listing review.',
+      copySuccessTitle: 'Pre-listing queue link copied',
+      copySuccessMessage: 'The pre-listing queue link is ready to share.',
+      copyUnavailableMessage: 'This browser cannot copy the pre-listing queue link automatically.',
+      copyFailureMessage: 'The pre-listing queue link could not be copied. Try again or copy the URL from the browser address bar.',
+      sharedFocusMessage: 'Shared link opened the pre-listing queue focused on one grouped submission.',
+    };
+  }
+
+  return {
+    eyebrow: 'Used Gear Workflow',
+    title: 'Processing And Stage Queue',
+    description: 'Manage accepted intake rows through processing, concurrent testing and photography, and pre-listing publish readiness. Related rows stay grouped by pickup or submission.',
+    emptyTitle: 'No active workflow rows in processing',
+    emptyMessage: 'The used-gear queue currently has no accepted rows in processing or concurrent stage work.',
+    emptyGuidance: 'Next route: review Parking Lot 2 for newly accepted arrivals, or open Listings if the next work item is already approved for publish.',
+    copySuccessTitle: 'Queue link copied',
+    copySuccessMessage: 'The processing and stage queue link is ready to share.',
+    copyUnavailableMessage: 'This browser cannot copy the processing and stage queue link automatically.',
+    copyFailureMessage: 'The processing and stage queue link could not be copied. Try again or copy the URL from the browser address bar.',
+    sharedFocusMessage: 'Shared link opened the progress queue focused on one grouped submission.',
+  };
 }
 
 export function UsedGearWorkflowProgressSection({
@@ -88,6 +170,9 @@ export function UsedGearWorkflowProgressSection({
   onOpenPhotosForm,
   onOpenWorkflowRecord,
   onOpenListingsRecord,
+  queueMode = 'all',
+  sectionId = 'used-gear-progress-queue',
+  groupParamName = 'workflowProgressGroup',
   focusedGroupId = null,
   onFocusedGroupIdChange,
   searchTerm: controlledSearchTerm,
@@ -97,14 +182,15 @@ export function UsedGearWorkflowProgressSection({
   sortMode: controlledSortMode,
   onSortModeChange,
 }: UsedGearWorkflowProgressSectionProps) {
+  const queuePresentation = getQueuePresentation(queueMode);
   const currentUser = useAuthStore((state) => state.users.find((user) => user.id === state.currentUserId) ?? null);
   const upsertByKey = useNotificationStore((state) => state.upsertByKey);
   const { copyingLink, copiedLink, copyLink } = useCopyQueueLink({
-    sectionId: 'used-gear-progress-queue',
-    successTitle: 'Queue link copied',
-    successMessage: 'The processing and stage queue link is ready to share.',
-    unavailableMessage: 'This browser cannot copy the processing and stage queue link automatically.',
-    failureMessage: 'The processing and stage queue link could not be copied. Try again or copy the URL from the browser address bar.',
+    sectionId,
+    successTitle: queuePresentation.copySuccessTitle,
+    successMessage: queuePresentation.copySuccessMessage,
+    unavailableMessage: queuePresentation.copyUnavailableMessage,
+    failureMessage: queuePresentation.copyFailureMessage,
   });
   const [records, setRecords] = useState<AirtableRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,14 +234,30 @@ export function UsedGearWorkflowProgressSection({
     };
   }, []);
 
+  const queueScopedRecords = useMemo(() => {
+    if (queueMode === 'testing') {
+      return records.filter((record) => isConcurrentStageStatus(record) && !record.fields['Testing Signed By']);
+    }
+
+    if (queueMode === 'photography') {
+      return records.filter((record) => isConcurrentStageStatus(record) && !record.fields['Photography Signed By']);
+    }
+
+    if (queueMode === 'pre-listing') {
+      return records.filter((record) => isAwaitingPreListingStatus(record));
+    }
+
+    return records;
+  }, [queueMode, records]);
+
   const filteredRecords = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
     if (!normalizedSearch) {
-      return records;
+      return queueScopedRecords;
     }
 
-    return records.filter((record) => recordSearchText(record).includes(normalizedSearch));
-  }, [records, searchTerm]);
+    return queueScopedRecords.filter((record) => recordSearchText(record).includes(normalizedSearch));
+  }, [queueScopedRecords, searchTerm]);
 
   const groupedRecords = useMemo(() => {
     const groups = groupUsedGearWorkflowRecords(filteredRecords);
@@ -275,14 +377,12 @@ export function UsedGearWorkflowProgressSection({
   };
 
   return (
-    <section id="used-gear-progress-queue" className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+    <section id={sectionId} className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Workflow</p>
-          <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Processing And Stage Queue</h3>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-            Manage accepted intake rows through processing, concurrent testing and photography, and pre-listing publish readiness. Related rows stay grouped by pickup or submission.
-          </p>
+          <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{queuePresentation.eyebrow}</p>
+          <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{queuePresentation.title}</h3>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{queuePresentation.description}</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <button
@@ -371,16 +471,16 @@ export function UsedGearWorkflowProgressSection({
       </div>
 
       {!loading && groupedRecords.length === 0 ? (
-        <EmptySurface title="No active workflow rows in processing" message="The used-gear queue currently has no accepted rows in processing or concurrent stage work.">
+        <EmptySurface title={queuePresentation.emptyTitle} message={queuePresentation.emptyMessage}>
           <p className="mt-3 text-sm text-[var(--muted)]">
-            Next route: review Parking Lot 2 for newly accepted arrivals, or open Listings if the next work item is already approved for publish.
+            {queuePresentation.emptyGuidance}
           </p>
         </EmptySurface>
       ) : null}
 
       {focusedGroupId ? (
         <div className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
-          Shared link opened the progress queue focused on one grouped submission.
+          {queuePresentation.sharedFocusMessage}
         </div>
       ) : null}
 
@@ -407,7 +507,7 @@ export function UsedGearWorkflowProgressSection({
                   type="button"
                   className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => {
-                    void copyLink(buildWorkflowProgressGroupLink(group.id));
+                    void copyLink(buildWorkflowProgressGroupLink(group.id, groupParamName, sectionId));
                   }}
                   disabled={copyingLink}
                 >

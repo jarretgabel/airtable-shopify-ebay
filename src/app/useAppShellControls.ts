@@ -161,7 +161,7 @@ export function useAppShellControls({
     }
   }, [activeTab, canAccessPage, exportingPdf, navigateToTab, pushNotification, setExportProgress, setExportingPdf, shellRef]);
 
-  const { tabs, ebayNavTabs, inventoryProcessingNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs } = buildAppFrameNavTabs({
+  const { tabs, intakeNavTabs, ebayNavTabs, inventoryProcessingNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs } = buildAppFrameNavTabs({
     visibleTabs,
     activeTab,
     exportingPdf,
@@ -187,6 +187,7 @@ export function useAppShellControls({
     onExportCurrentPage: () => void handleExportPdf('current'),
     onExportAllPages: () => void handleExportPdf('all'),
     tabs,
+    intakeNavTabs,
     ebayNavTabs,
     inventoryProcessingNavTabs,
     shopifyNavTabs,

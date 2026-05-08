@@ -11,10 +11,12 @@ describe('useActionGuidanceNotifications', () => {
 
   it('publishes used-gear stale and sold-ready notifications for inventory operators', async () => {
     const navigateToTab = vi.fn();
+    const navigateToInventoryPostPublishBucket = vi.fn();
 
     renderHook(() => useActionGuidanceNotifications({
       canAccessPage: () => true,
       navigateToTab,
+      navigateToInventoryPostPublishBucket,
       onRefresh: vi.fn(),
       approvalPending: 0,
       shopifyApprovalPending: 0,
@@ -41,5 +43,11 @@ describe('useActionGuidanceNotifications', () => {
     ]);
     expect(notifications[0]?.message).toContain('2 used-gear listings');
     expect(notifications[1]?.message).toContain('1 used-gear item');
+
+    notifications[0]?.onAction?.();
+    notifications[1]?.onAction?.();
+
+    expect(navigateToInventoryPostPublishBucket).toHaveBeenNthCalledWith(1, 'stale-listing');
+    expect(navigateToInventoryPostPublishBucket).toHaveBeenNthCalledWith(2, 'sold-ready');
   });
 });

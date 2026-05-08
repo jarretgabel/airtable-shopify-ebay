@@ -56,6 +56,11 @@ export function useAuthRouteGuard({
       normalizedPath === '/listings' ||
       isListingsDetailPath ||
       normalizedPath === '/ebay/listings' ||
+      normalizedPath === '/parking-lot-2' ||
+      normalizedPath === '/trash-review' ||
+      normalizedPath === '/workflow/testing' ||
+      normalizedPath === '/workflow/photography' ||
+      normalizedPath === '/workflow/pre-listing' ||
       normalizedPath === '/incoming-gear' ||
       isIncomingGearDetailPath ||
       normalizedPath === '/testing' ||
@@ -87,6 +92,16 @@ export function useAuthRouteGuard({
             ? 'ebay'
             : normalizedPath === '/shopify/products'
               ? 'shopify'
+                : normalizedPath === '/parking-lot-2'
+                  ? 'parking-lot-2'
+                : normalizedPath === '/trash-review'
+                  ? 'trash-review'
+                : normalizedPath === '/workflow/testing'
+                  ? 'testing-queue'
+                : normalizedPath === '/workflow/photography'
+                  ? 'photography-queue'
+                : normalizedPath === '/workflow/pre-listing'
+                  ? 'pre-listing-queue'
               : normalizedPath === '/incoming-gear' || isIncomingGearDetailPath
                 ? 'incoming-gear'
               : normalizedPath === '/testing' || isTestingDetailPath

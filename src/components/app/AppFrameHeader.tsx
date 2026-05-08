@@ -10,6 +10,7 @@ interface AppFrameHeaderProps {
   headerRef: Ref<HTMLElement>;
   currentUserLabel: string;
   tabs: AppTab[];
+  intakeTabs: AppTab[];
   ebayTabs: AppTab[];
   inventoryProcessingTabs: AppTab[];
   shopifyTabs: AppTab[];
@@ -35,6 +36,7 @@ export function AppFrameHeader({
   headerRef,
   currentUserLabel,
   tabs,
+  intakeTabs,
   ebayTabs,
   inventoryProcessingTabs,
   shopifyTabs,
@@ -125,6 +127,7 @@ export function AppFrameHeader({
       </div>
       <AppFrameHeaderNavigation
         tabs={tabs}
+        intakeTabs={intakeTabs}
         ebayTabs={ebayTabs}
         inventoryProcessingTabs={inventoryProcessingTabs}
         shopifyTabs={shopifyTabs}

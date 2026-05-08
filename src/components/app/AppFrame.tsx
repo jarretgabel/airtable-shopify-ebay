@@ -7,6 +7,7 @@ export function AppFrame({
   shellRef,
   currentUserLabel,
   tabs,
+  intakeTabs,
   ebayTabs,
   inventoryProcessingTabs,
   shopifyTabs,
@@ -64,6 +65,7 @@ export function AppFrame({
         headerRef={shellContainerRef}
         currentUserLabel={currentUserLabel}
         tabs={tabs}
+        intakeTabs={intakeTabs}
         ebayTabs={ebayTabs}
         inventoryProcessingTabs={inventoryProcessingTabs}
         shopifyTabs={shopifyTabs}

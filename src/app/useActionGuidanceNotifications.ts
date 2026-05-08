@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import type { Tab } from '@/app/appNavigation';
+import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 import { useNotificationStore } from '@/stores/notificationStore';
 
 interface ActionGuidanceParams {
   canAccessPage: (tab: Tab) => boolean;
   navigateToTab: (tab: Tab, replace?: boolean) => void;
+  navigateToInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket, options?: { replace?: boolean }) => void;
   onRefresh: () => void;
   approvalPending: number;
   shopifyApprovalPending: number;
@@ -32,6 +34,7 @@ const ACTION_KEYS = {
 export function useActionGuidanceNotifications({
   canAccessPage,
   navigateToTab,
+  navigateToInventoryPostPublishBucket,
   onRefresh,
   approvalPending,
   shopifyApprovalPending,
@@ -90,7 +93,7 @@ export function useActionGuidanceNotifications({
       tone: 'info',
       title: 'New JotForm submissions',
       message: `${totalNewSubmissions} new submission${totalNewSubmissions === 1 ? '' : 's'} arrived. Review incoming requests to keep the pipeline moving.`,
-      actionLabel: 'Open JotForm tab',
+      actionLabel: 'Open Parking Lot 1',
       onAction: () => navigateToTab('jotform'),
       dismissible: true,
     });
@@ -122,11 +125,11 @@ export function useActionGuidanceNotifications({
       tone: 'warning',
       title: 'Used gear shipments need attention',
       message: `${workflowPostPublishSoldReadyCount} used-gear item${workflowPostPublishSoldReadyCount === 1 ? '' : 's'} are sold and ready to ship. Move them through the post-publish workflow queue.`,
-      actionLabel: 'Open inventory',
-      onAction: () => navigateToTab('inventory'),
+      actionLabel: 'Open Sold Ready queue',
+      onAction: () => navigateToInventoryPostPublishBucket('sold-ready'),
       dismissible: true,
     });
-  }, [canAccessPage, dismissByKey, navigateToTab, upsertByKey, workflowPostPublishSoldReadyCount]);
+  }, [canAccessPage, dismissByKey, navigateToInventoryPostPublishBucket, upsertByKey, workflowPostPublishSoldReadyCount]);
 
   useEffect(() => {
     if (!canAccessPage('inventory') || workflowPostPublishStaleListingCount <= 0) {
@@ -138,11 +141,11 @@ export function useActionGuidanceNotifications({
       tone: 'info',
       title: 'Used gear listings are stale',
       message: `${workflowPostPublishStaleListingCount} used-gear listing${workflowPostPublishStaleListingCount === 1 ? ' needs' : 's need'} stale-listing review. Check pricing, marketplace coverage, and sell-through next steps.`,
-      actionLabel: 'Open inventory',
-      onAction: () => navigateToTab('inventory'),
+      actionLabel: 'Open Stale queue',
+      onAction: () => navigateToInventoryPostPublishBucket('stale-listing'),
       dismissible: true,
     });
-  }, [canAccessPage, dismissByKey, navigateToTab, upsertByKey, workflowPostPublishStaleListingCount]);
+  }, [canAccessPage, dismissByKey, navigateToInventoryPostPublishBucket, upsertByKey, workflowPostPublishStaleListingCount]);
 
   useEffect(() => {
     const activeError = [

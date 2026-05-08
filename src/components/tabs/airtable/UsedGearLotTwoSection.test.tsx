@@ -27,7 +27,7 @@ describe('UsedGearLotTwoSection', () => {
         writeText: clipboardWriteTextMock,
       },
     });
-    window.history.replaceState({}, '', '/jotform');
+    window.history.replaceState({}, '', '/parking-lot-2');
   });
 
   it('copies the lot-two queue link for sharing', async () => {
@@ -61,7 +61,7 @@ describe('UsedGearLotTwoSection', () => {
     });
 
     await waitFor(() => {
-      expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/jotform#used-gear-lot-two`);
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/parking-lot-2#used-gear-lot-two`);
     });
   });
 

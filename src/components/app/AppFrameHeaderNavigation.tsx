@@ -9,6 +9,7 @@ import {
 
 interface AppFrameHeaderNavigationProps {
   tabs: AppTab[];
+  intakeTabs: AppTab[];
   ebayTabs: AppTab[];
   inventoryProcessingTabs: AppTab[];
   shopifyTabs: AppTab[];
@@ -21,6 +22,7 @@ interface AppFrameHeaderNavigationProps {
 
 export function AppFrameHeaderNavigation({
   tabs,
+  intakeTabs,
   ebayTabs,
   inventoryProcessingTabs,
   shopifyTabs,
@@ -30,10 +32,12 @@ export function AppFrameHeaderNavigation({
   onToggleDropdown,
   onCloseDropdowns,
 }: AppFrameHeaderNavigationProps): ReactNode {
+  const hasActiveIntakeTab = intakeTabs.some((tab) => tab.active);
   const hasActiveEbayTab = ebayTabs.some((tab) => tab.active);
   const hasActiveInventoryProcessingTab = inventoryProcessingTabs.some((tab) => tab.active);
   const hasActiveShopifyTab = shopifyTabs.some((tab) => tab.active);
   const hasActiveUtilityTab = utilityTabs.some((tab) => tab.active);
+  const intakeBadgeTotal = intakeTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const ebayBadgeTotal = ebayTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const inventoryProcessingBadgeTotal = inventoryProcessingTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const shopifyBadgeTotal = shopifyTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
@@ -44,6 +48,30 @@ export function AppFrameHeaderNavigation({
       <div className="relative flex flex-wrap items-end gap-1">
         <div className="flex min-w-0 flex-1 items-end gap-1">
           {tabs.map((tab) => <TabButton key={tab.key} tab={tab} />)}
+
+          {intakeTabs.length > 0 && (
+            <div className="relative flex-shrink-0" data-export-ignore="true">
+              <DropdownTrigger
+                active={hasActiveIntakeTab}
+                expanded={openDropdown === 'intake'}
+                label="Intake"
+                menuId="intake-menu"
+                badgeCount={intakeBadgeTotal > 0 ? intakeBadgeTotal : undefined}
+                onClick={() => onToggleDropdown('intake')}
+                onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'intake', onToggleDropdown, onCloseDropdowns)}
+              />
+              {openDropdown === 'intake' && (
+                <div
+                  id="intake-menu"
+                  role="menu"
+                  aria-label="Intake tabs"
+                  className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+                >
+                  <DropdownTabList tabs={intakeTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
+                </div>
+              )}
+            </div>
+          )}
 
           {ebayTabs.length > 0 && (
             <div className="relative flex-shrink-0" data-export-ignore="true">
@@ -98,7 +126,7 @@ export function AppFrameHeaderNavigation({
               <DropdownTrigger
                 active={hasActiveInventoryProcessingTab}
                 expanded={openDropdown === 'inventory-processing'}
-                label="Inventory"
+                label="Workflow"
                 menuId="inventory-processing-menu"
                 badgeCount={inventoryProcessingBadgeTotal > 0 ? inventoryProcessingBadgeTotal : undefined}
                 onClick={() => onToggleDropdown('inventory-processing')}
@@ -108,7 +136,7 @@ export function AppFrameHeaderNavigation({
                 <div
                   id="inventory-processing-menu"
                   role="menu"
-                  aria-label="Inventory tabs"
+                  aria-label="Workflow tabs"
                   className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
                 >
                   <DropdownTabList tabs={inventoryProcessingTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />

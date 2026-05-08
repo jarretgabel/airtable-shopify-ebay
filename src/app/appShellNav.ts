@@ -1,4 +1,4 @@
-import { Tab, EBAY_TAB_SET, INVENTORY_PROCESSING_TAB_SET, SHOPIFY_TAB_SET, UTILITY_TAB_SET, navLabel } from './appNavigation';
+import { Tab, EBAY_TAB_SET, INTAKE_TAB_SET, INVENTORY_PROCESSING_TAB_SET, SHOPIFY_TAB_SET, UTILITY_TAB_SET, navLabel } from './appNavigation';
 
 interface NavTab {
   key: Tab;
@@ -26,6 +26,7 @@ interface BuildNavTabsInput {
 
 export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
   tabs: NavTab[];
+  intakeNavTabs: NavTab[];
   ebayNavTabs: NavTab[];
   inventoryProcessingNavTabs: NavTab[];
   shopifyNavTabs: NavTab[];
@@ -51,14 +52,24 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     disabledReason: disabledTabReasons[tab],
   });
 
-  const mainTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab) && !SHOPIFY_TAB_SET.has(tab) && !INVENTORY_PROCESSING_TAB_SET.has(tab) && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
-  const postEbayTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab) && !SHOPIFY_TAB_SET.has(tab) && !INVENTORY_PROCESSING_TAB_SET.has(tab) && !mainTabs.includes(tab) && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
+  const mainTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab) && !SHOPIFY_TAB_SET.has(tab) && !INTAKE_TAB_SET.has(tab) && !INVENTORY_PROCESSING_TAB_SET.has(tab) && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
+  const postEbayTabs = visibleTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !EBAY_TAB_SET.has(tab) && !SHOPIFY_TAB_SET.has(tab) && !INTAKE_TAB_SET.has(tab) && !INVENTORY_PROCESSING_TAB_SET.has(tab) && !mainTabs.includes(tab) && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
+  const intakeTabs = visibleTabs.filter((tab) => INTAKE_TAB_SET.has(tab));
   const ebayTabs = visibleTabs.filter((tab) => EBAY_TAB_SET.has(tab));
   const inventoryProcessingTabs = visibleTabs.filter((tab) => INVENTORY_PROCESSING_TAB_SET.has(tab));
   const shopifyTabs = visibleTabs.filter((tab) => SHOPIFY_TAB_SET.has(tab));
   const utilityTabs = visibleTabs.filter((tab) => UTILITY_TAB_SET.has(tab));
 
   const tabs = mainTabs.map((tab) => ({
+    key: tab,
+    label: navLabel(tab),
+    active: activeTab === tab,
+    badgeCount: undefined,
+    ...resolveDisabledState(tab),
+    onClick: () => navigateToTab(tab),
+  }));
+
+  const intakeNavTabs = intakeTabs.map((tab) => ({
     key: tab,
     label: navLabel(tab),
     active: activeTab === tab,
@@ -112,5 +123,5 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     onClick: () => (tab === 'users' ? navigateToUsersList() : navigateToTab(tab)),
   }));
 
-  return { tabs, ebayNavTabs, inventoryProcessingNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs };
+  return { tabs, intakeNavTabs, ebayNavTabs, inventoryProcessingNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs };
 }

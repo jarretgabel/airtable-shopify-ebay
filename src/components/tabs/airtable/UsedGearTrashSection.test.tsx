@@ -39,7 +39,7 @@ describe('UsedGearTrashSection', () => {
         writeText: clipboardWriteTextMock,
       },
     });
-    window.history.replaceState({}, '', '/jotform');
+    window.history.replaceState({}, '', '/trash-review');
   });
 
   it('copies the trash queue link for sharing', async () => {
@@ -67,7 +67,7 @@ describe('UsedGearTrashSection', () => {
     });
 
     await waitFor(() => {
-      expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/jotform#used-gear-trash`);
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/trash-review#used-gear-trash`);
     });
   });
 

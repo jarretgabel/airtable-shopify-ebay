@@ -132,7 +132,7 @@ const USED_GEAR_WORKFLOW_NOTIFICATION_FIELDS = [
 export type UsedGearWorkflowNotificationCounts = Record<UsedGearWorkflowNotificationEvent, number>;
 
 export interface UsedGearWorkflowNotificationTarget {
-  destinationTab: 'inventory' | 'listings';
+  destinationTab: 'inventory' | 'jotform' | 'parking-lot-2' | 'testing-queue' | 'photography-queue' | 'pre-listing-queue' | 'listings';
   recordId: string | null;
   sectionId: string | null;
   groupId?: string | null;
@@ -217,19 +217,40 @@ function getNotificationGroupId(record: AirtableRecord): string | null {
   return groupId.startsWith('record:') ? null : groupId;
 }
 
-function buildInventoryNotificationTarget(
+function buildNotificationTarget(
   record: AirtableRecord,
+  destinationTab: UsedGearWorkflowNotificationTarget['destinationTab'],
   sectionId: string,
-  groupParamName: 'workflowPendingReviewGroup' | 'workflowProgressGroup',
+  groupParamName?: 'workflowPendingReviewGroup' | 'workflowProgressGroup' | 'workflowLotTwoGroup' | 'workflowTestingQueueGroup' | 'workflowPhotographyQueueGroup' | 'workflowPreListingQueueGroup',
+  alwaysBuildSectionPath = false,
 ): UsedGearWorkflowNotificationTarget {
   const groupId = getNotificationGroupId(record);
+  const basePath = destinationTab === 'inventory'
+    ? '/inventory'
+    : destinationTab === 'jotform'
+      ? '/jotform'
+      : destinationTab === 'parking-lot-2'
+        ? '/parking-lot-2'
+        : destinationTab === 'testing-queue'
+          ? '/workflow/testing'
+          : destinationTab === 'photography-queue'
+            ? '/workflow/photography'
+            : destinationTab === 'pre-listing-queue'
+              ? '/workflow/pre-listing'
+        : null;
 
   return {
-    destinationTab: 'inventory',
+    destinationTab,
     recordId: groupId ? null : record.id,
     sectionId,
     groupId,
-    path: groupId ? `/inventory?${groupParamName}=${encodeURIComponent(groupId)}#${sectionId}` : null,
+    path: basePath
+      ? groupId && groupParamName
+        ? `${basePath}?${groupParamName}=${encodeURIComponent(groupId)}#${sectionId}`
+        : alwaysBuildSectionPath
+          ? `${basePath}#${sectionId}`
+          : null
+      : null,
   };
 }
 
@@ -567,7 +588,7 @@ export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGea
     if (status === PENDING_REVIEW_STATUS) {
       summary.counts.pendingReview += 1;
       actionableRecordIds.add(record.id);
-      summary.targets.pendingReview ??= buildInventoryNotificationTarget(record, 'used-gear-pending-review', 'workflowPendingReviewGroup');
+      summary.targets.pendingReview ??= buildNotificationTarget(record, 'jotform', 'used-gear-pending-review', 'workflowPendingReviewGroup', true);
       return;
     }
 
@@ -578,7 +599,7 @@ export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGea
     ) {
       summary.counts.processing += 1;
       actionableRecordIds.add(record.id);
-      summary.targets.processing ??= buildInventoryNotificationTarget(record, 'used-gear-progress-queue', 'workflowProgressGroup');
+      summary.targets.processing ??= buildNotificationTarget(record, 'parking-lot-2', 'used-gear-lot-two', 'workflowLotTwoGroup', true);
       return;
     }
 
@@ -587,12 +608,12 @@ export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGea
       if (!signoffs.testingSignedBy || !signoffs.testingSignedAt) {
         summary.counts.testing += 1;
         actionableRecordIds.add(record.id);
-        summary.targets.testing ??= buildInventoryNotificationTarget(record, 'used-gear-progress-queue', 'workflowProgressGroup');
+        summary.targets.testing ??= buildNotificationTarget(record, 'testing-queue', 'used-gear-testing-queue', 'workflowTestingQueueGroup', true);
       }
       if (!signoffs.photographySignedBy || !signoffs.photographySignedAt) {
         summary.counts.photography += 1;
         actionableRecordIds.add(record.id);
-        summary.targets.photography ??= buildInventoryNotificationTarget(record, 'used-gear-progress-queue', 'workflowProgressGroup');
+        summary.targets.photography ??= buildNotificationTarget(record, 'photography-queue', 'used-gear-photography-queue', 'workflowPhotographyQueueGroup', true);
       }
       return;
     }
@@ -600,7 +621,7 @@ export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGea
     if (status === AWAITING_PRE_LISTING_REVIEW_STATUS) {
       summary.counts.preListingReview += 1;
       actionableRecordIds.add(record.id);
-      summary.targets.preListingReview ??= buildInventoryNotificationTarget(record, 'used-gear-progress-queue', 'workflowProgressGroup');
+      summary.targets.preListingReview ??= buildNotificationTarget(record, 'pre-listing-queue', 'used-gear-pre-listing-queue', 'workflowPreListingQueueGroup', true);
       return;
     }
 

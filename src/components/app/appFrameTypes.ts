@@ -21,6 +21,7 @@ export interface AppFrameProps {
   shellRef?: Ref<HTMLElement>;
   currentUserLabel: string;
   tabs: AppTab[];
+  intakeTabs: AppTab[];
   ebayTabs: AppTab[];
   inventoryProcessingTabs: AppTab[];
   shopifyTabs: AppTab[];
@@ -42,4 +43,4 @@ export interface AppFrameProps {
   children: ReactNode;
 }
 
-export type OpenDropdown = 'pdf' | 'ebay' | 'inventory-processing' | 'shopify' | 'utilities' | 'notifications' | 'account' | null;
+export type OpenDropdown = 'pdf' | 'intake' | 'ebay' | 'inventory-processing' | 'shopify' | 'utilities' | 'notifications' | 'account' | null;

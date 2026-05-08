@@ -97,7 +97,7 @@ function App() {
     canAccessPage,
     users,
   });
-  const { loading, onRefresh, onExportCurrentPage, onExportAllPages, tabs, ebayNavTabs, inventoryProcessingNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
+  const { loading, onRefresh, onExportCurrentPage, onExportAllPages, tabs, intakeNavTabs, ebayNavTabs, inventoryProcessingNavTabs, shopifyNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
     activeTab,
     visibleTabs,
     workflowInventoryBadgeCount: workflowNotificationSummary.workflowQueueBadgeCount,
@@ -133,6 +133,7 @@ function App() {
   useActionGuidanceNotifications({
     canAccessPage: canAccessPage as (tab: Tab) => boolean,
     navigateToTab,
+    navigateToInventoryPostPublishBucket,
     onRefresh,
     approvalPending: approval.pending,
     shopifyApprovalPending: shopifyApproval.pending,
@@ -210,6 +211,7 @@ function App() {
           shellRef={shellRef}
           currentUserLabel={`${currentUser.name} · ${currentUser.role}`}
           tabs={tabs}
+          intakeTabs={intakeNavTabs}
           ebayTabs={ebayNavTabs}
           inventoryProcessingTabs={inventoryProcessingNavTabs}
           shopifyTabs={shopifyNavTabs}

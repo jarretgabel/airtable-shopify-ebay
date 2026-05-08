@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { UsedGearLotTwoSection } from '@/components/tabs/airtable/UsedGearLotTwoSection';
 import { UsedGearPendingReviewSection } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
-import { UsedGearTrashSection } from '@/components/tabs/airtable/UsedGearTrashSection';
 import type { JotformTabViewModel } from '@/app/appTabViewModels';
 import { formatAnswer } from '@/services/jotform';
 import { EmptySurface, ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
@@ -11,23 +9,18 @@ interface JotformTabProps {
   viewModel: JotformTabViewModel;
   currentUserName: string;
   onOpenIncomingGearForm: (recordId: string) => void;
-  onOpenTestingForm: (recordId: string) => void;
-  onOpenPhotosForm: (recordId: string) => void;
   onOpenWorkflowRecord: (recordId: string) => void;
 }
 
 const WORKFLOW_PENDING_REVIEW_SEARCH_PARAM = 'workflowPendingReviewSearch';
 const WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM = 'workflowPendingReviewCollapsedGroups';
 const WORKFLOW_PENDING_REVIEW_SORT_PARAM = 'workflowPendingReviewSort';
-const WORKFLOW_LOT_TWO_SEARCH_PARAM = 'workflowLotTwoSearch';
-const WORKFLOW_TRASH_SEARCH_PARAM = 'workflowTrashSearch';
+const WORKFLOW_PENDING_REVIEW_GROUP_PARAM = 'workflowPendingReviewGroup';
 
 export function JotformTab({
   viewModel,
   currentUserName,
   onOpenIncomingGearForm,
-  onOpenTestingForm,
-  onOpenPhotosForm,
   onOpenWorkflowRecord,
 }: JotformTabProps) {
   const location = useLocation();
@@ -43,17 +36,14 @@ export function JotformTab({
     () => submissions.filter((submission) => submission.new === '1').length,
     [submissions],
   );
-  const workflowLotTwoSearch = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    return params.get(WORKFLOW_LOT_TWO_SEARCH_PARAM) ?? '';
-  }, [location.search]);
-  const workflowTrashSearch = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    return params.get(WORKFLOW_TRASH_SEARCH_PARAM) ?? '';
-  }, [location.search]);
   const workflowPendingReviewSearch = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return params.get(WORKFLOW_PENDING_REVIEW_SEARCH_PARAM) ?? '';
+  }, [location.search]);
+  const workflowPendingReviewGroup = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const value = params.get(WORKFLOW_PENDING_REVIEW_GROUP_PARAM)?.trim() ?? '';
+    return value ? value : null;
   }, [location.search]);
   const workflowPendingReviewCollapsedGroups = useMemo(() => {
     const value = new URLSearchParams(location.search).get(WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM) ?? '';
@@ -139,28 +129,20 @@ export function JotformTab({
         onOpenGroupReview={(groupId) => navigate(`/jotform/review/${encodeURIComponent(groupId)}${location.search}`, { replace: false })}
         onOpenIncomingGearForm={onOpenIncomingGearForm}
         onOpenWorkflowRecord={onOpenWorkflowRecord}
+        focusedGroupId={workflowPendingReviewGroup}
+        onFocusedGroupIdChange={(groupId) => updateIntakeRouteState((params) => {
+          if (groupId) {
+            params.set(WORKFLOW_PENDING_REVIEW_GROUP_PARAM, groupId);
+          } else {
+            params.delete(WORKFLOW_PENDING_REVIEW_GROUP_PARAM);
+          }
+        }, '#used-gear-pending-review')}
         searchTerm={workflowPendingReviewSearch}
         onSearchTermChange={(value) => updateQueueSearch(WORKFLOW_PENDING_REVIEW_SEARCH_PARAM, value, '#used-gear-pending-review')}
         collapsedGroupIds={workflowPendingReviewCollapsedGroups}
         onCollapsedGroupIdsChange={updatePendingCollapsedGroups}
         sortMode={workflowPendingReviewSort}
         onSortModeChange={updatePendingSort}
-      />
-
-      <UsedGearLotTwoSection
-        onOpenIncomingGearForm={onOpenIncomingGearForm}
-        onOpenTestingForm={onOpenTestingForm}
-        onOpenPhotosForm={onOpenPhotosForm}
-        onOpenWorkflowRecord={onOpenWorkflowRecord}
-        searchTerm={workflowLotTwoSearch}
-        onSearchTermChange={(value) => updateQueueSearch(WORKFLOW_LOT_TWO_SEARCH_PARAM, value, '#used-gear-lot-two')}
-      />
-
-      <UsedGearTrashSection
-        currentUserName={currentUserName}
-        onOpenWorkflowRecord={onOpenWorkflowRecord}
-        searchTerm={workflowTrashSearch}
-        onSearchTermChange={(value) => updateQueueSearch(WORKFLOW_TRASH_SEARCH_PARAM, value, '#used-gear-trash')}
       />
 
       <div className="mt-3 flex flex-col gap-2 rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-sm md:flex-row md:items-center md:justify-between">

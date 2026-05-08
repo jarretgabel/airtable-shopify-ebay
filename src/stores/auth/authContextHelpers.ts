@@ -14,6 +14,7 @@ export function getCurrentUser(users: AppUser[], currentUserId: string | null): 
 export function canUserAccessPage(currentUser: AppUser | null, page: AppPage): boolean {
   if (!currentUser) return false;
   if (page === 'settings' || page === 'notifications' || page === 'incoming-gear' || page === 'testing' || page === 'photos') return true;
+  if ((page === 'testing-queue' || page === 'photography-queue' || page === 'pre-listing-queue') && currentUser.allowedPages.includes('inventory')) return true;
   if (currentUser.role === 'admin') return true;
   return currentUser.allowedPages.includes(page);
 }
@@ -21,7 +22,9 @@ export function canUserAccessPage(currentUser: AppUser | null, page: AppPage): b
 export function getAccessiblePages(currentUser: AppUser | null): AppPage[] {
   if (!currentUser) return [];
   if (currentUser.role === 'admin') return [...APP_PAGES];
-  return Array.from(new Set([...currentUser.allowedPages.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications' && page !== 'incoming-gear' && page !== 'testing' && page !== 'photos'), 'incoming-gear', 'testing', 'photos', 'settings', 'notifications']));
+  const basePages = currentUser.allowedPages.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications' && page !== 'incoming-gear' && page !== 'testing' && page !== 'photos');
+  const workflowStagePages: AppPage[] = currentUser.allowedPages.includes('inventory') ? ['testing-queue', 'photography-queue', 'pre-listing-queue'] : [];
+  return Array.from(new Set([...basePages, ...workflowStagePages, 'incoming-gear', 'testing', 'photos', 'settings', 'notifications']));
 }
 
 export function buildUserFromInput(input: CreateUserInput): { result?: CreateUserResult; user?: AppUser } {

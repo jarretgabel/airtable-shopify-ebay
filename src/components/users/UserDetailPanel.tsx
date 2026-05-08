@@ -1,4 +1,5 @@
-import { ASSIGNABLE_PAGES, AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
+import { type AppPage } from '@/auth/pages';
+import { UserPageAccessEditor } from '@/components/users/UserPageAccessEditor';
 import {
   USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS,
   type AppUser,
@@ -83,20 +84,15 @@ export function UserDetailPanel({
 
         <div>
           <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300">Accessible Pages</p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {ASSIGNABLE_PAGES.map((page) => (
-              <label key={`${selectedUser.id}-${page}`} className="inline-flex items-center gap-2 text-sm text-[var(--ink)]">
-                <input
-                  type="checkbox"
-                  className={checkboxClassName}
-                  checked={selectedUser.role === 'admin' ? true : selectedUser.allowedPages.includes(page)}
-                  disabled={selectedUser.role === 'admin'}
-                  onChange={() => onTogglePermission(page)}
-                />
-                <span>{PAGE_DEFINITIONS[page].label}</span>
-              </label>
-            ))}
-          </div>
+          <UserPageAccessEditor
+            selectedPages={selectedUser.role === 'admin' ? [] : selectedUser.allowedPages}
+            checkboxClassName={checkboxClassName}
+            disabled={selectedUser.role === 'admin'}
+            onTogglePage={onTogglePermission}
+          />
+          {selectedUser.role === 'admin' && (
+            <p className="mt-2 text-xs leading-5 text-[var(--muted)]">Admins keep full app access. Page groupings are shown here for reference only.</p>
+          )}
         </div>
 
         <div>

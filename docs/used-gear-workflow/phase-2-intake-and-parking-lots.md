@@ -47,23 +47,24 @@ This phase implements intake triage and queue visibility without yet changing th
 - Pending-review intake work can be shared quickly through a direct queue link from the app UI.
 
 ### Implemented Queue Operations
-- The former JotForm tab now acts as the Parking Lot 1 intake triage surface, embedding the used-gear pending review queue directly into the intake page while keeping the raw JotForm feed available as source-reference context.
-- The intake page now also includes a dedicated Parking Lot 2 queue section for accepted arrival-stage rows so staff can work awaiting-arrival, awaiting-SKU, and awaiting-missing-item records without scanning the broader progress queue.
-- The used-gear pending review section now includes a copy-link action that copies a direct link to the pending-review queue anchor inside Inventory for quick teammate handoff.
-- Pending-review search state now syncs into the Inventory URL so shared links preserve the active queue search.
-- Pending-review grouped submissions can now be collapsed, and that collapsed-group state also syncs into the Inventory URL so copied links preserve the current review layout.
+- The former JotForm tab now acts as the dedicated Parking Lot 1 intake triage surface, embedding the used-gear pending review queue directly into the page while keeping the raw JotForm feed available as source-reference context.
+- Parking Lot 2 now lives on its own dedicated app page so staff can work awaiting-arrival, awaiting-SKU, and awaiting-missing-item rows without scanning the broader progress queue.
+- Trash review now lives on its own dedicated app page so rejected intake work can be restored, re-qualified, or permanently deleted without competing with active intake triage.
+- The used-gear pending review section now includes a copy-link action that copies a direct link to the pending-review queue on Parking Lot 1 for quick teammate handoff.
+- Pending-review search state now syncs into the Parking Lot 1 URL so shared links preserve the active queue search.
+- Pending-review grouped submissions can now be collapsed, and that collapsed-group state also syncs into the Parking Lot 1 URL so copied links preserve the current review layout.
 - Pending-review operators can now collapse or expand every visible group in one action when sharing or resetting a review layout.
-- Pending-review sort mode now persists in the Inventory URL, and the active workflow-summary chips can clear pending-review search, sort, or collapsed-group state individually.
+- Pending-review sort mode now persists in the Parking Lot 1 URL, and the active workflow-summary chips can clear pending-review search, sort, collapsed-group state, or group focus individually.
 - Pending-review acceptance now requires qualification notes before a row can leave Parking Lot 1, and staff must choose the correct Lot 2 destination (`Awaiting Arrival`, `Arrived, Awaiting SKU`, or `Arrived, Awaiting Missing Item`) at acceptance time instead of relying on one hardcoded route.
 - Parking Lot 1 queue cards now surface offer amount, paid amount, confirmed grand total, and the acceptance gate status so staff can see why a row is or is not ready for Lot 2.
-- The Parking Lot 1 page now also includes a dedicated trash-review section for active trash rows so rejected intake work can be reviewed without leaving the intake surface.
 - The manual-entry Incoming Gear form now creates new rows through the used-gear workflow source, identifies them as `Manual Entry`, and lets staff route them either into Parking Lot 1 review or directly into Lot 2 accepted-arrival states.
 - Manual entry now captures customer-reference intake notes for cosmetic, functional, inclusion, and submitted-photo context so app-owned intake rows can mirror the core JotForm information model more closely before downstream staff corrections happen.
-- Parking Lot 2 and trash search filters now persist in the `/jotform` URL, so copied queue links preserve the current intake search context on those sections the same way the Inventory workflow views already do.
+- Parking Lot 2 and trash search filters now persist in their dedicated page URLs, so copied queue links preserve the current intake search context without forcing staff back through Parking Lot 1.
 - Parking Lot 1 now includes a dedicated grouped review page at `/jotform/review/:groupId` where staff can save item-level offer and paid amounts, apply equal-split grand-total allocation, switch to manual allocation override, and batch-accept the entire group into Lot 2.
 - Pending-review sorting now explicitly supports arrival-date and make/model ordering on top of the existing pickup/submission grouping behavior.
 - Parking Lot 1 search, collapse state, and sort mode now persist in the `/jotform` URL so copied intake links reopen the page in the same triage configuration and grouped-review links preserve the current route-state context.
-- Parking Lot 2 now supports downstream activation by either selecting a queued row or entering an exact SKU, with direct jumps into Incoming Gear, Testing, Photos, or Workflow Detail from the intake page.
+- Parking Lot 2 now supports downstream activation by either selecting a queued row or entering an exact SKU, with direct jumps into Incoming Gear, Testing, Photos, or Workflow Detail from its dedicated page.
+- Parking Lot 2 queue links can now focus one accepted intake group directly on the dedicated Parking Lot 2 page.
 - Trash review now supports restoring a row to Parking Lot 1, re-qualifying it back into Lot 2 with an explicit accepted route and qualification notes, or permanently deleting it when cleanup is final.
 
 ### Relevant Files

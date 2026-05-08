@@ -29,7 +29,7 @@ This phase carries the authoritative item record through processing with custome
 - Updated Incoming Gear form behavior.
 - Updated Testing form behavior.
 - Updated Photos form behavior.
-- Used-gear workflow progress queue and workflow detail page inside the inventory surface.
+- Used-gear workflow progress queue, dedicated testing/photography queue pages, and workflow detail page.
 - Team-specific notification routing between stages.
 
 ### Exit Criteria
@@ -44,6 +44,7 @@ This phase carries the authoritative item record through processing with custome
 
 ### Implemented Queue Operations
 - The used-gear processing and stage queue now includes a copy-link action that copies a direct link to the workflow progress queue anchor inside Inventory for quick teammate handoff.
+- Testing, photography, and pre-listing now also have dedicated queue pages with their own URL-backed search, sort, collapse, and focused-group state.
 - Progress-queue search state now syncs into the Inventory URL so shared links preserve the active queue search.
 - Progress-queue grouped submissions can now be collapsed, and that collapsed-group state also syncs into the Inventory URL so copied links preserve the current working layout.
 - Progress-queue operators can now collapse or expand every visible group in one action when sharing or restoring a working layout.
@@ -65,6 +66,7 @@ This phase carries the authoritative item record through processing with custome
 - `/Users/user/Sites/airtable-shopify-ebay/src/components/tabs/PhotosFormTab.tsx`
 - `/Users/user/Sites/airtable-shopify-ebay/src/services/photosForm.ts`
 - `/Users/user/Sites/airtable-shopify-ebay/src/components/tabs/UsedGearWorkflowRecordPage.tsx`
+- `/Users/user/Sites/airtable-shopify-ebay/src/components/tabs/UsedGearWorkflowQueueTab.tsx`
 - `/Users/user/Sites/airtable-shopify-ebay/src/components/tabs/airtable/UsedGearWorkflowProgressSection.tsx`
 - `/Users/user/Sites/airtable-shopify-ebay/src/services/usedGearQueue.ts`
 - `/Users/user/Sites/airtable-shopify-ebay/src/app/useActionGuidanceNotifications.ts`

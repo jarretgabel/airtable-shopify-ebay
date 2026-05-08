@@ -31,6 +31,9 @@ const MarketTab = lazy(async () => ({ default: (await import('@/components/tabs/
 const PhotosFormTab = lazy(async () => ({ default: (await import('@/components/tabs/PhotosFormTab')).PhotosFormTab }));
 const ShopifyTab = lazy(async () => ({ default: (await import('@/components/tabs/ShopifyTab')).ShopifyTab }));
 const TestingFormTab = lazy(async () => ({ default: (await import('@/components/tabs/TestingFormTab')).TestingFormTab }));
+const UsedGearLotTwoTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoTab')).UsedGearLotTwoTab }));
+const UsedGearTrashTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashTab')).UsedGearTrashTab }));
+const UsedGearWorkflowQueueTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearWorkflowQueueTab')).UsedGearWorkflowQueueTab }));
 
 function TabLoadingFallback({ tabLabel }: { tabLabel: string }) {
   return (
@@ -65,6 +68,16 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
       return 'Shopify approval queue';
     case 'jotform':
       return 'JotForm';
+    case 'parking-lot-2':
+      return 'Parking Lot 2';
+    case 'trash-review':
+      return 'Trash Review';
+    case 'testing-queue':
+      return 'Testing queue';
+    case 'photography-queue':
+      return 'Photography queue';
+    case 'pre-listing-queue':
+      return 'Pre-listing queue';
     case 'market':
       return 'market research';
     case 'users':
@@ -428,9 +441,60 @@ export function AppTabContent({
             viewModel={jotformViewModel}
             currentUserName={currentUserName}
             onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+            onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+          />
+        );
+      case 'parking-lot-2':
+        return (
+          <UsedGearLotTwoTab
+            currentUserName={currentUserName}
+            onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
             onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
             onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
             onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+          />
+        );
+      case 'trash-review':
+        return (
+          <UsedGearTrashTab
+            currentUserName={currentUserName}
+            onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+          />
+        );
+      case 'testing-queue':
+        return (
+          <UsedGearWorkflowQueueTab
+            queueMode="testing"
+            currentUserName={currentUserName}
+            onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+            onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
+            onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
+            onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+            onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
+          />
+        );
+      case 'photography-queue':
+        return (
+          <UsedGearWorkflowQueueTab
+            queueMode="photography"
+            currentUserName={currentUserName}
+            onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+            onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
+            onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
+            onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+            onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
+          />
+        );
+      case 'pre-listing-queue':
+        return (
+          <UsedGearWorkflowQueueTab
+            queueMode="pre-listing"
+            currentUserName={currentUserName}
+            onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+            onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
+            onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
+            onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+            onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
           />
         );
       default:

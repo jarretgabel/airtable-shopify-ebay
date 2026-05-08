@@ -56,11 +56,11 @@ describe('useUsedGearWorkflowNotifications', () => {
       },
       targets: {
         pendingReview: {
-          destinationTab: 'inventory',
+          destinationTab: 'jotform',
           recordId: null,
           sectionId: 'used-gear-pending-review',
           groupId: 'pickup:pickup-1',
-          path: '/inventory?workflowPendingReviewGroup=pickup%3Apickup-1#used-gear-pending-review',
+          path: '/jotform?workflowPendingReviewGroup=pickup%3Apickup-1#used-gear-pending-review',
         },
         processing: null,
         testing: null,
@@ -112,7 +112,7 @@ describe('useUsedGearWorkflowNotifications', () => {
     });
 
     expect(onSummaryChange).toHaveBeenCalledWith(expect.objectContaining({ workflowQueueBadgeCount: 1 }));
-    expect(navigateToPath).toHaveBeenCalledWith('/inventory?workflowPendingReviewGroup=pickup%3Apickup-1#used-gear-pending-review');
+    expect(navigateToPath).toHaveBeenCalledWith('/jotform?workflowPendingReviewGroup=pickup%3Apickup-1#used-gear-pending-review');
     expect(navigateToUsedGearWorkflowRecord).not.toHaveBeenCalled();
     expect(navigateToInventorySection).not.toHaveBeenCalled();
     expect(navigateToTab).not.toHaveBeenCalled();

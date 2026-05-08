@@ -304,6 +304,29 @@ async function main() {
 
       const requestUrl = new URL(request.url, `http://${request.headers.host || '127.0.0.1'}`);
 
+      if (request.method.toUpperCase() === 'GET' && requestUrl.pathname === '/') {
+        const origin = getResponseOrigin(request);
+        response.writeHead(200, {
+          'content-type': 'application/json',
+          ...(origin
+            ? {
+                'access-control-allow-origin': origin,
+                'access-control-allow-credentials': 'true',
+                vary: 'origin',
+              }
+            : {}),
+        });
+        response.end(JSON.stringify({
+          ok: true,
+          service: 'local-api',
+          message: 'Local API is running. Open the frontend on http://127.0.0.1:3000 and let Vite proxy /api requests here.',
+          frontendOrigin: 'http://127.0.0.1:3000',
+          apiPrefix: '/api',
+          healthUrl: `http://127.0.0.1:${defaultPort}/health`,
+        }));
+        return;
+      }
+
       if (request.method.toUpperCase() === 'GET' && requestUrl.pathname === '/health') {
         const origin = getResponseOrigin(request);
         response.writeHead(200, {

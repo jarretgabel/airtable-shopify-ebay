@@ -44,13 +44,13 @@ function buildNotificationCopy(eventKey: UsedGearWorkflowNotificationEvent, coun
       return {
         tone: 'warning' as const,
         title: 'Used gear pending review queue',
-        message: `${pluralize(count, 'row')} ${count === 1 ? 'is' : 'are'} awaiting intake review in Inventory.`,
+        message: `${pluralize(count, 'row')} ${count === 1 ? 'is' : 'are'} awaiting intake review in Parking Lot 1.`,
       };
     case 'processing':
       return {
         tone: 'info' as const,
         title: 'Used gear processing queue',
-        message: `${pluralize(count, 'row')} ${count === 1 ? 'is' : 'are'} waiting for processing handoff.`,
+        message: `${pluralize(count, 'row')} ${count === 1 ? 'is' : 'are'} waiting in Parking Lot 2 for arrival-stage handling.`,
       };
     case 'testing':
       return {
@@ -88,7 +88,7 @@ function buildNotificationAction(
   navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void,
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void,
 ) {
-  if (target?.destinationTab === 'inventory' && target.path) {
+  if (target?.path) {
     const targetPath = target.path;
     return {
       actionLabel: target.groupId ? 'Open Queue Group' : 'Open Queue Section',
@@ -120,6 +120,41 @@ function buildNotificationAction(
     };
   }
 
+  if (eventKey === 'pendingReview') {
+    return {
+      actionLabel: 'Open Parking Lot 1',
+      onAction: () => navigateToTab('jotform'),
+    };
+  }
+
+  if (eventKey === 'processing') {
+    return {
+      actionLabel: 'Open Parking Lot 2',
+      onAction: () => navigateToTab('parking-lot-2'),
+    };
+  }
+
+  if (eventKey === 'testing') {
+    return {
+      actionLabel: 'Open Testing Queue',
+      onAction: () => navigateToTab('testing-queue'),
+    };
+  }
+
+  if (eventKey === 'photography') {
+    return {
+      actionLabel: 'Open Photography Queue',
+      onAction: () => navigateToTab('photography-queue'),
+    };
+  }
+
+  if (eventKey === 'preListingReview') {
+    return {
+      actionLabel: 'Open Pre-Listing Queue',
+      onAction: () => navigateToTab('pre-listing-queue'),
+    };
+  }
+
   return eventKey === 'approvedForPublish'
     ? { actionLabel: 'Open Listings', onAction: () => navigateToTab('listings') }
     : { actionLabel: 'Open Inventory', onAction: () => navigateToTab('inventory') };
@@ -138,12 +173,19 @@ export function useUsedGearWorkflowNotifications({
 }: UsedGearWorkflowNotificationParams): void {
   const upsertByKey = useNotificationStore((state) => state.upsertByKey);
   const dismissByKey = useNotificationStore((state) => state.dismissByKey);
+  const canAccessWorkflowSurfaces = canAccessPage('jotform')
+    || canAccessPage('parking-lot-2')
+    || canAccessPage('inventory')
+    || canAccessPage('testing-queue')
+    || canAccessPage('photography-queue')
+    || canAccessPage('pre-listing-queue')
+    || canAccessPage('listings');
   const workflowPreferenceSignature = USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS
     .map((option) => `${option.key}:${currentUser?.notificationPreferences.workflowEvents[option.key] ? '1' : '0'}`)
     .join('|');
 
   useEffect(() => {
-    if (!enabled || !currentUser || !canAccessPage('inventory')) {
+    if (!enabled || !currentUser || !canAccessWorkflowSurfaces) {
       onSummaryChange?.(createEmptyUsedGearWorkflowNotificationSummary());
       USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS.forEach((option) => {
         dismissByKey(WORKFLOW_NOTIFICATION_KEYS[option.key]);
@@ -214,5 +256,5 @@ export function useUsedGearWorkflowNotifications({
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [canAccessPage, currentUser, dismissByKey, enabled, navigateToInventorySection, navigateToListingsRecord, navigateToPath, navigateToTab, navigateToUsedGearWorkflowRecord, onSummaryChange, upsertByKey, workflowPreferenceSignature]);
+  }, [canAccessWorkflowSurfaces, currentUser, dismissByKey, enabled, navigateToInventorySection, navigateToListingsRecord, navigateToPath, navigateToTab, navigateToUsedGearWorkflowRecord, onSummaryChange, upsertByKey, workflowPreferenceSignature]);
 }
