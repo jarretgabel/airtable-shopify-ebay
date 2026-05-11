@@ -31,6 +31,7 @@ interface ApprovalFormFieldsProps {
   showOnlyEbayAdvancedOptions?: boolean;
   allFieldNames: string[];
   writableFieldNames?: string[];
+  readOnlyFieldNames?: string[];
   requiredFieldNames?: string[];
   shopifyRequiredFieldNames?: string[];
   ebayRequiredFieldNames?: string[];
@@ -64,6 +65,7 @@ export function ApprovalFormFields({
   showOnlyEbayAdvancedOptions = false,
   allFieldNames,
   writableFieldNames = [],
+  readOnlyFieldNames = [],
   requiredFieldNames = [],
   shopifyRequiredFieldNames = [],
   ebayRequiredFieldNames = [],
@@ -246,6 +248,7 @@ export function ApprovalFormFields({
     suppressImageScalarFields,
     hasCanonicalConditionField,
     testingSectionFieldNames,
+    readOnlyFieldNames,
     formValues,
     fieldKinds,
     saving,

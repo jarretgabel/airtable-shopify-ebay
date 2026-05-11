@@ -174,6 +174,8 @@ export function EbaySnapshotRecordPage({
 
       <ListingApprovalWorkflowProcessCard
         summary={workflowSummary}
+        eyebrow="Workflow Match"
+        title="Workflow Status For This eBay Snapshot"
         loading={workflowLoading}
         error={workflowError}
         description="Cross-referenced from the used-gear workflow by SKU so you can see where this read-only eBay snapshot sits in the intake-to-listing pipeline."

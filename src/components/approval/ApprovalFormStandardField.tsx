@@ -56,6 +56,7 @@ interface ApprovalFormStandardFieldProps {
   suppressImageScalarFields: boolean;
   hasCanonicalConditionField: boolean;
   testingSectionFieldNames: string[];
+  readOnlyFieldNames: string[];
   formValues: Record<string, string>;
   fieldKinds: Record<string, 'boolean' | 'number' | 'json' | 'text'>;
   saving: boolean;
@@ -100,6 +101,7 @@ export function ApprovalFormStandardField({
   suppressImageScalarFields,
   hasCanonicalConditionField,
   testingSectionFieldNames,
+  readOnlyFieldNames,
   formValues,
   fieldKinds,
   saving,
@@ -149,7 +151,8 @@ export function ApprovalFormStandardField({
   const defaultValue = allowAdvancedOptionField ? getEbayAdvancedOptionDefaultValue(fieldName) : '';
   const value = storedValue || defaultValue;
   const kind = fieldKinds[fieldName] ?? 'text';
-  const readOnlyField = isReadOnlyApprovalField(fieldName);
+  const readOnlyField = isReadOnlyApprovalField(fieldName)
+    || readOnlyFieldNames.some((readOnlyFieldName) => readOnlyFieldName.trim().toLowerCase() === fieldName.trim().toLowerCase());
   const inputDisabled = saving || readOnlyField;
   const isListingFormatField = isEbayFormatField(fieldName);
   const isListingDurationField = isEbayListingDurationField(fieldName);

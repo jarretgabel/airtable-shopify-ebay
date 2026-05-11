@@ -2,7 +2,6 @@
 
 import {
   buildUsedGearConcurrentStageSignoffs,
-  deriveUsedGearIntakeDecision,
   deriveUsedGearNextTeams,
   getUsedGearWorkflowStatus,
 } from '@/services/usedGearWorkflow';
@@ -12,22 +11,20 @@ import type { AirtableRecord } from '@/types/airtable';
 
 export interface ListingApprovalWorkflowSummaryData {
   workflowStatus: string;
-  workflowIntakeDecision: string;
   workflowNextTeam: string;
   timeline: UsedGearWorkflowTimelineEntry[];
-  resolvedTitle: string;
-  resolvedDescription: string;
   resolvedPrice: string;
-  priceSourceFieldName: string | null;
   preListingReviewedBy: string;
 }
 
 interface ListingApprovalWorkflowSummaryProps {
   summary: ListingApprovalWorkflowSummaryData;
+  timelineOnly?: boolean;
 }
 
 export interface ListingApprovalWorkflowProcessCardProps {
   summary: ListingApprovalWorkflowSummaryData | null;
+  timelineOnly?: boolean;
   eyebrow?: string;
   title?: string;
   description?: string;
@@ -382,13 +379,9 @@ export function buildListingApprovalWorkflowSummaryData(record: AirtableRecord):
 
   return {
     workflowStatus,
-    workflowIntakeDecision: deriveUsedGearIntakeDecision(workflowStatus),
     workflowNextTeam: nextTeams.join(', '),
     timeline: buildUsedGearWorkflowTimeline(record),
-    resolvedTitle: readiness.title,
-    resolvedDescription: readiness.description,
     resolvedPrice: readiness.price,
-    priceSourceFieldName: readiness.priceFieldName,
     preListingReviewedBy: typeof record.fields['Pre-Listing Reviewed By'] === 'string'
       ? record.fields['Pre-Listing Reviewed By'].trim()
       : '',
@@ -397,6 +390,7 @@ export function buildListingApprovalWorkflowSummaryData(record: AirtableRecord):
 
 export function ListingApprovalWorkflowProcessCard({
   summary,
+  timelineOnly = false,
   eyebrow = 'Workflow Review Context',
   title = 'Used-Gear Intake And Listing Process',
   description = 'Workflow status, ownership, and milestone progress for this listing from intake through shipment.',
@@ -465,9 +459,183 @@ export function ListingApprovalWorkflowProcessCard({
   const activeIndex = getActiveTimelineIndex(summary.timeline, summary.workflowStatus);
   const activeEntry = summary.timeline[activeIndex] ?? null;
   const statusPresentation = getWorkflowStatusPresentation(summary.workflowStatus);
-  const progressPercent = summary.timeline.length > 0
-    ? Math.max((completedCount / summary.timeline.length) * 100, completedCount > 0 ? 8 : 0)
-    : 0;
+
+  const milestonesContent = (
+    <div className={timelineOnly ? '' : 'mt-4'}>
+      {!timelineOnly ? (
+        <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Milestones</p>
+      ) : null}
+      <div className={timelineOnly ? '' : 'mt-3'}>
+        <div className="flex w-full items-center">
+          <div
+            className="relative grid min-w-0 flex-1 items-center"
+            style={{
+              gridTemplateColumns: summary.timeline
+                .map((_, index) => (index === activeIndex ? 'auto' : 'minmax(0, 1fr)'))
+                .join(' '),
+            }}
+          >
+            {summary.timeline.map((entry, index) => {
+              const isCompleted = entry.status === 'completed' || index < activeIndex;
+              const isActive = index === activeIndex;
+              const isInferredCompleted = isCompleted && entry.status !== 'completed';
+              const completionGuidance = getTimelineCompletionGuidance(entry.id);
+              const isImmediatelyBeforeActive = index === activeIndex - 1;
+              const isImmediatelyAfterActive = index === activeIndex + 1;
+              const showLeftConnector = index > 0 && !isActive;
+              const showRightConnector = index < summary.timeline.length - 1 && !isActive;
+              const updatedLabel = isInferredCompleted
+                ? 'Completed via current workflow status'
+                : formatTimelineTimestamp(entry.timestamp);
+              const detailSummary = [
+                `${isCompleted ? 'Completed' : isActive ? 'Current' : 'Pending'} milestone`,
+                updatedLabel,
+                entry.actor ? `By ${entry.actor}` : null,
+              ].filter(Boolean).join(' • ');
+
+              return (
+                <div
+                  key={entry.id}
+                  className={[
+                    'relative z-10 flex justify-center',
+                    isActive ? '' : 'min-w-0',
+                  ].join(' ')}
+                >
+                  {showLeftConnector ? (
+                    <span
+                      aria-hidden="true"
+                      className={[
+                        'pointer-events-none absolute left-0 top-1/2 hidden h-0.5 -translate-y-1/2 rounded-full bg-[var(--line)]/70 md:block',
+                        isImmediatelyAfterActive ? 'w-[calc(50%-0.625rem)]' : 'w-1/2',
+                      ].join(' ')}
+                    />
+                  ) : null}
+                  {showRightConnector ? (
+                    <span
+                      aria-hidden="true"
+                      className={[
+                        'pointer-events-none absolute right-0 top-1/2 hidden h-0.5 -translate-y-1/2 rounded-full bg-[var(--line)]/70 md:block',
+                        isImmediatelyBeforeActive ? 'w-[calc(50%-0.625rem)]' : 'w-1/2',
+                      ].join(' ')}
+                    />
+                  ) : null}
+
+                  {isActive ? (
+                    <div
+                      tabIndex={0}
+                      title={detailSummary}
+                      aria-label={`Milestone ${entry.label}`}
+                      className={[
+                        'group relative inline-flex shrink-0 items-center gap-3 rounded-xl border px-3 py-2 outline-none transition-colors',
+                        'focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-blue-400/30',
+                        getTimelineCardClassName(entry, index, activeIndex),
+                      ].join(' ')}
+                    >
+                      {index > 0 ? (
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute right-full top-1/2 hidden h-0.5 w-4 -translate-y-1/2 md:block"
+                          style={{ backgroundColor: 'color-mix(in srgb, var(--line) 70%, transparent)' }}
+                        />
+                      ) : null}
+                      {index < summary.timeline.length - 1 ? (
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute left-full top-1/2 hidden h-0.5 w-4 -translate-y-1/2 md:block"
+                          style={{ backgroundColor: 'color-mix(in srgb, var(--line) 70%, transparent)' }}
+                        />
+                      ) : null}
+                      <span
+                        aria-hidden="true"
+                        className={[
+                          'inline-flex h-3.5 w-3.5 shrink-0 rounded-full border-2 transition-colors',
+                          getTimelineDotClassName(entry, index, activeIndex),
+                        ].join(' ')}
+                      />
+                      <div className="min-w-0">
+                        <p className="m-0 truncate text-sm font-semibold text-[var(--ink)]">{entry.label}</p>
+                      </div>
+
+                      <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-xl border border-[var(--line)] bg-[var(--panel)]/95 px-3 py-3 opacity-0 shadow-[0_20px_45px_rgba(0,0,0,0.35)] backdrop-blur transition md:block group-hover:pointer-events-auto group-hover:opacity-100 group-focus:pointer-events-auto group-focus:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                        <div>
+                          <p className="m-0 mt-1 text-sm font-semibold text-[var(--ink)]">{entry.label}</p>
+                        </div>
+                        <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Updated</p>
+                        <p className="m-0 mt-1 text-sm text-[var(--ink)]">{updatedLabel}</p>
+                        {entry.actor ? (
+                          <p className="m-0 mt-2 text-xs uppercase tracking-[0.08em] text-[var(--muted)]">By {entry.actor}</p>
+                        ) : null}
+                        <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">How To Complete</p>
+                        <p className="m-0 mt-1 text-sm leading-6 text-[var(--ink)]">{completionGuidance}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      tabIndex={0}
+                      title={detailSummary}
+                      aria-label={`Milestone ${entry.label}`}
+                      className={[
+                        'group relative inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border outline-none transition-colors',
+                        'focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-blue-400/30',
+                        getTimelineCardClassName(entry, index, activeIndex),
+                      ].join(' ')}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={[
+                          'inline-flex h-3 w-3 rounded-full border-2 transition-colors',
+                          getTimelineDotClassName(entry, index, activeIndex),
+                        ].join(' ')}
+                      />
+                      <span className="sr-only">{entry.label} {isCompleted ? 'Completed' : 'Pending'}</span>
+
+                      <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-64 -translate-x-1/2 rounded-xl border border-[var(--line)] bg-[var(--panel)]/95 px-3 py-3 opacity-0 shadow-[0_20px_45px_rgba(0,0,0,0.35)] backdrop-blur transition md:block group-hover:pointer-events-auto group-hover:opacity-100 group-focus:pointer-events-auto group-focus:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="m-0 mt-1 text-sm font-semibold text-[var(--ink)]">{entry.label}</p>
+                          </div>
+                          <span className={[
+                            'shrink-0 rounded-full border px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em]',
+                            getTimelineStatusBadgeClassName(isCompleted, false),
+                          ].join(' ')}>
+                            {isCompleted ? 'Completed' : 'Pending'}
+                          </span>
+                        </div>
+                        <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Updated</p>
+                        <p className="m-0 mt-1 text-sm text-[var(--ink)]">{updatedLabel}</p>
+                        {entry.actor ? (
+                          <p className="m-0 mt-2 text-xs uppercase tracking-[0.08em] text-[var(--muted)]">By {entry.actor}</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {activeEntry ? (
+          <p className="m-0 mt-2 text-xs text-[var(--muted)] md:hidden">
+            Current stage: <span className="font-semibold text-[var(--ink)]">{activeEntry.label}</span>
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  if (timelineOnly) {
+    return (
+      <section className="mb-4 rounded-2xl border border-[var(--line)] bg-white/5 p-4">
+        <div>
+          <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow Timeline</p>
+          <p className="m-0 mt-2 text-sm leading-6 text-[var(--muted)]">
+            Milestone progress for the linked used-gear workflow, from intake through final fulfillment.
+          </p>
+        </div>
+        {milestonesContent}
+      </section>
+    );
+  }
 
   return (
     <section className="mb-4 rounded-2xl border border-[var(--line)] bg-white/5 p-4">
@@ -487,16 +655,10 @@ export function ListingApprovalWorkflowProcessCard({
 
       <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Process Overview</p>
-              <h5 className="m-0 mt-2 text-sm font-semibold text-[var(--ink)]">{completedCount} of {summary.timeline.length} milestones completed</h5>
-              <p className="m-0 mt-2 text-sm text-[var(--ink)]">{statusPresentation.statusLabel}</p>
-              <p className="m-0 mt-1 max-w-2xl text-sm leading-6 text-[var(--muted)]">{statusPresentation.statusDescription}</p>
-            </div>
-            <span className="rounded-full border border-[var(--line)] bg-white/5 px-2.5 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">
-              Intake {summary.workflowIntakeDecision}
-            </span>
+          <div>
+            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Process Overview</p>
+            <h5 className="m-0 mt-2 text-sm font-semibold text-[var(--ink)]">{statusPresentation.statusLabel}</h5>
+            <p className="m-0 mt-1 max-w-2xl text-sm leading-6 text-[var(--muted)]">{statusPresentation.statusDescription}</p>
           </div>
           {statusPresentation.marketplaceLabels.length > 0 ? (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -513,30 +675,24 @@ export function ListingApprovalWorkflowProcessCard({
               ))}
             </div>
           ) : null}
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-black/25">
-            <div className={[
-              'h-full rounded-full transition-[width]',
-              statusPresentation.progressClassName,
-            ].join(' ')} style={{ width: `${progressPercent}%` }} />
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-[var(--line)] bg-white/5 px-3 py-3 text-sm text-[var(--muted)]">
-              <div>Current Stage</div>
-              <div className="mt-1 font-semibold text-[var(--ink)]">{summary.workflowStatus}</div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <div className="rounded-full border border-[var(--line)] bg-white/5 px-3 py-1.5 text-sm text-[var(--muted)]">
+              <span className="font-semibold text-[var(--ink)]">{completedCount}/{summary.timeline.length}</span> milestones
             </div>
-            <div className="rounded-xl border border-[var(--line)] bg-white/5 px-3 py-3 text-sm text-[var(--muted)]">
-              <div>{statusPresentation.nextTeamLabel}</div>
-              <div className="mt-1 font-semibold text-[var(--ink)]">{summary.workflowNextTeam || 'No open handoff'}</div>
+            <div className="rounded-full border border-[var(--line)] bg-white/5 px-3 py-1.5 text-sm text-[var(--muted)]">
+              <span className="text-[var(--muted)]">Next:</span>{' '}
+              <span className="font-semibold text-[var(--ink)]">{summary.workflowNextTeam || 'No open handoff'}</span>
             </div>
-            <div className="rounded-xl border border-[var(--line)] bg-white/5 px-3 py-3 text-sm text-[var(--muted)]">
-              <div>Resolved Price</div>
-              <div className="mt-1 font-semibold text-[var(--ink)]">{summary.resolvedPrice || 'Missing price'}</div>
-              <div className="mt-1 text-xs uppercase tracking-[0.08em]">{summary.priceSourceFieldName || 'No price field found'}</div>
+            <div className="rounded-full border border-[var(--line)] bg-white/5 px-3 py-1.5 text-sm text-[var(--muted)]">
+              <span className="text-[var(--muted)]">Price:</span>{' '}
+              <span className="font-semibold text-[var(--ink)]">{summary.resolvedPrice || 'Missing price'}</span>
             </div>
-            <div className="rounded-xl border border-[var(--line)] bg-white/5 px-3 py-3 text-sm text-[var(--muted)]">
-              <div>Pre-Listing Reviewer</div>
-              <div className="mt-1 font-semibold text-[var(--ink)]">{summary.preListingReviewedBy || 'Not signed yet'}</div>
-            </div>
+            {summary.preListingReviewedBy ? (
+              <div className="rounded-full border border-[var(--line)] bg-white/5 px-3 py-1.5 text-sm text-[var(--muted)]">
+                <span className="text-[var(--muted)]">Reviewer:</span>{' '}
+                <span className="font-semibold text-[var(--ink)]">{summary.preListingReviewedBy}</span>
+              </div>
+            ) : null}
           </div>
           {primaryActionLabel && onPrimaryAction ? (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -561,180 +717,19 @@ export function ListingApprovalWorkflowProcessCard({
         </div>
 
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-          <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Resolved Listing Content</p>
+          <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Listing Readiness</p>
           <div className="mt-3 rounded-xl border border-[var(--line)] bg-white/5 px-3 py-3 text-sm text-[var(--muted)]">
-            <div>Resolved Title</div>
-            <div className="mt-1 font-semibold text-[var(--ink)]">{summary.resolvedTitle || 'Missing title'}</div>
-          </div>
-          <div className="mt-3 rounded-xl border border-[var(--line)] bg-white/5 px-3 py-3 text-sm text-[var(--muted)]">
-            <div className="font-semibold text-[var(--ink)]">Resolved Description</div>
-            <div className="mt-1 line-clamp-6 whitespace-pre-wrap leading-6">{summary.resolvedDescription || 'No description resolved yet.'}</div>
+            <div className="text-[var(--muted)]">Resolved price</div>
+            <div className="mt-1 font-semibold text-[var(--ink)]">{summary.resolvedPrice || 'Missing price'}</div>
           </div>
         </div>
       </div>
 
-      <div className="mt-4">
-        <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Milestones</p>
-        <div className="mt-3">
-          <div className="flex w-full items-center">
-            <div
-              className="relative grid min-w-0 flex-1 items-center"
-              style={{
-                gridTemplateColumns: summary.timeline
-                  .map((_, index) => (index === activeIndex ? 'auto' : 'minmax(0, 1fr)'))
-                  .join(' '),
-              }}
-            >
-              {summary.timeline.map((entry, index) => {
-                const isCompleted = entry.status === 'completed' || index < activeIndex;
-                const isActive = index === activeIndex;
-                const isInferredCompleted = isCompleted && entry.status !== 'completed';
-                const completionGuidance = getTimelineCompletionGuidance(entry.id);
-                const isImmediatelyBeforeActive = index === activeIndex - 1;
-                const isImmediatelyAfterActive = index === activeIndex + 1;
-                const showLeftConnector = index > 0 && !isActive;
-                const showRightConnector = index < summary.timeline.length - 1 && !isActive;
-                const updatedLabel = isInferredCompleted
-                  ? 'Completed via current workflow status'
-                  : formatTimelineTimestamp(entry.timestamp);
-                const detailSummary = [
-                  `${isCompleted ? 'Completed' : isActive ? 'Current' : 'Pending'} milestone`,
-                  updatedLabel,
-                  entry.actor ? `By ${entry.actor}` : null,
-                ].filter(Boolean).join(' • ');
-
-                return (
-                  <div
-                    key={entry.id}
-                    className={[
-                      'relative z-10 flex justify-center',
-                      isActive ? '' : 'min-w-0',
-                    ].join(' ')}
-                  >
-                    {showLeftConnector ? (
-                      <span
-                        aria-hidden="true"
-                        className={[
-                          'pointer-events-none absolute left-0 top-1/2 hidden h-0.5 -translate-y-1/2 rounded-full bg-[var(--line)]/70 md:block',
-                          isImmediatelyAfterActive ? 'w-[calc(50%-0.625rem)]' : 'w-1/2',
-                        ].join(' ')}
-                      />
-                    ) : null}
-                    {showRightConnector ? (
-                      <span
-                        aria-hidden="true"
-                        className={[
-                          'pointer-events-none absolute right-0 top-1/2 hidden h-0.5 -translate-y-1/2 rounded-full bg-[var(--line)]/70 md:block',
-                          isImmediatelyBeforeActive ? 'w-[calc(50%-0.625rem)]' : 'w-1/2',
-                        ].join(' ')}
-                      />
-                    ) : null}
-
-                    {isActive ? (
-                      <div
-                        tabIndex={0}
-                        title={detailSummary}
-                        aria-label={`Milestone ${entry.label}`}
-                        className={[
-                          'group relative inline-flex shrink-0 items-center gap-3 rounded-xl border px-3 py-2 outline-none transition-colors',
-                          'focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-blue-400/30',
-                          getTimelineCardClassName(entry, index, activeIndex),
-                        ].join(' ')}
-                      >
-                        {index > 0 ? (
-                          <span
-                            aria-hidden="true"
-                            className="pointer-events-none absolute right-full top-1/2 hidden h-0.5 w-4 -translate-y-1/2 md:block"
-                            style={{ backgroundColor: 'color-mix(in srgb, var(--line) 70%, transparent)' }}
-                          />
-                        ) : null}
-                        {index < summary.timeline.length - 1 ? (
-                          <span
-                            aria-hidden="true"
-                            className="pointer-events-none absolute left-full top-1/2 hidden h-0.5 w-4 -translate-y-1/2 md:block"
-                            style={{ backgroundColor: 'color-mix(in srgb, var(--line) 70%, transparent)' }}
-                          />
-                        ) : null}
-                        <span
-                          aria-hidden="true"
-                          className={[
-                            'inline-flex h-3.5 w-3.5 shrink-0 rounded-full border-2 transition-colors',
-                            getTimelineDotClassName(entry, index, activeIndex),
-                          ].join(' ')}
-                        />
-                        <div className="min-w-0">
-                          <p className="m-0 truncate text-sm font-semibold text-[var(--ink)]">{entry.label}</p>
-                        </div>
-
-                        <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-xl border border-[var(--line)] bg-[var(--panel)]/95 px-3 py-3 opacity-0 shadow-[0_20px_45px_rgba(0,0,0,0.35)] backdrop-blur transition md:block group-hover:pointer-events-auto group-hover:opacity-100 group-focus:pointer-events-auto group-focus:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
-                          <div>
-                            <p className="m-0 mt-1 text-sm font-semibold text-[var(--ink)]">{entry.label}</p>
-                          </div>
-                          <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Updated</p>
-                          <p className="m-0 mt-1 text-sm text-[var(--ink)]">{updatedLabel}</p>
-                          {entry.actor ? (
-                            <p className="m-0 mt-2 text-xs uppercase tracking-[0.08em] text-[var(--muted)]">By {entry.actor}</p>
-                          ) : null}
-                          <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">How To Complete</p>
-                          <p className="m-0 mt-1 text-sm leading-6 text-[var(--ink)]">{completionGuidance}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div
-                        tabIndex={0}
-                        title={detailSummary}
-                        aria-label={`Milestone ${entry.label}`}
-                        className={[
-                          'group relative inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border outline-none transition-colors',
-                          'focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-blue-400/30',
-                          getTimelineCardClassName(entry, index, activeIndex),
-                        ].join(' ')}
-                      >
-                        <span
-                          aria-hidden="true"
-                          className={[
-                            'inline-flex h-3 w-3 rounded-full border-2 transition-colors',
-                            getTimelineDotClassName(entry, index, activeIndex),
-                          ].join(' ')}
-                        />
-                        <span className="sr-only">{entry.label} {isCompleted ? 'Completed' : 'Pending'}</span>
-
-                        <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-64 -translate-x-1/2 rounded-xl border border-[var(--line)] bg-[var(--panel)]/95 px-3 py-3 opacity-0 shadow-[0_20px_45px_rgba(0,0,0,0.35)] backdrop-blur transition md:block group-hover:pointer-events-auto group-hover:opacity-100 group-focus:pointer-events-auto group-focus:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="m-0 mt-1 text-sm font-semibold text-[var(--ink)]">{entry.label}</p>
-                            </div>
-                            <span className={[
-                              'shrink-0 rounded-full border px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em]',
-                              getTimelineStatusBadgeClassName(isCompleted, false),
-                            ].join(' ')}>
-                              {isCompleted ? 'Completed' : 'Pending'}
-                            </span>
-                          </div>
-                          <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Updated</p>
-                          <p className="m-0 mt-1 text-sm text-[var(--ink)]">{updatedLabel}</p>
-                          {entry.actor ? (
-                            <p className="m-0 mt-2 text-xs uppercase tracking-[0.08em] text-[var(--muted)]">By {entry.actor}</p>
-                          ) : null}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          {activeEntry ? (
-            <p className="m-0 mt-2 text-xs text-[var(--muted)] md:hidden">
-              Current stage: <span className="font-semibold text-[var(--ink)]">{activeEntry.label}</span>
-            </p>
-          ) : null}
-        </div>
-      </div>
+      {milestonesContent}
     </section>
   );
 }
 
-export function ListingApprovalWorkflowSummary({ summary }: ListingApprovalWorkflowSummaryProps) {
-  return <ListingApprovalWorkflowProcessCard summary={summary} />;
+export function ListingApprovalWorkflowSummary({ summary, timelineOnly = false }: ListingApprovalWorkflowSummaryProps) {
+  return <ListingApprovalWorkflowProcessCard summary={summary} timelineOnly={timelineOnly} />;
 }

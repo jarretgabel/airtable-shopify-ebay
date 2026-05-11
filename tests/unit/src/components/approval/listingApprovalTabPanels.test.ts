@@ -166,23 +166,22 @@ describe('buildListingApprovalTabPanels', () => {
 
     expect(getUsedGearWorkflowListingReadinessMock).toHaveBeenCalledWith(selectedRecord);
     expect(buildListingApprovalSelectedRecordPanelPropsMock).toHaveBeenCalledWith(expect.objectContaining({
+      eyebrowLabel: 'Combined Listing Editor',
       workflowSummary: expect.objectContaining({
         workflowStatus: 'Approved for Publish',
-        resolvedTitle: 'McIntosh MA6900',
-        resolvedDescription: 'Freshly serviced and ready to publish.',
+        workflowNextTeam: 'Listing',
         resolvedPrice: '3499.99',
-        priceSourceFieldName: 'Price',
         preListingReviewedBy: 'Taylor Reviewer',
+        timeline: expect.any(Array),
       }),
     }));
     expect(result.selectedRecordPanelProps?.workflowSummary).toMatchObject({
       workflowStatus: 'Approved for Publish',
-      resolvedTitle: 'McIntosh MA6900',
-      resolvedDescription: 'Freshly serviced and ready to publish.',
+      workflowNextTeam: 'Listing',
       resolvedPrice: '3499.99',
-      priceSourceFieldName: 'Price',
       preListingReviewedBy: 'Taylor Reviewer',
     });
+    expect(result.selectedRecordPanelProps?.workflowSummary?.timeline).toEqual(expect.any(Array));
   });
 
   it('omits workflow summary when the selected row is not a workflow-backed combined record', () => {
@@ -198,7 +197,36 @@ describe('buildListingApprovalTabPanels', () => {
 
     expect(getUsedGearWorkflowListingReadinessMock).not.toHaveBeenCalled();
     expect(buildListingApprovalSelectedRecordPanelPropsMock).toHaveBeenCalledWith(expect.objectContaining({
+      eyebrowLabel: 'Combined Listing Editor',
       workflowSummary: null,
+    }));
+  });
+
+  it('maps channel-specific eyebrow labels into selected-record panel props', () => {
+    const selectedRecord: AirtableRecord = {
+      id: 'rec-channel-1',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: { Name: 'Luxman L-509Z' },
+    };
+
+    buildListingApprovalTabPanels({
+      ...createBaseParams(selectedRecord),
+      approvalChannel: 'shopify',
+      isCombinedApproval: false,
+    });
+
+    expect(buildListingApprovalSelectedRecordPanelPropsMock).toHaveBeenLastCalledWith(expect.objectContaining({
+      eyebrowLabel: 'Shopify Listing Editor',
+    }));
+
+    buildListingApprovalTabPanels({
+      ...createBaseParams(selectedRecord),
+      approvalChannel: 'ebay',
+      isCombinedApproval: false,
+    });
+
+    expect(buildListingApprovalSelectedRecordPanelPropsMock).toHaveBeenLastCalledWith(expect.objectContaining({
+      eyebrowLabel: 'eBay Listing Editor',
     }));
   });
 });

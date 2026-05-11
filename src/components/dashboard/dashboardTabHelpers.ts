@@ -92,9 +92,9 @@ export function buildEbayWorkflowCards({
   if (accessiblePages.includes('listings')) {
     cards.push({
       id: 'listings',
-      title: 'eBay Listing Review',
+      title: 'eBay Listing Editor',
       eyebrow: approvalUnavailableReason ? 'Runtime config required' : approvalLoading ? 'Refreshing queue' : approvalError ? 'Queue needs attention' : `${approvalPending} awaiting review`,
-      detail: approvalUnavailableReason ?? approvalError ?? 'Open Listings to review pending eBay-ready records, validate mapped listing fields, and approve items for publishing.',
+      detail: approvalUnavailableReason ?? approvalError ?? 'Open Listings to edit pending eBay-ready records, validate mapped listing fields, and approve items for publishing.',
       stats: approvalLoading ? ['Loading queue…'] : [`${approvalTotal} total record${approvalTotal === 1 ? '' : 's'}`, `${approvalPending} pending`, `${approvalApproved} approved`],
       unavailableReason: approvalUnavailableReason ?? null,
     });
@@ -146,9 +146,9 @@ export function buildShopifyWorkflowCards({
   if (accessiblePages.includes('listings')) {
     cards.push({
       id: 'listings',
-      title: 'Shopify Listing Review',
+      title: 'Shopify Listing Editor',
       eyebrow: shopifyApprovalUnavailableReason ? 'Runtime config required' : shopifyApprovalLoading ? 'Syncing listings review' : `${shopifyApprovalPending} awaiting review`,
-      detail: shopifyApprovalUnavailableReason ?? 'Open Listings to review pending Shopify-ready records, validate mapped fields, and approve records for publishing.',
+      detail: shopifyApprovalUnavailableReason ?? 'Open Listings to edit pending Shopify-ready records, validate mapped fields, and approve records for publishing.',
       stats: shopifyApprovalLoading
         ? ['Loading queue…']
         : [`${shopifyApprovalTotal} total`, `${shopifyApprovalPending} pending`, `${shopifyApprovalApproved} approved`],

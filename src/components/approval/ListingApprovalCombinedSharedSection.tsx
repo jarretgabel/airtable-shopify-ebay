@@ -5,7 +5,7 @@ import {
   ListingApprovalTestingSection,
   resolveListingApprovalTestingSectionFields,
 } from '@/components/approval/listingApprovalTestingSection';
-import { hasWorkflowListingSourceContext } from '@/stores/approval/approvalStoreWorkflowPrefill';
+import { CONDITION_FIELD } from '@/stores/approvalStore';
 import type { ListingApprovalCombinedSharedSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
 const KeyFeaturesEditor = lazy(async () => ({
@@ -22,6 +22,27 @@ function CombinedSharedEditorFallback() {
 
 function normalizeSharedFieldName(fieldName: string): string {
   return fieldName.trim().toLowerCase();
+}
+
+const COMBINED_SOURCE_MANAGED_FIELD_NAMES = new Set([
+  'sku',
+  'make',
+  'model',
+  'component type',
+  'condition',
+  'item condition',
+  'shopify condition',
+  'shopify rest condition',
+  'ebay inventory condition',
+  CONDITION_FIELD.toLowerCase(),
+]);
+
+function isSourceManagedCombinedField(fieldName: string): boolean {
+  return COMBINED_SOURCE_MANAGED_FIELD_NAMES.has(normalizeSharedFieldName(fieldName));
+}
+
+function hasReadableValue(value: string | undefined): boolean {
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 export function ListingApprovalCombinedSharedSection({
@@ -49,7 +70,6 @@ export function ListingApprovalCombinedSharedSection({
     ...originalFieldValues,
     ...sharedTestingSourceFieldValues,
   };
-  const workflowManagedListingContent = hasWorkflowListingSourceContext(effectiveSharedTestingSourceFieldValues);
   const sharedTestingFields = resolveListingApprovalTestingSectionFields(
     Array.from(new Set([
       ...Object.keys(originalFieldValues),
@@ -59,6 +79,15 @@ export function ListingApprovalCombinedSharedSection({
   );
   const sharedTestingFieldSet = new Set(sharedTestingFields.map((field) => normalizeSharedFieldName(field.fieldName)));
   const standardSharedFieldNames = combinedSharedFieldNames.filter((fieldName) => !sharedTestingFieldSet.has(normalizeSharedFieldName(fieldName)));
+  const readOnlySharedFieldNames = standardSharedFieldNames.filter(isSourceManagedCombinedField);
+  const effectiveSharedFormValues = {
+    ...formValues,
+    ...Object.fromEntries(
+      readOnlySharedFieldNames
+        .filter((fieldName) => hasReadableValue(effectiveSharedTestingSourceFieldValues[fieldName]))
+        .map((fieldName) => [fieldName, effectiveSharedTestingSourceFieldValues[fieldName] ?? '']),
+    ),
+  };
 
   return (
     <details className="rounded-lg border border-[var(--line)] bg-white/5" open>
@@ -81,24 +110,31 @@ export function ListingApprovalCombinedSharedSection({
           </label>
         )}
 
+        {readOnlySharedFieldNames.length > 0 && (
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)]/70 px-4 py-3 text-sm text-[var(--muted)]">
+            Make, Model, Condition, SKU, and Component Type are auto-populated from the workflow and testing source forms. Update those source records to change these values.
+          </div>
+        )}
+
         <ApprovalFormFields
           recordId={selectedRecord.id}
           approvalChannel="combined"
           isCombinedApproval
           allFieldNames={standardSharedFieldNames}
           writableFieldNames={writableFieldNames}
+          readOnlyFieldNames={readOnlySharedFieldNames}
           requiredFieldNames={combinedRequiredFieldNames}
           shopifyRequiredFieldNames={shopifyRequiredFieldNames}
           ebayRequiredFieldNames={ebayRequiredFieldNames}
           approvedFieldName={approvedFieldName}
-          formValues={formValues}
+          formValues={effectiveSharedFormValues}
           fieldKinds={fieldKinds}
           listingFormatOptions={listingFormatOptions}
           listingDurationOptions={listingDurationOptions}
           saving={saving}
           setFormValue={setFormValue}
           suppressImageScalarFields
-          originalFieldValues={originalFieldValues}
+          originalFieldValues={effectiveSharedTestingSourceFieldValues}
         />
 
         <ListingApprovalTestingSection fields={sharedTestingFields} formValues={effectiveSharedTestingSourceFieldValues} />
@@ -110,10 +146,7 @@ export function ListingApprovalCombinedSharedSection({
               keyFeaturesValue={formValues[combinedSharedKeyFeaturesFieldName] ?? ''}
               setFormValue={setFormValue}
               syncFieldNames={combinedSharedKeyFeaturesSyncFieldNames}
-              disabled={saving || workflowManagedListingContent}
-              helperText={workflowManagedListingContent
-                ? 'Read-only listing details derived from the Testing form and workflow fields. Update the Testing form to change these values.'
-                : undefined}
+              disabled={saving}
             />
           </Suspense>
         )}

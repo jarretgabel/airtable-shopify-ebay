@@ -5,10 +5,10 @@ import {
   SHIPPING_SERVICE_FIELD,
 } from '@/stores/approval/approvalStoreConstants';
 import {
-  fromFormValue,
-  inferFieldKind,
+  fromFormValueForField,
+  inferFieldKindForField,
   mapShippingServiceToFields,
-  toFormValue,
+  toFormValueForField,
   type ApprovalFieldKind,
 } from '@/stores/approval/approvalStoreFieldUtils';
 import type { ApprovalStore } from '@/stores/approval/approvalStoreTypes';
@@ -320,9 +320,9 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
         .find((fieldName) => fieldName.toLowerCase() === approvedFieldName.toLowerCase())
         ?? approvedFieldName;
       const approvedFieldKind = fieldKinds[resolvedApprovedFieldName]
-        ?? inferFieldKind(selectedRecord.fields[resolvedApprovedFieldName]);
+        ?? inferFieldKindForField(resolvedApprovedFieldName, selectedRecord.fields[resolvedApprovedFieldName]);
       const currentApprovedValue = formValues[resolvedApprovedFieldName]
-        ?? toFormValue(selectedRecord.fields[resolvedApprovedFieldName]);
+        ?? toFormValueForField(resolvedApprovedFieldName, selectedRecord.fields[resolvedApprovedFieldName]);
       const nextValues = {
         ...formValues,
         [resolvedApprovedFieldName]: forceApproved
@@ -350,13 +350,14 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           const existsInSchema = actualFieldLookup.has(fieldName.toLowerCase());
           if (!existsOnRecord && !existsInSchema) return;
 
-          const fieldKind = fieldKinds[fieldName] ?? inferFieldKind(selectedRecord.fields[fieldName]);
-          payload[fieldName] = fromFormValue(String(rawValue), fieldKind);
+          const fieldKind = fieldKinds[fieldName] ?? inferFieldKindForField(fieldName, selectedRecord.fields[fieldName]);
+          payload[fieldName] = fromFormValueForField(fieldName, String(rawValue), fieldKind);
         });
       };
 
       if (mode === 'approve-only') {
-        payload[resolvedApprovedFieldName] = fromFormValue(
+        payload[resolvedApprovedFieldName] = fromFormValueForField(
+          resolvedApprovedFieldName,
           nextValues[resolvedApprovedFieldName] ?? resolveApprovedValue(currentApprovedValue, approvedFieldKind),
           approvedFieldKind,
         );
@@ -371,12 +372,12 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           const allowMissingWritableField = isAllowedMissingWritableFieldName(fieldName);
           if (!existsOnRecord && !existsInSchema && !allowMissingWritableField) return;
 
-          const originalValue = toFormValue(selectedRecord.fields[fieldName]);
+          const originalValue = toFormValueForField(fieldName, selectedRecord.fields[fieldName]);
           if (fieldName.toLowerCase() === resolvedApprovedFieldName.toLowerCase() && forceApproved) return;
           if (rawValue === originalValue) return;
 
           const fieldKind = fieldKinds[fieldName] ?? 'text';
-          payload[fieldName] = fromFormValue(rawValue, fieldKind);
+          payload[fieldName] = fromFormValueForField(fieldName, rawValue, fieldKind);
         });
 
         assignSystemFieldValues();

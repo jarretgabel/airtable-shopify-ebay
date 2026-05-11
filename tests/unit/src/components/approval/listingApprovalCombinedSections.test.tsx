@@ -235,12 +235,12 @@ describe('combined approval sections', () => {
       expect(screen.getByTestId('key-features-editor')).toHaveTextContent('Key Features');
     });
     expect(keyFeaturesEditorSpy).toHaveBeenCalledWith(expect.objectContaining({
-      disabled: true,
+      disabled: false,
     }));
     expect(testingNotesTextareaEditorSpy).not.toHaveBeenCalled();
   });
 
-  it('locks shared testing-detail editors when workflow-managed source fields are present', async () => {
+  it('keeps key features editable when workflow-managed source fields are present', async () => {
     const props = buildSharedProps();
     props.originalFieldValues = {
       ...props.originalFieldValues,
@@ -258,8 +258,43 @@ describe('combined approval sections', () => {
     });
 
     expect(keyFeaturesEditorSpy).toHaveBeenCalledWith(expect.objectContaining({
-      disabled: true,
-      helperText: expect.stringContaining('Testing form'),
+      disabled: false,
+    }));
+  });
+
+  it('renders combined identity fields from source values and marks them read-only', () => {
+    const props = buildSharedProps();
+    props.combinedSharedFieldNames = ['Title', 'SKU', 'Make', 'Model', 'Component Type', '__Condition__', 'Price'];
+    props.formValues = {
+      ...props.formValues,
+      SKU: '',
+      Make: '',
+      Model: 'Stale model',
+      'Component Type': '',
+      __Condition__: '',
+    };
+    props.sharedTestingSourceFieldValues = {
+      ...props.sharedTestingSourceFieldValues,
+      SKU: 'MARANTZ-2270',
+      Make: 'Marantz',
+      Model: '2270',
+      'Component Type': 'Stereo Receiver',
+      __Condition__: 'Used - Very Good',
+    };
+
+    render(<ListingApprovalCombinedSharedSection {...props} />);
+
+    expect(screen.getByText('Make, Model, Condition, SKU, and Component Type are auto-populated from the workflow and testing source forms. Update those source records to change these values.')).toBeInTheDocument();
+
+    expect(approvalFormFieldsSpy).toHaveBeenCalledWith(expect.objectContaining({
+      readOnlyFieldNames: expect.arrayContaining(['SKU', 'Make', 'Model', 'Component Type', '__Condition__']),
+      formValues: expect.objectContaining({
+        SKU: 'MARANTZ-2270',
+        Make: 'Marantz',
+        Model: '2270',
+        'Component Type': 'Stereo Receiver',
+        __Condition__: 'Used - Very Good',
+      }),
     }));
   });
 

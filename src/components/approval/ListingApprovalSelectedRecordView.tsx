@@ -5,6 +5,7 @@ import type { AirtableRecord } from '@/types/airtable';
 interface ListingApprovalSelectedRecordViewProps {
   selectedRecord: AirtableRecord;
   titleFieldName: string;
+  eyebrowLabel?: string;
   isApproved: boolean;
   saving: boolean;
   error: string | null;
@@ -22,6 +23,7 @@ interface ListingApprovalSelectedRecordViewProps {
 export function ListingApprovalSelectedRecordView({
   selectedRecord,
   titleFieldName,
+  eyebrowLabel = 'Listing Details',
   isApproved,
   saving,
   error,
@@ -49,7 +51,7 @@ export function ListingApprovalSelectedRecordView({
           {backToListLabel ?? 'Back to Listings'}
         </button>
         <div>
-          <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Listing Update</p>
+          <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{eyebrowLabel}</p>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <h3 className="m-0 text-[1.08rem] font-semibold text-[var(--ink)]">{displayValue(selectedRecord.fields[titleFieldName])}</h3>
             <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.06em] ${
@@ -60,7 +62,6 @@ export function ListingApprovalSelectedRecordView({
               {isApproved ? 'Approved' : 'Unapproved'}
             </span>
           </div>
-          <p className="m-0 mt-1 text-sm text-[var(--muted)]">Record ID: <code>{selectedRecord.id}</code></p>
         </div>
       </div>
 

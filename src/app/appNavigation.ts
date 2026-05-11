@@ -1,4 +1,5 @@
 import { APP_PAGES, AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
+import { displayReadableValue } from '@/utils/valueDisplay';
 
 export type Tab = AppPage;
 
@@ -52,16 +53,7 @@ export function navLabel(tab: Tab): string {
 }
 
 export function displayValue(value: unknown): string {
-  if (value === null || value === undefined || value === '') {
-    return 'N/A';
-  }
-  if (Array.isArray(value)) {
-    return value.join(', ');
-  }
-  if (typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-  return String(value);
+  return displayReadableValue(value, 'N/A');
 }
 
 export function hasValue(value: unknown): boolean {

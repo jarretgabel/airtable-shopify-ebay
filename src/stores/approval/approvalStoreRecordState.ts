@@ -8,9 +8,9 @@ import {
   SHIPPING_SERVICE_FIELD,
 } from '@/stores/approval/approvalStoreConstants';
 import {
-  inferFieldKind,
+  inferFieldKindForField,
   resolveListingFormatOptions,
-  toFormValue,
+  toFormValueForField,
   type ApprovalFieldKind,
 } from '@/stores/approval/approvalStoreFieldUtils';
 import { applyWorkflowListingPrefills } from '@/stores/approval/approvalStoreWorkflowPrefill';
@@ -42,8 +42,8 @@ export function createHydrateFormAction(set: ApprovalStoreSet): ApprovalStore['h
 
     allFieldNames.forEach((fieldName) => {
       const value = record.fields[fieldName];
-      nextValues[fieldName] = toFormValue(value);
-      nextKinds[fieldName] = inferFieldKind(value);
+      nextValues[fieldName] = toFormValueForField(fieldName, value);
+      nextKinds[fieldName] = inferFieldKindForField(fieldName, value);
     });
 
     nextValues[SHIPPING_SERVICE_FIELD] =

@@ -2,6 +2,7 @@ import type { InventoryDirectoryData, InventoryDraftValue, InventoryFieldMetadat
 import { getConfiguredFieldMetadata, getConfiguredRecord, getConfiguredRecords, updateConfiguredRecord, type AirtableMetadataField } from '@/services/app-api/airtable';
 import { enrichUsedGearWorkflowRecord } from '@/services/usedGearWorkflow';
 import type { AirtableRecord } from '@/types/airtable';
+import { displayReadableValue, extractReadableValue } from '@/utils/valueDisplay';
 
 const INVENTORY_DIRECTORY_LIST_FIELD_NAMES = [
   'SKU',
@@ -78,22 +79,7 @@ function dedupeOptions(values: string[]): string[] {
 }
 
 export function extractInventoryScalarValue(value: unknown): string {
-  if (value == null) return '';
-
-  if (Array.isArray(value)) {
-    const firstValue = value.find((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0);
-    return firstValue ?? '';
-  }
-
-  if (typeof value === 'object') {
-    const textValue = 'text' in value && typeof value.text === 'string' ? value.text.trim() : '';
-    if (textValue) return textValue;
-
-    const nameValue = 'name' in value && typeof value.name === 'string' ? value.name.trim() : '';
-    if (nameValue) return nameValue;
-  }
-
-  return String(value);
+  return extractReadableValue(value);
 }
 
 function firstStringValue(value: unknown): string {
@@ -210,13 +196,7 @@ export function inventoryDraftValuesEqual(left: InventoryDraftValue | undefined,
 }
 
 export function displayInventoryValue(value: unknown): string {
-  if (value == null || value === '') return 'N/A';
-  if (Array.isArray(value)) return value.join(', ');
-  if (typeof value === 'object') {
-    const scalarValue = extractInventoryScalarValue(value);
-    return scalarValue || JSON.stringify(value);
-  }
-  return String(value);
+  return displayReadableValue(value, 'N/A');
 }
 
 export async function loadInventoryDirectory(): Promise<InventoryDirectoryData> {

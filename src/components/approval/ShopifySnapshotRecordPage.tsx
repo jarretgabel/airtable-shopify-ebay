@@ -172,6 +172,8 @@ export function ShopifySnapshotRecordPage({
 
       <ListingApprovalWorkflowProcessCard
         summary={workflowSummary}
+        eyebrow="Workflow Match"
+        title="Workflow Status For This Shopify Snapshot"
         loading={workflowLoading}
         error={workflowError}
         description="Cross-referenced from the used-gear workflow by SKU so you can see where this read-only Shopify snapshot sits in the intake-to-listing pipeline."

@@ -18,6 +18,18 @@ import type { InlineNoticeTone } from '@/components/approval/listingApprovalReco
 import { errorSurfaceClass } from '@/components/tabs/uiClasses';
 import type { AirtableRecord } from '@/types/airtable';
 
+function getSelectedRecordEyebrowLabel(approvalChannel: 'shopify' | 'ebay' | 'combined'): string {
+  switch (approvalChannel) {
+    case 'shopify':
+      return 'Shopify Listing Editor';
+    case 'ebay':
+      return 'eBay Listing Editor';
+    case 'combined':
+    default:
+      return 'Combined Listing Editor';
+  }
+}
+
 interface BuildListingApprovalTabPanelsParams {
   selectedRecord: AirtableRecord | null;
   approvalChannel: 'shopify' | 'ebay' | 'combined';
@@ -315,6 +327,7 @@ export function buildListingApprovalTabPanels({
     selectedRecordPanelProps: buildListingApprovalSelectedRecordPanelProps({
       selectedRecord,
       titleFieldName,
+      eyebrowLabel: getSelectedRecordEyebrowLabel(approvalChannel),
       isApproved,
       saving,
       error,

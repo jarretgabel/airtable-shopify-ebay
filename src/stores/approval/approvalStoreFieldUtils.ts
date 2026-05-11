@@ -22,8 +22,52 @@ import {
   SHOPIFY_REST_STATUS_OPTIONS,
   SHOPIFY_WEIGHT_UNIT_OPTIONS,
 } from '@/stores/approval/approvalStoreConstants';
+import { displayReadableValue, extractReadableValue } from '@/utils/valueDisplay';
 
 export type ApprovalFieldKind = 'boolean' | 'number' | 'json' | 'text';
+
+const SINGLE_VALUE_SELECTION_FIELDS = new Set([
+  'component type',
+  'audiogon rating',
+  'original box',
+  'manual',
+  'remote',
+  'power cable',
+  'shipping method',
+]);
+
+const CATEGORY_VALUE_FIELDS = new Set([
+  'categories',
+  'category',
+  'categories airtable',
+  'category airtable',
+  'category ids',
+  'category id',
+  'category_ids',
+  'category_id',
+  'primary category',
+  'secondary category',
+  'primary category airtable',
+  'secondary category airtable',
+  'primary category id',
+  'secondary category id',
+  'primary category name',
+  'secondary category name',
+  'primary_category',
+  'secondary_category',
+  'primary_category_id',
+  'secondary_category_id',
+  'primary_category_name',
+  'secondary_category_name',
+  'ebay offer category id',
+  'ebay offer primary category id',
+  'ebay offer secondary category id',
+  'ebay_offer_category_id',
+  'ebay_offer_primary_category_id',
+  'ebay_offer_primarycategoryid',
+  'ebay_offer_secondary_category_id',
+  'ebay_offer_secondarycategoryid',
+]);
 
 function normalizeBooleanLikeString(raw: string): string {
   const normalized = raw.trim().toLowerCase();
@@ -32,11 +76,16 @@ function normalizeBooleanLikeString(raw: string): string {
   return raw;
 }
 
+export function isSingleValueSelectionField(fieldName: string): boolean {
+  return SINGLE_VALUE_SELECTION_FIELDS.has(fieldName.trim().toLowerCase());
+}
+
+export function isCategoryValueField(fieldName: string): boolean {
+  return CATEGORY_VALUE_FIELDS.has(fieldName.trim().toLowerCase());
+}
+
 export function displayValue(value: unknown): string {
-  if (value === null || value === undefined || value === '') return '—';
-  if (Array.isArray(value)) return value.join(', ');
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
+  return displayReadableValue(value, '—');
 }
 
 export function inferFieldKind(value: unknown): ApprovalFieldKind {
@@ -47,12 +96,32 @@ export function inferFieldKind(value: unknown): ApprovalFieldKind {
   return 'text';
 }
 
+export function inferFieldKindForField(fieldName: string, value: unknown): ApprovalFieldKind {
+  if (isSingleValueSelectionField(fieldName) || isCategoryValueField(fieldName)) {
+    return 'text';
+  }
+
+  return inferFieldKind(value);
+}
+
 export function toFormValue(value: unknown): string {
   if (value === null || value === undefined) return '';
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   if (typeof value === 'number') return String(value);
   if (Array.isArray(value) || typeof value === 'object') return JSON.stringify(value, null, 2);
   return String(value);
+}
+
+export function toFormValueForField(fieldName: string, value: unknown): string {
+  if (isSingleValueSelectionField(fieldName)) {
+    return extractReadableValue(value);
+  }
+
+  if (isCategoryValueField(fieldName)) {
+    return displayReadableValue(value, '');
+  }
+
+  return toFormValue(value);
 }
 
 export function fromFormValue(raw: string, kind: ApprovalFieldKind): unknown {
@@ -77,6 +146,15 @@ export function fromFormValue(raw: string, kind: ApprovalFieldKind): unknown {
   }
 
   return normalizeBooleanLikeString(raw);
+}
+
+export function fromFormValueForField(fieldName: string, raw: string, kind: ApprovalFieldKind): unknown {
+  if (isSingleValueSelectionField(fieldName)) {
+    const normalized = normalizeBooleanLikeString(raw).trim();
+    return normalized ? [normalized] : [];
+  }
+
+  return fromFormValue(raw, kind);
 }
 
 export function getDropdownOptions(fieldName: string): string[] | null {

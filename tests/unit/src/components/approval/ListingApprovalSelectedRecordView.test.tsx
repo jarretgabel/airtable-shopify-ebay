@@ -12,6 +12,7 @@ describe('ListingApprovalSelectedRecordView', () => {
           fields: { Title: 'Sansui AU-919' },
         }}
         titleFieldName="Title"
+        eyebrowLabel="Shopify Listing Editor"
         isApproved={false}
         saving={false}
         error={null}
@@ -26,6 +27,7 @@ describe('ListingApprovalSelectedRecordView', () => {
       />,
     );
 
+    expect(screen.getByText('Shopify Listing Editor')).toBeInTheDocument();
     expect(screen.queryByText('Deferred Payload Preview')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByText('API Payload Previews'));
@@ -42,6 +44,7 @@ describe('ListingApprovalSelectedRecordView', () => {
           fields: { Title: 'Accuphase E-470' },
         }}
         titleFieldName="Title"
+        eyebrowLabel="Combined Listing Editor"
         isApproved
         saving={false}
         error={null}
@@ -62,6 +65,7 @@ describe('ListingApprovalSelectedRecordView', () => {
       />,
     );
 
+    expect(screen.getByText('Combined Listing Editor')).toBeInTheDocument();
     expect(screen.getByText('Workflow Review Context')).toBeInTheDocument();
     expect(screen.getByText('Resolved Price')).toBeInTheDocument();
     expect(screen.getByText('2499.00')).toBeInTheDocument();

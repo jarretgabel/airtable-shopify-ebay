@@ -6,6 +6,7 @@ import type { AirtableRecord } from '@/types/airtable';
 interface BuildListingApprovalSelectedRecordPanelPropsParams {
   selectedRecord: AirtableRecord | null;
   titleFieldName: string;
+  eyebrowLabel?: string;
   isApproved: boolean;
   saving: boolean;
   error: string | null;
@@ -22,6 +23,7 @@ interface BuildListingApprovalSelectedRecordPanelPropsParams {
 export function buildListingApprovalSelectedRecordPanelProps({
   selectedRecord,
   titleFieldName,
+  eyebrowLabel,
   isApproved,
   saving,
   error,
@@ -41,6 +43,7 @@ export function buildListingApprovalSelectedRecordPanelProps({
   return {
     selectedRecord,
     titleFieldName,
+    eyebrowLabel,
     isApproved,
     saving,
     error,

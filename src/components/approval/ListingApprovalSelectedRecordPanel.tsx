@@ -30,6 +30,7 @@ function ApprovalEditorFallback() {
 export interface ListingApprovalSelectedRecordPanelProps {
   selectedRecord: AirtableRecord;
   titleFieldName: string;
+  eyebrowLabel?: string;
   isApproved: boolean;
   saving: boolean;
   error: string | null;
@@ -46,6 +47,7 @@ export interface ListingApprovalSelectedRecordPanelProps {
 export function ListingApprovalSelectedRecordPanel({
   selectedRecord,
   titleFieldName,
+  eyebrowLabel,
   isApproved,
   saving,
   error,
@@ -62,6 +64,7 @@ export function ListingApprovalSelectedRecordPanel({
     <ListingApprovalSelectedRecordView
       selectedRecord={selectedRecord}
       titleFieldName={titleFieldName}
+      eyebrowLabel={eyebrowLabel}
       isApproved={isApproved}
       saving={saving}
       error={error}
@@ -69,7 +72,7 @@ export function ListingApprovalSelectedRecordPanel({
       backToListLabel={backToListLabel}
       secondaryActionButtonClass={secondaryActionButtonClass}
       errorSurfaceClass={errorSurfaceClass}
-      workflowSummary={workflowSummary ? <ListingApprovalWorkflowSummary summary={workflowSummary} /> : null}
+      workflowSummary={workflowSummary ? <ListingApprovalWorkflowSummary summary={workflowSummary} timelineOnly /> : null}
       editor={(
         <Suspense fallback={<ApprovalEditorFallback />}>
           {isCombinedApproval ? (
