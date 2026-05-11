@@ -1,0 +1,29 @@
+{
+  "seededAt": "2026-05-11T04:26:59.935Z",
+  "approvedBaseId": "apprsAm2FOohEmL2u",
+  "approvedTableId": "tbl0K0nFQL64jQMx8",
+  "replacedExistingSampleCount": 8,
+  "createdCount": 9,
+  "createdRecordIds": [
+    "recFd04Xeg7lNHKmP",
+    "recVsb6dSmkGI5837",
+    "recmWvCDlm67Bp7Q9",
+    "rec1hUeyHDEnooOVE",
+    "recTymNdYQotrlmbE",
+    "recnrFUQ9Z9Q6Kd2b",
+    "recDHuHqUQQ47TX79",
+    "recOXj4KU7Sgorz5N",
+    "recKInyoCy3AOA3qt"
+  ],
+  "createdTitles": [
+    "[COMBINED_LISTINGS_SAMPLE_DATA] Workflow Prefill Rich Testing Sample",
+    "[COMBINED_LISTINGS_SAMPLE_DATA] Combined Draft Pending Review",
+    "[COMBINED_LISTINGS_SAMPLE_DATA] Shopify Ready Only",
+    "[COMBINED_LISTINGS_SAMPLE_DATA] eBay Fixed Price Ready",
+    "[COMBINED_LISTINGS_SAMPLE_DATA] eBay Auction Flow",
+    "[COMBINED_LISTINGS_SAMPLE_DATA] Both Channels Approved",
+    "[COMBINED_LISTINGS_SAMPLE_DATA] Local Pickup / No Shipping",
+    "[COMBINED_LISTINGS_SAMPLE_DATA] Media Heavy Rich HTML",
+    "[COMBINED_LISTINGS_SAMPLE_DATA] Sparse Draft / Needs Merchandising"
+  ]
+}

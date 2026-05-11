@@ -58,6 +58,7 @@ export function ListingApprovalCombinedEbaySection({
         <ApprovalFormFields
           recordId={selectedRecord.id}
           approvalChannel="ebay"
+          isCombinedApproval
           hideEbayAdvancedOptions
           allFieldNames={combinedEbayOnlyFieldNames}
           writableFieldNames={writableFieldNames}
@@ -84,6 +85,7 @@ export function ListingApprovalCombinedEbaySection({
         <ApprovalFormFields
           recordId={selectedRecord.id}
           approvalChannel="ebay"
+          isCombinedApproval
           showOnlyEbayAdvancedOptions
           allFieldNames={combinedEbayOnlyFieldNames}
           writableFieldNames={writableFieldNames}

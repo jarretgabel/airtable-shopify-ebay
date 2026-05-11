@@ -13,6 +13,7 @@ interface KeyFeaturesEditorProps {
   syncFieldNames?: string[];
   disabled?: boolean;
   label?: string;
+  helperText?: string;
 }
 
 const inputClass =
@@ -65,6 +66,7 @@ export function KeyFeaturesEditor({
   syncFieldNames = [],
   disabled = false,
   label = 'Key Features',
+  helperText = 'Free-form feature/value pairs for the listing highlights shown to buyers.',
 }: KeyFeaturesEditorProps) {
   const [rows, setRows] = useState<KeyFeatureRow[]>(() => parseKeyFeatures(keyFeaturesValue));
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -131,7 +133,7 @@ export function KeyFeaturesEditor({
       </summary>
       <div className="flex flex-col gap-2 border-t border-[var(--line)] px-3 py-3">
         <p className="m-0 text-[0.74rem] leading-5 text-[var(--muted)]">
-          Free-form feature/value pairs for the listing highlights shown to buyers.
+          {helperText}
         </p>
         {rows.map((row, index) => (
           <div

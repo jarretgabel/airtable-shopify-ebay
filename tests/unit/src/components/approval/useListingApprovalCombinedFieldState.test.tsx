@@ -70,6 +70,10 @@ describe('useListingApprovalCombinedFieldState', () => {
       'Acquired From': 'Walk-in seller',
       'Arrival Date': '2026-05-06',
       Cost: 525,
+      'Inventory Notes': 'Fresh service notes for intake only.',
+      'Internal Cosmetic Notes': 'Scuffs on the left side panel.',
+      'Internal Functional Notes': 'Bias adjusted during bench check.',
+      'Internal Inclusion Notes': 'Remote stored separately.',
       'SKU Legacy Backup': 'SANSUI-717-BACKUP',
       'Approved At': '2026-05-07T10:00:00.000Z',
       'Approved By': 'Taylor Reviewer',
@@ -94,6 +98,10 @@ describe('useListingApprovalCombinedFieldState', () => {
       'Acquired From',
       'Arrival Date',
       'Cost',
+      'Inventory Notes',
+      'Internal Cosmetic Notes',
+      'Internal Functional Notes',
+      'Internal Inclusion Notes',
       'SKU Legacy Backup',
       'Approved At',
       'Approved By',
@@ -105,7 +113,7 @@ describe('useListingApprovalCombinedFieldState', () => {
     expect(result.current.combinedEbayOnlyFieldNames).not.toEqual(expect.arrayContaining(['eBay Offer ID', 'eBay Listing ID']));
   });
 
-  it('routes Shopify tags and eBay testing notes into service-specific field groups', () => {
+  it('routes Shopify tags into Shopify-only fields and keeps Testing Notes out of the combined eBay-only group', () => {
     const record = buildRecord({
       Title: 'Sansui AU-717',
       Description: 'Integrated amp ready for listing.',
@@ -117,7 +125,43 @@ describe('useListingApprovalCombinedFieldState', () => {
     const { result } = renderCombinedFieldState(record);
 
     expect(result.current.combinedShopifyOnlyFieldNames).toEqual(expect.arrayContaining(['Tags']));
-    expect(result.current.combinedEbayOnlyFieldNames).toEqual(expect.arrayContaining(['Testing Notes']));
-    expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining(['Tags', 'Testing Notes']));
+    expect(result.current.combinedEbayOnlyFieldNames).not.toEqual(expect.arrayContaining(['Testing Notes']));
+    expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining(['Tags']));
+  });
+
+  it('keeps photo date workflow fields out of listing sections', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      "Photo'd": '2026-05-08',
+      'Photographed At': '2026-05-08T12:00:00.000Z',
+      'Photographed By': 'Phoebe Photographer',
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining(["Photo'd", 'Photographed At', 'Photographed By']));
+    expect(result.current.combinedEbayOnlyFieldNames).not.toEqual(expect.arrayContaining(["Photo'd"]));
+    expect(result.current.combinedShopifyOnlyFieldNames).not.toEqual(expect.arrayContaining(["Photo'd"]));
+  });
+
+  it('routes eBay shipping fee fields into the eBay section', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      'Domestic Shipping Fees': '25.00',
+      'International Shipping Fees': '95.00',
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedEbayOnlyFieldNames).toEqual(expect.arrayContaining([
+      'Domestic Shipping Fees',
+      'International Shipping Fees',
+    ]));
+    expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining([
+      'Domestic Shipping Fees',
+      'International Shipping Fees',
+    ]));
   });
 });

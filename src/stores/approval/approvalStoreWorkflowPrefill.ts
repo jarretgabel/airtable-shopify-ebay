@@ -190,7 +190,7 @@ function firstNonEmptyFormValue(values: ApprovalFormValues, fieldNames: string[]
   return '';
 }
 
-function hasWorkflowPrefillContext(fields: AirtableFields): boolean {
+export function hasWorkflowListingSourceContext(fields: AirtableFields): boolean {
   return WORKFLOW_CONTEXT_FIELD_CANDIDATES.some((fieldName) => getTrimmedFieldValue(fields, fieldName).length > 0);
 }
 
@@ -290,6 +290,15 @@ function buildWorkflowTestingNotesText(fields: AirtableFields): string {
   return sections.map((section) => `${section.label}: ${section.value}`).join('\n\n');
 }
 
+function buildDirectWorkflowTestingNotesText(fields: AirtableFields): string {
+  return firstNonEmptyField(fields, [
+    'Testing Notes',
+    'eBay Testing Notes',
+    'eBay Body Testing Notes',
+    'eBay Listing Testing Notes',
+  ]);
+}
+
 function buildWorkflowListingImageValues(fields: AirtableFields): {
   imageValue: string;
   imageAltTextValue: string;
@@ -319,11 +328,12 @@ function applyTextPrefill(
   kinds: ApprovalFieldKinds,
   fieldNames: string[],
   value: string,
+  overwrite = false,
 ) {
   if (!value) return;
 
   fieldNames.forEach((fieldName) => {
-    if ((values[fieldName]?.trim() ?? '').length > 0) return;
+    if (!overwrite && (values[fieldName]?.trim() ?? '').length > 0) return;
     values[fieldName] = value;
     kinds[fieldName] = 'text';
   });
@@ -334,11 +344,12 @@ function applyPairPrefill(
   kinds: ApprovalFieldKinds,
   fieldNames: string[],
   pairs: FeaturePair[],
+  overwrite = false,
 ) {
   if (pairs.length === 0) return;
 
   fieldNames.forEach((fieldName) => {
-    if ((values[fieldName]?.trim() ?? '').length > 0) return;
+    if (!overwrite && (values[fieldName]?.trim() ?? '').length > 0) return;
     values[fieldName] = serializeFeaturePairs(fieldName, pairs);
     kinds[fieldName] = normalizeFieldName(fieldName).includes('json') ? 'json' : 'text';
   });
@@ -349,7 +360,7 @@ export function applyWorkflowListingPrefills(
   values: ApprovalFormValues,
   kinds: ApprovalFieldKinds,
 ) {
-  if (!hasWorkflowPrefillContext(fields)) return;
+  if (!hasWorkflowListingSourceContext(fields)) return;
 
   const titleFieldNames = findMatchingFieldNames(values, TITLE_FIELD_CANDIDATES);
   const existingTitle = firstNonEmptyFormValue(values, TITLE_FIELD_CANDIDATES);
@@ -361,22 +372,29 @@ export function applyWorkflowListingPrefills(
 
   const keyFeatureFieldNames = findMatchingFieldNames(values, KEY_FEATURE_FIELD_CANDIDATES);
   const existingKeyFeatures = firstNonEmptyFormValue(values, KEY_FEATURE_FIELD_CANDIDATES);
+  const workflowKeyFeaturePairs = buildWorkflowKeyFeaturePairs(fields);
   applyPairPrefill(
     values,
     kinds,
     keyFeatureFieldNames,
-    existingKeyFeatures
+    workflowKeyFeaturePairs.length > 0
+      ? workflowKeyFeaturePairs
+      : existingKeyFeatures
       ? uniqueFeaturePairs(parseKeyFeatureEntries(existingKeyFeatures))
-      : buildWorkflowKeyFeaturePairs(fields),
+      : [],
+    workflowKeyFeaturePairs.length > 0,
   );
 
   const testingNotesFieldNames = findMatchingFieldNames(values, TESTING_NOTES_FIELD_CANDIDATES);
   const existingTestingNotes = firstNonEmptyFormValue(values, TESTING_NOTES_FIELD_CANDIDATES);
+  const directWorkflowTestingNotes = buildDirectWorkflowTestingNotesText(fields);
+  const workflowTestingNotes = buildWorkflowTestingNotesText(fields);
   applyTextPrefill(
     values,
     kinds,
     testingNotesFieldNames,
-    existingTestingNotes || buildWorkflowTestingNotesText(fields),
+    workflowTestingNotes || existingTestingNotes,
+    directWorkflowTestingNotes.length > 0,
   );
 
   const workflowImageValues = buildWorkflowListingImageValues(fields);

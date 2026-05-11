@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { EbayShippingServicesEditor } from './EbayShippingServicesEditor';
 import { ApprovalFormFieldsShippingEditors } from './ApprovalFormFieldsShippingEditors';
+import { ListingApprovalTestingSection, type ListingApprovalTestingSectionField } from './listingApprovalTestingSection';
 import { ShopifyTagsEditor } from './ShopifyTagsEditor';
 import { WorkflowListingImageSelector } from './WorkflowListingImageSelector';
 import {
@@ -40,9 +41,12 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
   workflowImageAttachments: WorkflowListingImageAttachment[];
   selectedWorkflowImageUrls: string[];
   formValues: Record<string, string>;
+  testingSectionValues?: Record<string, string>;
   setFormValue: (fieldName: string, value: string) => void;
   saving: boolean;
   isReadOnlyApprovalField: (fieldName: string) => boolean;
+  workflowManagedListingContent: boolean;
+  testingSectionFields: ListingApprovalTestingSectionField[];
   activeBodyDescriptionFieldName?: string;
   renderSpecialLabel: (label: string, fieldName?: string) => JSX.Element;
   inputBaseClass: string;
@@ -92,9 +96,12 @@ export function ApprovalFormFieldsSupplementalEditors({
   workflowImageAttachments,
   selectedWorkflowImageUrls,
   formValues,
+  testingSectionValues,
   setFormValue,
   saving,
   isReadOnlyApprovalField,
+  workflowManagedListingContent,
+  testingSectionFields,
   activeBodyDescriptionFieldName,
   renderSpecialLabel,
   inputBaseClass,
@@ -136,6 +143,9 @@ export function ApprovalFormFieldsSupplementalEditors({
   getSelectClassName,
   getInputClassName,
 }: ApprovalFormFieldsSupplementalEditorsProps) {
+  const hasTestingSection = testingSectionFields.length > 0;
+  const effectiveTestingSectionValues = testingSectionValues ?? formValues;
+
   return (
     <>
       {imageUrlSourceField && (
@@ -188,7 +198,10 @@ export function ApprovalFormFieldsSupplementalEditors({
             keyFeaturesValue={formValues[shopifyKeyFeaturesFieldName] ?? ''}
             setFormValue={setFormValue}
             syncFieldNames={shopifyKeyFeaturesSyncFieldNames}
-            disabled={saving}
+            disabled={saving || workflowManagedListingContent}
+            helperText={workflowManagedListingContent
+              ? 'Read-only listing details derived from the Testing form and workflow fields. Update the Testing form to change these values.'
+              : undefined}
           />
         </Suspense>
       )}
@@ -200,19 +213,32 @@ export function ApprovalFormFieldsSupplementalEditors({
             keyFeaturesValue={formValues[ebayKeyFeaturesFieldName] ?? ''}
             setFormValue={setFormValue}
             syncFieldNames={ebayKeyFeaturesSyncFieldNames}
-            disabled={saving}
+            disabled={saving || workflowManagedListingContent}
+            helperText={workflowManagedListingContent
+              ? 'Read-only listing details derived from the Testing form and workflow fields. Update the Testing form to change these values.'
+              : undefined}
           />
         </Suspense>
       )}
 
-      {ebayTestingNotesFieldName && (
+      {hasTestingSection && (
+        <ListingApprovalTestingSection fields={testingSectionFields} formValues={effectiveTestingSectionValues} />
+      )}
+
+      {ebayTestingNotesFieldName && !hasTestingSection && (
         <Suspense fallback={lazyEditorFallback}>
           <TestingNotesTextareaEditor
             fieldName={ebayTestingNotesFieldName}
             value={formValues[ebayTestingNotesFieldName] ?? ''}
             setFormValue={setFormValue}
-            disabled={saving}
+            disabled={saving || workflowManagedListingContent}
             label="Testing Notes"
+            helperText={workflowManagedListingContent
+              ? 'Read-only mirror of the Testing form notes. Update the Testing form to change this value.'
+              : undefined}
+            placeholder={workflowManagedListingContent
+              ? 'Testing form notes will appear here after the workflow fields are loaded.'
+              : undefined}
           />
         </Suspense>
       )}
@@ -230,22 +256,24 @@ export function ApprovalFormFieldsSupplementalEditors({
         </Suspense>
       )}
 
-      <ApprovalFormFieldsShippingEditors
-        formValues={formValues}
-        setFormValue={setFormValue}
-        saving={saving}
-        isReadOnlyApprovalField={isReadOnlyApprovalField}
-        renderSpecialLabel={renderSpecialLabel}
-        renderFieldLabel={renderFieldLabel}
-        getSelectClassName={getSelectClassName}
-        getInputClassName={getInputClassName}
-        ebayDomesticShippingFeesFieldName={ebayDomesticShippingFeesFieldName}
-        ebayInternationalShippingFeesFieldName={ebayInternationalShippingFeesFieldName}
-        ebayDomesticShippingFlatFeeFieldName={ebayDomesticShippingFlatFeeFieldName}
-        ebayInternationalShippingFlatFeeFieldName={ebayInternationalShippingFlatFeeFieldName}
-      />
+      {isEbayApprovalForm && (
+        <ApprovalFormFieldsShippingEditors
+          formValues={formValues}
+          setFormValue={setFormValue}
+          saving={saving}
+          isReadOnlyApprovalField={isReadOnlyApprovalField}
+          renderSpecialLabel={renderSpecialLabel}
+          renderFieldLabel={renderFieldLabel}
+          getSelectClassName={getSelectClassName}
+          getInputClassName={getInputClassName}
+          ebayDomesticShippingFeesFieldName={ebayDomesticShippingFeesFieldName}
+          ebayInternationalShippingFeesFieldName={ebayInternationalShippingFeesFieldName}
+          ebayDomesticShippingFlatFeeFieldName={ebayDomesticShippingFlatFeeFieldName}
+          ebayInternationalShippingFlatFeeFieldName={ebayInternationalShippingFlatFeeFieldName}
+        />
+      )}
 
-      {hasEbayShippingServicesEditor && (
+      {isEbayApprovalForm && hasEbayShippingServicesEditor && (
         <EbayShippingServicesEditor
           domesticService1FieldName={domesticService1FieldName}
           domesticService2FieldName={domesticService2FieldName}

@@ -4,6 +4,8 @@ interface TestingNotesTextareaEditorProps {
   setFormValue: (fieldName: string, value: string) => void;
   disabled?: boolean;
   label?: string;
+  helperText?: string;
+  placeholder?: string;
 }
 
 const textareaClass =
@@ -15,6 +17,8 @@ export function TestingNotesTextareaEditor({
   setFormValue,
   disabled = false,
   label = 'Testing Notes',
+  helperText = 'Mirrors the plain Testing Notes field from the Testing form. Keep this as direct notes text instead of structured listing rows.',
+  placeholder = 'Enter the testing notes exactly as they should appear from the Testing form.',
 }: TestingNotesTextareaEditorProps) {
   return (
     <details className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2" open>
@@ -23,13 +27,13 @@ export function TestingNotesTextareaEditor({
       </summary>
       <div className="flex flex-col gap-3 border-t border-[var(--line)] px-3 py-3">
         <p className="m-0 text-[0.74rem] leading-5 text-[var(--muted)]">
-          Mirrors the plain Testing Notes field from the Testing form. Keep this as direct notes text instead of structured listing rows.
+          {helperText}
         </p>
         <textarea
           className={`${textareaClass} resize-y leading-[1.5]`}
           value={value}
           onChange={(event) => setFormValue(fieldName, event.target.value)}
-          placeholder="Enter the testing notes exactly as they should appear from the Testing form."
+          placeholder={placeholder}
           disabled={disabled}
           aria-label={label}
         />

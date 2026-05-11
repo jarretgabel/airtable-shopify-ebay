@@ -315,6 +315,8 @@ export function isEbayOnlyFieldName(fieldName: string): boolean {
   return normalized.includes('ebay')
     || normalized.includes('buy it now')
     || normalized.includes('starting bid')
+    || normalized === 'domestic shipping fees'
+    || normalized === 'international shipping fees'
     || normalized.includes('listing duration')
     || normalized.includes('duration')
     || normalized.includes('listing format')
@@ -423,6 +425,7 @@ export function isWorkflowOnlyListingFieldName(fieldName: string): boolean {
     || normalized === 'confirmed grand total'
     || normalized === 'offer amount'
     || normalized === 'paid amount'
+    || normalized === "photo'd"
     || normalized === 'photographed at'
     || normalized === 'photographed by'
     || normalized === 'photography signed at'
@@ -459,6 +462,7 @@ export function isWorkflowOnlyListingFieldName(fieldName: string): boolean {
     || compact === 'pickup'
     || compact === 'pickupnumber'
     || compact === 'pickupid'
+    || compact === 'photod'
     || compact === 'submissiongroupid'
     || compact === 'approvedat'
     || compact === 'approvedby'
@@ -487,8 +491,16 @@ export function isInternalReferenceListingFieldName(fieldName: string): boolean 
   return normalized === 'acquired from'
     || normalized === 'arrival date'
     || normalized === 'cost'
+    || normalized === 'internal cosmetic notes'
+    || normalized === 'internal functional notes'
+    || normalized === 'internal inclusion notes'
+    || normalized === 'inventory notes'
     || normalized === 'sku legacy backup'
     || compact === 'acquiredfrom'
     || compact === 'arrivaldate'
+    || compact === 'internalcosmeticnotes'
+    || compact === 'internalfunctionalnotes'
+    || compact === 'internalinclusionnotes'
+    || compact === 'inventorynotes'
     || compact === 'skulegacybackup';
 }

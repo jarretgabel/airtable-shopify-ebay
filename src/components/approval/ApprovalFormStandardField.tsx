@@ -55,6 +55,7 @@ interface ApprovalFormStandardFieldProps {
   imageAltTextSourceField?: string;
   suppressImageScalarFields: boolean;
   hasCanonicalConditionField: boolean;
+  testingSectionFieldNames: string[];
   formValues: Record<string, string>;
   fieldKinds: Record<string, 'boolean' | 'number' | 'json' | 'text'>;
   saving: boolean;
@@ -98,6 +99,7 @@ export function ApprovalFormStandardField({
   imageAltTextSourceField,
   suppressImageScalarFields,
   hasCanonicalConditionField,
+  testingSectionFieldNames,
   formValues,
   fieldKinds,
   saving,
@@ -140,6 +142,7 @@ export function ApprovalFormStandardField({
     imageAltTextSourceField,
     suppressImageScalarFields,
     hasCanonicalConditionField,
+    testingSectionFieldNames,
   })) return null;
 
   const storedValue = formValues[fieldName] ?? '';

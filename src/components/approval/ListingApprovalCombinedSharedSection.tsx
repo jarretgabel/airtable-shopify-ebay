@@ -1,6 +1,11 @@
 import { Suspense, lazy } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
+import {
+  ListingApprovalTestingSection,
+  resolveListingApprovalTestingSectionFields,
+} from '@/components/approval/listingApprovalTestingSection';
+import { hasWorkflowListingSourceContext } from '@/stores/approval/approvalStoreWorkflowPrefill';
 import type { ListingApprovalCombinedSharedSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
 const KeyFeaturesEditor = lazy(async () => ({
@@ -13,6 +18,10 @@ function CombinedSharedEditorFallback() {
       Loading shared editor...
     </div>
   );
+}
+
+function normalizeSharedFieldName(fieldName: string): string {
+  return fieldName.trim().toLowerCase();
 }
 
 export function ListingApprovalCombinedSharedSection({
@@ -33,8 +42,24 @@ export function ListingApprovalCombinedSharedSection({
   ebayRequiredFieldNames,
   combinedSharedKeyFeaturesFieldName,
   combinedSharedKeyFeaturesSyncFieldNames,
+  sharedTestingSourceFieldValues,
   sharedDrawerRequiredStatus,
 }: ListingApprovalCombinedSharedSectionProps) {
+  const effectiveSharedTestingSourceFieldValues = {
+    ...originalFieldValues,
+    ...sharedTestingSourceFieldValues,
+  };
+  const workflowManagedListingContent = hasWorkflowListingSourceContext(effectiveSharedTestingSourceFieldValues);
+  const sharedTestingFields = resolveListingApprovalTestingSectionFields(
+    Array.from(new Set([
+      ...Object.keys(originalFieldValues),
+      ...Object.keys(sharedTestingSourceFieldValues),
+    ])),
+    { includeMissing: true },
+  );
+  const sharedTestingFieldSet = new Set(sharedTestingFields.map((field) => normalizeSharedFieldName(field.fieldName)));
+  const standardSharedFieldNames = combinedSharedFieldNames.filter((fieldName) => !sharedTestingFieldSet.has(normalizeSharedFieldName(fieldName)));
+
   return (
     <details className="rounded-lg border border-[var(--line)] bg-white/5" open>
       <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
@@ -60,7 +85,7 @@ export function ListingApprovalCombinedSharedSection({
           recordId={selectedRecord.id}
           approvalChannel="combined"
           isCombinedApproval
-          allFieldNames={combinedSharedFieldNames}
+          allFieldNames={standardSharedFieldNames}
           writableFieldNames={writableFieldNames}
           requiredFieldNames={combinedRequiredFieldNames}
           shopifyRequiredFieldNames={shopifyRequiredFieldNames}
@@ -76,6 +101,8 @@ export function ListingApprovalCombinedSharedSection({
           originalFieldValues={originalFieldValues}
         />
 
+        <ListingApprovalTestingSection fields={sharedTestingFields} formValues={effectiveSharedTestingSourceFieldValues} />
+
         {combinedSharedKeyFeaturesFieldName && (
           <Suspense fallback={<CombinedSharedEditorFallback />}>
             <KeyFeaturesEditor
@@ -83,7 +110,10 @@ export function ListingApprovalCombinedSharedSection({
               keyFeaturesValue={formValues[combinedSharedKeyFeaturesFieldName] ?? ''}
               setFormValue={setFormValue}
               syncFieldNames={combinedSharedKeyFeaturesSyncFieldNames}
-              disabled={saving}
+              disabled={saving || workflowManagedListingContent}
+              helperText={workflowManagedListingContent
+                ? 'Read-only listing details derived from the Testing form and workflow fields. Update the Testing form to change these values.'
+                : undefined}
             />
           </Suspense>
         )}

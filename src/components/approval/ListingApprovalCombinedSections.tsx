@@ -30,6 +30,7 @@ export function ListingApprovalCombinedSections({
   ebayRequiredFieldNames,
   combinedSharedKeyFeaturesFieldName,
   combinedSharedKeyFeaturesSyncFieldNames,
+  sharedTestingSourceFieldValues,
   sharedDrawerRequiredStatus,
   combinedShopifyOnlyFieldNames,
   shopifyDrawerRequiredStatus,
@@ -86,6 +87,7 @@ export function ListingApprovalCombinedSections({
         ebayRequiredFieldNames={ebayRequiredFieldNames}
         combinedSharedKeyFeaturesFieldName={combinedSharedKeyFeaturesFieldName}
         combinedSharedKeyFeaturesSyncFieldNames={combinedSharedKeyFeaturesSyncFieldNames}
+        sharedTestingSourceFieldValues={sharedTestingSourceFieldValues}
         sharedDrawerRequiredStatus={sharedDrawerRequiredStatus}
       />
 

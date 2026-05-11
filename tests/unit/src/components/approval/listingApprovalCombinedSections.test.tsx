@@ -64,6 +64,13 @@ function buildRecord(): AirtableRecord {
       'eBay Body HTML': '<p>eBay body</p>',
       'Key Features': 'Feature one',
       'Testing Notes': 'Bench tested',
+      Manual: 'Included',
+      'Original Box': 'No',
+      Voltage: '120V',
+      Remote: 'Included',
+      'Power Cable': 'Included',
+      'Audiogon Rating': '8/10',
+      'Cosmetic Condition Notes': 'Light wear on the top cover.',
     },
   };
 }
@@ -76,6 +83,13 @@ function buildCommonProps() {
       Description: 'Combined description',
       'Key Features': 'Feature one',
       'Testing Notes': 'Bench tested',
+      Manual: 'Included',
+      'Original Box': 'No',
+      Voltage: '120V',
+      Remote: 'Included',
+      'Power Cable': 'Included',
+      'Audiogon Rating': '8/10',
+      'Cosmetic Condition Notes': 'Light wear on the top cover.',
       'Shopify Body HTML': '<p>Shopify body</p>',
       'eBay Body HTML': '<p>eBay body</p>',
     },
@@ -84,7 +98,7 @@ function buildCommonProps() {
     listingDurationOptions: ['GTC'],
     saving: false,
     setFormValue: vi.fn(),
-    writableFieldNames: ['Title', 'Description', 'Price', 'Key Features', 'Testing Notes'],
+    writableFieldNames: ['Title', 'Description', 'Price', 'Key Features', 'Testing Notes', 'Manual', 'Original Box', 'Voltage', 'Remote', 'Power Cable', 'Audiogon Rating', 'Cosmetic Condition Notes'],
     originalFieldValues: {
       Description: 'Original description',
     },
@@ -101,6 +115,16 @@ function buildSharedProps(): ListingApprovalCombinedSharedSectionProps {
     ebayRequiredFieldNames: ['Title', 'Categories'],
     combinedSharedKeyFeaturesFieldName: 'Key Features',
     combinedSharedKeyFeaturesSyncFieldNames: ['Shopify Key Features'],
+    sharedTestingSourceFieldValues: {
+      Manual: 'Included',
+      'Original Box': 'No',
+      Voltage: '120V',
+      Remote: 'Included',
+      'Power Cable': 'Included',
+      'Testing Notes': 'Bench tested',
+      'Audiogon Rating': '8/10',
+      'Cosmetic Condition Notes': 'Light wear on the top cover.',
+    },
     sharedDrawerRequiredStatus: { hasRequired: true, allFilled: true },
   };
 }
@@ -173,13 +197,23 @@ describe('combined approval sections', () => {
 
   it('renders the shared drawer with description editing and shared editor modules', async () => {
     const props = buildSharedProps();
+    props.sharedTestingSourceFieldValues = {
+      Manual: '["Included"]',
+      'Original Box': '["No"]',
+      Voltage: '120V',
+      Remote: '["Included"]',
+      'Power Cable': '["Included"]',
+      'Testing Notes': 'Bench tested',
+      'Audiogon Rating': '["8/10"]',
+      'Cosmetic Condition Notes': 'Light wear on the top cover.',
+    };
 
     render(<ListingApprovalCombinedSharedSection {...props} />);
 
     expect(screen.getByText('Shared Fields')).toBeInTheDocument();
     expect(screen.getByLabelText('All required fields filled')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Updated combined description' } });
+    fireEvent.change(screen.getByDisplayValue('Combined description'), { target: { value: 'Updated combined description' } });
 
     expect(props.setFormValue).toHaveBeenCalledWith('Description', 'Updated combined description');
     expect(approvalFormFieldsSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -187,11 +221,46 @@ describe('combined approval sections', () => {
       allFieldNames: ['Title', 'Price'],
       requiredFieldNames: ['Title'],
     }));
+    expect(screen.getByText('Testing')).toBeInTheDocument();
+    expect(screen.getByLabelText('Manual')).toHaveValue('Included');
+    expect(screen.getByLabelText('Original Box')).toHaveValue('No');
+    expect(screen.getByLabelText('Voltage')).toHaveValue('120V');
+    expect(screen.getByLabelText('Remote')).toHaveValue('Included');
+    expect(screen.getByLabelText('Power Cable')).toHaveValue('Included');
+    expect(screen.getByLabelText('Audiogon Rating')).toHaveValue('8/10');
+    expect(screen.getByLabelText('Testing Notes')).toHaveValue('Bench tested');
+    expect(screen.getByLabelText('Cosmetic Notes')).toHaveValue('Light wear on the top cover.');
 
     await waitFor(() => {
       expect(screen.getByTestId('key-features-editor')).toHaveTextContent('Key Features');
     });
+    expect(keyFeaturesEditorSpy).toHaveBeenCalledWith(expect.objectContaining({
+      disabled: true,
+    }));
     expect(testingNotesTextareaEditorSpy).not.toHaveBeenCalled();
+  });
+
+  it('locks shared testing-detail editors when workflow-managed source fields are present', async () => {
+    const props = buildSharedProps();
+    props.originalFieldValues = {
+      ...props.originalFieldValues,
+      'Workflow Status': 'Approved for Publish',
+      Make: 'Marantz',
+      Model: '2270',
+      'Component Type': 'Stereo Receiver',
+      'Testing Notes': 'Passed extended bench test.',
+    };
+
+    render(<ListingApprovalCombinedSharedSection {...props} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('key-features-editor')).toHaveTextContent('Key Features');
+    });
+
+    expect(keyFeaturesEditorSpy).toHaveBeenCalledWith(expect.objectContaining({
+      disabled: true,
+      helperText: expect.stringContaining('Testing form'),
+    }));
   });
 
   it('renders the Shopify drawer with collection editor wiring and preview panels', async () => {

@@ -59,6 +59,7 @@ export function ListingApprovalCombinedShopifySection({
         <ApprovalFormFields
           recordId={selectedRecord.id}
           approvalChannel="shopify"
+          isCombinedApproval
           forceShowShopifyCollectionsEditor
           allFieldNames={combinedShopifyOnlyFieldNames}
           writableFieldNames={writableFieldNames}

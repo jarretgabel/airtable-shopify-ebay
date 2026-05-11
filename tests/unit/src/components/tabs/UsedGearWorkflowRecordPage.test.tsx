@@ -271,9 +271,10 @@ describe('UsedGearWorkflowRecordPage', () => {
     );
 
     expect(await screen.findByText('Milestones')).toBeInTheDocument();
-    expect(screen.getAllByText('Intake Accepted').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Processing Completed').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Pending').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Testing Signed').length).toBeGreaterThan(0);
+    expect(screen.getByLabelText('Milestone Intake Accepted')).toBeInTheDocument();
+    expect(screen.getByLabelText('Milestone Processing Completed')).toBeInTheDocument();
+    expect(screen.queryByText('Current')).not.toBeInTheDocument();
   });
 
   it('renders approved workflow metadata fields that were added to Airtable', async () => {
@@ -319,6 +320,53 @@ describe('UsedGearWorkflowRecordPage', () => {
     expect(screen.getByText('Allocation Mode: Equal Split')).toBeInTheDocument();
     expect(screen.getByText('Qualification Complete: true')).toBeInTheDocument();
     expect(screen.getByText('Stale Listing At: 2026-05-08T03:00:00.000Z')).toBeInTheDocument();
+  });
+
+  it('uses workflow status to select the current milestone when stage timestamps are sparse', async () => {
+    loadUsedGearWorkflowRecordContextMock.mockResolvedValue({
+      record: {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          SKU: 'SKU-1',
+          Make: 'McIntosh',
+          Model: 'C28',
+          'Workflow Status': 'Approved for Publish',
+          Price: '2499.00',
+        },
+      },
+      group: null,
+    });
+
+    render(
+      <UsedGearWorkflowRecordPage
+        currentUserName="Taylor Reviewer"
+        recordId="rec1"
+        onBackToDirectory={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenTestingForm={vi.fn()}
+        onOpenPhotosForm={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+        onOpenInventoryEditor={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Milestones')).toBeInTheDocument();
+    expect(screen.getAllByText('Approved For Publish').length).toBeGreaterThan(0);
+    expect(screen.getByLabelText('Milestone Approved For Publish')).toBeInTheDocument();
+    const milestoneOrder = screen
+      .getAllByLabelText(/Milestone /)
+      .map((element) => element.getAttribute('aria-label'));
+
+    expect(milestoneOrder).toContain('Milestone Intake Accepted');
+    expect(milestoneOrder.indexOf('Milestone Intake Accepted')).toBeLessThan(
+      milestoneOrder.indexOf('Milestone Approved For Publish'),
+    );
+    expect(screen.getByLabelText('Milestone Intake Accepted').className).toContain('emerald');
+    expect(screen.queryByText('Current')).not.toBeInTheDocument();
+    expect(screen.getByText('How To Complete')).toBeInTheDocument();
+    expect(screen.getByText('Use "Open Listings Approval" to publish the listing to Shopify or eBay.')).toBeInTheDocument();
   });
 
   it('shows sibling rows when the workflow record belongs to a grouped submission', async () => {

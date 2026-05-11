@@ -35,6 +35,7 @@ export interface ListingApprovalCombinedSharedSectionProps extends CombinedSecti
   ebayRequiredFieldNames: string[];
   combinedSharedKeyFeaturesFieldName: string;
   combinedSharedKeyFeaturesSyncFieldNames: string[];
+  sharedTestingSourceFieldValues: Record<string, string>;
   sharedDrawerRequiredStatus: DrawerRequiredStatus;
 }
 

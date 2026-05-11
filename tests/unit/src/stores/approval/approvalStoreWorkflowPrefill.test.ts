@@ -99,6 +99,45 @@ describe('applyWorkflowListingPrefills', () => {
     ].join('\n\n'));
   });
 
+  it('overrides existing listing details and testing notes when testing-form source fields are present', () => {
+    const values = {
+      'Key Features': 'Legacy,Manual listing copy',
+      'Testing Notes': 'Legacy listing notes',
+      'eBay Body Key Features JSON': JSON.stringify([{ feature: 'Legacy', value: 'Manual listing copy' }]),
+    };
+    const kinds = {
+      'Key Features': 'text',
+      'Testing Notes': 'text',
+      'eBay Body Key Features JSON': 'json',
+    } as const;
+
+    applyWorkflowListingPrefills({
+      'Workflow Status': 'Approved for Publish',
+      Make: 'Marantz',
+      Model: '2270',
+      'Component Type': 'Stereo Receiver',
+      'Internal Inclusion Notes': 'Original wood case and power cord included.',
+      'Internal Cosmetic Notes': 'Minor veneer wear on the rear-left corner.',
+      'Testing Notes': 'Passed extended bench and listening tests.',
+    }, values, { ...kinds });
+
+    expect(values['Key Features']).toBe([
+      'Make,Marantz',
+      'Model,2270',
+      'Component Type,Stereo Receiver',
+      'Cosmetic Notes,Minor veneer wear on the rear-left corner.',
+      'Includes,Original wood case and power cord included.',
+    ].join('\n'));
+    expect(values['Testing Notes']).toBe('Passed extended bench and listening tests.');
+    expect(values['eBay Body Key Features JSON']).toBe(JSON.stringify([
+      { feature: 'Make', value: 'Marantz' },
+      { feature: 'Model', value: '2270' },
+      { feature: 'Component Type', value: 'Stereo Receiver' },
+      { feature: 'Cosmetic Notes', value: 'Minor veneer wear on the rear-left corner.' },
+      { feature: 'Includes', value: 'Original wood case and power cord included.' },
+    ]));
+  });
+
   it('propagates channel-specific source fields into blank shared combined fields', () => {
     const values = {
       Title: '',

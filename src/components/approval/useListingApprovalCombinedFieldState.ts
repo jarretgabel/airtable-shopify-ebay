@@ -207,7 +207,7 @@ export function useListingApprovalCombinedFieldState({
       if (isWorkflowOnlyListingFieldName(fieldName)) return false;
       if (isSystemManagedListingFieldName(fieldName)) return false;
       if (isInternalReferenceListingFieldName(fieldName)) return false;
-      if (isEbayTestingNotesField(fieldName)) return true;
+      if (isEbayTestingNotesField(fieldName)) return false;
       if (!isEbayOnlyFieldName(fieldName) || isShopifyOnlyFieldName(fieldName)) return false;
       if (normalized.includes('primary category') || normalized.includes('secondary category')) return false;
       if (EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;

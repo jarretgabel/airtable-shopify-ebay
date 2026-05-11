@@ -81,6 +81,7 @@ export interface ApprovalFormStandardFieldVisibilityParams {
   imageAltTextSourceField?: string;
   suppressImageScalarFields: boolean;
   hasCanonicalConditionField: boolean;
+  testingSectionFieldNames: string[];
 }
 
 export function shouldHideApprovalFormStandardField({
@@ -112,6 +113,7 @@ export function shouldHideApprovalFormStandardField({
   imageAltTextSourceField,
   suppressImageScalarFields,
   hasCanonicalConditionField,
+  testingSectionFieldNames,
 }: ApprovalFormStandardFieldVisibilityParams): boolean {
   if (isWorkflowOnlyListingFieldName(fieldName)) return true;
   if (isSystemManagedListingFieldName(fieldName)) return true;
@@ -185,6 +187,7 @@ export function shouldHideApprovalFormStandardField({
   if (useCombinedImageAltEditor && fieldName === imageAltTextSourceField) return true;
   if (suppressImageScalarFields && isScalarImageField(fieldName, isImageUrlListField)) return true;
   if (hasCanonicalConditionField && fieldName.trim().toLowerCase() !== 'condition' && isConditionMirrorSourceField(fieldName)) return true;
+  if (testingSectionFieldNames.includes(fieldName)) return true;
 
   const normalizedType = fieldName.trim().toLowerCase();
   return normalizedType.includes('shopify')

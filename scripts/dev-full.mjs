@@ -6,6 +6,8 @@ const cwd = process.cwd();
 const children = [];
 let viteStarted = false;
 let shuttingDown = false;
+const frontendPort = Number(process.env.FRONTEND_PORT || '3000');
+const frontendHost = process.env.FRONTEND_HOST || '127.0.0.1';
 const localApiPort = Number(process.env.LOCAL_API_PORT || '3001');
 const localApiHost = process.env.LOCAL_API_HOST || '127.0.0.1';
 
@@ -81,12 +83,19 @@ function isPortOpen(host, port) {
 function startVite() {
   if (viteStarted) return;
   viteStarted = true;
-  startCommand('dev', npmCommand, ['run', 'dev']);
+  startCommand('dev', npmCommand, ['run', 'dev', '--', '--host', frontendHost, '--port', String(frontendPort), '--strictPort']);
 }
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 async function main() {
+  const frontendAlreadyRunning = await isPortOpen(frontendHost, frontendPort);
+  if (frontendAlreadyRunning) {
+    throw new Error(
+      `[dev:full] frontend port ${frontendPort} on ${frontendHost} is already in use. Stop the existing frontend process or run npm run local:api separately.`,
+    );
+  }
+
   const localApiAlreadyRunning = await isPortOpen(localApiHost, localApiPort);
 
   if (localApiAlreadyRunning) {

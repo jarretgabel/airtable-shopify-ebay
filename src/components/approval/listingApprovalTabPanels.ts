@@ -45,6 +45,7 @@ interface BuildListingApprovalTabPanelsParams {
   combinedSharedKeyFeaturesFieldName: string;
   combinedSharedKeyFeaturesSyncFieldNames: string[];
   combinedEbayTestingNotesFieldName: string;
+  drawerSourceFields: Record<string, unknown>;
   sharedDrawerRequiredStatus: { hasRequired: boolean; allFilled: boolean };
   combinedShopifyOnlyFieldNames: string[];
   shopifyDrawerRequiredStatus: { hasRequired: boolean; allFilled: boolean };
@@ -144,6 +145,7 @@ export function buildListingApprovalTabPanels({
   combinedSharedKeyFeaturesFieldName,
   combinedSharedKeyFeaturesSyncFieldNames,
   combinedEbayTestingNotesFieldName,
+  drawerSourceFields,
   sharedDrawerRequiredStatus,
   combinedShopifyOnlyFieldNames,
   shopifyDrawerRequiredStatus,
@@ -246,6 +248,7 @@ export function buildListingApprovalTabPanels({
       combinedSharedKeyFeaturesFieldName,
       combinedSharedKeyFeaturesSyncFieldNames,
       combinedEbayTestingNotesFieldName,
+      drawerSourceFields,
       sharedDrawerRequiredStatus,
       combinedShopifyOnlyFieldNames,
       shopifyDrawerRequiredStatus,

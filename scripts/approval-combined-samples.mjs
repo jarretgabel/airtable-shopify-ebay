@@ -122,6 +122,9 @@ function buildShopifyBodyHtml(description, bullets) {
 function makeSampleFields(index, config) {
   const sku = `${SAMPLE_SKU_PREFIX}${String(index + 1).padStart(2, '0')}`;
   const keyFeatures = config.keyFeatures.join('\n');
+  const listingKeyFeatures = Object.prototype.hasOwnProperty.call(config, 'listingKeyFeatures')
+    ? config.listingKeyFeatures
+    : keyFeatures;
 
   return {
     'Template Name': `${SAMPLE_MARKER} ${config.templateName}`,
@@ -130,7 +133,7 @@ function makeSampleFields(index, config) {
     'Images (comma-separated)': config.primaryImages.join(', '),
     'Images (comma-separated) 2': config.secondaryImages.join(', '),
     'Images Alt Text (comma separated)': config.altTexts.join(', '),
-    'Key Features (Key, Value)': keyFeatures,
+    'Key Features (Key, Value)': listingKeyFeatures,
     'SKU Legacy Backup': sku,
     'Item Zip Code': config.zipCode,
     Condition: config.condition,
@@ -159,11 +162,77 @@ function makeSampleFields(index, config) {
     'Ebay Body (HTML)': buildEbayBodyHtml(config.title, config.description, keyFeatures),
     'Ebay Price': config.ebayPrice,
     'Ebay Approved': config.ebayApproved,
+    ...(config.testingFields ?? {}),
+    ...(config.listingTestingNotes === undefined ? {} : { 'Testing Notes': config.listingTestingNotes }),
+    ...(config.workflowFields ?? {}),
   };
 }
 
 function buildSampleRecords() {
   return [
+    {
+      templateName: 'Workflow Prefill Rich Testing Sample',
+      title: 'Workflow Prefill Rich Testing Sample',
+      description: 'Sample row with richer testing-form data so listing pages can validate testing-detail and testing-note prefills without manual editing.',
+      keyFeatures: [
+        'Make,Marantz',
+        'Model,2270',
+        'Component Type,Stereo Receiver',
+        'Cosmetic Notes,Minor veneer wear at the rear-left corner and light marks on the top grille.',
+        'Includes,Original wood case, reproduction manual, and power cord.',
+      ],
+      listingKeyFeatures: '',
+      listingTestingNotes: '',
+      primaryImages: ['https://placehold.co/1200x900?text=Workflow+Testing+1'],
+      secondaryImages: ['https://placehold.co/1200x900?text=Workflow+Testing+2'],
+      altTexts: ['Workflow testing hero', 'Workflow testing detail'],
+      zipCode: 11205,
+      condition: 'Used',
+      shopifyType: 'Electronics > Audio > Receivers',
+      shopifyCollections: ['Receivers', 'Vintage'],
+      shopifyTags: ['Sample', 'Workflow Prefill', 'Testing'],
+      shopifyBullets: ['Testing-form-driven details sample', 'Listing notes should resolve from workflow fields'],
+      shopifyPrice: 2299,
+      shopifyRequiresShipping: 'TRUE',
+      shopifyTaxable: 'TRUE',
+      shopifyApproved: 'FALSE',
+      ebayCategories: ['Receivers'],
+      ebayListingFormat: 'Buy It Now',
+      ebayDuration: 'GTC',
+      ebayQuantity: 1,
+      ebayAllowOffers: 'TRUE',
+      ebayDomesticShippingFees: 'Calculated',
+      ebayPackageType: 'Package/Thick Envelope',
+      ebayDomesticService: 'UPS Ground',
+      ebayInternationalShippingFees: 'Calculated',
+      ebayInternationalDestinations: 'Worldwide',
+      ebayExcludedLocations: 'None',
+      ebayCombinedShippingDiscountEnabled: false,
+      ebayCombinedShippingDiscountProfile: '',
+      ebayHandlingTimeDays: 2,
+      ebayPrice: 2299,
+      ebayApproved: 'FALSE',
+      testingFields: {
+        Manual: ['Included'],
+        'Original Box': ['No'],
+        Voltage: '120V',
+        Remote: ['Included'],
+        'Power Cable': ['Included'],
+        'Audiogon Rating': '8/10',
+        'Cosmetic Condition Notes': 'Minor veneer wear at the rear-left corner and light marks on the top grille.',
+      },
+      workflowFields: {
+        'Workflow Status': 'Approved for Publish',
+        Make: 'Marantz',
+        Model: '2270',
+        'Component Type': 'Stereo Receiver',
+        'Inventory Notes': 'Recently serviced vintage receiver with strong phono performance and a stable extended listening test result.',
+        'Testing Notes': 'Passed extended bench and listening tests. Bias and DC offset are stable, tuner locks cleanly, and the phono stage is quiet.',
+        'Internal Functional Notes': 'All inputs, outputs, tone controls, lights, and tuner presets were verified after control cleaning.',
+        'Internal Inclusion Notes': 'Original wood case, reproduction manual, and power cord included.',
+        'Internal Cosmetic Notes': 'Minor veneer wear at the rear-left corner with light marks on the top grille.',
+      },
+    },
     {
       templateName: 'Combined Draft Pending Review',
       title: 'Combined Draft Pending Review',

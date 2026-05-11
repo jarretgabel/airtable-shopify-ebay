@@ -73,6 +73,7 @@ function createBaseParams(selectedRecord: AirtableRecord | null): Parameters<typ
     combinedSharedKeyFeaturesFieldName: '',
     combinedSharedKeyFeaturesSyncFieldNames: [],
     combinedEbayTestingNotesFieldName: '',
+    drawerSourceFields: {},
     sharedDrawerRequiredStatus: { hasRequired: false, allFilled: true },
     combinedShopifyOnlyFieldNames: [],
     shopifyDrawerRequiredStatus: { hasRequired: false, allFilled: true },

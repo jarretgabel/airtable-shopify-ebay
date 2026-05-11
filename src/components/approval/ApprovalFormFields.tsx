@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo } from 'react';
+import { hasWorkflowListingSourceContext } from '@/stores/approval/approvalStoreWorkflowPrefill';
 import {
   isReadOnlyApprovalField,
 } from './approvalFormFieldsSharedHelpers';
@@ -10,6 +11,7 @@ import {
 } from './approvalFormFieldsEbayHelpers';
 import { ApprovalFormFieldGrid } from './ApprovalFormFieldGrid';
 import type { ApprovalFormFieldsSupplementalEditorsProps } from './ApprovalFormFieldsSupplementalEditors';
+import { resolveListingApprovalTestingSectionFields } from './listingApprovalTestingSection';
 import { useApprovalFormFieldSetup } from './useApprovalFormFieldSetup';
 import { useApprovalFormFieldRequirements } from './useApprovalFormFieldRequirements';
 
@@ -87,6 +89,28 @@ export function ApprovalFormFields({
   const ebayAdvancedOptionFieldNames = useMemo(
     () => allFieldNames.filter((fieldName: string) => isEbayAdvancedOptionField(fieldName)),
     [allFieldNames],
+  );
+  const workflowManagedListingContent = useMemo(
+    () => hasWorkflowListingSourceContext(originalFieldValues),
+    [originalFieldValues],
+  );
+  const testingSectionValues = useMemo(
+    () => ({ ...originalFieldValues, ...formValues }),
+    [formValues, originalFieldValues],
+  );
+  const testingSectionFields = useMemo(
+    () => (approvalChannel === 'combined' || isCombinedApproval
+      ? []
+      : resolveListingApprovalTestingSectionFields(Array.from(new Set([
+        ...allFieldNames,
+        ...writableFieldNames,
+        ...Object.keys(testingSectionValues),
+      ])))),
+    [allFieldNames, approvalChannel, isCombinedApproval, testingSectionValues, writableFieldNames],
+  );
+  const testingSectionFieldNames = useMemo(
+    () => testingSectionFields.map((field) => field.fieldName),
+    [testingSectionFields],
   );
 
   const {
@@ -221,6 +245,7 @@ export function ApprovalFormFields({
     imageAltTextSourceField,
     suppressImageScalarFields,
     hasCanonicalConditionField,
+    testingSectionFieldNames,
     formValues,
     fieldKinds,
     saving,
@@ -243,9 +268,12 @@ export function ApprovalFormFields({
     workflowImageAttachments,
     selectedWorkflowImageUrls,
     formValues,
+    testingSectionValues,
     setFormValue,
     saving,
     isReadOnlyApprovalField,
+    workflowManagedListingContent,
+    testingSectionFields,
     activeBodyDescriptionFieldName,
     renderSpecialLabel,
     inputBaseClass,

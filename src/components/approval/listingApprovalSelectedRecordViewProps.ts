@@ -35,6 +35,7 @@ interface BuildListingApprovalSelectedRecordViewPropsParams {
   combinedSharedKeyFeaturesFieldName: string;
   combinedSharedKeyFeaturesSyncFieldNames: string[];
   combinedEbayTestingNotesFieldName: string;
+  drawerSourceFields: Record<string, unknown>;
   sharedDrawerRequiredStatus: DrawerRequiredStatus;
   combinedShopifyOnlyFieldNames: string[];
   shopifyDrawerRequiredStatus: DrawerRequiredStatus;
@@ -94,6 +95,7 @@ export function buildListingApprovalSelectedRecordViewProps({
   combinedSharedKeyFeaturesFieldName,
   combinedSharedKeyFeaturesSyncFieldNames,
   combinedEbayTestingNotesFieldName,
+  drawerSourceFields,
   sharedDrawerRequiredStatus,
   combinedShopifyOnlyFieldNames,
   shopifyDrawerRequiredStatus,
@@ -146,6 +148,9 @@ export function buildListingApprovalSelectedRecordViewProps({
       combinedSharedKeyFeaturesFieldName,
       combinedSharedKeyFeaturesSyncFieldNames,
       combinedEbayTestingNotesFieldName,
+      sharedTestingSourceFieldValues: Object.fromEntries(
+        Object.entries(drawerSourceFields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
+      ),
       sharedDrawerRequiredStatus,
       combinedShopifyOnlyFieldNames,
       shopifyDrawerRequiredStatus,
