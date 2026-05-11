@@ -139,7 +139,7 @@ export const photosFormFields: PhotosFormFieldDefinition[] = [
   },
   {
     name: 'imageFiles',
-    airtableFieldName: 'Images (Eduardo)',
+    airtableFieldName: 'Images',
     label: 'Images',
     type: 'file',
     description: 'Upload the primary listing photos.',

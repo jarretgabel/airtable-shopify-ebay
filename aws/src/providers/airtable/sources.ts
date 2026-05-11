@@ -30,8 +30,8 @@ export type AirtableConfiguredRecordsSource =
   | 'approval-shopify'
   | 'approval-combined';
 export type AirtableConfiguredWriteSource = AirtableConfiguredRecordsSource;
-export type AirtableConfiguredMetadataSource = 'inventory-directory';
-export type AirtableConfiguredAttachmentSource = 'inventory-directory';
+export type AirtableConfiguredMetadataSource = 'inventory-directory' | 'used-gear-workflow';
+export type AirtableConfiguredAttachmentSource = 'inventory-directory' | 'used-gear-workflow';
 
 interface AirtableConfiguredReadOptions {
   fields?: string[];
@@ -153,7 +153,30 @@ function getMetadataSourceDefinition(source: AirtableConfiguredMetadataSource): 
     };
   }
 
-  throw new Error(`Unsupported Airtable metadata source ${source}.`);
+  const definition = getSourceDefinition(source);
+
+  if (!definition.reference) {
+    return {
+      baseId: process.env.AIRTABLE_BASE_ID?.trim() || '',
+      tableId: definition.tableName,
+    };
+  }
+
+  const candidates = parseAirtableReferenceCandidates(
+    definition.reference,
+    definition.tableName,
+    process.env.AIRTABLE_BASE_ID?.trim() || '',
+  );
+  const [candidate] = candidates;
+
+  if (!candidate) {
+    throw new Error(`Unsupported Airtable metadata source ${source}.`);
+  }
+
+  return {
+    baseId: candidate.baseId,
+    tableId: candidate.tableName,
+  };
 }
 
 function getAttachmentSourceDefinition(source: AirtableConfiguredAttachmentSource): { baseId: string; allowedFieldIds: Set<string> } {
@@ -164,7 +187,31 @@ function getAttachmentSourceDefinition(source: AirtableConfiguredAttachmentSourc
     };
   }
 
-  throw new Error(`Unsupported Airtable attachment source ${source}.`);
+  const definition = getSourceDefinition(source);
+
+  if (!definition.reference) {
+    return {
+      baseId: process.env.AIRTABLE_BASE_ID?.trim() || '',
+      allowedFieldIds: INVENTORY_DIRECTORY_ATTACHMENT_FIELD_IDS,
+    };
+  }
+
+  const candidates = parseAirtableReferenceCandidates(
+    definition.reference,
+    definition.tableName,
+    process.env.AIRTABLE_BASE_ID?.trim() || '',
+  );
+  const [candidate] = candidates;
+
+  if (!candidate) {
+    throw new Error(`Unsupported Airtable attachment source ${source}.`);
+  }
+
+  return {
+    baseId: candidate.baseId,
+    allowedFieldIds: INVENTORY_DIRECTORY_ATTACHMENT_FIELD_IDS,
+  };
+
 }
 
 function isRetryableReferenceError(error: unknown): boolean {

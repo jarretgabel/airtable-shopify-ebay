@@ -15,6 +15,7 @@ This project uses a strict implementation baseline so the app remains visually c
 - Preserve existing data contracts and API payload shapes unless requirements demand changes.
 - Keep auth and route/page access checks aligned with AuthContext and src/auth/pages.ts.
 - Keep Shopify and eBay listing form page patterns aligned (section composition, save/reset/change-tracking behavior, and shared form conventions) unless channel-specific requirements explicitly diverge.
+- Create new unit tests under `tests/unit`, mirroring the source path from `src/` or `aws/src/`; keep integration scripts under `tests/integration`.
 - Implement changes with an advanced senior-level quality bar: prioritize durable architecture, clear separation of concerns, and long-term maintainability.
 
 ## Accessibility Requirements

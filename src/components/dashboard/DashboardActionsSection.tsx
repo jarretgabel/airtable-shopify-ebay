@@ -1,3 +1,4 @@
+import type { AppPage } from '@/auth/pages';
 import type { DashboardTargetTab } from './dashboardTabTypes';
 import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
 import { DashboardSubPanel } from './dashboardPrimitives';
@@ -91,6 +92,7 @@ function ActionButton({
 }
 
 export interface DashboardActionsSectionProps {
+  accessiblePages: AppPage[];
   ebayAuthenticated: boolean;
   ebayDraftCount: number;
   ebayPublishedCount: number;
@@ -113,6 +115,7 @@ export interface DashboardActionsSectionProps {
 }
 
 export function DashboardActionsSection({
+  accessiblePages,
   ebayAuthenticated,
   ebayDraftCount,
   ebayPublishedCount,
@@ -134,8 +137,11 @@ export function DashboardActionsSection({
   embedded,
 }: DashboardActionsSectionProps) {
   const items: ActionItem[] = [];
+  const canAccessListings = accessiblePages.includes('listings');
+  const canAccessInventory = accessiblePages.includes('inventory');
+  const canAccessEbay = accessiblePages.includes('ebay');
 
-  if (shopifyApprovalUnavailableReason) {
+  if (canAccessListings && shopifyApprovalUnavailableReason) {
     items.push({
       key: 'listings-shopify-unavailable',
       label: 'Shopify listings review unavailable',
@@ -147,7 +153,7 @@ export function DashboardActionsSection({
     });
   }
 
-  if (!shopifyApprovalUnavailableReason && shopifyQueuePending > 0) {
+  if (canAccessListings && !shopifyApprovalUnavailableReason && shopifyQueuePending > 0) {
     items.push({
       key: 'listings-shopify',
       label: `${shopifyQueuePending} listing${shopifyQueuePending === 1 ? '' : 's'} awaiting review`,
@@ -158,7 +164,7 @@ export function DashboardActionsSection({
     });
   }
 
-  if (ebayUnavailableReason) {
+  if ((canAccessEbay || canAccessListings) && ebayUnavailableReason) {
     items.push({
       key: 'ebay-unavailable',
       label: 'eBay snapshot unavailable',
@@ -170,7 +176,7 @@ export function DashboardActionsSection({
     });
   }
 
-  if (!ebayUnavailableReason && ebayAuthenticated && ebayDraftCount > 0) {
+  if (canAccessListings && !ebayUnavailableReason && ebayAuthenticated && ebayDraftCount > 0) {
     items.push({
       key: 'ebay',
       label: `${ebayDraftCount} eBay draft${ebayDraftCount === 1 ? '' : 's'} need listings review`,
@@ -181,7 +187,7 @@ export function DashboardActionsSection({
     });
   }
 
-  if (!workflowPostPublishLoading && workflowSoldReadyCount > 0) {
+  if (canAccessInventory && !workflowPostPublishLoading && workflowSoldReadyCount > 0) {
     items.push({
       key: 'used-gear-sold-ready',
       label: `${workflowSoldReadyCount} used-gear item${workflowSoldReadyCount === 1 ? '' : 's'} sold and ready to ship`,
@@ -194,7 +200,7 @@ export function DashboardActionsSection({
     });
   }
 
-  if (!workflowPostPublishLoading && workflowStaleListingCount > 0) {
+  if (canAccessInventory && !workflowPostPublishLoading && workflowStaleListingCount > 0) {
     items.push({
       key: 'used-gear-stale',
       label: `${workflowStaleListingCount} used-gear listing${workflowStaleListingCount === 1 ? '' : 's'} stale`,

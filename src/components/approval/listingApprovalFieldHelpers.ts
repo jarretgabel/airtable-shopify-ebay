@@ -56,6 +56,7 @@ export function isTitleLikeFieldName(fieldName: string): boolean {
 export function isPriceLikeFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized.includes('price')
+    || normalized === 'ebay price'
     || normalized === 'buy it now usd'
     || normalized === 'starting bid usd'
     || normalized === 'buy it now/starting bid'
@@ -85,7 +86,8 @@ export function findEbayPriceFieldName(fieldNames: string[]): string {
 
   const fuzzy = fieldNames.find((name) => {
     const normalized = normalizeFieldLookupKey(name);
-    return normalized === 'ebayofferpricevalue'
+    return normalized === 'ebayprice'
+      || normalized === 'ebayofferpricevalue'
       || normalized === 'ebayofferauctionstartpricevalue'
       || normalized.includes('buyitnowstartingbid')
       || normalized.includes('buyitnowstartingprice')
@@ -353,4 +355,90 @@ export function isHiddenCombinedFieldName(fieldName: string): boolean {
     || normalized === 'secondary category name'
     || normalized === 'ebay offer primary category name'
     || normalized === 'ebay offer secondary category name';
+}
+
+export function isWorkflowOnlyListingFieldName(fieldName: string): boolean {
+  const normalized = normalizeCombinedFieldName(fieldName);
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+
+  if (
+    normalized === 'accepted at'
+    || normalized === 'accepted by'
+    || normalized === 'allocation mode'
+    || normalized === 'allocation notes'
+    || normalized === 'approved at'
+    || normalized === 'approved by'
+    || normalized === 'approved for publish at'
+    || normalized === 'awaiting pre listing review at'
+    || normalized === 'confirmed grand total'
+    || normalized === 'offer amount'
+    || normalized === 'paid amount'
+    || normalized === 'photographed at'
+    || normalized === 'photographed by'
+    || normalized === 'photography signed at'
+    || normalized === 'photography signed by'
+    || normalized === 'pick up id'
+    || normalized === 'pick up'
+    || normalized === 'pick up #'
+    || normalized === 'pre listing reviewed at'
+    || normalized === 'pre listing reviewed by'
+    || normalized === 'processing signed at'
+    || normalized === 'processing signed by'
+    || normalized === 'qualification complete'
+    || normalized === 'qualification notes'
+    || normalized === 'shipped at'
+    || normalized === 'sold ready to ship at'
+    || normalized === 'stale listing at'
+    || normalized === 'stale recovery notes'
+    || normalized === 'stale recovery status'
+    || normalized === 'stale recovery updated at'
+    || normalized === 'submission group id'
+    || normalized === 'testing signed at'
+    || normalized === 'testing signed by'
+    || normalized === 'trash status'
+    || normalized === 'workflow owner'
+    || normalized === 'workflow owner assigned at'
+    || normalized === 'workflow source'
+    || normalized === 'workflow status'
+    || normalized === 'listed at'
+  ) {
+    return true;
+  }
+
+  return compact === 'pickupid'
+    || compact === 'pickup'
+    || compact === 'pickupnumber'
+    || compact === 'pickupid'
+    || compact === 'submissiongroupid'
+    || compact === 'approvedat'
+    || compact === 'approvedby'
+    || compact === 'photographedat'
+    || compact === 'photographedby';
+}
+
+export function isSystemManagedListingFieldName(fieldName: string): boolean {
+  const normalized = normalizeCombinedFieldName(fieldName);
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+
+  return normalized === 'e bay listing id'
+    || normalized === 'e bay offer id'
+    || normalized === 'shopify rest product id'
+    || normalized === 'shopify product id'
+    || compact === 'ebaylistingid'
+    || compact === 'ebayofferid'
+    || compact === 'shopifyrestproductid'
+    || compact === 'shopifyproductid';
+}
+
+export function isInternalReferenceListingFieldName(fieldName: string): boolean {
+  const normalized = normalizeCombinedFieldName(fieldName);
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+
+  return normalized === 'acquired from'
+    || normalized === 'arrival date'
+    || normalized === 'cost'
+    || normalized === 'sku legacy backup'
+    || compact === 'acquiredfrom'
+    || compact === 'arrivaldate'
+    || compact === 'skulegacybackup';
 }

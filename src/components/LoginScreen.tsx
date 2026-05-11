@@ -41,6 +41,12 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
     setResetLink(result.resetLink ?? null);
   }
 
+  function handleLoginEnterKeyDown(event: React.KeyboardEvent<HTMLInputElement>): void {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  }
+
   const labelClassName = 'text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300';
   const inputClassName = 'w-full rounded-xl border border-white/15 bg-slate-950/55 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30';
   const revealButtonClassName = 'shrink-0 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/10';
@@ -60,6 +66,7 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
+            onKeyDown={handleLoginEnterKeyDown}
             required
             autoComplete="email"
           />
@@ -82,6 +89,7 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            onKeyDown={handleLoginEnterKeyDown}
             required
             autoComplete="current-password"
           />
@@ -125,9 +133,12 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
           </form>
         )}
 
-        <p className="mt-4 text-xs text-slate-400">
-          Default admin login: admin@example.com / Admin123!
-        </p>
+        <div className="mt-4 space-y-1 text-xs text-slate-400">
+          <p className="m-0">Default admin login: admin@example.com / Admin123!</p>
+          <p className="m-0">Sample processor login: processor@example.com / Processor123!</p>
+          <p className="m-0">Sample tester login: tester@example.com / Tester123!</p>
+          <p className="m-0">Sample photographer login: photographer@example.com / Photographer123!</p>
+        </div>
       </section>
     </main>
   );

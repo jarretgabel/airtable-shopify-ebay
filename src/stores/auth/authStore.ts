@@ -1,5 +1,14 @@
 import { create } from 'zustand';
 import { AppPage } from '@/auth/pages';
+import { getRoleDefaultPages, hasFullAccessRole } from '@/auth/roleAccess';
+import {
+  createNotificationPreferencesForRole,
+  loadRoleWorkflowNotificationDefaults,
+  normalizeNotificationPreferencesForRole,
+  syncRoleWorkflowNotificationDefaultsFromAirtable,
+  type RoleWorkflowNotificationDefaults,
+  updateStoredRoleWorkflowNotificationDefault,
+} from '@/services/roleNotificationDefaults';
 import {
   confirmEmailChange as confirmEmailChangeViaApi,
   login as loginViaApi,
@@ -33,15 +42,66 @@ import {
   normalizeEmail,
 } from './authContextHelpers';
 import {
-  createDefaultUserNotificationPreferences,
   DEFAULT_USER_NOTIFICATION_PREFERENCES,
   type UsedGearWorkflowNotificationEvent,
   type UserNotificationPreferences,
 } from './authTypes';
 import { validatePasswordPolicy } from './passwordPolicy';
 
+function buildAuthenticatedSessionUser(input: {
+  userId: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  allowedPages: AppPage[];
+  mustChangePassword: boolean;
+}): AppUser {
+  return {
+    id: input.userId,
+    name: input.name,
+    email: input.email,
+    role: input.role,
+    mustChangePassword: input.mustChangePassword,
+    allowedPages: input.allowedPages,
+    notificationPreferences: createNotificationPreferencesForRole(input.role),
+  };
+}
+
+const SAMPLE_USER_DEFINITIONS: Array<{ id: string; name: string; email: string; role: UserRole; password: string }> = [
+  { id: 'u-processor-sample', name: 'Parker Processor', email: 'processor@example.com', role: 'processor', password: 'Processor123!' },
+  { id: 'u-tester-sample', name: 'Taylor Tester', email: 'tester@example.com', role: 'tester', password: 'Tester123!' },
+  { id: 'u-photographer-sample', name: 'Phoebe Photographer', email: 'photographer@example.com', role: 'photographer', password: 'Photographer123!' },
+];
+
+function isOwnerRoleChangeLocked(currentRole: UserRole, nextRole: UserRole): boolean {
+  return currentRole === 'owner' || nextRole === 'owner';
+}
+
+async function ensureSampleUsers(users: AppUser[]): Promise<AppUser[]> {
+  const normalizedEmails = new Set(users.map((user) => user.email.toLowerCase()));
+  const missingDefinitions = SAMPLE_USER_DEFINITIONS.filter((definition) => !normalizedEmails.has(definition.email));
+
+  if (missingDefinitions.length === 0) {
+    return users;
+  }
+
+  const createdUsers = await Promise.all(missingDefinitions.map(async (definition) => createUserInAirtable({
+    id: definition.id,
+    name: definition.name,
+    email: definition.email,
+    role: definition.role,
+    password: definition.password,
+    mustChangePassword: false,
+    allowedPages: getRoleDefaultPages(definition.role),
+    notificationPreferences: createNotificationPreferencesForRole(definition.role),
+  })));
+
+  return [...users, ...createdUsers].sort((left, right) => left.email.localeCompare(right.email));
+}
+
 export interface AuthStoreState {
   users: AppUser[];
+  roleNotificationDefaults: RoleWorkflowNotificationDefaults;
   usersLoading: boolean;
   usersReady: boolean;
   currentUserId: string | null;
@@ -64,10 +124,13 @@ export interface AuthStoreState {
   updateCurrentUserNotificationPreference: <K extends keyof UserNotificationPreferences>(key: K, value: UserNotificationPreferences[K]) => Promise<AccountUpdateResult>;
   updateCurrentUserWorkflowNotificationEvent: (eventKey: UsedGearWorkflowNotificationEvent, enabled: boolean) => Promise<AccountUpdateResult>;
   updateUserWorkflowNotificationEvent: (userId: string, eventKey: UsedGearWorkflowNotificationEvent, enabled: boolean) => Promise<AccountUpdateResult>;
+  updateRoleWorkflowNotificationDefault: (role: UserRole, eventKey: UsedGearWorkflowNotificationEvent, enabled: boolean) => Promise<AccountUpdateResult>;
+  applyRoleWorkflowNotificationDefaults: (role: UserRole) => Promise<AccountUpdateResult>;
 }
 
 export const useAuthStore = create<AuthStoreState>((set, get) => ({
   users: [],
+  roleNotificationDefaults: loadRoleWorkflowNotificationDefaults(),
   usersLoading: false,
   usersReady: false,
   currentUserId: null,
@@ -86,6 +149,26 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
         const session = await resolveSessionViaApi();
         resolvedUserId = session.userId;
         requiresPasswordChange = session.mustChangePassword;
+
+        const sessionUser = buildAuthenticatedSessionUser({
+          userId: session.userId,
+          name: session.name,
+          email: session.email,
+          role: session.role,
+          allowedPages: session.allowedPages,
+          mustChangePassword: session.mustChangePassword,
+        });
+
+        if (!hasFullAccessRole(session.role)) {
+          set({
+            users: [sessionUser],
+            usersReady: true,
+            currentUserId: sessionUser.id,
+            hasAuthenticatedSession: true,
+            requiresPasswordChange: requiresPasswordChange || Boolean(sessionUser.mustChangePassword),
+          });
+          return;
+        }
       } catch {
         resolvedUserId = null;
       }
@@ -101,11 +184,27 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
         return;
       }
 
-      const users = await loadUsersFromAirtable();
+      let users = await loadUsersFromAirtable();
+      let roleNotificationDefaults = loadRoleWorkflowNotificationDefaults();
 
-      const sessionUser = resolvedUserId ? users.find((user) => user.id === resolvedUserId) ?? null : null;
+      try {
+        roleNotificationDefaults = await syncRoleWorkflowNotificationDefaultsFromAirtable();
+      } catch {
+        roleNotificationDefaults = loadRoleWorkflowNotificationDefaults();
+      }
+
+      let sessionUser = resolvedUserId ? users.find((user) => user.id === resolvedUserId) ?? null : null;
+      if (sessionUser && hasFullAccessRole(sessionUser.role)) {
+        try {
+          users = await ensureSampleUsers(users);
+          sessionUser = users.find((user) => user.id === resolvedUserId) ?? sessionUser;
+        } catch (error) {
+          console.error('Failed to seed sample users:', error);
+        }
+      }
       set({
         users,
+        roleNotificationDefaults,
         usersReady: true,
         currentUserId: sessionUser?.id ?? null,
         hasAuthenticatedSession: Boolean(sessionUser),
@@ -121,7 +220,34 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
   login: async (email, password) => {
     try {
       const auth = await loginViaApi(email, password);
-      const latestUsers = await loadUsersFromAirtable();
+      const authenticatedUser = buildAuthenticatedSessionUser({
+        userId: auth.userId,
+        name: auth.name,
+        email: auth.email,
+        role: auth.role,
+        allowedPages: auth.allowedPages,
+        mustChangePassword: auth.mustChangePassword,
+      });
+
+      if (!hasFullAccessRole(authenticatedUser.role)) {
+        set({
+          users: [authenticatedUser],
+          usersReady: true,
+          currentUserId: auth.userId,
+          hasAuthenticatedSession: true,
+          requiresPasswordChange: auth.mustChangePassword,
+        });
+        return { success: true, message: 'Login successful.' };
+      }
+
+      let latestUsers = await loadUsersFromAirtable();
+      if (hasFullAccessRole(authenticatedUser.role)) {
+        try {
+          latestUsers = await ensureSampleUsers(latestUsers);
+        } catch (error) {
+          console.error('Failed to seed sample users after login:', error);
+        }
+      }
       set({
         users: latestUsers,
         usersReady: true,
@@ -176,6 +302,10 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       return { success: false, message: 'User not found.' };
     }
 
+    if (targetUser.role === 'owner') {
+      return { success: false, message: 'Owner account access is managed outside User Management.' };
+    }
+
     const nextUser = {
       ...targetUser,
       allowedPages: normalizePages(pages, targetUser.role),
@@ -200,10 +330,15 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       return { success: false, message: 'User not found.' };
     }
 
+    if (isOwnerRoleChangeLocked(targetUser.role, role)) {
+      return { success: false, message: 'Owner role changes must be made with the package script.' };
+    }
+
     const nextUser = {
       ...targetUser,
       role,
-      allowedPages: normalizePages(targetUser.allowedPages, role),
+      allowedPages: normalizePages(getRoleDefaultPages(role), role),
+      notificationPreferences: normalizeNotificationPreferencesForRole(role, targetUser.notificationPreferences),
     };
 
     try {
@@ -221,8 +356,8 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
   deleteUser: async (userId) => {
     const { users, currentUserId } = get();
     const currentUser = getCurrentUser(users, currentUserId);
-    if (!currentUser || currentUser.role !== 'admin') {
-      return { success: false, message: 'Only admins can delete users.' };
+    if (!currentUser || !hasFullAccessRole(currentUser.role)) {
+      return { success: false, message: 'Only admins or owners can delete users.' };
     }
 
     const targetUser = users.find((user) => user.id === userId);
@@ -236,6 +371,10 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
     if (targetUser.id === 'u-admin') {
       return { success: false, message: 'The main admin account cannot be deleted.' };
+    }
+
+    if (targetUser.role === 'owner') {
+      return { success: false, message: 'Owner accounts cannot be deleted from the app.' };
     }
 
     if (targetUser.role === 'admin') {
@@ -259,6 +398,10 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
   },
   createUser: async (input) => {
     const { users } = get();
+    if ((input as { role?: string }).role === 'owner') {
+      return { success: false, message: 'Owner accounts must be created with the package script.' };
+    }
+
     const candidate = buildUserFromInput(input);
     if (candidate.result) {
       return candidate.result;
@@ -428,7 +571,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       return { success: false, message: 'Current user was not found.' };
     }
 
-    const currentPreferences = currentUser.notificationPreferences ?? createDefaultUserNotificationPreferences();
+    const currentPreferences = currentUser.notificationPreferences ?? createNotificationPreferencesForRole(currentUser.role);
     const nextUser = {
       ...currentUser,
       notificationPreferences: {
@@ -470,11 +613,15 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       return { success: false, message: 'No active user session.' };
     }
 
-    if (actingUser.role !== 'admin' && actingUser.id !== targetUser.id) {
-      return { success: false, message: 'Only admins can update other users.' };
+    if (!hasFullAccessRole(actingUser.role) && actingUser.id !== targetUser.id) {
+      return { success: false, message: 'Only admins or owners can update other users.' };
     }
 
-    const currentPreferences = targetUser.notificationPreferences ?? createDefaultUserNotificationPreferences();
+    if (targetUser.role === 'owner' && actingUser.id !== targetUser.id) {
+      return { success: false, message: 'Owner workflow alerts must be managed from the owner account settings.' };
+    }
+
+    const currentPreferences = targetUser.notificationPreferences ?? createNotificationPreferencesForRole(targetUser.role);
     const nextUser = {
       ...targetUser,
       notificationPreferences: {
@@ -495,6 +642,70 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to update workflow notifications in Airtable.',
+      };
+    }
+  },
+  updateRoleWorkflowNotificationDefault: async (role, eventKey, enabled) => {
+    const { users, currentUserId } = get();
+    const actingUser = users.find((user) => user.id === currentUserId);
+    if (!actingUser || !hasFullAccessRole(actingUser.role)) {
+      return { success: false, message: 'Only admins or owners can update role defaults.' };
+    }
+
+    if (role === 'owner') {
+      return { success: false, message: 'Owner defaults are managed outside the app.' };
+    }
+
+    try {
+      const nextDefaults = await updateStoredRoleWorkflowNotificationDefault(role, eventKey, enabled);
+      set({ roleNotificationDefaults: nextDefaults });
+      return { success: true, message: `${role[0].toUpperCase()}${role.slice(1)} defaults updated.` };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update role defaults.',
+      };
+    }
+  },
+  applyRoleWorkflowNotificationDefaults: async (role) => {
+    const { users, currentUserId, roleNotificationDefaults } = get();
+    const actingUser = users.find((user) => user.id === currentUserId);
+    if (!actingUser || !hasFullAccessRole(actingUser.role)) {
+      return { success: false, message: 'Only admins or owners can apply role defaults.' };
+    }
+
+    if (role === 'owner') {
+      return { success: false, message: 'Owner defaults are managed outside the app.' };
+    }
+
+    const matchingUsers = users.filter((user) => user.role === role);
+    if (matchingUsers.length === 0) {
+      return { success: false, message: `No ${role} users found.` };
+    }
+
+    const workflowEvents = roleNotificationDefaults[role];
+    const updatedUsers = matchingUsers.map((user) => ({
+      ...user,
+      notificationPreferences: {
+        ...(user.notificationPreferences ?? createNotificationPreferencesForRole(user.role)),
+        workflowEvents: { ...workflowEvents },
+      },
+    }));
+
+    try {
+      await Promise.all(updatedUsers.map((user) => updateUserInAirtable(user)));
+      const updatedById = new Map(updatedUsers.map((user) => [user.id, user]));
+      set({
+        users: users.map((user) => updatedById.get(user.id) ?? user),
+      });
+      return {
+        success: true,
+        message: `Applied ${role} workflow alert defaults to ${updatedUsers.length} user${updatedUsers.length === 1 ? '' : 's'}.`,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to apply role defaults.',
       };
     }
   },

@@ -220,14 +220,11 @@ export function displayInventoryValue(value: unknown): string {
 }
 
 export async function loadInventoryDirectory(): Promise<InventoryDirectoryData> {
-  const [records, fields] = await Promise.all([
-    getConfiguredRecords('inventory-directory', {
-      fields: [...INVENTORY_DIRECTORY_LIST_FIELD_NAMES],
-    }),
-    loadInventoryFieldMetadata(),
-  ]);
+  const records = await getConfiguredRecords('inventory-directory', {
+    fields: [...INVENTORY_DIRECTORY_LIST_FIELD_NAMES],
+  });
 
-  return { records: records.map(enrichUsedGearWorkflowRecord), fields };
+  return { records: records.map(enrichUsedGearWorkflowRecord), fields: [] };
 }
 
 export async function loadInventoryRecord(recordId: string): Promise<AirtableRecord> {

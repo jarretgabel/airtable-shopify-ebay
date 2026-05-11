@@ -1,16 +1,12 @@
 import type {
-  ApprovalEbayBodyPreviewInput as EbayBodyPreviewInput,
-  ApprovalEbayCategoryPreviewInput as EbayCategoryPreviewInput,
   ApprovalNormalizeRequest as NormalizeApprovalParams,
   ApprovalNormalizeResult,
 } from '../../shared/contracts/approval.js';
 import {
   buildEbayApprovalPreviewFromFields,
-  type EbayApprovalPreview,
 } from '../ebay/approvalPreview.js';
 import {
   buildShopifyApprovalPreviewFromFields,
-  type ShopifyApprovalPreview,
 } from '../shopify/approvalPreview.js';
 
 interface NormalizeApprovalDependencies {

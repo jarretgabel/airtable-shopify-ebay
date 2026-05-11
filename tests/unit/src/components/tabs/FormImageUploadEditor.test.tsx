@@ -1,0 +1,169 @@
+import * as React from 'react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { FormImageUploadEditor } from '@/components/tabs/FormImageUploadEditor';
+
+const { processImageMock, revokeProcessedImageMock } = vi.hoisted(() => ({
+  processImageMock: vi.fn(),
+  revokeProcessedImageMock: vi.fn(),
+}));
+
+vi.mock('@/services/imageProcessor', async () => {
+  const actual = await vi.importActual<typeof import('@/services/imageProcessor')>('@/services/imageProcessor');
+  return {
+    ...actual,
+    formatBytes: (bytes: number) => `${bytes} B`,
+    processImage: processImageMock,
+    revokeProcessedImage: revokeProcessedImageMock,
+  };
+});
+
+describe('FormImageUploadEditor', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.localStorage.clear();
+
+    let objectUrlCount = 0;
+    URL.createObjectURL = vi.fn(() => `blob:mock-${++objectUrlCount}`);
+    URL.revokeObjectURL = vi.fn();
+
+    processImageMock.mockResolvedValue({
+      blob: new Blob(['processed-image'], { type: 'image/jpeg' }),
+      objectUrl: 'blob:processed-preview',
+      filename: 'hero-finished.jpg',
+      originalBytes: 100,
+      processedBytes: 80,
+      sourceWidth: 1600,
+      sourceHeight: 1200,
+      width: 1200,
+      height: 900,
+    });
+  });
+
+  it('updates crop values when the visual crop handles are dragged', async () => {
+    render(<FormImageUploadEditor onFilesChange={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText('Add upload images'), {
+      target: {
+        files: [new File(['original-image'], 'hero.jpg', { type: 'image/jpeg' })],
+      },
+    });
+
+    const card = screen.getByText('hero.jpg').closest('article');
+    expect(card).not.toBeNull();
+    if (!card) return;
+
+    const cropFrame = within(card).getByTestId('crop-frame');
+    Object.defineProperty(cropFrame, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({
+        width: 200,
+        height: 100,
+        left: 0,
+        top: 0,
+        right: 200,
+        bottom: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const leftCropInput = within(card).getByRole('spinbutton', { name: 'Left' });
+    expect(leftCropInput).toHaveValue(0);
+
+    fireEvent.mouseDown(within(card).getByTestId('crop-handle-left'), { clientX: 0, clientY: 50 });
+    fireEvent.mouseMove(document, { clientX: 40, clientY: 50 });
+    fireEvent.mouseUp(document);
+
+    await waitFor(() => {
+      expect(leftCropInput).toHaveValue(20);
+    });
+  });
+
+  it('replaces the raw upload with the processed file after applying edits', async () => {
+    const onFilesChange = vi.fn();
+    render(<FormImageUploadEditor onFilesChange={onFilesChange} />);
+
+    const originalFile = new File(['original-image'], 'hero.jpg', { type: 'image/jpeg' });
+    fireEvent.change(screen.getByLabelText('Add upload images'), {
+      target: { files: [originalFile] },
+    });
+
+    const card = screen.getByText('hero.jpg').closest('article');
+    expect(card).not.toBeNull();
+    if (!card) return;
+
+    fireEvent.change(within(card).getByRole('textbox', { name: 'Output filename' }), {
+      target: { value: 'hero-finished' },
+    });
+    fireEvent.click(within(card).getByRole('button', { name: 'Apply edits' }));
+
+    await waitFor(() => {
+      expect(processImageMock).toHaveBeenCalledWith(
+        originalFile,
+        expect.objectContaining({
+          outputFilename: 'hero-finished',
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      const latestCall = onFilesChange.mock.calls[onFilesChange.mock.calls.length - 1] as [File[]];
+      expect(latestCall[0]).toHaveLength(1);
+      expect(latestCall[0][0]?.name).toBe('hero-finished.jpg');
+    });
+  });
+
+  it('persists saved processing defaults in local storage', () => {
+    render(<FormImageUploadEditor onFilesChange={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show options' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Default watermark text' }), {
+      target: { value: 'Studio Watermark' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save defaults' }));
+
+    expect(JSON.parse(window.localStorage.getItem('form-image-processing-defaults:v1') ?? '{}')).toEqual(
+      expect.objectContaining({
+        watermarkText: 'Studio Watermark',
+      }),
+    );
+  });
+
+  it('keeps defaults collapsed while newly added images open their edit controls', async () => {
+    render(<FormImageUploadEditor onFilesChange={vi.fn()} />);
+
+    expect(screen.queryByRole('textbox', { name: 'Default watermark text' })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Add upload images'), {
+      target: {
+        files: [new File(['original-image'], 'collapsed-check.jpg', { type: 'image/jpeg' })],
+      },
+    });
+
+    const card = await screen.findByText('collapsed-check.jpg');
+    const article = card.closest('article');
+    expect(article).not.toBeNull();
+    if (!article) return;
+
+    expect(within(article).getByRole('textbox', { name: 'Output filename' })).toBeInTheDocument();
+  });
+
+  it('does not loop when the parent passes a new onFilesChange callback each render', async () => {
+    function Wrapper() {
+      const [, setFiles] = React.useState<File[]>([]);
+      return <FormImageUploadEditor onFilesChange={(nextFiles) => setFiles(nextFiles)} />;
+    }
+
+    render(<Wrapper />);
+
+    fireEvent.change(screen.getByLabelText('Add upload images'), {
+      target: {
+        files: [new File(['original-image'], 'loop-check.jpg', { type: 'image/jpeg' })],
+      },
+    });
+
+    await screen.findByText('loop-check.jpg');
+  });
+});

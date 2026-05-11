@@ -5,6 +5,11 @@ export const APP_PAGES = [
   'shopify',
   'market',
   'jotform',
+  'parking-lot-2',
+  'trash-review',
+  'testing-queue',
+  'photography-queue',
+  'pre-listing-queue',
   'incoming-gear',
   'testing',
   'photos',
@@ -16,9 +21,31 @@ export const APP_PAGES = [
 ] as const;
 
 export type AppPage = (typeof APP_PAGES)[number];
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'owner' | 'processor' | 'tester' | 'photographer';
 
-const NON_ADMIN_RESTRICTED_PAGES = new Set<AppPage>(['users', 'settings', 'notifications']);
+export function hasFullAccessRole(role: UserRole): boolean {
+  return role === 'admin' || role === 'owner';
+}
+
+const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
+  admin: [...APP_PAGES],
+  owner: [...APP_PAGES],
+  processor: [
+    'dashboard',
+    'inventory',
+    'jotform',
+    'parking-lot-2',
+    'trash-review',
+    'testing-queue',
+    'photography-queue',
+    'pre-listing-queue',
+    'incoming-gear',
+    'testing',
+    'photos',
+  ],
+  tester: ['dashboard', 'testing-queue', 'testing'],
+  photographer: ['dashboard', 'photography-queue', 'photos'],
+};
 
 export function isAppPage(value: string): value is AppPage {
   return APP_PAGES.includes(value as AppPage);
@@ -26,9 +53,16 @@ export function isAppPage(value: string): value is AppPage {
 
 export function normalizeAllowedPages(pages: AppPage[], role: UserRole): AppPage[] {
   const uniquePages = Array.from(new Set(pages.filter(isAppPage)));
-  if (role === 'admin') {
+  if (hasFullAccessRole(role)) {
     return [...APP_PAGES];
   }
 
-  return uniquePages.filter((page) => !NON_ADMIN_RESTRICTED_PAGES.has(page));
+  const allowedSet = new Set(ROLE_ALLOWED_PAGES[role]);
+  const nextPages = new Set(uniquePages.filter((page) => allowedSet.has(page)));
+
+  if (role === 'processor' && nextPages.has('inventory')) {
+    ['testing-queue', 'photography-queue', 'pre-listing-queue', 'incoming-gear', 'testing', 'photos'].forEach((page) => nextPages.add(page as AppPage));
+  }
+
+  return ROLE_ALLOWED_PAGES[role].filter((page) => nextPages.has(page));
 }

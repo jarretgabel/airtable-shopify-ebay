@@ -80,9 +80,8 @@ const USED_GEAR_WORKFLOW_RECORD_FIELDS = [
   'Relisted At',
   'Sold Ready To Ship At',
   'Shipped At',
-  'Price',
   'Shopify Price',
-  'eBay Price',
+  'Ebay Price',
 ] as const;
 
 const PENDING_REVIEW_STATUS = 'Pending Review';
@@ -228,7 +227,7 @@ function buildNotificationTarget(
   const basePath = destinationTab === 'inventory'
     ? '/inventory'
     : destinationTab === 'jotform'
-      ? '/jotform'
+      ? '/parking-lot-1'
       : destinationTab === 'parking-lot-2'
         ? '/parking-lot-2'
         : destinationTab === 'testing-queue'

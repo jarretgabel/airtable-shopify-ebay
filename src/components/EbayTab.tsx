@@ -66,10 +66,13 @@ export function EbayTab({ viewModel, onOpenSnapshotRecord }: EbayTabProps) {
     session: { authenticated, restoringSession },
     state: { loading, error },
     config: { runtimeConfig },
+    snapshot: { source },
     inventory: { items: inventoryItems, offers, recentListings, total },
     actions: { refetch },
   } = viewModel;
   const readOnly = true;
+  const usingAirtableSnapshot = source === 'airtable';
+  const hasSnapshotRecords = inventoryItems.length > 0 || offers.length > 0 || recentListings.length > 0;
 
   const activeRuntimeConfig = runtimeConfig ?? getFallbackRuntimeConfig();
 
@@ -154,13 +157,18 @@ export function EbayTab({ viewModel, onOpenSnapshotRecord }: EbayTabProps) {
     );
   }
 
-  if (!authenticated && !restoringSession) {
+  if (!authenticated && !restoringSession && !usingAirtableSnapshot) {
+    return <EbayServerConfigNotice error={error} loading={loading} />;
+  }
+
+  if (!authenticated && !restoringSession && usingAirtableSnapshot && !hasSnapshotRecords) {
     return <EbayServerConfigNotice error={error} loading={loading} />;
   }
 
   return (
     <EbayAuthenticatedView
       readOnly={readOnly}
+      snapshotSource={source}
       loading={loading}
       error={error}
       environment={activeRuntimeConfig.environment}

@@ -6,7 +6,6 @@ import type {
   ShopifyApprovalPreviewResult as ShopifyApprovalPreview,
 } from '../../shared/contracts/shopifyApproval.js';
 import {
-  getCollections,
   resolveTaxonomyCategory,
 } from './client.js';
 

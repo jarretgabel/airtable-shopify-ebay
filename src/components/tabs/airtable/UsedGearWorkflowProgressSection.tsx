@@ -2,21 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { useCopyQueueLink } from '@/components/tabs/airtable/useCopyQueueLink';
-import { useAuthStore } from '@/stores/auth/authStore';
-import { useNotificationStore } from '@/stores/notificationStore';
 import {
-  completePhotographyStage,
-  completeProcessingStage,
-  completeTestingStage,
   getUsedGearWorkflowPrimaryAction,
   groupUsedGearWorkflowRecords,
   loadWorkflowProgressQueue,
 } from '@/services/usedGearQueue';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
-import {
-  type UsedGearCompletedStage,
-} from '@/services/usedGearWorkflowStageNotifications';
-import { publishUsedGearStageHandoffNotification } from '@/services/usedGearWorkflowHandoffNotifier';
 import {
   buildWorkflowProgressQueueAgingSummary,
   formatUsedGearAgeDays,
@@ -77,13 +68,6 @@ function recordSearchText(record: AirtableRecord): string {
     .toLowerCase();
 }
 
-function isProcessingStatus(record: AirtableRecord): boolean {
-  const status = getUsedGearWorkflowStatus(record.fields);
-  return status === 'Accepted - Awaiting Arrival'
-    || status === 'Accepted - Arrived, Awaiting SKU'
-    || status === 'Accepted - Arrived, Awaiting Missing Item';
-}
-
 function isConcurrentStageStatus(record: AirtableRecord): boolean {
   return getUsedGearWorkflowStatus(record.fields) === 'Testing and Photography In Progress';
 }
@@ -97,6 +81,22 @@ function buildWorkflowProgressGroupLink(groupId: string, groupParamName: string,
   nextUrl.searchParams.set(groupParamName, groupId);
   nextUrl.hash = sectionId;
   return nextUrl.toString();
+}
+
+function getStageReviewLabel(status: string): string {
+  if (status === 'Awaiting Pre-Listing Review') {
+    return 'Open Pre-Listing Review';
+  }
+
+  if (status === 'Approved for Publish') {
+    return 'Open Publish Review';
+  }
+
+  if (status === 'Testing and Photography In Progress') {
+    return 'Open Stage Review';
+  }
+
+  return 'Open Stage Review';
 }
 
 function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): ProgressQueuePresentation {
@@ -164,10 +164,6 @@ function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): Pro
 }
 
 export function UsedGearWorkflowProgressSection({
-  currentUserName,
-  onOpenIncomingGearForm,
-  onOpenTestingForm,
-  onOpenPhotosForm,
   onOpenWorkflowRecord,
   onOpenListingsRecord,
   queueMode = 'all',
@@ -183,8 +179,6 @@ export function UsedGearWorkflowProgressSection({
   onSortModeChange,
 }: UsedGearWorkflowProgressSectionProps) {
   const queuePresentation = getQueuePresentation(queueMode);
-  const currentUser = useAuthStore((state) => state.users.find((user) => user.id === state.currentUserId) ?? null);
-  const upsertByKey = useNotificationStore((state) => state.upsertByKey);
   const { copyingLink, copiedLink, copyLink } = useCopyQueueLink({
     sectionId,
     successTitle: queuePresentation.copySuccessTitle,
@@ -199,7 +193,6 @@ export function UsedGearWorkflowProgressSection({
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
   const [uncontrolledCollapsedGroupIds, setUncontrolledCollapsedGroupIds] = useState<string[]>([]);
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowProgressSortMode>('group-label');
-  const [actionRecordId, setActionRecordId] = useState<string | null>(null);
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const collapsedGroupIds = Array.isArray(controlledCollapsedGroupIds) ? controlledCollapsedGroupIds : uncontrolledCollapsedGroupIds;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
@@ -297,38 +290,6 @@ export function UsedGearWorkflowProgressSection({
     }
   };
 
-  const replaceRecord = (updatedRecord: AirtableRecord) => {
-    setRecords((currentRecords) => currentRecords.map((record) => record.id === updatedRecord.id ? updatedRecord : record));
-  };
-
-  const handleAction = async (
-    recordId: string,
-    action: () => Promise<AirtableRecord>,
-    completedStage?: UsedGearCompletedStage,
-  ) => {
-    setActionRecordId(recordId);
-    setError(null);
-
-    try {
-      const updatedRecord = await action();
-      replaceRecord(updatedRecord);
-
-      if (completedStage) {
-        publishUsedGearStageHandoffNotification({
-          completedStage,
-          currentUser,
-          record: updatedRecord,
-          onOpenWorkflowRecord,
-          upsertByKey,
-        });
-      }
-    } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to update the selected workflow row.');
-    } finally {
-      setActionRecordId(null);
-    }
-  };
-
   const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
 
   const handleSearchTermChange = (value: string) => {
@@ -383,6 +344,7 @@ export function UsedGearWorkflowProgressSection({
           <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{queuePresentation.eyebrow}</p>
           <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{queuePresentation.title}</h3>
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{queuePresentation.description}</p>
+          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]/80">Detailed stage actions now live on the workflow record page.</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <button
@@ -540,10 +502,7 @@ export function UsedGearWorkflowProgressSection({
             ) : (
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
               {group.records.map((record) => {
-                const busy = actionRecordId === record.id;
                 const status = getUsedGearWorkflowStatus(record.fields) ?? 'Unknown';
-                const testingSigned = typeof record.fields['Testing Signed By'] === 'string' && record.fields['Testing Signed By'].trim().length > 0;
-                const photographySigned = typeof record.fields['Photography Signed By'] === 'string' && record.fields['Photography Signed By'].trim().length > 0;
 
                 return (
                   <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
@@ -571,31 +530,10 @@ export function UsedGearWorkflowProgressSection({
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button
                         type="button"
-                        className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                        className="rounded-xl bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110"
                         onClick={() => onOpenWorkflowRecord(record.id)}
                       >
-                        Workflow Detail
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                        onClick={() => onOpenIncomingGearForm(record.id)}
-                      >
-                        Incoming Gear
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                        onClick={() => onOpenTestingForm(record.id)}
-                      >
-                        Testing
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                        onClick={() => onOpenPhotosForm(record.id)}
-                      >
-                        Photos
+                        {getStageReviewLabel(status)}
                       </button>
 
                       {status === 'Approved for Publish' ? (
@@ -605,54 +543,6 @@ export function UsedGearWorkflowProgressSection({
                           onClick={() => onOpenListingsRecord(record.id)}
                         >
                           Open Listings Approval
-                        </button>
-                      ) : null}
-
-                      {isProcessingStatus(record) ? (
-                        <button
-                          type="button"
-                          className="rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                          onClick={() => {
-                            void handleAction(record.id, () => completeProcessingStage(record.id, currentUserName), 'processing');
-                          }}
-                          disabled={busy}
-                        >
-                          {busy ? 'Saving...' : 'Complete Processing'}
-                        </button>
-                      ) : null}
-
-                      {isConcurrentStageStatus(record) ? (
-                        <>
-                          <button
-                            type="button"
-                            className="rounded-xl bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                            onClick={() => {
-                              void handleAction(record.id, () => completeTestingStage(record.id, currentUserName), 'testing');
-                            }}
-                            disabled={busy || testingSigned}
-                          >
-                            {busy ? 'Saving...' : 'Mark Testing Complete'}
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-xl bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                            onClick={() => {
-                              void handleAction(record.id, () => completePhotographyStage(record.id, currentUserName), 'photography');
-                            }}
-                            disabled={busy || photographySigned}
-                          >
-                            {busy ? 'Saving...' : 'Mark Photography Complete'}
-                          </button>
-                        </>
-                      ) : null}
-
-                      {isAwaitingPreListingStatus(record) ? (
-                        <button
-                          type="button"
-                          className="rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110"
-                          onClick={() => onOpenWorkflowRecord(record.id)}
-                        >
-                          Review Readiness
                         </button>
                       ) : null}
                     </div>

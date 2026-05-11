@@ -48,7 +48,7 @@ export function DashboardWorkflowAnalyticsSection({
   soldReadyUnassignedCount = 0,
 }: DashboardWorkflowAnalyticsSectionProps) {
   return (
-    <DashboardSubPanel title="Used Gear Workflow Snapshot">
+    <DashboardSubPanel title="Used Gear Workflow Snapshot" className={loading ? 'min-h-[1240px] xl:min-h-[840px]' : undefined}>
       <p className="m-0 text-[0.82rem] leading-[1.55] text-[var(--muted)]">
         Counts by workflow status, queue age, and marketplace lifecycle so operators can spot intake, processing, and post-publish pressure in one place.
       </p>
@@ -59,10 +59,23 @@ export function DashboardWorkflowAnalyticsSection({
       {loading ? (
         <>
           <DashboardStatTileSkeletonGrid />
-          <div className="grid gap-4 xl:grid-cols-3">
-            <DashboardMetricRowSkeletonList count={8} />
-            <DashboardMetricRowSkeletonList count={8} />
-            <DashboardMetricRowSkeletonList count={6} />
+          <div className="grid gap-4 xl:grid-cols-4">
+            <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
+              <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">By Status</h4>
+              <div className="mt-2"><DashboardMetricRowSkeletonList count={8} /></div>
+            </section>
+            <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
+              <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Age And SLA</h4>
+              <div className="mt-2"><DashboardMetricRowSkeletonList count={8} /></div>
+            </section>
+            <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
+              <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">By Marketplace</h4>
+              <div className="mt-2"><DashboardMetricRowSkeletonList count={6} /></div>
+            </section>
+            <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
+              <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Post-Publish Ops</h4>
+              <div className="mt-2"><DashboardMetricRowSkeletonList count={6} /></div>
+            </section>
           </div>
         </>
       ) : (

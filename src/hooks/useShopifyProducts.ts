@@ -19,7 +19,7 @@ export function useShopifyProducts(enabled = true): UseShopifyProductsResult {
   const [lastLoadedAt, setLastLoadedAt] = useState<number | null>(null);
 
   const fetchProducts = useCallback(async (force = true) => {
-    if (!force && shouldReuseTabData(lastLoadedAt, TAB_DATA_TTLS.shopifyProducts, error === null)) {
+    if (!force && shouldReuseTabData(lastLoadedAt, TAB_DATA_TTLS.shopifyProducts, lastLoadedAt !== null)) {
       setLoading(false);
       return;
     }
@@ -35,7 +35,7 @@ export function useShopifyProducts(enabled = true): UseShopifyProductsResult {
     } finally {
       setLoading(false);
     }
-  }, [error, lastLoadedAt]);
+  }, [lastLoadedAt]);
 
   useEffect(() => {
     if (!enabled) {

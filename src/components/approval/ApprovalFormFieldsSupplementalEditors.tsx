@@ -1,9 +1,13 @@
 import { Suspense, lazy } from 'react';
 import { EbayShippingServicesEditor } from './EbayShippingServicesEditor';
 import { ApprovalFormFieldsShippingEditors } from './ApprovalFormFieldsShippingEditors';
-import { ImageUrlListEditor } from './ImageUrlListEditor';
 import { ShopifyTagsEditor } from './ShopifyTagsEditor';
-import { parseImageEditorRows, toCommaSeparatedImageValues } from './approvalFormFieldsImageHelpers';
+import { WorkflowListingImageSelector } from './WorkflowListingImageSelector';
+import {
+  buildWorkflowListingImageSelectionValues,
+  parseWorkflowSelectedImageRows,
+  type WorkflowListingImageAttachment,
+} from './workflowListingImageHelpers';
 
 const EbayAttributesEditor = lazy(async () => ({
   default: (await import('./EbayAttributesEditor')).EbayAttributesEditor,
@@ -17,8 +21,8 @@ const KeyFeaturesEditor = lazy(async () => ({
 const ShopifyCollectionsSelect = lazy(async () => ({
   default: (await import('./ShopifyCollectionsSelect')).ShopifyCollectionsSelect,
 }));
-const TestingNotesEditor = lazy(async () => ({
-  default: (await import('./TestingNotesEditor')).TestingNotesEditor,
+const TestingNotesTextareaEditor = lazy(async () => ({
+  default: (await import('./TestingNotesTextareaEditor')).TestingNotesTextareaEditor,
 }));
 
 const lazyEditorFallback = (
@@ -33,6 +37,8 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
   combinedImageEditorValue: string;
   imageAltTextSourceField?: string;
   shopifyImagePayloadFieldName?: string;
+  workflowImageAttachments: WorkflowListingImageAttachment[];
+  selectedWorkflowImageUrls: string[];
   formValues: Record<string, string>;
   setFormValue: (fieldName: string, value: string) => void;
   saving: boolean;
@@ -81,10 +87,10 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
 
 export function ApprovalFormFieldsSupplementalEditors({
   imageUrlSourceField,
-  useCombinedImageAltEditor,
-  combinedImageEditorValue,
   imageAltTextSourceField,
   shopifyImagePayloadFieldName,
+  workflowImageAttachments,
+  selectedWorkflowImageUrls,
   formValues,
   setFormValue,
   saving,
@@ -133,41 +139,27 @@ export function ApprovalFormFieldsSupplementalEditors({
   return (
     <>
       {imageUrlSourceField && (
-        <ImageUrlListEditor
-          key={imageUrlSourceField}
-          fieldLabel="Images"
-          value={useCombinedImageAltEditor ? combinedImageEditorValue : (formValues[imageUrlSourceField] ?? '')}
-          onChange={(newValue) => {
-            const parsedRows = parseImageEditorRows(newValue);
-            const normalizedRows = parsedRows
-              .map((row, index) => ({
-                src: row.src.trim(),
-                alt: row.alt.trim(),
-                position: index + 1,
-              }))
-              .filter((row) => row.src.length > 0);
+        <WorkflowListingImageSelector
+          attachments={workflowImageAttachments}
+          selectedUrls={selectedWorkflowImageUrls}
+          onSelectionChange={(nextSelectedUrls) => {
+            const currentRows = parseWorkflowSelectedImageRows(
+              formValues[imageUrlSourceField] ?? '',
+              imageAltTextSourceField ? (formValues[imageAltTextSourceField] ?? '') : '',
+              shopifyImagePayloadFieldName ? (formValues[shopifyImagePayloadFieldName] ?? '') : '',
+            );
+            const nextValues = buildWorkflowListingImageSelectionValues({
+              selectedUrls: nextSelectedUrls,
+              attachments: workflowImageAttachments,
+              currentRows,
+            });
 
-            if (!useCombinedImageAltEditor || !imageAltTextSourceField) {
-              setFormValue(imageUrlSourceField, newValue);
-              if (shopifyImagePayloadFieldName && shopifyImagePayloadFieldName !== imageUrlSourceField) {
-                setFormValue(
-                  shopifyImagePayloadFieldName,
-                  normalizedRows.length > 0 ? JSON.stringify(normalizedRows) : '',
-                );
-              }
-              return;
+            setFormValue(imageUrlSourceField, nextValues.imageValue);
+            if (imageAltTextSourceField) {
+              setFormValue(imageAltTextSourceField, nextValues.imageAltTextValue);
             }
-
-            const urls = normalizedRows.map((row) => row.src);
-            const alts = parsedRows.map((row) => row.alt.trim());
-
-            setFormValue(imageUrlSourceField, toCommaSeparatedImageValues(urls));
-            setFormValue(imageAltTextSourceField, toCommaSeparatedImageValues(alts));
             if (shopifyImagePayloadFieldName && shopifyImagePayloadFieldName !== imageUrlSourceField) {
-              setFormValue(
-                shopifyImagePayloadFieldName,
-                normalizedRows.length > 0 ? JSON.stringify(normalizedRows) : '',
-              );
+              setFormValue(shopifyImagePayloadFieldName, nextValues.shopifyImagePayloadValue);
             }
           }}
           disabled={saving || isReadOnlyApprovalField(imageUrlSourceField)}
@@ -215,7 +207,7 @@ export function ApprovalFormFieldsSupplementalEditors({
 
       {ebayTestingNotesFieldName && (
         <Suspense fallback={lazyEditorFallback}>
-          <TestingNotesEditor
+          <TestingNotesTextareaEditor
             fieldName={ebayTestingNotesFieldName}
             value={formValues[ebayTestingNotesFieldName] ?? ''}
             setFormValue={setFormValue}

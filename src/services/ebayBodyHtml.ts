@@ -48,6 +48,23 @@ function applyTableRows(templateHtml: string, options: {
   return templateHtml.replace(tablePattern, `${tablePrefix}${nextBody}${tableSuffix}`);
 }
 
+function normalizeTestingNotesForTemplate(rawValue: string): string {
+  const trimmed = rawValue.trim();
+  if (!trimmed) return '';
+  if (trimmed.startsWith('[') || trimmed.includes('\t') || trimmed.includes(',') || trimmed.includes(':')) {
+    return rawValue;
+  }
+
+  const lines = trimmed
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length === 0) return '';
+
+  return JSON.stringify([{ feature: 'Testing Notes', value: lines.join('<br />') }]);
+}
+
 export function buildEbayBodyHtmlFromTemplate(
   templateHtml: string,
   title: string,
@@ -64,6 +81,6 @@ export function buildEbayBodyHtmlFromTemplate(
 
   return applyTableRows(withKeyFeatures, {
     tableId: 'testing-notes',
-    rawValue: testingNotesRaw,
+    rawValue: normalizeTestingNotesForTemplate(testingNotesRaw),
   }).trim();
 }

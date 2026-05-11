@@ -1,6 +1,13 @@
+import { useEffect, useState } from 'react';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
+import {
+  buildListingApprovalWorkflowSummaryData,
+  ListingApprovalWorkflowProcessCard,
+  type ListingApprovalWorkflowSummaryData,
+} from '@/components/approval/ListingApprovalWorkflowSummary';
 import { EmptySurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
+import { loadUsedGearWorkflowRecordBySku } from '@/services/usedGearQueue';
 import type { ShopifyProduct } from '@/types/shopify';
 
 interface ShopifySnapshotRecordPageProps {
@@ -8,6 +15,7 @@ interface ShopifySnapshotRecordPageProps {
   viewModel: ShopifyTabViewModel;
   onBackToSnapshot: () => void;
   onOpenListings: () => void;
+  onOpenWorkflowRecord: (recordId: string) => void;
 }
 
 function stringifyJson(value: unknown): string {
@@ -71,10 +79,12 @@ export function ShopifySnapshotRecordPage({
   viewModel,
   onBackToSnapshot,
   onOpenListings,
+  onOpenWorkflowRecord,
 }: ShopifySnapshotRecordPageProps) {
-  if (viewModel.loading && viewModel.products.length === 0) {
-    return <LoadingSurface message="Loading Shopify snapshot..." />;
-  }
+  const [workflowSummary, setWorkflowSummary] = useState<ListingApprovalWorkflowSummaryData | null>(null);
+  const [workflowRecordId, setWorkflowRecordId] = useState<string | null>(null);
+  const [workflowLoading, setWorkflowLoading] = useState(false);
+  const [workflowError, setWorkflowError] = useState<string | null>(null);
 
   const product = viewModel.products.find((entry) => String(entry.id) === productId) as (ShopifyProduct & { id: number; created_at: string; updated_at: string }) | undefined;
   const tags = product?.tags ? product.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [];
@@ -82,6 +92,56 @@ export function ShopifySnapshotRecordPage({
   const variants = product?.variants ?? [];
   const images = product?.images ?? [];
   const metafields = product?.metafields ?? [];
+  const workflowSku = variants.map((variant) => variant.sku?.trim() ?? '').find(Boolean) ?? '';
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!workflowSku) {
+      setWorkflowSummary(null);
+      setWorkflowRecordId(null);
+      setWorkflowLoading(false);
+      setWorkflowError('This Shopify snapshot does not expose a SKU for workflow matching.');
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setWorkflowLoading(true);
+    setWorkflowError(null);
+
+    void loadUsedGearWorkflowRecordBySku(workflowSku)
+      .then((record) => {
+        if (cancelled) {
+          return;
+        }
+
+        setWorkflowSummary(buildListingApprovalWorkflowSummaryData(record));
+        setWorkflowRecordId(record.id);
+      })
+      .catch((lookupError) => {
+        if (cancelled) {
+          return;
+        }
+
+        setWorkflowSummary(null);
+        setWorkflowRecordId(null);
+        setWorkflowError(lookupError instanceof Error ? lookupError.message : 'Unable to load the used-gear workflow row for this Shopify snapshot.');
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setWorkflowLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [workflowSku]);
+
+  if (viewModel.loading && viewModel.products.length === 0) {
+    return <LoadingSurface message="Loading Shopify snapshot..." />;
+  }
 
   if (!product) {
     return (
@@ -109,6 +169,18 @@ export function ShopifySnapshotRecordPage({
           </div>
         </div>
       </PanelSurface>
+
+      <ListingApprovalWorkflowProcessCard
+        summary={workflowSummary}
+        loading={workflowLoading}
+        error={workflowError}
+        description="Cross-referenced from the used-gear workflow by SKU so you can see where this read-only Shopify snapshot sits in the intake-to-listing pipeline."
+        emptyMessage="No used-gear workflow row is linked to this Shopify snapshot yet."
+        primaryActionLabel="Open Listings"
+        onPrimaryAction={onOpenListings}
+        secondaryActionLabel={workflowRecordId ? 'Open Workflow Row' : undefined}
+        onSecondaryAction={workflowRecordId ? () => onOpenWorkflowRecord(workflowRecordId) : null}
+      />
 
       <PanelSurface>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

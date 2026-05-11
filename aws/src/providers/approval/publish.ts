@@ -1,12 +1,11 @@
-import { getConfiguredRecord, type AirtableConfiguredRecordsSource } from '../airtable/sources.js';
+import { getConfiguredRecord } from '../airtable/sources.js';
 import {
   buildEbayDraftPayloadBundleFromApprovalFields,
 } from '../ebay/approvalDraft.js';
-import { pushApprovalBundleToEbay, type EbayPublishSetup } from '../ebay/client.js';
+import { pushApprovalBundleToEbay } from '../ebay/client.js';
 import type {
   ApprovalPublishExecutionResult,
   ApprovalPublishRequest as ExecuteApprovalPublishParams,
-  ApprovalPublishTarget,
 } from '../../shared/contracts/approval.js';
 import { normalizeApprovalFields } from './normalize.js';
 import {

@@ -7,6 +7,7 @@ import { offerForSku, offerSortValue, statusColor, formatMissingFields, runameIn
 
 interface EbayAuthenticatedViewProps {
   readOnly?: boolean;
+  snapshotSource?: 'live' | 'airtable';
   loading: boolean;
   error: string | null;
   inventoryItems: EbayInventoryItem[];
@@ -39,6 +40,7 @@ interface EbayAuthenticatedViewProps {
 
 export function EbayAuthenticatedView({
   readOnly = false,
+  snapshotSource = 'live',
   loading,
   error,
   inventoryItems,
@@ -119,12 +121,13 @@ export function EbayAuthenticatedView({
 
   const ebaySearchInputClass = 'flex-1 min-w-[160px] rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-[0.82rem] text-[var(--ink)] placeholder-[var(--muted)] outline-none transition-colors focus:border-[var(--accent)]';
   const ebaySelectClass = 'rounded-lg border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-[0.82rem] text-[var(--ink)] outline-none transition-colors focus:border-[var(--accent)] cursor-pointer';
+  const isAirtableSnapshot = snapshotSource === 'airtable';
 
   return (
     <div className="flex flex-col gap-5 py-1">
       {readOnly && (
         <div className="rounded-[14px] border border-sky-400/30 bg-sky-950/25 px-5 py-4 text-[0.88rem] leading-[1.55] text-sky-100 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-          <strong className="font-semibold">Read-only eBay view.</strong> Create, approve, publish, or edit listing data from the combined Listings page. This screen is limited to inventory, offer, and connection visibility.
+          <strong className="font-semibold">Read-only eBay view.</strong> {isAirtableSnapshot ? 'The live eBay runtime is unavailable, so this screen is showing an Airtable-backed eBay listing snapshot.' : 'Create, approve, publish, or edit listing data from the combined Listings page.'} This screen is limited to inventory, offer, and connection visibility.
         </div>
       )}
 
@@ -132,9 +135,9 @@ export function EbayAuthenticatedView({
         <div className="flex items-center gap-4 max-[960px]:w-full max-[960px]:flex-col max-[960px]:items-start">
           <div className="flex items-center gap-2">
             <svg width="20" height="20" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="8" fill="#E53238"/><text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fontSize="20" fill="white" fontWeight="bold" fontFamily="Arial,sans-serif">eBay</text></svg>
-            <span className="rounded-md border border-green-400/35 bg-green-500/20 px-2 py-[0.2em] text-[0.82rem] font-bold text-green-200">{environment === 'production' ? 'Production via Lambda' : 'Sandbox via Lambda'}</span>
+            <span className="rounded-md border border-green-400/35 bg-green-500/20 px-2 py-[0.2em] text-[0.82rem] font-bold text-green-200">{isAirtableSnapshot ? 'Airtable Snapshot' : environment === 'production' ? 'Production via Lambda' : 'Sandbox via Lambda'}</span>
           </div>
-          <span className="text-[0.82rem] leading-[1.45] text-[var(--muted)]">Last 20 published eBay listings plus your inventory drafts · {total} valid inventory item{total !== 1 ? 's' : ''} · Lambda-backed dashboard state</span>
+          <span className="text-[0.82rem] leading-[1.45] text-[var(--muted)]">{isAirtableSnapshot ? `Airtable-derived eBay listing snapshot · ${total} tracked sheet item${total !== 1 ? 's' : ''} · read-only eBay-focused payload view` : `Last 20 published eBay listings plus your inventory drafts · ${total} valid inventory item${total !== 1 ? 's' : ''} · Lambda-backed dashboard state`}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2 max-[960px]:w-full max-[960px]:justify-start">
           {!readOnly && <div className="inline-flex items-center gap-1 rounded-[10px] border border-[var(--line)] bg-[var(--bg)] p-[0.2rem] max-[600px]:w-full" role="group" aria-label="Choose eBay listing API">
@@ -181,7 +184,7 @@ export function EbayAuthenticatedView({
         </div>
       </div>}
 
-      {offers.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Inventory API debug</div><div className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)]"><div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,0.8fr)] items-center gap-3 bg-white/5 px-4 py-3 text-[0.7rem] font-extrabold uppercase tracking-[0.05em] text-[var(--muted)] max-[600px]:grid-cols-2"><span>SKU</span><span>Offer ID</span><span>Status</span><span>Listing ID</span><span>Exists on eBay</span></div>{[...offers].sort((a, b) => offerSortValue(b) - offerSortValue(a)).map((offer) => <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,0.8fr)] items-center gap-3 border-t border-[rgba(148,163,184,0.18)] px-4 py-3 text-[0.8rem] text-[var(--ink)] first:border-t-0 max-[600px]:grid-cols-2" key={offer.offerId ?? offer.sku}><span className="break-words font-mono text-[0.73rem] text-[var(--muted)]">{offer.sku}</span><span className="break-words font-mono text-[0.73rem] text-[var(--muted)]">{offer.offerId ?? '—'}</span><span><span className={`inline-flex items-center rounded-full px-2.5 py-[0.18em] text-[0.68rem] font-extrabold uppercase tracking-[0.05em] ${statusColor(offer.status)}`}>{offer.status ?? 'UNKNOWN'}</span></span><span className="break-words font-mono text-[0.73rem] text-[var(--muted)]">{offer.listingId ?? '—'}</span><span>{offer.listingId ? 'Yes' : 'No'}</span></div>)}</div></>}
+      {offers.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">{isAirtableSnapshot ? 'eBay snapshot debug' : 'Inventory API debug'}</div><div className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)]"><div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,0.8fr)] items-center gap-3 bg-white/5 px-4 py-3 text-[0.7rem] font-extrabold uppercase tracking-[0.05em] text-[var(--muted)] max-[600px]:grid-cols-2"><span>SKU</span><span>Offer ID</span><span>Status</span><span>Listing ID</span><span>Exists on eBay</span></div>{[...offers].sort((a, b) => offerSortValue(b) - offerSortValue(a)).map((offer) => <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,0.8fr)] items-center gap-3 border-t border-[rgba(148,163,184,0.18)] px-4 py-3 text-[0.8rem] text-[var(--ink)] first:border-t-0 max-[600px]:grid-cols-2" key={offer.offerId ?? offer.snapshotId ?? offer.sku}><span className="break-words font-mono text-[0.73rem] text-[var(--muted)]">{offer.sku}</span><span className="break-words font-mono text-[0.73rem] text-[var(--muted)]">{offer.offerId ?? '—'}</span><span><span className={`inline-flex items-center rounded-full px-2.5 py-[0.18em] text-[0.68rem] font-extrabold uppercase tracking-[0.05em] ${statusColor(offer.status)}`}>{offer.status ?? 'UNKNOWN'}</span></span><span className="break-words font-mono text-[0.73rem] text-[var(--muted)]">{offer.listingId ?? '—'}</span><span>{offer.listingId ? 'Yes' : 'No'}</span></div>)}</div></>}
 
       {(recentListings.length > 0 || inventoryItems.length > 0) && (
         <div className="flex flex-wrap items-center gap-2 rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-3">
@@ -208,12 +211,12 @@ export function EbayAuthenticatedView({
         </div>
       )}
 
-      {filteredRecentListings.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Last 20 published inventory-api listings{search && filteredRecentListings.length !== recentListings.length ? ` (${filteredRecentListings.length} of ${recentListings.length})` : ''}</div><div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-[600px]:grid-cols-1">{filteredRecentListings.map((listing) => <RecentEbayCard key={listing.offer.offerId ?? listing.item.sku} listing={listing} onOpen={onOpenSnapshotRecord ? () => onOpenSnapshotRecord(listing.item.sku) : undefined} />)}</div></>}
+      {filteredRecentListings.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">{isAirtableSnapshot ? 'Published eBay sheet snapshots' : 'Last 20 published inventory-api listings'}{search && filteredRecentListings.length !== recentListings.length ? ` (${filteredRecentListings.length} of ${recentListings.length})` : ''}</div><div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-[600px]:grid-cols-1">{filteredRecentListings.map((listing) => <RecentEbayCard key={listing.offer.offerId ?? listing.item.snapshotId ?? listing.item.sku} listing={listing} onOpen={onOpenSnapshotRecord ? () => onOpenSnapshotRecord(listing.item.snapshotId ?? listing.item.sku) : undefined} />)}</div></>}
 
-      {loading && inventoryItems.length === 0 && <div className="flex items-center justify-center gap-3 py-8 text-[0.84rem] text-[var(--muted)]"><div className={spinnerClass} /><span>Loading eBay inventory...</span></div>}
-      {!loading && inventoryItems.length === 0 && !error && <div className="py-12 text-center text-[0.9rem] text-[var(--muted)]"><p>{readOnly ? 'No inventory items found for this eBay view yet.' : 'No inventory items found. Inventory-mode sample drafts will show here after you create one.'}</p></div>}
+      {loading && inventoryItems.length === 0 && <div className="flex items-center justify-center gap-3 py-8 text-[0.84rem] text-[var(--muted)]"><div className={spinnerClass} /><span>{isAirtableSnapshot ? 'Loading Airtable-backed eBay snapshot...' : 'Loading eBay inventory...'}</span></div>}
+      {!loading && inventoryItems.length === 0 && !error && <div className="py-12 text-center text-[0.9rem] text-[var(--muted)]"><p>{isAirtableSnapshot ? 'No Airtable-backed eBay snapshot records were found yet.' : readOnly ? 'No inventory items found for this eBay view yet.' : 'No inventory items found. Inventory-mode sample drafts will show here after you create one.'}</p></div>}
 
-      {inventoryItems.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Inventory API drafts and listings{search || statusFilter !== 'all' ? ` (${filteredInventoryItems.length} of ${inventoryItems.length})` : ''}</div>{filteredInventoryItems.length === 0 ? <p className="py-6 text-center text-[0.88rem] text-[var(--muted)]">No items match your filters.</p> : <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-[600px]:grid-cols-1">{filteredInventoryItems.map((item) => <EbayCard key={item.sku} item={item} offer={offerForSku(offers, item.sku)} onOpen={onOpenSnapshotRecord ? () => onOpenSnapshotRecord(item.sku) : undefined} />)}</div>}</>}
+      {inventoryItems.length > 0 && <><div className="mt-1 text-[0.78rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">{isAirtableSnapshot ? 'Airtable-backed eBay listings' : 'Inventory API drafts and listings'}{search || statusFilter !== 'all' ? ` (${filteredInventoryItems.length} of ${inventoryItems.length})` : ''}</div>{filteredInventoryItems.length === 0 ? <p className="py-6 text-center text-[0.88rem] text-[var(--muted)]">No items match your filters.</p> : <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-[600px]:grid-cols-1">{filteredInventoryItems.map((item) => <EbayCard key={item.snapshotId ?? item.sku} item={item} offer={offers.find((offer) => offer.snapshotId === item.snapshotId) ?? offerForSku(offers, item.sku)} onOpen={onOpenSnapshotRecord ? () => onOpenSnapshotRecord(item.snapshotId ?? item.sku) : undefined} />)}</div>}</>}
     </div>
   );
 }

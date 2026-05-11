@@ -10,10 +10,12 @@ import { buildListingApprovalQueuePanelProps } from '@/components/approval/listi
 import { buildListingApprovalSelectedRecordPanelProps } from '@/components/approval/listingApprovalSelectedRecordPanelProps';
 import { buildListingApprovalSelectedRecordStatusProps } from '@/components/approval/listingApprovalSelectedRecordStatusProps';
 import { buildListingApprovalSelectedRecordViewProps } from '@/components/approval/listingApprovalSelectedRecordViewProps';
-import type { ListingApprovalWorkflowSummaryData } from '@/components/approval/ListingApprovalWorkflowSummary';
+import {
+  buildListingApprovalWorkflowSummaryData,
+  type ListingApprovalWorkflowSummaryData,
+} from '@/components/approval/ListingApprovalWorkflowSummary';
 import type { InlineNoticeTone } from '@/components/approval/listingApprovalRecordActionTypes';
 import { errorSurfaceClass } from '@/components/tabs/uiClasses';
-import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
 import type { AirtableRecord } from '@/types/airtable';
 
 interface BuildListingApprovalTabPanelsParams {
@@ -213,24 +215,7 @@ export function buildListingApprovalTabPanels({
   queuePanelProps: ReturnType<typeof buildListingApprovalQueuePanelProps>;
 } {
   const workflowSummary: ListingApprovalWorkflowSummaryData | null = selectedRecord && isCombinedApproval
-    ? (() => {
-      const workflowStatus = typeof selectedRecord.fields['Workflow Status'] === 'string'
-        ? selectedRecord.fields['Workflow Status'].trim()
-        : '';
-      if (!workflowStatus) return null;
-
-      const readiness = getUsedGearWorkflowListingReadiness(selectedRecord);
-      return {
-        workflowStatus,
-        resolvedTitle: readiness.title,
-        resolvedDescription: readiness.description,
-        resolvedPrice: readiness.price,
-        priceSourceFieldName: readiness.priceFieldName,
-        preListingReviewedBy: typeof selectedRecord.fields['Pre-Listing Reviewed By'] === 'string'
-          ? selectedRecord.fields['Pre-Listing Reviewed By'].trim()
-          : '',
-      };
-    })()
+    ? buildListingApprovalWorkflowSummaryData(selectedRecord)
     : null;
 
   const selectedRecordViewProps = selectedRecord

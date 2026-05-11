@@ -1,3 +1,11 @@
+import {
+  buildWorkflowListingImageRowsFromMetadata,
+  buildWorkflowListingImageSelectionValues,
+  parseWorkflowImageAttachments,
+} from '@/components/approval/workflowListingImageHelpers';
+import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
+import { parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
+
 type ApprovalFieldKind = 'boolean' | 'number' | 'json' | 'text';
 
 type ApprovalFormValues = Record<string, string>;
@@ -9,9 +17,16 @@ interface FeaturePair {
   value: string;
 }
 
+interface TextPrefillSection {
+  label: string;
+  value: string;
+}
+
 const TITLE_FIELD_CANDIDATES = [
   'Shopify REST Title',
+  'shopify_rest_title',
   'Shopify Title',
+  'eBay Inventory Product Title',
   'Item Title',
   'Title',
   'Name',
@@ -21,7 +36,16 @@ const TITLE_FIELD_CANDIDATES = [
 const DESCRIPTION_FIELD_CANDIDATES = [
   'Shopify Body Description',
   'Shopify REST Body Description',
+  'Shopify Product Description',
+  'Shopify REST Product Description',
+  'Product Description',
   'eBay Inventory Product Description',
+  'shopify_body_description',
+  'shopify_rest_body_description',
+  'shopify_product_description',
+  'shopify_rest_product_description',
+  'product_description',
+  'ebay_inventory_product_description',
   'Item Description',
   'Description',
 ];
@@ -40,15 +64,70 @@ const KEY_FEATURE_FIELD_CANDIDATES = [
   'Key Features',
   'Features JSON',
   'Features',
+  'shopify_body_key_features_json',
+  'shopify_rest_body_key_features_json',
+  'shopify_body_key_features',
+  'shopify_rest_body_key_features',
+  'ebay_body_key_features_json',
+  'ebay_body_key_features',
+  'ebay_listing_key_features_json',
+  'ebay_listing_key_features',
 ];
 
 const TESTING_NOTES_FIELD_CANDIDATES = [
   'Testing Notes',
   'Testing Notes JSON',
+  'eBay Testing Notes',
+  'eBay Testing Notes JSON',
   'eBay Body Testing Notes',
   'eBay Body Testing Notes JSON',
   'eBay Listing Testing Notes',
   'eBay Listing Testing Notes JSON',
+  'testing_notes',
+  'testing_notes_json',
+  'ebay_testing_notes',
+  'ebay_testing_notes_json',
+  'ebay_body_testing_notes',
+  'ebay_body_testing_notes_json',
+  'ebay_listing_testing_notes',
+  'ebay_listing_testing_notes_json',
+];
+
+const IMAGE_ATTACHMENT_FIELD_CANDIDATES = [
+  'Images',
+  'Workflow Images',
+];
+
+const IMAGE_METADATA_FIELD_CANDIDATES = [
+  'Workflow Image Metadata JSON',
+  'Workflow Image Metadata',
+];
+
+const IMAGE_FIELD_CANDIDATES = [
+  'Images',
+  'images',
+  'Image URL',
+  'Image URLs',
+  'image_url',
+  'image_urls',
+];
+
+const IMAGE_ALT_TEXT_FIELD_CANDIDATES = [
+  'Images Alt Text',
+  'images_alt_text',
+  'Image Alt Text',
+  'image_alt_text',
+];
+
+const SHOPIFY_IMAGE_PAYLOAD_FIELD_CANDIDATES = [
+  'Shopify REST Images JSON',
+  'shopify_rest_images_json',
+  'Shopify Images JSON',
+  'shopify_images_json',
+  'Shopify REST Images',
+  'shopify_rest_images',
+  'Shopify Images',
+  'shopify_images',
 ];
 
 const WORKFLOW_CONTEXT_FIELD_CANDIDATES = [
@@ -57,6 +136,7 @@ const WORKFLOW_CONTEXT_FIELD_CANDIDATES = [
   'Model',
   'Component Type',
   'Inventory Notes',
+  'Testing Notes',
   'Customer Cosmetic Notes',
   'Customer Functional Notes',
   'Customer Inclusion Notes',
@@ -77,6 +157,18 @@ function findMatchingFieldNames(values: ApprovalFormValues, candidates: string[]
 function getTrimmedFieldValue(fields: AirtableFields, fieldName: string): string {
   const value = fields[fieldName];
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function getRawFieldValue(fields: AirtableFields, fieldNames: string[]): unknown {
+  for (const fieldName of fieldNames) {
+    const value = fields[fieldName];
+    if (value === null || value === undefined) continue;
+    if (typeof value === 'string' && value.trim().length === 0) continue;
+    if (Array.isArray(value) && value.length === 0) continue;
+    return value;
+  }
+
+  return undefined;
 }
 
 function firstNonEmptyField(fields: AirtableFields, fieldNames: string[]): string {
@@ -167,21 +259,59 @@ function buildWorkflowKeyFeaturePairs(fields: AirtableFields): FeaturePair[] {
   ]);
 }
 
-function buildWorkflowTestingNotePairs(fields: AirtableFields): FeaturePair[] {
-  return uniqueFeaturePairs([
+function buildWorkflowTestingNotesText(fields: AirtableFields): string {
+  const directTestingNotes = firstNonEmptyField(fields, [
+    'Testing Notes',
+    'eBay Testing Notes',
+    'eBay Body Testing Notes',
+    'eBay Listing Testing Notes',
+  ]);
+  if (directTestingNotes) {
+    return directTestingNotes;
+  }
+
+  const sections: TextPrefillSection[] = [
     {
-      feature: 'Functional Notes',
+      label: 'Functional Notes',
       value: firstNonEmptyField(fields, ['Internal Functional Notes', 'Customer Functional Notes']),
     },
     {
-      feature: 'Includes',
+      label: 'Includes',
       value: firstNonEmptyField(fields, ['Internal Inclusion Notes', 'Customer Inclusion Notes']),
     },
     {
-      feature: 'Cosmetic Notes',
+      label: 'Cosmetic Notes',
       value: firstNonEmptyField(fields, ['Internal Cosmetic Notes', 'Customer Cosmetic Notes']),
     },
-  ]);
+  ].filter((section) => section.value.length > 0);
+
+  if (sections.length === 0) return '';
+
+  return sections.map((section) => `${section.label}: ${section.value}`).join('\n\n');
+}
+
+function buildWorkflowListingImageValues(fields: AirtableFields): {
+  imageValue: string;
+  imageAltTextValue: string;
+  shopifyImagePayloadValue: string;
+} {
+  const metadataRaw = getRawFieldValue(fields, IMAGE_METADATA_FIELD_CANDIDATES);
+  const metadataRows = buildWorkflowListingImageRowsFromMetadata(parseWorkflowImageMetadata(metadataRaw));
+  const attachmentsRaw = getRawFieldValue(fields, IMAGE_ATTACHMENT_FIELD_CANDIDATES);
+  const attachments = parseWorkflowImageAttachments(attachmentsRaw);
+  if (metadataRows.length === 0 && attachments.length === 0) {
+    return {
+      imageValue: '',
+      imageAltTextValue: '',
+      shopifyImagePayloadValue: '',
+    };
+  }
+
+  return buildWorkflowListingImageSelectionValues({
+    selectedUrls: metadataRows.length > 0 ? metadataRows.map((row) => row.src) : attachments.map((attachment) => attachment.url),
+    attachments,
+    currentRows: metadataRows,
+  });
 }
 
 function applyTextPrefill(
@@ -235,15 +365,37 @@ export function applyWorkflowListingPrefills(
     values,
     kinds,
     keyFeatureFieldNames,
-    existingKeyFeatures ? [] : buildWorkflowKeyFeaturePairs(fields),
+    existingKeyFeatures
+      ? uniqueFeaturePairs(parseKeyFeatureEntries(existingKeyFeatures))
+      : buildWorkflowKeyFeaturePairs(fields),
   );
 
   const testingNotesFieldNames = findMatchingFieldNames(values, TESTING_NOTES_FIELD_CANDIDATES);
   const existingTestingNotes = firstNonEmptyFormValue(values, TESTING_NOTES_FIELD_CANDIDATES);
-  applyPairPrefill(
+  applyTextPrefill(
     values,
     kinds,
     testingNotesFieldNames,
-    existingTestingNotes ? [] : buildWorkflowTestingNotePairs(fields),
+    existingTestingNotes || buildWorkflowTestingNotesText(fields),
+  );
+
+  const workflowImageValues = buildWorkflowListingImageValues(fields);
+  applyTextPrefill(
+    values,
+    kinds,
+    findMatchingFieldNames(values, IMAGE_FIELD_CANDIDATES),
+    workflowImageValues.imageValue,
+  );
+  applyTextPrefill(
+    values,
+    kinds,
+    findMatchingFieldNames(values, IMAGE_ALT_TEXT_FIELD_CANDIDATES),
+    workflowImageValues.imageAltTextValue,
+  );
+  applyTextPrefill(
+    values,
+    kinds,
+    findMatchingFieldNames(values, SHOPIFY_IMAGE_PAYLOAD_FIELD_CANDIDATES),
+    workflowImageValues.shopifyImagePayloadValue,
   );
 }

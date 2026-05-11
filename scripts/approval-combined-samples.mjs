@@ -1,0 +1,636 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
+import dotenv from 'dotenv';
+
+const APPROVED_BASE_ID = 'apprsAm2FOohEmL2u';
+const APPROVED_TABLE_ID = 'tbl0K0nFQL64jQMx8';
+const RUNS_DIR = path.join(process.cwd(), 'tmp', 'approval-combined-samples');
+const BATCH_SIZE = 10;
+const SAMPLE_MARKER = '[COMBINED_LISTINGS_SAMPLE_DATA]';
+const SAMPLE_SKU_PREFIX = 'SAMPLE-LISTING-';
+
+function readEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return {};
+  }
+
+  return dotenv.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+const mergedEnv = {
+  ...readEnvFile(path.join(process.cwd(), '.env')),
+  ...readEnvFile(path.join(process.cwd(), '.env.local')),
+  ...process.env,
+};
+
+function getEnv(name) {
+  const value = mergedEnv[name]?.trim();
+  return value || '';
+}
+
+function requireEnv(name) {
+  const value = getEnv(name);
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+function ensureDirectory(dirPath) {
+  fs.mkdirSync(dirPath, { recursive: true });
+}
+
+function createRunDirectory(prefix) {
+  ensureDirectory(RUNS_DIR);
+  const stamp = new Date().toISOString().replaceAll(':', '-');
+  const runDir = path.join(RUNS_DIR, `${prefix}-${stamp}`);
+  ensureDirectory(runDir);
+  return runDir;
+}
+
+function writeJson(filePath, value) {
+  fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+}
+
+function getTrimmedString(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+async function fetchJson(url, options = {}) {
+  const response = await fetch(url, options);
+  const bodyText = await response.text();
+  const body = bodyText ? JSON.parse(bodyText) : null;
+
+  if (!response.ok) {
+    throw new Error(body?.error?.message || body?.message || `${response.status} ${response.statusText}`);
+  }
+
+  return body;
+}
+
+async function fetchAllListingRecords(apiKey) {
+  const records = [];
+  let offset = '';
+
+  do {
+    const params = new URLSearchParams({ pageSize: '100' });
+    if (offset) {
+      params.set('offset', offset);
+    }
+
+    const url = `https://api.airtable.com/v0/${encodeURIComponent(APPROVED_BASE_ID)}/${encodeURIComponent(APPROVED_TABLE_ID)}?${params.toString()}`;
+    const payload = await fetchJson(url, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+
+    records.push(...(payload.records || []));
+    offset = payload.offset || '';
+  } while (offset);
+
+  return records;
+}
+
+function chunk(items, size) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
+function buildEbayBodyHtml(title, description, keyFeatures) {
+  const rows = keyFeatures
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .map((row) => {
+      const [key, value] = row.split(',');
+      return `<tr><th scope="row">${key ?? ''}</th><td>${value ?? ''}</td></tr>`;
+    })
+    .join('');
+
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title></head><body><section><h1>${title}</h1><p>${description}</p><table><tbody>${rows}</tbody></table></section></body></html>`;
+}
+
+function buildShopifyBodyHtml(description, bullets) {
+  return `<p>${description}</p><ul>${bullets.map((bullet) => `<li>${bullet}</li>`).join('')}</ul>`;
+}
+
+function makeSampleFields(index, config) {
+  const sku = `${SAMPLE_SKU_PREFIX}${String(index + 1).padStart(2, '0')}`;
+  const keyFeatures = config.keyFeatures.join('\n');
+
+  return {
+    'Template Name': `${SAMPLE_MARKER} ${config.templateName}`,
+    'Item Title': `${SAMPLE_MARKER} ${config.title}`,
+    Description: `${SAMPLE_MARKER} ${config.description}`,
+    'Images (comma-separated)': config.primaryImages.join(', '),
+    'Images (comma-separated) 2': config.secondaryImages.join(', '),
+    'Images Alt Text (comma separated)': config.altTexts.join(', '),
+    'Key Features (Key, Value)': keyFeatures,
+    'SKU Legacy Backup': sku,
+    'Item Zip Code': config.zipCode,
+    Condition: config.condition,
+    'Shopify Type': config.shopifyType,
+    'Shopify Collections': config.shopifyCollections,
+    'Shopify Tags': config.shopifyTags,
+    'Shopify Body (HTML)': buildShopifyBodyHtml(config.description, config.shopifyBullets),
+    'Shopify Price': config.shopifyPrice,
+    'Shopify Variant-Requires-Shipping': config.shopifyRequiresShipping,
+    'Shopify Variant-Taxable': config.shopifyTaxable,
+    'Shopify Approved': config.shopifyApproved,
+    'Ebay Categories': config.ebayCategories,
+    'Ebay Listing Format': config.ebayListingFormat,
+    'Ebay Duration': config.ebayDuration,
+    'Ebay Quantity': config.ebayQuantity,
+    'Ebay Allow Offers': config.ebayAllowOffers,
+    'Ebay Domestic Shipping Fees': config.ebayDomesticShippingFees,
+    'Ebay Package Type': config.ebayPackageType,
+    'Ebay Domestic Service 1': config.ebayDomesticService,
+    'Ebay International Shipping Fees': config.ebayInternationalShippingFees,
+    'Ebay International Destinations': config.ebayInternationalDestinations,
+    'Ebay Excluded Locations': config.ebayExcludedLocations,
+    'Ebay Combined Shipping Discount Enabled': config.ebayCombinedShippingDiscountEnabled,
+    'Ebay Combined Shipping Discount Profile': config.ebayCombinedShippingDiscountProfile,
+    'Ebay Handling Time Days': config.ebayHandlingTimeDays,
+    'Ebay Body (HTML)': buildEbayBodyHtml(config.title, config.description, keyFeatures),
+    'Ebay Price': config.ebayPrice,
+    'Ebay Approved': config.ebayApproved,
+  };
+}
+
+function buildSampleRecords() {
+  return [
+    {
+      templateName: 'Combined Draft Pending Review',
+      title: 'Combined Draft Pending Review',
+      description: 'Draft record with both channels still pending approval so the queue can exercise the base combined workflow.',
+      keyFeatures: ['State,Pending Review', 'Focus,Base combined draft'],
+      primaryImages: ['https://placehold.co/1200x900?text=Combined+Draft+1'],
+      secondaryImages: ['https://placehold.co/1200x900?text=Combined+Draft+2'],
+      altTexts: ['Combined draft hero', 'Combined draft detail'],
+      zipCode: 11205,
+      condition: 'Used',
+      shopifyType: 'Electronics > Audio > Amplifiers > Preamplifiers',
+      shopifyCollections: ['Sample Collection'],
+      shopifyTags: ['Sample', 'Pending'],
+      shopifyBullets: ['Pending Shopify approval', 'Pending eBay approval'],
+      shopifyPrice: 1299.99,
+      shopifyRequiresShipping: 'TRUE',
+      shopifyTaxable: 'TRUE',
+      shopifyApproved: 'FALSE',
+      ebayCategories: ['Vintage Electronics'],
+      ebayListingFormat: 'Buy It Now',
+      ebayDuration: 'GTC',
+      ebayQuantity: 1,
+      ebayAllowOffers: 'FALSE',
+      ebayDomesticShippingFees: 'Calculated',
+      ebayPackageType: 'Package/Thick Envelope',
+      ebayDomesticService: 'UPS Ground',
+      ebayInternationalShippingFees: 'Calculated',
+      ebayInternationalDestinations: 'Worldwide',
+      ebayExcludedLocations: 'None',
+      ebayCombinedShippingDiscountEnabled: true,
+      ebayCombinedShippingDiscountProfile: 'Untitled Calculated Discount Profile (HighEndAudioAuctions)',
+      ebayHandlingTimeDays: 3,
+      ebayPrice: 1299.99,
+      ebayApproved: 'FALSE',
+    },
+    {
+      templateName: 'Shopify Ready Only',
+      title: 'Shopify Ready Only',
+      description: 'Listing sample where Shopify is approved and eBay remains pending.',
+      keyFeatures: ['Channel,Shopify', 'Approval,Shopify only'],
+      primaryImages: ['https://placehold.co/1200x900?text=Shopify+Only+1'],
+      secondaryImages: ['https://placehold.co/1200x900?text=Shopify+Only+2'],
+      altTexts: ['Shopify only hero', 'Shopify only detail'],
+      zipCode: 11205,
+      condition: 'Open Box',
+      shopifyType: 'Electronics > Audio > Audio Players & Recorders > Turntables & Record Players',
+      shopifyCollections: ['Turntables'],
+      shopifyTags: ['Sample', 'Shopify Ready'],
+      shopifyBullets: ['Approved for Shopify', 'eBay still pending'],
+      shopifyPrice: 1899.5,
+      shopifyRequiresShipping: 'TRUE',
+      shopifyTaxable: 'TRUE',
+      shopifyApproved: 'TRUE',
+      ebayCategories: ['Record Players/Home Turntables'],
+      ebayListingFormat: 'Buy It Now',
+      ebayDuration: 'GTC',
+      ebayQuantity: 1,
+      ebayAllowOffers: 'FALSE',
+      ebayDomesticShippingFees: 'Calculated',
+      ebayPackageType: 'Package/Thick Envelope',
+      ebayDomesticService: 'UPS Ground',
+      ebayInternationalShippingFees: 'Calculated',
+      ebayInternationalDestinations: 'Worldwide',
+      ebayExcludedLocations: 'None',
+      ebayCombinedShippingDiscountEnabled: false,
+      ebayCombinedShippingDiscountProfile: '',
+      ebayHandlingTimeDays: 3,
+      ebayPrice: 1899.5,
+      ebayApproved: 'FALSE',
+    },
+    {
+      templateName: 'eBay Fixed Price Ready',
+      title: 'eBay Fixed Price Ready',
+      description: 'Fixed-price eBay record with eBay approved and Shopify still pending.',
+      keyFeatures: ['Channel,eBay', 'Format,Fixed Price'],
+      primaryImages: ['https://placehold.co/1200x900?text=eBay+Fixed+1'],
+      secondaryImages: ['https://placehold.co/1200x900?text=eBay+Fixed+2'],
+      altTexts: ['eBay fixed hero', 'eBay fixed detail'],
+      zipCode: 11205,
+      condition: 'Used',
+      shopifyType: 'Electronics > Audio > Receivers',
+      shopifyCollections: ['Receivers'],
+      shopifyTags: ['Sample', 'eBay Ready'],
+      shopifyBullets: ['eBay approved', 'Shopify pending'],
+      shopifyPrice: 999.99,
+      shopifyRequiresShipping: 'TRUE',
+      shopifyTaxable: 'TRUE',
+      shopifyApproved: 'FALSE',
+      ebayCategories: ['Receivers'],
+      ebayListingFormat: 'Buy It Now',
+      ebayDuration: 'GTC',
+      ebayQuantity: 1,
+      ebayAllowOffers: 'TRUE',
+      ebayDomesticShippingFees: 'Flat',
+      ebayPackageType: 'Package/Thick Envelope',
+      ebayDomesticService: 'UPS Ground',
+      ebayInternationalShippingFees: 'Flat',
+      ebayInternationalDestinations: 'Worldwide',
+      ebayExcludedLocations: 'None',
+      ebayCombinedShippingDiscountEnabled: false,
+      ebayCombinedShippingDiscountProfile: '',
+      ebayHandlingTimeDays: 2,
+      ebayPrice: 999.99,
+      ebayApproved: 'TRUE',
+    },
+    {
+      templateName: 'eBay Auction Flow',
+      title: 'eBay Auction Flow',
+      description: 'Auction-style eBay listing sample with a shorter duration and offer-disabled configuration.',
+      keyFeatures: ['Channel,eBay', 'Format,Auction'],
+      primaryImages: ['https://placehold.co/1200x900?text=eBay+Auction+1'],
+      secondaryImages: ['https://placehold.co/1200x900?text=eBay+Auction+2'],
+      altTexts: ['eBay auction hero', 'eBay auction detail'],
+      zipCode: 11205,
+      condition: 'Used',
+      shopifyType: 'Electronics > Audio > CD Players',
+      shopifyCollections: ['Digital'],
+      shopifyTags: ['Sample', 'Auction'],
+      shopifyBullets: ['Auction flow sample', 'Shopify pending'],
+      shopifyPrice: 749.5,
+      shopifyRequiresShipping: 'TRUE',
+      shopifyTaxable: 'TRUE',
+      shopifyApproved: 'FALSE',
+      ebayCategories: ['CD Players & Recorders'],
+      ebayListingFormat: 'Auction',
+      ebayDuration: 'DAYS_7',
+      ebayQuantity: 1,
+      ebayAllowOffers: 'FALSE',
+      ebayDomesticShippingFees: 'Calculated',
+      ebayPackageType: 'Package/Thick Envelope',
+      ebayDomesticService: 'UPS Ground',
+      ebayInternationalShippingFees: 'Calculated',
+      ebayInternationalDestinations: 'Worldwide',
+      ebayExcludedLocations: 'None',
+      ebayCombinedShippingDiscountEnabled: true,
+      ebayCombinedShippingDiscountProfile: 'Untitled Calculated Discount Profile (HighEndAudioAuctions)',
+      ebayHandlingTimeDays: 3,
+      ebayPrice: 749.5,
+      ebayApproved: 'TRUE',
+    },
+    {
+      templateName: 'Both Channels Approved',
+      title: 'Both Channels Approved',
+      description: 'Record where both Shopify and eBay are approved for publish testing.',
+      keyFeatures: ['Channel,Both', 'Approval,Both approved'],
+      primaryImages: ['https://placehold.co/1200x900?text=Both+Approved+1'],
+      secondaryImages: ['https://placehold.co/1200x900?text=Both+Approved+2'],
+      altTexts: ['Both approved hero', 'Both approved detail'],
+      zipCode: 11205,
+      condition: 'New',
+      shopifyType: 'Electronics > Audio > Amplifiers > Power Amplifiers',
+      shopifyCollections: ['Amplifiers'],
+      shopifyTags: ['Sample', 'Both Ready'],
+      shopifyBullets: ['Both channels approved', 'Rich media sample'],
+      shopifyPrice: 2599,
+      shopifyRequiresShipping: 'TRUE',
+      shopifyTaxable: 'TRUE',
+      shopifyApproved: 'TRUE',
+      ebayCategories: ['Power Amplifiers'],
+      ebayListingFormat: 'Buy It Now',
+      ebayDuration: 'GTC',
+      ebayQuantity: 1,
+      ebayAllowOffers: 'TRUE',
+      ebayDomesticShippingFees: 'Flat',
+      ebayPackageType: 'Package/Thick Envelope',
+      ebayDomesticService: 'UPS Ground',
+      ebayInternationalShippingFees: 'Flat',
+      ebayInternationalDestinations: 'Worldwide',
+      ebayExcludedLocations: 'None',
+      ebayCombinedShippingDiscountEnabled: false,
+      ebayCombinedShippingDiscountProfile: '',
+      ebayHandlingTimeDays: 2,
+      ebayPrice: 2599,
+      ebayApproved: 'TRUE',
+    },
+    {
+      templateName: 'Local Pickup / No Shipping',
+      title: 'Local Pickup / No Shipping',
+      description: 'Local pickup style sample with non-shipping Shopify variant settings.',
+      keyFeatures: ['Shipping,Local Pickup', 'Taxable,FALSE'],
+      primaryImages: ['https://placehold.co/1200x900?text=Local+Pickup+1'],
+      secondaryImages: ['https://placehold.co/1200x900?text=Local+Pickup+2'],
+      altTexts: ['Local pickup hero', 'Local pickup detail'],
+      zipCode: 11205,
+      condition: 'Used',
+      shopifyType: 'Electronics > Audio > Speakers',
+      shopifyCollections: ['Speakers'],
+      shopifyTags: ['Sample', 'Local Pickup'],
+      shopifyBullets: ['No shipping required', 'Pickup-focused config'],
+      shopifyPrice: 849,
+      shopifyRequiresShipping: 'FALSE',
+      shopifyTaxable: 'FALSE',
+      shopifyApproved: 'TRUE',
+      ebayCategories: ['Home Speakers & Subwoofers'],
+      ebayListingFormat: 'Buy It Now',
+      ebayDuration: 'GTC',
+      ebayQuantity: 1,
+      ebayAllowOffers: 'FALSE',
+      ebayDomesticShippingFees: 'Flat',
+      ebayPackageType: 'Package/Thick Envelope',
+      ebayDomesticService: 'UPS Ground',
+      ebayInternationalShippingFees: 'Flat',
+      ebayInternationalDestinations: 'Worldwide',
+      ebayExcludedLocations: 'None',
+      ebayCombinedShippingDiscountEnabled: false,
+      ebayCombinedShippingDiscountProfile: '',
+      ebayHandlingTimeDays: 1,
+      ebayPrice: 849,
+      ebayApproved: 'FALSE',
+    },
+    {
+      templateName: 'Media Heavy Rich HTML',
+      title: 'Media Heavy Rich HTML',
+      description: 'Sample with multiple images, long HTML bodies, and denser merchandising content.',
+      keyFeatures: ['Media,Heavy', 'HTML,Rich'],
+      primaryImages: ['https://placehold.co/1200x900?text=Rich+HTML+1', 'https://placehold.co/1200x900?text=Rich+HTML+2'],
+      secondaryImages: ['https://placehold.co/1200x900?text=Rich+HTML+3'],
+      altTexts: ['Rich html hero', 'Rich html alt 2', 'Rich html alt 3'],
+      zipCode: 11205,
+      condition: 'Used',
+      shopifyType: 'Electronics > Audio > Equalizers',
+      shopifyCollections: ['Accessories', 'Featured'],
+      shopifyTags: ['Sample', 'HTML', 'Media'],
+      shopifyBullets: ['Multiple images', 'Expanded HTML body', 'Testing payload previews'],
+      shopifyPrice: 1495,
+      shopifyRequiresShipping: 'TRUE',
+      shopifyTaxable: 'TRUE',
+      shopifyApproved: 'TRUE',
+      ebayCategories: ['Equalizers'],
+      ebayListingFormat: 'Buy It Now',
+      ebayDuration: 'GTC',
+      ebayQuantity: 1,
+      ebayAllowOffers: 'TRUE',
+      ebayDomesticShippingFees: 'Calculated',
+      ebayPackageType: 'Package/Thick Envelope',
+      ebayDomesticService: 'UPS Ground',
+      ebayInternationalShippingFees: 'Calculated',
+      ebayInternationalDestinations: 'Worldwide',
+      ebayExcludedLocations: 'None',
+      ebayCombinedShippingDiscountEnabled: true,
+      ebayCombinedShippingDiscountProfile: 'Untitled Calculated Discount Profile (HighEndAudioAuctions)',
+      ebayHandlingTimeDays: 2,
+      ebayPrice: 1495,
+      ebayApproved: 'TRUE',
+    },
+    {
+      templateName: 'Sparse Draft / Needs Merchandising',
+      title: 'Sparse Draft / Needs Merchandising',
+      description: 'Intentionally sparse draft for testing incomplete approval states and missing merchandising details.',
+      keyFeatures: ['State,Sparse Draft', 'Review,Needs Merchandising'],
+      primaryImages: ['https://placehold.co/1200x900?text=Sparse+Draft+1'],
+      secondaryImages: [],
+      altTexts: ['Sparse draft hero'],
+      zipCode: 11205,
+      condition: 'Used',
+      shopifyType: 'Electronics > Audio',
+      shopifyCollections: [],
+      shopifyTags: ['Sample', 'Sparse'],
+      shopifyBullets: ['Sparse draft', 'Needs merchandising'],
+      shopifyPrice: 499,
+      shopifyRequiresShipping: 'TRUE',
+      shopifyTaxable: 'TRUE',
+      shopifyApproved: 'FALSE',
+      ebayCategories: ['Other Consumer Electronics'],
+      ebayListingFormat: 'Buy It Now',
+      ebayDuration: 'DAYS_7',
+      ebayQuantity: 1,
+      ebayAllowOffers: 'FALSE',
+      ebayDomesticShippingFees: 'Flat',
+      ebayPackageType: 'Package/Thick Envelope',
+      ebayDomesticService: 'UPS Ground',
+      ebayInternationalShippingFees: 'Flat',
+      ebayInternationalDestinations: 'Worldwide',
+      ebayExcludedLocations: 'None',
+      ebayCombinedShippingDiscountEnabled: false,
+      ebayCombinedShippingDiscountProfile: '',
+      ebayHandlingTimeDays: 3,
+      ebayPrice: 499,
+      ebayApproved: 'FALSE',
+    },
+  ].map((config, index) => ({ fields: makeSampleFields(index, config) }));
+}
+
+function isSampleRecord(record) {
+  const templateName = getTrimmedString(record.fields['Template Name']);
+  const itemTitle = getTrimmedString(record.fields['Item Title']);
+  const description = getTrimmedString(record.fields.Description);
+  const skuLegacyBackup = getTrimmedString(record.fields['SKU Legacy Backup']);
+
+  return templateName.includes(SAMPLE_MARKER)
+    || itemTitle.includes(SAMPLE_MARKER)
+    || description.includes(SAMPLE_MARKER)
+    || skuLegacyBackup.startsWith(SAMPLE_SKU_PREFIX);
+}
+
+async function createRecords(apiKey, records) {
+  const createdRecords = [];
+
+  for (const batch of chunk(records, BATCH_SIZE)) {
+    const url = `https://api.airtable.com/v0/${encodeURIComponent(APPROVED_BASE_ID)}/${encodeURIComponent(APPROVED_TABLE_ID)}`;
+    const payload = await fetchJson(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        typecast: true,
+        records: batch,
+      }),
+    });
+
+    createdRecords.push(...(payload.records || []));
+  }
+
+  return createdRecords;
+}
+
+async function deleteRecords(apiKey, recordIds) {
+  for (const batch of chunk(recordIds, BATCH_SIZE)) {
+    const params = new URLSearchParams();
+    batch.forEach((recordId) => params.append('records[]', recordId));
+
+    const url = `https://api.airtable.com/v0/${encodeURIComponent(APPROVED_BASE_ID)}/${encodeURIComponent(APPROVED_TABLE_ID)}?${params.toString()}`;
+    await fetchJson(url, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+  }
+}
+
+async function runList() {
+  const apiKey = requireEnv('VITE_AIRTABLE_API_KEY');
+  const records = await fetchAllListingRecords(apiKey);
+  const sampleRecords = records.filter(isSampleRecord);
+
+  console.log(`Found ${sampleRecords.length} sample combined listing row(s) in ${APPROVED_BASE_ID}/${APPROVED_TABLE_ID}.`);
+  sampleRecords.forEach((record) => {
+    console.log(`- ${record.id} :: Shopify ${getTrimmedString(record.fields['Shopify Approved']) || 'FALSE'} :: eBay ${getTrimmedString(record.fields['Ebay Approved']) || 'FALSE'} :: ${getTrimmedString(record.fields['Item Title']) || 'Untitled'}`);
+  });
+}
+
+async function runSeed(confirmToken, replaceExisting = false) {
+  if (confirmToken !== 'CREATE_COMBINED_LISTINGS_SAMPLES') {
+    throw new Error('Seed mode requires --confirm CREATE_COMBINED_LISTINGS_SAMPLES.');
+  }
+
+  const apiKey = requireEnv('VITE_AIRTABLE_API_KEY');
+  const existingRecords = await fetchAllListingRecords(apiKey);
+  const existingSampleRecords = existingRecords.filter(isSampleRecord);
+
+  if (existingSampleRecords.length > 0 && !replaceExisting) {
+    throw new Error(`Found ${existingSampleRecords.length} existing sample listing row(s). Run cleanup first or use --replace true.`);
+  }
+
+  if (existingSampleRecords.length > 0) {
+    await deleteRecords(apiKey, existingSampleRecords.map((record) => record.id));
+  }
+
+  const sampleRecords = buildSampleRecords();
+  const createdRecords = await createRecords(apiKey, sampleRecords);
+  const runDir = createRunDirectory('seed');
+
+  writeJson(path.join(runDir, 'created-records.json'), createdRecords);
+  writeJson(path.join(runDir, 'summary.json'), {
+    seededAt: new Date().toISOString(),
+    approvedBaseId: APPROVED_BASE_ID,
+    approvedTableId: APPROVED_TABLE_ID,
+    replacedExistingSampleCount: existingSampleRecords.length,
+    createdCount: createdRecords.length,
+    createdRecordIds: createdRecords.map((record) => record.id),
+    createdTitles: createdRecords.map((record) => record.fields['Item Title']),
+  });
+
+  console.log(`Created ${createdRecords.length} sample combined listing row(s).`);
+  console.log(`Artifacts saved in ${runDir}`);
+}
+
+async function runCleanup(confirmToken) {
+  if (confirmToken !== 'DELETE_COMBINED_LISTINGS_SAMPLES') {
+    throw new Error('Cleanup mode requires --confirm DELETE_COMBINED_LISTINGS_SAMPLES.');
+  }
+
+  const apiKey = requireEnv('VITE_AIRTABLE_API_KEY');
+  const records = await fetchAllListingRecords(apiKey);
+  const sampleRecords = records.filter(isSampleRecord);
+
+  if (sampleRecords.length === 0) {
+    console.log('No sample combined listing rows found.');
+    return;
+  }
+
+  await deleteRecords(apiKey, sampleRecords.map((record) => record.id));
+  const runDir = createRunDirectory('cleanup');
+  writeJson(path.join(runDir, 'deleted-records.json'), sampleRecords);
+
+  console.log(`Deleted ${sampleRecords.length} sample combined listing row(s).`);
+  console.log(`Artifacts saved in ${runDir}`);
+}
+
+function parseArgs(argv) {
+  const args = { _: [] };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+    if (token.startsWith('--')) {
+      const key = token.slice(2);
+      const nextToken = argv[index + 1];
+      if (!nextToken || nextToken.startsWith('--')) {
+        args[key] = 'true';
+      } else {
+        args[key] = nextToken;
+        index += 1;
+      }
+      continue;
+    }
+
+    args._.push(token);
+  }
+
+  return args;
+}
+
+function printHelp() {
+  console.log('Combined listings sample data helper');
+  console.log('');
+  console.log('Commands:');
+  console.log('  list');
+  console.log('    Show existing sample rows in the linked combined listings table.');
+  console.log('');
+  console.log('  seed --confirm CREATE_COMBINED_LISTINGS_SAMPLES [--replace true]');
+  console.log('    Insert combined listings approval sample rows into the linked Airtable table.');
+  console.log('');
+  console.log('  cleanup --confirm DELETE_COMBINED_LISTINGS_SAMPLES');
+  console.log('    Delete only rows created by this sample-data helper.');
+  console.log('');
+  console.log('Environment:');
+  console.log('  VITE_AIRTABLE_API_KEY is required.');
+  console.log('');
+  console.log('Safety notes:');
+  console.log(`  - Scope is hard-locked to base ${APPROVED_BASE_ID}, table ${APPROVED_TABLE_ID}.`);
+  console.log(`  - Created rows are marked with ${SAMPLE_MARKER} and ${SAMPLE_SKU_PREFIX} for cleanup.`);
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const command = args._[0] || 'help';
+
+  switch (command) {
+    case 'list':
+      await runList();
+      return;
+    case 'seed':
+      await runSeed(args.confirm || '', args.replace === 'true');
+      return;
+    case 'cleanup':
+      await runCleanup(args.confirm || '');
+      return;
+    case 'help':
+    default:
+      printHelp();
+  }
+}
+
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});

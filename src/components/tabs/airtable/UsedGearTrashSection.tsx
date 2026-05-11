@@ -6,25 +6,15 @@ import {
   groupUsedGearWorkflowRecords,
   hasUsedGearPendingReviewPricingPath,
   loadTrashQueue,
-  permanentlyDeleteTrashRecord,
-  requalifyTrashRecord,
-  restoreTrashRecord,
-  type UsedGearPendingReviewAcceptedStatus,
 } from '@/services/usedGearQueue';
 import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearTrashSectionProps {
-  currentUserName: string;
+  onOpenReviewRecord: (recordId: string) => void;
   onOpenWorkflowRecord: (recordId: string) => void;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
 }
-
-const REQUALIFY_ROUTE_OPTIONS: Array<{ value: UsedGearPendingReviewAcceptedStatus; label: string }> = [
-  { value: 'Accepted - Awaiting Arrival', label: 'Re-qualify: Awaiting Arrival' },
-  { value: 'Accepted - Arrived, Awaiting SKU', label: 'Re-qualify: Arrived, Awaiting SKU' },
-  { value: 'Accepted - Arrived, Awaiting Missing Item', label: 'Re-qualify: Arrived, Awaiting Missing Item' },
-];
 
 function recordSearchText(record: AirtableRecord): string {
   return [
@@ -42,8 +32,13 @@ function recordSearchText(record: AirtableRecord): string {
     .toLowerCase();
 }
 
+function previewText(value: unknown): string {
+  const normalized = displayInventoryValue(value);
+  return normalized.length > 120 ? `${normalized.slice(0, 117)}...` : normalized;
+}
+
 export function UsedGearTrashSection({
-  currentUserName,
+  onOpenReviewRecord,
   onOpenWorkflowRecord,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
@@ -60,9 +55,6 @@ export function UsedGearTrashSection({
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
-  const [actionRecordId, setActionRecordId] = useState<string | null>(null);
-  const [requalifyNotes, setRequalifyNotes] = useState<Record<string, string>>({});
-  const [requalifyStatuses, setRequalifyStatuses] = useState<Record<string, UsedGearPendingReviewAcceptedStatus>>({});
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
 
   useEffect(() => {
@@ -119,18 +111,6 @@ export function UsedGearTrashSection({
     }
   };
 
-  const removeRecord = (recordId: string) => {
-    setRecords((currentRecords) => currentRecords.filter((record) => record.id !== recordId));
-    setRequalifyNotes((currentNotes) => {
-      const { [recordId]: _removed, ...remaining } = currentNotes;
-      return remaining;
-    });
-    setRequalifyStatuses((currentStatuses) => {
-      const { [recordId]: _removed, ...remaining } = currentStatuses;
-      return remaining;
-    });
-  };
-
   const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
 
   const handleSearchTermChange = (value: string) => {
@@ -139,51 +119,6 @@ export function UsedGearTrashSection({
     }
 
     onSearchTermChange?.(value);
-  };
-
-  const handleRestore = async (recordId: string) => {
-    setActionRecordId(recordId);
-    setError(null);
-
-    try {
-      await restoreTrashRecord(recordId);
-      removeRecord(recordId);
-    } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to restore the selected trash row.');
-    } finally {
-      setActionRecordId(null);
-    }
-  };
-
-  const handleRequalify = async (recordId: string) => {
-    setActionRecordId(recordId);
-    setError(null);
-
-    try {
-      await requalifyTrashRecord(recordId, currentUserName, {
-        acceptedStatus: requalifyStatuses[recordId] ?? 'Accepted - Awaiting Arrival',
-        qualificationNotes: requalifyNotes[recordId] ?? '',
-      });
-      removeRecord(recordId);
-    } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to re-qualify the selected trash row into Lot 2.');
-    } finally {
-      setActionRecordId(null);
-    }
-  };
-
-  const handleDelete = async (recordId: string) => {
-    setActionRecordId(recordId);
-    setError(null);
-
-    try {
-      await permanentlyDeleteTrashRecord(recordId);
-      removeRecord(recordId);
-    } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to permanently delete the selected trash row.');
-    } finally {
-      setActionRecordId(null);
-    }
   };
 
   return (
@@ -278,9 +213,6 @@ export function UsedGearTrashSection({
 
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
               {group.records.map((record) => {
-                const requalifyNote = requalifyNotes[record.id] ?? '';
-                const requalifyStatus = requalifyStatuses[record.id] ?? 'Accepted - Awaiting Arrival';
-                const busy = actionRecordId === record.id;
                 const hasPricingPath = hasUsedGearPendingReviewPricingPath(record.fields);
 
                 return (
@@ -296,12 +228,12 @@ export function UsedGearTrashSection({
                     </div>
                   </div>
 
-                  <div className="mt-3 space-y-2 text-sm text-[var(--muted)]">
+                  <div className="mt-3 grid gap-2 text-sm text-[var(--muted)] sm:grid-cols-2">
                     <div>
                       <span className="font-semibold text-[var(--ink)]">Reason:</span> {displayInventoryValue(record.fields['Unqualified Reason'])}
                     </div>
                     <div>
-                      <span className="font-semibold text-[var(--ink)]">Qualification Notes:</span> {displayInventoryValue(record.fields['Qualification Notes'])}
+                      <span className="font-semibold text-[var(--ink)]">Pricing Gate:</span> {hasPricingPath ? 'Ready' : 'Missing'}
                     </div>
                     <div>
                       <span className="font-semibold text-[var(--ink)]">Offer Amount:</span> {displayInventoryValue(record.fields['Offer Amount'])}
@@ -309,112 +241,31 @@ export function UsedGearTrashSection({
                     <div>
                       <span className="font-semibold text-[var(--ink)]">Paid Amount:</span> {displayInventoryValue(record.fields['Paid Amount'])}
                     </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Confirmed Grand Total:</span> {displayInventoryValue(record.fields['Confirmed Grand Total'])}
+                    <div className="sm:col-span-2">
+                      <span className="font-semibold text-[var(--ink)]">Qualification Notes:</span> {previewText(record.fields['Qualification Notes'])}
                     </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Allocation Mode:</span> {displayInventoryValue(record.fields['Allocation Mode'])}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Allocation Notes:</span> {displayInventoryValue(record.fields['Allocation Notes'])}
-                    </div>
-                    <div>
+                    <div className="sm:col-span-2">
                       <span className="font-semibold text-[var(--ink)]">Trash Status:</span> {displayInventoryValue(record.fields['Trash Status'])}
                     </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Customer Cosmetic Notes:</span> {displayInventoryValue(record.fields['Customer Cosmetic Notes'])}
+                    <div className="sm:col-span-2">
+                      <span className="font-semibold text-[var(--ink)]">Internal Notes:</span> {previewText(record.fields['Internal Functional Notes'] || record.fields['Internal Cosmetic Notes'] || record.fields['Internal Inclusion Notes'])}
                     </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Customer Functional Notes:</span> {displayInventoryValue(record.fields['Customer Functional Notes'])}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Customer Inclusion Notes:</span> {displayInventoryValue(record.fields['Customer Inclusion Notes'])}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Customer Submitted Photos Notes:</span> {displayInventoryValue(record.fields['Customer Submitted Photos Notes'])}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Internal Cosmetic Notes:</span> {displayInventoryValue(record.fields['Internal Cosmetic Notes'])}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Internal Functional Notes:</span> {displayInventoryValue(record.fields['Internal Functional Notes'])}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Internal Inclusion Notes:</span> {displayInventoryValue(record.fields['Internal Inclusion Notes'])}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 space-y-3 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-3">
-                    <label className="block">
-                      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Re-qualify Route</span>
-                      <select
-                        className={inputClassName}
-                        value={requalifyStatus}
-                        onChange={(event) => setRequalifyStatuses((currentStatuses) => ({
-                          ...currentStatuses,
-                          [record.id]: event.currentTarget.value as UsedGearPendingReviewAcceptedStatus,
-                        }))}
-                      >
-                        {REQUALIFY_ROUTE_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="block">
-                      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Re-qualify Notes</span>
-                      <textarea
-                        className={inputClassName}
-                        rows={3}
-                        value={requalifyNote}
-                        onChange={(event) => setRequalifyNotes((currentNotes) => ({
-                          ...currentNotes,
-                          [record.id]: event.currentTarget.value,
-                        }))}
-                        placeholder="Required before sending the item back into Lot 2"
-                      />
-                    </label>
-                    {!hasPricingPath ? (
-                      <p className="m-0 text-xs text-amber-300">Offer, paid amount, or confirmed group total is still required before re-qualifying this row into Lot 2.</p>
-                    ) : null}
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="rounded-xl bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110"
+                      onClick={() => onOpenReviewRecord(record.id)}
+                    >
+                      Open Review
+                    </button>
                     <button
                       type="button"
                       className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
                       onClick={() => onOpenWorkflowRecord(record.id)}
                     >
                       Workflow Detail
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-                      onClick={() => {
-                        void handleRestore(record.id);
-                      }}
-                      disabled={busy}
-                    >
-                      {busy ? 'Saving...' : 'Restore To Lot 1'}
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                      onClick={() => {
-                        void handleRequalify(record.id);
-                      }}
-                      disabled={busy || requalifyNote.trim().length === 0 || !hasPricingPath}
-                    >
-                      {busy ? 'Saving...' : 'Re-qualify Into Lot 2'}
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-xl border border-rose-400/35 bg-rose-500/15 px-3 py-1.5 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                      onClick={() => {
-                        void handleDelete(record.id);
-                      }}
-                      disabled={busy}
-                    >
-                      {busy ? 'Saving...' : 'Delete Permanently'}
                     </button>
                   </div>
                 </article>

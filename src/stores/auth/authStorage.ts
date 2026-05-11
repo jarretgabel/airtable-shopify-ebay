@@ -1,4 +1,5 @@
 import { APP_PAGES, AppPage } from '@/auth/pages';
+import { hasFullAccessRole, normalizeRolePages } from '@/auth/roleAccess';
 import {
   createConfiguredRecord,
   deleteConfiguredRecord,
@@ -7,9 +8,10 @@ import {
 } from '@/services/app-api/airtable';
 import { sendPlainTextEmail } from '@/services/app-api/gmail';
 import {
-  DEFAULT_USER_NOTIFICATION_PREFERENCES,
-  createDefaultUsedGearWorkflowNotificationPreferences,
-  createDefaultUserNotificationPreferences,
+  createNotificationPreferencesForRole,
+  normalizeNotificationPreferencesForRole,
+} from '@/services/roleNotificationDefaults';
+import {
   type AppUser,
   type UserNotificationPreferences,
   type UserRole,
@@ -31,6 +33,7 @@ const USER_FIELD_KEYS = {
 const PASSWORD_FIELD_PAYLOAD_PREFIX = '__LCC_PASSWORD__:';
 const PASSWORD_HASH_SCHEME = 'pbkdf2-sha256';
 const PASSWORD_HASH_ITERATIONS = 210000;
+const ROLE_DEFAULTS_RECORD_PREFIX = '__role-defaults__:';
 
 interface StoredPasswordPayload {
   scheme?: string;
@@ -89,7 +92,16 @@ function toSingleString(value: unknown): string {
 }
 
 function parseRole(value: unknown): UserRole {
-  return toSingleString(value).toLowerCase() === 'admin' ? 'admin' : 'user';
+  const normalized = toSingleString(value).toLowerCase();
+  if (normalized === 'admin') return 'admin';
+  if (normalized === 'owner') return 'owner';
+  if (normalized === 'tester') return 'tester';
+  if (normalized === 'photographer') return 'photographer';
+  return 'processor';
+}
+
+function isRoleDefaultsRecordId(value: string): boolean {
+  return value.trim().startsWith(ROLE_DEFAULTS_RECORD_PREFIX);
 }
 
 function parseBoolean(value: unknown): boolean {
@@ -195,7 +207,7 @@ async function serializePasswordField(password: string, mustChangePassword: bool
 }
 
 function parseAllowedPages(value: unknown, role: UserRole): AppPage[] {
-  if (role === 'admin') {
+  if (hasFullAccessRole(role)) {
     return [...APP_PAGES];
   }
 
@@ -219,26 +231,26 @@ function parseAllowedPages(value: unknown, role: UserRole): AppPage[] {
   return normalizePages(pages, role);
 }
 
-function parseNotificationPreferences(value: unknown): UserNotificationPreferences {
+function parseNotificationPreferences(value: unknown, role: UserRole): UserNotificationPreferences {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return normalizeNotificationPreferences(value as Partial<UserNotificationPreferences>);
+    return normalizeNotificationPreferencesForRole(role, value as Partial<UserNotificationPreferences>);
   }
 
   const raw = toSingleString(value);
   if (!raw) {
-    return createDefaultUserNotificationPreferences();
+    return createNotificationPreferencesForRole(role);
   }
 
   try {
     const parsed = JSON.parse(raw) as Partial<UserNotificationPreferences>;
-    return normalizeNotificationPreferences(parsed);
+    return normalizeNotificationPreferencesForRole(role, parsed);
   } catch {
-    return createDefaultUserNotificationPreferences();
+    return createNotificationPreferencesForRole(role);
   }
 }
 
 function serializeAllowedPages(user: AppUser): string {
-  if (user.role === 'admin') {
+  if (hasFullAccessRole(user.role)) {
     return APP_PAGES.join(',');
   }
 
@@ -319,7 +331,7 @@ function mapRecordToUser(recordId: string, fields: Record<string, unknown>): App
   const passwordState = parsePasswordField(getFieldValue(fields, USER_FIELD_KEYS.password));
   const mustChangePassword = parseBoolean(getFieldValue(fields, USER_FIELD_KEYS.mustChangePassword)) || Boolean(passwordState.mustChangePassword);
   const allowedPages = parseAllowedPages(getFieldValue(fields, USER_FIELD_KEYS.allowedPages), role);
-  const notificationPreferences = parseNotificationPreferences(getFieldValue(fields, USER_FIELD_KEYS.notifications));
+  const notificationPreferences = parseNotificationPreferences(getFieldValue(fields, USER_FIELD_KEYS.notifications), role);
 
   return {
     id: parsedId,
@@ -337,6 +349,10 @@ export async function loadUsersFromAirtable(): Promise<AppUser[]> {
   const records = await getUserRecordsFromAirtable();
 
   return records
+    .filter((record) => {
+      const parsedId = toSingleString(getFieldValue(record.fields, USER_FIELD_KEYS.id)) || record.id;
+      return !isRoleDefaultsRecordId(parsedId);
+    })
     .map((record) => mapRecordToUser(record.id, record.fields))
     .filter((user) => Boolean(user.email));
 }
@@ -376,27 +392,7 @@ function normalizeLegacyPageValue(value: string): string {
 }
 
 export function normalizePages(pages: AppPage[], role: UserRole): AppPage[] {
-  const unique = Array.from(new Set(pages.filter(isAppPage)));
-  if (role === 'admin') {
-    return [...APP_PAGES];
-  }
-
-  return unique.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications');
-}
-
-function normalizeNotificationPreferences(value: Partial<UserNotificationPreferences> | undefined): UserNotificationPreferences {
-  const defaultWorkflowEvents = createDefaultUsedGearWorkflowNotificationPreferences();
-  return {
-    infoEnabled: value?.infoEnabled ?? DEFAULT_USER_NOTIFICATION_PREFERENCES.infoEnabled,
-    successEnabled: value?.successEnabled ?? DEFAULT_USER_NOTIFICATION_PREFERENCES.successEnabled,
-    warningEnabled: value?.warningEnabled ?? DEFAULT_USER_NOTIFICATION_PREFERENCES.warningEnabled,
-    errorEnabled: value?.errorEnabled ?? DEFAULT_USER_NOTIFICATION_PREFERENCES.errorEnabled,
-    autoDismissMs: value?.autoDismissMs ?? DEFAULT_USER_NOTIFICATION_PREFERENCES.autoDismissMs,
-    workflowEvents: {
-      ...defaultWorkflowEvents,
-      ...(value?.workflowEvents ?? {}),
-    },
-  };
+  return normalizeRolePages(Array.from(new Set(pages.filter(isAppPage))), role);
 }
 
 export function randomToken(): string {

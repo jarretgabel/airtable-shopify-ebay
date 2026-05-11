@@ -28,6 +28,8 @@ export const EBAY_TITLE_FIELD_CANDIDATES = [
 ] as const;
 
 export const EBAY_PRICE_FIELD_CANDIDATES = [
+  'eBay Price',
+  'Ebay Price',
   'Buy It Now/Starting Price',
   'Buy It Now / Starting Price',
   'Buy It Now/Starting Bid',

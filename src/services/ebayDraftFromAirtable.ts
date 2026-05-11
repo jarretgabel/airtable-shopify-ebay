@@ -2,6 +2,7 @@ type ApprovalFieldMap = Record<string, unknown>;
 
 import { parseEbayAspects } from '@/services/ebayAspects';
 import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
+import { getIncludedWorkflowImageMetadata, parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 
 const EBAY_CONDITION_ENUMS = new Set([
   'NEW',
@@ -353,6 +354,12 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
   ]));
   const conditionDescription = getField(fields, ['eBay Inventory Condition Description']);
   const quantity = parseInteger(getField(fields, ['eBay Inventory Ship To Location Quantity', 'Quantity', 'Qty']), 1);
+  const workflowImageUrls = getIncludedWorkflowImageMetadata(parseWorkflowImageMetadata(getRawField(fields, [
+    'Workflow Image Metadata JSON',
+    'Workflow Image Metadata',
+    'workflow_image_metadata_json',
+    'workflow_image_metadata',
+  ]))).map((record) => record.url);
   const imageUrls = parseImageUrls(getRawField(fields, [
     'eBay Inventory Product Image URLs JSON',
     'eBay Inventory Product ImageURLs JSON',
@@ -383,10 +390,12 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     'image_urls',
   ]));
   const fallbackImageUrls = collectImageUrlsFromFields(fields);
-  const resolvedImageUrls = dedupeCaseInsensitive([
-    ...imageUrls,
-    ...fallbackImageUrls,
-  ]);
+  const resolvedImageUrls = workflowImageUrls.length > 0
+    ? dedupeCaseInsensitive(workflowImageUrls)
+    : dedupeCaseInsensitive([
+        ...imageUrls,
+        ...fallbackImageUrls,
+      ]);
 
   const marketplaceId = getField(fields, ['eBay Offer Marketplace ID']) || 'EBAY_US';
   const format = getField(fields, ['eBay Offer Format']) || 'FIXED_PRICE';

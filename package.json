@@ -12,6 +12,13 @@
     "compare:lambda": "node scripts/compare-lambda.mjs",
     "compare:lambda:handler": "node scripts/compare-lambda-handlers.mjs",
     "workflow:backfill": "node scripts/used-gear-workflow-backfill.mjs",
+    "workflow:queue-samples:list": "node scripts/used-gear-workflow-queue-samples.mjs list",
+    "workflow:queue-samples:seed": "node scripts/used-gear-workflow-queue-samples.mjs seed",
+    "workflow:queue-samples:cleanup": "node scripts/used-gear-workflow-queue-samples.mjs cleanup",
+    "listings:samples:list": "node scripts/approval-combined-samples.mjs list",
+    "listings:samples:seed": "node scripts/approval-combined-samples.mjs seed",
+    "listings:samples:cleanup": "node scripts/approval-combined-samples.mjs cleanup",
+    "users:set-owner": "node scripts/users-set-owner.mjs",
     "workflow:schema:sync": "node scripts/sync-used-gear-workflow-schema.mjs",
     "workflow:schema:rollback:dry-run": "node scripts/rollback-used-gear-workflow-schema.mjs",
     "workflow:schema:rollback:apply": "node scripts/rollback-used-gear-workflow-schema.mjs --apply --confirm DELETE_APPROVED_WORKFLOW_FIELDS",
@@ -33,7 +40,9 @@
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 99",
     "lint:fix": "eslint . --ext ts,tsx --fix",
-    "test": "vitest run",
+    "test": "npm run test:web && npm run test:aws",
+    "test:web": "vitest run",
+    "test:aws": "node --import tsx --test tests/unit/aws/**/*.test.ts",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -49,10 +58,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
-    "@tailwindcss/vite": "^4.2.2",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^5.0.0",
@@ -61,8 +70,9 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
     "jsdom": "^26.0.0",
-    "typescript-eslint": "^8.24.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.0",
+    "typescript-eslint": "^8.24.1",
     "vite": "^8.0.0",
     "vitest": "^3.2.4"
   }

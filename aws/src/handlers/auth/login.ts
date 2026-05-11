@@ -19,6 +19,10 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     logInfo('Authenticated user session', { userId: result.userId });
     return jsonOk({
       userId: result.userId,
+      name: result.name,
+      email: result.email,
+      role: result.role,
+      allowedPages: result.allowedPages,
       mustChangePassword: result.mustChangePassword,
       csrfToken: buildCsrfToken(result.sessionToken),
     }, {

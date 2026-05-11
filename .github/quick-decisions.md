@@ -82,9 +82,10 @@ src/services/ebay/
 ├── listingConfig.ts                 (Env + constants)
 ├── listingRequest.ts                (Payload builders)
 ├── listingMappers.ts                (Response transforms)
-├── listingTypes.ts                  (TypeScript types)
-└── listing.test.ts
+└── listingTypes.ts                  (TypeScript types)
 ```
+
+Test path: `tests/unit/src/services/ebay/listing.test.ts`
 
 ### I have a Zustand store with lots of logic
 1. **Extract** field validation to `{feature}StoreFieldUtils.ts`
@@ -99,9 +100,10 @@ src/stores/approval/
 ├── approvalStore.ts                 (40 lines, uses extract of helpers + constants)
 ├── approvalStoreTypes.ts            (Interface Store { ... })
 ├── approvalStoreConstants.ts        (CONSTANTS, defaults)
-├── approvalStoreFieldUtils.ts       (Pure helper functions)
-└── approvalStore.test.ts
+└── approvalStoreFieldUtils.ts       (Pure helper functions)
 ```
+
+Test path: `tests/unit/src/stores/approval/approvalStore.test.ts`
 
 ---
 

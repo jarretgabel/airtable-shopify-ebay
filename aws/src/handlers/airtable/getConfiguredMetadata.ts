@@ -6,7 +6,7 @@ import { logError, logInfo } from '../../shared/logging.js';
 import { getConfiguredFieldMetadata, type AirtableConfiguredMetadataSource } from '../../providers/airtable/sources.js';
 
 function validateSource(value: string): AirtableConfiguredMetadataSource {
-  if (value === 'inventory-directory') {
+  if (value === 'inventory-directory' || value === 'used-gear-workflow') {
     return value;
   }
 

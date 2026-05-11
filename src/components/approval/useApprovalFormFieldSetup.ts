@@ -8,6 +8,14 @@ import {
   pickPreferredField,
 } from './approvalFormFieldsImageHelpers';
 import type { ApprovalFormFieldSetupParams } from './approvalFormFieldSetupTypes';
+import {
+  buildWorkflowListingSelectionFromMetadata,
+  findWorkflowImageAttachmentFieldName,
+  findWorkflowImageMetadataFieldName,
+  parseWorkflowImageAttachments,
+  parseWorkflowSelectedImageRows,
+} from './workflowListingImageHelpers';
+import { parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 import { useApprovalFormEbaySetup } from './useApprovalFormEbaySetup';
 import { useApprovalFormShopifySetup } from './useApprovalFormShopifySetup';
 
@@ -100,6 +108,61 @@ export function useApprovalFormFieldSetup({
       }));
     })())
     : '';
+  const workflowImageAttachmentFieldName = useMemo(
+    () => findWorkflowImageAttachmentFieldName(allFieldNames),
+    [allFieldNames],
+  );
+  const workflowImageMetadataFieldName = useMemo(
+    () => findWorkflowImageMetadataFieldName(allFieldNames),
+    [allFieldNames],
+  );
+  const workflowImageMetadata = useMemo(
+    () => parseWorkflowImageMetadata(workflowImageMetadataFieldName ? (originalFieldValues[workflowImageMetadataFieldName] ?? '') : ''),
+    [originalFieldValues, workflowImageMetadataFieldName],
+  );
+  const workflowImageAttachments = useMemo(
+    () => {
+      const attachments = parseWorkflowImageAttachments(workflowImageAttachmentFieldName ? (originalFieldValues[workflowImageAttachmentFieldName] ?? '') : '');
+      if (workflowImageMetadata.length === 0) return attachments;
+
+      const sortOrderByUrl = new Map(
+        workflowImageMetadata.map((record) => [record.url.trim().toLowerCase(), record.sortOrder] as const),
+      );
+
+      return [...attachments].sort((left, right) => {
+        const leftOrder = sortOrderByUrl.get(left.url.trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+        const rightOrder = sortOrderByUrl.get(right.url.trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+        if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+        return left.filename.localeCompare(right.filename);
+      });
+    },
+    [originalFieldValues, workflowImageAttachmentFieldName, workflowImageMetadata],
+  );
+  const selectedWorkflowImageUrls = useMemo(() => {
+    const currentRows = parseWorkflowSelectedImageRows(
+      imageUrlSourceField ? (formValues[imageUrlSourceField] ?? '') : '',
+      imageAltTextSourceField ? (formValues[imageAltTextSourceField] ?? '') : '',
+      shopifyImagePayloadFieldName ? (formValues[shopifyImagePayloadFieldName] ?? '') : '',
+    );
+    if (currentRows.length === 0) {
+      return buildWorkflowListingSelectionFromMetadata(workflowImageMetadata);
+    }
+
+    const attachmentLookup = new Map(
+      workflowImageAttachments.map((attachment) => [attachment.url.trim().toLowerCase(), attachment.url.trim()] as const),
+    );
+    return currentRows
+      .map((row) => row.src.trim())
+      .filter(Boolean)
+      .map((url) => attachmentLookup.get(url.toLowerCase()) ?? url);
+  }, [
+    formValues,
+    imageAltTextSourceField,
+    imageUrlSourceField,
+    shopifyImagePayloadFieldName,
+    workflowImageAttachments,
+    workflowImageMetadata,
+  ]);
 
   const ebaySetup = useApprovalFormEbaySetup({
     recordId,
@@ -167,7 +230,9 @@ export function useApprovalFormFieldSetup({
     imageAltTextSourceField,
     imageUrlSourceField,
     preferredShopifyPriceFieldName,
+    selectedWorkflowImageUrls,
     shopifyImagePayloadFieldName,
     useCombinedImageAltEditor,
+    workflowImageAttachments,
   };
 }

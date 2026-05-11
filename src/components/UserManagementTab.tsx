@@ -1,5 +1,6 @@
 import { FormEvent, useMemo, useRef, useState } from 'react';
 import type { UserManagementTabViewModel } from '@/app/appTabViewModels';
+import { getRoleDefaultPages, hasFullAccessRole } from '@/auth/roleAccess';
 import { AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
 import { useAuthStore } from '@/stores/auth/authStore';
 import type { AppUser } from '@/stores/auth/authTypes';
@@ -15,8 +16,8 @@ function defaultFormState(): NewUserFormState {
     name: '',
     email: '',
     password: generateTemporaryPassword(),
-    role: 'user',
-    allowedPages: ['dashboard'],
+    role: 'processor',
+    allowedPages: getRoleDefaultPages('processor'),
   };
 }
 
@@ -27,11 +28,17 @@ interface UserManagementTabProps {
 function roleBadgeClassName(role: AppUser['role']): string {
   return role === 'admin'
     ? 'inline-flex rounded-full bg-cyan-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-300'
-    : 'inline-flex rounded-full bg-slate-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300';
+    : role === 'owner'
+      ? 'inline-flex rounded-full bg-fuchsia-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-fuchsia-200'
+    : role === 'processor'
+      ? 'inline-flex rounded-full bg-blue-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-blue-200'
+      : role === 'tester'
+        ? 'inline-flex rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-amber-200'
+        : 'inline-flex rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-200';
 }
 
 function formatAccessiblePages(user: AppUser): string {
-  if (user.role === 'admin') {
+  if (hasFullAccessRole(user.role)) {
     return 'All pages';
   }
 
@@ -45,6 +52,9 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
   const updateUserPermissions = useAuthStore((state) => state.updateUserPermissions);
   const updateUserRole = useAuthStore((state) => state.updateUserRole);
   const updateUserWorkflowNotificationEvent = useAuthStore((state) => state.updateUserWorkflowNotificationEvent);
+  const roleNotificationDefaults = useAuthStore((state) => state.roleNotificationDefaults);
+  const updateRoleWorkflowNotificationDefault = useAuthStore((state) => state.updateRoleWorkflowNotificationDefault);
+  const applyRoleWorkflowNotificationDefaults = useAuthStore((state) => state.applyRoleWorkflowNotificationDefaults);
   const deleteUser = useAuthStore((state) => state.deleteUser);
   const requestPasswordReset = useAuthStore((state) => state.requestPasswordReset);
   const createUser = useAuthStore((state) => state.createUser);
@@ -83,8 +93,8 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
     const direction = sortDirection === 'asc' ? 1 : -1;
 
     return filtered.sort((a, b) => {
-      const aPages = a.role === 'admin' ? Number.MAX_SAFE_INTEGER : a.allowedPages.length;
-      const bPages = b.role === 'admin' ? Number.MAX_SAFE_INTEGER : b.allowedPages.length;
+      const aPages = hasFullAccessRole(a.role) ? Number.MAX_SAFE_INTEGER : a.allowedPages.length;
+      const bPages = hasFullAccessRole(b.role) ? Number.MAX_SAFE_INTEGER : b.allowedPages.length;
 
       const aValue =
         sortKey === 'name'
@@ -110,7 +120,7 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
   }, [searchTerm, roleFilter, sortKey, sortDirection, sortedUsers]);
 
   async function togglePermission(user: AppUser, page: AppPage): Promise<void> {
-    if (user.role === 'admin') return;
+    if (hasFullAccessRole(user.role)) return;
 
     const hasPage = user.allowedPages.includes(page);
     const nextPages = hasPage
@@ -194,12 +204,19 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
   if (selectedUser) {
     const deletingSelf = selectedUser.id === currentUserId;
     const deletingMainAdmin = selectedUser.id === 'u-admin';
-    const canDeleteSelectedUser = !deletingSelf && !deletingMainAdmin;
+    const deletingOwner = selectedUser.role === 'owner';
+    const canDeleteSelectedUser = !deletingSelf && !deletingMainAdmin && !deletingOwner;
+    const canSendPasswordReset = selectedUser.role !== 'owner';
     const deleteDisabledReason = deletingSelf
       ? 'You cannot delete your own account.'
       : deletingMainAdmin
         ? 'The main admin account cannot be deleted.'
+        : deletingOwner
+          ? 'Owner accounts cannot be deleted from User Management.'
         : undefined;
+    const passwordResetDisabledReason = selectedUser.role === 'owner'
+      ? 'Owner password changes must be handled by the owner through Account Settings.'
+      : undefined;
 
     return (
       <>
@@ -207,6 +224,8 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
         selectedUser={selectedUser}
         canDeleteSelectedUser={canDeleteSelectedUser}
         deleteDisabledReason={deleteDisabledReason}
+        canSendPasswordReset={canSendPasswordReset}
+        passwordResetDisabledReason={passwordResetDisabledReason}
         statusMessage={statusMessage}
         labelClassName={labelClassName}
         inputClassName={inputClassName}
@@ -246,6 +265,7 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
         sortKey={sortKey}
         sortDirection={sortDirection}
         newUser={newUser}
+        roleNotificationDefaults={roleNotificationDefaults}
         labelClassName={labelClassName}
         inputClassName={inputClassName}
         checkboxClassName={checkboxClassName}
@@ -260,9 +280,15 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
         onCreateUserSubmit={handleCreateUser}
         onScrollToCreateUser={scrollToCreateUserSection}
         onNewUserFieldChange={(field, value) => setNewUser((previous) => ({ ...previous, [field]: value }))}
-        onNewUserRoleChange={(role) => setNewUser((previous) => ({ ...previous, role }))}
+        onNewUserRoleChange={(role) => setNewUser((previous) => ({ ...previous, role, allowedPages: getRoleDefaultPages(role) }))}
         onNewUserPageToggle={handleNewUserPageToggle}
         onRegenerateTemporaryPassword={handleRegenerateTemporaryPassword}
+        onToggleRoleWorkflowNotificationDefault={(role, eventKey, enabled) => {
+          void updateRoleWorkflowNotificationDefault(role, eventKey, enabled).then((result) => setStatusMessage(result.message));
+        }}
+        onApplyRoleWorkflowNotificationDefaults={(role) => {
+          void applyRoleWorkflowNotificationDefaults(role).then((result) => setStatusMessage(result.message));
+        }}
       />
       {confirmationModal}
     </>

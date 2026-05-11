@@ -18,6 +18,8 @@ export interface EbaySampleListingResult {
 }
 
 export interface EbayInventoryItem {
+  snapshotId?: string;
+  sourceRecordId?: string;
   sku: string;
   product?: {
     title?: string;
@@ -35,6 +37,8 @@ export interface EbayInventoryItem {
 }
 
 export interface EbayOffer {
+  snapshotId?: string;
+  sourceRecordId?: string;
   offerId?: string;
   sku: string;
   status?: 'UNPUBLISHED' | 'PUBLISHED' | 'ENDED';

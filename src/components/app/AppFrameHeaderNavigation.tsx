@@ -7,6 +7,17 @@ import {
   handleDropdownTriggerKeyDown,
 } from '@/components/app/AppFrameHeaderShared';
 
+interface TabSection {
+  title: string;
+  tabs: AppTab[];
+}
+
+const INVENTORY_PROCESSING_SECTION_KEYS = {
+  hub: ['inventory'] as const,
+  reviewQueues: ['testing-queue', 'photography-queue', 'pre-listing-queue'] as const,
+  forms: ['incoming-gear', 'testing', 'photos'] as const,
+};
+
 interface AppFrameHeaderNavigationProps {
   tabs: AppTab[];
   intakeTabs: AppTab[];
@@ -38,6 +49,27 @@ export function AppFrameHeaderNavigation({
   const listingsBadgeTotal = listingsTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const inventoryProcessingBadgeTotal = inventoryProcessingTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const utilityBadgeTotal = utilityTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
+  const inventoryProcessingTabLookup = new Map(inventoryProcessingTabs.map((tab) => [tab.key, tab]));
+  const inventoryProcessingSections: TabSection[] = [
+    {
+      title: 'Hub',
+      tabs: INVENTORY_PROCESSING_SECTION_KEYS.hub
+        .map((key) => inventoryProcessingTabLookup.get(key))
+        .filter((tab): tab is AppTab => Boolean(tab)),
+    },
+    {
+      title: 'Review Queues',
+      tabs: INVENTORY_PROCESSING_SECTION_KEYS.reviewQueues
+        .map((key) => inventoryProcessingTabLookup.get(key))
+        .filter((tab): tab is AppTab => Boolean(tab)),
+    },
+    {
+      title: 'Forms',
+      tabs: INVENTORY_PROCESSING_SECTION_KEYS.forms
+        .map((key) => inventoryProcessingTabLookup.get(key))
+        .filter((tab): tab is AppTab => Boolean(tab)),
+    },
+  ].filter((section) => section.tabs.length > 0);
 
   return (
     <nav className="mx-auto w-[min(1200px,96vw)]" aria-label="Main navigation">
@@ -98,7 +130,7 @@ export function AppFrameHeaderNavigation({
               <DropdownTrigger
                 active={hasActiveInventoryProcessingTab}
                 expanded={openDropdown === 'inventory-processing'}
-                label="Workflow"
+                label="Processing"
                 menuId="inventory-processing-menu"
                 badgeCount={inventoryProcessingBadgeTotal > 0 ? inventoryProcessingBadgeTotal : undefined}
                 onClick={() => onToggleDropdown('inventory-processing')}
@@ -108,10 +140,26 @@ export function AppFrameHeaderNavigation({
                 <div
                   id="inventory-processing-menu"
                   role="menu"
-                  aria-label="Workflow tabs"
-                  className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+                  aria-label="Inventory processing tabs"
+                  className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[320px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
                 >
-                  <DropdownTabList tabs={inventoryProcessingTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
+                  <div className="space-y-1">
+                    {inventoryProcessingSections.map((section, index) => {
+                      const hasEnabledTab = section.tabs.some((tab) => !tab.disabled);
+                      const shouldAutoFocus = index === inventoryProcessingSections.findIndex((candidate) => candidate.tabs.some((tab) => !tab.disabled));
+
+                      return (
+                        <div key={section.title} className="rounded-lg border border-white/5 bg-white/[0.03] px-1.5 py-1.5">
+                          <p className="px-2 pb-1.5 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">{section.title}</p>
+                          <DropdownTabList
+                            tabs={section.tabs}
+                            onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }}
+                            autoFocusFirst={shouldAutoFocus && hasEnabledTab}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>

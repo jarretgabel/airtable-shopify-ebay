@@ -53,6 +53,7 @@ const ROUTES = [
   ['GET', '/api/jotform/forms/{formId}/submissions', 'handlers/jotform/getFormSubmissions.js', 'handler'],
   ['GET', '/api/airtable/listings', 'handlers/airtable/getListings.js', 'handler'],
   ['GET', '/api/airtable/configured-records', 'handlers/airtable/getConfiguredRecords.js', 'handler'],
+  ['GET', '/api/airtable/configured-records/{source}/{recordId}', 'handlers/airtable/getConfiguredRecord.js', 'handler'],
   ['GET', '/api/airtable/configured-metadata', 'handlers/airtable/getConfiguredMetadata.js', 'handler'],
   ['POST', '/api/airtable/configured-records/{source}', 'handlers/airtable/upsertConfiguredRecord.js', 'createHandler'],
   ['PATCH', '/api/airtable/configured-records/{source}/{recordId}', 'handlers/airtable/upsertConfiguredRecord.js', 'updateHandler'],

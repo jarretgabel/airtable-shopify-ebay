@@ -121,13 +121,13 @@ export function useJotFormInquiries(formId: string, pollIntervalMs = 60_000, ena
       return;
     }
 
-    if (shouldReuseTabData(lastLoadedAt, TAB_DATA_TTLS.jotformSubmissions, error === null)) {
+    if (shouldReuseTabData(lastLoadedAt, TAB_DATA_TTLS.jotformSubmissions, lastLoadedAt !== null)) {
       setLoading(false);
       return;
     }
 
     void doFetch(false);
-  }, [doFetch, enabled, error, lastLoadedAt]);
+  }, [doFetch, enabled, lastLoadedAt]);
 
   // Background polling
   useEffect(() => {

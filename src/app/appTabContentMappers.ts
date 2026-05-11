@@ -9,6 +9,7 @@ import type {
   ShopifyTabViewModel,
   UserManagementTabViewModel,
 } from '@/app/appTabViewModels';
+import { buildEbaySnapshotFromAirtable } from '@/services/ebaySnapshotFromAirtable';
 
 type AppTabInput = Pick<
   AppTabContentProps,
@@ -24,6 +25,7 @@ type AppTabInput = Pick<
   | 'totalNewSubmissions'
   | 'metrics'
   | 'accessiblePages'
+  | 'currentUserRole'
   | 'approvalLoading'
   | 'approvalError'
   | 'approvalTotal'
@@ -74,6 +76,9 @@ type EbayInput = Pick<
   | 'ebayRecentListings'
   | 'ebayTotal'
   | 'ebayRefetch'
+  | 'airtableRefetch'
+  | 'nonEmptyListings'
+  | 'runtimeFeatures'
 >;
 
 type AirtableInput = Pick<
@@ -108,26 +113,32 @@ type UsersInput = Pick<
 >;
 
 export function buildEbayTabViewModel(input: EbayInput): EbayTabViewModel {
+  const airtableSnapshot = buildEbaySnapshotFromAirtable(input.nonEmptyListings);
+  const useAirtableSnapshot = !input.runtimeFeatures.ebay.available;
+
   return {
     session: {
       authenticated: input.ebayAuthenticated,
       restoringSession: input.ebayRestoringSession,
     },
     state: {
-      loading: input.ebayLoading,
-      error: input.ebayError,
+      loading: useAirtableSnapshot ? false : input.ebayLoading,
+      error: useAirtableSnapshot ? null : input.ebayError,
     },
     config: {
-      runtimeConfig: input.ebayRuntimeConfig,
+      runtimeConfig: useAirtableSnapshot ? null : input.ebayRuntimeConfig,
+    },
+    snapshot: {
+      source: useAirtableSnapshot ? 'airtable' : 'live',
     },
     inventory: {
-      items: input.ebayInventoryItems,
-      offers: input.ebayOffers,
-      recentListings: input.ebayRecentListings,
-      total: input.ebayTotal,
+      items: useAirtableSnapshot ? airtableSnapshot.items : input.ebayInventoryItems,
+      offers: useAirtableSnapshot ? airtableSnapshot.offers : input.ebayOffers,
+      recentListings: useAirtableSnapshot ? airtableSnapshot.recentListings : input.ebayRecentListings,
+      total: useAirtableSnapshot ? airtableSnapshot.total : input.ebayTotal,
     },
     actions: {
-      refetch: input.ebayRefetch,
+      refetch: useAirtableSnapshot ? () => { void input.airtableRefetch(); } : input.ebayRefetch,
     },
   };
 }
@@ -214,6 +225,8 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
       marketListingCount: input.sharkListings.length,
       userCount: input.usersCount,
       adminCount: input.adminCount,
+      currentUserRole: input.currentUserRole,
+      canViewSensitiveMetrics: input.currentUserRole === 'owner',
     },
     status: {
       sources: [

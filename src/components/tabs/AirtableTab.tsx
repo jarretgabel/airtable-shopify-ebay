@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { AirtableTabViewModel } from '@/app/appTabViewModels';
-import { EmptySurface, ErrorSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { EmptySurface, PanelSurface } from '@/components/app/StateSurfaces';
 import { InventoryDirectoryListSection } from '@/components/tabs/airtable/InventoryDirectoryListSection';
 import { UsedGearPendingReviewSection, type UsedGearPendingReviewSortMode } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
 import { UsedGearWorkflowPostPublishSection } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
@@ -243,7 +243,7 @@ export function AirtableTab({
     return WORKFLOW_ROUTE_PARAMS.some((paramName) => params.has(paramName));
   }, [location.search]);
 
-  const updateWorkflowRouteState = (
+  const updateWorkflowRouteState = useCallback((
     update: (params: URLSearchParams) => void,
     hash: string,
   ) => {
@@ -256,7 +256,7 @@ export function AirtableTab({
       search: nextSearch ? `?${nextSearch}` : '',
       hash,
     }, { replace: true });
-  };
+  }, [location.pathname, location.search, navigate]);
 
   const buildWorkflowPresetSearch = () => {
     const currentParams = new URLSearchParams(location.search);
@@ -272,7 +272,7 @@ export function AirtableTab({
     return nextParams.toString();
   };
 
-  const updateInventoryDirectoryRouteState = (update: (params: URLSearchParams) => void) => {
+  const updateInventoryDirectoryRouteState = useCallback((update: (params: URLSearchParams) => void) => {
     const nextParams = new URLSearchParams(location.search);
     update(nextParams);
 
@@ -282,9 +282,9 @@ export function AirtableTab({
       search: nextSearch ? `?${nextSearch}` : '',
       hash: location.hash,
     }, { replace: true });
-  };
+  }, [location.hash, location.pathname, location.search, navigate]);
 
-  const updateWorkflowQueueSearch = (paramName: string, value: string, hash: string) => {
+  const updateWorkflowQueueSearch = useCallback((paramName: string, value: string, hash: string) => {
     updateWorkflowRouteState((params) => {
       if (value.trim().length === 0) {
         params.delete(paramName);
@@ -292,9 +292,9 @@ export function AirtableTab({
         params.set(paramName, value);
       }
     }, hash);
-  };
+  }, [updateWorkflowRouteState]);
 
-  const updateCollapsedWorkflowGroups = (paramName: string, groupIds: string[], hash: string) => {
+  const updateCollapsedWorkflowGroups = useCallback((paramName: string, groupIds: string[], hash: string) => {
     updateWorkflowRouteState((params) => {
       if (groupIds.length === 0) {
         params.delete(paramName);
@@ -302,7 +302,7 @@ export function AirtableTab({
         params.set(paramName, groupIds.join(','));
       }
     }, hash);
-  };
+  }, [updateWorkflowRouteState]);
 
   const resetWorkflowViewState = () => {
     updateWorkflowRouteState((params) => {
@@ -310,7 +310,7 @@ export function AirtableTab({
     }, '');
   };
 
-  const handlePostPublishBucketChange = (bucket: UsedGearWorkflowPostPublishBucket | 'all') => {
+  const handlePostPublishBucketChange = useCallback((bucket: UsedGearWorkflowPostPublishBucket | 'all') => {
     updateWorkflowRouteState((params) => {
       if (bucket === 'all') {
         params.delete('workflowPostPublishBucket');
@@ -318,7 +318,7 @@ export function AirtableTab({
         params.set('workflowPostPublishBucket', bucket);
       }
     }, bucket === 'all' ? '' : '#used-gear-post-publish');
-  };
+  }, [updateWorkflowRouteState]);
 
   const handleInventoryDirectorySearchChange = (value: string) => {
     updateInventoryDirectoryRouteState((params) => {
@@ -550,6 +550,10 @@ export function AirtableTab({
     return chips;
   }, [
     focusedPostPublishBucket,
+    handlePostPublishBucketChange,
+    updateCollapsedWorkflowGroups,
+    updateWorkflowQueueSearch,
+    updateWorkflowRouteState,
     workflowPendingReviewGroup,
     workflowPendingReviewCollapsedGroups.length,
     workflowPendingReviewSearch,
@@ -750,24 +754,6 @@ export function AirtableTab({
     }
   };
 
-  if (directoryError && records.length === 0) {
-    return <ErrorSurface title="Error loading Airtable records" message={directoryError} />;
-  }
-
-  if (directoryLoading && records.length === 0) {
-    return <PanelSurface><div className="px-4 py-10 text-center text-sm text-[var(--muted)]">Loading SB Inventory directory...</div></PanelSurface>;
-  }
-
-  if (!directoryLoading && records.length === 0) {
-    return (
-      <EmptySurface title="No inventory rows found" message="SB Inventory currently has no editable rows in this table.">
-        <p className="mt-3 text-sm text-[var(--muted)]">
-          Next route: start in Parking Lot 1 for customer-submitted intake, or open Incoming Gear when staff needs to create the first manual workflow row inside the app.
-        </p>
-      </EmptySurface>
-    );
-  }
-
   return (
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -903,7 +889,7 @@ export function AirtableTab({
 
         <UsedGearPendingReviewSection
           currentUserName={currentUserName}
-          onOpenIncomingGearForm={onOpenIncomingGearForm}
+          onOpenReviewRecord={(recordId) => onOpenIncomingGearForm(recordId)}
           onOpenWorkflowRecord={onOpenWorkflowRecord}
           focusedGroupId={workflowPendingReviewGroup}
           onFocusedGroupIdChange={(groupId) => updateWorkflowRouteState((params) => {
@@ -1043,19 +1029,42 @@ export function AirtableTab({
             </div>
           </div>
 
-          <InventoryDirectoryListSection
-            records={filteredRecords}
-            totalCount={records.length}
-            searchTerm={inventoryDirectorySearch}
-            statusFilter={inventoryDirectoryStatusFilter}
-            statusOptions={statusOptions}
-            onSearchTermChange={handleInventoryDirectorySearchChange}
-            onStatusFilterChange={handleInventoryDirectoryStatusFilterChange}
-            onOpenIncomingGearForm={onOpenIncomingGearForm}
-            onOpenTestingForm={onOpenTestingForm}
-            onOpenPhotosForm={onOpenPhotosForm}
-            onSelectRecord={onSelectRecord}
-          />
+          {directoryLoading && records.length === 0 ? (
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-10 text-center text-sm text-[var(--muted)]">
+              Loading SB Inventory directory...
+            </div>
+          ) : null}
+
+          {directoryError && records.length === 0 ? (
+            <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-4 text-sm text-amber-200">
+              <p className="m-0 font-semibold">SB Inventory directory is currently unavailable.</p>
+              <p className="mt-2 mb-0">{directoryError}</p>
+            </div>
+          ) : null}
+
+          {!directoryLoading && !directoryError && records.length === 0 ? (
+            <EmptySurface title="No inventory rows found" message="SB Inventory currently has no editable rows in this table.">
+              <p className="mt-3 text-sm text-[var(--muted)]">
+                Next route: start in Parking Lot 1 for customer-submitted intake, or open Incoming Gear when staff needs to create the first manual workflow row inside the app.
+              </p>
+            </EmptySurface>
+          ) : null}
+
+          {records.length > 0 ? (
+            <InventoryDirectoryListSection
+              records={filteredRecords}
+              totalCount={records.length}
+              searchTerm={inventoryDirectorySearch}
+              statusFilter={inventoryDirectoryStatusFilter}
+              statusOptions={statusOptions}
+              onSearchTermChange={handleInventoryDirectorySearchChange}
+              onStatusFilterChange={handleInventoryDirectoryStatusFilterChange}
+              onOpenIncomingGearForm={onOpenIncomingGearForm}
+              onOpenTestingForm={onOpenTestingForm}
+              onOpenPhotosForm={onOpenPhotosForm}
+              onSelectRecord={onSelectRecord}
+            />
+          ) : null}
         </section>
       </div>
     </PanelSurface>

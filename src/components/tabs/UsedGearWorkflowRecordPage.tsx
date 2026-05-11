@@ -1,4 +1,8 @@
 import { useEffect, useState } from 'react';
+import {
+  buildListingApprovalWorkflowSummaryData,
+  ListingApprovalWorkflowProcessCard,
+} from '@/components/approval/ListingApprovalWorkflowSummary';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import { useAuthStore } from '@/stores/auth/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
@@ -10,9 +14,15 @@ import {
   completeProcessingStage,
   completeTestingStage,
   loadUsedGearWorkflowRecordContext,
+  markWorkflowListingStale,
+  markWorkflowRelisted,
+  markWorkflowShipped,
+  markWorkflowSoldReadyToShip,
+  saveWorkflowStaleRecovery,
 } from '@/services/usedGearQueue';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
+import { USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS, type UsedGearWorkflowStaleRecoveryStatus } from '@/services/usedGearWorkflowLifecycle';
 import {
   type UsedGearCompletedStage,
 } from '@/services/usedGearWorkflowStageNotifications';
@@ -21,7 +31,6 @@ import {
 } from '@/services/usedGearWorkflowListingReadiness';
 import { publishUsedGearStageHandoffNotification } from '@/services/usedGearWorkflowHandoffNotifier';
 import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
-import { buildUsedGearWorkflowTimeline } from '@/services/usedGearWorkflowTimeline';
 import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearWorkflowRecordPageProps {
@@ -50,23 +59,30 @@ function statusSupportsListingsApproval(status: string | null): boolean {
   return status === 'Approved for Publish';
 }
 
-function formatTimelineTimestamp(value: string | null): string {
-  if (!value) {
-    return 'Pending';
-  }
+function statusSupportsMarkStale(status: string | null): boolean {
+  return status === 'Listed, Shopify' || status === 'Listed, eBay';
+}
 
-  const parsed = Date.parse(value);
-  if (!Number.isFinite(parsed)) {
-    return value;
-  }
+function statusSupportsSoldReady(status: string | null): boolean {
+  return status === 'Listed, Shopify'
+    || status === 'Listed, eBay'
+    || status === 'Stale Listing, Shopify'
+    || status === 'Stale Listing, eBay';
+}
 
-  return new Date(parsed).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+function statusSupportsShipped(status: string | null): boolean {
+  return status === 'Sold - Ready to Ship';
+}
+
+function statusSupportsStaleRecoveryEditing(status: string | null): boolean {
+  return status === 'Stale Listing, Shopify' || status === 'Stale Listing, eBay';
+}
+
+function normalizeStaleRecoveryStatus(value: unknown): UsedGearWorkflowStaleRecoveryStatus | '' {
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  return USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS.includes(normalized as UsedGearWorkflowStaleRecoveryStatus)
+    ? normalized as UsedGearWorkflowStaleRecoveryStatus
+    : '';
 }
 
 const WORKFLOW_HEADER_FIELDS = [
@@ -154,6 +170,111 @@ function runReadinessAction(target: UsedGearWorkflowListingReadinessActionTarget
   actions.onOpenInventoryEditor(recordId);
 }
 
+function buildWorkflowCardActionConfig(params: {
+  recordId: string;
+  status: string | null;
+  testingSigned: boolean;
+  photographySigned: boolean;
+  readiness: ReturnType<typeof getUsedGearWorkflowListingReadiness> | null;
+  onOpenIncomingGearForm: (recordId: string) => void;
+  onOpenTestingForm: (recordId: string) => void;
+  onOpenPhotosForm: (recordId: string) => void;
+  onOpenListingsRecord: (recordId: string) => void;
+  onOpenInventoryEditor: (recordId: string) => void;
+}) {
+  const {
+    recordId,
+    status,
+    testingSigned,
+    photographySigned,
+    readiness,
+    onOpenIncomingGearForm,
+    onOpenTestingForm,
+    onOpenPhotosForm,
+    onOpenListingsRecord,
+    onOpenInventoryEditor,
+  } = params;
+
+  if (!status) {
+    return {
+      primaryActionLabel: undefined,
+      onPrimaryAction: null,
+      secondaryActionLabel: undefined,
+      onSecondaryAction: null,
+    };
+  }
+
+  if (status === 'Accepted - Awaiting Arrival' || status === 'Accepted - Arrived, Awaiting SKU' || status === 'Accepted - Arrived, Awaiting Missing Item') {
+    return {
+      primaryActionLabel: 'Open Incoming Gear',
+      onPrimaryAction: () => onOpenIncomingGearForm(recordId),
+      secondaryActionLabel: 'Open Full Editor',
+      onSecondaryAction: () => onOpenInventoryEditor(recordId),
+    };
+  }
+
+  if (status === 'Testing and Photography In Progress') {
+    if (!testingSigned && !photographySigned) {
+      return {
+        primaryActionLabel: 'Open Testing',
+        onPrimaryAction: () => onOpenTestingForm(recordId),
+        secondaryActionLabel: 'Open Photos',
+        onSecondaryAction: () => onOpenPhotosForm(recordId),
+      };
+    }
+
+    if (!testingSigned) {
+      return {
+        primaryActionLabel: 'Open Testing',
+        onPrimaryAction: () => onOpenTestingForm(recordId),
+        secondaryActionLabel: undefined,
+        onSecondaryAction: null,
+      };
+    }
+
+    if (!photographySigned) {
+      return {
+        primaryActionLabel: 'Open Photos',
+        onPrimaryAction: () => onOpenPhotosForm(recordId),
+        secondaryActionLabel: undefined,
+        onSecondaryAction: null,
+      };
+    }
+  }
+
+  if (status === 'Awaiting Pre-Listing Review' || status === 'Approved for Publish' || status === 'Listed, Shopify' || status === 'Listed, eBay' || status === 'Stale Listing, Shopify' || status === 'Stale Listing, eBay') {
+    return {
+      primaryActionLabel: 'Open Listings Approval',
+      onPrimaryAction: () => onOpenListingsRecord(recordId),
+      secondaryActionLabel: readiness?.blockers[0]?.actionLabel,
+      onSecondaryAction: readiness?.blockers[0]
+        ? () => runReadinessAction(readiness.blockers[0].actionTarget, recordId, {
+          onOpenIncomingGearForm,
+          onOpenTestingForm,
+          onOpenPhotosForm,
+          onOpenListingsRecord,
+          onOpenInventoryEditor,
+        })
+        : null,
+    };
+  }
+
+  return {
+    primaryActionLabel: readiness?.blockers[0]?.actionLabel,
+    onPrimaryAction: readiness?.blockers[0]
+      ? () => runReadinessAction(readiness.blockers[0].actionTarget, recordId, {
+        onOpenIncomingGearForm,
+        onOpenTestingForm,
+        onOpenPhotosForm,
+        onOpenListingsRecord,
+        onOpenInventoryEditor,
+      })
+      : null,
+    secondaryActionLabel: undefined,
+    onSecondaryAction: null,
+  };
+}
+
 export function UsedGearWorkflowRecordPage({
   currentUserName,
   recordId,
@@ -176,6 +297,8 @@ export function UsedGearWorkflowRecordPage({
   const [saving, setSaving] = useState(false);
   const [pricingConfirmed, setPricingConfirmed] = useState(false);
   const [contentConfirmed, setContentConfirmed] = useState(false);
+  const [staleRecoveryDraftStatus, setStaleRecoveryDraftStatus] = useState<UsedGearWorkflowStaleRecoveryStatus | ''>('');
+  const [staleRecoveryDraftNotes, setStaleRecoveryDraftNotes] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -214,7 +337,7 @@ export function UsedGearWorkflowRecordPage({
   const testingSigned = typeof record?.fields['Testing Signed By'] === 'string' && record.fields['Testing Signed By'].trim().length > 0;
   const photographySigned = typeof record?.fields['Photography Signed By'] === 'string' && record.fields['Photography Signed By'].trim().length > 0;
   const readiness = record ? getUsedGearWorkflowListingReadiness(record) : null;
-  const timeline = record ? buildUsedGearWorkflowTimeline(record) : [];
+  const workflowSummary = record ? buildListingApprovalWorkflowSummaryData(record) : null;
   const canApproveForPublish = Boolean(
     statusSupportsPreListingReview(status)
       && readiness
@@ -238,6 +361,18 @@ export function UsedGearWorkflowRecordPage({
   const relistedAt = typeof record?.fields['Relisted At'] === 'string' ? record.fields['Relisted At'] : '';
   const workflowOwner = typeof record?.fields['Workflow Owner'] === 'string' ? record.fields['Workflow Owner'].trim() : '';
   const workflowOwnerAssignedAt = typeof record?.fields['Workflow Owner Assigned At'] === 'string' ? record.fields['Workflow Owner Assigned At'] : '';
+  const workflowCardActionConfig = buildWorkflowCardActionConfig({
+    recordId,
+    status,
+    testingSigned,
+    photographySigned,
+    readiness,
+    onOpenIncomingGearForm,
+    onOpenTestingForm,
+    onOpenPhotosForm,
+    onOpenListingsRecord,
+    onOpenInventoryEditor,
+  });
   const showStaleRecoveryPanel = status === 'Stale Listing, Shopify'
     || status === 'Stale Listing, eBay'
     || staleRecoveryStatus.length > 0
@@ -249,6 +384,11 @@ export function UsedGearWorkflowRecordPage({
     setPricingConfirmed(false);
     setContentConfirmed(false);
   }, [recordId, status]);
+
+  useEffect(() => {
+    setStaleRecoveryDraftStatus(normalizeStaleRecoveryStatus(staleRecoveryStatus));
+    setStaleRecoveryDraftNotes(staleRecoveryNotes);
+  }, [recordId, staleRecoveryStatus, staleRecoveryNotes]);
 
   const runAction = async (
     action: () => Promise<AirtableRecord>,
@@ -576,6 +716,147 @@ export function UsedGearWorkflowRecordPage({
         </section>
 
         <section className="grid gap-4 lg:grid-cols-2">
+          {(statusSupportsMarkStale(status) || statusSupportsSoldReady(status) || statusSupportsShipped(status) || showStaleRecoveryPanel) ? (
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 lg:col-span-2">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Post-Publish Operations</p>
+                  <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Post-Publish Lifecycle</h3>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">Use this record page for stale recovery, relist reconciliation, sold-ready handoff, and shipped completion. The queue now stays focused on triage while the detailed lifecycle work happens here.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {statusSupportsListingsApproval(status) || statusSupportsMarkStale(status) || statusSupportsSoldReady(status) ? (
+                    <button
+                      type="button"
+                      className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                      onClick={() => onOpenListingsRecord(recordId)}
+                    >
+                      Open Listings Approval
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-4">
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                  <div>Lifecycle Status</div>
+                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Workflow Status'])}</div>
+                </div>
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                  <div>Listed At</div>
+                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Listed At'])}</div>
+                </div>
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                  <div>Sold Ready</div>
+                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Sold Ready To Ship At'])}</div>
+                </div>
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                  <div>Shipped</div>
+                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Shipped At'])}</div>
+                </div>
+              </div>
+
+              {statusSupportsStaleRecoveryEditing(status) ? (
+                <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+                  <div>
+                    <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Stale Recovery Review</p>
+                    <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Document the recovery plan first, then mark the row relisted once the updated listing is live again.</p>
+                  </div>
+                  <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(220px,0.7fr)_minmax(0,1.3fr)]">
+                    <label>
+                      <span className="sr-only">Stale recovery status</span>
+                      <select
+                        className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                        value={staleRecoveryDraftStatus}
+                        onChange={(event) => setStaleRecoveryDraftStatus(normalizeStaleRecoveryStatus(event.currentTarget.value))}
+                        disabled={saving}
+                      >
+                        <option value="">Recovery Status</option>
+                        {USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      <span className="sr-only">Stale recovery notes</span>
+                      <textarea
+                        className="min-h-24 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                        value={staleRecoveryDraftNotes}
+                        onChange={(event) => setStaleRecoveryDraftNotes(event.currentTarget.value)}
+                        placeholder="Add relist, pricing, or content-refresh notes"
+                        disabled={saving}
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--line)]/70 pt-4">
+                    <button
+                      type="button"
+                      className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                      onClick={() => {
+                        void runAction(() => saveWorkflowStaleRecovery(recordId, {
+                          staleRecoveryStatus: staleRecoveryDraftStatus || null,
+                          staleRecoveryNotes: staleRecoveryDraftNotes || null,
+                        }));
+                      }}
+                      disabled={saving}
+                    >
+                      {saving ? 'Saving...' : 'Save Recovery'}
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                      onClick={() => {
+                        void runAction(() => markWorkflowRelisted(recordId));
+                      }}
+                      disabled={saving}
+                    >
+                      {saving ? 'Saving...' : 'Mark Relisted'}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--line)]/70 pt-4">
+                {statusSupportsMarkStale(status) ? (
+                  <button
+                    type="button"
+                    className="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => {
+                      void runAction(() => markWorkflowListingStale(recordId));
+                    }}
+                    disabled={saving}
+                  >
+                    {saving ? 'Saving...' : 'Mark Stale'}
+                  </button>
+                ) : null}
+                {statusSupportsSoldReady(status) ? (
+                  <button
+                    type="button"
+                    className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => {
+                      void runAction(() => markWorkflowSoldReadyToShip(recordId));
+                    }}
+                    disabled={saving}
+                  >
+                    {saving ? 'Saving...' : 'Mark Sold Ready'}
+                  </button>
+                ) : null}
+                {statusSupportsShipped(status) ? (
+                  <button
+                    type="button"
+                    className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => {
+                      void runAction(() => markWorkflowShipped(recordId));
+                    }}
+                    disabled={saving}
+                  >
+                    {saving ? 'Saving...' : 'Mark Shipped'}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
           {showStaleRecoveryPanel ? (
             <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 lg:col-span-2">
               <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Stale Recovery</h3>
@@ -658,31 +939,17 @@ export function UsedGearWorkflowRecordPage({
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-            <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Workflow Timeline</h3>
-            <div className="mt-4 space-y-3">
-              {timeline.map((entry) => (
-                <div key={entry.id} className="flex items-start gap-3 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3">
-                  <div className={[
-                    'mt-0.5 h-2.5 w-2.5 rounded-full',
-                    entry.status === 'completed' ? 'bg-emerald-400' : 'bg-[var(--line)]',
-                  ].join(' ')} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-[var(--ink)]">{entry.label}</span>
-                      <span className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                        {entry.status === 'completed' ? 'Completed' : 'Pending'}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-[var(--muted)]">{formatTimelineTimestamp(entry.timestamp)}</p>
-                    {entry.actor ? (
-                      <p className="m-0 text-xs uppercase tracking-[0.08em] text-[var(--muted)]">By {entry.actor}</p>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ListingApprovalWorkflowProcessCard
+            summary={workflowSummary}
+            eyebrow="Workflow Progress"
+            title="End-to-End Workflow Progress"
+            description="Canonical intake, processing, listing, and fulfillment status for this used-gear workflow row."
+            emptyMessage="This workflow row does not currently resolve to a status summary."
+            primaryActionLabel={workflowCardActionConfig.primaryActionLabel}
+            onPrimaryAction={workflowCardActionConfig.onPrimaryAction}
+            secondaryActionLabel={workflowCardActionConfig.secondaryActionLabel}
+            onSecondaryAction={workflowCardActionConfig.onSecondaryAction}
+          />
 
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
             <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Workflow Audit</h3>

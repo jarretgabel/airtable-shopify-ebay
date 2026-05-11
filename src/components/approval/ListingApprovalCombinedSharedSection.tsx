@@ -6,8 +6,8 @@ import type { ListingApprovalCombinedSharedSectionProps } from '@/components/app
 const KeyFeaturesEditor = lazy(async () => ({
   default: (await import('@/components/approval/KeyFeaturesEditor')).KeyFeaturesEditor,
 }));
-const TestingNotesEditor = lazy(async () => ({
-  default: (await import('@/components/approval/TestingNotesEditor')).TestingNotesEditor,
+const TestingNotesTextareaEditor = lazy(async () => ({
+  default: (await import('@/components/approval/TestingNotesTextareaEditor')).TestingNotesTextareaEditor,
 }));
 
 function CombinedSharedEditorFallback() {
@@ -100,7 +100,7 @@ export function ListingApprovalCombinedSharedSection({
 
         {combinedEbayTestingNotesFieldName && (
           <Suspense fallback={<CombinedSharedEditorFallback />}>
-            <TestingNotesEditor
+            <TestingNotesTextareaEditor
               fieldName={combinedEbayTestingNotesFieldName}
               value={formValues[combinedEbayTestingNotesFieldName] ?? ''}
               setFormValue={setFormValue}

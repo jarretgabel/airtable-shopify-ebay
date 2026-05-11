@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { AppPage } from '@/auth/pages';
 import { hasNonEmptyFields, TAB_VALUES } from '@/app/appNavigation';
+import { canAccessWorkflowDashboard } from '@/auth/roleAccess';
 import { getRuntimeFeatureCapabilities } from '@/config/runtimeCapabilities';
 import { checkOptionalEnv, requireEnv } from '@/config/runtimeEnv';
 import { useApprovalQueueSummary } from '@/hooks/useApprovalQueueSummary';
@@ -24,10 +25,10 @@ interface AppDataParams {
 
 export function useAppData({ enabled = true, canAccessPage, activeTab, users }: AppDataParams) {
   const dashboardActive = enabled && activeTab === 'dashboard';
-  const airtableEnabled = enabled && (dashboardActive || activeTab === 'inventory');
-  const shopifyEnabled = enabled && (dashboardActive || activeTab === 'shopify');
+  const airtableEnabled = enabled && canAccessPage('inventory') && (dashboardActive || activeTab === 'inventory');
+  const shopifyEnabled = enabled && canAccessPage('shopify') && (dashboardActive || activeTab === 'shopify');
   const runtimeFeatures = getRuntimeFeatureCapabilities();
-  const jotformEnabled = enabled && runtimeFeatures.jotform.available && (dashboardActive || activeTab === 'jotform');
+  const jotformEnabled = enabled && runtimeFeatures.jotform.available && canAccessPage('jotform') && (dashboardActive || activeTab === 'jotform');
   const ebayEnabled = enabled && runtimeFeatures.ebay.available && canAccessPage('ebay') && (dashboardActive || activeTab === 'ebay');
   const tableName = requireEnv('VITE_AIRTABLE_TABLE_NAME');
   const viewId = checkOptionalEnv('VITE_AIRTABLE_VIEW_ID');
@@ -39,14 +40,15 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, users }: 
   const ebay = useEbayListings(ebayEnabled);
   const approval = useApprovalQueueSummary(enabled && canAccessPage('listings') && runtimeFeatures.approvalEbay.available);
   const shopifyApproval = useShopifyApprovalQueueSummary(enabled && canAccessPage('listings') && runtimeFeatures.approvalShopify.available);
-  const usedGearWorkflowAnalytics = useUsedGearWorkflowAnalyticsSnapshot(enabled && canAccessPage('inventory'));
+  const workflowDashboardPages = enabled ? TAB_VALUES.filter((tab) => canAccessPage(tab)) : [];
+  const usedGearWorkflowAnalytics = useUsedGearWorkflowAnalyticsSnapshot(enabled && canAccessWorkflowDashboard(workflowDashboardPages));
   const usedGearWorkflowPostPublish = useUsedGearWorkflowPostPublishSummary(enabled && canAccessPage('inventory'));
 
   const JOTFORM_FORM_ID = runtimeFeatures.jotform.available ? checkOptionalEnv('VITE_JOTFORM_FORM_ID') : '';
   const jotform = useJotFormInquiries(JOTFORM_FORM_ID, 60_000, jotformEnabled);
 
   const totalNewSubmissions = jotform.submissions.filter((submission) => submission.new === '1').length;
-  const visibleTabs = enabled ? TAB_VALUES.filter((tab) => canAccessPage(tab)) : [];
+  const visibleTabs = workflowDashboardPages;
   const aiProvider = getAIProvider().provider;
   const adminCount = useMemo(() => users.filter((user) => user.role === 'admin').length, [users]);
   const ebayPublishedCount = useMemo(() => ebay.offers.filter((offer) => offer.status === 'PUBLISHED').length, [ebay.offers]);

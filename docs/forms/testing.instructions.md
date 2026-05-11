@@ -35,7 +35,7 @@ If this wording changes, update `src/components/tabs/TestingFormTab.tsx`.
   - `Remote`
   - `Power Cable`
   - `Shipping Method`
-- Uploads selected images to `Images (Eduardo)` after record creation.
+- Uploads selected images to `Images` after record creation.
 - Submits `Testing Time` as seconds converted from entered minutes.
 - Submits `Service Time` as seconds converted from entered minutes.
 - Uses the Airtable field `Tested` while displaying the label `Testing Date` in the UI.

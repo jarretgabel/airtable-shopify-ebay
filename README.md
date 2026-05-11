@@ -56,6 +56,26 @@ npm run deploy:cloudfront -- --bucket YOUR_BUCKET --distribution-id YOUR_DISTRIB
 npm run deploy:cloudfront:runtime-only -- --bucket YOUR_BUCKET --distribution-id YOUR_DISTRIBUTION_ID
 ```
 
+Combined listings sample data helpers for the linked approval table:
+
+```bash
+npm run listings:samples:list
+npm run listings:samples:seed -- --confirm CREATE_COMBINED_LISTINGS_SAMPLES
+npm run listings:samples:cleanup -- --confirm DELETE_COMBINED_LISTINGS_SAMPLES
+```
+
+These commands are hard-locked to the approval table at base `apprsAm2FOohEmL2u`, table `tbl0K0nFQL64jQMx8`, and they mark every created row so cleanup can remove only the sample data.
+
+Used-gear workflow queue sample data helpers for Parking Lot 1, Parking Lot 2, Trash Review, Testing Queue, Photography Queue, Pre-Listing Queue, and downstream workflow states:
+
+```bash
+npm run workflow:queue-samples:list
+npm run workflow:queue-samples:seed -- --confirm CREATE_USED_GEAR_WORKFLOW_QUEUE_SAMPLES
+npm run workflow:queue-samples:cleanup -- --confirm DELETE_USED_GEAR_WORKFLOW_QUEUE_SAMPLES
+```
+
+These commands target the same approval table and add one clearly marked workflow sample row for each queue-driving state, including distinct testing-pending and photography-pending concurrent-stage records.
+
 `build:bundle-report` runs the production build and then compares the current `feature-*` chunks in `dist/assets` against `docs/bundle-size-baseline.json` so chunk deltas stay measurable after each major phase.
 
 `build:cloudfront` writes `dist/runtime-config.json` from safe public environment variables after the Vite build completes.
@@ -182,6 +202,40 @@ Behavior:
 
 - When Gmail vars are configured and valid, welcome emails are sent via Gmail API.
 - If Gmail vars are missing or invalid, the app falls back to opening a prefilled email draft.
+
+## Owner Account Script
+
+Owner accounts remain real app users, but owner creation and owner role assignment are intentionally excluded from the in-app User Management flows.
+
+Use the package script to create a new owner or promote an existing account to owner:
+
+```bash
+npm run users:set-owner -- --email owner@example.com --name "Olivia Owner" --password "Owner123!"
+```
+
+Optional flags:
+
+- `--must-change-password` marks the owner password as temporary
+- `--help` prints the script usage
+
+Notes:
+
+- The script reads `VITE_AIRTABLE_API_KEY`, `VITE_AIRTABLE_BASE_ID`, and the users-table env vars from `.env` and `.env.local`.
+- Running the script against an existing user updates that account in place and promotes it to `owner`.
+- Owner accounts still manage their own email, password, and notification preferences from `Account Settings` after signing in.
+- In-app User Management can view owner records, but owner role assignment and owner-account mutation stay script-managed.
+
+## Workflow Image Metadata
+
+Used-gear stage images are stored in a split model rather than a single flat image list.
+
+- Airtable attachments continue to live in the shared `Images` field.
+- Stage-specific image state is tracked in `Workflow Image Metadata JSON`.
+- Each metadata row records `sourceStage` (`testing` or `photos`), sort order, alt text, and whether that image is `includedInListing`.
+- Testing and Photos forms each load only their own stage attachments while preserving the other stage's metadata.
+- Listing builders for Shopify and eBay prefer `Workflow Image Metadata JSON` when present and only publish rows marked `includedInListing: true`.
+
+This keeps testing-reference images, photography-stage assets, and listing-ready images from collapsing into one undifferentiated payload.
 
 ## Project Structure
 

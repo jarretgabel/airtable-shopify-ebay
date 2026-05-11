@@ -32,11 +32,14 @@ function App() {
     isResetPasswordPath,
     resetToken,
     jotformReviewGroupId,
+    jotformReviewRecordId,
+    trashReviewRecordId,
     incomingGearRecordId,
     testingRecordId,
     photosRecordId,
     inventoryRecordId,
     usedGearWorkflowRecordId,
+    workflowPriceEditorRecordId,
     listingsRecordId,
     shopifyListingsRecordId,
     ebayListingsRecordId,
@@ -65,6 +68,7 @@ function App() {
     navigateToTestingForm,
     navigateToPhotosForm,
     navigateToInventoryRecord,
+    navigateToWorkflowPriceEditor,
     navigateToUsedGearWorkflowRecord,
     navigateToInventoryList,
     navigateToInventoryPostPublishBucket,
@@ -222,7 +226,7 @@ function App() {
           onOpenNotifications={() => navigateToTab('notifications')}
           onOpenSettings={() => navigate('/account/settings')}
           onOpenUserManagement={() => navigateToTab('users')}
-          canManageUsers={currentUser.role === 'admin'}
+          canManageUsers={currentUser.role === 'admin' || currentUser.role === 'owner'}
           onLogout={handleLogout}
           exportProgress={exportingPdf ? exportProgress : null}
           exporting={exportingPdf}
@@ -230,16 +234,20 @@ function App() {
           <AppTabContent
             activeTab={activeTab}
             jotformReviewGroupId={jotformReviewGroupId}
+            jotformReviewRecordId={jotformReviewRecordId}
+            trashReviewRecordId={trashReviewRecordId}
             incomingGearRecordId={incomingGearRecordId}
             testingRecordId={testingRecordId}
             photosRecordId={photosRecordId}
             inventoryRecordId={inventoryRecordId}
             usedGearWorkflowRecordId={usedGearWorkflowRecordId}
+            workflowPriceEditorRecordId={workflowPriceEditorRecordId}
             listingsRecordId={listingsRecordId}
             shopifyListingsRecordId={shopifyListingsRecordId}
             ebayListingsRecordId={ebayListingsRecordId}
             userRecordId={userRecordId}
             navigateToInventoryRecord={navigateToInventoryRecord}
+            navigateToWorkflowPriceEditor={navigateToWorkflowPriceEditor}
             navigateToUsedGearWorkflowRecord={navigateToUsedGearWorkflowRecord}
             navigateToInventoryList={navigateToInventoryList}
             navigateToInventoryPostPublishBucket={navigateToInventoryPostPublishBucket}
@@ -259,6 +267,7 @@ function App() {
             runtimeFeatures={runtimeFeatures}
             metrics={metrics}
             accessiblePages={accessiblePages as Tab[]}
+            currentUserRole={currentUser.role}
             currentUserName={currentUser.name}
             aiProvider={aiProvider}
             usersCount={users.length}
@@ -267,6 +276,7 @@ function App() {
             displayValue={displayValue}
             hasValue={hasValue}
             recordTitle={recordTitle}
+            airtableRefetch={airtable.refetch}
             atLoading={airtable.loading}
             atError={airtable.error}
             products={shopify.products}

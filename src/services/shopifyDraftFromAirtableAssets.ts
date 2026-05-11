@@ -1,5 +1,6 @@
 import { parseShopifyTagList, serializeShopifyTagsCsv } from '@/services/shopifyTags';
 import type { ShopifyProduct } from '@/types/shopify';
+import { getIncludedWorkflowImageMetadata, parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 import {
   ApprovalFieldMap,
   coerceStructuredToString,
@@ -60,6 +61,20 @@ function getStructuredImageSource(image: Record<string, unknown>): string {
 }
 
 export function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] | undefined {
+  const workflowMetadata = getIncludedWorkflowImageMetadata(parseWorkflowImageMetadata(getRawField(fields, [
+    'Workflow Image Metadata JSON',
+    'Workflow Image Metadata',
+    'workflow_image_metadata_json',
+    'workflow_image_metadata',
+  ])));
+  if (workflowMetadata.length > 0) {
+    return workflowMetadata.map((record, index) => ({
+      src: record.url,
+      alt: record.alt,
+      position: index + 1,
+    }));
+  }
+
   const imageAltTexts = parseImageAltTextList(getRawField(fields, [
     'Images Alt Text',
     'Images Alt Text (comma separated)',

@@ -6,6 +6,11 @@ import {
   isScalarImageField,
 } from './approvalFormFieldsSharedHelpers';
 import {
+  isInternalReferenceListingFieldName,
+  isSystemManagedListingFieldName,
+  isWorkflowOnlyListingFieldName,
+} from './listingApprovalFieldHelpers';
+import {
   isEbayGlobalShippingField,
   isEbayHandlingCostField,
   isEbayKeyFeaturesField,
@@ -108,6 +113,9 @@ export function shouldHideApprovalFormStandardField({
   suppressImageScalarFields,
   hasCanonicalConditionField,
 }: ApprovalFormStandardFieldVisibilityParams): boolean {
+  if (isWorkflowOnlyListingFieldName(fieldName)) return true;
+  if (isSystemManagedListingFieldName(fieldName)) return true;
+  if (isInternalReferenceListingFieldName(fieldName)) return true;
   if (isCombinedApproval && isHiddenCombinedFieldName(fieldName)) return true;
   if (isRemovedEbayField(fieldName)) return true;
   if (!allowAdvancedOptionField && approvalChannel === 'ebay' && isEbayAdvancedOptionField(fieldName)) return true;

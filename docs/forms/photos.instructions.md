@@ -35,7 +35,7 @@ If this wording changes, update `src/components/tabs/PhotosFormTab.tsx`.
   - `Manual`
   - `Remote`
   - `Power Cable`
-- Uploads selected primary images to `Images (Eduardo)` after record creation.
+- Uploads selected primary images to `Images` after record creation.
 - Uses the Airtable field `Photo'd` while displaying the label `Photo Date` in the UI.
 
 ## Current Field Order
@@ -60,7 +60,7 @@ If this wording changes, update `src/components/tabs/PhotosFormTab.tsx`.
 - `Cosmetic Notes` maps to Airtable field `Cosmetic Condition Notes`.
 - `Audiogon Rating` maps to the Airtable field of the same name.
 - `Photo Date` maps to Airtable field `Photo'd`.
-- `Images` uploads to Airtable field `Images (Eduardo)`.
+- `Images` uploads to Airtable field `Images`.
 
 ## Editing Guidance
 

@@ -23,6 +23,12 @@ interface InventoryRecordEditorProps {
   onReset: () => void;
   onReload: () => void;
   onSave: () => void;
+  copy?: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    emptyMessage: string;
+  };
 }
 
 const FIELD_CLASS = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
@@ -154,12 +160,18 @@ export function InventoryRecordEditor({
   onReset,
   onReload,
   onSave,
+  copy = {
+    eyebrow: 'SB Inventory',
+    title: 'Edit Record',
+    description: 'Review and update the editable Airtable fields for this inventory item, then save your changes back to SB Inventory.',
+    emptyMessage: 'Load a record from the inventory directory to start editing its SB Inventory fields.',
+  },
 }: InventoryRecordEditorProps) {
   if (!record) {
     return (
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-        <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Inventory Record</h3>
-        <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Load a record from the inventory directory to start editing its SB Inventory fields.</p>
+        <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">{copy.title}</h3>
+        <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{copy.emptyMessage}</p>
       </section>
     );
   }
@@ -168,9 +180,9 @@ export function InventoryRecordEditor({
     <section className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
       <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
         <div>
-          <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SB Inventory</p>
-          <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Edit Record</h3>
-          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Review and update the editable Airtable fields for this inventory item, then save your changes back to SB Inventory.</p>
+          <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{copy.eyebrow}</p>
+          <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{copy.title}</h3>
+          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{copy.description}</p>
           <p className="mt-3 text-sm text-[var(--muted)]">
             SKU: <strong className="text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</strong>
             {' '}· {displayInventoryValue(record.fields.Make)} {displayInventoryValue(record.fields.Model)}

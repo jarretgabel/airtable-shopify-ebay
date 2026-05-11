@@ -125,7 +125,7 @@ export interface ShopifyApprovalPayloadDetailsProps extends ShopifyApprovalPaylo
   shopifyCategoryResolution: ShopifyCategoryResolutionSummary;
 }
 
-export interface EbayApprovalPayloadDetailsProps extends EbayApprovalPayloadPreviewData {}
+export type EbayApprovalPayloadDetailsProps = EbayApprovalPayloadPreviewData;
 
 interface ListingApprovalRecordPayloadPanelsProps extends ShopifyApprovalPayloadDetailsProps, EbayApprovalPayloadDetailsProps {
   approvalChannel: 'shopify' | 'ebay' | 'combined';

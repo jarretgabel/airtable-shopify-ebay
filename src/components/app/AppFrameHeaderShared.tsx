@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 import type { AppTab, OpenDropdown } from '@/components/app/appFrameTypes';
 

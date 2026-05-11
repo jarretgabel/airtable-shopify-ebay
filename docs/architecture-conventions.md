@@ -27,7 +27,9 @@
 
 ## Testing
 
-- Unit tests should live beside implementation files as `*.test.ts` or `*.test.tsx`.
+- Unit tests should live under `tests/unit`, mirroring the source path from `src/` or `aws/src/`.
+- Name unit tests as `*.test.ts` or `*.test.tsx`, for example `tests/unit/src/app/useAppRouteState.test.ts`.
+- Keep script-style or live integration checks under `tests/integration`.
 - Cover domain helpers and route-state behavior first, then key UI interactions.
 - CI must pass `typecheck`, `lint`, `test`, and `build` before merge.
 

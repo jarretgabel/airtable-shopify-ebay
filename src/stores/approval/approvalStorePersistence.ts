@@ -110,7 +110,8 @@ function isCategoryLikeFieldName(fieldName: string): boolean {
 
 function isPriceLikeFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
-  return normalized === 'buy it now/starting price'
+  return normalized === 'ebay price'
+    || normalized === 'buy it now/starting price'
     || normalized === 'buy it now / starting price'
     || normalized === 'buy it now/starting bid'
     || normalized === 'ebay offer price value'
@@ -141,6 +142,8 @@ function toNumericRetryValues(value: unknown): unknown[] {
 function getPriceFieldRetryNames(fieldName: string): string[] {
   const candidates = [
     fieldName,
+    'eBay Price',
+    'Ebay Price',
     'Buy It Now/Starting Price',
     'Buy It Now / Starting Price',
     'Buy It Now/Starting Bid',
@@ -232,6 +235,7 @@ function isAllowedMissingWritableFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return isTagLikeFieldName(fieldName)
     || normalized === 'collections'
+    || normalized === 'ebay price'
     || normalized === 'buy it now/starting price'
     || normalized === 'buy it now / starting price'
     || normalized === 'buy it now/starting bid'
@@ -307,7 +311,7 @@ function isLikelyComputedAirtableField(fieldName: string): boolean {
 }
 
 export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStoreGet): ApprovalStore['saveRecord'] {
-  return async (forceApproved, selectedRecord, tableReference, tableName, actualFieldNames, approvedFieldName, onSuccess, mode = 'full') => {
+  return async (forceApproved, selectedRecord, tableReference, tableName, actualFieldNames, approvedFieldName, onSuccess, mode = 'full', systemFieldValues = {}) => {
     set({ saving: true, error: null });
     try {
       const { formValues, fieldKinds } = get();
@@ -337,11 +341,26 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
       const mappedValues = mapShippingServiceToFields(nextValues);
       const payload: Record<string, unknown> = {};
 
+      const assignSystemFieldValues = () => {
+        Object.entries(systemFieldValues).forEach(([fieldName, rawValue]) => {
+          if (rawValue === undefined || rawValue === null) return;
+          if (isLikelyComputedAirtableField(fieldName)) return;
+
+          const existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, fieldName);
+          const existsInSchema = actualFieldLookup.has(fieldName.toLowerCase());
+          if (!existsOnRecord && !existsInSchema) return;
+
+          const fieldKind = fieldKinds[fieldName] ?? inferFieldKind(selectedRecord.fields[fieldName]);
+          payload[fieldName] = fromFormValue(String(rawValue), fieldKind);
+        });
+      };
+
       if (mode === 'approve-only') {
         payload[resolvedApprovedFieldName] = fromFormValue(
           nextValues[resolvedApprovedFieldName] ?? resolveApprovedValue(currentApprovedValue, approvedFieldKind),
           approvedFieldKind,
         );
+        assignSystemFieldValues();
       } else {
         Object.entries(mappedValues).forEach(([fieldName, rawValue]) => {
           if (fieldName === SHIPPING_SERVICE_FIELD) return;
@@ -359,6 +378,8 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           const fieldKind = fieldKinds[fieldName] ?? 'text';
           payload[fieldName] = fromFormValue(rawValue, fieldKind);
         });
+
+        assignSystemFieldValues();
       }
 
       if (Object.keys(payload).length > 0) {

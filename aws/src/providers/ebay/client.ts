@@ -225,11 +225,6 @@ function getApiBaseUrl(): string {
   return isSandbox() ? 'https://api.sandbox.ebay.com' : 'https://api.ebay.com';
 }
 
-function getAuthBaseUrl(): string {
-  return getOptionalSecret('EBAY_AUTH_HOST')
-    ?? (isSandbox() ? 'https://auth.sandbox.ebay.com' : 'https://auth.ebay.com');
-}
-
 function getBasicAuthHeader(): string {
   const clientId = requireSecret('EBAY_CLIENT_ID');
   const clientSecret = requireSecret('EBAY_CLIENT_SECRET');

@@ -8,7 +8,6 @@ import { EmptySurface, ErrorSurface, LoadingSurface, PanelSurface } from '@/comp
 interface JotformTabProps {
   viewModel: JotformTabViewModel;
   currentUserName: string;
-  onOpenIncomingGearForm: (recordId: string) => void;
   onOpenWorkflowRecord: (recordId: string) => void;
 }
 
@@ -20,7 +19,6 @@ const WORKFLOW_PENDING_REVIEW_GROUP_PARAM = 'workflowPendingReviewGroup';
 export function JotformTab({
   viewModel,
   currentUserName,
-  onOpenIncomingGearForm,
   onOpenWorkflowRecord,
 }: JotformTabProps) {
   const location = useLocation();
@@ -126,8 +124,8 @@ export function JotformTab({
 
       <UsedGearPendingReviewSection
         currentUserName={currentUserName}
-        onOpenGroupReview={(groupId) => navigate(`/jotform/review/${encodeURIComponent(groupId)}${location.search}`, { replace: false })}
-        onOpenIncomingGearForm={onOpenIncomingGearForm}
+        onOpenGroupReview={(groupId) => navigate(`/parking-lot-1/review/${encodeURIComponent(groupId)}${location.search}`, { replace: false })}
+        onOpenReviewRecord={(recordId) => navigate(`/parking-lot-1/review-record/${encodeURIComponent(recordId)}${location.search}`, { replace: false })}
         onOpenWorkflowRecord={onOpenWorkflowRecord}
         focusedGroupId={workflowPendingReviewGroup}
         onFocusedGroupIdChange={(groupId) => updateIntakeRouteState((params) => {

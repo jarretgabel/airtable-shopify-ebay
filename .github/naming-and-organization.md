@@ -63,9 +63,9 @@ This document defines naming patterns and folder organization to ensure consiste
 - Example: `FALLBACK_LISTING_FORMAT_OPTIONS`, `SHIPPING_SERVICE_FIELD`
 
 ### Test Files
-- Place adjacent to implementation: `src/path/to/Module.test.ts` or `Module.test.tsx`
+- Place under `tests/unit` using the mirrored source path: `tests/unit/src/path/to/Module.test.ts` or `Module.test.tsx`
 - Match module name exactly
-- Example: `src/app/useAppRouteState.test.ts` tests `useAppRouteState.ts`
+- Example: `tests/unit/src/app/useAppRouteState.test.ts` tests `src/app/useAppRouteState.ts`
 
 ## Folder Structure Patterns
 
@@ -73,16 +73,13 @@ This document defines naming patterns and folder organization to ensure consiste
 ```
 src/components/{domain}/
 ├── ComponentName.tsx          # Main export (PascalCase)
-├── ComponentName.test.tsx     # Tests
-├── helpers.ts                 # Private helpers (if needed)
-└── helpers.test.ts            # Helper tests (if needed)
+└── helpers.ts                 # Private helpers (if needed)
 ```
 
 ### Hook (Domain)
 ```
 src/hooks/{domain}/
 ├── useFeatureName.ts          # Main export
-├── useFeatureName.test.ts     # Tests
 ├── featureTypes.ts            # Type definitions
 ├── featureUtils.ts            # Shared helpers
 └── featureComputation.ts      # Heavy computation logic
@@ -94,8 +91,7 @@ src/stores/{domain}/
 ├── featureStore.ts            # Main export (barrel, re-exports)
 ├── featureStoreTypes.ts       # interface Store { ... }
 ├── featureStoreConstants.ts   # Constants
-├── featureStoreUtils.ts       # Helper functions
-└── featureStore.test.ts       # Tests
+└── featureStoreUtils.ts       # Helper functions
 ```
 
 ### Service
@@ -105,8 +101,16 @@ src/services/{platform}/
 ├── featureConfig.ts           # Configuration and env vars
 ├── featureRequest.ts          # Request building, payload shapes
 ├── featureMappers.ts          # Response transformations
-├── featureTypes.ts            # Type definitions
-└── feature.test.ts            # Tests
+└── featureTypes.ts            # Type definitions
+```
+
+### Tests Tree
+```
+tests/unit/
+├── src/path/to/Module.test.ts                # Tests for src/path/to/Module.ts
+├── src/components/{domain}/ComponentName.test.tsx
+├── src/components/{domain}/helpers.test.ts
+└── aws/src/path/to/module.test.ts            # Tests for aws/src/path/to/module.ts
 ```
 
 ### Types
@@ -209,5 +213,5 @@ src/types/
 - [ ] All cross-domain imports use `@/` alias
 - [ ] File size under limits; extraction at 250+ lines
 - [ ] Props interface defined and exported (`{ComponentName}Props`)
-- [ ] Test file created: `{Module}.test.ts` in same folder
+- [ ] Test file created under `tests/unit` with mirrored source path
 - [ ] Environment variables documented in `.env` template

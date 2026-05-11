@@ -163,7 +163,6 @@ export function useAppShellControls({
     totalNewSubmissions,
     disabledTabReasons: {
       jotform: runtimeFeatures.jotform.message ?? undefined,
-      ebay: runtimeFeatures.ebay.message ?? undefined,
       listings: runtimeFeatures.approvalCombined.message ?? undefined,
     },
     navigateToTab: (tab) => navigateToTab(tab),

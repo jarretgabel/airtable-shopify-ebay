@@ -1,11 +1,15 @@
 import { FormEvent, MutableRefObject, useRef, useState } from 'react';
 import { AppPage } from '@/auth/pages';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
+import { RoleNotificationDefaultsPanel } from '@/components/users/RoleNotificationDefaultsPanel';
 import { SectionSubnav } from '@/components/app/SectionSubnav';
 import type { AppUser } from '@/stores/auth/authTypes';
+import type { AssignableUserRole } from '@/stores/auth/authTypes';
+import type { UsedGearWorkflowNotificationEvent, UserRole } from '@/stores/auth/authTypes';
 import { UserCreateSection } from '@/components/users/UserCreateSection';
 import { UserDirectoryListSection } from '@/components/users/UserDirectoryListSection';
 import { NewUserFormState, RoleFilter, UserSortKey } from '@/components/users/userManagementTypes';
+import type { RoleWorkflowNotificationDefaults } from '@/services/roleNotificationDefaults';
 
 type UserManagementSection = 'overview' | 'directory' | 'create';
 
@@ -19,6 +23,7 @@ interface UserDirectoryPanelProps {
   sortKey: UserSortKey;
   sortDirection: 'asc' | 'desc';
   newUser: NewUserFormState;
+  roleNotificationDefaults: RoleWorkflowNotificationDefaults;
   labelClassName: string;
   inputClassName: string;
   checkboxClassName: string;
@@ -33,9 +38,11 @@ interface UserDirectoryPanelProps {
   onCreateUserSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onScrollToCreateUser: () => void;
   onNewUserFieldChange: (field: keyof NewUserFormState, value: string) => void;
-  onNewUserRoleChange: (role: 'admin' | 'user') => void;
+  onNewUserRoleChange: (role: AssignableUserRole) => void;
   onNewUserPageToggle: (page: AppPage) => void;
   onRegenerateTemporaryPassword: () => void;
+  onToggleRoleWorkflowNotificationDefault: (role: UserRole, eventKey: UsedGearWorkflowNotificationEvent, enabled: boolean) => void;
+  onApplyRoleWorkflowNotificationDefaults: (role: UserRole) => void;
 }
 
 export function UserDirectoryPanel({
@@ -48,6 +55,7 @@ export function UserDirectoryPanel({
   sortKey,
   sortDirection,
   newUser,
+  roleNotificationDefaults,
   labelClassName,
   inputClassName,
   checkboxClassName,
@@ -65,6 +73,8 @@ export function UserDirectoryPanel({
   onNewUserRoleChange,
   onNewUserPageToggle,
   onRegenerateTemporaryPassword,
+  onToggleRoleWorkflowNotificationDefault,
+  onApplyRoleWorkflowNotificationDefaults,
 }: UserDirectoryPanelProps) {
   const [activeSection, setActiveSection] = useState<UserManagementSection | null>(null);
   const overviewSectionRef = useRef<HTMLElement | null>(null);
@@ -91,7 +101,7 @@ export function UserDirectoryPanel({
       >
         <PageTitleHeader
           title="User Management"
-          description="Admins can manage users in a table list and open each profile in its own URL."
+          description="Admins and owners can manage users in a table list and open each profile in its own URL."
           actions={(
             <button
               type="button"
@@ -117,6 +127,13 @@ export function UserDirectoryPanel({
         />
 
         <div className="space-y-5">
+          <RoleNotificationDefaultsPanel
+            roleNotificationDefaults={roleNotificationDefaults}
+            checkboxClassName={checkboxClassName}
+            onToggleRoleWorkflowNotificationDefault={onToggleRoleWorkflowNotificationDefault}
+            onApplyRoleWorkflowNotificationDefaults={onApplyRoleWorkflowNotificationDefaults}
+          />
+
           <section
             ref={directorySectionRef}
             className={`scroll-mt-20 rounded-2xl border bg-[var(--panel)] p-4 ${activeSection === 'directory' ? 'border-cyan-500/45' : 'border-[var(--line)]'}`}

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { canAccessCommerceDashboard, canAccessWorkflowDashboard, hasFullAccessRole } from '@/auth/roleAccess';
 import { DashboardSectionNav } from '@/components/dashboard/DashboardSectionNav';
 import { DashboardOverviewSection, DashboardInsightsSection } from '@/components/dashboard/DashboardOverviewInsightsSection';
 import { DashboardAirtableSection } from '@/components/dashboard/DashboardAirtableSection';
@@ -121,86 +122,114 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
   }), [workflow]);
 
   const allUtilityCards = useMemo(() => [...marketCards, ...utilityCards], [marketCards, utilityCards]);
+  const filteredInsights = useMemo(
+    () => data.insights.filter((insight) => !insight.targetTab || workflow.accessiblePages.includes(insight.targetTab)),
+    [data.insights, workflow.accessiblePages],
+  );
+  const showWorkflowDashboard = useMemo(() => canAccessWorkflowDashboard(workflow.accessiblePages), [workflow.accessiblePages]);
+  const showCommerceDashboard = useMemo(() => canAccessCommerceDashboard(workflow.accessiblePages), [workflow.accessiblePages]);
+  const showActionsSection = workflow.accessiblePages.includes('inventory') || workflow.accessiblePages.includes('listings') || workflow.accessiblePages.includes('ebay');
+  const showOverviewSection = showWorkflowDashboard || showCommerceDashboard || filteredInsights.length > 0;
+  const showExpandedSections = hasFullAccessRole(workflow.currentUserRole);
   const degradedSources = useMemo(() => getDashboardDegradedSources(viewModel.status.sources), [viewModel.status.sources]);
   const showPartialDataNotice = useMemo(() => hasDashboardPartialData(viewModel.status.sources), [viewModel.status.sources]);
 
-  const sections = useMemo(() => buildDashboardSections({ ebayCards, marketCards, utilityCards: allUtilityCards }), [ebayCards, marketCards, allUtilityCards]);
+  const sections = useMemo(
+    () => buildDashboardSections({ accessiblePages: workflow.accessiblePages, ebayCards, marketCards, utilityCards: allUtilityCards, showExpandedSections }),
+    [allUtilityCards, ebayCards, marketCards, showExpandedSections, workflow.accessiblePages],
+  );
   const { activeSectionId, scrollToSection } = useDashboardSectionTracking(sections);
 
   return (
-    <div className="flex flex-col gap-12 pt-1">
+    <div className="flex flex-col gap-12 pt-1 [overflow-anchor:none]">
       <DashboardSectionNav sections={sections} activeSectionId={activeSectionId} onSelectSection={scrollToSection} />
       {showPartialDataNotice && <DashboardPartialDataNotice degradedSources={degradedSources} />}
-      <DashboardSectionPanel id="overview" title="Overview">
-        <DashboardOverviewSection
-          jfLoading={loading.jotform}
-          jotformUnavailableReason={jotformUnavailableReason}
-          jfSubmissionCount={data.jfSubmissions.length}
-          thisWeekCount={data.thisWeekSubs.length}
-          recentCount={data.recentSubs.length}
-          totalNewSubmissions={kpis.totalNewSubmissions}
-          spLoading={loading.shopify}
-          draftCount={data.draftProducts.length}
-          activeCount={data.activeProducts.length}
-          archivedCount={data.archivedProducts.length}
-          nonEmptyListingCount={data.nonEmptyListings.length}
-          approvalPending={workflow.approvalPending}
-          approvalApproved={workflow.approvalApproved}
-          approvalTotal={workflow.approvalTotal}
-          approvalUnavailableReason={approvalUnavailableReason}
-          uniqueAirtableBrands={kpis.uniqueAirtableBrands}
-          uniqueAirtableTypes={kpis.uniqueAirtableTypes}
-          ebayPublishedCount={workflow.ebayPublishedCount}
-          ebayDraftCount={workflow.ebayDraftCount}
-          ebayTotal={workflow.ebayTotal}
-          ebayUnavailableReason={ebayUnavailableReason}
-          sellThroughPct={kpis.sellThroughPct}
-          submissionsTrend={kpis.submissionsTrend}
-          dealsTrend={kpis.dealsTrend}
-          acquisitionTrend={kpis.acquisitionTrend}
-          inventoryTrend={kpis.inventoryTrend}
-          salesTrend={kpis.salesTrend}
-          marginTrend={kpis.marginTrend}
-          onSelectTab={actions.onSelectTab}
-          embedded
-        />
-        <DashboardActionsSection
-          ebayAuthenticated={workflow.ebayAuthenticated}
-          ebayDraftCount={workflow.ebayDraftCount}
-          ebayPublishedCount={workflow.ebayPublishedCount}
-          ebayTotal={workflow.ebayTotal}
-          shopifyQueueApproved={workflow.shopifyApprovalApproved}
-          shopifyQueuePending={workflow.shopifyApprovalPending}
-          shopifyQueueTotal={workflow.shopifyApprovalTotal}
-          workflowPostPublishLoading={workflow.workflowPostPublishLoading}
-          workflowActiveListingCount={workflow.workflowActiveListingCount}
-          workflowStaleListingCount={workflow.workflowStaleListingCount}
-          workflowStaleListingUnassignedCount={workflow.workflowStaleListingUnassignedCount}
-          workflowSoldReadyCount={workflow.workflowSoldReadyCount}
-          workflowSoldReadyUnassignedCount={workflow.workflowSoldReadyUnassignedCount}
-          workflowShippedCount={workflow.workflowShippedCount}
-          ebayUnavailableReason={viewModel.status.sources.find((source) => source.key === 'ebay')?.error ?? null}
-          shopifyApprovalUnavailableReason={viewModel.status.sources.find((source) => source.key === 'listings-shopify')?.error ?? null}
-          onSelectTab={actions.onSelectTab}
-          onOpenInventoryPostPublishBucket={actions.onOpenInventoryPostPublishBucket}
-          embedded
-        />
-        {workflow.accessiblePages.includes('inventory') ? (
-          <DashboardWorkflowAnalyticsSection
-            loading={workflow.workflowAnalytics.loading}
-            error={workflow.workflowAnalytics.error}
-            snapshot={workflow.workflowAnalytics}
-            staleListingUnassignedCount={workflow.workflowStaleListingUnassignedCount}
-            soldReadyUnassignedCount={workflow.workflowSoldReadyUnassignedCount}
+      {showOverviewSection ? (
+        <DashboardSectionPanel id="overview" title="Overview">
+          <DashboardOverviewSection
+            accessiblePages={workflow.accessiblePages}
+            canViewSensitiveMetrics={workflow.canViewSensitiveMetrics}
+            currentUserRole={workflow.currentUserRole}
+            workflowAnalytics={workflow.workflowAnalytics}
+            jfLoading={loading.jotform}
+            jotformUnavailableReason={jotformUnavailableReason}
+            jfSubmissionCount={data.jfSubmissions.length}
+            thisWeekCount={data.thisWeekSubs.length}
+            recentCount={data.recentSubs.length}
+            totalNewSubmissions={kpis.totalNewSubmissions}
+            spLoading={loading.shopify}
+            draftCount={data.draftProducts.length}
+            activeCount={data.activeProducts.length}
+            archivedCount={data.archivedProducts.length}
+            nonEmptyListingCount={data.nonEmptyListings.length}
+            approvalPending={workflow.approvalPending}
+            approvalApproved={workflow.approvalApproved}
+            approvalTotal={workflow.approvalTotal}
+            approvalUnavailableReason={approvalUnavailableReason}
+            uniqueAirtableBrands={kpis.uniqueAirtableBrands}
+            uniqueAirtableTypes={kpis.uniqueAirtableTypes}
+            ebayPublishedCount={workflow.ebayPublishedCount}
+            ebayDraftCount={workflow.ebayDraftCount}
+            ebayTotal={workflow.ebayTotal}
+            ebayUnavailableReason={ebayUnavailableReason}
+            acquisitionCost={kpis.acquisitionCost}
+            inventoryValue={kpis.inventoryValue}
+            avgAskPrice={kpis.avgAskPrice}
+            sellThroughPct={kpis.sellThroughPct}
+            grossMarginPct={kpis.grossMarginPct}
+            submissionsTrend={kpis.submissionsTrend}
+            dealsTrend={kpis.dealsTrend}
+            acquisitionTrend={kpis.acquisitionTrend}
+            inventoryTrend={kpis.inventoryTrend}
+            salesTrend={kpis.salesTrend}
+            marginTrend={kpis.marginTrend}
+            onSelectTab={actions.onSelectTab}
+            embedded
           />
-        ) : null}
-        <DashboardInsightsSection
-          insights={data.insights}
-          onSelectTab={actions.onSelectTab}
-          onOpenInventoryPostPublishBucket={actions.onOpenInventoryPostPublishBucket}
-          embedded
-        />
-      </DashboardSectionPanel>
+          {showActionsSection ? (
+            <DashboardActionsSection
+              accessiblePages={workflow.accessiblePages}
+              ebayAuthenticated={workflow.ebayAuthenticated}
+              ebayDraftCount={workflow.ebayDraftCount}
+              ebayPublishedCount={workflow.ebayPublishedCount}
+              ebayTotal={workflow.ebayTotal}
+              shopifyQueueApproved={workflow.shopifyApprovalApproved}
+              shopifyQueuePending={workflow.shopifyApprovalPending}
+              shopifyQueueTotal={workflow.shopifyApprovalTotal}
+              workflowPostPublishLoading={workflow.workflowPostPublishLoading}
+              workflowActiveListingCount={workflow.workflowActiveListingCount}
+              workflowStaleListingCount={workflow.workflowStaleListingCount}
+              workflowStaleListingUnassignedCount={workflow.workflowStaleListingUnassignedCount}
+              workflowSoldReadyCount={workflow.workflowSoldReadyCount}
+              workflowSoldReadyUnassignedCount={workflow.workflowSoldReadyUnassignedCount}
+              workflowShippedCount={workflow.workflowShippedCount}
+              ebayUnavailableReason={viewModel.status.sources.find((source) => source.key === 'ebay')?.error ?? null}
+              shopifyApprovalUnavailableReason={viewModel.status.sources.find((source) => source.key === 'listings-shopify')?.error ?? null}
+              onSelectTab={actions.onSelectTab}
+              onOpenInventoryPostPublishBucket={actions.onOpenInventoryPostPublishBucket}
+              embedded
+            />
+          ) : null}
+          {showWorkflowDashboard ? (
+            <DashboardWorkflowAnalyticsSection
+              loading={workflow.workflowAnalytics.loading}
+              error={workflow.workflowAnalytics.error}
+              snapshot={workflow.workflowAnalytics}
+              staleListingUnassignedCount={workflow.workflowStaleListingUnassignedCount}
+              soldReadyUnassignedCount={workflow.workflowSoldReadyUnassignedCount}
+            />
+          ) : null}
+          {filteredInsights.length > 0 ? (
+            <DashboardInsightsSection
+              insights={filteredInsights}
+              onSelectTab={actions.onSelectTab}
+              onOpenInventoryPostPublishBucket={actions.onOpenInventoryPostPublishBucket}
+              embedded
+            />
+          ) : null}
+        </DashboardSectionPanel>
+      ) : null}
+      {showExpandedSections && workflow.accessiblePages.includes('inventory') ? (
       <DashboardAirtableSection
         atLoading={loading.airtable}
         errorMessage={viewModel.status.sources.find((source) => source.key === 'airtable')?.error ?? null}
@@ -215,6 +244,8 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         maxAirtableBrandCount={kpis.maxAirtableBrandCount}
         onSelectTab={actions.onSelectTab}
       />
+      ) : null}
+      {showExpandedSections && workflow.accessiblePages.includes('jotform') ? (
       <DashboardJotformSection
         jfLoading={loading.jotform}
         errorMessage={viewModel.status.sources.find((source) => source.key === 'jotform')?.error ?? null}
@@ -231,6 +262,8 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         now={data.now}
         onSelectTab={actions.onSelectTab}
       />
+      ) : null}
+      {showExpandedSections && (workflow.accessiblePages.includes('shopify') || workflow.accessiblePages.includes('listings')) ? (
       <DashboardShopifySection
         shopifyCards={shopifyCards}
         onSelectTab={actions.onSelectTab}
@@ -241,6 +274,8 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         draftProductsCount={data.draftProducts.length}
         archivedProductsCount={data.archivedProducts.length}
       />
+      ) : null}
+      {showExpandedSections && ebayCards.length > 0 ? (
       <DashboardEbaySection
         cards={ebayCards}
         onSelectTab={actions.onSelectTab}
@@ -252,7 +287,8 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         ebayPublishedCount={workflow.ebayPublishedCount}
         ebayDraftCount={workflow.ebayDraftCount}
       />
-      <DashboardWorkflowSection sectionId="utility-workflows" title="Utilities" cards={allUtilityCards} onSelect={actions.onSelectTab} />
+      ) : null}
+      {showExpandedSections && allUtilityCards.length > 0 ? <DashboardWorkflowSection sectionId="utility-workflows" title="Utilities" cards={allUtilityCards} onSelect={actions.onSelectTab} /> : null}
     </div>
   );
 }

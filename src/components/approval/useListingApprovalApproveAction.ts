@@ -7,8 +7,10 @@ import {
 } from '@/components/approval/listingApprovalShopifyActions';
 import { getApprovalRequiredFieldValidationNotice } from '@/components/approval/listingApprovalActionValidation';
 import { updateRecordFromResolvedSource } from '@/services/app-api/airtable';
+import { resolveCurrentActorName } from '@/services/currentUserAudit';
 import { getProduct as getShopifyProduct } from '@/services/app-api/shopify';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
+import type { AirtableRecord } from '@/types/airtable';
 import type { UseListingApprovalRecordActionsParams } from './listingApprovalRecordActionTypes';
 
 type ApproveActionParams = Pick<UseListingApprovalRecordActionsParams,
@@ -37,6 +39,52 @@ type ApproveActionParams = Pick<UseListingApprovalRecordActionsParams,
   | 'pushInlineActionNotice'
   | 'requestConfirmation'
 >;
+
+function resolveExistingFieldName(fieldCandidates: string[], selectedRecord: AirtableRecord, actualFieldNames: string[]): string | null {
+  const availableFieldNames = new Map<string, string>();
+
+  Object.keys(selectedRecord.fields).forEach((fieldName) => {
+    availableFieldNames.set(fieldName.toLowerCase(), fieldName);
+  });
+  actualFieldNames.forEach((fieldName) => {
+    const normalized = fieldName.toLowerCase();
+    if (!availableFieldNames.has(normalized)) {
+      availableFieldNames.set(normalized, fieldName);
+    }
+  });
+
+  for (const candidate of fieldCandidates) {
+    const resolved = availableFieldNames.get(candidate.toLowerCase());
+    if (resolved) return resolved;
+  }
+
+  return null;
+}
+
+function buildApprovalSystemFieldValues(selectedRecord: AirtableRecord, actualFieldNames: string[]): Record<string, string> {
+  const actorName = resolveCurrentActorName();
+  const approvedAt = new Date().toISOString();
+  const fieldValues: Record<string, string> = {};
+
+  const approvedAtFieldName = resolveExistingFieldName(['Approved For Publish At', 'Approved At'], selectedRecord, actualFieldNames);
+  if (approvedAtFieldName) {
+    fieldValues[approvedAtFieldName] = approvedAt;
+  }
+
+  const reviewedAtFieldName = resolveExistingFieldName(['Pre-Listing Reviewed At'], selectedRecord, actualFieldNames);
+  if (reviewedAtFieldName) {
+    fieldValues[reviewedAtFieldName] = approvedAt;
+  }
+
+  if (actorName) {
+    const approvedByFieldName = resolveExistingFieldName(['Pre-Listing Reviewed By', 'Approved By'], selectedRecord, actualFieldNames);
+    if (approvedByFieldName) {
+      fieldValues[approvedByFieldName] = actorName;
+    }
+  }
+
+  return fieldValues;
+}
 
 export function useListingApprovalApproveAction({
   selectedRecord,
@@ -198,6 +246,7 @@ export function useListingApprovalApproveAction({
           approvedFieldName,
           onBackToList,
           'approve-only',
+          buildApprovalSystemFieldValues(selectedRecord, actualFieldNames),
         );
 
         if (!approveSucceeded) {

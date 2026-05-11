@@ -1,6 +1,7 @@
 import { type AppPage } from '@/auth/pages';
 import { UserPageAccessEditor } from '@/components/users/UserPageAccessEditor';
 import {
+  ASSIGNABLE_USER_ROLE_OPTIONS,
   USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS,
   type AppUser,
   type UsedGearWorkflowNotificationEvent,
@@ -10,13 +11,15 @@ interface UserDetailPanelProps {
   selectedUser: AppUser;
   canDeleteSelectedUser: boolean;
   deleteDisabledReason?: string;
+  canSendPasswordReset: boolean;
+  passwordResetDisabledReason?: string;
   statusMessage: string | null;
   labelClassName: string;
   inputClassName: string;
   checkboxClassName: string;
   roleBadgeClassName: (role: AppUser['role']) => string;
   onBackToList: () => void;
-  onRoleChange: (role: 'admin' | 'user') => void;
+  onRoleChange: (role: AppUser['role']) => void;
   onTogglePermission: (page: AppPage) => void;
   onToggleWorkflowNotificationEvent: (eventKey: UsedGearWorkflowNotificationEvent, enabled: boolean) => void;
   onSendPasswordReset: () => void;
@@ -27,6 +30,8 @@ export function UserDetailPanel({
   selectedUser,
   canDeleteSelectedUser,
   deleteDisabledReason,
+  canSendPasswordReset,
+  passwordResetDisabledReason,
   statusMessage,
   labelClassName,
   inputClassName,
@@ -39,6 +44,11 @@ export function UserDetailPanel({
   onSendPasswordReset,
   onDeleteUser,
 }: UserDetailPanelProps) {
+  const isOwner = selectedUser.role === 'owner';
+  const roleOptions = isOwner
+    ? [{ value: 'owner' as const, label: 'Owner (script-managed)' }]
+    : ASSIGNABLE_USER_ROLE_OPTIONS;
+
   return (
     <section className="mt-3 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
@@ -69,78 +79,127 @@ export function UserDetailPanel({
           <p className="mt-1 font-mono text-sm text-slate-200">{selectedUser.id}</p>
         </div>
 
-        <label className={labelClassName} htmlFor={`role-${selectedUser.id}`}>
-          Role
-        </label>
-        <select
-          id={`role-${selectedUser.id}`}
-          className={inputClassName}
-          value={selectedUser.role}
-          onChange={(event) => onRoleChange(event.target.value === 'admin' ? 'admin' : 'user')}
-        >
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
+        {isOwner ? (
+          <div>
+            <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300">Role</p>
+            <p className="mt-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-semibold text-[var(--ink)]">Owner (script-managed)</p>
+            <p className="mt-2 text-xs leading-5 text-[var(--muted)]">Owner assignment is package-script only and cannot be changed from the app.</p>
+          </div>
+        ) : (
+          <>
+            <label className={labelClassName} htmlFor={`role-${selectedUser.id}`}>
+              Role
+            </label>
+            <select
+              id={`role-${selectedUser.id}`}
+              className={inputClassName}
+              value={selectedUser.role}
+              onChange={(event) => onRoleChange(event.target.value as AppUser['role'])}
+            >
+              {roleOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </>
+        )}
 
         <div>
           <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300">Accessible Pages</p>
-          <UserPageAccessEditor
-            selectedPages={selectedUser.role === 'admin' ? [] : selectedUser.allowedPages}
-            checkboxClassName={checkboxClassName}
-            disabled={selectedUser.role === 'admin'}
-            onTogglePage={onTogglePermission}
-          />
-          {selectedUser.role === 'admin' && (
-            <p className="mt-2 text-xs leading-5 text-[var(--muted)]">Admins keep full app access. Page groupings are shown here for reference only.</p>
+          {isOwner ? (
+            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-[var(--muted)]">
+              <p className="m-0 font-semibold text-[var(--ink)]">Full app access</p>
+              <p className="mt-2 text-xs leading-5">Owners keep full app access. Page permissions for owner accounts are managed outside User Management.</p>
+            </div>
+          ) : (
+            <>
+              <UserPageAccessEditor
+                userRole={selectedUser.role}
+                selectedPages={selectedUser.role === 'admin' ? [] : selectedUser.allowedPages}
+                checkboxClassName={checkboxClassName}
+                disabled={selectedUser.role === 'admin'}
+                onTogglePage={onTogglePermission}
+              />
+              {selectedUser.role === 'admin' && (
+                <p className="mt-2 text-xs leading-5 text-[var(--muted)]">Admins keep full app access. Page groupings are shown here for reference only.</p>
+              )}
+            </>
           )}
         </div>
 
         <div>
           <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300">Used Gear Workflow Alerts</p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS.map((option) => (
-              <label key={`${selectedUser.id}-${option.key}`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--ink)]">
-                <span className="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    className={checkboxClassName}
-                    checked={selectedUser.notificationPreferences.workflowEvents[option.key]}
-                    onChange={(event) => onToggleWorkflowNotificationEvent(option.key, event.target.checked)}
-                  />
-                  <span>
-                    <span className="block font-semibold">{option.label}</span>
-                    <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">{option.description}</span>
+          {isOwner ? (
+            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-[var(--muted)]">
+              <p className="m-0 font-semibold text-[var(--ink)]">Owner-managed notification preferences</p>
+              <p className="mt-2 text-xs leading-5">Manage owner notification preferences from Account Settings while signed into the owner account.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS.map((option) => (
+                <label key={`${selectedUser.id}-${option.key}`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--ink)]">
+                  <span className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      className={checkboxClassName}
+                      checked={selectedUser.notificationPreferences.workflowEvents[option.key]}
+                      onChange={(event) => onToggleWorkflowNotificationEvent(option.key, event.target.checked)}
+                    />
+                    <span>
+                      <span className="block font-semibold">{option.label}</span>
+                      <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">{option.description}</span>
+                    </span>
                   </span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
-          onClick={onSendPasswordReset}
-        >
-          Send Password Reset Email
-        </button>
-
-        <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-3">
-          <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-rose-300">Danger Zone</p>
-          <p className="mt-1 text-sm text-rose-200/90">Delete this user account from Airtable and revoke access immediately.</p>
-          <button
-            type="button"
-            className="mt-3 rounded-xl border border-rose-300/50 bg-rose-500/15 px-4 py-2.5 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!canDeleteSelectedUser}
-            title={canDeleteSelectedUser ? 'Delete user' : deleteDisabledReason}
-            onClick={onDeleteUser}
-          >
-            Delete User
-          </button>
-          {!canDeleteSelectedUser && deleteDisabledReason && (
-            <p className="mt-2 text-xs text-rose-200/80">{deleteDisabledReason}</p>
+                </label>
+              ))}
+            </div>
           )}
         </div>
+
+        {isOwner ? (
+          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-[var(--muted)]">
+            <p className="m-0 font-semibold text-[var(--ink)]">Password management</p>
+            <p className="mt-2 text-xs leading-5">Owner password changes must be handled by the owner through Account Settings.</p>
+          </div>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={onSendPasswordReset}
+              disabled={!canSendPasswordReset}
+              title={canSendPasswordReset ? 'Send password reset email' : passwordResetDisabledReason}
+            >
+              Send Password Reset Email
+            </button>
+            {!canSendPasswordReset && passwordResetDisabledReason && (
+              <p className="-mt-2 text-xs leading-5 text-[var(--muted)]">{passwordResetDisabledReason}</p>
+            )}
+          </>
+        )}
+
+        {isOwner ? (
+          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-[var(--muted)]">
+            <p className="m-0 font-semibold text-[var(--ink)]">Owner account protection</p>
+            <p className="mt-2 text-xs leading-5">Owner account deletion and other owner-specific mutations are hidden in User Management and remain script-managed or self-managed through the owner session.</p>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-3">
+            <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-rose-300">Danger Zone</p>
+            <p className="mt-1 text-sm text-rose-200/90">Delete this user account from Airtable and revoke access immediately.</p>
+            <button
+              type="button"
+              className="mt-3 rounded-xl border border-rose-300/50 bg-rose-500/15 px-4 py-2.5 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={!canDeleteSelectedUser}
+              title={canDeleteSelectedUser ? 'Delete user' : deleteDisabledReason}
+              onClick={onDeleteUser}
+            >
+              Delete User
+            </button>
+            {!canDeleteSelectedUser && deleteDisabledReason && (
+              <p className="mt-2 text-xs text-rose-200/80">{deleteDisabledReason}</p>
+            )}
+          </div>
+        )}
       </article>
     </section>
   );

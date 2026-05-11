@@ -2,14 +2,25 @@ import { isAppApiHttpError } from './errors';
 import { clearCsrfToken } from './http';
 import { getJson, postJson } from './http';
 
+import type { AppPage } from '@/auth/pages';
+import type { UserRole } from '@/stores/auth/authTypes';
+
 interface AuthLoginResponse {
   userId: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  allowedPages: AppPage[];
   mustChangePassword: boolean;
   csrfToken?: string;
 }
 
 interface AuthSessionResponse {
   userId: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  allowedPages: AppPage[];
   mustChangePassword: boolean;
   csrfToken?: string;
 }

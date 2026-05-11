@@ -32,6 +32,7 @@ export interface UseListingApprovalRecordActionsParams {
     approvedFieldName: string,
     afterSave: () => void,
     mode: 'full' | 'approve-only',
+    systemFieldValues?: Record<string, unknown>,
   ) => Promise<boolean>;
   bodyHtmlPreview: string;
   ebayBodyHtmlSaveFieldName: string;

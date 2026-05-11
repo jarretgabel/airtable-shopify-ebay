@@ -55,7 +55,10 @@ export function UserDirectoryListSection({
           <select className={inputClassName} value={roleFilter} onChange={(event) => onRoleFilterChange(event.target.value as RoleFilter)}>
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
-            <option value="user">User</option>
+            <option value="owner">Owner</option>
+            <option value="processor">Processor</option>
+            <option value="tester">Tester</option>
+            <option value="photographer">Photographer</option>
           </select>
         </label>
 

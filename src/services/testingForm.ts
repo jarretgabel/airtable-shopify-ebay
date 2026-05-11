@@ -10,8 +10,17 @@ import { createServiceError, type ServiceError } from '@/services/serviceErrors'
 import { createTestingFormDefaults, type TestingFormOptionFieldName, type TestingFormValues } from '@/components/tabs/testing/testingFormSchema';
 import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
 import type { AirtableRecord } from '@/types/airtable';
+import {
+  filterWorkflowAttachmentsByStage,
+  mergeWorkflowImageMetadata,
+  parseWorkflowImageMetadata,
+  serializeWorkflowImageMetadata,
+  type WorkflowImageMetadataRecord,
+} from '@/services/workflowImageMetadata';
 
 const IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
+const WORKFLOW_IMAGE_METADATA_FIELD_NAME = 'Workflow Image Metadata JSON';
+const WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME = 'Images';
 
 const OPTION_FIELD_NAMES = [
   'Status',
@@ -34,10 +43,22 @@ export interface TestingFormCustomerReference {
   submittedPhotosNotes: string;
 }
 
+export interface TestingFormContextAttachment {
+  id?: string;
+  url?: string;
+  filename: string;
+}
+
+export interface TestingFormStageContext {
+  existingAttachments: TestingFormContextAttachment[];
+  imageMetadata: WorkflowImageMetadataRecord[];
+}
+
 export interface TestingFormLoadResult {
   source: TestingFormRecordSource;
   values: TestingFormValues;
   customerReference: TestingFormCustomerReference;
+  stageContext: TestingFormStageContext;
 }
 
 export interface TestingFormSubmitResult {
@@ -82,9 +103,83 @@ function compactFields(fields: Record<string, unknown>): Record<string, unknown>
   );
 }
 
+function isUnknownFieldNameError(error: unknown, fieldName: string): boolean {
+  return error instanceof Error && error.message.includes(`Unknown field name: "${fieldName}"`);
+}
+
+function omitWorkflowImageMetadataField(fields: Record<string, unknown>): Record<string, unknown> {
+  const nextFields = { ...fields };
+  delete nextFields[WORKFLOW_IMAGE_METADATA_FIELD_NAME];
+  return nextFields;
+}
+
+async function updateRecordWithWorkflowImageMetadataFallback(
+  recordSource: TestingFormRecordSource,
+  recordId: string,
+  fields: Record<string, unknown>,
+): Promise<AirtableRecord> {
+  try {
+    return await updateConfiguredRecord(recordSource, recordId, fields, { typecast: true });
+  } catch (error) {
+    if (WORKFLOW_IMAGE_METADATA_FIELD_NAME in fields && isUnknownFieldNameError(error, WORKFLOW_IMAGE_METADATA_FIELD_NAME)) {
+      return updateConfiguredRecord(recordSource, recordId, omitWorkflowImageMetadataField(fields), { typecast: true });
+    }
+
+    throw error;
+  }
+}
+
+async function createRecordWithWorkflowImageMetadataFallback(
+  fields: Record<string, unknown>,
+): Promise<AirtableRecord> {
+  try {
+    return await createConfiguredRecord('inventory-directory', fields, { typecast: true });
+  } catch (error) {
+    if (WORKFLOW_IMAGE_METADATA_FIELD_NAME in fields && isUnknownFieldNameError(error, WORKFLOW_IMAGE_METADATA_FIELD_NAME)) {
+      return createConfiguredRecord('inventory-directory', omitWorkflowImageMetadataField(fields), { typecast: true });
+    }
+
+    throw error;
+  }
+}
+
 async function uploadTestingImages(recordId: string, files: File[]): Promise<void> {
   for (const file of files) {
     await uploadConfiguredAttachment('inventory-directory', recordId, IMAGE_ATTACHMENT_FIELD_ID, file);
+  }
+}
+
+async function syncWorkflowImageMetadataForRecord(params: {
+  recordSource: TestingFormRecordSource;
+  recordId: string;
+  existingMetadata: WorkflowImageMetadataRecord[];
+}): Promise<void> {
+  const latestRecord = await getConfiguredRecord(params.recordSource, params.recordId);
+  const latestAttachments = Array.isArray(latestRecord.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME])
+    ? latestRecord.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME] as Array<Record<string, unknown>>
+    : [];
+  const mergedMetadata = mergeWorkflowImageMetadata({
+    attachments: latestAttachments,
+    existingMetadata: params.existingMetadata,
+    sourceStage: 'testing',
+    nowIso: new Date().toISOString(),
+  });
+
+  try {
+    await updateConfiguredRecord(
+      params.recordSource,
+      params.recordId,
+      {
+        [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: serializeWorkflowImageMetadata(mergedMetadata),
+      },
+      { typecast: true },
+    );
+  } catch (error) {
+    if (isUnknownFieldNameError(error, WORKFLOW_IMAGE_METADATA_FIELD_NAME)) {
+      return;
+    }
+
+    throw error;
   }
 }
 
@@ -96,6 +191,52 @@ async function loadConfiguredTestingRecord(recordId: string): Promise<{ source: 
     const inventoryRecord = await getConfiguredRecord('inventory-directory', recordId);
     return { source: 'inventory-directory', record: inventoryRecord };
   }
+}
+
+function extractAttachments(value: unknown): TestingFormContextAttachment[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object') {
+      return [];
+    }
+
+    const attachment = entry as { id?: unknown; url?: unknown; filename?: unknown; name?: unknown };
+    const filename = typeof attachment.filename === 'string'
+      ? attachment.filename
+      : typeof attachment.name === 'string'
+        ? attachment.name
+        : '';
+
+    if (!filename) {
+      return [];
+    }
+
+    return [{
+      id: typeof attachment.id === 'string' ? attachment.id : undefined,
+      url: typeof attachment.url === 'string' ? attachment.url : undefined,
+      filename,
+    }];
+  });
+}
+
+function buildStageContext(record: AirtableRecord): TestingFormStageContext {
+  const attachments = Array.isArray(record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME])
+    ? record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME] as Array<Record<string, unknown>>
+    : [];
+  const imageMetadata = mergeWorkflowImageMetadata({
+    attachments,
+    existingMetadata: parseWorkflowImageMetadata(record.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME]),
+    sourceStage: 'testing',
+    nowIso: new Date().toISOString(),
+  });
+
+  return {
+    existingAttachments: filterWorkflowAttachmentsByStage(extractAttachments(record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME]), imageMetadata, 'testing'),
+    imageMetadata,
+  };
 }
 
 function buildCustomerReference(record: AirtableRecord): TestingFormCustomerReference {
@@ -115,6 +256,7 @@ export async function loadTestingFormValues(recordId: string): Promise<TestingFo
     return {
       source,
       customerReference: buildCustomerReference(record),
+      stageContext: buildStageContext(record),
       values: {
         ...defaults,
         sku: extractInventoryScalarValue(record.fields.SKU),
@@ -196,7 +338,7 @@ export async function loadTestingFormOptionSets(): Promise<TestingOptionSet> {
 export async function submitTestingForm(
   values: TestingFormValues,
   recordId?: string | null,
-  options: { recordSource?: TestingFormRecordSource } = {},
+  options: { recordSource?: TestingFormRecordSource; imageMetadata?: WorkflowImageMetadataRecord[] } = {},
 ): Promise<TestingFormSubmitResult> {
   const costValue = trimToUndefined(values.cost);
   const testingTimeMinutes = trimToUndefined(values.testingTimeMinutes);
@@ -229,21 +371,25 @@ export async function submitTestingForm(
     'Service Time': serviceTimeMinutes ? Number.parseFloat(serviceTimeMinutes) * 60 : undefined,
     Tested: trimToUndefined(values.testingDate),
     Status: trimToUndefined(values.status),
+    [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata ? serializeWorkflowImageMetadata(options.imageMetadata) : undefined,
   });
 
   try {
     if (recordId) {
-      const updatedRecord = await updateConfiguredRecord(
-        recordSource,
-        recordId,
-        baseFields,
-        { typecast: true },
-      );
+      const updatedRecord = await updateRecordWithWorkflowImageMetadataFallback(recordSource, recordId, baseFields);
 
       if (values.imageFiles.length > 0) {
         for (const file of values.imageFiles) {
           await uploadConfiguredAttachment(recordSource, updatedRecord.id, IMAGE_ATTACHMENT_FIELD_ID, file);
         }
+      }
+
+      if (options.imageMetadata) {
+        await syncWorkflowImageMetadataForRecord({
+          recordSource,
+          recordId: updatedRecord.id,
+          existingMetadata: options.imageMetadata,
+        });
       }
 
       return {
@@ -253,14 +399,18 @@ export async function submitTestingForm(
       };
     }
 
-    const createdRecord = await createConfiguredRecord(
-      'inventory-directory',
-      baseFields,
-      { typecast: true },
-    );
+    const createdRecord = await createRecordWithWorkflowImageMetadataFallback(baseFields);
 
     if (values.imageFiles.length > 0) {
       await uploadTestingImages(createdRecord.id, values.imageFiles);
+    }
+
+    if (options.imageMetadata) {
+      await syncWorkflowImageMetadataForRecord({
+        recordSource: 'inventory-directory',
+        recordId: createdRecord.id,
+        existingMetadata: options.imageMetadata,
+      });
     }
 
     return {

@@ -12,7 +12,7 @@ interface AttachmentBody {
 }
 
 function validateSource(value: string): AirtableConfiguredAttachmentSource {
-  if (value === 'inventory-directory') {
+  if (value === 'inventory-directory' || value === 'used-gear-workflow') {
     return value;
   }
 

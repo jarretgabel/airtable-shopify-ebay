@@ -2,6 +2,7 @@ import { FormEvent, MutableRefObject, useState } from 'react';
 import { type AppPage } from '@/auth/pages';
 import { UserPageAccessEditor } from '@/components/users/UserPageAccessEditor';
 import { NewUserFormState } from '@/components/users/userManagementTypes';
+import { ASSIGNABLE_USER_ROLE_OPTIONS, type AssignableUserRole } from '@/stores/auth/authTypes';
 
 interface UserCreateSectionProps {
   createdMessage: string | null;
@@ -12,7 +13,7 @@ interface UserCreateSectionProps {
   checkboxClassName: string;
   onCreateUserSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onNewUserFieldChange: (field: keyof NewUserFormState, value: string) => void;
-  onNewUserRoleChange: (role: 'admin' | 'user') => void;
+  onNewUserRoleChange: (role: AssignableUserRole) => void;
   onNewUserPageToggle: (page: AppPage) => void;
   onRegenerateTemporaryPassword: () => void;
 }
@@ -94,15 +95,17 @@ export function UserCreateSection({
           name="new-user-role"
           className={inputClassName}
           value={newUser.role}
-          onChange={(event) => onNewUserRoleChange(event.target.value === 'admin' ? 'admin' : 'user')}
+          onChange={(event) => onNewUserRoleChange(event.target.value as AssignableUserRole)}
         >
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
+          {ASSIGNABLE_USER_ROLE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
         </select>
 
-        {newUser.role === 'user' && (
+        {newUser.role !== 'admin' && (
           <div className="mt-2">
             <UserPageAccessEditor
+              userRole={newUser.role}
               selectedPages={newUser.allowedPages}
               checkboxClassName={checkboxClassName}
               onTogglePage={onNewUserPageToggle}

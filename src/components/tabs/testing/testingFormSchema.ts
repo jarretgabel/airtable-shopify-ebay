@@ -220,7 +220,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
   },
   {
     name: 'imageFiles',
-    airtableFieldName: 'Images (Eduardo)',
+    airtableFieldName: 'Images',
     label: 'Images',
     type: 'file',
     description: 'Upload one or more images.',

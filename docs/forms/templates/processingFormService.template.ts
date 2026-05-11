@@ -42,23 +42,6 @@ function compactFields(fields: Record<string, unknown>): Record<string, unknown>
   );
 }
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result !== 'string') {
-        reject(new Error(`Unable to read ${file.name}.`));
-        return;
-      }
-      const [, base64 = ''] = result.split(',');
-      resolve(base64);
-    };
-    reader.onerror = () => reject(reader.error ?? new Error(`Unable to read ${file.name}.`));
-    reader.readAsDataURL(file);
-  });
-}
-
 async function uploadProcessingFormImages(recordId: string, files: File[]): Promise<void> {
   for (const file of files) {
     await uploadConfiguredAttachment(TARGET_SOURCE, recordId, IMAGE_ATTACHMENT_FIELD_ID, file);

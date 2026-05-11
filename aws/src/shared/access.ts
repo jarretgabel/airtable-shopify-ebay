@@ -3,17 +3,30 @@ import { readSessionTokenFromEvent } from '../handlers/auth/sessionCookie.js';
 import { resolveSession } from '../providers/auth/service.js';
 import { requireSessionCsrf } from './csrf.js';
 import { HttpError } from './errors.js';
-import type { AppPage } from './appPages.js';
+import { hasFullAccessRole, type AppPage } from './appPages.js';
 
 interface RouteAccessRequirement {
   adminOnly?: boolean;
   anyPage?: AppPage[];
 }
 
+const WORKFLOW_ACCESS_PAGES: AppPage[] = [
+  'inventory',
+  'jotform',
+  'parking-lot-2',
+  'trash-review',
+  'testing-queue',
+  'photography-queue',
+  'pre-listing-queue',
+  'incoming-gear',
+  'testing',
+  'photos',
+];
+
 export type AuthenticatedUser = Awaited<ReturnType<typeof resolveSession>>;
 
 function requireAnyAllowedPage(user: AuthenticatedUser, pages: AppPage[]): void {
-  if (user.role === 'admin') {
+  if (hasFullAccessRole(user.role)) {
     return;
   }
 
@@ -29,11 +42,11 @@ function requireAnyAllowedPage(user: AuthenticatedUser, pages: AppPage[]): void 
 }
 
 function requireAdmin(user: AuthenticatedUser): void {
-  if (user.role === 'admin') {
+  if (hasFullAccessRole(user.role)) {
     return;
   }
 
-  throw new HttpError(403, 'Admin access is required.', {
+  throw new HttpError(403, 'Admin or owner access is required.', {
     service: 'auth',
     code: 'AUTH_ADMIN_REQUIRED',
     retryable: false,
@@ -47,7 +60,7 @@ function resolveAirtableRequirement(event: APIGatewayProxyEventV2): RouteAccessR
       return { adminOnly: true, anyPage: ['users'] };
     case 'inventory-directory':
     case 'used-gear-workflow':
-      return { anyPage: ['inventory'] };
+      return { anyPage: WORKFLOW_ACCESS_PAGES };
     case 'approval-ebay':
       return { anyPage: ['listings'] };
     case 'approval-shopify':
@@ -55,7 +68,7 @@ function resolveAirtableRequirement(event: APIGatewayProxyEventV2): RouteAccessR
     case 'approval-combined':
       return { anyPage: ['listings'] };
     default:
-      return { anyPage: ['inventory'] };
+      return { anyPage: WORKFLOW_ACCESS_PAGES };
   }
 }
 
@@ -87,7 +100,7 @@ export function resolveRouteAccessRequirement(event: APIGatewayProxyEventV2): Ro
   }
 
   if (path === '/api/airtable/listings') {
-    return { anyPage: ['listings'] };
+    return { anyPage: ['inventory'] };
   }
 
   if (path.startsWith('/api/ai/')) {

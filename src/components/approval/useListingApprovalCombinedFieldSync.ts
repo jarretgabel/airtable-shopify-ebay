@@ -11,6 +11,15 @@ import {
 } from '@/components/approval/listingApprovalFieldHelpers';
 import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
 
+function isStructuredTestingNotesValue(rawValue: string): boolean {
+  const trimmed = rawValue.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith('[')) return true;
+  if (trimmed.includes('\t')) return true;
+  if (trimmed.includes(',')) return true;
+  return trimmed.split(/\r?\n/).some((line) => line.includes(':'));
+}
+
 interface UseListingApprovalCombinedFieldSyncParams {
   allFieldNames: string[];
   approvalChannel: 'shopify' | 'ebay' | 'combined';
@@ -52,8 +61,11 @@ export function useListingApprovalCombinedFieldSync({
     if (!isCombinedApproval) return;
     if (!combinedSharedKeyFeaturesFieldName || !combinedEbayTestingNotesFieldName) return;
 
+    const testingNotesRaw = formValues[combinedEbayTestingNotesFieldName] ?? '';
+    if (!isStructuredTestingNotesValue(testingNotesRaw)) return;
+
     const sharedEntries = parseKeyFeatureEntries(formValues[combinedSharedKeyFeaturesFieldName] ?? '');
-    const ebayEntries = parseKeyFeatureEntries(formValues[combinedEbayTestingNotesFieldName] ?? '');
+    const ebayEntries = parseKeyFeatureEntries(testingNotesRaw);
     const transferredEntries = ebayEntries.filter((entry) => shouldMoveTestingEntryToSharedKeyFeatures(entry.feature));
     if (transferredEntries.length === 0) return;
 

@@ -203,20 +203,33 @@ export function buildUtilityWorkflowCards({
 }
 
 export function buildDashboardSections({
+  accessiblePages,
   ebayCards,
   marketCards,
   utilityCards,
+  showExpandedSections,
 }: {
+  accessiblePages: DashboardWorkflowSource['accessiblePages'];
   ebayCards: WorkflowCard[];
   marketCards: WorkflowCard[];
   utilityCards: WorkflowCard[];
+  showExpandedSections: boolean;
 }): DashboardSection[] {
-  const sections: DashboardSection[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'inventory', label: 'Inventory' },
-    { id: 'inquiries', label: 'JotForm' },
-    { id: 'pipeline', label: 'Shopify' },
-  ];
+  const sections: DashboardSection[] = [{ id: 'overview', label: 'Overview' }];
+
+  if (!showExpandedSections) {
+    return sections;
+  }
+
+  if (accessiblePages.includes('inventory')) {
+    sections.push({ id: 'inventory', label: 'Inventory' });
+  }
+  if (accessiblePages.includes('jotform')) {
+    sections.push({ id: 'inquiries', label: 'JotForm' });
+  }
+  if (accessiblePages.includes('shopify') || accessiblePages.includes('listings')) {
+    sections.push({ id: 'pipeline', label: 'Shopify' });
+  }
 
   if (ebayCards.length > 0) sections.push({ id: 'ebay-workflows', label: 'eBay' });
   

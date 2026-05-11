@@ -9,7 +9,7 @@ Use this checklist for pull request reviews and self-review before posting PRs. 
 - [ ] File placed in correct domain folder (`src/components/{domain}/`, `src/hooks/`, `src/stores/{domain}/`, etc.)
 - [ ] Companion files created if needed (`*Types.ts`, `*Constants.ts`, `*Utils.ts`)
 - [ ] Main entry file acts as barrel export (re-exports types and helpers)
-- [ ] Test file placed adjacent to implementation: `{Module}.test.ts` or `{Module}.test.tsx`
+- [ ] Test file placed under `tests/unit` using the mirrored source path: `{Module}.test.ts` or `{Module}.test.tsx`
 - [ ] All cross-domain imports use `@/` alias (no relative paths)
 - [ ] Listing form page updates keep Shopify and eBay structure aligned (section order, save/reset UX, change-tracking visibility) unless a documented channel-specific requirement exists
 
@@ -160,7 +160,7 @@ Use this checklist for pull request reviews and self-review before posting PRs. 
 ## Testing
 
 ### Unit Tests
-- [ ] Created alongside implementation: `{Module}.test.ts` in same folder
+- [ ] Created under `tests/unit/{source-path}/`: `{Module}.test.ts` or `{Module}.test.tsx`
 - [ ] Pure functions tested independently (no side effects)
 - [ ] Edge cases covered (null, undefined, empty, boundary values)
 - [ ] Store state mutations tested with `renderHook` and `act`

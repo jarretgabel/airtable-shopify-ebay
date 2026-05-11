@@ -1,21 +1,27 @@
 import { HttpError } from '../../shared/errors.js';
+import { hasFullAccessRole } from '../../shared/appPages.js';
+import type { UserRole } from '../../shared/appPages.js';
 import { sendPlainTextEmail } from '../gmail/client.js';
-import { findAuthUserByEmail, findAuthUserById, updateAuthUserEmail, updateAuthUserPassword } from './users.js';
+import { ensureSampleAuthUsers, findAuthUserByEmail, findAuthUserById, loadAuthUsers, updateAuthUserEmail, updateAuthUserPassword } from './users.js';
 import { needsPasswordUpgrade, verifyStoredPassword } from './passwords.js';
 import { issueEmailChangeToken, issuePasswordResetToken, issueSessionToken, verifyToken } from './tokens.js';
 
 interface AuthLoginResult {
   userId: string;
+  name: string;
+  email: string;
   sessionToken: string;
   mustChangePassword: boolean;
-  role: 'admin' | 'user';
+  role: UserRole;
   allowedPages: string[];
 }
 
 interface AuthSessionResult {
   userId: string;
+  name: string;
+  email: string;
   mustChangePassword: boolean;
-  role: 'admin' | 'user';
+  role: UserRole;
   allowedPages: string[];
 }
 
@@ -76,6 +82,18 @@ function buildEmailChangeBody(link: string): string {
   ].join('\n');
 }
 
+async function maybeEnsureSampleAuthUsers(role: UserRole): Promise<void> {
+  if (!hasFullAccessRole(role)) {
+    return;
+  }
+
+  try {
+    await ensureSampleAuthUsers(await loadAuthUsers());
+  } catch {
+    // Keep the authenticated admin/owner flow working even if sample-user seeding fails.
+  }
+}
+
 export async function login(email: string, password: string): Promise<AuthLoginResult> {
   const user = await findAuthUserByEmail(normalizeEmail(email));
   if (!user || !verifyStoredPassword(password, user.passwordState)) {
@@ -90,8 +108,12 @@ export async function login(email: string, password: string): Promise<AuthLoginR
     await updateAuthUserPassword(user, password, user.mustChangePassword);
   }
 
+  await maybeEnsureSampleAuthUsers(user.role);
+
   return {
     userId: user.id,
+    name: user.name,
+    email: user.email,
     sessionToken: issueSessionToken(user.id, user.mustChangePassword),
     mustChangePassword: user.mustChangePassword,
     role: user.role,
@@ -110,8 +132,12 @@ export async function resolveSession(sessionToken: string): Promise<AuthSessionR
     });
   }
 
+  await maybeEnsureSampleAuthUsers(user.role);
+
   return {
     userId: user.id,
+    name: user.name,
+    email: user.email,
     mustChangePassword: user.mustChangePassword,
     role: user.role,
     allowedPages: user.allowedPages,

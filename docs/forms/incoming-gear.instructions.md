@@ -27,7 +27,7 @@ It is shown in the app under:
   - `Remote`
   - `Power Cable`
   - `Shipping Method`
-- Uploads selected images to `Images (Eduardo)` after record creation.
+- Uploads selected images to `Images` after record creation.
 - Generates a temporary `SKU` if the field is left blank.
 - Defaults `Status` to `Needs Initial Processing` if no status is selected.
 

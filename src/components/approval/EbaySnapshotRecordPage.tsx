@@ -1,6 +1,13 @@
+import { useEffect, useState } from 'react';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
+import {
+  buildListingApprovalWorkflowSummaryData,
+  ListingApprovalWorkflowProcessCard,
+  type ListingApprovalWorkflowSummaryData,
+} from '@/components/approval/ListingApprovalWorkflowSummary';
 import { EmptySurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import type { EbayTabViewModel } from '@/app/appTabViewModels';
+import { loadUsedGearWorkflowRecordBySku } from '@/services/usedGearQueue';
 import type { EbayInventoryItem, EbayOffer, EbayPublishedListing } from '@/services/ebay/types';
 
 interface EbaySnapshotRecordPageProps {
@@ -8,6 +15,7 @@ interface EbaySnapshotRecordPageProps {
   viewModel: EbayTabViewModel;
   onBackToSnapshot: () => void;
   onOpenListings: () => void;
+  onOpenWorkflowRecord: (recordId: string) => void;
 }
 
 function stringifyJson(value: unknown): string {
@@ -62,16 +70,82 @@ export function EbaySnapshotRecordPage({
   viewModel,
   onBackToSnapshot,
   onOpenListings,
+  onOpenWorkflowRecord,
 }: EbaySnapshotRecordPageProps) {
-  if (viewModel.state.loading && viewModel.inventory.items.length === 0 && viewModel.inventory.recentListings.length === 0) {
-    return <LoadingSurface message="Loading eBay snapshot..." />;
-  }
+  const [workflowSummary, setWorkflowSummary] = useState<ListingApprovalWorkflowSummaryData | null>(null);
+  const [workflowRecordId, setWorkflowRecordId] = useState<string | null>(null);
+  const [workflowLoading, setWorkflowLoading] = useState(false);
+  const [workflowError, setWorkflowError] = useState<string | null>(null);
 
   const item = viewModel.inventory.items.find((entry) => entry.sku === recordId);
   const offer = viewModel.inventory.offers.find((entry) => entry.sku === recordId);
   const recentListing = viewModel.inventory.recentListings.find((entry) => entry.item.sku === recordId);
+  const snapshotItem = viewModel.inventory.items.find((entry) => entry.snapshotId === recordId || entry.sourceRecordId === recordId);
+  const snapshotOffer = viewModel.inventory.offers.find((entry) => entry.snapshotId === recordId || entry.sourceRecordId === recordId);
+  const snapshotRecentListing = viewModel.inventory.recentListings.find((entry) => entry.item.snapshotId === recordId || entry.item.sourceRecordId === recordId);
 
-  if (!item && !offer && !recentListing) {
+  const resolvedDirectItem = item ?? snapshotItem;
+  const resolvedDirectOffer = offer ?? snapshotOffer;
+  const resolvedRecentListing = recentListing ?? snapshotRecentListing;
+
+  const resolvedItem = resolvedDirectItem ?? resolvedRecentListing?.item;
+  const resolvedOffer = resolvedDirectOffer ?? resolvedRecentListing?.offer;
+  const htmlPreview = resolvedOffer?.listingDescription ?? resolvedItem?.product?.description ?? '';
+  const aspects = resolvedItem?.product?.aspects ? Object.entries(resolvedItem.product.aspects) : [];
+  const imageUrls = resolvedItem?.product?.imageUrls ?? [];
+  const listingPolicies = resolvedOffer?.listingPolicies;
+  const workflowSku = resolvedItem?.sku?.trim() || resolvedOffer?.sku?.trim() || '';
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!workflowSku) {
+      setWorkflowSummary(null);
+      setWorkflowRecordId(null);
+      setWorkflowLoading(false);
+      setWorkflowError('This eBay snapshot does not expose a SKU for workflow matching.');
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setWorkflowLoading(true);
+    setWorkflowError(null);
+
+    void loadUsedGearWorkflowRecordBySku(workflowSku)
+      .then((record) => {
+        if (cancelled) {
+          return;
+        }
+
+        setWorkflowSummary(buildListingApprovalWorkflowSummaryData(record));
+        setWorkflowRecordId(record.id);
+      })
+      .catch((lookupError) => {
+        if (cancelled) {
+          return;
+        }
+
+        setWorkflowSummary(null);
+        setWorkflowRecordId(null);
+        setWorkflowError(lookupError instanceof Error ? lookupError.message : 'Unable to load the used-gear workflow row for this eBay snapshot.');
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setWorkflowLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [workflowSku]);
+
+  if (viewModel.state.loading && viewModel.inventory.items.length === 0 && viewModel.inventory.recentListings.length === 0) {
+    return <LoadingSurface message="Loading eBay snapshot..." />;
+  }
+
+  if (!resolvedDirectItem && !resolvedDirectOffer && !resolvedRecentListing) {
     return (
       <EmptySurface title="eBay snapshot not found" message="This SKU is no longer available in the current eBay snapshot.">
         <div className="mt-4 flex flex-wrap gap-2">
@@ -81,13 +155,6 @@ export function EbaySnapshotRecordPage({
       </EmptySurface>
     );
   }
-
-  const resolvedItem = item ?? recentListing?.item;
-  const resolvedOffer = offer ?? recentListing?.offer;
-  const htmlPreview = resolvedOffer?.listingDescription ?? resolvedItem?.product?.description ?? '';
-  const aspects = resolvedItem?.product?.aspects ? Object.entries(resolvedItem.product.aspects) : [];
-  const imageUrls = resolvedItem?.product?.imageUrls ?? [];
-  const listingPolicies = resolvedOffer?.listingPolicies;
 
   return (
     <div className="space-y-4">
@@ -104,6 +171,18 @@ export function EbaySnapshotRecordPage({
           </div>
         </div>
       </PanelSurface>
+
+      <ListingApprovalWorkflowProcessCard
+        summary={workflowSummary}
+        loading={workflowLoading}
+        error={workflowError}
+        description="Cross-referenced from the used-gear workflow by SKU so you can see where this read-only eBay snapshot sits in the intake-to-listing pipeline."
+        emptyMessage="No used-gear workflow row is linked to this eBay snapshot yet."
+        primaryActionLabel="Open Listings"
+        onPrimaryAction={onOpenListings}
+        secondaryActionLabel={workflowRecordId ? 'Open Workflow Row' : undefined}
+        onSecondaryAction={workflowRecordId ? () => onOpenWorkflowRecord(workflowRecordId) : null}
+      />
 
       <PanelSurface>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -131,7 +210,7 @@ export function EbaySnapshotRecordPage({
               <FieldRow label="Price" value={formatMoney(resolvedOffer?.pricingSummary?.price)} />
               <FieldRow label="Include Catalog Details" value={resolvedOffer?.includeCatalogProductDetails === undefined ? '—' : resolvedOffer.includeCatalogProductDetails ? 'Yes' : 'No'} />
               <FieldRow label="Offer Status" value={resolvedOffer?.status ?? '—'} />
-              <FieldRow label="Recent Listing" value={recentListing ? 'Yes' : 'No'} />
+              <FieldRow label="Recent Listing" value={resolvedRecentListing ? 'Yes' : 'No'} />
             </div>
           </div>
           <div className="rounded-lg border border-[var(--line)] bg-white/5 p-4">
@@ -198,7 +277,7 @@ export function EbaySnapshotRecordPage({
         <div className="mt-4 space-y-4">
           {resolvedItem && <DetailJsonPanel title="Inventory Item JSON" value={resolvedItem as EbayInventoryItem} />}
           {resolvedOffer && <DetailJsonPanel title="Offer JSON" value={resolvedOffer as EbayOffer} />}
-          {recentListing && <DetailJsonPanel title="Recent Listing JSON" value={recentListing as EbayPublishedListing} />}
+          {resolvedRecentListing && <DetailJsonPanel title="Recent Listing JSON" value={resolvedRecentListing as EbayPublishedListing} />}
         </div>
       </PanelSurface>
     </div>

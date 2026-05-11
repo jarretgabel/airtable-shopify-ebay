@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+
 import { getMissingRequiredFieldNames, isMissingRequiredFieldValue } from '@/components/approval/requiredFieldStatus';
 import {
   isPriceLikeFieldName,

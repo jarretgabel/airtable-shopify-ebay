@@ -2,6 +2,9 @@ import { useState, type ReactNode } from 'react';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
+import { FormImageUploadEditor } from '@/components/tabs/FormImageUploadEditor';
+import { WorkflowImageMetadataEditor } from '@/components/tabs/WorkflowImageMetadataEditor';
+import { filterWorkflowImageMetadataByStage, replaceWorkflowImageMetadataStage } from '@/services/workflowImageMetadata';
 import {
   createTestingFormDefaults,
   testingFormFields,
@@ -15,15 +18,22 @@ import {
   submitTestingForm,
   type TestingFormCustomerReference,
   type TestingFormRecordSource,
+  type TestingFormStageContext,
   type TestingFormSubmitResult,
 } from '@/services/testingForm';
 import { useEffect } from 'react';
+import type { WorkflowImageMetadataRecord } from '@/services/workflowImageMetadata';
 
 const EMPTY_CUSTOMER_REFERENCE: TestingFormCustomerReference = {
   cosmeticNotes: '',
   functionalNotes: '',
   inclusionNotes: '',
   submittedPhotosNotes: '',
+};
+
+const EMPTY_STAGE_CONTEXT: TestingFormStageContext = {
+  existingAttachments: [],
+  imageMetadata: [],
 };
 
 type TestingOptionSets = Record<TestingFormOptionFieldName, string[]>;
@@ -65,12 +75,16 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
   const [initialFormValues, setInitialFormValues] = useState<TestingFormValues>(() => createTestingFormDefaults());
   const [recordSource, setRecordSource] = useState<TestingFormRecordSource>('inventory-directory');
   const [customerReference, setCustomerReference] = useState<TestingFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
+  const [stageContext, setStageContext] = useState<TestingFormStageContext>(EMPTY_STAGE_CONTEXT);
+  const [imageMetadata, setImageMetadata] = useState<WorkflowImageMetadataRecord[]>([]);
+  const [initialImageMetadata, setInitialImageMetadata] = useState<WorkflowImageMetadataRecord[]>([]);
   const [optionSets, setOptionSets] = useState<TestingOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<TestingFormSubmitResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadEditorResetKey, setUploadEditorResetKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,14 +101,19 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
                 source: 'inventory-directory' as const,
                 values: createTestingFormDefaults(),
                 customerReference: EMPTY_CUSTOMER_REFERENCE,
+                stageContext: EMPTY_STAGE_CONTEXT,
               }),
         ]);
         if (!cancelled) {
           setOptionSets(nextOptionSets);
           setRecordSource(nextFormValues.source);
           setCustomerReference(nextFormValues.customerReference);
+          setStageContext(nextFormValues.stageContext);
+          setImageMetadata(nextFormValues.stageContext.imageMetadata);
+          setInitialImageMetadata(nextFormValues.stageContext.imageMetadata);
           setFormValues(nextFormValues.values);
           setInitialFormValues(nextFormValues.values);
+          setUploadEditorResetKey((current) => current + 1);
         }
       } catch (error) {
         if (!cancelled) {
@@ -131,16 +150,21 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
 
     setSubmitting(true);
     try {
-      const result = await submitTestingForm(formValues, recordId, { recordSource });
+      const result = await submitTestingForm(formValues, recordId, { recordSource, imageMetadata });
       setSubmitSuccess(result);
       if (result.action === 'updated') {
         const nextValues = { ...formValues, imageFiles: [] };
         setFormValues(nextValues);
         setInitialFormValues(nextValues);
+        setInitialImageMetadata(imageMetadata);
+        setUploadEditorResetKey((current) => current + 1);
       } else {
         const nextValues = createTestingFormDefaults();
         setFormValues(nextValues);
         setInitialFormValues(nextValues);
+        setImageMetadata([]);
+        setInitialImageMetadata([]);
+        setUploadEditorResetKey((current) => current + 1);
       }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Unable to submit the Testing form.');
@@ -165,18 +189,14 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
     }
 
     if (definition.type === 'file') {
-      const files = value as File[];
       return (
-        <>
-          <input
-            className={`${FIELD_CLASS} file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--accent)] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:brightness-110`}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(event) => setFieldValue(definition.name, Array.from(event.currentTarget.files ?? []) as TestingFormValues[typeof definition.name])}
-          />
-          <p className={HELP_CLASS}>{files.length > 0 ? `${files.length} image${files.length === 1 ? '' : 's'} selected.` : 'No images selected.'}</p>
-        </>
+        <FormImageUploadEditor
+          title={definition.label}
+          description="Upload, crop, resize, watermark, rename, and compare files before they are attached to the workflow record. Saved defaults persist locally for future testing sessions."
+          disabled={submitting}
+          resetKey={uploadEditorResetKey}
+          onFilesChange={(files) => setFieldValue(definition.name, files as TestingFormValues[typeof definition.name])}
+        />
       );
     }
 
@@ -246,6 +266,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
   }
 
   const hasCustomerReference = Object.values(customerReference).some((value) => value.trim().length > 0);
+  const stageImageMetadata = filterWorkflowImageMetadataByStage(imageMetadata, 'testing');
 
   return (
     <PanelSurface>
@@ -307,10 +328,24 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           </div>
         ) : null}
 
+        <WorkflowImageMetadataEditor
+          metadata={stageImageMetadata}
+          onChange={(nextMetadata) => setImageMetadata((current) => replaceWorkflowImageMetadataStage(current, 'testing', nextMetadata))}
+          disabled={submitting}
+          title="Testing Images"
+          description="Testing edits only testing-stage images here. Photography images stay separate on the photo form, while workflow and listing views still combine both stages."
+          emptyMessage={stageContext.existingAttachments.length > 0
+            ? 'Testing images were found, but no editable testing metadata could be derived yet.'
+            : 'No testing images are attached yet. Upload and save testing images to begin drafting metadata.'}
+          className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70"
+        />
+
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
           {testingFormFields.map((field) => (
             <div key={field.airtableFieldName}>
-              <FieldShell definition={field}>{renderField(field)}</FieldShell>
+              {field.type === 'file'
+                ? renderField(field)
+                : <FieldShell definition={field}>{renderField(field)}</FieldShell>}
             </div>
           ))}
 
@@ -324,6 +359,8 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
                   setSubmitError(null);
                   setSubmitSuccess(null);
                   setFormValues(initialFormValues);
+                  setImageMetadata(initialImageMetadata);
+                  setUploadEditorResetKey((current) => current + 1);
                 }}
                 disabled={submitting}
               >

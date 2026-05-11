@@ -1,6 +1,22 @@
 import { AppPage } from '@/auth/pages';
 
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'owner' | 'processor' | 'tester' | 'photographer';
+export type AssignableUserRole = Exclude<UserRole, 'owner'>;
+
+export const USER_ROLE_OPTIONS: Array<{ value: UserRole; label: string }> = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'owner', label: 'Owner' },
+  { value: 'processor', label: 'Processor' },
+  { value: 'tester', label: 'Tester' },
+  { value: 'photographer', label: 'Photographer' },
+];
+
+export const ASSIGNABLE_USER_ROLE_OPTIONS: Array<{ value: AssignableUserRole; label: string }> = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'processor', label: 'Processor' },
+  { value: 'tester', label: 'Tester' },
+  { value: 'photographer', label: 'Photographer' },
+];
 
 export const USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS = [
   {
@@ -59,18 +75,37 @@ export interface UserNotificationPreferences {
   workflowEvents: UsedGearWorkflowNotificationPreferences;
 }
 
-export function createDefaultUserNotificationPreferences(): UserNotificationPreferences {
+export function createDefaultUserNotificationPreferences(role: UserRole = 'processor'): UserNotificationPreferences {
+  const workflowEvents = createDefaultUsedGearWorkflowNotificationPreferences();
+
+  if (role === 'admin' || role === 'owner' || role === 'processor') {
+    workflowEvents.pendingReview = true;
+    workflowEvents.processing = true;
+    workflowEvents.testing = true;
+    workflowEvents.photography = true;
+    workflowEvents.preListingReview = true;
+    workflowEvents.approvedForPublish = true;
+  }
+
+  if (role === 'tester') {
+    workflowEvents.testing = true;
+  }
+
+  if (role === 'photographer') {
+    workflowEvents.photography = true;
+  }
+
   return {
     infoEnabled: true,
     successEnabled: true,
     warningEnabled: true,
     errorEnabled: true,
     autoDismissMs: 5000,
-    workflowEvents: createDefaultUsedGearWorkflowNotificationPreferences(),
+    workflowEvents,
   };
 }
 
-export const DEFAULT_USER_NOTIFICATION_PREFERENCES: UserNotificationPreferences = createDefaultUserNotificationPreferences();
+export const DEFAULT_USER_NOTIFICATION_PREFERENCES: UserNotificationPreferences = createDefaultUserNotificationPreferences('processor');
 
 export interface AppUser {
   id: string;
@@ -87,7 +122,7 @@ export interface AppUser {
 export interface CreateUserInput {
   name: string;
   email: string;
-  role: UserRole;
+  role: AssignableUserRole;
   password: string;
   allowedPages: AppPage[];
 }

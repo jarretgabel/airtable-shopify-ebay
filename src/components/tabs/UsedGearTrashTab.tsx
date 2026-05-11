@@ -49,7 +49,7 @@ export function UsedGearTrashTab({ currentUserName, onOpenWorkflowRecord }: Used
       </section>
 
       <UsedGearTrashSection
-        currentUserName={currentUserName}
+        onOpenReviewRecord={(recordId) => navigate(`/trash-review/review/${encodeURIComponent(recordId)}${location.search}`, { replace: false })}
         onOpenWorkflowRecord={onOpenWorkflowRecord}
         searchTerm={workflowTrashSearch}
         onSearchTermChange={updateRouteState}

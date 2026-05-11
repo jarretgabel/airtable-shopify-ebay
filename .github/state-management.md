@@ -11,7 +11,7 @@
 | **Custom Hook** | Complex state logic with side effects (data fetching, polling) |
 
 ### Store Organization
-Each Zustand store lives in `src/stores/{domain}/` with three files:
+Each Zustand store lives in `src/stores/{domain}/` with dedicated helper files and a mirrored unit test under `tests/unit`:
 
 ```
 src/stores/approval/
@@ -19,8 +19,9 @@ src/stores/approval/
 ├── approvalStoreTypes.ts      # interface Store { ... }
 ├── approvalStoreConstants.ts  # CONSTANTS, fallback values
 ├── approvalStoreFieldUtils.ts # Pure helper functions
-└── approvalStore.test.ts      # Unit tests for store logic
 ```
+
+Corresponding unit tests live under `tests/unit/src/stores/{domain}/`.
 
 ### Store File Structure
 
@@ -308,9 +309,9 @@ async loadRecords(tableReference?: string) {
 Unit test store logic separately from React:
 
 ```typescript
-// src/stores/approval/approvalStore.test.ts
+// tests/unit/src/stores/approval/approvalStore.test.ts
 import { renderHook, act } from '@testing-library/react';
-import { useApprovalStore } from './approvalStore';
+import { useApprovalStore } from '@/stores/approval/approvalStore';
 
 describe('useApprovalStore', () => {
   beforeEach(() => {

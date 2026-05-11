@@ -1,6 +1,6 @@
 ---
 description: Use when adding or changing routes, menu placement, access-control wiring, or navigation grouping for Inventory Processing forms.
-applyTo: src/auth/pages.ts,src/app/appNavigation.ts,src/app/appShellNav.ts,src/app/AppTabContent.tsx,src/components/app/AppFrameHeader.tsx,src/components/app/AppFrame.tsx,src/components/app/appFrameTypes.ts,src/app/useAppShellControls.ts,src/stores/auth/authContextHelpers.ts,src/app/useAppRouteState.test.ts,src/stores/auth/authContextHelpers.test.ts,docs/forms/**
+applyTo: src/auth/pages.ts,src/app/appNavigation.ts,src/app/appShellNav.ts,src/app/AppTabContent.tsx,src/components/app/AppFrameHeader.tsx,src/components/app/AppFrame.tsx,src/components/app/appFrameTypes.ts,src/app/useAppShellControls.ts,src/stores/auth/authContextHelpers.ts,tests/unit/src/app/useAppRouteState.test.ts,tests/unit/src/stores/auth/authContextHelpers.test.ts,docs/forms/**
 ---
 
 # Inventory Processing Routing Pattern

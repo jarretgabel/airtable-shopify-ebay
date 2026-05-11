@@ -12,6 +12,7 @@ interface AppNavigationHandlers {
   navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToInventoryRecord: (recordId: string, replace?: boolean) => void;
+  navigateToWorkflowPriceEditor: (recordId: string, replace?: boolean) => void;
   navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
   navigateToInventoryList: (replace?: boolean) => void;
   navigateToInventoryPostPublishBucket: (
@@ -31,10 +32,11 @@ interface AppNavigationHandlers {
 
 function scrollToPageTop(): void {
   if (typeof window === 'undefined') return;
-  // Defer until after React commits the new route so the scroll animates
-  // over the incoming content rather than snapping over the outgoing one.
+  // Defer until after React commits the new route, but avoid animating route
+  // transitions because late-loading dashboard content can cause visible
+  // scroll-anchor churn during a smooth scroll.
   requestAnimationFrame(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, left: 0 });
   });
 }
 
@@ -63,7 +65,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
   }, [navigate]);
 
   const navigateToJotformReviewGroup = useCallback((groupId: string, replace = false): void => {
-    navigate(`/jotform/review/${encodeURIComponent(groupId)}`, { replace });
+    navigate(`/parking-lot-1/review/${encodeURIComponent(groupId)}`, { replace });
     scrollToPageTop();
   }, [navigate]);
 
@@ -85,6 +87,11 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
 
   const navigateToInventoryRecord = useCallback((recordId: string, replace = false): void => {
     navigate(`/inventory/${encodeURIComponent(recordId)}`, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToWorkflowPriceEditor = useCallback((recordId: string, replace = false): void => {
+    navigate(`/inventory/workflow/${encodeURIComponent(recordId)}/price`, { replace });
     scrollToPageTop();
   }, [navigate]);
 
@@ -166,6 +173,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     navigateToTestingForm,
     navigateToPhotosForm,
     navigateToInventoryRecord,
+    navigateToWorkflowPriceEditor,
     navigateToUsedGearWorkflowRecord,
     navigateToInventoryList,
     navigateToInventoryPostPublishBucket,

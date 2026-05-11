@@ -30,6 +30,6 @@
       "@contracts/*": ["aws/src/shared/contracts/*"]
     }
   },
-  "include": ["src", "aws/src/shared/contracts/**/*.ts"],
+  "include": ["src", "aws/src/shared/contracts/**/*.ts", "tests/unit/src/**/*.ts", "tests/unit/src/**/*.tsx"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

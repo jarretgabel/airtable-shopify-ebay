@@ -35,9 +35,10 @@ src/services/{platform}/
 ├── {feature}Config.ts        # Env vars, constants, initialization
 ├── {feature}Request.ts       # Request builders, payload shapes
 ├── {feature}Mappers.ts       # Response transformations
-├── {feature}Types.ts         # Domain types
-└── {feature}.test.ts         # Integration and unit tests
+└── {feature}Types.ts         # Domain types
 ```
+
+Corresponding unit tests live under `tests/unit/src/services/{platform}/{feature}.test.ts`.
 
 ## Main Entry Point Pattern
 
@@ -356,9 +357,9 @@ export async function apiCall<T>(
 Test at three levels: request builders, mappers, and integration:
 
 ```typescript
-// src/services/ebay/mappers.test.ts
-import { mapListingResponse } from './mappers';
-import { createMockApiResponse } from '../test-helpers';
+// tests/unit/src/services/ebay/mappers.test.ts
+import { mapListingResponse } from '@/services/ebay/mappers';
+import { createMockApiResponse } from '@/services/ebay/test-helpers';
 
 describe('mapListingResponse', () => {
   it('should map valid API response to listing', () => {

@@ -97,3 +97,4 @@ This phase carries the authoritative item record through processing with custome
 - [x] Add direct deep links from workflow notifications to the most relevant queue group or record.
 - [x] Add clearer blocked-state messaging that links straight to the missing field or confirmation inside the active form.
 - [ ] Add optional team landing views if the shared Inventory workflow surface becomes too dense for daily processing work.
+- [x] Implement the shared workflow image metadata model described in `workflow-image-metadata-plan.md` so Testing, Photos, and Listings all consume the same per-image alt text and ordering data.

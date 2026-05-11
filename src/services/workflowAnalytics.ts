@@ -1,4 +1,5 @@
 import { checkOptionalEnv } from '@/config/runtimeEnv';
+import { postJson } from '@/services/app-api/http';
 
 export type WorkflowEventName =
   | 'tab_viewed'
@@ -33,21 +34,7 @@ function isAnalyticsEnabled(): boolean {
 function postToEndpoint(event: WorkflowEvent): void {
   if (typeof window === 'undefined') return;
 
-  const body = JSON.stringify(event);
-  const blob = new Blob([body], { type: 'application/json' });
-  const endpoint = ANALYTICS_API_PATH;
-
-  if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-    navigator.sendBeacon(endpoint, blob);
-    return;
-  }
-
-  void fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-    keepalive: true,
-  }).catch(() => {
+  void postJson<{ accepted: boolean }>(ANALYTICS_API_PATH, event).catch(() => {
     // Ignore network failures in non-blocking analytics path.
   });
 }

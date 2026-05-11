@@ -120,12 +120,14 @@ export function DashboardSectionPanel({
 export function DashboardSubPanel({
   title,
   children,
+  className,
 }: {
   title?: ReactNode;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+    <section className={`flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5${className ? ` ${className}` : ''}`}>
       {title && (
         <h3 className="m-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-bold text-[var(--ink)]">
           {title}

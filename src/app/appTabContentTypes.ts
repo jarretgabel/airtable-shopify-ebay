@@ -10,20 +10,25 @@ import type { Tab } from '@/app/appNavigation';
 import type { RuntimeFeatureMap } from '@/config/runtimeCapabilities';
 import type { UsedGearWorkflowAnalyticsSnapshotState } from '@/hooks/useUsedGearWorkflowAnalyticsSnapshot';
 import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
+import type { UserRole } from '@/stores/auth/authTypes';
 
 export interface AppTabContentProps {
   activeTab: Tab;
   jotformReviewGroupId: string | null;
+  jotformReviewRecordId: string | null;
+  trashReviewRecordId: string | null;
   incomingGearRecordId: string | null;
   testingRecordId: string | null;
   photosRecordId: string | null;
   inventoryRecordId: string | null;
   usedGearWorkflowRecordId: string | null;
+  workflowPriceEditorRecordId: string | null;
   listingsRecordId: string | null;
   shopifyListingsRecordId: string | null;
   ebayListingsRecordId: string | null;
   userRecordId: string | null;
   navigateToInventoryRecord: (recordId: string, replace?: boolean) => void;
+  navigateToWorkflowPriceEditor: (recordId: string, replace?: boolean) => void;
   navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
   navigateToInventoryList: (replace?: boolean) => void;
   navigateToInventoryPostPublishBucket: (
@@ -46,6 +51,7 @@ export interface AppTabContentProps {
   runtimeFeatures: RuntimeFeatureMap;
   metrics: ReturnType<typeof useDashboardMetrics>;
   accessiblePages: Tab[];
+  currentUserRole: UserRole;
   currentUserName: string;
   aiProvider: 'github' | 'openai' | 'backend' | 'none';
   usersCount: number;
@@ -54,6 +60,7 @@ export interface AppTabContentProps {
   displayValue: (value: unknown) => string;
   hasValue: (value: unknown) => boolean;
   recordTitle: (fields: Record<string, unknown>) => string;
+  airtableRefetch: () => Promise<void>;
   atLoading: boolean;
   atError: Error | null;
   products: ReturnType<typeof useShopifyProducts>['products'];

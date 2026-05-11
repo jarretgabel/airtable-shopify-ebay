@@ -25,8 +25,11 @@ import {
   isGenericSharedKeyFeaturesFieldName,
   isHiddenCombinedFieldName,
   isItemZipCodeField,
+  isInternalReferenceListingFieldName,
   isRemovedCombinedEbayPriceFieldName,
   isShopifyOnlyFieldName,
+  isSystemManagedListingFieldName,
+  isWorkflowOnlyListingFieldName,
 } from '@/components/approval/listingApprovalFieldHelpers';
 import { CONDITION_FIELD, toFormValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
@@ -140,14 +143,8 @@ export function useListingApprovalCombinedFieldState({
 
   const combinedEbayTestingNotesFieldName = useMemo(() => {
     if (!isCombinedApproval) return '';
-    const testingNotesField = selectedRecordFieldNames.find((fieldName) =>
-      EBAY_TESTING_NOTES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
-    );
-    if (testingNotesField) return testingNotesField;
-
     return selectedRecordFieldNames.find((fieldName) =>
-      !isGenericSharedKeyFeaturesFieldName(fieldName)
-      && EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
+      EBAY_TESTING_NOTES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
     ) ?? '';
   }, [isCombinedApproval, selectedRecordFieldNames]);
 
@@ -186,6 +183,9 @@ export function useListingApprovalCombinedFieldState({
     return selectedRecordFieldNames.filter((fieldName) => {
       const normalized = fieldName.trim().toLowerCase();
       if (isHiddenCombinedFieldName(fieldName)) return false;
+      if (isWorkflowOnlyListingFieldName(fieldName)) return false;
+      if (isSystemManagedListingFieldName(fieldName)) return false;
+      if (isInternalReferenceListingFieldName(fieldName)) return false;
       if (!isShopifyOnlyFieldName(fieldName) || isEbayOnlyFieldName(fieldName)) return false;
       if (chosenShopifyPriceFieldName && shopifyPriceFields.includes(fieldName) && fieldName !== chosenShopifyPriceFieldName) return false;
       if (normalized === 'product type') return false;
@@ -200,6 +200,9 @@ export function useListingApprovalCombinedFieldState({
       const normalized = fieldName.trim().toLowerCase();
       if (isRemovedCombinedEbayPriceFieldName(fieldName)) return false;
       if (isHiddenCombinedFieldName(fieldName)) return false;
+      if (isWorkflowOnlyListingFieldName(fieldName)) return false;
+      if (isSystemManagedListingFieldName(fieldName)) return false;
+      if (isInternalReferenceListingFieldName(fieldName)) return false;
       if (!isEbayOnlyFieldName(fieldName) || isShopifyOnlyFieldName(fieldName)) return false;
       if (normalized.includes('primary category') || normalized.includes('secondary category')) return false;
       if (EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
@@ -226,6 +229,9 @@ export function useListingApprovalCombinedFieldState({
         || normalized === 'ebay offer auction start price value';
 
       if (isHiddenCombinedFieldName(fieldName)) return false;
+      if (isWorkflowOnlyListingFieldName(fieldName)) return false;
+      if (isSystemManagedListingFieldName(fieldName)) return false;
+      if (isInternalReferenceListingFieldName(fieldName)) return false;
       if (shopifyOnlySet.has(normalized) || ebayOnlySet.has(normalized)) return false;
       if (isItemZipCodeField(fieldName)) return false;
       if (isCombinedEbayPriceField) return false;

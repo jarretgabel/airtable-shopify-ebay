@@ -10,6 +10,7 @@ This section documents the local forms under the `Inventory Processing` menu:
 - [Used Gear Workflow: Phase 5 Post-Publish Lifecycle](../used-gear-workflow/phase-5-post-publish-lifecycle.md)
 - [Used Gear Workflow: Phase 6 Marketplace Expansion](../used-gear-workflow/phase-6-marketplace-expansion.md)
 - [Used Gear Workflow: Data Model And Approvals](../used-gear-workflow/data-model-and-approvals.md)
+- [Used Gear Workflow: Workflow Image Metadata](../used-gear-workflow/workflow-image-metadata-plan.md)
 - [Used Gear Workflow: UI Surface Map](../used-gear-workflow/ui-surface-map.md)
 - [Incoming Gear Instructions](./incoming-gear.instructions.md)
 - [Testing Instructions](./testing.instructions.md)
@@ -21,7 +22,8 @@ This section documents the local forms under the `Inventory Processing` menu:
 - Both forms create records in the `SB Inventory` Airtable table.
 - Both forms are local React forms, not Airtable embeds.
 - Both forms load select options from Airtable table metadata at runtime.
-- Both forms upload images to the `Images (Eduardo)` attachment field after the record is created.
+- Both forms upload images to the `Images` attachment field after the record is created.
+- Shared workflow image metadata is documented in `Workflow Image Metadata` and uses the live `Workflow Image Metadata JSON` field alongside `Images`.
 
 ## Shared Airtable Target
 

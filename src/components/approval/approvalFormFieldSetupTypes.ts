@@ -1,4 +1,5 @@
 import type { EbayListingTemplateId } from './approvalFormFieldsEbayHelpersBasic';
+import type { WorkflowListingImageAttachment } from './workflowListingImageHelpers';
 
 export type ApprovalChannel = 'shopify' | 'ebay' | 'combined' | undefined;
 export type ApprovalFieldKind = 'boolean' | 'number' | 'json' | 'text';
@@ -20,4 +21,9 @@ export interface ApprovalFormFieldSetupParams {
   setFormValue: (fieldName: string, value: string) => void;
   selectedEbayTemplateId?: string;
   onEbayTemplateIdChange?: (templateId: EbayListingTemplateId) => void;
+}
+
+export interface WorkflowListingImageSelectionSupport {
+  workflowImageAttachments: WorkflowListingImageAttachment[];
+  selectedWorkflowImageUrls: string[];
 }

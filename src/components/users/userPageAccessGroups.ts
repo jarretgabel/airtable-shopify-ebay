@@ -26,4 +26,10 @@ export const USER_PAGE_ACCESS_GROUPS: UserPageAccessGroup[] = [
     description: 'Dedicated queue pages for testing, photography, and pre-listing review handoffs.',
     pages: ['testing-queue', 'photography-queue', 'pre-listing-queue'],
   },
+  {
+    key: 'forms',
+    title: 'Workflow Forms',
+    description: 'Direct forms used by intake, testing, and photography operators to complete stage work.',
+    pages: ['incoming-gear', 'testing', 'photos'],
+  },
 ];

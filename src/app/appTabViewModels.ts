@@ -8,6 +8,7 @@ import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwne
 import type { EbayListingsState } from '@/hooks/useEbayListings';
 import type { EbayRuntimeConfig } from '@/services/app-api/ebay';
 import type { useShopifyProducts } from '@/hooks/useShopifyProducts';
+import type { UserRole } from '@/stores/auth/authTypes';
 
 export interface DashboardTabViewModel {
   loading: {
@@ -88,6 +89,8 @@ export interface DashboardTabViewModel {
     marketListingCount: number;
     userCount: number;
     adminCount: number;
+    currentUserRole: UserRole;
+    canViewSensitiveMetrics: boolean;
   };
   status: {
     sources: DashboardSourceStatus[];
@@ -112,6 +115,9 @@ export interface EbayTabViewModel {
   };
   config: {
     runtimeConfig: EbayRuntimeConfig | null;
+  };
+  snapshot: {
+    source: 'live' | 'airtable';
   };
   inventory: {
     items: EbayListingsState['inventoryItems'];

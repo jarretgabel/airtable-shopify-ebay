@@ -150,7 +150,7 @@ export function UsedGearPendingReviewGroupPage({
     };
   }, [groupId]);
 
-  const records = group?.records ?? [];
+  const records = useMemo(() => group?.records ?? [], [group]);
   const parsedGrandTotal = parseCurrency(confirmedGrandTotal);
   const groupNeedsSubmissionId = records.length > 1 && submissionGroupId.trim().length === 0;
 

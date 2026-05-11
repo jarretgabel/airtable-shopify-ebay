@@ -26,12 +26,15 @@ const AirtableTab = lazy(async () => ({ default: (await import('@/components/tab
 const AirtableEmbeddedForm = lazy(async () => ({ default: (await import('@/components/tabs/AirtableEmbeddedForm')).AirtableEmbeddedForm }));
 const InventoryRecordEditorPage = lazy(async () => ({ default: (await import('@/components/tabs/InventoryRecordEditorPage')).InventoryRecordEditorPage }));
 const UsedGearWorkflowRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearWorkflowRecordPage')).UsedGearWorkflowRecordPage }));
+const WorkflowPriceEditorPage = lazy(async () => ({ default: (await import('../components/tabs/WorkflowPriceEditorPage')).WorkflowPriceEditorPage }));
 const UsedGearPendingReviewGroupPage = lazy(async () => ({ default: (await import('../components/tabs/UsedGearPendingReviewGroupPage')).UsedGearPendingReviewGroupPage }));
+const UsedGearPendingReviewRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearPendingReviewRecordPage')).UsedGearPendingReviewRecordPage }));
 const JotformTab = lazy(async () => ({ default: (await import('@/components/tabs/JotformTab')).JotformTab }));
 const MarketTab = lazy(async () => ({ default: (await import('@/components/tabs/MarketTab')).MarketTab }));
 const PhotosFormTab = lazy(async () => ({ default: (await import('@/components/tabs/PhotosFormTab')).PhotosFormTab }));
 const TestingFormTab = lazy(async () => ({ default: (await import('@/components/tabs/TestingFormTab')).TestingFormTab }));
 const UsedGearLotTwoTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoTab')).UsedGearLotTwoTab }));
+const UsedGearTrashReviewRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashReviewRecordPage')).UsedGearTrashReviewRecordPage }));
 const UsedGearTrashTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashTab')).UsedGearTrashTab }));
 const UsedGearWorkflowQueueTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearWorkflowQueueTab')).UsedGearWorkflowQueueTab }));
 
@@ -46,6 +49,117 @@ function TabLoadingFallback({ tabLabel }: { tabLabel: string }) {
         <div className="grid gap-3 md:grid-cols-2">
           <div className="h-20 animate-pulse rounded-xl bg-white/5" />
           <div className="h-20 animate-pulse rounded-xl bg-white/5" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DashboardTabLoadingFallback() {
+  const sectionPanelClass = 'rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]';
+
+  return (
+    <section className="flex flex-col gap-12 pt-1" aria-hidden="true">
+      <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(7,17,28,0.94),rgba(7,17,28,0.82))] px-3 py-3 shadow-[0_18px_40px_rgba(2,6,23,0.35)] backdrop-blur-md">
+        <div className="flex min-w-max items-center gap-2">
+          {Array.from({ length: 6 }, (_, index) => (
+            <div key={index} className="h-11 w-28 animate-pulse rounded-full bg-white/8" />
+          ))}
+        </div>
+      </div>
+      <div className="rounded-[14px] border border-amber-400/20 bg-amber-500/8 px-4 py-4 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]">
+        <div className="h-3 w-40 animate-pulse rounded-md bg-amber-200/15" />
+        <div className="mt-3 h-4 w-[min(42rem,85%)] animate-pulse rounded-md bg-white/10" />
+        <div className="mt-2 h-4 w-[min(32rem,70%)] animate-pulse rounded-md bg-white/10" />
+      </div>
+      <div className={sectionPanelClass}>
+        <div className="mb-4 h-8 w-32 animate-pulse rounded-md bg-white/10" />
+        <div className="space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+          <div className="h-6 w-36 animate-pulse rounded-md bg-white/10" />
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }, (_, index) => (
+              <div key={index} className="h-40 animate-pulse rounded-[14px] border border-[var(--line)] bg-white/5" />
+            ))}
+          </div>
+        </div>
+        <div className="mt-4 space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+          <div className="h-6 w-40 animate-pulse rounded-md bg-white/10" />
+          {Array.from({ length: 3 }, (_, index) => (
+            <div key={index} className="h-20 animate-pulse rounded-[12px] border border-[var(--line)] bg-white/5" />
+          ))}
+        </div>
+        <div className="mt-4 space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+          <div className="h-6 w-56 animate-pulse rounded-md bg-white/10" />
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            {Array.from({ length: 4 }, (_, index) => (
+              <div key={index} className="h-20 animate-pulse rounded-[12px] border border-[var(--line)] bg-white/5" />
+            ))}
+          </div>
+          <div className="grid gap-4 xl:grid-cols-4">
+            {Array.from({ length: 4 }, (_, index) => (
+              <div key={index} className="h-72 animate-pulse rounded-[12px] border border-[var(--line)] bg-white/5" />
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className={sectionPanelClass}>
+        <div className="mb-4 h-8 w-28 animate-pulse rounded-md bg-white/10" />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="h-72 animate-pulse rounded-[14px] border border-[var(--line)] bg-white/5" />
+          <div className="h-72 animate-pulse rounded-[14px] border border-[var(--line)] bg-white/5" />
+        </div>
+      </div>
+      <div className={sectionPanelClass}>
+        <div className="mb-4 h-8 w-24 animate-pulse rounded-md bg-white/10" />
+        <div className="space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+          <div className="h-6 w-44 animate-pulse rounded-md bg-white/10" />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {Array.from({ length: 3 }, (_, index) => (
+              <div key={index} className="h-20 animate-pulse rounded-[14px] border border-[var(--line)] bg-white/5" />
+            ))}
+          </div>
+          <div className="h-72 animate-pulse rounded-[18px] border border-[var(--line)] bg-white/5" />
+        </div>
+        <div className="mt-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+          <div className="h-6 w-48 animate-pulse rounded-md bg-white/10" />
+          <div className="mt-4 space-y-3">
+            {Array.from({ length: 8 }, (_, index) => (
+              <div key={index} className="h-6 animate-pulse rounded-md bg-white/5" />
+            ))}
+          </div>
+        </div>
+        <div className="mt-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+          <div className="h-6 w-44 animate-pulse rounded-md bg-white/10" />
+          <div className="mt-4 h-80 animate-pulse rounded-[14px] bg-white/5" />
+        </div>
+      </div>
+      <div className={sectionPanelClass}>
+        <div className="mb-4 h-8 w-24 animate-pulse rounded-md bg-white/10" />
+        <div className="space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {Array.from({ length: 4 }, (_, index) => (
+              <div key={index} className="h-20 animate-pulse rounded-[12px] border border-[var(--line)] bg-white/5" />
+            ))}
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            {Array.from({ length: 2 }, (_, index) => (
+              <div key={index} className="h-72 animate-pulse rounded-[16px] border border-[var(--line)] bg-white/5" />
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className={sectionPanelClass}>
+        <div className="mb-4 h-8 w-20 animate-pulse rounded-md bg-white/10" />
+        <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 2 }, (_, index) => (
+            <div key={index} className="h-72 animate-pulse rounded-[16px] border border-[var(--line)] bg-white/5" />
+          ))}
+        </div>
+      </div>
+      <div className={sectionPanelClass}>
+        <div className="mb-4 h-8 w-24 animate-pulse rounded-md bg-white/10" />
+        <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="h-56 animate-pulse rounded-[16px] border border-[var(--line)] bg-white/5" />
         </div>
       </div>
     </section>
@@ -108,11 +222,14 @@ function FeatureUnavailableTab({ title, message }: { title: string; message: str
 export function AppTabContent({
   activeTab,
   jotformReviewGroupId,
+  jotformReviewRecordId,
+  trashReviewRecordId,
   incomingGearRecordId,
   testingRecordId,
   photosRecordId,
   inventoryRecordId,
   usedGearWorkflowRecordId,
+  workflowPriceEditorRecordId,
   listingsRecordId,
   shopifyListingsRecordId,
   ebayListingsRecordId,
@@ -126,6 +243,7 @@ export function AppTabContent({
   navigateToPhotosForm,
   navigateToListingsRecord,
   navigateToListingsList,
+  navigateToWorkflowPriceEditor,
   navigateToShopifyList,
   navigateToShopifyRecord,
   navigateToEbayList,
@@ -136,11 +254,13 @@ export function AppTabContent({
   runtimeFeatures,
   metrics,
   accessiblePages,
+  currentUserRole,
   currentUserName,
   aiProvider,
   usersCount,
   adminCount,
   nonEmptyListings,
+  airtableRefetch,
   atLoading,
   atError,
   products,
@@ -199,11 +319,14 @@ export function AppTabContent({
   const deferredRouteState = useDeferredValue({
     activeTab,
     jotformReviewGroupId,
+    jotformReviewRecordId,
+    trashReviewRecordId,
     incomingGearRecordId,
     testingRecordId,
     photosRecordId,
     inventoryRecordId,
     usedGearWorkflowRecordId,
+    workflowPriceEditorRecordId,
     listingsRecordId,
     shopifyListingsRecordId,
     ebayListingsRecordId,
@@ -212,10 +335,13 @@ export function AppTabContent({
   const isRouteTransitionPending = deferredRouteState.activeTab !== activeTab
     || deferredRouteState.incomingGearRecordId !== incomingGearRecordId
     || deferredRouteState.jotformReviewGroupId !== jotformReviewGroupId
+    || deferredRouteState.jotformReviewRecordId !== jotformReviewRecordId
+    || deferredRouteState.trashReviewRecordId !== trashReviewRecordId
     || deferredRouteState.testingRecordId !== testingRecordId
     || deferredRouteState.photosRecordId !== photosRecordId
     || deferredRouteState.inventoryRecordId !== inventoryRecordId
     || deferredRouteState.usedGearWorkflowRecordId !== usedGearWorkflowRecordId
+    || deferredRouteState.workflowPriceEditorRecordId !== workflowPriceEditorRecordId
     || deferredRouteState.listingsRecordId !== listingsRecordId
     || deferredRouteState.shopifyListingsRecordId !== shopifyListingsRecordId
     || deferredRouteState.ebayListingsRecordId !== ebayListingsRecordId
@@ -232,6 +358,9 @@ export function AppTabContent({
     ebayRecentListings,
     ebayTotal,
     ebayRefetch,
+    airtableRefetch,
+    nonEmptyListings,
+    runtimeFeatures,
   });
 
   const dashboardViewModel = buildDashboardTabViewModel({
@@ -247,6 +376,7 @@ export function AppTabContent({
     totalNewSubmissions,
     metrics,
     accessiblePages,
+    currentUserRole,
     approvalLoading,
     approvalError,
     approvalTotal,
@@ -342,9 +472,6 @@ export function AppTabContent({
         }
         return <CombinedListingsApprovalTab viewModel={listingsViewModel} />;
       case 'ebay':
-        if (!runtimeFeatures.ebay.available && runtimeFeatures.ebay.message) {
-          return <FeatureUnavailableTab title="eBay unavailable" message={runtimeFeatures.ebay.message} />;
-        }
         if (deferredRouteState.ebayListingsRecordId) {
           return (
             <EbaySnapshotRecordPage
@@ -352,6 +479,7 @@ export function AppTabContent({
               viewModel={ebayViewModel}
               onBackToSnapshot={() => navigateToEbayList()}
               onOpenListings={() => navigateToListingsList()}
+              onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
             />
           );
         }
@@ -381,7 +509,15 @@ export function AppTabContent({
               onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
               onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
               onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
-              onOpenInventoryEditor={(recordId) => navigateToInventoryRecord(recordId)}
+              onOpenInventoryEditor={(recordId) => navigateToWorkflowPriceEditor(recordId)}
+            />
+          );
+        }
+        if (deferredRouteState.workflowPriceEditorRecordId) {
+          return (
+            <WorkflowPriceEditorPage
+              recordId={deferredRouteState.workflowPriceEditorRecordId}
+              onBackToWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
             />
           );
         }
@@ -408,6 +544,7 @@ export function AppTabContent({
               viewModel={shopifyViewModel}
               onBackToSnapshot={() => navigateToShopifyList()}
               onOpenListings={() => navigateToListingsList()}
+              onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
             />
           );
         }
@@ -440,11 +577,20 @@ export function AppTabContent({
             />
           );
         }
+        if (deferredRouteState.jotformReviewRecordId) {
+          return (
+            <UsedGearPendingReviewRecordPage
+              currentUserName={currentUserName}
+              recordId={deferredRouteState.jotformReviewRecordId}
+              onOpenIncomingGearForm={(recordId: string) => navigateToIncomingGearForm(recordId)}
+              onOpenWorkflowRecord={(recordId: string) => navigateToUsedGearWorkflowRecord(recordId)}
+            />
+          );
+        }
         return (
           <JotformTab
             viewModel={jotformViewModel}
             currentUserName={currentUserName}
-            onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
             onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
           />
         );
@@ -459,6 +605,15 @@ export function AppTabContent({
           />
         );
       case 'trash-review':
+        if (deferredRouteState.trashReviewRecordId) {
+          return (
+            <UsedGearTrashReviewRecordPage
+              currentUserName={currentUserName}
+              recordId={deferredRouteState.trashReviewRecordId}
+              onOpenWorkflowRecord={(recordId: string) => navigateToUsedGearWorkflowRecord(recordId)}
+            />
+          );
+        }
         return (
           <UsedGearTrashTab
             currentUserName={currentUserName}
@@ -514,7 +669,7 @@ export function AppTabContent({
         </div>
       )}
       <div className={isRouteTransitionPending ? 'opacity-95 transition-opacity' : 'transition-opacity'} aria-busy={isRouteTransitionPending}>
-        <Suspense fallback={<TabLoadingFallback tabLabel={getTabLoadingLabel(deferredRouteState.activeTab)} />}>
+        <Suspense fallback={deferredRouteState.activeTab === 'dashboard' ? <DashboardTabLoadingFallback /> : <TabLoadingFallback tabLabel={getTabLoadingLabel(deferredRouteState.activeTab)} />}>
           {renderActiveTab()}
         </Suspense>
       </div>

@@ -2,6 +2,9 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
+import { FormImageUploadEditor } from '@/components/tabs/FormImageUploadEditor';
+import { WorkflowImageMetadataEditor } from '@/components/tabs/WorkflowImageMetadataEditor';
+import { filterWorkflowImageMetadataByStage, replaceWorkflowImageMetadataStage } from '@/services/workflowImageMetadata';
 import {
   createPhotosFormDefaults,
   photosFormFields,
@@ -19,6 +22,7 @@ import {
   type PhotosFormStageContext,
   type PhotosFormSubmitResult,
 } from '@/services/photosForm';
+import type { WorkflowImageMetadataRecord } from '@/services/workflowImageMetadata';
 
 const EMPTY_CUSTOMER_REFERENCE: PhotosFormCustomerReference = {
   cosmeticNotes: '',
@@ -31,6 +35,7 @@ const EMPTY_STAGE_CONTEXT: PhotosFormStageContext = {
   inventoryNotes: '',
   testingNotes: '',
   existingAttachments: [],
+  imageMetadata: [],
 };
 
 type PhotosOptionSets = Record<PhotosFormOptionFieldName, string[]>;
@@ -71,6 +76,7 @@ function buildApplicableIncludedItems(values: PhotosFormValues): InclusionConfir
 
 function validateForm(
   values: PhotosFormValues,
+  recordSource: PhotosFormRecordSource,
   stageContext: PhotosFormStageContext,
   inclusionConfirmations: Partial<Record<InclusionConfirmationKey, boolean>>,
 ): string | null {
@@ -80,7 +86,7 @@ function validateForm(
   if (!values.componentType.trim()) return 'Component Type is required.';
   if (!values.photoDate.trim()) return 'Photo Date is required.';
   if (!values.status.trim()) return 'Status is required.';
-  if (values.imageFiles.length === 0 && stageContext.existingAttachments.length === 0) {
+  if (recordSource !== 'used-gear-workflow' && values.imageFiles.length === 0 && stageContext.existingAttachments.length === 0) {
     return 'Upload at least one image before submitting the Photos form.';
   }
 
@@ -120,6 +126,8 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
   const [recordSource, setRecordSource] = useState<PhotosFormRecordSource>('inventory-directory');
   const [customerReference, setCustomerReference] = useState<PhotosFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
   const [stageContext, setStageContext] = useState<PhotosFormStageContext>(EMPTY_STAGE_CONTEXT);
+  const [imageMetadata, setImageMetadata] = useState<WorkflowImageMetadataRecord[]>([]);
+  const [initialImageMetadata, setInitialImageMetadata] = useState<WorkflowImageMetadataRecord[]>([]);
   const [inclusionConfirmations, setInclusionConfirmations] = useState<Partial<Record<InclusionConfirmationKey, boolean>>>({});
   const [optionSets, setOptionSets] = useState<PhotosOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -127,6 +135,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<PhotosFormSubmitResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadEditorResetKey, setUploadEditorResetKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -151,9 +160,12 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
           setRecordSource(nextFormValues.source);
           setCustomerReference(nextFormValues.customerReference);
           setStageContext(nextFormValues.stageContext);
+          setImageMetadata(nextFormValues.stageContext.imageMetadata);
+          setInitialImageMetadata(nextFormValues.stageContext.imageMetadata);
           setInclusionConfirmations({});
           setFormValues(nextFormValues.values);
           setInitialFormValues(nextFormValues.values);
+          setUploadEditorResetKey((current) => current + 1);
         }
       } catch (error) {
         if (!cancelled) {
@@ -182,7 +194,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     setSubmitError(null);
     setSubmitSuccess(null);
 
-    const validationError = validateForm(formValues, stageContext, inclusionConfirmations);
+    const validationError = validateForm(formValues, recordSource, stageContext, inclusionConfirmations);
     if (validationError) {
       setSubmitError(validationError);
       return;
@@ -190,16 +202,21 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
 
     setSubmitting(true);
     try {
-      const result = await submitPhotosForm(formValues, recordId, { recordSource });
+      const result = await submitPhotosForm(formValues, recordId, { recordSource, imageMetadata });
       setSubmitSuccess(result);
       if (result.action === 'updated') {
         const nextValues = { ...formValues, imageFiles: [] };
         setFormValues(nextValues);
         setInitialFormValues(nextValues);
+        setInitialImageMetadata(imageMetadata);
+        setUploadEditorResetKey((current) => current + 1);
       } else {
         const nextValues = createPhotosFormDefaults();
         setFormValues(nextValues);
         setInitialFormValues(nextValues);
+        setImageMetadata([]);
+        setInitialImageMetadata([]);
+        setUploadEditorResetKey((current) => current + 1);
       }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Unable to submit the Photos form.');
@@ -224,18 +241,14 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     }
 
     if (definition.type === 'file') {
-      const files = value as File[];
       return (
-        <>
-          <input
-            className={`${FIELD_CLASS} file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--accent)] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:brightness-110`}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(event) => setFieldValue(definition.name, Array.from(event.currentTarget.files ?? []) as PhotosFormValues[typeof definition.name])}
-          />
-          <p className={HELP_CLASS}>{files.length > 0 ? `${files.length} image${files.length === 1 ? '' : 's'} selected.` : 'No images selected.'}</p>
-        </>
+        <FormImageUploadEditor
+          title={definition.label}
+          description="Upload, crop, resize, watermark, rename, and compare files before they are attached to the workflow record. Saved defaults persist locally for future photo sessions."
+          disabled={submitting}
+          resetKey={uploadEditorResetKey}
+          onFilesChange={(files) => setFieldValue(definition.name, files as PhotosFormValues[typeof definition.name])}
+        />
       );
     }
 
@@ -305,6 +318,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
   const hasCustomerReference = Object.values(customerReference).some((value) => value.trim().length > 0);
   const applicableIncludedItems = buildApplicableIncludedItems(formValues);
   const hasOperationalContext = Boolean(stageContext.inventoryNotes.trim() || stageContext.testingNotes.trim() || stageContext.existingAttachments.length > 0);
+  const stageImageMetadata = filterWorkflowImageMetadataByStage(imageMetadata, 'photos');
 
   const handleInclusionConfirmationChange = (key: InclusionConfirmationKey, checked: boolean) => {
     setInclusionConfirmations((current) => ({
@@ -456,12 +470,25 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
                 : <span className="text-sm text-[var(--muted)]">No existing workflow images are attached yet.</span>}
             </div>
           </div>
+
+          <WorkflowImageMetadataEditor
+            metadata={stageImageMetadata}
+            onChange={(nextMetadata) => setImageMetadata((current) => replaceWorkflowImageMetadataStage(current, 'photos', nextMetadata))}
+            allowReorder
+            disabled={submitting}
+            title="Photography Images"
+            description="Photography edits only photo-stage images here. Testing images stay separate on the testing form, while workflow and listing views still combine both stages."
+            emptyMessage="Upload and save photography images first. Once Airtable has attached the files, you can manage photo-stage alt text, order, and listing defaults here."
+            className="mt-4"
+          />
         </div>
 
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
           {photosFormFields.map((field) => (
             <div key={field.airtableFieldName}>
-              <FieldShell definition={field}>{renderField(field)}</FieldShell>
+              {field.type === 'file'
+                ? renderField(field)
+                : <FieldShell definition={field}>{renderField(field)}</FieldShell>}
             </div>
           ))}
 
@@ -497,7 +524,9 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
                   setSubmitError(null);
                   setSubmitSuccess(null);
                   setFormValues(initialFormValues);
+                  setImageMetadata(initialImageMetadata);
                   setInclusionConfirmations({});
+                  setUploadEditorResetKey((current) => current + 1);
                 }}
                 disabled={submitting}
               >

@@ -17,7 +17,7 @@ export function useListings(tableName: string, viewId?: string, enabled = true):
   const [lastLoadedAt, setLastLoadedAt] = useState<number | null>(null);
 
   const fetchListings = useCallback(async (force = true) => {
-    if (!force && shouldReuseTabData(lastLoadedAt, TAB_DATA_TTLS.airtableListings, error === null)) {
+    if (!force && shouldReuseTabData(lastLoadedAt, TAB_DATA_TTLS.airtableListings, lastLoadedAt !== null)) {
       setLoading(false);
       return;
     }
@@ -33,7 +33,7 @@ export function useListings(tableName: string, viewId?: string, enabled = true):
     } finally {
       setLoading(false);
     }
-  }, [error, lastLoadedAt, tableName, viewId]);
+  }, [lastLoadedAt, tableName, viewId]);
 
   useEffect(() => {
     if (!enabled) {

@@ -5,15 +5,28 @@
 
 export type WatermarkPosition = 'bottom-right' | 'bottom-left' | 'bottom-center' | 'top-right';
 
+export interface CropInsetsPercent {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
 export interface ProcessingOptions {
   /** Maximum dimension (width or height) in pixels. Aspect ratio preserved. */
   maxPx: number;
   /** JPEG quality 0–100 */
   quality: number;
+  /** Whether the watermark should be drawn at all */
+  watermarkEnabled: boolean;
   /** Watermark text — empty string disables watermark */
   watermarkText: string;
   /** Where to place the watermark */
   watermarkPos: WatermarkPosition;
+  /** Crop insets as percentages of the original width/height */
+  crop: CropInsetsPercent;
+  /** Optional output filename override */
+  outputFilename?: string;
 }
 
 export interface ProcessedImage {
@@ -22,6 +35,8 @@ export interface ProcessedImage {
   filename: string;
   originalBytes: number;
   processedBytes: number;
+  sourceWidth: number;
+  sourceHeight: number;
   width: number;
   height: number;
 }
@@ -29,8 +44,15 @@ export interface ProcessedImage {
 export const DEFAULT_OPTIONS: ProcessingOptions = {
   maxPx: 1200,
   quality: 85,
+  watermarkEnabled: true,
   watermarkText: 'Resolution AV',
   watermarkPos: 'bottom-right',
+  crop: {
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+  },
 };
 
 export function revokeProcessedImage(img: ProcessedImage) {
@@ -41,31 +63,31 @@ export async function processImage(
   file: File,
   opts: ProcessingOptions,
 ): Promise<ProcessedImage> {
-  // 1. Load source image
   const src = await loadImage(file);
+  const crop = normalizeCropInsets(opts.crop);
+  const cropLeft = Math.round(src.naturalWidth * (crop.left / 100));
+  const cropTop = Math.round(src.naturalHeight * (crop.top / 100));
+  const cropRight = Math.round(src.naturalWidth * (crop.right / 100));
+  const cropBottom = Math.round(src.naturalHeight * (crop.bottom / 100));
+  const croppedWidth = Math.max(1, src.naturalWidth - cropLeft - cropRight);
+  const croppedHeight = Math.max(1, src.naturalHeight - cropTop - cropBottom);
+  const scale = Math.min(1, opts.maxPx / Math.max(croppedWidth, croppedHeight));
+  const w = Math.max(1, Math.round(croppedWidth * scale));
+  const h = Math.max(1, Math.round(croppedHeight * scale));
 
-  // 2. Compute output dimensions
-  const scale = Math.min(1, opts.maxPx / Math.max(src.naturalWidth, src.naturalHeight));
-  const w = Math.round(src.naturalWidth * scale);
-  const h = Math.round(src.naturalHeight * scale);
-
-  // 3. Draw to canvas
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d')!;
-  ctx.drawImage(src, 0, 0, w, h);
+  ctx.drawImage(src, cropLeft, cropTop, croppedWidth, croppedHeight, 0, 0, w, h);
 
-  // 4. Watermark overlay
-  if (opts.watermarkText.trim()) {
+  if (opts.watermarkEnabled && opts.watermarkText.trim()) {
     drawWatermark(ctx, w, h, opts.watermarkText, opts.watermarkPos);
   }
 
-  // 5. Export as JPEG
   const blob = await canvasToBlob(canvas, 'image/jpeg', opts.quality / 100);
   const objectUrl = URL.createObjectURL(blob);
-  const stem = file.name.replace(/\.[^.]+$/, '');
-  const filename = `${stem}_processed.jpg`;
+  const filename = buildOutputFilename(file.name, opts.outputFilename);
 
   return {
     blob,
@@ -73,9 +95,55 @@ export async function processImage(
     filename,
     originalBytes: file.size,
     processedBytes: blob.size,
+    sourceWidth: src.naturalWidth,
+    sourceHeight: src.naturalHeight,
     width: w,
     height: h,
   };
+}
+
+function normalizeCropInsets(crop: CropInsetsPercent | undefined): CropInsetsPercent {
+  const normalized = {
+    left: clampPercent(crop?.left ?? 0),
+    top: clampPercent(crop?.top ?? 0),
+    right: clampPercent(crop?.right ?? 0),
+    bottom: clampPercent(crop?.bottom ?? 0),
+  };
+
+  const horizontalTotal = normalized.left + normalized.right;
+  if (horizontalTotal >= 95) {
+    const scale = 95 / horizontalTotal;
+    normalized.left = roundPercent(normalized.left * scale);
+    normalized.right = roundPercent(normalized.right * scale);
+  }
+
+  const verticalTotal = normalized.top + normalized.bottom;
+  if (verticalTotal >= 95) {
+    const scale = 95 / verticalTotal;
+    normalized.top = roundPercent(normalized.top * scale);
+    normalized.bottom = roundPercent(normalized.bottom * scale);
+  }
+
+  return normalized;
+}
+
+function clampPercent(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return roundPercent(Math.min(90, Math.max(0, value)));
+}
+
+function roundPercent(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function buildOutputFilename(originalName: string, outputFilename?: string): string {
+  const trimmedOverride = (outputFilename ?? '').trim();
+  if (trimmedOverride) {
+    return /\.jpe?g$/i.test(trimmedOverride) ? trimmedOverride : `${trimmedOverride}.jpg`;
+  }
+
+  const stem = originalName.replace(/\.[^.]+$/, '');
+  return `${stem}_processed.jpg`;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

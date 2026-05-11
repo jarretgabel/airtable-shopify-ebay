@@ -17,7 +17,7 @@ const DESCRIPTION_FIELD_CANDIDATES = [
   'Description',
 ] as const;
 
-const PRICE_FIELD_CANDIDATES = [
+export const PRICE_FIELD_CANDIDATES = [
   'Shopify REST Variant 1 Price',
   'Shopify Variant 1 Price',
   'eBay Offer Price Value',
@@ -26,6 +26,9 @@ const PRICE_FIELD_CANDIDATES = [
   'Buy It Now / Starting Price',
   'Variant-Compare-Price',
   'Variant Compare Price',
+  'Shopify Price',
+  'Ebay Price',
+  'eBay Price',
   'Price',
 ] as const;
 
@@ -33,7 +36,15 @@ type AirtableFields = AirtableRecord['fields'];
 
 function getTrimmedFieldValue(fields: AirtableFields, fieldName: string): string {
   const value = fields[fieldName];
-  return typeof value === 'string' ? value.trim() : '';
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  return '';
 }
 
 function findFirstFieldValue(
