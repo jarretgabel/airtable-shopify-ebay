@@ -6,9 +6,6 @@ import type { ListingApprovalCombinedSharedSectionProps } from '@/components/app
 const KeyFeaturesEditor = lazy(async () => ({
   default: (await import('@/components/approval/KeyFeaturesEditor')).KeyFeaturesEditor,
 }));
-const TestingNotesTextareaEditor = lazy(async () => ({
-  default: (await import('@/components/approval/TestingNotesTextareaEditor')).TestingNotesTextareaEditor,
-}));
 
 function CombinedSharedEditorFallback() {
   return (
@@ -34,12 +31,8 @@ export function ListingApprovalCombinedSharedSection({
   combinedRequiredFieldNames,
   shopifyRequiredFieldNames,
   ebayRequiredFieldNames,
-  currentPageShopifyTagValues,
-  currentPageShopifyCollectionIds,
-  currentPageShopifyCollectionLabelsById,
   combinedSharedKeyFeaturesFieldName,
   combinedSharedKeyFeaturesSyncFieldNames,
-  combinedEbayTestingNotesFieldName,
   sharedDrawerRequiredStatus,
 }: ListingApprovalCombinedSharedSectionProps) {
   return (
@@ -81,9 +74,6 @@ export function ListingApprovalCombinedSharedSection({
           setFormValue={setFormValue}
           suppressImageScalarFields
           originalFieldValues={originalFieldValues}
-          normalizedShopifyTagValues={currentPageShopifyTagValues}
-          normalizedShopifyCollectionIds={currentPageShopifyCollectionIds}
-          normalizedShopifyCollectionLabelsById={currentPageShopifyCollectionLabelsById}
         />
 
         {combinedSharedKeyFeaturesFieldName && (
@@ -94,18 +84,6 @@ export function ListingApprovalCombinedSharedSection({
               setFormValue={setFormValue}
               syncFieldNames={combinedSharedKeyFeaturesSyncFieldNames}
               disabled={saving}
-            />
-          </Suspense>
-        )}
-
-        {combinedEbayTestingNotesFieldName && (
-          <Suspense fallback={<CombinedSharedEditorFallback />}>
-            <TestingNotesTextareaEditor
-              fieldName={combinedEbayTestingNotesFieldName}
-              value={formValues[combinedEbayTestingNotesFieldName] ?? ''}
-              setFormValue={setFormValue}
-              disabled={saving}
-              label="Testing Notes"
             />
           </Suspense>
         )}

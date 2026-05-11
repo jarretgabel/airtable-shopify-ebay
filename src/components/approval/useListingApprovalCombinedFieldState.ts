@@ -20,6 +20,7 @@ import {
   type EbayListingTemplateId,
 } from '@/components/approval/listingApprovalEbayConstants';
 import {
+  isEbayTestingNotesField,
   findEbayBodyHtmlFieldName,
   isEbayOnlyFieldName,
   isGenericSharedKeyFeaturesFieldName,
@@ -28,6 +29,8 @@ import {
   isInternalReferenceListingFieldName,
   isRemovedCombinedEbayPriceFieldName,
   isShopifyOnlyFieldName,
+  isShopifyCompoundTagsField,
+  isShopifySingleTagField,
   isSystemManagedListingFieldName,
   isWorkflowOnlyListingFieldName,
 } from '@/components/approval/listingApprovalFieldHelpers';
@@ -187,6 +190,7 @@ export function useListingApprovalCombinedFieldState({
       if (isSystemManagedListingFieldName(fieldName)) return false;
       if (isInternalReferenceListingFieldName(fieldName)) return false;
       if (!isShopifyOnlyFieldName(fieldName) || isEbayOnlyFieldName(fieldName)) return false;
+      if (isShopifyCompoundTagsField(fieldName) || isShopifySingleTagField(fieldName)) return true;
       if (chosenShopifyPriceFieldName && shopifyPriceFields.includes(fieldName) && fieldName !== chosenShopifyPriceFieldName) return false;
       if (normalized === 'product type') return false;
       if (SHOPIFY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
@@ -203,6 +207,7 @@ export function useListingApprovalCombinedFieldState({
       if (isWorkflowOnlyListingFieldName(fieldName)) return false;
       if (isSystemManagedListingFieldName(fieldName)) return false;
       if (isInternalReferenceListingFieldName(fieldName)) return false;
+      if (isEbayTestingNotesField(fieldName)) return true;
       if (!isEbayOnlyFieldName(fieldName) || isShopifyOnlyFieldName(fieldName)) return false;
       if (normalized.includes('primary category') || normalized.includes('secondary category')) return false;
       if (EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
@@ -241,6 +246,8 @@ export function useListingApprovalCombinedFieldState({
       if (normalized === 'template name') return false;
       if (combinedDescriptionFieldName && normalized === combinedDescriptionFieldName.toLowerCase()) return false;
       if (combinedSharedKeyFeaturesFieldName && normalized === combinedSharedKeyFeaturesFieldName.toLowerCase()) return false;
+      if (isShopifyCompoundTagsField(fieldName) || isShopifySingleTagField(fieldName)) return false;
+      if (isEbayTestingNotesField(fieldName)) return false;
       if (SHOPIFY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       if (EBAY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       if (conditionCandidateSet.has(normalized) && allFieldNames.includes(CONDITION_FIELD) && fieldName !== CONDITION_FIELD) return false;

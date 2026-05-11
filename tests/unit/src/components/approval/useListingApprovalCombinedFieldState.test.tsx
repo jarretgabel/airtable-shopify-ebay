@@ -104,4 +104,20 @@ describe('useListingApprovalCombinedFieldState', () => {
     ]));
     expect(result.current.combinedEbayOnlyFieldNames).not.toEqual(expect.arrayContaining(['eBay Offer ID', 'eBay Listing ID']));
   });
+
+  it('routes Shopify tags and eBay testing notes into service-specific field groups', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      Tags: 'Vintage Audio,Integrated Amplifier',
+      'Testing Notes': 'Passed bench test.',
+      Vendor: 'Sansui',
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedShopifyOnlyFieldNames).toEqual(expect.arrayContaining(['Tags']));
+    expect(result.current.combinedEbayOnlyFieldNames).toEqual(expect.arrayContaining(['Testing Notes']));
+    expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining(['Tags', 'Testing Notes']));
+  });
 });

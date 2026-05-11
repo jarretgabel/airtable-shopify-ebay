@@ -9,6 +9,14 @@ import dotenv from 'dotenv';
 const cwd = process.cwd();
 const awsDir = path.join(cwd, 'aws');
 const defaultPort = Number(process.env.LOCAL_API_PORT || '3001');
+const REBUILD_DEBOUNCE_MS = 150;
+const WATCH_TARGETS = [
+  path.join(awsDir, 'src'),
+  path.join(awsDir, 'tsconfig.json'),
+  path.join(awsDir, 'package.json'),
+  path.join(cwd, '.env'),
+  path.join(cwd, '.env.local'),
+];
 
 const ROUTES = [
   ['POST', '/api/auth/login', 'handlers/auth/login.js', 'handler'],
@@ -174,15 +182,14 @@ function setAwsEnv() {
 }
 
 function buildAwsDist() {
-  execFileSync('npm', ['run', 'typecheck'], { cwd: awsDir, stdio: 'inherit' });
   execFileSync('npx', ['tsc', '-p', 'tsconfig.json'], { cwd: awsDir, stdio: 'inherit' });
 }
 
-async function loadHandlers() {
+async function loadHandlers(cacheKey) {
   const loadedHandlers = [];
 
   for (const route of ROUTES) {
-    const moduleUrl = pathToFileURL(path.join(awsDir, 'dist', route.modulePath)).href;
+    const moduleUrl = `${pathToFileURL(path.join(awsDir, 'dist', route.modulePath)).href}?v=${cacheKey}`;
     const loadedModule = await import(moduleUrl);
     const handler = loadedModule[route.exportName];
 
@@ -197,6 +204,82 @@ async function loadHandlers() {
   }
 
   return loadedHandlers;
+}
+
+function formatWatchPath(changedPath) {
+  const relativePath = path.relative(cwd, changedPath);
+  return relativePath || changedPath;
+}
+
+function shouldIgnoreWatchPath(changedPath) {
+  const normalized = changedPath.replace(/\\/g, '/');
+  return normalized.includes('/aws/dist/') || normalized.endsWith('/.DS_Store') || normalized.endsWith('.DS_Store');
+}
+
+function createWatcher(targetPath, onChange, watchers, watchedDirectories) {
+  if (!fs.existsSync(targetPath)) return;
+
+  const stats = fs.statSync(targetPath);
+
+  if (!stats.isDirectory()) {
+    const watcher = fs.watch(targetPath, () => {
+      onChange(targetPath);
+    });
+    watcher.on('error', (error) => {
+      console.error(`[local-api] Watch error for ${formatWatchPath(targetPath)}:`, error instanceof Error ? error.message : String(error));
+    });
+    watchers.push(watcher);
+    return;
+  }
+
+  const realDirectoryPath = fs.realpathSync(targetPath);
+  if (watchedDirectories.has(realDirectoryPath)) return;
+  watchedDirectories.add(realDirectoryPath);
+
+  const watcher = fs.watch(targetPath, (eventType, filename) => {
+    if (eventType !== 'change' && eventType !== 'rename') return;
+
+    const resolvedPath = typeof filename === 'string' && filename.length > 0
+      ? path.join(targetPath, filename)
+      : targetPath;
+
+    if (shouldIgnoreWatchPath(resolvedPath)) return;
+
+    if (fs.existsSync(resolvedPath)) {
+      try {
+        if (fs.statSync(resolvedPath).isDirectory()) {
+          createWatcher(resolvedPath, onChange, watchers, watchedDirectories);
+        }
+      } catch {
+        // Ignore transient filesystem races while editors save files.
+      }
+    }
+
+    onChange(resolvedPath);
+  });
+
+  watcher.on('error', (error) => {
+    console.error(`[local-api] Watch error for ${formatWatchPath(targetPath)}:`, error instanceof Error ? error.message : String(error));
+  });
+  watchers.push(watcher);
+
+  fs.readdirSync(targetPath, { withFileTypes: true }).forEach((entry) => {
+    if (!entry.isDirectory()) return;
+    createWatcher(path.join(targetPath, entry.name), onChange, watchers, watchedDirectories);
+  });
+}
+
+function watchApiSources(onChange) {
+  const watchers = [];
+  const watchedDirectories = new Set();
+
+  WATCH_TARGETS.forEach((targetPath) => {
+    createWatcher(targetPath, onChange, watchers, watchedDirectories);
+  });
+
+  return () => {
+    watchers.forEach((watcher) => watcher.close());
+  };
 }
 
 function findRoute(routes, method, pathname) {
@@ -286,9 +369,60 @@ function writeCorsResponse(request, response) {
 }
 
 async function main() {
-  setAwsEnv();
-  buildAwsDist();
-  const routes = await loadHandlers();
+  let routes = [];
+  let shuttingDown = false;
+  let reloadInFlight = false;
+  let reloadQueued = false;
+  let pendingReason = 'startup';
+  let reloadTimer;
+
+  const rebuildRoutes = async (reason) => {
+    pendingReason = reason;
+    if (reloadInFlight) {
+      reloadQueued = true;
+      return;
+    }
+
+    reloadInFlight = true;
+
+    do {
+      const activeReason = pendingReason;
+      reloadQueued = false;
+      const startedAt = Date.now();
+
+      try {
+        setAwsEnv();
+        buildAwsDist();
+        routes = await loadHandlers(startedAt);
+
+        const verb = activeReason === 'startup' ? 'Built' : 'Reloaded';
+        console.log(`[local-api] ${verb} handlers for ${activeReason} in ${Date.now() - startedAt}ms`);
+      } catch (error) {
+        console.error(`[local-api] Failed to rebuild handlers for ${activeReason}:`, error instanceof Error ? error.message : String(error));
+        if (routes.length === 0) {
+          throw error;
+        }
+        console.error('[local-api] Continuing with the previous successful handler build.');
+      }
+    } while (reloadQueued && !shuttingDown);
+
+    reloadInFlight = false;
+  };
+
+  await rebuildRoutes('startup');
+
+  const stopWatching = watchApiSources((changedPath) => {
+    if (shuttingDown || shouldIgnoreWatchPath(changedPath)) return;
+
+    const nextReason = formatWatchPath(changedPath);
+    if (reloadTimer) {
+      clearTimeout(reloadTimer);
+    }
+
+    reloadTimer = setTimeout(() => {
+      void rebuildRoutes(`change in ${nextReason}`);
+    }, REBUILD_DEBOUNCE_MS);
+  });
 
   const server = createServer(async (request, response) => {
     try {
@@ -437,9 +571,15 @@ async function main() {
 
   server.listen(defaultPort, '127.0.0.1', () => {
     console.log(`Local API server listening on http://127.0.0.1:${defaultPort}`);
+    console.log('[local-api] Watching AWS source files for changes...');
   });
 
   const shutdown = () => {
+    shuttingDown = true;
+    if (reloadTimer) {
+      clearTimeout(reloadTimer);
+    }
+    stopWatching();
     server.close(() => {
       process.exit(0);
     });

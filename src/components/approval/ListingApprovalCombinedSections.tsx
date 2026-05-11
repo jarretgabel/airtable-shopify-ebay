@@ -28,16 +28,15 @@ export function ListingApprovalCombinedSections({
   combinedRequiredFieldNames,
   shopifyRequiredFieldNames,
   ebayRequiredFieldNames,
-  currentPageShopifyTagValues,
-  currentPageShopifyCollectionIds,
-  currentPageShopifyCollectionLabelsById,
   combinedSharedKeyFeaturesFieldName,
   combinedSharedKeyFeaturesSyncFieldNames,
-  combinedEbayTestingNotesFieldName,
   sharedDrawerRequiredStatus,
   combinedShopifyOnlyFieldNames,
   shopifyDrawerRequiredStatus,
   currentPageShopifyBodyHtml,
+  currentPageShopifyTagValues,
+  currentPageShopifyCollectionIds,
+  currentPageShopifyCollectionLabelsById,
   selectedEbayTemplateId,
   setSelectedEbayTemplateId,
   combinedShopifyBodyHtmlFieldName,
@@ -85,12 +84,8 @@ export function ListingApprovalCombinedSections({
         combinedRequiredFieldNames={combinedRequiredFieldNames}
         shopifyRequiredFieldNames={shopifyRequiredFieldNames}
         ebayRequiredFieldNames={ebayRequiredFieldNames}
-        currentPageShopifyTagValues={currentPageShopifyTagValues}
-        currentPageShopifyCollectionIds={currentPageShopifyCollectionIds}
-        currentPageShopifyCollectionLabelsById={currentPageShopifyCollectionLabelsById}
         combinedSharedKeyFeaturesFieldName={combinedSharedKeyFeaturesFieldName}
         combinedSharedKeyFeaturesSyncFieldNames={combinedSharedKeyFeaturesSyncFieldNames}
-        combinedEbayTestingNotesFieldName={combinedEbayTestingNotesFieldName}
         sharedDrawerRequiredStatus={sharedDrawerRequiredStatus}
       />
 

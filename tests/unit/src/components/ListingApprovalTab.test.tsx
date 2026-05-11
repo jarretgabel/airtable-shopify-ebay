@@ -143,13 +143,19 @@ function buildEbayPreview(fields: Record<string, unknown>, bodyPreview?: { descr
 vi.mock('@/stores/approvalStore', async () => {
   const { create } = await import('zustand');
 
-  type ApprovalStoreSetState = (
-    partial:
-      | ApprovalStore
-      | Partial<ApprovalStore>
-      | ((state: ApprovalStore) => ApprovalStore | Partial<ApprovalStore>),
-    replace?: boolean,
-  ) => void;
+  type ApprovalStoreSetState = {
+    (
+      partial:
+        | ApprovalStore
+        | Partial<ApprovalStore>
+        | ((state: ApprovalStore) => ApprovalStore | Partial<ApprovalStore>),
+      replace?: false,
+    ): void;
+    (
+      state: ApprovalStore | ((state: ApprovalStore) => ApprovalStore),
+      replace: true,
+    ): void;
+  };
 
   let approvalStoreSetState: ApprovalStoreSetState | null = null;
 

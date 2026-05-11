@@ -202,10 +202,59 @@ export function isShopifyGraphqlCollectionIdsFieldName(fieldName: string): boole
     || /^shopify_graphql_collection_\d+_id$/.test(normalized);
 }
 
+export function isShopifyCompoundTagsField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized === 'shopify rest tags'
+    || normalized === 'shopify tags'
+    || normalized === 'shopify graphql tags'
+    || normalized === 'shopify graphql tags json'
+    || normalized === 'shopify_rest_tags'
+    || normalized === 'shopify_tags'
+    || normalized === 'shopify_graphql_tags'
+    || normalized === 'shopify_graphql_tags_json'
+    || normalized === 'tags';
+}
+
+export function isShopifySingleTagField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return /^shopify\s+(rest|graphql|extra)?\s*tag\s+\d+$/.test(normalized)
+    || /^shopify_(rest|graphql|extra)?_tag_\d+$/.test(normalized);
+}
+
+export function isEbayTestingNotesField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'testing notes'
+    || normalized === 'testing notes json'
+    || normalized === 'ebay testing notes'
+    || normalized === 'ebay testing notes json'
+    || normalized === 'ebay body testing notes'
+    || normalized === 'ebay body testing notes json'
+    || normalized === 'ebay listing testing notes'
+    || normalized === 'ebay listing testing notes json'
+    || normalized === 'testing_notes'
+    || normalized === 'testing_notes_json'
+    || normalized === 'ebay_testing_notes'
+    || normalized === 'ebay_testing_notes_json'
+    || normalized === 'ebay_body_testing_notes'
+    || normalized === 'ebay_body_testing_notes_json'
+    || normalized === 'ebay_listing_testing_notes'
+    || normalized === 'ebay_listing_testing_notes_json'
+    || compact === 'testingnotes'
+    || compact === 'testingnotesjson'
+    || compact === 'ebaytestingnotes'
+    || compact === 'ebaytestingnotesjson'
+    || compact === 'ebaybodytestingnotes'
+    || compact === 'ebaybodytestingnotesjson'
+    || compact === 'ebaylistingtestingnotes'
+    || compact === 'ebaylistingtestingnotesjson';
+}
+
 export function isShopifyOnlyFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   if (normalized === 'description') return false;
   if (normalized.includes('key feature')) return false;
+  if (isShopifyCompoundTagsField(fieldName) || isShopifySingleTagField(fieldName)) return true;
   return normalized.includes('shopify')
     || normalized.includes('collection')
     || normalized.includes('published scope')
@@ -261,6 +310,7 @@ export function isEbayOnlyFieldName(fieldName: string): boolean {
   const normalized = normalizeCombinedFieldName(fieldName);
   if (normalized === 'description') return false;
   if (normalized.includes('key feature')) return false;
+  if (isEbayTestingNotesField(fieldName)) return true;
   if (fieldName === SHIPPING_SERVICE_FIELD) return true;
   return normalized.includes('ebay')
     || normalized.includes('buy it now')

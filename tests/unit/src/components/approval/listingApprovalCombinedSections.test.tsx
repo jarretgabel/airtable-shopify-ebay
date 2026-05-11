@@ -99,12 +99,8 @@ function buildSharedProps(): ListingApprovalCombinedSharedSectionProps {
     combinedRequiredFieldNames: ['Title'],
     shopifyRequiredFieldNames: ['Title', 'Vendor'],
     ebayRequiredFieldNames: ['Title', 'Categories'],
-    currentPageShopifyTagValues: ['Vintage', 'Tube'],
-    currentPageShopifyCollectionIds: ['gid://shopify/Collection/1'],
-    currentPageShopifyCollectionLabelsById: { 'gid://shopify/Collection/1': 'Amplifiers' },
     combinedSharedKeyFeaturesFieldName: 'Key Features',
     combinedSharedKeyFeaturesSyncFieldNames: ['Shopify Key Features'],
-    combinedEbayTestingNotesFieldName: 'Testing Notes',
     sharedDrawerRequiredStatus: { hasRequired: true, allFilled: true },
   };
 }
@@ -150,7 +146,7 @@ function buildShopifyProps(): ListingApprovalCombinedShopifySectionProps {
 function buildEbayProps(): ListingApprovalCombinedEbaySectionProps {
   return {
     ...buildCommonProps(),
-    combinedEbayOnlyFieldNames: ['Categories', 'Condition'],
+    combinedEbayOnlyFieldNames: ['Categories', 'Condition', 'Testing Notes'],
     ebayRequiredFieldNames: ['Categories'],
     ebayDrawerRequiredStatus: { hasRequired: true, allFilled: true },
     combinedEbayGeneratedBodyHtml: '<p>Rendered eBay body</p>',
@@ -194,8 +190,8 @@ describe('combined approval sections', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('key-features-editor')).toHaveTextContent('Key Features');
-      expect(screen.getByTestId('testing-notes-textarea-editor')).toHaveTextContent('Testing Notes');
     });
+    expect(testingNotesTextareaEditorSpy).not.toHaveBeenCalled();
   });
 
   it('renders the Shopify drawer with collection editor wiring and preview panels', async () => {
@@ -223,10 +219,12 @@ describe('combined approval sections', () => {
     expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({
       approvalChannel: 'ebay',
       hideEbayAdvancedOptions: true,
+      allFieldNames: ['Categories', 'Condition', 'Testing Notes'],
     }));
     expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({
       approvalChannel: 'ebay',
       showOnlyEbayAdvancedOptions: true,
+      allFieldNames: ['Categories', 'Condition', 'Testing Notes'],
     }));
     expect(bodyHtmlPreviewSpy).toHaveBeenCalledWith(expect.objectContaining({
       value: '<p>Rendered eBay body</p>',

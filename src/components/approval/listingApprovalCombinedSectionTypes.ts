@@ -33,12 +33,8 @@ export interface ListingApprovalCombinedSharedSectionProps extends CombinedSecti
   combinedRequiredFieldNames: string[];
   shopifyRequiredFieldNames: string[];
   ebayRequiredFieldNames: string[];
-  currentPageShopifyTagValues: string[];
-  currentPageShopifyCollectionIds: string[];
-  currentPageShopifyCollectionLabelsById: Record<string, string>;
   combinedSharedKeyFeaturesFieldName: string;
   combinedSharedKeyFeaturesSyncFieldNames: string[];
-  combinedEbayTestingNotesFieldName: string;
   sharedDrawerRequiredStatus: DrawerRequiredStatus;
 }
 
