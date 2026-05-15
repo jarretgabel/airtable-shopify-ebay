@@ -29,43 +29,6 @@ describe('UsedGearWorkflowProgressSection', () => {
     window.history.replaceState({}, '', '/inventory');
   });
 
-  it('copies the processing and stage queue link for sharing', async () => {
-    loadWorkflowProgressQueueMock.mockResolvedValue([
-      {
-        id: 'rec-progress',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'PROG-1',
-          Make: 'Marantz',
-          Model: '8B',
-          'Workflow Status': 'Accepted - Awaiting Arrival',
-        },
-      },
-    ]);
-
-    render(
-      <UsedGearWorkflowProgressSection
-        currentUserName="Taylor Reviewer"
-        onOpenIncomingGearForm={vi.fn()}
-        onOpenTestingForm={vi.fn()}
-        onOpenPhotosForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
-        onOpenListingsRecord={vi.fn()}
-      />,
-    );
-
-    await screen.findByText('Processing And Stage Queue');
-
-    await act(async () => {
-      fireEvent.click(await screen.findByRole('button', { name: 'Copy Queue Link' }));
-      await Promise.resolve();
-    });
-
-    await waitFor(() => {
-      expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/inventory#used-gear-progress-queue`);
-    });
-  });
-
   it('shows inline sort options in the header by default', async () => {
     loadWorkflowProgressQueueMock.mockResolvedValue([]);
 

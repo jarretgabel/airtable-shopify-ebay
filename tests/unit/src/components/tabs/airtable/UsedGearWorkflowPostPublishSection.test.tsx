@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearWorkflowPostPublishSection } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 
@@ -142,44 +142,6 @@ describe('UsedGearWorkflowPostPublishSection', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'All Buckets' }));
     expect(onFocusedBucketChange).toHaveBeenCalledWith('all');
-  });
-
-  it('copies the current filtered queue link for sharing', async () => {
-    loadWorkflowPostPublishQueueMock.mockResolvedValue([
-      {
-        id: 'rec-sold',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'SOLD-1',
-          Make: 'Marantz',
-          Model: '2270',
-          'Workflow Status': 'Sold - Ready to Ship',
-          'Sold Ready To Ship At': '2026-05-06T00:00:00.000Z',
-        },
-      },
-    ]);
-    window.history.replaceState({}, '', '/inventory?workflowPostPublishBucket=sold-ready');
-
-    render(
-      <UsedGearWorkflowPostPublishSection
-        currentUserName="Taylor Reviewer"
-        focusedBucket="sold-ready"
-        onFocusedBucketChange={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
-        onOpenListingsRecord={vi.fn()}
-      />,
-    );
-
-    await screen.findByText('Sold Ready To Ship');
-
-    await act(async () => {
-      fireEvent.click(await screen.findByRole('button', { name: 'Copy Filtered Link' }));
-      await Promise.resolve();
-    });
-
-    await waitFor(() => {
-      expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/inventory?workflowPostPublishBucket=sold-ready#used-gear-post-publish`);
-    });
   });
 
   it('shows the sort control as an icon-triggered select in the header', async () => {

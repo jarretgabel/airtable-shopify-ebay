@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass, smallSuccessActionButtonClass } from '@/components/app/buttonStyles';
 import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
-import { CopyLinkIconButton } from '@/components/app/CopyLinkIconButton';
 import { FilterToggleIconButton } from '@/components/app/FilterToggleIconButton';
 import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
@@ -20,7 +19,6 @@ import {
   buildPostPublishQueueAgingSummary,
   formatUsedGearAgeDays,
 } from '@/services/usedGearWorkflowAging';
-import { useCopyQueueLink } from '@/components/tabs/airtable/useCopyQueueLink';
 import { buildPostPublishLastTouchedSummary } from '@/services/usedGearWorkflowLastTouched';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -133,15 +131,6 @@ export function UsedGearWorkflowPostPublishSection({
 }: UsedGearWorkflowPostPublishSectionProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const selectedBucket = focusedBucket ?? 'all';
-  const { copyingLink, copiedLink, copyLink } = useCopyQueueLink({
-    sectionId: 'used-gear-post-publish',
-    successTitle: 'Queue link copied',
-    successMessage: selectedBucket === 'all'
-      ? 'The post-publish queue link is ready to share.'
-      : 'The filtered post-publish queue link is ready to share.',
-    unavailableMessage: 'This browser cannot copy the post-publish queue link automatically.',
-    failureMessage: 'The post-publish queue link could not be copied. Try again or copy the URL from the browser address bar.',
-  });
   const [records, setRecords] = useState<AirtableRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -369,17 +358,6 @@ export function UsedGearWorkflowPostPublishSection({
             />
           </label>
           <div className="flex flex-wrap items-center gap-3">
-            <CopyLinkIconButton
-              onClick={() => {
-                void copyLink();
-              }}
-              disabled={copyingLink}
-              copying={copyingLink}
-              copied={copiedLink}
-              label={selectedBucket === 'all' ? 'Copy Queue Link' : 'Copy Filtered Link'}
-              copyingLabel={selectedBucket === 'all' ? 'Copying queue link' : 'Copying filtered link'}
-              copiedLabel={selectedBucket === 'all' ? 'Queue link copied' : 'Filtered link copied'}
-            />
             <RefreshIconButton
               onClick={() => {
                 void refreshQueue();
@@ -496,17 +474,6 @@ export function UsedGearWorkflowPostPublishSection({
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <CopyLinkIconButton
-              onClick={() => {
-                void copyLink();
-              }}
-              disabled={copyingLink}
-              copying={copyingLink}
-              copied={copiedLink}
-              label="Copy Filtered Link"
-              copyingLabel="Copying filtered link"
-              copiedLabel="Filtered link copied"
-            />
             <RefreshIconButton
               onClick={() => {
                 void refreshQueue();

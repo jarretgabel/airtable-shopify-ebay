@@ -247,17 +247,6 @@ export function UsedGearLotTwoSection({
             />
           </label>
           <div className="flex flex-wrap gap-3">
-            <CopyLinkIconButton
-              onClick={() => {
-                void copyLink();
-              }}
-              disabled={copyingLink}
-              copying={copyingLink}
-              copied={copiedLink}
-              label="Copy Queue Link"
-              copyingLabel="Copying queue link"
-              copiedLabel="Queue link copied"
-            />
             <RefreshIconButton
               onClick={() => {
                 void refreshQueue();

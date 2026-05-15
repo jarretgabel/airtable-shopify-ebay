@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
-import { CopyLinkIconButton } from '@/components/app/CopyLinkIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { RefreshIconButton } from '@/components/app/RefreshIconButton';
-import { useCopyQueueLink } from '@/components/tabs/airtable/useCopyQueueLink';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
   groupUsedGearWorkflowRecords,
@@ -89,13 +87,6 @@ export function UsedGearTrashSection({
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
 }: UsedGearTrashSectionProps) {
-  const { copyingLink, copiedLink, copyLink } = useCopyQueueLink({
-    sectionId: 'used-gear-trash',
-    successTitle: 'Trash link copied',
-    successMessage: 'The workflow trash link is ready to share.',
-    unavailableMessage: 'This browser cannot copy the workflow trash link automatically.',
-    failureMessage: 'The workflow trash link could not be copied. Try again or copy the URL from the browser address bar.',
-  });
   const [records, setRecords] = useState<AirtableRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -193,17 +184,6 @@ export function UsedGearTrashSection({
             />
           </label>
           <div className="flex flex-wrap gap-3">
-            <CopyLinkIconButton
-              onClick={() => {
-                void copyLink();
-              }}
-              disabled={copyingLink}
-              copying={copyingLink}
-              copied={copiedLink}
-              label="Copy Trash Link"
-              copyingLabel="Copying trash link"
-              copiedLabel="Trash link copied"
-            />
             <RefreshIconButton
               onClick={() => {
                 void refreshQueue();

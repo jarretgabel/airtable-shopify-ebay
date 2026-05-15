@@ -26,41 +26,6 @@ describe('UsedGearPendingReviewSection', () => {
     window.history.replaceState({}, '', '/inventory');
   });
 
-  it('copies the pending review queue link for sharing', async () => {
-    loadPendingReviewQueueMock.mockResolvedValue([
-      {
-        id: 'rec-pending',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'PEND-1',
-          Make: 'McIntosh',
-          Model: 'MC240',
-          'Workflow Status': 'Pending Review',
-        },
-      },
-    ]);
-
-    render(
-      <UsedGearPendingReviewSection
-        currentUserName="Taylor Reviewer"
-        onOpenGroupReview={vi.fn()}
-        onOpenReviewRecord={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
-      />,
-    );
-
-    await screen.findByText('Pending Review Queue');
-
-    await act(async () => {
-      fireEvent.click(await screen.findByRole('button', { name: 'Copy Queue Link' }));
-      await Promise.resolve();
-    });
-
-    await waitFor(() => {
-      expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/inventory#used-gear-pending-review`);
-    });
-  });
-
   it('shows inline sort options in the header by default', async () => {
     loadPendingReviewQueueMock.mockResolvedValue([]);
 
