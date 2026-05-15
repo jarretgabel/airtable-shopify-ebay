@@ -54,6 +54,53 @@ describe('UsedGearTrashSection', () => {
     expect(onSearchTermChange).toHaveBeenCalledWith('luxman');
   });
 
+  it('shows inline sort options in the header', async () => {
+    loadTrashQueueMock.mockResolvedValue([]);
+
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenWorkflowRecord={vi.fn()} />);
+
+    await screen.findByText('Trash Review');
+    expect(screen.getByLabelText(/Sort trash review queue/i)).toBeInTheDocument();
+  });
+
+  it('filters trash rows by shared source or status fields and trash reason', async () => {
+    loadTrashQueueMock.mockResolvedValue([
+      {
+        id: 'rec-trash-reason',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'TRASH-REASON',
+          Make: 'Pioneer',
+          Model: 'SX-750',
+          'Workflow Source': 'Manual Entry',
+          'Workflow Status': 'Unqualified',
+          'Unqualified Reason': 'Missing transformer cover',
+          'Trash Status': 'Active Trash',
+        },
+      },
+      {
+        id: 'rec-trash-other',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'TRASH-OTHER',
+          Make: 'Luxman',
+          Model: 'L-507',
+          'Workflow Source': 'JotForm',
+          'Workflow Status': 'Unqualified',
+          'Unqualified Reason': 'Broken dial glass',
+          'Trash Status': 'Active Trash',
+        },
+      },
+    ]);
+
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenWorkflowRecord={vi.fn()} searchTerm="transformer cover" />);
+
+    await screen.findByText('Trash Review');
+
+    expect(screen.getByText('TRASH-REASON')).toBeInTheDocument();
+    expect(screen.queryByText('TRASH-OTHER')).not.toBeInTheDocument();
+  });
+
   it('opens the dedicated trash review page from a compact queue card', async () => {
     const onOpenReviewRecord = vi.fn();
 
@@ -103,7 +150,6 @@ describe('UsedGearTrashSection', () => {
     await screen.findByText('Trash Review');
 
     expect(screen.getByText('Single intake item')).toBeInTheDocument();
-    expect(screen.getByText('Visible Sets')).toBeInTheDocument();
     expect(screen.getByText(/Intake Date:/i)).toBeInTheDocument();
     expect(screen.getByText(/May 6, 2026/i)).toBeInTheDocument();
   });

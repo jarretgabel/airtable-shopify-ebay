@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { WorkflowQueuePageTemplate } from '@/components/app/WorkflowQueuePageTemplate';
 import { UsedGearPendingReviewSection } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
 
 interface ParkingLotOneTabProps {
@@ -49,16 +49,12 @@ export function ParkingLotOneTab({ currentUserName, onOpenWorkflowRecord }: Park
   };
 
   return (
-    <>
-      <div className="mt-3">
-        <WorkflowPageHeader
-          eyebrow="Used Gear Intake"
-          title="Parking Lot 1"
-          description="Review new intake and decide whether each item moves into the workflow or into trash."
-          descriptionHint="This intake surface is workflow-only. Use the pending review queue below to accept qualified rows into the workflow or route unqualified rows into trash."
-        />
-      </div>
-
+    <WorkflowQueuePageTemplate
+      eyebrow="Used Gear Intake"
+      title="Parking Lot 1"
+      description="Review new intake and decide whether each item is accepted or trashed."
+      descriptionHint="Open a group or single row to confirm qualification details before moving it forward."
+    >
       <UsedGearPendingReviewSection
         currentUserName={currentUserName}
         showSectionIntro={false}
@@ -84,6 +80,6 @@ export function ParkingLotOneTab({ currentUserName, onOpenWorkflowRecord }: Park
           }
         }, '#used-gear-pending-review')}
       />
-    </>
+    </WorkflowQueuePageTemplate>
   );
 }

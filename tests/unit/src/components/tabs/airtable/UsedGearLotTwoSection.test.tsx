@@ -1,10 +1,9 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearLotTwoSection } from '@/components/tabs/airtable/UsedGearLotTwoSection';
 
-const { loadLotTwoQueueMock, loadUsedGearWorkflowRecordBySkuMock } = vi.hoisted(() => ({
+const { loadLotTwoQueueMock } = vi.hoisted(() => ({
   loadLotTwoQueueMock: vi.fn(),
-  loadUsedGearWorkflowRecordBySkuMock: vi.fn(),
 }));
 
 vi.mock('@/services/usedGearQueue', async () => {
@@ -12,14 +11,12 @@ vi.mock('@/services/usedGearQueue', async () => {
   return {
     ...actual,
     loadLotTwoQueue: loadLotTwoQueueMock,
-    loadUsedGearWorkflowRecordBySku: loadUsedGearWorkflowRecordBySkuMock,
   };
 });
 
 describe('UsedGearLotTwoSection', () => {
   beforeEach(() => {
     loadLotTwoQueueMock.mockReset();
-    loadUsedGearWorkflowRecordBySkuMock.mockReset();
     window.history.replaceState({}, '', '/parking-lot-2');
   });
 
@@ -58,7 +55,65 @@ describe('UsedGearLotTwoSection', () => {
     expect(onSearchTermChange).toHaveBeenCalledWith('mcintosh');
   });
 
-  it('activates downstream workflow forms by exact sku lookup', async () => {
+  it('shows inline sort options in the header', async () => {
+    loadLotTwoQueueMock.mockResolvedValue([]);
+
+    render(
+      <UsedGearLotTwoSection
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenTestingForm={vi.fn()}
+        onOpenPhotosForm={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Parking Lot 2');
+    expect(screen.getByLabelText(/Sort Parking Lot 2 queue/i)).toBeInTheDocument();
+  });
+
+  it('filters lot two rows by shared source or status fields', async () => {
+    loadLotTwoQueueMock.mockResolvedValue([
+      {
+        id: 'rec-lot-two-source',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'LOT2-SOURCE',
+          Make: 'Luxman',
+          Model: 'L-507',
+          'Workflow Source': 'Manual Entry',
+          'Workflow Status': 'Accepted - Awaiting Arrival',
+        },
+      },
+      {
+        id: 'rec-lot-two-other',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'LOT2-OTHER',
+          Make: 'Pioneer',
+          Model: 'SX-750',
+          'Workflow Source': 'JotForm',
+          'Workflow Status': 'Accepted - Arrived, Awaiting SKU',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearLotTwoSection
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenTestingForm={vi.fn()}
+        onOpenPhotosForm={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+        searchTerm="manual entry"
+      />,
+    );
+
+    await screen.findByText('Parking Lot 2');
+
+    expect(screen.getByText('LOT2-SOURCE')).toBeInTheDocument();
+    expect(screen.queryByText('LOT2-OTHER')).not.toBeInTheDocument();
+  });
+
+  it('opens downstream workflow forms from queue cards', async () => {
     const onOpenTestingForm = vi.fn();
 
     loadLotTwoQueueMock.mockResolvedValue([
@@ -73,13 +128,6 @@ describe('UsedGearLotTwoSection', () => {
         },
       },
     ]);
-    loadUsedGearWorkflowRecordBySkuMock.mockResolvedValue({
-      id: 'rec-by-sku',
-      createdTime: '2026-05-07T00:00:00.000Z',
-      fields: {
-        SKU: 'SKU-LOOKUP-1',
-      },
-    });
 
     render(
       <UsedGearLotTwoSection
@@ -92,15 +140,9 @@ describe('UsedGearLotTwoSection', () => {
 
     await screen.findByText('Parking Lot 2');
 
-    fireEvent.change(screen.getByRole('textbox', { name: 'Activate by SKU' }), {
-      target: { value: 'SKU-LOOKUP-1' },
-    });
     fireEvent.click(screen.getByRole('button', { name: 'Open Testing' }));
 
-    await waitFor(() => {
-      expect(loadUsedGearWorkflowRecordBySkuMock).toHaveBeenCalledWith('SKU-LOOKUP-1');
-      expect(onOpenTestingForm).toHaveBeenCalledWith('rec-by-sku');
-    });
+    expect(onOpenTestingForm).toHaveBeenCalledWith('rec-lot-two');
   });
 
   it('labels ungrouped records as single items', async () => {
@@ -130,8 +172,6 @@ describe('UsedGearLotTwoSection', () => {
     await screen.findByText('Parking Lot 2');
 
     expect(screen.getByText('Single intake item')).toBeInTheDocument();
-    expect(screen.getByText('Visible Sets')).toBeInTheDocument();
-    expect(screen.getByText('Downstream Activation')).toBeInTheDocument();
     expect(screen.getByText(/Intake Date:/i)).toBeInTheDocument();
     expect(screen.getAllByText(/May 6, 2026/i).length).toBeGreaterThan(0);
   });

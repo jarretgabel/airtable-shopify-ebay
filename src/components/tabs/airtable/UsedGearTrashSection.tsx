@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { EmptySurface } from '@/components/app/StateSurfaces';
-import { RefreshIconButton } from '@/components/app/RefreshIconButton';
+import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
   groupUsedGearWorkflowRecords,
@@ -17,7 +17,11 @@ interface UsedGearTrashSectionProps {
   showSectionIntro?: boolean;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
+  sortMode?: UsedGearTrashSortMode;
+  onSortModeChange?: (value: UsedGearTrashSortMode) => void;
 }
+
+export type UsedGearTrashSortMode = 'group-label' | 'newest' | 'oldest' | 'arrival-date' | 'make-model';
 
 function recordSearchText(record: AirtableRecord): string {
   return [
@@ -25,8 +29,7 @@ function recordSearchText(record: AirtableRecord): string {
     record.fields.Make,
     record.fields.Model,
     record.fields['Workflow Source'],
-    record.fields['Submission Group ID'],
-    record.fields['Pick Up ID'],
+    record.fields['Workflow Status'],
     record.fields['Unqualified Reason'],
   ]
     .flatMap((value) => Array.isArray(value) ? value : [value])
@@ -67,6 +70,29 @@ function formatIntakeDate(record: AirtableRecord): string {
   return 'Unknown';
 }
 
+function stringFieldValue(record: AirtableRecord, fieldName: string): string {
+  const value = record.fields[fieldName];
+  return typeof value === 'string' ? value : '';
+}
+
+function arrivalTimestamp(record: AirtableRecord): number {
+  const rawValue = stringFieldValue(record, 'Arrival Date');
+  const parsed = rawValue ? Date.parse(rawValue) : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+}
+
+function makeModelSortValue(record: AirtableRecord): string {
+  return `${stringFieldValue(record, 'Make')} ${stringFieldValue(record, 'Model')} ${stringFieldValue(record, 'SKU')}`.trim().toLowerCase();
+}
+
+function getTrashSortLabel(sortMode: UsedGearTrashSortMode): string {
+  if (sortMode === 'newest') return 'Newest First';
+  if (sortMode === 'oldest') return 'Oldest First';
+  if (sortMode === 'arrival-date') return 'Arrival Date';
+  if (sortMode === 'make-model') return 'Make Then Model';
+  return 'Default Order';
+}
+
 function getGroupHeading(description: string): string {
   if (description === 'Single record') {
     return 'Single intake item';
@@ -86,13 +112,17 @@ export function UsedGearTrashSection({
   showSectionIntro = true,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
+  sortMode: controlledSortMode,
+  onSortModeChange,
 }: UsedGearTrashSectionProps) {
   const [records, setRecords] = useState<AirtableRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
+  const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearTrashSortMode>('group-label');
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
+  const sortMode = controlledSortMode ?? uncontrolledSortMode;
 
   useEffect(() => {
     let cancelled = false;
@@ -133,7 +163,32 @@ export function UsedGearTrashSection({
     return records.filter((record) => recordSearchText(record).includes(normalizedSearch));
   }, [records, searchTerm]);
 
-  const groupedRecords = useMemo(() => groupUsedGearWorkflowRecords(filteredRecords), [filteredRecords]);
+  const groupedRecords = useMemo(() => {
+    const groups = groupUsedGearWorkflowRecords(filteredRecords);
+    const getNewestTimestamp = (group: (typeof groups)[number]) => Math.max(...group.records.map((record) => new Date(record.createdTime).getTime()));
+    const getOldestTimestamp = (group: (typeof groups)[number]) => Math.min(...group.records.map((record) => new Date(record.createdTime).getTime()));
+    const getEarliestArrival = (group: (typeof groups)[number]) => Math.min(...group.records.map(arrivalTimestamp));
+    const getLowestMakeModel = (group: (typeof groups)[number]) => [...group.records]
+      .sort((left, right) => makeModelSortValue(left).localeCompare(makeModelSortValue(right)))[0];
+
+    return [...groups].sort((left, right) => {
+      if (sortMode === 'newest') {
+        return getNewestTimestamp(right) - getNewestTimestamp(left) || left.label.localeCompare(right.label);
+      }
+      if (sortMode === 'oldest') {
+        return getOldestTimestamp(left) - getOldestTimestamp(right) || left.label.localeCompare(right.label);
+      }
+      if (sortMode === 'arrival-date') {
+        return getEarliestArrival(left) - getEarliestArrival(right) || left.label.localeCompare(right.label);
+      }
+      if (sortMode === 'make-model') {
+        const leftRecord = getLowestMakeModel(left);
+        const rightRecord = getLowestMakeModel(right);
+        return makeModelSortValue(leftRecord).localeCompare(makeModelSortValue(rightRecord)) || left.label.localeCompare(right.label);
+      }
+      return left.label.localeCompare(right.label);
+    });
+  }, [filteredRecords, sortMode]);
 
   const refreshQueue = async () => {
     setRefreshing(true);
@@ -148,8 +203,6 @@ export function UsedGearTrashSection({
     }
   };
 
-  const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
-
   const handleSearchTermChange = (value: string) => {
     if (typeof controlledSearchTerm !== 'string') {
       setUncontrolledSearchTerm(value);
@@ -158,8 +211,16 @@ export function UsedGearTrashSection({
     onSearchTermChange?.(value);
   };
 
+  const handleSortModeChange = (value: UsedGearTrashSortMode) => {
+    if (!controlledSortMode) {
+      setUncontrolledSortMode(value);
+    }
+
+    onSortModeChange?.(value);
+  };
+
   return (
-    <section id="used-gear-trash" className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+    <section id="used-gear-trash" className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
           <div>
@@ -172,29 +233,28 @@ export function UsedGearTrashSection({
             </div>
           </div>
         ) : null}
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <label className="min-w-[240px] flex-1">
-            <span className="sr-only">Search workflow trash</span>
-            <input
-              type="text"
-              className={inputClassName}
-              value={searchTerm}
-              onChange={(event) => handleSearchTermChange(event.currentTarget.value)}
-              placeholder="Search by SKU, make, model, reason, or group id"
-            />
-          </label>
-          <div className="flex flex-wrap gap-3">
-            <RefreshIconButton
-              onClick={() => {
-                void refreshQueue();
-              }}
-              disabled={refreshing}
-              loading={refreshing}
-              label="Refresh trash review queue"
-              loadingLabel="Refreshing trash review queue"
-            />
-          </div>
-        </div>
+        <QueueSearchToolbar
+          searchAriaLabel="Search workflow trash"
+          searchPlaceholder="Search by SKU, make, model, source, status, or reason"
+          searchValue={searchTerm}
+          onSearchChange={handleSearchTermChange}
+          refreshLabel="Refresh trash review queue"
+          refreshLoadingLabel="Refreshing trash review queue"
+          refreshing={refreshing}
+          onRefresh={() => {
+            void refreshQueue();
+          }}
+          sortAriaLabel={`Sort trash review queue. Current order: ${getTrashSortLabel(sortMode)}`}
+          sortValue={sortMode}
+          onSortChange={(value) => handleSortModeChange(value as UsedGearTrashSortMode)}
+          sortOptions={[
+            { value: 'group-label', label: 'Default Order' },
+            { value: 'newest', label: 'Newest First' },
+            { value: 'oldest', label: 'Oldest First' },
+            { value: 'arrival-date', label: 'Arrival Date' },
+            { value: 'make-model', label: 'Make Then Model' },
+          ]}
+        />
       </div>
 
       {error ? (
@@ -202,21 +262,6 @@ export function UsedGearTrashSection({
           {error}
         </div>
       ) : null}
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Trash Rows</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{records.length}</p>
-        </div>
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible After Search</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{filteredRecords.length}</p>
-        </div>
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible Sets</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{groupedRecords.length}</p>
-        </div>
-      </div>
 
       {!loading && records.length === 0 ? (
         <EmptySurface title="Trash queue is clear" message="No used-gear workflow rows are currently sitting in active trash.">
@@ -269,17 +314,8 @@ export function UsedGearTrashSection({
                     <div>
                       <span className="font-semibold text-[var(--ink)]">Offer Amount:</span> {displayInventoryValue(record.fields['Offer Amount'])}
                     </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Paid Amount:</span> {displayInventoryValue(record.fields['Paid Amount'])}
-                    </div>
                     <div className="sm:col-span-2">
                       <span className="font-semibold text-[var(--ink)]">Qualification Notes:</span> {previewText(record.fields['Qualification Notes'])}
-                    </div>
-                    <div className="sm:col-span-2">
-                      <span className="font-semibold text-[var(--ink)]">Trash Status:</span> {displayInventoryValue(record.fields['Trash Status'])}
-                    </div>
-                    <div className="sm:col-span-2">
-                      <span className="font-semibold text-[var(--ink)]">Internal Notes:</span> {previewText(record.fields['Internal Functional Notes'] || record.fields['Internal Cosmetic Notes'] || record.fields['Internal Inclusion Notes'])}
                     </div>
                   </div>
 

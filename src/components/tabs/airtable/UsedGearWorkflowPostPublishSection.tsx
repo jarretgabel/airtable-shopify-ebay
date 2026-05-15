@@ -571,13 +571,13 @@ export function UsedGearWorkflowPostPublishSection({
 
                     return (
                       <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{snapshot.status}</p>
                             <h5 className="mt-1 text-lg font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</h5>
                             <p className="mt-1 text-sm text-[var(--muted)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</p>
                           </div>
-                          <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                          <div className="inline-flex w-fit max-w-full items-center rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-[11px] font-semibold leading-4 text-[var(--muted)] sm:shrink-0">
                             {snapshot.channel ? snapshot.channel : snapshot.bucket}
                           </div>
                         </div>

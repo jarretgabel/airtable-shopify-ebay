@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
-import { UsedGearLotTwoSection } from '@/components/tabs/airtable/UsedGearLotTwoSection';
+import { WorkflowQueuePageTemplate } from '@/components/app/WorkflowQueuePageTemplate';
+import { UsedGearLotTwoSection, type UsedGearLotTwoSortMode } from '@/components/tabs/airtable/UsedGearLotTwoSection';
 
 interface UsedGearLotTwoTabProps {
   currentUserName: string;
@@ -12,6 +12,7 @@ interface UsedGearLotTwoTabProps {
 }
 
 const WORKFLOW_LOT_TWO_SEARCH_PARAM = 'workflowLotTwoSearch';
+const WORKFLOW_LOT_TWO_SORT_PARAM = 'workflowLotTwoSort';
 const WORKFLOW_LOT_TWO_GROUP_PARAM = 'workflowLotTwoGroup';
 
 export function UsedGearLotTwoTab({
@@ -27,6 +28,12 @@ export function UsedGearLotTwoTab({
     const value = new URLSearchParams(location.search).get(WORKFLOW_LOT_TWO_GROUP_PARAM)?.trim() ?? '';
     return value ? value : null;
   }, [location.search]);
+  const workflowLotTwoSort = useMemo(() => {
+    const value = new URLSearchParams(location.search).get(WORKFLOW_LOT_TWO_SORT_PARAM);
+    return value === 'newest' || value === 'oldest' || value === 'arrival-date' || value === 'make-model'
+      ? value as UsedGearLotTwoSortMode
+      : 'group-label';
+  }, [location.search]);
 
   const updateRouteState = (update: (params: URLSearchParams) => void, hash: string) => {
     const nextParams = new URLSearchParams(location.search);
@@ -41,16 +48,12 @@ export function UsedGearLotTwoTab({
   };
 
   return (
-    <>
-      <div className="mt-3 mb-6">
-        <WorkflowPageHeader
-          eyebrow="Used Gear Intake"
-          title="Parking Lot 2"
-          description="Track accepted intake until arrival handling, SKU assignment, and the next handoff are complete."
-          descriptionHint="Accepted intake rows live here until arrival handling, SKU assignment, or missing-item cleanup is complete. Open Incoming Gear, Testing, Photos, or the workflow detail page directly from the queue."
-        />
-      </div>
-
+    <WorkflowQueuePageTemplate
+      eyebrow="Used Gear Intake"
+      title="Parking Lot 2"
+      description="Track accepted intake through arrival, SKU assignment, and the next handoff."
+      descriptionHint="Use the queue actions to open Incoming Gear, Testing, Photos, or the workflow record directly from this page."
+    >
       <UsedGearLotTwoSection
         showSectionIntro={false}
         onOpenIncomingGearForm={onOpenIncomingGearForm}
@@ -73,7 +76,15 @@ export function UsedGearLotTwoTab({
             params.delete(WORKFLOW_LOT_TWO_SEARCH_PARAM);
           }
         }, '#used-gear-lot-two')}
+        sortMode={workflowLotTwoSort}
+        onSortModeChange={(value) => updateRouteState((params) => {
+          if (value === 'group-label') {
+            params.delete(WORKFLOW_LOT_TWO_SORT_PARAM);
+          } else {
+            params.set(WORKFLOW_LOT_TWO_SORT_PARAM, value);
+          }
+        }, '#used-gear-lot-two')}
       />
-    </>
+    </WorkflowQueuePageTemplate>
   );
 }

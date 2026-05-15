@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass, smallSuccessActionButtonClass } from '@/components/app/buttonStyles';
+import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { CopyLinkIconButton } from '@/components/app/CopyLinkIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
-import { RefreshIconButton } from '@/components/app/RefreshIconButton';
-import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
+import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { useCopyQueueLink } from '@/components/tabs/airtable/useCopyQueueLink';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
-import { groupUsedGearWorkflowRecords, loadLotTwoQueue, loadUsedGearWorkflowRecordBySku } from '@/services/usedGearQueue';
+import { groupUsedGearWorkflowRecords, loadLotTwoQueue } from '@/services/usedGearQueue';
 import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearLotTwoSectionProps {
@@ -20,16 +19,19 @@ interface UsedGearLotTwoSectionProps {
   onFocusedGroupIdChange?: (groupId: string | null) => void;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
+  sortMode?: UsedGearLotTwoSortMode;
+  onSortModeChange?: (value: UsedGearLotTwoSortMode) => void;
 }
+
+export type UsedGearLotTwoSortMode = 'group-label' | 'newest' | 'oldest' | 'arrival-date' | 'make-model';
 
 function recordSearchText(record: AirtableRecord): string {
   return [
     record.fields.SKU,
     record.fields.Make,
     record.fields.Model,
+    record.fields['Workflow Source'],
     record.fields['Workflow Status'],
-    record.fields['Submission Group ID'],
-    record.fields['Pick Up ID'],
   ]
     .flatMap((value) => Array.isArray(value) ? value : [value])
     .filter((value): value is string => typeof value === 'string')
@@ -42,6 +44,29 @@ function buildWorkflowLotTwoGroupLink(groupId: string): string {
   nextUrl.searchParams.set('workflowLotTwoGroup', groupId);
   nextUrl.hash = 'used-gear-lot-two';
   return nextUrl.toString();
+}
+
+function stringFieldValue(record: AirtableRecord, fieldName: string): string {
+  const value = record.fields[fieldName];
+  return typeof value === 'string' ? value : '';
+}
+
+function arrivalTimestamp(record: AirtableRecord): number {
+  const rawValue = stringFieldValue(record, 'Arrival Date');
+  const parsed = rawValue ? Date.parse(rawValue) : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+}
+
+function makeModelSortValue(record: AirtableRecord): string {
+  return `${stringFieldValue(record, 'Make')} ${stringFieldValue(record, 'Model')} ${stringFieldValue(record, 'SKU')}`.trim().toLowerCase();
+}
+
+function getLotTwoSortLabel(sortMode: UsedGearLotTwoSortMode): string {
+  if (sortMode === 'newest') return 'Newest First';
+  if (sortMode === 'oldest') return 'Oldest First';
+  if (sortMode === 'arrival-date') return 'Arrival Date';
+  if (sortMode === 'make-model') return 'Make Then Model';
+  return 'Default Order';
 }
 
 const intakeDateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -94,6 +119,8 @@ export function UsedGearLotTwoSection({
   onFocusedGroupIdChange,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
+  sortMode: controlledSortMode,
+  onSortModeChange,
 }: UsedGearLotTwoSectionProps) {
   const { copyingLink, copiedLink, copyLink } = useCopyQueueLink({
     sectionId: 'used-gear-lot-two',
@@ -107,10 +134,9 @@ export function UsedGearLotTwoSection({
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
-  const [activationSku, setActivationSku] = useState('');
-  const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
-  const [activatingBySku, setActivatingBySku] = useState(false);
+  const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearLotTwoSortMode>('group-label');
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
+  const sortMode = controlledSortMode ?? uncontrolledSortMode;
 
   useEffect(() => {
     let cancelled = false;
@@ -151,14 +177,35 @@ export function UsedGearLotTwoSection({
     return records.filter((record) => recordSearchText(record).includes(normalizedSearch));
   }, [records, searchTerm]);
 
-  const groupedRecords = useMemo(() => groupUsedGearWorkflowRecords(filteredRecords), [filteredRecords]);
+  const groupedRecords = useMemo(() => {
+    const groups = groupUsedGearWorkflowRecords(filteredRecords);
+    const getNewestTimestamp = (group: (typeof groups)[number]) => Math.max(...group.records.map((record) => new Date(record.createdTime).getTime()));
+    const getOldestTimestamp = (group: (typeof groups)[number]) => Math.min(...group.records.map((record) => new Date(record.createdTime).getTime()));
+    const getEarliestArrival = (group: (typeof groups)[number]) => Math.min(...group.records.map(arrivalTimestamp));
+    const getLowestMakeModel = (group: (typeof groups)[number]) => [...group.records]
+      .sort((left, right) => makeModelSortValue(left).localeCompare(makeModelSortValue(right)))[0];
+
+    return [...groups].sort((left, right) => {
+      if (sortMode === 'newest') {
+        return getNewestTimestamp(right) - getNewestTimestamp(left) || left.label.localeCompare(right.label);
+      }
+      if (sortMode === 'oldest') {
+        return getOldestTimestamp(left) - getOldestTimestamp(right) || left.label.localeCompare(right.label);
+      }
+      if (sortMode === 'arrival-date') {
+        return getEarliestArrival(left) - getEarliestArrival(right) || left.label.localeCompare(right.label);
+      }
+      if (sortMode === 'make-model') {
+        const leftRecord = getLowestMakeModel(left);
+        const rightRecord = getLowestMakeModel(right);
+        return makeModelSortValue(leftRecord).localeCompare(makeModelSortValue(rightRecord)) || left.label.localeCompare(right.label);
+      }
+      return left.label.localeCompare(right.label);
+    });
+  }, [filteredRecords, sortMode]);
   const visibleGroups = useMemo(
     () => (focusedGroupId ? groupedRecords.filter((group) => group.id === focusedGroupId) : groupedRecords),
     [focusedGroupId, groupedRecords],
-  );
-  const selectedRecord = useMemo(
-    () => records.find((record) => record.id === selectedRecordId) ?? null,
-    [records, selectedRecordId],
   );
 
   const refreshQueue = async () => {
@@ -174,8 +221,6 @@ export function UsedGearLotTwoSection({
     }
   };
 
-  const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
-
   const handleSearchTermChange = (value: string) => {
     if (typeof controlledSearchTerm !== 'string') {
       setUncontrolledSearchTerm(value);
@@ -184,40 +229,20 @@ export function UsedGearLotTwoSection({
     onSearchTermChange?.(value);
   };
 
-  const activateBySku = async (
-    action: (recordId: string) => void,
-    fallbackRecordId?: string | null,
-  ) => {
-    const normalizedSku = activationSku.trim();
-    if (normalizedSku) {
-      setActivatingBySku(true);
-      setError(null);
-
-      try {
-        const record = await loadUsedGearWorkflowRecordBySku(normalizedSku);
-        action(record.id);
-      } catch (activationError) {
-        setError(activationError instanceof Error ? activationError.message : 'Unable to find the requested SKU in the used-gear workflow.');
-      } finally {
-        setActivatingBySku(false);
-      }
-      return;
+  const handleSortModeChange = (value: UsedGearLotTwoSortMode) => {
+    if (!controlledSortMode) {
+      setUncontrolledSortMode(value);
     }
 
-    if (fallbackRecordId) {
-      action(fallbackRecordId);
-      return;
-    }
-
-    setError('Select a Parking Lot 2 row or enter a SKU before activating downstream workflow forms.');
+    onSortModeChange?.(value);
   };
 
   return (
-    <section id="used-gear-lot-two" className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+    <section id="used-gear-lot-two" className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
           <div>
-            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Intake</p>
+            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Workflow</p>
             <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Parking Lot 2</h3>
             <div className="mt-3 max-w-2xl">
               <CollapsibleHelperText label="Queue guide">
@@ -226,29 +251,28 @@ export function UsedGearLotTwoSection({
             </div>
           </div>
         ) : null}
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <label className="min-w-[240px] flex-1">
-            <span className="sr-only">Search Parking Lot 2</span>
-            <input
-              type="text"
-              className={inputClassName}
-              value={searchTerm}
-              onChange={(event) => handleSearchTermChange(event.currentTarget.value)}
-              placeholder="Search by SKU, make, model, status, or group id"
-            />
-          </label>
-          <div className="flex flex-wrap gap-3">
-            <RefreshIconButton
-              onClick={() => {
-                void refreshQueue();
-              }}
-              disabled={refreshing}
-              loading={refreshing}
-              label="Refresh Parking Lot 2 queue"
-              loadingLabel="Refreshing Parking Lot 2 queue"
-            />
-          </div>
-        </div>
+        <QueueSearchToolbar
+          searchAriaLabel="Search Parking Lot 2"
+          searchPlaceholder="Search by SKU, make, model, source, or status"
+          searchValue={searchTerm}
+          onSearchChange={handleSearchTermChange}
+          refreshLabel="Refresh Parking Lot 2 queue"
+          refreshLoadingLabel="Refreshing Parking Lot 2 queue"
+          refreshing={refreshing}
+          onRefresh={() => {
+            void refreshQueue();
+          }}
+          sortAriaLabel={`Sort Parking Lot 2 queue. Current order: ${getLotTwoSortLabel(sortMode)}`}
+          sortValue={sortMode}
+          onSortChange={(value) => handleSortModeChange(value as UsedGearLotTwoSortMode)}
+          sortOptions={[
+            { value: 'group-label', label: 'Default Order' },
+            { value: 'newest', label: 'Newest First' },
+            { value: 'oldest', label: 'Oldest First' },
+            { value: 'arrival-date', label: 'Arrival Date' },
+            { value: 'make-model', label: 'Make Then Model' },
+          ]}
+        />
       </div>
 
       {error ? (
@@ -258,107 +282,15 @@ export function UsedGearLotTwoSection({
       ) : null}
 
       {focusedGroupId ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
-          <span>Focused on one Parking Lot 2 set from a shared workflow link.</span>
-          {onFocusedGroupIdChange ? (
-            <button
-              type="button"
-              className={smallSecondaryActionButtonClass}
-              onClick={() => onFocusedGroupIdChange(null)}
-            >
-              Clear Focus
-            </button>
-          ) : null}
+        <div className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
+          Shared link opened Parking Lot 2 focused on one queue set.
         </div>
       ) : null}
-
-      <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Downstream Activation</p>
-            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              Select a queue row below or enter an exact SKU when you already know which workflow item should open next.
-            </p>
-          </div>
-          <label className="min-w-[240px] lg:max-w-[280px]">
-            <span className="sr-only">Activate by SKU</span>
-            <input
-              type="text"
-              className={inputClassName}
-              value={activationSku}
-              onChange={(event) => setActivationSku(event.currentTarget.value)}
-              placeholder="Exact SKU for direct activation"
-            />
-          </label>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            className={smallSuccessActionButtonClass}
-            onClick={() => {
-              void activateBySku(onOpenIncomingGearForm, selectedRecord?.id);
-            }}
-            disabled={activatingBySku}
-          >
-            Open Incoming Gear
-          </button>
-          <button
-            type="button"
-            className={smallSecondaryActionButtonClass}
-            onClick={() => {
-              void activateBySku(onOpenTestingForm, selectedRecord?.id);
-            }}
-            disabled={activatingBySku}
-          >
-            Open Testing
-          </button>
-          <button
-            type="button"
-            className={smallSecondaryActionButtonClass}
-            onClick={() => {
-              void activateBySku(onOpenPhotosForm, selectedRecord?.id);
-            }}
-            disabled={activatingBySku}
-          >
-            Open Photos
-          </button>
-          <button
-            type="button"
-            className={smallSecondaryActionButtonClass}
-            onClick={() => {
-              void activateBySku(onOpenWorkflowRecord, selectedRecord?.id);
-            }}
-            disabled={activatingBySku}
-          >
-            Open Workflow Detail
-          </button>
-        </div>
-        {selectedRecord ? (
-          <p className="m-0 mt-3 text-xs text-[var(--muted)]">
-            Selected row: <span className="font-semibold text-[var(--ink)]">{displayInventoryValue(selectedRecord.fields.SKU)}</span>
-          </p>
-        ) : null}
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Lot 2 Rows</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{records.length}</p>
-        </div>
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible After Search</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{filteredRecords.length}</p>
-        </div>
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible Sets</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{visibleGroups.length}</p>
-        </div>
-      </div>
 
       {!loading && records.length === 0 ? (
         <EmptySurface title="Parking Lot 2 is clear" message="No accepted arrival-stage workflow rows are currently waiting in Parking Lot 2.">
           <p className="mt-3 text-sm text-[var(--muted)]">
-            Next route: promote accepted intake rows out of Parking Lot 1, or reopen a workflow row by SKU when the item is already known and needs stage work.
+            Next route: promote accepted intake rows out of Parking Lot 1, then work each Lot 2 card through intake, testing, photos, or workflow detail.
           </p>
         </EmptySurface>
       ) : null}
@@ -376,33 +308,36 @@ export function UsedGearLotTwoSection({
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {onFocusedGroupIdChange ? (
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--bg)] px-1.5 py-1">
-                    <ToolbarIconButton
-                      onClick={() => onFocusedGroupIdChange(group.id)}
-                      label={group.description === 'Single record'
-                        ? (focusedGroupId === group.id ? 'Focused Item' : 'Focus Item')
-                        : (focusedGroupId === group.id ? 'Focused Set' : 'Focus Set')}
-                      className="h-7 w-7 rounded-full border-transparent bg-transparent shadow-none hover:bg-[var(--line)]"
-                      icon={(
-                        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-3.5 w-3.5">
-                          <circle cx="10" cy="10" r="4.25" stroke="currentColor" strokeWidth="1.75" />
-                          <path d="M10 2.917v2.5M10 14.583v2.5M17.083 10h-2.5M5.417 10h-2.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                        </svg>
-                      )}
-                    />
-                    <CopyLinkIconButton
-                      onClick={() => {
-                        void copyLink(buildWorkflowLotTwoGroupLink(group.id));
-                      }}
-                      disabled={copyingLink}
-                      copying={copyingLink}
-                      copied={copiedLink}
-                      label={group.description === 'Single record' ? 'Copy Item Link' : 'Copy Group Link'}
-                      copyingLabel={group.description === 'Single record' ? 'Copying item link' : 'Copying group link'}
-                      copiedLabel={group.description === 'Single record' ? 'Item link copied' : 'Group link copied'}
-                      className="h-7 w-7 rounded-full border-transparent bg-transparent shadow-none hover:bg-[var(--line)]"
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-medium text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    onClick={() => onFocusedGroupIdChange(group.id)}
+                  >
+                    {group.description === 'Single record'
+                      ? (focusedGroupId === group.id ? 'Focused Item' : 'Focus Item')
+                      : (focusedGroupId === group.id ? 'Focused Set' : 'Focus Set')}
+                  </button>
+                ) : null}
+                <CopyLinkIconButton
+                  onClick={() => {
+                    void copyLink(buildWorkflowLotTwoGroupLink(group.id));
+                  }}
+                  disabled={copyingLink}
+                  copying={copyingLink}
+                  copied={copiedLink}
+                  label={group.description === 'Single record' ? 'Copy Item Link' : 'Copy Group Link'}
+                  copyingLabel={group.description === 'Single record' ? 'Copying item link' : 'Copying group link'}
+                  copiedLabel={group.description === 'Single record' ? 'Item link copied' : 'Group link copied'}
+                  className="h-7 w-7 rounded-full"
+                />
+                {focusedGroupId ? (
+                  <button
+                    type="button"
+                    className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-medium text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    onClick={() => onFocusedGroupIdChange?.(null)}
+                  >
+                    Show All Sets
+                  </button>
                 ) : null}
               </div>
             </div>
@@ -410,18 +345,18 @@ export function UsedGearLotTwoSection({
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
               {group.records.map((record) => (
                 <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{displayInventoryValue(record.fields['Workflow Source'])}</p>
                       <h5 className="mt-1 text-lg font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</h5>
                       <p className="mt-1 text-sm text-[var(--muted)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</p>
                     </div>
-                    <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                    <div className="inline-flex w-fit max-w-full items-center rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-[11px] font-semibold leading-4 text-[var(--muted)] sm:shrink-0">
                       {displayInventoryValue(record.fields['Workflow Status'])}
                     </div>
                   </div>
 
-                  <div className="mt-3 space-y-2 text-sm text-[var(--muted)]">
+                  <div className="mt-3 grid gap-2 text-sm text-[var(--muted)] sm:grid-cols-2">
                     <div>
                       <span className="font-semibold text-[var(--ink)]">Intake Date:</span> {formatIntakeDate(record)}
                     </div>
@@ -434,7 +369,7 @@ export function UsedGearLotTwoSection({
                     <div>
                       <span className="font-semibold text-[var(--ink)]">Paid Amount:</span> {displayInventoryValue(record.fields['Paid Amount'])}
                     </div>
-                    <div>
+                    <div className="sm:col-span-2">
                       <span className="font-semibold text-[var(--ink)]">Accepted At:</span> {displayInventoryValue(record.fields['Accepted At'])}
                     </div>
                   </div>
@@ -442,10 +377,24 @@ export function UsedGearLotTwoSection({
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className={selectedRecordId === record.id ? smallSuccessActionButtonClass : smallSecondaryActionButtonClass}
-                      onClick={() => setSelectedRecordId(record.id)}
+                      className={smallPrimaryActionButtonClass}
+                      onClick={() => onOpenIncomingGearForm(record.id)}
                     >
-                      {selectedRecordId === record.id ? 'Selected' : 'Select Row'}
+                      Open Incoming Gear
+                    </button>
+                    <button
+                      type="button"
+                      className={smallSecondaryActionButtonClass}
+                      onClick={() => onOpenTestingForm(record.id)}
+                    >
+                      Open Testing
+                    </button>
+                    <button
+                      type="button"
+                      className={smallSecondaryActionButtonClass}
+                      onClick={() => onOpenPhotosForm(record.id)}
+                    >
+                      Open Photos
                     </button>
                     <button
                       type="button"
@@ -453,13 +402,6 @@ export function UsedGearLotTwoSection({
                       onClick={() => onOpenWorkflowRecord(record.id)}
                     >
                       Workflow Detail
-                    </button>
-                    <button
-                      type="button"
-                      className={smallPrimaryActionButtonClass}
-                      onClick={() => onOpenIncomingGearForm(record.id)}
-                    >
-                      Open Incoming Gear
                     </button>
                   </div>
                 </article>

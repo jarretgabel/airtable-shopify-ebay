@@ -235,6 +235,47 @@ describe('UsedGearPendingReviewSection', () => {
     expect(screen.getAllByText('PEND-3').length).toBeGreaterThan(0);
   });
 
+  it('filters pending review rows by shared source or status fields', async () => {
+    loadPendingReviewQueueMock.mockResolvedValue([
+      {
+        id: 'rec-pending-source',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PEND-SOURCE',
+          Make: 'McIntosh',
+          Model: 'MC240',
+          'Workflow Source': 'Manual Entry',
+          'Workflow Status': 'Pending Review',
+        },
+      },
+      {
+        id: 'rec-pending-other',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PEND-OTHER',
+          Make: 'Luxman',
+          Model: 'L-507',
+          'Workflow Source': 'JotForm',
+          'Workflow Status': 'Pending Review',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearPendingReviewSection
+        currentUserName="Taylor Reviewer"
+        onOpenReviewRecord={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+        searchTerm="manual entry"
+      />,
+    );
+
+    await screen.findByText('Pending Review Queue');
+
+    expect(screen.getByText('PEND-SOURCE')).toBeInTheDocument();
+    expect(screen.queryByText('PEND-OTHER')).not.toBeInTheDocument();
+  });
+
   it('opens workflow detail from the compact queue card', async () => {
     const onOpenWorkflowRecord = vi.fn();
 
