@@ -144,7 +144,6 @@ describe('UsedGearPendingReviewSection', () => {
 
     expect(await screen.findByRole('button', { name: 'Open Group Review' })).toBeInTheDocument();
     expect(screen.queryByText('Grouped intake review has moved off the queue cards.')).not.toBeInTheDocument();
-    expect(screen.getByText(/Earliest intake May 7, 2026/i)).toBeInTheDocument();
     expect(screen.queryByText('SUB-42')).not.toBeInTheDocument();
   });
 

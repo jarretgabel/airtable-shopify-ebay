@@ -88,6 +88,7 @@ describe('UsedGearTrashSection', () => {
         id: 'rec-trash-single',
         createdTime: '2026-05-07T00:00:00.000Z',
         fields: {
+          'Arrival Date': '2026-05-06',
           SKU: 'TRASH-SINGLE',
           Make: 'Pioneer',
           Model: 'SX-750',
@@ -103,6 +104,7 @@ describe('UsedGearTrashSection', () => {
 
     expect(screen.getByText('Single intake item')).toBeInTheDocument();
     expect(screen.getByText('Visible Sets')).toBeInTheDocument();
-    expect(screen.getByText(/Earliest intake May 7, 2026/i)).toBeInTheDocument();
+    expect(screen.getByText(/Intake Date:/i)).toBeInTheDocument();
+    expect(screen.getByText(/May 6, 2026/i)).toBeInTheDocument();
   });
 });

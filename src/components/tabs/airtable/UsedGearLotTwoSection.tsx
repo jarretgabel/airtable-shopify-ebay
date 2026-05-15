@@ -71,15 +71,6 @@ function formatIntakeDate(record: AirtableRecord): string {
   return 'Unknown';
 }
 
-function formatGroupIntakeDate(records: AirtableRecord[]): string {
-  const earliestTimestamp = Math.min(...records.map(getRecordIntakeTimestamp));
-  if (Number.isFinite(earliestTimestamp)) {
-    return intakeDateFormatter.format(new Date(earliestTimestamp));
-  }
-
-  return 'Unknown';
-}
-
 function getGroupHeading(description: string): string {
   if (description === 'Single record') {
     return 'Single intake item';
@@ -382,7 +373,6 @@ export function UsedGearLotTwoSection({
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{getGroupHeading(group.description)}</p>
-                <p className="mt-1 text-sm text-[var(--muted)]">Earliest intake {formatGroupIntakeDate(group.records)}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {onFocusedGroupIdChange ? (

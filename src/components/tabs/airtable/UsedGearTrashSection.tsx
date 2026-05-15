@@ -58,10 +58,10 @@ function getRecordIntakeTimestamp(record: AirtableRecord): number {
   return Number.isFinite(createdTime) ? createdTime : Number.POSITIVE_INFINITY;
 }
 
-function formatGroupIntakeDate(records: AirtableRecord[]): string {
-  const earliestTimestamp = Math.min(...records.map(getRecordIntakeTimestamp));
-  if (Number.isFinite(earliestTimestamp)) {
-    return intakeDateFormatter.format(new Date(earliestTimestamp));
+function formatIntakeDate(record: AirtableRecord): string {
+  const intakeTimestamp = getRecordIntakeTimestamp(record);
+  if (Number.isFinite(intakeTimestamp)) {
+    return intakeDateFormatter.format(new Date(intakeTimestamp));
   }
 
   return 'Unknown';
@@ -236,7 +236,6 @@ export function UsedGearTrashSection({
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{getGroupHeading(group.description)}</p>
-                <p className="mt-1 text-sm text-[var(--muted)]">Earliest intake {formatGroupIntakeDate(group.records)}</p>
               </div>
             </div>
 
@@ -258,6 +257,9 @@ export function UsedGearTrashSection({
                   </div>
 
                   <div className="mt-3 grid gap-2 text-sm text-[var(--muted)] sm:grid-cols-2">
+                    <div>
+                      <span className="font-semibold text-[var(--ink)]">Intake Date:</span> {formatIntakeDate(record)}
+                    </div>
                     <div>
                       <span className="font-semibold text-[var(--ink)]">Reason:</span> {displayInventoryValue(record.fields['Unqualified Reason'])}
                     </div>
