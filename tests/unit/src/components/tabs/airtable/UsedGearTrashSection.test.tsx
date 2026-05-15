@@ -120,4 +120,28 @@ describe('UsedGearTrashSection', () => {
 
     expect(onOpenReviewRecord).toHaveBeenCalledWith('rec-trash');
   });
+
+  it('labels ungrouped trash records as single items', async () => {
+    loadTrashQueueMock.mockResolvedValue([
+      {
+        id: 'rec-trash-single',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'TRASH-SINGLE',
+          Make: 'Pioneer',
+          Model: 'SX-750',
+          'Workflow Status': 'Unqualified',
+          'Trash Status': 'Active Trash',
+        },
+      },
+    ]);
+
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenWorkflowRecord={vi.fn()} />);
+
+    await screen.findByText('Trash Review');
+
+    expect(screen.getByText('Single intake item')).toBeInTheDocument();
+    expect(screen.getByText('Visible Sets')).toBeInTheDocument();
+    expect(screen.getByText(/Earliest intake May 7, 2026/i)).toBeInTheDocument();
+  });
 });

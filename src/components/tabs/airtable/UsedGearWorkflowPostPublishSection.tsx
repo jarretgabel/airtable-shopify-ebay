@@ -109,6 +109,18 @@ function sortByLifecycleDate(left: AirtableRecord, right: AirtableRecord): numbe
   return new Date(rightDate || 0).getTime() - new Date(leftDate || 0).getTime();
 }
 
+function getPostPublishSortLabel(sortMode: UsedGearWorkflowPostPublishSortMode): string {
+  if (sortMode === 'oldest-activity') {
+    return 'Oldest Activity';
+  }
+
+  if (sortMode === 'sku') {
+    return 'SKU';
+  }
+
+  return 'Latest Activity';
+}
+
 export function UsedGearWorkflowPostPublishSection({
   focusedBucket = null,
   onFocusedBucketChange,
@@ -138,9 +150,9 @@ export function UsedGearWorkflowPostPublishSection({
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowPostPublishSortMode>('latest-activity');
   const [selectedRecordIds, setSelectedRecordIds] = useState<string[]>([]);
-  const [batchBusy, setBatchBusy] = useState(false);
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
+  const batchBusy = false;
 
   useEffect(() => {
     if (!focusedBucket || !sectionRef.current) {
@@ -229,7 +241,6 @@ export function UsedGearWorkflowPostPublishSection({
     && selectedSnapshots.every((entry) => entry.snapshot?.bucket === 'active-listing' || entry.snapshot?.bucket === 'stale-listing');
   const canBatchMarkShipped = selectedSnapshots.length > 0
     && selectedSnapshots.every((entry) => entry.snapshot?.bucket === 'sold-ready');
-
   const visibleSections = useMemo(() => {
     if (selectedBucket === 'all') {
       return SECTION_DEFINITIONS;
@@ -237,15 +248,13 @@ export function UsedGearWorkflowPostPublishSection({
 
     return SECTION_DEFINITIONS.filter((section) => section.key === selectedBucket);
   }, [selectedBucket]);
-  const hasSecondaryControlsActive = selectedBucket !== 'all'
-    || searchTerm.trim().length > 0
-    || sortMode !== 'latest-activity';
+  const hasBucketFilterActive = selectedBucket !== 'all';
 
   useEffect(() => {
-    if (hasSecondaryControlsActive) {
+    if (hasBucketFilterActive) {
       setShowQueueTools(true);
     }
-  }, [hasSecondaryControlsActive]);
+  }, [hasBucketFilterActive]);
 
   useEffect(() => {
     setSelectedRecordIds((current) => current.filter((recordId) => filteredRecordIdSet.has(recordId)));
@@ -278,7 +287,6 @@ export function UsedGearWorkflowPostPublishSection({
       return;
     }
 
-    setBatchBusy(true);
     setError(null);
 
     try {
@@ -286,8 +294,6 @@ export function UsedGearWorkflowPostPublishSection({
       setSelectedRecordIds([]);
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'Unable to update the selected workflow rows.');
-    } finally {
-      setBatchBusy(false);
     }
   };
 
@@ -362,19 +368,18 @@ export function UsedGearWorkflowPostPublishSection({
               placeholder="Search by status, SKU, model, or lifecycle date"
             />
           </label>
-          <div className="flex flex-wrap gap-3">
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-2 py-2">
-              <CopyLinkIconButton
-                onClick={() => {
-                  void copyLink();
-                }}
-                disabled={copyingLink}
-                copying={copyingLink}
-                copied={copiedLink}
-                label={selectedBucket === 'all' ? 'Copy Queue Link' : 'Copy Filtered Link'}
-                copyingLabel={selectedBucket === 'all' ? 'Copying queue link' : 'Copying filtered link'}
-                copiedLabel={selectedBucket === 'all' ? 'Queue link copied' : 'Filtered link copied'}
-              />
+          <div className="flex flex-wrap items-center gap-3">
+            <CopyLinkIconButton
+              onClick={() => {
+                void copyLink();
+              }}
+              disabled={copyingLink}
+              copying={copyingLink}
+              copied={copiedLink}
+              label={selectedBucket === 'all' ? 'Copy Queue Link' : 'Copy Filtered Link'}
+              copyingLabel={selectedBucket === 'all' ? 'Copying queue link' : 'Copying filtered link'}
+              copiedLabel={selectedBucket === 'all' ? 'Queue link copied' : 'Filtered link copied'}
+            />
             <RefreshIconButton
               onClick={() => {
                 void refreshQueue();
@@ -384,13 +389,37 @@ export function UsedGearWorkflowPostPublishSection({
               label="Refresh post-publish queue"
               loadingLabel="Refreshing post-publish queue"
             />
+            <div className="relative h-10 w-10 shrink-0">
+              <div
+                aria-hidden="true"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] shadow-[0_4px_14px_rgba(17,32,49,0.04)] transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-[var(--line)] hover:text-[var(--ink)]"
+              >
+                <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+                  <path d="M4.167 5.417h9.166" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                  <path d="M4.167 10h6.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                  <path d="M4.167 14.583h4.166" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                  <path d="M14.583 4.167v11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                  <path d="m12.5 6.25 2.083-2.083 2.084 2.083" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="m12.5 13.75 2.083 2.083 2.084-2.083" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <select
+                aria-label={`Sort used gear post-publish queue. Current order: ${getPostPublishSortLabel(sortMode)}`}
+                className="absolute inset-0 h-10 w-10 cursor-pointer opacity-0"
+                value={sortMode}
+                onChange={(event) => handleSortModeChange(event.currentTarget.value as UsedGearWorkflowPostPublishSortMode)}
+              >
+                <option value="latest-activity">Latest Activity</option>
+                <option value="oldest-activity">Oldest Activity</option>
+                <option value="sku">SKU</option>
+              </select>
             </div>
             <FilterToggleIconButton
               onClick={() => setShowQueueTools((current) => !current)}
               aria-expanded={showQueueTools}
               expanded={showQueueTools}
-              collapsedLabel="Show Filters And Tools"
-              expandedLabel="Hide Filters And Tools"
+              collapsedLabel="Show Buckets"
+              expandedLabel="Hide Buckets"
             />
           </div>
         </div>
@@ -421,20 +450,6 @@ export function UsedGearWorkflowPostPublishSection({
                 ))}
               </div>
             </div>
-          </div>
-          <div className="mt-4 grid gap-3 lg:grid-cols-1 lg:items-end">
-            <label className="min-w-[180px]">
-              <span className="sr-only">Sort used gear post-publish queue</span>
-              <select
-                className={inputClassName}
-                value={sortMode}
-                onChange={(event) => handleSortModeChange(event.currentTarget.value as UsedGearWorkflowPostPublishSortMode)}
-              >
-                <option value="latest-activity">Sort: Latest Activity</option>
-                <option value="oldest-activity">Sort: Oldest Activity</option>
-                <option value="sku">Sort: SKU</option>
-              </select>
-            </label>
           </div>
         </div>
       ) : null}
@@ -481,33 +496,53 @@ export function UsedGearWorkflowPostPublishSection({
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className={smallSuccessActionButtonClass}
+            <CopyLinkIconButton
               onClick={() => {
-                void handleBatchAction(markWorkflowRowsSoldReadyToShip);
+                void copyLink();
               }}
-              disabled={batchBusy || !canBatchMarkSoldReady}
+              disabled={copyingLink}
+              copying={copyingLink}
+              copied={copiedLink}
+              label="Copy Filtered Link"
+              copyingLabel="Copying filtered link"
+              copiedLabel="Filtered link copied"
+            />
+            <RefreshIconButton
+              onClick={() => {
+                void refreshQueue();
+              }}
+              disabled={refreshing}
+              loading={refreshing}
+              label="Refresh post-publish queue"
+              loadingLabel="Refreshing post-publish queue"
+            />
+            <button
+              className={smallSecondaryActionButtonClass}
+              type="button"
+              onClick={() => setSelectedRecordIds([])}
+              disabled={batchBusy}
             >
-              {batchBusy ? 'Saving...' : 'Mark Selected Sold Ready'}
+              Clear Selection
             </button>
             <button
               type="button"
               className={smallPrimaryActionButtonClass}
               onClick={() => {
+                void handleBatchAction(markWorkflowRowsSoldReadyToShip);
+              }}
+              disabled={batchBusy || !canBatchMarkSoldReady}
+            >
+              Mark Selected Sold Ready
+            </button>
+            <button
+              type="button"
+              className={smallSuccessActionButtonClass}
+              onClick={() => {
                 void handleBatchAction(markWorkflowRowsShipped);
               }}
               disabled={batchBusy || !canBatchMarkShipped}
             >
-              {batchBusy ? 'Saving...' : 'Mark Selected Shipped'}
-            </button>
-            <button
-              type="button"
-              className={smallSecondaryActionButtonClass}
-              onClick={() => setSelectedRecordIds([])}
-              disabled={batchBusy}
-            >
-              Clear Selection
+              Mark Selected Shipped
             </button>
           </div>
         </div>

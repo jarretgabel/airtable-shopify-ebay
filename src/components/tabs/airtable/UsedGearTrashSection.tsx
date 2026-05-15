@@ -42,6 +42,46 @@ function previewText(value: unknown): string {
   return normalized.length > 120 ? `${normalized.slice(0, 117)}...` : normalized;
 }
 
+const intakeDateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+function getRecordIntakeTimestamp(record: AirtableRecord): number {
+  const arrivalDate = typeof record.fields['Arrival Date'] === 'string' ? record.fields['Arrival Date'].trim() : '';
+  const parsedArrival = arrivalDate ? Date.parse(arrivalDate) : Number.NaN;
+  if (Number.isFinite(parsedArrival)) {
+    return parsedArrival;
+  }
+
+  const createdTime = Date.parse(record.createdTime);
+  return Number.isFinite(createdTime) ? createdTime : Number.POSITIVE_INFINITY;
+}
+
+function formatGroupIntakeDate(records: AirtableRecord[]): string {
+  const earliestTimestamp = Math.min(...records.map(getRecordIntakeTimestamp));
+  if (Number.isFinite(earliestTimestamp)) {
+    return intakeDateFormatter.format(new Date(earliestTimestamp));
+  }
+
+  return 'Unknown';
+}
+
+function getGroupHeading(description: string): string {
+  if (description === 'Single record') {
+    return 'Single intake item';
+  }
+  if (description === 'Pickup group') {
+    return 'Pickup set';
+  }
+  if (description === 'Submission group') {
+    return 'Submission set';
+  }
+  return description;
+}
+
 export function UsedGearTrashSection({
   onOpenReviewRecord,
   onOpenWorkflowRecord,
@@ -153,28 +193,26 @@ export function UsedGearTrashSection({
             />
           </label>
           <div className="flex flex-wrap gap-3">
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-2 py-2">
-              <CopyLinkIconButton
-                onClick={() => {
-                  void copyLink();
-                }}
-                disabled={copyingLink}
-                copying={copyingLink}
-                copied={copiedLink}
-                label="Copy Trash Link"
-                copyingLabel="Copying trash link"
-                copiedLabel="Trash link copied"
-              />
-              <RefreshIconButton
-                onClick={() => {
-                  void refreshQueue();
-                }}
-                disabled={refreshing}
-                loading={refreshing}
-                label="Refresh trash review queue"
-                loadingLabel="Refreshing trash review queue"
-              />
-            </div>
+            <CopyLinkIconButton
+              onClick={() => {
+                void copyLink();
+              }}
+              disabled={copyingLink}
+              copying={copyingLink}
+              copied={copiedLink}
+              label="Copy Trash Link"
+              copyingLabel="Copying trash link"
+              copiedLabel="Trash link copied"
+            />
+            <RefreshIconButton
+              onClick={() => {
+                void refreshQueue();
+              }}
+              disabled={refreshing}
+              loading={refreshing}
+              label="Refresh trash review queue"
+              loadingLabel="Refreshing trash review queue"
+            />
           </div>
         </div>
       </div>
@@ -195,7 +233,7 @@ export function UsedGearTrashSection({
           <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{filteredRecords.length}</p>
         </div>
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible Groups</p>
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible Sets</p>
           <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{groupedRecords.length}</p>
         </div>
       </div>
@@ -217,11 +255,8 @@ export function UsedGearTrashSection({
           <div key={group.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{group.description}</p>
-                <h4 className="mt-1 text-lg font-semibold text-[var(--ink)]">{group.label}</h4>
-              </div>
-              <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                {group.records.length} row{group.records.length === 1 ? '' : 's'}
+                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{getGroupHeading(group.description)}</p>
+                <p className="mt-1 text-sm text-[var(--muted)]">Earliest intake {formatGroupIntakeDate(group.records)}</p>
               </div>
             </div>
 

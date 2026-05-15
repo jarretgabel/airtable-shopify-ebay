@@ -2,13 +2,6 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearPendingReviewSection } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
 
-async function openPendingReviewTools() {
-  const toggle = screen.queryByRole('button', { name: 'Show Filters And Tools' });
-  if (toggle) {
-    fireEvent.click(toggle);
-  }
-}
-
 const { loadPendingReviewQueueMock, clipboardWriteTextMock } = vi.hoisted(() => ({
   loadPendingReviewQueueMock: vi.fn(),
   clipboardWriteTextMock: vi.fn(),
@@ -59,7 +52,6 @@ describe('UsedGearPendingReviewSection', () => {
     await screen.findByText('Pending Review Queue');
 
     await act(async () => {
-      await openPendingReviewTools();
       fireEvent.click(await screen.findByRole('button', { name: 'Copy Queue Link' }));
       await Promise.resolve();
     });
@@ -67,6 +59,54 @@ describe('UsedGearPendingReviewSection', () => {
     await waitFor(() => {
       expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/inventory#used-gear-pending-review`);
     });
+  });
+
+  it('shows inline sort options in the header by default', async () => {
+    loadPendingReviewQueueMock.mockResolvedValue([]);
+
+    render(
+      <UsedGearPendingReviewSection
+        currentUserName="Taylor Reviewer"
+        onOpenReviewRecord={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Pending Review Queue');
+    expect(screen.getByLabelText(/Sort pending review queue/i)).toBeInTheDocument();
+  });
+
+  it('labels single pending-review records without group wording', async () => {
+    loadPendingReviewQueueMock.mockResolvedValue([
+      {
+        id: 'rec-pending-single',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          'Arrival Date': '2026-05-06',
+          SKU: 'PEND-SINGLE',
+          Make: 'McIntosh',
+          Model: 'MC240',
+          'Workflow Status': 'Pending Review',
+          'Offer Amount': 500,
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearPendingReviewSection
+        currentUserName="Taylor Reviewer"
+        onOpenGroupReview={vi.fn()}
+        onOpenReviewRecord={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Pending Review Queue');
+
+    expect(screen.getByText('Single intake item')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy Item Link' })).toBeInTheDocument();
+    expect(screen.getByText(/Intake Date:/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/May 6, 2026/i).length).toBeGreaterThan(0);
   });
 
   it('opens the dedicated item review page from a compact queue card', async () => {
@@ -139,6 +179,8 @@ describe('UsedGearPendingReviewSection', () => {
 
     expect(await screen.findByRole('button', { name: 'Open Group Review' })).toBeInTheDocument();
     expect(screen.queryByText('Grouped intake review has moved off the queue cards.')).not.toBeInTheDocument();
+    expect(screen.getByText(/Earliest intake May 7, 2026/i)).toBeInTheDocument();
+    expect(screen.queryByText('SUB-42')).not.toBeInTheDocument();
   });
 
   it('copies a group-focused pending review link', async () => {
@@ -168,7 +210,7 @@ describe('UsedGearPendingReviewSection', () => {
     await screen.findByText('Pending Review Queue');
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Copy Group Link' }));
+      fireEvent.click(screen.getByRole('button', { name: /Copy (Group|Item) Link/i }));
       await Promise.resolve();
     });
 
@@ -229,8 +271,8 @@ describe('UsedGearPendingReviewSection', () => {
     expect(screen.getAllByText('PEND-3').length).toBeGreaterThan(0);
   });
 
-  it('opens item review from the last-touched action', async () => {
-    const onOpenReviewRecord = vi.fn();
+  it('opens workflow detail from the compact queue card', async () => {
+    const onOpenWorkflowRecord = vi.fn();
 
     loadPendingReviewQueueMock.mockResolvedValue([
       {
@@ -250,13 +292,13 @@ describe('UsedGearPendingReviewSection', () => {
     render(
       <UsedGearPendingReviewSection
         currentUserName="Taylor Reviewer"
-        onOpenReviewRecord={onOpenReviewRecord}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenReviewRecord={vi.fn()}
+        onOpenWorkflowRecord={onOpenWorkflowRecord}
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: /last touched: owner assigned to taylor reviewer/i }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Workflow Detail' }));
 
-    expect(onOpenReviewRecord).toHaveBeenCalledWith('rec-pending');
+    expect(onOpenWorkflowRecord).toHaveBeenCalledWith('rec-pending');
   });
 });

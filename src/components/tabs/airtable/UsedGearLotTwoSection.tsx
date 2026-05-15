@@ -3,7 +3,6 @@ import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass, smallSu
 import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { CopyLinkIconButton } from '@/components/app/CopyLinkIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
-import { FilterToggleIconButton } from '@/components/app/FilterToggleIconButton';
 import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
 import { useCopyQueueLink } from '@/components/tabs/airtable/useCopyQueueLink';
@@ -45,6 +44,55 @@ function buildWorkflowLotTwoGroupLink(groupId: string): string {
   return nextUrl.toString();
 }
 
+const intakeDateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+function getRecordIntakeTimestamp(record: AirtableRecord): number {
+  const arrivalDate = typeof record.fields['Arrival Date'] === 'string' ? record.fields['Arrival Date'].trim() : '';
+  const parsedArrival = arrivalDate ? Date.parse(arrivalDate) : Number.NaN;
+  if (Number.isFinite(parsedArrival)) {
+    return parsedArrival;
+  }
+
+  const createdTime = Date.parse(record.createdTime);
+  return Number.isFinite(createdTime) ? createdTime : Number.POSITIVE_INFINITY;
+}
+
+function formatIntakeDate(record: AirtableRecord): string {
+  const intakeTimestamp = getRecordIntakeTimestamp(record);
+  if (Number.isFinite(intakeTimestamp)) {
+    return intakeDateFormatter.format(new Date(intakeTimestamp));
+  }
+
+  return 'Unknown';
+}
+
+function formatGroupIntakeDate(records: AirtableRecord[]): string {
+  const earliestTimestamp = Math.min(...records.map(getRecordIntakeTimestamp));
+  if (Number.isFinite(earliestTimestamp)) {
+    return intakeDateFormatter.format(new Date(earliestTimestamp));
+  }
+
+  return 'Unknown';
+}
+
+function getGroupHeading(description: string): string {
+  if (description === 'Single record') {
+    return 'Single intake item';
+  }
+  if (description === 'Pickup group') {
+    return 'Pickup set';
+  }
+  if (description === 'Submission group') {
+    return 'Submission set';
+  }
+  return description;
+}
+
 export function UsedGearLotTwoSection({
   onOpenIncomingGearForm,
   onOpenTestingForm,
@@ -67,7 +115,6 @@ export function UsedGearLotTwoSection({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showQueueTools, setShowQueueTools] = useState(false);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
   const [activationSku, setActivationSku] = useState('');
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
@@ -118,19 +165,10 @@ export function UsedGearLotTwoSection({
     () => (focusedGroupId ? groupedRecords.filter((group) => group.id === focusedGroupId) : groupedRecords),
     [focusedGroupId, groupedRecords],
   );
-  const hasSecondaryControlsActive = Boolean(focusedGroupId)
-    || activationSku.trim().length > 0
-    || selectedRecordId !== null;
   const selectedRecord = useMemo(
     () => records.find((record) => record.id === selectedRecordId) ?? null,
     [records, selectedRecordId],
   );
-
-  useEffect(() => {
-    if (hasSecondaryControlsActive) {
-      setShowQueueTools(true);
-    }
-  }, [hasSecondaryControlsActive]);
 
   const refreshQueue = async () => {
     setRefreshing(true);
@@ -209,34 +247,25 @@ export function UsedGearLotTwoSection({
             />
           </label>
           <div className="flex flex-wrap gap-3">
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-2 py-2">
-              <CopyLinkIconButton
-                onClick={() => {
-                  void copyLink();
-                }}
-                disabled={copyingLink}
-                copying={copyingLink}
-                copied={copiedLink}
-                label="Copy Queue Link"
-                copyingLabel="Copying queue link"
-                copiedLabel="Queue link copied"
-              />
-              <RefreshIconButton
-                onClick={() => {
-                  void refreshQueue();
-                }}
-                disabled={refreshing}
-                loading={refreshing}
-                label="Refresh Parking Lot 2 queue"
-                loadingLabel="Refreshing Parking Lot 2 queue"
-              />
-            </div>
-            <FilterToggleIconButton
-              onClick={() => setShowQueueTools((current) => !current)}
-              aria-expanded={showQueueTools}
-              expanded={showQueueTools}
-              collapsedLabel="Show Activation Tools"
-              expandedLabel="Hide Activation Tools"
+            <CopyLinkIconButton
+              onClick={() => {
+                void copyLink();
+              }}
+              disabled={copyingLink}
+              copying={copyingLink}
+              copied={copiedLink}
+              label="Copy Queue Link"
+              copyingLabel="Copying queue link"
+              copiedLabel="Queue link copied"
+            />
+            <RefreshIconButton
+              onClick={() => {
+                void refreshQueue();
+              }}
+              disabled={refreshing}
+              loading={refreshing}
+              label="Refresh Parking Lot 2 queue"
+              loadingLabel="Refreshing Parking Lot 2 queue"
             />
           </div>
         </div>
@@ -250,88 +279,86 @@ export function UsedGearLotTwoSection({
 
       {focusedGroupId ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
-          <span>Focused on one Parking Lot 2 group from a shared workflow link.</span>
+          <span>Focused on one Parking Lot 2 set from a shared workflow link.</span>
           {onFocusedGroupIdChange ? (
             <button
               type="button"
               className={smallSecondaryActionButtonClass}
               onClick={() => onFocusedGroupIdChange(null)}
             >
-              Clear Group Focus
+              Clear Focus
             </button>
           ) : null}
         </div>
       ) : null}
 
-      {showQueueTools ? (
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Downstream Activation</p>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                Select a queue row below or enter an exact SKU when you already know which workflow item should open next.
-              </p>
-            </div>
-            <label className="min-w-[240px] lg:max-w-[280px]">
-              <span className="sr-only">Activate by SKU</span>
-              <input
-                type="text"
-                className={inputClassName}
-                value={activationSku}
-                onChange={(event) => setActivationSku(event.currentTarget.value)}
-                placeholder="Exact SKU for direct activation"
-              />
-            </label>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className={smallSuccessActionButtonClass}
-              onClick={() => {
-                void activateBySku(onOpenIncomingGearForm, selectedRecord?.id);
-              }}
-              disabled={activatingBySku}
-            >
-              Open Incoming Gear
-            </button>
-            <button
-              type="button"
-              className={smallSecondaryActionButtonClass}
-              onClick={() => {
-                void activateBySku(onOpenTestingForm, selectedRecord?.id);
-              }}
-              disabled={activatingBySku}
-            >
-              Open Testing
-            </button>
-            <button
-              type="button"
-              className={smallSecondaryActionButtonClass}
-              onClick={() => {
-                void activateBySku(onOpenPhotosForm, selectedRecord?.id);
-              }}
-              disabled={activatingBySku}
-            >
-              Open Photos
-            </button>
-            <button
-              type="button"
-              className={smallSecondaryActionButtonClass}
-              onClick={() => {
-                void activateBySku(onOpenWorkflowRecord, selectedRecord?.id);
-              }}
-              disabled={activatingBySku}
-            >
-              Open Workflow Detail
-            </button>
-          </div>
-          {selectedRecord ? (
-            <p className="m-0 mt-3 text-xs text-[var(--muted)]">
-              Selected row: <span className="font-semibold text-[var(--ink)]">{displayInventoryValue(selectedRecord.fields.SKU)}</span>
+      <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Downstream Activation</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+              Select a queue row below or enter an exact SKU when you already know which workflow item should open next.
             </p>
-          ) : null}
+          </div>
+          <label className="min-w-[240px] lg:max-w-[280px]">
+            <span className="sr-only">Activate by SKU</span>
+            <input
+              type="text"
+              className={inputClassName}
+              value={activationSku}
+              onChange={(event) => setActivationSku(event.currentTarget.value)}
+              placeholder="Exact SKU for direct activation"
+            />
+          </label>
         </div>
-      ) : null}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            className={smallSuccessActionButtonClass}
+            onClick={() => {
+              void activateBySku(onOpenIncomingGearForm, selectedRecord?.id);
+            }}
+            disabled={activatingBySku}
+          >
+            Open Incoming Gear
+          </button>
+          <button
+            type="button"
+            className={smallSecondaryActionButtonClass}
+            onClick={() => {
+              void activateBySku(onOpenTestingForm, selectedRecord?.id);
+            }}
+            disabled={activatingBySku}
+          >
+            Open Testing
+          </button>
+          <button
+            type="button"
+            className={smallSecondaryActionButtonClass}
+            onClick={() => {
+              void activateBySku(onOpenPhotosForm, selectedRecord?.id);
+            }}
+            disabled={activatingBySku}
+          >
+            Open Photos
+          </button>
+          <button
+            type="button"
+            className={smallSecondaryActionButtonClass}
+            onClick={() => {
+              void activateBySku(onOpenWorkflowRecord, selectedRecord?.id);
+            }}
+            disabled={activatingBySku}
+          >
+            Open Workflow Detail
+          </button>
+        </div>
+        {selectedRecord ? (
+          <p className="m-0 mt-3 text-xs text-[var(--muted)]">
+            Selected row: <span className="font-semibold text-[var(--ink)]">{displayInventoryValue(selectedRecord.fields.SKU)}</span>
+          </p>
+        ) : null}
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
@@ -343,7 +370,7 @@ export function UsedGearLotTwoSection({
           <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{filteredRecords.length}</p>
         </div>
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible Groups</p>
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible Sets</p>
           <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{visibleGroups.length}</p>
         </div>
       </div>
@@ -365,15 +392,17 @@ export function UsedGearLotTwoSection({
           <div key={group.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{group.description}</p>
-                <h4 className="mt-1 text-lg font-semibold text-[var(--ink)]">{group.label}</h4>
+                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{getGroupHeading(group.description)}</p>
+                <p className="mt-1 text-sm text-[var(--muted)]">Earliest intake {formatGroupIntakeDate(group.records)}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {onFocusedGroupIdChange ? (
                   <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--bg)] px-1.5 py-1">
                     <ToolbarIconButton
                       onClick={() => onFocusedGroupIdChange(group.id)}
-                      label={focusedGroupId === group.id ? 'Focused Group' : 'Focus Group'}
+                      label={group.description === 'Single record'
+                        ? (focusedGroupId === group.id ? 'Focused Item' : 'Focus Item')
+                        : (focusedGroupId === group.id ? 'Focused Set' : 'Focus Set')}
                       className="h-7 w-7 rounded-full border-transparent bg-transparent shadow-none hover:bg-[var(--line)]"
                       icon={(
                         <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-3.5 w-3.5">
@@ -389,16 +418,13 @@ export function UsedGearLotTwoSection({
                       disabled={copyingLink}
                       copying={copyingLink}
                       copied={copiedLink}
-                      label="Copy Group Link"
-                      copyingLabel="Copying group link"
-                      copiedLabel="Group link copied"
+                      label={group.description === 'Single record' ? 'Copy Item Link' : 'Copy Group Link'}
+                      copyingLabel={group.description === 'Single record' ? 'Copying item link' : 'Copying group link'}
+                      copiedLabel={group.description === 'Single record' ? 'Item link copied' : 'Group link copied'}
                       className="h-7 w-7 rounded-full border-transparent bg-transparent shadow-none hover:bg-[var(--line)]"
                     />
                   </div>
                 ) : null}
-                <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                  {group.records.length} row{group.records.length === 1 ? '' : 's'}
-                </div>
               </div>
             </div>
 
@@ -418,19 +444,10 @@ export function UsedGearLotTwoSection({
 
                   <div className="mt-3 space-y-2 text-sm text-[var(--muted)]">
                     <div>
-                      <span className="font-semibold text-[var(--ink)]">Pick Up:</span> {displayInventoryValue(record.fields['Pick Up ID'])}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Submission Group:</span> {displayInventoryValue(record.fields['Submission Group ID'])}
+                      <span className="font-semibold text-[var(--ink)]">Intake Date:</span> {formatIntakeDate(record)}
                     </div>
                     <div>
                       <span className="font-semibold text-[var(--ink)]">Qualification Notes:</span> {displayInventoryValue(record.fields['Qualification Notes'])}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Accepted By:</span> {displayInventoryValue(record.fields['Accepted By'])}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Accepted At:</span> {displayInventoryValue(record.fields['Accepted At'])}
                     </div>
                     <div>
                       <span className="font-semibold text-[var(--ink)]">Offer Amount:</span> {displayInventoryValue(record.fields['Offer Amount'])}
@@ -439,13 +456,7 @@ export function UsedGearLotTwoSection({
                       <span className="font-semibold text-[var(--ink)]">Paid Amount:</span> {displayInventoryValue(record.fields['Paid Amount'])}
                     </div>
                     <div>
-                      <span className="font-semibold text-[var(--ink)]">Confirmed Grand Total:</span> {displayInventoryValue(record.fields['Confirmed Grand Total'])}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Allocation Mode:</span> {displayInventoryValue(record.fields['Allocation Mode'])}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Allocation Notes:</span> {displayInventoryValue(record.fields['Allocation Notes'])}
+                      <span className="font-semibold text-[var(--ink)]">Accepted At:</span> {displayInventoryValue(record.fields['Accepted At'])}
                     </div>
                   </div>
 

@@ -2,13 +2,6 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearWorkflowProgressSection } from '@/components/tabs/airtable/UsedGearWorkflowProgressSection';
 
-async function openWorkflowProgressTools() {
-  const toggle = screen.queryByRole('button', { name: 'Show Filters And Tools' });
-  if (toggle) {
-    fireEvent.click(toggle);
-  }
-}
-
 const { loadWorkflowProgressQueueMock, clipboardWriteTextMock } = vi.hoisted(() => ({
   loadWorkflowProgressQueueMock: vi.fn(),
   clipboardWriteTextMock: vi.fn(),
@@ -64,7 +57,6 @@ describe('UsedGearWorkflowProgressSection', () => {
     await screen.findByText('Processing And Stage Queue');
 
     await act(async () => {
-      await openWorkflowProgressTools();
       fireEvent.click(await screen.findByRole('button', { name: 'Copy Queue Link' }));
       await Promise.resolve();
     });
@@ -72,6 +64,60 @@ describe('UsedGearWorkflowProgressSection', () => {
     await waitFor(() => {
       expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/inventory#used-gear-progress-queue`);
     });
+  });
+
+  it('shows inline sort options in the header by default', async () => {
+    loadWorkflowProgressQueueMock.mockResolvedValue([]);
+
+    render(
+      <UsedGearWorkflowProgressSection
+        currentUserName="Taylor Reviewer"
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenTestingForm={vi.fn()}
+        onOpenPhotosForm={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Processing And Stage Queue');
+    expect(screen.getByLabelText(/Sort used gear progress queue/i)).toBeInTheDocument();
+  });
+
+  it('labels single workflow progress records without group wording', async () => {
+    loadWorkflowProgressQueueMock.mockResolvedValue([
+      {
+        id: 'rec-progress-single',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          'Arrival Date': '2026-05-06',
+          SKU: 'PROG-SINGLE',
+          Make: 'Marantz',
+          Model: '8B',
+          'Workflow Status': 'Accepted - Awaiting Arrival',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearWorkflowProgressSection
+        currentUserName="Taylor Reviewer"
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenTestingForm={vi.fn()}
+        onOpenPhotosForm={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Processing And Stage Queue');
+
+    expect(screen.getAllByText('Single workflow item').length).toBeGreaterThan(0);
+    expect(screen.getByText('Single item')).toBeInTheDocument();
+    expect(screen.getByText(/Visible Sets:/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy Item Link' })).toBeInTheDocument();
+    expect(screen.getByText(/Intake Date:/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/May 6, 2026/i).length).toBeGreaterThan(0);
   });
 
   it('copies a group-focused progress link', async () => {
@@ -103,7 +149,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     await screen.findByText('Processing And Stage Queue');
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Copy Group Link' }));
+      fireEvent.click(screen.getByRole('button', { name: /Copy (Group|Item) Link/i }));
       await Promise.resolve();
     });
 
@@ -199,7 +245,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     expect(screen.getAllByText('PROG-3').length).toBeGreaterThan(0);
   });
 
-  it('routes the last-touched action to listings approval for pre-listing handoff', async () => {
+  it('opens listings approval from the compact progress card when publish-ready', async () => {
     const onOpenListingsRecord = vi.fn();
 
     loadWorkflowProgressQueueMock.mockResolvedValue([
@@ -210,8 +256,8 @@ describe('UsedGearWorkflowProgressSection', () => {
           SKU: 'PROG-1',
           Make: 'Marantz',
           Model: '8B',
-          'Workflow Status': 'Awaiting Pre-Listing Review',
-          'Awaiting Pre-Listing Review At': '2026-05-08T04:00:00.000Z',
+          'Workflow Status': 'Approved for Publish',
+          'Approved For Publish At': '2026-05-08T04:00:00.000Z',
         },
       },
     ]);
@@ -227,7 +273,7 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: /last touched: moved to pre-listing review/i }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Listings Approval' }));
 
     expect(onOpenListingsRecord).toHaveBeenCalledWith('rec-progress-a');
   });

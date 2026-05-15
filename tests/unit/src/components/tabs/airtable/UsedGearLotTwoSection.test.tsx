@@ -2,13 +2,6 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearLotTwoSection } from '@/components/tabs/airtable/UsedGearLotTwoSection';
 
-async function openActivationTools() {
-  const toggle = screen.queryByRole('button', { name: 'Show Activation Tools' });
-  if (toggle) {
-    fireEvent.click(toggle);
-  }
-}
-
 const { loadLotTwoQueueMock, loadUsedGearWorkflowRecordBySkuMock, clipboardWriteTextMock } = vi.hoisted(() => ({
   loadLotTwoQueueMock: vi.fn(),
   loadUsedGearWorkflowRecordBySkuMock: vi.fn(),
@@ -140,7 +133,6 @@ describe('UsedGearLotTwoSection', () => {
     );
 
     await screen.findByText('Parking Lot 2');
-    await openActivationTools();
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Activate by SKU' }), {
       target: { value: 'SKU-LOOKUP-1' },
@@ -151,5 +143,38 @@ describe('UsedGearLotTwoSection', () => {
       expect(loadUsedGearWorkflowRecordBySkuMock).toHaveBeenCalledWith('SKU-LOOKUP-1');
       expect(onOpenTestingForm).toHaveBeenCalledWith('rec-by-sku');
     });
+  });
+
+  it('labels ungrouped records as single items', async () => {
+    loadLotTwoQueueMock.mockResolvedValue([
+      {
+        id: 'rec-lot-two-single',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          'Arrival Date': '2026-05-06',
+          SKU: 'LOT2-SINGLE',
+          Make: 'Luxman',
+          Model: 'L-507',
+          'Workflow Status': 'Accepted - Awaiting Arrival',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearLotTwoSection
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenTestingForm={vi.fn()}
+        onOpenPhotosForm={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Parking Lot 2');
+
+    expect(screen.getByText('Single intake item')).toBeInTheDocument();
+    expect(screen.getByText('Visible Sets')).toBeInTheDocument();
+    expect(screen.getByText('Downstream Activation')).toBeInTheDocument();
+    expect(screen.getByText(/Intake Date:/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/May 6, 2026/i).length).toBeGreaterThan(0);
   });
 });

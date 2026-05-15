@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearWorkflowPostPublishSection } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 
 async function openPostPublishTools() {
-  const toggle = screen.queryByRole('button', { name: 'Show Filters And Tools' });
+  const toggle = screen.queryByRole('button', { name: 'Show Buckets' });
   if (toggle) {
     fireEvent.click(toggle);
   }
@@ -173,7 +173,6 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     await screen.findByText('Sold Ready To Ship');
 
     await act(async () => {
-      await openPostPublishTools();
       fireEvent.click(await screen.findByRole('button', { name: 'Copy Filtered Link' }));
       await Promise.resolve();
     });
@@ -181,6 +180,22 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     await waitFor(() => {
       expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/inventory?workflowPostPublishBucket=sold-ready#used-gear-post-publish`);
     });
+  });
+
+  it('shows the sort control as an icon-triggered select in the header', async () => {
+    loadWorkflowPostPublishQueueMock.mockResolvedValue([]);
+
+    render(
+      <UsedGearWorkflowPostPublishSection
+        currentUserName="Taylor Reviewer"
+        onOpenWorkflowRecord={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Post-Publish Queue');
+
+    expect(screen.getByLabelText(/Sort used gear post-publish queue/i)).toBeInTheDocument();
   });
 
   it('ignores the legacy owner filter prop and keeps post-publish rows visible', async () => {
