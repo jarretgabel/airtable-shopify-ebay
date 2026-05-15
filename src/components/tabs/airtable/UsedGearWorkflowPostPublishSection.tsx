@@ -536,11 +536,7 @@ export function UsedGearWorkflowPostPublishSection({
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h4 className="mt-1 text-lg font-semibold text-[var(--ink)]">{section.title}</h4>
-                  <div className="mt-2 max-w-xl">
-                    <CollapsibleHelperText label="Bucket details">
-                      {section.description}
-                    </CollapsibleHelperText>
-                  </div>
+                  <p className="mt-2 max-w-xl text-sm text-[var(--muted)]">{section.description}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
