@@ -16,10 +16,13 @@ interface RoleNotificationDefaultsPanelProps {
 const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   admin: 'Default workflow alert subscriptions for admin users.',
   owner: 'Default workflow alerts for owners with full application and business-metrics access.',
+  developer: 'Developer accounts can access dashboard and JotForm source-feed surfaces, but workflow alert defaults still do not apply.',
   processor: 'Baseline workflow alerts for processors across intake, stage work, and publish readiness.',
   tester: 'Default workflow alerts for testing-focused users.',
   photographer: 'Default workflow alerts for photography-focused users.',
 };
+
+const WORKFLOW_DEFAULT_ROLE_OPTIONS = ASSIGNABLE_USER_ROLE_OPTIONS.filter((roleOption) => roleOption.value !== 'developer');
 
 export function RoleNotificationDefaultsPanel({
   roleNotificationDefaults,
@@ -35,7 +38,7 @@ export function RoleNotificationDefaultsPanel({
       </div>
 
       <div className="grid gap-3 xl:grid-cols-2">
-        {ASSIGNABLE_USER_ROLE_OPTIONS.map((roleOption) => (
+        {WORKFLOW_DEFAULT_ROLE_OPTIONS.map((roleOption) => (
           <article key={roleOption.value} className="rounded-xl border border-white/10 bg-white/5 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>

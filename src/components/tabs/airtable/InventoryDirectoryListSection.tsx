@@ -1,3 +1,4 @@
+import { smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import type { AirtableRecord } from '@/types/airtable';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 
@@ -89,28 +90,28 @@ export function InventoryDirectoryListSection({
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                        className={smallSecondaryActionButtonClass}
                         onClick={() => onOpenIncomingGearForm(record.id)}
                       >
                         Incoming Gear
                       </button>
                       <button
                         type="button"
-                        className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                        className={smallSecondaryActionButtonClass}
                         onClick={() => onOpenTestingForm(record.id)}
                       >
                         Testing
                       </button>
                       <button
                         type="button"
-                        className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                        className={smallSecondaryActionButtonClass}
                         onClick={() => onOpenPhotosForm(record.id)}
                       >
                         Photos
                       </button>
                       <button
                         type="button"
-                        className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                        className={smallSecondaryActionButtonClass}
                         onClick={() => onSelectRecord(record.id)}
                       >
                         Full Editor

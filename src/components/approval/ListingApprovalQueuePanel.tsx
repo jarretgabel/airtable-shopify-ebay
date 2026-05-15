@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { accentActionButtonClass, primaryActionButtonClass } from '@/components/app/buttonStyles';
+import { RefreshIconButton } from '@/components/app/RefreshIconButton';
+import { accentActionButtonClass } from '@/components/app/buttonStyles';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
 import { errorSurfaceClass, panelSurfaceClass } from '@/components/tabs/uiClasses';
 import { isReadyForRequiredFields } from '@/components/approval/requiredFieldStatus';
@@ -397,18 +398,18 @@ export function ListingApprovalQueuePanel({
                   {creatingShopifyListing ? 'Creating Listing...' : 'New Shopify Listing'}
                 </button>
               )}
-              <button
-                type="button"
-                className={primaryActionButtonClass}
+              <RefreshIconButton
                 onClick={() => {
                   trackWorkflowEvent('approval_queue_refreshed', {
                     tableReference,
                   });
                   void loadRecords(tableReference, tableName ?? '', true);
                 }}
-              >
-                Refresh Queue
-              </button>
+                disabled={loading}
+                loading={loading}
+                label="Refresh listing approval queue"
+                loadingLabel="Refreshing listing approval queue"
+              />
             </div>
           </div>
 

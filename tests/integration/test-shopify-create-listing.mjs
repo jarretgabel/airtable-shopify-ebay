@@ -1,4 +1,5 @@
 import { createRequire } from 'module';
+import { enforceLocalOnlyIntegrationTargets } from './helpers/local-only-test-guard.mjs';
 const require = createRequire(import.meta.url);
 
 // Load .env.local then .env
@@ -15,6 +16,10 @@ if (!domain || !accessToken) {
   console.error('✗ Missing credentials');
   process.exit(1);
 }
+
+enforceLocalOnlyIntegrationTargets('test-shopify-create-listing', [
+  { label: 'Shopify Admin API', url: `https://${domain}/admin/api/2024-04` },
+]);
 
 const { default: axios } = await import('axios');
 

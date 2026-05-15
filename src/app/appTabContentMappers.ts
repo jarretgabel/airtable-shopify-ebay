@@ -10,6 +10,9 @@ import type {
   UserManagementTabViewModel,
 } from '@/app/appTabViewModels';
 import { buildEbaySnapshotFromAirtable } from '@/services/ebaySnapshotFromAirtable';
+import { buildUsedGearWorkflowListingSkuSet } from '@/services/usedGearWorkflowListingVisibility';
+import type { EbayPublishedListing } from '@/services/ebay/types';
+import type { ShopifyProduct } from '@/types/shopify';
 
 type AppTabInput = Pick<
   AppTabContentProps,
@@ -22,10 +25,10 @@ type AppTabInput = Pick<
   | 'nonEmptyListings'
   | 'products'
   | 'jfSubmissions'
-  | 'totalNewSubmissions'
   | 'metrics'
   | 'accessiblePages'
   | 'currentUserRole'
+  | 'currentUserName'
   | 'approvalLoading'
   | 'approvalError'
   | 'approvalTotal'
@@ -36,13 +39,16 @@ type AppTabInput = Pick<
   | 'shopifyApprovalTotal'
   | 'shopifyApprovalApproved'
   | 'shopifyApprovalPending'
+  | 'workflowDashboardTargets'
   | 'workflowAnalytics'
   | 'workflowPostPublishLoading'
   | 'workflowPostPublishError'
   | 'workflowActiveListingCount'
   | 'workflowStaleListingCount'
+  | 'workflowStaleListingMineCount'
   | 'workflowStaleListingUnassignedCount'
   | 'workflowSoldReadyCount'
+  | 'workflowSoldReadyMineCount'
   | 'workflowSoldReadyUnassignedCount'
   | 'workflowShippedCount'
   | 'aiProvider'
@@ -61,6 +67,7 @@ type AppTabInput = Pick<
   | 'adminCount'
   | 'runtimeFeatures'
   | 'navigateToTab'
+  | 'navigateToInventoryWorkflowView'
   | 'navigateToInventoryPostPublishBucket'
 >;
 
@@ -88,7 +95,7 @@ type AirtableInput = Pick<
 
 type ShopifyInput = Pick<
   AppTabContentProps,
-  'spLoading' | 'spError' | 'products' | 'storeDomain'
+  'spLoading' | 'spError' | 'products' | 'storeDomain' | 'nonEmptyListings'
 >;
 
 type MarketInput = Pick<
@@ -105,6 +112,9 @@ interface ApprovalInput {
   approvalRecordId: string | null;
   navigateToApprovalRecord: (recordId: string, replace?: boolean) => void;
   navigateToApprovalList: (replace?: boolean) => void;
+  navigateToWorkflowRecord?: (recordId: string, replace?: boolean) => void;
+  navigateToTestingForm?: (recordId?: string | null, replace?: boolean) => void;
+  navigateToPhotosForm?: (recordId?: string | null, replace?: boolean) => void;
 }
 
 type UsersInput = Pick<
@@ -113,8 +123,21 @@ type UsersInput = Pick<
 >;
 
 export function buildEbayTabViewModel(input: EbayInput): EbayTabViewModel {
+  const eligibleListingSkus = buildUsedGearWorkflowListingSkuSet(input.nonEmptyListings);
   const airtableSnapshot = buildEbaySnapshotFromAirtable(input.nonEmptyListings);
   const useAirtableSnapshot = !input.runtimeFeatures.ebay.available;
+  const filteredItems = useAirtableSnapshot
+    ? airtableSnapshot.items
+    : input.ebayInventoryItems.filter((item) => eligibleListingSkus.has(item.sku));
+  const filteredOffers = useAirtableSnapshot
+    ? airtableSnapshot.offers
+    : input.ebayOffers.filter((offer) => eligibleListingSkus.has(offer.sku));
+  const filteredRecentListings = useAirtableSnapshot
+    ? airtableSnapshot.recentListings
+    : input.ebayRecentListings.filter((listing) => eligibleListingSkus.has(listing.item.sku) || eligibleListingSkus.has(listing.offer.sku));
+  const filteredTotal = useAirtableSnapshot
+    ? airtableSnapshot.total
+    : countUniqueEbaySkus(filteredItems, filteredOffers, filteredRecentListings);
 
   return {
     session: {
@@ -132,10 +155,10 @@ export function buildEbayTabViewModel(input: EbayInput): EbayTabViewModel {
       source: useAirtableSnapshot ? 'airtable' : 'live',
     },
     inventory: {
-      items: useAirtableSnapshot ? airtableSnapshot.items : input.ebayInventoryItems,
-      offers: useAirtableSnapshot ? airtableSnapshot.offers : input.ebayOffers,
-      recentListings: useAirtableSnapshot ? airtableSnapshot.recentListings : input.ebayRecentListings,
-      total: useAirtableSnapshot ? airtableSnapshot.total : input.ebayTotal,
+      items: filteredItems,
+      offers: filteredOffers,
+      recentListings: filteredRecentListings,
+      total: filteredTotal,
     },
     actions: {
       refetch: useAirtableSnapshot ? () => { void input.airtableRefetch(); } : input.ebayRefetch,
@@ -174,7 +197,6 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
       airtableTypeTable: metrics.airtableTypeTable,
     },
     kpis: {
-      totalNewSubmissions: input.totalNewSubmissions,
       acquisitionCost: metrics.acquisitionCost,
       inventoryValue: metrics.inventoryValue,
       avgAskPrice: metrics.avgAskPrice,
@@ -204,13 +226,16 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
       shopifyApprovalTotal: input.shopifyApprovalTotal,
       shopifyApprovalApproved: input.shopifyApprovalApproved,
       shopifyApprovalPending: input.shopifyApprovalPending,
+      workflowDashboardTargets: input.workflowDashboardTargets,
       workflowAnalytics: input.workflowAnalytics,
       workflowPostPublishLoading: input.workflowPostPublishLoading,
       workflowPostPublishError: input.workflowPostPublishError,
       workflowActiveListingCount: input.workflowActiveListingCount,
       workflowStaleListingCount: input.workflowStaleListingCount,
+      workflowStaleListingMineCount: input.workflowStaleListingMineCount,
       workflowStaleListingUnassignedCount: input.workflowStaleListingUnassignedCount,
       workflowSoldReadyCount: input.workflowSoldReadyCount,
+      workflowSoldReadyMineCount: input.workflowSoldReadyMineCount,
       workflowSoldReadyUnassignedCount: input.workflowSoldReadyUnassignedCount,
       workflowShippedCount: input.workflowShippedCount,
       aiProvider: input.aiProvider,
@@ -226,6 +251,7 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
       userCount: input.usersCount,
       adminCount: input.adminCount,
       currentUserRole: input.currentUserRole,
+      currentUserName: input.currentUserName,
       canViewSensitiveMetrics: input.currentUserRole === 'owner',
     },
     status: {
@@ -241,10 +267,15 @@ export function buildDashboardTabViewModel(input: AppTabInput): DashboardTabView
     },
     actions: {
       onSelectTab: input.navigateToTab,
-      onOpenInventoryPostPublishBucket: (bucket, ownerFilter) => {
+      onOpenInventoryWorkflowView: (view, options) => {
+        input.navigateToInventoryWorkflowView(
+          view,
+          options,
+        );
+      },
+      onOpenInventoryPostPublishBucket: (bucket) => {
         input.navigateToInventoryPostPublishBucket(
           bucket,
-          ownerFilter ? { ownerFilter } : undefined,
         );
       },
     },
@@ -263,10 +294,12 @@ export function buildAirtableTabViewModel(input: AirtableInput): AirtableTabView
 }
 
 export function buildShopifyTabViewModel(input: ShopifyInput): ShopifyTabViewModel {
+  const eligibleListingSkus = buildUsedGearWorkflowListingSkuSet(input.nonEmptyListings);
+
   return {
     loading: input.spLoading,
     error: input.spError,
-    products: input.products,
+    products: input.products.filter((product) => productHasEligibleWorkflowSku(product, eligibleListingSkus)),
     storeDomain: input.storeDomain,
   };
 }
@@ -299,6 +332,15 @@ export function buildApprovalTabViewModel(input: ApprovalInput): ApprovalTabView
     selectedRecordId: input.approvalRecordId,
     onSelectRecord: (recordId) => input.navigateToApprovalRecord(recordId),
     onBackToList: () => input.navigateToApprovalList(),
+    onOpenWorkflowRecord: input.navigateToWorkflowRecord
+      ? (recordId) => input.navigateToWorkflowRecord?.(recordId)
+      : undefined,
+    onOpenTestingForm: input.navigateToTestingForm
+      ? (recordId) => input.navigateToTestingForm?.(recordId)
+      : undefined,
+    onOpenPhotosForm: input.navigateToPhotosForm
+      ? (recordId) => input.navigateToPhotosForm?.(recordId)
+      : undefined,
   };
 }
 
@@ -308,4 +350,40 @@ export function buildUsersTabViewModel(input: UsersInput): UserManagementTabView
     onSelectUser: (userId) => input.navigateToUserRecord(userId),
     onBackToList: () => input.navigateToUsersList(),
   };
+}
+
+function productHasEligibleWorkflowSku(product: ShopifyProduct, eligibleListingSkus: Set<string>): boolean {
+  return (product.variants ?? []).some((variant) => {
+    const sku = variant.sku?.trim();
+    return Boolean(sku && eligibleListingSkus.has(sku));
+  });
+}
+
+function countUniqueEbaySkus(
+  items: EbayTabViewModel['inventory']['items'],
+  offers: EbayTabViewModel['inventory']['offers'],
+  recentListings: EbayPublishedListing[],
+): number {
+  const uniqueSkus = new Set<string>();
+
+  items.forEach((item) => {
+    if (item.sku) {
+      uniqueSkus.add(item.sku);
+    }
+  });
+  offers.forEach((offer) => {
+    if (offer.sku) {
+      uniqueSkus.add(offer.sku);
+    }
+  });
+  recentListings.forEach((listing) => {
+    if (listing.item.sku) {
+      uniqueSkus.add(listing.item.sku);
+    }
+    if (listing.offer.sku) {
+      uniqueSkus.add(listing.offer.sku);
+    }
+  });
+
+  return uniqueSkus.size;
 }

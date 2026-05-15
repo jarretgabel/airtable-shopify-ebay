@@ -125,7 +125,7 @@ npm run compare:lambda:handler
 
 ### Step 5: probe write routes safely
 
-Use these only when you want explicit smoke tests against the local `/api/*` server.
+Use these only when you want explicit smoke tests against the local `/api/*` server. This local API path is the canonical smoke-test target for repo validation; do not default to deployed AWS endpoints when verifying app changes.
 
 From the repo root:
 

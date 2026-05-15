@@ -1,5 +1,5 @@
 import { APP_PAGES, AppPage } from '@/auth/pages';
-import { hasFullAccessRole, normalizeRolePages } from '@/auth/roleAccess';
+import { normalizeRolePages } from '@/auth/roleAccess';
 import {
   createConfiguredRecord,
   deleteConfiguredRecord,
@@ -95,6 +95,7 @@ function parseRole(value: unknown): UserRole {
   const normalized = toSingleString(value).toLowerCase();
   if (normalized === 'admin') return 'admin';
   if (normalized === 'owner') return 'owner';
+  if (normalized === 'developer') return 'developer';
   if (normalized === 'tester') return 'tester';
   if (normalized === 'photographer') return 'photographer';
   return 'processor';
@@ -207,10 +208,6 @@ async function serializePasswordField(password: string, mustChangePassword: bool
 }
 
 function parseAllowedPages(value: unknown, role: UserRole): AppPage[] {
-  if (hasFullAccessRole(role)) {
-    return [...APP_PAGES];
-  }
-
   if (Array.isArray(value)) {
     const pages = value
       .filter((entry): entry is string => typeof entry === 'string')
@@ -250,10 +247,6 @@ function parseNotificationPreferences(value: unknown, role: UserRole): UserNotif
 }
 
 function serializeAllowedPages(user: AppUser): string {
-  if (hasFullAccessRole(user.role)) {
-    return APP_PAGES.join(',');
-  }
-
   return normalizePages(user.allowedPages, user.role).join(',');
 }
 

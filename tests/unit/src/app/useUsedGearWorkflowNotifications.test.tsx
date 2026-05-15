@@ -56,7 +56,7 @@ describe('useUsedGearWorkflowNotifications', () => {
       },
       targets: {
         pendingReview: {
-          destinationTab: 'jotform',
+          destinationTab: 'parking-lot-1',
           recordId: null,
           sectionId: 'used-gear-pending-review',
           groupId: 'pickup:pickup-1',
@@ -84,6 +84,8 @@ describe('useUsedGearWorkflowNotifications', () => {
           warningEnabled: true,
           errorEnabled: true,
           autoDismissMs: 5000,
+          workflowAssignedAlertsEnabled: true,
+          workflowUnassignedAlertsEnabled: false,
           workflowEvents: {
             pendingReview: true,
             processing: false,
@@ -112,10 +114,79 @@ describe('useUsedGearWorkflowNotifications', () => {
     });
 
     expect(onSummaryChange).toHaveBeenCalledWith(expect.objectContaining({ workflowQueueBadgeCount: 1 }));
+    expect(loadUsedGearWorkflowNotificationSummaryMock).toHaveBeenCalledWith({
+      currentUserName: 'Taylor Reviewer',
+      includeAssignedToCurrentUser: true,
+      includeUnassigned: false,
+    });
     expect(navigateToPath).toHaveBeenCalledWith('/parking-lot-1?workflowPendingReviewGroup=pickup%3Apickup-1#used-gear-pending-review');
     expect(navigateToUsedGearWorkflowRecord).not.toHaveBeenCalled();
     expect(navigateToInventorySection).not.toHaveBeenCalled();
     expect(navigateToTab).not.toHaveBeenCalled();
     expect(navigateToListingsRecord).not.toHaveBeenCalled();
+  });
+
+  it('dismisses workflow notifications when both ownership filters are disabled', async () => {
+    loadUsedGearWorkflowNotificationSummaryMock.mockResolvedValue({
+      counts: {
+        pendingReview: 0,
+        processing: 0,
+        testing: 0,
+        photography: 0,
+        preListingReview: 0,
+        approvedForPublish: 0,
+      },
+      targets: {
+        pendingReview: null,
+        processing: null,
+        testing: null,
+        photography: null,
+        preListingReview: null,
+        approvedForPublish: null,
+      },
+      workflowQueueBadgeCount: 0,
+    });
+
+    renderHook(() => useUsedGearWorkflowNotifications({
+      currentUser: {
+        id: 'user-1',
+        name: 'Taylor Reviewer',
+        email: 'taylor@example.com',
+        role: 'admin',
+        allowedPages: [],
+        notificationPreferences: {
+          infoEnabled: true,
+          successEnabled: true,
+          warningEnabled: true,
+          errorEnabled: true,
+          autoDismissMs: 5000,
+          workflowAssignedAlertsEnabled: false,
+          workflowUnassignedAlertsEnabled: false,
+          workflowEvents: {
+            pendingReview: true,
+            processing: true,
+            testing: true,
+            photography: true,
+            preListingReview: true,
+            approvedForPublish: true,
+          },
+        },
+      },
+      canAccessPage: () => true,
+      navigateToTab: vi.fn(),
+      navigateToPath: vi.fn(),
+      navigateToInventorySection: vi.fn(),
+      navigateToUsedGearWorkflowRecord: vi.fn(),
+      navigateToListingsRecord: vi.fn(),
+      enabled: true,
+    }));
+
+    await waitFor(() => {
+      expect(loadUsedGearWorkflowNotificationSummaryMock).toHaveBeenCalledWith({
+        currentUserName: 'Taylor Reviewer',
+        includeAssignedToCurrentUser: false,
+        includeUnassigned: false,
+      });
+    });
   });
 });

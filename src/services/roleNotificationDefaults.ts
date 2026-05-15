@@ -28,6 +28,7 @@ export function createDefaultRoleWorkflowNotificationDefaults(): RoleWorkflowNot
   return {
     admin: cloneWorkflowPreferences(createDefaultUserNotificationPreferences('admin').workflowEvents),
     owner: cloneWorkflowPreferences(createDefaultUserNotificationPreferences('owner').workflowEvents),
+    developer: cloneWorkflowPreferences(createDefaultUserNotificationPreferences('developer').workflowEvents),
     processor: cloneWorkflowPreferences(createDefaultUserNotificationPreferences('processor').workflowEvents),
     tester: cloneWorkflowPreferences(createDefaultUserNotificationPreferences('tester').workflowEvents),
     photographer: cloneWorkflowPreferences(createDefaultUserNotificationPreferences('photographer').workflowEvents),
@@ -44,6 +45,7 @@ function normalizeRoleWorkflowDefaults(value: unknown): RoleWorkflowNotification
   return {
     admin: { ...defaults.admin, ...(record.admin ?? {}) },
     owner: { ...defaults.owner, ...(record.owner ?? {}) },
+    developer: { ...defaults.developer, ...(record.developer ?? {}) },
     processor: { ...defaults.processor, ...(record.processor ?? {}) },
     tester: { ...defaults.tester, ...(record.tester ?? {}) },
     photographer: { ...defaults.photographer, ...(record.photographer ?? {}) },
@@ -54,6 +56,7 @@ function cloneRoleDefaults(defaults: RoleWorkflowNotificationDefaults): RoleWork
   return {
     admin: cloneWorkflowPreferences(defaults.admin),
     owner: cloneWorkflowPreferences(defaults.owner),
+    developer: cloneWorkflowPreferences(defaults.developer),
     processor: cloneWorkflowPreferences(defaults.processor),
     tester: cloneWorkflowPreferences(defaults.tester),
     photographer: cloneWorkflowPreferences(defaults.photographer),
@@ -96,7 +99,7 @@ function parseRoleDefaultsRecord(
   }
 
   const role = recordKey.slice(ROLE_DEFAULTS_RECORD_PREFIX.length) as UserRole;
-  if (!['admin', 'owner', 'processor', 'tester', 'photographer'].includes(role)) {
+  if (!['admin', 'owner', 'developer', 'processor', 'tester', 'photographer'].includes(role)) {
     return null;
   }
 
@@ -208,6 +211,8 @@ export function normalizeNotificationPreferencesForRole(
     warningEnabled: value?.warningEnabled ?? roleDefaults.warningEnabled,
     errorEnabled: value?.errorEnabled ?? roleDefaults.errorEnabled,
     autoDismissMs: value?.autoDismissMs ?? roleDefaults.autoDismissMs,
+    workflowAssignedAlertsEnabled: value?.workflowAssignedAlertsEnabled ?? roleDefaults.workflowAssignedAlertsEnabled,
+    workflowUnassignedAlertsEnabled: value?.workflowUnassignedAlertsEnabled ?? roleDefaults.workflowUnassignedAlertsEnabled,
     workflowEvents: {
       ...roleDefaults.workflowEvents,
       ...(value?.workflowEvents ?? {}),

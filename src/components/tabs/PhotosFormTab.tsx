@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
 import { FormImageUploadEditor } from '@/components/tabs/FormImageUploadEditor';
@@ -351,25 +352,22 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
   return (
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SB Inventory</p>
-              <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Photos</h2>
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Use this form after testing is complete to upload the primary listing photos, capture Audiogon rating and cosmetic notes, and mark the unit as photo&apos;d for listing prep.</p>
-              {recordId ? <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Editing record <strong>{recordId}</strong>. Saving here updates only the Photos fields for this inventory row.</p> : null}
-            </div>
-            {onBackToDirectory ? (
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={onBackToDirectory}
-              >
-                Back to Directory
-              </button>
-            ) : null}
-          </div>
-        </div>
+        <WorkflowPageHeader
+          eyebrow="SB Inventory"
+          title="Photos"
+          description="Upload final listing photos and capture cosmetic notes for listing prep."
+          descriptionHint="Use this form after testing is complete to upload the primary listing photos, capture Audiogon rating and cosmetic notes, and mark the unit as photo'd for listing prep."
+          detail={recordId ? <>Editing record <strong>{recordId}</strong>. Saving here updates only the Photos fields for this inventory row.</> : undefined}
+          actions={onBackToDirectory ? (
+            <button
+              type="button"
+              className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+              onClick={onBackToDirectory}
+            >
+              Back to Directory
+            </button>
+          ) : undefined}
+        />
 
         {submitError ? (
           <div className="rounded-xl border border-[#f7c8c4] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-text)]">

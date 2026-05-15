@@ -23,6 +23,8 @@ If a compare/probe script says the local API is not responding, restart it with 
 LOCAL_API_PORT=3002 npm run local:api
 ```
 
+Treat the local `/api/*` server as the only default target for repo tests and smoke checks. Deployed AWS Lambda environments are for deployment verification, not for routine development validation.
+
 ## Automated Write Probe
 
 The write probe is intentionally opt-in so it does not mutate Airtable data unless you explicitly enable it.

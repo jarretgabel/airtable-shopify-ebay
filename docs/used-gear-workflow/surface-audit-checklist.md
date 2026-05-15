@@ -150,7 +150,8 @@ This document is the app-owned surface audit for the approved used-gear workflow
   - `src/hooks/useUsedGearWorkflowPostPublishSummary.ts`
 - Alignment:
   - stale and sold-ready workflow counts surface in dashboard actions and insights
-  - dashboard actions deep-link into the correct post-publish bucket
+  - dashboard actions now emphasize queue entry points by role for processor, tester, and photographer dashboards
+  - post-publish dashboard actions deep-link into the correct owner-aware bucket, preferring `mine` when the current user already owns work and `unassigned` when work is ready to claim
 
 ## Existing Reuse Surfaces To Re-Check Later
 
@@ -159,10 +160,18 @@ This document is the app-owned surface audit for the approved used-gear workflow
 - Surface:
   - `src/components/tabs/JotformTab.tsx`
 - Alignment:
-  - now acts as Parking Lot 1 for intake-stage workflow review
-  - supports URL-backed intake queue state and grouped-review handoff into the dedicated group page
+  - now acts as the raw JotForm source feed only
+  - remains a utility/reference surface separate from workflow triage
 - Constraint:
   - no live JotForm changes in Phase 1
+
+### Parking Lot 1 Intake Page
+- Status: `Done`
+- Surface:
+  - `src/components/tabs/ParkingLotOneTab.tsx`
+- Alignment:
+  - owns workflow-only pending review triage
+  - supports URL-backed intake queue state and grouped-review handoff into the dedicated group page
 
 ### AirtableEmbeddedForm / Incoming Gear Form
 - Status: `Done`

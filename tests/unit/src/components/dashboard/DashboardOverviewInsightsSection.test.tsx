@@ -35,6 +35,12 @@ function buildWorkflowAnalyticsOverrides(overrides: Record<string, unknown> = {}
       soldReadyCount: 0,
       shippedCount: 0,
     },
+    ownership: {
+      pendingReviewMineCount: 0,
+      pendingReviewUnassignedCount: 0,
+      progressMineCount: 0,
+      progressUnassignedCount: 0,
+    },
     age: {
       pendingReviewAlertCount: 0,
       oldestPendingReviewAgeDays: null,
@@ -66,12 +72,6 @@ describe('DashboardOverviewSection', () => {
         canViewSensitiveMetrics={false}
         currentUserRole="admin"
         workflowAnalytics={buildWorkflowAnalyticsOverrides()}
-        jfLoading={false}
-        jotformUnavailableReason="Missing public runtime config: VITE_JOTFORM_FORM_ID."
-        jfSubmissionCount={5}
-        thisWeekCount={2}
-        recentCount={4}
-        totalNewSubmissions={1}
         spLoading={false}
         draftCount={3}
         activeCount={7}
@@ -92,7 +92,6 @@ describe('DashboardOverviewSection', () => {
         avgAskPrice={3400}
         sellThroughPct={30}
         grossMarginPct={42}
-        submissionsTrend={{ direction: 'flat', text: 'Flat' }}
         dealsTrend={{ direction: 'flat', text: 'Flat' }}
         acquisitionTrend={{ direction: 'flat', text: 'Flat' }}
         inventoryTrend={{ direction: 'flat', text: 'Flat' }}
@@ -102,27 +101,24 @@ describe('DashboardOverviewSection', () => {
       />,
     );
 
-    expect(screen.getAllByText('Unavailable').length).toBeGreaterThanOrEqual(3);
-  expect(screen.queryByRole('button', { name: /total inventory value/i })).not.toBeInTheDocument();
+    expect(screen.getAllByText('Unavailable').length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByRole('button', { name: /total inventory value/i })).not.toBeInTheDocument();
 
-    const jotformButton = screen.getByRole('button', { name: /incoming gear submissions/i });
     const approvalButton = screen.getByRole('button', { name: /listings review/i });
     const ebayButton = screen.getByRole('button', { name: /ebay coverage/i });
     const shopifyButton = screen.getByRole('button', { name: /deals in progress/i });
 
-    expect(jotformButton).toBeDisabled();
     expect(approvalButton).toBeDisabled();
     expect(ebayButton).toBeDisabled();
     expect(shopifyButton).toBeEnabled();
 
-    fireEvent.click(jotformButton);
     fireEvent.click(approvalButton);
     fireEvent.click(ebayButton);
     fireEvent.click(shopifyButton);
 
     expect(onSelectTab).toHaveBeenCalledTimes(1);
     expect(onSelectTab).toHaveBeenCalledWith('shopify');
-    expect(screen.getAllByText('Off').length).toBeGreaterThanOrEqual(3);
+    expect(screen.getAllByText('Off').length).toBeGreaterThanOrEqual(2);
   });
 
   it('renders owner-only financial cards when sensitive metrics are enabled', () => {
@@ -132,12 +128,6 @@ describe('DashboardOverviewSection', () => {
         canViewSensitiveMetrics
         currentUserRole="owner"
         workflowAnalytics={buildWorkflowAnalyticsOverrides()}
-        jfLoading={false}
-        jotformUnavailableReason={null}
-        jfSubmissionCount={5}
-        thisWeekCount={2}
-        recentCount={4}
-        totalNewSubmissions={1}
         spLoading={false}
         draftCount={3}
         activeCount={7}
@@ -158,7 +148,6 @@ describe('DashboardOverviewSection', () => {
         avgAskPrice={3400}
         sellThroughPct={30}
         grossMarginPct={42}
-        submissionsTrend={{ direction: 'flat', text: 'Flat' }}
         dealsTrend={{ direction: 'flat', text: 'Flat' }}
         acquisitionTrend={{ direction: 'flat', text: 'Flat' }}
         inventoryTrend={{ direction: 'flat', text: 'Flat' }}
@@ -185,12 +174,6 @@ describe('DashboardOverviewSection', () => {
         canViewSensitiveMetrics={false}
         currentUserRole="tester"
         workflowAnalytics={buildWorkflowAnalyticsOverrides()}
-        jfLoading={false}
-        jotformUnavailableReason={null}
-        jfSubmissionCount={0}
-        thisWeekCount={0}
-        recentCount={0}
-        totalNewSubmissions={0}
         spLoading={false}
         draftCount={0}
         activeCount={0}
@@ -211,7 +194,6 @@ describe('DashboardOverviewSection', () => {
         avgAskPrice={0}
         sellThroughPct={null}
         grossMarginPct={null}
-        submissionsTrend={{ direction: 'flat', text: 'Flat' }}
         dealsTrend={{ direction: 'flat', text: 'Flat' }}
         acquisitionTrend={{ direction: 'flat', text: 'Flat' }}
         inventoryTrend={{ direction: 'flat', text: 'Flat' }}
@@ -237,12 +219,6 @@ describe('DashboardOverviewSection', () => {
         canViewSensitiveMetrics={false}
         currentUserRole="photographer"
         workflowAnalytics={buildWorkflowAnalyticsOverrides()}
-        jfLoading={false}
-        jotformUnavailableReason={null}
-        jfSubmissionCount={0}
-        thisWeekCount={0}
-        recentCount={0}
-        totalNewSubmissions={0}
         spLoading={false}
         draftCount={0}
         activeCount={0}
@@ -263,7 +239,6 @@ describe('DashboardOverviewSection', () => {
         avgAskPrice={0}
         sellThroughPct={null}
         grossMarginPct={null}
-        submissionsTrend={{ direction: 'flat', text: 'Flat' }}
         dealsTrend={{ direction: 'flat', text: 'Flat' }}
         acquisitionTrend={{ direction: 'flat', text: 'Flat' }}
         inventoryTrend={{ direction: 'flat', text: 'Flat' }}

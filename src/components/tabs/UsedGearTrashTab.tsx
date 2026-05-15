@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { UsedGearTrashSection } from '@/components/tabs/airtable/UsedGearTrashSection';
 
 interface UsedGearTrashTabProps {
@@ -9,7 +10,7 @@ interface UsedGearTrashTabProps {
 
 const WORKFLOW_TRASH_SEARCH_PARAM = 'workflowTrashSearch';
 
-export function UsedGearTrashTab({ currentUserName, onOpenWorkflowRecord }: UsedGearTrashTabProps) {
+export function UsedGearTrashTab({ onOpenWorkflowRecord }: UsedGearTrashTabProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const workflowTrashSearch = useMemo(() => new URLSearchParams(location.search).get(WORKFLOW_TRASH_SEARCH_PARAM) ?? '', [location.search]);
@@ -32,23 +33,17 @@ export function UsedGearTrashTab({ currentUserName, onOpenWorkflowRecord }: Used
 
   return (
     <>
-      <section className="mt-3 rounded-2xl border border-[var(--line)] bg-[var(--panel)] px-5 py-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Intake</p>
-            <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Trash Review</h2>
-            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              Review unqualified workflow rows in one place. Restore mistakes, re-qualify items back into Parking Lot 2, or permanently delete work that should leave the queue.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-4 py-4">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow Reviewer</p>
-            <p className="mt-2 text-lg font-semibold text-[var(--ink)]">{currentUserName}</p>
-          </div>
-        </div>
-      </section>
+      <div className="mt-3 mb-6">
+        <WorkflowPageHeader
+          eyebrow="Used Gear Intake"
+          title="Trash Review"
+          description="Review unqualified rows, correct mistakes, or remove work that should leave the queue."
+          descriptionHint="Restore mistakes, re-qualify items back into Parking Lot 2, or permanently delete work that should leave the workflow."
+        />
+      </div>
 
       <UsedGearTrashSection
+        showSectionIntro={false}
         onOpenReviewRecord={(recordId) => navigate(`/trash-review/review/${encodeURIComponent(recordId)}${location.search}`, { replace: false })}
         onOpenWorkflowRecord={onOpenWorkflowRecord}
         searchTerm={workflowTrashSearch}

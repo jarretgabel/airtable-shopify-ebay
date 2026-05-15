@@ -42,7 +42,7 @@
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "test": "npm run test:web && npm run test:aws",
     "test:web": "vitest run",
-    "test:aws": "node --import tsx --test tests/unit/aws/**/*.test.ts",
+    "test:aws": "node --import tsx --import ./tests/unit/aws/network-guard.ts --test tests/unit/aws/**/*.test.ts",
     "test:watch": "vitest"
   },
   "dependencies": {

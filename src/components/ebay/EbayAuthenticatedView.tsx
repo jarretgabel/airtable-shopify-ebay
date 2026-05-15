@@ -1,4 +1,5 @@
 import { type EbayPublishedListing, type EbayListingsState } from '@/hooks/useEbayListings';
+import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import type { EbayBusinessPolicyConfig, EbayInventoryItem, EbayListingApiMode, EbayLocationConfig, EbayOffer, EbaySampleListingResult } from '@/services/ebay/types';
 import { spinnerClass } from '@/components/tabs/uiClasses';
 import { useState, useMemo, type Dispatch, type SetStateAction } from 'react';
@@ -147,7 +148,14 @@ export function EbayAuthenticatedView({
           </div>}
           {!readOnly && <button className={`${primaryButtonClass} max-[600px]:w-full`} onClick={onCreateDraft} disabled={draftStatus === 'creating'}>{draftStatus === 'creating' ? 'Creating...' : apiMode === 'inventory' ? '+ Create Sample Draft' : apiMode === 'trading' ? '+ Create Trading Listing' : '+ Verify Trading Payload'}</button>}
           {!readOnly && (apiMode === 'inventory' ? <button className={`${primaryButtonClass} max-[600px]:w-full`} onClick={onPublishDraft} disabled={publishStatus === 'publishing'}>{publishStatus === 'publishing' ? 'Publishing...' : 'Publish Sample Draft'}</button> : <span className="max-w-[16rem] text-[0.76rem] leading-[1.35] text-[var(--muted)] max-[960px]:max-w-none">{isTradingVerifyMode ? 'Verify Only does not create a listing.' : 'Trading API creates a live listing immediately.'}</span>)}
-          <button className={`${ghostButtonClass} max-[600px]:w-full`} onClick={refetch} disabled={loading}>{loading ? 'Refreshing...' : 'Refresh'}</button>
+          <RefreshIconButton
+            onClick={refetch}
+            disabled={loading}
+            loading={loading}
+            label="Refresh eBay listings"
+            loadingLabel="Refreshing eBay listings"
+            className="max-[600px]:w-11"
+          />
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ListingApprovalCombinedSections } from '@/components/approval/ListingApprovalCombinedSections';
 import { ListingApprovalCombinedEbaySection } from '@/components/approval/ListingApprovalCombinedEbaySection';
 import { ListingApprovalCombinedSharedSection } from '@/components/approval/ListingApprovalCombinedSharedSection';
 import { ListingApprovalCombinedShopifySection } from '@/components/approval/ListingApprovalCombinedShopifySection';
@@ -108,6 +109,7 @@ function buildCommonProps() {
 function buildSharedProps(): ListingApprovalCombinedSharedSectionProps {
   return {
     ...buildCommonProps(),
+    titleFieldName: 'Title',
     combinedDescriptionFieldName: 'Description',
     combinedSharedFieldNames: ['Title', 'Price'],
     combinedRequiredFieldNames: ['Title'],
@@ -126,6 +128,8 @@ function buildSharedProps(): ListingApprovalCombinedSharedSectionProps {
       'Cosmetic Condition Notes': 'Light wear on the top cover.',
     },
     sharedDrawerRequiredStatus: { hasRequired: true, allFilled: true },
+    onOpenWorkflowRecord: vi.fn(),
+    onOpenTestingForm: vi.fn(),
   };
 }
 
@@ -218,7 +222,12 @@ describe('combined approval sections', () => {
     expect(props.setFormValue).toHaveBeenCalledWith('Description', 'Updated combined description');
     expect(approvalFormFieldsSpy).toHaveBeenCalledWith(expect.objectContaining({
       approvalChannel: 'combined',
-      allFieldNames: ['Title', 'Price'],
+      allFieldNames: ['Title'],
+      requiredFieldNames: ['Title'],
+    }));
+    expect(approvalFormFieldsSpy).toHaveBeenCalledWith(expect.objectContaining({
+      approvalChannel: 'combined',
+      allFieldNames: ['Price'],
       requiredFieldNames: ['Title'],
     }));
     expect(screen.getByText('Testing')).toBeInTheDocument();
@@ -238,6 +247,19 @@ describe('combined approval sections', () => {
       disabled: false,
     }));
     expect(testingNotesTextareaEditorSpy).not.toHaveBeenCalled();
+  });
+
+  it('renders item title above description in the shared section', () => {
+    const props = buildSharedProps();
+
+    render(<ListingApprovalCombinedSharedSection {...props} />);
+
+    const [titleFields, priceFields] = screen.getAllByTestId('approval-form-fields');
+    const descriptionLabel = screen.getByText('Description');
+
+    expect(titleFields).toHaveTextContent('combined:Title');
+    expect(priceFields).toHaveTextContent('combined:Price');
+    expect(titleFields.compareDocumentPosition(descriptionLabel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('keeps key features editable when workflow-managed source fields are present', async () => {
@@ -284,10 +306,21 @@ describe('combined approval sections', () => {
 
     render(<ListingApprovalCombinedSharedSection {...props} />);
 
-    expect(screen.getByText('Make, Model, Condition, SKU, and Component Type are auto-populated from the workflow and testing source forms. Update those source records to change these values.')).toBeInTheDocument();
+    expect(screen.getByText('Source-Managed Details')).toBeInTheDocument();
+    expect(screen.getByText('Make, Model, Condition, SKU, and Component Type are auto-populated from the workflow and testing source forms.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit workflow source record' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit testing form' }));
 
-    expect(approvalFormFieldsSpy).toHaveBeenCalledWith(expect.objectContaining({
+    expect(props.onOpenWorkflowRecord).toHaveBeenCalledWith('rec-combined-1');
+    expect(props.onOpenTestingForm).toHaveBeenCalledWith('rec-combined-1');
+
+    expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      allFieldNames: ['Title'],
+      readOnlyFieldNames: [],
+    }));
+    expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({
       readOnlyFieldNames: expect.arrayContaining(['SKU', 'Make', 'Model', 'Component Type', '__Condition__']),
+      allFieldNames: ['SKU', 'Make', 'Model', 'Component Type', '__Condition__'],
       formValues: expect.objectContaining({
         SKU: 'MARANTZ-2270',
         Make: 'Marantz',
@@ -296,6 +329,57 @@ describe('combined approval sections', () => {
         __Condition__: 'Used - Very Good',
       }),
     }));
+    expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(3, expect.objectContaining({
+      allFieldNames: ['Price'],
+      readOnlyFieldNames: [],
+    }));
+  });
+
+  it('forwards combined shared quick-link callbacks through the wrapper', () => {
+    const sharedProps = buildSharedProps();
+    const shopifyProps = buildShopifyProps();
+    const ebayProps = buildEbayProps();
+    sharedProps.combinedSharedFieldNames = ['Title', 'SKU', 'Make', 'Model', 'Component Type', '__Condition__'];
+    sharedProps.formValues = {
+      ...sharedProps.formValues,
+      SKU: '',
+      Make: '',
+      Model: '',
+      'Component Type': '',
+      __Condition__: '',
+    };
+    sharedProps.sharedTestingSourceFieldValues = {
+      ...sharedProps.sharedTestingSourceFieldValues,
+      SKU: 'MAC-01',
+      Make: 'McIntosh',
+      Model: 'MA6900',
+      'Component Type': 'Integrated Amplifier',
+      __Condition__: 'Used - Good',
+    };
+
+    render(
+      <ListingApprovalCombinedSections
+        {...buildCommonProps()}
+        titleFieldName={sharedProps.titleFieldName}
+        combinedDescriptionFieldName={sharedProps.combinedDescriptionFieldName}
+        combinedSharedFieldNames={sharedProps.combinedSharedFieldNames}
+        combinedRequiredFieldNames={sharedProps.combinedRequiredFieldNames}
+        combinedSharedKeyFeaturesFieldName={sharedProps.combinedSharedKeyFeaturesFieldName}
+        combinedSharedKeyFeaturesSyncFieldNames={sharedProps.combinedSharedKeyFeaturesSyncFieldNames}
+        sharedTestingSourceFieldValues={sharedProps.sharedTestingSourceFieldValues}
+        sharedDrawerRequiredStatus={sharedProps.sharedDrawerRequiredStatus}
+        onOpenWorkflowRecord={sharedProps.onOpenWorkflowRecord}
+        onOpenTestingForm={sharedProps.onOpenTestingForm}
+        {...shopifyProps}
+        {...ebayProps}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit workflow source record' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit testing form' }));
+
+    expect(sharedProps.onOpenWorkflowRecord).toHaveBeenCalledWith('rec-combined-1');
+    expect(sharedProps.onOpenTestingForm).toHaveBeenCalledWith('rec-combined-1');
   });
 
   it('renders the Shopify drawer with collection editor wiring and preview panels', async () => {

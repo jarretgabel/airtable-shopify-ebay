@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useRef, useState } from 'react';
 import type { UserManagementTabViewModel } from '@/app/appTabViewModels';
 import { getRoleDefaultPages, hasFullAccessRole } from '@/auth/roleAccess';
-import { AppPage, PAGE_DEFINITIONS } from '@/auth/pages';
+import { PAGE_DEFINITIONS } from '@/auth/pages';
 import { useAuthStore } from '@/stores/auth/authStore';
 import type { AppUser } from '@/stores/auth/authTypes';
 import { generateTemporaryPassword } from '@/stores/auth/authStorage';
@@ -26,15 +26,27 @@ interface UserManagementTabProps {
 }
 
 function roleBadgeClassName(role: AppUser['role']): string {
-  return role === 'admin'
-    ? 'inline-flex rounded-full bg-cyan-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-300'
-    : role === 'owner'
-      ? 'inline-flex rounded-full bg-fuchsia-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-fuchsia-200'
-    : role === 'processor'
-      ? 'inline-flex rounded-full bg-blue-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-blue-200'
-      : role === 'tester'
-        ? 'inline-flex rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-amber-200'
-        : 'inline-flex rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-200';
+  if (role === 'admin') {
+    return 'inline-flex rounded-full bg-cyan-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-300';
+  }
+
+  if (role === 'owner') {
+    return 'inline-flex rounded-full bg-fuchsia-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-fuchsia-200';
+  }
+
+  if (role === 'developer') {
+    return 'inline-flex rounded-full bg-violet-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-violet-200';
+  }
+
+  if (role === 'processor') {
+    return 'inline-flex rounded-full bg-blue-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-blue-200';
+  }
+
+  if (role === 'tester') {
+    return 'inline-flex rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-amber-200';
+  }
+
+  return 'inline-flex rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-200';
 }
 
 function formatAccessiblePages(user: AppUser): string {
@@ -42,15 +54,15 @@ function formatAccessiblePages(user: AppUser): string {
     return 'All pages';
   }
 
-  return user.allowedPages.map((page) => PAGE_DEFINITIONS[page].label).join(', ') || 'No pages assigned';
+  return getRoleDefaultPages(user.role).map((page) => PAGE_DEFINITIONS[page].label).join(', ') || 'No pages assigned';
 }
 
 export function UserManagementTab({ viewModel }: UserManagementTabProps) {
   const { selectedUserId, onSelectUser, onBackToList } = viewModel;
   const users = useAuthStore((state) => state.users);
   const currentUserId = useAuthStore((state) => state.currentUserId);
-  const updateUserPermissions = useAuthStore((state) => state.updateUserPermissions);
   const updateUserRole = useAuthStore((state) => state.updateUserRole);
+  const updateUserNotificationPreference = useAuthStore((state) => state.updateUserNotificationPreference);
   const updateUserWorkflowNotificationEvent = useAuthStore((state) => state.updateUserWorkflowNotificationEvent);
   const roleNotificationDefaults = useAuthStore((state) => state.roleNotificationDefaults);
   const updateRoleWorkflowNotificationDefault = useAuthStore((state) => state.updateRoleWorkflowNotificationDefault);
@@ -93,8 +105,8 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
     const direction = sortDirection === 'asc' ? 1 : -1;
 
     return filtered.sort((a, b) => {
-      const aPages = hasFullAccessRole(a.role) ? Number.MAX_SAFE_INTEGER : a.allowedPages.length;
-      const bPages = hasFullAccessRole(b.role) ? Number.MAX_SAFE_INTEGER : b.allowedPages.length;
+      const aPages = hasFullAccessRole(a.role) ? Number.MAX_SAFE_INTEGER : getRoleDefaultPages(a.role).length;
+      const bPages = hasFullAccessRole(b.role) ? Number.MAX_SAFE_INTEGER : getRoleDefaultPages(b.role).length;
 
       const aValue =
         sortKey === 'name'
@@ -119,18 +131,6 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
     });
   }, [searchTerm, roleFilter, sortKey, sortDirection, sortedUsers]);
 
-  async function togglePermission(user: AppUser, page: AppPage): Promise<void> {
-    if (hasFullAccessRole(user.role)) return;
-
-    const hasPage = user.allowedPages.includes(page);
-    const nextPages = hasPage
-      ? user.allowedPages.filter((value) => value !== page)
-      : [...user.allowedPages, page];
-
-    const result = await updateUserPermissions(user.id, nextPages);
-    setStatusMessage(result.message);
-  }
-
   async function handleReset(email: string): Promise<void> {
     const result = await requestPasswordReset(email);
     setStatusMessage(result.message);
@@ -143,15 +143,6 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
     if (result.success) {
       setNewUser(defaultFormState());
     }
-  }
-
-  function handleNewUserPageToggle(page: AppPage): void {
-    const hasPage = newUser.allowedPages.includes(page);
-    const allowedPages = hasPage
-      ? newUser.allowedPages.filter((value) => value !== page)
-      : [...newUser.allowedPages, page];
-
-    setNewUser((previous) => ({ ...previous, allowedPages }));
   }
 
   function handleRegenerateTemporaryPassword(): void {
@@ -235,8 +226,8 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
         onRoleChange={(role) => {
           void updateUserRole(selectedUser.id, role).then((result) => setStatusMessage(result.message));
         }}
-        onTogglePermission={(page) => {
-          void togglePermission(selectedUser, page);
+        onToggleWorkflowOwnershipPreference={(key, enabled) => {
+          void updateUserNotificationPreference(selectedUser.id, key, enabled).then((result) => setStatusMessage(result.message));
         }}
         onToggleWorkflowNotificationEvent={(eventKey, enabled) => {
           void updateUserWorkflowNotificationEvent(selectedUser.id, eventKey, enabled).then((result) => setStatusMessage(result.message));
@@ -281,7 +272,6 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
         onScrollToCreateUser={scrollToCreateUserSection}
         onNewUserFieldChange={(field, value) => setNewUser((previous) => ({ ...previous, [field]: value }))}
         onNewUserRoleChange={(role) => setNewUser((previous) => ({ ...previous, role, allowedPages: getRoleDefaultPages(role) }))}
-        onNewUserPageToggle={handleNewUserPageToggle}
         onRegenerateTemporaryPassword={handleRegenerateTemporaryPassword}
         onToggleRoleWorkflowNotificationDefault={(role, eventKey, enabled) => {
           void updateRoleWorkflowNotificationDefault(role, eventKey, enabled).then((result) => setStatusMessage(result.message));

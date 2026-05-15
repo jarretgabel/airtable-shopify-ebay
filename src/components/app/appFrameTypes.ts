@@ -26,9 +26,6 @@ export interface AppFrameProps {
   inventoryProcessingTabs: AppTab[];
   postEbayTabs: AppTab[];
   utilityTabs: AppTab[];
-  refreshLabel: string;
-  refreshDisabled: boolean;
-  onRefresh: () => void;
   exportDisabled: boolean;
   onExportCurrentPage: () => void;
   onExportAllPages: () => void;
@@ -42,4 +39,4 @@ export interface AppFrameProps {
   children: ReactNode;
 }
 
-export type OpenDropdown = 'pdf' | 'intake' | 'listings' | 'inventory-processing' | 'utilities' | 'notifications' | 'account' | null;
+export type OpenDropdown = 'intake' | 'listings' | 'inventory-processing' | 'utilities' | 'notifications' | 'account' | null;

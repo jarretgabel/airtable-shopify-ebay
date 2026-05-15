@@ -25,6 +25,9 @@ interface AppFrameHeaderNavigationProps {
   inventoryProcessingTabs: AppTab[];
   postEbayTabs: AppTab[];
   utilityTabs: AppTab[];
+  exportDisabled: boolean;
+  onExportCurrentPage: () => void;
+  onExportAllPages: () => void;
   openDropdown: OpenDropdown;
   onToggleDropdown: (next: Exclude<OpenDropdown, null>) => void;
   onCloseDropdowns: () => void;
@@ -37,6 +40,9 @@ export function AppFrameHeaderNavigation({
   inventoryProcessingTabs,
   postEbayTabs,
   utilityTabs,
+  exportDisabled,
+  onExportCurrentPage,
+  onExportAllPages,
   openDropdown,
   onToggleDropdown,
   onCloseDropdowns,
@@ -45,6 +51,7 @@ export function AppFrameHeaderNavigation({
   const hasActiveListingsTab = listingsTabs.some((tab) => tab.active);
   const hasActiveInventoryProcessingTab = inventoryProcessingTabs.some((tab) => tab.active);
   const hasActiveUtilityTab = utilityTabs.some((tab) => tab.active);
+  const hasUtilityActions = true;
   const intakeBadgeTotal = intakeTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const listingsBadgeTotal = listingsTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const inventoryProcessingBadgeTotal = inventoryProcessingTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
@@ -168,7 +175,7 @@ export function AppFrameHeaderNavigation({
           {postEbayTabs.map((tab) => <TabButton key={tab.key} tab={tab} />)}
         </div>
 
-        {utilityTabs.length > 0 && (
+        {(utilityTabs.length > 0 || hasUtilityActions) && (
           <div className="relative flex-shrink-0" data-export-ignore="true">
             <DropdownTrigger
               active={hasActiveUtilityTab}
@@ -186,7 +193,34 @@ export function AppFrameHeaderNavigation({
                 aria-label="Utility tabs"
                 className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[240px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
               >
-                <DropdownTabList tabs={utilityTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
+                {utilityTabs.length > 0 ? <DropdownTabList tabs={utilityTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst /> : null}
+                <div className={`${utilityTabs.length > 0 ? 'mt-1.5 border-t border-white/8 pt-1.5' : ''}`.trim()}>
+                  <p className="px-3 pb-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">Export</p>
+                  <button
+                    role="menuitem"
+                    type="button"
+                    disabled={exportDisabled}
+                    onClick={() => {
+                      onCloseDropdowns();
+                      onExportCurrentPage();
+                    }}
+                    className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Download Current Page PDF
+                  </button>
+                  <button
+                    role="menuitem"
+                    type="button"
+                    disabled={exportDisabled}
+                    onClick={() => {
+                      onCloseDropdowns();
+                      onExportAllPages();
+                    }}
+                    className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Download Full PDF
+                  </button>
+                </div>
               </div>
             )}
           </div>

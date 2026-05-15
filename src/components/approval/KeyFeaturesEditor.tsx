@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
 
 interface KeyFeatureRow {
@@ -14,6 +14,7 @@ interface KeyFeaturesEditorProps {
   disabled?: boolean;
   label?: string;
   helperText?: string;
+  headerAction?: ReactNode;
 }
 
 const inputClass =
@@ -67,6 +68,7 @@ export function KeyFeaturesEditor({
   disabled = false,
   label = 'Key Features',
   helperText = 'Free-form feature/value pairs for the listing highlights shown to buyers.',
+  headerAction,
 }: KeyFeaturesEditorProps) {
   const [rows, setRows] = useState<KeyFeatureRow[]>(() => parseKeyFeatures(keyFeaturesValue));
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -123,13 +125,14 @@ export function KeyFeaturesEditor({
 
   return (
     <details className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2" open>
-      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-[var(--ink)]">
         <span className="inline-flex items-center gap-2">
           <span>{label}</span>
           <span className="rounded-full border border-[var(--line)] px-2 py-0.5 text-[0.68rem] font-medium text-[var(--muted)]">
             {filledRowCount} rows
           </span>
         </span>
+        {headerAction ? <span onClick={(event) => event.stopPropagation()}>{headerAction}</span> : null}
       </summary>
       <div className="flex flex-col gap-2 border-t border-[var(--line)] px-3 py-3">
         <p className="m-0 text-[0.74rem] leading-5 text-[var(--muted)]">

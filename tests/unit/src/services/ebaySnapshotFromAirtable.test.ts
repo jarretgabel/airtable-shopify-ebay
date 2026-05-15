@@ -7,6 +7,8 @@ describe('buildEbaySnapshotFromAirtable', () => {
         id: 'recEbay1',
         createdTime: '2026-05-08T00:00:00.000Z',
         fields: {
+          SKU: 'EBAY-SHEET-1',
+          'Workflow Status': 'Approved for Publish',
           'eBay Inventory SKU': 'EBAY-SHEET-1',
           'eBay Inventory Product Title': 'Sheet-backed eBay Listing',
           'eBay Inventory Product Description': '<p>Sheet snapshot HTML</p>',
@@ -45,5 +47,37 @@ describe('buildEbaySnapshotFromAirtable', () => {
       },
     });
     expect(snapshot.recentListings).toHaveLength(1);
+  });
+
+  it('excludes rows that have not reached listing-ready workflow states', () => {
+    const snapshot = buildEbaySnapshotFromAirtable([
+      {
+        id: 'recPending1',
+        createdTime: '2026-05-08T00:00:00.000Z',
+        fields: {
+          SKU: 'PENDING-SKU',
+          'Workflow Status': 'Awaiting Pre-Listing Review',
+          'eBay Inventory SKU': 'PENDING-SKU',
+          'eBay Inventory Product Title': 'Should not surface',
+          'eBay Offer Price Value': '1999.00',
+          'eBay Offer Status': 'Published',
+        },
+      },
+      {
+        id: 'recReady1',
+        createdTime: '2026-05-08T00:00:00.000Z',
+        fields: {
+          SKU: 'READY-SKU',
+          'Workflow Status': 'Approved for Publish',
+          'eBay Inventory SKU': 'READY-SKU',
+          'eBay Inventory Product Title': 'Should surface',
+          'eBay Offer Price Value': '2499.00',
+          'eBay Offer Status': 'Published',
+        },
+      },
+    ]);
+
+    expect(snapshot.total).toBe(1);
+    expect(snapshot.items.map((item) => item.sku)).toEqual(['READY-SKU']);
   });
 });

@@ -1,3 +1,4 @@
+import { enforceLocalOnlyIntegrationTargets } from './helpers/local-only-test-guard.mjs';
 const dotenv = (await import('dotenv')).default;
 dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '.env' });
@@ -6,6 +7,15 @@ const { default: axios } = await import('axios');
 
 const domain = process.env.VITE_SHOPIFY_STORE_DOMAIN;
 const token = process.env.VITE_SHOPIFY_OAUTH_ACCESS_TOKEN || process.env.VITE_SHOPIFY_ADMIN_API_TOKEN;
+
+if (!domain || !token) {
+  console.error('✗ Missing VITE_SHOPIFY_STORE_DOMAIN or Shopify access token');
+  process.exit(1);
+}
+
+enforceLocalOnlyIntegrationTargets('test-shopify-draft-listing', [
+  { label: 'Shopify Admin API', url: `https://${domain}/admin/api/2024-04` },
+]);
 
 const product = {
   title: 'Test Draft - High End Audio Component',

@@ -15,7 +15,6 @@ interface BuildNavTabsInput {
   activeTab: Tab;
   exportingPdf: boolean;
   workflowInventoryBadgeCount: number;
-  totalNewSubmissions: number;
   disabledTabReasons?: Partial<Record<Tab, string>>;
   navigateToTab: (tab: Tab) => void;
   navigateToUsersList: () => void;
@@ -34,7 +33,6 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     activeTab,
     exportingPdf,
     workflowInventoryBadgeCount,
-    totalNewSubmissions,
     disabledTabReasons = {},
     navigateToTab,
     navigateToUsersList,
@@ -65,7 +63,7 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     key: tab,
     label: navLabel(tab),
     active: activeTab === tab,
-    badgeCount: tab === 'jotform' ? totalNewSubmissions : undefined,
+    badgeCount: undefined,
     ...resolveDisabledState(tab),
     onClick: () => navigateToTab(tab),
   }));

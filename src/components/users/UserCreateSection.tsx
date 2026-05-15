@@ -1,5 +1,4 @@
 import { FormEvent, MutableRefObject, useState } from 'react';
-import { type AppPage } from '@/auth/pages';
 import { UserPageAccessEditor } from '@/components/users/UserPageAccessEditor';
 import { NewUserFormState } from '@/components/users/userManagementTypes';
 import { ASSIGNABLE_USER_ROLE_OPTIONS, type AssignableUserRole } from '@/stores/auth/authTypes';
@@ -14,7 +13,6 @@ interface UserCreateSectionProps {
   onCreateUserSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onNewUserFieldChange: (field: keyof NewUserFormState, value: string) => void;
   onNewUserRoleChange: (role: AssignableUserRole) => void;
-  onNewUserPageToggle: (page: AppPage) => void;
   onRegenerateTemporaryPassword: () => void;
 }
 
@@ -28,7 +26,6 @@ export function UserCreateSection({
   onCreateUserSubmit,
   onNewUserFieldChange,
   onNewUserRoleChange,
-  onNewUserPageToggle,
   onRegenerateTemporaryPassword,
 }: UserCreateSectionProps) {
   const [showTemporaryPassword, setShowTemporaryPassword] = useState(false);
@@ -36,7 +33,7 @@ export function UserCreateSection({
   return (
     <section ref={createUserSectionRef}>
       <h3 className="m-0 text-[0.95rem] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Create User</h3>
-      <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Provision a new user account and page access.</p>
+      <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Provision a new user account with one fixed role access bundle.</p>
       <form onSubmit={onCreateUserSubmit} className="mt-4 flex flex-col gap-2.5">
         <label className={labelClassName} htmlFor="new-user-name">Name</label>
         <input
@@ -104,12 +101,15 @@ export function UserCreateSection({
 
         {newUser.role !== 'admin' && (
           <div className="mt-2">
+            <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300">Role Access</p>
             <UserPageAccessEditor
               userRole={newUser.role}
               selectedPages={newUser.allowedPages}
               checkboxClassName={checkboxClassName}
-              onTogglePage={onNewUserPageToggle}
+              disabled
+              onTogglePage={() => undefined}
             />
+            <p className="mt-2 text-xs leading-5 text-[var(--muted)]">Each user can have one role only. Change the role selector to switch the bundled access.</p>
           </div>
         )}
 

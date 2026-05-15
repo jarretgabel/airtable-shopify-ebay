@@ -15,20 +15,22 @@ export const TAB_PATHS: Record<Tab, string> = Object.entries(PAGE_DEFINITIONS).r
 
 export const LISTINGS_TABS = ['listings', 'shopify', 'ebay'] as const satisfies readonly Tab[];
 export const LISTINGS_TAB_SET = new Set<Tab>(LISTINGS_TABS as readonly Tab[]);
-export const INTAKE_TABS = ['jotform', 'parking-lot-2', 'trash-review'] as const satisfies readonly Tab[];
+export const INTAKE_TABS = ['parking-lot-1', 'parking-lot-2', 'trash-review'] as const satisfies readonly Tab[];
 export const INTAKE_TAB_SET = new Set<Tab>(INTAKE_TABS as readonly Tab[]);
 export const INVENTORY_PROCESSING_TABS = ['inventory', 'testing-queue', 'photography-queue', 'pre-listing-queue', 'incoming-gear', 'testing', 'photos'] as const satisfies readonly Tab[];
 export const INVENTORY_PROCESSING_TAB_SET = new Set<Tab>(INVENTORY_PROCESSING_TABS as readonly Tab[]);
-export const UTILITY_TABS = ['market', 'imagelab'] as const satisfies readonly Tab[];
+export const UTILITY_TABS = ['workflow-guide', 'market', 'imagelab', 'jotform'] as const satisfies readonly Tab[];
 export const UTILITY_TAB_SET = new Set<Tab>(UTILITY_TABS as readonly Tab[]);
 
 const NAV_LABELS: Partial<Record<Tab, string>> = {
   dashboard: 'Dashboard',
+  'workflow-guide': 'Workflow Guide',
   inventory: 'Workflow Hub',
   listings: 'Listings',
   shopify: 'Shopify',
   market: 'HiFi Shark',
-  jotform: 'Parking Lot 1',
+  'parking-lot-1': 'Parking Lot 1',
+  jotform: 'JotForm',
   'parking-lot-2': 'Parking Lot 2',
   'trash-review': 'Trash Review',
   'testing-queue': 'Testing Review',

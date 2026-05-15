@@ -16,6 +16,7 @@
  */
 
 import { readFileSync, writeFileSync } from 'fs';
+import { enforceLocalOnlyIntegrationTargets } from './helpers/local-only-test-guard.mjs';
 import {
   createDraftListing,
   createTradingListing,
@@ -64,6 +65,11 @@ if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error('ERROR: VITE_EBAY_CLIENT_ID and VITE_EBAY_CLIENT_SECRET not set in .env.local');
   process.exit(1);
 }
+
+enforceLocalOnlyIntegrationTargets('test-create-ebay-listing', [
+  { label: 'eBay API', url: API_BASE },
+  { label: 'eBay auth', url: AUTH_BASE },
+]);
 
 // ── Parse CLI args ─────────────────────────────────────────────────────────────
 const args = Object.fromEntries(

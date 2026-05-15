@@ -14,7 +14,7 @@ interface UsedGearWorkflowPostPublishSummaryState extends UsedGearWorkflowPostPu
 
 const EMPTY_SUMMARY = createEmptyUsedGearWorkflowPostPublishSummary();
 
-export function useUsedGearWorkflowPostPublishSummary(enabled = true): UsedGearWorkflowPostPublishSummaryState {
+export function useUsedGearWorkflowPostPublishSummary(enabled = true, currentUserName = ''): UsedGearWorkflowPostPublishSummaryState {
   const [summary, setSummary] = useState<UsedGearWorkflowPostPublishSummary>(EMPTY_SUMMARY);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -32,14 +32,14 @@ export function useUsedGearWorkflowPostPublishSummary(enabled = true): UsedGearW
 
     try {
       const records = await loadWorkflowPostPublishQueue();
-      setSummary(summarizeUsedGearWorkflowPostPublishQueue(records));
+      setSummary(summarizeUsedGearWorkflowPostPublishQueue(records, currentUserName));
     } catch (loadError) {
       setSummary(EMPTY_SUMMARY);
       setError(loadError instanceof Error ? loadError.message : 'Unable to load used-gear post-publish workflow counts.');
     } finally {
       setLoading(false);
     }
-  }, [enabled]);
+  }, [currentUserName, enabled]);
 
   useEffect(() => {
     void refetch();

@@ -12,6 +12,7 @@ import { useHiFiShark } from '@/hooks/useHiFiShark';
 import { useJotFormInquiries } from '@/hooks/useJotForm';
 import { useListings } from '@/hooks/useListings';
 import { useShopifyProducts } from '@/hooks/useShopifyProducts';
+import { useUsedGearWorkflowDashboardTargets } from '@/hooks/useUsedGearWorkflowDashboardTargets';
 import { useUsedGearWorkflowAnalyticsSnapshot } from '@/hooks/useUsedGearWorkflowAnalyticsSnapshot';
 import { useUsedGearWorkflowPostPublishSummary } from '@/hooks/useUsedGearWorkflowPostPublishSummary';
 import { getAIProvider } from '@/services/equipmentAI';
@@ -20,10 +21,11 @@ interface AppDataParams {
   enabled?: boolean;
   canAccessPage: (page: AppPage) => boolean;
   activeTab: AppPage;
+  currentUserName: string;
   users: Array<{ role: string }>;
 }
 
-export function useAppData({ enabled = true, canAccessPage, activeTab, users }: AppDataParams) {
+export function useAppData({ enabled = true, canAccessPage, activeTab, currentUserName, users }: AppDataParams) {
   const dashboardActive = enabled && activeTab === 'dashboard';
   const airtableEnabled = enabled && canAccessPage('inventory') && (dashboardActive || activeTab === 'inventory');
   const shopifyEnabled = enabled && canAccessPage('shopify') && (dashboardActive || activeTab === 'shopify');
@@ -41,13 +43,16 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, users }: 
   const approval = useApprovalQueueSummary(enabled && canAccessPage('listings') && runtimeFeatures.approvalEbay.available);
   const shopifyApproval = useShopifyApprovalQueueSummary(enabled && canAccessPage('listings') && runtimeFeatures.approvalShopify.available);
   const workflowDashboardPages = enabled ? TAB_VALUES.filter((tab) => canAccessPage(tab)) : [];
-  const usedGearWorkflowAnalytics = useUsedGearWorkflowAnalyticsSnapshot(enabled && canAccessWorkflowDashboard(workflowDashboardPages));
-  const usedGearWorkflowPostPublish = useUsedGearWorkflowPostPublishSummary(enabled && canAccessPage('inventory'));
+  const usedGearWorkflowDashboardTargets = useUsedGearWorkflowDashboardTargets(enabled && activeTab === 'dashboard' && canAccessPage('inventory'));
+  const usedGearWorkflowAnalytics = useUsedGearWorkflowAnalyticsSnapshot(
+    enabled && canAccessWorkflowDashboard(workflowDashboardPages),
+    currentUserName,
+  );
+  const usedGearWorkflowPostPublish = useUsedGearWorkflowPostPublishSummary(enabled && canAccessPage('inventory'), currentUserName);
 
   const JOTFORM_FORM_ID = runtimeFeatures.jotform.available ? checkOptionalEnv('VITE_JOTFORM_FORM_ID') : '';
   const jotform = useJotFormInquiries(JOTFORM_FORM_ID, 60_000, jotformEnabled);
 
-  const totalNewSubmissions = jotform.submissions.filter((submission) => submission.new === '1').length;
   const visibleTabs = workflowDashboardPages;
   const aiProvider = getAIProvider().provider;
   const adminCount = useMemo(() => users.filter((user) => user.role === 'admin').length, [users]);
@@ -71,12 +76,12 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, users }: 
     },
     approval,
     shopifyApproval,
+    usedGearWorkflowDashboardTargets,
     usedGearWorkflowAnalytics,
     usedGearWorkflowPostPublish,
     jotform,
     metrics,
     visibleTabs,
-    totalNewSubmissions,
     aiProvider,
     adminCount,
     runtimeFeatures,

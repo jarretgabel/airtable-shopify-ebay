@@ -129,21 +129,16 @@ export function UsedGearWorkflowQueueTab({
   return (
     <>
       <section className="mt-3 rounded-2xl border border-[var(--line)] bg-[var(--panel)] px-5 py-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{config.eyebrow}</p>
-            <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{config.title}</h2>
-            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{config.description}</p>
-          </div>
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-4 py-4">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow Reviewer</p>
-            <p className="mt-2 text-lg font-semibold text-[var(--ink)]">{currentUserName}</p>
-          </div>
+        <div className="max-w-3xl">
+          <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{config.eyebrow}</p>
+          <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{config.title}</h2>
+          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{config.description}</p>
         </div>
       </section>
 
       <UsedGearWorkflowProgressSection
         currentUserName={currentUserName}
+        showSectionIntro={false}
         onOpenIncomingGearForm={onOpenIncomingGearForm}
         onOpenTestingForm={onOpenTestingForm}
         onOpenPhotosForm={onOpenPhotosForm}

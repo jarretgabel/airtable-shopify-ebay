@@ -10,7 +10,6 @@ interface ActionGuidanceParams {
   onRefresh: () => void;
   approvalPending: number;
   shopifyApprovalPending: number;
-  totalNewSubmissions: number;
   ebayAuthenticated: boolean;
   workflowPostPublishStaleListingCount: number;
   workflowPostPublishSoldReadyCount: number;
@@ -24,7 +23,6 @@ interface ActionGuidanceParams {
 const ACTION_KEYS = {
   ebayApproval: 'guidance-ebay-approval',
   shopifyApproval: 'guidance-shopify-approval',
-  jotform: 'guidance-jotform-submissions',
   ebayConnect: 'guidance-ebay-connect',
   usedGearStale: 'guidance-used-gear-stale-listings',
   usedGearSoldReady: 'guidance-used-gear-sold-ready',
@@ -38,7 +36,6 @@ export function useActionGuidanceNotifications({
   onRefresh,
   approvalPending,
   shopifyApprovalPending,
-  totalNewSubmissions,
   ebayAuthenticated,
   workflowPostPublishStaleListingCount,
   workflowPostPublishSoldReadyCount,
@@ -82,22 +79,6 @@ export function useActionGuidanceNotifications({
       dismissible: true,
     });
   }, [canAccessPage, dismissByKey, navigateToTab, shopifyApprovalPending, upsertByKey]);
-
-  useEffect(() => {
-    if (!canAccessPage('jotform') || totalNewSubmissions <= 0) {
-      dismissByKey(ACTION_KEYS.jotform);
-      return;
-    }
-
-    upsertByKey(ACTION_KEYS.jotform, {
-      tone: 'info',
-      title: 'New JotForm submissions',
-      message: `${totalNewSubmissions} new submission${totalNewSubmissions === 1 ? '' : 's'} arrived. Review incoming requests to keep the pipeline moving.`,
-      actionLabel: 'Open Parking Lot 1',
-      onAction: () => navigateToTab('jotform'),
-      dismissible: true,
-    });
-  }, [canAccessPage, dismissByKey, navigateToTab, totalNewSubmissions, upsertByKey]);
 
   useEffect(() => {
     if (!canAccessPage('ebay') || ebayAuthenticated) {

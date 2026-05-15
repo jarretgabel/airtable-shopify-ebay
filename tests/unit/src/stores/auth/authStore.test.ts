@@ -42,6 +42,8 @@ function buildUser(overrides: Partial<AppUser> = {}): AppUser {
       warningEnabled: false,
       errorEnabled: true,
       autoDismissMs: 9000,
+      workflowAssignedAlertsEnabled: true,
+      workflowUnassignedAlertsEnabled: true,
       workflowEvents: {
         pendingReview: true,
         processing: true,
@@ -82,6 +84,14 @@ describe('authStore updateUserRole', () => {
           photography: true,
           preListingReview: true,
           approvedForPublish: true,
+        },
+        developer: {
+          pendingReview: false,
+          processing: false,
+          testing: false,
+          photography: false,
+          preListingReview: false,
+          approvedForPublish: false,
         },
         processor: {
           pendingReview: true,
@@ -127,6 +137,8 @@ describe('authStore updateUserRole', () => {
         warningEnabled: false,
         errorEnabled: true,
         autoDismissMs: 9000,
+        workflowAssignedAlertsEnabled: true,
+        workflowUnassignedAlertsEnabled: true,
         workflowEvents: {
           pendingReview: true,
           processing: true,
@@ -189,6 +201,20 @@ describe('authStore updateUserRole', () => {
     });
   });
 
+  it('applies developer access defaults when changing a user into the developer role', async () => {
+    const startingUser = buildUser({ allowedPages: ['dashboard', 'testing'] });
+    updateUserInAirtableMock.mockImplementation(async (user: AppUser) => user);
+    useAuthStore.setState({ users: [startingUser] });
+
+    const result = await useAuthStore.getState().updateUserRole(startingUser.id, 'developer');
+
+    expect(result.success).toBe(true);
+    expect(updateUserInAirtableMock).toHaveBeenCalledWith(expect.objectContaining({
+      role: 'developer',
+      allowedPages: ['dashboard', 'jotform', 'settings', 'notifications'],
+    }));
+  });
+
   it('rejects owner permission changes from User Management', async () => {
     const ownerUser = buildUser({ role: 'owner', allowedPages: [] });
     useAuthStore.setState({ users: [ownerUser] });
@@ -198,6 +224,19 @@ describe('authStore updateUserRole', () => {
     expect(result).toEqual({
       success: false,
       message: 'Owner account access is managed outside User Management.',
+    });
+    expect(updateUserInAirtableMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects manual page edits for non-owner accounts so access stays role-based', async () => {
+    const startingUser = buildUser();
+    useAuthStore.setState({ users: [startingUser] });
+
+    const result = await useAuthStore.getState().updateUserPermissions(startingUser.id, ['dashboard', 'testing', 'photos']);
+
+    expect(result).toEqual({
+      success: false,
+      message: 'Access is locked to a single role bundle. Change the role instead of editing page permissions.',
     });
     expect(updateUserInAirtableMock).not.toHaveBeenCalled();
   });
@@ -227,5 +266,27 @@ describe('authStore updateUserRole', () => {
       message: 'Owner workflow alerts must be managed from the owner account settings.',
     });
     expect(updateUserInAirtableMock).not.toHaveBeenCalled();
+  });
+
+  it('lets admins update ownership-scoped workflow notification preferences for other users', async () => {
+    const actingAdmin = buildUser({ id: 'admin-1', role: 'admin', email: 'admin@example.com', allowedPages: [] });
+    const targetUser = buildUser({ id: 'user-2', email: 'processor@example.com', role: 'processor', allowedPages: ['inventory'] });
+    updateUserInAirtableMock.mockImplementation(async (user: AppUser) => user);
+    useAuthStore.setState({ users: [actingAdmin, targetUser], currentUserId: actingAdmin.id });
+
+    const result = await useAuthStore.getState().updateUserNotificationPreference(
+      targetUser.id,
+      'workflowUnassignedAlertsEnabled',
+      false,
+    );
+
+    expect(result).toEqual({ success: true, message: 'Notification preference updated.' });
+    expect(updateUserInAirtableMock).toHaveBeenCalledWith(expect.objectContaining({
+      id: targetUser.id,
+      notificationPreferences: expect.objectContaining({
+        workflowAssignedAlertsEnabled: true,
+        workflowUnassignedAlertsEnabled: false,
+      }),
+    }));
   });
 });

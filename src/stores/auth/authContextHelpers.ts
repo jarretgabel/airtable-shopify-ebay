@@ -1,5 +1,5 @@
-import { APP_PAGES, AppPage } from '@/auth/pages';
-import { getRoleDefaultPages, hasFullAccessRole, normalizeRolePages } from '@/auth/roleAccess';
+import { type AppPage } from '@/auth/pages';
+import { getRoleDefaultPages, normalizeRolePages } from '@/auth/roleAccess';
 import { createNotificationPreferencesForRole } from '@/services/roleNotificationDefaults';
 import { normalizePages, randomToken } from './authStorage';
 import { type AppUser, type CreateUserInput, type UserRole } from './authTypes';
@@ -16,13 +16,11 @@ export function getCurrentUser(users: AppUser[], currentUserId: string | null): 
 export function canUserAccessPage(currentUser: AppUser | null, page: AppPage): boolean {
   if (!currentUser) return false;
   if (page === 'settings' || page === 'notifications') return true;
-  if (hasFullAccessRole(currentUser.role)) return true;
   return normalizeRolePages(currentUser.allowedPages, currentUser.role).includes(page);
 }
 
 export function getAccessiblePages(currentUser: AppUser | null): AppPage[] {
   if (!currentUser) return [];
-  if (hasFullAccessRole(currentUser.role)) return [...APP_PAGES];
   return Array.from(new Set([...normalizeRolePages(currentUser.allowedPages, currentUser.role), 'settings', 'notifications']));
 }
 
@@ -33,7 +31,7 @@ export function buildUserFromInput(input: CreateUserInput): { result?: CreateUse
   }
 
   const role: UserRole = input.role;
-  const allowedPages = normalizePages(input.allowedPages.length ? input.allowedPages : getRoleDefaultPages(role), role);
+  const allowedPages = normalizePages(getRoleDefaultPages(role), role);
 
   return {
     user: {

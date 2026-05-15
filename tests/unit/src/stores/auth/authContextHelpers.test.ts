@@ -1,4 +1,4 @@
-import { APP_PAGES } from '@/auth/pages';
+import { type AppPage } from '@/auth/pages';
 import { getRoleDefaultPages } from '@/auth/roleAccess';
 import {
   createDefaultRoleWorkflowNotificationDefaults,
@@ -24,7 +24,7 @@ describe('authContextHelpers', () => {
       name: 'Admin User',
       email: 'admin@example.com',
       role: 'admin',
-      allowedPages: [...APP_PAGES],
+      allowedPages: getRoleDefaultPages('admin'),
       notificationPreferences: { ...DEFAULT_USER_NOTIFICATION_PREFERENCES },
     },
     {
@@ -32,7 +32,7 @@ describe('authContextHelpers', () => {
       name: 'Owner User',
       email: 'owner@example.com',
       role: 'owner',
-      allowedPages: [...APP_PAGES],
+      allowedPages: getRoleDefaultPages('owner'),
       notificationPreferences: { ...DEFAULT_USER_NOTIFICATION_PREFERENCES },
     },
     {
@@ -51,6 +51,22 @@ describe('authContextHelpers', () => {
       allowedPages: getRoleDefaultPages('tester'),
       notificationPreferences: { ...DEFAULT_USER_NOTIFICATION_PREFERENCES },
     },
+    {
+      id: '4',
+      name: 'Dev User',
+      email: 'developer@example.com',
+      role: 'developer',
+      allowedPages: getRoleDefaultPages('developer'),
+      notificationPreferences: { ...DEFAULT_USER_NOTIFICATION_PREFERENCES },
+    },
+    {
+      id: '5',
+      name: 'Photographer User',
+      email: 'photographer@example.com',
+      role: 'photographer',
+      allowedPages: getRoleDefaultPages('photographer'),
+      notificationPreferences: { ...DEFAULT_USER_NOTIFICATION_PREFERENCES },
+    },
   ];
 
   it('normalizes email addresses', () => {
@@ -67,25 +83,45 @@ describe('authContextHelpers', () => {
     const owner = baseUsers[1];
     const user = baseUsers[2];
     const tester = baseUsers[3];
+    const developer = baseUsers[4];
+    const photographer = baseUsers[5];
 
     expect(canUserAccessPage(admin, 'users')).toBe(true);
+    expect(canUserAccessPage(admin, 'market')).toBe(false);
+    expect(canUserAccessPage(admin, 'imagelab')).toBe(true);
     expect(canUserAccessPage(owner, 'users')).toBe(true);
+    expect(canUserAccessPage(owner, 'market')).toBe(true);
     expect(canUserAccessPage(user, 'dashboard')).toBe(true);
+    expect(canUserAccessPage(user, 'workflow-guide')).toBe(true);
     expect(canUserAccessPage(user, 'incoming-gear')).toBe(true);
+    expect(canUserAccessPage(user, 'testing-queue')).toBe(true);
+    expect(canUserAccessPage(user, 'photography-queue')).toBe(true);
     expect(canUserAccessPage(user, 'testing')).toBe(true);
     expect(canUserAccessPage(user, 'photos')).toBe(true);
     expect(canUserAccessPage(user, 'notifications')).toBe(true);
-    expect(canUserAccessPage(user, 'market')).toBe(false);
+    expect(canUserAccessPage(user, 'market')).toBe(true);
+    expect(canUserAccessPage(user, 'imagelab')).toBe(true);
     expect(canUserAccessPage(tester, 'testing')).toBe(true);
     expect(canUserAccessPage(tester, 'photos')).toBe(false);
+    expect(canUserAccessPage(tester, 'imagelab')).toBe(false);
+    expect(canUserAccessPage(developer, 'settings')).toBe(true);
+    expect(canUserAccessPage(developer, 'notifications')).toBe(true);
+    expect(canUserAccessPage(developer, 'dashboard')).toBe(true);
+    expect(canUserAccessPage(developer, 'workflow-guide')).toBe(true);
+    expect(canUserAccessPage(developer, 'jotform')).toBe(true);
+    expect(canUserAccessPage(developer, 'market')).toBe(true);
+    expect(canUserAccessPage(developer, 'imagelab')).toBe(true);
+    expect(canUserAccessPage(photographer, 'imagelab')).toBe(true);
+    expect(canUserAccessPage(photographer, 'market')).toBe(false);
   });
 
   it('filters users page for non-admin accessible pages', () => {
     const owner = baseUsers[1];
     expect(getAccessiblePages(baseUsers[2])).toEqual([
       'dashboard',
+      'workflow-guide',
       'inventory',
-      'jotform',
+      'parking-lot-1',
       'parking-lot-2',
       'trash-review',
       'testing-queue',
@@ -94,12 +130,16 @@ describe('authContextHelpers', () => {
       'incoming-gear',
       'testing',
       'photos',
+      'market',
+      'imagelab',
       'settings',
       'notifications',
     ]);
-    expect(getAccessiblePages(baseUsers[0])).toEqual(APP_PAGES);
-    expect(getAccessiblePages(owner)).toEqual(APP_PAGES);
-    expect(getAccessiblePages(baseUsers[3])).toEqual(['dashboard', 'testing-queue', 'testing', 'settings', 'notifications']);
+    expect(getAccessiblePages(baseUsers[0])).toEqual(getRoleDefaultPages('admin'));
+    expect(getAccessiblePages(owner)).toEqual(getRoleDefaultPages('owner'));
+    expect(getAccessiblePages(baseUsers[3])).toEqual(['dashboard', 'workflow-guide', 'testing-queue', 'testing', 'settings', 'notifications']);
+    expect(getAccessiblePages(baseUsers[4])).toEqual(['dashboard', 'workflow-guide', 'jotform', 'market', 'imagelab', 'settings', 'notifications']);
+    expect(getAccessiblePages(baseUsers[5])).toEqual(['dashboard', 'workflow-guide', 'photography-queue', 'photos', 'imagelab', 'settings', 'notifications']);
   });
 
   it('uses stored role notification defaults when building new users', () => {
@@ -131,5 +171,33 @@ describe('authContextHelpers', () => {
       preListingReview: false,
       approvedForPublish: true,
     });
+  });
+
+  it('ignores custom page selections and applies the chosen role bundle when building new users', () => {
+    const result = buildUserFromInput({
+      name: 'Hybrid Attempt',
+      email: 'hybrid@example.com',
+      password: 'temporary-password',
+      role: 'tester',
+      allowedPages: ['dashboard', 'testing', 'photos'],
+    });
+
+    expect(result.user?.allowedPages).toEqual(getRoleDefaultPages('tester'));
+  });
+
+  it('adds the workflow guide for existing users whose stored role bundle predates the page', () => {
+    const legacyTester = {
+      ...baseUsers[3],
+      allowedPages: ['dashboard', 'testing-queue', 'testing'] as AppPage[],
+    };
+
+    expect(getAccessiblePages(legacyTester)).toEqual([
+      'dashboard',
+      'workflow-guide',
+      'testing-queue',
+      'testing',
+      'settings',
+      'notifications',
+    ]);
   });
 });

@@ -48,6 +48,24 @@ describe('usedGearWorkflowLifecycle', () => {
     expect(getUsedGearWorkflowPostPublishSnapshot(shipped)?.bucket).toBe('shipped');
   });
 
+  it('reads shipment follow-through fields from sold-ready rows', () => {
+    const record: AirtableRecord = {
+      id: 'rec-shipment-notes',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        'Workflow Status': 'Sold - Ready to Ship',
+        'Sold Ready To Ship At': '2026-05-06T00:00:00.000Z',
+        'Shipment Follow-Through Notes': 'Carrier pickup booked for tomorrow morning.',
+        'Shipment Follow-Through Updated At': '2026-05-07T08:30:00.000Z',
+      },
+    };
+
+    const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+
+    expect(snapshot?.shipmentFollowThroughNotes).toBe('Carrier pickup booked for tomorrow morning.');
+    expect(snapshot?.shipmentFollowThroughUpdatedAt).toBe('2026-05-07T08:30:00.000Z');
+  });
+
   it('reads stale recovery fields from the workflow row', () => {
     const record: AirtableRecord = {
       id: 'rec-stale',

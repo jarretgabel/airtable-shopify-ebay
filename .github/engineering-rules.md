@@ -71,4 +71,4 @@ priceFieldName={approvalChannel === 'shopify' ? '' : priceFieldName}
 - No removed focus/keyboard affordances.
 - No new global CSS blocks for component styling.
 - No orphaned helper classes or dead selectors after migration.
-- For app-api/AWS migration work, verify the relevant local validation command still works (`compare:lambda`, `compare:lambda:handler`, or the guarded write probe).
+- For app-api/AWS migration work, validate only against the local `/api/*` seam: start the no-Docker local API, then verify the relevant local validation command still works (`compare:lambda`, `compare:lambda:handler`, or the guarded write probe). Do not use deployed AWS endpoints as the default test or smoke-test path.

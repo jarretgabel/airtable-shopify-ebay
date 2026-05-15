@@ -2,6 +2,7 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { enforceLocalOnlyIntegrationTargets } from './helpers/local-only-test-guard.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Prefer local overrides, then fall back to .env.
@@ -12,6 +13,7 @@ async function testAirtable() {
   const apiKey = process.env.VITE_AIRTABLE_API_KEY;
   const baseId = process.env.VITE_AIRTABLE_BASE_ID;
   const tableName = process.env.VITE_AIRTABLE_TABLE_NAME || 'Table 1';
+  const airtableBaseUrl = `https://api.airtable.com/v0/${baseId}`;
 
   console.log('Testing Airtable connection...\n');
   console.log('API Key:', apiKey ? `✓ Set (${apiKey.substring(0, 10)}...)` : '✗ Not set');
@@ -22,9 +24,13 @@ async function testAirtable() {
     process.exit(1);
   }
 
+  enforceLocalOnlyIntegrationTargets('test-airtable-connection', [
+    { label: 'Airtable API', url: airtableBaseUrl },
+  ]);
+
   try {
     const client = axios.create({
-      baseURL: `https://api.airtable.com/v0/${baseId}`,
+      baseURL: airtableBaseUrl,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',

@@ -58,6 +58,7 @@ This phase adds the listing-aging and fulfillment lifecycle after publish behavi
 - The Inventory tab now includes a post-publish workflow section with four operational buckets: active listings, stale listings, sold ready to ship, and shipped history.
 - Listed and stale rows can be promoted into `Sold - Ready to Ship`, which captures `Sold Ready To Ship At`.
 - Sold-ready rows can be marked `Shipped`, which captures `Shipped At`.
+- Sold-ready and shipped rows now support Airtable-backed `Shipment Follow-Through Notes` with `Shipment Follow-Through Updated At` so packing, carrier, and fulfillment handoff context stays on the workflow row.
 - Dashboard action cards now surface stale listings and sold-ready workflow work so operators can spot post-publish issues without opening the Inventory tab first.
 - Global in-app action-guidance notifications now prompt inventory users when used-gear listings go stale or sold-ready rows need shipping follow-through.
 - Dashboard insights now include used-gear stale-listing and sold-ready signals, and those insight/action shortcuts open the Inventory tab already filtered to the relevant post-publish lifecycle bucket.
@@ -72,6 +73,7 @@ This phase adds the listing-aging and fulfillment lifecycle after publish behavi
 - Post-publish cards now support row selection with batch reconciliation helpers so operators can claim queue ownership, move multiple listed or stale rows into `Sold - Ready to Ship`, and move multiple sold-ready rows into `Shipped` without repeating one-row actions.
 - Workflow rows now support lightweight ownership metadata through `Workflow Owner` and `Workflow Owner Assigned At`, which keeps queue accountability on the authoritative Airtable row without introducing a separate staffing table.
 - The workflow detail page now surfaces the current stale-recovery state as a read-only post-publish audit panel.
+- The workflow detail page now includes a shipment follow-through editor and audit panel so sold-ready and shipped rows retain operator notes without requiring separate Airtable history lookups.
 
 ### Automation Decision
 - Sold and shipped workflow transitions are implemented as explicit in-app operational actions for now.

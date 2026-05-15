@@ -17,6 +17,7 @@ describe('usedGearWorkflowAnalytics', () => {
       buildRecord({
         fields: {
           'Workflow Status': 'Pending Review',
+          'Workflow Owner': 'Taylor Reviewer',
         },
       }),
       buildRecord({
@@ -38,6 +39,7 @@ describe('usedGearWorkflowAnalytics', () => {
         fields: {
           'Workflow Status': 'Approved for Publish',
           'Approved For Publish At': '2026-05-06T00:00:00.000Z',
+          'Workflow Owner': 'Taylor Reviewer',
         },
       }),
       buildRecord({
@@ -71,13 +73,17 @@ describe('usedGearWorkflowAnalytics', () => {
           'Shipped At': '2026-05-06T00:00:00.000Z',
         },
       }),
-    ], Date.parse('2026-05-08T00:00:00.000Z'));
+    ], Date.parse('2026-05-08T00:00:00.000Z'), 'Taylor Reviewer');
 
     expect(snapshot.totalCount).toBe(8);
     expect(snapshot.pendingReviewCount).toBe(1);
     expect(snapshot.trashCount).toBe(1);
     expect(snapshot.progressCount).toBe(2);
     expect(snapshot.postPublishCount).toBe(4);
+    expect(snapshot.ownership.pendingReviewMineCount).toBe(1);
+    expect(snapshot.ownership.pendingReviewUnassignedCount).toBe(0);
+    expect(snapshot.ownership.progressMineCount).toBe(1);
+    expect(snapshot.ownership.progressUnassignedCount).toBe(1);
     expect(snapshot.statusCounts['Approved for Publish']).toBe(1);
     expect(snapshot.marketplace.shopifyLiveCount).toBe(1);
     expect(snapshot.marketplace.ebayStaleCount).toBe(1);

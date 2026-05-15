@@ -7,6 +7,7 @@ import type { UserRole } from '@/stores/auth/authTypes';
 
 interface AuthLoginResponse {
   userId: string;
+  airtableRecordId?: string;
   name: string;
   email: string;
   role: UserRole;
@@ -17,6 +18,7 @@ interface AuthLoginResponse {
 
 interface AuthSessionResponse {
   userId: string;
+  airtableRecordId?: string;
   name: string;
   email: string;
   role: UserRole;

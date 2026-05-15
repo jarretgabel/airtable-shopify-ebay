@@ -93,6 +93,7 @@ export function useAuthRouteGuard({
       isShopifyProductsDetailPath ||
       normalizedPath === '/account/settings' ||
       normalizedPath === '/account/notifications' ||
+      normalizedPath === '/workflow-guide' ||
       normalizedPath === '/account/users' ||
       isUserDetailPath;
     if (!isKnownTabPath && !isKnownSubPath) {
@@ -118,7 +119,7 @@ export function useAuthRouteGuard({
                 : normalizedPath === '/workflow/pre-listing'
                   ? 'pre-listing-queue'
               : normalizedPath === '/parking-lot-1' || /^\/parking-lot-1\/review\/[^/]+$/.test(normalizedPath) || isJotformReviewRecordPath
-                ? 'jotform'
+                ? 'parking-lot-1'
               : normalizedPath === '/incoming-gear' || isIncomingGearDetailPath
                 ? 'incoming-gear'
               : normalizedPath === '/testing' || isTestingDetailPath
@@ -131,6 +132,8 @@ export function useAuthRouteGuard({
                 ? 'settings'
                 : normalizedPath === '/account/notifications'
                   ? 'notifications'
+                  : normalizedPath === '/workflow-guide'
+                    ? 'workflow-guide'
                   : normalizedPath === '/account/users' || isUserDetailPath
                 ? 'users'
                 : isKnownTabPath

@@ -65,6 +65,8 @@ function createBaseParams(selectedRecord: AirtableRecord | null): Parameters<typ
     currentPageShopifyTagValues: [],
     currentPageShopifyCollectionIds: [],
     currentPageShopifyCollectionLabelsById: {},
+    onOpenWorkflowRecord: vi.fn(),
+    onOpenTestingForm: vi.fn(),
     combinedDescriptionFieldName: 'Description',
     combinedSharedFieldNames: [],
     combinedRequiredFieldNames: [],
@@ -165,6 +167,10 @@ describe('buildListingApprovalTabPanels', () => {
     const result = buildListingApprovalTabPanels(createBaseParams(selectedRecord));
 
     expect(getUsedGearWorkflowListingReadinessMock).toHaveBeenCalledWith(selectedRecord);
+    expect(buildListingApprovalSelectedRecordViewPropsMock).toHaveBeenCalledWith(expect.objectContaining({
+      onOpenWorkflowRecord: expect.any(Function),
+      onOpenTestingForm: expect.any(Function),
+    }));
     expect(buildListingApprovalSelectedRecordPanelPropsMock).toHaveBeenCalledWith(expect.objectContaining({
       eyebrowLabel: 'Combined Listing Editor',
       workflowSummary: expect.objectContaining({

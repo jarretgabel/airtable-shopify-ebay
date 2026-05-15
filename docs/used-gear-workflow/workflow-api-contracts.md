@@ -105,6 +105,7 @@ Primary source wiring:
   - `Workflow Owner`
   - `Workflow Owner Assigned At`
   - stale-recovery fields
+  - shipment follow-through notes and update timestamp
   - sold/shipped timestamps
 
 ### Single Workflow Record Read
@@ -185,6 +186,17 @@ All mutations write through `updateConfiguredRecord('used-gear-workflow', record
   - the `Signed By` and `Signed At` fields for the selected stage
 - Validation:
   - `userName` must be non-empty
+
+### Save Shipment Follow-Through Notes
+- Service: `saveWorkflowShipmentFollowThrough(recordId, { shipmentFollowThroughNotes })`
+- Allowed from:
+  - `Sold - Ready to Ship`
+  - `Shipped`
+- Writes:
+  - `Shipment Follow-Through Notes = normalized textarea value`
+  - `Shipment Follow-Through Updated At = now`
+- Validation:
+  - sold-ready or shipped workflow status is required
 
 ### Complete Processing
 - Service: `completeProcessingStage(recordId, userName)`

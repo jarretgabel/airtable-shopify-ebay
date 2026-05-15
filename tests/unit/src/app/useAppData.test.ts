@@ -10,6 +10,7 @@ const {
   mockUseEbayListings,
   mockUseApprovalQueueSummary,
   mockUseShopifyApprovalQueueSummary,
+  mockUseUsedGearWorkflowDashboardTargets,
   mockUseUsedGearWorkflowAnalyticsSnapshot,
   mockUseUsedGearWorkflowPostPublishSummary,
   mockUseJotFormInquiries,
@@ -22,6 +23,7 @@ const {
   mockUseEbayListings: vi.fn(),
   mockUseApprovalQueueSummary: vi.fn(),
   mockUseShopifyApprovalQueueSummary: vi.fn(),
+  mockUseUsedGearWorkflowDashboardTargets: vi.fn(),
   mockUseUsedGearWorkflowAnalyticsSnapshot: vi.fn(),
   mockUseUsedGearWorkflowPostPublishSummary: vi.fn(),
   mockUseJotFormInquiries: vi.fn(),
@@ -60,6 +62,10 @@ vi.mock('@/hooks/useApprovalQueueSummary', () => ({
 
 vi.mock('@/hooks/useShopifyApprovalQueueSummary', () => ({
   useShopifyApprovalQueueSummary: mockUseShopifyApprovalQueueSummary,
+}));
+
+vi.mock('@/hooks/useUsedGearWorkflowDashboardTargets', () => ({
+  useUsedGearWorkflowDashboardTargets: mockUseUsedGearWorkflowDashboardTargets,
 }));
 
 vi.mock('@/hooks/useUsedGearWorkflowAnalyticsSnapshot', () => ({
@@ -137,6 +143,14 @@ describe('useAppData', () => {
     mockUseApprovalQueueSummary.mockReturnValue({ loading: false, error: null, total: 0, approved: 0, pending: 0, refetch: vi.fn() });
     mockUseShopifyApprovalQueueSummary.mockReset();
     mockUseShopifyApprovalQueueSummary.mockReturnValue({ loading: false, error: null, total: 0, approved: 0, pending: 0, refetch: vi.fn() });
+    mockUseUsedGearWorkflowDashboardTargets.mockReset();
+    mockUseUsedGearWorkflowDashboardTargets.mockReturnValue({
+      loading: false,
+      error: null,
+      pendingReviewOldestGroup: { id: null, label: null },
+      progressOldestGroup: { id: null, label: null },
+      refetch: vi.fn(),
+    });
     mockUseUsedGearWorkflowAnalyticsSnapshot.mockReset();
     mockUseUsedGearWorkflowAnalyticsSnapshot.mockReturnValue({
       loading: false,
@@ -170,6 +184,12 @@ describe('useAppData', () => {
         soldReadyCount: 0,
         shippedCount: 0,
       },
+      ownership: {
+        pendingReviewMineCount: 0,
+        pendingReviewUnassignedCount: 0,
+        progressMineCount: 0,
+        progressUnassignedCount: 0,
+      },
       age: {
         pendingReviewAlertCount: 0,
         oldestPendingReviewAgeDays: null,
@@ -188,8 +208,10 @@ describe('useAppData', () => {
       error: null,
       activeListingCount: 0,
       staleListingCount: 0,
+      staleListingMineCount: 0,
       staleListingUnassignedCount: 0,
       soldReadyCount: 0,
+      soldReadyMineCount: 0,
       soldReadyUnassignedCount: 0,
       shippedCount: 0,
       totalCount: 0,
@@ -236,14 +258,16 @@ describe('useAppData', () => {
     const { result } = renderHook(() => useAppData({
       activeTab: 'dashboard',
       canAccessPage: () => true,
+      currentUserName: 'Taylor Reviewer',
       users: [{ role: 'admin' }],
     }));
 
     expect(mockUseEbayListings).toHaveBeenCalledWith(false);
     expect(mockUseApprovalQueueSummary).toHaveBeenCalledWith(false);
     expect(mockUseShopifyApprovalQueueSummary).toHaveBeenCalledWith(false);
-    expect(mockUseUsedGearWorkflowAnalyticsSnapshot).toHaveBeenCalledWith(true);
-    expect(mockUseUsedGearWorkflowPostPublishSummary).toHaveBeenCalledWith(true);
+    expect(mockUseUsedGearWorkflowDashboardTargets).toHaveBeenCalledWith(true);
+    expect(mockUseUsedGearWorkflowAnalyticsSnapshot).toHaveBeenCalledWith(true, 'Taylor Reviewer');
+    expect(mockUseUsedGearWorkflowPostPublishSummary).toHaveBeenCalledWith(true, 'Taylor Reviewer');
     expect(mockUseJotFormInquiries).toHaveBeenCalledWith('', 60_000, false);
     expect(result.current.runtimeFeatures).toEqual(unavailableFeatures);
   });
@@ -253,6 +277,7 @@ describe('useAppData', () => {
       enabled: false,
       activeTab: 'dashboard',
       canAccessPage: () => true,
+      currentUserName: '',
       users: [{ role: 'admin' }],
     }));
 
@@ -261,8 +286,9 @@ describe('useAppData', () => {
     expect(mockUseEbayListings).toHaveBeenCalledWith(false);
     expect(mockUseApprovalQueueSummary).toHaveBeenCalledWith(false);
     expect(mockUseShopifyApprovalQueueSummary).toHaveBeenCalledWith(false);
-    expect(mockUseUsedGearWorkflowAnalyticsSnapshot).toHaveBeenCalledWith(false);
-    expect(mockUseUsedGearWorkflowPostPublishSummary).toHaveBeenCalledWith(false);
+    expect(mockUseUsedGearWorkflowDashboardTargets).toHaveBeenCalledWith(false);
+    expect(mockUseUsedGearWorkflowAnalyticsSnapshot).toHaveBeenCalledWith(false, '');
+    expect(mockUseUsedGearWorkflowPostPublishSummary).toHaveBeenCalledWith(false, '');
     expect(mockUseJotFormInquiries).toHaveBeenCalledWith('', 60_000, false);
   });
 });

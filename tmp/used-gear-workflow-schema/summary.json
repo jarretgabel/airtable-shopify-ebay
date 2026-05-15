@@ -1,8 +1,5 @@
 {
-  "createdCount": 2,
-  "createdFieldNames": [
-    "Workflow Owner",
-    "Workflow Owner Assigned At"
-  ],
+  "createdCount": 0,
+  "createdFieldNames": [],
   "approvedWorkflowFieldCount": 45
 }

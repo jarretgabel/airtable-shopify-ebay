@@ -9,7 +9,8 @@ import type { useShopifyProducts } from '@/hooks/useShopifyProducts';
 import type { Tab } from '@/app/appNavigation';
 import type { RuntimeFeatureMap } from '@/config/runtimeCapabilities';
 import type { UsedGearWorkflowAnalyticsSnapshotState } from '@/hooks/useUsedGearWorkflowAnalyticsSnapshot';
-import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowDashboardTargetsState } from '@/hooks/useUsedGearWorkflowDashboardTargets';
+import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 import type { UserRole } from '@/stores/auth/authTypes';
 
 export interface AppTabContentProps {
@@ -31,9 +32,13 @@ export interface AppTabContentProps {
   navigateToWorkflowPriceEditor: (recordId: string, replace?: boolean) => void;
   navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
   navigateToInventoryList: (replace?: boolean) => void;
+  navigateToInventoryWorkflowView: (
+    view: 'pending-review' | 'progress',
+    options?: { replace?: boolean; focusedGroupId?: string | null },
+  ) => void;
   navigateToInventoryPostPublishBucket: (
     bucket: UsedGearWorkflowPostPublishBucket,
-    options?: { replace?: boolean; ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter },
+    options?: { replace?: boolean },
   ) => void;
   navigateToIncomingGearForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
@@ -75,7 +80,6 @@ export interface AppTabContentProps {
   jfLastUpdated: Date | null;
   jfFreshCount: number;
   jfClearFresh: () => void;
-  totalNewSubmissions: number;
   approvalLoading: boolean;
   approvalError: string | null;
   approvalTotal: number;
@@ -86,13 +90,16 @@ export interface AppTabContentProps {
   shopifyApprovalTotal: number;
   shopifyApprovalApproved: number;
   shopifyApprovalPending: number;
+  workflowDashboardTargets: UsedGearWorkflowDashboardTargetsState;
   workflowAnalytics: UsedGearWorkflowAnalyticsSnapshotState;
   workflowPostPublishLoading: boolean;
   workflowPostPublishError: string | null;
   workflowActiveListingCount: number;
   workflowStaleListingCount: number;
+  workflowStaleListingMineCount: number;
   workflowStaleListingUnassignedCount: number;
   workflowSoldReadyCount: number;
+  workflowSoldReadyMineCount: number;
   workflowSoldReadyUnassignedCount: number;
   workflowShippedCount: number;
   ebayAuthenticated: boolean;

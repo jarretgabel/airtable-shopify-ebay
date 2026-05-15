@@ -74,4 +74,23 @@ describe('app-api http csrf handling', () => {
       body: JSON.stringify({}),
     });
   });
+
+  it('keeps localhost browser requests on same-origin api paths even when a remote app api base url is configured', async () => {
+    vi.stubEnv('VITE_APP_API_BASE_URL', 'https://example.execute-api.us-east-1.amazonaws.com');
+    window.__APP_RUNTIME_CONFIG__ = {
+      VITE_APP_API_BASE_URL: 'https://example.execute-api.us-east-1.amazonaws.com',
+    };
+
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    }));
+
+    await getJson('/api/ebay/runtime-config');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/ebay/runtime-config', {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    });
+  });
 });

@@ -23,6 +23,7 @@ interface InventoryRecordEditorProps {
   onReset: () => void;
   onReload: () => void;
   onSave: () => void;
+  showIntro?: boolean;
   copy?: {
     eyebrow: string;
     title: string;
@@ -160,6 +161,7 @@ export function InventoryRecordEditor({
   onReset,
   onReload,
   onSave,
+  showIntro = true,
   copy = {
     eyebrow: 'SB Inventory',
     title: 'Edit Record',
@@ -178,18 +180,20 @@ export function InventoryRecordEditor({
 
   return (
     <section className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-      <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-        <div>
-          <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{copy.eyebrow}</p>
-          <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{copy.title}</h3>
-          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{copy.description}</p>
-          <p className="mt-3 text-sm text-[var(--muted)]">
-            SKU: <strong className="text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</strong>
-            {' '}· {displayInventoryValue(record.fields.Make)} {displayInventoryValue(record.fields.Model)}
-          </p>
-          <p className="mt-1 text-xs text-[var(--muted)]">Record ID: {record.id} · Created {new Date(record.createdTime).toLocaleString()}</p>
+      {showIntro ? (
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+          <div>
+            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{copy.eyebrow}</p>
+            <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{copy.title}</h3>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{copy.description}</p>
+            <p className="mt-3 text-sm text-[var(--muted)]">
+              SKU: <strong className="text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</strong>
+              {' '}· {displayInventoryValue(record.fields.Make)} {displayInventoryValue(record.fields.Model)}
+            </p>
+            <p className="mt-1 text-xs text-[var(--muted)]">Record ID: {record.id} · Created {new Date(record.createdTime).toLocaleString()}</p>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {error ? <p className="rounded-xl border border-[#f7c8c4] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-text)]">{error}</p> : null}
       {saveMessage ? <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{saveMessage}</p> : null}

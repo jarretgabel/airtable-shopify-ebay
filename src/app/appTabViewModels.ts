@@ -4,7 +4,8 @@ import type { Tab } from '@/app/appNavigation';
 import type { JotFormSubmission } from '@/types/jotform';
 import type { HiFiSharkListing } from '@/types/hifishark';
 import type { UsedGearWorkflowAnalyticsSnapshotState } from '@/hooks/useUsedGearWorkflowAnalyticsSnapshot';
-import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowDashboardTargetsState } from '@/hooks/useUsedGearWorkflowDashboardTargets';
+import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 import type { EbayListingsState } from '@/hooks/useEbayListings';
 import type { EbayRuntimeConfig } from '@/services/app-api/ebay';
 import type { useShopifyProducts } from '@/hooks/useShopifyProducts';
@@ -38,7 +39,6 @@ export interface DashboardTabViewModel {
     airtableTypeTable: AirtableTypeRow[];
   };
   kpis: {
-    totalNewSubmissions: number;
     acquisitionCost: number;
     inventoryValue: number;
     avgAskPrice: number;
@@ -68,13 +68,16 @@ export interface DashboardTabViewModel {
     shopifyApprovalTotal: number;
     shopifyApprovalApproved: number;
     shopifyApprovalPending: number;
+    workflowDashboardTargets: UsedGearWorkflowDashboardTargetsState;
     workflowAnalytics: UsedGearWorkflowAnalyticsSnapshotState;
     workflowPostPublishLoading: boolean;
     workflowPostPublishError: string | null;
     workflowActiveListingCount: number;
     workflowStaleListingCount: number;
+    workflowStaleListingMineCount: number;
     workflowStaleListingUnassignedCount: number;
     workflowSoldReadyCount: number;
+    workflowSoldReadyMineCount: number;
     workflowSoldReadyUnassignedCount: number;
     workflowShippedCount: number;
     aiProvider: 'github' | 'openai' | 'backend' | 'none';
@@ -90,6 +93,7 @@ export interface DashboardTabViewModel {
     userCount: number;
     adminCount: number;
     currentUserRole: UserRole;
+    currentUserName: string;
     canViewSensitiveMetrics: boolean;
   };
   status: {
@@ -97,10 +101,11 @@ export interface DashboardTabViewModel {
   };
   actions: {
     onSelectTab: (tab: DashboardTargetTab) => void;
-    onOpenInventoryPostPublishBucket: (
-      bucket: UsedGearWorkflowPostPublishBucket,
-      ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter,
+    onOpenInventoryWorkflowView: (
+      view: 'pending-review' | 'progress',
+      options?: { focusedGroupId?: string | null },
     ) => void;
+    onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket) => void;
   };
 }
 
@@ -169,6 +174,9 @@ export interface ApprovalTabViewModel {
   selectedRecordId: string | null;
   onSelectRecord: (recordId: string) => void;
   onBackToList: () => void;
+  onOpenWorkflowRecord?: (recordId: string) => void;
+  onOpenTestingForm?: (recordId: string) => void;
+  onOpenPhotosForm?: (recordId: string) => void;
 }
 
 export interface UserManagementTabViewModel {

@@ -1,4 +1,4 @@
-import { type AppPage } from '@/auth/pages';
+import { getRoleDefaultPages, hasFullAccessRole } from '@/auth/roleAccess';
 import { UserPageAccessEditor } from '@/components/users/UserPageAccessEditor';
 import {
   ASSIGNABLE_USER_ROLE_OPTIONS,
@@ -20,7 +20,7 @@ interface UserDetailPanelProps {
   roleBadgeClassName: (role: AppUser['role']) => string;
   onBackToList: () => void;
   onRoleChange: (role: AppUser['role']) => void;
-  onTogglePermission: (page: AppPage) => void;
+  onToggleWorkflowOwnershipPreference: (key: 'workflowAssignedAlertsEnabled' | 'workflowUnassignedAlertsEnabled', enabled: boolean) => void;
   onToggleWorkflowNotificationEvent: (eventKey: UsedGearWorkflowNotificationEvent, enabled: boolean) => void;
   onSendPasswordReset: () => void;
   onDeleteUser: () => void;
@@ -39,12 +39,15 @@ export function UserDetailPanel({
   roleBadgeClassName,
   onBackToList,
   onRoleChange,
-  onTogglePermission,
+  onToggleWorkflowOwnershipPreference,
   onToggleWorkflowNotificationEvent,
   onSendPasswordReset,
   onDeleteUser,
 }: UserDetailPanelProps) {
   const isOwner = selectedUser.role === 'owner';
+  const isDeveloper = selectedUser.role === 'developer';
+  const hasFullAccess = hasFullAccessRole(selectedUser.role);
+  const roleAccessPages = hasFullAccess ? [] : getRoleDefaultPages(selectedUser.role);
   const roleOptions = isOwner
     ? [{ value: 'owner' as const, label: 'Owner (script-managed)' }]
     : ASSIGNABLE_USER_ROLE_OPTIONS;
@@ -114,14 +117,16 @@ export function UserDetailPanel({
             <>
               <UserPageAccessEditor
                 userRole={selectedUser.role}
-                selectedPages={selectedUser.role === 'admin' ? [] : selectedUser.allowedPages}
+                  selectedPages={roleAccessPages}
                 checkboxClassName={checkboxClassName}
-                disabled={selectedUser.role === 'admin'}
-                onTogglePage={onTogglePermission}
+                  disabled
+                  onTogglePage={() => undefined}
               />
-              {selectedUser.role === 'admin' && (
-                <p className="mt-2 text-xs leading-5 text-[var(--muted)]">Admins keep full app access. Page groupings are shown here for reference only.</p>
-              )}
+                <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
+                  {hasFullAccess
+                    ? `${selectedUser.role === 'admin' ? 'Admins' : 'Owners'} keep full app access. Page groupings are shown here for reference only.`
+                    : 'Each user is limited to one role bundle. Change the role to switch access; individual page mixing is disabled.'}
+                </p>
             </>
           )}
         </div>
@@ -133,24 +138,61 @@ export function UserDetailPanel({
               <p className="m-0 font-semibold text-[var(--ink)]">Owner-managed notification preferences</p>
               <p className="mt-2 text-xs leading-5">Manage owner notification preferences from Account Settings while signed into the owner account.</p>
             </div>
+          ) : isDeveloper ? (
+            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-[var(--muted)]">
+              <p className="m-0 font-semibold text-[var(--ink)]">Developer notifications only</p>
+              <p className="mt-2 text-xs leading-5">Developer accounts can access the JotForm source feed and dashboard module, but used-gear workflow alert subscriptions remain disabled.</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS.map((option) => (
-                <label key={`${selectedUser.id}-${option.key}`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--ink)]">
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <label className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--ink)]">
                   <span className="flex items-start gap-2">
                     <input
                       type="checkbox"
                       className={checkboxClassName}
-                      checked={selectedUser.notificationPreferences.workflowEvents[option.key]}
-                      onChange={(event) => onToggleWorkflowNotificationEvent(option.key, event.target.checked)}
+                      checked={selectedUser.notificationPreferences.workflowAssignedAlertsEnabled}
+                      onChange={(event) => onToggleWorkflowOwnershipPreference('workflowAssignedAlertsEnabled', event.target.checked)}
                     />
                     <span>
-                      <span className="block font-semibold">{option.label}</span>
-                      <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">{option.description}</span>
+                      <span className="block font-semibold">Assigned to user</span>
+                      <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">Keep workflow alerts for records assigned to this user.</span>
                     </span>
                   </span>
                 </label>
-              ))}
+                <label className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--ink)]">
+                  <span className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      className={checkboxClassName}
+                      checked={selectedUser.notificationPreferences.workflowUnassignedAlertsEnabled}
+                      onChange={(event) => onToggleWorkflowOwnershipPreference('workflowUnassignedAlertsEnabled', event.target.checked)}
+                    />
+                    <span>
+                      <span className="block font-semibold">Unassigned work</span>
+                      <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">Keep workflow alerts for rows that still need an owner.</span>
+                    </span>
+                  </span>
+                </label>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS.map((option) => (
+                  <label key={`${selectedUser.id}-${option.key}`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--ink)]">
+                    <span className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        className={checkboxClassName}
+                        checked={selectedUser.notificationPreferences.workflowEvents[option.key]}
+                        onChange={(event) => onToggleWorkflowNotificationEvent(option.key, event.target.checked)}
+                      />
+                      <span>
+                        <span className="block font-semibold">{option.label}</span>
+                        <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">{option.description}</span>
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
           )}
         </div>

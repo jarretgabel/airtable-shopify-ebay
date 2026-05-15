@@ -12,7 +12,7 @@ interface RouteAccessRequirement {
 
 const WORKFLOW_ACCESS_PAGES: AppPage[] = [
   'inventory',
-  'jotform',
+  'parking-lot-1',
   'parking-lot-2',
   'trash-review',
   'testing-queue',
@@ -26,10 +26,6 @@ const WORKFLOW_ACCESS_PAGES: AppPage[] = [
 export type AuthenticatedUser = Awaited<ReturnType<typeof resolveSession>>;
 
 function requireAnyAllowedPage(user: AuthenticatedUser, pages: AppPage[]): void {
-  if (hasFullAccessRole(user.role)) {
-    return;
-  }
-
   if (pages.some((page) => user.allowedPages.includes(page))) {
     return;
   }

@@ -28,6 +28,7 @@ export function useApprovalFormEbaySetup({
   onEbayTemplateIdChange,
 }: UseApprovalFormEbaySetupParams) {
   const categorySetup = useApprovalFormEbayCategorySetup({
+    approvalChannel,
     isCombinedApproval,
     allFieldNames,
     writableFieldNames,

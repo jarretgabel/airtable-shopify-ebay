@@ -46,7 +46,7 @@ export function UserDirectoryListSection({
             className={inputClassName}
             value={searchTerm}
             onChange={(event) => onSearchTermChange(event.target.value)}
-            placeholder="Search by name, email, or pages"
+            placeholder="Search by name, email, or role access"
           />
         </label>
 
@@ -56,6 +56,7 @@ export function UserDirectoryListSection({
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
             <option value="owner">Owner</option>
+            <option value="developer">Developer</option>
             <option value="processor">Processor</option>
             <option value="tester">Tester</option>
             <option value="photographer">Photographer</option>
@@ -69,7 +70,7 @@ export function UserDirectoryListSection({
               <option value="name">Name</option>
               <option value="email">Email</option>
               <option value="role">Role</option>
-              <option value="pages">Accessible Pages</option>
+              <option value="pages">Role Access</option>
             </select>
           </label>
 
@@ -94,7 +95,7 @@ export function UserDirectoryListSection({
               <th className="border-b border-white/15 px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] text-slate-300">Name</th>
               <th className="border-b border-white/15 px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] text-slate-300">Email</th>
               <th className="border-b border-white/15 px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] text-slate-300">Role</th>
-              <th className="border-b border-white/15 px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] text-slate-300">Accessible Pages</th>
+              <th className="border-b border-white/15 px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] text-slate-300">Role Access</th>
               <th className="border-b border-white/15 px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] text-slate-300">Actions</th>
             </tr>
           </thead>

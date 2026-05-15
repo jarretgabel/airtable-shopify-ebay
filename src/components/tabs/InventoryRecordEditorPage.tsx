@@ -166,6 +166,7 @@ export function InventoryRecordEditorPage({ recordId, onBackToDirectory }: Inven
           saving={saving}
           error={error}
           saveMessage={saveMessage}
+          showIntro={false}
           onFieldChange={(fieldName, value) => setDraftValues((current) => ({ ...current, [fieldName]: value }))}
           onReset={() => {
             setDraftValues(initialDraftValues);

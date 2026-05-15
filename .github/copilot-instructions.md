@@ -27,6 +27,7 @@ These are the default implementation rules for this repository.
 - For listing form work, keep Shopify and eBay page structure aligned: use the same section order, shared UI conventions, and matching save/reset/change-tracking behavior unless channel-specific requirements explicitly differ.
 - When updating eBay listing form pages, mirror the Shopify form architecture patterns where applicable (candidate-field resolution, derived form helpers, and editor component composition) instead of introducing a one-off flow.
 - For listing grids (`ApprovalQueueTable`), suppress channel-irrelevant columns by passing `''` as the field name prop at the call site. Shopify grids hide Condition and Price; eBay grids hide Condition, Format, and Qty. See Engineering Rules for the full column matrix.
+- When changing workflow behavior, queue behavior, or other user-facing functionality that alters how work moves through the app, update the Workflow Guide content in the same change.
 - Build changes to an advanced senior-level engineering bar: production-ready structure, clear abstractions, strong type safety, and maintainable patterns.
 
 ## UI and Styling Rules
@@ -59,6 +60,6 @@ These are the default implementation rules for this repository.
 ## Validation Rules
 - After meaningful UI or structural edits, run `npm run build`.
 - If changing auth, listing, or eBay logic, verify related tabs render and actions remain wired.
-- If changing a Lambda-backed integration, also verify the relevant local migration command still works (`npm run compare:lambda`, `npm run compare:lambda:handler`, `npm run probe:lambda:writes`, or `npm run probe:lambda:shopify`).
+- If changing a Lambda-backed integration, run validation only against the local `/api/*` path. Start the no-Docker local API first, then verify the relevant local migration command still works (`npm run compare:lambda`, `npm run compare:lambda:handler`, `npm run probe:lambda:writes`, `npm run probe:lambda:shopify`, or `npm run probe:lambda:ebay`). Do not treat deployed AWS endpoints as the default test or smoke-test target.
 - Remove dead style selectors/helpers when migrations eliminate their usage.
 - After extraction refactors, ensure original side effects and navigation flows are unchanged.

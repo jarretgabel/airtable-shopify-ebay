@@ -19,6 +19,8 @@ function makeUser(overrides?: Partial<AppUser>): AppUser {
       warningEnabled: true,
       errorEnabled: true,
       autoDismissMs: 5000,
+      workflowAssignedAlertsEnabled: true,
+      workflowUnassignedAlertsEnabled: true,
       workflowEvents: {
         pendingReview: false,
         processing: false,
@@ -66,6 +68,8 @@ describe('buildUsedGearStageHandoffNotification', () => {
         warningEnabled: true,
         errorEnabled: true,
         autoDismissMs: 5000,
+        workflowAssignedAlertsEnabled: true,
+        workflowUnassignedAlertsEnabled: true,
         workflowEvents: {
           pendingReview: false,
           processing: false,
@@ -98,6 +102,8 @@ describe('buildUsedGearStageHandoffNotification', () => {
         warningEnabled: true,
         errorEnabled: true,
         autoDismissMs: 5000,
+        workflowAssignedAlertsEnabled: true,
+        workflowUnassignedAlertsEnabled: true,
         workflowEvents: {
           pendingReview: false,
           processing: false,
@@ -132,6 +138,8 @@ describe('buildUsedGearStageHandoffNotification', () => {
         warningEnabled: true,
         errorEnabled: true,
         autoDismissMs: 5000,
+        workflowAssignedAlertsEnabled: true,
+        workflowUnassignedAlertsEnabled: true,
         workflowEvents: {
           pendingReview: false,
           processing: false,

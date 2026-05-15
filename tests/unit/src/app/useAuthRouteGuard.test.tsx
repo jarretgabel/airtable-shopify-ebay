@@ -8,7 +8,7 @@ function GuardHarness({
   navigate = vi.fn(),
 }: {
   normalizedPath: string;
-  canAccessPage?: (tab: 'dashboard' | 'inventory' | 'listings' | 'shopify' | 'market' | 'jotform' | 'incoming-gear' | 'testing' | 'photos' | 'settings' | 'notifications' | 'imagelab' | 'ebay' | 'users' | 'parking-lot-2' | 'trash-review' | 'testing-queue' | 'photography-queue' | 'pre-listing-queue') => boolean;
+  canAccessPage?: (tab: 'dashboard' | 'workflow-guide' | 'inventory' | 'listings' | 'shopify' | 'market' | 'parking-lot-1' | 'jotform' | 'incoming-gear' | 'testing' | 'photos' | 'settings' | 'notifications' | 'imagelab' | 'ebay' | 'users' | 'parking-lot-2' | 'trash-review' | 'testing-queue' | 'photography-queue' | 'pre-listing-queue') => boolean;
   navigate?: ReturnType<typeof vi.fn>;
 }) {
   useAuthRouteGuard({
@@ -48,6 +48,20 @@ describe('useAuthRouteGuard', () => {
       <GuardHarness
         normalizedPath="/inventory/workflow/rec-stale-1/price"
         canAccessPage={(tab) => tab === 'inventory' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('allows the workflow guide route when the user has access', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/workflow-guide"
+        canAccessPage={(tab) => tab === 'workflow-guide' || tab === 'dashboard'}
         navigate={navigate}
       />,
     );

@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
 import { TAB_PATHS, type Tab } from '@/app/appNavigation';
-import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
+
+type InventoryWorkflowQueueView = 'pending-review' | 'progress';
 
 interface AppNavigationHandlers {
   navigateToTab: (tab: Tab, replace?: boolean) => void;
@@ -15,9 +17,13 @@ interface AppNavigationHandlers {
   navigateToWorkflowPriceEditor: (recordId: string, replace?: boolean) => void;
   navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
   navigateToInventoryList: (replace?: boolean) => void;
+  navigateToInventoryWorkflowView: (
+    view: InventoryWorkflowQueueView,
+    options?: { replace?: boolean; focusedGroupId?: string | null },
+  ) => void;
   navigateToInventoryPostPublishBucket: (
     bucket: UsedGearWorkflowPostPublishBucket,
-    options?: { replace?: boolean; ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter },
+    options?: { replace?: boolean },
   ) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsList: (replace?: boolean) => void;
@@ -105,15 +111,40 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     scrollToPageTop();
   }, [navigate]);
 
+  const navigateToInventoryWorkflowView = useCallback((
+    view: InventoryWorkflowQueueView,
+    options?: { replace?: boolean; focusedGroupId?: string | null },
+  ): void => {
+    const params = new URLSearchParams();
+
+    if (view === 'pending-review') {
+      if (options?.focusedGroupId) {
+        params.set('workflowPendingReviewGroup', options.focusedGroupId);
+      }
+
+      navigate(`${TAB_PATHS.inventory}${params.toString() ? `?${params.toString()}` : ''}#used-gear-pending-review`, {
+        replace: options?.replace ?? false,
+      });
+      scrollToPageTop();
+      return;
+    }
+
+    if (options?.focusedGroupId) {
+      params.set('workflowProgressGroup', options.focusedGroupId);
+    }
+
+    navigate(`${TAB_PATHS.inventory}${params.toString() ? `?${params.toString()}` : ''}#used-gear-workflow-progress`, {
+      replace: options?.replace ?? false,
+    });
+    scrollToPageTop();
+  }, [navigate]);
+
   const navigateToInventoryPostPublishBucket = useCallback((
     bucket: UsedGearWorkflowPostPublishBucket,
-    options?: { replace?: boolean; ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter },
+    options?: { replace?: boolean },
   ): void => {
     const params = new URLSearchParams();
     params.set('workflowPostPublishBucket', bucket);
-    if (options?.ownerFilter && options.ownerFilter !== 'all') {
-      params.set('workflowPostPublishOwner', options.ownerFilter);
-    }
 
     navigate(`${TAB_PATHS.inventory}?${params.toString()}#used-gear-post-publish`, { replace: options?.replace ?? false });
     scrollToPageTop();
@@ -176,6 +207,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     navigateToWorkflowPriceEditor,
     navigateToUsedGearWorkflowRecord,
     navigateToInventoryList,
+    navigateToInventoryWorkflowView,
     navigateToInventoryPostPublishBucket,
     navigateToListingsRecord,
     navigateToListingsList,

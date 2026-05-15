@@ -16,6 +16,8 @@ function makeUser(): AppUser {
       warningEnabled: true,
       errorEnabled: true,
       autoDismissMs: 5000,
+      workflowAssignedAlertsEnabled: true,
+      workflowUnassignedAlertsEnabled: true,
       workflowEvents: {
         pendingReview: false,
         processing: false,

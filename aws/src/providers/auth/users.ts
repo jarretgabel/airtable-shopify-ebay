@@ -86,6 +86,7 @@ function parseRole(value: unknown): UserRole {
   const normalized = toSingleString(value).toLowerCase();
   if (normalized === 'admin') return 'admin';
   if (normalized === 'owner') return 'owner';
+  if (normalized === 'developer') return 'developer';
   if (normalized === 'tester') return 'tester';
   if (normalized === 'photographer') return 'photographer';
   return 'processor';

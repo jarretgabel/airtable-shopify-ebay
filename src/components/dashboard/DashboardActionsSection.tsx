@@ -1,6 +1,8 @@
 import type { AppPage } from '@/auth/pages';
 import type { DashboardTargetTab } from './dashboardTabTypes';
-import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowAnalyticsSnapshotState } from '@/hooks/useUsedGearWorkflowAnalyticsSnapshot';
+import type { UserRole } from '@/stores/auth/authTypes';
 import { DashboardSubPanel } from './dashboardPrimitives';
 
 const severityClass = {
@@ -20,39 +22,171 @@ interface ActionItem {
   detail: string;
   severity: 'critical' | 'warning';
   targetTab: DashboardTargetTab;
+  inventoryWorkflowView?: 'pending-review' | 'progress';
+  inventoryWorkflowFocusedGroupId?: string | null;
   inventoryPostPublishBucket?: UsedGearWorkflowPostPublishBucket;
-  inventoryPostPublishOwnerFilter?: UsedGearWorkflowPostPublishOwnerFilter;
   unavailable?: boolean;
 }
 
-function getPostPublishTargetLabel(bucket: UsedGearWorkflowPostPublishBucket, ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter): string {
-  const bucketLabel = bucket === 'sold-ready'
-    ? 'Sold Ready To Ship'
-    : bucket === 'stale-listing'
-      ? 'Stale Listings'
-      : bucket === 'active-listing'
-        ? 'Active Listings'
-        : 'Shipped History';
-
-  if (ownerFilter === 'unassigned') {
-    return `Unassigned ${bucketLabel}`;
+function addOverdueWorkflowActionItems({
+  canAccessInventory,
+  items,
+  workflowAnalytics,
+  pendingReviewOldestGroupId,
+  pendingReviewOldestGroupLabel,
+  progressOldestGroupId,
+  progressOldestGroupLabel,
+}: {
+  canAccessInventory: boolean;
+  items: ActionItem[];
+  workflowAnalytics: UsedGearWorkflowAnalyticsSnapshotState;
+  pendingReviewOldestGroupId: string | null;
+  pendingReviewOldestGroupLabel: string | null;
+  progressOldestGroupId: string | null;
+  progressOldestGroupLabel: string | null;
+}) {
+  if (!canAccessInventory || workflowAnalytics.loading || workflowAnalytics.error) {
+    return;
   }
 
-  if (ownerFilter === 'mine') {
-    return `My ${bucketLabel}`;
+  if (workflowAnalytics.pendingReviewCount > 0 && workflowAnalytics.age.oldestPendingReviewAgeDays !== null && pendingReviewOldestGroupId) {
+    items.push({
+      key: 'workflow-pending-review-oldest',
+      label: `${workflowAnalytics.age.oldestPendingReviewAgeDays}d oldest pending review`,
+      count: workflowAnalytics.pendingReviewCount,
+      detail: `${pendingReviewOldestGroupLabel ?? pendingReviewOldestGroupId}`,
+      severity: workflowAnalytics.age.pendingReviewAlertCount > 0 ? 'critical' : 'warning',
+      targetTab: 'inventory',
+      inventoryWorkflowView: 'pending-review',
+      inventoryWorkflowFocusedGroupId: pendingReviewOldestGroupId,
+    });
   }
 
-  return bucketLabel;
+  if (workflowAnalytics.progressCount > 0 && workflowAnalytics.age.oldestProgressAgeDays !== null && progressOldestGroupId) {
+    items.push({
+      key: 'workflow-progress-oldest',
+      label: `${workflowAnalytics.age.oldestProgressAgeDays}d oldest in progress`,
+      count: workflowAnalytics.progressCount,
+      detail: `${progressOldestGroupLabel ?? progressOldestGroupId}`,
+      severity: workflowAnalytics.age.progressAlertCount > 0 ? 'critical' : 'warning',
+      targetTab: 'inventory',
+      inventoryWorkflowView: 'progress',
+      inventoryWorkflowFocusedGroupId: progressOldestGroupId,
+    });
+  }
+}
+
+function addRoleWorkflowActionItems({
+  accessiblePages,
+  currentUserRole,
+  workflowAnalytics,
+  items,
+}: {
+  accessiblePages: AppPage[];
+  currentUserRole: UserRole;
+  workflowAnalytics: UsedGearWorkflowAnalyticsSnapshotState;
+  items: ActionItem[];
+}) {
+  if (workflowAnalytics.loading || workflowAnalytics.error) {
+    return;
+  }
+
+  const awaitingSkuCount = workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting SKU'];
+  const awaitingMissingCount = workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting Missing Item'];
+  const sharedStageCount = workflowAnalytics.statusCounts['Testing and Photography In Progress'];
+  const preListingCount = workflowAnalytics.statusCounts['Awaiting Pre-Listing Review'];
+  const pendingReviewCount = workflowAnalytics.pendingReviewCount;
+  const progressAlertCount = workflowAnalytics.age.progressAlertCount;
+
+  if (currentUserRole === 'processor') {
+    if (accessiblePages.includes('parking-lot-1') && pendingReviewCount > 0) {
+      items.push({
+        key: 'workflow-pending-review',
+        label: `${pendingReviewCount} pending review`,
+        count: pendingReviewCount,
+        detail: `${preListingCount} ready next · ${progressAlertCount} aging`,
+        severity: 'critical',
+        targetTab: 'parking-lot-1',
+      });
+    }
+
+    if (accessiblePages.includes('pre-listing-queue') && (awaitingSkuCount > 0 || awaitingMissingCount > 0)) {
+      const blockerCount = awaitingSkuCount + awaitingMissingCount;
+      items.push({
+        key: 'workflow-processing-blockers',
+        label: `${blockerCount} processing blocker${blockerCount === 1 ? '' : 's'}`,
+        count: blockerCount,
+        detail: `${awaitingSkuCount} awaiting SKU · ${awaitingMissingCount} missing item`,
+        severity: 'warning',
+        targetTab: 'pre-listing-queue',
+      });
+    }
+    return;
+  }
+
+  if (currentUserRole === 'tester') {
+    if (accessiblePages.includes('testing-queue') && sharedStageCount > 0) {
+      items.push({
+        key: 'workflow-testing-queue',
+        label: `${sharedStageCount} in testing queue`,
+        count: sharedStageCount,
+        detail: `${progressAlertCount} aging · ${preListingCount} ready next`,
+        severity: progressAlertCount > 0 ? 'critical' : 'warning',
+        targetTab: 'testing-queue',
+      });
+    }
+
+    if (accessiblePages.includes('testing') && progressAlertCount > 0) {
+      items.push({
+        key: 'workflow-testing-aging',
+        label: `${progressAlertCount} testing item${progressAlertCount === 1 ? '' : 's'} aging`,
+        count: progressAlertCount,
+        detail: `${sharedStageCount} active in stage`,
+        severity: 'warning',
+        targetTab: 'testing',
+      });
+    }
+    return;
+  }
+
+  if (currentUserRole === 'photographer') {
+    if (accessiblePages.includes('photography-queue') && sharedStageCount > 0) {
+      items.push({
+        key: 'workflow-photography-queue',
+        label: `${sharedStageCount} waiting on photos`,
+        count: sharedStageCount,
+        detail: `${progressAlertCount} aging · ${preListingCount} ready next`,
+        severity: progressAlertCount > 0 ? 'critical' : 'warning',
+        targetTab: 'photography-queue',
+      });
+    }
+
+    if (accessiblePages.includes('photos') && preListingCount > 0) {
+      items.push({
+        key: 'workflow-photo-handoffs',
+        label: `${preListingCount} ready for handoff`,
+        count: preListingCount,
+        detail: `${sharedStageCount} still in stage`,
+        severity: 'warning',
+        targetTab: 'photos',
+      });
+    }
+  }
 }
 
 function ActionButton({
   item,
   onSelectTab,
+  onOpenInventoryWorkflowView,
   onOpenInventoryPostPublishBucket,
 }: {
   item: ActionItem;
   onSelectTab: (tab: DashboardTargetTab) => void;
-  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket, ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter) => void;
+  onOpenInventoryWorkflowView: (
+    view: 'pending-review' | 'progress',
+    options?: { focusedGroupId?: string | null },
+  ) => void;
+  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket) => void;
 }) {
   return (
     <button
@@ -66,8 +200,14 @@ function ActionButton({
       title={item.unavailable ? item.detail : undefined}
       onClick={() => {
         if (!item.unavailable) {
+          if (item.targetTab === 'inventory' && item.inventoryWorkflowView) {
+            onOpenInventoryWorkflowView(item.inventoryWorkflowView, {
+              focusedGroupId: item.inventoryWorkflowFocusedGroupId,
+            });
+            return;
+          }
           if (item.targetTab === 'inventory' && item.inventoryPostPublishBucket) {
-            onOpenInventoryPostPublishBucket(item.inventoryPostPublishBucket, item.inventoryPostPublishOwnerFilter);
+            onOpenInventoryPostPublishBucket(item.inventoryPostPublishBucket);
             return;
           }
           onSelectTab(item.targetTab);
@@ -80,19 +220,16 @@ function ActionButton({
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="text-[0.88rem] font-semibold leading-snug">{item.label}</span>
         <span className="text-[0.78rem] opacity-75">{item.detail}</span>
-        {item.inventoryPostPublishBucket ? (
-          <span className="mt-2 inline-flex w-fit rounded-full border border-current/25 bg-white/10 px-2.5 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.07em] opacity-90">
-            Opens {getPostPublishTargetLabel(item.inventoryPostPublishBucket, item.inventoryPostPublishOwnerFilter)} Bucket
-          </span>
-        ) : null}
       </div>
-      <span className="ml-auto shrink-0 self-center text-[0.75rem] font-semibold opacity-60">{item.unavailable ? 'Unavailable' : 'Go →'}</span>
+      <span className="ml-auto shrink-0 self-center text-[0.75rem] font-semibold opacity-60">{item.unavailable ? 'Unavailable' : 'Open'}</span>
     </button>
   );
 }
 
 export interface DashboardActionsSectionProps {
   accessiblePages: AppPage[];
+  currentUserRole: UserRole;
+  currentUserName: string;
   ebayAuthenticated: boolean;
   ebayDraftCount: number;
   ebayPublishedCount: number;
@@ -101,21 +238,33 @@ export interface DashboardActionsSectionProps {
   shopifyQueuePending: number;
   shopifyQueueTotal: number;
   workflowPostPublishLoading: boolean;
+  workflowAnalytics: UsedGearWorkflowAnalyticsSnapshotState;
   workflowActiveListingCount: number;
   workflowStaleListingCount: number;
+  workflowStaleListingMineCount: number;
   workflowStaleListingUnassignedCount: number;
   workflowSoldReadyCount: number;
+  workflowSoldReadyMineCount: number;
   workflowSoldReadyUnassignedCount: number;
   workflowShippedCount: number;
+  workflowPendingReviewOldestGroupId: string | null;
+  workflowPendingReviewOldestGroupLabel: string | null;
+  workflowProgressOldestGroupId: string | null;
+  workflowProgressOldestGroupLabel: string | null;
   ebayUnavailableReason?: string | null;
   shopifyApprovalUnavailableReason?: string | null;
   onSelectTab: (tab: DashboardTargetTab) => void;
-  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket, ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter) => void;
+  onOpenInventoryWorkflowView: (
+    view: 'pending-review' | 'progress',
+    options?: { focusedGroupId?: string | null },
+  ) => void;
+  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket) => void;
   embedded?: boolean;
 }
 
 export function DashboardActionsSection({
   accessiblePages,
+  currentUserRole,
   ebayAuthenticated,
   ebayDraftCount,
   ebayPublishedCount,
@@ -124,15 +273,19 @@ export function DashboardActionsSection({
   shopifyQueuePending,
   shopifyQueueTotal,
   workflowPostPublishLoading,
+  workflowAnalytics,
   workflowActiveListingCount,
   workflowStaleListingCount,
-  workflowStaleListingUnassignedCount,
   workflowSoldReadyCount,
-  workflowSoldReadyUnassignedCount,
   workflowShippedCount,
+  workflowPendingReviewOldestGroupId,
+  workflowPendingReviewOldestGroupLabel,
+  workflowProgressOldestGroupId,
+  workflowProgressOldestGroupLabel,
   ebayUnavailableReason,
   shopifyApprovalUnavailableReason,
   onSelectTab,
+  onOpenInventoryWorkflowView,
   onOpenInventoryPostPublishBucket,
   embedded,
 }: DashboardActionsSectionProps) {
@@ -141,10 +294,27 @@ export function DashboardActionsSection({
   const canAccessInventory = accessiblePages.includes('inventory');
   const canAccessEbay = accessiblePages.includes('ebay');
 
+  addOverdueWorkflowActionItems({
+    canAccessInventory,
+    items,
+    workflowAnalytics,
+    pendingReviewOldestGroupId: workflowPendingReviewOldestGroupId,
+    pendingReviewOldestGroupLabel: workflowPendingReviewOldestGroupLabel,
+    progressOldestGroupId: workflowProgressOldestGroupId,
+    progressOldestGroupLabel: workflowProgressOldestGroupLabel,
+  });
+
+  addRoleWorkflowActionItems({
+    accessiblePages,
+    currentUserRole,
+    workflowAnalytics,
+    items,
+  });
+
   if (canAccessListings && shopifyApprovalUnavailableReason) {
     items.push({
       key: 'listings-shopify-unavailable',
-      label: 'Shopify listings review unavailable',
+      label: 'Shopify review unavailable',
       count: 0,
       detail: shopifyApprovalUnavailableReason,
       severity: 'warning',
@@ -156,9 +326,9 @@ export function DashboardActionsSection({
   if (canAccessListings && !shopifyApprovalUnavailableReason && shopifyQueuePending > 0) {
     items.push({
       key: 'listings-shopify',
-      label: `${shopifyQueuePending} listing${shopifyQueuePending === 1 ? '' : 's'} awaiting review`,
+      label: `${shopifyQueuePending} Shopify listing${shopifyQueuePending === 1 ? '' : 's'} to review`,
       count: shopifyQueuePending,
-      detail: `${shopifyQueueApproved} approved · ${shopifyQueueTotal} total in queue`,
+      detail: `${shopifyQueueApproved} approved · ${shopifyQueueTotal} total`,
       severity: 'critical',
       targetTab: 'listings',
     });
@@ -167,7 +337,7 @@ export function DashboardActionsSection({
   if ((canAccessEbay || canAccessListings) && ebayUnavailableReason) {
     items.push({
       key: 'ebay-unavailable',
-      label: 'eBay snapshot unavailable',
+      label: 'eBay unavailable',
       count: 0,
       detail: ebayUnavailableReason,
       severity: 'warning',
@@ -179,9 +349,9 @@ export function DashboardActionsSection({
   if (canAccessListings && !ebayUnavailableReason && ebayAuthenticated && ebayDraftCount > 0) {
     items.push({
       key: 'ebay',
-      label: `${ebayDraftCount} eBay draft${ebayDraftCount === 1 ? '' : 's'} need listings review`,
+      label: `${ebayDraftCount} eBay draft${ebayDraftCount === 1 ? '' : 's'} to review`,
       count: ebayDraftCount,
-      detail: `Open Listings to approve or adjust data before publishing · ${ebayPublishedCount} currently live · ${ebayTotal} total tracked SKUs`,
+      detail: `${ebayPublishedCount} live · ${ebayTotal} tracked`,
       severity: 'warning',
       targetTab: 'listings',
     });
@@ -190,28 +360,29 @@ export function DashboardActionsSection({
   if (canAccessInventory && !workflowPostPublishLoading && workflowSoldReadyCount > 0) {
     items.push({
       key: 'used-gear-sold-ready',
-      label: `${workflowSoldReadyCount} used-gear item${workflowSoldReadyCount === 1 ? '' : 's'} sold and ready to ship`,
+      label: `${workflowSoldReadyCount} sold ready to ship`,
       count: workflowSoldReadyCount,
-      detail: `${workflowSoldReadyUnassignedCount} unassigned · ${workflowStaleListingCount} stale listing${workflowStaleListingCount === 1 ? '' : 's'} pending review · ${workflowShippedCount} shipped`,
+      detail: `${workflowShippedCount} shipped history`,
       severity: 'critical',
       targetTab: 'inventory',
       inventoryPostPublishBucket: 'sold-ready',
-      inventoryPostPublishOwnerFilter: workflowSoldReadyUnassignedCount > 0 ? 'unassigned' : 'all',
     });
   }
 
   if (canAccessInventory && !workflowPostPublishLoading && workflowStaleListingCount > 0) {
     items.push({
       key: 'used-gear-stale',
-      label: `${workflowStaleListingCount} used-gear listing${workflowStaleListingCount === 1 ? '' : 's'} stale`,
+      label: `${workflowStaleListingCount} stale listing${workflowStaleListingCount === 1 ? '' : 's'}`,
       count: workflowStaleListingCount,
-      detail: `${workflowStaleListingUnassignedCount} unassigned · ${workflowActiveListingCount} active listing${workflowActiveListingCount === 1 ? '' : 's'} · ${workflowSoldReadyCount} sold ready to ship`,
+      detail: `${workflowActiveListingCount} active listing${workflowActiveListingCount === 1 ? '' : 's'}`,
       severity: 'warning',
       targetTab: 'inventory',
       inventoryPostPublishBucket: 'stale-listing',
-      inventoryPostPublishOwnerFilter: workflowStaleListingUnassignedCount > 0 ? 'unassigned' : 'all',
     });
   }
+
+  const visibleItems = embedded ? items.slice(0, 4) : items;
+  const hiddenItems = embedded ? items.slice(4) : [];
 
   const content = items.length === 0 ? (
         <div className="flex items-center gap-3 rounded-[12px] border border-emerald-500/25 bg-emerald-950/20 px-4 py-4 text-[0.88rem] text-emerald-300">
@@ -222,14 +393,33 @@ export function DashboardActionsSection({
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {items.map((item) => (
+          {visibleItems.map((item) => (
             <ActionButton
               key={item.key}
               item={item}
               onSelectTab={onSelectTab}
+              onOpenInventoryWorkflowView={onOpenInventoryWorkflowView}
               onOpenInventoryPostPublishBucket={onOpenInventoryPostPublishBucket}
             />
           ))}
+          {hiddenItems.length > 0 ? (
+            <details className="rounded-[12px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_86%,transparent)] px-4 py-3 text-[var(--ink)]">
+              <summary className="cursor-pointer list-none text-[0.8rem] font-semibold">
+                Show {hiddenItems.length} more action{hiddenItems.length === 1 ? '' : 's'}
+              </summary>
+              <div className="mt-3 flex flex-col gap-2">
+                {hiddenItems.map((item) => (
+                  <ActionButton
+                    key={item.key}
+                    item={item}
+                    onSelectTab={onSelectTab}
+                    onOpenInventoryWorkflowView={onOpenInventoryWorkflowView}
+                    onOpenInventoryPostPublishBucket={onOpenInventoryPostPublishBucket}
+                  />
+                ))}
+              </div>
+            </details>
+          ) : null}
         </div>
       );
 

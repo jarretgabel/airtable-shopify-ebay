@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Airtable Shopify eBay Sync">
+  <defs>
+    <linearGradient id="accent" x1="12" y1="10" x2="52" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#38bdf8" />
+      <stop offset="1" stop-color="#22c55e" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#07111c" />
+  <path d="M18 18h28c4.4 0 8 3.6 8 8v12c0 4.4-3.6 8-8 8H30l-10 8v-8h-2c-4.4 0-8-3.6-8-8V26c0-4.4 3.6-8 8-8Z" fill="url(#accent)" opacity="0.18" />
+  <path d="M18 20h28c3.3 0 6 2.7 6 6v12c0 3.3-2.7 6-6 6H28l-6 4.8V44h-4c-3.3 0-6-2.7-6-6V26c0-3.3 2.7-6 6-6Z" fill="none" stroke="url(#accent)" stroke-width="3" stroke-linejoin="round" />
+  <circle cx="23" cy="32" r="3.5" fill="#38bdf8" />
+  <circle cx="32" cy="32" r="3.5" fill="#f59e0b" />
+  <circle cx="41" cy="32" r="3.5" fill="#22c55e" />
+</svg>

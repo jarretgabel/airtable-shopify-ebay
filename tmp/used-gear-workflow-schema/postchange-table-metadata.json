@@ -61,6 +61,41 @@
             "id": "selytOQFhLzpFkcIv",
             "name": "Record Players/Home Turntables",
             "color": "blueLight2"
+          },
+          {
+            "id": "selyVs2GMYGjzoopt",
+            "name": "Vintage Electronics",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selqrUivQCqG5j6s2",
+            "name": "Receivers",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "selxmy5elMjFJxhqk",
+            "name": "CD Players & Recorders",
+            "color": "tealLight2"
+          },
+          {
+            "id": "selCRMuDM4HpVZt1J",
+            "name": "Power Amplifiers",
+            "color": "greenLight2"
+          },
+          {
+            "id": "selZ5naAPvhUqY54e",
+            "name": "Home Speakers & Subwoofers",
+            "color": "yellowLight2"
+          },
+          {
+            "id": "selNbgSocdfne2rY1",
+            "name": "Equalizers",
+            "color": "orangeLight2"
+          },
+          {
+            "id": "sel9DUaXHsRQTqXip",
+            "name": "Other Consumer Electronics",
+            "color": "redLight2"
           }
         ]
       },
@@ -74,6 +109,11 @@
           {
             "id": "sel2YR4Q8OsqxkpWM",
             "name": "Buy It Now",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selJgVCPnWaeeyAD8",
+            "name": "Auction",
             "color": "blueLight2"
           }
         ]
@@ -378,6 +418,41 @@
             "id": "sel29CBcSg0NoRVio",
             "name": "Klipsch",
             "color": "blueLight2"
+          },
+          {
+            "id": "selmF9MmBmyIeidES",
+            "name": "Sample Collection",
+            "color": "blueLight2"
+          },
+          {
+            "id": "sel98xw8vHBn2dldl",
+            "name": "Receivers",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "seldPEXz14jx1JjyT",
+            "name": "Digital",
+            "color": "tealLight2"
+          },
+          {
+            "id": "selkAe1VUD0Lfsk4S",
+            "name": "Speakers",
+            "color": "greenLight2"
+          },
+          {
+            "id": "sel3QVauEdzFENx68",
+            "name": "Accessories",
+            "color": "yellowLight2"
+          },
+          {
+            "id": "selsocJyisNnKeYmq",
+            "name": "Featured",
+            "color": "orangeLight2"
+          },
+          {
+            "id": "selTBkPZGjv95JEto",
+            "name": "Vintage",
+            "color": "blueLight2"
           }
         ]
       },
@@ -407,6 +482,66 @@
             "id": "selkQaJrdyzOz58DQ",
             "name": "Test",
             "color": "blueLight2"
+          },
+          {
+            "id": "selm3TKoryuUXaxoi",
+            "name": "Sample",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selFFBD1cIDoNFcW4",
+            "name": "Pending",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "seldWd1RvrDXgdyqA",
+            "name": "Shopify Ready",
+            "color": "tealLight2"
+          },
+          {
+            "id": "selK4xfIlKkRSuHPb",
+            "name": "eBay Ready",
+            "color": "greenLight2"
+          },
+          {
+            "id": "selkQ9aCbypp102w9",
+            "name": "Auction",
+            "color": "yellowLight2"
+          },
+          {
+            "id": "selpyNFt3SZq6Zw8V",
+            "name": "Both Ready",
+            "color": "orangeLight2"
+          },
+          {
+            "id": "selyumR9tKqzH5Ohl",
+            "name": "Local Pickup",
+            "color": "redLight2"
+          },
+          {
+            "id": "seltPJPf4bLNYEZEq",
+            "name": "HTML",
+            "color": "pinkLight2"
+          },
+          {
+            "id": "sels6mwM80TA6pmQc",
+            "name": "Media",
+            "color": "purpleLight2"
+          },
+          {
+            "id": "selYwU8H5FSz759IQ",
+            "name": "Sparse",
+            "color": "grayLight2"
+          },
+          {
+            "id": "sel6h0U3t8QFm7URg",
+            "name": "Workflow Prefill",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selW81I9C8TZSqHN1",
+            "name": "Testing",
+            "color": "cyanLight2"
           }
         ]
       },
@@ -4194,6 +4329,16 @@
             "id": "seleSLeXw1bN5TMuj",
             "name": "Streamer/Int. Amp",
             "color": "grayLight2"
+          },
+          {
+            "id": "selEsDBIxc77AJyFg",
+            "name": "Preamp",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selvR16G7VF23S6cv",
+            "name": "Stereo Receiver",
+            "color": "blueLight2"
           }
         ]
       },
@@ -4221,7 +4366,7 @@
         "isReversed": false
       },
       "id": "fld1zIzmZEciQECah",
-      "name": "Images (Eduardo)"
+      "name": "Images"
     },
     {
       "type": "multilineText",
@@ -4260,6 +4405,11 @@
             "id": "seluYcU3xQIZTnMPB",
             "name": "No",
             "color": "redLight2"
+          },
+          {
+            "id": "selHToLBaPZRwp35I",
+            "name": "Included",
+            "color": "blueLight2"
           }
         ]
       },
@@ -4284,6 +4434,11 @@
             "id": "selJ5nBchSWWTQVKh",
             "name": "N/A",
             "color": "pinkBright"
+          },
+          {
+            "id": "sel4EXchgqPmeEkig",
+            "name": "Included",
+            "color": "blueLight2"
           }
         ]
       },
@@ -4303,6 +4458,11 @@
             "id": "selvSxE80VFyjqZry",
             "name": "No",
             "color": "redLight2"
+          },
+          {
+            "id": "selSiIAnZj3FhfLBb",
+            "name": "Included",
+            "color": "blueLight2"
           }
         ]
       },
@@ -4411,6 +4571,11 @@
             "id": "selsOumRvgYXAgOF6",
             "name": "1/10: Shot - For parts use only.",
             "color": "redBright"
+          },
+          {
+            "id": "selIUDrvKFGq3wyKi",
+            "name": "8/10",
+            "color": "blueLight2"
           }
         ]
       },

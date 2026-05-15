@@ -49,6 +49,9 @@ interface BuildListingApprovalTabPanelsParams {
   currentPageShopifyTagValues: string[];
   currentPageShopifyCollectionIds: string[];
   currentPageShopifyCollectionLabelsById: Record<string, string>;
+  onOpenWorkflowRecord?: (recordId: string) => void;
+  onOpenTestingForm?: (recordId: string) => void;
+  onOpenPhotosForm?: (recordId: string) => void;
   combinedDescriptionFieldName: string;
   combinedSharedFieldNames: string[];
   combinedRequiredFieldNames: string[];
@@ -149,6 +152,9 @@ export function buildListingApprovalTabPanels({
   currentPageShopifyTagValues,
   currentPageShopifyCollectionIds,
   currentPageShopifyCollectionLabelsById,
+  onOpenWorkflowRecord,
+  onOpenTestingForm,
+  onOpenPhotosForm,
   combinedDescriptionFieldName,
   combinedSharedFieldNames,
   combinedRequiredFieldNames,
@@ -238,6 +244,7 @@ export function buildListingApprovalTabPanels({
       approvalChannel,
       isCombinedApproval,
       approvedFieldName,
+      titleFieldName,
       allFieldNames,
       formRequiredFieldNames,
       formShopifyRequiredFieldNames,
@@ -252,6 +259,9 @@ export function buildListingApprovalTabPanels({
       currentPageShopifyTagValues,
       currentPageShopifyCollectionIds,
       currentPageShopifyCollectionLabelsById,
+      onOpenWorkflowRecord,
+      onOpenTestingForm,
+      onOpenPhotosForm,
       combinedDescriptionFieldName,
       combinedSharedFieldNames,
       combinedRequiredFieldNames,

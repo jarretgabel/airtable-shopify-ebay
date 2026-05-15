@@ -52,6 +52,9 @@ interface ApprovalFormFieldsProps {
   normalizedEbayCategoryLabelsById?: Record<string, string>;
   onEbayCategoryLabelsChange?: (labelsById: Record<string, string>) => void;
   onBodyHtmlPreviewChange?: (value: string) => void;
+  onOpenWorkflowRecord?: (recordId: string) => void;
+  onOpenTestingForm?: (recordId: string) => void;
+  onOpenPhotosForm?: (recordId: string) => void;
   selectedEbayTemplateId?: string;
   onEbayTemplateIdChange?: (templateId: EbayListingTemplateId) => void;
 }
@@ -85,6 +88,9 @@ export function ApprovalFormFields({
   normalizedEbayCategoryLabelsById = {},
   onEbayCategoryLabelsChange,
   onBodyHtmlPreviewChange,
+  onOpenWorkflowRecord,
+  onOpenTestingForm,
+  onOpenPhotosForm,
   selectedEbayTemplateId,
   onEbayTemplateIdChange,
 }: ApprovalFormFieldsProps) {
@@ -314,6 +320,10 @@ export function ApprovalFormFields({
     setEbayCategoryIds,
     onEbayCategoryLabelsChange,
     hasSecondaryEbayCategory,
+    recordId,
+    onOpenWorkflowRecord,
+    onOpenTestingForm,
+    onOpenPhotosForm,
     renderFieldLabel,
     getSelectClassName,
     getInputClassName,

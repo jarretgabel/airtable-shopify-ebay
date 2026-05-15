@@ -60,9 +60,9 @@ test('non-user Airtable configured routes keep page-based access rules', () => {
   }));
 
   assert.equal(inventoryRequirement.adminOnly, undefined);
-  assert.deepEqual(inventoryRequirement.anyPage, ['inventory', 'jotform', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'pre-listing-queue', 'incoming-gear', 'testing', 'photos']);
+  assert.deepEqual(inventoryRequirement.anyPage, ['inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'pre-listing-queue', 'incoming-gear', 'testing', 'photos']);
   assert.equal(usedGearRequirement.adminOnly, undefined);
-  assert.deepEqual(usedGearRequirement.anyPage, ['inventory', 'jotform', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'pre-listing-queue', 'incoming-gear', 'testing', 'photos']);
+  assert.deepEqual(usedGearRequirement.anyPage, ['inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'pre-listing-queue', 'incoming-gear', 'testing', 'photos']);
 });
 
 test('airtable listings route uses inventory access', () => {
@@ -72,4 +72,18 @@ test('airtable listings route uses inventory access', () => {
 
   assert.equal(listingsRequirement.adminOnly, undefined);
   assert.deepEqual(listingsRequirement.anyPage, ['inventory']);
+});
+
+test('utility routes keep their specific page requirements', () => {
+  const imageLabRequirement = resolveRouteAccessRequirement(createEvent({
+    rawPath: '/api/ai/generate-image',
+  }));
+  const hiFiSharkRequirement = resolveRouteAccessRequirement(createEvent({
+    rawPath: '/api/hifishark/search',
+  }));
+
+  assert.equal(imageLabRequirement.adminOnly, undefined);
+  assert.deepEqual(imageLabRequirement.anyPage, ['imagelab']);
+  assert.equal(hiFiSharkRequirement.adminOnly, undefined);
+  assert.deepEqual(hiFiSharkRequirement.anyPage, ['market']);
 });

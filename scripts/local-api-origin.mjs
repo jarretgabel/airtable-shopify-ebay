@@ -34,9 +34,14 @@ function isTcpPortOpen(port, host = '127.0.0.1') {
 }
 
 export async function resolveLocalApiOrigin(getOptionalEnv) {
-  const explicitOrigin = getOptionalEnv('LAMBDA_API_ORIGIN') || getOptionalEnv('VITE_APP_API_PROXY_TARGET') || getOptionalEnv('VITE_APP_API_BASE_URL');
+  const explicitOrigin = getOptionalEnv('LAMBDA_API_ORIGIN') || getOptionalEnv('VITE_APP_API_PROXY_TARGET');
   if (explicitOrigin) {
     return normalizeOrigin(explicitOrigin);
+  }
+
+  const configuredBaseUrl = normalizeOrigin(getOptionalEnv('VITE_APP_API_BASE_URL'));
+  if (configuredBaseUrl && isLocalOrigin(configuredBaseUrl)) {
+    return configuredBaseUrl;
   }
 
   const candidatePorts = [
@@ -60,7 +65,7 @@ export async function requireReadyLocalApiOrigin(getOptionalEnv, options = {}) {
   const portHint = new URL(origin).port || '3001';
 
   if (!isLocalOrigin(origin)) {
-    return origin;
+    throw new Error(`${purpose} requires the no-Docker local API, but ${origin} is not a local origin. Use \`LAMBDA_API_ORIGIN\` or \`VITE_APP_API_PROXY_TARGET\` with http://127.0.0.1:<port> (or localhost) instead.`);
   }
 
   let response;

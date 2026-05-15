@@ -41,7 +41,6 @@ export function useDashboardMetrics(
     const marginTrend = getTrendSummary(values.recentMarginPct, values.priorMarginPct, '30d');
 
     const insights = buildDashboardInsights({
-      jfSubmissions,
       recentSubs: submissions.recentSubs,
       priorRecentSubs: submissions.priorRecentSubs,
       draftProducts: slices.draftProducts,

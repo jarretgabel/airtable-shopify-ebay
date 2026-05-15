@@ -23,6 +23,7 @@ export function ListingApprovalCombinedSections({
   listingDurationOptions,
   saving,
   setFormValue,
+  titleFieldName,
   combinedDescriptionFieldName,
   combinedSharedFieldNames,
   combinedRequiredFieldNames,
@@ -32,6 +33,8 @@ export function ListingApprovalCombinedSections({
   combinedSharedKeyFeaturesSyncFieldNames,
   sharedTestingSourceFieldValues,
   sharedDrawerRequiredStatus,
+  onOpenWorkflowRecord,
+  onOpenTestingForm,
   combinedShopifyOnlyFieldNames,
   shopifyDrawerRequiredStatus,
   currentPageShopifyBodyHtml,
@@ -78,6 +81,7 @@ export function ListingApprovalCombinedSections({
         listingDurationOptions={listingDurationOptions}
         saving={saving}
         setFormValue={setFormValue}
+        titleFieldName={titleFieldName}
         writableFieldNames={writableFieldNames}
         originalFieldValues={originalFieldValues}
         combinedDescriptionFieldName={combinedDescriptionFieldName}
@@ -89,6 +93,8 @@ export function ListingApprovalCombinedSections({
         combinedSharedKeyFeaturesSyncFieldNames={combinedSharedKeyFeaturesSyncFieldNames}
         sharedTestingSourceFieldValues={sharedTestingSourceFieldValues}
         sharedDrawerRequiredStatus={sharedDrawerRequiredStatus}
+        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        onOpenTestingForm={onOpenTestingForm}
       />
 
       <ListingApprovalCombinedShopifySection

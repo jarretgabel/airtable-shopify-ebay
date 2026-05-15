@@ -12,7 +12,6 @@ export const USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS = [
 
 export type UsedGearWorkflowListingChannel = 'shopify' | 'ebay';
 export type UsedGearWorkflowPostPublishBucket = 'active-listing' | 'stale-listing' | 'sold-ready' | 'shipped';
-export type UsedGearWorkflowPostPublishOwnerFilter = 'all' | 'mine' | 'unassigned';
 export type UsedGearWorkflowStaleRecoveryStatus = (typeof USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS)[number];
 
 export interface UsedGearWorkflowPostPublishSnapshot {
@@ -26,6 +25,8 @@ export interface UsedGearWorkflowPostPublishSnapshot {
   staleRecoveryUpdatedAt: string | null;
   relistedAt: string | null;
   soldReadyToShipAt: string | null;
+  shipmentFollowThroughNotes: string | null;
+  shipmentFollowThroughUpdatedAt: string | null;
   shippedAt: string | null;
   daysSinceListed: number | null;
   staleThresholdDays: number;
@@ -98,6 +99,8 @@ export function getUsedGearWorkflowPostPublishSnapshot(
   const staleRecoveryUpdatedAt = getIsoTimestamp(record.fields['Stale Recovery Updated At']);
   const relistedAt = getIsoTimestamp(record.fields['Relisted At']);
   const soldReadyToShipAt = getIsoTimestamp(record.fields['Sold Ready To Ship At']);
+  const shipmentFollowThroughNotes = getTrimmedString(record.fields['Shipment Follow-Through Notes']);
+  const shipmentFollowThroughUpdatedAt = getIsoTimestamp(record.fields['Shipment Follow-Through Updated At']);
   const shippedAt = getIsoTimestamp(record.fields['Shipped At']);
   const daysSinceListed = getDaysBetween(nowMs, listedAt);
   const isPastStaleThreshold = daysSinceListed !== null && daysSinceListed >= staleThresholdDays;
@@ -116,6 +119,8 @@ export function getUsedGearWorkflowPostPublishSnapshot(
         staleRecoveryUpdatedAt,
         relistedAt,
         soldReadyToShipAt,
+        shipmentFollowThroughNotes,
+        shipmentFollowThroughUpdatedAt,
         shippedAt,
         daysSinceListed,
         staleThresholdDays,
@@ -134,6 +139,8 @@ export function getUsedGearWorkflowPostPublishSnapshot(
         staleRecoveryUpdatedAt,
         relistedAt,
         soldReadyToShipAt,
+        shipmentFollowThroughNotes,
+        shipmentFollowThroughUpdatedAt,
         shippedAt,
         daysSinceListed,
         staleThresholdDays,
@@ -151,6 +158,8 @@ export function getUsedGearWorkflowPostPublishSnapshot(
         staleRecoveryUpdatedAt,
         relistedAt,
         soldReadyToShipAt,
+        shipmentFollowThroughNotes,
+        shipmentFollowThroughUpdatedAt,
         shippedAt,
         daysSinceListed,
         staleThresholdDays,
@@ -168,6 +177,8 @@ export function getUsedGearWorkflowPostPublishSnapshot(
         staleRecoveryUpdatedAt,
         relistedAt,
         soldReadyToShipAt,
+        shipmentFollowThroughNotes,
+        shipmentFollowThroughUpdatedAt,
         shippedAt,
         daysSinceListed,
         staleThresholdDays,

@@ -8,6 +8,7 @@
  */
 
 import { readFileSync } from 'fs';
+import { enforceLocalOnlyIntegrationTargets } from './helpers/local-only-test-guard.mjs';
 
 const ENV_PATH = new URL('../.env.local', import.meta.url).pathname;
 const env = Object.fromEntries(
@@ -32,6 +33,11 @@ if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error('ERROR: VITE_EBAY_CLIENT_ID and VITE_EBAY_CLIENT_SECRET must be set in .env.local');
   process.exit(1);
 }
+
+enforceLocalOnlyIntegrationTargets('test-ebay-connection', [
+  { label: 'eBay API', url: API_BASE },
+  { label: 'eBay auth', url: AUTH_BASE },
+]);
 
 console.log('eBay Sandbox Connection Test');
 console.log('────────────────────────────────');

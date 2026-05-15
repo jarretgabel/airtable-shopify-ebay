@@ -41,7 +41,14 @@ export function useListingApprovalTabState({
   approvalChannel = 'ebay',
   backToListLabel,
 }: UseListingApprovalTabStateParams): UseListingApprovalTabStateResult {
-  const { selectedRecordId, onSelectRecord, onBackToList } = viewModel;
+  const {
+    selectedRecordId,
+    onSelectRecord,
+    onBackToList,
+    onOpenWorkflowRecord,
+    onOpenTestingForm,
+    onOpenPhotosForm,
+  } = viewModel;
   const tableReference = propsTableReference || checkOptionalEnv('VITE_AIRTABLE_APPROVAL_TABLE_REF');
   const tableName = propTableName
     ?? (propsTableReference
@@ -279,6 +286,9 @@ export function useListingApprovalTabState({
     currentPageShopifyTagValues,
     currentPageShopifyCollectionIds,
     currentPageShopifyCollectionLabelsById,
+    onOpenWorkflowRecord,
+    onOpenTestingForm,
+    onOpenPhotosForm,
     combinedDescriptionFieldName,
     combinedSharedFieldNames,
     combinedRequiredFieldNames,

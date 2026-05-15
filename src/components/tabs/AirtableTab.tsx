@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { AirtableTabViewModel } from '@/app/appTabViewModels';
+import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { EmptySurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { InventoryDirectoryListSection } from '@/components/tabs/airtable/InventoryDirectoryListSection';
 import { UsedGearPendingReviewSection, type UsedGearPendingReviewSortMode } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
 import { UsedGearWorkflowPostPublishSection } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
@@ -13,9 +15,10 @@ import {
   saveUsedGearWorkflowViewPreset,
   type UsedGearWorkflowViewPreset,
 } from '@/services/usedGearWorkflowViewPresets';
-import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 import type { UsedGearWorkflowPostPublishHistoryFilter, UsedGearWorkflowPostPublishSortMode } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 import { useNotificationStore } from '@/stores/notificationStore';
+import type { UserRole } from '@/stores/auth/authTypes';
 import type { AirtableRecord } from '@/types/airtable';
 
 const INVENTORY_DIRECTORY_SEARCH_PARAM = 'inventoryDirectorySearch';
@@ -32,7 +35,6 @@ const WORKFLOW_POST_PUBLISH_SORT_PARAM = 'workflowPostPublishSort';
 const WORKFLOW_PENDING_REVIEW_GROUP_PARAM = 'workflowPendingReviewGroup';
 const WORKFLOW_PROGRESS_GROUP_PARAM = 'workflowProgressGroup';
 const WORKFLOW_POST_PUBLISH_HISTORY_PARAM = 'workflowPostPublishHistory';
-const WORKFLOW_POST_PUBLISH_OWNER_PARAM = 'workflowPostPublishOwner';
 const WORKFLOW_ROUTE_PARAMS = [
   WORKFLOW_PENDING_REVIEW_SEARCH_PARAM,
   WORKFLOW_PROGRESS_SEARCH_PARAM,
@@ -46,7 +48,6 @@ const WORKFLOW_ROUTE_PARAMS = [
   WORKFLOW_PENDING_REVIEW_GROUP_PARAM,
   WORKFLOW_PROGRESS_GROUP_PARAM,
   WORKFLOW_POST_PUBLISH_HISTORY_PARAM,
-  WORKFLOW_POST_PUBLISH_OWNER_PARAM,
   'workflowPostPublishBucket',
 ] as const;
 
@@ -124,11 +125,6 @@ function parsePostPublishHistoryFilter(search: string): UsedGearWorkflowPostPubl
   return value === 'active-only' || value === 'history-only' ? value : 'all';
 }
 
-function parsePostPublishOwnerFilter(search: string): UsedGearWorkflowPostPublishOwnerFilter {
-  const value = new URLSearchParams(search).get(WORKFLOW_POST_PUBLISH_OWNER_PARAM);
-  return value === 'mine' || value === 'unassigned' ? value : 'all';
-}
-
 function pendingSortLabel(value: UsedGearPendingReviewSortMode): string {
   return value === 'newest'
     ? 'Pending sort: Newest First'
@@ -151,6 +147,7 @@ function postPublishSortLabel(value: UsedGearWorkflowPostPublishSortMode): strin
 
 interface AirtableTabProps {
   viewModel: AirtableTabViewModel;
+  currentUserRole: UserRole;
   currentUserName: string;
   onAddNewRecord: () => void;
   onOpenIncomingGearForm: (recordId: string) => void;
@@ -163,6 +160,7 @@ interface AirtableTabProps {
 
 export function AirtableTab({
   viewModel,
+  currentUserRole,
   currentUserName,
   onAddNewRecord,
   onOpenIncomingGearForm,
@@ -225,7 +223,6 @@ export function AirtableTab({
   const workflowPendingReviewGroup = useMemo(() => parseFocusedWorkflowGroup(location.search, WORKFLOW_PENDING_REVIEW_GROUP_PARAM), [location.search]);
   const workflowProgressGroup = useMemo(() => parseFocusedWorkflowGroup(location.search, WORKFLOW_PROGRESS_GROUP_PARAM), [location.search]);
   const workflowPostPublishHistoryFilter = useMemo(() => parsePostPublishHistoryFilter(location.search), [location.search]);
-  const workflowPostPublishOwnerFilter = useMemo(() => parsePostPublishOwnerFilter(location.search), [location.search]);
   const focusedPostPublishBucket = useMemo<UsedGearWorkflowPostPublishBucket | null>(() => {
     const params = new URLSearchParams(location.search);
     const bucket = params.get('workflowPostPublishBucket');
@@ -242,6 +239,8 @@ export function AirtableTab({
     const params = new URLSearchParams(location.search);
     return WORKFLOW_ROUTE_PARAMS.some((paramName) => params.has(paramName));
   }, [location.search]);
+
+  const defaultInventoryWorkflowHash = currentUserRole === 'processor' ? '#used-gear-pending-review' : '';
 
   const updateWorkflowRouteState = useCallback((
     update: (params: URLSearchParams) => void,
@@ -536,17 +535,6 @@ export function AirtableTab({
         }, '#used-gear-post-publish'),
       });
     }
-    if (workflowPostPublishOwnerFilter !== 'all') {
-      chips.push({
-        key: 'post-publish-owner',
-        label: workflowPostPublishOwnerFilter === 'mine' ? 'Owner: Assigned To Me' : 'Owner: Unassigned Only',
-        clearLabel: 'Clear post-publish owner filter',
-        onClear: () => updateWorkflowRouteState((params) => {
-          params.delete(WORKFLOW_POST_PUBLISH_OWNER_PARAM);
-        }, '#used-gear-post-publish'),
-      });
-    }
-
     return chips;
   }, [
     focusedPostPublishBucket,
@@ -559,7 +547,6 @@ export function AirtableTab({
     workflowPendingReviewSearch,
     workflowPendingReviewSort,
     workflowPostPublishHistoryFilter,
-    workflowPostPublishOwnerFilter,
     workflowPostPublishCollapsedSections.length,
     workflowPostPublishSearch,
     workflowPostPublishSort,
@@ -601,6 +588,18 @@ export function AirtableTab({
 
     return () => window.clearTimeout(timeoutHandle);
   }, [awaitingWorkflowShortcut]);
+
+  useEffect(() => {
+    if (!defaultInventoryWorkflowHash || hasWorkflowViewState || location.hash) {
+      return;
+    }
+
+    navigate({
+      pathname: location.pathname,
+      search: location.search,
+      hash: defaultInventoryWorkflowHash,
+    }, { replace: true });
+  }, [defaultInventoryWorkflowHash, hasWorkflowViewState, location.hash, location.pathname, location.search, navigate]);
 
   useEffect(() => {
     const focusSection = (sectionId: string, hash: string) => {
@@ -773,25 +772,13 @@ export function AirtableTab({
           <div className="sticky top-3 z-20 flex flex-col gap-3 rounded-2xl border border-[var(--line)] bg-[linear-gradient(180deg,rgba(7,17,28,0.94),rgba(7,17,28,0.82))] px-5 py-4 shadow-[0_18px_40px_rgba(2,6,23,0.35)] backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
             <div className="flex-1">
               <p className="m-0 text-sm font-semibold text-[var(--ink)]">Workflow views</p>
-              <p className="mt-1 text-sm text-[var(--muted)]">
-                {hasWorkflowViewState
-                  ? 'Shared queue searches, collapsed groups, and post-publish filters are currently applied to the Inventory workflow sections.'
-                  : 'Apply a saved view to restore a common workflow filter combination across the Inventory queues.'}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {WORKFLOW_SHORTCUT_HINTS.map((shortcut) => (
-                  <span key={shortcut.label} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                    <span>{shortcut.label}</span>
-                    <span className="text-[var(--ink)]">{shortcut.description}</span>
-                  </span>
-                ))}
-                {awaitingWorkflowShortcut ? (
-                  <span className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)]/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
-                    Awaiting jump key
-                  </span>
-                ) : null}
+              <div className="mt-2 max-w-2xl">
+                <CollapsibleHelperText label="Workflow views">
+                  {hasWorkflowViewState
+                    ? 'Shared filters are active across the workflow queues.'
+                    : 'Use a saved view when you need to restore a common filter setup across the workflow queues.'}
+                </CollapsibleHelperText>
               </div>
-
               {hasWorkflowViewState ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {workflowStateChips.map((chip) => (
@@ -813,8 +800,38 @@ export function AirtableTab({
                 </div>
               ) : null}
 
-              <div className="mt-4 flex flex-col gap-3 border-t border-[var(--line)]/70 pt-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <details className="mt-4 rounded-2xl border border-[var(--line)]/70 bg-[var(--bg)]/50 px-4 py-3 text-sm text-[var(--muted)]">
+                <summary className="cursor-pointer text-sm font-semibold text-[var(--ink)]">
+                  More workflow tools
+                </summary>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {WORKFLOW_SHORTCUT_HINTS.map((shortcut) => (
+                    <span key={shortcut.label} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                      <span>{shortcut.label}</span>
+                      <span className="text-[var(--ink)]">{shortcut.description}</span>
+                    </span>
+                  ))}
+                  {awaitingWorkflowShortcut ? (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)]/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
+                      Awaiting jump key
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => {
+                      void copyCurrentWorkflowView();
+                    }}
+                    disabled={copyingWorkflowView}
+                  >
+                    {copyingWorkflowView ? 'Copying...' : copiedWorkflowView ? 'View Copied' : 'Copy Current Workflow View'}
+                  </button>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
                   <label className="min-w-[240px] flex-1">
                     <span className="sr-only">Workflow view preset name</span>
                     <input
@@ -836,7 +853,7 @@ export function AirtableTab({
                 </div>
 
                 {workflowViewPresets.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="mt-4 flex flex-wrap gap-2">
                     {workflowViewPresets.map((preset) => (
                       <div key={preset.id} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
                         <button
@@ -858,21 +875,11 @@ export function AirtableTab({
                     ))}
                   </div>
                 ) : (
-                  <p className="m-0 text-sm text-[var(--muted)]">No saved workflow views yet.</p>
+                  <p className="mt-4 mb-0 text-sm text-[var(--muted)]">No saved workflow views yet.</p>
                 )}
-              </div>
+              </details>
             </div>
             <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={() => {
-                  void copyCurrentWorkflowView();
-                }}
-                disabled={copyingWorkflowView}
-              >
-                {copyingWorkflowView ? 'Copying...' : copiedWorkflowView ? 'View Copied' : 'Copy Current Workflow View'}
-              </button>
               {hasWorkflowViewState ? (
                 <button
                   ref={resetWorkflowViewButtonRef}
@@ -972,14 +979,6 @@ export function AirtableTab({
               params.set(WORKFLOW_POST_PUBLISH_HISTORY_PARAM, value);
             }
           }, '#used-gear-post-publish')}
-          ownerFilter={workflowPostPublishOwnerFilter}
-          onOwnerFilterChange={(value) => updateWorkflowRouteState((params) => {
-            if (value === 'all') {
-              params.delete(WORKFLOW_POST_PUBLISH_OWNER_PARAM);
-            } else {
-              params.set(WORKFLOW_POST_PUBLISH_OWNER_PARAM, value);
-            }
-          }, '#used-gear-post-publish')}
           searchTerm={workflowPostPublishSearch}
           onSearchTermChange={(value) => updateWorkflowQueueSearch(
             WORKFLOW_POST_PUBLISH_SEARCH_PARAM,
@@ -1016,16 +1015,15 @@ export function AirtableTab({
               >
                 Add New
               </button>
-              <button
-                type="button"
-                className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              <RefreshIconButton
                 onClick={() => {
                   void loadDirectoryData();
                 }}
                 disabled={directoryRefreshing}
-              >
-                {directoryRefreshing ? 'Refreshing...' : 'Refresh Directory'}
-              </button>
+                loading={directoryRefreshing}
+                label="Refresh inventory directory"
+                loadingLabel="Refreshing inventory directory"
+              />
             </div>
           </div>
 

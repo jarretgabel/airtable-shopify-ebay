@@ -1,28 +1,6 @@
 {
   "baseId": "apprsAm2FOohEmL2u",
   "tableId": "tbl0K0nFQL64jQMx8",
-  "created": [
-    {
-      "id": "fldD4HgaGTHi1N1ki",
-      "name": "Workflow Owner",
-      "type": "singleLineText"
-    },
-    {
-      "id": "fldMbaeLyP2S1dBxJ",
-      "name": "Workflow Owner Assigned At",
-      "type": "dateTime"
-    }
-  ],
-  "rollbackOrder": [
-    {
-      "id": "fldMbaeLyP2S1dBxJ",
-      "name": "Workflow Owner Assigned At",
-      "type": "dateTime"
-    },
-    {
-      "id": "fldD4HgaGTHi1N1ki",
-      "name": "Workflow Owner",
-      "type": "singleLineText"
-    }
-  ]
+  "created": [],
+  "rollbackOrder": []
 }

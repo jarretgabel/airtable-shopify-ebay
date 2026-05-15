@@ -12,9 +12,6 @@ export function AppFrame({
   inventoryProcessingTabs,
   postEbayTabs,
   utilityTabs,
-  refreshLabel,
-  refreshDisabled,
-  onRefresh,
   exportDisabled,
   onExportCurrentPage,
   onExportAllPages,
@@ -69,9 +66,6 @@ export function AppFrame({
         inventoryProcessingTabs={inventoryProcessingTabs}
         postEbayTabs={postEbayTabs}
         utilityTabs={utilityTabs}
-        refreshLabel={refreshLabel}
-        refreshDisabled={refreshDisabled}
-        onRefresh={onRefresh}
         exportDisabled={exportDisabled}
         onExportCurrentPage={onExportCurrentPage}
         onExportAllPages={onExportAllPages}

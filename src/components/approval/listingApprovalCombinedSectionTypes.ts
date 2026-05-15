@@ -28,6 +28,7 @@ export interface CombinedSectionCommonProps {
 }
 
 export interface ListingApprovalCombinedSharedSectionProps extends CombinedSectionCommonProps {
+  titleFieldName: string;
   combinedDescriptionFieldName: string;
   combinedSharedFieldNames: string[];
   combinedRequiredFieldNames: string[];
@@ -37,6 +38,8 @@ export interface ListingApprovalCombinedSharedSectionProps extends CombinedSecti
   combinedSharedKeyFeaturesSyncFieldNames: string[];
   sharedTestingSourceFieldValues: Record<string, string>;
   sharedDrawerRequiredStatus: DrawerRequiredStatus;
+  onOpenWorkflowRecord?: (recordId: string) => void;
+  onOpenTestingForm?: (recordId: string) => void;
 }
 
 export interface ListingApprovalCombinedShopifySectionProps extends CombinedSectionCommonProps, ShopifyApprovalPayloadPreviewData {

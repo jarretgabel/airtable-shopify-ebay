@@ -1,4 +1,5 @@
 import { buildEbayDraftPayloadBundleFromApprovalFields } from '@/services/ebayDraftFromAirtable';
+import { isUsedGearWorkflowListingSurfaceEligible } from '@/services/usedGearWorkflowListingVisibility';
 import type { EbayInventoryItem, EbayOffer, EbayPublishedListing } from '@/services/ebay/types';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -144,6 +145,7 @@ function buildSnapshotEntry(record: AirtableRecord): {
 
 export function buildEbaySnapshotFromAirtable(records: AirtableRecord[]): EbayAirtableSnapshot {
   const entries = records
+    .filter((record) => isUsedGearWorkflowListingSurfaceEligible(record))
     .map((record) => buildSnapshotEntry(record))
     .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
 

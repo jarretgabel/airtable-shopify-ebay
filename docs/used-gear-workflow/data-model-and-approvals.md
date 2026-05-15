@@ -96,6 +96,8 @@ Use this checklist to approve, reject, or revise the proposed Airtable/workflow 
 - [x] Approve `Stale Recovery Updated At`
 - [x] Approve `Relisted At`
 - [x] Approve `Sold Ready To Ship At`
+- [x] Approve `Shipment Follow-Through Notes`
+- [x] Approve `Shipment Follow-Through Updated At`
 - [x] Approve `Shipped At`
 
 #### Workflow Status Model

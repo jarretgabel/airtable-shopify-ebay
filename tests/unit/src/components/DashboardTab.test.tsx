@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { DashboardTab } from '@/components/DashboardTab';
 import type { DashboardTabViewModel } from '@/app/appTabViewModels';
@@ -72,7 +72,6 @@ function buildViewModel(): DashboardTabViewModel {
       airtableTypeTable: [],
     },
     kpis: {
-      totalNewSubmissions: 0,
       acquisitionCost: 0,
       inventoryValue: 0,
       avgAskPrice: 0,
@@ -102,6 +101,13 @@ function buildViewModel(): DashboardTabViewModel {
       shopifyApprovalTotal: 0,
       shopifyApprovalApproved: 0,
       shopifyApprovalPending: 0,
+      workflowDashboardTargets: {
+        loading: false,
+        error: null,
+        pendingReviewOldestGroup: { id: null, label: null },
+        progressOldestGroup: { id: null, label: null },
+        refetch: vi.fn(),
+      },
       workflowAnalytics: {
         loading: false,
         error: null,
@@ -134,6 +140,12 @@ function buildViewModel(): DashboardTabViewModel {
           soldReadyCount: 0,
           shippedCount: 0,
         },
+        ownership: {
+          pendingReviewMineCount: 0,
+          pendingReviewUnassignedCount: 0,
+          progressMineCount: 0,
+          progressUnassignedCount: 0,
+        },
         age: {
           pendingReviewAlertCount: 0,
           oldestPendingReviewAgeDays: null,
@@ -156,8 +168,10 @@ function buildViewModel(): DashboardTabViewModel {
       workflowPostPublishError: null,
       workflowActiveListingCount: 0,
       workflowStaleListingCount: 0,
+      workflowStaleListingMineCount: 0,
       workflowStaleListingUnassignedCount: 0,
       workflowSoldReadyCount: 0,
+      workflowSoldReadyMineCount: 0,
       workflowSoldReadyUnassignedCount: 0,
       workflowShippedCount: 0,
       aiProvider: 'none',
@@ -173,6 +187,7 @@ function buildViewModel(): DashboardTabViewModel {
       userCount: 0,
       adminCount: 0,
       currentUserRole: 'owner',
+      currentUserName: 'Taylor Reviewer',
       canViewSensitiveMetrics: true,
     },
     status: {
@@ -183,6 +198,7 @@ function buildViewModel(): DashboardTabViewModel {
     },
     actions: {
       onSelectTab: vi.fn(),
+      onOpenInventoryWorkflowView: vi.fn(),
       onOpenInventoryPostPublishBucket: vi.fn(),
     },
   };
@@ -195,6 +211,11 @@ describe('DashboardTab', () => {
     expect(screen.getByText('Partial dashboard data')).toBeInTheDocument();
     expect(screen.getByText('Section nav')).toBeInTheDocument();
     expect(screen.getByText('Overview section')).toBeInTheDocument();
+    expect(screen.queryByText('Airtable section:Inventory fetch failed')).not.toBeInTheDocument();
+    expect(screen.queryByText('Shopify section')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show detailed sections' }));
+
     expect(screen.getByText('Airtable section:Inventory fetch failed')).toBeInTheDocument();
     expect(screen.getByText('Shopify section')).toBeInTheDocument();
   });
@@ -203,7 +224,7 @@ describe('DashboardTab', () => {
     const viewModel = buildViewModel();
     viewModel.workflow.currentUserRole = 'processor';
     viewModel.workflow.canViewSensitiveMetrics = false;
-    viewModel.workflow.accessiblePages = ['dashboard', 'inventory', 'jotform'];
+    viewModel.workflow.accessiblePages = ['dashboard', 'inventory', 'parking-lot-1'];
 
     render(<DashboardTab viewModel={viewModel} />);
 

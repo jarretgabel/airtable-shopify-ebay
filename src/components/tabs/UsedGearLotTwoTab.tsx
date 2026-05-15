@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { UsedGearLotTwoSection } from '@/components/tabs/airtable/UsedGearLotTwoSection';
 
 interface UsedGearLotTwoTabProps {
@@ -14,7 +15,6 @@ const WORKFLOW_LOT_TWO_SEARCH_PARAM = 'workflowLotTwoSearch';
 const WORKFLOW_LOT_TWO_GROUP_PARAM = 'workflowLotTwoGroup';
 
 export function UsedGearLotTwoTab({
-  currentUserName,
   onOpenIncomingGearForm,
   onOpenTestingForm,
   onOpenPhotosForm,
@@ -42,23 +42,17 @@ export function UsedGearLotTwoTab({
 
   return (
     <>
-      <section className="mt-3 rounded-2xl border border-[var(--line)] bg-[var(--panel)] px-5 py-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Intake</p>
-            <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Parking Lot 2</h2>
-            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              Accepted intake rows live here until arrival handling, SKU assignment, or missing-item cleanup is complete. Open Incoming Gear, Testing, Photos, or the workflow detail page directly from the queue.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-4 py-4">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow Reviewer</p>
-            <p className="mt-2 text-lg font-semibold text-[var(--ink)]">{currentUserName}</p>
-          </div>
-        </div>
-      </section>
+      <div className="mt-3 mb-6">
+        <WorkflowPageHeader
+          eyebrow="Used Gear Intake"
+          title="Parking Lot 2"
+          description="Track accepted intake until arrival handling, SKU assignment, and the next handoff are complete."
+          descriptionHint="Accepted intake rows live here until arrival handling, SKU assignment, or missing-item cleanup is complete. Open Incoming Gear, Testing, Photos, or the workflow detail page directly from the queue."
+        />
+      </div>
 
       <UsedGearLotTwoSection
+        showSectionIntro={false}
         onOpenIncomingGearForm={onOpenIncomingGearForm}
         onOpenTestingForm={onOpenTestingForm}
         onOpenPhotosForm={onOpenPhotosForm}

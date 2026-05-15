@@ -84,11 +84,13 @@ export function ListingApprovalSelectedRecordPanel({
       )}
       alerts={<ListingApprovalRecordAlerts {...selectedRecordStatusProps.alertsProps} />}
       actions={<ListingApprovalRecordActions {...selectedRecordStatusProps.actionsProps} />}
-      payloadPanels={(
-        <Suspense fallback={<ApprovalEditorFallback />}>
-          <ListingApprovalRecordPayloadPanels {...selectedRecordViewProps.payloadPanelProps} />
-        </Suspense>
-      )}
+      payloadPanels={isCombinedApproval
+        ? null
+        : (
+          <Suspense fallback={<ApprovalEditorFallback />}>
+            <ListingApprovalRecordPayloadPanels {...selectedRecordViewProps.payloadPanelProps} />
+          </Suspense>
+        )}
     />
   );
 }

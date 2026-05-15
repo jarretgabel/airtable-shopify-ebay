@@ -129,7 +129,7 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 
 ### Group Review Page
 - Surface:
-  - `/jotform/review/:groupId`
+  - `/parking-lot-1/review/:groupId`
 - Use this when:
   - a multi-item submission needs per-row offer allocation and a shared submission review decision
 - Main actions:

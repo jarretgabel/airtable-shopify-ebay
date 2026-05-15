@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 interface TestingNotesTextareaEditorProps {
   fieldName: string;
   value: string;
@@ -6,6 +8,7 @@ interface TestingNotesTextareaEditorProps {
   label?: string;
   helperText?: string;
   placeholder?: string;
+  headerAction?: ReactNode;
 }
 
 const textareaClass =
@@ -19,11 +22,13 @@ export function TestingNotesTextareaEditor({
   label = 'Testing Notes',
   helperText = 'Mirrors the plain Testing Notes field from the Testing form. Keep this as direct notes text instead of structured listing rows.',
   placeholder = 'Enter the testing notes exactly as they should appear from the Testing form.',
+  headerAction,
 }: TestingNotesTextareaEditorProps) {
   return (
     <details className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2" open>
-      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
-        {label}
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+        <span>{label}</span>
+        {headerAction ? <span onClick={(event) => event.stopPropagation()}>{headerAction}</span> : null}
       </summary>
       <div className="flex flex-col gap-3 border-t border-[var(--line)] px-3 py-3">
         <p className="m-0 text-[0.74rem] leading-5 text-[var(--muted)]">

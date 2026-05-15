@@ -1,4 +1,5 @@
 import { createRequire } from 'module';
+import { enforceLocalOnlyIntegrationTargets } from './helpers/local-only-test-guard.mjs';
 const require = createRequire(import.meta.url);
 
 // Load .env.local then .env
@@ -34,6 +35,10 @@ if (domain === 'your-store.myshopify.com' || accessToken === 'your_shopify_admin
   console.error('\n✗ Please set actual credentials in .env.local');
   process.exit(1);
 }
+
+enforceLocalOnlyIntegrationTargets('test-shopify-connection', [
+  { label: 'Shopify Admin API', url: `https://${domain}/admin/api/2024-04` },
+]);
 
 const { default: axios } = await import('axios');
 

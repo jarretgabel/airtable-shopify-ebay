@@ -32,6 +32,7 @@ import {
   markPendingReviewUnqualified,
   markPendingReviewGroupUnqualified,
   saveWorkflowStaleRecovery,
+  saveWorkflowShipmentFollowThrough,
   markWorkflowShipped,
   markWorkflowSoldReadyToShip,
   permanentlyDeleteTrashRecord,
@@ -150,6 +151,15 @@ describe('usedGearQueue', () => {
 
     const records = await loadWorkflowProgressQueue();
 
+    expect(mockGetConfiguredRecords).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      expect.objectContaining({
+        fields: expect.not.arrayContaining([
+          'Shipment Follow-Through Notes',
+          'Shipment Follow-Through Updated At',
+        ]),
+      }),
+    );
     expect(records.map((record) => record.id)).toEqual(['recAccepted', 'recConcurrent', 'recApproved']);
   });
 
@@ -211,7 +221,7 @@ describe('usedGearQueue', () => {
   });
 
   it('requests the live Airtable price fields for queue reads without stale aliases', async () => {
-    mockGetConfiguredRecords.mockResolvedValue([]);
+    mockGetConfiguredRecords.mockResolvedValueOnce([]);
 
     await loadWorkflowPostPublishQueue();
 
@@ -225,11 +235,66 @@ describe('usedGearQueue', () => {
       }),
     );
 
-    const lastCall = mockGetConfiguredRecords.mock.calls[mockGetConfiguredRecords.mock.calls.length - 1];
-    const fields = lastCall?.[1]?.fields;
+    const requiredFields = mockGetConfiguredRecords.mock.calls[0]?.[1]?.fields;
+    const fields = requiredFields;
     expect(fields).toBeDefined();
     expect(fields).not.toContain('Price');
     expect(fields).not.toContain('eBay Price');
+    expect(fields).not.toContain('Shipment Follow-Through Notes');
+    expect(fields).not.toContain('Shipment Follow-Through Updated At');
+  });
+
+  it('requests optional shipment fields when loading a single workflow record', async () => {
+    mockGetConfiguredRecords
+      .mockResolvedValueOnce([
+        {
+          id: 'recSold',
+          createdTime: 'later',
+          fields: { 'Workflow Status': 'Sold - Ready to Ship', SKU: 'S-1' },
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'recSold',
+          createdTime: 'later',
+          fields: {
+            'Shipment Follow-Through Notes': 'Carrier booking pending.',
+            'Shipment Follow-Through Updated At': '2026-05-13T00:00:00.000Z',
+          },
+        },
+      ]);
+
+    const record = await loadUsedGearWorkflowRecord('recSold');
+
+    expect(record.fields['Shipment Follow-Through Notes']).toBe('Carrier booking pending.');
+    expect(mockGetConfiguredRecords).toHaveBeenCalledTimes(2);
+    expect(mockGetConfiguredRecords).toHaveBeenNthCalledWith(
+      2,
+      'used-gear-workflow',
+      expect.objectContaining({
+        fields: [
+          'Shipment Follow-Through Notes',
+          'Shipment Follow-Through Updated At',
+        ],
+      }),
+    );
+  });
+
+  it('falls back to required workflow fields when optional shipment fields are unavailable for detail reads', async () => {
+    mockGetConfiguredRecords
+      .mockResolvedValueOnce([
+        {
+          id: 'recSold',
+          createdTime: 'later',
+          fields: { 'Workflow Status': 'Sold - Ready to Ship', SKU: 'S-1' },
+        },
+      ])
+      .mockRejectedValueOnce(new Error('Failed to load Airtable records for used-gear-workflow.'));
+
+    const record = await loadUsedGearWorkflowRecord('recSold');
+
+    expect(record.id).toBe('recSold');
+    expect(mockGetConfiguredRecords).toHaveBeenCalledTimes(2);
   });
 
   it('summarizes post-publish workflow rows by lifecycle bucket', () => {
@@ -248,6 +313,7 @@ describe('usedGearQueue', () => {
         fields: {
           'Workflow Status': 'Stale Listing, eBay',
           'Listed At': '2026-01-01T00:00:00.000Z',
+          'Workflow Owner': 'Taylor Reviewer',
         },
       },
       {
@@ -264,13 +330,15 @@ describe('usedGearQueue', () => {
           'Workflow Status': 'Shipped',
         },
       },
-    ]);
+    ], 'Taylor Reviewer');
 
     expect(summary).toEqual({
       activeListingCount: 1,
       staleListingCount: 1,
-      staleListingUnassignedCount: 1,
+      staleListingMineCount: 1,
+      staleListingUnassignedCount: 0,
       soldReadyCount: 1,
+      soldReadyMineCount: 0,
       soldReadyUnassignedCount: 1,
       shippedCount: 1,
       totalCount: 4,
@@ -986,6 +1054,41 @@ describe('usedGearQueue', () => {
     );
   });
 
+  it('saves shipment follow-through notes for sold-ready workflow rows', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Sold - Ready to Ship',
+          'Sold Ready To Ship At': '2026-05-06T00:00:00.000Z',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: {
+        'Workflow Status': 'Sold - Ready to Ship',
+        'Shipment Follow-Through Notes': 'Carrier pickup booked.',
+      },
+    });
+
+    await saveWorkflowShipmentFollowThrough('rec1', {
+      shipmentFollowThroughNotes: 'Carrier pickup booked.',
+    });
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Shipment Follow-Through Notes': 'Carrier pickup booked.',
+        'Shipment Follow-Through Updated At': expect.any(String),
+      }),
+      { typecast: true },
+    );
+  });
+
   it('marks a selected batch of listed workflow rows sold ready', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
@@ -1180,7 +1283,7 @@ describe('usedGearQueue', () => {
       },
       targets: {
         pendingReview: {
-          destinationTab: 'jotform',
+          destinationTab: 'parking-lot-1',
           recordId: null,
           sectionId: 'used-gear-pending-review',
           groupId: 'pickup:pickup-100',
@@ -1223,6 +1326,86 @@ describe('usedGearQueue', () => {
         },
       },
       workflowQueueBadgeCount: 5,
+    });
+  });
+
+  it('filters workflow notification summary by owner preference inputs', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'recMine',
+        createdTime: '2026-05-01T00:00:00.000Z',
+        fields: { 'Workflow Status': 'Pending Review', 'Pick Up ID': 'pickup-100', 'Workflow Owner': 'Taylor Reviewer' },
+      },
+      {
+        id: 'recUnassigned',
+        createdTime: '2026-05-02T00:00:00.000Z',
+        fields: { 'Workflow Status': 'Accepted - Awaiting Arrival', 'Workflow Owner': '' },
+      },
+      {
+        id: 'recOther',
+        createdTime: '2026-05-03T00:00:00.000Z',
+        fields: { 'Workflow Status': 'Awaiting Pre-Listing Review', 'Workflow Owner': 'Someone Else' },
+      },
+    ]);
+
+    await expect(loadUsedGearWorkflowNotificationSummary({
+      currentUserName: 'Taylor Reviewer',
+      includeAssignedToCurrentUser: true,
+      includeUnassigned: false,
+    })).resolves.toEqual({
+      counts: {
+        pendingReview: 1,
+        processing: 0,
+        testing: 0,
+        photography: 0,
+        preListingReview: 0,
+        approvedForPublish: 0,
+      },
+      targets: {
+        pendingReview: {
+          destinationTab: 'parking-lot-1',
+          recordId: null,
+          sectionId: 'used-gear-pending-review',
+          groupId: 'pickup:pickup-100',
+          path: '/parking-lot-1?workflowPendingReviewGroup=pickup%3Apickup-100#used-gear-pending-review',
+        },
+        processing: null,
+        testing: null,
+        photography: null,
+        preListingReview: null,
+        approvedForPublish: null,
+      },
+      workflowQueueBadgeCount: 1,
+    });
+
+    await expect(loadUsedGearWorkflowNotificationSummary({
+      currentUserName: 'Taylor Reviewer',
+      includeAssignedToCurrentUser: false,
+      includeUnassigned: true,
+    })).resolves.toEqual({
+      counts: {
+        pendingReview: 0,
+        processing: 1,
+        testing: 0,
+        photography: 0,
+        preListingReview: 0,
+        approvedForPublish: 0,
+      },
+      targets: {
+        pendingReview: null,
+        processing: {
+          destinationTab: 'parking-lot-2',
+          recordId: 'recUnassigned',
+          sectionId: 'used-gear-lot-two',
+          groupId: null,
+          path: '/parking-lot-2#used-gear-lot-two',
+        },
+        testing: null,
+        photography: null,
+        preListingReview: null,
+        approvedForPublish: null,
+      },
+      workflowQueueBadgeCount: 1,
     });
   });
 });

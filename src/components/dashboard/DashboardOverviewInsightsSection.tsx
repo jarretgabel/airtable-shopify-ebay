@@ -1,9 +1,15 @@
 import { PAGE_DEFINITIONS, type AppPage } from '@/auth/pages';
 import { DashboardKpiCard, DashboardSectionPanel, DashboardSubPanel } from './dashboardPrimitives';
 import type { DashboardInsight, DashboardTargetTab, TrendSummary } from './dashboardTabTypes';
-import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 import type { UsedGearWorkflowAnalyticsSnapshotState } from '@/hooks/useUsedGearWorkflowAnalyticsSnapshot';
 import type { UserRole } from '@/stores/auth/authTypes';
+
+interface OverviewCardEntry {
+  key: string;
+  priority: number;
+  element: JSX.Element;
+}
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -34,24 +40,26 @@ const sectionBaseClass = 'scroll-mt-24';
 const sectionHeaderClass = 'mb-4 flex items-center border-b border-[var(--line)] pb-3 pt-1';
 const sectionHeaderLabelClass = 'm-0 text-[1.05rem] font-semibold text-[var(--ink)]';
 
-function getPostPublishTargetLabel(bucket: UsedGearWorkflowPostPublishBucket, ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter): string {
-  const bucketLabel = bucket === 'sold-ready'
+function getInsightTargetLabel(targetTab: DashboardTargetTab): string {
+  if (targetTab === 'inventory') {
+    return 'Inventory';
+  }
+
+  if (targetTab === 'shopify') {
+    return 'Shopify';
+  }
+
+  return PAGE_DEFINITIONS[targetTab].label;
+}
+
+function getPostPublishTargetLabel(bucket: UsedGearWorkflowPostPublishBucket): string {
+  return bucket === 'sold-ready'
     ? 'Sold Ready To Ship'
     : bucket === 'stale-listing'
       ? 'Stale Listings'
       : bucket === 'active-listing'
         ? 'Active Listings'
         : 'Shipped History';
-
-  if (ownerFilter === 'unassigned') {
-    return `Unassigned ${bucketLabel}`;
-  }
-
-  if (ownerFilter === 'mine') {
-    return `My ${bucketLabel}`;
-  }
-
-  return bucketLabel;
 }
 
 function canSeeRoleDashboardModule(currentUserRole: UserRole, role: 'processor' | 'tester' | 'photographer'): boolean {
@@ -63,12 +71,6 @@ interface DashboardOverviewSectionProps {
   canViewSensitiveMetrics: boolean;
   currentUserRole: UserRole;
   workflowAnalytics: UsedGearWorkflowAnalyticsSnapshotState;
-  jfLoading: boolean;
-  jotformUnavailableReason?: string | null;
-  jfSubmissionCount: number;
-  thisWeekCount: number;
-  recentCount: number;
-  totalNewSubmissions: number;
   spLoading: boolean;
   draftCount: number;
   activeCount: number;
@@ -89,7 +91,6 @@ interface DashboardOverviewSectionProps {
   avgAskPrice: number;
   sellThroughPct: number | null;
   grossMarginPct: number | null;
-  submissionsTrend: TrendSummary;
   dealsTrend: TrendSummary;
   acquisitionTrend: TrendSummary;
   inventoryTrend: TrendSummary;
@@ -101,16 +102,10 @@ interface DashboardOverviewSectionProps {
 
 export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
   const {
-    jfLoading,
     accessiblePages,
     canViewSensitiveMetrics,
     currentUserRole,
     workflowAnalytics,
-    jotformUnavailableReason,
-    jfSubmissionCount,
-    thisWeekCount,
-    recentCount,
-    totalNewSubmissions,
     spLoading,
     draftCount,
     activeCount,
@@ -131,7 +126,6 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
     avgAskPrice,
     sellThroughPct,
     grossMarginPct,
-    submissionsTrend,
     dealsTrend,
     acquisitionTrend,
     inventoryTrend,
@@ -155,205 +149,262 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
   const awaitingMissingCount = workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting Missing Item'];
   const processorBlockerCount = awaitingSkuCount + awaitingMissingCount;
 
-  const cards = [
+  const cards: Array<OverviewCardEntry | null> = [
     canViewSensitiveMetrics ? (
-      <DashboardKpiCard
+      {
+        key: 'inventory-value',
+        priority: 70,
+        element: <DashboardKpiCard
         key="inventory-value"
         borderToneClass="border-t-fuchsia-500"
-        eyebrow="Total Inventory Value"
+        eyebrow="Inventory Value"
         value={formatCurrency(inventoryValue)}
-        detail={<><strong className="font-semibold text-[var(--accent)]">{formatCurrency(avgAskPrice)}</strong> average active ask &nbsp;·&nbsp; valuation snapshot</>}
+        detail={<><strong className="font-semibold text-[var(--accent)]">{formatCurrency(avgAskPrice)}</strong> avg ask</>}
         trend={inventoryTrend.text}
         trendClass={trendToneClass[inventoryTrend.direction]}
         onClick={() => onSelectTab('shopify')}
-      />
+      />,
+      }
     ) : null,
     canViewSensitiveMetrics ? (
-      <DashboardKpiCard
+      {
+        key: 'acquisition-cost',
+        priority: 80,
+        element: <DashboardKpiCard
         key="acquisition-cost"
         borderToneClass="border-t-rose-500"
         eyebrow="Acquisition Cost"
         value={formatCurrency(acquisitionCost)}
-        detail={<><strong className="font-semibold text-[var(--accent)]">{grossMarginPct !== null ? `${grossMarginPct}%` : '—'}</strong> gross margin &nbsp;·&nbsp; cost basis snapshot</>}
+        detail={<><strong className="font-semibold text-[var(--accent)]">{grossMarginPct !== null ? `${grossMarginPct}%` : '—'}</strong> gross margin</>}
         trend={acquisitionTrend.text}
         trendClass={trendToneClass[acquisitionTrend.direction]}
         onClick={() => onSelectTab('inventory')}
-      />
+      />,
+      }
     ) : null,
     canSeeRoleDashboardModule(currentUserRole, 'processor') && accessiblePages.includes('incoming-gear') ? (
-      <DashboardKpiCard
+      {
+        key: 'processor-ops',
+        priority: 10,
+        element: <DashboardKpiCard
         key="processor-ops"
         borderToneClass="border-t-cyan-500"
         eyebrow="Processor Ops"
         value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : workflowIntakeCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{workflowAnalytics.pendingReviewCount}</strong> pending review &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{preListingCount}</strong> ready for pre-listing</>}
-        trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? `${progressAlertCount} aging across intake and stage work` : `${awaitingArrivalCount} awaiting arrival`}
+          : <><strong className="font-semibold text-[var(--accent)]">{workflowAnalytics.pendingReviewCount}</strong> pending &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{preListingCount}</strong> ready next</>}
+        trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? `${progressAlertCount} aging` : `${awaitingArrivalCount} awaiting arrival`}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : progressAlertCount > 0 ? 'text-amber-400' : trendToneClass[inventoryTrend.direction]}
         unavailableReason={workflowUnavailableReason}
         onClick={() => onSelectTab('incoming-gear')}
-      />
+      />,
+      }
     ) : null,
     canSeeRoleDashboardModule(currentUserRole, 'processor') && accessiblePages.includes('pre-listing-queue') ? (
-      <DashboardKpiCard
+      {
+        key: 'processor-blockers',
+        priority: 20,
+        element: <DashboardKpiCard
         key="processor-blockers"
         borderToneClass="border-t-indigo-500"
         eyebrow="Processing Blockers"
         value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : processorBlockerCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{awaitingSkuCount}</strong> awaiting SKU &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{awaitingMissingCount}</strong> awaiting missing item</>}
-        trend={workflowUnavailableReason ? 'Unavailable' : processorBlockerCount > 0 ? `${processorBlockerCount} intake blocker${processorBlockerCount === 1 ? '' : 's'} to clear` : `${preListingCount} cleared for pre-listing`}
+          : <><strong className="font-semibold text-[var(--accent)]">{awaitingSkuCount}</strong> awaiting SKU &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{awaitingMissingCount}</strong> missing item</>}
+        trend={workflowUnavailableReason ? 'Unavailable' : processorBlockerCount > 0 ? `${processorBlockerCount} to clear` : 'Clear'}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : processorBlockerCount > 0 ? 'text-amber-400' : 'text-emerald-300'}
         unavailableReason={workflowUnavailableReason}
         onClick={() => onSelectTab('pre-listing-queue')}
-      />
+      />,
+      }
     ) : null,
     canSeeRoleDashboardModule(currentUserRole, 'tester') && accessiblePages.includes('testing-queue') ? (
-      <DashboardKpiCard
+      {
+        key: 'testing-queue',
+        priority: 10,
+        element: <DashboardKpiCard
         key="testing-queue"
         borderToneClass="border-t-sky-500"
         eyebrow="Testing Queue"
         value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : sharedStageCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> in the shared testing/photo stage &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{progressAlertCount}</strong> aging beyond SLA</>}
-        trend={workflowUnavailableReason ? 'Unavailable' : preListingCount > 0 ? `${preListingCount} ready for pre-listing handoff` : sharedStageCount > 0 ? 'Bench queue active' : 'Queue clear'}
+          : <><strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> in stage &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{progressAlertCount}</strong> aging</>}
+        trend={workflowUnavailableReason ? 'Unavailable' : preListingCount > 0 ? `${preListingCount} ready next` : sharedStageCount > 0 ? 'Active' : 'Clear'}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : sharedStageCount > 0 ? 'text-blue-300' : 'text-emerald-300'}
         unavailableReason={workflowUnavailableReason}
         onClick={() => onSelectTab('testing-queue')}
-      />
+      />,
+      }
     ) : null,
     canSeeRoleDashboardModule(currentUserRole, 'tester') && accessiblePages.includes('testing') ? (
-      <DashboardKpiCard
+      {
+        key: 'testing-aging',
+        priority: 20,
+        element: <DashboardKpiCard
         key="testing-aging"
         borderToneClass="border-t-blue-600"
         eyebrow="Bench Aging"
         value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : progressAlertCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> active in the shared stage &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{preListingCount}</strong> ready for handoff</>}
-        trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? 'Testing follow-up needed' : 'Bench flow on pace'}
+          : <><strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> in stage &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{preListingCount}</strong> ready next</>}
+        trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? 'Follow up needed' : 'On pace'}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : progressAlertCount > 0 ? 'text-amber-400' : 'text-emerald-300'}
         unavailableReason={workflowUnavailableReason}
         onClick={() => onSelectTab('testing')}
-      />
+      />,
+      }
     ) : null,
     canSeeRoleDashboardModule(currentUserRole, 'photographer') && accessiblePages.includes('photography-queue') ? (
-      <DashboardKpiCard
+      {
+        key: 'photography-queue',
+        priority: 10,
+        element: <DashboardKpiCard
         key="photography-queue"
         borderToneClass="border-t-orange-500"
         eyebrow="Photography Queue"
         value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : sharedStageCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> in the shared testing/photo stage &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{preListingCount}</strong> ready for listing handoff</>}
-        trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? `${progressAlertCount} aging beyond SLA` : sharedStageCount > 0 ? 'Capture queue active' : 'Queue clear'}
+          : <><strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> in stage &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{preListingCount}</strong> ready next</>}
+        trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? `${progressAlertCount} aging` : sharedStageCount > 0 ? 'Active' : 'Clear'}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : sharedStageCount > 0 ? 'text-orange-300' : 'text-emerald-300'}
         unavailableReason={workflowUnavailableReason}
         onClick={() => onSelectTab('photography-queue')}
-      />
+      />,
+      }
     ) : null,
     canSeeRoleDashboardModule(currentUserRole, 'photographer') && accessiblePages.includes('photos') ? (
-      <DashboardKpiCard
+      {
+        key: 'photo-handoffs',
+        priority: 20,
+        element: <DashboardKpiCard
         key="photo-handoffs"
         borderToneClass="border-t-amber-600"
         eyebrow="Photo Handoffs"
         value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : preListingCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> still in the shared stage &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{progressAlertCount}</strong> aging beyond SLA</>}
-        trend={workflowUnavailableReason ? 'Unavailable' : preListingCount > 0 ? `${preListingCount} ready for pre-listing review` : 'Awaiting complete photo sets'}
+          : <><strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> still in stage &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{progressAlertCount}</strong> aging</>}
+        trend={workflowUnavailableReason ? 'Unavailable' : preListingCount > 0 ? `${preListingCount} ready next` : 'Waiting on photo sets'}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : preListingCount > 0 ? 'text-orange-300' : 'text-[var(--muted)]'}
         unavailableReason={workflowUnavailableReason}
         onClick={() => onSelectTab('photos')}
-      />
-    ) : null,
-    accessiblePages.includes('jotform') ? (
-      <DashboardKpiCard
-        key="jotform"
-        borderToneClass="border-t-blue-500"
-        eyebrow="Incoming Gear Submissions"
-        value={jotformUnavailableReason ? 'Off' : jfLoading ? '…' : jfSubmissionCount.toLocaleString()}
-        detail={jotformUnavailableReason ? jotformUnavailableReason : <><strong className="font-semibold text-[var(--accent)]">{thisWeekCount}</strong> this week &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{recentCount}</strong> last 30 days{totalNewSubmissions > 0 && <><span>&nbsp;·&nbsp;</span><span className="font-semibold text-red-600">{totalNewSubmissions} unread</span></>}</>}
-        trend={jotformUnavailableReason ? 'Unavailable' : submissionsTrend.text}
-        trendClass={jotformUnavailableReason ? 'text-amber-300' : trendToneClass[submissionsTrend.direction]}
-        unavailableReason={jotformUnavailableReason}
-        onClick={() => onSelectTab('jotform')}
-      />
+      />,
+      }
     ) : null,
     accessiblePages.includes('shopify') ? (
-      <DashboardKpiCard
+      {
+        key: 'shopify',
+        priority: 40,
+        element: <DashboardKpiCard
         key="shopify"
         borderToneClass="border-t-amber-500"
-        eyebrow="Deals in Progress"
+        eyebrow="Shopify Drafts"
         value={spLoading ? '…' : draftCount}
-        detail={<><strong className="font-semibold text-[var(--accent)]">{activeCount}</strong> live inventory &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{archivedCount}</strong> closed out</>}
+        detail={<><strong className="font-semibold text-[var(--accent)]">{activeCount}</strong> live &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{archivedCount}</strong> archived</>}
         trend={dealsTrend.text}
         trendClass={trendToneClass[dealsTrend.direction]}
         onClick={() => onSelectTab('shopify')}
-      />
+      />,
+      }
     ) : null,
     accessiblePages.includes('listings') ? (
-      <DashboardKpiCard
+      {
+        key: 'listings',
+        priority: 30,
+        element: <DashboardKpiCard
         key="listings"
         borderToneClass="border-t-violet-500"
         eyebrow="Listings Review"
         value={approvalUnavailableReason ? 'Off' : approvalPending.toLocaleString()}
-        detail={approvalUnavailableReason ? approvalUnavailableReason : <><strong className="font-semibold text-[var(--accent)]">{approvalApproved}</strong> approved &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvalTotal}</strong> total records</>}
+        detail={approvalUnavailableReason ? approvalUnavailableReason : <><strong className="font-semibold text-[var(--accent)]">{approvalApproved}</strong> approved &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvalTotal}</strong> total</>}
         trend={approvalUnavailableReason ? 'Unavailable' : acquisitionTrend.text}
         trendClass={approvalUnavailableReason ? 'text-amber-300' : trendToneClass[acquisitionTrend.direction]}
         unavailableReason={approvalUnavailableReason}
         onClick={() => onSelectTab('listings')}
-      />
+      />,
+      }
     ) : null,
     accessiblePages.includes('inventory') ? (
-      <DashboardKpiCard
+      {
+        key: 'inventory',
+        priority: 50,
+        element: <DashboardKpiCard
         key="inventory"
         borderToneClass="border-t-emerald-500"
-        eyebrow="Catalog Breadth"
+        eyebrow="Inventory"
         value={nonEmptyListingCount.toLocaleString()}
-        detail={<><strong className="font-semibold text-[var(--accent)]">{uniqueAirtableBrands}</strong> brands &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{uniqueAirtableTypes}</strong> component types</>}
+        detail={<><strong className="font-semibold text-[var(--accent)]">{uniqueAirtableBrands}</strong> brands &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{uniqueAirtableTypes}</strong> types</>}
         trend={inventoryTrend.text}
         trendClass={trendToneClass[inventoryTrend.direction]}
         onClick={() => onSelectTab('inventory')}
-      />
+      />,
+      }
     ) : null,
     accessiblePages.includes('shopify') ? (
-      <DashboardKpiCard
+      {
+        key: 'sales',
+        priority: 60,
+        element: <DashboardKpiCard
         key="sales"
         borderToneClass="border-t-slate-600"
-        eyebrow="Sales Performance"
+        eyebrow="Sell-Through"
         value={sellThroughPct !== null ? `${sellThroughPct}%` : '—'}
-        detail={<><strong className="font-semibold text-[var(--accent)]">{archivedCount}</strong> sold or archived &nbsp;·&nbsp; sell-through rate</>}
+        detail={<><strong className="font-semibold text-[var(--accent)]">{archivedCount}</strong> sold or archived</>}
         trend={salesTrend.text}
         trendClass={trendToneClass[salesTrend.direction]}
         onClick={() => onSelectTab('shopify')}
-      />
+      />,
+      }
     ) : null,
     (accessiblePages.includes('ebay') || accessiblePages.includes('listings')) ? (
-      <DashboardKpiCard
+      {
+        key: 'ebay',
+        priority: 55,
+        element: <DashboardKpiCard
         key="ebay"
         borderToneClass="border-t-teal-500"
         eyebrow="eBay Coverage"
         value={ebayUnavailableReason ? 'Off' : ebayCoveragePct !== null ? `${ebayCoveragePct}%` : '—'}
-        detail={ebayUnavailableReason ? ebayUnavailableReason : <><strong className="font-semibold text-[var(--accent)]">{ebayPublishedCount}</strong> live &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{ebayDraftCount}</strong> draft across {ebayTotal} tracked SKU</>}
+        detail={ebayUnavailableReason ? ebayUnavailableReason : <><strong className="font-semibold text-[var(--accent)]">{ebayPublishedCount}</strong> live &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{ebayDraftCount}</strong> draft</>}
         trend={ebayUnavailableReason ? 'Unavailable' : marginTrend.text}
         trendClass={ebayUnavailableReason ? 'text-amber-300' : trendToneClass[marginTrend.direction]}
         unavailableReason={ebayUnavailableReason}
         onClick={() => onSelectTab('ebay')}
-      />
+      />,
+      }
     ) : null,
-  ].filter(Boolean);
+  ];
 
-  if (cards.length === 0) {
+  const orderedCards = cards
+    .filter((card): card is OverviewCardEntry => card !== null)
+    .sort((left, right) => left.priority - right.priority);
+  const primaryCards = embedded ? orderedCards.slice(0, 6) : orderedCards;
+  const secondaryCards = embedded ? orderedCards.slice(6) : [];
+
+  if (orderedCards.length === 0) {
     return null;
   }
 
   const content = (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {cards}
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {primaryCards.map((card) => card.element)}
+      </div>
+      {secondaryCards.length > 0 ? (
+        <details className="rounded-[12px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_86%,transparent)] px-4 py-3">
+          <summary className="cursor-pointer list-none text-[0.8rem] font-semibold text-[var(--ink)]">
+            More metrics
+          </summary>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {secondaryCards.map((card) => card.element)}
+          </div>
+        </details>
+      ) : null}
       </div>
   );
 
@@ -379,12 +430,15 @@ export function DashboardInsightsSection({
 }: {
   insights: DashboardInsight[];
   onSelectTab: (tab: DashboardTargetTab) => void;
-  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket, ownerFilter?: UsedGearWorkflowPostPublishOwnerFilter) => void;
+  onOpenInventoryPostPublishBucket: (bucket: UsedGearWorkflowPostPublishBucket) => void;
   embedded?: boolean;
 }) {
-  const content = insights.length > 0 ? (
+  const primaryInsights = embedded ? insights.slice(0, 4) : insights;
+  const secondaryInsights = embedded ? insights.slice(4) : [];
+
+  const insightCards = (items: DashboardInsight[]) => (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-      {insights.map((insight) => (
+      {items.map((insight) => (
         <article key={insight.id} className={`rounded-xl border px-4 py-3 ${insightToneClass[insight.severity]}`}>
           {(() => {
             const targetTab = insight.targetTab;
@@ -400,7 +454,7 @@ export function DashboardInsightsSection({
             <>
               {targetTab === 'inventory' && insight.inventoryPostPublishBucket ? (
                 <span className="mt-3 inline-flex rounded-full border border-current/30 bg-white/10 px-2.5 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.07em]">
-                  Opens {getPostPublishTargetLabel(insight.inventoryPostPublishBucket, insight.inventoryPostPublishOwnerFilter)} Bucket
+                  Opens {getPostPublishTargetLabel(insight.inventoryPostPublishBucket)} Bucket
                 </span>
               ) : null}
               <button
@@ -408,14 +462,14 @@ export function DashboardInsightsSection({
                 className="mt-3 rounded-lg border border-current/30 bg-white/10 px-3 py-1.5 text-[0.72rem] font-semibold transition hover:bg-white/20"
                 onClick={() => {
                   if (targetTab === 'inventory' && insight.inventoryPostPublishBucket) {
-                    onOpenInventoryPostPublishBucket(insight.inventoryPostPublishBucket, insight.inventoryPostPublishOwnerFilter);
+                    onOpenInventoryPostPublishBucket(insight.inventoryPostPublishBucket);
                     return;
                   }
 
                   onSelectTab(targetTab);
                 }}
               >
-                Review in {PAGE_DEFINITIONS[targetTab].label} →
+                Open {getInsightTargetLabel(targetTab)}
               </button>
             </>
           ) : null}
@@ -424,6 +478,20 @@ export function DashboardInsightsSection({
           })()}
         </article>
       ))}
+    </div>
+  );
+
+  const content = insights.length > 0 ? (
+    <div className="flex flex-col gap-3">
+      {insightCards(primaryInsights)}
+      {secondaryInsights.length > 0 ? (
+        <details className="rounded-[12px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_86%,transparent)] px-4 py-3">
+          <summary className="cursor-pointer list-none text-[0.8rem] font-semibold text-[var(--ink)]">
+            Show {secondaryInsights.length} more insight{secondaryInsights.length === 1 ? '' : 's'}
+          </summary>
+          <div className="mt-3">{insightCards(secondaryInsights)}</div>
+        </details>
+      ) : null}
     </div>
   ) : (
     <div className="rounded-xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-4 text-[0.84rem] text-emerald-200">No active alerts right now. The dashboard will surface warnings here when inventory, inquiries, or sales trends drift.</div>

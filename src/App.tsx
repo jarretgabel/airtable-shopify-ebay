@@ -14,7 +14,9 @@ import { useAppShellControls } from '@/app/useAppShellControls';
 import { useActionGuidanceNotifications } from '@/app/useActionGuidanceNotifications';
 import { useAuthRouteGuard } from '@/app/useAuthRouteGuard';
 import { useUsedGearWorkflowNotifications } from '@/app/useUsedGearWorkflowNotifications';
+import { isDeveloperRole } from '@/auth/roleAccess';
 import { requireEnv } from '@/config/runtimeEnv';
+import { getLocalAppApiRoutingWarning } from '@/services/app-api/flags';
 import { createEmptyUsedGearWorkflowNotificationSummary } from '@/services/usedGearQueue';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { useAppUIStore } from '@/stores/appUIStore';
@@ -71,6 +73,7 @@ function App() {
     navigateToWorkflowPriceEditor,
     navigateToUsedGearWorkflowRecord,
     navigateToInventoryList,
+    navigateToInventoryWorkflowView,
     navigateToInventoryPostPublishBucket,
     navigateToListingsRecord,
     navigateToListingsList,
@@ -95,17 +98,17 @@ function App() {
     navigate,
   });
   const appDataEnabled = usersReady && Boolean(currentUser) && !isLoginPath && !isResetPasswordPath;
-  const { airtable, shopify, market, ebay, approval, shopifyApproval, usedGearWorkflowAnalytics, usedGearWorkflowPostPublish, jotform, metrics, visibleTabs, totalNewSubmissions, aiProvider, adminCount, runtimeFeatures } = useAppData({
+  const { airtable, shopify, market, ebay, approval, shopifyApproval, usedGearWorkflowDashboardTargets, usedGearWorkflowAnalytics, usedGearWorkflowPostPublish, jotform, metrics, visibleTabs, aiProvider, adminCount, runtimeFeatures } = useAppData({
     enabled: appDataEnabled,
     activeTab,
     canAccessPage,
+    currentUserName: currentUser?.name ?? '',
     users,
   });
-  const { loading, onRefresh, onExportCurrentPage, onExportAllPages, tabs, intakeNavTabs, listingsNavTabs, inventoryProcessingNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
+  const { onRefresh, onExportCurrentPage, onExportAllPages, tabs, intakeNavTabs, listingsNavTabs, inventoryProcessingNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
     activeTab,
     visibleTabs,
     workflowInventoryBadgeCount: workflowNotificationSummary.workflowQueueBadgeCount,
-    totalNewSubmissions,
     runtimeFeatures,
     exportingPdf,
     dashboardRefreshing,
@@ -138,7 +141,6 @@ function App() {
     onRefresh,
     approvalPending: approval.pending,
     shopifyApprovalPending: shopifyApproval.pending,
-    totalNewSubmissions,
     ebayAuthenticated: ebay.authenticated,
     workflowPostPublishStaleListingCount: usedGearWorkflowPostPublish.staleListingCount,
     workflowPostPublishSoldReadyCount: usedGearWorkflowPostPublish.soldReadyCount,
@@ -204,6 +206,9 @@ function App() {
   }
 
   const showRequiredPasswordModal = requiresPasswordChange;
+  const localApiRoutingWarning = import.meta.env.DEV && isDeveloperRole(currentUser.role)
+    ? getLocalAppApiRoutingWarning()
+    : null;
 
   return (
     <>
@@ -217,9 +222,6 @@ function App() {
           inventoryProcessingTabs={inventoryProcessingNavTabs}
           postEbayTabs={postEbayNavTabs}
           utilityTabs={utilityNavTabs}
-          refreshLabel={loading ? 'Refreshing...' : 'Refresh'}
-          refreshDisabled={loading || exportingPdf}
-          onRefresh={onRefresh}
           exportDisabled={exportingPdf}
           onExportCurrentPage={onExportCurrentPage}
           onExportAllPages={onExportAllPages}
@@ -231,6 +233,17 @@ function App() {
           exportProgress={exportingPdf ? exportProgress : null}
           exporting={exportingPdf}
         >
+          {localApiRoutingWarning && (
+            <section className="mb-5 rounded-[1.15rem] border border-amber-500/35 bg-amber-950/25 px-4 py-4 text-amber-100 shadow-[0_14px_34px_rgba(120,53,15,0.18)]">
+              <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.12em] text-amber-200/85">Local API override active</p>
+              <p className="mt-2 text-sm leading-6 text-amber-50">
+                Localhost is pinned to the local app API and Lambda handlers on /api, so the configured remote API base URL is being ignored in this session.
+              </p>
+              <p className="mt-2 text-xs leading-5 text-amber-200/80">
+                Configured value: {localApiRoutingWarning.configuredBaseUrl}
+              </p>
+            </section>
+          )}
           <AppTabContent
             activeTab={activeTab}
             jotformReviewGroupId={jotformReviewGroupId}
@@ -250,6 +263,7 @@ function App() {
             navigateToWorkflowPriceEditor={navigateToWorkflowPriceEditor}
             navigateToUsedGearWorkflowRecord={navigateToUsedGearWorkflowRecord}
             navigateToInventoryList={navigateToInventoryList}
+            navigateToInventoryWorkflowView={navigateToInventoryWorkflowView}
             navigateToInventoryPostPublishBucket={navigateToInventoryPostPublishBucket}
             navigateToIncomingGearForm={navigateToIncomingGearForm}
             navigateToTestingForm={navigateToTestingForm}
@@ -291,7 +305,6 @@ function App() {
             jfLastUpdated={jotform.lastUpdated}
             jfFreshCount={jotform.freshCount}
             jfClearFresh={jotform.clearFresh}
-            totalNewSubmissions={totalNewSubmissions}
             approvalLoading={approval.loading}
             approvalError={approval.error}
             approvalTotal={approval.total}
@@ -302,13 +315,16 @@ function App() {
             shopifyApprovalTotal={shopifyApproval.total}
             shopifyApprovalApproved={shopifyApproval.approved}
             shopifyApprovalPending={shopifyApproval.pending}
+            workflowDashboardTargets={usedGearWorkflowDashboardTargets}
             workflowAnalytics={usedGearWorkflowAnalytics}
             workflowPostPublishLoading={usedGearWorkflowPostPublish.loading}
             workflowPostPublishError={usedGearWorkflowPostPublish.error}
             workflowActiveListingCount={usedGearWorkflowPostPublish.activeListingCount}
             workflowStaleListingCount={usedGearWorkflowPostPublish.staleListingCount}
+            workflowStaleListingMineCount={usedGearWorkflowPostPublish.staleListingMineCount}
             workflowStaleListingUnassignedCount={usedGearWorkflowPostPublish.staleListingUnassignedCount}
             workflowSoldReadyCount={usedGearWorkflowPostPublish.soldReadyCount}
+            workflowSoldReadyMineCount={usedGearWorkflowPostPublish.soldReadyMineCount}
             workflowSoldReadyUnassignedCount={usedGearWorkflowPostPublish.soldReadyUnassignedCount}
             workflowShippedCount={usedGearWorkflowPostPublish.shippedCount}
             ebayAuthenticated={ebay.authenticated}

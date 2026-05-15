@@ -31,6 +31,10 @@ vi.mock('@/components/DashboardTab', () => ({
   DashboardTab: () => <div>Dashboard content</div>,
 }));
 
+vi.mock('@/components/tabs/WorkflowGuideTab', () => ({
+  WorkflowGuideTab: () => <div>Workflow guide content</div>,
+}));
+
 vi.mock('@/components/UserManagementTab', () => ({
   UserManagementTab: () => <div>User management content</div>,
 }));
@@ -118,6 +122,7 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     navigateToWorkflowPriceEditor: vi.fn(),
     navigateToUsedGearWorkflowRecord: vi.fn(),
     navigateToInventoryList: vi.fn(),
+    navigateToInventoryWorkflowView: vi.fn(),
     navigateToInventoryPostPublishBucket: vi.fn(),
     navigateToIncomingGearForm: vi.fn(),
     navigateToTestingForm: vi.fn(),
@@ -159,7 +164,6 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     jfLastUpdated: null,
     jfFreshCount: 0,
     jfClearFresh: vi.fn(),
-    totalNewSubmissions: 0,
     approvalLoading: false,
     approvalError: null,
     approvalTotal: 0,
@@ -170,6 +174,13 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     shopifyApprovalTotal: 0,
     shopifyApprovalApproved: 0,
     shopifyApprovalPending: 0,
+    workflowDashboardTargets: {
+      loading: false,
+      error: null,
+      pendingReviewOldestGroup: { id: null, label: null },
+      progressOldestGroup: { id: null, label: null },
+      refetch: vi.fn(),
+    },
     workflowAnalytics: {
       loading: false,
       error: null,
@@ -202,6 +213,12 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
         soldReadyCount: 0,
         shippedCount: 0,
       },
+      ownership: {
+        pendingReviewMineCount: 0,
+        pendingReviewUnassignedCount: 0,
+        progressMineCount: 0,
+        progressUnassignedCount: 0,
+      },
       age: {
         pendingReviewAlertCount: 0,
         oldestPendingReviewAgeDays: null,
@@ -224,8 +241,10 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     workflowPostPublishError: null,
     workflowActiveListingCount: 0,
     workflowStaleListingCount: 0,
+    workflowStaleListingMineCount: 0,
     workflowStaleListingUnassignedCount: 0,
     workflowSoldReadyCount: 0,
+    workflowSoldReadyMineCount: 0,
     workflowSoldReadyUnassignedCount: 0,
     workflowShippedCount: 0,
     ebayAuthenticated: false,
@@ -305,6 +324,12 @@ describe('AppTabContent', () => {
 
     rerender(<AppTabContent {...buildProps({ activeTab: 'notifications', accessiblePages: ['dashboard', 'users', 'settings', 'notifications'] })} />);
     expect(await screen.findByText('Notifications content')).toBeInTheDocument();
+  });
+
+  it('routes the workflow guide tab to the reference page', async () => {
+    render(<AppTabContent {...buildProps({ activeTab: 'workflow-guide', accessiblePages: ['dashboard', 'workflow-guide'] })} />);
+
+    expect(await screen.findByText('Workflow guide content')).toBeInTheDocument();
   });
 
   it('renders isolated Shopify and eBay snapshot detail pages for service-specific deep links', async () => {

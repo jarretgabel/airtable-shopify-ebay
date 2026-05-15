@@ -79,10 +79,23 @@ const USED_GEAR_WORKFLOW_RECORD_FIELDS = [
   'Stale Recovery Updated At',
   'Relisted At',
   'Sold Ready To Ship At',
+  'Shipment Follow-Through Notes',
+  'Shipment Follow-Through Updated At',
   'Shipped At',
   'Shopify Price',
   'Ebay Price',
 ] as const;
+
+const USED_GEAR_WORKFLOW_OPTIONAL_READ_FIELDS = [
+  'Shipment Follow-Through Notes',
+  'Shipment Follow-Through Updated At',
+] as const;
+
+const USED_GEAR_WORKFLOW_OPTIONAL_READ_FIELD_SET = new Set<string>(USED_GEAR_WORKFLOW_OPTIONAL_READ_FIELDS);
+
+const USED_GEAR_WORKFLOW_REQUIRED_RECORD_FIELDS = USED_GEAR_WORKFLOW_RECORD_FIELDS.filter(
+  (fieldName) => !USED_GEAR_WORKFLOW_OPTIONAL_READ_FIELD_SET.has(fieldName),
+);
 
 const PENDING_REVIEW_STATUS = 'Pending Review';
 const ACCEPTED_AWAITING_ARRIVAL_STATUS = 'Accepted - Awaiting Arrival';
@@ -122,16 +135,23 @@ const USED_GEAR_WORKFLOW_NOTIFICATION_FIELDS = [
   USED_GEAR_WORKFLOW_STATUS_FIELD,
   'Submission Group ID',
   'Pick Up ID',
+  'Workflow Owner',
   'Testing Signed By',
   'Testing Signed At',
   'Photography Signed By',
   'Photography Signed At',
 ] as const;
 
+interface LoadUsedGearWorkflowNotificationSummaryOptions {
+  currentUserName?: string | null;
+  includeAssignedToCurrentUser?: boolean;
+  includeUnassigned?: boolean;
+}
+
 export type UsedGearWorkflowNotificationCounts = Record<UsedGearWorkflowNotificationEvent, number>;
 
 export interface UsedGearWorkflowNotificationTarget {
-  destinationTab: 'inventory' | 'jotform' | 'parking-lot-2' | 'testing-queue' | 'photography-queue' | 'pre-listing-queue' | 'listings';
+  destinationTab: 'inventory' | 'parking-lot-1' | 'jotform' | 'parking-lot-2' | 'testing-queue' | 'photography-queue' | 'pre-listing-queue' | 'listings';
   recordId: string | null;
   sectionId: string | null;
   groupId?: string | null;
@@ -149,7 +169,9 @@ export interface UsedGearWorkflowNotificationSummary {
 export interface UsedGearWorkflowPostPublishSummary {
   activeListingCount: number;
   staleListingCount: number;
+  staleListingMineCount: number;
   soldReadyCount: number;
+  soldReadyMineCount: number;
   shippedCount: number;
   staleListingUnassignedCount: number;
   soldReadyUnassignedCount: number;
@@ -159,6 +181,10 @@ export interface UsedGearWorkflowPostPublishSummary {
 export interface SaveUsedGearWorkflowStaleRecoveryInput {
   staleRecoveryStatus: UsedGearWorkflowStaleRecoveryStatus | null;
   staleRecoveryNotes: string | null;
+}
+
+export interface SaveUsedGearWorkflowShipmentFollowThroughInput {
+  shipmentFollowThroughNotes: string | null;
 }
 
 function normalizeOwnerName(value: string): string {
@@ -199,11 +225,38 @@ export function createEmptyUsedGearWorkflowNotificationSummary(): UsedGearWorkfl
   };
 }
 
+function normalizeWorkflowNotificationOwner(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function shouldIncludeWorkflowNotificationRecord(
+  record: AirtableRecord,
+  options?: LoadUsedGearWorkflowNotificationSummaryOptions,
+): boolean {
+  const currentUserName = options?.currentUserName?.trim() ?? '';
+  if (!currentUserName) {
+    return true;
+  }
+
+  const workflowOwner = normalizeWorkflowNotificationOwner(record.fields['Workflow Owner']);
+  if (!workflowOwner) {
+    return options?.includeUnassigned !== false;
+  }
+
+  if (workflowOwner === currentUserName) {
+    return options?.includeAssignedToCurrentUser !== false;
+  }
+
+  return false;
+}
+
 export function createEmptyUsedGearWorkflowPostPublishSummary(): UsedGearWorkflowPostPublishSummary {
   return {
     activeListingCount: 0,
     staleListingCount: 0,
+    staleListingMineCount: 0,
     soldReadyCount: 0,
+    soldReadyMineCount: 0,
     shippedCount: 0,
     staleListingUnassignedCount: 0,
     soldReadyUnassignedCount: 0,
@@ -226,8 +279,10 @@ function buildNotificationTarget(
   const groupId = getNotificationGroupId(record);
   const basePath = destinationTab === 'inventory'
     ? '/inventory'
-    : destinationTab === 'jotform'
+    : destinationTab === 'parking-lot-1'
       ? '/parking-lot-1'
+      : destinationTab === 'jotform'
+        ? '/jotform'
       : destinationTab === 'parking-lot-2'
         ? '/parking-lot-2'
         : destinationTab === 'testing-queue'
@@ -319,6 +374,50 @@ function normalizeNullableCurrency(value: number | null | undefined): number | n
     return null;
   }
   return Math.round(value * 100) / 100;
+}
+
+function mergeConfiguredRecordFields(
+  baseRecords: AirtableRecord[],
+  supplementalRecords: AirtableRecord[],
+): AirtableRecord[] {
+  const supplementalFieldsById = new Map(
+    supplementalRecords.map((record) => [record.id, record.fields]),
+  );
+
+  return baseRecords.map((record) => {
+    const supplementalFields = supplementalFieldsById.get(record.id);
+    if (!supplementalFields) {
+      return record;
+    }
+
+    return {
+      ...record,
+      fields: {
+        ...record.fields,
+        ...supplementalFields,
+      },
+    };
+  });
+}
+
+async function loadUsedGearWorkflowRecords(options?: { includeOptionalReadFields?: boolean }): Promise<AirtableRecord[]> {
+  const requiredRecords = await getConfiguredRecords('used-gear-workflow', {
+    fields: [...USED_GEAR_WORKFLOW_REQUIRED_RECORD_FIELDS],
+  });
+
+  if (!options?.includeOptionalReadFields) {
+    return requiredRecords;
+  }
+
+  try {
+    const optionalRecords = await getConfiguredRecords('used-gear-workflow', {
+      fields: [...USED_GEAR_WORKFLOW_OPTIONAL_READ_FIELDS],
+    });
+
+    return mergeConfiguredRecordFields(requiredRecords, optionalRecords);
+  } catch {
+    return requiredRecords;
+  }
 }
 
 function normalizeAllocationText(value: string | undefined): string | null {
@@ -455,9 +554,7 @@ export async function loadTrashQueue(): Promise<AirtableRecord[]> {
 }
 
 export async function loadLotTwoQueue(): Promise<AirtableRecord[]> {
-  const records = await getConfiguredRecords('used-gear-workflow', {
-    fields: [...USED_GEAR_WORKFLOW_RECORD_FIELDS],
-  });
+  const records = await loadUsedGearWorkflowRecords();
 
   return records
     .map(withWorkflow)
@@ -475,9 +572,7 @@ export async function loadLotTwoQueue(): Promise<AirtableRecord[]> {
 }
 
 export async function loadWorkflowProgressQueue(): Promise<AirtableRecord[]> {
-  const records = await getConfiguredRecords('used-gear-workflow', {
-    fields: [...USED_GEAR_WORKFLOW_RECORD_FIELDS],
-  });
+  const records = await loadUsedGearWorkflowRecords();
 
   return records
     .map(withWorkflow)
@@ -488,9 +583,7 @@ export async function loadWorkflowProgressQueue(): Promise<AirtableRecord[]> {
 }
 
 export async function loadWorkflowPostPublishQueue(): Promise<AirtableRecord[]> {
-  const records = await getConfiguredRecords('used-gear-workflow', {
-    fields: [...USED_GEAR_WORKFLOW_RECORD_FIELDS],
-  });
+  const records = await loadUsedGearWorkflowRecords();
 
   return records
     .map(withWorkflow)
@@ -502,10 +595,17 @@ export async function loadWorkflowPostPublishQueue(): Promise<AirtableRecord[]> 
 
 export function summarizeUsedGearWorkflowPostPublishQueue(
   records: AirtableRecord[],
+  currentUserName?: string,
 ): UsedGearWorkflowPostPublishSummary {
+  const normalizedCurrentUserName = currentUserName?.trim().toLowerCase() ?? '';
+
   return records.reduce<UsedGearWorkflowPostPublishSummary>((summary, record) => {
     const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
     const workflowOwner = getTrimmedFieldValue(record, 'Workflow Owner');
+    const workflowOwnerMatchesCurrentUser = Boolean(
+      normalizedCurrentUserName.length > 0
+      && workflowOwner.trim().toLowerCase() === normalizedCurrentUserName,
+    );
     if (!snapshot) {
       return summary;
     }
@@ -519,6 +619,9 @@ export function summarizeUsedGearWorkflowPostPublishQueue(
 
     if (snapshot.bucket === 'stale-listing') {
       summary.staleListingCount += 1;
+      if (workflowOwnerMatchesCurrentUser) {
+        summary.staleListingMineCount += 1;
+      }
       if (!workflowOwner) {
         summary.staleListingUnassignedCount += 1;
       }
@@ -527,6 +630,9 @@ export function summarizeUsedGearWorkflowPostPublishQueue(
 
     if (snapshot.bucket === 'sold-ready') {
       summary.soldReadyCount += 1;
+      if (workflowOwnerMatchesCurrentUser) {
+        summary.soldReadyMineCount += 1;
+      }
       if (!workflowOwner) {
         summary.soldReadyUnassignedCount += 1;
       }
@@ -539,9 +645,7 @@ export function summarizeUsedGearWorkflowPostPublishQueue(
 }
 
 export async function loadUsedGearWorkflowRecord(recordId: string): Promise<AirtableRecord> {
-  const records = await getConfiguredRecords('used-gear-workflow', {
-    fields: [...USED_GEAR_WORKFLOW_RECORD_FIELDS],
-  });
+  const records = await loadUsedGearWorkflowRecords({ includeOptionalReadFields: true });
 
   const record = records.find((candidate) => candidate.id === recordId);
   if (!record) {
@@ -552,9 +656,7 @@ export async function loadUsedGearWorkflowRecord(recordId: string): Promise<Airt
 }
 
 export async function loadUsedGearWorkflowRecordContext(recordId: string): Promise<UsedGearWorkflowRecordContext> {
-  const records = (await getConfiguredRecords('used-gear-workflow', {
-    fields: [...USED_GEAR_WORKFLOW_RECORD_FIELDS],
-  })).map(withWorkflow);
+  const records = (await loadUsedGearWorkflowRecords({ includeOptionalReadFields: true })).map(withWorkflow);
 
   const record = records.find((candidate) => candidate.id === recordId);
   if (!record) {
@@ -569,7 +671,9 @@ export async function loadUsedGearWorkflowRecordContext(recordId: string): Promi
   };
 }
 
-export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGearWorkflowNotificationSummary> {
+export async function loadUsedGearWorkflowNotificationSummary(
+  options?: LoadUsedGearWorkflowNotificationSummaryOptions,
+): Promise<UsedGearWorkflowNotificationSummary> {
   const records = await getConfiguredRecords('used-gear-workflow', {
     fields: [...USED_GEAR_WORKFLOW_NOTIFICATION_FIELDS],
   });
@@ -579,6 +683,10 @@ export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGea
   const actionableRecordIds = new Set<string>();
 
   sortedRecords.forEach((record) => {
+    if (!shouldIncludeWorkflowNotificationRecord(record, options)) {
+      return;
+    }
+
     const status = getUsedGearWorkflowStatus(record.fields);
     if (!status) {
       return;
@@ -587,7 +695,7 @@ export async function loadUsedGearWorkflowNotificationSummary(): Promise<UsedGea
     if (status === PENDING_REVIEW_STATUS) {
       summary.counts.pendingReview += 1;
       actionableRecordIds.add(record.id);
-      summary.targets.pendingReview ??= buildNotificationTarget(record, 'jotform', 'used-gear-pending-review', 'workflowPendingReviewGroup', true);
+      summary.targets.pendingReview ??= buildNotificationTarget(record, 'parking-lot-1', 'used-gear-pending-review', 'workflowPendingReviewGroup', true);
       return;
     }
 
@@ -1153,6 +1261,30 @@ export async function markWorkflowSoldReadyToShip(recordId: string): Promise<Air
     {
       [USED_GEAR_WORKFLOW_STATUS_FIELD]: SOLD_READY_TO_SHIP_STATUS,
       'Sold Ready To Ship At': getTrimmedFieldValue(currentRecord, 'Sold Ready To Ship At') || soldReadyAt,
+    },
+    { typecast: true },
+  );
+
+  return withWorkflow(record);
+}
+
+export async function saveWorkflowShipmentFollowThrough(
+  recordId: string,
+  { shipmentFollowThroughNotes }: SaveUsedGearWorkflowShipmentFollowThroughInput,
+): Promise<AirtableRecord> {
+  const currentRecord = await loadUsedGearWorkflowRecord(recordId);
+  const currentStatus = getUsedGearWorkflowStatus(currentRecord.fields);
+  if (currentStatus !== SOLD_READY_TO_SHIP_STATUS && currentStatus !== SHIPPED_STATUS) {
+    throw new Error('Only sold-ready or shipped workflow rows can save shipment follow-through notes.');
+  }
+
+  const shipmentFollowThroughUpdatedAt = new Date().toISOString();
+  const record = await updateConfiguredRecord(
+    'used-gear-workflow',
+    recordId,
+    {
+      'Shipment Follow-Through Notes': normalizeTextAreaValue(shipmentFollowThroughNotes),
+      'Shipment Follow-Through Updated At': shipmentFollowThroughUpdatedAt,
     },
     { typecast: true },
   );

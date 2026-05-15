@@ -1,9 +1,11 @@
 export const APP_PAGES = [
   'dashboard',
+  'workflow-guide',
   'inventory',
   'listings',
   'shopify',
   'market',
+  'parking-lot-1',
   'jotform',
   'parking-lot-2',
   'trash-review',
@@ -30,11 +32,13 @@ export interface PageDefinition {
 
 export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   dashboard: { label: 'Dashboard', path: '/dashboard' },
+  'workflow-guide': { label: 'Workflow Guide', path: '/workflow-guide' },
   inventory: { label: 'Directory', path: '/inventory' },
   listings: { label: 'Listings', path: '/listings' },
   shopify: { label: 'Shopify Products', path: '/shopify/products' },
   market: { label: 'Market Prices', path: '/market' },
-  jotform: { label: 'Parking Lot 1', path: '/parking-lot-1' },
+  'parking-lot-1': { label: 'Parking Lot 1', path: '/parking-lot-1' },
+  jotform: { label: 'JotForm', path: '/jotform' },
   'parking-lot-2': { label: 'Parking Lot 2', path: '/parking-lot-2' },
   'trash-review': { label: 'Trash Review', path: '/trash-review' },
   'testing-queue': { label: 'Testing Queue', path: '/workflow/testing' },

@@ -1,6 +1,6 @@
 import { JotFormSubmission } from '@/types/jotform';
 import { ShopifyProduct } from '@/types/shopify';
-import type { UsedGearWorkflowPostPublishBucket, UsedGearWorkflowPostPublishOwnerFilter } from '@/services/usedGearWorkflowLifecycle';
+import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 
 export type ShopifyProductFull = ShopifyProduct & {
   id: number;
@@ -25,7 +25,6 @@ export interface DashboardInsight {
   severity: DashboardInsightSeverity;
   targetTab?: DashboardInsightTargetTab;
   inventoryPostPublishBucket?: UsedGearWorkflowPostPublishBucket;
-  inventoryPostPublishOwnerFilter?: UsedGearWorkflowPostPublishOwnerFilter;
 }
 
 export interface DashboardMetrics {

@@ -8,7 +8,7 @@ This document tracks the app-owned pages, forms, queues, and review surfaces inv
 - Keep form, queue, and detail pages aligned with the approved workflow model.
 
 ### Existing Surfaces
-- `JotformTab` — current inquiry list, Phase 2 reuse point
+- `JotformTab` — raw submission feed and source-reference page
 - `AirtableEmbeddedForm` — current Incoming Gear surface, Phase 2/3 reuse point
 - `TestingFormTab` — current testing surface, Phase 3 reuse point
 - `PhotosFormTab` — current photo surface, Phase 3 reuse point
@@ -24,6 +24,9 @@ This document tracks the app-owned pages, forms, queues, and review surfaces inv
 - [ ] Intake detail/review page for grouped submissions if needed
 
 Implemented route keys, paths, and file targets:
+- `parking-lot-1`
+	- Path: `/parking-lot-1`
+	- Component: `src/components/tabs/ParkingLotOneTab.tsx`
 - `jotform`
 	- Path: `/jotform`
 	- Component: `src/components/tabs/JotformTab.tsx`
@@ -37,7 +40,7 @@ Implemented route keys, paths, and file targets:
 	- Path: `/inventory/manual-intake`
 	- Likely component: `src/components/tabs/ManualIntakeTab.tsx`
 - `submission-review`
-	- Path: `/jotform/review/:groupId`
+	- Path: `/parking-lot-1/review/:groupId`
 	- Component: `src/components/tabs/UsedGearPendingReviewGroupPage.tsx`
 
 Likely shared helpers/services:
@@ -77,7 +80,7 @@ Implemented Phase 3 surfaces in the current app:
 	- Path: `/workflow/photography`
 	- Component: `src/components/tabs/UsedGearWorkflowQueueTab.tsx`
 - `pending review grouped queue`
-	- Path: `/jotform/review/:groupId`
+	- Path: `/parking-lot-1/review/:groupId`
 	- Component: `src/components/tabs/UsedGearPendingReviewGroupPage.tsx`
 
 #### Phase 4

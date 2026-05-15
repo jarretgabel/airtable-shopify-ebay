@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 export interface ListingApprovalTestingSectionField {
   fieldName: string;
   label: string;
@@ -66,19 +68,24 @@ function normalizeTestingSectionValue(value: unknown): string {
 export function ListingApprovalTestingSection({
   fields,
   formValues,
+  headerAction,
 }: {
   fields: ListingApprovalTestingSectionField[];
   formValues: Record<string, string>;
+  headerAction?: ReactNode;
 }) {
   if (fields.length === 0) return null;
 
   return (
     <section className="space-y-3 rounded-lg border border-[var(--line)] bg-white/5 px-3 py-3 md:col-span-2">
-      <div className="space-y-1">
-        <h3 className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Testing</h3>
-        <p className="m-0 text-xs leading-5 text-[var(--muted)]">
-          Read-only testing details mirrored from the Testing form.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h3 className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Testing</h3>
+          <p className="m-0 text-xs leading-5 text-[var(--muted)]">
+            Read-only testing details mirrored from the Testing form.
+          </p>
+        </div>
+        {headerAction ? <div className="shrink-0">{headerAction}</div> : null}
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {fields.map(({ fieldName, label, multiline }) => {

@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { enforceLocalOnlyIntegrationTargets } from './helpers/local-only-test-guard.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -9,10 +10,15 @@ dotenv.config({ path: `${__dirname}/.env` });
 
 const key = process.env.VITE_JOTFORM_API_KEY;
 const jotformApiBase = process.env.VITE_JOTFORM_API_BASE || 'https://api.jotform.com';
+
 if (!key) {
   console.error('❌ VITE_JOTFORM_API_KEY not set in .env.local');
   process.exit(1);
 }
+
+enforceLocalOnlyIntegrationTargets('test-jotform-connection', [
+  { label: 'JotForm API', url: jotformApiBase },
+]);
 
 async function apiFetch(path, params = {}) {
   const qs = new URLSearchParams({ apiKey: key, ...params });

@@ -1,8 +1,10 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { isDeveloperRole } from '@/auth/roleAccess';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
 import { SectionSubnav } from '@/components/app/SectionSubnav';
 import { getRuntimeHealthReport, type RuntimeHealthEntry } from '@/config/runtimeHealth';
+import { getAppApiSessionDiagnostics } from '@/services/app-api/flags';
 import { useAuthStore } from '@/stores/auth/authStore';
 import { PASSWORD_POLICY_MESSAGE, validatePasswordPolicy } from '@/stores/auth/passwordPolicy';
 import { useNotificationStore } from '@/stores/notificationStore';
@@ -37,6 +39,12 @@ const runtimeStatusClasses: Record<RuntimeHealthEntry['status'], string> = {
   ok: 'border-emerald-400/35 bg-emerald-500/10 text-emerald-200',
   warning: 'border-amber-400/35 bg-amber-500/10 text-amber-200',
   missing: 'border-rose-400/35 bg-rose-500/10 text-rose-200',
+};
+
+type LocalProxyProbeState = {
+  status: RuntimeHealthEntry['status'];
+  detail: string;
+  value: string | null;
 };
 
 export function SettingsTab() {
@@ -78,6 +86,20 @@ export function SettingsTab() {
   const runtimeSectionRef = useRef<HTMLElement | null>(null);
   const sessionSectionRef = useRef<HTMLElement | null>(null);
   const runtimeHealth = useMemo(() => getRuntimeHealthReport(), []);
+  const appApiDiagnostics = useMemo(() => getAppApiSessionDiagnostics(), []);
+  const [localProxyProbeState, setLocalProxyProbeState] = useState<LocalProxyProbeState>(() => (
+    appApiDiagnostics.shouldProbeLocalProxy
+      ? {
+        status: 'warning',
+        detail: 'Checking whether the local no-Docker API is reachable through the current /api route...',
+        value: 'Checking...',
+      }
+      : {
+        status: 'warning',
+        detail: 'Local proxy reachability checks only run for localhost sessions.',
+        value: 'Not applicable',
+      }
+  ));
 
   useEffect(() => {
     const token = new URLSearchParams(location.search).get('emailChangeToken');
@@ -113,6 +135,59 @@ export function SettingsTab() {
     });
   }, [section]);
 
+  useEffect(() => {
+    const healthPath = appApiDiagnostics.localProxyHealthPath;
+    if (!appApiDiagnostics.shouldProbeLocalProxy || !healthPath) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const response = await fetch(healthPath, {
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const payload = await response.json() as { service?: string; port?: number; apiPrefix?: string };
+        if (cancelled) return;
+
+        setLocalProxyProbeState({
+          status: 'ok',
+          detail: 'The current browser session can reach the local app API through the /api proxy path.',
+          value: `${payload.service ?? 'local-api'}${typeof payload.port === 'number' ? ` on port ${payload.port}` : ''}${payload.apiPrefix ? ` via ${payload.apiPrefix}` : ''}`,
+        });
+      } catch (error) {
+        if (cancelled) return;
+
+        setLocalProxyProbeState({
+          status: 'warning',
+          detail: 'The current session could not confirm the local app API through /api. Check that Vite is running with the local proxy and that npm run local:api is listening.',
+          value: error instanceof Error ? error.message : String(error),
+        });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [appApiDiagnostics]);
+
+  const showDeveloperRuntimeSection = currentUser ? isDeveloperRole(currentUser.role) : false;
+
+  useEffect(() => {
+    if (showDeveloperRuntimeSection || section !== 'runtime') {
+      return;
+    }
+
+    navigate('/account/settings?section=profile', { replace: true });
+  }, [navigate, section, showDeveloperRuntimeSection]);
+
   if (!currentUser) {
     return (
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5">
@@ -121,6 +196,9 @@ export function SettingsTab() {
     );
   }
 
+  const visibleSettingsSections = showDeveloperRuntimeSection
+    ? settingsSections
+    : settingsSections.filter((sectionItem) => sectionItem.key !== 'runtime');
   const isMainAdmin = currentUser.id === 'u-admin';
 
   async function handleEmailSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -175,6 +253,14 @@ export function SettingsTab() {
     setStatusMessage(result.message);
   }
 
+  async function handleWorkflowOwnershipPreferenceChange(
+    key: 'workflowAssignedAlertsEnabled' | 'workflowUnassignedAlertsEnabled',
+    enabled: boolean,
+  ): Promise<void> {
+    const result = await updateCurrentUserNotificationPreference(key, enabled);
+    setStatusMessage(result.message);
+  }
+
   const labelClass = 'text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300';
   const inputClass = 'w-full rounded-xl border border-white/15 bg-slate-950/55 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30';
   const revealButtonClass = 'shrink-0 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/10';
@@ -208,7 +294,7 @@ export function SettingsTab() {
       <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
         <SectionSubnav
           ariaLabel="Settings sections"
-          items={settingsSections}
+          items={visibleSettingsSections}
           onSelect={navigateToSection}
         />
 
@@ -220,6 +306,40 @@ export function SettingsTab() {
           >
             <div className="mb-3">
               <h3 className="m-0 text-[0.95rem] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Profile</h3>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <label className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--ink)]">
+                    <span className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-white/20 bg-slate-950/55 text-cyan-500 focus:ring-cyan-500/40"
+                        checked={currentUser.notificationPreferences.workflowAssignedAlertsEnabled}
+                        onChange={(event) => {
+                          void handleWorkflowOwnershipPreferenceChange('workflowAssignedAlertsEnabled', event.target.checked);
+                        }}
+                      />
+                      <span>
+                        <span className="block font-semibold">Assigned to me</span>
+                        <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">Only show workflow queue alerts for records currently assigned to you.</span>
+                      </span>
+                    </span>
+                  </label>
+                  <label className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--ink)]">
+                    <span className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-white/20 bg-slate-950/55 text-cyan-500 focus:ring-cyan-500/40"
+                        checked={currentUser.notificationPreferences.workflowUnassignedAlertsEnabled}
+                        onChange={(event) => {
+                          void handleWorkflowOwnershipPreferenceChange('workflowUnassignedAlertsEnabled', event.target.checked);
+                        }}
+                      />
+                      <span>
+                        <span className="block font-semibold">Unassigned work</span>
+                        <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">Keep alerts for workflow rows that still need an owner.</span>
+                      </span>
+                    </span>
+                  </label>
+                </div>
               <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Signed in as {currentUser.name} ({currentUser.role}).</p>
             </div>
 
@@ -404,30 +524,39 @@ export function SettingsTab() {
 
             <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--bg)]/45 p-4">
               <h4 className="m-0 text-[0.82rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Used Gear Workflow Alerts</h4>
-              <p className="mt-1 text-[0.78rem] text-[var(--muted)]">Choose which used-gear workflow queues should create in-app notifications for your account.</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS.map((option) => (
-                  <label key={option.key} className="rounded-lg border border-[var(--line)] px-3 py-3 text-[0.84rem] text-[var(--ink)]">
-                    <span className="flex items-start gap-2.5">
-                      <input
-                        type="checkbox"
-                        checked={currentUser.notificationPreferences.workflowEvents[option.key]}
-                        onChange={(event) => {
-                          void handleWorkflowNotificationEventChange(option.key, event.target.checked);
-                        }}
-                        className="mt-0.5 h-4 w-4 rounded border-[var(--line)] bg-transparent accent-sky-400"
-                      />
-                      <span>
-                        <span className="block font-semibold text-[var(--ink)]">{option.label}</span>
-                        <span className="mt-1 block text-[0.76rem] leading-5 text-[var(--muted)]">{option.description}</span>
-                      </span>
-                    </span>
-                  </label>
-                ))}
-              </div>
+              {showDeveloperRuntimeSection ? (
+                <p className="mt-2 text-[0.78rem] leading-6 text-[var(--muted)]">
+                  Developer accounts can access the JotForm source feed and dashboard module, but used-gear workflow alert subscriptions are still not available for this role.
+                </p>
+              ) : (
+                <>
+                  <p className="mt-1 text-[0.78rem] text-[var(--muted)]">Choose which used-gear workflow queues should create in-app notifications for your account.</p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS.map((option) => (
+                      <label key={option.key} className="rounded-lg border border-[var(--line)] px-3 py-3 text-[0.84rem] text-[var(--ink)]">
+                        <span className="flex items-start gap-2.5">
+                          <input
+                            type="checkbox"
+                            checked={currentUser.notificationPreferences.workflowEvents[option.key]}
+                            onChange={(event) => {
+                              void handleWorkflowNotificationEventChange(option.key, event.target.checked);
+                            }}
+                            className="mt-0.5 h-4 w-4 rounded border-[var(--line)] bg-transparent accent-sky-400"
+                          />
+                          <span>
+                            <span className="block font-semibold text-[var(--ink)]">{option.label}</span>
+                            <span className="mt-1 block text-[0.76rem] leading-5 text-[var(--muted)]">{option.description}</span>
+                          </span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </section>
 
+          {showDeveloperRuntimeSection && (
           <section
             id="settings-section-runtime"
             ref={runtimeSectionRef}
@@ -444,6 +573,53 @@ export function SettingsTab() {
                 <span className="text-sm font-semibold text-[var(--ink)]">Runtime config source</span>
               </div>
               <p className="mt-2 text-sm text-[var(--muted)]">{runtimeHealth.configSource.message}</p>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)]/55 px-4 py-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`rounded-full border px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.08em] ${runtimeStatusClasses[appApiDiagnostics.ignoredConfiguredBaseUrl ? 'warning' : 'ok']}`}>
+                    {appApiDiagnostics.ignoredConfiguredBaseUrl ? 'warning' : 'ok'}
+                  </span>
+                  <span className="text-sm font-semibold text-[var(--ink)]">Effective API route</span>
+                </div>
+                <p className="mt-2 text-[0.84rem] leading-6 text-[var(--muted)]">
+                  Requests in this browser session resolve through this route before any proxying happens.
+                </p>
+                <p className="mt-2 text-[0.78rem] text-slate-300">
+                  Current value: {appApiDiagnostics.effectiveRoute}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)]/55 px-4 py-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`rounded-full border px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.08em] ${runtimeStatusClasses[appApiDiagnostics.ignoredConfiguredBaseUrl ? 'warning' : appApiDiagnostics.configuredBaseUrl ? 'ok' : 'missing']}`}>
+                    {appApiDiagnostics.ignoredConfiguredBaseUrl ? 'warning' : appApiDiagnostics.configuredBaseUrl ? 'ok' : 'missing'}
+                  </span>
+                  <span className="text-sm font-semibold text-[var(--ink)]">Configured API base URL</span>
+                </div>
+                <p className="mt-2 text-[0.84rem] leading-6 text-[var(--muted)]">
+                  {appApiDiagnostics.ignoredConfiguredBaseUrl
+                    ? 'A configured remote base URL exists, but localhost sessions ignore it so requests stay on the local app API.'
+                    : 'This is the configured browser-safe API base URL from runtime-config or bundled env.'}
+                </p>
+                <p className="mt-2 text-[0.78rem] text-slate-300">
+                  Current value: {appApiDiagnostics.configuredBaseUrl ?? 'Not set'}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)]/55 px-4 py-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`rounded-full border px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.08em] ${runtimeStatusClasses[localProxyProbeState.status]}`}>
+                    {localProxyProbeState.status}
+                  </span>
+                  <span className="text-sm font-semibold text-[var(--ink)]">Local proxy reachability</span>
+                </div>
+                <p className="mt-2 text-[0.84rem] leading-6 text-[var(--muted)]">{localProxyProbeState.detail}</p>
+                <p className="mt-2 text-[0.78rem] text-slate-300">
+                  Current value: {localProxyProbeState.value ?? 'Unknown'}
+                </p>
+              </div>
             </div>
 
             <div className="mt-4 grid gap-3">
@@ -466,6 +642,7 @@ export function SettingsTab() {
               ))}
             </div>
           </section>
+          )}
 
           <section
             id="settings-section-session"

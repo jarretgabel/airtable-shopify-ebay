@@ -20,7 +20,6 @@ describe('useActionGuidanceNotifications', () => {
       onRefresh: vi.fn(),
       approvalPending: 0,
       shopifyApprovalPending: 0,
-      totalNewSubmissions: 0,
       ebayAuthenticated: true,
       workflowPostPublishStaleListingCount: 2,
       workflowPostPublishSoldReadyCount: 1,

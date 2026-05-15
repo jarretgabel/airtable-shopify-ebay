@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { canAccessCommerceDashboard, canAccessWorkflowDashboard, hasFullAccessRole } from '@/auth/roleAccess';
 import { DashboardSectionNav } from '@/components/dashboard/DashboardSectionNav';
 import { DashboardOverviewSection, DashboardInsightsSection } from '@/components/dashboard/DashboardOverviewInsightsSection';
@@ -47,10 +47,6 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
     [data.activeProducts, data.submissionDays, kpis.maxDayCount],
   );
 
-  const jotformUnavailableReason = useMemo(
-    () => viewModel.status.sources.find((source) => source.key === 'jotform')?.error ?? null,
-    [viewModel.status.sources],
-  );
   const approvalUnavailableReason = useMemo(
     () => viewModel.status.sources.find((source) => source.key === 'listings-ebay')?.error ?? null,
     [viewModel.status.sources],
@@ -130,13 +126,14 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
   const showCommerceDashboard = useMemo(() => canAccessCommerceDashboard(workflow.accessiblePages), [workflow.accessiblePages]);
   const showActionsSection = workflow.accessiblePages.includes('inventory') || workflow.accessiblePages.includes('listings') || workflow.accessiblePages.includes('ebay');
   const showOverviewSection = showWorkflowDashboard || showCommerceDashboard || filteredInsights.length > 0;
-  const showExpandedSections = hasFullAccessRole(workflow.currentUserRole);
+  const showExpandedSections = hasFullAccessRole(workflow.currentUserRole) || workflow.currentUserRole === 'developer';
+  const [showDetailedSections, setShowDetailedSections] = useState(false);
   const degradedSources = useMemo(() => getDashboardDegradedSources(viewModel.status.sources), [viewModel.status.sources]);
   const showPartialDataNotice = useMemo(() => hasDashboardPartialData(viewModel.status.sources), [viewModel.status.sources]);
 
   const sections = useMemo(
-    () => buildDashboardSections({ accessiblePages: workflow.accessiblePages, ebayCards, marketCards, utilityCards: allUtilityCards, showExpandedSections }),
-    [allUtilityCards, ebayCards, marketCards, showExpandedSections, workflow.accessiblePages],
+    () => buildDashboardSections({ accessiblePages: workflow.accessiblePages, ebayCards, marketCards, utilityCards: allUtilityCards, showExpandedSections: showExpandedSections && showDetailedSections }),
+    [allUtilityCards, ebayCards, marketCards, showDetailedSections, showExpandedSections, workflow.accessiblePages],
   );
   const { activeSectionId, scrollToSection } = useDashboardSectionTracking(sections);
 
@@ -151,12 +148,6 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
             canViewSensitiveMetrics={workflow.canViewSensitiveMetrics}
             currentUserRole={workflow.currentUserRole}
             workflowAnalytics={workflow.workflowAnalytics}
-            jfLoading={loading.jotform}
-            jotformUnavailableReason={jotformUnavailableReason}
-            jfSubmissionCount={data.jfSubmissions.length}
-            thisWeekCount={data.thisWeekSubs.length}
-            recentCount={data.recentSubs.length}
-            totalNewSubmissions={kpis.totalNewSubmissions}
             spLoading={loading.shopify}
             draftCount={data.draftProducts.length}
             activeCount={data.activeProducts.length}
@@ -177,7 +168,6 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
             avgAskPrice={kpis.avgAskPrice}
             sellThroughPct={kpis.sellThroughPct}
             grossMarginPct={kpis.grossMarginPct}
-            submissionsTrend={kpis.submissionsTrend}
             dealsTrend={kpis.dealsTrend}
             acquisitionTrend={kpis.acquisitionTrend}
             inventoryTrend={kpis.inventoryTrend}
@@ -189,6 +179,8 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
           {showActionsSection ? (
             <DashboardActionsSection
               accessiblePages={workflow.accessiblePages}
+              currentUserRole={workflow.currentUserRole}
+              currentUserName={workflow.currentUserName}
               ebayAuthenticated={workflow.ebayAuthenticated}
               ebayDraftCount={workflow.ebayDraftCount}
               ebayPublishedCount={workflow.ebayPublishedCount}
@@ -197,15 +189,23 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
               shopifyQueuePending={workflow.shopifyApprovalPending}
               shopifyQueueTotal={workflow.shopifyApprovalTotal}
               workflowPostPublishLoading={workflow.workflowPostPublishLoading}
+              workflowAnalytics={workflow.workflowAnalytics}
               workflowActiveListingCount={workflow.workflowActiveListingCount}
               workflowStaleListingCount={workflow.workflowStaleListingCount}
+              workflowStaleListingMineCount={workflow.workflowStaleListingMineCount}
               workflowStaleListingUnassignedCount={workflow.workflowStaleListingUnassignedCount}
               workflowSoldReadyCount={workflow.workflowSoldReadyCount}
+              workflowSoldReadyMineCount={workflow.workflowSoldReadyMineCount}
               workflowSoldReadyUnassignedCount={workflow.workflowSoldReadyUnassignedCount}
               workflowShippedCount={workflow.workflowShippedCount}
+              workflowPendingReviewOldestGroupId={workflow.workflowDashboardTargets.pendingReviewOldestGroup.id}
+              workflowPendingReviewOldestGroupLabel={workflow.workflowDashboardTargets.pendingReviewOldestGroup.label}
+              workflowProgressOldestGroupId={workflow.workflowDashboardTargets.progressOldestGroup.id}
+              workflowProgressOldestGroupLabel={workflow.workflowDashboardTargets.progressOldestGroup.label}
               ebayUnavailableReason={viewModel.status.sources.find((source) => source.key === 'ebay')?.error ?? null}
               shopifyApprovalUnavailableReason={viewModel.status.sources.find((source) => source.key === 'listings-shopify')?.error ?? null}
               onSelectTab={actions.onSelectTab}
+              onOpenInventoryWorkflowView={actions.onOpenInventoryWorkflowView}
               onOpenInventoryPostPublishBucket={actions.onOpenInventoryPostPublishBucket}
               embedded
             />
@@ -217,6 +217,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
               snapshot={workflow.workflowAnalytics}
               staleListingUnassignedCount={workflow.workflowStaleListingUnassignedCount}
               soldReadyUnassignedCount={workflow.workflowSoldReadyUnassignedCount}
+              embedded
             />
           ) : null}
           {filteredInsights.length > 0 ? (
@@ -227,9 +228,28 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
               embedded
             />
           ) : null}
+          {showExpandedSections ? (
+            <div className="rounded-[14px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_88%,transparent)] px-4 py-4 text-[var(--ink)]">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="max-w-3xl">
+                  <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Detailed Dashboards</p>
+                  <p className="m-0 mt-1 text-[0.9rem] leading-[1.55] text-[var(--muted)]">
+                    Keep the default view focused on the headline metrics. Open the detailed inventory, JotForm, Shopify, eBay, and utilities sections only when you need deeper analysis.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/5 px-4 py-2 text-[0.78rem] font-semibold text-[var(--ink)] transition hover:border-white/20 hover:bg-white/10"
+                  onClick={() => setShowDetailedSections((current) => !current)}
+                >
+                  {showDetailedSections ? 'Hide detailed sections' : 'Show detailed sections'}
+                </button>
+              </div>
+            </div>
+          ) : null}
         </DashboardSectionPanel>
       ) : null}
-      {showExpandedSections && workflow.accessiblePages.includes('inventory') ? (
+      {showExpandedSections && showDetailedSections && workflow.accessiblePages.includes('inventory') ? (
       <DashboardAirtableSection
         atLoading={loading.airtable}
         errorMessage={viewModel.status.sources.find((source) => source.key === 'airtable')?.error ?? null}
@@ -245,7 +265,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         onSelectTab={actions.onSelectTab}
       />
       ) : null}
-      {showExpandedSections && workflow.accessiblePages.includes('jotform') ? (
+      {showExpandedSections && showDetailedSections && workflow.accessiblePages.includes('jotform') ? (
       <DashboardJotformSection
         jfLoading={loading.jotform}
         errorMessage={viewModel.status.sources.find((source) => source.key === 'jotform')?.error ?? null}
@@ -263,7 +283,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         onSelectTab={actions.onSelectTab}
       />
       ) : null}
-      {showExpandedSections && (workflow.accessiblePages.includes('shopify') || workflow.accessiblePages.includes('listings')) ? (
+      {showExpandedSections && showDetailedSections && (workflow.accessiblePages.includes('shopify') || workflow.accessiblePages.includes('listings')) ? (
       <DashboardShopifySection
         shopifyCards={shopifyCards}
         onSelectTab={actions.onSelectTab}
@@ -275,7 +295,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         archivedProductsCount={data.archivedProducts.length}
       />
       ) : null}
-      {showExpandedSections && ebayCards.length > 0 ? (
+      {showExpandedSections && showDetailedSections && ebayCards.length > 0 ? (
       <DashboardEbaySection
         cards={ebayCards}
         onSelectTab={actions.onSelectTab}
@@ -288,7 +308,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         ebayDraftCount={workflow.ebayDraftCount}
       />
       ) : null}
-      {showExpandedSections && allUtilityCards.length > 0 ? <DashboardWorkflowSection sectionId="utility-workflows" title="Utilities" cards={allUtilityCards} onSelect={actions.onSelectTab} /> : null}
+      {showExpandedSections && showDetailedSections && allUtilityCards.length > 0 ? <DashboardWorkflowSection sectionId="utility-workflows" title="Utilities" cards={allUtilityCards} onSelect={actions.onSelectTab} /> : null}
     </div>
   );
 }

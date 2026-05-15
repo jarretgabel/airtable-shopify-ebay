@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs';
+import { enforceLocalOnlyIntegrationTargets } from './helpers/local-only-test-guard.mjs';
 
 const env = Object.fromEntries(
   readFileSync(new URL('../.env.local', import.meta.url), 'utf-8')
@@ -20,6 +21,10 @@ if (!clientId || !clientSecret || !refreshToken) {
   console.error('Missing VITE_EBAY_CLIENT_ID, VITE_EBAY_CLIENT_SECRET, or VITE_EBAY_REFRESH_TOKEN in .env.local');
   process.exit(1);
 }
+
+enforceLocalOnlyIntegrationTargets('test-ebay-read-listings', [
+  { label: 'eBay API', url: apiBase },
+]);
 
 const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 

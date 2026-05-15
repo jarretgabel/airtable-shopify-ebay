@@ -14,6 +14,7 @@ import type { AirtableRecord } from '@/types/airtable';
 
 const USED_GEAR_WORKFLOW_ANALYTICS_FIELDS = [
   'Workflow Status',
+  'Workflow Owner',
   'Trash Status',
   'Accepted At',
   'Processing Signed At',
@@ -70,6 +71,13 @@ export interface UsedGearWorkflowAnalyticsLifecycleSummary {
   oldestSoldReadyAgeDays: number | null;
 }
 
+export interface UsedGearWorkflowAnalyticsOwnershipSummary {
+  pendingReviewMineCount: number;
+  pendingReviewUnassignedCount: number;
+  progressMineCount: number;
+  progressUnassignedCount: number;
+}
+
 export interface UsedGearWorkflowAnalyticsSnapshot {
   totalCount: number;
   pendingReviewCount: number;
@@ -80,6 +88,7 @@ export interface UsedGearWorkflowAnalyticsSnapshot {
   marketplace: UsedGearWorkflowMarketplaceCounts;
   age: UsedGearWorkflowAnalyticsAgeSummary;
   lifecycle: UsedGearWorkflowAnalyticsLifecycleSummary;
+  ownership: UsedGearWorkflowAnalyticsOwnershipSummary;
 }
 
 function roundLifecycleDays(value: number): number {
@@ -98,6 +107,15 @@ function createEmptyMarketplaceCounts(): UsedGearWorkflowMarketplaceCounts {
     ebayStaleCount: 0,
     soldReadyCount: 0,
     shippedCount: 0,
+  };
+}
+
+function createEmptyOwnershipSummary(): UsedGearWorkflowAnalyticsOwnershipSummary {
+  return {
+    pendingReviewMineCount: 0,
+    pendingReviewUnassignedCount: 0,
+    progressMineCount: 0,
+    progressUnassignedCount: 0,
   };
 }
 
@@ -126,20 +144,28 @@ export function createEmptyUsedGearWorkflowAnalyticsSnapshot(): UsedGearWorkflow
       soldReadyAwaitingShipmentCount: 0,
       oldestSoldReadyAgeDays: null,
     },
+    ownership: createEmptyOwnershipSummary(),
   };
 }
 
 export function buildUsedGearWorkflowAnalyticsSnapshot(
   records: AirtableRecord[],
   nowMs = Date.now(),
+  currentUserName = '',
 ): UsedGearWorkflowAnalyticsSnapshot {
   const snapshot = createEmptyUsedGearWorkflowAnalyticsSnapshot();
   const pendingReviewRecords: AirtableRecord[] = [];
   const progressRecords: AirtableRecord[] = [];
   const postPublishRecords: AirtableRecord[] = [];
+  const normalizedCurrentUserName = currentUserName.trim().toLowerCase();
 
   records.forEach((record) => {
     const status = getUsedGearWorkflowStatus(record.fields);
+    const workflowOwner = typeof record.fields['Workflow Owner'] === 'string' ? record.fields['Workflow Owner'].trim() : '';
+    const ownerMatchesCurrentUser = Boolean(
+      normalizedCurrentUserName.length > 0
+      && workflowOwner.toLowerCase() === normalizedCurrentUserName,
+    );
     if (!status) {
       return;
     }
@@ -150,6 +176,12 @@ export function buildUsedGearWorkflowAnalyticsSnapshot(
     if (status === 'Pending Review') {
       pendingReviewRecords.push(record);
       snapshot.pendingReviewCount += 1;
+      if (ownerMatchesCurrentUser) {
+        snapshot.ownership.pendingReviewMineCount += 1;
+      }
+      if (!workflowOwner) {
+        snapshot.ownership.pendingReviewUnassignedCount += 1;
+      }
       return;
     }
 
@@ -161,6 +193,12 @@ export function buildUsedGearWorkflowAnalyticsSnapshot(
     if (PROGRESS_STATUSES.has(status)) {
       progressRecords.push(record);
       snapshot.progressCount += 1;
+      if (ownerMatchesCurrentUser) {
+        snapshot.ownership.progressMineCount += 1;
+      }
+      if (!workflowOwner) {
+        snapshot.ownership.progressUnassignedCount += 1;
+      }
       return;
     }
 
@@ -255,10 +293,10 @@ export function buildUsedGearWorkflowAnalyticsSnapshot(
   return snapshot;
 }
 
-export async function loadUsedGearWorkflowAnalyticsSnapshot(): Promise<UsedGearWorkflowAnalyticsSnapshot> {
+export async function loadUsedGearWorkflowAnalyticsSnapshot(currentUserName = ''): Promise<UsedGearWorkflowAnalyticsSnapshot> {
   const records = await getConfiguredRecords('used-gear-workflow', {
     fields: [...USED_GEAR_WORKFLOW_ANALYTICS_FIELDS],
   });
 
-  return buildUsedGearWorkflowAnalyticsSnapshot(records);
+  return buildUsedGearWorkflowAnalyticsSnapshot(records, Date.now(), currentUserName);
 }

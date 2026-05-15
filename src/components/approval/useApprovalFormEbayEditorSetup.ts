@@ -115,23 +115,8 @@ export function useApprovalFormEbayEditorSetup({
   const ebayAttributesCandidateFieldNames = (!isCombinedApproval && isEbayApprovalForm)
     ? allFieldNames.filter((fieldName) => isEbayAttributesField(fieldName) && !isLikelyDerivedAirtableField(fieldName))
     : [];
-  const ebayAttributesFieldName = (!isCombinedApproval && isEbayApprovalForm)
-    ? pickPreferredField(
-      ebayAttributesCandidateFieldNames,
-      [
-        'eBay Inventory Product Aspects JSON',
-        'eBay Inventory Product Aspects',
-        'eBay Inventory Aspects',
-        'eBay Product Aspects',
-        'eBay Aspects',
-        'ebay_inventory_product_aspects_json',
-        'ebay_inventory_product_aspects',
-        'ebay_inventory_aspects',
-      ],
-      formValues,
-    )
-    : undefined;
-  const ebayAttributesSyncFieldNames = ebayAttributesCandidateFieldNames.filter((fieldName) => fieldName !== ebayAttributesFieldName);
+  const ebayAttributesFieldName = undefined;
+  const ebayAttributesSyncFieldNames: string[] = [];
   const ebayShippingServiceFieldNames = (!isCombinedApproval && isEbayApprovalForm)
     ? allFieldNames.filter((fieldName) => isEbayShippingServiceFieldName(fieldName))
     : [];

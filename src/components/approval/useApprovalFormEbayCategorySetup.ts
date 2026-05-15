@@ -13,7 +13,8 @@ import { pickPreferredField } from './approvalFormFieldsImageHelpers';
 import type { ApprovalFormFieldSetupParams } from './approvalFormFieldSetupTypes';
 
 type UseApprovalFormEbayCategorySetupParams = Pick<ApprovalFormFieldSetupParams,
-  'isCombinedApproval'
+  'approvalChannel'
+  | 'isCombinedApproval'
   | 'allFieldNames'
   | 'writableFieldNames'
   | 'formValues'
@@ -22,6 +23,7 @@ type UseApprovalFormEbayCategorySetupParams = Pick<ApprovalFormFieldSetupParams,
 >;
 
 export function useApprovalFormEbayCategorySetup({
+  approvalChannel,
   isCombinedApproval,
   allFieldNames,
   writableFieldNames,
@@ -96,7 +98,7 @@ export function useApprovalFormEbayCategorySetup({
     const normalized = fieldName.toLowerCase();
     return normalized.startsWith('ebay ') || normalized.startsWith('ebay_');
   });
-  const hasEbayCategoryEditor = isEbayListingForm && !isCombinedApproval;
+  const hasEbayCategoryEditor = isEbayListingForm && (!isCombinedApproval || approvalChannel === 'ebay');
   const ebayMarketplaceId = (ebayMarketplaceIdFieldName ? formValues[ebayMarketplaceIdFieldName] : undefined)?.trim() || 'EBAY_US';
   const ebayCategorySourceValues = useMemo(() => {
     const merged: Record<string, string> = { ...originalFieldValues };

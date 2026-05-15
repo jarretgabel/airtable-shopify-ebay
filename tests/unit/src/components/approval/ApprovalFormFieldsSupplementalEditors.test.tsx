@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { ApprovalFormFieldsSupplementalEditors } from '@/components/approval/ApprovalFormFieldsSupplementalEditors';
 import { buildWorkflowListingImageSelectionValues } from '@/components/approval/workflowListingImageHelpers';
@@ -12,6 +13,10 @@ const { keyFeaturesEditorSpy, testingNotesTextareaEditorSpy } = vi.hoisted(() =>
   testingNotesTextareaEditorSpy: vi.fn(),
 }));
 
+const { ebayCategoriesSelectSpy } = vi.hoisted(() => ({
+  ebayCategoriesSelectSpy: vi.fn(),
+}));
+
 vi.mock('@/components/approval/ApprovalFormFieldsShippingEditors', () => ({
   ApprovalFormFieldsShippingEditors: (props: Record<string, unknown>) => {
     shippingEditorsSpy(props);
@@ -22,14 +27,29 @@ vi.mock('@/components/approval/ApprovalFormFieldsShippingEditors', () => ({
 vi.mock('@/components/approval/KeyFeaturesEditor', () => ({
   KeyFeaturesEditor: (props: Record<string, unknown>) => {
     keyFeaturesEditorSpy(props);
-    return null;
+    return (
+      <div data-testid="mock-key-features-editor">
+        {props.headerAction as ReactNode}
+      </div>
+    );
   },
 }));
 
 vi.mock('@/components/approval/TestingNotesTextareaEditor', () => ({
   TestingNotesTextareaEditor: (props: Record<string, unknown>) => {
     testingNotesTextareaEditorSpy(props);
-    return null;
+    return (
+      <div data-testid="mock-testing-notes-editor">
+        {props.headerAction as ReactNode}
+      </div>
+    );
+  },
+}));
+
+vi.mock('@/components/approval/EbayCategoriesSelect', () => ({
+  EbayCategoriesSelect: (props: Record<string, unknown>) => {
+    ebayCategoriesSelectSpy(props);
+    return <div data-testid="mock-ebay-categories-select">eBay categories select</div>;
   },
 }));
 
@@ -359,9 +379,12 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     shippingEditorsSpy.mockReset();
     keyFeaturesEditorSpy.mockReset();
     testingNotesTextareaEditorSpy.mockReset();
+    const onOpenWorkflowRecord = vi.fn();
+    const onOpenTestingForm = vi.fn();
 
     render(
       <ApprovalFormFieldsSupplementalEditors
+        recordId="rec-workflow-1"
         imageUrlSourceField={undefined}
         useCombinedImageAltEditor={false}
         combinedImageEditorValue=""
@@ -412,11 +435,27 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         normalizedEbayCategoryLabelsById={{}}
         setEbayCategoryIds={vi.fn()}
         hasSecondaryEbayCategory={false}
+        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        onOpenTestingForm={onOpenTestingForm}
         renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
         getSelectClassName={() => 'select'}
         getInputClassName={() => 'input'}
       />,
     );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-key-features-editor')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-testing-notes-editor')).toBeInTheDocument();
+    });
+
+    const keyFeaturesEditor = screen.getByTestId('mock-key-features-editor');
+    const testingNotesEditor = screen.getByTestId('mock-testing-notes-editor');
+
+    fireEvent.click(within(keyFeaturesEditor).getByRole('button', { name: 'Edit workflow source record' }));
+    fireEvent.click(within(testingNotesEditor).getByRole('button', { name: 'Edit testing form' }));
+
+    expect(onOpenWorkflowRecord).toHaveBeenCalledWith('rec-workflow-1');
+    expect(onOpenTestingForm).toHaveBeenCalledWith('rec-workflow-1');
 
     await waitFor(() => {
       expect(keyFeaturesEditorSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -428,6 +467,80 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         helperText: expect.stringContaining('Testing form'),
       }));
     });
+  });
+
+  it('renders testing and photos quick links for workflow image source content', () => {
+    shippingEditorsSpy.mockReset();
+    keyFeaturesEditorSpy.mockReset();
+    testingNotesTextareaEditorSpy.mockReset();
+    const onOpenTestingForm = vi.fn();
+    const onOpenPhotosForm = vi.fn();
+
+    render(
+      <ApprovalFormFieldsSupplementalEditors
+        recordId="rec-images-1"
+        imageUrlSourceField="Images"
+        useCombinedImageAltEditor={false}
+        combinedImageEditorValue=""
+        imageAltTextSourceField={undefined}
+        shopifyImagePayloadFieldName={undefined}
+        workflowImageAttachments={[
+          { id: 'att-1', url: 'https://cdn.example.com/image-a.jpg', filename: 'image-a.jpg' },
+        ]}
+        selectedWorkflowImageUrls={[]}
+        formValues={{ Images: '' }}
+        setFormValue={vi.fn()}
+        saving={false}
+        isReadOnlyApprovalField={() => false}
+        workflowManagedListingContent={false}
+        testingSectionFields={[]}
+        renderSpecialLabel={(label) => <span>{label}</span>}
+        inputBaseClass="input"
+        isEbayApprovalForm={false}
+        shopifyKeyFeaturesFieldName={undefined}
+        shopifyKeyFeaturesSyncFieldNames={[]}
+        ebayKeyFeaturesFieldName={undefined}
+        ebayKeyFeaturesSyncFieldNames={[]}
+        ebayTestingNotesFieldName={undefined}
+        ebayAttributesFieldName={undefined}
+        ebayAttributesSyncFieldNames={[]}
+        ebayDomesticShippingFeesFieldName={undefined}
+        ebayInternationalShippingFeesFieldName={undefined}
+        ebayDomesticShippingFlatFeeFieldName=""
+        ebayInternationalShippingFlatFeeFieldName=""
+        hasEbayShippingServicesEditor={false}
+        domesticService1FieldName={undefined}
+        domesticService2FieldName={undefined}
+        internationalService1FieldName={undefined}
+        internationalService2FieldName={undefined}
+        hasShopifyTagEditor={false}
+        shopifyTagValues={[]}
+        setShopifyTagValues={vi.fn()}
+        hasShopifyCollectionEditor={false}
+        shopifyCollectionsFieldName="Collections"
+        effectiveShopifyCollectionIds={[]}
+        effectiveCollectionEditorLabelsById={{}}
+        setShopifyCollectionIds={vi.fn()}
+        hasEbayCategoryEditor={false}
+        effectiveEbayCategoriesFieldName="categories"
+        ebayMarketplaceId="EBAY_US"
+        ebaySelectedCategoryDisplayValues={[]}
+        normalizedEbayCategoryLabelsById={{}}
+        setEbayCategoryIds={vi.fn()}
+        hasSecondaryEbayCategory={false}
+        onOpenTestingForm={onOpenTestingForm}
+        onOpenPhotosForm={onOpenPhotosForm}
+        renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
+        getSelectClassName={() => 'select'}
+        getInputClassName={() => 'input'}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit testing form' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit photos form' }));
+
+    expect(onOpenTestingForm).toHaveBeenCalledWith('rec-images-1');
+    expect(onOpenPhotosForm).toHaveBeenCalledWith('rec-images-1');
   });
 
   it('renders the shared Testing section on single-channel listing editors and suppresses the standalone testing-notes editor', () => {
@@ -604,5 +717,77 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     expect(screen.getByLabelText('Testing Notes')).toHaveValue('Bench tested');
     expect(screen.getByLabelText('Audiogon Rating')).toHaveValue('8/10');
     expect(screen.getByLabelText('Cosmetic Notes')).toHaveValue('Light wear on the top cover.');
+  });
+
+  it('renders the eBay category selector when the category editor is enabled', async () => {
+    shippingEditorsSpy.mockReset();
+    keyFeaturesEditorSpy.mockReset();
+    testingNotesTextareaEditorSpy.mockReset();
+    ebayCategoriesSelectSpy.mockReset();
+
+    render(
+      <ApprovalFormFieldsSupplementalEditors
+        imageUrlSourceField={undefined}
+        useCombinedImageAltEditor={false}
+        combinedImageEditorValue=""
+        imageAltTextSourceField={undefined}
+        shopifyImagePayloadFieldName={undefined}
+        workflowImageAttachments={[]}
+        selectedWorkflowImageUrls={[]}
+        formValues={{ Categories: '3276' }}
+        setFormValue={vi.fn()}
+        saving={false}
+        isReadOnlyApprovalField={() => false}
+        workflowManagedListingContent={false}
+        testingSectionFields={[]}
+        renderSpecialLabel={(label) => <span>{label}</span>}
+        inputBaseClass="input"
+        isEbayApprovalForm={true}
+        shopifyKeyFeaturesFieldName={undefined}
+        shopifyKeyFeaturesSyncFieldNames={[]}
+        ebayKeyFeaturesFieldName={undefined}
+        ebayKeyFeaturesSyncFieldNames={[]}
+        ebayTestingNotesFieldName={undefined}
+        ebayAttributesFieldName={undefined}
+        ebayAttributesSyncFieldNames={[]}
+        ebayDomesticShippingFeesFieldName={undefined}
+        ebayInternationalShippingFeesFieldName={undefined}
+        ebayDomesticShippingFlatFeeFieldName=""
+        ebayInternationalShippingFlatFeeFieldName=""
+        hasEbayShippingServicesEditor={false}
+        domesticService1FieldName={undefined}
+        domesticService2FieldName={undefined}
+        internationalService1FieldName={undefined}
+        internationalService2FieldName={undefined}
+        hasShopifyTagEditor={false}
+        shopifyTagValues={[]}
+        setShopifyTagValues={vi.fn()}
+        hasShopifyCollectionEditor={false}
+        shopifyCollectionsFieldName="Collections"
+        effectiveShopifyCollectionIds={[]}
+        effectiveCollectionEditorLabelsById={{}}
+        setShopifyCollectionIds={vi.fn()}
+        hasEbayCategoryEditor
+        effectiveEbayCategoriesFieldName="Categories"
+        ebayMarketplaceId="EBAY_US"
+        ebaySelectedCategoryDisplayValues={['3276']}
+        normalizedEbayCategoryLabelsById={{ '3276': 'Amplifiers' }}
+        setEbayCategoryIds={vi.fn()}
+        hasSecondaryEbayCategory={false}
+        renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
+        getSelectClassName={() => 'select'}
+        getInputClassName={() => 'input'}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-ebay-categories-select')).toBeInTheDocument();
+    });
+
+    expect(ebayCategoriesSelectSpy).toHaveBeenCalledWith(expect.objectContaining({
+      fieldName: 'Categories',
+      marketplaceId: 'EBAY_US',
+      value: ['3276'],
+    }));
   });
 });

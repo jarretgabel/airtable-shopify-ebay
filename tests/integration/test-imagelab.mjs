@@ -6,6 +6,7 @@
 
 import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { execSync } from 'child_process';
+import { enforceLocalOnlyIntegrationTargets } from './helpers/local-only-test-guard.mjs';
 
 const ENV_PATH = new URL('../.env.local', import.meta.url).pathname;
 const env = Object.fromEntries(
@@ -31,6 +32,11 @@ if (!token) {
   console.error('ERROR: No API key found in .env.local');
   process.exit(1);
 }
+
+enforceLocalOnlyIntegrationTargets('test-imagelab', [
+  { label: 'AI endpoint', url: endpoint },
+  { label: 'Test image source', url: TEST_IMAGE_URL },
+]);
 
 console.log(`Provider : ${useGitHub ? 'GitHub Models (Copilot)' : 'OpenAI'}`);
 console.log(`Endpoint : ${endpoint}`);

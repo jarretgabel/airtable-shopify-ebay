@@ -33,6 +33,7 @@ const lazyEditorFallback = (
 );
 
 export interface ApprovalFormFieldsSupplementalEditorsProps {
+  recordId?: string;
   imageUrlSourceField?: string;
   useCombinedImageAltEditor: boolean;
   combinedImageEditorValue: string;
@@ -84,12 +85,27 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
   setEbayCategoryIds: (nextIds: string[]) => void;
   onEbayCategoryLabelsChange?: (labelsById: Record<string, string>) => void;
   hasSecondaryEbayCategory: boolean;
+  onOpenWorkflowRecord?: (recordId: string) => void;
+  onOpenTestingForm?: (recordId: string) => void;
+  onOpenPhotosForm?: (recordId: string) => void;
   renderFieldLabel: (fieldName: string) => JSX.Element;
   getSelectClassName: (fieldName: string) => string;
   getInputClassName: (fieldName: string, extraClassName?: string) => string;
 }
 
+const iconActionButtonClass = 'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--line)] bg-white/5 text-[var(--muted)] transition hover:border-[var(--accent)] hover:bg-white/10 hover:text-[var(--ink)]';
+
+function EditIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-none stroke-current" strokeWidth="1.5">
+      <path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L6 12H4v-2l7.5-7.5Z" />
+      <path d="M10.5 3.5l2 2" />
+    </svg>
+  );
+}
+
 export function ApprovalFormFieldsSupplementalEditors({
+  recordId,
   imageUrlSourceField,
   imageAltTextSourceField,
   shopifyImagePayloadFieldName,
@@ -139,12 +155,51 @@ export function ApprovalFormFieldsSupplementalEditors({
   setEbayCategoryIds,
   onEbayCategoryLabelsChange,
   hasSecondaryEbayCategory,
+  onOpenWorkflowRecord,
+  onOpenTestingForm,
+  onOpenPhotosForm,
   renderFieldLabel,
   getSelectClassName,
   getInputClassName,
 }: ApprovalFormFieldsSupplementalEditorsProps) {
   const hasTestingSection = testingSectionFields.length > 0;
   const effectiveTestingSectionValues = testingSectionValues ?? formValues;
+  const workflowHeaderAction = recordId && workflowManagedListingContent && onOpenWorkflowRecord ? (
+    <button
+      type="button"
+      className={iconActionButtonClass}
+      onClick={() => onOpenWorkflowRecord(recordId)}
+      aria-label="Edit workflow source record"
+      title="Edit workflow source record"
+    >
+      <EditIcon />
+    </button>
+  ) : null;
+  const testingHeaderAction = recordId && onOpenTestingForm ? (
+    <button
+      type="button"
+      className={iconActionButtonClass}
+      onClick={() => onOpenTestingForm(recordId)}
+      aria-label="Edit testing form"
+      title="Edit testing form"
+    >
+      <EditIcon />
+    </button>
+  ) : null;
+  const imageSourceActions = recordId ? (
+    <>
+      {onOpenTestingForm && (
+        <button type="button" className={iconActionButtonClass} onClick={() => onOpenTestingForm(recordId)} aria-label="Edit testing form" title="Edit testing form">
+          <EditIcon />
+        </button>
+      )}
+      {onOpenPhotosForm && (
+        <button type="button" className={iconActionButtonClass} onClick={() => onOpenPhotosForm(recordId)} aria-label="Edit photos form" title="Edit photos form">
+          <EditIcon />
+        </button>
+      )}
+    </>
+  ) : null;
 
   return (
     <>
@@ -173,6 +228,7 @@ export function ApprovalFormFieldsSupplementalEditors({
             }
           }}
           disabled={saving || isReadOnlyApprovalField(imageUrlSourceField)}
+          sourceActions={imageSourceActions}
         />
       )}
 
@@ -202,6 +258,7 @@ export function ApprovalFormFieldsSupplementalEditors({
             helperText={workflowManagedListingContent
               ? 'Read-only listing details derived from the Testing form and workflow fields. Update the Testing form to change these values.'
               : undefined}
+            headerAction={workflowHeaderAction}
           />
         </Suspense>
       )}
@@ -217,12 +274,13 @@ export function ApprovalFormFieldsSupplementalEditors({
             helperText={workflowManagedListingContent
               ? 'Read-only listing details derived from the Testing form and workflow fields. Update the Testing form to change these values.'
               : undefined}
+            headerAction={workflowHeaderAction}
           />
         </Suspense>
       )}
 
       {hasTestingSection && (
-        <ListingApprovalTestingSection fields={testingSectionFields} formValues={effectiveTestingSectionValues} />
+        <ListingApprovalTestingSection fields={testingSectionFields} formValues={effectiveTestingSectionValues} headerAction={testingHeaderAction} />
       )}
 
       {ebayTestingNotesFieldName && !hasTestingSection && (
@@ -239,6 +297,7 @@ export function ApprovalFormFieldsSupplementalEditors({
             placeholder={workflowManagedListingContent
               ? 'Testing form notes will appear here after the workflow fields are loaded.'
               : undefined}
+            headerAction={workflowManagedListingContent ? testingHeaderAction : null}
           />
         </Suspense>
       )}

@@ -13,6 +13,7 @@ interface BuildListingApprovalSelectedRecordViewPropsParams {
   approvalChannel: 'shopify' | 'ebay' | 'combined';
   isCombinedApproval: boolean;
   approvedFieldName: string;
+  titleFieldName: string;
   allFieldNames: string[];
   formRequiredFieldNames: string[];
   formShopifyRequiredFieldNames: string[];
@@ -66,6 +67,9 @@ interface BuildListingApprovalSelectedRecordViewPropsParams {
   bodyHtmlPreview: string;
   isEbayPayloadPreviewContext: boolean;
   ebayDraftPayloadBundle: EbayApprovalPayloadPreviewData['ebayDraftPayloadBundle'];
+  onOpenWorkflowRecord?: (recordId: string) => void;
+  onOpenTestingForm?: (recordId: string) => void;
+  onOpenPhotosForm?: (recordId: string) => void;
 }
 
 export function buildListingApprovalSelectedRecordViewProps({
@@ -73,6 +77,7 @@ export function buildListingApprovalSelectedRecordViewProps({
   approvalChannel,
   isCombinedApproval,
   approvedFieldName,
+  titleFieldName,
   allFieldNames,
   formRequiredFieldNames,
   formShopifyRequiredFieldNames,
@@ -122,6 +127,9 @@ export function buildListingApprovalSelectedRecordViewProps({
   bodyHtmlPreview,
   isEbayPayloadPreviewContext,
   ebayDraftPayloadBundle,
+  onOpenWorkflowRecord,
+  onOpenTestingForm,
+  onOpenPhotosForm,
 }: BuildListingApprovalSelectedRecordViewPropsParams) {
   const approvalFormOriginalFieldValues = Object.fromEntries(
     Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
@@ -137,6 +145,7 @@ export function buildListingApprovalSelectedRecordViewProps({
       listingDurationOptions,
       saving,
       setFormValue,
+      titleFieldName,
       combinedDescriptionFieldName,
       combinedSharedFieldNames,
       combinedRequiredFieldNames,
@@ -152,6 +161,9 @@ export function buildListingApprovalSelectedRecordViewProps({
         Object.entries(drawerSourceFields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
       ),
       sharedDrawerRequiredStatus,
+      onOpenWorkflowRecord,
+      onOpenTestingForm,
+      onOpenPhotosForm,
       combinedShopifyOnlyFieldNames,
       shopifyDrawerRequiredStatus,
       currentPageShopifyBodyHtml,
@@ -211,6 +223,9 @@ export function buildListingApprovalSelectedRecordViewProps({
         ? (labelsById: Record<string, string>) => setEbayCategoryLabelsById((current) => ({ ...current, ...labelsById }))
         : undefined,
       onBodyHtmlPreviewChange: setBodyHtmlPreview,
+      onOpenWorkflowRecord,
+      onOpenTestingForm,
+      onOpenPhotosForm,
       selectedEbayTemplateId,
       onEbayTemplateIdChange: setSelectedEbayTemplateId,
     },

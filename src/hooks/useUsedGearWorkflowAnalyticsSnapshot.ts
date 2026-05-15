@@ -13,7 +13,7 @@ export interface UsedGearWorkflowAnalyticsSnapshotState extends UsedGearWorkflow
 
 const EMPTY_SNAPSHOT = createEmptyUsedGearWorkflowAnalyticsSnapshot();
 
-export function useUsedGearWorkflowAnalyticsSnapshot(enabled = true): UsedGearWorkflowAnalyticsSnapshotState {
+export function useUsedGearWorkflowAnalyticsSnapshot(enabled = true, currentUserName = ''): UsedGearWorkflowAnalyticsSnapshotState {
   const [snapshot, setSnapshot] = useState<UsedGearWorkflowAnalyticsSnapshot>(EMPTY_SNAPSHOT);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -30,14 +30,14 @@ export function useUsedGearWorkflowAnalyticsSnapshot(enabled = true): UsedGearWo
     setError(null);
 
     try {
-      setSnapshot(await loadUsedGearWorkflowAnalyticsSnapshot());
+      setSnapshot(await loadUsedGearWorkflowAnalyticsSnapshot(currentUserName));
     } catch (loadError) {
       setSnapshot(EMPTY_SNAPSHOT);
       setError(loadError instanceof Error ? loadError.message : 'Unable to load the used-gear workflow analytics snapshot.');
     } finally {
       setLoading(false);
     }
-  }, [enabled]);
+  }, [currentUserName, enabled]);
 
   useEffect(() => {
     void refetch();

@@ -1,5 +1,4 @@
 import { FormEvent, MutableRefObject, useRef, useState } from 'react';
-import { AppPage } from '@/auth/pages';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
 import { RoleNotificationDefaultsPanel } from '@/components/users/RoleNotificationDefaultsPanel';
 import { SectionSubnav } from '@/components/app/SectionSubnav';
@@ -39,7 +38,6 @@ interface UserDirectoryPanelProps {
   onScrollToCreateUser: () => void;
   onNewUserFieldChange: (field: keyof NewUserFormState, value: string) => void;
   onNewUserRoleChange: (role: AssignableUserRole) => void;
-  onNewUserPageToggle: (page: AppPage) => void;
   onRegenerateTemporaryPassword: () => void;
   onToggleRoleWorkflowNotificationDefault: (role: UserRole, eventKey: UsedGearWorkflowNotificationEvent, enabled: boolean) => void;
   onApplyRoleWorkflowNotificationDefaults: (role: UserRole) => void;
@@ -71,7 +69,6 @@ export function UserDirectoryPanel({
   onScrollToCreateUser,
   onNewUserFieldChange,
   onNewUserRoleChange,
-  onNewUserPageToggle,
   onRegenerateTemporaryPassword,
   onToggleRoleWorkflowNotificationDefault,
   onApplyRoleWorkflowNotificationDefaults,
@@ -175,7 +172,6 @@ export function UserDirectoryPanel({
               onCreateUserSubmit={onCreateUserSubmit}
               onNewUserFieldChange={onNewUserFieldChange}
               onNewUserRoleChange={onNewUserRoleChange}
-              onNewUserPageToggle={onNewUserPageToggle}
               onRegenerateTemporaryPassword={onRegenerateTemporaryPassword}
             />
           </section>

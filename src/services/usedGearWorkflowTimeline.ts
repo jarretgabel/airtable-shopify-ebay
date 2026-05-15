@@ -35,6 +35,7 @@ export function buildUsedGearWorkflowTimeline(record: AirtableRecord): UsedGearW
 
   return [
     buildEntry('accepted', 'Intake Accepted', fields['Accepted At'], fields['Accepted By']),
+    buildEntry('owner-assigned', 'Owner Assigned', fields['Workflow Owner Assigned At'], fields['Workflow Owner']),
     buildEntry('processing', 'Processing Completed', fields['Processing Signed At'], fields['Processing Signed By']),
     buildEntry('testing', 'Testing Signed', fields['Testing Signed At'], fields['Testing Signed By']),
     buildEntry('photography', 'Photography Signed', fields['Photography Signed At'], fields['Photography Signed By']),

@@ -4,8 +4,10 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ mode }) => {
   const workspaceRoot = new URL('.', import.meta.url).pathname
-  const env = loadEnv(mode, workspaceRoot, 'VITE_')
-  const appApiProxyTarget = env.VITE_APP_API_PROXY_TARGET?.trim()
+  const env = loadEnv(mode, workspaceRoot, '')
+  const localApiHost = env.LOCAL_API_HOST?.trim() || '127.0.0.1'
+  const localApiPort = env.LOCAL_API_PORT?.trim() || '3001'
+  const localApiOrigin = `http://${localApiHost}:${localApiPort}`
 
   return {
   plugins: [react(), tailwindcss()],
@@ -71,15 +73,11 @@ export default defineConfig(({ mode }) => {
     port: 3000,
     open: true,
     proxy: {
-      ...(appApiProxyTarget
-        ? {
-            '/api': {
-              target: appApiProxyTarget,
-              changeOrigin: true,
-              secure: /^https:\/\//i.test(appApiProxyTarget),
-            },
-          }
-        : {}),
+      '/api': {
+        target: localApiOrigin,
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   }

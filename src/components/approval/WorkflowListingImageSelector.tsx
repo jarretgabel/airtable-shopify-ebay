@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { WorkflowListingImageAttachment } from '@/components/approval/workflowListingImageHelpers';
 
 interface WorkflowListingImageSelectorProps {
@@ -5,6 +6,7 @@ interface WorkflowListingImageSelectorProps {
   selectedUrls: string[];
   onSelectionChange: (selectedUrls: string[]) => void;
   disabled?: boolean;
+  sourceActions?: ReactNode;
 }
 
 export function WorkflowListingImageSelector({
@@ -12,6 +14,7 @@ export function WorkflowListingImageSelector({
   selectedUrls,
   onSelectionChange,
   disabled = false,
+  sourceActions,
 }: WorkflowListingImageSelectorProps) {
   const selectedLookup = new Set(selectedUrls.map((url) => url.trim().toLowerCase()).filter(Boolean));
   const selectedCount = attachments.filter((attachment) => selectedLookup.has(attachment.url.trim().toLowerCase())).length;
@@ -142,6 +145,11 @@ export function WorkflowListingImageSelector({
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
             Images now come from the Testing and Photos workflow forms. Toggle the ones that should be included in this listing.
           </p>
+          {sourceActions ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {sourceActions}
+            </div>
+          ) : null}
         </div>
         <div className="rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--ink)]">
           {selectedCount} of {attachments.length} selected

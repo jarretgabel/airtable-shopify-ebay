@@ -341,6 +341,8 @@ function getTimelineCompletionGuidance(entryId: UsedGearWorkflowTimelineEntry['i
   switch (entryId) {
     case 'accepted':
       return 'Use "Open Incoming Gear" to update the intake record, then click "Complete Processing" when the item is ready to move forward.';
+    case 'owner-assigned':
+      return 'Ownership history is retained for older rows, but active handoffs now move forward through the stage completion actions instead of claim controls.';
     case 'processing':
       return 'Finish the intake details in "Open Incoming Gear", then click "Complete Processing" to send the item to testing and photography.';
     case 'testing':

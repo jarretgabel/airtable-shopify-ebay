@@ -17,7 +17,7 @@ interface ListingApprovalSelectedRecordViewProps {
   editor: ReactNode;
   alerts: ReactNode;
   actions: ReactNode;
-  payloadPanels: ReactNode;
+  payloadPanels?: ReactNode;
 }
 
 export function ListingApprovalSelectedRecordView({
@@ -77,26 +77,28 @@ export function ListingApprovalSelectedRecordView({
       {editor}
       {alerts}
       {actions}
-      <details
-        className="mt-4 rounded-lg border border-[var(--line)] bg-white/5"
-        open={showPayloadPanels}
-      >
-        <summary
-          className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]"
-          onClick={(event) => {
-            event.preventDefault();
-            setShowPayloadPanels((current) => !current);
-          }}
+      {payloadPanels ? (
+        <details
+          className="mt-4 rounded-lg border border-[var(--line)] bg-white/5"
+          open={showPayloadPanels}
         >
-          API Payload Previews
-        </summary>
-        <div className="border-t border-[var(--line)] px-3 py-3">
-          <p className="m-0 text-xs text-[var(--muted)]">
-            Open to inspect exact request payloads, debug resolution details, and docs examples for the current listing.
-          </p>
-          {showPayloadPanels ? payloadPanels : null}
-        </div>
-      </details>
+          <summary
+            className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]"
+            onClick={(event) => {
+              event.preventDefault();
+              setShowPayloadPanels((current) => !current);
+            }}
+          >
+            API Payload Previews
+          </summary>
+          <div className="border-t border-[var(--line)] px-3 py-3">
+            <p className="m-0 text-xs text-[var(--muted)]">
+              Open to inspect exact request payloads, debug resolution details, and docs examples for the current listing.
+            </p>
+            {showPayloadPanels ? payloadPanels : null}
+          </div>
+        </details>
+      ) : null}
     </>
   );
 }

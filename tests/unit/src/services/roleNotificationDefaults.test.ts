@@ -49,6 +49,44 @@ describe('roleNotificationDefaults', () => {
     });
   });
 
+  it('keeps processor defaults limited to processor-owned workflow stages', () => {
+    expect(loadRoleWorkflowNotificationDefaults().processor).toEqual({
+      pendingReview: true,
+      processing: true,
+      testing: false,
+      photography: false,
+      preListingReview: true,
+      approvedForPublish: true,
+    });
+  });
+
+  it('allows processor users to opt into testing and photography alerts without changing role defaults', () => {
+    expect(normalizeNotificationPreferencesForRole('processor', {
+      workflowEvents: {
+        testing: true,
+        photography: true,
+      },
+    }).workflowEvents).toEqual({
+      pendingReview: true,
+      processing: true,
+      testing: true,
+      photography: true,
+      preListingReview: true,
+      approvedForPublish: true,
+    });
+  });
+
+  it('keeps developer workflow defaults disabled by default', () => {
+    expect(loadRoleWorkflowNotificationDefaults().developer).toEqual({
+      pendingReview: false,
+      processing: false,
+      testing: false,
+      photography: false,
+      preListingReview: false,
+      approvedForPublish: false,
+    });
+  });
+
   it('loads per-role workflow alert defaults from Airtable-backed users config records', async () => {
     getConfiguredRecordsMock.mockResolvedValue([
       {
@@ -104,6 +142,7 @@ describe('roleNotificationDefaults', () => {
   it('builds role notification preferences from the cached shared defaults', () => {
     setRoleWorkflowNotificationDefaults({
       ...createDefaultRoleWorkflowNotificationDefaults(),
+      developer: createDefaultRoleWorkflowNotificationDefaults().developer,
       owner: createDefaultRoleWorkflowNotificationDefaults().owner,
       photographer: {
         pendingReview: false,
@@ -128,6 +167,7 @@ describe('roleNotificationDefaults', () => {
   it('merges stored role defaults with explicit per-user overrides', () => {
     setRoleWorkflowNotificationDefaults({
       ...createDefaultRoleWorkflowNotificationDefaults(),
+      developer: createDefaultRoleWorkflowNotificationDefaults().developer,
       owner: createDefaultRoleWorkflowNotificationDefaults().owner,
       processor: {
         pendingReview: false,

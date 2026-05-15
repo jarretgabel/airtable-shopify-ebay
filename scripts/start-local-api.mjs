@@ -482,6 +482,27 @@ async function main() {
         return;
       }
 
+      if (request.method.toUpperCase() === 'GET' && requestUrl.pathname === '/api/health') {
+        const origin = getResponseOrigin(request);
+        response.writeHead(200, {
+          'content-type': 'application/json',
+          ...(origin
+            ? {
+                'access-control-allow-origin': origin,
+                'access-control-allow-credentials': 'true',
+                vary: 'origin',
+              }
+            : {}),
+        });
+        response.end(JSON.stringify({
+          ok: true,
+          service: 'local-api',
+          port: defaultPort,
+          apiPrefix: '/api',
+        }));
+        return;
+      }
+
       const matched = findRoute(routes, request.method.toUpperCase(), requestUrl.pathname);
 
       if (!matched) {

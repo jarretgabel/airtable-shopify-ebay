@@ -42,6 +42,11 @@ describe('useAppRouteState', () => {
     expect(state.activeTab).toBe('incoming-gear');
   });
 
+  it('maps the workflow guide route', () => {
+    const state = useAppRouteState(locationFor('/workflow-guide'), ['dashboard', 'workflow-guide']);
+    expect(state.activeTab).toBe('workflow-guide');
+  });
+
   it('maps incoming gear deep links with record ids', () => {
     const state = useAppRouteState(locationFor('/incoming-gear/rec%20123'), ['dashboard', 'incoming-gear']);
     expect(state.activeTab).toBe('incoming-gear');
@@ -49,8 +54,8 @@ describe('useAppRouteState', () => {
   });
 
   it('maps jotform record review deep links with record ids', () => {
-    const state = useAppRouteState(locationFor('/parking-lot-1/review-record/rec%20pending'), ['dashboard', 'jotform']);
-    expect(state.activeTab).toBe('jotform');
+    const state = useAppRouteState(locationFor('/parking-lot-1/review-record/rec%20pending'), ['dashboard', 'parking-lot-1']);
+    expect(state.activeTab).toBe('parking-lot-1');
     expect(state.jotformReviewRecordId).toBe('rec pending');
   });
 

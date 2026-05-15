@@ -4,7 +4,6 @@ import { DashboardInsight, DashboardInsightSeverity, ShopifyProductFull } from '
 import { parseDateValue } from './metricUtils';
 
 interface InsightInput {
-  jfSubmissions: JotFormSubmission[];
   recentSubs: JotFormSubmission[];
   priorRecentSubs: JotFormSubmission[];
   draftProducts: ShopifyProductFull[];
@@ -29,7 +28,6 @@ const severityOrder: Record<DashboardInsightSeverity, number> = {
 
 export function buildDashboardInsights(input: InsightInput): DashboardInsight[] {
   const {
-    jfSubmissions,
     recentSubs,
     priorRecentSubs,
     draftProducts,
@@ -39,13 +37,10 @@ export function buildDashboardInsights(input: InsightInput): DashboardInsight[] 
     airtableBrandSummary,
     nonEmptyListings,
     workflowStaleListingCount,
-    workflowStaleListingUnassignedCount,
     workflowSoldReadyCount,
-    workflowSoldReadyUnassignedCount,
     now,
   } = input;
 
-  const unreadCount = jfSubmissions.filter((submission) => submission.new === '1').length;
   const staleActiveProducts = activeProducts.filter((product) => {
     const createdAt = parseDateValue(product.created_at);
     if (!createdAt) return false;
@@ -53,34 +48,6 @@ export function buildDashboardInsights(input: InsightInput): DashboardInsight[] 
   });
 
   const insights: DashboardInsight[] = [];
-
-  if (priorRecentSubs.length >= 5 && recentSubs.length <= Math.floor(priorRecentSubs.length * 0.6)) {
-    insights.push({
-      id: 'inquiry-drop',
-      title: 'Inquiry volume dropped',
-      detail: `Last 30 days received ${recentSubs.length} inquiries vs ${priorRecentSubs.length} in the prior window.`,
-      severity: 'warning',
-      targetTab: 'jotform',
-    });
-  }
-
-  if (unreadCount >= 20) {
-    insights.push({
-      id: 'unread-backlog-critical',
-      title: 'Inquiry backlog is high',
-      detail: `${unreadCount} unread inquiries need triage.`,
-      severity: 'critical',
-      targetTab: 'jotform',
-    });
-  } else if (unreadCount >= 8) {
-    insights.push({
-      id: 'unread-backlog-warning',
-      title: 'Inquiry backlog is growing',
-      detail: `${unreadCount} inquiries are still unread.`,
-      severity: 'warning',
-      targetTab: 'jotform',
-    });
-  }
 
   if (draftProducts.length >= 10 && draftProducts.length >= activeProducts.length) {
     insights.push({
@@ -95,24 +62,22 @@ export function buildDashboardInsights(input: InsightInput): DashboardInsight[] 
   if (workflowSoldReadyCount > 0) {
     insights.push({
       id: 'used-gear-sold-ready',
-      title: 'Used gear shipments are queued',
-      detail: `${workflowSoldReadyCount} used-gear item${workflowSoldReadyCount === 1 ? '' : 's'} are sold and ready to ship.`,
+      title: 'Used gear ready to ship',
+      detail: `${workflowSoldReadyCount} used-gear item${workflowSoldReadyCount === 1 ? ' is' : 's are'} sold and ready to ship.`,
       severity: 'critical',
       targetTab: 'inventory',
       inventoryPostPublishBucket: 'sold-ready',
-      inventoryPostPublishOwnerFilter: workflowSoldReadyUnassignedCount > 0 ? 'unassigned' : 'all',
     });
   }
 
   if (workflowStaleListingCount > 0) {
     insights.push({
       id: 'used-gear-stale-listings',
-      title: 'Used gear listings need stale review',
-      detail: `${workflowStaleListingCount} used-gear listing${workflowStaleListingCount === 1 ? '' : 's'} have crossed into stale-review work.`,
+      title: 'Used gear listings went stale',
+      detail: `${workflowStaleListingCount} used-gear listing${workflowStaleListingCount === 1 ? ' has' : 's have'} crossed into stale review.`,
       severity: workflowStaleListingCount >= 3 ? 'warning' : 'info',
       targetTab: 'inventory',
       inventoryPostPublishBucket: 'stale-listing',
-      inventoryPostPublishOwnerFilter: workflowStaleListingUnassignedCount > 0 ? 'unassigned' : 'all',
     });
   }
 

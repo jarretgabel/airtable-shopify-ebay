@@ -123,7 +123,7 @@ function buildNotificationAction(
   if (eventKey === 'pendingReview') {
     return {
       actionLabel: 'Open Parking Lot 1',
-      onAction: () => navigateToTab('jotform'),
+      onAction: () => navigateToTab('parking-lot-1'),
     };
   }
 
@@ -173,7 +173,7 @@ export function useUsedGearWorkflowNotifications({
 }: UsedGearWorkflowNotificationParams): void {
   const upsertByKey = useNotificationStore((state) => state.upsertByKey);
   const dismissByKey = useNotificationStore((state) => state.dismissByKey);
-  const canAccessWorkflowSurfaces = canAccessPage('jotform')
+  const canAccessWorkflowSurfaces = canAccessPage('parking-lot-1')
     || canAccessPage('parking-lot-2')
     || canAccessPage('inventory')
     || canAccessPage('testing-queue')
@@ -183,6 +183,9 @@ export function useUsedGearWorkflowNotifications({
   const workflowPreferenceSignature = USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS
     .map((option) => `${option.key}:${currentUser?.notificationPreferences.workflowEvents[option.key] ? '1' : '0'}`)
     .join('|');
+  const workflowOwnershipPreferenceSignature = currentUser
+    ? `${currentUser.notificationPreferences.workflowAssignedAlertsEnabled ? '1' : '0'}:${currentUser.notificationPreferences.workflowUnassignedAlertsEnabled ? '1' : '0'}`
+    : '0:0';
 
   useEffect(() => {
     if (!enabled || !currentUser || !canAccessWorkflowSurfaces) {
@@ -197,7 +200,11 @@ export function useUsedGearWorkflowNotifications({
 
     const syncNotifications = async () => {
       try {
-        const summary = await loadUsedGearWorkflowNotificationSummary();
+        const summary = await loadUsedGearWorkflowNotificationSummary({
+          currentUserName: currentUser.name,
+          includeAssignedToCurrentUser: currentUser.notificationPreferences.workflowAssignedAlertsEnabled,
+          includeUnassigned: currentUser.notificationPreferences.workflowUnassignedAlertsEnabled,
+        });
         if (cancelled) {
           return;
         }
@@ -256,5 +263,5 @@ export function useUsedGearWorkflowNotifications({
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [canAccessWorkflowSurfaces, currentUser, dismissByKey, enabled, navigateToInventorySection, navigateToListingsRecord, navigateToPath, navigateToTab, navigateToUsedGearWorkflowRecord, onSummaryChange, upsertByKey, workflowPreferenceSignature]);
+  }, [canAccessWorkflowSurfaces, currentUser, dismissByKey, enabled, navigateToInventorySection, navigateToListingsRecord, navigateToPath, navigateToTab, navigateToUsedGearWorkflowRecord, onSummaryChange, upsertByKey, workflowOwnershipPreferenceSignature, workflowPreferenceSignature]);
 }

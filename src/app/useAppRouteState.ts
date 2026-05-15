@@ -52,6 +52,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     if (normalizedPath === '/listings' || listingsRecordMatch) return 'listings';
     if (normalizedPath === '/ebay/listings' || ebayListingsRecordMatch) return 'ebay';
     if (normalizedPath === '/shopify/products' || shopifyListingsRecordMatch) return 'shopify';
+    if (normalizedPath === '/parking-lot-1' || jotformReviewGroupMatch || jotformReviewRecordMatch) return 'parking-lot-1';
     if (normalizedPath === '/parking-lot-2') return 'parking-lot-2';
     if (normalizedPath === '/trash-review' || trashReviewRecordMatch) return 'trash-review';
     if (normalizedPath === '/workflow/testing') return 'testing-queue';
@@ -61,10 +62,10 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     if (normalizedPath === '/testing' || testingRecordMatch) return 'testing';
     if (normalizedPath === '/photos' || photosRecordMatch) return 'photos';
     if (normalizedPath === '/inventory' || workflowPriceEditorRecordMatch || usedGearWorkflowRecordMatch || inventoryRecordMatch) return 'inventory';
-    if (normalizedPath === '/parking-lot-1' || jotformReviewGroupMatch || jotformReviewRecordMatch) return 'jotform';
     if (normalizedPath === '/account/users' || userRecordMatch) return 'users';
     if (normalizedPath === '/account/settings') return 'settings';
     if (normalizedPath === '/account/notifications') return 'notifications';
+    if (normalizedPath === '/workflow-guide') return 'workflow-guide';
 
     const tabFromPath = normalizedPath.slice(1);
     return isTab(tabFromPath) ? tabFromPath : 'dashboard';

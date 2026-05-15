@@ -8,6 +8,7 @@ import { issueEmailChangeToken, issuePasswordResetToken, issueSessionToken, veri
 
 interface AuthLoginResult {
   userId: string;
+  airtableRecordId: string;
   name: string;
   email: string;
   sessionToken: string;
@@ -18,6 +19,7 @@ interface AuthLoginResult {
 
 interface AuthSessionResult {
   userId: string;
+  airtableRecordId: string;
   name: string;
   email: string;
   mustChangePassword: boolean;
@@ -112,6 +114,7 @@ export async function login(email: string, password: string): Promise<AuthLoginR
 
   return {
     userId: user.id,
+    airtableRecordId: user.airtableRecordId,
     name: user.name,
     email: user.email,
     sessionToken: issueSessionToken(user.id, user.mustChangePassword),
@@ -136,6 +139,7 @@ export async function resolveSession(sessionToken: string): Promise<AuthSessionR
 
   return {
     userId: user.id,
+    airtableRecordId: user.airtableRecordId,
     name: user.name,
     email: user.email,
     mustChangePassword: user.mustChangePassword,

@@ -79,6 +79,8 @@ After the Airtable field exists, update only the affected repo seams.
 - `Stale Recovery Notes`
 - `Stale Recovery Updated At`
 - `Relisted At`
+- `Shipment Follow-Through Notes`
+- `Shipment Follow-Through Updated At`
 
 These fields were approved, created in base `apprsAm2FOohEmL2u` / table `tbl0K0nFQL64jQMx8`, and wired into the workflow queue and workflow detail surfaces.
 

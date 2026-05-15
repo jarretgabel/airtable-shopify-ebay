@@ -1,6 +1,15 @@
 import { FormEvent, useState } from 'react';
 import { useAuthStore } from '@/stores/auth/authStore';
 
+const TEST_USERS = [
+  { label: 'Admin', email: 'admin@example.com', password: 'Admin123!' },
+  { label: 'Owner', email: 'owner@example.com', password: 'Owner123!' },
+  { label: 'Developer', email: 'developer@example.com', password: 'Developer123!' },
+  { label: 'Processor', email: 'processor@example.com', password: 'Processor123!' },
+  { label: 'Tester', email: 'tester@example.com', password: 'Tester123!' },
+  { label: 'Photographer', email: 'photographer@example.com', password: 'Photographer123!' },
+] as const;
+
 interface LoginScreenProps {
   onLoggedIn: () => void;
 }
@@ -13,18 +22,19 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [activeSampleEmail, setActiveSampleEmail] = useState<string | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetStatus, setResetStatus] = useState<string | null>(null);
-  const [resetLink, setResetLink] = useState<string | null>(null);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
+  async function submitLogin(nextEmail: string, nextPassword: string, sampleEmail: string | null = null): Promise<void> {
     if (submitting) return;
 
+    setActiveSampleEmail(sampleEmail);
     setSubmitting(true);
-    const result = await login(email, password);
+    const result = await login(nextEmail, nextPassword);
     setSubmitting(false);
+    setActiveSampleEmail(null);
     if (!result.success) {
       setError(result.message);
       return;
@@ -34,11 +44,22 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
     onLoggedIn();
   }
 
+  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    await submitLogin(email, password, null);
+  }
+
   async function handleForgotPassword(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     const result = await requestPasswordReset(resetEmail);
     setResetStatus(result.message);
-    setResetLink(result.resetLink ?? null);
+  }
+
+  async function handleUseSampleAccount(sample: (typeof TEST_USERS)[number]): Promise<void> {
+    setEmail(sample.email);
+    setPassword(sample.password);
+    setError(null);
+    await submitLogin(sample.email, sample.password, sample.email);
   }
 
   function handleLoginEnterKeyDown(event: React.KeyboardEvent<HTMLInputElement>): void {
@@ -125,19 +146,29 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
               Send reset email
             </button>
             {resetStatus && <p className="text-sm text-emerald-300">{resetStatus}</p>}
-            {resetLink && (
-              <p className="break-all text-xs text-slate-300">
-                Development reset link: <a className="text-sky-300 underline underline-offset-2" href={resetLink}>{resetLink}</a>
-              </p>
-            )}
           </form>
         )}
 
-        <div className="mt-4 space-y-1 text-xs text-slate-400">
-          <p className="m-0">Default admin login: admin@example.com / Admin123!</p>
-          <p className="m-0">Sample processor login: processor@example.com / Processor123!</p>
-          <p className="m-0">Sample tester login: tester@example.com / Tester123!</p>
-          <p className="m-0">Sample photographer login: photographer@example.com / Photographer123!</p>
+        <div className="mt-5 border-t border-white/10 pt-4 text-xs leading-6 text-slate-400">
+          <p className="m-0 font-semibold uppercase tracking-[0.12em] text-sky-200/80">Test account logins</p>
+          {TEST_USERS.map((user) => (
+            <div key={user.email} className="flex items-center justify-between gap-3 py-1.5">
+              <p className="m-0 min-w-0 flex-1 truncate">
+                {user.label}: {user.email} / {user.password}
+              </p>
+              <button
+                type="button"
+                aria-label={`Log In as ${user.label}`}
+                className="shrink-0 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-slate-100 transition hover:bg-white/10"
+                disabled={submitting}
+                onClick={() => {
+                  void handleUseSampleAccount(user);
+                }}
+              >
+                {submitting && activeSampleEmail === user.email ? 'Logging In...' : 'Log In'}
+              </button>
+            </div>
+          ))}
         </div>
       </section>
     </main>

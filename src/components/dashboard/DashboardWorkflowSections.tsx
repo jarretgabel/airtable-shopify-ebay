@@ -3,7 +3,7 @@ import type { WorkflowCard } from './dashboardTabTypes';
 import { DashboardSectionPanel } from './dashboardPrimitives';
 
 const innerPanelClass =
-  'flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]';
+  'flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_94%,transparent)] p-5 shadow-[0_1px_2px_rgba(17,32,49,0.05),0_3px_12px_rgba(17,32,49,0.04)]';
 const subHeadClass =
   'm-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-bold text-[var(--ink)]';
 
@@ -94,7 +94,7 @@ function WorkflowButton({ card, onSelect }: { card: WorkflowCard; onSelect: (tab
   return (
     <button
       type="button"
-      className={`flex h-full flex-col gap-3 rounded-[16px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(104,164,255,0.1),transparent_56%),linear-gradient(180deg,rgba(15,23,42,0.9),rgba(8,15,26,0.96))] p-4 text-left text-[var(--ink)] transition ${card.unavailableReason ? 'cursor-not-allowed opacity-80' : 'hover:-translate-y-px hover:border-sky-400/35 hover:shadow-[0_18px_34px_rgba(2,6,23,0.28)]'}`}
+      className={`flex h-full flex-col gap-3 rounded-[16px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_90%,transparent)] p-4 text-left text-[var(--ink)] transition ${card.unavailableReason ? 'cursor-not-allowed opacity-80' : 'hover:border-sky-400/25 hover:bg-[color:color-mix(in_srgb,var(--panel)_94%,white_4%)] hover:shadow-[0_8px_20px_rgba(17,32,49,0.08)]'}`}
       disabled={Boolean(card.unavailableReason)}
       title={card.unavailableReason ?? undefined}
       onClick={() => {
@@ -104,16 +104,16 @@ function WorkflowButton({ card, onSelect }: { card: WorkflowCard; onSelect: (tab
       }}
     >
       <div>
-        <p className="m-0 flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-sky-200/80">
+        <p className="m-0 flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-sky-300/80">
           <span>{card.eyebrow}</span>
           {card.unavailableReason ? <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-[0.62rem] text-amber-200">Unavailable</span> : null}
         </p>
-        <h3 className="m-0 mt-1 text-[0.98rem] font-bold text-white">{card.title}</h3>
+        <h3 className="m-0 mt-1 text-[0.98rem] font-bold text-[var(--ink)]">{card.title}</h3>
       </div>
-      <p className="m-0 min-h-[3.6rem] text-[0.8rem] leading-[1.55] text-slate-300">{card.detail}</p>
+      <p className="m-0 min-h-[3.6rem] text-[0.8rem] leading-[1.55] text-[var(--muted)]">{card.detail}</p>
       <div className="mt-auto flex flex-wrap gap-2">
         {card.stats.map((stat, index) => (
-          <span key={`${stat}-${index}`} className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2.5 py-1 text-[0.7rem] font-semibold text-sky-100">
+          <span key={`${stat}-${index}`} className="rounded-full border border-sky-400/15 bg-sky-500/10 px-2.5 py-1 text-[0.7rem] font-semibold text-sky-200">
             {stat}
           </span>
         ))}

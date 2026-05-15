@@ -70,4 +70,30 @@ describe('ListingApprovalSelectedRecordView', () => {
     expect(screen.getByText('Resolved Price')).toBeInTheDocument();
     expect(screen.getByText('2499.00')).toBeInTheDocument();
   });
+
+  it('omits the payload preview section when no payload content is provided', () => {
+    render(
+      <ListingApprovalSelectedRecordView
+        selectedRecord={{
+          id: 'rec-approval-3',
+          createdTime: '2026-04-30T00:00:00.000Z',
+          fields: { Title: 'Luxman L-550AXII' },
+        }}
+        titleFieldName="Title"
+        eyebrowLabel="Combined Listing Editor"
+        isApproved
+        saving={false}
+        error={null}
+        onBackToList={vi.fn()}
+        secondaryActionButtonClass="rounded"
+        errorSurfaceClass="rounded"
+        workflowSummary={null}
+        editor={<div>Editor</div>}
+        alerts={<div>Alerts</div>}
+        actions={<div>Actions</div>}
+      />
+    );
+
+    expect(screen.queryByText('API Payload Previews')).not.toBeInTheDocument();
+  });
 });

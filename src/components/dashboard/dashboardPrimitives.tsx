@@ -63,7 +63,7 @@ export function DashboardKpiCard({
   return (
     <button
       type="button"
-      className={`w-full appearance-none rounded-[14px] border border-[var(--line)] border-t-[3px] bg-[var(--panel)] px-4 pb-3 pt-3 text-left text-[var(--ink)] shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)] transition focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-blue-200 ${borderToneClass} ${unavailableReason ? 'cursor-not-allowed opacity-85' : 'hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(17,32,49,0.09),0_8px_24px_rgba(17,32,49,0.08)]'}`}
+      className={`w-full appearance-none rounded-[14px] border border-[var(--line)] border-t-[3px] bg-[color:color-mix(in_srgb,var(--panel)_92%,transparent)] px-4 pb-3 pt-3 text-left text-[var(--ink)] shadow-[0_1px_2px_rgba(17,32,49,0.05),0_3px_10px_rgba(17,32,49,0.04)] transition focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-blue-200 ${borderToneClass} ${unavailableReason ? 'cursor-not-allowed opacity-85' : 'hover:border-white/15 hover:bg-[color:color-mix(in_srgb,var(--panel)_96%,white_4%)] hover:shadow-[0_3px_12px_rgba(17,32,49,0.06)]'}`}
       disabled={Boolean(unavailableReason)}
       title={unavailableReason ?? undefined}
       onClick={() => {
@@ -84,7 +84,7 @@ export function DashboardKpiCard({
 }
 
 const outerPanelClass =
-  'flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]';
+  'flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_94%,transparent)] p-5 shadow-[0_1px_2px_rgba(17,32,49,0.05),0_3px_12px_rgba(17,32,49,0.04)]';
 const panelHeaderClass = 'mb-4 flex items-center border-b border-[var(--line)] pb-3 pt-1';
 const panelHeaderLabelClass = 'm-0 text-[1.05rem] font-semibold text-[var(--ink)]';
 
@@ -127,7 +127,7 @@ export function DashboardSubPanel({
   className?: string;
 }) {
   return (
-    <section className={`flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5${className ? ` ${className}` : ''}`}>
+    <section className={`flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--bg)_92%,transparent)] p-4${className ? ` ${className}` : ''}`}>
       {title && (
         <h3 className="m-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-bold text-[var(--ink)]">
           {title}
@@ -255,7 +255,7 @@ export function DashboardPartialDataNotice({
   if (degradedSources.length === 0) return null;
 
   return (
-    <section className="rounded-[14px] border border-amber-400/35 bg-amber-500/10 px-4 py-4 text-amber-100 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]">
+    <section className="rounded-[14px] border border-amber-400/35 bg-amber-500/10 px-4 py-4 text-amber-100 shadow-[0_1px_2px_rgba(17,32,49,0.05),0_3px_10px_rgba(17,32,49,0.04)]">
       <p className="m-0 text-[0.78rem] font-bold uppercase tracking-[0.08em] text-amber-200">Partial dashboard data</p>
       <p className="m-0 mt-2 text-[0.88rem] text-amber-100/90">
         Some sources failed to refresh. The dashboard is still showing the most recent successful data where it was available.

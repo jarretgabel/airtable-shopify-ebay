@@ -7,11 +7,10 @@ describe('buildAppFrameNavTabs', () => {
     const navigateToUsersList = vi.fn();
 
     const result = buildAppFrameNavTabs({
-      visibleTabs: ['dashboard', 'listings', 'jotform', 'ebay', 'shopify', 'market'],
+      visibleTabs: ['dashboard', 'listings', 'parking-lot-1', 'jotform', 'ebay', 'shopify', 'market'],
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
-      totalNewSubmissions: 5,
       disabledTabReasons: {
         jotform: 'Missing public runtime config: VITE_JOTFORM_FORM_ID.',
         listings: 'Missing public runtime config: VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF.',
@@ -20,7 +19,11 @@ describe('buildAppFrameNavTabs', () => {
       navigateToUsersList,
     });
 
-    expect(result.intakeNavTabs.find((tab) => tab.key === 'jotform')).toMatchObject({
+    expect(result.intakeNavTabs.find((tab) => tab.key === 'parking-lot-1')).toMatchObject({
+      disabled: false,
+      disabledReason: undefined,
+    });
+    expect(result.utilityNavTabs.find((tab) => tab.key === 'jotform')).toMatchObject({
       disabled: true,
       disabledReason: 'Missing public runtime config: VITE_JOTFORM_FORM_ID.',
     });
@@ -38,13 +41,29 @@ describe('buildAppFrameNavTabs', () => {
     });
   });
 
+  it('places the workflow guide in the utility navigation group', () => {
+    const result = buildAppFrameNavTabs({
+      visibleTabs: ['dashboard', 'workflow-guide', 'market'],
+      activeTab: 'workflow-guide',
+      exportingPdf: false,
+      workflowInventoryBadgeCount: 0,
+      navigateToTab: vi.fn(),
+      navigateToUsersList: vi.fn(),
+    });
+
+    expect(result.tabs).toEqual([expect.objectContaining({ key: 'dashboard' })]);
+    expect(result.utilityNavTabs).toEqual(expect.arrayContaining([
+      expect.objectContaining({ key: 'workflow-guide', label: 'Workflow Guide', active: true }),
+      expect.objectContaining({ key: 'market', label: 'HiFi Shark' }),
+    ]));
+  });
+
   it('shows workflow queue volume on the inventory tab badge', () => {
     const result = buildAppFrameNavTabs({
       visibleTabs: ['dashboard', 'inventory', 'incoming-gear', 'testing', 'photos'],
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 7,
-      totalNewSubmissions: 0,
       navigateToTab: vi.fn(),
       navigateToUsersList: vi.fn(),
     });
@@ -59,7 +78,6 @@ describe('buildAppFrameNavTabs', () => {
       activeTab: 'inventory',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
-      totalNewSubmissions: 0,
       navigateToTab: vi.fn(),
       navigateToUsersList: vi.fn(),
     });

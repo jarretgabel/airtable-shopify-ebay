@@ -11,7 +11,6 @@ interface AppShellControlsParams {
   activeTab: Tab;
   visibleTabs: Tab[];
   workflowInventoryBadgeCount: number;
-  totalNewSubmissions: number;
   runtimeFeatures: RuntimeFeatureMap;
   exportingPdf: boolean;
   dashboardRefreshing: boolean;
@@ -41,7 +40,6 @@ export function useAppShellControls({
   activeTab,
   visibleTabs,
   workflowInventoryBadgeCount,
-  totalNewSubmissions,
   runtimeFeatures,
   exportingPdf,
   dashboardRefreshing,
@@ -160,7 +158,6 @@ export function useAppShellControls({
     activeTab,
     exportingPdf,
     workflowInventoryBadgeCount,
-    totalNewSubmissions,
     disabledTabReasons: {
       jotform: runtimeFeatures.jotform.message ?? undefined,
       listings: runtimeFeatures.approvalCombined.message ?? undefined,
