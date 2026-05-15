@@ -69,52 +69,6 @@ describe('UsedGearPendingReviewSection', () => {
     });
   });
 
-  it('emits collapse-all group ids for the visible pending-review groups', async () => {
-    const onCollapsedGroupIdsChange = vi.fn();
-
-    loadPendingReviewQueueMock.mockResolvedValue([
-      {
-        id: 'rec-pending-a',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'PEND-1',
-          Make: 'McIntosh',
-          Model: 'MC240',
-          'Workflow Status': 'Pending Review',
-          'Pick Up ID': 'pickup-a',
-        },
-      },
-      {
-        id: 'rec-pending-b',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'PEND-2',
-          Make: 'Marantz',
-          Model: 'Model 8',
-          'Workflow Status': 'Pending Review',
-          'Pick Up ID': 'pickup-b',
-        },
-      },
-    ]);
-
-    render(
-      <UsedGearPendingReviewSection
-        currentUserName="Taylor Reviewer"
-        onOpenReviewRecord={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
-        collapsedGroupIds={[]}
-        onCollapsedGroupIdsChange={onCollapsedGroupIdsChange}
-      />,
-    );
-
-    await screen.findByText('Pending Review Queue');
-
-  await openPendingReviewTools();
-  fireEvent.click(await screen.findByRole('button', { name: 'Collapse All Groups' }));
-
-    expect(onCollapsedGroupIdsChange).toHaveBeenCalledWith(['pickup:pickup-a', 'pickup:pickup-b']);
-  });
-
   it('opens the dedicated item review page from a compact queue card', async () => {
     const onOpenReviewRecord = vi.fn();
 

@@ -5,7 +5,6 @@ import { CopyLinkIconButton } from '@/components/app/CopyLinkIconButton';
 import { FilterToggleIconButton } from '@/components/app/FilterToggleIconButton';
 import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
-import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
   loadWorkflowPostPublishQueue,
@@ -31,18 +30,13 @@ interface UsedGearWorkflowPostPublishSectionProps {
   onFocusedBucketChange?: (bucket: UsedGearWorkflowPostPublishBucket | 'all') => void;
   onOpenWorkflowRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
-  historyFilter?: UsedGearWorkflowPostPublishHistoryFilter;
-  onHistoryFilterChange?: (value: UsedGearWorkflowPostPublishHistoryFilter) => void;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
-  collapsedSectionKeys?: UsedGearWorkflowPostPublishBucket[];
-  onCollapsedSectionKeysChange?: (keys: UsedGearWorkflowPostPublishBucket[]) => void;
   sortMode?: UsedGearWorkflowPostPublishSortMode;
   onSortModeChange?: (value: UsedGearWorkflowPostPublishSortMode) => void;
 }
 
 export type UsedGearWorkflowPostPublishSortMode = 'latest-activity' | 'oldest-activity' | 'sku';
-export type UsedGearWorkflowPostPublishHistoryFilter = 'all' | 'active-only' | 'history-only';
 
 interface PostPublishSectionDefinition {
   key: UsedGearWorkflowPostPublishBucket;
@@ -120,12 +114,8 @@ export function UsedGearWorkflowPostPublishSection({
   onFocusedBucketChange,
   onOpenWorkflowRecord,
   onOpenListingsRecord,
-  historyFilter = 'all',
-  onHistoryFilterChange,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
-  collapsedSectionKeys: controlledCollapsedSectionKeys,
-  onCollapsedSectionKeysChange,
   sortMode: controlledSortMode,
   onSortModeChange,
 }: UsedGearWorkflowPostPublishSectionProps) {
@@ -146,14 +136,10 @@ export function UsedGearWorkflowPostPublishSection({
   const [error, setError] = useState<string | null>(null);
   const [showQueueTools, setShowQueueTools] = useState(false);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
-  const [uncontrolledCollapsedSectionKeys, setUncontrolledCollapsedSectionKeys] = useState<UsedGearWorkflowPostPublishBucket[]>([]);
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowPostPublishSortMode>('latest-activity');
   const [selectedRecordIds, setSelectedRecordIds] = useState<string[]>([]);
   const [batchBusy, setBatchBusy] = useState(false);
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
-  const collapsedSectionKeys = Array.isArray(controlledCollapsedSectionKeys)
-    ? controlledCollapsedSectionKeys
-    : uncontrolledCollapsedSectionKeys;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
 
   useEffect(() => {
@@ -245,30 +231,15 @@ export function UsedGearWorkflowPostPublishSection({
     && selectedSnapshots.every((entry) => entry.snapshot?.bucket === 'sold-ready');
 
   const visibleSections = useMemo(() => {
-    const sectionDefinitions = historyFilter === 'active-only'
-      ? SECTION_DEFINITIONS.filter((section) => section.key !== 'shipped')
-      : historyFilter === 'history-only'
-        ? SECTION_DEFINITIONS.filter((section) => section.key === 'shipped')
-        : SECTION_DEFINITIONS;
-
     if (selectedBucket === 'all') {
-      return sectionDefinitions;
+      return SECTION_DEFINITIONS;
     }
 
-    return sectionDefinitions.filter((section) => section.key === selectedBucket);
-  }, [historyFilter, selectedBucket]);
-  const visibleSectionKeys = useMemo(
-    () => visibleSections.map((section) => section.key),
-    [visibleSections],
-  );
-  const collapsedSectionKeySet = useMemo(() => new Set(collapsedSectionKeys), [collapsedSectionKeys]);
-  const allVisibleSectionsCollapsed = visibleSectionKeys.length > 0
-    && visibleSectionKeys.every((sectionKey) => collapsedSectionKeySet.has(sectionKey));
+    return SECTION_DEFINITIONS.filter((section) => section.key === selectedBucket);
+  }, [selectedBucket]);
   const hasSecondaryControlsActive = selectedBucket !== 'all'
-    || historyFilter !== 'all'
     || searchTerm.trim().length > 0
-    || sortMode !== 'latest-activity'
-    || collapsedSectionKeys.length > 0;
+    || sortMode !== 'latest-activity';
 
   useEffect(() => {
     if (hasSecondaryControlsActive) {
@@ -339,28 +310,12 @@ export function UsedGearWorkflowPostPublishSection({
     onSearchTermChange?.(value);
   };
 
-  const handleCollapsedSectionKeysChange = (keys: UsedGearWorkflowPostPublishBucket[]) => {
-    if (!Array.isArray(controlledCollapsedSectionKeys)) {
-      setUncontrolledCollapsedSectionKeys(keys);
-    }
-
-    onCollapsedSectionKeysChange?.(keys);
-  };
-
   const handleSortModeChange = (value: UsedGearWorkflowPostPublishSortMode) => {
     if (!controlledSortMode) {
       setUncontrolledSortMode(value);
     }
 
     onSortModeChange?.(value);
-  };
-
-  const toggleSectionCollapsed = (sectionKey: UsedGearWorkflowPostPublishBucket) => {
-    const nextKeys = collapsedSectionKeySet.has(sectionKey)
-      ? collapsedSectionKeys.filter((key) => key !== sectionKey)
-      : [...collapsedSectionKeys, sectionKey].sort((left, right) => left.localeCompare(right)) as UsedGearWorkflowPostPublishBucket[];
-
-    handleCollapsedSectionKeysChange(nextKeys);
   };
 
   const toggleRecordSelected = (recordId: string) => {
@@ -382,19 +337,6 @@ export function UsedGearWorkflowPostPublishSection({
 
       return Array.from(new Set([...current, ...recordIds]));
     });
-  };
-
-  const collapseVisibleSections = () => {
-    const nextKeys = Array.from(new Set([...collapsedSectionKeys, ...visibleSectionKeys]))
-      .sort((left, right) => left.localeCompare(right)) as UsedGearWorkflowPostPublishBucket[];
-
-    handleCollapsedSectionKeysChange(nextKeys);
-  };
-
-  const expandVisibleSections = () => {
-    handleCollapsedSectionKeysChange(
-      collapsedSectionKeys.filter((key) => !visibleSectionKeys.includes(key)),
-    );
   };
 
   return (
@@ -461,7 +403,7 @@ export function UsedGearWorkflowPostPublishSection({
 
       {showQueueTools ? (
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4">
-          <div className="grid gap-4 xl:grid-cols-4 xl:items-start">
+          <div className="grid gap-4 xl:grid-cols-3 xl:items-start">
             <div className="space-y-2 xl:col-span-2">
               <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Bucket</p>
               <div className="flex flex-wrap gap-2">
@@ -484,34 +426,8 @@ export function UsedGearWorkflowPostPublishSection({
                 ))}
               </div>
             </div>
-            <div className="space-y-2">
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">History</p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${historyFilter === 'all' ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'}`}
-                  onClick={() => onHistoryFilterChange?.('all')}
-                >
-                  All Work
-                </button>
-                <button
-                  type="button"
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${historyFilter === 'active-only' ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'}`}
-                  onClick={() => onHistoryFilterChange?.('active-only')}
-                >
-                  Active Only
-                </button>
-                <button
-                  type="button"
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${historyFilter === 'history-only' ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'}`}
-                  onClick={() => onHistoryFilterChange?.('history-only')}
-                >
-                  History Only
-                </button>
-              </div>
-            </div>
           </div>
-          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div className="mt-4 grid gap-3 lg:grid-cols-1 lg:items-end">
             <label className="min-w-[180px]">
               <span className="sr-only">Sort used gear post-publish queue</span>
               <select
@@ -524,32 +440,6 @@ export function UsedGearWorkflowPostPublishSection({
                 <option value="sku">Sort: SKU</option>
               </select>
             </label>
-            <div className="flex flex-wrap gap-2">
-              <ToolbarIconButton
-                onClick={collapseVisibleSections}
-                disabled={visibleSectionKeys.length === 0 || allVisibleSectionsCollapsed}
-                label="Collapse All Buckets"
-                icon={(
-                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
-                    <path d="M4.167 6.667h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                    <path d="M6.667 10h6.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                    <path d="M8.333 13.333h3.334" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                  </svg>
-                )}
-              />
-              <ToolbarIconButton
-                onClick={expandVisibleSections}
-                disabled={visibleSectionKeys.length === 0 || collapsedSectionKeys.length === 0}
-                label="Expand All Buckets"
-                icon={(
-                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
-                    <path d="M4.167 6.667h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                    <path d="M4.167 10h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                    <path d="M4.167 13.333h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                  </svg>
-                )}
-              />
-            </div>
           </div>
         </div>
       ) : null}
@@ -643,7 +533,6 @@ export function UsedGearWorkflowPostPublishSection({
           </div>
         ) : visibleSections.map((section) => {
           const sectionRecords = recordsBySection.get(section.key) ?? [];
-          const collapsed = collapsedSectionKeySet.has(section.key);
           const sectionRecordIds = sectionRecords.map((record) => record.id);
           const allSectionRecordsSelected = sectionRecordIds.length > 0 && sectionRecordIds.every((recordId) => selectedRecordIds.includes(recordId));
 
@@ -662,27 +551,7 @@ export function UsedGearWorkflowPostPublishSection({
                   <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
                     {sectionRecords.length} row{sectionRecords.length === 1 ? '' : 's'}
                   </div>
-                    <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--bg)] px-1.5 py-1">
-                      <ToolbarIconButton
-                        onClick={() => toggleSectionCollapsed(section.key)}
-                        label={collapsed ? 'Expand Bucket' : 'Collapse Bucket'}
-                        aria-expanded={!collapsed}
-                        className="h-7 w-7 rounded-full border-transparent bg-transparent shadow-none hover:bg-[var(--line)]"
-                        icon={(
-                          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-3.5 w-3.5">
-                            {collapsed ? (
-                              <>
-                                <path d="M4.167 10h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                                <path d="M10 4.167v11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                              </>
-                            ) : (
-                              <path d="M4.167 10h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                            )}
-                          </svg>
-                        )}
-                      />
-                    </div>
-                    <button
+                  <button
                       type="button"
                       className={smallSecondaryActionButtonClass}
                       onClick={() => toggleSectionSelected(sectionRecordIds)}
@@ -693,11 +562,7 @@ export function UsedGearWorkflowPostPublishSection({
                 </div>
               </div>
 
-              {collapsed ? (
-                <div className="mt-4 rounded-xl border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
-                  This lifecycle bucket is collapsed in the current shared queue view.
-                </div>
-              ) : sectionRecords.length === 0 ? (
+              {sectionRecords.length === 0 ? (
                 <div className="mt-4 rounded-xl border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
                   <p className="m-0">No rows currently match this post-publish stage.</p>
                   <p className="mt-2 mb-0">{getPostPublishSectionEmptyGuidance(section.key)}</p>

@@ -136,11 +136,11 @@ describe('UsedGearWorkflowPostPublishSection', () => {
 
     await screen.findByRole('heading', { name: 'Active Listings' });
 
-  await openPostPublishTools();
-  fireEvent.click(await screen.findByRole('button', { name: 'Stale Listings' }));
+    await openPostPublishTools();
+    fireEvent.click(await screen.findByRole('button', { name: 'Stale Listings' }));
     expect(onFocusedBucketChange).toHaveBeenCalledWith('stale-listing');
 
-  fireEvent.click(await screen.findByRole('button', { name: 'All Buckets' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'All Buckets' }));
     expect(onFocusedBucketChange).toHaveBeenCalledWith('all');
   });
 
@@ -181,94 +181,6 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     await waitFor(() => {
       expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/inventory?workflowPostPublishBucket=sold-ready#used-gear-post-publish`);
     });
-  });
-
-  it('emits collapse-all bucket keys for the visible post-publish sections', async () => {
-    const onCollapsedSectionKeysChange = vi.fn();
-
-    loadWorkflowPostPublishQueueMock.mockResolvedValue([
-      {
-        id: 'rec-active',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'ACT-1',
-          Make: 'McIntosh',
-          Model: 'C28',
-          'Workflow Status': 'Listed, Shopify',
-          'Listed At': '2099-01-01T00:00:00.000Z',
-        },
-      },
-      {
-        id: 'rec-sold',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'SOLD-1',
-          Make: 'Marantz',
-          Model: '2270',
-          'Workflow Status': 'Sold - Ready to Ship',
-          'Sold Ready To Ship At': '2026-05-06T00:00:00.000Z',
-        },
-      },
-    ]);
-
-    render(
-      <UsedGearWorkflowPostPublishSection
-        currentUserName="Taylor Reviewer"
-        focusedBucket={null}
-        onFocusedBucketChange={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
-        onOpenListingsRecord={vi.fn()}
-        collapsedSectionKeys={[]}
-        onCollapsedSectionKeysChange={onCollapsedSectionKeysChange}
-      />,
-    );
-
-    await screen.findByRole('heading', { name: 'Active Listings' });
-
-  await openPostPublishTools();
-  fireEvent.click(await screen.findByRole('button', { name: 'Collapse All Buckets' }));
-
-    expect(onCollapsedSectionKeysChange).toHaveBeenCalledWith(['active-listing', 'shipped', 'sold-ready', 'stale-listing']);
-  });
-
-  it('filters post-publish sections down to shipped history when history-only is selected', async () => {
-    loadWorkflowPostPublishQueueMock.mockResolvedValue([
-      {
-        id: 'rec-active',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'ACT-1',
-          Make: 'McIntosh',
-          Model: 'C28',
-          'Workflow Status': 'Listed, Shopify',
-          'Listed At': '2099-01-01T00:00:00.000Z',
-        },
-      },
-      {
-        id: 'rec-shipped',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'SHIP-1',
-          Make: 'Marantz',
-          Model: '2270',
-          'Workflow Status': 'Shipped',
-          'Shipped At': '2026-05-06T00:00:00.000Z',
-        },
-      },
-    ]);
-
-    render(
-      <UsedGearWorkflowPostPublishSection
-        currentUserName="Taylor Reviewer"
-        historyFilter="history-only"
-        onHistoryFilterChange={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
-        onOpenListingsRecord={vi.fn()}
-      />,
-    );
-
-    expect(await screen.findByRole('heading', { name: 'Shipped History' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Active Listings' })).not.toBeInTheDocument();
   });
 
   it('ignores the legacy owner filter prop and keeps post-publish rows visible', async () => {

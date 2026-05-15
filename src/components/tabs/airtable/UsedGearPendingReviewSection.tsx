@@ -5,7 +5,6 @@ import { CopyLinkIconButton } from '@/components/app/CopyLinkIconButton';
 import { FilterToggleIconButton } from '@/components/app/FilterToggleIconButton';
 import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
-import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
 import {
   groupUsedGearWorkflowRecords,
   hasUsedGearPendingReviewPricingPath,
@@ -30,8 +29,6 @@ export interface UsedGearPendingReviewSectionProps {
   onFocusedGroupIdChange?: (groupId: string | null) => void;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
-  collapsedGroupIds?: string[];
-  onCollapsedGroupIdsChange?: (groupIds: string[]) => void;
   sortMode?: UsedGearPendingReviewSortMode;
   onSortModeChange?: (value: UsedGearPendingReviewSortMode) => void;
 }
@@ -89,8 +86,6 @@ export function UsedGearPendingReviewSection({
   onFocusedGroupIdChange,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
-  collapsedGroupIds: controlledCollapsedGroupIds,
-  onCollapsedGroupIdsChange,
   sortMode: controlledSortMode,
   onSortModeChange,
 }: UsedGearPendingReviewSectionProps) {
@@ -107,10 +102,8 @@ export function UsedGearPendingReviewSection({
   const [error, setError] = useState<string | null>(null);
   const [showQueueTools, setShowQueueTools] = useState(false);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
-  const [uncontrolledCollapsedGroupIds, setUncontrolledCollapsedGroupIds] = useState<string[]>([]);
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearPendingReviewSortMode>('group-label');
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
-  const collapsedGroupIds = Array.isArray(controlledCollapsedGroupIds) ? controlledCollapsedGroupIds : uncontrolledCollapsedGroupIds;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
 
   useEffect(() => {
@@ -185,13 +178,8 @@ export function UsedGearPendingReviewSection({
     [focusedGroupId, groupedRecords],
   );
   const agingSummary = useMemo(() => buildPendingReviewQueueAgingSummary(filteredRecords), [filteredRecords]);
-  const visibleGroupIds = useMemo(() => visibleGroups.map((group) => group.id), [visibleGroups]);
-  const collapsedGroupIdSet = useMemo(() => new Set(collapsedGroupIds), [collapsedGroupIds]);
-  const allVisibleGroupsCollapsed = visibleGroupIds.length > 0
-    && visibleGroupIds.every((groupId) => collapsedGroupIdSet.has(groupId));
   const hasSecondaryControlsActive = searchTerm.trim().length > 0
     || sortMode !== 'group-label'
-    || collapsedGroupIds.length > 0
     || Boolean(focusedGroupId);
 
   useEffect(() => {
@@ -223,41 +211,12 @@ export function UsedGearPendingReviewSection({
     onSearchTermChange?.(value);
   };
 
-  const handleCollapsedGroupIdsChange = (groupIds: string[]) => {
-    if (!Array.isArray(controlledCollapsedGroupIds)) {
-      setUncontrolledCollapsedGroupIds(groupIds);
-    }
-
-    onCollapsedGroupIdsChange?.(groupIds);
-  };
-
   const handleSortModeChange = (value: UsedGearPendingReviewSortMode) => {
     if (!controlledSortMode) {
       setUncontrolledSortMode(value);
     }
 
     onSortModeChange?.(value);
-  };
-
-  const toggleGroupCollapsed = (groupId: string) => {
-    const nextCollapsedGroupIds = collapsedGroupIdSet.has(groupId)
-      ? collapsedGroupIds.filter((value) => value !== groupId)
-      : [...collapsedGroupIds, groupId].sort((left, right) => left.localeCompare(right));
-
-    handleCollapsedGroupIdsChange(nextCollapsedGroupIds);
-  };
-
-  const collapseVisibleGroups = () => {
-    const nextCollapsedGroupIds = Array.from(new Set([...collapsedGroupIds, ...visibleGroupIds]))
-      .sort((left, right) => left.localeCompare(right));
-
-    handleCollapsedGroupIdsChange(nextCollapsedGroupIds);
-  };
-
-  const expandVisibleGroups = () => {
-    handleCollapsedGroupIdsChange(
-      collapsedGroupIds.filter((groupId) => !visibleGroupIds.includes(groupId)),
-    );
   };
 
   const openLastTouchedAction = (recordId: string) => {
@@ -325,7 +284,7 @@ export function UsedGearPendingReviewSection({
 
       {showQueueTools ? (
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4">
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div className="grid gap-3 lg:grid-cols-1 lg:items-end">
             <label className="min-w-[180px]">
               <span className="sr-only">Sort pending review queue</span>
               <select
@@ -340,32 +299,6 @@ export function UsedGearPendingReviewSection({
                 <option value="make-model">Sort: Make Then Model</option>
               </select>
             </label>
-            <div className="flex flex-wrap gap-2">
-              <ToolbarIconButton
-                onClick={collapseVisibleGroups}
-                disabled={visibleGroupIds.length === 0 || allVisibleGroupsCollapsed}
-                label="Collapse All Groups"
-                icon={(
-                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
-                    <path d="M4.167 6.667h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                    <path d="M6.667 10h6.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                    <path d="M8.333 13.333h3.334" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                  </svg>
-                )}
-              />
-              <ToolbarIconButton
-                onClick={expandVisibleGroups}
-                disabled={visibleGroupIds.length === 0 || collapsedGroupIds.length === 0}
-                label="Expand All Groups"
-                icon={(
-                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
-                    <path d="M4.167 6.667h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                    <path d="M4.167 10h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                    <path d="M4.167 13.333h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                  </svg>
-                )}
-              />
-            </div>
           </div>
         </div>
       ) : null}
@@ -421,7 +354,6 @@ export function UsedGearPendingReviewSection({
             Loading pending review queue...
           </div>
         ) : visibleGroups.map((group) => {
-          const collapsed = collapsedGroupIdSet.has(group.id);
           const groupNeedsSubmissionId = group.records.length > 1
             && group.records.some((record) => stringFieldValue(record, 'Submission Group ID').trim().length === 0);
 
@@ -458,24 +390,6 @@ export function UsedGearPendingReviewSection({
                     copiedLabel="Group link copied"
                     className="h-7 w-7 rounded-full border-transparent bg-transparent shadow-none hover:bg-[var(--line)]"
                   />
-                  <ToolbarIconButton
-                    onClick={() => toggleGroupCollapsed(group.id)}
-                    label={collapsed ? 'Expand Group' : 'Collapse Group'}
-                    aria-expanded={!collapsed}
-                    className="h-7 w-7 rounded-full border-transparent bg-transparent shadow-none hover:bg-[var(--line)]"
-                    icon={(
-                      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-3.5 w-3.5">
-                        {collapsed ? (
-                          <>
-                            <path d="M4.167 10h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                            <path d="M10 4.167v11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                          </>
-                        ) : (
-                          <path d="M4.167 10h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                        )}
-                      </svg>
-                    )}
-                  />
                 </div>
                 {focusedGroupId ? (
                   <button
@@ -489,11 +403,6 @@ export function UsedGearPendingReviewSection({
               </div>
             </div>
 
-            {collapsed ? (
-              <div className="mt-4 rounded-xl border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
-                This submission group is collapsed in the current shared queue view.
-              </div>
-            ) : (
             <div className="mt-4 space-y-3">
               {group.records.length > 1 && groupNeedsSubmissionId ? (
                 <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4 text-sm text-[var(--muted)]">
@@ -583,7 +492,6 @@ export function UsedGearPendingReviewSection({
               })}
             </div>
             </div>
-            )}
           </div>
         );
         })}

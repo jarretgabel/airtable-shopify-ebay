@@ -61,8 +61,6 @@ vi.mock('@/components/tabs/airtable/UsedGearPendingReviewSection', () => ({
     focusedGroupId = null,
     onFocusedGroupIdChange,
     onSearchTermChange,
-    collapsedGroupIds = [],
-    onCollapsedGroupIdsChange,
     sortMode = 'group-label',
     onSortModeChange,
   }: {
@@ -70,8 +68,6 @@ vi.mock('@/components/tabs/airtable/UsedGearPendingReviewSection', () => ({
     focusedGroupId?: string | null;
     onFocusedGroupIdChange?: (value: string | null) => void;
     onSearchTermChange?: (value: string) => void;
-    collapsedGroupIds?: string[];
-    onCollapsedGroupIdsChange?: (groupIds: string[]) => void;
     sortMode?: string;
     onSortModeChange?: (value: 'group-label' | 'newest' | 'oldest') => void;
   }) => (
@@ -86,11 +82,8 @@ vi.mock('@/components/tabs/airtable/UsedGearPendingReviewSection', () => ({
       </label>
       <div data-testid="pending-focused-group">{focusedGroupId ?? ''}</div>
       <div data-testid="pending-sort-mode">{sortMode}</div>
-      <div data-testid="pending-collapsed-groups">{collapsedGroupIds.join('|')}</div>
       <button type="button" onClick={() => onFocusedGroupIdChange?.('pickup:pickup-42')}>Focus Pending Group</button>
       <button type="button" onClick={() => onFocusedGroupIdChange?.(null)}>Clear Pending Group</button>
-      <button type="button" onClick={() => onCollapsedGroupIdsChange?.(['pickup-1'])}>Collapse Pending Group</button>
-      <button type="button" onClick={() => onCollapsedGroupIdsChange?.([])}>Expand Pending Groups</button>
       <button type="button" onClick={() => onSortModeChange?.('newest')}>Sort Pending Newest</button>
     </div>
   ),
@@ -102,8 +95,6 @@ vi.mock('@/components/tabs/airtable/UsedGearWorkflowProgressSection', () => ({
     focusedGroupId = null,
     onFocusedGroupIdChange,
     onSearchTermChange,
-    collapsedGroupIds = [],
-    onCollapsedGroupIdsChange,
     sortMode = 'group-label',
     onSortModeChange,
   }: {
@@ -111,8 +102,6 @@ vi.mock('@/components/tabs/airtable/UsedGearWorkflowProgressSection', () => ({
     focusedGroupId?: string | null;
     onFocusedGroupIdChange?: (value: string | null) => void;
     onSearchTermChange?: (value: string) => void;
-    collapsedGroupIds?: string[];
-    onCollapsedGroupIdsChange?: (groupIds: string[]) => void;
     sortMode?: string;
     onSortModeChange?: (value: 'group-label' | 'newest' | 'oldest') => void;
   }) => (
@@ -127,11 +116,8 @@ vi.mock('@/components/tabs/airtable/UsedGearWorkflowProgressSection', () => ({
       </label>
       <div data-testid="progress-focused-group">{focusedGroupId ?? ''}</div>
       <div data-testid="progress-sort-mode">{sortMode}</div>
-      <div data-testid="progress-collapsed-groups">{collapsedGroupIds.join('|')}</div>
       <button type="button" onClick={() => onFocusedGroupIdChange?.('submission:submission-22')}>Focus Progress Group</button>
       <button type="button" onClick={() => onFocusedGroupIdChange?.(null)}>Clear Progress Group</button>
-      <button type="button" onClick={() => onCollapsedGroupIdsChange?.(['submission-2'])}>Collapse Progress Group</button>
-      <button type="button" onClick={() => onCollapsedGroupIdsChange?.([])}>Expand Progress Groups</button>
       <button type="button" onClick={() => onSortModeChange?.('oldest')}>Sort Progress Oldest</button>
     </div>
   ),
@@ -142,20 +128,12 @@ vi.mock('@/components/tabs/airtable/UsedGearWorkflowPostPublishSection', () => (
     searchTerm = '',
     onSearchTermChange,
     onFocusedBucketChange,
-    historyFilter = 'all',
-    onHistoryFilterChange,
-    collapsedSectionKeys = [],
-    onCollapsedSectionKeysChange,
     sortMode = 'latest-activity',
     onSortModeChange,
   }: {
     searchTerm?: string;
     onSearchTermChange?: (value: string) => void;
     onFocusedBucketChange?: (bucket: 'all' | 'active-listing' | 'stale-listing' | 'sold-ready' | 'shipped') => void;
-    historyFilter?: 'all' | 'active-only' | 'history-only';
-    onHistoryFilterChange?: (value: 'all' | 'active-only' | 'history-only') => void;
-    collapsedSectionKeys?: string[];
-    onCollapsedSectionKeysChange?: (keys: Array<'active-listing' | 'stale-listing' | 'sold-ready' | 'shipped'>) => void;
     sortMode?: string;
     onSortModeChange?: (value: 'latest-activity' | 'oldest-activity' | 'sku') => void;
   }) => (
@@ -168,14 +146,9 @@ vi.mock('@/components/tabs/airtable/UsedGearWorkflowPostPublishSection', () => (
           onChange={(event) => onSearchTermChange?.(event.currentTarget.value)}
         />
       </label>
-      <div data-testid="post-publish-history-filter">{historyFilter}</div>
       <div data-testid="post-publish-sort-mode">{sortMode}</div>
-      <div data-testid="post-publish-collapsed-sections">{collapsedSectionKeys.join('|')}</div>
       <button type="button" onClick={() => onFocusedBucketChange?.('sold-ready')}>Focus Sold Ready</button>
-      <button type="button" onClick={() => onHistoryFilterChange?.('history-only')}>History Only</button>
-      <button type="button" onClick={() => onHistoryFilterChange?.('active-only')}>Active Only</button>
-      <button type="button" onClick={() => onHistoryFilterChange?.('all')}>All Lifecycle Work</button>
-      <button type="button" onClick={() => onCollapsedSectionKeysChange?.(['stale-listing'])}>Collapse Post Publish Section</button>
+      <button type="button" onClick={() => onFocusedBucketChange?.('all')}>Show All Buckets</button>
       <button type="button" onClick={() => onSortModeChange?.('sku')}>Sort Post Publish SKU</button>
     </div>
   ),
@@ -213,7 +186,7 @@ describe('AirtableTab', () => {
 
   it('hydrates workflow view state from the URL, persists updates, and resets workflow params', async () => {
     render(
-      <MemoryRouter initialEntries={['/inventory?inventoryDirectorySearch=amp&inventoryDirectoryStatus=Ready&workflowPendingReviewSearch=mcintosh&workflowProgressSearch=marantz&workflowPostPublishSearch=shipped&workflowPendingReviewCollapsedGroups=pickup-7&workflowProgressCollapsedGroups=submission-9&workflowPostPublishCollapsedSections=stale-listing&workflowPostPublishBucket=active-listing&workflowPendingReviewSort=newest&workflowProgressSort=oldest&workflowPostPublishSort=sku&workflowPendingReviewGroup=pickup:pickup-7&workflowProgressGroup=submission:submission-9&workflowPostPublishHistory=history-only']}>
+      <MemoryRouter initialEntries={['/inventory?inventoryDirectorySearch=amp&inventoryDirectoryStatus=Ready&workflowPendingReviewSearch=mcintosh&workflowProgressSearch=marantz&workflowPostPublishSearch=shipped&workflowPostPublishBucket=active-listing&workflowPendingReviewSort=newest&workflowProgressSort=oldest&workflowPostPublishSort=sku&workflowPendingReviewGroup=pickup:pickup-7&workflowProgressGroup=submission:submission-9']}>
         <AirtableTab
           viewModel={{
             loading: false,
@@ -248,24 +221,16 @@ describe('AirtableTab', () => {
     expect(screen.getByLabelText('Post Publish Search')).toHaveValue('shipped');
     expect(screen.getByTestId('pending-focused-group')).toHaveTextContent('pickup:pickup-7');
     expect(screen.getByTestId('progress-focused-group')).toHaveTextContent('submission:submission-9');
-    expect(screen.getByTestId('post-publish-history-filter')).toHaveTextContent('history-only');
     expect(screen.getByTestId('pending-sort-mode')).toHaveTextContent('newest');
     expect(screen.getByTestId('progress-sort-mode')).toHaveTextContent('oldest');
     expect(screen.getByTestId('post-publish-sort-mode')).toHaveTextContent('sku');
-    expect(screen.getByTestId('pending-collapsed-groups')).toHaveTextContent('pickup-7');
-    expect(screen.getByTestId('progress-collapsed-groups')).toHaveTextContent('submission-9');
-    expect(screen.getByTestId('post-publish-collapsed-sections')).toHaveTextContent('stale-listing');
     expect(screen.getByRole('button', { name: 'Reset Workflow View' })).toBeInTheDocument();
     expect(screen.getByText('Pending review: mcintosh')).toBeInTheDocument();
     expect(screen.getByText('Progress: marantz')).toBeInTheDocument();
     expect(screen.getByText('Post-publish: shipped')).toBeInTheDocument();
-    expect(screen.getByText('Pending groups collapsed: 1')).toBeInTheDocument();
     expect(screen.getByText('Pending group: pickup:pickup-7')).toBeInTheDocument();
-    expect(screen.getByText('Progress groups collapsed: 1')).toBeInTheDocument();
     expect(screen.getByText('Progress group: submission:submission-9')).toBeInTheDocument();
     expect(screen.getByText('Bucket: Active Listings')).toBeInTheDocument();
-    expect(screen.getByText('History: Shipped Only')).toBeInTheDocument();
-    expect(screen.getByText('Buckets collapsed: 1')).toBeInTheDocument();
     expect(screen.getByText('Pending sort: Newest First')).toBeInTheDocument();
     expect(screen.getByText('Progress sort: Oldest First')).toBeInTheDocument();
     expect(screen.getByText('Post-publish sort: SKU')).toBeInTheDocument();
@@ -286,21 +251,7 @@ describe('AirtableTab', () => {
     fireEvent.change(screen.getByLabelText('Pending Review Search'), { target: { value: 'fisher' } });
 
     await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory?inventoryDirectorySearch=receiver&inventoryDirectoryStatus=Sold&workflowPendingReviewSearch=fisher&workflowProgressSearch=marantz&workflowPostPublishSearch=shipped&workflowPendingReviewCollapsedGroups=pickup-7&workflowProgressCollapsedGroups=submission-9&workflowPostPublishCollapsedSections=stale-listing&workflowPostPublishBucket=active-listing&workflowPendingReviewSort=newest&workflowProgressSort=oldest&workflowPostPublishSort=sku&workflowPendingReviewGroup=pickup%3Apickup-7&workflowProgressGroup=submission%3Asubmission-9&workflowPostPublishHistory=history-only#used-gear-pending-review');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Collapse Pending Group' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPendingReviewCollapsedGroups=pickup-1');
-      expect(screen.getByTestId('pending-collapsed-groups')).toHaveTextContent('pickup-1');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Collapse Progress Group' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowProgressCollapsedGroups=submission-2');
-      expect(screen.getByTestId('progress-collapsed-groups')).toHaveTextContent('submission-2');
+      expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory?inventoryDirectorySearch=receiver&inventoryDirectoryStatus=Sold&workflowPendingReviewSearch=fisher&workflowProgressSearch=marantz&workflowPostPublishSearch=shipped&workflowPostPublishBucket=active-listing&workflowPendingReviewSort=newest&workflowProgressSort=oldest&workflowPostPublishSort=sku&workflowPendingReviewGroup=pickup%3Apickup-7&workflowProgressGroup=submission%3Asubmission-9#used-gear-pending-review');
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Focus Pending Group' }));
@@ -319,18 +270,9 @@ describe('AirtableTab', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Focus Sold Ready' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Active Only' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPostPublishBucket=sold-ready');
-      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPostPublishHistory=active-only');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Collapse Post Publish Section' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPostPublishCollapsedSections=stale-listing');
-      expect(screen.getByTestId('post-publish-collapsed-sections')).toHaveTextContent('stale-listing');
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Sort Pending Newest' }));
@@ -345,12 +287,10 @@ describe('AirtableTab', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear pending review group focus' }));
     fireEvent.click(screen.getByRole('button', { name: 'Clear progress queue group focus' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Clear post-publish history filter' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('location-state')).not.toHaveTextContent('workflowPendingReviewGroup=');
       expect(screen.getByTestId('location-state')).not.toHaveTextContent('workflowProgressGroup=');
-      expect(screen.getByTestId('location-state')).not.toHaveTextContent('workflowPostPublishHistory=');
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear pending review search' }));
@@ -383,10 +323,6 @@ describe('AirtableTab', () => {
       expect(screen.getByLabelText('Directory Status')).toHaveValue('Sold');
       expect(screen.getByTestId('pending-focused-group')).toHaveTextContent('');
       expect(screen.getByTestId('progress-focused-group')).toHaveTextContent('');
-      expect(screen.getByTestId('post-publish-history-filter')).toHaveTextContent('all');
-      expect(screen.getByTestId('pending-collapsed-groups')).toHaveTextContent('');
-      expect(screen.getByTestId('progress-collapsed-groups')).toHaveTextContent('');
-      expect(screen.getByTestId('post-publish-collapsed-sections')).toHaveTextContent('');
     });
   });
 
@@ -421,64 +357,7 @@ describe('AirtableTab', () => {
     });
   });
 
-  it('saves, reapplies, and deletes named workflow view presets', async () => {
-    render(
-      <MemoryRouter initialEntries={['/inventory?workflowPendingReviewSearch=mcintosh&workflowProgressSearch=marantz&workflowPostPublishBucket=stale-listing#used-gear-post-publish']}>
-        <AirtableTab
-          viewModel={{
-            loading: false,
-            error: null,
-            listings: [],
-            displayValue: (value) => String(value ?? ''),
-            hasValue: (value) => value !== null && value !== undefined && value !== '',
-            recordTitle: () => 'Inventory Record',
-          }}
-          currentUserRole="admin"
-          currentUserName="Taylor Reviewer"
-          onAddNewRecord={vi.fn()}
-          onOpenIncomingGearForm={vi.fn()}
-          onOpenTestingForm={vi.fn()}
-          onOpenPhotosForm={vi.fn()}
-          onOpenWorkflowRecord={vi.fn()}
-          onOpenListingsRecord={vi.fn()}
-          onSelectRecord={vi.fn()}
-        />
-        <LocationState />
-      </MemoryRouter>,
-    );
-
-    await waitFor(() => {
-      expect(loadInventoryDirectoryMock).toHaveBeenCalledTimes(1);
-    });
-
-    fireEvent.change(screen.getByLabelText('Workflow view preset name'), { target: { value: 'Triage View' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save Workflow View' }));
-
-    expect(screen.getByRole('button', { name: 'Triage View' })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Reset Workflow View' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Triage View' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPendingReviewSearch=mcintosh');
-      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowProgressSearch=marantz');
-      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPostPublishBucket=stale-listing');
-      expect(screen.getByTestId('location-state')).toHaveTextContent('#used-gear-post-publish');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Delete Triage View workflow view' }));
-
-    await waitFor(() => {
-      expect(screen.queryByRole('button', { name: 'Triage View' })).not.toBeInTheDocument();
-    });
-  });
-
-  it('keeps the workflow summary bar sticky and supports keyboard jumps between workflow sections', async () => {
+  it('keeps the workflow summary bar sticky when workflow filters are active', async () => {
     render(
       <MemoryRouter initialEntries={['/inventory?workflowPendingReviewSearch=mcintosh']}>
         <AirtableTab
@@ -508,31 +387,10 @@ describe('AirtableTab', () => {
       expect(loadInventoryDirectoryMock).toHaveBeenCalledTimes(1);
     });
 
-    const workflowViewsHeading = screen.getAllByText('Workflow views')[0]!;
-    const stickyPanel = workflowViewsHeading.closest('div[class*="sticky"]');
+    const workflowFiltersHeading = screen.getAllByText('Workflow filters')[0]!;
+    const stickyPanel = workflowFiltersHeading.closest('div[class*="sticky"]');
     expect(stickyPanel).not.toBeNull();
     expect(stickyPanel?.className).toContain('sticky');
-
-    fireEvent.keyDown(document, { key: 'g' });
-    expect(screen.getByText('Awaiting jump key')).toBeInTheDocument();
-
-    fireEvent.keyDown(document, { key: '2' });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('#used-gear-progress-queue');
-    });
-
-    fireEvent.keyDown(document, { key: 'g' });
-    fireEvent.keyDown(document, { key: '0' });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('#inventory-directory-list');
-    });
-
-    fireEvent.keyDown(screen.getByLabelText('Directory Search'), { key: 'g' });
-    fireEvent.keyDown(screen.getByLabelText('Directory Search'), { key: '3' });
-
-    expect(screen.getByTestId('location-state')).not.toHaveTextContent('#used-gear-post-publish');
   });
 
   it('keeps workflow sections available when the inventory directory load fails', async () => {

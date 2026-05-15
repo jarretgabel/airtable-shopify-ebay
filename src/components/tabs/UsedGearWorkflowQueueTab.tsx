@@ -22,7 +22,6 @@ interface QueueTabConfig {
   description: string;
   searchParamName: string;
   groupParamName: string;
-  collapsedParamName: string;
   sortParamName: string;
   sectionId: string;
   hash: string;
@@ -38,7 +37,6 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
       description: 'Testing operators can stay on one dedicated surface, keep grouped submissions together, and jump directly into the testing form or workflow detail when exceptions show up.',
       searchParamName: 'workflowTestingQueueSearch',
       groupParamName: 'workflowTestingQueueGroup',
-      collapsedParamName: 'workflowTestingQueueCollapsedGroups',
       sortParamName: 'workflowTestingQueueSort',
       sectionId: 'used-gear-testing-queue',
       hash: '#used-gear-testing-queue',
@@ -52,7 +50,6 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
       description: 'Photography operators can work from a dedicated queue, preserve grouped submissions, and jump directly into photo capture or workflow detail without scanning the broader inventory surface.',
       searchParamName: 'workflowPhotographyQueueSearch',
       groupParamName: 'workflowPhotographyQueueGroup',
-      collapsedParamName: 'workflowPhotographyQueueCollapsedGroups',
       sortParamName: 'workflowPhotographyQueueSort',
       sectionId: 'used-gear-photography-queue',
       hash: '#used-gear-photography-queue',
@@ -65,7 +62,6 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
     description: 'Rows that finished both concurrent stages collect here so final review can happen on one page before the listing team takes over.',
     searchParamName: 'workflowPreListingQueueSearch',
     groupParamName: 'workflowPreListingQueueGroup',
-    collapsedParamName: 'workflowPreListingQueueCollapsedGroups',
     sortParamName: 'workflowPreListingQueueSort',
     sectionId: 'used-gear-pre-listing-queue',
     hash: '#used-gear-pre-listing-queue',
@@ -75,18 +71,6 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
 function parseFocusedGroup(search: string, paramName: string): string | null {
   const value = new URLSearchParams(search).get(paramName)?.trim() ?? '';
   return value ? value : null;
-}
-
-function parseCollapsedGroupIds(search: string, paramName: string): string[] {
-  const rawValue = new URLSearchParams(search).get(paramName)?.trim() ?? '';
-  if (!rawValue) {
-    return [];
-  }
-
-  return rawValue
-    .split(',')
-    .map((value) => value.trim())
-    .filter(Boolean);
 }
 
 function parseSortMode(search: string, paramName: string): UsedGearWorkflowProgressSortMode {
@@ -111,7 +95,6 @@ export function UsedGearWorkflowQueueTab({
 
   const searchTerm = useMemo(() => new URLSearchParams(location.search).get(config.searchParamName) ?? '', [config.searchParamName, location.search]);
   const focusedGroupId = useMemo(() => parseFocusedGroup(location.search, config.groupParamName), [config.groupParamName, location.search]);
-  const collapsedGroupIds = useMemo(() => parseCollapsedGroupIds(location.search, config.collapsedParamName), [config.collapsedParamName, location.search]);
   const sortMode = useMemo(() => parseSortMode(location.search, config.sortParamName), [config.sortParamName, location.search]);
 
   const updateRouteState = (update: (params: URLSearchParams) => void) => {
@@ -161,14 +144,6 @@ export function UsedGearWorkflowQueueTab({
             params.set(config.searchParamName, value);
           } else {
             params.delete(config.searchParamName);
-          }
-        })}
-        collapsedGroupIds={collapsedGroupIds}
-        onCollapsedGroupIdsChange={(groupIds) => updateRouteState((params) => {
-          if (groupIds.length > 0) {
-            params.set(config.collapsedParamName, groupIds.join(','));
-          } else {
-            params.delete(config.collapsedParamName);
           }
         })}
         sortMode={sortMode}

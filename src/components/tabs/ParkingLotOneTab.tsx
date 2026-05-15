@@ -9,7 +9,6 @@ interface ParkingLotOneTabProps {
 }
 
 const WORKFLOW_PENDING_REVIEW_SEARCH_PARAM = 'workflowPendingReviewSearch';
-const WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM = 'workflowPendingReviewCollapsedGroups';
 const WORKFLOW_PENDING_REVIEW_SORT_PARAM = 'workflowPendingReviewSort';
 const WORKFLOW_PENDING_REVIEW_GROUP_PARAM = 'workflowPendingReviewGroup';
 
@@ -25,10 +24,6 @@ export function ParkingLotOneTab({ currentUserName, onOpenWorkflowRecord }: Park
     const params = new URLSearchParams(location.search);
     const value = params.get(WORKFLOW_PENDING_REVIEW_GROUP_PARAM)?.trim() ?? '';
     return value ? value : null;
-  }, [location.search]);
-  const workflowPendingReviewCollapsedGroups = useMemo(() => {
-    const value = new URLSearchParams(location.search).get(WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM) ?? '';
-    return value.split(',').map((entry) => entry.trim()).filter(Boolean);
   }, [location.search]);
   const workflowPendingReviewSort = useMemo(() => {
     const value = new URLSearchParams(location.search).get(WORKFLOW_PENDING_REVIEW_SORT_PARAM);
@@ -80,14 +75,6 @@ export function ParkingLotOneTab({ currentUserName, onOpenWorkflowRecord }: Park
         }, '#used-gear-pending-review')}
         searchTerm={workflowPendingReviewSearch}
         onSearchTermChange={(value) => updateQueueSearch(WORKFLOW_PENDING_REVIEW_SEARCH_PARAM, value, '#used-gear-pending-review')}
-        collapsedGroupIds={workflowPendingReviewCollapsedGroups}
-        onCollapsedGroupIdsChange={(groupIds) => updateIntakeRouteState((params) => {
-          if (groupIds.length === 0) {
-            params.delete(WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM);
-          } else {
-            params.set(WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM, groupIds.join(','));
-          }
-        }, '#used-gear-pending-review')}
         sortMode={workflowPendingReviewSort}
         onSortModeChange={(value) => updateIntakeRouteState((params) => {
           if (value === 'group-label') {

@@ -3,20 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import type { AirtableTabViewModel } from '@/app/appTabViewModels';
 import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { EmptySurface, PanelSurface } from '@/components/app/StateSurfaces';
-import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { InventoryDirectoryListSection } from '@/components/tabs/airtable/InventoryDirectoryListSection';
 import { UsedGearPendingReviewSection, type UsedGearPendingReviewSortMode } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
 import { UsedGearWorkflowPostPublishSection } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 import { UsedGearWorkflowProgressSection, type UsedGearWorkflowProgressSortMode } from '@/components/tabs/airtable/UsedGearWorkflowProgressSection';
 import { loadInventoryDirectory } from '@/services/inventoryDirectory';
-import {
-  deleteUsedGearWorkflowViewPreset,
-  loadUsedGearWorkflowViewPresets,
-  saveUsedGearWorkflowViewPreset,
-  type UsedGearWorkflowViewPreset,
-} from '@/services/usedGearWorkflowViewPresets';
 import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
-import type { UsedGearWorkflowPostPublishHistoryFilter, UsedGearWorkflowPostPublishSortMode } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
+import type { UsedGearWorkflowPostPublishSortMode } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 import { useNotificationStore } from '@/stores/notificationStore';
 import type { UserRole } from '@/stores/auth/authTypes';
 import type { AirtableRecord } from '@/types/airtable';
@@ -26,28 +19,20 @@ const INVENTORY_DIRECTORY_STATUS_PARAM = 'inventoryDirectoryStatus';
 const WORKFLOW_PENDING_REVIEW_SEARCH_PARAM = 'workflowPendingReviewSearch';
 const WORKFLOW_PROGRESS_SEARCH_PARAM = 'workflowProgressSearch';
 const WORKFLOW_POST_PUBLISH_SEARCH_PARAM = 'workflowPostPublishSearch';
-const WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM = 'workflowPendingReviewCollapsedGroups';
-const WORKFLOW_PROGRESS_COLLAPSED_PARAM = 'workflowProgressCollapsedGroups';
-const WORKFLOW_POST_PUBLISH_COLLAPSED_PARAM = 'workflowPostPublishCollapsedSections';
 const WORKFLOW_PENDING_REVIEW_SORT_PARAM = 'workflowPendingReviewSort';
 const WORKFLOW_PROGRESS_SORT_PARAM = 'workflowProgressSort';
 const WORKFLOW_POST_PUBLISH_SORT_PARAM = 'workflowPostPublishSort';
 const WORKFLOW_PENDING_REVIEW_GROUP_PARAM = 'workflowPendingReviewGroup';
 const WORKFLOW_PROGRESS_GROUP_PARAM = 'workflowProgressGroup';
-const WORKFLOW_POST_PUBLISH_HISTORY_PARAM = 'workflowPostPublishHistory';
 const WORKFLOW_ROUTE_PARAMS = [
   WORKFLOW_PENDING_REVIEW_SEARCH_PARAM,
   WORKFLOW_PROGRESS_SEARCH_PARAM,
   WORKFLOW_POST_PUBLISH_SEARCH_PARAM,
-  WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM,
-  WORKFLOW_PROGRESS_COLLAPSED_PARAM,
-  WORKFLOW_POST_PUBLISH_COLLAPSED_PARAM,
   WORKFLOW_PENDING_REVIEW_SORT_PARAM,
   WORKFLOW_PROGRESS_SORT_PARAM,
   WORKFLOW_POST_PUBLISH_SORT_PARAM,
   WORKFLOW_PENDING_REVIEW_GROUP_PARAM,
   WORKFLOW_PROGRESS_GROUP_PARAM,
-  WORKFLOW_POST_PUBLISH_HISTORY_PARAM,
   'workflowPostPublishBucket',
 ] as const;
 
@@ -66,35 +51,6 @@ interface WorkflowStateChip {
 }
 
 type WorkflowChipFocusTarget = string | '__reset__';
-
-const WORKFLOW_SHORTCUT_HINTS = [
-  { label: 'g then 1', description: 'Pending Review' },
-  { label: 'g then 2', description: 'Progress' },
-  { label: 'g then 3', description: 'Post-Publish' },
-  { label: 'g then 0', description: 'Directory' },
-] as const;
-
-function isEditableShortcutTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-
-  const tagName = target.tagName.toLowerCase();
-  return tagName === 'input'
-    || tagName === 'textarea'
-    || tagName === 'select'
-    || target.isContentEditable;
-}
-
-function parseWorkflowGroupIds(search: string, paramName: string): string[] {
-  const params = new URLSearchParams(search);
-  const value = params.get(paramName) ?? '';
-
-  return value
-    .split(',')
-    .map((groupId) => groupId.trim())
-    .filter((groupId) => groupId.length > 0);
-}
 
 function formatWorkflowChipValue(value: string): string {
   return value.length > 28 ? `${value.slice(0, 28)}...` : value;
@@ -118,11 +74,6 @@ function parsePostPublishSortMode(search: string): UsedGearWorkflowPostPublishSo
 function parseFocusedWorkflowGroup(search: string, paramName: string): string | null {
   const value = new URLSearchParams(search).get(paramName)?.trim() ?? '';
   return value ? value : null;
-}
-
-function parsePostPublishHistoryFilter(search: string): UsedGearWorkflowPostPublishHistoryFilter {
-  const value = new URLSearchParams(search).get(WORKFLOW_POST_PUBLISH_HISTORY_PARAM);
-  return value === 'active-only' || value === 'history-only' ? value : 'all';
 }
 
 function pendingSortLabel(value: UsedGearPendingReviewSortMode): string {
@@ -179,10 +130,7 @@ export function AirtableTab({
   const [directoryRefreshing, setDirectoryRefreshing] = useState(false);
   const [copyingWorkflowView, setCopyingWorkflowView] = useState(false);
   const [copiedWorkflowView, setCopiedWorkflowView] = useState(false);
-  const [workflowViewPresetName, setWorkflowViewPresetName] = useState('');
-  const [workflowViewPresets, setWorkflowViewPresets] = useState<UsedGearWorkflowViewPreset[]>([]);
   const [pendingWorkflowChipFocusTarget, setPendingWorkflowChipFocusTarget] = useState<WorkflowChipFocusTarget | null>(null);
-  const [awaitingWorkflowShortcut, setAwaitingWorkflowShortcut] = useState(false);
   const workflowChipButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const resetWorkflowViewButtonRef = useRef<HTMLButtonElement | null>(null);
   const inventoryDirectorySearch = useMemo(() => {
@@ -205,24 +153,11 @@ export function AirtableTab({
     const params = new URLSearchParams(location.search);
     return params.get(WORKFLOW_POST_PUBLISH_SEARCH_PARAM) ?? '';
   }, [location.search]);
-  const workflowPendingReviewCollapsedGroups = useMemo(
-    () => parseWorkflowGroupIds(location.search, WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM),
-    [location.search],
-  );
-  const workflowProgressCollapsedGroups = useMemo(
-    () => parseWorkflowGroupIds(location.search, WORKFLOW_PROGRESS_COLLAPSED_PARAM),
-    [location.search],
-  );
-  const workflowPostPublishCollapsedSections = useMemo(
-    () => parseWorkflowGroupIds(location.search, WORKFLOW_POST_PUBLISH_COLLAPSED_PARAM) as UsedGearWorkflowPostPublishBucket[],
-    [location.search],
-  );
   const workflowPendingReviewSort = useMemo(() => parsePendingReviewSortMode(location.search), [location.search]);
   const workflowProgressSort = useMemo(() => parseProgressSortMode(location.search), [location.search]);
   const workflowPostPublishSort = useMemo(() => parsePostPublishSortMode(location.search), [location.search]);
   const workflowPendingReviewGroup = useMemo(() => parseFocusedWorkflowGroup(location.search, WORKFLOW_PENDING_REVIEW_GROUP_PARAM), [location.search]);
   const workflowProgressGroup = useMemo(() => parseFocusedWorkflowGroup(location.search, WORKFLOW_PROGRESS_GROUP_PARAM), [location.search]);
-  const workflowPostPublishHistoryFilter = useMemo(() => parsePostPublishHistoryFilter(location.search), [location.search]);
   const focusedPostPublishBucket = useMemo<UsedGearWorkflowPostPublishBucket | null>(() => {
     const params = new URLSearchParams(location.search);
     const bucket = params.get('workflowPostPublishBucket');
@@ -257,20 +192,6 @@ export function AirtableTab({
     }, { replace: true });
   }, [location.pathname, location.search, navigate]);
 
-  const buildWorkflowPresetSearch = () => {
-    const currentParams = new URLSearchParams(location.search);
-    const nextParams = new URLSearchParams();
-
-    WORKFLOW_ROUTE_PARAMS.forEach((paramName) => {
-      const value = currentParams.get(paramName);
-      if (value !== null) {
-        nextParams.set(paramName, value);
-      }
-    });
-
-    return nextParams.toString();
-  };
-
   const updateInventoryDirectoryRouteState = useCallback((update: (params: URLSearchParams) => void) => {
     const nextParams = new URLSearchParams(location.search);
     update(nextParams);
@@ -289,16 +210,6 @@ export function AirtableTab({
         params.delete(paramName);
       } else {
         params.set(paramName, value);
-      }
-    }, hash);
-  }, [updateWorkflowRouteState]);
-
-  const updateCollapsedWorkflowGroups = useCallback((paramName: string, groupIds: string[], hash: string) => {
-    updateWorkflowRouteState((params) => {
-      if (groupIds.length === 0) {
-        params.delete(paramName);
-      } else {
-        params.set(paramName, groupIds.join(','));
       }
     }, hash);
   }, [updateWorkflowRouteState]);
@@ -376,46 +287,6 @@ export function AirtableTab({
     }
   };
 
-  const saveCurrentWorkflowPreset = () => {
-    const name = workflowViewPresetName.trim();
-    const presetSearch = buildWorkflowPresetSearch();
-    if (!name || !presetSearch) {
-      return;
-    }
-
-    setWorkflowViewPresets(saveUsedGearWorkflowViewPreset({
-      name,
-      search: presetSearch,
-      hash: location.hash,
-    }));
-    setWorkflowViewPresetName('');
-    pushNotification({
-      tone: 'success',
-      title: 'Workflow view saved',
-      message: `Saved the current workflow filters as ${name}.`,
-    });
-  };
-
-  const applyWorkflowPreset = (preset: UsedGearWorkflowViewPreset) => {
-    updateWorkflowRouteState((params) => {
-      WORKFLOW_ROUTE_PARAMS.forEach((paramName) => params.delete(paramName));
-
-      const presetParams = new URLSearchParams(preset.search);
-      presetParams.forEach((value, key) => {
-        params.set(key, value);
-      });
-    }, preset.hash);
-  };
-
-  const removeWorkflowPreset = (presetId: string, presetName: string) => {
-    setWorkflowViewPresets(deleteUsedGearWorkflowViewPreset(presetId));
-    pushNotification({
-      tone: 'success',
-      title: 'Workflow view removed',
-      message: `${presetName} was removed from saved Inventory views.`,
-    });
-  };
-
   const workflowStateChips = useMemo(() => {
     const chips: WorkflowStateChip[] = [];
 
@@ -473,14 +344,6 @@ export function AirtableTab({
         }, '#used-gear-post-publish'),
       });
     }
-    if (workflowPendingReviewCollapsedGroups.length > 0) {
-      chips.push({
-        key: 'pending-collapsed',
-        label: `Pending groups collapsed: ${workflowPendingReviewCollapsedGroups.length}`,
-        clearLabel: 'Clear pending review collapsed groups',
-        onClear: () => updateCollapsedWorkflowGroups(WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM, [], '#used-gear-pending-review'),
-      });
-    }
     if (workflowPendingReviewGroup) {
       chips.push({
         key: 'pending-group',
@@ -489,14 +352,6 @@ export function AirtableTab({
         onClear: () => updateWorkflowRouteState((params) => {
           params.delete(WORKFLOW_PENDING_REVIEW_GROUP_PARAM);
         }, '#used-gear-pending-review'),
-      });
-    }
-    if (workflowProgressCollapsedGroups.length > 0) {
-      chips.push({
-        key: 'progress-collapsed',
-        label: `Progress groups collapsed: ${workflowProgressCollapsedGroups.length}`,
-        clearLabel: 'Clear progress queue collapsed groups',
-        onClear: () => updateCollapsedWorkflowGroups(WORKFLOW_PROGRESS_COLLAPSED_PARAM, [], '#used-gear-progress-queue'),
       });
     }
     if (workflowProgressGroup) {
@@ -517,41 +372,18 @@ export function AirtableTab({
         onClear: () => handlePostPublishBucketChange('all'),
       });
     }
-    if (workflowPostPublishCollapsedSections.length > 0) {
-      chips.push({
-        key: 'post-publish-collapsed',
-        label: `Buckets collapsed: ${workflowPostPublishCollapsedSections.length}`,
-        clearLabel: 'Clear post-publish collapsed buckets',
-        onClear: () => updateCollapsedWorkflowGroups(WORKFLOW_POST_PUBLISH_COLLAPSED_PARAM, [], '#used-gear-post-publish'),
-      });
-    }
-    if (workflowPostPublishHistoryFilter !== 'all') {
-      chips.push({
-        key: 'post-publish-history',
-        label: workflowPostPublishHistoryFilter === 'history-only' ? 'History: Shipped Only' : 'History: Active Only',
-        clearLabel: 'Clear post-publish history filter',
-        onClear: () => updateWorkflowRouteState((params) => {
-          params.delete(WORKFLOW_POST_PUBLISH_HISTORY_PARAM);
-        }, '#used-gear-post-publish'),
-      });
-    }
     return chips;
   }, [
     focusedPostPublishBucket,
     handlePostPublishBucketChange,
-    updateCollapsedWorkflowGroups,
     updateWorkflowQueueSearch,
     updateWorkflowRouteState,
     workflowPendingReviewGroup,
-    workflowPendingReviewCollapsedGroups.length,
     workflowPendingReviewSearch,
     workflowPendingReviewSort,
-    workflowPostPublishHistoryFilter,
-    workflowPostPublishCollapsedSections.length,
     workflowPostPublishSearch,
     workflowPostPublishSort,
     workflowProgressGroup,
-    workflowProgressCollapsedGroups.length,
     workflowProgressSearch,
     workflowProgressSort,
   ]);
@@ -574,22 +406,6 @@ export function AirtableTab({
   }, [pendingWorkflowChipFocusTarget, workflowStateChips]);
 
   useEffect(() => {
-    setWorkflowViewPresets(loadUsedGearWorkflowViewPresets());
-  }, []);
-
-  useEffect(() => {
-    if (!awaitingWorkflowShortcut) {
-      return;
-    }
-
-    const timeoutHandle = window.setTimeout(() => {
-      setAwaitingWorkflowShortcut(false);
-    }, 1600);
-
-    return () => window.clearTimeout(timeoutHandle);
-  }, [awaitingWorkflowShortcut]);
-
-  useEffect(() => {
     if (!defaultInventoryWorkflowHash || hasWorkflowViewState || location.hash) {
       return;
     }
@@ -600,73 +416,6 @@ export function AirtableTab({
       hash: defaultInventoryWorkflowHash,
     }, { replace: true });
   }, [defaultInventoryWorkflowHash, hasWorkflowViewState, location.hash, location.pathname, location.search, navigate]);
-
-  useEffect(() => {
-    const focusSection = (sectionId: string, hash: string) => {
-      navigate({
-        pathname: location.pathname,
-        search: location.search,
-        hash,
-      }, { replace: true });
-
-      window.requestAnimationFrame(() => {
-        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {
-        return;
-      }
-
-      if (isEditableShortcutTarget(event.target)) {
-        return;
-      }
-
-      const normalizedKey = event.key.toLowerCase();
-
-      if (awaitingWorkflowShortcut) {
-        if (normalizedKey === '1') {
-          event.preventDefault();
-          setAwaitingWorkflowShortcut(false);
-          focusSection('used-gear-pending-review', '#used-gear-pending-review');
-          return;
-        }
-
-        if (normalizedKey === '2') {
-          event.preventDefault();
-          setAwaitingWorkflowShortcut(false);
-          focusSection('used-gear-progress-queue', '#used-gear-progress-queue');
-          return;
-        }
-
-        if (normalizedKey === '3') {
-          event.preventDefault();
-          setAwaitingWorkflowShortcut(false);
-          focusSection('used-gear-post-publish', '#used-gear-post-publish');
-          return;
-        }
-
-        if (normalizedKey === '0') {
-          event.preventDefault();
-          setAwaitingWorkflowShortcut(false);
-          focusSection('inventory-directory-list', '#inventory-directory-list');
-          return;
-        }
-
-        setAwaitingWorkflowShortcut(false);
-        return;
-      }
-
-      if (normalizedKey === 'g') {
-        event.preventDefault();
-        setAwaitingWorkflowShortcut(true);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [awaitingWorkflowShortcut, location.hash, location.pathname, location.search, navigate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -768,128 +517,48 @@ export function AirtableTab({
           </div>
         ) : null}
 
-        {hasWorkflowViewState || workflowViewPresets.length > 0 ? (
+        {hasWorkflowViewState ? (
           <div className="sticky top-3 z-20 flex flex-col gap-3 rounded-2xl border border-[var(--line)] bg-[linear-gradient(180deg,rgba(7,17,28,0.94),rgba(7,17,28,0.82))] px-5 py-4 shadow-[0_18px_40px_rgba(2,6,23,0.35)] backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
             <div className="flex-1">
-              <p className="m-0 text-sm font-semibold text-[var(--ink)]">Workflow views</p>
-              <div className="mt-2 max-w-2xl">
-                <CollapsibleHelperText label="Workflow views">
-                  {hasWorkflowViewState
-                    ? 'Shared filters are active across the workflow queues.'
-                    : 'Use a saved view when you need to restore a common filter setup across the workflow queues.'}
-                </CollapsibleHelperText>
+              <p className="m-0 text-sm font-semibold text-[var(--ink)]">Workflow filters</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {workflowStateChips.map((chip) => (
+                  <span key={chip.key} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                    <span>{chip.label}</span>
+                    <button
+                      type="button"
+                      ref={(element) => {
+                        workflowChipButtonRefs.current[chip.key] = element;
+                      }}
+                      className="rounded-full border border-[var(--line)] px-1.5 py-0.5 text-[10px] leading-none transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                      aria-label={chip.clearLabel}
+                      onClick={() => handleWorkflowChipClear(chip, workflowStateChips.findIndex((currentChip) => currentChip.key === chip.key))}
+                    >
+                      x
+                    </button>
+                  </span>
+                ))}
               </div>
-              {hasWorkflowViewState ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {workflowStateChips.map((chip) => (
-                    <span key={chip.key} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                      <span>{chip.label}</span>
-                      <button
-                        type="button"
-                        ref={(element) => {
-                          workflowChipButtonRefs.current[chip.key] = element;
-                        }}
-                        className="rounded-full border border-[var(--line)] px-1.5 py-0.5 text-[10px] leading-none transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                        aria-label={chip.clearLabel}
-                        onClick={() => handleWorkflowChipClear(chip, workflowStateChips.findIndex((currentChip) => currentChip.key === chip.key))}
-                      >
-                        x
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-
-              <details className="mt-4 rounded-2xl border border-[var(--line)]/70 bg-[var(--bg)]/50 px-4 py-3 text-sm text-[var(--muted)]">
-                <summary className="cursor-pointer text-sm font-semibold text-[var(--ink)]">
-                  More workflow tools
-                </summary>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {WORKFLOW_SHORTCUT_HINTS.map((shortcut) => (
-                    <span key={shortcut.label} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                      <span>{shortcut.label}</span>
-                      <span className="text-[var(--ink)]">{shortcut.description}</span>
-                    </span>
-                  ))}
-                  {awaitingWorkflowShortcut ? (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)]/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
-                      Awaiting jump key
-                    </span>
-                  ) : null}
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-                    onClick={() => {
-                      void copyCurrentWorkflowView();
-                    }}
-                    disabled={copyingWorkflowView}
-                  >
-                    {copyingWorkflowView ? 'Copying...' : copiedWorkflowView ? 'View Copied' : 'Copy Current Workflow View'}
-                  </button>
-                </div>
-
-                <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
-                  <label className="min-w-[240px] flex-1">
-                    <span className="sr-only">Workflow view preset name</span>
-                    <input
-                      type="text"
-                      className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                      value={workflowViewPresetName}
-                      onChange={(event) => setWorkflowViewPresetName(event.currentTarget.value.slice(0, 48))}
-                      placeholder="Save current workflow view as..."
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-                    onClick={saveCurrentWorkflowPreset}
-                    disabled={!hasWorkflowViewState || workflowViewPresetName.trim().length === 0}
-                  >
-                    Save Workflow View
-                  </button>
-                </div>
-
-                {workflowViewPresets.length > 0 ? (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {workflowViewPresets.map((preset) => (
-                      <div key={preset.id} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                        <button
-                          type="button"
-                          className="transition hover:text-[var(--accent)]"
-                          onClick={() => applyWorkflowPreset(preset)}
-                        >
-                          {preset.name}
-                        </button>
-                        <button
-                          type="button"
-                          className="rounded-full border border-[var(--line)] px-1.5 py-0.5 text-[10px] leading-none transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                          aria-label={`Delete ${preset.name} workflow view`}
-                          onClick={() => removeWorkflowPreset(preset.id, preset.name)}
-                        >
-                          x
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-4 mb-0 text-sm text-[var(--muted)]">No saved workflow views yet.</p>
-                )}
-              </details>
             </div>
             <div className="flex flex-wrap gap-3">
-              {hasWorkflowViewState ? (
-                <button
-                  ref={resetWorkflowViewButtonRef}
-                  type="button"
-                  className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                  onClick={resetWorkflowViewState}
-                >
-                  Reset Workflow View
-                </button>
-              ) : null}
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => {
+                  void copyCurrentWorkflowView();
+                }}
+                disabled={copyingWorkflowView}
+              >
+                {copyingWorkflowView ? 'Copying...' : copiedWorkflowView ? 'View Copied' : 'Copy Current Workflow View'}
+              </button>
+              <button
+                ref={resetWorkflowViewButtonRef}
+                type="button"
+                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                onClick={resetWorkflowViewState}
+              >
+                Reset Workflow View
+              </button>
             </div>
           </div>
         ) : null}
@@ -910,12 +579,6 @@ export function AirtableTab({
           onSearchTermChange={(value) => updateWorkflowQueueSearch(
             WORKFLOW_PENDING_REVIEW_SEARCH_PARAM,
             value,
-            '#used-gear-pending-review',
-          )}
-          collapsedGroupIds={workflowPendingReviewCollapsedGroups}
-          onCollapsedGroupIdsChange={(groupIds) => updateCollapsedWorkflowGroups(
-            WORKFLOW_PENDING_REVIEW_COLLAPSED_PARAM,
-            groupIds,
             '#used-gear-pending-review',
           )}
           sortMode={workflowPendingReviewSort}
@@ -949,12 +612,6 @@ export function AirtableTab({
             value,
             '#used-gear-progress-queue',
           )}
-          collapsedGroupIds={workflowProgressCollapsedGroups}
-          onCollapsedGroupIdsChange={(groupIds) => updateCollapsedWorkflowGroups(
-            WORKFLOW_PROGRESS_COLLAPSED_PARAM,
-            groupIds,
-            '#used-gear-progress-queue',
-          )}
           sortMode={workflowProgressSort}
           onSortModeChange={(value) => updateWorkflowRouteState((params) => {
             if (value === 'group-label') {
@@ -971,24 +628,10 @@ export function AirtableTab({
           onFocusedBucketChange={handlePostPublishBucketChange}
           onOpenWorkflowRecord={onOpenWorkflowRecord}
           onOpenListingsRecord={onOpenListingsRecord}
-          historyFilter={workflowPostPublishHistoryFilter}
-          onHistoryFilterChange={(value) => updateWorkflowRouteState((params) => {
-            if (value === 'all') {
-              params.delete(WORKFLOW_POST_PUBLISH_HISTORY_PARAM);
-            } else {
-              params.set(WORKFLOW_POST_PUBLISH_HISTORY_PARAM, value);
-            }
-          }, '#used-gear-post-publish')}
           searchTerm={workflowPostPublishSearch}
           onSearchTermChange={(value) => updateWorkflowQueueSearch(
             WORKFLOW_POST_PUBLISH_SEARCH_PARAM,
             value,
-            '#used-gear-post-publish',
-          )}
-          collapsedSectionKeys={workflowPostPublishCollapsedSections}
-          onCollapsedSectionKeysChange={(keys) => updateCollapsedWorkflowGroups(
-            WORKFLOW_POST_PUBLISH_COLLAPSED_PARAM,
-            keys,
             '#used-gear-post-publish',
           )}
           sortMode={workflowPostPublishSort}
