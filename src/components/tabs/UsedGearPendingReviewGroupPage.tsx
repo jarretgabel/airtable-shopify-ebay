@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
+import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import {
   acceptPendingReviewGroup,
   distributeUsedGearPendingReviewTotal,
@@ -251,15 +254,11 @@ export function UsedGearPendingReviewGroupPage({
   return (
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-        <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Parking Lot 1 Review</p>
-              <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{group.label}</h2>
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-                Review grouped intake pricing, allocation, and Lot 2 routing in one place before the items leave Parking Lot 1.
-              </p>
-            </div>
+        <WorkflowPageHeader
+          eyebrow="Parking Lot 1 Review"
+          title={group.label}
+          description="Review grouped intake pricing, allocation, and Lot 2 routing in one place before the items leave Parking Lot 1."
+          actions={(
             <button
               type="button"
               className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
@@ -267,11 +266,17 @@ export function UsedGearPendingReviewGroupPage({
             >
               Back to Parking Lot 1
             </button>
-          </div>
-        </section>
+          )}
+        />
 
         {error ? <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">{error}</div> : null}
         {successMessage ? <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{successMessage}</div> : null}
+
+        <div className="max-w-3xl">
+          <CollapsibleHelperText label="Grouped review guide">
+            Use the shared controls for batch-level totals and allocation, then finish per-row routing and notes below. Keep group acceptance for the end so pricing and qualification are fully complete before Lot 2 handoff.
+          </CollapsibleHelperText>
+        </div>
 
         <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
@@ -338,7 +343,7 @@ export function UsedGearPendingReviewGroupPage({
             <div className="mt-4 flex flex-wrap gap-3">
               <button
                 type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                className={smallSecondaryActionButtonClass}
                 onClick={applyEqualSplit}
                 disabled={saving || parsedGrandTotal === null || records.length === 0}
               >
@@ -346,7 +351,7 @@ export function UsedGearPendingReviewGroupPage({
               </button>
               <button
                 type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                className={smallSecondaryActionButtonClass}
                 onClick={() => {
                   setAllocationMode('Manual Override');
                 }}
@@ -360,7 +365,6 @@ export function UsedGearPendingReviewGroupPage({
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
             <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Acceptance Gate</p>
             <div className="mt-4 space-y-2 text-sm text-[var(--muted)]">
-              <div>Current reviewer: <span className="font-semibold text-[var(--ink)]">{currentUserName}</span></div>
               <div>Submission Group ID: <span className="font-semibold text-[var(--ink)]">{submissionGroupId.trim() || 'Missing'}</span></div>
               <div>Pricing path complete: <span className="font-semibold text-[var(--ink)]">{pricingCoverage ? 'Yes' : 'No'}</span></div>
               <div>Qualification notes complete: <span className="font-semibold text-[var(--ink)]">{qualificationCoverage ? 'Yes' : 'No'}</span></div>
@@ -368,7 +372,7 @@ export function UsedGearPendingReviewGroupPage({
             <div className="mt-5 flex flex-col gap-3">
               <button
                 type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                className={smallSecondaryActionButtonClass}
                 onClick={() => {
                   void handleSaveReview();
                 }}
@@ -378,7 +382,7 @@ export function UsedGearPendingReviewGroupPage({
               </button>
               <button
                 type="button"
-                className="rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                className={smallPrimaryActionButtonClass}
                 onClick={() => {
                   void handleAcceptGroup();
                 }}
@@ -407,14 +411,14 @@ export function UsedGearPendingReviewGroupPage({
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                      className={smallSecondaryActionButtonClass}
                       onClick={() => onOpenWorkflowRecord(record.id)}
                     >
                       Workflow Detail
                     </button>
                     <button
                       type="button"
-                      className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                      className={smallSecondaryActionButtonClass}
                       onClick={() => onOpenIncomingGearForm(record.id)}
                     >
                       Open Incoming Gear

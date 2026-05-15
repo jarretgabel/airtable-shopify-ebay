@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
+import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import {
   acceptPendingReviewRecord,
@@ -10,6 +14,7 @@ import {
   type UsedGearWorkflowRecordContext,
 } from '@/services/usedGearQueue';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
+import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
 
 interface UsedGearPendingReviewRecordPageProps {
   currentUserName: string;
@@ -67,16 +72,46 @@ function SummaryField({ label, value }: { label: string; value: unknown }) {
 
 function DetailBlock({ title, fields }: { title: string; fields: Array<{ label: string; value: unknown }> }) {
   return (
-    <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-      <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{title}</p>
-      <div className="mt-4 space-y-3 text-sm text-[var(--muted)]">
+    <details className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 text-sm text-[var(--muted)]">
+      <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+        {title}
+      </summary>
+      <div className="mt-4 space-y-3">
         {fields.map((field) => (
           <div key={field.label}>
             <span className="font-semibold text-[var(--ink)]">{field.label}:</span> {displayInventoryValue(field.value)}
           </div>
         ))}
       </div>
-    </section>
+    </details>
+  );
+}
+
+function NoteTemplateRow({
+  legend,
+  templateGroup,
+  onApplyTemplate,
+}: {
+  legend: string;
+  templateGroup: 'qualification' | 'unqualified-reason';
+  onApplyTemplate: (templateValue: string) => void;
+}) {
+  const templates = getUsedGearWorkflowNoteTemplates(templateGroup);
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      <span className="self-center text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]/80">{legend}</span>
+      {templates.map((template) => (
+        <button
+          key={template.id}
+          type="button"
+          className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          onClick={() => onApplyTemplate(template.value)}
+        >
+          {template.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -95,6 +130,7 @@ export function UsedGearPendingReviewRecordPage({
   const [acceptStatus, setAcceptStatus] = useState<UsedGearPendingReviewAcceptedStatus>('Accepted - Awaiting Arrival');
   const [qualificationNotes, setQualificationNotes] = useState('');
   const [unqualifiedReason, setUnqualifiedReason] = useState('');
+  const [showRecordActions, setShowRecordActions] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -198,17 +234,13 @@ export function UsedGearPendingReviewRecordPage({
   return (
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-        <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Parking Lot 1 Review</p>
-              <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</h2>
-              <p className="mt-2 text-sm text-[var(--muted)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</p>
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-                Use this focused intake decision page to qualify the row into Lot 2 or route it into trash without working from the queue card.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
+        <WorkflowPageHeader
+          eyebrow="Parking Lot 1 Review"
+          title={displayInventoryValue(record.fields.SKU)}
+          description="Use this focused intake decision page to qualify the row into Lot 2 or route it into trash without working from the queue card."
+          detail={<>{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</>}
+          actions={(
+            <>
               <button
                 type="button"
                 className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
@@ -216,23 +248,42 @@ export function UsedGearPendingReviewRecordPage({
               >
                 Back To Parking Lot
               </button>
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={() => onOpenIncomingGearForm(record.id)}
-              >
-                Open Incoming Gear
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={() => onOpenWorkflowRecord(record.id)}
-              >
-                Open Workflow Record
-              </button>
-            </div>
-          </div>
-        </section>
+              <div className="flex flex-col items-end gap-2">
+                <ToolbarIconButton
+                  label={showRecordActions ? 'Hide More Actions' : 'Show More Actions'}
+                  aria-expanded={showRecordActions}
+                  className={showRecordActions ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)] hover:border-[var(--accent)] hover:bg-[var(--accent)]/15 hover:text-[var(--accent)]' : undefined}
+                  icon={(
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
+                      <circle cx="4" cy="10" r="1.5" fill="currentColor" />
+                      <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+                      <circle cx="16" cy="10" r="1.5" fill="currentColor" />
+                    </svg>
+                  )}
+                  onClick={() => setShowRecordActions((current) => !current)}
+                />
+                {showRecordActions ? (
+                  <div className="flex flex-wrap justify-end gap-2 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-3">
+                    <button
+                      type="button"
+                      className={smallSecondaryActionButtonClass}
+                      onClick={() => onOpenIncomingGearForm(record.id)}
+                    >
+                      Open Incoming Gear
+                    </button>
+                    <button
+                      type="button"
+                      className={smallSecondaryActionButtonClass}
+                      onClick={() => onOpenWorkflowRecord(record.id)}
+                    >
+                      Open Workflow Record
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </>
+          )}
+        />
 
         {error ? (
           <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -245,7 +296,11 @@ export function UsedGearPendingReviewRecordPage({
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em]">Grouped Intake</p>
-                <p className="mt-2 mb-0">This row belongs to {group.label} with {group.records.length} intake rows. Use the group page when pricing, allocation, or routing should be managed together.</p>
+                <div className="mt-3 max-w-2xl">
+                  <CollapsibleHelperText label="Why open the group page">
+                    This row belongs to {group.label} with {group.records.length} intake rows. Use the group page when pricing, allocation, or routing should be managed together.
+                  </CollapsibleHelperText>
+                </div>
               </div>
               <button
                 type="button"
@@ -258,10 +313,9 @@ export function UsedGearPendingReviewRecordPage({
           </section>
         ) : null}
 
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-3">
           <SummaryField label="Workflow Source" value={record.fields['Workflow Source']} />
           <SummaryField label="Workflow Status" value={record.fields['Workflow Status']} />
-          <SummaryField label="Reviewer" value={currentUserName} />
           <SummaryField label="Pricing Gate" value={hasPricingPath ? 'Ready For Lot 2' : 'Missing Required Pricing'} />
         </div>
 
@@ -294,6 +348,13 @@ export function UsedGearPendingReviewRecordPage({
                   placeholder="Required before routing this item into Lot 2"
                 />
               </label>
+              <NoteTemplateRow
+                legend="Quick templates"
+                templateGroup="qualification"
+                onApplyTemplate={(templateValue) => {
+                  setQualificationNotes((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
+                }}
+              />
               {groupNeedsSubmissionId ? (
                 <p className="m-0 text-sm text-amber-300">This grouped intake still needs a Submission Group ID before it can be accepted into Lot 2.</p>
               ) : null}
@@ -327,6 +388,13 @@ export function UsedGearPendingReviewRecordPage({
                 placeholder="Required before sending this row into trash"
               />
             </label>
+            <NoteTemplateRow
+              legend="Common reasons"
+              templateGroup="unqualified-reason"
+              onApplyTemplate={(templateValue) => {
+                setUnqualifiedReason((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
+              }}
+            />
             <button
               type="button"
               className="mt-4 w-full rounded-xl border border-rose-300/35 bg-rose-500/20 px-4 py-3 text-sm font-semibold text-rose-50 transition hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
@@ -340,7 +408,7 @@ export function UsedGearPendingReviewRecordPage({
           </section>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-3">
+        <div className="grid gap-4 xl:grid-cols-3">
           <DetailBlock
             title="Pricing And Allocation"
             fields={[

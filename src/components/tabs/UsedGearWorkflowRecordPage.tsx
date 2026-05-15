@@ -3,12 +3,18 @@ import {
   buildListingApprovalWorkflowSummaryData,
   ListingApprovalWorkflowProcessCard,
 } from '@/components/approval/ListingApprovalWorkflowSummary';
+import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
+import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import {
+  smallPrimaryActionButtonClass,
+  smallSecondaryActionButtonClass,
+  smallSuccessActionButtonClass,
+} from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import { useAuthStore } from '@/stores/auth/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
 import {
-  assignWorkflowOwner,
-  clearWorkflowOwner,
   completePreListingReviewStage,
   completePhotographyStage,
   completeProcessingStage,
@@ -19,9 +25,11 @@ import {
   markWorkflowShipped,
   markWorkflowSoldReadyToShip,
   saveWorkflowStaleRecovery,
+  saveWorkflowShipmentFollowThrough,
 } from '@/services/usedGearQueue';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
+import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
 import { USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS, type UsedGearWorkflowStaleRecoveryStatus } from '@/services/usedGearWorkflowLifecycle';
 import {
   type UsedGearCompletedStage,
@@ -78,6 +86,10 @@ function statusSupportsStaleRecoveryEditing(status: string | null): boolean {
   return status === 'Stale Listing, Shopify' || status === 'Stale Listing, eBay';
 }
 
+function statusSupportsShipmentFollowThroughEditing(status: string | null): boolean {
+  return status === 'Sold - Ready to Ship' || status === 'Shipped';
+}
+
 function normalizeStaleRecoveryStatus(value: unknown): UsedGearWorkflowStaleRecoveryStatus | '' {
   const normalized = typeof value === 'string' ? value.trim() : '';
   return USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS.includes(normalized as UsedGearWorkflowStaleRecoveryStatus)
@@ -124,6 +136,7 @@ const WORKFLOW_AUDIT_FIELDS = [
   { label: 'eBay Listing ID', fieldName: 'eBay Listing ID' },
   { label: 'Stale Listing At', fieldName: 'Stale Listing At' },
   { label: 'Sold Ready To Ship At', fieldName: 'Sold Ready To Ship At' },
+  { label: 'Shipment Follow-Through Updated At', fieldName: 'Shipment Follow-Through Updated At' },
   { label: 'Shipped At', fieldName: 'Shipped At' },
 ] as const;
 
@@ -138,6 +151,7 @@ const REFERENCE_NOTE_FIELDS = [
   { label: 'Internal Functional Notes', fieldName: 'Internal Functional Notes' },
   { label: 'Internal Inclusion Notes', fieldName: 'Internal Inclusion Notes' },
   { label: 'Inventory Notes', fieldName: 'Inventory Notes' },
+  { label: 'Shipment Follow-Through Notes', fieldName: 'Shipment Follow-Through Notes' },
 ] as const;
 
 function runReadinessAction(target: UsedGearWorkflowListingReadinessActionTarget, recordId: string, actions: {
@@ -275,6 +289,46 @@ function buildWorkflowCardActionConfig(params: {
   };
 }
 
+function StaleRecoveryTemplateRow({ onApplyTemplate }: { onApplyTemplate: (templateValue: string) => void }) {
+  const templates = getUsedGearWorkflowNoteTemplates('stale-recovery');
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      <span className="self-center text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]/80">Recovery templates</span>
+      {templates.map((template) => (
+        <button
+          key={template.id}
+          type="button"
+          className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          onClick={() => onApplyTemplate(template.value)}
+        >
+          {template.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ShipmentFollowThroughTemplateRow({ onApplyTemplate }: { onApplyTemplate: (templateValue: string) => void }) {
+  const templates = getUsedGearWorkflowNoteTemplates('shipment-follow-through');
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      <span className="self-center text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]/80">Shipment templates</span>
+      {templates.map((template) => (
+        <button
+          key={template.id}
+          type="button"
+          className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          onClick={() => onApplyTemplate(template.value)}
+        >
+          {template.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function UsedGearWorkflowRecordPage({
   currentUserName,
   recordId,
@@ -295,10 +349,12 @@ export function UsedGearWorkflowRecordPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showRecordActions, setShowRecordActions] = useState(false);
   const [pricingConfirmed, setPricingConfirmed] = useState(false);
   const [contentConfirmed, setContentConfirmed] = useState(false);
   const [staleRecoveryDraftStatus, setStaleRecoveryDraftStatus] = useState<UsedGearWorkflowStaleRecoveryStatus | ''>('');
   const [staleRecoveryDraftNotes, setStaleRecoveryDraftNotes] = useState('');
+  const [shipmentFollowThroughDraftNotes, setShipmentFollowThroughDraftNotes] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -359,8 +415,8 @@ export function UsedGearWorkflowRecordPage({
   const staleRecoveryNotes = typeof record?.fields['Stale Recovery Notes'] === 'string' ? record.fields['Stale Recovery Notes'] : '';
   const staleRecoveryUpdatedAt = typeof record?.fields['Stale Recovery Updated At'] === 'string' ? record.fields['Stale Recovery Updated At'] : '';
   const relistedAt = typeof record?.fields['Relisted At'] === 'string' ? record.fields['Relisted At'] : '';
-  const workflowOwner = typeof record?.fields['Workflow Owner'] === 'string' ? record.fields['Workflow Owner'].trim() : '';
-  const workflowOwnerAssignedAt = typeof record?.fields['Workflow Owner Assigned At'] === 'string' ? record.fields['Workflow Owner Assigned At'] : '';
+  const shipmentFollowThroughNotes = typeof record?.fields['Shipment Follow-Through Notes'] === 'string' ? record.fields['Shipment Follow-Through Notes'] : '';
+  const shipmentFollowThroughUpdatedAt = typeof record?.fields['Shipment Follow-Through Updated At'] === 'string' ? record.fields['Shipment Follow-Through Updated At'] : '';
   const workflowCardActionConfig = buildWorkflowCardActionConfig({
     recordId,
     status,
@@ -379,6 +435,46 @@ export function UsedGearWorkflowRecordPage({
     || staleRecoveryNotes.length > 0
     || staleRecoveryUpdatedAt.length > 0
     || relistedAt.length > 0;
+  const showShipmentFollowThroughPanel = statusSupportsShipmentFollowThroughEditing(status)
+    || shipmentFollowThroughNotes.length > 0
+    || shipmentFollowThroughUpdatedAt.length > 0;
+  const primaryActionLabel = statusSupportsProcessingCompletion(status)
+    ? 'Complete Processing'
+    : status === 'Testing and Photography In Progress'
+      ? (!testingSigned ? 'Mark Testing Complete' : !photographySigned ? 'Mark Photography Complete' : null)
+      : statusSupportsListingsApproval(status)
+        ? 'Open Listings Approval'
+        : workflowCardActionConfig.primaryActionLabel ?? null;
+
+  const runPrimaryAction = () => {
+    if (statusSupportsProcessingCompletion(status)) {
+      void runAction(() => completeProcessingStage(recordId, currentUserName), 'processing');
+      return;
+    }
+
+    if (status === 'Testing and Photography In Progress') {
+      if (!testingSigned) {
+        void runAction(() => completeTestingStage(recordId, currentUserName), 'testing');
+        return;
+      }
+
+      if (!photographySigned) {
+        void runAction(() => completePhotographyStage(recordId, currentUserName), 'photography');
+        return;
+      }
+    }
+
+    if (statusSupportsListingsApproval(status)) {
+      onOpenListingsRecord(recordId);
+      return;
+    }
+
+    workflowCardActionConfig.onPrimaryAction?.();
+  };
+
+  const primaryActionDisabled = saving
+    || (status === 'Testing and Photography In Progress' && testingSigned && photographySigned)
+    || !primaryActionLabel;
 
   useEffect(() => {
     setPricingConfirmed(false);
@@ -389,6 +485,10 @@ export function UsedGearWorkflowRecordPage({
     setStaleRecoveryDraftStatus(normalizeStaleRecoveryStatus(staleRecoveryStatus));
     setStaleRecoveryDraftNotes(staleRecoveryNotes);
   }, [recordId, staleRecoveryStatus, staleRecoveryNotes]);
+
+  useEffect(() => {
+    setShipmentFollowThroughDraftNotes(shipmentFollowThroughNotes);
+  }, [recordId, shipmentFollowThroughNotes]);
 
   const runAction = async (
     action: () => Promise<AirtableRecord>,
@@ -440,14 +540,11 @@ export function UsedGearWorkflowRecordPage({
   return (
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Workflow</p>
-              <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Workflow Detail</h2>
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">This record view focuses on workflow routing, grouped intake context, and operational handoff actions.</p>
-            </div>
-
+        <WorkflowPageHeader
+          eyebrow="Used Gear Workflow"
+          title="Workflow Detail"
+          description="Track routing, grouped intake context, and operational handoff actions for this row."
+          actions={(
             <button
               type="button"
               className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
@@ -455,8 +552,8 @@ export function UsedGearWorkflowRecordPage({
             >
               Back to Directory
             </button>
-          </div>
-        </div>
+          )}
+        />
 
         {error ? (
           <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -487,11 +584,6 @@ export function UsedGearWorkflowRecordPage({
                 <div>Pick Up</div>
                 <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Pick Up ID'])}</div>
               </div>
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)] sm:col-span-2">
-                <div>Workflow Owner</div>
-                <div className="mt-1 text-base font-semibold text-[var(--ink)]">{workflowOwner || 'Unassigned'}</div>
-                <div className="mt-1 text-xs uppercase tracking-[0.08em]">Assigned {displayInventoryValue(workflowOwnerAssignedAt)}</div>
-              </div>
               {WORKFLOW_HEADER_FIELDS.map((field) => (
                 <div key={field.fieldName} className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
                   <div>{field.label}</div>
@@ -499,108 +591,130 @@ export function UsedGearWorkflowRecordPage({
                 </div>
               ))}
             </div>
+
+            <details className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)]/60 px-4 py-3 text-sm text-[var(--muted)]">
+              <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                More Record Details
+              </summary>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div>Submission Group: {displayInventoryValue(record?.fields['Submission Group ID'])}</div>
+                <div>Pick Up: {displayInventoryValue(record?.fields['Pick Up ID'])}</div>
+                {WORKFLOW_HEADER_FIELDS.map((field) => (
+                  <div key={`detail-${field.fieldName}`}>{field.label}: {displayInventoryValue(record?.fields[field.fieldName])}</div>
+                ))}
+              </div>
+            </details>
           </div>
 
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Actions</p>
+            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Next Step</p>
+            <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--bg)]/60 px-4 py-4 text-sm text-[var(--muted)]">
+              <p className="m-0">Focus on the current workflow handoff first. Navigation and secondary tools stay available when you need them.</p>
+            </div>
             <div className="mt-4 flex flex-col gap-2">
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={() => onOpenIncomingGearForm(recordId)}
-              >
-                Open Incoming Gear
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={() => onOpenTestingForm(recordId)}
-              >
-                Open Testing
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={() => onOpenPhotosForm(recordId)}
-              >
-                Open Photos
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={() => onOpenInventoryEditor(recordId)}
-              >
-                Open Full Editor
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={() => {
-                  void runAction(() => assignWorkflowOwner(recordId, currentUserName));
-                }}
-                disabled={saving}
-              >
-                {saving ? 'Saving...' : workflowOwner === currentUserName ? 'Refresh Owner Timestamp' : 'Assign To Me'}
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={() => {
-                  void runAction(() => clearWorkflowOwner(recordId));
-                }}
-                disabled={saving || workflowOwner.length === 0}
-              >
-                {saving ? 'Saving...' : 'Clear Owner'}
-              </button>
-
-              {statusSupportsListingsApproval(status) ? (
+              {primaryActionLabel ? (
                 <button
                   type="button"
-                  className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
-                  onClick={() => onOpenListingsRecord(recordId)}
+                  className="rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={runPrimaryAction}
+                  disabled={primaryActionDisabled}
                 >
-                  Open Listings Approval
+                  {saving ? 'Saving...' : primaryActionLabel}
+                </button>
+              ) : null}
+              {workflowCardActionConfig.secondaryActionLabel && workflowCardActionConfig.onSecondaryAction ? (
+                <button
+                  type="button"
+                  className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                  onClick={workflowCardActionConfig.onSecondaryAction}
+                >
+                  {workflowCardActionConfig.secondaryActionLabel}
                 </button>
               ) : null}
 
-              {statusSupportsProcessingCompletion(status) ? (
-                <button
-                  type="button"
-                  className="rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={() => {
-                    void runAction(() => completeProcessingStage(recordId, currentUserName), 'processing');
-                  }}
-                  disabled={saving}
-                >
-                  {saving ? 'Saving...' : 'Complete Processing'}
-                </button>
-              ) : null}
+                <div className="flex justify-end">
+                  <ToolbarIconButton
+                    label={showRecordActions ? 'Hide More Actions' : 'Show More Actions'}
+                    aria-expanded={showRecordActions}
+                    className={showRecordActions ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)] hover:border-[var(--accent)] hover:bg-[var(--accent)]/15 hover:text-[var(--accent)]' : undefined}
+                    icon={(
+                      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
+                        <circle cx="4" cy="10" r="1.5" fill="currentColor" />
+                        <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+                        <circle cx="16" cy="10" r="1.5" fill="currentColor" />
+                      </svg>
+                    )}
+                    onClick={() => setShowRecordActions((current) => !current)}
+                  />
+                </div>
 
-              {status === 'Testing and Photography In Progress' ? (
-                <>
-                  <button
-                    type="button"
-                    className="rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                    onClick={() => {
-                      void runAction(() => completeTestingStage(recordId, currentUserName), 'testing');
-                    }}
-                    disabled={saving || testingSigned}
-                  >
-                    {saving ? 'Saving...' : 'Mark Testing Complete'}
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                    onClick={() => {
-                      void runAction(() => completePhotographyStage(recordId, currentUserName), 'photography');
-                    }}
-                    disabled={saving || photographySigned}
-                  >
-                    {saving ? 'Saving...' : 'Mark Photography Complete'}
-                  </button>
-                </>
+              {showRecordActions ? (
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)]/60 p-3">
+                    <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                        className={smallSecondaryActionButtonClass}
+                      onClick={() => onOpenIncomingGearForm(recordId)}
+                    >
+                      Open Incoming Gear
+                    </button>
+                    <button
+                      type="button"
+                        className={smallSecondaryActionButtonClass}
+                      onClick={() => onOpenTestingForm(recordId)}
+                    >
+                      Open Testing
+                    </button>
+                    <button
+                      type="button"
+                        className={smallSecondaryActionButtonClass}
+                      onClick={() => onOpenPhotosForm(recordId)}
+                    >
+                      Open Photos
+                    </button>
+                    <button
+                      type="button"
+                        className={smallSecondaryActionButtonClass}
+                      onClick={() => onOpenInventoryEditor(recordId)}
+                    >
+                      Open Full Editor
+                    </button>
+                    {statusSupportsListingsApproval(status) ? (
+                      <button
+                        type="button"
+                          className={smallSecondaryActionButtonClass}
+                        onClick={() => onOpenListingsRecord(recordId)}
+                      >
+                        Open Listings Approval
+                      </button>
+                    ) : null}
+                    {status === 'Testing and Photography In Progress' && !testingSigned ? (
+                      <button
+                        type="button"
+                          className={smallPrimaryActionButtonClass}
+                        onClick={() => {
+                          void runAction(() => completeTestingStage(recordId, currentUserName), 'testing');
+                        }}
+                        disabled={saving}
+                      >
+                        {saving ? 'Saving...' : 'Mark Testing Complete'}
+                      </button>
+                    ) : null}
+                    {status === 'Testing and Photography In Progress' && !photographySigned ? (
+                      <button
+                        type="button"
+                        className={smallPrimaryActionButtonClass}
+                        onClick={() => {
+                          void runAction(() => completePhotographyStage(recordId, currentUserName), 'photography');
+                        }}
+                        disabled={saving}
+                      >
+                        {saving ? 'Saving...' : 'Mark Photography Complete'}
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
               ) : null}
-
             </div>
           </div>
         </section>
@@ -610,9 +724,11 @@ export function UsedGearWorkflowRecordPage({
             <div>
               <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Pre-Listing Readiness</p>
               <h3 className="mt-2 text-xl font-semibold text-[var(--ink)]">Reviewer And Pricing Gate</h3>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                Review the listing-critical fields gathered through intake, testing, photography, and prefill before promoting this row to publish-ready status.
-              </p>
+              <div className="mt-3 max-w-2xl">
+                <CollapsibleHelperText label="Review guide">
+                  Review the listing-critical fields gathered through intake, testing, photography, and prefill before promoting this row to publish-ready status.
+                </CollapsibleHelperText>
+              </div>
             </div>
             <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
               {statusSupportsPreListingReview(status) ? 'Awaiting reviewer confirmation' : displayInventoryValue(record?.fields['Workflow Status'])}
@@ -638,14 +754,14 @@ export function UsedGearWorkflowRecordPage({
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
-              <h4 className="m-0 text-base font-semibold text-[var(--ink)]">Stage Context</h4>
+            <details className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
+              <summary className="cursor-pointer text-base font-semibold text-[var(--ink)]">Stage Context</summary>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {PRELISTING_CONTEXT_FIELDS.map((field) => (
                   <div key={field.fieldName}>{field.label}: {displayInventoryValue(record?.fields[field.fieldName])}</div>
                 ))}
               </div>
-            </div>
+            </details>
 
             <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
               <h4 className="m-0 text-base font-semibold text-[var(--ink)]">Reviewer Checklist</h4>
@@ -716,13 +832,17 @@ export function UsedGearWorkflowRecordPage({
         </section>
 
         <section className="grid gap-4 lg:grid-cols-2">
-          {(statusSupportsMarkStale(status) || statusSupportsSoldReady(status) || statusSupportsShipped(status) || showStaleRecoveryPanel) ? (
+          {(statusSupportsMarkStale(status) || statusSupportsSoldReady(status) || statusSupportsShipped(status) || showStaleRecoveryPanel || showShipmentFollowThroughPanel) ? (
             <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 lg:col-span-2">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Post-Publish Operations</p>
                   <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Post-Publish Lifecycle</h3>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">Use this record page for stale recovery, relist reconciliation, sold-ready handoff, and shipped completion. The queue now stays focused on triage while the detailed lifecycle work happens here.</p>
+                  <div className="mt-3 max-w-3xl">
+                    <CollapsibleHelperText label="Lifecycle guide">
+                      Use this record page for stale recovery, relist reconciliation, sold-ready handoff, and shipped completion. The queue now stays focused on triage while the detailed lifecycle work happens here.
+                    </CollapsibleHelperText>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {statusSupportsListingsApproval(status) || statusSupportsMarkStale(status) || statusSupportsSoldReady(status) ? (
@@ -788,10 +908,15 @@ export function UsedGearWorkflowRecordPage({
                       />
                     </label>
                   </div>
+                  <StaleRecoveryTemplateRow
+                    onApplyTemplate={(templateValue) => {
+                      setStaleRecoveryDraftNotes((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
+                    }}
+                  />
                   <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--line)]/70 pt-4">
                     <button
                       type="button"
-                      className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                      className={smallSecondaryActionButtonClass}
                       onClick={() => {
                         void runAction(() => saveWorkflowStaleRecovery(recordId, {
                           staleRecoveryStatus: staleRecoveryDraftStatus || null,
@@ -804,7 +929,7 @@ export function UsedGearWorkflowRecordPage({
                     </button>
                     <button
                       type="button"
-                      className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                      className={smallPrimaryActionButtonClass}
                       onClick={() => {
                         void runAction(() => markWorkflowRelisted(recordId));
                       }}
@@ -816,11 +941,58 @@ export function UsedGearWorkflowRecordPage({
                 </div>
               ) : null}
 
+              {showShipmentFollowThroughPanel ? (
+                <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
+                  <div>
+                    <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Shipment Follow-Through</p>
+                    <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Capture packing, carrier, or shipment-confirmation notes on the workflow row so sold-ready and shipped follow-through stays visible to the next operator.</p>
+                  </div>
+                  <label className="mt-4 block">
+                    <span className="sr-only">Shipment follow-through notes</span>
+                    <textarea
+                      className="min-h-24 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                      value={shipmentFollowThroughDraftNotes}
+                      onChange={(event) => setShipmentFollowThroughDraftNotes(event.currentTarget.value)}
+                      placeholder="Add packing, carrier, or shipment confirmation notes"
+                      disabled={saving || !statusSupportsShipmentFollowThroughEditing(status)}
+                    />
+                  </label>
+                  {statusSupportsShipmentFollowThroughEditing(status) ? (
+                    <ShipmentFollowThroughTemplateRow
+                      onApplyTemplate={(templateValue) => {
+                        setShipmentFollowThroughDraftNotes((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
+                      }}
+                    />
+                  ) : null}
+                  {shipmentFollowThroughUpdatedAt ? (
+                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                      Last updated {shipmentFollowThroughUpdatedAt}
+                    </p>
+                  ) : null}
+                  {statusSupportsShipmentFollowThroughEditing(status) ? (
+                    <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--line)]/70 pt-4">
+                      <button
+                        type="button"
+                        className={smallSecondaryActionButtonClass}
+                        onClick={() => {
+                          void runAction(() => saveWorkflowShipmentFollowThrough(recordId, {
+                            shipmentFollowThroughNotes: shipmentFollowThroughDraftNotes || null,
+                          }));
+                        }}
+                        disabled={saving}
+                      >
+                        {saving ? 'Saving...' : 'Save Shipment Notes'}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
               <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--line)]/70 pt-4">
                 {statusSupportsMarkStale(status) ? (
                   <button
                     type="button"
-                    className="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    className={smallPrimaryActionButtonClass}
                     onClick={() => {
                       void runAction(() => markWorkflowListingStale(recordId));
                     }}
@@ -832,7 +1004,7 @@ export function UsedGearWorkflowRecordPage({
                 {statusSupportsSoldReady(status) ? (
                   <button
                     type="button"
-                    className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    className={smallSuccessActionButtonClass}
                     onClick={() => {
                       void runAction(() => markWorkflowSoldReadyToShip(recordId));
                     }}
@@ -844,7 +1016,7 @@ export function UsedGearWorkflowRecordPage({
                 {statusSupportsShipped(status) ? (
                   <button
                     type="button"
-                    className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    className={smallPrimaryActionButtonClass}
                     onClick={() => {
                       void runAction(() => markWorkflowShipped(recordId));
                     }}
@@ -859,39 +1031,72 @@ export function UsedGearWorkflowRecordPage({
 
           {showStaleRecoveryPanel ? (
             <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 lg:col-span-2">
-              <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Stale Recovery</h3>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
-                  <div>Recovery Status</div>
-                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{staleRecoveryStatus || 'Not set'}</div>
+              <details>
+                <summary className="cursor-pointer text-xl font-semibold text-[var(--ink)]">Stale Recovery</summary>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                    <div>Recovery Status</div>
+                    <div className="mt-1 text-base font-semibold text-[var(--ink)]">{staleRecoveryStatus || 'Not set'}</div>
+                  </div>
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                    <div>Recovery Updated</div>
+                    <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(staleRecoveryUpdatedAt)}</div>
+                  </div>
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                    <div>Relisted At</div>
+                    <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(relistedAt)}</div>
+                  </div>
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                    <div>Current Lifecycle</div>
+                    <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Workflow Status'])}</div>
+                  </div>
                 </div>
-                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
-                  <div>Recovery Updated</div>
-                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(staleRecoveryUpdatedAt)}</div>
+                {staleRecoveryNotes ? (
+                  <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm leading-6 text-[var(--ink)]">
+                    {staleRecoveryNotes}
+                  </div>
+                ) : null}
+              </details>
+            </div>
+          ) : null}
+
+          {showShipmentFollowThroughPanel ? (
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 lg:col-span-2">
+              <details>
+                <summary className="cursor-pointer text-xl font-semibold text-[var(--ink)]">Shipment Follow-Through Audit</summary>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                    <div>Current Lifecycle</div>
+                    <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Workflow Status'])}</div>
+                  </div>
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                    <div>Sold Ready At</div>
+                    <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Sold Ready To Ship At'])}</div>
+                  </div>
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                    <div>Shipment Notes Updated</div>
+                    <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(shipmentFollowThroughUpdatedAt)}</div>
+                  </div>
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                    <div>Shipped At</div>
+                    <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Shipped At'])}</div>
+                  </div>
                 </div>
-                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
-                  <div>Relisted At</div>
-                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(relistedAt)}</div>
-                </div>
-                <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
-                  <div>Current Lifecycle</div>
-                  <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayInventoryValue(record?.fields['Workflow Status'])}</div>
-                </div>
-              </div>
-              {staleRecoveryNotes ? (
-                <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm leading-6 text-[var(--ink)]">
-                  {staleRecoveryNotes}
-                </div>
-              ) : null}
+                {shipmentFollowThroughNotes ? (
+                  <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm leading-6 text-[var(--ink)]">
+                    {shipmentFollowThroughNotes}
+                  </div>
+                ) : null}
+              </details>
             </div>
           ) : null}
 
           {relatedGroupRecords.length > 0 ? (
-            <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 lg:col-span-2">
-              <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+            <details className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 lg:col-span-2 text-sm text-[var(--muted)]">
+              <summary className="cursor-pointer text-xl font-semibold text-[var(--ink)]">Grouped Submission Context</summary>
+              <div className="mt-4 flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Grouped Submission Context</h3>
-                  <p className="mt-2 text-sm text-[var(--muted)]">This row shares a {relatedGroupDescription?.toLowerCase() ?? 'workflow group'} with {relatedGroupRecords.length} other row{relatedGroupRecords.length === 1 ? '' : 's'} under {relatedGroupLabel}.</p>
+                  <p className="mt-0 mb-0">This row shares a {relatedGroupDescription?.toLowerCase() ?? 'workflow group'} with {relatedGroupRecords.length} other row{relatedGroupRecords.length === 1 ? '' : 's'} under {relatedGroupLabel}.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
@@ -908,7 +1113,7 @@ export function UsedGearWorkflowRecordPage({
 
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
                 {relatedGroupRecords.map((candidate) => (
-                  <div key={candidate.id} className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+                  <div key={candidate.id} className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="font-semibold text-[var(--ink)]">{displayInventoryValue(candidate.fields.SKU)}</div>
@@ -936,7 +1141,7 @@ export function UsedGearWorkflowRecordPage({
                   </div>
                 ))}
               </div>
-            </div>
+            </details>
           ) : null}
 
           <ListingApprovalWorkflowProcessCard
@@ -951,23 +1156,23 @@ export function UsedGearWorkflowRecordPage({
             onSecondaryAction={workflowCardActionConfig.onSecondaryAction}
           />
 
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-            <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Workflow Audit</h3>
-            <div className="mt-4 space-y-2 text-sm text-[var(--muted)]">
+          <details className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 text-sm text-[var(--muted)]">
+            <summary className="cursor-pointer text-xl font-semibold text-[var(--ink)]">Workflow Audit</summary>
+            <div className="mt-4 space-y-2">
               {WORKFLOW_AUDIT_FIELDS.map((field) => (
                 <div key={field.fieldName}>{field.label}: {displayInventoryValue(record?.fields[field.fieldName])}</div>
               ))}
             </div>
-          </div>
+          </details>
 
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-            <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Reference Notes</h3>
-            <div className="mt-4 space-y-2 text-sm text-[var(--muted)]">
+          <details className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 text-sm text-[var(--muted)]">
+            <summary className="cursor-pointer text-xl font-semibold text-[var(--ink)]">Reference Notes</summary>
+            <div className="mt-4 space-y-2">
               {REFERENCE_NOTE_FIELDS.map((field) => (
                 <div key={field.fieldName}>{field.label}: {displayInventoryValue(record?.fields[field.fieldName])}</div>
               ))}
             </div>
-          </div>
+          </details>
         </section>
       </div>
     </PanelSurface>

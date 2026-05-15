@@ -2,6 +2,13 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearLotTwoSection } from '@/components/tabs/airtable/UsedGearLotTwoSection';
 
+async function openActivationTools() {
+  const toggle = screen.queryByRole('button', { name: 'Show Activation Tools' });
+  if (toggle) {
+    fireEvent.click(toggle);
+  }
+}
+
 const { loadLotTwoQueueMock, loadUsedGearWorkflowRecordBySkuMock, clipboardWriteTextMock } = vi.hoisted(() => ({
   loadLotTwoQueueMock: vi.fn(),
   loadUsedGearWorkflowRecordBySkuMock: vi.fn(),
@@ -133,6 +140,7 @@ describe('UsedGearLotTwoSection', () => {
     );
 
     await screen.findByText('Parking Lot 2');
+    await openActivationTools();
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Activate by SKU' }), {
       target: { value: 'SKU-LOOKUP-1' },

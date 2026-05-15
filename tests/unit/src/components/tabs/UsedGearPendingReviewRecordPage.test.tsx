@@ -99,6 +99,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open Group Review' }));
     expect(navigateMock).toHaveBeenCalledWith('/parking-lot-1/review/submission%3Agroup-1?reviewMode=test');
 
+    fireEvent.click(screen.getByRole('button', { name: 'Show More Actions' }));
     fireEvent.click(screen.getByRole('button', { name: 'Open Incoming Gear' }));
     expect(onOpenIncomingGearForm).toHaveBeenCalledWith('rec-pending-1');
 
@@ -162,5 +163,28 @@ describe('UsedGearPendingReviewRecordPage', () => {
       search: '?reviewMode=test',
       hash: '#used-gear-trash',
     });
+  });
+
+  it('applies shared note templates for qualification and unqualify actions', async () => {
+    render(
+      <UsedGearPendingReviewRecordPage
+        currentUserName="Taylor Reviewer"
+        recordId="rec-pending-1"
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Qualify Into Lot 2')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sellable Clean Pass' }));
+    expect(screen.getByRole('textbox', { name: 'Qualification Notes' })).toHaveValue(
+      'Carry forward note\nSellable intake confirmed. Core unit is present, pricing path is documented, and the row should continue through Lot 2.',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Repair Not Economical' }));
+    expect(screen.getByRole('textbox', { name: 'Unqualified Reason' })).toHaveValue(
+      'Rejected at intake because the reported functional issues or required repair effort exceed the expected resale value.',
+    );
   });
 });

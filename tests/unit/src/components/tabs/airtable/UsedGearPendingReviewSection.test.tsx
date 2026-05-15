@@ -2,6 +2,13 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearPendingReviewSection } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
 
+async function openPendingReviewTools() {
+  const toggle = screen.queryByRole('button', { name: 'Show Filters And Tools' });
+  if (toggle) {
+    fireEvent.click(toggle);
+  }
+}
+
 const { loadPendingReviewQueueMock, clipboardWriteTextMock } = vi.hoisted(() => ({
   loadPendingReviewQueueMock: vi.fn(),
   clipboardWriteTextMock: vi.fn(),
@@ -52,7 +59,8 @@ describe('UsedGearPendingReviewSection', () => {
     await screen.findByText('Pending Review Queue');
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Copy Queue Link' }));
+      await openPendingReviewTools();
+      fireEvent.click(await screen.findByRole('button', { name: 'Copy Queue Link' }));
       await Promise.resolve();
     });
 
@@ -101,7 +109,8 @@ describe('UsedGearPendingReviewSection', () => {
 
     await screen.findByText('Pending Review Queue');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Collapse All Groups' }));
+  await openPendingReviewTools();
+  fireEvent.click(await screen.findByRole('button', { name: 'Collapse All Groups' }));
 
     expect(onCollapsedGroupIdsChange).toHaveBeenCalledWith(['pickup:pickup-a', 'pickup:pickup-b']);
   });
@@ -174,8 +183,8 @@ describe('UsedGearPendingReviewSection', () => {
       />,
     );
 
-    expect(await screen.findByText('Grouped intake review has moved off the queue cards.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Open Group Review' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Open Group Review' })).toBeInTheDocument();
+    expect(screen.queryByText('Grouped intake review has moved off the queue cards.')).not.toBeInTheDocument();
   });
 
   it('copies a group-focused pending review link', async () => {
@@ -212,5 +221,88 @@ describe('UsedGearPendingReviewSection', () => {
     await waitFor(() => {
       expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/inventory?workflowPendingReviewGroup=pickup%3Apickup-a#used-gear-pending-review`);
     });
+  });
+
+  it('ignores the legacy owner filter prop and keeps the full queue visible', async () => {
+    loadPendingReviewQueueMock.mockResolvedValue([
+      {
+        id: 'rec-pending-a',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PEND-1',
+          Make: 'McIntosh',
+          Model: 'MC240',
+          'Workflow Status': 'Pending Review',
+          'Workflow Owner': 'Taylor Reviewer',
+          'Offer Amount': 500,
+        },
+      },
+      {
+        id: 'rec-pending-b',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PEND-2',
+          Make: 'Marantz',
+          Model: 'Model 8',
+          'Workflow Status': 'Pending Review',
+          'Offer Amount': 400,
+        },
+      },
+      {
+        id: 'rec-pending-c',
+        createdTime: '2026-05-05T00:00:00.000Z',
+        fields: {
+          SKU: 'PEND-3',
+          Make: 'Sansui',
+          Model: 'AU-717',
+          'Workflow Status': 'Pending Review',
+          'Offer Amount': 450,
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearPendingReviewSection
+        currentUserName="Taylor Reviewer"
+        onOpenReviewRecord={vi.fn()}
+        onOpenWorkflowRecord={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Pending Review Queue')).toBeInTheDocument();
+    expect(screen.getAllByText('PEND-1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('PEND-2').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('PEND-3').length).toBeGreaterThan(0);
+  });
+
+  it('opens item review from the last-touched action', async () => {
+    const onOpenReviewRecord = vi.fn();
+
+    loadPendingReviewQueueMock.mockResolvedValue([
+      {
+        id: 'rec-pending',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PEND-1',
+          Make: 'McIntosh',
+          Model: 'MC240',
+          'Workflow Status': 'Pending Review',
+          'Workflow Owner': 'Taylor Reviewer',
+          'Workflow Owner Assigned At': '2026-05-08T03:00:00.000Z',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearPendingReviewSection
+        currentUserName="Taylor Reviewer"
+        onOpenReviewRecord={onOpenReviewRecord}
+        onOpenWorkflowRecord={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: /last touched: owner assigned to taylor reviewer/i }));
+
+    expect(onOpenReviewRecord).toHaveBeenCalledWith('rec-pending');
   });
 });

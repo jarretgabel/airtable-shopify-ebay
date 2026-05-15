@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
+import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import {
   hasUsedGearPendingReviewPricingPath,
   loadUsedGearWorkflowRecordContext,
@@ -11,6 +14,7 @@ import {
   type UsedGearWorkflowRecordContext,
 } from '@/services/usedGearQueue';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
+import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
 
 interface UsedGearTrashReviewRecordPageProps {
   currentUserName: string;
@@ -67,6 +71,26 @@ function DetailBlock({ title, fields }: { title: string; fields: Array<{ label: 
   );
 }
 
+function QualificationTemplateRow({ onApplyTemplate }: { onApplyTemplate: (templateValue: string) => void }) {
+  const templates = getUsedGearWorkflowNoteTemplates('qualification');
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      <span className="self-center text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-100/70">Quick templates</span>
+      {templates.map((template) => (
+        <button
+          key={template.id}
+          type="button"
+          className="rounded-full border border-emerald-200/20 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-100 transition hover:border-emerald-200/50 hover:bg-white/10"
+          onClick={() => onApplyTemplate(template.value)}
+        >
+          {template.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function UsedGearTrashReviewRecordPage({
   currentUserName,
   recordId,
@@ -80,6 +104,7 @@ export function UsedGearTrashReviewRecordPage({
   const [error, setError] = useState<string | null>(null);
   const [requalifyStatus, setRequalifyStatus] = useState<UsedGearPendingReviewAcceptedStatus>('Accepted - Awaiting Arrival');
   const [requalifyNotes, setRequalifyNotes] = useState('');
+  const [showRecordActions, setShowRecordActions] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -192,17 +217,13 @@ export function UsedGearTrashReviewRecordPage({
   return (
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-        <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Trash Review</p>
-              <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</h2>
-              <p className="mt-2 text-sm text-[var(--muted)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</p>
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-                Use this focused trash decision page to restore the row, re-qualify it into Lot 2, or remove it from the workflow entirely.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
+        <WorkflowPageHeader
+          eyebrow="Trash Review"
+          title={displayInventoryValue(record.fields.SKU)}
+          description="Use this focused trash decision page to restore the row, re-qualify it into Lot 2, or remove it from the workflow entirely."
+          detail={<>{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</>}
+          actions={(
+            <>
               <button
                 type="button"
                 className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
@@ -210,16 +231,35 @@ export function UsedGearTrashReviewRecordPage({
               >
                 Back To Trash
               </button>
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={() => onOpenWorkflowRecord(record.id)}
-              >
-                Open Workflow Record
-              </button>
-            </div>
-          </div>
-        </section>
+              <div className="flex flex-col items-end gap-2">
+                <ToolbarIconButton
+                  label={showRecordActions ? 'Hide More Actions' : 'Show More Actions'}
+                  aria-expanded={showRecordActions}
+                  className={showRecordActions ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)] hover:border-[var(--accent)] hover:bg-[var(--accent)]/15 hover:text-[var(--accent)]' : undefined}
+                  icon={(
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
+                      <circle cx="4" cy="10" r="1.5" fill="currentColor" />
+                      <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+                      <circle cx="16" cy="10" r="1.5" fill="currentColor" />
+                    </svg>
+                  )}
+                  onClick={() => setShowRecordActions((current) => !current)}
+                />
+                {showRecordActions ? (
+                  <div className="flex flex-wrap justify-end gap-2 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-3">
+                    <button
+                      type="button"
+                      className={smallSecondaryActionButtonClass}
+                      onClick={() => onOpenWorkflowRecord(record.id)}
+                    >
+                      Open Workflow Record
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </>
+          )}
+        />
 
         {error ? (
           <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -258,13 +298,13 @@ export function UsedGearTrashReviewRecordPage({
             </button>
           </section>
 
-          <section className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-5">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-200">Re-qualify</p>
-            <h3 className="mt-2 text-xl font-semibold text-white">Re-qualify Into Lot 2</h3>
-            <p className="mt-2 text-sm leading-6 text-emerald-100/80">Use this when the item should return to the active sellable workflow and continue from the correct Lot 2 stage.</p>
+          <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Re-qualify</p>
+            <h3 className="mt-2 text-xl font-semibold text-[var(--ink)]">Re-qualify Into Lot 2</h3>
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Use this when the item should return to the active sellable workflow and continue from the correct Lot 2 stage.</p>
             <div className="mt-4 grid gap-3">
               <label className="block">
-                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-100/80">Lot 2 Route</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Lot 2 Route</span>
                 <select
                   className={inputClassName}
                   value={requalifyStatus}
@@ -276,7 +316,7 @@ export function UsedGearTrashReviewRecordPage({
                 </select>
               </label>
               <label className="block">
-                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-100/80">Qualification Notes</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Qualification Notes</span>
                 <textarea
                   className={inputClassName}
                   rows={5}
@@ -285,12 +325,17 @@ export function UsedGearTrashReviewRecordPage({
                   placeholder="Required before re-qualifying this item into Lot 2"
                 />
               </label>
+              <QualificationTemplateRow
+                onApplyTemplate={(templateValue) => {
+                  setRequalifyNotes((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
+                }}
+              />
               {!hasPricingPath ? (
                 <p className="m-0 text-sm text-amber-200">Offer amount, paid amount, or confirmed grand total is still required before this row can be re-qualified into Lot 2.</p>
               ) : null}
               <button
                 type="button"
-                className="rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                className={smallPrimaryActionButtonClass}
                 onClick={() => {
                   void handleRequalify();
                 }}
@@ -308,7 +353,7 @@ export function UsedGearTrashReviewRecordPage({
           <p className="mt-2 text-sm leading-6 text-rose-100/80">Delete only when the row should leave the workflow entirely and should not return to Parking Lot 1 or Lot 2.</p>
           <button
             type="button"
-            className="mt-4 rounded-xl border border-rose-300/35 bg-rose-500/20 px-4 py-3 text-sm font-semibold text-rose-50 transition hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-4 inline-flex items-center justify-center rounded-xl border border-rose-300/35 bg-rose-500/15 px-4 py-2.5 text-sm font-semibold text-rose-50 transition hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
             onClick={() => {
               void handleDelete();
             }}

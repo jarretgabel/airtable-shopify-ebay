@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
+import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
+import { CopyLinkIconButton } from '@/components/app/CopyLinkIconButton';
+import { FilterToggleIconButton } from '@/components/app/FilterToggleIconButton';
+import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
+import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { useCopyQueueLink } from '@/components/tabs/airtable/useCopyQueueLink';
 import {
@@ -13,6 +19,7 @@ import {
   formatUsedGearAgeDays,
 } from '@/services/usedGearWorkflowAging';
 import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
+import { buildWorkflowProgressLastTouchedSummary } from '@/services/usedGearWorkflowLastTouched';
 import type { AirtableRecord } from '@/types/airtable';
 
 export interface UsedGearWorkflowProgressSectionProps {
@@ -22,6 +29,7 @@ export interface UsedGearWorkflowProgressSectionProps {
   onOpenPhotosForm: (recordId: string) => void;
   onOpenWorkflowRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
+  showSectionIntro?: boolean;
   queueMode?: UsedGearWorkflowProgressQueueMode;
   sectionId?: string;
   groupParamName?: string;
@@ -164,6 +172,7 @@ function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): Pro
 }
 
 export function UsedGearWorkflowProgressSection({
+  showSectionIntro = true,
   onOpenWorkflowRecord,
   onOpenListingsRecord,
   queueMode = 'all',
@@ -190,6 +199,7 @@ export function UsedGearWorkflowProgressSection({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showQueueTools, setShowQueueTools] = useState(false);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
   const [uncontrolledCollapsedGroupIds, setUncontrolledCollapsedGroupIds] = useState<string[]>([]);
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowProgressSortMode>('group-label');
@@ -245,11 +255,13 @@ export function UsedGearWorkflowProgressSection({
 
   const filteredRecords = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
-    if (!normalizedSearch) {
-      return queueScopedRecords;
-    }
+    return queueScopedRecords.filter((record) => {
+      if (!normalizedSearch) {
+        return true;
+      }
 
-    return queueScopedRecords.filter((record) => recordSearchText(record).includes(normalizedSearch));
+      return recordSearchText(record).includes(normalizedSearch);
+    });
   }, [queueScopedRecords, searchTerm]);
 
   const groupedRecords = useMemo(() => {
@@ -276,6 +288,16 @@ export function UsedGearWorkflowProgressSection({
   const collapsedGroupIdSet = useMemo(() => new Set(collapsedGroupIds), [collapsedGroupIds]);
   const allVisibleGroupsCollapsed = visibleGroupIds.length > 0
     && visibleGroupIds.every((groupId) => collapsedGroupIdSet.has(groupId));
+  const hasSecondaryControlsActive = searchTerm.trim().length > 0
+    || sortMode !== 'group-label'
+    || collapsedGroupIds.length > 0
+    || Boolean(focusedGroupId);
+
+  useEffect(() => {
+    if (hasSecondaryControlsActive) {
+      setShowQueueTools(true);
+    }
+  }, [hasSecondaryControlsActive]);
 
   const refreshQueue = async () => {
     setRefreshing(true);
@@ -337,26 +359,33 @@ export function UsedGearWorkflowProgressSection({
     );
   };
 
+  const openLastTouchedAction = (recordId: string, actionTarget: 'review-record' | 'workflow-record' | 'listings-record') => {
+    if (actionTarget === 'listings-record') {
+      onOpenListingsRecord(recordId);
+      return;
+    }
+
+    onOpenWorkflowRecord(recordId);
+  };
+
   return (
     <section id={sectionId} className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{queuePresentation.eyebrow}</p>
-          <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{queuePresentation.title}</h3>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{queuePresentation.description}</p>
-          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]/80">Detailed stage actions now live on the workflow record page.</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={() => {
-              void copyLink();
-            }}
-            disabled={copyingLink}
-          >
-            {copyingLink ? 'Copying...' : copiedLink ? 'Link Copied' : 'Copy Queue Link'}
-          </button>
+      <div className="flex flex-col gap-4">
+        {showSectionIntro ? (
+          <div>
+            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{queuePresentation.eyebrow}</p>
+            <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{queuePresentation.title}</h3>
+            <div className="mt-3 max-w-2xl">
+              <CollapsibleHelperText label="Queue guide">
+                <p className="m-0">{queuePresentation.description}</p>
+                <p className="mt-3 mb-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]/80">
+                  One clear next step stays on each card. Detailed stage actions live on the workflow record page.
+                </p>
+              </CollapsibleHelperText>
+            </div>
+          </div>
+        ) : null}
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <label className="min-w-[240px] flex-1">
             <span className="sr-only">Search used gear progress queue</span>
             <input
@@ -366,46 +395,84 @@ export function UsedGearWorkflowProgressSection({
               placeholder="Search by status, SKU, model, group, or next team"
             />
           </label>
-          <label className="min-w-[180px]">
-            <span className="sr-only">Sort used gear progress queue</span>
-            <select
-              className={inputClassName}
-              value={sortMode}
-              onChange={(event) => handleSortModeChange(event.currentTarget.value as UsedGearWorkflowProgressSortMode)}
-            >
-              <option value="group-label">Sort: Group Label</option>
-              <option value="newest">Sort: Newest First</option>
-              <option value="oldest">Sort: Oldest First</option>
-            </select>
-          </label>
-          <button
-            type="button"
-            className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={() => {
-              void refreshQueue();
-            }}
-            disabled={refreshing}
-          >
-            {refreshing ? 'Refreshing...' : 'Refresh Queue'}
-          </button>
-          <button
-            type="button"
-            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={collapseVisibleGroups}
-            disabled={visibleGroupIds.length === 0 || allVisibleGroupsCollapsed}
-          >
-            Collapse All Groups
-          </button>
-          <button
-            type="button"
-            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={expandVisibleGroups}
-            disabled={visibleGroupIds.length === 0 || collapsedGroupIds.length === 0}
-          >
-            Expand All Groups
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-2 py-2">
+              <CopyLinkIconButton
+                onClick={() => {
+                  void copyLink();
+                }}
+                disabled={copyingLink}
+                copying={copyingLink}
+                copied={copiedLink}
+                label="Copy Queue Link"
+                copyingLabel="Copying queue link"
+                copiedLabel="Queue link copied"
+              />
+            <RefreshIconButton
+              onClick={() => {
+                void refreshQueue();
+              }}
+              disabled={refreshing}
+              loading={refreshing}
+              label="Refresh workflow progress queue"
+              loadingLabel="Refreshing workflow progress queue"
+            />
+            </div>
+            <FilterToggleIconButton
+              onClick={() => setShowQueueTools((current) => !current)}
+              aria-expanded={showQueueTools}
+              expanded={showQueueTools}
+              collapsedLabel="Show Filters And Tools"
+              expandedLabel="Hide Filters And Tools"
+            />
+          </div>
         </div>
       </div>
+
+      {showQueueTools ? (
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <label className="min-w-[180px]">
+              <span className="sr-only">Sort used gear progress queue</span>
+              <select
+                className={inputClassName}
+                value={sortMode}
+                onChange={(event) => handleSortModeChange(event.currentTarget.value as UsedGearWorkflowProgressSortMode)}
+              >
+                <option value="group-label">Sort: Group Label</option>
+                <option value="newest">Sort: Newest First</option>
+                <option value="oldest">Sort: Oldest First</option>
+              </select>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <ToolbarIconButton
+                onClick={collapseVisibleGroups}
+                disabled={visibleGroupIds.length === 0 || allVisibleGroupsCollapsed}
+                label="Collapse All Groups"
+                icon={(
+                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
+                    <path d="M4.167 6.667h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                    <path d="M6.667 10h6.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                    <path d="M8.333 13.333h3.334" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                  </svg>
+                )}
+              />
+              <ToolbarIconButton
+                onClick={expandVisibleGroups}
+                disabled={visibleGroupIds.length === 0 || collapsedGroupIds.length === 0}
+                label="Expand All Groups"
+                icon={(
+                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
+                    <path d="M4.167 6.667h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                    <path d="M4.167 10h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                    <path d="M4.167 13.333h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                  </svg>
+                )}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {error ? (
         <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -430,6 +497,12 @@ export function UsedGearWorkflowProgressSection({
           <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Oldest Active Stage</p>
           <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{formatUsedGearAgeDays(agingSummary.oldestAgeDays)}</p>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
+        5+ Days In Stage: <span className="font-semibold text-[var(--ink)]">{agingSummary.alertCount}</span>
+        {' · '}
+        Oldest Active Stage: <span className="font-semibold text-[var(--ink)]">{formatUsedGearAgeDays(agingSummary.oldestAgeDays)}</span>
       </div>
 
       {!loading && groupedRecords.length === 0 ? (
@@ -458,40 +531,58 @@ export function UsedGearWorkflowProgressSection({
           <div key={group.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{group.description}</p>
                 <h4 className="mt-1 text-lg font-semibold text-[var(--ink)]">{group.label}</h4>
+                <div className="mt-2 max-w-xl">
+                  <CollapsibleHelperText label="Group details">
+                    {group.description}
+                  </CollapsibleHelperText>
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
                   {group.records.length} row{group.records.length === 1 ? '' : 's'}
                 </div>
-                <button
-                  type="button"
-                  className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={() => {
-                    void copyLink(buildWorkflowProgressGroupLink(group.id, groupParamName, sectionId));
-                  }}
-                  disabled={copyingLink}
-                >
-                  {copyingLink ? 'Copying...' : copiedLink ? 'Link Copied' : 'Copy Group Link'}
-                </button>
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--bg)] px-1.5 py-1">
+                  <CopyLinkIconButton
+                    onClick={() => {
+                      void copyLink(buildWorkflowProgressGroupLink(group.id, groupParamName, sectionId));
+                    }}
+                    disabled={copyingLink}
+                    copying={copyingLink}
+                    copied={copiedLink}
+                    label="Copy Group Link"
+                    copyingLabel="Copying group link"
+                    copiedLabel="Group link copied"
+                    className="h-7 w-7 rounded-full border-transparent bg-transparent shadow-none hover:bg-[var(--line)]"
+                  />
+                  <ToolbarIconButton
+                    onClick={() => toggleGroupCollapsed(group.id)}
+                    label={collapsed ? 'Expand Group' : 'Collapse Group'}
+                    aria-expanded={!collapsed}
+                    className="h-7 w-7 rounded-full border-transparent bg-transparent shadow-none hover:bg-[var(--line)]"
+                    icon={(
+                      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-3.5 w-3.5">
+                        {collapsed ? (
+                          <>
+                            <path d="M4.167 10h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                            <path d="M10 4.167v11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                          </>
+                        ) : (
+                          <path d="M4.167 10h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                        )}
+                      </svg>
+                    )}
+                  />
+                </div>
                 {focusedGroupId ? (
                   <button
                     type="button"
-                    className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-medium text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
                     onClick={() => onFocusedGroupIdChange?.(null)}
                   >
                     Show All Groups
                   </button>
                 ) : null}
-                <button
-                  type="button"
-                  className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                  onClick={() => toggleGroupCollapsed(group.id)}
-                  aria-expanded={!collapsed}
-                >
-                  {collapsed ? 'Expand Group' : 'Collapse Group'}
-                </button>
               </div>
             </div>
 
@@ -503,6 +594,7 @@ export function UsedGearWorkflowProgressSection({
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
               {group.records.map((record) => {
                 const status = getUsedGearWorkflowStatus(record.fields) ?? 'Unknown';
+                const lastTouchedSummary = buildWorkflowProgressLastTouchedSummary(record);
 
                 return (
                   <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
@@ -519,32 +611,57 @@ export function UsedGearWorkflowProgressSection({
 
                     <div className="mt-3 grid gap-2 text-sm text-[var(--muted)] sm:grid-cols-2">
                       <div>Next Team: {displayInventoryValue(record.fields['Workflow Next Team'])}</div>
-                      <div>Processing Signed: {displayInventoryValue(record.fields['Processing Signed By'])}</div>
-                      <div>Testing Signed: {displayInventoryValue(record.fields['Testing Signed By'])}</div>
-                      <div>Photography Signed: {displayInventoryValue(record.fields['Photography Signed By'])}</div>
                       <div>
                         Price Ready: {getUsedGearWorkflowListingReadiness(record).price ? 'Yes' : 'No'}
                       </div>
                     </div>
 
+                    <button
+                      type="button"
+                      className="mt-3 block w-full rounded-xl border border-[var(--line)] bg-[var(--bg)]/70 px-3 py-3 text-left text-sm text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--ink)]"
+                      onClick={() => openLastTouchedAction(record.id, lastTouchedSummary.actionTarget)}
+                    >
+                      <span className="font-semibold text-[var(--ink)]">Last touched:</span> {lastTouchedSummary.description} · {lastTouchedSummary.timestamp}
+                      <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{lastTouchedSummary.actionLabel}</span>
+                    </button>
+
+                    <details className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--bg)]/60 px-3 py-3 text-sm text-[var(--muted)]">
+                      <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                        More Stage Details
+                      </summary>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        <div>Processing Signed: {displayInventoryValue(record.fields['Processing Signed By'])}</div>
+                        <div>Testing Signed: {displayInventoryValue(record.fields['Testing Signed By'])}</div>
+                        <div>Photography Signed: {displayInventoryValue(record.fields['Photography Signed By'])}</div>
+                      </div>
+                      {status === 'Approved for Publish' ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            className={smallSecondaryActionButtonClass}
+                            onClick={() => onOpenWorkflowRecord(record.id)}
+                          >
+                            Open Workflow Record
+                          </button>
+                        </div>
+                      ) : null}
+                    </details>
+
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button
                         type="button"
-                        className="rounded-xl bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110"
-                        onClick={() => onOpenWorkflowRecord(record.id)}
-                      >
-                        {getStageReviewLabel(status)}
-                      </button>
+                        className={smallPrimaryActionButtonClass}
+                        onClick={() => {
+                          if (status === 'Approved for Publish') {
+                            onOpenListingsRecord(record.id);
+                            return;
+                          }
 
-                      {status === 'Approved for Publish' ? (
-                        <button
-                          type="button"
-                          className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110"
-                          onClick={() => onOpenListingsRecord(record.id)}
-                        >
-                          Open Listings Approval
-                        </button>
-                      ) : null}
+                          onOpenWorkflowRecord(record.id);
+                        }}
+                      >
+                        {status === 'Approved for Publish' ? 'Open Listings Approval' : getStageReviewLabel(status)}
+                      </button>
                     </div>
                   </article>
                 );

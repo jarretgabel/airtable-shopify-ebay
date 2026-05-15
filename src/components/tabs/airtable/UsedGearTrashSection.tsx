@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
+import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
+import { CopyLinkIconButton } from '@/components/app/CopyLinkIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
+import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { useCopyQueueLink } from '@/components/tabs/airtable/useCopyQueueLink';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
@@ -12,6 +16,7 @@ import type { AirtableRecord } from '@/types/airtable';
 interface UsedGearTrashSectionProps {
   onOpenReviewRecord: (recordId: string) => void;
   onOpenWorkflowRecord: (recordId: string) => void;
+  showSectionIntro?: boolean;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
 }
@@ -40,6 +45,7 @@ function previewText(value: unknown): string {
 export function UsedGearTrashSection({
   onOpenReviewRecord,
   onOpenWorkflowRecord,
+  showSectionIntro = true,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
 }: UsedGearTrashSectionProps) {
@@ -123,25 +129,19 @@ export function UsedGearTrashSection({
 
   return (
     <section id="used-gear-trash" className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Workflow</p>
-          <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Trash Review</h3>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-            Review rows that were marked unqualified and routed into active trash. Restore, re-qualify, and permanent-delete actions are available here so intake can recover mistakes without leaving Parking Lot 1.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={() => {
-              void copyLink();
-            }}
-            disabled={copyingLink}
-          >
-            {copyingLink ? 'Copying...' : copiedLink ? 'Link Copied' : 'Copy Trash Link'}
-          </button>
+      <div className="flex flex-col gap-4">
+        {showSectionIntro ? (
+          <div>
+            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Workflow</p>
+            <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Trash Review</h3>
+            <div className="mt-3 max-w-2xl">
+              <CollapsibleHelperText label="Queue guide">
+                Review rows that were marked unqualified and routed into active trash. Keep this queue focused on recovery decisions rather than exposing every intake action at once.
+              </CollapsibleHelperText>
+            </div>
+          </div>
+        ) : null}
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <label className="min-w-[240px] flex-1">
             <span className="sr-only">Search workflow trash</span>
             <input
@@ -152,16 +152,30 @@ export function UsedGearTrashSection({
               placeholder="Search by SKU, make, model, reason, or group id"
             />
           </label>
-          <button
-            type="button"
-            className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={() => {
-              void refreshQueue();
-            }}
-            disabled={refreshing}
-          >
-            {refreshing ? 'Refreshing...' : 'Refresh Trash'}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-2 py-2">
+              <CopyLinkIconButton
+                onClick={() => {
+                  void copyLink();
+                }}
+                disabled={copyingLink}
+                copying={copyingLink}
+                copied={copiedLink}
+                label="Copy Trash Link"
+                copyingLabel="Copying trash link"
+                copiedLabel="Trash link copied"
+              />
+              <RefreshIconButton
+                onClick={() => {
+                  void refreshQueue();
+                }}
+                disabled={refreshing}
+                loading={refreshing}
+                label="Refresh trash review queue"
+                loadingLabel="Refreshing trash review queue"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -255,14 +269,14 @@ export function UsedGearTrashSection({
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className="rounded-xl bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110"
+                      className={smallPrimaryActionButtonClass}
                       onClick={() => onOpenReviewRecord(record.id)}
                     >
                       Open Review
                     </button>
                     <button
                       type="button"
-                      className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                      className={smallSecondaryActionButtonClass}
                       onClick={() => onOpenWorkflowRecord(record.id)}
                     >
                       Workflow Detail
