@@ -192,7 +192,7 @@ export function UsedGearLotTwoSection({
             <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Parking Lot 2</h3>
             <div className="mt-3 max-w-2xl">
               <CollapsibleHelperText label="Queue guide">
-                Accepted intake rows waiting for arrival handling, SKU assignment, or missing-item follow-up. Keep the queue light, then open the next workflow surface only when you need to act.
+                Work accepted intake rows that still need arrival handling, SKU assignment, or missing-item follow-up.
               </CollapsibleHelperText>
             </div>
           </div>

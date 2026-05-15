@@ -347,12 +347,7 @@ export function UsedGearWorkflowPostPublishSection({
           <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Post-Publish Queue</h3>
           <div className="mt-3 max-w-2xl">
             <CollapsibleHelperText label="Queue guide">
-              <p className="m-0">
-                Track live listings, stale recovery, sold-ready items, and shipped history without surfacing every lifecycle control at once.
-              </p>
-              <p className="mt-3 mb-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]/80">
-                Open the workflow record for stale recovery and per-row lifecycle actions.
-              </p>
+              Track listing follow-up by bucket, then open the workflow record for per-row lifecycle actions.
             </CollapsibleHelperText>
           </div>
         </div>

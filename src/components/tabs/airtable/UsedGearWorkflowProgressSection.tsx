@@ -336,10 +336,7 @@ export function UsedGearWorkflowProgressSection({
             <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{queuePresentation.title}</h3>
             <div className="mt-3 max-w-2xl">
               <CollapsibleHelperText label="Queue guide">
-                <p className="m-0">{queuePresentation.description}</p>
-                <p className="mt-3 mb-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]/80">
-                  One clear next step stays on each card. Detailed stage actions live on the workflow record page.
-                </p>
+                Keep this queue focused on the next handoff. Open the workflow record for detailed stage actions.
               </CollapsibleHelperText>
             </div>
           </div>

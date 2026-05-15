@@ -232,7 +232,7 @@ export function UsedGearPendingReviewSection({
             <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Pending Review Queue</h3>
             <div className="mt-3 max-w-2xl">
               <CollapsibleHelperText label="Queue guide">
-                Review new intake rows, confirm they are qualified, and send each item into the right next step.
+                Review new intake rows and move qualified items into the next step.
               </CollapsibleHelperText>
             </div>
           </div>

@@ -136,7 +136,7 @@ export function UsedGearTrashSection({
             <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Trash Review</h3>
             <div className="mt-3 max-w-2xl">
               <CollapsibleHelperText label="Queue guide">
-                Review rows that were marked unqualified and routed into active trash. Keep this queue focused on recovery decisions rather than exposing every intake action at once.
+                Review unqualified rows in active trash and make the recovery decision.
               </CollapsibleHelperText>
             </div>
           </div>
