@@ -9,7 +9,7 @@ This document tracks the app-owned pages, forms, queues, and review surfaces inv
 
 ### Existing Surfaces
 - `JotformTab` — raw submission feed and source-reference page
-- `AirtableEmbeddedForm` — current Incoming Gear surface, Phase 2/3 reuse point
+- `AirtableEmbeddedForm` — current Manual Intake surface, Phase 2/3 reuse point
 - `TestingFormTab` — current testing surface, Phase 3 reuse point
 - `PhotosFormTab` — current photo surface, Phase 3 reuse point
 - `CombinedListingsApprovalTab` — current listing approval/publish surface, Phase 4/6 reuse point

@@ -2,7 +2,7 @@
 
 This file is the master index for the Used Gear workflow rollout. Keep detailed implementation work in the linked phase and support docs, and use this file for constraints, phase order, and rollup progress.
 
-Implement the workflow on top of the existing Airtable-backed inventory system by treating the user-provided Airtable table as the system of record, adding workflow-specific fields/views and new queue-oriented UI around the current JotForm, Incoming Gear, Testing, Photos, and listing-approval surfaces. Phase 1 should deliver the two intake parking lots, acceptance/unqualified routing, prepopulation into existing processing forms, staff-vs-customer data separation, in-app notifications, per-user workflow event notification preferences, and explicit handoffs between stages. External notifications and sale/shipping automations should be planned as follow-on phases behind stable status modeling and server endpoints.
+Implement the workflow on top of the existing Airtable-backed inventory system by treating the user-provided Airtable table as the system of record, adding workflow-specific fields/views and new queue-oriented UI around the current JotForm, Manual Intake, Testing, Photos, and listing-approval surfaces. Phase 1 should deliver the two intake parking lots, acceptance/unqualified routing, prepopulation into existing processing forms, staff-vs-customer data separation, in-app notifications, per-user workflow event notification preferences, and explicit handoffs between stages. External notifications and sale/shipping automations should be planned as follow-on phases behind stable status modeling and server endpoints.
 
 **Airtable Scope And Change Control**
 - The only Airtable table in scope for direct schema/view/process changes is `tbl0K0nFQL64jQMx8` in base `apprsAm2FOohEmL2u`.
@@ -59,7 +59,7 @@ Phase-level status lives here. Detailed tasks live in the linked phase docs.
 2. Run targeted frontend tests for new workflow helpers, queue components, and form-service mappings with `npm run test`.
 3. Run Lambda/API parity validation for new workflow reads via `npm run compare:lambda`; use guarded write probes only for opt-in mutation validation once endpoints exist.
 4. Run `npm run build` after each major phase, especially after route additions and form/service extractions.
-5. Manually verify in the UI that: Lot 1 and Lot 2 sort/group correctly, accepted JotForm submissions prefill Incoming Gear, customer-submitted fields remain distinct from internal assessments, form completion advances status and signatures, and next-team in-app notifications appear.
+5. Manually verify in the UI that: Lot 1 and Lot 2 sort/group correctly, accepted JotForm submissions prefill Manual Intake, customer-submitted fields remain distinct from internal assessments, form completion advances status and signatures, and next-team in-app notifications appear.
 6. Manually verify that the pre-listing review hands off correctly into the existing combined approval/listing surfaces for the specified Airtable table.
 7. Manually verify that the combined listing approval screen and publish confirmation retain workflow status/title/price context after the handoff from workflow review.
 8. Manually verify that successful publishes move workflow rows into listed lifecycle state, that the Inventory post-publish queue can move rows through stale, sold-ready, and shipped states, and that dashboard insights, dashboard actions, and action-guidance cues reflect those counts and open the correct filtered Inventory bucket.
@@ -99,7 +99,7 @@ Progress tracking rule:
 
 **Phase 0: Planning And Approval Gates**
 [x] Reviewed current Inventory Processing architecture in the app.
-[x] Audited existing Incoming Gear, Testing, Photos, and Inventory Directory surfaces.
+[x] Audited existing Manual Intake, Testing, Photos, and Inventory Directory surfaces.
 [x] Audited current JotForm loading, display, and notification behavior.
 [x] Audited current listing approval and lifecycle surfaces for Shopify/eBay.
 [x] Locked the workflow to the existing Airtable table as the system of record.

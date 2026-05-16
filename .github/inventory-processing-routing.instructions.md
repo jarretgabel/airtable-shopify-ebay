@@ -43,7 +43,7 @@ When adding a new Inventory Processing form, update all of the following togethe
 
 ## Route-Key Rules
 
-- Use stable, descriptive route keys like `incoming-gear` instead of temporary or UI-derived names.
+- Use stable, descriptive route keys like `manual-intake` instead of temporary or UI-derived names.
 - Keep the route key, route path, and form purpose aligned.
 - If renaming a route key, update every code reference in the same change rather than leaving aliases behind.
 

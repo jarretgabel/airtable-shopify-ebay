@@ -344,7 +344,7 @@ npm run probe:lambda:shopify
 UI checks:
 
 - users management
-- incoming gear
+- manual intake
 - testing
 - photos
 - approval save flows

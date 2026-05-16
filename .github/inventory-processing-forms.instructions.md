@@ -1,6 +1,6 @@
 ---
-description: Use when creating or updating local Airtable-backed forms under Inventory Processing, including incoming gear, testing, and future forms that should follow the same schema/component/service pattern.
-applyTo: src/components/tabs/AirtableEmbeddedForm.tsx,src/components/tabs/TestingFormTab.tsx,src/components/tabs/incoming-gear/**,src/components/tabs/testing/**,src/services/incomingGearForm.ts,src/services/testingForm.ts,docs/forms/**
+description: Use when creating or updating local Airtable-backed forms under Inventory Processing, including Manual Intake, testing, and future forms that should follow the same schema/component/service pattern.
+applyTo: src/components/tabs/AirtableEmbeddedForm.tsx,src/components/tabs/TestingFormTab.tsx,src/components/tabs/manual-intake/**,src/components/tabs/testing/**,src/services/manualIntakeForm.ts,src/services/testingForm.ts,docs/forms/**
 ---
 
 # Inventory Processing Form Pattern
@@ -59,7 +59,7 @@ Do not collapse schema, rendering, and Airtable transport into one file unless t
 
 ## Form UX Consistency
 
-- Use the same visual structure established by incoming gear and testing.
+- Use the same visual structure established by Manual Intake and testing.
 - Keep labels, help text, spacing, and form controls consistent across related forms.
 - Use searchable single-select inputs for large Airtable option sets like `Component Type`.
 - Use explicit date inputs for date fields.

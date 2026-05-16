@@ -265,21 +265,16 @@ Use the no-Docker local adapter for `/api/*` Lambda validation:
 
 The app includes three local Airtable-backed forms under the `Inventory Processing` menu:
 
-- `Incoming Gear` at `/incoming-gear`
+- `Manual Intake` at `/inventory/manual-intake`
 - `Testing` at `/testing`
 - `Photos` at `/photos`
 
 Form documentation:
 
 - [Inventory Processing Forms Overview](./docs/forms/README.md)
-- [Incoming Gear Instructions](./docs/forms/incoming-gear.instructions.md)
+- [Manual Intake Instructions](./docs/forms/manual-intake.instructions.md)
 - [Testing Instructions](./docs/forms/testing.instructions.md)
 - [Photos Instructions](./docs/forms/photos.instructions.md)
-
-Optional incoming gear source-link env vars:
-
-- `VITE_AIRTABLE_INCOMING_GEAR_FORM_URL`
-- `VITE_AIRTABLE_INCOMING_GEAR_FORM_EMBED_URL`
 
 ## Performance Notes
 

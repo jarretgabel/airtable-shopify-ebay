@@ -25,7 +25,7 @@ Welcome to the Airtable-Shopify-eBay project documentation! This index will help
 **I'm building a React hook with side effects**
 → [State Management § Hook-Based State](./state-management.md#hook-based-state-for-complex-logic) shows the pattern.
 
-**I'm updating the Incoming Gear or Testing forms**
+**I'm updating the Manual Intake or Testing forms**
 → Use [Inventory Processing Forms](../docs/forms/README.md), then the specific form instruction doc.
 
 **I need naming conventions**
@@ -140,10 +140,10 @@ Welcome to the Airtable-Shopify-eBay project documentation! This index will help
 **When to use:** Understanding high-level architecture and conventions across the app.
 
 ### [Inventory Processing Forms](../docs/forms/README.md)
-**What it covers:** Overview of the local `Incoming Gear`, `Testing`, and `Photos` forms, shared Airtable target, route keys, implementation files, and change checklist.
+**What it covers:** Overview of the local `Manual Intake`, `Testing`, and `Photos` forms, shared Airtable target, route keys, implementation files, and change checklist.
 
 **Related docs:**
-- [Incoming Gear Instructions](../docs/forms/incoming-gear.instructions.md)
+- [Manual Intake Instructions](../docs/forms/manual-intake.instructions.md)
 - [Testing Instructions](../docs/forms/testing.instructions.md)
 - [Photos Instructions](../docs/forms/photos.instructions.md)
 - [Inventory Processing Form Pattern](./inventory-processing-forms.instructions.md)

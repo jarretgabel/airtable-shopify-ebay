@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
 import {
@@ -94,7 +94,6 @@ function IntroBlock({ block }: { block: ManualIntakeFormIntroBlock }) {
 
 interface AirtableEmbeddedFormProps {
   recordId?: string | null;
-  onBackToDirectory?: () => void;
 }
 
 const MANUAL_ENTRY_ROUTE_OPTIONS: Array<{ value: ManualIntakeRoute; label: string; description: string }> = [
@@ -120,7 +119,7 @@ const MANUAL_ENTRY_ROUTE_OPTIONS: Array<{ value: ManualIntakeRoute; label: strin
   },
 ];
 
-export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEmbeddedFormProps) {
+export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
   const [formValues, setFormValues] = useState<ManualIntakeFormValues>(() => createManualIntakeFormDefaults());
   const [initialFormValues, setInitialFormValues] = useState<ManualIntakeFormValues>(() => createManualIntakeFormDefaults());
   const [recordSource, setRecordSource] = useState<ManualIntakeRecordSource>('used-gear-workflow');
@@ -323,28 +322,16 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
   }
 
   return (
-    <PanelSurface>
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{manualIntakeFormIntro.eyebrow}</p>
-              <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{manualIntakeFormIntro.title}</h2>
-              {recordId ? (
-                <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Editing record <strong>{recordId}</strong>. Saving here updates the intake fields for this row in the {recordSource === 'used-gear-workflow' ? 'used-gear workflow' : 'inventory directory'} source.</p>
-              ) : (
-                <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Create a manual-entry used-gear row and route it either into Parking Lot 1 review or directly into Lot 2 when the deal is already accepted.</p>
-              )}
-            </div>
-            {onBackToDirectory ? (
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={onBackToDirectory}
-              >
-                Back to Directory
-              </button>
-            ) : null}
+          <div>
+            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{manualIntakeFormIntro.eyebrow}</p>
+            <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{manualIntakeFormIntro.title}</h2>
+            {recordId ? (
+              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Editing record <strong>{recordId}</strong>. Saving here updates the intake fields for this row in the {recordSource === 'used-gear-workflow' ? 'used-gear workflow' : 'inventory directory'} source.</p>
+            ) : (
+              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Create a manual-entry used-gear row and route it either into Parking Lot 1 review or directly into Lot 2 when the deal is already accepted.</p>
+            )}
           </div>
           <div className="mt-4 space-y-3.5 pb-4">
             {manualIntakeFormIntro.blocks.map((block, index) => (
@@ -470,7 +457,6 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
             </div>
           </div>
         </form>
-      </div>
-    </PanelSurface>
+    </div>
   );
 }

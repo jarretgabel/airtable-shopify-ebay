@@ -562,7 +562,7 @@ export function AppTabContent({
       case 'market':
         return <MarketTab viewModel={marketViewModel} />;
       case 'manual-intake':
-        return <UsedGearManualIntakePage recordId={deferredRouteState.manualIntakeRecordId} onBackToDirectory={() => navigateToInventoryList()} />;
+        return <UsedGearManualIntakePage recordId={deferredRouteState.manualIntakeRecordId} />;
       case 'testing':
         return <TestingFormTab recordId={deferredRouteState.testingRecordId} onBackToDirectory={() => navigateToInventoryList()} />;
       case 'photos':

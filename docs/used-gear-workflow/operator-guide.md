@@ -47,7 +47,7 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 - Use this queue when:
   - a row is accepted and still in broad arrival, processing, or cross-stage triage flow
 - Main actions:
-  - open Incoming Gear, Testing, Photos, or Listings review
+  - open Manual Intake, Testing, Photos, or Listings review
   - complete processing
   - copy a focused group link for the exact submission/pickup cluster
 - Use the queue summary cards to spot:
@@ -81,14 +81,14 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 - Main actions:
   - search and sort arrival-stage rows
   - open a grouped handoff page for one pickup or submission set
-  - open the row in Incoming Gear or the current operational surface
+  - open the row in Manual Intake or the current operational surface
   - use shared URL state when handing off arrival-stage work
 
 ### Parking Lot 2 Group Handoff
 - Surface:
   - `/parking-lot-2/review/:groupId`
 - Use this when:
-  - one accepted pickup or submission set needs coordinated arrival-stage work across Incoming Gear, Testing, Photos, or the operational record
+  - one accepted pickup or submission set needs coordinated arrival-stage work across Manual Intake, Testing, Photos, or the operational record
 - Main actions:
   - review the whole set in one place
   - open each row directly into the next form or operational page

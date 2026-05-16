@@ -12,17 +12,17 @@ This section documents the local forms under the `Inventory Processing` menu:
 - [Used Gear Workflow: Data Model And Approvals](../used-gear-workflow/data-model-and-approvals.md)
 - [Used Gear Workflow: Workflow Image Metadata](../used-gear-workflow/workflow-image-metadata-plan.md)
 - [Used Gear Workflow: UI Surface Map](../used-gear-workflow/ui-surface-map.md)
-- [Incoming Gear Instructions](./incoming-gear.instructions.md)
+- [Manual Intake Instructions](./manual-intake.instructions.md)
 - [Testing Instructions](./testing.instructions.md)
 - [Photos Instructions](./photos.instructions.md)
 - [Starter Kit](./templates/README.md)
 
 ## Shared Rules
 
-- Both forms create records in the `SB Inventory` Airtable table.
-- Both forms are local React forms, not Airtable embeds.
-- Both forms load select options from Airtable table metadata at runtime.
-- Both forms upload images to the `Images` attachment field after the record is created.
+- All forms create records in the `SB Inventory` Airtable table or update existing rows in that same table-backed workflow.
+- All forms are local React forms, not Airtable embeds.
+- All forms load select options from Airtable table metadata at runtime when Airtable is the authoritative option source.
+- All forms upload images to the `Images` attachment field after the record is created.
 - Shared workflow image metadata is documented in `Workflow Image Metadata` and uses the live `Workflow Image Metadata JSON` field alongside `Images`.
 
 ## Shared Airtable Target
@@ -33,9 +33,9 @@ This section documents the local forms under the `Inventory Processing` menu:
 
 ## Primary Implementation Files
 
-- Incoming gear UI: `src/components/tabs/AirtableEmbeddedForm.tsx`
-- Incoming gear schema: `src/components/tabs/incoming-gear/incomingGearFormSchema.ts`
-- Incoming gear service: `src/services/incomingGearForm.ts`
+- Manual Intake UI: `src/components/tabs/AirtableEmbeddedForm.tsx`
+- Manual Intake schema: `src/components/tabs/manual-intake/manualIntakeFormSchema.ts`
+- Manual Intake service: `src/services/manualIntakeForm.ts`
 - Testing UI: `src/components/tabs/TestingFormTab.tsx`
 - Testing schema: `src/components/tabs/testing/testingFormSchema.ts`
 - Testing service: `src/services/testingForm.ts`
@@ -46,8 +46,8 @@ This section documents the local forms under the `Inventory Processing` menu:
 ## Navigation And Routes
 
 - Menu group: `Inventory Processing`
-- Incoming gear route key: `incoming-gear`
-- Incoming gear path: `/incoming-gear`
+- Manual Intake route key: `manual-intake`
+- Manual Intake path: `/inventory/manual-intake`
 - Testing route key: `testing`
 - Testing path: `/testing`
 - Photos route key: `photos`
@@ -55,7 +55,7 @@ This section documents the local forms under the `Inventory Processing` menu:
 
 ## Change Checklist
 
-When updating either form:
+When updating any form:
 
 1. Update the schema file first if field order, labels, or defaults change.
 2. Update the service if Airtable field names or payload transforms change.

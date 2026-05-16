@@ -219,11 +219,11 @@ Validate:
 - delete a user
 - unsupported field fallback still works when Airtable rejects unknown fields
 
-### Incoming Gear form
+### Manual Intake form
 
 Code path:
 
-- [src/services/incomingGearForm.ts](/Users/user/Sites/airtable-shopify-ebay/src/services/incomingGearForm.ts)
+- [src/services/manualIntakeForm.ts](/Users/user/Sites/airtable-shopify-ebay/src/services/manualIntakeForm.ts)
 
 Validate:
 

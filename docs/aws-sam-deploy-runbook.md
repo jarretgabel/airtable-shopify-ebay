@@ -374,7 +374,7 @@ npm run probe:lambda:shopify
 Then do browser validation for:
 
 1. Users management
-2. Incoming Gear
+2. Manual Intake
 3. Testing
 4. Photos
 5. Approval save flows

@@ -5,7 +5,6 @@ import { AirtableEmbeddedForm } from '@/components/tabs/AirtableEmbeddedForm';
 
 interface UsedGearManualIntakePageProps {
   recordId?: string | null;
-  onBackToDirectory?: () => void;
 }
 
 const MANUAL_ROUTE_GUIDANCE = [
@@ -27,7 +26,7 @@ const MANUAL_ROUTE_GUIDANCE = [
   },
 ] as const;
 
-export function UsedGearManualIntakePage({ recordId, onBackToDirectory }: UsedGearManualIntakePageProps) {
+export function UsedGearManualIntakePage({ recordId }: UsedGearManualIntakePageProps) {
   return (
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -37,15 +36,6 @@ export function UsedGearManualIntakePage({ recordId, onBackToDirectory }: UsedGe
           description={recordId
             ? 'Update the routed intake record in the same operator-owned surface used for manual entry creation. This keeps accepted arrival-stage rows on one intake page instead of splitting them across duplicate forms.'
             : 'Create used-gear intake records directly from operator knowledge when the item did not start from the shared submission flow. This surface is for first-pass record creation and routing, not broad queue browsing.'}
-          actions={onBackToDirectory ? (
-            <button
-              type="button"
-              className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              onClick={onBackToDirectory}
-            >
-              Back to Inventory
-            </button>
-          ) : null}
         />
 
         <section className="grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,1fr)]">
@@ -81,7 +71,7 @@ export function UsedGearManualIntakePage({ recordId, onBackToDirectory }: UsedGe
           </CollapsibleHelperText>
         </div>
 
-        <AirtableEmbeddedForm recordId={recordId} onBackToDirectory={onBackToDirectory} />
+        <AirtableEmbeddedForm recordId={recordId} />
       </div>
     </PanelSurface>
   );
