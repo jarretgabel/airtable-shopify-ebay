@@ -3,15 +3,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { WorkflowQueuePageTemplate } from '@/components/app/WorkflowQueuePageTemplate';
 import { UsedGearTrashSection, type UsedGearTrashSortMode } from '@/components/tabs/airtable/UsedGearTrashSection';
 
-interface UsedGearTrashTabProps {
-  currentUserName: string;
-  onOpenOperationalRecord: (recordId: string) => void;
-}
+interface UsedGearTrashTabProps {}
 
 const WORKFLOW_TRASH_SEARCH_PARAM = 'workflowTrashSearch';
 const WORKFLOW_TRASH_SORT_PARAM = 'workflowTrashSort';
 
-export function UsedGearTrashTab({ onOpenOperationalRecord }: UsedGearTrashTabProps) {
+export function UsedGearTrashTab({}: UsedGearTrashTabProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const workflowTrashSearch = useMemo(() => new URLSearchParams(location.search).get(WORKFLOW_TRASH_SEARCH_PARAM) ?? '', [location.search]);
@@ -44,7 +41,6 @@ export function UsedGearTrashTab({ onOpenOperationalRecord }: UsedGearTrashTabPr
       <UsedGearTrashSection
         showSectionIntro={false}
         onOpenReviewRecord={(recordId) => navigate(`/trash-review/review/${encodeURIComponent(recordId)}${location.search}`, { replace: false })}
-        onOpenOperationalRecord={onOpenOperationalRecord}
         searchTerm={workflowTrashSearch}
         onSearchTermChange={(value) => updateRouteState((params) => {
           if (value.trim()) {

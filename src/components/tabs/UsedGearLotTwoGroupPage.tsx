@@ -1,18 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
+import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
+import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
-import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
+import {
+  buildUsedGearManualIntakePath,
+  shouldShowOperationalAction,
+} from '@/services/usedGearOperationalRouting';
 import { loadLotTwoGroup, type UsedGearWorkflowGroup } from '@/services/usedGearQueue';
 import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearLotTwoGroupPageProps {
-  groupId: string;
   onBackToParkingLot: () => void;
+  groupId: string;
   onOpenManualIntake: (recordId: string) => void;
-  onOpenTestingForm: (recordId: string) => void;
-  onOpenPhotosForm: (recordId: string) => void;
   onOpenOperationalRecord: (recordId: string) => void;
 }
 
@@ -61,8 +64,6 @@ export function UsedGearLotTwoGroupPage({
   groupId,
   onBackToParkingLot,
   onOpenManualIntake,
-  onOpenTestingForm,
-  onOpenPhotosForm,
   onOpenOperationalRecord,
 }: UsedGearLotTwoGroupPageProps) {
   const [group, setGroup] = useState<UsedGearWorkflowGroup | null>(null);
@@ -123,7 +124,7 @@ export function UsedGearLotTwoGroupPage({
         <WorkflowPageHeader
           eyebrow="Parking Lot 2 Handoff"
           title={group.label}
-          description="Work this arrival-stage set in one place, then open the next operational form for each record when the intake handoff is ready."
+          description="Work this arrival-stage set in one place, then move each record into Manual Intake or its current operational follow-up when the intake handoff is ready."
           actions={(
             <button
               type="button"
@@ -137,7 +138,7 @@ export function UsedGearLotTwoGroupPage({
 
         <div className="max-w-3xl">
           <CollapsibleHelperText label="Handoff guide">
-            Use this page when one arrival-stage set needs coordinated work across intake, testing, photography, or operational follow-up. The queue still handles prioritization and shareable focus links; this page handles the grouped handoff itself.
+            Use this page when one arrival-stage set needs coordinated arrival handling before the records leave Parking Lot 2. The queue still handles prioritization and shareable focus links; this page handles the grouped handoff itself.
           </CollapsibleHelperText>
         </div>
 
@@ -179,51 +180,65 @@ export function UsedGearLotTwoGroupPage({
           </aside>
         </section>
 
-        <section className="space-y-4">
-          {records.map((record) => (
-            <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{displayInventoryValue(record.fields['Workflow Source'])}</p>
-                  <h3 className="mt-1 text-xl font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</h3>
-                  <p className="mt-1 text-sm text-[var(--muted)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</p>
-                </div>
-                <div className="inline-flex w-fit max-w-full items-center rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-[11px] font-semibold leading-4 text-[var(--muted)]">
-                  {displayInventoryValue(record.fields['Workflow Status'])}
-                </div>
-              </div>
+        <section>
+          <IntakeItemsMatrix
+            items={records}
+            getItemKey={(record) => record.id}
+            columns={records.length > 0 ? [
+              {
+                key: 'sku',
+                label: 'SKU',
+                width: '9rem',
+                renderCell: (record) => <span className="font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</span>,
+              },
+              {
+                key: 'item',
+                label: 'Item',
+                width: 'minmax(0,1.45fr)',
+                renderCell: (record) => (
+                  <div className="min-w-0">
+                    <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
+                    <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
+                      <span>{displayInventoryValue(record.fields['Workflow Source'])}</span>
+                      <span>{displayInventoryValue(record.fields['Workflow Status'])}</span>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                width: '14rem',
+                renderCell: (record) => <span className="text-xs text-[var(--muted)]">{displayInventoryValue(record.fields['Workflow Status'])}</span>,
+              },
+              {
+                key: 'intake',
+                label: 'Intake',
+                width: '8rem',
+                renderCell: (record) => <span className="text-xs text-[var(--muted)]">{formatIntakeDate(record)}</span>,
+              },
+              {
+                key: 'actions',
+                label: 'Actions',
+                width: '18rem',
+                align: 'right',
+                renderCell: (record) => {
+                  const showOperationalAction = shouldShowOperationalAction(record.id, record.fields, [
+                    buildUsedGearManualIntakePath(record.id),
+                  ]);
 
-              <div className="mt-4 grid gap-2 text-sm text-[var(--muted)] sm:grid-cols-2">
-                <div>
-                  <span className="font-semibold text-[var(--ink)]">Intake Date:</span> {formatIntakeDate(record)}
-                </div>
-                <div>
-                  <span className="font-semibold text-[var(--ink)]">Accepted At:</span> {displayInventoryValue(record.fields['Accepted At'])}
-                </div>
-                <div>
-                  <span className="font-semibold text-[var(--ink)]">Offer Amount:</span> {displayInventoryValue(record.fields['Offer Amount'])}
-                </div>
-                <div>
-                  <span className="font-semibold text-[var(--ink)]">Paid Amount:</span> {displayInventoryValue(record.fields['Paid Amount'])}
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button type="button" className={smallPrimaryActionButtonClass} onClick={() => onOpenManualIntake(record.id)}>
-                  Open Manual Intake
-                </button>
-                <button type="button" className={smallSecondaryActionButtonClass} onClick={() => onOpenTestingForm(record.id)}>
-                  Open Testing
-                </button>
-                <button type="button" className={smallSecondaryActionButtonClass} onClick={() => onOpenPhotosForm(record.id)}>
-                  Open Photos
-                </button>
-                <button type="button" className={smallSecondaryActionButtonClass} onClick={() => onOpenOperationalRecord(record.id)}>
-                  Open Operational Record
-                </button>
-              </div>
-            </article>
-          ))}
+                  return (
+                    <div className="flex flex-wrap gap-1.5 xl:justify-end">
+                      <CompactIconActionButton label="Open Manual Intake" variant="compact-primary" onClick={() => onOpenManualIntake(record.id)} />
+                      {showOperationalAction ? (
+                        <CompactIconActionButton label="Open Operational Record" onClick={() => onOpenOperationalRecord(record.id)} />
+                      ) : null}
+                    </div>
+                  );
+                },
+              },
+            ] as IntakeItemsMatrixColumn<AirtableRecord>[] : []}
+          />
         </section>
       </div>
     </PanelSurface>

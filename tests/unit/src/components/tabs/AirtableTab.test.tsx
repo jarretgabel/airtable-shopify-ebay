@@ -58,15 +58,11 @@ vi.mock('@/components/tabs/airtable/InventoryDirectoryListSection', () => ({
 vi.mock('@/components/tabs/airtable/UsedGearPendingReviewSection', () => ({
   UsedGearPendingReviewSection: ({
     searchTerm = '',
-    focusedGroupId = null,
-    onFocusedGroupIdChange,
     onSearchTermChange,
     sortMode = 'group-label',
     onSortModeChange,
   }: {
     searchTerm?: string;
-    focusedGroupId?: string | null;
-    onFocusedGroupIdChange?: (value: string | null) => void;
     onSearchTermChange?: (value: string) => void;
     sortMode?: string;
     onSortModeChange?: (value: 'group-label' | 'newest' | 'oldest') => void;
@@ -80,10 +76,7 @@ vi.mock('@/components/tabs/airtable/UsedGearPendingReviewSection', () => ({
           onChange={(event) => onSearchTermChange?.(event.currentTarget.value)}
         />
       </label>
-      <div data-testid="pending-focused-group">{focusedGroupId ?? ''}</div>
       <div data-testid="pending-sort-mode">{sortMode}</div>
-      <button type="button" onClick={() => onFocusedGroupIdChange?.('pickup:pickup-42')}>Focus Pending Group</button>
-      <button type="button" onClick={() => onFocusedGroupIdChange?.(null)}>Clear Pending Group</button>
       <button type="button" onClick={() => onSortModeChange?.('newest')}>Sort Pending Newest</button>
     </div>
   ),
@@ -92,15 +85,11 @@ vi.mock('@/components/tabs/airtable/UsedGearPendingReviewSection', () => ({
 vi.mock('@/components/tabs/airtable/UsedGearWorkflowProgressSection', () => ({
   UsedGearWorkflowProgressSection: ({
     searchTerm = '',
-    focusedGroupId = null,
-    onFocusedGroupIdChange,
     onSearchTermChange,
     sortMode = 'group-label',
     onSortModeChange,
   }: {
     searchTerm?: string;
-    focusedGroupId?: string | null;
-    onFocusedGroupIdChange?: (value: string | null) => void;
     onSearchTermChange?: (value: string) => void;
     sortMode?: string;
     onSortModeChange?: (value: 'group-label' | 'newest' | 'oldest') => void;
@@ -114,10 +103,7 @@ vi.mock('@/components/tabs/airtable/UsedGearWorkflowProgressSection', () => ({
           onChange={(event) => onSearchTermChange?.(event.currentTarget.value)}
         />
       </label>
-      <div data-testid="progress-focused-group">{focusedGroupId ?? ''}</div>
       <div data-testid="progress-sort-mode">{sortMode}</div>
-      <button type="button" onClick={() => onFocusedGroupIdChange?.('submission:submission-22')}>Focus Progress Group</button>
-      <button type="button" onClick={() => onFocusedGroupIdChange?.(null)}>Clear Progress Group</button>
       <button type="button" onClick={() => onSortModeChange?.('oldest')}>Sort Progress Oldest</button>
     </div>
   ),
@@ -186,7 +172,7 @@ describe('AirtableTab', () => {
 
   it('hydrates workflow view state from the URL, persists updates, and resets workflow params', async () => {
     render(
-      <MemoryRouter initialEntries={['/inventory?inventoryDirectorySearch=amp&inventoryDirectoryStatus=Ready&workflowPendingReviewSearch=mcintosh&workflowProgressSearch=marantz&workflowPostPublishSearch=shipped&workflowPostPublishBucket=active-listing&workflowPendingReviewSort=newest&workflowProgressSort=oldest&workflowPostPublishSort=sku&workflowPendingReviewGroup=pickup:pickup-7&workflowProgressGroup=submission:submission-9']}>
+      <MemoryRouter initialEntries={['/inventory?inventoryDirectorySearch=amp&inventoryDirectoryStatus=Ready&workflowPendingReviewSearch=mcintosh&workflowProgressSearch=marantz&workflowPostPublishSearch=shipped&workflowPostPublishBucket=active-listing&workflowPendingReviewSort=newest&workflowProgressSort=oldest&workflowPostPublishSort=sku']}>
         <AirtableTab
           viewModel={{
             loading: false,
@@ -219,8 +205,6 @@ describe('AirtableTab', () => {
     expect(screen.getByLabelText('Pending Review Search')).toHaveValue('mcintosh');
     expect(screen.getByLabelText('Workflow Progress Search')).toHaveValue('marantz');
     expect(screen.getByLabelText('Post Publish Search')).toHaveValue('shipped');
-    expect(screen.getByTestId('pending-focused-group')).toHaveTextContent('pickup:pickup-7');
-    expect(screen.getByTestId('progress-focused-group')).toHaveTextContent('submission:submission-9');
     expect(screen.getByTestId('pending-sort-mode')).toHaveTextContent('newest');
     expect(screen.getByTestId('progress-sort-mode')).toHaveTextContent('oldest');
     expect(screen.getByTestId('post-publish-sort-mode')).toHaveTextContent('sku');
@@ -228,8 +212,6 @@ describe('AirtableTab', () => {
     expect(screen.getByText('Pending review: mcintosh')).toBeInTheDocument();
     expect(screen.getByText('Progress: marantz')).toBeInTheDocument();
     expect(screen.getByText('Post-publish: shipped')).toBeInTheDocument();
-    expect(screen.getByText('Pending group: pickup:pickup-7')).toBeInTheDocument();
-    expect(screen.getByText('Progress group: submission:submission-9')).toBeInTheDocument();
     expect(screen.getByText('Bucket: Active Listings')).toBeInTheDocument();
     expect(screen.getByText('Pending sort: Newest First')).toBeInTheDocument();
     expect(screen.getByText('Progress sort: Oldest First')).toBeInTheDocument();
@@ -251,15 +233,7 @@ describe('AirtableTab', () => {
     fireEvent.change(screen.getByLabelText('Pending Review Search'), { target: { value: 'fisher' } });
 
     await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory?inventoryDirectorySearch=receiver&inventoryDirectoryStatus=Sold&workflowPendingReviewSearch=fisher&workflowProgressSearch=marantz&workflowPostPublishSearch=shipped&workflowPostPublishBucket=active-listing&workflowPendingReviewSort=newest&workflowProgressSort=oldest&workflowPostPublishSort=sku&workflowPendingReviewGroup=pickup%3Apickup-7&workflowProgressGroup=submission%3Asubmission-9#used-gear-pending-review');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Focus Pending Group' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Focus Progress Group' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPendingReviewGroup=pickup%3Apickup-42');
-      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowProgressGroup=submission%3Asubmission-22');
+      expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory?inventoryDirectorySearch=receiver&inventoryDirectoryStatus=Sold&workflowPendingReviewSearch=fisher&workflowProgressSearch=marantz&workflowPostPublishSearch=shipped&workflowPostPublishBucket=active-listing&workflowPendingReviewSort=newest&workflowProgressSort=oldest&workflowPostPublishSort=sku#used-gear-pending-review');
     });
 
     fireEvent.change(screen.getByLabelText('Post Publish Search'), { target: { value: 'mcintosh' } });
@@ -283,14 +257,6 @@ describe('AirtableTab', () => {
       expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPendingReviewSort=newest');
       expect(screen.getByTestId('location-state')).toHaveTextContent('workflowProgressSort=oldest');
       expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPostPublishSort=sku');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Clear pending review group focus' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Clear progress queue group focus' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('location-state')).not.toHaveTextContent('workflowPendingReviewGroup=');
-      expect(screen.getByTestId('location-state')).not.toHaveTextContent('workflowProgressGroup=');
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear pending review search' }));
@@ -321,8 +287,6 @@ describe('AirtableTab', () => {
       expect(screen.getByLabelText('Post Publish Search')).toHaveValue('');
       expect(screen.getByLabelText('Directory Search')).toHaveValue('receiver');
       expect(screen.getByLabelText('Directory Status')).toHaveValue('Sold');
-      expect(screen.getByTestId('pending-focused-group')).toHaveTextContent('');
-      expect(screen.getByTestId('progress-focused-group')).toHaveTextContent('');
     });
   });
 

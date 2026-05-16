@@ -76,7 +76,6 @@ describe('UsedGearTrashReviewRecordPage', () => {
       <UsedGearTrashReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-trash-1"
-        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -101,7 +100,6 @@ describe('UsedGearTrashReviewRecordPage', () => {
       <UsedGearTrashReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-trash-1"
-        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -134,7 +132,6 @@ describe('UsedGearTrashReviewRecordPage', () => {
       <UsedGearTrashReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-trash-1"
-        onOpenOperationalRecord={vi.fn()}
       />,
     );
 

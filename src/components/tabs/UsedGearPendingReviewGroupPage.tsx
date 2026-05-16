@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
+import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
@@ -156,6 +158,151 @@ export function UsedGearPendingReviewGroupPage({
   const records = useMemo(() => group?.records ?? [], [group]);
   const parsedGrandTotal = parseCurrency(confirmedGrandTotal);
   const groupNeedsSubmissionId = records.length > 1 && submissionGroupId.trim().length === 0;
+  const recordColumns = useMemo<IntakeItemsMatrixColumn<AirtableRecord>[]>(() => [
+    {
+      key: 'sku',
+      label: 'SKU',
+      width: '9rem',
+      renderCell: (record) => <span className="font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</span>,
+    },
+    {
+      key: 'item',
+      label: 'Item',
+      width: 'minmax(0,1.3fr)',
+      renderCell: (record) => (
+        <div className="min-w-0">
+          <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
+          <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
+            <span>{displayInventoryValue(record.fields['Workflow Source'])}</span>
+            <span>{displayInventoryValue(record.fields['Arrival Date'])}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'route',
+      label: 'Route',
+      width: '11rem',
+      renderCell: (record) => {
+        const editor = recordEditors[record.id];
+
+        return (
+          <select
+            aria-label="Lot 2 Route"
+            className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+            value={editor?.acceptedStatus ?? 'Accepted - Awaiting Arrival'}
+            onChange={(event) => {
+              const nextValue = event.currentTarget.value as UsedGearPendingReviewAcceptedStatus;
+              setRecordEditors((currentEditors) => ({
+                ...currentEditors,
+                [record.id]: {
+                  ...currentEditors[record.id],
+                  acceptedStatus: nextValue,
+                },
+              }));
+            }}
+          >
+            {ACCEPT_ROUTE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        );
+      },
+    },
+    {
+      key: 'offer',
+      label: 'Offer',
+      width: '8rem',
+      renderCell: (record) => {
+        const editor = recordEditors[record.id];
+
+        return (
+          <input
+            aria-label="Offer Amount"
+            className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+            type="number"
+            step="0.01"
+            value={editor?.offerAmount ?? ''}
+            onChange={(event) => {
+              const nextValue = event.currentTarget.value;
+              setRecordEditors((currentEditors) => ({
+                ...currentEditors,
+                [record.id]: {
+                  ...currentEditors[record.id],
+                  offerAmount: nextValue,
+                },
+              }));
+            }}
+          />
+        );
+      },
+    },
+    {
+      key: 'paid',
+      label: 'Paid',
+      width: '8rem',
+      renderCell: (record) => {
+        const editor = recordEditors[record.id];
+
+        return (
+          <input
+            aria-label="Paid Amount"
+            className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+            type="number"
+            step="0.01"
+            value={editor?.paidAmount ?? ''}
+            onChange={(event) => {
+              const nextValue = event.currentTarget.value;
+              setRecordEditors((currentEditors) => ({
+                ...currentEditors,
+                [record.id]: {
+                  ...currentEditors[record.id],
+                  paidAmount: nextValue,
+                },
+              }));
+            }}
+          />
+        );
+      },
+    },
+    {
+      key: 'notes',
+      label: 'Notes',
+      width: 'minmax(0,1.45fr)',
+      renderCell: (record) => {
+        const editor = recordEditors[record.id];
+
+        return (
+          <textarea
+            aria-label="Qualification Notes"
+            className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+            rows={3}
+            value={editor?.qualificationNotes ?? ''}
+            onChange={(event) => {
+              const nextValue = event.currentTarget.value;
+              setRecordEditors((currentEditors) => ({
+                ...currentEditors,
+                [record.id]: {
+                  ...currentEditors[record.id],
+                  qualificationNotes: nextValue,
+                },
+              }));
+            }}
+          />
+        );
+      },
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      width: '14rem',
+      align: 'right',
+      renderCell: (record) => (
+        <div className="flex flex-wrap justify-end gap-1.5">
+          <CompactIconActionButton label="Open Operational Record" variant="small-secondary" onClick={() => onOpenOperationalRecord(record.id)} />
+          <CompactIconActionButton label="Open Manual Intake" variant="small-secondary" onClick={() => onOpenManualIntake(record.id)} />
+        </div>
+      ),
+    },
+  ], [onOpenManualIntake, onOpenOperationalRecord, recordEditors]);
 
   const pricingCoverage = useMemo(() => records.every((record) => {
     const editor = recordEditors[record.id];
@@ -396,119 +543,12 @@ export function UsedGearPendingReviewGroupPage({
           </div>
         </section>
 
-        <section className="space-y-4">
-          {records.map((record) => {
-            const editor = recordEditors[record.id];
-            return (
-              <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{displayInventoryValue(record.fields['Workflow Source'])}</p>
-                    <h3 className="mt-2 text-xl font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</h3>
-                    <p className="mt-2 text-sm text-[var(--muted)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</p>
-                    <p className="mt-2 text-sm text-[var(--muted)]">Arrival Date: {displayInventoryValue(record.fields['Arrival Date'])}</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenOperationalRecord(record.id)}
-                    >
-                      Open Operational Record
-                    </button>
-                    <button
-                      type="button"
-                      className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenManualIntake(record.id)}
-                    >
-                      Open Manual Intake
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
-                  <label className="block">
-                    <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Lot 2 Route</span>
-                    <select
-                      className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                      value={editor?.acceptedStatus ?? 'Accepted - Awaiting Arrival'}
-                      onChange={(event) => setRecordEditors((currentEditors) => ({
-                        ...currentEditors,
-                        [record.id]: {
-                          ...currentEditors[record.id],
-                          acceptedStatus: event.currentTarget.value as UsedGearPendingReviewAcceptedStatus,
-                        },
-                      }))}
-                    >
-                      {ACCEPT_ROUTE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Offer Amount</span>
-                    <input
-                      className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                      type="number"
-                      step="0.01"
-                      value={editor?.offerAmount ?? ''}
-                      onChange={(event) => setRecordEditors((currentEditors) => ({
-                        ...currentEditors,
-                        [record.id]: {
-                          ...currentEditors[record.id],
-                          offerAmount: event.currentTarget.value,
-                        },
-                      }))}
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Paid Amount</span>
-                    <input
-                      className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                      type="number"
-                      step="0.01"
-                      value={editor?.paidAmount ?? ''}
-                      onChange={(event) => setRecordEditors((currentEditors) => ({
-                        ...currentEditors,
-                        [record.id]: {
-                          ...currentEditors[record.id],
-                          paidAmount: event.currentTarget.value,
-                        },
-                      }))}
-                    />
-                  </label>
-                  <label className="block lg:col-span-2 xl:col-span-1">
-                    <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Qualification Notes</span>
-                    <textarea
-                      className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                      rows={3}
-                      value={editor?.qualificationNotes ?? ''}
-                      onChange={(event) => setRecordEditors((currentEditors) => ({
-                        ...currentEditors,
-                        [record.id]: {
-                          ...currentEditors[record.id],
-                          qualificationNotes: event.currentTarget.value,
-                        },
-                      }))}
-                    />
-                  </label>
-                </div>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 text-sm text-[var(--muted)]">
-                  <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-3">
-                    Customer Cosmetic Notes: {displayInventoryValue(record.fields['Customer Cosmetic Notes'])}
-                  </div>
-                  <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-3">
-                    Customer Functional Notes: {displayInventoryValue(record.fields['Customer Functional Notes'])}
-                  </div>
-                  <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-3">
-                    Customer Inclusion Notes: {displayInventoryValue(record.fields['Customer Inclusion Notes'])}
-                  </div>
-                  <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-3">
-                    Inventory Notes: {displayInventoryValue(record.fields['Inventory Notes'])}
-                  </div>
-                </div>
-              </article>
-            );
-          })}
+        <section>
+          <IntakeItemsMatrix
+            items={records}
+            columns={recordColumns}
+            getItemKey={(record) => record.id}
+          />
         </section>
       </div>
     </PanelSurface>

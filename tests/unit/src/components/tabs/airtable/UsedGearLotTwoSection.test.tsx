@@ -39,8 +39,6 @@ describe('UsedGearLotTwoSection', () => {
     render(
       <UsedGearLotTwoSection
         onOpenManualIntake={vi.fn()}
-        onOpenTestingForm={vi.fn()}
-        onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
         searchTerm="luxman"
         onSearchTermChange={onSearchTermChange}
@@ -61,8 +59,6 @@ describe('UsedGearLotTwoSection', () => {
     render(
       <UsedGearLotTwoSection
         onOpenManualIntake={vi.fn()}
-        onOpenTestingForm={vi.fn()}
-        onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
       />,
     );
@@ -100,8 +96,6 @@ describe('UsedGearLotTwoSection', () => {
     render(
       <UsedGearLotTwoSection
         onOpenManualIntake={vi.fn()}
-        onOpenTestingForm={vi.fn()}
-        onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
         searchTerm="manual entry"
       />,
@@ -109,12 +103,12 @@ describe('UsedGearLotTwoSection', () => {
 
     await screen.findByText('Parking Lot 2');
 
-    expect(screen.getByText('LOT2-SOURCE')).toBeInTheDocument();
+    expect(screen.getAllByText('LOT2-SOURCE').length).toBeGreaterThan(0);
     expect(screen.queryByText('LOT2-OTHER')).not.toBeInTheDocument();
   });
 
-  it('opens downstream workflow forms from queue cards', async () => {
-    const onOpenTestingForm = vi.fn();
+  it('opens manual intake from queue cards', async () => {
+    const onOpenManualIntake = vi.fn();
 
     loadLotTwoQueueMock.mockResolvedValue([
       {
@@ -131,19 +125,44 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenManualIntake={vi.fn()}
-        onOpenTestingForm={onOpenTestingForm}
-        onOpenPhotosForm={vi.fn()}
+        onOpenManualIntake={onOpenManualIntake}
         onOpenOperationalRecord={vi.fn()}
       />,
     );
 
     await screen.findByText('Parking Lot 2');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Testing' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open Manual Intake' })[0]!);
 
-    expect(onOpenTestingForm).toHaveBeenCalledWith('rec-lot-two');
+    expect(onOpenManualIntake).toHaveBeenCalledWith('rec-lot-two');
     expect(screen.queryByText(/Qualification Notes:/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the operational action when it routes somewhere different than the visible handoff buttons', async () => {
+    loadLotTwoQueueMock.mockResolvedValue([
+      {
+        id: 'rec-lot-two-listed',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'LOT2-LISTED',
+          Make: 'Luxman',
+          Model: 'L-507',
+          'Workflow Status': 'Approved for Publish',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearLotTwoSection
+        onOpenManualIntake={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findAllByText('LOT2-LISTED');
+
+    expect(screen.getAllByRole('button', { name: 'Open Operational Record' }).length).toBeGreaterThan(0);
   });
 
   it('opens the dedicated Parking Lot 2 handoff surface from grouped queue cards', async () => {
@@ -178,15 +197,13 @@ describe('UsedGearLotTwoSection', () => {
       <UsedGearLotTwoSection
         onOpenGroupReview={onOpenGroupReview}
         onOpenManualIntake={vi.fn()}
-        onOpenTestingForm={vi.fn()}
-        onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
       />,
     );
 
     await screen.findByText('Parking Lot 2');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Set Handoff' }));
+    fireEvent.click(screen.getByRole('button', { name: /Open pickup set handoff pickup-100/i }));
 
     expect(onOpenGroupReview).toHaveBeenCalledWith('pickup:pickup-100');
   });
@@ -209,16 +226,17 @@ describe('UsedGearLotTwoSection', () => {
     render(
       <UsedGearLotTwoSection
         onOpenManualIntake={vi.fn()}
-        onOpenTestingForm={vi.fn()}
-        onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
       />,
     );
 
     await screen.findByText('Parking Lot 2');
 
-    expect(screen.getByText('Single intake item')).toBeInTheDocument();
-    expect(screen.getByText(/Intake Date:/i)).toBeInTheDocument();
+    expect(screen.queryByText('Single intake item')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader', { name: /Group/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('columnheader', { name: /Batch/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('columnheader', { name: /Item Actions/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/May 6, 2026/i).length).toBeGreaterThan(0);
   });
 });

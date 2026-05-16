@@ -8,19 +8,16 @@ vi.mock('@/components/tabs/airtable/UsedGearWorkflowProgressSection', () => ({
     queueMode,
     searchTerm,
     sortMode,
-    focusedGroupId,
   }: {
     queueMode: string;
     searchTerm?: string;
     sortMode?: string;
-    focusedGroupId?: string | null;
   }) => (
     <div
       data-testid="progress-section"
       data-queue-mode={queueMode}
       data-search-term={searchTerm ?? ''}
       data-sort-mode={sortMode ?? ''}
-      data-focused-group-id={focusedGroupId ?? ''}
     />
   ),
 }));
@@ -44,7 +41,7 @@ function renderQueueTab(initialEntry: string, queueMode: 'testing' | 'photograph
 describe('UsedGearWorkflowQueueTab', () => {
   it('renders the testing overview shell with post-intake holding guidance and URL-backed queue state', () => {
     renderQueueTab(
-      '/workflow/testing?workflowTestingQueueSearch=tube&workflowTestingQueueSort=newest&workflowTestingQueueGroup=submission%3Aabc#used-gear-testing-queue',
+      '/workflow/testing?workflowTestingQueueSearch=tube&workflowTestingQueueSort=newest#used-gear-testing-queue',
       'testing',
     );
 
@@ -67,12 +64,11 @@ describe('UsedGearWorkflowQueueTab', () => {
     expect(progressSection).toHaveAttribute('data-queue-mode', 'testing');
     expect(progressSection).toHaveAttribute('data-search-term', 'tube');
     expect(progressSection).toHaveAttribute('data-sort-mode', 'newest');
-    expect(progressSection).toHaveAttribute('data-focused-group-id', 'submission:abc');
   });
 
   it('renders the photography overview shell with dedicated guidance and URL-backed queue state', () => {
     renderQueueTab(
-      '/workflow/photography?workflowPhotographyQueueSearch=hero&workflowPhotographyQueueSort=oldest&workflowPhotographyQueueGroup=pickup%3A77#used-gear-photography-queue',
+      '/workflow/photography?workflowPhotographyQueueSearch=hero&workflowPhotographyQueueSort=oldest#used-gear-photography-queue',
       'photography',
     );
 
@@ -94,6 +90,5 @@ describe('UsedGearWorkflowQueueTab', () => {
     expect(progressSection).toHaveAttribute('data-queue-mode', 'photography');
     expect(progressSection).toHaveAttribute('data-search-term', 'hero');
     expect(progressSection).toHaveAttribute('data-sort-mode', 'oldest');
-    expect(progressSection).toHaveAttribute('data-focused-group-id', 'pickup:77');
   });
 });

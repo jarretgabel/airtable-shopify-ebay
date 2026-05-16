@@ -27,7 +27,6 @@ interface QueueTabConfig {
   stageSummary: string;
   routeDetail: string;
   searchParamName: string;
-  groupParamName: string;
   sortParamName: string;
   sectionId: string;
   hash: string;
@@ -45,7 +44,6 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
       stageSummary: 'Accepted rows land here after intake approval and processing signoff. This queue is the shared post-intake holding stage for hands-on bench verification, not a listing-review destination.',
       routeDetail: 'Use the queue to triage, filter, sort, and share grouped work. Use the Testing form to capture findings and the testing signoff that moves the row toward listing readiness.',
       searchParamName: 'workflowTestingQueueSearch',
-      groupParamName: 'workflowTestingQueueGroup',
       sortParamName: 'workflowTestingQueueSort',
       sectionId: 'used-gear-testing-queue',
       hash: '#used-gear-testing-queue',
@@ -74,7 +72,6 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
       stageSummary: 'Accepted rows land here after intake approval and processing signoff. This queue is the shared post-intake holding stage for photography work, not an early listing-prep page.',
       routeDetail: 'Use the queue to keep grouped submissions together, confirm which rows still need image work, and jump into the Photos form only when the unit is ready for photography completion.',
       searchParamName: 'workflowPhotographyQueueSearch',
-      groupParamName: 'workflowPhotographyQueueGroup',
       sortParamName: 'workflowPhotographyQueueSort',
       sectionId: 'used-gear-photography-queue',
       hash: '#used-gear-photography-queue',
@@ -102,7 +99,6 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
     stageSummary: 'Accepted rows land here after intake approval and processing signoff. This queue is the shared post-intake holding stage for hands-on bench verification, not a listing-review destination.',
     routeDetail: 'Use the queue to triage, filter, sort, and share grouped work. Use the Testing form to capture findings and the testing signoff that moves the row toward listing readiness.',
     searchParamName: 'workflowTestingQueueSearch',
-    groupParamName: 'workflowTestingQueueGroup',
     sortParamName: 'workflowTestingQueueSort',
     sectionId: 'used-gear-testing-queue',
     hash: '#used-gear-testing-queue',
@@ -121,11 +117,6 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
       },
     ],
   };
-}
-
-function parseFocusedGroup(search: string, paramName: string): string | null {
-  const value = new URLSearchParams(search).get(paramName)?.trim() ?? '';
-  return value ? value : null;
 }
 
 function parseSortMode(search: string, paramName: string): UsedGearWorkflowProgressSortMode {
@@ -149,7 +140,6 @@ export function UsedGearWorkflowQueueTab({
   const config = getQueueTabConfig(queueMode);
 
   const searchTerm = useMemo(() => new URLSearchParams(location.search).get(config.searchParamName) ?? '', [config.searchParamName, location.search]);
-  const focusedGroupId = useMemo(() => parseFocusedGroup(location.search, config.groupParamName), [config.groupParamName, location.search]);
   const sortMode = useMemo(() => parseSortMode(location.search, config.sortParamName), [config.sortParamName, location.search]);
 
   const updateRouteState = (update: (params: URLSearchParams) => void) => {
@@ -218,15 +208,6 @@ export function UsedGearWorkflowQueueTab({
           onOpenListingsRecord={onOpenListingsRecord}
           queueMode={queueMode}
           sectionId={config.sectionId}
-          groupParamName={config.groupParamName}
-          focusedGroupId={focusedGroupId}
-          onFocusedGroupIdChange={(groupId) => updateRouteState((params) => {
-            if (groupId) {
-              params.set(config.groupParamName, groupId);
-            } else {
-              params.delete(config.groupParamName);
-            }
-          })}
           searchTerm={searchTerm}
           onSearchTermChange={(value) => updateRouteState((params) => {
             if (value.trim()) {

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
-import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
@@ -20,7 +19,6 @@ interface UsedGearPendingReviewRecordPageProps {
   currentUserName: string;
   recordId: string;
   onOpenManualIntake: (recordId: string) => void;
-  onOpenOperationalRecord: (recordId: string) => void;
 }
 
 const ACCEPT_ROUTE_OPTIONS: Array<{
@@ -119,7 +117,6 @@ export function UsedGearPendingReviewRecordPage({
   currentUserName,
   recordId,
   onOpenManualIntake,
-  onOpenOperationalRecord,
 }: UsedGearPendingReviewRecordPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -130,7 +127,6 @@ export function UsedGearPendingReviewRecordPage({
   const [acceptStatus, setAcceptStatus] = useState<UsedGearPendingReviewAcceptedStatus>('Accepted - Awaiting Arrival');
   const [qualificationNotes, setQualificationNotes] = useState('');
   const [unqualifiedReason, setUnqualifiedReason] = useState('');
-  const [showRecordActions, setShowRecordActions] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -248,39 +244,13 @@ export function UsedGearPendingReviewRecordPage({
               >
                 Back To Parking Lot
               </button>
-              <div className="flex flex-col items-end gap-2">
-                <ToolbarIconButton
-                  label={showRecordActions ? 'Hide More Actions' : 'Show More Actions'}
-                  aria-expanded={showRecordActions}
-                  className={showRecordActions ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)] hover:border-[var(--accent)] hover:bg-[var(--accent)]/15 hover:text-[var(--accent)]' : undefined}
-                  icon={(
-                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
-                      <circle cx="4" cy="10" r="1.5" fill="currentColor" />
-                      <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-                      <circle cx="16" cy="10" r="1.5" fill="currentColor" />
-                    </svg>
-                  )}
-                  onClick={() => setShowRecordActions((current) => !current)}
-                />
-                {showRecordActions ? (
-                  <div className="flex flex-wrap justify-end gap-2 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-3">
-                    <button
-                      type="button"
-                      className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenManualIntake(record.id)}
-                    >
-                      Open Manual Intake
-                    </button>
-                    <button
-                      type="button"
-                      className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenOperationalRecord(record.id)}
-                    >
-                      Open Operational Record
-                    </button>
-                  </div>
-                ) : null}
-              </div>
+              <button
+                type="button"
+                className={smallSecondaryActionButtonClass}
+                onClick={() => onOpenManualIntake(record.id)}
+              >
+                Open Manual Intake
+              </button>
             </>
           )}
         />

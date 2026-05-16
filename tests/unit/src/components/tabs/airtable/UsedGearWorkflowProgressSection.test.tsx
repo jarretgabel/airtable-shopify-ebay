@@ -1,10 +1,9 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearWorkflowProgressSection } from '@/components/tabs/airtable/UsedGearWorkflowProgressSection';
 
-const { loadWorkflowProgressQueueMock, clipboardWriteTextMock } = vi.hoisted(() => ({
+const { loadWorkflowProgressQueueMock } = vi.hoisted(() => ({
   loadWorkflowProgressQueueMock: vi.fn(),
-  clipboardWriteTextMock: vi.fn(),
 }));
 
 vi.mock('@/services/usedGearQueue', async () => {
@@ -17,12 +16,6 @@ vi.mock('@/services/usedGearQueue', async () => {
 
 describe('UsedGearWorkflowProgressSection', () => {
   beforeEach(() => {
-    clipboardWriteTextMock.mockReset();
-    Object.assign(navigator, {
-      clipboard: {
-        writeText: clipboardWriteTextMock,
-      },
-    });
     window.history.replaceState({}, '', '/inventory');
   });
 
@@ -72,49 +65,9 @@ describe('UsedGearWorkflowProgressSection', () => {
 
     await screen.findByText('Processing And Holding Queue');
 
-    expect(screen.getAllByText('Single workflow item').length).toBeGreaterThan(0);
-    expect(screen.getByText('Single item')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Copy Item Link' })).toBeInTheDocument();
-    expect(screen.getByText(/Intake Date:/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/May 6, 2026/i).length).toBeGreaterThan(0);
-  });
-
-  it('copies a group-focused progress link', async () => {
-    loadWorkflowProgressQueueMock.mockResolvedValue([
-      {
-        id: 'rec-progress-a',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'PROG-1',
-          Make: 'Marantz',
-          Model: '8B',
-          'Workflow Status': 'Accepted - Awaiting Arrival',
-          'Submission Group ID': 'submission-a',
-        },
-      },
-    ]);
-
-    render(
-      <UsedGearWorkflowProgressSection
-        currentUserName="Taylor Reviewer"
-        onOpenManualIntake={vi.fn()}
-        onOpenTestingForm={vi.fn()}
-        onOpenPhotosForm={vi.fn()}
-        onOpenOperationalRecord={vi.fn()}
-        onOpenListingsRecord={vi.fn()}
-      />,
-    );
-
-    await screen.findByText('Processing And Holding Queue');
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /Copy (Group|Item) Link/i }));
-      await Promise.resolve();
-    });
-
-    await waitFor(() => {
-      expect(clipboardWriteTextMock).toHaveBeenCalledWith(`${window.location.origin}/inventory?workflowProgressGroup=submission%3Asubmission-a#used-gear-progress-queue`);
-    });
+    expect(screen.queryByText('Single workflow item')).not.toBeInTheDocument();
+    expect(screen.queryByText('Single item')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader', { name: /Group/i }).length).toBeGreaterThan(0);
   });
 
   it('opens stage review from the compact progress card', async () => {
@@ -147,7 +100,7 @@ describe('UsedGearWorkflowProgressSection', () => {
 
     await screen.findByText('Processing And Holding Queue');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Stage Review' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open Stage Review' })[0]!);
 
     expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-progress-a');
   });
@@ -233,12 +186,11 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Open Testing' }));
+    fireEvent.click((await screen.findAllByRole('button', { name: 'Open Testing' }))[0]!);
 
     expect(onOpenTestingForm).toHaveBeenCalledWith('rec-progress-testing');
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
-    expect(screen.queryByText('Testing and Photography In Progress')).not.toBeInTheDocument();
-    expect(screen.queryByText(/^Testing$/)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader', { name: /Status/i }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Next Team: Testing/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Price Ready:/i)).not.toBeInTheDocument();
   });
@@ -273,12 +225,11 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Open Photos' }));
+    fireEvent.click((await screen.findAllByRole('button', { name: 'Open Photos' }))[0]!);
 
     expect(onOpenPhotosForm).toHaveBeenCalledWith('rec-progress-photo');
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
-    expect(screen.queryByText('Testing and Photography In Progress')).not.toBeInTheDocument();
-    expect(screen.queryByText(/^Photography$/)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader', { name: /Status/i }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Next Team: Photography/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Price Ready:/i)).not.toBeInTheDocument();
   });

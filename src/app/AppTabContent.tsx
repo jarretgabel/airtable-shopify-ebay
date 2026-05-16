@@ -611,14 +611,12 @@ export function AppTabContent({
               currentUserName={currentUserName}
               recordId={deferredRouteState.jotformReviewRecordId}
               onOpenManualIntake={(recordId: string) => navigateToManualIntakeForm(recordId)}
-              onOpenOperationalRecord={(recordId: string) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
         }
         return (
           <ParkingLotOneTab
             currentUserName={currentUserName}
-            onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
           />
         );
       case 'jotform':
@@ -633,8 +631,6 @@ export function AppTabContent({
               groupId={deferredRouteState.lotTwoReviewGroupId}
               onBackToParkingLot={() => navigateToTab('parking-lot-2')}
               onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
-              onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
-              onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
               onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
@@ -643,8 +639,6 @@ export function AppTabContent({
           <UsedGearLotTwoTab
             currentUserName={currentUserName}
             onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
-            onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
-            onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
             onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
           />
         );
@@ -654,16 +648,10 @@ export function AppTabContent({
             <UsedGearTrashReviewRecordPage
               currentUserName={currentUserName}
               recordId={deferredRouteState.trashReviewRecordId}
-              onOpenOperationalRecord={(recordId: string) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
         }
-        return (
-          <UsedGearTrashTab
-            currentUserName={currentUserName}
-            onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
-          />
-        );
+        return <UsedGearTrashTab />;
       case 'testing-queue':
         return (
           <UsedGearWorkflowQueueTab

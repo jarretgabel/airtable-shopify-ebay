@@ -5,25 +5,18 @@ import { UsedGearPendingReviewSection } from '@/components/tabs/airtable/UsedGea
 
 interface ParkingLotOneTabProps {
   currentUserName: string;
-  onOpenOperationalRecord: (recordId: string) => void;
 }
 
 const WORKFLOW_PENDING_REVIEW_SEARCH_PARAM = 'workflowPendingReviewSearch';
 const WORKFLOW_PENDING_REVIEW_SORT_PARAM = 'workflowPendingReviewSort';
-const WORKFLOW_PENDING_REVIEW_GROUP_PARAM = 'workflowPendingReviewGroup';
 
-export function ParkingLotOneTab({ currentUserName, onOpenOperationalRecord }: ParkingLotOneTabProps) {
+export function ParkingLotOneTab({ currentUserName }: ParkingLotOneTabProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
   const workflowPendingReviewSearch = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return params.get(WORKFLOW_PENDING_REVIEW_SEARCH_PARAM) ?? '';
-  }, [location.search]);
-  const workflowPendingReviewGroup = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    const value = params.get(WORKFLOW_PENDING_REVIEW_GROUP_PARAM)?.trim() ?? '';
-    return value ? value : null;
   }, [location.search]);
   const workflowPendingReviewSort = useMemo(() => {
     const value = new URLSearchParams(location.search).get(WORKFLOW_PENDING_REVIEW_SORT_PARAM);
@@ -60,15 +53,6 @@ export function ParkingLotOneTab({ currentUserName, onOpenOperationalRecord }: P
         showSectionIntro={false}
         onOpenGroupReview={(groupId) => navigate(`/parking-lot-1/review/${encodeURIComponent(groupId)}${location.search}`, { replace: false })}
         onOpenReviewRecord={(recordId) => navigate(`/parking-lot-1/review-record/${encodeURIComponent(recordId)}${location.search}`, { replace: false })}
-        onOpenOperationalRecord={onOpenOperationalRecord}
-        focusedGroupId={workflowPendingReviewGroup}
-        onFocusedGroupIdChange={(groupId) => updateIntakeRouteState((params) => {
-          if (groupId) {
-            params.set(WORKFLOW_PENDING_REVIEW_GROUP_PARAM, groupId);
-          } else {
-            params.delete(WORKFLOW_PENDING_REVIEW_GROUP_PARAM);
-          }
-        }, '#used-gear-pending-review')}
         searchTerm={workflowPendingReviewSearch}
         onSearchTermChange={(value) => updateQueueSearch(WORKFLOW_PENDING_REVIEW_SEARCH_PARAM, value, '#used-gear-pending-review')}
         sortMode={workflowPendingReviewSort}

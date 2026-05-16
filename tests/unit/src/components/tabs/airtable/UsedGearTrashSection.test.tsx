@@ -40,7 +40,6 @@ describe('UsedGearTrashSection', () => {
     render(
       <UsedGearTrashSection
         onOpenReviewRecord={vi.fn()}
-        onOpenOperationalRecord={vi.fn()}
         searchTerm="pioneer"
         onSearchTermChange={onSearchTermChange}
       />,
@@ -57,7 +56,7 @@ describe('UsedGearTrashSection', () => {
   it('shows inline sort options in the header', async () => {
     loadTrashQueueMock.mockResolvedValue([]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenOperationalRecord={vi.fn()} />);
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} />);
 
     await screen.findByText('Trash Review');
     expect(screen.getByLabelText(/Sort trash review queue/i)).toBeInTheDocument();
@@ -93,11 +92,11 @@ describe('UsedGearTrashSection', () => {
       },
     ]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenOperationalRecord={vi.fn()} searchTerm="transformer cover" />);
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} searchTerm="transformer cover" />);
 
     await screen.findByText('Trash Review');
 
-    expect(screen.getByText('TRASH-REASON')).toBeInTheDocument();
+    expect(screen.getAllByText('TRASH-REASON').length).toBeGreaterThan(0);
     expect(screen.queryByText('TRASH-OTHER')).not.toBeInTheDocument();
   });
 
@@ -120,13 +119,14 @@ describe('UsedGearTrashSection', () => {
       },
     ]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={onOpenReviewRecord} onOpenOperationalRecord={vi.fn()} />);
+    render(<UsedGearTrashSection onOpenReviewRecord={onOpenReviewRecord} />);
 
     await screen.findByText('Trash Review');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Review' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open Review' })[0]!);
 
     expect(onOpenReviewRecord).toHaveBeenCalledWith('rec-trash');
+    expect(screen.queryByText(/^Unqualified$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Qualification Notes:/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Pricing Gate:/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Offer Amount:/i)).not.toBeInTheDocument();
@@ -148,12 +148,35 @@ describe('UsedGearTrashSection', () => {
       },
     ]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenOperationalRecord={vi.fn()} />);
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} />);
 
     await screen.findByText('Trash Review');
 
-    expect(screen.getByText('Single intake item')).toBeInTheDocument();
-    expect(screen.getByText(/Intake Date:/i)).toBeInTheDocument();
-    expect(screen.getByText(/May 6, 2026/i)).toBeInTheDocument();
+    expect(screen.queryByText('Single intake item')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader', { name: /Group/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/May 6, 2026/i).length).toBeGreaterThan(0);
+  });
+
+  it('hides the duplicate operational action when review already targets the same trash route', async () => {
+    loadTrashQueueMock.mockResolvedValue([
+      {
+        id: 'rec-trash-single',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'TRASH-SINGLE',
+          Make: 'Pioneer',
+          Model: 'SX-750',
+          'Workflow Status': 'Unqualified',
+          'Trash Status': 'Active Trash',
+        },
+      },
+    ]);
+
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} />);
+
+    await screen.findAllByText('TRASH-SINGLE');
+
+    expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
   });
 });

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
-import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
+import { smallPrimaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import {
@@ -19,7 +18,6 @@ import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } f
 interface UsedGearTrashReviewRecordPageProps {
   currentUserName: string;
   recordId: string;
-  onOpenOperationalRecord: (recordId: string) => void;
 }
 
 const REQUALIFY_ROUTE_OPTIONS: Array<{
@@ -94,7 +92,6 @@ function QualificationTemplateRow({ onApplyTemplate }: { onApplyTemplate: (templ
 export function UsedGearTrashReviewRecordPage({
   currentUserName,
   recordId,
-  onOpenOperationalRecord,
 }: UsedGearTrashReviewRecordPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -104,7 +101,6 @@ export function UsedGearTrashReviewRecordPage({
   const [error, setError] = useState<string | null>(null);
   const [requalifyStatus, setRequalifyStatus] = useState<UsedGearPendingReviewAcceptedStatus>('Accepted - Awaiting Arrival');
   const [requalifyNotes, setRequalifyNotes] = useState('');
-  const [showRecordActions, setShowRecordActions] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -231,32 +227,6 @@ export function UsedGearTrashReviewRecordPage({
               >
                 Back To Trash
               </button>
-              <div className="flex flex-col items-end gap-2">
-                <ToolbarIconButton
-                  label={showRecordActions ? 'Hide More Actions' : 'Show More Actions'}
-                  aria-expanded={showRecordActions}
-                  className={showRecordActions ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)] hover:border-[var(--accent)] hover:bg-[var(--accent)]/15 hover:text-[var(--accent)]' : undefined}
-                  icon={(
-                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
-                      <circle cx="4" cy="10" r="1.5" fill="currentColor" />
-                      <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-                      <circle cx="16" cy="10" r="1.5" fill="currentColor" />
-                    </svg>
-                  )}
-                  onClick={() => setShowRecordActions((current) => !current)}
-                />
-                {showRecordActions ? (
-                  <div className="flex flex-wrap justify-end gap-2 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-3">
-                    <button
-                      type="button"
-                      className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenOperationalRecord(record.id)}
-                    >
-                      Open Operational Record
-                    </button>
-                  </div>
-                ) : null}
-              </div>
             </>
           )}
         />

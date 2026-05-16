@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
+import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
+import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
 import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
@@ -12,7 +13,6 @@ import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearTrashSectionProps {
   onOpenReviewRecord: (recordId: string) => void;
-  onOpenOperationalRecord: (recordId: string) => void;
   showSectionIntro?: boolean;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
@@ -21,6 +21,10 @@ interface UsedGearTrashSectionProps {
 }
 
 export type UsedGearTrashSortMode = 'group-label' | 'newest' | 'oldest' | 'arrival-date' | 'make-model';
+
+function shouldShowTrashStatusTag(statusLabel: string): boolean {
+  return statusLabel.trim().toLowerCase() !== 'unqualified';
+}
 
 function recordSearchText(record: AirtableRecord): string {
   return [
@@ -87,22 +91,8 @@ function getTrashSortLabel(sortMode: UsedGearTrashSortMode): string {
   return 'Default Order';
 }
 
-function getGroupHeading(description: string): string {
-  if (description === 'Single record') {
-    return 'Single intake item';
-  }
-  if (description === 'Pickup group') {
-    return 'Pickup set';
-  }
-  if (description === 'Submission group') {
-    return 'Submission set';
-  }
-  return description;
-}
-
 export function UsedGearTrashSection({
   onOpenReviewRecord,
-  onOpenOperationalRecord,
   showSectionIntro = true,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
@@ -270,60 +260,82 @@ export function UsedGearTrashSection({
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-sm text-[var(--muted)]">
             Loading workflow trash...
           </div>
-        ) : groupedRecords.map((group) => (
-          <div key={group.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{getGroupHeading(group.description)}</p>
-              </div>
-            </div>
+        ) : (() => {
+          const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
+            {
+              key: 'sku',
+              label: 'SKU',
+              width: '10rem',
+              renderCell: (record) => <span className="font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</span>,
+            },
+            {
+              key: 'item',
+              label: 'Item',
+              width: 'minmax(0,1.4fr)',
+              renderCell: (record) => (
+                <div className="min-w-0">
+                  <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
+                  <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
+                    <span>{displayInventoryValue(record.fields['Workflow Source'])}</span>
+                    {shouldShowTrashStatusTag(displayInventoryValue(record.fields['Workflow Status'])) ? <span>{displayInventoryValue(record.fields['Workflow Status'])}</span> : null}
+                  </div>
+                </div>
+              ),
+            },
+            {
+              key: 'reason',
+              label: 'Reason',
+              width: 'minmax(0,1.4fr)',
+              renderCell: (record) => <span className="text-xs text-[var(--muted)]">{displayInventoryValue(record.fields['Unqualified Reason'])}</span>,
+            },
+            {
+              key: 'intake',
+              label: 'Intake',
+              width: '8rem',
+              renderCell: (record) => <span className="text-xs text-[var(--muted)]">{formatIntakeDate(record)}</span>,
+            },
+            {
+              key: 'actions',
+              label: 'Item Actions',
+              width: '4.75rem',
+              align: 'center',
+              headerClassName: 'border-l border-[var(--line)]/60',
+              cellClassName: 'border-l border-[var(--line)]/60',
+              renderCell: (record) => (
+                <div className="flex min-h-[4.5rem] w-full flex-col items-center justify-center gap-1.5">
+                  <CompactIconActionButton label="Open Review" variant="compact-primary" onClick={() => onOpenReviewRecord(record.id)} />
+                </div>
+              ),
+            },
+          ];
 
-            <div className="mt-4 grid gap-3 lg:grid-cols-2">
-              {group.records.map((record) => {
+          const matrixGroups: IntakeItemsMatrixGroup<AirtableRecord>[] = groupedRecords.map((group) => ({
+            id: group.id,
+            label: group.label,
+            description: group.description,
+            items: group.records,
+          }));
+
+          return (
+            <IntakeItemsMatrix
+              groups={matrixGroups}
+              columns={columns}
+              getItemKey={(record) => record.id}
+              groupColumnLabel="Group"
+              renderGroupCell={(group) => {
+                if (group.items.length === 1) {
+                  return <span className="text-xs text-[var(--muted)]/45">-</span>;
+                }
+
                 return (
-                <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{displayInventoryValue(record.fields['Workflow Source'])}</p>
-                      <h5 className="mt-1 text-lg font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</h5>
-                      <p className="mt-1 text-sm text-[var(--muted)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</p>
-                    </div>
-                    <div className="rounded-full border border-rose-400/35 bg-rose-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-rose-200">
-                      {displayInventoryValue(record.fields['Workflow Status'])}
-                    </div>
+                  <div className="flex min-h-[4.5rem] flex-col items-center justify-center gap-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{group.items.length}</span>
                   </div>
-
-                  <div className="mt-3 grid gap-2 text-sm text-[var(--muted)] sm:grid-cols-2">
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Intake Date:</span> {formatIntakeDate(record)}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Reason:</span> {displayInventoryValue(record.fields['Unqualified Reason'])}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className={smallPrimaryActionButtonClass}
-                      onClick={() => onOpenReviewRecord(record.id)}
-                    >
-                      Open Review
-                    </button>
-                    <button
-                      type="button"
-                      className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenOperationalRecord(record.id)}
-                    >
-                      Open Operational Record
-                    </button>
-                  </div>
-                </article>
                 );
-              })}
-            </div>
-          </div>
-        ))}
+              }}
+            />
+          );
+        })()}
       </div>
     </section>
   );

@@ -6,28 +6,19 @@ import { UsedGearLotTwoSection, type UsedGearLotTwoSortMode } from '@/components
 interface UsedGearLotTwoTabProps {
   currentUserName: string;
   onOpenManualIntake: (recordId: string) => void;
-  onOpenTestingForm: (recordId: string) => void;
-  onOpenPhotosForm: (recordId: string) => void;
   onOpenOperationalRecord: (recordId: string) => void;
 }
 
 const WORKFLOW_LOT_TWO_SEARCH_PARAM = 'workflowLotTwoSearch';
 const WORKFLOW_LOT_TWO_SORT_PARAM = 'workflowLotTwoSort';
-const WORKFLOW_LOT_TWO_GROUP_PARAM = 'workflowLotTwoGroup';
 
 export function UsedGearLotTwoTab({
   onOpenManualIntake,
-  onOpenTestingForm,
-  onOpenPhotosForm,
   onOpenOperationalRecord,
 }: UsedGearLotTwoTabProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const workflowLotTwoSearch = useMemo(() => new URLSearchParams(location.search).get(WORKFLOW_LOT_TWO_SEARCH_PARAM) ?? '', [location.search]);
-  const workflowLotTwoGroup = useMemo(() => {
-    const value = new URLSearchParams(location.search).get(WORKFLOW_LOT_TWO_GROUP_PARAM)?.trim() ?? '';
-    return value ? value : null;
-  }, [location.search]);
   const workflowLotTwoSort = useMemo(() => {
     const value = new URLSearchParams(location.search).get(WORKFLOW_LOT_TWO_SORT_PARAM);
     return value === 'newest' || value === 'oldest' || value === 'arrival-date' || value === 'make-model'
@@ -52,23 +43,16 @@ export function UsedGearLotTwoTab({
       eyebrow="Used Gear Intake"
       title="Parking Lot 2"
       description="Track accepted intake through arrival, SKU assignment, and the next handoff."
-      descriptionHint="Use the queue actions to open Manual Intake, Testing, Photos, or the current operational record directly from this page."
+      descriptionHint="Use the queue actions to open Manual Intake or the current operational record directly from this page."
     >
       <UsedGearLotTwoSection
         showSectionIntro={false}
-        onOpenGroupReview={(groupId) => navigate(`/parking-lot-2/review/${encodeURIComponent(groupId)}${location.search}`, { replace: false })}
+        onOpenGroupReview={(groupId) => navigate({
+          pathname: `/parking-lot-2/review/${encodeURIComponent(groupId)}`,
+          search: location.search,
+        }, { replace: false })}
         onOpenManualIntake={onOpenManualIntake}
-        onOpenTestingForm={onOpenTestingForm}
-        onOpenPhotosForm={onOpenPhotosForm}
         onOpenOperationalRecord={onOpenOperationalRecord}
-        focusedGroupId={workflowLotTwoGroup}
-        onFocusedGroupIdChange={(groupId) => updateRouteState((params) => {
-          if (groupId) {
-            params.set(WORKFLOW_LOT_TWO_GROUP_PARAM, groupId);
-          } else {
-            params.delete(WORKFLOW_LOT_TWO_GROUP_PARAM);
-          }
-        }, '#used-gear-lot-two')}
         searchTerm={workflowLotTwoSearch}
         onSearchTermChange={(value) => updateRouteState((params) => {
           if (value.trim()) {
