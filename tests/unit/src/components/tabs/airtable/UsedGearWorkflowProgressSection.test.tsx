@@ -190,7 +190,8 @@ describe('UsedGearWorkflowProgressSection', () => {
 
     expect(onOpenTestingForm).toHaveBeenCalledWith('rec-progress-testing');
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('columnheader', { name: /Status/i }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('columnheader', { name: /Status/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Next Team: Testing/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Price Ready:/i)).not.toBeInTheDocument();
   });
@@ -229,7 +230,8 @@ describe('UsedGearWorkflowProgressSection', () => {
 
     expect(onOpenPhotosForm).toHaveBeenCalledWith('rec-progress-photo');
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('columnheader', { name: /Status/i }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('columnheader', { name: /Status/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Next Team: Photography/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Price Ready:/i)).not.toBeInTheDocument();
   });

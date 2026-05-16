@@ -459,24 +459,6 @@ export function UsedGearWorkflowProgressSection({
               },
             },
             {
-              key: 'status',
-              label: 'Status',
-              width: '14rem',
-              renderCell: (record) => <span className="text-xs text-[var(--muted)]">{getUsedGearWorkflowStatus(record.fields) ?? 'Unknown'}</span>,
-            },
-            {
-              key: 'detail',
-              label: queueMode === 'all' ? 'Next / Ready' : 'Queue Detail',
-              width: '10rem',
-              renderCell: (record) => {
-                const nextTeamLabel = displayInventoryValue(record.fields['Workflow Next Team']);
-                const priceReady = getUsedGearWorkflowListingReadiness(record).price ? 'Price Ready' : 'Price Missing';
-                return (
-                  <span className="text-xs text-[var(--muted)]">{shouldShowNextTeamDetail(queueMode, nextTeamLabel) ? nextTeamLabel : shouldShowPriceReadyDetail(queueMode) ? priceReady : formatIntakeDate(record)}</span>
-                );
-              },
-            },
-            {
               key: 'actions',
               label: 'Item Actions',
               width: '4.75rem',
@@ -502,6 +484,36 @@ export function UsedGearWorkflowProgressSection({
               },
             },
           ];
+
+          if (queueMode === 'all') {
+            columns.splice(2, 0,
+              {
+                key: 'status',
+                label: 'Status',
+                width: '14rem',
+                renderCell: (record) => <span className="text-xs text-[var(--muted)]">{getUsedGearWorkflowStatus(record.fields) ?? 'Unknown'}</span>,
+              },
+              {
+                key: 'detail',
+                label: 'Next / Ready',
+                width: '10rem',
+                renderCell: (record) => {
+                  const nextTeamLabel = displayInventoryValue(record.fields['Workflow Next Team']);
+                  const priceReady = getUsedGearWorkflowListingReadiness(record).price ? 'Price Ready' : 'Price Missing';
+                  return (
+                    <span className="text-xs text-[var(--muted)]">{shouldShowNextTeamDetail(queueMode, nextTeamLabel) ? nextTeamLabel : shouldShowPriceReadyDetail(queueMode) ? priceReady : formatIntakeDate(record)}</span>
+                  );
+                },
+              },
+            );
+          } else {
+            columns.splice(2, 0, {
+              key: 'intake',
+              label: 'Intake',
+              width: '8rem',
+              renderCell: (record) => <span className="text-xs text-[var(--muted)]">{formatIntakeDate(record)}</span>,
+            });
+          }
 
           const matrixGroups: IntakeItemsMatrixGroup<AirtableRecord>[] = groupedRecords.map((group) => ({
             id: group.id,
