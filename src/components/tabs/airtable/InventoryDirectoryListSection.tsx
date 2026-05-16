@@ -10,7 +10,7 @@ interface InventoryDirectoryListSectionProps {
   statusOptions: string[];
   onSearchTermChange: (value: string) => void;
   onStatusFilterChange: (value: string) => void;
-  onOpenIncomingGearForm: (recordId: string) => void;
+  onOpenManualIntake: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
   onSelectRecord: (recordId: string) => void;
@@ -28,7 +28,7 @@ export function InventoryDirectoryListSection({
   statusOptions,
   onSearchTermChange,
   onStatusFilterChange,
-  onOpenIncomingGearForm,
+  onOpenManualIntake,
   onOpenTestingForm,
   onOpenPhotosForm,
   onSelectRecord,
@@ -91,9 +91,9 @@ export function InventoryDirectoryListSection({
                       <button
                         type="button"
                         className={smallSecondaryActionButtonClass}
-                        onClick={() => onOpenIncomingGearForm(record.id)}
+                        onClick={() => onOpenManualIntake(record.id)}
                       >
-                        Incoming Gear
+                        Manual Intake
                       </button>
                       <button
                         type="button"

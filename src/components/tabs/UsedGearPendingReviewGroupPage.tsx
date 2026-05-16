@@ -19,7 +19,7 @@ interface UsedGearPendingReviewGroupPageProps {
   currentUserName: string;
   groupId: string;
   onBackToParkingLot: () => void;
-  onOpenIncomingGearForm: (recordId: string) => void;
+  onOpenManualIntake: (recordId: string) => void;
   onOpenOperationalRecord: (recordId: string) => void;
 }
 
@@ -103,7 +103,7 @@ export function UsedGearPendingReviewGroupPage({
   currentUserName,
   groupId,
   onBackToParkingLot,
-  onOpenIncomingGearForm,
+  onOpenManualIntake,
   onOpenOperationalRecord,
 }: UsedGearPendingReviewGroupPageProps) {
   const [group, setGroup] = useState<UsedGearWorkflowGroup | null>(null);
@@ -419,9 +419,9 @@ export function UsedGearPendingReviewGroupPage({
                     <button
                       type="button"
                       className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenIncomingGearForm(record.id)}
+                      onClick={() => onOpenManualIntake(record.id)}
                     >
-                      Open Incoming Gear
+                      Open Manual Intake
                     </button>
                   </div>
                 </div>

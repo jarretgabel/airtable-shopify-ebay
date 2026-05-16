@@ -101,7 +101,7 @@ interface AirtableTabProps {
   currentUserRole: UserRole;
   currentUserName: string;
   onAddNewRecord: () => void;
-  onOpenIncomingGearForm: (recordId: string) => void;
+  onOpenManualIntake: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
   onOpenOperationalRecord: (recordId: string) => void;
@@ -114,7 +114,7 @@ export function AirtableTab({
   currentUserRole,
   currentUserName,
   onAddNewRecord,
-  onOpenIncomingGearForm,
+  onOpenManualIntake,
   onOpenTestingForm,
   onOpenPhotosForm,
   onOpenOperationalRecord,
@@ -508,7 +508,7 @@ export function AirtableTab({
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
           <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SB Inventory</p>
           <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Directory</h2>
-          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Browse existing SB Inventory records, filter the table, and jump directly into the Incoming Gear, Testing, Photos, or full record editor flows.</p>
+          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Browse existing SB Inventory records, filter the table, and jump directly into Manual Intake, Testing, Photos, or full record editor flows.</p>
         </div>
 
         {directoryError ? (
@@ -565,7 +565,7 @@ export function AirtableTab({
 
         <UsedGearPendingReviewSection
           currentUserName={currentUserName}
-          onOpenReviewRecord={(recordId) => onOpenIncomingGearForm(recordId)}
+          onOpenReviewRecord={(recordId) => onOpenManualIntake(recordId)}
           onOpenOperationalRecord={onOpenOperationalRecord}
           focusedGroupId={workflowPendingReviewGroup}
           onFocusedGroupIdChange={(groupId) => updateWorkflowRouteState((params) => {
@@ -593,7 +593,7 @@ export function AirtableTab({
 
         <UsedGearWorkflowProgressSection
           currentUserName={currentUserName}
-          onOpenIncomingGearForm={onOpenIncomingGearForm}
+          onOpenManualIntake={onOpenManualIntake}
           onOpenTestingForm={onOpenTestingForm}
           onOpenPhotosForm={onOpenPhotosForm}
           onOpenOperationalRecord={onOpenOperationalRecord}
@@ -686,7 +686,7 @@ export function AirtableTab({
           {!directoryLoading && !directoryError && records.length === 0 ? (
             <EmptySurface title="No inventory rows found" message="SB Inventory currently has no editable rows in this table.">
               <p className="mt-3 text-sm text-[var(--muted)]">
-                Next route: start in Parking Lot 1 for customer-submitted intake, or open Incoming Gear when staff needs to create the first manual operational row inside the app.
+                Next route: start in Parking Lot 1 for customer-submitted intake, or open Manual Intake when staff needs to create the first manual operational row inside the app.
               </p>
             </EmptySurface>
           ) : null}
@@ -700,7 +700,7 @@ export function AirtableTab({
               statusOptions={statusOptions}
               onSearchTermChange={handleInventoryDirectorySearchChange}
               onStatusFilterChange={handleInventoryDirectoryStatusFilterChange}
-              onOpenIncomingGearForm={onOpenIncomingGearForm}
+              onOpenManualIntake={onOpenManualIntake}
               onOpenTestingForm={onOpenTestingForm}
               onOpenPhotosForm={onOpenPhotosForm}
               onSelectRecord={onSelectRecord}

@@ -38,7 +38,7 @@ function App() {
     jotformReviewRecordId,
     lotTwoReviewGroupId,
     trashReviewRecordId,
-    incomingGearRecordId,
+    manualIntakeRecordId,
     testingRecordId,
     photosRecordId,
     inventoryRecordId,
@@ -68,7 +68,7 @@ function App() {
     navigateToInventorySection,
     navigateToJotformReviewGroup,
     navigateToManualIntake,
-    navigateToIncomingGearForm,
+    navigateToManualIntakeForm,
     navigateToTestingForm,
     navigateToPhotosForm,
     navigateToInventoryRecord,
@@ -253,7 +253,7 @@ function App() {
             jotformReviewRecordId={jotformReviewRecordId}
             lotTwoReviewGroupId={lotTwoReviewGroupId}
             trashReviewRecordId={trashReviewRecordId}
-            incomingGearRecordId={incomingGearRecordId}
+            manualIntakeRecordId={manualIntakeRecordId}
             testingRecordId={testingRecordId}
             photosRecordId={photosRecordId}
             inventoryRecordId={inventoryRecordId}
@@ -269,7 +269,7 @@ function App() {
             navigateToInventoryWorkflowView={navigateToInventoryWorkflowView}
             navigateToInventoryPostPublishBucket={navigateToInventoryPostPublishBucket}
             navigateToManualIntake={navigateToManualIntake}
-            navigateToIncomingGearForm={navigateToIncomingGearForm}
+            navigateToManualIntakeForm={navigateToManualIntakeForm}
             navigateToTestingForm={navigateToTestingForm}
             navigateToPhotosForm={navigateToPhotosForm}
             navigateToListingsRecord={navigateToListingsRecord}

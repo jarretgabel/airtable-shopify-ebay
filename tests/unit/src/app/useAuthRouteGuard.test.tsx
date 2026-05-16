@@ -8,7 +8,7 @@ function GuardHarness({
   navigate = vi.fn(),
 }: {
   normalizedPath: string;
-  canAccessPage?: (tab: 'dashboard' | 'workflow-guide' | 'inventory' | 'listings' | 'shopify' | 'market' | 'parking-lot-1' | 'jotform' | 'manual-intake' | 'incoming-gear' | 'testing' | 'photos' | 'settings' | 'notifications' | 'imagelab' | 'ebay' | 'users' | 'parking-lot-2' | 'trash-review' | 'testing-queue' | 'photography-queue') => boolean;
+  canAccessPage?: (tab: 'dashboard' | 'workflow-guide' | 'inventory' | 'listings' | 'shopify' | 'market' | 'parking-lot-1' | 'jotform' | 'manual-intake' | 'testing' | 'photos' | 'settings' | 'notifications' | 'imagelab' | 'ebay' | 'users' | 'parking-lot-2' | 'trash-review' | 'testing-queue' | 'photography-queue') => boolean;
   navigate?: ReturnType<typeof vi.fn>;
 }) {
   useAuthRouteGuard({

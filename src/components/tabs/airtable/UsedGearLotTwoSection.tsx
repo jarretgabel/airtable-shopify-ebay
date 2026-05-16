@@ -11,7 +11,7 @@ import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearLotTwoSectionProps {
   onOpenGroupReview?: (groupId: string) => void;
-  onOpenIncomingGearForm: (recordId: string) => void;
+  onOpenManualIntake: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
   onOpenOperationalRecord: (recordId: string) => void;
@@ -112,7 +112,7 @@ function getGroupHeading(description: string): string {
 
 export function UsedGearLotTwoSection({
   onOpenGroupReview,
-  onOpenIncomingGearForm,
+  onOpenManualIntake,
   onOpenTestingForm,
   onOpenPhotosForm,
   onOpenOperationalRecord,
@@ -389,9 +389,9 @@ export function UsedGearLotTwoSection({
                     <button
                       type="button"
                       className={smallPrimaryActionButtonClass}
-                      onClick={() => onOpenIncomingGearForm(record.id)}
+                      onClick={() => onOpenManualIntake(record.id)}
                     >
-                      Open Incoming Gear
+                      Open Manual Intake
                     </button>
                     <button
                       type="button"

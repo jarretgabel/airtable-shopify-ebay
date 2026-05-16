@@ -15,7 +15,7 @@ interface TabSection {
 const INVENTORY_PROCESSING_SECTION_KEYS = {
   hub: ['inventory'] as const,
   reviewQueues: ['testing-queue', 'photography-queue'] as const,
-  forms: ['manual-intake', 'incoming-gear', 'testing', 'photos'] as const,
+  forms: ['testing', 'photos'] as const,
 };
 
 interface AppFrameHeaderNavigationProps {

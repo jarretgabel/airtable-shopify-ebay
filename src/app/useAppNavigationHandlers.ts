@@ -13,7 +13,7 @@ interface AppNavigationHandlers {
   navigateToInventorySection: (sectionId: string, replace?: boolean) => void;
   navigateToJotformReviewGroup: (groupId: string, replace?: boolean) => void;
   navigateToManualIntake: (replace?: boolean) => void;
-  navigateToIncomingGearForm: (recordId?: string | null, replace?: boolean) => void;
+  navigateToManualIntakeForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToInventoryRecord: (recordId: string, replace?: boolean) => void;
@@ -65,16 +65,16 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     scrollToPageTop();
   }, [navigate]);
 
-  const navigateToIncomingGearForm = useCallback((recordId?: string | null, replace = false): void => {
+  const navigateToManualIntakeForm = useCallback((recordId?: string | null, replace = false): void => {
     const path = recordId
-      ? `${TAB_PATHS['incoming-gear']}/${encodeURIComponent(recordId)}`
-      : TAB_PATHS['incoming-gear'];
+      ? `${TAB_PATHS['manual-intake']}/${encodeURIComponent(recordId)}`
+      : TAB_PATHS['manual-intake'];
     navigate(path, { replace });
     scrollToPageTop();
   }, [navigate]);
 
   const navigateToManualIntake = useCallback((replace = false): void => {
-    navigate('/inventory/manual-intake', { replace });
+    navigate(TAB_PATHS['manual-intake'], { replace });
     scrollToPageTop();
   }, [navigate]);
 
@@ -216,7 +216,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     navigateToInventorySection,
     navigateToJotformReviewGroup,
     navigateToManualIntake,
-    navigateToIncomingGearForm,
+    navigateToManualIntakeForm,
     navigateToTestingForm,
     navigateToPhotosForm,
     navigateToInventoryRecord,

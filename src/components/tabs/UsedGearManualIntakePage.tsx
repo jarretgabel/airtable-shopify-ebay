@@ -4,6 +4,7 @@ import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { AirtableEmbeddedForm } from '@/components/tabs/AirtableEmbeddedForm';
 
 interface UsedGearManualIntakePageProps {
+  recordId?: string | null;
   onBackToDirectory?: () => void;
 }
 
@@ -26,14 +27,16 @@ const MANUAL_ROUTE_GUIDANCE = [
   },
 ] as const;
 
-export function UsedGearManualIntakePage({ onBackToDirectory }: UsedGearManualIntakePageProps) {
+export function UsedGearManualIntakePage({ recordId, onBackToDirectory }: UsedGearManualIntakePageProps) {
   return (
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
         <WorkflowPageHeader
           eyebrow="Inventory Processing"
           title="Manual Intake"
-          description="Create used-gear intake records directly from operator knowledge when the item did not start from the shared submission flow. This surface is for first-pass record creation and routing, not broad queue browsing."
+          description={recordId
+            ? 'Update the routed intake record in the same operator-owned surface used for manual entry creation. This keeps accepted arrival-stage rows on one intake page instead of splitting them across duplicate forms.'
+            : 'Create used-gear intake records directly from operator knowledge when the item did not start from the shared submission flow. This surface is for first-pass record creation and routing, not broad queue browsing.'}
           actions={onBackToDirectory ? (
             <button
               type="button"
@@ -49,8 +52,12 @@ export function UsedGearManualIntakePage({ onBackToDirectory }: UsedGearManualIn
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
             <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">When To Use This Page</p>
             <div className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
-              <p className="m-0">Start here when the operator already has enough information to create the intake row without waiting for a Jotform submission or parking-lot review handoff.</p>
-              <p className="m-0">Pick the route inside the form based on where the item should land next. The route choice determines whether the record enters Parking Lot 1 or one of the arrival-stage Parking Lot 2 buckets.</p>
+              <p className="m-0">{recordId
+                ? 'Use this page to finish or correct intake details for an accepted arrival-stage row without switching to a separate duplicate form surface.'
+                : 'Start here when the operator already has enough information to create the intake row without waiting for a Jotform submission or parking-lot review handoff.'}</p>
+              <p className="m-0">{recordId
+                ? 'The same field set now handles both first-pass manual creation and later intake edits for accepted items.'
+                : 'Pick the route inside the form based on where the item should land next. The route choice determines whether the record enters Parking Lot 1 or one of the arrival-stage Parking Lot 2 buckets.'}</p>
               <p className="m-0">Use submission-group, pickup, and qualification notes when the manual record still needs to stay connected to a larger deal or shared intake context.</p>
             </div>
           </div>
@@ -74,7 +81,7 @@ export function UsedGearManualIntakePage({ onBackToDirectory }: UsedGearManualIn
           </CollapsibleHelperText>
         </div>
 
-        <AirtableEmbeddedForm onBackToDirectory={onBackToDirectory} />
+        <AirtableEmbeddedForm recordId={recordId} onBackToDirectory={onBackToDirectory} />
       </div>
     </PanelSurface>
   );

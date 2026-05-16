@@ -37,9 +37,9 @@ describe('useAppRouteState', () => {
     expect(state.resetToken).toBe('123');
   });
 
-  it('maps the dedicated incoming-gear route', () => {
-    const state = useAppRouteState(locationFor('/incoming-gear'), ['dashboard', 'incoming-gear']);
-    expect(state.activeTab).toBe('incoming-gear');
+  it('maps the dedicated manual-intake route', () => {
+    const state = useAppRouteState(locationFor('/inventory/manual-intake'), ['dashboard', 'manual-intake']);
+    expect(state.activeTab).toBe('manual-intake');
   });
 
   it('maps the dedicated manual-intake route without treating it as an inventory record id', () => {
@@ -54,10 +54,10 @@ describe('useAppRouteState', () => {
     expect(state.activeTab).toBe('workflow-guide');
   });
 
-  it('maps incoming gear deep links with record ids', () => {
-    const state = useAppRouteState(locationFor('/incoming-gear/rec%20123'), ['dashboard', 'incoming-gear']);
-    expect(state.activeTab).toBe('incoming-gear');
-    expect(state.incomingGearRecordId).toBe('rec 123');
+  it('maps manual-intake deep links with record ids', () => {
+    const state = useAppRouteState(locationFor('/inventory/manual-intake/rec%20123'), ['dashboard', 'manual-intake']);
+    expect(state.activeTab).toBe('manual-intake');
+    expect(state.manualIntakeRecordId).toBe('rec 123');
   });
 
   it('maps jotform record review deep links with record ids', () => {

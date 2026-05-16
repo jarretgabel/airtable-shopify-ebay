@@ -11,7 +11,7 @@ interface AppRouteState {
   jotformReviewRecordId: string | null;
   lotTwoReviewGroupId: string | null;
   trashReviewRecordId: string | null;
-  incomingGearRecordId: string | null;
+  manualIntakeRecordId: string | null;
   testingRecordId: string | null;
   photosRecordId: string | null;
   inventoryRecordId: string | null;
@@ -30,12 +30,12 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const isLoginPath = normalizedPath === '/login';
   const isResetPasswordPath = normalizedPath === '/reset-password';
   const resetToken = searchParams.get('token');
-  const manualIntakeMode = normalizedPath === '/inventory/manual-intake';
+  const manualIntakeRecordMatch = normalizedPath.match(/^\/inventory\/manual-intake\/([^/]+)$/);
+  const manualIntakeMode = normalizedPath === '/inventory/manual-intake' || Boolean(manualIntakeRecordMatch);
   const jotformReviewGroupMatch = normalizedPath.match(/^\/parking-lot-1\/review\/([^/]+)$/);
   const jotformReviewRecordMatch = normalizedPath.match(/^\/parking-lot-1\/review-record\/([^/]+)$/);
   const lotTwoReviewGroupMatch = normalizedPath.match(/^\/parking-lot-2\/review\/([^/]+)$/);
   const trashReviewRecordMatch = normalizedPath.match(/^\/trash-review\/review\/([^/]+)$/);
-  const incomingGearRecordMatch = normalizedPath.match(/^\/incoming-gear\/([^/]+)$/);
   const testingRecordMatch = normalizedPath.match(/^\/testing\/([^/]+)$/);
   const photosRecordMatch = normalizedPath.match(/^\/photos\/([^/]+)$/);
   const inventoryPriceEditorRecordMatch = normalizedPath.match(/^\/inventory\/price\/([^/]+)$/);
@@ -56,7 +56,6 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     if (normalizedPath === '/workflow/testing') return 'testing-queue';
     if (normalizedPath === '/workflow/photography') return 'photography-queue';
     if (manualIntakeMode) return 'manual-intake';
-    if (normalizedPath === '/incoming-gear' || incomingGearRecordMatch) return 'incoming-gear';
     if (normalizedPath === '/testing' || testingRecordMatch) return 'testing';
     if (normalizedPath === '/photos' || photosRecordMatch) return 'photos';
     if (normalizedPath === '/inventory' || inventoryPriceEditorRecordMatch || inventoryRecordMatch) return 'inventory';
@@ -79,7 +78,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     jotformReviewRecordId: jotformReviewRecordMatch ? decodeURIComponent(jotformReviewRecordMatch[1]) : null,
     lotTwoReviewGroupId: lotTwoReviewGroupMatch ? decodeURIComponent(lotTwoReviewGroupMatch[1]) : null,
     trashReviewRecordId: trashReviewRecordMatch ? decodeURIComponent(trashReviewRecordMatch[1]) : null,
-    incomingGearRecordId: incomingGearRecordMatch ? decodeURIComponent(incomingGearRecordMatch[1]) : null,
+    manualIntakeRecordId: manualIntakeRecordMatch ? decodeURIComponent(manualIntakeRecordMatch[1]) : null,
     testingRecordId: testingRecordMatch ? decodeURIComponent(testingRecordMatch[1]) : null,
     photosRecordId: photosRecordMatch ? decodeURIComponent(photosRecordMatch[1]) : null,
     inventoryPriceEditorRecordId: inventoryPriceEditorRecordMatch ? decodeURIComponent(inventoryPriceEditorRecordMatch[1]) : null,

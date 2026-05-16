@@ -35,7 +35,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     render(
       <UsedGearWorkflowProgressSection
         currentUserName="Taylor Reviewer"
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
@@ -65,7 +65,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     render(
       <UsedGearWorkflowProgressSection
         currentUserName="Taylor Reviewer"
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
@@ -101,7 +101,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     render(
       <UsedGearWorkflowProgressSection
         currentUserName="Taylor Reviewer"
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
@@ -141,7 +141,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     render(
       <UsedGearWorkflowProgressSection
         currentUserName="Taylor Reviewer"
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={onOpenOperationalRecord}
@@ -194,7 +194,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     render(
       <UsedGearWorkflowProgressSection
         currentUserName="Taylor Reviewer"
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
@@ -228,7 +228,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     render(
       <UsedGearWorkflowProgressSection
         currentUserName="Taylor Reviewer"
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
@@ -261,7 +261,7 @@ describe('UsedGearWorkflowProgressSection', () => {
       <UsedGearWorkflowProgressSection
         currentUserName="Taylor Reviewer"
         queueMode="testing"
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={onOpenTestingForm}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
@@ -296,7 +296,7 @@ describe('UsedGearWorkflowProgressSection', () => {
       <UsedGearWorkflowProgressSection
         currentUserName="Taylor Reviewer"
         queueMode="photography"
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={onOpenPhotosForm}
         onOpenOperationalRecord={vi.fn()}

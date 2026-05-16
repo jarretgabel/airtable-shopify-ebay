@@ -1,4 +1,4 @@
-export type IncomingGearFormOptionFieldName =
+export type ManualIntakeFormOptionFieldName =
   | 'Status'
   | 'Component Type'
   | 'Original Box'
@@ -7,7 +7,7 @@ export type IncomingGearFormOptionFieldName =
   | 'Power Cable'
   | 'Shipping Method';
 
-export interface IncomingGearFormValues {
+export interface ManualIntakeFormValues {
   arrivalDate: string;
   pickUpNumber: string;
   acquiredFrom: string;
@@ -36,28 +36,28 @@ export interface IncomingGearFormValues {
   shippingMethod: string;
 }
 
-export type IncomingGearFormFieldType = 'text' | 'date' | 'currency' | 'textarea' | 'select' | 'searchable-select' | 'file';
+export type ManualIntakeFormFieldType = 'text' | 'date' | 'currency' | 'textarea' | 'select' | 'searchable-select' | 'file';
 
-export interface IncomingGearFormFieldDefinition {
-  name: keyof IncomingGearFormValues;
+export interface ManualIntakeFormFieldDefinition {
+  name: keyof ManualIntakeFormValues;
   airtableFieldName: string;
   label: string;
-  type: IncomingGearFormFieldType;
+  type: ManualIntakeFormFieldType;
   required?: boolean;
   placeholder?: string;
   description?: string;
-  optionFieldName?: IncomingGearFormOptionFieldName;
+  optionFieldName?: ManualIntakeFormOptionFieldName;
   rows?: number;
 }
 
-export interface IncomingGearFormIntroBlock {
+export interface ManualIntakeFormIntroBlock {
   type: 'body' | 'lead' | 'labelBody' | 'sectionHeading' | 'divider';
   text?: string;
   label?: string;
   body?: string;
 }
 
-export function createIncomingGearFormDefaults(): IncomingGearFormValues {
+export function createManualIntakeFormDefaults(): ManualIntakeFormValues {
   return {
     arrivalDate: new Date().toISOString().slice(0, 10),
     pickUpNumber: '',
@@ -88,13 +88,13 @@ export function createIncomingGearFormDefaults(): IncomingGearFormValues {
   };
 }
 
-export const incomingGearFormIntro: {
+export const manualIntakeFormIntro: {
   eyebrow: string;
   title: string;
-  blocks: IncomingGearFormIntroBlock[];
+  blocks: ManualIntakeFormIntroBlock[];
 } = {
   eyebrow: 'SB Inventory',
-  title: 'Incoming Gear Form',
+  title: 'Manual Intake Form',
   blocks: [
     {
       type: 'lead',
@@ -103,7 +103,7 @@ export const incomingGearFormIntro: {
     {
       type: 'labelBody',
       label: 'SB Quote Request Form:',
-      body: 'Filled and submitted by potential clients. If a deal is accepted, submitted details are routed into inventory with a "Waiting for Item" status and can be found in the "Incoming Gear" view.',
+      body: 'Filled and submitted by potential clients. If a deal is accepted, submitted details are routed into inventory with a "Waiting for Item" status and can be found in the "JotForm" and "Parking Lot 1" intake workflow views.',
     },
     {
       type: 'labelBody',
@@ -139,7 +139,7 @@ export const incomingGearFormIntro: {
   ],
 };
 
-export const incomingGearFormFields: IncomingGearFormFieldDefinition[] = [
+export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
   {
     name: 'arrivalDate',
     airtableFieldName: 'Arrival Date',

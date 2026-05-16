@@ -15,11 +15,11 @@ export const TAB_PATHS: Record<Tab, string> = Object.entries(PAGE_DEFINITIONS).r
 
 export const LISTINGS_TABS = ['listings', 'shopify', 'ebay'] as const satisfies readonly Tab[];
 export const LISTINGS_TAB_SET = new Set<Tab>(LISTINGS_TABS as readonly Tab[]);
-export const INTAKE_TABS = ['parking-lot-1', 'parking-lot-2', 'trash-review'] as const satisfies readonly Tab[];
+export const INTAKE_TABS = ['manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review'] as const satisfies readonly Tab[];
 export const INTAKE_TAB_SET = new Set<Tab>(INTAKE_TABS as readonly Tab[]);
-export const INVENTORY_PROCESSING_TABS = ['inventory', 'testing-queue', 'photography-queue', 'manual-intake', 'incoming-gear', 'testing', 'photos'] as const satisfies readonly Tab[];
+export const INVENTORY_PROCESSING_TABS = ['inventory', 'testing-queue', 'photography-queue', 'testing', 'photos'] as const satisfies readonly Tab[];
 export const INVENTORY_PROCESSING_TAB_SET = new Set<Tab>(INVENTORY_PROCESSING_TABS as readonly Tab[]);
-export const UTILITY_TABS = ['workflow-guide', 'market', 'imagelab', 'jotform'] as const satisfies readonly Tab[];
+export const UTILITY_TABS = ['workflow-guide', 'market', 'imagelab'] as const satisfies readonly Tab[];
 export const UTILITY_TAB_SET = new Set<Tab>(UTILITY_TABS as readonly Tab[]);
 
 const NAV_LABELS: Partial<Record<Tab, string>> = {
@@ -29,14 +29,13 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   listings: 'Listings',
   shopify: 'Shopify',
   market: 'HiFi Shark',
+  'manual-intake': 'Manual Intake',
   'parking-lot-1': 'Parking Lot 1',
   jotform: 'JotForm',
   'parking-lot-2': 'Parking Lot 2',
   'trash-review': 'Trash Review',
   'testing-queue': 'Testing Review',
   'photography-queue': 'Photography Review',
-  'manual-intake': 'Manual Intake',
-  'incoming-gear': 'Incoming Gear Form',
   testing: 'Testing Form',
   photos: 'Photo Form',
   settings: 'Settings',

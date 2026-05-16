@@ -84,7 +84,7 @@ export interface UsedGearWorkflowListingReadiness {
   missingRequirements: string[];
 }
 
-export type UsedGearWorkflowListingReadinessActionTarget = 'inventory-editor' | 'incoming-gear' | 'testing' | 'photos' | 'listings-approval';
+export type UsedGearWorkflowListingReadinessActionTarget = 'inventory-editor' | 'manual-intake' | 'testing' | 'photos' | 'listings-approval';
 
 export interface UsedGearWorkflowListingReadinessBlocker {
   message: string;

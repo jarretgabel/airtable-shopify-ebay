@@ -24,7 +24,6 @@ const ShopifySnapshotRecordPage = lazy(async () => ({ default: (await import('@/
 const ShopifyListingsDirectoryTab = lazy(async () => ({ default: (await import('@/components/approval/ShopifyListingsDirectoryTab')).ShopifyListingsDirectoryTab }));
 const UserManagementTab = lazy(async () => ({ default: (await import('@/components/UserManagementTab')).UserManagementTab }));
 const AirtableTab = lazy(async () => ({ default: (await import('@/components/tabs/AirtableTab')).AirtableTab }));
-const AirtableEmbeddedForm = lazy(async () => ({ default: (await import('@/components/tabs/AirtableEmbeddedForm')).AirtableEmbeddedForm }));
 const InventoryRecordEditorPage = lazy(async () => ({ default: (await import('@/components/tabs/InventoryRecordEditorPage')).InventoryRecordEditorPage }));
 const InventoryPriceEditorPage = lazy(async () => ({ default: (await import('../components/tabs/InventoryPriceEditorPage')).InventoryPriceEditorPage }));
 const ParkingLotOneTab = lazy(async () => ({ default: (await import('@/components/tabs/ParkingLotOneTab')).ParkingLotOneTab }));
@@ -201,8 +200,6 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
       return 'settings';
     case 'notifications':
       return 'notifications';
-    case 'incoming-gear':
-      return 'incoming gear form';
     case 'manual-intake':
       return 'manual intake';
     case 'testing':
@@ -233,7 +230,7 @@ export function AppTabContent({
   jotformReviewRecordId,
   lotTwoReviewGroupId,
   trashReviewRecordId,
-  incomingGearRecordId,
+  manualIntakeRecordId,
   testingRecordId,
   photosRecordId,
   inventoryRecordId,
@@ -248,7 +245,7 @@ export function AppTabContent({
   navigateToInventoryWorkflowView,
   navigateToInventoryPostPublishBucket,
   navigateToManualIntake,
-  navigateToIncomingGearForm,
+  navigateToManualIntakeForm,
   navigateToTestingForm,
   navigateToPhotosForm,
   navigateToListingsRecord,
@@ -334,7 +331,7 @@ export function AppTabContent({
     jotformReviewRecordId,
     lotTwoReviewGroupId,
     trashReviewRecordId,
-    incomingGearRecordId,
+    manualIntakeRecordId,
     testingRecordId,
     photosRecordId,
     inventoryRecordId,
@@ -345,7 +342,7 @@ export function AppTabContent({
     userRecordId,
   });
   const isRouteTransitionPending = deferredRouteState.activeTab !== activeTab
-    || deferredRouteState.incomingGearRecordId !== incomingGearRecordId
+    || deferredRouteState.manualIntakeRecordId !== manualIntakeRecordId
     || deferredRouteState.jotformReviewGroupId !== jotformReviewGroupId
     || deferredRouteState.jotformReviewRecordId !== jotformReviewRecordId
     || deferredRouteState.lotTwoReviewGroupId !== lotTwoReviewGroupId
@@ -536,7 +533,7 @@ export function AppTabContent({
               currentUserRole={currentUserRole}
               currentUserName={currentUserName}
               onAddNewRecord={() => navigateToManualIntake()}
-              onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+              onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
               onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
               onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
               onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
@@ -565,9 +562,7 @@ export function AppTabContent({
       case 'market':
         return <MarketTab viewModel={marketViewModel} />;
       case 'manual-intake':
-        return <UsedGearManualIntakePage onBackToDirectory={() => navigateToInventoryList()} />;
-      case 'incoming-gear':
-        return <AirtableEmbeddedForm recordId={deferredRouteState.incomingGearRecordId} onBackToDirectory={() => navigateToInventoryList()} />;
+        return <UsedGearManualIntakePage recordId={deferredRouteState.manualIntakeRecordId} onBackToDirectory={() => navigateToInventoryList()} />;
       case 'testing':
         return <TestingFormTab recordId={deferredRouteState.testingRecordId} onBackToDirectory={() => navigateToInventoryList()} />;
       case 'photos':
@@ -579,7 +574,7 @@ export function AppTabContent({
               currentUserName={currentUserName}
               groupId={deferredRouteState.jotformReviewGroupId}
               onBackToParkingLot={() => navigateToTab('parking-lot-1')}
-              onOpenIncomingGearForm={(recordId: string) => navigateToIncomingGearForm(recordId)}
+              onOpenManualIntake={(recordId: string) => navigateToManualIntakeForm(recordId)}
               onOpenOperationalRecord={(recordId: string) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
@@ -589,7 +584,7 @@ export function AppTabContent({
             <UsedGearPendingReviewRecordPage
               currentUserName={currentUserName}
               recordId={deferredRouteState.jotformReviewRecordId}
-              onOpenIncomingGearForm={(recordId: string) => navigateToIncomingGearForm(recordId)}
+              onOpenManualIntake={(recordId: string) => navigateToManualIntakeForm(recordId)}
               onOpenOperationalRecord={(recordId: string) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
@@ -611,7 +606,7 @@ export function AppTabContent({
             <UsedGearLotTwoGroupPage
               groupId={deferredRouteState.lotTwoReviewGroupId}
               onBackToParkingLot={() => navigateToTab('parking-lot-2')}
-              onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+              onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
               onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
               onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
               onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
@@ -621,7 +616,7 @@ export function AppTabContent({
         return (
           <UsedGearLotTwoTab
             currentUserName={currentUserName}
-            onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+            onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
             onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
             onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
             onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
@@ -648,7 +643,7 @@ export function AppTabContent({
           <UsedGearWorkflowQueueTab
             queueMode="testing"
             currentUserName={currentUserName}
-            onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+            onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
             onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
             onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
             onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
@@ -660,7 +655,7 @@ export function AppTabContent({
           <UsedGearWorkflowQueueTab
             queueMode="photography"
             currentUserName={currentUserName}
-            onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+            onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
             onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
             onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
             onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}

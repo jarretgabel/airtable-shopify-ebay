@@ -25,8 +25,8 @@ vi.mock('@/services/inventoryDirectory', () => ({
 }));
 
 import { createConfiguredRecord, getConfiguredRecord, updateConfiguredRecord, uploadConfiguredAttachment } from '@/services/app-api/airtable';
-import { incomingGearFormFields, type IncomingGearFormValues } from '@/components/tabs/incoming-gear/incomingGearFormSchema';
-import { loadIncomingGearFormValues, submitIncomingGearForm } from '@/services/incomingGearForm';
+import { manualIntakeFormFields, type ManualIntakeFormValues } from '@/components/tabs/manual-intake/manualIntakeFormSchema';
+import { loadManualIntakeFormValues, submitManualIntakeForm } from '@/services/manualIntakeForm';
 
 function buildRecord(fields: Record<string, unknown>): AirtableRecord {
   return {
@@ -36,12 +36,12 @@ function buildRecord(fields: Record<string, unknown>): AirtableRecord {
   };
 }
 
-describe('incomingGearForm', () => {
+describe('manualIntakeForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('loads Incoming Gear values for the full schema field set', async () => {
+  it('loads Manual Intake values for the full schema field set', async () => {
     vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
       'Arrival Date': '2026-04-01T00:00:00.000Z',
       'Pick Up #': 'PU-42',
@@ -70,7 +70,7 @@ describe('incomingGearForm', () => {
       'Shipping Method': ['Freight'],
     }));
 
-    const result = await loadIncomingGearFormValues('recIncoming123');
+    const result = await loadManualIntakeFormValues('recIncoming123');
 
     expect(result).toEqual({
       source: 'used-gear-workflow',
@@ -110,14 +110,14 @@ describe('incomingGearForm', () => {
       .mockRejectedValueOnce(new Error('Missing operational record'))
       .mockResolvedValueOnce(buildRecord({ SKU: 'INV-1' }));
 
-    const result = await loadIncomingGearFormValues('recIncoming123');
+    const result = await loadManualIntakeFormValues('recIncoming123');
 
     expect(result.source).toBe('inventory-directory');
     expect(result.values.sku).toBe('INV-1');
   });
 
-  it('submits every non-file Incoming Gear schema field and uploads images', async () => {
-    const values: IncomingGearFormValues = {
+  it('submits every non-file Manual Intake schema field and uploads images', async () => {
+    const values: ManualIntakeFormValues = {
       arrivalDate: '2026-04-01',
       pickUpNumber: 'PU-42',
       acquiredFrom: 'Walk-in seller',
@@ -148,7 +148,7 @@ describe('incomingGearForm', () => {
 
     vi.mocked(updateConfiguredRecord).mockResolvedValue(buildRecord({}));
 
-    const result = await submitIncomingGearForm(values, 'recIncoming123');
+    const result = await submitManualIntakeForm(values, 'recIncoming123');
 
     expect(result).toEqual({
       recordId: 'recIncoming123',
@@ -192,7 +192,7 @@ describe('incomingGearForm', () => {
 
     const submittedFields = vi.mocked(updateConfiguredRecord).mock.calls[0]?.[2] ?? {};
     expect(Object.keys(submittedFields).sort()).toEqual(
-      incomingGearFormFields
+      manualIntakeFormFields
         .filter((field) => field.type !== 'file')
         .map((field) => field.airtableFieldName)
         .sort(),
@@ -207,7 +207,7 @@ describe('incomingGearForm', () => {
   });
 
   it('creates manual-entry rows through the workflow source with lot-routing fields', async () => {
-    const values: IncomingGearFormValues = {
+    const values: ManualIntakeFormValues = {
       arrivalDate: '2026-04-01',
       pickUpNumber: 'PU-77',
       acquiredFrom: 'Phone deal',
@@ -238,7 +238,7 @@ describe('incomingGearForm', () => {
 
     vi.mocked(createConfiguredRecord).mockResolvedValue(buildRecord({}));
 
-    const result = await submitIncomingGearForm(values, null, {
+    const result = await submitManualIntakeForm(values, null, {
       manualEntryRoute: 'lot-2-awaiting-arrival',
       submissionGroupId: 'SUB-42',
       pickUpId: 'PU-77',
@@ -265,7 +265,7 @@ describe('incomingGearForm', () => {
   });
 
   it('requires qualification notes before routing manual entry directly to Lot 2', async () => {
-    const values: IncomingGearFormValues = {
+    const values: ManualIntakeFormValues = {
       arrivalDate: '2026-04-01',
       pickUpNumber: 'PU-88',
       acquiredFrom: 'Walk-in seller',
@@ -294,7 +294,7 @@ describe('incomingGearForm', () => {
       shippingMethod: '',
     };
 
-    await expect(submitIncomingGearForm(values, null, {
+    await expect(submitManualIntakeForm(values, null, {
       manualEntryRoute: 'lot-2-awaiting-arrival',
       qualificationNotes: '',
     })).rejects.toThrow('Qualification Notes are required before routing a manual-entry intake row directly to Lot 2.');

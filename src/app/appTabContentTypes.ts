@@ -20,7 +20,7 @@ export interface AppTabContentProps {
   jotformReviewRecordId: string | null;
   lotTwoReviewGroupId: string | null;
   trashReviewRecordId: string | null;
-  incomingGearRecordId: string | null;
+  manualIntakeRecordId: string | null;
   testingRecordId: string | null;
   photosRecordId: string | null;
   inventoryRecordId: string | null;
@@ -42,7 +42,7 @@ export interface AppTabContentProps {
     options?: { replace?: boolean },
   ) => void;
   navigateToManualIntake: (replace?: boolean) => void;
-  navigateToIncomingGearForm: (recordId?: string | null, replace?: boolean) => void;
+  navigateToManualIntakeForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;

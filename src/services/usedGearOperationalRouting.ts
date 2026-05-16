@@ -22,7 +22,7 @@ export function resolveUsedGearOperationalPath(recordId: string, fields: Record<
     || status === 'Accepted - Arrived, Awaiting SKU'
     || status === 'Accepted - Arrived, Awaiting Missing Item'
   ) {
-    return `/incoming-gear/${encodedRecordId}`;
+    return `/inventory/manual-intake/${encodedRecordId}`;
   }
 
   if (status === 'Testing and Photography In Progress') {

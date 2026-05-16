@@ -9,7 +9,7 @@ import {
 export interface UsedGearWorkflowQueueTabProps {
   queueMode: Exclude<UsedGearWorkflowProgressQueueMode, 'all'>;
   currentUserName: string;
-  onOpenIncomingGearForm: (recordId: string) => void;
+  onOpenManualIntake: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
   onOpenOperationalRecord: (recordId: string) => void;
@@ -83,7 +83,7 @@ function parseSortMode(search: string, paramName: string): UsedGearWorkflowProgr
 export function UsedGearWorkflowQueueTab({
   queueMode,
   currentUserName,
-  onOpenIncomingGearForm,
+  onOpenManualIntake,
   onOpenTestingForm,
   onOpenPhotosForm,
   onOpenOperationalRecord,
@@ -122,7 +122,7 @@ export function UsedGearWorkflowQueueTab({
       <UsedGearWorkflowProgressSection
         currentUserName={currentUserName}
         showSectionIntro={false}
-        onOpenIncomingGearForm={onOpenIncomingGearForm}
+        onOpenManualIntake={onOpenManualIntake}
         onOpenTestingForm={onOpenTestingForm}
         onOpenPhotosForm={onOpenPhotosForm}
         onOpenOperationalRecord={onOpenOperationalRecord}

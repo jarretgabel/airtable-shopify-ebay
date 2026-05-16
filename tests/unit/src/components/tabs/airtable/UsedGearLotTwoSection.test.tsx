@@ -38,7 +38,7 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
@@ -60,7 +60,7 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
@@ -99,7 +99,7 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
@@ -131,7 +131,7 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={onOpenTestingForm}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
@@ -176,7 +176,7 @@ describe('UsedGearLotTwoSection', () => {
     render(
       <UsedGearLotTwoSection
         onOpenGroupReview={onOpenGroupReview}
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
@@ -207,7 +207,7 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
         onOpenOperationalRecord={vi.fn()}

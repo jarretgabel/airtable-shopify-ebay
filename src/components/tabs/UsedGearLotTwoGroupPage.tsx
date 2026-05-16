@@ -10,7 +10,7 @@ import type { AirtableRecord } from '@/types/airtable';
 interface UsedGearLotTwoGroupPageProps {
   groupId: string;
   onBackToParkingLot: () => void;
-  onOpenIncomingGearForm: (recordId: string) => void;
+  onOpenManualIntake: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
   onOpenOperationalRecord: (recordId: string) => void;
@@ -60,7 +60,7 @@ function sortGroupRecords(records: AirtableRecord[]): AirtableRecord[] {
 export function UsedGearLotTwoGroupPage({
   groupId,
   onBackToParkingLot,
-  onOpenIncomingGearForm,
+  onOpenManualIntake,
   onOpenTestingForm,
   onOpenPhotosForm,
   onOpenOperationalRecord,
@@ -212,8 +212,8 @@ export function UsedGearLotTwoGroupPage({
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <button type="button" className={smallPrimaryActionButtonClass} onClick={() => onOpenIncomingGearForm(record.id)}>
-                  Open Incoming Gear
+                <button type="button" className={smallPrimaryActionButtonClass} onClick={() => onOpenManualIntake(record.id)}>
+                  Open Manual Intake
                 </button>
                 <button type="button" className={smallSecondaryActionButtonClass} onClick={() => onOpenTestingForm(record.id)}>
                   Open Testing

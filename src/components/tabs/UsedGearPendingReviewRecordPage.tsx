@@ -19,7 +19,7 @@ import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } f
 interface UsedGearPendingReviewRecordPageProps {
   currentUserName: string;
   recordId: string;
-  onOpenIncomingGearForm: (recordId: string) => void;
+  onOpenManualIntake: (recordId: string) => void;
   onOpenOperationalRecord: (recordId: string) => void;
 }
 
@@ -118,7 +118,7 @@ function NoteTemplateRow({
 export function UsedGearPendingReviewRecordPage({
   currentUserName,
   recordId,
-  onOpenIncomingGearForm,
+  onOpenManualIntake,
   onOpenOperationalRecord,
 }: UsedGearPendingReviewRecordPageProps) {
   const navigate = useNavigate();
@@ -267,9 +267,9 @@ export function UsedGearPendingReviewRecordPage({
                     <button
                       type="button"
                       className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenIncomingGearForm(record.id)}
+                      onClick={() => onOpenManualIntake(record.id)}
                     >
-                      Open Incoming Gear
+                      Open Manual Intake
                     </button>
                     <button
                       type="button"

@@ -44,7 +44,7 @@ export function useAuthRouteGuard({
     const isKnownTabPath = isTab(normalizedPath.slice(1));
     const isJotformReviewRecordPath = /^\/parking-lot-1\/review-record\/[^/]+$/.test(normalizedPath);
     const isTrashReviewRecordPath = /^\/trash-review\/review\/[^/]+$/.test(normalizedPath);
-    const isIncomingGearDetailPath = /^\/incoming-gear\/[^/]+$/.test(normalizedPath);
+    const isManualIntakeDetailPath = /^\/inventory\/manual-intake\/[^/]+$/.test(normalizedPath);
     const isTestingDetailPath = /^\/testing\/[^/]+$/.test(normalizedPath);
     const isPhotosDetailPath = /^\/photos\/[^/]+$/.test(normalizedPath);
     const isInventoryPriceEditorPath = /^\/inventory\/price\/[^/]+$/.test(normalizedPath);
@@ -58,6 +58,7 @@ export function useAuthRouteGuard({
       normalizedPath === '/inventory' ||
       isInventoryPriceEditorPath ||
       isInventoryManualIntakePath ||
+      isManualIntakeDetailPath ||
       isInventoryDetailPath ||
       normalizedPath === '/listings' ||
       isListingsDetailPath ||
@@ -71,8 +72,6 @@ export function useAuthRouteGuard({
       normalizedPath === '/parking-lot-1' ||
       /^\/parking-lot-1\/review\/[^/]+$/.test(normalizedPath) ||
       isJotformReviewRecordPath ||
-      normalizedPath === '/incoming-gear' ||
-      isIncomingGearDetailPath ||
       normalizedPath === '/testing' ||
       isTestingDetailPath ||
       normalizedPath === '/photos' ||
@@ -108,8 +107,8 @@ export function useAuthRouteGuard({
                 ? 'parking-lot-1'
               : isInventoryManualIntakePath
                 ? 'manual-intake'
-              : normalizedPath === '/incoming-gear' || isIncomingGearDetailPath
-                ? 'incoming-gear'
+              : isManualIntakeDetailPath
+                ? 'manual-intake'
               : normalizedPath === '/testing' || isTestingDetailPath
                 ? 'testing'
               : normalizedPath === '/photos' || isPhotosDetailPath

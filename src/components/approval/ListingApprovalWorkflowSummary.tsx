@@ -340,11 +340,11 @@ function getTimelineStatusBadgeClassName(isCompleted: boolean, isActive: boolean
 function getTimelineCompletionGuidance(entryId: UsedGearWorkflowTimelineEntry['id']): string {
   switch (entryId) {
     case 'accepted':
-      return 'Use "Open Incoming Gear" to update the intake record, then click "Complete Processing" when the item is ready to move forward.';
+      return 'Use "Open Manual Intake" to update the intake record, then click "Complete Processing" when the item is ready to move forward.';
     case 'owner-assigned':
       return 'Ownership history is retained for older rows, but active handoffs now move forward through the stage completion actions instead of claim controls.';
     case 'processing':
-      return 'Finish the intake details in "Open Incoming Gear", then click "Complete Processing" to send the item to testing and photography.';
+      return 'Finish the intake details in "Open Manual Intake", then click "Complete Processing" to send the item to testing and photography.';
     case 'testing':
       return 'Use "Open Testing" to capture the testing signoff for this item.';
     case 'photography':

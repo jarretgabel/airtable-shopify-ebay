@@ -7,7 +7,7 @@ import {
 } from '@/services/app-api/airtable';
 import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
-import { createIncomingGearFormDefaults, type IncomingGearFormOptionFieldName, type IncomingGearFormValues } from '@/components/tabs/incoming-gear/incomingGearFormSchema';
+import { createManualIntakeFormDefaults, type ManualIntakeFormOptionFieldName, type ManualIntakeFormValues } from '@/components/tabs/manual-intake/manualIntakeFormSchema';
 import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -23,19 +23,19 @@ const OPTION_FIELD_NAMES = [
   'Remote',
   'Power Cable',
   'Shipping Method',
-] as const satisfies readonly IncomingGearFormOptionFieldName[];
+] as const satisfies readonly ManualIntakeFormOptionFieldName[];
 
-type IncomingGearOptionSet = Record<IncomingGearFormOptionFieldName, string[]>;
+type ManualIntakeOptionSet = Record<ManualIntakeFormOptionFieldName, string[]>;
 
-export type IncomingGearRecordSource = 'inventory-directory' | 'used-gear-workflow';
-export type IncomingGearManualEntryRoute = 'lot-1' | 'lot-2-awaiting-arrival' | 'lot-2-awaiting-sku' | 'lot-2-awaiting-missing-item';
+export type ManualIntakeRecordSource = 'inventory-directory' | 'used-gear-workflow';
+export type ManualIntakeRoute = 'lot-1' | 'lot-2-awaiting-arrival' | 'lot-2-awaiting-sku' | 'lot-2-awaiting-missing-item';
 
-export interface IncomingGearFormLoadResult {
-  source: IncomingGearRecordSource;
-  values: IncomingGearFormValues;
+export interface ManualIntakeFormLoadResult {
+  source: ManualIntakeRecordSource;
+  values: ManualIntakeFormValues;
 }
 
-export interface IncomingGearFormSubmitResult {
+export interface ManualIntakeFormSubmitResult {
   recordId: string;
   sku: string;
   action: 'created' | 'updated';
@@ -45,11 +45,11 @@ function normalizeQualificationNotes(value: string): string {
   return value.trim();
 }
 
-function requiresQualificationGate(route: IncomingGearManualEntryRoute): boolean {
+function requiresQualificationGate(route: ManualIntakeRoute): boolean {
   return route !== 'lot-1';
 }
 
-function assertQualificationGate(route: IncomingGearManualEntryRoute, qualificationNotes: string): void {
+function assertQualificationGate(route: ManualIntakeRoute, qualificationNotes: string): void {
   if (!requiresQualificationGate(route)) {
     return;
   }
@@ -98,13 +98,13 @@ function createTemporarySku(): string {
   return `INTAKE-${iso}`;
 }
 
-async function uploadIncomingGearImages(recordId: string, files: File[]): Promise<void> {
+async function uploadManualIntakeImages(recordId: string, files: File[]): Promise<void> {
   for (const file of files) {
     await uploadConfiguredAttachment('inventory-directory', recordId, IMAGE_ATTACHMENT_FIELD_ID, file);
   }
 }
 
-async function loadConfiguredIncomingGearRecord(recordId: string): Promise<{ source: IncomingGearRecordSource; record: AirtableRecord }> {
+async function loadConfiguredManualIntakeRecord(recordId: string): Promise<{ source: ManualIntakeRecordSource; record: AirtableRecord }> {
   try {
     const workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
     return { source: 'used-gear-workflow', record: workflowRecord };
@@ -114,17 +114,17 @@ async function loadConfiguredIncomingGearRecord(recordId: string): Promise<{ sou
   }
 }
 
-function resolveManualEntryWorkflowStatus(route: IncomingGearManualEntryRoute): string {
+function resolveManualEntryWorkflowStatus(route: ManualIntakeRoute): string {
   if (route === 'lot-2-awaiting-arrival') return 'Accepted - Awaiting Arrival';
   if (route === 'lot-2-awaiting-sku') return 'Accepted - Arrived, Awaiting SKU';
   if (route === 'lot-2-awaiting-missing-item') return 'Accepted - Arrived, Awaiting Missing Item';
   return 'Pending Review';
 }
 
-export async function loadIncomingGearFormValues(recordId: string): Promise<IncomingGearFormLoadResult> {
+export async function loadManualIntakeFormValues(recordId: string): Promise<ManualIntakeFormLoadResult> {
   try {
-    const { source, record } = await loadConfiguredIncomingGearRecord(recordId);
-    const defaults = createIncomingGearFormDefaults();
+    const { source, record } = await loadConfiguredManualIntakeRecord(recordId);
+    const defaults = createManualIntakeFormDefaults();
 
     return {
       source,
@@ -159,11 +159,11 @@ export async function loadIncomingGearFormValues(recordId: string): Promise<Inco
       },
     };
   } catch (error) {
-    logServiceError('incomingGearForm', `Error loading Incoming Gear form values for ${recordId}`, error);
+    logServiceError('manualIntakeForm', `Error loading Manual Intake form values for ${recordId}`, error);
     const serviceError = createServiceError({
-      service: 'incomingGearForm',
-      code: 'INCOMING_GEAR_LOAD_FAILED',
-      userMessage: 'Unable to load the selected inventory record into Incoming Gear.',
+      service: 'manualIntakeForm',
+      code: 'MANUAL_INTAKE_LOAD_FAILED',
+      userMessage: 'Unable to load the selected inventory record into Manual Intake.',
       retryable: true,
       cause: error,
     });
@@ -173,11 +173,11 @@ export async function loadIncomingGearFormValues(recordId: string): Promise<Inco
   }
 }
 
-export async function loadIncomingGearFormOptionSets(): Promise<IncomingGearOptionSet> {
+export async function loadManualIntakeFormOptionSets(): Promise<ManualIntakeOptionSet> {
   try {
     const fields = await getConfiguredFieldMetadata('inventory-directory');
 
-    return OPTION_FIELD_NAMES.reduce<IncomingGearOptionSet>((acc, fieldName) => {
+    return OPTION_FIELD_NAMES.reduce<ManualIntakeOptionSet>((acc, fieldName) => {
       const field = fields.find((entry) => entry.name === fieldName);
       acc[fieldName] = dedupeOptions((field?.options?.choices ?? []).map((choice) => choice.name));
       return acc;
@@ -191,11 +191,11 @@ export async function loadIncomingGearFormOptionSets(): Promise<IncomingGearOpti
       'Shipping Method': [],
     });
   } catch (error) {
-    logServiceError('incomingGearForm', 'Error loading Incoming Gear form option sets', error);
+    logServiceError('manualIntakeForm', 'Error loading Manual Intake form option sets', error);
     const serviceError = createServiceError({
-      service: 'incomingGearForm',
-      code: 'INCOMING_GEAR_OPTIONS_FAILED',
-      userMessage: 'Unable to load the Incoming Gear form options from Airtable.',
+      service: 'manualIntakeForm',
+      code: 'MANUAL_INTAKE_OPTIONS_FAILED',
+      userMessage: 'Unable to load the Manual Intake form options from Airtable.',
       retryable: true,
       cause: error,
     });
@@ -205,17 +205,17 @@ export async function loadIncomingGearFormOptionSets(): Promise<IncomingGearOpti
   }
 }
 
-export async function submitIncomingGearForm(
-  values: IncomingGearFormValues,
+export async function submitManualIntakeForm(
+  values: ManualIntakeFormValues,
   recordId?: string | null,
   options: {
-    recordSource?: IncomingGearRecordSource;
-    manualEntryRoute?: IncomingGearManualEntryRoute;
+    recordSource?: ManualIntakeRecordSource;
+    manualEntryRoute?: ManualIntakeRoute;
     submissionGroupId?: string;
     pickUpId?: string;
     qualificationNotes?: string;
   } = {},
-): Promise<IncomingGearFormSubmitResult> {
+): Promise<ManualIntakeFormSubmitResult> {
   const costValue = trimToUndefined(values.cost);
   const skuValue = trimToUndefined(values.sku) ?? createTemporarySku();
   const statusValue = trimToUndefined(values.status) ?? DEFAULT_STATUS;
@@ -284,9 +284,8 @@ export async function submitIncomingGearForm(
         { typecast: true },
       );
 
-
       if (values.imageFiles.length > 0) {
-        await uploadIncomingGearImages(updatedRecord.id, values.imageFiles);
+        await uploadManualIntakeImages(updatedRecord.id, values.imageFiles);
       }
 
       return {
@@ -295,11 +294,11 @@ export async function submitIncomingGearForm(
         action: 'updated',
       };
     } catch (error) {
-      logServiceError('incomingGearForm', `Error updating Incoming Gear submission ${recordId}`, error);
+      logServiceError('manualIntakeForm', `Error updating Manual Intake submission ${recordId}`, error);
       const serviceError = createServiceError({
-        service: 'incomingGearForm',
-        code: 'INCOMING_GEAR_UPDATE_FAILED',
-        userMessage: 'Unable to update the Incoming Gear fields for this inventory record.',
+        service: 'manualIntakeForm',
+        code: 'MANUAL_INTAKE_UPDATE_FAILED',
+        userMessage: 'Unable to update the Manual Intake fields for this inventory record.',
         retryable: true,
         cause: error,
       });
@@ -320,7 +319,7 @@ export async function submitIncomingGearForm(
       );
 
       if (values.imageFiles.length > 0) {
-        await uploadIncomingGearImages(createdRecord.id, values.imageFiles);
+        await uploadManualIntakeImages(createdRecord.id, values.imageFiles);
       }
 
       return {
@@ -333,11 +332,11 @@ export async function submitIncomingGearForm(
     }
   }
 
-  logServiceError('incomingGearForm', 'Error creating Incoming Gear submission', lastError);
+  logServiceError('manualIntakeForm', 'Error creating Manual Intake submission', lastError);
   const serviceError = createServiceError({
-    service: 'incomingGearForm',
-    code: 'INCOMING_GEAR_SUBMIT_FAILED',
-    userMessage: 'Unable to submit the Incoming Gear form to Airtable.',
+    service: 'manualIntakeForm',
+    code: 'MANUAL_INTAKE_SUBMIT_FAILED',
+    userMessage: 'Unable to submit the Manual Intake form to Airtable.',
     retryable: true,
     cause: lastError,
   });

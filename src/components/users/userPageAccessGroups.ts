@@ -36,7 +36,7 @@ export const USER_PAGE_ACCESS_GROUPS: UserPageAccessGroup[] = [
     key: 'forms',
     title: 'Workflow Forms',
     description: 'Direct forms used by intake, testing, and photography operators to complete stage work.',
-    pages: ['manual-intake', 'incoming-gear', 'testing', 'photos'],
+    pages: ['manual-intake', 'testing', 'photos'],
   },
   {
     key: 'developer',

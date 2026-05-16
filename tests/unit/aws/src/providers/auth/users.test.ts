@@ -136,7 +136,7 @@ test('ensureSampleAuthUsers skips sample accounts that already exist', async () 
 
   try {
     await ensureSampleAuthUsers([
-      { ...baseUser, email: 'processor@example.com', role: 'processor', passwordState: { scheme: 'legacy', legacyPassword: 'Processor123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'incoming-gear', 'testing', 'photos', 'market', 'imagelab'] },
+      { ...baseUser, email: 'processor@example.com', role: 'processor', passwordState: { scheme: 'legacy', legacyPassword: 'Processor123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'manual-intake', 'inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'market', 'imagelab'] },
       { ...baseUser, email: 'tester@example.com', role: 'tester', passwordState: { scheme: 'legacy', legacyPassword: 'Tester123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'testing-queue', 'testing'] },
       { ...baseUser, email: 'photographer@example.com', role: 'photographer', passwordState: { scheme: 'legacy', legacyPassword: 'Photographer123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'photography-queue', 'photos', 'imagelab'] },
     ]);
@@ -175,7 +175,7 @@ test('ensureSampleAuthUsers resyncs sample accounts with stale passwords', async
         role: 'processor',
         passwordState: { scheme: 'legacy', legacyPassword: 'Processor123!' },
         mustChangePassword: false,
-        allowedPages: ['dashboard', 'inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'incoming-gear', 'testing', 'photos', 'market', 'imagelab'],
+        allowedPages: ['dashboard', 'manual-intake', 'inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'market', 'imagelab'],
       },
       { ...baseUser, airtableRecordId: 'rec-tester', email: 'tester@example.com', role: 'tester', passwordState: { scheme: 'legacy', legacyPassword: 'old-password' }, mustChangePassword: true, allowedPages: ['dashboard'] },
       {

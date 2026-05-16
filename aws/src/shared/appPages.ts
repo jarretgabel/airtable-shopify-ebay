@@ -1,13 +1,12 @@
 export const APP_PAGES = [
   'dashboard',
+  'manual-intake',
   'parking-lot-1',
   'parking-lot-2',
   'trash-review',
   'inventory',
   'testing-queue',
   'photography-queue',
-  'manual-intake',
-  'incoming-gear',
   'testing',
   'photos',
   'listings',
@@ -34,14 +33,13 @@ const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
   developer: ['dashboard', 'jotform', 'market', 'settings', 'notifications', 'imagelab'],
   processor: [
     'dashboard',
+    'manual-intake',
     'parking-lot-1',
     'parking-lot-2',
     'trash-review',
     'inventory',
     'testing-queue',
     'photography-queue',
-    'manual-intake',
-    'incoming-gear',
     'testing',
     'photos',
     'market',
@@ -65,7 +63,7 @@ export function normalizeAllowedPages(pages: AppPage[], role: UserRole): AppPage
   const nextPages = new Set(uniquePages.filter((page) => allowedSet.has(page)));
 
   if (role === 'processor' && nextPages.has('inventory')) {
-    ['parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'manual-intake', 'incoming-gear', 'testing', 'photos'].forEach((page) => nextPages.add(page as AppPage));
+    ['manual-intake', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos'].forEach((page) => nextPages.add(page as AppPage));
   }
 
   return ROLE_ALLOWED_PAGES[role].filter((page) => nextPages.has(page));

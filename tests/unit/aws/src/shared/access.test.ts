@@ -60,9 +60,9 @@ test('non-user Airtable configured routes keep page-based access rules', () => {
   }));
 
   assert.equal(inventoryRequirement.adminOnly, undefined);
-  assert.deepEqual(inventoryRequirement.anyPage, ['inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'manual-intake', 'incoming-gear', 'testing', 'photos']);
+  assert.deepEqual(inventoryRequirement.anyPage, ['manual-intake', 'inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos']);
   assert.equal(usedGearRequirement.adminOnly, undefined);
-  assert.deepEqual(usedGearRequirement.anyPage, ['inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'manual-intake', 'incoming-gear', 'testing', 'photos']);
+  assert.deepEqual(usedGearRequirement.anyPage, ['manual-intake', 'inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos']);
 });
 
 test('airtable listings route uses inventory access', () => {

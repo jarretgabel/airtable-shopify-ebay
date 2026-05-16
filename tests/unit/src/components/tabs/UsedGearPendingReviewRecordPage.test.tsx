@@ -82,14 +82,14 @@ describe('UsedGearPendingReviewRecordPage', () => {
   });
 
   it('opens linked group and operational actions from the isolated review page', async () => {
-    const onOpenIncomingGearForm = vi.fn();
+    const onOpenManualIntake = vi.fn();
     const onOpenOperationalRecord = vi.fn();
 
     render(
       <UsedGearPendingReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-pending-1"
-        onOpenIncomingGearForm={onOpenIncomingGearForm}
+        onOpenManualIntake={onOpenManualIntake}
         onOpenOperationalRecord={onOpenOperationalRecord}
       />,
     );
@@ -100,8 +100,8 @@ describe('UsedGearPendingReviewRecordPage', () => {
     expect(navigateMock).toHaveBeenCalledWith('/parking-lot-1/review/submission%3Agroup-1?reviewMode=test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Show More Actions' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Open Incoming Gear' }));
-    expect(onOpenIncomingGearForm).toHaveBeenCalledWith('rec-pending-1');
+    fireEvent.click(screen.getByRole('button', { name: 'Open Manual Intake' }));
+  expect(onOpenManualIntake).toHaveBeenCalledWith('rec-pending-1');
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Operational Record' }));
     expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-pending-1');
@@ -114,7 +114,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
       <UsedGearPendingReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-pending-1"
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
       />,
     );
@@ -143,7 +143,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
       <UsedGearPendingReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-pending-1"
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
       />,
     );
@@ -170,7 +170,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
       <UsedGearPendingReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-pending-1"
-        onOpenIncomingGearForm={vi.fn()}
+        onOpenManualIntake={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
       />,
     );

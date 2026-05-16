@@ -3,31 +3,31 @@ import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/Sta
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
 import {
-  createIncomingGearFormDefaults,
-  incomingGearFormFields,
-  incomingGearFormIntro,
-  type IncomingGearFormFieldDefinition,
-  type IncomingGearFormIntroBlock,
-  type IncomingGearFormOptionFieldName,
-  type IncomingGearFormValues,
-} from '@/components/tabs/incoming-gear/incomingGearFormSchema';
+  createManualIntakeFormDefaults,
+  manualIntakeFormFields,
+  manualIntakeFormIntro,
+  type ManualIntakeFormFieldDefinition,
+  type ManualIntakeFormIntroBlock,
+  type ManualIntakeFormOptionFieldName,
+  type ManualIntakeFormValues,
+} from '@/components/tabs/manual-intake/manualIntakeFormSchema';
 import {
-  loadIncomingGearFormOptionSets,
-  loadIncomingGearFormValues,
-  submitIncomingGearForm,
-  type IncomingGearManualEntryRoute,
-  type IncomingGearFormSubmitResult,
-  type IncomingGearRecordSource,
-} from '@/services/incomingGearForm';
+  loadManualIntakeFormOptionSets,
+  loadManualIntakeFormValues,
+  submitManualIntakeForm,
+  type ManualIntakeRoute,
+  type ManualIntakeFormSubmitResult,
+  type ManualIntakeRecordSource,
+} from '@/services/manualIntakeForm';
 
-type IncomingGearOptionSets = Record<IncomingGearFormOptionFieldName, string[]>;
+type ManualIntakeOptionSets = Record<ManualIntakeFormOptionFieldName, string[]>;
 
 const FIELD_CLASS = 'mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
 const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
 
-function validateForm(values: IncomingGearFormValues): string | null {
+function validateForm(values: ManualIntakeFormValues): string | null {
   if (!values.arrivalDate.trim()) return 'Arrival Date is required.';
   if (!values.cost.trim()) return 'Cost is required.';
   if (!values.status.trim()) return 'Status is required.';
@@ -37,7 +37,7 @@ function validateForm(values: IncomingGearFormValues): string | null {
   return null;
 }
 
-function FieldShell({ definition, children }: { definition: IncomingGearFormFieldDefinition; children: React.ReactNode }) {
+function FieldShell({ definition, children }: { definition: ManualIntakeFormFieldDefinition; children: React.ReactNode }) {
   return (
     <label className="block">
       <span className={LABEL_CLASS}>
@@ -50,7 +50,7 @@ function FieldShell({ definition, children }: { definition: IncomingGearFormFiel
   );
 }
 
-function IntroBlock({ block }: { block: IncomingGearFormIntroBlock }) {
+function IntroBlock({ block }: { block: ManualIntakeFormIntroBlock }) {
   if (block.type === 'lead') {
     return <p className="m-0 max-w-3xl text-[15px] font-medium leading-7 text-[var(--ink)]">{block.text}</p>;
   }
@@ -97,7 +97,7 @@ interface AirtableEmbeddedFormProps {
   onBackToDirectory?: () => void;
 }
 
-const MANUAL_ENTRY_ROUTE_OPTIONS: Array<{ value: IncomingGearManualEntryRoute; label: string; description: string }> = [
+const MANUAL_ENTRY_ROUTE_OPTIONS: Array<{ value: ManualIntakeRoute; label: string; description: string }> = [
   {
     value: 'lot-1',
     label: 'Route to Parking Lot 1',
@@ -121,18 +121,18 @@ const MANUAL_ENTRY_ROUTE_OPTIONS: Array<{ value: IncomingGearManualEntryRoute; l
 ];
 
 export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEmbeddedFormProps) {
-  const [formValues, setFormValues] = useState<IncomingGearFormValues>(() => createIncomingGearFormDefaults());
-  const [initialFormValues, setInitialFormValues] = useState<IncomingGearFormValues>(() => createIncomingGearFormDefaults());
-  const [recordSource, setRecordSource] = useState<IncomingGearRecordSource>('used-gear-workflow');
-  const [manualEntryRoute, setManualEntryRoute] = useState<IncomingGearManualEntryRoute>('lot-1');
+  const [formValues, setFormValues] = useState<ManualIntakeFormValues>(() => createManualIntakeFormDefaults());
+  const [initialFormValues, setInitialFormValues] = useState<ManualIntakeFormValues>(() => createManualIntakeFormDefaults());
+  const [recordSource, setRecordSource] = useState<ManualIntakeRecordSource>('used-gear-workflow');
+  const [manualEntryRoute, setManualEntryRoute] = useState<ManualIntakeRoute>('lot-1');
   const [submissionGroupId, setSubmissionGroupId] = useState('');
   const [pickUpId, setPickUpId] = useState('');
   const [qualificationNotes, setQualificationNotes] = useState('');
-  const [optionSets, setOptionSets] = useState<IncomingGearOptionSets | null>(null);
+  const [optionSets, setOptionSets] = useState<ManualIntakeOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState<IncomingGearFormSubmitResult | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<ManualIntakeFormSubmitResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -143,10 +143,10 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
       setOptionsError(null);
       try {
         const [nextOptionSets, nextFormValues] = await Promise.all([
-          loadIncomingGearFormOptionSets(),
+          loadManualIntakeFormOptionSets(),
           recordId
-            ? loadIncomingGearFormValues(recordId)
-            : Promise.resolve({ source: 'used-gear-workflow' as IncomingGearRecordSource, values: createIncomingGearFormDefaults() }),
+            ? loadManualIntakeFormValues(recordId)
+            : Promise.resolve({ source: 'used-gear-workflow' as ManualIntakeRecordSource, values: createManualIntakeFormDefaults() }),
         ]);
         if (!cancelled) {
           setOptionSets(nextOptionSets);
@@ -173,7 +173,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
     };
   }, [recordId]);
 
-  const setFieldValue = <K extends keyof IncomingGearFormValues>(fieldName: K, value: IncomingGearFormValues[K]) => {
+  const setFieldValue = <K extends keyof ManualIntakeFormValues>(fieldName: K, value: ManualIntakeFormValues[K]) => {
     setFormValues((current) => ({
       ...current,
       [fieldName]: value,
@@ -193,7 +193,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
 
     setSubmitting(true);
     try {
-      const result = await submitIncomingGearForm(formValues, recordId, {
+      const result = await submitManualIntakeForm(formValues, recordId, {
         recordSource,
         manualEntryRoute,
         submissionGroupId,
@@ -206,7 +206,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
         setFormValues(nextValues);
         setInitialFormValues(nextValues);
       } else {
-        const nextValues = createIncomingGearFormDefaults();
+        const nextValues = createManualIntakeFormDefaults();
         setFormValues(nextValues);
         setInitialFormValues(nextValues);
         setManualEntryRoute('lot-1');
@@ -215,13 +215,13 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
         setQualificationNotes('');
       }
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Unable to submit the Incoming Gear form.');
+      setSubmitError(error instanceof Error ? error.message : 'Unable to submit the Manual Intake form.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const renderField = (definition: IncomingGearFormFieldDefinition) => {
+  const renderField = (definition: ManualIntakeFormFieldDefinition) => {
     const value = formValues[definition.name];
 
     if (definition.type === 'textarea') {
@@ -231,7 +231,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
           rows={definition.rows ?? 4}
           value={value as string}
           placeholder={definition.placeholder}
-          onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as IncomingGearFormValues[typeof definition.name])}
+          onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as ManualIntakeFormValues[typeof definition.name])}
         />
       );
     }
@@ -245,7 +245,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
           value={value as string}
           pickerLabel={definition.label}
           placeholder={definition.placeholder}
-          onValueChange={(nextValue) => setFieldValue(definition.name, nextValue as IncomingGearFormValues[typeof definition.name])}
+          onValueChange={(nextValue) => setFieldValue(definition.name, nextValue as ManualIntakeFormValues[typeof definition.name])}
         />
       );
     }
@@ -261,7 +261,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
             multiple
             onChange={(event) => {
               const nextFiles = Array.from(event.currentTarget.files ?? []);
-              setFieldValue(definition.name, nextFiles as IncomingGearFormValues[typeof definition.name]);
+              setFieldValue(definition.name, nextFiles as ManualIntakeFormValues[typeof definition.name]);
             }}
           />
           <p className={HELP_CLASS}>{files.length > 0 ? `${files.length} image${files.length === 1 ? '' : 's'} selected.` : 'No images selected.'}</p>
@@ -275,7 +275,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
         <select
           className={FIELD_CLASS}
           value={value as string}
-          onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as IncomingGearFormValues[typeof definition.name])}
+          onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as ManualIntakeFormValues[typeof definition.name])}
         >
           <option value="">Select an option</option>
           {options.map((option) => (
@@ -287,7 +287,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
 
     if (definition.type === 'searchable-select') {
       const options = definition.optionFieldName && optionSets ? optionSets[definition.optionFieldName] : [];
-      const datalistId = `incoming-gear-${definition.name}-options`;
+      const datalistId = `manual-intake-${definition.name}-options`;
       return (
         <ComponentTypeSearchField
           className={FIELD_CLASS}
@@ -295,7 +295,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
           listId={datalistId}
           options={options}
           value={value as string}
-          onValueChange={(nextValue) => setFieldValue(definition.name, nextValue as IncomingGearFormValues[typeof definition.name])}
+          onValueChange={(nextValue) => setFieldValue(definition.name, nextValue as ManualIntakeFormValues[typeof definition.name])}
         />
       );
     }
@@ -309,17 +309,17 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
         step={definition.type === 'currency' ? '0.01' : undefined}
         value={value as string}
         placeholder={definition.placeholder}
-        onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as IncomingGearFormValues[typeof definition.name])}
+        onChange={(event) => setFieldValue(definition.name, event.currentTarget.value as ManualIntakeFormValues[typeof definition.name])}
       />
     );
   };
 
   if (loadingOptions) {
-    return <LoadingSurface message="Loading Incoming Gear form configuration from Airtable..." />;
+    return <LoadingSurface message="Loading Manual Intake form configuration from Airtable..." />;
   }
 
   if (optionsError || !optionSets) {
-    return <ErrorSurface title="Unable to load Incoming Gear Form" message={optionsError ?? 'The Airtable form configuration is unavailable.'} />;
+    return <ErrorSurface title="Unable to load Manual Intake" message={optionsError ?? 'The Airtable form configuration is unavailable.'} />;
   }
 
   return (
@@ -328,10 +328,10 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{incomingGearFormIntro.eyebrow}</p>
-              <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{incomingGearFormIntro.title}</h2>
+              <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{manualIntakeFormIntro.eyebrow}</p>
+              <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{manualIntakeFormIntro.title}</h2>
               {recordId ? (
-                <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Editing record <strong>{recordId}</strong>. Saving here updates the Incoming Gear fields for this row in the {recordSource === 'used-gear-workflow' ? 'used-gear workflow' : 'inventory directory'} source.</p>
+                <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Editing record <strong>{recordId}</strong>. Saving here updates the intake fields for this row in the {recordSource === 'used-gear-workflow' ? 'used-gear workflow' : 'inventory directory'} source.</p>
               ) : (
                 <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Create a manual-entry used-gear row and route it either into Parking Lot 1 review or directly into Lot 2 when the deal is already accepted.</p>
               )}
@@ -347,7 +347,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
             ) : null}
           </div>
           <div className="mt-4 space-y-3.5 pb-4">
-            {incomingGearFormIntro.blocks.map((block, index) => (
+            {manualIntakeFormIntro.blocks.map((block, index) => (
               <IntroBlock key={`${block.type}-${index}`} block={block} />
             ))}
           </div>
@@ -361,7 +361,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
         {submitSuccess ? (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
             {submitSuccess.action === 'updated'
-              ? <>Incoming Gear fields updated for record <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku || 'N/A'}</strong>.</>
+              ? <>Manual Intake fields updated for record <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku || 'N/A'}</strong>.</>
               : <>Submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. Temporary SKU: <strong>{submitSuccess.sku}</strong>.</>}
           </div>
         ) : null}
@@ -381,7 +381,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
                   <select
                     className={FIELD_CLASS}
                     value={manualEntryRoute}
-                    onChange={(event) => setManualEntryRoute(event.currentTarget.value as IncomingGearManualEntryRoute)}
+                    onChange={(event) => setManualEntryRoute(event.currentTarget.value as ManualIntakeRoute)}
                   >
                     {MANUAL_ENTRY_ROUTE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
@@ -433,7 +433,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
             </section>
           ) : null}
 
-          {incomingGearFormFields.map((field) => (
+          {manualIntakeFormFields.map((field) => (
             <div key={field.airtableFieldName}>
               <FieldShell definition={field}>{renderField(field)}</FieldShell>
             </div>
@@ -465,7 +465,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
                 className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={submitting}
               >
-                {submitting ? (recordId ? 'Saving...' : 'Creating...') : (recordId ? 'Save Incoming Gear' : 'Create Manual Entry')}
+                {submitting ? (recordId ? 'Saving...' : 'Creating...') : (recordId ? 'Save Manual Intake' : 'Create Manual Entry')}
               </button>
             </div>
           </div>

@@ -182,7 +182,7 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
       />,
       }
     ) : null,
-    canSeeRoleDashboardModule(currentUserRole, 'processor') && accessiblePages.includes('incoming-gear') ? (
+    canSeeRoleDashboardModule(currentUserRole, 'processor') && accessiblePages.includes('manual-intake') ? (
       {
         key: 'processor-ops',
         priority: 10,
@@ -197,7 +197,7 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? `${progressAlertCount} aging` : `${awaitingArrivalCount} awaiting arrival`}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : progressAlertCount > 0 ? 'text-amber-400' : trendToneClass[inventoryTrend.direction]}
         unavailableReason={workflowUnavailableReason}
-        onClick={() => onSelectTab('incoming-gear')}
+        onClick={() => onSelectTab('manual-intake')}
       />,
       }
     ) : null,

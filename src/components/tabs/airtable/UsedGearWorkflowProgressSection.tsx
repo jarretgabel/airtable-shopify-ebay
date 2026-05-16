@@ -21,7 +21,7 @@ import type { AirtableRecord } from '@/types/airtable';
 
 export interface UsedGearWorkflowProgressSectionProps {
   currentUserName: string;
-  onOpenIncomingGearForm: (recordId: string) => void;
+  onOpenManualIntake: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
   onOpenOperationalRecord: (recordId: string) => void;

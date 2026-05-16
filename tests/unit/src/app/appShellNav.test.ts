@@ -23,7 +23,7 @@ describe('buildAppFrameNavTabs', () => {
       disabled: false,
       disabledReason: undefined,
     });
-    expect(result.utilityNavTabs.find((tab) => tab.key === 'jotform')).toMatchObject({
+    expect(result.intakeNavTabs.find((tab) => tab.key === 'jotform')).toMatchObject({
       disabled: true,
       disabledReason: 'Missing public runtime config: VITE_JOTFORM_FORM_ID.',
     });
@@ -60,7 +60,7 @@ describe('buildAppFrameNavTabs', () => {
 
   it('shows workflow queue volume on the inventory tab badge', () => {
     const result = buildAppFrameNavTabs({
-      visibleTabs: ['dashboard', 'inventory', 'manual-intake', 'incoming-gear', 'testing', 'photos'],
+      visibleTabs: ['dashboard', 'manual-intake', 'inventory', 'testing', 'photos'],
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 7,
@@ -74,7 +74,7 @@ describe('buildAppFrameNavTabs', () => {
 
   it('uses clearer operator labels for inventory processing navigation', () => {
     const result = buildAppFrameNavTabs({
-      visibleTabs: ['inventory', 'testing-queue', 'photography-queue', 'manual-intake', 'incoming-gear', 'testing', 'photos'],
+      visibleTabs: ['manual-intake', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos'],
       activeTab: 'inventory',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
@@ -86,16 +86,17 @@ describe('buildAppFrameNavTabs', () => {
       expect.objectContaining({ key: 'inventory', label: 'Workflow Hub' }),
       expect.objectContaining({ key: 'testing-queue', label: 'Testing Review' }),
       expect.objectContaining({ key: 'photography-queue', label: 'Photography Review' }),
-      expect.objectContaining({ key: 'manual-intake', label: 'Manual Intake' }),
-      expect.objectContaining({ key: 'incoming-gear', label: 'Incoming Gear Form' }),
       expect.objectContaining({ key: 'testing', label: 'Testing Form' }),
       expect.objectContaining({ key: 'photos', label: 'Photo Form' }),
+    ]));
+    expect(result.intakeNavTabs).toEqual(expect.arrayContaining([
+      expect.objectContaining({ key: 'manual-intake', label: 'Manual Intake' }),
     ]));
   });
 
   it('preserves intake, processing, and listing order from the canonical page sequence', () => {
     const result = buildAppFrameNavTabs({
-      visibleTabs: ['dashboard', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'manual-intake', 'incoming-gear', 'testing', 'photos', 'listings', 'shopify', 'ebay'],
+      visibleTabs: ['dashboard', 'manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'shopify', 'ebay'],
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
@@ -103,8 +104,8 @@ describe('buildAppFrameNavTabs', () => {
       navigateToUsersList: vi.fn(),
     });
 
-    expect(result.intakeNavTabs.map((tab) => tab.key)).toEqual(['parking-lot-1', 'parking-lot-2', 'trash-review']);
-    expect(result.inventoryProcessingNavTabs.map((tab) => tab.key)).toEqual(['inventory', 'testing-queue', 'photography-queue', 'manual-intake', 'incoming-gear', 'testing', 'photos']);
+    expect(result.intakeNavTabs.map((tab) => tab.key)).toEqual(['manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review']);
+    expect(result.inventoryProcessingNavTabs.map((tab) => tab.key)).toEqual(['inventory', 'testing-queue', 'photography-queue', 'testing', 'photos']);
     expect(result.listingsNavTabs.map((tab) => tab.key)).toEqual(['listings', 'shopify', 'ebay']);
   });
 });

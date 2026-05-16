@@ -5,7 +5,7 @@ import { UsedGearLotTwoSection, type UsedGearLotTwoSortMode } from '@/components
 
 interface UsedGearLotTwoTabProps {
   currentUserName: string;
-  onOpenIncomingGearForm: (recordId: string) => void;
+  onOpenManualIntake: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
   onOpenOperationalRecord: (recordId: string) => void;
@@ -16,7 +16,7 @@ const WORKFLOW_LOT_TWO_SORT_PARAM = 'workflowLotTwoSort';
 const WORKFLOW_LOT_TWO_GROUP_PARAM = 'workflowLotTwoGroup';
 
 export function UsedGearLotTwoTab({
-  onOpenIncomingGearForm,
+  onOpenManualIntake,
   onOpenTestingForm,
   onOpenPhotosForm,
   onOpenOperationalRecord,
@@ -52,12 +52,12 @@ export function UsedGearLotTwoTab({
       eyebrow="Used Gear Intake"
       title="Parking Lot 2"
       description="Track accepted intake through arrival, SKU assignment, and the next handoff."
-      descriptionHint="Use the queue actions to open Incoming Gear, Testing, Photos, or the current operational record directly from this page."
+      descriptionHint="Use the queue actions to open Manual Intake, Testing, Photos, or the current operational record directly from this page."
     >
       <UsedGearLotTwoSection
         showSectionIntro={false}
         onOpenGroupReview={(groupId) => navigate(`/parking-lot-2/review/${encodeURIComponent(groupId)}${location.search}`, { replace: false })}
-        onOpenIncomingGearForm={onOpenIncomingGearForm}
+        onOpenManualIntake={onOpenManualIntake}
         onOpenTestingForm={onOpenTestingForm}
         onOpenPhotosForm={onOpenPhotosForm}
         onOpenOperationalRecord={onOpenOperationalRecord}

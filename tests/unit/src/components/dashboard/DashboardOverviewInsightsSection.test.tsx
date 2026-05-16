@@ -124,7 +124,7 @@ describe('DashboardOverviewSection', () => {
   it('renders owner-only financial cards when sensitive metrics are enabled', () => {
     render(
       <DashboardOverviewSection
-        accessiblePages={['dashboard', 'inventory', 'listings', 'shopify', 'jotform', 'ebay', 'incoming-gear', 'testing-queue', 'testing', 'photography-queue', 'photos']}
+        accessiblePages={['dashboard', 'manual-intake', 'inventory', 'listings', 'shopify', 'jotform', 'ebay', 'testing-queue', 'testing', 'photography-queue', 'photos']}
         canViewSensitiveMetrics
         currentUserRole="owner"
         workflowAnalytics={buildWorkflowAnalyticsOverrides()}

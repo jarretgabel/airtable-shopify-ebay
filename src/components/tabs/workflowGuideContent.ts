@@ -309,7 +309,7 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   {
     title: 'Arrival And Routing',
     detail: 'Accepted items move through Parking Lot 2 and the workflow hub for arrival handling, notes, and next-stage routing.',
-    pages: ['parking-lot-2', 'inventory', 'incoming-gear'],
+    pages: ['manual-intake', 'parking-lot-2', 'inventory'],
     tone: 'routing',
     primaryRoles: ['processor'],
     supportRoles: ['admin', 'owner'],
