@@ -8,9 +8,7 @@ import {
   assignWorkflowOwnerBatch,
   clearWorkflowOwner,
   completePreListingReviewStage,
-  completePhotographyStage,
   completeProcessingStage,
-  completeTestingStage,
   distributeUsedGearPendingReviewTotal,
   groupUsedGearWorkflowRecords,
   hasUsedGearPendingReviewPricingPath,
@@ -126,7 +124,7 @@ describe('usedGearQueue', () => {
     expect(records[0]?.fields['Workflow Intake Decision']).toBe('Unqualified');
   });
 
-  it('loads workflow progress records for accepted and concurrent statuses', async () => {
+  it('loads workflow progress records only for accepted and concurrent pre-listing statuses', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'recAccepted',
@@ -143,11 +141,6 @@ describe('usedGearQueue', () => {
         createdTime: 'later',
         fields: { 'Workflow Status': 'Pending Review', SKU: 'C-1' },
       },
-      {
-        id: 'recApproved',
-        createdTime: 'later',
-        fields: { 'Workflow Status': 'Approved for Publish', SKU: 'D-1' },
-      },
     ]);
 
     const records = await loadWorkflowProgressQueue();
@@ -161,7 +154,7 @@ describe('usedGearQueue', () => {
         ]),
       }),
     );
-    expect(records.map((record) => record.id)).toEqual(['recAccepted', 'recConcurrent', 'recApproved']);
+    expect(records.map((record) => record.id)).toEqual(['recAccepted', 'recConcurrent']);
   });
 
   it('loads only parking-lot-two arrival-stage records from the workflow source', async () => {
@@ -657,38 +650,6 @@ describe('usedGearQueue', () => {
       expect.objectContaining({
         'Workflow Status': 'Testing and Photography In Progress',
         'Processing Signed By': 'Taylor Reviewer',
-      }),
-      { typecast: true },
-    );
-  });
-
-  it('advances concurrent work to awaiting pre-listing after the second signoff', async () => {
-    mockGetConfiguredRecords.mockResolvedValue([
-      {
-        id: 'rec1',
-        createdTime: 'now',
-        fields: {
-          'Workflow Status': 'Testing and Photography In Progress',
-          'Testing Signed By': 'Taylor',
-          'Testing Signed At': '2026-05-07T10:00:00.000Z',
-        },
-      },
-    ]);
-    mockUpdateConfiguredRecord.mockResolvedValue({
-      id: 'rec1',
-      createdTime: 'now',
-      fields: { 'Workflow Status': 'Awaiting Pre-Listing Review' },
-    });
-
-    await completePhotographyStage('rec1', 'Jordan Reviewer');
-
-    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
-      'used-gear-workflow',
-      'rec1',
-      expect.objectContaining({
-        'Workflow Status': 'Awaiting Pre-Listing Review',
-        'Awaiting Pre-Listing Review At': expect.any(String),
-        'Photography Signed By': 'Jordan Reviewer',
       }),
       { typecast: true },
     );
@@ -1195,35 +1156,6 @@ describe('usedGearQueue', () => {
     expect(mockUpdateConfiguredRecord).not.toHaveBeenCalled();
   });
 
-  it('completes testing without advancing when photography is still pending', async () => {
-    mockGetConfiguredRecords.mockResolvedValue([
-      {
-        id: 'rec1',
-        createdTime: 'now',
-        fields: {
-          'Workflow Status': 'Testing and Photography In Progress',
-        },
-      },
-    ]);
-    mockUpdateConfiguredRecord.mockResolvedValue({
-      id: 'rec1',
-      createdTime: 'now',
-      fields: { 'Workflow Status': 'Testing and Photography In Progress' },
-    });
-
-    await completeTestingStage('rec1', 'Taylor Reviewer');
-
-    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
-      'used-gear-workflow',
-      'rec1',
-      expect.objectContaining({
-        'Workflow Status': 'Testing and Photography In Progress',
-        'Testing Signed By': 'Taylor Reviewer',
-      }),
-      { typecast: true },
-    );
-  });
-
   it('summarizes workflow notification counts by queue stage', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
@@ -1354,7 +1286,8 @@ describe('usedGearQueue', () => {
           path: null,
         },
       },
-      workflowQueueBadgeCount: 5,
+      workflowQueueBadgeCount: 3,
+      listingsBadgeCount: 2,
     });
   });
 
@@ -1405,6 +1338,7 @@ describe('usedGearQueue', () => {
         approvedForPublish: null,
       },
       workflowQueueBadgeCount: 1,
+      listingsBadgeCount: 0,
     });
 
     await expect(loadUsedGearWorkflowNotificationSummary({
@@ -1435,6 +1369,7 @@ describe('usedGearQueue', () => {
         approvedForPublish: null,
       },
       workflowQueueBadgeCount: 1,
+      listingsBadgeCount: 0,
     });
   });
 });

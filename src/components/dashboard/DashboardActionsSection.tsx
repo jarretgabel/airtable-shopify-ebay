@@ -95,8 +95,10 @@ function addRoleWorkflowActionItems({
   const awaitingMissingCount = workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting Missing Item'];
   const sharedStageCount = workflowAnalytics.statusCounts['Testing and Photography In Progress'];
   const preListingCount = workflowAnalytics.statusCounts['Awaiting Pre-Listing Review'];
+  const approvedForPublishCount = workflowAnalytics.statusCounts['Approved for Publish'];
   const pendingReviewCount = workflowAnalytics.pendingReviewCount;
   const progressAlertCount = workflowAnalytics.age.progressAlertCount;
+  const processingBlockerCount = awaitingSkuCount + awaitingMissingCount;
 
   if (currentUserRole === 'processor') {
     if (accessiblePages.includes('parking-lot-1') && pendingReviewCount > 0) {
@@ -104,23 +106,35 @@ function addRoleWorkflowActionItems({
         key: 'workflow-pending-review',
         label: `${pendingReviewCount} pending review`,
         count: pendingReviewCount,
-        detail: `${preListingCount} ready next · ${progressAlertCount} aging`,
+        detail: `${processingBlockerCount} blocked in processing · ${sharedStageCount} in shared stage`,
         severity: 'critical',
         targetTab: 'parking-lot-1',
       });
     }
 
-    if (accessiblePages.includes('inventory') && (awaitingSkuCount > 0 || awaitingMissingCount > 0)) {
-      const blockerCount = awaitingSkuCount + awaitingMissingCount;
+    if (accessiblePages.includes('inventory') && processingBlockerCount > 0) {
       items.push({
         key: 'workflow-processing-blockers',
-        label: `${blockerCount} processing blocker${blockerCount === 1 ? '' : 's'}`,
-        count: blockerCount,
+        label: `${processingBlockerCount} processing blocker${processingBlockerCount === 1 ? '' : 's'}`,
+        count: processingBlockerCount,
         detail: `${awaitingSkuCount} awaiting SKU · ${awaitingMissingCount} missing item`,
         severity: 'warning',
         targetTab: 'inventory',
       });
     }
+
+    if (accessiblePages.includes('listings') && (preListingCount > 0 || approvedForPublishCount > 0)) {
+      const listingPhaseCount = preListingCount + approvedForPublishCount;
+      items.push({
+        key: 'workflow-listings-phase',
+        label: `${listingPhaseCount} listing-phase row${listingPhaseCount === 1 ? '' : 's'}`,
+        count: listingPhaseCount,
+        detail: `${preListingCount} pre-listing review · ${approvedForPublishCount} approved for publish`,
+        severity: preListingCount > 0 ? 'critical' : 'warning',
+        targetTab: 'listings',
+      });
+    }
+
     return;
   }
 
@@ -130,20 +144,20 @@ function addRoleWorkflowActionItems({
         key: 'workflow-testing-queue',
         label: `${sharedStageCount} in testing queue`,
         count: sharedStageCount,
-        detail: `${progressAlertCount} aging · ${preListingCount} ready next`,
+        detail: `${progressAlertCount} aging · ${sharedStageCount} active in stage`,
         severity: progressAlertCount > 0 ? 'critical' : 'warning',
         targetTab: 'testing-queue',
       });
     }
 
-    if (accessiblePages.includes('testing') && progressAlertCount > 0) {
+    if (accessiblePages.includes('testing-queue') && progressAlertCount > 0) {
       items.push({
         key: 'workflow-testing-aging',
         label: `${progressAlertCount} testing item${progressAlertCount === 1 ? '' : 's'} aging`,
         count: progressAlertCount,
         detail: `${sharedStageCount} active in stage`,
         severity: 'warning',
-        targetTab: 'testing',
+        targetTab: 'testing-queue',
       });
     }
     return;
@@ -155,22 +169,24 @@ function addRoleWorkflowActionItems({
         key: 'workflow-photography-queue',
         label: `${sharedStageCount} waiting on photos`,
         count: sharedStageCount,
-        detail: `${progressAlertCount} aging · ${preListingCount} ready next`,
+        detail: `${progressAlertCount} aging · ${sharedStageCount} active in stage`,
         severity: progressAlertCount > 0 ? 'critical' : 'warning',
         targetTab: 'photography-queue',
       });
     }
 
-    if (accessiblePages.includes('photos') && preListingCount > 0) {
+    if (accessiblePages.includes('photography-queue') && progressAlertCount > 0) {
       items.push({
-        key: 'workflow-photo-handoffs',
-        label: `${preListingCount} ready for handoff`,
-        count: preListingCount,
-        detail: `${sharedStageCount} still in stage`,
+        key: 'workflow-photo-aging',
+        label: `${progressAlertCount} photo item${progressAlertCount === 1 ? '' : 's'} aging`,
+        count: progressAlertCount,
+        detail: `${sharedStageCount} active in stage`,
         severity: 'warning',
-        targetTab: 'photos',
+        targetTab: 'photography-queue',
       });
     }
+
+    return;
   }
 }
 

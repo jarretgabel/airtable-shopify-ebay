@@ -111,6 +111,7 @@ function App() {
     activeTab,
     visibleTabs,
     workflowInventoryBadgeCount: workflowNotificationSummary.workflowQueueBadgeCount,
+    listingsBadgeCount: workflowNotificationSummary.listingsBadgeCount,
     runtimeFeatures,
     exportingPdf,
     dashboardRefreshing,

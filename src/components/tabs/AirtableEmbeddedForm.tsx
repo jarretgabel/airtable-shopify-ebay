@@ -322,8 +322,8 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
   }
 
   return (
-    <div className="flex w-full flex-col gap-6">
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+    <div className="flex w-full flex-col gap-5">
+        <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
           <div>
             <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{manualIntakeFormIntro.eyebrow}</p>
             <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{manualIntakeFormIntro.title}</h2>
@@ -333,12 +333,12 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
               <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Create a manual-entry used-gear row and route it either into Parking Lot 1 review or directly into Lot 2 when the deal is already accepted.</p>
             )}
           </div>
-          <div className="mt-4 space-y-3.5 pb-4">
+          <div className="mt-3 space-y-3 pb-2">
             {manualIntakeFormIntro.blocks.map((block, index) => (
               <IntroBlock key={`${block.type}-${index}`} block={block} />
             ))}
           </div>
-        </div>
+        </section>
         {submitError ? (
           <div className="rounded-xl border border-[#f7c8c4] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-text)]">
             {submitError}

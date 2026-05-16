@@ -200,9 +200,6 @@ export function UsedGearLotTwoGroupPage({
                 <div>
                   <span className="font-semibold text-[var(--ink)]">Accepted At:</span> {displayInventoryValue(record.fields['Accepted At'])}
                 </div>
-                <div className="sm:col-span-2">
-                  <span className="font-semibold text-[var(--ink)]">Qualification Notes:</span> {displayInventoryValue(record.fields['Qualification Notes'])}
-                </div>
                 <div>
                   <span className="font-semibold text-[var(--ink)]">Offer Amount:</span> {displayInventoryValue(record.fields['Offer Amount'])}
                 </div>

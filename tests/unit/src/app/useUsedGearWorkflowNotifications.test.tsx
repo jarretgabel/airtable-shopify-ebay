@@ -26,6 +26,7 @@ vi.mock('@/services/usedGearQueue', () => ({
       approvedForPublish: null,
     },
     workflowQueueBadgeCount: 0,
+    listingsBadgeCount: 0,
   }),
   loadUsedGearWorkflowNotificationSummary: loadUsedGearWorkflowNotificationSummaryMock,
 }));
@@ -69,6 +70,7 @@ describe('useUsedGearWorkflowNotifications', () => {
         approvedForPublish: null,
       },
       workflowQueueBadgeCount: 1,
+      listingsBadgeCount: 0,
     });
 
     renderHook(() => useUsedGearWorkflowNotifications({
@@ -145,6 +147,7 @@ describe('useUsedGearWorkflowNotifications', () => {
         approvedForPublish: null,
       },
       workflowQueueBadgeCount: 0,
+      listingsBadgeCount: 0,
     });
 
     renderHook(() => useUsedGearWorkflowNotifications({
@@ -217,6 +220,7 @@ describe('useUsedGearWorkflowNotifications', () => {
         approvedForPublish: null,
       },
       workflowQueueBadgeCount: 1,
+      listingsBadgeCount: 1,
     });
 
     renderHook(() => useUsedGearWorkflowNotifications({
@@ -261,5 +265,79 @@ describe('useUsedGearWorkflowNotifications', () => {
     });
 
     expect(navigateToListingsRecord).toHaveBeenCalledWith('rec-listing-review');
+  });
+
+  it('opens Listings for approved-for-publish notifications when the user keeps that event enabled', async () => {
+    const navigateToTab = vi.fn();
+
+    loadUsedGearWorkflowNotificationSummaryMock.mockResolvedValue({
+      counts: {
+        pendingReview: 0,
+        processing: 0,
+        testing: 0,
+        photography: 0,
+        preListingReview: 0,
+        approvedForPublish: 2,
+      },
+      targets: {
+        pendingReview: null,
+        processing: null,
+        testing: null,
+        photography: null,
+        preListingReview: null,
+        approvedForPublish: {
+          destinationTab: 'listings',
+          recordId: null,
+          sectionId: null,
+          groupId: null,
+          path: null,
+        },
+      },
+      workflowQueueBadgeCount: 0,
+      listingsBadgeCount: 2,
+    });
+
+    renderHook(() => useUsedGearWorkflowNotifications({
+      currentUser: {
+        id: 'user-1',
+        name: 'Taylor Reviewer',
+        email: 'taylor@example.com',
+        role: 'admin',
+        allowedPages: [],
+        notificationPreferences: {
+          infoEnabled: true,
+          successEnabled: true,
+          warningEnabled: true,
+          errorEnabled: true,
+          autoDismissMs: 5000,
+          workflowAssignedAlertsEnabled: true,
+          workflowUnassignedAlertsEnabled: true,
+          workflowEvents: {
+            pendingReview: false,
+            processing: false,
+            testing: false,
+            photography: false,
+            preListingReview: false,
+            approvedForPublish: true,
+          },
+        },
+      },
+      canAccessPage: () => true,
+      navigateToTab,
+      navigateToPath: vi.fn(),
+      navigateToInventorySection: vi.fn(),
+      navigateToUsedGearOperationalRecord: vi.fn(),
+      navigateToListingsRecord: vi.fn(),
+      enabled: true,
+    }));
+
+    await waitFor(() => {
+      const notification = useNotificationStore.getState().notifications[0];
+      expect(notification?.title).toBe('Used gear approved for publish');
+      expect(notification?.actionLabel).toBe('Open Listings');
+      notification?.onAction?.();
+    });
+
+    expect(navigateToTab).toHaveBeenCalledWith('listings');
   });
 });

@@ -1,5 +1,4 @@
 import {
-  createConfiguredRecord,
   getConfiguredRecord,
   getConfiguredFieldMetadata,
   updateConfiguredRecord,
@@ -10,6 +9,13 @@ import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
 import { createPhotosFormDefaults, type PhotosFormOptionFieldName, type PhotosFormValues } from '@/components/tabs/photos/photosFormSchema';
 import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
+import {
+  buildUsedGearConcurrentStageSignoffs,
+  canEnterAwaitingPreListingReview,
+  getUsedGearWorkflowStatus,
+  isAcceptedUsedGearWorkflowStatus,
+  USED_GEAR_WORKFLOW_STATUS_FIELD,
+} from '@/services/usedGearWorkflow';
 import type { AirtableRecord } from '@/types/airtable';
 import {
   filterWorkflowAttachmentsByStage,
@@ -71,6 +77,38 @@ export interface PhotosFormSubmitResult {
   action: 'created' | 'updated';
 }
 
+function buildWorkflowPhotographyFields(record: AirtableRecord, actorName: string | null, photographedAt: string): Record<string, unknown> {
+  const signoffFields = compactFields({
+    'Photography Signed At': photographedAt,
+    'Photography Signed By': actorName ?? undefined,
+  });
+  const currentStatus = getUsedGearWorkflowStatus(record.fields);
+
+  if (currentStatus !== 'Testing and Photography In Progress') {
+    return signoffFields;
+  }
+
+  const nextSignoffs = buildUsedGearConcurrentStageSignoffs({
+    ...record.fields,
+    ...signoffFields,
+  });
+
+  if (canEnterAwaitingPreListingReview(nextSignoffs)) {
+    return {
+      ...signoffFields,
+      [USED_GEAR_WORKFLOW_STATUS_FIELD]: 'Awaiting Pre-Listing Review',
+      'Awaiting Pre-Listing Review At': typeof record.fields['Awaiting Pre-Listing Review At'] === 'string' && record.fields['Awaiting Pre-Listing Review At'].trim().length > 0
+        ? record.fields['Awaiting Pre-Listing Review At']
+        : photographedAt,
+    };
+  }
+
+  return {
+    ...signoffFields,
+    [USED_GEAR_WORKFLOW_STATUS_FIELD]: 'Testing and Photography In Progress',
+  };
+}
+
 function dedupeOptions(values: string[]): string[] {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
@@ -126,23 +164,11 @@ async function updateRecordWithWorkflowImageMetadataFallback(
   }
 }
 
-async function createRecordWithWorkflowImageMetadataFallback(
-  fields: Record<string, unknown>,
-): Promise<AirtableRecord> {
-  try {
-    return await createConfiguredRecord('inventory-directory', fields, { typecast: true });
-  } catch (error) {
-    if (WORKFLOW_IMAGE_METADATA_FIELD_NAME in fields && isUnknownFieldNameError(error, WORKFLOW_IMAGE_METADATA_FIELD_NAME)) {
-      return createConfiguredRecord('inventory-directory', omitWorkflowImageMetadataField(fields), { typecast: true });
-    }
+function assertApprovedPhotosWorkflowRecord(record: AirtableRecord): void {
+  const workflowStatus = getUsedGearWorkflowStatus(record.fields);
 
-    throw error;
-  }
-}
-
-async function uploadImages(recordId: string, fieldId: string, files: File[]): Promise<void> {
-  for (const file of files) {
-    await uploadConfiguredAttachment('inventory-directory', recordId, fieldId, file);
+  if (!workflowStatus || !isAcceptedUsedGearWorkflowStatus(workflowStatus)) {
+    throw new Error('Photos is available only for workflow items that have already been approved for intake.');
   }
 }
 
@@ -181,13 +207,9 @@ async function syncWorkflowImageMetadataForRecord(params: {
 }
 
 async function loadConfiguredPhotosRecord(recordId: string): Promise<{ source: PhotosFormRecordSource; record: AirtableRecord }> {
-  try {
-    const workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
-    return { source: 'used-gear-workflow', record: workflowRecord };
-  } catch {
-    const inventoryRecord = await getConfiguredRecord('inventory-directory', recordId);
-    return { source: 'inventory-directory', record: inventoryRecord };
-  }
+  const workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
+  assertApprovedPhotosWorkflowRecord(workflowRecord);
+  return { source: 'used-gear-workflow', record: workflowRecord };
 }
 
 function extractAttachments(value: unknown): PhotosFormContextAttachment[] {
@@ -331,42 +353,36 @@ export async function submitPhotosForm(
   const recordSource = options.recordSource ?? 'inventory-directory';
   const actorName = resolveCurrentActorName();
   const photographedAt = new Date().toISOString();
-  const workflowPhotoAuditFields = recordSource === 'used-gear-workflow'
-    ? compactFields({
-        'Photography Signed At': photographedAt,
-        'Photography Signed By': actorName ?? undefined,
-      })
-    : {};
-
-  const baseFields = compactFields({
-    SKU: skuValue,
-    Make: trimToUndefined(values.make),
-    Model: trimToUndefined(values.model),
-    'Component Type': arrayOrUndefined(values.componentType),
-    'Original Box': arrayOrUndefined(values.originalBox),
-    Manual: arrayOrUndefined(values.manual),
-    Remote: arrayOrUndefined(values.remote),
-    'Power Cable': arrayOrUndefined(values.powerCable),
-    'Additional Items': trimToUndefined(values.additionalItems),
-    'Audiogon Rating': arrayOrUndefined(values.audiogonRating),
-    'Cosmetic Condition Notes': trimToUndefined(values.cosmeticConditionNotes),
-    "Photo'd": trimToUndefined(values.photoDate),
-    Status: statusValue,
-    [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata ? serializeWorkflowImageMetadata(options.imageMetadata) : undefined,
-    ...workflowPhotoAuditFields,
-  });
-
-  const createCandidates: Array<Record<string, unknown>> = [
-    compactFields({ SKU: { text: skuValue }, ...baseFields }),
-    compactFields({ SKU: skuValue, ...baseFields }),
-    baseFields,
-  ];
 
   if (recordId) {
     try {
+      if (recordSource !== 'used-gear-workflow') {
+        throw new Error('Photos forms require an approved workflow item and cannot be opened as a blank or inventory-only form.');
+      }
+
+      const workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
+      assertApprovedPhotosWorkflowRecord(workflowRecord);
+      const baseFields = compactFields({
+        SKU: skuValue,
+        Make: trimToUndefined(values.make),
+        Model: trimToUndefined(values.model),
+        'Component Type': arrayOrUndefined(values.componentType),
+        'Original Box': arrayOrUndefined(values.originalBox),
+        Manual: arrayOrUndefined(values.manual),
+        Remote: arrayOrUndefined(values.remote),
+        'Power Cable': arrayOrUndefined(values.powerCable),
+        'Additional Items': trimToUndefined(values.additionalItems),
+        'Audiogon Rating': arrayOrUndefined(values.audiogonRating),
+        'Cosmetic Condition Notes': trimToUndefined(values.cosmeticConditionNotes),
+        "Photo'd": trimToUndefined(values.photoDate),
+        Status: statusValue,
+        [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata ? serializeWorkflowImageMetadata(options.imageMetadata) : undefined,
+        ...buildWorkflowPhotographyFields(workflowRecord, actorName, photographedAt),
+      });
+
       const updatedRecord = await updateRecordWithWorkflowImageMetadataFallback(recordSource, recordId, baseFields);
 
-      if (recordSource !== 'used-gear-workflow' && values.imageFiles.length > 0) {
+      if (values.imageFiles.length > 0) {
         for (const file of values.imageFiles) {
           await uploadConfiguredAttachment(recordSource, updatedRecord.id, PRIMARY_IMAGE_ATTACHMENT_FIELD_ID, file);
         }
@@ -390,7 +406,7 @@ export async function submitPhotosForm(
       const serviceError = createServiceError({
         service: 'photosForm',
         code: 'PHOTOS_FORM_UPDATE_FAILED',
-        userMessage: 'Unable to update the Photos fields for this inventory record.',
+        userMessage: 'Unable to update the Photos fields for this workflow item.',
         retryable: true,
         cause: error,
       });
@@ -400,41 +416,13 @@ export async function submitPhotosForm(
     }
   }
 
-  let lastError: unknown = null;
-
-  for (const candidate of createCandidates) {
-    try {
-      const createdRecord = await createRecordWithWorkflowImageMetadataFallback(candidate);
-
-      if (values.imageFiles.length > 0) {
-        await uploadImages(createdRecord.id, PRIMARY_IMAGE_ATTACHMENT_FIELD_ID, values.imageFiles);
-      }
-
-      if (options.imageMetadata) {
-        await syncWorkflowImageMetadataForRecord({
-          recordSource: 'inventory-directory',
-          recordId: createdRecord.id,
-          existingMetadata: options.imageMetadata,
-        });
-      }
-
-      return {
-        recordId: createdRecord.id,
-        sku: skuValue,
-        action: 'created',
-      };
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  logServiceError('photosForm', 'Error creating Photos form submission', lastError);
+  logServiceError('photosForm', 'Error updating Photos form submission', new Error('Missing workflow record id for Photos form.'));
   const serviceError = createServiceError({
     service: 'photosForm',
-    code: 'PHOTOS_FORM_SUBMIT_FAILED',
-    userMessage: 'Unable to submit the Photos form to Airtable.',
+    code: 'PHOTOS_FORM_UPDATE_FAILED',
+    userMessage: 'Unable to update the Photos fields for this workflow item.',
     retryable: true,
-    cause: lastError,
+    cause: new Error('Missing workflow record id for Photos form.'),
   });
   const typedError = new Error(serviceError.userMessage) as Error & { serviceError?: ServiceError };
   typedError.serviceError = serviceError;

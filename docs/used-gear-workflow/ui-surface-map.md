@@ -7,6 +7,12 @@ This document tracks the app-owned pages, forms, queues, and review surfaces inv
 - Prevent missed route/navigation work when new pages are added.
 - Keep form, queue, and detail pages aligned with the approved workflow model.
 
+### Current Navigation Order
+- `Intake`: `manual-intake`, `jotform`, `parking-lot-1`, `parking-lot-2`, `trash-review`
+- `Processing`: `inventory`, `testing-queue`, `photography-queue`, `testing`, `photos`
+- `Listing`: `listings`, `shopify`, `ebay`
+- Utility pages remain outside the operational workflow sequence.
+
 ### Existing Surfaces
 - `JotformTab` — raw submission feed and source-reference page
 - `AirtableEmbeddedForm` — current Manual Intake surface, Phase 2/3 reuse point
@@ -92,6 +98,9 @@ Implemented Phase 3 surfaces in the current app:
 - [ ] Listing-prep landing or review detail page if needed
 
 Implemented Phase 4 surfaces in the current app:
+- `combined listings directory shell`
+	- Path: `/listings`
+	- Component: `src/components/approval/CombinedListingsApprovalTab.tsx`
 - `listings review bucket`
 	- Path: `/listings/:recordId`
 	- Component: `src/components/approval/CombinedListingsApprovalTab.tsx`
@@ -140,8 +149,9 @@ Proposed route keys, paths, and file targets:
 - [x] Confirm direct-link behavior for each new route.
 - [x] Update docs for each new surface added.
 
-### Initial Route Wiring Proposal
-- Add proposed Phase 2 route keys to `APP_PAGES` and `PAGE_DEFINITIONS` only when implementation begins.
-- Treat the new parking-lot and trash pages as Inventory Processing pages, not top-level unrelated tabs.
-- Keep detail/review pages directly routable so queue selection can open a specific grouped submission or record review page.
-- Preserve direct activation of existing forms by record id, and extend the same pattern to queue/review pages where useful.
+### Current Route Wiring Notes
+- The app shell now groups workflow tabs in the shipped order `Intake > Processing > Listing`.
+- Parking Lot and trash surfaces live under Intake, while the dedicated Testing and Photography pages live under Processing and precede Listings.
+- Combined Listings is the first listing-phase destination and begins at `Awaiting Pre-Listing Review`; no separate pre-listing route remains in the active app shell.
+- Detail and review pages remain directly routable so queue selection can open a specific grouped submission or record review page.
+- Processing and listing overview pages now reuse the same workflow page-header and operator-guide pattern first established on the intake pages.

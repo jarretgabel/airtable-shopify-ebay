@@ -2,7 +2,6 @@ import { deleteConfiguredRecord, getConfiguredRecord, getConfiguredRecords, upda
 import type { UsedGearWorkflowNotificationEvent } from '@/stores/auth/authTypes';
 import {
   buildUsedGearConcurrentStageSignoffs,
-  canEnterAwaitingPreListingReview,
   enrichUsedGearWorkflowRecord,
   getUsedGearWorkflowSignoffFieldNames,
   getUsedGearWorkflowStatus,
@@ -118,8 +117,6 @@ const USED_GEAR_PROGRESS_STATUSES = new Set([
   ACCEPTED_ARRIVED_AWAITING_SKU_STATUS,
   ACCEPTED_ARRIVED_AWAITING_MISSING_ITEM_STATUS,
   TESTING_AND_PHOTOGRAPHY_IN_PROGRESS_STATUS,
-  AWAITING_PRE_LISTING_REVIEW_STATUS,
-  APPROVED_FOR_PUBLISH_STATUS,
 ]);
 
 const USED_GEAR_POST_PUBLISH_STATUSES = new Set([
@@ -164,6 +161,7 @@ export interface UsedGearWorkflowNotificationSummary {
   counts: UsedGearWorkflowNotificationCounts;
   targets: UsedGearWorkflowNotificationTargets;
   workflowQueueBadgeCount: number;
+  listingsBadgeCount: number;
 }
 
 export interface UsedGearWorkflowPostPublishSummary {
@@ -222,6 +220,7 @@ export function createEmptyUsedGearWorkflowNotificationSummary(): UsedGearWorkfl
     counts: createEmptyWorkflowNotificationCounts(),
     targets: createEmptyWorkflowNotificationTargets(),
     workflowQueueBadgeCount: 0,
+    listingsBadgeCount: 0,
   };
 }
 
@@ -689,7 +688,8 @@ export async function loadUsedGearWorkflowNotificationSummary(
 
   const sortedRecords = [...records].sort((left, right) => left.createdTime.localeCompare(right.createdTime));
   const summary = createEmptyUsedGearWorkflowNotificationSummary();
-  const actionableRecordIds = new Set<string>();
+  const inventoryActionableRecordIds = new Set<string>();
+  const listingsActionableRecordIds = new Set<string>();
 
   sortedRecords.forEach((record) => {
     if (!shouldIncludeWorkflowNotificationRecord(record, options)) {
@@ -703,7 +703,7 @@ export async function loadUsedGearWorkflowNotificationSummary(
 
     if (status === PENDING_REVIEW_STATUS) {
       summary.counts.pendingReview += 1;
-      actionableRecordIds.add(record.id);
+      inventoryActionableRecordIds.add(record.id);
       summary.targets.pendingReview ??= buildNotificationTarget(record, 'parking-lot-1', 'used-gear-pending-review', 'workflowPendingReviewGroup', true);
       return;
     }
@@ -714,7 +714,7 @@ export async function loadUsedGearWorkflowNotificationSummary(
       || status === ACCEPTED_ARRIVED_AWAITING_MISSING_ITEM_STATUS
     ) {
       summary.counts.processing += 1;
-      actionableRecordIds.add(record.id);
+      inventoryActionableRecordIds.add(record.id);
       summary.targets.processing ??= buildNotificationTarget(record, 'parking-lot-2', 'used-gear-lot-two', 'workflowLotTwoGroup', true);
       return;
     }
@@ -723,12 +723,12 @@ export async function loadUsedGearWorkflowNotificationSummary(
       const signoffs = buildUsedGearConcurrentStageSignoffs(record.fields);
       if (!signoffs.testingSignedBy || !signoffs.testingSignedAt) {
         summary.counts.testing += 1;
-        actionableRecordIds.add(record.id);
+        inventoryActionableRecordIds.add(record.id);
         summary.targets.testing ??= buildNotificationTarget(record, 'testing-queue', 'used-gear-testing-queue', 'workflowTestingQueueGroup', true);
       }
       if (!signoffs.photographySignedBy || !signoffs.photographySignedAt) {
         summary.counts.photography += 1;
-        actionableRecordIds.add(record.id);
+        inventoryActionableRecordIds.add(record.id);
         summary.targets.photography ??= buildNotificationTarget(record, 'photography-queue', 'used-gear-photography-queue', 'workflowPhotographyQueueGroup', true);
       }
       return;
@@ -736,7 +736,7 @@ export async function loadUsedGearWorkflowNotificationSummary(
 
     if (status === AWAITING_PRE_LISTING_REVIEW_STATUS) {
       summary.counts.preListingReview += 1;
-      actionableRecordIds.add(record.id);
+      listingsActionableRecordIds.add(record.id);
       summary.targets.preListingReview ??= {
         destinationTab: 'listings',
         recordId: record.id,
@@ -749,7 +749,7 @@ export async function loadUsedGearWorkflowNotificationSummary(
 
     if (status === APPROVED_FOR_PUBLISH_STATUS) {
       summary.counts.approvedForPublish += 1;
-      actionableRecordIds.add(record.id);
+      listingsActionableRecordIds.add(record.id);
       summary.targets.approvedForPublish ??= {
         destinationTab: 'listings',
         recordId: record.id,
@@ -762,7 +762,8 @@ export async function loadUsedGearWorkflowNotificationSummary(
     return;
   });
 
-  summary.workflowQueueBadgeCount = actionableRecordIds.size;
+  summary.workflowQueueBadgeCount = inventoryActionableRecordIds.size;
+  summary.listingsBadgeCount = listingsActionableRecordIds.size;
   return summary;
 }
 
@@ -1070,62 +1071,6 @@ export async function completeProcessingStage(recordId: string, userName: string
   );
 
   return withWorkflow(record);
-}
-
-async function completeConcurrentStage(
-  recordId: string,
-  stage: 'testing' | 'photography',
-  userName: string,
-): Promise<AirtableRecord> {
-  const normalizedUserName = userName.trim();
-  if (!normalizedUserName) {
-    throw new Error('Stage completion requires the current user name.');
-  }
-
-  const currentRecord = await loadUsedGearOperationalRecord(recordId);
-  const currentStatus = getUsedGearWorkflowStatus(currentRecord.fields);
-  if (currentStatus !== TESTING_AND_PHOTOGRAPHY_IN_PROGRESS_STATUS) {
-    throw new Error('Concurrent stage completion is only available while testing and photography are in progress.');
-  }
-
-  const fieldNames = getUsedGearWorkflowSignoffFieldNames(stage);
-  const signedAt = new Date().toISOString();
-  const nextSignoffs = buildUsedGearConcurrentStageSignoffs({
-    ...currentRecord.fields,
-    [fieldNames.signedBy]: normalizedUserName,
-    [fieldNames.signedAt]: signedAt,
-  });
-
-  const nextStatus = canEnterAwaitingPreListingReview(nextSignoffs)
-    ? AWAITING_PRE_LISTING_REVIEW_STATUS
-    : TESTING_AND_PHOTOGRAPHY_IN_PROGRESS_STATUS;
-
-  const nextFields: Record<string, unknown> = {
-    [fieldNames.signedBy]: normalizedUserName,
-    [fieldNames.signedAt]: signedAt,
-    [USED_GEAR_WORKFLOW_STATUS_FIELD]: nextStatus,
-  };
-
-  if (nextStatus === AWAITING_PRE_LISTING_REVIEW_STATUS) {
-    nextFields['Awaiting Pre-Listing Review At'] = signedAt;
-  }
-
-  const record = await updateConfiguredRecord(
-    'used-gear-workflow',
-    recordId,
-    nextFields,
-    { typecast: true },
-  );
-
-  return withWorkflow(record);
-}
-
-export async function completeTestingStage(recordId: string, userName: string): Promise<AirtableRecord> {
-  return completeConcurrentStage(recordId, 'testing', userName);
-}
-
-export async function completePhotographyStage(recordId: string, userName: string): Promise<AirtableRecord> {
-  return completeConcurrentStage(recordId, 'photography', userName);
 }
 
 export async function completePreListingReviewStage(recordId: string, userName: string): Promise<AirtableRecord> {

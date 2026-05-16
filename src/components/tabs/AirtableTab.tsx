@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { AirtableTabViewModel } from '@/app/appTabViewModels';
 import { RefreshIconButton } from '@/components/app/RefreshIconButton';
-import { EmptySurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { EmptySurface } from '@/components/app/StateSurfaces';
 import { InventoryDirectoryListSection } from '@/components/tabs/airtable/InventoryDirectoryListSection';
 import { UsedGearPendingReviewSection, type UsedGearPendingReviewSortMode } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
 import { UsedGearWorkflowPostPublishSection } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
@@ -503,12 +503,11 @@ export function AirtableTab({
   };
 
   return (
-    <PanelSurface>
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+      <div className="mx-auto mt-3 flex w-full max-w-6xl flex-col gap-6">
+        <div>
           <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SB Inventory</p>
           <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Directory</h2>
-          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Browse existing SB Inventory records, filter the table, and jump directly into Manual Intake, Testing, Photos, or full record editor flows.</p>
+          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Browse existing SB Inventory records, filter the table, and jump directly into Manual Intake, record-specific Testing or Photos work, or the full record editor.</p>
         </div>
 
         {directoryError ? (
@@ -708,6 +707,5 @@ export function AirtableTab({
           ) : null}
         </section>
       </div>
-    </PanelSurface>
   );
 }

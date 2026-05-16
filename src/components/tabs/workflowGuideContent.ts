@@ -37,15 +37,15 @@ export interface WorkflowFlowStage {
 
 export function roleSummary(role: UserRole): string {
   if (role === 'processor') {
-    return 'Start with Parking Lot 1, the workflow hub, and Listings. Those are the main places where intake turns into ready-to-list work.';
+    return 'Start with Parking Lot 1, the workflow hub, and the specialist queues. Listings takes over once a row reaches Awaiting Pre-Listing Review.';
   }
 
   if (role === 'tester') {
-    return 'Your day usually starts in the testing queue, then moves into the testing form when a record needs hands-on notes.';
+    return 'Your day usually starts in the testing queue, then moves into the record-specific testing form when a row needs hands-on notes.';
   }
 
   if (role === 'photographer') {
-    return 'Your day usually starts in the photography queue, then moves into the photo form when a record is ready for images and handoff.';
+    return 'Your day usually starts in the photography queue, then moves into the record-specific photos form when a row is ready for images and handoff.';
   }
 
   if (role === 'developer') {
@@ -65,8 +65,8 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartSummary: 'Keep the whole operation moving, then drop into the exact queue or record that needs intervention.',
     quickStartItems: [
       'Start on the dashboard to spot backlog, handoff gaps, and publish blockers.',
-      'Use Parking Lot 1 and the workflow hub to resolve stalled intake or handoff issues.',
-      'Check Listings and post-publish work when items are close to revenue or shipment.',
+      'Use Parking Lot 1 and the workflow hub to resolve stalled intake, routing, or post-publish issues.',
+      'Check Listings when items are entering listing review or need publish decisions.',
     ],
     flowSummary: 'You need the whole map because your role crosses intake, active workflow, listings, and follow-through.',
     flowSteps: [
@@ -76,7 +76,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Resolve intake and routing blockers first',
-        detail: 'Parking Lot 1 and the workflow hub are where missing notes, routing problems, and intake exceptions get cleaned up.',
+        detail: 'Parking Lot 1 and the workflow hub are where missing notes, routing problems, active-stage blockers, and post-publish exceptions get cleaned up.',
       },
       {
         title: 'Confirm publish readiness before release',
@@ -140,9 +140,9 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartTitle: 'Processor quick start',
     quickStartSummary: 'This is the operational lane for intake, handoff, and getting an item ready for the next specialist.',
     quickStartItems: [
-      'Start in Parking Lot 1 for fresh intake or the workflow hub for already-active items.',
+      'Start in Parking Lot 1 for fresh intake or the workflow hub for already-active operational items.',
       'Clean up notes, confirm the next stage, and move the item into the next real handoff instead of leaving it parked.',
-      'Use testing, photography, and Listings review to close missing work before publish.',
+      'Use the testing and photography queues for specialist work, then use Listings once the item reaches listing review.',
     ],
     flowSummary: 'Your role spans intake and handoff, so the most relevant map is the path from qualification through listing readiness.',
     flowSteps: [
@@ -152,11 +152,11 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Turn accepted items into owned workflow',
-        detail: 'Once a row is accepted, use the workflow hub to track stage status, next team, and the notes needed for a clean handoff.',
+        detail: 'Once a row is accepted, use the workflow hub to track stage status, next team, operational notes, and later post-publish follow-through. It is not the listing review page.',
       },
       {
         title: 'Move work through testing and photography',
-        detail: 'Use the stage queues and forms to finish specialist work instead of keeping status in scattered notes.',
+        detail: 'Use the stage queues and record-specific forms to finish specialist work instead of keeping status in scattered notes.',
       },
       {
         title: 'Clear listing review before publish',
@@ -308,7 +308,7 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   },
   {
     title: 'Arrival And Routing',
-    detail: 'Accepted items move through Parking Lot 2 and the workflow hub for arrival handling, notes, and next-stage routing.',
+    detail: 'Accepted items move through Parking Lot 2 and the workflow hub for arrival handling, operational notes, current-stage visibility, and next-stage routing.',
     pages: ['manual-intake', 'parking-lot-2', 'inventory'],
     tone: 'routing',
     primaryRoles: ['processor'],
@@ -340,7 +340,7 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   },
   {
     title: 'Post-Publish Follow-Through',
-    detail: 'The workflow hub tracks stale listings, sold-ready work, and shipment completion after publish.',
+    detail: 'The workflow hub tracks stale listings, sold-ready work, and shipment completion after publish, while Listings stays focused on listing-phase review and publish decisions.',
     pages: ['inventory', 'dashboard'],
     tone: 'follow-through',
     primaryRoles: ['admin', 'owner'],
@@ -387,25 +387,25 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     title: 'Workflow Hub',
     pages: ['inventory'],
     items: [
-      'See pending review, stage work, and post-publish work in one place.',
-      'Use the main queue view for triage and quick actions.',
+      'See pending review, active stage handoffs, and post-publish work in one place.',
+      'Use the main queue view for triage, routing, quick actions, and workflow status checks.',
       'Open an operational record when a row needs deeper work.',
     ],
   },
   {
-    title: 'Testing Queue And Form',
+    title: 'Testing Queue And Record',
     pages: ['testing-queue', 'testing'],
     items: [
       'The queue shows what is ready for testing and what still needs hands-on verification.',
-      'The form is where the actual hands-on findings and signoff belong.',
+      'The record-specific form is where the actual hands-on findings and signoff belong.',
     ],
   },
   {
-    title: 'Photography Queue And Form',
+    title: 'Photography Queue And Record',
     pages: ['photography-queue', 'photos'],
     items: [
       'The queue shows what is ready for photography and what still needs image completion.',
-      'The form is where image work and handoff notes should be completed.',
+      'The record-specific form is where image work and handoff notes should be completed.',
     ],
   },
   {

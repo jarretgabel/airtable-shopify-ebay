@@ -161,10 +161,11 @@ describe('DashboardOverviewSection', () => {
     expect(screen.getByRole('button', { name: /acquisition cost/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /processor ops/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /processing blockers/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /used gear listings/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /testing queue/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /bench aging/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^bench aging/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /photography queue/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /photo handoffs/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /photo bench aging/i })).toBeInTheDocument();
   });
 
   it('shows only tester-focused operational modules for tester dashboards', () => {
@@ -204,11 +205,12 @@ describe('DashboardOverviewSection', () => {
     );
 
     expect(screen.getByRole('button', { name: /testing queue/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /bench aging/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^bench aging/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /used gear listings/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /processor ops/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /processing blockers/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /photography queue/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /photo handoffs/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /photo bench aging/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /inventory value/i })).not.toBeInTheDocument();
   });
 
@@ -249,7 +251,7 @@ describe('DashboardOverviewSection', () => {
     );
 
     expect(screen.getByRole('button', { name: /photography queue/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /photo handoffs/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /photo bench aging/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /testing queue/i })).not.toBeInTheDocument();
   });
 });

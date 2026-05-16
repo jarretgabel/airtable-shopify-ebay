@@ -86,7 +86,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
   const navigateToTestingForm = useCallback((recordId?: string | null, replace = false): void => {
     const path = recordId
       ? `${TAB_PATHS.testing}/${encodeURIComponent(recordId)}`
-      : TAB_PATHS.testing;
+      : TAB_PATHS['testing-queue'];
     navigate(path, { replace });
     scrollToPageTop();
   }, [navigate]);
@@ -94,7 +94,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
   const navigateToPhotosForm = useCallback((recordId?: string | null, replace = false): void => {
     const path = recordId
       ? `${TAB_PATHS.photos}/${encodeURIComponent(recordId)}`
-      : TAB_PATHS.photos;
+      : TAB_PATHS['photography-queue'];
     navigate(path, { replace });
     scrollToPageTop();
   }, [navigate]);

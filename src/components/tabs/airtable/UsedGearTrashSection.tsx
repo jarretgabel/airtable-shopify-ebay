@@ -6,7 +6,6 @@ import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
   groupUsedGearWorkflowRecords,
-  hasUsedGearPendingReviewPricingPath,
   loadTrashQueue,
 } from '@/services/usedGearQueue';
 import type { AirtableRecord } from '@/types/airtable';
@@ -36,11 +35,6 @@ function recordSearchText(record: AirtableRecord): string {
     .filter((value): value is string => typeof value === 'string')
     .join(' ')
     .toLowerCase();
-}
-
-function previewText(value: unknown): string {
-  const normalized = displayInventoryValue(value);
-  return normalized.length > 120 ? `${normalized.slice(0, 117)}...` : normalized;
 }
 
 const intakeDateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -286,8 +280,6 @@ export function UsedGearTrashSection({
 
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
               {group.records.map((record) => {
-                const hasPricingPath = hasUsedGearPendingReviewPricingPath(record.fields);
-
                 return (
                 <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
                   <div className="flex items-start justify-between gap-3">
@@ -307,15 +299,6 @@ export function UsedGearTrashSection({
                     </div>
                     <div>
                       <span className="font-semibold text-[var(--ink)]">Reason:</span> {displayInventoryValue(record.fields['Unqualified Reason'])}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Pricing Gate:</span> {hasPricingPath ? 'Ready' : 'Missing'}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--ink)]">Offer Amount:</span> {displayInventoryValue(record.fields['Offer Amount'])}
-                    </div>
-                    <div className="sm:col-span-2">
-                      <span className="font-semibold text-[var(--ink)]">Qualification Notes:</span> {previewText(record.fields['Qualification Notes'])}
                     </div>
                   </div>
 

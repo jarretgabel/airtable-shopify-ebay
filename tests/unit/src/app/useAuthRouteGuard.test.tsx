@@ -83,6 +83,34 @@ describe('useAuthRouteGuard', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it('redirects the blank testing route to the testing queue', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/testing"
+        canAccessPage={(tab) => tab === 'testing-queue' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).toHaveBeenCalledWith('/workflow/testing', { replace: true });
+  });
+
+  it('redirects the blank photos route to the photography queue', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/photos"
+        canAccessPage={(tab) => tab === 'photography-queue' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).toHaveBeenCalledWith('/workflow/photography', { replace: true });
+  });
+
   it('redirects the retired pre-listing route away', () => {
     const navigate = vi.fn();
 

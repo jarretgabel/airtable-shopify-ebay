@@ -58,11 +58,6 @@ function makeModelSortValue(record: AirtableRecord): string {
   return `${stringFieldValue(record, 'Make')} ${stringFieldValue(record, 'Model')} ${stringFieldValue(record, 'SKU')}`.trim().toLowerCase();
 }
 
-function previewText(value: unknown): string {
-  const normalized = displayInventoryValue(value);
-  return normalized.length > 120 ? `${normalized.slice(0, 117)}...` : normalized;
-}
-
 const intakeDateFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   day: 'numeric',
@@ -386,9 +381,6 @@ export function UsedGearPendingReviewSection({
                       </div>
                       <div>
                         <span className="font-semibold text-[var(--ink)]">Offer Amount:</span> {displayInventoryValue(record.fields['Offer Amount'])}
-                      </div>
-                      <div className="sm:col-span-2">
-                        <span className="font-semibold text-[var(--ink)]">Qualification Notes:</span> {previewText(record.fields['Qualification Notes'])}
                       </div>
                     </div>
 

@@ -22,7 +22,7 @@ describe('WorkflowGuideTab', () => {
     expect(screen.getAllByText('Testing Handoff').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Photography Handoff').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Pre-List And Publish').length).toBeGreaterThan(0);
-    expect(screen.getByRole('heading', { name: 'Testing Queue And Form' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Testing Queue And Record' })).toBeInTheDocument();
     expect(screen.queryByText('Signed In')).not.toBeInTheDocument();
     expect(screen.queryByText('Pages In Your Account')).not.toBeInTheDocument();
     expect(screen.queryByText('Intake Arrives')).not.toBeInTheDocument();

@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import { PAGE_DEFINITIONS } from '@/auth/pages';
 import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { PanelSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
@@ -38,38 +40,44 @@ export function UsedGearManualIntakePage({ recordId }: UsedGearManualIntakePageP
             : 'Create used-gear intake records directly from operator knowledge when the item did not start from the shared submission flow. This surface is for first-pass record creation and routing, not broad queue browsing.'}
         />
 
-        <section className="grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,1fr)]">
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">When To Use This Page</p>
-            <div className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
-              <p className="m-0">{recordId
-                ? 'Use this page to finish or correct intake details for an accepted arrival-stage row without switching to a separate duplicate form surface.'
-                : 'Start here when the operator already has enough information to create the intake row without waiting for a Jotform submission or parking-lot review handoff.'}</p>
-              <p className="m-0">{recordId
-                ? 'The same field set now handles both first-pass manual creation and later intake edits for accepted items.'
-                : 'Pick the route inside the form based on where the item should land next. The route choice determines whether the record enters Parking Lot 1 or one of the arrival-stage Parking Lot 2 buckets.'}</p>
-              <p className="m-0">Use submission-group, pickup, and qualification notes when the manual record still needs to stay connected to a larger deal or shared intake context.</p>
+        <CollapsibleHelperText label="How to use this page" defaultExpanded={false}>
+          <section className="grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,1fr)]">
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">When To Use This Page</p>
+              <div className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
+                <p className="m-0">{recordId
+                  ? 'Use this page to finish or correct intake details for an accepted arrival-stage row without switching to a separate duplicate form surface.'
+                  : 'Start here when the operator already has enough information to create the intake row without waiting for a Jotform submission or parking-lot review handoff.'}</p>
+                <p className="m-0">{recordId
+                  ? 'The same field set now handles both first-pass manual creation and later intake edits for accepted items.'
+                  : 'Pick the route inside the form based on where the item should land next. The route choice determines whether the record enters Parking Lot 1 or one of the arrival-stage Parking Lot 2 buckets.'}</p>
+                <p className="m-0">Use submission-group, pickup, and qualification notes when the manual record still needs to stay connected to a larger deal or shared intake context.</p>
+              </div>
             </div>
+
+            <aside className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Routing Outcomes</p>
+              <div className="mt-4 space-y-3">
+                {MANUAL_ROUTE_GUIDANCE.map((route) => (
+                  <div key={route.label} className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3">
+                    <p className="m-0 text-sm font-semibold text-[var(--ink)]">{route.label}</p>
+                    <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{route.description}</p>
+                  </div>
+                ))}
+              </div>
+            </aside>
+          </section>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
+            <span>Need the full intake SOP and stage map?</span>
+            <Link
+              to={PAGE_DEFINITIONS['workflow-guide'].path}
+              className="font-semibold text-[var(--accent)] transition hover:brightness-110"
+            >
+              Open Workflow Guide
+            </Link>
           </div>
-
-          <aside className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Routing Outcomes</p>
-            <div className="mt-4 space-y-3">
-              {MANUAL_ROUTE_GUIDANCE.map((route) => (
-                <div key={route.label} className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3">
-                  <p className="m-0 text-sm font-semibold text-[var(--ink)]">{route.label}</p>
-                  <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{route.description}</p>
-                </div>
-              ))}
-            </div>
-          </aside>
-        </section>
-
-        <div className="max-w-3xl">
-          <CollapsibleHelperText label="Operator guide">
-            Manual intake is the dedicated creation surface for non-Jotform arrivals. If the item already exists in Parking Lot 1, Parking Lot 2, Testing, Photography, or Listings, open the existing workflow record instead of creating a duplicate here.
-          </CollapsibleHelperText>
-        </div>
+        </CollapsibleHelperText>
 
         <AirtableEmbeddedForm recordId={recordId} />
       </div>

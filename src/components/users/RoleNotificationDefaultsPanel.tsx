@@ -17,7 +17,7 @@ const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   admin: 'Default workflow alert subscriptions for admin users.',
   owner: 'Default workflow alerts for owners with full application and business-metrics access.',
   developer: 'Developer accounts can access dashboard and JotForm source-feed surfaces, but workflow alert defaults still do not apply.',
-  processor: 'Baseline workflow alerts for processors across intake, stage work, and publish readiness.',
+  processor: 'Baseline workflow alerts for processors across intake, processing and holding, and the Listings handoff.',
   tester: 'Default workflow alerts for testing-focused users.',
   photographer: 'Default workflow alerts for photography-focused users.',
 };

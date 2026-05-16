@@ -91,6 +91,18 @@ vi.mock('@/components/tabs/UsedGearManualIntakePage', () => ({
   UsedGearManualIntakePage: () => <div>Manual intake page</div>,
 }));
 
+vi.mock('@/components/tabs/TestingFormTab', () => ({
+  TestingFormTab: ({ recordId }: { recordId: string }) => <div>Testing form {recordId}</div>,
+}));
+
+vi.mock('@/components/tabs/PhotosFormTab', () => ({
+  PhotosFormTab: ({ recordId }: { recordId: string }) => <div>Photos form {recordId}</div>,
+}));
+
+vi.mock('@/components/tabs/UsedGearWorkflowQueueTab', () => ({
+  UsedGearWorkflowQueueTab: ({ queueMode }: { queueMode: string }) => <div>{queueMode} queue content</div>,
+}));
+
 function buildRuntimeFeatures(overrides: Partial<RuntimeFeatureMap> = {}): RuntimeFeatureMap {
   return {
     jotform: { available: true, message: null, missingEnvNames: [] },
@@ -453,5 +465,31 @@ describe('AppTabContent', () => {
     );
 
     expect(await screen.findByText('Manual intake page')).toBeInTheDocument();
+  });
+
+  it('falls back to the testing queue when no testing record id is present', async () => {
+    render(
+      <AppTabContent
+        {...buildProps({
+          activeTab: 'testing',
+          testingRecordId: null,
+        })}
+      />,
+    );
+
+    expect(await screen.findByText('testing queue content')).toBeInTheDocument();
+  });
+
+  it('falls back to the photography queue when no photos record id is present', async () => {
+    render(
+      <AppTabContent
+        {...buildProps({
+          activeTab: 'photos',
+          photosRecordId: null,
+        })}
+      />,
+    );
+
+    expect(await screen.findByText('photography queue content')).toBeInTheDocument();
   });
 });

@@ -12,10 +12,6 @@ import {
   loadWorkflowProgressQueue,
 } from '@/services/usedGearQueue';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
-import {
-  buildWorkflowProgressQueueAgingSummary,
-  formatUsedGearAgeDays,
-} from '@/services/usedGearWorkflowAging';
 import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -129,14 +125,6 @@ function getGroupHeading(description: string): string {
 }
 
 function getStageReviewLabel(status: string): string {
-  if (status === 'Awaiting Pre-Listing Review') {
-    return 'Open Listings Review';
-  }
-
-  if (status === 'Approved for Publish') {
-    return 'Open Publish Review';
-  }
-
   if (status === 'Testing and Photography In Progress') {
     return 'Open Stage Review';
   }
@@ -170,19 +158,49 @@ function getPrimaryQueueAction(
     };
   }
 
-  if (status === 'Approved for Publish') {
-    return {
-      label: 'Open Listings Approval',
-      onClick: () => handlers.onOpenListingsRecord(record.id),
-      showSecondaryAction: true,
-    };
-  }
-
   return {
     label: getStageReviewLabel(status),
     onClick: () => handlers.onOpenOperationalRecord(record.id),
     showSecondaryAction: true,
   };
+}
+
+function shouldShowPrimaryActionTag(queueMode: UsedGearWorkflowProgressQueueMode, actionLabel: string): boolean {
+  if (queueMode === 'testing' && actionLabel === 'Testing') {
+    return false;
+  }
+
+  if (queueMode === 'photography' && actionLabel === 'Photography') {
+    return false;
+  }
+
+  return true;
+}
+
+function shouldShowNextTeamDetail(queueMode: UsedGearWorkflowProgressQueueMode, nextTeamLabel: string): boolean {
+  const normalizedNextTeam = nextTeamLabel.trim().toLowerCase();
+
+  if (queueMode === 'testing' && normalizedNextTeam === 'testing') {
+    return false;
+  }
+
+  if (queueMode === 'photography' && normalizedNextTeam === 'photography') {
+    return false;
+  }
+
+  return true;
+}
+
+function shouldShowPriceReadyDetail(queueMode: UsedGearWorkflowProgressQueueMode): boolean {
+  return queueMode === 'all';
+}
+
+function shouldShowStatusLabel(queueMode: UsedGearWorkflowProgressQueueMode, status: string): boolean {
+  if (queueMode !== 'all' && status === 'Testing and Photography In Progress') {
+    return false;
+  }
+
+  return true;
 }
 
 function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): ProgressQueuePresentation {
@@ -220,16 +238,16 @@ function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): Pro
 
   return {
     eyebrow: 'Used Gear Workflow',
-    title: 'Processing And Stage Queue',
-    description: 'Manage accepted intake rows through processing and concurrent testing and photography. Related rows stay grouped by pickup or submission.',
-    emptyTitle: 'No active operational rows in processing',
-    emptyMessage: 'The used-gear queue currently has no accepted rows in processing or concurrent stage work.',
-    emptyGuidance: 'Next route: review Parking Lot 2 for newly accepted arrivals, or open Listings if the next work item is already approved for publish.',
+    title: 'Processing And Holding Queue',
+    description: 'Manage accepted intake rows through arrival handling, processing, and the shared downstream testing-and-photography holding stage. Related rows stay grouped by pickup or submission.',
+    emptyTitle: 'No active operational rows in processing or holding',
+    emptyMessage: 'The used-gear queue currently has no accepted rows still moving through arrival, processing, or concurrent testing and photography work.',
+    emptyGuidance: 'Next route: review Parking Lot 2 for newly accepted arrivals, or open Listings for rows that have already reached listing-phase review.',
     copySuccessTitle: 'Queue link copied',
-    copySuccessMessage: 'The processing and stage queue link is ready to share.',
-    copyUnavailableMessage: 'This browser cannot copy the processing and stage queue link automatically.',
-    copyFailureMessage: 'The processing and stage queue link could not be copied. Try again or copy the URL from the browser address bar.',
-    sharedFocusMessage: 'Shared link opened the progress queue focused on one grouped submission.',
+    copySuccessMessage: 'The processing and holding queue link is ready to share.',
+    copyUnavailableMessage: 'This browser cannot copy the processing and holding queue link automatically.',
+    copyFailureMessage: 'The processing and holding queue link could not be copied. Try again or copy the URL from the browser address bar.',
+    sharedFocusMessage: 'Shared link opened the processing and holding queue focused on one grouped submission.',
   };
 }
 
@@ -338,7 +356,6 @@ export function UsedGearWorkflowProgressSection({
     () => (focusedGroupId ? groupedRecords.filter((group) => group.id === focusedGroupId) : groupedRecords),
     [focusedGroupId, groupedRecords],
   );
-  const agingSummary = useMemo(() => buildWorkflowProgressQueueAgingSummary(filteredRecords), [filteredRecords]);
   const refreshQueue = async () => {
     setRefreshing(true);
     setError(null);
@@ -379,7 +396,7 @@ export function UsedGearWorkflowProgressSection({
             <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{queuePresentation.title}</h3>
             <div className="mt-3 max-w-2xl">
               <CollapsibleHelperText label="Queue guide">
-                Keep this queue focused on the next handoff. Open the operational record for detailed stage actions.
+                Keep this queue focused on accepted rows that still belong to arrival handling, processing, or the shared testing-and-photography holding stage. Listings takes over once both concurrent signoffs are complete.
               </CollapsibleHelperText>
             </div>
           </div>
@@ -401,8 +418,8 @@ export function UsedGearWorkflowProgressSection({
               }}
               disabled={refreshing}
               loading={refreshing}
-              label="Refresh workflow progress queue"
-              loadingLabel="Refreshing workflow progress queue"
+              label="Refresh workflow processing and holding queue"
+              loadingLabel="Refreshing workflow processing and holding queue"
             />
             <div className="relative h-10 w-10 shrink-0">
               <div
@@ -419,7 +436,7 @@ export function UsedGearWorkflowProgressSection({
                 </svg>
               </div>
               <select
-                aria-label={`Sort used gear progress queue. Current order: ${getWorkflowProgressSortLabel(sortMode)}`}
+                aria-label={`Sort used gear processing and holding queue. Current order: ${getWorkflowProgressSortLabel(sortMode)}`}
                 className="absolute inset-0 h-10 w-10 cursor-pointer opacity-0"
                 value={sortMode}
                 onChange={(event) => handleSortModeChange(event.currentTarget.value as UsedGearWorkflowProgressSortMode)}
@@ -439,16 +456,6 @@ export function UsedGearWorkflowProgressSection({
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
-        Visible Rows: <span className="font-semibold text-[var(--ink)]">{filteredRecords.length}</span>
-        {' · '}
-        Visible Sets: <span className="font-semibold text-[var(--ink)]">{groupedRecords.length}</span>
-        {' · '}
-        5+ Days In Stage: <span className="font-semibold text-[var(--ink)]">{agingSummary.alertCount}</span>
-        {' · '}
-        Oldest Active Stage: <span className="font-semibold text-[var(--ink)]">{formatUsedGearAgeDays(agingSummary.oldestAgeDays)}</span>
-      </div>
-
       {!loading && groupedRecords.length === 0 ? (
         <EmptySurface title={queuePresentation.emptyTitle} message={queuePresentation.emptyMessage}>
           <p className="mt-3 text-sm text-[var(--muted)]">
@@ -466,7 +473,7 @@ export function UsedGearWorkflowProgressSection({
       <div className="space-y-4">
         {loading ? (
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-sm text-[var(--muted)]">
-            Loading used-gear progress queue...
+            Loading used-gear processing and holding queue...
           </div>
         ) : visibleGroups.map((group) => {
           return (
@@ -506,6 +513,8 @@ export function UsedGearWorkflowProgressSection({
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
               {group.records.map((record) => {
                 const status = getUsedGearWorkflowStatus(record.fields) ?? 'Unknown';
+                const primaryActionTag = getUsedGearWorkflowPrimaryAction(record);
+                const nextTeamLabel = displayInventoryValue(record.fields['Workflow Next Team']);
                 const primaryAction = getPrimaryQueueAction(queueMode, record, {
                   onOpenTestingForm,
                   onOpenPhotosForm,
@@ -517,23 +526,31 @@ export function UsedGearWorkflowProgressSection({
                   <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{status}</p>
+                        {shouldShowStatusLabel(queueMode, status) ? (
+                          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{status}</p>
+                        ) : null}
                         <h5 className="mt-1 text-lg font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</h5>
                         <p className="mt-1 text-sm text-[var(--muted)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</p>
                       </div>
-                      <div className="inline-flex w-fit max-w-full items-center rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-[11px] font-semibold leading-4 text-[var(--muted)] sm:shrink-0">
-                        {getUsedGearWorkflowPrimaryAction(record)}
-                      </div>
+                      {shouldShowPrimaryActionTag(queueMode, primaryActionTag) ? (
+                        <div className="inline-flex w-fit max-w-full items-center rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-[11px] font-semibold leading-4 text-[var(--muted)] sm:shrink-0">
+                          {primaryActionTag}
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="mt-3 grid gap-2 text-sm text-[var(--muted)] sm:grid-cols-2">
                       <div>
                         <span className="font-semibold text-[var(--ink)]">Intake Date:</span> {formatIntakeDate(record)}
                       </div>
-                      <div>Next Team: {displayInventoryValue(record.fields['Workflow Next Team'])}</div>
-                      <div>
-                        Price Ready: {getUsedGearWorkflowListingReadiness(record).price ? 'Yes' : 'No'}
-                      </div>
+                      {shouldShowNextTeamDetail(queueMode, nextTeamLabel) ? (
+                        <div>Next Team: {nextTeamLabel}</div>
+                      ) : null}
+                      {shouldShowPriceReadyDetail(queueMode) ? (
+                        <div>
+                          Price Ready: {getUsedGearWorkflowListingReadiness(record).price ? 'Yes' : 'No'}
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="mt-4 flex flex-wrap gap-2">

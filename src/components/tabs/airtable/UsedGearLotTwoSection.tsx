@@ -372,9 +372,6 @@ export function UsedGearLotTwoSection({
                       <span className="font-semibold text-[var(--ink)]">Intake Date:</span> {formatIntakeDate(record)}
                     </div>
                     <div>
-                      <span className="font-semibold text-[var(--ink)]">Qualification Notes:</span> {displayInventoryValue(record.fields['Qualification Notes'])}
-                    </div>
-                    <div>
                       <span className="font-semibold text-[var(--ink)]">Offer Amount:</span> {displayInventoryValue(record.fields['Offer Amount'])}
                     </div>
                     <div>

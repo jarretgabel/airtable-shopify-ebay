@@ -23,33 +23,33 @@ export const ASSIGNABLE_USER_ROLE_OPTIONS: Array<{ value: AssignableUserRole; la
 export const USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS = [
   {
     key: 'pendingReview',
-    label: 'Pending review queue',
-    description: 'Rows waiting for initial purchasing review.',
+    label: 'Intake review queue',
+    description: 'Rows waiting in Parking Lot 1 for initial purchasing review.',
   },
   {
     key: 'processing',
-    label: 'Processing queue',
-    description: 'Accepted rows waiting for processing handoff.',
+    label: 'Processing and holding queue',
+    description: 'Accepted rows waiting across arrival, processing, and shared stage work before Listings.',
   },
   {
     key: 'testing',
-    label: 'Testing stage',
-    description: 'Rows waiting for testing signoff.',
+    label: 'Testing queue',
+    description: 'Rows still waiting for testing signoff in the shared stage.',
   },
   {
     key: 'photography',
-    label: 'Photography stage',
-    description: 'Rows waiting for photography signoff.',
+    label: 'Photography queue',
+    description: 'Rows still waiting for photography signoff in the shared stage.',
   },
   {
     key: 'preListingReview',
-    label: 'Pre-listing review',
-    description: 'Rows ready for pre-listing review approval.',
+    label: 'Listings pre-listing review',
+    description: 'Rows that have cleared processing and are now ready in Listings for final review.',
   },
   {
     key: 'approvedForPublish',
-    label: 'Approved for publish',
-    description: 'Rows cleared for listing and publish readiness.',
+    label: 'Listings approved for publish',
+    description: 'Rows already approved in Listings and ready for channel listing work.',
   },
 ] as const;
 

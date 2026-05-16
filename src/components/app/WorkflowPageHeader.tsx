@@ -19,7 +19,7 @@ export function WorkflowPageHeader({
   actions,
 }: WorkflowPageHeaderProps) {
   return (
-    <section className="rounded-2xl border border-[var(--line)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--panel)_96%,transparent),color-mix(in_srgb,var(--bg)_88%,transparent))] px-5 py-5 shadow-[0_20px_45px_rgba(2,6,23,0.18)]">
+    <section className="py-1">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-3xl">
           <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{eyebrow}</p>

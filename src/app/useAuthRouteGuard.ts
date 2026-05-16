@@ -41,6 +41,16 @@ export function useAuthRouteGuard({
       return;
     }
 
+    if (normalizedPath === '/testing') {
+      navigate(canAccessPage('testing-queue') ? TAB_PATHS['testing-queue'] : TAB_PATHS[firstAccessibleTab], { replace: true });
+      return;
+    }
+
+    if (normalizedPath === '/photos') {
+      navigate(canAccessPage('photography-queue') ? TAB_PATHS['photography-queue'] : TAB_PATHS[firstAccessibleTab], { replace: true });
+      return;
+    }
+
     const isKnownTabPath = isTab(normalizedPath.slice(1));
     const isJotformReviewRecordPath = /^\/parking-lot-1\/review-record\/[^/]+$/.test(normalizedPath);
     const isTrashReviewRecordPath = /^\/trash-review\/review\/[^/]+$/.test(normalizedPath);
@@ -72,9 +82,7 @@ export function useAuthRouteGuard({
       normalizedPath === '/parking-lot-1' ||
       /^\/parking-lot-1\/review\/[^/]+$/.test(normalizedPath) ||
       isJotformReviewRecordPath ||
-      normalizedPath === '/testing' ||
       isTestingDetailPath ||
-      normalizedPath === '/photos' ||
       isPhotosDetailPath ||
       normalizedPath === '/shopify/products' ||
       isShopifyProductsDetailPath ||
@@ -109,9 +117,9 @@ export function useAuthRouteGuard({
                 ? 'manual-intake'
               : isManualIntakeDetailPath
                 ? 'manual-intake'
-              : normalizedPath === '/testing' || isTestingDetailPath
+              : isTestingDetailPath
                 ? 'testing'
-              : normalizedPath === '/photos' || isPhotosDetailPath
+              : isPhotosDetailPath
                 ? 'photos'
               : normalizedPath === '/inventory' || isInventoryPriceEditorPath || isInventoryDetailPath
                 ? 'inventory'

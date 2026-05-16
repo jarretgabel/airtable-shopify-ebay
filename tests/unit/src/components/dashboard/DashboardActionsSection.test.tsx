@@ -226,12 +226,15 @@ describe('DashboardActionsSection', () => {
 
     expect(screen.getByText('2 pending review')).toBeInTheDocument();
     expect(screen.getByText('2 processing blockers')).toBeInTheDocument();
+    expect(screen.getByText('2 listing-phase rows')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /2 pending review/i }));
     fireEvent.click(screen.getByRole('button', { name: /2 processing blockers/i }));
+    fireEvent.click(screen.getByRole('button', { name: /2 listing-phase rows/i }));
 
     expect(onSelectTab).toHaveBeenNthCalledWith(1, 'parking-lot-1');
     expect(onSelectTab).toHaveBeenNthCalledWith(2, 'inventory');
+    expect(onSelectTab).toHaveBeenNthCalledWith(3, 'listings');
   });
 
   it('gives tester dashboards queue actions instead of an empty action rail', () => {
@@ -277,7 +280,52 @@ describe('DashboardActionsSection', () => {
     fireEvent.click(screen.getByRole('button', { name: /2 testing items aging/i }));
 
     expect(onSelectTab).toHaveBeenNthCalledWith(1, 'testing-queue');
-    expect(onSelectTab).toHaveBeenNthCalledWith(2, 'testing');
+    expect(onSelectTab).toHaveBeenNthCalledWith(2, 'testing-queue');
+  });
+
+  it('gives photographer dashboards queue-aging actions instead of record-form shortcuts', () => {
+    const onSelectTab = vi.fn();
+
+    render(
+      <DashboardActionsSection
+        accessiblePages={['dashboard', 'photography-queue']}
+        currentUserRole="photographer"
+        currentUserName="Taylor Reviewer"
+        ebayAuthenticated={false}
+        ebayDraftCount={0}
+        ebayPublishedCount={0}
+        ebayTotal={0}
+        shopifyQueueApproved={0}
+        shopifyQueuePending={0}
+        shopifyQueueTotal={0}
+        workflowPostPublishLoading={false}
+        workflowAnalytics={buildWorkflowAnalyticsOverrides()}
+        workflowActiveListingCount={0}
+        workflowStaleListingCount={0}
+        workflowStaleListingMineCount={0}
+        workflowStaleListingUnassignedCount={0}
+        workflowSoldReadyCount={0}
+        workflowSoldReadyMineCount={0}
+        workflowSoldReadyUnassignedCount={0}
+        workflowShippedCount={0}
+        workflowPendingReviewOldestGroupId={null}
+        workflowPendingReviewOldestGroupLabel={null}
+        workflowProgressOldestGroupId={null}
+        workflowProgressOldestGroupLabel={null}
+        onSelectTab={onSelectTab}
+        onOpenInventoryWorkflowView={vi.fn()}
+        onOpenInventoryPostPublishBucket={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('4 waiting on photos')).toBeInTheDocument();
+    expect(screen.getByText('2 photo items aging')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /4 waiting on photos/i }));
+    fireEvent.click(screen.getByRole('button', { name: /2 photo items aging/i }));
+
+    expect(onSelectTab).toHaveBeenNthCalledWith(1, 'photography-queue');
+    expect(onSelectTab).toHaveBeenNthCalledWith(2, 'photography-queue');
   });
 
   it('routes sold-ready and stale listing dashboard actions into post-publish buckets', () => {

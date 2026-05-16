@@ -78,11 +78,11 @@ describe('usedGearWorkflowAnalytics', () => {
     expect(snapshot.totalCount).toBe(8);
     expect(snapshot.pendingReviewCount).toBe(1);
     expect(snapshot.trashCount).toBe(1);
-    expect(snapshot.progressCount).toBe(2);
+    expect(snapshot.progressCount).toBe(1);
     expect(snapshot.postPublishCount).toBe(4);
     expect(snapshot.ownership.pendingReviewMineCount).toBe(1);
     expect(snapshot.ownership.pendingReviewUnassignedCount).toBe(0);
-    expect(snapshot.ownership.progressMineCount).toBe(1);
+    expect(snapshot.ownership.progressMineCount).toBe(0);
     expect(snapshot.ownership.progressUnassignedCount).toBe(1);
     expect(snapshot.statusCounts['Approved for Publish']).toBe(1);
     expect(snapshot.marketplace.shopifyLiveCount).toBe(1);

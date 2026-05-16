@@ -139,7 +139,7 @@ export function InventoryRecordEditorPage({ recordId, onBackToDirectory }: Inven
     <>
       <PanelSurface>
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+        <div>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SB Inventory</p>

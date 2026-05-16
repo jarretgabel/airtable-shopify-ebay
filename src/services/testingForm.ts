@@ -1,5 +1,4 @@
 import {
-  createConfiguredRecord,
   getConfiguredRecord,
   getConfiguredFieldMetadata,
   updateConfiguredRecord,
@@ -10,6 +9,13 @@ import { createServiceError, type ServiceError } from '@/services/serviceErrors'
 import { createTestingFormDefaults, type TestingFormOptionFieldName, type TestingFormValues } from '@/components/tabs/testing/testingFormSchema';
 import { resolveCurrentActorName } from '@/services/currentUserAudit';
 import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
+import {
+  buildUsedGearConcurrentStageSignoffs,
+  canEnterAwaitingPreListingReview,
+  getUsedGearWorkflowStatus,
+  isAcceptedUsedGearWorkflowStatus,
+  USED_GEAR_WORKFLOW_STATUS_FIELD,
+} from '@/services/usedGearWorkflow';
 import type { AirtableRecord } from '@/types/airtable';
 import {
   filterWorkflowAttachmentsByStage,
@@ -66,6 +72,38 @@ export interface TestingFormSubmitResult {
   recordId: string;
   sku: string;
   action: 'created' | 'updated';
+}
+
+function buildWorkflowTestingFields(record: AirtableRecord, actorName: string | null, testedAt: string): Record<string, unknown> {
+  const signoffFields = compactFields({
+    'Testing Signed At': testedAt,
+    'Testing Signed By': actorName ?? undefined,
+  });
+  const currentStatus = getUsedGearWorkflowStatus(record.fields);
+
+  if (currentStatus !== 'Testing and Photography In Progress') {
+    return signoffFields;
+  }
+
+  const nextSignoffs = buildUsedGearConcurrentStageSignoffs({
+    ...record.fields,
+    ...signoffFields,
+  });
+
+  if (canEnterAwaitingPreListingReview(nextSignoffs)) {
+    return {
+      ...signoffFields,
+      [USED_GEAR_WORKFLOW_STATUS_FIELD]: 'Awaiting Pre-Listing Review',
+      'Awaiting Pre-Listing Review At': typeof record.fields['Awaiting Pre-Listing Review At'] === 'string' && record.fields['Awaiting Pre-Listing Review At'].trim().length > 0
+        ? record.fields['Awaiting Pre-Listing Review At']
+        : testedAt,
+    };
+  }
+
+  return {
+    ...signoffFields,
+    [USED_GEAR_WORKFLOW_STATUS_FIELD]: 'Testing and Photography In Progress',
+  };
 }
 
 function dedupeOptions(values: string[]): string[] {
@@ -130,23 +168,11 @@ async function updateRecordWithWorkflowImageMetadataFallback(
   }
 }
 
-async function createRecordWithWorkflowImageMetadataFallback(
-  fields: Record<string, unknown>,
-): Promise<AirtableRecord> {
-  try {
-    return await createConfiguredRecord('inventory-directory', fields, { typecast: true });
-  } catch (error) {
-    if (WORKFLOW_IMAGE_METADATA_FIELD_NAME in fields && isUnknownFieldNameError(error, WORKFLOW_IMAGE_METADATA_FIELD_NAME)) {
-      return createConfiguredRecord('inventory-directory', omitWorkflowImageMetadataField(fields), { typecast: true });
-    }
+function assertApprovedTestingWorkflowRecord(record: AirtableRecord): void {
+  const workflowStatus = getUsedGearWorkflowStatus(record.fields);
 
-    throw error;
-  }
-}
-
-async function uploadTestingImages(recordId: string, files: File[]): Promise<void> {
-  for (const file of files) {
-    await uploadConfiguredAttachment('inventory-directory', recordId, IMAGE_ATTACHMENT_FIELD_ID, file);
+  if (!workflowStatus || !isAcceptedUsedGearWorkflowStatus(workflowStatus)) {
+    throw new Error('Testing is available only for workflow items that have already been approved for intake.');
   }
 }
 
@@ -185,13 +211,9 @@ async function syncWorkflowImageMetadataForRecord(params: {
 }
 
 async function loadConfiguredTestingRecord(recordId: string): Promise<{ source: TestingFormRecordSource; record: AirtableRecord }> {
-  try {
-    const workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
-    return { source: 'used-gear-workflow', record: workflowRecord };
-  } catch {
-    const inventoryRecord = await getConfiguredRecord('inventory-directory', recordId);
-    return { source: 'inventory-directory', record: inventoryRecord };
-  }
+  const workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
+  assertApprovedTestingWorkflowRecord(workflowRecord);
+  return { source: 'used-gear-workflow', record: workflowRecord };
 }
 
 function extractAttachments(value: unknown): TestingFormContextAttachment[] {
@@ -341,99 +363,78 @@ export async function submitTestingForm(
   recordId?: string | null,
   options: { recordSource?: TestingFormRecordSource; imageMetadata?: WorkflowImageMetadataRecord[] } = {},
 ): Promise<TestingFormSubmitResult> {
-  const costValue = trimToUndefined(values.cost);
-  const testingTimeMinutes = trimToUndefined(values.testingTimeMinutes);
-  const serviceTimeMinutes = trimToUndefined(values.serviceTimeMinutes);
   const recordSource = options.recordSource ?? 'inventory-directory';
   const actorName = resolveCurrentActorName();
   const testedAt = new Date().toISOString();
-  const workflowTestingAuditFields = recordSource === 'used-gear-workflow'
-    ? compactFields({
-        'Testing Signed At': testedAt,
-        'Testing Signed By': actorName ?? undefined,
-      })
-    : {};
-  const baseFields = compactFields({
-    SKU: trimToUndefined(values.sku),
-    'Arrival Date': trimToUndefined(values.arrivalDate),
-    'Acquired From': trimToUndefined(values.acquiredFrom),
-    Make: trimToUndefined(values.make),
-    Model: trimToUndefined(values.model),
-    'Component Type': arrayOrUndefined(values.componentType),
-    Cost: costValue ? Number.parseFloat(costValue) : undefined,
-    'Inventory Notes': trimToUndefined(values.inventoryNotes),
-    'Serial Number': trimToUndefined(values.serialNumber),
-    Voltage: trimToUndefined(values.voltage),
-    'Audiogon Rating': trimToUndefined(values.audiogonRating),
-    'Cosmetic Condition Notes': trimToUndefined(values.cosmeticConditionNotes),
-    'Original Box': arrayOrUndefined(values.originalBox),
-    Manual: arrayOrUndefined(values.manual),
-    Remote: arrayOrUndefined(values.remote),
-    'Power Cable': arrayOrUndefined(values.powerCable),
-    'Additional Items': trimToUndefined(values.additionalItems),
-    'Shipping Weight': trimToUndefined(values.shippingWeight),
-    'Shipping Dims': trimToUndefined(values.shippingDims),
-    'Shipping Method': arrayOrUndefined(values.shippingMethod),
-    'Testing Notes': trimToUndefined(values.testingNotes),
-    'Testing Time': testingTimeMinutes ? Number.parseFloat(testingTimeMinutes) * 60 : undefined,
-    'Service Notes': trimToUndefined(values.serviceNotes),
-    'Service Time': serviceTimeMinutes ? Number.parseFloat(serviceTimeMinutes) * 60 : undefined,
-    Tested: trimToUndefined(values.testingDate),
-    Status: trimToUndefined(values.status),
-    [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata ? serializeWorkflowImageMetadata(options.imageMetadata) : undefined,
-    ...workflowTestingAuditFields,
-  });
 
   try {
-    if (recordId) {
-      const updatedRecord = await updateRecordWithWorkflowImageMetadataFallback(recordSource, recordId, baseFields);
-
-      if (values.imageFiles.length > 0) {
-        for (const file of values.imageFiles) {
-          await uploadConfiguredAttachment(recordSource, updatedRecord.id, IMAGE_ATTACHMENT_FIELD_ID, file);
-        }
-      }
-
-      if (options.imageMetadata) {
-        await syncWorkflowImageMetadataForRecord({
-          recordSource,
-          recordId: updatedRecord.id,
-          existingMetadata: options.imageMetadata,
-        });
-      }
-
-      return {
-        recordId: updatedRecord.id,
-        sku: values.sku,
-        action: 'updated',
-      };
+    if (!recordId || recordSource !== 'used-gear-workflow') {
+      throw new Error('Testing forms require an approved workflow item and cannot be opened as a blank or inventory-only form.');
     }
 
-    const createdRecord = await createRecordWithWorkflowImageMetadataFallback(baseFields);
+    const workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
+    assertApprovedTestingWorkflowRecord(workflowRecord);
+    const costValue = trimToUndefined(values.cost);
+    const testingTimeMinutes = trimToUndefined(values.testingTimeMinutes);
+    const serviceTimeMinutes = trimToUndefined(values.serviceTimeMinutes);
+    const baseFields = compactFields({
+      SKU: trimToUndefined(values.sku),
+      'Arrival Date': trimToUndefined(values.arrivalDate),
+      'Acquired From': trimToUndefined(values.acquiredFrom),
+      Make: trimToUndefined(values.make),
+      Model: trimToUndefined(values.model),
+      'Component Type': arrayOrUndefined(values.componentType),
+      Cost: costValue ? Number.parseFloat(costValue) : undefined,
+      'Inventory Notes': trimToUndefined(values.inventoryNotes),
+      'Serial Number': trimToUndefined(values.serialNumber),
+      Voltage: trimToUndefined(values.voltage),
+      'Audiogon Rating': trimToUndefined(values.audiogonRating),
+      'Cosmetic Condition Notes': trimToUndefined(values.cosmeticConditionNotes),
+      'Original Box': arrayOrUndefined(values.originalBox),
+      Manual: arrayOrUndefined(values.manual),
+      Remote: arrayOrUndefined(values.remote),
+      'Power Cable': arrayOrUndefined(values.powerCable),
+      'Additional Items': trimToUndefined(values.additionalItems),
+      'Shipping Weight': trimToUndefined(values.shippingWeight),
+      'Shipping Dims': trimToUndefined(values.shippingDims),
+      'Shipping Method': arrayOrUndefined(values.shippingMethod),
+      'Testing Notes': trimToUndefined(values.testingNotes),
+      'Testing Time': testingTimeMinutes ? Number.parseFloat(testingTimeMinutes) * 60 : undefined,
+      'Service Notes': trimToUndefined(values.serviceNotes),
+      'Service Time': serviceTimeMinutes ? Number.parseFloat(serviceTimeMinutes) * 60 : undefined,
+      Tested: trimToUndefined(values.testingDate),
+      Status: trimToUndefined(values.status),
+      [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata ? serializeWorkflowImageMetadata(options.imageMetadata) : undefined,
+      ...buildWorkflowTestingFields(workflowRecord, actorName, testedAt),
+    });
+
+    const updatedRecord = await updateRecordWithWorkflowImageMetadataFallback(recordSource, recordId, baseFields);
 
     if (values.imageFiles.length > 0) {
-      await uploadTestingImages(createdRecord.id, values.imageFiles);
+      for (const file of values.imageFiles) {
+        await uploadConfiguredAttachment(recordSource, updatedRecord.id, IMAGE_ATTACHMENT_FIELD_ID, file);
+    }
     }
 
     if (options.imageMetadata) {
       await syncWorkflowImageMetadataForRecord({
-        recordSource: 'inventory-directory',
-        recordId: createdRecord.id,
+        recordSource,
+        recordId: updatedRecord.id,
         existingMetadata: options.imageMetadata,
       });
     }
 
     return {
-      recordId: createdRecord.id,
+      recordId: updatedRecord.id,
       sku: values.sku,
-      action: 'created',
+      action: 'updated',
     };
   } catch (error) {
-    logServiceError('testingForm', `Error ${recordId ? 'updating' : 'creating'} Testing form submission`, error);
+    logServiceError('testingForm', 'Error updating Testing form submission', error);
     const serviceError = createServiceError({
       service: 'testingForm',
-      code: recordId ? 'TESTING_FORM_UPDATE_FAILED' : 'TESTING_FORM_SUBMIT_FAILED',
-      userMessage: recordId ? 'Unable to update the Testing fields for this inventory record.' : 'Unable to submit the Testing form to Airtable.',
+      code: 'TESTING_FORM_UPDATE_FAILED',
+      userMessage: 'Unable to update the Testing fields for this workflow item.',
       retryable: true,
       cause: error,
     });

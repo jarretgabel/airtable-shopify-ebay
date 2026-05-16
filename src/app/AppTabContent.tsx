@@ -203,9 +203,9 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
     case 'manual-intake':
       return 'manual intake';
     case 'testing':
-      return 'testing form';
+      return 'testing record';
     case 'photos':
-      return 'photos form';
+      return 'photos record';
     case 'listings':
       return 'combined listings';
     default:
@@ -564,9 +564,35 @@ export function AppTabContent({
       case 'manual-intake':
         return <UsedGearManualIntakePage recordId={deferredRouteState.manualIntakeRecordId} />;
       case 'testing':
-        return <TestingFormTab recordId={deferredRouteState.testingRecordId} onBackToDirectory={() => navigateToInventoryList()} />;
+        if (!deferredRouteState.testingRecordId) {
+          return (
+            <UsedGearWorkflowQueueTab
+              queueMode="testing"
+              currentUserName={currentUserName}
+              onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
+              onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
+              onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
+              onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
+              onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
+            />
+          );
+        }
+        return <TestingFormTab recordId={deferredRouteState.testingRecordId} onBackToDirectory={() => navigateToTab('testing-queue')} />;
       case 'photos':
-        return <PhotosFormTab recordId={deferredRouteState.photosRecordId} onBackToDirectory={() => navigateToInventoryList()} />;
+        if (!deferredRouteState.photosRecordId) {
+          return (
+            <UsedGearWorkflowQueueTab
+              queueMode="photography"
+              currentUserName={currentUserName}
+              onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
+              onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
+              onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
+              onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
+              onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
+            />
+          );
+        }
+        return <PhotosFormTab recordId={deferredRouteState.photosRecordId} onBackToDirectory={() => navigateToTab('photography-queue')} />;
       case 'parking-lot-1':
         if (deferredRouteState.jotformReviewGroupId) {
           return (

@@ -2,6 +2,14 @@
 
 This guide is the day-to-day reference for operators using the in-app used-gear workflow.
 
+## Primary Navigation Order
+
+- Workflow surfaces now follow `Intake > Processing > Listing` in the app shell.
+- Use Intake for qualification, arrival routing, and manual-entry creation.
+- Use Processing for the workflow hub plus dedicated Testing and Photography work discovery and form completion.
+- Use Listings only after both concurrent signoffs are complete and the row has entered `Awaiting Pre-Listing Review`.
+- Utility pages such as Workflow Guide, HiFi Shark, and Image Lab remain outside that operational sequence.
+
 ## Inventory Workflow Shell
 
 ### Inventory Workflow Bar
@@ -162,6 +170,7 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
   - resolved title and price look correct before final publish
   - successful publish updates the authoritative workflow row automatically
   - grouped submission context, audit fields, and post-publish notes stay aligned with the authoritative workflow row
+  - the selected-record page now acts as the former pre-listing review home, so blocker messaging, reviewer confirmation, and approve-for-publish actions all stay on this same Listings surface
 
 ## Suggested Daily Flow
 1. Start in Pending Review for new intake.

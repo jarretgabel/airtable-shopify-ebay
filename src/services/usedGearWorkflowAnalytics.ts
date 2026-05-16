@@ -31,8 +31,6 @@ const PROGRESS_STATUSES = new Set<UsedGearWorkflowStatus>([
   'Accepted - Arrived, Awaiting SKU',
   'Accepted - Arrived, Awaiting Missing Item',
   'Testing and Photography In Progress',
-  'Awaiting Pre-Listing Review',
-  'Approved for Publish',
 ]);
 
 const POST_PUBLISH_STATUSES = new Set<UsedGearWorkflowStatus>([

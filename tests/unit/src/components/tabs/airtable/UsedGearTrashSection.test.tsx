@@ -127,6 +127,9 @@ describe('UsedGearTrashSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open Review' }));
 
     expect(onOpenReviewRecord).toHaveBeenCalledWith('rec-trash');
+    expect(screen.queryByText(/Qualification Notes:/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Pricing Gate:/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Offer Amount:/i)).not.toBeInTheDocument();
   });
 
   it('labels ungrouped trash records as single items', async () => {

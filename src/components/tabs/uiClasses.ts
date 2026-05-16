@@ -1,4 +1,4 @@
-export const panelSurfaceClass = 'mt-3 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4';
+export const panelSurfaceClass = 'mt-3';
 export const errorSurfaceClass = 'mt-3 rounded-[14px] border border-[#f7c8c4] bg-[var(--error-bg)] p-4';
 export const loadingSurfaceClass = 'mt-3 flex items-center gap-3 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4 text-[var(--muted)]';
 export const emptySurfaceClass = 'mt-3 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4 text-center text-[var(--muted)]';

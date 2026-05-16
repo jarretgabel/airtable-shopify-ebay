@@ -49,6 +49,7 @@ describe('testingForm', () => {
     vi.mocked(getConfiguredRecord).mockImplementation(async (source) => {
       if (source === 'used-gear-workflow') {
         return buildRecord({
+          'Workflow Status': 'Testing and Photography In Progress',
           SKU: 'SKU-100',
           'Arrival Date': '2026-04-01T00:00:00.000Z',
           'Acquired From': 'Walk-in seller',
@@ -157,24 +158,19 @@ describe('testingForm', () => {
     });
   });
 
-  it('falls back to the inventory source when the workflow source lookup fails', async () => {
-    vi.mocked(getConfiguredRecord)
-      .mockRejectedValueOnce(new Error('not in workflow'))
-      .mockResolvedValueOnce(buildRecord({
+  it('rejects records that are not approved workflow intake items', async () => {
+    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
       SKU: 'SKU-100',
       Make: 'Luxman',
       Model: 'L-507',
       'Component Type': ['Amplifier'],
-      Status: 'Needs Initial Processing',
+      'Workflow Status': 'Pending Review',
     }));
 
-    const result = await loadTestingFormValues('recTesting123');
-
-    expect(result.source).toBe('inventory-directory');
-    expect(result.values.make).toBe('Luxman');
+    await expect(loadTestingFormValues('recTesting123')).rejects.toThrow('Unable to load the selected inventory record into Testing.');
   });
 
-  it('submits every non-file Testing schema field and uploads images', async () => {
+  it('submits every non-file Testing schema field and uploads images for workflow-owned rows', async () => {
     const values: TestingFormValues = {
       sku: 'SKU-100',
       arrivalDate: '2026-04-01',
@@ -205,13 +201,18 @@ describe('testingForm', () => {
       status: 'Tested',
     };
 
+    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
+      'Workflow Status': 'Testing and Photography In Progress',
+      'Photography Signed At': '2026-05-04T12:00:00.000Z',
+      'Photography Signed By': 'Phoebe Photographer',
+    }));
     vi.mocked(updateConfiguredRecord).mockResolvedValue({
       id: 'recTesting123',
       createdTime: '2026-05-05T12:00:00.000Z',
       fields: {},
     });
 
-    const result = await submitTestingForm(values, 'recTesting123');
+    const result = await submitTestingForm(values, 'recTesting123', { recordSource: 'used-gear-workflow' });
 
     expect(result).toEqual({
       recordId: 'recTesting123',
@@ -221,9 +222,9 @@ describe('testingForm', () => {
 
     expect(createConfiguredRecord).not.toHaveBeenCalled();
     expect(updateConfiguredRecord).toHaveBeenCalledWith(
-      'inventory-directory',
+      'used-gear-workflow',
       'recTesting123',
-      {
+      expect.objectContaining({
         SKU: 'SKU-100',
         'Arrival Date': '2026-04-01',
         'Acquired From': 'Walk-in seller',
@@ -250,7 +251,11 @@ describe('testingForm', () => {
         'Service Time': 1800,
         Tested: '2026-04-05',
         Status: 'Tested',
-      },
+        'Workflow Status': 'Awaiting Pre-Listing Review',
+        'Awaiting Pre-Listing Review At': expect.any(String),
+        'Testing Signed At': expect.any(String),
+        'Testing Signed By': 'Taylor Reviewer',
+      }),
       { typecast: true },
     );
 
@@ -259,15 +264,56 @@ describe('testingForm', () => {
       testingFormFields
         .filter((field) => field.type !== 'file')
         .map((field) => field.airtableFieldName)
+        .concat([
+          'Awaiting Pre-Listing Review At',
+          'Testing Signed At',
+          'Testing Signed By',
+          'Workflow Status',
+        ])
         .sort(),
     );
 
     expect(uploadConfiguredAttachment).toHaveBeenCalledWith(
-      'inventory-directory',
+      'used-gear-workflow',
       'recTesting123',
       'fldMXp0EaUHGglU8M',
       values.imageFiles[0],
     );
+  });
+
+  it('rejects testing updates when no workflow record id is provided', async () => {
+    const values: TestingFormValues = {
+      sku: 'SKU-100',
+      arrivalDate: '',
+      acquiredFrom: '',
+      make: 'McIntosh',
+      model: 'MC275',
+      componentType: 'Amplifier',
+      cost: '',
+      inventoryNotes: '',
+      serialNumber: '',
+      voltage: '',
+      audiogonRating: '',
+      cosmeticConditionNotes: '',
+      originalBox: '',
+      manual: '',
+      remote: '',
+      powerCable: '',
+      additionalItems: '',
+      shippingWeight: '',
+      shippingDims: '',
+      shippingMethod: '',
+      imageFiles: [],
+      testingNotes: '',
+      testingTimeMinutes: '',
+      serviceNotes: '',
+      serviceTimeMinutes: '',
+      testingDate: '2026-04-05',
+      status: 'Tested',
+    };
+
+    await expect(submitTestingForm(values)).rejects.toThrow('Unable to update the Testing fields for this workflow item.');
+    expect(updateConfiguredRecord).not.toHaveBeenCalled();
   });
 
   it('updates the workflow source when the testing form is opened from an operational row', async () => {
@@ -301,6 +347,15 @@ describe('testingForm', () => {
       status: 'Tested',
     };
 
+    vi.mocked(getConfiguredRecord).mockResolvedValue({
+      id: 'recWorkflow123',
+      createdTime: '2026-05-05T12:00:00.000Z',
+      fields: {
+        'Workflow Status': 'Testing and Photography In Progress',
+        'Photography Signed At': '2026-05-05T09:00:00.000Z',
+        'Photography Signed By': 'Phoebe Photographer',
+      },
+    });
     vi.mocked(updateConfiguredRecord).mockResolvedValue({
       id: 'recWorkflow123',
       createdTime: '2026-05-05T12:00:00.000Z',
@@ -313,6 +368,8 @@ describe('testingForm', () => {
       'used-gear-workflow',
       'recWorkflow123',
       expect.objectContaining({
+        'Workflow Status': 'Awaiting Pre-Listing Review',
+        'Awaiting Pre-Listing Review At': expect.any(String),
         'Testing Signed At': expect.any(String),
         'Testing Signed By': 'Taylor Reviewer',
       }),
@@ -323,6 +380,64 @@ describe('testingForm', () => {
       'recWorkflow123',
       'fldMXp0EaUHGglU8M',
       values.imageFiles[0],
+    );
+  });
+
+  it('keeps workflow-owned rows in concurrent stage until photography is signed', async () => {
+    const values: TestingFormValues = {
+      sku: 'SKU-202',
+      arrivalDate: '',
+      acquiredFrom: '',
+      make: 'Accuphase',
+      model: 'P-300',
+      componentType: 'Amplifier',
+      cost: '',
+      inventoryNotes: '',
+      serialNumber: '',
+      voltage: '',
+      audiogonRating: '',
+      cosmeticConditionNotes: '',
+      originalBox: '',
+      manual: '',
+      remote: '',
+      powerCable: '',
+      additionalItems: '',
+      shippingWeight: '',
+      shippingDims: '',
+      shippingMethod: '',
+      imageFiles: [],
+      testingNotes: 'Verified power-on.',
+      testingTimeMinutes: '15',
+      serviceNotes: '',
+      serviceTimeMinutes: '',
+      testingDate: '2026-05-06',
+      status: 'Tested',
+    };
+
+    vi.mocked(getConfiguredRecord).mockResolvedValue({
+      id: 'recWorkflow202',
+      createdTime: '2026-05-05T12:00:00.000Z',
+      fields: {
+        'Workflow Status': 'Testing and Photography In Progress',
+      },
+    });
+    vi.mocked(updateConfiguredRecord).mockResolvedValue({
+      id: 'recWorkflow202',
+      createdTime: '2026-05-05T12:00:00.000Z',
+      fields: {},
+    });
+
+    await submitTestingForm(values, 'recWorkflow202', { recordSource: 'used-gear-workflow' });
+
+    expect(updateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'recWorkflow202',
+      expect.objectContaining({
+        'Workflow Status': 'Testing and Photography In Progress',
+        'Testing Signed At': expect.any(String),
+        'Testing Signed By': 'Taylor Reviewer',
+      }),
+      { typecast: true },
     );
   });
 
@@ -364,11 +479,15 @@ describe('testingForm', () => {
         fields: {},
       })
       .mockResolvedValueOnce(buildRecord({}));
-    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
-      Images: [
-        { id: 'att-5', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
-      ],
-    }));
+    vi.mocked(getConfiguredRecord)
+      .mockResolvedValueOnce(buildRecord({
+        'Workflow Status': 'Testing and Photography In Progress',
+      }))
+      .mockResolvedValueOnce(buildRecord({
+        Images: [
+          { id: 'att-5', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
+        ],
+      }));
 
     await submitTestingForm(values, 'recWorkflow123', {
       recordSource: 'used-gear-workflow',
@@ -445,7 +564,11 @@ describe('testingForm', () => {
         fields: {},
       })
       .mockRejectedValueOnce(new Error('Unknown field name: "Workflow Image Metadata JSON"'));
-    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({ Images: [] }));
+    vi.mocked(getConfiguredRecord)
+      .mockResolvedValueOnce(buildRecord({
+        'Workflow Status': 'Testing and Photography In Progress',
+      }))
+      .mockResolvedValueOnce(buildRecord({ Images: [] }));
 
     const result = await submitTestingForm(values, 'recWorkflow123', {
       recordSource: 'used-gear-workflow',
@@ -483,6 +606,7 @@ describe('testingForm', () => {
     vi.mocked(getConfiguredRecord).mockImplementation(async (source) => {
       if (source === 'used-gear-workflow') {
         return buildRecord({
+          'Workflow Status': 'Testing and Photography In Progress',
           SKU: 'SKU-102',
           Make: 'McIntosh',
           Model: 'MC240',

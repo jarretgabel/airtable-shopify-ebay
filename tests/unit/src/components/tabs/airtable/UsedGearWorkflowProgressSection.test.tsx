@@ -12,9 +12,6 @@ vi.mock('@/services/usedGearQueue', async () => {
   return {
     ...actual,
     loadWorkflowProgressQueue: loadWorkflowProgressQueueMock,
-    completeProcessingStage: vi.fn(),
-    completeTestingStage: vi.fn(),
-    completePhotographyStage: vi.fn(),
   };
 });
 
@@ -43,8 +40,8 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    await screen.findByText('Processing And Stage Queue');
-    expect(screen.getByLabelText(/Sort used gear progress queue/i)).toBeInTheDocument();
+    await screen.findByText('Processing And Holding Queue');
+    expect(screen.getByLabelText(/Sort used gear processing and holding queue/i)).toBeInTheDocument();
   });
 
   it('labels single workflow progress records without group wording', async () => {
@@ -73,11 +70,10 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    await screen.findByText('Processing And Stage Queue');
+    await screen.findByText('Processing And Holding Queue');
 
     expect(screen.getAllByText('Single workflow item').length).toBeGreaterThan(0);
     expect(screen.getByText('Single item')).toBeInTheDocument();
-    expect(screen.getByText(/Visible Sets:/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy Item Link' })).toBeInTheDocument();
     expect(screen.getByText(/Intake Date:/i)).toBeInTheDocument();
     expect(screen.getAllByText(/May 6, 2026/i).length).toBeGreaterThan(0);
@@ -109,7 +105,7 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    await screen.findByText('Processing And Stage Queue');
+    await screen.findByText('Processing And Holding Queue');
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /Copy (Group|Item) Link/i }));
@@ -149,7 +145,7 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    await screen.findByText('Processing And Stage Queue');
+    await screen.findByText('Processing And Holding Queue');
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Stage Review' }));
 
@@ -202,43 +198,10 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    expect(await screen.findByText('Processing And Stage Queue')).toBeInTheDocument();
+    expect(await screen.findByText('Processing And Holding Queue')).toBeInTheDocument();
     expect(screen.getAllByText('PROG-1').length).toBeGreaterThan(0);
     expect(screen.getAllByText('PROG-2').length).toBeGreaterThan(0);
     expect(screen.getAllByText('PROG-3').length).toBeGreaterThan(0);
-  });
-
-  it('opens listings approval from the compact progress card when publish-ready', async () => {
-    const onOpenListingsRecord = vi.fn();
-
-    loadWorkflowProgressQueueMock.mockResolvedValue([
-      {
-        id: 'rec-progress-a',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'PROG-1',
-          Make: 'Marantz',
-          Model: '8B',
-          'Workflow Status': 'Approved for Publish',
-          'Approved For Publish At': '2026-05-08T04:00:00.000Z',
-        },
-      },
-    ]);
-
-    render(
-      <UsedGearWorkflowProgressSection
-        currentUserName="Taylor Reviewer"
-        onOpenManualIntake={vi.fn()}
-        onOpenTestingForm={vi.fn()}
-        onOpenPhotosForm={vi.fn()}
-        onOpenOperationalRecord={vi.fn()}
-        onOpenListingsRecord={onOpenListingsRecord}
-      />,
-    );
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Open Listings Approval' }));
-
-    expect(onOpenListingsRecord).toHaveBeenCalledWith('rec-progress-a');
   });
 
   it('opens the testing form directly from the dedicated testing queue', async () => {
@@ -253,6 +216,7 @@ describe('UsedGearWorkflowProgressSection', () => {
           Make: 'Marantz',
           Model: '8B',
           'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Next Team': 'Testing',
         },
       },
     ]);
@@ -273,6 +237,10 @@ describe('UsedGearWorkflowProgressSection', () => {
 
     expect(onOpenTestingForm).toHaveBeenCalledWith('rec-progress-testing');
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Testing and Photography In Progress')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Testing$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Next Team: Testing/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Price Ready:/i)).not.toBeInTheDocument();
   });
 
   it('opens the photos form directly from the dedicated photography queue', async () => {
@@ -287,6 +255,7 @@ describe('UsedGearWorkflowProgressSection', () => {
           Make: 'Pioneer',
           Model: 'SX-1250',
           'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Next Team': 'Photography',
           'Testing Signed By': 'Taylor Reviewer',
         },
       },
@@ -308,5 +277,9 @@ describe('UsedGearWorkflowProgressSection', () => {
 
     expect(onOpenPhotosForm).toHaveBeenCalledWith('rec-progress-photo');
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Testing and Photography In Progress')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Photography$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Next Team: Photography/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Price Ready:/i)).not.toBeInTheDocument();
   });
 });

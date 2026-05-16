@@ -11,6 +11,7 @@ describe('buildAppFrameNavTabs', () => {
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
+      listingsBadgeCount: 0,
       disabledTabReasons: {
         jotform: 'Missing public runtime config: VITE_JOTFORM_FORM_ID.',
         listings: 'Missing public runtime config: VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF.',
@@ -47,6 +48,7 @@ describe('buildAppFrameNavTabs', () => {
       activeTab: 'workflow-guide',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
+      listingsBadgeCount: 0,
       navigateToTab: vi.fn(),
       navigateToUsersList: vi.fn(),
     });
@@ -64,20 +66,23 @@ describe('buildAppFrameNavTabs', () => {
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 7,
+      listingsBadgeCount: 0,
       navigateToTab: vi.fn(),
       navigateToUsersList: vi.fn(),
     });
 
     expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'inventory')).toMatchObject({ badgeCount: 7 });
-    expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'testing')).toMatchObject({ badgeCount: undefined });
+    expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'testing')).toBeUndefined();
+    expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'photos')).toBeUndefined();
   });
 
-  it('uses clearer operator labels for inventory processing navigation', () => {
+  it('uses clearer operator labels for inventory processing navigation while hiding form-only tabs', () => {
     const result = buildAppFrameNavTabs({
       visibleTabs: ['manual-intake', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos'],
       activeTab: 'inventory',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
+      listingsBadgeCount: 0,
       navigateToTab: vi.fn(),
       navigateToUsersList: vi.fn(),
     });
@@ -86,9 +91,9 @@ describe('buildAppFrameNavTabs', () => {
       expect.objectContaining({ key: 'inventory', label: 'Workflow Hub' }),
       expect.objectContaining({ key: 'testing-queue', label: 'Testing Review' }),
       expect.objectContaining({ key: 'photography-queue', label: 'Photography Review' }),
-      expect.objectContaining({ key: 'testing', label: 'Testing Form' }),
-      expect.objectContaining({ key: 'photos', label: 'Photo Form' }),
     ]));
+    expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'testing')).toBeUndefined();
+    expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'photos')).toBeUndefined();
     expect(result.intakeNavTabs).toEqual(expect.arrayContaining([
       expect.objectContaining({ key: 'manual-intake', label: 'Manual Intake' }),
     ]));
@@ -100,12 +105,29 @@ describe('buildAppFrameNavTabs', () => {
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
+      listingsBadgeCount: 0,
       navigateToTab: vi.fn(),
       navigateToUsersList: vi.fn(),
     });
 
     expect(result.intakeNavTabs.map((tab) => tab.key)).toEqual(['manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review']);
-    expect(result.inventoryProcessingNavTabs.map((tab) => tab.key)).toEqual(['inventory', 'testing-queue', 'photography-queue', 'testing', 'photos']);
+    expect(result.inventoryProcessingNavTabs.map((tab) => tab.key)).toEqual(['inventory', 'testing-queue', 'photography-queue']);
     expect(result.listingsNavTabs.map((tab) => tab.key)).toEqual(['listings', 'shopify', 'ebay']);
+  });
+
+  it('shows listing-phase work volume on the listings tab badge', () => {
+    const result = buildAppFrameNavTabs({
+      visibleTabs: ['dashboard', 'inventory', 'listings', 'shopify', 'ebay'],
+      activeTab: 'dashboard',
+      exportingPdf: false,
+      workflowInventoryBadgeCount: 2,
+      listingsBadgeCount: 4,
+      navigateToTab: vi.fn(),
+      navigateToUsersList: vi.fn(),
+    });
+
+    expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'inventory')).toMatchObject({ badgeCount: 2 });
+    expect(result.listingsNavTabs.find((tab) => tab.key === 'listings')).toMatchObject({ badgeCount: 4 });
+    expect(result.listingsNavTabs.find((tab) => tab.key === 'shopify')).toMatchObject({ badgeCount: undefined });
   });
 });

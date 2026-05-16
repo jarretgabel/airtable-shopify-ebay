@@ -20,7 +20,7 @@ export function JotformTab({
 
   return (
     <>
-      <section className="mt-3 rounded-2xl border border-[var(--line)] bg-[var(--panel)] px-5 py-5">
+      <section className="mt-3">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-3xl">
             <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">JotForm Source Feed</p>
@@ -30,7 +30,7 @@ export function JotformTab({
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-1 lg:min-w-[280px]">
-            <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-4 py-4">
+            <div className="px-4 py-1">
               <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Active Submissions</p>
               <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{activeSubmissions.length}</p>
             </div>

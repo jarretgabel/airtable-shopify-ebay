@@ -103,6 +103,7 @@ describe('UsedGearPendingReviewSection', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Open Review' }));
 
     expect(onOpenReviewRecord).toHaveBeenCalledWith('rec-pending');
+    expect(screen.queryByText(/Qualification Notes:/i)).not.toBeInTheDocument();
   });
 
   it('shows the grouped review guidance instead of inline batch actions', async () => {

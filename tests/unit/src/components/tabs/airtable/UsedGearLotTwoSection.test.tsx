@@ -143,6 +143,7 @@ describe('UsedGearLotTwoSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open Testing' }));
 
     expect(onOpenTestingForm).toHaveBeenCalledWith('rec-lot-two');
+    expect(screen.queryByText(/Qualification Notes:/i)).not.toBeInTheDocument();
   });
 
   it('opens the dedicated Parking Lot 2 handoff surface from grouped queue cards', async () => {
