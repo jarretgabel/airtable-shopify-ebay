@@ -41,7 +41,7 @@ describe('UsedGearLotTwoSection', () => {
         onOpenIncomingGearForm={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         searchTerm="luxman"
         onSearchTermChange={onSearchTermChange}
       />,
@@ -63,7 +63,7 @@ describe('UsedGearLotTwoSection', () => {
         onOpenIncomingGearForm={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -102,7 +102,7 @@ describe('UsedGearLotTwoSection', () => {
         onOpenIncomingGearForm={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         searchTerm="manual entry"
       />,
     );
@@ -134,7 +134,7 @@ describe('UsedGearLotTwoSection', () => {
         onOpenIncomingGearForm={vi.fn()}
         onOpenTestingForm={onOpenTestingForm}
         onOpenPhotosForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -143,6 +143,51 @@ describe('UsedGearLotTwoSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open Testing' }));
 
     expect(onOpenTestingForm).toHaveBeenCalledWith('rec-lot-two');
+  });
+
+  it('opens the dedicated Parking Lot 2 handoff surface from grouped queue cards', async () => {
+    const onOpenGroupReview = vi.fn();
+
+    loadLotTwoQueueMock.mockResolvedValue([
+      {
+        id: 'rec-lot-two-a',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          'Pick Up ID': 'pickup-100',
+          SKU: 'LOT2-A',
+          Make: 'Luxman',
+          Model: 'L-507',
+          'Workflow Status': 'Accepted - Awaiting Arrival',
+        },
+      },
+      {
+        id: 'rec-lot-two-b',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          'Pick Up ID': 'pickup-100',
+          SKU: 'LOT2-B',
+          Make: 'Pioneer',
+          Model: 'SX-750',
+          'Workflow Status': 'Accepted - Arrived, Awaiting SKU',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearLotTwoSection
+        onOpenGroupReview={onOpenGroupReview}
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenTestingForm={vi.fn()}
+        onOpenPhotosForm={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Parking Lot 2');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Set Handoff' }));
+
+    expect(onOpenGroupReview).toHaveBeenCalledWith('pickup:pickup-100');
   });
 
   it('labels ungrouped records as single items', async () => {
@@ -165,7 +210,7 @@ describe('UsedGearLotTwoSection', () => {
         onOpenIncomingGearForm={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 

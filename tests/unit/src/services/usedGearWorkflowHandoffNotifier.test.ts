@@ -46,13 +46,13 @@ function makeRecord(id: string, fields: Record<string, unknown>): AirtableRecord
 describe('publishUsedGearStageHandoffNotification', () => {
   it('uses a shared digest key for repeated same-route handoffs', () => {
     const upsertByKey = vi.fn();
-    const onOpenWorkflowRecord = vi.fn();
+    const onOpenOperationalRecord = vi.fn();
 
     publishUsedGearStageHandoffNotification({
       currentUser: makeUser(),
       completedStage: 'processing',
       record: makeRecord('1', { 'Workflow Status': 'Testing and Photography In Progress' }),
-      onOpenWorkflowRecord,
+      onOpenOperationalRecord,
       upsertByKey,
     });
 
@@ -60,14 +60,14 @@ describe('publishUsedGearStageHandoffNotification', () => {
       currentUser: makeUser(),
       completedStage: 'processing',
       record: makeRecord('2', { 'Workflow Status': 'Testing and Photography In Progress' }),
-      onOpenWorkflowRecord,
+      onOpenOperationalRecord,
       upsertByKey,
     });
 
     expect(upsertByKey).toHaveBeenNthCalledWith(
       1,
       'used-gear-stage-handoff:testing-photography',
-      expect.objectContaining({ actionLabel: 'Open Workflow Record' }),
+      expect.objectContaining({ actionLabel: 'Open Operational Record' }),
     );
     expect(upsertByKey).toHaveBeenNthCalledWith(
       2,
@@ -79,6 +79,6 @@ describe('publishUsedGearStageHandoffNotification', () => {
 
     const secondInput = upsertByKey.mock.calls[1]?.[1];
     secondInput?.onAction?.();
-    expect(onOpenWorkflowRecord).toHaveBeenCalledWith('2');
+    expect(onOpenOperationalRecord).toHaveBeenCalledWith('2');
   });
 });

@@ -41,25 +41,14 @@ export function useAuthRouteGuard({
       return;
     }
 
-    if (normalizedPath === '/ebay/approval' || normalizedPath.startsWith('/ebay/approval/') || normalizedPath === '/shopify/approval' || normalizedPath.startsWith('/shopify/approval/')) {
-      const legacyApprovalRecordMatch = normalizedPath.match(/^\/(?:ebay|shopify)\/approval\/([^/]+)$/);
-      navigate(
-        legacyApprovalRecordMatch
-          ? `${TAB_PATHS.listings}/${encodeURIComponent(decodeURIComponent(legacyApprovalRecordMatch[1]))}`
-          : TAB_PATHS.listings,
-        { replace: true },
-      );
-      return;
-    }
-
     const isKnownTabPath = isTab(normalizedPath.slice(1));
     const isJotformReviewRecordPath = /^\/parking-lot-1\/review-record\/[^/]+$/.test(normalizedPath);
     const isTrashReviewRecordPath = /^\/trash-review\/review\/[^/]+$/.test(normalizedPath);
     const isIncomingGearDetailPath = /^\/incoming-gear\/[^/]+$/.test(normalizedPath);
     const isTestingDetailPath = /^\/testing\/[^/]+$/.test(normalizedPath);
     const isPhotosDetailPath = /^\/photos\/[^/]+$/.test(normalizedPath);
-    const isWorkflowPriceEditorPath = /^\/inventory\/workflow\/[^/]+\/price$/.test(normalizedPath);
-    const isInventoryWorkflowDetailPath = /^\/inventory\/workflow\/[^/]+$/.test(normalizedPath);
+    const isInventoryPriceEditorPath = /^\/inventory\/price\/[^/]+$/.test(normalizedPath);
+    const isInventoryManualIntakePath = normalizedPath === '/inventory/manual-intake';
     const isInventoryDetailPath = /^\/inventory\/[^/]+$/.test(normalizedPath);
     const isListingsDetailPath = /^\/listings\/[^/]+$/.test(normalizedPath);
     const isEbayListingsDetailPath = /^\/ebay\/listings\/[^/]+$/.test(normalizedPath);
@@ -67,8 +56,8 @@ export function useAuthRouteGuard({
     const isUserDetailPath = /^\/account\/users\/[^/]+$/.test(normalizedPath);
     const isKnownSubPath =
       normalizedPath === '/inventory' ||
-      isWorkflowPriceEditorPath ||
-      isInventoryWorkflowDetailPath ||
+      isInventoryPriceEditorPath ||
+      isInventoryManualIntakePath ||
       isInventoryDetailPath ||
       normalizedPath === '/listings' ||
       isListingsDetailPath ||
@@ -79,7 +68,6 @@ export function useAuthRouteGuard({
       isTrashReviewRecordPath ||
       normalizedPath === '/workflow/testing' ||
       normalizedPath === '/workflow/photography' ||
-      normalizedPath === '/workflow/pre-listing' ||
       normalizedPath === '/parking-lot-1' ||
       /^\/parking-lot-1\/review\/[^/]+$/.test(normalizedPath) ||
       isJotformReviewRecordPath ||
@@ -116,17 +104,17 @@ export function useAuthRouteGuard({
                   ? 'testing-queue'
                 : normalizedPath === '/workflow/photography'
                   ? 'photography-queue'
-                : normalizedPath === '/workflow/pre-listing'
-                  ? 'pre-listing-queue'
               : normalizedPath === '/parking-lot-1' || /^\/parking-lot-1\/review\/[^/]+$/.test(normalizedPath) || isJotformReviewRecordPath
                 ? 'parking-lot-1'
+              : isInventoryManualIntakePath
+                ? 'manual-intake'
               : normalizedPath === '/incoming-gear' || isIncomingGearDetailPath
                 ? 'incoming-gear'
               : normalizedPath === '/testing' || isTestingDetailPath
                 ? 'testing'
               : normalizedPath === '/photos' || isPhotosDetailPath
                 ? 'photos'
-              : normalizedPath === '/inventory' || isWorkflowPriceEditorPath || isInventoryWorkflowDetailPath || isInventoryDetailPath
+              : normalizedPath === '/inventory' || isInventoryPriceEditorPath || isInventoryDetailPath
                 ? 'inventory'
               : normalizedPath === '/account/settings'
                 ? 'settings'

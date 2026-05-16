@@ -1,4 +1,6 @@
-## Phase 6: Marketplace Expansion
+## Historical: Phase 6 Marketplace Expansion
+
+> Historical reference only. This document records planning work and should not be used as the source of truth for new implementation tasks. Use the docs in the parent folder for current guidance.
 
 This phase treats new marketplaces as follow-on work after the core workflow is stable.
 

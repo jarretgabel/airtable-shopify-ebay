@@ -1,4 +1,6 @@
-# Workflow Image Metadata
+# Historical: Workflow Image Metadata
+
+> Historical reference only. This document records prior implementation planning context and should not be used as the source of truth for new implementation tasks. Use the docs in the parent folder for current guidance.
 
 This document describes the live workflow image model used by Testing, Photos, and Listings.
 

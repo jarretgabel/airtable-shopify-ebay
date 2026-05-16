@@ -16,6 +16,7 @@ interface BuildListingApprovalSelectedRecordPanelPropsParams {
   errorSurfaceClass: string;
   isCombinedApproval: boolean;
   workflowSummary: ListingApprovalSelectedRecordPanelProps['workflowSummary'];
+  workflowDetails: ListingApprovalSelectedRecordPanelProps['workflowDetails'];
   selectedRecordViewProps: ReturnType<typeof buildListingApprovalSelectedRecordViewProps> | null;
   selectedRecordStatusProps: ReturnType<typeof buildListingApprovalSelectedRecordStatusProps> | null;
 }
@@ -33,6 +34,7 @@ export function buildListingApprovalSelectedRecordPanelProps({
   errorSurfaceClass,
   isCombinedApproval,
   workflowSummary,
+  workflowDetails,
   selectedRecordViewProps,
   selectedRecordStatusProps,
 }: BuildListingApprovalSelectedRecordPanelPropsParams): ListingApprovalSelectedRecordPanelProps | null {
@@ -53,6 +55,7 @@ export function buildListingApprovalSelectedRecordPanelProps({
     errorSurfaceClass,
     isCombinedApproval,
     workflowSummary,
+    workflowDetails,
     selectedRecordViewProps,
     selectedRecordStatusProps,
   };

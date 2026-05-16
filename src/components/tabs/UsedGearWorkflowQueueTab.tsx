@@ -12,7 +12,7 @@ export interface UsedGearWorkflowQueueTabProps {
   onOpenIncomingGearForm: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
 }
 
@@ -34,7 +34,7 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
     return {
       eyebrow: 'Used Gear Workflow',
       title: 'Testing Queue',
-      description: 'Testing operators can stay on one dedicated surface, keep grouped submissions together, and jump directly into the testing form or workflow detail when exceptions show up.',
+      description: 'Testing operators can stay on one dedicated surface, keep grouped submissions together, and jump directly into the testing form or current operational surface when exceptions show up.',
       searchParamName: 'workflowTestingQueueSearch',
       groupParamName: 'workflowTestingQueueGroup',
       sortParamName: 'workflowTestingQueueSort',
@@ -47,7 +47,7 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
     return {
       eyebrow: 'Used Gear Workflow',
       title: 'Photography Queue',
-      description: 'Photography operators can work from a dedicated queue, preserve grouped submissions, and jump directly into photo capture or workflow detail without scanning the broader inventory surface.',
+      description: 'Photography operators can work from a dedicated queue, preserve grouped submissions, and jump directly into photo capture or the current operational surface without scanning the broader inventory surface.',
       searchParamName: 'workflowPhotographyQueueSearch',
       groupParamName: 'workflowPhotographyQueueGroup',
       sortParamName: 'workflowPhotographyQueueSort',
@@ -58,13 +58,13 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
 
   return {
     eyebrow: 'Used Gear Workflow',
-    title: 'Pre-Listing Queue',
-    description: 'Rows that finished both concurrent stages collect here so final review can happen on one page before the listing team takes over.',
-    searchParamName: 'workflowPreListingQueueSearch',
-    groupParamName: 'workflowPreListingQueueGroup',
-    sortParamName: 'workflowPreListingQueueSort',
-    sectionId: 'used-gear-pre-listing-queue',
-    hash: '#used-gear-pre-listing-queue',
+    title: 'Testing Queue',
+    description: 'Testing operators can stay on one dedicated surface, keep grouped submissions together, and jump directly into the testing form or current operational surface when exceptions show up.',
+    searchParamName: 'workflowTestingQueueSearch',
+    groupParamName: 'workflowTestingQueueGroup',
+    sortParamName: 'workflowTestingQueueSort',
+    sectionId: 'used-gear-testing-queue',
+    hash: '#used-gear-testing-queue',
   };
 }
 
@@ -86,7 +86,7 @@ export function UsedGearWorkflowQueueTab({
   onOpenIncomingGearForm,
   onOpenTestingForm,
   onOpenPhotosForm,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
   onOpenListingsRecord,
 }: UsedGearWorkflowQueueTabProps) {
   const location = useLocation();
@@ -125,7 +125,7 @@ export function UsedGearWorkflowQueueTab({
         onOpenIncomingGearForm={onOpenIncomingGearForm}
         onOpenTestingForm={onOpenTestingForm}
         onOpenPhotosForm={onOpenPhotosForm}
-        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={onOpenListingsRecord}
         queueMode={queueMode}
         sectionId={config.sectionId}

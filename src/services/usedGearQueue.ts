@@ -151,7 +151,7 @@ interface LoadUsedGearWorkflowNotificationSummaryOptions {
 export type UsedGearWorkflowNotificationCounts = Record<UsedGearWorkflowNotificationEvent, number>;
 
 export interface UsedGearWorkflowNotificationTarget {
-  destinationTab: 'inventory' | 'parking-lot-1' | 'jotform' | 'parking-lot-2' | 'testing-queue' | 'photography-queue' | 'pre-listing-queue' | 'listings';
+  destinationTab: 'inventory' | 'parking-lot-1' | 'jotform' | 'parking-lot-2' | 'testing-queue' | 'photography-queue' | 'listings';
   recordId: string | null;
   sectionId: string | null;
   groupId?: string | null;
@@ -289,9 +289,7 @@ function buildNotificationTarget(
           ? '/workflow/testing'
           : destinationTab === 'photography-queue'
             ? '/workflow/photography'
-            : destinationTab === 'pre-listing-queue'
-              ? '/workflow/pre-listing'
-        : null;
+            : null;
 
   return {
     destinationTab,
@@ -316,7 +314,7 @@ export interface UsedGearWorkflowGroup {
   records: AirtableRecord[];
 }
 
-export interface UsedGearWorkflowRecordContext {
+export interface UsedGearOperationalRecordContext {
   record: AirtableRecord;
   group: UsedGearWorkflowGroup | null;
 }
@@ -400,7 +398,7 @@ function mergeConfiguredRecordFields(
   });
 }
 
-async function loadUsedGearWorkflowRecords(options?: { includeOptionalReadFields?: boolean }): Promise<AirtableRecord[]> {
+async function loadUsedGearOperationalRecords(options?: { includeOptionalReadFields?: boolean }): Promise<AirtableRecord[]> {
   const requiredRecords = await getConfiguredRecords('used-gear-workflow', {
     fields: [...USED_GEAR_WORKFLOW_REQUIRED_RECORD_FIELDS],
   });
@@ -518,7 +516,7 @@ export async function loadPendingReviewGroup(groupId: string): Promise<UsedGearW
   return group;
 }
 
-export async function loadUsedGearWorkflowRecordBySku(sku: string): Promise<AirtableRecord> {
+export async function loadUsedGearOperationalRecordBySku(sku: string): Promise<AirtableRecord> {
   const normalizedSku = sku.trim().toLowerCase();
   if (!normalizedSku) {
     throw new Error('SKU is required.');
@@ -533,7 +531,7 @@ export async function loadUsedGearWorkflowRecordBySku(sku: string): Promise<Airt
     .find((candidate) => getTrimmedFieldValue(candidate, 'SKU').toLowerCase() === normalizedSku);
 
   if (!record) {
-    throw new Error(`No used-gear workflow row was found for SKU ${sku.trim()}.`);
+    throw new Error(`No used-gear operational row was found for SKU ${sku.trim()}.`);
   }
 
   return record;
@@ -554,7 +552,7 @@ export async function loadTrashQueue(): Promise<AirtableRecord[]> {
 }
 
 export async function loadLotTwoQueue(): Promise<AirtableRecord[]> {
-  const records = await loadUsedGearWorkflowRecords();
+  const records = await loadUsedGearOperationalRecords();
 
   return records
     .map(withWorkflow)
@@ -571,8 +569,19 @@ export async function loadLotTwoQueue(): Promise<AirtableRecord[]> {
     });
 }
 
+export async function loadLotTwoGroup(groupId: string): Promise<UsedGearWorkflowGroup> {
+  const groups = groupUsedGearWorkflowRecords(await loadLotTwoQueue());
+  const group = groups.find((candidate) => candidate.id === groupId);
+
+  if (!group) {
+    throw new Error('Unable to load the selected Parking Lot 2 group.');
+  }
+
+  return group;
+}
+
 export async function loadWorkflowProgressQueue(): Promise<AirtableRecord[]> {
-  const records = await loadUsedGearWorkflowRecords();
+  const records = await loadUsedGearOperationalRecords();
 
   return records
     .map(withWorkflow)
@@ -583,7 +592,7 @@ export async function loadWorkflowProgressQueue(): Promise<AirtableRecord[]> {
 }
 
 export async function loadWorkflowPostPublishQueue(): Promise<AirtableRecord[]> {
-  const records = await loadUsedGearWorkflowRecords();
+  const records = await loadUsedGearOperationalRecords();
 
   return records
     .map(withWorkflow)
@@ -644,23 +653,23 @@ export function summarizeUsedGearWorkflowPostPublishQueue(
   }, createEmptyUsedGearWorkflowPostPublishSummary());
 }
 
-export async function loadUsedGearWorkflowRecord(recordId: string): Promise<AirtableRecord> {
-  const records = await loadUsedGearWorkflowRecords({ includeOptionalReadFields: true });
+export async function loadUsedGearOperationalRecord(recordId: string): Promise<AirtableRecord> {
+  const records = await loadUsedGearOperationalRecords({ includeOptionalReadFields: true });
 
   const record = records.find((candidate) => candidate.id === recordId);
   if (!record) {
-    throw new Error('Unable to load the selected used-gear workflow record.');
+    throw new Error('Unable to load the selected used-gear operational record.');
   }
 
   return withWorkflow(record);
 }
 
-export async function loadUsedGearWorkflowRecordContext(recordId: string): Promise<UsedGearWorkflowRecordContext> {
-  const records = (await loadUsedGearWorkflowRecords({ includeOptionalReadFields: true })).map(withWorkflow);
+export async function loadUsedGearOperationalRecordContext(recordId: string): Promise<UsedGearOperationalRecordContext> {
+  const records = (await loadUsedGearOperationalRecords({ includeOptionalReadFields: true })).map(withWorkflow);
 
   const record = records.find((candidate) => candidate.id === recordId);
   if (!record) {
-    throw new Error('Unable to load the selected used-gear workflow record.');
+    throw new Error('Unable to load the selected used-gear operational record.');
   }
 
   const group = groupUsedGearWorkflowRecords(records).find((candidate) => candidate.id === groupKeyForRecord(record).key) ?? null;
@@ -728,7 +737,13 @@ export async function loadUsedGearWorkflowNotificationSummary(
     if (status === AWAITING_PRE_LISTING_REVIEW_STATUS) {
       summary.counts.preListingReview += 1;
       actionableRecordIds.add(record.id);
-      summary.targets.preListingReview ??= buildNotificationTarget(record, 'pre-listing-queue', 'used-gear-pre-listing-queue', 'workflowPreListingQueueGroup', true);
+      summary.targets.preListingReview ??= {
+        destinationTab: 'listings',
+        recordId: record.id,
+        sectionId: null,
+        groupId: null,
+        path: null,
+      };
       return;
     }
 
@@ -1067,7 +1082,7 @@ async function completeConcurrentStage(
     throw new Error('Stage completion requires the current user name.');
   }
 
-  const currentRecord = await loadUsedGearWorkflowRecord(recordId);
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
   const currentStatus = getUsedGearWorkflowStatus(currentRecord.fields);
   if (currentStatus !== TESTING_AND_PHOTOGRAPHY_IN_PROGRESS_STATUS) {
     throw new Error('Concurrent stage completion is only available while testing and photography are in progress.');
@@ -1119,7 +1134,7 @@ export async function completePreListingReviewStage(recordId: string, userName: 
     throw new Error('Pre-listing review requires the current user name.');
   }
 
-  const currentRecord = await loadUsedGearWorkflowRecord(recordId);
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
   const currentStatus = getUsedGearWorkflowStatus(currentRecord.fields);
   if (currentStatus !== AWAITING_PRE_LISTING_REVIEW_STATUS) {
     throw new Error('Pre-listing review can only be completed when the row is awaiting pre-listing review.');
@@ -1172,10 +1187,10 @@ export function getUsedGearWorkflowPrimaryAction(record: AirtableRecord): string
 }
 
 export async function markWorkflowListingStale(recordId: string): Promise<AirtableRecord> {
-  const currentRecord = await loadUsedGearWorkflowRecord(recordId);
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
   const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
   if (!snapshot || (snapshot.status !== LISTED_SHOPIFY_STATUS && snapshot.status !== LISTED_EBAY_STATUS && snapshot.status !== STALE_LISTING_SHOPIFY_STATUS && snapshot.status !== STALE_LISTING_EBAY_STATUS)) {
-    throw new Error('Only active listed workflow rows can be moved into the stale listing queue.');
+    throw new Error('Only active listed operational rows can be moved into the stale listing queue.');
   }
 
   const staleAt = new Date().toISOString();
@@ -1197,10 +1212,10 @@ export async function saveWorkflowStaleRecovery(
   recordId: string,
   { staleRecoveryStatus, staleRecoveryNotes }: SaveUsedGearWorkflowStaleRecoveryInput,
 ): Promise<AirtableRecord> {
-  const currentRecord = await loadUsedGearWorkflowRecord(recordId);
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
   const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
   if (!snapshot || (snapshot.status !== STALE_LISTING_SHOPIFY_STATUS && snapshot.status !== STALE_LISTING_EBAY_STATUS)) {
-    throw new Error('Only stale workflow rows can save stale recovery details.');
+    throw new Error('Only stale operational rows can save stale recovery details.');
   }
 
   if (staleRecoveryStatus && !isUsedGearWorkflowStaleRecoveryStatus(staleRecoveryStatus)) {
@@ -1223,10 +1238,10 @@ export async function saveWorkflowStaleRecovery(
 }
 
 export async function markWorkflowRelisted(recordId: string): Promise<AirtableRecord> {
-  const currentRecord = await loadUsedGearWorkflowRecord(recordId);
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
   const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
   if (!snapshot || (snapshot.status !== STALE_LISTING_SHOPIFY_STATUS && snapshot.status !== STALE_LISTING_EBAY_STATUS)) {
-    throw new Error('Only stale workflow rows can be marked relisted.');
+    throw new Error('Only stale operational rows can be marked relisted.');
   }
 
   const relistedAt = new Date().toISOString();
@@ -1248,10 +1263,10 @@ export async function markWorkflowRelisted(recordId: string): Promise<AirtableRe
 }
 
 export async function markWorkflowSoldReadyToShip(recordId: string): Promise<AirtableRecord> {
-  const currentRecord = await loadUsedGearWorkflowRecord(recordId);
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
   const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
   if (!snapshot || (snapshot.bucket !== 'active-listing' && snapshot.bucket !== 'stale-listing')) {
-    throw new Error('Only listed workflow rows can move into sold-ready-to-ship.');
+    throw new Error('Only listed operational rows can move into sold-ready-to-ship.');
   }
 
   const soldReadyAt = new Date().toISOString();
@@ -1272,10 +1287,10 @@ export async function saveWorkflowShipmentFollowThrough(
   recordId: string,
   { shipmentFollowThroughNotes }: SaveUsedGearWorkflowShipmentFollowThroughInput,
 ): Promise<AirtableRecord> {
-  const currentRecord = await loadUsedGearWorkflowRecord(recordId);
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
   const currentStatus = getUsedGearWorkflowStatus(currentRecord.fields);
   if (currentStatus !== SOLD_READY_TO_SHIP_STATUS && currentStatus !== SHIPPED_STATUS) {
-    throw new Error('Only sold-ready or shipped workflow rows can save shipment follow-through notes.');
+    throw new Error('Only sold-ready or shipped operational rows can save shipment follow-through notes.');
   }
 
   const shipmentFollowThroughUpdatedAt = new Date().toISOString();
@@ -1294,7 +1309,7 @@ export async function saveWorkflowShipmentFollowThrough(
 
 export async function markWorkflowRowsSoldReadyToShip(recordIds: string[]): Promise<AirtableRecord[]> {
   if (recordIds.length === 0) {
-    throw new Error('At least one workflow row must be selected to mark sold ready.');
+    throw new Error('At least one operational row must be selected to mark sold ready.');
   }
 
   const updatedRecords: AirtableRecord[] = [];
@@ -1307,10 +1322,10 @@ export async function markWorkflowRowsSoldReadyToShip(recordIds: string[]): Prom
 }
 
 export async function markWorkflowShipped(recordId: string): Promise<AirtableRecord> {
-  const currentRecord = await loadUsedGearWorkflowRecord(recordId);
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
   const currentStatus = getUsedGearWorkflowStatus(currentRecord.fields);
   if (currentStatus !== SOLD_READY_TO_SHIP_STATUS) {
-    throw new Error('Only sold-ready-to-ship workflow rows can be marked shipped.');
+    throw new Error('Only sold-ready-to-ship operational rows can be marked shipped.');
   }
 
   const shippedAt = new Date().toISOString();
@@ -1329,7 +1344,7 @@ export async function markWorkflowShipped(recordId: string): Promise<AirtableRec
 
 export async function markWorkflowRowsShipped(recordIds: string[]): Promise<AirtableRecord[]> {
   if (recordIds.length === 0) {
-    throw new Error('At least one workflow row must be selected to mark shipped.');
+    throw new Error('At least one operational row must be selected to mark shipped.');
   }
 
   const updatedRecords: AirtableRecord[] = [];

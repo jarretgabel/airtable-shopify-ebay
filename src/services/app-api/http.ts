@@ -1,5 +1,5 @@
 import { AppApiHttpError } from './errors';
-import { getAppApiBaseUrl } from './flags';
+import { getAppApiBaseUrl, isLocalBrowserSession } from './flags';
 
 interface ApiErrorBody {
   message?: string;
@@ -14,6 +14,21 @@ interface CsrfAwareBody {
 
 const CSRF_STORAGE_KEY = 'app_api_csrf_token';
 let csrfTokenCache: string | null = null;
+
+function isAbsoluteHttpUrl(value: string): boolean {
+  return /^(https?:)?\/\//i.test(value);
+}
+
+function assertLocalBrowserPath(path: string): void {
+  if (!isLocalBrowserSession()) return;
+  if (!isAbsoluteHttpUrl(path)) return;
+
+  throw new AppApiHttpError('Localhost browser sessions must use the local /api routes. Remote app API URLs are blocked until deployment.', {
+    statusCode: 403,
+    code: 'LOCAL_REMOTE_API_BLOCKED',
+    retryable: false,
+  });
+}
 
 function canUseSessionStorage(): boolean {
   return typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
@@ -69,6 +84,8 @@ function maybePersistCsrfToken(body: unknown): void {
 }
 
 function buildUrl(path: string, params?: Record<string, string | number | undefined>): string {
+  assertLocalBrowserPath(path);
+
   const base = getAppApiBaseUrl();
   const origin = typeof window === 'undefined' ? 'http://localhost' : window.location.origin;
   const url = new URL(path, base || origin);

@@ -102,11 +102,11 @@ describe('DashboardOverviewSection', () => {
     );
 
     expect(screen.getAllByText('Unavailable').length).toBeGreaterThanOrEqual(2);
-    expect(screen.queryByRole('button', { name: /total inventory value/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /inventory value/i })).not.toBeInTheDocument();
 
     const approvalButton = screen.getByRole('button', { name: /listings review/i });
     const ebayButton = screen.getByRole('button', { name: /ebay coverage/i });
-    const shopifyButton = screen.getByRole('button', { name: /deals in progress/i });
+    const shopifyButton = screen.getByRole('button', { name: /shopify drafts/i });
 
     expect(approvalButton).toBeDisabled();
     expect(ebayButton).toBeDisabled();
@@ -124,7 +124,7 @@ describe('DashboardOverviewSection', () => {
   it('renders owner-only financial cards when sensitive metrics are enabled', () => {
     render(
       <DashboardOverviewSection
-        accessiblePages={['dashboard', 'inventory', 'listings', 'shopify', 'jotform', 'ebay', 'incoming-gear', 'pre-listing-queue', 'testing-queue', 'testing', 'photography-queue', 'photos']}
+        accessiblePages={['dashboard', 'inventory', 'listings', 'shopify', 'jotform', 'ebay', 'incoming-gear', 'testing-queue', 'testing', 'photography-queue', 'photos']}
         canViewSensitiveMetrics
         currentUserRole="owner"
         workflowAnalytics={buildWorkflowAnalyticsOverrides()}
@@ -157,7 +157,7 @@ describe('DashboardOverviewSection', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: /total inventory value/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /inventory value/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /acquisition cost/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /processor ops/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /processing blockers/i })).toBeInTheDocument();
@@ -209,7 +209,7 @@ describe('DashboardOverviewSection', () => {
     expect(screen.queryByRole('button', { name: /processing blockers/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /photography queue/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /photo handoffs/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /total inventory value/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /inventory value/i })).not.toBeInTheDocument();
   });
 
   it('shows queue and metric modules for photographer dashboards', () => {

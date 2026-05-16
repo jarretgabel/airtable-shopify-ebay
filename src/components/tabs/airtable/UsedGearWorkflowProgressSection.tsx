@@ -24,7 +24,7 @@ export interface UsedGearWorkflowProgressSectionProps {
   onOpenIncomingGearForm: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
   showSectionIntro?: boolean;
   queueMode?: UsedGearWorkflowProgressQueueMode;
@@ -39,7 +39,7 @@ export interface UsedGearWorkflowProgressSectionProps {
 }
 
 export type UsedGearWorkflowProgressSortMode = 'group-label' | 'newest' | 'oldest';
-export type UsedGearWorkflowProgressQueueMode = 'all' | 'testing' | 'photography' | 'pre-listing';
+export type UsedGearWorkflowProgressQueueMode = 'all' | 'testing' | 'photography';
 
 function getWorkflowProgressSortLabel(sortMode: UsedGearWorkflowProgressSortMode): string {
   if (sortMode === 'newest') return 'Newest First';
@@ -79,10 +79,6 @@ function recordSearchText(record: AirtableRecord): string {
 
 function isConcurrentStageStatus(record: AirtableRecord): boolean {
   return getUsedGearWorkflowStatus(record.fields) === 'Testing and Photography In Progress';
-}
-
-function isAwaitingPreListingStatus(record: AirtableRecord): boolean {
-  return getUsedGearWorkflowStatus(record.fields) === 'Awaiting Pre-Listing Review';
 }
 
 function buildWorkflowProgressGroupLink(groupId: string, groupParamName: string, sectionId: string): string {
@@ -134,7 +130,7 @@ function getGroupHeading(description: string): string {
 
 function getStageReviewLabel(status: string): string {
   if (status === 'Awaiting Pre-Listing Review') {
-    return 'Open Pre-Listing Review';
+    return 'Open Listings Review';
   }
 
   if (status === 'Approved for Publish') {
@@ -146,6 +142,47 @@ function getStageReviewLabel(status: string): string {
   }
 
   return 'Open Stage Review';
+}
+
+function getPrimaryQueueAction(
+  queueMode: UsedGearWorkflowProgressQueueMode,
+  record: AirtableRecord,
+  handlers: Pick<
+    UsedGearWorkflowProgressSectionProps,
+    'onOpenTestingForm' | 'onOpenPhotosForm' | 'onOpenOperationalRecord' | 'onOpenListingsRecord'
+  >,
+): { label: string; onClick: () => void; showSecondaryAction: boolean } {
+  const status = getUsedGearWorkflowStatus(record.fields) ?? 'Unknown';
+
+  if (queueMode === 'testing' && status === 'Testing and Photography In Progress' && !record.fields['Testing Signed By']) {
+    return {
+      label: 'Open Testing',
+      onClick: () => handlers.onOpenTestingForm(record.id),
+      showSecondaryAction: false,
+    };
+  }
+
+  if (queueMode === 'photography' && status === 'Testing and Photography In Progress' && !record.fields['Photography Signed By']) {
+    return {
+      label: 'Open Photos',
+      onClick: () => handlers.onOpenPhotosForm(record.id),
+      showSecondaryAction: false,
+    };
+  }
+
+  if (status === 'Approved for Publish') {
+    return {
+      label: 'Open Listings Approval',
+      onClick: () => handlers.onOpenListingsRecord(record.id),
+      showSecondaryAction: true,
+    };
+  }
+
+  return {
+    label: getStageReviewLabel(status),
+    onClick: () => handlers.onOpenOperationalRecord(record.id),
+    showSecondaryAction: true,
+  };
 }
 
 function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): ProgressQueuePresentation {
@@ -181,27 +218,11 @@ function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): Pro
     };
   }
 
-  if (queueMode === 'pre-listing') {
-    return {
-      eyebrow: 'Used Gear Workflow',
-      title: 'Pre-Listing Queue',
-      description: 'Focus only on rows that cleared testing and photography and are ready for pre-listing review before publish handoff.',
-      emptyTitle: 'No rows currently need pre-listing review',
-      emptyMessage: 'The pre-listing queue is clear. Rows that finish both concurrent stages will appear here automatically.',
-      emptyGuidance: 'Next route: finish testing and photography work so rows can advance into pre-listing review.',
-      copySuccessTitle: 'Pre-listing queue link copied',
-      copySuccessMessage: 'The pre-listing queue link is ready to share.',
-      copyUnavailableMessage: 'This browser cannot copy the pre-listing queue link automatically.',
-      copyFailureMessage: 'The pre-listing queue link could not be copied. Try again or copy the URL from the browser address bar.',
-      sharedFocusMessage: 'Shared link opened the pre-listing queue focused on one grouped submission.',
-    };
-  }
-
   return {
     eyebrow: 'Used Gear Workflow',
     title: 'Processing And Stage Queue',
-    description: 'Manage accepted intake rows through processing, concurrent testing and photography, and pre-listing publish readiness. Related rows stay grouped by pickup or submission.',
-    emptyTitle: 'No active workflow rows in processing',
+    description: 'Manage accepted intake rows through processing and concurrent testing and photography. Related rows stay grouped by pickup or submission.',
+    emptyTitle: 'No active operational rows in processing',
     emptyMessage: 'The used-gear queue currently has no accepted rows in processing or concurrent stage work.',
     emptyGuidance: 'Next route: review Parking Lot 2 for newly accepted arrivals, or open Listings if the next work item is already approved for publish.',
     copySuccessTitle: 'Queue link copied',
@@ -214,7 +235,9 @@ function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): Pro
 
 export function UsedGearWorkflowProgressSection({
   showSectionIntro = true,
-  onOpenWorkflowRecord,
+  onOpenTestingForm,
+  onOpenPhotosForm,
+  onOpenOperationalRecord,
   onOpenListingsRecord,
   queueMode = 'all',
   sectionId = 'used-gear-progress-queue',
@@ -280,10 +303,6 @@ export function UsedGearWorkflowProgressSection({
 
     if (queueMode === 'photography') {
       return records.filter((record) => isConcurrentStageStatus(record) && !record.fields['Photography Signed By']);
-    }
-
-    if (queueMode === 'pre-listing') {
-      return records.filter((record) => isAwaitingPreListingStatus(record));
     }
 
     return records;
@@ -360,7 +379,7 @@ export function UsedGearWorkflowProgressSection({
             <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{queuePresentation.title}</h3>
             <div className="mt-3 max-w-2xl">
               <CollapsibleHelperText label="Queue guide">
-                Keep this queue focused on the next handoff. Open the workflow record for detailed stage actions.
+                Keep this queue focused on the next handoff. Open the operational record for detailed stage actions.
               </CollapsibleHelperText>
             </div>
           </div>
@@ -487,6 +506,12 @@ export function UsedGearWorkflowProgressSection({
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
               {group.records.map((record) => {
                 const status = getUsedGearWorkflowStatus(record.fields) ?? 'Unknown';
+                const primaryAction = getPrimaryQueueAction(queueMode, record, {
+                  onOpenTestingForm,
+                  onOpenPhotosForm,
+                  onOpenOperationalRecord,
+                  onOpenListingsRecord,
+                });
 
                 return (
                   <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
@@ -515,24 +540,19 @@ export function UsedGearWorkflowProgressSection({
                       <button
                         type="button"
                         className={smallPrimaryActionButtonClass}
-                        onClick={() => {
-                          if (status === 'Approved for Publish') {
-                            onOpenListingsRecord(record.id);
-                            return;
-                          }
-
-                          onOpenWorkflowRecord(record.id);
-                        }}
+                        onClick={primaryAction.onClick}
                       >
-                        {status === 'Approved for Publish' ? 'Open Listings Approval' : getStageReviewLabel(status)}
+                        {primaryAction.label}
                       </button>
-                      <button
-                        type="button"
-                        className={smallSecondaryActionButtonClass}
-                        onClick={() => onOpenWorkflowRecord(record.id)}
-                      >
-                        Workflow Detail
-                      </button>
+                      {primaryAction.showSecondaryAction ? (
+                        <button
+                          type="button"
+                          className={smallSecondaryActionButtonClass}
+                          onClick={() => onOpenOperationalRecord(record.id)}
+                        >
+                          Open Operational Record
+                        </button>
+                      ) : null}
                     </div>
                   </article>
                 );

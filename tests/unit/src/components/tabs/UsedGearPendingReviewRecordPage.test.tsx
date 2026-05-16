@@ -5,13 +5,13 @@ import { UsedGearPendingReviewRecordPage } from '@/components/tabs/UsedGearPendi
 const {
   acceptPendingReviewRecordMock,
   hasUsedGearPendingReviewPricingPathMock,
-  loadUsedGearWorkflowRecordContextMock,
+  loadUsedGearOperationalRecordContextMock,
   markPendingReviewUnqualifiedMock,
   navigateMock,
 } = vi.hoisted(() => ({
   acceptPendingReviewRecordMock: vi.fn(),
   hasUsedGearPendingReviewPricingPathMock: vi.fn(),
-  loadUsedGearWorkflowRecordContextMock: vi.fn(),
+  loadUsedGearOperationalRecordContextMock: vi.fn(),
   markPendingReviewUnqualifiedMock: vi.fn(),
   navigateMock: vi.fn(),
 }));
@@ -28,7 +28,7 @@ vi.mock('react-router-dom', async () => {
 vi.mock('@/services/usedGearQueue', () => ({
   acceptPendingReviewRecord: acceptPendingReviewRecordMock,
   hasUsedGearPendingReviewPricingPath: hasUsedGearPendingReviewPricingPathMock,
-  loadUsedGearWorkflowRecordContext: loadUsedGearWorkflowRecordContextMock,
+  loadUsedGearOperationalRecordContext: loadUsedGearOperationalRecordContextMock,
   markPendingReviewUnqualified: markPendingReviewUnqualifiedMock,
 }));
 
@@ -40,12 +40,12 @@ describe('UsedGearPendingReviewRecordPage', () => {
   beforeEach(() => {
     acceptPendingReviewRecordMock.mockReset();
     hasUsedGearPendingReviewPricingPathMock.mockReset();
-    loadUsedGearWorkflowRecordContextMock.mockReset();
+    loadUsedGearOperationalRecordContextMock.mockReset();
     markPendingReviewUnqualifiedMock.mockReset();
     navigateMock.mockReset();
 
     hasUsedGearPendingReviewPricingPathMock.mockReturnValue(true);
-    loadUsedGearWorkflowRecordContextMock.mockResolvedValue({
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({
       record: {
         id: 'rec-pending-1',
         createdTime: '2026-05-09T00:00:00.000Z',
@@ -81,16 +81,16 @@ describe('UsedGearPendingReviewRecordPage', () => {
     });
   });
 
-  it('opens linked group and workflow actions from the isolated review page', async () => {
+  it('opens linked group and operational actions from the isolated review page', async () => {
     const onOpenIncomingGearForm = vi.fn();
-    const onOpenWorkflowRecord = vi.fn();
+    const onOpenOperationalRecord = vi.fn();
 
     render(
       <UsedGearPendingReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-pending-1"
         onOpenIncomingGearForm={onOpenIncomingGearForm}
-        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        onOpenOperationalRecord={onOpenOperationalRecord}
       />,
     );
 
@@ -103,8 +103,8 @@ describe('UsedGearPendingReviewRecordPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open Incoming Gear' }));
     expect(onOpenIncomingGearForm).toHaveBeenCalledWith('rec-pending-1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Workflow Record' }));
-    expect(onOpenWorkflowRecord).toHaveBeenCalledWith('rec-pending-1');
+    fireEvent.click(screen.getByRole('button', { name: 'Open Operational Record' }));
+    expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-pending-1');
   });
 
   it('accepts the row into lot 2 and returns to the queue', async () => {
@@ -115,7 +115,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
         currentUserName="Taylor Reviewer"
         recordId="rec-pending-1"
         onOpenIncomingGearForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -144,7 +144,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
         currentUserName="Taylor Reviewer"
         recordId="rec-pending-1"
         onOpenIncomingGearForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -171,7 +171,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
         currentUserName="Taylor Reviewer"
         recordId="rec-pending-1"
         onOpenIncomingGearForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 

@@ -20,7 +20,7 @@ interface UsedGearPendingReviewGroupPageProps {
   groupId: string;
   onBackToParkingLot: () => void;
   onOpenIncomingGearForm: (recordId: string) => void;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
 }
 
 interface GroupReviewRecordEditor {
@@ -104,7 +104,7 @@ export function UsedGearPendingReviewGroupPage({
   groupId,
   onBackToParkingLot,
   onOpenIncomingGearForm,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
 }: UsedGearPendingReviewGroupPageProps) {
   const [group, setGroup] = useState<UsedGearWorkflowGroup | null>(null);
   const [loading, setLoading] = useState(true);
@@ -412,9 +412,9 @@ export function UsedGearPendingReviewGroupPage({
                     <button
                       type="button"
                       className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenWorkflowRecord(record.id)}
+                      onClick={() => onOpenOperationalRecord(record.id)}
                     >
-                      Workflow Detail
+                      Open Operational Record
                     </button>
                     <button
                       type="button"

@@ -10,10 +10,11 @@ import { groupUsedGearWorkflowRecords, loadLotTwoQueue } from '@/services/usedGe
 import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearLotTwoSectionProps {
+  onOpenGroupReview?: (groupId: string) => void;
   onOpenIncomingGearForm: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
   showSectionIntro?: boolean;
   focusedGroupId?: string | null;
   onFocusedGroupIdChange?: (groupId: string | null) => void;
@@ -110,10 +111,11 @@ function getGroupHeading(description: string): string {
 }
 
 export function UsedGearLotTwoSection({
+  onOpenGroupReview,
   onOpenIncomingGearForm,
   onOpenTestingForm,
   onOpenPhotosForm,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
   showSectionIntro = true,
   focusedGroupId = null,
   onFocusedGroupIdChange,
@@ -288,9 +290,9 @@ export function UsedGearLotTwoSection({
       ) : null}
 
       {!loading && records.length === 0 ? (
-        <EmptySurface title="Parking Lot 2 is clear" message="No accepted arrival-stage workflow rows are currently waiting in Parking Lot 2.">
+        <EmptySurface title="Parking Lot 2 is clear" message="No accepted arrival-stage operational rows are currently waiting in Parking Lot 2.">
           <p className="mt-3 text-sm text-[var(--muted)]">
-            Next route: promote accepted intake rows out of Parking Lot 1, then work each Lot 2 card through intake, testing, photos, or workflow detail.
+            Next route: promote accepted intake rows out of Parking Lot 1, then work each Lot 2 card through intake, testing, photos, or the current operational surface.
           </p>
         </EmptySurface>
       ) : null}
@@ -307,6 +309,15 @@ export function UsedGearLotTwoSection({
                 <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{getGroupHeading(group.description)}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                {onOpenGroupReview ? (
+                  <button
+                    type="button"
+                    className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-medium text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    onClick={() => onOpenGroupReview(group.id)}
+                  >
+                    {group.description === 'Single record' ? 'Open Item Handoff' : 'Open Set Handoff'}
+                  </button>
+                ) : null}
                 {onFocusedGroupIdChange ? (
                   <button
                     type="button"
@@ -399,9 +410,9 @@ export function UsedGearLotTwoSection({
                     <button
                       type="button"
                       className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenWorkflowRecord(record.id)}
+                      onClick={() => onOpenOperationalRecord(record.id)}
                     >
-                      Workflow Detail
+                      Open Operational Record
                     </button>
                   </div>
                 </article>

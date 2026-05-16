@@ -33,7 +33,7 @@ export function ListingApprovalCombinedSections({
   combinedSharedKeyFeaturesSyncFieldNames,
   sharedTestingSourceFieldValues,
   sharedDrawerRequiredStatus,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
   onOpenTestingForm,
   combinedShopifyOnlyFieldNames,
   shopifyDrawerRequiredStatus,
@@ -93,7 +93,7 @@ export function ListingApprovalCombinedSections({
         combinedSharedKeyFeaturesSyncFieldNames={combinedSharedKeyFeaturesSyncFieldNames}
         sharedTestingSourceFieldValues={sharedTestingSourceFieldValues}
         sharedDrawerRequiredStatus={sharedDrawerRequiredStatus}
-        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenTestingForm={onOpenTestingForm}
       />
 

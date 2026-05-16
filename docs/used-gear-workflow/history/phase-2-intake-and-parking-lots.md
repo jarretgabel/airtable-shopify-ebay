@@ -1,4 +1,6 @@
-## Phase 2: Intake And Parking Lots
+## Historical: Phase 2 Intake And Parking Lots
+
+> Historical reference only. This document records a completed implementation phase and should not be used as the source of truth for new tasks. Use the docs in the parent folder for current guidance.
 
 This phase implements intake triage and queue visibility without yet changing the downstream listing lifecycle.
 

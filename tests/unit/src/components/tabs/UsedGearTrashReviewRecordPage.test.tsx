@@ -4,14 +4,14 @@ import { UsedGearTrashReviewRecordPage } from '@/components/tabs/UsedGearTrashRe
 
 const {
   hasUsedGearPendingReviewPricingPathMock,
-  loadUsedGearWorkflowRecordContextMock,
+  loadUsedGearOperationalRecordContextMock,
   navigateMock,
   permanentlyDeleteTrashRecordMock,
   requalifyTrashRecordMock,
   restoreTrashRecordMock,
 } = vi.hoisted(() => ({
   hasUsedGearPendingReviewPricingPathMock: vi.fn(),
-  loadUsedGearWorkflowRecordContextMock: vi.fn(),
+  loadUsedGearOperationalRecordContextMock: vi.fn(),
   navigateMock: vi.fn(),
   permanentlyDeleteTrashRecordMock: vi.fn(),
   requalifyTrashRecordMock: vi.fn(),
@@ -29,7 +29,7 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('@/services/usedGearQueue', () => ({
   hasUsedGearPendingReviewPricingPath: hasUsedGearPendingReviewPricingPathMock,
-  loadUsedGearWorkflowRecordContext: loadUsedGearWorkflowRecordContextMock,
+  loadUsedGearOperationalRecordContext: loadUsedGearOperationalRecordContextMock,
   permanentlyDeleteTrashRecord: permanentlyDeleteTrashRecordMock,
   requalifyTrashRecord: requalifyTrashRecordMock,
   restoreTrashRecord: restoreTrashRecordMock,
@@ -42,14 +42,14 @@ vi.mock('@/services/inventoryDirectory', () => ({
 describe('UsedGearTrashReviewRecordPage', () => {
   beforeEach(() => {
     hasUsedGearPendingReviewPricingPathMock.mockReset();
-    loadUsedGearWorkflowRecordContextMock.mockReset();
+    loadUsedGearOperationalRecordContextMock.mockReset();
     navigateMock.mockReset();
     permanentlyDeleteTrashRecordMock.mockReset();
     requalifyTrashRecordMock.mockReset();
     restoreTrashRecordMock.mockReset();
 
     hasUsedGearPendingReviewPricingPathMock.mockReturnValue(true);
-    loadUsedGearWorkflowRecordContextMock.mockResolvedValue({
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({
       record: {
         id: 'rec-trash-1',
         createdTime: '2026-05-09T00:00:00.000Z',
@@ -76,7 +76,7 @@ describe('UsedGearTrashReviewRecordPage', () => {
       <UsedGearTrashReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-trash-1"
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -101,7 +101,7 @@ describe('UsedGearTrashReviewRecordPage', () => {
       <UsedGearTrashReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-trash-1"
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -134,7 +134,7 @@ describe('UsedGearTrashReviewRecordPage', () => {
       <UsedGearTrashReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-trash-1"
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 

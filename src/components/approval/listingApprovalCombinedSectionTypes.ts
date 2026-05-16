@@ -38,7 +38,7 @@ export interface ListingApprovalCombinedSharedSectionProps extends CombinedSecti
   combinedSharedKeyFeaturesSyncFieldNames: string[];
   sharedTestingSourceFieldValues: Record<string, string>;
   sharedDrawerRequiredStatus: DrawerRequiredStatus;
-  onOpenWorkflowRecord?: (recordId: string) => void;
+  onOpenOperationalRecord?: (recordId: string) => void;
   onOpenTestingForm?: (recordId: string) => void;
 }
 

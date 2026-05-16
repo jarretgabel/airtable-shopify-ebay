@@ -17,7 +17,7 @@ export interface UsedGearPendingReviewSectionProps {
   currentUserName: string;
   onOpenGroupReview?: (groupId: string) => void;
   onOpenReviewRecord: (recordId: string) => void;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
   showSectionIntro?: boolean;
   focusedGroupId?: string | null;
   onFocusedGroupIdChange?: (groupId: string | null) => void;
@@ -121,7 +121,7 @@ function getPendingReviewSortLabel(sortMode: UsedGearPendingReviewSortMode): str
 export function UsedGearPendingReviewSection({
   onOpenGroupReview,
   onOpenReviewRecord,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
   showSectionIntro = true,
   focusedGroupId = null,
   onFocusedGroupIdChange,
@@ -291,9 +291,9 @@ export function UsedGearPendingReviewSection({
       ) : null}
 
       {!loading && records.length === 0 ? (
-        <EmptySurface title="Pending review queue is clear" message="No used-gear workflow rows currently need initial intake review.">
+        <EmptySurface title="Pending review queue is clear" message="No used-gear operational rows currently need initial intake review.">
           <p className="mt-3 text-sm text-[var(--muted)]">
-            Next route: check Parking Lot 1 for fresh customer submissions, or use the manual Incoming Gear form when intake starts inside the app.
+            Next route: check Parking Lot 1 for fresh customer submissions, or open the dedicated manual intake page when intake starts inside the app.
           </p>
         </EmptySurface>
       ) : null}
@@ -403,9 +403,9 @@ export function UsedGearPendingReviewSection({
                       <button
                         type="button"
                         className={smallSecondaryActionButtonClass}
-                        onClick={() => onOpenWorkflowRecord(record.id)}
+                        onClick={() => onOpenOperationalRecord(record.id)}
                       >
-                        Workflow Detail
+                        Open Operational Record
                       </button>
                       {groupNeedsSubmissionId ? (
                         <span className="rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200">Needs shared submission ID</span>

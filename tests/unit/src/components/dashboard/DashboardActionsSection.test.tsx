@@ -194,7 +194,7 @@ describe('DashboardActionsSection', () => {
 
     render(
       <DashboardActionsSection
-        accessiblePages={['dashboard', 'inventory', 'parking-lot-1', 'pre-listing-queue']}
+        accessiblePages={['dashboard', 'inventory', 'parking-lot-1', 'listings']}
         currentUserRole="processor"
         currentUserName="Taylor Reviewer"
         ebayAuthenticated={false}
@@ -231,7 +231,7 @@ describe('DashboardActionsSection', () => {
     fireEvent.click(screen.getByRole('button', { name: /2 processing blockers/i }));
 
     expect(onSelectTab).toHaveBeenNthCalledWith(1, 'parking-lot-1');
-    expect(onSelectTab).toHaveBeenNthCalledWith(2, 'pre-listing-queue');
+    expect(onSelectTab).toHaveBeenNthCalledWith(2, 'inventory');
   });
 
   it('gives tester dashboards queue actions instead of an empty action rail', () => {

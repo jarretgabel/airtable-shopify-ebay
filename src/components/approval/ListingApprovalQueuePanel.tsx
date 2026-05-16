@@ -9,7 +9,7 @@ import { displayValue } from '@/stores/approvalStore';
 import { AirtableRecord } from '@/types/airtable';
 
 type QueueQuickFilter = 'all' | 'pending' | 'ready' | 'needs-fields' | 'approved';
-type QueueExtraFilter = 'all' | 'shopify-active' | 'shopify-draft' | 'shopify-archived' | 'ebay-live' | 'ebay-draft-offer' | 'ebay-approved-to-publish' | 'ebay-stale';
+type QueueExtraFilter = 'all' | 'shopify-active' | 'shopify-draft' | 'shopify-archived' | 'ebay-live' | 'ebay-draft-offer' | 'ebay-approved-to-publish' | 'ebay-stale' | 'workflow-pre-listing-review' | 'workflow-approved-for-publish';
 
 interface QueueExtraFilterDefinition {
   id: Exclude<QueueExtraFilter, 'all'>;
@@ -124,6 +124,23 @@ function buildExtraFilterDefinitions(
         id: 'ebay-stale',
         label: 'Stale',
         matches: (record) => normalizeEbayWorkflowStatus(record) === 'stale listing, ebay',
+      },
+    ];
+
+    return definitions.filter((definition) => records.some((record) => definition.matches(record)));
+  }
+
+  if (approvalChannel === 'combined') {
+    const definitions: QueueExtraFilterDefinition[] = [
+      {
+        id: 'workflow-pre-listing-review',
+        label: 'Needs Review',
+        matches: (record) => normalizeEbayWorkflowStatus(record) === 'awaiting pre-listing review',
+      },
+      {
+        id: 'workflow-approved-for-publish',
+        label: 'Approved to Publish',
+        matches: (record) => normalizeEbayWorkflowStatus(record) === 'approved for publish',
       },
     ];
 
@@ -258,12 +275,12 @@ export function ListingApprovalQueuePanel({
   createNewShopifyListing,
   loadRecords,
 }: ListingApprovalQueuePanelProps) {
-  const isServiceSpecificQueue = approvalChannel !== 'combined';
+  const supportsSearchAndQuickFilters = approvalChannel !== 'combined';
   const quickFilterStorageKey = `${FILTER_STORAGE_PREFIX}:${approvalChannel}:quick`;
   const extraFilterStorageKey = `${FILTER_STORAGE_PREFIX}:${approvalChannel}:extra`;
   const [searchQuery, setSearchQuery] = useState('');
   const [activeQuickFilter, setActiveQuickFilter] = useState<QueueQuickFilter>(() => readStoredFilter(quickFilterStorageKey, defaultQuickFilterForChannel(approvalChannel), ['all', 'pending', 'ready', 'needs-fields', 'approved'] as const));
-  const [activeExtraFilter, setActiveExtraFilter] = useState<QueueExtraFilter>(() => readStoredFilter(extraFilterStorageKey, 'all', ['all', 'shopify-active', 'shopify-draft', 'shopify-archived', 'ebay-live', 'ebay-draft-offer', 'ebay-approved-to-publish', 'ebay-stale'] as const));
+  const [activeExtraFilter, setActiveExtraFilter] = useState<QueueExtraFilter>(() => readStoredFilter(extraFilterStorageKey, 'all', ['all', 'shopify-active', 'shopify-draft', 'shopify-archived', 'ebay-live', 'ebay-draft-offer', 'ebay-approved-to-publish', 'ebay-stale', 'workflow-pre-listing-review', 'workflow-approved-for-publish'] as const));
   const requiredFieldNames = approvalChannel === 'shopify'
     ? shopifyRequiredFieldNames
     : approvalChannel === 'ebay'
@@ -275,12 +292,12 @@ export function ListingApprovalQueuePanel({
   );
 
   useEffect(() => {
-    if (!isServiceSpecificQueue) return;
+    if (!supportsSearchAndQuickFilters) return;
     writeStoredFilter(quickFilterStorageKey, activeQuickFilter);
-  }, [activeQuickFilter, isServiceSpecificQueue, quickFilterStorageKey]);
+  }, [activeQuickFilter, quickFilterStorageKey, supportsSearchAndQuickFilters]);
 
   useEffect(() => {
-    if (!isServiceSpecificQueue) return;
+    if (extraFilterDefinitions.length === 0) return;
     const allowedExtraFilters = new Set<QueueExtraFilter>(['all', ...extraFilterDefinitions.map((definition) => definition.id)]);
     if (!allowedExtraFilters.has(activeExtraFilter)) {
       setActiveExtraFilter('all');
@@ -288,11 +305,9 @@ export function ListingApprovalQueuePanel({
     }
 
     writeStoredFilter(extraFilterStorageKey, activeExtraFilter);
-  }, [activeExtraFilter, extraFilterDefinitions, extraFilterStorageKey, isServiceSpecificQueue]);
+  }, [activeExtraFilter, extraFilterDefinitions, extraFilterStorageKey]);
 
   const filteredRecords = useMemo(() => {
-    if (!isServiceSpecificQueue) return records;
-
     const normalizedQuery = searchQuery.trim().toLowerCase();
     const searchableFieldNames = [
       titleFieldName,
@@ -307,13 +322,16 @@ export function ListingApprovalQueuePanel({
     ];
 
     return records.filter((record) => {
-      const passesQuickFilter = matchesQuickFilter(record, approvedFieldName, requiredFieldNames, activeQuickFilter);
-      if (!passesQuickFilter) return false;
+      if (supportsSearchAndQuickFilters) {
+        const passesQuickFilter = matchesQuickFilter(record, approvedFieldName, requiredFieldNames, activeQuickFilter);
+        if (!passesQuickFilter) return false;
+      }
+
       const passesExtraFilter = activeExtraFilter === 'all'
         || extraFilterDefinitions.find((definition) => definition.id === activeExtraFilter)?.matches(record)
         || false;
       if (!passesExtraFilter) return false;
-      if (!normalizedQuery) return true;
+      if (!supportsSearchAndQuickFilters || !normalizedQuery) return true;
 
       return buildSearchableRecordText(record, searchableFieldNames).includes(normalizedQuery);
     });
@@ -323,18 +341,18 @@ export function ListingApprovalQueuePanel({
     approvedFieldName,
     extraFilterDefinitions,
     formatFieldName,
-    isServiceSpecificQueue,
     priceFieldName,
     qtyFieldName,
     records,
     requiredFieldNames,
     searchQuery,
+    supportsSearchAndQuickFilters,
     titleFieldName,
     vendorFieldName,
   ]);
 
   const quickFilterCounts = useMemo(() => {
-    if (!isServiceSpecificQueue) return null;
+    if (!supportsSearchAndQuickFilters) return null;
 
     return {
       all: records.length,
@@ -343,15 +361,19 @@ export function ListingApprovalQueuePanel({
       'needs-fields': records.filter((record) => matchesQuickFilter(record, approvedFieldName, requiredFieldNames, 'needs-fields')).length,
       approved: records.filter((record) => matchesQuickFilter(record, approvedFieldName, requiredFieldNames, 'approved')).length,
     } satisfies Record<QueueQuickFilter, number>;
-  }, [approvedFieldName, isServiceSpecificQueue, records, requiredFieldNames]);
+  }, [approvedFieldName, records, requiredFieldNames, supportsSearchAndQuickFilters]);
 
   const extraFilterCounts = useMemo(() => {
-    if (!isServiceSpecificQueue || extraFilterDefinitions.length === 0) return null;
+    if (extraFilterDefinitions.length === 0) return null;
 
     return Object.fromEntries(
       extraFilterDefinitions.map((definition) => [definition.id, records.filter((record) => definition.matches(record)).length]),
     ) as Record<Exclude<QueueExtraFilter, 'all'>, number>;
-  }, [extraFilterDefinitions, isServiceSpecificQueue, records]);
+  }, [extraFilterDefinitions, records]);
+
+  const isFiltered = supportsSearchAndQuickFilters
+    ? filteredRecords.length !== records.length
+    : activeExtraFilter !== 'all' && filteredRecords.length !== records.length;
 
   return (
     <>
@@ -413,7 +435,7 @@ export function ListingApprovalQueuePanel({
             </div>
           </div>
 
-          {isServiceSpecificQueue ? (
+          {supportsSearchAndQuickFilters ? (
             <div className="mb-4 space-y-3">
               <div className="flex flex-wrap items-center gap-3">
                 <input
@@ -468,14 +490,35 @@ export function ListingApprovalQueuePanel({
             </div>
           ) : null}
 
+          {!supportsSearchAndQuickFilters && extraFilterDefinitions.length > 0 ? (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {extraFilterDefinitions.map((definition) => {
+                const active = activeExtraFilter === definition.id;
+                const count = extraFilterCounts?.[definition.id] ?? 0;
+
+                return (
+                  <button
+                    key={definition.id}
+                    type="button"
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${active ? 'border-cyan-400/35 bg-cyan-500/15 text-cyan-100' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-cyan-400/25 hover:text-[var(--ink)]'}`}
+                    onClick={() => setActiveExtraFilter(active ? 'all' : definition.id)}
+                    aria-pressed={active}
+                  >
+                    {definition.label} · {count}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+
           <p className="m-0 mb-4 text-sm text-[var(--muted)]">
             <strong>{filteredRecords.length}</strong>
-            {isServiceSpecificQueue && filteredRecords.length !== records.length ? ` of ${records.length}` : ''} listing rows {isServiceSpecificQueue ? 'shown' : 'loaded'}.
+            {isFiltered ? ` of ${records.length}` : ''} listing rows {supportsSearchAndQuickFilters || isFiltered ? 'shown' : 'loaded'}.
           </p>
 
-          {isServiceSpecificQueue && filteredRecords.length === 0 ? (
+          {(supportsSearchAndQuickFilters || activeExtraFilter !== 'all') && filteredRecords.length === 0 ? (
             <section className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-8 text-center text-sm text-[var(--muted)]">
-              No listing rows match the current search and quick filter.
+              No listing rows match the current filters.
             </section>
           ) : null}
 

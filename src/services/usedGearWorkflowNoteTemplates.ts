@@ -74,7 +74,7 @@ const SHIPMENT_FOLLOW_THROUGH_NOTE_TEMPLATES: UsedGearWorkflowNoteTemplate[] = [
   {
     id: 'shipment-confirmed',
     label: 'Shipment Confirmed',
-    value: 'Fulfillment follow-through completed. Shipment confirmation was recorded and the workflow row is ready for shipped-history retention.',
+    value: 'Fulfillment follow-through completed. Shipment confirmation was recorded and the operational row is ready for shipped-history retention.',
   },
 ];
 

@@ -14,14 +14,15 @@ import {
   distributeUsedGearPendingReviewTotal,
   groupUsedGearWorkflowRecords,
   hasUsedGearPendingReviewPricingPath,
+  loadLotTwoGroup,
   loadLotTwoQueue,
-  loadUsedGearWorkflowRecordBySku,
+  loadUsedGearOperationalRecordBySku,
   loadWorkflowPostPublishQueue,
   loadTrashQueue,
   loadUsedGearWorkflowNotificationCounts,
   loadUsedGearWorkflowNotificationSummary,
-  loadUsedGearWorkflowRecord,
-  loadUsedGearWorkflowRecordContext,
+  loadUsedGearOperationalRecord,
+  loadUsedGearOperationalRecordContext,
   loadWorkflowProgressQueue,
   loadPendingReviewQueue,
   loadPendingReviewGroup,
@@ -196,7 +197,35 @@ describe('usedGearQueue', () => {
     ]);
   });
 
-  it('loads post-publish workflow rows for listed and shipping lifecycle statuses', async () => {
+  it('loads a grouped Parking Lot 2 handoff set', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'recAwaitingArrival',
+        createdTime: 'now',
+        fields: {
+          'Pick Up ID': 'pickup-100',
+          'Workflow Status': 'Accepted - Awaiting Arrival',
+          SKU: 'A-1',
+        },
+      },
+      {
+        id: 'recAwaitingSku',
+        createdTime: 'later',
+        fields: {
+          'Pick Up ID': 'pickup-100',
+          'Workflow Status': 'Accepted - Arrived, Awaiting SKU',
+          SKU: 'A-2',
+        },
+      },
+    ]);
+
+    const group = await loadLotTwoGroup('pickup:pickup-100');
+
+    expect(group.label).toBe('pickup-100');
+    expect(group.records.map((record) => record.id)).toEqual(['recAwaitingArrival', 'recAwaitingSku']);
+  });
+
+  it('loads post-publish operational rows for listed and shipping lifecycle statuses', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'recListed',
@@ -244,7 +273,7 @@ describe('usedGearQueue', () => {
     expect(fields).not.toContain('Shipment Follow-Through Updated At');
   });
 
-  it('requests optional shipment fields when loading a single workflow record', async () => {
+  it('requests optional shipment fields when loading a single operational record', async () => {
     mockGetConfiguredRecords
       .mockResolvedValueOnce([
         {
@@ -264,7 +293,7 @@ describe('usedGearQueue', () => {
         },
       ]);
 
-    const record = await loadUsedGearWorkflowRecord('recSold');
+    const record = await loadUsedGearOperationalRecord('recSold');
 
     expect(record.fields['Shipment Follow-Through Notes']).toBe('Carrier booking pending.');
     expect(mockGetConfiguredRecords).toHaveBeenCalledTimes(2);
@@ -280,7 +309,7 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('falls back to required workflow fields when optional shipment fields are unavailable for detail reads', async () => {
+  it('falls back to required operational fields when optional shipment fields are unavailable for detail reads', async () => {
     mockGetConfiguredRecords
       .mockResolvedValueOnce([
         {
@@ -291,13 +320,13 @@ describe('usedGearQueue', () => {
       ])
       .mockRejectedValueOnce(new Error('Failed to load Airtable records for used-gear-workflow.'));
 
-    const record = await loadUsedGearWorkflowRecord('recSold');
+    const record = await loadUsedGearOperationalRecord('recSold');
 
     expect(record.id).toBe('recSold');
     expect(mockGetConfiguredRecords).toHaveBeenCalledTimes(2);
   });
 
-  it('summarizes post-publish workflow rows by lifecycle bucket', () => {
+  it('summarizes post-publish operational rows by lifecycle bucket', () => {
     const summary = summarizeUsedGearWorkflowPostPublishQueue([
       {
         id: 'recActive',
@@ -345,7 +374,7 @@ describe('usedGearQueue', () => {
     });
   });
 
-  it('groups workflow rows by pickup first, then submission id', () => {
+  it('groups operational rows by pickup first, then submission id', () => {
     const groups = groupUsedGearWorkflowRecords([
       {
         id: 'rec1',
@@ -440,7 +469,7 @@ describe('usedGearQueue', () => {
     expect(group.records).toHaveLength(2);
   });
 
-  it('loads a workflow row by exact sku lookup', async () => {
+  it('loads an operational row by exact sku lookup', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'recSku',
@@ -449,7 +478,7 @@ describe('usedGearQueue', () => {
       },
     ]);
 
-    const record = await loadUsedGearWorkflowRecordBySku('sku-42');
+    const record = await loadUsedGearOperationalRecordBySku('sku-42');
 
     expect(record.id).toBe('recSku');
   });
@@ -665,7 +694,7 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('loads a single workflow record through the workflow source', async () => {
+  it('loads a single operational record through the workflow source', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'rec1',
@@ -674,12 +703,12 @@ describe('usedGearQueue', () => {
       },
     ]);
 
-    const record = await loadUsedGearWorkflowRecord('rec1');
+    const record = await loadUsedGearOperationalRecord('rec1');
 
     expect(record.id).toBe('rec1');
   });
 
-  it('requests the approved workflow field inventory when loading a single workflow record', async () => {
+  it('requests the approved workflow field inventory when loading a single operational record', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'rec1',
@@ -688,7 +717,7 @@ describe('usedGearQueue', () => {
       },
     ]);
 
-    await loadUsedGearWorkflowRecord('rec1');
+    await loadUsedGearOperationalRecord('rec1');
 
     expect(mockGetConfiguredRecords).toHaveBeenCalledWith(
       'used-gear-workflow',
@@ -741,7 +770,7 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('loads grouped workflow context for a record with sibling rows', async () => {
+  it('loads grouped operational context for a record with sibling rows', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'rec1',
@@ -755,7 +784,7 @@ describe('usedGearQueue', () => {
       },
     ]);
 
-    const context = await loadUsedGearWorkflowRecordContext('rec1');
+    const context = await loadUsedGearOperationalRecordContext('rec1');
 
     expect(context.record.id).toBe('rec1');
     expect(context.group?.id).toBe('submission:SUB-42');
@@ -917,7 +946,7 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('moves listed workflow rows into sold-ready-to-ship', async () => {
+  it('moves listed operational rows into sold-ready-to-ship', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'rec1',
@@ -948,7 +977,7 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('saves stale recovery details for stale workflow rows', async () => {
+  it('saves stale recovery details for stale operational rows', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'rec1',
@@ -987,7 +1016,7 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('returns stale workflow rows to active listed status when relisted', async () => {
+  it('returns stale operational rows to active listed status when relisted', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'rec1',
@@ -1024,7 +1053,7 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('marks sold-ready workflow rows shipped', async () => {
+  it('marks sold-ready operational rows shipped', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'rec1',
@@ -1054,7 +1083,7 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('saves shipment follow-through notes for sold-ready workflow rows', async () => {
+  it('saves shipment follow-through notes for sold-ready operational rows', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'rec1',
@@ -1089,7 +1118,7 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('marks a selected batch of listed workflow rows sold ready', async () => {
+  it('marks a selected batch of listed operational rows sold ready', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'rec1',
@@ -1119,7 +1148,7 @@ describe('usedGearQueue', () => {
     expect(mockUpdateConfiguredRecord).toHaveBeenCalledTimes(2);
   });
 
-  it('marks a selected batch of sold-ready workflow rows shipped', async () => {
+  it('marks a selected batch of sold-ready operational rows shipped', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'rec1',
@@ -1311,11 +1340,11 @@ describe('usedGearQueue', () => {
           path: '/workflow/photography#used-gear-photography-queue',
         },
         preListingReview: {
-          destinationTab: 'pre-listing-queue',
+          destinationTab: 'listings',
           recordId: 'recPreListing',
-          sectionId: 'used-gear-pre-listing-queue',
+          sectionId: null,
           groupId: null,
-          path: '/workflow/pre-listing#used-gear-pre-listing-queue',
+          path: null,
         },
         approvedForPublish: {
           destinationTab: 'listings',

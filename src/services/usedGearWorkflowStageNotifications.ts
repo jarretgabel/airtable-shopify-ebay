@@ -27,7 +27,7 @@ function getTrimmedString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-function getWorkflowRecordLabel(record: AirtableRecord): string {
+function getOperationalRecordLabel(record: AirtableRecord): string {
   const sku = getTrimmedString(record.fields.SKU);
   const make = getTrimmedString(record.fields.Make);
   const model = getTrimmedString(record.fields.Model);
@@ -45,7 +45,7 @@ function getWorkflowRecordLabel(record: AirtableRecord): string {
     return makeModel;
   }
 
-  return `workflow record ${record.id}`;
+  return `operational record ${record.id}`;
 }
 
 function areAnyWorkflowEventsEnabled(
@@ -71,7 +71,7 @@ export function buildUsedGearStageHandoffNotification({
 
   const signoffs = buildUsedGearConcurrentStageSignoffs(record.fields);
   const nextTeams = deriveUsedGearNextTeams(status, signoffs);
-  const recordLabel = getWorkflowRecordLabel(record);
+  const recordLabel = getOperationalRecordLabel(record);
 
   if (status === 'Testing and Photography In Progress') {
     if (nextTeams.includes('Testing') && nextTeams.includes('Photography')) {

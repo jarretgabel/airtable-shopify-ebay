@@ -66,7 +66,7 @@ describe('usedGearWorkflowLifecycle', () => {
     expect(snapshot?.shipmentFollowThroughUpdatedAt).toBe('2026-05-07T08:30:00.000Z');
   });
 
-  it('reads stale recovery fields from the workflow row', () => {
+  it('reads stale recovery fields from the operational row', () => {
     const record: AirtableRecord = {
       id: 'rec-stale',
       createdTime: '2026-05-07T00:00:00.000Z',

@@ -1,20 +1,22 @@
-## Phase 4: Pre-Listing And Publish Readiness
+## Historical: Phase 4 Pre-Listing And Publish Readiness
+
+> Historical reference only. This document records a completed implementation phase and should not be used as the source of truth for new tasks. Use the docs in the parent folder for current guidance.
 
 This phase adds the operational review step that bridges processing into the existing listing editors.
 
 ### Goals
-- Create an explicit pre-listing operational review step.
+- Create an explicit listing-phase operational review step inside Listings.
 - Prefill the listing editors as much as possible.
 - Make reviewer/pricing confirmation explicit before publish.
 
 ### Scope
-1. Add a queue-aware pre-listing review surface.
+1. Add a queue-aware listing review surface that begins at `Awaiting Pre-Listing Review` inside Listings.
 2. Consolidate data from prior stages for final review and correction.
 3. Prefill the existing Shopify/eBay listing approval/editing workflow with as much known information as possible from intake, processing, testing, and photography stages.
 4. Route approved records into the existing Shopify/eBay listing approval/editing workflow.
 5. Set `APPROVED FOR PUBLISH` state and reviewer metadata before final publishing.
 6. Capture the final pricing/reviewer confirmation step so the designated reviewer can confirm pricing and publish readiness before release to market.
-7. Add any missing listing-prep pages that improve operational clarity, such as an approved-for-publish queue, review detail page, or listing-prep landing page if the existing approval screens are not sufficient on their own.
+7. Add any missing listing-prep modules only if the existing Listings selected-record flow is not sufficient.
 8. Define how listing-prep corrections write back to the authoritative Airtable row so downstream listing data stays consistent.
 9. Wire any new listing-prep pages into app navigation, route definitions, and direct-link handling.
 
@@ -22,7 +24,7 @@ This phase adds the operational review step that bridges processing into the exi
 - Phase 3 completion with `Awaiting Pre-Listing Review` transition.
 
 ### Deliverables
-- Pre-listing review page.
+- Listing review bucket and selected-record flow inside Combined Listing Approval.
 - Approved-for-publish queue or equivalent landing page if needed.
 - Listing prefill rules.
 - Reviewer/pricing confirmation flow.
@@ -30,7 +32,7 @@ This phase adds the operational review step that bridges processing into the exi
 - In-app workflow notification preference routing for queue-stage alerts.
 
 ### Exit Criteria
-- Pre-listing review exists as a distinct operational step.
+- Listing review exists as a distinct operational step inside Listings.
 - Records hand off correctly into the current approval/publish flow.
 - Listing approval surfaces retain enough workflow context that the listing team can confirm what was approved before publish.
 - Listing editors are prefilled as much as possible before manual completion.
@@ -72,14 +74,14 @@ This phase adds the operational review step that bridges processing into the exi
 - Existing listing-editor values continue to win over workflow-derived prefills so manual listing edits are not overwritten on open.
 
 ### Implemented Review Gate
-- Rows in `Awaiting Pre-Listing Review` now route into the workflow detail page for explicit review instead of allowing inline approval directly from the queue card.
-- The workflow detail page now consolidates listing title, description, price, signoffs, and internal notes into a single pre-listing readiness panel.
-- `Approve For Publish` is disabled until the reviewer explicitly confirms pricing and content review in-app.
+- Rows in `Awaiting Pre-Listing Review` now surface in Combined Listing Approval as the first listing-phase state.
+- The Listings selected-record experience now owns reviewer confirmation, blocker messaging, and `Approve For Publish` actions.
+- Workflow detail is now reference-only for blocker context, grouped sibling review, and audit history.
 - The service layer now blocks the status transition to `Approved for Publish` when no listing price has been captured on the row.
 
 ### Implemented Approval Handoff Context
 - The combined listing approval selected-record view now shows a workflow summary block so the listing team can see the workflow status, resolved title, resolved description, resolved price, price source, and pre-listing reviewer without leaving the approval screen.
-- Final publish confirmation now repeats the workflow status, resolved title, and resolved price alongside the existing marketplace confirmation copy so the last publish step uses the same readiness context that was approved in the workflow detail page.
+- Final publish confirmation now repeats the workflow status, resolved title, and resolved price alongside the existing marketplace confirmation copy so the last publish step uses the same readiness context shown in Listings.
 
 ### Implemented Publish Lifecycle Writeback
 - Successful publish actions now write lifecycle state back to the authoritative workflow row so `Workflow Status` advances from `Approved for Publish` into the listed workflow family.

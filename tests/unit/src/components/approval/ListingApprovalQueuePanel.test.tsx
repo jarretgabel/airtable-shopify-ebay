@@ -149,4 +149,23 @@ describe('ListingApprovalQueuePanel', () => {
     expect(screen.queryByRole('button', { name: /Needs Fields/i })).not.toBeInTheDocument();
     expect(screen.getByText((_, node) => node?.textContent?.replace(/\s+/g, ' ').trim() === '1 listing rows loaded.')).toBeInTheDocument();
   });
+
+  it('shows workflow-stage chips for the combined queue and filters pre-listing review rows', () => {
+    render(
+      <ListingApprovalQueuePanel
+        {...baseProps}
+        approvalChannel="combined"
+        records={[
+          buildRecord('1', { Title: 'Needs Review Listing', Approved: false, 'Workflow Status': 'Awaiting Pre-Listing Review' }),
+          buildRecord('2', { Title: 'Approved Listing', Approved: true, 'Workflow Status': 'Approved for Publish' }),
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Needs Review · 1' }));
+
+    expect(screen.getByText('Needs Review Listing')).toBeInTheDocument();
+    expect(screen.queryByText('Approved Listing')).not.toBeInTheDocument();
+    expect(screen.getByText((_, node) => node?.textContent?.replace(/\s+/g, ' ').trim() === '1 of 2 listing rows shown.')).toBeInTheDocument();
+  });
 });

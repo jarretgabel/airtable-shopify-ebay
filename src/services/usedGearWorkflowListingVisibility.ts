@@ -3,6 +3,7 @@ import { getUsedGearWorkflowStatus, type UsedGearWorkflowStatus } from '@/servic
 import type { AirtableRecord } from '@/types/airtable';
 
 const LISTING_SURFACE_STATUSES = new Set<UsedGearWorkflowStatus>([
+  'Awaiting Pre-Listing Review',
   'Approved for Publish',
   'Listed, Shopify',
   'Listed, eBay',

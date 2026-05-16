@@ -335,7 +335,7 @@ export function SettingsTab() {
                       />
                       <span>
                         <span className="block font-semibold">Unassigned work</span>
-                        <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">Keep alerts for workflow rows that still need an owner.</span>
+                        <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">Keep alerts for operational rows that still need an owner.</span>
                       </span>
                     </span>
                   </label>

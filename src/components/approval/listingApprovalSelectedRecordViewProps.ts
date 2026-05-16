@@ -67,7 +67,7 @@ interface BuildListingApprovalSelectedRecordViewPropsParams {
   bodyHtmlPreview: string;
   isEbayPayloadPreviewContext: boolean;
   ebayDraftPayloadBundle: EbayApprovalPayloadPreviewData['ebayDraftPayloadBundle'];
-  onOpenWorkflowRecord?: (recordId: string) => void;
+  onOpenOperationalRecord?: (recordId: string) => void;
   onOpenTestingForm?: (recordId: string) => void;
   onOpenPhotosForm?: (recordId: string) => void;
 }
@@ -127,7 +127,7 @@ export function buildListingApprovalSelectedRecordViewProps({
   bodyHtmlPreview,
   isEbayPayloadPreviewContext,
   ebayDraftPayloadBundle,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
   onOpenTestingForm,
   onOpenPhotosForm,
 }: BuildListingApprovalSelectedRecordViewPropsParams) {
@@ -161,7 +161,7 @@ export function buildListingApprovalSelectedRecordViewProps({
         Object.entries(drawerSourceFields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
       ),
       sharedDrawerRequiredStatus,
-      onOpenWorkflowRecord,
+      onOpenOperationalRecord,
       onOpenTestingForm,
       onOpenPhotosForm,
       combinedShopifyOnlyFieldNames,
@@ -223,7 +223,7 @@ export function buildListingApprovalSelectedRecordViewProps({
         ? (labelsById: Record<string, string>) => setEbayCategoryLabelsById((current) => ({ ...current, ...labelsById }))
         : undefined,
       onBodyHtmlPreviewChange: setBodyHtmlPreview,
-      onOpenWorkflowRecord,
+      onOpenOperationalRecord,
       onOpenTestingForm,
       onOpenPhotosForm,
       selectedEbayTemplateId,

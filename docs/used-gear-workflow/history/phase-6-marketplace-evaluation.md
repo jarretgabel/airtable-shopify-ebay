@@ -1,4 +1,6 @@
-## Phase 6 Marketplace Evaluation
+## Historical: Phase 6 Marketplace Evaluation
+
+> Historical reference only. This document records planning work and should not be used as the source of truth for new implementation tasks. Use the docs in the parent folder for current guidance.
 
 This document evaluates future marketplace expansion against the current used-gear workflow architecture. It is intentionally scoped as a planning artifact rather than an implementation spec because the core workflow already depends on one authoritative Airtable row and a stable publish/writeback loop.
 

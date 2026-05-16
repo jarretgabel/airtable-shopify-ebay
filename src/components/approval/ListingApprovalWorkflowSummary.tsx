@@ -398,7 +398,7 @@ export function ListingApprovalWorkflowProcessCard({
   description = 'Workflow status, ownership, and milestone progress for this listing from intake through shipment.',
   loading = false,
   error = null,
-  emptyMessage = 'No used-gear workflow row is linked to this listing yet.',
+  emptyMessage = 'No used-gear operational row is linked to this listing yet.',
   primaryActionLabel,
   onPrimaryAction = null,
   secondaryActionLabel,

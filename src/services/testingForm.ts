@@ -8,6 +8,7 @@ import {
 import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
 import { createTestingFormDefaults, type TestingFormOptionFieldName, type TestingFormValues } from '@/components/tabs/testing/testingFormSchema';
+import { resolveCurrentActorName } from '@/services/currentUserAudit';
 import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
 import type { AirtableRecord } from '@/types/airtable';
 import {
@@ -344,6 +345,14 @@ export async function submitTestingForm(
   const testingTimeMinutes = trimToUndefined(values.testingTimeMinutes);
   const serviceTimeMinutes = trimToUndefined(values.serviceTimeMinutes);
   const recordSource = options.recordSource ?? 'inventory-directory';
+  const actorName = resolveCurrentActorName();
+  const testedAt = new Date().toISOString();
+  const workflowTestingAuditFields = recordSource === 'used-gear-workflow'
+    ? compactFields({
+        'Testing Signed At': testedAt,
+        'Testing Signed By': actorName ?? undefined,
+      })
+    : {};
   const baseFields = compactFields({
     SKU: trimToUndefined(values.sku),
     'Arrival Date': trimToUndefined(values.arrivalDate),
@@ -372,6 +381,7 @@ export async function submitTestingForm(
     Tested: trimToUndefined(values.testingDate),
     Status: trimToUndefined(values.status),
     [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata ? serializeWorkflowImageMetadata(options.imageMetadata) : undefined,
+    ...workflowTestingAuditFields,
   });
 
   try {

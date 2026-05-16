@@ -5,14 +5,14 @@ import { UsedGearPendingReviewSection } from '@/components/tabs/airtable/UsedGea
 
 interface ParkingLotOneTabProps {
   currentUserName: string;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
 }
 
 const WORKFLOW_PENDING_REVIEW_SEARCH_PARAM = 'workflowPendingReviewSearch';
 const WORKFLOW_PENDING_REVIEW_SORT_PARAM = 'workflowPendingReviewSort';
 const WORKFLOW_PENDING_REVIEW_GROUP_PARAM = 'workflowPendingReviewGroup';
 
-export function ParkingLotOneTab({ currentUserName, onOpenWorkflowRecord }: ParkingLotOneTabProps) {
+export function ParkingLotOneTab({ currentUserName, onOpenOperationalRecord }: ParkingLotOneTabProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -60,7 +60,7 @@ export function ParkingLotOneTab({ currentUserName, onOpenWorkflowRecord }: Park
         showSectionIntro={false}
         onOpenGroupReview={(groupId) => navigate(`/parking-lot-1/review/${encodeURIComponent(groupId)}${location.search}`, { replace: false })}
         onOpenReviewRecord={(recordId) => navigate(`/parking-lot-1/review-record/${encodeURIComponent(recordId)}${location.search}`, { replace: false })}
-        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        onOpenOperationalRecord={onOpenOperationalRecord}
         focusedGroupId={workflowPendingReviewGroup}
         onFocusedGroupIdChange={(groupId) => updateIntakeRouteState((params) => {
           if (groupId) {

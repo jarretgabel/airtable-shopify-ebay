@@ -6,12 +6,12 @@ import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/Sta
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import {
   hasUsedGearPendingReviewPricingPath,
-  loadUsedGearWorkflowRecordContext,
+  loadUsedGearOperationalRecordContext,
   permanentlyDeleteTrashRecord,
   requalifyTrashRecord,
   restoreTrashRecord,
   type UsedGearPendingReviewAcceptedStatus,
-  type UsedGearWorkflowRecordContext,
+  type UsedGearOperationalRecordContext,
 } from '@/services/usedGearQueue';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
@@ -19,7 +19,7 @@ import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } f
 interface UsedGearTrashReviewRecordPageProps {
   currentUserName: string;
   recordId: string;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
 }
 
 const REQUALIFY_ROUTE_OPTIONS: Array<{
@@ -94,11 +94,11 @@ function QualificationTemplateRow({ onApplyTemplate }: { onApplyTemplate: (templ
 export function UsedGearTrashReviewRecordPage({
   currentUserName,
   recordId,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
 }: UsedGearTrashReviewRecordPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [context, setContext] = useState<UsedGearWorkflowRecordContext | null>(null);
+  const [context, setContext] = useState<UsedGearOperationalRecordContext | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -114,7 +114,7 @@ export function UsedGearTrashReviewRecordPage({
       setError(null);
 
       try {
-        const nextContext = await loadUsedGearWorkflowRecordContext(recordId);
+        const nextContext = await loadUsedGearOperationalRecordContext(recordId);
         if (!cancelled) {
           setContext(nextContext);
           setRequalifyStatus(
@@ -250,9 +250,9 @@ export function UsedGearTrashReviewRecordPage({
                     <button
                       type="button"
                       className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenWorkflowRecord(record.id)}
+                      onClick={() => onOpenOperationalRecord(record.id)}
                     >
-                      Open Workflow Record
+                      Open Operational Record
                     </button>
                   </div>
                 ) : null}

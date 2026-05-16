@@ -193,7 +193,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
       return (
         <FormImageUploadEditor
           title={definition.label}
-          description="Upload, crop, resize, watermark, rename, and compare files before they are attached to the workflow record. Saved defaults persist locally for future testing sessions."
+          description="Upload, crop, resize, watermark, rename, and compare files before they are attached to the operational record. Saved defaults persist locally for future testing sessions."
           disabled={submitting}
           resetKey={uploadEditorResetKey}
           onFilesChange={(files) => setFieldValue(definition.name, files as TestingFormValues[typeof definition.name])}

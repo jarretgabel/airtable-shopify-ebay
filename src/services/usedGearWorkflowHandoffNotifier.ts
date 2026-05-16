@@ -19,7 +19,7 @@ interface PublishUsedGearStageHandoffNotificationParams {
   currentUser: AppUser | null;
   completedStage: UsedGearCompletedStage;
   record: AirtableRecord;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
   upsertByKey: (key: string, input: UpsertNotificationInput) => string;
 }
 
@@ -27,7 +27,7 @@ export function publishUsedGearStageHandoffNotification({
   currentUser,
   completedStage,
   record,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
   upsertByKey,
 }: PublishUsedGearStageHandoffNotificationParams): boolean {
   const notification = buildUsedGearStageHandoffNotification({
@@ -44,8 +44,8 @@ export function publishUsedGearStageHandoffNotification({
     tone: notification.tone,
     title: notification.title,
     message: notification.message,
-    actionLabel: 'Open Workflow Record',
-    onAction: () => onOpenWorkflowRecord(record.id),
+    actionLabel: 'Open Operational Record',
+    onAction: () => onOpenOperationalRecord(record.id),
     dismissible: true,
   });
 

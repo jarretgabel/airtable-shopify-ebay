@@ -93,6 +93,7 @@ describe('authContextHelpers', () => {
     expect(canUserAccessPage(owner, 'market')).toBe(true);
     expect(canUserAccessPage(user, 'dashboard')).toBe(true);
     expect(canUserAccessPage(user, 'workflow-guide')).toBe(true);
+    expect(canUserAccessPage(user, 'manual-intake')).toBe(true);
     expect(canUserAccessPage(user, 'incoming-gear')).toBe(true);
     expect(canUserAccessPage(user, 'testing-queue')).toBe(true);
     expect(canUserAccessPage(user, 'photography-queue')).toBe(true);
@@ -120,13 +121,13 @@ describe('authContextHelpers', () => {
     expect(getAccessiblePages(baseUsers[2])).toEqual([
       'dashboard',
       'workflow-guide',
-      'inventory',
       'parking-lot-1',
       'parking-lot-2',
       'trash-review',
+      'inventory',
       'testing-queue',
       'photography-queue',
-      'pre-listing-queue',
+      'manual-intake',
       'incoming-gear',
       'testing',
       'photos',

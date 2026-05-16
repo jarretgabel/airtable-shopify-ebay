@@ -14,6 +14,7 @@ interface ListingApprovalSelectedRecordViewProps {
   secondaryActionButtonClass: string;
   errorSurfaceClass: string;
   workflowSummary?: ReactNode;
+  workflowDetails?: ReactNode;
   editor: ReactNode;
   alerts: ReactNode;
   actions: ReactNode;
@@ -32,6 +33,7 @@ export function ListingApprovalSelectedRecordView({
   secondaryActionButtonClass,
   errorSurfaceClass,
   workflowSummary,
+  workflowDetails,
   editor,
   alerts,
   actions,
@@ -77,6 +79,7 @@ export function ListingApprovalSelectedRecordView({
       {editor}
       {alerts}
       {actions}
+      {workflowDetails}
       {payloadPanels ? (
         <details
           className="mt-4 rounded-lg border border-[var(--line)] bg-white/5"

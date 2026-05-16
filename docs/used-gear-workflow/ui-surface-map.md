@@ -20,7 +20,7 @@ This document tracks the app-owned pages, forms, queues, and review surfaces inv
 - [x] Parking Lot 1 queue page
 - [x] Parking Lot 2 queue page
 - [x] Trash page
-- [ ] Manual entry intake page
+- [x] Manual entry intake page
 - [ ] Intake detail/review page for grouped submissions if needed
 
 Implemented route keys, paths, and file targets:
@@ -33,12 +33,15 @@ Implemented route keys, paths, and file targets:
 - `parking-lot-2`
 	- Path: `/parking-lot-2`
 	- Component: `src/components/tabs/UsedGearLotTwoTab.tsx`
+- `parking-lot-2-group-review`
+	- Path: `/parking-lot-2/review/:groupId`
+	- Component: `src/components/tabs/UsedGearLotTwoGroupPage.tsx`
 - `trash-review`
 	- Path: `/trash-review`
 	- Component: `src/components/tabs/UsedGearTrashTab.tsx`
 - `manual-intake`
 	- Path: `/inventory/manual-intake`
-	- Likely component: `src/components/tabs/ManualIntakeTab.tsx`
+	- Component: `src/components/tabs/UsedGearManualIntakePage.tsx`
 - `submission-review`
 	- Path: `/parking-lot-1/review/:groupId`
 	- Component: `src/components/tabs/UsedGearPendingReviewGroupPage.tsx`
@@ -67,9 +70,6 @@ Implemented route keys, paths, and file targets:
 	- Component: `src/components/tabs/PhotosFormTab.tsx`
 
 Implemented Phase 3 surfaces in the current app:
-- `inventory workflow detail`
-	- Path: `/inventory/workflow/:recordId`
-	- Component: `src/components/tabs/UsedGearWorkflowRecordPage.tsx`
 - `used-gear progress queue`
 	- Path: embedded in `/inventory`
 	- Component: `src/components/tabs/airtable/UsedGearWorkflowProgressSection.tsx`
@@ -82,19 +82,25 @@ Implemented Phase 3 surfaces in the current app:
 - `pending review grouped queue`
 	- Path: `/parking-lot-1/review/:groupId`
 	- Component: `src/components/tabs/UsedGearPendingReviewGroupPage.tsx`
+- `parking lot 2 grouped handoff`
+	- Path: `/parking-lot-2/review/:groupId`
+	- Component: `src/components/tabs/UsedGearLotTwoGroupPage.tsx`
 
 #### Phase 4
-- [x] Pre-listing queue page added
+- [x] Listing review begins in Combined Listings at `Awaiting Pre-Listing Review`
 - [x] Approved-for-publish rows shown inside the inventory workflow progress queue
 - [ ] Listing-prep landing or review detail page if needed
 
 Implemented Phase 4 surfaces in the current app:
-- `pre-listing queue`
-	- Path: `/workflow/pre-listing`
-	- Component: `src/components/tabs/UsedGearWorkflowQueueTab.tsx`
-- `pre-listing completion action`
-	- Path: `/workflow/pre-listing` and `/inventory/workflow/:recordId`
-	- Components: `src/components/tabs/UsedGearWorkflowQueueTab.tsx`, `src/components/tabs/UsedGearWorkflowRecordPage.tsx`
+- `listings review bucket`
+	- Path: `/listings/:recordId`
+	- Component: `src/components/approval/CombinedListingsApprovalTab.tsx`
+- `approve-for-publish action`
+	- Path: `/listings/:recordId`
+	- Components: `src/components/approval/ListingApprovalRecordActions.tsx`, `src/components/approval/ListingApprovalSelectedRecordPanel.tsx`
+- `workflow audit and lifecycle context in Listings`
+	- Path: `/listings/:recordId`
+	- Component: `src/components/approval/ListingApprovalWorkflowOpsPanel.tsx`
 - `workflow notification preference management`
 	- Path: `/account/settings` and `/users/:userId`
 	- Components: `src/components/SettingsTab.tsx`, `src/components/users/UserDetailPanel.tsx`
@@ -103,9 +109,6 @@ Implemented Phase 4 surfaces in the current app:
 	- Hook: `src/app/useUsedGearWorkflowNotifications.ts`
 
 Implemented route keys, paths, and file targets:
-- `pre-listing-queue`
-	- Path: `/workflow/pre-listing`
-	- Component: `src/components/tabs/UsedGearWorkflowQueueTab.tsx`
 - `approved-for-publish`
 	- Path: `/listings/approved-for-publish`
 	- Likely component: `src/components/tabs/ApprovedForPublishQueueTab.tsx`

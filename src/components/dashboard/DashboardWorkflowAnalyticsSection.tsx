@@ -113,7 +113,7 @@ export function DashboardWorkflowAnalyticsSection({
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <StatTile label="Workflow Rows" value={snapshot.totalCount} />
+            <StatTile label="Operational Rows" value={snapshot.totalCount} />
             <StatTile label="Pending Review" value={snapshot.pendingReviewCount} />
             <StatTile label="In Progress" value={snapshot.progressCount} />
             <StatTile label="Post-Publish" value={snapshot.postPublishCount} />
@@ -124,7 +124,7 @@ export function DashboardWorkflowAnalyticsSection({
           {embedded ? (
             <details className="rounded-[12px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_86%,transparent)] px-4 py-3">
               <summary className="cursor-pointer list-none text-[0.8rem] font-semibold text-[var(--ink)]">
-                More workflow details
+                More workflow context
               </summary>
               <div className="mt-3 grid gap-4 xl:grid-cols-4">
                 <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">

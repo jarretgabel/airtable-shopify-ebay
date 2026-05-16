@@ -415,7 +415,7 @@ export function AirtableEmbeddedForm({ recordId, onBackToDirectory }: AirtableEm
                     className={FIELD_CLASS}
                     rows={3}
                     value={qualificationNotes}
-                    placeholder="Optional routing or qualification notes for the workflow record"
+                    placeholder="Optional routing or qualification notes for the operational record"
                     onChange={(event) => setQualificationNotes(event.currentTarget.value)}
                   />
                   <p className={HELP_CLASS}>Required when routing a manual-entry row directly into Parking Lot 2. Keep the seller-qualification summary here, then use the new customer-reference fields below to mirror the JotForm intake details.</p>

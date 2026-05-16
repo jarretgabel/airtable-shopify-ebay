@@ -85,7 +85,7 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
   setEbayCategoryIds: (nextIds: string[]) => void;
   onEbayCategoryLabelsChange?: (labelsById: Record<string, string>) => void;
   hasSecondaryEbayCategory: boolean;
-  onOpenWorkflowRecord?: (recordId: string) => void;
+  onOpenOperationalRecord?: (recordId: string) => void;
   onOpenTestingForm?: (recordId: string) => void;
   onOpenPhotosForm?: (recordId: string) => void;
   renderFieldLabel: (fieldName: string) => JSX.Element;
@@ -155,7 +155,7 @@ export function ApprovalFormFieldsSupplementalEditors({
   setEbayCategoryIds,
   onEbayCategoryLabelsChange,
   hasSecondaryEbayCategory,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
   onOpenTestingForm,
   onOpenPhotosForm,
   renderFieldLabel,
@@ -164,11 +164,11 @@ export function ApprovalFormFieldsSupplementalEditors({
 }: ApprovalFormFieldsSupplementalEditorsProps) {
   const hasTestingSection = testingSectionFields.length > 0;
   const effectiveTestingSectionValues = testingSectionValues ?? formValues;
-  const workflowHeaderAction = recordId && workflowManagedListingContent && onOpenWorkflowRecord ? (
+  const workflowHeaderAction = recordId && workflowManagedListingContent && onOpenOperationalRecord ? (
     <button
       type="button"
       className={iconActionButtonClass}
-      onClick={() => onOpenWorkflowRecord(recordId)}
+      onClick={() => onOpenOperationalRecord(recordId)}
       aria-label="Edit workflow source record"
       title="Edit workflow source record"
     >

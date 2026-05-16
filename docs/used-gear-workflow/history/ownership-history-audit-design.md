@@ -1,4 +1,6 @@
-# Ownership History Audit Design
+# Historical: Ownership History Audit Design
+
+> Historical reference only. This document records prior design work and should not be used as the source of truth for new implementation tasks. Use the docs in the parent folder for current guidance.
 
 This note describes the smallest schema-safe path to move from the current latest-owner timestamp model to true multi-step ownership history.
 

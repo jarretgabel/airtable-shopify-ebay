@@ -93,4 +93,16 @@ describe('app-api http csrf handling', () => {
       headers: { Accept: 'application/json' },
     });
   });
+
+  it('blocks absolute remote api urls from localhost browser sessions', async () => {
+    vi.stubEnv('VITE_APP_API_BASE_URL', 'https://example.execute-api.us-east-1.amazonaws.com');
+
+    await expect(getJson('https://example.execute-api.us-east-1.amazonaws.com/api/ebay/runtime-config')).rejects.toMatchObject({
+      name: 'AppApiHttpError',
+      statusCode: 403,
+      code: 'LOCAL_REMOTE_API_BLOCKED',
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

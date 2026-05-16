@@ -70,7 +70,7 @@ describe('DashboardWorkflowCardGrid', () => {
     );
 
     expect(screen.getByText('Used Gear Workflow Snapshot')).toBeInTheDocument();
-    expect(screen.getByText('Workflow Rows')).toBeInTheDocument();
+    expect(screen.getByText('Operational Rows')).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getByText('Approved For Publish')).toBeInTheDocument();
     expect(screen.getByText('Shopify Live')).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('DashboardWorkflowCardGrid', () => {
     expect(screen.getByText('Post-Publish Ops')).toBeInTheDocument();
     expect(screen.getByText('Avg Days To Sell')).toBeInTheDocument();
     expect(screen.getByText('18.5d')).toBeInTheDocument();
-    expect(screen.getByText('Stale Unassigned')).toBeInTheDocument();
-    expect(screen.getByText('Sold Ready Unassigned')).toBeInTheDocument();
+    expect(screen.getAllByText('Stale Unassigned').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Sold Ready Unassigned').length).toBeGreaterThan(0);
   });
 });

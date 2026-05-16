@@ -174,7 +174,7 @@ export interface ApprovalTabViewModel {
   selectedRecordId: string | null;
   onSelectRecord: (recordId: string) => void;
   onBackToList: () => void;
-  onOpenWorkflowRecord?: (recordId: string) => void;
+  onOpenOperationalRecord?: (recordId: string) => void;
   onOpenTestingForm?: (recordId: string) => void;
   onOpenPhotosForm?: (recordId: string) => void;
 }

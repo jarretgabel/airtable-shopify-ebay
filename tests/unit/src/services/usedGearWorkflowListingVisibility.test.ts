@@ -15,18 +15,18 @@ function buildRecord(id: string, fields: Record<string, unknown>): AirtableRecor
 }
 
 describe('usedGearWorkflowListingVisibility', () => {
-  it('requires a listing workflow status at or beyond approved for publish', () => {
+  it('treats awaiting pre-listing review as the first listing-phase status', () => {
     expect(isUsedGearWorkflowListingSurfaceEligible(buildRecord('rec-1', {
       SKU: 'SKU-1',
       'Workflow Status': 'Awaiting Pre-Listing Review',
       Price: '1000',
-    }))).toBe(false);
+    }))).toBe(true);
 
     expect(isUsedGearWorkflowListingSurfaceEligible(buildRecord('rec-2', {
       SKU: 'SKU-2',
-      'Workflow Status': 'Approved for Publish',
+      'Workflow Status': 'Testing and Photography In Progress',
       Price: '1000',
-    }))).toBe(true);
+    }))).toBe(false);
   });
 
   it('requires listing readiness blockers to be cleared', () => {
@@ -36,7 +36,7 @@ describe('usedGearWorkflowListingVisibility', () => {
     }))).toBe(false);
   });
 
-  it('collects eligible SKUs from workflow rows', () => {
+  it('collects eligible SKUs from operational rows', () => {
     const skuSet = buildUsedGearWorkflowListingSkuSet([
       buildRecord('rec-4', {
         SKU: 'VISIBLE-SKU',

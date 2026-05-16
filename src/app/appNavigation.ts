@@ -17,7 +17,7 @@ export const LISTINGS_TABS = ['listings', 'shopify', 'ebay'] as const satisfies 
 export const LISTINGS_TAB_SET = new Set<Tab>(LISTINGS_TABS as readonly Tab[]);
 export const INTAKE_TABS = ['parking-lot-1', 'parking-lot-2', 'trash-review'] as const satisfies readonly Tab[];
 export const INTAKE_TAB_SET = new Set<Tab>(INTAKE_TABS as readonly Tab[]);
-export const INVENTORY_PROCESSING_TABS = ['inventory', 'testing-queue', 'photography-queue', 'pre-listing-queue', 'incoming-gear', 'testing', 'photos'] as const satisfies readonly Tab[];
+export const INVENTORY_PROCESSING_TABS = ['inventory', 'testing-queue', 'photography-queue', 'manual-intake', 'incoming-gear', 'testing', 'photos'] as const satisfies readonly Tab[];
 export const INVENTORY_PROCESSING_TAB_SET = new Set<Tab>(INVENTORY_PROCESSING_TABS as readonly Tab[]);
 export const UTILITY_TABS = ['workflow-guide', 'market', 'imagelab', 'jotform'] as const satisfies readonly Tab[];
 export const UTILITY_TAB_SET = new Set<Tab>(UTILITY_TABS as readonly Tab[]);
@@ -35,7 +35,7 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   'trash-review': 'Trash Review',
   'testing-queue': 'Testing Review',
   'photography-queue': 'Photography Review',
-  'pre-listing-queue': 'Pre-Listing Review',
+  'manual-intake': 'Manual Intake',
   'incoming-gear': 'Incoming Gear Form',
   testing: 'Testing Form',
   photos: 'Photo Form',

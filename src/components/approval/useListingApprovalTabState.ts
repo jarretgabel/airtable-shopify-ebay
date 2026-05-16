@@ -45,7 +45,7 @@ export function useListingApprovalTabState({
     selectedRecordId,
     onSelectRecord,
     onBackToList,
-    onOpenWorkflowRecord,
+    onOpenOperationalRecord,
     onOpenTestingForm,
     onOpenPhotosForm,
   } = viewModel;
@@ -286,7 +286,7 @@ export function useListingApprovalTabState({
     currentPageShopifyTagValues,
     currentPageShopifyCollectionIds,
     currentPageShopifyCollectionLabelsById,
-    onOpenWorkflowRecord,
+    onOpenOperationalRecord,
     onOpenTestingForm,
     onOpenPhotosForm,
     combinedDescriptionFieldName,

@@ -15,22 +15,23 @@ import type { UserRole } from '@/stores/auth/authTypes';
 
 export interface AppTabContentProps {
   activeTab: Tab;
+  manualIntakeMode: boolean;
   jotformReviewGroupId: string | null;
   jotformReviewRecordId: string | null;
+  lotTwoReviewGroupId: string | null;
   trashReviewRecordId: string | null;
   incomingGearRecordId: string | null;
   testingRecordId: string | null;
   photosRecordId: string | null;
   inventoryRecordId: string | null;
-  usedGearWorkflowRecordId: string | null;
-  workflowPriceEditorRecordId: string | null;
+  inventoryPriceEditorRecordId: string | null;
   listingsRecordId: string | null;
   shopifyListingsRecordId: string | null;
   ebayListingsRecordId: string | null;
   userRecordId: string | null;
   navigateToInventoryRecord: (recordId: string, replace?: boolean) => void;
-  navigateToWorkflowPriceEditor: (recordId: string, replace?: boolean) => void;
-  navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
+  navigateToInventoryPriceEditor: (recordId: string, replace?: boolean) => void;
+  navigateToUsedGearOperationalRecord: (recordId: string, replace?: boolean) => void;
   navigateToInventoryList: (replace?: boolean) => void;
   navigateToInventoryWorkflowView: (
     view: 'pending-review' | 'progress',
@@ -40,6 +41,7 @@ export interface AppTabContentProps {
     bucket: UsedGearWorkflowPostPublishBucket,
     options?: { replace?: boolean },
   ) => void;
+  navigateToManualIntake: (replace?: boolean) => void;
   navigateToIncomingGearForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;

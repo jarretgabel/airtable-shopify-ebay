@@ -37,7 +37,7 @@ export interface WorkflowFlowStage {
 
 export function roleSummary(role: UserRole): string {
   if (role === 'processor') {
-    return 'Start with Parking Lot 1, the workflow hub, and the pre-listing queue. Those are the main places where intake turns into ready-to-list work.';
+    return 'Start with Parking Lot 1, the workflow hub, and Listings. Those are the main places where intake turns into ready-to-list work.';
   }
 
   if (role === 'tester') {
@@ -66,7 +66,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartItems: [
       'Start on the dashboard to spot backlog, handoff gaps, and publish blockers.',
       'Use Parking Lot 1 and the workflow hub to resolve stalled intake or handoff issues.',
-      'Check pre-listing, listings, and post-publish work when items are close to revenue or shipment.',
+      'Check Listings and post-publish work when items are close to revenue or shipment.',
     ],
     flowSummary: 'You need the whole map because your role crosses intake, active workflow, listings, and follow-through.',
     flowSteps: [
@@ -80,21 +80,21 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Confirm publish readiness before release',
-        detail: 'Pre-listing and listing surfaces should only move forward when pricing, notes, and signoffs are in place.',
+        detail: 'Listings surfaces should only move forward when pricing, notes, and signoffs are in place.',
       },
       {
         title: 'Close the loop after publish',
-        detail: 'Use workflow detail and post-publish tracking for stale recovery, sold-ready handoff, and shipment completion.',
+        detail: 'Use the Listings record view for stale recovery, sold-ready handoff, shipment completion, and workflow audit once the item reaches listing-phase work.',
       },
     ],
     questions: [
       {
         question: 'Where do I look when the team says work is stuck?',
-        answer: 'Start with the dashboard, then open the queue or workflow record that owns the current blocker.',
+        answer: 'Start with the dashboard, then open the queue or operational record that owns the current blocker.',
       },
       {
         question: 'Which page should handle publish-ready decisions?',
-        answer: 'Pre-listing review and listings surfaces should handle the final release decision, not the intake queue.',
+        answer: 'Listings should handle the final release decision, not the intake or processing queues.',
       },
     ],
   },
@@ -118,7 +118,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Watch the release gates',
-        detail: 'Pre-listing review and listing pages are where readiness turns into live selling work.',
+        detail: 'Listings pages are where readiness turns into live selling work.',
       },
       {
         title: 'Finish the sale-to-shipment cycle',
@@ -132,7 +132,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         question: 'What is the shortest path to understanding a problem item?',
-        answer: 'Open the workflow record. It keeps the queue views light while preserving the deeper routing and handoff context.',
+        answer: 'Open the operational record for the current stage. Listings now carries the workflow audit and post-publish context once the item reaches listing-phase work.',
       },
     ],
   },
@@ -142,7 +142,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartItems: [
       'Start in Parking Lot 1 for fresh intake or the workflow hub for already-active items.',
       'Clean up notes, confirm the next stage, and move the item into the next real handoff instead of leaving it parked.',
-      'Use testing, photography, and pre-listing queues to close missing work before listing.',
+      'Use testing, photography, and Listings review to close missing work before publish.',
     ],
     flowSummary: 'Your role spans intake and handoff, so the most relevant map is the path from qualification through listing readiness.',
     flowSteps: [
@@ -159,8 +159,8 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
         detail: 'Use the stage queues and forms to finish specialist work instead of keeping status in scattered notes.',
       },
       {
-        title: 'Clear pre-listing before handoff to listings',
-        detail: 'Pricing, description, and signoffs should be in place before the item leaves workflow for publish.',
+        title: 'Clear listing review before publish',
+        detail: 'Pricing, description, and signoffs should be in place before the item leaves workflow for live channel publish.',
       },
     ],
     questions: [
@@ -170,7 +170,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         question: 'Where do I go when a queue card feels too light?',
-        answer: 'Open the workflow record. The queue stays simple on purpose, while the detail page holds fuller routing, notes, and follow-through controls.',
+        answer: 'Open the operational record for that stage. Queue cards stay simple on purpose, while the stage-specific pages and Listings hold fuller routing, notes, and follow-through controls.',
       },
     ],
   },
@@ -232,7 +232,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Leave the item ready for listing review',
-        detail: 'A finished photo handoff should make it obvious whether the next stop is pre-listing or a correction step.',
+        detail: 'A finished photo handoff should make it obvious whether the next stop is Listings review or a correction step.',
       },
       {
         title: 'Send blockers back with context',
@@ -262,11 +262,11 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     flowSteps: [
       {
         title: 'Intake begins outside the main workflow pages',
-        detail: 'JotForm and intake tooling create the front-door data that later becomes inventory and workflow records.',
+        detail: 'JotForm and intake tooling create the front-door data that later becomes inventory and operational records.',
       },
       {
         title: 'Workflow pages carry the operational state',
-        detail: 'Queues and detail pages are where stage, handoff, and next-step logic become visible in the app.',
+        detail: 'Queues and operational pages are where stage, handoff, and next-step logic become visible in the app.',
       },
       {
         title: 'Listing surfaces represent publish-side state',
@@ -332,8 +332,8 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   },
   {
     title: 'Pre-List And Publish',
-    detail: 'Pre-listing review confirms readiness before listings and channel pages take the item live.',
-    pages: ['pre-listing-queue', 'listings', 'shopify', 'ebay'],
+    detail: 'Listings now owns publish-readiness review before channel pages take the item live.',
+    pages: ['listings', 'shopify', 'ebay'],
     tone: 'publish',
     primaryRoles: ['processor', 'admin', 'owner'],
     supportRoles: ['developer'],
@@ -389,7 +389,7 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     items: [
       'See pending review, stage work, and post-publish work in one place.',
       'Use the main queue view for triage and quick actions.',
-      'Open a workflow record when a row needs deeper work.',
+      'Open an operational record when a row needs deeper work.',
     ],
   },
   {
@@ -409,18 +409,11 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     ],
   },
   {
-    title: 'Pre-Listing Queue',
-    pages: ['pre-listing-queue'],
-    items: [
-      'Use this checkpoint to confirm pricing, notes, and readiness before publish.',
-      'If something important is missing, send the work back instead of pushing it forward.',
-    ],
-  },
-  {
-    title: 'Listings And Channel Views',
+    title: 'Listings Review And Channel Views',
     pages: ['listings', 'shopify', 'ebay'],
     items: [
-      'Listings pages focus on publish readiness and live channel status after workflow is complete.',
+      'Listings is the checkpoint for final pricing, notes, and approve-for-publish work.',
+      'Channel pages focus on representation and status after the operational row is publish-ready.',
       'Channel pages are for representation and status, not intake or stage routing.',
     ],
   },

@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, type ReactNode } from 'react';
 import { ListingApprovalRecordActions } from '@/components/approval/ListingApprovalRecordActions';
 import { ListingApprovalRecordAlerts } from '@/components/approval/ListingApprovalRecordAlerts';
 import { ListingApprovalSelectedRecordView } from '@/components/approval/ListingApprovalSelectedRecordView';
@@ -40,6 +40,7 @@ export interface ListingApprovalSelectedRecordPanelProps {
   errorSurfaceClass: string;
   isCombinedApproval: boolean;
   workflowSummary: ListingApprovalWorkflowSummaryData | null;
+  workflowDetails: ReactNode | null;
   selectedRecordViewProps: ReturnType<typeof buildListingApprovalSelectedRecordViewProps>;
   selectedRecordStatusProps: ReturnType<typeof buildListingApprovalSelectedRecordStatusProps>;
 }
@@ -57,6 +58,7 @@ export function ListingApprovalSelectedRecordPanel({
   errorSurfaceClass,
   isCombinedApproval,
   workflowSummary,
+  workflowDetails,
   selectedRecordViewProps,
   selectedRecordStatusProps,
 }: ListingApprovalSelectedRecordPanelProps) {
@@ -73,6 +75,7 @@ export function ListingApprovalSelectedRecordPanel({
       secondaryActionButtonClass={secondaryActionButtonClass}
       errorSurfaceClass={errorSurfaceClass}
       workflowSummary={workflowSummary ? <ListingApprovalWorkflowSummary summary={workflowSummary} timelineOnly /> : null}
+      workflowDetails={workflowDetails}
       editor={(
         <Suspense fallback={<ApprovalEditorFallback />}>
           {isCombinedApproval ? (

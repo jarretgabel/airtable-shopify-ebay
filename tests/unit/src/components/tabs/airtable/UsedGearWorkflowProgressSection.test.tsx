@@ -38,7 +38,7 @@ describe('UsedGearWorkflowProgressSection', () => {
         onOpenIncomingGearForm={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
       />,
     );
@@ -68,7 +68,7 @@ describe('UsedGearWorkflowProgressSection', () => {
         onOpenIncomingGearForm={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
       />,
     );
@@ -104,7 +104,7 @@ describe('UsedGearWorkflowProgressSection', () => {
         onOpenIncomingGearForm={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
       />,
     );
@@ -122,7 +122,7 @@ describe('UsedGearWorkflowProgressSection', () => {
   });
 
   it('opens stage review from the compact progress card', async () => {
-    const onOpenWorkflowRecord = vi.fn();
+    const onOpenOperationalRecord = vi.fn();
 
     loadWorkflowProgressQueueMock.mockResolvedValue([
       {
@@ -144,7 +144,7 @@ describe('UsedGearWorkflowProgressSection', () => {
         onOpenIncomingGearForm={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
-        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={vi.fn()}
       />,
     );
@@ -153,7 +153,7 @@ describe('UsedGearWorkflowProgressSection', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Stage Review' }));
 
-    expect(onOpenWorkflowRecord).toHaveBeenCalledWith('rec-progress-a');
+    expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-progress-a');
   });
 
   it('ignores the legacy owner filter prop and keeps the full progress queue visible', async () => {
@@ -197,7 +197,7 @@ describe('UsedGearWorkflowProgressSection', () => {
         onOpenIncomingGearForm={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
       />,
     );
@@ -231,7 +231,7 @@ describe('UsedGearWorkflowProgressSection', () => {
         onOpenIncomingGearForm={vi.fn()}
         onOpenTestingForm={vi.fn()}
         onOpenPhotosForm={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={onOpenListingsRecord}
       />,
     );
@@ -239,5 +239,74 @@ describe('UsedGearWorkflowProgressSection', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Open Listings Approval' }));
 
     expect(onOpenListingsRecord).toHaveBeenCalledWith('rec-progress-a');
+  });
+
+  it('opens the testing form directly from the dedicated testing queue', async () => {
+    const onOpenTestingForm = vi.fn();
+
+    loadWorkflowProgressQueueMock.mockResolvedValue([
+      {
+        id: 'rec-progress-testing',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PROG-TST-1',
+          Make: 'Marantz',
+          Model: '8B',
+          'Workflow Status': 'Testing and Photography In Progress',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearWorkflowProgressSection
+        currentUserName="Taylor Reviewer"
+        queueMode="testing"
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenTestingForm={onOpenTestingForm}
+        onOpenPhotosForm={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Testing' }));
+
+    expect(onOpenTestingForm).toHaveBeenCalledWith('rec-progress-testing');
+    expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
+  });
+
+  it('opens the photos form directly from the dedicated photography queue', async () => {
+    const onOpenPhotosForm = vi.fn();
+
+    loadWorkflowProgressQueueMock.mockResolvedValue([
+      {
+        id: 'rec-progress-photo',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PROG-PHT-1',
+          Make: 'Pioneer',
+          Model: 'SX-1250',
+          'Workflow Status': 'Testing and Photography In Progress',
+          'Testing Signed By': 'Taylor Reviewer',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearWorkflowProgressSection
+        currentUserName="Taylor Reviewer"
+        queueMode="photography"
+        onOpenIncomingGearForm={vi.fn()}
+        onOpenTestingForm={vi.fn()}
+        onOpenPhotosForm={onOpenPhotosForm}
+        onOpenOperationalRecord={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Photos' }));
+
+    expect(onOpenPhotosForm).toHaveBeenCalledWith('rec-progress-photo');
+    expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
   });
 });

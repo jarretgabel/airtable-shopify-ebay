@@ -43,20 +43,18 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 
 ### Progress Queue
 - Surface:
-  - `Inventory > Used Gear Workflow > Processing And Stage Queue`
+  - `Processing > Workflow Hub`
 - Use this queue when:
   - a row is accepted and still in broad arrival, processing, or cross-stage triage flow
 - Main actions:
-  - open Incoming Gear, Testing, Photos, or Workflow Detail
+  - open Incoming Gear, Testing, Photos, or Listings review
   - complete processing
-  - complete testing
-  - complete photography
   - copy a focused group link for the exact submission/pickup cluster
 - Use the queue summary cards to spot:
   - visible active rows and groups
   - rows sitting too long in the same stage
 - If a row is blocked:
-  - open Workflow Detail for readiness context and grouped sibling context
+  - open the current operational record for readiness context and grouped sibling context
 
 ### Post-Publish Queue
 - Surface:
@@ -82,8 +80,30 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
   - an intake is accepted but has not fully entered the processing/test/photo workflow
 - Main actions:
   - search and sort arrival-stage rows
-  - open the row in Incoming Gear or Workflow Detail
+  - open a grouped handoff page for one pickup or submission set
+  - open the row in Incoming Gear or the current operational surface
   - use shared URL state when handing off arrival-stage work
+
+### Parking Lot 2 Group Handoff
+- Surface:
+  - `/parking-lot-2/review/:groupId`
+- Use this when:
+  - one accepted pickup or submission set needs coordinated arrival-stage work across Incoming Gear, Testing, Photos, or the operational record
+- Main actions:
+  - review the whole set in one place
+  - open each row directly into the next form or operational page
+  - keep shared pickup or submission context visible during the handoff
+
+### Manual Intake
+- Surface:
+  - `/inventory/manual-intake`
+- Use this when:
+  - intake starts inside the app instead of coming from JotForm
+  - staff needs to create a manual-entry workflow row with seller-reference notes and an explicit starting route
+- Main actions:
+  - route the new row into Parking Lot 1 review or directly into Parking Lot 2 when the deal is already accepted
+  - capture submission group id, pickup id, and qualification notes when shared context matters
+  - keep manual-entry intake aligned with the JotForm-style seller reference fields before downstream corrections are added
 
 ### Trash Queue
 - Surface:
@@ -97,32 +117,22 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 
 ### Testing Queue
 - Surface:
-  - `Workflow > Testing Queue`
+  - `Processing > Testing Review`
 - Use this queue when:
   - a row is in concurrent stage work and still needs testing signoff
 - Main actions:
   - open the Testing form directly
-  - open Workflow Detail when a row is blocked or grouped context matters
+  - open the current operational record when a row is blocked or grouped context matters
   - copy a focused group link for teammate handoff
 
 ### Photography Queue
 - Surface:
-  - `Workflow > Photography Queue`
+  - `Processing > Photography Review`
 - Use this queue when:
   - a row is in concurrent stage work and still needs photography signoff
 - Main actions:
   - open the Photos form directly
-  - open Workflow Detail when readiness or grouped context matters
-  - copy a focused group link for teammate handoff
-
-### Pre-Listing Queue
-- Surface:
-  - `Workflow > Pre-Listing Queue`
-- Use this queue when:
-  - both concurrent stage signoffs are complete and the row needs final workflow review before listing handoff
-- Main actions:
-  - open Workflow Detail for final readiness review
-  - jump to listing work once the row is approved for publish
+  - open the current operational record when readiness or grouped context matters
   - copy a focused group link for teammate handoff
 
 ## Review And Detail Guides
@@ -138,35 +148,25 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
   - save grouped review state
   - accept the grouped submission into Lot 2
 
-### Workflow Detail Page
-- Surface:
-  - `/inventory/workflow/:recordId`
-- Use this when:
-  - a row needs stage-by-stage context before the next status transition
-  - pre-listing readiness is blocked and needs a direct correction path
-  - the current row belongs to a grouped submission and sibling context matters
-- Main panels:
-  - workflow summary and actions
-  - pre-listing readiness with blocker actions
-  - grouped submission context for sibling rows
-  - workflow timeline and audit notes
-
 ## Listing Handoff Guide
 
 ### Combined Listing Approval
 - Surface:
   - `/listings/:recordId`
 - Use this when:
-  - a row is already `Approved for Publish`
+  - a row is `Awaiting Pre-Listing Review` and needs final readiness review
+  - a row is already `Approved for Publish` and needs final publish work
+  - a listing-phase row needs grouped sibling context, audit history, or post-publish lifecycle work
 - What the listing team should verify:
-  - workflow summary matches what was approved in the workflow detail page
+  - workflow summary matches the current workflow row and signoff state
   - resolved title and price look correct before final publish
   - successful publish updates the authoritative workflow row automatically
+  - grouped submission context, audit fields, and post-publish notes stay aligned with the authoritative workflow row
 
 ## Suggested Daily Flow
 1. Start in Pending Review for new intake.
 2. Move accepted rows through Parking Lot 2 and complete arrival-stage processing.
 3. Work concurrent signoffs from Testing Queue and Photography Queue, or use the broader Progress Queue when cross-stage triage is needed.
-4. Use Pre-Listing Queue and Workflow Detail whenever a row needs final readiness review, grouped sibling context, or blocker resolution.
-5. Hand approved rows into Combined Listing Approval.
+4. Use Combined Listing Approval for `Awaiting Pre-Listing Review` and `Approved for Publish` rows; the selected-record view now carries grouped context, audit history, blocker messaging, and post-publish workflow notes.
+5. Hand publish-ready rows through the Combined Listing Approval selected-record flow.
 6. Work stale, sold-ready, and shipped transitions from Post-Publish.

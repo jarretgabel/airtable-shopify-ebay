@@ -71,6 +71,33 @@ describe('ListingApprovalSelectedRecordView', () => {
     expect(screen.getByText('2499.00')).toBeInTheDocument();
   });
 
+  it('renders workflow context content when provided', () => {
+    render(
+      <ListingApprovalSelectedRecordView
+        selectedRecord={{
+          id: 'rec-approval-4',
+          createdTime: '2026-04-30T00:00:00.000Z',
+          fields: { Title: 'Marantz 2270' },
+        }}
+        titleFieldName="Title"
+        eyebrowLabel="Combined Listing Editor"
+        isApproved
+        saving={false}
+        error={null}
+        onBackToList={vi.fn()}
+        secondaryActionButtonClass="rounded"
+        errorSurfaceClass="rounded"
+        workflowSummary={null}
+        workflowDetails={<div>Workflow Lifecycle Panel</div>}
+        editor={<div>Editor</div>}
+        alerts={<div>Alerts</div>}
+        actions={<div>Actions</div>}
+      />,
+    );
+
+    expect(screen.getByText('Workflow Lifecycle Panel')).toBeInTheDocument();
+  });
+
   it('omits the payload preview section when no payload content is provided', () => {
     render(
       <ListingApprovalSelectedRecordView

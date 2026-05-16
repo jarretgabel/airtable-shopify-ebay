@@ -7,19 +7,19 @@ import { useUnsavedChangesPrompt } from '@/hooks/useUnsavedChangesPrompt';
 import {
   buildInventoryDraftValues,
   getInventoryEditableFields,
-  loadWorkflowPriceFieldMetadata,
-  loadWorkflowPriceRecord,
-  saveWorkflowPriceRecord,
-} from '@/services/workflowPriceEditor';
+  loadInventoryPriceFieldMetadata,
+  loadInventoryPriceRecord,
+  saveInventoryPriceRecord,
+} from '@/services/inventoryPriceEditor';
 import { inventoryDraftValuesEqual } from '@/services/inventoryDirectory';
 import type { AirtableRecord } from '@/types/airtable';
 
-interface WorkflowPriceEditorPageProps {
+interface InventoryPriceEditorPageProps {
   recordId: string;
-  onBackToWorkflowRecord: (recordId: string) => void;
+  onBackToInventoryRecord: (recordId: string) => void;
 }
 
-export function WorkflowPriceEditorPage({ recordId, onBackToWorkflowRecord }: WorkflowPriceEditorPageProps) {
+export function InventoryPriceEditorPage({ recordId, onBackToInventoryRecord }: InventoryPriceEditorPageProps) {
   const [fieldMetadata, setFieldMetadata] = useState<InventoryFieldMetadata[]>([]);
   const [record, setRecord] = useState<AirtableRecord | null>(null);
   const [draftValues, setDraftValues] = useState<Record<string, InventoryDraftValue>>({});
@@ -41,8 +41,8 @@ export function WorkflowPriceEditorPage({ recordId, onBackToWorkflowRecord }: Wo
 
       try {
         const [nextFieldMetadata, nextRecord] = await Promise.all([
-          loadWorkflowPriceFieldMetadata(),
-          loadWorkflowPriceRecord(recordId),
+          loadInventoryPriceFieldMetadata(),
+          loadInventoryPriceRecord(recordId),
         ]);
 
         if (cancelled) return;
@@ -54,7 +54,7 @@ export function WorkflowPriceEditorPage({ recordId, onBackToWorkflowRecord }: Wo
         setInitialDraftValues(nextDraftValues);
       } catch (nextError) {
         if (cancelled) return;
-        setError(nextError instanceof Error ? nextError.message : 'Unable to load the selected workflow price editor.');
+        setError(nextError instanceof Error ? nextError.message : 'Unable to load the selected inventory price editor.');
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -80,7 +80,7 @@ export function WorkflowPriceEditorPage({ recordId, onBackToWorkflowRecord }: Wo
 
   useUnsavedChangesPrompt({
     when: dirtyFieldNames.length > 0 && !saving,
-    message: 'You have unsaved workflow price edits. Leave this page and discard them?',
+    message: 'You have unsaved inventory price edits. Leave this page and discard them?',
     requestConfirmation,
   });
 
@@ -92,7 +92,7 @@ export function WorkflowPriceEditorPage({ recordId, onBackToWorkflowRecord }: Wo
     setSaveMessage(null);
 
     try {
-      const updatedRecord = await saveWorkflowPriceRecord(record.id, dirtyFieldNames, draftValues, fieldMetadata);
+      const updatedRecord = await saveInventoryPriceRecord(record.id, dirtyFieldNames, draftValues, fieldMetadata);
       const nextRecord: AirtableRecord = {
         ...record,
         ...updatedRecord,
@@ -107,28 +107,28 @@ export function WorkflowPriceEditorPage({ recordId, onBackToWorkflowRecord }: Wo
       setRecord(nextRecord);
       setDraftValues(nextDraftValues);
       setInitialDraftValues(nextDraftValues);
-      setSaveMessage(`Saved ${dirtyFieldNames.length} workflow price field${dirtyFieldNames.length === 1 ? '' : 's'} to Airtable.`);
+      setSaveMessage(`Saved ${dirtyFieldNames.length} inventory price field${dirtyFieldNames.length === 1 ? '' : 's'} to Airtable.`);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Unable to save the selected workflow price record.');
+      setError(nextError instanceof Error ? nextError.message : 'Unable to save the selected inventory price record.');
     } finally {
       setSaving(false);
     }
   };
 
   if (loading && !record) {
-    return <LoadingSurface message="Loading workflow price editor..." />;
+    return <LoadingSurface message="Loading inventory price editor..." />;
   }
 
   if (error && !record) {
     return (
-      <ErrorSurface title="Unable to load workflow price editor" message={error}>
+      <ErrorSurface title="Unable to load inventory price editor" message={error}>
         <div className="mt-4">
           <button
             type="button"
             className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-            onClick={() => onBackToWorkflowRecord(recordId)}
+            onClick={() => onBackToInventoryRecord(recordId)}
           >
-            Back to Workflow Record
+            Back to inventory
           </button>
         </div>
       </ErrorSurface>
@@ -142,17 +142,17 @@ export function WorkflowPriceEditorPage({ recordId, onBackToWorkflowRecord }: Wo
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow Pricing</p>
-                <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Workflow Price Editor</h2>
-                <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Edit the combined-listings price fields that control publish readiness for this workflow record, then save them back to Airtable.</p>
+                <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Pricing</p>
+                <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Inventory Price Editor</h2>
+                <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Edit the combined-listings price fields that control publish readiness for this operational row, then save them back to Airtable.</p>
               </div>
 
               <button
                 type="button"
                 className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={() => onBackToWorkflowRecord(recordId)}
+                onClick={() => onBackToInventoryRecord(recordId)}
               >
-                Back to Workflow Record
+                Back to inventory
               </button>
             </div>
           </div>
@@ -180,10 +180,10 @@ export function WorkflowPriceEditorPage({ recordId, onBackToWorkflowRecord }: Wo
               void handleSave();
             }}
             copy={{
-              eyebrow: 'Workflow Pricing',
-              title: 'Edit Workflow Prices',
-              description: 'Review and update the editable Airtable price fields for this workflow item, then save your changes back to the combined listings table.',
-              emptyMessage: 'Load a workflow record to start editing its publish-readiness price fields.',
+              eyebrow: 'Inventory Pricing',
+              title: 'Edit Inventory Prices',
+              description: 'Review and update the editable Airtable price fields for this operational row, then save your changes back to the combined listings table.',
+              emptyMessage: 'Load an operational row to start editing its publish-readiness price fields.',
             }}
           />
         </div>

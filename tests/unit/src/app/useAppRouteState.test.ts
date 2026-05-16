@@ -13,8 +13,8 @@ function locationFor(pathname: string, search = ''): Location {
 }
 
 describe('useAppRouteState', () => {
-  it('maps legacy approval detail routes to listings and decodes id', () => {
-    const state = useAppRouteState(locationFor('/ebay/approval/abc%20123'), ['dashboard']);
+  it('maps listings detail routes and decodes id', () => {
+    const state = useAppRouteState(locationFor('/listings/abc%20123'), ['dashboard']);
     expect(state.activeTab).toBe('listings');
     expect(state.listingsRecordId).toBe('abc 123');
   });
@@ -42,6 +42,13 @@ describe('useAppRouteState', () => {
     expect(state.activeTab).toBe('incoming-gear');
   });
 
+  it('maps the dedicated manual-intake route without treating it as an inventory record id', () => {
+    const state = useAppRouteState(locationFor('/inventory/manual-intake'), ['dashboard', 'manual-intake']);
+    expect(state.activeTab).toBe('manual-intake');
+    expect(state.manualIntakeMode).toBe(true);
+    expect(state.inventoryRecordId).toBeNull();
+  });
+
   it('maps the workflow guide route', () => {
     const state = useAppRouteState(locationFor('/workflow-guide'), ['dashboard', 'workflow-guide']);
     expect(state.activeTab).toBe('workflow-guide');
@@ -57,6 +64,12 @@ describe('useAppRouteState', () => {
     const state = useAppRouteState(locationFor('/parking-lot-1/review-record/rec%20pending'), ['dashboard', 'parking-lot-1']);
     expect(state.activeTab).toBe('parking-lot-1');
     expect(state.jotformReviewRecordId).toBe('rec pending');
+  });
+
+  it('maps Parking Lot 2 group handoff routes and decodes id', () => {
+    const state = useAppRouteState(locationFor('/parking-lot-2/review/pickup%20set'), ['dashboard', 'parking-lot-2']);
+    expect(state.activeTab).toBe('parking-lot-2');
+    expect(state.lotTwoReviewGroupId).toBe('pickup set');
   });
 
   it('maps testing deep links with record ids', () => {
@@ -87,17 +100,18 @@ describe('useAppRouteState', () => {
     expect(state.inventoryRecordId).toBe('rec 123');
   });
 
-  it('maps the used gear workflow detail route and decodes id', () => {
-    const state = useAppRouteState(locationFor('/inventory/workflow/rec%20workflow'), ['dashboard', 'inventory']);
+  it('maps the inventory price editor route and decodes id', () => {
+    const state = useAppRouteState(locationFor('/inventory/price/rec%20workflow'), ['dashboard', 'inventory']);
     expect(state.activeTab).toBe('inventory');
-    expect(state.usedGearWorkflowRecordId).toBe('rec workflow');
+    expect(state.inventoryPriceEditorRecordId).toBe('rec workflow');
+    expect(state.inventoryRecordId).toBeNull();
   });
 
-  it('maps the workflow price editor route and decodes id', () => {
-    const state = useAppRouteState(locationFor('/inventory/workflow/rec%20workflow/price'), ['dashboard', 'inventory']);
-    expect(state.activeTab).toBe('inventory');
-    expect(state.workflowPriceEditorRecordId).toBe('rec workflow');
-    expect(state.usedGearWorkflowRecordId).toBeNull();
+  it('treats retired workflow detail routes as unsupported paths', () => {
+    const state = useAppRouteState(locationFor('/inventory/workflow/rec%20workflow'), ['dashboard', 'inventory']);
+    expect(state.activeTab).toBe('dashboard');
+    expect(state.inventoryRecordId).toBeNull();
+    expect(state.inventoryPriceEditorRecordId).toBeNull();
   });
 
   it('maps trash review record deep links with record ids', () => {

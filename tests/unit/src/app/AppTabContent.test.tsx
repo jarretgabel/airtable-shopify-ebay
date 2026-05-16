@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppTabContent } from '@/app/AppTabContent';
 import type { AppTabContentProps } from '@/app/appTabContentTypes';
@@ -79,16 +79,16 @@ vi.mock('@/components/tabs/JotformTab', () => ({
   JotformTab: () => <div>JotForm content</div>,
 }));
 
-vi.mock('@/components/tabs/UsedGearWorkflowRecordPage', () => ({
-  UsedGearWorkflowRecordPage: ({ onOpenInventoryEditor }: { onOpenInventoryEditor: (recordId: string) => void }) => (
-    <button type="button" onClick={() => onOpenInventoryEditor('rec-workflow-price')}>
-      Open workflow price editor
-    </button>
-  ),
+vi.mock('@/components/tabs/InventoryPriceEditorPage', () => ({
+  InventoryPriceEditorPage: ({ recordId }: { recordId: string }) => <div>Inventory price editor {recordId}</div>,
 }));
 
-vi.mock('@/components/tabs/WorkflowPriceEditorPage', () => ({
-  WorkflowPriceEditorPage: ({ recordId }: { recordId: string }) => <div>Workflow price editor {recordId}</div>,
+vi.mock('@/components/tabs/UsedGearLotTwoGroupPage', () => ({
+  UsedGearLotTwoGroupPage: ({ groupId }: { groupId: string }) => <div>Parking Lot 2 handoff {groupId}</div>,
+}));
+
+vi.mock('@/components/tabs/UsedGearManualIntakePage', () => ({
+  UsedGearManualIntakePage: () => <div>Manual intake page</div>,
 }));
 
 function buildRuntimeFeatures(overrides: Partial<RuntimeFeatureMap> = {}): RuntimeFeatureMap {
@@ -105,25 +105,27 @@ function buildRuntimeFeatures(overrides: Partial<RuntimeFeatureMap> = {}): Runti
 function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentProps {
   return {
     activeTab: 'dashboard',
+    manualIntakeMode: false,
     jotformReviewGroupId: null,
     jotformReviewRecordId: null,
+    lotTwoReviewGroupId: null,
     trashReviewRecordId: null,
     incomingGearRecordId: null,
     testingRecordId: null,
     photosRecordId: null,
     inventoryRecordId: null,
-    usedGearWorkflowRecordId: null,
-    workflowPriceEditorRecordId: null,
+    inventoryPriceEditorRecordId: null,
     listingsRecordId: null,
     shopifyListingsRecordId: null,
     ebayListingsRecordId: null,
     userRecordId: null,
     navigateToInventoryRecord: vi.fn(),
-    navigateToWorkflowPriceEditor: vi.fn(),
-    navigateToUsedGearWorkflowRecord: vi.fn(),
+    navigateToInventoryPriceEditor: vi.fn(),
+    navigateToUsedGearOperationalRecord: vi.fn(),
     navigateToInventoryList: vi.fn(),
     navigateToInventoryWorkflowView: vi.fn(),
     navigateToInventoryPostPublishBucket: vi.fn(),
+    navigateToManualIntake: vi.fn(),
     navigateToIncomingGearForm: vi.fn(),
     navigateToTestingForm: vi.fn(),
     navigateToPhotosForm: vi.fn(),
@@ -278,13 +280,14 @@ describe('AppTabContent', () => {
     const initialProps = buildProps();
     const pendingDeferredRouteState = {
       activeTab: 'dashboard',
+      manualIntakeMode: false,
       jotformReviewGroupId: null,
+      lotTwoReviewGroupId: null,
       incomingGearRecordId: null,
       testingRecordId: null,
       photosRecordId: null,
       inventoryRecordId: null,
-      usedGearWorkflowRecordId: null,
-      workflowPriceEditorRecordId: null,
+      inventoryPriceEditorRecordId: null,
       listingsRecordId: null,
       shopifyListingsRecordId: null,
       ebayListingsRecordId: null,
@@ -413,34 +416,42 @@ describe('AppTabContent', () => {
     expect(screen.queryByText('Combined listings content')).not.toBeInTheDocument();
   });
 
-  it('routes workflow price actions to the dedicated workflow price editor path', async () => {
-    const navigateToWorkflowPriceEditor = vi.fn();
-
+  it('renders the dedicated inventory price editor for inventory price routes', async () => {
     render(
       <AppTabContent
         {...buildProps({
           activeTab: 'inventory',
-          usedGearWorkflowRecordId: 'rec-workflow-1',
-          navigateToWorkflowPriceEditor,
+          inventoryPriceEditorRecordId: 'rec-price-1',
         })}
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Open workflow price editor' }));
-
-    expect(navigateToWorkflowPriceEditor).toHaveBeenCalledWith('rec-workflow-price');
+    expect(await screen.findByText('Inventory price editor rec-price-1')).toBeInTheDocument();
   });
 
-  it('renders the dedicated workflow price editor for workflow price routes', async () => {
+  it('renders the dedicated Parking Lot 2 handoff page for grouped Lot 2 routes', async () => {
     render(
       <AppTabContent
         {...buildProps({
-          activeTab: 'inventory',
-          workflowPriceEditorRecordId: 'rec-price-1',
+          activeTab: 'parking-lot-2',
+          lotTwoReviewGroupId: 'pickup:set-1',
         })}
       />,
     );
 
-    expect(await screen.findByText('Workflow price editor rec-price-1')).toBeInTheDocument();
+    expect(await screen.findByText('Parking Lot 2 handoff pickup:set-1')).toBeInTheDocument();
+  });
+
+  it('renders the dedicated manual-intake page for the inventory manual-intake route', async () => {
+    render(
+      <AppTabContent
+        {...buildProps({
+          activeTab: 'manual-intake',
+          manualIntakeMode: true,
+        })}
+      />,
+    );
+
+    expect(await screen.findByText('Manual intake page')).toBeInTheDocument();
   });
 });

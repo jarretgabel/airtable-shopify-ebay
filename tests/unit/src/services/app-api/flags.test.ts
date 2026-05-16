@@ -7,7 +7,7 @@ describe('app-api flags', () => {
     vi.resetModules();
   });
 
-  it('warns when localhost has a remote configured app api base url', async () => {
+  it('exposes the configured remote app api base url for localhost notices', async () => {
     vi.stubEnv('VITE_APP_API_BASE_URL', '');
     window.__APP_RUNTIME_CONFIG__ = {
       VITE_APP_API_BASE_URL: 'https://example.execute-api.us-east-1.amazonaws.com',

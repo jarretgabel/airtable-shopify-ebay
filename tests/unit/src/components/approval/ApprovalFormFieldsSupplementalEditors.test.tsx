@@ -379,7 +379,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     shippingEditorsSpy.mockReset();
     keyFeaturesEditorSpy.mockReset();
     testingNotesTextareaEditorSpy.mockReset();
-    const onOpenWorkflowRecord = vi.fn();
+    const onOpenOperationalRecord = vi.fn();
     const onOpenTestingForm = vi.fn();
 
     render(
@@ -435,7 +435,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         normalizedEbayCategoryLabelsById={{}}
         setEbayCategoryIds={vi.fn()}
         hasSecondaryEbayCategory={false}
-        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenTestingForm={onOpenTestingForm}
         renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
         getSelectClassName={() => 'select'}
@@ -454,7 +454,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     fireEvent.click(within(keyFeaturesEditor).getByRole('button', { name: 'Edit workflow source record' }));
     fireEvent.click(within(testingNotesEditor).getByRole('button', { name: 'Edit testing form' }));
 
-    expect(onOpenWorkflowRecord).toHaveBeenCalledWith('rec-workflow-1');
+    expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-workflow-1');
     expect(onOpenTestingForm).toHaveBeenCalledWith('rec-workflow-1');
 
     await waitFor(() => {

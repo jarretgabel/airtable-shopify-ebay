@@ -202,7 +202,7 @@ describe('AirtableTab', () => {
           onOpenIncomingGearForm={vi.fn()}
           onOpenTestingForm={vi.fn()}
           onOpenPhotosForm={vi.fn()}
-          onOpenWorkflowRecord={vi.fn()}
+          onOpenOperationalRecord={vi.fn()}
           onOpenListingsRecord={vi.fn()}
           onSelectRecord={vi.fn()}
         />
@@ -344,7 +344,7 @@ describe('AirtableTab', () => {
           onOpenIncomingGearForm={vi.fn()}
           onOpenTestingForm={vi.fn()}
           onOpenPhotosForm={vi.fn()}
-          onOpenWorkflowRecord={vi.fn()}
+          onOpenOperationalRecord={vi.fn()}
           onOpenListingsRecord={vi.fn()}
           onSelectRecord={vi.fn()}
         />
@@ -375,7 +375,7 @@ describe('AirtableTab', () => {
           onOpenIncomingGearForm={vi.fn()}
           onOpenTestingForm={vi.fn()}
           onOpenPhotosForm={vi.fn()}
-          onOpenWorkflowRecord={vi.fn()}
+          onOpenOperationalRecord={vi.fn()}
           onOpenListingsRecord={vi.fn()}
           onSelectRecord={vi.fn()}
         />
@@ -414,7 +414,7 @@ describe('AirtableTab', () => {
             onOpenIncomingGearForm={vi.fn()}
             onOpenTestingForm={vi.fn()}
             onOpenPhotosForm={vi.fn()}
-            onOpenWorkflowRecord={vi.fn()}
+            onOpenOperationalRecord={vi.fn()}
             onOpenListingsRecord={vi.fn()}
             onSelectRecord={vi.fn()}
           />

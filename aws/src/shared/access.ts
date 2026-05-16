@@ -17,7 +17,7 @@ const WORKFLOW_ACCESS_PAGES: AppPage[] = [
   'trash-review',
   'testing-queue',
   'photography-queue',
-  'pre-listing-queue',
+  'manual-intake',
   'incoming-gear',
   'testing',
   'photos',

@@ -5,13 +5,13 @@ import { UsedGearTrashSection, type UsedGearTrashSortMode } from '@/components/t
 
 interface UsedGearTrashTabProps {
   currentUserName: string;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
 }
 
 const WORKFLOW_TRASH_SEARCH_PARAM = 'workflowTrashSearch';
 const WORKFLOW_TRASH_SORT_PARAM = 'workflowTrashSort';
 
-export function UsedGearTrashTab({ onOpenWorkflowRecord }: UsedGearTrashTabProps) {
+export function UsedGearTrashTab({ onOpenOperationalRecord }: UsedGearTrashTabProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const workflowTrashSearch = useMemo(() => new URLSearchParams(location.search).get(WORKFLOW_TRASH_SEARCH_PARAM) ?? '', [location.search]);
@@ -44,7 +44,7 @@ export function UsedGearTrashTab({ onOpenWorkflowRecord }: UsedGearTrashTabProps
       <UsedGearTrashSection
         showSectionIntro={false}
         onOpenReviewRecord={(recordId) => navigate(`/trash-review/review/${encodeURIComponent(recordId)}${location.search}`, { replace: false })}
-        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        onOpenOperationalRecord={onOpenOperationalRecord}
         searchTerm={workflowTrashSearch}
         onSearchTermChange={(value) => updateRouteState((params) => {
           if (value.trim()) {

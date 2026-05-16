@@ -1,24 +1,24 @@
 export const APP_PAGES = [
   'dashboard',
   'workflow-guide',
-  'inventory',
-  'listings',
-  'shopify',
-  'market',
   'parking-lot-1',
-  'jotform',
   'parking-lot-2',
   'trash-review',
+  'inventory',
   'testing-queue',
   'photography-queue',
-  'pre-listing-queue',
+  'manual-intake',
   'incoming-gear',
   'testing',
   'photos',
+  'listings',
+  'shopify',
+  'ebay',
+  'jotform',
+  'market',
   'settings',
   'notifications',
   'imagelab',
-  'ebay',
   'users',
 ] as const;
 
@@ -43,7 +43,7 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   'trash-review': { label: 'Trash Review', path: '/trash-review' },
   'testing-queue': { label: 'Testing Queue', path: '/workflow/testing' },
   'photography-queue': { label: 'Photography Queue', path: '/workflow/photography' },
-  'pre-listing-queue': { label: 'Pre-Listing Queue', path: '/workflow/pre-listing' },
+  'manual-intake': { label: 'Manual Intake', path: '/inventory/manual-intake' },
   'incoming-gear': { label: 'Incoming Gear', path: '/incoming-gear' },
   testing: { label: 'Testing', path: '/testing' },
   photos: { label: 'Photos', path: '/photos' },
@@ -54,4 +54,4 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   users: { label: 'User Management', path: '/account/users', adminOnly: true },
 };
 
-export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications' && page !== 'incoming-gear' && page !== 'testing' && page !== 'photos');
+export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications' && page !== 'manual-intake' && page !== 'incoming-gear' && page !== 'testing' && page !== 'photos');

@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
 import { TAB_PATHS, type Tab } from '@/app/appNavigation';
+import { loadUsedGearOperationalRecord } from '@/services/usedGearQueue';
+import { resolveUsedGearOperationalPath } from '@/services/usedGearOperationalRouting';
 import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 
 type InventoryWorkflowQueueView = 'pending-review' | 'progress';
@@ -10,12 +12,13 @@ interface AppNavigationHandlers {
   navigateToPath: (path: string, replace?: boolean) => void;
   navigateToInventorySection: (sectionId: string, replace?: boolean) => void;
   navigateToJotformReviewGroup: (groupId: string, replace?: boolean) => void;
+  navigateToManualIntake: (replace?: boolean) => void;
   navigateToIncomingGearForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToInventoryRecord: (recordId: string, replace?: boolean) => void;
-  navigateToWorkflowPriceEditor: (recordId: string, replace?: boolean) => void;
-  navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
+  navigateToInventoryPriceEditor: (recordId: string, replace?: boolean) => void;
+  navigateToUsedGearOperationalRecord: (recordId: string, replace?: boolean) => void;
   navigateToInventoryList: (replace?: boolean) => void;
   navigateToInventoryWorkflowView: (
     view: InventoryWorkflowQueueView,
@@ -70,6 +73,11 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     scrollToPageTop();
   }, [navigate]);
 
+  const navigateToManualIntake = useCallback((replace = false): void => {
+    navigate('/inventory/manual-intake', { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
   const navigateToJotformReviewGroup = useCallback((groupId: string, replace = false): void => {
     navigate(`/parking-lot-1/review/${encodeURIComponent(groupId)}`, { replace });
     scrollToPageTop();
@@ -96,14 +104,21 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     scrollToPageTop();
   }, [navigate]);
 
-  const navigateToWorkflowPriceEditor = useCallback((recordId: string, replace = false): void => {
-    navigate(`/inventory/workflow/${encodeURIComponent(recordId)}/price`, { replace });
+  const navigateToInventoryPriceEditor = useCallback((recordId: string, replace = false): void => {
+    navigate(`/inventory/price/${encodeURIComponent(recordId)}`, { replace });
     scrollToPageTop();
   }, [navigate]);
 
-  const navigateToUsedGearWorkflowRecord = useCallback((recordId: string, replace = false): void => {
-    navigate(`/inventory/workflow/${encodeURIComponent(recordId)}`, { replace });
-    scrollToPageTop();
+  const navigateToUsedGearOperationalRecord = useCallback((recordId: string, replace = false): void => {
+    void loadUsedGearOperationalRecord(recordId)
+      .then((record) => {
+        navigate(resolveUsedGearOperationalPath(recordId, record.fields), { replace });
+        scrollToPageTop();
+      })
+      .catch(() => {
+        navigate(`/inventory/${encodeURIComponent(recordId)}`, { replace });
+        scrollToPageTop();
+      });
   }, [navigate]);
 
   const navigateToInventoryList = useCallback((replace = false): void => {
@@ -200,12 +215,13 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     navigateToPath,
     navigateToInventorySection,
     navigateToJotformReviewGroup,
+    navigateToManualIntake,
     navigateToIncomingGearForm,
     navigateToTestingForm,
     navigateToPhotosForm,
     navigateToInventoryRecord,
-    navigateToWorkflowPriceEditor,
-    navigateToUsedGearWorkflowRecord,
+    navigateToInventoryPriceEditor,
+    navigateToUsedGearOperationalRecord,
     navigateToInventoryList,
     navigateToInventoryWorkflowView,
     navigateToInventoryPostPublishBucket,

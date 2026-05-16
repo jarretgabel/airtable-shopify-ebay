@@ -1,4 +1,6 @@
-## Phase 1: Workflow Foundation
+## Historical: Phase 1 Workflow Foundation
+
+> Historical reference only. This document records a completed implementation phase and should not be used as the source of truth for new tasks. Use the docs in the parent folder for current guidance.
 
 This phase defines the workflow model and backend seams that every later UI stage depends on.
 

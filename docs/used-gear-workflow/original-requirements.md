@@ -12,6 +12,7 @@ This document captures the original user requirements and guardrails for the use
 - Limit direct Airtable changes to table `tbl0K0nFQL64jQMx8` in base `apprsAm2FOohEmL2u`.
 - Require explicit approval before adding or relying on any new Airtable fields.
 - Do not modify the live JotForm itself or other external systems as part of this rollout.
+- Do not preserve legacy workflow URLs, retired workflow detail pages, or compatibility-only routing/code paths unless a later requirement explicitly asks for them.
 - If other Airtable tables are ever needed, treat them as reference-only tables linked back to the in-scope workflow rows instead of duplicating business data.
 
 ### Intake Workflow Requirements
@@ -64,7 +65,7 @@ This document captures the original user requirements and guardrails for the use
 
 ### App Surface Requirements
 - Add new app-owned queue pages, detail pages, and review pages where necessary to make the workflow usable without falling back to Airtable directly.
-- Keep workflow detail and operational queues inside the existing app shell.
+- Keep operational queues, listing review, and lifecycle context inside the existing app shell.
 - Preserve direct-link routing for queue and review surfaces.
 - Keep shareable queue links and URL-backed state where practical so teams can hand off work cleanly.
 

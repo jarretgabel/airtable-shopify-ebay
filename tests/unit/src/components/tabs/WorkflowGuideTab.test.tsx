@@ -38,7 +38,7 @@ describe('WorkflowGuideTab', () => {
       <WorkflowGuideTab
         currentUserRole="processor"
         currentUserName="Pat Processor"
-        accessiblePages={['dashboard', 'workflow-guide', 'inventory', 'parking-lot-1', 'testing-queue', 'testing', 'pre-listing-queue']}
+        accessiblePages={['dashboard', 'workflow-guide', 'inventory', 'parking-lot-1', 'testing-queue', 'testing', 'listings']}
       />,
     );
 
@@ -46,7 +46,7 @@ describe('WorkflowGuideTab', () => {
     expect(screen.getByText('Pages That Matter To This Role')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Parking Lot 1' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Workflow Hub' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Pre-Listing Queue' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Listings Review And Channel Views' })).toBeInTheDocument();
     expect(screen.getAllByText('Arrival And Routing').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Testing Handoff').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Photography Handoff').length).toBeGreaterThan(0);

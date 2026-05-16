@@ -201,7 +201,7 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
       />,
       }
     ) : null,
-    canSeeRoleDashboardModule(currentUserRole, 'processor') && accessiblePages.includes('pre-listing-queue') ? (
+    canSeeRoleDashboardModule(currentUserRole, 'processor') && accessiblePages.includes('inventory') ? (
       {
         key: 'processor-blockers',
         priority: 20,
@@ -216,7 +216,7 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         trend={workflowUnavailableReason ? 'Unavailable' : processorBlockerCount > 0 ? `${processorBlockerCount} to clear` : 'Clear'}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : processorBlockerCount > 0 ? 'text-amber-400' : 'text-emerald-300'}
         unavailableReason={workflowUnavailableReason}
-        onClick={() => onSelectTab('pre-listing-queue')}
+        onClick={() => onSelectTab('inventory')}
       />,
       }
     ) : null,

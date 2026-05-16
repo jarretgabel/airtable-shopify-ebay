@@ -60,7 +60,7 @@ describe('buildAppFrameNavTabs', () => {
 
   it('shows workflow queue volume on the inventory tab badge', () => {
     const result = buildAppFrameNavTabs({
-      visibleTabs: ['dashboard', 'inventory', 'incoming-gear', 'testing', 'photos'],
+      visibleTabs: ['dashboard', 'inventory', 'manual-intake', 'incoming-gear', 'testing', 'photos'],
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 7,
@@ -74,7 +74,7 @@ describe('buildAppFrameNavTabs', () => {
 
   it('uses clearer operator labels for inventory processing navigation', () => {
     const result = buildAppFrameNavTabs({
-      visibleTabs: ['inventory', 'testing-queue', 'photography-queue', 'pre-listing-queue', 'incoming-gear', 'testing', 'photos'],
+      visibleTabs: ['inventory', 'testing-queue', 'photography-queue', 'manual-intake', 'incoming-gear', 'testing', 'photos'],
       activeTab: 'inventory',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
@@ -86,10 +86,25 @@ describe('buildAppFrameNavTabs', () => {
       expect.objectContaining({ key: 'inventory', label: 'Workflow Hub' }),
       expect.objectContaining({ key: 'testing-queue', label: 'Testing Review' }),
       expect.objectContaining({ key: 'photography-queue', label: 'Photography Review' }),
-      expect.objectContaining({ key: 'pre-listing-queue', label: 'Pre-Listing Review' }),
+      expect.objectContaining({ key: 'manual-intake', label: 'Manual Intake' }),
       expect.objectContaining({ key: 'incoming-gear', label: 'Incoming Gear Form' }),
       expect.objectContaining({ key: 'testing', label: 'Testing Form' }),
       expect.objectContaining({ key: 'photos', label: 'Photo Form' }),
     ]));
+  });
+
+  it('preserves intake, processing, and listing order from the canonical page sequence', () => {
+    const result = buildAppFrameNavTabs({
+      visibleTabs: ['dashboard', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'manual-intake', 'incoming-gear', 'testing', 'photos', 'listings', 'shopify', 'ebay'],
+      activeTab: 'dashboard',
+      exportingPdf: false,
+      workflowInventoryBadgeCount: 0,
+      navigateToTab: vi.fn(),
+      navigateToUsersList: vi.fn(),
+    });
+
+    expect(result.intakeNavTabs.map((tab) => tab.key)).toEqual(['parking-lot-1', 'parking-lot-2', 'trash-review']);
+    expect(result.inventoryProcessingNavTabs.map((tab) => tab.key)).toEqual(['inventory', 'testing-queue', 'photography-queue', 'manual-intake', 'incoming-gear', 'testing', 'photos']);
+    expect(result.listingsNavTabs.map((tab) => tab.key)).toEqual(['listings', 'shopify', 'ebay']);
   });
 });

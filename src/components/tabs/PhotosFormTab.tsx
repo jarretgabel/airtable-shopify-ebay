@@ -245,7 +245,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
       return (
         <FormImageUploadEditor
           title={definition.label}
-          description="Upload, crop, resize, watermark, rename, and compare files before they are attached to the workflow record. Saved defaults persist locally for future photo sessions."
+          description="Upload, crop, resize, watermark, rename, and compare files before they are attached to the operational record. Saved defaults persist locally for future photo sessions."
           disabled={submitting}
           resetKey={uploadEditorResetKey}
           onFilesChange={(files) => setFieldValue(definition.name, files as PhotosFormValues[typeof definition.name])}

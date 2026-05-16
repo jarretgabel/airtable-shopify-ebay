@@ -104,7 +104,7 @@ interface AirtableTabProps {
   onOpenIncomingGearForm: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
   onSelectRecord: (recordId: string) => void;
 }
@@ -117,7 +117,7 @@ export function AirtableTab({
   onOpenIncomingGearForm,
   onOpenTestingForm,
   onOpenPhotosForm,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
   onOpenListingsRecord,
   onSelectRecord,
 }: AirtableTabProps) {
@@ -566,7 +566,7 @@ export function AirtableTab({
         <UsedGearPendingReviewSection
           currentUserName={currentUserName}
           onOpenReviewRecord={(recordId) => onOpenIncomingGearForm(recordId)}
-          onOpenWorkflowRecord={onOpenWorkflowRecord}
+          onOpenOperationalRecord={onOpenOperationalRecord}
           focusedGroupId={workflowPendingReviewGroup}
           onFocusedGroupIdChange={(groupId) => updateWorkflowRouteState((params) => {
             if (groupId) {
@@ -596,7 +596,7 @@ export function AirtableTab({
           onOpenIncomingGearForm={onOpenIncomingGearForm}
           onOpenTestingForm={onOpenTestingForm}
           onOpenPhotosForm={onOpenPhotosForm}
-          onOpenWorkflowRecord={onOpenWorkflowRecord}
+          onOpenOperationalRecord={onOpenOperationalRecord}
           onOpenListingsRecord={onOpenListingsRecord}
           focusedGroupId={workflowProgressGroup}
           onFocusedGroupIdChange={(groupId) => updateWorkflowRouteState((params) => {
@@ -626,7 +626,7 @@ export function AirtableTab({
           currentUserName={currentUserName}
           focusedBucket={focusedPostPublishBucket}
           onFocusedBucketChange={handlePostPublishBucketChange}
-          onOpenWorkflowRecord={onOpenWorkflowRecord}
+          onOpenOperationalRecord={onOpenOperationalRecord}
           onOpenListingsRecord={onOpenListingsRecord}
           searchTerm={workflowPostPublishSearch}
           onSearchTermChange={(value) => updateWorkflowQueueSearch(
@@ -656,7 +656,7 @@ export function AirtableTab({
                 className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
                 onClick={onAddNewRecord}
               >
-                Add New
+                Open Manual Intake
               </button>
               <RefreshIconButton
                 onClick={() => {
@@ -686,7 +686,7 @@ export function AirtableTab({
           {!directoryLoading && !directoryError && records.length === 0 ? (
             <EmptySurface title="No inventory rows found" message="SB Inventory currently has no editable rows in this table.">
               <p className="mt-3 text-sm text-[var(--muted)]">
-                Next route: start in Parking Lot 1 for customer-submitted intake, or open Incoming Gear when staff needs to create the first manual workflow row inside the app.
+                Next route: start in Parking Lot 1 for customer-submitted intake, or open Incoming Gear when staff needs to create the first manual operational row inside the app.
               </p>
             </EmptySurface>
           ) : null}

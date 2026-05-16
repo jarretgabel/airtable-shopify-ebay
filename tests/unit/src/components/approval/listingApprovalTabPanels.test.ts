@@ -65,7 +65,7 @@ function createBaseParams(selectedRecord: AirtableRecord | null): Parameters<typ
     currentPageShopifyTagValues: [],
     currentPageShopifyCollectionIds: [],
     currentPageShopifyCollectionLabelsById: {},
-    onOpenWorkflowRecord: vi.fn(),
+    onOpenOperationalRecord: vi.fn(),
     onOpenTestingForm: vi.fn(),
     combinedDescriptionFieldName: 'Description',
     combinedSharedFieldNames: [],
@@ -168,11 +168,12 @@ describe('buildListingApprovalTabPanels', () => {
 
     expect(getUsedGearWorkflowListingReadinessMock).toHaveBeenCalledWith(selectedRecord);
     expect(buildListingApprovalSelectedRecordViewPropsMock).toHaveBeenCalledWith(expect.objectContaining({
-      onOpenWorkflowRecord: expect.any(Function),
+      onOpenOperationalRecord: expect.any(Function),
       onOpenTestingForm: expect.any(Function),
     }));
     expect(buildListingApprovalSelectedRecordPanelPropsMock).toHaveBeenCalledWith(expect.objectContaining({
       eyebrowLabel: 'Combined Listing Editor',
+      workflowDetails: expect.anything(),
       workflowSummary: expect.objectContaining({
         workflowStatus: 'Approved for Publish',
         workflowNextTeam: 'Listing',
@@ -188,6 +189,11 @@ describe('buildListingApprovalTabPanels', () => {
       preListingReviewedBy: 'Taylor Reviewer',
     });
     expect(result.selectedRecordPanelProps?.workflowSummary?.timeline).toEqual(expect.any(Array));
+    expect(result.selectedRecordPanelProps?.workflowDetails).not.toBeNull();
+    expect(buildListingApprovalSelectedRecordStatusPropsMock).toHaveBeenCalledWith(expect.objectContaining({
+      workflowStatus: 'Approved for Publish',
+      workflowReadinessMissingRequirements: [],
+    }));
   });
 
   it('omits workflow summary when the selected row is not a workflow-backed combined record', () => {
@@ -204,6 +210,7 @@ describe('buildListingApprovalTabPanels', () => {
     expect(getUsedGearWorkflowListingReadinessMock).not.toHaveBeenCalled();
     expect(buildListingApprovalSelectedRecordPanelPropsMock).toHaveBeenCalledWith(expect.objectContaining({
       eyebrowLabel: 'Combined Listing Editor',
+      workflowDetails: null,
       workflowSummary: null,
     }));
   });

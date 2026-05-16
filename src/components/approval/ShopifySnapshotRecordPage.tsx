@@ -7,7 +7,7 @@ import {
 } from '@/components/approval/ListingApprovalWorkflowSummary';
 import { EmptySurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
-import { loadUsedGearWorkflowRecordBySku } from '@/services/usedGearQueue';
+import { loadUsedGearOperationalRecordBySku } from '@/services/usedGearQueue';
 import type { ShopifyProduct } from '@/types/shopify';
 
 interface ShopifySnapshotRecordPageProps {
@@ -15,7 +15,7 @@ interface ShopifySnapshotRecordPageProps {
   viewModel: ShopifyTabViewModel;
   onBackToSnapshot: () => void;
   onOpenListings: () => void;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
 }
 
 function stringifyJson(value: unknown): string {
@@ -79,10 +79,10 @@ export function ShopifySnapshotRecordPage({
   viewModel,
   onBackToSnapshot,
   onOpenListings,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
 }: ShopifySnapshotRecordPageProps) {
   const [workflowSummary, setWorkflowSummary] = useState<ListingApprovalWorkflowSummaryData | null>(null);
-  const [workflowRecordId, setWorkflowRecordId] = useState<string | null>(null);
+  const [operationalRecordId, setOperationalRecordId] = useState<string | null>(null);
   const [workflowLoading, setWorkflowLoading] = useState(false);
   const [workflowError, setWorkflowError] = useState<string | null>(null);
 
@@ -99,7 +99,7 @@ export function ShopifySnapshotRecordPage({
 
     if (!workflowSku) {
       setWorkflowSummary(null);
-      setWorkflowRecordId(null);
+      setOperationalRecordId(null);
       setWorkflowLoading(false);
       setWorkflowError('This Shopify snapshot does not expose a SKU for workflow matching.');
       return () => {
@@ -110,14 +110,14 @@ export function ShopifySnapshotRecordPage({
     setWorkflowLoading(true);
     setWorkflowError(null);
 
-    void loadUsedGearWorkflowRecordBySku(workflowSku)
+    void loadUsedGearOperationalRecordBySku(workflowSku)
       .then((record) => {
         if (cancelled) {
           return;
         }
 
         setWorkflowSummary(buildListingApprovalWorkflowSummaryData(record));
-        setWorkflowRecordId(record.id);
+        setOperationalRecordId(record.id);
       })
       .catch((lookupError) => {
         if (cancelled) {
@@ -125,8 +125,8 @@ export function ShopifySnapshotRecordPage({
         }
 
         setWorkflowSummary(null);
-        setWorkflowRecordId(null);
-        setWorkflowError(lookupError instanceof Error ? lookupError.message : 'Unable to load the used-gear workflow row for this Shopify snapshot.');
+        setOperationalRecordId(null);
+        setWorkflowError(lookupError instanceof Error ? lookupError.message : 'Unable to load the used-gear operational row for this Shopify snapshot.');
       })
       .finally(() => {
         if (!cancelled) {
@@ -177,11 +177,11 @@ export function ShopifySnapshotRecordPage({
         loading={workflowLoading}
         error={workflowError}
         description="Cross-referenced from the used-gear workflow by SKU so you can see where this read-only Shopify snapshot sits in the intake-to-listing pipeline."
-        emptyMessage="No used-gear workflow row is linked to this Shopify snapshot yet."
+        emptyMessage="No used-gear operational row is linked to this Shopify snapshot yet."
         primaryActionLabel="Open Listings"
         onPrimaryAction={onOpenListings}
-        secondaryActionLabel={workflowRecordId ? 'Open Workflow Row' : undefined}
-        onSecondaryAction={workflowRecordId ? () => onOpenWorkflowRecord(workflowRecordId) : null}
+        secondaryActionLabel={operationalRecordId ? 'Open Operational Record' : undefined}
+        onSecondaryAction={operationalRecordId ? () => onOpenOperationalRecord(operationalRecordId) : null}
       />
 
       <PanelSurface>

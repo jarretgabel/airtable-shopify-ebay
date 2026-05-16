@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react';
+import { createElement, type Dispatch, type SetStateAction } from 'react';
 import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
 import type {
   EbayApprovalPayloadPreviewData,
@@ -10,12 +10,14 @@ import { buildListingApprovalQueuePanelProps } from '@/components/approval/listi
 import { buildListingApprovalSelectedRecordPanelProps } from '@/components/approval/listingApprovalSelectedRecordPanelProps';
 import { buildListingApprovalSelectedRecordStatusProps } from '@/components/approval/listingApprovalSelectedRecordStatusProps';
 import { buildListingApprovalSelectedRecordViewProps } from '@/components/approval/listingApprovalSelectedRecordViewProps';
+import { ListingApprovalWorkflowOpsPanel } from '@/components/approval/ListingApprovalWorkflowOpsPanel';
 import {
   buildListingApprovalWorkflowSummaryData,
   type ListingApprovalWorkflowSummaryData,
 } from '@/components/approval/ListingApprovalWorkflowSummary';
 import type { InlineNoticeTone } from '@/components/approval/listingApprovalRecordActionTypes';
 import { errorSurfaceClass } from '@/components/tabs/uiClasses';
+import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
 import type { AirtableRecord } from '@/types/airtable';
 
 function getSelectedRecordEyebrowLabel(approvalChannel: 'shopify' | 'ebay' | 'combined'): string {
@@ -49,7 +51,7 @@ interface BuildListingApprovalTabPanelsParams {
   currentPageShopifyTagValues: string[];
   currentPageShopifyCollectionIds: string[];
   currentPageShopifyCollectionLabelsById: Record<string, string>;
-  onOpenWorkflowRecord?: (recordId: string) => void;
+  onOpenOperationalRecord?: (recordId: string) => void;
   onOpenTestingForm?: (recordId: string) => void;
   onOpenPhotosForm?: (recordId: string) => void;
   combinedDescriptionFieldName: string;
@@ -152,7 +154,7 @@ export function buildListingApprovalTabPanels({
   currentPageShopifyTagValues,
   currentPageShopifyCollectionIds,
   currentPageShopifyCollectionLabelsById,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
   onOpenTestingForm,
   onOpenPhotosForm,
   combinedDescriptionFieldName,
@@ -259,7 +261,7 @@ export function buildListingApprovalTabPanels({
       currentPageShopifyTagValues,
       currentPageShopifyCollectionIds,
       currentPageShopifyCollectionLabelsById,
-      onOpenWorkflowRecord,
+      onOpenOperationalRecord,
       onOpenTestingForm,
       onOpenPhotosForm,
       combinedDescriptionFieldName,
@@ -304,6 +306,10 @@ export function buildListingApprovalTabPanels({
     ? buildListingApprovalSelectedRecordStatusProps({
       approvalChannel,
       isCombinedApproval,
+      workflowStatus: workflowSummary?.workflowStatus ?? null,
+      workflowReadinessMissingRequirements: selectedRecord && workflowSummary && isCombinedApproval
+        ? getUsedGearWorkflowListingReadiness(selectedRecord).missingRequirements
+        : [],
       saving,
       approving,
       pushingTarget,
@@ -333,6 +339,16 @@ export function buildListingApprovalTabPanels({
     })
     : null;
 
+  const workflowDetails = selectedRecord && isCombinedApproval && workflowSummary && hasTableReference
+    ? createElement(ListingApprovalWorkflowOpsPanel, {
+      selectedRecord,
+      tableReference,
+      tableName,
+      loadRecords,
+      onOpenOperationalRecord,
+    })
+    : null;
+
   return {
     selectedRecordPanelProps: buildListingApprovalSelectedRecordPanelProps({
       selectedRecord,
@@ -347,6 +363,7 @@ export function buildListingApprovalTabPanels({
       errorSurfaceClass,
       isCombinedApproval,
       workflowSummary,
+      workflowDetails,
       selectedRecordViewProps,
       selectedRecordStatusProps,
     }),

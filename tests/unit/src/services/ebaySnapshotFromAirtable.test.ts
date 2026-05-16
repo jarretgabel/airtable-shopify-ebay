@@ -49,7 +49,7 @@ describe('buildEbaySnapshotFromAirtable', () => {
     expect(snapshot.recentListings).toHaveLength(1);
   });
 
-  it('excludes rows that have not reached listing-ready workflow states', () => {
+  it('starts Airtable-backed snapshot visibility at awaiting pre-listing review', () => {
     const snapshot = buildEbaySnapshotFromAirtable([
       {
         id: 'recPending1',
@@ -58,7 +58,7 @@ describe('buildEbaySnapshotFromAirtable', () => {
           SKU: 'PENDING-SKU',
           'Workflow Status': 'Awaiting Pre-Listing Review',
           'eBay Inventory SKU': 'PENDING-SKU',
-          'eBay Inventory Product Title': 'Should not surface',
+          'eBay Inventory Product Title': 'Should surface',
           'eBay Offer Price Value': '1999.00',
           'eBay Offer Status': 'Published',
         },
@@ -68,9 +68,9 @@ describe('buildEbaySnapshotFromAirtable', () => {
         createdTime: '2026-05-08T00:00:00.000Z',
         fields: {
           SKU: 'READY-SKU',
-          'Workflow Status': 'Approved for Publish',
+          'Workflow Status': 'Testing and Photography In Progress',
           'eBay Inventory SKU': 'READY-SKU',
-          'eBay Inventory Product Title': 'Should surface',
+          'eBay Inventory Product Title': 'Should not surface',
           'eBay Offer Price Value': '2499.00',
           'eBay Offer Status': 'Published',
         },
@@ -78,6 +78,6 @@ describe('buildEbaySnapshotFromAirtable', () => {
     ]);
 
     expect(snapshot.total).toBe(1);
-    expect(snapshot.items.map((item) => item.sku)).toEqual(['READY-SKU']);
+    expect(snapshot.items.map((item) => item.sku)).toEqual(['PENDING-SKU']);
   });
 });

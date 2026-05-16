@@ -67,7 +67,7 @@ After the Airtable field exists, update only the affected repo seams.
 #### Documentation
 - `docs/used-gear-workflow/data-model-and-approvals.md`
 - the relevant phase doc
-- `docs/used-gear-workflow/workflow-api-contracts.md` if the field changes a read/write contract
+- `docs/used-gear-workflow/history/workflow-api-contracts.md` for historical read/write contract context when needed
 
 ## Recently Approved And Implemented Schema
 - `Workflow Owner`
@@ -85,7 +85,7 @@ After the Airtable field exists, update only the affected repo seams.
 These fields were approved, created in base `apprsAm2FOohEmL2u` / table `tbl0K0nFQL64jQMx8`, and wired into the workflow queue and workflow detail surfaces.
 
 See also:
-- `docs/used-gear-workflow/stale-listing-recovery-design.md`
+- `docs/used-gear-workflow/history/stale-listing-recovery-design.md` (historical reference)
 
 ## Practical Approval Checklist
 1. Confirm the field is needed on the Airtable row and cannot stay app-derived.

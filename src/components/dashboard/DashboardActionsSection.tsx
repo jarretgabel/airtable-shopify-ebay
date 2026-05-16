@@ -110,7 +110,7 @@ function addRoleWorkflowActionItems({
       });
     }
 
-    if (accessiblePages.includes('pre-listing-queue') && (awaitingSkuCount > 0 || awaitingMissingCount > 0)) {
+    if (accessiblePages.includes('inventory') && (awaitingSkuCount > 0 || awaitingMissingCount > 0)) {
       const blockerCount = awaitingSkuCount + awaitingMissingCount;
       items.push({
         key: 'workflow-processing-blockers',
@@ -118,7 +118,7 @@ function addRoleWorkflowActionItems({
         count: blockerCount,
         detail: `${awaitingSkuCount} awaiting SKU · ${awaitingMissingCount} missing item`,
         severity: 'warning',
-        targetTab: 'pre-listing-queue',
+        targetTab: 'inventory',
       });
     }
     return;

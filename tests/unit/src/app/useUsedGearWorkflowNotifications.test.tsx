@@ -37,11 +37,11 @@ describe('useUsedGearWorkflowNotifications', () => {
     loadUsedGearWorkflowNotificationSummaryMock.mockReset();
   });
 
-  it('opens the workflow record for actionable inventory-stage notifications and reports badge counts', async () => {
+  it('opens the operational record for actionable inventory-stage notifications and reports badge counts', async () => {
     const navigateToTab = vi.fn();
     const navigateToPath = vi.fn();
     const navigateToInventorySection = vi.fn();
-    const navigateToUsedGearWorkflowRecord = vi.fn();
+    const navigateToUsedGearOperationalRecord = vi.fn();
     const navigateToListingsRecord = vi.fn();
     const onSummaryChange = vi.fn();
 
@@ -100,7 +100,7 @@ describe('useUsedGearWorkflowNotifications', () => {
       navigateToTab,
       navigateToPath,
       navigateToInventorySection,
-      navigateToUsedGearWorkflowRecord,
+      navigateToUsedGearOperationalRecord,
       navigateToListingsRecord,
       enabled: true,
       onSummaryChange,
@@ -120,7 +120,7 @@ describe('useUsedGearWorkflowNotifications', () => {
       includeUnassigned: false,
     });
     expect(navigateToPath).toHaveBeenCalledWith('/parking-lot-1?workflowPendingReviewGroup=pickup%3Apickup-1#used-gear-pending-review');
-    expect(navigateToUsedGearWorkflowRecord).not.toHaveBeenCalled();
+    expect(navigateToUsedGearOperationalRecord).not.toHaveBeenCalled();
     expect(navigateToInventorySection).not.toHaveBeenCalled();
     expect(navigateToTab).not.toHaveBeenCalled();
     expect(navigateToListingsRecord).not.toHaveBeenCalled();
@@ -176,7 +176,7 @@ describe('useUsedGearWorkflowNotifications', () => {
       navigateToTab: vi.fn(),
       navigateToPath: vi.fn(),
       navigateToInventorySection: vi.fn(),
-      navigateToUsedGearWorkflowRecord: vi.fn(),
+      navigateToUsedGearOperationalRecord: vi.fn(),
       navigateToListingsRecord: vi.fn(),
       enabled: true,
     }));
@@ -188,5 +188,78 @@ describe('useUsedGearWorkflowNotifications', () => {
         includeUnassigned: false,
       });
     });
+  });
+
+  it('opens the Listings record for pre-listing review notifications', async () => {
+    const navigateToListingsRecord = vi.fn();
+
+    loadUsedGearWorkflowNotificationSummaryMock.mockResolvedValue({
+      counts: {
+        pendingReview: 0,
+        processing: 0,
+        testing: 0,
+        photography: 0,
+        preListingReview: 1,
+        approvedForPublish: 0,
+      },
+      targets: {
+        pendingReview: null,
+        processing: null,
+        testing: null,
+        photography: null,
+        preListingReview: {
+          destinationTab: 'listings',
+          recordId: 'rec-listing-review',
+          sectionId: null,
+          groupId: null,
+          path: null,
+        },
+        approvedForPublish: null,
+      },
+      workflowQueueBadgeCount: 1,
+    });
+
+    renderHook(() => useUsedGearWorkflowNotifications({
+      currentUser: {
+        id: 'user-1',
+        name: 'Taylor Reviewer',
+        email: 'taylor@example.com',
+        role: 'admin',
+        allowedPages: [],
+        notificationPreferences: {
+          infoEnabled: true,
+          successEnabled: true,
+          warningEnabled: true,
+          errorEnabled: true,
+          autoDismissMs: 5000,
+          workflowAssignedAlertsEnabled: true,
+          workflowUnassignedAlertsEnabled: true,
+          workflowEvents: {
+            pendingReview: false,
+            processing: false,
+            testing: false,
+            photography: false,
+            preListingReview: true,
+            approvedForPublish: false,
+          },
+        },
+      },
+      canAccessPage: () => true,
+      navigateToTab: vi.fn(),
+      navigateToPath: vi.fn(),
+      navigateToInventorySection: vi.fn(),
+      navigateToUsedGearOperationalRecord: vi.fn(),
+      navigateToListingsRecord,
+      enabled: true,
+    }));
+
+    await waitFor(() => {
+      const notification = useNotificationStore.getState().notifications[0];
+      expect(notification?.title).toBe('Used gear listing review queue');
+      expect(notification?.actionLabel).toBe('Open Listing Record');
+      notification?.onAction?.();
+    });
+
+    expect(navigateToListingsRecord).toHaveBeenCalledWith('rec-listing-review');
   });
 });

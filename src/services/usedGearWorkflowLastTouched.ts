@@ -5,7 +5,7 @@ export interface UsedGearWorkflowLastTouchedSummary {
   description: string;
   timestamp: string;
   actionLabel: string;
-  actionTarget: 'review-record' | 'workflow-record' | 'listings-record';
+  actionTarget: 'review-record' | 'operational-record' | 'listings-record';
 }
 
 interface LastTouchedCandidate {
@@ -93,7 +93,7 @@ export function buildPendingReviewLastTouchedSummary(record: AirtableRecord): Us
       'Open Review',
       'review-record',
     ),
-  ], 'Workflow row created', 'Open Review', 'review-record', record.createdTime);
+  ], 'Operational row created', 'Open Review', 'review-record', record.createdTime);
 }
 
 export function buildWorkflowProgressLastTouchedSummary(record: AirtableRecord): UsedGearWorkflowLastTouchedSummary {
@@ -108,7 +108,7 @@ export function buildWorkflowProgressLastTouchedSummary(record: AirtableRecord):
       record.fields['Workflow Owner Assigned At'],
       workflowOwner ? `Owner assigned to ${workflowOwner}` : 'Owner assignment updated',
       'Open Stage Review',
-      'workflow-record',
+      'operational-record',
     ),
     createCandidate(
       record.fields['Awaiting Pre-Listing Review At'],
@@ -120,27 +120,27 @@ export function buildWorkflowProgressLastTouchedSummary(record: AirtableRecord):
       record.fields['Photography Signed At'],
       photographySignedBy ? `Photography signed by ${photographySignedBy}` : 'Photography signed',
       'Open Stage Review',
-      'workflow-record',
+      'operational-record',
     ),
     createCandidate(
       record.fields['Testing Signed At'],
       testingSignedBy ? `Testing signed by ${testingSignedBy}` : 'Testing signed',
       'Open Stage Review',
-      'workflow-record',
+      'operational-record',
     ),
     createCandidate(
       record.fields['Processing Signed At'],
       processingSignedBy ? `Processing signed by ${processingSignedBy}` : 'Processing signed',
       'Open Stage Review',
-      'workflow-record',
+      'operational-record',
     ),
     createCandidate(
       record.fields['Accepted At'],
       acceptedBy ? `Intake accepted by ${acceptedBy}` : 'Intake accepted',
       'Open Stage Review',
-      'workflow-record',
+      'operational-record',
     ),
-  ], 'Workflow row created', 'Open Stage Review', 'workflow-record', record.createdTime);
+  ], 'Operational row created', 'Open Stage Review', 'operational-record', record.createdTime);
 }
 
 export function buildPostPublishLastTouchedSummary(record: AirtableRecord): UsedGearWorkflowLastTouchedSummary {
@@ -152,25 +152,25 @@ export function buildPostPublishLastTouchedSummary(record: AirtableRecord): Used
     createCandidate(
       record.fields['Workflow Owner Assigned At'],
       workflowOwner ? `Owner assigned to ${workflowOwner}` : 'Owner assignment updated',
-      'Open Workflow Record',
-      'workflow-record',
+      'Open Operational Record',
+      'operational-record',
     ),
     createCandidate(
       snapshot?.staleRecoveryUpdatedAt,
       staleRecoveryStatus ? `Stale recovery updated: ${staleRecoveryStatus}` : 'Stale recovery updated',
-      'Open Workflow Record',
-      'workflow-record',
+      'Open Operational Record',
+      'operational-record',
     ),
     createCandidate(
       snapshot?.shipmentFollowThroughUpdatedAt,
       'Shipment follow-through updated',
-      'Open Workflow Record',
-      'workflow-record',
+      'Open Operational Record',
+      'operational-record',
     ),
-    createCandidate(snapshot?.shippedAt, 'Marked shipped', 'Open Workflow Record', 'workflow-record'),
-    createCandidate(snapshot?.soldReadyToShipAt, 'Marked sold ready', 'Open Workflow Record', 'workflow-record'),
+    createCandidate(snapshot?.shippedAt, 'Marked shipped', 'Open Operational Record', 'operational-record'),
+    createCandidate(snapshot?.soldReadyToShipAt, 'Marked sold ready', 'Open Operational Record', 'operational-record'),
     createCandidate(snapshot?.relistedAt, 'Marked relisted', 'Open Listings Approval', 'listings-record'),
-    createCandidate(snapshot?.staleListingAt, 'Marked stale', 'Open Workflow Record', 'workflow-record'),
+    createCandidate(snapshot?.staleListingAt, 'Marked stale', 'Open Operational Record', 'operational-record'),
     createCandidate(snapshot?.listedAt, 'Marked listed', 'Open Listings Approval', 'listings-record'),
-  ], 'Workflow row created', 'Open Workflow Record', 'workflow-record', record.createdTime);
+  ], 'Operational row created', 'Open Operational Record', 'operational-record', record.createdTime);
 }

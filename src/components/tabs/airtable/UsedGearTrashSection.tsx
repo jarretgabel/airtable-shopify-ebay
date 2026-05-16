@@ -13,7 +13,7 @@ import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearTrashSectionProps {
   onOpenReviewRecord: (recordId: string) => void;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
   showSectionIntro?: boolean;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
@@ -108,7 +108,7 @@ function getGroupHeading(description: string): string {
 
 export function UsedGearTrashSection({
   onOpenReviewRecord,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
   showSectionIntro = true,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
@@ -264,7 +264,7 @@ export function UsedGearTrashSection({
       ) : null}
 
       {!loading && records.length === 0 ? (
-        <EmptySurface title="Trash queue is clear" message="No used-gear workflow rows are currently sitting in active trash.">
+        <EmptySurface title="Trash queue is clear" message="No used-gear operational rows are currently sitting in active trash.">
           <p className="mt-3 text-sm text-[var(--muted)]">
             Next route: return to pending review when an intake needs re-qualification, or leave this queue alone when there is nothing to restore or delete.
           </p>
@@ -330,9 +330,9 @@ export function UsedGearTrashSection({
                     <button
                       type="button"
                       className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenWorkflowRecord(record.id)}
+                      onClick={() => onOpenOperationalRecord(record.id)}
                     >
-                      Workflow Detail
+                      Open Operational Record
                     </button>
                   </div>
                 </article>

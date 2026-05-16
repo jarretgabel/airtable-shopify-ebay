@@ -78,5 +78,5 @@ This document records the implemented publish writeback behavior from the combin
 - `/Users/user/Sites/airtable-shopify-ebay/src/components/approval/useListingApprovalPublishActions.ts`
 - `/Users/user/Sites/airtable-shopify-ebay/src/services/usedGearWorkflowLifecycle.ts`
 - `/Users/user/Sites/airtable-shopify-ebay/src/services/usedGearQueue.ts`
-- `/Users/user/Sites/airtable-shopify-ebay/docs/used-gear-workflow/phase-4-pre-listing-and-publish-readiness.md`
-- `/Users/user/Sites/airtable-shopify-ebay/docs/used-gear-workflow/phase-5-post-publish-lifecycle.md`
+- `/Users/user/Sites/airtable-shopify-ebay/docs/used-gear-workflow/history/phase-4-pre-listing-and-publish-readiness.md` (historical reference)
+- `/Users/user/Sites/airtable-shopify-ebay/docs/used-gear-workflow/history/phase-5-post-publish-lifecycle.md` (historical reference)

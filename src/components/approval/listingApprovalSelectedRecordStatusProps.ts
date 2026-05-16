@@ -8,6 +8,8 @@ type ListingApprovalRecordActionsProps = ComponentProps<typeof ListingApprovalRe
 interface BuildListingApprovalSelectedRecordStatusPropsParams {
   approvalChannel: ListingApprovalRecordAlertsProps['approvalChannel'];
   isCombinedApproval: ListingApprovalRecordActionsProps['isCombinedApproval'];
+  workflowStatus?: string | null;
+  workflowReadinessMissingRequirements?: string[];
   saving: boolean;
   approving: boolean;
   pushingTarget: ListingApprovalRecordActionsProps['pushingTarget'];
@@ -39,6 +41,8 @@ interface BuildListingApprovalSelectedRecordStatusPropsParams {
 export function buildListingApprovalSelectedRecordStatusProps({
   approvalChannel,
   isCombinedApproval,
+  workflowStatus,
+  workflowReadinessMissingRequirements,
   saving,
   approving,
   pushingTarget,
@@ -69,6 +73,8 @@ export function buildListingApprovalSelectedRecordStatusProps({
   return {
     alertsProps: {
       approvalChannel,
+      workflowStatus,
+      workflowReadinessMissingRequirements,
       hasUnsavedChanges,
       changedFieldNames,
       hasMissingShopifyRequiredFields,
@@ -83,6 +89,7 @@ export function buildListingApprovalSelectedRecordStatusProps({
     actionsProps: {
       approvalChannel,
       isCombinedApproval,
+      workflowStatus,
       saving,
       approving,
       pushingTarget,

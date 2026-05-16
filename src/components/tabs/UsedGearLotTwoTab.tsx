@@ -8,7 +8,7 @@ interface UsedGearLotTwoTabProps {
   onOpenIncomingGearForm: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
 }
 
 const WORKFLOW_LOT_TWO_SEARCH_PARAM = 'workflowLotTwoSearch';
@@ -19,7 +19,7 @@ export function UsedGearLotTwoTab({
   onOpenIncomingGearForm,
   onOpenTestingForm,
   onOpenPhotosForm,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
 }: UsedGearLotTwoTabProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -52,14 +52,15 @@ export function UsedGearLotTwoTab({
       eyebrow="Used Gear Intake"
       title="Parking Lot 2"
       description="Track accepted intake through arrival, SKU assignment, and the next handoff."
-      descriptionHint="Use the queue actions to open Incoming Gear, Testing, Photos, or the workflow record directly from this page."
+      descriptionHint="Use the queue actions to open Incoming Gear, Testing, Photos, or the current operational record directly from this page."
     >
       <UsedGearLotTwoSection
         showSectionIntro={false}
+        onOpenGroupReview={(groupId) => navigate(`/parking-lot-2/review/${encodeURIComponent(groupId)}${location.search}`, { replace: false })}
         onOpenIncomingGearForm={onOpenIncomingGearForm}
         onOpenTestingForm={onOpenTestingForm}
         onOpenPhotosForm={onOpenPhotosForm}
-        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        onOpenOperationalRecord={onOpenOperationalRecord}
         focusedGroupId={workflowLotTwoGroup}
         onFocusedGroupIdChange={(groupId) => updateRouteState((params) => {
           if (groupId) {

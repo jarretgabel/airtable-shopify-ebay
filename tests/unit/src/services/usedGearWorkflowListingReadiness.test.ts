@@ -54,11 +54,11 @@ describe('usedGearWorkflowListingReadiness', () => {
     );
   });
 
-  it('treats numeric workflow price fields as valid publish pricing', () => {
+  it('treats numeric operational price fields as valid publish pricing', () => {
     const readiness = getUsedGearWorkflowListingReadiness(buildRecord({
       Make: 'Audio Research',
       Model: 'SP-9',
-      'Inventory Notes': 'Workflow row stores price as a number.',
+      'Inventory Notes': 'Operational row stores price as a number.',
       'Shopify Price': 2499.99,
     }));
 

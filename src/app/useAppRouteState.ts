@@ -6,15 +6,16 @@ interface AppRouteState {
   isLoginPath: boolean;
   isResetPasswordPath: boolean;
   resetToken: string | null;
+  manualIntakeMode: boolean;
   jotformReviewGroupId: string | null;
   jotformReviewRecordId: string | null;
+  lotTwoReviewGroupId: string | null;
   trashReviewRecordId: string | null;
   incomingGearRecordId: string | null;
   testingRecordId: string | null;
   photosRecordId: string | null;
   inventoryRecordId: string | null;
-  usedGearWorkflowRecordId: string | null;
-  workflowPriceEditorRecordId: string | null;
+  inventoryPriceEditorRecordId: string | null;
   listingsRecordId: string | null;
   shopifyListingsRecordId: string | null;
   ebayListingsRecordId: string | null;
@@ -29,39 +30,36 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const isLoginPath = normalizedPath === '/login';
   const isResetPasswordPath = normalizedPath === '/reset-password';
   const resetToken = searchParams.get('token');
+  const manualIntakeMode = normalizedPath === '/inventory/manual-intake';
   const jotformReviewGroupMatch = normalizedPath.match(/^\/parking-lot-1\/review\/([^/]+)$/);
   const jotformReviewRecordMatch = normalizedPath.match(/^\/parking-lot-1\/review-record\/([^/]+)$/);
+  const lotTwoReviewGroupMatch = normalizedPath.match(/^\/parking-lot-2\/review\/([^/]+)$/);
   const trashReviewRecordMatch = normalizedPath.match(/^\/trash-review\/review\/([^/]+)$/);
   const incomingGearRecordMatch = normalizedPath.match(/^\/incoming-gear\/([^/]+)$/);
   const testingRecordMatch = normalizedPath.match(/^\/testing\/([^/]+)$/);
   const photosRecordMatch = normalizedPath.match(/^\/photos\/([^/]+)$/);
-  const workflowPriceEditorRecordMatch = normalizedPath.match(/^\/inventory\/workflow\/([^/]+)\/price$/);
-  const usedGearWorkflowRecordMatch = normalizedPath.match(/^\/inventory\/workflow\/([^/]+)$/);
-  const inventoryRecordMatch = normalizedPath.match(/^\/inventory\/([^/]+)$/);
+  const inventoryPriceEditorRecordMatch = normalizedPath.match(/^\/inventory\/price\/([^/]+)$/);
+  const inventoryRecordMatch = manualIntakeMode ? null : normalizedPath.match(/^\/inventory\/(?!price\/)([^/]+)$/);
   const ebayListingsRecordMatch = normalizedPath.match(/^\/ebay\/listings\/([^/]+)$/);
   const shopifyListingsRecordMatch = normalizedPath.match(/^\/shopify\/products\/([^/]+)$/);
-  const legacyEbayApprovalRecordMatch = normalizedPath.match(/^\/ebay\/approval\/([^/]+)$/);
-  const legacyShopifyApprovalRecordMatch = normalizedPath.match(/^\/shopify\/approval\/([^/]+)$/);
   const listingsRecordMatch = normalizedPath.match(/^\/listings\/([^/]+)$/);
   const userRecordMatch = normalizedPath.match(/^\/account\/users\/([^/]+)$/);
   const firstAccessibleTab = (accessiblePages[0] ?? 'dashboard') as Tab;
 
   const activeTab: Tab = (() => {
-    if (normalizedPath === '/ebay/approval' || normalizedPath.startsWith('/ebay/approval/')) return 'listings';
-    if (normalizedPath === '/shopify/approval' || normalizedPath.startsWith('/shopify/approval/')) return 'listings';
     if (normalizedPath === '/listings' || listingsRecordMatch) return 'listings';
     if (normalizedPath === '/ebay/listings' || ebayListingsRecordMatch) return 'ebay';
     if (normalizedPath === '/shopify/products' || shopifyListingsRecordMatch) return 'shopify';
     if (normalizedPath === '/parking-lot-1' || jotformReviewGroupMatch || jotformReviewRecordMatch) return 'parking-lot-1';
-    if (normalizedPath === '/parking-lot-2') return 'parking-lot-2';
+    if (normalizedPath === '/parking-lot-2' || lotTwoReviewGroupMatch) return 'parking-lot-2';
     if (normalizedPath === '/trash-review' || trashReviewRecordMatch) return 'trash-review';
     if (normalizedPath === '/workflow/testing') return 'testing-queue';
     if (normalizedPath === '/workflow/photography') return 'photography-queue';
-    if (normalizedPath === '/workflow/pre-listing') return 'pre-listing-queue';
+    if (manualIntakeMode) return 'manual-intake';
     if (normalizedPath === '/incoming-gear' || incomingGearRecordMatch) return 'incoming-gear';
     if (normalizedPath === '/testing' || testingRecordMatch) return 'testing';
     if (normalizedPath === '/photos' || photosRecordMatch) return 'photos';
-    if (normalizedPath === '/inventory' || workflowPriceEditorRecordMatch || usedGearWorkflowRecordMatch || inventoryRecordMatch) return 'inventory';
+    if (normalizedPath === '/inventory' || inventoryPriceEditorRecordMatch || inventoryRecordMatch) return 'inventory';
     if (normalizedPath === '/account/users' || userRecordMatch) return 'users';
     if (normalizedPath === '/account/settings') return 'settings';
     if (normalizedPath === '/account/notifications') return 'notifications';
@@ -76,22 +74,17 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     isLoginPath,
     isResetPasswordPath,
     resetToken,
+    manualIntakeMode,
     jotformReviewGroupId: jotformReviewGroupMatch ? decodeURIComponent(jotformReviewGroupMatch[1]) : null,
     jotformReviewRecordId: jotformReviewRecordMatch ? decodeURIComponent(jotformReviewRecordMatch[1]) : null,
+    lotTwoReviewGroupId: lotTwoReviewGroupMatch ? decodeURIComponent(lotTwoReviewGroupMatch[1]) : null,
     trashReviewRecordId: trashReviewRecordMatch ? decodeURIComponent(trashReviewRecordMatch[1]) : null,
     incomingGearRecordId: incomingGearRecordMatch ? decodeURIComponent(incomingGearRecordMatch[1]) : null,
     testingRecordId: testingRecordMatch ? decodeURIComponent(testingRecordMatch[1]) : null,
     photosRecordId: photosRecordMatch ? decodeURIComponent(photosRecordMatch[1]) : null,
-    usedGearWorkflowRecordId: usedGearWorkflowRecordMatch ? decodeURIComponent(usedGearWorkflowRecordMatch[1]) : null,
-    workflowPriceEditorRecordId: workflowPriceEditorRecordMatch ? decodeURIComponent(workflowPriceEditorRecordMatch[1]) : null,
+    inventoryPriceEditorRecordId: inventoryPriceEditorRecordMatch ? decodeURIComponent(inventoryPriceEditorRecordMatch[1]) : null,
     inventoryRecordId: inventoryRecordMatch ? decodeURIComponent(inventoryRecordMatch[1]) : null,
-    listingsRecordId: listingsRecordMatch
-      ? decodeURIComponent(listingsRecordMatch[1])
-      : legacyEbayApprovalRecordMatch
-        ? decodeURIComponent(legacyEbayApprovalRecordMatch[1])
-        : legacyShopifyApprovalRecordMatch
-          ? decodeURIComponent(legacyShopifyApprovalRecordMatch[1])
-          : null,
+    listingsRecordId: listingsRecordMatch ? decodeURIComponent(listingsRecordMatch[1]) : null,
     shopifyListingsRecordId: shopifyListingsRecordMatch ? decodeURIComponent(shopifyListingsRecordMatch[1]) : null,
     ebayListingsRecordId: ebayListingsRecordMatch ? decodeURIComponent(ebayListingsRecordMatch[1]) : null,
     userRecordId: userRecordMatch ? decodeURIComponent(userRecordMatch[1]) : null,

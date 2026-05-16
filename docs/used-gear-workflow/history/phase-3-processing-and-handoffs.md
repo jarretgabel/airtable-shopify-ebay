@@ -1,4 +1,6 @@
-## Phase 3: Processing Stages And Handoffs
+## Historical: Phase 3 Processing Stages And Handoffs
+
+> Historical reference only. This document records a completed implementation phase and should not be used as the source of truth for new tasks. Use the docs in the parent folder for current guidance.
 
 This phase carries the authoritative item record through processing with customer and internal data clearly separated.
 
@@ -29,7 +31,7 @@ This phase carries the authoritative item record through processing with custome
 - Updated Incoming Gear form behavior.
 - Updated Testing form behavior.
 - Updated Photos form behavior.
-- Used-gear workflow progress queue, dedicated testing/photography queue pages, and workflow detail page.
+- Used-gear workflow progress queue, dedicated testing/photography queue pages, and workflow detail reference page.
 - Team-specific notification routing between stages.
 
 ### Exit Criteria
@@ -44,7 +46,7 @@ This phase carries the authoritative item record through processing with custome
 
 ### Implemented Queue Operations
 - The used-gear processing and stage queue now includes a copy-link action that copies a direct link to the workflow progress queue anchor inside Inventory for quick teammate handoff.
-- Testing, photography, and pre-listing now also have dedicated queue pages with their own URL-backed search, sort, collapse, and focused-group state.
+- Testing and photography now have dedicated queue pages with their own URL-backed search, sort, collapse, and focused-group state, while listing-phase review begins in Listings.
 - Progress-queue search state now syncs into the Inventory URL so shared links preserve the active queue search.
 - Progress-queue grouped submissions can now be collapsed, and that collapsed-group state also syncs into the Inventory URL so copied links preserve the current working layout.
 - Progress-queue operators can now collapse or expand every visible group in one action when sharing or restoring a working layout.
@@ -56,6 +58,7 @@ This phase carries the authoritative item record through processing with custome
 - Included items such as Original Box, Manual, Remote, Power Cable, and Additional Items are now visually emphasized in the photo stage when applicable, and the form requires explicit confirmation that each applicable item was checked and photographed before submit.
 - Photo-stage completion validation now accepts either newly uploaded images or existing workflow images, and blocks submit until required included-item confirmations are complete.
 - Processing, Testing, and Photography completion actions now emit explicit in-app handoff notifications based on the resulting workflow row so operators see whether the item is moving to concurrent stage work, the remaining concurrent team, or pre-listing review.
+- Testing and Photos are now the only completion surfaces for their stage signoffs; workflow detail remains a reference page for blockers, grouped context, and audit history.
 
 ### Relevant Files
 - `/Users/user/Sites/airtable-shopify-ebay/src/components/tabs/AirtableEmbeddedForm.tsx`

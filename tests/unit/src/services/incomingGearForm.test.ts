@@ -107,7 +107,7 @@ describe('incomingGearForm', () => {
 
   it('falls back to the inventory source when the workflow source misses the row', async () => {
     vi.mocked(getConfiguredRecord)
-      .mockRejectedValueOnce(new Error('Missing workflow record'))
+      .mockRejectedValueOnce(new Error('Missing operational record'))
       .mockResolvedValueOnce(buildRecord({ SKU: 'INV-1' }));
 
     const result = await loadIncomingGearFormValues('recIncoming123');

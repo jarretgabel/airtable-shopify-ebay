@@ -1,4 +1,6 @@
-# Airtable Schema Options Audit Summary
+# Historical: Airtable Schema Options Audit Summary
+
+> Historical reference only. This document records prior schema validation work and should not be used as the source of truth for new implementation tasks. Use the docs in the parent folder for current guidance.
 
 This report captures the approved select-option values for the used-gear workflow Airtable fields after the schema reconciliation run.
 

@@ -1,4 +1,6 @@
-# Workflow API Contracts
+# Historical: Workflow API Contracts
+
+> Historical reference only. This document reflects an earlier app contract snapshot and may describe retired workflow-detail surfaces. Do not use it as the source of truth for new implementation tasks. Use the docs in the parent folder and current code for active behavior.
 
 This document records the app-owned read and write contracts for the used-gear workflow.
 

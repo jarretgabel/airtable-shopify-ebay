@@ -40,7 +40,7 @@ describe('UsedGearTrashSection', () => {
     render(
       <UsedGearTrashSection
         onOpenReviewRecord={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         searchTerm="pioneer"
         onSearchTermChange={onSearchTermChange}
       />,
@@ -57,7 +57,7 @@ describe('UsedGearTrashSection', () => {
   it('shows inline sort options in the header', async () => {
     loadTrashQueueMock.mockResolvedValue([]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenWorkflowRecord={vi.fn()} />);
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenOperationalRecord={vi.fn()} />);
 
     await screen.findByText('Trash Review');
     expect(screen.getByLabelText(/Sort trash review queue/i)).toBeInTheDocument();
@@ -93,7 +93,7 @@ describe('UsedGearTrashSection', () => {
       },
     ]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenWorkflowRecord={vi.fn()} searchTerm="transformer cover" />);
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenOperationalRecord={vi.fn()} searchTerm="transformer cover" />);
 
     await screen.findByText('Trash Review');
 
@@ -120,7 +120,7 @@ describe('UsedGearTrashSection', () => {
       },
     ]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={onOpenReviewRecord} onOpenWorkflowRecord={vi.fn()} />);
+    render(<UsedGearTrashSection onOpenReviewRecord={onOpenReviewRecord} onOpenOperationalRecord={vi.fn()} />);
 
     await screen.findByText('Trash Review');
 
@@ -145,7 +145,7 @@ describe('UsedGearTrashSection', () => {
       },
     ]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenWorkflowRecord={vi.fn()} />);
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenOperationalRecord={vi.fn()} />);
 
     await screen.findByText('Trash Review');
 

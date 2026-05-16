@@ -1,4 +1,6 @@
-# Stale Listing Recovery Design
+# Historical: Stale Listing Recovery Design
+
+> Historical reference only. This document records prior design and rollout context and should not be used as the source of truth for new implementation tasks. Use the docs in the parent folder for current guidance.
 
 This document records the approved stale-listing recovery model and the current implementation seams.
 

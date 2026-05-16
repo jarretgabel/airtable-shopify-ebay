@@ -33,7 +33,7 @@ describe('UsedGearPendingReviewSection', () => {
       <UsedGearPendingReviewSection
         currentUserName="Taylor Reviewer"
         onOpenReviewRecord={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -62,7 +62,7 @@ describe('UsedGearPendingReviewSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenGroupReview={vi.fn()}
         onOpenReviewRecord={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -96,7 +96,7 @@ describe('UsedGearPendingReviewSection', () => {
       <UsedGearPendingReviewSection
         currentUserName="Taylor Reviewer"
         onOpenReviewRecord={onOpenReviewRecord}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -138,7 +138,7 @@ describe('UsedGearPendingReviewSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenGroupReview={vi.fn()}
         onOpenReviewRecord={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -167,7 +167,7 @@ describe('UsedGearPendingReviewSection', () => {
       <UsedGearPendingReviewSection
         currentUserName="Taylor Reviewer"
         onOpenReviewRecord={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -225,7 +225,7 @@ describe('UsedGearPendingReviewSection', () => {
       <UsedGearPendingReviewSection
         currentUserName="Taylor Reviewer"
         onOpenReviewRecord={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
@@ -265,7 +265,7 @@ describe('UsedGearPendingReviewSection', () => {
       <UsedGearPendingReviewSection
         currentUserName="Taylor Reviewer"
         onOpenReviewRecord={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         searchTerm="manual entry"
       />,
     );
@@ -276,8 +276,8 @@ describe('UsedGearPendingReviewSection', () => {
     expect(screen.queryByText('PEND-OTHER')).not.toBeInTheDocument();
   });
 
-  it('opens workflow detail from the compact queue card', async () => {
-    const onOpenWorkflowRecord = vi.fn();
+  it('opens the operational record from the compact queue card', async () => {
+    const onOpenOperationalRecord = vi.fn();
 
     loadPendingReviewQueueMock.mockResolvedValue([
       {
@@ -298,12 +298,12 @@ describe('UsedGearPendingReviewSection', () => {
       <UsedGearPendingReviewSection
         currentUserName="Taylor Reviewer"
         onOpenReviewRecord={vi.fn()}
-        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        onOpenOperationalRecord={onOpenOperationalRecord}
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Workflow Detail' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Operational Record' }));
 
-    expect(onOpenWorkflowRecord).toHaveBeenCalledWith('rec-pending');
+    expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-pending');
   });
 });

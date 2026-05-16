@@ -1,4 +1,6 @@
-## Phase 5: Post-Publish Lifecycle
+## Historical: Phase 5 Post-Publish Lifecycle
+
+> Historical reference only. This document records a completed implementation phase and should not be used as the source of truth for new tasks. Use the docs in the parent folder for current guidance.
 
 This phase adds the listing-aging and fulfillment lifecycle after publish behavior is stable.
 

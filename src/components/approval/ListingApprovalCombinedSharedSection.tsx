@@ -77,7 +77,7 @@ export function ListingApprovalCombinedSharedSection({
   combinedSharedKeyFeaturesSyncFieldNames,
   sharedTestingSourceFieldValues,
   sharedDrawerRequiredStatus,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
   onOpenTestingForm,
 }: ListingApprovalCombinedSharedSectionProps) {
   const effectiveSharedTestingSourceFieldValues = {
@@ -107,11 +107,11 @@ export function ListingApprovalCombinedSharedSection({
         .map((fieldName) => [fieldName, effectiveSharedTestingSourceFieldValues[fieldName] ?? '']),
     ),
   };
-  const workflowHeaderAction = onOpenWorkflowRecord ? (
+  const workflowHeaderAction = onOpenOperationalRecord ? (
     <button
       type="button"
       className={iconActionButtonClass}
-      onClick={() => onOpenWorkflowRecord(selectedRecord.id)}
+      onClick={() => onOpenOperationalRecord(selectedRecord.id)}
       aria-label="Edit workflow source record"
       title="Edit workflow source record"
     >

@@ -333,7 +333,7 @@ describe('approval action notifications', () => {
     });
   });
 
-  it('writes approved eBay publish metadata back to the workflow row', async () => {
+  it('writes approved eBay publish metadata back to the operational row', async () => {
     publishApprovalRecordMock.mockResolvedValue({
       target: 'ebay',
       ebay: {

@@ -26,7 +26,7 @@ interface UsedGearWorkflowPostPublishSectionProps {
   currentUserName: string;
   focusedBucket?: UsedGearWorkflowPostPublishBucket | null;
   onFocusedBucketChange?: (bucket: UsedGearWorkflowPostPublishBucket | 'all') => void;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
@@ -122,7 +122,7 @@ function getPostPublishSortLabel(sortMode: UsedGearWorkflowPostPublishSortMode):
 export function UsedGearWorkflowPostPublishSection({
   focusedBucket = null,
   onFocusedBucketChange,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
   onOpenListingsRecord,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
@@ -282,17 +282,17 @@ export function UsedGearWorkflowPostPublishSection({
       replaceRecords(await action(selectedRecordIds));
       setSelectedRecordIds([]);
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to update the selected workflow rows.');
+      setError(actionError instanceof Error ? actionError.message : 'Unable to update the selected operational rows.');
     }
   };
 
-  const openLastTouchedAction = (recordId: string, actionTarget: 'review-record' | 'workflow-record' | 'listings-record') => {
+  const openLastTouchedAction = (recordId: string, actionTarget: 'review-record' | 'operational-record' | 'listings-record') => {
     if (actionTarget === 'listings-record') {
       onOpenListingsRecord(recordId);
       return;
     }
 
-    onOpenWorkflowRecord(recordId);
+    onOpenOperationalRecord(recordId);
   };
 
   const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
@@ -342,7 +342,7 @@ export function UsedGearWorkflowPostPublishSection({
           <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Post-Publish Queue</h3>
           <div className="mt-3 max-w-2xl">
             <CollapsibleHelperText label="Queue guide">
-              Track listing follow-up by bucket, then open the workflow record for per-row lifecycle actions.
+              Track listing follow-up by bucket, then open the operational record for per-row lifecycle actions.
             </CollapsibleHelperText>
           </div>
         </div>
@@ -516,7 +516,7 @@ export function UsedGearWorkflowPostPublishSection({
       ) : null}
 
       {!loading && filteredRecords.length === 0 ? (
-        <EmptySurface title="No post-publish workflow rows" message="The used-gear workflow currently has no listed, stale, sold-ready, or shipped rows.">
+        <EmptySurface title="No post-publish operational rows" message="The used-gear workflow currently has no listed, stale, sold-ready, or shipped operational rows.">
           <p className="mt-3 text-sm text-[var(--muted)]">
             Next route: open Listings for newly approved publish work, then return here when a live item needs stale, sold-ready, or shipped follow-through.
           </p>
@@ -656,10 +656,10 @@ export function UsedGearWorkflowPostPublishSection({
                           <button
                             type="button"
                             className={smallPrimaryActionButtonClass}
-                            onClick={() => onOpenWorkflowRecord(record.id)}
+                            onClick={() => onOpenOperationalRecord(record.id)}
                             disabled={batchBusy}
                           >
-                            Open Workflow Record
+                            Open Operational Record
                           </button>
                         </div>
                       </article>

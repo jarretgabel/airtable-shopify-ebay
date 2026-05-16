@@ -97,7 +97,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         focusedBucket="sold-ready"
         onFocusedBucketChange={vi.fn()}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
       />,
     );
@@ -129,7 +129,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         focusedBucket={null}
         onFocusedBucketChange={onFocusedBucketChange}
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
       />,
     );
@@ -150,7 +150,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     render(
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
       />,
     );
@@ -212,7 +212,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     render(
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
       />,
     );
@@ -222,8 +222,8 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     expect(screen.getByText('SOLD-1')).toBeInTheDocument();
   });
 
-  it('opens the workflow record from a compact stale-listing card', async () => {
-    const onOpenWorkflowRecord = vi.fn();
+  it('opens the operational record from a compact stale-listing card', async () => {
+    const onOpenOperationalRecord = vi.fn();
 
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {
@@ -243,16 +243,16 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     render(
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
-        onOpenWorkflowRecord={onOpenWorkflowRecord}
+        onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={vi.fn()}
       />,
     );
 
     await screen.findByText('STALE-1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Workflow Record' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Operational Record' }));
 
-    expect(onOpenWorkflowRecord).toHaveBeenCalledWith('rec-stale');
+    expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-stale');
   });
 
   it('supports sold-ready reconciliation from selected rows', async () => {
@@ -286,7 +286,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     render(
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
       />,
     );
@@ -320,7 +320,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     render(
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
-        onOpenWorkflowRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={onOpenListingsRecord}
       />,
     );

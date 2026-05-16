@@ -29,14 +29,14 @@ export const USER_PAGE_ACCESS_GROUPS: UserPageAccessGroup[] = [
   {
     key: 'workflow',
     title: 'Workflow Queues',
-    description: 'Dedicated queue pages for testing, photography, and pre-listing review handoffs.',
-    pages: ['testing-queue', 'photography-queue', 'pre-listing-queue'],
+    description: 'Dedicated queue pages for testing and photography handoffs.',
+    pages: ['testing-queue', 'photography-queue'],
   },
   {
     key: 'forms',
     title: 'Workflow Forms',
     description: 'Direct forms used by intake, testing, and photography operators to complete stage work.',
-    pages: ['incoming-gear', 'testing', 'photos'],
+    pages: ['manual-intake', 'incoming-gear', 'testing', 'photos'],
   },
   {
     key: 'developer',

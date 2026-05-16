@@ -1,4 +1,6 @@
-# Airtable Schema Rollback Plan
+# Historical: Airtable Schema Rollback Plan
+
+> Historical reference only. This document records prior schema-change planning and should not be used as the source of truth for new implementation tasks. Use the docs in the parent folder for current guidance.
 
 This plan covers rollback for the approved used-gear workflow columns added to:
 - base `apprsAm2FOohEmL2u`

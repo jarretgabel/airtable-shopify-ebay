@@ -19,7 +19,7 @@ interface UsedGearWorkflowNotificationParams {
   navigateToTab: (tab: Tab, replace?: boolean) => void;
   navigateToPath: (path: string, replace?: boolean) => void;
   navigateToInventorySection: (sectionId: string, replace?: boolean) => void;
-  navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void;
+  navigateToUsedGearOperationalRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   enabled: boolean;
   onSummaryChange?: (summary: UsedGearWorkflowNotificationSummary) => void;
@@ -67,8 +67,8 @@ function buildNotificationCopy(eventKey: UsedGearWorkflowNotificationEvent, coun
     case 'preListingReview':
       return {
         tone: 'warning' as const,
-        title: 'Used gear pre-listing review queue',
-        message: `${pluralize(count, 'row')} ${count === 1 ? 'is' : 'are'} ready for pre-listing review.`,
+        title: 'Used gear listing review queue',
+        message: `${pluralize(count, 'row')} ${count === 1 ? 'is' : 'are'} ready in Listings for final review.`,
       };
     case 'approvedForPublish':
       return {
@@ -85,7 +85,7 @@ function buildNotificationAction(
   navigateToTab: (tab: Tab, replace?: boolean) => void,
   navigateToPath: (path: string, replace?: boolean) => void,
   navigateToInventorySection: (sectionId: string, replace?: boolean) => void,
-  navigateToUsedGearWorkflowRecord: (recordId: string, replace?: boolean) => void,
+  navigateToUsedGearOperationalRecord: (recordId: string, replace?: boolean) => void,
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void,
 ) {
   if (target?.path) {
@@ -107,8 +107,8 @@ function buildNotificationAction(
   if (target?.destinationTab === 'inventory' && target.recordId) {
     const recordId = target.recordId;
     return {
-      actionLabel: 'Open Workflow Record',
-      onAction: () => navigateToUsedGearWorkflowRecord(recordId),
+      actionLabel: 'Open Operational Record',
+      onAction: () => navigateToUsedGearOperationalRecord(recordId),
     };
   }
 
@@ -150,8 +150,8 @@ function buildNotificationAction(
 
   if (eventKey === 'preListingReview') {
     return {
-      actionLabel: 'Open Pre-Listing Queue',
-      onAction: () => navigateToTab('pre-listing-queue'),
+      actionLabel: 'Open Listings',
+      onAction: () => navigateToTab('listings'),
     };
   }
 
@@ -166,7 +166,7 @@ export function useUsedGearWorkflowNotifications({
   navigateToTab,
   navigateToPath,
   navigateToInventorySection,
-  navigateToUsedGearWorkflowRecord,
+  navigateToUsedGearOperationalRecord,
   navigateToListingsRecord,
   enabled,
   onSummaryChange,
@@ -178,7 +178,6 @@ export function useUsedGearWorkflowNotifications({
     || canAccessPage('inventory')
     || canAccessPage('testing-queue')
     || canAccessPage('photography-queue')
-    || canAccessPage('pre-listing-queue')
     || canAccessPage('listings');
   const workflowPreferenceSignature = USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS
     .map((option) => `${option.key}:${currentUser?.notificationPreferences.workflowEvents[option.key] ? '1' : '0'}`)
@@ -228,7 +227,7 @@ export function useUsedGearWorkflowNotifications({
             navigateToTab,
             navigateToPath,
             navigateToInventorySection,
-            navigateToUsedGearWorkflowRecord,
+            navigateToUsedGearOperationalRecord,
             navigateToListingsRecord,
           );
           upsertByKey(notificationKey, {
@@ -263,5 +262,5 @@ export function useUsedGearWorkflowNotifications({
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [canAccessWorkflowSurfaces, currentUser, dismissByKey, enabled, navigateToInventorySection, navigateToListingsRecord, navigateToPath, navigateToTab, navigateToUsedGearWorkflowRecord, onSummaryChange, upsertByKey, workflowOwnershipPreferenceSignature, workflowPreferenceSignature]);
+  }, [canAccessWorkflowSurfaces, currentUser, dismissByKey, enabled, navigateToInventorySection, navigateToListingsRecord, navigateToPath, navigateToTab, navigateToUsedGearOperationalRecord, onSummaryChange, upsertByKey, workflowOwnershipPreferenceSignature, workflowPreferenceSignature]);
 }

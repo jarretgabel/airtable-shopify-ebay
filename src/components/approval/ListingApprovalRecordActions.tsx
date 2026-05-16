@@ -1,6 +1,7 @@
 interface ListingApprovalRecordActionsProps {
   approvalChannel: 'shopify' | 'ebay' | 'combined';
   isCombinedApproval: boolean;
+  workflowStatus?: string | null;
   saving: boolean;
   approving: boolean;
   pushingTarget: 'shopify' | 'ebay' | 'both' | null;
@@ -27,6 +28,7 @@ interface ListingApprovalRecordActionsProps {
 export function ListingApprovalRecordActions({
   approvalChannel,
   isCombinedApproval,
+  workflowStatus,
   saving,
   approving,
   pushingTarget,
@@ -49,6 +51,9 @@ export function ListingApprovalRecordActions({
   primaryActionButtonClass,
   secondaryActionButtonClass,
 }: ListingApprovalRecordActionsProps) {
+  const isWorkflowPreListingReview = isCombinedApproval && workflowStatus === 'Awaiting Pre-Listing Review';
+  const showCombinedPublishButtons = isCombinedApproval && !isWorkflowPreListingReview;
+
   return (
     <div className="mt-4 flex flex-wrap justify-end gap-3">
       <button
@@ -67,7 +72,23 @@ export function ListingApprovalRecordActions({
       >
         {saving ? 'Saving...' : 'Save Updates'}
       </button>
-      {isCombinedApproval && (
+      {isWorkflowPreListingReview && (
+        <button
+          type="button"
+          className={accentActionButtonClass}
+          onClick={onPrimaryAction}
+          disabled={saving || approving || hasUnsavedChanges || hasMissingShopifyRequiredFields || hasMissingEbayRequiredFields}
+        >
+          {approving
+            ? 'Approving for Publish...'
+            : hasUnsavedChanges
+              ? 'Save Updates Before Approving'
+              : hasMissingShopifyRequiredFields || hasMissingEbayRequiredFields
+                ? 'Complete Required Fields'
+                : 'Approve for Publish'}
+        </button>
+      )}
+      {showCombinedPublishButtons && (
         <>
           <button
             type="button"

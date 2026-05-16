@@ -5,10 +5,10 @@ import {
   updateConfiguredRecord,
 } from '@/services/app-api/airtable';
 import {
-  loadWorkflowPriceFieldMetadata,
-  loadWorkflowPriceRecord,
-  saveWorkflowPriceRecord,
-} from '@/services/workflowPriceEditor';
+  loadInventoryPriceFieldMetadata,
+  loadInventoryPriceRecord,
+  saveInventoryPriceRecord,
+} from '@/services/inventoryPriceEditor';
 
 vi.mock('@/services/app-api/airtable', () => ({
   getConfiguredFieldMetadata: vi.fn(),
@@ -20,14 +20,14 @@ const mockGetConfiguredFieldMetadata = vi.mocked(getConfiguredFieldMetadata);
 const mockGetConfiguredRecord = vi.mocked(getConfiguredRecord);
 const mockUpdateConfiguredRecord = vi.mocked(updateConfiguredRecord);
 
-describe('workflowPriceEditor', () => {
+describe('inventoryPriceEditor', () => {
   beforeEach(() => {
     mockGetConfiguredFieldMetadata.mockReset();
     mockGetConfiguredRecord.mockReset();
     mockUpdateConfiguredRecord.mockReset();
   });
 
-  it('loads and sorts editable workflow price fields from used-gear-workflow metadata', async () => {
+  it('loads and sorts editable inventory price fields from used-gear-workflow metadata', async () => {
     mockGetConfiguredFieldMetadata.mockResolvedValue([
       { id: 'fld-title', name: 'Title', type: 'singleLineText' },
       { id: 'fld-price', name: 'Price', type: 'currency' },
@@ -35,7 +35,7 @@ describe('workflowPriceEditor', () => {
       { id: 'fld-readonly', name: 'eBay Offer Price Value', type: 'formula' },
     ]);
 
-    const fields = await loadWorkflowPriceFieldMetadata();
+    const fields = await loadInventoryPriceFieldMetadata();
 
     expect(mockGetConfiguredFieldMetadata).toHaveBeenCalledWith('used-gear-workflow');
     expect(fields).toEqual([
@@ -44,7 +44,7 @@ describe('workflowPriceEditor', () => {
     ]);
   });
 
-  it('loads workflow records from used-gear-workflow', async () => {
+  it('loads inventory price records from used-gear-workflow', async () => {
     mockGetConfiguredRecord.mockResolvedValue({
       id: 'rec-workflow-1',
       createdTime: 'now',
@@ -54,13 +54,13 @@ describe('workflowPriceEditor', () => {
       },
     });
 
-    const record = await loadWorkflowPriceRecord('rec-workflow-1');
+    const record = await loadInventoryPriceRecord('rec-workflow-1');
 
     expect(mockGetConfiguredRecord).toHaveBeenCalledWith('used-gear-workflow', 'rec-workflow-1');
     expect(record.id).toBe('rec-workflow-1');
   });
 
-  it('saves workflow price fields back to used-gear-workflow', async () => {
+  it('saves inventory price fields back to used-gear-workflow', async () => {
     mockUpdateConfiguredRecord.mockResolvedValue({
       id: 'rec-workflow-1',
       createdTime: 'now',
@@ -69,7 +69,7 @@ describe('workflowPriceEditor', () => {
       },
     });
 
-    const result = await saveWorkflowPriceRecord(
+    const result = await saveInventoryPriceRecord(
       'rec-workflow-1',
       ['Price'],
       { Price: '2199' },

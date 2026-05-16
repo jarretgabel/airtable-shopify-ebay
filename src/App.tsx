@@ -33,15 +33,16 @@ function App() {
     isLoginPath,
     isResetPasswordPath,
     resetToken,
+    manualIntakeMode,
     jotformReviewGroupId,
     jotformReviewRecordId,
+    lotTwoReviewGroupId,
     trashReviewRecordId,
     incomingGearRecordId,
     testingRecordId,
     photosRecordId,
     inventoryRecordId,
-    usedGearWorkflowRecordId,
-    workflowPriceEditorRecordId,
+    inventoryPriceEditorRecordId,
     listingsRecordId,
     shopifyListingsRecordId,
     ebayListingsRecordId,
@@ -66,12 +67,13 @@ function App() {
     navigateToPath,
     navigateToInventorySection,
     navigateToJotformReviewGroup,
+    navigateToManualIntake,
     navigateToIncomingGearForm,
     navigateToTestingForm,
     navigateToPhotosForm,
     navigateToInventoryRecord,
-    navigateToWorkflowPriceEditor,
-    navigateToUsedGearWorkflowRecord,
+    navigateToInventoryPriceEditor,
+    navigateToUsedGearOperationalRecord,
     navigateToInventoryList,
     navigateToInventoryWorkflowView,
     navigateToInventoryPostPublishBucket,
@@ -157,7 +159,7 @@ function App() {
     navigateToTab,
     navigateToPath,
     navigateToInventorySection,
-    navigateToUsedGearWorkflowRecord,
+    navigateToUsedGearOperationalRecord,
     navigateToListingsRecord,
     enabled: appDataEnabled,
     onSummaryChange: setWorkflowNotificationSummary,
@@ -246,25 +248,27 @@ function App() {
           )}
           <AppTabContent
             activeTab={activeTab}
+            manualIntakeMode={manualIntakeMode}
             jotformReviewGroupId={jotformReviewGroupId}
             jotformReviewRecordId={jotformReviewRecordId}
+            lotTwoReviewGroupId={lotTwoReviewGroupId}
             trashReviewRecordId={trashReviewRecordId}
             incomingGearRecordId={incomingGearRecordId}
             testingRecordId={testingRecordId}
             photosRecordId={photosRecordId}
             inventoryRecordId={inventoryRecordId}
-            usedGearWorkflowRecordId={usedGearWorkflowRecordId}
-            workflowPriceEditorRecordId={workflowPriceEditorRecordId}
+            inventoryPriceEditorRecordId={inventoryPriceEditorRecordId}
             listingsRecordId={listingsRecordId}
             shopifyListingsRecordId={shopifyListingsRecordId}
             ebayListingsRecordId={ebayListingsRecordId}
             userRecordId={userRecordId}
             navigateToInventoryRecord={navigateToInventoryRecord}
-            navigateToWorkflowPriceEditor={navigateToWorkflowPriceEditor}
-            navigateToUsedGearWorkflowRecord={navigateToUsedGearWorkflowRecord}
+            navigateToInventoryPriceEditor={navigateToInventoryPriceEditor}
+            navigateToUsedGearOperationalRecord={navigateToUsedGearOperationalRecord}
             navigateToInventoryList={navigateToInventoryList}
             navigateToInventoryWorkflowView={navigateToInventoryWorkflowView}
             navigateToInventoryPostPublishBucket={navigateToInventoryPostPublishBucket}
+            navigateToManualIntake={navigateToManualIntake}
             navigateToIncomingGearForm={navigateToIncomingGearForm}
             navigateToTestingForm={navigateToTestingForm}
             navigateToPhotosForm={navigateToPhotosForm}

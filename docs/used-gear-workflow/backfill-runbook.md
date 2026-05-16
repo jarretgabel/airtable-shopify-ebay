@@ -202,7 +202,7 @@ Artifacts are written under a new apply run directory:
 ## References
 - `docs/used-gear-workflow/data-model-and-approvals.md`
 - `docs/used-gear-workflow/schema-update-approval-guide.md`
-- `docs/used-gear-workflow/stale-listing-recovery-design.md`
-- `docs/used-gear-workflow/phase-1-foundation.md`
+- `docs/used-gear-workflow/history/stale-listing-recovery-design.md` (historical reference)
+- `docs/used-gear-workflow/history/phase-1-foundation.md` (historical reference)
 - `src/services/usedGearWorkflow.ts`
 - `src/services/usedGearQueue.ts`

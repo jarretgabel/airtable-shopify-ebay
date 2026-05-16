@@ -8,10 +8,10 @@ import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/Sta
 import {
   acceptPendingReviewRecord,
   hasUsedGearPendingReviewPricingPath,
-  loadUsedGearWorkflowRecordContext,
+  loadUsedGearOperationalRecordContext,
   markPendingReviewUnqualified,
   type UsedGearPendingReviewAcceptedStatus,
-  type UsedGearWorkflowRecordContext,
+  type UsedGearOperationalRecordContext,
 } from '@/services/usedGearQueue';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
@@ -20,7 +20,7 @@ interface UsedGearPendingReviewRecordPageProps {
   currentUserName: string;
   recordId: string;
   onOpenIncomingGearForm: (recordId: string) => void;
-  onOpenWorkflowRecord: (recordId: string) => void;
+  onOpenOperationalRecord: (recordId: string) => void;
 }
 
 const ACCEPT_ROUTE_OPTIONS: Array<{
@@ -119,11 +119,11 @@ export function UsedGearPendingReviewRecordPage({
   currentUserName,
   recordId,
   onOpenIncomingGearForm,
-  onOpenWorkflowRecord,
+  onOpenOperationalRecord,
 }: UsedGearPendingReviewRecordPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [context, setContext] = useState<UsedGearWorkflowRecordContext | null>(null);
+  const [context, setContext] = useState<UsedGearOperationalRecordContext | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -140,7 +140,7 @@ export function UsedGearPendingReviewRecordPage({
       setError(null);
 
       try {
-        const nextContext = await loadUsedGearWorkflowRecordContext(recordId);
+        const nextContext = await loadUsedGearOperationalRecordContext(recordId);
         if (!cancelled) {
           setContext(nextContext);
           setAcceptStatus(
@@ -274,9 +274,9 @@ export function UsedGearPendingReviewRecordPage({
                     <button
                       type="button"
                       className={smallSecondaryActionButtonClass}
-                      onClick={() => onOpenWorkflowRecord(record.id)}
+                      onClick={() => onOpenOperationalRecord(record.id)}
                     >
-                      Open Workflow Record
+                      Open Operational Record
                     </button>
                   </div>
                 ) : null}

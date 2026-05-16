@@ -26,8 +26,7 @@ const UserManagementTab = lazy(async () => ({ default: (await import('@/componen
 const AirtableTab = lazy(async () => ({ default: (await import('@/components/tabs/AirtableTab')).AirtableTab }));
 const AirtableEmbeddedForm = lazy(async () => ({ default: (await import('@/components/tabs/AirtableEmbeddedForm')).AirtableEmbeddedForm }));
 const InventoryRecordEditorPage = lazy(async () => ({ default: (await import('@/components/tabs/InventoryRecordEditorPage')).InventoryRecordEditorPage }));
-const UsedGearWorkflowRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearWorkflowRecordPage')).UsedGearWorkflowRecordPage }));
-const WorkflowPriceEditorPage = lazy(async () => ({ default: (await import('../components/tabs/WorkflowPriceEditorPage')).WorkflowPriceEditorPage }));
+const InventoryPriceEditorPage = lazy(async () => ({ default: (await import('../components/tabs/InventoryPriceEditorPage')).InventoryPriceEditorPage }));
 const ParkingLotOneTab = lazy(async () => ({ default: (await import('@/components/tabs/ParkingLotOneTab')).ParkingLotOneTab }));
 const UsedGearPendingReviewGroupPage = lazy(async () => ({ default: (await import('../components/tabs/UsedGearPendingReviewGroupPage')).UsedGearPendingReviewGroupPage }));
 const UsedGearPendingReviewRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearPendingReviewRecordPage')).UsedGearPendingReviewRecordPage }));
@@ -35,6 +34,8 @@ const JotformTab = lazy(async () => ({ default: (await import('@/components/tabs
 const MarketTab = lazy(async () => ({ default: (await import('@/components/tabs/MarketTab')).MarketTab }));
 const PhotosFormTab = lazy(async () => ({ default: (await import('@/components/tabs/PhotosFormTab')).PhotosFormTab }));
 const TestingFormTab = lazy(async () => ({ default: (await import('@/components/tabs/TestingFormTab')).TestingFormTab }));
+const UsedGearManualIntakePage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearManualIntakePage')).UsedGearManualIntakePage }));
+const UsedGearLotTwoGroupPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoGroupPage')).UsedGearLotTwoGroupPage }));
 const UsedGearLotTwoTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoTab')).UsedGearLotTwoTab }));
 const UsedGearTrashReviewRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashReviewRecordPage')).UsedGearTrashReviewRecordPage }));
 const UsedGearTrashTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashTab')).UsedGearTrashTab }));
@@ -192,8 +193,6 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
       return 'Testing queue';
     case 'photography-queue':
       return 'Photography queue';
-    case 'pre-listing-queue':
-      return 'Pre-listing queue';
     case 'market':
       return 'market research';
     case 'users':
@@ -204,6 +203,8 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
       return 'notifications';
     case 'incoming-gear':
       return 'incoming gear form';
+    case 'manual-intake':
+      return 'manual intake';
     case 'testing':
       return 'testing form';
     case 'photos':
@@ -227,30 +228,31 @@ function FeatureUnavailableTab({ title, message }: { title: string; message: str
 
 export function AppTabContent({
   activeTab,
+  manualIntakeMode,
   jotformReviewGroupId,
   jotformReviewRecordId,
+  lotTwoReviewGroupId,
   trashReviewRecordId,
   incomingGearRecordId,
   testingRecordId,
   photosRecordId,
   inventoryRecordId,
-  usedGearWorkflowRecordId,
-  workflowPriceEditorRecordId,
+  inventoryPriceEditorRecordId,
   listingsRecordId,
   shopifyListingsRecordId,
   ebayListingsRecordId,
   userRecordId,
   navigateToInventoryRecord,
-  navigateToUsedGearWorkflowRecord,
+  navigateToUsedGearOperationalRecord,
   navigateToInventoryList,
   navigateToInventoryWorkflowView,
   navigateToInventoryPostPublishBucket,
+  navigateToManualIntake,
   navigateToIncomingGearForm,
   navigateToTestingForm,
   navigateToPhotosForm,
   navigateToListingsRecord,
   navigateToListingsList,
-  navigateToWorkflowPriceEditor,
   navigateToShopifyList,
   navigateToShopifyRecord,
   navigateToEbayList,
@@ -327,15 +329,16 @@ export function AppTabContent({
 }: AppTabContentProps) {
   const deferredRouteState = useDeferredValue({
     activeTab,
+    manualIntakeMode,
     jotformReviewGroupId,
     jotformReviewRecordId,
+    lotTwoReviewGroupId,
     trashReviewRecordId,
     incomingGearRecordId,
     testingRecordId,
     photosRecordId,
     inventoryRecordId,
-    usedGearWorkflowRecordId,
-    workflowPriceEditorRecordId,
+    inventoryPriceEditorRecordId,
     listingsRecordId,
     shopifyListingsRecordId,
     ebayListingsRecordId,
@@ -345,12 +348,12 @@ export function AppTabContent({
     || deferredRouteState.incomingGearRecordId !== incomingGearRecordId
     || deferredRouteState.jotformReviewGroupId !== jotformReviewGroupId
     || deferredRouteState.jotformReviewRecordId !== jotformReviewRecordId
+    || deferredRouteState.lotTwoReviewGroupId !== lotTwoReviewGroupId
     || deferredRouteState.trashReviewRecordId !== trashReviewRecordId
     || deferredRouteState.testingRecordId !== testingRecordId
     || deferredRouteState.photosRecordId !== photosRecordId
     || deferredRouteState.inventoryRecordId !== inventoryRecordId
-    || deferredRouteState.usedGearWorkflowRecordId !== usedGearWorkflowRecordId
-    || deferredRouteState.workflowPriceEditorRecordId !== workflowPriceEditorRecordId
+    || deferredRouteState.inventoryPriceEditorRecordId !== inventoryPriceEditorRecordId
     || deferredRouteState.listingsRecordId !== listingsRecordId
     || deferredRouteState.shopifyListingsRecordId !== shopifyListingsRecordId
     || deferredRouteState.ebayListingsRecordId !== ebayListingsRecordId
@@ -468,7 +471,7 @@ export function AppTabContent({
     approvalRecordId: listingsRecordId,
     navigateToApprovalRecord: navigateToListingsRecord,
     navigateToApprovalList: navigateToListingsList,
-    navigateToWorkflowRecord: navigateToUsedGearWorkflowRecord,
+    navigateToOperationalRecord: navigateToUsedGearOperationalRecord,
     navigateToTestingForm,
     navigateToPhotosForm,
   });
@@ -496,7 +499,7 @@ export function AppTabContent({
               viewModel={ebayViewModel}
               onBackToSnapshot={() => navigateToEbayList()}
               onOpenListings={() => navigateToListingsList()}
-              onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+              onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
         }
@@ -517,26 +520,11 @@ export function AppTabContent({
       case 'workflow-guide':
         return <WorkflowGuideTab currentUserRole={currentUserRole} currentUserName={currentUserName} accessiblePages={accessiblePages} />;
       case 'inventory':
-        if (deferredRouteState.usedGearWorkflowRecordId) {
+        if (deferredRouteState.inventoryPriceEditorRecordId) {
           return (
-            <UsedGearWorkflowRecordPage
-              currentUserName={currentUserName}
-              recordId={deferredRouteState.usedGearWorkflowRecordId}
-              onBackToDirectory={() => navigateToInventoryList()}
-              onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
-              onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
-              onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
-              onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
-              onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
-              onOpenInventoryEditor={(recordId) => navigateToWorkflowPriceEditor(recordId)}
-            />
-          );
-        }
-        if (deferredRouteState.workflowPriceEditorRecordId) {
-          return (
-            <WorkflowPriceEditorPage
-              recordId={deferredRouteState.workflowPriceEditorRecordId}
-              onBackToWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+            <InventoryPriceEditorPage
+              recordId={deferredRouteState.inventoryPriceEditorRecordId}
+              onBackToInventoryRecord={(recordId) => navigateToInventoryRecord(recordId)}
             />
           );
         }
@@ -547,11 +535,11 @@ export function AppTabContent({
               viewModel={airtableViewModel}
               currentUserRole={currentUserRole}
               currentUserName={currentUserName}
-              onAddNewRecord={() => navigateToIncomingGearForm()}
+              onAddNewRecord={() => navigateToManualIntake()}
               onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
               onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
               onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
-              onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+              onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
               onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
               onSelectRecord={(recordId) => navigateToInventoryRecord(recordId)}
             />
@@ -564,7 +552,7 @@ export function AppTabContent({
               viewModel={shopifyViewModel}
               onBackToSnapshot={() => navigateToShopifyList()}
               onOpenListings={() => navigateToListingsList()}
-              onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+              onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
         }
@@ -576,6 +564,8 @@ export function AppTabContent({
         );
       case 'market':
         return <MarketTab viewModel={marketViewModel} />;
+      case 'manual-intake':
+        return <UsedGearManualIntakePage onBackToDirectory={() => navigateToInventoryList()} />;
       case 'incoming-gear':
         return <AirtableEmbeddedForm recordId={deferredRouteState.incomingGearRecordId} onBackToDirectory={() => navigateToInventoryList()} />;
       case 'testing':
@@ -590,7 +580,7 @@ export function AppTabContent({
               groupId={deferredRouteState.jotformReviewGroupId}
               onBackToParkingLot={() => navigateToTab('parking-lot-1')}
               onOpenIncomingGearForm={(recordId: string) => navigateToIncomingGearForm(recordId)}
-              onOpenWorkflowRecord={(recordId: string) => navigateToUsedGearWorkflowRecord(recordId)}
+              onOpenOperationalRecord={(recordId: string) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
         }
@@ -600,14 +590,14 @@ export function AppTabContent({
               currentUserName={currentUserName}
               recordId={deferredRouteState.jotformReviewRecordId}
               onOpenIncomingGearForm={(recordId: string) => navigateToIncomingGearForm(recordId)}
-              onOpenWorkflowRecord={(recordId: string) => navigateToUsedGearWorkflowRecord(recordId)}
+              onOpenOperationalRecord={(recordId: string) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
         }
         return (
           <ParkingLotOneTab
             currentUserName={currentUserName}
-            onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+            onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
           />
         );
       case 'jotform':
@@ -616,13 +606,25 @@ export function AppTabContent({
         }
         return <JotformTab viewModel={jotformViewModel} />;
       case 'parking-lot-2':
+        if (deferredRouteState.lotTwoReviewGroupId) {
+          return (
+            <UsedGearLotTwoGroupPage
+              groupId={deferredRouteState.lotTwoReviewGroupId}
+              onBackToParkingLot={() => navigateToTab('parking-lot-2')}
+              onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
+              onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
+              onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
+              onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
+            />
+          );
+        }
         return (
           <UsedGearLotTwoTab
             currentUserName={currentUserName}
             onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
             onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
             onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
-            onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+            onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
           />
         );
       case 'trash-review':
@@ -631,14 +633,14 @@ export function AppTabContent({
             <UsedGearTrashReviewRecordPage
               currentUserName={currentUserName}
               recordId={deferredRouteState.trashReviewRecordId}
-              onOpenWorkflowRecord={(recordId: string) => navigateToUsedGearWorkflowRecord(recordId)}
+              onOpenOperationalRecord={(recordId: string) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
         }
         return (
           <UsedGearTrashTab
             currentUserName={currentUserName}
-            onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+            onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
           />
         );
       case 'testing-queue':
@@ -649,7 +651,7 @@ export function AppTabContent({
             onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
             onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
             onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
-            onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+            onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
             onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
           />
         );
@@ -661,19 +663,7 @@ export function AppTabContent({
             onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
             onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
             onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
-            onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
-            onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
-          />
-        );
-      case 'pre-listing-queue':
-        return (
-          <UsedGearWorkflowQueueTab
-            queueMode="pre-listing"
-            currentUserName={currentUserName}
-            onOpenIncomingGearForm={(recordId) => navigateToIncomingGearForm(recordId)}
-            onOpenTestingForm={(recordId) => navigateToTestingForm(recordId)}
-            onOpenPhotosForm={(recordId) => navigateToPhotosForm(recordId)}
-            onOpenWorkflowRecord={(recordId) => navigateToUsedGearWorkflowRecord(recordId)}
+            onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
             onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
           />
         );

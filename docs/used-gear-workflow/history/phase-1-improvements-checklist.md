@@ -1,4 +1,6 @@
-# Phase 1 Improvements Checklist
+# Historical: Phase 1 Improvements Checklist
+
+> Historical reference only. This document records completed or retired backlog work and should not be used as the source of truth for new tasks. Use the docs in the parent folder for current guidance.
 
 This backlog is for non-blocking improvements after the major Phase 1 workflow foundation is considered complete.
 

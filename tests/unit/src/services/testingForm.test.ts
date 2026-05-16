@@ -9,6 +9,10 @@ vi.mock('@/services/app-api/airtable', () => ({
   uploadConfiguredAttachment: vi.fn(),
 }));
 
+vi.mock('@/services/currentUserAudit', () => ({
+  resolveCurrentActorName: vi.fn(() => 'Taylor Reviewer'),
+}));
+
 vi.mock('@/services/inventoryDirectory', () => ({
   extractInventoryScalarValue: (value: unknown): string => {
     if (value == null) return '';
@@ -41,7 +45,7 @@ describe('testingForm', () => {
     vi.clearAllMocks();
   });
 
-  it('loads Testing values from the authoritative workflow record and returns customer reference notes', async () => {
+  it('loads Testing values from the authoritative operational record and returns customer reference notes', async () => {
     vi.mocked(getConfiguredRecord).mockImplementation(async (source) => {
       if (source === 'used-gear-workflow') {
         return buildRecord({
@@ -266,7 +270,7 @@ describe('testingForm', () => {
     );
   });
 
-  it('updates the workflow source when the testing form is opened from a workflow row', async () => {
+  it('updates the workflow source when the testing form is opened from an operational row', async () => {
     const values: TestingFormValues = {
       sku: 'SKU-200',
       arrivalDate: '',
@@ -308,7 +312,10 @@ describe('testingForm', () => {
     expect(updateConfiguredRecord).toHaveBeenCalledWith(
       'used-gear-workflow',
       'recWorkflow123',
-      expect.any(Object),
+      expect.objectContaining({
+        'Testing Signed At': expect.any(String),
+        'Testing Signed By': 'Taylor Reviewer',
+      }),
       { typecast: true },
     );
     expect(uploadConfiguredAttachment).toHaveBeenCalledWith(

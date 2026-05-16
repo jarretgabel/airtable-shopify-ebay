@@ -128,7 +128,7 @@ function buildSharedProps(): ListingApprovalCombinedSharedSectionProps {
       'Cosmetic Condition Notes': 'Light wear on the top cover.',
     },
     sharedDrawerRequiredStatus: { hasRequired: true, allFilled: true },
-    onOpenWorkflowRecord: vi.fn(),
+    onOpenOperationalRecord: vi.fn(),
     onOpenTestingForm: vi.fn(),
   };
 }
@@ -311,7 +311,7 @@ describe('combined approval sections', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit workflow source record' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit testing form' }));
 
-    expect(props.onOpenWorkflowRecord).toHaveBeenCalledWith('rec-combined-1');
+    expect(props.onOpenOperationalRecord).toHaveBeenCalledWith('rec-combined-1');
     expect(props.onOpenTestingForm).toHaveBeenCalledWith('rec-combined-1');
 
     expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({
@@ -368,7 +368,7 @@ describe('combined approval sections', () => {
         combinedSharedKeyFeaturesSyncFieldNames={sharedProps.combinedSharedKeyFeaturesSyncFieldNames}
         sharedTestingSourceFieldValues={sharedProps.sharedTestingSourceFieldValues}
         sharedDrawerRequiredStatus={sharedProps.sharedDrawerRequiredStatus}
-        onOpenWorkflowRecord={sharedProps.onOpenWorkflowRecord}
+        onOpenOperationalRecord={sharedProps.onOpenOperationalRecord}
         onOpenTestingForm={sharedProps.onOpenTestingForm}
         {...shopifyProps}
         {...ebayProps}
@@ -378,7 +378,7 @@ describe('combined approval sections', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit workflow source record' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit testing form' }));
 
-    expect(sharedProps.onOpenWorkflowRecord).toHaveBeenCalledWith('rec-combined-1');
+    expect(sharedProps.onOpenOperationalRecord).toHaveBeenCalledWith('rec-combined-1');
     expect(sharedProps.onOpenTestingForm).toHaveBeenCalledWith('rec-combined-1');
   });
 

@@ -14,8 +14,8 @@ interface TabSection {
 
 const INVENTORY_PROCESSING_SECTION_KEYS = {
   hub: ['inventory'] as const,
-  reviewQueues: ['testing-queue', 'photography-queue', 'pre-listing-queue'] as const,
-  forms: ['incoming-gear', 'testing', 'photos'] as const,
+  reviewQueues: ['testing-queue', 'photography-queue'] as const,
+  forms: ['manual-intake', 'incoming-gear', 'testing', 'photos'] as const,
 };
 
 interface AppFrameHeaderNavigationProps {
@@ -108,30 +108,6 @@ export function AppFrameHeaderNavigation({
             </div>
           )}
 
-          {listingsTabs.length > 0 && (
-            <div className="relative flex-shrink-0" data-export-ignore="true">
-              <DropdownTrigger
-                active={hasActiveListingsTab}
-                expanded={openDropdown === 'listings'}
-                label="Listings"
-                menuId="listings-menu"
-                badgeCount={listingsBadgeTotal > 0 ? listingsBadgeTotal : undefined}
-                onClick={() => onToggleDropdown('listings')}
-                onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'listings', onToggleDropdown, onCloseDropdowns)}
-              />
-              {openDropdown === 'listings' && (
-                <div
-                  id="listings-menu"
-                  role="menu"
-                  aria-label="Listings tabs"
-                  className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
-                >
-                  <DropdownTabList tabs={listingsTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
-                </div>
-              )}
-            </div>
-          )}
-
           {inventoryProcessingTabs.length > 0 && (
             <div className="relative flex-shrink-0" data-export-ignore="true">
               <DropdownTrigger
@@ -167,6 +143,30 @@ export function AppFrameHeaderNavigation({
                       );
                     })}
                   </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {listingsTabs.length > 0 && (
+            <div className="relative flex-shrink-0" data-export-ignore="true">
+              <DropdownTrigger
+                active={hasActiveListingsTab}
+                expanded={openDropdown === 'listings'}
+                label="Listings"
+                menuId="listings-menu"
+                badgeCount={listingsBadgeTotal > 0 ? listingsBadgeTotal : undefined}
+                onClick={() => onToggleDropdown('listings')}
+                onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'listings', onToggleDropdown, onCloseDropdowns)}
+              />
+              {openDropdown === 'listings' && (
+                <div
+                  id="listings-menu"
+                  role="menu"
+                  aria-label="Listings tabs"
+                  className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+                >
+                  <DropdownTabList tabs={listingsTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
                 </div>
               )}
             </div>

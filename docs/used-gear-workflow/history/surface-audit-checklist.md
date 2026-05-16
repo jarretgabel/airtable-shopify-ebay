@@ -1,4 +1,6 @@
-# Surface Audit Checklist
+# Historical: Surface Audit Checklist
+
+> Historical reference only. This document records prior audit state and phase alignment and should not be used as the source of truth for new implementation tasks. Use the docs in the parent folder for current guidance.
 
 This document is the app-owned surface audit for the approved used-gear workflow model.
 

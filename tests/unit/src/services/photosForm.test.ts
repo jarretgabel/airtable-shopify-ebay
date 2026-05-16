@@ -45,7 +45,7 @@ describe('photosForm', () => {
     vi.clearAllMocks();
   });
 
-  it('loads Photos values from the authoritative workflow row and separates customer reference notes', async () => {
+  it('loads Photos values from the authoritative operational row and separates customer reference notes', async () => {
     vi.mocked(getConfiguredRecord).mockImplementation(async (source) => {
       if (source === 'used-gear-workflow') {
         return buildRecord({

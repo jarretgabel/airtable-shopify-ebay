@@ -11,8 +11,8 @@ import { enrichUsedGearWorkflowRecord } from '@/services/usedGearWorkflow';
 import { PRICE_FIELD_CANDIDATES } from '@/services/usedGearWorkflowListingReadiness';
 import type { AirtableRecord } from '@/types/airtable';
 
-const WORKFLOW_PRICE_FIELD_ORDER: string[] = [...PRICE_FIELD_CANDIDATES];
-const WORKFLOW_PRICE_FIELD_NAMES = new Set<string>(WORKFLOW_PRICE_FIELD_ORDER);
+const INVENTORY_PRICE_FIELD_ORDER: string[] = [...PRICE_FIELD_CANDIDATES];
+const INVENTORY_PRICE_FIELD_NAMES = new Set<string>(INVENTORY_PRICE_FIELD_ORDER);
 
 const EDITABLE_TYPES = new Set([
   'barcode',
@@ -47,8 +47,8 @@ function normalizeField(field: AirtableMetadataField): InventoryFieldMetadata {
 
 function sortFields(fields: InventoryFieldMetadata[]): InventoryFieldMetadata[] {
   return [...fields].sort((left, right) => {
-    const leftIndex = WORKFLOW_PRICE_FIELD_ORDER.indexOf(left.name);
-    const rightIndex = WORKFLOW_PRICE_FIELD_ORDER.indexOf(right.name);
+    const leftIndex = INVENTORY_PRICE_FIELD_ORDER.indexOf(left.name);
+    const rightIndex = INVENTORY_PRICE_FIELD_ORDER.indexOf(right.name);
 
     if (leftIndex >= 0 && rightIndex >= 0) return leftIndex - rightIndex;
     if (leftIndex >= 0) return -1;
@@ -57,22 +57,22 @@ function sortFields(fields: InventoryFieldMetadata[]): InventoryFieldMetadata[] 
   });
 }
 
-export async function loadWorkflowPriceFieldMetadata(): Promise<InventoryFieldMetadata[]> {
+export async function loadInventoryPriceFieldMetadata(): Promise<InventoryFieldMetadata[]> {
   const fields = await getConfiguredFieldMetadata('used-gear-workflow');
 
   return sortFields(
     fields
       .map(normalizeField)
-      .filter((field) => field.editable && WORKFLOW_PRICE_FIELD_NAMES.has(field.name)),
+      .filter((field) => field.editable && INVENTORY_PRICE_FIELD_NAMES.has(field.name)),
   );
 }
 
-export async function loadWorkflowPriceRecord(recordId: string): Promise<AirtableRecord> {
+export async function loadInventoryPriceRecord(recordId: string): Promise<AirtableRecord> {
   const record = await getConfiguredRecord('used-gear-workflow', recordId);
   return enrichUsedGearWorkflowRecord(record);
 }
 
-export async function saveWorkflowPriceRecord(
+export async function saveInventoryPriceRecord(
   recordId: string,
   fieldNames: string[],
   draftValues: Record<string, InventoryDraftValue>,
