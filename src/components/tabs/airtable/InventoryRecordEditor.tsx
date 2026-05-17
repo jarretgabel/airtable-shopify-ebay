@@ -1,3 +1,4 @@
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
 import type { InventoryDraftValue, InventoryFieldMetadata } from '@/components/tabs/airtable/inventoryDirectoryTypes';
@@ -182,16 +183,13 @@ export function InventoryRecordEditor({
     <section className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
       {showIntro ? (
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <div>
-            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{copy.eyebrow}</p>
-            <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{copy.title}</h3>
-            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{copy.description}</p>
-            <p className="mt-3 text-sm text-[var(--muted)]">
-              SKU: <strong className="text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</strong>
-              {' '}· {displayInventoryValue(record.fields.Make)} {displayInventoryValue(record.fields.Model)}
-            </p>
-            <p className="mt-1 text-xs text-[var(--muted)]">Record ID: {record.id} · Created {new Date(record.createdTime).toLocaleString()}</p>
-          </div>
+          <AppSectionTitle title={copy.title} />
+          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{copy.description}</p>
+          <p className="mt-3 text-sm text-[var(--muted)]">
+            SKU: <strong className="text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</strong>
+            {' '}· {displayInventoryValue(record.fields.Make)} {displayInventoryValue(record.fields.Model)}
+          </p>
+          <p className="mt-1 text-xs text-[var(--muted)]">Record ID: {record.id} · Created {new Date(record.createdTime).toLocaleString()}</p>
         </div>
       ) : null}
 

@@ -5,9 +5,7 @@ import { DatePickerField } from '@/components/tabs/date-picker-field';
 import {
   createManualIntakeFormDefaults,
   manualIntakeFormFields,
-  manualIntakeFormIntro,
   type ManualIntakeFormFieldDefinition,
-  type ManualIntakeFormIntroBlock,
   type ManualIntakeFormOptionFieldName,
   type ManualIntakeFormValues,
 } from '@/components/tabs/manual-intake/manualIntakeFormSchema';
@@ -48,48 +46,6 @@ function FieldShell({ definition, children }: { definition: ManualIntakeFormFiel
       {definition.description ? <p className={HELP_CLASS}>{definition.description}</p> : null}
     </label>
   );
-}
-
-function IntroBlock({ block }: { block: ManualIntakeFormIntroBlock }) {
-  if (block.type === 'lead') {
-    return <p className="m-0 max-w-3xl text-[15px] font-medium leading-7 text-[var(--ink)]">{block.text}</p>;
-  }
-
-  if (block.type === 'sectionHeading') {
-    return <p className="m-0 pb-3 pt-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">{block.text}</p>;
-  }
-
-  if (block.type === 'labelBody') {
-    const isProcessingBlock = block.label === 'PRE-PROCESSING' || block.label === 'ACTIVE-PROCESSING';
-
-    if (isProcessingBlock) {
-      return (
-        <p className="m-0 max-w-3xl text-[14px] leading-7 text-[var(--muted)]">
-          <span className="mr-1 text-[12px] font-bold uppercase tracking-[0.14em] text-[var(--ink)]">{block.label}</span>
-          <span>{block.body}</span>
-        </p>
-      );
-    }
-
-    return (
-      <p className="m-0 max-w-3xl text-[14px] leading-7 text-[var(--muted)]">
-        <span className="font-semibold text-[var(--ink)]">{block.label} </span>
-        <span>{block.body}</span>
-      </p>
-    );
-  }
-
-  if (block.type === 'divider') {
-    return (
-      <div className="flex items-center gap-4 py-1">
-        <div className="h-px flex-1 bg-[var(--line)]" />
-        <span className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">{block.text}</span>
-        <div className="h-px flex-1 bg-[var(--line)]" />
-      </div>
-    );
-  }
-
-  return <p className="m-0 max-w-3xl text-[14px] leading-7 text-[var(--muted)]">{block.text}</p>;
 }
 
 interface AirtableEmbeddedFormProps {
@@ -323,22 +279,11 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
 
   return (
     <div className="flex w-full flex-col gap-5">
-        <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-          <div>
-            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{manualIntakeFormIntro.eyebrow}</p>
-            <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">{manualIntakeFormIntro.title}</h2>
-            {recordId ? (
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Editing record <strong>{recordId}</strong>. Saving here updates the intake fields for this row in the {recordSource === 'used-gear-workflow' ? 'used-gear workflow' : 'inventory directory'} source.</p>
-            ) : (
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Create a manual-entry used-gear row and route it either into Parking Lot 1 review or directly into Lot 2 when the deal is already accepted.</p>
-            )}
-          </div>
-          <div className="mt-3 space-y-3 pb-2">
-            {manualIntakeFormIntro.blocks.map((block, index) => (
-              <IntroBlock key={`${block.type}-${index}`} block={block} />
-            ))}
-          </div>
+      {recordId ? (
+        <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
+          <p className="m-0 text-sm leading-6 text-[var(--muted)]">Editing record <strong>{recordId}</strong>. Saving here updates the intake fields for this row in the {recordSource === 'used-gear-workflow' ? 'used-gear workflow' : 'inventory directory'} source.</p>
         </section>
+      ) : null}
         {submitError ? (
           <div className="rounded-xl border border-[#f7c8c4] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-text)]">
             {submitError}
@@ -356,13 +301,8 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
           {!recordId ? (
             <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Manual Entry Routing</p>
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Routing Context</p>
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                <label className="block">
-                  <span className={LABEL_CLASS}>Workflow Source</span>
-                  <input className={FIELD_CLASS} type="text" value="Manual Entry" readOnly />
-                  <p className={HELP_CLASS}>Manual-entry creates new rows through the used-gear workflow source.</p>
-                </label>
                 <label className="block">
                   <span className={LABEL_CLASS}>Entry Route</span>
                   <select
@@ -382,9 +322,10 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
                     className={FIELD_CLASS}
                     type="text"
                     value={submissionGroupId}
-                    placeholder="Optional shared submission key"
+                    placeholder="Optional shared deal/group key"
                     onChange={(event) => setSubmissionGroupId(event.currentTarget.value)}
                   />
+                  <p className={HELP_CLASS}>Optional. Use when multiple manual rows belong to the same deal and should stay grouped through intake review.</p>
                 </label>
                 <label className="block">
                   <span className={LABEL_CLASS}>Pick Up ID</span>
@@ -392,9 +333,10 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
                     className={FIELD_CLASS}
                     type="text"
                     value={pickUpId}
-                    placeholder="Optional pickup or arrival group key"
+                    placeholder="Optional pickup/arrival batch key"
                     onChange={(event) => setPickUpId(event.currentTarget.value)}
                   />
+                  <p className={HELP_CLASS}>Optional. Use when this intake should stay tied to an existing pickup or arrival batch tracked elsewhere.</p>
                 </label>
                 <label className="block lg:col-span-2">
                   <span className={LABEL_CLASS}>Qualification Notes</span>
@@ -405,18 +347,9 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
                     placeholder="Optional routing or qualification notes for the operational record"
                     onChange={(event) => setQualificationNotes(event.currentTarget.value)}
                   />
-                  <p className={HELP_CLASS}>Required when routing a manual-entry row directly into Parking Lot 2. Keep the seller-qualification summary here, then use the new customer-reference fields below to mirror the JotForm intake details.</p>
+                  <p className={HELP_CLASS}>Required when routing a manual-entry row directly into Parking Lot 2.</p>
                 </label>
               </div>
-            </section>
-          ) : null}
-
-          {!recordId ? (
-            <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Manual Intake Reference</p>
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-                To keep manual entry aligned with the JotForm workflow, capture seller-provided cosmetic, functional, inclusion, and photo-reference notes in the dedicated customer fields below before staff-specific corrections are added later in workflow review.
-              </p>
             </section>
           ) : null}
 

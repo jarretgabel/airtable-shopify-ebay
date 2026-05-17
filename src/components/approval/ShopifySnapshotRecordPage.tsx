@@ -5,7 +5,9 @@ import {
   ListingApprovalWorkflowProcessCard,
   type ListingApprovalWorkflowSummaryData,
 } from '@/components/approval/ListingApprovalWorkflowSummary';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { EmptySurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
 import { loadUsedGearOperationalRecordBySku } from '@/services/usedGearQueue';
 import type { ShopifyProduct } from '@/types/shopify';
@@ -93,6 +95,18 @@ export function ShopifySnapshotRecordPage({
   const images = product?.images ?? [];
   const metafields = product?.metafields ?? [];
   const workflowSku = variants.map((variant) => variant.sku?.trim() ?? '').find(Boolean) ?? '';
+  const header = (
+    <WorkflowPageHeader
+      eyebrow="Channels"
+      title="Shopify Snapshot"
+      actions={(
+        <>
+          <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to Shopify Snapshot</button>
+          <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
+        </>
+      )}
+    />
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -140,35 +154,31 @@ export function ShopifySnapshotRecordPage({
   }, [workflowSku]);
 
   if (viewModel.loading && viewModel.products.length === 0) {
-    return <LoadingSurface message="Loading Shopify snapshot..." />;
+    return (
+      <AppPageLayout>
+        {header}
+        <LoadingSurface message="Loading Shopify snapshot..." />
+      </AppPageLayout>
+    );
   }
 
   if (!product) {
     return (
-      <EmptySurface title="Shopify snapshot not found" message="This product is no longer available in the current Shopify snapshot.">
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to Shopify Snapshot</button>
-          <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
-        </div>
-      </EmptySurface>
+      <AppPageLayout>
+        {header}
+        <EmptySurface title="Shopify snapshot not found" message="This product is no longer available in the current Shopify snapshot.">
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to Shopify Snapshot</button>
+            <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
+          </div>
+        </EmptySurface>
+      </AppPageLayout>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <PanelSurface>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Shopify Snapshot</p>
-            <h2 className="m-0 mt-1 text-[1.18rem] font-semibold text-[var(--ink)]">{product.title}</h2>
-            <p className="m-0 mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">Read-only Shopify detail snapshot. Use the combined Listings page for any listing edits or publishing workflow changes.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to Shopify Snapshot</button>
-            <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
-          </div>
-        </div>
-      </PanelSurface>
+    <AppPageLayout>
+      {header}
 
       <ListingApprovalWorkflowProcessCard
         summary={workflowSummary}
@@ -318,6 +328,6 @@ export function ShopifySnapshotRecordPage({
           <DetailJsonPanel title="Shopify Product JSON" value={product} />
         </div>
       </PanelSurface>
-    </div>
+    </AppPageLayout>
   );
 }

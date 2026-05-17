@@ -1,5 +1,7 @@
 import { FormEvent, useRef } from 'react';
 import type { MarketTabViewModel } from '@/app/appTabViewModels';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { primaryActionButtonClass } from '@/components/app/buttonStyles';
 import { darkTableHeaderClass, darkTableRowHoverClass, emptySurfaceClass, errorSurfaceClass, listingSummaryClass, loadingSurfaceClass, mutedCodeClass, panelSurfaceClass, spinnerClass } from '@/components/tabs/uiClasses';
 
@@ -20,7 +22,12 @@ export function MarketTab({ viewModel }: MarketTabProps) {
   }
 
   return (
-    <>
+    <AppPageLayout>
+      <WorkflowPageHeader
+        eyebrow="Research"
+        title="Market Research"
+      />
+
       <section className={panelSurfaceClass}>
         <form onSubmit={handleSearch} className="flex flex-col gap-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -123,6 +130,6 @@ export function MarketTab({ viewModel }: MarketTabProps) {
           <p>Example slugs: <code className={mutedCodeClass}>accuphase-e-530</code>, <code className={mutedCodeClass}>naim-nac-282</code>, <code className={mutedCodeClass}>wilson-audio-sasha</code></p>
         </section>
       )}
-    </>
+    </AppPageLayout>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
@@ -224,10 +225,7 @@ export function UsedGearPendingReviewSection({
     <section id="used-gear-pending-review" className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
       <div className="flex flex-col gap-5">
         {showSectionIntro ? (
-          <div className="pb-1">
-            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Workflow</p>
-            <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Pending Review Queue</h3>
-          </div>
+          <AppSectionTitle title="Pending Review Queue" />
         ) : null}
         <QueueSearchToolbar
           searchAriaLabel="Search pending review queue"

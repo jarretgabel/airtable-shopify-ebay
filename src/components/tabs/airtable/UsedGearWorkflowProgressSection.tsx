@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
 import { RefreshIconButton } from '@/components/app/RefreshIconButton';
@@ -367,10 +368,7 @@ export function UsedGearWorkflowProgressSection({
     <section id={sectionId} className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
-          <div>
-            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{queuePresentation.eyebrow}</p>
-            <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{queuePresentation.title}</h3>
-          </div>
+          <AppSectionTitle title={queuePresentation.title} />
         ) : null}
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <label className="min-w-[240px] flex-1">

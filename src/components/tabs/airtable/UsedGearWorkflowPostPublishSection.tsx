@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppPageStatSection } from '@/components/app/AppPageStatSection';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
@@ -390,10 +391,7 @@ export function UsedGearWorkflowPostPublishSection({
     <section id={POST_PUBLISH_OVERVIEW_SECTION_ID} ref={sectionRef} className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-24">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
-          <div>
-            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Workflow</p>
-            <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Post-Publish Queue</h3>
-          </div>
+          <AppSectionTitle title="Post-Publish Queue" />
         ) : null}
         <AppPageStatSection
           stats={[

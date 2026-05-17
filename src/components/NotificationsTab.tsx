@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
 import { useNotificationStore, type NotificationTone } from '@/stores/notificationStore';
 
@@ -89,7 +90,7 @@ export function NotificationsTab() {
   const filteredUnreadCount = filteredNotifications.filter((notification) => !notification.seen).length;
 
   return (
-    <section className="space-y-5">
+    <AppPageLayout>
       <PageTitleHeader
         eyebrow="Utilities"
         title="Notifications"
@@ -256,6 +257,6 @@ export function NotificationsTab() {
           </div>
         )}
       </section>
-    </section>
+    </AppPageLayout>
   );
 }

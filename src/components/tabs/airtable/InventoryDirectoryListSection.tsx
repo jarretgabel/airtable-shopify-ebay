@@ -10,8 +10,10 @@ interface InventoryDirectoryListSectionProps {
   searchTerm: string;
   statusFilter: string;
   statusOptions: string[];
+  refreshing?: boolean;
   onSearchTermChange: (value: string) => void;
   onStatusFilterChange: (value: string) => void;
+  onRefresh?: () => void;
   onOpenManualIntake: (recordId: string) => void;
   onOpenTestingForm: (recordId: string) => void;
   onOpenPhotosForm: (recordId: string) => void;
@@ -28,8 +30,10 @@ export function InventoryDirectoryListSection({
   searchTerm,
   statusFilter,
   statusOptions,
+  refreshing = false,
   onSearchTermChange,
   onStatusFilterChange,
+  onRefresh,
   onOpenManualIntake,
   onOpenTestingForm,
   onOpenPhotosForm,
@@ -83,6 +87,11 @@ export function InventoryDirectoryListSection({
         searchPlaceholder="Search by SKU, make, model, component, or status"
         searchValue={searchTerm}
         onSearchChange={onSearchTermChange}
+        refreshLabel="Refresh inventory directory"
+        refreshLoadingLabel="Refreshing inventory directory"
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        compactFilters
         filters={[
           {
             ariaLabel: 'Filter inventory by status',

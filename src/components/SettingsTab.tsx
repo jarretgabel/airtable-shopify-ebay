@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { isDeveloperRole } from '@/auth/roleAccess';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
 import { SectionSubnav } from '@/components/app/SectionSubnav';
 import { getRuntimeHealthReport, type RuntimeHealthEntry } from '@/config/runtimeHealth';
@@ -273,7 +274,7 @@ export function SettingsTab() {
   }
 
   return (
-    <section className="space-y-5">
+    <AppPageLayout>
       <PageTitleHeader eyebrow="Utilities" title="Account Settings" />
 
       {requiresPasswordChange && (
@@ -662,6 +663,6 @@ export function SettingsTab() {
           </section>
         </div>
       </div>
-    </section>
+    </AppPageLayout>
   );
 }

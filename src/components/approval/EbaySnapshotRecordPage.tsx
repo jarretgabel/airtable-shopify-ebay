@@ -5,7 +5,9 @@ import {
   ListingApprovalWorkflowProcessCard,
   type ListingApprovalWorkflowSummaryData,
 } from '@/components/approval/ListingApprovalWorkflowSummary';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { EmptySurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import type { EbayTabViewModel } from '@/app/appTabViewModels';
 import { loadUsedGearOperationalRecordBySku } from '@/services/usedGearQueue';
 import type { EbayInventoryItem, EbayOffer, EbayPublishedListing } from '@/services/ebay/types';
@@ -95,6 +97,18 @@ export function EbaySnapshotRecordPage({
   const imageUrls = resolvedItem?.product?.imageUrls ?? [];
   const listingPolicies = resolvedOffer?.listingPolicies;
   const workflowSku = resolvedItem?.sku?.trim() || resolvedOffer?.sku?.trim() || '';
+  const header = (
+    <WorkflowPageHeader
+      eyebrow="Channels"
+      title="eBay Snapshot"
+      actions={(
+        <>
+          <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to eBay Snapshot</button>
+          <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
+        </>
+      )}
+    />
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -142,35 +156,31 @@ export function EbaySnapshotRecordPage({
   }, [workflowSku]);
 
   if (viewModel.state.loading && viewModel.inventory.items.length === 0 && viewModel.inventory.recentListings.length === 0) {
-    return <LoadingSurface message="Loading eBay snapshot..." />;
+    return (
+      <AppPageLayout>
+        {header}
+        <LoadingSurface message="Loading eBay snapshot..." />
+      </AppPageLayout>
+    );
   }
 
   if (!resolvedDirectItem && !resolvedDirectOffer && !resolvedRecentListing) {
     return (
-      <EmptySurface title="eBay snapshot not found" message="This SKU is no longer available in the current eBay snapshot.">
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to eBay Snapshot</button>
-          <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
-        </div>
-      </EmptySurface>
+      <AppPageLayout>
+        {header}
+        <EmptySurface title="eBay snapshot not found" message="This SKU is no longer available in the current eBay snapshot.">
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to eBay Snapshot</button>
+            <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
+          </div>
+        </EmptySurface>
+      </AppPageLayout>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <PanelSurface>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">eBay Snapshot</p>
-            <h2 className="m-0 mt-1 text-[1.18rem] font-semibold text-[var(--ink)]">{resolvedItem?.product?.title ?? resolvedOffer?.listingId ?? recordId}</h2>
-            <p className="m-0 mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">Read-only eBay detail snapshot. Use the combined Listings page for any listing edits or publishing workflow changes.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to eBay Snapshot</button>
-            <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
-          </div>
-        </div>
-      </PanelSurface>
+    <AppPageLayout>
+      {header}
 
       <ListingApprovalWorkflowProcessCard
         summary={workflowSummary}
@@ -282,6 +292,6 @@ export function EbaySnapshotRecordPage({
           {resolvedRecentListing && <DetailJsonPanel title="Recent Listing JSON" value={resolvedRecentListing as EbayPublishedListing} />}
         </div>
       </PanelSurface>
-    </div>
+    </AppPageLayout>
   );
 }

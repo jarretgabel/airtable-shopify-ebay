@@ -380,8 +380,13 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     items: [
       'Start here when an operator already has enough detail to create the intake row without waiting for a JotForm submission or Parking Lot 1 review.',
       'Use the same form when an accepted arrival-stage row needs intake corrections instead of switching to a second edit surface.',
+      'Manual Intake covers the off-JotForm lane: phone deals, return clients, and other accepted deals that were assembled outside the quote-request flow.',
+      'StereoBuyers inventory usually starts either from the customer quote form or from Manual Intake. Use Manual Intake only for the second case.',
       'Choose the route inside the form based on where the item should land next: Parking Lot 1 for qualification, or one of the Parking Lot 2 buckets for accepted arrival-stage work.',
-      'Use submission-group, pickup, and qualification notes when the manual record still needs to stay tied to a larger deal or shared intake context.',
+      'Keep entry standards clean and customer-facing: spelling, capitalization, model naming, component types, and seller-reported notes here often flow straight into later listing work.',
+      'Use the customer cosmetic, functional, inclusion, and submitted-photo note fields to mirror the seller-provided intake context before staff-specific corrections are added later in workflow review.',
+      'Submission Group ID and Pick Up ID are optional. Use them only when the manual row needs to stay tied to a larger deal, grouped submission, or shared pickup/arrival batch.',
+      'Qualification Notes are required only when the row is being routed directly into a Parking Lot 2 bucket instead of going through Parking Lot 1 first.',
     ],
   },
   {

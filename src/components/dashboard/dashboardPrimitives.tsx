@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import type { DashboardSourceStatus } from '@/components/dashboard/dashboardTabTypes';
 
 const skeletonPulseClass = 'animate-pulse rounded-md bg-white/10';
@@ -85,8 +86,6 @@ export function DashboardKpiCard({
 
 const outerPanelClass =
   'flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_94%,transparent)] p-5 shadow-[0_1px_2px_rgba(17,32,49,0.05),0_3px_12px_rgba(17,32,49,0.04)]';
-const panelHeaderClass = 'mb-4 flex items-center border-b border-[var(--line)] pb-3 pt-1';
-const panelHeaderLabelClass = 'm-0 text-[1.05rem] font-semibold text-[var(--ink)]';
 
 /**
  * Outer dashboard section panel — the full-width card with scroll anchor, section title h2,
@@ -105,9 +104,7 @@ export function DashboardSectionPanel({
 }) {
   return (
     <section id={id} className={`scroll-mt-24 ${outerPanelClass}${className ? ` ${className}` : ''}`}>
-      <div className={panelHeaderClass}>
-        <h2 className={panelHeaderLabelClass}>{title}</h2>
-      </div>
+      <AppSectionTitle title={title} className="mb-4" />
       {children}
     </section>
   );

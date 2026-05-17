@@ -21,6 +21,7 @@ interface ListingsServiceSummaryPanelProps {
   warnings?: string[];
   stats: ListingsServiceSummaryStat[];
   metrics: ListingsServiceSummaryMetric[];
+  showHeader?: boolean;
 }
 
 export function ListingsServiceSummaryPanel({
@@ -30,10 +31,11 @@ export function ListingsServiceSummaryPanel({
   warnings = [],
   stats,
   metrics,
+  showHeader = true,
 }: ListingsServiceSummaryPanelProps) {
   return (
     <div className="space-y-4">
-      <AppPageHeader eyebrow={eyebrow} title={title} description={description} />
+      {showHeader ? <AppPageHeader eyebrow={eyebrow} title={title} description={description} /> : null}
 
       <PanelSurface>
         <div className="flex flex-col gap-4">

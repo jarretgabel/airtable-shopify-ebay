@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
-import { PanelSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import {
   UsedGearWorkflowProgressSection,
@@ -99,41 +98,39 @@ export function UsedGearWorkflowQueueTab({
   };
 
   return (
-    <PanelSurface>
-      <AppPageLayout>
-        <WorkflowPageHeader
-          eyebrow={config.eyebrow}
-          title={config.title}
-        />
+    <AppPageLayout>
+      <WorkflowPageHeader
+        eyebrow={config.eyebrow}
+        title={config.title}
+      />
 
-        <UsedGearWorkflowProgressSection
-          currentUserName={currentUserName}
-          showSectionIntro={false}
-          onOpenManualIntake={onOpenManualIntake}
-          onOpenTestingForm={onOpenTestingForm}
-          onOpenPhotosForm={onOpenPhotosForm}
-          onOpenOperationalRecord={onOpenOperationalRecord}
-          onOpenListingsRecord={onOpenListingsRecord}
-          queueMode={queueMode}
-          sectionId={config.sectionId}
-          searchTerm={searchTerm}
-          onSearchTermChange={(value) => updateRouteState((params) => {
-            if (value.trim()) {
-              params.set(config.searchParamName, value);
-            } else {
-              params.delete(config.searchParamName);
-            }
-          })}
-          sortMode={sortMode}
-          onSortModeChange={(value) => updateRouteState((params) => {
-            if (value === 'group-label') {
-              params.delete(config.sortParamName);
-            } else {
-              params.set(config.sortParamName, value);
-            }
-          })}
-        />
-      </AppPageLayout>
-    </PanelSurface>
+      <UsedGearWorkflowProgressSection
+        currentUserName={currentUserName}
+        showSectionIntro={false}
+        onOpenManualIntake={onOpenManualIntake}
+        onOpenTestingForm={onOpenTestingForm}
+        onOpenPhotosForm={onOpenPhotosForm}
+        onOpenOperationalRecord={onOpenOperationalRecord}
+        onOpenListingsRecord={onOpenListingsRecord}
+        queueMode={queueMode}
+        sectionId={config.sectionId}
+        searchTerm={searchTerm}
+        onSearchTermChange={(value) => updateRouteState((params) => {
+          if (value.trim()) {
+            params.set(config.searchParamName, value);
+          } else {
+            params.delete(config.searchParamName);
+          }
+        })}
+        sortMode={sortMode}
+        onSortModeChange={(value) => updateRouteState((params) => {
+          if (value === 'group-label') {
+            params.delete(config.sortParamName);
+          } else {
+            params.set(config.sortParamName, value);
+          }
+        })}
+      />
+    </AppPageLayout>
   );
 }

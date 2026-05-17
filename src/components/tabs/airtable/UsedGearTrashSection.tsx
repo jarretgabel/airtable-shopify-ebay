@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
 import { EmptySurface } from '@/components/app/StateSurfaces';
@@ -206,10 +207,7 @@ export function UsedGearTrashSection({
     <section id="used-gear-trash" className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
-          <div>
-            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Workflow</p>
-            <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Trash Review</h3>
-          </div>
+          <AppSectionTitle title="Trash Review" />
         ) : null}
         <QueueSearchToolbar
           searchAriaLabel="Search workflow trash"

@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { AirtableTabViewModel } from '@/app/appTabViewModels';
-import { RefreshIconButton } from '@/components/app/RefreshIconButton';
+import { navLabel } from '@/app/appNavigation';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { EmptySurface } from '@/components/app/StateSurfaces';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import { InventoryDirectoryListSection } from '@/components/tabs/airtable/InventoryDirectoryListSection';
 import { UsedGearPendingReviewSection, type UsedGearPendingReviewSortMode } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
 import { UsedGearWorkflowProgressSection, type UsedGearWorkflowProgressSortMode } from '@/components/tabs/airtable/UsedGearWorkflowProgressSection';
@@ -27,6 +32,9 @@ const WORKFLOW_ROUTE_PARAMS = [
   WORKFLOW_PENDING_REVIEW_SORT_PARAM,
   WORKFLOW_PROGRESS_SORT_PARAM,
 ] as const;
+const INVENTORY_PENDING_REVIEW_SECTION_ID = 'used-gear-pending-review';
+const INVENTORY_PROGRESS_SECTION_ID = 'used-gear-progress-queue';
+const INVENTORY_DIRECTORY_SECTION_ID = 'inventory-directory-list';
 
 interface WorkflowStateChip {
   key: string;
@@ -36,6 +44,7 @@ interface WorkflowStateChip {
 }
 
 type WorkflowChipFocusTarget = string | '__reset__';
+type InventoryWorkflowSectionKey = 'pending-review' | 'processing' | 'directory';
 
 function formatWorkflowChipValue(value: string): string {
   return value.length > 28 ? `${value.slice(0, 28)}...` : value;
@@ -88,7 +97,6 @@ export function AirtableTab({
   viewModel,
   currentUserRole,
   currentUserName,
-  onAddNewRecord,
   onOpenManualIntake,
   onOpenTestingForm,
   onOpenPhotosForm,
@@ -141,6 +149,16 @@ export function AirtableTab({
   }, [location.search]);
 
   const defaultInventoryWorkflowHash = currentUserRole === 'processor' ? '#used-gear-pending-review' : '';
+  const sectionItems = useMemo(() => [
+    { id: INVENTORY_PENDING_REVIEW_SECTION_ID, key: 'pending-review' as const, label: 'Pending Review' },
+    { id: INVENTORY_PROGRESS_SECTION_ID, key: 'processing' as const, label: 'Processing' },
+    { id: INVENTORY_DIRECTORY_SECTION_ID, key: 'directory' as const, label: 'Record Directory' },
+  ], []);
+  const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, INVENTORY_PENDING_REVIEW_SECTION_ID);
+  const activeSectionKey = useMemo<InventoryWorkflowSectionKey>(
+    () => sectionItems.find((item) => item.id === activeSectionId)?.key ?? 'pending-review',
+    [activeSectionId, sectionItems],
+  );
 
   const updateWorkflowRouteState = useCallback((
     update: (params: URLSearchParams) => void,
@@ -428,12 +446,25 @@ export function AirtableTab({
   };
 
   return (
-      <div className="mx-auto mt-3 flex w-full max-w-6xl flex-col gap-6">
-        <div>
-          <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SB Inventory</p>
-          <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Directory</h2>
-          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Browse existing SB Inventory records, filter the table, and jump directly into Manual Intake, record-specific Testing or Photos work, or the full record editor.</p>
-        </div>
+      <AppPageLayout>
+        <WorkflowPageHeader
+          eyebrow="Processing"
+          title={navLabel('inventory')}
+        />
+
+        <MainPageSectionNav
+          ariaLabel="Workflow hub sections"
+          items={sectionItems.map((item) => ({ key: item.key, label: item.label }))}
+          activeKey={activeSectionKey}
+          onSelect={(sectionKey) => {
+            const sectionId = sectionItems.find((item) => item.key === sectionKey)?.id;
+            if (sectionId) {
+              requestAnimationFrame(() => {
+                scrollToSection(sectionId);
+              });
+            }
+          }}
+        />
 
         {directoryError ? (
           <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -442,7 +473,7 @@ export function AirtableTab({
         ) : null}
 
         {hasWorkflowViewState ? (
-          <div className="sticky top-3 z-20 flex flex-col gap-3 rounded-2xl border border-[var(--line)] bg-[linear-gradient(180deg,rgba(7,17,28,0.94),rgba(7,17,28,0.82))] px-5 py-4 shadow-[0_18px_40px_rgba(2,6,23,0.35)] backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
+          <div className="sticky top-16 z-10 flex flex-col gap-3 rounded-2xl border border-[var(--line)] bg-[linear-gradient(180deg,rgba(7,17,28,0.94),rgba(7,17,28,0.82))] px-5 py-4 shadow-[0_18px_40px_rgba(2,6,23,0.35)] backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
             <div className="flex-1">
               <p className="m-0 text-sm font-semibold text-[var(--ink)]">Workflow filters</p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -531,30 +562,7 @@ export function AirtableTab({
           }, '#used-gear-progress-queue')}
         />
         <section id="inventory-directory-list" className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">Find a Record</h3>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Use search and status filters to find a row, then choose Edit Record to move into the dedicated inventory form page.</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={onAddNewRecord}
-              >
-                Open Manual Intake
-              </button>
-              <RefreshIconButton
-                onClick={() => {
-                  void loadDirectoryData();
-                }}
-                disabled={directoryRefreshing}
-                loading={directoryRefreshing}
-                label="Refresh inventory directory"
-                loadingLabel="Refreshing inventory directory"
-              />
-            </div>
-          </div>
+          <AppSectionTitle title="Record Directory" />
 
           {directoryLoading && records.length === 0 ? (
             <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-10 text-center text-sm text-[var(--muted)]">
@@ -584,8 +592,12 @@ export function AirtableTab({
               searchTerm={inventoryDirectorySearch}
               statusFilter={inventoryDirectoryStatusFilter}
               statusOptions={statusOptions}
+              refreshing={directoryRefreshing}
               onSearchTermChange={handleInventoryDirectorySearchChange}
               onStatusFilterChange={handleInventoryDirectoryStatusFilterChange}
+              onRefresh={() => {
+                void loadDirectoryData();
+              }}
               onOpenManualIntake={onOpenManualIntake}
               onOpenTestingForm={onOpenTestingForm}
               onOpenPhotosForm={onOpenPhotosForm}
@@ -593,6 +605,6 @@ export function AirtableTab({
             />
           ) : null}
         </section>
-      </div>
+      </AppPageLayout>
   );
 }

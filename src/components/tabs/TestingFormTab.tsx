@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
@@ -270,12 +271,11 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
   const stageImageMetadata = filterWorkflowImageMetadataByStage(imageMetadata, 'testing');
 
   return (
-    <PanelSurface>
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <AppPageLayout>
+      <div className="flex flex-col gap-6">
         <WorkflowPageHeader
           eyebrow="Forms"
           title="Testing"
-          detail={recordId ? <>Editing record <strong>{recordId}</strong>. Saving here updates only the Testing fields for this inventory row.</> : undefined}
           actions={onBackToDirectory ? (
             <button
               type="button"
@@ -373,6 +373,6 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           </div>
         </form>
       </div>
-    </PanelSurface>
+    </AppPageLayout>
   );
 }

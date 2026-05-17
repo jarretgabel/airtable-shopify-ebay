@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { InventoryRecordEditor } from '@/components/tabs/airtable/InventoryRecordEditor';
 import type { InventoryDraftValue, InventoryFieldMetadata } from '@/components/tabs/airtable/inventoryDirectoryTypes';
 import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
@@ -137,25 +139,20 @@ export function InventoryPriceEditorPage({ recordId, onBackToInventoryRecord }: 
 
   return (
     <>
-      <PanelSurface>
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-          <div>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Pricing</p>
-                <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Inventory Price Editor</h2>
-                <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Edit the combined-listings price fields that control publish readiness for this operational row, then save them back to Airtable.</p>
-              </div>
-
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={() => onBackToInventoryRecord(recordId)}
-              >
-                Back to inventory
-              </button>
-            </div>
-          </div>
+      <AppPageLayout>
+        <WorkflowPageHeader
+          eyebrow="Processing"
+          title="Inventory Price Editor"
+          actions={(
+            <button
+              type="button"
+              className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+              onClick={() => onBackToInventoryRecord(recordId)}
+            >
+              Back to inventory
+            </button>
+          )}
+        />
 
           <InventoryRecordEditor
             record={record}
@@ -186,8 +183,7 @@ export function InventoryPriceEditorPage({ recordId, onBackToInventoryRecord }: 
               emptyMessage: 'Load an operational row to start editing its publish-readiness price fields.',
             }}
           />
-        </div>
-      </PanelSurface>
+      </AppPageLayout>
       {confirmationModal}
     </>
   );

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { InventoryRecordEditor } from '@/components/tabs/airtable/InventoryRecordEditor';
 import type { InventoryDraftValue, InventoryFieldMetadata } from '@/components/tabs/airtable/inventoryDirectoryTypes';
 import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
@@ -137,16 +139,11 @@ export function InventoryRecordEditorPage({ recordId, onBackToDirectory }: Inven
 
   return (
     <>
-      <PanelSurface>
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-        <div>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SB Inventory</p>
-              <h2 className="mt-2 text-3xl font-semibold text-[var(--ink)]">Inventory Record Editor</h2>
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">This isolated form page mirrors the inventory-processing form layout so you can focus on one record at a time while editing Airtable-backed inventory data.</p>
-            </div>
-
+      <AppPageLayout>
+        <WorkflowPageHeader
+          eyebrow="Processing"
+          title="Inventory Record Editor"
+          actions={(
             <button
               type="button"
               className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
@@ -154,8 +151,8 @@ export function InventoryRecordEditorPage({ recordId, onBackToDirectory }: Inven
             >
               Back to Directory
             </button>
-          </div>
-        </div>
+          )}
+        />
 
         <InventoryRecordEditor
           record={record}
@@ -180,8 +177,7 @@ export function InventoryRecordEditorPage({ recordId, onBackToDirectory }: Inven
             void handleSave();
           }}
         />
-        </div>
-      </PanelSurface>
+      </AppPageLayout>
       {confirmationModal}
     </>
   );

@@ -1,4 +1,5 @@
 import { getRoleDefaultPages, hasFullAccessRole } from '@/auth/roleAccess';
+import { PageTitleHeader } from '@/components/app/PageTitleHeader';
 import { UserPageAccessEditor } from '@/components/users/UserPageAccessEditor';
 import {
   ASSIGNABLE_USER_ROLE_OPTIONS,
@@ -53,22 +54,25 @@ export function UserDetailPanel({
     : ASSIGNABLE_USER_ROLE_OPTIONS;
 
   return (
-    <section className="mt-3 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-        <button
-          type="button"
-          className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
-          onClick={onBackToList}
-        >
-          Back to Users List
-        </button>
-        <div>
-          <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300">User Detail</p>
-          <h2 className="m-0 mt-1 text-xl font-semibold text-[var(--ink)]">{selectedUser.name}</h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">{selectedUser.email}</p>
+    <section className="space-y-5">
+      <PageTitleHeader eyebrow="Utilities" title="User Management" />
+
+      <section className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+          <button
+            type="button"
+            className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
+            onClick={onBackToList}
+          >
+            Back to Users List
+          </button>
+          <div>
+            <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300">User Detail</p>
+            <h2 className="m-0 mt-1 text-xl font-semibold text-[var(--ink)]">{selectedUser.name}</h2>
+            <p className="mt-1 text-sm text-[var(--muted)]">{selectedUser.email}</p>
+          </div>
+          <span className={roleBadgeClassName(selectedUser.role)}>{selectedUser.role}</span>
         </div>
-        <span className={roleBadgeClassName(selectedUser.role)}>{selectedUser.role}</span>
-      </div>
 
       {statusMessage && (
         <p className="mb-4 rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
@@ -243,6 +247,7 @@ export function UserDetailPanel({
           </div>
         )}
       </article>
+      </section>
     </section>
   );
 }

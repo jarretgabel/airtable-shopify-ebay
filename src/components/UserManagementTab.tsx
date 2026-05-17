@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useRef, useState } from 'react';
 import type { UserManagementTabViewModel } from '@/app/appTabViewModels';
 import { getRoleDefaultPages, hasFullAccessRole } from '@/auth/roleAccess';
 import { PAGE_DEFINITIONS } from '@/auth/pages';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { useAuthStore } from '@/stores/auth/authStore';
 import type { AppUser } from '@/stores/auth/authTypes';
 import { generateTemporaryPassword } from '@/stores/auth/authStorage';
@@ -179,16 +180,18 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
 
   if (selectedUserId && !selectedUser) {
     return (
-      <section className="mt-3 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4">
-        <p className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">User not found.</p>
-        <button
-          type="button"
-          className="mt-3 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
-          onClick={onBackToList}
-        >
-          Back to Users List
-        </button>
-      </section>
+      <AppPageLayout>
+        <section className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4">
+          <p className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">User not found.</p>
+          <button
+            type="button"
+            className="mt-3 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
+            onClick={onBackToList}
+          >
+            Back to Users List
+          </button>
+        </section>
+      </AppPageLayout>
     );
   }
 
@@ -211,34 +214,36 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
 
     return (
       <>
-        <UserDetailPanel
-        selectedUser={selectedUser}
-        canDeleteSelectedUser={canDeleteSelectedUser}
-        deleteDisabledReason={deleteDisabledReason}
-        canSendPasswordReset={canSendPasswordReset}
-        passwordResetDisabledReason={passwordResetDisabledReason}
-        statusMessage={statusMessage}
-        labelClassName={labelClassName}
-        inputClassName={inputClassName}
-        checkboxClassName={checkboxClassName}
-        roleBadgeClassName={roleBadgeClassName}
-        onBackToList={onBackToList}
-        onRoleChange={(role) => {
-          void updateUserRole(selectedUser.id, role).then((result) => setStatusMessage(result.message));
-        }}
-        onToggleWorkflowOwnershipPreference={(key, enabled) => {
-          void updateUserNotificationPreference(selectedUser.id, key, enabled).then((result) => setStatusMessage(result.message));
-        }}
-        onToggleWorkflowNotificationEvent={(eventKey, enabled) => {
-          void updateUserWorkflowNotificationEvent(selectedUser.id, eventKey, enabled).then((result) => setStatusMessage(result.message));
-        }}
-        onSendPasswordReset={() => {
-          void handleReset(selectedUser.email);
-        }}
-        onDeleteUser={() => {
-          void handleDeleteUser(selectedUser);
-        }}
+        <AppPageLayout>
+          <UserDetailPanel
+          selectedUser={selectedUser}
+          canDeleteSelectedUser={canDeleteSelectedUser}
+          deleteDisabledReason={deleteDisabledReason}
+          canSendPasswordReset={canSendPasswordReset}
+          passwordResetDisabledReason={passwordResetDisabledReason}
+          statusMessage={statusMessage}
+          labelClassName={labelClassName}
+          inputClassName={inputClassName}
+          checkboxClassName={checkboxClassName}
+          roleBadgeClassName={roleBadgeClassName}
+          onBackToList={onBackToList}
+          onRoleChange={(role) => {
+            void updateUserRole(selectedUser.id, role).then((result) => setStatusMessage(result.message));
+          }}
+          onToggleWorkflowOwnershipPreference={(key, enabled) => {
+            void updateUserNotificationPreference(selectedUser.id, key, enabled).then((result) => setStatusMessage(result.message));
+          }}
+          onToggleWorkflowNotificationEvent={(eventKey, enabled) => {
+            void updateUserWorkflowNotificationEvent(selectedUser.id, eventKey, enabled).then((result) => setStatusMessage(result.message));
+          }}
+          onSendPasswordReset={() => {
+            void handleReset(selectedUser.email);
+          }}
+          onDeleteUser={() => {
+            void handleDeleteUser(selectedUser);
+          }}
         />
+        </AppPageLayout>
         {confirmationModal}
       </>
     );
@@ -246,40 +251,42 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
 
   return (
     <>
-      <UserDirectoryPanel
-        statusMessage={statusMessage}
-        createdMessage={createdMessage}
-        sortedUsers={sortedUsers}
-        listUsers={listUsers}
-        searchTerm={searchTerm}
-        roleFilter={roleFilter}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-        newUser={newUser}
-        roleNotificationDefaults={roleNotificationDefaults}
-        labelClassName={labelClassName}
-        inputClassName={inputClassName}
-        checkboxClassName={checkboxClassName}
-        roleBadgeClassName={roleBadgeClassName}
-        formatAccessiblePages={formatAccessiblePages}
-        createUserSectionRef={createUserSectionRef}
-        onSearchTermChange={setSearchTerm}
-        onRoleFilterChange={setRoleFilter}
-        onSortKeyChange={setSortKey}
-        onSortDirectionChange={setSortDirection}
-        onSelectUser={onSelectUser}
-        onCreateUserSubmit={handleCreateUser}
-        onScrollToCreateUser={scrollToCreateUserSection}
-        onNewUserFieldChange={(field, value) => setNewUser((previous) => ({ ...previous, [field]: value }))}
-        onNewUserRoleChange={(role) => setNewUser((previous) => ({ ...previous, role, allowedPages: getRoleDefaultPages(role) }))}
-        onRegenerateTemporaryPassword={handleRegenerateTemporaryPassword}
-        onToggleRoleWorkflowNotificationDefault={(role, eventKey, enabled) => {
-          void updateRoleWorkflowNotificationDefault(role, eventKey, enabled).then((result) => setStatusMessage(result.message));
-        }}
-        onApplyRoleWorkflowNotificationDefaults={(role) => {
-          void applyRoleWorkflowNotificationDefaults(role).then((result) => setStatusMessage(result.message));
-        }}
-      />
+      <AppPageLayout>
+        <UserDirectoryPanel
+          statusMessage={statusMessage}
+          createdMessage={createdMessage}
+          sortedUsers={sortedUsers}
+          listUsers={listUsers}
+          searchTerm={searchTerm}
+          roleFilter={roleFilter}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          newUser={newUser}
+          roleNotificationDefaults={roleNotificationDefaults}
+          labelClassName={labelClassName}
+          inputClassName={inputClassName}
+          checkboxClassName={checkboxClassName}
+          roleBadgeClassName={roleBadgeClassName}
+          formatAccessiblePages={formatAccessiblePages}
+          createUserSectionRef={createUserSectionRef}
+          onSearchTermChange={setSearchTerm}
+          onRoleFilterChange={setRoleFilter}
+          onSortKeyChange={setSortKey}
+          onSortDirectionChange={setSortDirection}
+          onSelectUser={onSelectUser}
+          onCreateUserSubmit={handleCreateUser}
+          onScrollToCreateUser={scrollToCreateUserSection}
+          onNewUserFieldChange={(field, value) => setNewUser((previous) => ({ ...previous, [field]: value }))}
+          onNewUserRoleChange={(role) => setNewUser((previous) => ({ ...previous, role, allowedPages: getRoleDefaultPages(role) }))}
+          onRegenerateTemporaryPassword={handleRegenerateTemporaryPassword}
+          onToggleRoleWorkflowNotificationDefault={(role, eventKey, enabled) => {
+            void updateRoleWorkflowNotificationDefault(role, eventKey, enabled).then((result) => setStatusMessage(result.message));
+          }}
+          onApplyRoleWorkflowNotificationDefaults={(role) => {
+            void applyRoleWorkflowNotificationDefaults(role).then((result) => setStatusMessage(result.message));
+          }}
+        />
+      </AppPageLayout>
       {confirmationModal}
     </>
   );

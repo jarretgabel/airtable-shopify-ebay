@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { PAGE_DEFINITIONS, type AppPage } from '@/auth/pages';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import type { UserRole } from '@/stores/auth/authTypes';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
 import {
@@ -219,7 +220,7 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
   const visiblePageCards = getVisiblePageCards(accessiblePages);
 
   return (
-    <div className="space-y-5">
+    <AppPageLayout>
       <PageTitleHeader eyebrow="Guide" title="User Guide" />
 
       <section className="rounded-2xl border border-[var(--line)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--panel)_92%,transparent),color-mix(in_srgb,var(--bg)_88%,transparent))] p-5 shadow-[0_20px_45px_rgba(2,6,23,0.2)]">
@@ -277,6 +278,6 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
           ))}
         </div>
       </GuideSection>
-    </div>
+    </AppPageLayout>
   );
 }
