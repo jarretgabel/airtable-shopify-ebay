@@ -641,18 +641,10 @@ export function ListingApprovalWorkflowProcessCard({
 
   return (
     <section className="mb-4 rounded-2xl border border-[var(--line)] bg-white/5 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{eyebrow}</p>
-          <h4 className="m-0 mt-2 text-base font-semibold text-[var(--ink)]">{title}</h4>
-          <p className="m-0 mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{description}</p>
-        </div>
-        <span className={[
-          'inline-block rounded-full border px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.06em]',
-          statusPresentation.badgeClassName,
-        ].join(' ')}>
-          {summary.workflowStatus}
-        </span>
+      <div>
+        <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{eyebrow}</p>
+        <h4 className="m-0 mt-2 text-base font-semibold text-[var(--ink)]">{title}</h4>
+        <p className="m-0 mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{description}</p>
       </div>
 
       <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">

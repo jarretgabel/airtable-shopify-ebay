@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
+import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { useNotificationStore, type NotificationTone } from '@/stores/notificationStore';
 
 const toneLabelMap: Record<NotificationTone, string> = {
@@ -36,6 +37,17 @@ const tonePriority: Record<NotificationTone, number> = {
   info: 2,
   success: 3,
 };
+
+function ResetIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+      <path d="M16.25 5.833V10h-4.167" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15.26 11.667a5.833 5.833 0 1 1 .397-4.962L16.25 10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+const compactIconButtonClassName = 'inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] shadow-[0_4px_14px_rgba(17,32,49,0.04)] transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-[var(--line)] hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50';
 
 export function NotificationsTab() {
   const notifications = useNotificationStore((state) => state.notifications);
@@ -87,12 +99,17 @@ export function NotificationsTab() {
       });
   }, [notifications, search, sortBy, statusFilter, toneFilter]);
 
-  const filteredUnreadCount = filteredNotifications.filter((notification) => !notification.seen).length;
+  function resetControls(): void {
+    setSearch('');
+    setToneFilter('all');
+    setStatusFilter('all');
+    setSortBy('newest');
+  }
 
   return (
     <AppPageLayout>
       <PageTitleHeader
-        eyebrow="Utilities"
+        eyebrow="User"
         title="Notifications"
         actions={(
           <>
@@ -117,80 +134,59 @@ export function NotificationsTab() {
       />
 
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="m-0 text-[0.95rem] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Active Notifications</h3>
-          <div className="flex items-center gap-2">
-            {filteredUnreadCount > 0 && (
-              <span className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1 text-[0.72rem] font-bold text-cyan-200">
-                {filteredUnreadCount} new
-              </span>
-            )}
-            <span className="rounded-full border border-[var(--line)] px-2.5 py-1 text-[0.72rem] font-bold text-[var(--muted)]">
-              {filteredNotifications.length} shown
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 rounded-xl border border-[var(--line)] bg-[rgba(9,16,26,0.45)] p-3 lg:grid-cols-[minmax(0,1fr)_160px_140px_170px_auto]">
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search title, message, or key"
-            className="w-full rounded-lg border border-white/15 bg-slate-950/55 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
-            aria-label="Search notifications"
-          />
-
-          <select
-            value={toneFilter}
-            onChange={(event) => setToneFilter(event.target.value as 'all' | NotificationTone)}
-            className="rounded-lg border border-[var(--line)] bg-[var(--panel)] px-2.5 py-2 text-[0.82rem] text-[var(--ink)]"
-            aria-label="Filter by notification tone"
-          >
-            <option value="all">All tones</option>
-            <option value="info">Info</option>
-            <option value="success">Success</option>
-            <option value="warning">Warning</option>
-            <option value="error">Error</option>
-          </select>
-
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as NotificationStatusFilter)}
-            className="rounded-lg border border-[var(--line)] bg-[var(--panel)] px-2.5 py-2 text-[0.82rem] text-[var(--ink)]"
-            aria-label="Filter by read status"
-          >
-            <option value="all">All status</option>
-            <option value="unread">Unread</option>
-            <option value="seen">Seen</option>
-          </select>
-
-          <select
-            value={sortBy}
-            onChange={(event) => setSortBy(event.target.value as NotificationSort)}
-            className="rounded-lg border border-[var(--line)] bg-[var(--panel)] px-2.5 py-2 text-[0.82rem] text-[var(--ink)]"
-            aria-label="Sort notifications"
-          >
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="unread-first">Unread first</option>
-            <option value="tone">Tone priority</option>
-          </select>
-
-          <button
-            type="button"
-            onClick={() => {
-              setSearch('');
-              setToneFilter('all');
-              setStatusFilter('all');
-              setSortBy('newest');
-            }}
-            disabled={!hasActiveControls}
-            className="rounded-lg border border-[var(--line)] px-3 py-2 text-[0.72rem] font-bold uppercase tracking-[0.06em] text-[var(--muted)] transition hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Reset
-          </button>
-        </div>
+        <QueueSearchToolbar
+          className="rounded-xl border border-[var(--line)] bg-[rgba(9,16,26,0.45)] p-3"
+          searchAriaLabel="Search notifications"
+          searchPlaceholder="Search title, message, or key"
+          searchValue={search}
+          onSearchChange={setSearch}
+          sortAriaLabel="Sort notifications"
+          sortValue={sortBy}
+          sortOptions={[
+            { value: 'newest', label: 'Newest first' },
+            { value: 'oldest', label: 'Oldest first' },
+            { value: 'unread-first', label: 'Unread first' },
+            { value: 'tone', label: 'Tone priority' },
+          ]}
+          onSortChange={(value) => setSortBy(value as NotificationSort)}
+          filters={[
+            {
+              ariaLabel: 'Filter by notification tone',
+              value: toneFilter,
+              onChange: (value) => setToneFilter(value as 'all' | NotificationTone),
+              options: [
+                { value: 'all', label: 'All tones' },
+                { value: 'info', label: 'Info' },
+                { value: 'success', label: 'Success' },
+                { value: 'warning', label: 'Warning' },
+                { value: 'error', label: 'Error' },
+              ],
+            },
+            {
+              ariaLabel: 'Filter by read status',
+              value: statusFilter,
+              onChange: (value) => setStatusFilter(value as NotificationStatusFilter),
+              options: [
+                { value: 'all', label: 'All status' },
+                { value: 'unread', label: 'Unread' },
+                { value: 'seen', label: 'Seen' },
+              ],
+            },
+          ]}
+          compactFilters
+          actions={(
+            <button
+              type="button"
+              onClick={resetControls}
+              disabled={!hasActiveControls}
+              className={compactIconButtonClassName}
+              aria-label="Reset notification search and filters"
+              title="Reset"
+            >
+              <ResetIcon />
+            </button>
+          )}
+        />
 
         {filteredNotifications.length === 0 ? (
           <p className="mt-4 rounded-lg border border-[var(--line)] px-4 py-3 text-[0.86rem] text-[var(--muted)]">
@@ -199,22 +195,28 @@ export function NotificationsTab() {
         ) : (
           <div className="mt-4 space-y-3">
             {filteredNotifications.map((notification) => (
-              <article key={notification.id} className="rounded-xl border border-[var(--line)] bg-[rgba(9,16,26,0.55)] px-4 py-3">
+              <article
+                key={notification.id}
+                className={[
+                  'rounded-xl border bg-[rgba(9,16,26,0.55)] px-4 py-3 transition-colors',
+                  notification.seen
+                    ? 'border-[var(--line)]'
+                    : 'border-rose-400/35 bg-[linear-gradient(90deg,rgba(244,63,94,0.08),rgba(9,16,26,0.55)_16%)]',
+                ].join(' ')}
+              >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      {!notification.seen && (
-                        <span className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-cyan-200">
-                          New
-                        </span>
-                      )}
                       <span className={`inline-flex rounded-full border px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.06em] ${toneClassMap[notification.tone]}`}>
                         {toneLabelMap[notification.tone]}
                       </span>
                       <span className="text-[0.72rem] text-[var(--muted)]">{formatTimestamp(notification.createdAt)}</span>
                       {notification.key && <span className="rounded-md bg-slate-800 px-2 py-0.5 text-[0.66rem] font-bold text-slate-300">{notification.key}</span>}
                     </div>
-                    <h4 className="mt-2 text-[0.95rem] font-bold text-[var(--ink)]">{notification.title}</h4>
+                    <h4 className="mt-2 flex items-center gap-2 text-[0.95rem] font-bold text-[var(--ink)]">
+                      {!notification.seen ? <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-rose-400 shadow-[0_0_0_4px_rgba(251,113,133,0.14)]" aria-hidden="true" /> : null}
+                      <span>{notification.title}</span>
+                    </h4>
                     <p className="mt-1 text-[0.85rem] leading-relaxed text-[var(--muted)]">{notification.message}</p>
                   </div>
 

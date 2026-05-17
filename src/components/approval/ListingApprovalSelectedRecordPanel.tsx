@@ -81,6 +81,7 @@ export function ListingApprovalSelectedRecordPanel({
       titleFieldName={titleFieldName}
       eyebrowLabel={eyebrowLabel}
       isApproved={isApproved}
+      showApprovalStateBadge={!isCombinedApproval}
       saving={saving}
       error={error}
       onBackToList={onBackToList}

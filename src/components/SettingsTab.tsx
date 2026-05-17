@@ -2,8 +2,9 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { isDeveloperRole } from '@/auth/roleAccess';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
-import { SectionSubnav } from '@/components/app/SectionSubnav';
 import { getRuntimeHealthReport, type RuntimeHealthEntry } from '@/config/runtimeHealth';
 import { getAppApiSessionDiagnostics } from '@/services/app-api/flags';
 import { useAuthStore } from '@/stores/auth/authStore';
@@ -275,7 +276,7 @@ export function SettingsTab() {
 
   return (
     <AppPageLayout>
-      <PageTitleHeader eyebrow="Utilities" title="Account Settings" />
+      <PageTitleHeader eyebrow="User" title="Account Settings" />
 
       {requiresPasswordChange && (
         <p className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -289,22 +290,21 @@ export function SettingsTab() {
         </p>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <SectionSubnav
-          ariaLabel="Settings sections"
-          items={visibleSettingsSections}
-          onSelect={navigateToSection}
-        />
+      <MainPageSectionNav
+        ariaLabel="Settings sections"
+        items={visibleSettingsSections.map((sectionItem) => ({ key: sectionItem.key, label: sectionItem.label }))}
+        activeKey={activeSection}
+        onSelect={navigateToSection}
+      />
 
-        <div className="space-y-5">
+      <div className="space-y-5">
           <section
             id="settings-section-profile"
             ref={profileSectionRef}
             className={`scroll-mt-20 rounded-2xl border bg-[var(--panel)] p-5 ${activeSection === 'profile' ? 'border-cyan-500/45' : 'border-[var(--line)]'}`}
           >
-            <div className="mb-3">
-              <h3 className="m-0 text-[0.95rem] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Profile</h3>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <AppSectionTitle title="Profile" className="mb-4" />
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <label className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--ink)]">
                     <span className="flex items-start gap-2">
                       <input
@@ -337,9 +337,8 @@ export function SettingsTab() {
                       </span>
                     </span>
                   </label>
-                </div>
-              <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Signed in as {currentUser.name} ({currentUser.role}).</p>
             </div>
+            <p className="mt-3 text-[0.84rem] text-[var(--muted)]">Signed in as {currentUser.name} ({currentUser.role}).</p>
 
             {isMainAdmin && (
               <p className="mb-3 rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[0.82rem] text-amber-200">
@@ -393,13 +392,13 @@ export function SettingsTab() {
             ref={securitySectionRef}
             className={`scroll-mt-20 rounded-2xl border bg-[var(--panel)] p-5 ${activeSection === 'security' ? 'border-cyan-500/45' : 'border-[var(--line)]'}`}
           >
-            <h3 className="m-0 text-[0.95rem] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Password</h3>
+            <AppSectionTitle title="Password" className="mb-4" />
             {isMainAdmin && (
-              <p className="mt-2 rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[0.82rem] text-amber-200">
+              <p className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[0.82rem] text-amber-200">
                 Password changes are disabled for the main admin account.
               </p>
             )}
-            <form className="mt-3 space-y-3" onSubmit={handlePasswordSubmit}>
+            <form className="space-y-3" onSubmit={handlePasswordSubmit}>
               <div className="flex items-center justify-between gap-3">
                 <label className={labelClass} htmlFor="settings-current-password">Current Password</label>
                 <button
@@ -484,7 +483,7 @@ export function SettingsTab() {
             ref={preferencesSectionRef}
             className={`scroll-mt-20 rounded-2xl border bg-[var(--panel)] p-5 ${activeSection === 'preferences' ? 'border-cyan-500/45' : 'border-[var(--line)]'}`}
           >
-            <h3 className="m-0 text-[0.95rem] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Notification Preferences</h3>
+            <AppSectionTitle title="Notification Preferences" className="mb-4" />
             <p className="mt-1 text-[0.84rem] text-[var(--muted)]">These preferences apply only to your account.</p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -521,7 +520,7 @@ export function SettingsTab() {
             </div>
 
             <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--bg)]/45 p-4">
-              <h4 className="m-0 text-[0.82rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Used Gear Workflow Alerts</h4>
+              <AppSectionTitle title="Used Gear Workflow Alerts" className="mb-3" />
               {showDeveloperRuntimeSection ? (
                 <p className="mt-2 text-[0.78rem] leading-6 text-[var(--muted)]">
                   Developer accounts can access the JotForm source feed and dashboard module, but used-gear workflow alert subscriptions are still not available for this role.
@@ -560,7 +559,7 @@ export function SettingsTab() {
             ref={runtimeSectionRef}
             className={`scroll-mt-20 rounded-2xl border bg-[var(--panel)] p-5 ${activeSection === 'runtime' ? 'border-cyan-500/45' : 'border-[var(--line)]'}`}
           >
-            <h3 className="m-0 text-[0.95rem] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Runtime Config Health</h3>
+            <AppSectionTitle title="Runtime Config Health" className="mb-4" />
             <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Review which browser-safe settings are loaded, which ones are missing, and which feature surfaces may degrade.</p>
 
             <div className="mt-4 rounded-xl border border-[var(--line)] bg-black/15 px-4 py-3">
@@ -647,21 +646,24 @@ export function SettingsTab() {
             ref={sessionSectionRef}
             className={`scroll-mt-20 rounded-2xl border bg-[var(--panel)] p-5 ${activeSection === 'session' ? 'border-cyan-500/45' : 'border-[var(--line)]'}`}
           >
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[0.86rem] text-[var(--muted)]">Sign out from this account when you are done.</p>
-              <button
-                type="button"
-                onClick={() => {
-                  logout();
-                  navigate('/login', { replace: true });
-                }}
-                className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
-              >
-                Log Out
-              </button>
-            </div>
+            <AppSectionTitle
+              title="Session"
+              className="mb-4"
+              actions={(
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    navigate('/login', { replace: true });
+                  }}
+                  className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
+                >
+                  Log Out
+                </button>
+              )}
+            />
+            <p className="text-[0.86rem] text-[var(--muted)]">Sign out from this account when you are done.</p>
           </section>
-        </div>
       </div>
     </AppPageLayout>
   );

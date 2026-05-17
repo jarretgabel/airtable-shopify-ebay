@@ -1,4 +1,5 @@
 import { getRoleDefaultPages, hasFullAccessRole } from '@/auth/roleAccess';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
 import { UserPageAccessEditor } from '@/components/users/UserPageAccessEditor';
 import {
@@ -55,7 +56,7 @@ export function UserDetailPanel({
 
   return (
     <section className="space-y-5">
-      <PageTitleHeader eyebrow="Utilities" title="User Management" />
+      <PageTitleHeader eyebrow="User" title="User Management" />
 
       <section className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
@@ -67,8 +68,7 @@ export function UserDetailPanel({
             Back to Users List
           </button>
           <div>
-            <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300">User Detail</p>
-            <h2 className="m-0 mt-1 text-xl font-semibold text-[var(--ink)]">{selectedUser.name}</h2>
+            <AppSectionTitle title={selectedUser.name} className="border-b-0 pb-0 pt-0" titleClassName="text-xl" />
             <p className="mt-1 text-sm text-[var(--muted)]">{selectedUser.email}</p>
           </div>
           <span className={roleBadgeClassName(selectedUser.role)}>{selectedUser.role}</span>

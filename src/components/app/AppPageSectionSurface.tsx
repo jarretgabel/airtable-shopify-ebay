@@ -1,13 +1,15 @@
-import type { ReactNode } from 'react';
+import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 
-interface AppPageSectionSurfaceProps {
+interface AppPageSectionSurfaceProps extends ComponentPropsWithoutRef<'section'> {
   children: ReactNode;
-  className?: string;
 }
 
-export function AppPageSectionSurface({ children, className }: AppPageSectionSurfaceProps) {
+export function AppPageSectionSurface({ children, className, ...sectionProps }: AppPageSectionSurfaceProps) {
   return (
-    <section className={`rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 ${className ?? ''}`.trim()}>
+    <section
+      {...sectionProps}
+      className={`rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 ${className ?? ''}`.trim()}
+    >
       {children}
     </section>
   );

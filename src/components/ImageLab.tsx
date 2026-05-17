@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
+import { PageTitleHeader } from '@/components/app/PageTitleHeader';
 import { getAIProvider } from '@/services/equipmentAI';
 import { DEFAULT_OPTIONS, type ProcessingOptions } from '@/services/imageProcessor';
 import { ImageLabCard } from '@/components/imagelab/ImageLabCard';
@@ -49,64 +52,68 @@ export function ImageLab({ onShopifyImagesUpdate, onEbayImagesUpdate }: ImageLab
   } = useImageLabItems(opts, { onShopifyImagesUpdate, onEbayImagesUpdate });
 
   return (
-    <div className="flex flex-col gap-4 pt-1">
-      {!aiEnabled ? (
-        <div className="rounded-[10px] border border-amber-300 bg-amber-50 px-4 py-3 text-[0.84rem] leading-[1.6] text-amber-900 [&_a]:text-amber-800 [&_code]:rounded [&_code]:bg-black/5 [&_code]:px-[0.35em] [&_code]:py-[0.1em] [&_code]:text-[0.82em]">
-          <strong>AI identification is unavailable.</strong> Configure the backend Lambda route and its server-side provider credentials.
-          <br />
-          {' '}Image optimization and watermarking still work without AI.
-        </div>
-      ) : (
-        <div className="rounded-[10px] border border-emerald-200 bg-emerald-50 px-4 py-[0.55rem] text-[0.82rem] text-emerald-800">
-          AI provider: <strong>{aiProviderLabel}{aiProvider === 'github' ? ' (Copilot)' : ''}</strong>
-          {' · '}
-          <span>{aiProvider === 'backend' ? 'Backend-owned identification' : 'GPT-4o Vision'}</span>
-        </div>
-      )}
+    <AppPageLayout>
+      <PageTitleHeader eyebrow="Utilities" title="Image Lab" />
 
-      <ImageLabOptionsPanel opts={opts} setOpts={setOpts} />
+      <AppPageSectionSurface className="space-y-4">
+        {!aiEnabled ? (
+          <div className="rounded-[10px] border border-amber-300 bg-amber-50 px-4 py-3 text-[0.84rem] leading-[1.6] text-amber-900 [&_a]:text-amber-800 [&_code]:rounded [&_code]:bg-black/5 [&_code]:px-[0.35em] [&_code]:py-[0.1em] [&_code]:text-[0.82em]">
+            <strong>AI identification is unavailable.</strong> Configure the backend Lambda route and its server-side provider credentials.
+            <br />
+            {' '}Image optimization and watermarking still work without AI.
+          </div>
+        ) : (
+          <div className="rounded-[10px] border border-emerald-200 bg-emerald-50 px-4 py-[0.55rem] text-[0.82rem] text-emerald-800">
+            AI provider: <strong>{aiProviderLabel}{aiProvider === 'github' ? ' (Copilot)' : ''}</strong>
+            {' · '}
+            <span>{aiProvider === 'backend' ? 'Backend-owned identification' : 'GPT-4o Vision'}</span>
+          </div>
+        )}
 
-      <ImageLabSessionStatsBar itemsLength={items.length} sessionStats={sessionStats} />
+        <ImageLabOptionsPanel opts={opts} setOpts={setOpts} />
 
-      <ImageLabDropZone
-        dragging={dragging}
-        itemsLength={items.length}
-        fileInputRef={fileInputRef}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        onFileChange={onFileChange}
-      />
+        <ImageLabSessionStatsBar itemsLength={items.length} sessionStats={sessionStats} />
 
-      <ImageLabBulkActions
-        itemsLength={items.length}
-        hasBusy={hasBusy}
-        aiEnabled={aiEnabled}
-        hasIdleToIdentify={hasIdleToIdentify}
-        hasItemsToProcess={hasItemsToProcess}
-        onIdentifyAll={identifyAll}
-        onProcessAll={processAll}
-        onClearAll={clearAll}
-      />
+        <ImageLabDropZone
+          dragging={dragging}
+          itemsLength={items.length}
+          fileInputRef={fileInputRef}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          onFileChange={onFileChange}
+        />
 
-      {items.length > 0 && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 max-[600px]:grid-cols-1">
-          {items.map((item) => (
-            <ImageLabCard
-              key={item.id}
-              item={item}
-              apiKeyPresent={aiEnabled}
-              isCopied={copyId === item.id}
-              onIdentify={() => identifyItem(item.id)}
-              onProcess={() => processItem(item.id)}
-              onRemove={() => removeItem(item.id)}
-              onCopy={() => item.aiResult && copyDetails(item.id, item.aiResult)}
-              onUploadToShopify={() => uploadToShopify(item.id)}
-              onUploadToEbay={() => uploadToEbay(item.id)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+        <ImageLabBulkActions
+          itemsLength={items.length}
+          hasBusy={hasBusy}
+          aiEnabled={aiEnabled}
+          hasIdleToIdentify={hasIdleToIdentify}
+          hasItemsToProcess={hasItemsToProcess}
+          onIdentifyAll={identifyAll}
+          onProcessAll={processAll}
+          onClearAll={clearAll}
+        />
+
+        {items.length > 0 && (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 max-[600px]:grid-cols-1">
+            {items.map((item) => (
+              <ImageLabCard
+                key={item.id}
+                item={item}
+                apiKeyPresent={aiEnabled}
+                isCopied={copyId === item.id}
+                onIdentify={() => identifyItem(item.id)}
+                onProcess={() => processItem(item.id)}
+                onRemove={() => removeItem(item.id)}
+                onCopy={() => item.aiResult && copyDetails(item.id, item.aiResult)}
+                onUploadToShopify={() => uploadToShopify(item.id)}
+                onUploadToEbay={() => uploadToEbay(item.id)}
+              />
+            ))}
+          </div>
+        )}
+      </AppPageSectionSurface>
+    </AppPageLayout>
   );
 }

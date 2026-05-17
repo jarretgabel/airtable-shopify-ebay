@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
@@ -222,7 +223,7 @@ export function UsedGearPendingReviewSection({
   };
 
   return (
-    <section id="used-gear-pending-review" className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+    <AppPageSectionSurface id="used-gear-pending-review" className="space-y-5">
       <div className="flex flex-col gap-5">
         {showSectionIntro ? (
           <AppSectionTitle title="Pending Review Queue" />
@@ -370,6 +371,6 @@ export function UsedGearPendingReviewSection({
           );
         })()}
       </div>
-    </section>
+    </AppPageSectionSurface>
   );
 }

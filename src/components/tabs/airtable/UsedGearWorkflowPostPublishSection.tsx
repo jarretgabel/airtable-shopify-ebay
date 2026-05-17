@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppPageStatSection } from '@/components/app/AppPageStatSection';
+import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
@@ -452,18 +453,12 @@ export function UsedGearWorkflowPostPublishSection({
           const sectionRecords = recordsBySection.get(section.key) ?? [];
 
           return (
-            <div id={section.id} key={section.key} className="scroll-mt-24 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h4 className="mt-1 text-lg font-semibold text-[var(--ink)]">{section.title}</h4>
-                  <p className="mt-2 max-w-xl text-sm text-[var(--muted)]">{section.description}</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                    {sectionRecords.length} row{sectionRecords.length === 1 ? '' : 's'}
-                  </div>
-                </div>
-              </div>
+            <AppPageSectionSurface id={section.id} key={section.key} className="scroll-mt-24 bg-[var(--bg)]/60 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
+              <AppSectionTitle
+                title={section.title}
+                className="mb-3"
+              />
+              <p className="max-w-xl text-sm text-[var(--muted)]">{section.description}</p>
 
               {sectionRecords.length === 0 ? (
                 <div className="mt-4 rounded-xl border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
@@ -479,7 +474,7 @@ export function UsedGearWorkflowPostPublishSection({
                   />
                 </div>
               )}
-            </div>
+            </AppPageSectionSurface>
           );
         })}
       </div>

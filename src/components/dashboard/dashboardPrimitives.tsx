@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import type { DashboardSourceStatus } from '@/components/dashboard/dashboardTabTypes';
 
@@ -84,9 +85,6 @@ export function DashboardKpiCard({
   );
 }
 
-const outerPanelClass =
-  'flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_94%,transparent)] p-5 shadow-[0_1px_2px_rgba(17,32,49,0.05),0_3px_12px_rgba(17,32,49,0.04)]';
-
 /**
  * Outer dashboard section panel — the full-width card with scroll anchor, section title h2,
  * and the standard border/shadow/bg treatment shared by every major dashboard section.
@@ -103,9 +101,16 @@ export function DashboardSectionPanel({
   className?: string;
 }) {
   return (
-    <section id={id} className={`scroll-mt-24 ${outerPanelClass}${className ? ` ${className}` : ''}`}>
+    <section id={id} className="scroll-mt-24">
+      <AppPageSectionSurface
+        className={[
+          'flex flex-col gap-4 bg-[color:color-mix(in_srgb,var(--panel)_94%,transparent)] shadow-[0_1px_2px_rgba(17,32,49,0.05),0_3px_12px_rgba(17,32,49,0.04)]',
+          className ?? '',
+        ].join(' ').trim()}
+      >
       <AppSectionTitle title={title} className="mb-4" />
       {children}
+      </AppPageSectionSurface>
     </section>
   );
 }

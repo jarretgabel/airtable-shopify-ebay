@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
-import { RefreshIconButton } from '@/components/app/RefreshIconButton';
+import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
@@ -346,8 +347,6 @@ export function UsedGearWorkflowProgressSection({
     }
   };
 
-  const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
-
   const handleSearchTermChange = (value: string) => {
     if (typeof controlledSearchTerm !== 'string') {
       setUncontrolledSearchTerm(value);
@@ -365,58 +364,31 @@ export function UsedGearWorkflowProgressSection({
   };
 
   return (
-    <section id={sectionId} className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+    <AppPageSectionSurface id={sectionId} className="space-y-4">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
           <AppSectionTitle title={queuePresentation.title} />
         ) : null}
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <label className="min-w-[240px] flex-1">
-            <span className="sr-only">Search used gear progress queue</span>
-            <input
-              className={inputClassName}
-              value={searchTerm}
-              onChange={(event) => handleSearchTermChange(event.currentTarget.value)}
-              placeholder="Search by status, SKU, model, group, or next team"
-            />
-          </label>
-          <div className="flex flex-wrap items-center gap-3">
-            <RefreshIconButton
-              onClick={() => {
-                void refreshQueue();
-              }}
-              disabled={refreshing}
-              loading={refreshing}
-              label="Refresh workflow processing and holding queue"
-              loadingLabel="Refreshing workflow processing and holding queue"
-            />
-            <div className="relative h-10 w-10 shrink-0">
-              <div
-                aria-hidden="true"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] shadow-[0_4px_14px_rgba(17,32,49,0.04)] transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-[var(--line)] hover:text-[var(--ink)]"
-              >
-                <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-                  <path d="M4.167 5.417h9.166" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                  <path d="M4.167 10h6.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                  <path d="M4.167 14.583h4.166" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                  <path d="M14.583 4.167v11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                  <path d="m12.5 6.25 2.083-2.083 2.084 2.083" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="m12.5 13.75 2.083 2.083 2.084-2.083" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <select
-                aria-label={`Sort used gear processing and holding queue. Current order: ${getWorkflowProgressSortLabel(sortMode)}`}
-                className="absolute inset-0 h-10 w-10 cursor-pointer opacity-0"
-                value={sortMode}
-                onChange={(event) => handleSortModeChange(event.currentTarget.value as UsedGearWorkflowProgressSortMode)}
-              >
-                <option value="group-label">Default Order</option>
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-              </select>
-            </div>
-          </div>
-        </div>
+        <QueueSearchToolbar
+          searchAriaLabel="Search used gear progress queue"
+          searchPlaceholder="Search by status, SKU, model, group, or next team"
+          searchValue={searchTerm}
+          onSearchChange={handleSearchTermChange}
+          refreshLabel="Refresh workflow processing and holding queue"
+          refreshLoadingLabel="Refreshing workflow processing and holding queue"
+          refreshing={refreshing}
+          onRefresh={() => {
+            void refreshQueue();
+          }}
+          sortAriaLabel={`Sort used gear processing and holding queue. Current order: ${getWorkflowProgressSortLabel(sortMode)}`}
+          sortValue={sortMode}
+          onSortChange={(value) => handleSortModeChange(value as UsedGearWorkflowProgressSortMode)}
+          sortOptions={[
+            { value: 'group-label', label: 'Default Order' },
+            { value: 'newest', label: 'Newest First' },
+            { value: 'oldest', label: 'Oldest First' },
+          ]}
+        />
       </div>
 
       {error ? (
@@ -552,6 +524,6 @@ export function UsedGearWorkflowProgressSection({
           );
         })()}
       </div>
-    </section>
+    </AppPageSectionSurface>
   );
 }

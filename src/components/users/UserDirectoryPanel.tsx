@@ -1,7 +1,8 @@
 import { FormEvent, MutableRefObject, useRef, useState } from 'react';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
 import { RoleNotificationDefaultsPanel } from '@/components/users/RoleNotificationDefaultsPanel';
-import { SectionSubnav } from '@/components/app/SectionSubnav';
 import type { AppUser } from '@/stores/auth/authTypes';
 import type { AssignableUserRole } from '@/stores/auth/authTypes';
 import type { UsedGearWorkflowNotificationEvent, UserRole } from '@/stores/auth/authTypes';
@@ -97,7 +98,7 @@ export function UserDirectoryPanel({
         className="scroll-mt-20"
       >
         <PageTitleHeader
-          eyebrow="Utilities"
+          eyebrow="User"
           title="User Management"
           actions={(
             <button
@@ -113,17 +114,17 @@ export function UserDirectoryPanel({
         {statusMessage && <p className="mt-3 rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{statusMessage}</p>}
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <SectionSubnav
-          ariaLabel="User management sections"
-          items={[
-            { key: 'directory', label: 'User Directory', detail: 'Search, filter, and edit users' },
-            { key: 'create', label: 'Create User', detail: 'Provision a new account' },
-          ]}
-          onSelect={scrollToSection}
-        />
+      <MainPageSectionNav
+        ariaLabel="User management sections"
+        items={[
+          { key: 'directory', label: 'User Directory' },
+          { key: 'create', label: 'Create User' },
+        ]}
+        activeKey={activeSection ?? 'directory'}
+        onSelect={scrollToSection}
+      />
 
-        <div className="space-y-5">
+      <div className="space-y-5">
           <RoleNotificationDefaultsPanel
             roleNotificationDefaults={roleNotificationDefaults}
             checkboxClassName={checkboxClassName}
@@ -135,10 +136,8 @@ export function UserDirectoryPanel({
             ref={directorySectionRef}
             className={`scroll-mt-20 rounded-2xl border bg-[var(--panel)] p-4 ${activeSection === 'directory' ? 'border-cyan-500/45' : 'border-[var(--line)]'}`}
           >
-            <div className="mb-3">
-              <h3 className="m-0 text-[0.95rem] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">User Directory</h3>
-              <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Search, filter, and open user profiles.</p>
-            </div>
+            <AppSectionTitle title="User Directory" className="mb-4" />
+            <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Search, filter, and open user profiles.</p>
             <UserDirectoryListSection
               sortedUsers={sortedUsers}
               listUsers={listUsers}
@@ -173,7 +172,6 @@ export function UserDirectoryPanel({
               onRegenerateTemporaryPassword={onRegenerateTemporaryPassword}
             />
           </section>
-        </div>
       </div>
     </section>
   );

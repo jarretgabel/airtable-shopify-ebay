@@ -1,3 +1,4 @@
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import {
   ASSIGNABLE_USER_ROLE_OPTIONS,
   USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS,
@@ -32,12 +33,10 @@ export function RoleNotificationDefaultsPanel({
 }: RoleNotificationDefaultsPanelProps) {
   return (
     <section className="rounded-2xl border border-white/15 bg-slate-950/45 p-4 shadow-[0_12px_26px_rgba(0,0,0,0.28)]">
-      <div className="mb-3">
-        <h3 className="m-0 text-[0.95rem] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Role Workflow Alert Defaults</h3>
-        <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Configure baseline workflow alerts per role. Individual users can still override these defaults, and you can push the role defaults onto current members when needed.</p>
-      </div>
+      <AppSectionTitle title="Role Workflow Alert Defaults" className="mb-4" />
+      <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Configure baseline workflow alerts per role. Individual users can still override these defaults, and you can push the role defaults onto current members when needed.</p>
 
-      <div className="grid gap-3 xl:grid-cols-2">
+      <div className="mt-4 grid gap-3 xl:grid-cols-2">
         {WORKFLOW_DEFAULT_ROLE_OPTIONS.map((roleOption) => (
           <article key={roleOption.value} className="rounded-xl border border-white/10 bg-white/5 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">

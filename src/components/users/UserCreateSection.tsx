@@ -1,4 +1,5 @@
 import { FormEvent, MutableRefObject, useState } from 'react';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { UserPageAccessEditor } from '@/components/users/UserPageAccessEditor';
 import { NewUserFormState } from '@/components/users/userManagementTypes';
 import { ASSIGNABLE_USER_ROLE_OPTIONS, type AssignableUserRole } from '@/stores/auth/authTypes';
@@ -32,7 +33,7 @@ export function UserCreateSection({
 
   return (
     <section ref={createUserSectionRef}>
-      <h3 className="m-0 text-[0.95rem] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Create User</h3>
+      <AppSectionTitle title="Create User" className="mb-4" />
       <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Provision a new user account with one fixed role access bundle.</p>
       <form onSubmit={onCreateUserSubmit} className="mt-4 flex flex-col gap-2.5">
         <label className={labelClassName} htmlFor="new-user-name">Name</label>

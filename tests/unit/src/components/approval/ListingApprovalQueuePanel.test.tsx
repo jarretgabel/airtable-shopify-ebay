@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ListingApprovalQueuePanel } from '@/components/approval/ListingApprovalQueuePanel';
 import type { AirtableRecord } from '@/types/airtable';
@@ -136,44 +136,47 @@ describe('ListingApprovalQueuePanel', () => {
     expect(screen.getByRole('button', { name: 'Draft Offer · 1' })).toBeInTheDocument();
   });
 
-  it('shows the standard search and filter row for the combined queue', () => {
+  it('shows the section nav and section-scoped searches for the combined queue', () => {
     render(
       <ListingApprovalQueuePanel
         {...baseProps}
         approvalChannel="combined"
         records={[
           buildRecord('1', { Title: 'Needs Review Listing', Approved: false, 'Workflow Status': 'Awaiting Pre-Listing Review' }),
-          buildRecord('2', { Title: 'Approved Listing', Approved: true, 'Workflow Status': 'Approved for Publish' }),
+          buildRecord('2', { Title: 'Approved Listing', Approved: true, Vendor: 'McIntosh', Price: '1200', 'Workflow Status': 'Approved for Publish' }),
         ]}
       />,
     );
 
-    expect(screen.getByLabelText('Search combined listing queue')).toBeInTheDocument();
-    expect(screen.getByLabelText('Filter combined listing queue')).toBeInTheDocument();
+    expect(screen.getByLabelText('Search ready for publishing combined listings')).toBeInTheDocument();
+    expect(screen.getByLabelText('Search combined listings that need further work')).toBeInTheDocument();
+    expect(screen.getByLabelText('Combined listings sections')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ready for Publishing' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Needs Further Work' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Needs Fields/i })).not.toBeInTheDocument();
-    expect(screen.getByText((_, node) => node?.textContent?.replace(/\s+/g, ' ').trim() === '2 listing rows loaded.')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Refresh listing approval queue' })).toHaveLength(2);
   });
 
-  it('filters the combined queue with the standard workflow filter row', () => {
+  it('splits combined rows using the same approved and readiness logic shown in the table', () => {
     render(
       <ListingApprovalQueuePanel
         {...baseProps}
         approvalChannel="combined"
         records={[
-          buildRecord('1', { Title: 'Needs Review Listing', Approved: false, 'Workflow Status': 'Awaiting Pre-Listing Review' }),
-          buildRecord('2', { Title: 'Approved Listing', Approved: true, 'Workflow Status': 'Approved for Publish' }),
+          buildRecord('1', { Title: 'Ready Listing', Approved: true, Vendor: 'McIntosh', Price: '1200', 'Workflow Status': 'Awaiting Pre-Listing Review' }),
+          buildRecord('2', { Title: 'Approved Missing Vendor', Approved: true, Price: '800', 'Workflow Status': 'Approved for Publish' }),
         ]}
       />,
     );
 
-    expect(screen.getByText('Combined Listings')).toBeInTheDocument();
+    const readySection = document.getElementById('combined-listings-ready-for-publishing');
+    const workSection = document.getElementById('combined-listings-needs-further-work');
 
-    fireEvent.change(screen.getByLabelText('Filter combined listing queue'), {
-      target: { value: 'workflow-pre-listing-review' },
-    });
-
-    expect(screen.getByText('Needs Review Listing')).toBeInTheDocument();
-    expect(screen.queryByText('Approved Listing')).not.toBeInTheDocument();
-    expect(screen.getByText((_, node) => node?.textContent?.replace(/\s+/g, ' ').trim() === '1 of 2 listing rows shown.')).toBeInTheDocument();
+    expect(readySection).not.toBeNull();
+    expect(workSection).not.toBeNull();
+    expect(within(readySection as HTMLElement).getByText('Ready Listing')).toBeInTheDocument();
+    expect(within(readySection as HTMLElement).queryByText('Approved Missing Vendor')).not.toBeInTheDocument();
+    expect(within(workSection as HTMLElement).getByText('Approved Missing Vendor')).toBeInTheDocument();
+    expect(within(workSection as HTMLElement).queryByText('Ready Listing')).not.toBeInTheDocument();
   });
 });

@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { AppPageStatSection } from '@/components/app/AppPageStatSection';
+import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
+import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { accentActionButtonClass } from '@/components/app/buttonStyles';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
@@ -13,6 +17,8 @@ import { AirtableRecord } from '@/types/airtable';
 
 type QueueQuickFilter = 'all' | 'pending' | 'ready' | 'needs-fields' | 'approved';
 type QueueExtraFilter = 'all' | 'shopify-active' | 'shopify-draft' | 'shopify-archived' | 'ebay-live' | 'ebay-draft-offer' | 'ebay-approved-to-publish' | 'ebay-stale' | 'workflow-pre-listing-review' | 'workflow-approved-for-publish';
+type CombinedQueueSectionKey = 'ready-for-publishing' | 'needs-further-work';
+type CombinedQueueSortMode = 'default' | 'title-asc' | 'vendor-asc' | 'price-desc' | 'price-asc';
 
 interface QueueExtraFilterDefinition {
   id: Exclude<QueueExtraFilter, 'all'>;
@@ -23,6 +29,10 @@ interface QueueExtraFilterDefinition {
 const queueFilterButtonClass = 'rounded-lg border px-3.5 py-2 text-[0.82rem] font-semibold transition';
 const FILTER_STORAGE_PREFIX = 'approval-queue-filter';
 const approvalQueueSurfaceClass = 'rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5';
+const COMBINED_QUEUE_SECTION_IDS: Record<CombinedQueueSectionKey, string> = {
+  'ready-for-publishing': 'combined-listings-ready-for-publishing',
+  'needs-further-work': 'combined-listings-needs-further-work',
+};
 
 function isApprovedRecord(record: AirtableRecord, approvedFieldName: string): boolean {
   const raw = record.fields[approvedFieldName];
@@ -72,8 +82,79 @@ function normalizeEbayWorkflowStatus(record: AirtableRecord): string {
   return getRecordFieldText(record, ['Workflow Status']).trim().toLowerCase();
 }
 
+function isCombinedRecordReadyForPublishing(
+  record: AirtableRecord,
+  approvedFieldName: string,
+  combinedRequiredFieldNames: string[],
+  shopifyRequiredFieldNames: string[],
+  ebayRequiredFieldNames: string[],
+): boolean {
+  return isApprovedRecord(record, approvedFieldName)
+    && isReadyForRequiredFields(record.fields, combinedRequiredFieldNames)
+    && isReadyForRequiredFields(record.fields, shopifyRequiredFieldNames)
+    && isReadyForRequiredFields(record.fields, ebayRequiredFieldNames);
+}
+
 function normalizeEbayOfferStatus(record: AirtableRecord): string {
   return getRecordFieldText(record, ['eBay Offer Status', 'Offer Status', 'eBay Inventory Status']).trim().toLowerCase();
+}
+
+function normalizeCombinedWorkflowStatus(record: AirtableRecord): string {
+  return getRecordFieldText(record, ['Workflow Status']).trim();
+}
+
+function getCombinedSortLabel(mode: CombinedQueueSortMode): string {
+  switch (mode) {
+    case 'title-asc':
+      return 'Title A-Z';
+    case 'vendor-asc':
+      return 'Vendor A-Z';
+    case 'price-desc':
+      return 'Highest Price';
+    case 'price-asc':
+      return 'Lowest Price';
+    default:
+      return 'Default Order';
+  }
+}
+
+function parseSortableNumber(value: unknown): number | null {
+  const raw = displayValue(value).replace(/[^0-9.-]+/g, '');
+  if (!raw) return null;
+
+  const parsed = Number.parseFloat(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function sortCombinedRecords(
+  records: AirtableRecord[],
+  sortMode: CombinedQueueSortMode,
+  titleFieldName: string,
+  vendorFieldName: string,
+  priceFieldName: string,
+): AirtableRecord[] {
+  if (sortMode === 'default') return records;
+
+  const sortedRecords = [...records];
+  sortedRecords.sort((left, right) => {
+    if (sortMode === 'title-asc') {
+      return getRecordFieldText(left, [titleFieldName]).localeCompare(getRecordFieldText(right, [titleFieldName]), undefined, { sensitivity: 'base' });
+    }
+
+    if (sortMode === 'vendor-asc') {
+      return getRecordFieldText(left, [vendorFieldName]).localeCompare(getRecordFieldText(right, [vendorFieldName]), undefined, { sensitivity: 'base' });
+    }
+
+    const leftPrice = parseSortableNumber(left.fields[priceFieldName]);
+    const rightPrice = parseSortableNumber(right.fields[priceFieldName]);
+    if (leftPrice === null && rightPrice === null) return 0;
+    if (leftPrice === null) return 1;
+    if (rightPrice === null) return -1;
+
+    return sortMode === 'price-desc' ? rightPrice - leftPrice : leftPrice - rightPrice;
+  });
+
+  return sortedRecords;
 }
 
 function buildExtraFilterDefinitions(
@@ -280,10 +361,30 @@ export function ListingApprovalQueuePanel({
   loadRecords,
 }: ListingApprovalQueuePanelProps) {
   const isCombinedApproval = approvalChannel === 'combined';
+  const combinedSectionItems = useMemo(
+    () => isCombinedApproval
+      ? [
+        { id: COMBINED_QUEUE_SECTION_IDS['ready-for-publishing'], key: 'ready-for-publishing' as const, label: 'Ready for Publishing' },
+        { id: COMBINED_QUEUE_SECTION_IDS['needs-further-work'], key: 'needs-further-work' as const, label: 'Needs Further Work' },
+      ]
+      : [{ id: 'listing-approval-queue', key: 'needs-further-work' as const, label: 'Listing Queue' }],
+    [isCombinedApproval],
+  );
+  const { activeSectionId, scrollToSection } = usePageSectionTracking(combinedSectionItems, combinedSectionItems[0]?.id ?? 'listing-approval-queue');
+  const activeCombinedSectionKey = useMemo<CombinedQueueSectionKey>(
+    () => combinedSectionItems.find((item) => item.id === activeSectionId)?.key ?? 'ready-for-publishing',
+    [activeSectionId, combinedSectionItems],
+  );
   const supportsQuickFilters = approvalChannel !== 'combined';
   const quickFilterStorageKey = `${FILTER_STORAGE_PREFIX}:${approvalChannel}:quick`;
   const extraFilterStorageKey = `${FILTER_STORAGE_PREFIX}:${approvalChannel}:extra`;
   const [searchQuery, setSearchQuery] = useState('');
+  const [combinedReadySearchQuery, setCombinedReadySearchQuery] = useState('');
+  const [combinedWorkSearchQuery, setCombinedWorkSearchQuery] = useState('');
+  const [combinedReadySortMode, setCombinedReadySortMode] = useState<CombinedQueueSortMode>('default');
+  const [combinedWorkSortMode, setCombinedWorkSortMode] = useState<CombinedQueueSortMode>('default');
+  const [combinedReadyWorkflowFilter, setCombinedReadyWorkflowFilter] = useState('all');
+  const [combinedWorkWorkflowFilter, setCombinedWorkWorkflowFilter] = useState('all');
   const [activeQuickFilter, setActiveQuickFilter] = useState<QueueQuickFilter>(() => readStoredFilter(quickFilterStorageKey, defaultQuickFilterForChannel(approvalChannel), ['all', 'pending', 'ready', 'needs-fields', 'approved'] as const));
   const [activeExtraFilter, setActiveExtraFilter] = useState<QueueExtraFilter>(() => readStoredFilter(extraFilterStorageKey, 'all', ['all', 'shopify-active', 'shopify-draft', 'shopify-archived', 'ebay-live', 'ebay-draft-offer', 'ebay-approved-to-publish', 'ebay-stale', 'workflow-pre-listing-review', 'workflow-approved-for-publish'] as const));
   const requiredFieldNames = approvalChannel === 'shopify'
@@ -332,7 +433,9 @@ export function ListingApprovalQueuePanel({
         if (!passesQuickFilter) return false;
       }
 
-      const passesExtraFilter = activeExtraFilter === 'all'
+      const passesExtraFilter = isCombinedApproval
+        ? true
+        : activeExtraFilter === 'all'
         || extraFilterDefinitions.find((definition) => definition.id === activeExtraFilter)?.matches(record)
         || false;
       if (!passesExtraFilter) return false;
@@ -351,11 +454,142 @@ export function ListingApprovalQueuePanel({
     records,
     requiredFieldNames,
     searchQuery,
+    isCombinedApproval,
     supportsQuickFilters,
     titleFieldName,
     vendorFieldName,
   ]);
 
+  const combinedReadyForPublishingRecords = useMemo(
+    () => isCombinedApproval
+      ? filteredRecords.filter((record) => isCombinedRecordReadyForPublishing(
+        record,
+        approvedFieldName,
+        combinedRequiredFieldNames,
+        shopifyRequiredFieldNames,
+        ebayRequiredFieldNames,
+      ))
+      : [],
+    [
+      approvedFieldName,
+      combinedRequiredFieldNames,
+      ebayRequiredFieldNames,
+      filteredRecords,
+      isCombinedApproval,
+      shopifyRequiredFieldNames,
+    ],
+  );
+  const combinedNeedsFurtherWorkRecords = useMemo(
+    () => isCombinedApproval
+      ? filteredRecords.filter((record) => !isCombinedRecordReadyForPublishing(
+        record,
+        approvedFieldName,
+        combinedRequiredFieldNames,
+        shopifyRequiredFieldNames,
+        ebayRequiredFieldNames,
+      ))
+      : [],
+    [
+      approvedFieldName,
+      combinedRequiredFieldNames,
+      ebayRequiredFieldNames,
+      filteredRecords,
+      isCombinedApproval,
+      shopifyRequiredFieldNames,
+    ],
+  );
+  const combinedReadyWorkflowOptions = useMemo(() => {
+    const statusValues = Array.from(
+      new Set(
+        combinedReadyForPublishingRecords
+          .map((record) => normalizeCombinedWorkflowStatus(record))
+          .filter((value) => value.length > 0),
+      ),
+    ).sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }));
+
+    return [
+      { value: 'all', label: 'All Statuses' },
+      ...statusValues.map((value) => ({ value, label: value })),
+    ];
+  }, [combinedReadyForPublishingRecords]);
+  const combinedWorkWorkflowOptions = useMemo(() => {
+    const statusValues = Array.from(
+      new Set(
+        combinedNeedsFurtherWorkRecords
+          .map((record) => normalizeCombinedWorkflowStatus(record))
+          .filter((value) => value.length > 0),
+      ),
+    ).sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }));
+
+    return [
+      { value: 'all', label: 'All Statuses' },
+      ...statusValues.map((value) => ({ value, label: value })),
+    ];
+  }, [combinedNeedsFurtherWorkRecords]);
+  const filteredCombinedReadyForPublishingRecords = useMemo(() => {
+    if (!isCombinedApproval) return [];
+    const normalizedQuery = combinedReadySearchQuery.trim().toLowerCase();
+    const readyRecords = combinedReadyForPublishingRecords.filter((record) => {
+      const workflowStatus = normalizeCombinedWorkflowStatus(record);
+      if (combinedReadyWorkflowFilter !== 'all' && workflowStatus !== combinedReadyWorkflowFilter) return false;
+      if (!normalizedQuery) return true;
+
+      return buildSearchableRecordText(record, [
+        titleFieldName,
+        vendorFieldName,
+        priceFieldName,
+        qtyFieldName,
+        'Workflow Status',
+        'SKU',
+        'Model',
+        'Brand',
+      ]).includes(normalizedQuery);
+    });
+
+    return sortCombinedRecords(readyRecords, combinedReadySortMode, titleFieldName, vendorFieldName, priceFieldName);
+  }, [
+    combinedReadyForPublishingRecords,
+    combinedReadySearchQuery,
+    combinedReadySortMode,
+    combinedReadyWorkflowFilter,
+    isCombinedApproval,
+    priceFieldName,
+    qtyFieldName,
+    titleFieldName,
+    vendorFieldName,
+  ]);
+  const filteredCombinedNeedsFurtherWorkRecords = useMemo(() => {
+    if (!isCombinedApproval) return [];
+    const normalizedQuery = combinedWorkSearchQuery.trim().toLowerCase();
+    const workRecords = combinedNeedsFurtherWorkRecords.filter((record) => {
+      const workflowStatus = normalizeCombinedWorkflowStatus(record);
+      if (combinedWorkWorkflowFilter !== 'all' && workflowStatus !== combinedWorkWorkflowFilter) return false;
+      if (!normalizedQuery) return true;
+
+      return buildSearchableRecordText(record, [
+        titleFieldName,
+        vendorFieldName,
+        priceFieldName,
+        qtyFieldName,
+        'Workflow Status',
+        'SKU',
+        'Model',
+        'Brand',
+      ]).includes(normalizedQuery);
+    });
+
+    return sortCombinedRecords(workRecords, combinedWorkSortMode, titleFieldName, vendorFieldName, priceFieldName);
+  }, [
+    combinedNeedsFurtherWorkRecords,
+    combinedWorkSearchQuery,
+    combinedWorkSortMode,
+    combinedWorkWorkflowFilter,
+    isCombinedApproval,
+    priceFieldName,
+    qtyFieldName,
+    titleFieldName,
+    vendorFieldName,
+  ]);
   const quickFilterCounts = useMemo(() => {
     if (!supportsQuickFilters) return null;
 
@@ -367,7 +601,6 @@ export function ListingApprovalQueuePanel({
       approved: records.filter((record) => matchesQuickFilter(record, approvedFieldName, requiredFieldNames, 'approved')).length,
     } satisfies Record<QueueQuickFilter, number>;
   }, [approvedFieldName, records, requiredFieldNames, supportsQuickFilters]);
-
   const extraFilterCounts = useMemo(() => {
     if (extraFilterDefinitions.length === 0) return null;
 
@@ -378,24 +611,22 @@ export function ListingApprovalQueuePanel({
 
   const isFiltered = supportsQuickFilters
     ? filteredRecords.length !== records.length
-    : searchQuery.trim().length > 0 || (activeExtraFilter !== 'all' && filteredRecords.length !== records.length);
+    : searchQuery.trim().length > 0;
   const summaryStats = useMemo(() => {
-    if (approvalChannel === 'combined') {
-      return [
-        { label: 'Loaded Rows', value: records.length },
-        { label: 'Needs Review', value: extraFilterCounts?.['workflow-pre-listing-review'] ?? 0 },
-        { label: 'Approved To Publish', value: extraFilterCounts?.['workflow-approved-for-publish'] ?? 0 },
-        { label: 'Showing', value: filteredRecords.length },
-      ];
-    }
-
     return [
       { label: 'Loaded Rows', value: records.length },
       { label: 'Pending', value: quickFilterCounts?.pending ?? 0 },
       { label: 'Ready', value: quickFilterCounts?.ready ?? 0 },
       { label: 'Approved', value: quickFilterCounts?.approved ?? 0 },
     ];
-  }, [approvalChannel, extraFilterCounts, filteredRecords.length, quickFilterCounts, records.length]);
+  }, [quickFilterCounts, records.length]);
+
+  const refreshQueue = () => {
+    trackWorkflowEvent('approval_queue_refreshed', {
+      tableReference,
+    });
+    void loadRecords(tableReference, tableName ?? '', true);
+  };
 
   const queuePanel = (
     <>
@@ -416,65 +647,50 @@ export function ListingApprovalQueuePanel({
       )}
 
       {hasTableReference && loading ? (
-        <section className={approvalQueueSurfaceClass}>
-          <ListingApprovalQueueSkeleton />
-        </section>
+        isCombinedApproval ? (
+          <AppPageSectionSurface>
+            <ListingApprovalQueueSkeleton />
+          </AppPageSectionSurface>
+        ) : (
+          <section className={approvalQueueSurfaceClass}>
+            <ListingApprovalQueueSkeleton />
+          </section>
+        )
       ) : hasTableReference ? (
-        <section className={approvalQueueSurfaceClass}>
-          <AppPageStatSection
-            stats={summaryStats}
-            dividerBelow
-            className="mb-4"
-            actions={approvalChannel === 'shopify' ? (
-              <button
-                type="button"
-                className={accentActionButtonClass}
-                onClick={() => {
-                  void createNewShopifyListing();
-                }}
-                disabled={loading || saving || creatingShopifyListing}
-              >
-                {creatingShopifyListing ? 'Creating Listing...' : 'New Shopify Listing'}
-              </button>
-            ) : undefined}
-          />
+        <section className={isCombinedApproval ? '' : approvalQueueSurfaceClass}>
+          {!isCombinedApproval ? (
+            <AppPageStatSection
+              stats={summaryStats}
+              dividerBelow
+              className="mb-4"
+              actions={approvalChannel === 'shopify' ? (
+                <button
+                  type="button"
+                  className={accentActionButtonClass}
+                  onClick={() => {
+                    void createNewShopifyListing();
+                  }}
+                  disabled={loading || saving || creatingShopifyListing}
+                >
+                  {creatingShopifyListing ? 'Creating Listing...' : 'New Shopify Listing'}
+                </button>
+              ) : undefined}
+            />
+          ) : null}
 
-          <QueueSearchToolbar
-            searchAriaLabel={approvalChannel === 'shopify'
-              ? 'Search Shopify listing queue'
-              : approvalChannel === 'ebay'
-                ? 'Search eBay listing queue'
-                : 'Search combined listing queue'}
-            searchPlaceholder={approvalChannel === 'shopify'
-              ? 'Search Shopify listings, brand, vendor, or workflow status…'
-              : approvalChannel === 'ebay'
-                ? 'Search eBay listings, brand, vendor, or workflow status…'
-                : 'Search combined listings, brand, vendor, or workflow status…'}
-            searchValue={searchQuery}
-            onSearchChange={setSearchQuery}
-            refreshLabel={!supportsQuickFilters ? 'Refresh listing approval queue' : undefined}
-            refreshLoadingLabel={!supportsQuickFilters ? 'Refreshing listing approval queue' : undefined}
-            refreshing={!supportsQuickFilters ? loading : undefined}
-            onRefresh={!supportsQuickFilters ? (() => {
-              trackWorkflowEvent('approval_queue_refreshed', {
-                tableReference,
-              });
-              void loadRecords(tableReference, tableName ?? '', true);
-            }) : undefined}
-            filters={!supportsQuickFilters && extraFilterDefinitions.length > 0
-              ? [{
-                ariaLabel: 'Filter combined listing queue',
-                value: activeExtraFilter,
-                options: [
-                  { value: 'all', label: 'All Workflow Stages' },
-                  ...extraFilterDefinitions.map((definition) => ({ value: definition.id, label: definition.label })),
-                ],
-                onChange: (value) => setActiveExtraFilter(value as QueueExtraFilter),
-              }]
-              : undefined}
-            compactFilters={!supportsQuickFilters}
-            className="mb-4"
-          />
+          {!isCombinedApproval ? (
+            <QueueSearchToolbar
+              searchAriaLabel={approvalChannel === 'shopify'
+                ? 'Search Shopify listing queue'
+                : 'Search eBay listing queue'}
+              searchPlaceholder={approvalChannel === 'shopify'
+                ? 'Search Shopify listings, brand, vendor, or workflow status…'
+                : 'Search eBay listings, brand, vendor, or workflow status…'}
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              className="mb-4"
+            />
+          ) : null}
 
           {supportsQuickFilters ? (
             <div className="mb-4 space-y-3">
@@ -520,35 +736,158 @@ export function ListingApprovalQueuePanel({
             </div>
           ) : null}
 
-          <p className="m-0 mb-4 text-sm text-[var(--muted)]">
-            <strong>{filteredRecords.length}</strong>
-            {isFiltered ? ` of ${records.length}` : ''} listing rows {supportsQuickFilters || isFiltered ? 'shown' : 'loaded'}.
-          </p>
+          {!isCombinedApproval ? (
+            <p className="m-0 mb-4 text-sm text-[var(--muted)]">
+              <strong>{filteredRecords.length}</strong>
+              {isFiltered ? ` of ${records.length}` : ''} listing rows {supportsQuickFilters || isFiltered ? 'shown' : 'loaded'}.
+            </p>
+          ) : null}
 
-          {(supportsQuickFilters || searchQuery.trim().length > 0 || activeExtraFilter !== 'all') && filteredRecords.length === 0 ? (
+          {(supportsQuickFilters || searchQuery.trim().length > 0) && filteredRecords.length === 0 ? (
             <section className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-8 text-center text-sm text-[var(--muted)]">
               No listing rows match the current filters.
             </section>
           ) : null}
 
-          {filteredRecords.length > 0 ? (
+          {filteredRecords.length > 0 && !isCombinedApproval ? (
             <ApprovalQueueTable
               records={filteredRecords}
               approvedFieldName={approvedFieldName}
               requiredFieldNames={requiredFieldNames}
-              readinessColumns={approvalChannel === 'combined' ? [
-                { key: 'shopify', label: 'Shopify Ready', requiredFieldNames: shopifyRequiredFieldNames },
-                { key: 'ebay', label: 'eBay Ready', requiredFieldNames: ebayRequiredFieldNames },
-              ] : []}
+              readinessColumns={[]}
               titleFieldName={titleFieldName}
               conditionFieldName=""
-              formatFieldName={approvalChannel === 'ebay' || approvalChannel === 'combined' ? '' : formatFieldName}
+              formatFieldName={approvalChannel === 'ebay' ? '' : formatFieldName}
               priceFieldName={approvalChannel === 'shopify' ? '' : priceFieldName}
               vendorFieldName={vendorFieldName}
               qtyFieldName={approvalChannel === 'ebay' ? '' : qtyFieldName}
               openRecord={openRecord}
               onSelectRecord={onSelectRecord}
             />
+          ) : null}
+
+          {filteredRecords.length > 0 && isCombinedApproval ? (
+            <div className="space-y-5">
+              <AppPageSectionSurface id={COMBINED_QUEUE_SECTION_IDS['ready-for-publishing']} className="scroll-mt-24 bg-[var(--bg)]/60">
+                <AppSectionTitle
+                  title="Ready for Publishing"
+                  className="mb-4"
+                />
+                <QueueSearchToolbar
+                  className="mb-4"
+                  searchAriaLabel="Search ready for publishing combined listings"
+                  searchPlaceholder="Search ready items by title, vendor, SKU, brand, or workflow status…"
+                  searchValue={combinedReadySearchQuery}
+                  onSearchChange={setCombinedReadySearchQuery}
+                  refreshLabel="Refresh listing approval queue"
+                  refreshLoadingLabel="Refreshing listing approval queue"
+                  refreshing={loading}
+                  onRefresh={refreshQueue}
+                  sortAriaLabel={`Sort ready-for-publishing combined listings. Current order: ${getCombinedSortLabel(combinedReadySortMode)}`}
+                  sortValue={combinedReadySortMode}
+                  onSortChange={(value) => setCombinedReadySortMode(value as CombinedQueueSortMode)}
+                  sortOptions={[
+                    { value: 'default', label: 'Default Order' },
+                    { value: 'title-asc', label: 'Title A-Z' },
+                    { value: 'vendor-asc', label: 'Vendor A-Z' },
+                    { value: 'price-desc', label: 'Highest Price' },
+                    { value: 'price-asc', label: 'Lowest Price' },
+                  ]}
+                  filters={combinedReadyWorkflowOptions.length > 1 ? [{
+                    ariaLabel: 'Filter ready-for-publishing combined listings by workflow status',
+                    value: combinedReadyWorkflowFilter,
+                    options: combinedReadyWorkflowOptions,
+                    onChange: setCombinedReadyWorkflowFilter,
+                  }] : undefined}
+                  compactFilters
+                />
+                {filteredCombinedReadyForPublishingRecords.length > 0 ? (
+                  <ApprovalQueueTable
+                    records={filteredCombinedReadyForPublishingRecords}
+                    approvedFieldName={approvedFieldName}
+                    requiredFieldNames={requiredFieldNames}
+                    readinessColumns={[
+                      { key: 'shopify', label: 'Shopify Ready', requiredFieldNames: shopifyRequiredFieldNames },
+                      { key: 'ebay', label: 'eBay Ready', requiredFieldNames: ebayRequiredFieldNames },
+                    ]}
+                    titleFieldName={titleFieldName}
+                    conditionFieldName=""
+                    formatFieldName=""
+                    priceFieldName={priceFieldName}
+                    vendorFieldName={vendorFieldName}
+                    qtyFieldName={qtyFieldName}
+                    openRecord={openRecord}
+                    onSelectRecord={onSelectRecord}
+                  />
+                ) : (
+                  <section className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-8 text-center text-sm text-[var(--muted)]">
+                    {combinedReadyForPublishingRecords.length === 0
+                      ? 'No combined listing rows are currently ready for publishing.'
+                      : 'No ready-for-publishing rows match this section search.'}
+                  </section>
+                )}
+              </AppPageSectionSurface>
+
+              <AppPageSectionSurface id={COMBINED_QUEUE_SECTION_IDS['needs-further-work']} className="scroll-mt-24 bg-[var(--bg)]/60">
+                <AppSectionTitle
+                  title="Needs Further Work"
+                  className="mb-4"
+                />
+                <QueueSearchToolbar
+                  className="mb-4"
+                  searchAriaLabel="Search combined listings that need further work"
+                  searchPlaceholder="Search rows needing work by title, vendor, SKU, brand, or workflow status…"
+                  searchValue={combinedWorkSearchQuery}
+                  onSearchChange={setCombinedWorkSearchQuery}
+                  refreshLabel="Refresh listing approval queue"
+                  refreshLoadingLabel="Refreshing listing approval queue"
+                  refreshing={loading}
+                  onRefresh={refreshQueue}
+                  sortAriaLabel={`Sort combined listings that need further work. Current order: ${getCombinedSortLabel(combinedWorkSortMode)}`}
+                  sortValue={combinedWorkSortMode}
+                  onSortChange={(value) => setCombinedWorkSortMode(value as CombinedQueueSortMode)}
+                  sortOptions={[
+                    { value: 'default', label: 'Default Order' },
+                    { value: 'title-asc', label: 'Title A-Z' },
+                    { value: 'vendor-asc', label: 'Vendor A-Z' },
+                    { value: 'price-desc', label: 'Highest Price' },
+                    { value: 'price-asc', label: 'Lowest Price' },
+                  ]}
+                  filters={combinedWorkWorkflowOptions.length > 1 ? [{
+                    ariaLabel: 'Filter combined listings that need further work by workflow status',
+                    value: combinedWorkWorkflowFilter,
+                    options: combinedWorkWorkflowOptions,
+                    onChange: setCombinedWorkWorkflowFilter,
+                  }] : undefined}
+                  compactFilters
+                />
+                {filteredCombinedNeedsFurtherWorkRecords.length > 0 ? (
+                  <ApprovalQueueTable
+                    records={filteredCombinedNeedsFurtherWorkRecords}
+                    approvedFieldName={approvedFieldName}
+                    requiredFieldNames={requiredFieldNames}
+                    readinessColumns={[
+                      { key: 'shopify', label: 'Shopify Ready', requiredFieldNames: shopifyRequiredFieldNames },
+                      { key: 'ebay', label: 'eBay Ready', requiredFieldNames: ebayRequiredFieldNames },
+                    ]}
+                    titleFieldName={titleFieldName}
+                    conditionFieldName=""
+                    formatFieldName=""
+                    priceFieldName={priceFieldName}
+                    vendorFieldName={vendorFieldName}
+                    qtyFieldName={qtyFieldName}
+                    openRecord={openRecord}
+                    onSelectRecord={onSelectRecord}
+                  />
+                ) : (
+                  <section className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-8 text-center text-sm text-[var(--muted)]">
+                    {combinedNeedsFurtherWorkRecords.length === 0
+                      ? 'No combined listing rows currently need additional listing work.'
+                      : 'No needs-further-work rows match this section search.'}
+                  </section>
+                )}
+              </AppPageSectionSurface>
+            </div>
           ) : null}
         </section>
       ) : null}
@@ -564,6 +903,20 @@ export function ListingApprovalQueuePanel({
       <WorkflowPageHeader
         eyebrow="Review"
         title="Combined Listings"
+      />
+
+      <MainPageSectionNav
+        ariaLabel="Combined listings sections"
+        items={combinedSectionItems.map((item) => ({ key: item.key, label: item.label }))}
+        activeKey={activeCombinedSectionKey}
+        onSelect={(sectionKey) => {
+          const sectionId = combinedSectionItems.find((item) => item.key === sectionKey)?.id;
+          if (sectionId) {
+            requestAnimationFrame(() => {
+              scrollToSection(sectionId);
+            });
+          }
+        }}
       />
 
       {queuePanel}

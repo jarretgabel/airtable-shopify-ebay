@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
@@ -203,7 +204,7 @@ export function UsedGearLotTwoSection({
   };
 
   return (
-    <section id="used-gear-lot-two" className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+    <AppPageSectionSurface id="used-gear-lot-two" className="space-y-5">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
           <AppSectionTitle title="Parking Lot 2" />
@@ -350,6 +351,6 @@ export function UsedGearLotTwoSection({
           );
         })()}
       </div>
-    </section>
+    </AppPageSectionSurface>
   );
 }
