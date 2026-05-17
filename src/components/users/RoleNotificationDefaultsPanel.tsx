@@ -1,3 +1,4 @@
+import type { MutableRefObject } from 'react';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import {
   ASSIGNABLE_USER_ROLE_OPTIONS,
@@ -12,6 +13,8 @@ interface RoleNotificationDefaultsPanelProps {
   checkboxClassName: string;
   onToggleRoleWorkflowNotificationDefault: (role: UserRole, eventKey: UsedGearWorkflowNotificationEvent, enabled: boolean) => void;
   onApplyRoleWorkflowNotificationDefaults: (role: UserRole) => void;
+  className?: string;
+  sectionRef?: MutableRefObject<HTMLElement | null>;
 }
 
 const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
@@ -30,9 +33,14 @@ export function RoleNotificationDefaultsPanel({
   checkboxClassName,
   onToggleRoleWorkflowNotificationDefault,
   onApplyRoleWorkflowNotificationDefaults,
+  className,
+  sectionRef,
 }: RoleNotificationDefaultsPanelProps) {
   return (
-    <section className="rounded-2xl border border-white/15 bg-slate-950/45 p-4 shadow-[0_12px_26px_rgba(0,0,0,0.28)]">
+    <section ref={sectionRef} className={[
+      'rounded-2xl border border-white/15 bg-slate-950/45 p-4 shadow-[0_12px_26px_rgba(0,0,0,0.28)]',
+      className ?? '',
+    ].join(' ').trim()}>
       <AppSectionTitle title="Role Workflow Alert Defaults" className="mb-4" />
       <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Configure baseline workflow alerts per role. Individual users can still override these defaults, and you can push the role defaults onto current members when needed.</p>
 

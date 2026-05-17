@@ -11,7 +11,7 @@ import { UserDirectoryListSection } from '@/components/users/UserDirectoryListSe
 import { NewUserFormState, RoleFilter, UserSortKey } from '@/components/users/userManagementTypes';
 import type { RoleWorkflowNotificationDefaults } from '@/services/roleNotificationDefaults';
 
-type UserManagementSection = 'overview' | 'directory' | 'create';
+type UserManagementSection = 'overview' | 'directory' | 'create' | 'defaults';
 
 interface UserDirectoryPanelProps {
   statusMessage: string | null;
@@ -77,6 +77,7 @@ export function UserDirectoryPanel({
   const [activeSection, setActiveSection] = useState<UserManagementSection | null>(null);
   const overviewSectionRef = useRef<HTMLElement | null>(null);
   const directorySectionRef = useRef<HTMLElement | null>(null);
+  const defaultsSectionRef = useRef<HTMLElement | null>(null);
 
   function scrollToSection(section: UserManagementSection): void {
     setActiveSection(section);
@@ -86,6 +87,10 @@ export function UserDirectoryPanel({
     }
     if (section === 'directory') {
       directorySectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    if (section === 'defaults') {
+      defaultsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
     onScrollToCreateUser();
@@ -119,19 +124,13 @@ export function UserDirectoryPanel({
         items={[
           { key: 'directory', label: 'User Directory' },
           { key: 'create', label: 'Create User' },
+          { key: 'defaults', label: 'Role Alert Defaults' },
         ]}
         activeKey={activeSection ?? 'directory'}
         onSelect={scrollToSection}
       />
 
       <div className="space-y-5">
-          <RoleNotificationDefaultsPanel
-            roleNotificationDefaults={roleNotificationDefaults}
-            checkboxClassName={checkboxClassName}
-            onToggleRoleWorkflowNotificationDefault={onToggleRoleWorkflowNotificationDefault}
-            onApplyRoleWorkflowNotificationDefaults={onApplyRoleWorkflowNotificationDefaults}
-          />
-
           <section
             ref={directorySectionRef}
             className={`scroll-mt-20 rounded-2xl border bg-[var(--panel)] p-4 ${activeSection === 'directory' ? 'border-cyan-500/45' : 'border-[var(--line)]'}`}
@@ -172,6 +171,15 @@ export function UserDirectoryPanel({
               onRegenerateTemporaryPassword={onRegenerateTemporaryPassword}
             />
           </section>
+
+          <RoleNotificationDefaultsPanel
+            roleNotificationDefaults={roleNotificationDefaults}
+            checkboxClassName={checkboxClassName}
+            onToggleRoleWorkflowNotificationDefault={onToggleRoleWorkflowNotificationDefault}
+            onApplyRoleWorkflowNotificationDefaults={onApplyRoleWorkflowNotificationDefaults}
+            sectionRef={defaultsSectionRef}
+            className={`scroll-mt-20 ${activeSection === 'defaults' ? 'border-cyan-500/45' : 'border-white/15'}`}
+          />
       </div>
     </section>
   );
