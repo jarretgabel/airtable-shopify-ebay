@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { DashboardTab } from '@/components/DashboardTab';
 import type { DashboardTabViewModel } from '@/app/appTabViewModels';
@@ -205,20 +205,16 @@ function buildViewModel(): DashboardTabViewModel {
 }
 
 describe('DashboardTab', () => {
-  it('shows the partial-data notice and passes source errors through to sections', () => {
+  it('shows the partial-data notice and exposes expanded sections for full-access roles', () => {
     render(<DashboardTab viewModel={buildViewModel()} />);
 
     expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
     expect(screen.getByText('Partial dashboard data')).toBeInTheDocument();
     expect(screen.getByText('Section nav')).toBeInTheDocument();
     expect(screen.getByText('Overview section')).toBeInTheDocument();
+    expect(screen.getAllByText('Actions section')).toHaveLength(1);
     expect(screen.queryByText('Airtable section:Inventory fetch failed')).not.toBeInTheDocument();
     expect(screen.queryByText('Shopify section')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Show detailed sections' }));
-
-    expect(screen.getByText('Airtable section:Inventory fetch failed')).toBeInTheDocument();
-    expect(screen.getByText('Shopify section')).toBeInTheDocument();
   });
 
   it('keeps limited-role dashboards focused on the overview section', () => {

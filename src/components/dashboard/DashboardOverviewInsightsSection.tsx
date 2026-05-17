@@ -11,19 +11,6 @@ interface OverviewCardEntry {
   element: JSX.Element;
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-const trendToneClass = {
-  up: 'text-green-300',
-  down: 'text-amber-400',
-  flat: 'text-[var(--muted)]',
-} as const satisfies Record<TrendSummary['direction'], string>;
 const insightToneClass = {
   critical: 'border-red-500/30 bg-red-950/30 text-red-300',
   warning: 'border-amber-500/30 bg-amber-950/30 text-amber-300',
@@ -59,39 +46,43 @@ function getPostPublishTargetLabel(bucket: UsedGearWorkflowPostPublishBucket): s
 }
 
 function canSeeRoleDashboardModule(currentUserRole: UserRole, role: 'processor' | 'tester' | 'photographer'): boolean {
-  return currentUserRole === role || currentUserRole === 'admin' || currentUserRole === 'owner';
+  if (role === 'processor') {
+    return currentUserRole === 'processor' || currentUserRole === 'admin' || currentUserRole === 'owner';
+  }
+
+  return currentUserRole === role;
 }
 
 interface DashboardOverviewSectionProps {
   accessiblePages: AppPage[];
-  canViewSensitiveMetrics: boolean;
+  canViewSensitiveMetrics?: boolean;
   currentUserRole: UserRole;
   workflowAnalytics: UsedGearWorkflowAnalyticsSnapshotState;
-  spLoading: boolean;
-  draftCount: number;
-  activeCount: number;
-  archivedCount: number;
-  nonEmptyListingCount: number;
-  approvalPending: number;
-  approvalApproved: number;
-  approvalTotal: number;
+  spLoading?: boolean;
+  draftCount?: number;
+  activeCount?: number;
+  archivedCount?: number;
+  nonEmptyListingCount?: number;
+  approvalPending?: number;
+  approvalApproved?: number;
+  approvalTotal?: number;
   approvalUnavailableReason?: string | null;
-  uniqueAirtableBrands: number;
-  uniqueAirtableTypes: number;
-  ebayPublishedCount: number;
-  ebayDraftCount: number;
-  ebayTotal: number;
+  uniqueAirtableBrands?: number;
+  uniqueAirtableTypes?: number;
+  ebayPublishedCount?: number;
+  ebayDraftCount?: number;
+  ebayTotal?: number;
   ebayUnavailableReason?: string | null;
-  acquisitionCost: number;
-  inventoryValue: number;
-  avgAskPrice: number;
-  sellThroughPct: number | null;
-  grossMarginPct: number | null;
-  dealsTrend: TrendSummary;
-  acquisitionTrend: TrendSummary;
-  inventoryTrend: TrendSummary;
-  salesTrend: TrendSummary;
-  marginTrend: TrendSummary;
+  acquisitionCost?: number;
+  inventoryValue?: number;
+  avgAskPrice?: number;
+  sellThroughPct?: number | null;
+  grossMarginPct?: number | null;
+  dealsTrend?: TrendSummary;
+  acquisitionTrend?: TrendSummary;
+  inventoryTrend?: TrendSummary;
+  salesTrend?: TrendSummary;
+  marginTrend?: TrendSummary;
   onSelectTab: (tab: DashboardTargetTab) => void;
   embedded?: boolean;
 }
@@ -99,38 +90,11 @@ interface DashboardOverviewSectionProps {
 export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
   const {
     accessiblePages,
-    canViewSensitiveMetrics,
     currentUserRole,
     workflowAnalytics,
-    spLoading,
-    draftCount,
-    activeCount,
-    archivedCount,
-    nonEmptyListingCount,
-    approvalPending,
-    approvalApproved,
-    approvalTotal,
-    approvalUnavailableReason,
-    uniqueAirtableBrands,
-    uniqueAirtableTypes,
-    ebayPublishedCount,
-    ebayDraftCount,
-    ebayTotal,
-    ebayUnavailableReason,
-    acquisitionCost,
-    inventoryValue,
-    avgAskPrice,
-    sellThroughPct,
-    grossMarginPct,
-    dealsTrend,
-    acquisitionTrend,
-    inventoryTrend,
-    salesTrend,
-    marginTrend,
     onSelectTab,
     embedded,
   } = props;
-  const ebayCoveragePct = ebayTotal > 0 ? Math.round(((ebayPublishedCount + ebayDraftCount) / ebayTotal) * 100) : null;
   const workflowUnavailableReason = workflowAnalytics.error;
   const workflowIntakeCount = workflowAnalytics.pendingReviewCount
     + workflowAnalytics.statusCounts['Accepted - Awaiting Arrival']
@@ -148,38 +112,6 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
   const processorBlockerCount = awaitingSkuCount + awaitingMissingCount;
 
   const cards: Array<OverviewCardEntry | null> = [
-    canViewSensitiveMetrics ? (
-      {
-        key: 'inventory-value',
-        priority: 70,
-        element: <DashboardKpiCard
-        key="inventory-value"
-        borderToneClass="border-t-fuchsia-500"
-        eyebrow="Inventory Value"
-        value={formatCurrency(inventoryValue)}
-        detail={<><strong className="font-semibold text-[var(--accent)]">{formatCurrency(avgAskPrice)}</strong> avg ask</>}
-        trend={inventoryTrend.text}
-        trendClass={trendToneClass[inventoryTrend.direction]}
-        onClick={() => onSelectTab('shopify')}
-      />,
-      }
-    ) : null,
-    canViewSensitiveMetrics ? (
-      {
-        key: 'acquisition-cost',
-        priority: 80,
-        element: <DashboardKpiCard
-        key="acquisition-cost"
-        borderToneClass="border-t-rose-500"
-        eyebrow="Acquisition Cost"
-        value={formatCurrency(acquisitionCost)}
-        detail={<><strong className="font-semibold text-[var(--accent)]">{grossMarginPct !== null ? `${grossMarginPct}%` : '—'}</strong> gross margin</>}
-        trend={acquisitionTrend.text}
-        trendClass={trendToneClass[acquisitionTrend.direction]}
-        onClick={() => onSelectTab('inventory')}
-      />,
-      }
-    ) : null,
     canSeeRoleDashboardModule(currentUserRole, 'processor') && accessiblePages.includes('manual-intake') ? (
       {
         key: 'processor-ops',
@@ -193,7 +125,7 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
           ? workflowUnavailableReason
           : <><strong className="font-semibold text-[var(--accent)]">{workflowAnalytics.pendingReviewCount}</strong> pending &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> in shared stage</>}
         trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? `${progressAlertCount} aging` : `${awaitingArrivalCount} awaiting arrival`}
-        trendClass={workflowUnavailableReason ? 'text-amber-300' : progressAlertCount > 0 ? 'text-amber-400' : trendToneClass[inventoryTrend.direction]}
+        trendClass={workflowUnavailableReason ? 'text-amber-300' : progressAlertCount > 0 ? 'text-amber-400' : 'text-emerald-300'}
         unavailableReason={workflowUnavailableReason}
         onClick={() => onSelectTab('manual-intake')}
       />,
@@ -313,120 +245,24 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
       />,
       }
     ) : null,
-    accessiblePages.includes('shopify') ? (
-      {
-        key: 'shopify',
-        priority: 40,
-        element: <DashboardKpiCard
-        key="shopify"
-        borderToneClass="border-t-amber-500"
-        eyebrow="Shopify Drafts"
-        value={spLoading ? '…' : draftCount}
-        detail={<><strong className="font-semibold text-[var(--accent)]">{activeCount}</strong> live &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{archivedCount}</strong> archived</>}
-        trend={dealsTrend.text}
-        trendClass={trendToneClass[dealsTrend.direction]}
-        onClick={() => onSelectTab('shopify')}
-      />,
-      }
-    ) : null,
-    accessiblePages.includes('listings') ? (
-      {
-        key: 'listings',
-        priority: 30,
-        element: <DashboardKpiCard
-        key="listings"
-        borderToneClass="border-t-violet-500"
-        eyebrow="Listings Review"
-        value={approvalUnavailableReason ? 'Off' : approvalPending.toLocaleString()}
-        detail={approvalUnavailableReason ? approvalUnavailableReason : <><strong className="font-semibold text-[var(--accent)]">{approvalApproved}</strong> approved &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvalTotal}</strong> total</>}
-        trend={approvalUnavailableReason ? 'Unavailable' : acquisitionTrend.text}
-        trendClass={approvalUnavailableReason ? 'text-amber-300' : trendToneClass[acquisitionTrend.direction]}
-        unavailableReason={approvalUnavailableReason}
-        onClick={() => onSelectTab('listings')}
-      />,
-      }
-    ) : null,
-    accessiblePages.includes('inventory') ? (
-      {
-        key: 'inventory',
-        priority: 50,
-        element: <DashboardKpiCard
-        key="inventory"
-        borderToneClass="border-t-emerald-500"
-        eyebrow="Inventory"
-        value={nonEmptyListingCount.toLocaleString()}
-        detail={<><strong className="font-semibold text-[var(--accent)]">{uniqueAirtableBrands}</strong> brands &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{uniqueAirtableTypes}</strong> types</>}
-        trend={inventoryTrend.text}
-        trendClass={trendToneClass[inventoryTrend.direction]}
-        onClick={() => onSelectTab('inventory')}
-      />,
-      }
-    ) : null,
-    accessiblePages.includes('shopify') ? (
-      {
-        key: 'sales',
-        priority: 60,
-        element: <DashboardKpiCard
-        key="sales"
-        borderToneClass="border-t-slate-600"
-        eyebrow="Sell-Through"
-        value={sellThroughPct !== null ? `${sellThroughPct}%` : '—'}
-        detail={<><strong className="font-semibold text-[var(--accent)]">{archivedCount}</strong> sold or archived</>}
-        trend={salesTrend.text}
-        trendClass={trendToneClass[salesTrend.direction]}
-        onClick={() => onSelectTab('shopify')}
-      />,
-      }
-    ) : null,
-    (accessiblePages.includes('ebay') || accessiblePages.includes('listings')) ? (
-      {
-        key: 'ebay',
-        priority: 55,
-        element: <DashboardKpiCard
-        key="ebay"
-        borderToneClass="border-t-teal-500"
-        eyebrow="eBay Coverage"
-        value={ebayUnavailableReason ? 'Off' : ebayCoveragePct !== null ? `${ebayCoveragePct}%` : '—'}
-        detail={ebayUnavailableReason ? ebayUnavailableReason : <><strong className="font-semibold text-[var(--accent)]">{ebayPublishedCount}</strong> live &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{ebayDraftCount}</strong> draft</>}
-        trend={ebayUnavailableReason ? 'Unavailable' : marginTrend.text}
-        trendClass={ebayUnavailableReason ? 'text-amber-300' : trendToneClass[marginTrend.direction]}
-        unavailableReason={ebayUnavailableReason}
-        onClick={() => onSelectTab('ebay')}
-      />,
-      }
-    ) : null,
   ];
 
   const orderedCards = cards
     .filter((card): card is OverviewCardEntry => card !== null)
     .sort((left, right) => left.priority - right.priority);
-  const primaryCards = embedded ? orderedCards.slice(0, 6) : orderedCards;
-  const secondaryCards = embedded ? orderedCards.slice(6) : [];
 
   if (orderedCards.length === 0) {
     return null;
   }
 
   const content = (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {primaryCards.map((card) => card.element)}
-      </div>
-      {secondaryCards.length > 0 ? (
-        <details className="rounded-[12px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_86%,transparent)] px-4 py-3">
-          <summary className="cursor-pointer list-none text-[0.8rem] font-semibold text-[var(--ink)]">
-            More metrics
-          </summary>
-          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {secondaryCards.map((card) => card.element)}
-          </div>
-        </details>
-      ) : null}
-      </div>
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {orderedCards.map((card) => card.element)}
+    </div>
   );
 
   if (embedded) {
-    return <DashboardSubPanel title="Dashboard">{content}</DashboardSubPanel>;
+    return content;
   }
 
   return (
