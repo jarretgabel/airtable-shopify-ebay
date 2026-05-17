@@ -1,5 +1,5 @@
 import { MemoryRouter } from 'react-router-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { UsedGearWorkflowQueueTab } from '@/components/tabs/UsedGearWorkflowQueueTab';
 
@@ -46,19 +46,8 @@ describe('UsedGearWorkflowQueueTab', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Testing Queue' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /how to use this queue/i })).toBeInTheDocument();
-    expect(screen.queryByText('Operator guide')).not.toBeInTheDocument();
-    expect(screen.queryByText('Working Rules')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /how to use this queue/i }));
-
-    expect(screen.getByText('Post-Intake Holding Stage')).toBeInTheDocument();
-    expect(screen.getByText('Working Rules')).toBeInTheDocument();
-    expect(screen.getByText('Rows Land Here')).toBeInTheDocument();
-    expect(screen.getByText('Complete On Form')).toBeInTheDocument();
-    expect(screen.getByText('Leave For Listings')).toBeInTheDocument();
-    expect(screen.getByText(/Accepted rows land here after intake approval and processing signoff/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open Workflow Guide' })).toHaveAttribute('href', '/workflow-guide');
+  expect(screen.queryByRole('button', { name: /how to use this queue/i })).not.toBeInTheDocument();
+  expect(screen.queryByText('Working Rules')).not.toBeInTheDocument();
 
     const progressSection = screen.getByTestId('progress-section');
     expect(progressSection).toHaveAttribute('data-queue-mode', 'testing');
@@ -73,18 +62,7 @@ describe('UsedGearWorkflowQueueTab', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Photography Queue' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /how to use this queue/i })).toBeInTheDocument();
-    expect(screen.queryByText('Operator guide')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /how to use this queue/i }));
-
-    expect(screen.getByText('Post-Intake Holding Stage')).toBeInTheDocument();
-    expect(screen.getByText('Working Rules')).toBeInTheDocument();
-    expect(screen.getByText('Rows Land Here')).toBeInTheDocument();
-    expect(screen.getByText('Complete On Form')).toBeInTheDocument();
-    expect(screen.getByText('Carry Forward Context')).toBeInTheDocument();
-    expect(screen.getByText(/This queue is the shared post-intake holding stage for photography work/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open Workflow Guide' })).toHaveAttribute('href', '/workflow-guide');
+  expect(screen.queryByRole('button', { name: /how to use this queue/i })).not.toBeInTheDocument();
 
     const progressSection = screen.getByTestId('progress-section');
     expect(progressSection).toHaveAttribute('data-queue-mode', 'photography');

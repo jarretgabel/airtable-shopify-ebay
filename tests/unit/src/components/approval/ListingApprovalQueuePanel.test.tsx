@@ -163,8 +163,6 @@ describe('ListingApprovalQueuePanel', () => {
     );
 
     expect(screen.getByText('Combined Listings')).toBeInTheDocument();
-    expect(screen.getByText('Listing-Phase Entry Point')).toBeInTheDocument();
-    expect(screen.getByText('Listing-phase guide')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Needs Review · 1' }));
 

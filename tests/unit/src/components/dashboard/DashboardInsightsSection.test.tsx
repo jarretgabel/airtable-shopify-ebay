@@ -15,7 +15,7 @@ describe('DashboardInsightsSection', () => {
             title: 'Used gear shipments are queued',
             detail: '1 used-gear item is sold and ready to ship.',
             severity: 'critical',
-            targetTab: 'inventory',
+            targetTab: 'post-publish',
             inventoryPostPublishBucket: 'sold-ready',
           },
         ]}
@@ -26,7 +26,7 @@ describe('DashboardInsightsSection', () => {
 
     expect(screen.getByText('Opens Sold Ready To Ship Bucket')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /open inventory/i }));
+    fireEvent.click(screen.getByRole('button', { name: /open post-publish/i }));
 
     expect(onOpenInventoryPostPublishBucket).toHaveBeenCalledWith('sold-ready');
     expect(onSelectTab).not.toHaveBeenCalled();

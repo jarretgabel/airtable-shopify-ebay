@@ -10,6 +10,7 @@ interface AppFrameHeaderProps {
   tabs: AppTab[];
   intakeTabs: AppTab[];
   listingsTabs: AppTab[];
+  postPublishTabs: AppTab[];
   inventoryProcessingTabs: AppTab[];
   postEbayTabs: AppTab[];
   utilityTabs: AppTab[];
@@ -32,6 +33,7 @@ export function AppFrameHeader({
   tabs,
   intakeTabs,
   listingsTabs,
+  postPublishTabs,
   inventoryProcessingTabs,
   postEbayTabs,
   utilityTabs,
@@ -91,6 +93,7 @@ export function AppFrameHeader({
         tabs={tabs}
         intakeTabs={intakeTabs}
         listingsTabs={listingsTabs}
+        postPublishTabs={postPublishTabs}
         inventoryProcessingTabs={inventoryProcessingTabs}
         postEbayTabs={postEbayTabs}
         utilityTabs={utilityTabs}

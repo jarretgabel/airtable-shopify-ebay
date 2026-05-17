@@ -45,8 +45,6 @@ export function ParkingLotOneTab({ currentUserName }: ParkingLotOneTabProps) {
     <WorkflowQueuePageTemplate
       eyebrow="Used Gear Intake"
       title="Parking Lot 1"
-      description="Review new intake and decide whether each item is accepted or trashed."
-      descriptionHint="Open a group or single row to confirm qualification details before moving it forward."
     >
       <UsedGearPendingReviewSection
         currentUserName={currentUserName}

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { accentActionButtonClass } from '@/components/app/buttonStyles';
@@ -18,21 +17,6 @@ interface QueueExtraFilterDefinition {
   label: string;
   matches: (record: AirtableRecord) => boolean;
 }
-
-const COMBINED_LISTING_GUIDANCE_CARDS = [
-  {
-    label: 'Listing Phase Entry',
-    description: 'Rows first land here at Awaiting Pre-Listing Review after both testing and photography signoffs are complete.',
-  },
-  {
-    label: 'Review And Correct Here',
-    description: 'Use the selected listing record to resolve pricing, content, and readiness blockers instead of sending operators to a separate pre-listing page.',
-  },
-  {
-    label: 'Publish After Approval',
-    description: 'Approve for publish from the listing record first, then hand off into Shopify, eBay, or both from the same listing-phase surface.',
-  },
-] as const;
 
 const searchInputClass = 'flex-1 min-w-[220px] rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-[0.82rem] text-[var(--ink)] placeholder-[var(--muted)] outline-none transition-colors focus:border-[var(--accent)]';
 const FILTER_STORAGE_PREFIX = 'approval-queue-filter';
@@ -573,37 +557,7 @@ export function ListingApprovalQueuePanel({
       <WorkflowPageHeader
         eyebrow="Used Gear Workflow"
         title="Combined Listings"
-        description="Listings is the first listing-phase directory after testing and photography complete. Review listing readiness, correct marketplace data, approve for publish, and manage live lifecycle work from this one surface."
       />
-
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,1fr)]">
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Listing-Phase Entry Point</p>
-          <div className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
-            <p className="m-0">Awaiting Pre-Listing Review is the first listing-phase state shown here. Rows should not appear on this page while testing or photography is still in progress.</p>
-            <p className="m-0">Use the queue to find listing-ready work, open the selected record for pricing and content review, and keep publish approval on the listing page instead of routing through a separate workflow review destination.</p>
-            <p className="m-0">The queue chips divide incoming review work from approved-to-publish rows so listing operators can separate final QA from publish execution and later lifecycle follow-through.</p>
-          </div>
-        </div>
-
-        <aside className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Working Rules</p>
-          <div className="mt-4 space-y-3">
-            {COMBINED_LISTING_GUIDANCE_CARDS.map((card) => (
-              <div key={card.label} className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3">
-                <p className="m-0 text-sm font-semibold text-[var(--ink)]">{card.label}</p>
-                <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{card.description}</p>
-              </div>
-            ))}
-          </div>
-        </aside>
-      </section>
-
-      <div className="max-w-3xl">
-        <CollapsibleHelperText label="Listing-phase guide">
-          Use the combined queue for discovery and the selected record for the actual review gate. If a blocker points back to intake, testing, photos, or pricing source data, open the upstream record from the listing page, fix the source, then return here to approve and publish.
-        </CollapsibleHelperText>
-      </div>
 
       {queuePanel}
     </div>

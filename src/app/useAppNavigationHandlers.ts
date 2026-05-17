@@ -161,7 +161,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     const params = new URLSearchParams();
     params.set('workflowPostPublishBucket', bucket);
 
-    navigate(`${TAB_PATHS.inventory}?${params.toString()}#used-gear-post-publish`, { replace: options?.replace ?? false });
+    navigate(`${TAB_PATHS['post-publish']}?${params.toString()}#used-gear-post-publish`, { replace: options?.replace ?? false });
     scrollToPageTop();
   }, [navigate]);
 

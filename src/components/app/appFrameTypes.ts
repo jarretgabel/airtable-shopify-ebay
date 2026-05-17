@@ -23,6 +23,7 @@ export interface AppFrameProps {
   tabs: AppTab[];
   intakeTabs: AppTab[];
   listingsTabs: AppTab[];
+  postPublishTabs: AppTab[];
   inventoryProcessingTabs: AppTab[];
   postEbayTabs: AppTab[];
   utilityTabs: AppTab[];

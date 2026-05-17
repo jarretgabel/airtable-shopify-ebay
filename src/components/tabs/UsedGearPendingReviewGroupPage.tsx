@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
-import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
@@ -404,7 +403,6 @@ export function UsedGearPendingReviewGroupPage({
         <WorkflowPageHeader
           eyebrow="Parking Lot 1 Review"
           title={group.label}
-          description="Review grouped intake pricing, allocation, and Lot 2 routing in one place before the items leave Parking Lot 1."
           actions={(
             <button
               type="button"
@@ -418,13 +416,6 @@ export function UsedGearPendingReviewGroupPage({
 
         {error ? <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">{error}</div> : null}
         {successMessage ? <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{successMessage}</div> : null}
-
-        <div className="max-w-3xl">
-          <CollapsibleHelperText label="Grouped review guide">
-            Use the shared controls for batch-level totals and allocation, then finish per-row routing and notes below. Keep group acceptance for the end so pricing and qualification are fully complete before Lot 2 handoff.
-          </CollapsibleHelperText>
-        </div>
-
         <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
             <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Group Summary</p>

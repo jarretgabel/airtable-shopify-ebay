@@ -57,17 +57,20 @@ vi.mock('@/components/tabs/airtable/InventoryDirectoryListSection', () => ({
 
 vi.mock('@/components/tabs/airtable/UsedGearPendingReviewSection', () => ({
   UsedGearPendingReviewSection: ({
+    focusedGroupId = null,
     searchTerm = '',
     onSearchTermChange,
     sortMode = 'group-label',
     onSortModeChange,
   }: {
+    focusedGroupId?: string | null;
     searchTerm?: string;
     onSearchTermChange?: (value: string) => void;
     sortMode?: string;
     onSortModeChange?: (value: 'group-label' | 'newest' | 'oldest') => void;
   }) => (
     <div>
+      <div data-testid="pending-focused-group">{focusedGroupId ?? ''}</div>
       <label>
         Pending Review Search
         <input
@@ -84,17 +87,20 @@ vi.mock('@/components/tabs/airtable/UsedGearPendingReviewSection', () => ({
 
 vi.mock('@/components/tabs/airtable/UsedGearWorkflowProgressSection', () => ({
   UsedGearWorkflowProgressSection: ({
+    focusedGroupId = null,
     searchTerm = '',
     onSearchTermChange,
     sortMode = 'group-label',
     onSortModeChange,
   }: {
+    focusedGroupId?: string | null;
     searchTerm?: string;
     onSearchTermChange?: (value: string) => void;
     sortMode?: string;
     onSortModeChange?: (value: 'group-label' | 'newest' | 'oldest') => void;
   }) => (
     <div>
+      <div data-testid="progress-focused-group">{focusedGroupId ?? ''}</div>
       <label>
         Workflow Progress Search
         <input
@@ -105,37 +111,6 @@ vi.mock('@/components/tabs/airtable/UsedGearWorkflowProgressSection', () => ({
       </label>
       <div data-testid="progress-sort-mode">{sortMode}</div>
       <button type="button" onClick={() => onSortModeChange?.('oldest')}>Sort Progress Oldest</button>
-    </div>
-  ),
-}));
-
-vi.mock('@/components/tabs/airtable/UsedGearWorkflowPostPublishSection', () => ({
-  UsedGearWorkflowPostPublishSection: ({
-    searchTerm = '',
-    onSearchTermChange,
-    onFocusedBucketChange,
-    sortMode = 'latest-activity',
-    onSortModeChange,
-  }: {
-    searchTerm?: string;
-    onSearchTermChange?: (value: string) => void;
-    onFocusedBucketChange?: (bucket: 'all' | 'active-listing' | 'stale-listing' | 'sold-ready' | 'shipped') => void;
-    sortMode?: string;
-    onSortModeChange?: (value: 'latest-activity' | 'oldest-activity' | 'sku') => void;
-  }) => (
-    <div>
-      <label>
-        Post Publish Search
-        <input
-          aria-label="Post Publish Search"
-          value={searchTerm}
-          onChange={(event) => onSearchTermChange?.(event.currentTarget.value)}
-        />
-      </label>
-      <div data-testid="post-publish-sort-mode">{sortMode}</div>
-      <button type="button" onClick={() => onFocusedBucketChange?.('sold-ready')}>Focus Sold Ready</button>
-      <button type="button" onClick={() => onFocusedBucketChange?.('all')}>Show All Buckets</button>
-      <button type="button" onClick={() => onSortModeChange?.('sku')}>Sort Post Publish SKU</button>
     </div>
   ),
 }));
@@ -172,7 +147,7 @@ describe('AirtableTab', () => {
 
   it('hydrates workflow view state from the URL, persists updates, and resets workflow params', async () => {
     render(
-      <MemoryRouter initialEntries={['/inventory?inventoryDirectorySearch=amp&inventoryDirectoryStatus=Ready&workflowPendingReviewSearch=mcintosh&workflowProgressSearch=marantz&workflowPostPublishSearch=shipped&workflowPostPublishBucket=active-listing&workflowPendingReviewSort=newest&workflowProgressSort=oldest&workflowPostPublishSort=sku']}>
+      <MemoryRouter initialEntries={['/inventory?inventoryDirectorySearch=amp&inventoryDirectoryStatus=Ready&workflowPendingReviewSearch=mcintosh&workflowProgressSearch=marantz&workflowPendingReviewGroup=pickup%3Apickup-100&workflowProgressGroup=pickup%3Apickup-200&workflowPendingReviewSort=newest&workflowProgressSort=oldest']}>
         <AirtableTab
           viewModel={{
             loading: false,
@@ -204,18 +179,17 @@ describe('AirtableTab', () => {
     expect(screen.getByLabelText('Directory Status')).toHaveValue('Ready');
     expect(screen.getByLabelText('Pending Review Search')).toHaveValue('mcintosh');
     expect(screen.getByLabelText('Workflow Progress Search')).toHaveValue('marantz');
-    expect(screen.getByLabelText('Post Publish Search')).toHaveValue('shipped');
+    expect(screen.getByTestId('pending-focused-group')).toHaveTextContent('pickup:pickup-100');
+    expect(screen.getByTestId('progress-focused-group')).toHaveTextContent('pickup:pickup-200');
     expect(screen.getByTestId('pending-sort-mode')).toHaveTextContent('newest');
     expect(screen.getByTestId('progress-sort-mode')).toHaveTextContent('oldest');
-    expect(screen.getByTestId('post-publish-sort-mode')).toHaveTextContent('sku');
     expect(screen.getByRole('button', { name: 'Reset Workflow View' })).toBeInTheDocument();
     expect(screen.getByText('Pending review: mcintosh')).toBeInTheDocument();
     expect(screen.getByText('Progress: marantz')).toBeInTheDocument();
-    expect(screen.getByText('Post-publish: shipped')).toBeInTheDocument();
-    expect(screen.getByText('Bucket: Active Listings')).toBeInTheDocument();
+    expect(screen.getByText('Pending group: pickup-100')).toBeInTheDocument();
+    expect(screen.getByText('Progress group: pickup-200')).toBeInTheDocument();
     expect(screen.getByText('Pending sort: Newest First')).toBeInTheDocument();
     expect(screen.getByText('Progress sort: Oldest First')).toBeInTheDocument();
-    expect(screen.getByText('Post-publish sort: SKU')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Directory Search'), { target: { value: 'receiver' } });
 
@@ -233,30 +207,15 @@ describe('AirtableTab', () => {
     fireEvent.change(screen.getByLabelText('Pending Review Search'), { target: { value: 'fisher' } });
 
     await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory?inventoryDirectorySearch=receiver&inventoryDirectoryStatus=Sold&workflowPendingReviewSearch=fisher&workflowProgressSearch=marantz&workflowPostPublishSearch=shipped&workflowPostPublishBucket=active-listing&workflowPendingReviewSort=newest&workflowProgressSort=oldest&workflowPostPublishSort=sku#used-gear-pending-review');
-    });
-
-    fireEvent.change(screen.getByLabelText('Post Publish Search'), { target: { value: 'mcintosh' } });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPostPublishSearch=mcintosh');
-      expect(screen.getByTestId('location-state')).toHaveTextContent('#used-gear-post-publish');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Focus Sold Ready' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPostPublishBucket=sold-ready');
+      expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory?inventoryDirectorySearch=receiver&inventoryDirectoryStatus=Sold&workflowPendingReviewSearch=fisher&workflowProgressSearch=marantz&workflowPendingReviewGroup=pickup%3Apickup-100&workflowProgressGroup=pickup%3Apickup-200&workflowPendingReviewSort=newest&workflowProgressSort=oldest#used-gear-pending-review');
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Sort Pending Newest' }));
     fireEvent.click(screen.getByRole('button', { name: 'Sort Progress Oldest' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Sort Post Publish SKU' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPendingReviewSort=newest');
       expect(screen.getByTestId('location-state')).toHaveTextContent('workflowProgressSort=oldest');
-      expect(screen.getByTestId('location-state')).toHaveTextContent('workflowPostPublishSort=sku');
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear pending review search' }));
@@ -264,12 +223,6 @@ describe('AirtableTab', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Pending Review Search')).toHaveValue('');
       expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Clear progress queue search' }));
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Clear post-publish bucket filter' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('location-state')).not.toHaveTextContent('workflowPostPublishBucket=');
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy Current Workflow View' }));
@@ -284,7 +237,8 @@ describe('AirtableTab', () => {
       expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory');
       expect(screen.getByLabelText('Pending Review Search')).toHaveValue('');
       expect(screen.getByLabelText('Workflow Progress Search')).toHaveValue('');
-      expect(screen.getByLabelText('Post Publish Search')).toHaveValue('');
+      expect(screen.getByTestId('pending-focused-group')).toHaveTextContent('');
+      expect(screen.getByTestId('progress-focused-group')).toHaveTextContent('');
       expect(screen.getByLabelText('Directory Search')).toHaveValue('receiver');
       expect(screen.getByLabelText('Directory Status')).toHaveValue('Sold');
     });
@@ -361,7 +315,7 @@ describe('AirtableTab', () => {
     loadInventoryDirectoryMock.mockRejectedValue(new Error('Failed to load Airtable records from tblInventory.'));
 
     render(
-      <MemoryRouter initialEntries={['/inventory#used-gear-post-publish']}>
+      <MemoryRouter initialEntries={['/inventory#used-gear-progress-queue']}>
         <>
           <AirtableTab
             viewModel={{
@@ -390,7 +344,6 @@ describe('AirtableTab', () => {
     expect(await screen.findByText('SB Inventory directory is currently unavailable.')).toBeInTheDocument();
     expect(screen.getByLabelText('Pending Review Search')).toBeInTheDocument();
     expect(screen.getByLabelText('Workflow Progress Search')).toBeInTheDocument();
-    expect(screen.getByLabelText('Post Publish Search')).toBeInTheDocument();
-    expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory#used-gear-post-publish');
+    expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory#used-gear-progress-queue');
   });
 });

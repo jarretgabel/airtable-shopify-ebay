@@ -35,8 +35,6 @@ export function UsedGearTrashTab({}: UsedGearTrashTabProps) {
     <WorkflowQueuePageTemplate
       eyebrow="Used Gear Intake"
       title="Trash Review"
-      description="Review unqualified rows and decide whether to restore or remove them."
-      descriptionHint="Restore mistaken rejects back into Parking Lot 2, or permanently delete trash work that is finished."
     >
       <UsedGearTrashSection
         showSectionIntro={false}

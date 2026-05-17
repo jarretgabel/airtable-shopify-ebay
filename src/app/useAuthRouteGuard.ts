@@ -72,6 +72,7 @@ export function useAuthRouteGuard({
       isInventoryDetailPath ||
       normalizedPath === '/listings' ||
       isListingsDetailPath ||
+      normalizedPath === '/workflow/post-publish' ||
       normalizedPath === '/ebay/listings' ||
       isEbayListingsDetailPath ||
       normalizedPath === '/parking-lot-2' ||
@@ -99,6 +100,8 @@ export function useAuthRouteGuard({
     const requestedTab: Tab | null =
       normalizedPath === '/listings' || isListingsDetailPath
           ? 'listings'
+        : normalizedPath === '/workflow/post-publish'
+          ? 'post-publish'
         : normalizedPath === '/ebay/listings' || isEbayListingsDetailPath
             ? 'ebay'
             : normalizedPath === '/shopify/products' || isShopifyProductsDetailPath

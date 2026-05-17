@@ -39,6 +39,7 @@ const UsedGearLotTwoTab = lazy(async () => ({ default: (await import('@/componen
 const UsedGearTrashReviewRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashReviewRecordPage')).UsedGearTrashReviewRecordPage }));
 const UsedGearTrashTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashTab')).UsedGearTrashTab }));
 const UsedGearWorkflowQueueTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearWorkflowQueueTab')).UsedGearWorkflowQueueTab }));
+const PostPublishQueueTab = lazy(async () => ({ default: (await import('@/components/tabs/PostPublishQueueTab')).PostPublishQueueTab }));
 
 function TabLoadingFallback({ tabLabel }: { tabLabel: string }) {
   return (
@@ -173,7 +174,7 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
     case 'dashboard':
       return 'dashboard';
     case 'workflow-guide':
-      return 'workflow guide';
+      return 'user guide';
     case 'inventory':
       return 'inventory';
     case 'shopify':
@@ -192,6 +193,8 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
       return 'Testing queue';
     case 'photography-queue':
       return 'Photography queue';
+    case 'post-publish':
+      return 'post-publish';
     case 'market':
       return 'market research';
     case 'users':
@@ -541,6 +544,14 @@ export function AppTabContent({
               onSelectRecord={(recordId) => navigateToInventoryRecord(recordId)}
             />
           );
+      case 'post-publish':
+        return (
+          <PostPublishQueueTab
+            currentUserName={currentUserName}
+            onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
+            onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
+          />
+        );
       case 'shopify':
         if (deferredRouteState.shopifyListingsRecordId) {
           return (

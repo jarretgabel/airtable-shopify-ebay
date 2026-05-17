@@ -5,11 +5,8 @@ import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { InventoryDirectoryListSection } from '@/components/tabs/airtable/InventoryDirectoryListSection';
 import { UsedGearPendingReviewSection, type UsedGearPendingReviewSortMode } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
-import { UsedGearWorkflowPostPublishSection } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 import { UsedGearWorkflowProgressSection, type UsedGearWorkflowProgressSortMode } from '@/components/tabs/airtable/UsedGearWorkflowProgressSection';
 import { loadInventoryDirectory } from '@/services/inventoryDirectory';
-import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
-import type { UsedGearWorkflowPostPublishSortMode } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 import { useNotificationStore } from '@/stores/notificationStore';
 import type { UserRole } from '@/stores/auth/authTypes';
 import type { AirtableRecord } from '@/types/airtable';
@@ -18,26 +15,18 @@ const INVENTORY_DIRECTORY_SEARCH_PARAM = 'inventoryDirectorySearch';
 const INVENTORY_DIRECTORY_STATUS_PARAM = 'inventoryDirectoryStatus';
 const WORKFLOW_PENDING_REVIEW_SEARCH_PARAM = 'workflowPendingReviewSearch';
 const WORKFLOW_PROGRESS_SEARCH_PARAM = 'workflowProgressSearch';
-const WORKFLOW_POST_PUBLISH_SEARCH_PARAM = 'workflowPostPublishSearch';
+const WORKFLOW_PENDING_REVIEW_GROUP_PARAM = 'workflowPendingReviewGroup';
+const WORKFLOW_PROGRESS_GROUP_PARAM = 'workflowProgressGroup';
 const WORKFLOW_PENDING_REVIEW_SORT_PARAM = 'workflowPendingReviewSort';
 const WORKFLOW_PROGRESS_SORT_PARAM = 'workflowProgressSort';
-const WORKFLOW_POST_PUBLISH_SORT_PARAM = 'workflowPostPublishSort';
 const WORKFLOW_ROUTE_PARAMS = [
   WORKFLOW_PENDING_REVIEW_SEARCH_PARAM,
   WORKFLOW_PROGRESS_SEARCH_PARAM,
-  WORKFLOW_POST_PUBLISH_SEARCH_PARAM,
+  WORKFLOW_PENDING_REVIEW_GROUP_PARAM,
+  WORKFLOW_PROGRESS_GROUP_PARAM,
   WORKFLOW_PENDING_REVIEW_SORT_PARAM,
   WORKFLOW_PROGRESS_SORT_PARAM,
-  WORKFLOW_POST_PUBLISH_SORT_PARAM,
-  'workflowPostPublishBucket',
 ] as const;
-
-const POST_PUBLISH_BUCKET_LABELS: Record<UsedGearWorkflowPostPublishBucket, string> = {
-  'active-listing': 'Active Listings',
-  'stale-listing': 'Stale Listings',
-  'sold-ready': 'Sold Ready To Ship',
-  shipped: 'Shipped History',
-};
 
 interface WorkflowStateChip {
   key: string;
@@ -52,6 +41,10 @@ function formatWorkflowChipValue(value: string): string {
   return value.length > 28 ? `${value.slice(0, 28)}...` : value;
 }
 
+function formatWorkflowGroupChipValue(value: string): string {
+  return formatWorkflowChipValue(value.replace(/^(pickup|submission|record):/i, ''));
+}
+
 function parsePendingReviewSortMode(search: string): UsedGearPendingReviewSortMode {
   const value = new URLSearchParams(search).get(WORKFLOW_PENDING_REVIEW_SORT_PARAM);
   return value === 'newest' || value === 'oldest' || value === 'arrival-date' || value === 'make-model' ? value : 'group-label';
@@ -60,11 +53,6 @@ function parsePendingReviewSortMode(search: string): UsedGearPendingReviewSortMo
 function parseProgressSortMode(search: string): UsedGearWorkflowProgressSortMode {
   const value = new URLSearchParams(search).get(WORKFLOW_PROGRESS_SORT_PARAM);
   return value === 'newest' || value === 'oldest' ? value : 'group-label';
-}
-
-function parsePostPublishSortMode(search: string): UsedGearWorkflowPostPublishSortMode {
-  const value = new URLSearchParams(search).get(WORKFLOW_POST_PUBLISH_SORT_PARAM);
-  return value === 'oldest-activity' || value === 'sku' ? value : 'latest-activity';
 }
 
 function pendingSortLabel(value: UsedGearPendingReviewSortMode): string {
@@ -81,10 +69,6 @@ function pendingSortLabel(value: UsedGearPendingReviewSortMode): string {
 
 function progressSortLabel(value: UsedGearWorkflowProgressSortMode): string {
   return value === 'newest' ? 'Progress sort: Newest First' : value === 'oldest' ? 'Progress sort: Oldest First' : 'Progress sort: Group Label';
-}
-
-function postPublishSortLabel(value: UsedGearWorkflowPostPublishSortMode): string {
-  return value === 'oldest-activity' ? 'Post-publish sort: Oldest Activity' : value === 'sku' ? 'Post-publish sort: SKU' : 'Post-publish sort: Latest Activity';
 }
 
 interface AirtableTabProps {
@@ -140,24 +124,16 @@ export function AirtableTab({
     const params = new URLSearchParams(location.search);
     return params.get(WORKFLOW_PROGRESS_SEARCH_PARAM) ?? '';
   }, [location.search]);
-  const workflowPostPublishSearch = useMemo(() => {
+  const focusedPendingReviewGroupId = useMemo(() => {
     const params = new URLSearchParams(location.search);
-    return params.get(WORKFLOW_POST_PUBLISH_SEARCH_PARAM) ?? '';
+    return params.get(WORKFLOW_PENDING_REVIEW_GROUP_PARAM);
+  }, [location.search]);
+  const focusedProgressGroupId = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get(WORKFLOW_PROGRESS_GROUP_PARAM);
   }, [location.search]);
   const workflowPendingReviewSort = useMemo(() => parsePendingReviewSortMode(location.search), [location.search]);
   const workflowProgressSort = useMemo(() => parseProgressSortMode(location.search), [location.search]);
-  const workflowPostPublishSort = useMemo(() => parsePostPublishSortMode(location.search), [location.search]);
-  const focusedPostPublishBucket = useMemo<UsedGearWorkflowPostPublishBucket | null>(() => {
-    const params = new URLSearchParams(location.search);
-    const bucket = params.get('workflowPostPublishBucket');
-
-    return bucket === 'active-listing'
-      || bucket === 'stale-listing'
-      || bucket === 'sold-ready'
-      || bucket === 'shipped'
-      ? bucket
-      : null;
-  }, [location.search]);
 
   const hasWorkflowViewState = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -208,16 +184,6 @@ export function AirtableTab({
       WORKFLOW_ROUTE_PARAMS.forEach((paramName) => params.delete(paramName));
     }, '');
   };
-
-  const handlePostPublishBucketChange = useCallback((bucket: UsedGearWorkflowPostPublishBucket | 'all') => {
-    updateWorkflowRouteState((params) => {
-      if (bucket === 'all') {
-        params.delete('workflowPostPublishBucket');
-      } else {
-        params.set('workflowPostPublishBucket', bucket);
-      }
-    }, bucket === 'all' ? '' : '#used-gear-post-publish');
-  }, [updateWorkflowRouteState]);
 
   const handleInventoryDirectorySearchChange = (value: string) => {
     updateInventoryDirectoryRouteState((params) => {
@@ -295,12 +261,24 @@ export function AirtableTab({
         onClear: () => updateWorkflowQueueSearch(WORKFLOW_PROGRESS_SEARCH_PARAM, '', '#used-gear-progress-queue'),
       });
     }
-    if (workflowPostPublishSearch) {
+    if (focusedPendingReviewGroupId) {
       chips.push({
-        key: 'post-publish-search',
-        label: `Post-publish: ${formatWorkflowChipValue(workflowPostPublishSearch)}`,
-        clearLabel: 'Clear post-publish queue search',
-        onClear: () => updateWorkflowQueueSearch(WORKFLOW_POST_PUBLISH_SEARCH_PARAM, '', '#used-gear-post-publish'),
+        key: 'pending-group',
+        label: `Pending group: ${formatWorkflowGroupChipValue(focusedPendingReviewGroupId)}`,
+        clearLabel: 'Clear pending review group focus',
+        onClear: () => updateWorkflowRouteState((params) => {
+          params.delete(WORKFLOW_PENDING_REVIEW_GROUP_PARAM);
+        }, '#used-gear-pending-review'),
+      });
+    }
+    if (focusedProgressGroupId) {
+      chips.push({
+        key: 'progress-group',
+        label: `Progress group: ${formatWorkflowGroupChipValue(focusedProgressGroupId)}`,
+        clearLabel: 'Clear progress queue group focus',
+        onClear: () => updateWorkflowRouteState((params) => {
+          params.delete(WORKFLOW_PROGRESS_GROUP_PARAM);
+        }, '#used-gear-progress-queue'),
       });
     }
     if (workflowPendingReviewSort !== 'group-label') {
@@ -323,34 +301,14 @@ export function AirtableTab({
         }, '#used-gear-progress-queue'),
       });
     }
-    if (workflowPostPublishSort !== 'latest-activity') {
-      chips.push({
-        key: 'post-publish-sort',
-        label: postPublishSortLabel(workflowPostPublishSort),
-        clearLabel: 'Clear post-publish queue sort',
-        onClear: () => updateWorkflowRouteState((params) => {
-          params.delete(WORKFLOW_POST_PUBLISH_SORT_PARAM);
-        }, '#used-gear-post-publish'),
-      });
-    }
-    if (focusedPostPublishBucket) {
-      chips.push({
-        key: 'post-publish-bucket',
-        label: `Bucket: ${POST_PUBLISH_BUCKET_LABELS[focusedPostPublishBucket]}`,
-        clearLabel: 'Clear post-publish bucket filter',
-        onClear: () => handlePostPublishBucketChange('all'),
-      });
-    }
     return chips;
   }, [
-    focusedPostPublishBucket,
-    handlePostPublishBucketChange,
+    focusedPendingReviewGroupId,
+    focusedProgressGroupId,
     updateWorkflowQueueSearch,
     updateWorkflowRouteState,
     workflowPendingReviewSearch,
     workflowPendingReviewSort,
-    workflowPostPublishSearch,
-    workflowPostPublishSort,
     workflowProgressSearch,
     workflowProgressSort,
   ]);
@@ -532,6 +490,7 @@ export function AirtableTab({
         <UsedGearPendingReviewSection
           currentUserName={currentUserName}
           onOpenReviewRecord={(recordId) => onOpenManualIntake(recordId)}
+          focusedGroupId={focusedPendingReviewGroupId}
           searchTerm={workflowPendingReviewSearch}
           onSearchTermChange={(value) => updateWorkflowQueueSearch(
             WORKFLOW_PENDING_REVIEW_SEARCH_PARAM,
@@ -555,6 +514,7 @@ export function AirtableTab({
           onOpenPhotosForm={onOpenPhotosForm}
           onOpenOperationalRecord={onOpenOperationalRecord}
           onOpenListingsRecord={onOpenListingsRecord}
+          focusedGroupId={focusedProgressGroupId}
           searchTerm={workflowProgressSearch}
           onSearchTermChange={(value) => updateWorkflowQueueSearch(
             WORKFLOW_PROGRESS_SEARCH_PARAM,
@@ -570,29 +530,6 @@ export function AirtableTab({
             }
           }, '#used-gear-progress-queue')}
         />
-
-        <UsedGearWorkflowPostPublishSection
-          currentUserName={currentUserName}
-          focusedBucket={focusedPostPublishBucket}
-          onFocusedBucketChange={handlePostPublishBucketChange}
-          onOpenOperationalRecord={onOpenOperationalRecord}
-          onOpenListingsRecord={onOpenListingsRecord}
-          searchTerm={workflowPostPublishSearch}
-          onSearchTermChange={(value) => updateWorkflowQueueSearch(
-            WORKFLOW_POST_PUBLISH_SEARCH_PARAM,
-            value,
-            '#used-gear-post-publish',
-          )}
-          sortMode={workflowPostPublishSort}
-          onSortModeChange={(value) => updateWorkflowRouteState((params) => {
-            if (value === 'latest-activity') {
-              params.delete(WORKFLOW_POST_PUBLISH_SORT_PARAM);
-            } else {
-              params.set(WORKFLOW_POST_PUBLISH_SORT_PARAM, value);
-            }
-          }, '#used-gear-post-publish')}
-        />
-
         <section id="inventory-directory-list" className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>

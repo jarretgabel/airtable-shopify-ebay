@@ -40,6 +40,7 @@ describe('buildAppFrameNavTabs', () => {
       disabled: false,
       disabledReason: undefined,
     });
+    expect(result.postPublishNavTabs).toEqual([]);
   });
 
   it('places the workflow guide in the utility navigation group', () => {
@@ -55,9 +56,10 @@ describe('buildAppFrameNavTabs', () => {
 
     expect(result.tabs).toEqual([expect.objectContaining({ key: 'dashboard' })]);
     expect(result.utilityNavTabs).toEqual(expect.arrayContaining([
-      expect.objectContaining({ key: 'workflow-guide', label: 'Workflow Guide', active: true }),
+      expect.objectContaining({ key: 'workflow-guide', label: 'User Guide', active: true }),
       expect.objectContaining({ key: 'market', label: 'HiFi Shark' }),
     ]));
+    expect(result.postPublishNavTabs).toEqual([]);
   });
 
   it('shows workflow queue volume on the inventory tab badge', () => {
@@ -74,6 +76,7 @@ describe('buildAppFrameNavTabs', () => {
     expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'inventory')).toMatchObject({ badgeCount: 7 });
     expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'testing')).toBeUndefined();
     expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'photos')).toBeUndefined();
+    expect(result.postPublishNavTabs).toEqual([]);
   });
 
   it('uses clearer operator labels for inventory processing navigation while hiding form-only tabs', () => {
@@ -97,11 +100,12 @@ describe('buildAppFrameNavTabs', () => {
     expect(result.intakeNavTabs).toEqual(expect.arrayContaining([
       expect.objectContaining({ key: 'manual-intake', label: 'Manual Intake' }),
     ]));
+    expect(result.postPublishNavTabs).toEqual([]);
   });
 
-  it('preserves intake, processing, and listing order from the canonical page sequence', () => {
+  it('preserves intake, processing, and commerce order from the canonical page sequence', () => {
     const result = buildAppFrameNavTabs({
-      visibleTabs: ['dashboard', 'manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'shopify', 'ebay'],
+      visibleTabs: ['dashboard', 'manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'shopify', 'ebay'],
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
@@ -112,7 +116,8 @@ describe('buildAppFrameNavTabs', () => {
 
     expect(result.intakeNavTabs.map((tab) => tab.key)).toEqual(['manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review']);
     expect(result.inventoryProcessingNavTabs.map((tab) => tab.key)).toEqual(['inventory', 'testing-queue', 'photography-queue']);
-    expect(result.listingsNavTabs.map((tab) => tab.key)).toEqual(['listings', 'shopify', 'ebay']);
+    expect(result.listingsNavTabs.map((tab) => tab.key)).toEqual(['listings', 'post-publish', 'shopify', 'ebay']);
+    expect(result.postPublishNavTabs).toEqual([]);
   });
 
   it('shows listing-phase work volume on the listings tab badge', () => {
@@ -129,5 +134,6 @@ describe('buildAppFrameNavTabs', () => {
     expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'inventory')).toMatchObject({ badgeCount: 2 });
     expect(result.listingsNavTabs.find((tab) => tab.key === 'listings')).toMatchObject({ badgeCount: 4 });
     expect(result.listingsNavTabs.find((tab) => tab.key === 'shopify')).toMatchObject({ badgeCount: undefined });
+    expect(result.postPublishNavTabs).toEqual([]);
   });
 });

@@ -9,6 +9,7 @@ export function AppFrame({
   tabs,
   intakeTabs,
   listingsTabs,
+  postPublishTabs,
   inventoryProcessingTabs,
   postEbayTabs,
   utilityTabs,
@@ -63,6 +64,7 @@ export function AppFrame({
         tabs={tabs}
         intakeTabs={intakeTabs}
         listingsTabs={listingsTabs}
+        postPublishTabs={postPublishTabs}
         inventoryProcessingTabs={inventoryProcessingTabs}
         postEbayTabs={postEbayTabs}
         utilityTabs={utilityTabs}

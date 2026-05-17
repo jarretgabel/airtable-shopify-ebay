@@ -98,7 +98,6 @@ export function UserDirectoryPanel({
       >
         <PageTitleHeader
           title="User Management"
-          description="Admins and owners can manage users in a table list and open each profile in its own URL."
           actions={(
             <button
               type="button"

@@ -20,8 +20,8 @@ describe('buildDashboardInsights', () => {
     });
 
     expect(insights).toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: 'used-gear-sold-ready', inventoryPostPublishBucket: 'sold-ready', targetTab: 'inventory' }),
-      expect.objectContaining({ id: 'used-gear-stale-listings', inventoryPostPublishBucket: 'stale-listing', targetTab: 'inventory' }),
+      expect.objectContaining({ id: 'used-gear-sold-ready', inventoryPostPublishBucket: 'sold-ready', targetTab: 'post-publish' }),
+      expect.objectContaining({ id: 'used-gear-stale-listings', inventoryPostPublishBucket: 'stale-listing', targetTab: 'post-publish' }),
     ]));
   });
 });

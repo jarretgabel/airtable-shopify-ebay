@@ -375,6 +375,16 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     ],
   },
   {
+    title: 'Manual Intake',
+    pages: ['manual-intake'],
+    items: [
+      'Start here when an operator already has enough detail to create the intake row without waiting for a JotForm submission or Parking Lot 1 review.',
+      'Use the same form when an accepted arrival-stage row needs intake corrections instead of switching to a second edit surface.',
+      'Choose the route inside the form based on where the item should land next: Parking Lot 1 for qualification, or one of the Parking Lot 2 buckets for accepted arrival-stage work.',
+      'Use submission-group, pickup, and qualification notes when the manual record still needs to stay tied to a larger deal or shared intake context.',
+    ],
+  },
+  {
     title: 'Parking Lot 1',
     pages: ['parking-lot-1'],
     items: [
@@ -384,10 +394,31 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     ],
   },
   {
+    title: 'Parking Lot 2',
+    pages: ['parking-lot-2'],
+    items: [
+      'Work accepted intake rows that still need arrival handling, SKU assignment, or missing-item follow-up.',
+      'Use this page for the accepted arrival-stage buckets before the row reaches the broader workflow hub or specialist queues.',
+      'Move each row forward into the current operational surface instead of leaving accepted work parked longer than necessary.',
+    ],
+  },
+  {
+    title: 'Trash Review',
+    pages: ['trash-review'],
+    items: [
+      'Review unqualified rows in active trash and make the recovery decision.',
+      'Use it to restore, re-qualify back into the workflow, or permanently remove rows that should not continue.',
+      'Treat this as the exception lane after Parking Lot 1 decides the item does not currently qualify.',
+    ],
+  },
+  {
     title: 'Workflow Hub',
     pages: ['inventory'],
     items: [
       'See pending review, active stage handoffs, and post-publish work in one place.',
+      'Pending Review is where new intake rows are reviewed and moved into the next real step.',
+      'The processing and holding queue stays focused on accepted rows that still belong to arrival handling, processing, or the shared testing-and-photography holding stage. Listings takes over once both signoffs are complete.',
+      'Post-Publish tracks listing follow-up by bucket so you can open the operational record for per-row lifecycle actions.',
       'Use the main queue view for triage, routing, quick actions, and workflow status checks.',
       'Open an operational record when a row needs deeper work.',
     ],
@@ -396,16 +427,20 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     title: 'Testing Queue And Record',
     pages: ['testing-queue', 'testing'],
     items: [
-      'The queue shows what is ready for testing and what still needs hands-on verification.',
-      'The record-specific form is where the actual hands-on findings and signoff belong.',
+      'The queue is the shared post-intake holding stage for hands-on bench verification, not a listing-review destination.',
+      'Use the queue to triage, filter, sort, and share one exact workset through URL-backed state instead of handing off a vague list.',
+      'The record-specific form is where the actual hands-on findings and testing signoff belong.',
+      'A row should reach Listings only after both testing and photography signoffs are complete.',
     ],
   },
   {
     title: 'Photography Queue And Record',
     pages: ['photography-queue', 'photos'],
     items: [
-      'The queue shows what is ready for photography and what still needs image completion.',
+      'The queue is the shared post-intake holding stage for photography work, not an early listing-prep page.',
+      'Use the queue to keep grouped submissions together, confirm which rows still need image work, and hand off a specific filtered workset through the URL.',
       'The record-specific form is where image work and handoff notes should be completed.',
+      'Carry forward testing notes, included-item context, and submission-level handoff detail while planning shoots.',
     ],
   },
   {
@@ -419,7 +454,7 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
   },
   {
     title: 'Support And Admin Tools',
-    pages: ['jotform', 'market', 'trash-review', 'parking-lot-2', 'users', 'imagelab', 'settings', 'notifications'],
+    pages: ['jotform', 'market', 'users', 'imagelab', 'settings', 'notifications'],
     items: [
       'These pages support intake sources, exceptions, account management, and supporting utilities. HiFi Shark is limited to owners, developers, and processors, while Image Lab is open to every non-tester role.',
       'Use them when the main queue pages do not match the job you are actually trying to do.',

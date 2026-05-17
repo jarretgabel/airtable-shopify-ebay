@@ -155,7 +155,7 @@ export function useAppShellControls({
     }
   }, [activeTab, canAccessPage, exportingPdf, navigateToTab, pushNotification, setExportProgress, setExportingPdf, shellRef]);
 
-  const { tabs, intakeNavTabs, listingsNavTabs, inventoryProcessingNavTabs, postEbayNavTabs, utilityNavTabs } = buildAppFrameNavTabs({
+  const { tabs, intakeNavTabs, listingsNavTabs, postPublishNavTabs, inventoryProcessingNavTabs, postEbayNavTabs, utilityNavTabs } = buildAppFrameNavTabs({
     visibleTabs,
     activeTab,
     exportingPdf,
@@ -177,6 +177,7 @@ export function useAppShellControls({
     tabs,
     intakeNavTabs,
     listingsNavTabs,
+    postPublishNavTabs,
     inventoryProcessingNavTabs,
     postEbayNavTabs,
     utilityNavTabs,

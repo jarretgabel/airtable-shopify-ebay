@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
@@ -233,7 +232,6 @@ export function UsedGearPendingReviewRecordPage({
         <WorkflowPageHeader
           eyebrow="Parking Lot 1 Review"
           title={displayInventoryValue(record.fields.SKU)}
-          description="Use this focused intake decision page to qualify the row into Lot 2 or route it into trash without working from the queue card."
           detail={<>{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</>}
           actions={(
             <>
@@ -266,11 +264,9 @@ export function UsedGearPendingReviewRecordPage({
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em]">Grouped Intake</p>
-                <div className="mt-3 max-w-2xl">
-                  <CollapsibleHelperText label="Why open the group page">
-                    This row belongs to {group.label} with {group.records.length} intake rows. Use the group page when pricing, allocation, or routing should be managed together.
-                  </CollapsibleHelperText>
-                </div>
+                <p className="mt-3 max-w-2xl leading-6">
+                  This row belongs to {group.label} with {group.records.length} intake rows. Use the group page when pricing, allocation, or routing should be managed together.
+                </p>
               </div>
               <button
                 type="button"

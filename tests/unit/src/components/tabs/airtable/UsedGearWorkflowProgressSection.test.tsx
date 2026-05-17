@@ -105,7 +105,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-progress-a');
   });
 
-  it('ignores the legacy owner filter prop and keeps the full progress queue visible', async () => {
+  it('keeps the full progress queue visible without owner-scoped filtering', async () => {
     loadWorkflowProgressQueueMock.mockResolvedValue([
       {
         id: 'rec-progress-a',

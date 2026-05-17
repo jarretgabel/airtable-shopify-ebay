@@ -355,8 +355,6 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
         <WorkflowPageHeader
           eyebrow="SB Inventory"
           title="Photos"
-          description="Upload final listing photos and capture cosmetic notes for listing prep."
-          descriptionHint="Use this form after testing is complete to upload the primary listing photos, capture Audiogon rating and cosmetic notes, and mark the unit as photo'd for listing prep."
           detail={recordId ? <>Editing record <strong>{recordId}</strong>. Saving here updates only the Photos fields for this inventory row.</> : undefined}
           actions={onBackToDirectory ? (
             <button

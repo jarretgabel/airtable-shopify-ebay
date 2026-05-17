@@ -17,17 +17,10 @@ npm run local:api:check
 - [ ] Verify the Inventory workflow badge count still appears when actionable rows exist.
 - [ ] Open Parking Lot 1 and confirm it shows workflow-only intake triage.
 - [ ] Open JotForm from the utility nav and confirm it shows the raw source feed without the workflow queue embedded.
-- [ ] Use the quick shortcut buttons for `My Pending Review` and `My Progress` and confirm Inventory applies the matching owner filter without clearing unrelated directory filters.
-- [ ] Use the quick shortcut buttons for `Assigned To Me + Sold Ready` and `Unassigned + Stale Listings` and confirm Inventory updates the post-publish route state without clearing unrelated queue searches.
 - [ ] Confirm `Reset Workflow View` clears search, focused group, bucket, history, collapsed-state, and sort params.
 - [ ] Save a named workflow view preset, reapply it, and delete it.
 
-## Queue Ownership Filters
-- [ ] In Pending Review, switch between `All Owners`, `Assigned To Me`, and `Unassigned Only` and confirm the queue rows, group counts, and URL params update together.
-- [ ] In Progress, switch between `All Owners`, `Assigned To Me`, and `Unassigned Only` and confirm the queue rows, group counts, and URL params update together.
-- [ ] In Pending Review, use `Claim Oldest Unassigned` and confirm the oldest visible unassigned row assigns to the current user and drops out of the unassigned view.
-- [ ] In Progress, use `Claim Oldest Unassigned` and confirm the oldest visible unassigned row assigns to the current user and drops out of the unassigned view.
-- [ ] In Post-Publish, use `Claim Oldest Unassigned` and confirm the oldest visible unassigned active, stale, or sold-ready row assigns to the current user while shipped-history rows remain unaffected.
+## Queue Focus And Audit
 - [ ] In each workflow queue, confirm the row cards show a `Last touched` summary that reflects the newest available owner, stage, or stale-recovery update instead of a blank audit state.
 
 ## Dashboard Routing And Ownership

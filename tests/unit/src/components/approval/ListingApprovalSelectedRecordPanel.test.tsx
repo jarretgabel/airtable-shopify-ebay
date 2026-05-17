@@ -62,9 +62,6 @@ describe('ListingApprovalSelectedRecordPanel', () => {
     );
 
     expect(screen.getByText('Pre-Listing Review Workspace')).toBeInTheDocument();
-    expect(screen.getByText('Listing Review Home')).toBeInTheDocument();
-    expect(screen.getByText('Review Flow')).toBeInTheDocument();
-    expect(screen.getByText('Listing review guide')).toBeInTheDocument();
     expect(screen.getByText('Selected Record View')).toBeInTheDocument();
   });
 
@@ -88,7 +85,6 @@ describe('ListingApprovalSelectedRecordPanel', () => {
       />,
     );
 
-    expect(screen.queryByText('Listing Review Home')).not.toBeInTheDocument();
     expect(screen.getByText('Selected Record View')).toBeInTheDocument();
   });
 });

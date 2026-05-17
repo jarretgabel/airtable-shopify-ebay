@@ -10,6 +10,7 @@ export const APP_PAGES = [
   'testing',
   'photos',
   'listings',
+  'post-publish',
   'shopify',
   'ebay',
   'jotform',
@@ -42,6 +43,7 @@ const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'photography-queue',
     'testing',
     'photos',
+    'post-publish',
     'market',
     'imagelab',
   ],
@@ -63,7 +65,7 @@ export function normalizeAllowedPages(pages: AppPage[], role: UserRole): AppPage
   const nextPages = new Set(uniquePages.filter((page) => allowedSet.has(page)));
 
   if (role === 'processor' && nextPages.has('inventory')) {
-    ['manual-intake', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos'].forEach((page) => nextPages.add(page as AppPage));
+    ['manual-intake', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'post-publish'].forEach((page) => nextPages.add(page as AppPage));
   }
 
   return ROLE_ALLOWED_PAGES[role].filter((page) => nextPages.has(page));

@@ -43,6 +43,7 @@ This backlog is for non-blocking improvements after the major Phase 1 workflow f
 - [x] Add a workflow analytics snapshot for counts by status, age, and marketplace to simplify operational review.
 
 ## Documentation
+- Historical note: ownership filters, quick-owner presets, and claim actions listed below describe earlier workflow experiments and should not be read as the current UI contract.
 - [x] Revisit the surface audit when Phase 2 implementation starts so reused forms are updated before launch.
 - [x] Add a short operator guide for each queue section after the workflow UI stabilizes.
 - [x] Document the publish writeback behavior for Shopify and eBay once marketplace-specific edge cases are fully settled.

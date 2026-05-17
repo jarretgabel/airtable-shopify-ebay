@@ -65,7 +65,7 @@ export function buildDashboardInsights(input: InsightInput): DashboardInsight[] 
       title: 'Used gear ready to ship',
       detail: `${workflowSoldReadyCount} used-gear item${workflowSoldReadyCount === 1 ? ' is' : 's are'} sold and ready to ship.`,
       severity: 'critical',
-      targetTab: 'inventory',
+      targetTab: 'post-publish',
       inventoryPostPublishBucket: 'sold-ready',
     });
   }
@@ -76,7 +76,7 @@ export function buildDashboardInsights(input: InsightInput): DashboardInsight[] 
       title: 'Used gear listings went stale',
       detail: `${workflowStaleListingCount} used-gear listing${workflowStaleListingCount === 1 ? ' has' : 's have'} crossed into stale review.`,
       severity: workflowStaleListingCount >= 3 ? 'warning' : 'info',
-      targetTab: 'inventory',
+      targetTab: 'post-publish',
       inventoryPostPublishBucket: 'stale-listing',
     });
   }

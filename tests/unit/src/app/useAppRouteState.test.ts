@@ -54,6 +54,11 @@ describe('useAppRouteState', () => {
     expect(state.activeTab).toBe('workflow-guide');
   });
 
+  it('maps the post-publish route', () => {
+    const state = useAppRouteState(locationFor('/workflow/post-publish'), ['dashboard', 'post-publish']);
+    expect(state.activeTab).toBe('post-publish');
+  });
+
   it('maps manual-intake deep links with record ids', () => {
     const state = useAppRouteState(locationFor('/inventory/manual-intake/rec%20123'), ['dashboard', 'manual-intake']);
     expect(state.activeTab).toBe('manual-intake');

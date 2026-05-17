@@ -2,7 +2,8 @@ interface CompactIconActionButtonProps {
   label: string;
   onClick: () => void;
   variant?: 'compact-primary' | 'compact-secondary' | 'small-secondary';
-  icon?: 'open' | 'group';
+  icon?: 'open' | 'group' | 'check' | 'truck';
+  disabled?: boolean;
 }
 
 const variantClassNames: Record<NonNullable<CompactIconActionButtonProps['variant']>, string> = {
@@ -16,6 +17,7 @@ export function CompactIconActionButton({
   onClick,
   variant = 'compact-secondary',
   icon = 'open',
+  disabled = false,
 }: CompactIconActionButtonProps) {
   return (
     <button
@@ -24,6 +26,7 @@ export function CompactIconActionButton({
       title={label}
       className={variantClassNames[variant]}
       onClick={onClick}
+      disabled={disabled}
     >
       {icon === 'group' ? (
         <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
@@ -31,6 +34,17 @@ export function CompactIconActionButton({
           <path d="M12.917 10A2.083 2.083 0 0 0 12.917 5.833H10.833" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
           <path d="M7.083 14.167A2.083 2.083 0 0 1 7.083 10h2.084" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
           <path d="M12.917 14.167A2.083 2.083 0 0 0 12.917 10H10.833" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+        </svg>
+      ) : icon === 'check' ? (
+        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+          <path d="m5.833 10.417 2.5 2.5 5.834-5.834" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : icon === 'truck' ? (
+        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+          <path d="M2.917 5.833h8.75v6.25h-8.75z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M11.667 8.333h2.291l1.875 1.875v1.875h-4.166" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M5.417 14.583a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z" stroke="currentColor" strokeWidth="1.75" />
+          <path d="M14.583 14.583a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z" stroke="currentColor" strokeWidth="1.75" />
         </svg>
       ) : (
         <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">

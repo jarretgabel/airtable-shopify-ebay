@@ -13,6 +13,7 @@ const PROCESSOR_PAGES: AppPage[] = [
   'photography-queue',
   'testing',
   'photos',
+  'post-publish',
   'market',
   'imagelab',
 ];
@@ -43,6 +44,7 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'testing',
     'photos',
     'listings',
+    'post-publish',
     'shopify',
     'ebay',
     'jotform',
@@ -64,6 +66,7 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'testing',
     'photos',
     'listings',
+    'post-publish',
     'shopify',
     'ebay',
     'jotform',
@@ -88,6 +91,7 @@ const PROCESSOR_LEGACY_EXPANSIONS: AppPage[] = [
   'photography-queue',
   'testing',
   'photos',
+  'post-publish',
 ];
 
 export const WORKFLOW_DASHBOARD_PAGES: AppPage[] = [
@@ -100,6 +104,7 @@ export const WORKFLOW_DASHBOARD_PAGES: AppPage[] = [
   'photography-queue',
   'testing',
   'photos',
+  'post-publish',
 ];
 
 export function getRoleDefaultPages(role: UserRole): AppPage[] {

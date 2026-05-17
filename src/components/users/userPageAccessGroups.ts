@@ -33,6 +33,12 @@ export const USER_PAGE_ACCESS_GROUPS: UserPageAccessGroup[] = [
     pages: ['testing-queue', 'photography-queue'],
   },
   {
+    key: 'post-publish',
+    title: 'Post-Publish',
+    description: 'Marketplace follow-through after Listings hands work off to stale, sold-ready, and shipped lifecycle buckets.',
+    pages: ['post-publish'],
+  },
+  {
     key: 'forms',
     title: 'Workflow Forms',
     description: 'Direct forms used by intake, testing, and photography operators to complete stage work.',

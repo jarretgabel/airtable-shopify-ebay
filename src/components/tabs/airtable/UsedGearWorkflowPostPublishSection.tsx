@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass, smallSuccessActionButtonClass } from '@/components/app/buttonStyles';
-import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
+import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
+import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { FilterToggleIconButton } from '@/components/app/FilterToggleIconButton';
 import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
   loadWorkflowPostPublishQueue,
-  markWorkflowRowsShipped,
-  markWorkflowRowsSoldReadyToShip,
+  markWorkflowShipped,
+  markWorkflowSoldReadyToShip,
 } from '@/services/usedGearQueue';
 import {
   getUsedGearWorkflowPostPublishSnapshot,
@@ -24,6 +24,7 @@ import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearWorkflowPostPublishSectionProps {
   currentUserName: string;
+  showSectionIntro?: boolean;
   focusedBucket?: UsedGearWorkflowPostPublishBucket | null;
   onFocusedBucketChange?: (bucket: UsedGearWorkflowPostPublishBucket | 'all') => void;
   onOpenOperationalRecord: (recordId: string) => void;
@@ -119,10 +120,19 @@ function getPostPublishSortLabel(sortMode: UsedGearWorkflowPostPublishSortMode):
   return 'Latest Activity';
 }
 
+function getPostPublishListingsActionLabel(bucket: UsedGearWorkflowPostPublishBucket): string | null {
+  if (bucket === 'sold-ready' || bucket === 'shipped') {
+    return null;
+  }
+
+  return 'Open Listings Approval';
+}
+
 export function UsedGearWorkflowPostPublishSection({
+  showSectionIntro = true,
   focusedBucket = null,
   onFocusedBucketChange,
-  onOpenOperationalRecord,
+  onOpenOperationalRecord: _onOpenOperationalRecord,
   onOpenListingsRecord,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
@@ -138,10 +148,9 @@ export function UsedGearWorkflowPostPublishSection({
   const [showQueueTools, setShowQueueTools] = useState(false);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowPostPublishSortMode>('latest-activity');
-  const [selectedRecordIds, setSelectedRecordIds] = useState<string[]>([]);
+  const [updatingRecordIds, setUpdatingRecordIds] = useState<string[]>([]);
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
-  const batchBusy = false;
 
   useEffect(() => {
     if (!focusedBucket || !sectionRef.current) {
@@ -194,15 +203,6 @@ export function UsedGearWorkflowPostPublishSection({
       return recordSearchText(record).includes(normalizedSearch);
     });
   }, [records, searchTerm]);
-  const filteredRecordIdSet = useMemo(() => new Set(filteredRecords.map((record) => record.id)), [filteredRecords]);
-  const selectedRecords = useMemo(
-    () => filteredRecords.filter((record) => selectedRecordIds.includes(record.id)),
-    [filteredRecords, selectedRecordIds],
-  );
-  const selectedSnapshots = useMemo(
-    () => selectedRecords.map((record) => ({ record, snapshot: getUsedGearWorkflowPostPublishSnapshot(record) })).filter((entry) => entry.snapshot),
-    [selectedRecords],
-  );
 
   const recordsBySection = useMemo(() => {
     const entries = SECTION_DEFINITIONS.map((section) => [section.key, [] as AirtableRecord[]] as const);
@@ -226,10 +226,6 @@ export function UsedGearWorkflowPostPublishSection({
     return nextMap;
   }, [filteredRecords, sortMode]);
   const agingSummary = useMemo(() => buildPostPublishQueueAgingSummary(filteredRecords), [filteredRecords]);
-  const canBatchMarkSoldReady = selectedSnapshots.length > 0
-    && selectedSnapshots.every((entry) => entry.snapshot?.bucket === 'active-listing' || entry.snapshot?.bucket === 'stale-listing');
-  const canBatchMarkShipped = selectedSnapshots.length > 0
-    && selectedSnapshots.every((entry) => entry.snapshot?.bucket === 'sold-ready');
   const visibleSections = useMemo(() => {
     if (selectedBucket === 'all') {
       return SECTION_DEFINITIONS;
@@ -244,10 +240,6 @@ export function UsedGearWorkflowPostPublishSection({
       setShowQueueTools(true);
     }
   }, [hasBucketFilterActive]);
-
-  useEffect(() => {
-    setSelectedRecordIds((current) => current.filter((recordId) => filteredRecordIdSet.has(recordId)));
-  }, [filteredRecordIdSet]);
 
   const refreshQueue = async () => {
     setRefreshing(true);
@@ -271,28 +263,17 @@ export function UsedGearWorkflowPostPublishSection({
     setRecords((currentRecords) => currentRecords.map((record) => updatedById.get(record.id) ?? record));
   };
 
-  const handleBatchAction = async (action: (recordIds: string[]) => Promise<AirtableRecord[]>) => {
-    if (selectedRecordIds.length === 0) {
-      return;
-    }
-
+  const handleRecordAction = async (recordId: string, action: (nextRecordId: string) => Promise<AirtableRecord>) => {
     setError(null);
+    setUpdatingRecordIds((current) => [...current, recordId]);
 
     try {
-      replaceRecords(await action(selectedRecordIds));
-      setSelectedRecordIds([]);
+      replaceRecords([await action(recordId)]);
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to update the selected operational rows.');
+      setError(actionError instanceof Error ? actionError.message : 'Unable to update the operational row.');
+    } finally {
+      setUpdatingRecordIds((current) => current.filter((currentRecordId) => currentRecordId !== recordId));
     }
-  };
-
-  const openLastTouchedAction = (recordId: string, actionTarget: 'review-record' | 'operational-record' | 'listings-record') => {
-    if (actionTarget === 'listings-record') {
-      onOpenListingsRecord(recordId);
-      return;
-    }
-
-    onOpenOperationalRecord(recordId);
   };
 
   const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
@@ -313,39 +294,116 @@ export function UsedGearWorkflowPostPublishSection({
     onSortModeChange?.(value);
   };
 
-  const toggleRecordSelected = (recordId: string) => {
-    setSelectedRecordIds((current) => current.includes(recordId)
-      ? current.filter((value) => value !== recordId)
-      : [...current, recordId]);
-  };
+  const getSectionColumns = (sectionKey: UsedGearWorkflowPostPublishBucket): IntakeItemsMatrixColumn<AirtableRecord>[] => [
+    {
+      key: 'sku',
+      label: 'SKU',
+      width: '8.5rem',
+      renderCell: (record) => <span className="font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</span>,
+    },
+    {
+      key: 'item',
+      label: 'Item',
+      width: 'minmax(0,1.65fr)',
+      renderCell: (record) => {
+        const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+        const status = snapshot?.status ?? 'Unknown';
+        const channelLabel = snapshot?.channel || snapshot?.bucket || 'Workflow';
 
-  const toggleSectionSelected = (recordIds: string[]) => {
-    if (recordIds.length === 0) {
-      return;
-    }
+        return (
+          <div className="min-w-0">
+            <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
+            <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
+              <span>{status}</span>
+              <span>{channelLabel}</span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'overview',
+      label: 'Days Live',
+      width: '7rem',
+      renderCell: (record) => {
+        const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+        if (!snapshot) {
+          return <span className="text-xs text-[var(--muted)]">No lifecycle snapshot</span>;
+        }
 
-    setSelectedRecordIds((current) => {
-      const allSelected = recordIds.every((recordId) => current.includes(recordId));
-      if (allSelected) {
-        return current.filter((recordId) => !recordIds.includes(recordId));
-      }
+        return (
+          <span className="text-sm font-semibold text-[var(--ink)]">{snapshot.daysSinceListed ?? '—'}</span>
+        );
+      },
+    },
+    {
+      key: 'activity',
+      label: 'Last Touched',
+      width: '11rem',
+      renderCell: (record) => {
+        const lastTouchedSummary = buildPostPublishLastTouchedSummary(record);
 
-      return Array.from(new Set([...current, ...recordIds]));
-    });
-  };
+        return (
+          <span className="block text-xs text-[var(--muted)]">{lastTouchedSummary.timestamp}</span>
+        );
+      },
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      width: '8.5rem',
+      align: 'center',
+      headerClassName: 'border-l border-[var(--line)]/60',
+      cellClassName: 'border-l border-[var(--line)]/60',
+      renderCell: (record) => {
+        const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+        const listingsActionLabel = getPostPublishListingsActionLabel(sectionKey);
+        const recordBusy = updatingRecordIds.includes(record.id);
+        const showMarkSoldReady = snapshot?.bucket === 'active-listing' || snapshot?.bucket === 'stale-listing';
+        const showMarkShipped = snapshot?.bucket === 'sold-ready';
+
+        return (
+          <div className="flex min-h-[4.5rem] w-full items-center justify-center gap-1.5">
+            {showMarkSoldReady ? (
+              <CompactIconActionButton
+                label="Mark Sold Ready"
+                variant="compact-primary"
+                icon="check"
+                onClick={() => {
+                  void handleRecordAction(record.id, markWorkflowSoldReadyToShip);
+                }}
+                disabled={recordBusy}
+              />
+            ) : null}
+            {showMarkShipped ? (
+              <CompactIconActionButton
+                label="Mark Shipped"
+                variant="compact-primary"
+                icon="truck"
+                onClick={() => {
+                  void handleRecordAction(record.id, markWorkflowShipped);
+                }}
+                disabled={recordBusy}
+              />
+            ) : null}
+            {listingsActionLabel ? (
+              <CompactIconActionButton label={listingsActionLabel} onClick={() => onOpenListingsRecord(record.id)} disabled={recordBusy} />
+            ) : null}
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <section id="used-gear-post-publish" ref={sectionRef} className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
       <div className="flex flex-col gap-4">
-        <div>
-          <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Workflow</p>
-          <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Post-Publish Queue</h3>
-          <div className="mt-3 max-w-2xl">
-            <CollapsibleHelperText label="Queue guide">
-              Track listing follow-up by bucket, then open the operational record for per-row lifecycle actions.
-            </CollapsibleHelperText>
+        {showSectionIntro ? (
+          <div>
+            <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Workflow</p>
+            <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Post-Publish Queue</h3>
           </div>
-        </div>
+        ) : null}
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <label className="min-w-[240px] flex-1">
             <span className="sr-only">Search used gear post-publish queue</span>
@@ -463,58 +521,6 @@ export function UsedGearWorkflowPostPublishSection({
         </div>
       </div>
 
-      {selectedRecordIds.length > 0 ? (
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Selected Rows</p>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                {selectedRecordIds.length} selected row{selectedRecordIds.length === 1 ? '' : 's'} ready for batch lifecycle updates.
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <RefreshIconButton
-              onClick={() => {
-                void refreshQueue();
-              }}
-              disabled={refreshing}
-              loading={refreshing}
-              label="Refresh post-publish queue"
-              loadingLabel="Refreshing post-publish queue"
-            />
-            <button
-              className={smallSecondaryActionButtonClass}
-              type="button"
-              onClick={() => setSelectedRecordIds([])}
-              disabled={batchBusy}
-            >
-              Clear Selection
-            </button>
-            <button
-              type="button"
-              className={smallPrimaryActionButtonClass}
-              onClick={() => {
-                void handleBatchAction(markWorkflowRowsSoldReadyToShip);
-              }}
-              disabled={batchBusy || !canBatchMarkSoldReady}
-            >
-              Mark Selected Sold Ready
-            </button>
-            <button
-              type="button"
-              className={smallSuccessActionButtonClass}
-              onClick={() => {
-                void handleBatchAction(markWorkflowRowsShipped);
-              }}
-              disabled={batchBusy || !canBatchMarkShipped}
-            >
-              Mark Selected Shipped
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       {!loading && filteredRecords.length === 0 ? (
         <EmptySurface title="No post-publish operational rows" message="The used-gear workflow currently has no listed, stale, sold-ready, or shipped operational rows.">
           <p className="mt-3 text-sm text-[var(--muted)]">
@@ -530,8 +536,6 @@ export function UsedGearWorkflowPostPublishSection({
           </div>
         ) : visibleSections.map((section) => {
           const sectionRecords = recordsBySection.get(section.key) ?? [];
-          const sectionRecordIds = sectionRecords.map((record) => record.id);
-          const allSectionRecordsSelected = sectionRecordIds.length > 0 && sectionRecordIds.every((recordId) => selectedRecordIds.includes(recordId));
 
           return (
             <div key={section.key} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
@@ -544,14 +548,6 @@ export function UsedGearWorkflowPostPublishSection({
                   <div className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
                     {sectionRecords.length} row{sectionRecords.length === 1 ? '' : 's'}
                   </div>
-                  <button
-                      type="button"
-                      className={smallSecondaryActionButtonClass}
-                      onClick={() => toggleSectionSelected(sectionRecordIds)}
-                      disabled={sectionRecordIds.length === 0 || batchBusy}
-                    >
-                      {allSectionRecordsSelected ? 'Clear Bucket Selection' : 'Select Bucket'}
-                    </button>
                 </div>
               </div>
 
@@ -561,110 +557,12 @@ export function UsedGearWorkflowPostPublishSection({
                   <p className="mt-2 mb-0">{getPostPublishSectionEmptyGuidance(section.key)}</p>
                 </div>
               ) : (
-                <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                  {sectionRecords.map((record) => {
-                    const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
-                    if (!snapshot) return null;
-
-                    const lastTouchedSummary = buildPostPublishLastTouchedSummary(record);
-                    const selected = selectedRecordIds.includes(record.id);
-
-                    return (
-                      <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{snapshot.status}</p>
-                            <h5 className="mt-1 text-lg font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</h5>
-                            <p className="mt-1 text-sm text-[var(--muted)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</p>
-                          </div>
-                          <div className="inline-flex w-fit max-w-full items-center rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-[11px] font-semibold leading-4 text-[var(--muted)] sm:shrink-0">
-                            {snapshot.channel ? snapshot.channel : snapshot.bucket}
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-3 text-sm text-[var(--muted)]">
-                          <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                            <input
-                              type="checkbox"
-                              checked={selected}
-                              onChange={() => toggleRecordSelected(record.id)}
-                              disabled={batchBusy}
-                              aria-label={`Select ${displayInventoryValue(record.fields.SKU)}`}
-                            />
-                            Select Row
-                          </label>
-                        </div>
-
-                        <button
-                          type="button"
-                          className="mt-3 block w-full rounded-xl border border-[var(--line)] bg-[var(--bg)]/70 px-3 py-3 text-left text-sm text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
-                          onClick={() => openLastTouchedAction(record.id, lastTouchedSummary.actionTarget)}
-                          disabled={batchBusy}
-                        >
-                          <span className="font-semibold text-[var(--ink)]">Last touched:</span> {lastTouchedSummary.description} · {lastTouchedSummary.timestamp}
-                          <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{lastTouchedSummary.actionLabel}</span>
-                        </button>
-
-                        <div className="mt-3 grid gap-2 text-sm text-[var(--muted)] sm:grid-cols-2">
-                          <div>Days Live: {snapshot.daysSinceListed ?? '—'}</div>
-                          <div>Price: {displayInventoryValue(record.fields.Price || record.fields['Shopify Price'] || record.fields['Ebay Price'] || record.fields['eBay Price'])}</div>
-                          <div>Recovery Status: {displayInventoryValue(snapshot.staleRecoveryStatus)}</div>
-                        </div>
-
-                        {snapshot.bucket !== 'shipped' && snapshot.isPastStaleThreshold && snapshot.status !== 'Stale Listing, Shopify' && snapshot.status !== 'Stale Listing, eBay' ? (
-                          <div className="mt-3 rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-3 text-sm text-amber-200">
-                            This listing has been live for {snapshot.daysSinceListed ?? 0} days and has crossed the {snapshot.staleThresholdDays}-day stale threshold.
-                          </div>
-                        ) : null}
-
-                        <details className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--bg)]/60 px-3 py-3 text-sm text-[var(--muted)]">
-                          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                            More Lifecycle Details
-                          </summary>
-                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                            <div>Listed At: {displayInventoryValue(snapshot.listedAt)}</div>
-                            <div>Stale At: {displayInventoryValue(snapshot.staleListingAt)}</div>
-                            <div>Relisted At: {displayInventoryValue(snapshot.relistedAt)}</div>
-                            <div>Sold Ready At: {displayInventoryValue(snapshot.soldReadyToShipAt)}</div>
-                            <div>Shipped At: {displayInventoryValue(snapshot.shippedAt)}</div>
-                          </div>
-                          {snapshot.staleRecoveryNotes ? (
-                            <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-3 text-sm text-[var(--ink)]">
-                              {snapshot.staleRecoveryNotes}
-                            </div>
-                          ) : null}
-                          {snapshot.shipmentFollowThroughNotes ? (
-                            <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-3 text-sm text-[var(--ink)]">
-                              {snapshot.shipmentFollowThroughNotes}
-                            </div>
-                          ) : null}
-                          {snapshot.bucket !== 'sold-ready' && snapshot.bucket !== 'shipped' ? (
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                className={smallSecondaryActionButtonClass}
-                                onClick={() => onOpenListingsRecord(record.id)}
-                                disabled={batchBusy}
-                              >
-                                Open Listings Approval
-                              </button>
-                            </div>
-                          ) : null}
-                        </details>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            className={smallPrimaryActionButtonClass}
-                            onClick={() => onOpenOperationalRecord(record.id)}
-                            disabled={batchBusy}
-                          >
-                            Open Operational Record
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })}
+                <div className="mt-4">
+                  <IntakeItemsMatrix
+                    items={sectionRecords}
+                    columns={getSectionColumns(section.key)}
+                    getItemKey={(record) => record.id}
+                  />
                 </div>
               )}
             </div>

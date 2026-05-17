@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
-import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
@@ -24,6 +23,7 @@ export interface UsedGearWorkflowProgressSectionProps {
   showSectionIntro?: boolean;
   queueMode?: UsedGearWorkflowProgressQueueMode;
   sectionId?: string;
+  focusedGroupId?: string | null;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
   sortMode?: UsedGearWorkflowProgressSortMode;
@@ -235,6 +235,7 @@ export function UsedGearWorkflowProgressSection({
   onOpenListingsRecord,
   queueMode = 'all',
   sectionId = 'used-gear-progress-queue',
+  focusedGroupId = null,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
   sortMode: controlledSortMode,
@@ -318,6 +319,19 @@ export function UsedGearWorkflowProgressSection({
       return left.label.localeCompare(right.label);
     });
   }, [filteredRecords, sortMode]);
+  const visibleGroups = useMemo(() => {
+    if (!focusedGroupId) {
+      return groupedRecords;
+    }
+
+    return groupedRecords.filter((group) => group.id === focusedGroupId);
+  }, [focusedGroupId, groupedRecords]);
+  const matrixGroups = useMemo<IntakeItemsMatrixGroup<AirtableRecord>[]>(() => visibleGroups.map((group) => ({
+    id: group.id,
+    label: group.label,
+    description: group.description,
+    items: group.records,
+  })), [visibleGroups]);
   const refreshQueue = async () => {
     setRefreshing(true);
     setError(null);
@@ -356,11 +370,6 @@ export function UsedGearWorkflowProgressSection({
           <div>
             <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{queuePresentation.eyebrow}</p>
             <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{queuePresentation.title}</h3>
-            <div className="mt-3 max-w-2xl">
-              <CollapsibleHelperText label="Queue guide">
-                Keep this queue focused on accepted rows that still belong to arrival handling, processing, or the shared testing-and-photography holding stage. Listings takes over once both concurrent signoffs are complete.
-              </CollapsibleHelperText>
-            </div>
           </div>
         ) : null}
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -515,12 +524,14 @@ export function UsedGearWorkflowProgressSection({
             });
           }
 
-          const matrixGroups: IntakeItemsMatrixGroup<AirtableRecord>[] = groupedRecords.map((group) => ({
-            id: group.id,
-            label: group.label,
-            description: group.description,
-            items: group.records,
-          }));
+          if (!matrixGroups.length) {
+            return (
+              <EmptySurface
+                title="Focused progress group not found"
+                message="The shared Inventory link opened a progress group that is no longer visible in this queue."
+              />
+            );
+          }
 
           return (
             <IntakeItemsMatrix

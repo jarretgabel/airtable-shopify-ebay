@@ -28,6 +28,7 @@ interface AppDataParams {
 export function useAppData({ enabled = true, canAccessPage, activeTab, currentUserName, users }: AppDataParams) {
   const dashboardActive = enabled && activeTab === 'dashboard';
   const airtableEnabled = enabled && canAccessPage('inventory') && (dashboardActive || activeTab === 'inventory');
+  const postPublishEnabled = enabled && canAccessPage('post-publish');
   const shopifyEnabled = enabled && canAccessPage('shopify') && (dashboardActive || activeTab === 'shopify');
   const runtimeFeatures = getRuntimeFeatureCapabilities();
   const jotformEnabled = enabled && runtimeFeatures.jotform.available && canAccessPage('jotform') && (dashboardActive || activeTab === 'jotform');
@@ -48,7 +49,7 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, currentUs
     enabled && canAccessWorkflowDashboard(workflowDashboardPages),
     currentUserName,
   );
-  const usedGearWorkflowPostPublish = useUsedGearWorkflowPostPublishSummary(enabled && canAccessPage('inventory'), currentUserName);
+  const usedGearWorkflowPostPublish = useUsedGearWorkflowPostPublishSummary(postPublishEnabled, currentUserName);
 
   const JOTFORM_FORM_ID = runtimeFeatures.jotform.available ? checkOptionalEnv('VITE_JOTFORM_FORM_ID') : '';
   const jotform = useJotFormInquiries(JOTFORM_FORM_ID, 60_000, jotformEnabled);

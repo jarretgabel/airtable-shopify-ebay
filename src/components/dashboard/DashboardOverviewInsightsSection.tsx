@@ -41,10 +41,6 @@ const sectionHeaderClass = 'mb-4 flex items-center border-b border-[var(--line)]
 const sectionHeaderLabelClass = 'm-0 text-[1.05rem] font-semibold text-[var(--ink)]';
 
 function getInsightTargetLabel(targetTab: DashboardTargetTab): string {
-  if (targetTab === 'inventory') {
-    return 'Inventory';
-  }
-
   if (targetTab === 'shopify') {
     return 'Shopify';
   }
@@ -473,7 +469,7 @@ export function DashboardInsightsSection({
           <p className="m-0 text-[0.8rem] leading-[1.45] opacity-90">{insight.detail}</p>
           {targetTab ? (
             <>
-              {targetTab === 'inventory' && insight.inventoryPostPublishBucket ? (
+              {insight.inventoryPostPublishBucket ? (
                 <span className="mt-3 inline-flex rounded-full border border-current/30 bg-white/10 px-2.5 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.07em]">
                   Opens {getPostPublishTargetLabel(insight.inventoryPostPublishBucket)} Bucket
                 </span>
@@ -482,7 +478,7 @@ export function DashboardInsightsSection({
                 type="button"
                 className="mt-3 rounded-lg border border-current/30 bg-white/10 px-3 py-1.5 text-[0.72rem] font-semibold transition hover:bg-white/20"
                 onClick={() => {
-                  if (targetTab === 'inventory' && insight.inventoryPostPublishBucket) {
+                  if (insight.inventoryPostPublishBucket) {
                     onOpenInventoryPostPublishBucket(insight.inventoryPostPublishBucket);
                     return;
                   }

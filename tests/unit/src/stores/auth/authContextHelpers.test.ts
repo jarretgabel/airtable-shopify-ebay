@@ -98,6 +98,7 @@ describe('authContextHelpers', () => {
     expect(canUserAccessPage(user, 'photography-queue')).toBe(true);
     expect(canUserAccessPage(user, 'testing')).toBe(true);
     expect(canUserAccessPage(user, 'photos')).toBe(true);
+    expect(canUserAccessPage(user, 'post-publish')).toBe(true);
     expect(canUserAccessPage(user, 'notifications')).toBe(true);
     expect(canUserAccessPage(user, 'market')).toBe(true);
     expect(canUserAccessPage(user, 'imagelab')).toBe(true);
@@ -129,6 +130,7 @@ describe('authContextHelpers', () => {
       'photography-queue',
       'testing',
       'photos',
+      'post-publish',
       'market',
       'imagelab',
       'settings',

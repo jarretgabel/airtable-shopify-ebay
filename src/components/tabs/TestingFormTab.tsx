@@ -275,8 +275,6 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
         <WorkflowPageHeader
           eyebrow="SB Inventory"
           title="Testing"
-          description="Confirm testing details and service notes before the item moves forward."
-          descriptionHint="In addition to general testing and service, please double check all previously entered details to ensure accuracy of information."
           detail={recordId ? <>Editing record <strong>{recordId}</strong>. Saving here updates only the Testing fields for this inventory row.</> : undefined}
           actions={onBackToDirectory ? (
             <button

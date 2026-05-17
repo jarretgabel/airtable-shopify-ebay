@@ -97,7 +97,7 @@ export function useActionGuidanceNotifications({
   }, [canAccessPage, dismissByKey, ebayAuthenticated, navigateToTab, upsertByKey]);
 
   useEffect(() => {
-    if (!canAccessPage('inventory') || workflowPostPublishSoldReadyCount <= 0) {
+    if (!canAccessPage('post-publish') || workflowPostPublishSoldReadyCount <= 0) {
       dismissByKey(ACTION_KEYS.usedGearSoldReady);
       return;
     }
@@ -113,7 +113,7 @@ export function useActionGuidanceNotifications({
   }, [canAccessPage, dismissByKey, navigateToInventoryPostPublishBucket, upsertByKey, workflowPostPublishSoldReadyCount]);
 
   useEffect(() => {
-    if (!canAccessPage('inventory') || workflowPostPublishStaleListingCount <= 0) {
+    if (!canAccessPage('post-publish') || workflowPostPublishStaleListingCount <= 0) {
       dismissByKey(ACTION_KEYS.usedGearStale);
       return;
     }

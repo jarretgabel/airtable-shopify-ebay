@@ -92,8 +92,6 @@ export function NotificationsTab() {
     <section className="space-y-5">
       <PageTitleHeader
         title="Notifications"
-        description="Review active notifications, run quick actions, and clear resolved items."
-        descriptionClassName="max-w-[720px]"
         actions={(
           <>
             <button

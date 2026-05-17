@@ -16,7 +16,7 @@ export interface TrendSummary {
 }
 
 export type DashboardInsightSeverity = 'critical' | 'warning' | 'info' | 'positive';
-export type DashboardInsightTargetTab = 'jotform' | 'shopify' | 'inventory';
+export type DashboardInsightTargetTab = 'jotform' | 'shopify' | 'inventory' | 'post-publish';
 
 export interface DashboardInsight {
   id: string;

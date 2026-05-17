@@ -48,6 +48,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
 
   const activeTab: Tab = (() => {
     if (normalizedPath === '/listings' || listingsRecordMatch) return 'listings';
+    if (normalizedPath === '/workflow/post-publish') return 'post-publish';
     if (normalizedPath === '/ebay/listings' || ebayListingsRecordMatch) return 'ebay';
     if (normalizedPath === '/shopify/products' || shopifyListingsRecordMatch) return 'shopify';
     if (normalizedPath === '/parking-lot-1' || jotformReviewGroupMatch || jotformReviewRecordMatch) return 'parking-lot-1';

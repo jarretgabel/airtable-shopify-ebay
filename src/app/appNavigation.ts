@@ -13,8 +13,10 @@ export const TAB_PATHS: Record<Tab, string> = Object.entries(PAGE_DEFINITIONS).r
   {} as Record<Tab, string>,
 );
 
-export const LISTINGS_TABS = ['listings', 'shopify', 'ebay'] as const satisfies readonly Tab[];
+export const LISTINGS_TABS = ['listings', 'post-publish', 'shopify', 'ebay'] as const satisfies readonly Tab[];
 export const LISTINGS_TAB_SET = new Set<Tab>(LISTINGS_TABS as readonly Tab[]);
+export const POST_PUBLISH_TABS = [] as const satisfies readonly Tab[];
+export const POST_PUBLISH_TAB_SET = new Set<Tab>(POST_PUBLISH_TABS as readonly Tab[]);
 export const INTAKE_TABS = ['manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review'] as const satisfies readonly Tab[];
 export const INTAKE_TAB_SET = new Set<Tab>(INTAKE_TABS as readonly Tab[]);
 export const INVENTORY_PROCESSING_TABS = ['inventory', 'testing-queue', 'photography-queue', 'testing', 'photos'] as const satisfies readonly Tab[];
@@ -24,9 +26,10 @@ export const UTILITY_TAB_SET = new Set<Tab>(UTILITY_TABS as readonly Tab[]);
 
 const NAV_LABELS: Partial<Record<Tab, string>> = {
   dashboard: 'Dashboard',
-  'workflow-guide': 'Workflow Guide',
+  'workflow-guide': 'User Guide',
   inventory: 'Workflow Hub',
   listings: 'Listings',
+  'post-publish': 'Post-Publish',
   shopify: 'Shopify',
   market: 'HiFi Shark',
   'manual-intake': 'Manual Intake',

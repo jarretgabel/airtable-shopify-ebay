@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
-import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
@@ -209,11 +208,6 @@ export function UsedGearLotTwoSection({
           <div>
             <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Workflow</p>
             <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Parking Lot 2</h3>
-            <div className="mt-3 max-w-2xl">
-              <CollapsibleHelperText label="Queue guide">
-                Work accepted intake rows that still need arrival handling, SKU assignment, or missing-item follow-up.
-              </CollapsibleHelperText>
-            </div>
           </div>
         ) : null}
         <QueueSearchToolbar

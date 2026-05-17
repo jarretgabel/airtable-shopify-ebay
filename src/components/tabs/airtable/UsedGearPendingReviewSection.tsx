@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
-import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import {
@@ -16,6 +15,7 @@ export interface UsedGearPendingReviewSectionProps {
   onOpenGroupReview?: (groupId: string) => void;
   onOpenReviewRecord: (recordId: string) => void;
   showSectionIntro?: boolean;
+  focusedGroupId?: string | null;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
   sortMode?: UsedGearPendingReviewSortMode;
@@ -96,6 +96,7 @@ export function UsedGearPendingReviewSection({
   onOpenGroupReview,
   onOpenReviewRecord,
   showSectionIntro = true,
+  focusedGroupId = null,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
   sortMode: controlledSortMode,
@@ -177,6 +178,19 @@ export function UsedGearPendingReviewSection({
       return left.label.localeCompare(right.label);
     });
   }, [filteredRecords, sortMode]);
+  const visibleGroups = useMemo(() => {
+    if (!focusedGroupId) {
+      return groupedRecords;
+    }
+
+    return groupedRecords.filter((group) => group.id === focusedGroupId);
+  }, [focusedGroupId, groupedRecords]);
+  const matrixGroups = useMemo<IntakeItemsMatrixGroup<AirtableRecord>[]>(() => visibleGroups.map((group) => ({
+    id: group.id,
+    label: group.label,
+    description: group.description,
+    items: group.records,
+  })), [visibleGroups]);
   const refreshQueue = async () => {
     setRefreshing(true);
     setError(null);
@@ -213,11 +227,6 @@ export function UsedGearPendingReviewSection({
           <div className="pb-1">
             <p className="m-0 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Used Gear Workflow</p>
             <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Pending Review Queue</h3>
-            <div className="mt-3 max-w-2xl">
-              <CollapsibleHelperText label="Queue guide">
-                Review new intake rows and move qualified items into the next step.
-              </CollapsibleHelperText>
-            </div>
           </div>
         ) : null}
         <QueueSearchToolbar
@@ -312,12 +321,14 @@ export function UsedGearPendingReviewSection({
             },
           ];
 
-          const matrixGroups: IntakeItemsMatrixGroup<AirtableRecord>[] = groupedRecords.map((group) => ({
-            id: group.id,
-            label: group.label,
-            description: group.description,
-            items: group.records,
-          }));
+          if (!matrixGroups.length) {
+            return (
+              <EmptySurface
+                title="Focused pending-review group not found"
+                message="The shared Inventory link opened a pending-review group that is no longer visible in this queue."
+              />
+            );
+          }
 
           return (
             <IntakeItemsMatrix

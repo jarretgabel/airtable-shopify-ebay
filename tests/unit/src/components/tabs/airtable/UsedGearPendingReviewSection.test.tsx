@@ -140,7 +140,7 @@ describe('UsedGearPendingReviewSection', () => {
     expect(screen.queryByText('SUB-42')).not.toBeInTheDocument();
   });
 
-  it('ignores the legacy owner filter prop and keeps the full queue visible', async () => {
+  it('keeps the full pending-review queue visible without owner-scoped filtering', async () => {
     loadPendingReviewQueueMock.mockResolvedValue([
       {
         id: 'rec-pending-a',

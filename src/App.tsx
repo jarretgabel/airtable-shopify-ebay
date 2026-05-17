@@ -107,7 +107,7 @@ function App() {
     currentUserName: currentUser?.name ?? '',
     users,
   });
-  const { onRefresh, onExportCurrentPage, onExportAllPages, tabs, intakeNavTabs, listingsNavTabs, inventoryProcessingNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
+  const { onRefresh, onExportCurrentPage, onExportAllPages, tabs, intakeNavTabs, listingsNavTabs, postPublishNavTabs, inventoryProcessingNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
     activeTab,
     visibleTabs,
     workflowInventoryBadgeCount: workflowNotificationSummary.workflowQueueBadgeCount,
@@ -222,6 +222,7 @@ function App() {
           tabs={tabs}
           intakeTabs={intakeNavTabs}
           listingsTabs={listingsNavTabs}
+              postPublishTabs={postPublishNavTabs}
           inventoryProcessingTabs={inventoryProcessingNavTabs}
           postEbayTabs={postEbayNavTabs}
           utilityTabs={utilityNavTabs}

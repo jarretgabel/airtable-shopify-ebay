@@ -42,8 +42,6 @@ export function UsedGearLotTwoTab({
     <WorkflowQueuePageTemplate
       eyebrow="Used Gear Intake"
       title="Parking Lot 2"
-      description="Track accepted intake through arrival, SKU assignment, and the next handoff."
-      descriptionHint="Use the queue actions to open Manual Intake or the current operational record directly from this page."
     >
       <UsedGearLotTwoSection
         showSectionIntro={false}

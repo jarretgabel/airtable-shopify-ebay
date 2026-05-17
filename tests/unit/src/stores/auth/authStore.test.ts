@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getRoleDefaultPages } from '@/auth/roleAccess';
 import type { AppUser } from '@/stores/auth/authTypes';
 import { useAuthStore } from '@/stores/auth/authStore';
 
@@ -211,7 +212,7 @@ describe('authStore updateUserRole', () => {
     expect(result.success).toBe(true);
     expect(updateUserInAirtableMock).toHaveBeenCalledWith(expect.objectContaining({
       role: 'developer',
-      allowedPages: ['dashboard', 'jotform', 'settings', 'notifications'],
+      allowedPages: getRoleDefaultPages('developer'),
     }));
   });
 

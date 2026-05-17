@@ -12,16 +12,29 @@ interface TabSection {
   tabs: AppTab[];
 }
 
+const INTAKE_SECTION_KEYS = {
+  forms: ['manual-intake', 'jotform'] as const,
+  parkingLots: ['parking-lot-1', 'parking-lot-2'] as const,
+  trash: ['trash-review'] as const,
+};
+
 const INVENTORY_PROCESSING_SECTION_KEYS = {
   hub: ['inventory'] as const,
   reviewQueues: ['testing-queue', 'photography-queue'] as const,
   forms: ['testing', 'photos'] as const,
 };
 
+const SELLING_SECTION_KEYS = {
+  review: ['listings'] as const,
+  followThrough: ['post-publish'] as const,
+  channels: ['shopify', 'ebay'] as const,
+};
+
 interface AppFrameHeaderNavigationProps {
   tabs: AppTab[];
   intakeTabs: AppTab[];
   listingsTabs: AppTab[];
+  postPublishTabs: AppTab[];
   inventoryProcessingTabs: AppTab[];
   postEbayTabs: AppTab[];
   utilityTabs: AppTab[];
@@ -37,6 +50,7 @@ export function AppFrameHeaderNavigation({
   tabs,
   intakeTabs,
   listingsTabs,
+  postPublishTabs,
   inventoryProcessingTabs,
   postEbayTabs,
   utilityTabs,
@@ -56,6 +70,27 @@ export function AppFrameHeaderNavigation({
   const listingsBadgeTotal = listingsTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const inventoryProcessingBadgeTotal = inventoryProcessingTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const utilityBadgeTotal = utilityTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
+  const intakeTabLookup = new Map(intakeTabs.map((tab) => [tab.key, tab]));
+  const intakeSections: TabSection[] = [
+    {
+      title: 'Intake Forms',
+      tabs: INTAKE_SECTION_KEYS.forms
+        .map((key) => intakeTabLookup.get(key))
+        .filter((tab): tab is AppTab => Boolean(tab)),
+    },
+    {
+      title: 'Parking Lots',
+      tabs: INTAKE_SECTION_KEYS.parkingLots
+        .map((key) => intakeTabLookup.get(key))
+        .filter((tab): tab is AppTab => Boolean(tab)),
+    },
+    {
+      title: 'Trash',
+      tabs: INTAKE_SECTION_KEYS.trash
+        .map((key) => intakeTabLookup.get(key))
+        .filter((tab): tab is AppTab => Boolean(tab)),
+    },
+  ].filter((section) => section.tabs.length > 0);
   const inventoryProcessingTabLookup = new Map(inventoryProcessingTabs.map((tab) => [tab.key, tab]));
   const inventoryProcessingSections: TabSection[] = [
     {
@@ -74,6 +109,27 @@ export function AppFrameHeaderNavigation({
       title: 'Forms',
       tabs: INVENTORY_PROCESSING_SECTION_KEYS.forms
         .map((key) => inventoryProcessingTabLookup.get(key))
+        .filter((tab): tab is AppTab => Boolean(tab)),
+    },
+  ].filter((section) => section.tabs.length > 0);
+  const sellingTabLookup = new Map(listingsTabs.map((tab) => [tab.key, tab]));
+  const sellingSections: TabSection[] = [
+    {
+      title: 'Review',
+      tabs: SELLING_SECTION_KEYS.review
+        .map((key) => sellingTabLookup.get(key))
+        .filter((tab): tab is AppTab => Boolean(tab)),
+    },
+    {
+      title: 'Follow-Through',
+      tabs: SELLING_SECTION_KEYS.followThrough
+        .map((key) => sellingTabLookup.get(key))
+        .filter((tab): tab is AppTab => Boolean(tab)),
+    },
+    {
+      title: 'Channels',
+      tabs: SELLING_SECTION_KEYS.channels
+        .map((key) => sellingTabLookup.get(key))
         .filter((tab): tab is AppTab => Boolean(tab)),
     },
   ].filter((section) => section.tabs.length > 0);
@@ -102,7 +158,23 @@ export function AppFrameHeaderNavigation({
                   aria-label="Intake tabs"
                   className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
                 >
-                  <DropdownTabList tabs={intakeTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
+                  <div className="space-y-1">
+                    {intakeSections.map((section, index) => {
+                      const hasEnabledTab = section.tabs.some((tab) => !tab.disabled);
+                      const shouldAutoFocus = index === intakeSections.findIndex((candidate) => candidate.tabs.some((tab) => !tab.disabled));
+
+                      return (
+                        <div key={section.title} className="rounded-lg border border-white/5 bg-white/[0.03] px-1.5 py-1.5">
+                          <p className="px-2 pb-1.5 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">{section.title}</p>
+                          <DropdownTabList
+                            tabs={section.tabs}
+                            onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }}
+                            autoFocusFirst={shouldAutoFocus && hasEnabledTab}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -153,7 +225,7 @@ export function AppFrameHeaderNavigation({
               <DropdownTrigger
                 active={hasActiveListingsTab}
                 expanded={openDropdown === 'listings'}
-                label="Listings"
+                label="Selling"
                 menuId="listings-menu"
                 badgeCount={listingsBadgeTotal > 0 ? listingsBadgeTotal : undefined}
                 onClick={() => onToggleDropdown('listings')}
@@ -163,14 +235,32 @@ export function AppFrameHeaderNavigation({
                 <div
                   id="listings-menu"
                   role="menu"
-                  aria-label="Listings tabs"
+                  aria-label="Selling tabs"
                   className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[280px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
                 >
-                  <DropdownTabList tabs={listingsTabs} onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }} autoFocusFirst />
+                  <div className="space-y-1">
+                    {sellingSections.map((section, index) => {
+                      const hasEnabledTab = section.tabs.some((tab) => !tab.disabled);
+                      const shouldAutoFocus = index === sellingSections.findIndex((candidate) => candidate.tabs.some((tab) => !tab.disabled));
+
+                      return (
+                        <div key={section.title} className="rounded-lg border border-white/5 bg-white/[0.03] px-1.5 py-1.5">
+                          <p className="px-2 pb-1.5 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">{section.title}</p>
+                          <DropdownTabList
+                            tabs={section.tabs}
+                            onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }}
+                            autoFocusFirst={shouldAutoFocus && hasEnabledTab}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
           )}
+
+          {postPublishTabs.map((tab) => <TabButton key={tab.key} tab={tab} />)}
 
           {postEbayTabs.map((tab) => <TabButton key={tab.key} tab={tab} />)}
         </div>

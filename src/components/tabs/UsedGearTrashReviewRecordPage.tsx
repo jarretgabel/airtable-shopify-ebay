@@ -216,7 +216,6 @@ export function UsedGearTrashReviewRecordPage({
         <WorkflowPageHeader
           eyebrow="Trash Review"
           title={displayInventoryValue(record.fields.SKU)}
-          description="Use this focused trash decision page to restore the row, re-qualify it into Lot 2, or remove it from the workflow entirely."
           detail={<>{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</>}
           actions={(
             <>

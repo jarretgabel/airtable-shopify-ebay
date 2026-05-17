@@ -8,7 +8,7 @@ function GuardHarness({
   navigate = vi.fn(),
 }: {
   normalizedPath: string;
-  canAccessPage?: (tab: 'dashboard' | 'workflow-guide' | 'inventory' | 'listings' | 'shopify' | 'market' | 'parking-lot-1' | 'jotform' | 'manual-intake' | 'testing' | 'photos' | 'settings' | 'notifications' | 'imagelab' | 'ebay' | 'users' | 'parking-lot-2' | 'trash-review' | 'testing-queue' | 'photography-queue') => boolean;
+  canAccessPage?: (tab: 'dashboard' | 'workflow-guide' | 'inventory' | 'listings' | 'post-publish' | 'shopify' | 'market' | 'parking-lot-1' | 'jotform' | 'manual-intake' | 'testing' | 'photos' | 'settings' | 'notifications' | 'imagelab' | 'ebay' | 'users' | 'parking-lot-2' | 'trash-review' | 'testing-queue' | 'photography-queue') => boolean;
   navigate?: ReturnType<typeof vi.fn>;
 }) {
   useAuthRouteGuard({
@@ -62,6 +62,20 @@ describe('useAuthRouteGuard', () => {
       <GuardHarness
         normalizedPath="/workflow-guide"
         canAccessPage={(tab) => tab === 'workflow-guide' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('allows the post-publish route when the user has access', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/workflow/post-publish"
+        canAccessPage={(tab) => tab === 'post-publish' || tab === 'dashboard'}
         navigate={navigate}
       />,
     );

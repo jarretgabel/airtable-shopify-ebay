@@ -17,16 +17,12 @@ const { loadWorkflowPostPublishQueueMock, clipboardWriteTextMock } = vi.hoisted(
 const {
   markWorkflowListingStaleMock,
   markWorkflowRelistedMock,
-  markWorkflowRowsShippedMock,
-  markWorkflowRowsSoldReadyToShipMock,
   markWorkflowSoldReadyToShipMock,
   markWorkflowShippedMock,
   saveWorkflowStaleRecoveryMock,
 } = vi.hoisted(() => ({
   markWorkflowListingStaleMock: vi.fn(),
   markWorkflowRelistedMock: vi.fn(),
-  markWorkflowRowsShippedMock: vi.fn(),
-  markWorkflowRowsSoldReadyToShipMock: vi.fn(),
   markWorkflowSoldReadyToShipMock: vi.fn(),
   markWorkflowShippedMock: vi.fn(),
   saveWorkflowStaleRecoveryMock: vi.fn(),
@@ -39,8 +35,6 @@ vi.mock('@/services/usedGearQueue', async () => {
     loadWorkflowPostPublishQueue: loadWorkflowPostPublishQueueMock,
     markWorkflowListingStale: markWorkflowListingStaleMock,
     markWorkflowRelisted: markWorkflowRelistedMock,
-    markWorkflowRowsShipped: markWorkflowRowsShippedMock,
-    markWorkflowRowsSoldReadyToShip: markWorkflowRowsSoldReadyToShipMock,
     markWorkflowSoldReadyToShip: markWorkflowSoldReadyToShipMock,
     markWorkflowShipped: markWorkflowShippedMock,
     saveWorkflowStaleRecovery: saveWorkflowStaleRecoveryMock,
@@ -58,8 +52,6 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     });
     markWorkflowListingStaleMock.mockReset();
     markWorkflowRelistedMock.mockReset();
-    markWorkflowRowsShippedMock.mockReset();
-    markWorkflowRowsSoldReadyToShipMock.mockReset();
     markWorkflowSoldReadyToShipMock.mockReset();
     markWorkflowShippedMock.mockReset();
     saveWorkflowStaleRecoveryMock.mockReset();
@@ -160,7 +152,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     expect(screen.getByLabelText(/Sort used gear post-publish queue/i)).toBeInTheDocument();
   });
 
-  it('ignores the legacy owner filter prop and keeps post-publish rows visible', async () => {
+  it('keeps post-publish rows visible without owner-scoped filtering', async () => {
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {
         id: 'rec-active-newer',
@@ -222,8 +214,8 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     expect(screen.getByText('SOLD-1')).toBeInTheDocument();
   });
 
-  it('opens the operational record from a compact stale-listing card', async () => {
-    const onOpenOperationalRecord = vi.fn();
+  it('removes the open-operational button and keeps listing approval actions for listing buckets', async () => {
+    const onOpenListingsRecord = vi.fn();
 
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {
@@ -243,19 +235,21 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     render(
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
-        onOpenOperationalRecord={onOpenOperationalRecord}
-        onOpenListingsRecord={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
+        onOpenListingsRecord={onOpenListingsRecord}
       />,
     );
 
     await screen.findByText('STALE-1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Operational Record' }));
+    expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
 
-    expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-stale');
+    fireEvent.click(screen.getByRole('button', { name: 'Open Listings Approval' }));
+
+    expect(onOpenListingsRecord).toHaveBeenCalledWith('rec-stale');
   });
 
-  it('supports sold-ready reconciliation from selected rows', async () => {
+  it('supports sold-ready reconciliation from row actions', async () => {
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {
         id: 'rec-active',
@@ -281,7 +275,18 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         },
       },
     ]);
-    markWorkflowRowsSoldReadyToShipMock.mockResolvedValue([]);
+    markWorkflowSoldReadyToShipMock.mockResolvedValue({
+      id: 'rec-active',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        SKU: 'ACT-1',
+        Make: 'McIntosh',
+        Model: 'C28',
+        'Workflow Status': 'Sold - Ready to Ship',
+        'Listed At': '2099-01-01T00:00:00.000Z',
+        'Sold Ready To Ship At': '2026-05-08T06:00:00.000Z',
+      },
+    });
 
     render(
       <UsedGearWorkflowPostPublishSection
@@ -293,16 +298,55 @@ describe('UsedGearWorkflowPostPublishSection', () => {
 
     await screen.findByText('ACT-1');
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Select Bucket' })[0]!);
-    fireEvent.click(screen.getByRole('button', { name: 'Mark Selected Sold Ready' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Mark Sold Ready' })[0]!);
     await waitFor(() => {
-      expect(markWorkflowRowsSoldReadyToShipMock).toHaveBeenCalledWith(['rec-active']);
+      expect(markWorkflowSoldReadyToShipMock).toHaveBeenCalledWith('rec-active');
     });
   });
 
-  it('routes the last-touched action to listings approval for listing events', async () => {
-    const onOpenListingsRecord = vi.fn();
+  it('supports shipped reconciliation from row actions', async () => {
+    loadWorkflowPostPublishQueueMock.mockResolvedValue([
+      {
+        id: 'rec-sold',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'SOLD-1',
+          Make: 'Pioneer',
+          Model: 'SX-1250',
+          'Workflow Status': 'Sold - Ready to Ship',
+          'Sold Ready To Ship At': '2026-05-08T05:00:00.000Z',
+        },
+      },
+    ]);
+    markWorkflowShippedMock.mockResolvedValue({
+      id: 'rec-sold',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        SKU: 'SOLD-1',
+        Make: 'Pioneer',
+        Model: 'SX-1250',
+        'Workflow Status': 'Shipped',
+        'Sold Ready To Ship At': '2026-05-08T05:00:00.000Z',
+        'Shipped At': '2026-05-09T07:00:00.000Z',
+      },
+    });
 
+    render(
+      <UsedGearWorkflowPostPublishSection
+        currentUserName="Taylor Reviewer"
+        onOpenOperationalRecord={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Mark Shipped' }));
+
+    await waitFor(() => {
+      expect(markWorkflowShippedMock).toHaveBeenCalledWith('rec-sold');
+    });
+  });
+
+  it('shows last touched as a plain timestamp without action copy', async () => {
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {
         id: 'rec-active',
@@ -321,12 +365,13 @@ describe('UsedGearWorkflowPostPublishSection', () => {
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={vi.fn()}
-        onOpenListingsRecord={onOpenListingsRecord}
+        onOpenListingsRecord={vi.fn()}
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: /last touched: marked listed/i }));
-
-    expect(onOpenListingsRecord).toHaveBeenCalledWith('rec-active');
+    expect(await screen.findByText(/May (7|8), 2026/)).toBeInTheDocument();
+    expect(screen.queryByText(/Marked listed/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /last touched/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Open Operational Record/i)).not.toBeInTheDocument();
   });
 });

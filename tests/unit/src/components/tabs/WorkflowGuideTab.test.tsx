@@ -13,6 +13,7 @@ describe('WorkflowGuideTab', () => {
     );
 
     expect(screen.getByText('Tester quick start')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'User Guide' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Your Workflow Lane' })).toBeInTheDocument();
     expect(screen.getAllByText('Your lane').length).toBeGreaterThan(0);
     expect(screen.getAllByText('specialist').length).toBeGreaterThan(0);
@@ -43,7 +44,7 @@ describe('WorkflowGuideTab', () => {
     );
 
     expect(screen.getByText('Processor quick start')).toBeInTheDocument();
-    expect(screen.getByText('Pages That Matter To This Role')).toBeInTheDocument();
+    expect(screen.getByText('How To Use The Pages For This Role')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Parking Lot 1' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Workflow Hub' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Listings Review And Channel Views' })).toBeInTheDocument();

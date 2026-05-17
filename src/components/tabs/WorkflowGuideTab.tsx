@@ -220,11 +220,7 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
 
   return (
     <div className="space-y-5">
-      <PageTitleHeader
-        title="Workflow Guide"
-        description="Quick reference for the stages, pages, and responsibilities tied to this role."
-        descriptionHint="A short plain-language reference for how used gear moves through the app and what this role is expected to handle."
-      />
+      <PageTitleHeader title="User Guide" />
 
       <section className="rounded-2xl border border-[var(--line)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--panel)_92%,transparent),color-mix(in_srgb,var(--bg)_88%,transparent))] p-5 shadow-[0_20px_45px_rgba(2,6,23,0.2)]">
         <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Your Starting Point</p>
@@ -257,8 +253,8 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
 
       <GuideSection
         eyebrow="Relevant Pages"
-        title="Pages That Matter To This Role"
-        summary="This stays focused on the stops this login may need during the workflow rather than every account detail."
+        title="How To Use The Pages For This Role"
+        summary="This keeps the page-level instructions in one place so the operational screens can stay focused on the work itself."
       >
         <div className="grid gap-3 lg:grid-cols-2">
           {visiblePageCards.map((card) => (

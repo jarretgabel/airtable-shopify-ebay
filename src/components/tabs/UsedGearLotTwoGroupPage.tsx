@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
-import { CollapsibleHelperText } from '@/components/app/CollapsibleHelperText';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
@@ -124,7 +123,6 @@ export function UsedGearLotTwoGroupPage({
         <WorkflowPageHeader
           eyebrow="Parking Lot 2 Handoff"
           title={group.label}
-          description="Work this arrival-stage set in one place, then move each record into Manual Intake or its current operational follow-up when the intake handoff is ready."
           actions={(
             <button
               type="button"
@@ -135,13 +133,6 @@ export function UsedGearLotTwoGroupPage({
             </button>
           )}
         />
-
-        <div className="max-w-3xl">
-          <CollapsibleHelperText label="Handoff guide">
-            Use this page when one arrival-stage set needs coordinated arrival handling before the records leave Parking Lot 2. The queue still handles prioritization and shareable focus links; this page handles the grouped handoff itself.
-          </CollapsibleHelperText>
-        </div>
-
         <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
             <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Set Summary</p>

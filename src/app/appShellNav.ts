@@ -1,4 +1,4 @@
-import { Tab, INTAKE_TAB_SET, INVENTORY_PROCESSING_TAB_SET, LISTINGS_TAB_SET, UTILITY_TAB_SET, navLabel } from './appNavigation';
+import { Tab, INTAKE_TAB_SET, INVENTORY_PROCESSING_TAB_SET, LISTINGS_TAB_SET, POST_PUBLISH_TAB_SET, UTILITY_TAB_SET, navLabel } from './appNavigation';
 
 const FORM_ONLY_TAB_SET = new Set<Tab>(['testing', 'photos']);
 
@@ -27,6 +27,7 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
   tabs: NavTab[];
   intakeNavTabs: NavTab[];
   listingsNavTabs: NavTab[];
+  postPublishNavTabs: NavTab[];
   inventoryProcessingNavTabs: NavTab[];
   postEbayNavTabs: NavTab[];
   utilityNavTabs: NavTab[];
@@ -49,10 +50,11 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
 
   const navigableTabs = visibleTabs.filter((tab) => !FORM_ONLY_TAB_SET.has(tab));
 
-  const mainTabs = navigableTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !LISTINGS_TAB_SET.has(tab) && !INTAKE_TAB_SET.has(tab) && !INVENTORY_PROCESSING_TAB_SET.has(tab) && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
-  const postEbayTabs = navigableTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !LISTINGS_TAB_SET.has(tab) && !INTAKE_TAB_SET.has(tab) && !INVENTORY_PROCESSING_TAB_SET.has(tab) && !mainTabs.includes(tab) && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
+  const mainTabs = navigableTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !LISTINGS_TAB_SET.has(tab) && !POST_PUBLISH_TAB_SET.has(tab) && !INTAKE_TAB_SET.has(tab) && !INVENTORY_PROCESSING_TAB_SET.has(tab) && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
+  const postEbayTabs = navigableTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !LISTINGS_TAB_SET.has(tab) && !POST_PUBLISH_TAB_SET.has(tab) && !INTAKE_TAB_SET.has(tab) && !INVENTORY_PROCESSING_TAB_SET.has(tab) && !mainTabs.includes(tab) && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
   const intakeTabs = navigableTabs.filter((tab) => INTAKE_TAB_SET.has(tab));
   const listingsTabs = navigableTabs.filter((tab) => LISTINGS_TAB_SET.has(tab));
+  const postPublishTabs = navigableTabs.filter((tab) => POST_PUBLISH_TAB_SET.has(tab));
   const inventoryProcessingTabs = navigableTabs.filter((tab) => INVENTORY_PROCESSING_TAB_SET.has(tab));
   const utilityTabs = navigableTabs.filter((tab) => UTILITY_TAB_SET.has(tab));
 
@@ -79,6 +81,15 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     label: navLabel(tab),
     active: activeTab === tab,
     badgeCount: tab === 'listings' ? listingsBadgeCount : undefined,
+    ...resolveDisabledState(tab),
+    onClick: () => navigateToTab(tab),
+  }));
+
+  const postPublishNavTabs = postPublishTabs.map((tab) => ({
+    key: tab,
+    label: navLabel(tab),
+    active: activeTab === tab,
+    badgeCount: undefined,
     ...resolveDisabledState(tab),
     onClick: () => navigateToTab(tab),
   }));
@@ -110,5 +121,5 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     onClick: () => (tab === 'users' ? navigateToUsersList() : navigateToTab(tab)),
   }));
 
-  return { tabs, intakeNavTabs, listingsNavTabs, inventoryProcessingNavTabs, postEbayNavTabs, utilityNavTabs };
+  return { tabs, intakeNavTabs, listingsNavTabs, postPublishNavTabs, inventoryProcessingNavTabs, postEbayNavTabs, utilityNavTabs };
 }
