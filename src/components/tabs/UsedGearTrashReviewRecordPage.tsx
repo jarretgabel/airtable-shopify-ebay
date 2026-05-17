@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { smallPrimaryActionButtonClass } from '@/components/app/buttonStyles';
-import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
-import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import {
   hasUsedGearPendingReviewPricingPath,
   loadUsedGearOperationalRecordContext,
@@ -212,24 +211,19 @@ export function UsedGearTrashReviewRecordPage({
   }
 
   return (
-    <PanelSurface>
-      <AppPageLayout>
-        <WorkflowPageHeader
-          eyebrow="Trash"
-          title={displayInventoryValue(record.fields.SKU)}
-          detail={<>{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</>}
-          actions={(
-            <>
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={backToTrash}
-              >
-                Back To Trash
-              </button>
-            </>
-          )}
-        />
+    <WorkflowRecordPageLayout
+      eyebrow="Trash"
+      title={displayInventoryValue(record.fields.SKU)}
+      actions={(
+        <button
+          type="button"
+          className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          onClick={backToTrash}
+        >
+          Back To Trash
+        </button>
+      )}
+    >
 
         {error ? (
           <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -362,7 +356,6 @@ export function UsedGearTrashReviewRecordPage({
             ]}
           />
         </div>
-      </AppPageLayout>
-    </PanelSurface>
+    </WorkflowRecordPageLayout>
   );
 }

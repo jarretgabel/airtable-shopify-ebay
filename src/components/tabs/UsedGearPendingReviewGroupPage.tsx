@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
-import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
-import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
+import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import {
   acceptPendingReviewGroup,
   distributeUsedGearPendingReviewTotal,
@@ -399,21 +398,19 @@ export function UsedGearPendingReviewGroupPage({
   }
 
   return (
-    <PanelSurface>
-      <AppPageLayout>
-        <WorkflowPageHeader
-          eyebrow="Parking Lots"
-          title={group.label}
-          actions={(
-            <button
-              type="button"
-              className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              onClick={onBackToParkingLot}
-            >
-              Back to Parking Lot 1
-            </button>
-          )}
-        />
+    <WorkflowRecordPageLayout
+      eyebrow="Parking Lots"
+      title={group.label}
+      actions={(
+        <button
+          type="button"
+          className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          onClick={onBackToParkingLot}
+        >
+          Back to Parking Lot 1
+        </button>
+      )}
+    >
 
         {error ? <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">{error}</div> : null}
         {successMessage ? <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{successMessage}</div> : null}
@@ -542,7 +539,6 @@ export function UsedGearPendingReviewGroupPage({
             getItemKey={(record) => record.id}
           />
         </section>
-      </AppPageLayout>
-    </PanelSurface>
+    </WorkflowRecordPageLayout>
   );
 }

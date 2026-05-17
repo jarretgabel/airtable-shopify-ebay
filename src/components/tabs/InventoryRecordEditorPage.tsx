@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AppPageLayout } from '@/components/app/AppPageLayout';
-import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { InventoryRecordEditor } from '@/components/tabs/airtable/InventoryRecordEditor';
 import type { InventoryDraftValue, InventoryFieldMetadata } from '@/components/tabs/airtable/inventoryDirectoryTypes';
@@ -139,20 +138,19 @@ export function InventoryRecordEditorPage({ recordId, onBackToDirectory }: Inven
 
   return (
     <>
-      <AppPageLayout>
-        <WorkflowPageHeader
-          eyebrow="Processing"
-          title="Inventory Record Editor"
-          actions={(
-            <button
-              type="button"
-              className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              onClick={onBackToDirectory}
-            >
-              Back to Directory
-            </button>
-          )}
-        />
+      <WorkflowRecordPageLayout
+        eyebrow="Processing"
+        title="Inventory Record Editor"
+        actions={(
+          <button
+            type="button"
+            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            onClick={onBackToDirectory}
+          >
+            Back to Directory
+          </button>
+        )}
+      >
 
         <InventoryRecordEditor
           record={record}
@@ -177,7 +175,7 @@ export function InventoryRecordEditorPage({ recordId, onBackToDirectory }: Inven
             void handleSave();
           }}
         />
-      </AppPageLayout>
+      </WorkflowRecordPageLayout>
       {confirmationModal}
     </>
   );

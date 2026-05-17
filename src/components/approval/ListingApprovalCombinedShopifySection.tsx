@@ -1,6 +1,8 @@
 import { Suspense, lazy } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
+import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
 import type { ListingApprovalCombinedShopifySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
@@ -17,6 +19,7 @@ function ShopifyPayloadFallback() {
 }
 
 export function ListingApprovalCombinedShopifySection({
+  sectionId,
   selectedRecord,
   approvedFieldName,
   formValues,
@@ -48,14 +51,12 @@ export function ListingApprovalCombinedShopifySection({
   shopifyProductSetRequest,
 }: ListingApprovalCombinedShopifySectionProps) {
   return (
-    <details className="rounded-lg border border-[var(--line)] bg-white/5" open>
-      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
-        <span className="inline-flex items-center gap-2">
-          <span>Shopify-Specific Fields</span>
-          {shopifyDrawerRequiredStatus.hasRequired && <DrawerStatusIcon allFilled={shopifyDrawerRequiredStatus.allFilled} />}
-        </span>
-      </summary>
-      <div className="border-t border-[var(--line)] px-3 py-3">
+    <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
+      <AppSectionTitle
+        title="Shopify-Specific Fields"
+        actions={shopifyDrawerRequiredStatus.hasRequired ? <DrawerStatusIcon allFilled={shopifyDrawerRequiredStatus.allFilled} /> : null}
+      />
+      <div>
         <ApprovalFormFields
           recordId={selectedRecord.id}
           approvalChannel="shopify"
@@ -114,6 +115,6 @@ export function ListingApprovalCombinedShopifySection({
           />
         </Suspense>
       </div>
-    </details>
+    </AppPageSectionSurface>
   );
 }

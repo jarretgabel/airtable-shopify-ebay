@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
-import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
-import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
+import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
   buildUsedGearManualIntakePath,
@@ -119,21 +118,19 @@ export function UsedGearLotTwoGroupPage({
   }
 
   return (
-    <PanelSurface>
-      <AppPageLayout>
-        <WorkflowPageHeader
-          eyebrow="Parking Lots"
-          title={group.label}
-          actions={(
-            <button
-              type="button"
-              className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              onClick={onBackToParkingLot}
-            >
-              Back to Parking Lot 2
-            </button>
-          )}
-        />
+    <WorkflowRecordPageLayout
+      eyebrow="Parking Lots"
+      title={group.label}
+      actions={(
+        <button
+          type="button"
+          className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          onClick={onBackToParkingLot}
+        >
+          Back to Parking Lot 2
+        </button>
+      )}
+    >
         <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
             <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Set Summary</p>
@@ -232,7 +229,6 @@ export function UsedGearLotTwoGroupPage({
             ] as IntakeItemsMatrixColumn<AirtableRecord>[] : []}
           />
         </section>
-      </AppPageLayout>
-    </PanelSurface>
+    </WorkflowRecordPageLayout>
   );
 }

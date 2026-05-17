@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AppPageLayout } from '@/components/app/AppPageLayout';
-import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
-import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import {
   acceptPendingReviewRecord,
   hasUsedGearPendingReviewPricingPath,
@@ -228,31 +227,28 @@ export function UsedGearPendingReviewRecordPage({
   const acceptRouteDescription = ACCEPT_ROUTE_OPTIONS.find((option) => option.value === acceptStatus)?.description;
 
   return (
-    <PanelSurface>
-      <AppPageLayout>
-        <WorkflowPageHeader
-          eyebrow="Parking Lots"
-          title={displayInventoryValue(record.fields.SKU)}
-          detail={<>{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</>}
-          actions={(
-            <>
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={backToQueue}
-              >
-                Back To Parking Lot
-              </button>
-              <button
-                type="button"
-                className={smallSecondaryActionButtonClass}
-                onClick={() => onOpenManualIntake(record.id)}
-              >
-                Open Manual Intake
-              </button>
-            </>
-          )}
-        />
+    <WorkflowRecordPageLayout
+      eyebrow="Parking Lots"
+      title={displayInventoryValue(record.fields.SKU)}
+      actions={(
+        <>
+          <button
+            type="button"
+            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            onClick={backToQueue}
+          >
+            Back To Parking Lot
+          </button>
+          <button
+            type="button"
+            className={smallSecondaryActionButtonClass}
+            onClick={() => onOpenManualIntake(record.id)}
+          >
+            Open Manual Intake
+          </button>
+        </>
+      )}
+    >
 
         {error ? (
           <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -406,7 +402,6 @@ export function UsedGearPendingReviewRecordPage({
             ]}
           />
         </div>
-      </AppPageLayout>
-    </PanelSurface>
+    </WorkflowRecordPageLayout>
   );
 }

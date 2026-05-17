@@ -1,6 +1,8 @@
 import { Suspense, lazy } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
+import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import {
   EBAY_LISTING_TEMPLATE_OPTIONS,
   normalizeEbayListingTemplateId,
@@ -21,6 +23,7 @@ function EbayPayloadFallback() {
 }
 
 export function ListingApprovalCombinedEbaySection({
+  sectionId,
   selectedRecord,
   approvedFieldName,
   formValues,
@@ -47,14 +50,12 @@ export function ListingApprovalCombinedEbaySection({
   ebayDraftPayloadBundle,
 }: ListingApprovalCombinedEbaySectionProps) {
   return (
-    <details className="rounded-lg border border-[var(--line)] bg-white/5" open>
-      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
-        <span className="inline-flex items-center gap-2">
-          <span>eBay-Specific Fields</span>
-          {ebayDrawerRequiredStatus.hasRequired && <DrawerStatusIcon allFilled={ebayDrawerRequiredStatus.allFilled} />}
-        </span>
-      </summary>
-      <div className="border-t border-[var(--line)] px-3 py-3">
+    <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
+      <AppSectionTitle
+        title="eBay-Specific Fields"
+        actions={ebayDrawerRequiredStatus.hasRequired ? <DrawerStatusIcon allFilled={ebayDrawerRequiredStatus.allFilled} /> : null}
+      />
+      <div>
         <ApprovalFormFields
           recordId={selectedRecord.id}
           approvalChannel="ebay"
@@ -141,6 +142,6 @@ export function ListingApprovalCombinedEbaySection({
           />
         </Suspense>
       </div>
-    </details>
+    </AppPageSectionSurface>
   );
 }

@@ -1,12 +1,15 @@
-import { Suspense, lazy, type ReactNode } from 'react';
-import { AppPageLayout } from '@/components/app/AppPageLayout';
-import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { Suspense, lazy, useMemo, type ReactNode } from 'react';
+import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
+import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
+import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ListingApprovalRecordActions } from '@/components/approval/ListingApprovalRecordActions';
 import { ListingApprovalRecordAlerts } from '@/components/approval/ListingApprovalRecordAlerts';
+import { COMBINED_RECORD_SECTION_ITEMS, type CombinedRecordSectionKey } from '@/components/approval/listingApprovalCombinedSectionNav';
 import { ListingApprovalSelectedRecordView } from '@/components/approval/ListingApprovalSelectedRecordView';
 import { ListingApprovalWorkflowSummary, type ListingApprovalWorkflowSummaryData } from '@/components/approval/ListingApprovalWorkflowSummary';
 import type { buildListingApprovalSelectedRecordStatusProps } from '@/components/approval/listingApprovalSelectedRecordStatusProps';
 import type { buildListingApprovalSelectedRecordViewProps } from '@/components/approval/listingApprovalSelectedRecordViewProps';
+import { displayValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 
 const ApprovalFormFields = lazy(async () => ({ default: (await import('@/components/approval/ApprovalFormFields')).ApprovalFormFields }));
@@ -47,15 +50,6 @@ export interface ListingApprovalSelectedRecordPanelProps {
   selectedRecordStatusProps: ReturnType<typeof buildListingApprovalSelectedRecordStatusProps>;
 }
 
-function getCombinedListingsSelectedRecordCopy(summary: ListingApprovalWorkflowSummaryData | null) {
-  const workflowStatus = summary?.workflowStatus ?? '';
-  const isPreListingReview = workflowStatus === 'Awaiting Pre-Listing Review';
-
-  return {
-    title: isPreListingReview ? 'Pre-Listing Review Workspace' : 'Combined Listings Record',
-  };
-}
-
 export function ListingApprovalSelectedRecordPanel({
   selectedRecord,
   titleFieldName,
@@ -73,13 +67,43 @@ export function ListingApprovalSelectedRecordPanel({
   selectedRecordViewProps,
   selectedRecordStatusProps,
 }: ListingApprovalSelectedRecordPanelProps) {
-  const combinedCopy = getCombinedListingsSelectedRecordCopy(workflowSummary);
+  const selectedRecordTitle = displayValue(selectedRecord.fields[titleFieldName]) || 'Listing Record';
+  const backButton = (
+    <button
+      type="button"
+      className={secondaryActionButtonClass}
+      onClick={onBackToList}
+      disabled={saving}
+    >
+      {backToListLabel ?? 'Back to Listings'}
+    </button>
+  );
+  const combinedSectionItems = useMemo(() => [...COMBINED_RECORD_SECTION_ITEMS], []);
+  const { activeSectionId, scrollToSection } = usePageSectionTracking(combinedSectionItems, COMBINED_RECORD_SECTION_ITEMS[0].id);
+  const activeSectionKey = useMemo<CombinedRecordSectionKey>(
+    () => combinedSectionItems.find((item) => item.id === activeSectionId)?.key ?? 'shared',
+    [activeSectionId, combinedSectionItems],
+  );
+  const combinedSectionNav = isCombinedApproval ? (
+    <MainPageSectionNav
+      ariaLabel="Combined listing record sections"
+      items={combinedSectionItems.map((item) => ({ key: item.key, label: item.label }))}
+      activeKey={activeSectionKey}
+      onSelect={(sectionKey) => {
+        const sectionId = combinedSectionItems.find((item) => item.key === sectionKey)?.id;
+        if (sectionId) {
+          scrollToSection(sectionId);
+        }
+      }}
+    />
+  ) : null;
 
   const selectedRecordView = (
     <ListingApprovalSelectedRecordView
       selectedRecord={selectedRecord}
       titleFieldName={titleFieldName}
       eyebrowLabel={eyebrowLabel}
+      showRecordHeader={false}
       isApproved={isApproved}
       showApprovalStateBadge={!isCombinedApproval}
       saving={saving}
@@ -111,18 +135,14 @@ export function ListingApprovalSelectedRecordPanel({
     />
   );
 
-  if (!isCombinedApproval) {
-    return selectedRecordView;
-  }
-
   return (
-    <AppPageLayout>
-      <WorkflowPageHeader
-        eyebrow="Review"
-        title={combinedCopy.title}
-      />
-
+    <WorkflowRecordPageLayout
+      eyebrow="Review"
+      title={selectedRecordTitle}
+      actions={backButton}
+      belowHeader={combinedSectionNav}
+    >
       {selectedRecordView}
-    </AppPageLayout>
+    </WorkflowRecordPageLayout>
   );
 }

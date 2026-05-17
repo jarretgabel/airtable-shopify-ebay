@@ -37,10 +37,10 @@ export function ListingApprovalTab({
 
   if (selectedRecord) {
     return (
-      <AppPageLayout>
+      <>
         <ListingApprovalSelectedRecordPanel {...selectedRecordPanelProps!} />
         {confirmationModal}
-      </AppPageLayout>
+      </>
     );
   }
 

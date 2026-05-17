@@ -1,6 +1,7 @@
 import { ListingApprovalCombinedEbaySection } from '@/components/approval/ListingApprovalCombinedEbaySection';
 import { ListingApprovalCombinedSharedSection } from '@/components/approval/ListingApprovalCombinedSharedSection';
 import { ListingApprovalCombinedShopifySection } from '@/components/approval/ListingApprovalCombinedShopifySection';
+import { COMBINED_RECORD_SECTION_ITEMS } from '@/components/approval/listingApprovalCombinedSectionNav';
 import type {
   CombinedSectionCommonProps,
   ListingApprovalCombinedEbaySectionProps,
@@ -73,6 +74,7 @@ export function ListingApprovalCombinedSections({
   return (
     <div className="space-y-4">
       <ListingApprovalCombinedSharedSection
+        sectionId={COMBINED_RECORD_SECTION_ITEMS[0].id}
         selectedRecord={selectedRecord}
         approvedFieldName={approvedFieldName}
         formValues={formValues}
@@ -98,6 +100,7 @@ export function ListingApprovalCombinedSections({
       />
 
       <ListingApprovalCombinedShopifySection
+        sectionId={COMBINED_RECORD_SECTION_ITEMS[1].id}
         selectedRecord={selectedRecord}
         approvedFieldName={approvedFieldName}
         formValues={formValues}
@@ -130,6 +133,7 @@ export function ListingApprovalCombinedSections({
       />
 
       <ListingApprovalCombinedEbaySection
+        sectionId={COMBINED_RECORD_SECTION_ITEMS[2].id}
         selectedRecord={selectedRecord}
         approvedFieldName={approvedFieldName}
         formValues={formValues}

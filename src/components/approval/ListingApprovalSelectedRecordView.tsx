@@ -6,6 +6,7 @@ interface ListingApprovalSelectedRecordViewProps {
   selectedRecord: AirtableRecord;
   titleFieldName: string;
   eyebrowLabel?: string;
+  showRecordHeader?: boolean;
   isApproved: boolean;
   showApprovalStateBadge?: boolean;
   saving: boolean;
@@ -26,6 +27,7 @@ export function ListingApprovalSelectedRecordView({
   selectedRecord,
   titleFieldName,
   eyebrowLabel = 'Listing Details',
+  showRecordHeader = true,
   isApproved,
   showApprovalStateBadge = true,
   saving,
@@ -45,31 +47,33 @@ export function ListingApprovalSelectedRecordView({
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-        <button
-          type="button"
-          className={secondaryActionButtonClass}
-          onClick={onBackToList}
-          disabled={saving}
-        >
-          {backToListLabel ?? 'Back to Listings'}
-        </button>
-        <div>
-          <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{eyebrowLabel}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <h3 className="m-0 text-[1.08rem] font-semibold text-[var(--ink)]">{displayValue(selectedRecord.fields[titleFieldName])}</h3>
-            {showApprovalStateBadge ? (
-              <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.06em] ${
-                isApproved
-                  ? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200'
-                  : 'border border-amber-400/35 bg-amber-500/20 text-amber-200'
-              }`}>
-                {isApproved ? 'Approved' : 'Unapproved'}
-              </span>
-            ) : null}
+      {showRecordHeader ? (
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+          <button
+            type="button"
+            className={secondaryActionButtonClass}
+            onClick={onBackToList}
+            disabled={saving}
+          >
+            {backToListLabel ?? 'Back to Listings'}
+          </button>
+          <div>
+            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{eyebrowLabel}</p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <h3 className="m-0 text-[1.08rem] font-semibold text-[var(--ink)]">{displayValue(selectedRecord.fields[titleFieldName])}</h3>
+              {showApprovalStateBadge ? (
+                <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.06em] ${
+                  isApproved
+                    ? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200'
+                    : 'border border-amber-400/35 bg-amber-500/20 text-amber-200'
+                }`}>
+                  {isApproved ? 'Approved' : 'Unapproved'}
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {error && (
         <section className={`${errorSurfaceClass} mb-4`}>

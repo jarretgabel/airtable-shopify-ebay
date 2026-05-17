@@ -28,6 +28,7 @@ export interface CombinedSectionCommonProps {
 }
 
 export interface ListingApprovalCombinedSharedSectionProps extends CombinedSectionCommonProps {
+  sectionId?: string;
   titleFieldName: string;
   combinedDescriptionFieldName: string;
   combinedSharedFieldNames: string[];
@@ -43,6 +44,7 @@ export interface ListingApprovalCombinedSharedSectionProps extends CombinedSecti
 }
 
 export interface ListingApprovalCombinedShopifySectionProps extends CombinedSectionCommonProps, ShopifyApprovalPayloadPreviewData {
+  sectionId?: string;
   combinedShopifyOnlyFieldNames: string[];
   shopifyRequiredFieldNames: string[];
   shopifyDrawerRequiredStatus: DrawerRequiredStatus;
@@ -79,6 +81,7 @@ export interface ListingApprovalCombinedShopifySectionProps extends CombinedSect
 }
 
 export interface ListingApprovalCombinedEbaySectionProps extends CombinedSectionCommonProps, EbayApprovalPayloadPreviewData {
+  sectionId?: string;
   combinedEbayOnlyFieldNames: string[];
   ebayRequiredFieldNames: string[];
   ebayDrawerRequiredStatus: DrawerRequiredStatus;

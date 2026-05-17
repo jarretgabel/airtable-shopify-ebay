@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AppPageStatSection } from '@/components/app/AppPageStatSection';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
@@ -17,10 +16,6 @@ import {
   USED_GEAR_STALE_THRESHOLD_DAYS,
   type UsedGearWorkflowPostPublishBucket,
 } from '@/services/usedGearWorkflowLifecycle';
-import {
-  buildPostPublishQueueAgingSummary,
-  formatUsedGearAgeDays,
-} from '@/services/usedGearWorkflowAging';
 import { buildPostPublishLastTouchedSummary } from '@/services/usedGearWorkflowLastTouched';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -234,7 +229,6 @@ export function UsedGearWorkflowPostPublishSection({
     }));
     return nextMap;
   }, [filteredRecords, sortMode]);
-  const agingSummary = useMemo(() => buildPostPublishQueueAgingSummary(filteredRecords), [filteredRecords]);
 
   const refreshQueue = async () => {
     setRefreshing(true);
@@ -394,14 +388,6 @@ export function UsedGearWorkflowPostPublishSection({
         {showSectionIntro ? (
           <AppSectionTitle title="Post-Publish Queue" />
         ) : null}
-        <AppPageStatSection
-          stats={[
-            { label: 'Visible Rows', value: filteredRecords.length },
-            { label: 'Active 30+ Days', value: agingSummary.activeNearStaleCount },
-            { label: 'Stale 14+ Days', value: agingSummary.staleFollowUpCount },
-            { label: 'Oldest Stale', value: formatUsedGearAgeDays(agingSummary.oldestStaleAgeDays) },
-          ]}
-        />
         <QueueSearchToolbar
           searchAriaLabel="Search used gear post-publish queue"
           searchPlaceholder="Search by status, SKU, model, or lifecycle date"

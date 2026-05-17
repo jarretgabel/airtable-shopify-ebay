@@ -1,5 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
+import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
 import {
   ListingApprovalTestingSection,
@@ -57,6 +59,7 @@ function hasReadableValue(value: string | undefined): boolean {
 }
 
 export function ListingApprovalCombinedSharedSection({
+  sectionId,
   selectedRecord,
   approvedFieldName,
   formValues,
@@ -131,14 +134,12 @@ export function ListingApprovalCombinedSharedSection({
   ) : null;
 
   return (
-    <details className="rounded-lg border border-[var(--line)] bg-white/5" open>
-      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
-        <span className="inline-flex items-center gap-2">
-          <span>Shared Fields</span>
-          {sharedDrawerRequiredStatus.hasRequired && <DrawerStatusIcon allFilled={sharedDrawerRequiredStatus.allFilled} />}
-        </span>
-      </summary>
-      <div className="border-t border-[var(--line)] px-3 py-3 space-y-4">
+    <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
+      <AppSectionTitle
+        title="Shared Fields"
+        actions={sharedDrawerRequiredStatus.hasRequired ? <DrawerStatusIcon allFilled={sharedDrawerRequiredStatus.allFilled} /> : null}
+      />
+      <div className="space-y-4">
         {titleFieldName && (
           <ApprovalFormFields
             recordId={selectedRecord.id}
@@ -248,6 +249,6 @@ export function ListingApprovalCombinedSharedSection({
           </Suspense>
         )}
       </div>
-    </details>
+    </AppPageSectionSurface>
   );
 }

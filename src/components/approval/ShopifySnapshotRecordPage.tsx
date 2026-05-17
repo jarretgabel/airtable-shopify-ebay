@@ -5,9 +5,8 @@ import {
   ListingApprovalWorkflowProcessCard,
   type ListingApprovalWorkflowSummaryData,
 } from '@/components/approval/ListingApprovalWorkflowSummary';
-import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { EmptySurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
-import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
 import { loadUsedGearOperationalRecordBySku } from '@/services/usedGearQueue';
 import type { ShopifyProduct } from '@/types/shopify';
@@ -95,17 +94,11 @@ export function ShopifySnapshotRecordPage({
   const images = product?.images ?? [];
   const metafields = product?.metafields ?? [];
   const workflowSku = variants.map((variant) => variant.sku?.trim() ?? '').find(Boolean) ?? '';
-  const header = (
-    <WorkflowPageHeader
-      eyebrow="Channels"
-      title="Shopify Snapshot"
-      actions={(
-        <>
-          <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to Shopify Snapshot</button>
-          <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
-        </>
-      )}
-    />
+  const headerActions = (
+    <>
+      <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to Shopify Snapshot</button>
+      <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
+    </>
   );
 
   useEffect(() => {
@@ -155,30 +148,27 @@ export function ShopifySnapshotRecordPage({
 
   if (viewModel.loading && viewModel.products.length === 0) {
     return (
-      <AppPageLayout>
-        {header}
+      <WorkflowRecordPageLayout eyebrow="Channels" title="Shopify Snapshot" actions={headerActions}>
         <LoadingSurface message="Loading Shopify snapshot..." />
-      </AppPageLayout>
+      </WorkflowRecordPageLayout>
     );
   }
 
   if (!product) {
     return (
-      <AppPageLayout>
-        {header}
+      <WorkflowRecordPageLayout eyebrow="Channels" title="Shopify Snapshot" actions={headerActions}>
         <EmptySurface title="Shopify snapshot not found" message="This product is no longer available in the current Shopify snapshot.">
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to Shopify Snapshot</button>
             <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
           </div>
         </EmptySurface>
-      </AppPageLayout>
+      </WorkflowRecordPageLayout>
     );
   }
 
   return (
-    <AppPageLayout>
-      {header}
+    <WorkflowRecordPageLayout eyebrow="Channels" title="Shopify Snapshot" actions={headerActions}>
 
       <ListingApprovalWorkflowProcessCard
         summary={workflowSummary}
@@ -328,6 +318,6 @@ export function ShopifySnapshotRecordPage({
           <DetailJsonPanel title="Shopify Product JSON" value={product} />
         </div>
       </PanelSurface>
-    </AppPageLayout>
+    </WorkflowRecordPageLayout>
   );
 }
