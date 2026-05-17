@@ -274,7 +274,7 @@ export function SettingsTab() {
 
   return (
     <section className="space-y-5">
-      <PageTitleHeader title="Account Settings" />
+      <PageTitleHeader eyebrow="Utilities" title="Account Settings" />
 
       {requiresPasswordChange && (
         <p className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">

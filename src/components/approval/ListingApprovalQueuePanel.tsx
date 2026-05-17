@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { AppPageStatSection } from '@/components/app/AppPageStatSection';
+import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
-import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { accentActionButtonClass } from '@/components/app/buttonStyles';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
-import { errorSurfaceClass, panelSurfaceClass } from '@/components/tabs/uiClasses';
+import { errorSurfaceClass } from '@/components/tabs/uiClasses';
 import { isReadyForRequiredFields } from '@/components/approval/requiredFieldStatus';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { displayValue } from '@/stores/approvalStore';
@@ -18,8 +20,9 @@ interface QueueExtraFilterDefinition {
   matches: (record: AirtableRecord) => boolean;
 }
 
-const searchInputClass = 'flex-1 min-w-[220px] rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-[0.82rem] text-[var(--ink)] placeholder-[var(--muted)] outline-none transition-colors focus:border-[var(--accent)]';
+const queueFilterButtonClass = 'rounded-lg border px-3.5 py-2 text-[0.82rem] font-semibold transition';
 const FILTER_STORAGE_PREFIX = 'approval-queue-filter';
+const approvalQueueSurfaceClass = 'rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5';
 
 function isApprovedRecord(record: AirtableRecord, approvedFieldName: string): boolean {
   const raw = record.fields[approvedFieldName];
@@ -277,7 +280,7 @@ export function ListingApprovalQueuePanel({
   loadRecords,
 }: ListingApprovalQueuePanelProps) {
   const isCombinedApproval = approvalChannel === 'combined';
-  const supportsSearchAndQuickFilters = approvalChannel !== 'combined';
+  const supportsQuickFilters = approvalChannel !== 'combined';
   const quickFilterStorageKey = `${FILTER_STORAGE_PREFIX}:${approvalChannel}:quick`;
   const extraFilterStorageKey = `${FILTER_STORAGE_PREFIX}:${approvalChannel}:extra`;
   const [searchQuery, setSearchQuery] = useState('');
@@ -294,9 +297,9 @@ export function ListingApprovalQueuePanel({
   );
 
   useEffect(() => {
-    if (!supportsSearchAndQuickFilters) return;
+    if (!supportsQuickFilters) return;
     writeStoredFilter(quickFilterStorageKey, activeQuickFilter);
-  }, [activeQuickFilter, quickFilterStorageKey, supportsSearchAndQuickFilters]);
+  }, [activeQuickFilter, quickFilterStorageKey, supportsQuickFilters]);
 
   useEffect(() => {
     if (extraFilterDefinitions.length === 0) return;
@@ -324,7 +327,7 @@ export function ListingApprovalQueuePanel({
     ];
 
     return records.filter((record) => {
-      if (supportsSearchAndQuickFilters) {
+      if (supportsQuickFilters) {
         const passesQuickFilter = matchesQuickFilter(record, approvedFieldName, requiredFieldNames, activeQuickFilter);
         if (!passesQuickFilter) return false;
       }
@@ -333,7 +336,7 @@ export function ListingApprovalQueuePanel({
         || extraFilterDefinitions.find((definition) => definition.id === activeExtraFilter)?.matches(record)
         || false;
       if (!passesExtraFilter) return false;
-      if (!supportsSearchAndQuickFilters || !normalizedQuery) return true;
+      if (!normalizedQuery) return true;
 
       return buildSearchableRecordText(record, searchableFieldNames).includes(normalizedQuery);
     });
@@ -348,13 +351,13 @@ export function ListingApprovalQueuePanel({
     records,
     requiredFieldNames,
     searchQuery,
-    supportsSearchAndQuickFilters,
+    supportsQuickFilters,
     titleFieldName,
     vendorFieldName,
   ]);
 
   const quickFilterCounts = useMemo(() => {
-    if (!supportsSearchAndQuickFilters) return null;
+    if (!supportsQuickFilters) return null;
 
     return {
       all: records.length,
@@ -363,7 +366,7 @@ export function ListingApprovalQueuePanel({
       'needs-fields': records.filter((record) => matchesQuickFilter(record, approvedFieldName, requiredFieldNames, 'needs-fields')).length,
       approved: records.filter((record) => matchesQuickFilter(record, approvedFieldName, requiredFieldNames, 'approved')).length,
     } satisfies Record<QueueQuickFilter, number>;
-  }, [approvedFieldName, records, requiredFieldNames, supportsSearchAndQuickFilters]);
+  }, [approvedFieldName, records, requiredFieldNames, supportsQuickFilters]);
 
   const extraFilterCounts = useMemo(() => {
     if (extraFilterDefinitions.length === 0) return null;
@@ -373,9 +376,26 @@ export function ListingApprovalQueuePanel({
     ) as Record<Exclude<QueueExtraFilter, 'all'>, number>;
   }, [extraFilterDefinitions, records]);
 
-  const isFiltered = supportsSearchAndQuickFilters
+  const isFiltered = supportsQuickFilters
     ? filteredRecords.length !== records.length
-    : activeExtraFilter !== 'all' && filteredRecords.length !== records.length;
+    : searchQuery.trim().length > 0 || (activeExtraFilter !== 'all' && filteredRecords.length !== records.length);
+  const summaryStats = useMemo(() => {
+    if (approvalChannel === 'combined') {
+      return [
+        { label: 'Loaded Rows', value: records.length },
+        { label: 'Needs Review', value: extraFilterCounts?.['workflow-pre-listing-review'] ?? 0 },
+        { label: 'Approved To Publish', value: extraFilterCounts?.['workflow-approved-for-publish'] ?? 0 },
+        { label: 'Showing', value: filteredRecords.length },
+      ];
+    }
+
+    return [
+      { label: 'Loaded Rows', value: records.length },
+      { label: 'Pending', value: quickFilterCounts?.pending ?? 0 },
+      { label: 'Ready', value: quickFilterCounts?.ready ?? 0 },
+      { label: 'Approved', value: quickFilterCounts?.approved ?? 0 },
+    ];
+  }, [approvalChannel, extraFilterCounts, filteredRecords.length, quickFilterCounts, records.length]);
 
   const queuePanel = (
     <>
@@ -396,60 +416,68 @@ export function ListingApprovalQueuePanel({
       )}
 
       {hasTableReference && loading ? (
-        <section className={panelSurfaceClass}>
+        <section className={approvalQueueSurfaceClass}>
           <ListingApprovalQueueSkeleton />
         </section>
       ) : hasTableReference ? (
-        <section className={panelSurfaceClass}>
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow</p>
-              <h3 className="m-0 mt-1 text-[1.08rem] font-semibold text-[var(--ink)]">Listing Update & Approval</h3>
-              <p className="m-0 mt-1 text-sm text-[var(--muted)]">
-                Source: <code>{tableReference}</code>
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {approvalChannel === 'shopify' && (
-                <button
-                  type="button"
-                  className={accentActionButtonClass}
-                  onClick={() => {
-                    void createNewShopifyListing();
-                  }}
-                  disabled={loading || saving || creatingShopifyListing}
-                >
-                  {creatingShopifyListing ? 'Creating Listing...' : 'New Shopify Listing'}
-                </button>
-              )}
-              <RefreshIconButton
+        <section className={approvalQueueSurfaceClass}>
+          <AppPageStatSection
+            stats={summaryStats}
+            dividerBelow
+            className="mb-4"
+            actions={approvalChannel === 'shopify' ? (
+              <button
+                type="button"
+                className={accentActionButtonClass}
                 onClick={() => {
-                  trackWorkflowEvent('approval_queue_refreshed', {
-                    tableReference,
-                  });
-                  void loadRecords(tableReference, tableName ?? '', true);
+                  void createNewShopifyListing();
                 }}
-                disabled={loading}
-                loading={loading}
-                label="Refresh listing approval queue"
-                loadingLabel="Refreshing listing approval queue"
-              />
-            </div>
-          </div>
+                disabled={loading || saving || creatingShopifyListing}
+              >
+                {creatingShopifyListing ? 'Creating Listing...' : 'New Shopify Listing'}
+              </button>
+            ) : undefined}
+          />
 
-          {supportsSearchAndQuickFilters ? (
+          <QueueSearchToolbar
+            searchAriaLabel={approvalChannel === 'shopify'
+              ? 'Search Shopify listing queue'
+              : approvalChannel === 'ebay'
+                ? 'Search eBay listing queue'
+                : 'Search combined listing queue'}
+            searchPlaceholder={approvalChannel === 'shopify'
+              ? 'Search Shopify listings, brand, vendor, or workflow status…'
+              : approvalChannel === 'ebay'
+                ? 'Search eBay listings, brand, vendor, or workflow status…'
+                : 'Search combined listings, brand, vendor, or workflow status…'}
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            refreshLabel={!supportsQuickFilters ? 'Refresh listing approval queue' : undefined}
+            refreshLoadingLabel={!supportsQuickFilters ? 'Refreshing listing approval queue' : undefined}
+            refreshing={!supportsQuickFilters ? loading : undefined}
+            onRefresh={!supportsQuickFilters ? (() => {
+              trackWorkflowEvent('approval_queue_refreshed', {
+                tableReference,
+              });
+              void loadRecords(tableReference, tableName ?? '', true);
+            }) : undefined}
+            filters={!supportsQuickFilters && extraFilterDefinitions.length > 0
+              ? [{
+                ariaLabel: 'Filter combined listing queue',
+                value: activeExtraFilter,
+                options: [
+                  { value: 'all', label: 'All Workflow Stages' },
+                  ...extraFilterDefinitions.map((definition) => ({ value: definition.id, label: definition.label })),
+                ],
+                onChange: (value) => setActiveExtraFilter(value as QueueExtraFilter),
+              }]
+              : undefined}
+            compactFilters={!supportsQuickFilters}
+            className="mb-4"
+          />
+
+          {supportsQuickFilters ? (
             <div className="mb-4 space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  className={searchInputClass}
-                  placeholder={approvalChannel === 'shopify' ? 'Search Shopify listings, brand, vendor, or workflow status…' : 'Search eBay listings, brand, vendor, or workflow status…'}
-                  aria-label={approvalChannel === 'shopify' ? 'Search Shopify listing queue' : 'Search eBay listing queue'}
-                />
-              </div>
-
               <div className="flex flex-wrap gap-2">
                 {(['all', 'pending', 'ready', 'needs-fields', 'approved'] as const).map((filter) => {
                   const active = activeQuickFilter === filter;
@@ -459,7 +487,7 @@ export function ListingApprovalQueuePanel({
                     <button
                       key={filter}
                       type="button"
-                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${active ? 'border-sky-400/35 bg-sky-500/15 text-sky-100' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-sky-400/25 hover:text-[var(--ink)]'}`}
+                      className={`${queueFilterButtonClass} ${active ? 'border-sky-400/35 bg-sky-500/15 text-sky-100' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-sky-400/25 hover:text-[var(--ink)]'}`}
                       onClick={() => setActiveQuickFilter(filter)}
                       aria-pressed={active}
                     >
@@ -479,7 +507,7 @@ export function ListingApprovalQueuePanel({
                       <button
                         key={definition.id}
                         type="button"
-                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${active ? 'border-emerald-400/35 bg-emerald-500/15 text-emerald-100' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-emerald-400/25 hover:text-[var(--ink)]'}`}
+                        className={`${queueFilterButtonClass} ${active ? 'border-emerald-400/35 bg-emerald-500/15 text-emerald-100' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-emerald-400/25 hover:text-[var(--ink)]'}`}
                         onClick={() => setActiveExtraFilter(active ? 'all' : definition.id)}
                         aria-pressed={active}
                       >
@@ -492,33 +520,12 @@ export function ListingApprovalQueuePanel({
             </div>
           ) : null}
 
-          {!supportsSearchAndQuickFilters && extraFilterDefinitions.length > 0 ? (
-            <div className="mb-4 flex flex-wrap gap-2">
-              {extraFilterDefinitions.map((definition) => {
-                const active = activeExtraFilter === definition.id;
-                const count = extraFilterCounts?.[definition.id] ?? 0;
-
-                return (
-                  <button
-                    key={definition.id}
-                    type="button"
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${active ? 'border-cyan-400/35 bg-cyan-500/15 text-cyan-100' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-cyan-400/25 hover:text-[var(--ink)]'}`}
-                    onClick={() => setActiveExtraFilter(active ? 'all' : definition.id)}
-                    aria-pressed={active}
-                  >
-                    {definition.label} · {count}
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-
           <p className="m-0 mb-4 text-sm text-[var(--muted)]">
             <strong>{filteredRecords.length}</strong>
-            {isFiltered ? ` of ${records.length}` : ''} listing rows {supportsSearchAndQuickFilters || isFiltered ? 'shown' : 'loaded'}.
+            {isFiltered ? ` of ${records.length}` : ''} listing rows {supportsQuickFilters || isFiltered ? 'shown' : 'loaded'}.
           </p>
 
-          {(supportsSearchAndQuickFilters || activeExtraFilter !== 'all') && filteredRecords.length === 0 ? (
+          {(supportsQuickFilters || searchQuery.trim().length > 0 || activeExtraFilter !== 'all') && filteredRecords.length === 0 ? (
             <section className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-8 text-center text-sm text-[var(--muted)]">
               No listing rows match the current filters.
             </section>
@@ -553,13 +560,13 @@ export function ListingApprovalQueuePanel({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <AppPageLayout>
       <WorkflowPageHeader
-        eyebrow="Used Gear Workflow"
+        eyebrow="Review"
         title="Combined Listings"
       />
 
       {queuePanel}
-    </div>
+    </AppPageLayout>
   );
 }

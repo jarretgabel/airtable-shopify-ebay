@@ -208,6 +208,7 @@ describe('DashboardTab', () => {
   it('shows the partial-data notice and passes source errors through to sections', () => {
     render(<DashboardTab viewModel={buildViewModel()} />);
 
+    expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
     expect(screen.getByText('Partial dashboard data')).toBeInTheDocument();
     expect(screen.getByText('Section nav')).toBeInTheDocument();
     expect(screen.getByText('Overview section')).toBeInTheDocument();

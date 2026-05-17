@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { smallPrimaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
@@ -212,9 +213,9 @@ export function UsedGearTrashReviewRecordPage({
 
   return (
     <PanelSurface>
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <AppPageLayout>
         <WorkflowPageHeader
-          eyebrow="Trash Review"
+          eyebrow="Trash"
           title={displayInventoryValue(record.fields.SKU)}
           detail={<>{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</>}
           actions={(
@@ -361,7 +362,7 @@ export function UsedGearTrashReviewRecordPage({
             ]}
           />
         </div>
-      </div>
+      </AppPageLayout>
     </PanelSurface>
   );
 }

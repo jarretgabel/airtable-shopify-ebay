@@ -16,9 +16,9 @@ export function ShopifyListingsDirectoryTab({
   const archivedProductsCount = shopifyViewModel.products.filter((product) => product.status?.toLowerCase() === 'archived').length;
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
       <ListingsServiceSummaryPanel
-        eyebrow="Shopify Directory"
+        eyebrow="Channels"
         title="Shopify Product Snapshot"
         description="This page is read-only. Use the combined Listings page for all approvals, edits, and publishing decisions; keep this screen for store-side product visibility only."
         stats={[

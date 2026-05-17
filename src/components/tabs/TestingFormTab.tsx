@@ -273,7 +273,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <WorkflowPageHeader
-          eyebrow="SB Inventory"
+          eyebrow="Forms"
           title="Testing"
           detail={recordId ? <>Editing record <strong>{recordId}</strong>. Saving here updates only the Testing fields for this inventory row.</> : undefined}
           actions={onBackToDirectory ? (

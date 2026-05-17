@@ -1,8 +1,8 @@
 import type { ApprovalTabViewModel } from '@/app/appTabViewModels';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { ListingApprovalQueuePanel } from '@/components/approval/ListingApprovalQueuePanel';
 import { ListingApprovalSelectedRecordPanel } from '@/components/approval/ListingApprovalSelectedRecordPanel';
 import { useListingApprovalTabState } from '@/components/approval/useListingApprovalTabState';
-import { panelSurfaceClass } from '@/components/tabs/uiClasses';
 
 interface ListingApprovalTabProps {
   viewModel: ApprovalTabViewModel;
@@ -37,19 +37,17 @@ export function ListingApprovalTab({
 
   if (selectedRecord) {
     return (
-      <>
-        <section className={panelSurfaceClass}>
-          <ListingApprovalSelectedRecordPanel {...selectedRecordPanelProps!} />
-        </section>
+      <AppPageLayout>
+        <ListingApprovalSelectedRecordPanel {...selectedRecordPanelProps!} />
         {confirmationModal}
-      </>
+      </AppPageLayout>
     );
   }
 
   return (
-    <>
+    <AppPageLayout>
       <ListingApprovalQueuePanel {...queuePanelProps} />
       {confirmationModal}
-    </>
+    </AppPageLayout>
   );
 }

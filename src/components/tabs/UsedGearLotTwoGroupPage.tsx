@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
@@ -119,9 +120,9 @@ export function UsedGearLotTwoGroupPage({
 
   return (
     <PanelSurface>
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <AppPageLayout>
         <WorkflowPageHeader
-          eyebrow="Parking Lot 2 Handoff"
+          eyebrow="Parking Lots"
           title={group.label}
           actions={(
             <button
@@ -231,7 +232,7 @@ export function UsedGearLotTwoGroupPage({
             ] as IntakeItemsMatrixColumn<AirtableRecord>[] : []}
           />
         </section>
-      </div>
+      </AppPageLayout>
     </PanelSurface>
   );
 }

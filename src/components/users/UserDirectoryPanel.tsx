@@ -97,6 +97,7 @@ export function UserDirectoryPanel({
         className="scroll-mt-20"
       >
         <PageTitleHeader
+          eyebrow="Utilities"
           title="User Management"
           actions={(
             <button
@@ -145,8 +146,6 @@ export function UserDirectoryPanel({
               roleFilter={roleFilter}
               sortKey={sortKey}
               sortDirection={sortDirection}
-              labelClassName={labelClassName}
-              inputClassName={inputClassName}
               roleBadgeClassName={roleBadgeClassName}
               formatAccessiblePages={formatAccessiblePages}
               onSearchTermChange={onSearchTermChange}

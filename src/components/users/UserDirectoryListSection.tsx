@@ -1,3 +1,4 @@
+import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import type { AppUser } from '@/stores/auth/authTypes';
 import { RoleFilter, UserSortKey } from '@/components/users/userManagementTypes';
 
@@ -8,8 +9,6 @@ interface UserDirectoryListSectionProps {
   roleFilter: RoleFilter;
   sortKey: UserSortKey;
   sortDirection: 'asc' | 'desc';
-  labelClassName: string;
-  inputClassName: string;
   roleBadgeClassName: (role: AppUser['role']) => string;
   formatAccessiblePages: (user: AppUser) => string;
   onSearchTermChange: (value: string) => void;
@@ -26,8 +25,6 @@ export function UserDirectoryListSection({
   roleFilter,
   sortKey,
   sortDirection,
-  labelClassName,
-  inputClassName,
   roleBadgeClassName,
   formatAccessiblePages,
   onSearchTermChange,
@@ -38,51 +35,49 @@ export function UserDirectoryListSection({
 }: UserDirectoryListSectionProps) {
   return (
     <section className="rounded-2xl border border-white/15 bg-slate-950/45 p-4 shadow-[0_12px_26px_rgba(0,0,0,0.28)]">
-      <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-4">
-        <label className="flex flex-col gap-1.5 lg:col-span-2">
-          <span className={labelClassName}>Search</span>
-          <input
-            type="text"
-            className={inputClassName}
-            value={searchTerm}
-            onChange={(event) => onSearchTermChange(event.target.value)}
-            placeholder="Search by name, email, or role access"
-          />
-        </label>
-
-        <label className="flex flex-col gap-1.5">
-          <span className={labelClassName}>Role Filter</span>
-          <select className={inputClassName} value={roleFilter} onChange={(event) => onRoleFilterChange(event.target.value as RoleFilter)}>
-            <option value="all">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="owner">Owner</option>
-            <option value="developer">Developer</option>
-            <option value="processor">Processor</option>
-            <option value="tester">Tester</option>
-            <option value="photographer">Photographer</option>
-          </select>
-        </label>
-
-        <div className="flex gap-2">
-          <label className="flex flex-1 flex-col gap-1.5">
-            <span className={labelClassName}>Sort By</span>
-            <select className={inputClassName} value={sortKey} onChange={(event) => onSortKeyChange(event.target.value as UserSortKey)}>
-              <option value="name">Name</option>
-              <option value="email">Email</option>
-              <option value="role">Role</option>
-              <option value="pages">Role Access</option>
-            </select>
-          </label>
-
-          <label className="flex w-[6.5rem] flex-col gap-1.5">
-            <span className={labelClassName}>Order</span>
-            <select className={inputClassName} value={sortDirection} onChange={(event) => onSortDirectionChange(event.target.value as 'asc' | 'desc')}>
-              <option value="asc">Asc</option>
-              <option value="desc">Desc</option>
-            </select>
-          </label>
-        </div>
-      </div>
+      <QueueSearchToolbar
+        className="mb-4"
+        searchAriaLabel="Search users"
+        searchPlaceholder="Search by name, email, or role access"
+        searchValue={searchTerm}
+        onSearchChange={onSearchTermChange}
+        filters={[
+          {
+            ariaLabel: 'Filter users by role',
+            value: roleFilter,
+            onChange: (value) => onRoleFilterChange(value as RoleFilter),
+            options: [
+              { value: 'all', label: 'All Roles' },
+              { value: 'admin', label: 'Admin' },
+              { value: 'owner', label: 'Owner' },
+              { value: 'developer', label: 'Developer' },
+              { value: 'processor', label: 'Processor' },
+              { value: 'tester', label: 'Tester' },
+              { value: 'photographer', label: 'Photographer' },
+            ],
+          },
+          {
+            ariaLabel: 'Sort users by',
+            value: sortKey,
+            onChange: (value) => onSortKeyChange(value as UserSortKey),
+            options: [
+              { value: 'name', label: 'Sort: Name' },
+              { value: 'email', label: 'Sort: Email' },
+              { value: 'role', label: 'Sort: Role' },
+              { value: 'pages', label: 'Sort: Role Access' },
+            ],
+          },
+          {
+            ariaLabel: 'Sort user order',
+            value: sortDirection,
+            onChange: (value) => onSortDirectionChange(value as 'asc' | 'desc'),
+            options: [
+              { value: 'asc', label: 'Order: Asc' },
+              { value: 'desc', label: 'Order: Desc' },
+            ],
+          },
+        ]}
+      />
 
       <p className="mb-3 text-xs text-slate-300">
         Showing <strong>{listUsers.length}</strong> of <strong>{sortedUsers.length}</strong> users

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
@@ -228,9 +229,9 @@ export function UsedGearPendingReviewRecordPage({
 
   return (
     <PanelSurface>
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <AppPageLayout>
         <WorkflowPageHeader
-          eyebrow="Parking Lot 1 Review"
+          eyebrow="Parking Lots"
           title={displayInventoryValue(record.fields.SKU)}
           detail={<>{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</>}
           actions={(
@@ -405,7 +406,7 @@ export function UsedGearPendingReviewRecordPage({
             ]}
           />
         </div>
-      </div>
+      </AppPageLayout>
     </PanelSurface>
   );
 }

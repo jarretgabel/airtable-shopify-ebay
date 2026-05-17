@@ -91,6 +91,7 @@ export function NotificationsTab() {
   return (
     <section className="space-y-5">
       <PageTitleHeader
+        eyebrow="Utilities"
         title="Notifications"
         actions={(
           <>

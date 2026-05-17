@@ -1,3 +1,5 @@
+import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
+import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { displayValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 import { isReadyForRequiredFields } from '@/components/approval/requiredFieldStatus';
@@ -50,85 +52,134 @@ export function ApprovalQueueTable({
 	qtyFieldName,
 	openRecord,
 }: ApprovalQueueTableProps) {
-	return (
-		<div className="overflow-hidden rounded-lg border border-[var(--line)]">
-			<table className="w-full border-collapse text-left text-sm text-[var(--ink)]">
-				<thead className="bg-white/5 text-xs uppercase tracking-[0.06em] text-[var(--muted)]">
-					<tr>
-						<th className="px-3 py-2">Title</th>
-						{!!conditionFieldName && <th className="px-3 py-2">Condition</th>}
-						{!!formatFieldName && <th className="px-3 py-2">Format</th>}
-						{!!priceFieldName && <th className="px-3 py-2">Price</th>}
-						{!!vendorFieldName && <th className="px-3 py-2">Vendor</th>}
-						{!!qtyFieldName && <th className="px-3 py-2">Qty</th>}
-						{readinessColumns.map((column) => <th key={column.key} className="px-3 py-2">{column.label}</th>)}
-						<th className="px-3 py-2">Approved</th>
-						<th className="px-3 py-2 text-right">Action</th>
-					</tr>
-				</thead>
-				<tbody>
-					{records.map((record) => {
-						const approved = isApprovedRecord(record, approvedFieldName);
-						const missingRequired = hasMissingRequiredField(record, requiredFieldNames);
+	const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
+		{
+			key: 'title',
+			label: 'Title',
+			width: 'minmax(0,1.8fr)',
+			renderCell: (record) => (
+				<div className="min-w-0">
+					<div className="truncate font-medium text-[var(--ink)]">{getCell(record, titleFieldName) || '(Untitled)'}</div>
+				</div>
+			),
+		},
+		...(
+			conditionFieldName
+				? [{
+					key: 'condition',
+					label: 'Condition',
+					width: '10rem',
+					renderCell: (record: AirtableRecord) => <span className="text-[var(--muted)]">{getCell(record, conditionFieldName)}</span>,
+				} satisfies IntakeItemsMatrixColumn<AirtableRecord>]
+				: []
+		),
+		...(
+			formatFieldName
+				? [{
+					key: 'format',
+					label: 'Format',
+					width: '9rem',
+					renderCell: (record: AirtableRecord) => <span className="text-[var(--muted)]">{getCell(record, formatFieldName)}</span>,
+				} satisfies IntakeItemsMatrixColumn<AirtableRecord>]
+				: []
+		),
+		...(
+			priceFieldName
+				? [{
+					key: 'price',
+					label: 'Price',
+					width: '8rem',
+					renderCell: (record: AirtableRecord) => <span className="text-[var(--muted)]">{getCell(record, priceFieldName)}</span>,
+				} satisfies IntakeItemsMatrixColumn<AirtableRecord>]
+				: []
+		),
+		...(
+			vendorFieldName
+				? [{
+					key: 'vendor',
+					label: 'Vendor',
+					width: '10rem',
+					renderCell: (record: AirtableRecord) => <span className="text-[var(--muted)]">{getCell(record, vendorFieldName)}</span>,
+				} satisfies IntakeItemsMatrixColumn<AirtableRecord>]
+				: []
+		),
+		...(
+			qtyFieldName
+				? [{
+					key: 'qty',
+					label: 'Qty',
+					width: '7rem',
+					align: 'center',
+					renderCell: (record: AirtableRecord) => <span className="text-[var(--muted)]">{getCell(record, qtyFieldName)}</span>,
+				} satisfies IntakeItemsMatrixColumn<AirtableRecord>]
+				: []
+		),
+		...readinessColumns.map((column) => ({
+			key: column.key,
+			label: column.label,
+			width: '11rem',
+			renderCell: (record: AirtableRecord) => {
+				const ready = isReadyForRequiredFields(record.fields, column.requiredFieldNames);
+				return (
+					<span
+						className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+							ready
+								? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200'
+								: 'border border-rose-400/35 bg-rose-500/20 text-rose-200'
+						}`}
+					>
+						{ready ? 'Ready' : 'Needs Fields'}
+					</span>
+				);
+			},
+		} satisfies IntakeItemsMatrixColumn<AirtableRecord>)),
+		{
+			key: 'approved',
+			label: 'Approved',
+			width: '11rem',
+			renderCell: (record) => {
+				const approved = isApprovedRecord(record, approvedFieldName);
+				const missingRequired = hasMissingRequiredField(record, requiredFieldNames);
 
-						return (
-							<tr
-								key={record.id}
-								className="cursor-pointer border-t border-[var(--line)] hover:bg-white/5"
-								onClick={() => openRecord(record)}
-							>
-								<td className="px-3 py-2 font-medium">{getCell(record, titleFieldName) || '(Untitled)'}</td>
-								{!!conditionFieldName && <td className="px-3 py-2">{getCell(record, conditionFieldName)}</td>}
-								{!!formatFieldName && <td className="px-3 py-2">{getCell(record, formatFieldName)}</td>}
-								{!!priceFieldName && <td className="px-3 py-2">{getCell(record, priceFieldName)}</td>}
-								{!!vendorFieldName && <td className="px-3 py-2">{getCell(record, vendorFieldName)}</td>}
-								{!!qtyFieldName && <td className="px-3 py-2">{getCell(record, qtyFieldName)}</td>}
-								{readinessColumns.map((column) => {
-									const ready = isReadyForRequiredFields(record.fields, column.requiredFieldNames);
-									return (
-										<td key={column.key} className="px-3 py-2">
-											<span
-												className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-													ready
-														? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200'
-														: 'border border-rose-400/35 bg-rose-500/20 text-rose-200'
-												}`}
-											>
-												{ready ? 'Ready' : 'Needs Fields'}
-											</span>
-										</td>
-									);
-								})}
-								<td className="px-3 py-2">
-									<span
-										className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-											approved
-												? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200'
-												: missingRequired
-													? 'border border-rose-400/35 bg-rose-500/20 text-rose-200'
-													: 'border border-amber-400/35 bg-amber-500/20 text-amber-200'
-										}`}
-									>
-										{approved ? 'Approved' : missingRequired ? 'Needs Fields' : 'Pending'}
-									</span>
-								</td>
-								<td className="px-3 py-2 text-right">
-									<button
-										type="button"
-										className="inline-flex items-center rounded-md border border-sky-400/35 bg-sky-500/15 px-2.5 py-1 text-xs font-semibold text-sky-100 transition hover:bg-sky-500/25"
-										onClick={(event) => {
-											event.stopPropagation();
-											openRecord(record);
-										}}
-									>
-										View Listing
-									</button>
-								</td>
-							</tr>
-						);
-					})}
-				</tbody>
-			</table>
-		</div>
+				return (
+					<span
+						className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+							approved
+								? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200'
+								: missingRequired
+									? 'border border-rose-400/35 bg-rose-500/20 text-rose-200'
+									: 'border border-amber-400/35 bg-amber-500/20 text-amber-200'
+						}`}
+					>
+						{approved ? 'Approved' : missingRequired ? 'Needs Fields' : 'Pending'}
+					</span>
+				);
+			},
+		},
+		{
+			key: 'actions',
+			label: 'Actions',
+			width: '10rem',
+			align: 'center',
+			headerClassName: 'border-l border-[var(--line)]/60',
+			cellClassName: 'border-l border-[var(--line)]/60',
+			renderCell: (record) => (
+				<div className="flex min-h-[3rem] items-center justify-center gap-1.5">
+					<CompactIconActionButton
+						label="View Listing"
+						variant="small-secondary"
+						onClick={() => openRecord(record)}
+					/>
+				</div>
+			),
+		},
+	];
+
+	return (
+		<IntakeItemsMatrix
+			items={records}
+			columns={columns}
+			getItemKey={(record) => record.id}
+		/>
 	);
 }

@@ -33,7 +33,7 @@ export function UsedGearTrashTab({}: UsedGearTrashTabProps) {
 
   return (
     <WorkflowQueuePageTemplate
-      eyebrow="Used Gear Intake"
+      eyebrow="Trash"
       title="Trash Review"
     >
       <UsedGearTrashSection

@@ -27,9 +27,9 @@ export function EbayListingsDirectoryTab({
       : 'Disconnected';
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
       <ListingsServiceSummaryPanel
-        eyebrow="eBay Directory"
+        eyebrow="Channels"
         title="eBay Listing Snapshot"
         description={usingAirtableSnapshot
           ? 'This page is read-only. The live eBay runtime is unavailable, so this screen is showing Airtable-backed eBay listing snapshots instead. Use the combined Listings page for approvals, edits, and listing changes.'

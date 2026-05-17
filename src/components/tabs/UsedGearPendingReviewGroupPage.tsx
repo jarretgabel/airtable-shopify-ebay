@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
@@ -399,9 +400,9 @@ export function UsedGearPendingReviewGroupPage({
 
   return (
     <PanelSurface>
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <AppPageLayout>
         <WorkflowPageHeader
-          eyebrow="Parking Lot 1 Review"
+          eyebrow="Parking Lots"
           title={group.label}
           actions={(
             <button
@@ -541,7 +542,7 @@ export function UsedGearPendingReviewGroupPage({
             getItemKey={(record) => record.id}
           />
         </section>
-      </div>
+      </AppPageLayout>
     </PanelSurface>
   );
 }

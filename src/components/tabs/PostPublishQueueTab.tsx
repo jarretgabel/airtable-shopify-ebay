@@ -1,7 +1,15 @@
 import { useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
+import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import { WorkflowQueuePageTemplate } from '@/components/app/WorkflowQueuePageTemplate';
-import { UsedGearWorkflowPostPublishSection, type UsedGearWorkflowPostPublishSortMode } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
+import {
+  getPostPublishSectionId,
+  POST_PUBLISH_OVERVIEW_SECTION_ID,
+  POST_PUBLISH_SECTION_DEFINITIONS,
+  UsedGearWorkflowPostPublishSection,
+  type UsedGearWorkflowPostPublishSortMode,
+} from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 
 interface PostPublishQueueTabProps {
@@ -12,6 +20,7 @@ interface PostPublishQueueTabProps {
 
 const WORKFLOW_POST_PUBLISH_SEARCH_PARAM = 'workflowPostPublishSearch';
 const WORKFLOW_POST_PUBLISH_SORT_PARAM = 'workflowPostPublishSort';
+type PostPublishSectionNavKey = 'overview' | UsedGearWorkflowPostPublishBucket;
 
 function parsePostPublishSortMode(search: string): UsedGearWorkflowPostPublishSortMode {
   const value = new URLSearchParams(search).get(WORKFLOW_POST_PUBLISH_SORT_PARAM);
@@ -57,16 +66,47 @@ export function PostPublishQueueTab({
     });
   }, [updateRouteState]);
 
+  const sectionItems = useMemo(() => [
+    { id: POST_PUBLISH_OVERVIEW_SECTION_ID, key: 'overview' as const, label: 'Overview' },
+    ...POST_PUBLISH_SECTION_DEFINITIONS.map((section) => ({ id: section.id, key: section.key, label: section.title })),
+  ], []);
+  const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, POST_PUBLISH_OVERVIEW_SECTION_ID);
+  const activeSectionKey = useMemo<PostPublishSectionNavKey>(
+    () => sectionItems.find((item) => item.id === activeSectionId)?.key ?? 'overview',
+    [activeSectionId, sectionItems],
+  );
+
+  const handleSectionSelect = useCallback((sectionKey: PostPublishSectionNavKey) => {
+    if (sectionKey === 'overview') {
+      handleFocusedBucketChange('all');
+      requestAnimationFrame(() => {
+        scrollToSection(POST_PUBLISH_OVERVIEW_SECTION_ID);
+      });
+      return;
+    }
+
+    handleFocusedBucketChange(sectionKey);
+    requestAnimationFrame(() => {
+      scrollToSection(getPostPublishSectionId(sectionKey));
+    });
+  }, [handleFocusedBucketChange, scrollToSection]);
+
   return (
     <WorkflowQueuePageTemplate
-      eyebrow="Used Gear Workflow"
+      eyebrow="Follow-Through"
       title="Post-Publish"
     >
+      <MainPageSectionNav
+        ariaLabel="Post-publish sections"
+        items={sectionItems.map((item) => ({ key: item.key, label: item.label }))}
+        activeKey={activeSectionKey}
+        onSelect={handleSectionSelect}
+      />
+
       <UsedGearWorkflowPostPublishSection
         currentUserName={currentUserName}
         showSectionIntro={false}
         focusedBucket={focusedBucket}
-        onFocusedBucketChange={handleFocusedBucketChange}
         onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={onOpenListingsRecord}
         searchTerm={searchTerm}

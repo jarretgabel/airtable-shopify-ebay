@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { canAccessCommerceDashboard, canAccessWorkflowDashboard, hasFullAccessRole } from '@/auth/roleAccess';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { DashboardSectionNav } from '@/components/dashboard/DashboardSectionNav';
 import { DashboardOverviewSection, DashboardInsightsSection } from '@/components/dashboard/DashboardOverviewInsightsSection';
 import { DashboardAirtableSection } from '@/components/dashboard/DashboardAirtableSection';
@@ -138,7 +140,8 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
   const { activeSectionId, scrollToSection } = useDashboardSectionTracking(sections);
 
   return (
-    <div className="flex flex-col gap-12 pt-1 [overflow-anchor:none]">
+    <AppPageLayout className="[overflow-anchor:none]">
+      <WorkflowPageHeader eyebrow="Overview" title="Dashboard" />
       <DashboardSectionNav sections={sections} activeSectionId={activeSectionId} onSelectSection={scrollToSection} />
       {showPartialDataNotice && <DashboardPartialDataNotice degradedSources={degradedSources} />}
       {showOverviewSection ? (
@@ -309,6 +312,6 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
       />
       ) : null}
       {showExpandedSections && showDetailedSections && allUtilityCards.length > 0 ? <DashboardWorkflowSection sectionId="utility-workflows" title="Utilities" cards={allUtilityCards} onSelect={actions.onSelectTab} /> : null}
-    </div>
+    </AppPageLayout>
   );
 }

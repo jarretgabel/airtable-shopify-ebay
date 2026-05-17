@@ -136,21 +136,25 @@ describe('ListingApprovalQueuePanel', () => {
     expect(screen.getByRole('button', { name: 'Draft Offer · 1' })).toBeInTheDocument();
   });
 
-  it('does not render service quick filters for the combined queue', () => {
+  it('shows the standard search and filter row for the combined queue', () => {
     render(
       <ListingApprovalQueuePanel
         {...baseProps}
         approvalChannel="combined"
-        records={[buildRecord('1', { Title: 'Combined Listing', Approved: false })]}
+        records={[
+          buildRecord('1', { Title: 'Needs Review Listing', Approved: false, 'Workflow Status': 'Awaiting Pre-Listing Review' }),
+          buildRecord('2', { Title: 'Approved Listing', Approved: true, 'Workflow Status': 'Approved for Publish' }),
+        ]}
       />,
     );
 
-    expect(screen.queryByLabelText('Search Shopify listing queue')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Search combined listing queue')).toBeInTheDocument();
+    expect(screen.getByLabelText('Filter combined listing queue')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Needs Fields/i })).not.toBeInTheDocument();
-    expect(screen.getByText((_, node) => node?.textContent?.replace(/\s+/g, ' ').trim() === '1 listing rows loaded.')).toBeInTheDocument();
+    expect(screen.getByText((_, node) => node?.textContent?.replace(/\s+/g, ' ').trim() === '2 listing rows loaded.')).toBeInTheDocument();
   });
 
-  it('shows workflow-stage chips for the combined queue and filters pre-listing review rows', () => {
+  it('filters the combined queue with the standard workflow filter row', () => {
     render(
       <ListingApprovalQueuePanel
         {...baseProps}
@@ -164,7 +168,9 @@ describe('ListingApprovalQueuePanel', () => {
 
     expect(screen.getByText('Combined Listings')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Needs Review · 1' }));
+    fireEvent.change(screen.getByLabelText('Filter combined listing queue'), {
+      target: { value: 'workflow-pre-listing-review' },
+    });
 
     expect(screen.getByText('Needs Review Listing')).toBeInTheDocument();
     expect(screen.queryByText('Approved Listing')).not.toBeInTheDocument();

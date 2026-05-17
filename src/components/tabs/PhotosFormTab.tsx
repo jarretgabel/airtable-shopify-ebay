@@ -353,7 +353,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     <PanelSurface>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <WorkflowPageHeader
-          eyebrow="SB Inventory"
+          eyebrow="Forms"
           title="Photos"
           detail={recordId ? <>Editing record <strong>{recordId}</strong>. Saving here updates only the Photos fields for this inventory row.</> : undefined}
           actions={onBackToDirectory ? (

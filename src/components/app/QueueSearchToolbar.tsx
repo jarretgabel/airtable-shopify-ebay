@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 
 export interface QueueSearchToolbarSortOption {
@@ -5,23 +6,39 @@ export interface QueueSearchToolbarSortOption {
   label: string;
 }
 
+export interface QueueSearchToolbarFilterOption {
+  value: string;
+  label: string;
+}
+
+export interface QueueSearchToolbarFilter {
+  ariaLabel: string;
+  value: string;
+  options: QueueSearchToolbarFilterOption[];
+  onChange: (value: string) => void;
+}
+
 export interface QueueSearchToolbarProps {
   searchAriaLabel: string;
   searchPlaceholder: string;
   searchValue: string;
   onSearchChange: (value: string) => void;
-  refreshLabel: string;
-  refreshLoadingLabel: string;
+  refreshLabel?: string;
+  refreshLoadingLabel?: string;
   refreshing?: boolean;
-  onRefresh: () => void;
+  onRefresh?: () => void;
   sortAriaLabel?: string;
   sortValue?: string;
   sortOptions?: QueueSearchToolbarSortOption[];
   onSortChange?: (value: string) => void;
+  filters?: QueueSearchToolbarFilter[];
+  compactFilters?: boolean;
+  actions?: ReactNode;
   className?: string;
 }
 
 const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
+const filterSelectClassName = 'h-[42px] min-w-[220px] rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
 
 function SortIcon() {
   return (
@@ -36,6 +53,18 @@ function SortIcon() {
   );
 }
 
+function FilterIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+      <path d="M3.75 5.417h12.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path d="M6.25 10h7.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path d="M8.75 14.583h2.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+const iconButtonShellClassName = 'inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] shadow-[0_4px_14px_rgba(17,32,49,0.04)] transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-[var(--line)] hover:text-[var(--ink)]';
+
 export function QueueSearchToolbar({
   searchAriaLabel,
   searchPlaceholder,
@@ -49,9 +78,14 @@ export function QueueSearchToolbar({
   sortValue,
   sortOptions,
   onSortChange,
+  filters,
+  compactFilters = false,
+  actions,
   className,
 }: QueueSearchToolbarProps) {
   const showSort = typeof sortValue === 'string' && Array.isArray(sortOptions) && sortOptions.length > 0 && typeof onSortChange === 'function' && typeof sortAriaLabel === 'string';
+  const showRefresh = typeof onRefresh === 'function' && typeof refreshLabel === 'string' && typeof refreshLoadingLabel === 'string';
+  const visibleFilters = Array.isArray(filters) ? filters : [];
 
   return (
     <div className={['flex flex-col gap-3 lg:flex-row lg:items-center', className ?? ''].join(' ').trim()}>
@@ -65,19 +99,55 @@ export function QueueSearchToolbar({
           placeholder={searchPlaceholder}
         />
       </label>
-      <div className="flex flex-wrap items-center gap-3">
-        <RefreshIconButton
-          onClick={onRefresh}
-          disabled={refreshing}
-          loading={refreshing}
-          label={refreshLabel}
-          loadingLabel={refreshLoadingLabel}
-        />
+      {visibleFilters.length > 0 && !compactFilters ? (
+        <div className="flex flex-wrap items-center gap-3">
+          {visibleFilters.map((filter) => (
+            <select
+              key={filter.ariaLabel}
+              aria-label={filter.ariaLabel}
+              className={filterSelectClassName}
+              value={filter.value}
+              onChange={(event) => filter.onChange(event.currentTarget.value)}
+            >
+              {filter.options.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          ))}
+        </div>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-3 lg:ml-auto">
+        {showRefresh ? (
+          <RefreshIconButton
+            onClick={onRefresh}
+            disabled={refreshing}
+            loading={refreshing}
+            label={refreshLabel}
+            loadingLabel={refreshLoadingLabel}
+          />
+        ) : null}
+        {visibleFilters.length > 0 && compactFilters ? visibleFilters.map((filter) => (
+          <div key={filter.ariaLabel} className="relative h-10 w-10 shrink-0">
+            <div aria-hidden="true" className={iconButtonShellClassName}>
+              <FilterIcon />
+            </div>
+            <select
+              aria-label={filter.ariaLabel}
+              className="absolute inset-0 h-10 w-10 cursor-pointer opacity-0"
+              value={filter.value}
+              onChange={(event) => filter.onChange(event.currentTarget.value)}
+            >
+              {filter.options.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+        )) : null}
         {showSort ? (
           <div className="relative h-10 w-10 shrink-0">
             <div
               aria-hidden="true"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] shadow-[0_4px_14px_rgba(17,32,49,0.04)] transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-[var(--line)] hover:text-[var(--ink)]"
+              className={iconButtonShellClassName}
             >
               <SortIcon />
             </div>
@@ -93,6 +163,7 @@ export function QueueSearchToolbar({
             </select>
           </div>
         ) : null}
+        {actions}
       </div>
     </div>
   );

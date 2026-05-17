@@ -1,3 +1,4 @@
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { PanelSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { AirtableEmbeddedForm } from '@/components/tabs/AirtableEmbeddedForm';
@@ -9,14 +10,14 @@ interface UsedGearManualIntakePageProps {
 export function UsedGearManualIntakePage({ recordId }: UsedGearManualIntakePageProps) {
   return (
     <PanelSurface>
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <AppPageLayout>
         <WorkflowPageHeader
-          eyebrow="Inventory Processing"
+          eyebrow="Intake Forms"
           title="Manual Intake"
         />
 
         <AirtableEmbeddedForm recordId={recordId} />
-      </div>
+      </AppPageLayout>
     </PanelSurface>
   );
 }

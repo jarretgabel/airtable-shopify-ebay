@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { AppPageStatSection } from '@/components/app/AppPageStatSection';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
-import { FilterToggleIconButton } from '@/components/app/FilterToggleIconButton';
-import { RefreshIconButton } from '@/components/app/RefreshIconButton';
+import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
@@ -26,7 +26,6 @@ interface UsedGearWorkflowPostPublishSectionProps {
   currentUserName: string;
   showSectionIntro?: boolean;
   focusedBucket?: UsedGearWorkflowPostPublishBucket | null;
-  onFocusedBucketChange?: (bucket: UsedGearWorkflowPostPublishBucket | 'all') => void;
   onOpenOperationalRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
   searchTerm?: string;
@@ -39,8 +38,15 @@ export type UsedGearWorkflowPostPublishSortMode = 'latest-activity' | 'oldest-ac
 
 interface PostPublishSectionDefinition {
   key: UsedGearWorkflowPostPublishBucket;
+  id: string;
   title: string;
   description: string;
+}
+
+export const POST_PUBLISH_OVERVIEW_SECTION_ID = 'used-gear-post-publish';
+
+export function getPostPublishSectionId(bucket: UsedGearWorkflowPostPublishBucket): string {
+  return `used-gear-post-publish-${bucket}`;
 }
 
 function getPostPublishSectionEmptyGuidance(bucket: UsedGearWorkflowPostPublishBucket): string {
@@ -58,24 +64,28 @@ function getPostPublishSectionEmptyGuidance(bucket: UsedGearWorkflowPostPublishB
   }
 }
 
-const SECTION_DEFINITIONS: PostPublishSectionDefinition[] = [
+export const POST_PUBLISH_SECTION_DEFINITIONS: PostPublishSectionDefinition[] = [
   {
     key: 'active-listing',
+    id: getPostPublishSectionId('active-listing'),
     title: 'Active Listings',
     description: `Live listings that are still inside the ${USED_GEAR_STALE_THRESHOLD_DAYS}-day freshness window.`,
   },
   {
     key: 'stale-listing',
+    id: getPostPublishSectionId('stale-listing'),
     title: 'Stale Listings',
     description: `Listings at or beyond the ${USED_GEAR_STALE_THRESHOLD_DAYS}-day threshold, plus rows explicitly moved into the stale queue.`,
   },
   {
     key: 'sold-ready',
+    id: getPostPublishSectionId('sold-ready'),
     title: 'Sold Ready To Ship',
     description: 'Sold items waiting for shipping completion.',
   },
   {
     key: 'shipped',
+    id: getPostPublishSectionId('shipped'),
     title: 'Shipped History',
     description: 'Completed shipments retained for quick workflow lookup.',
   },
@@ -131,7 +141,6 @@ function getPostPublishListingsActionLabel(bucket: UsedGearWorkflowPostPublishBu
 export function UsedGearWorkflowPostPublishSection({
   showSectionIntro = true,
   focusedBucket = null,
-  onFocusedBucketChange,
   onOpenOperationalRecord: _onOpenOperationalRecord,
   onOpenListingsRecord,
   searchTerm: controlledSearchTerm,
@@ -140,12 +149,10 @@ export function UsedGearWorkflowPostPublishSection({
   onSortModeChange,
 }: UsedGearWorkflowPostPublishSectionProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
-  const selectedBucket = focusedBucket ?? 'all';
   const [records, setRecords] = useState<AirtableRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showQueueTools, setShowQueueTools] = useState(false);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowPostPublishSortMode>('latest-activity');
   const [updatingRecordIds, setUpdatingRecordIds] = useState<string[]>([]);
@@ -158,7 +165,7 @@ export function UsedGearWorkflowPostPublishSection({
     }
 
     requestAnimationFrame(() => {
-      sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById(getPostPublishSectionId(focusedBucket))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }, [focusedBucket]);
 
@@ -205,7 +212,7 @@ export function UsedGearWorkflowPostPublishSection({
   }, [records, searchTerm]);
 
   const recordsBySection = useMemo(() => {
-    const entries = SECTION_DEFINITIONS.map((section) => [section.key, [] as AirtableRecord[]] as const);
+    const entries = POST_PUBLISH_SECTION_DEFINITIONS.map((section) => [section.key, [] as AirtableRecord[]] as const);
     const nextMap = new Map<UsedGearWorkflowPostPublishBucket, AirtableRecord[]>(entries);
 
     filteredRecords.forEach((record) => {
@@ -226,20 +233,6 @@ export function UsedGearWorkflowPostPublishSection({
     return nextMap;
   }, [filteredRecords, sortMode]);
   const agingSummary = useMemo(() => buildPostPublishQueueAgingSummary(filteredRecords), [filteredRecords]);
-  const visibleSections = useMemo(() => {
-    if (selectedBucket === 'all') {
-      return SECTION_DEFINITIONS;
-    }
-
-    return SECTION_DEFINITIONS.filter((section) => section.key === selectedBucket);
-  }, [selectedBucket]);
-  const hasBucketFilterActive = selectedBucket !== 'all';
-
-  useEffect(() => {
-    if (hasBucketFilterActive) {
-      setShowQueueTools(true);
-    }
-  }, [hasBucketFilterActive]);
 
   const refreshQueue = async () => {
     setRefreshing(true);
@@ -275,8 +268,6 @@ export function UsedGearWorkflowPostPublishSection({
       setUpdatingRecordIds((current) => current.filter((currentRecordId) => currentRecordId !== recordId));
     }
   };
-
-  const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
 
   const handleSearchTermChange = (value: string) => {
     if (typeof controlledSearchTerm !== 'string') {
@@ -396,7 +387,7 @@ export function UsedGearWorkflowPostPublishSection({
   ];
 
   return (
-    <section id="used-gear-post-publish" ref={sectionRef} className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+    <section id={POST_PUBLISH_OVERVIEW_SECTION_ID} ref={sectionRef} className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-24">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
           <div>
@@ -404,95 +395,39 @@ export function UsedGearWorkflowPostPublishSection({
             <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Post-Publish Queue</h3>
           </div>
         ) : null}
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <label className="min-w-[240px] flex-1">
-            <span className="sr-only">Search used gear post-publish queue</span>
-            <input
-              type="text"
-              className={inputClassName}
-              value={searchTerm}
-              onChange={(event) => handleSearchTermChange(event.currentTarget.value)}
-              placeholder="Search by status, SKU, model, or lifecycle date"
-            />
-          </label>
-          <div className="flex flex-wrap items-center gap-3">
-            <RefreshIconButton
-              onClick={() => {
-                void refreshQueue();
-              }}
-              disabled={refreshing}
-              loading={refreshing}
-              label="Refresh post-publish queue"
-              loadingLabel="Refreshing post-publish queue"
-            />
-            <div className="relative h-10 w-10 shrink-0">
-              <div
-                aria-hidden="true"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] shadow-[0_4px_14px_rgba(17,32,49,0.04)] transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-[var(--line)] hover:text-[var(--ink)]"
-              >
-                <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-                  <path d="M4.167 5.417h9.166" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                  <path d="M4.167 10h6.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                  <path d="M4.167 14.583h4.166" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                  <path d="M14.583 4.167v11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                  <path d="m12.5 6.25 2.083-2.083 2.084 2.083" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="m12.5 13.75 2.083 2.083 2.084-2.083" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <select
-                aria-label={`Sort used gear post-publish queue. Current order: ${getPostPublishSortLabel(sortMode)}`}
-                className="absolute inset-0 h-10 w-10 cursor-pointer opacity-0"
-                value={sortMode}
-                onChange={(event) => handleSortModeChange(event.currentTarget.value as UsedGearWorkflowPostPublishSortMode)}
-              >
-                <option value="latest-activity">Latest Activity</option>
-                <option value="oldest-activity">Oldest Activity</option>
-                <option value="sku">SKU</option>
-              </select>
-            </div>
-            <FilterToggleIconButton
-              onClick={() => setShowQueueTools((current) => !current)}
-              aria-expanded={showQueueTools}
-              expanded={showQueueTools}
-              collapsedLabel="Show Buckets"
-              expandedLabel="Hide Buckets"
-            />
-          </div>
-        </div>
+        <AppPageStatSection
+          stats={[
+            { label: 'Visible Rows', value: filteredRecords.length },
+            { label: 'Active 30+ Days', value: agingSummary.activeNearStaleCount },
+            { label: 'Stale 14+ Days', value: agingSummary.staleFollowUpCount },
+            { label: 'Oldest Stale', value: formatUsedGearAgeDays(agingSummary.oldestStaleAgeDays) },
+          ]}
+        />
+        <QueueSearchToolbar
+          searchAriaLabel="Search used gear post-publish queue"
+          searchPlaceholder="Search by status, SKU, model, or lifecycle date"
+          searchValue={searchTerm}
+          onSearchChange={handleSearchTermChange}
+          refreshLabel="Refresh post-publish queue"
+          refreshLoadingLabel="Refreshing post-publish queue"
+          refreshing={refreshing}
+          onRefresh={() => {
+            void refreshQueue();
+          }}
+          sortAriaLabel={`Sort used gear post-publish queue. Current order: ${getPostPublishSortLabel(sortMode)}`}
+          sortValue={sortMode}
+          onSortChange={(value) => handleSortModeChange(value as UsedGearWorkflowPostPublishSortMode)}
+          sortOptions={[
+            { value: 'latest-activity', label: 'Latest Activity' },
+            { value: 'oldest-activity', label: 'Oldest Activity' },
+            { value: 'sku', label: 'SKU' },
+          ]}
+        />
       </div>
-
-      {showQueueTools ? (
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4">
-          <div className="grid gap-4 xl:grid-cols-3 xl:items-start">
-            <div className="space-y-2 xl:col-span-2">
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Bucket</p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${selectedBucket === 'all' ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'}`}
-                  onClick={() => onFocusedBucketChange?.('all')}
-                >
-                  All Buckets
-                </button>
-                {SECTION_DEFINITIONS.map((section) => (
-                  <button
-                    key={section.key}
-                    type="button"
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition ${selectedBucket === section.key ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'}`}
-                    onClick={() => onFocusedBucketChange?.(section.key)}
-                  >
-                    {section.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {focusedBucket ? (
         <div className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
-          Dashboard shortcut opened the post-publish queue filtered to the selected lifecycle bucket.
+          Dashboard shortcut opened the post-publish page and jumped to the selected lifecycle section.
         </div>
       ) : null}
 
@@ -501,25 +436,6 @@ export function UsedGearWorkflowPostPublishSection({
           {error}
         </div>
       ) : null}
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visible Rows</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{filteredRecords.length}</p>
-        </div>
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Active 30+ Days</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{agingSummary.activeNearStaleCount}</p>
-        </div>
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Stale 14+ Days</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{agingSummary.staleFollowUpCount}</p>
-        </div>
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Oldest Stale</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">{formatUsedGearAgeDays(agingSummary.oldestStaleAgeDays)}</p>
-        </div>
-      </div>
 
       {!loading && filteredRecords.length === 0 ? (
         <EmptySurface title="No post-publish operational rows" message="The used-gear workflow currently has no listed, stale, sold-ready, or shipped operational rows.">
@@ -534,11 +450,11 @@ export function UsedGearWorkflowPostPublishSection({
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-sm text-[var(--muted)]">
             Loading used-gear post-publish queue...
           </div>
-        ) : visibleSections.map((section) => {
+        ) : POST_PUBLISH_SECTION_DEFINITIONS.map((section) => {
           const sectionRecords = recordsBySection.get(section.key) ?? [];
 
           return (
-            <div key={section.key} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
+            <div id={section.id} key={section.key} className="scroll-mt-24 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h4 className="mt-1 text-lg font-semibold text-[var(--ink)]">{section.title}</h4>

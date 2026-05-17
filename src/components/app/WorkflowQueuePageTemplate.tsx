@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 
 interface WorkflowQueuePageTemplateProps {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   children: ReactNode;
 }
@@ -13,8 +14,8 @@ export function WorkflowQueuePageTemplate({
   children,
 }: WorkflowQueuePageTemplateProps) {
   return (
-    <>
-      <div className="mt-3 mb-6">
+    <AppPageLayout>
+      <div>
         <WorkflowPageHeader
           eyebrow={eyebrow}
           title={title}
@@ -22,6 +23,6 @@ export function WorkflowQueuePageTemplate({
       </div>
 
       {children}
-    </>
+    </AppPageLayout>
   );
 }

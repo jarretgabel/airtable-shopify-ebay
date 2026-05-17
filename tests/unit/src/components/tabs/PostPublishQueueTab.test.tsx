@@ -4,20 +4,26 @@ import { describe, expect, it, vi } from 'vitest';
 import { PostPublishQueueTab } from '@/components/tabs/PostPublishQueueTab';
 
 vi.mock('@/components/tabs/airtable/UsedGearWorkflowPostPublishSection', () => ({
+  POST_PUBLISH_OVERVIEW_SECTION_ID: 'used-gear-post-publish',
+  POST_PUBLISH_SECTION_DEFINITIONS: [
+    { key: 'active-listing', id: 'used-gear-post-publish-active-listing', title: 'Active Listings' },
+    { key: 'stale-listing', id: 'used-gear-post-publish-stale-listing', title: 'Stale Listings' },
+    { key: 'sold-ready', id: 'used-gear-post-publish-sold-ready', title: 'Sold Ready To Ship' },
+    { key: 'shipped', id: 'used-gear-post-publish-shipped', title: 'Shipped History' },
+  ],
+  getPostPublishSectionId: (bucket: string) => `used-gear-post-publish-${bucket}`,
   UsedGearWorkflowPostPublishSection: ({
     searchTerm,
     sortMode,
     focusedBucket,
     onSearchTermChange,
     onSortModeChange,
-    onFocusedBucketChange,
   }: {
     searchTerm?: string;
     sortMode?: string;
     focusedBucket?: string | null;
     onSearchTermChange?: (value: string) => void;
     onSortModeChange?: (value: 'latest-activity' | 'oldest-activity' | 'sku') => void;
-    onFocusedBucketChange?: (value: 'all' | 'sold-ready') => void;
   }) => (
     <div>
       <div data-testid="post-publish-search-term">{searchTerm ?? ''}</div>
@@ -25,7 +31,6 @@ vi.mock('@/components/tabs/airtable/UsedGearWorkflowPostPublishSection', () => (
       <div data-testid="post-publish-focused-bucket">{focusedBucket ?? ''}</div>
       <button type="button" onClick={() => onSearchTermChange?.('sold')}>Set Search</button>
       <button type="button" onClick={() => onSortModeChange?.('sku')}>Set Sort</button>
-      <button type="button" onClick={() => onFocusedBucketChange?.('sold-ready')}>Set Bucket</button>
     </div>
   ),
 }));
@@ -49,13 +54,14 @@ describe('PostPublishQueueTab', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Post-Publish' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Overview' })).toBeInTheDocument();
     expect(screen.getByTestId('post-publish-search-term')).toHaveTextContent('stale');
     expect(screen.getByTestId('post-publish-sort-mode')).toHaveTextContent('oldest-activity');
     expect(screen.getByTestId('post-publish-focused-bucket')).toHaveTextContent('shipped');
 
     fireEvent.click(screen.getByRole('button', { name: 'Set Search' }));
     fireEvent.click(screen.getByRole('button', { name: 'Set Sort' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Set Bucket' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sold Ready To Ship' }));
 
     expect(screen.getByTestId('location-state')).toHaveTextContent('/workflow/post-publish?workflowPostPublishSearch=sold&workflowPostPublishSort=sku&workflowPostPublishBucket=sold-ready#used-gear-post-publish');
   });

@@ -2,13 +2,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearWorkflowPostPublishSection } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 
-async function openPostPublishTools() {
-  const toggle = screen.queryByRole('button', { name: 'Show Buckets' });
-  if (toggle) {
-    fireEvent.click(toggle);
-  }
-}
-
 const { loadWorkflowPostPublishQueueMock, clipboardWriteTextMock } = vi.hoisted(() => ({
   loadWorkflowPostPublishQueueMock: vi.fn(),
   clipboardWriteTextMock: vi.fn(),
@@ -58,7 +51,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     window.history.replaceState({}, '', '/inventory');
   });
 
-  it('shows only the focused bucket when opened from a dashboard deep link', async () => {
+  it('keeps all sections visible and announces the deep-linked lifecycle section', async () => {
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {
         id: 'rec-active',
@@ -88,52 +81,14 @@ describe('UsedGearWorkflowPostPublishSection', () => {
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
         focusedBucket="sold-ready"
-        onFocusedBucketChange={vi.fn()}
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
       />,
     );
 
     expect(await screen.findByText('Sold Ready To Ship')).toBeInTheDocument();
-    expect(screen.getByText('Dashboard shortcut opened the post-publish queue filtered to the selected lifecycle bucket.')).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Active Listings' })).not.toBeInTheDocument();
-  });
-
-  it('emits bucket changes when operators switch post-publish filters manually', async () => {
-    const onFocusedBucketChange = vi.fn();
-
-    loadWorkflowPostPublishQueueMock.mockResolvedValue([
-      {
-        id: 'rec-active',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'ACT-1',
-          Make: 'McIntosh',
-          Model: 'C28',
-          'Workflow Status': 'Listed, Shopify',
-          'Listed At': '2099-01-01T00:00:00.000Z',
-        },
-      },
-    ]);
-
-    render(
-      <UsedGearWorkflowPostPublishSection
-        currentUserName="Taylor Reviewer"
-        focusedBucket={null}
-        onFocusedBucketChange={onFocusedBucketChange}
-        onOpenOperationalRecord={vi.fn()}
-        onOpenListingsRecord={vi.fn()}
-      />,
-    );
-
-    await screen.findByRole('heading', { name: 'Active Listings' });
-
-    await openPostPublishTools();
-    fireEvent.click(await screen.findByRole('button', { name: 'Stale Listings' }));
-    expect(onFocusedBucketChange).toHaveBeenCalledWith('stale-listing');
-
-    fireEvent.click(await screen.findByRole('button', { name: 'All Buckets' }));
-    expect(onFocusedBucketChange).toHaveBeenCalledWith('all');
+    expect(screen.getByText('Dashboard shortcut opened the post-publish page and jumped to the selected lifecycle section.')).toBeInTheDocument();
+    expect(screen.getByText('Active Listings')).toBeInTheDocument();
   });
 
   it('shows the sort control as an icon-triggered select in the header', async () => {

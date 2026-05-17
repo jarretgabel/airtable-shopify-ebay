@@ -1,5 +1,6 @@
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
+import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import type { AirtableRecord } from '@/types/airtable';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 
@@ -34,8 +35,6 @@ export function InventoryDirectoryListSection({
   onOpenPhotosForm,
   onSelectRecord,
 }: InventoryDirectoryListSectionProps) {
-  const labelClassName = 'text-sm font-semibold text-[var(--ink)]';
-  const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
   const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
     {
       key: 'sku',
@@ -78,28 +77,24 @@ export function InventoryDirectoryListSection({
 
   return (
     <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-      <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)]">
-        <label className="flex flex-col gap-1.5">
-          <span className={labelClassName}>Search Inventory</span>
-          <input
-            type="text"
-            className={inputClassName}
-            value={searchTerm}
-            onChange={(event) => onSearchTermChange(event.currentTarget.value)}
-            placeholder="Search by SKU, make, model, component, or status"
-          />
-        </label>
-
-        <label className="flex flex-col gap-1.5">
-          <span className={labelClassName}>Status Filter</span>
-          <select className={inputClassName} value={statusFilter} onChange={(event) => onStatusFilterChange(event.currentTarget.value)}>
-            <option value="all">All Statuses</option>
-            {statusOptions.map((status) => (
-              <option key={status} value={status}>{status}</option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <QueueSearchToolbar
+        className="mb-4"
+        searchAriaLabel="Search inventory"
+        searchPlaceholder="Search by SKU, make, model, component, or status"
+        searchValue={searchTerm}
+        onSearchChange={onSearchTermChange}
+        filters={[
+          {
+            ariaLabel: 'Filter inventory by status',
+            value: statusFilter,
+            onChange: onStatusFilterChange,
+            options: [
+              { value: 'all', label: 'All Statuses' },
+              ...statusOptions.map((status) => ({ value: status, label: status })),
+            ],
+          },
+        ]}
+      />
 
       <p className="mb-3 text-sm text-[var(--muted)]">
         Showing <strong>{records.length}</strong> of <strong>{totalCount}</strong> SB Inventory records

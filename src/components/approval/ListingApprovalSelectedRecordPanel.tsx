@@ -1,4 +1,5 @@
 import { Suspense, lazy, type ReactNode } from 'react';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { ListingApprovalRecordActions } from '@/components/approval/ListingApprovalRecordActions';
 import { ListingApprovalRecordAlerts } from '@/components/approval/ListingApprovalRecordAlerts';
@@ -114,23 +115,13 @@ export function ListingApprovalSelectedRecordPanel({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <AppPageLayout>
       <WorkflowPageHeader
-        eyebrow="Used Gear Workflow"
+        eyebrow="Review"
         title={combinedCopy.title}
-        detail={workflowSummary ? (
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-              Workflow status: {workflowSummary.workflowStatus}
-            </span>
-            <span className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-              Next team: {workflowSummary.workflowNextTeam}
-            </span>
-          </div>
-        ) : null}
       />
 
       {selectedRecordView}
-    </div>
+    </AppPageLayout>
   );
 }

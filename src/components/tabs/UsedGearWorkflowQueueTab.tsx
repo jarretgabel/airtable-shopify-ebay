@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { PanelSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import {
@@ -32,7 +33,7 @@ const SORT_MODES: UsedGearWorkflowProgressSortMode[] = ['group-label', 'newest',
 function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode, 'all'>): QueueTabConfig {
   if (queueMode === 'testing') {
     return {
-      eyebrow: 'Used Gear Workflow',
+      eyebrow: 'Review Queues',
       title: 'Testing Queue',
       searchParamName: 'workflowTestingQueueSearch',
       sortParamName: 'workflowTestingQueueSort',
@@ -43,7 +44,7 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
 
   if (queueMode === 'photography') {
     return {
-      eyebrow: 'Used Gear Workflow',
+      eyebrow: 'Review Queues',
       title: 'Photography Queue',
       searchParamName: 'workflowPhotographyQueueSearch',
       sortParamName: 'workflowPhotographyQueueSort',
@@ -53,7 +54,7 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
   }
 
   return {
-    eyebrow: 'Used Gear Workflow',
+    eyebrow: 'Review Queues',
     title: 'Testing Queue',
     searchParamName: 'workflowTestingQueueSearch',
     sortParamName: 'workflowTestingQueueSort',
@@ -99,7 +100,7 @@ export function UsedGearWorkflowQueueTab({
 
   return (
     <PanelSurface>
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <AppPageLayout>
         <WorkflowPageHeader
           eyebrow={config.eyebrow}
           title={config.title}
@@ -132,7 +133,7 @@ export function UsedGearWorkflowQueueTab({
             }
           })}
         />
-      </div>
+      </AppPageLayout>
     </PanelSurface>
   );
 }
