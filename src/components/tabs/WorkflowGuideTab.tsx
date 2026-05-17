@@ -1,10 +1,14 @@
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { PAGE_DEFINITIONS, type AppPage } from '@/auth/pages';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import type { UserRole } from '@/stores/auth/authTypes';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
+import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import {
+  getVisibleRecordCards,
   getVisiblePageCards,
+  getRoleStartPoints,
   getWorkflowFlowStagesForRole,
   ROLE_GUIDES,
   roleSummary,
@@ -20,15 +24,16 @@ interface WorkflowGuideTabProps {
 }
 
 interface GuideSectionProps {
+  id?: string;
   eyebrow: string;
   title: string;
   summary: string;
   children: ReactNode;
 }
 
-function GuideSection({ eyebrow, title, summary, children }: GuideSectionProps) {
+function GuideSection({ id, eyebrow, title, summary, children }: GuideSectionProps) {
   return (
-    <section className="rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_18px_40px_rgba(2,6,23,0.18)]">
+    <section id={id} className="scroll-mt-28 rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_18px_40px_rgba(2,6,23,0.18)]">
       <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">{eyebrow}</p>
       <h3 className="mt-2 text-xl font-semibold text-[var(--ink)]">{title}</h3>
       <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{summary}</p>
@@ -67,6 +72,100 @@ function QuickStartCard({ title, items }: { title: string; items: string[] }) {
         ))}
       </ul>
     </article>
+  );
+}
+
+function GuideReferenceCard({
+  title,
+  summary,
+  leftLabel,
+  leftItems,
+  workflows,
+  href,
+  ctaLabel,
+}: {
+  title: string;
+  summary: string;
+  leftLabel: string;
+  leftItems: string[];
+  workflows: string[];
+  href?: string;
+  ctaLabel?: string;
+}) {
+  return (
+    <article className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
+      <h4 className="m-0 text-sm font-semibold text-[var(--ink)]">{title}</h4>
+      <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{summary}</p>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+        <div>
+          <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">{leftLabel}</p>
+          <ul className="mt-2 space-y-2 pl-5 text-sm leading-6 text-[var(--muted)]">
+            {leftItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Use It For</p>
+          <ul className="mt-2 space-y-2 pl-5 text-sm leading-6 text-[var(--muted)]">
+            {workflows.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {href && ctaLabel ? (
+        <div className="mt-4">
+          <a
+            href={href}
+            className="inline-flex items-center rounded-full border border-[var(--accent)]/35 bg-[var(--accent)]/10 px-3 py-1.5 text-sm font-semibold text-[var(--accent)] transition-colors hover:border-[var(--accent)]/60 hover:bg-[var(--accent)]/16"
+          >
+            {ctaLabel}
+          </a>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function RoleStartStrip({
+  currentUserRole,
+  accessiblePages,
+}: {
+  currentUserRole: UserRole;
+  accessiblePages: AppPage[];
+}) {
+  const startPoints = getRoleStartPoints(currentUserRole, accessiblePages);
+
+  if (startPoints.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-3 lg:grid-cols-3">
+      {startPoints.map((item) => {
+        const pageLabel = PAGE_DEFINITIONS[item.page]?.label ?? item.page;
+        const pagePath = PAGE_DEFINITIONS[item.page]?.path ?? '#';
+
+        return (
+          <article key={`${item.page}-${item.title}`} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
+            <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Open this first</p>
+            <p className="mt-2 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">{pageLabel}</p>
+            <h4 className="mt-2 m-0 text-sm font-semibold text-[var(--ink)]">{item.title}</h4>
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{item.detail}</p>
+            <a
+              href={pagePath}
+              className="mt-4 inline-flex items-center rounded-full border border-[var(--accent)]/35 bg-[var(--accent)]/10 px-3 py-1.5 text-sm font-semibold text-[var(--accent)] transition-colors hover:border-[var(--accent)]/60 hover:bg-[var(--accent)]/16"
+            >
+              Open {pageLabel}
+            </a>
+          </article>
+        );
+      })}
+    </div>
   );
 }
 
@@ -127,25 +226,25 @@ function FlowStageCard({
             : 'border-[var(--line)]',
       ].join(' ')}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className={['m-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em]', toneStyles.marker].join(' ')}>
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className={['m-0 inline-flex items-center rounded-full border px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.12em] whitespace-nowrap', toneStyles.marker].join(' ')}>
             {stage.tone.replace('-', ' ')}
           </p>
-          <h4 className="mt-2 m-0 text-sm font-semibold text-[var(--ink)]">{stage.title}</h4>
+          <span
+            className={[
+              'inline-flex items-center whitespace-nowrap rounded-full px-3 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.08em]',
+              isPrimary
+                ? 'bg-[var(--accent)] text-slate-950'
+                : isSupport
+                  ? 'bg-sky-400/15 text-sky-200'
+                  : 'bg-[var(--panel)] text-[var(--muted)]',
+            ].join(' ')}
+          >
+            {isPrimary ? 'Your lane' : isSupport ? 'You support' : 'Reference'}
+          </span>
         </div>
-        <span
-          className={[
-            'rounded-full px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em]',
-            isPrimary
-              ? 'bg-[var(--accent)] text-slate-950'
-              : isSupport
-                ? 'bg-sky-400/15 text-sky-200'
-                : 'bg-[var(--panel)] text-[var(--muted)]',
-          ].join(' ')}
-        >
-          {isPrimary ? 'Your lane' : isSupport ? 'You support' : 'Reference'}
-        </span>
+        <h4 className="mt-3 m-0 text-sm font-semibold text-[var(--ink)]">{stage.title}</h4>
       </div>
       <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{stage.detail}</p>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -162,40 +261,23 @@ function FlowStageCard({
 function WorkflowFlowChart({ currentUserRole }: { currentUserRole: UserRole }) {
   const visibleStages = getWorkflowFlowStagesForRole(currentUserRole);
   const showTrashPath = shouldShowWorkflowTrashPath(currentUserRole);
-  const desktopColumns = visibleStages.length >= 5 ? 'xl:grid-cols-5' : visibleStages.length === 4 ? 'xl:grid-cols-4' : 'xl:grid-cols-3';
 
   return (
     <div className="space-y-3">
       <div className="rounded-[28px] border border-[var(--line)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--panel)_94%,transparent),color-mix(in_srgb,var(--bg)_90%,transparent))] p-4 shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:p-5">
         <div className="mb-4 flex flex-wrap items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
-          <span className="rounded-full bg-[var(--accent)]/15 px-2.5 py-1 text-[var(--accent)]">Your lane</span>
-          <span className="rounded-full bg-sky-400/15 px-2.5 py-1 text-sky-200">You support</span>
-          <span className="rounded-full bg-[var(--panel)] px-2.5 py-1">Reference</span>
+          <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[var(--accent)]/15 px-3 py-1 text-[var(--accent)]">Your lane</span>
+          <span className="inline-flex items-center whitespace-nowrap rounded-full bg-sky-400/15 px-3 py-1 text-sky-200">You support</span>
+          <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[var(--panel)] px-3 py-1">Reference</span>
         </div>
 
-        <div className="relative hidden xl:block">
-          <div className="absolute left-[10%] right-[10%] top-5 h-px bg-[color:color-mix(in_srgb,var(--line)_72%,white_10%)]" />
-          <div className={`relative grid gap-3 ${desktopColumns}`}>
-            {visibleStages.map((stage, index) => (
-              <div key={stage.title} className="relative">
-                <div className="mb-3 flex justify-center">
-                  <span className="relative z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--panel)] text-sm font-bold text-[var(--ink)] shadow-[0_8px_20px_rgba(2,6,23,0.18)]">
-                    {index + 1}
-                  </span>
-                </div>
-                <FlowStageCard currentUserRole={currentUserRole} stage={stage} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-3 xl:hidden">
+        <div className="space-y-4">
           {visibleStages.map((stage, index) => (
-            <div key={stage.title} className="relative pl-9">
+            <div key={stage.title} className="relative pl-12">
               {index < visibleStages.length - 1 ? (
-                <div className="absolute bottom-[-14px] left-[15px] top-9 w-px bg-[color:color-mix(in_srgb,var(--line)_72%,white_10%)]" />
+                <div className="absolute bottom-[-18px] left-5 top-11 w-px bg-[color:color-mix(in_srgb,var(--line)_72%,white_10%)]" />
               ) : null}
-              <span className="absolute left-0 top-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--panel)] text-xs font-bold text-[var(--ink)] shadow-[0_8px_20px_rgba(2,6,23,0.18)]">
+              <span className="absolute left-0 top-1 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--panel)] text-sm font-bold text-[var(--ink)] shadow-[0_8px_20px_rgba(2,6,23,0.18)]">
                 {index + 1}
               </span>
               <FlowStageCard currentUserRole={currentUserRole} stage={stage} />
@@ -218,25 +300,51 @@ function WorkflowFlowChart({ currentUserRole }: { currentUserRole: UserRole }) {
 export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUserName, accessiblePages }: WorkflowGuideTabProps) {
   const roleGuide = ROLE_GUIDES[currentUserRole];
   const visiblePageCards = getVisiblePageCards(accessiblePages);
+  const visibleRecordCards = getVisibleRecordCards(accessiblePages);
+  const guideSections = useMemo(
+    () => [
+      { id: 'workflow-lane', key: 'workflow-lane', label: 'Workflow Lane' },
+      { id: 'role-view', key: 'role-view', label: 'Role View' },
+      { id: 'daily-flow', key: 'daily-flow', label: 'Daily Flow' },
+      { id: 'page-reference', key: 'page-reference', label: 'Pages' },
+      { id: 'record-reference', key: 'record-reference', label: 'Record Pages' },
+      { id: 'quick-answers', key: 'quick-answers', label: 'Quick Answers' },
+    ],
+    [],
+  );
+  const { activeSectionId, scrollToSection } = usePageSectionTracking(guideSections, guideSections[0].id);
 
   return (
     <AppPageLayout>
       <PageTitleHeader eyebrow="Guide" title="User Guide" />
 
+      <MainPageSectionNav
+        ariaLabel="User guide sections"
+        items={guideSections.map((section) => ({ key: section.id, label: section.label }))}
+        activeKey={activeSectionId}
+        onSelect={scrollToSection}
+        className="mb-1"
+      />
+
       <section className="rounded-2xl border border-[var(--line)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--panel)_92%,transparent),color-mix(in_srgb,var(--bg)_88%,transparent))] p-5 shadow-[0_20px_45px_rgba(2,6,23,0.2)]">
         <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Your Starting Point</p>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{roleSummary(currentUserRole)}</p>
+        <div className="mt-4">
+          <RoleStartStrip currentUserRole={currentUserRole} accessiblePages={accessiblePages} />
+        </div>
       </section>
 
       <GuideSection
+        id="workflow-lane"
         eyebrow="Flow"
         title="Your Workflow Lane"
-        summary="Read this in order. The chart is trimmed to the stages this role usually touches, with color-coded stops for quicker scanning."
+        summary="Read this in order. The chart is trimmed to the stages this role usually touches, with adjacent handoffs left in when they help explain the flow. The page references below are the strictly access-scoped part."
       >
         <WorkflowFlowChart currentUserRole={currentUserRole} />
       </GuideSection>
 
       <GuideSection
+        id="role-view"
         eyebrow="Role View"
         title={roleGuide.quickStartTitle}
         summary={roleGuide.quickStartSummary}
@@ -245,6 +353,7 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
       </GuideSection>
 
       <GuideSection
+        id="daily-flow"
         eyebrow="Big Picture"
         title="How The Work Flows For You"
         summary={roleGuide.flowSummary}
@@ -253,18 +362,51 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
       </GuideSection>
 
       <GuideSection
+        id="page-reference"
         eyebrow="Relevant Pages"
         title="How To Use The Pages For This Role"
-        summary="This keeps the page-level instructions in one place so the operational screens can stay focused on the work itself."
+        summary="This is organized page first, then module-by-module, so the fastest question stays clear: which page owns the job you are trying to do? Only pages this login can access appear here."
       >
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-3">
           {visiblePageCards.map((card) => (
-            <QuickStartCard key={card.title} title={card.title} items={card.items} />
+            <GuideReferenceCard
+              key={card.title}
+              title={card.title}
+              summary={card.summary}
+              leftLabel="Modules On This Page"
+              leftItems={card.modules}
+              workflows={card.workflows}
+              href={PAGE_DEFINITIONS[card.pages[0]]?.path}
+              ctaLabel={`Open ${card.title}`}
+            />
           ))}
         </div>
       </GuideSection>
 
       <GuideSection
+        id="record-reference"
+        eyebrow="Deeper Surfaces"
+        title="Record And Detail Pages"
+        summary="Use this section when a queue or directory gets you close, but the actual work, audit trail, or grouped decision lives on a deeper single-record or group page. Only record surfaces tied to accessible pages appear here."
+      >
+        <div className="grid gap-3">
+          {visibleRecordCards.map((card) => (
+            <GuideReferenceCard
+              key={card.title}
+              title={card.title}
+              summary={card.summary}
+              leftLabel="Key Surfaces"
+              leftItems={card.surfaces}
+              workflows={card.workflows}
+              href={PAGE_DEFINITIONS[card.pages[0]]?.path}
+              ctaLabel={`Open ${PAGE_DEFINITIONS[card.pages[0]]?.label ?? 'parent page'}`}
+            />
+          ))}
+        </div>
+      </GuideSection>
+
+      <GuideSection
+        id="quick-answers"
         eyebrow="Quick Answers"
         title="Common Questions For Your Role"
         summary="These answers are trimmed to the work this login is expected to handle."

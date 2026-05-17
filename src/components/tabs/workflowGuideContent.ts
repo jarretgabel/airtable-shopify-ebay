@@ -23,7 +23,17 @@ export interface RoleGuide {
 export interface PageGuideCard {
   title: string;
   pages: AppPage[];
-  items: string[];
+  summary: string;
+  modules: string[];
+  workflows: string[];
+}
+
+export interface RecordGuideCard {
+  title: string;
+  pages: AppPage[];
+  summary: string;
+  surfaces: string[];
+  workflows: string[];
 }
 
 export interface WorkflowFlowStage {
@@ -35,9 +45,15 @@ export interface WorkflowFlowStage {
   supportRoles?: UserRole[];
 }
 
+export interface RoleStartPoint {
+  page: AppPage;
+  title: string;
+  detail: string;
+}
+
 export function roleSummary(role: UserRole): string {
   if (role === 'processor') {
-    return 'Start with Parking Lot 1, the workflow hub, and the specialist queues. Listings takes over once a row reaches Awaiting Pre-Listing Review.';
+    return 'Start with Parking Lot 1, the Workflow Hub, and the specialist queues. Use Post-Publish once a live listing needs stale, sold-ready, or shipment follow-through.';
   }
 
   if (role === 'tester') {
@@ -65,7 +81,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartSummary: 'Keep the whole operation moving, then drop into the exact queue or record that needs intervention.',
     quickStartItems: [
       'Start on the dashboard to spot backlog, handoff gaps, and publish blockers.',
-      'Use Parking Lot 1 and the workflow hub to resolve stalled intake, routing, or post-publish issues.',
+      'Use Parking Lot 1, the Workflow Hub, and Post-Publish to resolve stalled intake, routing, or live-listing follow-through issues.',
       'Check Listings when items are entering listing review or need publish decisions.',
     ],
     flowSummary: 'You need the whole map because your role crosses intake, active workflow, listings, and follow-through.',
@@ -76,7 +92,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Resolve intake and routing blockers first',
-        detail: 'Parking Lot 1 and the workflow hub are where missing notes, routing problems, active-stage blockers, and post-publish exceptions get cleaned up.',
+        detail: 'Parking Lot 1 and the Workflow Hub are where missing notes, routing problems, and active-stage blockers get cleaned up before listing work can move again.',
       },
       {
         title: 'Confirm publish readiness before release',
@@ -103,7 +119,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartSummary: 'Use the same operational map as admin, with focus on throughput, accountability, and exceptions.',
     quickStartItems: [
       'Start on the dashboard to see how work is distributed and where the team needs attention.',
-      'Use workflow and queue pages to remove blockers before they delay listings or shipping.',
+      'Use workflow and queue pages to remove blockers before they delay listings, stale follow-up, or shipping.',
       'Review user access, notifications, and channel surfaces when process or oversight changes are needed.',
     ],
     flowSummary: 'This view keeps the full operation visible while still emphasizing the checkpoints that need owner attention.',
@@ -122,7 +138,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Finish the sale-to-shipment cycle',
-        detail: 'Post-publish follow-through matters because sold items still need clean shipment completion and history.',
+        detail: 'Post-Publish and listing record detail pages matter because sold items still need clean stale follow-up, shipment completion, and history.',
       },
     ],
     questions: [
@@ -140,7 +156,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartTitle: 'Processor quick start',
     quickStartSummary: 'This is the operational lane for intake, handoff, and getting an item ready for the next specialist.',
     quickStartItems: [
-      'Start in Parking Lot 1 for fresh intake or the workflow hub for already-active operational items.',
+      'Start in Parking Lot 1 for fresh intake, the Workflow Hub for active operational items, or Post-Publish for live listing follow-through.',
       'Clean up notes, confirm the next stage, and move the item into the next real handoff instead of leaving it parked.',
       'Use the testing and photography queues for specialist work, then use Listings once the item reaches listing review.',
     ],
@@ -152,7 +168,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Turn accepted items into owned workflow',
-        detail: 'Once a row is accepted, use the workflow hub to track stage status, next team, operational notes, and later post-publish follow-through. It is not the listing review page.',
+        detail: 'Once a row is accepted, use the Workflow Hub to track stage status, next team, and operational notes. Use Post-Publish later for live listing follow-through; neither page is the listing review page.',
       },
       {
         title: 'Move work through testing and photography',
@@ -340,8 +356,8 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   },
   {
     title: 'Post-Publish Follow-Through',
-    detail: 'The workflow hub tracks stale listings, sold-ready work, and shipment completion after publish, while Listings stays focused on listing-phase review and publish decisions.',
-    pages: ['inventory', 'dashboard'],
+    detail: 'Post-Publish handles stale listings, sold-ready work, and shipment completion after publish, while Listings stays focused on listing-phase review and publish decisions.',
+    pages: ['post-publish', 'listings', 'dashboard'],
     tone: 'follow-through',
     primaryRoles: ['admin', 'owner'],
     supportRoles: ['processor'],
@@ -369,103 +385,438 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
   {
     title: 'Dashboard',
     pages: ['dashboard'],
-    items: [
-      'Use it to spot backlog, handoff gaps, and high-level workflow pressure.',
-      'Treat it as the summary view, not the place for deep record work.',
+    summary: 'Use Dashboard as the summary and routing surface when you need to see pressure points across intake, workflow, listings, and follow-through.',
+    modules: [
+      'Overview: high-level workflow and commerce KPIs.',
+      'Actions: role-aware shortcuts into the exact queue, bucket, or handoff that needs work.',
+      'Insights: alert-style prompts that explain backlog, stale follow-up, and publish blockers.',
+    ],
+    workflows: [
+      'Start here when you do not yet know which queue owns the problem.',
+      'Use the dashboard to jump into Parking Lot 1, Workflow Hub, Listings, or Post-Publish rather than working records directly here.',
+    ],
+  },
+  {
+    title: 'JotForm',
+    pages: ['jotform'],
+    summary: 'Use JotForm as the raw source-feed reference page for incoming quote and intake submissions.',
+    modules: [
+      'Live submission feed: read-only list of active submissions.',
+      'Expanded submission detail: raw seller answers and source timestamps.',
+    ],
+    workflows: [
+      'Use it to verify source intake data before or during Parking Lot 1 review.',
+      'Treat it as reference only; do not use it as the operational decision surface.',
     ],
   },
   {
     title: 'Manual Intake',
     pages: ['manual-intake'],
-    items: [
-      'Start here when an operator already has enough detail to create the intake row without waiting for a JotForm submission or Parking Lot 1 review.',
-      'Use the same form when an accepted arrival-stage row needs intake corrections instead of switching to a second edit surface.',
-      'Manual Intake covers the off-JotForm lane: phone deals, return clients, and other accepted deals that were assembled outside the quote-request flow.',
-      'StereoBuyers inventory usually starts either from the customer quote form or from Manual Intake. Use Manual Intake only for the second case.',
-      'Choose the route inside the form based on where the item should land next: Parking Lot 1 for qualification, or one of the Parking Lot 2 buckets for accepted arrival-stage work.',
-      'Keep entry standards clean and customer-facing: spelling, capitalization, model naming, component types, and seller-reported notes here often flow straight into later listing work.',
-      'Use the customer cosmetic, functional, inclusion, and submitted-photo note fields to mirror the seller-provided intake context before staff-specific corrections are added later in workflow review.',
-      'Submission Group ID and Pick Up ID are optional. Use them only when the manual row needs to stay tied to a larger deal, grouped submission, or shared pickup/arrival batch.',
-      'Qualification Notes are required only when the row is being routed directly into a Parking Lot 2 bucket instead of going through Parking Lot 1 first.',
+    summary: 'Use Manual Intake when staff is creating a used-gear row inside the app instead of waiting for a JotForm submission.',
+    modules: [
+      'Manual intake form: seller reference, condition context, grouping IDs, and route selection.',
+      'Route controls: send the row into Parking Lot 1 or directly into an accepted arrival-stage bucket when appropriate.',
+    ],
+    workflows: [
+      'Use it for phone deals, repeat-customer intake, or accepted arrivals that were assembled outside the quote-request flow.',
+      'Keep naming, customer-facing notes, and grouping IDs clean here because they flow into downstream workflow and listing work.',
     ],
   },
   {
     title: 'Parking Lot 1',
     pages: ['parking-lot-1'],
-    items: [
-      'Review newly arrived intake rows.',
-      'Accept qualified items into the workflow.',
-      'Route unqualified items into trash review with a reason.',
+    summary: 'Parking Lot 1 is the front-door review page for new used-gear intake.',
+    modules: [
+      'Pending review queue: qualify, accept, or trash new rows.',
+      'Grouped review flow: shared submission handling for multi-item intake.',
+      'Selected record and group pages: deeper review for grouped intake decisions.',
+    ],
+    workflows: [
+      'Start here when a new intake row still needs qualification review.',
+      'Accept qualified rows into Parking Lot 2 or route unqualified rows into Trash Review with a reason.',
     ],
   },
   {
     title: 'Parking Lot 2',
     pages: ['parking-lot-2'],
-    items: [
-      'Work accepted intake rows that still need arrival handling, SKU assignment, or missing-item follow-up.',
-      'Use this page for the accepted arrival-stage buckets before the row reaches the broader workflow hub or specialist queues.',
-      'Move each row forward into the current operational surface instead of leaving accepted work parked longer than necessary.',
+    summary: 'Parking Lot 2 is the accepted arrival-stage page for rows that are in workflow but not yet through early routing and handoff.',
+    modules: [
+      'Arrival-stage queue buckets: accepted rows, missing item follow-up, and grouped arrivals.',
+      'Group handoff page: coordinated review for one pickup or submission set.',
+      'Record actions: open Manual Intake or the current operational record.',
+    ],
+    workflows: [
+      'Use it for arrival handling, SKU assignment, grouped handoff work, and missing-item follow-up.',
+      'Move rows forward into Manual Intake, Workflow Hub, or specialist work instead of leaving accepted items parked here.',
     ],
   },
   {
     title: 'Trash Review',
     pages: ['trash-review'],
-    items: [
-      'Review unqualified rows in active trash and make the recovery decision.',
-      'Use it to restore, re-qualify back into the workflow, or permanently remove rows that should not continue.',
-      'Treat this as the exception lane after Parking Lot 1 decides the item does not currently qualify.',
+    summary: 'Trash Review is the exception lane for rows that were rejected during intake review.',
+    modules: [
+      'Trash queue: active rejected rows waiting for recovery or removal.',
+      'Trash record page: restore, re-qualify, or permanently delete one row with context.',
+    ],
+    workflows: [
+      'Use it when a previously rejected row needs audit, recovery, or final deletion.',
+      'Restore rows back to pending review or re-qualify them into the accepted workflow when appropriate.',
     ],
   },
   {
     title: 'Workflow Hub',
     pages: ['inventory'],
-    items: [
-      'See pending review, active stage handoffs, and post-publish work in one place.',
-      'Pending Review is where new intake rows are reviewed and moved into the next real step.',
-      'The processing and holding queue stays focused on accepted rows that still belong to arrival handling, processing, or the shared testing-and-photography holding stage. Listings takes over once both signoffs are complete.',
-      'Post-Publish tracks listing follow-up by bucket so you can open the operational record for per-row lifecycle actions.',
-      'Use the main queue view for triage, routing, quick actions, and workflow status checks.',
-      'Open an operational record when a row needs deeper work.',
+    summary: 'Workflow Hub is the main processing and triage surface for accepted operational rows that are still in active workflow.',
+    modules: [
+      'Workflow bar: saved views, active filters, focused groups, and shareable URL state.',
+      'Progress queue: active routing, stage status, and current handoff context.',
+      'Operational record links: open deeper record editors when queue context is not enough.',
+    ],
+    workflows: [
+      'Use it for active-stage triage, routing, and cross-stage blocker cleanup after intake is accepted.',
+      'Use Post-Publish instead of the Workflow Hub when the work is already in live listing follow-through.',
     ],
   },
   {
-    title: 'Testing Queue And Record',
-    pages: ['testing-queue', 'testing'],
-    items: [
-      'The queue is the shared post-intake holding stage for hands-on bench verification, not a listing-review destination.',
-      'Use the queue to triage, filter, sort, and share one exact workset through URL-backed state instead of handing off a vague list.',
-      'The record-specific form is where the actual hands-on findings and testing signoff belong.',
-      'A row should reach Listings only after both testing and photography signoffs are complete.',
+    title: 'Testing Queue',
+    pages: ['testing-queue'],
+    summary: 'Testing Queue is the specialist discovery page for rows that are ready for hands-on bench verification.',
+    modules: [
+      'Testing queue list: triage, filter, sort, and share one exact workset.',
+      'Queue actions: open the Testing form or current operational record.',
+    ],
+    workflows: [
+      'Start here to find what is actually ready for testing work.',
+      'Use the queue for triage only; move into the Testing form for the real work details and signoff.',
     ],
   },
   {
-    title: 'Photography Queue And Record',
-    pages: ['photography-queue', 'photos'],
-    items: [
-      'The queue is the shared post-intake holding stage for photography work, not an early listing-prep page.',
-      'Use the queue to keep grouped submissions together, confirm which rows still need image work, and hand off a specific filtered workset through the URL.',
-      'The record-specific form is where image work and handoff notes should be completed.',
-      'Carry forward testing notes, included-item context, and submission-level handoff detail while planning shoots.',
+    title: 'Testing',
+    pages: ['testing'],
+    summary: 'Testing is the record-specific form where hands-on findings and testing signoff are captured.',
+    modules: [
+      'Testing form fields: working condition, issue notes, and signoff state.',
+      'Record-level workflow context: enough detail to understand the item while completing testing work.',
+    ],
+    workflows: [
+      'Use it when you are doing the actual testing work on one row.',
+      'Finish the testing signoff here so workflow can route the row onward with clean notes.',
     ],
   },
   {
-    title: 'Listings Review And Channel Views',
-    pages: ['listings', 'shopify', 'ebay'],
-    items: [
-      'Listings is the checkpoint for final pricing, notes, and approve-for-publish work.',
-      'Channel pages focus on representation and status after the operational row is publish-ready.',
-      'Channel pages are for representation and status, not intake or stage routing.',
+    title: 'Photography Queue',
+    pages: ['photography-queue'],
+    summary: 'Photography Queue is the specialist discovery page for rows that are ready for image work.',
+    modules: [
+      'Photography queue list: grouped submissions, image-ready rows, and filterable worksets.',
+      'Queue actions: open the Photos form or operational context when needed.',
+    ],
+    workflows: [
+      'Start here to see which rows are ready for photography.',
+      'Use the queue for work discovery and handoff, then use the Photos form for the actual image task and notes.',
     ],
   },
   {
-    title: 'Support And Admin Tools',
-    pages: ['jotform', 'market', 'users', 'imagelab', 'settings', 'notifications'],
-    items: [
-      'These pages support intake sources, exceptions, account management, and supporting utilities. HiFi Shark is limited to owners, developers, and processors, while Image Lab is open to every non-tester role.',
-      'Use them when the main queue pages do not match the job you are actually trying to do.',
+    title: 'Photos',
+    pages: ['photos'],
+    summary: 'Photos is the record-specific form where image work, readiness notes, and handoff details are completed.',
+    modules: [
+      'Photos form fields: photo completion state, notes, and related listing-facing image context.',
+      'Record-level handoff context: testing notes, grouped submission context, and readiness cues.',
+    ],
+    workflows: [
+      'Use it when you are doing the actual image work on one row.',
+      'Finish the photography signoff here so the item can move cleanly into Listings review.',
+    ],
+  },
+  {
+    title: 'Listings',
+    pages: ['listings'],
+    summary: 'Listings is the final review and publish-readiness workspace for combined listing records.',
+    modules: [
+      'Combined listings queue: ready-for-publishing and needs-further-work sections with shared search and filters.',
+      'Selected record page: shared, Shopify, and eBay sections with workflow summary, actions, and payload visibility.',
+      'Record detail workflow shell: final approve-for-publish work and post-publish context once the item reaches listing-phase ownership.',
+    ],
+    workflows: [
+      'Use it for Awaiting Pre-Listing Review and Approved for Publish rows.',
+      'Confirm title, price, notes, signoffs, and publish decisions here before any channel-facing action.',
+    ],
+  },
+  {
+    title: 'Post-Publish',
+    pages: ['post-publish'],
+    summary: 'Post-Publish is the dedicated lifecycle follow-through page for live listings after publish.',
+    modules: [
+      'Overview and bucket sections: Active Listings, Stale Listings, Sold Ready To Ship, and Shipped History.',
+      'Shared search and sort toolbar: filter one lifecycle workset instead of scanning the full history.',
+      'Per-row actions: mark stale, mark sold ready, mark shipped, and open the listing or operational record.',
+    ],
+    workflows: [
+      'Use it once the item is live and the work is now stale follow-up, payment-to-shipping handoff, or shipment completion.',
+      'Treat it as the active ownership page for listing lifecycle follow-through, not as part of the Workflow Hub.',
+    ],
+  },
+  {
+    title: 'Shopify Products',
+    pages: ['shopify'],
+    summary: 'Shopify Products is the read-only store-side snapshot page for Shopify product visibility.',
+    modules: [
+      'Service summary panel: store domain plus active, draft, and archived counts.',
+      'Snapshot directory and record pages: open read-only Shopify product snapshots for inspection.',
+    ],
+    workflows: [
+      'Use it to verify Shopify-side state after listing work has already been prepared in Listings.',
+      'Do not use this page for approvals, intake routing, or workflow decisions.',
+    ],
+  },
+  {
+    title: 'eBay',
+    pages: ['ebay'],
+    summary: 'eBay is the read-only channel snapshot page for inventory, offers, and connection visibility.',
+    modules: [
+      'Service summary panel: live offers, draft offers, tracked inventory, and connection or snapshot status.',
+      'Inventory and offer directory: read-only eBay snapshot browsing.',
+      'Snapshot record page: inventory item, offer, and recent listing detail for one SKU.',
+    ],
+    workflows: [
+      'Use it to verify eBay-side visibility after Listings review has already prepared the row.',
+      'Do not use this page for approvals, stage routing, or intake decisions.',
+    ],
+  },
+  {
+    title: 'Market Prices',
+    pages: ['market'],
+    summary: 'Market Prices is the research page for HiFiShark lookup and price context.',
+    modules: [
+      'Model slug search: direct HiFiShark lookup by slug.',
+      'Market listings table: comparable listing source, country, price, and age.',
+    ],
+    workflows: [
+      'Use it when pricing or market context is needed before or during Listings review.',
+      'Treat it as research support, not as the authoritative workflow or listing record.',
+    ],
+  },
+  {
+    title: 'Image Lab',
+    pages: ['imagelab'],
+    summary: 'Image Lab is the image utility page for AI identification, processing, and upload prep.',
+    modules: [
+      'Options panel: processing settings and AI-provider context.',
+      'Drop zone and bulk actions: stage image batches and run identify/process actions.',
+      'Image cards: per-item results, copy actions, and upload actions.',
+    ],
+    workflows: [
+      'Use it when the job is image processing or AI-assisted identification rather than queue workflow routing.',
+      'Treat it as a utility page that supports listing assets, not as a workflow decision page.',
+    ],
+  },
+  {
+    title: 'User Management',
+    pages: ['users'],
+    summary: 'User Management is the admin page for account provisioning, role access, and workflow alert defaults.',
+    modules: [
+      'User Directory: search, filter, sort, and open user profiles.',
+      'Create User: add a user with default page access and a temporary password.',
+      'Role Alert Defaults: baseline workflow notification defaults by role.',
+      'Selected user detail view: role, page access, password reset, and workflow notification settings for one user.',
+    ],
+    workflows: [
+      'Use it when the work is account administration instead of operational workflow handling.',
+      'Keep role access and workflow alert defaults aligned with how each team is expected to work.',
+    ],
+  },
+  {
+    title: 'Settings',
+    pages: ['settings'],
+    summary: 'Settings is the account self-service page for profile, password, preferences, runtime diagnostics, and session controls.',
+    modules: [
+      'Profile: email and account identity.',
+      'Password: sign-in credential changes.',
+      'Notifications: user-level preference and workflow event toggles.',
+      'Runtime: developer-facing runtime and local proxy diagnostics when available.',
+      'Session: sign-out controls.',
+    ],
+    workflows: [
+      'Use it when the current signed-in user needs account maintenance or preference changes.',
+      'Treat it as self-service account control, not as a team-wide admin page.',
+    ],
+  },
+  {
+    title: 'Notifications',
+    pages: ['notifications'],
+    summary: 'Notifications is the personal notification inbox for workflow and system events.',
+    modules: [
+      'Search and filter toolbar: tone, seen status, and sort controls.',
+      'Notification list: unread state, actions, and per-notification dismissal.',
+      'Bulk actions: mark all seen and clear all notifications.',
+    ],
+    workflows: [
+      'Use it to triage workflow alerts and recent system messages for the current login.',
+      'Pair it with Settings or User Management when notification behavior itself needs to change.',
     ],
   },
 ];
+
+const RECORD_GUIDE_CARDS: RecordGuideCard[] = [
+  {
+    title: 'Pending Review Record And Group Pages',
+    pages: ['parking-lot-1'],
+    summary: 'These pages are the deeper intake decision surfaces when the queue row alone is not enough, especially for grouped submissions.',
+    surfaces: [
+      'Selected record page: one intake row with qualification, routing, and next-step context.',
+      'Group review page: shared submission review, submission group ID, and allocation decisions for multi-item intake.',
+    ],
+    workflows: [
+      'Use them when a single queue row needs deeper qualification work or a grouped submission needs one coordinated decision.',
+      'Finish the acceptance or trash decision here before the item moves into Parking Lot 2 or Trash Review.',
+    ],
+  },
+  {
+    title: 'Parking Lot 2 Group Handoff Page',
+    pages: ['parking-lot-2'],
+    summary: 'This page keeps one accepted pickup or submission set together during arrival-stage handoff work.',
+    surfaces: [
+      'Group handoff page: shared set summary plus direct actions into Manual Intake and the operational record for each row.',
+    ],
+    workflows: [
+      'Use it when multiple accepted rows need coordinated arrival-stage work and shared context should stay visible.',
+      'Hand off each row into the next real working page instead of leaving the set parked in the queue.',
+    ],
+  },
+  {
+    title: 'Trash Record Page',
+    pages: ['trash-review'],
+    summary: 'The trash record page is the row-level audit and recovery surface for one rejected intake item.',
+    surfaces: [
+      'Trash record page: restore, re-qualify, or permanently delete with grouped context and workflow history visible.',
+    ],
+    workflows: [
+      'Use it when a trash row needs more context than the queue shows before making the recovery decision.',
+      'Make the final restore, re-qualify, or permanent delete action here.',
+    ],
+  },
+  {
+    title: 'Manual Intake Record Work',
+    pages: ['manual-intake'],
+    summary: 'Manual Intake also acts as the row-level edit surface when accepted arrival-stage items need intake-side corrections.',
+    surfaces: [
+      'Manual intake editor: row-level intake corrections, route changes, and grouped context updates.',
+    ],
+    workflows: [
+      'Use it when the accepted row needs intake-detail correction rather than a new queue-level decision.',
+      'Keep intake-side notes and route selections aligned before the row continues downstream.',
+    ],
+  },
+  {
+    title: 'Workflow Operational Record Editors',
+    pages: ['inventory'],
+    summary: 'The workflow record editors are the deeper operational surfaces behind queue triage in the Workflow Hub.',
+    surfaces: [
+      'Operational record editor: row-level workflow fields and readiness context.',
+      'Inventory price editor: targeted pricing edits for workflow rows.',
+    ],
+    workflows: [
+      'Open these when the Workflow Hub queue needs deeper row-level editing or pricing correction.',
+      'Use them for operational fixes, not for final listing approval decisions.',
+    ],
+  },
+  {
+    title: 'Testing Record Page',
+    pages: ['testing'],
+    summary: 'This page is the single-row working surface for hands-on testing and signoff.',
+    surfaces: [
+      'Testing form page: condition findings, issue notes, and testing completion state.',
+    ],
+    workflows: [
+      'Use it for the actual work on one testing row after the queue tells you what is ready.',
+      'Leave enough clear detail here for the next team to understand the outcome without reopening bench work.',
+    ],
+  },
+  {
+    title: 'Photos Record Page',
+    pages: ['photos'],
+    summary: 'This page is the single-row working surface for photography completion and image-related handoff notes.',
+    surfaces: [
+      'Photos form page: image completion state, related notes, and listing-facing image context.',
+    ],
+    workflows: [
+      'Use it for the actual image work on one row after the queue tells you what is ready.',
+      'Finish photography here so Listings receives a clean handoff.',
+    ],
+  },
+  {
+    title: 'Listings Record Page',
+    pages: ['listings'],
+    summary: 'The Listings record page is now the main detailed review surface for one combined listing row.',
+    surfaces: [
+      'Workflow summary and blocker state.',
+      'Shared, Shopify, and eBay section editors with section nav.',
+      'Record actions and payload previews where applicable.',
+    ],
+    workflows: [
+      'Use it when one listing row needs final readiness work, approve-for-publish action, or listing-phase audit context.',
+      'Treat it as the detailed home for listing review once the item reaches Listings ownership.',
+    ],
+  },
+  {
+    title: 'Shopify Snapshot Record Page',
+    pages: ['shopify'],
+    summary: 'The Shopify snapshot record page is the row-level read-only reference view for one store product snapshot.',
+    surfaces: [
+      'Workflow match summary.',
+      'Shopify product details, HTML preview, and raw JSON preview.',
+    ],
+    workflows: [
+      'Use it to inspect how a published or draft Shopify product currently looks in the store-side snapshot.',
+      'Do not use it for approvals or routing; go back to Listings for that work.',
+    ],
+  },
+  {
+    title: 'eBay Snapshot Record Page',
+    pages: ['ebay'],
+    summary: 'The eBay snapshot record page is the row-level read-only reference view for one inventory item and offer snapshot.',
+    surfaces: [
+      'Workflow match summary.',
+      'Offer setup, inventory details, HTML preview, and raw JSON preview.',
+    ],
+    workflows: [
+      'Use it to inspect how a live or draft eBay listing currently looks in the snapshot data.',
+      'Do not use it for approvals or routing; go back to Listings for publish decisions.',
+    ],
+  },
+];
+
+const ROLE_START_POINTS: Record<UserRole, RoleStartPoint[]> = {
+  admin: [
+    { page: 'dashboard', title: 'Check overall pressure first', detail: 'Open Dashboard when you need to spot the queue, stage, or publish issue that deserves attention first.' },
+    { page: 'parking-lot-1', title: 'Start intake cleanup here', detail: 'Open Parking Lot 1 when the front door is backing up or new submissions need qualification decisions.' },
+    { page: 'listings', title: 'Open final review here', detail: 'Open Listings when the work is publish readiness, channel prep, or listing-phase blockers.' },
+  ],
+  owner: [
+    { page: 'dashboard', title: 'Start with the operation view', detail: 'Open Dashboard to see where throughput, aging work, or follow-through needs intervention.' },
+    { page: 'post-publish', title: 'Check live listing follow-through', detail: 'Open Post-Publish when the question is stale listings, sold-ready handoff, or shipment completion.' },
+    { page: 'listings', title: 'Review publish readiness here', detail: 'Open Listings when an item is nearing release or channel detail needs review.' },
+  ],
+  processor: [
+    { page: 'parking-lot-1', title: 'Start fresh intake here', detail: 'Open Parking Lot 1 first when you are qualifying new used-gear intake.' },
+    { page: 'inventory', title: 'Route active work here', detail: 'Open Workflow Hub when the item is accepted and needs routing, triage, or blocker cleanup.' },
+    { page: 'post-publish', title: 'Work live follow-through here', detail: 'Open Post-Publish once the item is already live and now needs stale, sold-ready, or shipping follow-through.' },
+  ],
+  tester: [
+    { page: 'testing-queue', title: 'Start ready work here', detail: 'Open Testing Queue to find the rows that are actually ready for hands-on bench work.' },
+    { page: 'testing', title: 'Do the hands-on work here', detail: 'Open the Testing page when you are completing findings, issue notes, and signoff on one row.' },
+  ],
+  photographer: [
+    { page: 'photography-queue', title: 'Start image work here', detail: 'Open Photography Queue to find the rows that are ready for image work.' },
+    { page: 'photos', title: 'Finish the image handoff here', detail: 'Open the Photos page when you are doing the actual image work and completion notes.' },
+  ],
+  developer: [
+    { page: 'dashboard', title: 'Start with the app map', detail: 'Open Dashboard when you need the fastest read on which operational surface or backlog is relevant to the code you are changing.' },
+    { page: 'workflow-guide', title: 'Use the guide as glossary', detail: 'Open User Guide when you need plain-language workflow context for a label, route, or role-specific behavior.' },
+    { page: 'market', title: 'Use research support here', detail: 'Open Market Prices when you are tracing pricing support or external market context behavior.' },
+  ],
+};
 
 export function getVisiblePageLabels(accessiblePages: AppPage[]): string[] {
   return accessiblePages
@@ -477,4 +828,27 @@ export function getVisiblePageLabels(accessiblePages: AppPage[]): string[] {
 export function getVisiblePageCards(accessiblePages: AppPage[]): PageGuideCard[] {
   const accessiblePageSet = new Set(accessiblePages);
   return PAGE_GUIDE_CARDS.filter((card) => card.pages.some((page) => accessiblePageSet.has(page)));
+}
+
+export function getVisibleRecordCards(accessiblePages: AppPage[]): RecordGuideCard[] {
+  const accessiblePageSet = new Set(accessiblePages);
+  return RECORD_GUIDE_CARDS.filter((card) => card.pages.some((page) => accessiblePageSet.has(page)));
+}
+
+export function getRoleStartPoints(role: UserRole, accessiblePages: AppPage[]): RoleStartPoint[] {
+  const accessiblePageSet = new Set(accessiblePages);
+  const matchingStarts = ROLE_START_POINTS[role].filter((item) => accessiblePageSet.has(item.page));
+
+  if (matchingStarts.length > 0) {
+    return matchingStarts;
+  }
+
+  return accessiblePages
+    .filter((page) => page !== 'workflow-guide')
+    .slice(0, 3)
+    .map((page) => ({
+      page,
+      title: `Open ${PAGE_DEFINITIONS[page]?.label ?? page} first`,
+      detail: 'This is one of the pages currently available to this login and is the safest starting point when role-specific shortcuts are not available.',
+    }));
 }
