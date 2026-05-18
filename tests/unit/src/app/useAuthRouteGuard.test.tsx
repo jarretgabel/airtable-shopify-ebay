@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useAuthRouteGuard } from '@/app/useAuthRouteGuard';
+import type { AppPage } from '@/auth/pages';
 
 function GuardHarness({
   normalizedPath,
@@ -8,7 +9,7 @@ function GuardHarness({
   navigate = vi.fn(),
 }: {
   normalizedPath: string;
-  canAccessPage?: (tab: 'dashboard' | 'workflow-guide' | 'inventory' | 'listings' | 'post-publish' | 'shopify' | 'market' | 'parking-lot-1' | 'jotform' | 'manual-intake' | 'testing' | 'photos' | 'settings' | 'notifications' | 'imagelab' | 'ebay' | 'users' | 'parking-lot-2' | 'trash-review' | 'testing-queue' | 'photography-queue') => boolean;
+  canAccessPage?: (tab: AppPage) => boolean;
   navigate?: ReturnType<typeof vi.fn>;
 }) {
   useAuthRouteGuard({

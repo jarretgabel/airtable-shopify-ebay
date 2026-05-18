@@ -111,6 +111,7 @@ export function useAuthRouteGuard({
       normalizedPath === '/listings' ||
       isListingsDetailPath ||
       normalizedPath === '/workflow/post-publish' ||
+      normalizedPath === '/workflow/archive' ||
       normalizedPath === '/ebay/listings' ||
       isEbayListingsDetailPath ||
       normalizedPath === '/parking-lot-2' ||
@@ -143,6 +144,8 @@ export function useAuthRouteGuard({
           ? 'listings'
         : normalizedPath === '/workflow/post-publish'
           ? 'post-publish'
+        : normalizedPath === '/workflow/archive'
+          ? 'archive'
         : normalizedPath === '/ebay/listings' || isEbayListingsDetailPath
             ? 'ebay'
             : normalizedPath === '/shopify/products' || isShopifyProductsDetailPath

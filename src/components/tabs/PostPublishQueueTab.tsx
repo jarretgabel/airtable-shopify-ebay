@@ -39,7 +39,7 @@ export function PostPublishQueueTab({
   const sortMode = useMemo(() => parsePostPublishSortMode(location.search), [location.search]);
   const focusedBucket = useMemo<UsedGearWorkflowPostPublishBucket | null>(() => {
     const bucket = new URLSearchParams(location.search).get('workflowPostPublishBucket');
-    return bucket === 'active-listing' || bucket === 'stale-listing' || bucket === 'sold-ready' || bucket === 'shipped'
+    return bucket === 'active-listing' || bucket === 'stale-listing' || bucket === 'sold-ready'
       ? bucket
       : null;
   }, [location.search]);

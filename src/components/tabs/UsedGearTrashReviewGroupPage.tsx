@@ -268,12 +268,12 @@ export function UsedGearTrashReviewGroupPage({
           </div>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.15fr)]">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.15fr)]">
           <section id="restore" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
             <AppSectionTitle title="Restore To Parking Lot 1" titleClassName="text-lg" className="pt-0" />
             <button
               type="button"
-              className="mt-4 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-3 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => {
                 void handleRestoreGroup();
               }}
@@ -285,7 +285,7 @@ export function UsedGearTrashReviewGroupPage({
 
           <section id="requalify" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
             <AppSectionTitle title="Re-qualify Into Lot 2" titleClassName="text-lg" className="pt-0" />
-            <div className="mt-4 grid gap-3">
+            <div className="mt-3 grid gap-3">
               <label className="block">
                 <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Lot 2 Route</span>
                 <select

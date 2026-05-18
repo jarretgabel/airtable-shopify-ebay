@@ -59,6 +59,11 @@ describe('useAppRouteState', () => {
     expect(state.activeTab).toBe('post-publish');
   });
 
+  it('maps the archive route', () => {
+    const state = useAppRouteState(locationFor('/workflow/archive'), ['dashboard', 'archive']);
+    expect(state.activeTab).toBe('archive');
+  });
+
   it('maps manual-intake deep links with record ids', () => {
     const state = useAppRouteState(locationFor('/manual-intake/rec%20123'), ['dashboard', 'manual-intake']);
     expect(state.activeTab).toBe('manual-intake');

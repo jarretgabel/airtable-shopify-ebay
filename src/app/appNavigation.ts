@@ -13,7 +13,7 @@ export const TAB_PATHS: Record<Tab, string> = Object.entries(PAGE_DEFINITIONS).r
   {} as Record<Tab, string>,
 );
 
-export const LISTINGS_TABS = ['listings', 'post-publish', 'shopify', 'ebay'] as const satisfies readonly Tab[];
+export const LISTINGS_TABS = ['listings', 'post-publish', 'archive', 'shopify', 'ebay'] as const satisfies readonly Tab[];
 export const LISTINGS_TAB_SET = new Set<Tab>(LISTINGS_TABS as readonly Tab[]);
 export const POST_PUBLISH_TABS = [] as const satisfies readonly Tab[];
 export const POST_PUBLISH_TAB_SET = new Set<Tab>(POST_PUBLISH_TABS as readonly Tab[]);
@@ -30,6 +30,7 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   inventory: 'Workflow Hub',
   listings: 'Listings',
   'post-publish': 'Post-Publish',
+  archive: 'Completed Shipments',
   shopify: 'Shopify',
   market: 'HiFi Shark',
   'manual-intake': 'Manual Intake',

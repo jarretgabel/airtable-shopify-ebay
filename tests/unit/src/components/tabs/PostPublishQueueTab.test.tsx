@@ -9,7 +9,6 @@ vi.mock('@/components/tabs/airtable/UsedGearWorkflowPostPublishSection', () => (
     { key: 'active-listing', id: 'used-gear-post-publish-active-listing', title: 'Active Listings' },
     { key: 'stale-listing', id: 'used-gear-post-publish-stale-listing', title: 'Stale Listings' },
     { key: 'sold-ready', id: 'used-gear-post-publish-sold-ready', title: 'Sold Ready To Ship' },
-    { key: 'shipped', id: 'used-gear-post-publish-shipped', title: 'Shipped History' },
   ],
   getPostPublishSectionId: (bucket: string) => `used-gear-post-publish-${bucket}`,
   UsedGearWorkflowPostPublishSection: ({
@@ -43,7 +42,7 @@ function LocationState() {
 describe('PostPublishQueueTab', () => {
   it('hydrates and persists post-publish route state on the standalone page', () => {
     render(
-      <MemoryRouter initialEntries={['/workflow/post-publish?workflowPostPublishSearch=stale&workflowPostPublishSort=oldest-activity&workflowPostPublishBucket=shipped#used-gear-post-publish']}>
+      <MemoryRouter initialEntries={['/workflow/post-publish?workflowPostPublishSearch=stale&workflowPostPublishSort=oldest-activity&workflowPostPublishBucket=sold-ready#used-gear-post-publish']}>
         <PostPublishQueueTab
           currentUserName="Taylor Reviewer"
           onOpenOperationalRecord={vi.fn()}
@@ -57,7 +56,7 @@ describe('PostPublishQueueTab', () => {
     expect(screen.getByRole('button', { name: 'Overview' })).toBeInTheDocument();
     expect(screen.getByTestId('post-publish-search-term')).toHaveTextContent('stale');
     expect(screen.getByTestId('post-publish-sort-mode')).toHaveTextContent('oldest-activity');
-    expect(screen.getByTestId('post-publish-focused-bucket')).toHaveTextContent('shipped');
+    expect(screen.getByTestId('post-publish-focused-bucket')).toHaveTextContent('sold-ready');
 
     fireEvent.click(screen.getByRole('button', { name: 'Set Search' }));
     fireEvent.click(screen.getByRole('button', { name: 'Set Sort' }));

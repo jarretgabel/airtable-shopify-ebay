@@ -42,6 +42,7 @@ const UsedGearTrashReviewRecordPage = lazy(async () => ({ default: (await import
 const UsedGearTrashTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashTab')).UsedGearTrashTab }));
 const UsedGearWorkflowQueueTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearWorkflowQueueTab')).UsedGearWorkflowQueueTab }));
 const PostPublishQueueTab = lazy(async () => ({ default: (await import('@/components/tabs/PostPublishQueueTab')).PostPublishQueueTab }));
+const ArchiveQueueTab = lazy(async () => ({ default: (await import('@/components/tabs/ArchiveQueueTab')).ArchiveQueueTab }));
 
 function TabLoadingFallback({ tabLabel }: { tabLabel: string }) {
   return (
@@ -567,6 +568,14 @@ export function AppTabContent({
           <PostPublishQueueTab
             currentUserName={currentUserName}
             onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
+            onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
+          />
+        );
+      case 'archive':
+        return (
+          <ArchiveQueueTab
+            currentUserName={currentUserName}
+            onOpenWorkflowSnapshot={(recordId) => navigateToInventoryRecord(recordId)}
             onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
           />
         );

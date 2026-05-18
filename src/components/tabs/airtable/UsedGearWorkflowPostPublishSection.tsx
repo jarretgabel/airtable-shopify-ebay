@@ -23,6 +23,7 @@ import type { AirtableRecord } from '@/types/airtable';
 interface UsedGearWorkflowPostPublishSectionProps {
   currentUserName: string;
   showSectionIntro?: boolean;
+  showSectionTitles?: boolean;
   focusedBucket?: UsedGearWorkflowPostPublishBucket | null;
   onOpenOperationalRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
@@ -30,11 +31,20 @@ interface UsedGearWorkflowPostPublishSectionProps {
   onSearchTermChange?: (value: string) => void;
   sortMode?: UsedGearWorkflowPostPublishSortMode;
   onSortModeChange?: (value: UsedGearWorkflowPostPublishSortMode) => void;
+  sectionDefinitions?: PostPublishSectionDefinition[];
+  overviewSectionId?: string;
+  queueTitle?: string;
+  queueNoun?: string;
+  focusedBucketNotice?: string;
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+  nextRouteMessage?: string;
+  searchPlaceholder?: string;
 }
 
 export type UsedGearWorkflowPostPublishSortMode = 'latest-activity' | 'oldest-activity' | 'sku';
 
-interface PostPublishSectionDefinition {
+export interface PostPublishSectionDefinition {
   key: UsedGearWorkflowPostPublishBucket;
   id: string;
   title: string;
@@ -42,6 +52,7 @@ interface PostPublishSectionDefinition {
 }
 
 export const POST_PUBLISH_OVERVIEW_SECTION_ID = 'used-gear-post-publish';
+export const ARCHIVE_OVERVIEW_SECTION_ID = 'used-gear-archive';
 
 export function getPostPublishSectionId(bucket: UsedGearWorkflowPostPublishBucket): string {
   return `used-gear-post-publish-${bucket}`;
@@ -56,7 +67,7 @@ function getPostPublishSectionEmptyGuidance(bucket: UsedGearWorkflowPostPublishB
     case 'sold-ready':
       return 'Next action: mark a listed or stale row Sold Ready To Ship after payment is confirmed, or return to Active Listings and Stale Listings for marketplace follow-through.';
     case 'shipped':
-      return 'Next action: mark a Sold Ready To Ship row Shipped after fulfillment completes, or switch history mode back to active work when the team is triaging current lifecycle items.';
+      return 'Next action: use Archive for completed-item lookup, or return to Post-Publish when an item still needs shipment completion.';
     default:
       return 'Next action: continue the next workflow handoff from Listings or the active lifecycle queue.';
   }
@@ -81,13 +92,33 @@ export const POST_PUBLISH_SECTION_DEFINITIONS: PostPublishSectionDefinition[] = 
     title: 'Sold Ready To Ship',
     description: 'Sold items waiting for shipping completion.',
   },
+];
+
+export const ARCHIVE_SECTION_DEFINITIONS: PostPublishSectionDefinition[] = [
   {
     key: 'shipped',
     id: getPostPublishSectionId('shipped'),
-    title: 'Shipped History',
-    description: 'Completed shipments retained for quick workflow lookup.',
+    title: 'Completed Shipments',
+    description: '',
   },
 ];
+
+function formatLifecycleDate(value: string | null | undefined): string {
+  if (!value) {
+    return '—';
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return '—';
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(parsedDate);
+}
 
 function recordSearchText(record: AirtableRecord): string {
   return [
@@ -138,13 +169,23 @@ function getPostPublishListingsActionLabel(bucket: UsedGearWorkflowPostPublishBu
 
 export function UsedGearWorkflowPostPublishSection({
   showSectionIntro = true,
+  showSectionTitles = true,
   focusedBucket = null,
-  onOpenOperationalRecord: _onOpenOperationalRecord,
+  onOpenOperationalRecord,
   onOpenListingsRecord,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
   sortMode: controlledSortMode,
   onSortModeChange,
+  sectionDefinitions = POST_PUBLISH_SECTION_DEFINITIONS,
+  overviewSectionId = POST_PUBLISH_OVERVIEW_SECTION_ID,
+  queueTitle = 'Post-Publish Queue',
+  queueNoun = 'post-publish queue',
+  focusedBucketNotice = 'Dashboard shortcut opened the post-publish page and jumped to the selected lifecycle section.',
+  emptyStateTitle = 'No post-publish operational rows',
+  emptyStateMessage = 'The used-gear workflow currently has no listed, stale, sold-ready, or shipped operational rows.',
+  nextRouteMessage = 'Next route: open Listings for newly approved publish work, then return here when a live item needs stale, sold-ready, or shipped follow-through.',
+  searchPlaceholder = 'Search by status, SKU, model, or lifecycle date',
 }: UsedGearWorkflowPostPublishSectionProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [records, setRecords] = useState<AirtableRecord[]>([]);
@@ -163,9 +204,11 @@ export function UsedGearWorkflowPostPublishSection({
     }
 
     requestAnimationFrame(() => {
-      document.getElementById(getPostPublishSectionId(focusedBucket))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const focusedSection = sectionDefinitions.find((section) => section.key === focusedBucket);
+      const targetId = focusedSection?.id ?? overviewSectionId;
+      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
-  }, [focusedBucket]);
+  }, [focusedBucket, overviewSectionId, sectionDefinitions]);
 
   useEffect(() => {
     let cancelled = false;
@@ -210,7 +253,7 @@ export function UsedGearWorkflowPostPublishSection({
   }, [records, searchTerm]);
 
   const recordsBySection = useMemo(() => {
-    const entries = POST_PUBLISH_SECTION_DEFINITIONS.map((section) => [section.key, [] as AirtableRecord[]] as const);
+    const entries = sectionDefinitions.map((section) => [section.key, [] as AirtableRecord[]] as const);
     const nextMap = new Map<UsedGearWorkflowPostPublishBucket, AirtableRecord[]>(entries);
 
     filteredRecords.forEach((record) => {
@@ -229,7 +272,7 @@ export function UsedGearWorkflowPostPublishSection({
       return sortByLifecycleDate(left, right);
     }));
     return nextMap;
-  }, [filteredRecords, sortMode]);
+  }, [filteredRecords, sectionDefinitions, sortMode]);
 
   const refreshQueue = async () => {
     setRefreshing(true);
@@ -282,133 +325,178 @@ export function UsedGearWorkflowPostPublishSection({
     onSortModeChange?.(value);
   };
 
-  const getSectionColumns = (sectionKey: UsedGearWorkflowPostPublishBucket): IntakeItemsMatrixColumn<AirtableRecord>[] => [
-    {
-      key: 'sku',
-      label: 'SKU',
-      width: '8.5rem',
-      renderCell: (record) => <span className="font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</span>,
-    },
-    {
-      key: 'item',
-      label: 'Item',
-      width: 'minmax(0,1.65fr)',
-      renderCell: (record) => {
-        const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
-        const channelLabel = snapshot?.channel || snapshot?.bucket || 'Workflow';
+  const getSectionColumns = (sectionKey: UsedGearWorkflowPostPublishBucket): IntakeItemsMatrixColumn<AirtableRecord>[] => {
+    const baseColumns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
+      {
+        key: 'sku',
+        label: 'SKU',
+        width: '8.5rem',
+        renderCell: (record) => <span className="font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</span>,
+      },
+      {
+        key: 'item',
+        label: 'Item',
+        width: 'minmax(0,1.65fr)',
+        renderCell: (record) => {
+          const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+          const channelLabel = snapshot?.channel || snapshot?.bucket || 'Workflow';
+          const itemMetaLabel = sectionKey === 'shipped' ? null : channelLabel;
 
-        return (
-          <div className="min-w-0">
-            <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
-            <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
-              <span>{channelLabel}</span>
+          return (
+            <div className="min-w-0">
+              <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
+              {itemMetaLabel ? (
+                <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
+                  <span>{itemMetaLabel}</span>
+                </div>
+              ) : null}
             </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      width: '14rem',
-      renderCell: (record) => {
-        const statusLabel = getUsedGearWorkflowPostPublishSnapshot(record)?.status ?? 'Unknown';
+    ];
 
-        return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
-      },
-    },
-    {
-      key: 'overview',
-      label: 'Days Live',
-      width: '7rem',
-      renderCell: (record) => {
-        const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
-        if (!snapshot) {
-          return <span className="text-xs text-[var(--muted)]">No lifecycle snapshot</span>;
-        }
+    if (sectionKey === 'shipped') {
+      return [
+        ...baseColumns,
+        {
+          key: 'ship-date',
+          label: 'Ship Date',
+          width: '9rem',
+          renderCell: (record) => {
+            const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+            return <span className="block text-xs text-[var(--muted)]">{formatLifecycleDate(snapshot?.shippedAt)}</span>;
+          },
+        },
+        {
+          key: 'actions',
+          label: 'Actions',
+          width: '10rem',
+          align: 'center',
+          headerClassName: 'border-l border-[var(--line)]/60',
+          cellClassName: 'border-l border-[var(--line)]/60',
+          renderCell: (record) => {
+            const recordBusy = updatingRecordIds.includes(record.id);
 
-        return (
-          <span className="text-sm font-semibold text-[var(--ink)]">{snapshot.daysSinceListed ?? '—'}</span>
-        );
-      },
-    },
-    {
-      key: 'activity',
-      label: 'Last Touched',
-      width: '11rem',
-      renderCell: (record) => {
-        const lastTouchedSummary = buildPostPublishLastTouchedSummary(record);
+            return (
+              <div className="flex min-h-[4.5rem] w-full items-center justify-center gap-1.5">
+                <CompactIconActionButton
+                  label="Open Workflow Snapshot"
+                  onClick={() => onOpenOperationalRecord(record.id)}
+                  disabled={recordBusy}
+                />
+              </div>
+            );
+          },
+        },
+      ];
+    }
 
-        return (
-          <span className="block text-xs text-[var(--muted)]">{lastTouchedSummary.timestamp}</span>
-        );
-      },
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      width: '8.5rem',
-      align: 'center',
-      headerClassName: 'border-l border-[var(--line)]/60',
-      cellClassName: 'border-l border-[var(--line)]/60',
-      renderCell: (record) => {
-        const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
-        const listingsActionLabel = getPostPublishListingsActionLabel(sectionKey);
-        const recordBusy = updatingRecordIds.includes(record.id);
-        const showMarkSoldReady = snapshot?.bucket === 'active-listing' || snapshot?.bucket === 'stale-listing';
-        const showMarkShipped = snapshot?.bucket === 'sold-ready';
+    return [
+      ...baseColumns,
+      {
+        key: 'status',
+        label: 'Status',
+        width: '14rem',
+        renderCell: (record) => {
+          const statusLabel = getUsedGearWorkflowPostPublishSnapshot(record)?.status ?? 'Unknown';
 
-        return (
-          <div className="flex min-h-[4.5rem] w-full items-center justify-center gap-1.5">
-            {showMarkSoldReady ? (
-              <CompactIconActionButton
-                label="Mark Sold Ready"
-                variant="compact-primary"
-                icon="check"
-                onClick={() => {
-                  void handleRecordAction(record.id, markWorkflowSoldReadyToShip);
-                }}
-                disabled={recordBusy}
-              />
-            ) : null}
-            {showMarkShipped ? (
-              <CompactIconActionButton
-                label="Mark Shipped"
-                variant="compact-primary"
-                icon="truck"
-                onClick={() => {
-                  void handleRecordAction(record.id, markWorkflowShipped);
-                }}
-                disabled={recordBusy}
-              />
-            ) : null}
-            {listingsActionLabel ? (
-              <CompactIconActionButton label={listingsActionLabel} onClick={() => onOpenListingsRecord(record.id)} disabled={recordBusy} />
-            ) : null}
-          </div>
-        );
+          return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
+        },
       },
-    },
-  ];
+      {
+        key: 'overview',
+        label: 'Days Live',
+        width: '7rem',
+        renderCell: (record) => {
+          const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+          if (!snapshot) {
+            return <span className="text-xs text-[var(--muted)]">No lifecycle snapshot</span>;
+          }
+
+          return (
+            <span className="text-sm font-semibold text-[var(--ink)]">{snapshot.daysSinceListed ?? '—'}</span>
+          );
+        },
+      },
+      {
+        key: 'activity',
+        label: 'Last Touched',
+        width: '11rem',
+        renderCell: (record) => {
+          const lastTouchedSummary = buildPostPublishLastTouchedSummary(record);
+
+          return (
+            <span className="block text-xs text-[var(--muted)]">{lastTouchedSummary.timestamp}</span>
+          );
+        },
+      },
+      {
+        key: 'actions',
+        label: 'Actions',
+        width: '8.5rem',
+        align: 'center',
+        headerClassName: 'border-l border-[var(--line)]/60',
+        cellClassName: 'border-l border-[var(--line)]/60',
+        renderCell: (record) => {
+          const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+          const listingsActionLabel = getPostPublishListingsActionLabel(sectionKey);
+          const recordBusy = updatingRecordIds.includes(record.id);
+          const showMarkSoldReady = snapshot?.bucket === 'active-listing' || snapshot?.bucket === 'stale-listing';
+          const showMarkShipped = snapshot?.bucket === 'sold-ready';
+
+          return (
+            <div className="flex min-h-[4.5rem] w-full items-center justify-center gap-1.5">
+              {showMarkSoldReady ? (
+                <CompactIconActionButton
+                  label="Mark Sold Ready"
+                  variant="compact-primary"
+                  icon="check"
+                  onClick={() => {
+                    void handleRecordAction(record.id, markWorkflowSoldReadyToShip);
+                  }}
+                  disabled={recordBusy}
+                />
+              ) : null}
+              {showMarkShipped ? (
+                <CompactIconActionButton
+                  label="Mark Shipped"
+                  variant="compact-primary"
+                  icon="truck"
+                  onClick={() => {
+                    void handleRecordAction(record.id, markWorkflowShipped);
+                  }}
+                  disabled={recordBusy}
+                />
+              ) : null}
+              {listingsActionLabel ? (
+                <CompactIconActionButton label={listingsActionLabel} onClick={() => onOpenListingsRecord(record.id)} disabled={recordBusy} />
+              ) : null}
+            </div>
+          );
+        },
+      },
+    ];
+  };
 
   return (
-    <section id={POST_PUBLISH_OVERVIEW_SECTION_ID} ref={sectionRef} className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-24">
+    <section id={overviewSectionId} ref={sectionRef} className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-24">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
-          <AppSectionTitle title="Post-Publish Queue" />
+          <AppSectionTitle title={queueTitle} />
         ) : null}
         <QueueSearchToolbar
-          searchAriaLabel="Search used gear post-publish queue"
-          searchPlaceholder="Search by status, SKU, model, or lifecycle date"
+          searchAriaLabel={`Search used gear ${queueNoun}`}
+          searchPlaceholder={searchPlaceholder}
           searchValue={searchTerm}
           onSearchChange={handleSearchTermChange}
-          refreshLabel="Refresh post-publish queue"
-          refreshLoadingLabel="Refreshing post-publish queue"
+          refreshLabel={`Refresh ${queueNoun}`}
+          refreshLoadingLabel={`Refreshing ${queueNoun}`}
           refreshing={refreshing}
           onRefresh={() => {
             void refreshQueue();
           }}
-          sortAriaLabel={`Sort used gear post-publish queue. Current order: ${getPostPublishSortLabel(sortMode)}`}
+          sortAriaLabel={`Sort used gear ${queueNoun}. Current order: ${getPostPublishSortLabel(sortMode)}`}
           sortValue={sortMode}
           onSortChange={(value) => handleSortModeChange(value as UsedGearWorkflowPostPublishSortMode)}
           sortOptions={[
@@ -419,9 +507,9 @@ export function UsedGearWorkflowPostPublishSection({
         />
       </div>
 
-      {focusedBucket ? (
+      {focusedBucket && focusedBucketNotice ? (
         <div className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
-          Dashboard shortcut opened the post-publish page and jumped to the selected lifecycle section.
+          {focusedBucketNotice}
         </div>
       ) : null}
 
@@ -432,9 +520,9 @@ export function UsedGearWorkflowPostPublishSection({
       ) : null}
 
       {!loading && filteredRecords.length === 0 ? (
-        <EmptySurface title="No post-publish operational rows" message="The used-gear workflow currently has no listed, stale, sold-ready, or shipped operational rows.">
+        <EmptySurface title={emptyStateTitle} message={emptyStateMessage}>
           <p className="mt-3 text-sm text-[var(--muted)]">
-            Next route: open Listings for newly approved publish work, then return here when a live item needs stale, sold-ready, or shipped follow-through.
+            {nextRouteMessage}
           </p>
         </EmptySurface>
       ) : null}
@@ -442,18 +530,20 @@ export function UsedGearWorkflowPostPublishSection({
       <div className="space-y-4">
         {loading ? (
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-sm text-[var(--muted)]">
-            Loading used-gear post-publish queue...
+            {`Loading used-gear ${queueNoun}...`}
           </div>
-        ) : POST_PUBLISH_SECTION_DEFINITIONS.map((section) => {
+        ) : sectionDefinitions.map((section) => {
           const sectionRecords = recordsBySection.get(section.key) ?? [];
 
           return (
             <AppPageSectionSurface id={section.id} key={section.key} className="scroll-mt-24 bg-[var(--bg)]/60 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
-              <AppSectionTitle
-                title={section.title}
-                className="mb-3"
-              />
-              <p className="max-w-xl text-sm text-[var(--muted)]">{section.description}</p>
+              {showSectionTitles ? (
+                <AppSectionTitle
+                  title={section.title}
+                  className="mb-3"
+                />
+              ) : null}
+              {section.description ? <p className="max-w-xl text-sm text-[var(--muted)]">{section.description}</p> : null}
 
               {sectionRecords.length === 0 ? (
                 <div className="mt-4 rounded-xl border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">

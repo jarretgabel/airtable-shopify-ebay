@@ -35,8 +35,14 @@ export const USER_PAGE_ACCESS_GROUPS: UserPageAccessGroup[] = [
   {
     key: 'post-publish',
     title: 'Post-Publish',
-    description: 'Marketplace follow-through after Listings hands work off to stale, sold-ready, and shipped lifecycle buckets.',
+    description: 'Marketplace follow-through after Listings hands work off to stale and sold-ready lifecycle buckets.',
     pages: ['post-publish'],
+  },
+  {
+    key: 'archive',
+    title: 'Archive',
+    description: 'Completed shipped items retained for lookup after the active post-publish workflow is finished.',
+    pages: ['archive'],
   },
   {
     key: 'forms',

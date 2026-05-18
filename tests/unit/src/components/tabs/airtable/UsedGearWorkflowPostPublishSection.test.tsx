@@ -332,4 +332,52 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     expect(screen.queryByRole('button', { name: /last touched/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/Open Operational Record/i)).not.toBeInTheDocument();
   });
+
+  it('renders archive rows with ship date and workflow snapshot actions instead of active-work columns', async () => {
+    const onOpenOperationalRecord = vi.fn();
+
+    loadWorkflowPostPublishQueueMock.mockResolvedValue([
+      {
+        id: 'rec-shipped',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'SHIP-1',
+          Make: 'Sansui',
+          Model: '9090DB',
+          'Workflow Status': 'Shipped',
+          'Shipped At': '2026-02-15T00:00:00.000Z',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearWorkflowPostPublishSection
+        currentUserName="Taylor Reviewer"
+        sectionDefinitions={[{ key: 'shipped', id: 'used-gear-post-publish-shipped', title: 'Completed Shipments', description: '' }]}
+        overviewSectionId="used-gear-archive"
+        queueTitle="Completed Shipments"
+        queueNoun="completed shipments"
+        focusedBucketNotice=""
+        showSectionTitles={false}
+        searchPlaceholder="Search by status, SKU, model, or ship date"
+        onOpenOperationalRecord={onOpenOperationalRecord}
+        onOpenListingsRecord={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('SHIP-1')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search by status, SKU, model, or ship date')).toBeInTheDocument();
+    expect(screen.queryByText('Completed shipments retained for quick workflow lookup.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Status' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Days Live' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Last Touched' })).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Ship Date' })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { name: 'Completed Shipments' })).toHaveLength(1);
+    expect(screen.queryByText('Shipped')).not.toBeInTheDocument();
+    expect(screen.getByText(/Feb\s+\d{1,2},\s+2026/)).toHaveClass('block', 'text-xs', 'text-[var(--muted)]');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Workflow Snapshot' }));
+
+    expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-shipped');
+  });
 });

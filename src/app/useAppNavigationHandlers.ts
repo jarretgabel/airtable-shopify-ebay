@@ -158,6 +158,12 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     bucket: UsedGearWorkflowPostPublishBucket,
     options?: { replace?: boolean },
   ): void => {
+    if (bucket === 'shipped') {
+      navigate(TAB_PATHS.archive, { replace: options?.replace ?? false });
+      scrollToPageTop();
+      return;
+    }
+
     const params = new URLSearchParams();
     params.set('workflowPostPublishBucket', bucket);
 

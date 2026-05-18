@@ -111,6 +111,10 @@ vi.mock('@/components/tabs/UsedGearWorkflowQueueTab', () => ({
   UsedGearWorkflowQueueTab: ({ queueMode }: { queueMode: string }) => <div>{queueMode} queue content</div>,
 }));
 
+vi.mock('@/components/tabs/ArchiveQueueTab', () => ({
+  ArchiveQueueTab: () => <div>Archive queue content</div>,
+}));
+
 function buildRuntimeFeatures(overrides: Partial<RuntimeFeatureMap> = {}): RuntimeFeatureMap {
   return {
     jotform: { available: true, message: null, missingEnvNames: [] },
@@ -492,6 +496,18 @@ describe('AppTabContent', () => {
     );
 
     expect(await screen.findByText('Trash review group trash-set-a')).toBeInTheDocument();
+  });
+
+  it('renders the dedicated Archive page for completed shipped items', async () => {
+    render(
+      <AppTabContent
+        {...buildProps({
+          activeTab: 'archive',
+        })}
+      />,
+    );
+
+    expect(await screen.findByText('Archive queue content')).toBeInTheDocument();
   });
 
   it('renders the dedicated manual-intake page for the manual-intake route', async () => {

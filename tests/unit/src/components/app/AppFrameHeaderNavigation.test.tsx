@@ -82,6 +82,7 @@ describe('AppFrameHeaderNavigation', () => {
         listingsTabs={[
           createTab('listings', 'Listings'),
           createTab('post-publish', 'Post-Publish'),
+          createTab('archive', 'Completed Shipments'),
           createTab('shopify', 'Shopify'),
         ]}
         postPublishTabs={[]}
@@ -99,10 +100,11 @@ describe('AppFrameHeaderNavigation', () => {
 
     expect(screen.getByRole('button', { name: /Selling/ })).toBeInTheDocument();
     expect(screen.getByText('Review')).toBeInTheDocument();
-    expect(screen.getByText('Follow-Through')).toBeInTheDocument();
+    expect(screen.getByText('Lifecycle')).toBeInTheDocument();
     expect(screen.getByText('Channels')).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Listings' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Post-Publish' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Completed Shipments' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Shopify' })).toBeInTheDocument();
   });
 
@@ -114,6 +116,7 @@ describe('AppFrameHeaderNavigation', () => {
         listingsTabs={[
           { ...createTab('listings', 'Listings'), badgeCount: 4 },
           createTab('post-publish', 'Post-Publish'),
+          createTab('archive', 'Completed Shipments'),
           createTab('shopify', 'Shopify'),
         ]}
         postPublishTabs={[]}

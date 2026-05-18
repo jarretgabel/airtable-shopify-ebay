@@ -548,13 +548,26 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     pages: ['post-publish'],
     summary: 'Post-Publish is the dedicated lifecycle follow-through page for live listings after publish.',
     modules: [
-      'Overview and bucket sections: Active Listings, Stale Listings, Sold Ready To Ship, and Shipped History.',
+      'Overview and bucket sections: Active Listings, Stale Listings, and Sold Ready To Ship.',
       'Shared search and sort toolbar: filter one lifecycle workset instead of scanning the full history.',
       'Per-row actions: mark stale, mark sold ready, mark shipped, and open the listing or operational record.',
     ],
     workflows: [
       'Use it once the item is live and the work is now stale follow-up, payment-to-shipping handoff, or shipment completion.',
       'Treat it as the active ownership page for listing lifecycle follow-through, not as part of the Workflow Hub.',
+    ],
+  },
+  {
+    title: 'Archive',
+    pages: ['archive'],
+    summary: 'Archive is the completed-items page for shipped used-gear workflow rows.',
+    modules: [
+      'Shipped section: completed shipments retained for lookup after fulfillment is done.',
+      'Shared search and sort toolbar: quickly find completed shipped items by SKU, model, status, or lifecycle dates.',
+    ],
+    workflows: [
+      'Use it after shipment completion when the work is done and the team needs referenceable history instead of an active queue.',
+      'Keep Post-Publish focused on active follow-through and use Archive for completed shipped outcomes.',
     ],
   },
   {

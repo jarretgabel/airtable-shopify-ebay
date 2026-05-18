@@ -131,6 +131,7 @@ describe('authContextHelpers', () => {
       'testing',
       'photos',
       'post-publish',
+      'archive',
       'market',
       'imagelab',
       'settings',

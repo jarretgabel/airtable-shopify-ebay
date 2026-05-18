@@ -25,7 +25,7 @@ const INVENTORY_PROCESSING_SECTION_KEYS = {
 
 const SELLING_SECTION_KEYS = {
   review: ['listings'] as const,
-  followThrough: ['post-publish'] as const,
+  lifecycle: ['post-publish', 'archive'] as const,
   channels: ['shopify', 'ebay'] as const,
 };
 
@@ -113,8 +113,8 @@ export function AppFrameHeaderNavigation({
         .filter((tab): tab is AppTab => Boolean(tab)),
     },
     {
-      title: 'Follow-Through',
-      tabs: SELLING_SECTION_KEYS.followThrough
+      title: 'Lifecycle',
+      tabs: SELLING_SECTION_KEYS.lifecycle
         .map((key) => sellingTabLookup.get(key))
         .filter((tab): tab is AppTab => Boolean(tab)),
     },
