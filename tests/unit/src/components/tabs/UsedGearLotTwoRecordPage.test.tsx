@@ -1,15 +1,18 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { within } from '@testing-library/react';
 import { UsedGearLotTwoRecordPage } from '@/components/tabs/UsedGearLotTwoRecordPage';
 
 const {
   completeProcessingStageMock,
   loadUsedGearOperationalRecordContextMock,
+  markPendingReviewUnqualifiedMock,
   navigateMock,
   saveLotTwoReviewRecordMock,
 } = vi.hoisted(() => ({
   completeProcessingStageMock: vi.fn(),
   loadUsedGearOperationalRecordContextMock: vi.fn(),
+  markPendingReviewUnqualifiedMock: vi.fn(),
   navigateMock: vi.fn(),
   saveLotTwoReviewRecordMock: vi.fn(),
 }));
@@ -26,6 +29,7 @@ vi.mock('react-router-dom', async () => {
 vi.mock('@/services/usedGearQueue', () => ({
   completeProcessingStage: completeProcessingStageMock,
   loadUsedGearOperationalRecordContext: loadUsedGearOperationalRecordContextMock,
+  markPendingReviewUnqualified: markPendingReviewUnqualifiedMock,
   saveLotTwoReviewRecord: saveLotTwoReviewRecordMock,
 }));
 
@@ -37,6 +41,7 @@ describe('UsedGearLotTwoRecordPage', () => {
   beforeEach(() => {
     completeProcessingStageMock.mockReset();
     loadUsedGearOperationalRecordContextMock.mockReset();
+    markPendingReviewUnqualifiedMock.mockReset();
     navigateMock.mockReset();
     saveLotTwoReviewRecordMock.mockReset();
 
@@ -95,6 +100,7 @@ describe('UsedGearLotTwoRecordPage', () => {
     expect(await screen.findByText('Update The Handoff Fields')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Back to Parking Lot 2' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Parking Lot 2 sections' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Route To Trash' })).toBeInTheDocument();
     expect(screen.queryByText('Current Context')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Group Review' }));
@@ -126,6 +132,37 @@ describe('UsedGearLotTwoRecordPage', () => {
     });
 
     expect(await screen.findByText('Saved Parking Lot 2 review fields.')).toBeInTheDocument();
+  });
+
+  it('routes the row into trash from the Lot 2 review page', async () => {
+    markPendingReviewUnqualifiedMock.mockResolvedValue(undefined);
+
+    render(
+      <UsedGearLotTwoRecordPage
+        currentUserName="Taylor Reviewer"
+        recordId="rec-lot-two-1"
+        onOpenManualIntake={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Route To Trash');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Unqualified Reason' }), {
+      target: { value: 'Cabinet damage makes the item unsuitable for resale.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send To Trash' }));
+
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Send To Trash' }));
+
+    await waitFor(() => {
+      expect(markPendingReviewUnqualifiedMock).toHaveBeenCalledWith('rec-lot-two-1', 'Cabinet damage makes the item unsuitable for resale.');
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith({
+      pathname: '/trash-review',
+      search: '?reviewMode=test',
+      hash: '#used-gear-trash',
+    });
   });
 
   it('completes processing after the required handoff fields are present', async () => {

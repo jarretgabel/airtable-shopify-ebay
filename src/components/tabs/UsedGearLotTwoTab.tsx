@@ -38,7 +38,7 @@ export function UsedGearLotTwoTab({
 
   return (
     <WorkflowQueuePageTemplate
-      eyebrow="Parking Lots"
+      eyebrow="Parking Lot 2"
       title="Parking Lot 2"
     >
       <UsedGearLotTwoSection

@@ -4,6 +4,7 @@ import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
+import { UsedGearTrashRouteCard } from '@/components/tabs/UsedGearTrashRouteCard';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
@@ -73,18 +74,20 @@ function NoteTemplateRow({
   const templates = getUsedGearWorkflowNoteTemplates(templateGroup);
 
   return (
-    <div className="mt-3 flex flex-wrap gap-2">
-      <span className="self-center text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]/80">{legend}</span>
-      {templates.map((template) => (
-        <button
-          key={template.id}
-          type="button"
-          className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          onClick={() => onApplyTemplate(template.value)}
-        >
-          {template.label}
-        </button>
-      ))}
+    <div className="mt-3 rounded-2xl border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_72%,transparent)] p-3">
+      <p className="m-0 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]/85">{legend}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {templates.map((template) => (
+          <button
+            key={template.id}
+            type="button"
+            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] shadow-[0_4px_14px_rgba(17,32,49,0.04)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--panel)] hover:text-[var(--ink)]"
+            onClick={() => onApplyTemplate(template.value)}
+          >
+            {template.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -225,7 +228,7 @@ export function UsedGearPendingReviewRecordPage({
 
   return (
     <WorkflowRecordPageLayout
-      eyebrow="Parking Lots"
+      eyebrow="Parking Lot 1"
       title={displayInventoryValue(record.fields.SKU)}
       belowHeader={sectionNav}
       actions={<BackToolbarButton label="Back to Parking Lot 1" onClick={backToQueue} />}
@@ -312,37 +315,21 @@ export function UsedGearPendingReviewRecordPage({
             </div>
           </section>
 
-          <section id="trash" className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-5 scroll-mt-28">
-            <AppSectionTitle title="Route To Trash" titleClassName="text-lg text-white" className="border-b-rose-300/20 pt-0" />
-            <p className="mt-2 text-sm text-rose-100/80">Capture the reason clearly so downstream review can see why this intake was stopped before Lot 2.</p>
-            <label className="mt-4 block">
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-rose-100/70">Unqualified Reason</span>
-              <textarea
-                className={inputClassName}
-                rows={5}
-                value={unqualifiedReason}
-                onChange={(event) => setUnqualifiedReason(event.currentTarget.value)}
-                placeholder="Required before sending this row into trash"
-              />
-            </label>
-            <NoteTemplateRow
-              legend="Common reasons"
-              templateGroup="unqualified-reason"
-              onApplyTemplate={(templateValue) => {
-                setUnqualifiedReason((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
-              }}
-            />
-            <button
-              type="button"
-              className="mt-4 w-full rounded-xl border border-rose-300/35 bg-rose-500/20 px-4 py-3 text-sm font-semibold text-rose-50 transition hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-              onClick={() => {
-                void handleUnqualify();
-              }}
-              disabled={saving || unqualifiedReason.trim().length === 0}
-            >
-              {saving ? 'Saving...' : 'Send To Trash'}
-            </button>
-          </section>
+          <UsedGearTrashRouteCard
+            sectionId="trash"
+            description="Capture the reason clearly so downstream review can see why this intake was stopped before Lot 2."
+            reason={unqualifiedReason}
+            onReasonChange={setUnqualifiedReason}
+            onApplyTemplate={(templateValue) => {
+              setUnqualifiedReason((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
+            }}
+            onSubmit={() => {
+              void handleUnqualify();
+            }}
+            disabled={saving || unqualifiedReason.trim().length === 0}
+            textareaClassName={inputClassName}
+            isSaving={saving}
+          />
         </div>
 
         <IntakeSnapshotSection

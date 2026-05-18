@@ -400,7 +400,7 @@ export function UsedGearPendingReviewGroupPage({
 
   return (
     <WorkflowRecordPageLayout
-      eyebrow="Parking Lots"
+      eyebrow="Parking Lot 1"
       title={group.label}
       actions={(
         <BackToolbarButton label="Back to Parking Lot 1" onClick={onBackToParkingLot} />

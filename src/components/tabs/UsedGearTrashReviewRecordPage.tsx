@@ -235,7 +235,7 @@ export function UsedGearTrashReviewRecordPage({
 
   return (
     <WorkflowRecordPageLayout
-      eyebrow="Trash"
+      eyebrow="Trash Review"
       title={displayInventoryValue(record.fields.SKU)}
       belowHeader={sectionNav}
       actions={<BackToolbarButton label="Back to Trash Review" onClick={backToTrash} />}

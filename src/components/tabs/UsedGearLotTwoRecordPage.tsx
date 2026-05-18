@@ -4,6 +4,7 @@ import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
+import { UsedGearTrashRouteCard } from '@/components/tabs/UsedGearTrashRouteCard';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
@@ -13,11 +14,13 @@ import { buildUsedGearIntakeSnapshot } from '@/components/tabs/usedGearIntakeSna
 import {
   completeProcessingStage,
   loadUsedGearOperationalRecordContext,
+  markPendingReviewUnqualified,
   saveLotTwoReviewRecord,
   type UsedGearOperationalRecordContext,
 } from '@/services/usedGearQueue';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { resolveUsedGearOperationalPath } from '@/services/usedGearOperationalRouting';
+import { applyUsedGearWorkflowNoteTemplate } from '@/services/usedGearWorkflowNoteTemplates';
 
 interface UsedGearLotTwoRecordPageProps {
   currentUserName: string;
@@ -25,7 +28,7 @@ interface UsedGearLotTwoRecordPageProps {
   onOpenManualIntake: (recordId: string) => void;
 }
 
-type LotTwoRecordSectionKey = 'group' | 'review' | 'snapshot';
+type LotTwoRecordSectionKey = 'group' | 'review' | 'trash' | 'snapshot';
 
 function stringFieldValue(fields: Record<string, unknown>, fieldName: string): string {
   const value = fields[fieldName];
@@ -51,6 +54,7 @@ export function UsedGearLotTwoRecordPage({
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [arrivalDate, setArrivalDate] = useState('');
   const [sku, setSku] = useState('');
+  const [unqualifiedReason, setUnqualifiedReason] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -65,6 +69,7 @@ export function UsedGearLotTwoRecordPage({
           setContext(nextContext);
           setArrivalDate(dateFieldValue(nextContext.record.fields, 'Arrival Date'));
           setSku(stringFieldValue(nextContext.record.fields, 'SKU'));
+          setUnqualifiedReason(stringFieldValue(nextContext.record.fields, 'Unqualified Reason'));
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -96,6 +101,7 @@ export function UsedGearLotTwoRecordPage({
       items.push({ id: 'group', key: 'group', label: 'Grouped Intake' });
     }
     items.push({ id: 'review', key: 'review', label: 'Review' });
+    items.push({ id: 'trash', key: 'trash', label: 'Trash' });
     if (intakeSnapshot) {
       items.push({ id: 'snapshot', key: 'snapshot', label: 'Snapshot' });
     }
@@ -156,6 +162,24 @@ export function UsedGearLotTwoRecordPage({
     }
   };
 
+  const handleSendToTrash = async () => {
+    if (!record || unqualifiedReason.trim().length === 0) {
+      return;
+    }
+
+    setSaving('save');
+    setError(null);
+    setSaveMessage(null);
+
+    try {
+      await markPendingReviewUnqualified(record.id, unqualifiedReason);
+      navigate({ pathname: '/trash-review', search: location.search, hash: '#used-gear-trash' });
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Unable to move this Parking Lot 2 row into trash.');
+      setSaving(null);
+    }
+  };
+
   if (loading) {
     return <LoadingSurface message="Loading Parking Lot 2 review..." />;
   }
@@ -166,7 +190,7 @@ export function UsedGearLotTwoRecordPage({
 
   return (
     <WorkflowRecordPageLayout
-      eyebrow="Parking Lots"
+      eyebrow="Parking Lot 2"
       title={displayInventoryValue(record.fields.SKU) || record.id}
       belowHeader={sectionNav}
       actions={<BackToolbarButton label="Back to Parking Lot 2" onClick={backToQueue} />}
@@ -204,67 +228,85 @@ export function UsedGearLotTwoRecordPage({
           </section>
         ) : null}
 
-        <section id="review" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
-          <AppSectionTitle title="Parking Lot 2 Review" titleClassName="text-lg" className="pt-0" />
-          <h3 className="mt-4 text-xl font-semibold text-[var(--ink)]">Update The Handoff Fields</h3>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-            Keep this review page focused on the fields that usually block the row from moving into testing and photos.
-          </p>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.9fr)]">
+          <section id="review" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
+            <AppSectionTitle title="Parking Lot 2 Review" titleClassName="text-lg" className="pt-0" />
+            <h3 className="mt-4 text-xl font-semibold text-[var(--ink)]">Update The Handoff Fields</h3>
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+              Keep this review page focused on the fields that usually block the row from moving into testing and photos.
+            </p>
 
-          <div className="mt-4 grid gap-4">
-            <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Arrival Date</span>
-              <DatePickerField
-                containerClassName="mt-2 flex gap-2"
-                inputClassName={`${inputClassName} flex-1`}
-                buttonClassName={dateButtonClassName}
-                value={arrivalDate}
-                pickerLabel="Arrival Date"
-                onValueChange={setArrivalDate}
-              />
-            </label>
+            <div className="mt-4 grid gap-4">
+              <label className="block">
+                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Arrival Date</span>
+                <DatePickerField
+                  containerClassName="mt-2 flex gap-2"
+                  inputClassName={`${inputClassName} flex-1`}
+                  buttonClassName={dateButtonClassName}
+                  value={arrivalDate}
+                  pickerLabel="Arrival Date"
+                  onValueChange={setArrivalDate}
+                />
+              </label>
 
-            <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SKU</span>
-              <input
-                type="text"
-                className={inputClassName}
-                value={sku}
-                onChange={(event) => setSku(event.currentTarget.value)}
-                placeholder="Required before processing is complete"
-              />
-            </label>
+              <label className="block">
+                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SKU</span>
+                <input
+                  type="text"
+                  className={inputClassName}
+                  value={sku}
+                  onChange={(event) => setSku(event.currentTarget.value)}
+                  placeholder="Required before processing is complete"
+                />
+              </label>
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={() => {
-                  void handleSave();
-                }}
-                disabled={saving !== null}
-              >
-                {saving === 'save' ? 'Saving...' : 'Save Review'}
-              </button>
-              <button
-                type="button"
-                className="rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={() => {
-                  void handleCompleteProcessing();
-                }}
-                disabled={saving !== null || processingBlocked}
-              >
-                {saving === 'complete' ? 'Moving...' : 'Complete Processing'}
-              </button>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    void handleSave();
+                  }}
+                  disabled={saving !== null}
+                >
+                  {saving === 'save' ? 'Saving...' : 'Save Review'}
+                </button>
+                <button
+                  type="button"
+                  className="rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    void handleCompleteProcessing();
+                  }}
+                  disabled={saving !== null || processingBlocked}
+                >
+                  {saving === 'complete' ? 'Moving...' : 'Complete Processing'}
+                </button>
+              </div>
+
+              {processingBlocked ? (
+                <p className="m-0 text-sm text-amber-300">
+                  Arrival Date and SKU are required before this row can leave Parking Lot 2.
+                </p>
+              ) : null}
             </div>
+          </section>
 
-            {processingBlocked ? (
-              <p className="m-0 text-sm text-amber-300">
-                Arrival Date and SKU are required before this row can leave Parking Lot 2.
-              </p>
-            ) : null}
-          </div>
-        </section>
+          <UsedGearTrashRouteCard
+            sectionId="trash"
+            description="Capture the reason clearly when this item should stop in Lot 2 and move into Trash Review."
+            reason={unqualifiedReason}
+            onReasonChange={setUnqualifiedReason}
+            onApplyTemplate={(templateValue) => {
+              setUnqualifiedReason((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
+            }}
+            onSubmit={() => {
+              void handleSendToTrash();
+            }}
+            disabled={saving !== null || unqualifiedReason.trim().length === 0}
+            textareaClassName={inputClassName}
+            isSaving={saving === 'save'}
+          />
+        </div>
 
         {intakeSnapshot ? (
           <IntakeSnapshotSection

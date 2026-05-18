@@ -120,7 +120,7 @@ export function UsedGearLotTwoGroupPage({
 
   return (
     <WorkflowRecordPageLayout
-      eyebrow="Parking Lots"
+      eyebrow="Parking Lot 2"
       title={group.label}
       actions={(
         <BackToolbarButton label="Back to Parking Lot 2" onClick={onBackToParkingLot} />

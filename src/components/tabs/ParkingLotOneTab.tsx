@@ -43,7 +43,7 @@ export function ParkingLotOneTab({ currentUserName }: ParkingLotOneTabProps) {
 
   return (
     <WorkflowQueuePageTemplate
-      eyebrow="Parking Lots"
+      eyebrow="Parking Lot 1"
       title="Parking Lot 1"
     >
       <UsedGearPendingReviewSection

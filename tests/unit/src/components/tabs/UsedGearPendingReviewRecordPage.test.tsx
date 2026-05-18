@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { within } from '@testing-library/react';
 import { UsedGearPendingReviewRecordPage } from '@/components/tabs/UsedGearPendingReviewRecordPage';
 
 const {
@@ -150,6 +151,9 @@ describe('UsedGearPendingReviewRecordPage', () => {
       target: { value: 'Speaker damage under grille.' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send To Trash' }));
+
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Send To Trash' }));
 
     await waitFor(() => {
       expect(markPendingReviewUnqualifiedMock).toHaveBeenCalledWith('rec-pending-1', 'Speaker damage under grille.');
