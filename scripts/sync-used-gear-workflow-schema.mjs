@@ -61,6 +61,8 @@ const APPROVED_FIELD_DEFINITIONS = [
   { name: 'Customer Functional Notes', type: 'multilineText' },
   { name: 'Customer Inclusion Notes', type: 'multilineText' },
   { name: 'Customer Submitted Photos Notes', type: 'multilineText' },
+  { name: 'Testing Cosmetic Notes', type: 'multilineText' },
+  { name: 'Photography Cosmetic Notes', type: 'multilineText' },
   { name: 'Internal Cosmetic Notes', type: 'multilineText' },
   { name: 'Internal Functional Notes', type: 'multilineText' },
   { name: 'Internal Inclusion Notes', type: 'multilineText' },
@@ -143,12 +145,30 @@ async function createField(apiKey, definition) {
   });
 }
 
+async function renameField(apiKey, fieldId, name) {
+  return fetchJson(`https://api.airtable.com/v0/meta/bases/${BASE_ID}/tables/${TABLE_ID}/fields/${fieldId}`, apiKey, {
+    method: 'PATCH',
+    body: JSON.stringify({ name }),
+  });
+}
+
 async function main() {
   const apiKey = requireApiKey();
   const before = await fetchTable(apiKey);
   writeJson('prechange-table-metadata.json', before);
 
-  const liveFieldNames = new Set(before.fields.map((field) => field.name));
+  const renamedFields = [];
+  const legacyTestingCosmeticField = before.fields.find((field) => field.name === 'Cosmetic Condition Notes');
+  const testingCosmeticField = before.fields.find((field) => field.name === 'Testing Cosmetic Notes');
+
+  if (legacyTestingCosmeticField && !testingCosmeticField) {
+    const renamed = await renameField(apiKey, legacyTestingCosmeticField.id, 'Testing Cosmetic Notes');
+    renamedFields.push({ id: renamed.id, from: 'Cosmetic Condition Notes', to: renamed.name, type: renamed.type });
+    console.log(`RENAMED Cosmetic Condition Notes -> ${renamed.name} (${renamed.id})`);
+  }
+
+  const current = renamedFields.length > 0 ? await fetchTable(apiKey) : before;
+  const liveFieldNames = new Set(current.fields.map((field) => field.name));
   const missingDefinitions = APPROVED_FIELD_DEFINITIONS.filter((field) => !liveFieldNames.has(field.name));
   const createdFields = [];
 
@@ -165,6 +185,7 @@ async function main() {
 
   writeJson('postchange-table-metadata.json', after);
   writeJson('created-fields.json', createdFields);
+  writeJson('renamed-fields.json', renamedFields);
   writeJson('rollback-delete-created-fields.json', {
     baseId: BASE_ID,
     tableId: TABLE_ID,
@@ -179,11 +200,14 @@ async function main() {
     rollbackOrder: [...approvedWorkflowFields].reverse(),
   });
   writeJson('summary.json', {
+    renamedCount: renamedFields.length,
+    renamedFields,
     createdCount: createdFields.length,
     createdFieldNames: createdFields.map((field) => field.name),
     approvedWorkflowFieldCount: approvedWorkflowFields.length,
   });
 
+  console.log(`RENAMED_COUNT ${renamedFields.length}`);
   console.log(`CREATED_COUNT ${createdFields.length}`);
 }
 

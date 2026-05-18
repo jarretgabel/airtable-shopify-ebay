@@ -57,8 +57,18 @@ const FIELD_CONFIG_BY_NAME: Record<string, InventoryEditorFieldConfig> = {
     kind: 'textarea',
     rows: 4,
   },
-  'Cosmetic Condition Notes': {
+  'Testing Cosmetic Notes': {
     label: 'Cosmetic Notes',
+    kind: 'textarea',
+    rows: 4,
+  },
+  'Photography Cosmetic Notes': {
+    label: 'Photography Cosmetic Notes',
+    kind: 'textarea',
+    rows: 4,
+  },
+  'Internal Cosmetic Notes': {
+    label: 'Internal Cosmetic Notes',
     kind: 'textarea',
     rows: 4,
   },

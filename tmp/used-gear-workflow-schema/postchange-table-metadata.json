@@ -4371,7 +4371,7 @@
     {
       "type": "multilineText",
       "id": "fld5HseHNQSaCZuRY",
-      "name": "Cosmetic Condition Notes"
+      "name": "Testing Cosmetic Notes"
     },
     {
       "type": "multipleSelects",
@@ -5195,6 +5195,11 @@
       },
       "id": "fldMbaeLyP2S1dBxJ",
       "name": "Workflow Owner Assigned At"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldABa0GnVNhsgByb",
+      "name": "Photography Cosmetic Notes"
     }
   ],
   "views": [

@@ -60,7 +60,8 @@ describe('photosForm', () => {
           'Power Cable': ['Included'],
           'Additional Items': 'Replacement feet',
           'Audiogon Rating': ['7/10'],
-          'Cosmetic Condition Notes': 'Moderate case wear.',
+          'Testing Cosmetic Notes': 'Moderate test-stage wear.',
+          'Photography Cosmetic Notes': 'Moderate photo-stage wear.',
           "Photo'd": '2026-05-04T00:00:00.000Z',
           Status: "Photo'd",
           'Customer Cosmetic Notes': 'Seller flagged scratches on the top cover.',
@@ -102,6 +103,7 @@ describe('photosForm', () => {
       stageContext: {
         inventoryNotes: 'Keep reflection under control on the top cover.',
         testingNotes: 'Receiver passed tuner and phono checks.',
+        testingCosmeticNotes: 'Moderate test-stage wear.',
         existingAttachments: [
           { id: 'att-1', url: 'https://example.com/hero.jpg', filename: 'hero.jpg' },
         ],
@@ -128,7 +130,7 @@ describe('photosForm', () => {
         powerCable: 'Included',
         additionalItems: 'Replacement feet',
         audiogonRating: '7/10',
-        cosmeticConditionNotes: 'Moderate case wear.',
+        cosmeticConditionNotes: 'Moderate photo-stage wear.',
         imageFiles: [],
         photoDate: '2026-05-04',
         status: "Photo'd",

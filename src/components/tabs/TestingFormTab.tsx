@@ -36,6 +36,7 @@ const EMPTY_CUSTOMER_REFERENCE: TestingFormCustomerReference = {
 };
 
 const EMPTY_STAGE_CONTEXT: TestingFormStageContext = {
+  photographyCosmeticNotes: '',
   existingAttachments: [],
   imageMetadata: [],
 };
@@ -149,6 +150,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
   const [formValues, setFormValues] = useState<TestingFormValues>(() => createTestingFormDefaults());
   const [recordSource, setRecordSource] = useState<TestingFormRecordSource>('inventory-directory');
   const [customerReference, setCustomerReference] = useState<TestingFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
+  const [stageContext, setStageContext] = useState<TestingFormStageContext>(EMPTY_STAGE_CONTEXT);
   const [imageMetadata, setImageMetadata] = useState<WorkflowImageMetadataRecord[]>([]);
   const [optionSets, setOptionSets] = useState<TestingOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -181,6 +183,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           setOptionSets(nextOptionSets);
           setRecordSource(nextFormValues.source);
           setCustomerReference(nextFormValues.customerReference);
+          setStageContext(nextFormValues.stageContext);
           setImageMetadata(nextFormValues.stageContext.imageMetadata);
           setFormValues(nextFormValues.values);
           setUploadEditorResetKey((current) => current + 1);
@@ -428,6 +431,11 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
             <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
               <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Notes</p>
               <p className="mt-2 leading-6 text-[var(--ink)]">{formValues.inventoryNotes || 'No inventory notes available.'}</p>
+            </div>
+
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Photography Cosmetic Notes</p>
+              <p className="mt-2 leading-6 text-[var(--ink)]">{stageContext.photographyCosmeticNotes || 'No photography cosmetic notes available yet.'}</p>
             </div>
           </div>
         </div>

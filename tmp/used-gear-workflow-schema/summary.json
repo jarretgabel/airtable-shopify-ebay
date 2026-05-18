@@ -1,5 +1,16 @@
 {
-  "createdCount": 0,
-  "createdFieldNames": [],
-  "approvedWorkflowFieldCount": 45
+  "renamedCount": 1,
+  "renamedFields": [
+    {
+      "id": "fld5HseHNQSaCZuRY",
+      "from": "Cosmetic Condition Notes",
+      "to": "Testing Cosmetic Notes",
+      "type": "multilineText"
+    }
+  ],
+  "createdCount": 1,
+  "createdFieldNames": [
+    "Photography Cosmetic Notes"
+  ],
+  "approvedWorkflowFieldCount": 47
 }

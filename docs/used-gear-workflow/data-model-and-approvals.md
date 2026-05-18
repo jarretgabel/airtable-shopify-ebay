@@ -216,6 +216,11 @@ These are proposed additions or formalized workflow fields for `tbl0K0nFQL64jQMx
 - `Internal Inclusion Notes`
 	- Purpose: separate internal assessment values from customer-origin data.
 
+#### Workflow Stage Cosmetic Notes
+- `Testing Cosmetic Notes`
+- `Photography Cosmetic Notes`
+	- Purpose: keep stage-owned cosmetic findings distinct so testing and photography can each record and review their own notes without overwriting the other stage.
+
 #### Offer, Paid, And Allocation
 - `Offer Amount`
 	- Purpose: item-level offer amount proposed to the seller.

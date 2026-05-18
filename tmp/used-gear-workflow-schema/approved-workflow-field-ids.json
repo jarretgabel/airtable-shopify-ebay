@@ -1,5 +1,10 @@
 [
   {
+    "id": "fld5HseHNQSaCZuRY",
+    "name": "Testing Cosmetic Notes",
+    "type": "multilineText"
+  },
+  {
     "id": "fldPntn6pMirQpZLX",
     "name": "Stale Recovery Status",
     "type": "singleSelect"
@@ -223,5 +228,10 @@
     "id": "fldMbaeLyP2S1dBxJ",
     "name": "Workflow Owner Assigned At",
     "type": "dateTime"
+  },
+  {
+    "id": "fldABa0GnVNhsgByb",
+    "name": "Photography Cosmetic Notes",
+    "type": "multilineText"
   }
 ]

@@ -219,7 +219,7 @@ function buildSampleRecords() {
         Remote: ['Included'],
         'Power Cable': ['Included'],
         'Audiogon Rating': '8/10',
-        'Cosmetic Condition Notes': 'Minor veneer wear at the rear-left corner and light marks on the top grille.',
+        'Testing Cosmetic Notes': 'Minor veneer wear at the rear-left corner and light marks on the top grille.',
       },
       workflowFields: {
         'Workflow Status': 'Approved for Publish',

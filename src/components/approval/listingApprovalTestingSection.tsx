@@ -22,7 +22,7 @@ const LISTING_APPROVAL_TESTING_SECTION_DEFINITIONS = [
     multiline: true,
   },
   { label: 'Audiogon Rating', candidates: ['Audiogon Rating'], multiline: false },
-  { label: 'Cosmetic Notes', candidates: ['Cosmetic Condition Notes'], multiline: true },
+  { label: 'Cosmetic Notes', candidates: ['Testing Cosmetic Notes', 'Cosmetic Condition Notes'], multiline: true },
 ] as const;
 
 function normalizeTestingFieldName(fieldName: string): string {

@@ -29,6 +29,9 @@ const PRIMARY_IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
 const DEFAULT_STATUS = "Photo'd";
 const WORKFLOW_IMAGE_METADATA_FIELD_NAME = 'Workflow Image Metadata JSON';
 const WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME = 'Images';
+const TESTING_COSMETIC_NOTES_FIELD_NAME = 'Testing Cosmetic Notes';
+const LEGACY_TESTING_COSMETIC_NOTES_FIELD_NAME = 'Cosmetic Condition Notes';
+const PHOTOGRAPHY_COSMETIC_NOTES_FIELD_NAME = 'Photography Cosmetic Notes';
 
 const OPTION_FIELD_NAMES = [
   'Status',
@@ -60,6 +63,7 @@ export interface PhotosFormContextAttachment {
 export interface PhotosFormStageContext {
   inventoryNotes: string;
   testingNotes: string;
+  testingCosmeticNotes: string;
   existingAttachments: PhotosFormContextAttachment[];
   imageMetadata: WorkflowImageMetadataRecord[];
 }
@@ -264,6 +268,7 @@ function buildStageContext(record: AirtableRecord): PhotosFormStageContext {
   return {
     inventoryNotes: extractInventoryScalarValue(record.fields['Inventory Notes']),
     testingNotes: extractInventoryScalarValue(record.fields['Testing Notes']),
+    testingCosmeticNotes: extractInventoryScalarValue(record.fields[TESTING_COSMETIC_NOTES_FIELD_NAME] ?? record.fields[LEGACY_TESTING_COSMETIC_NOTES_FIELD_NAME]),
     existingAttachments: filterWorkflowAttachmentsByStage(extractAttachments(record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME]), imageMetadata, 'photos'),
     imageMetadata,
   };
@@ -290,7 +295,7 @@ export async function loadPhotosFormValues(recordId: string): Promise<PhotosForm
         powerCable: extractInventoryScalarValue(record.fields['Power Cable']),
         additionalItems: extractInventoryScalarValue(record.fields['Additional Items']),
         audiogonRating: extractInventoryScalarValue(record.fields['Audiogon Rating']),
-        cosmeticConditionNotes: extractInventoryScalarValue(record.fields['Cosmetic Condition Notes']),
+        cosmeticConditionNotes: extractInventoryScalarValue(record.fields[PHOTOGRAPHY_COSMETIC_NOTES_FIELD_NAME]),
         imageFiles: [],
         photoDate: dateOrFallback(record.fields["Photo'd"], defaults.photoDate),
         status: extractInventoryScalarValue(record.fields.Status) || defaults.status,
@@ -373,7 +378,7 @@ export async function submitPhotosForm(
         'Power Cable': arrayOrUndefined(values.powerCable),
         'Additional Items': trimToUndefined(values.additionalItems),
         'Audiogon Rating': arrayOrUndefined(values.audiogonRating),
-        'Cosmetic Condition Notes': trimToUndefined(values.cosmeticConditionNotes),
+        [PHOTOGRAPHY_COSMETIC_NOTES_FIELD_NAME]: trimToUndefined(values.cosmeticConditionNotes),
         "Photo'd": trimToUndefined(values.photoDate),
         Status: statusValue,
         [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata ? serializeWorkflowImageMetadata(options.imageMetadata) : undefined,

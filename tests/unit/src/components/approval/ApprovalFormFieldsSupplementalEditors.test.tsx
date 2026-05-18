@@ -565,7 +565,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
           'Power Cable': 'Included',
           'Testing Notes': 'Bench tested',
           'Audiogon Rating': '8/10',
-          'Cosmetic Condition Notes': 'Light wear on the top cover.',
+          'Testing Cosmetic Notes': 'Light wear on the top cover.',
         }}
         setFormValue={vi.fn()}
         saving={false}
@@ -579,7 +579,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
           { fieldName: 'Power Cable', label: 'Power Cable', multiline: false },
           { fieldName: 'Testing Notes', label: 'Testing Notes', multiline: true },
           { fieldName: 'Audiogon Rating', label: 'Audiogon Rating', multiline: false },
-          { fieldName: 'Cosmetic Condition Notes', label: 'Cosmetic Notes', multiline: true },
+          { fieldName: 'Testing Cosmetic Notes', label: 'Cosmetic Notes', multiline: true },
         ]}
         renderSpecialLabel={(label) => <span>{label}</span>}
         inputBaseClass="input"
@@ -653,7 +653,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
           'Power Cable': 'Included',
           'Testing Notes': 'Bench tested',
           'Audiogon Rating': '8/10',
-          'Cosmetic Condition Notes': 'Light wear on the top cover.',
+          'Testing Cosmetic Notes': 'Light wear on the top cover.',
         }}
         setFormValue={vi.fn()}
         saving={false}
@@ -667,7 +667,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
           { fieldName: 'Power Cable', label: 'Power Cable', multiline: false },
           { fieldName: 'Testing Notes', label: 'Testing Notes', multiline: true },
           { fieldName: 'Audiogon Rating', label: 'Audiogon Rating', multiline: false },
-          { fieldName: 'Cosmetic Condition Notes', label: 'Cosmetic Notes', multiline: true },
+          { fieldName: 'Testing Cosmetic Notes', label: 'Cosmetic Notes', multiline: true },
         ]}
         renderSpecialLabel={(label) => <span>{label}</span>}
         inputBaseClass="input"

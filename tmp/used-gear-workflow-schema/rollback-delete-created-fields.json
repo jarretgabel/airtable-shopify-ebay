@@ -1,6 +1,18 @@
 {
   "baseId": "apprsAm2FOohEmL2u",
   "tableId": "tbl0K0nFQL64jQMx8",
-  "created": [],
-  "rollbackOrder": []
+  "created": [
+    {
+      "id": "fldABa0GnVNhsgByb",
+      "name": "Photography Cosmetic Notes",
+      "type": "multilineText"
+    }
+  ],
+  "rollbackOrder": [
+    {
+      "id": "fldABa0GnVNhsgByb",
+      "name": "Photography Cosmetic Notes",
+      "type": "multilineText"
+    }
+  ]
 }

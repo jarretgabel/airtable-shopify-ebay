@@ -63,6 +63,7 @@ describe('TestingFormTab', () => {
         submittedPhotosNotes: '',
       },
       stageContext: {
+        photographyCosmeticNotes: 'Photography called out two cabinet scratches.',
         existingAttachments: [{ id: 'att-1', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' }],
         imageMetadata: [
           {
@@ -145,6 +146,8 @@ describe('TestingFormTab', () => {
     expect(screen.getByText('Accessories, spikes, umbilicals, etc..')).toBeInTheDocument();
     expect(screen.getByText('Inventory Notes')).toBeInTheDocument();
     expect(screen.getByText('Capture top cover wear.')).toBeInTheDocument();
+    expect(screen.getByText('Photography Cosmetic Notes')).toBeInTheDocument();
+    expect(screen.getByText('Photography called out two cabinet scratches.')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Alt text for testing.jpg'), { target: { value: 'Updated bench overview' } });
     fireEvent.click(screen.getByLabelText('Include testing.jpg in listings'));
@@ -214,6 +217,7 @@ describe('TestingFormTab', () => {
         submittedPhotosNotes: '',
       },
       stageContext: {
+        photographyCosmeticNotes: '',
         existingAttachments: [],
         imageMetadata: [],
       },

@@ -261,7 +261,7 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
   },
   {
     name: 'cosmeticConditionNotes',
-    airtableFieldName: 'Cosmetic Condition Notes',
+    airtableFieldName: 'Testing Cosmetic Notes',
     label: 'Cosmetic Notes',
     type: 'textarea',
     rows: 4,

@@ -71,7 +71,7 @@ function buildRecord(): AirtableRecord {
       Remote: 'Included',
       'Power Cable': 'Included',
       'Audiogon Rating': '8/10',
-      'Cosmetic Condition Notes': 'Light wear on the top cover.',
+      'Testing Cosmetic Notes': 'Light wear on the top cover.',
     },
   };
 }
@@ -90,7 +90,7 @@ function buildCommonProps() {
       Remote: 'Included',
       'Power Cable': 'Included',
       'Audiogon Rating': '8/10',
-      'Cosmetic Condition Notes': 'Light wear on the top cover.',
+      'Testing Cosmetic Notes': 'Light wear on the top cover.',
       'Shopify Body HTML': '<p>Shopify body</p>',
       'eBay Body HTML': '<p>eBay body</p>',
     },
@@ -99,7 +99,7 @@ function buildCommonProps() {
     listingDurationOptions: ['GTC'],
     saving: false,
     setFormValue: vi.fn(),
-    writableFieldNames: ['Title', 'Description', 'Price', 'Key Features', 'Testing Notes', 'Manual', 'Original Box', 'Voltage', 'Remote', 'Power Cable', 'Audiogon Rating', 'Cosmetic Condition Notes'],
+    writableFieldNames: ['Title', 'Description', 'Price', 'Key Features', 'Testing Notes', 'Manual', 'Original Box', 'Voltage', 'Remote', 'Power Cable', 'Audiogon Rating', 'Testing Cosmetic Notes'],
     originalFieldValues: {
       Description: 'Original description',
     },
@@ -125,7 +125,7 @@ function buildSharedProps(): ListingApprovalCombinedSharedSectionProps {
       'Power Cable': 'Included',
       'Testing Notes': 'Bench tested',
       'Audiogon Rating': '8/10',
-      'Cosmetic Condition Notes': 'Light wear on the top cover.',
+      'Testing Cosmetic Notes': 'Light wear on the top cover.',
     },
     sharedDrawerRequiredStatus: { hasRequired: true, allFilled: true },
     onOpenOperationalRecord: vi.fn(),
@@ -209,7 +209,7 @@ describe('combined approval sections', () => {
       'Power Cable': '["Included"]',
       'Testing Notes': 'Bench tested',
       'Audiogon Rating': '["8/10"]',
-      'Cosmetic Condition Notes': 'Light wear on the top cover.',
+      'Testing Cosmetic Notes': 'Light wear on the top cover.',
     };
 
     render(<ListingApprovalCombinedSharedSection {...props} />);

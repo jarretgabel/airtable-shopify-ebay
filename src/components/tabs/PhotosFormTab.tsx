@@ -38,6 +38,7 @@ const EMPTY_CUSTOMER_REFERENCE: PhotosFormCustomerReference = {
 const EMPTY_STAGE_CONTEXT: PhotosFormStageContext = {
   inventoryNotes: '',
   testingNotes: '',
+  testingCosmeticNotes: '',
   existingAttachments: [],
   imageMetadata: [],
 };
@@ -54,6 +55,7 @@ const READ_ONLY_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = [
   'make',
   'model',
   'componentType',
+  'additionalItems',
   'audiogonRating',
 ];
 
@@ -381,7 +383,12 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
 
   const hasCustomerReference = Object.values(customerReference).some((value) => value.trim().length > 0);
   const applicableIncludedItems = buildApplicableIncludedItems(formValues);
-  const hasOperationalContext = Boolean(stageContext.inventoryNotes.trim() || stageContext.testingNotes.trim() || stageContext.existingAttachments.length > 0);
+  const hasOperationalContext = Boolean(
+    stageContext.inventoryNotes.trim()
+    || stageContext.testingNotes.trim()
+    || stageContext.testingCosmeticNotes.trim()
+    || stageContext.existingAttachments.length > 0,
+  );
   const stageImageMetadata = filterWorkflowImageMetadataByStage(imageMetadata, 'photos');
   const readOnlyFields = photosFormFields.filter((field) => READ_ONLY_PHOTOS_FIELD_NAMES.includes(field.name));
   const editableFields = photosFormFields.filter((field) => EDITABLE_PHOTOS_FIELD_NAMES.includes(field.name));
@@ -458,17 +465,17 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
               <p className="mt-2 leading-6 text-[var(--ink)]">{customerReference.cosmeticNotes || 'None provided'}</p>
             </div>
 
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Additional Items</p>
-              <p className="mt-2 leading-6 text-[var(--ink)]">{formValues.additionalItems || 'None provided'}</p>
-            </div>
-
             {hasOperationalContext ? (
               <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
                 <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Notes</p>
                 <p className="mt-2 leading-6 text-[var(--ink)]">{stageContext.inventoryNotes || 'No inventory notes available.'}</p>
               </div>
             ) : null}
+
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Testing Cosmetic Notes</p>
+              <p className="mt-2 leading-6 text-[var(--ink)]">{stageContext.testingCosmeticNotes || 'No testing cosmetic notes available yet.'}</p>
+            </div>
 
             {hasOperationalContext ? (
               <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">

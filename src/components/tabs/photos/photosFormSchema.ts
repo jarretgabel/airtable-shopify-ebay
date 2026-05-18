@@ -136,7 +136,7 @@ export const photosFormFields: PhotosFormFieldDefinition[] = [
   },
   {
     name: 'cosmeticConditionNotes',
-    airtableFieldName: 'Cosmetic Condition Notes',
+    airtableFieldName: 'Photography Cosmetic Notes',
     label: 'Cosmetic Notes',
     type: 'textarea',
     rows: 4,
@@ -148,7 +148,7 @@ export const photosFormFields: PhotosFormFieldDefinition[] = [
     label: 'Images',
     type: 'file',
     required: true,
-    description: 'Photograph additional items also.',
+    description: 'Photos should cover all sides of the unit with close ups of any cosmetic issues. Photograph additional items also.',
   },
   {
     name: 'photoDate',

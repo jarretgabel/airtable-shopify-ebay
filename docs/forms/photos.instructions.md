@@ -57,7 +57,7 @@ If this wording changes, update `src/components/tabs/PhotosFormTab.tsx`.
 
 ## Airtable Field Mapping Notes
 
-- `Cosmetic Notes` maps to Airtable field `Cosmetic Condition Notes`.
+- `Cosmetic Notes` maps to Airtable field `Photography Cosmetic Notes`.
 - `Audiogon Rating` maps to the Airtable field of the same name.
 - `Photo Date` maps to Airtable field `Photo'd`.
 - `Images` uploads to Airtable field `Images`.

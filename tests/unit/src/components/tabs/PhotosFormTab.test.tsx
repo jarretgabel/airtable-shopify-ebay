@@ -68,6 +68,7 @@ describe('PhotosFormTab', () => {
       stageContext: {
         inventoryNotes: 'Capture the serial plate and top cover.',
         testingNotes: 'Passed tuner test.',
+        testingCosmeticNotes: 'Light wear on the top cover edges.',
         existingAttachments: [{ id: 'att-1', url: 'https://example.com/hero.jpg', filename: 'hero.jpg' }],
         imageMetadata: [
           {
@@ -132,9 +133,13 @@ describe('PhotosFormTab', () => {
     expect(screen.getAllByText('Remote').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Power Cable').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Please confirm')).toHaveLength(4);
-    expect(screen.getByText('Photograph additional items also.')).toBeInTheDocument();
+    expect(screen.getByText('Photos should cover all sides of the unit with close ups of any cosmetic issues. Photograph additional items also.')).toBeInTheDocument();
     expect(screen.getAllByText('Additional Items').length).toBeGreaterThan(0);
     expect(screen.getByText('Rack handles')).toBeInTheDocument();
+    expect(screen.getByText('Inventory Notes')).toBeInTheDocument();
+    expect(screen.getByText('Capture the serial plate and top cover.')).toBeInTheDocument();
+    expect(screen.getByText('Testing Cosmetic Notes')).toBeInTheDocument();
+    expect(screen.getByText('Light wear on the top cover edges.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Photos Complete' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Yes, complete photography' }));
@@ -217,6 +222,7 @@ describe('PhotosFormTab', () => {
       stageContext: {
         inventoryNotes: 'Capture the serial plate and top cover.',
         testingNotes: 'Passed tuner test.',
+        testingCosmeticNotes: 'Light wear on the top cover edges.',
         existingAttachments: [],
         imageMetadata: [],
       },

@@ -72,7 +72,7 @@ If this wording changes, update `src/components/tabs/TestingFormTab.tsx`.
 
 ## Airtable Field Mapping Notes
 
-- `Cosmetic Notes` maps to Airtable field `Cosmetic Condition Notes`.
+- `Cosmetic Notes` maps to Airtable field `Testing Cosmetic Notes`.
 - `Shipping Dimensions` maps to Airtable field `Shipping Dims`.
 - `Testing Date` maps to Airtable field `Tested`.
 - `Testing Time` maps to Airtable field `Testing Time` and is converted from minutes to seconds.

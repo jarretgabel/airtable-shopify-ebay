@@ -29,6 +29,9 @@ const IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
 const WORKFLOW_IMAGE_METADATA_FIELD_NAME = 'Workflow Image Metadata JSON';
 const WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME = 'Images';
 const DEFAULT_STATUS = 'Tested';
+const TESTING_COSMETIC_NOTES_FIELD_NAME = 'Testing Cosmetic Notes';
+const LEGACY_TESTING_COSMETIC_NOTES_FIELD_NAME = 'Cosmetic Condition Notes';
+const PHOTOGRAPHY_COSMETIC_NOTES_FIELD_NAME = 'Photography Cosmetic Notes';
 
 const OPTION_FIELD_NAMES = [
   'Status',
@@ -58,6 +61,7 @@ export interface TestingFormContextAttachment {
 }
 
 export interface TestingFormStageContext {
+  photographyCosmeticNotes: string;
   existingAttachments: TestingFormContextAttachment[];
   imageMetadata: WorkflowImageMetadataRecord[];
 }
@@ -258,6 +262,7 @@ function buildStageContext(record: AirtableRecord): TestingFormStageContext {
   });
 
   return {
+    photographyCosmeticNotes: extractInventoryScalarValue(record.fields[PHOTOGRAPHY_COSMETIC_NOTES_FIELD_NAME]),
     existingAttachments: filterWorkflowAttachmentsByStage(extractAttachments(record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME]), imageMetadata, 'testing'),
     imageMetadata,
   };
@@ -294,7 +299,7 @@ export async function loadTestingFormValues(recordId: string): Promise<TestingFo
         serialNumber: extractInventoryScalarValue(record.fields['Serial Number']),
         voltage: extractInventoryScalarValue(record.fields.Voltage),
         audiogonRating: extractInventoryScalarValue(record.fields['Audiogon Rating']),
-        cosmeticConditionNotes: extractInventoryScalarValue(record.fields['Cosmetic Condition Notes']),
+        cosmeticConditionNotes: extractInventoryScalarValue(record.fields[TESTING_COSMETIC_NOTES_FIELD_NAME] ?? record.fields[LEGACY_TESTING_COSMETIC_NOTES_FIELD_NAME]),
         originalBox: extractInventoryScalarValue(record.fields['Original Box']),
         manual: extractInventoryScalarValue(record.fields.Manual),
         remote: extractInventoryScalarValue(record.fields.Remote),
@@ -391,7 +396,7 @@ export async function submitTestingForm(
       'Serial Number': trimToUndefined(values.serialNumber),
       Voltage: trimToUndefined(values.voltage),
       'Audiogon Rating': trimToUndefined(values.audiogonRating),
-      'Cosmetic Condition Notes': trimToUndefined(values.cosmeticConditionNotes),
+      [TESTING_COSMETIC_NOTES_FIELD_NAME]: trimToUndefined(values.cosmeticConditionNotes),
       'Original Box': arrayOrUndefined(values.originalBox),
       Manual: arrayOrUndefined(values.manual),
       Remote: arrayOrUndefined(values.remote),

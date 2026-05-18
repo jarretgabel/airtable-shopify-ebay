@@ -52,7 +52,7 @@ It is shown in the app under:
 15. `Voltage`
 16. `Inventory Notes`
 17. `Images`
-18. `Cosmetic Condition Notes`
+18. `Testing Cosmetic Notes`
 19. `Original Box`
 20. `Manual`
 21. `Remote`

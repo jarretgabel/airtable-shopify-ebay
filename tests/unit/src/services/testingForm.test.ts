@@ -61,7 +61,7 @@ describe('testingForm', () => {
           'Serial Number': 'SN-123',
           Voltage: '120V',
           'Audiogon Rating': ['8/10'],
-          'Cosmetic Condition Notes': 'Very clean',
+          'Testing Cosmetic Notes': 'Very clean',
           'Original Box': ['Yes'],
           Manual: ['Included'],
           Remote: ['No'],
@@ -74,6 +74,7 @@ describe('testingForm', () => {
           'Testing Time': 5400,
           'Service Notes': 'Bias adjusted',
           'Service Time': 1800,
+          'Photography Cosmetic Notes': 'Photography noted scratches on the top cover.',
           Tested: '2026-04-05T00:00:00.000Z',
           Status: 'Tested',
           'Customer Cosmetic Notes': 'Faceplate has one small nick.',
@@ -111,6 +112,7 @@ describe('testingForm', () => {
         submittedPhotosNotes: 'Customer sent rear serial sticker photo.',
       },
       stageContext: {
+        photographyCosmeticNotes: 'Photography noted scratches on the top cover.',
         existingAttachments: [
           { id: 'att-1', url: 'https://example.com/front.jpg', filename: 'front.jpg' },
         ],
@@ -239,7 +241,7 @@ describe('testingForm', () => {
         'Serial Number': 'SN-123',
         Voltage: '120V',
         'Audiogon Rating': '8/10',
-        'Cosmetic Condition Notes': 'Very clean',
+        'Testing Cosmetic Notes': 'Very clean',
         'Original Box': ['Yes'],
         Manual: ['Included'],
         Remote: ['No'],
