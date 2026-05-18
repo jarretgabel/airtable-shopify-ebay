@@ -1,7 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
 import { FormImageUploadEditor } from '@/components/tabs/FormImageUploadEditor';
@@ -23,7 +25,6 @@ import {
   type TestingFormStageContext,
   type TestingFormSubmitResult,
 } from '@/services/testingForm';
-import { useEffect } from 'react';
 import type { WorkflowImageMetadataRecord } from '@/services/workflowImageMetadata';
 
 const EMPTY_CUSTOMER_REFERENCE: TestingFormCustomerReference = {
@@ -45,9 +46,37 @@ const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
 
+const READ_ONLY_TESTING_FIELD_NAMES: Array<keyof TestingFormValues> = [
+  'sku',
+  'make',
+  'model',
+  'componentType',
+];
+
+const EDITABLE_TESTING_FIELD_NAMES: Array<keyof TestingFormValues> = [
+  'serialNumber',
+  'voltage',
+  'audiogonRating',
+  'cosmeticConditionNotes',
+  'originalBox',
+  'manual',
+  'remote',
+  'powerCable',
+  'additionalItems',
+  'shippingWeight',
+  'shippingDims',
+  'imageFiles',
+  'testingNotes',
+  'testingTimeMinutes',
+  'serviceNotes',
+  'serviceTimeMinutes',
+  'testingDate',
+];
+
+type TestingSubmitIntent = 'save' | 'complete';
+
 function validateForm(values: TestingFormValues): string | null {
   if (!values.sku.trim()) return 'SKU is required.';
-  if (!values.status.trim()) return 'Status is required.';
   if (!values.make.trim()) return 'Make is required.';
   if (!values.model.trim()) return 'Model is required.';
   if (!values.componentType.trim()) return 'Component Type is required.';
@@ -61,9 +90,27 @@ function FieldShell({ definition, children }: { definition: TestingFormFieldDefi
         {definition.label}
         {definition.required ? ' *' : ''}
       </span>
-      {children}
       {definition.description ? <p className={HELP_CLASS}>{definition.description}</p> : null}
+      {children}
     </label>
+  );
+}
+
+function ReadOnlyFieldDisplay({
+  label,
+  value,
+  description,
+}: {
+  label: string;
+  value: string;
+  description?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5">
+      <p className="m-0 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{label}</p>
+      <p className="mt-1 text-sm leading-5 text-[var(--ink)]">{value || 'Not provided'}</p>
+      {description ? <p className="mt-1 text-[0.72rem] leading-5 text-[var(--muted)]">{description}</p> : null}
+    </div>
   );
 }
 
@@ -74,12 +121,9 @@ interface TestingFormTabProps {
 
 export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabProps) {
   const [formValues, setFormValues] = useState<TestingFormValues>(() => createTestingFormDefaults());
-  const [initialFormValues, setInitialFormValues] = useState<TestingFormValues>(() => createTestingFormDefaults());
   const [recordSource, setRecordSource] = useState<TestingFormRecordSource>('inventory-directory');
   const [customerReference, setCustomerReference] = useState<TestingFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
-  const [stageContext, setStageContext] = useState<TestingFormStageContext>(EMPTY_STAGE_CONTEXT);
   const [imageMetadata, setImageMetadata] = useState<WorkflowImageMetadataRecord[]>([]);
-  const [initialImageMetadata, setInitialImageMetadata] = useState<WorkflowImageMetadataRecord[]>([]);
   const [optionSets, setOptionSets] = useState<TestingOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
@@ -87,6 +131,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
   const [submitSuccess, setSubmitSuccess] = useState<TestingFormSubmitResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploadEditorResetKey, setUploadEditorResetKey] = useState(0);
+  const { requestConfirmation, confirmationModal } = useConfirmationDialog();
 
   useEffect(() => {
     let cancelled = false;
@@ -110,11 +155,8 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           setOptionSets(nextOptionSets);
           setRecordSource(nextFormValues.source);
           setCustomerReference(nextFormValues.customerReference);
-          setStageContext(nextFormValues.stageContext);
           setImageMetadata(nextFormValues.stageContext.imageMetadata);
-          setInitialImageMetadata(nextFormValues.stageContext.imageMetadata);
           setFormValues(nextFormValues.values);
-          setInitialFormValues(nextFormValues.values);
           setUploadEditorResetKey((current) => current + 1);
         }
       } catch (error) {
@@ -139,8 +181,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
     setFormValues((current) => ({ ...current, [fieldName]: value }));
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const submitTesting = async (submitIntent: TestingSubmitIntent) => {
     setSubmitError(null);
     setSubmitSuccess(null);
 
@@ -152,20 +193,20 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
 
     setSubmitting(true);
     try {
-      const result = await submitTestingForm(formValues, recordId, { recordSource, imageMetadata });
+      const result = await submitTestingForm(formValues, recordId, {
+        recordSource,
+        imageMetadata,
+        completeWorkflowStage: submitIntent === 'complete',
+      });
       setSubmitSuccess(result);
       if (result.action === 'updated') {
         const nextValues = { ...formValues, imageFiles: [] };
         setFormValues(nextValues);
-        setInitialFormValues(nextValues);
-        setInitialImageMetadata(imageMetadata);
         setUploadEditorResetKey((current) => current + 1);
       } else {
         const nextValues = createTestingFormDefaults();
         setFormValues(nextValues);
-        setInitialFormValues(nextValues);
         setImageMetadata([]);
-        setInitialImageMetadata([]);
         setUploadEditorResetKey((current) => current + 1);
       }
     } catch (error) {
@@ -175,13 +216,18 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
     }
   };
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await submitTesting('save');
+  };
+
   const renderField = (definition: TestingFormFieldDefinition) => {
     const value = formValues[definition.name];
 
     if (definition.type === 'textarea') {
       return (
         <textarea
-          className={FIELD_CLASS}
+          className={`${FIELD_CLASS} block`}
           rows={definition.rows ?? 4}
           value={value as string}
           placeholder={definition.placeholder}
@@ -194,10 +240,22 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
       return (
         <FormImageUploadEditor
           title={definition.label}
-          description="Upload, crop, resize, watermark, rename, and compare files before they are attached to the operational record. Saved defaults persist locally for future testing sessions."
+          description={definition.description}
           disabled={submitting}
           resetKey={uploadEditorResetKey}
           onFilesChange={(files) => setFieldValue(definition.name, files as TestingFormValues[typeof definition.name])}
+          afterUploadContent={stageImageMetadata.length > 0 ? (
+            <WorkflowImageMetadataEditor
+              metadata={stageImageMetadata}
+              onChange={(nextMetadata) => setImageMetadata((current) => replaceWorkflowImageMetadataStage(current, 'testing', nextMetadata))}
+              allowReorder
+              disabled={submitting}
+              title="Testing Images"
+              description="Manage saved testing-stage image alt text, ordering, and listing defaults here."
+              emptyMessage=""
+              className="border-0 bg-transparent p-0"
+            />
+          ) : null}
         />
       );
     }
@@ -269,6 +327,8 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
 
   const hasCustomerReference = Object.values(customerReference).some((value) => value.trim().length > 0);
   const stageImageMetadata = filterWorkflowImageMetadataByStage(imageMetadata, 'testing');
+  const readOnlyFields = testingFormFields.filter((field) => READ_ONLY_TESTING_FIELD_NAMES.includes(field.name));
+  const editableFields = testingFormFields.filter((field) => EDITABLE_TESTING_FIELD_NAMES.includes(field.name));
 
   return (
     <AppPageLayout>
@@ -324,20 +384,33 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           </div>
         ) : null}
 
-        <WorkflowImageMetadataEditor
-          metadata={stageImageMetadata}
-          onChange={(nextMetadata) => setImageMetadata((current) => replaceWorkflowImageMetadataStage(current, 'testing', nextMetadata))}
-          disabled={submitting}
-          title="Testing Images"
-          description="Testing edits only testing-stage images here. Photography images stay separate on the photo form, while workflow and listing views still combine both stages."
-          emptyMessage={stageContext.existingAttachments.length > 0
-            ? 'Testing images were found, but no editable testing metadata could be derived yet.'
-            : 'No testing images are attached yet. Upload and save testing images to begin drafting metadata.'}
-          className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70"
-        />
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+          <AppSectionTitle title="Submitted Intake And Included Items" titleClassName="text-lg" />
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {readOnlyFields.map((field) => (
+              <ReadOnlyFieldDisplay
+                key={field.airtableFieldName}
+                label={field.label}
+                value={String(formValues[field.name] ?? '')}
+                description={field.name === 'componentType' ? undefined : field.description}
+              />
+            ))}
+            <ReadOnlyFieldDisplay label="Acquired From" value={formValues.acquiredFrom} />
+          </div>
+
+          <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Customer Cosmetic Notes</p>
+            <p className="mt-2 leading-6 text-[var(--ink)]">{customerReference.cosmeticNotes || 'None provided'}</p>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Notes</p>
+            <p className="mt-2 leading-6 text-[var(--ink)]">{formValues.inventoryNotes || 'No inventory notes available.'}</p>
+          </div>
+        </div>
 
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
-          {testingFormFields.map((field) => (
+          {editableFields.map((field) => (
             <div key={field.airtableFieldName}>
               {field.type === 'file'
                 ? renderField(field)
@@ -345,23 +418,8 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
             </div>
           ))}
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="m-0 text-sm text-[var(--muted)]">Required fields are marked with an asterisk. Testing Time is submitted to Airtable as minutes converted to duration seconds.</p>
+          <div className="flex justify-end">
             <div className="flex gap-3">
-              <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={() => {
-                  setSubmitError(null);
-                  setSubmitSuccess(null);
-                  setFormValues(initialFormValues);
-                  setImageMetadata(initialImageMetadata);
-                  setUploadEditorResetKey((current) => current + 1);
-                }}
-                disabled={submitting}
-              >
-                Reset
-              </button>
               <button
                 type="submit"
                 className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
@@ -369,9 +427,35 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
               >
                 {submitting ? (recordId ? 'Saving...' : 'Submitting...') : (recordId ? 'Save Testing' : 'Submit Testing')}
               </button>
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-5 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={async () => {
+                  const confirmed = await requestConfirmation({
+                    title: 'Mark testing as complete?',
+                    message: 'This will mark the testing step complete for this record and move it to the next workflow state when the handoff requirements are satisfied.',
+                    confirmLabel: 'Yes, complete testing',
+                    cancelLabel: 'Cancel',
+                    bullets: [
+                      'Save Testing keeps the record in the testing step so the tester can come back later.',
+                      'Testing Complete advances the workflow only when the record is ready for handoff.',
+                    ],
+                  });
+
+                  if (!confirmed) {
+                    return;
+                  }
+
+                  void submitTesting('complete');
+                }}
+                disabled={submitting}
+              >
+                Testing Complete
+              </button>
             </div>
           </div>
         </form>
+        {confirmationModal}
       </div>
     </AppPageLayout>
   );

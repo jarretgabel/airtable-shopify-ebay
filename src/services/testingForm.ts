@@ -28,6 +28,7 @@ import {
 const IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
 const WORKFLOW_IMAGE_METADATA_FIELD_NAME = 'Workflow Image Metadata JSON';
 const WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME = 'Images';
+const DEFAULT_STATUS = 'Tested';
 
 const OPTION_FIELD_NAMES = [
   'Status',
@@ -361,11 +362,12 @@ export async function loadTestingFormOptionSets(): Promise<TestingOptionSet> {
 export async function submitTestingForm(
   values: TestingFormValues,
   recordId?: string | null,
-  options: { recordSource?: TestingFormRecordSource; imageMetadata?: WorkflowImageMetadataRecord[] } = {},
+  options: { recordSource?: TestingFormRecordSource; imageMetadata?: WorkflowImageMetadataRecord[]; completeWorkflowStage?: boolean } = {},
 ): Promise<TestingFormSubmitResult> {
   const recordSource = options.recordSource ?? 'inventory-directory';
   const actorName = resolveCurrentActorName();
   const testedAt = new Date().toISOString();
+  const statusValue = DEFAULT_STATUS;
 
   try {
     if (!recordId || recordSource !== 'used-gear-workflow') {
@@ -403,9 +405,9 @@ export async function submitTestingForm(
       'Service Notes': trimToUndefined(values.serviceNotes),
       'Service Time': serviceTimeMinutes ? Number.parseFloat(serviceTimeMinutes) * 60 : undefined,
       Tested: trimToUndefined(values.testingDate),
-      Status: trimToUndefined(values.status),
+      Status: statusValue,
       [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata ? serializeWorkflowImageMetadata(options.imageMetadata) : undefined,
-      ...buildWorkflowTestingFields(workflowRecord, actorName, testedAt),
+      ...(options.completeWorkflowStage ? buildWorkflowTestingFields(workflowRecord, actorName, testedAt) : {}),
     });
 
     const updatedRecord = await updateRecordWithWorkflowImageMetadataFallback(recordSource, recordId, baseFields);

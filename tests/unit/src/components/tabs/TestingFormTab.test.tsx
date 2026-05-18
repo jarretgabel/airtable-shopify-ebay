@@ -3,7 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestingFormTab } from '@/components/tabs/TestingFormTab';
 
 vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
-  FormImageUploadEditor: ({ onFilesChange }: { onFilesChange: (files: File[]) => void }) => (
+  FormImageUploadEditor: ({
+    onFilesChange,
+    afterUploadContent,
+  }: {
+    onFilesChange: (files: File[]) => void;
+    afterUploadContent?: React.ReactNode;
+  }) => (
     <div>
       <button
         type="button"
@@ -11,6 +17,7 @@ vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
       >
         Mock add processed testing photos
       </button>
+      {afterUploadContent}
     </div>
   ),
 }));
@@ -115,19 +122,33 @@ describe('TestingFormTab', () => {
     });
   });
 
-  it('submits edited workflow image metadata with testing-stage saves', async () => {
+  it('submits edited workflow image metadata only after testing completion is confirmed', async () => {
     render(<TestingFormTab recordId="rec-testing" />);
 
     await screen.findByText('Testing');
 
     expect(screen.queryByLabelText('Alt text for photo.jpg')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Arrival Date')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Acquired From')).not.toBeInTheDocument();
+    expect(screen.getByText('Acquired From')).toBeInTheDocument();
+    expect(screen.getByText('Walk-in seller')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Cost')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Inventory Notes')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Shipping Method')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Status')).not.toBeInTheDocument();
+    expect(screen.getByText('Additional Items')).toBeInTheDocument();
+    expect(screen.getByText('Accessories, spikes, umbilicals, etc..')).toBeInTheDocument();
+    expect(screen.getByText('Inventory Notes')).toBeInTheDocument();
+    expect(screen.getByText('Capture top cover wear.')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Alt text for testing.jpg'), { target: { value: 'Updated bench overview' } });
     fireEvent.click(screen.getByLabelText('Include testing.jpg in listings'));
-    fireEvent.click(screen.getByRole('button', { name: 'Save Testing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Testing Complete' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Yes, complete testing' }));
 
     await waitFor(() => {
       expect(submitTestingFormMock).toHaveBeenCalledWith(expect.any(Object), 'rec-testing', {
+        completeWorkflowStage: true,
         recordSource: 'used-gear-workflow',
         imageMetadata: [
           expect.objectContaining({
@@ -162,6 +183,10 @@ describe('TestingFormTab', () => {
     await waitFor(() => {
       expect(submitTestingFormMock).toHaveBeenCalled();
     });
+
+    expect(submitTestingFormMock).toHaveBeenLastCalledWith(expect.any(Object), 'rec-testing', expect.objectContaining({
+      completeWorkflowStage: false,
+    }));
 
     const latestCall = submitTestingFormMock.mock.calls[submitTestingFormMock.mock.calls.length - 1];
     const [submittedValues] = latestCall as [

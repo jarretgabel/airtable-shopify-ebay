@@ -346,10 +346,10 @@ export async function loadPhotosFormOptionSets(): Promise<PhotosOptionSet> {
 export async function submitPhotosForm(
   values: PhotosFormValues,
   recordId?: string | null,
-  options: { recordSource?: PhotosFormRecordSource; imageMetadata?: WorkflowImageMetadataRecord[] } = {},
+  options: { recordSource?: PhotosFormRecordSource; imageMetadata?: WorkflowImageMetadataRecord[]; completeWorkflowStage?: boolean } = {},
 ): Promise<PhotosFormSubmitResult> {
   const skuValue = values.sku.trim();
-  const statusValue = trimToUndefined(values.status) ?? DEFAULT_STATUS;
+  const statusValue = DEFAULT_STATUS;
   const recordSource = options.recordSource ?? 'inventory-directory';
   const actorName = resolveCurrentActorName();
   const photographedAt = new Date().toISOString();
@@ -377,7 +377,7 @@ export async function submitPhotosForm(
         "Photo'd": trimToUndefined(values.photoDate),
         Status: statusValue,
         [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata ? serializeWorkflowImageMetadata(options.imageMetadata) : undefined,
-        ...buildWorkflowPhotographyFields(workflowRecord, actorName, photographedAt),
+        ...(options.completeWorkflowStage ? buildWorkflowPhotographyFields(workflowRecord, actorName, photographedAt) : {}),
       });
 
       const updatedRecord = await updateRecordWithWorkflowImageMetadataFallback(recordSource, recordId, baseFields);

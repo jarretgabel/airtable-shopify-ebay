@@ -156,6 +156,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     airtableFieldName: 'Audiogon Rating',
     label: 'Audiogon Rating',
     type: 'text',
+    description: '1-10',
   },
   {
     name: 'cosmeticConditionNotes',
@@ -163,6 +164,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     label: 'Cosmetic Notes',
     type: 'textarea',
     rows: 4,
+    description: 'Anything rated below an 8 requires list of flaws',
   },
   {
     name: 'originalBox',
@@ -198,18 +200,21 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     label: 'Additional Items',
     type: 'textarea',
     rows: 3,
+    description: 'Accessories, spikes, umbilicals, etc..',
   },
   {
     name: 'shippingWeight',
     airtableFieldName: 'Shipping Weight',
     label: 'Shipping Weight',
     type: 'text',
+    description: 'Enter in lbs. Box + Foam adds approximately 10lbs to unit weight.',
   },
   {
     name: 'shippingDims',
     airtableFieldName: 'Shipping Dims',
     label: 'Shipping Dimensions',
     type: 'text',
+    description: 'Enter in inches as W"xD"xH"',
   },
   {
     name: 'shippingMethod',
@@ -223,7 +228,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     airtableFieldName: 'Images',
     label: 'Images',
     type: 'file',
-    description: 'Upload one or more images.',
+    description: 'Boxes, internals, lights/screen ON shots, etc..',
   },
   {
     name: 'testingNotes',
@@ -231,13 +236,14 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     label: 'Testing Notes',
     type: 'textarea',
     rows: 5,
+    description: 'Functions as intended, or.. (please be detailed)',
   },
   {
     name: 'testingTimeMinutes',
     airtableFieldName: 'Testing Time',
     label: 'Testing Time',
     type: 'number',
-    description: 'Enter total testing time in minutes.',
+    description: 'Time spent testing this unit.',
   },
   {
     name: 'serviceNotes',
@@ -245,6 +251,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     label: 'Service Notes',
     type: 'textarea',
     rows: 4,
+    description: 'Part replacements, notable cleaning, fresh tubes, etc.. Provide costs if relevant.',
   },
   {
     name: 'serviceTimeMinutes',

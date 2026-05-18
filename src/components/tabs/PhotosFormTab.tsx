@@ -3,6 +3,7 @@ import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
 import { FormImageUploadEditor } from '@/components/tabs/FormImageUploadEditor';
@@ -59,7 +60,9 @@ const READ_ONLY_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = [
   'additionalItems',
 ];
 
-const HIDDEN_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = ['audiogonRating', 'cosmeticConditionNotes'];
+const HIDDEN_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = ['audiogonRating', 'cosmeticConditionNotes', 'status'];
+
+type PhotosSubmitIntent = 'save' | 'complete';
 
 type InclusionConfirmationKey = 'originalBox' | 'manual' | 'remote' | 'powerCable' | 'additionalItems';
 
@@ -95,15 +98,19 @@ function validateForm(
   recordSource: PhotosFormRecordSource,
   stageContext: PhotosFormStageContext,
   inclusionConfirmations: Partial<Record<InclusionConfirmationKey, boolean>>,
+  submitIntent: PhotosSubmitIntent,
 ): string | null {
   if (!values.sku.trim()) return 'SKU is required.';
   if (!values.make.trim()) return 'Make is required.';
   if (!values.model.trim()) return 'Model is required.';
   if (!values.componentType.trim()) return 'Component Type is required.';
   if (!values.photoDate.trim()) return 'Photo Date is required.';
-  if (!values.status.trim()) return 'Status is required.';
   if (recordSource !== 'used-gear-workflow' && values.imageFiles.length === 0 && stageContext.existingAttachments.length === 0) {
     return 'Upload at least one image before submitting the Photos form.';
+  }
+
+  if (submitIntent !== 'complete') {
+    return null;
   }
 
   const applicableIncludedItems = buildApplicableIncludedItems(values);
@@ -125,8 +132,8 @@ function FieldShell({ definition, children }: { definition: PhotosFormFieldDefin
         {definition.label}
         {definition.required ? ' *' : ''}
       </span>
-      {children}
       {definition.description ? <p className={HELP_CLASS}>{definition.description}</p> : null}
+      {children}
     </label>
   );
 }
@@ -156,12 +163,10 @@ interface PhotosFormTabProps {
 
 export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProps) {
   const [formValues, setFormValues] = useState<PhotosFormValues>(() => createPhotosFormDefaults());
-  const [initialFormValues, setInitialFormValues] = useState<PhotosFormValues>(() => createPhotosFormDefaults());
   const [recordSource, setRecordSource] = useState<PhotosFormRecordSource>('inventory-directory');
   const [customerReference, setCustomerReference] = useState<PhotosFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
   const [stageContext, setStageContext] = useState<PhotosFormStageContext>(EMPTY_STAGE_CONTEXT);
   const [imageMetadata, setImageMetadata] = useState<WorkflowImageMetadataRecord[]>([]);
-  const [initialImageMetadata, setInitialImageMetadata] = useState<WorkflowImageMetadataRecord[]>([]);
   const [inclusionConfirmations, setInclusionConfirmations] = useState<Partial<Record<InclusionConfirmationKey, boolean>>>({});
   const [optionSets, setOptionSets] = useState<PhotosOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -170,6 +175,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
   const [submitSuccess, setSubmitSuccess] = useState<PhotosFormSubmitResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploadEditorResetKey, setUploadEditorResetKey] = useState(0);
+  const { requestConfirmation, confirmationModal } = useConfirmationDialog();
 
   useEffect(() => {
     let cancelled = false;
@@ -195,10 +201,8 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
           setCustomerReference(nextFormValues.customerReference);
           setStageContext(nextFormValues.stageContext);
           setImageMetadata(nextFormValues.stageContext.imageMetadata);
-          setInitialImageMetadata(nextFormValues.stageContext.imageMetadata);
           setInclusionConfirmations({});
           setFormValues(nextFormValues.values);
-          setInitialFormValues(nextFormValues.values);
           setUploadEditorResetKey((current) => current + 1);
         }
       } catch (error) {
@@ -223,12 +227,11 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     setFormValues((current) => ({ ...current, [fieldName]: value }));
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const submitPhotos = async (submitIntent: PhotosSubmitIntent) => {
     setSubmitError(null);
     setSubmitSuccess(null);
 
-    const validationError = validateForm(formValues, recordSource, stageContext, inclusionConfirmations);
+    const validationError = validateForm(formValues, recordSource, stageContext, inclusionConfirmations, submitIntent);
     if (validationError) {
       setSubmitError(validationError);
       return;
@@ -236,20 +239,20 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
 
     setSubmitting(true);
     try {
-      const result = await submitPhotosForm(formValues, recordId, { recordSource, imageMetadata });
+      const result = await submitPhotosForm(formValues, recordId, {
+        recordSource,
+        imageMetadata,
+        completeWorkflowStage: submitIntent === 'complete',
+      });
       setSubmitSuccess(result);
       if (result.action === 'updated') {
         const nextValues = { ...formValues, imageFiles: [] };
         setFormValues(nextValues);
-        setInitialFormValues(nextValues);
-        setInitialImageMetadata(imageMetadata);
         setUploadEditorResetKey((current) => current + 1);
       } else {
         const nextValues = createPhotosFormDefaults();
         setFormValues(nextValues);
-        setInitialFormValues(nextValues);
         setImageMetadata([]);
-        setInitialImageMetadata([]);
         setUploadEditorResetKey((current) => current + 1);
       }
     } catch (error) {
@@ -257,6 +260,11 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await submitPhotos('save');
   };
 
   const renderField = (definition: PhotosFormFieldDefinition) => {
@@ -424,7 +432,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
                 key={field.airtableFieldName}
                 label={field.label}
                 value={String(formValues[field.name] ?? '')}
-                description={field.description}
+                description={field.name === 'componentType' ? undefined : field.description}
               />
             ))}
           </div>
@@ -502,30 +510,41 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
           <div className="flex justify-end">
             <div className="flex gap-3">
               <button
-                type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                onClick={() => {
-                  setSubmitError(null);
-                  setSubmitSuccess(null);
-                  setFormValues(initialFormValues);
-                  setImageMetadata(initialImageMetadata);
-                  setInclusionConfirmations({});
-                  setUploadEditorResetKey((current) => current + 1);
-                }}
-                disabled={submitting}
-              >
-                Reset
-              </button>
-              <button
                 type="submit"
                 className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={submitting}
               >
                 {submitting ? (recordId ? 'Saving...' : 'Submitting...') : (recordId ? 'Save Photos' : 'Submit Photos')}
               </button>
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-5 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={async () => {
+                  const confirmed = await requestConfirmation({
+                    title: 'Mark photography as complete?',
+                    message: 'This will mark the photography step complete for this record and move it to the next workflow state when the handoff requirements are satisfied.',
+                    confirmLabel: 'Yes, complete photography',
+                    cancelLabel: 'Cancel',
+                    bullets: [
+                      'Save Photos keeps the record in the photography step so the photographer can come back later.',
+                      'Photos Complete advances the workflow only after the required confirmations are satisfied.',
+                    ],
+                  });
+
+                  if (!confirmed) {
+                    return;
+                  }
+
+                  void submitPhotos('complete');
+                }}
+                disabled={submitting}
+              >
+                Photos Complete
+              </button>
             </div>
           </div>
         </form>
+        {confirmationModal}
       </div>
     </AppPageLayout>
   );

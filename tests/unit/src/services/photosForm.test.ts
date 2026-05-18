@@ -136,7 +136,7 @@ describe('photosForm', () => {
     });
   });
 
-  it('submits photo changes back to the workflow source when requested', async () => {
+  it('submits photo changes back to the workflow source when photography is completed', async () => {
     const values: PhotosFormValues = {
       sku: 'SKU-300',
       make: 'Marantz',
@@ -161,7 +161,7 @@ describe('photosForm', () => {
     }));
     vi.mocked(updateConfiguredRecord).mockResolvedValue(buildRecord({}));
 
-    const result = await submitPhotosForm(values, 'recPhotos123', { recordSource: 'used-gear-workflow' });
+    const result = await submitPhotosForm(values, 'recPhotos123', { recordSource: 'used-gear-workflow', completeWorkflowStage: true });
 
     expect(result).toEqual({
       recordId: 'recPhotos123',
@@ -211,7 +211,7 @@ describe('photosForm', () => {
     }));
     vi.mocked(updateConfiguredRecord).mockResolvedValue(buildRecord({}));
 
-    await submitPhotosForm(values, 'recPhotos302', { recordSource: 'used-gear-workflow' });
+    await submitPhotosForm(values, 'recPhotos302', { recordSource: 'used-gear-workflow', completeWorkflowStage: true });
 
     expect(updateConfiguredRecord).toHaveBeenCalledWith(
       'used-gear-workflow',
@@ -258,6 +258,7 @@ describe('photosForm', () => {
 
     await submitPhotosForm(values, 'recPhotos123', {
       recordSource: 'used-gear-workflow',
+      completeWorkflowStage: true,
       imageMetadata: [
         {
           attachmentId: 'att-9',
@@ -322,6 +323,7 @@ describe('photosForm', () => {
 
     const result = await submitPhotosForm(values, 'recPhotos123', {
       recordSource: 'used-gear-workflow',
+      completeWorkflowStage: true,
       imageMetadata: [
         {
           attachmentId: 'att-10',
@@ -372,6 +374,42 @@ describe('photosForm', () => {
 
     await expect(submitPhotosForm(values, 'recPhotos123')).rejects.toThrow('Unable to update the Photos fields for this workflow item.');
     expect(updateConfiguredRecord).not.toHaveBeenCalled();
+  });
+
+  it('saves photo changes without workflow photography signoff when completion is not requested', async () => {
+    const values: PhotosFormValues = {
+      sku: 'SKU-305',
+      make: 'Marantz',
+      model: '2245',
+      componentType: 'Receiver',
+      originalBox: 'No',
+      manual: 'Included',
+      remote: 'No',
+      powerCable: 'Included',
+      additionalItems: '',
+      audiogonRating: '7/10',
+      cosmeticConditionNotes: 'Saved mid-session.',
+      imageFiles: [],
+      photoDate: '2026-05-04',
+      status: "Photo'd",
+    };
+
+    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
+      'Workflow Status': 'Testing and Photography In Progress',
+      'Testing Signed At': '2026-05-04T11:00:00.000Z',
+    }));
+    vi.mocked(updateConfiguredRecord).mockResolvedValue(buildRecord({}));
+
+    await submitPhotosForm(values, 'recPhotos305', { recordSource: 'used-gear-workflow', completeWorkflowStage: false });
+
+    expect(updateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'recPhotos305',
+      expect.not.objectContaining({
+        'Photography Signed At': expect.any(String),
+      }),
+      { typecast: true },
+    );
   });
 
   it('rejects records that are not approved workflow intake items', async () => {

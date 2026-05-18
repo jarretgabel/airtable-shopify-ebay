@@ -257,7 +257,7 @@ export function FormImageUploadEditor({
       <div className="flex flex-col gap-4">
         <div>
           <p className="m-0 text-sm font-semibold text-[var(--ink)]">{title}</p>
-          {description ? <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{description}</p> : null}
+          {description ? <p className="mt-1 text-xs text-[var(--muted)]">{description}</p> : null}
         </div>
 
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_auto] lg:items-start">

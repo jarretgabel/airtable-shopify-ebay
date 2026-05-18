@@ -111,14 +111,15 @@ describe('PhotosFormTab', () => {
     });
   });
 
-  it('requires included-item confirmations before allowing photo-stage submit', async () => {
+  it('requires included-item confirmations before allowing photo-stage completion', async () => {
     render(<PhotosFormTab recordId="rec-photo" />);
 
     await screen.findByText('Photos');
 
     expect(screen.queryByLabelText('Alt text for testing.jpg')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save Photos' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Photos Complete' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Yes, complete photography' }));
 
     await screen.findByText('Confirm that the following included items were checked and photographed: Manual, Power Cable, Additional Items.');
     expect(submitPhotosFormMock).not.toHaveBeenCalled();
@@ -127,10 +128,12 @@ describe('PhotosFormTab', () => {
     fireEvent.click(screen.getByLabelText('I checked and photographed Power Cable for this unit.'));
     fireEvent.click(screen.getByLabelText('I checked and photographed Additional Items for this unit.'));
     fireEvent.change(screen.getByLabelText('Alt text for hero.jpg'), { target: { value: 'Updated hero shot' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save Photos' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Photos Complete' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Yes, complete photography' }));
 
     await waitFor(() => {
       expect(submitPhotosFormMock).toHaveBeenCalledWith(expect.any(Object), 'rec-photo', {
+        completeWorkflowStage: true,
         recordSource: 'used-gear-workflow',
         imageMetadata: [
           expect.objectContaining({
@@ -168,6 +171,10 @@ describe('PhotosFormTab', () => {
     await waitFor(() => {
       expect(submitPhotosFormMock).toHaveBeenCalled();
     });
+
+    expect(submitPhotosFormMock).toHaveBeenLastCalledWith(expect.any(Object), 'rec-photo', expect.objectContaining({
+      completeWorkflowStage: false,
+    }));
 
     const latestCall = submitPhotosFormMock.mock.calls[submitPhotosFormMock.mock.calls.length - 1];
     const [submittedValues] = latestCall as [

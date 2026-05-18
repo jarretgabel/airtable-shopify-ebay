@@ -170,7 +170,7 @@ describe('testingForm', () => {
     await expect(loadTestingFormValues('recTesting123')).rejects.toThrow('Unable to load the selected inventory record into Testing.');
   });
 
-  it('submits every non-file Testing schema field and uploads images for workflow-owned rows', async () => {
+  it('submits every non-file Testing schema field and uploads images when testing is completed', async () => {
     const values: TestingFormValues = {
       sku: 'SKU-100',
       arrivalDate: '2026-04-01',
@@ -212,7 +212,10 @@ describe('testingForm', () => {
       fields: {},
     });
 
-    const result = await submitTestingForm(values, 'recTesting123', { recordSource: 'used-gear-workflow' });
+    const result = await submitTestingForm(values, 'recTesting123', {
+      recordSource: 'used-gear-workflow',
+      completeWorkflowStage: true,
+    });
 
     expect(result).toEqual({
       recordId: 'recTesting123',
@@ -362,7 +365,10 @@ describe('testingForm', () => {
       fields: {},
     });
 
-    await submitTestingForm(values, 'recWorkflow123', { recordSource: 'used-gear-workflow' });
+    await submitTestingForm(values, 'recWorkflow123', {
+      recordSource: 'used-gear-workflow',
+      completeWorkflowStage: true,
+    });
 
     expect(updateConfiguredRecord).toHaveBeenCalledWith(
       'used-gear-workflow',
@@ -427,7 +433,10 @@ describe('testingForm', () => {
       fields: {},
     });
 
-    await submitTestingForm(values, 'recWorkflow202', { recordSource: 'used-gear-workflow' });
+    await submitTestingForm(values, 'recWorkflow202', {
+      recordSource: 'used-gear-workflow',
+      completeWorkflowStage: true,
+    });
 
     expect(updateConfiguredRecord).toHaveBeenCalledWith(
       'used-gear-workflow',
@@ -439,6 +448,68 @@ describe('testingForm', () => {
       }),
       { typecast: true },
     );
+  });
+
+  it('saves testing changes without workflow testing signoff when completion is not requested', async () => {
+    const values: TestingFormValues = {
+      sku: 'SKU-203',
+      arrivalDate: '',
+      acquiredFrom: '',
+      make: 'Accuphase',
+      model: 'P-300',
+      componentType: 'Amplifier',
+      cost: '',
+      inventoryNotes: '',
+      serialNumber: '',
+      voltage: '',
+      audiogonRating: '',
+      cosmeticConditionNotes: '',
+      originalBox: '',
+      manual: '',
+      remote: '',
+      powerCable: '',
+      additionalItems: '',
+      shippingWeight: '',
+      shippingDims: '',
+      shippingMethod: '',
+      imageFiles: [],
+      testingNotes: 'Verified power-on.',
+      testingTimeMinutes: '15',
+      serviceNotes: '',
+      serviceTimeMinutes: '',
+      testingDate: '2026-05-06',
+      status: 'Needs Review',
+    };
+
+    vi.mocked(getConfiguredRecord).mockResolvedValue({
+      id: 'recWorkflow203',
+      createdTime: '2026-05-05T12:00:00.000Z',
+      fields: {
+        'Workflow Status': 'Testing and Photography In Progress',
+      },
+    });
+    vi.mocked(updateConfiguredRecord).mockResolvedValue({
+      id: 'recWorkflow203',
+      createdTime: '2026-05-05T12:00:00.000Z',
+      fields: {},
+    });
+
+    await submitTestingForm(values, 'recWorkflow203', { recordSource: 'used-gear-workflow' });
+
+    expect(updateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'recWorkflow203',
+      expect.objectContaining({
+        Status: 'Tested',
+      }),
+      { typecast: true },
+    );
+
+    const submittedFields = vi.mocked(updateConfiguredRecord).mock.calls[0]?.[2] ?? {};
+    expect(submittedFields).not.toHaveProperty('Testing Signed At');
+    expect(submittedFields).not.toHaveProperty('Testing Signed By');
+    expect(submittedFields).not.toHaveProperty('Workflow Status');
+    expect(submittedFields).not.toHaveProperty('Awaiting Pre-Listing Review At');
   });
 
   it('persists workflow image metadata when it is provided by the Testing form', async () => {
