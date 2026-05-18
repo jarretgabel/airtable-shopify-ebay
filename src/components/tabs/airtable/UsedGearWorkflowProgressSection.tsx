@@ -142,7 +142,7 @@ function getPrimaryQueueAction(
     || status === 'Accepted - Arrived, Awaiting Missing Item'
   ) {
     return {
-      label: 'Open Manual Intake',
+      label: 'Open Intake',
       onClick: () => handlers.onOpenManualIntake(record.id),
       showSecondaryAction: true,
       icon: 'form',

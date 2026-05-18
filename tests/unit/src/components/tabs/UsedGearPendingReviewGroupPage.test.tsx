@@ -111,7 +111,7 @@ describe('UsedGearPendingReviewGroupPage', () => {
     expect(screen.getAllByRole('columnheader', { name: 'Paid' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('columnheader', { name: 'Notes' }).length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Open Manual Intake' })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open Intake' })[0]!);
     fireEvent.click(screen.getAllByRole('button', { name: 'Open Operational Record' })[0]!);
 
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-group-1');

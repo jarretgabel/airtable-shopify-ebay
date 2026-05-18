@@ -24,7 +24,7 @@ const ShopifySnapshotRecordPage = lazy(async () => ({ default: (await import('@/
 const ShopifyListingsDirectoryTab = lazy(async () => ({ default: (await import('@/components/approval/ShopifyListingsDirectoryTab')).ShopifyListingsDirectoryTab }));
 const UserManagementTab = lazy(async () => ({ default: (await import('@/components/UserManagementTab')).UserManagementTab }));
 const AirtableTab = lazy(async () => ({ default: (await import('@/components/tabs/AirtableTab')).AirtableTab }));
-const InventoryRecordEditorPage = lazy(async () => ({ default: (await import('@/components/tabs/InventoryRecordEditorPage')).InventoryRecordEditorPage }));
+const WorkflowSnapshotPage = lazy(async () => ({ default: (await import('@/components/tabs/WorkflowSnapshotPage')).WorkflowSnapshotPage }));
 const InventoryPriceEditorPage = lazy(async () => ({ default: (await import('../components/tabs/InventoryPriceEditorPage')).InventoryPriceEditorPage }));
 const ParkingLotOneTab = lazy(async () => ({ default: (await import('@/components/tabs/ParkingLotOneTab')).ParkingLotOneTab }));
 const UsedGearPendingReviewGroupPage = lazy(async () => ({ default: (await import('../components/tabs/UsedGearPendingReviewGroupPage')).UsedGearPendingReviewGroupPage }));
@@ -529,7 +529,17 @@ export function AppTabContent({
           );
         }
         return deferredRouteState.inventoryRecordId
-          ? <InventoryRecordEditorPage recordId={deferredRouteState.inventoryRecordId} onBackToDirectory={() => navigateToInventoryList()} />
+          ? (
+            <WorkflowSnapshotPage
+              recordId={deferredRouteState.inventoryRecordId}
+              onBackToDirectory={() => navigateToInventoryList()}
+              onOpenIntake={(recordId) => navigateToManualIntakeForm(recordId)}
+              onOpenTesting={(recordId) => navigateToTestingForm(recordId)}
+              onOpenPhotos={(recordId) => navigateToPhotosForm(recordId)}
+              onOpenListings={(recordId) => navigateToListingsRecord(recordId)}
+              onOpenPostPublish={(bucket) => navigateToInventoryPostPublishBucket(bucket)}
+            />
+          )
           : (
             <AirtableTab
               viewModel={airtableViewModel}

@@ -117,6 +117,17 @@ function getActiveTimelineIndex(timeline: UsedGearWorkflowTimelineEntry[], workf
   return Math.max(timeline.length - 1, 0);
 }
 
+export function getListingApprovalActiveTimelineEntry(
+  timeline: UsedGearWorkflowTimelineEntry[],
+  workflowStatus: string,
+): UsedGearWorkflowTimelineEntry | null {
+  if (timeline.length === 0) {
+    return null;
+  }
+
+  return timeline[getActiveTimelineIndex(timeline, workflowStatus)] ?? null;
+}
+
 function getStatusBadgeClassName(status: string): string {
   if (status === 'Shipped') {
     return 'border-emerald-400/35 bg-emerald-500/15 text-emerald-100';
@@ -340,11 +351,11 @@ function getTimelineStatusBadgeClassName(isCompleted: boolean, isActive: boolean
 function getTimelineCompletionGuidance(entryId: UsedGearWorkflowTimelineEntry['id']): string {
   switch (entryId) {
     case 'accepted':
-      return 'Use "Open Manual Intake" to update the intake record, then click "Complete Processing" when the item is ready to move forward.';
+      return 'Use "Open Intake" to update the intake record, then click "Complete Processing" when the item is ready to move forward.';
     case 'owner-assigned':
       return 'Ownership history is retained for older rows, but active handoffs now move forward through the stage completion actions instead of claim controls.';
     case 'processing':
-      return 'Finish the intake details in "Open Manual Intake", then click "Complete Processing" to send the item to testing and photography.';
+      return 'Finish the intake details in "Open Intake", then click "Complete Processing" to send the item to testing and photography.';
     case 'testing':
       return 'Use "Open Testing" to capture the testing signoff for this item.';
     case 'photography':
@@ -630,11 +641,10 @@ export function ListingApprovalWorkflowProcessCard({
       <section className="mb-4 rounded-2xl border border-[var(--line)] bg-white/5 p-4">
         <div>
           <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow Timeline</p>
-          <p className="m-0 mt-2 text-sm leading-6 text-[var(--muted)]">
-            Milestone progress for the linked used-gear workflow, from intake through final fulfillment.
-          </p>
         </div>
-        {milestonesContent}
+        <div className="mt-4">
+          {milestonesContent}
+        </div>
       </section>
     );
   }

@@ -132,7 +132,7 @@ describe('UsedGearLotTwoSection', () => {
 
     await screen.findByText('Parking Lot 2');
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Open Manual Intake' })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open Intake' })[0]!);
 
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-lot-two');
     expect(screen.queryByText(/Qualification Notes:/i)).not.toBeInTheDocument();

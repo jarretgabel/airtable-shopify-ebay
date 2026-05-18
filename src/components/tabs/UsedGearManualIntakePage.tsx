@@ -10,8 +10,8 @@ export function UsedGearManualIntakePage({ recordId }: UsedGearManualIntakePageP
   return (
     <AppPageLayout>
       <WorkflowPageHeader
-        eyebrow="Intake Forms"
-        title="Manual Intake"
+        eyebrow={recordId ? 'Intake' : 'Intake Forms'}
+        title={recordId ? 'Intake Record' : 'Manual Intake'}
       />
 
       <AirtableEmbeddedForm recordId={recordId} />

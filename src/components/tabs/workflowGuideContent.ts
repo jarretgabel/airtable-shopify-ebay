@@ -443,7 +443,7 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     modules: [
       'Arrival-stage queue buckets: accepted rows, missing item follow-up, and grouped arrivals.',
       'Group handoff page: coordinated review for one pickup or submission set.',
-      'Record actions: open Manual Intake or the current operational record.',
+      'Record actions: open Intake or the current operational record.',
     ],
     workflows: [
       'Use it for arrival handling, SKU assignment, grouped handoff work, and missing-item follow-up.',

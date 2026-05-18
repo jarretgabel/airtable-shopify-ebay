@@ -97,7 +97,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open Group Review' }));
     expect(navigateMock).toHaveBeenCalledWith('/parking-lot-1/review/submission%3Agroup-1?reviewMode=test');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Manual Intake' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Intake' }));
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-pending-1');
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
   });

@@ -1287,7 +1287,7 @@ describe('usedGearQueue', () => {
         },
       },
       workflowQueueBadgeCount: 3,
-      listingsBadgeCount: 2,
+      listingsBadgeCount: 1,
     });
   });
 

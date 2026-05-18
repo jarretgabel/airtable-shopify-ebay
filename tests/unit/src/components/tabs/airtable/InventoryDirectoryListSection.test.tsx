@@ -27,7 +27,6 @@ describe('InventoryDirectoryListSection', () => {
         onSearchTermChange={vi.fn()}
         onStatusFilterChange={vi.fn()}
         onRefresh={vi.fn()}
-        onOpenManualIntake={vi.fn()}
         onSelectRecord={vi.fn()}
       />,
     );
@@ -41,7 +40,6 @@ describe('InventoryDirectoryListSection', () => {
 
   it('passes through the status filter and row actions', () => {
     const onStatusFilterChange = vi.fn();
-    const onOpenManualIntake = vi.fn();
     const onSelectRecord = vi.fn();
 
     render(
@@ -66,7 +64,6 @@ describe('InventoryDirectoryListSection', () => {
         onSearchTermChange={vi.fn()}
         onStatusFilterChange={onStatusFilterChange}
         onRefresh={vi.fn()}
-        onOpenManualIntake={onOpenManualIntake}
         onSelectRecord={onSelectRecord}
       />,
     );
@@ -77,10 +74,7 @@ describe('InventoryDirectoryListSection', () => {
     expect(screen.queryByRole('button', { name: 'Open Testing' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Open Photos' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Manual Intake' }));
-    expect(onOpenManualIntake).toHaveBeenCalledWith('rec-directory-2');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Edit Inventory Record' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Workflow Snapshot' }));
     expect(onSelectRecord).toHaveBeenCalledWith('rec-directory-2');
   });
 
@@ -105,7 +99,6 @@ describe('InventoryDirectoryListSection', () => {
         onSearchTermChange={vi.fn()}
         onStatusFilterChange={vi.fn()}
         onRefresh={vi.fn()}
-        onOpenManualIntake={vi.fn()}
         onSelectRecord={vi.fn()}
       />,
     );

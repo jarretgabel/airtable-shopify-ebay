@@ -56,6 +56,11 @@ export function useAuthRouteGuard({
       return;
     }
 
+    if (normalizedPath === '/intake') {
+      navigate('/manual-intake', { replace: true });
+      return;
+    }
+
     const legacyInventoryPriceEditorMatch = normalizedPath.match(/^\/inventory\/price\/([^/]+)$/);
     if (legacyInventoryPriceEditorMatch) {
       navigate(`/workflow-hub/price/${legacyInventoryPriceEditorMatch[1]}`, { replace: true });
@@ -68,10 +73,17 @@ export function useAuthRouteGuard({
       return;
     }
 
+    const legacyManualIntakeDetailMatch = normalizedPath.match(/^\/manual-intake\/([^/]+)$/);
+    if (legacyManualIntakeDetailMatch) {
+      navigate(`/intake/${legacyManualIntakeDetailMatch[1]}`, { replace: true });
+      return;
+    }
+
     const isKnownTabPath = isTab(normalizedPath.slice(1));
     const isJotformReviewRecordPath = /^\/parking-lot-1\/review-record\/[^/]+$/.test(normalizedPath);
     const isTrashReviewRecordPath = /^\/trash-review\/review\/[^/]+$/.test(normalizedPath);
     const isManualIntakeDetailPath = /^\/manual-intake\/[^/]+$/.test(normalizedPath);
+    const isIntakeDetailPath = /^\/intake\/[^/]+$/.test(normalizedPath);
     const isTestingDetailPath = /^\/testing\/[^/]+$/.test(normalizedPath);
     const isPhotosDetailPath = /^\/photos\/[^/]+$/.test(normalizedPath);
     const isInventoryPriceEditorPath = /^\/workflow-hub\/price\/[^/]+$/.test(normalizedPath);
@@ -86,6 +98,7 @@ export function useAuthRouteGuard({
       isInventoryPriceEditorPath ||
       isInventoryManualIntakePath ||
       isManualIntakeDetailPath ||
+      isIntakeDetailPath ||
       isInventoryDetailPath ||
       normalizedPath === '/listings' ||
       isListingsDetailPath ||
@@ -136,6 +149,8 @@ export function useAuthRouteGuard({
               : isInventoryManualIntakePath
                 ? 'manual-intake'
               : isManualIntakeDetailPath
+                ? 'manual-intake'
+              : isIntakeDetailPath
                 ? 'manual-intake'
               : isTestingDetailPath
                 ? 'testing'

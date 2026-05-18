@@ -584,7 +584,7 @@ export function AirtableTab({
           {!directoryLoading && !directoryError && records.length === 0 ? (
             <EmptySurface title="No inventory rows found" message="SB Inventory currently has no editable rows in this table.">
               <p className="mt-3 text-sm text-[var(--muted)]">
-                Next route: start in Parking Lot 1 for customer-submitted intake, or open Manual Intake when staff needs to create the first manual operational row inside the app.
+                Next route: start in Parking Lot 1 for customer-submitted intake, or open Intake when staff needs to create the first manual operational row inside the app.
               </p>
             </EmptySurface>
           ) : null}
@@ -602,7 +602,6 @@ export function AirtableTab({
               onRefresh={() => {
                 void loadDirectoryData();
               }}
-              onOpenManualIntake={onOpenManualIntake}
               onSelectRecord={onSelectRecord}
             />
           ) : null}

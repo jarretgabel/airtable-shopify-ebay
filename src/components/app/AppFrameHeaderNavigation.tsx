@@ -67,7 +67,6 @@ export function AppFrameHeaderNavigation({
   const hasActiveUtilityTab = utilityTabs.some((tab) => tab.active);
   const hasUtilityActions = true;
   const intakeBadgeTotal = intakeTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
-  const listingsBadgeTotal = listingsTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const inventoryProcessingBadgeTotal = inventoryProcessingTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const utilityBadgeTotal = utilityTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const intakeTabLookup = new Map(intakeTabs.map((tab) => [tab.key, tab]));
@@ -227,7 +226,6 @@ export function AppFrameHeaderNavigation({
                 expanded={openDropdown === 'listings'}
                 label="Selling"
                 menuId="listings-menu"
-                badgeCount={listingsBadgeTotal > 0 ? listingsBadgeTotal : undefined}
                 onClick={() => onToggleDropdown('listings')}
                 onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'listings', onToggleDropdown, onCloseDropdowns)}
               />

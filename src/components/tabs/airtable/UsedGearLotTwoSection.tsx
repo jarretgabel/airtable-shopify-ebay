@@ -301,7 +301,7 @@ export function UsedGearLotTwoSection({
 
                 return (
                   <div className="flex min-h-[4.5rem] w-full flex-col items-center justify-center gap-1.5">
-                    <CompactIconActionButton label="Open Manual Intake" variant="compact-primary" onClick={() => onOpenManualIntake(record.id)} />
+                    <CompactIconActionButton label="Open Intake" variant="compact-primary" onClick={() => onOpenManualIntake(record.id)} />
                     {showOperationalAction ? (
                       <CompactIconActionButton label="Open Operational Record" onClick={() => onOpenOperationalRecord(record.id)} />
                     ) : null}

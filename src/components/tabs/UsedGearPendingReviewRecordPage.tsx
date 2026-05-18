@@ -244,7 +244,7 @@ export function UsedGearPendingReviewRecordPage({
             className={smallSecondaryActionButtonClass}
             onClick={() => onOpenManualIntake(record.id)}
           >
-            Open Manual Intake
+            Open Intake
           </button>
         </>
       )}

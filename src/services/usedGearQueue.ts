@@ -691,7 +691,7 @@ export async function loadUsedGearWorkflowNotificationSummary(
   const sortedRecords = [...records].sort((left, right) => left.createdTime.localeCompare(right.createdTime));
   const summary = createEmptyUsedGearWorkflowNotificationSummary();
   const inventoryActionableRecordIds = new Set<string>();
-  const listingsActionableRecordIds = new Set<string>();
+  const approvedForPublishRecordIds = new Set<string>();
 
   sortedRecords.forEach((record) => {
     if (!shouldIncludeWorkflowNotificationRecord(record, options)) {
@@ -738,7 +738,6 @@ export async function loadUsedGearWorkflowNotificationSummary(
 
     if (status === AWAITING_PRE_LISTING_REVIEW_STATUS) {
       summary.counts.preListingReview += 1;
-      listingsActionableRecordIds.add(record.id);
       summary.targets.preListingReview ??= {
         destinationTab: 'listings',
         recordId: record.id,
@@ -751,7 +750,7 @@ export async function loadUsedGearWorkflowNotificationSummary(
 
     if (status === APPROVED_FOR_PUBLISH_STATUS) {
       summary.counts.approvedForPublish += 1;
-      listingsActionableRecordIds.add(record.id);
+      approvedForPublishRecordIds.add(record.id);
       summary.targets.approvedForPublish ??= {
         destinationTab: 'listings',
         recordId: record.id,
@@ -765,7 +764,7 @@ export async function loadUsedGearWorkflowNotificationSummary(
   });
 
   summary.workflowQueueBadgeCount = inventoryActionableRecordIds.size;
-  summary.listingsBadgeCount = listingsActionableRecordIds.size;
+  summary.listingsBadgeCount = approvedForPublishRecordIds.size;
   return summary;
 }
 

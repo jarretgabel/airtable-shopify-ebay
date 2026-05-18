@@ -31,7 +31,8 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const isResetPasswordPath = normalizedPath === '/reset-password';
   const resetToken = searchParams.get('token');
   const manualIntakeRecordMatch = normalizedPath.match(/^\/manual-intake\/([^/]+)$/);
-  const manualIntakeMode = normalizedPath === '/manual-intake' || Boolean(manualIntakeRecordMatch);
+  const intakeRecordMatch = normalizedPath.match(/^\/intake\/([^/]+)$/);
+  const manualIntakeMode = normalizedPath === '/manual-intake' || Boolean(manualIntakeRecordMatch) || Boolean(intakeRecordMatch);
   const jotformReviewGroupMatch = normalizedPath.match(/^\/parking-lot-1\/review\/([^/]+)$/);
   const jotformReviewRecordMatch = normalizedPath.match(/^\/parking-lot-1\/review-record\/([^/]+)$/);
   const lotTwoReviewGroupMatch = normalizedPath.match(/^\/parking-lot-2\/review\/([^/]+)$/);
@@ -79,7 +80,11 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     jotformReviewRecordId: jotformReviewRecordMatch ? decodeURIComponent(jotformReviewRecordMatch[1]) : null,
     lotTwoReviewGroupId: lotTwoReviewGroupMatch ? decodeURIComponent(lotTwoReviewGroupMatch[1]) : null,
     trashReviewRecordId: trashReviewRecordMatch ? decodeURIComponent(trashReviewRecordMatch[1]) : null,
-    manualIntakeRecordId: manualIntakeRecordMatch ? decodeURIComponent(manualIntakeRecordMatch[1]) : null,
+    manualIntakeRecordId: manualIntakeRecordMatch
+      ? decodeURIComponent(manualIntakeRecordMatch[1])
+      : intakeRecordMatch
+        ? decodeURIComponent(intakeRecordMatch[1])
+        : null,
     testingRecordId: testingRecordMatch ? decodeURIComponent(testingRecordMatch[1]) : null,
     photosRecordId: photosRecordMatch ? decodeURIComponent(photosRecordMatch[1]) : null,
     inventoryPriceEditorRecordId: inventoryPriceEditorRecordMatch ? decodeURIComponent(inventoryPriceEditorRecordMatch[1]) : null,

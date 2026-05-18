@@ -297,7 +297,7 @@ export function UsedGearPendingReviewGroupPage({
       renderCell: (record) => (
         <div className="flex flex-wrap justify-end gap-1.5">
           <CompactIconActionButton label="Open Operational Record" variant="small-secondary" onClick={() => onOpenOperationalRecord(record.id)} />
-          <CompactIconActionButton label="Open Manual Intake" variant="small-secondary" onClick={() => onOpenManualIntake(record.id)} />
+          <CompactIconActionButton label="Open Intake" variant="small-secondary" onClick={() => onOpenManualIntake(record.id)} />
         </div>
       ),
     },

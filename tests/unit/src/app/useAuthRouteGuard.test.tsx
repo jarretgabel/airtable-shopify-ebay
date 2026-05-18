@@ -97,6 +97,20 @@ describe('useAuthRouteGuard', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it('redirects legacy manual-intake detail routes to the canonical intake detail path', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/manual-intake/rec-legacy-1"
+        canAccessPage={(tab) => tab === 'manual-intake' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).toHaveBeenCalledWith('/intake/rec-legacy-1', { replace: true });
+  });
+
   it('redirects the legacy workflow hub root to the new path', () => {
     const navigate = vi.fn();
 

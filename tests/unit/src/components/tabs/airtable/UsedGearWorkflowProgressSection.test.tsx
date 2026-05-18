@@ -101,7 +101,7 @@ describe('UsedGearWorkflowProgressSection', () => {
 
     await screen.findByText('Processing And Holding Queue');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Manual Intake' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Intake' }));
 
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-progress-a');
 

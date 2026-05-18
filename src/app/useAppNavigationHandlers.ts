@@ -67,7 +67,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
 
   const navigateToManualIntakeForm = useCallback((recordId?: string | null, replace = false): void => {
     const path = recordId
-      ? `${TAB_PATHS['manual-intake']}/${encodeURIComponent(recordId)}`
+      ? `/intake/${encodeURIComponent(recordId)}`
       : TAB_PATHS['manual-intake'];
     navigate(path, { replace });
     scrollToPageTop();

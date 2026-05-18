@@ -288,8 +288,8 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
       {submitSuccess ? (
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
           {submitSuccess.action === 'updated'
-            ? <>Manual Intake fields updated for record <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku || 'N/A'}</strong>.</>
-            : <>Submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. Temporary SKU: <strong>{submitSuccess.sku}</strong>.</>}
+            ? <>Manual Intake fields updated for record <strong>{submitSuccess.recordId}</strong>.</>
+            : <>Submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>.</>}
         </div>
       ) : null}
 
@@ -355,7 +355,6 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
           ))}
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="m-0 text-sm text-[var(--muted)]">Required fields are marked with an asterisk. Images upload to the Airtable image attachment field.</p>
             <div className="flex gap-3">
               <button
                 type="button"

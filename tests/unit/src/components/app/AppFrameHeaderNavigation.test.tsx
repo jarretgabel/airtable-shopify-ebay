@@ -105,4 +105,31 @@ describe('AppFrameHeaderNavigation', () => {
     expect(screen.getByRole('menuitem', { name: 'Post-Publish' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Shopify' })).toBeInTheDocument();
   });
+
+  it('does not show an aggregate red badge on the Selling dropdown trigger', () => {
+    render(
+      <AppFrameHeaderNavigation
+        tabs={[createTab('dashboard', 'Dashboard')]}
+        intakeTabs={[]}
+        listingsTabs={[
+          { ...createTab('listings', 'Listings'), badgeCount: 4 },
+          createTab('post-publish', 'Post-Publish'),
+          createTab('shopify', 'Shopify'),
+        ]}
+        postPublishTabs={[]}
+        inventoryProcessingTabs={[]}
+        postEbayTabs={[]}
+        utilityTabs={[]}
+        exportDisabled={false}
+        onExportCurrentPage={vi.fn()}
+        onExportAllPages={vi.fn()}
+        openDropdown={null}
+        onToggleDropdown={vi.fn()}
+        onCloseDropdowns={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /^Selling/ })).toHaveTextContent('Selling');
+    expect(screen.getByRole('button', { name: /^Selling/ })).not.toHaveTextContent('4');
+  });
 });

@@ -83,7 +83,6 @@ describe('manualIntakeForm', () => {
         customerFunctionalNotes: 'Seller reports fully working on both channels.',
         customerInclusionNotes: 'Original cage and spare tubes included.',
         customerSubmittedPhotosNotes: 'Customer sent rear-panel serial photo.',
-        sku: 'SKU-100',
         status: 'Ready to Test',
         make: 'McIntosh',
         model: 'MC275',
@@ -113,7 +112,7 @@ describe('manualIntakeForm', () => {
     const result = await loadManualIntakeFormValues('recIncoming123');
 
     expect(result.source).toBe('inventory-directory');
-    expect(result.values.sku).toBe('INV-1');
+    expect(result.values.make).toBe('');
   });
 
   it('submits every non-file Manual Intake schema field and uploads images', async () => {
@@ -126,7 +125,6 @@ describe('manualIntakeForm', () => {
       customerFunctionalNotes: 'Seller reports no hum or crackle.',
       customerInclusionNotes: 'Original cage included.',
       customerSubmittedPhotosNotes: 'Customer sent front and rear photos.',
-      sku: 'SKU-100',
       status: 'Ready to Test',
       make: 'McIntosh',
       model: 'MC275',
@@ -152,7 +150,6 @@ describe('manualIntakeForm', () => {
 
     expect(result).toEqual({
       recordId: 'recIncoming123',
-      sku: 'SKU-100',
       action: 'updated',
     });
 
@@ -169,7 +166,6 @@ describe('manualIntakeForm', () => {
         'Customer Functional Notes': 'Seller reports no hum or crackle.',
         'Customer Inclusion Notes': 'Original cage included.',
         'Customer Submitted Photos Notes': 'Customer sent front and rear photos.',
-        SKU: 'SKU-100',
         Status: 'Ready to Test',
         Make: 'McIntosh',
         Model: 'MC275',
@@ -216,7 +212,6 @@ describe('manualIntakeForm', () => {
       customerFunctionalNotes: 'Seller says both channels work.',
       customerInclusionNotes: 'Power cable only.',
       customerSubmittedPhotosNotes: 'Photos received by text message.',
-      sku: '',
       status: 'Needs Initial Processing',
       make: 'Marantz',
       model: 'Model 8B',
@@ -274,7 +269,6 @@ describe('manualIntakeForm', () => {
       customerFunctionalNotes: '',
       customerInclusionNotes: '',
       customerSubmittedPhotosNotes: '',
-      sku: '',
       status: 'Needs Initial Processing',
       make: 'Adcom',
       model: 'GFA-555',

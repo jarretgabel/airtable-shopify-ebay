@@ -24,4 +24,15 @@ describe('UsedGearManualIntakePage', () => {
     expect(screen.queryByText('Routing Outcomes')).not.toBeInTheDocument();
     expect(screen.getByTestId('airtable-embedded-form')).toHaveAttribute('data-record-id', '');
   });
+
+  it('uses the shared intake title for record editing routes', () => {
+    render(
+      <MemoryRouter>
+        <UsedGearManualIntakePage recordId="rec-intake-1" />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Intake Record' })).toBeInTheDocument();
+    expect(screen.getByTestId('airtable-embedded-form')).toHaveAttribute('data-record-id', 'rec-intake-1');
+  });
 });

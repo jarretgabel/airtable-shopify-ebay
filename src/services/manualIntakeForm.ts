@@ -37,7 +37,6 @@ export interface ManualIntakeFormLoadResult {
 
 export interface ManualIntakeFormSubmitResult {
   recordId: string;
-  sku: string;
   action: 'created' | 'updated';
 }
 
@@ -93,11 +92,6 @@ function compactFields(fields: Record<string, unknown>): Record<string, unknown>
   );
 }
 
-function createTemporarySku(): string {
-  const iso = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
-  return `INTAKE-${iso}`;
-}
-
 async function uploadManualIntakeImages(recordId: string, files: File[]): Promise<void> {
   for (const file of files) {
     await uploadConfiguredAttachment('inventory-directory', recordId, IMAGE_ATTACHMENT_FIELD_ID, file);
@@ -138,7 +132,6 @@ export async function loadManualIntakeFormValues(recordId: string): Promise<Manu
         customerFunctionalNotes: extractInventoryScalarValue(record.fields['Customer Functional Notes']),
         customerInclusionNotes: extractInventoryScalarValue(record.fields['Customer Inclusion Notes']),
         customerSubmittedPhotosNotes: extractInventoryScalarValue(record.fields['Customer Submitted Photos Notes']),
-        sku: extractInventoryScalarValue(record.fields.SKU),
         status: extractInventoryScalarValue(record.fields.Status) || defaults.status,
         make: extractInventoryScalarValue(record.fields.Make),
         model: extractInventoryScalarValue(record.fields.Model),
@@ -217,7 +210,6 @@ export async function submitManualIntakeForm(
   } = {},
 ): Promise<ManualIntakeFormSubmitResult> {
   const costValue = trimToUndefined(values.cost);
-  const skuValue = trimToUndefined(values.sku) ?? createTemporarySku();
   const statusValue = trimToUndefined(values.status) ?? DEFAULT_STATUS;
   const manualRoute = options.manualEntryRoute ?? 'lot-1';
   const qualificationNotes = normalizeQualificationNotes(options.qualificationNotes ?? '');
@@ -233,7 +225,6 @@ export async function submitManualIntakeForm(
     'Customer Functional Notes': trimToUndefined(values.customerFunctionalNotes),
     'Customer Inclusion Notes': trimToUndefined(values.customerInclusionNotes),
     'Customer Submitted Photos Notes': trimToUndefined(values.customerSubmittedPhotosNotes),
-    SKU: skuValue,
     Status: statusValue,
     Make: trimToUndefined(values.make),
     Model: trimToUndefined(values.model),
@@ -265,12 +256,6 @@ export async function submitManualIntakeForm(
     'Unqualified Reason': null,
   });
 
-  const createCandidates: Array<Record<string, unknown>> = [
-    compactFields({ SKU: { text: skuValue }, ...baseFields, ...workflowFields }),
-    compactFields({ SKU: skuValue, ...baseFields, ...workflowFields }),
-    compactFields({ ...baseFields, ...workflowFields }),
-  ];
-
   if (recordId) {
     try {
       const writeSource = options.recordSource ?? 'inventory-directory';
@@ -290,7 +275,6 @@ export async function submitManualIntakeForm(
 
       return {
         recordId: updatedRecord.id,
-        sku: skuValue,
         action: 'updated',
       };
     } catch (error) {
@@ -310,26 +294,23 @@ export async function submitManualIntakeForm(
 
   let lastError: unknown = null;
 
-  for (const candidate of createCandidates) {
-    try {
-      const createdRecord = await createConfiguredRecord(
-        'used-gear-workflow',
-        candidate,
-        { typecast: true },
-      );
+  try {
+    const createdRecord = await createConfiguredRecord(
+      'used-gear-workflow',
+      compactFields({ ...baseFields, ...workflowFields }),
+      { typecast: true },
+    );
 
-      if (values.imageFiles.length > 0) {
-        await uploadManualIntakeImages(createdRecord.id, values.imageFiles);
-      }
-
-      return {
-        recordId: createdRecord.id,
-        sku: skuValue,
-        action: 'created',
-      };
-    } catch (error) {
-      lastError = error;
+    if (values.imageFiles.length > 0) {
+      await uploadManualIntakeImages(createdRecord.id, values.imageFiles);
     }
+
+    return {
+      recordId: createdRecord.id,
+      action: 'created',
+    };
+  } catch (error) {
+    lastError = error;
   }
 
   logServiceError('manualIntakeForm', 'Error creating Manual Intake submission', lastError);

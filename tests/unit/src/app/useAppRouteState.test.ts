@@ -65,6 +65,12 @@ describe('useAppRouteState', () => {
     expect(state.manualIntakeRecordId).toBe('rec 123');
   });
 
+  it('maps intake deep links with record ids', () => {
+    const state = useAppRouteState(locationFor('/intake/rec%20123'), ['dashboard', 'manual-intake']);
+    expect(state.activeTab).toBe('manual-intake');
+    expect(state.manualIntakeRecordId).toBe('rec 123');
+  });
+
   it('maps jotform record review deep links with record ids', () => {
     const state = useAppRouteState(locationFor('/parking-lot-1/review-record/rec%20pending'), ['dashboard', 'parking-lot-1']);
     expect(state.activeTab).toBe('parking-lot-1');

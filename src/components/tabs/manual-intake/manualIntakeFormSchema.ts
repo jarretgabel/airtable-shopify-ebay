@@ -16,7 +16,6 @@ export interface ManualIntakeFormValues {
   customerFunctionalNotes: string;
   customerInclusionNotes: string;
   customerSubmittedPhotosNotes: string;
-  sku: string;
   status: string;
   make: string;
   model: string;
@@ -67,7 +66,6 @@ export function createManualIntakeFormDefaults(): ManualIntakeFormValues {
     customerFunctionalNotes: '',
     customerInclusionNotes: '',
     customerSubmittedPhotosNotes: '',
-    sku: '',
     status: 'Needs Initial Processing',
     make: '',
     model: '',
@@ -134,7 +132,7 @@ export const manualIntakeFormIntro: {
     {
       type: 'labelBody',
       label: 'ACTIVE-PROCESSING',
-      body: 'of gear that has physically arrived and needs to be assigned a SKU and prepped for testing (Status: Ready to Test). Active-Processing is often just giving a SKU and confirming the details provided by Ed in Pre-Processing before staging it to be tested. Sometimes gear will physically arrive with no Pre-Processing performed. This form will be used to assign a SKU and get it entered in from scratch. Refer to associated Pick Up Receipt for price paid and related details.',
+      body: 'of gear that has physically arrived and needs to be confirmed and prepped for testing (Status: Ready to Test). Active-Processing is often confirming the details provided by Ed in Pre-Processing before staging it to be tested. Sometimes gear will physically arrive with no Pre-Processing performed. This form will be used to get it entered in from scratch. Refer to associated Pick Up Receipt for price paid and related details.',
     },
   ],
 };
@@ -198,13 +196,6 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     type: 'textarea',
     rows: 3,
     description: 'Reference notes about photos provided by the seller during intake.',
-  },
-  {
-    name: 'sku',
-    airtableFieldName: 'SKU',
-    label: 'SKU',
-    type: 'text',
-    description: 'Leave blank to auto-generate an intake SKU.',
   },
   {
     name: 'status',

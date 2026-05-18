@@ -218,7 +218,7 @@ export function UsedGearLotTwoGroupPage({
 
                   return (
                     <div className="flex flex-wrap gap-1.5 xl:justify-end">
-                      <CompactIconActionButton label="Open Manual Intake" variant="compact-primary" onClick={() => onOpenManualIntake(record.id)} />
+                      <CompactIconActionButton label="Open Intake" variant="compact-primary" onClick={() => onOpenManualIntake(record.id)} />
                       {showOperationalAction ? (
                         <CompactIconActionButton label="Open Operational Record" onClick={() => onOpenOperationalRecord(record.id)} />
                       ) : null}

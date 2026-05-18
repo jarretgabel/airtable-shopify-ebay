@@ -20,7 +20,6 @@ interface InventoryDirectoryListSectionProps {
   onSearchTermChange: (value: string) => void;
   onStatusFilterChange: (value: string) => void;
   onRefresh?: () => void;
-  onOpenManualIntake: (recordId: string) => void;
   onSelectRecord: (recordId: string) => void;
 }
 
@@ -61,7 +60,6 @@ export function InventoryDirectoryListSection({
   onSearchTermChange,
   onStatusFilterChange,
   onRefresh,
-  onOpenManualIntake,
   onSelectRecord,
 }: InventoryDirectoryListSectionProps) {
   const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
@@ -96,12 +94,11 @@ export function InventoryDirectoryListSection({
     {
       key: 'actions',
       label: 'Actions',
-      width: '6rem',
+      width: '7rem',
       align: 'right',
       renderCell: (record) => (
         <div className="flex flex-wrap justify-end gap-1.5">
-          <CompactIconActionButton label="Open Manual Intake" variant="small-secondary" icon="form" onClick={() => onOpenManualIntake(record.id)} />
-          <CompactIconActionButton label="Edit Inventory Record" variant="small-secondary" icon="edit" onClick={() => onSelectRecord(record.id)} />
+          <CompactIconActionButton label="Open Workflow Snapshot" variant="small-secondary" icon="edit" onClick={() => onSelectRecord(record.id)} />
         </div>
       ),
     },
