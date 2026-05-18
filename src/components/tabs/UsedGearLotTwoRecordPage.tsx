@@ -100,7 +100,7 @@ export function UsedGearLotTwoRecordPage({
     if (group) {
       items.push({ id: 'group', key: 'group', label: 'Grouped Intake' });
     }
-    items.push({ id: 'review', key: 'review', label: 'Review' });
+    items.push({ id: 'review', key: 'review', label: 'Qualify' });
     items.push({ id: 'trash', key: 'trash', label: 'Trash' });
     if (intakeSnapshot) {
       items.push({ id: 'snapshot', key: 'snapshot', label: 'Snapshot' });

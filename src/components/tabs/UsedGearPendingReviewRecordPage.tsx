@@ -159,7 +159,7 @@ export function UsedGearPendingReviewRecordPage({
     if (group) {
       items.push({ id: 'group', key: 'group', label: 'Grouped Intake' });
     }
-    items.push({ id: 'lot-two', key: 'lot-two', label: 'Lot 2' });
+    items.push({ id: 'lot-two', key: 'lot-two', label: 'Qualify' });
     items.push({ id: 'trash', key: 'trash', label: 'Trash' });
     items.push({ id: 'snapshot', key: 'snapshot', label: 'Snapshot' });
     return items;
