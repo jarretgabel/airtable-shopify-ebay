@@ -1,4 +1,5 @@
 import { Suspense, lazy, useMemo, type ReactNode } from 'react';
+import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
@@ -59,7 +60,6 @@ export function ListingApprovalSelectedRecordPanel({
   error,
   onBackToList,
   backToListLabel,
-  secondaryActionButtonClass,
   errorSurfaceClass,
   isCombinedApproval,
   workflowSummary,
@@ -69,14 +69,11 @@ export function ListingApprovalSelectedRecordPanel({
 }: ListingApprovalSelectedRecordPanelProps) {
   const selectedRecordTitle = displayValue(selectedRecord.fields[titleFieldName]) || 'Listing Record';
   const backButton = (
-    <button
-      type="button"
-      className={secondaryActionButtonClass}
+    <BackToolbarButton
+      label={backToListLabel ?? 'Back to Listings'}
       onClick={onBackToList}
       disabled={saving}
-    >
-      {backToListLabel ?? 'Back to Listings'}
-    </button>
+    />
   );
   const combinedSectionItems = useMemo(() => [...COMBINED_RECORD_SECTION_ITEMS], []);
   const { activeSectionId, scrollToSection } = usePageSectionTracking(combinedSectionItems, COMBINED_RECORD_SECTION_ITEMS[0].id);
@@ -110,7 +107,6 @@ export function ListingApprovalSelectedRecordPanel({
       error={error}
       onBackToList={onBackToList}
       backToListLabel={backToListLabel}
-      secondaryActionButtonClass={secondaryActionButtonClass}
       errorSurfaceClass={errorSurfaceClass}
       workflowSummary={workflowSummary ? <ListingApprovalWorkflowSummary summary={workflowSummary} timelineOnly /> : null}
       workflowDetails={workflowDetails}

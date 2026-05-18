@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { displayValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -34,7 +35,6 @@ export function ListingApprovalSelectedRecordView({
   error,
   onBackToList,
   backToListLabel,
-  secondaryActionButtonClass,
   errorSurfaceClass,
   workflowSummary,
   workflowDetails,
@@ -49,14 +49,11 @@ export function ListingApprovalSelectedRecordView({
     <>
       {showRecordHeader ? (
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-          <button
-            type="button"
-            className={secondaryActionButtonClass}
+          <BackToolbarButton
+            label={backToListLabel ?? 'Back to Listings'}
             onClick={onBackToList}
             disabled={saving}
-          >
-            {backToListLabel ?? 'Back to Listings'}
-          </button>
+          />
           <div>
             <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{eyebrowLabel}</p>
             <div className="mt-1 flex flex-wrap items-center gap-2">

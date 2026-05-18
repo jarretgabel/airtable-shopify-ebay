@@ -61,7 +61,7 @@ describe('ListingApprovalSelectedRecordPanel', () => {
       />,
     );
 
-    expect(screen.getByText('Pre-Listing Review Workspace')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'McIntosh MA6900' })).toBeInTheDocument();
     expect(screen.getByText('Selected Record View')).toBeInTheDocument();
   });
 
