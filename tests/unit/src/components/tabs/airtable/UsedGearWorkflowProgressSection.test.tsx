@@ -105,7 +105,7 @@ describe('UsedGearWorkflowProgressSection', () => {
 
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-progress-a');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Operational Record' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Workflow Record' }));
 
     expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-progress-a');
     expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);
@@ -292,7 +292,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     fireEvent.click((await screen.findAllByRole('button', { name: 'Open Testing' }))[0]!);
 
     expect(onOpenTestingForm).toHaveBeenCalledWith('rec-progress-testing');
-    expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit Workflow Record' })).not.toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: /Status/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: /Group/i })).not.toBeInTheDocument();
     expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);
@@ -395,7 +395,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     fireEvent.click((await screen.findAllByRole('button', { name: 'Open Photos' }))[0]!);
 
     expect(onOpenPhotosForm).toHaveBeenCalledWith('rec-progress-photo');
-    expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit Workflow Record' })).not.toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: /Status/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: /Group/i })).not.toBeInTheDocument();
     expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);

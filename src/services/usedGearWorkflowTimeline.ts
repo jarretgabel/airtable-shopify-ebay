@@ -35,16 +35,12 @@ export function buildUsedGearWorkflowTimeline(record: AirtableRecord): UsedGearW
 
   return [
     buildEntry('accepted', 'Intake Accepted', fields['Accepted At'], fields['Accepted By']),
-    buildEntry('owner-assigned', 'Owner Assigned', fields['Workflow Owner Assigned At'], fields['Workflow Owner']),
     buildEntry('processing', 'Processing Completed', fields['Processing Signed At'], fields['Processing Signed By']),
     buildEntry('testing', 'Testing Signed', fields['Testing Signed At'], fields['Testing Signed By']),
     buildEntry('photography', 'Photography Signed', fields['Photography Signed At'], fields['Photography Signed By']),
-    buildEntry('awaiting-pre-listing', 'Awaiting Pre-Listing Review', fields['Awaiting Pre-Listing Review At']),
-    buildEntry('pre-listing', 'Pre-Listing Review Completed', fields['Pre-Listing Reviewed At'], fields['Pre-Listing Reviewed By']),
+    buildEntry('pre-listing', 'Pre-Listing', fields['Pre-Listing Reviewed At'], fields['Pre-Listing Reviewed By']),
     buildEntry('approved', 'Approved For Publish', fields['Approved For Publish At'], fields['Pre-Listing Reviewed By']),
     buildEntry('listed', 'Listed', fields['Listed At']),
-    buildEntry('stale-listing', 'Marked Stale', fields['Stale Listing At']),
-    buildEntry('relisted', 'Relisted', fields['Relisted At']),
     buildEntry('sold-ready', 'Sold Ready To Ship', fields['Sold Ready To Ship At']),
     buildEntry('shipped', 'Shipped', fields['Shipped At']),
   ];

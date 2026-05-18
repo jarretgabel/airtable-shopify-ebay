@@ -107,6 +107,61 @@ describe('UsedGearLotTwoSection', () => {
     expect(screen.queryByText('LOT2-OTHER')).not.toBeInTheDocument();
   });
 
+  it('truncates long workflow statuses inside the fixed status column', async () => {
+    loadLotTwoQueueMock.mockResolvedValue([
+      {
+        id: 'rec-lot-two-long-status',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'LOT2-LONG',
+          Make: 'Luxman',
+          Model: 'L-507',
+          'Workflow Status': 'Accepted - Arrived, Awaiting Missing Item',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearLotTwoSection
+        onOpenManualIntake={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Parking Lot 2');
+
+    expect(screen.getByText('Arrived, Awaiting Missing Item')).toHaveAttribute('title', 'Arrived, Awaiting Missing Item');
+  });
+
+  it('removes redundant status suffixes from the item column while keeping the status chip specific', async () => {
+    loadLotTwoQueueMock.mockResolvedValue([
+      {
+        id: 'rec-lot-two-item-status',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'LOT2-ITEM',
+          Make: 'Luxman',
+          Model: 'L-507 Awaiting Arrival',
+          'Workflow Status': 'Accepted - Awaiting Arrival',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearLotTwoSection
+        onOpenManualIntake={vi.fn()}
+        onOpenOperationalRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Parking Lot 2');
+
+    expect(screen.getByText('Luxman · L-507')).toBeInTheDocument();
+    expect(screen.queryByText('Luxman · L-507 Awaiting Arrival')).not.toBeInTheDocument();
+    expect(screen.getByText('Awaiting Arrival')).toBeInTheDocument();
+    expect(screen.queryByText('Accepted - Awaiting Arrival')).not.toBeInTheDocument();
+  });
+
   it('opens manual intake from queue cards', async () => {
     const onOpenManualIntake = vi.fn();
 
@@ -136,7 +191,7 @@ describe('UsedGearLotTwoSection', () => {
 
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-lot-two');
     expect(screen.queryByText(/Qualification Notes:/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit Workflow Record' })).not.toBeInTheDocument();
   });
 
   it('keeps the operational action when it routes somewhere different than the visible handoff buttons', async () => {
@@ -162,7 +217,7 @@ describe('UsedGearLotTwoSection', () => {
 
     await screen.findAllByText('LOT2-LISTED');
 
-    expect(screen.getAllByRole('button', { name: 'Open Operational Record' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: 'Edit Workflow Record' }).length).toBeGreaterThan(0);
   });
 
   it('opens the dedicated Parking Lot 2 handoff surface from grouped queue cards', async () => {
@@ -237,7 +292,7 @@ describe('UsedGearLotTwoSection', () => {
     expect(screen.getAllByRole('columnheader', { name: /Batch/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('columnheader', { name: /Item Actions/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('columnheader', { name: /Status/i }).length).toBeGreaterThan(0);
-    expect(screen.getByText('Accepted - Awaiting Arrival')).toBeInTheDocument();
+    expect(screen.getByText('Awaiting Arrival')).toBeInTheDocument();
     expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/May 6, 2026/i).length).toBeGreaterThan(0);
   });

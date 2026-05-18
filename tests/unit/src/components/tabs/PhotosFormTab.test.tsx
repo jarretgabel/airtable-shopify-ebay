@@ -115,6 +115,17 @@ describe('PhotosFormTab', () => {
     });
   });
 
+  it('renders the back-arrow action for the photography queue when a directory callback is provided', async () => {
+    const onBackToDirectory = vi.fn();
+
+    render(<PhotosFormTab recordId="rec-photo" onBackToDirectory={onBackToDirectory} />);
+
+    await screen.findByText('Photos');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Photography Queue' }));
+    expect(onBackToDirectory).toHaveBeenCalledTimes(1);
+  });
+
   it('requires included-item confirmations before allowing photo-stage completion', async () => {
     render(<PhotosFormTab recordId="rec-photo" />);
 

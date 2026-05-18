@@ -123,6 +123,17 @@ describe('TestingFormTab', () => {
     });
   });
 
+  it('renders the back-arrow action for the testing queue when a directory callback is provided', async () => {
+    const onBackToDirectory = vi.fn();
+
+    render(<TestingFormTab recordId="rec-testing" onBackToDirectory={onBackToDirectory} />);
+
+    await screen.findByText('Testing');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Testing Queue' }));
+    expect(onBackToDirectory).toHaveBeenCalledTimes(1);
+  });
+
   it('submits edited workflow image metadata only after testing completion is confirmed', async () => {
     render(<TestingFormTab recordId="rec-testing" />);
 

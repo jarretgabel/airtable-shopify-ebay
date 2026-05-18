@@ -168,6 +168,7 @@ export function ApprovalQueueTable({
 					<CompactIconActionButton
 						label="View Listing"
 						variant="small-secondary"
+						icon="edit"
 						onClick={() => openRecord(record)}
 					/>
 				</div>

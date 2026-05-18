@@ -81,7 +81,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartSummary: 'Keep the whole operation moving, then drop into the exact queue or record that needs intervention.',
     quickStartItems: [
       'Start on the dashboard to spot backlog, handoff gaps, and publish blockers.',
-      'Use Parking Lot 1, the Workflow Hub, and Post-Publish to resolve stalled intake, routing, or live-listing follow-through issues.',
+      'Use Parking Lot 1 for intake decisions, the Workflow Hub for directory lookup and workflow snapshots, and Post-Publish for live-listing follow-through issues.',
       'Check Listings when items are entering listing review or need publish decisions.',
     ],
     flowSummary: 'You need the whole map because your role crosses intake, active workflow, listings, and follow-through.',
@@ -92,7 +92,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Resolve intake and routing blockers first',
-        detail: 'Parking Lot 1 and the Workflow Hub are where missing notes, routing problems, and active-stage blockers get cleaned up before listing work can move again.',
+        detail: 'Parking Lot 1 handles intake decisions, while the Workflow Hub helps you look up accepted rows, confirm current workflow state, and open the real working page that owns the blocker.',
       },
       {
         title: 'Confirm publish readiness before release',
@@ -156,7 +156,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartTitle: 'Processor quick start',
     quickStartSummary: 'This is the operational lane for intake, handoff, and getting an item ready for the next specialist.',
     quickStartItems: [
-      'Start in Parking Lot 1 for fresh intake, the Workflow Hub for active operational items, or Post-Publish for live listing follow-through.',
+      'Start in Parking Lot 1 for fresh intake, the Workflow Hub for accepted-row lookup and workflow snapshots, or Post-Publish for live listing follow-through.',
       'Clean up notes, confirm the next stage, and move the item into the next real handoff instead of leaving it parked.',
       'Use the testing and photography queues for specialist work, then use Listings once the item reaches listing review.',
     ],
@@ -168,7 +168,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Turn accepted items into owned workflow',
-        detail: 'Once a row is accepted, use the Workflow Hub to track stage status, next team, and operational notes. Use Post-Publish later for live listing follow-through; neither page is the listing review page.',
+        detail: 'Once a row is accepted, use the Workflow Hub to confirm stage status and open the exact page that owns the next step. Use Post-Publish later for live listing follow-through; neither page is the listing review page.',
       },
       {
         title: 'Move work through testing and photography',
@@ -709,15 +709,15 @@ const RECORD_GUIDE_CARDS: RecordGuideCard[] = [
     ],
   },
   {
-    title: 'Workflow Operational Record Editors',
+    title: 'Workflow Snapshot And Record Pages',
     pages: ['inventory'],
-    summary: 'These workflow record surfaces are the deeper operational pages linked from the Workflow Hub directory and snapshot views.',
+    summary: 'These are the deeper workflow surfaces linked from the Workflow Hub directory and snapshot views when a row needs more than lookup context.',
     surfaces: [
-      'Operational record editor: row-level workflow fields and readiness context.',
-      'Inventory price editor: targeted pricing edits for workflow rows.',
+      'Workflow snapshot page: read-only timeline and linked workflow context for one row.',
+      'Workflow record pages: row-level workflow fields, readiness context, and targeted pricing edits when needed.',
     ],
     workflows: [
-      'Open these when the Workflow Hub directory or workflow snapshot shows that a row needs deeper editing or pricing correction.',
+      'Open these when the Workflow Hub directory shows that a row needs either a read-only workflow overview or a deeper workflow correction.',
       'Use them for operational fixes, not for final listing approval decisions.',
     ],
   },
@@ -800,7 +800,7 @@ const ROLE_START_POINTS: Record<UserRole, RoleStartPoint[]> = {
   ],
   processor: [
     { page: 'parking-lot-1', title: 'Start fresh intake here', detail: 'Open Parking Lot 1 first when you are qualifying new used-gear intake.' },
-    { page: 'inventory', title: 'Route active work here', detail: 'Open Workflow Hub when the item is accepted and needs routing, triage, or blocker cleanup.' },
+    { page: 'inventory', title: 'Look up accepted work here', detail: 'Open Workflow Hub when the item is accepted and you need its current workflow snapshot or the next owning page.' },
     { page: 'post-publish', title: 'Work live follow-through here', detail: 'Open Post-Publish once the item is already live and now needs stale, sold-ready, or shipping follow-through.' },
   ],
   tester: [

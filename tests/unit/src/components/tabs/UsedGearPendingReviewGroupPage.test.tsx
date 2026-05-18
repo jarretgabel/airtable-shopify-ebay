@@ -112,7 +112,7 @@ describe('UsedGearPendingReviewGroupPage', () => {
     expect(screen.getAllByRole('columnheader', { name: 'Notes' }).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Open Intake' })[0]!);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Open Operational Record' })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit Workflow Record' })[0]!);
 
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-group-1');
     expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-group-1');

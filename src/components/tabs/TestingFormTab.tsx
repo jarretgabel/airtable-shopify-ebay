@@ -367,7 +367,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           eyebrow="Forms"
           title="Testing"
           actions={onBackToDirectory ? (
-            <ToolbarIconButton label="Back to Directory" icon={<BackIcon />} onClick={onBackToDirectory} />
+            <ToolbarIconButton label="Back to Testing Queue" icon={<BackIcon />} onClick={onBackToDirectory} />
           ) : undefined}
         />
 

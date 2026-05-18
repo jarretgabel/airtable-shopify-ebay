@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ListingApprovalWorkflowProcessCard,
   buildListingApprovalWorkflowSummaryData,
-  getListingApprovalActiveTimelineEntry,
   type ListingApprovalWorkflowSummaryData,
 } from '@/components/approval/ListingApprovalWorkflowSummary';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
@@ -186,7 +185,7 @@ export function WorkflowSnapshotPage({
     return (
       <ErrorSurface title="Unable to load workflow snapshot" message={error}>
         <div className="mt-4">
-          <ToolbarIconButton label="Back to Directory" icon={<BackIcon />} onClick={onBackToDirectory} />
+          <ToolbarIconButton label="Back to Workflow Hub" icon={<BackIcon />} onClick={onBackToDirectory} />
         </div>
       </ErrorSurface>
     );
@@ -198,7 +197,7 @@ export function WorkflowSnapshotPage({
         eyebrow="Workflow Hub"
         title="Workflow Snapshot"
         belowHeader={sectionNav}
-        actions={<ToolbarIconButton label="Back to Directory" icon={<BackIcon />} onClick={onBackToDirectory} />}
+        actions={<ToolbarIconButton label="Back to Workflow Hub" icon={<BackIcon />} onClick={onBackToDirectory} />}
       >
 
         {record ? (

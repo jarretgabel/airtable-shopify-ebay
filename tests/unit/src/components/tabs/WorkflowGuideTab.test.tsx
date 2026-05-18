@@ -66,7 +66,7 @@ describe('WorkflowGuideTab', () => {
     expect(screen.getByRole('heading', { name: 'Testing' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Listings' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Pending Review Record And Group Pages' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Workflow Operational Record Editors' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Workflow Snapshot And Record Pages' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Testing Record Page' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Listings Record Page' })).toBeInTheDocument();
     expect(screen.getAllByText('Arrival And Routing').length).toBeGreaterThan(0);

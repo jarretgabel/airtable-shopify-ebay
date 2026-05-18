@@ -239,7 +239,7 @@ export function AirtableTab({
         </div>
       ) : null}
 
-      <section id="inventory-directory-list" className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+      <section id="inventory-directory-list" className="space-y-4">
         {directoryLoading && records.length === 0 ? (
           <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-10 text-center text-sm text-[var(--muted)]">
             Loading SB Inventory directory...

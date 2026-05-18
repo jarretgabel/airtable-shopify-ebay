@@ -91,6 +91,29 @@ function formatIntakeDate(record: AirtableRecord): string {
   return 'Unknown';
 }
 
+function stripLotTwoStatusSuffixes(value: string): string {
+  return value
+    .replace(/\s+(awaiting sku|awaiting arrival|awaiting missing item)$/i, '')
+    .trim();
+}
+
+function getLotTwoItemTitle(record: AirtableRecord): string {
+  const make = displayInventoryValue(record.fields.Make);
+  const model = stripLotTwoStatusSuffixes(displayInventoryValue(record.fields.Model));
+
+  return [make, model].filter(Boolean).join(' · ');
+}
+
+function getLotTwoStatusLabel(record: AirtableRecord): string {
+  const rawStatus = displayInventoryValue(record.fields['Workflow Status']) || 'Unknown';
+
+  if (rawStatus.startsWith('Accepted - ')) {
+    return rawStatus.slice('Accepted - '.length);
+  }
+
+  return rawStatus;
+}
+
 export function UsedGearLotTwoSection({
   onOpenGroupReview,
   onOpenManualIntake,
@@ -267,18 +290,24 @@ export function UsedGearLotTwoSection({
               width: 'minmax(0,1.3fr)',
               renderCell: (record) => (
                 <div className="min-w-0">
-                  <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
+                  <div className="truncate text-sm text-[var(--ink)]">{getLotTwoItemTitle(record)}</div>
                 </div>
               ),
             },
             {
               key: 'status',
               label: 'Status',
-              width: '12rem',
+              width: '14rem',
               renderCell: (record) => {
-                const statusLabel = displayInventoryValue(record.fields['Workflow Status']) || 'Unknown';
+                const statusLabel = getLotTwoStatusLabel(record);
 
-                return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
+                return (
+                  <div className="min-w-0">
+                    <span className={`${getWorkflowStatusChipClasses(statusLabel)} overflow-hidden text-ellipsis px-2 text-[0.64rem]`} title={statusLabel}>
+                      {statusLabel}
+                    </span>
+                  </div>
+                );
               },
             },
             {
@@ -301,9 +330,9 @@ export function UsedGearLotTwoSection({
 
                 return (
                   <div className="flex min-h-[4.5rem] w-full flex-col items-center justify-center gap-1.5">
-                    <CompactIconActionButton label="Open Intake" variant="compact-primary" onClick={() => onOpenManualIntake(record.id)} />
+                    <CompactIconActionButton label="Open Intake" variant="compact-primary" icon="edit" onClick={() => onOpenManualIntake(record.id)} />
                     {showOperationalAction ? (
-                      <CompactIconActionButton label="Open Operational Record" onClick={() => onOpenOperationalRecord(record.id)} />
+                      <CompactIconActionButton label="Edit Workflow Record" icon="edit" onClick={() => onOpenOperationalRecord(record.id)} />
                     ) : null}
                   </div>
                 );

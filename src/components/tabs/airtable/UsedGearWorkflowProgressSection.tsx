@@ -123,7 +123,7 @@ function getPrimaryQueueAction(
       label: 'Open Testing',
       onClick: () => handlers.onOpenTestingForm(record.id),
       showSecondaryAction: false,
-      icon: 'form',
+      icon: 'edit',
     };
   }
 
@@ -132,7 +132,7 @@ function getPrimaryQueueAction(
       label: 'Open Photos',
       onClick: () => handlers.onOpenPhotosForm(record.id),
       showSecondaryAction: false,
-      icon: 'form',
+      icon: 'edit',
     };
   }
 
@@ -145,7 +145,7 @@ function getPrimaryQueueAction(
       label: 'Open Intake',
       onClick: () => handlers.onOpenManualIntake(record.id),
       showSecondaryAction: true,
-      icon: 'form',
+      icon: 'edit',
     };
   }
 
@@ -155,7 +155,7 @@ function getPrimaryQueueAction(
         label: 'Open Testing',
         onClick: () => handlers.onOpenTestingForm(record.id),
         showSecondaryAction: true,
-        icon: 'form',
+        icon: 'edit',
       };
     }
 
@@ -164,7 +164,7 @@ function getPrimaryQueueAction(
         label: 'Open Photos',
         onClick: () => handlers.onOpenPhotosForm(record.id),
         showSecondaryAction: true,
-        icon: 'form',
+        icon: 'edit',
       };
     }
 
@@ -173,7 +173,7 @@ function getPrimaryQueueAction(
         label: 'Open Testing',
         onClick: () => handlers.onOpenTestingForm(record.id),
         showSecondaryAction: true,
-        icon: 'form',
+        icon: 'edit',
       };
     }
 
@@ -182,7 +182,7 @@ function getPrimaryQueueAction(
         label: 'Open Photos',
         onClick: () => handlers.onOpenPhotosForm(record.id),
         showSecondaryAction: true,
-        icon: 'form',
+        icon: 'edit',
       };
     }
   }
@@ -197,10 +197,10 @@ function getPrimaryQueueAction(
   }
 
   return {
-    label: 'Open Operational Record',
+    label: 'Edit Workflow Record',
     onClick: () => handlers.onOpenOperationalRecord(record.id),
     showSecondaryAction: false,
-    icon: 'open',
+    icon: 'edit',
   };
 }
 
@@ -482,7 +482,7 @@ export function UsedGearWorkflowProgressSection({
                   <div className="flex min-h-[4.5rem] w-full items-center justify-center gap-1.5">
                     <CompactIconActionButton label={primaryAction.label} variant="compact-primary" icon={primaryAction.icon} onClick={primaryAction.onClick} />
                     {primaryAction.showSecondaryAction ? (
-                      <CompactIconActionButton label="Open Operational Record" icon="open" onClick={() => onOpenOperationalRecord(record.id)} />
+                      <CompactIconActionButton label="Edit Workflow Record" icon="edit" onClick={() => onOpenOperationalRecord(record.id)} />
                     ) : null}
                   </div>
                 );

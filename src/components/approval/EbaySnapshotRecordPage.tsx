@@ -182,7 +182,7 @@ export function EbaySnapshotRecordPage({
         emptyMessage="No used-gear operational row is linked to this eBay snapshot yet."
         primaryActionLabel="Open Listings"
         onPrimaryAction={onOpenListings}
-        secondaryActionLabel={operationalRecordId ? 'Open Operational Record' : undefined}
+        secondaryActionLabel={operationalRecordId ? 'Edit Workflow Record' : undefined}
         onSecondaryAction={operationalRecordId ? () => onOpenOperationalRecord(operationalRecordId) : null}
       />
 

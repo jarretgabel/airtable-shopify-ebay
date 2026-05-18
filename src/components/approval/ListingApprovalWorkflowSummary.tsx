@@ -73,15 +73,14 @@ function getPreferredTimelineEntryId(workflowStatus: string): UsedGearWorkflowTi
     case 'Accepted - Arrived, Awaiting Missing Item':
       return 'processing';
     case 'Awaiting Pre-Listing Review':
-      return 'awaiting-pre-listing';
+      return 'pre-listing';
     case 'Approved for Publish':
       return 'approved';
     case 'Listed, Shopify':
     case 'Listed, eBay':
-      return 'listed';
     case 'Stale Listing, Shopify':
     case 'Stale Listing, eBay':
-      return 'stale-listing';
+      return 'listed';
     case 'Sold - Ready to Ship':
       return 'sold-ready';
     case 'Shipped':
@@ -352,26 +351,18 @@ function getTimelineCompletionGuidance(entryId: UsedGearWorkflowTimelineEntry['i
   switch (entryId) {
     case 'accepted':
       return 'Use "Open Intake" to update the intake record, then click "Complete Processing" when the item is ready to move forward.';
-    case 'owner-assigned':
-      return 'Ownership history is retained for older rows, but active handoffs now move forward through the stage completion actions instead of claim controls.';
     case 'processing':
       return 'Finish the intake details in "Open Intake", then click "Complete Processing" to send the item to testing and photography.';
     case 'testing':
       return 'Use "Open Testing" to capture the testing signoff for this item.';
     case 'photography':
       return 'Use "Open Photos" to capture the photography signoff for this item.';
-    case 'awaiting-pre-listing':
-      return 'Use "Open Listings Approval" to review the listing once both testing and photography are signed off.';
     case 'pre-listing':
       return 'Review the listing in "Open Listings Approval", then click "Approve For Publish" when pricing and content are ready.';
     case 'approved':
       return 'Use "Open Listings Approval" to publish the listing to Shopify or eBay.';
     case 'listed':
       return 'Use "Open Listings Approval" to verify the live listing and manage any follow-up listing changes.';
-    case 'stale-listing':
-      return 'Use "Open Listings Approval" to review the stale listing, then click "Mark Relisted" when it is live again.';
-    case 'relisted':
-      return 'Confirm the relisted item is live and continue managing it from "Open Listings Approval".';
     case 'sold-ready':
       return 'Hand the item off for fulfillment, then click "Mark Shipped" when shipping is complete.';
     case 'shipped':

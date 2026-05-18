@@ -408,7 +408,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
           eyebrow="Forms"
           title="Photos"
           actions={onBackToDirectory ? (
-            <ToolbarIconButton label="Back to Directory" icon={<BackIcon />} onClick={onBackToDirectory} />
+            <ToolbarIconButton label="Back to Photography Queue" icon={<BackIcon />} onClick={onBackToDirectory} />
           ) : undefined}
         />
 
