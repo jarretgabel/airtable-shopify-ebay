@@ -198,4 +198,58 @@ describe('TestingFormTab', () => {
     expect(submittedValues.imageFiles).toHaveLength(1);
     expect(submittedValues.imageFiles[0]?.name).toBe('processed-testing.jpg');
   });
+
+  it('blocks submission when a required testing field is missing', async () => {
+    loadTestingFormValuesMock.mockResolvedValueOnce({
+      source: 'used-gear-workflow',
+      customerReference: {
+        cosmeticNotes: 'Customer noted one chip on the rack handle.',
+        functionalNotes: '',
+        inclusionNotes: '',
+        submittedPhotosNotes: '',
+      },
+      stageContext: {
+        existingAttachments: [],
+        imageMetadata: [],
+      },
+      values: {
+        sku: 'SKU-500',
+        arrivalDate: '2026-05-01',
+        acquiredFrom: 'Walk-in seller',
+        make: 'Accuphase',
+        model: 'P-300',
+        componentType: 'Amplifier',
+        cost: '1200',
+        inventoryNotes: 'Capture top cover wear.',
+        serialNumber: 'SN-500',
+        voltage: '120V',
+        audiogonRating: '',
+        cosmeticConditionNotes: 'Strong faceplate.',
+        originalBox: 'No',
+        manual: 'Included',
+        remote: 'No',
+        powerCable: 'Included',
+        additionalItems: '',
+        shippingWeight: '65 lbs',
+        shippingDims: '26x22x9',
+        shippingMethod: 'Freight',
+        imageFiles: [],
+        testingNotes: 'Bench tested.',
+        testingTimeMinutes: '30',
+        serviceNotes: '',
+        serviceTimeMinutes: '',
+        testingDate: '2026-05-03',
+        status: 'Tested',
+      },
+    });
+
+    render(<TestingFormTab recordId="rec-testing" />);
+
+    await screen.findByText('Testing');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Testing' }));
+
+    expect(await screen.findByText('Audiogon Rating is required.')).toBeInTheDocument();
+    expect(submitTestingFormMock).not.toHaveBeenCalled();
+  });
 });

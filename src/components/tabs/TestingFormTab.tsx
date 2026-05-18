@@ -80,7 +80,23 @@ function validateForm(values: TestingFormValues): string | null {
   if (!values.make.trim()) return 'Make is required.';
   if (!values.model.trim()) return 'Model is required.';
   if (!values.componentType.trim()) return 'Component Type is required.';
+  if (!values.audiogonRating.trim()) return 'Audiogon Rating is required.';
+  if (!values.testingNotes.trim()) return 'Testing Notes is required.';
+  if (!values.testingTimeMinutes.trim()) return 'Testing Time is required.';
+  if (!values.testingDate.trim()) return 'Testing Date is required.';
   return null;
+}
+
+function getFieldLayoutClass(definition: TestingFormFieldDefinition): string {
+  if (definition.name === 'testingDate') {
+    return 'lg:col-start-1';
+  }
+
+  if (definition.type === 'textarea' || definition.type === 'file') {
+    return 'lg:col-span-2';
+  }
+
+  return '';
 }
 
 function FieldShell({ definition, children }: { definition: TestingFormFieldDefinition; children: ReactNode }) {
@@ -88,7 +104,7 @@ function FieldShell({ definition, children }: { definition: TestingFormFieldDefi
     <label className="block">
       <span className={LABEL_CLASS}>
         {definition.label}
-        {definition.required ? ' *' : ''}
+        {definition.required ? <span className="text-red-400"> *</span> : null}
       </span>
       {definition.description ? <p className={HELP_CLASS}>{definition.description}</p> : null}
       {children}
@@ -386,7 +402,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
 
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
           <AppSectionTitle title="Submitted Intake And Included Items" titleClassName="text-lg" />
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {readOnlyFields.map((field) => (
               <ReadOnlyFieldDisplay
                 key={field.airtableFieldName}
@@ -398,25 +414,30 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
             <ReadOnlyFieldDisplay label="Acquired From" value={formValues.acquiredFrom} />
           </div>
 
-          <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Customer Cosmetic Notes</p>
-            <p className="mt-2 leading-6 text-[var(--ink)]">{customerReference.cosmeticNotes || 'None provided'}</p>
-          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Customer Cosmetic Notes</p>
+              <p className="mt-2 leading-6 text-[var(--ink)]">{customerReference.cosmeticNotes || 'None provided'}</p>
+            </div>
 
-          <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Notes</p>
-            <p className="mt-2 leading-6 text-[var(--ink)]">{formValues.inventoryNotes || 'No inventory notes available.'}</p>
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Notes</p>
+              <p className="mt-2 leading-6 text-[var(--ink)]">{formValues.inventoryNotes || 'No inventory notes available.'}</p>
+            </div>
           </div>
         </div>
 
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
-          {editableFields.map((field) => (
-            <div key={field.airtableFieldName}>
-              {field.type === 'file'
-                ? renderField(field)
-                : <FieldShell definition={field}>{renderField(field)}</FieldShell>}
-            </div>
-          ))}
+          <AppSectionTitle title="Testing Details" titleClassName="text-lg" />
+          <div className="grid gap-5 lg:grid-cols-2">
+            {editableFields.map((field) => (
+              <div key={field.airtableFieldName} className={getFieldLayoutClass(field)}>
+                {field.type === 'file'
+                  ? renderField(field)
+                  : <FieldShell definition={field}>{renderField(field)}</FieldShell>}
+              </div>
+            ))}
+          </div>
 
           <div className="flex justify-end">
             <div className="flex gap-3">

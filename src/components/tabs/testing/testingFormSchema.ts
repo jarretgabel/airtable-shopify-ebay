@@ -156,6 +156,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     airtableFieldName: 'Audiogon Rating',
     label: 'Audiogon Rating',
     type: 'text',
+    required: true,
     description: '1-10',
   },
   {
@@ -172,6 +173,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     label: 'Original Box',
     type: 'select',
     optionFieldName: 'Original Box',
+    description: 'Please confirm',
   },
   {
     name: 'manual',
@@ -179,6 +181,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     label: 'Manual',
     type: 'select',
     optionFieldName: 'Manual',
+    description: 'Please confirm',
   },
   {
     name: 'remote',
@@ -186,6 +189,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     label: 'Remote',
     type: 'select',
     optionFieldName: 'Remote',
+    description: 'Please confirm',
   },
   {
     name: 'powerCable',
@@ -193,6 +197,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     label: 'Power Cable',
     type: 'select',
     optionFieldName: 'Power Cable',
+    description: 'Please confirm',
   },
   {
     name: 'additionalItems',
@@ -236,6 +241,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     label: 'Testing Notes',
     type: 'textarea',
     rows: 5,
+    required: true,
     description: 'Functions as intended, or.. (please be detailed)',
   },
   {
@@ -243,6 +249,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     airtableFieldName: 'Testing Time',
     label: 'Testing Time',
     type: 'number',
+    required: true,
     description: 'Time spent testing this unit.',
   },
   {
@@ -257,6 +264,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     name: 'serviceTimeMinutes',
     airtableFieldName: 'Service Time',
     label: 'Service Time',
+    required: true,
     type: 'number',
     description: 'Enter total service time in minutes.',
   },
@@ -265,6 +273,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     airtableFieldName: 'Tested',
     label: 'Testing Date',
     type: 'date',
+    required: true,
   },
   {
     name: 'status',
