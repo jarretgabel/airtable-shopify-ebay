@@ -53,11 +53,11 @@ describe('usedGearWorkflowDashboardTargets', () => {
     );
 
     expect(targets.pendingReviewOldestGroup).toEqual({
-      id: 'pickup:pickup-a',
+      id: 'pickup-a',
       label: 'pickup-a',
     });
     expect(targets.progressOldestGroup).toEqual({
-      id: 'submission:submission-a',
+      id: 'submission-a',
       label: 'submission-a',
     });
   });

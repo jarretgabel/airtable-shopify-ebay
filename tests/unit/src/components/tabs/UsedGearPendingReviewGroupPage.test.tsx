@@ -33,8 +33,8 @@ describe('UsedGearPendingReviewGroupPage', () => {
     savePendingReviewGroupReviewMock.mockReset();
 
     loadPendingReviewGroupMock.mockResolvedValue({
-      id: 'submission:group-42',
-      key: 'submission:group-42',
+      id: 'group-42',
+      key: 'group-42',
       label: 'SUB-42',
       description: 'Submission group',
       records: [
@@ -94,7 +94,7 @@ describe('UsedGearPendingReviewGroupPage', () => {
     render(
       <UsedGearPendingReviewGroupPage
         currentUserName="Taylor Reviewer"
-        groupId="submission:group-42"
+        groupId="group-42"
         onBackToParkingLot={vi.fn()}
         onOpenTrashReview={vi.fn()}
         onOpenManualIntake={onOpenManualIntake}
@@ -161,7 +161,7 @@ describe('UsedGearPendingReviewGroupPage', () => {
     render(
       <UsedGearPendingReviewGroupPage
         currentUserName="Taylor Reviewer"
-        groupId="submission:group-42"
+        groupId="group-42"
         onBackToParkingLot={vi.fn()}
         onOpenTrashReview={vi.fn()}
         onOpenManualIntake={vi.fn()}
@@ -211,7 +211,7 @@ describe('UsedGearPendingReviewGroupPage', () => {
     render(
       <UsedGearPendingReviewGroupPage
         currentUserName="Taylor Reviewer"
-        groupId="submission:group-42"
+        groupId="group-42"
         onBackToParkingLot={vi.fn()}
         onOpenTrashReview={onOpenTrashReview}
         onOpenManualIntake={vi.fn()}

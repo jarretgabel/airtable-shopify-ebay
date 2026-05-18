@@ -79,7 +79,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
   }, [navigate]);
 
   const navigateToJotformReviewGroup = useCallback((groupId: string, replace = false): void => {
-    navigate(`/parking-lot-1/review/${encodeURIComponent(groupId)}`, { replace });
+    navigate(`/parking-lot-1/group/${encodeURIComponent(groupId)}`, { replace });
     scrollToPageTop();
   }, [navigate]);
 

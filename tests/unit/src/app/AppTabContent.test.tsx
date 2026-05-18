@@ -451,12 +451,12 @@ describe('AppTabContent', () => {
       <AppTabContent
         {...buildProps({
           activeTab: 'parking-lot-2',
-          lotTwoReviewGroupId: 'pickup:set-1',
+          lotTwoReviewGroupId: 'set-1',
         })}
       />,
     );
 
-    expect(await screen.findByText('Parking Lot 2 handoff pickup:set-1')).toBeInTheDocument();
+    expect(await screen.findByText('Parking Lot 2 handoff set-1')).toBeInTheDocument();
   });
 
   it('renders the dedicated Parking Lot 2 review page for record routes', async () => {

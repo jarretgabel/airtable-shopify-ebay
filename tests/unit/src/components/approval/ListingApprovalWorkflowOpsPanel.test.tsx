@@ -47,7 +47,7 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
       record: buildRecord({ 'Workflow Source': 'JotForm' }),
       group: {
         id: 'submission:1',
-        key: 'submission:1',
+        key: '1',
         label: 'SUB-1',
         description: 'Submission group',
         records: [

@@ -78,7 +78,7 @@ describe('useAppRouteState', () => {
   });
 
   it('maps Parking Lot 2 group handoff routes and decodes id', () => {
-    const state = useAppRouteState(locationFor('/parking-lot-2/review/pickup%20set'), ['dashboard', 'parking-lot-2']);
+    const state = useAppRouteState(locationFor('/parking-lot-2/group/pickup%20set'), ['dashboard', 'parking-lot-2']);
     expect(state.activeTab).toBe('parking-lot-2');
     expect(state.lotTwoReviewGroupId).toBe('pickup set');
   });

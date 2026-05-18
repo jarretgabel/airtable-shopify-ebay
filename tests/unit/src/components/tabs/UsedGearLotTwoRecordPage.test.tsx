@@ -61,7 +61,7 @@ describe('UsedGearLotTwoRecordPage', () => {
         },
       },
       group: {
-        id: 'submission:group-1',
+        id: 'group-1',
         label: 'group-1',
         description: 'Submission group',
         records: [
@@ -104,7 +104,7 @@ describe('UsedGearLotTwoRecordPage', () => {
     expect(screen.queryByText('Current Context')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Group Review' }));
-    expect(navigateMock).toHaveBeenCalledWith('/parking-lot-2/review/submission%3Agroup-1?reviewMode=test');
+    expect(navigateMock).toHaveBeenCalledWith('/parking-lot-2/group/group-1?reviewMode=test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Intake' }));
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-lot-two-1');

@@ -213,9 +213,9 @@ describe('buildDashboardTabViewModel', () => {
     const navigateToInventoryWorkflowView = vi.fn();
     const viewModel = buildDashboardTabViewModel(buildInput({ navigateToInventoryWorkflowView }));
 
-    viewModel.actions.onOpenInventoryWorkflowView('pending-review', { focusedGroupId: 'pickup:pickup-7' });
+    viewModel.actions.onOpenInventoryWorkflowView('pending-review', { focusedGroupId: 'pickup-7' });
 
-    expect(navigateToInventoryWorkflowView).toHaveBeenCalledWith('pending-review', { focusedGroupId: 'pickup:pickup-7' });
+    expect(navigateToInventoryWorkflowView).toHaveBeenCalledWith('pending-review', { focusedGroupId: 'pickup-7' });
   });
 
   it('maps post-publish dashboard actions into inventory navigation options', () => {

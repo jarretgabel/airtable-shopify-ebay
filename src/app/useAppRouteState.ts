@@ -34,9 +34,9 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const manualIntakeRecordMatch = normalizedPath.match(/^\/manual-intake\/([^/]+)$/);
   const intakeRecordMatch = normalizedPath.match(/^\/intake\/([^/]+)$/);
   const manualIntakeMode = normalizedPath === '/manual-intake' || Boolean(manualIntakeRecordMatch) || Boolean(intakeRecordMatch);
-  const jotformReviewGroupMatch = normalizedPath.match(/^\/parking-lot-1\/review\/([^/]+)$/);
+  const jotformReviewGroupMatch = normalizedPath.match(/^\/parking-lot-1\/group\/([^/]+)$/);
   const jotformReviewRecordMatch = normalizedPath.match(/^\/parking-lot-1\/(?!review\/)([^/]+)$/);
-  const lotTwoReviewGroupMatch = normalizedPath.match(/^\/parking-lot-2\/review\/([^/]+)$/);
+  const lotTwoReviewGroupMatch = normalizedPath.match(/^\/parking-lot-2\/group\/([^/]+)$/);
   const lotTwoReviewRecordMatch = normalizedPath.match(/^\/parking-lot-2\/(?!review\/)([^/]+)$/);
   const trashReviewRecordMatch = normalizedPath.match(/^\/trash-review\/review\/([^/]+)$/);
   const testingRecordMatch = normalizedPath.match(/^\/testing\/([^/]+)$/);

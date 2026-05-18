@@ -653,10 +653,11 @@ export function AppTabContent({
         if (deferredRouteState.lotTwoReviewGroupId) {
           return (
             <UsedGearLotTwoGroupPage
+              currentUserName={currentUserName}
               groupId={deferredRouteState.lotTwoReviewGroupId}
               onBackToParkingLot={() => navigateToTab('parking-lot-2')}
+              onOpenTrashReview={() => navigateToTab('trash-review')}
               onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
-              onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
         }

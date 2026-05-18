@@ -677,11 +677,11 @@ const RECORD_GUIDE_CARDS: RecordGuideCard[] = [
     pages: ['parking-lot-2'],
     summary: 'This page keeps one accepted pickup or submission set together during arrival-stage handoff work.',
     surfaces: [
-      'Group handoff page: shared set summary plus direct actions into Manual Intake and the operational record for each row.',
+      'Group handoff page: batch arrival-date and SKU review for the full set, plus direct actions into Manual Intake and the operational record for each row.',
     ],
     workflows: [
-      'Use it when multiple accepted rows need coordinated arrival-stage work and shared context should stay visible.',
-      'Hand off each row into the next real working page instead of leaving the set parked in the queue.',
+      'Use it when multiple accepted rows need coordinated arrival-stage work and the handoff fields can be updated together.',
+      'Save the batch here, move every ready row into processing together, or route the full set into Trash Review when the whole handoff should stop.',
     ],
   },
   {

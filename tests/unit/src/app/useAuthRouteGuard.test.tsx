@@ -102,7 +102,7 @@ describe('useAuthRouteGuard', () => {
 
     render(
       <GuardHarness
-        normalizedPath="/parking-lot-2/review/pickup%3Apickup-100"
+        normalizedPath="/parking-lot-2/group/pickup%3Apickup-100"
         canAccessPage={(tab) => tab === 'parking-lot-2' || tab === 'dashboard'}
         navigate={navigate}
       />,

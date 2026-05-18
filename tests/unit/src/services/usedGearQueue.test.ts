@@ -212,7 +212,7 @@ describe('usedGearQueue', () => {
       },
     ]);
 
-    const group = await loadLotTwoGroup('pickup:pickup-100');
+    const group = await loadLotTwoGroup('pickup-100');
 
     expect(group.label).toBe('pickup-100');
     expect(group.records.map((record) => record.id)).toEqual(['recAwaitingArrival', 'recAwaitingSku']);
@@ -387,9 +387,9 @@ describe('usedGearQueue', () => {
     ]);
 
     expect(groups).toHaveLength(2);
-    expect(groups[0]?.key).toBe('pickup:PU-1');
+    expect(groups[0]?.key).toBe('PU-1');
     expect(groups[0]?.records).toHaveLength(2);
-    expect(groups[1]?.key).toBe('submission:SUB-9');
+    expect(groups[1]?.key).toBe('SUB-9');
   });
 
   it('accepts a pending-review row with the approved status transition fields', async () => {
@@ -456,9 +456,9 @@ describe('usedGearQueue', () => {
       },
     ]);
 
-    const group = await loadPendingReviewGroup('submission:SUB-42');
+    const group = await loadPendingReviewGroup('SUB-42');
 
-    expect(group.id).toBe('submission:SUB-42');
+    expect(group.id).toBe('SUB-42');
     expect(group.records).toHaveLength(2);
   });
 
@@ -748,7 +748,7 @@ describe('usedGearQueue', () => {
     const context = await loadUsedGearOperationalRecordContext('rec1');
 
     expect(context.record.id).toBe('rec1');
-    expect(context.group?.id).toBe('submission:SUB-42');
+    expect(context.group?.id).toBe('SUB-42');
     expect(context.group?.records).toHaveLength(2);
   });
 
@@ -1247,8 +1247,8 @@ describe('usedGearQueue', () => {
           destinationTab: 'parking-lot-1',
           recordId: null,
           sectionId: 'used-gear-pending-review',
-          groupId: 'pickup:pickup-100',
-          path: '/parking-lot-1?workflowPendingReviewGroup=pickup%3Apickup-100#used-gear-pending-review',
+          groupId: 'pickup-100',
+          path: '/parking-lot-1?workflowPendingReviewGroup=pickup-100#used-gear-pending-review',
         },
         processing: {
           destinationTab: 'parking-lot-2',
@@ -1328,8 +1328,8 @@ describe('usedGearQueue', () => {
           destinationTab: 'parking-lot-1',
           recordId: null,
           sectionId: 'used-gear-pending-review',
-          groupId: 'pickup:pickup-100',
-          path: '/parking-lot-1?workflowPendingReviewGroup=pickup%3Apickup-100#used-gear-pending-review',
+          groupId: 'pickup-100',
+          path: '/parking-lot-1?workflowPendingReviewGroup=pickup-100#used-gear-pending-review',
         },
         processing: null,
         testing: null,

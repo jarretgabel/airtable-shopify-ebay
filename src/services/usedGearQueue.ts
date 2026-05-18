@@ -266,8 +266,8 @@ export function createEmptyUsedGearWorkflowPostPublishSummary(): UsedGearWorkflo
 }
 
 function getNotificationGroupId(record: AirtableRecord): string | null {
-  const groupId = groupKeyForRecord(record).key;
-  return groupId.startsWith('record:') ? null : groupId;
+  const group = groupKeyForRecord(record);
+  return group.description === 'Single record' ? null : group.key;
 }
 
 function buildNotificationTarget(
@@ -484,7 +484,7 @@ function groupKeyForRecord(record: AirtableRecord): { key: string; label: string
   const pickupId = getTrimmedFieldValue(record, 'Pick Up ID');
   if (pickupId) {
     return {
-      key: `pickup:${pickupId}`,
+      key: pickupId,
       label: pickupId,
       description: 'Pickup group',
     };
@@ -493,14 +493,14 @@ function groupKeyForRecord(record: AirtableRecord): { key: string; label: string
   const submissionGroupId = getTrimmedFieldValue(record, 'Submission Group ID');
   if (submissionGroupId) {
     return {
-      key: `submission:${submissionGroupId}`,
+      key: submissionGroupId,
       label: submissionGroupId,
       description: 'Submission group',
     };
   }
 
   return {
-    key: `record:${record.id}`,
+    key: record.id,
     label: getTrimmedFieldValue(record, 'SKU') || record.id,
     description: 'Single record',
   };

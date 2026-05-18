@@ -49,10 +49,10 @@ describe('UsedGearLotTwoTab', () => {
       onOpenGroupReview: (groupId: string) => void;
     };
 
-    sectionProps.onOpenGroupReview('pickup:pickup-100');
+    sectionProps.onOpenGroupReview('pickup-100');
 
     expect(navigateMock).toHaveBeenCalledWith({
-      pathname: '/parking-lot-2/review/pickup%3Apickup-100',
+      pathname: '/parking-lot-2/group/pickup-100',
       search: '?workflowLotTwoSearch=luxman&workflowLotTwoSort=newest',
     }, { replace: false });
   });

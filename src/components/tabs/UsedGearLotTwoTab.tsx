@@ -44,7 +44,7 @@ export function UsedGearLotTwoTab({
       <UsedGearLotTwoSection
         showSectionIntro={false}
         onOpenGroupReview={(groupId) => navigate({
-          pathname: `/parking-lot-2/review/${encodeURIComponent(groupId)}`,
+          pathname: `/parking-lot-2/group/${encodeURIComponent(groupId)}`,
           search: location.search,
         }, { replace: false })}
         onOpenReviewRecord={onOpenReviewRecord}

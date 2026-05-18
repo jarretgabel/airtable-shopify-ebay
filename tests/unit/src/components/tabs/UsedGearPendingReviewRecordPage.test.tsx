@@ -63,7 +63,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
         },
       },
       group: {
-        id: 'submission:group-1',
+        id: 'group-1',
         label: 'group-1',
         description: 'Submission group',
         records: [
@@ -100,7 +100,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
     expect(screen.getByRole('button', { name: 'Back to Parking Lot 1' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Group Review' }));
-    expect(navigateMock).toHaveBeenCalledWith('/parking-lot-1/review/submission%3Agroup-1?reviewMode=test');
+    expect(navigateMock).toHaveBeenCalledWith('/parking-lot-1/group/group-1?reviewMode=test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Intake' }));
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-pending-1');

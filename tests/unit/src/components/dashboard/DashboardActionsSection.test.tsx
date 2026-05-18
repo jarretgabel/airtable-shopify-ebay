@@ -453,9 +453,9 @@ describe('DashboardActionsSection', () => {
         workflowSoldReadyMineCount={0}
         workflowSoldReadyUnassignedCount={0}
         workflowShippedCount={0}
-        workflowPendingReviewOldestGroupId="pickup:pickup-100"
+        workflowPendingReviewOldestGroupId="pickup-100"
         workflowPendingReviewOldestGroupLabel="pickup-100"
-        workflowProgressOldestGroupId="submission:submission-200"
+        workflowProgressOldestGroupId="submission-200"
         workflowProgressOldestGroupLabel="submission-200"
         onSelectTab={vi.fn()}
         onOpenInventoryWorkflowView={onOpenInventoryWorkflowView}
@@ -464,9 +464,9 @@ describe('DashboardActionsSection', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /9d oldest pending review/i }));
-    expect(onOpenInventoryWorkflowView).toHaveBeenNthCalledWith(1, 'pending-review', { focusedGroupId: 'pickup:pickup-100' });
+    expect(onOpenInventoryWorkflowView).toHaveBeenNthCalledWith(1, 'pending-review', { focusedGroupId: 'pickup-100' });
 
     fireEvent.click(screen.getByRole('button', { name: /12d oldest in progress/i }));
-    expect(onOpenInventoryWorkflowView).toHaveBeenNthCalledWith(2, 'progress', { focusedGroupId: 'submission:submission-200' });
+    expect(onOpenInventoryWorkflowView).toHaveBeenNthCalledWith(2, 'progress', { focusedGroupId: 'submission-200' });
   });
 });

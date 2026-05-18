@@ -220,7 +220,7 @@ export function UsedGearLotTwoRecordPage({
               <button
                 type="button"
                 className="rounded-xl border border-sky-300/40 bg-white/5 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-white/10"
-                onClick={() => navigate(`/parking-lot-2/review/${encodeURIComponent(group.id)}${location.search}`)}
+                onClick={() => navigate(`/parking-lot-2/group/${encodeURIComponent(group.id)}${location.search}`)}
               >
                 Open Group Review
               </button>

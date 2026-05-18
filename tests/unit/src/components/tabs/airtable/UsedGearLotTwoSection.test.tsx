@@ -226,7 +226,7 @@ describe('UsedGearLotTwoSection', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Open pickup set handoff pickup-100/i }));
 
-    expect(onOpenGroupReview).toHaveBeenCalledWith('pickup:pickup-100');
+    expect(onOpenGroupReview).toHaveBeenCalledWith('pickup-100');
   });
 
   it('labels ungrouped records as single items', async () => {
