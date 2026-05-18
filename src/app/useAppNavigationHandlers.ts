@@ -100,12 +100,12 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
   }, [navigate]);
 
   const navigateToInventoryRecord = useCallback((recordId: string, replace = false): void => {
-    navigate(`/inventory/${encodeURIComponent(recordId)}`, { replace });
+    navigate(`/workflow-hub/${encodeURIComponent(recordId)}`, { replace });
     scrollToPageTop();
   }, [navigate]);
 
   const navigateToInventoryPriceEditor = useCallback((recordId: string, replace = false): void => {
-    navigate(`/inventory/price/${encodeURIComponent(recordId)}`, { replace });
+    navigate(`/workflow-hub/price/${encodeURIComponent(recordId)}`, { replace });
     scrollToPageTop();
   }, [navigate]);
 
@@ -116,7 +116,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
         scrollToPageTop();
       })
       .catch(() => {
-        navigate(`/inventory/${encodeURIComponent(recordId)}`, { replace });
+        navigate(`/workflow-hub/${encodeURIComponent(recordId)}`, { replace });
         scrollToPageTop();
       });
   }, [navigate]);

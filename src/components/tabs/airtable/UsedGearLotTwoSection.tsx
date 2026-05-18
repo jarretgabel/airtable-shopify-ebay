@@ -5,6 +5,7 @@ import { CompactIconActionButton } from '@/components/app/CompactIconActionButto
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
+import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
   buildUsedGearManualIntakePath,
@@ -274,7 +275,11 @@ export function UsedGearLotTwoSection({
               key: 'status',
               label: 'Status',
               width: '12rem',
-              renderCell: (record) => <span className="text-xs text-[var(--muted)]">{displayInventoryValue(record.fields['Workflow Status'])}</span>,
+              renderCell: (record) => {
+                const statusLabel = displayInventoryValue(record.fields['Workflow Status']) || 'Unknown';
+
+                return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
+              },
             },
             {
               key: 'intake',

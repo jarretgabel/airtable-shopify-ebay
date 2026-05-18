@@ -6,11 +6,21 @@ import { displayReadableValue, extractReadableValue } from '@/utils/valueDisplay
 
 const INVENTORY_DIRECTORY_LIST_FIELD_NAMES = [
   'SKU',
+  'SKU Legacy Backup',
   'Make',
   'Model',
+  'Item Title',
   'Component Type',
   'Status',
+  'Workflow Status',
+  'Arrival Date',
 ] as const;
+
+const INVENTORY_DIRECTORY_SKU_FIELDS = ['SKU', 'SKU Legacy Backup'] as const;
+const INVENTORY_DIRECTORY_MAKE_FIELDS = ['Make'] as const;
+const INVENTORY_DIRECTORY_MODEL_FIELDS = ['Model'] as const;
+const INVENTORY_DIRECTORY_TITLE_FIELDS = ['Item Title'] as const;
+const INVENTORY_DIRECTORY_STATUS_FIELDS = ['Workflow Status', 'Status'] as const;
 
 const PRIORITY_FIELD_ORDER = [
   'SKU',
@@ -199,6 +209,59 @@ export function inventoryDraftValuesEqual(left: InventoryDraftValue | undefined,
 
 export function displayInventoryValue(value: unknown): string {
   return displayReadableValue(value, 'N/A');
+}
+
+function getFirstInventoryDirectoryValue(
+  fields: Record<string, unknown>,
+  fieldNames: readonly string[],
+): string {
+  for (const fieldName of fieldNames) {
+    const value = extractInventoryScalarValue(fields[fieldName]);
+    if (value) {
+      return value;
+    }
+  }
+
+  return '';
+}
+
+export function getInventoryDirectorySku(fields: Record<string, unknown>): string {
+  return getFirstInventoryDirectoryValue(fields, INVENTORY_DIRECTORY_SKU_FIELDS);
+}
+
+export function getInventoryDirectoryMake(fields: Record<string, unknown>): string {
+  return getFirstInventoryDirectoryValue(fields, INVENTORY_DIRECTORY_MAKE_FIELDS);
+}
+
+export function getInventoryDirectoryModel(fields: Record<string, unknown>): string {
+  return getFirstInventoryDirectoryValue(fields, INVENTORY_DIRECTORY_MODEL_FIELDS);
+}
+
+export function getInventoryDirectoryTitle(fields: Record<string, unknown>): string {
+  return getFirstInventoryDirectoryValue(fields, INVENTORY_DIRECTORY_TITLE_FIELDS);
+}
+
+export function getInventoryDirectoryStatus(fields: Record<string, unknown>): string {
+  return getFirstInventoryDirectoryValue(fields, INVENTORY_DIRECTORY_STATUS_FIELDS);
+}
+
+export function getInventoryDirectoryItemLabel(fields: Record<string, unknown>): string {
+  const make = getInventoryDirectoryMake(fields);
+  const model = getInventoryDirectoryModel(fields);
+
+  if (make && model) {
+    return `${make} · ${model}`;
+  }
+
+  if (make) {
+    return make;
+  }
+
+  if (model) {
+    return model;
+  }
+
+  return getInventoryDirectoryTitle(fields);
 }
 
 export async function loadInventoryDirectory(): Promise<InventoryDirectoryData> {

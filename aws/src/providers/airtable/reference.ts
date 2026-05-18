@@ -28,11 +28,12 @@ export function parseAirtableReferenceCandidates(
   const parts = cleaned.split('/').filter(Boolean);
 
   if (parts.length < 2) {
-    throw new Error('Airtable table reference must be in the format "baseId/tableId" or "baseId/viewId"');
+    throw new Error('Airtable table reference must be in the format "baseId/tableId", "baseId/viewId", or "baseId/tableId/viewId"');
   }
 
   const firstPart = parts[0];
   const secondPart = parts[1];
+  const thirdPart = parts[2];
   const candidates: ParsedAirtableReference[] = [];
   const fallback = fallbackTableName?.trim();
 
@@ -44,6 +45,16 @@ export function parseAirtableReferenceCandidates(
   };
 
   const secondLooksLikeView = secondPart.startsWith('viw') || !secondPart.startsWith('tbl');
+
+  if (firstPart.startsWith('app') && secondPart.startsWith('tbl') && thirdPart) {
+    pushUniqueCandidate({
+      baseId: normalizeId(firstPart, 'app'),
+      tableName: normalizeId(secondPart, 'tbl'),
+      viewId: normalizeId(thirdPart, 'viw'),
+    });
+
+    return candidates;
+  }
 
   if (secondLooksLikeView) {
     const viewId = normalizeId(secondPart, 'viw');

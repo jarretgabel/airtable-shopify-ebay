@@ -48,7 +48,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     markWorkflowSoldReadyToShipMock.mockReset();
     markWorkflowShippedMock.mockReset();
     saveWorkflowStaleRecoveryMock.mockReset();
-    window.history.replaceState({}, '', '/inventory');
+    window.history.replaceState({}, '', '/workflow-hub');
   });
 
   it('keeps all sections visible and announces the deep-linked lifecycle section', async () => {
@@ -167,6 +167,9 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     expect(await screen.findByText('ACT-1')).toBeInTheDocument();
     expect(screen.getByText('STALE-1')).toBeInTheDocument();
     expect(screen.getByText('SOLD-1')).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader', { name: /Status/i }).length).toBeGreaterThan(0);
+    expect(screen.getByText('Listed, Shopify')).toBeInTheDocument();
+    expect(screen.getByText('Stale Listing, eBay')).toBeInTheDocument();
   });
 
   it('removes the open-operational button and keeps listing approval actions for listing buckets', async () => {

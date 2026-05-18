@@ -58,7 +58,7 @@ describe('WorkflowGuideTab', () => {
     expect(screen.getByText('Record And Detail Pages')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Start fresh intake here' })).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Open Parking Lot 1' })[0]).toHaveAttribute('href', '/parking-lot-1');
-    expect(screen.getAllByRole('link', { name: 'Open Workflow Hub' })[0]).toHaveAttribute('href', '/inventory');
+    expect(screen.getAllByRole('link', { name: 'Open Workflow Hub' })[0]).toHaveAttribute('href', '/workflow-hub');
     expect(screen.getAllByRole('link', { name: 'Open Listings' })[0]).toHaveAttribute('href', '/listings');
     expect(screen.getByRole('heading', { name: 'Parking Lot 1' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Workflow Hub' })).toBeInTheDocument();

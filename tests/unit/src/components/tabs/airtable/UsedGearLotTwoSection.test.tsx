@@ -236,6 +236,8 @@ describe('UsedGearLotTwoSection', () => {
     expect(screen.getAllByRole('columnheader', { name: /Group/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('columnheader', { name: /Batch/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('columnheader', { name: /Item Actions/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('columnheader', { name: /Status/i }).length).toBeGreaterThan(0);
+    expect(screen.getByText('Accepted - Awaiting Arrival')).toBeInTheDocument();
     expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/May 6, 2026/i).length).toBeGreaterThan(0);
   });

@@ -147,7 +147,7 @@ describe('AirtableTab', () => {
 
   it('hydrates workflow view state from the URL, persists updates, and resets workflow params', async () => {
     render(
-      <MemoryRouter initialEntries={['/inventory?inventoryDirectorySearch=amp&inventoryDirectoryStatus=Ready&workflowPendingReviewSearch=mcintosh&workflowProgressSearch=marantz&workflowPendingReviewGroup=pickup%3Apickup-100&workflowProgressGroup=pickup%3Apickup-200&workflowPendingReviewSort=newest&workflowProgressSort=oldest']}>
+      <MemoryRouter initialEntries={['/workflow-hub?inventoryDirectorySearch=amp&inventoryDirectoryStatus=Ready&workflowPendingReviewSearch=mcintosh&workflowProgressSearch=marantz&workflowPendingReviewGroup=pickup%3Apickup-100&workflowProgressGroup=pickup%3Apickup-200&workflowPendingReviewSort=newest&workflowProgressSort=oldest']}>
         <AirtableTab
           viewModel={{
             loading: false,
@@ -207,7 +207,7 @@ describe('AirtableTab', () => {
     fireEvent.change(screen.getByLabelText('Pending Review Search'), { target: { value: 'fisher' } });
 
     await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory?inventoryDirectorySearch=receiver&inventoryDirectoryStatus=Sold&workflowPendingReviewSearch=fisher&workflowProgressSearch=marantz&workflowPendingReviewGroup=pickup%3Apickup-100&workflowProgressGroup=pickup%3Apickup-200&workflowPendingReviewSort=newest&workflowProgressSort=oldest#used-gear-pending-review');
+      expect(screen.getByTestId('location-state')).toHaveTextContent('/workflow-hub?inventoryDirectorySearch=receiver&inventoryDirectoryStatus=Sold&workflowPendingReviewSearch=fisher&workflowProgressSearch=marantz&workflowPendingReviewGroup=pickup%3Apickup-100&workflowProgressGroup=pickup%3Apickup-200&workflowPendingReviewSort=newest&workflowProgressSort=oldest#used-gear-pending-review');
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Sort Pending Newest' }));
@@ -228,13 +228,13 @@ describe('AirtableTab', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Copy Current Workflow View' }));
 
     await waitFor(() => {
-      expect(clipboardWriteTextMock).toHaveBeenCalledWith(expect.stringContaining('/inventory?'));
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(expect.stringContaining('/workflow-hub?'));
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Reset Workflow View' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory');
+      expect(screen.getByTestId('location-state')).toHaveTextContent('/workflow-hub');
       expect(screen.getByLabelText('Pending Review Search')).toHaveValue('');
       expect(screen.getByLabelText('Workflow Progress Search')).toHaveValue('');
       expect(screen.getByTestId('pending-focused-group')).toHaveTextContent('');
@@ -246,7 +246,7 @@ describe('AirtableTab', () => {
 
   it('defaults processor inventory routes to pending review when no workflow state is present', async () => {
     render(
-      <MemoryRouter initialEntries={['/inventory']}>
+      <MemoryRouter initialEntries={['/workflow-hub']}>
         <AirtableTab
           viewModel={{
             loading: false,
@@ -271,13 +271,13 @@ describe('AirtableTab', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('location-state').textContent).toBe('/inventory#used-gear-pending-review');
+      expect(screen.getByTestId('location-state').textContent).toBe('/workflow-hub#used-gear-pending-review');
     });
   });
 
   it('keeps the workflow summary bar sticky when workflow filters are active', async () => {
     render(
-      <MemoryRouter initialEntries={['/inventory?workflowPendingReviewSearch=mcintosh']}>
+      <MemoryRouter initialEntries={['/workflow-hub?workflowPendingReviewSearch=mcintosh']}>
         <AirtableTab
           viewModel={{
             loading: false,
@@ -315,7 +315,7 @@ describe('AirtableTab', () => {
     loadInventoryDirectoryMock.mockRejectedValue(new Error('Failed to load Airtable records from tblInventory.'));
 
     render(
-      <MemoryRouter initialEntries={['/inventory#used-gear-progress-queue']}>
+      <MemoryRouter initialEntries={['/workflow-hub#used-gear-progress-queue']}>
         <>
           <AirtableTab
             viewModel={{
@@ -344,6 +344,6 @@ describe('AirtableTab', () => {
     expect(await screen.findByText('SB Inventory directory is currently unavailable.')).toBeInTheDocument();
     expect(screen.getByLabelText('Pending Review Search')).toBeInTheDocument();
     expect(screen.getByLabelText('Workflow Progress Search')).toBeInTheDocument();
-    expect(screen.getByTestId('location-state')).toHaveTextContent('/inventory#used-gear-progress-queue');
+    expect(screen.getByTestId('location-state')).toHaveTextContent('/workflow-hub#used-gear-progress-queue');
   });
 });

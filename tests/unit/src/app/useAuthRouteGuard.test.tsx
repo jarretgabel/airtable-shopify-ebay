@@ -46,7 +46,7 @@ describe('useAuthRouteGuard', () => {
 
     render(
       <GuardHarness
-        normalizedPath="/inventory/price/rec-stale-1"
+        normalizedPath="/workflow-hub/price/rec-stale-1"
         canAccessPage={(tab) => tab === 'inventory' || tab === 'dashboard'}
         navigate={navigate}
       />,
@@ -88,13 +88,27 @@ describe('useAuthRouteGuard', () => {
 
     render(
       <GuardHarness
-        normalizedPath="/inventory/manual-intake"
+        normalizedPath="/manual-intake"
         canAccessPage={(tab) => tab === 'manual-intake' || tab === 'dashboard'}
         navigate={navigate}
       />,
     );
 
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('redirects the legacy workflow hub root to the new path', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/inventory"
+        canAccessPage={(tab) => tab === 'inventory' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).toHaveBeenCalledWith('/workflow-hub', { replace: true });
   });
 
   it('redirects the blank testing route to the testing queue', () => {

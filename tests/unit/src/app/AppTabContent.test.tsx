@@ -454,7 +454,7 @@ describe('AppTabContent', () => {
     expect(await screen.findByText('Parking Lot 2 handoff pickup:set-1')).toBeInTheDocument();
   });
 
-  it('renders the dedicated manual-intake page for the inventory manual-intake route', async () => {
+  it('renders the dedicated manual-intake page for the manual-intake route', async () => {
     render(
       <AppTabContent
         {...buildProps({

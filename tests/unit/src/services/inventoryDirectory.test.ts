@@ -42,6 +42,19 @@ describe('inventoryDirectory', () => {
     expect(result.records[0]?.fields['Workflow Intake Decision']).toBe('Pending');
     expect(result.records[0]?.fields['Workflow Next Team']).toBe('Purchasing');
     expect(result.fields).toEqual([]);
+    expect(mockGetConfiguredRecords).toHaveBeenCalledWith('inventory-directory', {
+      fields: [
+        'SKU',
+        'SKU Legacy Backup',
+        'Make',
+        'Model',
+        'Item Title',
+        'Component Type',
+        'Status',
+        'Workflow Status',
+        'Arrival Date',
+      ],
+    });
     expect(mockGetConfiguredFieldMetadata).not.toHaveBeenCalled();
   });
 

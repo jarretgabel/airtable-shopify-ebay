@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { airtableSourceDependencies, getConfiguredRecordsSummary, uploadConfiguredAttachment } from '../../../../../../aws/src/providers/airtable/sources.js';
+import {
+  airtableSourceDependencies,
+  getConfiguredRecords,
+  getConfiguredRecordsSummary,
+  uploadConfiguredAttachment,
+} from '../../../../../../aws/src/providers/airtable/sources.js';
 
 function buildRecord(fields: Record<string, unknown>) {
   return {
@@ -74,6 +79,38 @@ test('uploadConfiguredAttachment supports used-gear-workflow sources', async () 
     airtableSourceDependencies.uploadAttachment = original;
     process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF = originalWorkflowReference;
     process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME = originalWorkflowTableName;
+    process.env.AIRTABLE_BASE_ID = originalBaseId;
+  }
+});
+
+test('getConfiguredRecords resolves inventory-directory through the combined listings source', async () => {
+  const original = airtableSourceDependencies.getRecords;
+  const originalInventoryReference = process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF;
+  const originalInventoryTableName = process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME;
+  const originalBaseId = process.env.AIRTABLE_BASE_ID;
+  const calls: Array<{ baseId: string; tableName: string; viewId?: string; fields?: string[] }> = [];
+
+  process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF = 'apprsAm2FOohEmL2u/tbl0K0nFQL64jQMx8/viwZdrQSBohX1m35D';
+  process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME = 'tbl0K0nFQL64jQMx8';
+  process.env.AIRTABLE_BASE_ID = 'appLocalBase';
+  airtableSourceDependencies.getRecords = async (baseId, tableName, viewId, options) => {
+    calls.push({ baseId, tableName, viewId, fields: options?.fields });
+    return [];
+  };
+
+  try {
+    await getConfiguredRecords('inventory-directory', { fields: ['SKU', 'Status'] });
+
+    assert.deepEqual(calls, [{
+      baseId: 'apprsAm2FOohEmL2u',
+      tableName: 'tbl0K0nFQL64jQMx8',
+      viewId: 'viwZdrQSBohX1m35D',
+      fields: ['SKU', 'Status'],
+    }]);
+  } finally {
+    airtableSourceDependencies.getRecords = original;
+    process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF = originalInventoryReference;
+    process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME = originalInventoryTableName;
     process.env.AIRTABLE_BASE_ID = originalBaseId;
   }
 });

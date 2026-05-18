@@ -409,7 +409,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
         ) : null}
 
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-          <AppSectionTitle title="Submitted Intake And Included Items" titleClassName="text-lg" />
+          <AppSectionTitle title="Intake Snapshot" titleClassName="text-lg" />
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {readOnlyFields.map((field) => (
               <ReadOnlyFieldDisplay

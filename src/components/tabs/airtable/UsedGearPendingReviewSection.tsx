@@ -5,6 +5,7 @@ import { CompactIconActionButton } from '@/components/app/CompactIconActionButto
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { EmptySurface } from '@/components/app/StateSurfaces';
+import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import {
   groupUsedGearWorkflowRecords,
   loadPendingReviewQueue,
@@ -38,10 +39,6 @@ function recordSearchText(record: AirtableRecord): string {
     .filter((value): value is string => typeof value === 'string')
     .join(' ')
     .toLowerCase();
-}
-
-function shouldShowPendingReviewStatusTag(statusLabel: string): boolean {
-  return statusLabel.trim().toLowerCase() !== 'pending review';
 }
 
 function stringFieldValue(record: AirtableRecord, fieldName: string): string {
@@ -288,12 +285,18 @@ export function UsedGearPendingReviewSection({
               renderCell: (record) => (
                 <div className="min-w-0">
                   <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
-                    <span>{displayInventoryValue(record.fields['Workflow Source'])}</span>
-                    {shouldShowPendingReviewStatusTag(displayInventoryValue(record.fields['Workflow Status'])) ? <span>{displayInventoryValue(record.fields['Workflow Status'])}</span> : null}
-                  </div>
                 </div>
               ),
+            },
+            {
+              key: 'status',
+              label: 'Status',
+              width: '12rem',
+              renderCell: (record) => {
+                const statusLabel = displayInventoryValue(record.fields['Workflow Status']) || 'Unknown';
+
+                return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
+              },
             },
             {
               key: 'intake',

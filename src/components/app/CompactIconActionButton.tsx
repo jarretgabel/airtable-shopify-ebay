@@ -2,7 +2,7 @@ interface CompactIconActionButtonProps {
   label: string;
   onClick: () => void;
   variant?: 'compact-primary' | 'compact-secondary' | 'small-secondary';
-  icon?: 'open' | 'group' | 'check' | 'truck';
+  icon?: 'open' | 'group' | 'check' | 'truck' | 'form' | 'edit';
   disabled?: boolean;
 }
 
@@ -45,6 +45,19 @@ export function CompactIconActionButton({
           <path d="M11.667 8.333h2.291l1.875 1.875v1.875h-4.166" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M5.417 14.583a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z" stroke="currentColor" strokeWidth="1.75" />
           <path d="M14.583 14.583a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z" stroke="currentColor" strokeWidth="1.75" />
+        </svg>
+      ) : icon === 'form' ? (
+        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+          <path d="M6.25 3.75h5.833l2.5 2.5v10H6.25z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M12.083 3.75v2.5h2.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M8.333 9.167h4.167" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+          <path d="M8.333 12.5h4.167" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+        </svg>
+      ) : icon === 'edit' ? (
+        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+          <path d="M4.167 15.833h2.5l7.083-7.083-2.5-2.5-7.083 7.083v2.5Z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="m10.833 6.667 2.5 2.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M4.167 15.833h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
         </svg>
       ) : (
         <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">

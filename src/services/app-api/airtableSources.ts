@@ -1,11 +1,7 @@
 import { checkOptionalEnv } from '@/config/runtimeEnv';
 
 export const DEFAULT_USERS_TABLE_NAME = 'j2Gt9USORo6Vi5';
-
-export const INVENTORY_DIRECTORY_BASE_ID = 'appjQj8FQfFZ2ogMz';
-export const INVENTORY_DIRECTORY_TABLE_ID = 'tblirsoRIFPDMHxb0';
-export const INVENTORY_DIRECTORY_TABLE_NAME = 'SB Inventory';
-export const INVENTORY_DIRECTORY_TABLE_REFERENCE = `${INVENTORY_DIRECTORY_BASE_ID}/${INVENTORY_DIRECTORY_TABLE_ID}`;
+export const DEFAULT_COMBINED_LISTINGS_TABLE_NAME = 'tbl0K0nFQL64jQMx8';
 
 export type AirtableConfiguredRecordsSource =
   | 'users'
@@ -61,13 +57,13 @@ export function getConfiguredRecordsSourceDefinition(source: AirtableConfiguredR
   if (source === 'used-gear-workflow') {
     return {
       reference: checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF'),
-      tableName: checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME') || '',
+      tableName: checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME') || DEFAULT_COMBINED_LISTINGS_TABLE_NAME,
     };
   }
 
   return {
-    reference: INVENTORY_DIRECTORY_TABLE_REFERENCE,
-    tableName: INVENTORY_DIRECTORY_TABLE_NAME,
+    reference: checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF'),
+    tableName: checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME') || DEFAULT_COMBINED_LISTINGS_TABLE_NAME,
   };
 }
 

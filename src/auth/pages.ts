@@ -33,9 +33,9 @@ export interface PageDefinition {
 export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   dashboard: { label: 'Dashboard', path: '/dashboard' },
   'workflow-guide': { label: 'User Guide', path: '/workflow-guide' },
-  'manual-intake': { label: 'Manual Intake', path: '/inventory/manual-intake' },
+  'manual-intake': { label: 'Manual Intake', path: '/manual-intake' },
   jotform: { label: 'JotForm', path: '/jotform' },
-  inventory: { label: 'Workflow Hub', path: '/inventory' },
+  inventory: { label: 'Workflow Hub', path: '/workflow-hub' },
   listings: { label: 'Listings', path: '/listings' },
   'post-publish': { label: 'Post-Publish', path: '/workflow/post-publish' },
   shopify: { label: 'Shopify Products', path: '/shopify/products' },

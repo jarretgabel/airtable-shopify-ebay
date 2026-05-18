@@ -16,7 +16,7 @@ vi.mock('@/services/usedGearQueue', async () => {
 
 describe('UsedGearPendingReviewSection', () => {
   beforeEach(() => {
-    window.history.replaceState({}, '', '/inventory');
+    window.history.replaceState({}, '', '/workflow-hub');
   });
 
   it('shows inline sort options in the header by default', async () => {
@@ -95,7 +95,8 @@ describe('UsedGearPendingReviewSection', () => {
     fireEvent.click((await screen.findAllByRole('button', { name: /Open( Item)? Review/ }))[0]!);
 
     expect(onOpenReviewRecord).toHaveBeenCalledWith('rec-pending');
-    expect(screen.queryByText(/^Pending Review$/)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader', { name: /Status/i }).length).toBeGreaterThan(0);
+    expect(screen.getByText('Pending Review')).toBeInTheDocument();
     expect(screen.queryByText(/Qualification Notes:/i)).not.toBeInTheDocument();
   });
 
@@ -229,6 +230,8 @@ describe('UsedGearPendingReviewSection', () => {
 
     expect(screen.getAllByText('PEND-SOURCE').length).toBeGreaterThan(0);
     expect(screen.queryByText('PEND-OTHER')).not.toBeInTheDocument();
+    expect(screen.queryByText('Manual Entry')).not.toBeInTheDocument();
+    expect(screen.queryByText('JotForm')).not.toBeInTheDocument();
   });
 
   it('does not show a duplicate operational action on pending-review queue rows', async () => {

@@ -5,14 +5,13 @@ import { CompactIconActionButton } from '@/components/app/CompactIconActionButto
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { EmptySurface } from '@/components/app/StateSurfaces';
+import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
-  getUsedGearWorkflowPrimaryAction,
   groupUsedGearWorkflowRecords,
   loadWorkflowProgressQueue,
 } from '@/services/usedGearQueue';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
-import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
 import type { AirtableRecord } from '@/types/airtable';
 
 export interface UsedGearWorkflowProgressSectionProps {
@@ -102,12 +101,10 @@ function formatIntakeDate(record: AirtableRecord): string {
   return 'Unknown';
 }
 
-function getStageReviewLabel(status: string): string {
-  if (status === 'Testing and Photography In Progress') {
-    return 'Open Stage Review';
-  }
-
-  return 'Open Stage Review';
+function stripQueueTitleSuffixes(title: string): string {
+  return title
+    .replace(/\s+(testing pending|photo pending|photography pending|awaiting sku|awaiting arrival)$/i, '')
+    .trim();
 }
 
 function getPrimaryQueueAction(
@@ -115,16 +112,18 @@ function getPrimaryQueueAction(
   record: AirtableRecord,
   handlers: Pick<
     UsedGearWorkflowProgressSectionProps,
-    'onOpenTestingForm' | 'onOpenPhotosForm' | 'onOpenOperationalRecord' | 'onOpenListingsRecord'
+    'onOpenManualIntake' | 'onOpenTestingForm' | 'onOpenPhotosForm' | 'onOpenOperationalRecord' | 'onOpenListingsRecord'
   >,
-): { label: string; onClick: () => void; showSecondaryAction: boolean } {
+): { label: string; onClick: () => void; showSecondaryAction: boolean; icon: 'open' | 'form' | 'edit' } {
   const status = getUsedGearWorkflowStatus(record.fields) ?? 'Unknown';
+  const normalizedNextTeam = displayInventoryValue(record.fields['Workflow Next Team']).trim().toLowerCase();
 
   if (queueMode === 'testing' && status === 'Testing and Photography In Progress' && !record.fields['Testing Signed By']) {
     return {
       label: 'Open Testing',
       onClick: () => handlers.onOpenTestingForm(record.id),
       showSecondaryAction: false,
+      icon: 'form',
     };
   }
 
@@ -133,52 +132,84 @@ function getPrimaryQueueAction(
       label: 'Open Photos',
       onClick: () => handlers.onOpenPhotosForm(record.id),
       showSecondaryAction: false,
+      icon: 'form',
+    };
+  }
+
+  if (
+    status === 'Accepted - Awaiting Arrival'
+    || status === 'Accepted - Arrived, Awaiting SKU'
+    || status === 'Accepted - Arrived, Awaiting Missing Item'
+  ) {
+    return {
+      label: 'Open Manual Intake',
+      onClick: () => handlers.onOpenManualIntake(record.id),
+      showSecondaryAction: true,
+      icon: 'form',
+    };
+  }
+
+  if (status === 'Testing and Photography In Progress') {
+    if ((normalizedNextTeam === 'testing' || normalizedNextTeam === 'testing pending') && !record.fields['Testing Signed By']) {
+      return {
+        label: 'Open Testing',
+        onClick: () => handlers.onOpenTestingForm(record.id),
+        showSecondaryAction: true,
+        icon: 'form',
+      };
+    }
+
+    if ((normalizedNextTeam === 'photography' || normalizedNextTeam === 'photo pending' || normalizedNextTeam === 'photography pending') && !record.fields['Photography Signed By']) {
+      return {
+        label: 'Open Photos',
+        onClick: () => handlers.onOpenPhotosForm(record.id),
+        showSecondaryAction: true,
+        icon: 'form',
+      };
+    }
+
+    if (!record.fields['Testing Signed By']) {
+      return {
+        label: 'Open Testing',
+        onClick: () => handlers.onOpenTestingForm(record.id),
+        showSecondaryAction: true,
+        icon: 'form',
+      };
+    }
+
+    if (!record.fields['Photography Signed By']) {
+      return {
+        label: 'Open Photos',
+        onClick: () => handlers.onOpenPhotosForm(record.id),
+        showSecondaryAction: true,
+        icon: 'form',
+      };
+    }
+  }
+
+  if (status === 'Awaiting Pre-Listing Review') {
+    return {
+      label: 'Open Listings Approval',
+      onClick: () => handlers.onOpenListingsRecord(record.id),
+      showSecondaryAction: true,
+      icon: 'edit',
     };
   }
 
   return {
-    label: getStageReviewLabel(status),
+    label: 'Open Operational Record',
     onClick: () => handlers.onOpenOperationalRecord(record.id),
-    showSecondaryAction: true,
+    showSecondaryAction: false,
+    icon: 'open',
   };
 }
 
-function shouldShowPrimaryActionTag(queueMode: UsedGearWorkflowProgressQueueMode, actionLabel: string): boolean {
-  if (queueMode === 'testing' && actionLabel === 'Testing') {
-    return false;
-  }
+function getQueueItemTitle(record: AirtableRecord): string {
+  const make = displayInventoryValue(record.fields.Make);
+  const model = displayInventoryValue(record.fields.Model);
+  const rawTitle = [make, model].filter(Boolean).join(' · ');
 
-  if (queueMode === 'photography' && actionLabel === 'Photography') {
-    return false;
-  }
-
-  return true;
-}
-
-function shouldShowNextTeamDetail(queueMode: UsedGearWorkflowProgressQueueMode, nextTeamLabel: string): boolean {
-  const normalizedNextTeam = nextTeamLabel.trim().toLowerCase();
-
-  if (queueMode === 'testing' && normalizedNextTeam === 'testing') {
-    return false;
-  }
-
-  if (queueMode === 'photography' && normalizedNextTeam === 'photography') {
-    return false;
-  }
-
-  return true;
-}
-
-function shouldShowPriceReadyDetail(queueMode: UsedGearWorkflowProgressQueueMode): boolean {
-  return queueMode === 'all';
-}
-
-function shouldShowStatusLabel(queueMode: UsedGearWorkflowProgressQueueMode, status: string): boolean {
-  if (queueMode !== 'all' && status === 'Testing and Photography In Progress') {
-    return false;
-  }
-
-  return true;
+  return stripQueueTitleSuffixes(rawTitle);
 }
 
 function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): ProgressQueuePresentation {
@@ -231,6 +262,7 @@ function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): Pro
 
 export function UsedGearWorkflowProgressSection({
   showSectionIntro = true,
+  onOpenManualIntake,
   onOpenTestingForm,
   onOpenPhotosForm,
   onOpenOperationalRecord,
@@ -315,12 +347,15 @@ export function UsedGearWorkflowProgressSection({
       if (sortMode === 'newest') {
         return getNewestTimestamp(right) - getNewestTimestamp(left) || left.label.localeCompare(right.label);
       }
+
       if (sortMode === 'oldest') {
         return getOldestTimestamp(left) - getOldestTimestamp(right) || left.label.localeCompare(right.label);
       }
+
       return left.label.localeCompare(right.label);
     });
   }, [filteredRecords, sortMode]);
+
   const visibleGroups = useMemo(() => {
     if (!focusedGroupId) {
       return groupedRecords;
@@ -328,12 +363,15 @@ export function UsedGearWorkflowProgressSection({
 
     return groupedRecords.filter((group) => group.id === focusedGroupId);
   }, [focusedGroupId, groupedRecords]);
+
   const matrixGroups = useMemo<IntakeItemsMatrixGroup<AirtableRecord>[]>(() => visibleGroups.map((group) => ({
     id: group.id,
     label: group.label,
     description: group.description,
     items: group.records,
   })), [visibleGroups]);
+  const shouldShowGroupColumn = queueMode === 'all';
+
   const refreshQueue = async () => {
     setRefreshing(true);
     setError(null);
@@ -422,30 +460,18 @@ export function UsedGearWorkflowProgressSection({
               key: 'item',
               label: 'Item',
               width: 'minmax(0,1.5fr)',
-              renderCell: (record) => {
-                const status = getUsedGearWorkflowStatus(record.fields) ?? 'Unknown';
-                const primaryActionTag = getUsedGearWorkflowPrimaryAction(record);
-
-                return (
-                  <div className="min-w-0">
-                    <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
-                    <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
-                      {shouldShowPrimaryActionTag(queueMode, primaryActionTag) ? <span>{primaryActionTag}</span> : null}
-                      {!shouldShowPrimaryActionTag(queueMode, primaryActionTag) && shouldShowStatusLabel(queueMode, status) ? <span>{status}</span> : null}
-                    </div>
-                  </div>
-                );
-              },
+              renderCell: (record) => <div className="min-w-0 truncate text-sm text-[var(--ink)]">{getQueueItemTitle(record)}</div>,
             },
             {
               key: 'actions',
               label: 'Item Actions',
-              width: '4.75rem',
+              width: '6rem',
               align: 'center',
               headerClassName: 'border-l border-[var(--line)]/60',
               cellClassName: 'border-l border-[var(--line)]/60',
               renderCell: (record) => {
                 const primaryAction = getPrimaryQueueAction(queueMode, record, {
+                  onOpenManualIntake,
                   onOpenTestingForm,
                   onOpenPhotosForm,
                   onOpenOperationalRecord,
@@ -453,10 +479,10 @@ export function UsedGearWorkflowProgressSection({
                 });
 
                 return (
-                  <div className="flex min-h-[4.5rem] w-full flex-col items-center justify-center gap-1.5">
-                    <CompactIconActionButton label={primaryAction.label} variant="compact-primary" onClick={primaryAction.onClick} />
+                  <div className="flex min-h-[4.5rem] w-full items-center justify-center gap-1.5">
+                    <CompactIconActionButton label={primaryAction.label} variant="compact-primary" icon={primaryAction.icon} onClick={primaryAction.onClick} />
                     {primaryAction.showSecondaryAction ? (
-                      <CompactIconActionButton label="Open Operational Record" onClick={() => onOpenOperationalRecord(record.id)} />
+                      <CompactIconActionButton label="Open Operational Record" icon="open" onClick={() => onOpenOperationalRecord(record.id)} />
                     ) : null}
                   </div>
                 );
@@ -469,29 +495,39 @@ export function UsedGearWorkflowProgressSection({
               {
                 key: 'status',
                 label: 'Status',
-                width: '14rem',
-                renderCell: (record) => <span className="text-xs text-[var(--muted)]">{getUsedGearWorkflowStatus(record.fields) ?? 'Unknown'}</span>,
+                width: '18rem',
+                renderCell: (record) => {
+                  const statusLabel = getUsedGearWorkflowStatus(record.fields) ?? 'Unknown';
+
+                  return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
+                },
               },
               {
-                key: 'detail',
-                label: 'Next / Ready',
-                width: '10rem',
-                renderCell: (record) => {
-                  const nextTeamLabel = displayInventoryValue(record.fields['Workflow Next Team']);
-                  const priceReady = getUsedGearWorkflowListingReadiness(record).price ? 'Price Ready' : 'Price Missing';
-                  return (
-                    <span className="text-xs text-[var(--muted)]">{shouldShowNextTeamDetail(queueMode, nextTeamLabel) ? nextTeamLabel : shouldShowPriceReadyDetail(queueMode) ? priceReady : formatIntakeDate(record)}</span>
-                  );
-                },
+                key: 'intake',
+                label: 'Intake',
+                width: '8rem',
+                renderCell: (record) => <span className="text-xs text-[var(--muted)]">{formatIntakeDate(record)}</span>,
               },
             );
           } else {
-            columns.splice(2, 0, {
-              key: 'intake',
-              label: 'Intake',
-              width: '8rem',
-              renderCell: (record) => <span className="text-xs text-[var(--muted)]">{formatIntakeDate(record)}</span>,
-            });
+            columns.splice(2, 0,
+              {
+                key: 'status',
+                label: 'Status',
+                width: '18rem',
+                renderCell: (record) => {
+                  const statusLabel = getUsedGearWorkflowStatus(record.fields) ?? 'Unknown';
+
+                  return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
+                },
+              },
+              {
+                key: 'intake',
+                label: 'Intake',
+                width: '8rem',
+                renderCell: (record) => <span className="text-xs text-[var(--muted)]">{formatIntakeDate(record)}</span>,
+              },
+            );
           }
 
           if (!matrixGroups.length) {
@@ -508,8 +544,8 @@ export function UsedGearWorkflowProgressSection({
               groups={matrixGroups}
               columns={columns}
               getItemKey={(record) => record.id}
-              groupColumnLabel="Group"
-              renderGroupCell={(group) => {
+              groupColumnLabel={shouldShowGroupColumn ? 'Group' : undefined}
+              renderGroupCell={shouldShowGroupColumn ? ((group) => {
                 if (group.items.length === 1) {
                   return <span className="text-xs text-[var(--muted)]/45">-</span>;
                 }
@@ -519,7 +555,7 @@ export function UsedGearWorkflowProgressSection({
                     <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{group.items.length}</span>
                   </div>
                 );
-              }}
+              }) : undefined}
             />
           );
         })()}

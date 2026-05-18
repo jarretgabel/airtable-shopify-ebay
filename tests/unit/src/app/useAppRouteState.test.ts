@@ -38,12 +38,12 @@ describe('useAppRouteState', () => {
   });
 
   it('maps the dedicated manual-intake route', () => {
-    const state = useAppRouteState(locationFor('/inventory/manual-intake'), ['dashboard', 'manual-intake']);
+    const state = useAppRouteState(locationFor('/manual-intake'), ['dashboard', 'manual-intake']);
     expect(state.activeTab).toBe('manual-intake');
   });
 
   it('maps the dedicated manual-intake route without treating it as an inventory record id', () => {
-    const state = useAppRouteState(locationFor('/inventory/manual-intake'), ['dashboard', 'manual-intake']);
+    const state = useAppRouteState(locationFor('/manual-intake'), ['dashboard', 'manual-intake']);
     expect(state.activeTab).toBe('manual-intake');
     expect(state.manualIntakeMode).toBe(true);
     expect(state.inventoryRecordId).toBeNull();
@@ -60,7 +60,7 @@ describe('useAppRouteState', () => {
   });
 
   it('maps manual-intake deep links with record ids', () => {
-    const state = useAppRouteState(locationFor('/inventory/manual-intake/rec%20123'), ['dashboard', 'manual-intake']);
+    const state = useAppRouteState(locationFor('/manual-intake/rec%20123'), ['dashboard', 'manual-intake']);
     expect(state.activeTab).toBe('manual-intake');
     expect(state.manualIntakeRecordId).toBe('rec 123');
   });
@@ -95,18 +95,18 @@ describe('useAppRouteState', () => {
   });
 
   it('maps the dedicated inventory route', () => {
-    const state = useAppRouteState(locationFor('/inventory'), ['dashboard', 'inventory']);
+    const state = useAppRouteState(locationFor('/workflow-hub'), ['dashboard', 'inventory']);
     expect(state.activeTab).toBe('inventory');
   });
 
   it('maps the inventory record detail route and decodes id', () => {
-    const state = useAppRouteState(locationFor('/inventory/rec%20123'), ['dashboard', 'inventory']);
+    const state = useAppRouteState(locationFor('/workflow-hub/rec%20123'), ['dashboard', 'inventory']);
     expect(state.activeTab).toBe('inventory');
     expect(state.inventoryRecordId).toBe('rec 123');
   });
 
   it('maps the inventory price editor route and decodes id', () => {
-    const state = useAppRouteState(locationFor('/inventory/price/rec%20workflow'), ['dashboard', 'inventory']);
+    const state = useAppRouteState(locationFor('/workflow-hub/price/rec%20workflow'), ['dashboard', 'inventory']);
     expect(state.activeTab).toBe('inventory');
     expect(state.inventoryPriceEditorRecordId).toBe('rec workflow');
     expect(state.inventoryRecordId).toBeNull();

@@ -17,7 +17,7 @@ export function buildUsedGearPendingReviewPath(recordId: string): string {
 }
 
 export function buildUsedGearManualIntakePath(recordId: string): string {
-  return `/inventory/manual-intake/${encodeRecordId(recordId)}`;
+  return `/manual-intake/${encodeRecordId(recordId)}`;
 }
 
 export function buildUsedGearTestingPath(recordId: string): string {
@@ -54,7 +54,7 @@ export function resolveUsedGearOperationalPath(recordId: string, fields: Record<
     || status === 'Accepted - Arrived, Awaiting SKU'
     || status === 'Accepted - Arrived, Awaiting Missing Item'
   ) {
-    return `/inventory/manual-intake/${encodedRecordId}`;
+    return `/manual-intake/${encodedRecordId}`;
   }
 
   if (status === 'Testing and Photography In Progress') {
@@ -82,5 +82,5 @@ export function resolveUsedGearOperationalPath(recordId: string, fields: Record<
     return `/listings/${encodedRecordId}`;
   }
 
-  return `/inventory/${encodedRecordId}`;
+  return `/workflow-hub/${encodedRecordId}`;
 }

@@ -447,7 +447,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
         ) : null}
 
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-          <AppSectionTitle title="Submitted Intake And Included Items" titleClassName="text-lg" />
+          <AppSectionTitle title="Intake Snapshot" titleClassName="text-lg" />
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {readOnlyFields.map((field) => (
               <ReadOnlyFieldDisplay
@@ -465,12 +465,10 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
               <p className="mt-2 leading-6 text-[var(--ink)]">{customerReference.cosmeticNotes || 'None provided'}</p>
             </div>
 
-            {hasOperationalContext ? (
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
-                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Notes</p>
-                <p className="mt-2 leading-6 text-[var(--ink)]">{stageContext.inventoryNotes || 'No inventory notes available.'}</p>
-              </div>
-            ) : null}
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Notes</p>
+              <p className="mt-2 leading-6 text-[var(--ink)]">{stageContext.inventoryNotes || 'No inventory notes available.'}</p>
+            </div>
 
             <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
               <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Testing Cosmetic Notes</p>

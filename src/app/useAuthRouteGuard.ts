@@ -51,21 +51,38 @@ export function useAuthRouteGuard({
       return;
     }
 
+    if (normalizedPath === '/inventory') {
+      navigate('/workflow-hub', { replace: true });
+      return;
+    }
+
+    const legacyInventoryPriceEditorMatch = normalizedPath.match(/^\/inventory\/price\/([^/]+)$/);
+    if (legacyInventoryPriceEditorMatch) {
+      navigate(`/workflow-hub/price/${legacyInventoryPriceEditorMatch[1]}`, { replace: true });
+      return;
+    }
+
+    const legacyInventoryDetailMatch = normalizedPath.match(/^\/inventory\/(?!price\/|manual-intake\/|workflow\/)([^/]+)$/);
+    if (legacyInventoryDetailMatch) {
+      navigate(`/workflow-hub/${legacyInventoryDetailMatch[1]}`, { replace: true });
+      return;
+    }
+
     const isKnownTabPath = isTab(normalizedPath.slice(1));
     const isJotformReviewRecordPath = /^\/parking-lot-1\/review-record\/[^/]+$/.test(normalizedPath);
     const isTrashReviewRecordPath = /^\/trash-review\/review\/[^/]+$/.test(normalizedPath);
-    const isManualIntakeDetailPath = /^\/inventory\/manual-intake\/[^/]+$/.test(normalizedPath);
+    const isManualIntakeDetailPath = /^\/manual-intake\/[^/]+$/.test(normalizedPath);
     const isTestingDetailPath = /^\/testing\/[^/]+$/.test(normalizedPath);
     const isPhotosDetailPath = /^\/photos\/[^/]+$/.test(normalizedPath);
-    const isInventoryPriceEditorPath = /^\/inventory\/price\/[^/]+$/.test(normalizedPath);
-    const isInventoryManualIntakePath = normalizedPath === '/inventory/manual-intake';
-    const isInventoryDetailPath = /^\/inventory\/[^/]+$/.test(normalizedPath);
+    const isInventoryPriceEditorPath = /^\/workflow-hub\/price\/[^/]+$/.test(normalizedPath);
+    const isInventoryManualIntakePath = normalizedPath === '/manual-intake';
+    const isInventoryDetailPath = /^\/workflow-hub\/[^/]+$/.test(normalizedPath);
     const isListingsDetailPath = /^\/listings\/[^/]+$/.test(normalizedPath);
     const isEbayListingsDetailPath = /^\/ebay\/listings\/[^/]+$/.test(normalizedPath);
     const isShopifyProductsDetailPath = /^\/shopify\/products\/[^/]+$/.test(normalizedPath);
     const isUserDetailPath = /^\/account\/users\/[^/]+$/.test(normalizedPath);
     const isKnownSubPath =
-      normalizedPath === '/inventory' ||
+      normalizedPath === '/workflow-hub' ||
       isInventoryPriceEditorPath ||
       isInventoryManualIntakePath ||
       isManualIntakeDetailPath ||
@@ -124,7 +141,7 @@ export function useAuthRouteGuard({
                 ? 'testing'
               : isPhotosDetailPath
                 ? 'photos'
-              : normalizedPath === '/inventory' || isInventoryPriceEditorPath || isInventoryDetailPath
+              : normalizedPath === '/workflow-hub' || isInventoryPriceEditorPath || isInventoryDetailPath
                 ? 'inventory'
               : normalizedPath === '/account/settings'
                 ? 'settings'

@@ -5,6 +5,7 @@ import { CompactIconActionButton } from '@/components/app/CompactIconActionButto
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { EmptySurface } from '@/components/app/StateSurfaces';
+import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
   loadWorkflowPostPublishQueue,
@@ -294,18 +295,26 @@ export function UsedGearWorkflowPostPublishSection({
       width: 'minmax(0,1.65fr)',
       renderCell: (record) => {
         const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
-        const status = snapshot?.status ?? 'Unknown';
         const channelLabel = snapshot?.channel || snapshot?.bucket || 'Workflow';
 
         return (
           <div className="min-w-0">
             <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
             <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
-              <span>{status}</span>
               <span>{channelLabel}</span>
             </div>
           </div>
         );
+      },
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      width: '14rem',
+      renderCell: (record) => {
+        const statusLabel = getUsedGearWorkflowPostPublishSnapshot(record)?.status ?? 'Unknown';
+
+        return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
       },
     },
     {

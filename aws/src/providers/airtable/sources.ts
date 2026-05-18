@@ -79,10 +79,6 @@ function isApprovedValue(value: unknown): boolean {
 const DEFAULT_USERS_TABLE_NAME = 'j2Gt9USORo6Vi5';
 const DEFAULT_APPROVAL_TABLE_REFERENCE = '3yTb0JkzUMFNnS/viw21kEduXKNub4Vn';
 const DEFAULT_COMBINED_LISTINGS_TABLE_NAME = 'tbl0K0nFQL64jQMx8';
-const INVENTORY_DIRECTORY_BASE_ID = 'appjQj8FQfFZ2ogMz';
-const INVENTORY_DIRECTORY_TABLE_ID = 'tblirsoRIFPDMHxb0';
-const INVENTORY_DIRECTORY_TABLE_NAME = 'SB Inventory';
-const INVENTORY_DIRECTORY_TABLE_REFERENCE = `${INVENTORY_DIRECTORY_BASE_ID}/${INVENTORY_DIRECTORY_TABLE_ID}`;
 const INVENTORY_DIRECTORY_ATTACHMENT_FIELD_IDS = new Set(['fldMXp0EaUHGglU8M']);
 
 function resolveUsersSource(): { reference?: string; tableName: string } {
@@ -136,8 +132,8 @@ function getSourceDefinition(source: AirtableConfiguredRecordsSource): { referen
   }
 
   return {
-    reference: INVENTORY_DIRECTORY_TABLE_REFERENCE,
-    tableName: INVENTORY_DIRECTORY_TABLE_NAME,
+    reference: process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF?.trim(),
+    tableName: process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME?.trim() || DEFAULT_COMBINED_LISTINGS_TABLE_NAME,
   };
 }
 
@@ -146,12 +142,6 @@ function getWriteSourceDefinition(source: AirtableConfiguredWriteSource): { refe
 }
 
 function getMetadataSourceDefinition(source: AirtableConfiguredMetadataSource): { baseId: string; tableId: string } {
-  if (source === 'inventory-directory') {
-    return {
-      baseId: INVENTORY_DIRECTORY_BASE_ID,
-      tableId: INVENTORY_DIRECTORY_TABLE_ID,
-    };
-  }
 
   const definition = getSourceDefinition(source);
 
@@ -180,13 +170,6 @@ function getMetadataSourceDefinition(source: AirtableConfiguredMetadataSource): 
 }
 
 function getAttachmentSourceDefinition(source: AirtableConfiguredAttachmentSource): { baseId: string; allowedFieldIds: Set<string> } {
-  if (source === 'inventory-directory') {
-    return {
-      baseId: INVENTORY_DIRECTORY_BASE_ID,
-      allowedFieldIds: INVENTORY_DIRECTORY_ATTACHMENT_FIELD_IDS,
-    };
-  }
-
   const definition = getSourceDefinition(source);
 
   if (!definition.reference) {

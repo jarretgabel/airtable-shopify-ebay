@@ -279,7 +279,7 @@ function buildNotificationTarget(
 ): UsedGearWorkflowNotificationTarget {
   const groupId = getNotificationGroupId(record);
   const basePath = destinationTab === 'inventory'
-    ? '/inventory'
+    ? '/workflow-hub'
     : destinationTab === 'parking-lot-1'
       ? '/parking-lot-1'
       : destinationTab === 'jotform'

@@ -1,8 +1,14 @@
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
+import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import type { AirtableRecord } from '@/types/airtable';
-import { displayInventoryValue } from '@/services/inventoryDirectory';
+import {
+  displayInventoryValue,
+  getInventoryDirectoryItemLabel,
+  getInventoryDirectorySku,
+  getInventoryDirectoryStatus,
+} from '@/services/inventoryDirectory';
 
 interface InventoryDirectoryListSectionProps {
   records: AirtableRecord[];
@@ -15,13 +21,34 @@ interface InventoryDirectoryListSectionProps {
   onStatusFilterChange: (value: string) => void;
   onRefresh?: () => void;
   onOpenManualIntake: (recordId: string) => void;
-  onOpenTestingForm: (recordId: string) => void;
-  onOpenPhotosForm: (recordId: string) => void;
   onSelectRecord: (recordId: string) => void;
 }
 
-function componentText(record: AirtableRecord): string {
-  return displayInventoryValue(record.fields['Component Type'] ?? record.fields.Component);
+const intakeDateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+function getRecordIntakeTimestamp(record: AirtableRecord): number {
+  const arrivalDate = typeof record.fields['Arrival Date'] === 'string' ? record.fields['Arrival Date'].trim() : '';
+  const parsedArrival = arrivalDate ? Date.parse(arrivalDate) : Number.NaN;
+  if (Number.isFinite(parsedArrival)) {
+    return parsedArrival;
+  }
+
+  const createdTime = Date.parse(record.createdTime);
+  return Number.isFinite(createdTime) ? createdTime : Number.POSITIVE_INFINITY;
+}
+
+function formatIntakeDate(record: AirtableRecord): string {
+  const intakeTimestamp = getRecordIntakeTimestamp(record);
+  if (Number.isFinite(intakeTimestamp)) {
+    return intakeDateFormatter.format(new Date(intakeTimestamp));
+  }
+
+  return 'Unknown';
 }
 
 export function InventoryDirectoryListSection({
@@ -35,8 +62,6 @@ export function InventoryDirectoryListSection({
   onStatusFilterChange,
   onRefresh,
   onOpenManualIntake,
-  onOpenTestingForm,
-  onOpenPhotosForm,
   onSelectRecord,
 }: InventoryDirectoryListSectionProps) {
   const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
@@ -44,36 +69,39 @@ export function InventoryDirectoryListSection({
       key: 'sku',
       label: 'SKU',
       width: '9rem',
-      renderCell: (record) => <span className="font-medium text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</span>,
+      renderCell: (record) => <span className="font-medium text-[var(--ink)]">{displayInventoryValue(getInventoryDirectorySku(record.fields))}</span>,
     },
     {
       key: 'item',
       label: 'Item',
       width: 'minmax(0,1.55fr)',
-      renderCell: (record) => (
-        <div className="min-w-0">
-          <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
-          <div className="mt-0.5 text-xs text-[var(--muted)]">{componentText(record)}</div>
-        </div>
-      ),
+      renderCell: (record) => <div className="min-w-0 truncate text-sm text-[var(--ink)]">{displayInventoryValue(getInventoryDirectoryItemLabel(record.fields))}</div>,
     },
     {
       key: 'status',
       label: 'Status',
-      width: '10rem',
-      renderCell: (record) => <span className="text-xs text-[var(--muted)]">{displayInventoryValue(record.fields.Status)}</span>,
+      width: '14rem',
+      renderCell: (record) => {
+        const statusLabel = displayInventoryValue(getInventoryDirectoryStatus(record.fields)) || 'Unknown';
+
+        return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
+      },
+    },
+    {
+      key: 'intake',
+      label: 'Intake',
+      width: '8rem',
+      renderCell: (record) => <span className="text-xs text-[var(--muted)]">{formatIntakeDate(record)}</span>,
     },
     {
       key: 'actions',
       label: 'Actions',
-      width: '11rem',
+      width: '6rem',
       align: 'right',
       renderCell: (record) => (
         <div className="flex flex-wrap justify-end gap-1.5">
-          <CompactIconActionButton label="Open Manual Intake" variant="small-secondary" onClick={() => onOpenManualIntake(record.id)} />
-          <CompactIconActionButton label="Open Testing" variant="small-secondary" onClick={() => onOpenTestingForm(record.id)} />
-          <CompactIconActionButton label="Open Photos" variant="small-secondary" onClick={() => onOpenPhotosForm(record.id)} />
-          <CompactIconActionButton label="Edit Inventory Record" variant="small-secondary" onClick={() => onSelectRecord(record.id)} />
+          <CompactIconActionButton label="Open Manual Intake" variant="small-secondary" icon="form" onClick={() => onOpenManualIntake(record.id)} />
+          <CompactIconActionButton label="Edit Inventory Record" variant="small-secondary" icon="edit" onClick={() => onSelectRecord(record.id)} />
         </div>
       ),
     },

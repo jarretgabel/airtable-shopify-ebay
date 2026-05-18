@@ -11,7 +11,12 @@ import { usePageSectionTracking } from '@/components/app/usePageSectionTracking'
 import { InventoryDirectoryListSection } from '@/components/tabs/airtable/InventoryDirectoryListSection';
 import { UsedGearPendingReviewSection, type UsedGearPendingReviewSortMode } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
 import { UsedGearWorkflowProgressSection, type UsedGearWorkflowProgressSortMode } from '@/components/tabs/airtable/UsedGearWorkflowProgressSection';
-import { loadInventoryDirectory } from '@/services/inventoryDirectory';
+import {
+  getInventoryDirectoryItemLabel,
+  getInventoryDirectorySku,
+  getInventoryDirectoryStatus,
+  loadInventoryDirectory,
+} from '@/services/inventoryDirectory';
 import { useNotificationStore } from '@/stores/notificationStore';
 import type { UserRole } from '@/stores/auth/authTypes';
 import type { AirtableRecord } from '@/types/airtable';
@@ -390,8 +395,8 @@ export function AirtableTab({
 
   const statusOptions = useMemo(
     () => Array.from(new Set(records
-      .map((record) => record.fields.Status)
-      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)))
+      .map((record) => getInventoryDirectoryStatus(record.fields))
+      .filter((value): value is string => value.trim().length > 0)))
       .sort((left, right) => left.localeCompare(right)),
     [records],
   );
@@ -400,7 +405,7 @@ export function AirtableTab({
     const normalizedSearch = inventoryDirectorySearch.trim().toLowerCase();
 
     return records.filter((record) => {
-      const status = typeof record.fields.Status === 'string' ? record.fields.Status : '';
+      const status = getInventoryDirectoryStatus(record.fields);
       if (inventoryDirectoryStatusFilter !== 'all' && status !== inventoryDirectoryStatusFilter) {
         return false;
       }
@@ -410,11 +415,10 @@ export function AirtableTab({
       }
 
       const haystack = [
-        record.fields.SKU,
-        record.fields.Make,
-        record.fields.Model,
+        getInventoryDirectorySku(record.fields),
+        getInventoryDirectoryItemLabel(record.fields),
         record.fields['Component Type'],
-        record.fields.Status,
+        status,
       ]
         .flatMap((value) => Array.isArray(value) ? value : [value])
         .filter((value): value is string => typeof value === 'string')
@@ -599,8 +603,6 @@ export function AirtableTab({
                 void loadDirectoryData();
               }}
               onOpenManualIntake={onOpenManualIntake}
-              onOpenTestingForm={onOpenTestingForm}
-              onOpenPhotosForm={onOpenPhotosForm}
               onSelectRecord={onSelectRecord}
             />
           ) : null}
