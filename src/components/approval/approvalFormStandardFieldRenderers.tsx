@@ -1,4 +1,5 @@
 import { type ChangeEvent, type JSX } from 'react';
+import { isAllowOffersField } from '@/stores/approvalStore';
 
 import { ApprovalSelect } from './ApprovalSelect';
 import {
@@ -39,6 +40,9 @@ export function renderApprovalFormBooleanField({
   setFormValue,
 }: ApprovalFormStandardFieldRendererParams): JSX.Element {
   const normalizedBooleanValue = value.trim().toLowerCase() === 'true' ? 'true' : 'false';
+  const booleanLabels = isAllowOffersField(fieldName)
+    ? { trueLabel: 'Yes', falseLabel: 'No' }
+    : { trueLabel: 'True', falseLabel: 'False' };
 
   return (
     <label className="flex flex-col gap-2">
@@ -49,8 +53,8 @@ export function renderApprovalFormBooleanField({
         onChange={(event: ChangeEvent<HTMLSelectElement>) => setFormValue(fieldName, event.target.value)}
         disabled={inputDisabled}
       >
-        <option value="true">True</option>
-        <option value="false">False</option>
+        <option value="true">{booleanLabels.trueLabel}</option>
+        <option value="false">{booleanLabels.falseLabel}</option>
       </ApprovalSelect>
     </label>
   );

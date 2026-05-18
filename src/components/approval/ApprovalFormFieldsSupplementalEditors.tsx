@@ -162,6 +162,18 @@ export function ApprovalFormFieldsSupplementalEditors({
   getSelectClassName,
   getInputClassName,
 }: ApprovalFormFieldsSupplementalEditorsProps) {
+  const currentWorkflowImageRows = imageUrlSourceField
+    ? parseWorkflowSelectedImageRows(
+      formValues[imageUrlSourceField] ?? '',
+      imageAltTextSourceField ? (formValues[imageAltTextSourceField] ?? '') : '',
+      shopifyImagePayloadFieldName ? (formValues[shopifyImagePayloadFieldName] ?? '') : '',
+    )
+    : [];
+  const workflowImageAltByUrl = Object.fromEntries(
+    currentWorkflowImageRows
+      .map((row) => [row.src.trim().toLowerCase(), row.alt.trim()] as const)
+      .filter(([url]) => url.length > 0),
+  );
   const hasTestingSection = testingSectionFields.length > 0;
   const effectiveTestingSectionValues = testingSectionValues ?? formValues;
   const workflowHeaderAction = recordId && workflowManagedListingContent && onOpenOperationalRecord ? (
@@ -207,16 +219,12 @@ export function ApprovalFormFieldsSupplementalEditors({
         <WorkflowListingImageSelector
           attachments={workflowImageAttachments}
           selectedUrls={selectedWorkflowImageUrls}
+          imageAltByUrl={workflowImageAltByUrl}
           onSelectionChange={(nextSelectedUrls) => {
-            const currentRows = parseWorkflowSelectedImageRows(
-              formValues[imageUrlSourceField] ?? '',
-              imageAltTextSourceField ? (formValues[imageAltTextSourceField] ?? '') : '',
-              shopifyImagePayloadFieldName ? (formValues[shopifyImagePayloadFieldName] ?? '') : '',
-            );
             const nextValues = buildWorkflowListingImageSelectionValues({
               selectedUrls: nextSelectedUrls,
               attachments: workflowImageAttachments,
-              currentRows,
+              currentRows: currentWorkflowImageRows,
             });
 
             setFormValue(imageUrlSourceField, nextValues.imageValue);
@@ -230,21 +238,6 @@ export function ApprovalFormFieldsSupplementalEditors({
           disabled={saving || isReadOnlyApprovalField(imageUrlSourceField)}
           sourceActions={imageSourceActions}
         />
-      )}
-
-      {activeBodyDescriptionFieldName && (
-        <label className="col-span-1 flex flex-col gap-2 md:col-span-2">
-          {renderSpecialLabel('Description', activeBodyDescriptionFieldName)}
-          <textarea
-            className={`${inputBaseClass} min-h-[110px] resize-y leading-[1.4]`}
-            value={formValues[activeBodyDescriptionFieldName] ?? ''}
-            onChange={(event) => setFormValue(activeBodyDescriptionFieldName, event.target.value)}
-            placeholder={isEbayApprovalForm
-              ? 'Listing description saved to Airtable Description and mirrored into Body HTML'
-              : 'Short product description used in listing body HTML'}
-            disabled={saving}
-          />
-        </label>
       )}
 
       {shopifyKeyFeaturesFieldName && (
@@ -277,6 +270,21 @@ export function ApprovalFormFieldsSupplementalEditors({
             headerAction={workflowHeaderAction}
           />
         </Suspense>
+      )}
+
+      {activeBodyDescriptionFieldName && (
+        <label className="col-span-1 flex flex-col gap-2 md:col-span-2">
+          {renderSpecialLabel('Description', activeBodyDescriptionFieldName)}
+          <textarea
+            className={`${inputBaseClass} min-h-[110px] resize-y leading-[1.4]`}
+            value={formValues[activeBodyDescriptionFieldName] ?? ''}
+            onChange={(event) => setFormValue(activeBodyDescriptionFieldName, event.target.value)}
+            placeholder={isEbayApprovalForm
+              ? 'Listing description saved to Airtable Description and mirrored into Body HTML'
+              : 'Short product description used in listing body HTML'}
+            disabled={saving}
+          />
+        </label>
       )}
 
       {hasTestingSection && (

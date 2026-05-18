@@ -17,9 +17,11 @@ export interface IntakeSnapshotSectionProps {
   fields: IntakeSnapshotField[];
   cards: IntakeSnapshotCard[];
   title?: string;
+  description?: string;
   className?: string;
   actions?: ReactNode;
   sectionId?: string;
+  children?: ReactNode;
 }
 
 function SnapshotFieldCard({ label, value, description }: IntakeSnapshotField) {
@@ -47,20 +49,27 @@ export function IntakeSnapshotSection({
   fields,
   cards,
   title = 'Intake Snapshot',
+  description,
   className,
   actions,
   sectionId,
+  children,
 }: IntakeSnapshotSectionProps) {
   return (
     <div id={sectionId} className={['rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5', className].filter(Boolean).join(' ')}>
       <AppSectionTitle title={title} titleClassName="text-lg" actions={actions} />
+      {description ? <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{description}</p> : null}
       <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {fields.map((field) => <SnapshotFieldCard key={field.label} {...field} />)}
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        {cards.map((card) => <SnapshotNoteCard key={card.title} {...card} />)}
-      </div>
+      {cards.length > 0 ? (
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {cards.map((card) => <SnapshotNoteCard key={card.title} {...card} />)}
+        </div>
+      ) : null}
+
+      {children}
     </div>
   );
 }

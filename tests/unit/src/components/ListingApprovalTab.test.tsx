@@ -404,4 +404,27 @@ describe('ListingApprovalTab', () => {
       expect(preTexts.some((text) => text.includes('"categoryId": "654321"') && text.includes('listingDescription'))).toBe(true);
     });
   });
+
+  it('shows a not-found state for a direct listing URL whose record no longer exists', () => {
+    const onBackToList = vi.fn();
+
+    render(
+      <ListingApprovalTab
+        viewModel={{
+          selectedRecordId: 'rec-missing-after-reseed',
+          onSelectRecord: vi.fn(),
+          onBackToList,
+        }}
+        tableReference="test-base/test-table"
+        tableName="Approval Listings"
+        approvalChannel="combined"
+      />,
+    );
+
+    expect(screen.getByText('Listing record not found')).toBeInTheDocument();
+    expect(screen.getByText(/old record ID may no longer exist/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to listings directory' }));
+    expect(onBackToList).toHaveBeenCalledTimes(1);
+  });
 });

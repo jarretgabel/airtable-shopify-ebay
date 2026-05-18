@@ -411,6 +411,17 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     expect(product.variants?.[0]?.price).toBe('249.00');
     expect(product.variants?.[0]?.compare_at_price).toBe('299.00');
   });
+
+  it('maps the internal sku to the Shopify variant barcode', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Barcode From SKU Product',
+      SKU: 'MCINTOSH-MA6900',
+      'Shopify REST Variant 1 Barcode': 'SHOULD-NOT-WIN',
+    });
+
+    expect(product.variants?.[0]?.sku).toBe('MCINTOSH-MA6900');
+    expect(product.variants?.[0]?.barcode).toBe('MCINTOSH-MA6900');
+  });
   
   it('parses collection IDs from Airtable collection fields into Shopify GIDs', () => {
     const collectionIds = buildShopifyCollectionIdsFromApprovalFields({

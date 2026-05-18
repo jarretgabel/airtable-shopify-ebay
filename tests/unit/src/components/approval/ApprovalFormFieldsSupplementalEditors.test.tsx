@@ -543,6 +543,85 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     expect(onOpenPhotosForm).toHaveBeenCalledWith('rec-images-1');
   });
 
+  it('renders key features immediately after the listing images selector', async () => {
+    shippingEditorsSpy.mockReset();
+    keyFeaturesEditorSpy.mockReset();
+    testingNotesTextareaEditorSpy.mockReset();
+
+    render(
+      <ApprovalFormFieldsSupplementalEditors
+        imageUrlSourceField="Images"
+        useCombinedImageAltEditor={false}
+        combinedImageEditorValue=""
+        imageAltTextSourceField={undefined}
+        shopifyImagePayloadFieldName={undefined}
+        workflowImageAttachments={[
+          { id: 'att-1', url: 'https://cdn.example.com/image-a.jpg', filename: 'image-a.jpg' },
+        ]}
+        selectedWorkflowImageUrls={[]}
+        formValues={{
+          Images: '',
+          'eBay Body Key Features JSON': '[]',
+          Description: 'Listing description',
+        }}
+        setFormValue={vi.fn()}
+        saving={false}
+        isReadOnlyApprovalField={() => false}
+        workflowManagedListingContent={false}
+        testingSectionFields={[]}
+        activeBodyDescriptionFieldName="Description"
+        renderSpecialLabel={(label) => <span>{label}</span>}
+        inputBaseClass="input"
+        isEbayApprovalForm={true}
+        shopifyKeyFeaturesFieldName={undefined}
+        shopifyKeyFeaturesSyncFieldNames={[]}
+        ebayKeyFeaturesFieldName="eBay Body Key Features JSON"
+        ebayKeyFeaturesSyncFieldNames={[]}
+        ebayTestingNotesFieldName={undefined}
+        ebayAttributesFieldName={undefined}
+        ebayAttributesSyncFieldNames={[]}
+        ebayDomesticShippingFeesFieldName={undefined}
+        ebayInternationalShippingFeesFieldName={undefined}
+        ebayDomesticShippingFlatFeeFieldName=""
+        ebayInternationalShippingFlatFeeFieldName=""
+        hasEbayShippingServicesEditor={false}
+        domesticService1FieldName={undefined}
+        domesticService2FieldName={undefined}
+        internationalService1FieldName={undefined}
+        internationalService2FieldName={undefined}
+        hasShopifyTagEditor={false}
+        shopifyTagValues={[]}
+        setShopifyTagValues={vi.fn()}
+        hasShopifyCollectionEditor={false}
+        shopifyCollectionsFieldName="Collections"
+        effectiveShopifyCollectionIds={[]}
+        effectiveCollectionEditorLabelsById={{}}
+        setShopifyCollectionIds={vi.fn()}
+        hasEbayCategoryEditor={false}
+        effectiveEbayCategoriesFieldName="categories"
+        ebayMarketplaceId="EBAY_US"
+        ebaySelectedCategoryDisplayValues={[]}
+        normalizedEbayCategoryLabelsById={{}}
+        setEbayCategoryIds={vi.fn()}
+        hasSecondaryEbayCategory={false}
+        renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
+        getSelectClassName={() => 'select'}
+        getInputClassName={() => 'input'}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-key-features-editor')).toBeInTheDocument();
+    });
+
+    const imageSelector = screen.getByTestId('workflow-listing-image-selector');
+    const keyFeaturesEditor = screen.getByTestId('mock-key-features-editor');
+    const description = screen.getByText('Description');
+
+    expect(imageSelector.compareDocumentPosition(keyFeaturesEditor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(keyFeaturesEditor.compareDocumentPosition(description) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('renders the shared Testing section on single-channel listing editors and suppresses the standalone testing-notes editor', () => {
     shippingEditorsSpy.mockReset();
     keyFeaturesEditorSpy.mockReset();
@@ -622,9 +701,12 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     );
 
     expect(screen.getByText('Testing')).toBeInTheDocument();
-    expect(screen.getByLabelText('Manual')).toHaveValue('Included');
-    expect(screen.getByLabelText('Testing Notes')).toHaveValue('Bench tested');
-    expect(screen.getByLabelText('Cosmetic Notes')).toHaveValue('Light wear on the top cover.');
+    expect(screen.getByText('Manual')).toBeInTheDocument();
+    expect(screen.getAllByText('Included').length).toBeGreaterThan(0);
+    expect(screen.getByText('Testing Notes')).toBeInTheDocument();
+    expect(screen.getByText('Bench tested')).toBeInTheDocument();
+    expect(screen.getByText('Cosmetic Notes')).toBeInTheDocument();
+    expect(screen.getByText('Light wear on the top cover.')).toBeInTheDocument();
     expect(testingNotesTextareaEditorSpy).not.toHaveBeenCalled();
   });
 
@@ -709,14 +791,18 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
       />,
     );
 
-    expect(screen.getByLabelText('Manual')).toHaveValue('Included');
-    expect(screen.getByLabelText('Original Box')).toHaveValue('No');
-    expect(screen.getByLabelText('Voltage')).toHaveValue('120V');
-    expect(screen.getByLabelText('Remote')).toHaveValue('Included');
-    expect(screen.getByLabelText('Power Cable')).toHaveValue('Included');
-    expect(screen.getByLabelText('Testing Notes')).toHaveValue('Bench tested');
-    expect(screen.getByLabelText('Audiogon Rating')).toHaveValue('8/10');
-    expect(screen.getByLabelText('Cosmetic Notes')).toHaveValue('Light wear on the top cover.');
+    expect(screen.getByText('Manual')).toBeInTheDocument();
+    expect(screen.getByText('Original Box')).toBeInTheDocument();
+    expect(screen.getByText('Voltage')).toBeInTheDocument();
+    expect(screen.getByText('Remote')).toBeInTheDocument();
+    expect(screen.getByText('Power Cable')).toBeInTheDocument();
+    expect(screen.getByText('Audiogon Rating')).toBeInTheDocument();
+    expect(screen.getAllByText('Included').length).toBeGreaterThan(0);
+    expect(screen.getByText('No')).toBeInTheDocument();
+    expect(screen.getByText('120V')).toBeInTheDocument();
+    expect(screen.getByText('Bench tested')).toBeInTheDocument();
+    expect(screen.getByText('8/10')).toBeInTheDocument();
+    expect(screen.getByText('Light wear on the top cover.')).toBeInTheDocument();
   });
 
   it('renders the eBay category selector when the category editor is enabled', async () => {

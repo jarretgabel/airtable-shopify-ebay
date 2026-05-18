@@ -31,6 +31,9 @@ import {
   isShopifyOnlyFieldName,
   isShopifyCompoundTagsField,
   isShopifySingleTagField,
+  shouldIncludeEbayListingRecordFieldName,
+  shouldIncludeSharedListingRecordFieldName,
+  shouldIncludeShopifyListingRecordFieldName,
   isSystemManagedListingFieldName,
   isWorkflowOnlyListingFieldName,
 } from '@/components/approval/listingApprovalFieldHelpers';
@@ -187,6 +190,7 @@ export function useListingApprovalCombinedFieldState({
 
     return selectedRecordFieldNames.filter((fieldName) => {
       const normalized = fieldName.trim().toLowerCase();
+      if (!shouldIncludeShopifyListingRecordFieldName(fieldName)) return false;
       if (isHiddenCombinedFieldName(fieldName)) return false;
       if (isWorkflowOnlyListingFieldName(fieldName)) return false;
       if (isSystemManagedListingFieldName(fieldName)) return false;
@@ -204,6 +208,7 @@ export function useListingApprovalCombinedFieldState({
     if (!isCombinedApproval) return [] as string[];
     return selectedRecordFieldNames.filter((fieldName) => {
       const normalized = fieldName.trim().toLowerCase();
+      if (!shouldIncludeEbayListingRecordFieldName(fieldName)) return false;
       if (isRemovedCombinedEbayPriceFieldName(fieldName)) return false;
       if (isHiddenCombinedFieldName(fieldName)) return false;
       if (isWorkflowOnlyListingFieldName(fieldName)) return false;
@@ -227,6 +232,7 @@ export function useListingApprovalCombinedFieldState({
 
     return selectedRecordFieldNames.filter((fieldName) => {
       const normalized = fieldName.trim().toLowerCase();
+      if (!shouldIncludeSharedListingRecordFieldName(fieldName)) return false;
       if (isRemovedCombinedEbayPriceFieldName(fieldName)) return false;
 
       const isCombinedEbayPriceField = EBAY_PRICE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)

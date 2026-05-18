@@ -78,7 +78,7 @@ export function ListingApprovalSelectedRecordPanel({
   const combinedSectionItems = useMemo(() => [...COMBINED_RECORD_SECTION_ITEMS], []);
   const { activeSectionId, scrollToSection } = usePageSectionTracking(combinedSectionItems, COMBINED_RECORD_SECTION_ITEMS[0].id);
   const activeSectionKey = useMemo<CombinedRecordSectionKey>(
-    () => combinedSectionItems.find((item) => item.id === activeSectionId)?.key ?? 'shared',
+    () => combinedSectionItems.find((item) => item.id === activeSectionId)?.key ?? 'intake',
     [activeSectionId, combinedSectionItems],
   );
   const combinedSectionNav = isCombinedApproval ? (

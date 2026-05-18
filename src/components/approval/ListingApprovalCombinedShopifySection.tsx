@@ -4,6 +4,7 @@ import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
+import { isShopifyAdvancedOptionField } from '@/components/approval/approvalFormFieldsShopifyHelpersBasic';
 import type { ListingApprovalCombinedShopifySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
 const ShopifyApprovalPayloadDetails = lazy(async () => ({
@@ -50,6 +51,9 @@ export function ListingApprovalCombinedShopifySection({
   isShopifyPayloadPreviewContext,
   shopifyProductSetRequest,
 }: ListingApprovalCombinedShopifySectionProps) {
+  const standardShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => !isShopifyAdvancedOptionField(fieldName));
+  const advancedShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => isShopifyAdvancedOptionField(fieldName));
+
   return (
     <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
       <AppSectionTitle
@@ -57,32 +61,67 @@ export function ListingApprovalCombinedShopifySection({
         actions={shopifyDrawerRequiredStatus.hasRequired ? <DrawerStatusIcon allFilled={shopifyDrawerRequiredStatus.allFilled} /> : null}
       />
       <div>
-        <ApprovalFormFields
-          recordId={selectedRecord.id}
-          approvalChannel="shopify"
-          isCombinedApproval
-          forceShowShopifyCollectionsEditor
-          allFieldNames={combinedShopifyOnlyFieldNames}
-          writableFieldNames={writableFieldNames}
-          requiredFieldNames={shopifyRequiredFieldNames}
-          shopifyRequiredFieldNames={shopifyRequiredFieldNames}
-          ebayRequiredFieldNames={[]}
-          approvedFieldName={approvedFieldName}
-          formValues={formValues}
-          fieldKinds={fieldKinds}
-          listingFormatOptions={listingFormatOptions}
-          listingDurationOptions={listingDurationOptions}
-          saving={saving}
-          setFormValue={setFormValue}
-          suppressImageScalarFields
-          originalFieldValues={originalFieldValues}
-          normalizedBodyHtmlPreview={currentPageShopifyBodyHtml}
-          normalizedShopifyTagValues={currentPageShopifyTagValues}
-          normalizedShopifyCollectionIds={currentPageShopifyCollectionIds}
-          normalizedShopifyCollectionLabelsById={currentPageShopifyCollectionLabelsById}
-          selectedEbayTemplateId={selectedEbayTemplateId}
-          onEbayTemplateIdChange={setSelectedEbayTemplateId}
-        />
+        {standardShopifyFieldNames.length > 0 && (
+          <ApprovalFormFields
+            recordId={selectedRecord.id}
+            approvalChannel="shopify"
+            isCombinedApproval
+            forceShowShopifyCollectionsEditor
+            allFieldNames={standardShopifyFieldNames}
+            writableFieldNames={writableFieldNames}
+            requiredFieldNames={shopifyRequiredFieldNames}
+            shopifyRequiredFieldNames={shopifyRequiredFieldNames}
+            ebayRequiredFieldNames={[]}
+            approvedFieldName={approvedFieldName}
+            formValues={formValues}
+            fieldKinds={fieldKinds}
+            listingFormatOptions={listingFormatOptions}
+            listingDurationOptions={listingDurationOptions}
+            saving={saving}
+            setFormValue={setFormValue}
+            suppressImageScalarFields
+            originalFieldValues={originalFieldValues}
+            normalizedBodyHtmlPreview={currentPageShopifyBodyHtml}
+            normalizedShopifyTagValues={currentPageShopifyTagValues}
+            normalizedShopifyCollectionIds={currentPageShopifyCollectionIds}
+            normalizedShopifyCollectionLabelsById={currentPageShopifyCollectionLabelsById}
+            selectedEbayTemplateId={selectedEbayTemplateId}
+            onEbayTemplateIdChange={setSelectedEbayTemplateId}
+          />
+        )}
+
+        {advancedShopifyFieldNames.length > 0 && (
+          <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
+            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Advanced Shopify Fields</summary>
+            <div className="border-t border-[var(--line)] px-3 py-3">
+              <ApprovalFormFields
+                recordId={selectedRecord.id}
+                approvalChannel="shopify"
+                isCombinedApproval
+                allFieldNames={advancedShopifyFieldNames}
+                writableFieldNames={writableFieldNames}
+                requiredFieldNames={shopifyRequiredFieldNames}
+                shopifyRequiredFieldNames={shopifyRequiredFieldNames}
+                ebayRequiredFieldNames={[]}
+                approvedFieldName={approvedFieldName}
+                formValues={formValues}
+                fieldKinds={fieldKinds}
+                listingFormatOptions={listingFormatOptions}
+                listingDurationOptions={listingDurationOptions}
+                saving={saving}
+                setFormValue={setFormValue}
+                suppressImageScalarFields
+                originalFieldValues={originalFieldValues}
+                normalizedBodyHtmlPreview={currentPageShopifyBodyHtml}
+                normalizedShopifyTagValues={currentPageShopifyTagValues}
+                normalizedShopifyCollectionIds={currentPageShopifyCollectionIds}
+                normalizedShopifyCollectionLabelsById={currentPageShopifyCollectionLabelsById}
+                selectedEbayTemplateId={selectedEbayTemplateId}
+                onEbayTemplateIdChange={setSelectedEbayTemplateId}
+              />
+            </div>
+          </details>
+        )}
 
         <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
           <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify Body (HTML)</summary>

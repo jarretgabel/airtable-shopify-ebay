@@ -30,4 +30,14 @@ describe('approvalStoreFieldUtils single-value selection fields', () => {
     expect(toFormValueForField('Custom JSON', ['Audio', 'Vintage'])).toBe('[\n  "Audio",\n  "Vintage"\n]');
     expect(inferFieldKindForField('Custom JSON', ['Audio', 'Vintage'])).toBe('json');
   });
+
+  it('hydrates readable wrapped objects as plain text instead of json', () => {
+    expect(toFormValueForField('SKU', { text: 'SAMPLE-WORKFLOW-QUEUE-12' })).toBe('SAMPLE-WORKFLOW-QUEUE-12');
+    expect(inferFieldKindForField('SKU', { text: 'SAMPLE-WORKFLOW-QUEUE-12' })).toBe('text');
+  });
+
+  it('keeps multi-property objects as json when they are not simple wrappers', () => {
+    expect(toFormValueForField('Custom JSON', { text: 'SKU-100', locale: 'en-US' })).toBe('{\n  "text": "SKU-100",\n  "locale": "en-US"\n}');
+    expect(inferFieldKindForField('Custom JSON', { text: 'SKU-100', locale: 'en-US' })).toBe('json');
+  });
 });

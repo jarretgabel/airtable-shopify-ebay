@@ -5,6 +5,7 @@ import type {
   ShopifyApprovalPayloadPreviewData,
 } from '@/components/approval/ListingApprovalRecordPayloadPanels';
 import type { DrawerRequiredStatus } from '@/components/approval/listingApprovalCombinedSectionTypes';
+import { shouldIncludeListingRecordFieldName } from '@/components/approval/listingApprovalFieldHelpers';
 import { toFormValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -133,6 +134,8 @@ export function buildListingApprovalSelectedRecordViewProps({
   onOpenTestingForm,
   onOpenPhotosForm,
 }: BuildListingApprovalSelectedRecordViewPropsParams) {
+  const approvalFormFieldNames = allFieldNames.filter((fieldName) => shouldIncludeListingRecordFieldName(fieldName, approvalChannel));
+  const approvalFormWritableFieldNames = Object.keys(selectedRecord.fields).filter((fieldName) => shouldIncludeListingRecordFieldName(fieldName, approvalChannel));
   const approvalFormOriginalFieldValues = Object.fromEntries(
     Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
   );
@@ -198,8 +201,8 @@ export function buildListingApprovalSelectedRecordViewProps({
       approvalChannel,
       isCombinedApproval,
       forceShowShopifyCollectionsEditor: approvalChannel === 'shopify',
-      allFieldNames,
-      writableFieldNames: Object.keys(selectedRecord.fields),
+      allFieldNames: approvalFormFieldNames,
+      writableFieldNames: approvalFormWritableFieldNames,
       requiredFieldNames: formRequiredFieldNames,
       shopifyRequiredFieldNames: formShopifyRequiredFieldNames,
       ebayRequiredFieldNames: formEbayRequiredFieldNames,

@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
 
 export interface ListingApprovalTestingSectionField {
   fieldName: string;
@@ -69,55 +71,65 @@ export function ListingApprovalTestingSection({
   fields,
   formValues,
   headerAction,
+  className,
+  embedded = false,
 }: {
   fields: ListingApprovalTestingSectionField[];
   formValues: Record<string, string>;
   headerAction?: ReactNode;
+  className?: string;
+  embedded?: boolean;
 }) {
   if (fields.length === 0) return null;
 
-  return (
-    <section className="space-y-3 rounded-lg border border-[var(--line)] bg-white/5 px-3 py-3 md:col-span-2">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h3 className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Testing</h3>
-          <p className="m-0 text-xs leading-5 text-[var(--muted)]">
-            Read-only testing details mirrored from the Testing form.
-          </p>
-        </div>
-        {headerAction ? <div className="shrink-0">{headerAction}</div> : null}
-      </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        {fields.map(({ fieldName, label, multiline }) => {
-          const value = normalizeTestingSectionValue(formValues[fieldName]);
+  const snapshotFields = fields
+    .filter(({ multiline }) => !multiline)
+    .map(({ fieldName, label }) => ({
+      label,
+      value: normalizeTestingSectionValue(formValues[fieldName]),
+    }));
 
-          return (
-            <label
-              key={fieldName}
-              className={`flex flex-col gap-2 ${multiline ? 'md:col-span-2' : ''}`}
-            >
-              <span className="text-sm font-semibold text-[var(--ink)]">{label}</span>
-              {multiline ? (
-                <textarea
-                  className="min-h-[110px] w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none disabled:cursor-not-allowed disabled:opacity-70"
-                  value={value}
-                  readOnly
-                  disabled
-                  aria-label={label}
-                />
-              ) : (
-                <input
-                  className="w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none disabled:cursor-not-allowed disabled:opacity-70"
-                  value={value}
-                  readOnly
-                  disabled
-                  aria-label={label}
-                />
-              )}
-            </label>
-          );
-        })}
+  const snapshotCards = fields
+    .filter(({ multiline }) => multiline)
+    .map(({ fieldName, label }) => ({
+      title: label,
+      value: normalizeTestingSectionValue(formValues[fieldName]),
+      emptyValue: 'Not provided',
+    }));
+
+  if (embedded) {
+    return (
+      <div className={className}>
+        <AppSectionTitle title="Testing" titleClassName="text-base" actions={headerAction} />
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {snapshotFields.map((field) => (
+            <div key={field.label} className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5">
+              <p className="m-0 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{field.label}</p>
+              <p className="mt-1 text-sm leading-5 text-[var(--ink)]">{field.value || 'Not provided'}</p>
+            </div>
+          ))}
+        </div>
+        {snapshotCards.length > 0 ? (
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            {snapshotCards.map((card) => (
+              <div key={card.title} className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{card.title}</p>
+                <p className="mt-2 whitespace-pre-wrap leading-6 text-[var(--ink)]">{card.value.trim() || card.emptyValue || 'No notes available.'}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
-    </section>
+    );
+  }
+
+  return (
+    <IntakeSnapshotSection
+      title="Testing"
+      actions={headerAction}
+      fields={snapshotFields}
+      cards={snapshotCards}
+      className={className}
+    />
   );
 }

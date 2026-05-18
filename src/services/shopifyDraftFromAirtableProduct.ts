@@ -207,12 +207,14 @@ function buildVariant(fields: ApprovalFieldMap, options: ShopifyProductOption[])
   const shouldIncludeCompareAt = Number.isFinite(numericListingPrice) && Number.isFinite(numericBasePrice) && numericBasePrice > numericListingPrice;
   const inventoryQuantity = parseInteger(getField(fields, ['Shopify REST Variant 1 Inventory Quantity', 'Shopify Variant 1 Inventory Quantity', 'Quantity', 'Qty', 'shopify_rest_variant_1_inventory_quantity']));
   const inventoryManagement = getField(fields, ['Shopify REST Variant 1 Inventory Management', 'shopify_rest_variant_1_inventory_management']) || undefined;
+  const sku = getField(fields, ['Shopify REST Variant 1 SKU', 'SKU', 'shopify_rest_variant_1_sku']) || undefined;
+  const barcode = sku || getField(fields, ['Shopify REST Variant 1 Barcode', 'shopify_rest_variant_1_barcode']) || undefined;
 
   return {
     ...(listingPrice ? { price: listingPrice } : {}),
     compare_at_price: shouldIncludeCompareAt ? basePrice : undefined,
-    sku: getField(fields, ['Shopify REST Variant 1 SKU', 'SKU', 'shopify_rest_variant_1_sku']) || undefined,
-    barcode: getField(fields, ['Shopify REST Variant 1 Barcode', 'shopify_rest_variant_1_barcode']) || undefined,
+    sku,
+    barcode,
     inventory_quantity: inventoryQuantity,
     inventory_management: inventoryManagement ?? (typeof inventoryQuantity === 'number' ? 'shopify' : undefined),
     inventory_policy: getField(fields, ['Shopify REST Variant 1 Inventory Policy', 'shopify_rest_variant_1_inventory_policy']) || undefined,

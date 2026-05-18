@@ -164,4 +164,134 @@ describe('useListingApprovalCombinedFieldState', () => {
       'International Shipping Fees',
     ]));
   });
+
+  it('keeps the derived shipping method out of shared fields and in the eBay section', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      '__Shipping Services__': 'FedEx Ground',
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining(['__Shipping Services__']));
+    expect(result.current.combinedEbayOnlyFieldNames).toEqual(expect.arrayContaining(['__Shipping Services__']));
+  });
+
+  it('removes shipping method from combined listing record sections', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      'Shipping Method': 'Freight',
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining(['Shipping Method']));
+    expect(result.current.combinedEbayOnlyFieldNames).not.toEqual(expect.arrayContaining(['Shipping Method']));
+    expect(result.current.combinedShopifyOnlyFieldNames).not.toEqual(expect.arrayContaining(['Shipping Method']));
+  });
+
+  it('removes Shopify variant barcode from combined listing record sections', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      'Shopify Variant Barcode': 'SANSUI-717',
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining(['Shopify Variant Barcode']));
+    expect(result.current.combinedShopifyOnlyFieldNames).not.toEqual(expect.arrayContaining(['Shopify Variant Barcode']));
+    expect(result.current.combinedEbayOnlyFieldNames).not.toEqual(expect.arrayContaining(['Shopify Variant Barcode']));
+  });
+
+  it('keeps Status out of the eBay-specific field list', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      Status: 'Listed',
+      Categories: '3276',
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedEbayOnlyFieldNames).not.toEqual(expect.arrayContaining(['Status']));
+    expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining(['Status']));
+  });
+
+  it('removes non-listing workflow metadata fields from combined listing record sections', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      'Additional Items': 'Power cable and shelf card',
+      'Customer Cosmetic Notes': 'Customer reported light wear.',
+      'Customer Functional Notes': 'Customer said both channels worked.',
+      'Customer Inclusion Notes': 'Original accessories included.',
+      'Customer Submitted Photos Notes': 'Customer texted reference photos.',
+      'Service Notes': 'Controls cleaned and switches exercised.',
+      Tested: '2026-05-14',
+      'Testing Time': '5400',
+      'Service Time': '1800',
+      'Unqualified Reason': 'Missing serial plate',
+      Price: '1899.99',
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining([
+      'Additional Items',
+      'Customer Cosmetic Notes',
+      'Customer Functional Notes',
+      'Customer Inclusion Notes',
+      'Customer Submitted Photos Notes',
+      'Service Notes',
+      'Tested',
+      'Testing Time',
+      'Service Time',
+      'Unqualified Reason',
+    ]));
+    expect(result.current.combinedShopifyOnlyFieldNames).not.toEqual(expect.arrayContaining([
+      'Additional Items',
+      'Customer Cosmetic Notes',
+      'Customer Functional Notes',
+      'Customer Inclusion Notes',
+      'Customer Submitted Photos Notes',
+      'Service Notes',
+      'Tested',
+      'Testing Time',
+      'Service Time',
+      'Unqualified Reason',
+    ]));
+    expect(result.current.combinedEbayOnlyFieldNames).not.toEqual(expect.arrayContaining([
+      'Additional Items',
+      'Customer Cosmetic Notes',
+      'Customer Functional Notes',
+      'Customer Inclusion Notes',
+      'Customer Submitted Photos Notes',
+      'Service Notes',
+      'Tested',
+      'Testing Time',
+      'Service Time',
+      'Unqualified Reason',
+    ]));
+  });
+
+  it('removes eBay product aspects fields from combined listing record sections', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      'eBay Inventory Product Aspects JSON': '{"Brand":["Sansui"]}',
+      Categories: '3276',
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedEbayOnlyFieldNames).not.toEqual(expect.arrayContaining([
+      'eBay Inventory Product Aspects JSON',
+    ]));
+    expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining([
+      'eBay Inventory Product Aspects JSON',
+    ]));
+  });
 });

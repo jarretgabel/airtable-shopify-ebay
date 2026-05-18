@@ -1,16 +1,19 @@
 import { ListingApprovalCombinedEbaySection } from '@/components/approval/ListingApprovalCombinedEbaySection';
+import { ListingApprovalCombinedIntakeSection } from '@/components/approval/ListingApprovalCombinedIntakeSection';
 import { ListingApprovalCombinedSharedSection } from '@/components/approval/ListingApprovalCombinedSharedSection';
 import { ListingApprovalCombinedShopifySection } from '@/components/approval/ListingApprovalCombinedShopifySection';
 import { COMBINED_RECORD_SECTION_ITEMS } from '@/components/approval/listingApprovalCombinedSectionNav';
 import type {
   CombinedSectionCommonProps,
   ListingApprovalCombinedEbaySectionProps,
+  ListingApprovalCombinedIntakeSectionProps,
   ListingApprovalCombinedSharedSectionProps,
   ListingApprovalCombinedShopifySectionProps,
 } from '@/components/approval/listingApprovalCombinedSectionTypes';
 import { toFormValue } from '@/stores/approvalStore';
 interface ListingApprovalCombinedSectionsProps
   extends Omit<CombinedSectionCommonProps, 'writableFieldNames' | 'originalFieldValues'>,
+    Omit<ListingApprovalCombinedIntakeSectionProps, keyof CombinedSectionCommonProps>,
     Omit<ListingApprovalCombinedSharedSectionProps, keyof CombinedSectionCommonProps>,
     Omit<ListingApprovalCombinedShopifySectionProps, keyof CombinedSectionCommonProps>,
     Omit<ListingApprovalCombinedEbaySectionProps, keyof CombinedSectionCommonProps> {}
@@ -73,8 +76,26 @@ export function ListingApprovalCombinedSections({
 
   return (
     <div className="space-y-4">
-      <ListingApprovalCombinedSharedSection
+      <ListingApprovalCombinedIntakeSection
         sectionId={COMBINED_RECORD_SECTION_ITEMS[0].id}
+        selectedRecord={selectedRecord}
+        approvedFieldName={approvedFieldName}
+        formValues={formValues}
+        fieldKinds={fieldKinds}
+        listingFormatOptions={listingFormatOptions}
+        listingDurationOptions={listingDurationOptions}
+        saving={saving}
+        setFormValue={setFormValue}
+        writableFieldNames={writableFieldNames}
+        originalFieldValues={originalFieldValues}
+        combinedSharedFieldNames={combinedSharedFieldNames}
+        sharedTestingSourceFieldValues={sharedTestingSourceFieldValues}
+        onOpenOperationalRecord={onOpenOperationalRecord}
+        onOpenTestingForm={onOpenTestingForm}
+      />
+
+      <ListingApprovalCombinedSharedSection
+        sectionId={COMBINED_RECORD_SECTION_ITEMS[1].id}
         selectedRecord={selectedRecord}
         approvedFieldName={approvedFieldName}
         formValues={formValues}
@@ -100,7 +121,7 @@ export function ListingApprovalCombinedSections({
       />
 
       <ListingApprovalCombinedShopifySection
-        sectionId={COMBINED_RECORD_SECTION_ITEMS[1].id}
+        sectionId={COMBINED_RECORD_SECTION_ITEMS[2].id}
         selectedRecord={selectedRecord}
         approvedFieldName={approvedFieldName}
         formValues={formValues}
@@ -133,7 +154,7 @@ export function ListingApprovalCombinedSections({
       />
 
       <ListingApprovalCombinedEbaySection
-        sectionId={COMBINED_RECORD_SECTION_ITEMS[2].id}
+        sectionId={COMBINED_RECORD_SECTION_ITEMS[3].id}
         selectedRecord={selectedRecord}
         approvedFieldName={approvedFieldName}
         formValues={formValues}

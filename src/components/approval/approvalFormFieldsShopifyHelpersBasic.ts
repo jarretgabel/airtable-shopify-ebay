@@ -160,3 +160,21 @@ export function isShopifyVariantBooleanField(fieldName: string): boolean {
 
   return isTaxableField || isRequiresShippingField;
 }
+
+export function isShopifyAdvancedOptionField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase().replace(/\s+/g, ' ');
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  const isVariantField = normalized.includes('variant') || compact.includes('variant');
+
+  if (!isVariantField) return false;
+
+  return normalized.includes('requires shipping')
+    || normalized.includes('requires_shipping')
+    || compact.includes('requiresshipping')
+    || normalized.includes('taxable')
+    || compact.includes('taxable')
+    || normalized.includes('fulfillment')
+    || normalized.includes('fulfillment service')
+    || compact.includes('fulfillment')
+    || compact.includes('fulfillmentservice');
+}

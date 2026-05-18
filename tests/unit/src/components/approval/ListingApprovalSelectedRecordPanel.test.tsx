@@ -62,6 +62,7 @@ describe('ListingApprovalSelectedRecordPanel', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'McIntosh MA6900' })).toBeInTheDocument();
+    expect(screen.getByText('Intake Details')).toBeInTheDocument();
     expect(screen.getByText('Selected Record View')).toBeInTheDocument();
   });
 

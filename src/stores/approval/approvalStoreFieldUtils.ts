@@ -69,11 +69,28 @@ const CATEGORY_VALUE_FIELDS = new Set([
   'ebay_offer_secondarycategoryid',
 ]);
 
+const READABLE_OBJECT_KEYS = new Set([
+  'text',
+  'name',
+  'label',
+  'title',
+  'value',
+  'sku',
+  'componentType',
+  'displayName',
+]);
+
+const OBJECT_METADATA_KEYS = new Set(['id', 'url']);
+
 function normalizeBooleanLikeString(raw: string): string {
   const normalized = raw.trim().toLowerCase();
   if (normalized === 'true') return 'TRUE';
   if (normalized === 'false') return 'FALSE';
   return raw;
+}
+
+function isPrimitiveReadableValue(value: unknown): value is string | number | boolean {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
 }
 
 export function isSingleValueSelectionField(fieldName: string): boolean {
@@ -82,6 +99,24 @@ export function isSingleValueSelectionField(fieldName: string): boolean {
 
 export function isCategoryValueField(fieldName: string): boolean {
   return CATEGORY_VALUE_FIELDS.has(fieldName.trim().toLowerCase());
+}
+
+function isReadableWrappedObject(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+
+  const readableValue = extractReadableValue(value).trim();
+  if (!readableValue) return false;
+
+  const meaningfulKeys = Object.entries(value as Record<string, unknown>)
+    .filter(([, entryValue]) => entryValue !== null && entryValue !== undefined && entryValue !== '');
+
+  if (meaningfulKeys.length === 0) return false;
+
+  return meaningfulKeys.every(([key, entryValue]) => {
+    if (OBJECT_METADATA_KEYS.has(key)) return true;
+    if (!READABLE_OBJECT_KEYS.has(key)) return false;
+    return isPrimitiveReadableValue(entryValue);
+  });
 }
 
 export function displayValue(value: unknown): string {
@@ -98,6 +133,10 @@ export function inferFieldKind(value: unknown): ApprovalFieldKind {
 
 export function inferFieldKindForField(fieldName: string, value: unknown): ApprovalFieldKind {
   if (isSingleValueSelectionField(fieldName) || isCategoryValueField(fieldName)) {
+    return 'text';
+  }
+
+  if (isReadableWrappedObject(value)) {
     return 'text';
   }
 
@@ -119,6 +158,10 @@ export function toFormValueForField(fieldName: string, value: unknown): string {
 
   if (isCategoryValueField(fieldName)) {
     return displayReadableValue(value, '');
+  }
+
+  if (isReadableWrappedObject(value)) {
+    return extractReadableValue(value);
   }
 
   return toFormValue(value);
@@ -233,7 +276,10 @@ export function getDropdownOptions(fieldName: string): string[] | null {
 }
 
 export function isAllowOffersField(fieldName: string): boolean {
-  return fieldName.trim().toLowerCase() === 'allow offers';
+  const normalized = fieldName.trim().toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
+  return normalized === 'allow offers'
+    || normalized === 'ebay allow offers'
+    || normalized === 'e bay allow offers';
 }
 
 export function isShippingServiceField(fieldName: string): boolean {

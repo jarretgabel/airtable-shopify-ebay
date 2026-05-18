@@ -3,6 +3,8 @@ import {
   EBAY_BODY_HTML_FIELD_CANDIDATES,
   EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES,
   EBAY_DESCRIPTION_FIELD_CANDIDATES,
+  EBAY_DURATION_FIELD_CANDIDATES,
+  EBAY_FORMAT_FIELD_CANDIDATES,
   EBAY_PRICE_FIELD_CANDIDATES,
   EBAY_TESTING_NOTES_FIELD_CANDIDATES,
   EBAY_TITLE_FIELD_CANDIDATES,
@@ -250,6 +252,16 @@ export function isEbayTestingNotesField(fieldName: string): boolean {
     || compact === 'ebaylistingtestingnotesjson';
 }
 
+export function isShopifyVariantBarcodeFieldName(fieldName: string): boolean {
+  const normalized = normalizeCombinedFieldName(fieldName);
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  const isVariantField = normalized.includes('variant') || compact.includes('variant');
+
+  if (!isVariantField) return false;
+
+  return normalized.includes('barcode') || compact.includes('barcode');
+}
+
 export function isShopifyOnlyFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   if (normalized === 'description') return false;
@@ -321,7 +333,6 @@ export function isEbayOnlyFieldName(fieldName: string): boolean {
     || normalized.includes('duration')
     || normalized.includes('listing format')
     || normalized.includes('format')
-    || normalized === 'status'
     || normalized.includes('shipping service')
     || isItemZipCodeField(fieldName)
     || isEbayAttributesFieldName(fieldName)
@@ -489,22 +500,110 @@ export function isInternalReferenceListingFieldName(fieldName: string): boolean 
   const compact = normalized.replace(/[^a-z0-9]/g, '');
 
   return normalized === 'acquired from'
+    || normalized === 'additional items'
     || normalized === 'arrival date'
     || normalized === 'cost'
+    || normalized === 'customer cosmetic notes'
+    || normalized === 'customer functional notes'
+    || normalized === 'customer inclusion notes'
+    || normalized === 'customer submitted photos notes'
     || normalized === 'testing cosmetic notes'
     || normalized === 'photography cosmetic notes'
     || normalized === 'internal cosmetic notes'
     || normalized === 'internal functional notes'
     || normalized === 'internal inclusion notes'
     || normalized === 'inventory notes'
+    || normalized === 'service notes'
     || normalized === 'sku legacy backup'
     || compact === 'acquiredfrom'
+    || compact === 'additionalitems'
     || compact === 'arrivaldate'
+    || compact === 'customercosmeticnotes'
+    || compact === 'customerfunctionalnotes'
+    || compact === 'customerinclusionnotes'
+    || compact === 'customersubmittedphotosnotes'
     || compact === 'testingcosmeticnotes'
     || compact === 'photographycosmeticnotes'
     || compact === 'internalcosmeticnotes'
     || compact === 'internalfunctionalnotes'
     || compact === 'internalinclusionnotes'
     || compact === 'inventorynotes'
+    || compact === 'servicenotes'
     || compact === 'skulegacybackup';
+}
+
+function isNonListingRecordMetadataFieldName(fieldName: string): boolean {
+  const normalized = normalizeCombinedFieldName(fieldName);
+
+  return normalized === 'tested'
+    || normalized === 'testing time'
+    || normalized === 'service time'
+    || normalized === 'shipping method'
+    || normalized === 'unqualified reason'
+    || normalized === 'status'
+    || isShopifyVariantBarcodeFieldName(fieldName);
+}
+
+export function shouldIncludeSharedListingRecordFieldName(fieldName: string): boolean {
+  const normalized = normalizeCombinedFieldName(fieldName);
+
+  if (fieldName === SHIPPING_SERVICE_FIELD) return false;
+  if (isNonListingRecordMetadataFieldName(fieldName)) return false;
+  if (isRemovedCombinedEbayPriceFieldName(fieldName)) return false;
+  if (isHiddenCombinedFieldName(fieldName)) return false;
+  if (isWorkflowOnlyListingFieldName(fieldName)) return false;
+  if (isSystemManagedListingFieldName(fieldName)) return false;
+  if (isInternalReferenceListingFieldName(fieldName)) return false;
+  if (isEbayAttributesFieldName(fieldName)) return false;
+  if (isItemZipCodeField(fieldName)) return false;
+  if (EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
+  if (EBAY_DURATION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
+  if (normalized === 'template name') return false;
+
+  return true;
+}
+
+export function shouldIncludeShopifyListingRecordFieldName(fieldName: string): boolean {
+  if (isNonListingRecordMetadataFieldName(fieldName)) return false;
+  if (isHiddenCombinedFieldName(fieldName)) return false;
+  if (isWorkflowOnlyListingFieldName(fieldName)) return false;
+  if (isSystemManagedListingFieldName(fieldName)) return false;
+  if (isInternalReferenceListingFieldName(fieldName)) return false;
+
+  return isShopifyOnlyFieldName(fieldName) && !isEbayOnlyFieldName(fieldName);
+}
+
+export function shouldIncludeEbayListingRecordFieldName(fieldName: string): boolean {
+  const normalized = normalizeCombinedFieldName(fieldName);
+
+  if (isNonListingRecordMetadataFieldName(fieldName)) return false;
+  if (isRemovedCombinedEbayPriceFieldName(fieldName)) return false;
+  if (isHiddenCombinedFieldName(fieldName)) return false;
+  if (isWorkflowOnlyListingFieldName(fieldName)) return false;
+  if (isSystemManagedListingFieldName(fieldName)) return false;
+  if (isInternalReferenceListingFieldName(fieldName)) return false;
+  if (isEbayAttributesFieldName(fieldName)) return false;
+  if (normalized.includes('primary category') || normalized.includes('secondary category')) return false;
+  if (EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
+  if (EBAY_DURATION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
+  if (EBAY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
+
+  return isEbayOnlyFieldName(fieldName) && !isShopifyOnlyFieldName(fieldName);
+}
+
+export function shouldIncludeListingRecordFieldName(
+  fieldName: string,
+  approvalChannel: 'shopify' | 'ebay' | 'combined',
+): boolean {
+  if (approvalChannel === 'shopify') {
+    return shouldIncludeSharedListingRecordFieldName(fieldName) || shouldIncludeShopifyListingRecordFieldName(fieldName);
+  }
+
+  if (approvalChannel === 'ebay') {
+    return shouldIncludeSharedListingRecordFieldName(fieldName) || shouldIncludeEbayListingRecordFieldName(fieldName);
+  }
+
+  return shouldIncludeSharedListingRecordFieldName(fieldName)
+    || shouldIncludeShopifyListingRecordFieldName(fieldName)
+    || shouldIncludeEbayListingRecordFieldName(fieldName);
 }

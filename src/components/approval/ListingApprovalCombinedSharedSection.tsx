@@ -1,25 +1,16 @@
 import { Suspense, lazy } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
+import {
+  isGenericImageAltField,
+  isGenericImageUrlField,
+  isShopifyImagePayloadField,
+} from '@/components/approval/approvalFormFieldsImageHelpers';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
-import {
-  ListingApprovalTestingSection,
-  resolveListingApprovalTestingSectionFields,
-} from '@/components/approval/listingApprovalTestingSection';
+import { resolveListingApprovalTestingSectionFields } from '@/components/approval/listingApprovalTestingSection';
 import { CONDITION_FIELD } from '@/stores/approvalStore';
 import type { ListingApprovalCombinedSharedSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
-
-const iconActionButtonClass = 'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--line)] bg-white/5 text-[var(--muted)] transition hover:border-[var(--accent)] hover:bg-white/10 hover:text-[var(--ink)]';
-
-function EditIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-none stroke-current" strokeWidth="1.5">
-      <path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L6 12H4v-2l7.5-7.5Z" />
-      <path d="M10.5 3.5l2 2" />
-    </svg>
-  );
-}
 
 const KeyFeaturesEditor = lazy(async () => ({
   default: (await import('@/components/approval/KeyFeaturesEditor')).KeyFeaturesEditor,
@@ -41,6 +32,7 @@ const COMBINED_SOURCE_MANAGED_FIELD_NAMES = new Set([
   'sku',
   'make',
   'model',
+  'serial number',
   'component type',
   'condition',
   'item condition',
@@ -54,8 +46,10 @@ function isSourceManagedCombinedField(fieldName: string): boolean {
   return COMBINED_SOURCE_MANAGED_FIELD_NAMES.has(normalizeSharedFieldName(fieldName));
 }
 
-function hasReadableValue(value: string | undefined): boolean {
-  return typeof value === 'string' && value.trim().length > 0;
+function isListingImageSupportField(fieldName: string): boolean {
+  return isGenericImageUrlField(fieldName)
+    || isGenericImageAltField(fieldName)
+    || isShopifyImagePayloadField(fieldName);
 }
 
 export function ListingApprovalCombinedSharedSection({
@@ -80,13 +74,7 @@ export function ListingApprovalCombinedSharedSection({
   combinedSharedKeyFeaturesSyncFieldNames,
   sharedTestingSourceFieldValues,
   sharedDrawerRequiredStatus,
-  onOpenOperationalRecord,
-  onOpenTestingForm,
 }: ListingApprovalCombinedSharedSectionProps) {
-  const effectiveSharedTestingSourceFieldValues = {
-    ...originalFieldValues,
-    ...sharedTestingSourceFieldValues,
-  };
   const sharedTestingFields = resolveListingApprovalTestingSectionFields(
     Array.from(new Set([
       ...Object.keys(originalFieldValues),
@@ -100,46 +88,18 @@ export function ListingApprovalCombinedSharedSection({
     const normalizedFieldName = normalizeSharedFieldName(fieldName);
     return !sharedTestingFieldSet.has(normalizedFieldName) && normalizedFieldName !== normalizedTitleFieldName;
   });
-  const readOnlySharedFieldNames = standardSharedFieldNames.filter(isSourceManagedCombinedField);
   const editableSharedFieldNames = standardSharedFieldNames.filter((fieldName) => !isSourceManagedCombinedField(fieldName));
-  const effectiveSharedFormValues = {
-    ...formValues,
-    ...Object.fromEntries(
-      readOnlySharedFieldNames
-        .filter((fieldName) => hasReadableValue(effectiveSharedTestingSourceFieldValues[fieldName]))
-        .map((fieldName) => [fieldName, effectiveSharedTestingSourceFieldValues[fieldName] ?? '']),
-    ),
-  };
-  const workflowHeaderAction = onOpenOperationalRecord ? (
-    <button
-      type="button"
-      className={iconActionButtonClass}
-      onClick={() => onOpenOperationalRecord(selectedRecord.id)}
-      aria-label="Edit workflow source record"
-      title="Edit workflow source record"
-    >
-      <EditIcon />
-    </button>
-  ) : null;
-  const testingHeaderAction = onOpenTestingForm ? (
-    <button
-      type="button"
-      className={iconActionButtonClass}
-      onClick={() => onOpenTestingForm(selectedRecord.id)}
-      aria-label="Edit testing form"
-      title="Edit testing form"
-    >
-      <EditIcon />
-    </button>
-  ) : null;
+  const imageSupportSharedFieldNames = editableSharedFieldNames.filter(isListingImageSupportField);
+  const postKeyFeaturesSharedFieldNames = editableSharedFieldNames.filter((fieldName) => !isListingImageSupportField(fieldName));
 
   return (
     <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
-      <AppSectionTitle
-        title="Shared Fields"
-        actions={sharedDrawerRequiredStatus.hasRequired ? <DrawerStatusIcon allFilled={sharedDrawerRequiredStatus.allFilled} /> : null}
-      />
       <div className="space-y-4">
+        <AppSectionTitle
+          title="Shared Fields"
+          actions={sharedDrawerRequiredStatus.hasRequired ? <DrawerStatusIcon allFilled={sharedDrawerRequiredStatus.allFilled} /> : null}
+        />
+
         {titleFieldName && (
           <ApprovalFormFields
             recordId={selectedRecord.id}
@@ -152,14 +112,14 @@ export function ListingApprovalCombinedSharedSection({
             shopifyRequiredFieldNames={shopifyRequiredFieldNames}
             ebayRequiredFieldNames={ebayRequiredFieldNames}
             approvedFieldName={approvedFieldName}
-            formValues={effectiveSharedFormValues}
+            formValues={formValues}
             fieldKinds={fieldKinds}
             listingFormatOptions={listingFormatOptions}
             listingDurationOptions={listingDurationOptions}
             saving={saving}
             setFormValue={setFormValue}
             suppressImageScalarFields
-            originalFieldValues={effectiveSharedTestingSourceFieldValues}
+            originalFieldValues={originalFieldValues}
           />
         )}
 
@@ -175,67 +135,28 @@ export function ListingApprovalCombinedSharedSection({
           </label>
         )}
 
-        {readOnlySharedFieldNames.length > 0 && (
-          <section className="rounded-xl border border-[var(--line)] bg-[var(--panel)]/70 px-4 py-3">
-            <div className="flex flex-col gap-3 border-b border-[var(--line)] pb-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Source-Managed Details</p>
-                <p className="mt-2 text-sm text-[var(--muted)]">
-                  Make, Model, Condition, SKU, and Component Type are auto-populated from the workflow and testing source forms.
-                </p>
-              </div>
-              {workflowHeaderAction ? <div className="shrink-0">{workflowHeaderAction}</div> : null}
-            </div>
-
-            <div className="pt-3">
-              <ApprovalFormFields
-                recordId={selectedRecord.id}
-                approvalChannel="combined"
-                isCombinedApproval
-                allFieldNames={readOnlySharedFieldNames}
-                writableFieldNames={writableFieldNames}
-                readOnlyFieldNames={readOnlySharedFieldNames}
-                requiredFieldNames={combinedRequiredFieldNames}
-                shopifyRequiredFieldNames={shopifyRequiredFieldNames}
-                ebayRequiredFieldNames={ebayRequiredFieldNames}
-                approvedFieldName={approvedFieldName}
-                formValues={effectiveSharedFormValues}
-                fieldKinds={fieldKinds}
-                listingFormatOptions={listingFormatOptions}
-                listingDurationOptions={listingDurationOptions}
-                saving={saving}
-                setFormValue={setFormValue}
-                suppressImageScalarFields
-                originalFieldValues={effectiveSharedTestingSourceFieldValues}
-              />
-            </div>
-          </section>
-        )}
-
-        {editableSharedFieldNames.length > 0 && (
+        {imageSupportSharedFieldNames.length > 0 && (
           <ApprovalFormFields
             recordId={selectedRecord.id}
             approvalChannel="combined"
             isCombinedApproval
-            allFieldNames={editableSharedFieldNames}
+            allFieldNames={imageSupportSharedFieldNames}
             writableFieldNames={writableFieldNames}
             readOnlyFieldNames={[]}
             requiredFieldNames={combinedRequiredFieldNames}
             shopifyRequiredFieldNames={shopifyRequiredFieldNames}
             ebayRequiredFieldNames={ebayRequiredFieldNames}
             approvedFieldName={approvedFieldName}
-            formValues={effectiveSharedFormValues}
+            formValues={formValues}
             fieldKinds={fieldKinds}
             listingFormatOptions={listingFormatOptions}
             listingDurationOptions={listingDurationOptions}
             saving={saving}
             setFormValue={setFormValue}
             suppressImageScalarFields
-            originalFieldValues={effectiveSharedTestingSourceFieldValues}
+            originalFieldValues={originalFieldValues}
           />
         )}
-
-        <ListingApprovalTestingSection fields={sharedTestingFields} formValues={effectiveSharedTestingSourceFieldValues} headerAction={testingHeaderAction} />
 
         {combinedSharedKeyFeaturesFieldName && (
           <Suspense fallback={<CombinedSharedEditorFallback />}>
@@ -247,6 +168,29 @@ export function ListingApprovalCombinedSharedSection({
               disabled={saving}
             />
           </Suspense>
+        )}
+
+        {postKeyFeaturesSharedFieldNames.length > 0 && (
+          <ApprovalFormFields
+            recordId={selectedRecord.id}
+            approvalChannel="combined"
+            isCombinedApproval
+            allFieldNames={postKeyFeaturesSharedFieldNames}
+            writableFieldNames={writableFieldNames}
+            readOnlyFieldNames={[]}
+            requiredFieldNames={combinedRequiredFieldNames}
+            shopifyRequiredFieldNames={shopifyRequiredFieldNames}
+            ebayRequiredFieldNames={ebayRequiredFieldNames}
+            approvedFieldName={approvedFieldName}
+            formValues={formValues}
+            fieldKinds={fieldKinds}
+            listingFormatOptions={listingFormatOptions}
+            listingDurationOptions={listingDurationOptions}
+            saving={saving}
+            setFormValue={setFormValue}
+            suppressImageScalarFields
+            originalFieldValues={originalFieldValues}
+          />
         )}
       </div>
     </AppPageSectionSurface>

@@ -43,6 +43,14 @@ export interface ListingApprovalCombinedSharedSectionProps extends CombinedSecti
   onOpenTestingForm?: (recordId: string) => void;
 }
 
+export interface ListingApprovalCombinedIntakeSectionProps extends CombinedSectionCommonProps {
+  sectionId?: string;
+  combinedSharedFieldNames: string[];
+  sharedTestingSourceFieldValues: Record<string, string>;
+  onOpenOperationalRecord?: (recordId: string) => void;
+  onOpenTestingForm?: (recordId: string) => void;
+}
+
 export interface ListingApprovalCombinedShopifySectionProps extends CombinedSectionCommonProps, ShopifyApprovalPayloadPreviewData {
   sectionId?: string;
   combinedShopifyOnlyFieldNames: string[];

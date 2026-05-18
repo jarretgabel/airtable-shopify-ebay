@@ -133,6 +133,41 @@ function buildShipmentNotes(config) {
   return `${SAMPLE_MARKER} ${config.make} ${config.model} packed, labeled, and documented for shipment follow-through coverage.`;
 }
 
+function buildSampleImageUrls(config, index) {
+  const sampleKey = `${String(index + 1).padStart(2, '0')}-${config.make}-${config.model}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-');
+
+  return [
+    `https://placehold.co/1600x1200/png?text=${encodeURIComponent(`${sampleKey}-front`)}`,
+    `https://placehold.co/1600x1200/png?text=${encodeURIComponent(`${sampleKey}-rear`)}`,
+    `https://placehold.co/1600x1200/png?text=${encodeURIComponent(`${sampleKey}-detail`)}`,
+  ];
+}
+
+function buildSampleImageAttachments(config, index) {
+  return buildSampleImageUrls(config, index).map((url, imageIndex) => ({
+    url,
+    filename: `${String(index + 1).padStart(2, '0')}-${config.make}-${config.model}-${imageIndex + 1}.png`
+      .toLowerCase()
+      .replace(/[^a-z0-9.]+/g, '-'),
+  }));
+}
+
+function buildSampleImageMetadata(config, index) {
+  return buildSampleImageUrls(config, index).map((url, imageIndex) => ({
+    attachmentId: `att-sample-workflow-${index + 1}-${imageIndex + 1}`,
+    url,
+    filename: `${String(index + 1).padStart(2, '0')}-${config.make}-${config.model}-${imageIndex + 1}.png`
+      .toLowerCase()
+      .replace(/[^a-z0-9.]+/g, '-'),
+    alt: `${config.make} ${config.model} sample image ${imageIndex + 1}`,
+    sortOrder: imageIndex + 1,
+    sourceStage: 'photos',
+    includedInListing: true,
+  }));
+}
+
 function buildStageFields(index, config) {
   const profile = config.stageProfile ?? 'pending-review';
   const acceptedAt = config.acceptedAt ?? isoAt(index + 1, 15);
@@ -241,6 +276,7 @@ function buildStageFields(index, config) {
     ...(hasPhotographyComplete ? {
       'Photography Cosmetic Notes': config.photographyCosmeticNotes ?? photographyNotes,
       "Photo'd": photographedAt,
+      Images: config.images ?? buildSampleImageAttachments(config, index),
       Status: config.status ?? recordStatus,
     } : {}),
     ...(hasListingReadiness ? {

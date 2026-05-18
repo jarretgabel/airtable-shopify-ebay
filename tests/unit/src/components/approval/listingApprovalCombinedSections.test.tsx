@@ -2,10 +2,12 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ListingApprovalCombinedSections } from '@/components/approval/ListingApprovalCombinedSections';
 import { ListingApprovalCombinedEbaySection } from '@/components/approval/ListingApprovalCombinedEbaySection';
+import { ListingApprovalCombinedIntakeSection } from '@/components/approval/ListingApprovalCombinedIntakeSection';
 import { ListingApprovalCombinedSharedSection } from '@/components/approval/ListingApprovalCombinedSharedSection';
 import { ListingApprovalCombinedShopifySection } from '@/components/approval/ListingApprovalCombinedShopifySection';
 import type {
   ListingApprovalCombinedEbaySectionProps,
+  ListingApprovalCombinedIntakeSectionProps,
   ListingApprovalCombinedSharedSectionProps,
   ListingApprovalCombinedShopifySectionProps,
 } from '@/components/approval/listingApprovalCombinedSectionTypes';
@@ -133,10 +135,29 @@ function buildSharedProps(): ListingApprovalCombinedSharedSectionProps {
   };
 }
 
+function buildIntakeProps(): ListingApprovalCombinedIntakeSectionProps {
+  return {
+    ...buildCommonProps(),
+    combinedSharedFieldNames: ['Title', 'Price'],
+    sharedTestingSourceFieldValues: {
+      Manual: 'Included',
+      'Original Box': 'No',
+      Voltage: '120V',
+      Remote: 'Included',
+      'Power Cable': 'Included',
+      'Testing Notes': 'Bench tested',
+      'Audiogon Rating': '8/10',
+      'Testing Cosmetic Notes': 'Light wear on the top cover.',
+    },
+    onOpenOperationalRecord: vi.fn(),
+    onOpenTestingForm: vi.fn(),
+  };
+}
+
 function buildShopifyProps(): ListingApprovalCombinedShopifySectionProps {
   return {
     ...buildCommonProps(),
-    combinedShopifyOnlyFieldNames: ['Vendor', 'Tags'],
+    combinedShopifyOnlyFieldNames: ['Vendor', 'Tags', 'Shopify Variant Taxable', 'Shopify Variant Fulfillment', 'Shopify Variant Requires Shipping'],
     shopifyRequiredFieldNames: ['Vendor'],
     shopifyDrawerRequiredStatus: { hasRequired: true, allFilled: false },
     currentPageShopifyBodyHtml: '<p>Rendered Shopify body</p>',
@@ -199,8 +220,8 @@ describe('combined approval sections', () => {
     testingNotesTextareaEditorSpy.mockReset();
   });
 
-  it('renders the shared drawer with description editing and shared editor modules', async () => {
-    const props = buildSharedProps();
+  it('renders the intake drawer with snapshot modules and testing notes nested under intake details', () => {
+    const props = buildIntakeProps();
     props.sharedTestingSourceFieldValues = {
       Manual: '["Included"]',
       'Original Box': '["No"]',
@@ -212,41 +233,24 @@ describe('combined approval sections', () => {
       'Testing Cosmetic Notes': 'Light wear on the top cover.',
     };
 
-    render(<ListingApprovalCombinedSharedSection {...props} />);
+    render(<ListingApprovalCombinedIntakeSection {...props} />);
 
-    expect(screen.getByText('Shared Fields')).toBeInTheDocument();
-    expect(screen.getByLabelText('All required fields filled')).toBeInTheDocument();
-
-    fireEvent.change(screen.getByDisplayValue('Combined description'), { target: { value: 'Updated combined description' } });
-
-    expect(props.setFormValue).toHaveBeenCalledWith('Description', 'Updated combined description');
-    expect(approvalFormFieldsSpy).toHaveBeenCalledWith(expect.objectContaining({
-      approvalChannel: 'combined',
-      allFieldNames: ['Title'],
-      requiredFieldNames: ['Title'],
-    }));
-    expect(approvalFormFieldsSpy).toHaveBeenCalledWith(expect.objectContaining({
-      approvalChannel: 'combined',
-      allFieldNames: ['Price'],
-      requiredFieldNames: ['Title'],
-    }));
+    expect(screen.getByText('Intake Details')).toBeInTheDocument();
     expect(screen.getByText('Testing')).toBeInTheDocument();
-    expect(screen.getByLabelText('Manual')).toHaveValue('Included');
-    expect(screen.getByLabelText('Original Box')).toHaveValue('No');
-    expect(screen.getByLabelText('Voltage')).toHaveValue('120V');
-    expect(screen.getByLabelText('Remote')).toHaveValue('Included');
-    expect(screen.getByLabelText('Power Cable')).toHaveValue('Included');
-    expect(screen.getByLabelText('Audiogon Rating')).toHaveValue('8/10');
-    expect(screen.getByLabelText('Testing Notes')).toHaveValue('Bench tested');
-    expect(screen.getByLabelText('Cosmetic Notes')).toHaveValue('Light wear on the top cover.');
-
-    await waitFor(() => {
-      expect(screen.getByTestId('key-features-editor')).toHaveTextContent('Key Features');
-    });
-    expect(keyFeaturesEditorSpy).toHaveBeenCalledWith(expect.objectContaining({
-      disabled: false,
-    }));
-    expect(testingNotesTextareaEditorSpy).not.toHaveBeenCalled();
+    expect(screen.getByText('Testing Notes')).toBeInTheDocument();
+    expect(screen.queryByText('Shared Fields')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Manual').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Original Box').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Voltage').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Remote').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Power Cable').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Audiogon Rating').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Included').length).toBeGreaterThan(0);
+    expect(screen.getByText('No')).toBeInTheDocument();
+    expect(screen.getByText('120V')).toBeInTheDocument();
+    expect(screen.getByText('8/10')).toBeInTheDocument();
+    expect(screen.getByText('Bench tested')).toBeInTheDocument();
+    expect(screen.getByText('Light wear on the top cover.')).toBeInTheDocument();
   });
 
   it('renders item title above description in the shared section', () => {
@@ -284,14 +288,15 @@ describe('combined approval sections', () => {
     }));
   });
 
-  it('renders combined identity fields from source values and marks them read-only', () => {
-    const props = buildSharedProps();
-    props.combinedSharedFieldNames = ['Title', 'SKU', 'Make', 'Model', 'Component Type', '__Condition__', 'Price'];
+  it('renders combined identity fields from source values inside intake details and keeps the snapshot quick links', () => {
+    const props = buildIntakeProps();
+    props.combinedSharedFieldNames = ['Title', 'SKU', 'Make', 'Model', 'Serial Number', 'Component Type', '__Condition__', 'Price'];
     props.formValues = {
       ...props.formValues,
       SKU: '',
       Make: '',
       Model: 'Stale model',
+      'Serial Number': '',
       'Component Type': '',
       __Condition__: '',
     };
@@ -300,39 +305,29 @@ describe('combined approval sections', () => {
       SKU: 'MARANTZ-2270',
       Make: 'Marantz',
       Model: '2270',
+      'Serial Number': 'SN-2270-4455',
       'Component Type': 'Stereo Receiver',
       __Condition__: 'Used - Very Good',
     };
 
-    render(<ListingApprovalCombinedSharedSection {...props} />);
+    render(<ListingApprovalCombinedIntakeSection {...props} />);
 
-    expect(screen.getByText('Source-Managed Details')).toBeInTheDocument();
-    expect(screen.getByText('Make, Model, Condition, SKU, and Component Type are auto-populated from the workflow and testing source forms.')).toBeInTheDocument();
+    expect(screen.getByText('Intake Details')).toBeInTheDocument();
+    expect(screen.queryByText('Make, Model, Condition, SKU, and Component Type are auto-populated from the workflow and testing source forms.')).not.toBeInTheDocument();
+    expect(screen.getByText('MARANTZ-2270')).toBeInTheDocument();
+    expect(screen.getByText('Marantz')).toBeInTheDocument();
+    expect(screen.getByText('2270')).toBeInTheDocument();
+    expect(screen.getByText('SN-2270-4455')).toBeInTheDocument();
+    expect(screen.getByText('Stereo Receiver')).toBeInTheDocument();
+    expect(screen.getByText('Used - Very Good')).toBeInTheDocument();
+    expect(screen.getByText('Make').compareDocumentPosition(screen.getByText('Model')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText('Model').compareDocumentPosition(screen.getByText('SKU')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText('SKU').compareDocumentPosition(screen.getByText('Serial Number')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Edit workflow source record' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit testing form' }));
 
     expect(props.onOpenOperationalRecord).toHaveBeenCalledWith('rec-combined-1');
     expect(props.onOpenTestingForm).toHaveBeenCalledWith('rec-combined-1');
-
-    expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      allFieldNames: ['Title'],
-      readOnlyFieldNames: [],
-    }));
-    expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({
-      readOnlyFieldNames: expect.arrayContaining(['SKU', 'Make', 'Model', 'Component Type', '__Condition__']),
-      allFieldNames: ['SKU', 'Make', 'Model', 'Component Type', '__Condition__'],
-      formValues: expect.objectContaining({
-        SKU: 'MARANTZ-2270',
-        Make: 'Marantz',
-        Model: '2270',
-        'Component Type': 'Stereo Receiver',
-        __Condition__: 'Used - Very Good',
-      }),
-    }));
-    expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(3, expect.objectContaining({
-      allFieldNames: ['Price'],
-      readOnlyFieldNames: [],
-    }));
   });
 
   it('forwards combined shared quick-link callbacks through the wrapper', () => {
@@ -382,16 +377,58 @@ describe('combined approval sections', () => {
     expect(sharedProps.onOpenTestingForm).toHaveBeenCalledWith('rec-combined-1');
   });
 
+  it('keeps source-managed and testing snapshot fields out of the shared editor fields', () => {
+    const props = buildSharedProps();
+    props.combinedSharedFieldNames = ['Title', 'SKU', 'Make', 'Model', 'Serial Number', 'Component Type', '__Condition__', 'Price', 'Manual', 'Testing Notes', 'Voltage'];
+
+    render(<ListingApprovalCombinedSharedSection {...props} />);
+
+    expect(approvalFormFieldsSpy).toHaveBeenCalledTimes(2);
+    expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      allFieldNames: ['Title'],
+    }));
+    expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      allFieldNames: ['Price'],
+    }));
+  });
+
+  it('renders key features between the listing images block and the remaining shared fields', () => {
+    const props = buildSharedProps();
+    props.combinedSharedFieldNames = ['Title', 'Images', 'Serial Number', 'Shipping Dims', 'Shipping Weight'];
+    props.formValues = {
+      ...props.formValues,
+      Images: '',
+      'Serial Number': 'SAMPLE-SN-0012',
+      'Shipping Dims': '22x19x11',
+      'Shipping Weight': '42',
+    };
+
+    render(<ListingApprovalCombinedSharedSection {...props} />);
+
+    const imageFields = screen.getByText('combined:Images');
+    const keyFeaturesEditor = screen.getByTestId('key-features-editor');
+    const remainingFields = screen.getByText('combined:Shipping Dims,Shipping Weight');
+
+    expect(imageFields.compareDocumentPosition(keyFeaturesEditor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(keyFeaturesEditor.compareDocumentPosition(remainingFields) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByText(/combined:.*Serial Number/)).not.toBeInTheDocument();
+  });
+
   it('renders the Shopify drawer with collection editor wiring and preview panels', async () => {
     render(<ListingApprovalCombinedShopifySection {...buildShopifyProps()} />);
 
     expect(screen.getByText('Shopify-Specific Fields')).toBeInTheDocument();
+    expect(screen.getByText('Advanced Shopify Fields')).toBeInTheDocument();
     expect(screen.getByLabelText('Contains missing required fields')).toBeInTheDocument();
-    expect(approvalFormFieldsSpy).toHaveBeenCalledTimes(1);
-    expect(approvalFormFieldsSpy).toHaveBeenCalledWith(expect.objectContaining({
+    expect(approvalFormFieldsSpy).toHaveBeenCalledTimes(2);
+    expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({
       approvalChannel: 'shopify',
       forceShowShopifyCollectionsEditor: true,
       allFieldNames: ['Vendor', 'Tags'],
+    }));
+    expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      approvalChannel: 'shopify',
+      allFieldNames: ['Shopify Variant Taxable', 'Shopify Variant Fulfillment', 'Shopify Variant Requires Shipping'],
     }));
     expect(screen.getByTestId('body-html-preview')).toHaveTextContent('<p>Shopify body</p>');
     await waitFor(() => {

@@ -42,7 +42,7 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
     markWorkflowListingStaleMock.mockReset();
   });
 
-  it('renders grouped workflow context and audit details inside Listings', async () => {
+  it('does not render the removed workflow audit section inside Listings', async () => {
     loadUsedGearOperationalRecordContextMock.mockResolvedValue({
       record: buildRecord({ 'Workflow Source': 'JotForm' }),
       group: {
@@ -76,11 +76,14 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
       />,
     );
 
-    expect(await screen.findByText('Workflow Audit And Notes')).toBeInTheDocument();
-    expect(screen.getByText('Grouped Submission Context')).toBeInTheDocument();
-    expect(screen.getByText(/This row shares a submission group/i)).toBeInTheDocument();
-    expect(screen.getByText('Workflow Source: JotForm')).toBeInTheDocument();
-    expect(screen.getAllByText('Inventory Notes: Fresh caps installed.').length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(loadUsedGearOperationalRecordContextMock).toHaveBeenCalledWith('rec-workflow-1');
+    });
+
+    expect(screen.queryByText('Workflow Audit And Notes')).not.toBeInTheDocument();
+    expect(screen.queryByText('Grouped Submission Context')).not.toBeInTheDocument();
+    expect(screen.queryByText(/This row shares a submission group/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Workflow Source: JotForm')).not.toBeInTheDocument();
   });
 
   it('runs post-publish stale actions and reloads the Listings table', async () => {

@@ -51,20 +51,21 @@ const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
 
-const READ_ONLY_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = [
+const SNAPSHOT_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = [
   'sku',
   'make',
   'model',
   'componentType',
-  'additionalItems',
-  'audiogonRating',
-];
-
-const EDITABLE_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = [
   'originalBox',
   'manual',
   'remote',
   'powerCable',
+  'additionalItems',
+  'audiogonRating',
+  'status',
+];
+
+const EDITABLE_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = [
   'cosmeticConditionNotes',
   'imageFiles',
   'photoDate',
@@ -364,7 +365,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     || stageContext.existingAttachments.length > 0,
   );
   const stageImageMetadata = filterWorkflowImageMetadataByStage(imageMetadata, 'photos');
-  const readOnlyFields = photosFormFields.filter((field) => READ_ONLY_PHOTOS_FIELD_NAMES.includes(field.name));
+  const snapshotFields = photosFormFields.filter((field) => SNAPSHOT_PHOTOS_FIELD_NAMES.includes(field.name));
   const editableFields = photosFormFields.filter((field) => EDITABLE_PHOTOS_FIELD_NAMES.includes(field.name));
 
   const handleInclusionConfirmationChange = (key: InclusionConfirmationKey, checked: boolean) => {
@@ -421,10 +422,12 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
         ) : null}
 
         <IntakeSnapshotSection
-          fields={readOnlyFields.map((field) => ({
+          fields={snapshotFields.map((field) => ({
             label: field.label,
             value: String(formValues[field.name] ?? ''),
-            description: field.name === 'componentType' ? undefined : field.description,
+            description: field.name === 'additionalItems' || field.name === 'audiogonRating'
+              ? field.description
+              : undefined,
           }))}
           cards={[
             { title: 'Customer Cosmetic Notes', value: customerReference.cosmeticNotes, emptyValue: 'None provided' },

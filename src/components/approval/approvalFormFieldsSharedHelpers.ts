@@ -9,6 +9,8 @@ export function toHumanReadableLabel(fieldName: string): string {
   if (fieldName.trim().toLowerCase() === 'shopify rest variant 1 price') return 'Shopify Price';
   if (fieldName.trim().toLowerCase() === 'shopify price') return 'Shopify Price';
   if (fieldName.trim().toLowerCase() === 'type') return 'Shopify Type';
+  if (fieldName.trim().toLowerCase() === 'shipping weight') return 'Shipping Weight (in lbs)';
+  if (fieldName.trim().toLowerCase() === 'shipping dims') return 'Shipping Dimensions (L"W"H" in inches)';
 
   const withSpaces = fieldName
     .replace(/[_-]+/g, ' ')
