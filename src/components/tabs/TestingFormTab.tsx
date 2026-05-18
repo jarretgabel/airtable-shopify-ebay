@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
+import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
@@ -135,6 +136,15 @@ interface TestingFormTabProps {
   onBackToDirectory?: () => void;
 }
 
+function BackIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+      <path d="M12.5 4.167 6.667 10l5.833 5.833" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7.5 10h5.833" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabProps) {
   const [formValues, setFormValues] = useState<TestingFormValues>(() => createTestingFormDefaults());
   const [recordSource, setRecordSource] = useState<TestingFormRecordSource>('inventory-directory');
@@ -256,6 +266,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
       return (
         <FormImageUploadEditor
           title={definition.label}
+          required={definition.required}
           description={definition.description}
           disabled={submitting}
           resetKey={uploadEditorResetKey}
@@ -353,13 +364,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           eyebrow="Forms"
           title="Testing"
           actions={onBackToDirectory ? (
-            <button
-              type="button"
-              className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              onClick={onBackToDirectory}
-            >
-              Back to Directory
-            </button>
+            <ToolbarIconButton label="Back to Directory" icon={<BackIcon />} onClick={onBackToDirectory} />
           ) : undefined}
         />
 

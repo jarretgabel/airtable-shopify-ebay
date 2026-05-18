@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
+import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
@@ -53,14 +54,18 @@ const READ_ONLY_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = [
   'make',
   'model',
   'componentType',
+  'audiogonRating',
+];
+
+const EDITABLE_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = [
   'originalBox',
   'manual',
   'remote',
   'powerCable',
-  'additionalItems',
+  'cosmeticConditionNotes',
+  'imageFiles',
+  'photoDate',
 ];
-
-const HIDDEN_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = ['audiogonRating', 'cosmeticConditionNotes', 'status'];
 
 type PhotosSubmitIntent = 'save' | 'complete';
 
@@ -95,7 +100,6 @@ function buildApplicableIncludedItems(values: PhotosFormValues): InclusionConfir
 
 function validateForm(
   values: PhotosFormValues,
-  recordSource: PhotosFormRecordSource,
   stageContext: PhotosFormStageContext,
   inclusionConfirmations: Partial<Record<InclusionConfirmationKey, boolean>>,
   submitIntent: PhotosSubmitIntent,
@@ -105,7 +109,7 @@ function validateForm(
   if (!values.model.trim()) return 'Model is required.';
   if (!values.componentType.trim()) return 'Component Type is required.';
   if (!values.photoDate.trim()) return 'Photo Date is required.';
-  if (recordSource !== 'used-gear-workflow' && values.imageFiles.length === 0 && stageContext.existingAttachments.length === 0) {
+  if (values.imageFiles.length === 0 && stageContext.existingAttachments.length === 0) {
     return 'Upload at least one image before submitting the Photos form.';
   }
 
@@ -123,6 +127,14 @@ function validateForm(
   }
 
   return null;
+}
+
+function getFieldLayoutClass(definition: PhotosFormFieldDefinition): string {
+  if (definition.type === 'textarea' || definition.type === 'file') {
+    return 'lg:col-span-2';
+  }
+
+  return '';
 }
 
 function FieldShell({ definition, children }: { definition: PhotosFormFieldDefinition; children: ReactNode }) {
@@ -159,6 +171,15 @@ function ReadOnlyFieldDisplay({
 interface PhotosFormTabProps {
   recordId?: string | null;
   onBackToDirectory?: () => void;
+}
+
+function BackIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+      <path d="M12.5 4.167 6.667 10l5.833 5.833" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7.5 10h5.833" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProps) {
@@ -231,7 +252,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     setSubmitError(null);
     setSubmitSuccess(null);
 
-    const validationError = validateForm(formValues, recordSource, stageContext, inclusionConfirmations, submitIntent);
+    const validationError = validateForm(formValues, stageContext, inclusionConfirmations, submitIntent);
     if (validationError) {
       setSubmitError(validationError);
       return;
@@ -286,7 +307,8 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
       return (
         <FormImageUploadEditor
           title={definition.label}
-          description="Upload, crop, resize, watermark, rename, and compare files before they are attached to the operational record. Saved defaults persist locally for future photo sessions."
+          required={definition.required}
+          description={definition.description}
           disabled={submitting}
           resetKey={uploadEditorResetKey}
           onFilesChange={(files) => setFieldValue(definition.name, files as PhotosFormValues[typeof definition.name])}
@@ -361,9 +383,8 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
   const applicableIncludedItems = buildApplicableIncludedItems(formValues);
   const hasOperationalContext = Boolean(stageContext.inventoryNotes.trim() || stageContext.testingNotes.trim() || stageContext.existingAttachments.length > 0);
   const stageImageMetadata = filterWorkflowImageMetadataByStage(imageMetadata, 'photos');
-  const visiblePhotosFields = photosFormFields.filter((field) => !HIDDEN_PHOTOS_FIELD_NAMES.includes(field.name));
-  const readOnlyFields = visiblePhotosFields.filter((field) => READ_ONLY_PHOTOS_FIELD_NAMES.includes(field.name));
-  const editableFields = visiblePhotosFields.filter((field) => !READ_ONLY_PHOTOS_FIELD_NAMES.includes(field.name));
+  const readOnlyFields = photosFormFields.filter((field) => READ_ONLY_PHOTOS_FIELD_NAMES.includes(field.name));
+  const editableFields = photosFormFields.filter((field) => EDITABLE_PHOTOS_FIELD_NAMES.includes(field.name));
 
   const handleInclusionConfirmationChange = (key: InclusionConfirmationKey, checked: boolean) => {
     setInclusionConfirmations((current) => ({
@@ -380,13 +401,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
           eyebrow="Forms"
           title="Photos"
           actions={onBackToDirectory ? (
-            <button
-              type="button"
-              className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              onClick={onBackToDirectory}
-            >
-              Back to Directory
-            </button>
+            <ToolbarIconButton label="Back to Directory" icon={<BackIcon />} onClick={onBackToDirectory} />
           ) : undefined}
         />
 
@@ -443,6 +458,11 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
               <p className="mt-2 leading-6 text-[var(--ink)]">{customerReference.cosmeticNotes || 'None provided'}</p>
             </div>
 
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Additional Items</p>
+              <p className="mt-2 leading-6 text-[var(--ink)]">{formValues.additionalItems || 'None provided'}</p>
+            </div>
+
             {hasOperationalContext ? (
               <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
                 <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Notes</p>
@@ -462,12 +482,15 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
 
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
           <AppSectionTitle title="Photography Details" titleClassName="text-lg" />
-          {editableFields.map((field) => (
-            <div key={field.airtableFieldName}>
+          <div className="grid gap-5 lg:grid-cols-2">
+            {editableFields.map((field) => (
+            <div key={field.airtableFieldName} className={getFieldLayoutClass(field)}>
               {field.type === 'file'
                 ? (
                   <FormImageUploadEditor
                     title={field.label}
+                    required={field.required}
+                    description={field.description}
                     disabled={submitting}
                     resetKey={uploadEditorResetKey}
                     onFilesChange={(files) => setFieldValue(field.name, files as PhotosFormValues[typeof field.name])}
@@ -488,6 +511,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
                 : <FieldShell definition={field}>{renderField(field)}</FieldShell>}
             </div>
           ))}
+          </div>
 
           {applicableIncludedItems.length > 0 ? (
             <div className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-5">

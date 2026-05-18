@@ -26,6 +26,7 @@ export interface FormImageUploadEditorProps {
   resetKey?: string | number;
   disabled?: boolean;
   title?: string;
+  required?: boolean;
   description?: string;
   className?: string;
   afterUploadContent?: ReactNode;
@@ -69,6 +70,7 @@ export function FormImageUploadEditor({
   resetKey = 0,
   disabled = false,
   title = 'Upload Images',
+  required = false,
   description,
   className = '',
   afterUploadContent,
@@ -256,7 +258,10 @@ export function FormImageUploadEditor({
     <section className={`rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 ${className}`.trim()}>
       <div className="flex flex-col gap-4">
         <div>
-          <p className="m-0 text-sm font-semibold text-[var(--ink)]">{title}</p>
+          <p className="m-0 text-sm font-semibold text-[var(--ink)]">
+            {title}
+            {required ? <span className="text-red-400"> *</span> : null}
+          </p>
           {description ? <p className="mt-1 text-xs text-[var(--muted)]">{description}</p> : null}
         </div>
 

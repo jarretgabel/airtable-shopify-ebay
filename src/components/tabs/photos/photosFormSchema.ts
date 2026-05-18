@@ -94,6 +94,7 @@ export const photosFormFields: PhotosFormFieldDefinition[] = [
     label: 'Original Box',
     type: 'select',
     optionFieldName: 'Original Box',
+    description: 'Please confirm',
   },
   {
     name: 'manual',
@@ -101,6 +102,7 @@ export const photosFormFields: PhotosFormFieldDefinition[] = [
     label: 'Manual',
     type: 'select',
     optionFieldName: 'Manual',
+    description: 'Please confirm',
   },
   {
     name: 'remote',
@@ -108,6 +110,7 @@ export const photosFormFields: PhotosFormFieldDefinition[] = [
     label: 'Remote',
     type: 'select',
     optionFieldName: 'Remote',
+    description: 'Please confirm',
   },
   {
     name: 'powerCable',
@@ -115,6 +118,7 @@ export const photosFormFields: PhotosFormFieldDefinition[] = [
     label: 'Power Cable',
     type: 'select',
     optionFieldName: 'Power Cable',
+    description: 'Please confirm',
   },
   {
     name: 'additionalItems',
@@ -136,13 +140,15 @@ export const photosFormFields: PhotosFormFieldDefinition[] = [
     label: 'Cosmetic Notes',
     type: 'textarea',
     rows: 4,
+    description: 'Additional details if Audiogon rating is below an 8/10.',
   },
   {
     name: 'imageFiles',
     airtableFieldName: 'Images',
     label: 'Images',
     type: 'file',
-    description: 'Upload the primary listing photos.',
+    required: true,
+    description: 'Photograph additional items also.',
   },
   {
     name: 'photoDate',

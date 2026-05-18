@@ -136,6 +136,11 @@ describe('TestingFormTab', () => {
     expect(screen.queryByLabelText('Inventory Notes')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Shipping Method')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Status')).not.toBeInTheDocument();
+    expect(screen.getByText('Original Box')).toBeInTheDocument();
+    expect(screen.getByText('Manual')).toBeInTheDocument();
+    expect(screen.getByText('Remote')).toBeInTheDocument();
+    expect(screen.getByText('Power Cable')).toBeInTheDocument();
+    expect(screen.getAllByText('Please confirm')).toHaveLength(4);
     expect(screen.getByText('Additional Items')).toBeInTheDocument();
     expect(screen.getByText('Accessories, spikes, umbilicals, etc..')).toBeInTheDocument();
     expect(screen.getByText('Inventory Notes')).toBeInTheDocument();
