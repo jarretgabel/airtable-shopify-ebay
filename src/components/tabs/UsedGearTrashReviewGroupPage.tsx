@@ -7,28 +7,27 @@ import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
-import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
-import { buildUsedGearIntakeSnapshot } from '@/components/tabs/usedGearIntakeSnapshot';
 import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import {
   hasUsedGearPendingReviewPricingPath,
-  loadUsedGearOperationalRecordContext,
+  loadTrashGroup,
   permanentlyDeleteTrashRecord,
   requalifyTrashRecord,
   restoreTrashRecord,
   type UsedGearPendingReviewAcceptedStatus,
-  type UsedGearOperationalRecordContext,
+  type UsedGearWorkflowGroup,
 } from '@/services/usedGearQueue';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
+import type { AirtableRecord } from '@/types/airtable';
 
-interface UsedGearTrashReviewRecordPageProps {
+interface UsedGearTrashReviewGroupPageProps {
   currentUserName: string;
-  recordId: string;
+  groupId: string;
   onOpenManualIntake: (recordId: string) => void;
 }
 
-type TrashReviewSectionKey = 'restore' | 'requalify' | 'snapshot' | 'delete';
+type TrashReviewGroupSectionKey = 'review' | 'restore' | 'requalify' | 'delete';
 
 const REQUALIFY_ROUTE_OPTIONS: Array<{
   value: UsedGearPendingReviewAcceptedStatus;
@@ -39,8 +38,8 @@ const REQUALIFY_ROUTE_OPTIONS: Array<{
   { value: 'Accepted - Arrived, Awaiting Missing Item', label: 'Arrived, Awaiting Missing Item' },
 ];
 
-function stringFieldValue(fields: Record<string, unknown>, fieldName: string): string {
-  const value = fields[fieldName];
+function stringFieldValue(record: AirtableRecord, fieldName: string): string {
+  const value = record.fields[fieldName];
   if (typeof value === 'string') {
     return value;
   }
@@ -48,6 +47,33 @@ function stringFieldValue(fields: Record<string, unknown>, fieldName: string): s
     return String(value);
   }
   return '';
+}
+
+function intakeTimestamp(record: AirtableRecord): number {
+  const arrivalDate = stringFieldValue(record, 'Arrival Date');
+  const parsedArrival = arrivalDate ? Date.parse(arrivalDate) : Number.NaN;
+  if (Number.isFinite(parsedArrival)) {
+    return parsedArrival;
+  }
+
+  const createdTime = Date.parse(record.createdTime);
+  return Number.isFinite(createdTime) ? createdTime : Number.POSITIVE_INFINITY;
+}
+
+function sortGroupRecords(records: AirtableRecord[]): AirtableRecord[] {
+  return [...records].sort((left, right) => {
+    const timestampDelta = intakeTimestamp(left) - intakeTimestamp(right);
+    if (timestampDelta !== 0) {
+      return timestampDelta;
+    }
+
+    const makeDelta = stringFieldValue(left, 'Make').localeCompare(stringFieldValue(right, 'Make'));
+    if (makeDelta !== 0) {
+      return makeDelta;
+    }
+
+    return stringFieldValue(left, 'Model').localeCompare(stringFieldValue(right, 'Model'));
+  });
 }
 
 function QualificationTemplateRow({ onApplyTemplate }: { onApplyTemplate: (templateValue: string) => void }) {
@@ -70,17 +96,18 @@ function QualificationTemplateRow({ onApplyTemplate }: { onApplyTemplate: (templ
   );
 }
 
-export function UsedGearTrashReviewRecordPage({
+export function UsedGearTrashReviewGroupPage({
   currentUserName,
-  recordId,
+  groupId,
   onOpenManualIntake,
-}: UsedGearTrashReviewRecordPageProps) {
+}: UsedGearTrashReviewGroupPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [context, setContext] = useState<UsedGearOperationalRecordContext | null>(null);
+  const [group, setGroup] = useState<UsedGearWorkflowGroup | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState<'restore' | 'requalify' | 'delete' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [requalifyStatus, setRequalifyStatus] = useState<UsedGearPendingReviewAcceptedStatus>('Accepted - Awaiting Arrival');
   const [requalifyNotes, setRequalifyNotes] = useState('');
   const { requestConfirmation, confirmationModal } = useConfirmationDialog();
@@ -88,25 +115,20 @@ export function UsedGearTrashReviewRecordPage({
   useEffect(() => {
     let cancelled = false;
 
-    const loadRecord = async () => {
+    const loadGroup = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const nextContext = await loadUsedGearOperationalRecordContext(recordId);
+        const nextGroup = await loadTrashGroup(groupId);
         if (!cancelled) {
-          setContext(nextContext);
-          setRequalifyStatus(
-            nextContext.record.fields['Workflow Status'] === 'Accepted - Arrived, Awaiting SKU'
-              || nextContext.record.fields['Workflow Status'] === 'Accepted - Arrived, Awaiting Missing Item'
-              ? nextContext.record.fields['Workflow Status'] as UsedGearPendingReviewAcceptedStatus
-              : 'Accepted - Awaiting Arrival',
-          );
-          setRequalifyNotes(stringFieldValue(nextContext.record.fields, 'Qualification Notes'));
+          const sortedRecords = sortGroupRecords(nextGroup.records);
+          setGroup({ ...nextGroup, records: sortedRecords });
+          setRequalifyNotes(stringFieldValue(sortedRecords[0] ?? nextGroup.records[0]!, 'Qualification Notes'));
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Unable to load the selected trash-review row.');
+          setError(loadError instanceof Error ? loadError.message : 'Unable to load the selected Trash Review group.');
         }
       } finally {
         if (!cancelled) {
@@ -115,93 +137,89 @@ export function UsedGearTrashReviewRecordPage({
       }
     };
 
-    void loadRecord();
+    void loadGroup();
 
     return () => {
       cancelled = true;
     };
-  }, [recordId]);
+  }, [groupId]);
 
-  const record = context?.record ?? null;
-  const group = context?.group ?? null;
-  const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
-  const hasPricingPath = useMemo(() => record ? hasUsedGearPendingReviewPricingPath(record.fields) : false, [record]);
-  const intakeSnapshot = useMemo(() => (record ? buildUsedGearIntakeSnapshot(record) : null), [record]);
-  const sectionItems = useMemo<Array<{ id: TrashReviewSectionKey; key: TrashReviewSectionKey; label: string }>>(() => {
-    const items: Array<{ id: TrashReviewSectionKey; key: TrashReviewSectionKey; label: string }> = [];
-    items.push({ id: 'restore', key: 'restore', label: 'Restore' });
-    items.push({ id: 'requalify', key: 'requalify', label: 'Re-qualify' });
-    if (intakeSnapshot) {
-      items.push({ id: 'snapshot', key: 'snapshot', label: 'Snapshot' });
-    }
-    items.push({ id: 'delete', key: 'delete', label: 'Delete' });
-    return items;
-  }, [intakeSnapshot]);
-  const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, sectionItems[0]?.id ?? 'restore');
+  const records = useMemo(() => group?.records ?? [], [group]);
+  const sectionItems = useMemo<Array<{ id: TrashReviewGroupSectionKey; key: TrashReviewGroupSectionKey; label: string }>>(() => [
+    { id: 'review', key: 'review', label: 'Group Review' },
+    { id: 'restore', key: 'restore', label: 'Restore' },
+    { id: 'requalify', key: 'requalify', label: 'Re-qualify' },
+    { id: 'delete', key: 'delete', label: 'Delete' },
+  ], []);
+  const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, 'review');
   const sectionNav = (
     <MainPageSectionNav
-      ariaLabel="Trash review sections"
+      ariaLabel="Trash review group sections"
       items={sectionItems.map((item) => ({ key: item.key, label: item.label }))}
-      activeKey={activeSectionId as TrashReviewSectionKey}
+      activeKey={activeSectionId as TrashReviewGroupSectionKey}
       onSelect={(sectionKey) => scrollToSection(sectionKey)}
     />
   );
+  const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
+  const hasPricingCoverage = useMemo(() => records.every((record) => hasUsedGearPendingReviewPricingPath(record.fields)), [records]);
 
   const backToTrash = () => {
     navigate({ pathname: '/trash-review', search: location.search, hash: '#used-gear-trash' });
   };
 
-  const handleRestore = async () => {
-    if (!record) {
+  const handleRestoreGroup = async () => {
+    if (records.length === 0) {
       return;
     }
 
-    setSaving(true);
+    setSaving('restore');
     setError(null);
+    setSuccessMessage(null);
 
     try {
-      await restoreTrashRecord(record.id);
+      await Promise.all(records.map((record) => restoreTrashRecord(record.id)));
       navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-pending-review' });
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to restore this trash row to Parking Lot 1.');
-      setSaving(false);
+      setError(actionError instanceof Error ? actionError.message : 'Unable to restore this Trash Review group to Parking Lot 1.');
+      setSaving(null);
     }
   };
 
-  const handleRequalify = async () => {
-    if (!record) {
+  const handleRequalifyGroup = async () => {
+    if (records.length === 0 || requalifyNotes.trim().length === 0 || !hasPricingCoverage) {
       return;
     }
 
-    setSaving(true);
+    setSaving('requalify');
     setError(null);
+    setSuccessMessage(null);
 
     try {
-      await requalifyTrashRecord(record.id, currentUserName, {
+      await Promise.all(records.map((record) => requalifyTrashRecord(record.id, currentUserName, {
         acceptedStatus: requalifyStatus,
         qualificationNotes: requalifyNotes,
-      });
+      })));
       navigate({ pathname: '/parking-lot-2', search: location.search });
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to re-qualify this trash row into Lot 2.');
-      setSaving(false);
+      setError(actionError instanceof Error ? actionError.message : 'Unable to re-qualify this Trash Review group into Lot 2.');
+      setSaving(null);
     }
   };
 
-  const handleDelete = async () => {
-    if (!record) {
+  const handleDeleteGroup = async () => {
+    if (records.length === 0) {
       return;
     }
 
     const confirmed = await requestConfirmation({
-      title: 'Delete trash record?',
-      message: 'This permanently removes the record from the workflow and it will not return to Trash Review, Parking Lot 1, or Parking Lot 2.',
+      title: 'Delete trash group?',
+      message: 'This permanently removes every record in this grouped Trash Review set from the workflow.',
       confirmLabel: 'Delete Permanently',
-      cancelLabel: 'Keep Record',
+      cancelLabel: 'Keep Records',
       tone: 'danger',
       bullets: [
         'This action cannot be undone from the app.',
-        'Any current workflow routing for this row will be removed.',
+        'All grouped rows in this Trash Review set will be removed together.',
       ],
     });
 
@@ -209,40 +227,47 @@ export function UsedGearTrashReviewRecordPage({
       return;
     }
 
-    setSaving(true);
+    setSaving('delete');
     setError(null);
+    setSuccessMessage(null);
 
     try {
-      await permanentlyDeleteTrashRecord(record.id);
+      await Promise.all(records.map((record) => permanentlyDeleteTrashRecord(record.id)));
       backToTrash();
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to permanently delete this trash row.');
-      setSaving(false);
+      setError(actionError instanceof Error ? actionError.message : 'Unable to permanently delete this Trash Review group.');
+      setSaving(null);
     }
   };
 
   if (loading) {
-    return <LoadingSurface message="Loading trash review..." />;
+    return <LoadingSurface message="Loading trash review group..." />;
   }
 
-  if (!record) {
-    return <ErrorSurface title="Unable to load trash review" message={error ?? 'The selected Trash Review record could not be loaded.'} />;
+  if (!group) {
+    return <ErrorSurface title="Unable to load trash review group" message={error ?? 'The selected Trash Review group could not be loaded.'} />;
   }
 
   return (
     <WorkflowRecordPageLayout
       eyebrow="Trash Review"
-      title={displayInventoryValue(record.fields.SKU)}
+      title={`Trash Review ${group.label}`}
       belowHeader={sectionNav}
       actions={<BackToolbarButton label="Back to Trash Review" onClick={backToTrash} />}
     >
       <div className="space-y-6">
-
         {error ? (
           <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
             {error}
           </div>
         ) : null}
+
+        {successMessage ? (
+          <div className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+            {successMessage}
+          </div>
+        ) : null}
+
         <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.15fr)]">
           <section id="restore" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
             <AppSectionTitle title="Restore To Parking Lot 1" titleClassName="text-lg" className="pt-0" />
@@ -250,11 +275,11 @@ export function UsedGearTrashReviewRecordPage({
               type="button"
               className="mt-4 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => {
-                void handleRestore();
+                void handleRestoreGroup();
               }}
-              disabled={saving}
+              disabled={saving !== null}
             >
-              {saving ? 'Saving...' : 'Restore To Lot 1'}
+              {saving === 'restore' ? 'Saving...' : 'Restore To Lot 1'}
             </button>
           </section>
 
@@ -280,7 +305,7 @@ export function UsedGearTrashReviewRecordPage({
                   rows={5}
                   value={requalifyNotes}
                   onChange={(event) => setRequalifyNotes(event.currentTarget.value)}
-                  placeholder="Required before re-qualifying this item into Lot 2"
+                  placeholder="Required before re-qualifying this grouped set into Lot 2"
                 />
               </label>
               <QualificationTemplateRow
@@ -288,49 +313,57 @@ export function UsedGearTrashReviewRecordPage({
                   setRequalifyNotes((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
                 }}
               />
-              {!hasPricingPath ? (
-                <p className="m-0 text-sm text-amber-200">Offer amount, paid amount, or confirmed grand total is still required before this row can be re-qualified into Lot 2.</p>
+              {!hasPricingCoverage ? (
+                <p className="m-0 text-sm text-amber-200">Offer amount, paid amount, or confirmed grand total is still required before this grouped set can be re-qualified into Lot 2.</p>
               ) : null}
               <button
                 type="button"
                 className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={() => {
-                  void handleRequalify();
+                  void handleRequalifyGroup();
                 }}
-                disabled={saving || requalifyNotes.trim().length === 0 || !hasPricingPath}
+                disabled={saving !== null || requalifyNotes.trim().length === 0 || !hasPricingCoverage}
               >
-                {saving ? 'Saving...' : 'Re-qualify Into Lot 2'}
+                {saving === 'requalify' ? 'Saving...' : 'Re-qualify Into Lot 2'}
               </button>
             </div>
           </section>
         </div>
 
-        {intakeSnapshot ? (
-          <IntakeSnapshotSection
-            sectionId="snapshot"
-            className="scroll-mt-28"
-            fields={intakeSnapshot.fields}
-            cards={intakeSnapshot.cards}
-            actions={<CompactIconActionButton label="Edit Intake" variant="small-secondary" icon="edit" onClick={() => onOpenManualIntake(record.id)} />}
-          />
-        ) : null}
+        <section id="review" className="space-y-4 scroll-mt-28">
+          <div className="grid gap-3 md:grid-cols-2">
+            {records.map((record) => (
+              <article key={record.id} className="h-full rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="m-0 text-lg font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</p>
+                    <div className="mt-3 border-t border-[var(--line)]/70 pt-3 text-sm text-[var(--muted)]">
+                      <div>SKU: {displayInventoryValue(record.fields.SKU)}</div>
+                      <div className="mt-1">Reason: {displayInventoryValue(record.fields['Unqualified Reason'])}</div>
+                    </div>
+                  </div>
+                  <CompactIconActionButton label="Edit Intake" variant="compact-secondary" icon="edit" onClick={() => onOpenManualIntake(record.id)} />
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
-        <section id="delete" className="rounded-2xl border border-rose-400/25 bg-rose-500/10 p-5 scroll-mt-28">
-          <AppSectionTitle title="Delete From Workflow" titleClassName="text-lg text-white" className="border-b-rose-300/20 pt-0" />
-          <p className="mt-2 text-sm leading-6 text-rose-100/80">Delete only when the row should leave the workflow entirely and should not return to Parking Lot 1 or Lot 2.</p>
+        <section id="delete" className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-5 scroll-mt-28">
+          <AppSectionTitle title="Delete From Workflow" titleClassName="text-lg text-rose-100" className="pt-0" />
+          <p className="mt-2 text-sm leading-6 text-rose-100/80">Permanently remove every row in this grouped Trash Review set when the batch should not return to workflow.</p>
           <button
             type="button"
-            className="mt-4 inline-flex items-center justify-center rounded-xl border border-rose-300/35 bg-rose-500/15 px-4 py-2.5 text-sm font-semibold text-rose-50 transition hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-4 w-full rounded-xl border border-rose-300/40 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:border-rose-200/70 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
             onClick={() => {
-              void handleDelete();
+              void handleDeleteGroup();
             }}
-            disabled={saving}
+            disabled={saving !== null}
           >
-            {saving ? 'Saving...' : 'Delete Permanently'}
+            {saving === 'delete' ? 'Saving...' : 'Delete Group Permanently'}
           </button>
         </section>
         {confirmationModal}
-
       </div>
     </WorkflowRecordPageLayout>
   );

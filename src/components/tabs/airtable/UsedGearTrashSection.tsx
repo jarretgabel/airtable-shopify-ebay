@@ -14,6 +14,7 @@ import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearTrashSectionProps {
   onOpenReviewRecord: (recordId: string) => void;
+  onOpenGroupReview: (groupId: string) => void;
   showSectionIntro?: boolean;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
@@ -94,6 +95,7 @@ function getTrashSortLabel(sortMode: UsedGearTrashSortMode): string {
 
 export function UsedGearTrashSection({
   onOpenReviewRecord,
+  onOpenGroupReview,
   showSectionIntro = true,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
@@ -323,6 +325,22 @@ export function UsedGearTrashSection({
                 return (
                   <div className="flex min-h-[4.5rem] flex-col items-center justify-center gap-1">
                     <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{group.items.length}</span>
+                  </div>
+                );
+              }}
+              renderGroupActionCell={(group) => {
+                if (group.items.length === 1) {
+                  return <span className="text-xs text-[var(--muted)]/45">-</span>;
+                }
+
+                return (
+                  <div className="flex min-h-[4.5rem] w-full flex-col items-center justify-center gap-1.5">
+                    <CompactIconActionButton
+                      label="Open Group Review"
+                      variant="compact-primary"
+                      icon="edit"
+                      onClick={() => onOpenGroupReview(group.id)}
+                    />
                   </div>
                 );
               }}

@@ -87,6 +87,10 @@ vi.mock('@/components/tabs/UsedGearLotTwoGroupPage', () => ({
   UsedGearLotTwoGroupPage: ({ groupId }: { groupId: string }) => <div>Parking Lot 2 handoff {groupId}</div>,
 }));
 
+vi.mock('@/components/tabs/UsedGearTrashReviewGroupPage', () => ({
+  UsedGearTrashReviewGroupPage: ({ groupId }: { groupId: string }) => <div>Trash review group {groupId}</div>,
+}));
+
 vi.mock('@/components/tabs/UsedGearLotTwoRecordPage', () => ({
   UsedGearLotTwoRecordPage: ({ recordId }: { recordId: string }) => <div>Parking Lot 2 review {recordId}</div>,
 }));
@@ -126,6 +130,7 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     jotformReviewRecordId: null,
     lotTwoReviewGroupId: null,
     lotTwoReviewRecordId: null,
+    trashReviewGroupId: null,
     trashReviewRecordId: null,
     manualIntakeRecordId: null,
     testingRecordId: null,
@@ -299,7 +304,11 @@ describe('AppTabContent', () => {
       activeTab: 'dashboard',
       manualIntakeMode: false,
       jotformReviewGroupId: null,
+      jotformReviewRecordId: null,
       lotTwoReviewGroupId: null,
+      lotTwoReviewRecordId: null,
+      trashReviewGroupId: null,
+      trashReviewRecordId: null,
       manualIntakeRecordId: null,
       testingRecordId: null,
       photosRecordId: null,
@@ -470,6 +479,19 @@ describe('AppTabContent', () => {
     );
 
     expect(await screen.findByText('Parking Lot 2 review rec-lot-two-1')).toBeInTheDocument();
+  });
+
+  it('renders the dedicated Trash Review group page for grouped trash routes', async () => {
+    render(
+      <AppTabContent
+        {...buildProps({
+          activeTab: 'trash-review',
+          trashReviewGroupId: 'trash-set-a',
+        })}
+      />,
+    );
+
+    expect(await screen.findByText('Trash review group trash-set-a')).toBeInTheDocument();
   });
 
   it('renders the dedicated manual-intake page for the manual-intake route', async () => {

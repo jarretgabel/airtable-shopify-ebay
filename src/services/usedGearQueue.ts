@@ -562,6 +562,17 @@ export async function loadTrashQueue(): Promise<AirtableRecord[]> {
     });
 }
 
+export async function loadTrashGroup(groupId: string): Promise<UsedGearWorkflowGroup> {
+  const groups = groupUsedGearWorkflowRecords(await loadTrashQueue());
+  const group = groups.find((candidate) => candidate.id === groupId && candidate.records.length > 1);
+
+  if (!group) {
+    throw new Error('Unable to load the selected Trash Review group.');
+  }
+
+  return group;
+}
+
 export async function loadLotTwoQueue(): Promise<AirtableRecord[]> {
   const records = await loadUsedGearOperationalRecords();
 

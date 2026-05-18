@@ -40,6 +40,7 @@ describe('UsedGearTrashSection', () => {
     render(
       <UsedGearTrashSection
         onOpenReviewRecord={vi.fn()}
+        onOpenGroupReview={vi.fn()}
         searchTerm="pioneer"
         onSearchTermChange={onSearchTermChange}
       />,
@@ -56,7 +57,7 @@ describe('UsedGearTrashSection', () => {
   it('shows inline sort options in the header', async () => {
     loadTrashQueueMock.mockResolvedValue([]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} />);
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenGroupReview={vi.fn()} />);
 
     await screen.findByText('Trash Review');
     expect(screen.getByLabelText(/Sort trash review queue/i)).toBeInTheDocument();
@@ -92,7 +93,7 @@ describe('UsedGearTrashSection', () => {
       },
     ]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} searchTerm="transformer cover" />);
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenGroupReview={vi.fn()} searchTerm="transformer cover" />);
 
     await screen.findByText('Trash Review');
 
@@ -119,7 +120,7 @@ describe('UsedGearTrashSection', () => {
       },
     ]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={onOpenReviewRecord} />);
+    render(<UsedGearTrashSection onOpenReviewRecord={onOpenReviewRecord} onOpenGroupReview={vi.fn()} />);
 
     await screen.findByText('Trash Review');
 
@@ -130,6 +131,44 @@ describe('UsedGearTrashSection', () => {
     expect(screen.queryByText(/Qualification Notes:/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Pricing Gate:/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Offer Amount:/i)).not.toBeInTheDocument();
+  });
+
+  it('opens the dedicated grouped trash review page for multi-item trash groups', async () => {
+    const onOpenGroupReview = vi.fn();
+
+    loadTrashQueueMock.mockResolvedValue([
+      {
+        id: 'rec-trash-a',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'TRASH-A',
+          Make: 'Pioneer',
+          Model: 'SX-750',
+          'Workflow Status': 'Unqualified',
+          'Trash Status': 'Active Trash',
+          'Submission Group ID': 'trash-set-a',
+        },
+      },
+      {
+        id: 'rec-trash-b',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'TRASH-B',
+          Make: 'Pioneer',
+          Model: 'CT-F9191',
+          'Workflow Status': 'Unqualified',
+          'Trash Status': 'Active Trash',
+          'Submission Group ID': 'trash-set-a',
+        },
+      },
+    ]);
+
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenGroupReview={onOpenGroupReview} />);
+
+    await screen.findByText('Trash Review');
+    fireEvent.click(screen.getByRole('button', { name: 'Open Group Review' }));
+
+    expect(onOpenGroupReview).toHaveBeenCalledWith('trash-set-a');
   });
 
   it('labels ungrouped trash records as single items', async () => {
@@ -148,7 +187,7 @@ describe('UsedGearTrashSection', () => {
       },
     ]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} />);
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenGroupReview={vi.fn()} />);
 
     await screen.findByText('Trash Review');
 
@@ -173,7 +212,7 @@ describe('UsedGearTrashSection', () => {
       },
     ]);
 
-    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} />);
+    render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenGroupReview={vi.fn()} />);
 
     await screen.findAllByText('TRASH-SINGLE');
 

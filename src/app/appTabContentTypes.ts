@@ -20,6 +20,7 @@ export interface AppTabContentProps {
   jotformReviewRecordId: string | null;
   lotTwoReviewGroupId: string | null;
   lotTwoReviewRecordId: string | null;
+  trashReviewGroupId: string | null;
   trashReviewRecordId: string | null;
   manualIntakeRecordId: string | null;
   testingRecordId: string | null;

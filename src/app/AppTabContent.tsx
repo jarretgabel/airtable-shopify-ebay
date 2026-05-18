@@ -37,6 +37,7 @@ const UsedGearManualIntakePage = lazy(async () => ({ default: (await import('@/c
 const UsedGearLotTwoGroupPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoGroupPage')).UsedGearLotTwoGroupPage }));
 const UsedGearLotTwoRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoRecordPage')).UsedGearLotTwoRecordPage }));
 const UsedGearLotTwoTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoTab')).UsedGearLotTwoTab }));
+const UsedGearTrashReviewGroupPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashReviewGroupPage')).UsedGearTrashReviewGroupPage }));
 const UsedGearTrashReviewRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashReviewRecordPage')).UsedGearTrashReviewRecordPage }));
 const UsedGearTrashTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashTab')).UsedGearTrashTab }));
 const UsedGearWorkflowQueueTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearWorkflowQueueTab')).UsedGearWorkflowQueueTab }));
@@ -234,6 +235,7 @@ export function AppTabContent({
   jotformReviewRecordId,
   lotTwoReviewGroupId,
   lotTwoReviewRecordId,
+  trashReviewGroupId,
   trashReviewRecordId,
   manualIntakeRecordId,
   testingRecordId,
@@ -336,6 +338,7 @@ export function AppTabContent({
     jotformReviewRecordId,
     lotTwoReviewGroupId,
     lotTwoReviewRecordId,
+    trashReviewGroupId,
     trashReviewRecordId,
     manualIntakeRecordId,
     testingRecordId,
@@ -353,6 +356,7 @@ export function AppTabContent({
     || deferredRouteState.jotformReviewRecordId !== jotformReviewRecordId
     || deferredRouteState.lotTwoReviewGroupId !== lotTwoReviewGroupId
     || deferredRouteState.lotTwoReviewRecordId !== lotTwoReviewRecordId
+    || deferredRouteState.trashReviewGroupId !== trashReviewGroupId
     || deferredRouteState.trashReviewRecordId !== trashReviewRecordId
     || deferredRouteState.testingRecordId !== testingRecordId
     || deferredRouteState.photosRecordId !== photosRecordId
@@ -677,6 +681,15 @@ export function AppTabContent({
           />
         );
       case 'trash-review':
+        if (deferredRouteState.trashReviewGroupId) {
+          return (
+            <UsedGearTrashReviewGroupPage
+              currentUserName={currentUserName}
+              groupId={deferredRouteState.trashReviewGroupId}
+              onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
+            />
+          );
+        }
         if (deferredRouteState.trashReviewRecordId) {
           return (
             <UsedGearTrashReviewRecordPage

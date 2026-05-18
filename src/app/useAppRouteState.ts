@@ -11,6 +11,7 @@ interface AppRouteState {
   jotformReviewRecordId: string | null;
   lotTwoReviewGroupId: string | null;
   lotTwoReviewRecordId: string | null;
+  trashReviewGroupId: string | null;
   trashReviewRecordId: string | null;
   manualIntakeRecordId: string | null;
   testingRecordId: string | null;
@@ -38,6 +39,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const jotformReviewRecordMatch = normalizedPath.match(/^\/parking-lot-1\/(?!review\/)([^/]+)$/);
   const lotTwoReviewGroupMatch = normalizedPath.match(/^\/parking-lot-2\/group\/([^/]+)$/);
   const lotTwoReviewRecordMatch = normalizedPath.match(/^\/parking-lot-2\/(?!review\/)([^/]+)$/);
+  const trashReviewGroupMatch = normalizedPath.match(/^\/trash-review\/group\/([^/]+)$/);
   const trashReviewRecordMatch = normalizedPath.match(/^\/trash-review\/review\/([^/]+)$/);
   const testingRecordMatch = normalizedPath.match(/^\/testing\/([^/]+)$/);
   const photosRecordMatch = normalizedPath.match(/^\/photos\/([^/]+)$/);
@@ -56,7 +58,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     if (normalizedPath === '/shopify/products' || shopifyListingsRecordMatch) return 'shopify';
     if (normalizedPath === '/parking-lot-1' || jotformReviewGroupMatch || jotformReviewRecordMatch) return 'parking-lot-1';
     if (normalizedPath === '/parking-lot-2' || lotTwoReviewGroupMatch || lotTwoReviewRecordMatch) return 'parking-lot-2';
-    if (normalizedPath === '/trash-review' || trashReviewRecordMatch) return 'trash-review';
+    if (normalizedPath === '/trash-review' || trashReviewGroupMatch || trashReviewRecordMatch) return 'trash-review';
     if (normalizedPath === '/workflow/testing') return 'testing-queue';
     if (normalizedPath === '/workflow/photography') return 'photography-queue';
     if (manualIntakeMode) return 'manual-intake';
@@ -82,6 +84,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     jotformReviewRecordId: jotformReviewRecordMatch ? decodeURIComponent(jotformReviewRecordMatch[1]) : null,
     lotTwoReviewGroupId: lotTwoReviewGroupMatch ? decodeURIComponent(lotTwoReviewGroupMatch[1]) : null,
     lotTwoReviewRecordId: lotTwoReviewRecordMatch ? decodeURIComponent(lotTwoReviewRecordMatch[1]) : null,
+    trashReviewGroupId: trashReviewGroupMatch ? decodeURIComponent(trashReviewGroupMatch[1]) : null,
     trashReviewRecordId: trashReviewRecordMatch ? decodeURIComponent(trashReviewRecordMatch[1]) : null,
     manualIntakeRecordId: manualIntakeRecordMatch
       ? decodeURIComponent(manualIntakeRecordMatch[1])

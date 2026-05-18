@@ -10,6 +10,7 @@ function buildInput(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     jotformReviewRecordId: null,
     lotTwoReviewGroupId: null,
     lotTwoReviewRecordId: null,
+    trashReviewGroupId: null,
     trashReviewRecordId: null,
     manualIntakeRecordId: null,
     testingRecordId: null,

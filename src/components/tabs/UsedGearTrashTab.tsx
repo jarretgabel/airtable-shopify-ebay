@@ -39,6 +39,7 @@ export function UsedGearTrashTab({}: UsedGearTrashTabProps) {
       <UsedGearTrashSection
         showSectionIntro={false}
         onOpenReviewRecord={(recordId) => navigate(`/trash-review/review/${encodeURIComponent(recordId)}${location.search}`, { replace: false })}
+        onOpenGroupReview={(groupId) => navigate(`/trash-review/group/${encodeURIComponent(groupId)}${location.search}`, { replace: false })}
         searchTerm={workflowTrashSearch}
         onSearchTermChange={(value) => updateRouteState((params) => {
           if (value.trim()) {

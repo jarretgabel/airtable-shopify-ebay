@@ -137,6 +137,12 @@ describe('useAppRouteState', () => {
     expect(state.trashReviewRecordId).toBe('rec trash');
   });
 
+  it('maps trash review group deep links with group ids', () => {
+    const state = useAppRouteState(locationFor('/trash-review/group/trash%20set'), ['dashboard', 'trash-review']);
+    expect(state.activeTab).toBe('trash-review');
+    expect(state.trashReviewGroupId).toBe('trash set');
+  });
+
   it('maps Shopify listing detail routes and decodes id', () => {
     const state = useAppRouteState(locationFor('/shopify/products/rec%20shopify'), ['dashboard', 'shopify']);
     expect(state.activeTab).toBe('shopify');

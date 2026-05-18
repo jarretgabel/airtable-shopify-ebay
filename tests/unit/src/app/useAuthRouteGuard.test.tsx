@@ -111,6 +111,20 @@ describe('useAuthRouteGuard', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it('allows grouped trash review routes when the user has access', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/trash-review/group/trash-set-a"
+        canAccessPage={(tab) => tab === 'trash-review' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('allows the manual-intake route when the user has access', () => {
     const navigate = vi.fn();
 
