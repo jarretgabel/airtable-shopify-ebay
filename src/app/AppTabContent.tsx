@@ -625,8 +625,8 @@ export function AppTabContent({
               currentUserName={currentUserName}
               groupId={deferredRouteState.jotformReviewGroupId}
               onBackToParkingLot={() => navigateToTab('parking-lot-1')}
+              onOpenTrashReview={() => navigateToTab('trash-review')}
               onOpenManualIntake={(recordId: string) => navigateToManualIntakeForm(recordId)}
-              onOpenOperationalRecord={(recordId: string) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
         }

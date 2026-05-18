@@ -1,28 +1,32 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
-import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
-import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
+import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
+import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
+import { UsedGearTrashRouteCard } from '@/components/tabs/UsedGearTrashRouteCard';
+import { secondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import {
   acceptPendingReviewGroup,
-  distributeUsedGearPendingReviewTotal,
   loadPendingReviewGroup,
+  markPendingReviewGroupUnqualified,
   savePendingReviewGroupReview,
   type UsedGearPendingReviewAcceptedStatus,
   type UsedGearPendingReviewAllocationMode,
   type UsedGearWorkflowGroup,
 } from '@/services/usedGearQueue';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
+import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
 import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearPendingReviewGroupPageProps {
   currentUserName: string;
   groupId: string;
   onBackToParkingLot: () => void;
+  onOpenTrashReview: () => void;
   onOpenManualIntake: (recordId: string) => void;
-  onOpenOperationalRecord: (recordId: string) => void;
 }
 
 interface GroupReviewRecordEditor {
@@ -40,6 +44,34 @@ const ACCEPT_ROUTE_OPTIONS: Array<{
   { value: 'Accepted - Arrived, Awaiting SKU', label: 'Arrived, Awaiting SKU' },
   { value: 'Accepted - Arrived, Awaiting Missing Item', label: 'Arrived, Awaiting Missing Item' },
 ];
+
+type PendingReviewGroupSectionKey = 'review' | 'grouped-items' | 'trash';
+
+function NoteTemplateRow({
+  onApplyTemplate,
+}: {
+  onApplyTemplate: (templateValue: string) => void;
+}) {
+  const templates = getUsedGearWorkflowNoteTemplates('qualification');
+
+  return (
+    <div className="mt-3 rounded-2xl border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--panel)_72%,transparent)] p-3">
+      <p className="m-0 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]/85">Quick templates</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {templates.map((template) => (
+          <button
+            key={template.id}
+            type="button"
+            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] shadow-[0_4px_14px_rgba(17,32,49,0.04)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--panel)] hover:text-[var(--ink)]"
+            onClick={() => onApplyTemplate(template.value)}
+          >
+            {template.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function stringFieldValue(record: AirtableRecord, fieldName: string): string {
   const value = record.fields[fieldName];
@@ -105,8 +137,8 @@ export function UsedGearPendingReviewGroupPage({
   currentUserName,
   groupId,
   onBackToParkingLot,
+  onOpenTrashReview,
   onOpenManualIntake,
-  onOpenOperationalRecord,
 }: UsedGearPendingReviewGroupPageProps) {
   const [group, setGroup] = useState<UsedGearWorkflowGroup | null>(null);
   const [loading, setLoading] = useState(true);
@@ -117,6 +149,7 @@ export function UsedGearPendingReviewGroupPage({
   const [confirmedGrandTotal, setConfirmedGrandTotal] = useState('');
   const [allocationMode, setAllocationMode] = useState<UsedGearPendingReviewAllocationMode>('Equal Split');
   const [allocationNotes, setAllocationNotes] = useState('');
+  const [unqualifiedReason, setUnqualifiedReason] = useState('');
   const [recordEditors, setRecordEditors] = useState<Record<string, GroupReviewRecordEditor>>({});
 
   useEffect(() => {
@@ -135,6 +168,7 @@ export function UsedGearPendingReviewGroupPage({
           setConfirmedGrandTotal(stringFieldValue(sortedRecords[0]!, 'Confirmed Grand Total'));
           setAllocationMode((stringFieldValue(sortedRecords[0]!, 'Allocation Mode') as UsedGearPendingReviewAllocationMode) || 'Equal Split');
           setAllocationNotes(stringFieldValue(sortedRecords[0]!, 'Allocation Notes'));
+          setUnqualifiedReason(stringFieldValue(sortedRecords[0]!, 'Unqualified Reason'));
           setRecordEditors(buildRecordEditors(sortedRecords));
         }
       } catch (loadError) {
@@ -158,152 +192,6 @@ export function UsedGearPendingReviewGroupPage({
   const records = useMemo(() => group?.records ?? [], [group]);
   const parsedGrandTotal = parseCurrency(confirmedGrandTotal);
   const groupNeedsSubmissionId = records.length > 1 && submissionGroupId.trim().length === 0;
-  const recordColumns = useMemo<IntakeItemsMatrixColumn<AirtableRecord>[]>(() => [
-    {
-      key: 'sku',
-      label: 'SKU',
-      width: '9rem',
-      renderCell: (record) => <span className="font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</span>,
-    },
-    {
-      key: 'item',
-      label: 'Item',
-      width: 'minmax(0,1.3fr)',
-      renderCell: (record) => (
-        <div className="min-w-0">
-          <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
-          <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
-            <span>{displayInventoryValue(record.fields['Workflow Source'])}</span>
-            <span>{displayInventoryValue(record.fields['Arrival Date'])}</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: 'route',
-      label: 'Route',
-      width: '11rem',
-      renderCell: (record) => {
-        const editor = recordEditors[record.id];
-
-        return (
-          <select
-            aria-label="Lot 2 Route"
-            className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-            value={editor?.acceptedStatus ?? 'Accepted - Awaiting Arrival'}
-            onChange={(event) => {
-              const nextValue = event.currentTarget.value as UsedGearPendingReviewAcceptedStatus;
-              setRecordEditors((currentEditors) => ({
-                ...currentEditors,
-                [record.id]: {
-                  ...currentEditors[record.id],
-                  acceptedStatus: nextValue,
-                },
-              }));
-            }}
-          >
-            {ACCEPT_ROUTE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
-        );
-      },
-    },
-    {
-      key: 'offer',
-      label: 'Offer',
-      width: '8rem',
-      renderCell: (record) => {
-        const editor = recordEditors[record.id];
-
-        return (
-          <input
-            aria-label="Offer Amount"
-            className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-            type="number"
-            step="0.01"
-            value={editor?.offerAmount ?? ''}
-            onChange={(event) => {
-              const nextValue = event.currentTarget.value;
-              setRecordEditors((currentEditors) => ({
-                ...currentEditors,
-                [record.id]: {
-                  ...currentEditors[record.id],
-                  offerAmount: nextValue,
-                },
-              }));
-            }}
-          />
-        );
-      },
-    },
-    {
-      key: 'paid',
-      label: 'Paid',
-      width: '8rem',
-      renderCell: (record) => {
-        const editor = recordEditors[record.id];
-
-        return (
-          <input
-            aria-label="Paid Amount"
-            className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-            type="number"
-            step="0.01"
-            value={editor?.paidAmount ?? ''}
-            onChange={(event) => {
-              const nextValue = event.currentTarget.value;
-              setRecordEditors((currentEditors) => ({
-                ...currentEditors,
-                [record.id]: {
-                  ...currentEditors[record.id],
-                  paidAmount: nextValue,
-                },
-              }));
-            }}
-          />
-        );
-      },
-    },
-    {
-      key: 'notes',
-      label: 'Notes',
-      width: 'minmax(0,1.45fr)',
-      renderCell: (record) => {
-        const editor = recordEditors[record.id];
-
-        return (
-          <textarea
-            aria-label="Qualification Notes"
-            className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-            rows={3}
-            value={editor?.qualificationNotes ?? ''}
-            onChange={(event) => {
-              const nextValue = event.currentTarget.value;
-              setRecordEditors((currentEditors) => ({
-                ...currentEditors,
-                [record.id]: {
-                  ...currentEditors[record.id],
-                  qualificationNotes: nextValue,
-                },
-              }));
-            }}
-          />
-        );
-      },
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      width: '14rem',
-      align: 'right',
-      renderCell: (record) => (
-        <div className="flex flex-wrap justify-end gap-1.5">
-          <CompactIconActionButton label="Edit Workflow Record" variant="small-secondary" icon="edit" onClick={() => onOpenOperationalRecord(record.id)} />
-          <CompactIconActionButton label="Open Intake" variant="small-secondary" icon="edit" onClick={() => onOpenManualIntake(record.id)} />
-        </div>
-      ),
-    },
-  ], [onOpenManualIntake, onOpenOperationalRecord, recordEditors]);
-
   const pricingCoverage = useMemo(() => records.every((record) => {
     const editor = recordEditors[record.id];
     if (!editor) {
@@ -319,24 +207,20 @@ export function UsedGearPendingReviewGroupPage({
     const editor = recordEditors[record.id];
     return Boolean(editor && editor.qualificationNotes.trim().length > 0);
   }), [recordEditors, records]);
-
-  const applyEqualSplit = () => {
-    if (parsedGrandTotal === null) {
-      setError('Confirmed Grand Total is required before applying equal split.');
-      return;
-    }
-
-    const allocations = distributeUsedGearPendingReviewTotal(parsedGrandTotal, records.length);
-    setAllocationMode('Equal Split');
-    setRecordEditors((currentEditors) => Object.fromEntries(records.map((record, index) => [
-      record.id,
-      {
-        ...currentEditors[record.id],
-        offerAmount: allocations[index].toFixed(2),
-      },
-    ])));
-    setError(null);
-  };
+  const sectionItems = useMemo<Array<{ id: PendingReviewGroupSectionKey; key: PendingReviewGroupSectionKey; label: string }>>(() => [
+    { id: 'review', key: 'review', label: 'Review' },
+    { id: 'grouped-items', key: 'grouped-items', label: 'Grouped Items' },
+    { id: 'trash', key: 'trash', label: 'Trash' },
+  ], []);
+  const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, 'review');
+  const sectionNav = (
+    <MainPageSectionNav
+      ariaLabel="Parking Lot 1 group sections"
+      items={sectionItems.map((item) => ({ key: item.key, label: item.label }))}
+      activeKey={activeSectionId as PendingReviewGroupSectionKey}
+      onSelect={(sectionKey) => scrollToSection(sectionKey)}
+    />
+  );
 
   const buildReviewInput = () => ({
     submissionGroupId,
@@ -390,6 +274,24 @@ export function UsedGearPendingReviewGroupPage({
     }
   };
 
+  const handleSendGroupToTrash = async () => {
+    if (records.length === 0 || unqualifiedReason.trim().length === 0) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      await markPendingReviewGroupUnqualified(records.map((record) => record.id), unqualifiedReason);
+      onOpenTrashReview();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Unable to route this grouped intake review into Trash Review.');
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return <LoadingSurface message="Loading parking-lot group review..." />;
   }
@@ -402,6 +304,7 @@ export function UsedGearPendingReviewGroupPage({
     <WorkflowRecordPageLayout
       eyebrow="Parking Lot 1"
       title={group.label}
+      belowHeader={sectionNav}
       actions={(
         <BackToolbarButton label="Back to Parking Lot 1" onClick={onBackToParkingLot} />
       )}
@@ -409,23 +312,9 @@ export function UsedGearPendingReviewGroupPage({
 
         {error ? <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">{error}</div> : null}
         {successMessage ? <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{successMessage}</div> : null}
-        <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+        <section id="review" className="scroll-mt-28">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Group Summary</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
-                <div>Items</div>
-                <div className="mt-1 text-2xl font-semibold text-[var(--ink)]">{records.length}</div>
-              </div>
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
-                <div>Pricing Ready</div>
-                <div className="mt-1 text-2xl font-semibold text-[var(--ink)]">{pricingCoverage ? 'Yes' : 'No'}</div>
-              </div>
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
-                <div>Qualification Ready</div>
-                <div className="mt-1 text-2xl font-semibold text-[var(--ink)]">{qualificationCoverage ? 'Yes' : 'No'}</div>
-              </div>
-            </div>
+            <AppSectionTitle title="Group Review" />
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <label className="block">
@@ -471,49 +360,146 @@ export function UsedGearPendingReviewGroupPage({
               </label>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button
-                type="button"
-                className={smallSecondaryActionButtonClass}
-                onClick={applyEqualSplit}
-                disabled={saving || parsedGrandTotal === null || records.length === 0}
-              >
-                Apply Equal Split
-              </button>
-              <button
-                type="button"
-                className={smallSecondaryActionButtonClass}
-                onClick={() => {
-                  setAllocationMode('Manual Override');
-                }}
-                disabled={saving}
-              >
-                Switch To Manual Override
-              </button>
-            </div>
-          </div>
+            <div id="grouped-items" className="mt-6 scroll-mt-28">
+              <AppSectionTitle title="Grouped Items" className="mb-4" />
+              <div className="grid gap-4 xl:grid-cols-2">
+                {records.map((record) => {
+                  const editor = recordEditors[record.id];
 
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Acceptance Gate</p>
-            <div className="mt-4 space-y-2 text-sm text-[var(--muted)]">
-              <div>Submission Group ID: <span className="font-semibold text-[var(--ink)]">{submissionGroupId.trim() || 'Missing'}</span></div>
-              <div>Pricing path complete: <span className="font-semibold text-[var(--ink)]">{pricingCoverage ? 'Yes' : 'No'}</span></div>
-              <div>Qualification notes complete: <span className="font-semibold text-[var(--ink)]">{qualificationCoverage ? 'Yes' : 'No'}</span></div>
+                  return (
+                    <article key={record.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4 shadow-[0_8px_24px_rgba(17,32,49,0.05)]">
+                      <div className="flex flex-col gap-3 border-b border-[var(--line)] pb-4 md:flex-row md:items-start md:justify-between">
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SKU</div>
+                          <div className="mt-1 text-lg font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</div>
+                          <div className="mt-2 text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 md:justify-end">
+                          <CompactIconActionButton label="Open Intake" variant="small-secondary" icon="edit" onClick={() => onOpenManualIntake(record.id)} />
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <label className="block">
+                          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Lot 2 Route</span>
+                          <select
+                            aria-label="Lot 2 Route"
+                            className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                            value={editor?.acceptedStatus ?? 'Accepted - Awaiting Arrival'}
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.value as UsedGearPendingReviewAcceptedStatus;
+                              setRecordEditors((currentEditors) => ({
+                                ...currentEditors,
+                                [record.id]: {
+                                  ...currentEditors[record.id],
+                                  acceptedStatus: nextValue,
+                                },
+                              }));
+                            }}
+                          >
+                            {ACCEPT_ROUTE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                          </select>
+                        </label>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <label className="block">
+                            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Offer</span>
+                            <input
+                              aria-label="Offer Amount"
+                              className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                              type="number"
+                              step="0.01"
+                              value={editor?.offerAmount ?? ''}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setRecordEditors((currentEditors) => ({
+                                  ...currentEditors,
+                                  [record.id]: {
+                                    ...currentEditors[record.id],
+                                    offerAmount: nextValue,
+                                  },
+                                }));
+                              }}
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Paid</span>
+                            <input
+                              aria-label="Paid Amount"
+                              className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                              type="number"
+                              step="0.01"
+                              value={editor?.paidAmount ?? ''}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setRecordEditors((currentEditors) => ({
+                                  ...currentEditors,
+                                  [record.id]: {
+                                    ...currentEditors[record.id],
+                                    paidAmount: nextValue,
+                                  },
+                                }));
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <label className="mt-4 block">
+                        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Qualification Notes</span>
+                        <textarea
+                          aria-label="Qualification Notes"
+                          className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                          rows={4}
+                          value={editor?.qualificationNotes ?? ''}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setRecordEditors((currentEditors) => ({
+                              ...currentEditors,
+                              [record.id]: {
+                                ...currentEditors[record.id],
+                                qualificationNotes: nextValue,
+                              },
+                            }));
+                          }}
+                        />
+                      </label>
+
+                      <NoteTemplateRow
+                        onApplyTemplate={(templateValue) => {
+                          setRecordEditors((currentEditors) => ({
+                            ...currentEditors,
+                            [record.id]: {
+                              ...currentEditors[record.id],
+                              qualificationNotes: applyUsedGearWorkflowNoteTemplate(
+                                currentEditors[record.id]?.qualificationNotes ?? '',
+                                templateValue,
+                              ),
+                            },
+                          }));
+                        }}
+                      />
+                    </article>
+                  );
+                })}
+              </div>
             </div>
-            <div className="mt-5 flex flex-col gap-3">
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                className={smallSecondaryActionButtonClass}
+                className={`${secondaryActionButtonClass} w-full py-3`}
                 onClick={() => {
                   void handleSaveReview();
                 }}
                 disabled={saving}
               >
-                {saving ? 'Saving...' : 'Save Review Fields'}
+                {saving ? 'Saving...' : 'Save Review'}
               </button>
               <button
                 type="button"
-                className={smallPrimaryActionButtonClass}
+                className="rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={() => {
                   void handleAcceptGroup();
                 }}
@@ -521,19 +507,26 @@ export function UsedGearPendingReviewGroupPage({
               >
                 {saving ? 'Saving...' : 'Accept Group Into Lot 2'}
               </button>
-              {groupNeedsSubmissionId ? <p className="m-0 text-xs text-amber-300">Multi-item groups require Submission Group ID before acceptance.</p> : null}
-              {!pricingCoverage ? <p className="m-0 text-xs text-amber-300">Each row needs offer amount, paid amount, or the shared confirmed group total.</p> : null}
             </div>
+
+            {groupNeedsSubmissionId ? <p className="mt-3 m-0 text-sm text-amber-300">Multi-item groups require Submission Group ID before acceptance.</p> : null}
+            {!pricingCoverage ? <p className="mt-3 m-0 text-sm text-amber-300">Each row needs offer amount, paid amount, or the shared confirmed group total.</p> : null}
           </div>
         </section>
 
-        <section>
-          <IntakeItemsMatrix
-            items={records}
-            columns={recordColumns}
-            getItemKey={(record) => record.id}
-          />
-        </section>
+        <UsedGearTrashRouteCard
+          sectionId="trash"
+          description="Use one shared unqualified reason when the entire grouped intake should stop here and move into Trash Review together."
+          reason={unqualifiedReason}
+          onReasonChange={setUnqualifiedReason}
+          onApplyTemplate={(templateValue) => {
+            setUnqualifiedReason((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
+          }}
+          onSubmit={handleSendGroupToTrash}
+          disabled={saving || unqualifiedReason.trim().length === 0}
+          textareaClassName="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+          isSaving={saving}
+        />
     </WorkflowRecordPageLayout>
   );
 }

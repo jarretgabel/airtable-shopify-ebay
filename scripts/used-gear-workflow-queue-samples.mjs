@@ -155,6 +155,7 @@ function buildSampleRecords() {
       confirmedGrandTotal: 850,
       allocationNotes: 'Parking Lot 1 queue coverage.',
       workflowSource: 'JotForm',
+      pickUpId: '',
       extraFields: {
         'Submission Group ID': 'sample-workflow-submission-pl1-set-a',
       },
@@ -174,6 +175,7 @@ function buildSampleRecords() {
       confirmedGrandTotal: 575,
       allocationNotes: 'Parking Lot 1 grouped submission coverage.',
       workflowSource: 'JotForm',
+      pickUpId: '',
       extraFields: {
         'Submission Group ID': 'sample-workflow-submission-pl1-set-a',
       },

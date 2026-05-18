@@ -261,7 +261,7 @@ export function UsedGearPendingReviewRecordPage({
           </section>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.9fr)]">
+        <div className="grid gap-6">
           <section id="lot-two" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
             <AppSectionTitle title="Qualify Into Lot 2" titleClassName="text-lg" className="pt-0" />
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Choose the correct Lot 2 destination and leave the qualification note that explains why this intake should stay in the sellable workflow.</p>
@@ -314,23 +314,23 @@ export function UsedGearPendingReviewRecordPage({
               </button>
             </div>
           </section>
-
-          <UsedGearTrashRouteCard
-            sectionId="trash"
-            description="Capture the reason clearly so downstream review can see why this intake was stopped before Lot 2."
-            reason={unqualifiedReason}
-            onReasonChange={setUnqualifiedReason}
-            onApplyTemplate={(templateValue) => {
-              setUnqualifiedReason((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
-            }}
-            onSubmit={() => {
-              void handleUnqualify();
-            }}
-            disabled={saving || unqualifiedReason.trim().length === 0}
-            textareaClassName={inputClassName}
-            isSaving={saving}
-          />
         </div>
+
+        <UsedGearTrashRouteCard
+          sectionId="trash"
+          description="Capture the reason clearly so downstream review can see why this intake was stopped before Lot 2."
+          reason={unqualifiedReason}
+          onReasonChange={setUnqualifiedReason}
+          onApplyTemplate={(templateValue) => {
+            setUnqualifiedReason((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
+          }}
+          onSubmit={() => {
+            void handleUnqualify();
+          }}
+          disabled={saving || unqualifiedReason.trim().length === 0}
+          textareaClassName={inputClassName}
+          isSaving={saving}
+        />
 
         <IntakeSnapshotSection
           sectionId="snapshot"

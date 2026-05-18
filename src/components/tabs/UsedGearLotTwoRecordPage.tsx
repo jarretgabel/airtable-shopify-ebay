@@ -228,7 +228,7 @@ export function UsedGearLotTwoRecordPage({
           </section>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.9fr)]">
+        <div className="grid gap-6">
           <section id="review" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
             <AppSectionTitle title="Parking Lot 2 Review" titleClassName="text-lg" className="pt-0" />
             <h3 className="mt-4 text-xl font-semibold text-[var(--ink)]">Update The Handoff Fields</h3>
@@ -290,23 +290,23 @@ export function UsedGearLotTwoRecordPage({
               ) : null}
             </div>
           </section>
-
-          <UsedGearTrashRouteCard
-            sectionId="trash"
-            description="Capture the reason clearly when this item should stop in Lot 2 and move into Trash Review."
-            reason={unqualifiedReason}
-            onReasonChange={setUnqualifiedReason}
-            onApplyTemplate={(templateValue) => {
-              setUnqualifiedReason((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
-            }}
-            onSubmit={() => {
-              void handleSendToTrash();
-            }}
-            disabled={saving !== null || unqualifiedReason.trim().length === 0}
-            textareaClassName={inputClassName}
-            isSaving={saving === 'save'}
-          />
         </div>
+
+        <UsedGearTrashRouteCard
+          sectionId="trash"
+          description="Capture the reason clearly when this item should stop in Lot 2 and move into Trash Review."
+          reason={unqualifiedReason}
+          onReasonChange={setUnqualifiedReason}
+          onApplyTemplate={(templateValue) => {
+            setUnqualifiedReason((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
+          }}
+          onSubmit={() => {
+            void handleSendToTrash();
+          }}
+          disabled={saving !== null || unqualifiedReason.trim().length === 0}
+          textareaClassName={inputClassName}
+          isSaving={saving === 'save'}
+        />
 
         {intakeSnapshot ? (
           <IntakeSnapshotSection

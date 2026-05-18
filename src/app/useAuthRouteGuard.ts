@@ -113,6 +113,7 @@ export function useAuthRouteGuard({
       normalizedPath === '/ebay/listings' ||
       isEbayListingsDetailPath ||
       normalizedPath === '/parking-lot-2' ||
+      /^\/parking-lot-2\/review\/[^/]+$/.test(normalizedPath) ||
       isLotTwoReviewRecordPath ||
       normalizedPath === '/trash-review' ||
       isTrashReviewRecordPath ||

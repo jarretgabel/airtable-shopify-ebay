@@ -97,6 +97,20 @@ describe('useAuthRouteGuard', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it('allows Parking Lot 2 grouped review routes when the user has access', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/parking-lot-2/review/pickup%3Apickup-100"
+        canAccessPage={(tab) => tab === 'parking-lot-2' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('allows the manual-intake route when the user has access', () => {
     const navigate = vi.fn();
 
