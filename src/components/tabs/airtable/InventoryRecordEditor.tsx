@@ -1,9 +1,18 @@
+import { Suspense, lazy, useMemo, useState } from 'react';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { ShopifyTagsEditor } from '@/components/approval/ShopifyTagsEditor';
+import {
+  isEbayMarketplaceIdField,
+  isEbayPrimaryCategoryField,
+  isEbaySecondaryCategoryField,
+} from '@/components/approval/approvalFormFieldsEbayHelpers';
+import { isShopifyCompoundTagsField } from '@/components/approval/approvalFormFieldsShopifyTagHelpers';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
 import type { InventoryDraftValue, InventoryFieldMetadata } from '@/components/tabs/airtable/inventoryDirectoryTypes';
 import {
   displayInventoryValue,
+  extractInventoryScalarValue,
   inventoryFieldSupportsNumericInput,
   inventoryFieldSupportsTextInput,
   inventoryFieldSupportsTextarea,
@@ -38,6 +47,9 @@ const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
 
+const EbayCategoriesSelect = lazy(() => import('@/components/approval/EbayCategoriesSelect').then((module) => ({ default: module.EbayCategoriesSelect })));
+const LAZY_EDITOR_FALLBACK = <div className="mt-2 rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--muted)]">Loading editor...</div>;
+
 type InventoryEditorFieldKind = 'checkbox' | 'text' | 'textarea' | 'select' | 'searchable-select' | 'date' | 'number' | 'unsupported';
 
 interface InventoryEditorFieldConfig {
@@ -47,6 +59,33 @@ interface InventoryEditorFieldConfig {
   description?: string;
   step?: string;
 }
+
+type InventoryEditorSectionKey = 'intake' | 'testing' | 'photography' | 'listing' | 'workflow';
+
+const INVENTORY_EDITOR_SECTION_ORDER: InventoryEditorSectionKey[] = ['intake', 'testing', 'photography', 'listing', 'workflow'];
+
+const INVENTORY_EDITOR_SECTION_COPY: Record<InventoryEditorSectionKey, { title: string; description: string }> = {
+  intake: {
+    title: 'Intake',
+    description: 'Core intake, identification, acquisition, and baseline inventory details.',
+  },
+  testing: {
+    title: 'Testing',
+    description: 'Condition, evaluation, testing notes, and service details for the testing stage.',
+  },
+  photography: {
+    title: 'Photography',
+    description: 'Photography-specific notes and completion fields for the photo stage.',
+  },
+  listing: {
+    title: 'Listing',
+    description: 'Marketplace-facing content, tags, pricing, and eBay or Shopify listing inputs.',
+  },
+  workflow: {
+    title: 'Workflow',
+    description: 'Operational workflow, approvals, assignments, signoffs, and lifecycle tracking.',
+  },
+};
 
 const FIELD_CONFIG_BY_NAME: Record<string, InventoryEditorFieldConfig> = {
   'Component Type': {
@@ -159,6 +198,79 @@ function toggleMultiSelectValue(currentValue: string[], option: string): string[
     : [...currentValue, option];
 }
 
+function getInventoryEditorSectionKey(fieldName: string): InventoryEditorSectionKey {
+  const normalized = fieldName.trim().toLowerCase();
+
+  if (
+    normalized.includes('shopify')
+    || normalized.includes('ebay')
+    || normalized === 'template name'
+    || normalized === 'item title'
+    || normalized === 'description'
+    || normalized.includes('key features')
+    || normalized.includes('images (comma-separated)')
+    || normalized.includes('images alt text')
+    || normalized === 'condition'
+    || normalized === 'images'
+  ) {
+    return 'listing';
+  }
+
+  if (
+    normalized.includes('photography')
+    || normalized === "photo'd"
+    || normalized.startsWith('photo')
+  ) {
+    return 'photography';
+  }
+
+  if (
+    normalized.includes('testing')
+    || normalized.includes('service')
+    || normalized.includes('audiogon')
+    || normalized === 'tested'
+  ) {
+    return 'testing';
+  }
+
+  if (
+    normalized.includes('workflow')
+    || normalized.includes('accepted')
+    || normalized.includes('signed by')
+    || normalized.includes('signed at')
+    || normalized.includes('pre-listing')
+    || normalized.includes('stale recovery')
+    || normalized.includes('relisted')
+    || normalized.includes('trash status')
+    || normalized.includes('qualification')
+    || normalized.includes('unqualified')
+    || normalized.includes('allocation')
+    || normalized.includes('offer amount')
+    || normalized.includes('paid amount')
+    || normalized.includes('confirmed grand total')
+    || normalized.includes('published at')
+    || normalized.includes('offer id')
+    || normalized.includes('listing id')
+    || normalized.includes('owner')
+  ) {
+    return 'workflow';
+  }
+
+  return 'intake';
+}
+
+function getInventoryEbayMarketplaceId(record: AirtableRecord | null, editableFields: InventoryFieldMetadata[]): string {
+  if (!record) return 'EBAY_US';
+
+  const marketplaceField = editableFields.find((field) => isEbayMarketplaceIdField(field.name));
+  if (!marketplaceField) {
+    return 'EBAY_US';
+  }
+
+  const rawValue = record.fields[marketplaceField.name];
+  return extractInventoryScalarValue(rawValue) || 'EBAY_US';
+}
+
 export function InventoryRecordEditor({
   record,
   editableFields,
@@ -180,6 +292,8 @@ export function InventoryRecordEditor({
     emptyMessage: 'Load a record from the inventory directory to start editing its SB Inventory fields.',
   },
 }: InventoryRecordEditorProps) {
+  const [ebayCategoryLabelsByField, setEbayCategoryLabelsByField] = useState<Record<string, Record<string, string>>>({});
+
   if (!record) {
     return (
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
@@ -189,8 +303,20 @@ export function InventoryRecordEditor({
     );
   }
 
+  const hasStandaloneEbayCategoriesField = editableFields.some((field) => field.name.trim().toLowerCase() === 'ebay categories');
+  const ebayMarketplaceId = getInventoryEbayMarketplaceId(record, editableFields);
+  const sectionedFields = useMemo(
+    () => INVENTORY_EDITOR_SECTION_ORDER
+      .map((key) => ({
+        key,
+        fields: editableFields.filter((field) => getInventoryEditorSectionKey(field.name) === key),
+      }))
+      .filter((section) => section.fields.length > 0),
+    [editableFields],
+  );
+
   return (
-    <section className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+    <div className="space-y-5">
       {showIntro ? (
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-4">
           <AppSectionTitle title={copy.title} />
@@ -206,11 +332,38 @@ export function InventoryRecordEditor({
       {error ? <p className="rounded-xl border border-[#f7c8c4] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-text)]">{error}</p> : null}
       {saveMessage ? <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{saveMessage}</p> : null}
 
-      <div className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-        {editableFields.map((field) => {
+      <div className="space-y-8">
+        {sectionedFields.map((section, sectionIndex) => (
+          <section key={section.key} className="space-y-5">
+            <AppSectionTitle
+              title={INVENTORY_EDITOR_SECTION_COPY[section.key].title}
+              className={sectionIndex === 0 ? 'pt-0' : 'border-t border-[var(--line)] pt-6'}
+            />
+            <p className="-mt-2 text-sm text-[var(--muted)]">{INVENTORY_EDITOR_SECTION_COPY[section.key].description}</p>
+
+            {section.fields.map((field) => {
           const dirty = dirtyFieldNames.includes(field.name);
           const value = draftValues[field.name];
           const fieldConfig = getInventoryEditorFieldConfig(field);
+          const isShopifyTagsField = isShopifyCompoundTagsField(field.name);
+          const isStandaloneEbayCategoriesField = field.name.trim().toLowerCase() === 'ebay categories';
+          const isPrimaryEbayCategoryField = !hasStandaloneEbayCategoriesField && isEbayPrimaryCategoryField(field.name);
+          const isSecondaryEbayCategoryField = !hasStandaloneEbayCategoriesField && isEbaySecondaryCategoryField(field.name);
+          const isEbayCategoriesField = isStandaloneEbayCategoriesField || isPrimaryEbayCategoryField;
+
+          if (isSecondaryEbayCategoryField) {
+            return null;
+          }
+
+          const ebayCategoryValue = isStandaloneEbayCategoriesField
+            ? (Array.isArray(value) ? value : [])
+            : [
+              typeof draftValues[field.name] === 'string' ? draftValues[field.name] : '',
+              ...editableFields
+                .filter((candidate) => isEbaySecondaryCategoryField(candidate.name))
+                .map((candidate) => draftValues[candidate.name])
+                .filter((candidate): candidate is string => typeof candidate === 'string' && candidate.trim().length > 0),
+            ].filter((candidate): candidate is string => typeof candidate === 'string' && candidate.trim().length > 0);
 
           return (
             <div key={field.id} className="block">
@@ -273,7 +426,52 @@ export function InventoryRecordEditor({
                 )
               ) : null}
 
-              {field.type === 'multipleSelects' && !inventoryFieldUsesSingleSelectUi(field.name) ? (
+              {isShopifyTagsField ? (
+                <div className="mt-2">
+                  <ShopifyTagsEditor
+                    label={fieldConfig.label}
+                    tags={Array.isArray(value) ? value : []}
+                    onChange={(nextTags) => onFieldChange(field.name, nextTags)}
+                    disabled={saving}
+                  />
+                </div>
+              ) : null}
+
+              {isEbayCategoriesField ? (
+                <div className="mt-2">
+                  <Suspense fallback={LAZY_EDITOR_FALLBACK}>
+                    <EbayCategoriesSelect
+                      fieldName={field.name}
+                      label={fieldConfig.label}
+                      marketplaceId={ebayMarketplaceId}
+                      value={ebayCategoryValue}
+                      labelsById={ebayCategoryLabelsByField[field.name] ?? {}}
+                      onChange={(nextIds, labelsById) => {
+                        if (isStandaloneEbayCategoriesField) {
+                          onFieldChange(field.name, nextIds);
+                        } else {
+                          onFieldChange(field.name, nextIds[0] ?? '');
+                          editableFields
+                            .filter((candidate) => isEbaySecondaryCategoryField(candidate.name))
+                            .forEach((candidate, index) => {
+                              onFieldChange(candidate.name, nextIds[index + 1] ?? '');
+                            });
+                        }
+
+                        if (labelsById) {
+                          setEbayCategoryLabelsByField((current) => ({
+                            ...current,
+                            [field.name]: labelsById,
+                          }));
+                        }
+                      }}
+                      disabled={saving}
+                    />
+                  </Suspense>
+                </div>
+              ) : null}
+
+              {field.type === 'multipleSelects' && !inventoryFieldUsesSingleSelectUi(field.name) && !isShopifyTagsField && !isEbayCategoriesField ? (
                 field.choices.length > 0 ? (
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
                     {field.choices.map((choice, index) => {
@@ -354,7 +552,9 @@ export function InventoryRecordEditor({
                 ) : null}
             </div>
           );
-        })}
+            })}
+          </section>
+        ))}
 
         <div className="flex flex-col gap-3 border-t border-[var(--line)] pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="m-0 text-sm text-[var(--muted)]">
@@ -390,6 +590,6 @@ export function InventoryRecordEditor({
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
