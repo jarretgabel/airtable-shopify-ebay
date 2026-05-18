@@ -15,6 +15,7 @@ describe('WorkflowGuideTab', () => {
     expect(screen.getByText('Tester quick start')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'User Guide' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Your Workflow Lane' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'How Items Move To The Next Step' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'User guide sections' })).toBeInTheDocument();
     expect(screen.getByText('Record And Detail Pages')).toBeInTheDocument();
     expect(screen.getAllByText('Open this first').length).toBeGreaterThan(0);
@@ -55,6 +56,7 @@ describe('WorkflowGuideTab', () => {
 
     expect(screen.getByText('Processor quick start')).toBeInTheDocument();
     expect(screen.getByText('How To Use The Pages For This Role')).toBeInTheDocument();
+    expect(screen.getByText('How Items Move To The Next Step')).toBeInTheDocument();
     expect(screen.getByText('Record And Detail Pages')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Start fresh intake here' })).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Open Parking Lot 1' })[0]).toHaveAttribute('href', '/parking-lot-1');
@@ -72,6 +74,7 @@ describe('WorkflowGuideTab', () => {
     expect(screen.getAllByText('Arrival And Routing').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Testing Handoff').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Photography Handoff').length).toBeGreaterThan(0);
+    expect(screen.getByText('Listings to live listing status')).toBeInTheDocument();
     expect(screen.getAllByText('Your lane').length).toBeGreaterThan(1);
     expect(screen.getByText('Where should I start if I am working intake?')).toBeInTheDocument();
   });

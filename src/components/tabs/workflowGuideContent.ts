@@ -51,6 +51,29 @@ export interface RoleStartPoint {
   detail: string;
 }
 
+export const WORKFLOW_ADVANCEMENT_RULES: GuideStep[] = [
+  {
+    title: 'Parking Lot 1 to accepted workflow',
+    detail: 'A new intake should only leave Parking Lot 1 after it has a clear qualification decision and qualification notes. Accepted rows move into Parking Lot 2; rejected rows move into Trash Review.',
+  },
+  {
+    title: 'Parking Lot 2 to specialist work',
+    detail: 'Accepted rows should only move past Parking Lot 2 once the arrival-stage handoff is complete for the current situation: arrival captured, SKU assigned when needed, and missing-item issues resolved before downstream work starts.',
+  },
+  {
+    title: 'Testing and Photography to Listings',
+    detail: 'A row reaches Listings only after both specialist signoffs are complete. Testing and photography should leave enough notes and completion detail that the next team does not have to guess why the row is ready.',
+  },
+  {
+    title: 'Listings to live listing status',
+    detail: 'A row should only move from Awaiting Pre-Listing Review to Approved for Publish when title, price, description, and required signoffs are in place. It should only move into listed statuses after the publish action is completed.',
+  },
+  {
+    title: 'Live listings to follow-through',
+    detail: 'Once a row is already listed, the work belongs to Active Listings or Post-Publish follow-through depending on the state. Sold-ready and shipped rows should not return to Listings review because they have already moved past publish readiness.',
+  },
+];
+
 export function roleSummary(role: UserRole): string {
   if (role === 'processor') {
     return 'Start with Parking Lot 1, the Workflow Hub, and the specialist queues. Use Post-Publish once a live listing needs stale, sold-ready, or shipment follow-through.';
@@ -534,12 +557,12 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     pages: ['listings'],
     summary: 'Listings is the final review and publish-readiness workspace for combined listing records.',
     modules: [
-      'Combined listings queue: ready-for-publishing and needs-further-work sections with shared search and filters.',
+      'Combined listings queue: ready-for-publishing, active-listings, and needs-further-work sections with shared search and filters.',
       'Selected record page: shared, Shopify, and eBay sections with workflow summary, actions, and payload visibility.',
       'Record detail workflow shell: final approve-for-publish work and post-publish context once the item reaches listing-phase ownership.',
     ],
     workflows: [
-      'Use it for Awaiting Pre-Listing Review and Approved for Publish rows.',
+      'Use it for Awaiting Pre-Listing Review and Approved for Publish rows, and for quick verification of already-listed rows before handing active follow-through to Post-Publish. Sold-ready and shipped rows should stay out of Listings.',
       'Confirm title, price, notes, signoffs, and publish decisions here before any channel-facing action.',
     ],
   },

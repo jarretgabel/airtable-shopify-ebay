@@ -105,6 +105,190 @@ function isoAt(day, hour) {
   return new Date(Date.UTC(2026, 4, day, hour, 0, 0)).toISOString();
 }
 
+function formatIsoDate(isoString) {
+  return typeof isoString === 'string' && isoString.trim() ? isoString.slice(0, 10) : '';
+}
+
+function buildListingDescription(config) {
+  return `${SAMPLE_MARKER} ${config.make} ${config.model} sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.`;
+}
+
+function buildInventoryNotes(config) {
+  return `${SAMPLE_MARKER} ${config.make} ${config.model} cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.`;
+}
+
+function buildTestingNotes(config) {
+  return `${SAMPLE_MARKER} Bench-tested ${config.make} ${config.model}. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.`;
+}
+
+function buildServiceNotes(config) {
+  return `${SAMPLE_MARKER} Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.`;
+}
+
+function buildPhotographyNotes(config) {
+  return `${SAMPLE_MARKER} Cosmetic review for ${config.make} ${config.model} captured with clear front, rear, side, and detail-image callouts.`;
+}
+
+function buildShipmentNotes(config) {
+  return `${SAMPLE_MARKER} ${config.make} ${config.model} packed, labeled, and documented for shipment follow-through coverage.`;
+}
+
+function buildStageFields(index, config) {
+  const profile = config.stageProfile ?? 'pending-review';
+  const acceptedAt = config.acceptedAt ?? isoAt(index + 1, 15);
+  const arrivedAt = config.arrivedAt ?? isoAt(index + 2, 11);
+  const testedAt = config.testedAt ?? isoAt(index + 3, 10);
+  const photographedAt = config.photographedAt ?? isoAt(index + 3, 12);
+  const reviewedAt = config.preListingReviewedAt ?? isoAt(index + 4, 15);
+  const listedAt = config.listedAt ?? isoAt(index + 5, 11);
+  const staleAt = config.staleAt ?? isoAt(index + 12, 9);
+  const soldReadyAt = config.soldReadyAt ?? isoAt(index + 7, 9);
+  const shippedAt = config.shippedAt ?? isoAt(index + 8, 14);
+  const listingDescription = config.listingDescription ?? buildListingDescription(config);
+  const inventoryNotes = config.inventoryNotes ?? buildInventoryNotes(config);
+  const testingNotes = config.testingNotes ?? buildTestingNotes(config);
+  const serviceNotes = config.serviceNotes ?? buildServiceNotes(config);
+  const photographyNotes = config.photographyNotes ?? buildPhotographyNotes(config);
+  const listingPrice = config.listingPrice ?? config.confirmedGrandTotal ?? config.offerAmount;
+  const recordStatus = config.recordStatus ?? (profile === 'testing-pending' ? "Photo'd" : profile === 'photos-pending' ? 'Tested' : "Photo'd");
+  const hasAccepted = !['pending-review', 'trash'].includes(profile);
+  const hasArrivalDetails = [
+    'awaiting-sku',
+    'awaiting-missing',
+    'testing-pending',
+    'photos-pending',
+    'pre-listing',
+    'approved',
+    'listed-shopify',
+    'listed-ebay',
+    'stale-shopify',
+    'stale-ebay',
+    'sold-ready',
+    'shipped',
+  ].includes(profile);
+  const hasTestingComplete = [
+    'photos-pending',
+    'pre-listing',
+    'approved',
+    'listed-shopify',
+    'listed-ebay',
+    'stale-shopify',
+    'stale-ebay',
+    'sold-ready',
+    'shipped',
+  ].includes(profile);
+  const hasPhotographyComplete = [
+    'testing-pending',
+    'pre-listing',
+    'approved',
+    'listed-shopify',
+    'listed-ebay',
+    'stale-shopify',
+    'stale-ebay',
+    'sold-ready',
+    'shipped',
+  ].includes(profile);
+  const hasListingReadiness = [
+    'pre-listing',
+    'approved',
+    'listed-shopify',
+    'listed-ebay',
+    'stale-shopify',
+    'stale-ebay',
+    'sold-ready',
+    'shipped',
+  ].includes(profile);
+  const isEbayTrack = ['listed-ebay', 'stale-ebay'].includes(profile);
+  const isShopifyTrack = ['listed-shopify', 'stale-shopify'].includes(profile);
+  const hasShopifyListingFields = ['approved', 'listed-shopify', 'stale-shopify', 'sold-ready', 'shipped'].includes(profile);
+  const hasEbayListingFields = ['approved', 'listed-ebay', 'stale-ebay', 'sold-ready', 'shipped'].includes(profile);
+
+  return {
+    'Customer Cosmetic Notes': `${SAMPLE_MARKER} Customer reported light cosmetic wear with one notable finish mark documented at intake.`,
+    'Customer Functional Notes': `${SAMPLE_MARKER} Customer reported unit powers on and passes basic functional checks.`,
+    'Customer Inclusion Notes': `${SAMPLE_MARKER} Intake includes the accessories documented for workflow sample coverage.`,
+    'Customer Submitted Photos Notes': `${SAMPLE_MARKER} Customer supplied reference photos before handoff into the workflow.`,
+    ...(hasAccepted ? {
+      'Accepted By': config.acceptedBy ?? 'Sample Buyer',
+      'Accepted At': acceptedAt,
+    } : {}),
+    ...(hasArrivalDetails ? {
+      'Arrival Date': formatIsoDate(arrivedAt),
+      'Acquired From': config.acquiredFrom ?? 'Local Seller Trade-In',
+      Cost: config.cost ?? config.paidAmount ?? config.offerAmount,
+      'Inventory Notes': inventoryNotes,
+      'Serial Number': config.serialNumber ?? `SAMPLE-SN-${String(index + 1).padStart(4, '0')}`,
+      Voltage: config.voltage ?? '120V',
+      'Audiogon Rating': config.audiogonRating ?? '8',
+      'Original Box': config.originalBox ?? 'No',
+      Manual: config.manual ?? 'Yes',
+      Remote: config.remote ?? 'No',
+      'Power Cable': config.powerCable ?? 'Yes',
+      'Additional Items': `${SAMPLE_MARKER} ${config.additionalItems ?? 'Power cable, shelf card, and documented included accessories.'}`,
+      'Shipping Weight': config.shippingWeight ?? '42',
+      'Shipping Dims': config.shippingDims ?? '22x19x11',
+      'Shipping Method': config.shippingMethod ?? 'FedEx Ground',
+    } : {}),
+    ...(hasTestingComplete ? {
+      'Testing Cosmetic Notes': config.testingCosmeticNotes ?? `${SAMPLE_MARKER} Minor cosmetic wear documented during bench evaluation.`,
+      'Testing Notes': testingNotes,
+      'Testing Time': config.testingTime ?? 5400,
+      'Service Notes': serviceNotes,
+      'Service Time': config.serviceTime ?? 1800,
+      Tested: testedAt,
+      Status: config.status ?? recordStatus,
+    } : {}),
+    ...(hasPhotographyComplete ? {
+      'Photography Cosmetic Notes': config.photographyCosmeticNotes ?? photographyNotes,
+      "Photo'd": photographedAt,
+      Status: config.status ?? recordStatus,
+    } : {}),
+    ...(hasListingReadiness ? {
+      'Item Title': `${config.make} ${config.model}`,
+      Description: listingDescription,
+      ...(hasShopifyListingFields ? {
+        'Shopify Approved': 'TRUE',
+        'Shopify Body (HTML)': `<p>${listingDescription}</p>`,
+        'Shopify Price': listingPrice,
+        'Shopify Tags': `${config.make}, ${config.componentType}, ${SAMPLE_MARKER}`,
+        'Shopify Type': config.componentType,
+      } : {}),
+      ...(hasEbayListingFields ? {
+        'Ebay Approved': 'TRUE',
+        'Ebay Body (HTML)': `<p>${listingDescription}</p>`,
+        'Ebay Categories': config.ebayCategory ?? 'Vintage Audio',
+        'Ebay Listing Format': 'Fixed Price',
+        'Ebay Price': listingPrice,
+        'Ebay Quantity': 1,
+      } : {}),
+    } : {}),
+    ...(['approved', 'listed-shopify', 'listed-ebay', 'stale-shopify', 'stale-ebay', 'sold-ready', 'shipped'].includes(profile) ? {
+      'Pre-Listing Reviewed By': config.preListingReviewer ?? 'Sample Reviewer',
+      'Pre-Listing Reviewed At': reviewedAt,
+    } : {}),
+    ...(['listed-shopify', 'listed-ebay', 'stale-shopify', 'stale-ebay', 'sold-ready', 'shipped'].includes(profile) ? {
+      'Approved For Publish At': config.approvedForPublishAt ?? reviewedAt,
+      'Listed At': listedAt,
+    } : {}),
+    ...(isEbayTrack ? {
+      'eBay Offer ID': config.ebayOfferId ?? `v1|sample-workflow-offer-${index + 1}|0`,
+      'eBay Listing ID': config.ebayListingId ?? `sample-workflow-listing-${index + 1}`,
+    } : {}),
+    ...(['stale-shopify', 'stale-ebay'].includes(profile) ? {
+      'Stale Listing At': staleAt,
+      'Stale Recovery Status': config.staleRecoveryStatus ?? 'Needs Review',
+      'Stale Recovery Notes': `${SAMPLE_MARKER} ${config.staleRecoveryNotes ?? 'Listing needs refresh work before it should continue as active inventory.'}`,
+      'Stale Recovery Updated At': config.staleRecoveryUpdatedAt ?? staleAt,
+    } : {}),
+    ...(['sold-ready', 'shipped'].includes(profile) ? {
+      'Sold Ready To Ship At': soldReadyAt,
+    } : {}),
+    ...(profile === 'shipped' ? {
+      'Shipped At': shippedAt,
+    } : {}),
+  };
+}
+
 function buildCommonFields(index, config) {
   const sequence = String(index + 1).padStart(2, '0');
   const sku = `${SAMPLE_SKU_PREFIX}${sequence}`;
@@ -134,6 +318,7 @@ function buildCommonFields(index, config) {
 
   return {
     ...baseFields,
+    ...buildStageFields(index, config),
     ...(config.extraFields ?? {}),
   };
 }
@@ -154,6 +339,7 @@ function buildSampleRecords() {
       paidAmount: 0,
       confirmedGrandTotal: 850,
       allocationNotes: 'Parking Lot 1 queue coverage.',
+      stageProfile: 'pending-review',
       workflowSource: 'JotForm',
       pickUpId: '',
       extraFields: {
@@ -174,6 +360,7 @@ function buildSampleRecords() {
       paidAmount: 0,
       confirmedGrandTotal: 575,
       allocationNotes: 'Parking Lot 1 grouped submission coverage.',
+      stageProfile: 'pending-review',
       workflowSource: 'JotForm',
       pickUpId: '',
       extraFields: {
@@ -194,6 +381,7 @@ function buildSampleRecords() {
       paidAmount: 0,
       confirmedGrandTotal: 150,
       allocationNotes: 'Trash queue coverage.',
+      stageProfile: 'trash',
       pickUpId: '',
       extraFields: {
         'Trash Status': 'Active Trash',
@@ -215,6 +403,7 @@ function buildSampleRecords() {
       paidAmount: 0,
       confirmedGrandTotal: 95,
       allocationNotes: 'Trash grouped coverage.',
+      stageProfile: 'trash',
       pickUpId: '',
       extraFields: {
         'Trash Status': 'Active Trash',
@@ -236,6 +425,7 @@ function buildSampleRecords() {
       paidAmount: 250,
       confirmedGrandTotal: 1200,
       allocationNotes: 'Lot 2 arrival coverage.',
+      stageProfile: 'awaiting-arrival',
       acceptedAt: isoAt(3, 15),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -257,6 +447,7 @@ function buildSampleRecords() {
       paidAmount: 150,
       confirmedGrandTotal: 650,
       allocationNotes: 'Lot 2 grouped arrival coverage.',
+      stageProfile: 'awaiting-arrival',
       acceptedAt: isoAt(3, 16),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -278,6 +469,7 @@ function buildSampleRecords() {
       paidAmount: 700,
       confirmedGrandTotal: 1750,
       allocationNotes: 'Lot 2 SKU coverage.',
+      stageProfile: 'awaiting-sku',
       acceptedAt: isoAt(4, 15),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -298,6 +490,7 @@ function buildSampleRecords() {
       paidAmount: 450,
       confirmedGrandTotal: 900,
       allocationNotes: 'Lot 2 missing-item coverage.',
+      stageProfile: 'awaiting-missing',
       acceptedAt: isoAt(5, 15),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -318,6 +511,7 @@ function buildSampleRecords() {
       paidAmount: 525,
       confirmedGrandTotal: 950,
       allocationNotes: 'Testing queue unique pending-testing coverage.',
+      stageProfile: 'testing-pending',
       acceptedAt: isoAt(6, 14),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -342,6 +536,7 @@ function buildSampleRecords() {
       paidAmount: 310,
       confirmedGrandTotal: 625,
       allocationNotes: 'Photography queue unique pending-photo coverage.',
+      stageProfile: 'photos-pending',
       acceptedAt: isoAt(7, 14),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -366,6 +561,7 @@ function buildSampleRecords() {
       paidAmount: 800,
       confirmedGrandTotal: 1400,
       allocationNotes: 'Pre-listing queue coverage.',
+      stageProfile: 'pre-listing',
       acceptedAt: isoAt(8, 14),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -393,6 +589,7 @@ function buildSampleRecords() {
       paidAmount: 1000,
       confirmedGrandTotal: 1800,
       allocationNotes: 'Approved-for-publish coverage.',
+      stageProfile: 'approved',
       acceptedAt: isoAt(9, 14),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -423,6 +620,7 @@ function buildSampleRecords() {
       paidAmount: 650,
       confirmedGrandTotal: 1100,
       allocationNotes: 'Listed Shopify coverage.',
+      stageProfile: 'listed-shopify',
       acceptedAt: isoAt(10, 14),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -454,6 +652,7 @@ function buildSampleRecords() {
       paidAmount: 540,
       confirmedGrandTotal: 975,
       allocationNotes: 'Listed eBay coverage.',
+      stageProfile: 'listed-ebay',
       acceptedAt: isoAt(11, 14),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -487,6 +686,7 @@ function buildSampleRecords() {
       paidAmount: 1200,
       confirmedGrandTotal: 2100,
       allocationNotes: 'Stale Shopify coverage.',
+      stageProfile: 'stale-shopify',
       acceptedAt: isoAt(12, 14),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -522,6 +722,7 @@ function buildSampleRecords() {
       paidAmount: 1040,
       confirmedGrandTotal: 1950,
       allocationNotes: 'Stale eBay coverage.',
+      stageProfile: 'stale-ebay',
       acceptedAt: isoAt(13, 14),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -559,6 +760,7 @@ function buildSampleRecords() {
       paidAmount: 1200,
       confirmedGrandTotal: 2400,
       allocationNotes: 'Sold-ready coverage.',
+      stageProfile: 'sold-ready',
       acceptedAt: isoAt(14, 14),
       extraFields: {
         'Accepted By': 'Sample Buyer',
@@ -591,6 +793,7 @@ function buildSampleRecords() {
       paidAmount: 740,
       confirmedGrandTotal: 1300,
       allocationNotes: 'Shipped coverage.',
+      stageProfile: 'shipped',
       acceptedAt: isoAt(15, 14),
       extraFields: {
         'Accepted By': 'Sample Buyer',

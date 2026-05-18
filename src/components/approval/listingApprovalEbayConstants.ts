@@ -54,9 +54,9 @@ export const EBAY_QTY_FIELD_CANDIDATES = [
 ] as const;
 
 export const EBAY_FORMAT_FIELD_CANDIDATES = [
+  'Ebay Listing Format',
   'eBay Offer Format',
   'Listing Format',
-  'Status',
 ] as const;
 
 export const EBAY_DURATION_FIELD_CANDIDATES = [

@@ -55,7 +55,7 @@ export function useListingApprovalPublishFieldState({
 
   const formatFieldName = useMemo(
     () => approvalChannel === 'shopify'
-      ? resolveFieldName(['Listing Format', 'Status', 'Shopify Status', 'Shopify REST Status'], 'Listing Format')
+      ? resolveFieldName(['Listing Format', 'Status'], 'Listing Format')
       : resolveFieldName([...EBAY_FORMAT_FIELD_CANDIDATES], 'Listing Format'),
     [approvalChannel, resolveFieldName],
   );

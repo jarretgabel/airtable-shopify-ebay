@@ -1,0 +1,1304 @@
+[
+  {
+    "id": "recNTcFB9CYW2ADRN",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 0,
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 1 Pending Review",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-01"
+      },
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-01T14:00:00.000Z",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-01",
+      "Workflow Status": "Pending Review",
+      "Make": "McIntosh",
+      "Workflow Source": "JotForm",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Waiting for purchasing review in Parking Lot 1.",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 1 Pending Review",
+      "Confirmed Grand Total": 850,
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Pending review sample row for Parking Lot 1 intake triage.\n",
+      "Ebay Approved": "FALSE",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 1 queue coverage.",
+      "Model": "C28 Pending Intake",
+      "Offer Amount": 850,
+      "Submission Group ID": "sample-workflow-submission-pl1-set-a",
+      "Component Type": [
+        "Preamp"
+      ]
+    }
+  },
+  {
+    "id": "recxaILrtJyg9zSHW",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 0,
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 1 Submission Companion",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-02"
+      },
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-02T14:00:00.000Z",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-02",
+      "Workflow Status": "Pending Review",
+      "Make": "McIntosh",
+      "Workflow Source": "JotForm",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Companion item from the same customer submission waiting for intake review.",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 1 Submission Companion",
+      "Confirmed Grand Total": 575,
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Second pending review sample row sharing the same submission group for Parking Lot 1.\n",
+      "Ebay Approved": "FALSE",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 1 grouped submission coverage.",
+      "Model": "MR74 Pending Intake",
+      "Offer Amount": 575,
+      "Submission Group ID": "sample-workflow-submission-pl1-set-a",
+      "Component Type": [
+        "Tuner"
+      ]
+    }
+  },
+  {
+    "id": "rec5onMgikqBiwvvF",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 0,
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Trash Review Unqualified",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-03"
+      },
+      "Unqualified Reason": "Cabinet damage beyond resale standards.",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-03T14:00:00.000Z",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-03",
+      "Qualification Complete": true,
+      "Workflow Status": "Unqualified",
+      "Make": "Pioneer",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Rejected during intake review.",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Trash Review Unqualified",
+      "Confirmed Grand Total": 150,
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Unqualified sample row that should surface in Trash Review only.\n",
+      "Ebay Approved": "FALSE",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Trash queue coverage.",
+      "Model": "SX-780 Rejected",
+      "Trash Status": "Active Trash",
+      "Offer Amount": 150,
+      "Submission Group ID": "sample-workflow-submission-trash-set-a",
+      "Component Type": [
+        "Receiver"
+      ]
+    }
+  },
+  {
+    "id": "recUqs87E8SPaBO53",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 0,
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Trash Review Group Companion",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-04"
+      },
+      "Unqualified Reason": "Matching set item also failed intake inspection.",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-04T14:00:00.000Z",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-04",
+      "Qualification Complete": true,
+      "Workflow Status": "Unqualified",
+      "Make": "Pioneer",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Grouped companion rejected during intake review.",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Trash Review Group Companion",
+      "Confirmed Grand Total": 95,
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Second unqualified sample row sharing the same submission group for grouped trash-review testing.\n",
+      "Ebay Approved": "FALSE",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Trash grouped coverage.",
+      "Model": "CT-F9191 Rejected Companion",
+      "Trash Status": "Active Trash",
+      "Offer Amount": 95,
+      "Submission Group ID": "sample-workflow-submission-trash-set-a",
+      "Component Type": [
+        "Cassette Deck"
+      ]
+    }
+  },
+  {
+    "id": "rechhilU5qE32k4xX",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 250,
+      "Pick Up ID": "sample-workflow-pickup-lot2-set-a",
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Awaiting Arrival",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-05"
+      },
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-03T15:00:00.000Z",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-05",
+      "Qualification Complete": true,
+      "Workflow Status": "Accepted - Awaiting Arrival",
+      "Make": "Luxman",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Accepted and waiting for physical intake.",
+      "Accepted At": "2026-05-03T15:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Awaiting Arrival",
+      "Confirmed Grand Total": 1200,
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Accepted arrival-stage sample for Parking Lot 2.\n",
+      "Ebay Approved": "FALSE",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Lot 2 arrival coverage.",
+      "Model": "L-430 Awaiting Arrival",
+      "Accepted By": "Sample Buyer",
+      "Offer Amount": 1200,
+      "Submission Group ID": "sample-workflow-group-05",
+      "Component Type": [
+        "Amplifier"
+      ]
+    }
+  },
+  {
+    "id": "recwjQCQ1anKCv0lR",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 150,
+      "Pick Up ID": "sample-workflow-pickup-lot2-set-a",
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Arrival Set Companion",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-06"
+      },
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-03T16:00:00.000Z",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-06",
+      "Qualification Complete": true,
+      "Workflow Status": "Accepted - Awaiting Arrival",
+      "Make": "Luxman",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Accepted as part of the same pickup set and waiting for coordinated arrival handling.",
+      "Accepted At": "2026-05-03T16:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Arrival Set Companion",
+      "Confirmed Grand Total": 650,
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Second accepted arrival-stage sample sharing the same pickup handoff set in Parking Lot 2.\n",
+      "Ebay Approved": "FALSE",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Lot 2 grouped arrival coverage.",
+      "Model": "T-110 Arrival Companion",
+      "Accepted By": "Sample Buyer",
+      "Offer Amount": 650,
+      "Submission Group ID": "sample-workflow-group-06",
+      "Component Type": [
+        "Tuner"
+      ]
+    }
+  },
+  {
+    "id": "recvFGfytqflhLvE4",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 700,
+      "Manual": [
+        "Yes"
+      ],
+      "Pick Up ID": "sample-workflow-pickup-07",
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Awaiting SKU",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-07"
+      },
+      "Shipping Weight": "42",
+      "Cost": 700,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-04T15:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0007",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Arrival Date": "2026-05-08",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-07",
+      "Qualification Complete": true,
+      "Workflow Status": "Accepted - Arrived, Awaiting SKU",
+      "Make": "Accuphase",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Arrived and pending SKU assignment.",
+      "Accepted At": "2026-05-04T15:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Awaiting SKU",
+      "Confirmed Grand Total": 1750,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Accepted sample row that arrived but still needs SKU assignment.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Accuphase E-202 Awaiting SKU cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Lot 2 SKU coverage.",
+      "Model": "E-202 Awaiting SKU",
+      "Accepted By": "Sample Buyer",
+      "Shipping Dims": "22x19x11",
+      "Offer Amount": 1750,
+      "Submission Group ID": "sample-workflow-group-07",
+      "Component Type": [
+        "Amplifier"
+      ]
+    }
+  },
+  {
+    "id": "reculXxMacZmgOdga",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 450,
+      "Manual": [
+        "Yes"
+      ],
+      "Pick Up ID": "sample-workflow-pickup-08",
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Awaiting Missing Item",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-08"
+      },
+      "Shipping Weight": "42",
+      "Cost": 450,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-05T15:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0008",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Arrival Date": "2026-05-09",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-08",
+      "Qualification Complete": true,
+      "Workflow Status": "Accepted - Arrived, Awaiting Missing Item",
+      "Make": "Technics",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Missing accessory must be resolved before testing.",
+      "Accepted At": "2026-05-05T15:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Awaiting Missing Item",
+      "Confirmed Grand Total": 900,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Accepted sample row blocked by missing accessory follow-up.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Technics SL-1200 Missing Dust Cover cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Lot 2 missing-item coverage.",
+      "Model": "SL-1200 Missing Dust Cover",
+      "Accepted By": "Sample Buyer",
+      "Shipping Dims": "22x19x11",
+      "Offer Amount": 900,
+      "Submission Group ID": "sample-workflow-group-08",
+      "Component Type": [
+        "Turntable"
+      ]
+    }
+  },
+  {
+    "id": "rec3gSh9i1EJgUgLh",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 525,
+      "Manual": [
+        "Yes"
+      ],
+      "Pick Up ID": "sample-workflow-pickup-09",
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Testing Queue Pending Testing",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Sansui AU-717 Testing Pending captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Sample Photo",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-09"
+      },
+      "Shipping Weight": "42",
+      "Cost": 525,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-06T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0009",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-11",
+      "Status": "Photo'd",
+      "Arrival Date": "2026-05-10",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-09",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-07T11:00:00.000Z",
+      "Workflow Status": "Testing and Photography In Progress",
+      "Make": "Sansui",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Waiting on testing signoff only.",
+      "Accepted At": "2026-05-06T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Testing Queue Pending Testing",
+      "Confirmed Grand Total": 950,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Concurrent-stage sample row with photography complete and testing still pending.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Processing Signed At": "2026-05-06T16:00:00.000Z",
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Sansui AU-717 Testing Pending cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Sample Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Testing queue unique pending-testing coverage.",
+      "Model": "AU-717 Testing Pending",
+      "Accepted By": "Sample Buyer",
+      "Shipping Dims": "22x19x11",
+      "Offer Amount": 950,
+      "Submission Group ID": "sample-workflow-group-09",
+      "Component Type": [
+        "Amplifier"
+      ]
+    }
+  },
+  {
+    "id": "recgfafZvd9ah3lgI",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 310,
+      "Testing Signed By": "Sample Tech",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pick Up ID": "sample-workflow-pickup-10",
+      "Testing Time": 5400,
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Photography Queue Pending Photography",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-10"
+      },
+      "Shipping Weight": "42",
+      "Cost": 310,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-07T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0010",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Status": "Tested",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Nakamichi BX-300 Photo Pending. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-11",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-10",
+      "Qualification Complete": true,
+      "Workflow Status": "Testing and Photography In Progress",
+      "Make": "Nakamichi",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Waiting on photography signoff only.",
+      "Accepted At": "2026-05-07T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Photography Queue Pending Photography",
+      "Confirmed Grand Total": 625,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Concurrent-stage sample row with testing complete and photography still pending.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Processing Signed At": "2026-05-07T16:00:00.000Z",
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Nakamichi BX-300 Photo Pending cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Sample Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-08T11:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Photography queue unique pending-photo coverage.",
+      "Model": "BX-300 Photo Pending",
+      "Accepted By": "Sample Buyer",
+      "Tested": "2026-05-12",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Offer Amount": 625,
+      "Submission Group ID": "sample-workflow-group-10",
+      "Component Type": [
+        "Cassette Deck"
+      ]
+    }
+  },
+  {
+    "id": "recOYSz37P39ME1Q6",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 800,
+      "Testing Signed By": "Sample Tech",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pick Up ID": "sample-workflow-pickup-11",
+      "Testing Time": 5400,
+      "Item Title": "Audio Research SP-9 Pre-Listing",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Audio Research SP-9 Pre-Listing captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Sample Photo",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-11"
+      },
+      "Shipping Weight": "42",
+      "Cost": 800,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-08T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0011",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-13",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Audio Research SP-9 Pre-Listing. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-12",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-11",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-09T12:00:00.000Z",
+      "Workflow Status": "Awaiting Pre-Listing Review",
+      "Make": "Audio Research",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Ready for final listing QA.",
+      "Accepted At": "2026-05-08T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Pre-Listing Queue Ready",
+      "Confirmed Grand Total": 1400,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Audio Research SP-9 Pre-Listing sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Processing Signed At": "2026-05-08T16:00:00.000Z",
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Audio Research SP-9 Pre-Listing cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Sample Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-09T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Pre-listing queue coverage.",
+      "Model": "SP-9 Pre-Listing",
+      "Accepted By": "Sample Buyer",
+      "Tested": "2026-05-13",
+      "Awaiting Pre-Listing Review At": "2026-05-09T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Offer Amount": 1400,
+      "Submission Group ID": "sample-workflow-group-11",
+      "Component Type": [
+        "Preamp"
+      ]
+    }
+  },
+  {
+    "id": "recHPV8pAcuhFMMxJ",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Shopify Type": "Turntable",
+      "Paid Amount": 1000,
+      "Testing Signed By": "Sample Tech",
+      "Shopify Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Rega Planar 8 Publish Ready sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-10T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-10T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-12",
+      "Ebay Listing Format": "Fixed Price",
+      "Testing Time": 5400,
+      "Shopify Price": 1800,
+      "Item Title": "Rega Planar 8 Publish Ready",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Rega Planar 8 Publish Ready captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Sample Photo",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-12"
+      },
+      "Ebay Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Rega Planar 8 Publish Ready sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Sample Reviewer",
+      "Cost": 1000,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-09T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0012",
+      "Ebay Categories": [
+        "Vintage Audio"
+      ],
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-14",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Rega Planar 8 Publish Ready. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-13",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-12",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-10T12:00:00.000Z",
+      "Workflow Status": "Approved for Publish",
+      "Make": "Rega",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Publish handoff approved.",
+      "Accepted At": "2026-05-09T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Approved For Publish",
+      "Confirmed Grand Total": 1800,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Ebay Price": 1800,
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Rega Planar 8 Publish Ready sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Processing Signed At": "2026-05-09T16:00:00.000Z",
+      "Ebay Quantity": 1,
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Rega Planar 8 Publish Ready cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "TRUE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Sample Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-10T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Approved-for-publish coverage.",
+      "Model": "Planar 8 Publish Ready",
+      "Accepted By": "Sample Buyer",
+      "Tested": "2026-05-14",
+      "Awaiting Pre-Listing Review At": "2026-05-10T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Offer Amount": 1800,
+      "Submission Group ID": "sample-workflow-group-12",
+      "Component Type": [
+        "Turntable"
+      ],
+      "Shopify Tags": [
+        "Rega",
+        "Turntable",
+        "[WORKFLOW_QUEUE_SAMPLE_DATA]"
+      ],
+      "Shopify Approved": "TRUE"
+    }
+  },
+  {
+    "id": "rectZB2LHwzQj9yiU",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Shopify Type": "Turntable",
+      "Paid Amount": 650,
+      "Testing Signed By": "Sample Tech",
+      "Shopify Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Thorens TD-160 Shopify Live sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-11T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-11T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-13",
+      "Testing Time": 5400,
+      "Shopify Price": 1100,
+      "Item Title": "Thorens TD-160 Shopify Live",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Thorens TD-160 Shopify Live captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Sample Photo",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-13"
+      },
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Sample Reviewer",
+      "Cost": 650,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-10T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0013",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-15",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Thorens TD-160 Shopify Live. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-14",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-13",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-11T12:00:00.000Z",
+      "Workflow Status": "Listed, Shopify",
+      "Make": "Thorens",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Published on Shopify.",
+      "Accepted At": "2026-05-10T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Listed Shopify",
+      "Confirmed Grand Total": 1100,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Thorens TD-160 Shopify Live sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Processing Signed At": "2026-05-10T16:00:00.000Z",
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Thorens TD-160 Shopify Live cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Sample Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-11T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Listed Shopify coverage.",
+      "Model": "TD-160 Shopify Live",
+      "Accepted By": "Sample Buyer",
+      "Tested": "2026-05-15",
+      "Awaiting Pre-Listing Review At": "2026-05-11T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Listed At": "2026-05-12T11:00:00.000Z",
+      "Offer Amount": 1100,
+      "Submission Group ID": "sample-workflow-group-13",
+      "Component Type": [
+        "Turntable"
+      ],
+      "Shopify Tags": [
+        "Thorens",
+        "Turntable",
+        "[WORKFLOW_QUEUE_SAMPLE_DATA]"
+      ],
+      "Shopify Approved": "TRUE"
+    }
+  },
+  {
+    "id": "recjsNGwqqhLZkdLJ",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 540,
+      "Testing Signed By": "Sample Tech",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-12T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-12T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-14",
+      "eBay Listing ID": "sample-workflow-listing-11",
+      "Ebay Listing Format": "Fixed Price",
+      "Testing Time": 5400,
+      "Item Title": "Marantz 2230 eBay Live",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Marantz 2230 eBay Live captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Sample Photo",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-14"
+      },
+      "Ebay Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Marantz 2230 eBay Live sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Sample Reviewer",
+      "Cost": 540,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-11T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0014",
+      "Ebay Categories": [
+        "Vintage Audio"
+      ],
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-16",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Marantz 2230 eBay Live. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-15",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-14",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-12T12:00:00.000Z",
+      "Workflow Status": "Listed, eBay",
+      "Make": "Marantz",
+      "eBay Offer ID": "v1|sample-workflow-offer-11|0",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Published on eBay.",
+      "Accepted At": "2026-05-11T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Listed eBay",
+      "Confirmed Grand Total": 975,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Ebay Price": 975,
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Marantz 2230 eBay Live sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Processing Signed At": "2026-05-11T16:00:00.000Z",
+      "Ebay Quantity": 1,
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Marantz 2230 eBay Live cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "TRUE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Sample Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-12T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Listed eBay coverage.",
+      "Model": "2230 eBay Live",
+      "Accepted By": "Sample Buyer",
+      "Tested": "2026-05-16",
+      "Awaiting Pre-Listing Review At": "2026-05-12T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Listed At": "2026-05-13T11:00:00.000Z",
+      "Offer Amount": 975,
+      "Submission Group ID": "sample-workflow-group-14",
+      "Component Type": [
+        "Receiver"
+      ]
+    }
+  },
+  {
+    "id": "recpMZcUsoVitKKtQ",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Shopify Type": "Turntable",
+      "Paid Amount": 1200,
+      "Testing Signed By": "Sample Tech",
+      "Stale Recovery Updated At": "2026-05-20T09:00:00.000Z",
+      "Shopify Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Oracle Alexandria Stale Shopify sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-13T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-13T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-15",
+      "Testing Time": 5400,
+      "Shopify Price": 2100,
+      "Item Title": "Oracle Alexandria Stale Shopify",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Oracle Alexandria Stale Shopify captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Sample Photo",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-15"
+      },
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Sample Reviewer",
+      "Cost": 1200,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-12T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0015",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-17",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Oracle Alexandria Stale Shopify. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-16",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-15",
+      "Stale Recovery Status": "Needs Review",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-13T12:00:00.000Z",
+      "Workflow Status": "Stale Listing, Shopify",
+      "Make": "Oracle",
+      "Stale Listing At": "2026-05-20T09:00:00.000Z",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Stale Shopify listing needs review.",
+      "Accepted At": "2026-05-12T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Stale Listing Shopify",
+      "Confirmed Grand Total": 2100,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Oracle Alexandria Stale Shopify sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Processing Signed At": "2026-05-12T16:00:00.000Z",
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Oracle Alexandria Stale Shopify cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Stale Recovery Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Shopify stale listing sample.",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Sample Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-13T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Stale Shopify coverage.",
+      "Model": "Alexandria Stale Shopify",
+      "Accepted By": "Sample Buyer",
+      "Tested": "2026-05-17",
+      "Awaiting Pre-Listing Review At": "2026-05-13T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Listed At": "2026-05-14T10:00:00.000Z",
+      "Offer Amount": 2100,
+      "Submission Group ID": "sample-workflow-group-15",
+      "Component Type": [
+        "Turntable"
+      ],
+      "Shopify Tags": [
+        "Oracle",
+        "Turntable",
+        "[WORKFLOW_QUEUE_SAMPLE_DATA]"
+      ],
+      "Shopify Approved": "TRUE"
+    }
+  },
+  {
+    "id": "reca69NyHspbC6wZz",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 1040,
+      "Testing Signed By": "Sample Tech",
+      "Stale Recovery Updated At": "2026-05-21T09:00:00.000Z",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-14T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-14T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-16",
+      "eBay Listing ID": "sample-workflow-listing-13",
+      "Ebay Listing Format": "Fixed Price",
+      "Testing Time": 5400,
+      "Item Title": "JBL L100 Stale eBay",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for JBL L100 Stale eBay captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Sample Photo",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-16"
+      },
+      "Ebay Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] JBL L100 Stale eBay sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Sample Reviewer",
+      "Cost": 1040,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-13T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0016",
+      "Ebay Categories": [
+        "Vintage Audio"
+      ],
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-18",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested JBL L100 Stale eBay. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-17",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-16",
+      "Stale Recovery Status": "Price Refresh",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-14T12:00:00.000Z",
+      "Workflow Status": "Stale Listing, eBay",
+      "Make": "JBL",
+      "Stale Listing At": "2026-05-21T09:00:00.000Z",
+      "eBay Offer ID": "v1|sample-workflow-offer-13|0",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Stale eBay listing needs review.",
+      "Accepted At": "2026-05-13T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Stale Listing eBay",
+      "Confirmed Grand Total": 1950,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Ebay Price": 1950,
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] JBL L100 Stale eBay sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Processing Signed At": "2026-05-13T16:00:00.000Z",
+      "Ebay Quantity": 1,
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] JBL L100 Stale eBay cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "TRUE",
+      "Voltage": "120V",
+      "Stale Recovery Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] eBay stale listing sample.",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Sample Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-14T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Stale eBay coverage.",
+      "Model": "L100 Stale eBay",
+      "Accepted By": "Sample Buyer",
+      "Tested": "2026-05-18",
+      "Awaiting Pre-Listing Review At": "2026-05-14T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Listed At": "2026-05-15T10:00:00.000Z",
+      "Offer Amount": 1950,
+      "Submission Group ID": "sample-workflow-group-16",
+      "Component Type": [
+        "Speakers"
+      ]
+    }
+  },
+  {
+    "id": "recL8ZAbDwVuxmW1r",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Shopify Type": "Speakers",
+      "Paid Amount": 1200,
+      "Sold Ready To Ship At": "2026-05-18T09:00:00.000Z",
+      "Testing Signed By": "Sample Tech",
+      "Shopify Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Klipsch Cornwall Sold Ready sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-15T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-15T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-17",
+      "Ebay Listing Format": "Fixed Price",
+      "Testing Time": 5400,
+      "Shopify Price": 2400,
+      "Item Title": "Klipsch Cornwall Sold Ready",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Klipsch Cornwall Sold Ready captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Sample Photo",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-17"
+      },
+      "Ebay Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Klipsch Cornwall Sold Ready sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Sample Reviewer",
+      "Cost": 1200,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-14T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0017",
+      "Ebay Categories": [
+        "Vintage Audio"
+      ],
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-19",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Klipsch Cornwall Sold Ready. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-18",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-17",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-15T12:00:00.000Z",
+      "Workflow Status": "Sold - Ready to Ship",
+      "Make": "Klipsch",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Sold and waiting to ship.",
+      "Accepted At": "2026-05-14T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Sold Ready To Ship",
+      "Confirmed Grand Total": 2400,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Ebay Price": 2400,
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Klipsch Cornwall Sold Ready sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Processing Signed At": "2026-05-14T16:00:00.000Z",
+      "Ebay Quantity": 1,
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Klipsch Cornwall Sold Ready cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "TRUE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Sample Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-15T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Sold-ready coverage.",
+      "Model": "Cornwall Sold Ready",
+      "Accepted By": "Sample Buyer",
+      "Tested": "2026-05-19",
+      "Awaiting Pre-Listing Review At": "2026-05-15T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Listed At": "2026-05-16T10:00:00.000Z",
+      "Offer Amount": 2400,
+      "Submission Group ID": "sample-workflow-group-17",
+      "Component Type": [
+        "Speakers"
+      ],
+      "Shopify Tags": [
+        "Klipsch",
+        "Speakers",
+        "[WORKFLOW_QUEUE_SAMPLE_DATA]"
+      ],
+      "Shopify Approved": "TRUE"
+    }
+  },
+  {
+    "id": "rec8rU6ng3RgmKX6G",
+    "createdTime": "2026-05-18T15:02:18.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Shopify Type": "Cassette Deck",
+      "Paid Amount": 740,
+      "Sold Ready To Ship At": "2026-05-18T09:00:00.000Z",
+      "Testing Signed By": "Sample Tech",
+      "Shipped At": "2026-05-19T14:00:00.000Z",
+      "Shopify Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Tandberg 3014A Shipped sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-16T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-16T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-18",
+      "Ebay Listing Format": "Fixed Price",
+      "Testing Time": 5400,
+      "Shopify Price": 1300,
+      "Item Title": "Tandberg 3014A Shipped",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Tandberg 3014A Shipped captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Sample Photo",
+      "Workflow Owner": "Sample Operator",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-18"
+      },
+      "Ebay Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Tandberg 3014A Shipped sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Sample Reviewer",
+      "Cost": 740,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-15T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0018",
+      "Ebay Categories": [
+        "Vintage Audio"
+      ],
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-20",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Tandberg 3014A Shipped. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-19",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-18",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-16T12:00:00.000Z",
+      "Workflow Status": "Shipped",
+      "Make": "Tandberg",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Completed shipped state sample.",
+      "Accepted At": "2026-05-15T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Shipped",
+      "Confirmed Grand Total": 1300,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Ebay Price": 1300,
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Tandberg 3014A Shipped sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Processing Signed At": "2026-05-15T16:00:00.000Z",
+      "Ebay Quantity": 1,
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Tandberg 3014A Shipped cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "TRUE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Sample Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-16T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Shipped coverage.",
+      "Model": "3014A Shipped",
+      "Accepted By": "Sample Buyer",
+      "Tested": "2026-05-20",
+      "Awaiting Pre-Listing Review At": "2026-05-16T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Listed At": "2026-05-17T10:00:00.000Z",
+      "Offer Amount": 1300,
+      "Submission Group ID": "sample-workflow-group-18",
+      "Component Type": [
+        "Cassette Deck"
+      ],
+      "Shopify Tags": [
+        "Tandberg",
+        "Cassette Deck",
+        "[WORKFLOW_QUEUE_SAMPLE_DATA]"
+      ],
+      "Shopify Approved": "TRUE"
+    }
+  }
+]

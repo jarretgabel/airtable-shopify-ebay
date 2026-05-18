@@ -17,7 +17,7 @@ import { AirtableRecord } from '@/types/airtable';
 
 type QueueQuickFilter = 'all' | 'pending' | 'ready' | 'needs-fields' | 'approved';
 type QueueExtraFilter = 'all' | 'shopify-active' | 'shopify-draft' | 'shopify-archived' | 'ebay-live' | 'ebay-draft-offer' | 'ebay-approved-to-publish' | 'ebay-stale' | 'workflow-pre-listing-review' | 'workflow-approved-for-publish';
-type CombinedQueueSectionKey = 'ready-for-publishing' | 'needs-further-work';
+type CombinedQueueSectionKey = 'ready-for-publishing' | 'active-listings' | 'needs-further-work';
 type CombinedQueueSortMode = 'default' | 'title-asc' | 'vendor-asc' | 'price-desc' | 'price-asc';
 
 interface QueueExtraFilterDefinition {
@@ -31,8 +31,19 @@ const FILTER_STORAGE_PREFIX = 'approval-queue-filter';
 const approvalQueueSurfaceClass = 'rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5';
 const COMBINED_QUEUE_SECTION_IDS: Record<CombinedQueueSectionKey, string> = {
   'ready-for-publishing': 'combined-listings-ready-for-publishing',
+  'active-listings': 'combined-listings-active-listings',
   'needs-further-work': 'combined-listings-needs-further-work',
 };
+
+const READY_FOR_PUBLISH_WORKFLOW_STATUSES = new Set(['Approved for Publish']);
+const ACTIVE_LISTING_WORKFLOW_STATUSES = new Set(['Listed, Shopify', 'Listed, eBay']);
+const VISIBLE_COMBINED_WORKFLOW_STATUSES = new Set([
+  'Awaiting Pre-Listing Review',
+  'Approved for Publish',
+  'Listed, Shopify',
+  'Listed, eBay',
+]);
+const COMBINED_APPROVED_WORKFLOW_STATUSES = ['Approved for Publish', 'Listed, Shopify', 'Listed, eBay'];
 
 function isApprovedRecord(record: AirtableRecord, approvedFieldName: string): boolean {
   const raw = record.fields[approvedFieldName];
@@ -75,7 +86,7 @@ function getRecordFieldText(record: AirtableRecord, fieldNames: string[]): strin
 }
 
 function normalizeShopifyStatus(record: AirtableRecord, formatFieldName: string): string {
-  return getRecordFieldText(record, [formatFieldName, 'Shopify REST Status', 'Shopify Status', 'Shopify GraphQL Status', 'Status']).trim().toLowerCase();
+  return getRecordFieldText(record, [formatFieldName]).trim().toLowerCase();
 }
 
 function normalizeEbayWorkflowStatus(record: AirtableRecord): string {
@@ -84,23 +95,30 @@ function normalizeEbayWorkflowStatus(record: AirtableRecord): string {
 
 function isCombinedRecordReadyForPublishing(
   record: AirtableRecord,
-  approvedFieldName: string,
   combinedRequiredFieldNames: string[],
   shopifyRequiredFieldNames: string[],
   ebayRequiredFieldNames: string[],
 ): boolean {
-  return isApprovedRecord(record, approvedFieldName)
+  return READY_FOR_PUBLISH_WORKFLOW_STATUSES.has(normalizeCombinedWorkflowStatus(record))
     && isReadyForRequiredFields(record.fields, combinedRequiredFieldNames)
     && isReadyForRequiredFields(record.fields, shopifyRequiredFieldNames)
     && isReadyForRequiredFields(record.fields, ebayRequiredFieldNames);
 }
 
 function normalizeEbayOfferStatus(record: AirtableRecord): string {
-  return getRecordFieldText(record, ['eBay Offer Status', 'Offer Status', 'eBay Inventory Status']).trim().toLowerCase();
+  return getRecordFieldText(record, ['eBay Offer Status']).trim().toLowerCase();
 }
 
 function normalizeCombinedWorkflowStatus(record: AirtableRecord): string {
   return getRecordFieldText(record, ['Workflow Status']).trim();
+}
+
+function isCombinedRecordAlreadyListed(record: AirtableRecord): boolean {
+  return ACTIVE_LISTING_WORKFLOW_STATUSES.has(normalizeCombinedWorkflowStatus(record));
+}
+
+function isCombinedRecordVisibleOnListingsPage(record: AirtableRecord): boolean {
+  return VISIBLE_COMBINED_WORKFLOW_STATUSES.has(normalizeCombinedWorkflowStatus(record));
 }
 
 function getCombinedSortLabel(mode: CombinedQueueSortMode): string {
@@ -365,6 +383,7 @@ export function ListingApprovalQueuePanel({
     () => isCombinedApproval
       ? [
         { id: COMBINED_QUEUE_SECTION_IDS['ready-for-publishing'], key: 'ready-for-publishing' as const, label: 'Ready for Publishing' },
+        { id: COMBINED_QUEUE_SECTION_IDS['active-listings'], key: 'active-listings' as const, label: 'Active Listings' },
         { id: COMBINED_QUEUE_SECTION_IDS['needs-further-work'], key: 'needs-further-work' as const, label: 'Needs Further Work' },
       ]
       : [{ id: 'listing-approval-queue', key: 'needs-further-work' as const, label: 'Listing Queue' }],
@@ -380,10 +399,13 @@ export function ListingApprovalQueuePanel({
   const extraFilterStorageKey = `${FILTER_STORAGE_PREFIX}:${approvalChannel}:extra`;
   const [searchQuery, setSearchQuery] = useState('');
   const [combinedReadySearchQuery, setCombinedReadySearchQuery] = useState('');
+  const [combinedActiveSearchQuery, setCombinedActiveSearchQuery] = useState('');
   const [combinedWorkSearchQuery, setCombinedWorkSearchQuery] = useState('');
   const [combinedReadySortMode, setCombinedReadySortMode] = useState<CombinedQueueSortMode>('default');
+  const [combinedActiveSortMode, setCombinedActiveSortMode] = useState<CombinedQueueSortMode>('default');
   const [combinedWorkSortMode, setCombinedWorkSortMode] = useState<CombinedQueueSortMode>('default');
   const [combinedReadyWorkflowFilter, setCombinedReadyWorkflowFilter] = useState('all');
+  const [combinedActiveWorkflowFilter, setCombinedActiveWorkflowFilter] = useState('all');
   const [combinedWorkWorkflowFilter, setCombinedWorkWorkflowFilter] = useState('all');
   const [activeQuickFilter, setActiveQuickFilter] = useState<QueueQuickFilter>(() => readStoredFilter(quickFilterStorageKey, defaultQuickFilterForChannel(approvalChannel), ['all', 'pending', 'ready', 'needs-fields', 'approved'] as const));
   const [activeExtraFilter, setActiveExtraFilter] = useState<QueueExtraFilter>(() => readStoredFilter(extraFilterStorageKey, 'all', ['all', 'shopify-active', 'shopify-draft', 'shopify-archived', 'ebay-live', 'ebay-draft-offer', 'ebay-approved-to-publish', 'ebay-stale', 'workflow-pre-listing-review', 'workflow-approved-for-publish'] as const));
@@ -462,13 +484,12 @@ export function ListingApprovalQueuePanel({
 
   const combinedReadyForPublishingRecords = useMemo(
     () => isCombinedApproval
-      ? filteredRecords.filter((record) => isCombinedRecordReadyForPublishing(
-        record,
-        approvedFieldName,
-        combinedRequiredFieldNames,
-        shopifyRequiredFieldNames,
-        ebayRequiredFieldNames,
-      ))
+      ? filteredRecords.filter((record) => isCombinedRecordVisibleOnListingsPage(record) && !isCombinedRecordAlreadyListed(record) && isCombinedRecordReadyForPublishing(
+          record,
+          combinedRequiredFieldNames,
+          shopifyRequiredFieldNames,
+          ebayRequiredFieldNames,
+        ))
       : [],
     [
       approvedFieldName,
@@ -479,15 +500,20 @@ export function ListingApprovalQueuePanel({
       shopifyRequiredFieldNames,
     ],
   );
+  const combinedActiveListingRecords = useMemo(
+    () => isCombinedApproval
+      ? filteredRecords.filter((record) => isCombinedRecordVisibleOnListingsPage(record) && isCombinedRecordAlreadyListed(record))
+      : [],
+    [filteredRecords, isCombinedApproval],
+  );
   const combinedNeedsFurtherWorkRecords = useMemo(
     () => isCombinedApproval
-      ? filteredRecords.filter((record) => !isCombinedRecordReadyForPublishing(
-        record,
-        approvedFieldName,
-        combinedRequiredFieldNames,
-        shopifyRequiredFieldNames,
-        ebayRequiredFieldNames,
-      ))
+      ? filteredRecords.filter((record) => isCombinedRecordVisibleOnListingsPage(record) && !isCombinedRecordAlreadyListed(record) && !isCombinedRecordReadyForPublishing(
+          record,
+          combinedRequiredFieldNames,
+          shopifyRequiredFieldNames,
+          ebayRequiredFieldNames,
+        ))
       : [],
     [
       approvedFieldName,
@@ -526,6 +552,20 @@ export function ListingApprovalQueuePanel({
       ...statusValues.map((value) => ({ value, label: value })),
     ];
   }, [combinedNeedsFurtherWorkRecords]);
+  const combinedActiveWorkflowOptions = useMemo(() => {
+    const statusValues = Array.from(
+      new Set(
+        combinedActiveListingRecords
+          .map((record) => normalizeCombinedWorkflowStatus(record))
+          .filter((value) => value.length > 0),
+      ),
+    ).sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }));
+
+    return [
+      { value: 'all', label: 'All Statuses' },
+      ...statusValues.map((value) => ({ value, label: value })),
+    ];
+  }, [combinedActiveListingRecords]);
   const filteredCombinedReadyForPublishingRecords = useMemo(() => {
     if (!isCombinedApproval) return [];
     const normalizedQuery = combinedReadySearchQuery.trim().toLowerCase();
@@ -552,6 +592,38 @@ export function ListingApprovalQueuePanel({
     combinedReadySearchQuery,
     combinedReadySortMode,
     combinedReadyWorkflowFilter,
+    isCombinedApproval,
+    priceFieldName,
+    qtyFieldName,
+    titleFieldName,
+    vendorFieldName,
+  ]);
+  const filteredCombinedActiveListingRecords = useMemo(() => {
+    if (!isCombinedApproval) return [];
+    const normalizedQuery = combinedActiveSearchQuery.trim().toLowerCase();
+    const activeRecords = combinedActiveListingRecords.filter((record) => {
+      const workflowStatus = normalizeCombinedWorkflowStatus(record);
+      if (combinedActiveWorkflowFilter !== 'all' && workflowStatus !== combinedActiveWorkflowFilter) return false;
+      if (!normalizedQuery) return true;
+
+      return buildSearchableRecordText(record, [
+        titleFieldName,
+        vendorFieldName,
+        priceFieldName,
+        qtyFieldName,
+        'Workflow Status',
+        'SKU',
+        'Model',
+        'Brand',
+      ]).includes(normalizedQuery);
+    });
+
+    return sortCombinedRecords(activeRecords, combinedActiveSortMode, titleFieldName, vendorFieldName, priceFieldName);
+  }, [
+    combinedActiveListingRecords,
+    combinedActiveSearchQuery,
+    combinedActiveSortMode,
+    combinedActiveWorkflowFilter,
     isCombinedApproval,
     priceFieldName,
     qtyFieldName,
@@ -805,7 +877,10 @@ export function ListingApprovalQueuePanel({
                   <ApprovalQueueTable
                     records={filteredCombinedReadyForPublishingRecords}
                     approvedFieldName={approvedFieldName}
+                    approvedWorkflowStatuses={COMBINED_APPROVED_WORKFLOW_STATUSES}
                     requiredFieldNames={requiredFieldNames}
+                    workflowStatusFieldName="Workflow Status"
+                    hideApprovedColumn
                     readinessColumns={[
                       { key: 'shopify', label: 'Shopify Ready', requiredFieldNames: shopifyRequiredFieldNames },
                       { key: 'ebay', label: 'eBay Ready', requiredFieldNames: ebayRequiredFieldNames },
@@ -824,6 +899,71 @@ export function ListingApprovalQueuePanel({
                     {combinedReadyForPublishingRecords.length === 0
                       ? 'No combined listing rows are currently ready for publishing.'
                       : 'No ready-for-publishing rows match this section search.'}
+                  </section>
+                )}
+              </AppPageSectionSurface>
+
+              <AppPageSectionSurface id={COMBINED_QUEUE_SECTION_IDS['active-listings']} className="scroll-mt-24 bg-[var(--bg)]/60">
+                <AppSectionTitle
+                  title="Active Listings"
+                  className="mb-4"
+                />
+                <QueueSearchToolbar
+                  className="mb-4"
+                  searchAriaLabel="Search active combined listings"
+                  searchPlaceholder="Search active listings by title, vendor, SKU, brand, or workflow status…"
+                  searchValue={combinedActiveSearchQuery}
+                  onSearchChange={setCombinedActiveSearchQuery}
+                  refreshLabel="Refresh listing approval queue"
+                  refreshLoadingLabel="Refreshing listing approval queue"
+                  refreshing={loading}
+                  onRefresh={refreshQueue}
+                  sortAriaLabel={`Sort active combined listings. Current order: ${getCombinedSortLabel(combinedActiveSortMode)}`}
+                  sortValue={combinedActiveSortMode}
+                  onSortChange={(value) => setCombinedActiveSortMode(value as CombinedQueueSortMode)}
+                  sortOptions={[
+                    { value: 'default', label: 'Default Order' },
+                    { value: 'title-asc', label: 'Title A-Z' },
+                    { value: 'vendor-asc', label: 'Vendor A-Z' },
+                    { value: 'price-desc', label: 'Highest Price' },
+                    { value: 'price-asc', label: 'Lowest Price' },
+                  ]}
+                  filters={combinedActiveWorkflowOptions.length > 1 ? [{
+                    ariaLabel: 'Filter active combined listings by workflow status',
+                    value: combinedActiveWorkflowFilter,
+                    options: combinedActiveWorkflowOptions,
+                    onChange: setCombinedActiveWorkflowFilter,
+                  }] : undefined}
+                  compactFilters
+                />
+                {filteredCombinedActiveListingRecords.length > 0 ? (
+                  <ApprovalQueueTable
+                    records={filteredCombinedActiveListingRecords}
+                    approvedFieldName={approvedFieldName}
+                    approvedWorkflowStatuses={COMBINED_APPROVED_WORKFLOW_STATUSES}
+                    requiredFieldNames={requiredFieldNames}
+                    workflowStatusFieldName="Workflow Status"
+                    hideApprovedColumn
+                    readinessColumns={[
+                      { key: 'shopify', label: 'Shopify Ready', requiredFieldNames: shopifyRequiredFieldNames },
+                      { key: 'ebay', label: 'eBay Ready', requiredFieldNames: ebayRequiredFieldNames },
+                    ]}
+                    treatListedWorkflowStatusesAsApproved
+                    showLiveChannelStatusForListedRows
+                    titleFieldName={titleFieldName}
+                    conditionFieldName=""
+                    formatFieldName=""
+                    priceFieldName={priceFieldName}
+                    vendorFieldName={vendorFieldName}
+                    qtyFieldName={qtyFieldName}
+                    openRecord={openRecord}
+                    onSelectRecord={onSelectRecord}
+                  />
+                ) : (
+                  <section className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-8 text-center text-sm text-[var(--muted)]">
+                    {combinedActiveListingRecords.length === 0
+                      ? 'No combined listing rows are currently active listings.'
+                      : 'No active listings match this section search.'}
                   </section>
                 )}
               </AppPageSectionSurface>
@@ -865,7 +1005,10 @@ export function ListingApprovalQueuePanel({
                   <ApprovalQueueTable
                     records={filteredCombinedNeedsFurtherWorkRecords}
                     approvedFieldName={approvedFieldName}
+                    approvedWorkflowStatuses={COMBINED_APPROVED_WORKFLOW_STATUSES}
                     requiredFieldNames={requiredFieldNames}
+                    workflowStatusFieldName="Workflow Status"
+                    hideApprovedColumn
                     readinessColumns={[
                       { key: 'shopify', label: 'Shopify Ready', requiredFieldNames: shopifyRequiredFieldNames },
                       { key: 'ebay', label: 'eBay Ready', requiredFieldNames: ebayRequiredFieldNames },

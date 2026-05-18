@@ -15,6 +15,7 @@ import {
   shouldShowWorkflowTrashPath,
   type GuideStep,
   type WorkflowFlowStage,
+  WORKFLOW_ADVANCEMENT_RULES,
 } from '@/components/tabs/workflowGuideContent';
 
 interface WorkflowGuideTabProps {
@@ -306,6 +307,7 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
       { id: 'workflow-lane', key: 'workflow-lane', label: 'Workflow Lane' },
       { id: 'role-view', key: 'role-view', label: 'Role View' },
       { id: 'daily-flow', key: 'daily-flow', label: 'Daily Flow' },
+      { id: 'advancement-rules', key: 'advancement-rules', label: 'Next Steps' },
       { id: 'page-reference', key: 'page-reference', label: 'Pages' },
       { id: 'record-reference', key: 'record-reference', label: 'Record Pages' },
       { id: 'quick-answers', key: 'quick-answers', label: 'Quick Answers' },
@@ -359,6 +361,15 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
         summary={roleGuide.flowSummary}
       >
         <StepList steps={roleGuide.flowSteps} />
+      </GuideSection>
+
+      <GuideSection
+        id="advancement-rules"
+        eyebrow="Stage Gates"
+        title="How Items Move To The Next Step"
+        summary="Use this section when the question is what qualifies a row to advance. These are the stage gates that keep the workflow moving forward only when the current step is actually complete."
+      >
+        <StepList steps={WORKFLOW_ADVANCEMENT_RULES} />
       </GuideSection>
 
       <GuideSection

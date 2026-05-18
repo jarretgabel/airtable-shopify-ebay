@@ -125,6 +125,11 @@ function makeSampleFields(index, config) {
   const listingKeyFeatures = Object.prototype.hasOwnProperty.call(config, 'listingKeyFeatures')
     ? config.listingKeyFeatures
     : keyFeatures;
+  const defaultWorkflowFields = config.workflowFields ?? {
+    'Workflow Status': config.shopifyApproved === 'TRUE' && config.ebayApproved === 'TRUE'
+      ? 'Approved for Publish'
+      : 'Awaiting Pre-Listing Review',
+  };
 
   return {
     'Template Name': `${SAMPLE_MARKER} ${config.templateName}`,
@@ -164,7 +169,7 @@ function makeSampleFields(index, config) {
     'Ebay Approved': config.ebayApproved,
     ...(config.testingFields ?? {}),
     ...(config.listingTestingNotes === undefined ? {} : { 'Testing Notes': config.listingTestingNotes }),
-    ...(config.workflowFields ?? {}),
+    ...defaultWorkflowFields,
   };
 }
 

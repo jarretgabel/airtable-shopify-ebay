@@ -15,6 +15,11 @@ interface ApprovalQueueTableProps {
 	approvedFieldName: string;
 	requiredFieldNames: string[];
 	readinessColumns?: ApprovalReadinessColumn[];
+	treatListedWorkflowStatusesAsApproved?: boolean;
+	approvedWorkflowStatuses?: string[];
+	showLiveChannelStatusForListedRows?: boolean;
+	workflowStatusFieldName?: string;
+	hideApprovedColumn?: boolean;
 	titleFieldName: string;
 	conditionFieldName: string;
 	formatFieldName: string;
@@ -25,9 +30,31 @@ interface ApprovalQueueTableProps {
 	onSelectRecord?: (recordId: string) => void;
 }
 
-function isApprovedRecord(record: AirtableRecord, approvedFieldName: string): boolean {
+const LISTED_WORKFLOW_STATUSES = new Set(['Listed, Shopify', 'Listed, eBay']);
+
+function getListedChannelStatus(record: AirtableRecord): 'shopify' | 'ebay' | null {
+	const workflowStatus = displayValue(record.fields['Workflow Status']).trim();
+	if (workflowStatus === 'Listed, Shopify') return 'shopify';
+	if (workflowStatus === 'Listed, eBay') return 'ebay';
+	return null;
+}
+
+function isApprovedRecord(record: AirtableRecord, approvedFieldName: string, treatListedWorkflowStatusesAsApproved = false): boolean {
+	if (treatListedWorkflowStatusesAsApproved) {
+		const workflowStatus = displayValue(record.fields['Workflow Status']).trim();
+		if (LISTED_WORKFLOW_STATUSES.has(workflowStatus)) {
+			return true;
+		}
+	}
+
 	const raw = record.fields[approvedFieldName];
 	return raw === true || String(raw ?? '').toLowerCase() === 'true' || String(raw ?? '').toLowerCase() === 'yes';
+}
+
+function isApprovedByWorkflowStatus(record: AirtableRecord, approvedWorkflowStatuses: string[]): boolean {
+	if (approvedWorkflowStatuses.length === 0) return false;
+	const workflowStatus = displayValue(record.fields['Workflow Status']).trim();
+	return approvedWorkflowStatuses.includes(workflowStatus);
 }
 
 function hasMissingRequiredField(record: AirtableRecord, requiredFieldNames: string[]): boolean {
@@ -39,11 +66,40 @@ function getCell(record: AirtableRecord, fieldName: string): string {
 	return displayValue(record.fields[fieldName]);
 }
 
+function getWorkflowStatusCell(record: AirtableRecord, fieldName: string): string {
+	if (!fieldName.trim()) return '';
+	const rawValue = record.fields[fieldName];
+	if (rawValue === null || rawValue === undefined || rawValue === '') return '';
+	const text = displayValue(rawValue).trim();
+	return text === '—' ? '' : text;
+}
+
+function workflowStatusClasses(status: string): string {
+	if (status === 'Approved for Publish') {
+		return 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200';
+	}
+
+	if (LISTED_WORKFLOW_STATUSES.has(status)) {
+		return 'border border-sky-400/35 bg-sky-500/20 text-sky-200';
+	}
+
+	if (status === 'Awaiting Pre-Listing Review') {
+		return 'border border-amber-400/35 bg-amber-500/20 text-amber-200';
+	}
+
+	return 'border border-slate-400/25 bg-slate-500/10 text-slate-300';
+}
+
 export function ApprovalQueueTable({
 	records,
 	approvedFieldName,
 	requiredFieldNames,
 	readinessColumns = [],
+	treatListedWorkflowStatusesAsApproved = false,
+	approvedWorkflowStatuses = [],
+	showLiveChannelStatusForListedRows = false,
+	workflowStatusFieldName = '',
+	hideApprovedColumn = false,
 	titleFieldName,
 	conditionFieldName,
 	formatFieldName,
@@ -119,6 +175,22 @@ export function ApprovalQueueTable({
 			label: column.label,
 			width: '11rem',
 			renderCell: (record: AirtableRecord) => {
+				const listedChannelStatus = showLiveChannelStatusForListedRows ? getListedChannelStatus(record) : null;
+				if (listedChannelStatus) {
+					const isLiveChannel = listedChannelStatus === column.key;
+					return (
+						<span
+							className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+								isLiveChannel
+									? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200'
+									: 'border border-slate-400/25 bg-slate-500/10 text-slate-300'
+							}`}
+						>
+							{isLiveChannel ? 'Live' : 'Not Live'}
+						</span>
+					);
+				}
+
 				const ready = isReadyForRequiredFields(record.fields, column.requiredFieldNames);
 				return (
 					<span
@@ -133,29 +205,50 @@ export function ApprovalQueueTable({
 				);
 			},
 		} satisfies IntakeItemsMatrixColumn<AirtableRecord>)),
-		{
-			key: 'approved',
-			label: 'Approved',
-			width: '11rem',
-			renderCell: (record) => {
-				const approved = isApprovedRecord(record, approvedFieldName);
-				const missingRequired = hasMissingRequiredField(record, requiredFieldNames);
+		...(
+			workflowStatusFieldName
+				? [{
+					key: 'workflow-status',
+					label: 'Workflow Status',
+					width: '14rem',
+					renderCell: (record: AirtableRecord) => {
+						const status = getWorkflowStatusCell(record, workflowStatusFieldName);
+						return status
+							? <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${workflowStatusClasses(status)}`}>{status}</span>
+							: <span className="inline-flex rounded-full border border-slate-400/25 bg-slate-500/10 px-2 py-0.5 text-xs font-semibold text-slate-300">Not Set</span>;
+					},
+				} satisfies IntakeItemsMatrixColumn<AirtableRecord>]
+				: []
+		),
+		...(
+			hideApprovedColumn
+				? []
+				: [{
+					key: 'approved',
+					label: 'Approved',
+					width: '11rem',
+					renderCell: (record: AirtableRecord) => {
+						const approved = approvedWorkflowStatuses.length > 0
+							? isApprovedByWorkflowStatus(record, approvedWorkflowStatuses)
+							: isApprovedRecord(record, approvedFieldName, treatListedWorkflowStatusesAsApproved);
+						const missingRequired = hasMissingRequiredField(record, requiredFieldNames);
 
-				return (
-					<span
-						className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-							approved
-								? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200'
-								: missingRequired
-									? 'border border-rose-400/35 bg-rose-500/20 text-rose-200'
-									: 'border border-amber-400/35 bg-amber-500/20 text-amber-200'
-						}`}
-					>
-						{approved ? 'Approved' : missingRequired ? 'Needs Fields' : 'Pending'}
-					</span>
-				);
-			},
-		},
+						return (
+							<span
+								className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+									approved
+										? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200'
+										: missingRequired
+											? 'border border-rose-400/35 bg-rose-500/20 text-rose-200'
+											: 'border border-amber-400/35 bg-amber-500/20 text-amber-200'
+								}`}
+							>
+								{approved ? 'Approved' : missingRequired ? 'Needs Fields' : 'Pending'}
+							</span>
+						);
+					},
+				} satisfies IntakeItemsMatrixColumn<AirtableRecord>]
+		),
 		{
 			key: 'actions',
 			label: 'Actions',
