@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { BackToolbarButton } from '@/components/app/BackToolbarButton';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
+import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
-import { smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
+import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
+import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
+import { buildUsedGearIntakeSnapshot } from '@/components/tabs/usedGearIntakeSnapshot';
 import {
   acceptPendingReviewRecord,
   hasUsedGearPendingReviewPricingPath,
@@ -19,6 +25,8 @@ interface UsedGearPendingReviewRecordPageProps {
   recordId: string;
   onOpenManualIntake: (recordId: string) => void;
 }
+
+type PendingReviewSectionKey = 'group' | 'lot-two' | 'trash' | 'snapshot';
 
 const ACCEPT_ROUTE_OPTIONS: Array<{
   value: UsedGearPendingReviewAcceptedStatus;
@@ -51,37 +59,6 @@ function stringFieldValue(fields: Record<string, unknown>, fieldName: string): s
     return String(value);
   }
   return '';
-}
-
-function previewText(value: unknown): string {
-  const normalized = displayInventoryValue(value);
-  return normalized.length > 180 ? `${normalized.slice(0, 177)}...` : normalized;
-}
-
-function SummaryField({ label, value }: { label: string; value: unknown }) {
-  return (
-    <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-4 py-4">
-      <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{label}</p>
-      <p className="mt-2 text-sm text-[var(--ink)]">{displayInventoryValue(value)}</p>
-    </div>
-  );
-}
-
-function DetailBlock({ title, fields }: { title: string; fields: Array<{ label: string; value: unknown }> }) {
-  return (
-    <details className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 text-sm text-[var(--muted)]">
-      <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-        {title}
-      </summary>
-      <div className="mt-4 space-y-3">
-        {fields.map((field) => (
-          <div key={field.label}>
-            <span className="font-semibold text-[var(--ink)]">{field.label}:</span> {displayInventoryValue(field.value)}
-          </div>
-        ))}
-      </div>
-    </details>
-  );
 }
 
 function NoteTemplateRow({
@@ -174,6 +151,25 @@ export function UsedGearPendingReviewRecordPage({
     () => Boolean(group && group.records.length > 1 && stringFieldValue(record?.fields ?? {}, 'Submission Group ID').trim().length === 0),
     [group, record],
   );
+  const sectionItems = useMemo<Array<{ id: PendingReviewSectionKey; key: PendingReviewSectionKey; label: string }>>(() => {
+    const items: Array<{ id: PendingReviewSectionKey; key: PendingReviewSectionKey; label: string }> = [];
+    if (group) {
+      items.push({ id: 'group', key: 'group', label: 'Grouped Intake' });
+    }
+    items.push({ id: 'lot-two', key: 'lot-two', label: 'Lot 2' });
+    items.push({ id: 'trash', key: 'trash', label: 'Trash' });
+    items.push({ id: 'snapshot', key: 'snapshot', label: 'Snapshot' });
+    return items;
+  }, [group]);
+  const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, sectionItems[0]?.id ?? 'lot-two');
+  const sectionNav = (
+    <MainPageSectionNav
+      ariaLabel="Parking Lot 1 sections"
+      items={sectionItems.map((item) => ({ key: item.key, label: item.label }))}
+      activeKey={activeSectionId as PendingReviewSectionKey}
+      onSelect={(sectionKey) => scrollToSection(sectionKey)}
+    />
+  );
 
   const backToQueue = () => {
     navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-pending-review' });
@@ -225,30 +221,16 @@ export function UsedGearPendingReviewRecordPage({
   }
 
   const acceptRouteDescription = ACCEPT_ROUTE_OPTIONS.find((option) => option.value === acceptStatus)?.description;
+  const intakeSnapshot = buildUsedGearIntakeSnapshot(record);
 
   return (
     <WorkflowRecordPageLayout
       eyebrow="Parking Lots"
       title={displayInventoryValue(record.fields.SKU)}
-      actions={(
-        <>
-          <button
-            type="button"
-            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-            onClick={backToQueue}
-          >
-            Back To Parking Lot
-          </button>
-          <button
-            type="button"
-            className={smallSecondaryActionButtonClass}
-            onClick={() => onOpenManualIntake(record.id)}
-          >
-            Open Intake
-          </button>
-        </>
-      )}
+      belowHeader={sectionNav}
+      actions={<BackToolbarButton label="Back to Parking Lot 1" onClick={backToQueue} />}
     >
+      <div className="space-y-6">
 
         {error ? (
           <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -257,10 +239,10 @@ export function UsedGearPendingReviewRecordPage({
         ) : null}
 
         {group ? (
-          <section className="rounded-2xl border border-sky-400/30 bg-sky-500/10 px-5 py-4 text-sm text-sky-100">
+          <section id="group" className="rounded-2xl border border-sky-400/30 bg-sky-500/10 px-5 py-4 text-sm text-sky-100 scroll-mt-28">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em]">Grouped Intake</p>
+                <AppSectionTitle title="Grouped Intake" className="border-b-sky-300/25 pt-0" titleClassName="text-lg text-sky-50" />
                 <p className="mt-3 max-w-2xl leading-6">
                   This row belongs to {group.label} with {group.records.length} intake rows. Use the group page when pricing, allocation, or routing should be managed together.
                 </p>
@@ -276,16 +258,9 @@ export function UsedGearPendingReviewRecordPage({
           </section>
         ) : null}
 
-        <div className="grid gap-3 md:grid-cols-3">
-          <SummaryField label="Workflow Source" value={record.fields['Workflow Source']} />
-          <SummaryField label="Workflow Status" value={record.fields['Workflow Status']} />
-          <SummaryField label="Pricing Gate" value={hasPricingPath ? 'Ready For Lot 2' : 'Missing Required Pricing'} />
-        </div>
-
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.9fr)]">
-          <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Route Into Lot 2</p>
-            <h3 className="mt-2 text-xl font-semibold text-[var(--ink)]">Qualify Into Lot 2</h3>
+          <section id="lot-two" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
+            <AppSectionTitle title="Qualify Into Lot 2" titleClassName="text-lg" className="pt-0" />
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Choose the correct Lot 2 destination and leave the qualification note that explains why this intake should stay in the sellable workflow.</p>
             <div className="mt-4 grid gap-3">
               <label className="block">
@@ -337,9 +312,8 @@ export function UsedGearPendingReviewRecordPage({
             </div>
           </section>
 
-          <section className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-5">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-rose-200">Trash Route</p>
-            <h3 className="mt-2 text-xl font-semibold text-white">Route To Trash</h3>
+          <section id="trash" className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-5 scroll-mt-28">
+            <AppSectionTitle title="Route To Trash" titleClassName="text-lg text-white" className="border-b-rose-300/20 pt-0" />
             <p className="mt-2 text-sm text-rose-100/80">Capture the reason clearly so downstream review can see why this intake was stopped before Lot 2.</p>
             <label className="mt-4 block">
               <span className="text-xs font-semibold uppercase tracking-[0.08em] text-rose-100/70">Unqualified Reason</span>
@@ -371,37 +345,16 @@ export function UsedGearPendingReviewRecordPage({
           </section>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-3">
-          <DetailBlock
-            title="Pricing And Allocation"
-            fields={[
-              { label: 'Offer Amount', value: record.fields['Offer Amount'] },
-              { label: 'Paid Amount', value: record.fields['Paid Amount'] },
-              { label: 'Confirmed Grand Total', value: record.fields['Confirmed Grand Total'] },
-              { label: 'Allocation Mode', value: record.fields['Allocation Mode'] },
-              { label: 'Allocation Notes', value: record.fields['Allocation Notes'] },
-            ]}
-          />
-          <DetailBlock
-            title="Customer Intake Notes"
-            fields={[
-              { label: 'Cosmetic Notes', value: previewText(record.fields['Customer Cosmetic Notes']) },
-              { label: 'Functional Notes', value: previewText(record.fields['Customer Functional Notes']) },
-              { label: 'Inclusion Notes', value: previewText(record.fields['Customer Inclusion Notes']) },
-              { label: 'Photos Notes', value: previewText(record.fields['Customer Submitted Photos Notes']) },
-            ]}
-          />
-          <DetailBlock
-            title="Internal Notes"
-            fields={[
-              { label: 'Qualification Complete', value: record.fields['Qualification Complete'] },
-              { label: 'Qualification Notes', value: previewText(record.fields['Qualification Notes']) },
-              { label: 'Internal Cosmetic Notes', value: previewText(record.fields['Internal Cosmetic Notes']) },
-              { label: 'Internal Functional Notes', value: previewText(record.fields['Internal Functional Notes']) },
-              { label: 'Internal Inclusion Notes', value: previewText(record.fields['Internal Inclusion Notes']) },
-            ]}
-          />
-        </div>
+        <IntakeSnapshotSection
+          sectionId="snapshot"
+          className="scroll-mt-28"
+          fields={intakeSnapshot.fields}
+          cards={intakeSnapshot.cards}
+          actions={<CompactIconActionButton label="Edit Intake" variant="small-secondary" icon="edit" onClick={() => onOpenManualIntake(record.id)} />}
+        />
+
+      </div>
+
     </WorkflowRecordPageLayout>
   );
 }

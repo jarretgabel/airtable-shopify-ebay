@@ -5,6 +5,7 @@ import {
   ListingApprovalWorkflowProcessCard,
   type ListingApprovalWorkflowSummaryData,
 } from '@/components/approval/ListingApprovalWorkflowSummary';
+import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { EmptySurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import type { EbayTabViewModel } from '@/app/appTabViewModels';
@@ -98,7 +99,7 @@ export function EbaySnapshotRecordPage({
   const workflowSku = resolvedItem?.sku?.trim() || resolvedOffer?.sku?.trim() || '';
   const headerActions = (
     <>
-      <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to eBay Snapshot</button>
+      <BackToolbarButton label="Back to eBay Snapshot" onClick={onBackToSnapshot} />
       <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
     </>
   );
@@ -161,7 +162,7 @@ export function EbaySnapshotRecordPage({
       <WorkflowRecordPageLayout eyebrow="Channels" title="eBay Snapshot" actions={headerActions}>
         <EmptySurface title="eBay snapshot not found" message="This SKU is no longer available in the current eBay snapshot.">
           <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to eBay Snapshot</button>
+            <BackToolbarButton label="Back to eBay Snapshot" onClick={onBackToSnapshot} />
             <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
           </div>
         </EmptySurface>

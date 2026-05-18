@@ -5,6 +5,7 @@ import {
   ListingApprovalWorkflowProcessCard,
   type ListingApprovalWorkflowSummaryData,
 } from '@/components/approval/ListingApprovalWorkflowSummary';
+import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { EmptySurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
@@ -96,7 +97,7 @@ export function ShopifySnapshotRecordPage({
   const workflowSku = variants.map((variant) => variant.sku?.trim() ?? '').find(Boolean) ?? '';
   const headerActions = (
     <>
-      <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to Shopify Snapshot</button>
+      <BackToolbarButton label="Back to Shopify Snapshot" onClick={onBackToSnapshot} />
       <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
     </>
   );
@@ -159,7 +160,7 @@ export function ShopifySnapshotRecordPage({
       <WorkflowRecordPageLayout eyebrow="Channels" title="Shopify Snapshot" actions={headerActions}>
         <EmptySurface title="Shopify snapshot not found" message="This product is no longer available in the current Shopify snapshot.">
           <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" className="rounded-md border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)]" onClick={onBackToSnapshot}>Back to Shopify Snapshot</button>
+            <BackToolbarButton label="Back to Shopify Snapshot" onClick={onBackToSnapshot} />
             <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
           </div>
         </EmptySurface>

@@ -35,6 +35,7 @@ const PhotosFormTab = lazy(async () => ({ default: (await import('@/components/t
 const TestingFormTab = lazy(async () => ({ default: (await import('@/components/tabs/TestingFormTab')).TestingFormTab }));
 const UsedGearManualIntakePage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearManualIntakePage')).UsedGearManualIntakePage }));
 const UsedGearLotTwoGroupPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoGroupPage')).UsedGearLotTwoGroupPage }));
+const UsedGearLotTwoRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoRecordPage')).UsedGearLotTwoRecordPage }));
 const UsedGearLotTwoTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoTab')).UsedGearLotTwoTab }));
 const UsedGearTrashReviewRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashReviewRecordPage')).UsedGearTrashReviewRecordPage }));
 const UsedGearTrashTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashTab')).UsedGearTrashTab }));
@@ -232,6 +233,7 @@ export function AppTabContent({
   jotformReviewGroupId,
   jotformReviewRecordId,
   lotTwoReviewGroupId,
+  lotTwoReviewRecordId,
   trashReviewRecordId,
   manualIntakeRecordId,
   testingRecordId,
@@ -333,6 +335,7 @@ export function AppTabContent({
     jotformReviewGroupId,
     jotformReviewRecordId,
     lotTwoReviewGroupId,
+    lotTwoReviewRecordId,
     trashReviewRecordId,
     manualIntakeRecordId,
     testingRecordId,
@@ -349,6 +352,7 @@ export function AppTabContent({
     || deferredRouteState.jotformReviewGroupId !== jotformReviewGroupId
     || deferredRouteState.jotformReviewRecordId !== jotformReviewRecordId
     || deferredRouteState.lotTwoReviewGroupId !== lotTwoReviewGroupId
+    || deferredRouteState.lotTwoReviewRecordId !== lotTwoReviewRecordId
     || deferredRouteState.trashReviewRecordId !== trashReviewRecordId
     || deferredRouteState.testingRecordId !== testingRecordId
     || deferredRouteState.photosRecordId !== photosRecordId
@@ -656,11 +660,19 @@ export function AppTabContent({
             />
           );
         }
+        if (deferredRouteState.lotTwoReviewRecordId) {
+          return (
+            <UsedGearLotTwoRecordPage
+              currentUserName={currentUserName}
+              recordId={deferredRouteState.lotTwoReviewRecordId}
+              onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
+            />
+          );
+        }
         return (
           <UsedGearLotTwoTab
             currentUserName={currentUserName}
-            onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
-            onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
+            onOpenReviewRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
           />
         );
       case 'trash-review':
@@ -669,6 +681,7 @@ export function AppTabContent({
             <UsedGearTrashReviewRecordPage
               currentUserName={currentUserName}
               recordId={deferredRouteState.trashReviewRecordId}
+              onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
             />
           );
         }

@@ -37,6 +37,7 @@ function App() {
     jotformReviewGroupId,
     jotformReviewRecordId,
     lotTwoReviewGroupId,
+    lotTwoReviewRecordId,
     trashReviewRecordId,
     manualIntakeRecordId,
     testingRecordId,
@@ -254,6 +255,7 @@ function App() {
             jotformReviewGroupId={jotformReviewGroupId}
             jotformReviewRecordId={jotformReviewRecordId}
             lotTwoReviewGroupId={lotTwoReviewGroupId}
+            lotTwoReviewRecordId={lotTwoReviewRecordId}
             trashReviewRecordId={trashReviewRecordId}
             manualIntakeRecordId={manualIntakeRecordId}
             testingRecordId={testingRecordId}

@@ -343,6 +343,11 @@ export interface UsedGearPendingReviewGroupReviewInput {
   allocationNotes?: string;
 }
 
+export interface SaveLotTwoReviewInput {
+  arrivalDate: string;
+  sku: string;
+}
+
 function withWorkflow(record: AirtableRecord): AirtableRecord {
   return enrichUsedGearWorkflowRecord(record);
 }
@@ -366,6 +371,11 @@ function getNumericFieldValue(fields: Record<string, unknown>, fieldName: string
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
+}
+
+function trimToNull(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 function normalizeNullableCurrency(value: number | null | undefined): number | null {
@@ -579,6 +589,23 @@ export async function loadLotTwoGroup(groupId: string): Promise<UsedGearWorkflow
   }
 
   return group;
+}
+
+export async function saveLotTwoReviewRecord(
+  recordId: string,
+  { arrivalDate, sku }: SaveLotTwoReviewInput,
+): Promise<AirtableRecord> {
+  const record = await updateConfiguredRecord(
+    'used-gear-workflow',
+    recordId,
+    {
+      'Arrival Date': trimToNull(arrivalDate),
+      SKU: trimToNull(sku),
+    },
+    { typecast: true },
+  );
+
+  return withWorkflow(record);
 }
 
 export async function loadWorkflowProgressQueue(): Promise<AirtableRecord[]> {

@@ -87,6 +87,10 @@ vi.mock('@/components/tabs/UsedGearLotTwoGroupPage', () => ({
   UsedGearLotTwoGroupPage: ({ groupId }: { groupId: string }) => <div>Parking Lot 2 handoff {groupId}</div>,
 }));
 
+vi.mock('@/components/tabs/UsedGearLotTwoRecordPage', () => ({
+  UsedGearLotTwoRecordPage: ({ recordId }: { recordId: string }) => <div>Parking Lot 2 review {recordId}</div>,
+}));
+
 vi.mock('@/components/tabs/UsedGearManualIntakePage', () => ({
   UsedGearManualIntakePage: () => <div>Manual intake page</div>,
 }));
@@ -121,6 +125,7 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     jotformReviewGroupId: null,
     jotformReviewRecordId: null,
     lotTwoReviewGroupId: null,
+    lotTwoReviewRecordId: null,
     trashReviewRecordId: null,
     manualIntakeRecordId: null,
     testingRecordId: null,
@@ -452,6 +457,19 @@ describe('AppTabContent', () => {
     );
 
     expect(await screen.findByText('Parking Lot 2 handoff pickup:set-1')).toBeInTheDocument();
+  });
+
+  it('renders the dedicated Parking Lot 2 review page for record routes', async () => {
+    render(
+      <AppTabContent
+        {...buildProps({
+          activeTab: 'parking-lot-2',
+          lotTwoReviewRecordId: 'rec-lot-two-1',
+        })}
+      />,
+    );
+
+    expect(await screen.findByText('Parking Lot 2 review rec-lot-two-1')).toBeInTheDocument();
   });
 
   it('renders the dedicated manual-intake page for the manual-intake route', async () => {

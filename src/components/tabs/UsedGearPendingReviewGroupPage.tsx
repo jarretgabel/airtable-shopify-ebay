@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
@@ -402,13 +403,7 @@ export function UsedGearPendingReviewGroupPage({
       eyebrow="Parking Lots"
       title={group.label}
       actions={(
-        <button
-          type="button"
-          className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          onClick={onBackToParkingLot}
-        >
-          Back to Parking Lot 1
-        </button>
+        <BackToolbarButton label="Back to Parking Lot 1" onClick={onBackToParkingLot} />
       )}
     >
 

@@ -104,6 +104,7 @@ describe('UsedGearPendingReviewGroupPage', () => {
     );
 
     expect((await screen.findAllByText('SUB-42')).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Back to Parking Lot 1' })).toBeInTheDocument();
     expect(screen.getAllByText('GRP-1').length).toBeGreaterThan(0);
     expect(screen.getAllByText('GRP-2').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('columnheader', { name: 'Route' }).length).toBeGreaterThan(0);

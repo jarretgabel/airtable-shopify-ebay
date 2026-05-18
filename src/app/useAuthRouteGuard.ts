@@ -79,8 +79,15 @@ export function useAuthRouteGuard({
       return;
     }
 
+    const legacyPendingReviewRecordMatch = normalizedPath.match(/^\/parking-lot-1\/review-record\/([^/]+)$/);
+    if (legacyPendingReviewRecordMatch) {
+      navigate(`/parking-lot-1/${legacyPendingReviewRecordMatch[1]}`, { replace: true });
+      return;
+    }
+
     const isKnownTabPath = isTab(normalizedPath.slice(1));
-    const isJotformReviewRecordPath = /^\/parking-lot-1\/review-record\/[^/]+$/.test(normalizedPath);
+    const isJotformReviewRecordPath = /^\/parking-lot-1\/(?!review\/)[^/]+$/.test(normalizedPath);
+    const isLotTwoReviewRecordPath = /^\/parking-lot-2\/(?!review\/)[^/]+$/.test(normalizedPath);
     const isTrashReviewRecordPath = /^\/trash-review\/review\/[^/]+$/.test(normalizedPath);
     const isManualIntakeDetailPath = /^\/manual-intake\/[^/]+$/.test(normalizedPath);
     const isIntakeDetailPath = /^\/intake\/[^/]+$/.test(normalizedPath);
@@ -106,6 +113,7 @@ export function useAuthRouteGuard({
       normalizedPath === '/ebay/listings' ||
       isEbayListingsDetailPath ||
       normalizedPath === '/parking-lot-2' ||
+      isLotTwoReviewRecordPath ||
       normalizedPath === '/trash-review' ||
       isTrashReviewRecordPath ||
       normalizedPath === '/workflow/testing' ||
@@ -136,7 +144,7 @@ export function useAuthRouteGuard({
             ? 'ebay'
             : normalizedPath === '/shopify/products' || isShopifyProductsDetailPath
               ? 'shopify'
-                : normalizedPath === '/parking-lot-2'
+                : normalizedPath === '/parking-lot-2' || isLotTwoReviewRecordPath || /^\/parking-lot-2\/review\/[^/]+$/.test(normalizedPath)
                   ? 'parking-lot-2'
                 : normalizedPath === '/trash-review' || isTrashReviewRecordPath
                   ? 'trash-review'

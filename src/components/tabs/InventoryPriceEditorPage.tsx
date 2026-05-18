@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { InventoryRecordEditor } from '@/components/tabs/airtable/InventoryRecordEditor';
@@ -124,13 +125,7 @@ export function InventoryPriceEditorPage({ recordId, onBackToInventoryRecord }: 
     return (
       <ErrorSurface title="Unable to load inventory price editor" message={error}>
         <div className="mt-4">
-          <button
-            type="button"
-            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-            onClick={() => onBackToInventoryRecord(recordId)}
-          >
-            Back to inventory
-          </button>
+          <BackToolbarButton label="Back to Inventory" onClick={() => onBackToInventoryRecord(recordId)} />
         </div>
       </ErrorSurface>
     );
@@ -142,13 +137,7 @@ export function InventoryPriceEditorPage({ recordId, onBackToInventoryRecord }: 
         eyebrow="Processing"
         title="Inventory Price Editor"
         actions={(
-          <button
-            type="button"
-            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-            onClick={() => onBackToInventoryRecord(recordId)}
-          >
-            Back to inventory
-          </button>
+          <BackToolbarButton label="Back to Inventory" onClick={() => onBackToInventoryRecord(recordId)} />
         )}
       >
 

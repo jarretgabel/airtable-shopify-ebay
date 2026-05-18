@@ -5,16 +5,14 @@ import { UsedGearLotTwoSection, type UsedGearLotTwoSortMode } from '@/components
 
 interface UsedGearLotTwoTabProps {
   currentUserName: string;
-  onOpenManualIntake: (recordId: string) => void;
-  onOpenOperationalRecord: (recordId: string) => void;
+  onOpenReviewRecord: (recordId: string) => void;
 }
 
 const WORKFLOW_LOT_TWO_SEARCH_PARAM = 'workflowLotTwoSearch';
 const WORKFLOW_LOT_TWO_SORT_PARAM = 'workflowLotTwoSort';
 
 export function UsedGearLotTwoTab({
-  onOpenManualIntake,
-  onOpenOperationalRecord,
+  onOpenReviewRecord,
 }: UsedGearLotTwoTabProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,8 +47,7 @@ export function UsedGearLotTwoTab({
           pathname: `/parking-lot-2/review/${encodeURIComponent(groupId)}`,
           search: location.search,
         }, { replace: false })}
-        onOpenManualIntake={onOpenManualIntake}
-        onOpenOperationalRecord={onOpenOperationalRecord}
+        onOpenReviewRecord={onOpenReviewRecord}
         searchTerm={workflowLotTwoSearch}
         onSearchTermChange={(value) => updateRouteState((params) => {
           if (value.trim()) {

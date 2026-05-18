@@ -316,6 +316,7 @@ export function UsedGearPendingReviewSection({
                   <CompactIconActionButton
                     label="Open Review"
                     variant="compact-primary"
+                    icon="edit"
                     onClick={() => onOpenReviewRecord(record.id)}
                   />
                 </div>

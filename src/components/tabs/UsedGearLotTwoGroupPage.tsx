@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
@@ -122,13 +123,7 @@ export function UsedGearLotTwoGroupPage({
       eyebrow="Parking Lots"
       title={group.label}
       actions={(
-        <button
-          type="button"
-          className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          onClick={onBackToParkingLot}
-        >
-          Back to Parking Lot 2
-        </button>
+        <BackToolbarButton label="Back to Parking Lot 2" onClick={onBackToParkingLot} />
       )}
     >
         <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">

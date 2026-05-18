@@ -41,8 +41,7 @@ describe('UsedGearLotTwoTab', () => {
     render(
       <UsedGearLotTwoTab
         currentUserName="Taylor Reviewer"
-        onOpenManualIntake={vi.fn()}
-        onOpenOperationalRecord={vi.fn()}
+        onOpenReviewRecord={vi.fn()}
       />,
     );
 

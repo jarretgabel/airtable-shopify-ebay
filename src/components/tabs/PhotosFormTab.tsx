@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
-import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
+import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
 import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
@@ -152,36 +153,9 @@ function FieldShell({ definition, children }: { definition: PhotosFormFieldDefin
   );
 }
 
-function ReadOnlyFieldDisplay({
-  label,
-  value,
-  description,
-}: {
-  label: string;
-  value: string;
-  description?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5">
-      <p className="m-0 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{label}</p>
-      <p className="mt-1 text-sm leading-5 text-[var(--ink)]">{value || 'Not provided'}</p>
-      {description ? <p className="mt-1 text-[0.72rem] leading-5 text-[var(--muted)]">{description}</p> : null}
-    </div>
-  );
-}
-
 interface PhotosFormTabProps {
   recordId?: string | null;
   onBackToDirectory?: () => void;
-}
-
-function BackIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-      <path d="M15 10H5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="m9 6-4 4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProps) {
@@ -408,7 +382,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
           eyebrow="Forms"
           title="Photos"
           actions={onBackToDirectory ? (
-            <ToolbarIconButton label="Back to Photography Queue" icon={<BackIcon />} onClick={onBackToDirectory} />
+            <BackToolbarButton label="Back to Photography Queue" onClick={onBackToDirectory} />
           ) : undefined}
         />
 
@@ -446,44 +420,19 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-          <AppSectionTitle title="Intake Snapshot" titleClassName="text-lg" />
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {readOnlyFields.map((field) => (
-              <ReadOnlyFieldDisplay
-                key={field.airtableFieldName}
-                label={field.label}
-                value={String(formValues[field.name] ?? '')}
-                description={field.name === 'componentType' ? undefined : field.description}
-              />
-            ))}
-          </div>
-
-          <div className="mt-4 grid gap-3 lg:grid-cols-2">
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Customer Cosmetic Notes</p>
-              <p className="mt-2 leading-6 text-[var(--ink)]">{customerReference.cosmeticNotes || 'None provided'}</p>
-            </div>
-
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Inventory Notes</p>
-              <p className="mt-2 leading-6 text-[var(--ink)]">{stageContext.inventoryNotes || 'No inventory notes available.'}</p>
-            </div>
-
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Testing Cosmetic Notes</p>
-              <p className="mt-2 leading-6 text-[var(--ink)]">{stageContext.testingCosmeticNotes || 'No testing cosmetic notes available yet.'}</p>
-            </div>
-
-            {hasOperationalContext ? (
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
-                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Testing Notes</p>
-                <p className="mt-2 leading-6 text-[var(--ink)]">{stageContext.testingNotes || 'No testing notes available yet.'}</p>
-              </div>
-            ) : null}
-          </div>
-
-        </div>
+        <IntakeSnapshotSection
+          fields={readOnlyFields.map((field) => ({
+            label: field.label,
+            value: String(formValues[field.name] ?? ''),
+            description: field.name === 'componentType' ? undefined : field.description,
+          }))}
+          cards={[
+            { title: 'Customer Cosmetic Notes', value: customerReference.cosmeticNotes, emptyValue: 'None provided' },
+            { title: 'Inventory Notes', value: stageContext.inventoryNotes, emptyValue: 'No inventory notes available.' },
+            { title: 'Testing Cosmetic Notes', value: stageContext.testingCosmeticNotes, emptyValue: 'No testing cosmetic notes available yet.' },
+            ...(hasOperationalContext ? [{ title: 'Testing Notes', value: stageContext.testingNotes, emptyValue: 'No testing notes available yet.' }] : []),
+          ]}
+        />
 
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
           <AppSectionTitle title="Photography Details" titleClassName="text-lg" />

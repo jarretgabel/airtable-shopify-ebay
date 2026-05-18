@@ -7,17 +7,13 @@ import { EmptySurface } from '@/components/app/StateSurfaces';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
-import {
-  buildUsedGearManualIntakePath,
-  shouldShowOperationalAction,
-} from '@/services/usedGearOperationalRouting';
 import { groupUsedGearWorkflowRecords, loadLotTwoQueue } from '@/services/usedGearQueue';
+import { getLotTwoItemTitle, getLotTwoStatusLabel } from '@/components/tabs/airtable/usedGearLotTwoPresentation';
 import type { AirtableRecord } from '@/types/airtable';
 
 interface UsedGearLotTwoSectionProps {
   onOpenGroupReview?: (groupId: string) => void;
-  onOpenManualIntake: (recordId: string) => void;
-  onOpenOperationalRecord: (recordId: string) => void;
+  onOpenReviewRecord: (recordId: string) => void;
   showSectionIntro?: boolean;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
@@ -91,33 +87,9 @@ function formatIntakeDate(record: AirtableRecord): string {
   return 'Unknown';
 }
 
-function stripLotTwoStatusSuffixes(value: string): string {
-  return value
-    .replace(/\s+(awaiting sku|awaiting arrival|awaiting missing item)$/i, '')
-    .trim();
-}
-
-function getLotTwoItemTitle(record: AirtableRecord): string {
-  const make = displayInventoryValue(record.fields.Make);
-  const model = stripLotTwoStatusSuffixes(displayInventoryValue(record.fields.Model));
-
-  return [make, model].filter(Boolean).join(' · ');
-}
-
-function getLotTwoStatusLabel(record: AirtableRecord): string {
-  const rawStatus = displayInventoryValue(record.fields['Workflow Status']) || 'Unknown';
-
-  if (rawStatus.startsWith('Accepted - ')) {
-    return rawStatus.slice('Accepted - '.length);
-  }
-
-  return rawStatus;
-}
-
 export function UsedGearLotTwoSection({
   onOpenGroupReview,
-  onOpenManualIntake,
-  onOpenOperationalRecord,
+  onOpenReviewRecord,
   showSectionIntro = true,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
@@ -323,20 +295,11 @@ export function UsedGearLotTwoSection({
               align: 'center',
               headerClassName: 'border-l border-[var(--line)]/60',
               cellClassName: 'border-l border-[var(--line)]/60',
-              renderCell: (record) => {
-                const showOperationalAction = shouldShowOperationalAction(record.id, record.fields, [
-                  buildUsedGearManualIntakePath(record.id),
-                ]);
-
-                return (
-                  <div className="flex min-h-[4.5rem] w-full flex-col items-center justify-center gap-1.5">
-                    <CompactIconActionButton label="Open Intake" variant="compact-primary" icon="edit" onClick={() => onOpenManualIntake(record.id)} />
-                    {showOperationalAction ? (
-                      <CompactIconActionButton label="Edit Workflow Record" icon="edit" onClick={() => onOpenOperationalRecord(record.id)} />
-                    ) : null}
-                  </div>
-                );
-              },
+              renderCell: (record) => (
+                <div className="flex min-h-[4.5rem] w-full items-center justify-center">
+                  <CompactIconActionButton label="Open Review" variant="compact-primary" icon="edit" onClick={() => onOpenReviewRecord(record.id)} />
+                </div>
+              ),
             },
           ];
 

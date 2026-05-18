@@ -72,7 +72,7 @@ describe('useAppRouteState', () => {
   });
 
   it('maps jotform record review deep links with record ids', () => {
-    const state = useAppRouteState(locationFor('/parking-lot-1/review-record/rec%20pending'), ['dashboard', 'parking-lot-1']);
+    const state = useAppRouteState(locationFor('/parking-lot-1/rec%20pending'), ['dashboard', 'parking-lot-1']);
     expect(state.activeTab).toBe('parking-lot-1');
     expect(state.jotformReviewRecordId).toBe('rec pending');
   });
@@ -81,6 +81,12 @@ describe('useAppRouteState', () => {
     const state = useAppRouteState(locationFor('/parking-lot-2/review/pickup%20set'), ['dashboard', 'parking-lot-2']);
     expect(state.activeTab).toBe('parking-lot-2');
     expect(state.lotTwoReviewGroupId).toBe('pickup set');
+  });
+
+  it('maps Parking Lot 2 review record routes and decodes id', () => {
+    const state = useAppRouteState(locationFor('/parking-lot-2/rec%20lot-two'), ['dashboard', 'parking-lot-2']);
+    expect(state.activeTab).toBe('parking-lot-2');
+    expect(state.lotTwoReviewRecordId).toBe('rec lot-two');
   });
 
   it('maps testing deep links with record ids', () => {

@@ -83,6 +83,20 @@ describe('useAuthRouteGuard', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it('allows Parking Lot 2 record review routes when the user has access', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/parking-lot-2/rec-lot-two-1"
+        canAccessPage={(tab) => tab === 'parking-lot-2' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('allows the manual-intake route when the user has access', () => {
     const navigate = vi.fn();
 
@@ -109,6 +123,20 @@ describe('useAuthRouteGuard', () => {
     );
 
     expect(navigate).toHaveBeenCalledWith('/intake/rec-legacy-1', { replace: true });
+  });
+
+  it('redirects legacy pending-review record routes to the flattened Parking Lot 1 record path', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/parking-lot-1/review-record/rec-legacy-1"
+        canAccessPage={(tab) => tab === 'parking-lot-1' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).toHaveBeenCalledWith('/parking-lot-1/rec-legacy-1', { replace: true });
   });
 
   it('redirects the legacy workflow hub root to the new path', () => {

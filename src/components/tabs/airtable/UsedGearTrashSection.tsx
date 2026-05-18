@@ -296,7 +296,7 @@ export function UsedGearTrashSection({
               cellClassName: 'border-l border-[var(--line)]/60',
               renderCell: (record) => (
                 <div className="flex min-h-[4.5rem] w-full flex-col items-center justify-center gap-1.5">
-                  <CompactIconActionButton label="Open Review" variant="compact-primary" onClick={() => onOpenReviewRecord(record.id)} />
+                  <CompactIconActionButton label="Open Review" variant="compact-primary" icon="edit" onClick={() => onOpenReviewRecord(record.id)} />
                 </div>
               ),
             },

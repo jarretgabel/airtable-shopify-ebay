@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { BackToolbarButton } from '@/components/app/BackToolbarButton';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
+import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { smallPrimaryActionButtonClass } from '@/components/app/buttonStyles';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
+import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
+import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
+import { buildUsedGearIntakeSnapshot } from '@/components/tabs/usedGearIntakeSnapshot';
+import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import {
   hasUsedGearPendingReviewPricingPath,
   loadUsedGearOperationalRecordContext,
@@ -18,7 +26,10 @@ import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } f
 interface UsedGearTrashReviewRecordPageProps {
   currentUserName: string;
   recordId: string;
+  onOpenManualIntake: (recordId: string) => void;
 }
+
+type TrashReviewSectionKey = 'group' | 'restore' | 'requalify' | 'snapshot' | 'delete';
 
 const REQUALIFY_ROUTE_OPTIONS: Array<{
   value: UsedGearPendingReviewAcceptedStatus;
@@ -38,35 +49,6 @@ function stringFieldValue(fields: Record<string, unknown>, fieldName: string): s
     return String(value);
   }
   return '';
-}
-
-function previewText(value: unknown): string {
-  const normalized = displayInventoryValue(value);
-  return normalized.length > 180 ? `${normalized.slice(0, 177)}...` : normalized;
-}
-
-function SummaryField({ label, value }: { label: string; value: unknown }) {
-  return (
-    <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-4 py-4">
-      <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{label}</p>
-      <p className="mt-2 text-sm text-[var(--ink)]">{displayInventoryValue(value)}</p>
-    </div>
-  );
-}
-
-function DetailBlock({ title, fields }: { title: string; fields: Array<{ label: string; value: unknown }> }) {
-  return (
-    <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-      <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{title}</p>
-      <div className="mt-4 space-y-3 text-sm text-[var(--muted)]">
-        {fields.map((field) => (
-          <div key={field.label}>
-            <span className="font-semibold text-[var(--ink)]">{field.label}:</span> {displayInventoryValue(field.value)}
-          </div>
-        ))}
-      </div>
-    </section>
-  );
 }
 
 function QualificationTemplateRow({ onApplyTemplate }: { onApplyTemplate: (templateValue: string) => void }) {
@@ -92,6 +74,7 @@ function QualificationTemplateRow({ onApplyTemplate }: { onApplyTemplate: (templ
 export function UsedGearTrashReviewRecordPage({
   currentUserName,
   recordId,
+  onOpenManualIntake,
 }: UsedGearTrashReviewRecordPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -101,6 +84,7 @@ export function UsedGearTrashReviewRecordPage({
   const [error, setError] = useState<string | null>(null);
   const [requalifyStatus, setRequalifyStatus] = useState<UsedGearPendingReviewAcceptedStatus>('Accepted - Awaiting Arrival');
   const [requalifyNotes, setRequalifyNotes] = useState('');
+  const { requestConfirmation, confirmationModal } = useConfirmationDialog();
 
   useEffect(() => {
     let cancelled = false;
@@ -143,6 +127,29 @@ export function UsedGearTrashReviewRecordPage({
   const group = context?.group ?? null;
   const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
   const hasPricingPath = useMemo(() => record ? hasUsedGearPendingReviewPricingPath(record.fields) : false, [record]);
+  const intakeSnapshot = useMemo(() => (record ? buildUsedGearIntakeSnapshot(record) : null), [record]);
+  const sectionItems = useMemo<Array<{ id: TrashReviewSectionKey; key: TrashReviewSectionKey; label: string }>>(() => {
+    const items: Array<{ id: TrashReviewSectionKey; key: TrashReviewSectionKey; label: string }> = [];
+    if (group) {
+      items.push({ id: 'group', key: 'group', label: 'Group' });
+    }
+    items.push({ id: 'restore', key: 'restore', label: 'Restore' });
+    items.push({ id: 'requalify', key: 'requalify', label: 'Re-qualify' });
+    if (intakeSnapshot) {
+      items.push({ id: 'snapshot', key: 'snapshot', label: 'Snapshot' });
+    }
+    items.push({ id: 'delete', key: 'delete', label: 'Delete' });
+    return items;
+  }, [group, intakeSnapshot]);
+  const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, sectionItems[0]?.id ?? 'restore');
+  const sectionNav = (
+    <MainPageSectionNav
+      ariaLabel="Trash review sections"
+      items={sectionItems.map((item) => ({ key: item.key, label: item.label }))}
+      activeKey={activeSectionId as TrashReviewSectionKey}
+      onSelect={(sectionKey) => scrollToSection(sectionKey)}
+    />
+  );
 
   const backToTrash = () => {
     navigate({ pathname: '/trash-review', search: location.search, hash: '#used-gear-trash' });
@@ -190,6 +197,22 @@ export function UsedGearTrashReviewRecordPage({
       return;
     }
 
+    const confirmed = await requestConfirmation({
+      title: 'Delete trash record?',
+      message: 'This permanently removes the record from the workflow and it will not return to Trash Review, Parking Lot 1, or Parking Lot 2.',
+      confirmLabel: 'Delete Permanently',
+      cancelLabel: 'Keep Record',
+      tone: 'danger',
+      bullets: [
+        'This action cannot be undone from the app.',
+        'Any current workflow routing for this row will be removed.',
+      ],
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -214,16 +237,10 @@ export function UsedGearTrashReviewRecordPage({
     <WorkflowRecordPageLayout
       eyebrow="Trash"
       title={displayInventoryValue(record.fields.SKU)}
-      actions={(
-        <button
-          type="button"
-          className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          onClick={backToTrash}
-        >
-          Back To Trash
-        </button>
-      )}
+      belowHeader={sectionNav}
+      actions={<BackToolbarButton label="Back to Trash Review" onClick={backToTrash} />}
     >
+      <div className="space-y-6">
 
         {error ? (
           <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -232,23 +249,15 @@ export function UsedGearTrashReviewRecordPage({
         ) : null}
 
         {group ? (
-          <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-4 text-sm text-[var(--muted)]">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Related Intake Group</p>
+          <section id="group" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 px-5 py-4 text-sm text-[var(--muted)] scroll-mt-28">
+            <AppSectionTitle title="Related Intake Group" titleClassName="text-lg" className="pt-0" />
             <p className="mt-2 mb-0">This trash row is grouped under {group.label} with {group.records.length} related intake rows.</p>
           </section>
         ) : null}
 
-        <div className="grid gap-3 md:grid-cols-4">
-          <SummaryField label="Workflow Source" value={record.fields['Workflow Source']} />
-          <SummaryField label="Workflow Status" value={record.fields['Workflow Status']} />
-          <SummaryField label="Trash Status" value={record.fields['Trash Status']} />
-          <SummaryField label="Pricing Gate" value={hasPricingPath ? 'Ready For Re-qualify' : 'Missing Required Pricing'} />
-        </div>
-
         <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.15fr)]">
-          <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Restore</p>
-            <h3 className="mt-2 text-xl font-semibold text-[var(--ink)]">Restore To Parking Lot 1</h3>
+          <section id="restore" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
+            <AppSectionTitle title="Restore To Parking Lot 1" titleClassName="text-lg" className="pt-0" />
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Use restore when the row was trashed in error and should return to the standard Parking Lot 1 review queue.</p>
             <button
               type="button"
@@ -262,9 +271,8 @@ export function UsedGearTrashReviewRecordPage({
             </button>
           </section>
 
-          <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Re-qualify</p>
-            <h3 className="mt-2 text-xl font-semibold text-[var(--ink)]">Re-qualify Into Lot 2</h3>
+          <section id="requalify" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
+            <AppSectionTitle title="Re-qualify Into Lot 2" titleClassName="text-lg" className="pt-0" />
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Use this when the item should return to the active sellable workflow and continue from the correct Lot 2 stage.</p>
             <div className="mt-4 grid gap-3">
               <label className="block">
@@ -311,9 +319,18 @@ export function UsedGearTrashReviewRecordPage({
           </section>
         </div>
 
-        <section className="rounded-2xl border border-rose-400/25 bg-rose-500/10 p-5">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-rose-200">Danger Zone</p>
-          <h3 className="mt-2 text-xl font-semibold text-white">Delete From Workflow</h3>
+        {intakeSnapshot ? (
+          <IntakeSnapshotSection
+            sectionId="snapshot"
+            className="scroll-mt-28"
+            fields={intakeSnapshot.fields}
+            cards={intakeSnapshot.cards}
+            actions={<CompactIconActionButton label="Edit Intake" variant="small-secondary" icon="edit" onClick={() => onOpenManualIntake(record.id)} />}
+          />
+        ) : null}
+
+        <section id="delete" className="rounded-2xl border border-rose-400/25 bg-rose-500/10 p-5 scroll-mt-28">
+          <AppSectionTitle title="Delete From Workflow" titleClassName="text-lg text-white" className="border-b-rose-300/20 pt-0" />
           <p className="mt-2 text-sm leading-6 text-rose-100/80">Delete only when the row should leave the workflow entirely and should not return to Parking Lot 1 or Lot 2.</p>
           <button
             type="button"
@@ -326,36 +343,9 @@ export function UsedGearTrashReviewRecordPage({
             {saving ? 'Saving...' : 'Delete Permanently'}
           </button>
         </section>
+        {confirmationModal}
 
-        <div className="grid gap-6 xl:grid-cols-3">
-          <DetailBlock
-            title="Trash Reason"
-            fields={[
-              { label: 'Unqualified Reason', value: record.fields['Unqualified Reason'] },
-              { label: 'Qualification Notes', value: previewText(record.fields['Qualification Notes']) },
-              { label: 'Accepted By', value: record.fields['Accepted By'] },
-            ]}
-          />
-          <DetailBlock
-            title="Pricing And Allocation"
-            fields={[
-              { label: 'Offer Amount', value: record.fields['Offer Amount'] },
-              { label: 'Paid Amount', value: record.fields['Paid Amount'] },
-              { label: 'Confirmed Grand Total', value: record.fields['Confirmed Grand Total'] },
-              { label: 'Allocation Mode', value: record.fields['Allocation Mode'] },
-              { label: 'Allocation Notes', value: record.fields['Allocation Notes'] },
-            ]}
-          />
-          <DetailBlock
-            title="Intake Notes"
-            fields={[
-              { label: 'Customer Cosmetic Notes', value: previewText(record.fields['Customer Cosmetic Notes']) },
-              { label: 'Customer Functional Notes', value: previewText(record.fields['Customer Functional Notes']) },
-              { label: 'Internal Cosmetic Notes', value: previewText(record.fields['Internal Cosmetic Notes']) },
-              { label: 'Internal Functional Notes', value: previewText(record.fields['Internal Functional Notes']) },
-            ]}
-          />
-        </div>
+      </div>
     </WorkflowRecordPageLayout>
   );
 }

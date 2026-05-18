@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearTrashReviewRecordPage } from '@/components/tabs/UsedGearTrashReviewRecordPage';
 
@@ -71,15 +71,25 @@ describe('UsedGearTrashReviewRecordPage', () => {
 
   it('restores a trashed row back to parking lot 1', async () => {
     restoreTrashRecordMock.mockResolvedValue(undefined);
+    const onOpenManualIntake = vi.fn();
 
     render(
       <UsedGearTrashReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-trash-1"
+        onOpenManualIntake={onOpenManualIntake}
       />,
     );
 
     await screen.findByText('Restore To Parking Lot 1');
+    expect(screen.getByRole('button', { name: 'Back to Trash Review' })).toBeInTheDocument();
+  const deleteHeading = screen.getByRole('heading', { name: 'Delete From Workflow' });
+  const snapshotHeading = screen.getByText('Intake Snapshot');
+    expect(snapshotHeading.compareDocumentPosition(deleteHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByText('Trash Reason')).toBeNull();
+    expect(screen.queryByText('Intake Notes')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Intake' }));
+    expect(onOpenManualIntake).toHaveBeenCalledWith('rec-trash-1');
     fireEvent.click(screen.getByRole('button', { name: 'Restore To Lot 1' }));
 
     await waitFor(() => {
@@ -100,6 +110,7 @@ describe('UsedGearTrashReviewRecordPage', () => {
       <UsedGearTrashReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-trash-1"
+        onOpenManualIntake={vi.fn()}
       />,
     );
 
@@ -132,11 +143,16 @@ describe('UsedGearTrashReviewRecordPage', () => {
       <UsedGearTrashReviewRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-trash-1"
+        onOpenManualIntake={vi.fn()}
       />,
     );
 
     await screen.findByText('Delete From Workflow');
-    fireEvent.click(screen.getByRole('button', { name: 'Delete Permanently' }));
+  fireEvent.click(screen.getAllByRole('button', { name: 'Delete Permanently' })[0]!);
+
+  const dialog = await screen.findByRole('dialog');
+  expect(screen.getByText('Delete trash record?')).toBeInTheDocument();
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Delete Permanently' }));
 
     await waitFor(() => {
       expect(permanentlyDeleteTrashRecordMock).toHaveBeenCalledWith('rec-trash-1');

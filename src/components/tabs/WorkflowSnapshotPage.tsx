@@ -4,10 +4,10 @@ import {
   buildListingApprovalWorkflowSummaryData,
   type ListingApprovalWorkflowSummaryData,
 } from '@/components/approval/ListingApprovalWorkflowSummary';
+import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
-import { ToolbarIconButton } from '@/components/app/ToolbarIconButton';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
@@ -42,15 +42,6 @@ const WORKFLOW_SNAPSHOT_SECTION_ITEMS: Array<{ id: WorkflowSnapshotSectionKey; k
   { id: 'listings', key: 'listings', label: 'Listings' },
   { id: 'post-publish', key: 'post-publish', label: 'Post-Publish' },
 ];
-
-function BackIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-      <path d="M15 10H5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="m9 6-4 4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 function SnapshotCard({
   sectionId,
@@ -185,7 +176,7 @@ export function WorkflowSnapshotPage({
     return (
       <ErrorSurface title="Unable to load workflow snapshot" message={error}>
         <div className="mt-4">
-          <ToolbarIconButton label="Back to Workflow Hub" icon={<BackIcon />} onClick={onBackToDirectory} />
+          <BackToolbarButton label="Back to Workflow Hub" onClick={onBackToDirectory} />
         </div>
       </ErrorSurface>
     );
@@ -197,7 +188,7 @@ export function WorkflowSnapshotPage({
         eyebrow="Workflow Hub"
         title="Workflow Snapshot"
         belowHeader={sectionNav}
-        actions={<ToolbarIconButton label="Back to Workflow Hub" icon={<BackIcon />} onClick={onBackToDirectory} />}
+        actions={<BackToolbarButton label="Back to Workflow Hub" onClick={onBackToDirectory} />}
       >
 
         {record ? (

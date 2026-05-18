@@ -50,7 +50,7 @@ export function ParkingLotOneTab({ currentUserName }: ParkingLotOneTabProps) {
         currentUserName={currentUserName}
         showSectionIntro={false}
         onOpenGroupReview={(groupId) => navigate(`/parking-lot-1/review/${encodeURIComponent(groupId)}${location.search}`, { replace: false })}
-        onOpenReviewRecord={(recordId) => navigate(`/parking-lot-1/review-record/${encodeURIComponent(recordId)}${location.search}`, { replace: false })}
+        onOpenReviewRecord={(recordId) => navigate(`/parking-lot-1/${encodeURIComponent(recordId)}${location.search}`, { replace: false })}
         searchTerm={workflowPendingReviewSearch}
         onSearchTermChange={(value) => updateQueueSearch(WORKFLOW_PENDING_REVIEW_SEARCH_PARAM, value, '#used-gear-pending-review')}
         sortMode={workflowPendingReviewSort}

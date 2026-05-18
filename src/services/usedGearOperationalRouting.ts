@@ -13,7 +13,11 @@ export function buildUsedGearTrashReviewPath(recordId: string): string {
 }
 
 export function buildUsedGearPendingReviewPath(recordId: string): string {
-  return `/parking-lot-1/review-record/${encodeRecordId(recordId)}`;
+  return `/parking-lot-1/${encodeRecordId(recordId)}`;
+}
+
+export function buildUsedGearLotTwoReviewPath(recordId: string): string {
+  return `/parking-lot-2/${encodeRecordId(recordId)}`;
 }
 
 export function buildUsedGearManualIntakePath(recordId: string): string {
@@ -46,7 +50,7 @@ export function resolveUsedGearOperationalPath(recordId: string, fields: Record<
   }
 
   if (status === 'Pending Review') {
-    return `/parking-lot-1/review-record/${encodedRecordId}`;
+    return `/parking-lot-1/${encodedRecordId}`;
   }
 
   if (
@@ -54,7 +58,7 @@ export function resolveUsedGearOperationalPath(recordId: string, fields: Record<
     || status === 'Accepted - Arrived, Awaiting SKU'
     || status === 'Accepted - Arrived, Awaiting Missing Item'
   ) {
-    return `/manual-intake/${encodedRecordId}`;
+    return `/parking-lot-2/${encodedRecordId}`;
   }
 
   if (status === 'Testing and Photography In Progress') {

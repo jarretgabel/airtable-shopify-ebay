@@ -38,8 +38,7 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenManualIntake={vi.fn()}
-        onOpenOperationalRecord={vi.fn()}
+        onOpenReviewRecord={vi.fn()}
         searchTerm="luxman"
         onSearchTermChange={onSearchTermChange}
       />,
@@ -58,8 +57,7 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenManualIntake={vi.fn()}
-        onOpenOperationalRecord={vi.fn()}
+        onOpenReviewRecord={vi.fn()}
       />,
     );
 
@@ -95,8 +93,7 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenManualIntake={vi.fn()}
-        onOpenOperationalRecord={vi.fn()}
+        onOpenReviewRecord={vi.fn()}
         searchTerm="manual entry"
       />,
     );
@@ -123,8 +120,7 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenManualIntake={vi.fn()}
-        onOpenOperationalRecord={vi.fn()}
+        onOpenReviewRecord={vi.fn()}
       />,
     );
 
@@ -149,8 +145,7 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenManualIntake={vi.fn()}
-        onOpenOperationalRecord={vi.fn()}
+        onOpenReviewRecord={vi.fn()}
       />,
     );
 
@@ -162,8 +157,8 @@ describe('UsedGearLotTwoSection', () => {
     expect(screen.queryByText('Accepted - Awaiting Arrival')).not.toBeInTheDocument();
   });
 
-  it('opens manual intake from queue cards', async () => {
-    const onOpenManualIntake = vi.fn();
+  it('opens the dedicated Lot 2 review page from queue cards', async () => {
+    const onOpenReviewRecord = vi.fn();
 
     loadLotTwoQueueMock.mockResolvedValue([
       {
@@ -180,44 +175,16 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenManualIntake={onOpenManualIntake}
-        onOpenOperationalRecord={vi.fn()}
+        onOpenReviewRecord={onOpenReviewRecord}
       />,
     );
 
     await screen.findByText('Parking Lot 2');
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Open Intake' })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open Review' })[0]!);
 
-    expect(onOpenManualIntake).toHaveBeenCalledWith('rec-lot-two');
+    expect(onOpenReviewRecord).toHaveBeenCalledWith('rec-lot-two');
     expect(screen.queryByText(/Qualification Notes:/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Edit Workflow Record' })).not.toBeInTheDocument();
-  });
-
-  it('keeps the operational action when it routes somewhere different than the visible handoff buttons', async () => {
-    loadLotTwoQueueMock.mockResolvedValue([
-      {
-        id: 'rec-lot-two-listed',
-        createdTime: '2026-05-07T00:00:00.000Z',
-        fields: {
-          SKU: 'LOT2-LISTED',
-          Make: 'Luxman',
-          Model: 'L-507',
-          'Workflow Status': 'Approved for Publish',
-        },
-      },
-    ]);
-
-    render(
-      <UsedGearLotTwoSection
-        onOpenManualIntake={vi.fn()}
-        onOpenOperationalRecord={vi.fn()}
-      />,
-    );
-
-    await screen.findAllByText('LOT2-LISTED');
-
-    expect(screen.getAllByRole('button', { name: 'Edit Workflow Record' }).length).toBeGreaterThan(0);
   });
 
   it('opens the dedicated Parking Lot 2 handoff surface from grouped queue cards', async () => {
@@ -251,8 +218,7 @@ describe('UsedGearLotTwoSection', () => {
     render(
       <UsedGearLotTwoSection
         onOpenGroupReview={onOpenGroupReview}
-        onOpenManualIntake={vi.fn()}
-        onOpenOperationalRecord={vi.fn()}
+        onOpenReviewRecord={vi.fn()}
       />,
     );
 
@@ -280,8 +246,7 @@ describe('UsedGearLotTwoSection', () => {
 
     render(
       <UsedGearLotTwoSection
-        onOpenManualIntake={vi.fn()}
-        onOpenOperationalRecord={vi.fn()}
+        onOpenReviewRecord={vi.fn()}
       />,
     );
 

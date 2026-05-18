@@ -93,11 +93,15 @@ describe('UsedGearPendingReviewRecordPage', () => {
     );
 
     expect(await screen.findByText('Qualify Into Lot 2')).toBeInTheDocument();
+    const routeHeading = screen.getByRole('heading', { name: 'Route To Trash' });
+    const snapshotHeading = screen.getByText('Intake Snapshot');
+    expect(snapshotHeading.compareDocumentPosition(routeHeading) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Back to Parking Lot 1' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Group Review' }));
     expect(navigateMock).toHaveBeenCalledWith('/parking-lot-1/review/submission%3Agroup-1?reviewMode=test');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Intake' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Intake' }));
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-pending-1');
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
   });
