@@ -25,7 +25,7 @@ interface UseListingApprovalCombinedFieldSyncParams {
   approvalChannel: 'shopify' | 'ebay' | 'combined';
   isCombinedApproval: boolean;
   formValues: Record<string, string>;
-  setFormValue: (fieldName: string, value: string) => void;
+  setDerivedFormValue: (fieldName: string, value: string) => void;
   combinedSharedKeyFeaturesFieldName: string;
   combinedEbayTestingNotesFieldName: string;
   setSelectedEbayTemplateId: React.Dispatch<React.SetStateAction<EbayListingTemplateId>>;
@@ -36,7 +36,7 @@ export function useListingApprovalCombinedFieldSync({
   approvalChannel,
   isCombinedApproval,
   formValues,
-  setFormValue,
+  setDerivedFormValue,
   combinedSharedKeyFeaturesFieldName,
   combinedEbayTestingNotesFieldName,
   setSelectedEbayTemplateId,
@@ -89,17 +89,17 @@ export function useListingApprovalCombinedFieldSync({
     const nextEbayValue = serializeKeyFeatureEntries(remainingEbayEntries, combinedEbayTestingNotesFieldName);
 
     if ((formValues[combinedSharedKeyFeaturesFieldName] ?? '') !== nextSharedValue) {
-      setFormValue(combinedSharedKeyFeaturesFieldName, nextSharedValue);
+      setDerivedFormValue(combinedSharedKeyFeaturesFieldName, nextSharedValue);
     }
 
     if ((formValues[combinedEbayTestingNotesFieldName] ?? '') !== nextEbayValue) {
-      setFormValue(combinedEbayTestingNotesFieldName, nextEbayValue);
+      setDerivedFormValue(combinedEbayTestingNotesFieldName, nextEbayValue);
     }
   }, [
     combinedEbayTestingNotesFieldName,
     combinedSharedKeyFeaturesFieldName,
     formValues,
     isCombinedApproval,
-    setFormValue,
+    setDerivedFormValue,
   ]);
 }

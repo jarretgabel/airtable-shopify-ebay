@@ -13,8 +13,10 @@ interface UseListingApprovalDerivedStateParams {
   approvalChannel: 'shopify' | 'ebay' | 'combined';
   isCombinedApproval: boolean;
   formValues: Record<string, string>;
+  initialFormValues: Record<string, string>;
   fieldKinds: Record<string, 'boolean' | 'number' | 'json' | 'text'>;
   setFormValue: (fieldName: string, value: string) => void;
+  setDerivedFormValue: (fieldName: string, value: string) => void;
   ebayCategoryLabelsById: Record<string, string>;
   selectedEbayTemplateId: EbayListingTemplateId;
   setSelectedEbayTemplateId: Dispatch<SetStateAction<EbayListingTemplateId>>;
@@ -29,8 +31,10 @@ export function useListingApprovalDerivedState({
   approvalChannel,
   isCombinedApproval,
   formValues,
+  initialFormValues,
   fieldKinds,
   setFormValue,
+  setDerivedFormValue,
   ebayCategoryLabelsById,
   selectedEbayTemplateId,
   setSelectedEbayTemplateId,
@@ -45,6 +49,7 @@ export function useListingApprovalDerivedState({
     isCombinedApproval,
     formValues,
     setFormValue,
+    setDerivedFormValue,
     selectedEbayTemplateId,
     setSelectedEbayTemplateId,
   });
@@ -55,7 +60,7 @@ export function useListingApprovalDerivedState({
     selectedRecord: combinedFieldState.selectedRecord,
     fieldKinds,
     formValues,
-    setFormValue,
+    setDerivedFormValue,
     ebayCategoryLabelsById,
     selectedEbayTemplateId,
     combinedEbayBodyHtmlFieldName: combinedFieldState.combinedEbayBodyHtmlFieldName,
@@ -69,6 +74,7 @@ export function useListingApprovalDerivedState({
     allFieldNames,
     approvalChannel,
     formValues,
+    initialFormValues,
     mergedDraftSourceFields: previewState.mergedDraftSourceFields,
     selectedRecord: combinedFieldState.selectedRecord,
     combinedSharedFieldNames: combinedFieldState.combinedSharedFieldNames,

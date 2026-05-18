@@ -33,6 +33,15 @@ export function createSetFormValueAction(set: ApprovalStoreSet): ApprovalStore['
   };
 }
 
+export function createSetDerivedFormValueAction(set: ApprovalStoreSet): ApprovalStore['setDerivedFormValue'] {
+  return (fieldName, value) => {
+    set((state) => ({
+      formValues: { ...state.formValues, [fieldName]: value },
+      initialFormValues: { ...state.initialFormValues, [fieldName]: value },
+    }));
+  };
+}
+
 export function createHydrateFormAction(set: ApprovalStoreSet): ApprovalStore['hydrateForm'] {
   return (record, allFieldNames, approvedFieldName) => {
     const nextValues: Record<string, string> = {};
@@ -72,7 +81,7 @@ export function createHydrateFormAction(set: ApprovalStoreSet): ApprovalStore['h
       nextKinds[SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD] = 'json';
     }
 
-    set({ formValues: nextValues, fieldKinds: nextKinds });
+    set({ formValues: nextValues, initialFormValues: { ...nextValues }, fieldKinds: nextKinds });
   };
 }
 

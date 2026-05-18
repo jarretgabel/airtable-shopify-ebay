@@ -10,7 +10,7 @@ interface UseApprovalPreviewParams {
   selectedRecord: AirtableRecord | null;
   fieldKinds: Record<string, ApprovalFieldKind>;
   formValues: Record<string, string>;
-  setFormValue: (fieldName: string, value: string) => void;
+  setDerivedFormValue: (fieldName: string, value: string) => void;
   fromFormValue: (value: string, kind: ApprovalFieldKind) => unknown;
   isCombinedApproval: boolean;
   ebayCategoryLabelsById: Record<string, string>;
@@ -30,7 +30,7 @@ export function useApprovalPreview({
   selectedRecord,
   fieldKinds,
   formValues,
-  setFormValue,
+  setDerivedFormValue,
   fromFormValue,
   isCombinedApproval,
   ebayCategoryLabelsById,
@@ -127,7 +127,7 @@ export function useApprovalPreview({
         setEbayApprovalPreview(preview.ebay ?? null);
         Object.entries(preview.ebay?.categoryFieldUpdates ?? {}).forEach(([fieldName, value]) => {
           if ((latestFormValuesRef.current[fieldName] ?? '') !== value) {
-            setFormValue(fieldName, value);
+            setDerivedFormValue(fieldName, value);
           }
         });
       })
@@ -136,7 +136,7 @@ export function useApprovalPreview({
         setShopifyApprovalPreview(null);
         setEbayApprovalPreview(null);
       });
-  }, [currentEbayCategoryPreviewInput, currentEbayPreviewBodyInput, isEbayPayloadPreviewContext, isShopifyPayloadPreviewContext, mergedDraftSourceFields, setFormValue]);
+  }, [currentEbayCategoryPreviewInput, currentEbayPreviewBodyInput, isEbayPayloadPreviewContext, isShopifyPayloadPreviewContext, mergedDraftSourceFields, setDerivedFormValue]);
 
   const loadShopifyApprovalPreviewNow = async (fallbackFields: Record<string, unknown>) => {
     const preview = await normalizeApprovalRecord(mergedDraftSourceFields ?? fallbackFields, 'shopify');

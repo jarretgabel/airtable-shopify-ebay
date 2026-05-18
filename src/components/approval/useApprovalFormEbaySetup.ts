@@ -11,6 +11,7 @@ type UseApprovalFormEbaySetupParams = Pick<ApprovalFormFieldSetupParams,
   | 'formValues'
   | 'originalFieldValues'
   | 'setFormValue'
+  | 'setDerivedFormValue'
   | 'selectedEbayTemplateId'
   | 'onEbayTemplateIdChange'
 >;
@@ -24,6 +25,7 @@ export function useApprovalFormEbaySetup({
   formValues,
   originalFieldValues,
   setFormValue,
+  setDerivedFormValue,
   selectedEbayTemplateId,
   onEbayTemplateIdChange,
 }: UseApprovalFormEbaySetupParams) {
@@ -45,6 +47,7 @@ export function useApprovalFormEbaySetup({
     formValues,
     originalFieldValues,
     setFormValue,
+    setDerivedFormValue,
     selectedEbayTemplateId,
     onEbayTemplateIdChange,
     ebayMarketplaceId: categorySetup.ebayMarketplaceId,

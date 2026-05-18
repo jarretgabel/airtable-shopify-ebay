@@ -19,6 +19,7 @@ export interface ApprovalFormFieldSetupParams {
   normalizedShopifyCollectionIds?: string[];
   normalizedShopifyCollectionLabelsById: Record<string, string>;
   setFormValue: (fieldName: string, value: string) => void;
+  setDerivedFormValue: (fieldName: string, value: string) => void;
   selectedEbayTemplateId?: string;
   onEbayTemplateIdChange?: (templateId: EbayListingTemplateId) => void;
 }

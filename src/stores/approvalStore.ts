@@ -1,5 +1,11 @@
 import { create } from 'zustand';
-import { createLoadListingFormatOptionsAction, createLoadRecordsAction, createHydrateFormAction, createSetFormValueAction } from '@/stores/approval/approvalStoreRecordState';
+import {
+  createLoadListingFormatOptionsAction,
+  createLoadRecordsAction,
+  createHydrateFormAction,
+  createSetDerivedFormValueAction,
+  createSetFormValueAction,
+} from '@/stores/approval/approvalStoreRecordState';
 import { createSaveRecordAction } from '@/stores/approval/approvalStorePersistence';
 import {
   FALLBACK_LISTING_FORMAT_OPTIONS,
@@ -42,8 +48,10 @@ export const useApprovalStore = create<ApprovalStore>((set, get) => ({
   listingFormatOptions: FALLBACK_LISTING_FORMAT_OPTIONS,
   listingDurationOptions: resolveListingDurationOptions(EBAY_LISTING_DURATION_OPTIONS),
   formValues: {},
+  initialFormValues: {},
   fieldKinds: {},
   setFormValue: createSetFormValueAction(set),
+  setDerivedFormValue: createSetDerivedFormValueAction(set),
   hydrateForm: createHydrateFormAction(set),
   loadRecords: createLoadRecordsAction(set, get),
   loadListingFormatOptions: createLoadListingFormatOptionsAction(set),

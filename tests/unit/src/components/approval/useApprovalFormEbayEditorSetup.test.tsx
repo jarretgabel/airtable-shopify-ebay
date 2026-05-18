@@ -9,6 +9,7 @@ vi.mock('@/services/app-api/ebay', () => ({
 describe('useApprovalFormEbayEditorSetup', () => {
   it('keeps eBay aspects fields hidden without exposing an attributes editor', () => {
     const setFormValue = vi.fn();
+    const setDerivedFormValue = vi.fn();
 
     const { result } = renderHook(() => useApprovalFormEbayEditorSetup({
       recordId: 'rec-ebay-approval',
@@ -30,6 +31,7 @@ describe('useApprovalFormEbayEditorSetup', () => {
       },
       originalFieldValues: {},
       setFormValue,
+      setDerivedFormValue,
       selectedEbayTemplateId: undefined,
       onEbayTemplateIdChange: undefined,
       ebayMarketplaceId: 'EBAY_US',
@@ -42,5 +44,31 @@ describe('useApprovalFormEbayEditorSetup', () => {
     ]);
     expect(result.current.ebayAttributesFieldName).toBeUndefined();
     expect(result.current.ebayAttributesSyncFieldNames).toEqual([]);
+  });
+
+  it('syncs the normalized template id through the derived setter instead of user-edit state', () => {
+    const setFormValue = vi.fn();
+    const setDerivedFormValue = vi.fn();
+
+    renderHook(() => useApprovalFormEbayEditorSetup({
+      recordId: 'rec-ebay-template',
+      approvalChannel: 'ebay',
+      isCombinedApproval: false,
+      allFieldNames: ['eBay Body HTML Template'],
+      writableFieldNames: ['eBay Body HTML Template'],
+      formValues: {
+        'eBay Body HTML Template': '',
+      },
+      originalFieldValues: {},
+      setFormValue,
+      setDerivedFormValue,
+      selectedEbayTemplateId: 'impact-luxe',
+      onEbayTemplateIdChange: undefined,
+      ebayMarketplaceId: 'EBAY_US',
+      isEbayListingForm: true,
+    }));
+
+    expect(setDerivedFormValue).toHaveBeenCalledWith('eBay Body HTML Template', 'impact-luxe');
+    expect(setFormValue).not.toHaveBeenCalled();
   });
 });

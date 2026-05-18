@@ -4,13 +4,13 @@ import { useListingApprovalCombinedFieldSync } from '@/components/approval/useLi
 
 interface HarnessProps {
   formValues: Record<string, string>;
-  setFormValue: ReturnType<typeof vi.fn>;
+  setDerivedFormValue: ReturnType<typeof vi.fn>;
   setSelectedEbayTemplateId?: ReturnType<typeof vi.fn>;
 }
 
 function CombinedFieldSyncHarness({
   formValues,
-  setFormValue,
+  setDerivedFormValue,
   setSelectedEbayTemplateId = vi.fn(),
 }: HarnessProps) {
   useListingApprovalCombinedFieldSync({
@@ -18,7 +18,7 @@ function CombinedFieldSyncHarness({
     approvalChannel: 'combined',
     isCombinedApproval: true,
     formValues,
-    setFormValue,
+    setDerivedFormValue,
     combinedSharedKeyFeaturesFieldName: 'Key Features',
     combinedEbayTestingNotesFieldName: 'Testing Notes',
     setSelectedEbayTemplateId,
@@ -29,7 +29,7 @@ function CombinedFieldSyncHarness({
 
 describe('useListingApprovalCombinedFieldSync', () => {
   it('does not rewrite plain textarea testing notes in combined approval', () => {
-    const setFormValue = vi.fn();
+    const setDerivedFormValue = vi.fn();
 
     render(
       <CombinedFieldSyncHarness
@@ -37,15 +37,15 @@ describe('useListingApprovalCombinedFieldSync', () => {
           'Key Features': 'Brand,McIntosh',
           'Testing Notes': 'Passed bench test.\nLamp replaced.',
         }}
-        setFormValue={setFormValue}
+        setDerivedFormValue={setDerivedFormValue}
       />,
     );
 
-    expect(setFormValue).not.toHaveBeenCalled();
+    expect(setDerivedFormValue).not.toHaveBeenCalled();
   });
 
   it('still moves structured testing note entries into shared key features', () => {
-    const setFormValue = vi.fn();
+    const setDerivedFormValue = vi.fn();
 
     render(
       <CombinedFieldSyncHarness
@@ -53,12 +53,12 @@ describe('useListingApprovalCombinedFieldSync', () => {
           'Key Features': 'Condition,Excellent',
           'Testing Notes': 'Brand,McIntosh\nFunctional Notes,Fully tested',
         }}
-        setFormValue={setFormValue}
+        setDerivedFormValue={setDerivedFormValue}
       />,
     );
 
-    expect(setFormValue).toHaveBeenCalledTimes(2);
-    expect(setFormValue).toHaveBeenCalledWith('Key Features', 'Condition,Excellent\nBrand,McIntosh');
-    expect(setFormValue).toHaveBeenCalledWith('Testing Notes', 'Functional Notes,Fully tested');
+    expect(setDerivedFormValue).toHaveBeenCalledTimes(2);
+    expect(setDerivedFormValue).toHaveBeenCalledWith('Key Features', 'Condition,Excellent\nBrand,McIntosh');
+    expect(setDerivedFormValue).toHaveBeenCalledWith('Testing Notes', 'Functional Notes,Fully tested');
   });
 });

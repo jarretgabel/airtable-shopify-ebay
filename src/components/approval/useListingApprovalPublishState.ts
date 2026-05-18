@@ -21,6 +21,7 @@ interface UseListingApprovalPublishStateParams {
   allFieldNames: string[];
   approvalChannel: 'shopify' | 'ebay' | 'combined';
   formValues: Record<string, string>;
+  initialFormValues: Record<string, string>;
   mergedDraftSourceFields: Record<string, unknown> | null | undefined;
   selectedRecord: AirtableRecord | null;
   combinedSharedFieldNames: string[];
@@ -34,6 +35,7 @@ export function useListingApprovalPublishState({
   allFieldNames,
   approvalChannel,
   formValues,
+  initialFormValues,
   mergedDraftSourceFields,
   selectedRecord,
   combinedSharedFieldNames,
@@ -143,11 +145,11 @@ export function useListingApprovalPublishState({
         if (approvalChannel === 'shopify' && isVendorFieldName(fieldName)) return false;
         if (approvalChannel === 'shopify' && isShopifyGraphqlCollectionIdsFieldName(fieldName)) return false;
 
-        const originalValue = toFormValue(selectedRecord.fields[fieldName]);
+          const originalValue = initialFormValues[fieldName] ?? toFormValue(selectedRecord.fields[fieldName]);
         return currentValue !== originalValue;
       })
       .map(([fieldName]) => fieldName);
-  }, [approvalChannel, formValues, selectedRecord]);
+        }, [approvalChannel, formValues, initialFormValues, selectedRecord]);
 
   const shouldForceEbayBodyHtmlSave = useMemo(
     () => approvalChannel === 'ebay' && changedFieldNames.some((fieldName) => isEbayBodyHtmlSyncTriggerFieldName(fieldName)),

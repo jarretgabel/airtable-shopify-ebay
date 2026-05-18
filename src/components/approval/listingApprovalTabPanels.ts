@@ -47,6 +47,7 @@ interface BuildListingApprovalTabPanelsParams {
   listingDurationOptions: string[];
   saving: boolean;
   setFormValue: (fieldName: string, value: string) => void;
+  setDerivedFormValue: (fieldName: string, value: string) => void;
   currentPageShopifyBodyHtml: string;
   currentPageShopifyTagValues: string[];
   currentPageShopifyCollectionIds: string[];
@@ -150,6 +151,7 @@ export function buildListingApprovalTabPanels({
   listingDurationOptions,
   saving,
   setFormValue,
+  setDerivedFormValue,
   currentPageShopifyBodyHtml,
   currentPageShopifyTagValues,
   currentPageShopifyCollectionIds,
@@ -257,6 +259,7 @@ export function buildListingApprovalTabPanels({
       listingDurationOptions,
       saving,
       setFormValue,
+      setDerivedFormValue,
       currentPageShopifyBodyHtml,
       currentPageShopifyTagValues,
       currentPageShopifyCollectionIds,

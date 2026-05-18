@@ -20,6 +20,7 @@ type UseApprovalFormShopifySetupParams = Pick<ApprovalFormFieldSetupParams,
   | 'normalizedShopifyCollectionIds'
   | 'normalizedShopifyCollectionLabelsById'
   | 'setFormValue'
+  | 'setDerivedFormValue'
 >;
 
 export function useApprovalFormShopifySetup({
@@ -34,6 +35,7 @@ export function useApprovalFormShopifySetup({
   normalizedShopifyCollectionIds,
   normalizedShopifyCollectionLabelsById,
   setFormValue,
+  setDerivedFormValue,
 }: UseApprovalFormShopifySetupParams) {
   const isShopifyApprovalForm = approvalChannel === 'shopify';
   const shopifyBodyDescriptionFieldName = isShopifyApprovalForm

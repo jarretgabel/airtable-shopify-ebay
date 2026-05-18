@@ -34,6 +34,7 @@ export function useApprovalFormFieldSetup({
   normalizedShopifyCollectionIds,
   normalizedShopifyCollectionLabelsById,
   setFormValue,
+  setDerivedFormValue,
   selectedEbayTemplateId,
   onEbayTemplateIdChange,
 }: ApprovalFormFieldSetupParams) {
@@ -173,6 +174,7 @@ export function useApprovalFormFieldSetup({
     formValues,
     originalFieldValues,
     setFormValue,
+    setDerivedFormValue,
     selectedEbayTemplateId,
     onEbayTemplateIdChange,
   });
@@ -188,6 +190,7 @@ export function useApprovalFormFieldSetup({
     normalizedShopifyCollectionIds,
     normalizedShopifyCollectionLabelsById,
     setFormValue,
+    setDerivedFormValue,
   });
 
   const derivedBodyHtmlPreview = normalizedBodyHtmlPreview ?? '';
@@ -199,11 +202,11 @@ export function useApprovalFormFieldSetup({
     const currentBodyHtml = formValues[shopifySetup.shopifyBodyHtmlFieldName] ?? '';
 
     if (currentBodyHtml !== nextBodyHtml) {
-      setFormValue(shopifySetup.shopifyBodyHtmlFieldName, nextBodyHtml);
+      setDerivedFormValue(shopifySetup.shopifyBodyHtmlFieldName, nextBodyHtml);
     }
   }, [
     derivedBodyHtmlPreview,
-    setFormValue,
+    setDerivedFormValue,
     shopifySetup.shopifyBodyHtmlFieldName,
     formValues,
   ]);
@@ -215,9 +218,9 @@ export function useApprovalFormFieldSetup({
     const currentBodyHtml = formValues[ebaySetup.ebayBodyHtmlFieldName] ?? '';
 
     if (currentBodyHtml !== nextBodyHtml) {
-      setFormValue(ebaySetup.ebayBodyHtmlFieldName, nextBodyHtml);
+      setDerivedFormValue(ebaySetup.ebayBodyHtmlFieldName, nextBodyHtml);
     }
-  }, [derivedBodyHtmlPreview, ebaySetup.ebayBodyHtmlFieldName, formValues, setFormValue]);
+  }, [derivedBodyHtmlPreview, ebaySetup.ebayBodyHtmlFieldName, formValues, setDerivedFormValue]);
 
   const activeBodyDescriptionFieldName = shopifySetup.shopifyBodyDescriptionFieldName ?? ebaySetup.ebayBodyDescriptionFieldName;
 

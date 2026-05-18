@@ -24,6 +24,7 @@ interface BuildListingApprovalSelectedRecordViewPropsParams {
   listingDurationOptions: string[];
   saving: boolean;
   setFormValue: (fieldName: string, value: string) => void;
+  setDerivedFormValue: (fieldName: string, value: string) => void;
   currentPageShopifyBodyHtml: string;
   currentPageShopifyTagValues: string[];
   currentPageShopifyCollectionIds: string[];
@@ -88,6 +89,7 @@ export function buildListingApprovalSelectedRecordViewProps({
   listingDurationOptions,
   saving,
   setFormValue,
+  setDerivedFormValue,
   currentPageShopifyBodyHtml,
   currentPageShopifyTagValues,
   currentPageShopifyCollectionIds,
@@ -208,6 +210,7 @@ export function buildListingApprovalSelectedRecordViewProps({
       listingDurationOptions,
       saving,
       setFormValue,
+      setDerivedFormValue,
       suppressImageScalarFields: approvalChannel === 'shopify' || approvalChannel === 'ebay',
       originalFieldValues: approvalFormOriginalFieldValues,
       normalizedBodyHtmlPreview: approvalChannel === 'shopify'

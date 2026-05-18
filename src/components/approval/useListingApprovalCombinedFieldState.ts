@@ -46,6 +46,7 @@ interface UseListingApprovalCombinedFieldStateParams {
   isCombinedApproval: boolean;
   formValues: Record<string, string>;
   setFormValue: (fieldName: string, value: string) => void;
+  setDerivedFormValue: (fieldName: string, value: string) => void;
   selectedEbayTemplateId: EbayListingTemplateId;
   setSelectedEbayTemplateId: Dispatch<SetStateAction<EbayListingTemplateId>>;
 }
@@ -58,6 +59,7 @@ export function useListingApprovalCombinedFieldState({
   isCombinedApproval,
   formValues,
   setFormValue,
+  setDerivedFormValue,
   setSelectedEbayTemplateId,
 }: UseListingApprovalCombinedFieldStateParams) {
   const selectedRecord = useMemo(
@@ -156,7 +158,7 @@ export function useListingApprovalCombinedFieldState({
     approvalChannel,
     isCombinedApproval,
     formValues,
-    setFormValue,
+    setDerivedFormValue,
     combinedSharedKeyFeaturesFieldName,
     combinedEbayTestingNotesFieldName,
     setSelectedEbayTemplateId,

@@ -36,6 +36,7 @@ type UseApprovalFormEbayEditorSetupParams = Pick<ApprovalFormFieldSetupParams,
   | 'formValues'
   | 'originalFieldValues'
   | 'setFormValue'
+  | 'setDerivedFormValue'
   | 'selectedEbayTemplateId'
   | 'onEbayTemplateIdChange'
 > & {
@@ -52,6 +53,7 @@ export function useApprovalFormEbayEditorSetup({
   formValues,
   originalFieldValues,
   setFormValue,
+  setDerivedFormValue,
   selectedEbayTemplateId,
   onEbayTemplateIdChange,
   ebayMarketplaceId,
@@ -223,7 +225,7 @@ export function useApprovalFormEbayEditorSetup({
     if (ebayBodyHtmlTemplateFieldName) {
       const currentTemplateValue = formValues[ebayBodyHtmlTemplateFieldName] ?? '';
       if (normalizeEbayListingTemplateId(currentTemplateValue) !== resolvedEbayTemplateId) {
-        setFormValue(ebayBodyHtmlTemplateFieldName, resolvedEbayTemplateId);
+        setDerivedFormValue(ebayBodyHtmlTemplateFieldName, resolvedEbayTemplateId);
       }
     }
 
@@ -234,7 +236,7 @@ export function useApprovalFormEbayEditorSetup({
     isEbayApprovalForm,
     onEbayTemplateIdChange,
     resolvedEbayTemplateId,
-    setFormValue,
+    setDerivedFormValue,
   ]);
 
   const ebayFormatFieldName = allFieldNames.find((fieldName) => isEbayFormatField(fieldName));

@@ -42,6 +42,7 @@ interface ApprovalFormFieldsProps {
   listingDurationOptions?: string[];
   saving: boolean;
   setFormValue: (fieldName: string, value: string) => void;
+  setDerivedFormValue: (fieldName: string, value: string) => void;
   suppressImageScalarFields?: boolean;
   originalFieldValues?: Record<string, string>;
   showBodyHtmlPreview?: boolean;
@@ -79,6 +80,7 @@ export function ApprovalFormFields({
   listingDurationOptions = [],
   saving,
   setFormValue,
+  setDerivedFormValue,
   suppressImageScalarFields = false,
   originalFieldValues = {},
   normalizedBodyHtmlPreview,
@@ -192,6 +194,7 @@ export function ApprovalFormFields({
     normalizedShopifyCollectionIds,
     normalizedShopifyCollectionLabelsById,
     setFormValue,
+    setDerivedFormValue,
     selectedEbayTemplateId,
     onEbayTemplateIdChange,
   });

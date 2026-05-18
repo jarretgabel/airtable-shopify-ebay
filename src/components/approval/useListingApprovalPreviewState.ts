@@ -22,7 +22,7 @@ interface UseListingApprovalPreviewStateParams {
   selectedRecord: AirtableRecord | null;
   fieldKinds: Record<string, 'boolean' | 'number' | 'json' | 'text'>;
   formValues: Record<string, string>;
-  setFormValue: (fieldName: string, value: string) => void;
+  setDerivedFormValue: (fieldName: string, value: string) => void;
   ebayCategoryLabelsById: Record<string, string>;
   selectedEbayTemplateId: EbayListingTemplateId;
   combinedEbayBodyHtmlFieldName: string;
@@ -38,7 +38,7 @@ export function useListingApprovalPreviewState({
   selectedRecord,
   fieldKinds,
   formValues,
-  setFormValue,
+  setDerivedFormValue,
   ebayCategoryLabelsById,
   selectedEbayTemplateId,
   combinedEbayBodyHtmlFieldName,
@@ -59,7 +59,7 @@ export function useListingApprovalPreviewState({
     selectedRecord,
     fieldKinds,
     formValues,
-    setFormValue,
+    setDerivedFormValue,
     fromFormValue,
     isCombinedApproval,
     ebayCategoryLabelsById,
@@ -93,14 +93,14 @@ export function useListingApprovalPreviewState({
 
     const current = formValues[combinedEbayBodyHtmlFieldName] ?? '';
     if (current !== combinedEbayGeneratedBodyHtml) {
-      setFormValue(combinedEbayBodyHtmlFieldName, combinedEbayGeneratedBodyHtml);
+      setDerivedFormValue(combinedEbayBodyHtmlFieldName, combinedEbayGeneratedBodyHtml);
     }
   }, [
     combinedEbayBodyHtmlFieldName,
     combinedEbayGeneratedBodyHtml,
     formValues,
     isCombinedApproval,
-    setFormValue,
+    setDerivedFormValue,
   ]);
 
   const ebayDraftPayloadBundle = useMemo(() => {
