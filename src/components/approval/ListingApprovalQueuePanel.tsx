@@ -902,7 +902,7 @@ export function ListingApprovalQueuePanel({
     <AppPageLayout>
       <WorkflowPageHeader
         eyebrow="Review"
-        title="Combined Listings"
+        title="Listings"
       />
 
       <MainPageSectionNav

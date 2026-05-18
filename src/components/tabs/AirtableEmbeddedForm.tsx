@@ -279,26 +279,21 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
 
   return (
     <div className="flex w-full flex-col gap-5">
-      {recordId ? (
-        <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
-          <p className="m-0 text-sm leading-6 text-[var(--muted)]">Editing record <strong>{recordId}</strong>. Saving here updates the intake fields for this row in the {recordSource === 'used-gear-workflow' ? 'used-gear workflow' : 'inventory directory'} source.</p>
-        </section>
+      {submitError ? (
+        <div className="rounded-xl border border-[#f7c8c4] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-text)]">
+          {submitError}
+        </div>
       ) : null}
-        {submitError ? (
-          <div className="rounded-xl border border-[#f7c8c4] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-text)]">
-            {submitError}
-          </div>
-        ) : null}
 
-        {submitSuccess ? (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-            {submitSuccess.action === 'updated'
-              ? <>Manual Intake fields updated for record <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku || 'N/A'}</strong>.</>
-              : <>Submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. Temporary SKU: <strong>{submitSuccess.sku}</strong>.</>}
-          </div>
-        ) : null}
+      {submitSuccess ? (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+          {submitSuccess.action === 'updated'
+            ? <>Manual Intake fields updated for record <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku || 'N/A'}</strong>.</>
+            : <>Submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. Temporary SKU: <strong>{submitSuccess.sku}</strong>.</>}
+        </div>
+      ) : null}
 
-        <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
+      <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
           {!recordId ? (
             <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
               <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Routing Context</p>

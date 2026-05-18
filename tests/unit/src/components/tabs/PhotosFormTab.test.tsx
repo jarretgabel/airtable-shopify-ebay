@@ -3,7 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PhotosFormTab } from '@/components/tabs/PhotosFormTab';
 
 vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
-  FormImageUploadEditor: ({ onFilesChange }: { onFilesChange: (files: File[]) => void }) => (
+  FormImageUploadEditor: ({
+    onFilesChange,
+    afterUploadContent,
+  }: {
+    onFilesChange: (files: File[]) => void;
+    afterUploadContent?: React.ReactNode;
+  }) => (
     <div>
       <button
         type="button"
@@ -11,6 +17,7 @@ vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
       >
         Mock add processed photos
       </button>
+      {afterUploadContent}
     </div>
   ),
 }));

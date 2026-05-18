@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
@@ -18,7 +19,6 @@ import {
   loadPhotosFormOptionSets,
   loadPhotosFormValues,
   submitPhotosForm,
-  type PhotosFormContextAttachment,
   type PhotosFormCustomerReference,
   type PhotosFormRecordSource,
   type PhotosFormStageContext,
@@ -46,6 +46,20 @@ const FIELD_CLASS = 'mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(
 const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
+
+const READ_ONLY_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = [
+  'sku',
+  'make',
+  'model',
+  'componentType',
+  'originalBox',
+  'manual',
+  'remote',
+  'powerCable',
+  'additionalItems',
+];
+
+const HIDDEN_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = ['audiogonRating', 'cosmeticConditionNotes'];
 
 type InclusionConfirmationKey = 'originalBox' | 'manual' | 'remote' | 'powerCable' | 'additionalItems';
 
@@ -114,6 +128,24 @@ function FieldShell({ definition, children }: { definition: PhotosFormFieldDefin
       {children}
       {definition.description ? <p className={HELP_CLASS}>{definition.description}</p> : null}
     </label>
+  );
+}
+
+function ReadOnlyFieldDisplay({
+  label,
+  value,
+  description,
+}: {
+  label: string;
+  value: string;
+  description?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5">
+      <p className="m-0 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{label}</p>
+      <p className="mt-1 text-sm leading-5 text-[var(--ink)]">{value || 'Not provided'}</p>
+      {description ? <p className="mt-1 text-[0.72rem] leading-5 text-[var(--muted)]">{description}</p> : null}
+    </div>
   );
 }
 
@@ -321,6 +353,9 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
   const applicableIncludedItems = buildApplicableIncludedItems(formValues);
   const hasOperationalContext = Boolean(stageContext.inventoryNotes.trim() || stageContext.testingNotes.trim() || stageContext.existingAttachments.length > 0);
   const stageImageMetadata = filterWorkflowImageMetadataByStage(imageMetadata, 'photos');
+  const visiblePhotosFields = photosFormFields.filter((field) => !HIDDEN_PHOTOS_FIELD_NAMES.includes(field.name));
+  const readOnlyFields = visiblePhotosFields.filter((field) => READ_ONLY_PHOTOS_FIELD_NAMES.includes(field.name));
+  const editableFields = visiblePhotosFields.filter((field) => !READ_ONLY_PHOTOS_FIELD_NAMES.includes(field.name));
 
   const handleInclusionConfirmationChange = (key: InclusionConfirmationKey, checked: boolean) => {
     setInclusionConfirmations((current) => ({
@@ -329,26 +364,6 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     }));
   };
 
-  const renderAttachmentLink = (attachment: PhotosFormContextAttachment) => {
-    if (attachment.url) {
-      return (
-        <a
-          href={attachment.url}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-        >
-          {attachment.filename}
-        </a>
-      );
-    }
-
-    return (
-      <span className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
-        {attachment.filename}
-      </span>
-    );
-  };
 
   return (
     <AppPageLayout>
@@ -389,9 +404,6 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
             </p>
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
               <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
-                <span className="font-semibold text-sky-50">Customer Cosmetic Notes:</span> {customerReference.cosmeticNotes || 'None provided'}
-              </div>
-              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
                 <span className="font-semibold text-sky-50">Customer Functional Notes:</span> {customerReference.functionalNotes || 'None provided'}
               </div>
               <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
@@ -405,17 +417,21 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
         ) : null}
 
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Photography Context</p>
-          <div className="mt-4 grid gap-3 lg:grid-cols-3">
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-3 text-sm text-[var(--muted)]">
-              <span className="font-semibold text-[var(--ink)]">Make:</span> {formValues.make || 'Not set'}
-            </div>
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-3 text-sm text-[var(--muted)]">
-              <span className="font-semibold text-[var(--ink)]">Model:</span> {formValues.model || 'Not set'}
-            </div>
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-3 text-sm text-[var(--muted)]">
-              <span className="font-semibold text-[var(--ink)]">Component Type:</span> {formValues.componentType || 'Not set'}
-            </div>
+          <AppSectionTitle title="Submitted Intake And Included Items" titleClassName="text-lg" />
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {readOnlyFields.map((field) => (
+              <ReadOnlyFieldDisplay
+                key={field.airtableFieldName}
+                label={field.label}
+                value={String(formValues[field.name] ?? '')}
+                description={field.description}
+              />
+            ))}
+          </div>
+
+          <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Customer Cosmetic Notes</p>
+            <p className="mt-2 leading-6 text-[var(--ink)]">{customerReference.cosmeticNotes || 'None provided'}</p>
           </div>
 
           {hasOperationalContext ? (
@@ -431,59 +447,32 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
             </div>
           ) : null}
 
-          <div className="mt-4 rounded-xl border border-amber-400/25 bg-amber-500/10 p-4">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-amber-100">Included Items To Photograph</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {[
-                { label: 'Original Box', value: formValues.originalBox },
-                { label: 'Manual', value: formValues.manual },
-                { label: 'Remote', value: formValues.remote },
-                { label: 'Power Cable', value: formValues.powerCable },
-                { label: 'Additional Items', value: formValues.additionalItems },
-              ].map((item) => {
-                const emphasized = isApplicableIncludedValue(item.value);
-                return (
-                  <span
-                    key={item.label}
-                    className={emphasized
-                      ? 'rounded-full border border-amber-300/35 bg-amber-400/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-amber-50'
-                      : 'rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]'}
-                  >
-                    {item.label}: {item.value || 'Not provided'}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Existing Workflow Images</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {stageContext.existingAttachments.length > 0
-                ? stageContext.existingAttachments.map((attachment) => (
-                    <div key={attachment.id ?? attachment.filename}>{renderAttachmentLink(attachment)}</div>
-                  ))
-                : <span className="text-sm text-[var(--muted)]">No existing workflow images are attached yet.</span>}
-            </div>
-          </div>
-
-          <WorkflowImageMetadataEditor
-            metadata={stageImageMetadata}
-            onChange={(nextMetadata) => setImageMetadata((current) => replaceWorkflowImageMetadataStage(current, 'photos', nextMetadata))}
-            allowReorder
-            disabled={submitting}
-            title="Photography Images"
-            description="Photography edits only photo-stage images here. Testing images stay separate on the testing form, while workflow and listing views still combine both stages."
-            emptyMessage="Upload and save photography images first. Once Airtable has attached the files, you can manage photo-stage alt text, order, and listing defaults here."
-            className="mt-4"
-          />
         </div>
 
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
-          {photosFormFields.map((field) => (
+          {editableFields.map((field) => (
             <div key={field.airtableFieldName}>
               {field.type === 'file'
-                ? renderField(field)
+                ? (
+                  <FormImageUploadEditor
+                    title={field.label}
+                    disabled={submitting}
+                    resetKey={uploadEditorResetKey}
+                    onFilesChange={(files) => setFieldValue(field.name, files as PhotosFormValues[typeof field.name])}
+                    afterUploadContent={stageImageMetadata.length > 0 ? (
+                      <WorkflowImageMetadataEditor
+                        metadata={stageImageMetadata}
+                        onChange={(nextMetadata) => setImageMetadata((current) => replaceWorkflowImageMetadataStage(current, 'photos', nextMetadata))}
+                        allowReorder
+                        disabled={submitting}
+                        title="Photography Images"
+                        description="Manage saved photo-stage image alt text, ordering, and listing defaults here."
+                        emptyMessage=""
+                        className="border-0 bg-transparent p-0"
+                      />
+                    ) : null}
+                  />
+                )
                 : <FieldShell definition={field}>{renderField(field)}</FieldShell>}
             </div>
           ))}
@@ -510,8 +499,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
             </div>
           ) : null}
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="m-0 text-sm text-[var(--muted)]">Required fields are marked with an asterisk. Submit requires either newly uploaded photos or existing workflow images plus any applicable included-item confirmations.</p>
+          <div className="flex justify-end">
             <div className="flex gap-3">
               <button
                 type="button"
