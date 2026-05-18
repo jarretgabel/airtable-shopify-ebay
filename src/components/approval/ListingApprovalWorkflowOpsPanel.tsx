@@ -25,64 +25,6 @@ interface ListingApprovalWorkflowOpsPanelProps {
   onOpenOperationalRecord?: (recordId: string) => void;
 }
 
-const STAGE_CONTEXT_FIELDS = [
-  { label: 'Processing Signed By', fieldName: 'Processing Signed By' },
-  { label: 'Processing Signed At', fieldName: 'Processing Signed At' },
-  { label: 'Testing Signed By', fieldName: 'Testing Signed By' },
-  { label: 'Testing Signed At', fieldName: 'Testing Signed At' },
-  { label: 'Photography Signed By', fieldName: 'Photography Signed By' },
-  { label: 'Photography Signed At', fieldName: 'Photography Signed At' },
-  { label: 'Pre-Listing Reviewed By', fieldName: 'Pre-Listing Reviewed By' },
-  { label: 'Pre-Listing Reviewed At', fieldName: 'Pre-Listing Reviewed At' },
-  { label: 'Inventory Notes', fieldName: 'Inventory Notes' },
-  { label: 'Testing Cosmetic Notes', fieldName: 'Testing Cosmetic Notes' },
-  { label: 'Photography Cosmetic Notes', fieldName: 'Photography Cosmetic Notes' },
-  { label: 'Internal Inclusion Notes', fieldName: 'Internal Inclusion Notes' },
-  { label: 'Internal Cosmetic Notes', fieldName: 'Internal Cosmetic Notes' },
-  { label: 'Internal Functional Notes', fieldName: 'Internal Functional Notes' },
-] as const;
-
-const WORKFLOW_AUDIT_FIELDS = [
-  { label: 'Workflow Source', fieldName: 'Workflow Source' },
-  { label: 'Trash Status', fieldName: 'Trash Status' },
-  { label: 'Workflow Owner', fieldName: 'Workflow Owner' },
-  { label: 'Workflow Owner Assigned At', fieldName: 'Workflow Owner Assigned At' },
-  { label: 'Accepted By', fieldName: 'Accepted By' },
-  { label: 'Accepted At', fieldName: 'Accepted At' },
-  { label: 'Qualification Complete', fieldName: 'Qualification Complete' },
-  { label: 'Allocation Mode', fieldName: 'Allocation Mode' },
-  { label: 'Allocation Notes', fieldName: 'Allocation Notes' },
-  { label: 'Offer Amount', fieldName: 'Offer Amount' },
-  { label: 'Paid Amount', fieldName: 'Paid Amount' },
-  { label: 'Confirmed Grand Total', fieldName: 'Confirmed Grand Total' },
-  { label: 'Awaiting Pre-Listing Review At', fieldName: 'Awaiting Pre-Listing Review At' },
-  { label: 'Approved For Publish At', fieldName: 'Approved For Publish At' },
-  { label: 'Listed At', fieldName: 'Listed At' },
-  { label: 'eBay Published At', fieldName: 'eBay Published At' },
-  { label: 'eBay Offer ID', fieldName: 'eBay Offer ID' },
-  { label: 'eBay Listing ID', fieldName: 'eBay Listing ID' },
-  { label: 'Stale Listing At', fieldName: 'Stale Listing At' },
-  { label: 'Sold Ready To Ship At', fieldName: 'Sold Ready To Ship At' },
-  { label: 'Shipment Follow-Through Updated At', fieldName: 'Shipment Follow-Through Updated At' },
-  { label: 'Shipped At', fieldName: 'Shipped At' },
-] as const;
-
-const REFERENCE_NOTE_FIELDS = [
-  { label: 'Qualification Notes', fieldName: 'Qualification Notes' },
-  { label: 'Unqualified Reason', fieldName: 'Unqualified Reason' },
-  { label: 'Customer Cosmetic Notes', fieldName: 'Customer Cosmetic Notes' },
-  { label: 'Customer Functional Notes', fieldName: 'Customer Functional Notes' },
-  { label: 'Customer Inclusion Notes', fieldName: 'Customer Inclusion Notes' },
-  { label: 'Customer Submitted Photos Notes', fieldName: 'Customer Submitted Photos Notes' },
-  { label: 'Testing Cosmetic Notes', fieldName: 'Testing Cosmetic Notes' },
-  { label: 'Photography Cosmetic Notes', fieldName: 'Photography Cosmetic Notes' },
-  { label: 'Internal Cosmetic Notes', fieldName: 'Internal Cosmetic Notes' },
-  { label: 'Internal Functional Notes', fieldName: 'Internal Functional Notes' },
-  { label: 'Internal Inclusion Notes', fieldName: 'Internal Inclusion Notes' },
-  { label: 'Inventory Notes', fieldName: 'Inventory Notes' },
-  { label: 'Shipment Follow-Through Notes', fieldName: 'Shipment Follow-Through Notes' },
-] as const;
-
 function normalizeStaleRecoveryStatus(value: unknown): UsedGearWorkflowStaleRecoveryStatus | '' {
   const normalized = typeof value === 'string' ? value.trim() : '';
   return USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS.includes(normalized as UsedGearWorkflowStaleRecoveryStatus)
@@ -135,12 +77,8 @@ export function ListingApprovalWorkflowOpsPanel({
   tableReference,
   tableName,
   loadRecords,
-  onOpenOperationalRecord,
 }: ListingApprovalWorkflowOpsPanelProps) {
   const [workflowRecord, setWorkflowRecord] = useState(selectedRecord);
-  const [relatedGroupRecords, setRelatedGroupRecords] = useState<AirtableRecord[]>([]);
-  const [relatedGroupLabel, setRelatedGroupLabel] = useState<string | null>(null);
-  const [relatedGroupDescription, setRelatedGroupDescription] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [staleRecoveryDraftStatus, setStaleRecoveryDraftStatus] = useState<UsedGearWorkflowStaleRecoveryStatus | ''>('');
@@ -162,14 +100,9 @@ export function ListingApprovalWorkflowOpsPanel({
         }
 
         setWorkflowRecord(nextContext.record);
-        setRelatedGroupRecords(nextContext.group?.records.filter((candidate) => candidate.id !== selectedRecord.id) ?? []);
-        setRelatedGroupLabel(nextContext.group?.label ?? null);
-        setRelatedGroupDescription(nextContext.group?.description ?? null);
       } catch {
         if (!cancelled) {
-          setRelatedGroupRecords([]);
-          setRelatedGroupLabel(null);
-          setRelatedGroupDescription(null);
+          setWorkflowRecord(selectedRecord);
         }
       }
     };
@@ -188,17 +121,6 @@ export function ListingApprovalWorkflowOpsPanel({
     ? workflowRecord.fields['Shipment Follow-Through Updated At']
     : '';
   const postPublishSnapshot = useMemo(() => getUsedGearWorkflowPostPublishSnapshot(workflowRecord), [workflowRecord]);
-  const relatedGroupSummary = useMemo(() => ({
-    pricedCount: relatedGroupRecords.filter((candidate) => {
-      const value = candidate.fields.Price;
-      return typeof value === 'number' || (typeof value === 'string' && value.trim().length > 0);
-    }).length,
-    offerCount: relatedGroupRecords.filter((candidate) => {
-      const value = candidate.fields['Offer Amount'];
-      return typeof value === 'number' || (typeof value === 'string' && value.trim().length > 0);
-    }).length,
-  }), [relatedGroupRecords]);
-
   useEffect(() => {
     setStaleRecoveryDraftStatus(normalizeStaleRecoveryStatus(staleRecoveryStatus));
     setStaleRecoveryDraftNotes(staleRecoveryNotes);

@@ -23,6 +23,7 @@ export interface CombinedSectionCommonProps {
   listingDurationOptions: ApprovalFormFieldsProps['listingDurationOptions'];
   saving: boolean;
   setFormValue: ApprovalFormFieldsProps['setFormValue'];
+  setDerivedFormValue: ApprovalFormFieldsProps['setDerivedFormValue'];
   writableFieldNames: string[];
   originalFieldValues: Record<string, string>;
 }

@@ -245,8 +245,6 @@ function buildWorkflowDescription(fields: AirtableFields): string {
 
 function buildWorkflowKeyFeaturePairs(fields: AirtableFields): FeaturePair[] {
   return uniqueFeaturePairs([
-    { feature: 'Make', value: getTrimmedFieldValue(fields, 'Make') },
-    { feature: 'Model', value: getTrimmedFieldValue(fields, 'Model') },
     { feature: 'Component Type', value: getTrimmedFieldValue(fields, 'Component Type') },
     {
       feature: 'Cosmetic Notes',
@@ -257,6 +255,22 @@ function buildWorkflowKeyFeaturePairs(fields: AirtableFields): FeaturePair[] {
       value: firstNonEmptyField(fields, ['Internal Inclusion Notes', 'Customer Inclusion Notes']),
     },
   ]);
+}
+
+function buildWorkflowEbayKeyFeaturePairs(fields: AirtableFields): FeaturePair[] {
+  return uniqueFeaturePairs([
+    { feature: 'Make', value: getTrimmedFieldValue(fields, 'Make') },
+    { feature: 'Model', value: getTrimmedFieldValue(fields, 'Model') },
+    ...buildWorkflowKeyFeaturePairs(fields),
+  ]);
+}
+
+function isEbaySpecificKeyFeatureFieldName(fieldName: string): boolean {
+  const normalized = normalizeFieldName(fieldName);
+  return normalized.includes('ebay body key features')
+    || normalized.includes('ebay listing key features')
+    || normalized.includes('ebay_body_key_features')
+    || normalized.includes('ebay_listing_key_features');
 }
 
 function buildWorkflowTestingNotesText(fields: AirtableFields): string {
@@ -371,18 +385,39 @@ export function applyWorkflowListingPrefills(
   applyTextPrefill(values, kinds, descriptionFieldNames, existingDescription || buildWorkflowDescription(fields));
 
   const keyFeatureFieldNames = findMatchingFieldNames(values, KEY_FEATURE_FIELD_CANDIDATES);
-  const existingKeyFeatures = firstNonEmptyFormValue(values, KEY_FEATURE_FIELD_CANDIDATES);
+  const genericKeyFeatureFieldNames = keyFeatureFieldNames.filter((fieldName) => !isEbaySpecificKeyFeatureFieldName(fieldName));
+  const ebayKeyFeatureFieldNames = keyFeatureFieldNames.filter((fieldName) => isEbaySpecificKeyFeatureFieldName(fieldName));
+  const existingGenericKeyFeatures = genericKeyFeatureFieldNames.length > 0
+    ? firstNonEmptyFormValue(values, genericKeyFeatureFieldNames)
+    : '';
+  const existingEbayKeyFeatures = ebayKeyFeatureFieldNames.length > 0
+    ? firstNonEmptyFormValue(values, ebayKeyFeatureFieldNames)
+    : '';
   const workflowKeyFeaturePairs = buildWorkflowKeyFeaturePairs(fields);
+  const workflowEbayKeyFeaturePairs = buildWorkflowEbayKeyFeaturePairs(fields);
+
   applyPairPrefill(
     values,
     kinds,
-    keyFeatureFieldNames,
+    genericKeyFeatureFieldNames,
     workflowKeyFeaturePairs.length > 0
       ? workflowKeyFeaturePairs
-      : existingKeyFeatures
-      ? uniqueFeaturePairs(parseKeyFeatureEntries(existingKeyFeatures))
+      : (existingGenericKeyFeatures || existingEbayKeyFeatures)
+      ? uniqueFeaturePairs(parseKeyFeatureEntries(existingGenericKeyFeatures || existingEbayKeyFeatures))
       : [],
     workflowKeyFeaturePairs.length > 0,
+  );
+
+  applyPairPrefill(
+    values,
+    kinds,
+    ebayKeyFeatureFieldNames,
+    workflowEbayKeyFeaturePairs.length > 0
+      ? workflowEbayKeyFeaturePairs
+      : existingEbayKeyFeatures
+      ? uniqueFeaturePairs(parseKeyFeatureEntries(existingEbayKeyFeatures))
+      : [],
+    workflowEbayKeyFeaturePairs.length > 0,
   );
 
   const testingNotesFieldNames = findMatchingFieldNames(values, TESTING_NOTES_FIELD_CANDIDATES);

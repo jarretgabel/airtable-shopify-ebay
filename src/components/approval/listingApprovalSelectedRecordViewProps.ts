@@ -150,6 +150,7 @@ export function buildListingApprovalSelectedRecordViewProps({
       listingDurationOptions,
       saving,
       setFormValue,
+      setDerivedFormValue,
       titleFieldName,
       combinedDescriptionFieldName,
       combinedSharedFieldNames,

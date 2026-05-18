@@ -67,6 +67,8 @@ export function useListingApprovalDerivedState({
     combinedEbayTestingNotesFieldName: combinedFieldState.combinedEbayTestingNotesFieldName,
     combinedEbayTitleFieldName: combinedFieldState.combinedEbayTitleFieldName,
     combinedDescriptionFieldName: combinedFieldState.combinedDescriptionFieldName,
+    combinedMakeFieldName: combinedFieldState.combinedMakeFieldName,
+    combinedModelFieldName: combinedFieldState.combinedModelFieldName,
     combinedSharedKeyFeaturesFieldName: combinedFieldState.combinedSharedKeyFeaturesFieldName,
   });
 

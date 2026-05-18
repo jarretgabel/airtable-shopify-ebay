@@ -14,7 +14,6 @@ interface ListingApprovalSelectedRecordViewProps {
   error: string | null;
   onBackToList: () => void;
   backToListLabel?: string;
-  secondaryActionButtonClass: string;
   errorSurfaceClass: string;
   workflowSummary?: ReactNode;
   workflowDetails?: ReactNode;

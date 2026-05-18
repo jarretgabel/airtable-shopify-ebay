@@ -392,6 +392,18 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Dust cover, headshell, power cable</li><li><strong>Finish:</strong> Silver</li></ul>');
   });
 
+  it('prepends Make and Model to Shopify key features without duplicating manual rows', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Make Model Product',
+      Description: 'Pulled from Airtable description field.',
+      Make: 'Marantz',
+      Model: '2270',
+      'Key Features': 'Key,Value\nMake,Wrong Make\nModel,Wrong Model\nIncludes,Original box',
+    });
+
+    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p>\n<ul><li><strong>Make:</strong> Marantz</li><li><strong>Model:</strong> 2270</li><li><strong>Includes:</strong> Original box</li></ul>');
+  });
+
   it('sends only the last segment of the Type breadcrumb as Shopify product_type', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Type Leaf Product',

@@ -622,6 +622,75 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     expect(keyFeaturesEditor.compareDocumentPosition(description) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it('passes guidance that Make and Model are automatic for editable eBay key features', async () => {
+    shippingEditorsSpy.mockReset();
+    keyFeaturesEditorSpy.mockReset();
+    testingNotesTextareaEditorSpy.mockReset();
+
+    render(
+      <ApprovalFormFieldsSupplementalEditors
+        imageUrlSourceField={undefined}
+        useCombinedImageAltEditor={false}
+        combinedImageEditorValue=""
+        imageAltTextSourceField={undefined}
+        shopifyImagePayloadFieldName={undefined}
+        workflowImageAttachments={[]}
+        selectedWorkflowImageUrls={[]}
+        formValues={{
+          'eBay Body Key Features JSON': '[]',
+        }}
+        setFormValue={vi.fn()}
+        saving={false}
+        isReadOnlyApprovalField={() => false}
+        workflowManagedListingContent={false}
+        testingSectionFields={[]}
+        renderSpecialLabel={(label) => <span>{label}</span>}
+        inputBaseClass="input"
+        isEbayApprovalForm={true}
+        shopifyKeyFeaturesFieldName={undefined}
+        shopifyKeyFeaturesSyncFieldNames={[]}
+        ebayKeyFeaturesFieldName="eBay Body Key Features JSON"
+        ebayKeyFeaturesSyncFieldNames={[]}
+        ebayTestingNotesFieldName={undefined}
+        ebayAttributesFieldName={undefined}
+        ebayAttributesSyncFieldNames={[]}
+        ebayDomesticShippingFeesFieldName={undefined}
+        ebayInternationalShippingFeesFieldName={undefined}
+        ebayDomesticShippingFlatFeeFieldName=""
+        ebayInternationalShippingFlatFeeFieldName=""
+        hasEbayShippingServicesEditor={false}
+        domesticService1FieldName={undefined}
+        domesticService2FieldName={undefined}
+        internationalService1FieldName={undefined}
+        internationalService2FieldName={undefined}
+        hasShopifyTagEditor={false}
+        shopifyTagValues={[]}
+        setShopifyTagValues={vi.fn()}
+        hasShopifyCollectionEditor={false}
+        shopifyCollectionsFieldName="Collections"
+        effectiveShopifyCollectionIds={[]}
+        effectiveCollectionEditorLabelsById={{}}
+        setShopifyCollectionIds={vi.fn()}
+        hasEbayCategoryEditor={false}
+        effectiveEbayCategoriesFieldName="categories"
+        ebayMarketplaceId="EBAY_US"
+        ebaySelectedCategoryDisplayValues={[]}
+        normalizedEbayCategoryLabelsById={{}}
+        setEbayCategoryIds={vi.fn()}
+        hasSecondaryEbayCategory={false}
+        renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
+        getSelectClassName={() => 'select'}
+        getInputClassName={() => 'input'}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(keyFeaturesEditorSpy).toHaveBeenCalledWith(expect.objectContaining({
+        helperText: 'Shared buyer-facing highlights for the eBay body. Make and Model are added automatically to the top details table, so do not enter them here.',
+      }));
+    });
+  });
+
   it('renders the shared Testing section on single-channel listing editors and suppresses the standalone testing-notes editor', () => {
     shippingEditorsSpy.mockReset();
     keyFeaturesEditorSpy.mockReset();

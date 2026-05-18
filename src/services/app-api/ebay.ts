@@ -198,6 +198,8 @@ export async function getEbayApprovalPreview(
     description: string;
     keyFeatures: string;
     testingNotes?: string;
+    make?: string;
+    model?: string;
     fieldName?: string;
   },
 ): Promise<EbayApprovalPreviewResult> {

@@ -52,6 +52,23 @@ function isListingImageSupportField(fieldName: string): boolean {
     || isShopifyImagePayloadField(fieldName);
 }
 
+function resolveComponentTypeValue(
+  formValues: Record<string, string>,
+  recordFields: Record<string, unknown>,
+): string {
+  const formEntry = Object.entries(formValues).find(([fieldName]) => normalizeSharedFieldName(fieldName) === 'component type');
+  if (formEntry?.[1]?.trim()) return formEntry[1].trim();
+
+  const recordEntry = Object.entries(recordFields).find(([fieldName]) => normalizeSharedFieldName(fieldName) === 'component type');
+  const rawValue = recordEntry?.[1];
+  if (typeof rawValue === 'string') return rawValue.trim();
+  if (Array.isArray(rawValue)) {
+    return rawValue.map((value) => String(value).trim()).filter(Boolean).join(', ');
+  }
+
+  return '';
+}
+
 export function ListingApprovalCombinedSharedSection({
   sectionId,
   selectedRecord,
@@ -62,6 +79,7 @@ export function ListingApprovalCombinedSharedSection({
   listingDurationOptions,
   saving,
   setFormValue,
+  setDerivedFormValue,
   titleFieldName,
   writableFieldNames,
   originalFieldValues,
@@ -91,6 +109,7 @@ export function ListingApprovalCombinedSharedSection({
   const editableSharedFieldNames = standardSharedFieldNames.filter((fieldName) => !isSourceManagedCombinedField(fieldName));
   const imageSupportSharedFieldNames = editableSharedFieldNames.filter(isListingImageSupportField);
   const postKeyFeaturesSharedFieldNames = editableSharedFieldNames.filter((fieldName) => !isListingImageSupportField(fieldName));
+  const componentTypeValue = resolveComponentTypeValue(formValues, selectedRecord.fields);
 
   return (
     <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
@@ -118,6 +137,7 @@ export function ListingApprovalCombinedSharedSection({
             listingDurationOptions={listingDurationOptions}
             saving={saving}
             setFormValue={setFormValue}
+            setDerivedFormValue={setDerivedFormValue}
             suppressImageScalarFields
             originalFieldValues={originalFieldValues}
           />
@@ -153,6 +173,7 @@ export function ListingApprovalCombinedSharedSection({
             listingDurationOptions={listingDurationOptions}
             saving={saving}
             setFormValue={setFormValue}
+            setDerivedFormValue={setDerivedFormValue}
             suppressImageScalarFields
             originalFieldValues={originalFieldValues}
           />
@@ -166,6 +187,13 @@ export function ListingApprovalCombinedSharedSection({
               setFormValue={setFormValue}
               syncFieldNames={combinedSharedKeyFeaturesSyncFieldNames}
               disabled={saving}
+              componentTypeValue={componentTypeValue}
+              helperNotice={(
+                <p className="m-0 leading-5">
+                  <span className="font-semibold uppercase tracking-[0.08em]">Automatic Mapping</span>{' '}
+                  Make and Model come from the listing record automatically. Do not add them again in key features.
+                </p>
+              )}
             />
           </Suspense>
         )}
@@ -188,6 +216,7 @@ export function ListingApprovalCombinedSharedSection({
             listingDurationOptions={listingDurationOptions}
             saving={saving}
             setFormValue={setFormValue}
+            setDerivedFormValue={setDerivedFormValue}
             suppressImageScalarFields
             originalFieldValues={originalFieldValues}
           />

@@ -180,8 +180,6 @@ function buildSampleRecords() {
       title: 'Workflow Prefill Rich Testing Sample',
       description: 'Sample row with richer testing-form data so listing pages can validate testing-detail and testing-note prefills without manual editing.',
       keyFeatures: [
-        'Make,Marantz',
-        'Model,2270',
         'Component Type,Stereo Receiver',
         'Cosmetic Notes,Minor veneer wear at the rear-left corner and light marks on the top grille.',
         'Includes,Original wood case, reproduction manual, and power cord.',

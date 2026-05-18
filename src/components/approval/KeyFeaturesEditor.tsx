@@ -14,13 +14,164 @@ interface KeyFeaturesEditorProps {
   disabled?: boolean;
   label?: string;
   helperText?: string;
+  helperNotice?: ReactNode;
   headerAction?: ReactNode;
+  componentTypeValue?: string;
+}
+
+type KeyFeaturePresetId =
+  | 'general-component'
+  | 'receiver-amplifier'
+  | 'turntable'
+  | 'speaker'
+  | 'cable'
+  | 'cd-media'
+  | 'dac-streamer'
+  | 'phono-stage';
+
+interface KeyFeaturePreset {
+  id: KeyFeaturePresetId;
+  label: string;
+  rows: ReadonlyArray<KeyFeatureRow>;
 }
 
 const inputClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
 const iconButtonClass = 'flex h-7 w-7 items-center justify-center rounded-md border border-[var(--line)] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-45';
 const dragHandleClass = 'flex h-7 w-7 cursor-grab items-center justify-center rounded-md border border-[var(--line)] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] active:cursor-grabbing';
+
+const KEY_FEATURE_PRESETS: ReadonlyArray<KeyFeaturePreset> = [
+  {
+    id: 'general-component',
+    label: 'General Component',
+    rows: [
+      { feature: 'Condition', value: '' },
+      { feature: 'Includes', value: '' },
+      { feature: 'Service History', value: '' },
+      { feature: 'Best For', value: '' },
+    ],
+  },
+  {
+    id: 'receiver-amplifier',
+    label: 'Receiver / Amplifier',
+    rows: [
+      { feature: 'Power Output', value: '' },
+      { feature: 'Inputs', value: '' },
+      { feature: 'Phono Stage', value: '' },
+      { feature: 'Includes', value: '' },
+    ],
+  },
+  {
+    id: 'turntable',
+    label: 'Turntable',
+    rows: [
+      { feature: 'Cartridge', value: '' },
+      { feature: 'Tonearm', value: '' },
+      { feature: 'Dust Cover', value: '' },
+      { feature: 'Includes', value: '' },
+    ],
+  },
+  {
+    id: 'speaker',
+    label: 'Speaker',
+    rows: [
+      { feature: 'Driver Complement', value: '' },
+      { feature: 'Impedance', value: '' },
+      { feature: 'Sensitivity', value: '' },
+      { feature: 'Finish', value: '' },
+    ],
+  },
+  {
+    id: 'cable',
+    label: 'Cable',
+    rows: [
+      { feature: 'Cable Type', value: '' },
+      { feature: 'Termination', value: '' },
+      { feature: 'Length', value: '' },
+      { feature: 'Shielding', value: '' },
+    ],
+  },
+  {
+    id: 'cd-media',
+    label: 'CD / Media',
+    rows: [
+      { feature: 'Artist', value: '' },
+      { feature: 'Release Title', value: '' },
+      { feature: 'Format', value: '' },
+      { feature: 'Condition', value: '' },
+    ],
+  },
+  {
+    id: 'dac-streamer',
+    label: 'DAC / Streamer',
+    rows: [
+      { feature: 'Inputs', value: '' },
+      { feature: 'DAC Chip', value: '' },
+      { feature: 'Streaming Support', value: '' },
+      { feature: 'Includes', value: '' },
+    ],
+  },
+  {
+    id: 'phono-stage',
+    label: 'Phono Stage',
+    rows: [
+      { feature: 'MM / MC Support', value: '' },
+      { feature: 'Gain Options', value: '' },
+      { feature: 'Loading Options', value: '' },
+      { feature: 'Includes', value: '' },
+    ],
+  },
+] as const;
+
+function normalizeFeatureKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
+}
+
+function inferPresetIdFromComponentType(componentTypeValue: string): KeyFeaturePresetId {
+  const normalized = componentTypeValue.trim().toLowerCase();
+
+  if (
+    normalized.includes('dac')
+    || normalized.includes('streamer')
+    || normalized.includes('network player')
+    || normalized.includes('digital audio')
+  ) {
+    return 'dac-streamer';
+  }
+
+  if (normalized.includes('phono stage') || normalized.includes('phono preamp')) {
+    return 'phono-stage';
+  }
+
+  if (normalized.includes('speaker') || normalized.includes('subwoofer') || normalized.includes('monitor') || normalized.includes('soundbar')) {
+    return 'speaker';
+  }
+
+  if (normalized.includes('cable') || normalized.includes('interconnect') || normalized.includes('power cord') || normalized.includes('speaker wire')) {
+    return 'cable';
+  }
+
+  if (normalized.includes('turntable')) {
+    return 'turntable';
+  }
+
+  if (normalized.includes('cd') || normalized.includes('disc') || normalized.includes('media')) {
+    return 'cd-media';
+  }
+
+  if (
+    normalized.includes('receiver')
+    || normalized.includes('amplifier')
+    || normalized.includes('integrated')
+    || normalized.includes('preamp')
+    || normalized.includes('power amp')
+    || normalized.includes('phono')
+  ) {
+    return 'receiver-amplifier';
+  }
+
+  return 'general-component';
+}
 
 function parseKeyFeatures(raw: string): KeyFeatureRow[] {
   const rows = parseKeyFeatureEntries(raw).map((entry) => ({
@@ -68,14 +219,21 @@ export function KeyFeaturesEditor({
   disabled = false,
   label = 'Key Features',
   helperText = 'Free-form feature/value pairs for the listing highlights shown to buyers.',
+  helperNotice,
   headerAction,
+  componentTypeValue,
 }: KeyFeaturesEditorProps) {
   const [rows, setRows] = useState<KeyFeatureRow[]>(() => parseKeyFeatures(keyFeaturesValue));
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [selectedPresetId, setSelectedPresetId] = useState<KeyFeaturePresetId | ''>(componentTypeValue ? inferPresetIdFromComponentType(componentTypeValue) : '');
 
   useEffect(() => {
     setRows(parseKeyFeatures(keyFeaturesValue));
   }, [keyFeaturesValue]);
+
+  useEffect(() => {
+    setSelectedPresetId(componentTypeValue ? inferPresetIdFromComponentType(componentTypeValue) : '');
+  }, [componentTypeValue]);
 
   function commitRows(nextRows: KeyFeatureRow[]) {
     setRows(nextRows);
@@ -93,6 +251,25 @@ export function KeyFeaturesEditor({
 
   function addRow() {
     commitRows([...rows, { feature: '', value: '' }]);
+  }
+
+  function applyPreset() {
+    if (!selectedPresetId) return;
+
+    const preset = KEY_FEATURE_PRESETS.find((candidate) => candidate.id === selectedPresetId);
+    if (!preset) return;
+
+    const nextRows = [...rows];
+    const existingFeatureKeys = new Set(nextRows.map((row) => normalizeFeatureKey(row.feature)).filter(Boolean));
+
+    preset.rows.forEach((row) => {
+      const normalizedFeature = normalizeFeatureKey(row.feature);
+      if (existingFeatureKeys.has(normalizedFeature)) return;
+      nextRows.push({ ...row });
+      existingFeatureKeys.add(normalizedFeature);
+    });
+
+    commitRows(nextRows);
   }
 
   function removeRow(index: number) {
@@ -138,6 +315,46 @@ export function KeyFeaturesEditor({
         <p className="m-0 text-[0.74rem] leading-5 text-[var(--muted)]">
           {helperText}
         </p>
+        {helperNotice ? (
+          <div className="rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-100">
+            {helperNotice}
+          </div>
+        ) : null}
+        {componentTypeValue ? (
+          <div className="rounded-lg border border-[var(--line)] bg-[var(--bg)] p-3">
+            <div className="space-y-1">
+              <span className="text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Suggested Defaults</span>
+              <p className="m-0 text-xs text-[var(--muted)]">
+                Suggested from component type: <span className="font-medium text-[var(--ink)]">{componentTypeValue}</span>
+              </p>
+            </div>
+            <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+              <label className="flex flex-col gap-2">
+                <span className="sr-only">Select key feature preset</span>
+                <select
+                  className={`${inputClass} appearance-none pr-12`}
+                  value={selectedPresetId}
+                  onChange={(event) => setSelectedPresetId(event.target.value as KeyFeaturePresetId | '')}
+                  disabled={disabled}
+                  aria-label="Select key feature preset"
+                >
+                  <option value="">Select a feature preset</option>
+                  {KEY_FEATURE_PRESETS.map((preset) => (
+                    <option key={preset.id} value={preset.id}>{preset.label}</option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={applyPreset}
+                disabled={disabled || !selectedPresetId}
+                className="rounded-xl border border-[var(--line)] px-3 py-2 text-sm font-medium text-[var(--ink)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Add defaults
+              </button>
+            </div>
+          </div>
+        ) : null}
         {rows.map((row, index) => (
           <div
             key={index}

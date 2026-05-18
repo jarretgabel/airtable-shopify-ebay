@@ -1,4 +1,4 @@
-import { buildShopifyBodyHtml, formatKeyFeatureHtml } from '@/services/shopifyBodyHtml';
+import { buildShopifyBodyHtml, formatKeyFeatureHtml, parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
 import { SHOPIFY_DEFAULT_VENDOR } from '@/services/shopifyDraftFromAirtable/shared';
 import {
   ApprovalFieldMap,
@@ -14,6 +14,26 @@ interface ShopifyBodyDynamicTokenSpec {
   token: string;
   candidates: string[];
   formatter?: (value: string) => string;
+}
+
+function normalizeFeatureName(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
+}
+
+function mergeShopifyKeyFeatureEntries(raw: string, makeValue: string, modelValue: string): string {
+  const supplementalEntries = [
+    makeValue.trim() ? { feature: 'Make', value: makeValue.trim() } : null,
+    modelValue.trim() ? { feature: 'Model', value: modelValue.trim() } : null,
+  ].filter((entry): entry is { feature: string; value: string } => entry !== null);
+
+  if (supplementalEntries.length === 0) return raw;
+
+  const filteredEntries = parseKeyFeatureEntries(raw).filter((entry) => {
+    const normalized = normalizeFeatureName(entry.feature);
+    return normalized !== 'make' && normalized !== 'model';
+  });
+
+  return JSON.stringify([...supplementalEntries, ...filteredEntries]);
 }
 
 function formatBulletList(value: string): string {
@@ -148,13 +168,14 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
     'shopify_body_key_features',
     'shopify_rest_body_key_features',
   ]);
+  const mergedKeyFeatures = mergeShopifyKeyFeatureEntries(rawKeyFeatures, getField(fields, ['Make']), getField(fields, ['Model']));
 
   const tokenValues = new Map<string, string>();
   SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.forEach((spec) => {
     const rawValue = spec.token === 'vendor'
       ? SHOPIFY_DEFAULT_VENDOR
       : spec.token === 'body_key_features'
-        ? getFieldPreservingStructuredValues(fields, spec.candidates)
+        ? mergedKeyFeatures
         : getField(fields, spec.candidates);
     tokenValues.set(spec.token, spec.formatter ? spec.formatter(rawValue) : rawValue);
   });
@@ -164,16 +185,16 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   const hasEditableBodyFields = hasAnyField(fields, bodyDescriptionCandidates) || hasAnyField(fields, bodyKeyFeaturesCandidates);
 
   if (!explicitTemplate && (bodyDescription || bodyKeyFeatures)) {
-    return buildShopifyBodyHtml(bodyDescription, rawKeyFeatures, fallbackBodyHtml);
+    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, fallbackBodyHtml);
   }
 
   if (!explicitTemplate) {
     if (!hasEditableBodyFields) return fallbackBodyHtml;
-    return buildShopifyBodyHtml(bodyDescription, rawKeyFeatures, fallbackBodyHtml);
+    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, fallbackBodyHtml);
   }
 
   if (bodyDescription || bodyKeyFeatures) {
-    return buildShopifyBodyHtml(bodyDescription, rawKeyFeatures, explicitTemplate);
+    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, explicitTemplate);
   }
 
   return template.replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, (_match, tokenName: string) => {

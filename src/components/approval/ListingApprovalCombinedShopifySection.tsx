@@ -29,6 +29,7 @@ export function ListingApprovalCombinedShopifySection({
   listingDurationOptions,
   saving,
   setFormValue,
+  setDerivedFormValue,
   writableFieldNames,
   originalFieldValues,
   combinedShopifyOnlyFieldNames,
@@ -53,6 +54,7 @@ export function ListingApprovalCombinedShopifySection({
 }: ListingApprovalCombinedShopifySectionProps) {
   const standardShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => !isShopifyAdvancedOptionField(fieldName));
   const advancedShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => isShopifyAdvancedOptionField(fieldName));
+  const displayedShopifyBodyHtml = currentPageShopifyBodyHtml || combinedShopifyBodyHtmlValue;
 
   return (
     <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
@@ -79,6 +81,7 @@ export function ListingApprovalCombinedShopifySection({
             listingDurationOptions={listingDurationOptions}
             saving={saving}
             setFormValue={setFormValue}
+            setDerivedFormValue={setDerivedFormValue}
             suppressImageScalarFields
             originalFieldValues={originalFieldValues}
             normalizedBodyHtmlPreview={currentPageShopifyBodyHtml}
@@ -110,6 +113,7 @@ export function ListingApprovalCombinedShopifySection({
                 listingDurationOptions={listingDurationOptions}
                 saving={saving}
                 setFormValue={setFormValue}
+                setDerivedFormValue={setDerivedFormValue}
                 suppressImageScalarFields
                 originalFieldValues={originalFieldValues}
                 normalizedBodyHtmlPreview={currentPageShopifyBodyHtml}
@@ -126,18 +130,18 @@ export function ListingApprovalCombinedShopifySection({
         <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
           <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify Body (HTML)</summary>
           <div className="border-t border-[var(--line)] px-3 py-3">
-            <p className="m-0 mb-2 text-xs text-[var(--muted)]">Read-only HTML from Airtable field.</p>
+            <p className="m-0 mb-2 text-xs text-[var(--muted)]">Generated from the current Shopify body preview when available, otherwise falls back to the saved Airtable field.</p>
             {!combinedShopifyBodyHtmlFieldName && (
               <p className="m-0 mb-2 text-xs text-[var(--muted)]">No Shopify Body HTML field was found for this record.</p>
             )}
-            <pre className="m-0 max-h-[260px] overflow-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{combinedShopifyBodyHtmlValue}</pre>
+            <pre className="m-0 max-h-[260px] overflow-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{displayedShopifyBodyHtml}</pre>
           </div>
         </details>
 
         <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
           <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify Body Rendered</summary>
           <div className="border-t border-[var(--line)] px-3 py-3">
-            <BodyHtmlPreview value={combinedShopifyBodyHtmlValue} previewOnly />
+            <BodyHtmlPreview value={displayedShopifyBodyHtml} previewOnly />
           </div>
         </details>
 

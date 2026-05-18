@@ -238,6 +238,8 @@ describe('app-api ebay', () => {
         title: 'Amp',
         description: 'Great amp',
         keyFeatures: 'Power: 100W',
+        make: 'McIntosh',
+        model: 'MC275',
       },
     );
 
@@ -255,6 +257,8 @@ describe('app-api ebay', () => {
           title: 'Amp',
           description: 'Great amp',
           keyFeatures: 'Power: 100W',
+          make: 'McIntosh',
+          model: 'MC275',
         },
       }),
     });

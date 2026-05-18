@@ -167,8 +167,17 @@ vi.mock('@/stores/approvalStore', async () => {
     listingFormatOptions: ['FIXED_PRICE'],
     listingDurationOptions: ['GTC'],
     formValues: {},
+    initialFormValues: {},
     fieldKinds: {},
     setFormValue: (fieldName, value) => {
+      approvalStoreSetState?.((state: ApprovalStore) => ({
+        formValues: {
+          ...state.formValues,
+          [fieldName]: value,
+        },
+      }));
+    },
+    setDerivedFormValue: (fieldName, value) => {
       approvalStoreSetState?.((state: ApprovalStore) => ({
         formValues: {
           ...state.formValues,
@@ -179,6 +188,7 @@ vi.mock('@/stores/approvalStore', async () => {
     hydrateForm: (nextRecord, allFieldNames) => {
       approvalStoreSetState?.({
         formValues: Object.fromEntries(allFieldNames.map((fieldName) => [fieldName, String(nextRecord.fields[fieldName] ?? '')])),
+        initialFormValues: Object.fromEntries(allFieldNames.map((fieldName) => [fieldName, String(nextRecord.fields[fieldName] ?? '')])),
         fieldKinds: Object.fromEntries(allFieldNames.map((fieldName) => [fieldName, 'text'])),
       });
     },

@@ -32,6 +32,7 @@ export function ListingApprovalCombinedEbaySection({
   listingDurationOptions,
   saving,
   setFormValue,
+  setDerivedFormValue,
   writableFieldNames,
   originalFieldValues,
   combinedEbayOnlyFieldNames,
@@ -73,6 +74,7 @@ export function ListingApprovalCombinedEbaySection({
           listingDurationOptions={listingDurationOptions}
           saving={saving}
           setFormValue={setFormValue}
+          setDerivedFormValue={setDerivedFormValue}
           suppressImageScalarFields
           originalFieldValues={originalFieldValues}
           normalizedBodyHtmlPreview={combinedEbayGeneratedBodyHtml}
@@ -100,6 +102,7 @@ export function ListingApprovalCombinedEbaySection({
           listingDurationOptions={listingDurationOptions}
           saving={saving}
           setFormValue={setFormValue}
+          setDerivedFormValue={setDerivedFormValue}
           suppressImageScalarFields
           originalFieldValues={originalFieldValues}
           normalizedBodyHtmlPreview={combinedEbayGeneratedBodyHtml}

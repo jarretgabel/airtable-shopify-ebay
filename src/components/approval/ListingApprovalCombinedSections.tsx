@@ -27,6 +27,7 @@ export function ListingApprovalCombinedSections({
   listingDurationOptions,
   saving,
   setFormValue,
+  setDerivedFormValue,
   titleFieldName,
   combinedDescriptionFieldName,
   combinedSharedFieldNames,
@@ -86,6 +87,7 @@ export function ListingApprovalCombinedSections({
         listingDurationOptions={listingDurationOptions}
         saving={saving}
         setFormValue={setFormValue}
+        setDerivedFormValue={setDerivedFormValue}
         writableFieldNames={writableFieldNames}
         originalFieldValues={originalFieldValues}
         combinedSharedFieldNames={combinedSharedFieldNames}
@@ -104,6 +106,7 @@ export function ListingApprovalCombinedSections({
         listingDurationOptions={listingDurationOptions}
         saving={saving}
         setFormValue={setFormValue}
+        setDerivedFormValue={setDerivedFormValue}
         titleFieldName={titleFieldName}
         writableFieldNames={writableFieldNames}
         originalFieldValues={originalFieldValues}
@@ -130,6 +133,7 @@ export function ListingApprovalCombinedSections({
         listingDurationOptions={listingDurationOptions}
         saving={saving}
         setFormValue={setFormValue}
+        setDerivedFormValue={setDerivedFormValue}
         writableFieldNames={writableFieldNames}
         originalFieldValues={originalFieldValues}
         combinedShopifyOnlyFieldNames={combinedShopifyOnlyFieldNames}
@@ -163,6 +167,7 @@ export function ListingApprovalCombinedSections({
         listingDurationOptions={listingDurationOptions}
         saving={saving}
         setFormValue={setFormValue}
+        setDerivedFormValue={setDerivedFormValue}
         writableFieldNames={writableFieldNames}
         originalFieldValues={originalFieldValues}
         combinedEbayOnlyFieldNames={combinedEbayOnlyFieldNames}

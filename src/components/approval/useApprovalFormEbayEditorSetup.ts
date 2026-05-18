@@ -52,7 +52,7 @@ export function useApprovalFormEbayEditorSetup({
   writableFieldNames,
   formValues,
   originalFieldValues,
-  setFormValue,
+  setFormValue: _setFormValue,
   setDerivedFormValue,
   selectedEbayTemplateId,
   onEbayTemplateIdChange,

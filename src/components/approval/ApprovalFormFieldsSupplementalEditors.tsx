@@ -266,7 +266,7 @@ export function ApprovalFormFieldsSupplementalEditors({
             disabled={saving || workflowManagedListingContent}
             helperText={workflowManagedListingContent
               ? 'Read-only listing details derived from the Testing form and workflow fields. Update the Testing form to change these values.'
-              : undefined}
+              : 'Shared buyer-facing highlights for the eBay body. Make and Model are added automatically to the top details table, so do not enter them here.'}
             headerAction={workflowHeaderAction}
           />
         </Suspense>

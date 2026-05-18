@@ -24,6 +24,22 @@ function renderCombinedFieldState(record: AirtableRecord) {
     isCombinedApproval: true,
     formValues: Object.fromEntries(Object.keys(record.fields).map((fieldName) => [fieldName, String(record.fields[fieldName] ?? '')])),
     setFormValue: vi.fn(),
+    setDerivedFormValue: vi.fn(),
+    selectedEbayTemplateId: 'classic',
+    setSelectedEbayTemplateId: vi.fn(),
+  }));
+}
+
+function renderCombinedFieldStateWithFormValues(record: AirtableRecord, formValues: Record<string, string>) {
+  return renderHook(() => useListingApprovalCombinedFieldState({
+    records: [record],
+    selectedRecordId: record.id,
+    allFieldNames: Object.keys(record.fields),
+    approvalChannel: 'combined',
+    isCombinedApproval: true,
+    formValues,
+    setFormValue: vi.fn(),
+    setDerivedFormValue: vi.fn(),
     selectedEbayTemplateId: 'classic',
     setSelectedEbayTemplateId: vi.fn(),
   }));
@@ -111,6 +127,28 @@ describe('useListingApprovalCombinedFieldState', () => {
       'eBay Listing ID',
     ]));
     expect(result.current.combinedEbayOnlyFieldNames).not.toEqual(expect.arrayContaining(['eBay Offer ID', 'eBay Listing ID']));
+  });
+
+  it('discovers hydrated make and model fields from form values even when the selected queue record is stale', () => {
+    const record = buildRecord({
+      Title: 'Marantz 2270',
+      Description: 'Receiver ready for listing.',
+      'Key Features': 'Component Type,Stereo Receiver',
+      'Testing Notes': 'Bench tested.',
+    });
+
+    const { result } = renderCombinedFieldStateWithFormValues(record, {
+      Title: 'Marantz 2270',
+      Description: 'Receiver ready for listing.',
+      Make: 'Marantz',
+      Model: '2270',
+      'Key Features': 'Component Type,Stereo Receiver',
+      'Testing Notes': 'Bench tested.',
+    });
+
+    expect(result.current.combinedMakeFieldName).toBe('Make');
+    expect(result.current.combinedModelFieldName).toBe('Model');
+    expect(result.current.combinedSharedFieldNames).toEqual(expect.arrayContaining(['Make', 'Model']));
   });
 
   it('routes Shopify tags into Shopify-only fields and keeps Testing Notes out of the combined eBay-only group', () => {

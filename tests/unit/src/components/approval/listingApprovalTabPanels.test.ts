@@ -61,6 +61,7 @@ function createBaseParams(selectedRecord: AirtableRecord | null): Parameters<typ
     listingDurationOptions: [],
     saving: false,
     setFormValue: vi.fn(),
+    setDerivedFormValue: vi.fn(),
     currentPageShopifyBodyHtml: '',
     currentPageShopifyTagValues: [],
     currentPageShopifyCollectionIds: [],

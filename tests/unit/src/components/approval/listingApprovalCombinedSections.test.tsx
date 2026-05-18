@@ -60,6 +60,7 @@ function buildRecord(): AirtableRecord {
     fields: {
       Title: 'McIntosh MA6900',
       Description: 'Original description',
+      'Component Type': 'Stereo Receiver',
       Category: 'Amplifiers > Integrated Amplifiers',
       Categories: '3276',
       Price: '3499.99',
@@ -84,6 +85,7 @@ function buildCommonProps() {
     approvedFieldName: 'Approved',
     formValues: {
       Description: 'Combined description',
+      'Component Type': 'Stereo Receiver',
       'Key Features': 'Feature one',
       'Testing Notes': 'Bench tested',
       Manual: 'Included',
@@ -101,6 +103,7 @@ function buildCommonProps() {
     listingDurationOptions: ['GTC'],
     saving: false,
     setFormValue: vi.fn(),
+    setDerivedFormValue: vi.fn(),
     writableFieldNames: ['Title', 'Description', 'Price', 'Key Features', 'Testing Notes', 'Manual', 'Original Box', 'Voltage', 'Remote', 'Power Cable', 'Audiogon Rating', 'Testing Cosmetic Notes'],
     originalFieldValues: {
       Description: 'Original description',
@@ -266,6 +269,22 @@ describe('combined approval sections', () => {
     expect(titleFields.compareDocumentPosition(descriptionLabel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it('prefers the generated Shopify body html in the body html and rendered panels', () => {
+    const props = buildShopifyProps();
+    props.currentPageShopifyBodyHtml = '<p>Generated description</p>\n<h3>Key Features</h3>\n<ul><li><strong>Includes:</strong> Original box</li></ul>';
+    props.combinedShopifyBodyHtmlValue = '<p>Saved Shopify body without features</p>';
+
+    render(<ListingApprovalCombinedShopifySection {...props} />);
+
+    expect(screen.getByText('Shopify Body (HTML)').closest('details')).toHaveTextContent('Generated description');
+    expect(screen.getByText('Shopify Body (HTML)').closest('details')).toHaveTextContent('Key Features');
+    expect(screen.getByText('Shopify Body (HTML)').closest('details')).toHaveTextContent('<strong>Includes:</strong> Original box');
+    expect(screen.queryByText('Saved Shopify body without features')).not.toBeInTheDocument();
+    expect(bodyHtmlPreviewSpy).toHaveBeenCalledWith(expect.objectContaining({
+      value: props.currentPageShopifyBodyHtml,
+    }));
+  });
+
   it('keeps key features editable when workflow-managed source fields are present', async () => {
     const props = buildSharedProps();
     props.originalFieldValues = {
@@ -414,6 +433,14 @@ describe('combined approval sections', () => {
     expect(screen.queryByText(/combined:.*Serial Number/)).not.toBeInTheDocument();
   });
 
+  it('passes component type into the shared key features editor preset flow', () => {
+    render(<ListingApprovalCombinedSharedSection {...buildSharedProps()} />);
+
+    expect(keyFeaturesEditorSpy).toHaveBeenCalledWith(expect.objectContaining({
+      componentTypeValue: 'Stereo Receiver',
+    }));
+  });
+
   it('renders the Shopify drawer with collection editor wiring and preview panels', async () => {
     render(<ListingApprovalCombinedShopifySection {...buildShopifyProps()} />);
 
@@ -430,7 +457,7 @@ describe('combined approval sections', () => {
       approvalChannel: 'shopify',
       allFieldNames: ['Shopify Variant Taxable', 'Shopify Variant Fulfillment', 'Shopify Variant Requires Shipping'],
     }));
-    expect(screen.getByTestId('body-html-preview')).toHaveTextContent('<p>Shopify body</p>');
+    expect(screen.getByTestId('body-html-preview')).toHaveTextContent('<p>Rendered Shopify body</p>');
     await waitFor(() => {
       expect(screen.getByText('Shopify Create Listing API Payload (Exact Request)')).toBeInTheDocument();
     });

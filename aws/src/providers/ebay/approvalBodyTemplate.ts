@@ -1,6 +1,41 @@
 import type { ApprovalEbayBodyPreviewInput as EbayBodyPreviewInput } from '../../shared/contracts/approval.js';
 import { parseDelimitedCells, parseKeyFeatureEntries } from './approvalShared.js';
 
+interface EbayTemplateEntry {
+  feature: string;
+  value: string;
+}
+
+function normalizeTemplateFeatureName(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
+}
+
+function buildMakeModelTemplateEntries(makeValue: string, modelValue: string): EbayTemplateEntry[] {
+  const entries: EbayTemplateEntry[] = [];
+
+  if (makeValue.trim()) {
+    entries.push({ feature: 'Make', value: makeValue.trim() });
+  }
+
+  if (modelValue.trim()) {
+    entries.push({ feature: 'Model', value: modelValue.trim() });
+  }
+
+  return entries;
+}
+
+function mergeTemplateKeyFeatureEntries(rawValue: string, makeValue: string, modelValue: string): string {
+  const supplementalEntries = buildMakeModelTemplateEntries(makeValue, modelValue);
+  if (supplementalEntries.length === 0) return rawValue;
+
+  const filteredEntries = parseTemplateKeyFeatureEntries(rawValue).filter((entry) => {
+    const normalized = normalizeTemplateFeatureName(entry.feature);
+    return normalized !== 'make' && normalized !== 'model';
+  });
+
+  return JSON.stringify([...supplementalEntries, ...filteredEntries]);
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -91,7 +126,7 @@ function applyTableRows(templateHtml: string, options: {
 function normalizeTestingNotesForTemplate(rawValue: string): string {
   const trimmed = rawValue.trim();
   if (!trimmed) return '';
-  if (trimmed.startsWith('[') || trimmed.includes('\t') || trimmed.includes(',') || trimmed.includes(':')) {
+  if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
     return rawValue;
   }
 
@@ -110,7 +145,7 @@ export function buildEbayBodyHtmlFromTemplate(input: EbayBodyPreviewInput): stri
   const withDescription = replaceTemplateToken(withTitle, 'description', input.description);
   const withKeyFeatures = applyTableRows(withDescription, {
     tableId: 'key-features',
-    rawValue: input.keyFeatures,
+    rawValue: mergeTemplateKeyFeatureEntries(input.keyFeatures, input.make ?? '', input.model ?? ''),
   });
 
   return applyTableRows(withKeyFeatures, {

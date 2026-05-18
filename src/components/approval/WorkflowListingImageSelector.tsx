@@ -106,15 +106,9 @@ export function WorkflowListingImageSelector({
             src={attachment.url}
           />
           <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-slate-950/70 px-2 py-1 text-white">
-            <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7">
-              <path d="M6 3H3v3" />
-              <path d="M10 3h3v3" />
-              <path d="M3 10v3h3" />
-              <path d="M13 10v3h-3" />
-              <path d="M3 6l4-4" />
-              <path d="M13 6L9 2" />
-              <path d="M3 10l4 4" />
-              <path d="M13 10l-4 4" />
+            <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="7" cy="7" r="3.75" />
+              <path d="M9.8 9.8 13 13" />
             </svg>
           </span>
         </button>

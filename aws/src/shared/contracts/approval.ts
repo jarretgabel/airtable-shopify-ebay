@@ -18,6 +18,8 @@ export interface ApprovalEbayBodyPreviewInput {
   description: string;
   keyFeatures: string;
   testingNotes?: string;
+  make?: string;
+  model?: string;
   fieldName?: string;
 }
 
@@ -137,7 +139,7 @@ export function validateApprovalEbayBodyPreviewInput(value: unknown): ContractVa
     return failure('bodyPreview must be an object when provided');
   }
 
-  if (!isNonEmptyString(value.templateHtml) || !isOptionalString(value.testingNotes) || !isOptionalString(value.fieldName)) {
+  if (!isNonEmptyString(value.templateHtml) || !isOptionalString(value.testingNotes) || !isOptionalString(value.make) || !isOptionalString(value.model) || !isOptionalString(value.fieldName)) {
     return failure('bodyPreview is invalid');
   }
 
@@ -151,6 +153,8 @@ export function validateApprovalEbayBodyPreviewInput(value: unknown): ContractVa
     description: typeof value.description === 'string' ? value.description : '',
     keyFeatures: typeof value.keyFeatures === 'string' ? value.keyFeatures : '',
     ...(typeof value.testingNotes === 'string' ? { testingNotes: value.testingNotes } : {}),
+    ...(typeof value.make === 'string' ? { make: value.make } : {}),
+    ...(typeof value.model === 'string' ? { model: value.model } : {}),
     ...(typeof value.fieldName === 'string' ? { fieldName: value.fieldName } : {}),
   });
 }

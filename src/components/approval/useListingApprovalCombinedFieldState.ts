@@ -61,7 +61,6 @@ export function useListingApprovalCombinedFieldState({
   approvalChannel,
   isCombinedApproval,
   formValues,
-  setFormValue,
   setDerivedFormValue,
   setSelectedEbayTemplateId,
 }: UseListingApprovalCombinedFieldStateParams) {
@@ -73,8 +72,9 @@ export function useListingApprovalCombinedFieldState({
   const selectedRecordFieldNames = useMemo(() => {
     const names = new Set<string>(allFieldNames);
     Object.keys(selectedRecord?.fields ?? {}).forEach((fieldName) => names.add(fieldName));
+    Object.keys(formValues).forEach((fieldName) => names.add(fieldName));
     return Array.from(names).sort((left, right) => left.localeCompare(right));
-  }, [allFieldNames, selectedRecord]);
+  }, [allFieldNames, formValues, selectedRecord]);
 
   const combinedDescriptionFieldName = useMemo(() => {
     if (!isCombinedApproval) return '';
@@ -154,6 +154,16 @@ export function useListingApprovalCombinedFieldState({
     return selectedRecordFieldNames.find((fieldName) =>
       EBAY_TESTING_NOTES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
     ) ?? '';
+  }, [isCombinedApproval, selectedRecordFieldNames]);
+
+  const combinedMakeFieldName = useMemo(() => {
+    if (!isCombinedApproval) return '';
+    return selectedRecordFieldNames.find((fieldName) => fieldName.trim().toLowerCase() === 'make') ?? '';
+  }, [isCombinedApproval, selectedRecordFieldNames]);
+
+  const combinedModelFieldName = useMemo(() => {
+    if (!isCombinedApproval) return '';
+    return selectedRecordFieldNames.find((fieldName) => fieldName.trim().toLowerCase() === 'model') ?? '';
   }, [isCombinedApproval, selectedRecordFieldNames]);
 
   useListingApprovalCombinedFieldSync({
@@ -275,6 +285,8 @@ export function useListingApprovalCombinedFieldState({
     combinedDescriptionFieldName,
     combinedEbayBodyHtmlFieldName,
     combinedEbayBodyHtmlValue,
+    combinedMakeFieldName,
+    combinedModelFieldName,
     combinedEbayOnlyFieldNames,
     combinedEbayTestingNotesFieldName,
     combinedEbayTitleFieldName,

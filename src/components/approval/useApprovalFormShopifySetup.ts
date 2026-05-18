@@ -35,7 +35,6 @@ export function useApprovalFormShopifySetup({
   normalizedShopifyCollectionIds,
   normalizedShopifyCollectionLabelsById,
   setFormValue,
-  setDerivedFormValue,
 }: UseApprovalFormShopifySetupParams) {
   const isShopifyApprovalForm = approvalChannel === 'shopify';
   const shopifyBodyDescriptionFieldName = isShopifyApprovalForm

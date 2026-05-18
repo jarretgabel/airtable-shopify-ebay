@@ -5,6 +5,35 @@ import type { ShopifyApprovalPreviewResult } from '@/services/app-api/shopify';
 import type { ApprovalFieldKind } from '@/stores/approval/approvalStoreFieldUtils';
 import type { AirtableRecord } from '@/types/airtable';
 
+function toPreviewTextValue(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => String(entry ?? '').trim())
+      .filter(Boolean)
+      .join(', ');
+  }
+  if (value === null || value === undefined) return '';
+  return String(value);
+}
+
+function resolveCombinedPreviewValue(
+  formValues: Record<string, string>,
+  sourceFields: Record<string, unknown> | null | undefined,
+  selectedRecord: AirtableRecord | null,
+  fieldName: string,
+): string {
+  if (!fieldName) return '';
+
+  const formValue = formValues[fieldName] ?? '';
+  if (formValue.trim()) return formValue;
+
+  const sourceValue = toPreviewTextValue(sourceFields?.[fieldName]).trim();
+  if (sourceValue) return sourceValue;
+
+  return toPreviewTextValue(selectedRecord?.fields[fieldName]).trim();
+}
+
 interface UseApprovalPreviewParams {
   approvalChannel: 'shopify' | 'ebay' | 'combined';
   selectedRecord: AirtableRecord | null;
@@ -20,6 +49,8 @@ interface UseApprovalPreviewParams {
   combinedSharedKeyFeaturesFieldName: string;
   combinedEbayTestingNotesFieldName: string;
   combinedEbayBodyHtmlFieldName: string;
+  combinedMakeFieldName: string;
+  combinedModelFieldName: string;
   isRemovedCombinedEbayPriceFieldName: (fieldName: string) => boolean;
   isEbayHandlingCostFieldName: (fieldName: string) => boolean;
   isEbayGlobalShippingFieldName: (fieldName: string) => boolean;
@@ -40,6 +71,8 @@ export function useApprovalPreview({
   combinedSharedKeyFeaturesFieldName,
   combinedEbayTestingNotesFieldName,
   combinedEbayBodyHtmlFieldName,
+  combinedMakeFieldName,
+  combinedModelFieldName,
   isRemovedCombinedEbayPriceFieldName,
   isEbayHandlingCostFieldName,
   isEbayGlobalShippingFieldName,
@@ -89,13 +122,15 @@ export function useApprovalPreview({
 
     return {
       templateHtml: selectedEbayTemplateHtml,
-      title: combinedEbayTitleFieldName ? (formValues[combinedEbayTitleFieldName] ?? '') : '',
-      description: combinedDescriptionFieldName ? (formValues[combinedDescriptionFieldName] ?? '') : '',
-      keyFeatures: combinedSharedKeyFeaturesFieldName ? (formValues[combinedSharedKeyFeaturesFieldName] ?? '') : '',
-      testingNotes: combinedEbayTestingNotesFieldName ? (formValues[combinedEbayTestingNotesFieldName] ?? '') : '',
+      title: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayTitleFieldName),
+      description: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedDescriptionFieldName),
+      keyFeatures: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedSharedKeyFeaturesFieldName),
+      testingNotes: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayTestingNotesFieldName),
+      make: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedMakeFieldName),
+      model: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedModelFieldName),
       fieldName: combinedEbayBodyHtmlFieldName || undefined,
     };
-  }, [combinedDescriptionFieldName, combinedEbayBodyHtmlFieldName, combinedEbayTestingNotesFieldName, combinedEbayTitleFieldName, combinedSharedKeyFeaturesFieldName, formValues, isCombinedApproval, selectedEbayTemplateHtml]);
+  }, [combinedDescriptionFieldName, combinedEbayBodyHtmlFieldName, combinedEbayTestingNotesFieldName, combinedEbayTitleFieldName, combinedMakeFieldName, combinedModelFieldName, combinedSharedKeyFeaturesFieldName, formValues, isCombinedApproval, mergedDraftSourceFields, selectedEbayTemplateHtml, selectedRecord]);
 
   const currentEbayCategoryPreviewInput = useMemo(
     () => (isEbayPayloadPreviewContext ? { labelsById: ebayCategoryLabelsById } : undefined),
