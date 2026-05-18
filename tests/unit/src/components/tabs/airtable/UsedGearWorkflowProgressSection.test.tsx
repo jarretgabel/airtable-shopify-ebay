@@ -293,7 +293,7 @@ describe('UsedGearWorkflowProgressSection', () => {
 
     expect(onOpenTestingForm).toHaveBeenCalledWith('rec-progress-testing');
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('columnheader', { name: /Status/i }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('columnheader', { name: /Status/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: /Group/i })).not.toBeInTheDocument();
     expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Next Team: Testing/i)).not.toBeInTheDocument();
@@ -342,7 +342,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     await screen.findByText('Testing Queue');
     expect(screen.queryByText('Testing Pending')).not.toBeInTheDocument();
     expect(screen.getByText('Marantz · 7C')).toBeInTheDocument();
-    expect(screen.getAllByText('Testing and Photography In Progress').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Testing and Photography In Progress')).not.toBeInTheDocument();
 
     rerender(
       <UsedGearWorkflowProgressSection
@@ -359,7 +359,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     await screen.findByText('Photography Queue');
     expect(screen.queryByText('Photo Pending')).not.toBeInTheDocument();
     expect(screen.getByText('Pioneer · SA-9900')).toBeInTheDocument();
-    expect(screen.getAllByText('Testing and Photography In Progress').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Testing and Photography In Progress')).not.toBeInTheDocument();
   });
 
   it('opens the photos form directly from the dedicated photography queue', async () => {
@@ -396,7 +396,7 @@ describe('UsedGearWorkflowProgressSection', () => {
 
     expect(onOpenPhotosForm).toHaveBeenCalledWith('rec-progress-photo');
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('columnheader', { name: /Status/i }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('columnheader', { name: /Status/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: /Group/i })).not.toBeInTheDocument();
     expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Next Team: Photography/i)).not.toBeInTheDocument();

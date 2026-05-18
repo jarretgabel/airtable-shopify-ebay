@@ -62,7 +62,7 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     key: tab,
     label: navLabel(tab),
     active: activeTab === tab,
-    badgeCount: undefined,
+    badgeCount: tab === 'inventory' ? workflowInventoryBadgeCount : undefined,
     ...resolveDisabledState(tab),
     onClick: () => navigateToTab(tab),
   }));
@@ -98,7 +98,7 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     key: tab,
     label: navLabel(tab),
     active: activeTab === tab,
-    badgeCount: tab === 'inventory' ? workflowInventoryBadgeCount : undefined,
+    badgeCount: undefined,
     ...resolveDisabledState(tab),
     onClick: () => navigateToTab(tab),
   }));

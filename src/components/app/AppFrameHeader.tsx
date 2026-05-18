@@ -64,10 +64,11 @@ export function AppFrameHeader({
 
   return (
     <header ref={headerRef} className="relative z-40 border-b border-[var(--line)] bg-[rgba(7,17,28,0.85)] backdrop-blur-md">
-      <div className="mx-auto flex w-[min(1200px,96vw)] items-center justify-between gap-4 py-3">
-        <div>
-          <span className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Inventory Operations</span>
-          <h1 className="m-0 text-[1rem] font-bold leading-none text-[var(--ink)]">Listing Control Center</h1>
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 py-3">
+        <div className="flex min-w-0 flex-col">
+          <h1 className="m-0 max-w-[12ch] text-[0.96rem] font-semibold leading-[1.02] tracking-[-0.01em] text-[var(--ink)] sm:max-w-none">
+            Control Center
+          </h1>
         </div>
         <div className="flex flex-wrap items-center gap-2" data-export-ignore="true">
           <AppFrameHeaderNotificationsMenu

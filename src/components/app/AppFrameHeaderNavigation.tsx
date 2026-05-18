@@ -19,7 +19,6 @@ const INTAKE_SECTION_KEYS = {
 };
 
 const INVENTORY_PROCESSING_SECTION_KEYS = {
-  hub: ['inventory'] as const,
   reviewQueues: ['testing-queue', 'photography-queue'] as const,
   forms: ['testing', 'photos'] as const,
 };
@@ -93,12 +92,6 @@ export function AppFrameHeaderNavigation({
   const inventoryProcessingTabLookup = new Map(inventoryProcessingTabs.map((tab) => [tab.key, tab]));
   const inventoryProcessingSections: TabSection[] = [
     {
-      title: 'Hub',
-      tabs: INVENTORY_PROCESSING_SECTION_KEYS.hub
-        .map((key) => inventoryProcessingTabLookup.get(key))
-        .filter((tab): tab is AppTab => Boolean(tab)),
-    },
-    {
       title: 'Review Queues',
       tabs: INVENTORY_PROCESSING_SECTION_KEYS.reviewQueues
         .map((key) => inventoryProcessingTabLookup.get(key))
@@ -134,8 +127,8 @@ export function AppFrameHeaderNavigation({
   ].filter((section) => section.tabs.length > 0);
 
   return (
-    <nav className="mx-auto w-[min(1200px,96vw)]" aria-label="Main navigation">
-      <div className="relative flex flex-wrap items-end gap-1">
+    <nav className="mx-auto w-full max-w-6xl" aria-label="Main navigation">
+      <div className="relative -mx-4 flex flex-wrap items-end gap-1">
         <div className="flex min-w-0 flex-1 items-end gap-1">
           {tabs.map((tab) => <TabButton key={tab.key} tab={tab} />)}
 

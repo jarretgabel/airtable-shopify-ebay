@@ -23,9 +23,11 @@ describe('InventoryDirectoryListSection', () => {
         totalCount={1}
         searchTerm=""
         statusFilter="all"
+        sortMode="intake-newest"
         statusOptions={['Testing and Photography In Progress']}
         onSearchTermChange={vi.fn()}
         onStatusFilterChange={vi.fn()}
+        onSortModeChange={vi.fn()}
         onRefresh={vi.fn()}
         onSelectRecord={vi.fn()}
       />,
@@ -40,6 +42,7 @@ describe('InventoryDirectoryListSection', () => {
 
   it('passes through the status filter and row actions', () => {
     const onStatusFilterChange = vi.fn();
+    const onSortModeChange = vi.fn();
     const onSelectRecord = vi.fn();
 
     render(
@@ -60,9 +63,11 @@ describe('InventoryDirectoryListSection', () => {
         totalCount={1}
         searchTerm=""
         statusFilter="all"
+        sortMode="intake-newest"
         statusOptions={['Approved for Publish']}
         onSearchTermChange={vi.fn()}
         onStatusFilterChange={onStatusFilterChange}
+        onSortModeChange={onSortModeChange}
         onRefresh={vi.fn()}
         onSelectRecord={onSelectRecord}
       />,
@@ -70,6 +75,9 @@ describe('InventoryDirectoryListSection', () => {
 
     fireEvent.change(screen.getByLabelText('Filter inventory by status'), { target: { value: 'Approved for Publish' } });
     expect(onStatusFilterChange).toHaveBeenCalledWith('Approved for Publish');
+
+    fireEvent.change(screen.getByLabelText('Sort workflow hub directory. Current order: Intake Date: Newest First'), { target: { value: 'intake-oldest' } });
+    expect(onSortModeChange).toHaveBeenCalledWith('intake-oldest');
 
     expect(screen.queryByRole('button', { name: 'Open Testing' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Open Photos' })).not.toBeInTheDocument();
@@ -95,9 +103,11 @@ describe('InventoryDirectoryListSection', () => {
         totalCount={1}
         searchTerm=""
         statusFilter="all"
+        sortMode="intake-newest"
         statusOptions={['Approved for Publish']}
         onSearchTermChange={vi.fn()}
         onStatusFilterChange={vi.fn()}
+        onSortModeChange={vi.fn()}
         onRefresh={vi.fn()}
         onSelectRecord={vi.fn()}
       />,

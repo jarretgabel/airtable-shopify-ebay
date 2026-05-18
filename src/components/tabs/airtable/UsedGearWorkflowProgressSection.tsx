@@ -512,16 +512,6 @@ export function UsedGearWorkflowProgressSection({
           } else {
             columns.splice(2, 0,
               {
-                key: 'status',
-                label: 'Status',
-                width: '18rem',
-                renderCell: (record) => {
-                  const statusLabel = getUsedGearWorkflowStatus(record.fields) ?? 'Unknown';
-
-                  return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
-                },
-              },
-              {
                 key: 'intake',
                 label: 'Intake',
                 width: '8rem',

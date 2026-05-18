@@ -324,7 +324,7 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   },
   {
     title: 'Arrival And Routing',
-    detail: 'Accepted items move through Parking Lot 2 and the workflow hub for arrival handling, operational notes, current-stage visibility, and next-stage routing.',
+    detail: 'Accepted items move through Parking Lot 2 for arrival handling and then into the specialist queues, while the Workflow Hub stays focused on record lookup and workflow snapshots.',
     pages: ['manual-intake', 'parking-lot-2', 'inventory'],
     tone: 'routing',
     primaryRoles: ['processor'],
@@ -466,14 +466,14 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
   {
     title: 'Workflow Hub',
     pages: ['inventory'],
-    summary: 'Workflow Hub is the main processing and triage surface for accepted operational rows that are still in active workflow.',
+    summary: 'Workflow Hub is the accepted-workflow directory and snapshot surface for operational rows that are still active.',
     modules: [
-      'Workflow bar: saved views, active filters, focused groups, and shareable URL state.',
-      'Progress queue: active routing, stage status, and current handoff context.',
-      'Operational record links: open deeper record editors when queue context is not enough.',
+      'Record directory: searchable operational rows with status filtering.',
+      'Workflow snapshot links: open the read-only workflow overview for one row.',
+      'Directory actions: jump into the relevant record surface from the selected workflow row.',
     ],
     workflows: [
-      'Use it for active-stage triage, routing, and cross-stage blocker cleanup after intake is accepted.',
+      'Use it to look up accepted workflow rows, confirm current state, and open the right downstream working surface.',
       'Use Post-Publish instead of the Workflow Hub when the work is already in live listing follow-through.',
     ],
   },
@@ -711,13 +711,13 @@ const RECORD_GUIDE_CARDS: RecordGuideCard[] = [
   {
     title: 'Workflow Operational Record Editors',
     pages: ['inventory'],
-    summary: 'The workflow record editors are the deeper operational surfaces behind queue triage in the Workflow Hub.',
+    summary: 'These workflow record surfaces are the deeper operational pages linked from the Workflow Hub directory and snapshot views.',
     surfaces: [
       'Operational record editor: row-level workflow fields and readiness context.',
       'Inventory price editor: targeted pricing edits for workflow rows.',
     ],
     workflows: [
-      'Open these when the Workflow Hub queue needs deeper row-level editing or pricing correction.',
+      'Open these when the Workflow Hub directory or workflow snapshot shows that a row needs deeper editing or pricing correction.',
       'Use them for operational fixes, not for final listing approval decisions.',
     ],
   },

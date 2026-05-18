@@ -73,7 +73,7 @@ describe('buildAppFrameNavTabs', () => {
       navigateToUsersList: vi.fn(),
     });
 
-    expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'inventory')).toMatchObject({ badgeCount: 7 });
+    expect(result.tabs.find((tab) => tab.key === 'inventory')).toMatchObject({ badgeCount: 7, label: 'Workflow Hub' });
     expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'testing')).toBeUndefined();
     expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'photos')).toBeUndefined();
     expect(result.postPublishNavTabs).toEqual([]);
@@ -90,10 +90,12 @@ describe('buildAppFrameNavTabs', () => {
       navigateToUsersList: vi.fn(),
     });
 
+    expect(result.tabs).toEqual(expect.arrayContaining([
+      expect.objectContaining({ key: 'inventory', label: 'Workflow Hub', active: true }),
+    ]));
     expect(result.inventoryProcessingNavTabs).toEqual(expect.arrayContaining([
-      expect.objectContaining({ key: 'inventory', label: 'Workflow Hub' }),
-      expect.objectContaining({ key: 'testing-queue', label: 'Testing Review' }),
-      expect.objectContaining({ key: 'photography-queue', label: 'Photography Review' }),
+      expect.objectContaining({ key: 'testing-queue', label: 'Testing Queue' }),
+      expect.objectContaining({ key: 'photography-queue', label: 'Photography Queue' }),
     ]));
     expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'testing')).toBeUndefined();
     expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'photos')).toBeUndefined();
@@ -115,7 +117,8 @@ describe('buildAppFrameNavTabs', () => {
     });
 
     expect(result.intakeNavTabs.map((tab) => tab.key)).toEqual(['manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review']);
-    expect(result.inventoryProcessingNavTabs.map((tab) => tab.key)).toEqual(['inventory', 'testing-queue', 'photography-queue']);
+    expect(result.tabs.map((tab) => tab.key)).toEqual(['dashboard', 'inventory']);
+    expect(result.inventoryProcessingNavTabs.map((tab) => tab.key)).toEqual(['testing-queue', 'photography-queue']);
     expect(result.listingsNavTabs.map((tab) => tab.key)).toEqual(['listings', 'post-publish', 'shopify', 'ebay']);
     expect(result.postPublishNavTabs).toEqual([]);
   });
@@ -131,7 +134,7 @@ describe('buildAppFrameNavTabs', () => {
       navigateToUsersList: vi.fn(),
     });
 
-    expect(result.inventoryProcessingNavTabs.find((tab) => tab.key === 'inventory')).toMatchObject({ badgeCount: 2 });
+    expect(result.tabs.find((tab) => tab.key === 'inventory')).toMatchObject({ badgeCount: 2, label: 'Workflow Hub' });
     expect(result.listingsNavTabs.find((tab) => tab.key === 'listings')).toMatchObject({ badgeCount: 4 });
     expect(result.listingsNavTabs.find((tab) => tab.key === 'shopify')).toMatchObject({ badgeCount: undefined });
     expect(result.postPublishNavTabs).toEqual([]);

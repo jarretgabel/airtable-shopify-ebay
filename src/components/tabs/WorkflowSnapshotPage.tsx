@@ -115,21 +115,6 @@ function buildSnapshotWorkflowSummary(record: UsedGearOperationalRecordContext['
   };
 }
 
-function getCurrentStepLabel(summary: ListingApprovalWorkflowSummaryData | null): string {
-  if (!summary) {
-    return 'Workflow Not Started';
-  }
-
-  const hasCompletedMilestone = summary.timeline.some((entry) => entry.status === 'completed');
-  const activeEntry = getListingApprovalActiveTimelineEntry(summary.timeline, summary.workflowStatus);
-
-  if (!activeEntry && !hasCompletedMilestone) {
-    return 'Workflow Not Started';
-  }
-
-  return activeEntry?.label ?? 'Workflow Complete';
-}
-
 export function WorkflowSnapshotPage({
   recordId,
   onBackToDirectory,
@@ -176,7 +161,6 @@ export function WorkflowSnapshotPage({
   const workflowSummary = useMemo(() => (record ? buildSnapshotWorkflowSummary(record) : null), [record]);
   const workflowStatus = record ? getUsedGearWorkflowStatus(record.fields) ?? '' : '';
   const postPublishSnapshot = useMemo(() => (record ? getUsedGearWorkflowPostPublishSnapshot(record) : null), [record]);
-  const currentStepLabel = useMemo(() => getCurrentStepLabel(workflowSummary), [workflowSummary]);
   const showSpecialistCards = workflowStatus !== 'Pending Review' && workflowStatus !== 'Unqualified';
   const showListingsCard = showSpecialistCards && workflowStatus !== 'Accepted - Awaiting Arrival';
   const sectionItems = useMemo(
@@ -220,15 +204,8 @@ export function WorkflowSnapshotPage({
         {record ? (
           <div className="space-y-6">
             <section id="overview" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] scroll-mt-28">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Record Overview</p>
-                  <h2 className="m-0 mt-2 text-2xl font-semibold text-[var(--ink)]">SKU {displayInventoryValue(record.fields.SKU)}</h2>
-                </div>
-                <span className="rounded-full border border-sky-400/35 bg-sky-500/15 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-sky-100">
-                  {currentStepLabel}
-                </span>
-              </div>
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Record Overview</p>
+              <h2 className="m-0 mt-2 text-2xl font-semibold text-[var(--ink)]">SKU {displayInventoryValue(record.fields.SKU)}</h2>
             </section>
 
             <section id="timeline" className="scroll-mt-28">

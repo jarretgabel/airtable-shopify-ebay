@@ -15,10 +15,12 @@ interface InventoryDirectoryListSectionProps {
   totalCount: number;
   searchTerm: string;
   statusFilter: string;
+  sortMode: 'intake-newest' | 'intake-oldest';
   statusOptions: string[];
   refreshing?: boolean;
   onSearchTermChange: (value: string) => void;
   onStatusFilterChange: (value: string) => void;
+  onSortModeChange: (value: 'intake-newest' | 'intake-oldest') => void;
   onRefresh?: () => void;
   onSelectRecord: (recordId: string) => void;
 }
@@ -50,15 +52,22 @@ function formatIntakeDate(record: AirtableRecord): string {
   return 'Unknown';
 }
 
+function getDirectorySortLabel(sortMode: 'intake-newest' | 'intake-oldest'): string {
+  if (sortMode === 'intake-oldest') return 'Intake Date: Oldest First';
+  return 'Intake Date: Newest First';
+}
+
 export function InventoryDirectoryListSection({
   records,
   totalCount,
   searchTerm,
   statusFilter,
+  sortMode,
   statusOptions,
   refreshing = false,
   onSearchTermChange,
   onStatusFilterChange,
+  onSortModeChange,
   onRefresh,
   onSelectRecord,
 }: InventoryDirectoryListSectionProps) {
@@ -82,7 +91,13 @@ export function InventoryDirectoryListSection({
       renderCell: (record) => {
         const statusLabel = displayInventoryValue(getInventoryDirectoryStatus(record.fields)) || 'Unknown';
 
-        return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
+        return (
+          <div className="min-w-0">
+            <span className={`${getWorkflowStatusChipClasses(statusLabel)} overflow-hidden text-ellipsis`} title={statusLabel}>
+              {statusLabel}
+            </span>
+          </div>
+        );
       },
     },
     {
@@ -116,6 +131,13 @@ export function InventoryDirectoryListSection({
         refreshLoadingLabel="Refreshing inventory directory"
         refreshing={refreshing}
         onRefresh={onRefresh}
+        sortAriaLabel={`Sort workflow hub directory. Current order: ${getDirectorySortLabel(sortMode)}`}
+        sortValue={sortMode}
+        onSortChange={(value) => onSortModeChange(value as 'intake-newest' | 'intake-oldest')}
+        sortOptions={[
+          { value: 'intake-newest', label: 'Intake Date: Newest First' },
+          { value: 'intake-oldest', label: 'Intake Date: Oldest First' },
+        ]}
         compactFilters
         filters={[
           {
