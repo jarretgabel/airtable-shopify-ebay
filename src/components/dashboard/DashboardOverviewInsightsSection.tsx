@@ -292,7 +292,7 @@ export function DashboardInsightsSection({
   const insightCards = (items: DashboardInsight[]) => (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {items.map((insight) => (
-        <article key={insight.id} className={`rounded-xl border px-4 py-3 ${insightToneClass[insight.severity]}`}>
+        <article key={insight.id} className={`flex h-full flex-col rounded-xl border px-4 py-3 ${insightToneClass[insight.severity]}`}>
           {(() => {
             const targetTab = insight.targetTab;
 
@@ -304,15 +304,10 @@ export function DashboardInsightsSection({
           </div>
           <p className="m-0 text-[0.8rem] leading-[1.45] opacity-90">{insight.detail}</p>
           {targetTab ? (
-            <>
-              {insight.inventoryPostPublishBucket ? (
-                <span className="mt-3 inline-flex rounded-full border border-current/30 bg-white/10 px-2.5 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.07em]">
-                  Opens {getPostPublishTargetLabel(insight.inventoryPostPublishBucket)} Bucket
-                </span>
-              ) : null}
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
               <button
                 type="button"
-                className="mt-3 rounded-lg border border-current/30 bg-white/10 px-3 py-1.5 text-[0.72rem] font-semibold transition hover:bg-white/20"
+                className="self-start rounded-lg border border-current/30 bg-white/10 px-3 py-1.5 text-[0.72rem] font-semibold transition hover:bg-white/20"
                 onClick={() => {
                   if (insight.inventoryPostPublishBucket) {
                     onOpenInventoryPostPublishBucket(insight.inventoryPostPublishBucket);
@@ -322,9 +317,11 @@ export function DashboardInsightsSection({
                   onSelectTab(targetTab);
                 }}
               >
-                Open {getInsightTargetLabel(targetTab)}
+                {insight.inventoryPostPublishBucket
+                  ? `Open ${getPostPublishTargetLabel(insight.inventoryPostPublishBucket)}`
+                  : `Open ${getInsightTargetLabel(targetTab)}`}
               </button>
-            </>
+            </div>
           ) : null}
               </>
             );

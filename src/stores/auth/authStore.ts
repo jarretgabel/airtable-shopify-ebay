@@ -70,6 +70,7 @@ function buildAuthenticatedSessionUser(input: {
 }
 
 const SAMPLE_USER_DEFINITIONS: Array<{ id: string; name: string; email: string; role: UserRole; password: string }> = [
+  { id: 'u-developer-sample', name: 'Devon Developer', email: 'developer@example.com', role: 'developer', password: 'Developer123!' },
   { id: 'u-processor-sample', name: 'Parker Processor', email: 'processor@example.com', role: 'processor', password: 'Processor123!' },
   { id: 'u-tester-sample', name: 'Taylor Tester', email: 'tester@example.com', role: 'tester', password: 'Tester123!' },
   { id: 'u-photographer-sample', name: 'Phoebe Photographer', email: 'photographer@example.com', role: 'photographer', password: 'Photographer123!' },

@@ -102,7 +102,7 @@ function App() {
     navigate,
   });
   const appDataEnabled = usersReady && Boolean(currentUser) && !isLoginPath && !isResetPasswordPath;
-  const { airtable, shopify, market, ebay, approval, shopifyApproval, usedGearWorkflowDashboardTargets, usedGearWorkflowAnalytics, usedGearWorkflowPostPublish, jotform, metrics, visibleTabs, aiProvider, adminCount, runtimeFeatures } = useAppData({
+  const { airtable, shopify, market, ebay, approval, shopifyApproval, combinedListingsReadyForPublishing, usedGearWorkflowDashboardTargets, usedGearWorkflowAnalytics, usedGearWorkflowPostPublish, jotform, metrics, visibleTabs, aiProvider, adminCount, runtimeFeatures } = useAppData({
     enabled: appDataEnabled,
     activeTab,
     canAccessPage,
@@ -113,7 +113,7 @@ function App() {
     activeTab,
     visibleTabs,
     workflowInventoryBadgeCount: workflowNotificationSummary.workflowQueueBadgeCount,
-    listingsBadgeCount: workflowNotificationSummary.listingsBadgeCount,
+    listingsBadgeCount: combinedListingsReadyForPublishing.count,
     runtimeFeatures,
     exportingPdf,
     dashboardRefreshing,

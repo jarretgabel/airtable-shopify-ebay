@@ -96,7 +96,17 @@ async function maybeEnsureSampleAuthUsers(role: UserRole): Promise<void> {
   }
 }
 
+async function maybeEnsureSampleAuthUsersBeforeLogin(): Promise<void> {
+  try {
+    await ensureSampleAuthUsers(await loadAuthUsers());
+  } catch {
+    // Keep login working even if sample-user seeding fails.
+  }
+}
+
 export async function login(email: string, password: string): Promise<AuthLoginResult> {
+  await maybeEnsureSampleAuthUsersBeforeLogin();
+
   const user = await findAuthUserByEmail(normalizeEmail(email));
   if (!user || !verifyStoredPassword(password, user.passwordState)) {
     throw new HttpError(401, 'Invalid email or password.', {

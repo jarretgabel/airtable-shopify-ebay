@@ -112,6 +112,9 @@ describe('authContextHelpers', () => {
     expect(canUserAccessPage(developer, 'jotform')).toBe(true);
     expect(canUserAccessPage(developer, 'market')).toBe(true);
     expect(canUserAccessPage(developer, 'imagelab')).toBe(true);
+    expect(canUserAccessPage(developer, 'users')).toBe(true);
+    expect(canUserAccessPage(developer, 'shopify')).toBe(true);
+    expect(canUserAccessPage(developer, 'ebay')).toBe(true);
     expect(canUserAccessPage(photographer, 'imagelab')).toBe(true);
     expect(canUserAccessPage(photographer, 'market')).toBe(false);
   });
@@ -140,7 +143,7 @@ describe('authContextHelpers', () => {
     expect(getAccessiblePages(baseUsers[0])).toEqual(getRoleDefaultPages('admin'));
     expect(getAccessiblePages(owner)).toEqual(getRoleDefaultPages('owner'));
     expect(getAccessiblePages(baseUsers[3])).toEqual(['dashboard', 'workflow-guide', 'testing-queue', 'testing', 'settings', 'notifications']);
-    expect(getAccessiblePages(baseUsers[4])).toEqual(['dashboard', 'workflow-guide', 'jotform', 'market', 'imagelab', 'settings', 'notifications']);
+    expect(getAccessiblePages(baseUsers[4])).toEqual(getRoleDefaultPages('developer'));
     expect(getAccessiblePages(baseUsers[5])).toEqual(['dashboard', 'workflow-guide', 'photography-queue', 'photos', 'imagelab', 'settings', 'notifications']);
   });
 

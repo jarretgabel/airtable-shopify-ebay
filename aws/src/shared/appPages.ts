@@ -26,13 +26,13 @@ export type AppPage = (typeof APP_PAGES)[number];
 export type UserRole = 'admin' | 'owner' | 'developer' | 'processor' | 'tester' | 'photographer';
 
 export function hasFullAccessRole(role: UserRole): boolean {
-  return role === 'admin' || role === 'owner';
+  return role === 'admin' || role === 'owner' || role === 'developer';
 }
 
 const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
   admin: APP_PAGES.filter((page) => page !== 'market'),
   owner: [...APP_PAGES],
-  developer: ['dashboard', 'jotform', 'market', 'settings', 'notifications', 'imagelab'],
+  developer: [...APP_PAGES],
   processor: [
     'dashboard',
     'manual-intake',

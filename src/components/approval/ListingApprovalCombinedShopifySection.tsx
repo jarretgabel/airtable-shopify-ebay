@@ -3,9 +3,11 @@ import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { isDeveloperRole } from '@/auth/roleAccess';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
 import { isShopifyAdvancedOptionField } from '@/components/approval/approvalFormFieldsShopifyHelpersBasic';
 import type { ListingApprovalCombinedShopifySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
+import { useAuthStore } from '@/stores/auth/authStore';
 
 const ShopifyApprovalPayloadDetails = lazy(async () => ({
   default: (await import('@/components/approval/ListingApprovalRecordPayloadPanels')).ShopifyApprovalPayloadDetails,
@@ -55,6 +57,10 @@ export function ListingApprovalCombinedShopifySection({
   const standardShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => !isShopifyAdvancedOptionField(fieldName));
   const advancedShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => isShopifyAdvancedOptionField(fieldName));
   const displayedShopifyBodyHtml = currentPageShopifyBodyHtml || combinedShopifyBodyHtmlValue;
+  const showDeveloperPayloadPanels = useAuthStore((state) => {
+    const currentUser = state.users.find((user) => user.id === state.currentUserId);
+    return currentUser ? isDeveloperRole(currentUser.role) : false;
+  });
 
   return (
     <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
@@ -127,6 +133,14 @@ export function ListingApprovalCombinedShopifySection({
           </details>
         )}
 
+        {advancedShopifyFieldNames.length > 0 && (
+          <div
+            role="separator"
+            aria-label="Listing content divider"
+            className="mt-5 border-t border-[var(--line)]/80"
+          />
+        )}
+
         <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
           <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify Body (HTML)</summary>
           <div className="border-t border-[var(--line)] px-3 py-3">
@@ -145,18 +159,20 @@ export function ListingApprovalCombinedShopifySection({
           </div>
         </details>
 
-        <Suspense fallback={<ShopifyPayloadFallback />}>
-          <ShopifyApprovalPayloadDetails
-            currentPageProductDescriptionResolution={currentPageProductDescriptionResolution}
-            currentPageProductDescription={currentPageProductDescription}
-            currentPageProductCategoryResolution={currentPageProductCategoryResolution}
-            currentPageCategoryIdResolution={currentPageCategoryIdResolution}
-            shopifyCategoryLookupValue={shopifyCategoryLookupValue}
-            shopifyCategoryResolution={shopifyCategoryResolution}
-            isShopifyPayloadPreviewContext={isShopifyPayloadPreviewContext}
-            shopifyProductSetRequest={shopifyProductSetRequest}
-          />
-        </Suspense>
+        {showDeveloperPayloadPanels ? (
+          <Suspense fallback={<ShopifyPayloadFallback />}>
+            <ShopifyApprovalPayloadDetails
+              currentPageProductDescriptionResolution={currentPageProductDescriptionResolution}
+              currentPageProductDescription={currentPageProductDescription}
+              currentPageProductCategoryResolution={currentPageProductCategoryResolution}
+              currentPageCategoryIdResolution={currentPageCategoryIdResolution}
+              shopifyCategoryLookupValue={shopifyCategoryLookupValue}
+              shopifyCategoryResolution={shopifyCategoryResolution}
+              isShopifyPayloadPreviewContext={isShopifyPayloadPreviewContext}
+              shopifyProductSetRequest={shopifyProductSetRequest}
+            />
+          </Suspense>
+        ) : null}
       </div>
     </AppPageSectionSurface>
   );

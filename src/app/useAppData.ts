@@ -5,6 +5,7 @@ import { canAccessWorkflowDashboard } from '@/auth/roleAccess';
 import { getRuntimeFeatureCapabilities } from '@/config/runtimeCapabilities';
 import { checkOptionalEnv, requireEnv } from '@/config/runtimeEnv';
 import { useApprovalQueueSummary } from '@/hooks/useApprovalQueueSummary';
+import { useCombinedListingsReadyForPublishingCount } from '@/hooks/useCombinedListingsReadyForPublishingCount';
 import { useShopifyApprovalQueueSummary } from '@/hooks/useShopifyApprovalQueueSummary';
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
 import { useEbayListings } from '@/hooks/useEbayListings';
@@ -43,6 +44,7 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, currentUs
   const ebay = useEbayListings(ebayEnabled);
   const approval = useApprovalQueueSummary(enabled && canAccessPage('listings') && runtimeFeatures.approvalEbay.available);
   const shopifyApproval = useShopifyApprovalQueueSummary(enabled && canAccessPage('listings') && runtimeFeatures.approvalShopify.available);
+  const combinedListingsReadyForPublishing = useCombinedListingsReadyForPublishingCount(enabled && canAccessPage('listings') && runtimeFeatures.approvalCombined.available);
   const workflowDashboardPages = enabled ? TAB_VALUES.filter((tab) => canAccessPage(tab)) : [];
   const usedGearWorkflowDashboardTargets = useUsedGearWorkflowDashboardTargets(enabled && activeTab === 'dashboard' && canAccessPage('inventory'));
   const usedGearWorkflowAnalytics = useUsedGearWorkflowAnalyticsSnapshot(
@@ -77,6 +79,7 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, currentUs
     },
     approval,
     shopifyApproval,
+    combinedListingsReadyForPublishing,
     usedGearWorkflowDashboardTargets,
     usedGearWorkflowAnalytics,
     usedGearWorkflowPostPublish,

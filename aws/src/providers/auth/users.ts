@@ -18,9 +18,10 @@ const SAMPLE_AUTH_USER_DEFINITIONS: Array<{
   id: string;
   name: string;
   email: string;
-  role: Extract<UserRole, 'processor' | 'tester' | 'photographer'>;
+  role: Extract<UserRole, 'developer' | 'processor' | 'tester' | 'photographer'>;
   password: string;
 }> = [
+  { id: 'u-developer-sample', name: 'Devon Developer', email: 'developer@example.com', role: 'developer', password: 'Developer123!' },
   { id: 'u-processor-sample', name: 'Parker Processor', email: 'processor@example.com', role: 'processor', password: 'Processor123!' },
   { id: 'u-tester-sample', name: 'Taylor Tester', email: 'tester@example.com', role: 'tester', password: 'Tester123!' },
   { id: 'u-photographer-sample', name: 'Phoebe Photographer', email: 'photographer@example.com', role: 'photographer', password: 'Photographer123!' },
@@ -264,7 +265,7 @@ async function updateAuthUserRecord(recordId: string, fields: Record<string, unk
   throw new Error('Failed to update auth user after removing unsupported fields.');
 }
 
-function buildSampleAllowedPages(role: Extract<UserRole, 'processor' | 'tester' | 'photographer'>): string {
+function buildSampleAllowedPages(role: Extract<UserRole, 'developer' | 'processor' | 'tester' | 'photographer'>): string {
   return normalizeAllowedPages([...APP_PAGES], role).join(',');
 }
 

@@ -21,10 +21,33 @@ const PROCESSOR_PAGES: AppPage[] = [
 
 const TESTER_PAGES: AppPage[] = ['dashboard', 'workflow-guide', 'testing-queue', 'testing'];
 const PHOTOGRAPHER_PAGES: AppPage[] = ['dashboard', 'workflow-guide', 'photography-queue', 'photos', 'imagelab'];
-const DEVELOPER_PAGES: AppPage[] = ['dashboard', 'workflow-guide', 'jotform', 'market', 'imagelab', 'settings', 'notifications'];
+const DEVELOPER_PAGES: AppPage[] = [
+  'dashboard',
+  'workflow-guide',
+  'manual-intake',
+  'parking-lot-1',
+  'parking-lot-2',
+  'trash-review',
+  'inventory',
+  'testing-queue',
+  'photography-queue',
+  'testing',
+  'photos',
+  'listings',
+  'post-publish',
+  'archive',
+  'shopify',
+  'ebay',
+  'jotform',
+  'market',
+  'settings',
+  'notifications',
+  'imagelab',
+  'users',
+];
 
 export function hasFullAccessRole(role: UserRole): boolean {
-  return role === 'admin' || role === 'owner';
+  return role === 'admin' || role === 'owner' || role === 'developer';
 }
 
 export function isDeveloperRole(role: UserRole): boolean {

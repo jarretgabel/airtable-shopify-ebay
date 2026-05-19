@@ -15,8 +15,11 @@ test('owner keeps HiFi Shark access', () => {
   assert.equal(pages.includes('market'), true);
 });
 
+test('developers keep the full page bundle', () => {
+  assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'developer'), [...APP_PAGES]);
+});
+
 test('non-tester roles get Image Lab according to their role bundle', () => {
-  assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'developer'), ['dashboard', 'jotform', 'market', 'settings', 'notifications', 'imagelab']);
   assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'processor'), ['dashboard', 'manual-intake', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'market', 'imagelab']);
   assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'photographer'), ['dashboard', 'photography-queue', 'photos', 'imagelab']);
   assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'tester'), ['dashboard', 'testing-queue', 'testing']);

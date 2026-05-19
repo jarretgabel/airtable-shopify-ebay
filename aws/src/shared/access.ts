@@ -41,7 +41,7 @@ function requireAdmin(user: AuthenticatedUser): void {
     return;
   }
 
-  throw new HttpError(403, 'Admin or owner access is required.', {
+  throw new HttpError(403, 'A full-access role is required.', {
     service: 'auth',
     code: 'AUTH_ADMIN_REQUIRED',
     retryable: false,

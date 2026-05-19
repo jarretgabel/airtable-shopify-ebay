@@ -82,7 +82,7 @@ test('updateAuthUserPassword rethrows unrelated Airtable write errors', async ()
   }
 });
 
-test('ensureSampleAuthUsers creates missing processor, tester, and photographer users', async () => {
+test('ensureSampleAuthUsers creates missing developer, processor, tester, and photographer users', async () => {
   const originalCreate = authUserDependencies.createConfiguredRecord;
   const calls: Array<{ source: string; fields: Record<string, unknown>; options: { typecast?: boolean } }> = [];
 
@@ -101,10 +101,10 @@ test('ensureSampleAuthUsers creates missing processor, tester, and photographer 
     authUserDependencies.createConfiguredRecord = originalCreate;
   }
 
-  assert.equal(calls.length, 3);
-  assert.deepEqual(calls.map((call) => call.source), ['users', 'users', 'users']);
-  assert.deepEqual(calls.map((call) => call.fields['Email']), ['processor@example.com', 'tester@example.com', 'photographer@example.com']);
-  assert.deepEqual(calls.map((call) => call.fields['Role']), ['processor', 'tester', 'photographer']);
+  assert.equal(calls.length, 4);
+  assert.deepEqual(calls.map((call) => call.source), ['users', 'users', 'users', 'users']);
+  assert.deepEqual(calls.map((call) => call.fields['Email']), ['developer@example.com', 'processor@example.com', 'tester@example.com', 'photographer@example.com']);
+  assert.deepEqual(calls.map((call) => call.fields['Role']), ['developer', 'processor', 'tester', 'photographer']);
   const firstCall = calls[0];
   assert.ok(firstCall);
   assert.equal(typeof firstCall.fields.Password, 'string');
@@ -136,6 +136,7 @@ test('ensureSampleAuthUsers skips sample accounts that already exist', async () 
 
   try {
     await ensureSampleAuthUsers([
+      { ...baseUser, email: 'developer@example.com', role: 'developer', passwordState: { scheme: 'legacy', legacyPassword: 'Developer123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'manual-intake', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'jotform', 'market', 'settings', 'notifications', 'imagelab', 'users'] },
       { ...baseUser, email: 'processor@example.com', role: 'processor', passwordState: { scheme: 'legacy', legacyPassword: 'Processor123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'manual-intake', 'inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'market', 'imagelab'] },
       { ...baseUser, email: 'tester@example.com', role: 'tester', passwordState: { scheme: 'legacy', legacyPassword: 'Tester123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'testing-queue', 'testing'] },
       { ...baseUser, email: 'photographer@example.com', role: 'photographer', passwordState: { scheme: 'legacy', legacyPassword: 'Photographer123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'photography-queue', 'photos', 'imagelab'] },
@@ -168,6 +169,15 @@ test('ensureSampleAuthUsers resyncs sample accounts with stale passwords', async
 
   try {
     await ensureSampleAuthUsers([
+      {
+        ...baseUser,
+        airtableRecordId: 'rec-developer',
+        email: 'developer@example.com',
+        role: 'developer',
+        passwordState: { scheme: 'legacy', legacyPassword: 'Developer123!' },
+        mustChangePassword: false,
+        allowedPages: ['dashboard', 'manual-intake', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'jotform', 'market', 'settings', 'notifications', 'imagelab', 'users'],
+      },
       {
         ...baseUser,
         airtableRecordId: 'rec-processor',

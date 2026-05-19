@@ -3,12 +3,14 @@ import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { isDeveloperRole } from '@/auth/roleAccess';
 import {
   EBAY_LISTING_TEMPLATE_OPTIONS,
   normalizeEbayListingTemplateId,
 } from '@/components/approval/listingApprovalEbayConstants';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
 import type { ListingApprovalCombinedEbaySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
+import { useAuthStore } from '@/stores/auth/authStore';
 
 const EbayApprovalPayloadDetails = lazy(async () => ({
   default: (await import('@/components/approval/ListingApprovalRecordPayloadPanels')).EbayApprovalPayloadDetails,
@@ -50,6 +52,11 @@ export function ListingApprovalCombinedEbaySection({
   isEbayPayloadPreviewContext,
   ebayDraftPayloadBundle,
 }: ListingApprovalCombinedEbaySectionProps) {
+  const showDeveloperPayloadPanels = useAuthStore((state) => {
+    const currentUser = state.users.find((user) => user.id === state.currentUserId);
+    return currentUser ? isDeveloperRole(currentUser.role) : false;
+  });
+
   return (
     <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
       <AppSectionTitle
@@ -113,6 +120,12 @@ export function ListingApprovalCombinedEbaySection({
           onEbayTemplateIdChange={setSelectedEbayTemplateId}
         />
 
+        <div
+          role="separator"
+          aria-label="Listing content divider"
+          className="mt-5 border-t border-[var(--line)]/80"
+        />
+
         <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
           <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">eBay Body (HTML)</summary>
           <div className="border-t border-[var(--line)] px-3 py-3">
@@ -138,12 +151,14 @@ export function ListingApprovalCombinedEbaySection({
           </div>
         </details>
 
-        <Suspense fallback={<EbayPayloadFallback />}>
-          <EbayApprovalPayloadDetails
-            isEbayPayloadPreviewContext={isEbayPayloadPreviewContext}
-            ebayDraftPayloadBundle={ebayDraftPayloadBundle}
-          />
-        </Suspense>
+        {showDeveloperPayloadPanels ? (
+          <Suspense fallback={<EbayPayloadFallback />}>
+            <EbayApprovalPayloadDetails
+              isEbayPayloadPreviewContext={isEbayPayloadPreviewContext}
+              ebayDraftPayloadBundle={ebayDraftPayloadBundle}
+            />
+          </Suspense>
+        ) : null}
       </div>
     </AppPageSectionSurface>
   );

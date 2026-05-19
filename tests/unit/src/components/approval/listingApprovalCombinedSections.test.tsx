@@ -5,6 +5,7 @@ import { ListingApprovalCombinedEbaySection } from '@/components/approval/Listin
 import { ListingApprovalCombinedIntakeSection } from '@/components/approval/ListingApprovalCombinedIntakeSection';
 import { ListingApprovalCombinedSharedSection } from '@/components/approval/ListingApprovalCombinedSharedSection';
 import { ListingApprovalCombinedShopifySection } from '@/components/approval/ListingApprovalCombinedShopifySection';
+import { useAuthStore } from '@/stores/auth/authStore';
 import type {
   ListingApprovalCombinedEbaySectionProps,
   ListingApprovalCombinedIntakeSectionProps,
@@ -221,6 +222,35 @@ describe('combined approval sections', () => {
     bodyHtmlPreviewSpy.mockReset();
     keyFeaturesEditorSpy.mockReset();
     testingNotesTextareaEditorSpy.mockReset();
+    useAuthStore.setState({
+      users: [
+        {
+          id: 'user-developer',
+          name: 'Devon Developer',
+          email: 'developer@example.com',
+          role: 'developer',
+          allowedPages: ['dashboard', 'workflow-guide', 'manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab', 'users'],
+          notificationPreferences: {
+            infoEnabled: true,
+            successEnabled: true,
+            warningEnabled: true,
+            errorEnabled: true,
+            autoDismissMs: 9000,
+            workflowAssignedAlertsEnabled: true,
+            workflowUnassignedAlertsEnabled: true,
+            workflowEvents: {
+              pendingReview: true,
+              processing: true,
+              testing: true,
+              photography: true,
+              preListingReview: true,
+              approvedForPublish: true,
+            },
+          },
+        },
+      ],
+      currentUserId: 'user-developer',
+    });
   });
 
   it('renders the intake drawer with snapshot modules and testing notes nested under intake details', () => {
@@ -466,6 +496,7 @@ describe('combined approval sections', () => {
       approvalChannel: 'shopify',
       allFieldNames: ['Shopify Variant Taxable', 'Shopify Variant Fulfillment', 'Shopify Variant Requires Shipping'],
     }));
+    expect(screen.getByRole('separator', { name: 'Listing content divider' })).toBeInTheDocument();
     expect(screen.getByTestId('body-html-preview')).toHaveTextContent('<p>Rendered Shopify body</p>');
     await waitFor(() => {
       expect(screen.getByText('Shopify Create Listing API Payload (Exact Request)')).toBeInTheDocument();
@@ -487,6 +518,7 @@ describe('combined approval sections', () => {
       showOnlyEbayAdvancedOptions: true,
       allFieldNames: ['Categories', 'Condition', 'Testing Notes'],
     }));
+    expect(screen.getByRole('separator', { name: 'Listing content divider' })).toBeInTheDocument();
     expect(bodyHtmlPreviewSpy).toHaveBeenCalledWith(expect.objectContaining({
       value: '<p>Rendered eBay body</p>',
       showTemplateSelector: true,
@@ -494,5 +526,89 @@ describe('combined approval sections', () => {
     await waitFor(() => {
       expect(screen.getByText('eBay Create Listing API Payload (Exact Request)')).toBeInTheDocument();
     });
+  });
+
+  it('hides combined Shopify and eBay payload JSON panels for non-developers', async () => {
+    useAuthStore.setState({
+      users: [
+        {
+          id: 'user-tester',
+          name: 'Taylor Tester',
+          email: 'tester@example.com',
+          role: 'tester',
+          allowedPages: ['dashboard', 'workflow-guide', 'testing-queue', 'testing', 'settings', 'notifications'],
+          notificationPreferences: {
+            infoEnabled: true,
+            successEnabled: true,
+            warningEnabled: true,
+            errorEnabled: true,
+            autoDismissMs: 9000,
+            workflowAssignedAlertsEnabled: true,
+            workflowUnassignedAlertsEnabled: true,
+            workflowEvents: {
+              pendingReview: true,
+              processing: true,
+              testing: true,
+              photography: true,
+              preListingReview: true,
+              approvedForPublish: true,
+            },
+          },
+        },
+      ],
+      currentUserId: 'user-tester',
+    });
+
+    render(
+      <ListingApprovalCombinedSections
+        {...buildCommonProps()}
+        titleFieldName="Title"
+        combinedDescriptionFieldName="Description"
+        combinedSharedFieldNames={['Title', 'Price']}
+        combinedRequiredFieldNames={['Title']}
+        shopifyRequiredFieldNames={['Vendor']}
+        ebayRequiredFieldNames={['Categories']}
+        combinedSharedKeyFeaturesFieldName="Key Features"
+        combinedSharedKeyFeaturesSyncFieldNames={['Shopify Key Features']}
+        sharedTestingSourceFieldValues={{}}
+        sharedDrawerRequiredStatus={{ hasRequired: true, allFilled: true }}
+        combinedShopifyOnlyFieldNames={buildShopifyProps().combinedShopifyOnlyFieldNames}
+        shopifyDrawerRequiredStatus={{ hasRequired: true, allFilled: false }}
+        currentPageShopifyBodyHtml="<p>Rendered Shopify body</p>"
+        currentPageShopifyTagValues={['Vintage']}
+        currentPageShopifyCollectionIds={['gid://shopify/Collection/1']}
+        currentPageShopifyCollectionLabelsById={{ 'gid://shopify/Collection/1': 'Amplifiers' }}
+        selectedEbayTemplateId="classic"
+        setSelectedEbayTemplateId={vi.fn()}
+        combinedShopifyBodyHtmlFieldName="Shopify Body HTML"
+        combinedShopifyBodyHtmlValue="<p>Shopify body</p>"
+        currentPageProductDescriptionResolution={{ sourceFieldName: 'Description', sourceType: 'exact' }}
+        currentPageProductDescription="Combined description"
+        currentPageProductCategoryResolution={{ sourceFieldName: 'Category', sourceType: 'exact' }}
+        currentPageCategoryIdResolution={{ sourceFieldName: 'Shopify Category ID', value: 'gid://shopify/TaxonomyCategory/amplifiers' }}
+        shopifyCategoryLookupValue="Amplifiers > Integrated Amplifiers"
+        shopifyCategoryResolution={{ status: 'resolved', match: { id: 'gid://shopify/TaxonomyCategory/amplifiers', fullName: 'Amplifiers > Integrated Amplifiers' } }}
+        isShopifyPayloadPreviewContext
+        shopifyProductSetRequest={{ input: { title: 'Combined description' }, synchronous: true }}
+        combinedEbayOnlyFieldNames={['Categories', 'Condition', 'Testing Notes']}
+        ebayDrawerRequiredStatus={{ hasRequired: true, allFilled: true }}
+        combinedEbayGeneratedBodyHtml="<p>Rendered eBay body</p>"
+        ebayCategoryLabelsById={{ '3276': 'Amplifiers' }}
+        setEbayCategoryLabelsById={vi.fn()}
+        setBodyHtmlPreview={vi.fn()}
+        combinedEbayBodyHtmlFieldName="eBay Body HTML"
+        combinedEbayBodyHtmlValue="<p>eBay body</p>"
+        bodyHtmlPreview="<p>Preview body</p>"
+        isEbayPayloadPreviewContext
+        ebayDraftPayloadBundle={{ inventoryItem: {}, offer: {} }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Shopify Create Listing API Payload (Exact Request)')).not.toBeInTheDocument();
+      expect(screen.queryByText('eBay Create Listing API Payload (Exact Request)')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Shopify Body (HTML)')).toBeInTheDocument();
+    expect(screen.getByText('eBay Body (HTML)')).toBeInTheDocument();
   });
 });

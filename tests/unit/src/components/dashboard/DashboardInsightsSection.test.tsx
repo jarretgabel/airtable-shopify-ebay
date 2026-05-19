@@ -24,9 +24,9 @@ describe('DashboardInsightsSection', () => {
       />,
     );
 
-    expect(screen.getByText('Opens Sold Ready To Ship Bucket')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open sold ready to ship/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /open post-publish/i }));
+    fireEvent.click(screen.getByRole('button', { name: /open sold ready to ship/i }));
 
     expect(onOpenInventoryPostPublishBucket).toHaveBeenCalledWith('sold-ready');
     expect(onSelectTab).not.toHaveBeenCalled();

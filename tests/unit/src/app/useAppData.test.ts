@@ -9,6 +9,7 @@ const {
   mockUseHiFiShark,
   mockUseEbayListings,
   mockUseApprovalQueueSummary,
+  mockUseCombinedListingsReadyForPublishingCount,
   mockUseShopifyApprovalQueueSummary,
   mockUseUsedGearWorkflowDashboardTargets,
   mockUseUsedGearWorkflowAnalyticsSnapshot,
@@ -22,6 +23,7 @@ const {
   mockUseHiFiShark: vi.fn(),
   mockUseEbayListings: vi.fn(),
   mockUseApprovalQueueSummary: vi.fn(),
+  mockUseCombinedListingsReadyForPublishingCount: vi.fn(),
   mockUseShopifyApprovalQueueSummary: vi.fn(),
   mockUseUsedGearWorkflowDashboardTargets: vi.fn(),
   mockUseUsedGearWorkflowAnalyticsSnapshot: vi.fn(),
@@ -58,6 +60,10 @@ vi.mock('@/hooks/useEbayListings', () => ({
 
 vi.mock('@/hooks/useApprovalQueueSummary', () => ({
   useApprovalQueueSummary: mockUseApprovalQueueSummary,
+}));
+
+vi.mock('@/hooks/useCombinedListingsReadyForPublishingCount', () => ({
+  useCombinedListingsReadyForPublishingCount: mockUseCombinedListingsReadyForPublishingCount,
 }));
 
 vi.mock('@/hooks/useShopifyApprovalQueueSummary', () => ({
@@ -141,6 +147,8 @@ describe('useAppData', () => {
     });
     mockUseApprovalQueueSummary.mockReset();
     mockUseApprovalQueueSummary.mockReturnValue({ loading: false, error: null, total: 0, approved: 0, pending: 0, refetch: vi.fn() });
+    mockUseCombinedListingsReadyForPublishingCount.mockReset();
+    mockUseCombinedListingsReadyForPublishingCount.mockReturnValue({ loading: false, error: null, count: 0, refetch: vi.fn() });
     mockUseShopifyApprovalQueueSummary.mockReset();
     mockUseShopifyApprovalQueueSummary.mockReturnValue({ loading: false, error: null, total: 0, approved: 0, pending: 0, refetch: vi.fn() });
     mockUseUsedGearWorkflowDashboardTargets.mockReset();
@@ -264,6 +272,7 @@ describe('useAppData', () => {
 
     expect(mockUseEbayListings).toHaveBeenCalledWith(false);
     expect(mockUseApprovalQueueSummary).toHaveBeenCalledWith(false);
+    expect(mockUseCombinedListingsReadyForPublishingCount).toHaveBeenCalledWith(false);
     expect(mockUseShopifyApprovalQueueSummary).toHaveBeenCalledWith(false);
     expect(mockUseUsedGearWorkflowDashboardTargets).toHaveBeenCalledWith(true);
     expect(mockUseUsedGearWorkflowAnalyticsSnapshot).toHaveBeenCalledWith(true, 'Taylor Reviewer');
@@ -285,10 +294,32 @@ describe('useAppData', () => {
     expect(mockUseShopifyProducts).toHaveBeenCalledWith(false);
     expect(mockUseEbayListings).toHaveBeenCalledWith(false);
     expect(mockUseApprovalQueueSummary).toHaveBeenCalledWith(false);
+    expect(mockUseCombinedListingsReadyForPublishingCount).toHaveBeenCalledWith(false);
     expect(mockUseShopifyApprovalQueueSummary).toHaveBeenCalledWith(false);
     expect(mockUseUsedGearWorkflowDashboardTargets).toHaveBeenCalledWith(false);
     expect(mockUseUsedGearWorkflowAnalyticsSnapshot).toHaveBeenCalledWith(false, '');
     expect(mockUseUsedGearWorkflowPostPublishSummary).toHaveBeenCalledWith(false, '');
     expect(mockUseJotFormInquiries).toHaveBeenCalledWith('', 60_000, false);
+  });
+
+  it('enables the combined listings ready count only when the combined approval feature is available', () => {
+    mockGetRuntimeFeatureCapabilities.mockReturnValue({
+      ...unavailableFeatures,
+      approvalCombined: {
+        available: true,
+        message: null,
+        missingEnvNames: [],
+      },
+    });
+
+    renderHook(() => useAppData({
+      enabled: true,
+      activeTab: 'listings',
+      canAccessPage: (page) => page === 'listings',
+      currentUserName: 'Taylor Reviewer',
+      users: [{ role: 'admin' }],
+    }));
+
+    expect(mockUseCombinedListingsReadyForPublishingCount).toHaveBeenCalledWith(true);
   });
 });
