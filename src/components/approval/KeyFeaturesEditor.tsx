@@ -57,8 +57,6 @@ const AUTO_INCLUDED_FEATURE_NAMES = new Set([
   'audiogon rating',
 ]);
 
-const AUTO_INCLUDED_FEATURE_NAMES_TEXT = 'Make, Model, Serial Number, Condition, Component Type, Cosmetic Notes, Includes, Original Box, Manual, Remote, Power Cable, Voltage, and Audiogon Rating';
-
 const KEY_FEATURE_PRESETS: ReadonlyArray<KeyFeaturePreset> = [
   {
     id: 'general-component',
@@ -260,7 +258,7 @@ export function KeyFeaturesEditor({
   syncFieldNames = [],
   disabled = false,
   label = 'Other Key Features',
-  helperText = 'Free-form feature/value pairs for the listing highlights shown to buyers.',
+  helperText,
   helperNotice,
   headerAction,
   componentTypeValue,
@@ -385,9 +383,11 @@ export function KeyFeaturesEditor({
         {headerAction ? <span onClick={(event) => event.stopPropagation()}>{headerAction}</span> : null}
       </summary>
       <div className="flex flex-col gap-2 border-t border-[var(--line)] px-3 py-3">
-        <p className="m-0 text-[0.74rem] leading-5 text-[var(--muted)]">
-          {helperText}
-        </p>
+        {helperText ? (
+          <p className="m-0 text-[0.74rem] leading-5 text-[var(--muted)]">
+            {helperText}
+          </p>
+        ) : null}
         {helperNotice ? (
           <div className="rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-100">
             {helperNotice}
@@ -399,9 +399,6 @@ export function KeyFeaturesEditor({
               <span className="text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Suggested Defaults</span>
               <p className="m-0 text-xs text-[var(--muted)]">
                 Suggested from component type: <span className="font-medium text-[var(--ink)]">{componentTypeValue}</span>
-              </p>
-              <p className="m-0 text-xs text-[var(--muted)]">
-                Suggested defaults omit auto-mapped fields. {AUTO_INCLUDED_FEATURE_NAMES_TEXT} come from the listing automatically unless you add an override below.
               </p>
             </div>
             <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">

@@ -78,6 +78,7 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
   effectiveCollectionEditorLabelsById: Record<string, string>;
   setShopifyCollectionIds: (nextCollectionIds: string[], collectionLabelsById?: Record<string, string>) => void;
   hasEbayCategoryEditor: boolean;
+  renderEbayCategoryEditor?: boolean;
   effectiveEbayCategoriesFieldName: string;
   ebayMarketplaceId: string;
   ebaySelectedCategoryDisplayValues: string[];
@@ -148,6 +149,7 @@ export function ApprovalFormFieldsSupplementalEditors({
   effectiveCollectionEditorLabelsById,
   setShopifyCollectionIds,
   hasEbayCategoryEditor,
+  renderEbayCategoryEditor = true,
   effectiveEbayCategoriesFieldName,
   ebayMarketplaceId,
   ebaySelectedCategoryDisplayValues,
@@ -212,7 +214,6 @@ export function ApprovalFormFieldsSupplementalEditors({
       )}
     </>
   ) : null;
-
   return (
     <>
       {imageUrlSourceField && (
@@ -376,7 +377,7 @@ export function ApprovalFormFieldsSupplementalEditors({
         </Suspense>
       )}
 
-      {hasEbayCategoryEditor && (
+      {hasEbayCategoryEditor && renderEbayCategoryEditor && (
         <Suspense fallback={lazyEditorFallback}>
           <EbayCategoriesSelect
             fieldName={effectiveEbayCategoriesFieldName}

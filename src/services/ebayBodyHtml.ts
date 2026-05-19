@@ -148,10 +148,15 @@ function normalizeTestingNotesForTemplate(rawValue: string): string {
 }
 
 function mergeTemplateTestingEntries(rawValue: string, supplementalFields: EbaySupplementalBodyFields = {}): string {
-  return mergeTemplateEntries(normalizeTestingNotesForTemplate(rawValue), buildSupplementalTemplateEntries([
+  const mergedEntries = parseKeyFeatureEntries(mergeTemplateEntries(normalizeTestingNotesForTemplate(rawValue), buildSupplementalTemplateEntries([
     { feature: 'Voltage', value: supplementalFields.voltage ?? '' },
     { feature: 'Audiogon Rating', value: supplementalFields.audiogonRating ?? '' },
-  ]), { supplementalFirst: false });
+  ]), { supplementalFirst: false }));
+  const normalizedTestingNotesFeature = normalizeTemplateFeatureName('Testing Notes');
+  const testingNotesEntries = mergedEntries.filter((entry) => normalizeTemplateFeatureName(entry.feature) === normalizedTestingNotesFeature);
+  const otherEntries = mergedEntries.filter((entry) => normalizeTemplateFeatureName(entry.feature) !== normalizedTestingNotesFeature);
+
+  return JSON.stringify([...otherEntries, ...testingNotesEntries]);
 }
 
 export function buildEbayBodyHtmlFromTemplate(

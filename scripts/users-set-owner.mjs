@@ -408,8 +408,9 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log('Usage: npm run users:set-owner -- --email owner@example.com --name "Owner Name" --password "StrongPass123!" [--must-change-password]');
+  console.log('Usage: npm run users:owner-account -- --email owner@example.com --name "Owner Name" --password "StrongPass123!" [--must-change-password]');
   console.log('');
+  console.log('This script manages a single owner account record. It does not seed the live team-user roster.');
   console.log('If the email already exists, the script promotes that account to owner and optionally updates name/password.');
   console.log('If the email does not exist, the script creates a new owner record in Airtable.');
 }

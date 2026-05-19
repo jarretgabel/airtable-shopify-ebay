@@ -203,6 +203,21 @@ Behavior:
 - When Gmail vars are configured and valid, welcome emails are sent via Gmail API.
 - If Gmail vars are missing or invalid, the app falls back to opening a prefilled email draft.
 
+## Live Team User Seed Script
+
+Use this package script when you want to seed the hard-coded live internal user roster into the Airtable Users table without sending welcome emails.
+
+```bash
+npm run users:actual-users:list
+npm run users:actual-users:seed
+```
+
+Notes:
+
+- `users:actual-users:list` is preview-only and writes the planned changes to `tmp/users-team-seed/.../plan.json`.
+- `users:actual-users:seed` creates or updates the live roster, generates temporary passwords when needed, and writes those passwords to `tmp/users-team-seed/.../temporary-passwords.json`.
+- This is the live internal user seed path, not the owner-account utility.
+
 ## Owner Account Script
 
 Owner accounts remain real app users, but owner creation and owner role assignment are intentionally excluded from the in-app User Management flows.
@@ -210,7 +225,7 @@ Owner accounts remain real app users, but owner creation and owner role assignme
 Use the package script to create a new owner or promote an existing account to owner:
 
 ```bash
-npm run users:set-owner -- --email owner@example.com --name "Olivia Owner" --password "Owner123!"
+npm run users:owner-account -- --email owner@example.com --name "Olivia Owner" --password "Owner123!"
 ```
 
 Optional flags:
@@ -220,6 +235,7 @@ Optional flags:
 
 Notes:
 
+- This script manages one owner account at a time. It is separate from the live team-user seed script.
 - The script reads `VITE_AIRTABLE_API_KEY`, `VITE_AIRTABLE_BASE_ID`, and the users-table env vars from `.env` and `.env.local`.
 - Running the script against an existing user updates that account in place and promotes it to `owner`.
 - Owner accounts still manage their own email, password, and notification preferences from `Account Settings` after signing in.

@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode } from 'react';
+import { Fragment, type ComponentProps, type ReactNode } from 'react';
 import { ApprovalFormStandardField } from './ApprovalFormStandardField';
 
 type StandardFieldSharedProps = Omit<ComponentProps<typeof ApprovalFormStandardField>, 'fieldName'>;
@@ -12,6 +12,8 @@ interface ApprovalFormFieldGridProps {
   pinnedPreDescriptionFieldName?: string;
   standardFieldProps: StandardFieldSharedProps;
   supplementalEditors: ReactNode;
+  inlineAfterFieldNames?: string[];
+  inlineAfterFieldContent?: ReactNode;
 }
 
 function renderStandardField(
@@ -57,12 +59,34 @@ export function ApprovalFormFieldGrid({
   pinnedPreDescriptionFieldName,
   standardFieldProps,
   supplementalEditors,
+  inlineAfterFieldNames = [],
+  inlineAfterFieldContent,
 }: ApprovalFormFieldGridProps) {
   const advancedOptionsBlock = renderAdvancedOptionsBlock(
     showEbayAdvancedOptions,
     ebayAdvancedOptionFieldNames,
     standardFieldProps,
   );
+  let hasRenderedInlineAfterFieldContent = false;
+
+  const renderFieldSequence = (fieldNames: string[]) => fieldNames
+    .filter((fieldName) => fieldName !== pinnedPreDescriptionFieldName)
+    .map((fieldName) => {
+      const shouldRenderInlineAfterField = !hasRenderedInlineAfterFieldContent
+        && inlineAfterFieldContent
+        && inlineAfterFieldNames.some((candidate) => candidate.trim().toLowerCase() === fieldName.trim().toLowerCase());
+
+      if (shouldRenderInlineAfterField) {
+        hasRenderedInlineAfterFieldContent = true;
+      }
+
+      return (
+        <Fragment key={fieldName}>
+          {renderStandardField(fieldName, standardFieldProps)}
+          {shouldRenderInlineAfterField ? inlineAfterFieldContent : null}
+        </Fragment>
+      );
+    });
 
   if (showOnlyEbayAdvancedOptions) {
     return <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">{advancedOptionsBlock}</div>;
@@ -70,17 +94,27 @@ export function ApprovalFormFieldGrid({
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      {requiredOrderedFieldNames
-        .filter((fieldName) => fieldName !== pinnedPreDescriptionFieldName)
-        .map((fieldName) => renderStandardField(fieldName, standardFieldProps))}
+      {renderFieldSequence(requiredOrderedFieldNames)}
 
-      {pinnedPreDescriptionFieldName && renderStandardField(pinnedPreDescriptionFieldName, standardFieldProps)}
+      {pinnedPreDescriptionFieldName && (
+        <Fragment key={pinnedPreDescriptionFieldName}>
+          {renderStandardField(pinnedPreDescriptionFieldName, standardFieldProps)}
+          {!hasRenderedInlineAfterFieldContent
+            && inlineAfterFieldContent
+            && inlineAfterFieldNames.some((candidate) => candidate.trim().toLowerCase() === pinnedPreDescriptionFieldName.trim().toLowerCase())
+            ? (() => {
+              hasRenderedInlineAfterFieldContent = true;
+              return inlineAfterFieldContent;
+            })()
+            : null}
+        </Fragment>
+      )}
 
       {supplementalEditors}
 
-      {optionalOrderedFieldNames
-        .filter((fieldName) => fieldName !== pinnedPreDescriptionFieldName)
-        .map((fieldName) => renderStandardField(fieldName, standardFieldProps))}
+      {renderFieldSequence(optionalOrderedFieldNames)}
+
+      {!hasRenderedInlineAfterFieldContent ? inlineAfterFieldContent : null}
 
       {advancedOptionsBlock}
     </div>

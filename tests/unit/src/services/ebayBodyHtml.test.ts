@@ -198,11 +198,41 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
     expect(html).toContain('<tr><th>Testing Notes</th><td>Fully tested.</td></tr>');
     expect(html).toContain('<tr><th>Voltage</th><td>Wrong Voltage</td></tr>');
     expect(html).toContain('<tr><th>Audiogon Rating</th><td>Wrong Rating</td></tr>');
+    expect(html).toMatch(/<tr><th>Voltage<\/th><td>Wrong Voltage<\/td><\/tr>\n<tr><th>Audiogon Rating<\/th><td>Wrong Rating<\/td><\/tr>\n<tr><th>Testing Notes<\/th><td>Fully tested\.<\/td><\/tr>/);
     expect(html).not.toContain('<tr><th>Serial Number</th><td>SN-2270-4455</td></tr>');
     expect(html).not.toContain('<tr><th>Condition</th><td>Used - Very Good</td></tr>');
     expect(html).not.toContain('<tr><th>Original Box</th><td>Yes</td></tr>');
     expect(html).not.toContain('<tr><th>Manual</th><td>Included</td></tr>');
     expect(html).not.toContain('<tr><th>Voltage</th><td>120V</td></tr>');
     expect(html).not.toContain('<tr><th>Audiogon Rating</th><td>8/10</td></tr>');
+  });
+
+  it('moves testing notes to the bottom of the eBay testing table', () => {
+    const template = [
+      '<table id="testing-notes">',
+      '  <tbody>',
+      '    <tr><th>{{key}}</th><td>{{value}}</td></tr>',
+      '  </tbody>',
+      '</table>',
+    ].join('\n');
+
+    const html = buildEbayBodyHtmlFromTemplate(
+      template,
+      '',
+      '',
+      '',
+      JSON.stringify([
+        { feature: 'Testing Notes', value: 'Fully tested.' },
+        { feature: 'Bias', value: 'Stable' },
+      ]),
+      '',
+      '',
+      {
+        voltage: '120V',
+        audiogonRating: '8/10',
+      },
+    );
+
+    expect(html).toMatch(/<tr><th>Bias<\/th><td>Stable<\/td><\/tr>\n<tr><th>Voltage<\/th><td>120V<\/td><\/tr>\n<tr><th>Audiogon Rating<\/th><td>8\/10<\/td><\/tr>\n<tr><th>Testing Notes<\/th><td>Fully tested\.<\/td><\/tr>/);
   });
 });

@@ -19,8 +19,6 @@ describe('KeyFeaturesEditor', () => {
     expect(screen.getByText('Other Key Features')).toBeInTheDocument();
     expect(screen.getByText('Suggested from component type:')).toBeInTheDocument();
     expect(screen.getByText('Stereo Receiver')).toBeInTheDocument();
-    expect(screen.getByText(/Suggested defaults omit auto-mapped fields/i)).toBeInTheDocument();
-    expect(screen.getByText(/Make, Model, Serial Number, Condition, Component Type, Cosmetic Notes, Includes, Original Box, Manual, Remote, Power Cable, Voltage, and Audiogon Rating come from the listing automatically unless you add an override below/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Add defaults' }));
 
