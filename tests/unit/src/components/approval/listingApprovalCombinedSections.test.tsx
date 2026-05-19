@@ -235,6 +235,12 @@ describe('combined approval sections', () => {
       'Audiogon Rating': '["8/10"]',
       'Testing Cosmetic Notes': 'Light wear on the top cover.',
     };
+    props.formValues = {
+      ...props.formValues,
+      'eBay Body Key Features JSON': JSON.stringify([
+        { feature: 'Includes', value: 'Original box and inserts' },
+      ]),
+    };
 
     render(<ListingApprovalCombinedIntakeSection {...props} />);
 
@@ -244,11 +250,13 @@ describe('combined approval sections', () => {
     expect(screen.queryByText('Shared Fields')).not.toBeInTheDocument();
     expect(screen.getAllByText('Manual').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Original Box').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Includes')).toHaveLength(1);
     expect(screen.getAllByText('Voltage').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Remote').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Power Cable').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Audiogon Rating').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Included').length).toBeGreaterThan(0);
+    expect(screen.getByText('Original box and inserts')).toBeInTheDocument();
     expect(screen.getByText('No')).toBeInTheDocument();
     expect(screen.getByText('120V')).toBeInTheDocument();
     expect(screen.getByText('8/10')).toBeInTheDocument();
@@ -304,6 +312,7 @@ describe('combined approval sections', () => {
 
     expect(keyFeaturesEditorSpy).toHaveBeenCalledWith(expect.objectContaining({
       disabled: false,
+      hiddenFeatureNames: expect.arrayContaining(['Make', 'Model', 'Serial Number', 'Condition', 'Component Type', 'Cosmetic Notes', 'Includes', 'Original Box', 'Manual', 'Remote', 'Power Cable', 'Voltage', 'Audiogon Rating']),
     }));
   });
 

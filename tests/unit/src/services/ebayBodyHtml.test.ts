@@ -107,7 +107,7 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
     expect(html).toContain('<tr><th>Testing Notes</th><td>Passed extended bench and listening tests. Bias and DC offset are stable:<br />tuner locks cleanly and the phono stage is quiet</td></tr>');
   });
 
-  it('adds Make and Model to the top key features table without duplicating manual key feature rows', () => {
+  it('lets manual auto-mapped key feature rows override listing-derived eBay values', () => {
     const template = [
       '<table id="key-features">',
       '  <tbody>',
@@ -124,16 +124,85 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
         { feature: 'Make', value: 'Wrong Make' },
         { feature: 'Model', value: 'Wrong Model' },
         { feature: 'Condition', value: 'Very Good' },
+        { feature: 'Finish', value: 'Silver' },
+        { feature: 'Service History', value: 'Recapped in 2024' },
       ]),
       '',
       'McIntosh',
       'MC275',
+      {
+        componentType: 'Tube Amplifier',
+      },
     );
 
-    expect(html).toContain('<tr><th>Make</th><td>McIntosh</td></tr>');
-    expect(html).toContain('<tr><th>Model</th><td>MC275</td></tr>');
+    expect(html).toContain('<tr><th>Make</th><td>Wrong Make</td></tr>');
+    expect(html).toContain('<tr><th>Model</th><td>Wrong Model</td></tr>');
+    expect(html).toContain('<tr><th>Component Type</th><td>Tube Amplifier</td></tr>');
     expect(html).toContain('<tr><th>Condition</th><td>Very Good</td></tr>');
-    expect(html).not.toContain('Wrong Make');
-    expect(html).not.toContain('Wrong Model');
+    expect(html).toContain('<tr><th>Finish</th><td>Silver</td></tr>');
+    expect(html).toContain('<tr><th>Service History</th><td>Recapped in 2024</td></tr>');
+    expect(html).toMatch(/<tr><th>Model<\/th><td>Wrong Model<\/td><\/tr>\n<tr><th>Component Type<\/th><td>Tube Amplifier<\/td><\/tr>\n<tr><th>Condition<\/th><td>Very Good<\/td><\/tr>\n<tr><th>Finish<\/th><td>Silver<\/td><\/tr>\n<tr><th>Service History<\/th><td>Recapped in 2024<\/td><\/tr>/);
+    expect(html).not.toContain('<tr><th>Make</th><td>McIntosh</td></tr>');
+    expect(html).not.toContain('<tr><th>Model</th><td>MC275</td></tr>');
+  });
+
+  it('lets manual auto-mapped key feature and testing rows override listing-derived eBay values', () => {
+    const template = [
+      '<table id="key-features">',
+      '  <tbody>',
+      '    <tr><th>{{key}}</th><td>{{value}}</td></tr>',
+      '  </tbody>',
+      '</table>',
+      '<table id="testing-notes">',
+      '  <tbody>',
+      '    <tr><th>{{key}}</th><td>{{value}}</td></tr>',
+      '  </tbody>',
+      '</table>',
+    ].join('\n');
+
+    const html = buildEbayBodyHtmlFromTemplate(
+      template,
+      '',
+      '',
+      JSON.stringify([
+        { feature: 'Serial Number', value: 'Wrong Serial' },
+        { feature: 'Condition', value: 'Wrong Condition' },
+        { feature: 'Original Box', value: 'Wrong Box' },
+        { feature: 'Manual', value: 'Wrong Manual' },
+      ]),
+      JSON.stringify([
+        { feature: 'Voltage', value: 'Wrong Voltage' },
+        { feature: 'Audiogon Rating', value: 'Wrong Rating' },
+        { feature: 'Testing Notes', value: 'Fully tested.' },
+      ]),
+      'Marantz',
+      '2270',
+      {
+        serialNumber: 'SN-2270-4455',
+        condition: 'Used - Very Good',
+        originalBox: 'Yes',
+        remote: 'Included',
+        powerCable: 'Included',
+        manual: 'Included',
+        voltage: '120V',
+        audiogonRating: '8/10',
+      },
+    );
+
+    expect(html).toContain('<tr><th>Serial Number</th><td>Wrong Serial</td></tr>');
+    expect(html).toContain('<tr><th>Condition</th><td>Wrong Condition</td></tr>');
+    expect(html).toContain('<tr><th>Original Box</th><td>Wrong Box</td></tr>');
+    expect(html).toContain('<tr><th>Remote</th><td>Included</td></tr>');
+    expect(html).toContain('<tr><th>Power Cable</th><td>Included</td></tr>');
+    expect(html).toContain('<tr><th>Manual</th><td>Wrong Manual</td></tr>');
+    expect(html).toContain('<tr><th>Testing Notes</th><td>Fully tested.</td></tr>');
+    expect(html).toContain('<tr><th>Voltage</th><td>Wrong Voltage</td></tr>');
+    expect(html).toContain('<tr><th>Audiogon Rating</th><td>Wrong Rating</td></tr>');
+    expect(html).not.toContain('<tr><th>Serial Number</th><td>SN-2270-4455</td></tr>');
+    expect(html).not.toContain('<tr><th>Condition</th><td>Used - Very Good</td></tr>');
+    expect(html).not.toContain('<tr><th>Original Box</th><td>Yes</td></tr>');
+    expect(html).not.toContain('<tr><th>Manual</th><td>Included</td></tr>');
+    expect(html).not.toContain('<tr><th>Voltage</th><td>120V</td></tr>');
+    expect(html).not.toContain('<tr><th>Audiogon Rating</th><td>8/10</td></tr>');
   });
 });

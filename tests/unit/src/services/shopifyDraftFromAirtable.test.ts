@@ -392,16 +392,28 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Dust cover, headshell, power cable</li><li><strong>Finish:</strong> Silver</li></ul>');
   });
 
-  it('prepends Make and Model to Shopify key features without duplicating manual rows', () => {
+  it('lets manual auto-mapped key feature rows override listing-derived Shopify values', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Make Model Product',
       Description: 'Pulled from Airtable description field.',
       Make: 'Marantz',
       Model: '2270',
-      'Key Features': 'Key,Value\nMake,Wrong Make\nModel,Wrong Model\nIncludes,Original box',
+      'Component Type': 'Stereo Receiver',
+      'Serial Number': 'SN-2270-4455',
+      __Condition__: 'Used - Very Good',
+      Manual: 'Included',
+      'Original Box': 'Yes',
+      Remote: 'Included',
+      'Power Cable': 'Included',
+      Voltage: '120V',
+      'Audiogon Rating': '8/10',
+      'Internal Inclusion Notes': 'Original box',
+      'Testing Cosmetic Notes': 'Light scratching on the case',
+      'Testing Notes': 'Passed bench test.\nPhono stage is quiet.',
+      'Key Features': 'Key,Value\nMake,Wrong Make\nModel,Wrong Model\nSerial Number,Wrong Serial\nCondition,Excellent\nIncludes,Wrong includes\nCosmetic Notes,Wrong cosmetics\nOriginal Box,Wrong box\nPower Cable,Wrong power cable\nManual,Wrong manual\nVoltage,Wrong voltage\nAudiogon Rating,Wrong rating\nFinish,Silver\nService History,Recapped in 2024',
     });
 
-    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p>\n<ul><li><strong>Make:</strong> Marantz</li><li><strong>Model:</strong> 2270</li><li><strong>Includes:</strong> Original box</li></ul>');
+    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p>\n<ul><li><strong>Make:</strong> Wrong Make</li><li><strong>Model:</strong> Wrong Model</li><li><strong>Component Type:</strong> Stereo Receiver</li><li><strong>Serial Number:</strong> Wrong Serial</li><li><strong>Condition:</strong> Excellent</li><li><strong>Cosmetic Notes:</strong> Wrong cosmetics</li><li><strong>Includes:</strong> Wrong includes</li><li><strong>Original Box:</strong> Wrong box</li><li><strong>Remote:</strong> Included</li><li><strong>Power Cable:</strong> Wrong power cable</li><li><strong>Manual:</strong> Wrong manual</li><li><strong>Voltage:</strong> Wrong voltage</li><li><strong>Audiogon Rating:</strong> Wrong rating</li><li><strong>Finish:</strong> Silver</li><li><strong>Service History:</strong> Recapped in 2024</li></ul>\n<p><strong>Testing Notes:</strong> Passed bench test.<br />Phono stage is quiet.</p>');
   });
 
   it('sends only the last segment of the Type breadcrumb as Shopify product_type', () => {

@@ -141,6 +141,22 @@ export function formatKeyFeatureHtml(raw: string): string {
   }).join('')}</ul>`;
 }
 
+export function formatTestingNotesHtml(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+
+  const paragraphs = trimmed
+    .split(/\r?\n\s*\r?\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .map((paragraph) => paragraph.replace(/\r?\n/g, '<br />'));
+
+  if (paragraphs.length === 0) return '';
+  return paragraphs
+    .map((paragraph, index) => (index === 0 ? `<p><strong>Testing Notes:</strong> ${paragraph}</p>` : `<p>${paragraph}</p>`))
+    .join('\n');
+}
+
 function formatDescriptionHtml(description: string): string {
   const trimmed = description.trim();
   if (!trimmed) return '<br>';
@@ -196,6 +212,7 @@ function extractKeyFeaturesHeading(html: string): string {
 function buildStructuredBodyHtml(
   descriptionHtml: string,
   keyFeaturesHtml: string,
+  testingNotesHtml = '',
   keyFeaturesHeading = '',
 ): string {
   const parts: string[] = [];
@@ -209,6 +226,10 @@ function buildStructuredBodyHtml(
       parts.push(keyFeaturesHeading);
     }
     parts.push(keyFeaturesHtml);
+  }
+
+  if (testingNotesHtml) {
+    parts.push(testingNotesHtml);
   }
 
   return parts.join('\n').trim();
@@ -240,21 +261,22 @@ function replaceFirstList(html: string, replacement: string): string {
   return `${html}${replacement}`;
 }
 
-export function buildShopifyBodyHtml(description: string, keyFeaturesRaw: string, templateHtml = ''): string {
+export function buildShopifyBodyHtml(description: string, keyFeaturesRaw: string, templateHtml = '', testingNotes = ''): string {
   const descriptionHtml = formatDescriptionHtml(description);
   const keyFeaturesHtml = ensureListWrapped(formatKeyFeatureHtml(keyFeaturesRaw));
+  const testingNotesHtml = formatTestingNotesHtml(testingNotes);
   const baseTemplate = normalizeTemplateHtml(templateHtml);
 
   if (!baseTemplate) {
-    return buildStructuredBodyHtml(descriptionHtml, keyFeaturesHtml);
+    return buildStructuredBodyHtml(descriptionHtml, keyFeaturesHtml, testingNotesHtml);
   }
 
   if (!hasTemplateTokens(baseTemplate)) {
     const keyFeaturesHeading = keyFeaturesHtml ? extractKeyFeaturesHeading(baseTemplate) : '';
-    return buildStructuredBodyHtml(descriptionHtml, keyFeaturesHtml, keyFeaturesHeading);
+    return buildStructuredBodyHtml(descriptionHtml, keyFeaturesHtml, testingNotesHtml, keyFeaturesHeading);
   }
 
   const withDescription = replaceFirstParagraph(baseTemplate, descriptionHtml);
   const withFeatures = replaceFirstList(withDescription, keyFeaturesHtml);
-  return withFeatures.trim();
+  return buildStructuredBodyHtml(withFeatures.trim(), '', testingNotesHtml).trim();
 }

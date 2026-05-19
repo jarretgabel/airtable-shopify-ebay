@@ -243,9 +243,12 @@ function buildWorkflowDescription(fields: AirtableFields): string {
   return firstNonEmptyField(fields, ['Inventory Notes']);
 }
 
-function buildWorkflowKeyFeaturePairs(fields: AirtableFields): FeaturePair[] {
+function buildWorkflowKeyFeaturePairs(): FeaturePair[] {
+  return [];
+}
+
+function buildWorkflowAutoIncludedKeyFeaturePairs(fields: AirtableFields): FeaturePair[] {
   return uniqueFeaturePairs([
-    { feature: 'Component Type', value: getTrimmedFieldValue(fields, 'Component Type') },
     {
       feature: 'Cosmetic Notes',
       value: firstNonEmptyField(fields, ['Internal Cosmetic Notes', 'Customer Cosmetic Notes']),
@@ -261,7 +264,9 @@ function buildWorkflowEbayKeyFeaturePairs(fields: AirtableFields): FeaturePair[]
   return uniqueFeaturePairs([
     { feature: 'Make', value: getTrimmedFieldValue(fields, 'Make') },
     { feature: 'Model', value: getTrimmedFieldValue(fields, 'Model') },
-    ...buildWorkflowKeyFeaturePairs(fields),
+    { feature: 'Component Type', value: getTrimmedFieldValue(fields, 'Component Type') },
+    ...buildWorkflowKeyFeaturePairs(),
+    ...buildWorkflowAutoIncludedKeyFeaturePairs(fields),
   ]);
 }
 
@@ -393,7 +398,7 @@ export function applyWorkflowListingPrefills(
   const existingEbayKeyFeatures = ebayKeyFeatureFieldNames.length > 0
     ? firstNonEmptyFormValue(values, ebayKeyFeatureFieldNames)
     : '';
-  const workflowKeyFeaturePairs = buildWorkflowKeyFeaturePairs(fields);
+  const workflowKeyFeaturePairs = buildWorkflowKeyFeaturePairs();
   const workflowEbayKeyFeaturePairs = buildWorkflowEbayKeyFeaturePairs(fields);
 
   applyPairPrefill(

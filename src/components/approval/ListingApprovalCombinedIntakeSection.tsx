@@ -1,5 +1,6 @@
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
+import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
 import {
   ListingApprovalTestingSection,
   resolveListingApprovalTestingSectionFields,
@@ -50,10 +51,11 @@ const INTAKE_SNAPSHOT_FIELD_ORDER: Record<string, number> = {
   'serial number': 3,
   'component type': 4,
   condition: 5,
-  'original box': 6,
-  manual: 7,
-  remote: 8,
-  'power cable': 9,
+  includes: 6,
+  'original box': 7,
+  manual: 8,
+  remote: 9,
+  'power cable': 10,
 };
 
 function isSourceManagedCombinedField(fieldName: string): boolean {
@@ -85,6 +87,56 @@ function toSourceManagedSnapshotLabel(fieldName: string): string {
   return normalizeSharedFieldName(fieldName) === normalizeSharedFieldName(CONDITION_FIELD)
     ? 'Condition'
     : fieldName;
+}
+
+function resolveIntakeTestingSnapshotValue(
+  field: { fieldName: string; label: string },
+  values: Record<string, string>,
+): string {
+  return normalizeSnapshotValue(values[field.fieldName] ?? '');
+}
+
+function resolveFeatureValueFromKeyFeatureFields(
+  values: Array<Record<string, string>>,
+  featureName: string,
+): string {
+  const normalizedFeatureName = normalizeSharedFieldName(featureName);
+  const candidateFieldNames = [
+    'eBay Body Key Features JSON',
+    'eBay Body Key Features',
+    'eBay Listing Key Features JSON',
+    'eBay Listing Key Features',
+    'Key Features JSON',
+    'Key Features',
+  ];
+
+  for (const sourceValues of values) {
+    for (const fieldName of candidateFieldNames) {
+      const rawValue = sourceValues[fieldName];
+      if (!rawValue || !rawValue.trim()) continue;
+
+      const match = parseKeyFeatureEntries(rawValue).find((entry) => normalizeSharedFieldName(entry.feature) === normalizedFeatureName);
+      if (match?.value?.trim()) return match.value;
+    }
+  }
+
+  return '';
+}
+
+function resolveIncludesSnapshotValue(
+  sourceValues: Record<string, string>,
+  formValues: Record<string, string>,
+): string {
+  const customerValue = sourceValues['Customer Inclusion Notes'];
+  if (customerValue?.trim()) return normalizeSnapshotValue(customerValue);
+
+  const internalValue = sourceValues['Internal Inclusion Notes'];
+  if (internalValue?.trim()) return normalizeSnapshotValue(internalValue);
+
+  return normalizeSnapshotValue(resolveFeatureValueFromKeyFeatureFields([
+    formValues,
+    sourceValues,
+  ], 'Includes'));
 }
 
 export function ListingApprovalCombinedIntakeSection({
@@ -122,9 +174,13 @@ export function ListingApprovalCombinedIntakeSection({
           : formValues[fieldName] ?? '',
       ),
     })),
+    {
+      label: 'Includes',
+      value: resolveIncludesSnapshotValue(effectiveSharedTestingSourceFieldValues, formValues),
+    },
     ...intakeTestingFields.map((field) => ({
       label: field.label,
-      value: normalizeSnapshotValue(effectiveSharedTestingSourceFieldValues[field.fieldName] ?? ''),
+      value: resolveIntakeTestingSnapshotValue(field, effectiveSharedTestingSourceFieldValues),
     })),
   ].sort((left, right) => {
     const leftOrder = INTAKE_SNAPSHOT_FIELD_ORDER[normalizeSharedFieldName(left.label)] ?? Number.MAX_SAFE_INTEGER;

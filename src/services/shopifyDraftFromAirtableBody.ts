@@ -16,24 +16,50 @@ interface ShopifyBodyDynamicTokenSpec {
   formatter?: (value: string) => string;
 }
 
+interface ShopifySupplementalFeatureEntry {
+  feature: string;
+  value: string;
+}
+
+const SHOPIFY_SUPPLEMENTAL_KEY_FEATURE_SPECS: ReadonlyArray<{ feature: string; candidates: string[] }> = [
+  { feature: 'Make', candidates: ['Make'] },
+  { feature: 'Model', candidates: ['Model'] },
+  { feature: 'Component Type', candidates: ['Component Type'] },
+  { feature: 'Serial Number', candidates: ['Serial Number'] },
+  { feature: 'Condition', candidates: ['__Condition__', 'Item Condition', 'Condition', 'Shopify Condition', 'Shopify REST Condition'] },
+  { feature: 'Cosmetic Notes', candidates: ['Cosmetic Notes', 'Testing Cosmetic Notes', 'Internal Cosmetic Notes', 'Customer Cosmetic Notes'] },
+  { feature: 'Includes', candidates: ['Includes', 'Internal Inclusion Notes', 'Customer Inclusion Notes'] },
+  { feature: 'Original Box', candidates: ['Original Box'] },
+  { feature: 'Remote', candidates: ['Remote'] },
+  { feature: 'Power Cable', candidates: ['Power Cable'] },
+  { feature: 'Manual', candidates: ['Manual'] },
+  { feature: 'Voltage', candidates: ['Voltage'] },
+  { feature: 'Audiogon Rating', candidates: ['Audiogon Rating'] },
+];
+
 function normalizeFeatureName(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
 }
 
-function mergeShopifyKeyFeatureEntries(raw: string, makeValue: string, modelValue: string): string {
-  const supplementalEntries = [
-    makeValue.trim() ? { feature: 'Make', value: makeValue.trim() } : null,
-    modelValue.trim() ? { feature: 'Model', value: modelValue.trim() } : null,
-  ].filter((entry): entry is { feature: string; value: string } => entry !== null);
+function mergeShopifyKeyFeatureEntries(raw: string, supplementalEntries: ShopifySupplementalFeatureEntry[]): string {
+  const filteredSupplementalEntries = supplementalEntries.filter((entry) => entry.value.trim().length > 0);
 
-  if (supplementalEntries.length === 0) return raw;
+  if (filteredSupplementalEntries.length === 0) return raw;
 
-  const filteredEntries = parseKeyFeatureEntries(raw).filter((entry) => {
-    const normalized = normalizeFeatureName(entry.feature);
-    return normalized !== 'make' && normalized !== 'model';
+  const parsedEntries = parseKeyFeatureEntries(raw);
+  const blockedFeatureNames = new Set(filteredSupplementalEntries.map((entry) => normalizeFeatureName(entry.feature)));
+  const overridingEntriesByName = new Map(
+    parsedEntries
+      .filter((entry) => blockedFeatureNames.has(normalizeFeatureName(entry.feature)))
+      .map((entry) => [normalizeFeatureName(entry.feature), entry] as const),
+  );
+  const remainingEntries = parsedEntries.filter((entry) => !blockedFeatureNames.has(normalizeFeatureName(entry.feature)));
+  const orderedSupplementalEntries = filteredSupplementalEntries.map((entry) => {
+    const overrideEntry = overridingEntriesByName.get(normalizeFeatureName(entry.feature));
+    return overrideEntry ? { feature: entry.feature, value: overrideEntry.value } : entry;
   });
 
-  return JSON.stringify([...supplementalEntries, ...filteredEntries]);
+  return JSON.stringify([...orderedSupplementalEntries, ...remainingEntries]);
 }
 
 function formatBulletList(value: string): string {
@@ -168,7 +194,14 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
     'shopify_body_key_features',
     'shopify_rest_body_key_features',
   ]);
-  const mergedKeyFeatures = mergeShopifyKeyFeatureEntries(rawKeyFeatures, getField(fields, ['Make']), getField(fields, ['Model']));
+  const mergedKeyFeatures = mergeShopifyKeyFeatureEntries(
+    rawKeyFeatures,
+    SHOPIFY_SUPPLEMENTAL_KEY_FEATURE_SPECS.map((spec) => ({
+      feature: spec.feature,
+      value: getField(fields, spec.candidates),
+    })),
+  );
+  const testingNotes = getField(fields, ['Testing Notes', 'Shopify Body Testing Notes', 'shopify_body_testing_notes']);
 
   const tokenValues = new Map<string, string>();
   SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.forEach((spec) => {
@@ -183,18 +216,19 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   const bodyDescription = tokenValues.get('body_description') ?? '';
   const bodyKeyFeatures = tokenValues.get('body_key_features') ?? '';
   const hasEditableBodyFields = hasAnyField(fields, bodyDescriptionCandidates) || hasAnyField(fields, bodyKeyFeaturesCandidates);
+  const usesStructuredBodyTokens = /\{\{\s*(body_description|body_key_features)\s*\}\}/i.test(explicitTemplate || '');
 
   if (!explicitTemplate && (bodyDescription || bodyKeyFeatures)) {
-    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, fallbackBodyHtml);
+    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, fallbackBodyHtml, testingNotes);
   }
 
   if (!explicitTemplate) {
     if (!hasEditableBodyFields) return fallbackBodyHtml;
-    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, fallbackBodyHtml);
+    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, fallbackBodyHtml, testingNotes);
   }
 
-  if (bodyDescription || bodyKeyFeatures) {
-    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, explicitTemplate);
+  if (usesStructuredBodyTokens || hasEditableBodyFields) {
+    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, explicitTemplate, testingNotes);
   }
 
   return template.replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, (_match, tokenName: string) => {

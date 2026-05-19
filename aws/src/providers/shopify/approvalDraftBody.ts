@@ -38,25 +38,51 @@ function parseDelimitedCells(line: string, delimiter: ',' | '\t'): string[] {
   return cells;
 }
 
+interface ShopifySupplementalFeatureEntry {
+  feature: string;
+  value: string;
+}
+
+const SHOPIFY_SUPPLEMENTAL_KEY_FEATURE_SPECS: ReadonlyArray<{ feature: string; candidates: string[] }> = [
+  { feature: 'Make', candidates: ['Make'] },
+  { feature: 'Model', candidates: ['Model'] },
+  { feature: 'Component Type', candidates: ['Component Type'] },
+  { feature: 'Serial Number', candidates: ['Serial Number'] },
+  { feature: 'Condition', candidates: ['__Condition__', 'Item Condition', 'Condition', 'Shopify Condition', 'Shopify REST Condition'] },
+  { feature: 'Cosmetic Notes', candidates: ['Cosmetic Notes', 'Testing Cosmetic Notes', 'Internal Cosmetic Notes', 'Customer Cosmetic Notes'] },
+  { feature: 'Includes', candidates: ['Includes', 'Internal Inclusion Notes', 'Customer Inclusion Notes'] },
+  { feature: 'Original Box', candidates: ['Original Box'] },
+  { feature: 'Remote', candidates: ['Remote'] },
+  { feature: 'Power Cable', candidates: ['Power Cable'] },
+  { feature: 'Manual', candidates: ['Manual'] },
+  { feature: 'Voltage', candidates: ['Voltage'] },
+  { feature: 'Audiogon Rating', candidates: ['Audiogon Rating'] },
+];
+
+function normalizeFeatureName(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
+}
+
+function mergeShopifyKeyFeatureEntries(raw: string, supplementalEntries: ShopifySupplementalFeatureEntry[]): string {
+  const filteredSupplementalEntries = supplementalEntries.filter((entry) => entry.value.trim().length > 0);
+  if (filteredSupplementalEntries.length === 0) return raw;
+
+  const parsedEntries = parseKeyFeatureEntries(raw);
+  const blockedFeatureNames = new Set(filteredSupplementalEntries.map((entry) => normalizeFeatureName(entry.feature)));
+  const overridingEntriesByName = new Map(
+    parsedEntries
+      .filter((entry) => blockedFeatureNames.has(normalizeFeatureName(entry.feature)))
+      .map((entry) => [normalizeFeatureName(entry.feature), entry] as const),
+  );
+  const filteredEntries = parsedEntries.filter((entry) => !blockedFeatureNames.has(normalizeFeatureName(entry.feature)));
+  const orderedSupplementalEntries = filteredSupplementalEntries.map((entry) => {
+    const overrideEntry = overridingEntriesByName.get(normalizeFeatureName(entry.feature));
+    return overrideEntry ? { feature: entry.feature, value: overrideEntry.value } : entry;
+  });
+  return JSON.stringify([...orderedSupplementalEntries, ...filteredEntries]);
+}
+
 function parseKeyFeatureEntries(raw: string): Array<{ feature: string; value: string }> {
-  function normalizeFeatureName(value: string): string {
-    return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
-  }
-  function mergeShopifyKeyFeatureEntries(raw: string, makeValue: string, modelValue: string): string {
-    const supplementalEntries = [
-      makeValue.trim() ? { feature: 'Make', value: makeValue.trim() } : null,
-      modelValue.trim() ? { feature: 'Model', value: modelValue.trim() } : null,
-    ].filter((entry): entry is { feature: string; value: string } => entry !== null);
-
-    if (supplementalEntries.length === 0) return raw;
-
-    const filteredEntries = parseKeyFeatureEntries(raw).filter((entry) => {
-      const normalized = normalizeFeatureName(entry.feature);
-      return normalized !== 'make' && normalized !== 'model';
-    });
-
-    return JSON.stringify([...supplementalEntries, ...filteredEntries]);
-  }
   if (!raw.trim()) return [];
   try {
     const parsed = JSON.parse(raw.trim());
@@ -93,6 +119,14 @@ function formatKeyFeatureHtml(raw: string): string {
   const entries = parseKeyFeatureEntries(raw);
   if (entries.length === 0) return '';
   return `<ul>${entries.map((entry) => entry.feature && entry.value ? `<li><strong>${entry.feature}:</strong> ${entry.value}</li>` : `<li>${entry.feature || entry.value}</li>`).join('')}</ul>`;
+}
+
+function formatTestingNotesHtml(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  const paragraphs = trimmed.split(/\r?\n\s*\r?\n/).map((paragraph) => paragraph.trim()).filter(Boolean).map((paragraph) => paragraph.replace(/\r?\n/g, '<br />'));
+  if (paragraphs.length === 0) return '';
+  return paragraphs.map((paragraph, index) => index === 0 ? `<p><strong>Testing Notes:</strong> ${paragraph}</p>` : `<p>${paragraph}</p>`).join('\n');
 }
 
 function formatDescriptionHtml(description: string): string {
@@ -146,12 +180,13 @@ function replaceFirstList(html: string, replacement: string): string {
   return `${html}${replacement}`;
 }
 
-export function buildShopifyBodyHtml(description: string, keyFeaturesRaw: string, templateHtml = ''): string {
+export function buildShopifyBodyHtml(description: string, keyFeaturesRaw: string, templateHtml = '', testingNotes = ''): string {
   const descriptionHtml = formatDescriptionHtml(description);
   const keyFeaturesHtml = ensureListWrapped(formatKeyFeatureHtml(keyFeaturesRaw));
+  const testingNotesHtml = formatTestingNotesHtml(testingNotes);
   const baseTemplate = normalizeTemplateHtml(templateHtml);
   if (!baseTemplate) {
-    const parts = [descriptionHtml, keyFeaturesHtml].filter(Boolean);
+    const parts = [descriptionHtml, keyFeaturesHtml, testingNotesHtml].filter(Boolean);
     return parts.join('\n').trim();
   }
   if (!hasTemplateTokens(baseTemplate)) {
@@ -161,9 +196,11 @@ export function buildShopifyBodyHtml(description: string, keyFeaturesRaw: string
       if (heading) parts.push(heading);
       parts.push(keyFeaturesHtml);
     }
+    if (testingNotesHtml) parts.push(testingNotesHtml);
     return parts.join('\n').trim();
   }
-  return replaceFirstList(replaceFirstParagraph(baseTemplate, descriptionHtml), keyFeaturesHtml).trim();
+  const withDescriptionAndFeatures = replaceFirstList(replaceFirstParagraph(baseTemplate, descriptionHtml), keyFeaturesHtml).trim();
+  return testingNotesHtml ? `${withDescriptionAndFeatures}\n${testingNotesHtml}`.trim() : withDescriptionAndFeatures;
 }
 
 function formatBulletList(value: string): string {
@@ -231,7 +268,14 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   const bodyDescriptionCandidates = SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.find((spec) => spec.token === 'body_description')?.candidates ?? [];
   const bodyKeyFeaturesCandidates = SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.find((spec) => spec.token === 'body_key_features')?.candidates ?? [];
   const rawKeyFeatures = getFieldPreservingStructuredValues(fields, ['Shopify Body Key Features JSON', 'Shopify REST Body Key Features JSON', 'Shopify Body Key Features', 'Shopify REST Body Key Features', 'Key Features JSON', 'Key Features', 'Features JSON', 'Features', 'shopify_body_key_features_json', 'shopify_rest_body_key_features_json', 'shopify_body_key_features', 'shopify_rest_body_key_features']);
-    const mergedKeyFeatures = mergeShopifyKeyFeatureEntries(rawKeyFeatures, getField(fields, ['Make']), getField(fields, ['Model']));
+  const mergedKeyFeatures = mergeShopifyKeyFeatureEntries(
+    rawKeyFeatures,
+    SHOPIFY_SUPPLEMENTAL_KEY_FEATURE_SPECS.map((spec) => ({
+      feature: spec.feature,
+      value: getField(fields, spec.candidates),
+    })),
+  );
+  const testingNotes = getField(fields, ['Testing Notes', 'Shopify Body Testing Notes', 'shopify_body_testing_notes']);
   const tokenValues = new Map<string, string>();
   SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.forEach((spec) => {
     const rawValue = spec.token === 'vendor'
@@ -244,12 +288,13 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   const bodyDescription = tokenValues.get('body_description') ?? '';
   const bodyKeyFeatures = tokenValues.get('body_key_features') ?? '';
   const hasEditableBodyFields = hasAnyField(fields, bodyDescriptionCandidates) || hasAnyField(fields, bodyKeyFeaturesCandidates);
+  const usesStructuredBodyTokens = /\{\{\s*(body_description|body_key_features)\s*\}\}/i.test(explicitTemplate || '');
   if (!explicitTemplate) {
     if (!hasEditableBodyFields) return fallbackBodyHtml;
-    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, fallbackBodyHtml);
+    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, fallbackBodyHtml, testingNotes);
   }
-  if (bodyDescription || bodyKeyFeatures) {
-    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, explicitTemplate);
+  if (usesStructuredBodyTokens || hasEditableBodyFields) {
+    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, explicitTemplate, testingNotes);
   }
   return template.replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, (_match, tokenName: string) => tokenValues.get(tokenName.toLowerCase()) ?? '');
 }

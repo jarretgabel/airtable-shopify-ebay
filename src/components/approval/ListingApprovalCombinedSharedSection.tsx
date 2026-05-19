@@ -42,6 +42,8 @@ const COMBINED_SOURCE_MANAGED_FIELD_NAMES = new Set([
   CONDITION_FIELD.toLowerCase(),
 ]);
 
+const COMBINED_HIDDEN_KEY_FEATURE_NAMES = ['Make', 'Model', 'Serial Number', 'Condition', 'Component Type', 'Cosmetic Notes', 'Includes', 'Original Box', 'Manual', 'Remote', 'Power Cable', 'Voltage', 'Audiogon Rating'];
+
 function isSourceManagedCombinedField(fieldName: string): boolean {
   return COMBINED_SOURCE_MANAGED_FIELD_NAMES.has(normalizeSharedFieldName(fieldName));
 }
@@ -188,10 +190,11 @@ export function ListingApprovalCombinedSharedSection({
               syncFieldNames={combinedSharedKeyFeaturesSyncFieldNames}
               disabled={saving}
               componentTypeValue={componentTypeValue}
+              hiddenFeatureNames={COMBINED_HIDDEN_KEY_FEATURE_NAMES}
               helperNotice={(
                 <p className="m-0 leading-5">
                   <span className="font-semibold uppercase tracking-[0.08em]">Automatic Mapping</span>{' '}
-                  Make and Model come from the listing record automatically. Do not add them again in key features.
+                  Make, Model, Serial Number, Condition, Component Type, Cosmetic Notes, Includes, Original Box, Manual, Remote, Power Cable, Voltage, and Audiogon Rating come from the listing record automatically. Add one here only when you need to override the listing value.
                 </p>
               )}
             />

@@ -1,6 +1,10 @@
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import type { AirtableRecord } from '@/types/airtable';
 
+function getSnapshotIncludesValue(record: AirtableRecord): unknown {
+  return record.fields['Customer Inclusion Notes'] || record.fields['Internal Inclusion Notes'];
+}
+
 export function buildUsedGearIntakeSnapshot(record: AirtableRecord) {
   return {
     fields: [
@@ -8,6 +12,7 @@ export function buildUsedGearIntakeSnapshot(record: AirtableRecord) {
       { label: 'Make', value: displayInventoryValue(record.fields.Make) },
       { label: 'Model', value: displayInventoryValue(record.fields.Model) },
       { label: 'Component Type', value: displayInventoryValue(record.fields['Component Type']) },
+      { label: 'Includes', value: displayInventoryValue(getSnapshotIncludesValue(record)) },
       { label: 'Acquired From', value: displayInventoryValue(record.fields['Acquired From']) },
       { label: 'Arrival Date', value: displayInventoryValue(record.fields['Arrival Date']) },
     ],

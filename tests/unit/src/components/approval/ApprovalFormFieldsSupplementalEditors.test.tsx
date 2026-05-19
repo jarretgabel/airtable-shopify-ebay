@@ -686,7 +686,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
 
     await waitFor(() => {
       expect(keyFeaturesEditorSpy).toHaveBeenCalledWith(expect.objectContaining({
-        helperText: 'Shared buyer-facing highlights for the eBay body. Make and Model are added automatically to the top details table, so do not enter them here.',
+        helperText: 'Shared buyer-facing highlights for the eBay body. Make, Model, Serial Number, Condition, Cosmetic Notes, Includes, Original Box, Manual, Remote, Power Cable, Voltage, and Audiogon Rating are added automatically from the listing record. Add one here only if you need to override the listing value.',
       }));
     });
   });

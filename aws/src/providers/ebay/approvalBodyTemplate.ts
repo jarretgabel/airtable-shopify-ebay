@@ -6,6 +6,18 @@ interface EbayTemplateEntry {
   value: string;
 }
 
+interface EbaySupplementalBodyFields {
+  componentType?: string;
+  serialNumber?: string;
+  condition?: string;
+  originalBox?: string;
+  remote?: string;
+  powerCable?: string;
+  manual?: string;
+  voltage?: string;
+  audiogonRating?: string;
+}
+
 function normalizeTemplateFeatureName(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
 }
@@ -24,16 +36,50 @@ function buildMakeModelTemplateEntries(makeValue: string, modelValue: string): E
   return entries;
 }
 
-function mergeTemplateKeyFeatureEntries(rawValue: string, makeValue: string, modelValue: string): string {
-  const supplementalEntries = buildMakeModelTemplateEntries(makeValue, modelValue);
+function buildSupplementalTemplateEntries(entries: ReadonlyArray<EbayTemplateEntry>): EbayTemplateEntry[] {
+  return entries
+    .filter((entry) => entry.value.trim())
+    .map((entry) => ({ feature: entry.feature, value: entry.value.trim() }));
+}
+
+function mergeTemplateEntries(rawValue: string, supplementalEntries: ReadonlyArray<EbayTemplateEntry>, options: {
+  supplementalFirst?: boolean;
+} = {}): string {
   if (supplementalEntries.length === 0) return rawValue;
 
-  const filteredEntries = parseTemplateKeyFeatureEntries(rawValue).filter((entry) => {
-    const normalized = normalizeTemplateFeatureName(entry.feature);
-    return normalized !== 'make' && normalized !== 'model';
+  const parsedEntries = parseTemplateKeyFeatureEntries(rawValue);
+  const blockedFeatureNames = new Set(supplementalEntries.map((entry) => normalizeTemplateFeatureName(entry.feature)));
+  const overridingEntriesByName = new Map(
+    parsedEntries
+      .filter((entry) => blockedFeatureNames.has(normalizeTemplateFeatureName(entry.feature)))
+      .map((entry) => [normalizeTemplateFeatureName(entry.feature), entry] as const),
+  );
+  const filteredEntries = parsedEntries.filter((entry) => !blockedFeatureNames.has(normalizeTemplateFeatureName(entry.feature)));
+  const orderedSupplementalEntries = supplementalEntries.map((entry) => {
+    const overrideEntry = overridingEntriesByName.get(normalizeTemplateFeatureName(entry.feature));
+    return overrideEntry ? { feature: entry.feature, value: overrideEntry.value } : entry;
   });
+  return JSON.stringify(options.supplementalFirst === false
+    ? [...filteredEntries, ...orderedSupplementalEntries]
+    : [...orderedSupplementalEntries, ...filteredEntries]);
+}
 
-  return JSON.stringify([...supplementalEntries, ...filteredEntries]);
+function mergeTemplateKeyFeatureEntries(
+  rawValue: string,
+  makeValue: string,
+  modelValue: string,
+  supplementalFields: EbaySupplementalBodyFields = {},
+): string {
+  return mergeTemplateEntries(rawValue, buildSupplementalTemplateEntries([
+    ...buildMakeModelTemplateEntries(makeValue, modelValue),
+    { feature: 'Component Type', value: supplementalFields.componentType ?? '' },
+    { feature: 'Serial Number', value: supplementalFields.serialNumber ?? '' },
+    { feature: 'Condition', value: supplementalFields.condition ?? '' },
+    { feature: 'Original Box', value: supplementalFields.originalBox ?? '' },
+    { feature: 'Remote', value: supplementalFields.remote ?? '' },
+    { feature: 'Power Cable', value: supplementalFields.powerCable ?? '' },
+    { feature: 'Manual', value: supplementalFields.manual ?? '' },
+  ]));
 }
 
 function escapeRegExp(value: string): string {
@@ -140,16 +186,40 @@ function normalizeTestingNotesForTemplate(rawValue: string): string {
   return JSON.stringify([{ feature: 'Testing Notes', value: lines.join('<br />') }]);
 }
 
+function mergeTemplateTestingEntries(rawValue: string, supplementalFields: EbaySupplementalBodyFields = {}): string {
+  return mergeTemplateEntries(normalizeTestingNotesForTemplate(rawValue), buildSupplementalTemplateEntries([
+    { feature: 'Voltage', value: supplementalFields.voltage ?? '' },
+    { feature: 'Audiogon Rating', value: supplementalFields.audiogonRating ?? '' },
+  ]), { supplementalFirst: false });
+}
+
 export function buildEbayBodyHtmlFromTemplate(input: EbayBodyPreviewInput): string {
   const withTitle = replaceTemplateToken(input.templateHtml, 'title', input.title);
   const withDescription = replaceTemplateToken(withTitle, 'description', input.description);
   const withKeyFeatures = applyTableRows(withDescription, {
     tableId: 'key-features',
-    rawValue: mergeTemplateKeyFeatureEntries(input.keyFeatures, input.make ?? '', input.model ?? ''),
+    rawValue: mergeTemplateKeyFeatureEntries(input.keyFeatures, input.make ?? '', input.model ?? '', {
+      componentType: input.componentType,
+      serialNumber: input.serialNumber,
+      condition: input.condition,
+      originalBox: input.originalBox,
+      remote: input.remote,
+      powerCable: input.powerCable,
+      manual: input.manual,
+      voltage: input.voltage,
+      audiogonRating: input.audiogonRating,
+    }),
   });
 
   return applyTableRows(withKeyFeatures, {
     tableId: 'testing-notes',
-    rawValue: normalizeTestingNotesForTemplate(input.testingNotes ?? ''),
+    rawValue: mergeTemplateTestingEntries(input.testingNotes ?? '', {
+      originalBox: input.originalBox,
+      remote: input.remote,
+      powerCable: input.powerCable,
+      manual: input.manual,
+      voltage: input.voltage,
+      audiogonRating: input.audiogonRating,
+    }),
   }).trim();
 }

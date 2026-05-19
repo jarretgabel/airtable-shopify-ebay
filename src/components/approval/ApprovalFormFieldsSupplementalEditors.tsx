@@ -248,9 +248,10 @@ export function ApprovalFormFieldsSupplementalEditors({
             setFormValue={setFormValue}
             syncFieldNames={shopifyKeyFeaturesSyncFieldNames}
             disabled={saving || workflowManagedListingContent}
+            hiddenFeatureNames={['Make', 'Model', 'Component Type', 'Serial Number', 'Condition', 'Cosmetic Notes', 'Includes', 'Original Box', 'Manual', 'Remote', 'Power Cable', 'Voltage', 'Audiogon Rating']}
             helperText={workflowManagedListingContent
               ? 'Read-only listing details derived from the Testing form and workflow fields. Update the Testing form to change these values.'
-              : undefined}
+              : 'Make, Model, Serial Number, Condition, Cosmetic Notes, Includes, Original Box, Manual, Remote, Power Cable, Voltage, and Audiogon Rating are added automatically from the listing record. Add one here only if you need to override the listing value.'}
             headerAction={workflowHeaderAction}
           />
         </Suspense>
@@ -264,9 +265,10 @@ export function ApprovalFormFieldsSupplementalEditors({
             setFormValue={setFormValue}
             syncFieldNames={ebayKeyFeaturesSyncFieldNames}
             disabled={saving || workflowManagedListingContent}
+            hiddenFeatureNames={['Make', 'Model', 'Component Type', 'Serial Number', 'Condition', 'Cosmetic Notes', 'Includes', 'Original Box', 'Manual', 'Remote', 'Power Cable', 'Voltage', 'Audiogon Rating']}
             helperText={workflowManagedListingContent
               ? 'Read-only listing details derived from the Testing form and workflow fields. Update the Testing form to change these values.'
-              : 'Shared buyer-facing highlights for the eBay body. Make and Model are added automatically to the top details table, so do not enter them here.'}
+              : 'Shared buyer-facing highlights for the eBay body. Make, Model, Serial Number, Condition, Cosmetic Notes, Includes, Original Box, Manual, Remote, Power Cable, Voltage, and Audiogon Rating are added automatically from the listing record. Add one here only if you need to override the listing value.'}
             headerAction={workflowHeaderAction}
           />
         </Suspense>

@@ -20,6 +20,15 @@ export interface ApprovalEbayBodyPreviewInput {
   testingNotes?: string;
   make?: string;
   model?: string;
+  componentType?: string;
+  serialNumber?: string;
+  condition?: string;
+  originalBox?: string;
+  remote?: string;
+  powerCable?: string;
+  manual?: string;
+  voltage?: string;
+  audiogonRating?: string;
   fieldName?: string;
 }
 
@@ -139,7 +148,20 @@ export function validateApprovalEbayBodyPreviewInput(value: unknown): ContractVa
     return failure('bodyPreview must be an object when provided');
   }
 
-  if (!isNonEmptyString(value.templateHtml) || !isOptionalString(value.testingNotes) || !isOptionalString(value.make) || !isOptionalString(value.model) || !isOptionalString(value.fieldName)) {
+  if (!isNonEmptyString(value.templateHtml)
+    || !isOptionalString(value.testingNotes)
+    || !isOptionalString(value.make)
+    || !isOptionalString(value.model)
+    || !isOptionalString(value.componentType)
+    || !isOptionalString(value.serialNumber)
+    || !isOptionalString(value.condition)
+    || !isOptionalString(value.originalBox)
+    || !isOptionalString(value.remote)
+    || !isOptionalString(value.powerCable)
+    || !isOptionalString(value.manual)
+    || !isOptionalString(value.voltage)
+    || !isOptionalString(value.audiogonRating)
+    || !isOptionalString(value.fieldName)) {
     return failure('bodyPreview is invalid');
   }
 
@@ -155,6 +177,15 @@ export function validateApprovalEbayBodyPreviewInput(value: unknown): ContractVa
     ...(typeof value.testingNotes === 'string' ? { testingNotes: value.testingNotes } : {}),
     ...(typeof value.make === 'string' ? { make: value.make } : {}),
     ...(typeof value.model === 'string' ? { model: value.model } : {}),
+    ...(typeof value.componentType === 'string' ? { componentType: value.componentType } : {}),
+    ...(typeof value.serialNumber === 'string' ? { serialNumber: value.serialNumber } : {}),
+    ...(typeof value.condition === 'string' ? { condition: value.condition } : {}),
+    ...(typeof value.originalBox === 'string' ? { originalBox: value.originalBox } : {}),
+    ...(typeof value.remote === 'string' ? { remote: value.remote } : {}),
+    ...(typeof value.powerCable === 'string' ? { powerCable: value.powerCable } : {}),
+    ...(typeof value.manual === 'string' ? { manual: value.manual } : {}),
+    ...(typeof value.voltage === 'string' ? { voltage: value.voltage } : {}),
+    ...(typeof value.audiogonRating === 'string' ? { audiogonRating: value.audiogonRating } : {}),
     ...(typeof value.fieldName === 'string' ? { fieldName: value.fieldName } : {}),
   });
 }

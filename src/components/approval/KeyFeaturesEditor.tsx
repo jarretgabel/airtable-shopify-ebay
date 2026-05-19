@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
 
 interface KeyFeatureRow {
@@ -17,6 +17,7 @@ interface KeyFeaturesEditorProps {
   helperNotice?: ReactNode;
   headerAction?: ReactNode;
   componentTypeValue?: string;
+  hiddenFeatureNames?: string[];
 }
 
 type KeyFeaturePresetId =
@@ -40,14 +41,31 @@ const inputClass =
 const iconButtonClass = 'flex h-7 w-7 items-center justify-center rounded-md border border-[var(--line)] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-45';
 const dragHandleClass = 'flex h-7 w-7 cursor-grab items-center justify-center rounded-md border border-[var(--line)] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] active:cursor-grabbing';
 
+const AUTO_INCLUDED_FEATURE_NAMES = new Set([
+  'make',
+  'model',
+  'serial number',
+  'condition',
+  'component type',
+  'cosmetic notes',
+  'includes',
+  'original box',
+  'remote',
+  'power cable',
+  'manual',
+  'voltage',
+  'audiogon rating',
+]);
+
+const AUTO_INCLUDED_FEATURE_NAMES_TEXT = 'Make, Model, Serial Number, Condition, Component Type, Cosmetic Notes, Includes, Original Box, Manual, Remote, Power Cable, Voltage, and Audiogon Rating';
+
 const KEY_FEATURE_PRESETS: ReadonlyArray<KeyFeaturePreset> = [
   {
     id: 'general-component',
     label: 'General Component',
     rows: [
-      { feature: 'Condition', value: '' },
-      { feature: 'Includes', value: '' },
       { feature: 'Service History', value: '' },
+      { feature: 'Finish', value: '' },
       { feature: 'Best For', value: '' },
     ],
   },
@@ -58,7 +76,6 @@ const KEY_FEATURE_PRESETS: ReadonlyArray<KeyFeaturePreset> = [
       { feature: 'Power Output', value: '' },
       { feature: 'Inputs', value: '' },
       { feature: 'Phono Stage', value: '' },
-      { feature: 'Includes', value: '' },
     ],
   },
   {
@@ -68,7 +85,6 @@ const KEY_FEATURE_PRESETS: ReadonlyArray<KeyFeaturePreset> = [
       { feature: 'Cartridge', value: '' },
       { feature: 'Tonearm', value: '' },
       { feature: 'Dust Cover', value: '' },
-      { feature: 'Includes', value: '' },
     ],
   },
   {
@@ -98,7 +114,7 @@ const KEY_FEATURE_PRESETS: ReadonlyArray<KeyFeaturePreset> = [
       { feature: 'Artist', value: '' },
       { feature: 'Release Title', value: '' },
       { feature: 'Format', value: '' },
-      { feature: 'Condition', value: '' },
+      { feature: 'Edition', value: '' },
     ],
   },
   {
@@ -108,7 +124,6 @@ const KEY_FEATURE_PRESETS: ReadonlyArray<KeyFeaturePreset> = [
       { feature: 'Inputs', value: '' },
       { feature: 'DAC Chip', value: '' },
       { feature: 'Streaming Support', value: '' },
-      { feature: 'Includes', value: '' },
     ],
   },
   {
@@ -118,13 +133,49 @@ const KEY_FEATURE_PRESETS: ReadonlyArray<KeyFeaturePreset> = [
       { feature: 'MM / MC Support', value: '' },
       { feature: 'Gain Options', value: '' },
       { feature: 'Loading Options', value: '' },
-      { feature: 'Includes', value: '' },
     ],
   },
 ] as const;
 
 function normalizeFeatureKey(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
+}
+
+function isAutoIncludedFeature(value: string): boolean {
+  return AUTO_INCLUDED_FEATURE_NAMES.has(normalizeFeatureKey(value));
+}
+
+function stripAutoIncludedRows(rows: ReadonlyArray<KeyFeatureRow>): KeyFeatureRow[] {
+  return rows.filter((row) => !isAutoIncludedFeature(row.feature));
+}
+
+function normalizeHiddenFeatureNames(hiddenFeatureNames: readonly string[]): Set<string> {
+  return new Set(hiddenFeatureNames.map((value) => normalizeFeatureKey(value)).filter(Boolean));
+}
+
+function splitVisibleAndHiddenRows(raw: string, hiddenFeatureNames: Set<string>): {
+  visibleRows: KeyFeatureRow[];
+  hiddenRows: KeyFeatureRow[];
+} {
+  const parsedRows = parseKeyFeatureEntries(raw).map((entry) => ({
+    feature: entry.feature,
+    value: entry.value,
+  }));
+
+  if (hiddenFeatureNames.size === 0) {
+    return {
+      visibleRows: parsedRows.length > 0 ? parsedRows : [{ feature: '', value: '' }],
+      hiddenRows: [],
+    };
+  }
+
+  const visibleRows = parsedRows.filter((row) => !hiddenFeatureNames.has(normalizeFeatureKey(row.feature)));
+  const hiddenRows = parsedRows.filter((row) => hiddenFeatureNames.has(normalizeFeatureKey(row.feature)));
+
+  return {
+    visibleRows: visibleRows.length > 0 ? visibleRows : [{ feature: '', value: '' }],
+    hiddenRows,
+  };
 }
 
 function inferPresetIdFromComponentType(componentTypeValue: string): KeyFeaturePresetId {
@@ -173,15 +224,6 @@ function inferPresetIdFromComponentType(componentTypeValue: string): KeyFeatureP
   return 'general-component';
 }
 
-function parseKeyFeatures(raw: string): KeyFeatureRow[] {
-  const rows = parseKeyFeatureEntries(raw).map((entry) => ({
-    feature: entry.feature,
-    value: entry.value,
-  }));
-
-  return rows.length > 0 ? rows : [{ feature: '', value: '' }];
-}
-
 function shouldSerializeKeyFeaturesAsJson(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized.includes('json') || normalized.endsWith('_json');
@@ -217,19 +259,43 @@ export function KeyFeaturesEditor({
   setFormValue,
   syncFieldNames = [],
   disabled = false,
-  label = 'Key Features',
+  label = 'Other Key Features',
   helperText = 'Free-form feature/value pairs for the listing highlights shown to buyers.',
   helperNotice,
   headerAction,
   componentTypeValue,
+  hiddenFeatureNames = [],
 }: KeyFeaturesEditorProps) {
-  const [rows, setRows] = useState<KeyFeatureRow[]>(() => parseKeyFeatures(keyFeaturesValue));
+  const hiddenFeatureNamesKey = hiddenFeatureNames
+    .map((value) => normalizeFeatureKey(value))
+    .filter(Boolean)
+    .join('|');
+  const normalizedHiddenFeatureNames = useMemo(
+    () => normalizeHiddenFeatureNames(hiddenFeatureNames),
+    [hiddenFeatureNamesKey],
+  );
+  const initialRows = splitVisibleAndHiddenRows(keyFeaturesValue, normalizedHiddenFeatureNames);
+  const [rows, setRows] = useState<KeyFeatureRow[]>(initialRows.visibleRows);
+  const [hiddenRows, setHiddenRows] = useState<KeyFeatureRow[]>(initialRows.hiddenRows);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [selectedPresetId, setSelectedPresetId] = useState<KeyFeaturePresetId | ''>(componentTypeValue ? inferPresetIdFromComponentType(componentTypeValue) : '');
+  const lastCommittedValueRef = useRef(keyFeaturesValue);
+  const availablePresets = useMemo(
+    () => KEY_FEATURE_PRESETS.map((preset) => ({
+      ...preset,
+      rows: stripAutoIncludedRows(preset.rows),
+    })),
+    [],
+  );
 
   useEffect(() => {
-    setRows(parseKeyFeatures(keyFeaturesValue));
-  }, [keyFeaturesValue]);
+    if (keyFeaturesValue === lastCommittedValueRef.current) return;
+
+    const nextRows = splitVisibleAndHiddenRows(keyFeaturesValue, normalizedHiddenFeatureNames);
+    setRows(nextRows.visibleRows);
+    setHiddenRows(nextRows.hiddenRows);
+    lastCommittedValueRef.current = keyFeaturesValue;
+  }, [keyFeaturesValue, normalizedHiddenFeatureNames]);
 
   useEffect(() => {
     setSelectedPresetId(componentTypeValue ? inferPresetIdFromComponentType(componentTypeValue) : '');
@@ -238,9 +304,16 @@ export function KeyFeaturesEditor({
   function commitRows(nextRows: KeyFeatureRow[]) {
     setRows(nextRows);
 
+    const allRows = [...hiddenRows, ...nextRows];
+    const currentFieldValue = serializeKeyFeatures(allRows, keyFeaturesFieldName);
+    lastCommittedValueRef.current = currentFieldValue;
+
     const uniqueFieldNames = Array.from(new Set([keyFeaturesFieldName, ...syncFieldNames]));
     for (const fieldName of uniqueFieldNames) {
-      setFormValue(fieldName, serializeKeyFeatures(nextRows, fieldName));
+      const nextFieldValue = fieldName === keyFeaturesFieldName
+        ? currentFieldValue
+        : serializeKeyFeatures(allRows, fieldName);
+      setFormValue(fieldName, nextFieldValue);
     }
   }
 
@@ -256,7 +329,7 @@ export function KeyFeaturesEditor({
   function applyPreset() {
     if (!selectedPresetId) return;
 
-    const preset = KEY_FEATURE_PRESETS.find((candidate) => candidate.id === selectedPresetId);
+    const preset = availablePresets.find((candidate) => candidate.id === selectedPresetId);
     if (!preset) return;
 
     const nextRows = [...rows];
@@ -327,6 +400,9 @@ export function KeyFeaturesEditor({
               <p className="m-0 text-xs text-[var(--muted)]">
                 Suggested from component type: <span className="font-medium text-[var(--ink)]">{componentTypeValue}</span>
               </p>
+              <p className="m-0 text-xs text-[var(--muted)]">
+                Suggested defaults omit auto-mapped fields. {AUTO_INCLUDED_FEATURE_NAMES_TEXT} come from the listing automatically unless you add an override below.
+              </p>
             </div>
             <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
               <label className="flex flex-col gap-2">
@@ -339,7 +415,7 @@ export function KeyFeaturesEditor({
                   aria-label="Select key feature preset"
                 >
                   <option value="">Select a feature preset</option>
-                  {KEY_FEATURE_PRESETS.map((preset) => (
+                  {availablePresets.map((preset) => (
                     <option key={preset.id} value={preset.id}>{preset.label}</option>
                   ))}
                 </select>
@@ -356,9 +432,14 @@ export function KeyFeaturesEditor({
           </div>
         ) : null}
         {rows.map((row, index) => (
+          (() => {
+            const autoIncludedFeature = isAutoIncludedFeature(row.feature);
+            const overrideAutoMappedRow = normalizedHiddenFeatureNames.has(normalizeFeatureKey(row.feature));
+
+            return (
           <div
             key={index}
-            className={`grid grid-cols-1 gap-3 rounded-lg border border-[var(--line)] bg-[var(--bg)] p-3 md:grid-cols-[1fr_1fr_auto] ${draggingIndex === index ? 'opacity-60' : ''}`}
+            className={`grid grid-cols-1 gap-3 rounded-lg border bg-[var(--bg)] p-3 md:grid-cols-[1fr_1fr_auto] ${overrideAutoMappedRow ? 'border-amber-400/60 bg-amber-500/10' : 'border-[var(--line)]'} ${draggingIndex === index ? 'opacity-60' : ''}`}
             onDragOver={(event) => {
               if (disabled) return;
               event.preventDefault();
@@ -371,19 +452,37 @@ export function KeyFeaturesEditor({
               setDraggingIndex(null);
             }}
           >
+            <div className="flex flex-col gap-2">
+              <input
+                className={`${inputClass} ${overrideAutoMappedRow || autoIncludedFeature ? 'border-amber-400/70 focus:border-amber-300 focus:ring-amber-300/30' : ''}`}
+                value={row.feature}
+                onChange={(event) => updateRow(index, { feature: event.target.value })}
+                placeholder="Feature (e.g. Service History)"
+                disabled={disabled}
+                aria-label={`Key feature ${index + 1}`}
+                aria-describedby={overrideAutoMappedRow || autoIncludedFeature ? `key-feature-warning-${index}` : undefined}
+              />
+              {overrideAutoMappedRow ? (
+                <p
+                  id={`key-feature-warning-${index}`}
+                  className="m-0 rounded-md border border-amber-400/35 bg-amber-500/10 px-2.5 py-2 text-[0.72rem] leading-5 text-amber-100"
+                >
+                  {row.feature.trim() || 'This feature'} is auto-mapped from the listing. This manual value overrides the listing value in generated key features.
+                </p>
+              ) : autoIncludedFeature ? (
+                <p
+                  id={`key-feature-warning-${index}`}
+                  className="m-0 rounded-md border border-amber-400/35 bg-amber-500/10 px-2.5 py-2 text-[0.72rem] leading-5 text-amber-100"
+                >
+                  {row.feature.trim() || 'This feature'} is auto-mapped from the listing. Add it here only when you want to override the listing value.
+                </p>
+              ) : null}
+            </div>
             <input
-              className={inputClass}
-              value={row.feature}
-              onChange={(event) => updateRow(index, { feature: event.target.value })}
-              placeholder="Feature (e.g. Condition)"
-              disabled={disabled}
-              aria-label={`Key feature ${index + 1}`}
-            />
-            <input
-              className={inputClass}
+              className={`${inputClass} ${overrideAutoMappedRow ? 'border-amber-400/70 focus:border-amber-300 focus:ring-amber-300/30' : ''}`}
               value={row.value}
               onChange={(event) => updateRow(index, { value: event.target.value })}
-              placeholder="Value (e.g. Used Excellent)"
+              placeholder="Value (e.g. Serviced in 2024)"
               disabled={disabled}
               aria-label={`Key value ${index + 1}`}
             />
@@ -436,6 +535,8 @@ export function KeyFeaturesEditor({
               </button>
             </div>
           </div>
+            );
+          })()
         ))}
 
         <button

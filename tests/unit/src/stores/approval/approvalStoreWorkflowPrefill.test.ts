@@ -32,11 +32,7 @@ describe('applyWorkflowListingPrefills', () => {
 
     expect(values.Title).toBe('McIntosh MA6900');
     expect(values.Description).toBe('Fresh service completed and ready for listing.');
-    expect(values['Key Features']).toBe([
-      'Component Type,Integrated Amplifier',
-      'Cosmetic Notes,Light wear on top cover.',
-      'Includes,Remote and power cable included.',
-    ].join('\n'));
+    expect(values['Key Features']).toBe('');
     expect(values['Testing Notes']).toBe('Passed bench test and listening check. All inputs and outputs working normally.');
     expect(values['eBay Body Key Features JSON']).toBe(JSON.stringify([
       { feature: 'Make', value: 'McIntosh' },
@@ -119,11 +115,7 @@ describe('applyWorkflowListingPrefills', () => {
       'Testing Notes': 'Passed extended bench and listening tests.',
     }, values, { ...kinds });
 
-    expect(values['Key Features']).toBe([
-      'Component Type,Stereo Receiver',
-      'Cosmetic Notes,Minor veneer wear on the rear-left corner.',
-      'Includes,Original wood case and power cord included.',
-    ].join('\n'));
+    expect(values['Key Features']).toBe('Legacy,Manual listing copy');
     expect(values['Testing Notes']).toBe('Passed extended bench and listening tests.');
     expect(values['eBay Body Key Features JSON']).toBe(JSON.stringify([
       { feature: 'Make', value: 'Marantz' },
@@ -155,6 +147,9 @@ describe('applyWorkflowListingPrefills', () => {
 
     expect(values['Key Features']).not.toContain('Make,Marantz');
     expect(values['Key Features']).not.toContain('Model,2270');
+    expect(values['Key Features']).not.toContain('Component Type');
+    expect(values['Key Features']).not.toContain('Cosmetic Notes');
+    expect(values['Key Features']).not.toContain('Includes');
     expect(values['eBay Body Key Features JSON']).toBe(JSON.stringify([
       { feature: 'Make', value: 'Marantz' },
       { feature: 'Model', value: '2270' },

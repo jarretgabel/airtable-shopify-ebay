@@ -158,6 +158,18 @@ export function useListingApprovalPreviewState({
       resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayTestingNotesFieldName),
       resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, combinedMakeFieldName),
       resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, combinedModelFieldName),
+      {
+        componentType: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Component Type'),
+        serialNumber: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Serial Number'),
+        condition: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, '__Condition__')
+          || resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Condition'),
+        originalBox: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Original Box'),
+        remote: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Remote'),
+        powerCable: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Power Cable'),
+        manual: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Manual'),
+        voltage: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Voltage'),
+        audiogonRating: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Audiogon Rating'),
+      },
     );
   }, [
     combinedDescriptionFieldName,

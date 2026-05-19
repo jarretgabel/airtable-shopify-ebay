@@ -128,6 +128,16 @@ export function useApprovalPreview({
       testingNotes: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayTestingNotesFieldName),
       make: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedMakeFieldName),
       model: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedModelFieldName),
+      componentType: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Component Type'),
+      serialNumber: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Serial Number'),
+      condition: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, '__Condition__')
+        || resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Condition'),
+      originalBox: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Original Box'),
+      remote: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Remote'),
+      powerCable: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Power Cable'),
+      manual: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Manual'),
+      voltage: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Voltage'),
+      audiogonRating: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Audiogon Rating'),
       fieldName: combinedEbayBodyHtmlFieldName || undefined,
     };
   }, [combinedDescriptionFieldName, combinedEbayBodyHtmlFieldName, combinedEbayTestingNotesFieldName, combinedEbayTitleFieldName, combinedMakeFieldName, combinedModelFieldName, combinedSharedKeyFeaturesFieldName, formValues, isCombinedApproval, mergedDraftSourceFields, selectedEbayTemplateHtml, selectedRecord]);
