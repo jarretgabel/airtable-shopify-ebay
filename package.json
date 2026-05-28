@@ -9,6 +9,8 @@
     "local:api": "node scripts/start-local-api.mjs",
     "local:api:check": "node scripts/local-api-check.mjs",
     "local:api:approval-check": "node scripts/local-api-approval-check.mjs",
+    "google-drive:authorize": "node scripts/setup-google-drive-oauth.mjs",
+    "google-drive:check": "node scripts/check-google-drive-archive.mjs",
     "compare:lambda": "node scripts/compare-lambda.mjs",
     "compare:lambda:handler": "node scripts/compare-lambda-handlers.mjs",
     "workflow:backfill": "node scripts/used-gear-workflow-backfill.mjs",

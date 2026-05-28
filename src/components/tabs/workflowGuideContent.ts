@@ -76,7 +76,7 @@ export const WORKFLOW_ADVANCEMENT_RULES: GuideStep[] = [
   },
   {
     title: 'Listings to live listing status',
-    detail: 'A row should only move from Awaiting Pre-Listing Review to Approved for Publish when title, price, description, and required signoffs are in place. It should only move into listed statuses after the publish action is completed.',
+    detail: 'A row should only move from Awaiting Pre-Listing Review to Approved for Publish when listing review is complete and title, price, description, and required signoffs are in place. It should only move into listed statuses after the publish action is completed.',
   },
   {
     title: 'Live listings to follow-through',
@@ -329,7 +329,7 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   {
     title: 'Intake Arrives',
     detail: 'New gear enters from intake sources and lands in the front-door review path.',
-    pages: ['jotform', 'parking-lot-1'],
+    pages: ['manual-intake', 'jotform', 'parking-lot-1'],
     tone: 'intake',
     primaryRoles: ['processor', 'admin', 'owner'],
     supportRoles: ['developer'],
@@ -368,7 +368,7 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   {
     title: 'Pre-List And Publish',
     detail: 'Listings now owns publish-readiness review before channel pages take the item live.',
-    pages: ['listings', 'shopify', 'ebay'],
+    pages: ['listings'],
     tone: 'publish',
     primaryRoles: ['processor', 'admin', 'owner'],
     supportRoles: ['developer'],
@@ -562,7 +562,7 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
       'Record detail workflow shell: final approve-for-publish work and post-publish context once the item reaches listing-phase ownership.',
     ],
     workflows: [
-      'Use it for Awaiting Pre-Listing Review and Approved for Publish rows, and for quick verification of already-listed rows before handing active follow-through to Post-Publish. Sold-ready and shipped rows should stay out of Listings.',
+      'Use it for Awaiting Pre-Listing Review and Approved for Publish rows, and for quick verification of already-listed rows before handing active follow-through to Post-Publish. Listing review starts here, and sold-ready and shipped rows should stay out of Listings.',
       'Confirm title, price, notes, signoffs, and publish decisions here before any channel-facing action.',
     ],
   },

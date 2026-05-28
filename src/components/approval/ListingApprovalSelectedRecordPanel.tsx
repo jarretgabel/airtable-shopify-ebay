@@ -17,6 +17,23 @@ const ApprovalFormFields = lazy(async () => ({ default: (await import('@/compone
 const ListingApprovalCombinedSections = lazy(async () => ({ default: (await import('@/components/approval/ListingApprovalCombinedSections')).ListingApprovalCombinedSections }));
 const ListingApprovalRecordPayloadPanels = lazy(async () => ({ default: (await import('@/components/approval/ListingApprovalRecordPayloadPanels')).ListingApprovalRecordPayloadPanels }));
 
+function getWorkflowSummaryActionSectionConfig(workflowStatus: string | null): { sectionId: string; label: string } | null {
+  switch (workflowStatus) {
+    case 'Awaiting Pre-Listing Review':
+      return { sectionId: 'listing-record-actions', label: 'Go to Approval Actions' };
+    case 'Approved for Publish':
+    case 'Listed, Shopify':
+    case 'Listed, eBay':
+    case 'Stale Listing, Shopify':
+    case 'Stale Listing, eBay':
+      return { sectionId: 'listing-record-actions', label: 'Go to Publish Actions' };
+    case 'Sold - Ready to Ship':
+      return { sectionId: 'listing-workflow-details', label: 'Go to Shipping Actions' };
+    default:
+      return null;
+  }
+}
+
 function ApprovalEditorFallback() {
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-4 text-sm text-slate-300">
@@ -42,7 +59,6 @@ export interface ListingApprovalSelectedRecordPanelProps {
   error: string | null;
   onBackToList: () => void;
   backToListLabel?: string;
-  secondaryActionButtonClass: string;
   errorSurfaceClass: string;
   isCombinedApproval: boolean;
   workflowSummary: ListingApprovalWorkflowSummaryData | null;
@@ -94,6 +110,10 @@ export function ListingApprovalSelectedRecordPanel({
       }}
     />
   ) : null;
+  const workflowSummaryAction = useMemo(
+    () => getWorkflowSummaryActionSectionConfig(workflowSummary?.workflowStatus ?? null),
+    [workflowSummary?.workflowStatus],
+  );
 
   const selectedRecordView = (
     <ListingApprovalSelectedRecordView
@@ -108,7 +128,19 @@ export function ListingApprovalSelectedRecordPanel({
       onBackToList={onBackToList}
       backToListLabel={backToListLabel}
       errorSurfaceClass={errorSurfaceClass}
-      workflowSummary={workflowSummary ? <ListingApprovalWorkflowSummary summary={workflowSummary} timelineOnly /> : null}
+      workflowSummary={workflowSummary ? (
+        <ListingApprovalWorkflowSummary
+          summary={workflowSummary}
+          timelineOnly
+          activeActionLabel={workflowSummaryAction?.label}
+          onActiveAction={workflowSummaryAction
+            ? () => {
+              const section = document.getElementById(workflowSummaryAction.sectionId);
+              section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            : null}
+        />
+      ) : null}
       workflowDetails={workflowDetails}
       editor={(
         <Suspense fallback={<ApprovalEditorFallback />}>

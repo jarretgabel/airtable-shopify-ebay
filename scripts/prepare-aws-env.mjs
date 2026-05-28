@@ -65,6 +65,16 @@ const payload = {
     ...(getOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF') ? { AIRTABLE_COMBINED_LISTINGS_TABLE_REF: getOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF') } : {}),
     ...(getOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME') ? { AIRTABLE_COMBINED_LISTINGS_TABLE_NAME: getOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME') } : {}),
   },
+  AirtableUploadConfiguredAttachmentFunction: {
+    AIRTABLE_API_KEY: requireEnv('VITE_AIRTABLE_API_KEY'),
+    AIRTABLE_BASE_ID: requireEnv('VITE_AIRTABLE_BASE_ID'),
+    ...(getOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF') ? { AIRTABLE_COMBINED_LISTINGS_TABLE_REF: getOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF') } : {}),
+    ...(getOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME') ? { AIRTABLE_COMBINED_LISTINGS_TABLE_NAME: getOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME') } : {}),
+    ...(getOptionalEnv('VITE_GOOGLE_DRIVE_CLIENT_ID') ? { GOOGLE_DRIVE_CLIENT_ID: getOptionalEnv('VITE_GOOGLE_DRIVE_CLIENT_ID') } : {}),
+    ...(getOptionalEnv('VITE_GOOGLE_DRIVE_CLIENT_SECRET') ? { GOOGLE_DRIVE_CLIENT_SECRET: getOptionalEnv('VITE_GOOGLE_DRIVE_CLIENT_SECRET') } : {}),
+    ...(getOptionalEnv('VITE_GOOGLE_DRIVE_REFRESH_TOKEN') ? { GOOGLE_DRIVE_REFRESH_TOKEN: getOptionalEnv('VITE_GOOGLE_DRIVE_REFRESH_TOKEN') } : {}),
+    ...(getOptionalEnv('VITE_GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID') ? { GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID: getOptionalEnv('VITE_GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID') } : {}),
+  },
   AiIdentifyEquipmentFunction: {
     ...(getOptionalEnv('VITE_GITHUB_TOKEN') ? { GITHUB_TOKEN: getOptionalEnv('VITE_GITHUB_TOKEN') } : {}),
     ...(getOptionalEnv('VITE_OPENAI_API_KEY') ? { OPENAI_API_KEY: getOptionalEnv('VITE_OPENAI_API_KEY') } : {}),
@@ -122,4 +132,16 @@ if (payload.GmailSendFunction.GOOGLE_GMAIL_ACCESS_TOKEN) {
 }
 if (payload.GmailSendFunction.GOOGLE_GMAIL_FROM_EMAIL) {
   console.log(`  GOOGLE_GMAIL_FROM_EMAIL = ${mask(payload.GmailSendFunction.GOOGLE_GMAIL_FROM_EMAIL)}`);
+}
+if (payload.AirtableUploadConfiguredAttachmentFunction.GOOGLE_DRIVE_CLIENT_ID) {
+  console.log(`  GOOGLE_DRIVE_CLIENT_ID = ${mask(payload.AirtableUploadConfiguredAttachmentFunction.GOOGLE_DRIVE_CLIENT_ID)}`);
+}
+if (payload.AirtableUploadConfiguredAttachmentFunction.GOOGLE_DRIVE_CLIENT_SECRET) {
+  console.log(`  GOOGLE_DRIVE_CLIENT_SECRET = ${mask(payload.AirtableUploadConfiguredAttachmentFunction.GOOGLE_DRIVE_CLIENT_SECRET)}`);
+}
+if (payload.AirtableUploadConfiguredAttachmentFunction.GOOGLE_DRIVE_REFRESH_TOKEN) {
+  console.log(`  GOOGLE_DRIVE_REFRESH_TOKEN = ${mask(payload.AirtableUploadConfiguredAttachmentFunction.GOOGLE_DRIVE_REFRESH_TOKEN)}`);
+}
+if (payload.AirtableUploadConfiguredAttachmentFunction.GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID) {
+  console.log(`  GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID = ${mask(payload.AirtableUploadConfiguredAttachmentFunction.GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID)}`);
 }

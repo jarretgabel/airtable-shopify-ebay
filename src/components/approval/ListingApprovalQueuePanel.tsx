@@ -7,7 +7,7 @@ import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
-import { accentActionButtonClass } from '@/components/app/buttonStyles';
+import { AccentActionButton } from '@/components/app/AccentActionButton';
 import { ApprovalQueueTable } from '@/components/approval/ApprovalQueueTable';
 import {
   filterCombinedActiveListingRecords,
@@ -692,16 +692,14 @@ export function ListingApprovalQueuePanel({
               dividerBelow
               className="mb-4"
               actions={approvalChannel === 'shopify' ? (
-                <button
-                  type="button"
-                  className={accentActionButtonClass}
+                <AccentActionButton
                   onClick={() => {
                     void createNewShopifyListing();
                   }}
                   disabled={loading || saving || creatingShopifyListing}
                 >
                   {creatingShopifyListing ? 'Creating Listing...' : 'New Shopify Listing'}
-                </button>
+                </AccentActionButton>
               ) : undefined}
             />
           ) : null}

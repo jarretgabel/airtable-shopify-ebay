@@ -15,7 +15,7 @@ function buildRecord(id: string, fields: Record<string, unknown>): AirtableRecor
 }
 
 describe('usedGearWorkflowListingVisibility', () => {
-  it('treats awaiting pre-listing review as the first listing-phase status', () => {
+  it('treats awaiting listing review as the first listing-phase status', () => {
     expect(isUsedGearWorkflowListingSurfaceEligible(buildRecord('rec-1', {
       SKU: 'SKU-1',
       'Workflow Status': 'Awaiting Pre-Listing Review',

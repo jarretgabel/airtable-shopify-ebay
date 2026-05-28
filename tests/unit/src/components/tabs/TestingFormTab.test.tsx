@@ -5,17 +5,37 @@ import { TestingFormTab } from '@/components/tabs/TestingFormTab';
 vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
   FormImageUploadEditor: ({
     onFilesChange,
+    onUploadAssetsChange,
+    onProcessingStateChange,
+    onProcessingSummaryChange,
     afterUploadContent,
   }: {
     onFilesChange: (files: File[]) => void;
+    onUploadAssetsChange?: (assets: Array<{ originalFile: File; uploadFile: File }>) => void;
+    onProcessingStateChange?: (isProcessing: boolean) => void;
+    onProcessingSummaryChange?: (summary: { total: number; processed: number; processing: number; failed: number }) => void;
     afterUploadContent?: React.ReactNode;
   }) => (
     <div>
       <button
         type="button"
-        onClick={() => onFilesChange([new File(['processed-testing'], 'processed-testing.jpg', { type: 'image/jpeg' })])}
+        onClick={() => {
+          const originalFile = new File(['original-testing'], 'original-testing.jpg', { type: 'image/jpeg' });
+          const processedFile = new File(['processed-testing'], 'processed-testing.jpg', { type: 'image/jpeg' });
+          onFilesChange([processedFile]);
+          onUploadAssetsChange?.([{ originalFile, uploadFile: processedFile }]);
+        }}
       >
         Mock add processed testing photos
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          onProcessingSummaryChange?.({ total: 2, processed: 1, processing: 1, failed: 0 });
+          onProcessingStateChange?.(true);
+        }}
+      >
+        Mock testing processing in progress
       </button>
       {afterUploadContent}
     </div>
@@ -63,8 +83,8 @@ describe('TestingFormTab', () => {
         submittedPhotosNotes: '',
       },
       stageContext: {
-        photographyCosmeticNotes: 'Photography called out two cabinet scratches.',
         existingAttachments: [{ id: 'att-1', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' }],
+        referenceAttachments: [{ id: 'att-intake', url: 'https://example.com/intake.jpg', filename: 'intake.jpg' }],
         imageMetadata: [
           {
             attachmentId: 'att-1',
@@ -157,8 +177,8 @@ describe('TestingFormTab', () => {
     expect(screen.getByText('Accessories, spikes, umbilicals, etc..')).toBeInTheDocument();
     expect(screen.getByText('Inventory Notes')).toBeInTheDocument();
     expect(screen.getByText('Capture top cover wear.')).toBeInTheDocument();
-    expect(screen.getByText('Photography Cosmetic Notes')).toBeInTheDocument();
-    expect(screen.getByText('Photography called out two cabinet scratches.')).toBeInTheDocument();
+    expect(screen.getByText('Existing Reference Images')).toBeInTheDocument();
+    expect(screen.getByText('intake.jpg')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Alt text for testing.jpg'), { target: { value: 'Updated bench overview' } });
     fireEvent.click(screen.getByLabelText('Include testing.jpg in listings'));
@@ -166,9 +186,10 @@ describe('TestingFormTab', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Yes, complete testing' }));
 
     await waitFor(() => {
-      expect(submitTestingFormMock).toHaveBeenCalledWith(expect.any(Object), 'rec-testing', {
+      expect(submitTestingFormMock).toHaveBeenCalledWith(expect.any(Object), 'rec-testing', expect.objectContaining({
         completeWorkflowStage: true,
         recordSource: 'used-gear-workflow',
+        imageUploadAssets: [],
         imageMetadata: [
           expect.objectContaining({
             attachmentId: 'att-1',
@@ -187,7 +208,7 @@ describe('TestingFormTab', () => {
             includedInListing: true,
           }),
         ],
-      });
+      }));
     });
   });
 
@@ -205,6 +226,12 @@ describe('TestingFormTab', () => {
 
     expect(submitTestingFormMock).toHaveBeenLastCalledWith(expect.any(Object), 'rec-testing', expect.objectContaining({
       completeWorkflowStage: false,
+      imageUploadAssets: [
+        expect.objectContaining({
+          originalFile: expect.objectContaining({ name: 'original-testing.jpg' }),
+          uploadFile: expect.objectContaining({ name: 'processed-testing.jpg' }),
+        }),
+      ],
     }));
 
     const latestCall = submitTestingFormMock.mock.calls[submitTestingFormMock.mock.calls.length - 1];
@@ -228,8 +255,8 @@ describe('TestingFormTab', () => {
         submittedPhotosNotes: '',
       },
       stageContext: {
-        photographyCosmeticNotes: '',
         existingAttachments: [],
+        referenceAttachments: [],
         imageMetadata: [],
       },
       values: {
@@ -271,5 +298,50 @@ describe('TestingFormTab', () => {
 
     expect(await screen.findByText('Audiogon Rating is required.')).toBeInTheDocument();
     expect(submitTestingFormMock).not.toHaveBeenCalled();
+  });
+
+  it('shows processing progress and disables submission while testing images are still being prepared', async () => {
+    render(<TestingFormTab recordId="rec-testing" />);
+
+    await screen.findByText('Testing');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mock testing processing in progress' }));
+
+    expect(await screen.findByText('Preparing images: 1 of 2 ready. 1 still processing.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Processing images...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Testing Complete' })).toBeDisabled();
+  });
+
+  it('shows upload progress while testing images are being submitted', async () => {
+    const resolveSubmitRef: { current?: (value: { recordId: string; sku: string; action: 'updated' }) => void } = {};
+    submitTestingFormMock.mockImplementationOnce(async (_values, _recordId, options) => {
+      options?.onImageUploadProgress?.({ total: 1, completed: 0, currentFilename: 'processed-testing.jpg', phase: 'uploading' });
+      await Promise.resolve();
+      options?.onImageUploadProgress?.({ total: 1, completed: 1, currentFilename: '', phase: 'finalizing' });
+      return await new Promise<{ recordId: string; sku: string; action: 'updated' }>((resolve) => {
+        resolveSubmitRef.current = resolve;
+      });
+    });
+
+    render(<TestingFormTab recordId="rec-testing" />);
+
+    await screen.findByText('Testing');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mock add processed testing photos' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save Testing' }));
+
+    expect(await screen.findByText('Uploading images: 0 of 1 complete. Current file: processed-testing.jpg.')).toBeInTheDocument();
+    expect(await screen.findByText('Finalizing saved image metadata for 1 image.')).toBeInTheDocument();
+
+    if (!resolveSubmitRef.current) {
+      throw new Error('Expected testing submit promise resolver to be assigned.');
+    }
+
+    resolveSubmitRef.current({ recordId: 'rec-testing', sku: 'SKU-500', action: 'updated' });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Uploading images: 0 of 1 complete. Current file: processed-testing.jpg.')).not.toBeInTheDocument();
+      expect(screen.queryByText('Finalizing saved image metadata for 1 image.')).not.toBeInTheDocument();
+    });
   });
 });

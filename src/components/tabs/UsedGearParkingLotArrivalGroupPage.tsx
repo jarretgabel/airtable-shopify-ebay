@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
+import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
-import { secondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { UsedGearTrashRouteCard } from '@/components/tabs/UsedGearTrashRouteCard';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
@@ -319,16 +319,15 @@ export function UsedGearParkingLotArrivalGroupPage({
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                className={`${secondaryActionButtonClass} w-full py-3`}
+              <SecondaryActionButton
+                className="w-full py-3"
                 onClick={() => {
                   void handleSaveReview();
                 }}
                 disabled={saving !== null}
               >
                 {saving === 'save' ? 'Saving...' : 'Save Review'}
-              </button>
+              </SecondaryActionButton>
               <button
                 type="button"
                 className="rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"

@@ -33,9 +33,6 @@ interface BuildListingApprovalSelectedRecordStatusPropsParams {
   onSaveUpdates: () => void;
   onPrimaryAction: () => void;
   runCombinedPush: (target: 'shopify' | 'ebay' | 'both') => Promise<void> | void;
-  accentActionButtonClass: string;
-  primaryActionButtonClass: string;
-  secondaryActionButtonClass: string;
 }
 
 export function buildListingApprovalSelectedRecordStatusProps({
@@ -66,9 +63,6 @@ export function buildListingApprovalSelectedRecordStatusProps({
   onSaveUpdates,
   onPrimaryAction,
   runCombinedPush,
-  accentActionButtonClass,
-  primaryActionButtonClass,
-  secondaryActionButtonClass,
 }: BuildListingApprovalSelectedRecordStatusPropsParams) {
   return {
     alertsProps: {
@@ -108,9 +102,6 @@ export function buildListingApprovalSelectedRecordStatusProps({
       onPublishEbay: () => { void runCombinedPush('ebay'); },
       onPublishBoth: () => { void runCombinedPush('both'); },
       onPrimaryAction,
-      accentActionButtonClass,
-      primaryActionButtonClass,
-      secondaryActionButtonClass,
     } satisfies ListingApprovalRecordActionsProps,
   };
 }

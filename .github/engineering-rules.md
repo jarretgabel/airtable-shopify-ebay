@@ -4,6 +4,7 @@
 - For large component refactors, change structure incrementally and keep feature parity.
 - Avoid touching unrelated files during focused migrations.
 - If a migration removes legacy classes, prune matching CSS selectors in the same change.
+- For new features, do not add legacy redirects, alias routes, compatibility shims, or dual-path support unless the request explicitly calls for backward compatibility.
 
 ## React DOM Rules
 - Never use `querySelector`, `querySelectorAll`, `getElementById`, or any imperative DOM query against the React-rendered tree. Always use React refs (`useRef`), state, controlled props, or `autoFocus` to manage focus, read values, or interact with rendered elements.

@@ -143,7 +143,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     expect(screen.getByText('May 6, 2026')).toBeInTheDocument();
   });
 
-  it('routes all-queue testing, photography, and pre-listing rows to their next surfaces', async () => {
+  it('routes all-queue testing, photography, and listing review rows to their next surfaces', async () => {
     const onOpenTestingForm = vi.fn();
     const onOpenPhotosForm = vi.fn();
     const onOpenListingsRecord = vi.fn();

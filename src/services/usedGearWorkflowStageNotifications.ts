@@ -115,8 +115,8 @@ export function buildUsedGearStageHandoffNotification({
       key: `used-gear-stage-handoff:${record.id}:${completedStage}`,
       digestKey: 'used-gear-stage-handoff:pre-listing-review',
       tone: 'warning',
-      title: 'Stage handoff complete: pre-listing review next',
-      message: `${recordLabel} cleared photography and is ready for pre-listing review.`,
+      title: 'Stage handoff complete: listing review next',
+      message: `${recordLabel} cleared photography and is ready for listing review.`,
     };
   }
 

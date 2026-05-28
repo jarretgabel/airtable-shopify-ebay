@@ -2,6 +2,7 @@ import * as React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FormImageUploadEditor } from '@/components/tabs/FormImageUploadEditor';
+import type { ProcessedImage } from '@/services/imageProcessor';
 
 const { processImageMock, revokeProcessedImageMock } = vi.hoisted(() => ({
   processImageMock: vi.fn(),
@@ -83,16 +84,44 @@ describe('FormImageUploadEditor', () => {
 
   it('replaces the raw upload with the processed file after applying edits', async () => {
     const onFilesChange = vi.fn();
-    render(<FormImageUploadEditor onFilesChange={onFilesChange} />);
+    const onUploadAssetsChange = vi.fn();
+    render(<FormImageUploadEditor onFilesChange={onFilesChange} onUploadAssetsChange={onUploadAssetsChange} />);
 
     const originalFile = new File(['original-image'], 'hero.jpg', { type: 'image/jpeg' });
     fireEvent.change(screen.getByLabelText('Add upload images'), {
       target: { files: [originalFile] },
     });
 
+    await waitFor(() => {
+      expect(processImageMock).toHaveBeenCalledWith(
+        originalFile,
+        expect.objectContaining({
+          outputFilename: 'hero_edited.jpg',
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      const latestCall = onFilesChange.mock.calls[onFilesChange.mock.calls.length - 1] as [File[]];
+      expect(latestCall[0]).toHaveLength(1);
+      expect(latestCall[0][0]?.name).toBe('hero-finished.jpg');
+    });
+
     const card = screen.getByText('hero.jpg').closest('article');
     expect(card).not.toBeNull();
     if (!card) return;
+
+    processImageMock.mockResolvedValueOnce({
+      blob: new Blob(['processed-image-v2'], { type: 'image/jpeg' }),
+      objectUrl: 'blob:processed-preview-v2',
+      filename: 'hero-refined.jpg',
+      originalBytes: 100,
+      processedBytes: 72,
+      sourceWidth: 1600,
+      sourceHeight: 1200,
+      width: 1200,
+      height: 900,
+    });
 
     fireEvent.change(within(card).getByRole('textbox', { name: 'Output filename' }), {
       target: { value: 'hero-finished' },
@@ -111,14 +140,71 @@ describe('FormImageUploadEditor', () => {
     await waitFor(() => {
       const latestCall = onFilesChange.mock.calls[onFilesChange.mock.calls.length - 1] as [File[]];
       expect(latestCall[0]).toHaveLength(1);
-      expect(latestCall[0][0]?.name).toBe('hero-finished.jpg');
+      expect(latestCall[0][0]?.name).toBe('hero-refined.jpg');
+    });
+
+    await waitFor(() => {
+      const latestAssetCall = onUploadAssetsChange.mock.calls[onUploadAssetsChange.mock.calls.length - 1] as [{ originalFile: File; uploadFile: File }[]];
+      expect(latestAssetCall[0]).toHaveLength(1);
+      expect(latestAssetCall[0][0]?.originalFile.name).toBe('hero.jpg');
+      expect(latestAssetCall[0][0]?.uploadFile.name).toBe('hero-refined.jpg');
+    });
+  });
+
+  it('does not expose files for submit until auto-processing completes', async () => {
+    const resolveProcessingRef: { current?: (value: ProcessedImage) => void } = {};
+    processImageMock.mockImplementationOnce(() => new Promise<ProcessedImage>((resolve) => {
+      resolveProcessingRef.current = resolve;
+    }));
+
+    const onFilesChange = vi.fn();
+    const onUploadAssetsChange = vi.fn();
+    render(<FormImageUploadEditor onFilesChange={onFilesChange} onUploadAssetsChange={onUploadAssetsChange} />);
+
+    fireEvent.change(screen.getByLabelText('Add upload images'), {
+      target: { files: [new File(['original-image'], 'pending.jpg', { type: 'image/jpeg' })] },
+    });
+
+    await waitFor(() => {
+      expect(processImageMock).toHaveBeenCalledTimes(1);
+    });
+
+    const latestFileCall = onFilesChange.mock.calls[onFilesChange.mock.calls.length - 1] as [File[]];
+    const latestAssetCall = onUploadAssetsChange.mock.calls[onUploadAssetsChange.mock.calls.length - 1] as [{ originalFile: File; uploadFile: File }[]];
+    expect(latestFileCall[0]).toEqual([]);
+    expect(latestAssetCall[0]).toEqual([]);
+
+    if (!resolveProcessingRef.current) {
+      throw new Error('Expected auto-processing promise resolver to be assigned.');
+    }
+
+    resolveProcessingRef.current({
+      blob: new Blob(['processed-image'], { type: 'image/jpeg' }),
+      objectUrl: 'blob:processed-preview-pending',
+      filename: 'pending-finished.jpg',
+      originalBytes: 100,
+      processedBytes: 80,
+      sourceWidth: 1600,
+      sourceHeight: 1200,
+      width: 1200,
+      height: 900,
+    });
+
+    await waitFor(() => {
+      const completedCall = onFilesChange.mock.calls[onFilesChange.mock.calls.length - 1] as [File[]];
+      expect(completedCall[0][0]?.name).toBe('pending-finished.jpg');
     });
   });
 
   it('persists saved processing defaults in local storage', () => {
     render(<FormImageUploadEditor onFilesChange={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Show options' }));
+    fireEvent.change(screen.getByLabelText('Add upload images'), {
+      target: {
+        files: [new File(['original-image'], 'defaults-check.jpg', { type: 'image/jpeg' })],
+      },
+    });
+
     fireEvent.change(screen.getByRole('textbox', { name: 'Default watermark text' }), {
       target: { value: 'Studio Watermark' },
     });

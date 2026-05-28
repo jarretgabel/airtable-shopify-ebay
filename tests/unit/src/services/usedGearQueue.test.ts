@@ -782,7 +782,7 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('completes pre-listing review and advances to approved for publish', async () => {
+  it('completes listing review and advances to approved for publish', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'rec1',
@@ -1138,7 +1138,7 @@ describe('usedGearQueue', () => {
     expect(mockUpdateConfiguredRecord).toHaveBeenCalledTimes(2);
   });
 
-  it('blocks pre-listing approval when no listing price is captured', async () => {
+  it('blocks listing review approval when no listing price is captured', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'rec1',
@@ -1262,7 +1262,7 @@ describe('usedGearQueue', () => {
           recordId: 'recConcurrent',
           sectionId: 'used-gear-testing-queue',
           groupId: null,
-          path: '/workflow/testing#used-gear-testing-queue',
+          path: '/testing#used-gear-testing-queue',
         },
         photography: null,
         preListingReview: {

@@ -139,6 +139,13 @@ At least one of:
 - `GOOGLE_GMAIL_ACCESS_TOKEN`
 - `GOOGLE_GMAIL_FROM_EMAIL`
 
+### Optional for Google Drive image archiving
+
+- `GOOGLE_DRIVE_CLIENT_ID`
+- `GOOGLE_DRIVE_CLIENT_SECRET`
+- `GOOGLE_DRIVE_REFRESH_TOKEN`
+- `GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID`
+
 ## Source-of-truth mapping from frontend env to AWS runtime env
 
 Use this mapping when moving from `.env.local` to deployed Lambda configuration.
@@ -195,6 +202,13 @@ Use this mapping when moving from `.env.local` to deployed Lambda configuration.
 
 - `VITE_GOOGLE_GMAIL_ACCESS_TOKEN` -> `GOOGLE_GMAIL_ACCESS_TOKEN`
 - `VITE_GOOGLE_GMAIL_FROM_EMAIL` -> `GOOGLE_GMAIL_FROM_EMAIL`
+
+### Google Drive image archiving
+
+- `VITE_GOOGLE_DRIVE_CLIENT_ID` -> `GOOGLE_DRIVE_CLIENT_ID`
+- `VITE_GOOGLE_DRIVE_CLIENT_SECRET` -> `GOOGLE_DRIVE_CLIENT_SECRET`
+- `VITE_GOOGLE_DRIVE_REFRESH_TOKEN` -> `GOOGLE_DRIVE_REFRESH_TOKEN`
+- `VITE_GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID` -> `GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID`
 
 ## Recommended AWS services
 

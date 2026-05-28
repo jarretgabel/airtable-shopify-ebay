@@ -196,7 +196,7 @@ describe('useAuthRouteGuard', () => {
     expect(navigate).toHaveBeenCalledWith('/workflow-hub', { replace: true });
   });
 
-  it('redirects the blank testing route to the testing queue', () => {
+  it('keeps the testing route as the queue landing surface', () => {
     const navigate = vi.fn();
 
     render(
@@ -207,10 +207,10 @@ describe('useAuthRouteGuard', () => {
       />,
     );
 
-    expect(navigate).toHaveBeenCalledWith('/workflow/testing', { replace: true });
+    expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('redirects the blank photos route to the photography queue', () => {
+  it('redirects the retired photos route away', () => {
     const navigate = vi.fn();
 
     render(
@@ -221,7 +221,7 @@ describe('useAuthRouteGuard', () => {
       />,
     );
 
-    expect(navigate).toHaveBeenCalledWith('/workflow/photography', { replace: true });
+    expect(navigate).toHaveBeenCalledWith('/dashboard', { replace: true });
   });
 
   it('redirects the retired pre-listing route away', () => {

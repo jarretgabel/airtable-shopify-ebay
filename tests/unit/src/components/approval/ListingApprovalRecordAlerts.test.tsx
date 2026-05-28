@@ -19,14 +19,14 @@ const baseProps = {
 };
 
 describe('ListingApprovalRecordAlerts', () => {
-  it('shows pre-listing review guidance when readiness blockers are cleared', () => {
+  it('shows listing review guidance when readiness blockers are cleared', () => {
     render(<ListingApprovalRecordAlerts {...baseProps} />);
 
     expect(screen.getByText('Listing review is in progress.')).toBeInTheDocument();
     expect(screen.getByText(/approve the row for publish/i)).toBeInTheDocument();
   });
 
-  it('shows workflow readiness blockers for pre-listing review rows', () => {
+  it('shows workflow readiness blockers for listing review rows', () => {
     render(
       <ListingApprovalRecordAlerts
         {...baseProps}

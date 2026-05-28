@@ -130,7 +130,7 @@ describe('buildUsedGearStageHandoffNotification', () => {
     });
   });
 
-  it('routes the final concurrent signoff to pre-listing review', () => {
+  it('routes the final concurrent signoff to listing review', () => {
     const user = makeUser({
       notificationPreferences: {
         infoEnabled: true,
@@ -163,8 +163,8 @@ describe('buildUsedGearStageHandoffNotification', () => {
       key: 'used-gear-stage-handoff:rec-stage-1:photography',
       digestKey: 'used-gear-stage-handoff:pre-listing-review',
       tone: 'warning',
-      title: 'Stage handoff complete: pre-listing review next',
-      message: 'UG-100 (McIntosh MC275) cleared photography and is ready for pre-listing review.',
+      title: 'Stage handoff complete: listing review next',
+      message: 'UG-100 (McIntosh MC275) cleared photography and is ready for listing review.',
     });
   });
 

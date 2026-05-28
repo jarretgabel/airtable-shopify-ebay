@@ -444,4 +444,72 @@ describe('app-api airtable', () => {
       contentType: 'image/jpeg',
     });
   });
+
+  it('supports archive-only workflow uploads and returns archive metadata', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({
+        uploaded: false,
+        archived: true,
+        archive: {
+          folderId: 'folder-1',
+          original: {
+            id: 'file-original',
+            filename: 'testing-original.jpg',
+            url: 'https://drive.google.com/uc?export=view&id=file-original',
+          },
+          processed: {
+            id: 'file-processed',
+            filename: 'testing-processed.jpg',
+            url: 'https://drive.google.com/uc?export=view&id=file-processed',
+          },
+        },
+      }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const originalFile = new File(['original'], 'testing-original.jpg', { type: 'image/jpeg' });
+    const processedFile = new File(['processed'], 'testing-processed.jpg', { type: 'image/jpeg' });
+    const result = await uploadConfiguredAttachment('used-gear-workflow', 'rec123', 'fld1zIzmZEciQECah', processedFile, {
+      archiveOnly: true,
+      driveArchive: {
+        sku: 'SKU-123',
+        stage: 'testing',
+        originalFile,
+      },
+    });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      filename: 'testing-processed.jpg',
+      contentType: 'image/jpeg',
+      archiveOnly: true,
+      driveArchive: {
+        sku: 'SKU-123',
+        stage: 'testing',
+        original: {
+          filename: 'testing-original.jpg',
+          contentType: 'image/jpeg',
+        },
+      },
+    });
+    expect(result).toEqual({
+      uploaded: false,
+      archived: true,
+      archive: {
+        folderId: 'folder-1',
+        original: {
+          id: 'file-original',
+          filename: 'testing-original.jpg',
+          url: 'https://drive.google.com/uc?export=view&id=file-original',
+        },
+        processed: {
+          id: 'file-processed',
+          filename: 'testing-processed.jpg',
+          url: 'https://drive.google.com/uc?export=view&id=file-processed',
+        },
+      },
+    });
+  });
 });

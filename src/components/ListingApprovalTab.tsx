@@ -1,6 +1,6 @@
 import type { ApprovalTabViewModel } from '@/app/appTabViewModels';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
-import { secondaryActionButtonClass } from '@/components/app/buttonStyles';
+import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
 import { ListingApprovalQueuePanel } from '@/components/approval/ListingApprovalQueuePanel';
 import { ListingApprovalSelectedRecordPanel } from '@/components/approval/ListingApprovalSelectedRecordPanel';
 import { useListingApprovalTabState } from '@/components/approval/useListingApprovalTabState';
@@ -55,9 +55,9 @@ export function ListingApprovalTab({
             The requested listing record is not available in the current dataset. If sample data was reseeded, the old record ID may no longer exist.
           </p>
           <div className="mt-5">
-            <button type="button" className={secondaryActionButtonClass} onClick={viewModel.onBackToList}>
+            <SecondaryActionButton onClick={viewModel.onBackToList}>
               Back to listings directory
-            </button>
+            </SecondaryActionButton>
           </div>
         </section>
         {confirmationModal}

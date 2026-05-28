@@ -1,8 +1,8 @@
 import { FormEvent, useRef } from 'react';
 import type { MarketTabViewModel } from '@/app/appTabViewModels';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
+import { PrimaryActionButton } from '@/components/app/PrimaryActionButton';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
-import { primaryActionButtonClass } from '@/components/app/buttonStyles';
 import { darkTableHeaderClass, darkTableRowHoverClass, emptySurfaceClass, errorSurfaceClass, listingSummaryClass, loadingSurfaceClass, mutedCodeClass, panelSurfaceClass, spinnerClass } from '@/components/tabs/uiClasses';
 
 interface MarketTabProps {
@@ -44,9 +44,9 @@ export function MarketTab({ viewModel }: MarketTabProps) {
                 defaultValue={currentSlug}
               />
             </div>
-            <button type="submit" className={primaryActionButtonClass} disabled={loading}>
+            <PrimaryActionButton type="submit" disabled={loading}>
               {loading ? 'Searching...' : 'Search'}
-            </button>
+            </PrimaryActionButton>
           </div>
           <p className="m-0 text-sm text-[var(--muted)]">
             Enter a HiFiShark model slug from{' '}

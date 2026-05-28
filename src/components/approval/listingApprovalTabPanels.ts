@@ -1,5 +1,4 @@
 import { createElement, type Dispatch, type SetStateAction } from 'react';
-import { accentActionButtonClass, primaryActionButtonClass, secondaryActionButtonClass } from '@/components/app/buttonStyles';
 import type {
   EbayApprovalPayloadPreviewData,
   ShopifyApprovalPayloadPreviewData,
@@ -336,9 +335,6 @@ export function buildListingApprovalTabPanels({
       onSaveUpdates,
       onPrimaryAction,
       runCombinedPush,
-      accentActionButtonClass,
-      primaryActionButtonClass,
-      secondaryActionButtonClass,
     })
     : null;
 
@@ -362,7 +358,6 @@ export function buildListingApprovalTabPanels({
       error,
       onBackToList,
       backToListLabel,
-      secondaryActionButtonClass,
       errorSurfaceClass,
       isCombinedApproval,
       workflowSummary,

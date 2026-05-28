@@ -50,9 +50,9 @@ describe('WorkflowGuideTab', () => {
     expect(screen.getByRole('heading', { name: 'How Items Move To The Next Step' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'User guide sections' })).toBeInTheDocument();
     expect(screen.getByText('Record And Detail Pages')).toBeInTheDocument();
-    expect(screen.getAllByText('Open this first').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Suggested start').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Start ready work here' })).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Open Testing Queue' })[0]).toHaveAttribute('href', '/workflow/testing');
+    expect(screen.getAllByRole('link', { name: 'Open Testing Queue' })[0]).toHaveAttribute('href', '/testing');
     expect(screen.getAllByRole('link', { name: 'Open Testing' })[0]).toHaveAttribute('href', '/testing');
     expect(screen.getAllByText('Your lane').length).toBeGreaterThan(0);
     expect(screen.getAllByText('specialist').length).toBeGreaterThan(0);
@@ -100,6 +100,11 @@ describe('WorkflowGuideTab', () => {
     expect(screen.getByRole('heading', { name: 'Testing Queue' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Testing' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Listings' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Manual Intake' })[0]).toHaveAttribute('href', '/manual-intake');
+    expect(screen.getAllByRole('link', { name: 'JotForm' })[0]).toHaveAttribute('href', '/jotform');
+    expect(screen.getAllByRole('link', { name: 'Parking Lot' })[0]).toHaveAttribute('href', '/parking-lot-1');
+    expect(screen.getAllByRole('link', { name: 'Testing' })[0]).toHaveAttribute('href', '/testing');
+    expect(screen.getAllByRole('link', { name: 'Photography' })[0]).toHaveAttribute('href', '/photography');
     expect(screen.getAllByText(/JotForm/i).length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Pending Review Record And Group Pages' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Workflow Snapshot And Record Pages' })).toBeInTheDocument();
@@ -109,6 +114,8 @@ describe('WorkflowGuideTab', () => {
     expect(screen.getAllByText('Testing Handoff').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Photography Handoff').length).toBeGreaterThan(0);
     expect(screen.getByText('Listings to live listing status')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Shopify Products' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'eBay' })).not.toBeInTheDocument();
     expect(screen.getAllByText('Your lane').length).toBeGreaterThan(1);
     expect(screen.getByText('Where should I start if I am working intake?')).toBeInTheDocument();
   });

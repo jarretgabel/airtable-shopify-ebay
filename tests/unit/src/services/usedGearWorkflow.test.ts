@@ -30,7 +30,7 @@ describe('usedGearWorkflow', () => {
     expect(deriveUsedGearNextTeams('Awaiting Pre-Listing Review')).toEqual(['Listing']);
   });
 
-  it('requires both concurrent signoffs before pre-listing review', () => {
+  it('requires both concurrent signoffs before listing review', () => {
     expect(hasTestingSignoff({ testingSignedBy: 'Taylor' })).toBe(false);
     expect(hasPhotographySignoff({ photographySignedAt: '2026-05-07T11:15:00.000Z' })).toBe(false);
 

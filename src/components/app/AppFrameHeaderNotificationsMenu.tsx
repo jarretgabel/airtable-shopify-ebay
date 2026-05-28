@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { secondaryActionButtonClass } from '@/components/app/buttonStyles';
+import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
 import type { OpenDropdown } from '@/components/app/appFrameTypes';
 import { handleDropdownTriggerKeyDown } from '@/components/app/AppFrameHeaderShared';
 import { useNotificationStore } from '@/stores/notificationStore';
@@ -45,15 +45,14 @@ export function AppFrameHeaderNotificationsMenu({
 
   return (
     <div className="relative" data-export-ignore="true">
-      <button
-        type="button"
+      <SecondaryActionButton
         aria-haspopup="menu"
         aria-controls="notifications-menu"
         aria-expanded={openDropdown === 'notifications'}
         aria-label="Open notifications menu"
         onClick={() => onToggleDropdown('notifications')}
         onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'notifications', onToggleDropdown, onCloseDropdowns)}
-        className={`${secondaryActionButtonClass} relative px-2.5`}
+        className="relative px-2.5"
       >
         <span className="relative inline-flex h-6 w-6 items-center justify-center">
           <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
@@ -66,7 +65,7 @@ export function AppFrameHeaderNotificationsMenu({
             </span>
           )}
         </span>
-      </button>
+      </SecondaryActionButton>
 
       {openDropdown === 'notifications' && (
         <div

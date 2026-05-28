@@ -34,6 +34,18 @@ Current behavior:
 - auth session state is carried by the backend `lcc_session` httpOnly cookie rather than frontend localStorage
 - the local adapter defaults `APP_AUTH_COOKIE_SECURE_MODE=never` so cookie auth works on plain `http://127.0.0.1:*`
 
+Google Drive image archiving:
+
+- testing and photography image uploads can now archive both the original upload and the processed upload into Google Drive before the Airtable attachment write completes
+- a plain Google API key is not sufficient for this flow because Drive uploads to private folders require OAuth
+- for the root `.env.local` used by `npm run local:api`, set `VITE_GOOGLE_DRIVE_CLIENT_ID`, `VITE_GOOGLE_DRIVE_CLIENT_SECRET`, `VITE_GOOGLE_DRIVE_REFRESH_TOKEN`, and `VITE_GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID`
+- run `npm run google-drive:authorize` once to mint a refresh token for the Google account that owns the personal Drive folder
+- for deployed Lambda configuration, use `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`, `GOOGLE_DRIVE_REFRESH_TOKEN`, and `GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID`
+- after setting those values locally, run `npm run google-drive:check` to confirm the backend can read the configured folder and upload/delete a tiny probe image inside it
+- by default the backend creates or reuses a single `Workflow Image Archive` folder in Drive root and stores each SKU subfolder under it
+- each SKU folder stores stage-prefixed originals and processed files together, for example `testing--front--original.jpg` and `testing--front_edited.jpg`
+- for `used-gear-workflow` image uploads, the app now stores the processed Google Drive URL in `Workflow Image Metadata JSON` and no longer depends on Airtable `Images` attachments for the saved workflow image source
+
 ## Command Workflow
 
 ### Step 1: validate the frontend build

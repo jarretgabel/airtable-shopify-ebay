@@ -49,7 +49,7 @@ describe('buildEbaySnapshotFromAirtable', () => {
     expect(snapshot.recentListings).toHaveLength(1);
   });
 
-  it('starts Airtable-backed snapshot visibility at awaiting pre-listing review', () => {
+  it('starts Airtable-backed snapshot visibility at awaiting listing review', () => {
     const snapshot = buildEbaySnapshotFromAirtable([
       {
         id: 'recPending1',

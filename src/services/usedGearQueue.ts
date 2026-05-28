@@ -299,9 +299,9 @@ function buildNotificationTarget(
       : destinationTab === 'jotform'
         ? '/jotform'
         : destinationTab === 'testing-queue'
-          ? '/workflow/testing'
+          ? '/testing'
           : destinationTab === 'photography-queue'
-            ? '/workflow/photography'
+            ? '/photography'
             : null;
 
   return {
@@ -1133,13 +1133,13 @@ export async function completeProcessingStage(recordId: string, userName: string
 export async function completePreListingReviewStage(recordId: string, userName: string): Promise<AirtableRecord> {
   const normalizedUserName = userName.trim();
   if (!normalizedUserName) {
-    throw new Error('Pre-listing review requires the current user name.');
+    throw new Error('Listing review requires the current user name.');
   }
 
   const currentRecord = await loadUsedGearOperationalRecord(recordId);
   const currentStatus = getUsedGearWorkflowStatus(currentRecord.fields);
   if (currentStatus !== AWAITING_PRE_LISTING_REVIEW_STATUS) {
-    throw new Error('Pre-listing review can only be completed when the row is awaiting pre-listing review.');
+    throw new Error('Listing review can only be completed when the row is awaiting listing review.');
   }
 
   assertUsedGearWorkflowReadyForPublish(currentRecord);
@@ -1173,7 +1173,7 @@ export function getUsedGearWorkflowPrimaryAction(record: AirtableRecord): string
     case PHOTOGRAPHY_IN_PROGRESS_STATUS:
       return 'Photography';
     case AWAITING_PRE_LISTING_REVIEW_STATUS:
-      return 'Pre-Listing Review';
+      return 'Listing Review';
     case APPROVED_FOR_PUBLISH_STATUS:
       return 'Approved for Publish';
     case LISTED_SHOPIFY_STATUS:

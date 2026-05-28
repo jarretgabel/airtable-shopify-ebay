@@ -43,7 +43,7 @@ export const USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS = [
   },
   {
     key: 'preListingReview',
-    label: 'Listings pre-listing review',
+    label: 'Listings listing review',
     description: 'Rows that have cleared processing and are now ready in Listings for final review.',
   },
   {

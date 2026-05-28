@@ -12,7 +12,6 @@ interface BuildListingApprovalSelectedRecordPanelPropsParams {
   error: string | null;
   onBackToList: () => void;
   backToListLabel?: string;
-  secondaryActionButtonClass: string;
   errorSurfaceClass: string;
   isCombinedApproval: boolean;
   workflowSummary: ListingApprovalSelectedRecordPanelProps['workflowSummary'];
@@ -30,7 +29,6 @@ export function buildListingApprovalSelectedRecordPanelProps({
   error,
   onBackToList,
   backToListLabel,
-  secondaryActionButtonClass,
   errorSurfaceClass,
   isCombinedApproval,
   workflowSummary,
@@ -51,7 +49,6 @@ export function buildListingApprovalSelectedRecordPanelProps({
     error,
     onBackToList,
     backToListLabel,
-    secondaryActionButtonClass,
     errorSurfaceClass,
     isCombinedApproval,
     workflowSummary,

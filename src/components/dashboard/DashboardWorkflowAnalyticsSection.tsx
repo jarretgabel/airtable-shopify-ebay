@@ -25,7 +25,7 @@ const STATUS_ROWS: Array<{ label: string; status: UsedGearWorkflowStatus }> = [
   { label: 'Awaiting Missing Item', status: 'Accepted - Arrived, Awaiting Missing Item' },
   { label: 'Testing', status: 'Testing In Progress' },
   { label: 'Photography', status: 'Photography In Progress' },
-  { label: 'Pre-Listing Review', status: 'Awaiting Pre-Listing Review' },
+  { label: 'Listing Review', status: 'Awaiting Pre-Listing Review' },
   { label: 'Approved For Publish', status: 'Approved for Publish' },
 ];
 

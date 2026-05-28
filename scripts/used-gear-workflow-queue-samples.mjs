@@ -9,6 +9,14 @@ const RUNS_DIR = path.join(process.cwd(), 'tmp', 'used-gear-workflow-queue-sampl
 const BATCH_SIZE = 10;
 const SAMPLE_MARKER = '[WORKFLOW_QUEUE_SAMPLE_DATA]';
 const SAMPLE_SKU_PREFIX = 'SAMPLE-WORKFLOW-QUEUE-';
+const SAMPLE_WORKFLOW_USERS = {
+  owner: 'Wes Workflow',
+  purchasing: 'Paula Purchasing',
+  processing: 'Iris Intake',
+  testing: 'Tina Testing',
+  photography: 'Perry Photos',
+  listing: 'Lana Listing',
+};
 
 function readEnvFile(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -55,6 +63,35 @@ function writeJson(filePath, value) {
 
 function getTrimmedString(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function replaceSampleWorkflowUser(value) {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  switch (value) {
+    case 'Sample Operator':
+      return SAMPLE_WORKFLOW_USERS.owner;
+    case 'Sample Buyer':
+      return SAMPLE_WORKFLOW_USERS.purchasing;
+    case 'Sample Intake':
+      return SAMPLE_WORKFLOW_USERS.processing;
+    case 'Sample Tech':
+      return SAMPLE_WORKFLOW_USERS.testing;
+    case 'Sample Photo':
+      return SAMPLE_WORKFLOW_USERS.photography;
+    case 'Sample Reviewer':
+      return SAMPLE_WORKFLOW_USERS.listing;
+    default:
+      return value;
+  }
+}
+
+function applySampleWorkflowUsers(fields) {
+  return Object.fromEntries(
+    Object.entries(fields).map(([fieldName, value]) => [fieldName, replaceSampleWorkflowUser(value)]),
+  );
 }
 
 async function fetchJson(url, options = {}) {
@@ -352,11 +389,11 @@ function buildCommonFields(index, config) {
     'Workflow Status': config.workflowStatus,
   };
 
-  return {
+  return applySampleWorkflowUsers({
     ...baseFields,
     ...buildStageFields(index, config),
     ...(config.extraFields ?? {}),
-  };
+  });
 }
 
 function buildSampleRecords() {

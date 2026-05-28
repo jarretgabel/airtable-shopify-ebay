@@ -25,12 +25,11 @@ const baseProps = {
   onPublishBoth: vi.fn(),
   onPrimaryAction: vi.fn(),
   accentActionButtonClass: 'accent',
-  primaryActionButtonClass: 'primary',
   secondaryActionButtonClass: 'secondary',
 };
 
 describe('ListingApprovalRecordActions', () => {
-  it('shows approve-for-publish instead of publish buttons during pre-listing review', () => {
+  it('shows approve-for-publish instead of publish buttons during listing review', () => {
     const onPrimaryAction = vi.fn();
 
     render(

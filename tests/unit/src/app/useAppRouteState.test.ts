@@ -105,13 +105,24 @@ describe('useAppRouteState', () => {
     expect(state.testingRecordId).toBe('rec 456');
   });
 
-  it('maps the dedicated photos route', () => {
-    const state = useAppRouteState(locationFor('/photos'), ['dashboard', 'photos']);
-    expect(state.activeTab).toBe('photos');
+  it('maps the dedicated testing route to the testing queue', () => {
+    const state = useAppRouteState(locationFor('/testing'), ['dashboard', 'testing-queue']);
+    expect(state.activeTab).toBe('testing-queue');
   });
 
-  it('maps photos deep links with record ids', () => {
-    const state = useAppRouteState(locationFor('/photos/rec%20789'), ['dashboard', 'photos']);
+  it('maps the dedicated photography route', () => {
+    const state = useAppRouteState(locationFor('/photography'), ['dashboard', 'photography-queue']);
+    expect(state.activeTab).toBe('photography-queue');
+  });
+
+  it('treats retired photos routes as unsupported paths', () => {
+    const state = useAppRouteState(locationFor('/photos'), ['dashboard', 'photography-queue']);
+    expect(state.activeTab).toBe('dashboard');
+    expect(state.photosRecordId).toBeNull();
+  });
+
+  it('maps photography deep links with record ids', () => {
+    const state = useAppRouteState(locationFor('/photography/rec%20789'), ['dashboard', 'photos']);
     expect(state.activeTab).toBe('photos');
     expect(state.photosRecordId).toBe('rec 789');
   });

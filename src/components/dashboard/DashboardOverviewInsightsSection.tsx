@@ -104,9 +104,9 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
     + workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting SKU']
     + workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting Missing Item']
     + downstreamStageCount;
-  const preListingCount = workflowAnalytics.statusCounts['Awaiting Pre-Listing Review'];
+  const listingReviewCount = workflowAnalytics.statusCounts['Awaiting Pre-Listing Review'];
   const approvedForPublishCount = workflowAnalytics.statusCounts['Approved for Publish'];
-  const listingPhaseCount = preListingCount + approvedForPublishCount;
+  const listingPhaseCount = listingReviewCount + approvedForPublishCount;
   const progressAlertCount = workflowAnalytics.age.progressAlertCount;
   const awaitingArrivalCount = workflowAnalytics.statusCounts['Accepted - Awaiting Arrival'];
   const awaitingSkuCount = workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting SKU'];
@@ -163,8 +163,8 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : listingPhaseCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{preListingCount}</strong> pre-listing &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvedForPublishCount}</strong> approved</>}
-        trend={workflowUnavailableReason ? 'Unavailable' : preListingCount > 0 ? `${preListingCount} awaiting review` : approvedForPublishCount > 0 ? `${approvedForPublishCount} ready to list` : 'Clear'}
+          : <><strong className="font-semibold text-[var(--accent)]">{listingReviewCount}</strong> listing review &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvedForPublishCount}</strong> approved</>}
+        trend={workflowUnavailableReason ? 'Unavailable' : listingReviewCount > 0 ? `${listingReviewCount} awaiting review` : approvedForPublishCount > 0 ? `${approvedForPublishCount} ready to list` : 'Clear'}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : listingPhaseCount > 0 ? 'text-violet-300' : 'text-emerald-300'}
         unavailableReason={workflowUnavailableReason}
         onClick={() => onSelectTab('listings')}

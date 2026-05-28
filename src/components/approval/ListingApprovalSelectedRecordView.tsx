@@ -82,8 +82,14 @@ export function ListingApprovalSelectedRecordView({
 
       {editor}
       {alerts}
-      {actions}
-      {workflowDetails}
+      <section id="listing-record-actions">
+        {actions}
+      </section>
+      {workflowDetails ? (
+        <section id="listing-workflow-details">
+          {workflowDetails}
+        </section>
+      ) : null}
       {payloadPanels ? (
         <details
           className="mt-4 rounded-lg border border-[var(--line)] bg-white/5"

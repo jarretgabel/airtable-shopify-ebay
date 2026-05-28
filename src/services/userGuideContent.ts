@@ -156,6 +156,14 @@ function normalizeStageTone(value: string, fallback: WorkflowFlowStage['tone']):
   return fallback;
 }
 
+function normalizeWorkflowStagePages(pages: AppPage[], fallback: WorkflowFlowStage): AppPage[] {
+  if (fallback.title === 'Pre-List And Publish') {
+    return pages.filter((page) => page === 'listings');
+  }
+
+  return pages;
+}
+
 function stripNamePrefix(value: string, prefix: string, fallback: string): string {
   const trimmedValue = value.trim();
   if (!trimmedValue) {
@@ -225,7 +233,7 @@ function buildRecordGuideCard(record: AirtableRecord | null, fallback: RecordGui
 
 function buildWorkflowStage(record: AirtableRecord | null, fallback: WorkflowFlowStage): WorkflowFlowStage {
   const fields = record?.fields ?? {};
-  const pages = readPages(fields);
+  const pages = normalizeWorkflowStagePages(readPages(fields), fallback);
   const primaryRoles = readRoles(fields, 'Primary Role');
   const supportRoles = readRoles(fields, 'Support Role');
 

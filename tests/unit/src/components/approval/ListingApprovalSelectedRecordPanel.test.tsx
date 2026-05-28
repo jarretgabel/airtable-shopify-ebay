@@ -51,7 +51,6 @@ describe('ListingApprovalSelectedRecordPanel', () => {
         saving={false}
         error={null}
         onBackToList={vi.fn()}
-        secondaryActionButtonClass="rounded"
         errorSurfaceClass="rounded"
         isCombinedApproval
         workflowSummary={buildWorkflowSummary('Awaiting Pre-Listing Review')}
@@ -76,7 +75,6 @@ describe('ListingApprovalSelectedRecordPanel', () => {
         saving={false}
         error={null}
         onBackToList={vi.fn()}
-        secondaryActionButtonClass="rounded"
         errorSurfaceClass="rounded"
         isCombinedApproval={false}
         workflowSummary={null}

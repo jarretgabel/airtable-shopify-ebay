@@ -36,11 +36,11 @@ export function ListingApprovalRecordAlerts({
   inlineActionNotices,
   fadingInlineNoticeIds,
 }: ListingApprovalRecordAlertsProps) {
-  const isWorkflowPreListingReview = approvalChannel === 'combined' && workflowStatus === 'Awaiting Pre-Listing Review';
+  const isWorkflowListingReview = approvalChannel === 'combined' && workflowStatus === 'Awaiting Pre-Listing Review';
 
   return (
     <>
-      {isWorkflowPreListingReview && workflowReadinessMissingRequirements.length === 0 && (
+      {isWorkflowListingReview && workflowReadinessMissingRequirements.length === 0 && (
         <section className="mt-4 rounded-lg border border-sky-400/35 bg-sky-500/10 px-3 py-2">
           <p className="m-0 text-sm font-semibold text-sky-200">
             Listing review is in progress.
@@ -51,7 +51,7 @@ export function ListingApprovalRecordAlerts({
         </section>
       )}
 
-      {isWorkflowPreListingReview && workflowReadinessMissingRequirements.length > 0 && (
+      {isWorkflowListingReview && workflowReadinessMissingRequirements.length > 0 && (
         <section className="mt-4 rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-2">
           <p className="m-0 text-sm font-semibold text-amber-200">
             Resolve listing readiness blockers before approving for publish.

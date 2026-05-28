@@ -19,7 +19,7 @@ describe('buildUsedGearWorkflowTimeline', () => {
       'Processing Completed',
       'Testing Signed',
       'Photography Signed',
-      'Pre-Listing',
+      'Listing Review',
       'Approved For Publish',
       'Listed',
       'Sold Ready To Ship',
@@ -29,9 +29,10 @@ describe('buildUsedGearWorkflowTimeline', () => {
     expect(timeline[1]).toMatchObject({ status: 'completed', actor: 'Jordan Processor' });
     expect(timeline[2]).toMatchObject({ status: 'pending', actor: null });
     expect(timeline[4]).toMatchObject({ status: 'pending', actor: null });
+    expect(timeline[3]).toMatchObject({ status: 'pending', actor: null });
   });
 
-  it('keeps pre-listing as a single milestone completed by the reviewer signoff', () => {
+  it('keeps listing review as a single milestone completed by the reviewer signoff', () => {
     const timeline = buildUsedGearWorkflowTimeline({
       id: 'rec-2',
       createdTime: '2026-05-08T00:00:00.000Z',
@@ -46,7 +47,7 @@ describe('buildUsedGearWorkflowTimeline', () => {
 
     expect(timeline[4]).toMatchObject({
       id: 'pre-listing',
-      label: 'Pre-Listing',
+      label: 'Listing Review',
       status: 'completed',
       actor: 'Jordan Reviewer',
     });

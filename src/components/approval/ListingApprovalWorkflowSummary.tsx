@@ -20,6 +20,8 @@ export interface ListingApprovalWorkflowSummaryData {
 interface ListingApprovalWorkflowSummaryProps {
   summary: ListingApprovalWorkflowSummaryData;
   timelineOnly?: boolean;
+  activeActionLabel?: string;
+  onActiveAction?: (() => void) | null;
 }
 
 export interface ListingApprovalWorkflowProcessCardProps {
@@ -35,6 +37,8 @@ export interface ListingApprovalWorkflowProcessCardProps {
   onPrimaryAction?: (() => void) | null;
   secondaryActionLabel?: string;
   onSecondaryAction?: (() => void) | null;
+  activeActionLabel?: string;
+  onActiveAction?: (() => void) | null;
 }
 
 interface WorkflowStatusPresentation {
@@ -237,7 +241,7 @@ function getWorkflowStatusPresentation(status: string): WorkflowStatusPresentati
         badgeClassName: getStatusBadgeClassName(status),
         progressClassName: 'bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-300',
         statusLabel: 'Publish-ready',
-        statusDescription: 'The item passed pre-listing review and is ready to be pushed live to Shopify, eBay, or both.',
+        statusDescription: 'The item passed listing review and is ready to be pushed live to Shopify, eBay, or both.',
         nextTeamLabel: 'Publish listing',
         marketplaceLabels: ['Shopify', 'eBay'],
       };
@@ -312,12 +316,12 @@ function getTimelineCardClassName(
   index: number,
   activeIndex: number,
 ): string {
-  if (entry.status === 'completed' || index < activeIndex) {
-    return 'border-emerald-400/30 bg-emerald-500/10';
-  }
-
   if (index === activeIndex) {
     return 'border-amber-400/35 bg-amber-500/10';
+  }
+
+  if (entry.status === 'completed' || index < activeIndex) {
+    return 'border-emerald-400/30 bg-emerald-500/10';
   }
 
   return 'border-[var(--line)] bg-[var(--bg)]';
@@ -328,12 +332,12 @@ function getTimelineDotClassName(
   index: number,
   activeIndex: number,
 ): string {
-  if (entry.status === 'completed' || index < activeIndex) {
-    return 'border-emerald-300/70 bg-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.12)]';
-  }
-
   if (index === activeIndex) {
     return 'border-amber-300/80 bg-amber-300 shadow-[0_0_0_6px_rgba(245,158,11,0.14)]';
+  }
+
+  if (entry.status === 'completed' || index < activeIndex) {
+    return 'border-emerald-300/70 bg-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.12)]';
   }
 
   return 'border-[var(--line)] bg-[var(--bg)]';
@@ -354,9 +358,9 @@ function getTimelineStatusBadgeClassName(isCompleted: boolean, isActive: boolean
 function getTimelineCompletionGuidance(entryId: UsedGearWorkflowTimelineEntry['id']): string {
   switch (entryId) {
     case 'accepted':
-      return 'Use "Open Intake" to update the intake record, then click "Complete Processing" when the item is ready to move forward.';
+      return 'Use "Open Intake" to update the intake record after the item is accepted into Parking Lot.';
     case 'processing':
-      return 'Finish the intake details in "Open Intake", then click "Complete Processing" to send the item to testing.';
+      return 'Finish the intake details in "Open Intake", then click "Complete Processing" when the item is ready to leave Parking Lot and move into testing.';
     case 'testing':
       return 'Use "Open Testing" to capture the testing signoff for this item before it moves to photography.';
     case 'photography':
@@ -409,6 +413,8 @@ export function ListingApprovalWorkflowProcessCard({
   onPrimaryAction = null,
   secondaryActionLabel,
   onSecondaryAction = null,
+  activeActionLabel,
+  onActiveAction = null,
 }: ListingApprovalWorkflowProcessCardProps) {
   if (loading) {
     return (
@@ -492,13 +498,18 @@ export function ListingApprovalWorkflowProcessCard({
               const isImmediatelyAfterActive = index === activeIndex + 1;
               const showLeftConnector = index > 0 && !isActive;
               const showRightConnector = index < summary.timeline.length - 1 && !isActive;
-              const updatedLabel = isInferredCompleted
-                ? 'Completed via current workflow status'
-                : formatTimelineTimestamp(entry.timestamp);
+              const updatedLabel = entry.timestamp
+                ? formatTimelineTimestamp(entry.timestamp)
+                : isInferredCompleted
+                  ? entry.actor
+                    ? `Completed by ${entry.actor}`
+                    : 'Completed by workflow status'
+                  : 'Pending';
+              const actorLabel = entry.timestamp ? entry.actor : null;
               const detailSummary = [
                 `${isCompleted ? 'Completed' : isActive ? 'Current' : 'Pending'} milestone`,
                 updatedLabel,
-                entry.actor ? `By ${entry.actor}` : null,
+                actorLabel ? `By ${actorLabel}` : null,
               ].filter(Boolean).join(' • ');
 
               return (
@@ -568,13 +579,21 @@ export function ListingApprovalWorkflowProcessCard({
                         <div>
                           <p className="m-0 mt-1 text-sm font-semibold text-[var(--ink)]">{entry.label}</p>
                         </div>
-                        <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Updated</p>
-                        <p className="m-0 mt-1 text-sm text-[var(--ink)]">{updatedLabel}</p>
-                        {entry.actor ? (
-                          <p className="m-0 mt-2 text-xs uppercase tracking-[0.08em] text-[var(--muted)]">By {entry.actor}</p>
+                        {updatedLabel ? <p className="m-0 mt-3 text-sm text-[var(--ink)]">{updatedLabel}</p> : null}
+                        {actorLabel ? (
+                          <p className="m-0 mt-2 text-xs uppercase tracking-[0.08em] text-[var(--muted)]">By {actorLabel}</p>
                         ) : null}
                         <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">How To Complete</p>
                         <p className="m-0 mt-1 text-sm leading-6 text-[var(--ink)]">{completionGuidance}</p>
+                        {activeActionLabel && onActiveAction ? (
+                          <button
+                            type="button"
+                            className="pointer-events-auto mt-3 inline-flex items-center rounded-lg border border-amber-400/35 bg-amber-500/15 px-3 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/35"
+                            onClick={onActiveAction}
+                          >
+                            {activeActionLabel}
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   ) : (
@@ -609,10 +628,9 @@ export function ListingApprovalWorkflowProcessCard({
                             {isCompleted ? 'Completed' : 'Pending'}
                           </span>
                         </div>
-                        <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Updated</p>
-                        <p className="m-0 mt-1 text-sm text-[var(--ink)]">{updatedLabel}</p>
-                        {entry.actor ? (
-                          <p className="m-0 mt-2 text-xs uppercase tracking-[0.08em] text-[var(--muted)]">By {entry.actor}</p>
+                        {updatedLabel ? <p className="m-0 mt-3 text-sm text-[var(--ink)]">{updatedLabel}</p> : null}
+                        {actorLabel ? (
+                          <p className="m-0 mt-2 text-xs uppercase tracking-[0.08em] text-[var(--muted)]">By {actorLabel}</p>
                         ) : null}
                       </div>
                     </div>
@@ -729,6 +747,18 @@ export function ListingApprovalWorkflowProcessCard({
   );
 }
 
-export function ListingApprovalWorkflowSummary({ summary, timelineOnly = false }: ListingApprovalWorkflowSummaryProps) {
-  return <ListingApprovalWorkflowProcessCard summary={summary} timelineOnly={timelineOnly} />;
+export function ListingApprovalWorkflowSummary({
+  summary,
+  timelineOnly = false,
+  activeActionLabel,
+  onActiveAction = null,
+}: ListingApprovalWorkflowSummaryProps) {
+  return (
+    <ListingApprovalWorkflowProcessCard
+      summary={summary}
+      timelineOnly={timelineOnly}
+      activeActionLabel={activeActionLabel}
+      onActiveAction={onActiveAction}
+    />
+  );
 }

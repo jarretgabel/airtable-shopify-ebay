@@ -112,7 +112,7 @@ export function buildWorkflowProgressLastTouchedSummary(record: AirtableRecord):
     ),
     createCandidate(
       record.fields['Awaiting Pre-Listing Review At'],
-      'Moved to pre-listing review',
+      'Moved to listing review',
       'Open Listings Approval',
       'listings-record',
     ),

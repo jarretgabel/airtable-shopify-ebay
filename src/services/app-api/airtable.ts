@@ -45,10 +45,45 @@ export interface AirtableMetadataField {
   };
 }
 
+export type AirtableDriveArchiveStage = 'testing' | 'photos';
+
+export interface AirtableAttachmentUploadDriveArchive {
+  sku: string;
+  stage: AirtableDriveArchiveStage;
+  originalFile: File;
+}
+
+export interface AirtableArchivedFileReference {
+  id: string;
+  filename: string;
+  url: string;
+}
+
+export interface AirtableAttachmentUploadResult {
+  uploaded: boolean;
+  archived?: boolean;
+  archive?: {
+    folderId: string;
+    original: AirtableArchivedFileReference;
+    processed: AirtableArchivedFileReference;
+  } | null;
+}
+
+export interface AirtableAttachmentUploadOptions {
+  archiveOnly?: boolean;
+  driveArchive?: AirtableAttachmentUploadDriveArchive;
+}
+
 interface AirtableAttachmentUploadPayload {
   filename: string;
   contentType: string;
   file: string;
+  archiveOnly?: boolean;
+  driveArchive?: {
+    sku: string;
+    stage: AirtableDriveArchiveStage;
+    original: AirtableAttachmentUploadPayload;
+  };
 }
 
 function toAirtableError(error: unknown, tableName: string) {
@@ -340,12 +375,26 @@ export async function uploadConfiguredAttachment(
   recordId: string,
   fieldId: string,
   file: File,
-): Promise<void> {
+  options?: AirtableAttachmentUploadOptions,
+): Promise<AirtableAttachmentUploadResult> {
   const base64 = await fileToBase64(file);
   const payload = toAttachmentPayload(file, base64);
 
+  if (options?.archiveOnly) {
+    payload.archiveOnly = true;
+  }
+
+  if (options?.driveArchive) {
+    const originalBase64 = await fileToBase64(options.driveArchive.originalFile);
+    payload.driveArchive = {
+      sku: options.driveArchive.sku,
+      stage: options.driveArchive.stage,
+      original: toAttachmentPayload(options.driveArchive.originalFile, originalBase64),
+    };
+  }
+
   try {
-    await postJson<{ uploaded: true }>(
+    return await postJson<AirtableAttachmentUploadResult>(
       `/api/airtable/configured-attachments/${encodeURIComponent(source)}/${encodeURIComponent(recordId)}/${encodeURIComponent(fieldId)}`,
       payload,
     );

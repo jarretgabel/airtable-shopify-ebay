@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { secondaryActionButtonClass } from '@/components/app/buttonStyles';
+import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
 import type { OpenDropdown } from '@/components/app/appFrameTypes';
 import { TabBadge, handleDropdownTriggerKeyDown } from '@/components/app/AppFrameHeaderShared';
 import { useNotificationStore } from '@/stores/notificationStore';
@@ -43,21 +43,19 @@ export function AppFrameHeaderAccountMenu({
 
   return (
     <div className="relative" data-export-ignore="true">
-      <button
-        type="button"
+      <SecondaryActionButton
         aria-haspopup="menu"
         aria-controls="account-menu"
         aria-expanded={openDropdown === 'account'}
         aria-label="Open account menu"
         onClick={() => onToggleDropdown('account')}
         onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'account', onToggleDropdown, onCloseDropdowns)}
-        className={secondaryActionButtonClass}
       >
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500/20 text-[0.66rem] font-bold text-cyan-200">{initials}</span>
           <span className={`text-[0.72rem] transition-transform ${openDropdown === 'account' ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
         </span>
-      </button>
+      </SecondaryActionButton>
 
       {openDropdown === 'account' && (
         <div

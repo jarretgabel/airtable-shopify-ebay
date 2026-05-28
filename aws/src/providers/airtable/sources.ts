@@ -82,6 +82,7 @@ const DEFAULT_USER_GUIDE_TABLE_NAME = 'tblquB9pdwSRXsI7c';
 const DEFAULT_APPROVAL_TABLE_REFERENCE = '3yTb0JkzUMFNnS/viw21kEduXKNub4Vn';
 const DEFAULT_COMBINED_LISTINGS_TABLE_NAME = 'tbl0K0nFQL64jQMx8';
 const INVENTORY_DIRECTORY_ATTACHMENT_FIELD_IDS = new Set(['fldMXp0EaUHGglU8M']);
+const USED_GEAR_WORKFLOW_ATTACHMENT_FIELD_IDS = new Set(['fld1zIzmZEciQECah']);
 
 function resolveUsersSource(): { reference?: string; tableName: string } {
   const tableReference = process.env.AIRTABLE_USERS_TABLE_REF?.trim();
@@ -180,11 +181,14 @@ function getMetadataSourceDefinition(source: AirtableConfiguredMetadataSource): 
 
 function getAttachmentSourceDefinition(source: AirtableConfiguredAttachmentSource): { baseId: string; allowedFieldIds: Set<string> } {
   const definition = getSourceDefinition(source);
+  const allowedFieldIds = source === 'used-gear-workflow'
+    ? USED_GEAR_WORKFLOW_ATTACHMENT_FIELD_IDS
+    : INVENTORY_DIRECTORY_ATTACHMENT_FIELD_IDS;
 
   if (!definition.reference) {
     return {
       baseId: process.env.AIRTABLE_BASE_ID?.trim() || '',
-      allowedFieldIds: INVENTORY_DIRECTORY_ATTACHMENT_FIELD_IDS,
+      allowedFieldIds,
     };
   }
 
@@ -201,7 +205,7 @@ function getAttachmentSourceDefinition(source: AirtableConfiguredAttachmentSourc
 
   return {
     baseId: candidate.baseId,
-    allowedFieldIds: INVENTORY_DIRECTORY_ATTACHMENT_FIELD_IDS,
+    allowedFieldIds,
   };
 
 }

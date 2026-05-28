@@ -1,3 +1,7 @@
+import { AccentActionButton } from '@/components/app/AccentActionButton';
+import { PrimaryActionButton } from '@/components/app/PrimaryActionButton';
+import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
+
 interface ListingApprovalRecordActionsProps {
   approvalChannel: 'shopify' | 'ebay' | 'combined';
   isCombinedApproval: boolean;
@@ -20,9 +24,6 @@ interface ListingApprovalRecordActionsProps {
   onPublishEbay: () => void;
   onPublishBoth: () => void;
   onPrimaryAction: () => void;
-  accentActionButtonClass: string;
-  primaryActionButtonClass: string;
-  secondaryActionButtonClass: string;
 }
 
 export function ListingApprovalRecordActions({
@@ -47,35 +48,26 @@ export function ListingApprovalRecordActions({
   onPublishEbay,
   onPublishBoth,
   onPrimaryAction,
-  accentActionButtonClass,
-  primaryActionButtonClass,
-  secondaryActionButtonClass,
 }: ListingApprovalRecordActionsProps) {
-  const isWorkflowPreListingReview = isCombinedApproval && workflowStatus === 'Awaiting Pre-Listing Review';
-  const showCombinedPublishButtons = isCombinedApproval && !isWorkflowPreListingReview;
+  const isWorkflowListingReview = isCombinedApproval && workflowStatus === 'Awaiting Pre-Listing Review';
+  const showCombinedPublishButtons = isCombinedApproval && !isWorkflowListingReview;
 
   return (
     <div className="mt-4 flex flex-wrap justify-end gap-3">
-      <button
-        type="button"
-        className={secondaryActionButtonClass}
+      <SecondaryActionButton
         onClick={onResetData}
         disabled={saving || !hasUnsavedChanges}
       >
         Reset data
-      </button>
-      <button
-        type="button"
-        className={primaryActionButtonClass}
+      </SecondaryActionButton>
+      <PrimaryActionButton
         onClick={onSaveUpdates}
         disabled={saving}
       >
         {saving ? 'Saving...' : 'Save Updates'}
-      </button>
-      {isWorkflowPreListingReview && (
-        <button
-          type="button"
-          className={accentActionButtonClass}
+      </PrimaryActionButton>
+      {isWorkflowListingReview && (
+        <AccentActionButton
           onClick={onPrimaryAction}
           disabled={saving || approving || hasUnsavedChanges || hasMissingShopifyRequiredFields || hasMissingEbayRequiredFields}
         >
@@ -86,13 +78,11 @@ export function ListingApprovalRecordActions({
               : hasMissingShopifyRequiredFields || hasMissingEbayRequiredFields
                 ? 'Complete Required Fields'
                 : 'Approve for Publish'}
-        </button>
+        </AccentActionButton>
       )}
       {showCombinedPublishButtons && (
         <>
-          <button
-            type="button"
-            className={secondaryActionButtonClass}
+          <SecondaryActionButton
             onClick={onPublishShopify}
             disabled={saving || approving || pushingTarget !== null || pushShopifyDisabled}
           >
@@ -101,10 +91,8 @@ export function ListingApprovalRecordActions({
               : pushShopifyDisabled
                   ? 'Complete Shopify Fields'
                   : 'Publish Shopify'}
-          </button>
-          <button
-            type="button"
-            className={secondaryActionButtonClass}
+          </SecondaryActionButton>
+          <SecondaryActionButton
             onClick={onPublishEbay}
             disabled={saving || approving || pushingTarget !== null || pushEbayDisabled}
           >
@@ -113,10 +101,8 @@ export function ListingApprovalRecordActions({
               : pushEbayDisabled
                   ? 'Complete eBay Fields'
                   : 'Publish eBay'}
-          </button>
-          <button
-            type="button"
-            className={accentActionButtonClass}
+          </SecondaryActionButton>
+          <AccentActionButton
             onClick={onPublishBoth}
             disabled={saving || approving || pushingTarget !== null || pushBothDisabled}
           >
@@ -125,13 +111,11 @@ export function ListingApprovalRecordActions({
               : pushBothDisabled
                   ? 'Complete Required Fields'
                   : 'Publish Both'}
-          </button>
+          </AccentActionButton>
         </>
       )}
       {!isCombinedApproval && (
-        <button
-          type="button"
-          className={accentActionButtonClass}
+        <AccentActionButton
           onClick={onPrimaryAction}
           disabled={
             saving
@@ -156,7 +140,7 @@ export function ListingApprovalRecordActions({
                     : approvalChannel === 'ebay' && hasMissingEbayRequiredFields
                       ? 'Complete Required eBay Fields'
                       : (hasExistingShopifyRestProductId ? 'Update Listing' : 'Approve Listing')}
-        </button>
+        </AccentActionButton>
       )}
     </div>
   );

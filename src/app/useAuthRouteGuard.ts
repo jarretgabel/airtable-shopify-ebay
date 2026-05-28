@@ -41,16 +41,6 @@ export function useAuthRouteGuard({
       return;
     }
 
-    if (normalizedPath === '/testing') {
-      navigate(canAccessPage('testing-queue') ? TAB_PATHS['testing-queue'] : TAB_PATHS[firstAccessibleTab], { replace: true });
-      return;
-    }
-
-    if (normalizedPath === '/photos') {
-      navigate(canAccessPage('photography-queue') ? TAB_PATHS['photography-queue'] : TAB_PATHS[firstAccessibleTab], { replace: true });
-      return;
-    }
-
     if (normalizedPath === '/inventory') {
       navigate('/workflow-hub', { replace: true });
       return;
@@ -94,7 +84,7 @@ export function useAuthRouteGuard({
     const isManualIntakeDetailPath = /^\/manual-intake\/[^/]+$/.test(normalizedPath);
     const isIntakeDetailPath = /^\/intake\/[^/]+$/.test(normalizedPath);
     const isTestingDetailPath = /^\/testing\/[^/]+$/.test(normalizedPath);
-    const isPhotosDetailPath = /^\/photos\/[^/]+$/.test(normalizedPath);
+    const isPhotosDetailPath = /^\/photography\/[^/]+$/.test(normalizedPath);
     const isInventoryPriceEditorPath = /^\/workflow-hub\/price\/[^/]+$/.test(normalizedPath);
     const isInventoryManualIntakePath = normalizedPath === '/manual-intake';
     const isInventoryDetailPath = /^\/workflow-hub\/[^/]+$/.test(normalizedPath);
@@ -125,7 +115,9 @@ export function useAuthRouteGuard({
       isParkingLotArrivalGroupPath ||
       isJotformReviewRecordPath ||
       isParkingLotArrivalRecordPath ||
+      normalizedPath === '/testing' ||
       isTestingDetailPath ||
+      normalizedPath === '/photography' ||
       isPhotosDetailPath ||
       normalizedPath === '/shopify/products' ||
       isShopifyProductsDetailPath ||
@@ -165,8 +157,12 @@ export function useAuthRouteGuard({
                 ? 'manual-intake'
               : isIntakeDetailPath
                 ? 'manual-intake'
+              : normalizedPath === '/testing'
+                ? 'testing-queue'
               : isTestingDetailPath
                 ? 'testing'
+              : normalizedPath === '/photography'
+                ? 'photography-queue'
               : isPhotosDetailPath
                 ? 'photos'
               : normalizedPath === '/workflow-hub' || isInventoryPriceEditorPath || isInventoryDetailPath

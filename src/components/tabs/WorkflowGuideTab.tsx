@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { PAGE_DEFINITIONS, type AppPage } from '@/auth/pages';
 import { hasFullAccessRole } from '@/auth/roleAccess';
-import { CompactActionIcon } from '@/components/app/CompactIconActionButton';
+import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import type { UserRole } from '@/stores/auth/authTypes';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
+import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import {
   DEFAULT_WORKFLOW_GUIDE_CONTENT,
@@ -125,12 +126,12 @@ function GuideReferenceCard({
 
       {href && ctaLabel ? (
         <div className="mt-4">
-          <a
+          <SecondaryActionButton
             href={href}
-            className="inline-flex items-center rounded-full border border-[var(--accent)]/35 bg-[var(--accent)]/10 px-3 py-1.5 text-sm font-semibold text-[var(--accent)] transition-colors hover:border-[var(--accent)]/60 hover:bg-[var(--accent)]/16"
+            className="w-fit"
           >
             {ctaLabel}
-          </a>
+          </SecondaryActionButton>
         </div>
       ) : null}
     </article>
@@ -160,16 +161,16 @@ function RoleStartStrip({
 
         return (
           <article key={`${item.page}-${item.title}`} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
-            <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Open this first</p>
+            <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Suggested start</p>
             <p className="mt-2 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">{pageLabel}</p>
             <h4 className="mt-2 m-0 text-sm font-semibold text-[var(--ink)]">{item.title}</h4>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{item.detail}</p>
-            <a
+            <SecondaryActionButton
               href={pagePath}
-              className="mt-4 inline-flex items-center rounded-full border border-[var(--accent)]/35 bg-[var(--accent)]/10 px-3 py-1.5 text-sm font-semibold text-[var(--accent)] transition-colors hover:border-[var(--accent)]/60 hover:bg-[var(--accent)]/16"
+              className="mt-4 w-fit"
             >
               Open {pageLabel}
-            </a>
+            </SecondaryActionButton>
           </article>
         );
       })}
@@ -187,8 +188,23 @@ function FlowStageCard({
   const isPrimary = stage.primaryRoles.includes(currentUserRole);
   const isSupport = stage.supportRoles?.includes(currentUserRole) ?? false;
   const relevantPages = stage.pages
-    .map((page) => PAGE_DEFINITIONS[page]?.label)
-    .filter((label): label is string => Boolean(label));
+    .map((page) => {
+      if (page === 'testing-queue' || page === 'testing') {
+        return { key: 'testing', label: 'Testing', path: PAGE_DEFINITIONS.testing.path };
+      }
+
+      if (page === 'photography-queue' || page === 'photos') {
+        return { key: 'photography', label: 'Photography', path: PAGE_DEFINITIONS.photos.path };
+      }
+
+      return {
+        key: page,
+        label: PAGE_DEFINITIONS[page]?.label,
+        path: PAGE_DEFINITIONS[page]?.path,
+      };
+    })
+    .filter((page): page is { key: string; label: string; path: string } => Boolean(page.label && page.path))
+    .filter((page, index, pages) => pages.findIndex((candidate) => candidate.key === page.key) === index);
   const toneStyles = {
     intake: {
       edge: 'border-l-4 border-l-cyan-400',
@@ -256,10 +272,14 @@ function FlowStageCard({
       </div>
       <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{stage.detail}</p>
       <div className="mt-3 flex flex-wrap gap-2">
-        {relevantPages.map((label) => (
-          <span key={label} className="inline-flex items-center rounded-full border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-            {label}
-          </span>
+        {relevantPages.map((page) => (
+          <SecondaryActionButton
+            key={page.key}
+            href={page.path}
+            className="min-h-0 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em]"
+          >
+            {page.label}
+          </SecondaryActionButton>
         ))}
       </div>
     </article>
@@ -350,14 +370,12 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
         eyebrow="Guide"
         title="User Guide"
         actions={hasFullAccessRole(currentUserRole) ? (
-          <a
+          <CompactIconActionButton
+            label="Open User Guide Admin"
+            icon="edit"
+            variant="toolbar-secondary"
             href={PAGE_DEFINITIONS['workflow-guide-editor'].path}
-            aria-label="Open User Guide Admin"
-            title="Open User Guide Admin"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] transition hover:border-[var(--accent)] hover:bg-[var(--line)] hover:text-[var(--ink)]"
-          >
-            <CompactActionIcon icon="edit" />
-          </a>
+          />
         ) : null}
       />
 

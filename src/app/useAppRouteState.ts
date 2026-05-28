@@ -42,7 +42,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const trashReviewGroupMatch = normalizedPath.match(/^\/trash-review\/group\/([^/]+)$/);
   const trashReviewRecordMatch = normalizedPath.match(/^\/trash-review\/review\/([^/]+)$/);
   const testingRecordMatch = normalizedPath.match(/^\/testing\/([^/]+)$/);
-  const photosRecordMatch = normalizedPath.match(/^\/photos\/([^/]+)$/);
+  const photosRecordMatch = normalizedPath.match(/^\/photography\/([^/]+)$/);
   const inventoryPriceEditorRecordMatch = normalizedPath.match(/^\/workflow-hub\/price\/([^/]+)$/);
   const inventoryRecordMatch = manualIntakeMode ? null : normalizedPath.match(/^\/workflow-hub\/(?!price\/)([^/]+)$/);
   const ebayListingsRecordMatch = normalizedPath.match(/^\/ebay\/listings\/([^/]+)$/);
@@ -62,14 +62,17 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     if (normalizedPath === '/workflow/testing') return 'testing-queue';
     if (normalizedPath === '/workflow/photography') return 'photography-queue';
     if (manualIntakeMode) return 'manual-intake';
-    if (normalizedPath === '/testing' || testingRecordMatch) return 'testing';
-    if (normalizedPath === '/photos' || photosRecordMatch) return 'photos';
+    if (normalizedPath === '/testing') return 'testing-queue';
+    if (testingRecordMatch) return 'testing';
+    if (normalizedPath === '/photography') return 'photography-queue';
+    if (photosRecordMatch) return 'photos';
     if (normalizedPath === '/workflow-hub' || inventoryPriceEditorRecordMatch || inventoryRecordMatch) return 'inventory';
     if (normalizedPath === '/account/users' || userRecordMatch) return 'users';
     if (normalizedPath === '/account/settings') return 'settings';
     if (normalizedPath === '/account/notifications') return 'notifications';
     if (normalizedPath === '/workflow-guide/edit') return 'workflow-guide-editor';
     if (normalizedPath === '/workflow-guide') return 'workflow-guide';
+    if (normalizedPath === '/photos') return 'dashboard';
 
     const tabFromPath = normalizedPath.slice(1);
     return isTab(tabFromPath) ? tabFromPath : 'dashboard';

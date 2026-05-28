@@ -193,7 +193,7 @@ describe('useUsedGearWorkflowNotifications', () => {
     });
   });
 
-  it('opens the Listings record for pre-listing review notifications', async () => {
+  it('opens the Listings record for listing review notifications', async () => {
     const navigateToListingsRecord = vi.fn();
 
     loadUsedGearWorkflowNotificationSummaryMock.mockResolvedValue({

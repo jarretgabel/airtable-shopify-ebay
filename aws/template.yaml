@@ -100,6 +100,21 @@ Parameters:
   GoogleGmailFromEmail:
     Type: String
     Default: ''
+  GoogleDriveClientId:
+    Type: String
+    NoEcho: true
+    Default: ''
+  GoogleDriveClientSecret:
+    Type: String
+    NoEcho: true
+    Default: ''
+  GoogleDriveRefreshToken:
+    Type: String
+    NoEcho: true
+    Default: ''
+  GoogleDriveImageArchiveRootFolderId:
+    Type: String
+    Default: ''
   AnalyticsForwardEndpoint:
     Type: String
     Default: ''
@@ -123,6 +138,9 @@ Conditions:
   HasGithubToken: !Not [!Equals [!Ref GithubToken, '']]
   HasOpenAiApiKey: !Not [!Equals [!Ref OpenAiApiKey, '']]
   HasGoogleGmailAccessToken: !Not [!Equals [!Ref GoogleGmailAccessToken, '']]
+  HasGoogleDriveClientId: !Not [!Equals [!Ref GoogleDriveClientId, '']]
+  HasGoogleDriveClientSecret: !Not [!Equals [!Ref GoogleDriveClientSecret, '']]
+  HasGoogleDriveRefreshToken: !Not [!Equals [!Ref GoogleDriveRefreshToken, '']]
 
 Globals:
   Function:
@@ -177,6 +195,19 @@ Globals:
           - !Ref GoogleGmailAccessToken
           - ''
         GOOGLE_GMAIL_FROM_EMAIL: !Ref GoogleGmailFromEmail
+        GOOGLE_DRIVE_CLIENT_ID: !If
+          - HasGoogleDriveClientId
+          - !Ref GoogleDriveClientId
+          - ''
+        GOOGLE_DRIVE_CLIENT_SECRET: !If
+          - HasGoogleDriveClientSecret
+          - !Ref GoogleDriveClientSecret
+          - ''
+        GOOGLE_DRIVE_REFRESH_TOKEN: !If
+          - HasGoogleDriveRefreshToken
+          - !Ref GoogleDriveRefreshToken
+          - ''
+        GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID: !Ref GoogleDriveImageArchiveRootFolderId
         ANALYTICS_FORWARD_ENDPOINT: !Ref AnalyticsForwardEndpoint
         APP_AUTH_TOKEN_SECRET: !Ref AppAuthTokenSecret
         APP_AUTH_COOKIE_SECURE_MODE: !Ref AppAuthCookieSecureMode

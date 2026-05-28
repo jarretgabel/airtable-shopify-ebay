@@ -73,7 +73,7 @@ function AdminFieldEditor({
   );
 }
 
-export function WorkflowGuideEditorTab({ currentUserRole, className }: WorkflowGuideEditorTabProps) {
+export function WorkflowGuideEditorTab({ className }: WorkflowGuideEditorTabProps) {
   const [editableRecords, setEditableRecords] = useState<UserGuideEditableRecord[]>([]);
   const [guideSource, setGuideSource] = useState<'airtable' | 'default'>('default');
   const [loading, setLoading] = useState(true);

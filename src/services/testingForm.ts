@@ -4,11 +4,13 @@ import {
   updateConfiguredRecord,
   uploadConfiguredAttachment,
 } from '@/services/app-api/airtable';
+import type { AirtableAttachmentUploadOptions } from '@/services/app-api/airtable';
 import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
 import { createTestingFormDefaults, type TestingFormOptionFieldName, type TestingFormValues } from '@/components/tabs/testing/testingFormSchema';
 import { resolveCurrentActorName } from '@/services/currentUserAudit';
 import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
+import type { FormImageUploadAsset } from '@/services/formImageUploads';
 import {
   getUsedGearWorkflowStatus,
   isAcceptedUsedGearWorkflowStatus,
@@ -17,20 +19,21 @@ import {
 import type { AirtableRecord } from '@/types/airtable';
 import {
   filterWorkflowAttachmentsByStage,
+  filterWorkflowImageMetadataByStage,
   mergeWorkflowImageMetadata,
   parseWorkflowImageMetadata,
+  replaceWorkflowImageMetadataStage,
   serializeWorkflowImageMetadata,
   type WorkflowImageMetadataRecord,
 } from '@/services/workflowImageMetadata';
 
-const IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
+const INVENTORY_IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
+const WORKFLOW_IMAGE_ATTACHMENT_FIELD_ID = 'fld1zIzmZEciQECah';
 const WORKFLOW_IMAGE_METADATA_FIELD_NAME = 'Workflow Image Metadata JSON';
 const WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME = 'Images';
 const DEFAULT_STATUS = 'Tested';
 const TESTING_COSMETIC_NOTES_FIELD_NAME = 'Testing Cosmetic Notes';
 const LEGACY_TESTING_COSMETIC_NOTES_FIELD_NAME = 'Cosmetic Condition Notes';
-const PHOTOGRAPHY_COSMETIC_NOTES_FIELD_NAME = 'Photography Cosmetic Notes';
-
 const OPTION_FIELD_NAMES = [
   'Status',
   'Component Type',
@@ -59,8 +62,8 @@ export interface TestingFormContextAttachment {
 }
 
 export interface TestingFormStageContext {
-  photographyCosmeticNotes: string;
   existingAttachments: TestingFormContextAttachment[];
+  referenceAttachments: TestingFormContextAttachment[];
   imageMetadata: WorkflowImageMetadataRecord[];
 }
 
@@ -75,6 +78,65 @@ export interface TestingFormSubmitResult {
   recordId: string;
   sku: string;
   action: 'created' | 'updated';
+}
+
+export interface TestingFormImageUploadProgress {
+  total: number;
+  completed: number;
+  currentFilename: string;
+  phase: 'uploading' | 'finalizing';
+}
+
+function getImageAttachmentFieldId(recordSource: TestingFormRecordSource): string {
+  return recordSource === 'used-gear-workflow'
+    ? WORKFLOW_IMAGE_ATTACHMENT_FIELD_ID
+    : INVENTORY_IMAGE_ATTACHMENT_FIELD_ID;
+}
+
+function buildContextAttachmentsFromStageMetadata(
+  records: WorkflowImageMetadataRecord[],
+  stage: 'testing' | 'photos',
+): TestingFormContextAttachment[] {
+  return filterWorkflowImageMetadataByStage(records, stage).map((record) => ({
+    id: record.attachmentId,
+    url: record.url,
+    filename: record.filename,
+  }));
+}
+
+function appendArchivedStageMetadata(
+  records: WorkflowImageMetadataRecord[],
+  archivedFiles: Array<{ id: string; url: string; filename: string }>,
+): WorkflowImageMetadataRecord[] {
+  const currentStageRecords = filterWorkflowImageMetadataByStage(records, 'testing');
+  const existingUrls = new Set(currentStageRecords.map((record) => record.url.trim().toLowerCase()));
+  const nowIso = new Date().toISOString();
+  const additions = archivedFiles
+    .filter((file) => {
+      const key = file.url.trim().toLowerCase();
+      return Boolean(key) && !existingUrls.has(key);
+    })
+    .map((file, index) => ({
+      attachmentId: file.id,
+      url: file.url,
+      filename: file.filename,
+      alt: '',
+      sortOrder: currentStageRecords.length + index + 1,
+      sourceStage: 'testing',
+      includedInListing: true,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    } satisfies WorkflowImageMetadataRecord));
+
+  return replaceWorkflowImageMetadataStage(records, 'testing', [...currentStageRecords, ...additions]);
+}
+
+interface TestingFormSubmitOptions {
+  recordSource?: TestingFormRecordSource;
+  imageMetadata?: WorkflowImageMetadataRecord[];
+  imageUploadAssets?: FormImageUploadAsset[];
+  completeWorkflowStage?: boolean;
+  onImageUploadProgress?: (progress: TestingFormImageUploadProgress) => void;
 }
 
 function buildWorkflowTestingFields(record: AirtableRecord, actorName: string | null, testedAt: string): Record<string, unknown> {
@@ -168,17 +230,20 @@ async function syncWorkflowImageMetadataForRecord(params: {
   recordSource: TestingFormRecordSource;
   recordId: string;
   existingMetadata: WorkflowImageMetadataRecord[];
+  nextMetadata?: WorkflowImageMetadataRecord[];
 }): Promise<void> {
-  const latestRecord = await getConfiguredRecord(params.recordSource, params.recordId);
-  const latestAttachments = Array.isArray(latestRecord.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME])
-    ? latestRecord.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME] as Array<Record<string, unknown>>
-    : [];
-  const mergedMetadata = mergeWorkflowImageMetadata({
-    attachments: latestAttachments,
-    existingMetadata: params.existingMetadata,
-    sourceStage: 'testing',
-    nowIso: new Date().toISOString(),
-  });
+  const mergedMetadata = params.nextMetadata ?? await (async () => {
+    const latestRecord = await getConfiguredRecord(params.recordSource, params.recordId);
+    const latestAttachments = Array.isArray(latestRecord.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME])
+      ? latestRecord.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME] as Array<Record<string, unknown>>
+      : [];
+    return mergeWorkflowImageMetadata({
+      attachments: latestAttachments,
+      existingMetadata: params.existingMetadata,
+      sourceStage: 'testing',
+      nowIso: new Date().toISOString(),
+    });
+  })();
 
   try {
     await updateConfiguredRecord(
@@ -237,16 +302,25 @@ function buildStageContext(record: AirtableRecord): TestingFormStageContext {
   const attachments = Array.isArray(record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME])
     ? record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME] as Array<Record<string, unknown>>
     : [];
-  const imageMetadata = mergeWorkflowImageMetadata({
-    attachments,
-    existingMetadata: parseWorkflowImageMetadata(record.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME]),
-    sourceStage: 'testing',
-    nowIso: new Date().toISOString(),
-  });
+  const allAttachments = extractAttachments(record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME]);
+  const parsedImageMetadata = parseWorkflowImageMetadata(record.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME]);
+  const imageMetadata = parsedImageMetadata.length > 0 && attachments.length > 0
+    ? mergeWorkflowImageMetadata({
+        attachments,
+        existingMetadata: parsedImageMetadata,
+        sourceStage: 'testing',
+        nowIso: new Date().toISOString(),
+      })
+    : parsedImageMetadata;
+  const existingAttachments = filterWorkflowAttachmentsByStage(
+    allAttachments,
+    imageMetadata,
+    'testing',
+  );
 
   return {
-    photographyCosmeticNotes: extractInventoryScalarValue(record.fields[PHOTOGRAPHY_COSMETIC_NOTES_FIELD_NAME]),
-    existingAttachments: filterWorkflowAttachmentsByStage(extractAttachments(record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME]), imageMetadata, 'testing'),
+    existingAttachments: existingAttachments.length > 0 ? existingAttachments : buildContextAttachmentsFromStageMetadata(imageMetadata, 'testing'),
+    referenceAttachments: parsedImageMetadata.length === 0 ? allAttachments : [],
     imageMetadata,
   };
 }
@@ -350,7 +424,7 @@ export async function loadTestingFormOptionSets(): Promise<TestingOptionSet> {
 export async function submitTestingForm(
   values: TestingFormValues,
   recordId?: string | null,
-  options: { recordSource?: TestingFormRecordSource; imageMetadata?: WorkflowImageMetadataRecord[]; completeWorkflowStage?: boolean } = {},
+  options: TestingFormSubmitOptions = {},
 ): Promise<TestingFormSubmitResult> {
   const recordSource = options.recordSource ?? 'inventory-directory';
   const actorName = resolveCurrentActorName();
@@ -399,14 +473,75 @@ export async function submitTestingForm(
     });
 
     const updatedRecord = await updateRecordWithWorkflowImageMetadataFallback(recordSource, recordId, baseFields);
+    let finalImageMetadata = options.imageMetadata ?? [];
+    let usedArchiveOnlyWorkflowUpload = false;
 
     if (values.imageFiles.length > 0) {
-      for (const file of values.imageFiles) {
-        await uploadConfiguredAttachment(recordSource, updatedRecord.id, IMAGE_ATTACHMENT_FIELD_ID, file);
-    }
+      const totalUploads = values.imageFiles.length;
+      for (const [index, file] of values.imageFiles.entries()) {
+        options.onImageUploadProgress?.({
+          total: totalUploads,
+          completed: index,
+          currentFilename: file.name,
+          phase: 'uploading',
+        });
+        const uploadOptions: AirtableAttachmentUploadOptions | undefined = options.imageUploadAssets?.[index]
+          ? {
+              driveArchive: {
+                sku: values.sku,
+                stage: 'testing',
+                originalFile: options.imageUploadAssets[index].originalFile,
+              },
+            }
+          : undefined;
+        const shouldArchiveOnly = recordSource === 'used-gear-workflow' && Boolean(uploadOptions?.driveArchive);
+        const uploadResult = await uploadConfiguredAttachment(
+          recordSource,
+          updatedRecord.id,
+          getImageAttachmentFieldId(recordSource),
+          file,
+          shouldArchiveOnly
+            ? {
+                ...uploadOptions,
+                archiveOnly: true,
+              }
+            : uploadOptions,
+        );
+
+        if (shouldArchiveOnly && uploadResult.archive?.processed) {
+          usedArchiveOnlyWorkflowUpload = true;
+          finalImageMetadata = appendArchivedStageMetadata(finalImageMetadata, [uploadResult.archive.processed]);
+        }
+
+        options.onImageUploadProgress?.({
+          total: totalUploads,
+          completed: index + 1,
+          currentFilename: file.name,
+          phase: 'uploading',
+        });
+      }
     }
 
-    if (options.imageMetadata) {
+    if (usedArchiveOnlyWorkflowUpload) {
+      options.onImageUploadProgress?.({
+        total: values.imageFiles.length,
+        completed: values.imageFiles.length,
+        currentFilename: '',
+        phase: 'finalizing',
+      });
+      await syncWorkflowImageMetadataForRecord({
+        recordSource,
+        recordId: updatedRecord.id,
+        existingMetadata: finalImageMetadata,
+        nextMetadata: finalImageMetadata,
+      });
+    } else if (options.imageMetadata) {
+      options.onImageUploadProgress?.({
+        total: values.imageFiles.length,
+        completed: values.imageFiles.length,
+        currentFilename: '',
+        phase: 'finalizing',
+      });
       await syncWorkflowImageMetadataForRecord({
         recordSource,
         recordId: updatedRecord.id,

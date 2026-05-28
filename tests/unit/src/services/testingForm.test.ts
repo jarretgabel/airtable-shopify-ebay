@@ -29,7 +29,7 @@ vi.mock('@/services/inventoryDirectory', () => ({
 }));
 
 import { createConfiguredRecord, getConfiguredRecord, updateConfiguredRecord, uploadConfiguredAttachment } from '@/services/app-api/airtable';
-import { testingFormFields, type TestingFormValues } from '@/components/tabs/testing/testingFormSchema';
+import { createTestingFormDefaults, testingFormFields, type TestingFormValues } from '@/components/tabs/testing/testingFormSchema';
 import { loadTestingFormValues, submitTestingForm } from '@/services/testingForm';
 
 function buildRecord(fields: Record<string, unknown>): AirtableRecord {
@@ -43,6 +43,7 @@ function buildRecord(fields: Record<string, unknown>): AirtableRecord {
 describe('testingForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(uploadConfiguredAttachment).mockResolvedValue({ uploaded: true });
   });
 
   it('loads Testing values from the authoritative operational record and returns customer reference notes', async () => {
@@ -112,10 +113,10 @@ describe('testingForm', () => {
         submittedPhotosNotes: 'Customer sent rear serial sticker photo.',
       },
       stageContext: {
-        photographyCosmeticNotes: 'Photography noted scratches on the top cover.',
         existingAttachments: [
           { id: 'att-1', url: 'https://example.com/front.jpg', filename: 'front.jpg' },
         ],
+        referenceAttachments: [],
         imageMetadata: [
           {
             attachmentId: 'att-1',
@@ -279,9 +280,133 @@ describe('testingForm', () => {
     expect(uploadConfiguredAttachment).toHaveBeenCalledWith(
       'used-gear-workflow',
       'recTesting123',
-      'fldMXp0EaUHGglU8M',
+      'fld1zIzmZEciQECah',
       values.imageFiles[0],
+      undefined,
     );
+  });
+
+  it('passes google drive archive details when original testing uploads are available', async () => {
+    const originalFile = new File(['original-image'], 'front-original.jpg', { type: 'image/jpeg' });
+    const processedFile = new File(['processed-image'], 'front-processed.jpg', { type: 'image/jpeg' });
+    const values: TestingFormValues = {
+      ...createTestingFormDefaults(),
+      sku: 'SKU-101',
+      make: 'McIntosh',
+      model: 'MC240',
+      componentType: 'Amplifier',
+      audiogonRating: '8/10',
+      testingNotes: 'Bench tested.',
+      testingTimeMinutes: '20',
+      testingDate: '2026-04-05',
+      imageFiles: [processedFile],
+    };
+
+    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
+      'Workflow Status': 'Testing In Progress',
+    }));
+    vi.mocked(updateConfiguredRecord).mockResolvedValue(buildRecord({}));
+    vi.mocked(uploadConfiguredAttachment).mockResolvedValue({
+      uploaded: false,
+      archived: true,
+      archive: {
+        folderId: 'folder-1',
+        original: {
+          id: 'file-original',
+          filename: 'testing-original.jpg',
+          url: 'https://drive.google.com/uc?export=view&id=file-original',
+        },
+        processed: {
+          id: 'file-processed',
+          filename: 'testing-processed.jpg',
+          url: 'https://drive.google.com/uc?export=view&id=file-processed',
+        },
+      },
+    });
+
+    await submitTestingForm(values, 'recTesting123', {
+      recordSource: 'used-gear-workflow',
+      imageUploadAssets: [{ originalFile, uploadFile: processedFile }],
+    });
+
+    expect(uploadConfiguredAttachment).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'recTesting123',
+      'fld1zIzmZEciQECah',
+      processedFile,
+      {
+        archiveOnly: true,
+        driveArchive: {
+          sku: 'SKU-101',
+          stage: 'testing',
+          originalFile,
+        },
+      },
+    );
+  });
+
+  it('stores processed Drive URLs in workflow image metadata for archive-only testing uploads', async () => {
+    const originalFile = new File(['original-image'], 'testing-original.jpg', { type: 'image/jpeg' });
+    const processedFile = new File(['processed-image'], 'testing-processed.jpg', { type: 'image/jpeg' });
+    const values: TestingFormValues = {
+      ...createTestingFormDefaults(),
+      sku: 'SKU-104',
+      make: 'McIntosh',
+      model: 'MC240',
+      componentType: 'Amplifier',
+      audiogonRating: '8/10',
+      testingNotes: 'Bench tested.',
+      testingTimeMinutes: '20',
+      testingDate: '2026-04-05',
+      imageFiles: [processedFile],
+    };
+
+    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
+      'Workflow Status': 'Testing In Progress',
+    }));
+    vi.mocked(updateConfiguredRecord)
+      .mockResolvedValueOnce(buildRecord({}))
+      .mockResolvedValueOnce(buildRecord({}));
+    vi.mocked(uploadConfiguredAttachment).mockResolvedValue({
+      uploaded: false,
+      archived: true,
+      archive: {
+        folderId: 'folder-1',
+        original: {
+          id: 'file-original',
+          filename: 'testing-original.jpg',
+          url: 'https://drive.google.com/uc?export=view&id=file-original',
+        },
+        processed: {
+          id: 'file-processed',
+          filename: 'testing-processed.jpg',
+          url: 'https://drive.google.com/uc?export=view&id=file-processed',
+        },
+      },
+    });
+
+    await submitTestingForm(values, 'recTesting123', {
+      recordSource: 'used-gear-workflow',
+      imageUploadAssets: [{ originalFile, uploadFile: processedFile }],
+    });
+
+    const metadataPayload = vi.mocked(updateConfiguredRecord).mock.calls[1]?.[2] as Record<string, unknown>;
+    expect(vi.mocked(updateConfiguredRecord).mock.calls[1]?.[0]).toBe('used-gear-workflow');
+    expect(vi.mocked(updateConfiguredRecord).mock.calls[1]?.[1]).toBe('recTesting123');
+    expect(vi.mocked(updateConfiguredRecord).mock.calls[1]?.[3]).toEqual({ typecast: true });
+    expect(JSON.parse(String(metadataPayload['Workflow Image Metadata JSON']))).toEqual([
+      {
+        attachmentId: 'file-processed',
+        url: 'https://drive.google.com/uc?export=view&id=file-processed',
+        filename: 'testing-processed.jpg',
+        alt: '',
+        sortOrder: 1,
+        sourceStage: 'testing',
+        includedInListing: true,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      },
+    ]);
   });
 
   it('rejects testing updates when no workflow record id is provided', async () => {
@@ -383,8 +508,9 @@ describe('testingForm', () => {
     expect(uploadConfiguredAttachment).toHaveBeenCalledWith(
       'used-gear-workflow',
       'recWorkflow123',
-      'fldMXp0EaUHGglU8M',
+      'fld1zIzmZEciQECah',
       values.imageFiles[0],
+      undefined,
     );
   });
 
@@ -717,7 +843,50 @@ describe('testingForm', () => {
     expect(result.stageContext.existingAttachments).toEqual([
       { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
     ]);
+    expect(result.stageContext.referenceAttachments).toEqual([]);
     expect(result.stageContext.imageMetadata).toHaveLength(2);
     expect(result.stageContext.imageMetadata.map((record) => record.sourceStage)).toEqual(['testing', 'photos']);
+  });
+
+  it('falls back to metadata-backed testing attachments when workflow records have no Airtable image attachments', async () => {
+    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
+      'Workflow Status': 'Testing In Progress',
+      SKU: 'SKU-105',
+      Make: 'McIntosh',
+      Model: 'MC240',
+      'Component Type': ['Amplifier'],
+      Status: 'Tested',
+      Images: [],
+      'Workflow Image Metadata JSON': JSON.stringify([
+        {
+          attachmentId: 'file-processed',
+          url: 'https://drive.google.com/uc?export=view&id=file-processed',
+          filename: 'testing-processed.jpg',
+          alt: 'Bench overview',
+          sortOrder: 1,
+          sourceStage: 'testing',
+          includedInListing: true,
+        },
+      ]),
+    }));
+
+    const result = await loadTestingFormValues('recTestingMetadataOnly');
+
+    expect(result.stageContext.existingAttachments).toEqual([
+      {
+        id: 'file-processed',
+        url: 'https://drive.google.com/uc?export=view&id=file-processed',
+        filename: 'testing-processed.jpg',
+      },
+    ]);
+    expect(result.stageContext.referenceAttachments).toEqual([]);
+    expect(result.stageContext.imageMetadata).toEqual([
+      expect.objectContaining({
+        attachmentId: 'file-processed',
+        url: 'https://drive.google.com/uc?export=view&id=file-processed',
+        filename: 'testing-processed.jpg',
+        sourceStage: 'testing',
+      }),
+    ]);
   });
 });

@@ -1,10 +1,24 @@
-interface CompactIconActionButtonProps {
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
+import { toolbarIconButtonClassName } from '@/components/app/ToolbarIconButton';
+
+interface CompactIconActionButtonBaseProps {
   label: string;
-  onClick: () => void;
-  variant?: 'compact-primary' | 'compact-secondary' | 'small-secondary';
+  variant?: 'compact-primary' | 'compact-secondary' | 'small-secondary' | 'toolbar-secondary';
   icon?: 'open' | 'group' | 'check' | 'truck' | 'form' | 'edit';
   disabled?: boolean;
 }
+
+interface CompactIconActionButtonLinkProps extends CompactIconActionButtonBaseProps, Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'children'> {
+  href: string;
+  onClick?: AnchorHTMLAttributes<HTMLAnchorElement>['onClick'];
+}
+
+interface CompactIconActionButtonButtonProps extends CompactIconActionButtonBaseProps, Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
+  href?: undefined;
+  onClick: NonNullable<ButtonHTMLAttributes<HTMLButtonElement>['onClick']>;
+}
+
+export type CompactIconActionButtonProps = CompactIconActionButtonLinkProps | CompactIconActionButtonButtonProps;
 
 export interface CompactActionIconProps {
   icon?: NonNullable<CompactIconActionButtonProps['icon']>;
@@ -15,6 +29,7 @@ const variantClassNames: Record<NonNullable<CompactIconActionButtonProps['varian
   'compact-primary': 'inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--accent)]/20 bg-[var(--accent)]/8 text-[var(--ink)] transition hover:border-[var(--accent)]/35 hover:bg-[var(--accent)]/12 disabled:cursor-not-allowed disabled:opacity-60',
   'compact-secondary': 'inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--panel)]/80 text-[var(--ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-[var(--accent)]/45 hover:bg-[var(--panel)] disabled:cursor-not-allowed disabled:opacity-60',
   'small-secondary': 'inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] transition hover:border-[var(--accent)] hover:bg-[var(--line)] hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-60',
+  'toolbar-secondary': toolbarIconButtonClassName,
 };
 
 export function CompactActionIcon({ icon = 'open', className = 'h-3.5 w-3.5' }: CompactActionIconProps) {
@@ -59,21 +74,43 @@ export function CompactActionIcon({ icon = 'open', className = 'h-3.5 w-3.5' }: 
 
 export function CompactIconActionButton({
   label,
-  onClick,
   variant = 'compact-secondary',
   icon = 'open',
   disabled = false,
+  ...props
 }: CompactIconActionButtonProps) {
+  const iconClassName = variant === 'toolbar-secondary' ? 'h-4 w-4' : 'h-3.5 w-3.5';
+
+  if ('href' in props && typeof props.href === 'string') {
+    const { href, onClick, ...anchorProps } = props;
+
+    return (
+      <a
+        {...anchorProps}
+        href={href}
+        aria-label={label}
+        title={label}
+        className={variantClassNames[variant]}
+        onClick={onClick}
+      >
+        <CompactActionIcon icon={icon} className={iconClassName} />
+      </a>
+    );
+  }
+
+  const { onClick, type = 'button', ...buttonProps } = props;
+
   return (
     <button
-      type="button"
+      {...buttonProps}
+      type={type}
       aria-label={label}
       title={label}
       className={variantClassNames[variant]}
       onClick={onClick}
       disabled={disabled}
     >
-      <CompactActionIcon icon={icon} />
+      <CompactActionIcon icon={icon} className={iconClassName} />
     </button>
   );
 }

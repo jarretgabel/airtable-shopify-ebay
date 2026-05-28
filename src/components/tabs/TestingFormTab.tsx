@@ -9,7 +9,10 @@ import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
 import { FormImageUploadEditor } from '@/components/tabs/FormImageUploadEditor';
+import { WorkflowReferenceImagesPanel } from '@/components/tabs/WorkflowReferenceImagesPanel';
 import { WorkflowImageMetadataEditor } from '@/components/tabs/WorkflowImageMetadataEditor';
+import type { FormImageProcessingSummary } from '@/components/tabs/FormImageUploadEditor';
+import type { FormImageUploadAsset } from '@/services/formImageUploads';
 import { filterWorkflowImageMetadataByStage, replaceWorkflowImageMetadataStage } from '@/services/workflowImageMetadata';
 import {
   createTestingFormDefaults,
@@ -23,6 +26,7 @@ import {
   loadTestingFormValues,
   submitTestingForm,
   type TestingFormCustomerReference,
+  type TestingFormImageUploadProgress,
   type TestingFormRecordSource,
   type TestingFormStageContext,
   type TestingFormSubmitResult,
@@ -37,9 +41,16 @@ const EMPTY_CUSTOMER_REFERENCE: TestingFormCustomerReference = {
 };
 
 const EMPTY_STAGE_CONTEXT: TestingFormStageContext = {
-  photographyCosmeticNotes: '',
   existingAttachments: [],
+  referenceAttachments: [],
   imageMetadata: [],
+};
+
+const EMPTY_IMAGE_PROCESSING_SUMMARY: FormImageProcessingSummary = {
+  total: 0,
+  processed: 0,
+  processing: 0,
+  failed: 0,
 };
 
 type TestingOptionSets = Record<TestingFormOptionFieldName, string[]>;
@@ -126,12 +137,16 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
   const [customerReference, setCustomerReference] = useState<TestingFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
   const [stageContext, setStageContext] = useState<TestingFormStageContext>(EMPTY_STAGE_CONTEXT);
   const [imageMetadata, setImageMetadata] = useState<WorkflowImageMetadataRecord[]>([]);
+  const [imageUploadAssets, setImageUploadAssets] = useState<FormImageUploadAsset[]>([]);
   const [optionSets, setOptionSets] = useState<TestingOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<TestingFormSubmitResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [imagesProcessing, setImagesProcessing] = useState(false);
+  const [imageProcessingSummary, setImageProcessingSummary] = useState<FormImageProcessingSummary>(EMPTY_IMAGE_PROCESSING_SUMMARY);
+  const [imageUploadProgress, setImageUploadProgress] = useState<TestingFormImageUploadProgress | null>(null);
   const [uploadEditorResetKey, setUploadEditorResetKey] = useState(0);
   const { requestConfirmation, confirmationModal } = useConfirmationDialog();
 
@@ -159,6 +174,9 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           setCustomerReference(nextFormValues.customerReference);
           setStageContext(nextFormValues.stageContext);
           setImageMetadata(nextFormValues.stageContext.imageMetadata);
+          setImageUploadAssets([]);
+          setImageProcessingSummary(EMPTY_IMAGE_PROCESSING_SUMMARY);
+          setImageUploadProgress(null);
           setFormValues(nextFormValues.values);
           setUploadEditorResetKey((current) => current + 1);
         }
@@ -194,28 +212,39 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
       return;
     }
 
+    if (imagesProcessing) {
+      setSubmitError('Wait for image processing to finish before saving Testing.');
+      return;
+    }
+
     setSubmitting(true);
+    setImageUploadProgress(null);
     try {
       const result = await submitTestingForm(formValues, recordId, {
         recordSource,
         imageMetadata,
+        imageUploadAssets,
         completeWorkflowStage: submitIntent === 'complete',
+        onImageUploadProgress: setImageUploadProgress,
       });
       setSubmitSuccess(result);
       if (result.action === 'updated') {
         const nextValues = { ...formValues, imageFiles: [] };
         setFormValues(nextValues);
+        setImageUploadAssets([]);
         setUploadEditorResetKey((current) => current + 1);
       } else {
         const nextValues = createTestingFormDefaults();
         setFormValues(nextValues);
         setImageMetadata([]);
+        setImageUploadAssets([]);
         setUploadEditorResetKey((current) => current + 1);
       }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Unable to submit the Testing form.');
     } finally {
       setSubmitting(false);
+      setImageUploadProgress(null);
     }
   };
 
@@ -248,6 +277,9 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           disabled={submitting}
           resetKey={uploadEditorResetKey}
           onFilesChange={(files) => setFieldValue(definition.name, files as TestingFormValues[typeof definition.name])}
+          onUploadAssetsChange={setImageUploadAssets}
+          onProcessingStateChange={setImagesProcessing}
+          onProcessingSummaryChange={setImageProcessingSummary}
           afterUploadContent={stageImageMetadata.length > 0 ? (
             <WorkflowImageMetadataEditor
               metadata={stageImageMetadata}
@@ -351,6 +383,22 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           </div>
         ) : null}
 
+        {imagesProcessing ? (
+          <div className="rounded-xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-50/90">
+            Preparing images: {imageProcessingSummary.processed} of {imageProcessingSummary.total} ready.
+            {imageProcessingSummary.processing > 0 ? ` ${imageProcessingSummary.processing} still processing.` : ''}
+            {imageProcessingSummary.failed > 0 ? ` ${imageProcessingSummary.failed} need attention before submit.` : ''}
+          </div>
+        ) : null}
+
+        {submitting && imageUploadProgress && imageUploadProgress.total > 0 ? (
+          <div className="rounded-xl border border-sky-400/25 bg-sky-500/10 px-4 py-3 text-sm text-sky-50/90">
+            {imageUploadProgress.phase === 'finalizing'
+              ? `Finalizing saved image metadata for ${imageUploadProgress.total} ${imageUploadProgress.total === 1 ? 'image' : 'images'}.`
+              : `Uploading images: ${imageUploadProgress.completed} of ${imageUploadProgress.total} complete.${imageUploadProgress.currentFilename ? ` Current file: ${imageUploadProgress.currentFilename}.` : ''}`}
+          </div>
+        ) : null}
+
         {submitSuccess ? (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
             {submitSuccess.action === 'updated'
@@ -394,9 +442,14 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           cards={[
             { title: 'Customer Cosmetic Notes', value: customerReference.cosmeticNotes, emptyValue: 'None provided' },
             { title: 'Inventory Notes', value: formValues.inventoryNotes, emptyValue: 'No inventory notes available.' },
-            { title: 'Photography Cosmetic Notes', value: stageContext.photographyCosmeticNotes, emptyValue: 'No photography cosmetic notes available yet.' },
           ]}
-        />
+        >
+          <WorkflowReferenceImagesPanel
+            title="Existing Reference Images"
+            description="These earlier record images stay separate from the active testing upload set and are shown here for reference only."
+            images={stageContext.referenceAttachments}
+          />
+        </IntakeSnapshotSection>
 
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
           <AppSectionTitle title="Testing Details" titleClassName="text-lg" />
@@ -415,9 +468,9 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
               <button
                 type="submit"
                 className="rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={submitting}
+                disabled={submitting || imagesProcessing}
               >
-                {submitting ? (recordId ? 'Saving...' : 'Submitting...') : (recordId ? 'Save Testing' : 'Submit Testing')}
+                {submitting ? (recordId ? 'Saving...' : 'Submitting...') : imagesProcessing ? 'Processing images...' : (recordId ? 'Save Testing' : 'Submit Testing')}
               </button>
               <button
                 type="button"
@@ -440,7 +493,7 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
 
                   void submitTesting('complete');
                 }}
-                disabled={submitting}
+                disabled={submitting || imagesProcessing}
               >
                 Testing Complete
               </button>

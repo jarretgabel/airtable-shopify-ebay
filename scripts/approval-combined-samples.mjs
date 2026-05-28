@@ -9,6 +9,14 @@ const RUNS_DIR = path.join(process.cwd(), 'tmp', 'approval-combined-samples');
 const BATCH_SIZE = 10;
 const SAMPLE_MARKER = '[COMBINED_LISTINGS_SAMPLE_DATA]';
 const SAMPLE_SKU_PREFIX = 'SAMPLE-LISTING-';
+const SAMPLE_WORKFLOW_USERS = {
+  owner: 'Wes Workflow',
+  purchasing: 'Paula Purchasing',
+  processing: 'Iris Intake',
+  testing: 'Tina Testing',
+  photography: 'Perry Photos',
+  listing: 'Lana Listing',
+};
 
 function readEnvFile(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -101,6 +109,66 @@ function chunk(items, size) {
   return chunks;
 }
 
+function isoAt(day, hour) {
+  return new Date(Date.UTC(2026, 4, day, hour, 0, 0)).toISOString();
+}
+
+function buildWorkflowSampleFields(index, workflowStatus) {
+  const acceptedAt = isoAt(index + 1, 14);
+  const processingSignedAt = isoAt(index + 1, 16);
+  const testingSignedAt = isoAt(index + 2, 10);
+  const photographySignedAt = isoAt(index + 2, 12);
+  const awaitingPreListingReviewAt = isoAt(index + 2, 12);
+  const preListingReviewedAt = isoAt(index + 2, 15);
+  const listedAt = isoAt(index + 3, 11);
+
+  const baseFields = {
+    'Workflow Owner': SAMPLE_WORKFLOW_USERS.owner,
+    'Workflow Owner Assigned At': acceptedAt,
+    'Accepted By': SAMPLE_WORKFLOW_USERS.purchasing,
+    'Accepted At': acceptedAt,
+    'Processing Signed By': SAMPLE_WORKFLOW_USERS.processing,
+    'Processing Signed At': processingSignedAt,
+    'Testing Signed By': SAMPLE_WORKFLOW_USERS.testing,
+    'Testing Signed At': testingSignedAt,
+    'Photography Signed By': SAMPLE_WORKFLOW_USERS.photography,
+    'Photography Signed At': photographySignedAt,
+    'Awaiting Pre-Listing Review At': awaitingPreListingReviewAt,
+  };
+
+  if (workflowStatus === 'Awaiting Pre-Listing Review') {
+    return baseFields;
+  }
+
+  if (workflowStatus === 'Approved for Publish') {
+    return {
+      ...baseFields,
+      'Pre-Listing Reviewed By': SAMPLE_WORKFLOW_USERS.listing,
+      'Pre-Listing Reviewed At': preListingReviewedAt,
+      'Approved For Publish At': preListingReviewedAt,
+    };
+  }
+
+  if (
+    workflowStatus === 'Listed, Shopify'
+    || workflowStatus === 'Listed, eBay'
+    || workflowStatus === 'Stale Listing, Shopify'
+    || workflowStatus === 'Stale Listing, eBay'
+    || workflowStatus === 'Sold - Ready to Ship'
+    || workflowStatus === 'Shipped'
+  ) {
+    return {
+      ...baseFields,
+      'Pre-Listing Reviewed By': SAMPLE_WORKFLOW_USERS.listing,
+      'Pre-Listing Reviewed At': preListingReviewedAt,
+      'Approved For Publish At': preListingReviewedAt,
+      'Listed At': listedAt,
+    };
+  }
+
+  return { 'Workflow Owner': SAMPLE_WORKFLOW_USERS.owner };
+}
+
 function buildEbayBodyHtml(title, description, keyFeatures) {
   const rows = keyFeatures
     .trim()
@@ -125,10 +193,14 @@ function makeSampleFields(index, config) {
   const listingKeyFeatures = Object.prototype.hasOwnProperty.call(config, 'listingKeyFeatures')
     ? config.listingKeyFeatures
     : keyFeatures;
-  const defaultWorkflowFields = config.workflowFields ?? {
-    'Workflow Status': config.shopifyApproved === 'TRUE' && config.ebayApproved === 'TRUE'
+  const resolvedWorkflowStatus = getTrimmedString(config.workflowFields?.['Workflow Status'])
+    || (config.shopifyApproved === 'TRUE' && config.ebayApproved === 'TRUE'
       ? 'Approved for Publish'
-      : 'Awaiting Pre-Listing Review',
+      : 'Awaiting Pre-Listing Review');
+  const defaultWorkflowFields = {
+    'Workflow Status': resolvedWorkflowStatus,
+    ...buildWorkflowSampleFields(index, resolvedWorkflowStatus),
+    ...(config.workflowFields ?? {}),
   };
 
   return {

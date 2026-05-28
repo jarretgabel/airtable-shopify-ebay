@@ -232,7 +232,7 @@ export function InventoryRecordEditorPage({
             <div className="grid gap-6 xl:grid-cols-2">
               <SnapshotCard
                 title="Intake Data"
-                description="Shared pre-listing intake data that can be edited anywhere in the workflow before listing is made."
+                description="Shared listing review intake data that can be edited anywhere in the workflow before listing is made."
                 actionLabel="Open Intake"
                 onAction={() => onOpenIntake(record.id)}
                 fields={[

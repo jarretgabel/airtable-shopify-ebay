@@ -6,6 +6,7 @@ import {
   saveFormImageProcessingDefaults,
   type FormImageProcessingDefaults,
 } from '@/services/formImageProcessingDefaults';
+import type { FormImageUploadAsset } from '@/services/formImageUploads';
 import { formatBytes, processImage, revokeProcessedImage, type ProcessedImage } from '@/services/imageProcessor';
 
 interface EditableUploadItem {
@@ -21,8 +22,18 @@ interface EditableUploadItem {
   optionsExpanded: boolean;
 }
 
+export interface FormImageProcessingSummary {
+  total: number;
+  processed: number;
+  processing: number;
+  failed: number;
+}
+
 export interface FormImageUploadEditorProps {
   onFilesChange: (files: File[]) => void;
+  onUploadAssetsChange?: (assets: FormImageUploadAsset[]) => void;
+  onProcessingStateChange?: (isProcessing: boolean) => void;
+  onProcessingSummaryChange?: (summary: FormImageProcessingSummary) => void;
   resetKey?: string | number;
   disabled?: boolean;
   title?: string;
@@ -61,12 +72,35 @@ function disposeItem(item: EditableUploadItem) {
   }
 }
 
+function getUploadReadyItems(items: EditableUploadItem[]): EditableUploadItem[] {
+  return items.filter((item) => item.status === 'done' && item.editedFile);
+}
+
+function buildProcessingSummary(items: EditableUploadItem[]): FormImageProcessingSummary {
+  return {
+    total: items.length,
+    processed: items.filter((item) => item.status === 'done').length,
+    processing: items.filter((item) => item.status === 'processing').length,
+    failed: items.filter((item) => item.status === 'error').length,
+  };
+}
+
 function toUploadFiles(items: EditableUploadItem[]): File[] {
-  return items.map((item) => item.editedFile ?? item.originalFile);
+  return getUploadReadyItems(items).flatMap((item) => item.editedFile ? [item.editedFile] : []);
+}
+
+function toUploadAssets(items: EditableUploadItem[]): FormImageUploadAsset[] {
+  return getUploadReadyItems(items).map((item) => ({
+    originalFile: item.originalFile,
+    uploadFile: item.editedFile ?? item.originalFile,
+  }));
 }
 
 export function FormImageUploadEditor({
   onFilesChange,
+  onUploadAssetsChange,
+  onProcessingStateChange,
+  onProcessingSummaryChange,
   resetKey = 0,
   disabled = false,
   title = 'Upload Images',
@@ -83,10 +117,25 @@ export function FormImageUploadEditor({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const itemsRef = useRef<EditableUploadItem[]>([]);
   const onFilesChangeRef = useRef(onFilesChange);
+  const onUploadAssetsChangeRef = useRef(onUploadAssetsChange);
+  const onProcessingStateChangeRef = useRef(onProcessingStateChange);
+  const onProcessingSummaryChangeRef = useRef(onProcessingSummaryChange);
 
   useEffect(() => {
     onFilesChangeRef.current = onFilesChange;
   }, [onFilesChange]);
+
+  useEffect(() => {
+    onUploadAssetsChangeRef.current = onUploadAssetsChange;
+  }, [onUploadAssetsChange]);
+
+  useEffect(() => {
+    onProcessingStateChangeRef.current = onProcessingStateChange;
+  }, [onProcessingStateChange]);
+
+  useEffect(() => {
+    onProcessingSummaryChangeRef.current = onProcessingSummaryChange;
+  }, [onProcessingSummaryChange]);
 
   useEffect(() => {
     itemsRef.current = items;
@@ -104,11 +153,19 @@ export function FormImageUploadEditor({
       return [];
     });
     onFilesChangeRef.current([]);
+    onUploadAssetsChangeRef.current?.([]);
+    onProcessingStateChangeRef.current?.(false);
+    onProcessingSummaryChangeRef.current?.({ total: 0, processed: 0, processing: 0, failed: 0 });
     setDefaultsExpanded(false);
   }, [resetKey]);
 
   useEffect(() => {
+    const uploadAssets = toUploadAssets(items);
+    const summary = buildProcessingSummary(items);
     onFilesChangeRef.current(toUploadFiles(items));
+    onUploadAssetsChangeRef.current?.(uploadAssets);
+    onProcessingStateChangeRef.current?.(summary.processing > 0);
+    onProcessingSummaryChangeRef.current?.(summary);
   }, [items]);
 
   useEffect(() => {
@@ -126,7 +183,11 @@ export function FormImageUploadEditor({
     const nextFiles = files.filter((file) => file.type.startsWith('image/'));
     if (nextFiles.length === 0) return;
 
-    setItems((current) => ([...current, ...nextFiles.map((file) => createUploadItem(file, defaultSettings))]));
+    const nextItems = nextFiles.map((file) => createUploadItem(file, defaultSettings));
+    setItems((current) => [...current, ...nextItems]);
+    nextItems.forEach((item) => {
+      void processSingleItem(item.id, item);
+    });
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -210,8 +271,8 @@ export function FormImageUploadEditor({
     });
   };
 
-  const processSingleItem = async (itemId: string) => {
-    const currentItem = items.find((item) => item.id === itemId);
+  const processSingleItem = async (itemId: string, sourceItem?: EditableUploadItem) => {
+    const currentItem = sourceItem ?? itemsRef.current.find((item) => item.id === itemId);
     if (!currentItem) return;
 
     updateItem(itemId, (item) => ({ ...item, status: 'processing', error: undefined }));
@@ -474,7 +535,7 @@ export function FormImageUploadEditor({
       {items.length > 0 ? (
         <p className="mt-4 text-sm text-[var(--muted)]">
           Current upload set: <strong className="text-[var(--ink)]">{items.length}</strong> image{items.length === 1 ? '' : 's'}.
-          Processed files replace originals for upload, and unprocessed files upload as originally selected.
+          Images auto-process after you add them. Only completed processed files are included on submit, and you can re-run edits anytime.
         </p>
       ) : null}
 

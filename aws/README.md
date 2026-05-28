@@ -9,6 +9,7 @@ This package contains the first Lambda-backed routes for the strangler migration
 - Shopify product, collection, taxonomy, mutation, and image routes
 - AI identify route
 - Gmail send route
+- Google Drive workflow image archiving on Airtable attachment uploads
 
 ## Local workflow
 
@@ -26,6 +27,8 @@ npm run local:api
 ```
 
 This builds the AWS TypeScript output, injects the same env vars used by the handlers, and serves the AWS routes directly on `http://127.0.0.1:3001`.
+
+For Google Drive workflow image archiving in the no-Docker adapter, a plain Google API key is not enough. Use `VITE_GOOGLE_DRIVE_CLIENT_ID`, `VITE_GOOGLE_DRIVE_CLIENT_SECRET`, and `VITE_GOOGLE_DRIVE_REFRESH_TOKEN` in the repo root `.env.local`, plus `VITE_GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID` for the target personal Drive folder. Run `npm run google-drive:authorize` once to mint the refresh token, then `npm run google-drive:check` to verify real file upload/delete access before using the UI.
 
 Before parity checks or write probes, verify the adapter explicitly:
 
