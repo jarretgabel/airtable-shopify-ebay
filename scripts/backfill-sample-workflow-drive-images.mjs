@@ -157,6 +157,27 @@ async function removeLegacySampleFiles(folderId, sku) {
   return legacyFiles.map((file) => ({ id: file.id, name: file.name }));
 }
 
+function shouldDeleteUnexpectedSampleStageDriveFile(fileName, sku, allowedStages) {
+  const normalizedName = fileName.trim().toLowerCase();
+  const normalizedSku = sku.trim().toLowerCase();
+  if (!normalizedName.includes(normalizedSku)) {
+    return false;
+  }
+
+  const stagePrefixes = ['intake', 'testing', 'photos'];
+  const matchedStage = stagePrefixes.find((stage) => normalizedName.startsWith(`${stage}--`));
+  return Boolean(matchedStage && !allowedStages.has(matchedStage));
+}
+
+async function removeUnexpectedSampleStageFiles(folderId, sku, allowedStages) {
+  const files = await listDriveFilesInFolder(folderId);
+  const staleFiles = files.filter((file) => shouldDeleteUnexpectedSampleStageDriveFile(String(file.name || ''), sku, allowedStages));
+  for (const file of staleFiles) {
+    await deleteDriveFile(String(file.id));
+  }
+  return staleFiles.map((file) => ({ id: file.id, name: file.name }));
+}
+
 function createRunDirectory() {
   fs.mkdirSync(RUNS_DIR, { recursive: true });
   const stamp = new Date().toISOString().replaceAll(':', '-');
@@ -195,8 +216,8 @@ function isSampleRecord(record) {
 function getStagePlan(workflowStatus) {
   if (workflowStatus === 'Testing In Progress') {
     return {
-      metadataStages: ['intake', 'testing'],
-      imageStage: 'testing',
+      metadataStages: ['intake'],
+      imageStage: null,
     };
   }
 
@@ -320,7 +341,7 @@ async function archiveStageImages(record, stage) {
       alt: descriptor.alt,
       sortOrder: index,
       sourceStage: stage,
-      includedInListing: stage === 'photos',
+      includedInListing: stage !== 'intake',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
@@ -397,7 +418,9 @@ async function main() {
       || testingImages[0]?.folderId
       || photoImages[0]?.folderId
       || null;
+    const allowedStages = new Set(metadataStages);
     const deletedLegacyFiles = folderId && sku ? await removeLegacySampleFiles(folderId, sku) : [];
+    const deletedUnexpectedStageFiles = folderId && sku ? await removeUnexpectedSampleStageFiles(folderId, sku, allowedStages) : [];
     const updated = await updateRecord(apiKey, record.id, {
       Images: currentStageImages.map((image) => ({ url: image.url, filename: image.filename })),
       'Workflow Image Metadata JSON': JSON.stringify(metadata),
@@ -413,6 +436,7 @@ async function main() {
       photoUrls: photoImages.map((image) => image.url),
       testingUrls: testingImages.map((image) => image.url),
       deletedLegacyFiles,
+      deletedUnexpectedStageFiles,
       updatedRecordId: updated.id,
     });
   }

@@ -464,12 +464,12 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
         >
           <WorkflowReferenceImagesPanel
             title="Intake Images"
-            description="These intake-stage images are available for reference while you photograph the current stage. They do not become part of the active photo upload set unless you upload them here again."
+            description="These intake-stage images are available for reference while you photograph the current stage."
             images={stageContext.intakeReferenceAttachments}
           />
           <WorkflowReferenceImagesPanel
             title="Testing Images"
-            description="These testing-stage images are available for reference while you photograph the current stage. They do not become part of the active photo upload set unless you upload them here again."
+            description="These testing-stage images are available for reference while you photograph the current stage."
             images={stageContext.testingReferenceAttachments}
           />
         </IntakeSnapshotSection>

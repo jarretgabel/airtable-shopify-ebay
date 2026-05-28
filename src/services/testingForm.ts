@@ -95,7 +95,7 @@ function getImageAttachmentFieldId(recordSource: TestingFormRecordSource): strin
 
 function buildContextAttachmentsFromStageMetadata(
   records: WorkflowImageMetadataRecord[],
-  stage: 'testing' | 'photos',
+  stage: 'intake' | 'testing' | 'photos',
 ): TestingFormContextAttachment[] {
   return filterWorkflowImageMetadataByStage(records, stage).map((record) => ({
     id: record.attachmentId,
@@ -304,14 +304,25 @@ function buildStageContext(record: AirtableRecord): TestingFormStageContext {
     : [];
   const allAttachments = extractAttachments(record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME]);
   const parsedImageMetadata = parseWorkflowImageMetadata(record.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME]);
-  const imageMetadata = parsedImageMetadata.length > 0 && attachments.length > 0
+  const attachmentsForMetadataMerge = parsedImageMetadata.length > 0
+    ? filterWorkflowAttachmentsByStage(allAttachments, parsedImageMetadata, 'testing').map((attachment) => ({
+        id: attachment.id,
+        url: attachment.url,
+        filename: attachment.filename,
+      }))
+    : attachments;
+  const mergedTestingMetadata = parsedImageMetadata.length > 0 && attachments.length > 0
     ? mergeWorkflowImageMetadata({
-        attachments,
-        existingMetadata: parsedImageMetadata,
+        attachments: attachmentsForMetadataMerge,
+        existingMetadata: filterWorkflowImageMetadataByStage(parsedImageMetadata, 'testing'),
         sourceStage: 'testing',
         nowIso: new Date().toISOString(),
       })
-    : parsedImageMetadata;
+    : filterWorkflowImageMetadataByStage(parsedImageMetadata, 'testing');
+  const imageMetadata = [
+    ...parsedImageMetadata.filter((record) => record.sourceStage !== 'testing'),
+    ...mergedTestingMetadata,
+  ];
   const existingAttachments = imageMetadata.length > 0
     ? filterWorkflowAttachmentsByStage(
       allAttachments,
@@ -322,7 +333,7 @@ function buildStageContext(record: AirtableRecord): TestingFormStageContext {
 
   return {
     existingAttachments: existingAttachments.length > 0 ? existingAttachments : buildContextAttachmentsFromStageMetadata(imageMetadata, 'testing'),
-    referenceAttachments: [],
+    referenceAttachments: buildContextAttachmentsFromStageMetadata(imageMetadata, 'intake'),
     imageMetadata,
   };
 }

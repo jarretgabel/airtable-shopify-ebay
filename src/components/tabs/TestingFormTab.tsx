@@ -361,7 +361,6 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
     return <ErrorSurface title="Unable to load Testing form" message={optionsError ?? 'The Airtable Testing form configuration is unavailable.'} />;
   }
 
-  const hasCustomerReference = Object.values(customerReference).some((value) => value.trim().length > 0);
   const stageImageMetadata = filterWorkflowImageMetadataByStage(imageMetadata, 'testing');
   const readOnlyFields = testingFormFields.filter((field) => READ_ONLY_TESTING_FIELD_NAMES.includes(field.name));
   const editableFields = testingFormFields.filter((field) => EDITABLE_TESTING_FIELD_NAMES.includes(field.name));
@@ -407,29 +406,6 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           </div>
         ) : null}
 
-        {hasCustomerReference ? (
-          <div className="rounded-2xl border border-sky-400/25 bg-sky-500/10 p-5">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-sky-100">Customer Intake Reference</p>
-            <p className="mt-2 text-sm leading-6 text-sky-50/90">
-              Use these customer-submitted notes as reference only. Keep testing findings and staff assessments in the Testing fields below.
-            </p>
-            <div className="mt-4 grid gap-3 lg:grid-cols-2">
-              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
-                <span className="font-semibold text-sky-50">Customer Cosmetic Notes:</span> {customerReference.cosmeticNotes || 'None provided'}
-              </div>
-              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
-                <span className="font-semibold text-sky-50">Customer Functional Notes:</span> {customerReference.functionalNotes || 'None provided'}
-              </div>
-              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
-                <span className="font-semibold text-sky-50">Customer Inclusion Notes:</span> {customerReference.inclusionNotes || 'None provided'}
-              </div>
-              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
-                <span className="font-semibold text-sky-50">Customer Submitted Photos Notes:</span> {customerReference.submittedPhotosNotes || 'None provided'}
-              </div>
-            </div>
-          </div>
-        ) : null}
-
         <IntakeSnapshotSection
           fields={[
             ...readOnlyFields.map((field) => ({
@@ -445,8 +421,8 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           ]}
         >
           <WorkflowReferenceImagesPanel
-            title="Existing Reference Images"
-            description="These earlier record images stay separate from the active testing upload set and are shown here for reference only."
+            title="Intake Images"
+            description="These intake-stage images are available for reference while you test the current stage. They do not become part of the active testing upload set unless you upload them here again."
             images={stageContext.referenceAttachments}
           />
         </IntakeSnapshotSection>

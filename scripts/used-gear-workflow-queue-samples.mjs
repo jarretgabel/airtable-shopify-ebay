@@ -170,6 +170,77 @@ function buildShipmentNotes(config) {
   return `${SAMPLE_MARKER} ${config.make} ${config.model} packed, labeled, and documented for shipment follow-through coverage.`;
 }
 
+function getSampleWorkflowImagePlanForProfile(profile) {
+  const intakeCompleteProfiles = new Set([
+    'testing-pending',
+    'photos-pending',
+    'pre-listing',
+    'approved',
+    'listed-shopify',
+    'listed-ebay',
+    'stale-shopify',
+    'stale-ebay',
+    'sold-ready',
+    'shipped',
+  ]);
+  const testingCompleteProfiles = new Set([
+    'photos-pending',
+    'pre-listing',
+    'approved',
+    'listed-shopify',
+    'listed-ebay',
+    'stale-shopify',
+    'stale-ebay',
+    'sold-ready',
+    'shipped',
+  ]);
+  const photographyCompleteProfiles = new Set([
+    'pre-listing',
+    'approved',
+    'listed-shopify',
+    'listed-ebay',
+    'stale-shopify',
+    'stale-ebay',
+    'sold-ready',
+    'shipped',
+  ]);
+
+  const metadataStages = [];
+  if (intakeCompleteProfiles.has(profile)) {
+    metadataStages.push('intake');
+  }
+  if (testingCompleteProfiles.has(profile)) {
+    metadataStages.push('testing');
+  }
+  if (photographyCompleteProfiles.has(profile)) {
+    metadataStages.push('photos');
+  }
+
+  return {
+    hasIntakeComplete: intakeCompleteProfiles.has(profile),
+    hasTestingComplete: testingCompleteProfiles.has(profile),
+    hasPhotographyComplete: photographyCompleteProfiles.has(profile),
+    metadataStages,
+    imageStage: photographyCompleteProfiles.has(profile) ? 'photos' : null,
+  };
+}
+
+function buildSampleWorkflowRecordStatus(profile) {
+  if (profile === 'photos-pending') {
+    return 'Tested';
+  }
+
+  if (getSampleWorkflowImagePlanForProfile(profile).hasPhotographyComplete) {
+    return "Photo'd";
+  }
+
+  if (getSampleWorkflowImagePlanForProfile(profile).hasTestingComplete) {
+    return 'Tested';
+  }
+
+  return '';
+}
+
 function buildSampleImageUrls() {
   // Sample workflow image records are populated by the Drive backfill so seeds never reintroduce placeholder URLs.
   return [];
@@ -193,11 +264,12 @@ function buildStageSampleImageAttachments(config, index, stage) {
   }));
 }
 
-function buildWorkflowSampleImageAttachments(config, index, { includeTesting, includePhotos }) {
-  return [
-    ...(includeTesting ? buildStageSampleImageAttachments(config, index, 'testing') : []),
-    ...(includePhotos ? buildStageSampleImageAttachments(config, index, 'photos') : []),
-  ];
+function buildWorkflowSampleImageAttachments(config, index, imageStage) {
+  if (!imageStage) {
+    return [];
+  }
+
+  return buildStageSampleImageAttachments(config, index, imageStage);
 }
 
 function buildSampleImageMetadata(config, index, stage, includedInListing) {
@@ -214,11 +286,8 @@ function buildSampleImageMetadata(config, index, stage, includedInListing) {
   }));
 }
 
-function buildWorkflowSampleImageMetadata(config, index, { includeTesting, includePhotos }) {
-  return [
-    ...(includeTesting ? buildSampleImageMetadata(config, index, 'testing', false) : []),
-    ...(includePhotos ? buildSampleImageMetadata(config, index, 'photos', true) : []),
-  ];
+function buildWorkflowSampleImageMetadata(config, index, metadataStages) {
+  return metadataStages.flatMap((stage) => buildSampleImageMetadata(config, index, stage, stage !== 'intake'));
 }
 
 function buildStageFields(index, config) {
@@ -238,7 +307,8 @@ function buildStageFields(index, config) {
   const serviceNotes = config.serviceNotes ?? buildServiceNotes(config);
   const photographyNotes = config.photographyNotes ?? buildPhotographyNotes(config);
   const listingPrice = config.listingPrice ?? config.confirmedGrandTotal ?? config.offerAmount;
-  const recordStatus = config.recordStatus ?? (profile === 'testing-pending' ? "Photo'd" : profile === 'photos-pending' ? 'Tested' : "Photo'd");
+  const imagePlan = getSampleWorkflowImagePlanForProfile(profile);
+  const recordStatus = config.recordStatus ?? buildSampleWorkflowRecordStatus(profile);
   const hasAccepted = !['pending-review', 'trash'].includes(profile);
   const hasArrivalDetails = [
     'awaiting-sku',
@@ -254,28 +324,7 @@ function buildStageFields(index, config) {
     'sold-ready',
     'shipped',
   ].includes(profile);
-  const hasTestingComplete = [
-    'photos-pending',
-    'pre-listing',
-    'approved',
-    'listed-shopify',
-    'listed-ebay',
-    'stale-shopify',
-    'stale-ebay',
-    'sold-ready',
-    'shipped',
-  ].includes(profile);
-  const hasPhotographyComplete = [
-    'testing-pending',
-    'pre-listing',
-    'approved',
-    'listed-shopify',
-    'listed-ebay',
-    'stale-shopify',
-    'stale-ebay',
-    'sold-ready',
-    'shipped',
-  ].includes(profile);
+  const { hasTestingComplete, hasPhotographyComplete } = imagePlan;
   const hasListingReadiness = [
     'pre-listing',
     'approved',
@@ -291,10 +340,7 @@ function buildStageFields(index, config) {
   const hasShopifyListingFields = ['approved', 'listed-shopify', 'stale-shopify', 'sold-ready', 'shipped'].includes(profile);
   const hasEbayListingFields = ['approved', 'listed-ebay', 'stale-ebay', 'sold-ready', 'shipped'].includes(profile);
   const hasPassedPhotography = hasListingReadiness;
-  const workflowImageMetadata = buildWorkflowSampleImageMetadata(config, index, {
-    includeTesting: hasTestingComplete,
-    includePhotos: hasPassedPhotography,
-  });
+  const workflowImageMetadata = buildWorkflowSampleImageMetadata(config, index, imagePlan.metadataStages);
 
   return {
     'Customer Cosmetic Notes': `${SAMPLE_MARKER} Customer reported light cosmetic wear with one notable finish mark documented at intake.`,
@@ -329,15 +375,15 @@ function buildStageFields(index, config) {
       'Service Notes': serviceNotes,
       'Service Time': config.serviceTime ?? 1800,
       Tested: testedAt,
-      Status: config.status ?? recordStatus,
+      ...(recordStatus ? { Status: config.status ?? recordStatus } : {}),
     } : {}),
     ...(hasPhotographyComplete ? {
       'Photography Cosmetic Notes': config.photographyCosmeticNotes ?? photographyNotes,
       "Photo'd": photographedAt,
-      Images: config.images ?? (hasPassedPhotography
-        ? buildWorkflowSampleImageAttachments(config, index, { includeTesting: true, includePhotos: true })
-        : buildSampleImageAttachments(config, index)),
-      Status: config.status ?? recordStatus,
+      ...(config.images || imagePlan.imageStage
+        ? { Images: config.images ?? buildWorkflowSampleImageAttachments(config, index, imagePlan.imageStage) }
+        : {}),
+      ...(recordStatus ? { Status: config.status ?? recordStatus } : {}),
     } : {}),
     ...(workflowImageMetadata.length > 0 ? {
       'Workflow Image Metadata JSON': JSON.stringify(workflowImageMetadata),
@@ -617,8 +663,6 @@ function buildSampleRecords() {
         'Accepted At': isoAt(6, 14),
         'Processing Signed By': 'Sample Intake',
         'Processing Signed At': isoAt(6, 16),
-        'Photography Signed By': 'Sample Photo',
-        'Photography Signed At': isoAt(7, 11),
       },
     },
     {

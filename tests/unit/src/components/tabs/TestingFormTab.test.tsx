@@ -93,7 +93,7 @@ describe('TestingFormTab', () => {
             alt: 'Bench overview',
             sortOrder: 1,
             sourceStage: 'testing',
-            includedInListing: false,
+            includedInListing: true,
           },
           {
             attachmentId: 'att-2',
@@ -177,11 +177,11 @@ describe('TestingFormTab', () => {
     expect(screen.getByText('Accessories, spikes, umbilicals, etc..')).toBeInTheDocument();
     expect(screen.getByText('Inventory Notes')).toBeInTheDocument();
     expect(screen.getByText('Capture top cover wear.')).toBeInTheDocument();
-    expect(screen.getByText('Existing Reference Images')).toBeInTheDocument();
+    expect(screen.getByText('Intake Images')).toBeInTheDocument();
     expect(screen.getByText('intake.jpg')).toBeInTheDocument();
+    expect(screen.queryByText('Customer Intake Reference')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Alt text for testing.jpg'), { target: { value: 'Updated bench overview' } });
-    fireEvent.click(screen.getByLabelText('Include testing.jpg in listings'));
     fireEvent.click(screen.getByRole('button', { name: 'Testing Complete' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Yes, complete testing' }));
 

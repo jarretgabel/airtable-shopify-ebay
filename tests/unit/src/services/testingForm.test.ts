@@ -814,6 +814,15 @@ describe('testingForm', () => {
           ],
           'Workflow Image Metadata JSON': JSON.stringify([
             {
+              attachmentId: 'att-intake',
+              url: 'https://example.com/intake.jpg',
+              filename: 'intake.jpg',
+              alt: 'Customer intake overview',
+              sortOrder: 0,
+              sourceStage: 'intake',
+              includedInListing: false,
+            },
+            {
               attachmentId: 'att-testing',
               url: 'https://example.com/testing.jpg',
               filename: 'testing.jpg',
@@ -843,9 +852,11 @@ describe('testingForm', () => {
     expect(result.stageContext.existingAttachments).toEqual([
       { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
     ]);
-    expect(result.stageContext.referenceAttachments).toEqual([]);
-    expect(result.stageContext.imageMetadata).toHaveLength(2);
-    expect(result.stageContext.imageMetadata.map((record) => record.sourceStage)).toEqual(['testing', 'photos']);
+    expect(result.stageContext.referenceAttachments).toEqual([
+      { id: 'att-intake', url: 'https://example.com/intake.jpg', filename: 'intake.jpg' },
+    ]);
+    expect(result.stageContext.imageMetadata).toHaveLength(3);
+    expect([...new Set(result.stageContext.imageMetadata.map((record) => record.sourceStage))].sort()).toEqual(['intake', 'photos', 'testing']);
   });
 
   it('falls back to metadata-backed testing attachments when workflow records have no Airtable image attachments', async () => {
