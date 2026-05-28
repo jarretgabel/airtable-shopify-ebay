@@ -17,6 +17,8 @@
     "workflow:queue-samples:list": "node scripts/used-gear-workflow-queue-samples.mjs list",
     "workflow:queue-samples:seed": "node scripts/used-gear-workflow-queue-samples.mjs seed",
     "workflow:queue-samples:cleanup": "node scripts/used-gear-workflow-queue-samples.mjs cleanup",
+    "workflow:sample-markers:plan": "node scripts/cleanup-used-gear-workflow-sample-markers.mjs plan",
+    "workflow:sample-markers:apply": "node scripts/cleanup-used-gear-workflow-sample-markers.mjs apply",
     "workflow:queue-samples:drive-backfill": "node scripts/backfill-sample-workflow-drive-images.mjs",
     "jotform:backfill:plan": "node --import tsx scripts/backfill-jotform-workflow-submissions.ts plan",
     "jotform:backfill:apply": "node --import tsx scripts/backfill-jotform-workflow-submissions.ts apply",
