@@ -4,7 +4,7 @@ import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
-import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
+import { WorkflowFormSnapshotSection } from '@/components/tabs/WorkflowFormSnapshotSection';
 import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
@@ -59,13 +59,6 @@ const FIELD_CLASS = 'mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(
 const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
-
-const READ_ONLY_TESTING_FIELD_NAMES: Array<keyof TestingFormValues> = [
-  'sku',
-  'make',
-  'model',
-  'componentType',
-];
 
 const EDITABLE_TESTING_FIELD_NAMES: Array<keyof TestingFormValues> = [
   'serialNumber',
@@ -362,7 +355,6 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
   }
 
   const stageImageMetadata = filterWorkflowImageMetadataByStage(imageMetadata, 'testing');
-  const readOnlyFields = testingFormFields.filter((field) => READ_ONLY_TESTING_FIELD_NAMES.includes(field.name));
   const editableFields = testingFormFields.filter((field) => EDITABLE_TESTING_FIELD_NAMES.includes(field.name));
 
   return (
@@ -406,26 +398,28 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
           </div>
         ) : null}
 
-        <IntakeSnapshotSection
-          fields={[
-            ...readOnlyFields.map((field) => ({
-              label: field.label,
-              value: String(formValues[field.name] ?? ''),
-              description: field.name === 'componentType' ? undefined : field.description,
-            })),
-            { label: 'Acquired From', value: formValues.acquiredFrom },
-          ]}
-          cards={[
-            { title: 'Customer Cosmetic Notes', value: customerReference.cosmeticNotes, emptyValue: 'None provided' },
-            { title: 'Inventory Notes', value: formValues.inventoryNotes, emptyValue: 'No inventory notes available.' },
-          ]}
+        <WorkflowFormSnapshotSection
+          values={{
+            sku: formValues.sku,
+            make: formValues.make,
+            model: formValues.model,
+            componentType: formValues.componentType,
+            originalBox: formValues.originalBox,
+            manual: formValues.manual,
+            remote: formValues.remote,
+            powerCable: formValues.powerCable,
+            additionalItems: formValues.additionalItems,
+            audiogonRating: formValues.audiogonRating,
+          }}
+          customerCosmeticNotes={customerReference.cosmeticNotes}
+          inventoryNotes={formValues.inventoryNotes}
         >
           <WorkflowReferenceImagesPanel
             title="Intake Images"
             description="These intake-stage images are available for reference while you test the current stage. They do not become part of the active testing upload set unless you upload them here again."
             images={stageContext.referenceAttachments}
           />
-        </IntakeSnapshotSection>
+        </WorkflowFormSnapshotSection>
 
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
           <AppSectionTitle title="Testing Details" titleClassName="text-lg" />

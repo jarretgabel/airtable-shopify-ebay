@@ -57,6 +57,19 @@ function getDirectorySortLabel(sortMode: 'intake-newest' | 'intake-oldest'): str
   return 'Intake Date: Newest First';
 }
 
+function renderWorkflowSource(value: unknown) {
+  const sourceLabel = displayInventoryValue(value);
+  if (!sourceLabel) {
+    return <span className="text-xs text-[var(--muted)]/60">-</span>;
+  }
+
+  return (
+    <span className="inline-flex rounded-full border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">
+      {sourceLabel}
+    </span>
+  );
+}
+
 export function InventoryDirectoryListSection({
   records,
   totalCount,
@@ -83,6 +96,12 @@ export function InventoryDirectoryListSection({
       label: 'Item',
       width: 'minmax(0,1.55fr)',
       renderCell: (record) => <div className="min-w-0 truncate text-sm text-[var(--ink)]">{displayInventoryValue(getInventoryDirectoryItemLabel(record.fields))}</div>,
+    },
+    {
+      key: 'source',
+      label: 'Source',
+      width: '9rem',
+      renderCell: (record) => renderWorkflowSource(record.fields['Workflow Source']),
     },
     {
       key: 'status',

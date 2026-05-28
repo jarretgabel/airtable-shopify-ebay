@@ -91,6 +91,19 @@ function getPendingReviewSortLabel(sortMode: UsedGearPendingReviewSortMode): str
   return 'Default Order';
 }
 
+function renderWorkflowSource(value: unknown) {
+  const sourceLabel = displayInventoryValue(value);
+  if (!sourceLabel) {
+    return <span className="text-xs text-[var(--muted)]/60">-</span>;
+  }
+
+  return (
+    <span className="inline-flex rounded-full border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">
+      {sourceLabel}
+    </span>
+  );
+}
+
 export function UsedGearPendingReviewSection({
   onOpenGroupReview,
   onOpenReviewRecord,
@@ -297,6 +310,12 @@ export function UsedGearPendingReviewSection({
 
                 return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
               },
+            },
+            {
+              key: 'source',
+              label: 'Source',
+              width: '9rem',
+              renderCell: (record) => renderWorkflowSource(record.fields['Workflow Source']),
             },
             {
               key: 'intake',

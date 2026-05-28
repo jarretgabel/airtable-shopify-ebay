@@ -119,6 +119,17 @@ function buildSnapshotStageImages(record: UsedGearOperationalRecordContext['reco
   };
 }
 
+function countPhotographyImages(record: UsedGearOperationalRecordContext['record']): string {
+  const parsedMetadata = parseWorkflowImageMetadata(record.fields['Workflow Image Metadata JSON']);
+  const photographyImages = filterWorkflowImageMetadataByStage(parsedMetadata, 'photos');
+  const count = photographyImages.length;
+  if (count > 0) {
+    return `${count} item${count === 1 ? '' : 's'}`;
+  }
+
+  return countFieldItems(record.fields.Images);
+}
+
 function countFieldItems(value: unknown): string {
   if (!Array.isArray(value)) {
     return displayInventoryValue(value);
@@ -295,7 +306,7 @@ export function WorkflowSnapshotPage({
                 fields={[
                   { label: 'Photography Cosmetic Notes', value: record.fields['Photography Cosmetic Notes'] },
                   { label: "Photo'd", value: record.fields["Photo'd"] },
-                  { label: 'Images', value: stageImages.photographyImages.length > 0 ? `${stageImages.photographyImages.length} item${stageImages.photographyImages.length === 1 ? '' : 's'}` : countFieldItems(record.fields.Images) },
+                  { label: 'Images', value: countPhotographyImages(record) },
                   { label: 'Additional Items', value: record.fields['Additional Items'] },
                 ]}
               >

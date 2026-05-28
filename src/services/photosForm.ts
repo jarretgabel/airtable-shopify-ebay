@@ -521,7 +521,6 @@ export async function submitPhotosForm(
           const uploadOptions: AirtableAttachmentUploadOptions | undefined = options.imageUploadAssets?.[index]
             ? {
                 driveArchive: {
-                  sku: skuValue,
                   stage: 'photos',
                   originalFile: options.imageUploadAssets[index].originalFile,
                 },

@@ -4,7 +4,7 @@ import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
-import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
+import { WorkflowFormSnapshotSection } from '@/components/tabs/WorkflowFormSnapshotSection';
 import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
@@ -63,20 +63,6 @@ const FIELD_CLASS = 'mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(
 const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
-
-const SNAPSHOT_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = [
-  'sku',
-  'make',
-  'model',
-  'componentType',
-  'originalBox',
-  'manual',
-  'remote',
-  'powerCable',
-  'additionalItems',
-  'audiogonRating',
-  'status',
-];
 
 const EDITABLE_PHOTOS_FIELD_NAMES: Array<keyof PhotosFormValues> = [
   'cosmeticConditionNotes',
@@ -395,7 +381,6 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     || stageContext.existingAttachments.length > 0,
   );
   const stageImageMetadata = filterWorkflowImageMetadataByStage(imageMetadata, 'photos');
-  const snapshotFields = photosFormFields.filter((field) => SNAPSHOT_PHOTOS_FIELD_NAMES.includes(field.name));
   const editableFields = photosFormFields.filter((field) => EDITABLE_PHOTOS_FIELD_NAMES.includes(field.name));
 
   const handleInclusionConfirmationChange = (key: InclusionConfirmationKey, checked: boolean) => {
@@ -447,17 +432,22 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
           </div>
         ) : null}
 
-        <IntakeSnapshotSection
-          fields={snapshotFields.map((field) => ({
-            label: field.label,
-            value: String(formValues[field.name] ?? ''),
-            description: field.name === 'additionalItems' || field.name === 'audiogonRating'
-              ? field.description
-              : undefined,
-          }))}
-          cards={[
-            { title: 'Customer Cosmetic Notes', value: customerReference.cosmeticNotes, emptyValue: 'None provided' },
-            { title: 'Inventory Notes', value: stageContext.inventoryNotes, emptyValue: 'No inventory notes available.' },
+        <WorkflowFormSnapshotSection
+          values={{
+            sku: formValues.sku,
+            make: formValues.make,
+            model: formValues.model,
+            componentType: formValues.componentType,
+            originalBox: formValues.originalBox,
+            manual: formValues.manual,
+            remote: formValues.remote,
+            powerCable: formValues.powerCable,
+            additionalItems: formValues.additionalItems,
+            audiogonRating: formValues.audiogonRating,
+          }}
+          customerCosmeticNotes={customerReference.cosmeticNotes}
+          inventoryNotes={stageContext.inventoryNotes}
+          extraCards={[
             { title: 'Testing Cosmetic Notes', value: stageContext.testingCosmeticNotes, emptyValue: 'No testing cosmetic notes available yet.' },
             ...(hasOperationalContext ? [{ title: 'Testing Notes', value: stageContext.testingNotes, emptyValue: 'No testing notes available yet.' }] : []),
           ]}
@@ -472,7 +462,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
             description="These testing-stage images are available for reference while you photograph the current stage."
             images={stageContext.testingReferenceAttachments}
           />
-        </IntakeSnapshotSection>
+        </WorkflowFormSnapshotSection>
 
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
           <AppSectionTitle title="Photography Details" titleClassName="text-lg" />

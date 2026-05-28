@@ -161,10 +161,9 @@ describe('PhotosFormTab', () => {
     expect(screen.queryByLabelText('Remote')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Power Cable')).not.toBeInTheDocument();
     expect(screen.getByText('Cosmetic Notes')).toBeInTheDocument();
-    expect(screen.getByText('Additional details if Audiogon rating is below an 8/10.')).toBeInTheDocument();
     expect(screen.queryByLabelText('Status')).not.toBeInTheDocument();
-    expect(screen.getByText('Status')).toBeInTheDocument();
-    expect(screen.getByText("Photo'd")).toBeInTheDocument();
+    expect(screen.queryByText('Status')).not.toBeInTheDocument();
+    expect(screen.queryByText("Photo'd")).not.toBeInTheDocument();
     expect(screen.getAllByText('Audiogon Rating').length).toBeGreaterThan(0);
     expect(screen.getByText('7/10')).toBeInTheDocument();
     expect(screen.getAllByText('Original Box').length).toBeGreaterThan(0);

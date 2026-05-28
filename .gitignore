@@ -36,3 +36,6 @@ aws/.aws-sam/
 .cloudfront-frontend.deploy.json
 .cloudfront-frontend.staging.deploy.json
 .cloudfront-frontend.prod.deploy.json
+
+# Generated run artifacts
+tmp/

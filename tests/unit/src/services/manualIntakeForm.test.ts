@@ -74,6 +74,8 @@ describe('manualIntakeForm', () => {
 
     expect(result).toEqual({
       source: 'used-gear-workflow',
+      workflowSource: '',
+      jotFormSubmissionId: '',
       values: {
         arrivalDate: '2026-04-01',
         pickUpNumber: 'PU-42',
@@ -102,6 +104,18 @@ describe('manualIntakeForm', () => {
         shippingMethod: 'Freight',
       },
     });
+  });
+
+  it('returns workflow metadata for JotForm-backed intake rows', async () => {
+    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
+      'Workflow Source': 'JotForm',
+      'JotForm Submission ID': 'sub-777',
+    }));
+
+    const result = await loadManualIntakeFormValues('recIncoming123');
+
+    expect(result.workflowSource).toBe('JotForm');
+    expect(result.jotFormSubmissionId).toBe('sub-777');
   });
 
   it('falls back to the inventory source when the workflow source misses the row', async () => {

@@ -17,6 +17,7 @@ import {
   type ManualIntakeFormSubmitResult,
   type ManualIntakeRecordSource,
 } from '@/services/manualIntakeForm';
+import { buildJotFormSubmissionUrl } from '@/services/jotform';
 
 type ManualIntakeOptionSets = Record<ManualIntakeFormOptionFieldName, string[]>;
 
@@ -79,6 +80,8 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
   const [formValues, setFormValues] = useState<ManualIntakeFormValues>(() => createManualIntakeFormDefaults());
   const [initialFormValues, setInitialFormValues] = useState<ManualIntakeFormValues>(() => createManualIntakeFormDefaults());
   const [recordSource, setRecordSource] = useState<ManualIntakeRecordSource>('used-gear-workflow');
+  const [workflowSource, setWorkflowSource] = useState('');
+  const [jotFormSubmissionId, setJotFormSubmissionId] = useState('');
   const [manualEntryRoute, setManualEntryRoute] = useState<ManualIntakeRoute>('lot-1');
   const [submissionGroupId, setSubmissionGroupId] = useState('');
   const [pickUpId, setPickUpId] = useState('');
@@ -101,11 +104,18 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
           loadManualIntakeFormOptionSets(),
           recordId
             ? loadManualIntakeFormValues(recordId)
-            : Promise.resolve({ source: 'used-gear-workflow' as ManualIntakeRecordSource, values: createManualIntakeFormDefaults() }),
+            : Promise.resolve({
+              source: 'used-gear-workflow' as ManualIntakeRecordSource,
+              workflowSource: '',
+              jotFormSubmissionId: '',
+              values: createManualIntakeFormDefaults(),
+            }),
         ]);
         if (!cancelled) {
           setOptionSets(nextOptionSets);
           setRecordSource(nextFormValues.source);
+          setWorkflowSource(nextFormValues.workflowSource ?? '');
+          setJotFormSubmissionId(nextFormValues.jotFormSubmissionId ?? '');
           setFormValues(nextFormValues.values);
           setInitialFormValues(nextFormValues.values);
         }
@@ -277,6 +287,8 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
     return <ErrorSurface title="Unable to load Manual Intake" message={optionsError ?? 'The Airtable form configuration is unavailable.'} />;
   }
 
+  const jotFormSubmissionUrl = buildJotFormSubmissionUrl(jotFormSubmissionId);
+
   return (
     <div className="flex w-full flex-col gap-5">
       {submitError ? (
@@ -294,6 +306,32 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
       ) : null}
 
       <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
+          {recordId && recordSource === 'used-gear-workflow' && workflowSource ? (
+            <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow Source</p>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--ink)]">
+                  <span className="inline-flex rounded-full border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">
+                    {workflowSource}
+                  </span>
+                  {jotFormSubmissionId ? (
+                    <span className="text-[var(--muted)]">Submission ID: <span className="font-medium text-[var(--ink)]">{jotFormSubmissionId}</span></span>
+                  ) : null}
+                </div>
+                {jotFormSubmissionUrl ? (
+                  <a
+                    className="inline-flex items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    href={jotFormSubmissionUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open in JotForm
+                  </a>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
+
           {!recordId ? (
             <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
               <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Routing Context</p>

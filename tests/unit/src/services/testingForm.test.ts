@@ -337,7 +337,6 @@ describe('testingForm', () => {
       {
         archiveOnly: true,
         driveArchive: {
-          sku: 'SKU-101',
           stage: 'testing',
           originalFile,
         },

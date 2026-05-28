@@ -10,7 +10,7 @@ interface GoogleDriveArchiveFilePayload {
 }
 
 export interface WorkflowImageArchiveRequest {
-  sku: string;
+  folderKey: string;
   stage: WorkflowImageArchiveStage;
   original: GoogleDriveArchiveFilePayload;
   processed: GoogleDriveArchiveFilePayload;
@@ -133,12 +133,12 @@ function getConfiguredDriveRootFolderId(): string | undefined {
   return getOptionalSecret('GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID');
 }
 
-function normalizeSkuFolderName(sku: string): string {
-  const trimmed = sku.trim();
+function normalizeArchiveFolderName(folderKey: string): string {
+  const trimmed = folderKey.trim();
   if (!trimmed) {
-    throw new HttpError(400, 'SKU is required to archive workflow images in Google Drive', {
+    throw new HttpError(400, 'Folder key is required to archive workflow images in Google Drive', {
       service: 'google-drive',
-      code: 'GOOGLE_DRIVE_SKU_REQUIRED',
+      code: 'GOOGLE_DRIVE_FOLDER_KEY_REQUIRED',
       retryable: false,
     });
   }
@@ -238,9 +238,9 @@ async function ensureArchiveRootFolder(): Promise<string> {
   return await createFolder('root', GOOGLE_DRIVE_DEFAULT_ARCHIVE_ROOT_FOLDER_NAME);
 }
 
-async function ensureSkuFolder(sku: string): Promise<string> {
+async function ensureArchiveFolder(folderKey: string): Promise<string> {
   const rootFolderId = await ensureArchiveRootFolder();
-  const folderName = normalizeSkuFolderName(sku);
+  const folderName = normalizeArchiveFolderName(folderKey);
   const existingFolder = await findFileByName(rootFolderId, folderName, GOOGLE_DRIVE_FOLDER_MIME_TYPE);
   if (existingFolder) {
     return existingFolder.id;
@@ -329,7 +329,7 @@ async function ensurePublicReadAccess(fileId: string): Promise<void> {
 }
 
 export async function archiveWorkflowImagesToGoogleDrive(request: WorkflowImageArchiveRequest): Promise<WorkflowImageArchiveResult> {
-  const folderId = await ensureSkuFolder(request.sku);
+  const folderId = await ensureArchiveFolder(request.folderKey);
 
   const originalFile = await upsertFileInFolder(
     folderId,

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import dotenv from 'dotenv';
+import { backfillCombinedListingSampleDriveImages } from './backfill-approval-combined-sample-drive-images.mjs';
 
 const APPROVED_BASE_ID = 'apprsAm2FOohEmL2u';
 const APPROVED_TABLE_ID = 'tbl0K0nFQL64jQMx8';
@@ -207,8 +208,9 @@ function makeSampleFields(index, config) {
     'Template Name': `${SAMPLE_MARKER} ${config.templateName}`,
     'Item Title': `${SAMPLE_MARKER} ${config.title}`,
     Description: `${SAMPLE_MARKER} ${config.description}`,
-    'Images (comma-separated)': config.primaryImages.join(', '),
-    'Images (comma-separated) 2': config.secondaryImages.join(', '),
+    // Drive-backed sample images are populated immediately after seed so placeholders never persist in Airtable.
+    'Images (comma-separated)': '',
+    'Images (comma-separated) 2': '',
     'Images Alt Text (comma separated)': config.altTexts.join(', '),
     'Key Features (Key, Value)': listingKeyFeatures,
     'SKU Legacy Backup': sku,
@@ -671,6 +673,10 @@ async function runSeed(confirmToken, replaceExisting = false) {
 
   const sampleRecords = buildSampleRecords();
   const createdRecords = await createRecords(apiKey, sampleRecords);
+  const driveBackfill = await backfillCombinedListingSampleDriveImages({
+    apiKey,
+    records: createdRecords,
+  });
   const runDir = createRunDirectory('seed');
 
   writeJson(path.join(runDir, 'created-records.json'), createdRecords);
@@ -682,9 +688,12 @@ async function runSeed(confirmToken, replaceExisting = false) {
     createdCount: createdRecords.length,
     createdRecordIds: createdRecords.map((record) => record.id),
     createdTitles: createdRecords.map((record) => record.fields['Item Title']),
+    driveBackfillUpdatedCount: driveBackfill.updatedCount,
+    driveBackfillRunDir: driveBackfill.runDir,
   });
 
   console.log(`Created ${createdRecords.length} sample combined listing row(s).`);
+  console.log(`Backfilled ${driveBackfill.updatedCount} sample combined listing row(s) with Drive-backed images.`);
   console.log(`Artifacts saved in ${runDir}`);
 }
 
@@ -741,7 +750,7 @@ function printHelp() {
   console.log('    Show existing sample rows in the linked combined listings table.');
   console.log('');
   console.log('  seed --confirm CREATE_COMBINED_LISTINGS_SAMPLES [--replace true]');
-  console.log('    Insert combined listings approval sample rows into the linked Airtable table.');
+  console.log('    Insert combined listings approval sample rows into the linked Airtable table and backfill Drive-backed image URLs.');
   console.log('');
   console.log('  cleanup --confirm DELETE_COMBINED_LISTINGS_SAMPLES');
   console.log('    Delete only rows created by this sample-data helper.');

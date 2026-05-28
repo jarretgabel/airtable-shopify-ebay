@@ -4,6 +4,7 @@ import { resolveSession } from '../providers/auth/service.js';
 import { requireSessionCsrf } from './csrf.js';
 import { HttpError } from './errors.js';
 import { hasFullAccessRole, type AppPage } from './appPages.js';
+import { requireSecret } from './secrets.js';
 
 interface RouteAccessRequirement {
   adminOnly?: boolean;
@@ -136,4 +137,17 @@ export async function requireRouteAccess(
   }
 
   return user;
+}
+
+export function requireWebhookSecret(providedSecret: string | undefined, secretName: string, service: string, code: string): void {
+  const expectedSecret = requireSecret(secretName);
+  const normalizedProvided = providedSecret?.trim() || '';
+
+  if (!normalizedProvided || normalizedProvided !== expectedSecret) {
+    throw new HttpError(403, 'Invalid webhook secret.', {
+      service,
+      code,
+      retryable: false,
+    });
+  }
 }

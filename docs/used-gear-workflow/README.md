@@ -6,6 +6,7 @@ This folder contains the current authoritative documentation for the used-gear w
 - `original-requirements.md` - approved scope and guardrails
 - `operator-guide.md` - current operator workflow and surface behavior
 - `ui-surface-map.md` - active pages, queues, and route ownership
+- `jotform-airtable-ingestion-plan.md` - implementation plan for moving JotForm intake into Airtable-backed workflow rows
 - `release-smoke-test-checklist.md` - current regression and smoke coverage
 - `data-model-and-approvals.md` - approved workflow data model and field rules
 - `schema-update-approval-guide.md` - process for future Airtable field approvals

@@ -46,8 +46,8 @@ test('archiveWorkflowImagesToGoogleDrive exchanges a refresh token for an access
 
     if (url === 'https://www.googleapis.com/drive/v3/files?fields=id,name,mimeType&supportsAllDrives=true' && method === 'POST') {
       const body = JSON.parse(bodyText ?? '{}') as { name?: string };
-      if (body.name === 'SKU-701') {
-        return Response.json({ id: 'sku-folder-701', name: 'SKU-701', mimeType: 'application/vnd.google-apps.folder' });
+      if (body.name === 'recWorkflow701') {
+        return Response.json({ id: 'record-folder-701', name: 'recWorkflow701', mimeType: 'application/vnd.google-apps.folder' });
       }
     }
 
@@ -60,7 +60,7 @@ test('archiveWorkflowImagesToGoogleDrive exchanges a refresh token for an access
 
   try {
     await archiveWorkflowImagesToGoogleDrive({
-      sku: 'SKU-701',
+      folderKey: 'recWorkflow701',
       stage: 'photos',
       original: {
         filename: 'rear.jpg',

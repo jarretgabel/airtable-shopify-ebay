@@ -45,6 +45,7 @@ Use this checklist to approve, reject, or revise the proposed Airtable/workflow 
 #### Workflow And Routing Fields
 - [x] Approve `Workflow Source`
 - [x] Approve `Submission Group ID`
+- [x] Approve `JotForm Submission ID`
 - [x] Approve `Pick Up ID`
 - [x] Approve `Trash Status`
 
@@ -150,6 +151,14 @@ These are proposed additions or formalized workflow fields for `tbl0K0nFQL64jQMx
 	- Sample values: `SG-20260507-001`, `SG-20260507-014`, `JF-103842`, `SUB-2026-05-07-ACME-01`.
 	- Rule: use only for items created from the same single intake submission. Do not repurpose it for later pickups, merges, or shipping batches.
 	- When to use it: use this when you need to answer "which rows came from the same original submission?"
+- `JotForm Submission ID`
+	- Purpose: store the exact external JotForm submission identity for webhook idempotency, audit, and replay-safe updates.
+	- Plain-language meaning: this is the source submission id that came from JotForm itself; it is not the same thing as the grouped internal `Submission Group ID` used to relate multiple sellable rows.
+	- Example: one JotForm submission creates three sellable rows. All three rows share one `Submission Group ID`, and all three rows also carry the same `JotForm Submission ID` so the app can trace them back to the one external submission.
+	- Suggested format: exact JotForm submission id as delivered by the JotForm API.
+	- Sample values: `6132456789012345678`, `6132456789012345689`.
+	- Rule: set at creation for `Workflow Source = JotForm` rows and do not mutate it later. Manual-entry rows should leave it blank.
+	- When to use it: use this when you need to answer "which exact JotForm submission created or last synced this workflow row?"
 - `Pick Up ID`
 	- Purpose: group manually processed or physically received items tied to the same pickup/arrival workflow.
 	- Plain-language meaning: if multiple rows were brought in, dropped off, or received together as one real-world handoff, they share the same `Pick Up ID`.
@@ -346,6 +355,7 @@ Rule summary:
 Do not store `Manual Entry Route` as a separate Airtable field. Treat it as an app-side choice made on the manual-entry page that determines the row's initial workflow state.
 
 - Manual entry sent to Lot 1 creates a row with `Workflow Source = Manual Entry` and initial `Workflow Status = Pending Review`.
+- JotForm webhook ingestion creates a row with `Workflow Source = JotForm` and initial `Workflow Status = Pending Review`.
 - Manual entry sent directly to Lot 2 creates a row with `Workflow Source = Manual Entry` and an initial accepted workflow status such as `Accepted - Awaiting Arrival`.
 - After creation, the workflow should rely on `Workflow Status`, not a separate stored route field, to determine where the item currently belongs.
 

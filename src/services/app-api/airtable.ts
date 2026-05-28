@@ -48,7 +48,6 @@ export interface AirtableMetadataField {
 export type AirtableDriveArchiveStage = 'intake' | 'testing' | 'photos';
 
 export interface AirtableAttachmentUploadDriveArchive {
-  sku: string;
   stage: AirtableDriveArchiveStage;
   originalFile: File;
 }
@@ -80,7 +79,6 @@ interface AirtableAttachmentUploadPayload {
   file: string;
   archiveOnly?: boolean;
   driveArchive?: {
-    sku: string;
     stage: AirtableDriveArchiveStage;
     original: AirtableAttachmentUploadPayload;
   };
@@ -387,7 +385,6 @@ export async function uploadConfiguredAttachment(
   if (options?.driveArchive) {
     const originalBase64 = await fileToBase64(options.driveArchive.originalFile);
     payload.driveArchive = {
-      sku: options.driveArchive.sku,
       stage: options.driveArchive.stage,
       original: toAttachmentPayload(options.driveArchive.originalFile, originalBase64),
     };

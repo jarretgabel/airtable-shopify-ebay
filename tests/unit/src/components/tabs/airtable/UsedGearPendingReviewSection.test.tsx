@@ -43,6 +43,7 @@ describe('UsedGearPendingReviewSection', () => {
           SKU: 'PEND-SINGLE',
           Make: 'McIntosh',
           Model: 'MC240',
+          'Workflow Source': 'Manual Entry',
           'Workflow Status': 'Pending Review',
           'Offer Amount': 500,
         },
@@ -63,8 +64,10 @@ describe('UsedGearPendingReviewSection', () => {
     expect(screen.getAllByRole('columnheader', { name: /Group/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('columnheader', { name: /Batch/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('columnheader', { name: /Item Actions/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('columnheader', { name: /Source/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/May 6, 2026/i).length).toBeGreaterThan(0);
+    expect(screen.getByText('Manual Entry')).toBeInTheDocument();
   });
 
   it('opens the dedicated item review page from a compact queue card', async () => {
@@ -230,7 +233,7 @@ describe('UsedGearPendingReviewSection', () => {
 
     expect(screen.getAllByText('PEND-SOURCE').length).toBeGreaterThan(0);
     expect(screen.queryByText('PEND-OTHER')).not.toBeInTheDocument();
-    expect(screen.queryByText('Manual Entry')).not.toBeInTheDocument();
+    expect(screen.getByText('Manual Entry')).toBeInTheDocument();
     expect(screen.queryByText('JotForm')).not.toBeInTheDocument();
   });
 

@@ -301,7 +301,6 @@ describe('photosForm', () => {
       {
         archiveOnly: true,
         driveArchive: {
-          sku: 'SKU-301',
           stage: 'photos',
           originalFile,
         },

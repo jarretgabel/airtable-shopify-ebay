@@ -9,6 +9,15 @@ interface JotFormApiResponse<T> {
   content: T;
 }
 
+export interface JotFormAnswer {
+  name: string;
+  order: string;
+  text: string;
+  type: string;
+  answer?: string | string[] | Record<string, string>;
+  prettyFormat?: string;
+}
+
 export interface JotFormForm {
   id: string;
   username: string;
@@ -35,7 +44,7 @@ export interface JotFormSubmission {
   new: '0' | '1';
   flag: '0' | '1';
   notes: string;
-  answers: Record<string, unknown>;
+  answers: Record<string, JotFormAnswer>;
 }
 
 interface JotFormRequestParams {
@@ -85,4 +94,8 @@ export function getFormSubmissions(
   params: JotFormRequestParams = {},
 ): Promise<JotFormSubmission[]> {
   return requestJotForm<JotFormSubmission[]>(`/form/${formId}/submissions`, params);
+}
+
+export function getSubmission(submissionId: string): Promise<JotFormSubmission> {
+  return requestJotForm<JotFormSubmission>(`/submission/${submissionId}`);
 }

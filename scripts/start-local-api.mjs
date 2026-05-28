@@ -59,6 +59,7 @@ const ROUTES = [
   ['POST', '/api/shopify/images', 'handlers/shopify/uploadImage.js', 'handler'],
   ['GET', '/api/jotform/forms', 'handlers/jotform/getForms.js', 'handler'],
   ['GET', '/api/jotform/forms/{formId}/submissions', 'handlers/jotform/getFormSubmissions.js', 'handler'],
+  ['POST', '/api/hooks/jotform/submissions/{formId}', 'handlers/jotform/ingestSubmissionWebhook.js', 'handler'],
   ['GET', '/api/airtable/listings', 'handlers/airtable/getListings.js', 'handler'],
   ['GET', '/api/airtable/configured-records', 'handlers/airtable/getConfiguredRecords.js', 'handler'],
   ['GET', '/api/airtable/configured-records/{source}/{recordId}', 'handlers/airtable/getConfiguredRecord.js', 'handler'],
@@ -122,6 +123,7 @@ function setAwsEnv() {
   const mergedEnv = getMergedEnv();
 
   process.env.JOTFORM_API_KEY = requireEnv(mergedEnv, 'VITE_JOTFORM_API_KEY');
+  process.env.JOTFORM_WEBHOOK_SECRET = getOptionalEnv(mergedEnv, 'JOTFORM_WEBHOOK_SECRET') || getOptionalEnv(mergedEnv, 'VITE_JOTFORM_WEBHOOK_SECRET');
   process.env.AIRTABLE_API_KEY = requireEnv(mergedEnv, 'VITE_AIRTABLE_API_KEY');
   process.env.AIRTABLE_BASE_ID = requireEnv(mergedEnv, 'VITE_AIRTABLE_BASE_ID');
   process.env.ALLOWED_AIRTABLE_TABLE_NAME = requireEnv(mergedEnv, 'VITE_AIRTABLE_TABLE_NAME');

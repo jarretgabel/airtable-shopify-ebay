@@ -1,3 +1,4 @@
+import { filterWorkflowImageMetadataByStage, parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ListingApprovalWorkflowProcessCard,
@@ -16,6 +17,7 @@ import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkf
 import { getUsedGearWorkflowPostPublishSnapshot } from '@/services/usedGearWorkflowLifecycle';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 import { buildUsedGearWorkflowTimeline } from '@/services/usedGearWorkflowTimeline';
+import type { AirtableRecord } from '@/types/airtable';
 
 interface InventoryRecordEditorPageProps {
   recordId: string;
@@ -76,6 +78,16 @@ function countFieldItems(value: unknown): string {
   }
 
   return value.length === 0 ? 'N/A' : `${value.length} item${value.length === 1 ? '' : 's'}`;
+}
+
+function countPhotographyImages(record: AirtableRecord): string {
+  const parsedMetadata = parseWorkflowImageMetadata(record.fields['Workflow Image Metadata JSON']);
+  const photographyImages = filterWorkflowImageMetadataByStage(parsedMetadata, 'photos');
+  if (photographyImages.length > 0) {
+    return `${photographyImages.length} item${photographyImages.length === 1 ? '' : 's'}`;
+  }
+
+  return countFieldItems(record.fields.Images);
 }
 
 function buildSnapshotWorkflowSummary(record: UsedGearOperationalRecordContext['record']): ListingApprovalWorkflowSummaryData {
@@ -268,7 +280,7 @@ export function InventoryRecordEditorPage({
                 fields={[
                   { label: 'Photography Cosmetic Notes', value: record.fields['Photography Cosmetic Notes'] },
                   { label: "Photo'd", value: record.fields["Photo'd"] },
-                  { label: 'Images', value: countFieldItems(record.fields.Images) },
+                  { label: 'Images', value: countPhotographyImages(record) },
                   { label: 'Additional Items', value: record.fields['Additional Items'] },
                 ]}
               />

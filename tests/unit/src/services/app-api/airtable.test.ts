@@ -474,7 +474,6 @@ describe('app-api airtable', () => {
     const result = await uploadConfiguredAttachment('used-gear-workflow', 'rec123', 'fld1zIzmZEciQECah', processedFile, {
       archiveOnly: true,
       driveArchive: {
-        sku: 'SKU-123',
         stage: 'testing',
         originalFile,
       },
@@ -486,7 +485,6 @@ describe('app-api airtable', () => {
       contentType: 'image/jpeg',
       archiveOnly: true,
       driveArchive: {
-        sku: 'SKU-123',
         stage: 'testing',
         original: {
           filename: 'testing-original.jpg',

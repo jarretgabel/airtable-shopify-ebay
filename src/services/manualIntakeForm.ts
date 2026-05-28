@@ -5,6 +5,11 @@ import {
   updateConfiguredRecord,
   uploadConfiguredAttachment,
 } from '@/services/app-api/airtable';
+import {
+  buildUsedGearIntakeBaseFields,
+  buildUsedGearWorkflowFields,
+  trimToUndefined,
+} from '../../aws/src/shared/contracts/usedGearIntakeFields';
 import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
 import { createManualIntakeFormDefaults, type ManualIntakeFormOptionFieldName, type ManualIntakeFormValues } from '@/components/tabs/manual-intake/manualIntakeFormSchema';
@@ -33,6 +38,8 @@ export type ManualIntakeRoute = 'lot-1' | 'lot-2-awaiting-arrival' | 'lot-2-awai
 export interface ManualIntakeFormLoadResult {
   source: ManualIntakeRecordSource;
   values: ManualIntakeFormValues;
+  workflowSource?: string;
+  jotFormSubmissionId?: string;
 }
 
 export interface ManualIntakeFormSubmitResult {
@@ -62,34 +69,9 @@ function dedupeOptions(values: string[]): string[] {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
 
-function trimToUndefined(value: string): string | undefined {
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
 function dateOrFallback(value: unknown, fallback: string): string {
   const normalizedValue = extractInventoryScalarValue(value);
   return normalizedValue ? normalizedValue.slice(0, 10) : fallback;
-}
-
-function arrayOrUndefined(value: string): string[] | undefined {
-  const trimmed = trimToUndefined(value);
-  return trimmed ? [trimmed] : undefined;
-}
-
-function singleValueAsArrayOrUndefined(value: string): string[] | undefined {
-  const trimmed = trimToUndefined(value);
-  return trimmed ? [trimmed] : undefined;
-}
-
-function compactFields(fields: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(fields).filter(([, value]) => {
-      if (value === undefined || value === null) return false;
-      if (Array.isArray(value)) return value.length > 0;
-      return true;
-    }),
-  );
 }
 
 async function uploadManualIntakeImages(recordId: string, files: File[]): Promise<void> {
@@ -122,6 +104,8 @@ export async function loadManualIntakeFormValues(recordId: string): Promise<Manu
 
     return {
       source,
+      workflowSource: extractInventoryScalarValue(record.fields['Workflow Source']),
+      jotFormSubmissionId: extractInventoryScalarValue(record.fields['JotForm Submission ID']),
       values: {
         ...defaults,
         arrivalDate: dateOrFallback(record.fields['Arrival Date'], defaults.arrivalDate),
@@ -216,51 +200,51 @@ export async function submitManualIntakeForm(
 
   assertQualificationGate(manualRoute, qualificationNotes);
 
-  const baseFields = compactFields({
-    'Arrival Date': trimToUndefined(values.arrivalDate),
-    'Pick Up #': trimToUndefined(values.pickUpNumber),
-    'Acquired From': trimToUndefined(values.acquiredFrom),
-    Cost: costValue ? Number.parseFloat(costValue) : undefined,
-    'Customer Cosmetic Notes': trimToUndefined(values.customerCosmeticNotes),
-    'Customer Functional Notes': trimToUndefined(values.customerFunctionalNotes),
-    'Customer Inclusion Notes': trimToUndefined(values.customerInclusionNotes),
-    'Customer Submitted Photos Notes': trimToUndefined(values.customerSubmittedPhotosNotes),
-    Status: statusValue,
-    Make: trimToUndefined(values.make),
-    Model: trimToUndefined(values.model),
-    'Component Type': singleValueAsArrayOrUndefined(values.componentType),
-    'Serial Number': trimToUndefined(values.serialNumber),
-    Voltage: trimToUndefined(values.voltage),
-    'Inventory Notes': trimToUndefined(values.inventoryNotes),
-    'Testing Cosmetic Notes': trimToUndefined(values.cosmeticConditionNotes),
-    'Original Box': arrayOrUndefined(values.originalBox),
-    Manual: arrayOrUndefined(values.manual),
-    Remote: arrayOrUndefined(values.remote),
-    'Power Cable': arrayOrUndefined(values.powerCable),
-    'Additional Items': trimToUndefined(values.additionalItems),
-    Weight: trimToUndefined(values.weight),
-    'Shipping Dims': trimToUndefined(values.shippingDims),
-    'Shipping Method': arrayOrUndefined(values.shippingMethod),
+  const baseFields = buildUsedGearIntakeBaseFields({
+    arrivalDate: values.arrivalDate,
+    pickUpNumber: values.pickUpNumber,
+    acquiredFrom: values.acquiredFrom,
+    cost: costValue,
+    customerCosmeticNotes: values.customerCosmeticNotes,
+    customerFunctionalNotes: values.customerFunctionalNotes,
+    customerInclusionNotes: values.customerInclusionNotes,
+    customerSubmittedPhotosNotes: values.customerSubmittedPhotosNotes,
+    status: statusValue,
+    make: values.make,
+    model: values.model,
+    componentType: values.componentType,
+    serialNumber: values.serialNumber,
+    voltage: values.voltage,
+    inventoryNotes: values.inventoryNotes,
+    cosmeticConditionNotes: values.cosmeticConditionNotes,
+    originalBox: values.originalBox,
+    manual: values.manual,
+    remote: values.remote,
+    powerCable: values.powerCable,
+    additionalItems: values.additionalItems,
+    weight: values.weight,
+    shippingDims: values.shippingDims,
+    shippingMethod: values.shippingMethod,
   });
 
-  const workflowFields = compactFields({
-    'Workflow Source': WORKFLOW_SOURCE_MANUAL_ENTRY,
-    'Workflow Status': resolveManualEntryWorkflowStatus(manualRoute),
-    'Submission Group ID': trimToUndefined(options.submissionGroupId ?? ''),
-    'Pick Up ID': trimToUndefined(options.pickUpId ?? ''),
-    'Qualification Notes': qualificationNotes || undefined,
-    'Qualification Complete': manualRoute === 'lot-1' ? false : true,
-    'Accepted By': manualRoute === 'lot-1' ? undefined : WORKFLOW_SOURCE_MANUAL_ENTRY,
-    'Accepted At': manualRoute === 'lot-1' ? undefined : new Date().toISOString(),
-    'Trash Status': null,
-    'Unqualified Reason': null,
+  const workflowFields = buildUsedGearWorkflowFields({
+    workflowSource: WORKFLOW_SOURCE_MANUAL_ENTRY,
+    workflowStatus: resolveManualEntryWorkflowStatus(manualRoute),
+    submissionGroupId: options.submissionGroupId ?? '',
+    pickUpId: options.pickUpId ?? '',
+    qualificationNotes,
+    qualificationComplete: manualRoute === 'lot-1' ? false : true,
+    acceptedBy: manualRoute === 'lot-1' ? undefined : WORKFLOW_SOURCE_MANUAL_ENTRY,
+    acceptedAt: manualRoute === 'lot-1' ? undefined : new Date().toISOString(),
+    trashStatus: null,
+    unqualifiedReason: null,
   });
 
   if (recordId) {
     try {
       const writeSource = options.recordSource ?? 'inventory-directory';
       const fieldsToUpdate = writeSource === 'used-gear-workflow'
-        ? compactFields({ ...baseFields, ...workflowFields })
+        ? { ...baseFields, ...workflowFields }
         : baseFields;
       const updatedRecord = await updateConfiguredRecord(
         writeSource,
@@ -297,7 +281,7 @@ export async function submitManualIntakeForm(
   try {
     const createdRecord = await createConfiguredRecord(
       'used-gear-workflow',
-      compactFields({ ...baseFields, ...workflowFields }),
+      { ...baseFields, ...workflowFields },
       { typecast: true },
     );
 

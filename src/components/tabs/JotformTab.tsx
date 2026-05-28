@@ -3,7 +3,7 @@ import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import type { JotformTabViewModel } from '@/app/appTabViewModels';
-import { formatAnswer } from '@/services/jotform';
+import { buildJotFormSubmissionUrl, formatAnswer } from '@/services/jotform';
 import { EmptySurface, ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
 
 interface JotformTabProps {
@@ -99,6 +99,7 @@ export function JotformTab({
                   .sort((a, b) => Number(a.order) - Number(b.order));
                 const previewAnswer = sortedAnswers[0];
                 const submittedAt = new Date(submission.created_at);
+                const submissionUrl = buildJotFormSubmissionUrl(submission.id);
 
                 return (
                   <li key={submission.id} className="border-b border-[var(--line)] last:border-b-0">
@@ -140,6 +141,16 @@ export function JotformTab({
                           Submitted {submittedAt.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
                           {submission.ip && ` · IP ${submission.ip}`}
                         </p>
+                        {submissionUrl ? (
+                          <a
+                            className="mt-3 inline-flex items-center rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                            href={submissionUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Open in JotForm
+                          </a>
+                        ) : null}
                       </div>
                     )}
                   </li>

@@ -16,7 +16,7 @@ interface AttachmentBody {
   file?: string;
   archiveOnly?: boolean;
   driveArchive?: {
-    sku?: string;
+    folderKey?: string;
     stage?: WorkflowImageArchiveStage;
     original?: {
       filename?: string;
@@ -39,7 +39,7 @@ function validateSource(value: string): AirtableConfiguredAttachmentSource {
 }
 
 function normalizeDriveArchive(body: AttachmentBody): {
-  sku: string;
+  folderKey: string;
   stage: WorkflowImageArchiveStage;
   original: { filename: string; contentType: string; file: string };
   processed: { filename: string; contentType: string; file: string };
@@ -48,14 +48,14 @@ function normalizeDriveArchive(body: AttachmentBody): {
     return null;
   }
 
-  const sku = body.driveArchive.sku?.trim();
+  const folderKey = body.driveArchive.folderKey?.trim();
   const stage = body.driveArchive.stage;
   const originalFilename = body.driveArchive.original?.filename?.trim();
   const originalFile = body.driveArchive.original?.file?.trim();
   const processedFilename = body.filename?.trim();
   const processedFile = body.file?.trim();
 
-  if (!sku || (stage !== 'intake' && stage !== 'testing' && stage !== 'photos') || !originalFilename || !originalFile || !processedFilename || !processedFile) {
+  if (!folderKey || (stage !== 'intake' && stage !== 'testing' && stage !== 'photos') || !originalFilename || !originalFile || !processedFilename || !processedFile) {
     throw new HttpError(400, 'Invalid Google Drive archive payload', {
       service: 'google-drive',
       code: 'GOOGLE_DRIVE_ARCHIVE_PAYLOAD_INVALID',
@@ -64,7 +64,7 @@ function normalizeDriveArchive(body: AttachmentBody): {
   }
 
   return {
-    sku,
+    folderKey,
     stage,
     original: {
       filename: originalFilename,
@@ -97,7 +97,15 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       }, { origin });
     }
 
-    const driveArchive = normalizeDriveArchive(body);
+    const driveArchive = body.driveArchive
+      ? normalizeDriveArchive({
+          ...body,
+          driveArchive: {
+            ...body.driveArchive,
+            folderKey: body.driveArchive.folderKey?.trim() || recordId,
+          },
+        })
+      : null;
     if (body.archiveOnly && !driveArchive) {
       return jsonError(400, {
         message: 'archiveOnly requires driveArchive',
