@@ -76,7 +76,7 @@ describe('InventoryRecordEditor', () => {
             'Ebay Categories': ['3276'],
             'Testing Notes': 'Passed playback test.',
             'Photography Cosmetic Notes': 'Capture top-panel scratches.',
-            'Workflow Status': 'Testing and Photography In Progress',
+            'Workflow Status': 'Testing In Progress',
           },
         }}
         editableFields={[
@@ -84,14 +84,14 @@ describe('InventoryRecordEditor', () => {
           { id: 'fld-ebay-categories', name: 'Ebay Categories', type: 'multipleSelects', editable: true, choices: [] },
           { id: 'fld-testing-notes', name: 'Testing Notes', type: 'multilineText', editable: true, choices: [] },
           { id: 'fld-photography-notes', name: 'Photography Cosmetic Notes', type: 'multilineText', editable: true, choices: [] },
-          { id: 'fld-workflow-status', name: 'Workflow Status', type: 'singleSelect', editable: true, choices: ['Testing and Photography In Progress'] },
+          { id: 'fld-workflow-status', name: 'Workflow Status', type: 'singleSelect', editable: true, choices: ['Testing In Progress'] },
         ]}
         draftValues={{
           Status: 'Ready to Test',
           'Ebay Categories': ['3276'],
           'Testing Notes': 'Passed playback test.',
           'Photography Cosmetic Notes': 'Capture top-panel scratches.',
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Testing In Progress',
         }}
         dirtyFieldNames={[]}
         loading={false}

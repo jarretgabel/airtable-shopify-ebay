@@ -72,6 +72,10 @@ function getPreferredTimelineEntryId(workflowStatus: string): UsedGearWorkflowTi
     case 'Accepted - Arrived, Awaiting SKU':
     case 'Accepted - Arrived, Awaiting Missing Item':
       return 'processing';
+    case 'Testing In Progress':
+      return 'testing';
+    case 'Photography In Progress':
+      return 'photography';
     case 'Awaiting Pre-Listing Review':
       return 'pre-listing';
     case 'Approved for Publish':
@@ -91,15 +95,6 @@ function getPreferredTimelineEntryId(workflowStatus: string): UsedGearWorkflowTi
 }
 
 function getActiveTimelineIndex(timeline: UsedGearWorkflowTimelineEntry[], workflowStatus: string): number {
-  if (workflowStatus === 'Testing and Photography In Progress') {
-    const testingOrPhotographyIndex = timeline.findIndex((entry) =>
-      (entry.id === 'testing' || entry.id === 'photography') && entry.status === 'pending',
-    );
-    if (testingOrPhotographyIndex >= 0) {
-      return testingOrPhotographyIndex;
-    }
-  }
-
   const preferredEntryId = getPreferredTimelineEntryId(workflowStatus);
   if (preferredEntryId) {
     const preferredIndex = timeline.findIndex((entry) => entry.id === preferredEntryId);
@@ -210,13 +205,22 @@ function getWorkflowStatusPresentation(status: string): WorkflowStatusPresentati
         nextTeamLabel: 'Resolve missing item',
         marketplaceLabels: [],
       };
-    case 'Testing and Photography In Progress':
+    case 'Testing In Progress':
       return {
         badgeClassName: 'border-sky-400/35 bg-sky-500/15 text-sky-100',
         progressClassName: 'bg-gradient-to-r from-sky-500 via-cyan-400 to-teal-300',
-        statusLabel: 'Technical review in flight',
-        statusDescription: 'Testing and photography are the active checkpoints. Listing prep should wait until both signoffs are complete.',
-        nextTeamLabel: 'Finish testing and photos',
+        statusLabel: 'Testing in flight',
+        statusDescription: 'Testing is the active checkpoint. Photography should wait until the testing signoff is complete.',
+        nextTeamLabel: 'Finish testing',
+        marketplaceLabels: [],
+      };
+    case 'Photography In Progress':
+      return {
+        badgeClassName: 'border-sky-400/35 bg-sky-500/15 text-sky-100',
+        progressClassName: 'bg-gradient-to-r from-sky-500 via-cyan-400 to-teal-300',
+        statusLabel: 'Photography in flight',
+        statusDescription: 'Testing is complete and photography is the active checkpoint before listing QA can begin.',
+        nextTeamLabel: 'Finish photography',
         marketplaceLabels: [],
       };
     case 'Awaiting Pre-Listing Review':
@@ -352,11 +356,11 @@ function getTimelineCompletionGuidance(entryId: UsedGearWorkflowTimelineEntry['i
     case 'accepted':
       return 'Use "Open Intake" to update the intake record, then click "Complete Processing" when the item is ready to move forward.';
     case 'processing':
-      return 'Finish the intake details in "Open Intake", then click "Complete Processing" to send the item to testing and photography.';
+      return 'Finish the intake details in "Open Intake", then click "Complete Processing" to send the item to testing.';
     case 'testing':
-      return 'Use "Open Testing" to capture the testing signoff for this item.';
+      return 'Use "Open Testing" to capture the testing signoff for this item before it moves to photography.';
     case 'photography':
-      return 'Use "Open Photos" to capture the photography signoff for this item.';
+      return 'Use "Open Photos" to capture the photography signoff for this item after testing is complete.';
     case 'pre-listing':
       return 'Review the listing in "Open Listings Approval", then click "Approve For Publish" when pricing and content are ready.';
     case 'approved':

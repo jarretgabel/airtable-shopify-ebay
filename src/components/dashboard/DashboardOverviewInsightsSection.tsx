@@ -96,12 +96,14 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
     embedded,
   } = props;
   const workflowUnavailableReason = workflowAnalytics.error;
+  const testingStageCount = workflowAnalytics.statusCounts['Testing In Progress'] ?? 0;
+  const photographyStageCount = workflowAnalytics.statusCounts['Photography In Progress'] ?? 0;
+  const downstreamStageCount = testingStageCount + photographyStageCount;
   const workflowIntakeCount = workflowAnalytics.pendingReviewCount
     + workflowAnalytics.statusCounts['Accepted - Awaiting Arrival']
     + workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting SKU']
     + workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting Missing Item']
-    + workflowAnalytics.statusCounts['Testing and Photography In Progress'];
-  const sharedStageCount = workflowAnalytics.statusCounts['Testing and Photography In Progress'];
+    + downstreamStageCount;
   const preListingCount = workflowAnalytics.statusCounts['Awaiting Pre-Listing Review'];
   const approvedForPublishCount = workflowAnalytics.statusCounts['Approved for Publish'];
   const listingPhaseCount = preListingCount + approvedForPublishCount;
@@ -123,7 +125,7 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : workflowIntakeCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{workflowAnalytics.pendingReviewCount}</strong> pending &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> in shared stage</>}
+          : <><strong className="font-semibold text-[var(--accent)]">{workflowAnalytics.pendingReviewCount}</strong> pending &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{downstreamStageCount}</strong> in testing or photos</>}
         trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? `${progressAlertCount} aging` : `${awaitingArrivalCount} awaiting arrival`}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : progressAlertCount > 0 ? 'text-amber-400' : 'text-emerald-300'}
         unavailableReason={workflowUnavailableReason}
@@ -177,12 +179,12 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         key="testing-queue"
         borderToneClass="border-t-sky-500"
         eyebrow="Testing Queue"
-        value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : sharedStageCount.toLocaleString()}
+        value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : testingStageCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> in stage &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{progressAlertCount}</strong> aging</>}
-        trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? `${progressAlertCount} aging` : sharedStageCount > 0 ? 'Active' : 'Clear'}
-        trendClass={workflowUnavailableReason ? 'text-amber-300' : sharedStageCount > 0 ? 'text-blue-300' : 'text-emerald-300'}
+          : <><strong className="font-semibold text-[var(--accent)]">{testingStageCount}</strong> waiting on testing &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{progressAlertCount}</strong> aging</>}
+        trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? `${progressAlertCount} aging` : testingStageCount > 0 ? 'Active' : 'Clear'}
+        trendClass={workflowUnavailableReason ? 'text-amber-300' : testingStageCount > 0 ? 'text-blue-300' : 'text-emerald-300'}
         unavailableReason={workflowUnavailableReason}
         onClick={() => onSelectTab('testing-queue')}
       />,
@@ -199,7 +201,7 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : progressAlertCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> active in stage &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{awaitingSkuCount + awaitingMissingCount}</strong> blocked in processing</>}
+          : <><strong className="font-semibold text-[var(--accent)]">{testingStageCount}</strong> waiting on testing &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{awaitingSkuCount + awaitingMissingCount}</strong> blocked in processing</>}
         trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? 'Follow up needed' : 'On pace'}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : progressAlertCount > 0 ? 'text-amber-400' : 'text-emerald-300'}
         unavailableReason={workflowUnavailableReason}
@@ -215,12 +217,12 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         key="photography-queue"
         borderToneClass="border-t-orange-500"
         eyebrow="Photography Queue"
-        value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : sharedStageCount.toLocaleString()}
+        value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : photographyStageCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> in stage &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{progressAlertCount}</strong> aging</>}
-        trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? `${progressAlertCount} aging` : sharedStageCount > 0 ? 'Active' : 'Clear'}
-        trendClass={workflowUnavailableReason ? 'text-amber-300' : sharedStageCount > 0 ? 'text-orange-300' : 'text-emerald-300'}
+          : <><strong className="font-semibold text-[var(--accent)]">{photographyStageCount}</strong> waiting on photos &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{progressAlertCount}</strong> aging</>}
+        trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? `${progressAlertCount} aging` : photographyStageCount > 0 ? 'Active' : 'Clear'}
+        trendClass={workflowUnavailableReason ? 'text-amber-300' : photographyStageCount > 0 ? 'text-orange-300' : 'text-emerald-300'}
         unavailableReason={workflowUnavailableReason}
         onClick={() => onSelectTab('photography-queue')}
       />,
@@ -237,7 +239,7 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : progressAlertCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{sharedStageCount}</strong> active in stage &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvedForPublishCount}</strong> already in Listings</>}
+          : <><strong className="font-semibold text-[var(--accent)]">{photographyStageCount}</strong> waiting on photos &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvedForPublishCount}</strong> already in Listings</>}
         trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? 'Follow up needed' : 'Waiting on photo sets'}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : progressAlertCount > 0 ? 'text-orange-300' : 'text-[var(--muted)]'}
         unavailableReason={workflowUnavailableReason}

@@ -29,17 +29,17 @@ export const USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS = [
   {
     key: 'processing',
     label: 'Processing and holding queue',
-    description: 'Accepted rows waiting across arrival, processing, and shared stage work before Listings.',
+    description: 'Accepted rows waiting across arrival, processing, and downstream specialist stages before Listings.',
   },
   {
     key: 'testing',
     label: 'Testing queue',
-    description: 'Rows still waiting for testing signoff in the shared stage.',
+    description: 'Rows currently in the testing stage before photography can begin.',
   },
   {
     key: 'photography',
     label: 'Photography queue',
-    description: 'Rows still waiting for photography signoff in the shared stage.',
+    description: 'Rows that cleared testing and are now waiting for photography signoff.',
   },
   {
     key: 'preListingReview',

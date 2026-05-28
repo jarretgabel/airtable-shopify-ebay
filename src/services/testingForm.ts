@@ -10,8 +10,6 @@ import { createTestingFormDefaults, type TestingFormOptionFieldName, type Testin
 import { resolveCurrentActorName } from '@/services/currentUserAudit';
 import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
 import {
-  buildUsedGearConcurrentStageSignoffs,
-  canEnterAwaitingPreListingReview,
   getUsedGearWorkflowStatus,
   isAcceptedUsedGearWorkflowStatus,
   USED_GEAR_WORKFLOW_STATUS_FIELD,
@@ -86,29 +84,14 @@ function buildWorkflowTestingFields(record: AirtableRecord, actorName: string | 
   });
   const currentStatus = getUsedGearWorkflowStatus(record.fields);
 
-  if (currentStatus !== 'Testing and Photography In Progress') {
-    return signoffFields;
-  }
-
-  const nextSignoffs = buildUsedGearConcurrentStageSignoffs({
-    ...record.fields,
-    ...signoffFields,
-  });
-
-  if (canEnterAwaitingPreListingReview(nextSignoffs)) {
+  if (currentStatus === 'Testing In Progress') {
     return {
       ...signoffFields,
-      [USED_GEAR_WORKFLOW_STATUS_FIELD]: 'Awaiting Pre-Listing Review',
-      'Awaiting Pre-Listing Review At': typeof record.fields['Awaiting Pre-Listing Review At'] === 'string' && record.fields['Awaiting Pre-Listing Review At'].trim().length > 0
-        ? record.fields['Awaiting Pre-Listing Review At']
-        : testedAt,
+      [USED_GEAR_WORKFLOW_STATUS_FIELD]: 'Photography In Progress',
     };
   }
 
-  return {
-    ...signoffFields,
-    [USED_GEAR_WORKFLOW_STATUS_FIELD]: 'Testing and Photography In Progress',
-  };
+  return signoffFields;
 }
 
 function dedupeOptions(values: string[]): string[] {

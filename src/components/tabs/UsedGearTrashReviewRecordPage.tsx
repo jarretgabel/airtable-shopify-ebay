@@ -160,9 +160,9 @@ export function UsedGearTrashReviewRecordPage({
 
     try {
       await restoreTrashRecord(record.id);
-      navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-pending-review' });
+      navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-parking-lot' });
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to restore this trash row to Parking Lot 1.');
+      setError(actionError instanceof Error ? actionError.message : 'Unable to restore this trash row to Parking Lot.');
       setSaving(false);
     }
   };
@@ -180,9 +180,9 @@ export function UsedGearTrashReviewRecordPage({
         acceptedStatus: requalifyStatus,
         qualificationNotes: requalifyNotes,
       });
-      navigate({ pathname: '/parking-lot-2', search: location.search });
+      navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-parking-lot' });
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to re-qualify this trash row into Lot 2.');
+      setError(actionError instanceof Error ? actionError.message : 'Unable to re-qualify this trash row into Parking Lot.');
       setSaving(false);
     }
   };
@@ -194,7 +194,7 @@ export function UsedGearTrashReviewRecordPage({
 
     const confirmed = await requestConfirmation({
       title: 'Delete trash record?',
-      message: 'This permanently removes the record from the workflow and it will not return to Trash Review, Parking Lot 1, or Parking Lot 2.',
+      message: 'This permanently removes the record from the workflow and it will not return to Trash Review or Parking Lot.',
       confirmLabel: 'Delete Permanently',
       cancelLabel: 'Keep Record',
       tone: 'danger',
@@ -244,7 +244,7 @@ export function UsedGearTrashReviewRecordPage({
         ) : null}
         <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.15fr)]">
           <section id="restore" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
-            <AppSectionTitle title="Restore To Parking Lot 1" titleClassName="text-lg" className="pt-0" />
+            <AppSectionTitle title="Restore To Parking Lot" titleClassName="text-lg" className="pt-0" />
             <button
               type="button"
               className="mt-3 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
@@ -253,15 +253,15 @@ export function UsedGearTrashReviewRecordPage({
               }}
               disabled={saving}
             >
-              {saving ? 'Saving...' : 'Restore To Lot 1'}
+              {saving ? 'Saving...' : 'Restore To Parking Lot'}
             </button>
           </section>
 
           <section id="requalify" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
-            <AppSectionTitle title="Re-qualify Into Lot 2" titleClassName="text-lg" className="pt-0" />
+            <AppSectionTitle title="Re-qualify Into Parking Lot" titleClassName="text-lg" className="pt-0" />
             <div className="mt-3 grid gap-3">
               <label className="block">
-                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Lot 2 Route</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Parking Lot Status</span>
                 <select
                   className={inputClassName}
                   value={requalifyStatus}
@@ -279,7 +279,7 @@ export function UsedGearTrashReviewRecordPage({
                   rows={5}
                   value={requalifyNotes}
                   onChange={(event) => setRequalifyNotes(event.currentTarget.value)}
-                  placeholder="Required before re-qualifying this item into Lot 2"
+                  placeholder="Required before re-qualifying this item into Parking Lot"
                 />
               </label>
               <QualificationTemplateRow
@@ -288,7 +288,7 @@ export function UsedGearTrashReviewRecordPage({
                 }}
               />
               {!hasPricingPath ? (
-                <p className="m-0 text-sm text-amber-200">Offer amount, paid amount, or confirmed grand total is still required before this row can be re-qualified into Lot 2.</p>
+                <p className="m-0 text-sm text-amber-200">Offer amount, paid amount, or confirmed grand total is still required before this row can be re-qualified into Parking Lot.</p>
               ) : null}
               <button
                 type="button"
@@ -298,7 +298,7 @@ export function UsedGearTrashReviewRecordPage({
                 }}
                 disabled={saving || requalifyNotes.trim().length === 0 || !hasPricingPath}
               >
-                {saving ? 'Saving...' : 'Re-qualify Into Lot 2'}
+                {saving ? 'Saving...' : 'Re-qualify Into Parking Lot'}
               </button>
             </div>
           </section>
@@ -316,7 +316,7 @@ export function UsedGearTrashReviewRecordPage({
 
         <section id="delete" className="rounded-2xl border border-rose-400/25 bg-rose-500/10 p-5 scroll-mt-28">
           <AppSectionTitle title="Delete From Workflow" titleClassName="text-lg text-white" className="border-b-rose-300/20 pt-0" />
-          <p className="mt-2 text-sm leading-6 text-rose-100/80">Delete only when the row should leave the workflow entirely and should not return to Parking Lot 1 or Lot 2.</p>
+          <p className="mt-2 text-sm leading-6 text-rose-100/80">Delete only when the row should leave the workflow entirely and should not return to Trash Review or Parking Lot.</p>
           <button
             type="button"
             className="mt-4 inline-flex items-center justify-center rounded-xl border border-rose-300/35 bg-rose-500/15 px-4 py-2.5 text-sm font-semibold text-rose-50 transition hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"

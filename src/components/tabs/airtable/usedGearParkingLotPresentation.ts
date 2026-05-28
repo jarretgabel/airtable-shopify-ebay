@@ -1,20 +1,20 @@
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import type { AirtableRecord } from '@/types/airtable';
 
-function stripLotTwoStatusSuffixes(value: string): string {
+function stripParkingLotStatusSuffixes(value: string): string {
   return value
     .replace(/\s+(awaiting sku|awaiting arrival|awaiting missing item)$/i, '')
     .trim();
 }
 
-export function getLotTwoItemTitle(record: AirtableRecord): string {
+export function getParkingLotItemTitle(record: AirtableRecord): string {
   const make = displayInventoryValue(record.fields.Make);
-  const model = stripLotTwoStatusSuffixes(displayInventoryValue(record.fields.Model));
+  const model = stripParkingLotStatusSuffixes(displayInventoryValue(record.fields.Model));
 
   return [make, model].filter(Boolean).join(' · ');
 }
 
-export function getLotTwoStatusLabel(record: AirtableRecord): string {
+export function getParkingLotStatusLabel(record: AirtableRecord): string {
   const rawStatus = displayInventoryValue(record.fields['Workflow Status']) || 'Unknown';
 
   if (rawStatus.startsWith('Accepted - ')) {

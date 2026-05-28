@@ -127,6 +127,8 @@ function setAwsEnv() {
   process.env.ALLOWED_AIRTABLE_TABLE_NAME = requireEnv(mergedEnv, 'VITE_AIRTABLE_TABLE_NAME');
   process.env.AIRTABLE_USERS_TABLE_REF = getOptionalEnv(mergedEnv, 'VITE_AIRTABLE_USERS_TABLE_REF');
   process.env.AIRTABLE_USERS_TABLE_NAME = getOptionalEnv(mergedEnv, 'VITE_AIRTABLE_USERS_TABLE_NAME');
+  process.env.AIRTABLE_USER_GUIDE_TABLE_REF = getOptionalEnv(mergedEnv, 'VITE_AIRTABLE_USER_GUIDE_TABLE_REF');
+  process.env.AIRTABLE_USER_GUIDE_TABLE_NAME = getOptionalEnv(mergedEnv, 'VITE_AIRTABLE_USER_GUIDE_TABLE_NAME');
   process.env.AIRTABLE_APPROVAL_TABLE_REF = getOptionalEnv(mergedEnv, 'VITE_AIRTABLE_APPROVAL_TABLE_REF');
   process.env.AIRTABLE_APPROVAL_TABLE_NAME = getOptionalEnv(mergedEnv, 'VITE_AIRTABLE_APPROVAL_TABLE_NAME');
   process.env.AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF = getOptionalEnv(mergedEnv, 'VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF');

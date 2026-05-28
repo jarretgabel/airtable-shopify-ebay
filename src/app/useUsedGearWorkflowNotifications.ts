@@ -44,13 +44,13 @@ function buildNotificationCopy(eventKey: UsedGearWorkflowNotificationEvent, coun
       return {
         tone: 'warning' as const,
         title: 'Used gear pending review queue',
-        message: `${pluralize(count, 'row')} ${count === 1 ? 'is' : 'are'} awaiting intake review in Parking Lot 1.`,
+        message: `${pluralize(count, 'row')} ${count === 1 ? 'is' : 'are'} awaiting intake review in Parking Lot.`,
       };
     case 'processing':
       return {
         tone: 'info' as const,
         title: 'Used gear processing queue',
-        message: `${pluralize(count, 'row')} ${count === 1 ? 'is' : 'are'} waiting in Parking Lot 2 for arrival-stage handling.`,
+        message: `${pluralize(count, 'row')} ${count === 1 ? 'is' : 'are'} waiting in Parking Lot for arrival-stage handling.`,
       };
     case 'testing':
       return {
@@ -122,15 +122,15 @@ function buildNotificationAction(
 
   if (eventKey === 'pendingReview') {
     return {
-      actionLabel: 'Open Parking Lot 1',
+      actionLabel: 'Open Parking Lot',
       onAction: () => navigateToTab('parking-lot-1'),
     };
   }
 
   if (eventKey === 'processing') {
     return {
-      actionLabel: 'Open Parking Lot 2',
-      onAction: () => navigateToTab('parking-lot-2'),
+      actionLabel: 'Open Parking Lot',
+      onAction: () => navigateToTab('parking-lot-1'),
     };
   }
 
@@ -174,7 +174,6 @@ export function useUsedGearWorkflowNotifications({
   const upsertByKey = useNotificationStore((state) => state.upsertByKey);
   const dismissByKey = useNotificationStore((state) => state.dismissByKey);
   const canAccessWorkflowSurfaces = canAccessPage('parking-lot-1')
-    || canAccessPage('parking-lot-2')
     || canAccessPage('inventory')
     || canAccessPage('testing-queue')
     || canAccessPage('photography-queue')

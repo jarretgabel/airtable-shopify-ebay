@@ -54,6 +54,11 @@ describe('useAppRouteState', () => {
     expect(state.activeTab).toBe('workflow-guide');
   });
 
+  it('maps the workflow guide editor route', () => {
+    const state = useAppRouteState(locationFor('/workflow-guide/edit'), ['dashboard', 'workflow-guide', 'workflow-guide-editor']);
+    expect(state.activeTab).toBe('workflow-guide-editor');
+  });
+
   it('maps the post-publish route', () => {
     const state = useAppRouteState(locationFor('/workflow/post-publish'), ['dashboard', 'post-publish']);
     expect(state.activeTab).toBe('post-publish');
@@ -82,16 +87,16 @@ describe('useAppRouteState', () => {
     expect(state.jotformReviewRecordId).toBe('rec pending');
   });
 
-  it('maps Parking Lot 2 group handoff routes and decodes id', () => {
-    const state = useAppRouteState(locationFor('/parking-lot-2/group/pickup%20set'), ['dashboard', 'parking-lot-2']);
-    expect(state.activeTab).toBe('parking-lot-2');
-    expect(state.lotTwoReviewGroupId).toBe('pickup set');
+  it('maps Parking Lot arrival-stage group routes and decodes id', () => {
+    const state = useAppRouteState(locationFor('/parking-lot-1/arrival/group/pickup%20set'), ['dashboard', 'parking-lot-1']);
+    expect(state.activeTab).toBe('parking-lot-1');
+    expect(state.parkingLotArrivalGroupId).toBe('pickup set');
   });
 
-  it('maps Parking Lot 2 review record routes and decodes id', () => {
-    const state = useAppRouteState(locationFor('/parking-lot-2/rec%20lot-two'), ['dashboard', 'parking-lot-2']);
-    expect(state.activeTab).toBe('parking-lot-2');
-    expect(state.lotTwoReviewRecordId).toBe('rec lot-two');
+  it('maps Parking Lot arrival-stage record routes and decodes id', () => {
+    const state = useAppRouteState(locationFor('/parking-lot-1/arrival/rec%20lot-two'), ['dashboard', 'parking-lot-1']);
+    expect(state.activeTab).toBe('parking-lot-1');
+    expect(state.parkingLotArrivalRecordId).toBe('rec lot-two');
   });
 
   it('maps testing deep links with record ids', () => {

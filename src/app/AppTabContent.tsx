@@ -15,6 +15,7 @@ import { ErrorSurface } from '@/components/app/StateSurfaces';
 const DashboardTab = lazy(async () => ({ default: (await import('@/components/DashboardTab')).DashboardTab }));
 const ImageLab = lazy(async () => ({ default: (await import('@/components/ImageLab')).ImageLab }));
 const WorkflowGuideTab = lazy(async () => ({ default: (await import('@/components/tabs/WorkflowGuideTab')).WorkflowGuideTab }));
+const WorkflowGuideEditorTab = lazy(async () => ({ default: (await import('@/components/tabs/WorkflowGuideEditorTab')).WorkflowGuideEditorTab }));
 const CombinedListingsApprovalTab = lazy(async () => ({ default: (await import('@/components/approval/CombinedListingsApprovalTab')).CombinedListingsApprovalTab }));
 const EbayListingsDirectoryTab = lazy(async () => ({ default: (await import('@/components/approval/EbayListingsDirectoryTab')).EbayListingsDirectoryTab }));
 const EbaySnapshotRecordPage = lazy(async () => ({ default: (await import('@/components/approval/EbaySnapshotRecordPage')).EbaySnapshotRecordPage }));
@@ -34,9 +35,8 @@ const MarketTab = lazy(async () => ({ default: (await import('@/components/tabs/
 const PhotosFormTab = lazy(async () => ({ default: (await import('@/components/tabs/PhotosFormTab')).PhotosFormTab }));
 const TestingFormTab = lazy(async () => ({ default: (await import('@/components/tabs/TestingFormTab')).TestingFormTab }));
 const UsedGearManualIntakePage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearManualIntakePage')).UsedGearManualIntakePage }));
-const UsedGearLotTwoGroupPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoGroupPage')).UsedGearLotTwoGroupPage }));
-const UsedGearLotTwoRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoRecordPage')).UsedGearLotTwoRecordPage }));
-const UsedGearLotTwoTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearLotTwoTab')).UsedGearLotTwoTab }));
+const UsedGearParkingLotArrivalGroupPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearParkingLotArrivalGroupPage')).UsedGearParkingLotArrivalGroupPage }));
+const UsedGearParkingLotArrivalRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearParkingLotArrivalRecordPage')).UsedGearParkingLotArrivalRecordPage }));
 const UsedGearTrashReviewGroupPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashReviewGroupPage')).UsedGearTrashReviewGroupPage }));
 const UsedGearTrashReviewRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashReviewRecordPage')).UsedGearTrashReviewRecordPage }));
 const UsedGearTrashTab = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashTab')).UsedGearTrashTab }));
@@ -178,6 +178,8 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
       return 'dashboard';
     case 'workflow-guide':
       return 'user guide';
+    case 'workflow-guide-editor':
+      return 'user guide admin';
     case 'inventory':
       return 'inventory';
     case 'shopify':
@@ -185,11 +187,9 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
     case 'ebay':
       return 'eBay';
     case 'parking-lot-1':
-      return 'Parking Lot 1';
+      return 'Parking Lot';
     case 'jotform':
       return 'JotForm';
-    case 'parking-lot-2':
-      return 'Parking Lot 2';
     case 'trash-review':
       return 'Trash Review';
     case 'testing-queue':
@@ -234,8 +234,8 @@ export function AppTabContent({
   manualIntakeMode,
   jotformReviewGroupId,
   jotformReviewRecordId,
-  lotTwoReviewGroupId,
-  lotTwoReviewRecordId,
+  parkingLotArrivalGroupId,
+  parkingLotArrivalRecordId,
   trashReviewGroupId,
   trashReviewRecordId,
   manualIntakeRecordId,
@@ -337,8 +337,8 @@ export function AppTabContent({
     manualIntakeMode,
     jotformReviewGroupId,
     jotformReviewRecordId,
-    lotTwoReviewGroupId,
-    lotTwoReviewRecordId,
+    parkingLotArrivalGroupId,
+    parkingLotArrivalRecordId,
     trashReviewGroupId,
     trashReviewRecordId,
     manualIntakeRecordId,
@@ -355,8 +355,8 @@ export function AppTabContent({
     || deferredRouteState.manualIntakeRecordId !== manualIntakeRecordId
     || deferredRouteState.jotformReviewGroupId !== jotformReviewGroupId
     || deferredRouteState.jotformReviewRecordId !== jotformReviewRecordId
-    || deferredRouteState.lotTwoReviewGroupId !== lotTwoReviewGroupId
-    || deferredRouteState.lotTwoReviewRecordId !== lotTwoReviewRecordId
+    || deferredRouteState.parkingLotArrivalGroupId !== parkingLotArrivalGroupId
+    || deferredRouteState.parkingLotArrivalRecordId !== parkingLotArrivalRecordId
     || deferredRouteState.trashReviewGroupId !== trashReviewGroupId
     || deferredRouteState.trashReviewRecordId !== trashReviewRecordId
     || deferredRouteState.testingRecordId !== testingRecordId
@@ -528,6 +528,8 @@ export function AppTabContent({
         return <DashboardTab viewModel={dashboardViewModel} />;
       case 'workflow-guide':
         return <WorkflowGuideTab currentUserRole={currentUserRole} currentUserName={currentUserName} accessiblePages={accessiblePages} />;
+      case 'workflow-guide-editor':
+        return <WorkflowGuideEditorTab currentUserRole={currentUserRole} />;
       case 'inventory':
         if (deferredRouteState.inventoryPriceEditorRecordId) {
           return (
@@ -632,6 +634,26 @@ export function AppTabContent({
         }
         return <PhotosFormTab recordId={deferredRouteState.photosRecordId} onBackToDirectory={() => navigateToTab('photography-queue')} />;
       case 'parking-lot-1':
+        if (deferredRouteState.parkingLotArrivalGroupId) {
+          return (
+            <UsedGearParkingLotArrivalGroupPage
+              currentUserName={currentUserName}
+              groupId={deferredRouteState.parkingLotArrivalGroupId}
+              onBackToParkingLot={() => navigateToTab('parking-lot-1')}
+              onOpenTrashReview={() => navigateToTab('trash-review')}
+              onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
+            />
+          );
+        }
+        if (deferredRouteState.parkingLotArrivalRecordId) {
+          return (
+            <UsedGearParkingLotArrivalRecordPage
+              currentUserName={currentUserName}
+              recordId={deferredRouteState.parkingLotArrivalRecordId}
+              onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
+            />
+          );
+        }
         if (deferredRouteState.jotformReviewGroupId) {
           return (
             <UsedGearPendingReviewGroupPage
@@ -662,33 +684,6 @@ export function AppTabContent({
           return <FeatureUnavailableTab title="JotForm unavailable" message={runtimeFeatures.jotform.message} />;
         }
         return <JotformTab viewModel={jotformViewModel} />;
-      case 'parking-lot-2':
-        if (deferredRouteState.lotTwoReviewGroupId) {
-          return (
-            <UsedGearLotTwoGroupPage
-              currentUserName={currentUserName}
-              groupId={deferredRouteState.lotTwoReviewGroupId}
-              onBackToParkingLot={() => navigateToTab('parking-lot-2')}
-              onOpenTrashReview={() => navigateToTab('trash-review')}
-              onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
-            />
-          );
-        }
-        if (deferredRouteState.lotTwoReviewRecordId) {
-          return (
-            <UsedGearLotTwoRecordPage
-              currentUserName={currentUserName}
-              recordId={deferredRouteState.lotTwoReviewRecordId}
-              onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
-            />
-          );
-        }
-        return (
-          <UsedGearLotTwoTab
-            currentUserName={currentUserName}
-            onOpenReviewRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
-          />
-        );
       case 'trash-review':
         if (deferredRouteState.trashReviewGroupId) {
           return (

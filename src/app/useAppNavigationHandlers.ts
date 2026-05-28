@@ -11,7 +11,7 @@ interface AppNavigationHandlers {
   navigateToTab: (tab: Tab, replace?: boolean) => void;
   navigateToPath: (path: string, replace?: boolean) => void;
   navigateToInventorySection: (sectionId: string, replace?: boolean) => void;
-  navigateToJotformReviewGroup: (groupId: string, replace?: boolean) => void;
+  navigateToParkingLotPendingReviewGroup: (groupId: string, replace?: boolean) => void;
   navigateToManualIntake: (replace?: boolean) => void;
   navigateToManualIntakeForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
@@ -78,7 +78,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     scrollToPageTop();
   }, [navigate]);
 
-  const navigateToJotformReviewGroup = useCallback((groupId: string, replace = false): void => {
+  const navigateToParkingLotPendingReviewGroup = useCallback((groupId: string, replace = false): void => {
     navigate(`/parking-lot-1/group/${encodeURIComponent(groupId)}`, { replace });
     scrollToPageTop();
   }, [navigate]);
@@ -220,7 +220,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     navigateToTab,
     navigateToPath,
     navigateToInventorySection,
-    navigateToJotformReviewGroup,
+    navigateToParkingLotPendingReviewGroup,
     navigateToManualIntake,
     navigateToManualIntakeForm,
     navigateToTestingForm,

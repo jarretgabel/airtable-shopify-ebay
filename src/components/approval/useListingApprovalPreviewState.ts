@@ -168,6 +168,9 @@ export function useListingApprovalPreviewState({
         powerCable: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Power Cable'),
         manual: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Manual'),
         voltage: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Voltage'),
+        shippingWeight: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Shipping Weight')
+          || resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Weight'),
+        shippingDimensions: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Shipping Dims'),
         audiogonRating: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Audiogon Rating'),
       },
     );

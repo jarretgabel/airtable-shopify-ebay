@@ -406,14 +406,29 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       Remote: 'Included',
       'Power Cable': 'Included',
       Voltage: '120V',
+      Weight: '42 lbs',
+      'Shipping Dims': '22x19x11',
       'Audiogon Rating': '8/10',
       'Internal Inclusion Notes': 'Original box',
       'Testing Cosmetic Notes': 'Light scratching on the case',
       'Testing Notes': 'Passed bench test.\nPhono stage is quiet.',
-      'Key Features': 'Key,Value\nMake,Wrong Make\nModel,Wrong Model\nSerial Number,Wrong Serial\nCondition,Excellent\nIncludes,Wrong includes\nCosmetic Notes,Wrong cosmetics\nOriginal Box,Wrong box\nPower Cable,Wrong power cable\nManual,Wrong manual\nVoltage,Wrong voltage\nAudiogon Rating,Wrong rating\nFinish,Silver\nService History,Recapped in 2024',
+      'Key Features': 'Key,Value\nMake,Wrong Make\nModel,Wrong Model\nSerial Number,Wrong Serial\nCondition,Excellent\nIncludes,Wrong includes\nCosmetic Notes,Wrong cosmetics\nOriginal Box,Wrong box\nPower Cable,Wrong power cable\nManual,Wrong manual\nVoltage,Wrong voltage\nShipping Weight,Wrong weight\nShipping Dimensions,Wrong dims\nAudiogon Rating,Wrong rating\nFinish,Silver\nService History,Recapped in 2024',
     });
 
-    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p>\n<ul><li><strong>Make:</strong> Wrong Make</li><li><strong>Model:</strong> Wrong Model</li><li><strong>Component Type:</strong> Stereo Receiver</li><li><strong>Serial Number:</strong> Wrong Serial</li><li><strong>Condition:</strong> Excellent</li><li><strong>Cosmetic Notes:</strong> Wrong cosmetics</li><li><strong>Includes:</strong> Wrong includes</li><li><strong>Original Box:</strong> Wrong box</li><li><strong>Remote:</strong> Included</li><li><strong>Power Cable:</strong> Wrong power cable</li><li><strong>Manual:</strong> Wrong manual</li><li><strong>Voltage:</strong> Wrong voltage</li><li><strong>Audiogon Rating:</strong> Wrong rating</li><li><strong>Finish:</strong> Silver</li><li><strong>Service History:</strong> Recapped in 2024</li></ul>\n<p><strong>Testing Notes:</strong> Passed bench test.<br />Phono stage is quiet.</p>');
+    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p>\n<ul><li><strong>Make:</strong> Wrong Make</li><li><strong>Model:</strong> Wrong Model</li><li><strong>Component Type:</strong> Stereo Receiver</li><li><strong>Serial Number:</strong> Wrong Serial</li><li><strong>Condition:</strong> Excellent</li><li><strong>Cosmetic Notes:</strong> Wrong cosmetics</li><li><strong>Includes:</strong> Wrong includes</li><li><strong>Original Box:</strong> Wrong box</li><li><strong>Remote:</strong> Included</li><li><strong>Power Cable:</strong> Wrong power cable</li><li><strong>Manual:</strong> Wrong manual</li><li><strong>Voltage:</strong> Wrong voltage</li><li><strong>Shipping Weight:</strong> Wrong weight</li><li><strong>Shipping Dimensions:</strong> Wrong dims</li><li><strong>Audiogon Rating:</strong> Wrong rating</li><li><strong>Finish:</strong> Silver</li><li><strong>Service History:</strong> Recapped in 2024</li></ul>\n<p><strong>Testing Notes:</strong> Passed bench test.<br />Phono stage is quiet.</p>');
+  });
+
+  it('auto-adds shipping weight and dimensions into Shopify body html key features', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Shipping Details Product',
+      Description: 'Pulled from Airtable description field.',
+      Weight: '42 lbs',
+      'Shipping Dims': '22x19x11',
+      'Key Features': 'Key,Value\nFinish,Silver',
+    });
+
+    expect(product.body_html).toContain('<li><strong>Shipping Weight:</strong> 42 lbs</li>');
+    expect(product.body_html).toContain('<li><strong>Shipping Dimensions:</strong> 22x19x11</li>');
   });
 
   it('sends only the last segment of the Type breadcrumb as Shopify product_type', () => {

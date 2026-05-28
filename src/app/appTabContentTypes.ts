@@ -18,8 +18,8 @@ export interface AppTabContentProps {
   manualIntakeMode: boolean;
   jotformReviewGroupId: string | null;
   jotformReviewRecordId: string | null;
-  lotTwoReviewGroupId: string | null;
-  lotTwoReviewRecordId: string | null;
+  parkingLotArrivalGroupId: string | null;
+  parkingLotArrivalRecordId: string | null;
   trashReviewGroupId: string | null;
   trashReviewRecordId: string | null;
   manualIntakeRecordId: string | null;
@@ -56,7 +56,7 @@ export interface AppTabContentProps {
   navigateToUserRecord: (userId: string, replace?: boolean) => void;
   navigateToUsersList: (replace?: boolean) => void;
   navigateToTab: (tab: Tab, replace?: boolean) => void;
-  navigateToJotformReviewGroup: (groupId: string, replace?: boolean) => void;
+  navigateToParkingLotPendingReviewGroup: (groupId: string, replace?: boolean) => void;
   runtimeFeatures: RuntimeFeatureMap;
   metrics: ReturnType<typeof useDashboardMetrics>;
   accessiblePages: Tab[];

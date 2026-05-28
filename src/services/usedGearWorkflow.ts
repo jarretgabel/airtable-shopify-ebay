@@ -6,7 +6,8 @@ export const USED_GEAR_WORKFLOW_STATUSES = [
   'Accepted - Awaiting Arrival',
   'Accepted - Arrived, Awaiting SKU',
   'Accepted - Arrived, Awaiting Missing Item',
-  'Testing and Photography In Progress',
+  'Testing In Progress',
+  'Photography In Progress',
   'Awaiting Pre-Listing Review',
   'Approved for Publish',
   'Listed, Shopify',
@@ -119,6 +120,8 @@ export function deriveUsedGearNextTeams(
   status: UsedGearWorkflowStatus,
   signoffs: UsedGearConcurrentStageSignoffs = {},
 ): UsedGearWorkflowTeam[] {
+  void signoffs;
+
   switch (status) {
     case 'Pending Review':
       return ['Purchasing'];
@@ -126,12 +129,10 @@ export function deriveUsedGearNextTeams(
     case 'Accepted - Arrived, Awaiting SKU':
     case 'Accepted - Arrived, Awaiting Missing Item':
       return ['Processing'];
-    case 'Testing and Photography In Progress': {
-      const nextTeams: UsedGearWorkflowTeam[] = [];
-      if (!hasTestingSignoff(signoffs)) nextTeams.push('Testing');
-      if (!hasPhotographySignoff(signoffs)) nextTeams.push('Photography');
-      return nextTeams;
-    }
+    case 'Testing In Progress':
+      return ['Testing'];
+    case 'Photography In Progress':
+      return ['Photography'];
     case 'Awaiting Pre-Listing Review':
     case 'Approved for Publish':
     case 'Stale Listing, Shopify':

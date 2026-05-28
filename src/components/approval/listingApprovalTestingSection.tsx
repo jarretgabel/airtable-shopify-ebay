@@ -16,6 +16,8 @@ const LISTING_APPROVAL_TESTING_SECTION_DEFINITIONS = [
   { label: 'Manual', candidates: ['Manual'], multiline: false },
   { label: 'Original Box', candidates: ['Original Box'], multiline: false },
   { label: 'Voltage', candidates: ['Voltage'], multiline: false },
+  { label: 'Shipping Weight', candidates: ['Shipping Weight', 'Weight'], multiline: false },
+  { label: 'Shipping Dimensions', candidates: ['Shipping Dims'], multiline: false },
   { label: 'Remote', candidates: ['Remote'], multiline: false },
   { label: 'Power Cable', candidates: ['Power Cable'], multiline: false },
   {

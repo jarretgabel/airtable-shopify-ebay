@@ -12,6 +12,7 @@ import {
 function validateSource(value: string): AirtableConfiguredRecordsSource {
   if (
     value === 'users'
+    || value === 'user-guide'
     || value === 'inventory-directory'
     || value === 'used-gear-workflow'
     || value === 'approval-ebay'

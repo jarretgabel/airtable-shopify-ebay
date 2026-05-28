@@ -55,22 +55,22 @@ interface AirtableEmbeddedFormProps {
 const MANUAL_ENTRY_ROUTE_OPTIONS: Array<{ value: ManualIntakeRoute; label: string; description: string }> = [
   {
     value: 'lot-1',
-    label: 'Route to Parking Lot 1',
+    label: 'Route to Parking Lot',
     description: 'Create the row as pending review so purchasing can qualify it in-app.',
   },
   {
     value: 'lot-2-awaiting-arrival',
-    label: 'Route to Lot 2: Awaiting Arrival',
+    label: 'Route to Parking Lot: Awaiting Arrival',
     description: 'Use when the manual deal is accepted but the item has not physically arrived yet.',
   },
   {
     value: 'lot-2-awaiting-sku',
-    label: 'Route to Lot 2: Arrived, Awaiting SKU',
+    label: 'Route to Parking Lot: Arrived, Awaiting SKU',
     description: 'Use when the item has already arrived and still needs SKU assignment.',
   },
   {
     value: 'lot-2-awaiting-missing-item',
-    label: 'Route to Lot 2: Arrived, Awaiting Missing Item',
+    label: 'Route to Parking Lot: Arrived, Awaiting Missing Item',
     description: 'Use when intake is accepted but follow-up is still required for a missing unit or missing pieces.',
   },
 ];
@@ -342,7 +342,7 @@ export function AirtableEmbeddedForm({ recordId }: AirtableEmbeddedFormProps) {
                     placeholder="Optional routing or qualification notes for the operational record"
                     onChange={(event) => setQualificationNotes(event.currentTarget.value)}
                   />
-                  <p className={HELP_CLASS}>Required when routing a manual-entry row directly into Parking Lot 2.</p>
+                  <p className={HELP_CLASS}>Required when routing a manual-entry row directly into an accepted Parking Lot status.</p>
                 </label>
               </div>
             </section>

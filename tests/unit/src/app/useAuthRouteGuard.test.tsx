@@ -70,6 +70,20 @@ describe('useAuthRouteGuard', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it('allows the workflow guide editor route when the user has access', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/workflow-guide/edit"
+        canAccessPage={(tab) => tab === 'workflow-guide' || tab === 'workflow-guide-editor' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('allows the post-publish route when the user has access', () => {
     const navigate = vi.fn();
 
@@ -84,13 +98,13 @@ describe('useAuthRouteGuard', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('allows Parking Lot 2 record review routes when the user has access', () => {
+  it('allows Parking Lot arrival-stage record review routes when the user has access', () => {
     const navigate = vi.fn();
 
     render(
       <GuardHarness
-        normalizedPath="/parking-lot-2/rec-lot-two-1"
-        canAccessPage={(tab) => tab === 'parking-lot-2' || tab === 'dashboard'}
+        normalizedPath="/parking-lot-1/arrival/rec-lot-two-1"
+        canAccessPage={(tab) => tab === 'parking-lot-1' || tab === 'dashboard'}
         navigate={navigate}
       />,
     );
@@ -98,13 +112,13 @@ describe('useAuthRouteGuard', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('allows Parking Lot 2 grouped review routes when the user has access', () => {
+  it('allows Parking Lot arrival-stage grouped review routes when the user has access', () => {
     const navigate = vi.fn();
 
     render(
       <GuardHarness
-        normalizedPath="/parking-lot-2/group/pickup%3Apickup-100"
-        canAccessPage={(tab) => tab === 'parking-lot-2' || tab === 'dashboard'}
+        normalizedPath="/parking-lot-1/arrival/group/pickup%3Apickup-100"
+        canAccessPage={(tab) => tab === 'parking-lot-1' || tab === 'dashboard'}
         navigate={navigate}
       />,
     );

@@ -49,7 +49,7 @@ describe('testingForm', () => {
     vi.mocked(getConfiguredRecord).mockImplementation(async (source) => {
       if (source === 'used-gear-workflow') {
         return buildRecord({
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Testing In Progress',
           SKU: 'SKU-100',
           'Arrival Date': '2026-04-01T00:00:00.000Z',
           'Acquired From': 'Walk-in seller',
@@ -204,7 +204,7 @@ describe('testingForm', () => {
     };
 
     vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
-      'Workflow Status': 'Testing and Photography In Progress',
+      'Workflow Status': 'Testing In Progress',
       'Photography Signed At': '2026-05-04T12:00:00.000Z',
       'Photography Signed By': 'Phoebe Photographer',
     }));
@@ -256,8 +256,7 @@ describe('testingForm', () => {
         'Service Time': 1800,
         Tested: '2026-04-05',
         Status: 'Tested',
-        'Workflow Status': 'Awaiting Pre-Listing Review',
-        'Awaiting Pre-Listing Review At': expect.any(String),
+        'Workflow Status': 'Photography In Progress',
         'Testing Signed At': expect.any(String),
         'Testing Signed By': 'Taylor Reviewer',
       }),
@@ -270,7 +269,6 @@ describe('testingForm', () => {
         .filter((field) => field.type !== 'file')
         .map((field) => field.airtableFieldName)
         .concat([
-          'Awaiting Pre-Listing Review At',
           'Testing Signed At',
           'Testing Signed By',
           'Workflow Status',
@@ -356,7 +354,7 @@ describe('testingForm', () => {
       id: 'recWorkflow123',
       createdTime: '2026-05-05T12:00:00.000Z',
       fields: {
-        'Workflow Status': 'Testing and Photography In Progress',
+        'Workflow Status': 'Testing In Progress',
         'Photography Signed At': '2026-05-05T09:00:00.000Z',
         'Photography Signed By': 'Phoebe Photographer',
       },
@@ -376,8 +374,7 @@ describe('testingForm', () => {
       'used-gear-workflow',
       'recWorkflow123',
       expect.objectContaining({
-        'Workflow Status': 'Awaiting Pre-Listing Review',
-        'Awaiting Pre-Listing Review At': expect.any(String),
+        'Workflow Status': 'Photography In Progress',
         'Testing Signed At': expect.any(String),
         'Testing Signed By': 'Taylor Reviewer',
       }),
@@ -391,7 +388,7 @@ describe('testingForm', () => {
     );
   });
 
-  it('keeps workflow-owned rows in concurrent stage until photography is signed', async () => {
+  it('advances workflow-owned rows into photography once testing is signed', async () => {
     const values: TestingFormValues = {
       sku: 'SKU-202',
       arrivalDate: '',
@@ -426,7 +423,7 @@ describe('testingForm', () => {
       id: 'recWorkflow202',
       createdTime: '2026-05-05T12:00:00.000Z',
       fields: {
-        'Workflow Status': 'Testing and Photography In Progress',
+        'Workflow Status': 'Testing In Progress',
       },
     });
     vi.mocked(updateConfiguredRecord).mockResolvedValue({
@@ -444,7 +441,7 @@ describe('testingForm', () => {
       'used-gear-workflow',
       'recWorkflow202',
       expect.objectContaining({
-        'Workflow Status': 'Testing and Photography In Progress',
+        'Workflow Status': 'Photography In Progress',
         'Testing Signed At': expect.any(String),
         'Testing Signed By': 'Taylor Reviewer',
       }),
@@ -487,7 +484,7 @@ describe('testingForm', () => {
       id: 'recWorkflow203',
       createdTime: '2026-05-05T12:00:00.000Z',
       fields: {
-        'Workflow Status': 'Testing and Photography In Progress',
+        'Workflow Status': 'Testing In Progress',
       },
     });
     vi.mocked(updateConfiguredRecord).mockResolvedValue({
@@ -554,7 +551,7 @@ describe('testingForm', () => {
       .mockResolvedValueOnce(buildRecord({}));
     vi.mocked(getConfiguredRecord)
       .mockResolvedValueOnce(buildRecord({
-        'Workflow Status': 'Testing and Photography In Progress',
+        'Workflow Status': 'Testing In Progress',
       }))
       .mockResolvedValueOnce(buildRecord({
         Images: [
@@ -639,7 +636,7 @@ describe('testingForm', () => {
       .mockRejectedValueOnce(new Error('Unknown field name: "Workflow Image Metadata JSON"'));
     vi.mocked(getConfiguredRecord)
       .mockResolvedValueOnce(buildRecord({
-        'Workflow Status': 'Testing and Photography In Progress',
+        'Workflow Status': 'Testing In Progress',
       }))
       .mockResolvedValueOnce(buildRecord({ Images: [] }));
 
@@ -679,7 +676,7 @@ describe('testingForm', () => {
     vi.mocked(getConfiguredRecord).mockImplementation(async (source) => {
       if (source === 'used-gear-workflow') {
         return buildRecord({
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Testing In Progress',
           SKU: 'SKU-102',
           Make: 'McIntosh',
           Model: 'MC240',

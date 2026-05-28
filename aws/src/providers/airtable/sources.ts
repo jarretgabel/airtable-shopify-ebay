@@ -24,6 +24,7 @@ export const airtableSourceDependencies = {
 
 export type AirtableConfiguredRecordsSource =
   | 'users'
+  | 'user-guide'
   | 'inventory-directory'
   | 'used-gear-workflow'
   | 'approval-ebay'
@@ -77,6 +78,7 @@ function isApprovedValue(value: unknown): boolean {
 }
 
 const DEFAULT_USERS_TABLE_NAME = 'j2Gt9USORo6Vi5';
+const DEFAULT_USER_GUIDE_TABLE_NAME = 'tblquB9pdwSRXsI7c';
 const DEFAULT_APPROVAL_TABLE_REFERENCE = '3yTb0JkzUMFNnS/viw21kEduXKNub4Vn';
 const DEFAULT_COMBINED_LISTINGS_TABLE_NAME = 'tbl0K0nFQL64jQMx8';
 const INVENTORY_DIRECTORY_ATTACHMENT_FIELD_IDS = new Set(['fldMXp0EaUHGglU8M']);
@@ -96,6 +98,13 @@ function resolveUsersSource(): { reference?: string; tableName: string } {
 }
 
 function getSourceDefinition(source: AirtableConfiguredRecordsSource): { reference?: string; tableName: string } {
+  if (source === 'user-guide') {
+    return {
+      reference: process.env.AIRTABLE_USER_GUIDE_TABLE_REF?.trim() || process.env.VITE_AIRTABLE_USER_GUIDE_TABLE_REF?.trim(),
+      tableName: process.env.AIRTABLE_USER_GUIDE_TABLE_NAME?.trim() || process.env.VITE_AIRTABLE_USER_GUIDE_TABLE_NAME?.trim() || DEFAULT_USER_GUIDE_TABLE_NAME,
+    };
+  }
+
   if (source === 'users') {
     return resolveUsersSource();
   }

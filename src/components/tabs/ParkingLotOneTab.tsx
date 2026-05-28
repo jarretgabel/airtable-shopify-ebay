@@ -1,25 +1,36 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { WorkflowQueuePageTemplate } from '@/components/app/WorkflowQueuePageTemplate';
-import { UsedGearPendingReviewSection } from '@/components/tabs/airtable/UsedGearPendingReviewSection';
+import { UsedGearParkingLotSection } from '@/components/tabs/airtable/UsedGearParkingLotSection';
+import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
+import { isParkingLotArrivalStageStatus, type UsedGearWorkflowGroup } from '@/services/usedGearQueue';
+import type { AirtableRecord } from '@/types/airtable';
 
 interface ParkingLotOneTabProps {
   currentUserName: string;
 }
 
-const WORKFLOW_PENDING_REVIEW_SEARCH_PARAM = 'workflowPendingReviewSearch';
-const WORKFLOW_PENDING_REVIEW_SORT_PARAM = 'workflowPendingReviewSort';
+const WORKFLOW_PARKING_LOT_SEARCH_PARAM = 'workflowParkingLotSearch';
+const WORKFLOW_PARKING_LOT_SORT_PARAM = 'workflowParkingLotSort';
+
+function isArrivalStageRecord(record: AirtableRecord): boolean {
+  return isParkingLotArrivalStageStatus(getUsedGearWorkflowStatus(record.fields));
+}
+
+function isArrivalStageGroup(group: UsedGearWorkflowGroup): boolean {
+  return group.records.every((record) => isArrivalStageRecord(record));
+}
 
 export function ParkingLotOneTab({ currentUserName }: ParkingLotOneTabProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const workflowPendingReviewSearch = useMemo(() => {
+  const workflowParkingLotSearch = useMemo(() => {
     const params = new URLSearchParams(location.search);
-    return params.get(WORKFLOW_PENDING_REVIEW_SEARCH_PARAM) ?? '';
+    return params.get(WORKFLOW_PARKING_LOT_SEARCH_PARAM) ?? '';
   }, [location.search]);
-  const workflowPendingReviewSort = useMemo(() => {
-    const value = new URLSearchParams(location.search).get(WORKFLOW_PENDING_REVIEW_SORT_PARAM);
+  const workflowParkingLotSort = useMemo(() => {
+    const value = new URLSearchParams(location.search).get(WORKFLOW_PARKING_LOT_SORT_PARAM);
     return value === 'newest' || value === 'oldest' || value === 'arrival-date' || value === 'make-model' ? value : 'group-label';
   }, [location.search]);
 
@@ -43,24 +54,30 @@ export function ParkingLotOneTab({ currentUserName }: ParkingLotOneTabProps) {
 
   return (
     <WorkflowQueuePageTemplate
-      eyebrow="Parking Lot 1"
-      title="Parking Lot 1"
+      eyebrow="Parking Lot"
+      title="Parking Lot"
     >
-      <UsedGearPendingReviewSection
+      <UsedGearParkingLotSection
         currentUserName={currentUserName}
         showSectionIntro={false}
-        onOpenGroupReview={(groupId) => navigate(`/parking-lot-1/group/${encodeURIComponent(groupId)}${location.search}`, { replace: false })}
-        onOpenReviewRecord={(recordId) => navigate(`/parking-lot-1/${encodeURIComponent(recordId)}${location.search}`, { replace: false })}
-        searchTerm={workflowPendingReviewSearch}
-        onSearchTermChange={(value) => updateQueueSearch(WORKFLOW_PENDING_REVIEW_SEARCH_PARAM, value, '#used-gear-pending-review')}
-        sortMode={workflowPendingReviewSort}
+        onOpenGroupReview={(group) => navigate(
+          `${isArrivalStageGroup(group) ? '/parking-lot-1/arrival/group' : '/parking-lot-1/group'}/${encodeURIComponent(group.id)}${location.search}`,
+          { replace: false },
+        )}
+        onOpenReviewRecord={(record) => navigate(
+          `${isArrivalStageRecord(record) ? '/parking-lot-1/arrival' : '/parking-lot-1'}/${encodeURIComponent(record.id)}${location.search}`,
+          { replace: false },
+        )}
+        searchTerm={workflowParkingLotSearch}
+        onSearchTermChange={(value) => updateQueueSearch(WORKFLOW_PARKING_LOT_SEARCH_PARAM, value, '#used-gear-parking-lot')}
+        sortMode={workflowParkingLotSort}
         onSortModeChange={(value) => updateIntakeRouteState((params) => {
           if (value === 'group-label') {
-            params.delete(WORKFLOW_PENDING_REVIEW_SORT_PARAM);
+            params.delete(WORKFLOW_PARKING_LOT_SORT_PARAM);
           } else {
-            params.set(WORKFLOW_PENDING_REVIEW_SORT_PARAM, value);
+            params.set(WORKFLOW_PARKING_LOT_SORT_PARAM, value);
           }
-        }, '#used-gear-pending-review')}
+        }, '#used-gear-parking-lot')}
       />
     </WorkflowQueuePageTemplate>
   );

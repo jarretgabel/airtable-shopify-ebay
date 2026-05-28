@@ -64,9 +64,7 @@ describe('inventoryDirectory', () => {
       createdTime: 'now',
       fields: {
         SKU: 'SKU-1',
-        'Workflow Status': 'Testing and Photography In Progress',
-        'Testing Signed By': 'Taylor',
-        'Testing Signed At': '2026-05-07T10:00:00.000Z',
+        'Workflow Status': 'Photography In Progress',
       },
     });
 

@@ -87,9 +87,11 @@ describe('authContextHelpers', () => {
     const photographer = baseUsers[5];
 
     expect(canUserAccessPage(admin, 'users')).toBe(true);
+    expect(canUserAccessPage(admin, 'workflow-guide-editor')).toBe(true);
     expect(canUserAccessPage(admin, 'market')).toBe(false);
     expect(canUserAccessPage(admin, 'imagelab')).toBe(true);
     expect(canUserAccessPage(owner, 'users')).toBe(true);
+    expect(canUserAccessPage(owner, 'workflow-guide-editor')).toBe(true);
     expect(canUserAccessPage(owner, 'market')).toBe(true);
     expect(canUserAccessPage(user, 'dashboard')).toBe(true);
     expect(canUserAccessPage(user, 'workflow-guide')).toBe(true);
@@ -113,33 +115,17 @@ describe('authContextHelpers', () => {
     expect(canUserAccessPage(developer, 'market')).toBe(true);
     expect(canUserAccessPage(developer, 'imagelab')).toBe(true);
     expect(canUserAccessPage(developer, 'users')).toBe(true);
+    expect(canUserAccessPage(developer, 'workflow-guide-editor')).toBe(true);
     expect(canUserAccessPage(developer, 'shopify')).toBe(true);
     expect(canUserAccessPage(developer, 'ebay')).toBe(true);
     expect(canUserAccessPage(photographer, 'imagelab')).toBe(true);
     expect(canUserAccessPage(photographer, 'market')).toBe(false);
+    expect(canUserAccessPage(photographer, 'workflow-guide-editor')).toBe(false);
   });
 
   it('filters users page for non-admin accessible pages', () => {
     const owner = baseUsers[1];
-    expect(getAccessiblePages(baseUsers[2])).toEqual([
-      'dashboard',
-      'workflow-guide',
-      'manual-intake',
-      'parking-lot-1',
-      'parking-lot-2',
-      'trash-review',
-      'inventory',
-      'testing-queue',
-      'photography-queue',
-      'testing',
-      'photos',
-      'post-publish',
-      'archive',
-      'market',
-      'imagelab',
-      'settings',
-      'notifications',
-    ]);
+    expect(getAccessiblePages(baseUsers[2])).toEqual(getRoleDefaultPages('processor'));
     expect(getAccessiblePages(baseUsers[0])).toEqual(getRoleDefaultPages('admin'));
     expect(getAccessiblePages(owner)).toEqual(getRoleDefaultPages('owner'));
     expect(getAccessiblePages(baseUsers[3])).toEqual(['dashboard', 'workflow-guide', 'testing-queue', 'testing', 'settings', 'notifications']);

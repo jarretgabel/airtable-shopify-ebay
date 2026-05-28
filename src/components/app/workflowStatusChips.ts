@@ -19,7 +19,11 @@ export function getWorkflowStatusChipClassName(status: string): string {
     return 'border-amber-400/35 bg-amber-500/15 text-amber-100';
   }
 
-  if (normalizedStatus === 'testing and photography in progress' || normalizedStatus === 'awaiting pre-listing review') {
+  if (
+    normalizedStatus === 'testing in progress'
+    || normalizedStatus === 'photography in progress'
+    || normalizedStatus === 'awaiting pre-listing review'
+  ) {
     return 'border-sky-400/35 bg-sky-500/15 text-sky-100';
   }
 

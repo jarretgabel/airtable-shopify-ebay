@@ -1,8 +1,9 @@
 export const APP_PAGES = [
   'dashboard',
+  'workflow-guide',
+  'workflow-guide-editor',
   'manual-intake',
   'parking-lot-1',
-  'parking-lot-2',
   'trash-review',
   'inventory',
   'testing-queue',
@@ -35,22 +36,28 @@ const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
   developer: [...APP_PAGES],
   processor: [
     'dashboard',
+    'workflow-guide',
     'manual-intake',
+    'jotform',
     'parking-lot-1',
-    'parking-lot-2',
     'trash-review',
     'inventory',
     'testing-queue',
     'photography-queue',
     'testing',
     'photos',
+    'listings',
     'post-publish',
     'archive',
+    'shopify',
+    'ebay',
     'market',
+    'settings',
+    'notifications',
     'imagelab',
   ],
-  tester: ['dashboard', 'testing-queue', 'testing'],
-  photographer: ['dashboard', 'photography-queue', 'photos', 'imagelab'],
+  tester: ['dashboard', 'workflow-guide', 'testing-queue', 'testing'],
+  photographer: ['dashboard', 'workflow-guide', 'photography-queue', 'photos', 'imagelab'],
 };
 
 export function isAppPage(value: string): value is AppPage {
@@ -67,7 +74,7 @@ export function normalizeAllowedPages(pages: AppPage[], role: UserRole): AppPage
   const nextPages = new Set(uniquePages.filter((page) => allowedSet.has(page)));
 
   if (role === 'processor' && nextPages.has('inventory')) {
-    ['manual-intake', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'post-publish', 'archive'].forEach((page) => nextPages.add(page as AppPage));
+    ['manual-intake', 'jotform', 'parking-lot-1', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'settings', 'notifications'].forEach((page) => nextPages.add(page as AppPage));
   }
 
   return ROLE_ALLOWED_PAGES[role].filter((page) => nextPages.has(page));

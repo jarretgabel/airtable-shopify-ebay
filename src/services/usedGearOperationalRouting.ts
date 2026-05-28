@@ -1,9 +1,5 @@
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 
-function hasSignedUser(fields: Record<string, unknown>, fieldName: string): boolean {
-  return typeof fields[fieldName] === 'string' && fields[fieldName].trim().length > 0;
-}
-
 function encodeRecordId(recordId: string): string {
   return encodeURIComponent(recordId);
 }
@@ -16,8 +12,8 @@ export function buildUsedGearPendingReviewPath(recordId: string): string {
   return `/parking-lot-1/${encodeRecordId(recordId)}`;
 }
 
-export function buildUsedGearLotTwoReviewPath(recordId: string): string {
-  return `/parking-lot-2/${encodeRecordId(recordId)}`;
+export function buildUsedGearParkingLotArrivalReviewPath(recordId: string): string {
+  return `/parking-lot-1/arrival/${encodeRecordId(recordId)}`;
 }
 
 export function buildUsedGearManualIntakePath(recordId: string): string {
@@ -58,19 +54,15 @@ export function resolveUsedGearOperationalPath(recordId: string, fields: Record<
     || status === 'Accepted - Arrived, Awaiting SKU'
     || status === 'Accepted - Arrived, Awaiting Missing Item'
   ) {
-    return `/parking-lot-2/${encodedRecordId}`;
+    return `/parking-lot-1/arrival/${encodedRecordId}`;
   }
 
-  if (status === 'Testing and Photography In Progress') {
-    if (!hasSignedUser(fields, 'Testing Signed By')) {
-      return `/testing/${encodedRecordId}`;
-    }
+  if (status === 'Testing In Progress') {
+    return `/testing/${encodedRecordId}`;
+  }
 
-    if (!hasSignedUser(fields, 'Photography Signed By')) {
-      return `/photos/${encodedRecordId}`;
-    }
-
-    return `/listings/${encodedRecordId}`;
+  if (status === 'Photography In Progress') {
+    return `/photos/${encodedRecordId}`;
   }
 
   if (

@@ -69,7 +69,7 @@ describe('UsedGearTrashReviewRecordPage', () => {
     });
   });
 
-  it('restores a trashed row back to parking lot 1', async () => {
+  it('restores a trashed row back to parking lot', async () => {
     restoreTrashRecordMock.mockResolvedValue(undefined);
     const onOpenManualIntake = vi.fn();
 
@@ -81,7 +81,7 @@ describe('UsedGearTrashReviewRecordPage', () => {
       />,
     );
 
-    await screen.findByText('Restore To Parking Lot 1');
+    await screen.findByRole('heading', { name: 'Restore To Parking Lot' });
     expect(screen.getByRole('button', { name: 'Back to Trash Review' })).toBeInTheDocument();
   const deleteHeading = screen.getByRole('heading', { name: 'Delete From Workflow' });
   const snapshotHeading = screen.getByText('Intake Snapshot');
@@ -90,7 +90,7 @@ describe('UsedGearTrashReviewRecordPage', () => {
     expect(screen.queryByText('Intake Notes')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Edit Intake' }));
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-trash-1');
-    fireEvent.click(screen.getByRole('button', { name: 'Restore To Lot 1' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Restore To Parking Lot' }));
 
     await waitFor(() => {
       expect(restoreTrashRecordMock).toHaveBeenCalledWith('rec-trash-1');
@@ -99,11 +99,11 @@ describe('UsedGearTrashReviewRecordPage', () => {
     expect(navigateMock).toHaveBeenCalledWith({
       pathname: '/parking-lot-1',
       search: '?reviewMode=test',
-      hash: '#used-gear-pending-review',
+      hash: '#used-gear-parking-lot',
     });
   });
 
-  it('re-qualifies a trashed row into lot 2', async () => {
+  it('re-qualifies a trashed row into the parking lot arrival-stage workflow', async () => {
     requalifyTrashRecordMock.mockResolvedValue(undefined);
 
     render(
@@ -114,14 +114,14 @@ describe('UsedGearTrashReviewRecordPage', () => {
       />,
     );
 
-    await screen.findByRole('heading', { name: 'Re-qualify Into Lot 2' });
-    fireEvent.change(screen.getByRole('combobox', { name: 'Lot 2 Route' }), {
+    await screen.findByRole('heading', { name: 'Re-qualify Into Parking Lot' });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Parking Lot Status' }), {
       target: { value: 'Accepted - Arrived, Awaiting Missing Item' },
     });
     fireEvent.change(screen.getByRole('textbox', { name: 'Qualification Notes' }), {
       target: { value: 'Recovered after visual inspection.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Re-qualify Into Lot 2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Re-qualify Into Parking Lot' }));
 
     await waitFor(() => {
       expect(requalifyTrashRecordMock).toHaveBeenCalledWith('rec-trash-1', 'Taylor Reviewer', {
@@ -131,8 +131,9 @@ describe('UsedGearTrashReviewRecordPage', () => {
     });
 
     expect(navigateMock).toHaveBeenCalledWith({
-      pathname: '/parking-lot-2',
+      pathname: '/parking-lot-1',
       search: '?reviewMode=test',
+      hash: '#used-gear-parking-lot',
     });
   });
 

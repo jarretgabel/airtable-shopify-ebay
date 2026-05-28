@@ -72,8 +72,14 @@ function getProgressStageStartedAt(record: AirtableRecord): string | null {
     return typeof record.fields['Accepted At'] === 'string' ? record.fields['Accepted At'] : record.createdTime;
   }
 
-  if (status === 'Testing and Photography In Progress') {
+  if (status === 'Testing In Progress') {
     return typeof record.fields['Processing Signed At'] === 'string' ? record.fields['Processing Signed At'] : record.createdTime;
+  }
+
+  if (status === 'Photography In Progress') {
+    return typeof record.fields['Testing Signed At'] === 'string'
+      ? record.fields['Testing Signed At']
+      : (typeof record.fields['Processing Signed At'] === 'string' ? record.fields['Processing Signed At'] : record.createdTime);
   }
 
   if (status === 'Awaiting Pre-Listing Review') {

@@ -167,7 +167,7 @@ export function UsedGearPendingReviewRecordPage({
   const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, sectionItems[0]?.id ?? 'lot-two');
   const sectionNav = (
     <MainPageSectionNav
-      ariaLabel="Parking Lot 1 sections"
+      ariaLabel="Parking Lot sections"
       items={sectionItems.map((item) => ({ key: item.key, label: item.label }))}
       activeKey={activeSectionId as PendingReviewSectionKey}
       onSelect={(sectionKey) => scrollToSection(sectionKey)}
@@ -175,7 +175,7 @@ export function UsedGearPendingReviewRecordPage({
   );
 
   const backToQueue = () => {
-    navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-pending-review' });
+    navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-parking-lot' });
   };
 
   const handleAccept = async () => {
@@ -193,7 +193,7 @@ export function UsedGearPendingReviewRecordPage({
       });
       backToQueue();
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to accept this parking-lot row into Lot 2.');
+      setError(actionError instanceof Error ? actionError.message : 'Unable to move this parking-lot row into an accepted Parking Lot status.');
       setSaving(false);
     }
   };
@@ -220,7 +220,7 @@ export function UsedGearPendingReviewRecordPage({
   }
 
   if (!record) {
-    return <ErrorSurface title="Unable to load parking-lot review" message={error ?? 'The selected Parking Lot 1 record could not be loaded.'} />;
+    return <ErrorSurface title="Unable to load parking-lot review" message={error ?? 'The selected Parking Lot record could not be loaded.'} />;
   }
 
   const acceptRouteDescription = ACCEPT_ROUTE_OPTIONS.find((option) => option.value === acceptStatus)?.description;
@@ -228,10 +228,10 @@ export function UsedGearPendingReviewRecordPage({
 
   return (
     <WorkflowRecordPageLayout
-      eyebrow="Parking Lot 1"
+      eyebrow="Parking Lot"
       title={displayInventoryValue(record.fields.SKU)}
       belowHeader={sectionNav}
-      actions={<BackToolbarButton label="Back to Parking Lot 1" onClick={backToQueue} />}
+      actions={<BackToolbarButton label="Back to Parking Lot" onClick={backToQueue} />}
     >
       <div className="space-y-6">
 
@@ -263,11 +263,11 @@ export function UsedGearPendingReviewRecordPage({
 
         <div className="grid gap-6">
           <section id="lot-two" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
-            <AppSectionTitle title="Qualify Into Lot 2" titleClassName="text-lg" className="pt-0" />
-            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Choose the correct Lot 2 destination and leave the qualification note that explains why this intake should stay in the sellable workflow.</p>
+            <AppSectionTitle title="Qualify Into Parking Lot" titleClassName="text-lg" className="pt-0" />
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Choose the correct accepted Parking Lot status and leave the qualification note that explains why this intake should stay in the sellable workflow.</p>
             <div className="mt-4 grid gap-3">
               <label className="block">
-                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Lot 2 Route</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Parking Lot Status</span>
                 <select
                   className={inputClassName}
                   value={acceptStatus}
@@ -286,7 +286,7 @@ export function UsedGearPendingReviewRecordPage({
                   rows={5}
                   value={qualificationNotes}
                   onChange={(event) => setQualificationNotes(event.currentTarget.value)}
-                  placeholder="Required before routing this item into Lot 2"
+                  placeholder="Required before routing this item into Parking Lot"
                 />
               </label>
               <NoteTemplateRow
@@ -297,10 +297,10 @@ export function UsedGearPendingReviewRecordPage({
                 }}
               />
               {groupNeedsSubmissionId ? (
-                <p className="m-0 text-sm text-amber-300">This grouped intake still needs a Submission Group ID before it can be accepted into Lot 2.</p>
+                <p className="m-0 text-sm text-amber-300">This grouped intake still needs a Submission Group ID before it can be accepted into Parking Lot.</p>
               ) : null}
               {!hasPricingPath ? (
-                <p className="m-0 text-sm text-amber-300">Offer amount, paid amount, or confirmed grand total is required before this row can enter Lot 2.</p>
+                <p className="m-0 text-sm text-amber-300">Offer amount, paid amount, or confirmed grand total is required before this row can enter an accepted Parking Lot status.</p>
               ) : null}
               <button
                 type="button"
@@ -310,7 +310,7 @@ export function UsedGearPendingReviewRecordPage({
                 }}
                 disabled={saving || qualificationNotes.trim().length === 0 || !hasPricingPath || groupNeedsSubmissionId}
               >
-                {saving ? 'Saving...' : 'Accept Into Lot 2'}
+                {saving ? 'Saving...' : 'Accept Into Parking Lot'}
               </button>
             </div>
           </section>
@@ -318,7 +318,7 @@ export function UsedGearPendingReviewRecordPage({
 
         <UsedGearTrashRouteCard
           sectionId="trash"
-          description="Capture the reason clearly so downstream review can see why this intake was stopped before Lot 2."
+          description="Capture the reason clearly so downstream review can see why this intake was stopped before accepted Parking Lot handling."
           reason={unqualifiedReason}
           onReasonChange={setUnqualifiedReason}
           onApplyTemplate={(templateValue) => {

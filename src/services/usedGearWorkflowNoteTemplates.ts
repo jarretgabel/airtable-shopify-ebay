@@ -10,12 +10,12 @@ const QUALIFICATION_NOTE_TEMPLATES: UsedGearWorkflowNoteTemplate[] = [
   {
     id: 'sellable-clean-pass',
     label: 'Sellable Clean Pass',
-    value: 'Sellable intake confirmed. Core unit is present, pricing path is documented, and the row should continue through Lot 2.',
+    value: 'Sellable intake confirmed. Core unit is present, pricing path is documented, and the row should continue through Parking Lot.',
   },
   {
     id: 'accepted-missing-accessory',
     label: 'Accepted With Follow-Up',
-    value: 'Accepted into Lot 2 with a follow-up item still outstanding. Workflow can continue while the missing accessory or confirmation is tracked separately.',
+    value: 'Accepted into Parking Lot with a follow-up item still outstanding. Workflow can continue while the missing accessory or confirmation is tracked separately.',
   },
   {
     id: 'grouped-intake-ready',
@@ -38,7 +38,7 @@ const UNQUALIFIED_REASON_TEMPLATES: UsedGearWorkflowNoteTemplate[] = [
   {
     id: 'insufficient-intake-verification',
     label: 'Insufficient Verification',
-    value: 'Rejected at intake because required identifying, pricing, or qualification details could not be verified well enough to continue into Lot 2.',
+    value: 'Rejected at intake because required identifying, pricing, or qualification details could not be verified well enough to continue into Parking Lot.',
   },
 ];
 

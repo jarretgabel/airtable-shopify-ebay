@@ -9,6 +9,7 @@ import { deleteJson, getJson, patchJson, postJson } from './http';
 
 export type AirtableConfiguredWriteSource =
   | 'users'
+  | 'user-guide'
   | 'inventory-directory'
   | 'used-gear-workflow'
   | 'approval-ebay'

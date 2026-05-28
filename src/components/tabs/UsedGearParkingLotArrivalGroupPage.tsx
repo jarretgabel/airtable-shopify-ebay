@@ -12,14 +12,14 @@ import { applyUsedGearWorkflowNoteTemplate } from '@/services/usedGearWorkflowNo
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
   completeProcessingStage,
-  loadLotTwoGroup,
+  loadParkingLotArrivalGroup,
   markPendingReviewUnqualified,
-  saveLotTwoReviewRecord,
+  saveParkingLotArrivalReviewRecord,
   type UsedGearWorkflowGroup,
 } from '@/services/usedGearQueue';
 import type { AirtableRecord } from '@/types/airtable';
 
-interface UsedGearLotTwoGroupPageProps {
+interface UsedGearParkingLotArrivalGroupPageProps {
   currentUserName: string;
   onBackToParkingLot: () => void;
   groupId: string;
@@ -27,9 +27,9 @@ interface UsedGearLotTwoGroupPageProps {
   onOpenManualIntake: (recordId: string) => void;
 }
 
-type LotTwoGroupSectionKey = 'review' | 'trash';
+type ParkingLotArrivalGroupSectionKey = 'review' | 'trash';
 
-interface LotTwoGroupRecordEditor {
+interface ParkingLotArrivalGroupRecordEditor {
   arrivalDate: string;
   sku: string;
 }
@@ -63,19 +63,19 @@ function sortGroupRecords(records: AirtableRecord[]): AirtableRecord[] {
   });
 }
 
-export function UsedGearLotTwoGroupPage({
+export function UsedGearParkingLotArrivalGroupPage({
   currentUserName,
   groupId,
   onBackToParkingLot,
   onOpenTrashReview,
   onOpenManualIntake,
-}: UsedGearLotTwoGroupPageProps) {
+}: UsedGearParkingLotArrivalGroupPageProps) {
   const [group, setGroup] = useState<UsedGearWorkflowGroup | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<'save' | 'complete' | 'trash' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [recordEditors, setRecordEditors] = useState<Record<string, LotTwoGroupRecordEditor>>({});
+  const [recordEditors, setRecordEditors] = useState<Record<string, ParkingLotArrivalGroupRecordEditor>>({});
   const [unqualifiedReason, setUnqualifiedReason] = useState('');
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export function UsedGearLotTwoGroupPage({
       setError(null);
 
       try {
-        const nextGroup = await loadLotTwoGroup(groupId);
+        const nextGroup = await loadParkingLotArrivalGroup(groupId);
         if (!cancelled) {
           const sortedRecords = sortGroupRecords(nextGroup.records);
           setGroup({ ...nextGroup, records: sortedRecords });
@@ -98,7 +98,7 @@ export function UsedGearLotTwoGroupPage({
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Unable to load the selected Parking Lot 2 handoff set.');
+          setError(loadError instanceof Error ? loadError.message : 'Unable to load the selected Parking Lot handoff set.');
         }
       } finally {
         if (!cancelled) {
@@ -115,16 +115,16 @@ export function UsedGearLotTwoGroupPage({
   }, [groupId]);
 
   const records = useMemo(() => group?.records ?? [], [group]);
-  const sectionItems = useMemo<Array<{ id: LotTwoGroupSectionKey; key: LotTwoGroupSectionKey; label: string }>>(() => [
+  const sectionItems = useMemo<Array<{ id: ParkingLotArrivalGroupSectionKey; key: ParkingLotArrivalGroupSectionKey; label: string }>>(() => [
     { id: 'review', key: 'review', label: 'Group Review' },
     { id: 'trash', key: 'trash', label: 'Trash' },
   ], []);
   const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, 'review');
   const sectionNav = (
     <MainPageSectionNav
-      ariaLabel="Parking Lot 2 group sections"
+      ariaLabel="Parking Lot arrival-stage group sections"
       items={sectionItems.map((item) => ({ key: item.key, label: item.label }))}
-      activeKey={activeSectionId as LotTwoGroupSectionKey}
+      activeKey={activeSectionId as ParkingLotArrivalGroupSectionKey}
       onSelect={(sectionKey) => scrollToSection(sectionKey)}
     />
   );
@@ -141,7 +141,7 @@ export function UsedGearLotTwoGroupPage({
   );
 
   const refreshGroup = async () => {
-    const nextGroup = await loadLotTwoGroup(groupId);
+    const nextGroup = await loadParkingLotArrivalGroup(groupId);
     const sortedRecords = sortGroupRecords(nextGroup.records);
     setGroup({ ...nextGroup, records: sortedRecords });
     setRecordEditors(Object.fromEntries(sortedRecords.map((record) => [record.id, {
@@ -162,7 +162,7 @@ export function UsedGearLotTwoGroupPage({
     try {
       const updatedRecords = await Promise.all(records.map((record) => {
         const editor = recordEditors[record.id];
-        return saveLotTwoReviewRecord(record.id, {
+        return saveParkingLotArrivalReviewRecord(record.id, {
           arrivalDate: editor?.arrivalDate ?? '',
           sku: editor?.sku ?? '',
         });
@@ -173,9 +173,9 @@ export function UsedGearLotTwoGroupPage({
         arrivalDate: stringFieldValue(record, 'Arrival Date').slice(0, 10),
         sku: stringFieldValue(record, 'SKU'),
       }])));
-      setSuccessMessage('Saved Parking Lot 2 review fields for this batch.');
+      setSuccessMessage('Saved Parking Lot review fields for this batch.');
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Unable to save the Parking Lot 2 review fields for this batch.');
+      setError(saveError instanceof Error ? saveError.message : 'Unable to save the Parking Lot review fields for this batch.');
     } finally {
       setSaving(null);
     }
@@ -193,7 +193,7 @@ export function UsedGearLotTwoGroupPage({
     try {
       await Promise.all(records.map((record) => {
         const editor = recordEditors[record.id];
-        return saveLotTwoReviewRecord(record.id, {
+        return saveParkingLotArrivalReviewRecord(record.id, {
           arrivalDate: editor?.arrivalDate ?? '',
           sku: editor?.sku ?? '',
         });
@@ -207,7 +207,7 @@ export function UsedGearLotTwoGroupPage({
         onBackToParkingLot();
       }
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to move the ready Parking Lot 2 items into processing.');
+      setError(actionError instanceof Error ? actionError.message : 'Unable to move the ready Parking Lot items into processing.');
       setSaving(null);
       return;
     }
@@ -228,26 +228,26 @@ export function UsedGearLotTwoGroupPage({
       await Promise.all(records.map((record) => markPendingReviewUnqualified(record.id, unqualifiedReason)));
       onOpenTrashReview();
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to move this Parking Lot 2 batch into Trash Review.');
+      setError(actionError instanceof Error ? actionError.message : 'Unable to move this Parking Lot batch into Trash Review.');
       setSaving(null);
     }
   };
 
   if (loading) {
-    return <LoadingSurface message="Loading Parking Lot 2 handoff..." />;
+    return <LoadingSurface message="Loading Parking Lot handoff..." />;
   }
 
   if (!group) {
-    return <ErrorSurface title="Unable to load Parking Lot 2 handoff" message={error ?? 'The selected Parking Lot 2 set could not be loaded.'} />;
+    return <ErrorSurface title="Unable to load Parking Lot handoff" message={error ?? 'The selected Parking Lot set could not be loaded.'} />;
   }
 
   return (
     <WorkflowRecordPageLayout
-      eyebrow="Parking Lot 2"
+      eyebrow="Parking Lot"
       title={group.label}
       belowHeader={sectionNav}
       actions={(
-        <BackToolbarButton label="Back to Parking Lot 2" onClick={onBackToParkingLot} />
+        <BackToolbarButton label="Back to Parking Lot" onClick={onBackToParkingLot} />
       )}
     >
         {error ? <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">{error}</div> : null}
@@ -342,9 +342,9 @@ export function UsedGearLotTwoGroupPage({
             </div>
 
             {readyRecordIds.length === 0 ? (
-              <p className="mt-3 m-0 text-sm text-amber-300">Add Arrival Date and SKU to at least one item before moving it out of Parking Lot 2.</p>
+              <p className="mt-3 m-0 text-sm text-amber-300">Add Arrival Date and SKU to at least one item before moving it out of Parking Lot.</p>
             ) : readyRecordIds.length < records.length ? (
-              <p className="mt-3 m-0 text-sm text-amber-300">Arrival Date and SKU are required before each remaining item can leave Parking Lot 2.</p>
+              <p className="mt-3 m-0 text-sm text-amber-300">Arrival Date and SKU are required before each remaining item can leave Parking Lot.</p>
             ) : null}
           </div>
         </section>

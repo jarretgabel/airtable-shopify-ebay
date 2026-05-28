@@ -35,6 +35,10 @@ vi.mock('@/components/tabs/WorkflowGuideTab', () => ({
   WorkflowGuideTab: () => <div>Workflow guide content</div>,
 }));
 
+vi.mock('@/components/tabs/WorkflowGuideEditorTab', () => ({
+  WorkflowGuideEditorTab: () => <div>Workflow guide editor content</div>,
+}));
+
 vi.mock('@/components/UserManagementTab', () => ({
   UserManagementTab: () => <div>User management content</div>,
 }));
@@ -83,16 +87,16 @@ vi.mock('@/components/tabs/InventoryPriceEditorPage', () => ({
   InventoryPriceEditorPage: ({ recordId }: { recordId: string }) => <div>Inventory price editor {recordId}</div>,
 }));
 
-vi.mock('@/components/tabs/UsedGearLotTwoGroupPage', () => ({
-  UsedGearLotTwoGroupPage: ({ groupId }: { groupId: string }) => <div>Parking Lot 2 handoff {groupId}</div>,
+vi.mock('@/components/tabs/UsedGearParkingLotArrivalGroupPage', () => ({
+  UsedGearParkingLotArrivalGroupPage: ({ groupId }: { groupId: string }) => <div>Parking Lot arrival handoff {groupId}</div>,
 }));
 
 vi.mock('@/components/tabs/UsedGearTrashReviewGroupPage', () => ({
   UsedGearTrashReviewGroupPage: ({ groupId }: { groupId: string }) => <div>Trash review group {groupId}</div>,
 }));
 
-vi.mock('@/components/tabs/UsedGearLotTwoRecordPage', () => ({
-  UsedGearLotTwoRecordPage: ({ recordId }: { recordId: string }) => <div>Parking Lot 2 review {recordId}</div>,
+vi.mock('@/components/tabs/UsedGearParkingLotArrivalRecordPage', () => ({
+  UsedGearParkingLotArrivalRecordPage: ({ recordId }: { recordId: string }) => <div>Parking Lot arrival review {recordId}</div>,
 }));
 
 vi.mock('@/components/tabs/UsedGearManualIntakePage', () => ({
@@ -132,8 +136,8 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     manualIntakeMode: false,
     jotformReviewGroupId: null,
     jotformReviewRecordId: null,
-    lotTwoReviewGroupId: null,
-    lotTwoReviewRecordId: null,
+    parkingLotArrivalGroupId: null,
+    parkingLotArrivalRecordId: null,
     trashReviewGroupId: null,
     trashReviewRecordId: null,
     manualIntakeRecordId: null,
@@ -164,7 +168,7 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     navigateToUserRecord: vi.fn(),
     navigateToUsersList: vi.fn(),
     navigateToTab: vi.fn(),
-    navigateToJotformReviewGroup: vi.fn(),
+    navigateToParkingLotPendingReviewGroup: vi.fn(),
     runtimeFeatures: buildRuntimeFeatures(),
     metrics: {} as AppTabContentProps['metrics'],
     accessiblePages: ['dashboard'],
@@ -223,7 +227,8 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
         'Accepted - Awaiting Arrival': 0,
         'Accepted - Arrived, Awaiting SKU': 0,
         'Accepted - Arrived, Awaiting Missing Item': 0,
-        'Testing and Photography In Progress': 0,
+        'Testing In Progress': 0,
+        'Photography In Progress': 0,
         'Awaiting Pre-Listing Review': 0,
         'Approved for Publish': 0,
         'Listed, Shopify': 0,
@@ -309,8 +314,8 @@ describe('AppTabContent', () => {
       manualIntakeMode: false,
       jotformReviewGroupId: null,
       jotformReviewRecordId: null,
-      lotTwoReviewGroupId: null,
-      lotTwoReviewRecordId: null,
+      parkingLotArrivalGroupId: null,
+      parkingLotArrivalRecordId: null,
       trashReviewGroupId: null,
       trashReviewRecordId: null,
       manualIntakeRecordId: null,
@@ -363,6 +368,12 @@ describe('AppTabContent', () => {
     render(<AppTabContent {...buildProps({ activeTab: 'workflow-guide', accessiblePages: ['dashboard', 'workflow-guide'] })} />);
 
     expect(await screen.findByText('Workflow guide content')).toBeInTheDocument();
+  });
+
+  it('routes the workflow guide editor tab to the isolated editor page', async () => {
+    render(<AppTabContent {...buildProps({ activeTab: 'workflow-guide-editor', accessiblePages: ['dashboard', 'workflow-guide', 'workflow-guide-editor'] })} />);
+
+    expect(await screen.findByText('Workflow guide editor content')).toBeInTheDocument();
   });
 
   it('renders isolated Shopify and eBay snapshot detail pages for service-specific deep links', async () => {
@@ -459,30 +470,30 @@ describe('AppTabContent', () => {
     expect(await screen.findByText('Inventory price editor rec-price-1')).toBeInTheDocument();
   });
 
-  it('renders the dedicated Parking Lot 2 handoff page for grouped Lot 2 routes', async () => {
+  it('renders the dedicated Parking Lot arrival handoff page for grouped arrival routes', async () => {
     render(
       <AppTabContent
         {...buildProps({
-          activeTab: 'parking-lot-2',
-          lotTwoReviewGroupId: 'set-1',
+          activeTab: 'parking-lot-1',
+          parkingLotArrivalGroupId: 'set-1',
         })}
       />,
     );
 
-    expect(await screen.findByText('Parking Lot 2 handoff set-1')).toBeInTheDocument();
+    expect(await screen.findByText('Parking Lot arrival handoff set-1')).toBeInTheDocument();
   });
 
-  it('renders the dedicated Parking Lot 2 review page for record routes', async () => {
+  it('renders the dedicated Parking Lot arrival review page for record routes', async () => {
     render(
       <AppTabContent
         {...buildProps({
-          activeTab: 'parking-lot-2',
-          lotTwoReviewRecordId: 'rec-lot-two-1',
+          activeTab: 'parking-lot-1',
+          parkingLotArrivalRecordId: 'rec-lot-two-1',
         })}
       />,
     );
 
-    expect(await screen.findByText('Parking Lot 2 review rec-lot-two-1')).toBeInTheDocument();
+    expect(await screen.findByText('Parking Lot arrival review rec-lot-two-1')).toBeInTheDocument();
   });
 
   it('renders the dedicated Trash Review group page for grouped trash routes', async () => {

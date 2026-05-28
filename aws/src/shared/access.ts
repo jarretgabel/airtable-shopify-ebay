@@ -14,7 +14,6 @@ const WORKFLOW_ACCESS_PAGES: AppPage[] = [
   'manual-intake',
   'inventory',
   'parking-lot-1',
-  'parking-lot-2',
   'trash-review',
   'testing-queue',
   'photography-queue',
@@ -53,6 +52,8 @@ function resolveAirtableRequirement(event: APIGatewayProxyEventV2): RouteAccessR
   switch (source.trim()) {
     case 'users':
       return { adminOnly: true, anyPage: ['users'] };
+    case 'user-guide':
+      return { adminOnly: true, anyPage: ['workflow-guide-editor'] };
     case 'inventory-directory':
     case 'used-gear-workflow':
       return { anyPage: WORKFLOW_ACCESS_PAGES };

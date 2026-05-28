@@ -12,6 +12,7 @@ export interface QuickAnswer {
 }
 
 export interface RoleGuide {
+  roleSummary: string;
   quickStartTitle: string;
   quickStartSummary: string;
   quickStartItems: string[];
@@ -51,18 +52,27 @@ export interface RoleStartPoint {
   detail: string;
 }
 
+export interface WorkflowGuideContent {
+  roleGuides: Record<UserRole, RoleGuide>;
+  advancementRules: GuideStep[];
+  flowStages: WorkflowFlowStage[];
+  pageCards: PageGuideCard[];
+  recordCards: RecordGuideCard[];
+  roleStartPoints: Record<UserRole, RoleStartPoint[]>;
+}
+
 export const WORKFLOW_ADVANCEMENT_RULES: GuideStep[] = [
   {
-    title: 'Parking Lot 1 to accepted workflow',
-    detail: 'A new intake should only leave Parking Lot 1 after it has a clear qualification decision and qualification notes. Accepted rows move into Parking Lot 2; rejected rows move into Trash Review.',
+    title: 'Parking Lot intake workflow',
+    detail: 'A new intake should only leave Parking Lot after it has a clear qualification decision and qualification notes. Accepted rows stay in Parking Lot for arrival-stage handling; rejected rows move into Trash Review.',
   },
   {
-    title: 'Parking Lot 2 to specialist work',
-    detail: 'Accepted rows should only move past Parking Lot 2 once the arrival-stage handoff is complete for the current situation: arrival captured, SKU assigned when needed, and missing-item issues resolved before downstream work starts.',
+    title: 'Parking Lot to specialist work',
+    detail: 'Accepted rows should only move past Parking Lot once the arrival-stage handoff is complete for the current situation: arrival captured, SKU assigned when needed, and missing-item issues resolved before downstream work starts.',
   },
   {
-    title: 'Testing and Photography to Listings',
-    detail: 'A row reaches Listings only after both specialist signoffs are complete. Testing and photography should leave enough notes and completion detail that the next team does not have to guess why the row is ready.',
+    title: 'Testing, then Photography, then Listings',
+    detail: 'A row reaches Listings only after testing is complete first and photography is complete second. Each specialist handoff should leave enough notes and completion detail that the next team does not have to guess why the row is ready.',
   },
   {
     title: 'Listings to live listing status',
@@ -74,32 +84,13 @@ export const WORKFLOW_ADVANCEMENT_RULES: GuideStep[] = [
   },
 ];
 
-export function roleSummary(role: UserRole): string {
-  if (role === 'processor') {
-    return 'Start with Parking Lot 1, the Workflow Hub, and the specialist queues. Use Post-Publish once a live listing needs stale, sold-ready, or shipment follow-through.';
-  }
-
-  if (role === 'tester') {
-    return 'Your day usually starts in the testing queue, then moves into the record-specific testing form when a row needs hands-on notes.';
-  }
-
-  if (role === 'photographer') {
-    return 'Your day usually starts in the photography queue, then moves into the record-specific photos form when a row is ready for images and handoff.';
-  }
-
-  if (role === 'developer') {
-    return 'Use this page as a plain-language map of the operation while you work in the supporting tools and source feeds.';
-  }
-
-  return 'Use this page as the short version of how intake, workflow, listing, and shipping fit together across the app.';
-}
-
 export function roleLabel(role: UserRole): string {
   return role.charAt(0).toUpperCase() + role.slice(1);
 }
 
 export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
   admin: {
+    roleSummary: 'Use this page as the short version of how intake, workflow, listing, and shipping fit together across the app.',
     quickStartTitle: 'Admin quick start',
     quickStartSummary: 'Keep the whole operation moving, then drop into the exact queue or record that needs intervention.',
     quickStartItems: [
@@ -138,6 +129,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     ],
   },
   owner: {
+    roleSummary: 'Use this page as the short version of how intake, workflow, listing, and shipping fit together across the app.',
     quickStartTitle: 'Owner quick start',
     quickStartSummary: 'Use the same operational map as admin, with focus on throughput, accountability, and exceptions.',
     quickStartItems: [
@@ -176,10 +168,11 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     ],
   },
   processor: {
+    roleSummary: 'Start with Parking Lot 1, JotForm reference, the Workflow Hub, and the specialist queues. Use Post-Publish once a live listing needs stale, sold-ready, or shipment follow-through.',
     quickStartTitle: 'Processor quick start',
     quickStartSummary: 'This is the operational lane for intake, handoff, and getting an item ready for the next specialist.',
     quickStartItems: [
-      'Start in Parking Lot 1 for fresh intake, the Workflow Hub for accepted-row lookup and workflow snapshots, or Post-Publish for live listing follow-through.',
+      'Start in Parking Lot 1 for fresh intake, use JotForm as the raw source-feed reference when you need submission context, use the Workflow Hub for accepted-row lookup and workflow snapshots, or open Post-Publish for live listing follow-through.',
       'Clean up notes, confirm the next stage, and move the item into the next real handoff instead of leaving it parked.',
       'Use the testing and photography queues for specialist work, then use Listings once the item reaches listing review.',
     ],
@@ -191,11 +184,11 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Turn accepted items into owned workflow',
-        detail: 'Once a row is accepted, use the Workflow Hub to confirm stage status and open the exact page that owns the next step. Use Post-Publish later for live listing follow-through; neither page is the listing review page.',
+        detail: 'Once a row is accepted, use JotForm when you need to verify the original submission details, then use the Workflow Hub to confirm stage status and open the exact page that owns the next step. Use Post-Publish later for live listing follow-through; neither page is the listing review page.',
       },
       {
         title: 'Move work through testing and photography',
-        detail: 'Use the stage queues and record-specific forms to finish specialist work instead of keeping status in scattered notes.',
+        detail: 'Use the stage queues and record-specific forms to move items through testing first and photography second instead of keeping status in scattered notes.',
       },
       {
         title: 'Clear listing review before publish',
@@ -214,6 +207,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     ],
   },
   tester: {
+    roleSummary: 'Your day usually starts in the testing queue, then moves into the record-specific testing form when a row needs hands-on notes.',
     quickStartTitle: 'Tester quick start',
     quickStartSummary: 'Your lane is narrow on purpose: pick up ready items, capture hands-on findings, and sign off or flag blockers.',
     quickStartItems: [
@@ -237,7 +231,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Return the item to the workflow path',
-        detail: 'After testing, the item either continues toward photos and listing or circles back for correction.',
+        detail: 'After testing, the item moves forward to photography or circles back for correction with clear notes.',
       },
     ],
     questions: [
@@ -252,6 +246,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     ],
   },
   photographer: {
+    roleSummary: 'Your day usually starts in the photography queue, then moves into the record-specific photos form when a row is ready for images and handoff.',
     quickStartTitle: 'Photographer quick start',
     quickStartSummary: 'Your lane is the photography handoff: find ready items, complete image work, and hand the record back cleanly.',
     quickStartItems: [
@@ -290,6 +285,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     ],
   },
   developer: {
+    roleSummary: 'Use this page as a plain-language map of the operation while you work in the supporting tools and source feeds.',
     quickStartTitle: 'Developer quick start',
     quickStartSummary: 'This guide is your plain-language map while you work in source feeds, account tooling, and local validation.',
     quickStartItems: [
@@ -347,15 +343,15 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   },
   {
     title: 'Arrival And Routing',
-    detail: 'Accepted items move through Parking Lot 2 for arrival handling and then into the specialist queues, while the Workflow Hub stays focused on record lookup and workflow snapshots.',
-    pages: ['manual-intake', 'parking-lot-2', 'inventory'],
+    detail: 'Accepted items stay inside Parking Lot for arrival handling and then move into the specialist queues, while the Workflow Hub stays focused on record lookup and workflow snapshots.',
+    pages: ['manual-intake', 'parking-lot-1', 'inventory'],
     tone: 'routing',
     primaryRoles: ['processor'],
     supportRoles: ['admin', 'owner'],
   },
   {
     title: 'Testing Handoff',
-    detail: 'Testing takes the item from routed intake into hands-on verification and sends it forward with clear findings.',
+    detail: 'Testing takes the item from routed intake into hands-on verification and sends it forward to photography with clear findings.',
     pages: ['testing-queue', 'testing'],
     tone: 'specialist',
     primaryRoles: ['tester'],
@@ -387,9 +383,13 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   },
 ];
 
-export function getWorkflowFlowStagesForRole(role: UserRole): WorkflowFlowStage[] {
+export function roleSummary(role: UserRole, roleGuides: Record<UserRole, RoleGuide> = ROLE_GUIDES): string {
+  return roleGuides[role]?.roleSummary ?? ROLE_GUIDES[role].roleSummary;
+}
+
+export function getWorkflowFlowStagesForRole(role: UserRole, flowStages: WorkflowFlowStage[] = WORKFLOW_FLOW_STAGES): WorkflowFlowStage[] {
   if (role === 'tester' || role === 'photographer') {
-    return WORKFLOW_FLOW_STAGES.filter((stage) => (
+    return flowStages.filter((stage) => (
       stage.title === 'Arrival And Routing'
       || stage.title === 'Testing Handoff'
       || stage.title === 'Photography Handoff'
@@ -397,7 +397,7 @@ export function getWorkflowFlowStagesForRole(role: UserRole): WorkflowFlowStage[
     ));
   }
 
-  return WORKFLOW_FLOW_STAGES;
+  return flowStages;
 }
 
 export function shouldShowWorkflowTrashPath(role: UserRole): boolean {
@@ -446,31 +446,31 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     ],
   },
   {
-    title: 'Parking Lot 1',
+    title: 'Parking Lot',
     pages: ['parking-lot-1'],
-    summary: 'Parking Lot 1 is the front-door review page for new used-gear intake.',
+    summary: 'Parking Lot is the single intake page for new used-gear review and accepted arrival-stage handling.',
     modules: [
-      'Pending review queue: qualify, accept, or trash new rows.',
+      'Parking Lot queue: review Pending Review, Awaiting Arrival, Awaiting SKU, and Awaiting Missing Item rows in one place.',
       'Grouped review flow: shared submission handling for multi-item intake.',
-      'Selected record and group pages: deeper review for grouped intake decisions.',
+      'Selected record and group pages: deeper review for grouped intake decisions and accepted arrival-stage handoff work.',
     ],
     workflows: [
       'Start here when a new intake row still needs qualification review.',
-      'Accept qualified rows into Parking Lot 2 or route unqualified rows into Trash Review with a reason.',
+      'Accept qualified rows into arrival-stage statuses inside Parking Lot or route unqualified rows into Trash Review with a reason.',
     ],
   },
   {
-    title: 'Parking Lot 2',
-    pages: ['parking-lot-2'],
-    summary: 'Parking Lot 2 is the accepted arrival-stage page for rows that are in workflow but not yet through early routing and handoff.',
+    title: 'Arrival-stage work inside Parking Lot',
+    pages: ['parking-lot-1'],
+    summary: 'Accepted arrival-stage rows stay inside Parking Lot until intake handoff is complete.',
     modules: [
-      'Arrival-stage queue buckets: accepted rows, missing item follow-up, and grouped arrivals.',
+      'Arrival-stage review pages: accepted rows, missing item follow-up, and grouped arrivals.',
       'Group handoff page: coordinated review for one pickup or submission set.',
       'Record actions: open Intake or the current operational record.',
     ],
     workflows: [
-      'Use it for arrival handling, SKU assignment, grouped handoff work, and missing-item follow-up.',
-      'Move rows forward into Manual Intake, Workflow Hub, or specialist work instead of leaving accepted items parked here.',
+      'Use these review pages for arrival handling, SKU assignment, grouped handoff work, and missing-item follow-up.',
+      'Move rows forward into Manual Intake, Workflow Hub, or specialist work instead of leaving accepted items parked in Parking Lot.',
     ],
   },
   {
@@ -705,12 +705,12 @@ const RECORD_GUIDE_CARDS: RecordGuideCard[] = [
     ],
     workflows: [
       'Use them when a single queue row needs deeper qualification work or a grouped submission needs one coordinated decision.',
-      'Finish the acceptance or trash decision here before the item moves into Parking Lot 2 or Trash Review.',
+      'Finish the acceptance or trash decision here before the item stays in Parking Lot for arrival-stage handling or moves into Trash Review.',
     ],
   },
   {
-    title: 'Parking Lot 2 Group Handoff Page',
-    pages: ['parking-lot-2'],
+    title: 'Parking Lot Group Handoff Page',
+    pages: ['parking-lot-1'],
     summary: 'This page keeps one accepted pickup or submission set together during arrival-stage handoff work.',
     surfaces: [
       'Group handoff page: batch arrival-date and SKU review for the full set, plus direct actions into Manual Intake and the operational record for each row.',
@@ -861,19 +861,23 @@ export function getVisiblePageLabels(accessiblePages: AppPage[]): string[] {
     .filter((label): label is string => Boolean(label));
 }
 
-export function getVisiblePageCards(accessiblePages: AppPage[]): PageGuideCard[] {
+export function getVisiblePageCards(accessiblePages: AppPage[], pageCards: PageGuideCard[] = PAGE_GUIDE_CARDS): PageGuideCard[] {
   const accessiblePageSet = new Set(accessiblePages);
-  return PAGE_GUIDE_CARDS.filter((card) => card.pages.some((page) => accessiblePageSet.has(page)));
+  return pageCards.filter((card) => card.pages.some((page) => accessiblePageSet.has(page)));
 }
 
-export function getVisibleRecordCards(accessiblePages: AppPage[]): RecordGuideCard[] {
+export function getVisibleRecordCards(accessiblePages: AppPage[], recordCards: RecordGuideCard[] = RECORD_GUIDE_CARDS): RecordGuideCard[] {
   const accessiblePageSet = new Set(accessiblePages);
-  return RECORD_GUIDE_CARDS.filter((card) => card.pages.some((page) => accessiblePageSet.has(page)));
+  return recordCards.filter((card) => card.pages.some((page) => accessiblePageSet.has(page)));
 }
 
-export function getRoleStartPoints(role: UserRole, accessiblePages: AppPage[]): RoleStartPoint[] {
+export function getRoleStartPoints(
+  role: UserRole,
+  accessiblePages: AppPage[],
+  roleStartPoints: Record<UserRole, RoleStartPoint[]> = ROLE_START_POINTS,
+): RoleStartPoint[] {
   const accessiblePageSet = new Set(accessiblePages);
-  const matchingStarts = ROLE_START_POINTS[role].filter((item) => accessiblePageSet.has(item.page));
+  const matchingStarts = roleStartPoints[role].filter((item) => accessiblePageSet.has(item.page));
 
   if (matchingStarts.length > 0) {
     return matchingStarts;
@@ -888,3 +892,12 @@ export function getRoleStartPoints(role: UserRole, accessiblePages: AppPage[]): 
       detail: 'This is one of the pages currently available to this login and is the safest starting point when role-specific shortcuts are not available.',
     }));
 }
+
+export const DEFAULT_WORKFLOW_GUIDE_CONTENT: WorkflowGuideContent = {
+  roleGuides: ROLE_GUIDES,
+  advancementRules: WORKFLOW_ADVANCEMENT_RULES,
+  flowStages: WORKFLOW_FLOW_STAGES,
+  pageCards: PAGE_GUIDE_CARDS,
+  recordCards: RECORD_GUIDE_CARDS,
+  roleStartPoints: ROLE_START_POINTS,
+};

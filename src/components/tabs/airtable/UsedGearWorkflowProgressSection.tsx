@@ -70,8 +70,14 @@ function recordSearchText(record: AirtableRecord): string {
     .toLowerCase();
 }
 
-function isConcurrentStageStatus(record: AirtableRecord): boolean {
-  return getUsedGearWorkflowStatus(record.fields) === 'Testing and Photography In Progress';
+function isTestingQueueStatus(record: AirtableRecord): boolean {
+  const status = getUsedGearWorkflowStatus(record.fields);
+  return status === 'Testing In Progress';
+}
+
+function isPhotographyQueueStatus(record: AirtableRecord): boolean {
+  const status = getUsedGearWorkflowStatus(record.fields);
+  return status === 'Photography In Progress';
 }
 
 const intakeDateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -116,9 +122,8 @@ function getPrimaryQueueAction(
   >,
 ): { label: string; onClick: () => void; showSecondaryAction: boolean; icon: 'open' | 'form' | 'edit' } {
   const status = getUsedGearWorkflowStatus(record.fields) ?? 'Unknown';
-  const normalizedNextTeam = displayInventoryValue(record.fields['Workflow Next Team']).trim().toLowerCase();
 
-  if (queueMode === 'testing' && status === 'Testing and Photography In Progress' && !record.fields['Testing Signed By']) {
+  if (queueMode === 'testing' && isTestingQueueStatus(record)) {
     return {
       label: 'Open Testing',
       onClick: () => handlers.onOpenTestingForm(record.id),
@@ -127,7 +132,7 @@ function getPrimaryQueueAction(
     };
   }
 
-  if (queueMode === 'photography' && status === 'Testing and Photography In Progress' && !record.fields['Photography Signed By']) {
+  if (queueMode === 'photography' && isPhotographyQueueStatus(record)) {
     return {
       label: 'Open Photos',
       onClick: () => handlers.onOpenPhotosForm(record.id),
@@ -149,42 +154,22 @@ function getPrimaryQueueAction(
     };
   }
 
-  if (status === 'Testing and Photography In Progress') {
-    if ((normalizedNextTeam === 'testing' || normalizedNextTeam === 'testing pending') && !record.fields['Testing Signed By']) {
-      return {
-        label: 'Open Testing',
-        onClick: () => handlers.onOpenTestingForm(record.id),
-        showSecondaryAction: true,
-        icon: 'edit',
-      };
-    }
+  if (status === 'Testing In Progress') {
+    return {
+      label: 'Open Testing',
+      onClick: () => handlers.onOpenTestingForm(record.id),
+      showSecondaryAction: true,
+      icon: 'edit',
+    };
+  }
 
-    if ((normalizedNextTeam === 'photography' || normalizedNextTeam === 'photo pending' || normalizedNextTeam === 'photography pending') && !record.fields['Photography Signed By']) {
-      return {
-        label: 'Open Photos',
-        onClick: () => handlers.onOpenPhotosForm(record.id),
-        showSecondaryAction: true,
-        icon: 'edit',
-      };
-    }
-
-    if (!record.fields['Testing Signed By']) {
-      return {
-        label: 'Open Testing',
-        onClick: () => handlers.onOpenTestingForm(record.id),
-        showSecondaryAction: true,
-        icon: 'edit',
-      };
-    }
-
-    if (!record.fields['Photography Signed By']) {
-      return {
-        label: 'Open Photos',
-        onClick: () => handlers.onOpenPhotosForm(record.id),
-        showSecondaryAction: true,
-        icon: 'edit',
-      };
-    }
+  if (status === 'Photography In Progress') {
+    return {
+      label: 'Open Photos',
+      onClick: () => handlers.onOpenPhotosForm(record.id),
+      showSecondaryAction: true,
+      icon: 'edit',
+    };
   }
 
   if (status === 'Awaiting Pre-Listing Review') {
@@ -217,10 +202,10 @@ function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): Pro
     return {
       eyebrow: 'Used Gear Workflow',
       title: 'Testing Queue',
-      description: 'Focus only on rows still waiting for testing signoff. Related rows stay grouped by pickup or submission so multi-item work stays coherent.',
+      description: 'Focus only on rows still waiting for testing signoff. Related rows stay grouped by pickup or submission so multi-item work stays coherent before photography begins.',
       emptyTitle: 'No rows currently need testing',
       emptyMessage: 'The testing queue is clear. Rows that still need testing will appear here automatically.',
-      emptyGuidance: 'Next route: move accepted rows through Parking Lot 2 and complete processing so testing work can begin.',
+      emptyGuidance: 'Next route: move accepted rows through Parking Lot and complete arrival-stage handling so testing work can begin.',
       copySuccessTitle: 'Testing queue link copied',
       copySuccessMessage: 'The testing queue link is ready to share.',
       copyUnavailableMessage: 'This browser cannot copy the testing queue link automatically.',
@@ -233,10 +218,10 @@ function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): Pro
     return {
       eyebrow: 'Used Gear Workflow',
       title: 'Photography Queue',
-      description: 'Focus only on rows still waiting for photography signoff. Related rows stay grouped by pickup or submission so staging work can be handed off cleanly.',
+      description: 'Focus only on rows that already cleared testing and are now waiting for photography signoff. Related rows stay grouped by pickup or submission so staging work can be handed off cleanly.',
       emptyTitle: 'No rows currently need photography',
       emptyMessage: 'The photography queue is clear. Rows that still need photography will appear here automatically.',
-      emptyGuidance: 'Next route: use Parking Lot 2 or the testing queue until rows are ready for photo-stage completion.',
+      emptyGuidance: 'Next route: use Parking Lot or the testing queue until rows are ready for photo-stage completion.',
       copySuccessTitle: 'Photography queue link copied',
       copySuccessMessage: 'The photography queue link is ready to share.',
       copyUnavailableMessage: 'This browser cannot copy the photography queue link automatically.',
@@ -247,16 +232,16 @@ function getQueuePresentation(queueMode: UsedGearWorkflowProgressQueueMode): Pro
 
   return {
     eyebrow: 'Used Gear Workflow',
-    title: 'Processing And Holding Queue',
-    description: 'Manage accepted intake rows through arrival handling, processing, and the shared downstream testing-and-photography holding stage. Related rows stay grouped by pickup or submission.',
+    title: 'Processing And Specialist Queue',
+    description: 'Manage accepted intake rows through arrival handling, processing, testing, and photography. Related rows stay grouped by pickup or submission.',
     emptyTitle: 'No active operational rows in processing or holding',
-    emptyMessage: 'The used-gear queue currently has no accepted rows still moving through arrival, processing, or concurrent testing and photography work.',
-    emptyGuidance: 'Next route: review Parking Lot 2 for newly accepted arrivals, or open Listings for rows that have already reached listing-phase review.',
+    emptyMessage: 'The used-gear queue currently has no accepted rows still moving through arrival, processing, testing, or photography.',
+    emptyGuidance: 'Next route: review Parking Lot for newly accepted arrivals, or open Listings for rows that have already reached listing-phase review.',
     copySuccessTitle: 'Queue link copied',
-    copySuccessMessage: 'The processing and holding queue link is ready to share.',
-    copyUnavailableMessage: 'This browser cannot copy the processing and holding queue link automatically.',
-    copyFailureMessage: 'The processing and holding queue link could not be copied. Try again or copy the URL from the browser address bar.',
-    sharedFocusMessage: 'Shared link opened the processing and holding queue focused on one grouped submission.',
+    copySuccessMessage: 'The processing and specialist queue link is ready to share.',
+    copyUnavailableMessage: 'This browser cannot copy the processing and specialist queue link automatically.',
+    copyFailureMessage: 'The processing and specialist queue link could not be copied. Try again or copy the URL from the browser address bar.',
+    sharedFocusMessage: 'Shared link opened the processing and specialist queue focused on one grouped submission.',
   };
 }
 
@@ -317,11 +302,11 @@ export function UsedGearWorkflowProgressSection({
 
   const queueScopedRecords = useMemo(() => {
     if (queueMode === 'testing') {
-      return records.filter((record) => isConcurrentStageStatus(record) && !record.fields['Testing Signed By']);
+      return records.filter((record) => isTestingQueueStatus(record));
     }
 
     if (queueMode === 'photography') {
-      return records.filter((record) => isConcurrentStageStatus(record) && !record.fields['Photography Signed By']);
+      return records.filter((record) => isPhotographyQueueStatus(record));
     }
 
     return records;

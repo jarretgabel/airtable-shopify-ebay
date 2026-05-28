@@ -78,7 +78,7 @@ describe('useListingApprovalCombinedFieldState', () => {
       Make: 'Sansui',
       Model: 'AU-717',
       'Accepted At': '2026-05-06T14:00:00.000Z',
-      'Workflow Status': 'Testing and Photography In Progress',
+      'Workflow Status': 'Testing In Progress',
       'Qualification Notes': 'Waiting on testing signoff only.',
       'Submission Group ID': 'sample-workflow-group-06',
       'Offer Amount': 950,

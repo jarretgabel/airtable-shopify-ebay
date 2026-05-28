@@ -93,11 +93,11 @@ describe('UsedGearPendingReviewRecordPage', () => {
       />,
     );
 
-    expect(await screen.findByText('Qualify Into Lot 2')).toBeInTheDocument();
+    expect(await screen.findByText('Qualify Into Parking Lot')).toBeInTheDocument();
     const routeHeading = screen.getByRole('heading', { name: 'Route To Trash' });
     const snapshotHeading = screen.getByText('Intake Snapshot');
     expect(snapshotHeading.compareDocumentPosition(routeHeading) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Back to Parking Lot 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to Parking Lot' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Group Review' }));
     expect(navigateMock).toHaveBeenCalledWith('/parking-lot-1/group/group-1?reviewMode=test');
@@ -107,7 +107,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
   });
 
-  it('accepts the row into lot 2 and returns to the queue', async () => {
+  it('accepts the row into parking lot and returns to the queue', async () => {
     acceptPendingReviewRecordMock.mockResolvedValue(undefined);
 
     render(
@@ -118,8 +118,8 @@ describe('UsedGearPendingReviewRecordPage', () => {
       />,
     );
 
-    await screen.findByText('Qualify Into Lot 2');
-    fireEvent.click(screen.getByRole('button', { name: 'Accept Into Lot 2' }));
+    await screen.findByText('Qualify Into Parking Lot');
+    fireEvent.click(screen.getByRole('button', { name: 'Accept Into Parking Lot' }));
 
     await waitFor(() => {
       expect(acceptPendingReviewRecordMock).toHaveBeenCalledWith('rec-pending-1', 'Taylor Reviewer', {
@@ -131,7 +131,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
     expect(navigateMock).toHaveBeenCalledWith({
       pathname: '/parking-lot-1',
       search: '?reviewMode=test',
-      hash: '#used-gear-pending-review',
+      hash: '#used-gear-parking-lot',
     });
   });
 
@@ -175,11 +175,11 @@ describe('UsedGearPendingReviewRecordPage', () => {
       />,
     );
 
-    expect(await screen.findByText('Qualify Into Lot 2')).toBeInTheDocument();
+    expect(await screen.findByText('Qualify Into Parking Lot')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sellable Clean Pass' }));
     expect(screen.getByRole('textbox', { name: 'Qualification Notes' })).toHaveValue(
-      'Carry forward note\nSellable intake confirmed. Core unit is present, pricing path is documented, and the row should continue through Lot 2.',
+      'Carry forward note\nSellable intake confirmed. Core unit is present, pricing path is documented, and the row should continue through Parking Lot.',
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Repair Not Economical' }));

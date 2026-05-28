@@ -215,7 +215,7 @@ export function UsedGearPendingReviewGroupPage({
   const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, 'review');
   const sectionNav = (
     <MainPageSectionNav
-      ariaLabel="Parking Lot 1 group sections"
+      ariaLabel="Parking Lot group sections"
       items={sectionItems.map((item) => ({ key: item.key, label: item.label }))}
       activeKey={activeSectionId as PendingReviewGroupSectionKey}
       onSelect={(sectionKey) => scrollToSection(sectionKey)}
@@ -268,7 +268,7 @@ export function UsedGearPendingReviewGroupPage({
       await acceptPendingReviewGroup(reviewInput, currentUserName);
       onBackToParkingLot();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Unable to accept the grouped intake review into Lot 2.');
+      setError(saveError instanceof Error ? saveError.message : 'Unable to accept the grouped intake review into Parking Lot.');
       setSaving(false);
       return;
     }
@@ -302,11 +302,11 @@ export function UsedGearPendingReviewGroupPage({
 
   return (
     <WorkflowRecordPageLayout
-      eyebrow="Parking Lot 1"
+      eyebrow="Parking Lot"
       title={group.label}
       belowHeader={sectionNav}
       actions={(
-        <BackToolbarButton label="Back to Parking Lot 1" onClick={onBackToParkingLot} />
+        <BackToolbarButton label="Back to Parking Lot" onClick={onBackToParkingLot} />
       )}
     >
 
@@ -381,9 +381,9 @@ export function UsedGearPendingReviewGroupPage({
 
                       <div className="mt-4 grid gap-4 md:grid-cols-2">
                         <label className="block">
-                          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Lot 2 Route</span>
+                          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Parking Lot Status</span>
                           <select
-                            aria-label="Lot 2 Route"
+                            aria-label="Parking Lot Status"
                             className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
                             value={editor?.acceptedStatus ?? 'Accepted - Awaiting Arrival'}
                             onChange={(event) => {
@@ -505,7 +505,7 @@ export function UsedGearPendingReviewGroupPage({
                 }}
                 disabled={saving || groupNeedsSubmissionId || !pricingCoverage || !qualificationCoverage}
               >
-                {saving ? 'Saving...' : 'Accept Group Into Lot 2'}
+                {saving ? 'Saving...' : 'Accept Group Into Parking Lot'}
               </button>
             </div>
 

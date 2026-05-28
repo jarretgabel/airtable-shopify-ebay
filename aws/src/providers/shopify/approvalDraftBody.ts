@@ -56,6 +56,8 @@ const SHOPIFY_SUPPLEMENTAL_KEY_FEATURE_SPECS: ReadonlyArray<{ feature: string; c
   { feature: 'Power Cable', candidates: ['Power Cable'] },
   { feature: 'Manual', candidates: ['Manual'] },
   { feature: 'Voltage', candidates: ['Voltage'] },
+  { feature: 'Shipping Weight', candidates: ['Shipping Weight', 'Weight'] },
+  { feature: 'Shipping Dimensions', candidates: ['Shipping Dims'] },
   { feature: 'Audiogon Rating', candidates: ['Audiogon Rating'] },
 ];
 

@@ -1,0 +1,262 @@
+[
+  {
+    "id": "recjnLFU7DFmYJGCU",
+    "name": "Admin quick start"
+  },
+  {
+    "id": "recSB7GNGhoSLejQc",
+    "name": "Owner quick start"
+  },
+  {
+    "id": "recMT6y9l4PxGYfV1",
+    "name": "Processor quick start"
+  },
+  {
+    "id": "recXHw9xXu4LsLAfi",
+    "name": "Tester quick start"
+  },
+  {
+    "id": "recqEtSQvWLjDCYpZ",
+    "name": "Photographer quick start"
+  },
+  {
+    "id": "recNbhyMh8I1A9MX2",
+    "name": "Developer quick start"
+  },
+  {
+    "id": "rec3NfpvjX2U96HYu",
+    "name": "Rule 01 - Parking Lot intake workflow"
+  },
+  {
+    "id": "recY9ZfBLJ8RknZvg",
+    "name": "Rule 02 - Parking Lot to specialist work"
+  },
+  {
+    "id": "recrYahVdWRCZVJPY",
+    "name": "Rule 03 - Testing, then Photography, then Listings"
+  },
+  {
+    "id": "recWLJ9NNVIjRrAfe",
+    "name": "Rule 04 - Listings to live listing status"
+  },
+  {
+    "id": "recB5tjnZQtsTdIu5",
+    "name": "Rule 05 - Live listings to follow-through"
+  },
+  {
+    "id": "recHCx4ne2IjcKUBs",
+    "name": "Stage - Intake Arrives"
+  },
+  {
+    "id": "recQ9J3ih44t2wwKJ",
+    "name": "Stage - Qualify Or Trash"
+  },
+  {
+    "id": "recyUG4YYa4om1J9r",
+    "name": "Stage - Arrival And Routing"
+  },
+  {
+    "id": "rec0Az5nNJCwQslkb",
+    "name": "Stage - Testing Handoff"
+  },
+  {
+    "id": "recFJKNqlNbfXcKZk",
+    "name": "Stage - Photography Handoff"
+  },
+  {
+    "id": "recWFJSfFZfTA38XC",
+    "name": "Stage - Pre-List And Publish"
+  },
+  {
+    "id": "recEsNBOErUlfCScA",
+    "name": "Stage - Post-Publish Follow-Through"
+  },
+  {
+    "id": "recMxdrVG6DezDf34",
+    "name": "Page - Dashboard"
+  },
+  {
+    "id": "recgDOvXxE4ZQks1V",
+    "name": "Page - JotForm"
+  },
+  {
+    "id": "recnoePx0sg3iMm7U",
+    "name": "Page - Manual Intake"
+  },
+  {
+    "id": "recXx5XfJx9aGbseX",
+    "name": "Page - Parking Lot"
+  },
+  {
+    "id": "recgiYEpEVBI6w8Jl",
+    "name": "Page - Arrival-stage work inside Parking Lot"
+  },
+  {
+    "id": "recO4whGqzje9mtTB",
+    "name": "Page - Trash Review"
+  },
+  {
+    "id": "reclAksmLfACnJuev",
+    "name": "Page - Workflow Hub"
+  },
+  {
+    "id": "recgthYG5C1ftviCd",
+    "name": "Page - Testing Queue"
+  },
+  {
+    "id": "recZKParvbNedogU5",
+    "name": "Page - Testing"
+  },
+  {
+    "id": "recPpdbVwZcwiayNP",
+    "name": "Page - Photography Queue"
+  },
+  {
+    "id": "recM4QLD8rNLOBp7z",
+    "name": "Page - Photos"
+  },
+  {
+    "id": "recQJONhBcOfm4WgR",
+    "name": "Page - Listings"
+  },
+  {
+    "id": "recDhQ0Eru8dWAv4L",
+    "name": "Page - Post-Publish"
+  },
+  {
+    "id": "recQAbhBBckjYowMh",
+    "name": "Page - Archive"
+  },
+  {
+    "id": "rec7ej5Ypr0B31q3p",
+    "name": "Page - Shopify Products"
+  },
+  {
+    "id": "rece3epRtt3ck4eyw",
+    "name": "Page - eBay"
+  },
+  {
+    "id": "recYWnPqiqfyYHrYj",
+    "name": "Page - Market Prices"
+  },
+  {
+    "id": "rec7WSg0I9SBpGvuK",
+    "name": "Page - Image Lab"
+  },
+  {
+    "id": "recMBiD4A9eiQOSXQ",
+    "name": "Page - User Management"
+  },
+  {
+    "id": "recs0d5CPEBSyc1Uq",
+    "name": "Page - Settings"
+  },
+  {
+    "id": "rec3vLZVXACTYbKa1",
+    "name": "Page - Notifications"
+  },
+  {
+    "id": "recrZfBuSIVEKTBLK",
+    "name": "Record - Pending Review Record And Group Pages"
+  },
+  {
+    "id": "reczzJcYukREkJ7v0",
+    "name": "Record - Parking Lot Group Handoff Page"
+  },
+  {
+    "id": "recJWTY7XWen0Eoy0",
+    "name": "Record - Trash Record Page"
+  },
+  {
+    "id": "recAy2eAoCBhDX86Z",
+    "name": "Record - Manual Intake Record Work"
+  },
+  {
+    "id": "recSyPeogaIetw6n0",
+    "name": "Record - Workflow Snapshot And Record Pages"
+  },
+  {
+    "id": "reccc7BDiUhj71DUu",
+    "name": "Record - Testing Record Page"
+  },
+  {
+    "id": "recCD4nGyc6vnzW6f",
+    "name": "Record - Photos Record Page"
+  },
+  {
+    "id": "rec06fmKH9WiOc3AT",
+    "name": "Record - Listings Record Page"
+  },
+  {
+    "id": "recLtYOdyQpNrtITu",
+    "name": "Record - Shopify Snapshot Record Page"
+  },
+  {
+    "id": "recDnK8KIvIy2Ch4b",
+    "name": "Record - eBay Snapshot Record Page"
+  },
+  {
+    "id": "rec0glLgpy08OR1El",
+    "name": "Start - admin - Check overall pressure first"
+  },
+  {
+    "id": "rec5DueA7ngEsFtxe",
+    "name": "Start - admin - Start intake cleanup here"
+  },
+  {
+    "id": "rec0u2Zt6EAznhHpf",
+    "name": "Start - admin - Open final review here"
+  },
+  {
+    "id": "recj2S5PnptXxVyro",
+    "name": "Start - owner - Start with the operation view"
+  },
+  {
+    "id": "recolKMxD7gbtqSKi",
+    "name": "Start - owner - Check live listing follow-through"
+  },
+  {
+    "id": "recgS1Ych9ZSk4ozZ",
+    "name": "Start - owner - Review publish readiness here"
+  },
+  {
+    "id": "recbPRap1yWVVs2qo",
+    "name": "Start - processor - Start fresh intake here"
+  },
+  {
+    "id": "rec2l2G3ytGguf69M",
+    "name": "Start - processor - Look up accepted work here"
+  },
+  {
+    "id": "receHls2US6LACnCJ",
+    "name": "Start - processor - Work live follow-through here"
+  },
+  {
+    "id": "recEWwBBaYFDknhN6",
+    "name": "Start - tester - Start ready work here"
+  },
+  {
+    "id": "recMMJkhAJaSf5UNY",
+    "name": "Start - tester - Do the hands-on work here"
+  },
+  {
+    "id": "recgFfUgC8TvB2Vd8",
+    "name": "Start - photographer - Start image work here"
+  },
+  {
+    "id": "recLXDnSMO9EXyIL3",
+    "name": "Start - photographer - Finish the image handoff here"
+  },
+  {
+    "id": "rec18vrG422OLLAfE",
+    "name": "Start - developer - Start with the app map"
+  },
+  {
+    "id": "rec1QzIaTupmh8L9N",
+    "name": "Start - developer - Use the guide as glossary"
+  },
+  {
+    "id": "rec0fux3V8RoObYY6",
+    "name": "Start - developer - Use research support here"
+  }
+]

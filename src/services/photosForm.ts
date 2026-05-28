@@ -10,8 +10,6 @@ import { createServiceError, type ServiceError } from '@/services/serviceErrors'
 import { createPhotosFormDefaults, type PhotosFormOptionFieldName, type PhotosFormValues } from '@/components/tabs/photos/photosFormSchema';
 import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
 import {
-  buildUsedGearConcurrentStageSignoffs,
-  canEnterAwaitingPreListingReview,
   getUsedGearWorkflowStatus,
   isAcceptedUsedGearWorkflowStatus,
   USED_GEAR_WORKFLOW_STATUS_FIELD,
@@ -88,16 +86,7 @@ function buildWorkflowPhotographyFields(record: AirtableRecord, actorName: strin
   });
   const currentStatus = getUsedGearWorkflowStatus(record.fields);
 
-  if (currentStatus !== 'Testing and Photography In Progress') {
-    return signoffFields;
-  }
-
-  const nextSignoffs = buildUsedGearConcurrentStageSignoffs({
-    ...record.fields,
-    ...signoffFields,
-  });
-
-  if (canEnterAwaitingPreListingReview(nextSignoffs)) {
+  if (currentStatus === 'Photography In Progress') {
     return {
       ...signoffFields,
       [USED_GEAR_WORKFLOW_STATUS_FIELD]: 'Awaiting Pre-Listing Review',
@@ -107,10 +96,7 @@ function buildWorkflowPhotographyFields(record: AirtableRecord, actorName: strin
     };
   }
 
-  return {
-    ...signoffFields,
-    [USED_GEAR_WORKFLOW_STATUS_FIELD]: 'Testing and Photography In Progress',
-  };
+  return signoffFields;
 }
 
 function dedupeOptions(values: string[]): string[] {
@@ -173,6 +159,14 @@ function assertApprovedPhotosWorkflowRecord(record: AirtableRecord): void {
 
   if (!workflowStatus || !isAcceptedUsedGearWorkflowStatus(workflowStatus)) {
     throw new Error('Photos is available only for workflow items that have already been approved for intake.');
+  }
+}
+
+function assertPhotographyStageReadyForCompletion(record: AirtableRecord): void {
+  const workflowStatus = getUsedGearWorkflowStatus(record.fields);
+
+  if (workflowStatus === 'Testing In Progress') {
+    throw new Error('Photography can start only after testing is complete.');
   }
 }
 
@@ -367,6 +361,9 @@ export async function submitPhotosForm(
 
       const workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
       assertApprovedPhotosWorkflowRecord(workflowRecord);
+      if (options.completeWorkflowStage) {
+        assertPhotographyStageReadyForCompletion(workflowRecord);
+      }
       const baseFields = compactFields({
         SKU: skuValue,
         Make: trimToUndefined(values.make),

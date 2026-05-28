@@ -229,7 +229,7 @@ describe('combined approval sections', () => {
           name: 'Devon Developer',
           email: 'developer@example.com',
           role: 'developer',
-          allowedPages: ['dashboard', 'workflow-guide', 'manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab', 'users'],
+          allowedPages: ['dashboard', 'workflow-guide', 'manual-intake', 'jotform', 'parking-lot-1', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab', 'users'],
           notificationPreferences: {
             infoEnabled: true,
             successEnabled: true,
@@ -259,6 +259,8 @@ describe('combined approval sections', () => {
       Manual: '["Included"]',
       'Original Box': '["No"]',
       Voltage: '120V',
+      Weight: '42 lbs',
+      'Shipping Dims': '22x19x11',
       Remote: '["Included"]',
       'Power Cable': '["Included"]',
       'Testing Notes': 'Bench tested',
@@ -282,6 +284,8 @@ describe('combined approval sections', () => {
     expect(screen.getAllByText('Original Box').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Includes')).toHaveLength(1);
     expect(screen.getAllByText('Voltage').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Shipping Weight').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Shipping Dimensions').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Remote').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Power Cable').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Audiogon Rating').length).toBeGreaterThan(0);
@@ -289,6 +293,8 @@ describe('combined approval sections', () => {
     expect(screen.getByText('Original box and inserts')).toBeInTheDocument();
     expect(screen.getByText('No')).toBeInTheDocument();
     expect(screen.getByText('120V')).toBeInTheDocument();
+    expect(screen.getByText('42 lbs')).toBeInTheDocument();
+    expect(screen.getByText('22x19x11')).toBeInTheDocument();
     expect(screen.getByText('8/10')).toBeInTheDocument();
     expect(screen.getByText('Bench tested')).toBeInTheDocument();
     expect(screen.getByText('Light wear on the top cover.')).toBeInTheDocument();
@@ -342,7 +348,7 @@ describe('combined approval sections', () => {
 
     expect(keyFeaturesEditorSpy).toHaveBeenCalledWith(expect.objectContaining({
       disabled: false,
-      hiddenFeatureNames: expect.arrayContaining(['Make', 'Model', 'Serial Number', 'Condition', 'Component Type', 'Cosmetic Notes', 'Includes', 'Original Box', 'Manual', 'Remote', 'Power Cable', 'Voltage', 'Audiogon Rating']),
+      hiddenFeatureNames: expect.arrayContaining(['Make', 'Model', 'Serial Number', 'Condition', 'Component Type', 'Cosmetic Notes', 'Includes', 'Original Box', 'Manual', 'Remote', 'Power Cable', 'Voltage', 'Shipping Weight', 'Shipping Dimensions', 'Audiogon Rating']),
     }));
   });
 
@@ -450,7 +456,7 @@ describe('combined approval sections', () => {
     }));
   });
 
-  it('renders key features between the listing images block and the remaining shared fields', () => {
+  it('renders key features after the listing images block and keeps shipping fields out of the shared editor', () => {
     const props = buildSharedProps();
     props.combinedSharedFieldNames = ['Title', 'Images', 'Serial Number', 'Shipping Dims', 'Shipping Weight'];
     props.formValues = {
@@ -465,10 +471,15 @@ describe('combined approval sections', () => {
 
     const imageFields = screen.getByText('combined:Images');
     const keyFeaturesEditor = screen.getByTestId('key-features-editor');
-    const remainingFields = screen.getByText('combined:Shipping Dims,Shipping Weight');
 
     expect(imageFields.compareDocumentPosition(keyFeaturesEditor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(keyFeaturesEditor.compareDocumentPosition(remainingFields) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByText('combined:Shipping Dims,Shipping Weight')).not.toBeInTheDocument();
+    expect(approvalFormFieldsSpy).toHaveBeenCalledWith(expect.objectContaining({
+      allFieldNames: ['Title'],
+    }));
+    expect(approvalFormFieldsSpy).toHaveBeenCalledWith(expect.objectContaining({
+      allFieldNames: ['Images'],
+    }));
     expect(screen.queryByText(/combined:.*Serial Number/)).not.toBeInTheDocument();
   });
 

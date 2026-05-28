@@ -156,7 +156,7 @@ describe('UsedGearWorkflowProgressSection', () => {
           SKU: 'PROG-TEST-ALL',
           Make: 'Marantz',
           Model: '8B',
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Testing In Progress',
           'Workflow Next Team': 'Testing',
         },
       },
@@ -167,7 +167,7 @@ describe('UsedGearWorkflowProgressSection', () => {
           SKU: 'PROG-PHOTO-ALL',
           Make: 'Pioneer',
           Model: 'SX-1250',
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Photography In Progress',
           'Workflow Next Team': 'Photography',
           'Testing Signed By': 'Taylor Reviewer',
         },
@@ -217,7 +217,7 @@ describe('UsedGearWorkflowProgressSection', () => {
           SKU: 'PROG-1',
           Make: 'Marantz',
           Model: '8B',
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Testing In Progress',
           'Workflow Owner': 'Taylor Reviewer',
         },
       },
@@ -228,7 +228,7 @@ describe('UsedGearWorkflowProgressSection', () => {
           SKU: 'PROG-2',
           Make: 'McIntosh',
           Model: 'MC275',
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Testing In Progress',
         },
       },
       {
@@ -238,7 +238,7 @@ describe('UsedGearWorkflowProgressSection', () => {
           SKU: 'PROG-3',
           Make: 'Pioneer',
           Model: 'SX-1250',
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Testing In Progress',
         },
       },
     ]);
@@ -271,7 +271,7 @@ describe('UsedGearWorkflowProgressSection', () => {
           SKU: 'PROG-TST-1',
           Make: 'Marantz',
           Model: '8B',
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Testing In Progress',
           'Workflow Next Team': 'Testing',
         },
       },
@@ -309,7 +309,7 @@ describe('UsedGearWorkflowProgressSection', () => {
           SKU: 'PROG-TST-2',
           Make: 'Marantz',
           Model: '7C Testing Pending',
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Testing In Progress',
           'Workflow Next Team': 'Testing Pending',
         },
       },
@@ -320,7 +320,7 @@ describe('UsedGearWorkflowProgressSection', () => {
           SKU: 'PROG-PHT-2',
           Make: 'Pioneer',
           Model: 'SA-9900 Photo Pending',
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Photography In Progress',
           'Workflow Next Team': 'Photo Pending',
           'Testing Signed By': 'Taylor Reviewer',
         },
@@ -342,7 +342,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     await screen.findByText('Testing Queue');
     expect(screen.queryByText('Testing Pending')).not.toBeInTheDocument();
     expect(screen.getByText('Marantz · 7C')).toBeInTheDocument();
-    expect(screen.queryByText('Testing and Photography In Progress')).not.toBeInTheDocument();
+    expect(screen.queryByText('Testing In Progress')).not.toBeInTheDocument();
 
     rerender(
       <UsedGearWorkflowProgressSection
@@ -359,7 +359,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     await screen.findByText('Photography Queue');
     expect(screen.queryByText('Photo Pending')).not.toBeInTheDocument();
     expect(screen.getByText('Pioneer · SA-9900')).toBeInTheDocument();
-    expect(screen.queryByText('Testing and Photography In Progress')).not.toBeInTheDocument();
+    expect(screen.queryByText('Photography In Progress')).not.toBeInTheDocument();
   });
 
   it('opens the photos form directly from the dedicated photography queue', async () => {
@@ -373,7 +373,7 @@ describe('UsedGearWorkflowProgressSection', () => {
           SKU: 'PROG-PHT-1',
           Make: 'Pioneer',
           Model: 'SX-1250',
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Photography In Progress',
           'Workflow Next Team': 'Photography',
           'Testing Signed By': 'Taylor Reviewer',
         },

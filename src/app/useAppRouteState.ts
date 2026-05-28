@@ -9,8 +9,8 @@ interface AppRouteState {
   manualIntakeMode: boolean;
   jotformReviewGroupId: string | null;
   jotformReviewRecordId: string | null;
-  lotTwoReviewGroupId: string | null;
-  lotTwoReviewRecordId: string | null;
+  parkingLotArrivalGroupId: string | null;
+  parkingLotArrivalRecordId: string | null;
   trashReviewGroupId: string | null;
   trashReviewRecordId: string | null;
   manualIntakeRecordId: string | null;
@@ -36,9 +36,9 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const intakeRecordMatch = normalizedPath.match(/^\/intake\/([^/]+)$/);
   const manualIntakeMode = normalizedPath === '/manual-intake' || Boolean(manualIntakeRecordMatch) || Boolean(intakeRecordMatch);
   const jotformReviewGroupMatch = normalizedPath.match(/^\/parking-lot-1\/group\/([^/]+)$/);
-  const jotformReviewRecordMatch = normalizedPath.match(/^\/parking-lot-1\/(?!review\/)([^/]+)$/);
-  const lotTwoReviewGroupMatch = normalizedPath.match(/^\/parking-lot-2\/group\/([^/]+)$/);
-  const lotTwoReviewRecordMatch = normalizedPath.match(/^\/parking-lot-2\/(?!review\/)([^/]+)$/);
+  const jotformReviewRecordMatch = normalizedPath.match(/^\/parking-lot-1\/(?!group\/|arrival\/|review\/)([^/]+)$/);
+  const parkingLotArrivalGroupMatch = normalizedPath.match(/^\/parking-lot-1\/arrival\/group\/([^/]+)$/);
+  const parkingLotArrivalRecordMatch = normalizedPath.match(/^\/parking-lot-1\/arrival\/([^/]+)$/);
   const trashReviewGroupMatch = normalizedPath.match(/^\/trash-review\/group\/([^/]+)$/);
   const trashReviewRecordMatch = normalizedPath.match(/^\/trash-review\/review\/([^/]+)$/);
   const testingRecordMatch = normalizedPath.match(/^\/testing\/([^/]+)$/);
@@ -57,8 +57,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     if (normalizedPath === '/workflow/archive') return 'archive';
     if (normalizedPath === '/ebay/listings' || ebayListingsRecordMatch) return 'ebay';
     if (normalizedPath === '/shopify/products' || shopifyListingsRecordMatch) return 'shopify';
-    if (normalizedPath === '/parking-lot-1' || jotformReviewGroupMatch || jotformReviewRecordMatch) return 'parking-lot-1';
-    if (normalizedPath === '/parking-lot-2' || lotTwoReviewGroupMatch || lotTwoReviewRecordMatch) return 'parking-lot-2';
+    if (normalizedPath === '/parking-lot-1' || jotformReviewGroupMatch || jotformReviewRecordMatch || parkingLotArrivalGroupMatch || parkingLotArrivalRecordMatch) return 'parking-lot-1';
     if (normalizedPath === '/trash-review' || trashReviewGroupMatch || trashReviewRecordMatch) return 'trash-review';
     if (normalizedPath === '/workflow/testing') return 'testing-queue';
     if (normalizedPath === '/workflow/photography') return 'photography-queue';
@@ -69,6 +68,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     if (normalizedPath === '/account/users' || userRecordMatch) return 'users';
     if (normalizedPath === '/account/settings') return 'settings';
     if (normalizedPath === '/account/notifications') return 'notifications';
+    if (normalizedPath === '/workflow-guide/edit') return 'workflow-guide-editor';
     if (normalizedPath === '/workflow-guide') return 'workflow-guide';
 
     const tabFromPath = normalizedPath.slice(1);
@@ -83,8 +83,8 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     manualIntakeMode,
     jotformReviewGroupId: jotformReviewGroupMatch ? decodeURIComponent(jotformReviewGroupMatch[1]) : null,
     jotformReviewRecordId: jotformReviewRecordMatch ? decodeURIComponent(jotformReviewRecordMatch[1]) : null,
-    lotTwoReviewGroupId: lotTwoReviewGroupMatch ? decodeURIComponent(lotTwoReviewGroupMatch[1]) : null,
-    lotTwoReviewRecordId: lotTwoReviewRecordMatch ? decodeURIComponent(lotTwoReviewRecordMatch[1]) : null,
+    parkingLotArrivalGroupId: parkingLotArrivalGroupMatch ? decodeURIComponent(parkingLotArrivalGroupMatch[1]) : null,
+    parkingLotArrivalRecordId: parkingLotArrivalRecordMatch ? decodeURIComponent(parkingLotArrivalRecordMatch[1]) : null,
     trashReviewGroupId: trashReviewGroupMatch ? decodeURIComponent(trashReviewGroupMatch[1]) : null,
     trashReviewRecordId: trashReviewRecordMatch ? decodeURIComponent(trashReviewRecordMatch[1]) : null,
     manualIntakeRecordId: manualIntakeRecordMatch

@@ -51,7 +51,7 @@ describe('publishUsedGearStageHandoffNotification', () => {
     publishUsedGearStageHandoffNotification({
       currentUser: makeUser(),
       completedStage: 'processing',
-      record: makeRecord('1', { 'Workflow Status': 'Testing and Photography In Progress' }),
+      record: makeRecord('1', { 'Workflow Status': 'Testing In Progress' }),
       onOpenOperationalRecord,
       upsertByKey,
     });
@@ -59,19 +59,19 @@ describe('publishUsedGearStageHandoffNotification', () => {
     publishUsedGearStageHandoffNotification({
       currentUser: makeUser(),
       completedStage: 'processing',
-      record: makeRecord('2', { 'Workflow Status': 'Testing and Photography In Progress' }),
+      record: makeRecord('2', { 'Workflow Status': 'Testing In Progress' }),
       onOpenOperationalRecord,
       upsertByKey,
     });
 
     expect(upsertByKey).toHaveBeenNthCalledWith(
       1,
-      'used-gear-stage-handoff:testing-photography',
+      'used-gear-stage-handoff:testing-only',
       expect.objectContaining({ actionLabel: 'Open Operational Record' }),
     );
     expect(upsertByKey).toHaveBeenNthCalledWith(
       2,
-      'used-gear-stage-handoff:testing-photography',
+      'used-gear-stage-handoff:testing-only',
       expect.objectContaining({
         message: expect.stringContaining('UG-2'),
       }),

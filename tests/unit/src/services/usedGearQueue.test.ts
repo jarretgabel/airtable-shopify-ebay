@@ -12,8 +12,8 @@ import {
   distributeUsedGearPendingReviewTotal,
   groupUsedGearWorkflowRecords,
   hasUsedGearPendingReviewPricingPath,
-  loadLotTwoGroup,
-  loadLotTwoQueue,
+  loadParkingLotArrivalGroup,
+  loadParkingLotArrivalQueue,
   loadUsedGearOperationalRecordBySku,
   loadWorkflowPostPublishQueue,
   loadTrashQueue,
@@ -124,7 +124,7 @@ describe('usedGearQueue', () => {
     expect(records[0]?.fields['Workflow Intake Decision']).toBe('Unqualified');
   });
 
-  it('loads workflow progress records only for accepted and concurrent pre-listing statuses', async () => {
+  it('loads workflow progress records only for accepted and active specialist statuses', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'recAccepted',
@@ -134,7 +134,7 @@ describe('usedGearQueue', () => {
       {
         id: 'recConcurrent',
         createdTime: 'later',
-        fields: { 'Workflow Status': 'Testing and Photography In Progress', SKU: 'B-1' },
+        fields: { 'Workflow Status': 'Testing In Progress', SKU: 'B-1' },
       },
       {
         id: 'recIgnored',
@@ -157,7 +157,7 @@ describe('usedGearQueue', () => {
     expect(records.map((record) => record.id)).toEqual(['recAccepted', 'recConcurrent']);
   });
 
-  it('loads only parking-lot-two arrival-stage records from the workflow source', async () => {
+  it('loads only Parking Lot arrival-stage records from the workflow source', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'recAwaitingArrival',
@@ -177,11 +177,11 @@ describe('usedGearQueue', () => {
       {
         id: 'recIgnored',
         createdTime: 'later',
-        fields: { 'Workflow Status': 'Testing and Photography In Progress', SKU: 'A-4' },
+        fields: { 'Workflow Status': 'Testing In Progress', SKU: 'A-4' },
       },
     ]);
 
-    const records = await loadLotTwoQueue();
+    const records = await loadParkingLotArrivalQueue();
 
     expect(records.map((record) => record.id)).toEqual([
       'recAwaitingArrival',
@@ -190,7 +190,7 @@ describe('usedGearQueue', () => {
     ]);
   });
 
-  it('loads a grouped Parking Lot 2 handoff set', async () => {
+  it('loads a grouped Parking Lot handoff set', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
         id: 'recAwaitingArrival',
@@ -212,7 +212,7 @@ describe('usedGearQueue', () => {
       },
     ]);
 
-    const group = await loadLotTwoGroup('pickup-100');
+    const group = await loadParkingLotArrivalGroup('pickup-100');
 
     expect(group.label).toBe('pickup-100');
     expect(group.records.map((record) => record.id)).toEqual(['recAwaitingArrival', 'recAwaitingSku']);
@@ -422,14 +422,14 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('requires qualification notes before accepting a pending-review row into lot 2', async () => {
+  it('requires qualification notes before accepting a pending-review row into parking lot', async () => {
     await expect(acceptPendingReviewRecord('recPending', 'Taylor Reviewer', {
       acceptedStatus: 'Accepted - Awaiting Arrival',
       qualificationNotes: '   ',
-    })).rejects.toThrow('Qualification Notes are required before routing a pending-review row into Lot 2.');
+    })).rejects.toThrow('Qualification Notes are required before routing a pending-review row into Parking Lot.');
   });
 
-  it('requires pricing before accepting a pending-review row into lot 2', async () => {
+  it('requires pricing before accepting a pending-review row into parking lot', async () => {
     mockGetConfiguredRecord.mockResolvedValue({
       id: 'recPending',
       createdTime: 'now',
@@ -439,7 +439,7 @@ describe('usedGearQueue', () => {
     await expect(acceptPendingReviewRecord('recPending', 'Taylor Reviewer', {
       acceptedStatus: 'Accepted - Awaiting Arrival',
       qualificationNotes: 'Offer discussed with seller.',
-    })).rejects.toThrow('Offer Amount, Paid Amount, or Confirmed Grand Total is required before routing a pending-review row into Lot 2.');
+    })).rejects.toThrow('Offer Amount, Paid Amount, or Confirmed Grand Total is required before routing a pending-review row into Parking Lot.');
   });
 
   it('loads a specific pending-review group by its grouped queue id', async () => {
@@ -619,7 +619,7 @@ describe('usedGearQueue', () => {
     mockUpdateConfiguredRecord.mockResolvedValue({
       id: 'rec1',
       createdTime: 'now',
-      fields: { 'Workflow Status': 'Testing and Photography In Progress' },
+      fields: { 'Workflow Status': 'Testing In Progress' },
     });
 
     await saveUsedGearWorkflowStageSignoff('rec1', 'testing', 'Taylor Reviewer', '2026-05-07T18:00:00.000Z');
@@ -635,11 +635,11 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('marks processing complete and advances into concurrent work', async () => {
+  it('marks processing complete and advances into testing', async () => {
     mockUpdateConfiguredRecord.mockResolvedValue({
       id: 'rec1',
       createdTime: 'now',
-      fields: { 'Workflow Status': 'Testing and Photography In Progress' },
+      fields: { 'Workflow Status': 'Testing In Progress' },
     });
 
     await completeProcessingStage('rec1', 'Taylor Reviewer');
@@ -648,7 +648,7 @@ describe('usedGearQueue', () => {
       'used-gear-workflow',
       'rec1',
       expect.objectContaining({
-        'Workflow Status': 'Testing and Photography In Progress',
+        'Workflow Status': 'Testing In Progress',
         'Processing Signed By': 'Taylor Reviewer',
       }),
       { typecast: true },
@@ -1171,13 +1171,13 @@ describe('usedGearQueue', () => {
       {
         id: 'recConcurrentA',
         createdTime: 'now',
-        fields: { 'Workflow Status': 'Testing and Photography In Progress' },
+        fields: { 'Workflow Status': 'Testing In Progress' },
       },
       {
         id: 'recConcurrentB',
         createdTime: 'now',
         fields: {
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Photography In Progress',
           'Testing Signed By': 'Taylor',
           'Testing Signed At': '2026-05-07T10:00:00.000Z',
         },
@@ -1198,7 +1198,7 @@ describe('usedGearQueue', () => {
       pendingReview: 1,
       processing: 1,
       testing: 1,
-      photography: 2,
+      photography: 1,
       preListingReview: 1,
       approvedForPublish: 1,
     });
@@ -1219,7 +1219,7 @@ describe('usedGearQueue', () => {
       {
         id: 'recConcurrent',
         createdTime: '2026-05-03T00:00:00.000Z',
-        fields: { 'Workflow Status': 'Testing and Photography In Progress' },
+        fields: { 'Workflow Status': 'Testing In Progress' },
       },
       {
         id: 'recPreListing',
@@ -1238,7 +1238,7 @@ describe('usedGearQueue', () => {
         pendingReview: 1,
         processing: 1,
         testing: 1,
-        photography: 1,
+        photography: 0,
         preListingReview: 1,
         approvedForPublish: 1,
       },
@@ -1251,11 +1251,11 @@ describe('usedGearQueue', () => {
           path: '/parking-lot-1?workflowPendingReviewGroup=pickup-100#used-gear-pending-review',
         },
         processing: {
-          destinationTab: 'parking-lot-2',
+          destinationTab: 'parking-lot-1',
           recordId: 'recProcessing',
-          sectionId: 'used-gear-lot-two',
+          sectionId: 'used-gear-parking-lot',
           groupId: null,
-          path: '/parking-lot-2#used-gear-lot-two',
+          path: '/parking-lot-1#used-gear-parking-lot',
         },
         testing: {
           destinationTab: 'testing-queue',
@@ -1264,13 +1264,7 @@ describe('usedGearQueue', () => {
           groupId: null,
           path: '/workflow/testing#used-gear-testing-queue',
         },
-        photography: {
-          destinationTab: 'photography-queue',
-          recordId: 'recConcurrent',
-          sectionId: 'used-gear-photography-queue',
-          groupId: null,
-          path: '/workflow/photography#used-gear-photography-queue',
-        },
+        photography: null,
         preListingReview: {
           destinationTab: 'listings',
           recordId: 'recPreListing',
@@ -1357,11 +1351,11 @@ describe('usedGearQueue', () => {
       targets: {
         pendingReview: null,
         processing: {
-          destinationTab: 'parking-lot-2',
+          destinationTab: 'parking-lot-1',
           recordId: 'recUnassigned',
-          sectionId: 'used-gear-lot-two',
+          sectionId: 'used-gear-parking-lot',
           groupId: null,
-          path: '/parking-lot-2#used-gear-lot-two',
+          path: '/parking-lot-1#used-gear-parking-lot',
         },
         testing: null,
         photography: null,

@@ -20,24 +20,14 @@ describe('usedGearWorkflow', () => {
   it('derives intake decision from workflow status', () => {
     expect(deriveUsedGearIntakeDecision('Pending Review')).toBe('Pending');
     expect(deriveUsedGearIntakeDecision('Unqualified')).toBe('Unqualified');
-    expect(deriveUsedGearIntakeDecision('Testing and Photography In Progress')).toBe('Accepted');
+    expect(deriveUsedGearIntakeDecision('Testing In Progress')).toBe('Accepted');
     expect(isAcceptedUsedGearWorkflowStatus('Listed, Shopify')).toBe(true);
   });
 
-  it('routes concurrent work to whichever teams still need signoff', () => {
-    expect(deriveUsedGearNextTeams('Testing and Photography In Progress')).toEqual(['Testing', 'Photography']);
-
-    expect(deriveUsedGearNextTeams('Testing and Photography In Progress', {
-      testingSignedBy: 'Taylor',
-      testingSignedAt: '2026-05-07T10:00:00.000Z',
-    })).toEqual(['Photography']);
-
-    expect(deriveUsedGearNextTeams('Testing and Photography In Progress', {
-      testingSignedBy: 'Taylor',
-      testingSignedAt: '2026-05-07T10:00:00.000Z',
-      photographySignedBy: 'Jordan',
-      photographySignedAt: '2026-05-07T11:15:00.000Z',
-    })).toEqual([]);
+  it('routes active work to the next required team in sequence', () => {
+    expect(deriveUsedGearNextTeams('Testing In Progress')).toEqual(['Testing']);
+    expect(deriveUsedGearNextTeams('Photography In Progress')).toEqual(['Photography']);
+    expect(deriveUsedGearNextTeams('Awaiting Pre-Listing Review')).toEqual(['Listing']);
   });
 
   it('requires both concurrent signoffs before pre-listing review', () => {

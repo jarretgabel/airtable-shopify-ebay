@@ -34,11 +34,12 @@ This document captures the original user requirements and guardrails for the use
   - `Accepted - Awaiting Arrival`
   - `Accepted - Arrived, Awaiting SKU`
   - `Accepted - Arrived, Awaiting Missing Item`
-  - `Testing and Photography In Progress`
+  - `Testing In Progress`
+  - `Photography In Progress`
   - `Awaiting Pre-Listing Review`
   - `Approved for Publish`
-- Testing and photography are allowed to proceed concurrently.
-- The second of testing or photography completion should advance a row to `Awaiting Pre-Listing Review`.
+- Testing should complete before photography begins.
+- Photography completion should advance a row to `Awaiting Pre-Listing Review`.
 
 ### Acceptance Gate Requirements
 - Intake may move from Parking Lot 1 into an accepted Lot 2 state only when the qualification gate passes.

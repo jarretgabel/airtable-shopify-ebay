@@ -49,7 +49,7 @@ describe('photosForm', () => {
     vi.mocked(getConfiguredRecord).mockImplementation(async (source) => {
       if (source === 'used-gear-workflow') {
         return buildRecord({
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Testing In Progress',
           SKU: 'SKU-300',
           Make: 'Marantz',
           Model: '2270',
@@ -157,7 +157,7 @@ describe('photosForm', () => {
     };
 
     vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
-      'Workflow Status': 'Testing and Photography In Progress',
+      'Workflow Status': 'Photography In Progress',
       'Testing Signed At': '2026-05-04T11:00:00.000Z',
       'Testing Signed By': 'Taylor Reviewer',
     }));
@@ -190,7 +190,7 @@ describe('photosForm', () => {
     );
   });
 
-  it('keeps workflow-owned rows in concurrent stage until testing is signed', async () => {
+  it('blocks photography completion until testing is signed', async () => {
     const values: PhotosFormValues = {
       sku: 'SKU-302',
       make: 'Marantz',
@@ -209,22 +209,14 @@ describe('photosForm', () => {
     };
 
     vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
-      'Workflow Status': 'Testing and Photography In Progress',
+      'Workflow Status': 'Testing In Progress',
     }));
     vi.mocked(updateConfiguredRecord).mockResolvedValue(buildRecord({}));
 
-    await submitPhotosForm(values, 'recPhotos302', { recordSource: 'used-gear-workflow', completeWorkflowStage: true });
+    await expect(submitPhotosForm(values, 'recPhotos302', { recordSource: 'used-gear-workflow', completeWorkflowStage: true }))
+      .rejects.toThrow('Unable to update the Photos fields for this workflow item.');
 
-    expect(updateConfiguredRecord).toHaveBeenCalledWith(
-      'used-gear-workflow',
-      'recPhotos302',
-      expect.objectContaining({
-        'Workflow Status': 'Testing and Photography In Progress',
-        'Photography Signed At': expect.any(String),
-        'Photography Signed By': 'Phoebe Photographer',
-      }),
-      { typecast: true },
-    );
+    expect(updateConfiguredRecord).not.toHaveBeenCalled();
   });
 
   it('persists workflow image metadata when it is provided by the Photos form', async () => {
@@ -250,7 +242,7 @@ describe('photosForm', () => {
       .mockResolvedValueOnce(buildRecord({}));
     vi.mocked(getConfiguredRecord)
       .mockResolvedValueOnce(buildRecord({
-        'Workflow Status': 'Testing and Photography In Progress',
+        'Workflow Status': 'Photography In Progress',
       }))
       .mockResolvedValueOnce(buildRecord({
         Images: [
@@ -319,7 +311,7 @@ describe('photosForm', () => {
       .mockRejectedValueOnce(new Error('Unknown field name: "Workflow Image Metadata JSON"'));
     vi.mocked(getConfiguredRecord)
       .mockResolvedValueOnce(buildRecord({
-        'Workflow Status': 'Testing and Photography In Progress',
+        'Workflow Status': 'Photography In Progress',
       }))
       .mockResolvedValueOnce(buildRecord({ Images: [] }));
 
@@ -397,8 +389,7 @@ describe('photosForm', () => {
     };
 
     vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
-      'Workflow Status': 'Testing and Photography In Progress',
-      'Testing Signed At': '2026-05-04T11:00:00.000Z',
+      'Workflow Status': 'Testing In Progress',
     }));
     vi.mocked(updateConfiguredRecord).mockResolvedValue(buildRecord({}));
 
@@ -430,7 +421,7 @@ describe('photosForm', () => {
     vi.mocked(getConfiguredRecord).mockImplementation(async (source) => {
       if (source === 'used-gear-workflow') {
         return buildRecord({
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Photography In Progress',
           SKU: 'SKU-302',
           Make: 'Marantz',
           Model: '250',

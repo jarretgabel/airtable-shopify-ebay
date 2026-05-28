@@ -106,7 +106,8 @@ Use this checklist to approve, reject, or revise the proposed Airtable/workflow 
 - [x] Approve `Accepted - Awaiting Arrival`
 - [x] Approve `Accepted - Arrived, Awaiting SKU`
 - [x] Approve `Accepted - Arrived, Awaiting Missing Item`
-- [x] Approve `Testing and Photography In Progress`
+- [x] Approve `Testing In Progress`
+- [x] Approve `Photography In Progress`
 - [x] Approve `Awaiting Pre-Listing Review`
 - [x] Approve `Approved for Publish`
 - [x] Approve `Listed, Shopify`
@@ -242,7 +243,7 @@ These are proposed additions or formalized workflow fields for `tbl0K0nFQL64jQMx
 - `Workflow Status`
 	- Purpose: explicit workflow state separate from marketplace-specific listing state if needed.
 	- Rule: this is the authoritative current-state field for the operational workflow.
-	- Sample values: `Pending Review`, `Accepted - Awaiting Arrival`, `Testing and Photography In Progress`, `Approved for Publish`, `Listed, Shopify`, `Sold - Ready to Ship`.
+	- Sample values: `Pending Review`, `Accepted - Awaiting Arrival`, `Testing In Progress`, `Photography In Progress`, `Approved for Publish`, `Listed, Shopify`, `Sold - Ready to Ship`.
 	- When to use it: use this when you need to answer "where is this item right now in the operational workflow?"
 - `Awaiting Pre-Listing Review At`
 	- Rule: set when a record first enters `Awaiting Pre-Listing Review`.
@@ -287,9 +288,12 @@ These are proposed additions or formalized workflow fields for `tbl0K0nFQL64jQMx
 	- Example use: camera body arrived, but the promised battery grip is still missing.
 
 #### Processing
-- `Testing and Photography In Progress`
-	- Processing is complete, and testing and photography may proceed in either order or at the same time.
-	- Example use: SKU assigned, the testing team is validating functionality, and the photo team can begin shooting available assets without waiting for a linear handoff.
+- `Testing In Progress`
+	- Processing is complete and testing is the active specialist stage.
+	- Example use: SKU assigned, and the testing team is validating functionality before photography begins.
+- `Photography In Progress`
+	- Testing is complete and photography is the active specialist stage.
+	- Example use: testing is signed off, and the photo team is shooting the final asset set before listing review.
 - `Awaiting Pre-Listing Review`
 	- Testing and photography are both complete, and the item is queued for listing-team review.
 	- Example use: all required photos are uploaded, testing is signed off, and listing review is next.
@@ -321,7 +325,8 @@ Do not store `Intake Decision` as a separate Airtable field. Derive it from `Wor
 - `Accepted - Awaiting Arrival` -> `Accepted`
 - `Accepted - Arrived, Awaiting SKU` -> `Accepted`
 - `Accepted - Arrived, Awaiting Missing Item` -> `Accepted`
-- `Testing and Photography In Progress` -> `Accepted`
+- `Testing In Progress` -> `Accepted`
+- `Photography In Progress` -> `Accepted`
 - `Awaiting Pre-Listing Review` -> `Accepted`
 - `Approved for Publish` -> `Accepted`
 - `Listed, Shopify` -> `Accepted`
@@ -352,7 +357,8 @@ Do not store `Next Team` as a separate Airtable field. Derive it from `Workflow 
 - `Accepted - Awaiting Arrival` -> `Processing`
 - `Accepted - Arrived, Awaiting SKU` -> `Processing`
 - `Accepted - Arrived, Awaiting Missing Item` -> `Processing`
-- `Testing and Photography In Progress` -> `Testing`, `Photography`, or both depending on which stage signoffs are still incomplete.
+- `Testing In Progress` -> `Testing`
+- `Photography In Progress` -> `Photography`
 - `Awaiting Pre-Listing Review` -> `Listing`
 - `Approved for Publish` -> `Listing`
 - `Listed, Shopify` -> none
@@ -364,7 +370,7 @@ Do not store `Next Team` as a separate Airtable field. Derive it from `Workflow 
 - `Unqualified` -> none
 
 Rule summary:
-- The app should compute the next operational team from the current workflow state and, during concurrent testing/photo work, from whichever stage signoffs are still incomplete.
+- The app should compute the next operational team from the current workflow state.
 - If a future exception path needs custom routing, handle it in app logic rather than introducing a generic `Next Team` field by default.
 
 ### Proposed Transition Guards
@@ -374,10 +380,12 @@ Rule summary:
 	- Requires: unqualified reason captured.
 - `Accepted - Awaiting Arrival` -> `Accepted - Arrived, Awaiting SKU`
 	- Requires: item arrival confirmed.
-- `Accepted - Arrived, Awaiting SKU` -> `Testing and Photography In Progress`
+- `Accepted - Arrived, Awaiting SKU` -> `Testing In Progress`
 	- Requires: processing-stage completion, SKU assigned, processing signoff captured.
-- `Testing and Photography In Progress` -> `Awaiting Pre-Listing Review`
-	- Requires: testing completion, testing signoff captured, photo-stage completion, required uploads present, inclusion confirmations complete, photography signoff captured.
+- `Testing In Progress` -> `Photography In Progress`
+	- Requires: testing completion and testing signoff captured.
+- `Photography In Progress` -> `Awaiting Pre-Listing Review`
+	- Requires: photo-stage completion, required uploads present, inclusion confirmations complete, and photography signoff captured.
 - `Awaiting Pre-Listing Review` -> `Approved for Publish`
 	- Requires: pre-listing review completion, reviewer/pricing confirmation captured.
 

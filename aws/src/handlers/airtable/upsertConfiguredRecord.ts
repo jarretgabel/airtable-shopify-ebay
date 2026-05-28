@@ -29,6 +29,7 @@ const SELF_SERVICE_USER_WRITE_FIELD_NAMES = new Set([
 function validateWriteSource(value: string): AirtableConfiguredWriteSource {
   if (
     value === 'users'
+    || value === 'user-guide'
     || value === 'inventory-directory'
     || value === 'used-gear-workflow'
     || value === 'approval-ebay'

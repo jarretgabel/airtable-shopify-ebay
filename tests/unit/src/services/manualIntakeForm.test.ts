@@ -259,7 +259,7 @@ describe('manualIntakeForm', () => {
     );
   });
 
-  it('requires qualification notes before routing manual entry directly to Lot 2', async () => {
+  it('requires qualification notes before routing manual entry directly into Parking Lot', async () => {
     const values: ManualIntakeFormValues = {
       arrivalDate: '2026-04-01',
       pickUpNumber: 'PU-88',
@@ -291,6 +291,6 @@ describe('manualIntakeForm', () => {
     await expect(submitManualIntakeForm(values, null, {
       manualEntryRoute: 'lot-2-awaiting-arrival',
       qualificationNotes: '',
-    })).rejects.toThrow('Qualification Notes are required before routing a manual-entry intake row directly to Lot 2.');
+    })).rejects.toThrow('Qualification Notes are required before routing a manual-entry intake row directly into an accepted Parking Lot status.');
   });
 });

@@ -235,4 +235,32 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
 
     expect(html).toMatch(/<tr><th>Bias<\/th><td>Stable<\/td><\/tr>\n<tr><th>Voltage<\/th><td>120V<\/td><\/tr>\n<tr><th>Audiogon Rating<\/th><td>8\/10<\/td><\/tr>\n<tr><th>Testing Notes<\/th><td>Fully tested\.<\/td><\/tr>/);
   });
+
+  it('auto-adds shipping weight and dimensions into the eBay key-features table', () => {
+    const template = [
+      '<table id="key-features">',
+      '  <tbody>',
+      '    <tr><th>{{key}}</th><td>{{value}}</td></tr>',
+      '  </tbody>',
+      '</table>',
+    ].join('\n');
+
+    const html = buildEbayBodyHtmlFromTemplate(
+      template,
+      '',
+      '',
+      JSON.stringify([{ feature: 'Finish', value: 'Silver' }]),
+      '',
+      '',
+      '',
+      {
+        shippingWeight: '42 lbs',
+        shippingDimensions: '22x19x11',
+      },
+    );
+
+    expect(html).toContain('<tr><th>Shipping Weight</th><td>42 lbs</td></tr>');
+    expect(html).toContain('<tr><th>Shipping Dimensions</th><td>22x19x11</td></tr>');
+    expect(html).toContain('<tr><th>Finish</th><td>Silver</td></tr>');
+  });
 });

@@ -13,15 +13,14 @@ function createTab(key: AppTab['key'], label: string): AppTab {
 }
 
 describe('AppFrameHeaderNavigation', () => {
-  it('renders separated intake sections for forms, parking lots, and trash', () => {
+  it('renders separated intake sections for forms, parking lot, and trash', () => {
     render(
       <AppFrameHeaderNavigation
         tabs={[createTab('dashboard', 'Dashboard')]}
         intakeTabs={[
           createTab('manual-intake', 'Manual Intake'),
           createTab('jotform', 'JotForm'),
-          createTab('parking-lot-1', 'Parking Lot 1'),
-          createTab('parking-lot-2', 'Parking Lot 2'),
+          createTab('parking-lot-1', 'Parking Lot'),
           createTab('trash-review', 'Trash Review'),
         ]}
         listingsTabs={[]}
@@ -39,12 +38,11 @@ describe('AppFrameHeaderNavigation', () => {
     );
 
     expect(screen.getByText('Intake Forms')).toBeInTheDocument();
-    expect(screen.getByText('Parking Lots')).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Parking Lot' })).toBeInTheDocument();
     expect(screen.getByText('Trash')).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Manual Intake' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'JotForm' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Parking Lot 1' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Parking Lot 2' })).toBeInTheDocument();
+    expect(screen.getAllByText('Parking Lot')).toHaveLength(2);
     expect(screen.getByRole('menuitem', { name: 'Trash Review' })).toBeInTheDocument();
   });
 

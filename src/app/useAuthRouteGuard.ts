@@ -86,8 +86,9 @@ export function useAuthRouteGuard({
     }
 
     const isKnownTabPath = isTab(normalizedPath.slice(1));
-    const isJotformReviewRecordPath = /^\/parking-lot-1\/(?!review\/)[^/]+$/.test(normalizedPath);
-    const isLotTwoReviewRecordPath = /^\/parking-lot-2\/(?!review\/)[^/]+$/.test(normalizedPath);
+    const isJotformReviewRecordPath = /^\/parking-lot-1\/(?!group\/|arrival\/|review\/)[^/]+$/.test(normalizedPath);
+    const isParkingLotArrivalRecordPath = /^\/parking-lot-1\/arrival\/[^/]+$/.test(normalizedPath);
+    const isParkingLotArrivalGroupPath = /^\/parking-lot-1\/arrival\/group\/[^/]+$/.test(normalizedPath);
     const isTrashReviewGroupPath = /^\/trash-review\/group\/[^/]+$/.test(normalizedPath);
     const isTrashReviewRecordPath = /^\/trash-review\/review\/[^/]+$/.test(normalizedPath);
     const isManualIntakeDetailPath = /^\/manual-intake\/[^/]+$/.test(normalizedPath);
@@ -114,9 +115,6 @@ export function useAuthRouteGuard({
       normalizedPath === '/workflow/archive' ||
       normalizedPath === '/ebay/listings' ||
       isEbayListingsDetailPath ||
-      normalizedPath === '/parking-lot-2' ||
-      /^\/parking-lot-2\/group\/[^/]+$/.test(normalizedPath) ||
-      isLotTwoReviewRecordPath ||
       normalizedPath === '/trash-review' ||
       isTrashReviewGroupPath ||
       isTrashReviewRecordPath ||
@@ -124,13 +122,16 @@ export function useAuthRouteGuard({
       normalizedPath === '/workflow/photography' ||
       normalizedPath === '/parking-lot-1' ||
       /^\/parking-lot-1\/group\/[^/]+$/.test(normalizedPath) ||
+      isParkingLotArrivalGroupPath ||
       isJotformReviewRecordPath ||
+      isParkingLotArrivalRecordPath ||
       isTestingDetailPath ||
       isPhotosDetailPath ||
       normalizedPath === '/shopify/products' ||
       isShopifyProductsDetailPath ||
       normalizedPath === '/account/settings' ||
       normalizedPath === '/account/notifications' ||
+      normalizedPath === '/workflow-guide/edit' ||
       normalizedPath === '/workflow-guide' ||
       normalizedPath === '/account/users' ||
       isUserDetailPath;
@@ -150,15 +151,13 @@ export function useAuthRouteGuard({
             ? 'ebay'
             : normalizedPath === '/shopify/products' || isShopifyProductsDetailPath
               ? 'shopify'
-                : normalizedPath === '/parking-lot-2' || isLotTwoReviewRecordPath || /^\/parking-lot-2\/review\/[^/]+$/.test(normalizedPath)
-                  ? 'parking-lot-2'
                 : normalizedPath === '/trash-review' || isTrashReviewGroupPath || isTrashReviewRecordPath
                   ? 'trash-review'
                 : normalizedPath === '/workflow/testing'
                   ? 'testing-queue'
                 : normalizedPath === '/workflow/photography'
                   ? 'photography-queue'
-              : normalizedPath === '/parking-lot-1' || /^\/parking-lot-1\/review\/[^/]+$/.test(normalizedPath) || isJotformReviewRecordPath
+              : normalizedPath === '/parking-lot-1' || /^\/parking-lot-1\/group\/[^/]+$/.test(normalizedPath) || isParkingLotArrivalGroupPath || /^\/parking-lot-1\/review\/[^/]+$/.test(normalizedPath) || isJotformReviewRecordPath || isParkingLotArrivalRecordPath
                 ? 'parking-lot-1'
               : isInventoryManualIntakePath
                 ? 'manual-intake'
@@ -176,6 +175,8 @@ export function useAuthRouteGuard({
                 ? 'settings'
                 : normalizedPath === '/account/notifications'
                   ? 'notifications'
+                  : normalizedPath === '/workflow-guide/edit'
+                    ? 'workflow-guide-editor'
                   : normalizedPath === '/workflow-guide'
                     ? 'workflow-guide'
                   : normalizedPath === '/account/users' || isUserDetailPath

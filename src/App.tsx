@@ -36,8 +36,8 @@ function App() {
     manualIntakeMode,
     jotformReviewGroupId,
     jotformReviewRecordId,
-    lotTwoReviewGroupId,
-    lotTwoReviewRecordId,
+    parkingLotArrivalGroupId,
+    parkingLotArrivalRecordId,
     trashReviewGroupId,
     trashReviewRecordId,
     manualIntakeRecordId,
@@ -68,7 +68,7 @@ function App() {
     navigateToTab,
     navigateToPath,
     navigateToInventorySection,
-    navigateToJotformReviewGroup,
+    navigateToParkingLotPendingReviewGroup,
     navigateToManualIntake,
     navigateToManualIntakeForm,
     navigateToTestingForm,
@@ -255,8 +255,8 @@ function App() {
             manualIntakeMode={manualIntakeMode}
             jotformReviewGroupId={jotformReviewGroupId}
             jotformReviewRecordId={jotformReviewRecordId}
-            lotTwoReviewGroupId={lotTwoReviewGroupId}
-            lotTwoReviewRecordId={lotTwoReviewRecordId}
+            parkingLotArrivalGroupId={parkingLotArrivalGroupId}
+            parkingLotArrivalRecordId={parkingLotArrivalRecordId}
             trashReviewGroupId={trashReviewGroupId}
             trashReviewRecordId={trashReviewRecordId}
             manualIntakeRecordId={manualIntakeRecordId}
@@ -287,7 +287,7 @@ function App() {
             navigateToUserRecord={navigateToUserRecord}
             navigateToUsersList={navigateToUsersList}
             navigateToTab={navigateToTab}
-            navigateToJotformReviewGroup={navigateToJotformReviewGroup}
+            navigateToParkingLotPendingReviewGroup={navigateToParkingLotPendingReviewGroup}
             runtimeFeatures={runtimeFeatures}
             metrics={metrics}
             accessiblePages={accessiblePages as Tab[]}

@@ -7,6 +7,25 @@ const baseOverviewProps = {
 };
 
 function buildWorkflowAnalyticsOverrides(overrides: Record<string, unknown> = {}) {
+  const baseStatusCounts = {
+    'Pending Review': 2,
+    'Unqualified': 0,
+    'Accepted - Awaiting Arrival': 3,
+    'Accepted - Arrived, Awaiting SKU': 1,
+    'Accepted - Arrived, Awaiting Missing Item': 1,
+    'Testing In Progress': 4,
+    'Photography In Progress': 0,
+    'Awaiting Pre-Listing Review': 2,
+    'Approved for Publish': 0,
+    'Listed, Shopify': 0,
+    'Listed, eBay': 0,
+    'Stale Listing, Shopify': 0,
+    'Stale Listing, eBay': 0,
+    'Sold - Ready to Ship': 0,
+    'Shipped': 0,
+  };
+  const { statusCounts: overrideStatusCounts, ...otherOverrides } = overrides;
+
   return {
     loading: false,
     error: null,
@@ -16,20 +35,8 @@ function buildWorkflowAnalyticsOverrides(overrides: Record<string, unknown> = {}
     progressCount: 0,
     postPublishCount: 0,
     statusCounts: {
-      'Pending Review': 2,
-      'Unqualified': 0,
-      'Accepted - Awaiting Arrival': 3,
-      'Accepted - Arrived, Awaiting SKU': 1,
-      'Accepted - Arrived, Awaiting Missing Item': 1,
-      'Testing and Photography In Progress': 4,
-      'Awaiting Pre-Listing Review': 2,
-      'Approved for Publish': 0,
-      'Listed, Shopify': 0,
-      'Listed, eBay': 0,
-      'Stale Listing, Shopify': 0,
-      'Stale Listing, eBay': 0,
-      'Sold - Ready to Ship': 0,
-      'Shipped': 0,
+      ...baseStatusCounts,
+      ...((overrideStatusCounts as Record<string, number> | undefined) ?? {}),
     },
     marketplace: {
       shopifyLiveCount: 0,
@@ -62,7 +69,7 @@ function buildWorkflowAnalyticsOverrides(overrides: Record<string, unknown> = {}
       oldestSoldReadyAgeDays: null,
     },
     refetch: vi.fn(),
-    ...overrides,
+    ...otherOverrides,
   };
 }
 

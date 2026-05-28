@@ -15,20 +15,20 @@ import {
   completeProcessingStage,
   loadUsedGearOperationalRecordContext,
   markPendingReviewUnqualified,
-  saveLotTwoReviewRecord,
+  saveParkingLotArrivalReviewRecord,
   type UsedGearOperationalRecordContext,
 } from '@/services/usedGearQueue';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { resolveUsedGearOperationalPath } from '@/services/usedGearOperationalRouting';
 import { applyUsedGearWorkflowNoteTemplate } from '@/services/usedGearWorkflowNoteTemplates';
 
-interface UsedGearLotTwoRecordPageProps {
+interface UsedGearParkingLotArrivalRecordPageProps {
   currentUserName: string;
   recordId: string;
   onOpenManualIntake: (recordId: string) => void;
 }
 
-type LotTwoRecordSectionKey = 'group' | 'review' | 'trash' | 'snapshot';
+type ParkingLotArrivalRecordSectionKey = 'group' | 'review' | 'trash' | 'snapshot';
 
 function stringFieldValue(fields: Record<string, unknown>, fieldName: string): string {
   const value = fields[fieldName];
@@ -40,11 +40,11 @@ function dateFieldValue(fields: Record<string, unknown>, fieldName: string): str
   return value ? value.slice(0, 10) : '';
 }
 
-export function UsedGearLotTwoRecordPage({
+export function UsedGearParkingLotArrivalRecordPage({
   currentUserName,
   recordId,
   onOpenManualIntake,
-}: UsedGearLotTwoRecordPageProps) {
+}: UsedGearParkingLotArrivalRecordPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [context, setContext] = useState<UsedGearOperationalRecordContext | null>(null);
@@ -73,7 +73,7 @@ export function UsedGearLotTwoRecordPage({
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Unable to load the selected Parking Lot 2 row.');
+          setError(loadError instanceof Error ? loadError.message : 'Unable to load the selected Parking Lot row.');
         }
       } finally {
         if (!cancelled) {
@@ -95,30 +95,30 @@ export function UsedGearLotTwoRecordPage({
   const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
   const dateButtonClassName = 'inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
   const intakeSnapshot = useMemo(() => (record ? buildUsedGearIntakeSnapshot(record) : null), [record]);
-  const sectionItems = useMemo<Array<{ id: LotTwoRecordSectionKey; key: LotTwoRecordSectionKey; label: string }>>(() => {
-    const items: Array<{ id: LotTwoRecordSectionKey; key: LotTwoRecordSectionKey; label: string }> = [];
+  const sectionItems = useMemo<Array<{ id: ParkingLotArrivalRecordSectionKey; key: ParkingLotArrivalRecordSectionKey; label: string }>>(() => {
+    const items: Array<{ id: ParkingLotArrivalRecordSectionKey; key: ParkingLotArrivalRecordSectionKey; label: string }> = [];
     if (group) {
       items.push({ id: 'group', key: 'group', label: 'Grouped Intake' });
     }
-    items.push({ id: 'review', key: 'review', label: 'Qualify' });
-    items.push({ id: 'trash', key: 'trash', label: 'Trash' });
     if (intakeSnapshot) {
       items.push({ id: 'snapshot', key: 'snapshot', label: 'Snapshot' });
     }
+    items.push({ id: 'review', key: 'review', label: 'Qualify' });
+    items.push({ id: 'trash', key: 'trash', label: 'Trash' });
     return items;
   }, [group, intakeSnapshot]);
   const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, sectionItems[0]?.id ?? 'review');
   const sectionNav = (
     <MainPageSectionNav
-      ariaLabel="Parking Lot 2 sections"
+      ariaLabel="Parking Lot arrival-stage sections"
       items={sectionItems.map((item) => ({ key: item.key, label: item.label }))}
-      activeKey={activeSectionId as LotTwoRecordSectionKey}
+      activeKey={activeSectionId as ParkingLotArrivalRecordSectionKey}
       onSelect={(sectionKey) => scrollToSection(sectionKey)}
     />
   );
 
   const backToQueue = () => {
-    navigate({ pathname: '/parking-lot-2', search: location.search, hash: '#used-gear-lot-two' });
+    navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-parking-lot' });
   };
 
   const handleSave = async () => {
@@ -131,13 +131,13 @@ export function UsedGearLotTwoRecordPage({
     setSaveMessage(null);
 
     try {
-      const updatedRecord = await saveLotTwoReviewRecord(record.id, { arrivalDate, sku });
+      const updatedRecord = await saveParkingLotArrivalReviewRecord(record.id, { arrivalDate, sku });
       setContext((current) => current ? { ...current, record: updatedRecord } : current);
       setArrivalDate(dateFieldValue(updatedRecord.fields, 'Arrival Date'));
       setSku(stringFieldValue(updatedRecord.fields, 'SKU'));
-      setSaveMessage('Saved Parking Lot 2 review fields.');
+      setSaveMessage('Saved Parking Lot review fields.');
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Unable to save the Parking Lot 2 review fields.');
+      setError(saveError instanceof Error ? saveError.message : 'Unable to save the Parking Lot review fields.');
     } finally {
       setSaving(null);
     }
@@ -153,11 +153,11 @@ export function UsedGearLotTwoRecordPage({
     setSaveMessage(null);
 
     try {
-      await saveLotTwoReviewRecord(record.id, { arrivalDate, sku });
+      await saveParkingLotArrivalReviewRecord(record.id, { arrivalDate, sku });
       const updatedRecord = await completeProcessingStage(record.id, currentUserName);
       navigate(resolveUsedGearOperationalPath(updatedRecord.id, updatedRecord.fields));
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to move this Parking Lot 2 row into processing.');
+      setError(actionError instanceof Error ? actionError.message : 'Unable to move this Parking Lot row into processing.');
       setSaving(null);
     }
   };
@@ -175,25 +175,25 @@ export function UsedGearLotTwoRecordPage({
       await markPendingReviewUnqualified(record.id, unqualifiedReason);
       navigate({ pathname: '/trash-review', search: location.search, hash: '#used-gear-trash' });
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to move this Parking Lot 2 row into trash.');
+      setError(actionError instanceof Error ? actionError.message : 'Unable to move this Parking Lot row into trash.');
       setSaving(null);
     }
   };
 
   if (loading) {
-    return <LoadingSurface message="Loading Parking Lot 2 review..." />;
+    return <LoadingSurface message="Loading Parking Lot review..." />;
   }
 
   if (!record) {
-    return <ErrorSurface title="Unable to load Parking Lot 2 review" message={error ?? 'The selected Parking Lot 2 row could not be loaded.'} />;
+    return <ErrorSurface title="Unable to load Parking Lot review" message={error ?? 'The selected Parking Lot row could not be loaded.'} />;
   }
 
   return (
     <WorkflowRecordPageLayout
-      eyebrow="Parking Lot 2"
+      eyebrow="Parking Lot"
       title={displayInventoryValue(record.fields.SKU) || record.id}
       belowHeader={sectionNav}
-      actions={<BackToolbarButton label="Back to Parking Lot 2" onClick={backToQueue} />}
+      actions={<BackToolbarButton label="Back to Parking Lot" onClick={backToQueue} />}
     >
       <div className="space-y-6">
         {error ? (
@@ -220,7 +220,7 @@ export function UsedGearLotTwoRecordPage({
               <button
                 type="button"
                 className="rounded-xl border border-sky-300/40 bg-white/5 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-white/10"
-                onClick={() => navigate(`/parking-lot-2/group/${encodeURIComponent(group.id)}${location.search}`)}
+                onClick={() => navigate(`/parking-lot-1/arrival/group/${encodeURIComponent(group.id)}${location.search}`)}
               >
                 Open Group Review
               </button>
@@ -228,9 +228,20 @@ export function UsedGearLotTwoRecordPage({
           </section>
         ) : null}
 
+        {intakeSnapshot ? (
+          <IntakeSnapshotSection
+            sectionId="snapshot"
+            className="scroll-mt-28"
+            title="Intake Snapshot"
+            actions={<CompactIconActionButton label="Edit Intake" variant="small-secondary" icon="edit" onClick={() => onOpenManualIntake(record.id)} />}
+            fields={intakeSnapshot.fields}
+            cards={intakeSnapshot.cards}
+          />
+        ) : null}
+
         <div className="grid gap-6">
           <section id="review" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
-            <AppSectionTitle title="Parking Lot 2 Review" titleClassName="text-lg" className="pt-0" />
+            <AppSectionTitle title="Parking Lot Review" titleClassName="text-lg" className="pt-0" />
             <h3 className="mt-4 text-xl font-semibold text-[var(--ink)]">Update The Handoff Fields</h3>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
               Keep this review page focused on the fields that usually block the row from moving into testing and photos.
@@ -285,7 +296,7 @@ export function UsedGearLotTwoRecordPage({
 
               {processingBlocked ? (
                 <p className="m-0 text-sm text-amber-300">
-                  Arrival Date and SKU are required before this row can leave Parking Lot 2.
+                  Arrival Date and SKU are required before this row can leave Parking Lot.
                 </p>
               ) : null}
             </div>
@@ -294,7 +305,7 @@ export function UsedGearLotTwoRecordPage({
 
         <UsedGearTrashRouteCard
           sectionId="trash"
-          description="Capture the reason clearly when this item should stop in Lot 2 and move into Trash Review."
+          description="Capture the reason clearly when this item should stop in Parking Lot and move into Trash Review."
           reason={unqualifiedReason}
           onReasonChange={setUnqualifiedReason}
           onApplyTemplate={(templateValue) => {
@@ -307,17 +318,6 @@ export function UsedGearLotTwoRecordPage({
           textareaClassName={inputClassName}
           isSaving={saving === 'save'}
         />
-
-        {intakeSnapshot ? (
-          <IntakeSnapshotSection
-            sectionId="snapshot"
-            className="scroll-mt-28"
-            title="Intake Snapshot"
-            actions={<CompactIconActionButton label="Edit Intake" variant="small-secondary" icon="edit" onClick={() => onOpenManualIntake(record.id)} />}
-            fields={intakeSnapshot.fields}
-            cards={intakeSnapshot.cards}
-          />
-        ) : null}
       </div>
     </WorkflowRecordPageLayout>
   );

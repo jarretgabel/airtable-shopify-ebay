@@ -137,6 +137,9 @@ export function useApprovalPreview({
       powerCable: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Power Cable'),
       manual: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Manual'),
       voltage: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Voltage'),
+      shippingWeight: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Shipping Weight')
+        || resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Weight'),
+      shippingDimensions: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Shipping Dims'),
       audiogonRating: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Audiogon Rating'),
       fieldName: combinedEbayBodyHtmlFieldName || undefined,
     };

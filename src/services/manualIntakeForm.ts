@@ -54,7 +54,7 @@ function assertQualificationGate(route: ManualIntakeRoute, qualificationNotes: s
   }
 
   if (!normalizeQualificationNotes(qualificationNotes)) {
-    throw new Error('Qualification Notes are required before routing a manual-entry intake row directly to Lot 2.');
+    throw new Error('Qualification Notes are required before routing a manual-entry intake row directly into an accepted Parking Lot status.');
   }
 }
 

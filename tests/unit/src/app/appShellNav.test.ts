@@ -45,7 +45,7 @@ describe('buildAppFrameNavTabs', () => {
 
   it('places the workflow guide in the utility navigation group', () => {
     const result = buildAppFrameNavTabs({
-      visibleTabs: ['dashboard', 'workflow-guide', 'market'],
+      visibleTabs: ['dashboard', 'workflow-guide', 'workflow-guide-editor', 'market'],
       activeTab: 'workflow-guide',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
@@ -59,6 +59,8 @@ describe('buildAppFrameNavTabs', () => {
       expect.objectContaining({ key: 'workflow-guide', label: 'User Guide', active: true }),
       expect.objectContaining({ key: 'market', label: 'HiFi Shark' }),
     ]));
+    expect(result.tabs.find((tab) => tab.key === 'workflow-guide-editor')).toBeUndefined();
+    expect(result.utilityNavTabs.find((tab) => tab.key === 'workflow-guide-editor')).toBeUndefined();
     expect(result.postPublishNavTabs).toEqual([]);
   });
 
@@ -107,7 +109,7 @@ describe('buildAppFrameNavTabs', () => {
 
   it('preserves intake, processing, and commerce order from the canonical page sequence', () => {
     const result = buildAppFrameNavTabs({
-      visibleTabs: ['dashboard', 'manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'shopify', 'ebay'],
+      visibleTabs: ['dashboard', 'manual-intake', 'jotform', 'parking-lot-1', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'shopify', 'ebay'],
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
@@ -116,7 +118,7 @@ describe('buildAppFrameNavTabs', () => {
       navigateToUsersList: vi.fn(),
     });
 
-    expect(result.intakeNavTabs.map((tab) => tab.key)).toEqual(['manual-intake', 'jotform', 'parking-lot-1', 'parking-lot-2', 'trash-review']);
+    expect(result.intakeNavTabs.map((tab) => tab.key)).toEqual(['manual-intake', 'jotform', 'parking-lot-1', 'trash-review']);
     expect(result.tabs.map((tab) => tab.key)).toEqual(['dashboard', 'inventory']);
     expect(result.inventoryProcessingNavTabs.map((tab) => tab.key)).toEqual(['testing-queue', 'photography-queue']);
     expect(result.listingsNavTabs.map((tab) => tab.key)).toEqual(['listings', 'post-publish', 'shopify', 'ebay']);

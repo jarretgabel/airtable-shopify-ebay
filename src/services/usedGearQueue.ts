@@ -1,7 +1,6 @@
 import { deleteConfiguredRecord, getConfiguredRecord, getConfiguredRecords, updateConfiguredRecord } from '@/services/app-api/airtable';
 import type { UsedGearWorkflowNotificationEvent } from '@/stores/auth/authTypes';
 import {
-  buildUsedGearConcurrentStageSignoffs,
   enrichUsedGearWorkflowRecord,
   getUsedGearWorkflowSignoffFieldNames,
   getUsedGearWorkflowStatus,
@@ -102,7 +101,8 @@ const PENDING_REVIEW_STATUS = 'Pending Review';
 const ACCEPTED_AWAITING_ARRIVAL_STATUS = 'Accepted - Awaiting Arrival';
 const ACCEPTED_ARRIVED_AWAITING_SKU_STATUS = 'Accepted - Arrived, Awaiting SKU';
 const ACCEPTED_ARRIVED_AWAITING_MISSING_ITEM_STATUS = 'Accepted - Arrived, Awaiting Missing Item';
-const TESTING_AND_PHOTOGRAPHY_IN_PROGRESS_STATUS = 'Testing and Photography In Progress';
+const TESTING_IN_PROGRESS_STATUS = 'Testing In Progress';
+const PHOTOGRAPHY_IN_PROGRESS_STATUS = 'Photography In Progress';
 const AWAITING_PRE_LISTING_REVIEW_STATUS = 'Awaiting Pre-Listing Review';
 const APPROVED_FOR_PUBLISH_STATUS = 'Approved for Publish';
 const LISTED_SHOPIFY_STATUS = 'Listed, Shopify';
@@ -114,11 +114,25 @@ const SHIPPED_STATUS = 'Shipped';
 const UNQUALIFIED_STATUS = 'Unqualified';
 const ACTIVE_TRASH_STATUS = 'Active Trash';
 
+const USED_GEAR_PARKING_LOT_STATUSES = new Set([
+  PENDING_REVIEW_STATUS,
+  ACCEPTED_AWAITING_ARRIVAL_STATUS,
+  ACCEPTED_ARRIVED_AWAITING_SKU_STATUS,
+  ACCEPTED_ARRIVED_AWAITING_MISSING_ITEM_STATUS,
+]);
+
+const USED_GEAR_ARRIVAL_STAGE_STATUSES = new Set([
+  ACCEPTED_AWAITING_ARRIVAL_STATUS,
+  ACCEPTED_ARRIVED_AWAITING_SKU_STATUS,
+  ACCEPTED_ARRIVED_AWAITING_MISSING_ITEM_STATUS,
+]);
+
 const USED_GEAR_PROGRESS_STATUSES = new Set([
   ACCEPTED_AWAITING_ARRIVAL_STATUS,
   ACCEPTED_ARRIVED_AWAITING_SKU_STATUS,
   ACCEPTED_ARRIVED_AWAITING_MISSING_ITEM_STATUS,
-  TESTING_AND_PHOTOGRAPHY_IN_PROGRESS_STATUS,
+  TESTING_IN_PROGRESS_STATUS,
+  PHOTOGRAPHY_IN_PROGRESS_STATUS,
 ]);
 
 const USED_GEAR_POST_PUBLISH_STATUSES = new Set([
@@ -150,7 +164,7 @@ interface LoadUsedGearWorkflowNotificationSummaryOptions {
 export type UsedGearWorkflowNotificationCounts = Record<UsedGearWorkflowNotificationEvent, number>;
 
 export interface UsedGearWorkflowNotificationTarget {
-  destinationTab: 'inventory' | 'parking-lot-1' | 'jotform' | 'parking-lot-2' | 'testing-queue' | 'photography-queue' | 'listings';
+  destinationTab: 'inventory' | 'parking-lot-1' | 'jotform' | 'testing-queue' | 'photography-queue' | 'listings';
   recordId: string | null;
   sectionId: string | null;
   groupId?: string | null;
@@ -274,7 +288,7 @@ function buildNotificationTarget(
   record: AirtableRecord,
   destinationTab: UsedGearWorkflowNotificationTarget['destinationTab'],
   sectionId: string,
-  groupParamName?: 'workflowPendingReviewGroup' | 'workflowProgressGroup' | 'workflowLotTwoGroup' | 'workflowTestingQueueGroup' | 'workflowPhotographyQueueGroup' | 'workflowPreListingQueueGroup',
+  groupParamName?: 'workflowPendingReviewGroup' | 'workflowProgressGroup' | 'workflowParkingLotGroup' | 'workflowTestingQueueGroup' | 'workflowPhotographyQueueGroup' | 'workflowPreListingQueueGroup',
   alwaysBuildSectionPath = false,
 ): UsedGearWorkflowNotificationTarget {
   const groupId = getNotificationGroupId(record);
@@ -284,8 +298,6 @@ function buildNotificationTarget(
       ? '/parking-lot-1'
       : destinationTab === 'jotform'
         ? '/jotform'
-      : destinationTab === 'parking-lot-2'
-        ? '/parking-lot-2'
         : destinationTab === 'testing-queue'
           ? '/workflow/testing'
           : destinationTab === 'photography-queue'
@@ -343,7 +355,7 @@ export interface UsedGearPendingReviewGroupReviewInput {
   allocationNotes?: string;
 }
 
-export interface SaveLotTwoReviewInput {
+export interface SaveParkingLotArrivalReviewInput {
   arrivalDate: string;
   sku: string;
 }
@@ -516,6 +528,24 @@ export async function loadPendingReviewQueue(): Promise<AirtableRecord[]> {
     .filter((record) => getUsedGearWorkflowStatus(record.fields) === PENDING_REVIEW_STATUS);
 }
 
+export function isParkingLotArrivalStageStatus(status: string | null | undefined): boolean {
+  return Boolean(status && USED_GEAR_ARRIVAL_STAGE_STATUSES.has(status));
+}
+
+export function isParkingLotStatus(status: string | null | undefined): boolean {
+  return Boolean(status && USED_GEAR_PARKING_LOT_STATUSES.has(status));
+}
+
+export async function loadParkingLotQueue(): Promise<AirtableRecord[]> {
+  const records = await getConfiguredRecords('used-gear-workflow', {
+    fields: [...USED_GEAR_PENDING_REVIEW_QUEUE_FIELDS],
+  });
+
+  return records
+    .map(withWorkflow)
+    .filter((record) => isParkingLotStatus(getUsedGearWorkflowStatus(record.fields)));
+}
+
 export async function loadPendingReviewGroup(groupId: string): Promise<UsedGearWorkflowGroup> {
   const groups = groupUsedGearWorkflowRecords(await loadPendingReviewQueue());
   const group = groups.find((candidate) => candidate.id === groupId);
@@ -573,38 +603,31 @@ export async function loadTrashGroup(groupId: string): Promise<UsedGearWorkflowG
   return group;
 }
 
-export async function loadLotTwoQueue(): Promise<AirtableRecord[]> {
+export async function loadParkingLotArrivalQueue(): Promise<AirtableRecord[]> {
   const records = await loadUsedGearOperationalRecords();
 
   return records
     .map(withWorkflow)
     .filter((record) => {
       const status = getUsedGearWorkflowStatus(record.fields);
-      return Boolean(
-        status
-        && (
-          status === ACCEPTED_AWAITING_ARRIVAL_STATUS
-          || status === ACCEPTED_ARRIVED_AWAITING_SKU_STATUS
-          || status === ACCEPTED_ARRIVED_AWAITING_MISSING_ITEM_STATUS
-        ),
-      );
+      return isParkingLotArrivalStageStatus(status);
     });
 }
 
-export async function loadLotTwoGroup(groupId: string): Promise<UsedGearWorkflowGroup> {
-  const groups = groupUsedGearWorkflowRecords(await loadLotTwoQueue());
+export async function loadParkingLotArrivalGroup(groupId: string): Promise<UsedGearWorkflowGroup> {
+  const groups = groupUsedGearWorkflowRecords(await loadParkingLotArrivalQueue());
   const group = groups.find((candidate) => candidate.id === groupId);
 
   if (!group) {
-    throw new Error('Unable to load the selected Parking Lot 2 group.');
+    throw new Error('Unable to load the selected Parking Lot group.');
   }
 
   return group;
 }
 
-export async function saveLotTwoReviewRecord(
+export async function saveParkingLotArrivalReviewRecord(
   recordId: string,
-  { arrivalDate, sku }: SaveLotTwoReviewInput,
+  { arrivalDate, sku }: SaveParkingLotArrivalReviewInput,
 ): Promise<AirtableRecord> {
   const record = await updateConfiguredRecord(
     'used-gear-workflow',
@@ -748,29 +771,24 @@ export async function loadUsedGearWorkflowNotificationSummary(
       return;
     }
 
-    if (
-      status === ACCEPTED_AWAITING_ARRIVAL_STATUS
-      || status === ACCEPTED_ARRIVED_AWAITING_SKU_STATUS
-      || status === ACCEPTED_ARRIVED_AWAITING_MISSING_ITEM_STATUS
-    ) {
+    if (isParkingLotArrivalStageStatus(status)) {
       summary.counts.processing += 1;
       inventoryActionableRecordIds.add(record.id);
-      summary.targets.processing ??= buildNotificationTarget(record, 'parking-lot-2', 'used-gear-lot-two', 'workflowLotTwoGroup', true);
+      summary.targets.processing ??= buildNotificationTarget(record, 'parking-lot-1', 'used-gear-parking-lot', 'workflowParkingLotGroup', true);
       return;
     }
 
-    if (status === TESTING_AND_PHOTOGRAPHY_IN_PROGRESS_STATUS) {
-      const signoffs = buildUsedGearConcurrentStageSignoffs(record.fields);
-      if (!signoffs.testingSignedBy || !signoffs.testingSignedAt) {
-        summary.counts.testing += 1;
-        inventoryActionableRecordIds.add(record.id);
-        summary.targets.testing ??= buildNotificationTarget(record, 'testing-queue', 'used-gear-testing-queue', 'workflowTestingQueueGroup', true);
-      }
-      if (!signoffs.photographySignedBy || !signoffs.photographySignedAt) {
-        summary.counts.photography += 1;
-        inventoryActionableRecordIds.add(record.id);
-        summary.targets.photography ??= buildNotificationTarget(record, 'photography-queue', 'used-gear-photography-queue', 'workflowPhotographyQueueGroup', true);
-      }
+    if (status === TESTING_IN_PROGRESS_STATUS) {
+      summary.counts.testing += 1;
+      inventoryActionableRecordIds.add(record.id);
+      summary.targets.testing ??= buildNotificationTarget(record, 'testing-queue', 'used-gear-testing-queue', 'workflowTestingQueueGroup', true);
+      return;
+    }
+
+    if (status === PHOTOGRAPHY_IN_PROGRESS_STATUS) {
+      summary.counts.photography += 1;
+      inventoryActionableRecordIds.add(record.id);
+      summary.targets.photography ??= buildNotificationTarget(record, 'photography-queue', 'used-gear-photography-queue', 'workflowPhotographyQueueGroup', true);
       return;
     }
 
@@ -849,12 +867,12 @@ export async function acceptPendingReviewRecord(
 
   const normalizedQualificationNotes = options.qualificationNotes.trim();
   if (!normalizedQualificationNotes) {
-    throw new Error('Qualification Notes are required before routing a pending-review row into Lot 2.');
+    throw new Error('Qualification Notes are required before routing a pending-review row into Parking Lot.');
   }
 
   const currentRecord = await getConfiguredRecord('used-gear-workflow', recordId);
   if (!hasUsedGearPendingReviewPricingPath(currentRecord.fields)) {
-    throw new Error('Offer Amount, Paid Amount, or Confirmed Grand Total is required before routing a pending-review row into Lot 2.');
+    throw new Error('Offer Amount, Paid Amount, or Confirmed Grand Total is required before routing a pending-review row into Parking Lot.');
   }
 
   const record = await updateConfiguredRecord(
@@ -929,7 +947,7 @@ export async function acceptPendingReviewGroup(
 ): Promise<AirtableRecord[]> {
   const normalizedSubmissionGroupId = input.submissionGroupId?.trim() ?? '';
   if (input.records.length > 1 && !normalizedSubmissionGroupId) {
-    throw new Error('Submission Group ID is required before routing a multi-item intake review into Lot 2.');
+    throw new Error('Submission Group ID is required before routing a multi-item intake review into Parking Lot.');
   }
 
   const acceptedRecords: AirtableRecord[] = [];
@@ -1104,7 +1122,7 @@ export async function completeProcessingStage(recordId: string, userName: string
     {
       [fieldNames.signedBy]: normalizedUserName,
       [fieldNames.signedAt]: new Date().toISOString(),
-      [USED_GEAR_WORKFLOW_STATUS_FIELD]: TESTING_AND_PHOTOGRAPHY_IN_PROGRESS_STATUS,
+      [USED_GEAR_WORKFLOW_STATUS_FIELD]: TESTING_IN_PROGRESS_STATUS,
     },
     { typecast: true },
   );
@@ -1150,8 +1168,10 @@ export function getUsedGearWorkflowPrimaryAction(record: AirtableRecord): string
     case ACCEPTED_ARRIVED_AWAITING_SKU_STATUS:
     case ACCEPTED_ARRIVED_AWAITING_MISSING_ITEM_STATUS:
       return 'Processing';
-    case TESTING_AND_PHOTOGRAPHY_IN_PROGRESS_STATUS:
-      return getTrimmedFieldValue(record, USED_GEAR_WORKFLOW_NEXT_TEAM_FIELD) || 'Testing, Photography';
+    case TESTING_IN_PROGRESS_STATUS:
+      return 'Testing';
+    case PHOTOGRAPHY_IN_PROGRESS_STATUS:
+      return 'Photography';
     case AWAITING_PRE_LISTING_REVIEW_STATUS:
       return 'Pre-Listing Review';
     case APPROVED_FOR_PUBLISH_STATUS:

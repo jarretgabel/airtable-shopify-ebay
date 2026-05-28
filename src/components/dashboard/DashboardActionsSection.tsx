@@ -93,7 +93,9 @@ function addRoleWorkflowActionItems({
 
   const awaitingSkuCount = workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting SKU'];
   const awaitingMissingCount = workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting Missing Item'];
-  const sharedStageCount = workflowAnalytics.statusCounts['Testing and Photography In Progress'];
+  const testingStageCount = workflowAnalytics.statusCounts['Testing In Progress'] ?? 0;
+  const photographyStageCount = workflowAnalytics.statusCounts['Photography In Progress'] ?? 0;
+  const downstreamStageCount = testingStageCount + photographyStageCount;
   const preListingCount = workflowAnalytics.statusCounts['Awaiting Pre-Listing Review'];
   const approvedForPublishCount = workflowAnalytics.statusCounts['Approved for Publish'];
   const pendingReviewCount = workflowAnalytics.pendingReviewCount;
@@ -106,7 +108,7 @@ function addRoleWorkflowActionItems({
         key: 'workflow-pending-review',
         label: `${pendingReviewCount} pending review`,
         count: pendingReviewCount,
-        detail: `${processingBlockerCount} blocked in processing · ${sharedStageCount} in shared stage`,
+        detail: `${processingBlockerCount} blocked in processing · ${downstreamStageCount} in testing or photos`,
         severity: 'critical',
         targetTab: 'parking-lot-1',
       });
@@ -139,12 +141,12 @@ function addRoleWorkflowActionItems({
   }
 
   if (currentUserRole === 'tester') {
-    if (accessiblePages.includes('testing-queue') && sharedStageCount > 0) {
+    if (accessiblePages.includes('testing-queue') && testingStageCount > 0) {
       items.push({
         key: 'workflow-testing-queue',
-        label: `${sharedStageCount} in testing queue`,
-        count: sharedStageCount,
-        detail: `${progressAlertCount} aging · ${sharedStageCount} active in stage`,
+        label: `${testingStageCount} in testing queue`,
+        count: testingStageCount,
+        detail: `${progressAlertCount} aging · ${testingStageCount} waiting on testing`,
         severity: progressAlertCount > 0 ? 'critical' : 'warning',
         targetTab: 'testing-queue',
       });
@@ -155,7 +157,7 @@ function addRoleWorkflowActionItems({
         key: 'workflow-testing-aging',
         label: `${progressAlertCount} testing item${progressAlertCount === 1 ? '' : 's'} aging`,
         count: progressAlertCount,
-        detail: `${sharedStageCount} active in stage`,
+        detail: `${testingStageCount} waiting on testing`,
         severity: 'warning',
         targetTab: 'testing-queue',
       });
@@ -164,12 +166,12 @@ function addRoleWorkflowActionItems({
   }
 
   if (currentUserRole === 'photographer') {
-    if (accessiblePages.includes('photography-queue') && sharedStageCount > 0) {
+    if (accessiblePages.includes('photography-queue') && photographyStageCount > 0) {
       items.push({
         key: 'workflow-photography-queue',
-        label: `${sharedStageCount} waiting on photos`,
-        count: sharedStageCount,
-        detail: `${progressAlertCount} aging · ${sharedStageCount} active in stage`,
+        label: `${photographyStageCount} waiting on photos`,
+        count: photographyStageCount,
+        detail: `${progressAlertCount} aging · ${photographyStageCount} photo-ready rows`,
         severity: progressAlertCount > 0 ? 'critical' : 'warning',
         targetTab: 'photography-queue',
       });
@@ -180,7 +182,7 @@ function addRoleWorkflowActionItems({
         key: 'workflow-photo-aging',
         label: `${progressAlertCount} photo item${progressAlertCount === 1 ? '' : 's'} aging`,
         count: progressAlertCount,
-        detail: `${sharedStageCount} active in stage`,
+        detail: `${photographyStageCount} photo-ready rows`,
         severity: 'warning',
         targetTab: 'photography-queue',
       });

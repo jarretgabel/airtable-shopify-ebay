@@ -3,25 +3,26 @@ import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
-import { EmptySurface } from '@/components/app/StateSurfaces';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
+import { EmptySurface } from '@/components/app/StateSurfaces';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
+import { getParkingLotItemTitle, getParkingLotStatusLabel } from '@/components/tabs/airtable/usedGearParkingLotPresentation';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
-import { groupUsedGearWorkflowRecords, loadLotTwoQueue } from '@/services/usedGearQueue';
-import { getLotTwoItemTitle, getLotTwoStatusLabel } from '@/components/tabs/airtable/usedGearLotTwoPresentation';
+import { groupUsedGearWorkflowRecords, loadParkingLotQueue, type UsedGearWorkflowGroup } from '@/services/usedGearQueue';
 import type { AirtableRecord } from '@/types/airtable';
 
-interface UsedGearLotTwoSectionProps {
-  onOpenGroupReview?: (groupId: string) => void;
-  onOpenReviewRecord: (recordId: string) => void;
+export interface UsedGearParkingLotSectionProps {
+  currentUserName: string;
+  onOpenGroupReview?: (group: UsedGearWorkflowGroup) => void;
+  onOpenReviewRecord: (record: AirtableRecord) => void;
   showSectionIntro?: boolean;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
-  sortMode?: UsedGearLotTwoSortMode;
-  onSortModeChange?: (value: UsedGearLotTwoSortMode) => void;
+  sortMode?: UsedGearParkingLotSortMode;
+  onSortModeChange?: (value: UsedGearParkingLotSortMode) => void;
 }
 
-export type UsedGearLotTwoSortMode = 'group-label' | 'newest' | 'oldest' | 'arrival-date' | 'make-model';
+export type UsedGearParkingLotSortMode = 'group-label' | 'newest' | 'oldest' | 'arrival-date' | 'make-model';
 
 function recordSearchText(record: AirtableRecord): string {
   return [
@@ -52,7 +53,7 @@ function makeModelSortValue(record: AirtableRecord): string {
   return `${stringFieldValue(record, 'Make')} ${stringFieldValue(record, 'Model')} ${stringFieldValue(record, 'SKU')}`.trim().toLowerCase();
 }
 
-function getLotTwoSortLabel(sortMode: UsedGearLotTwoSortMode): string {
+function getParkingLotSortLabel(sortMode: UsedGearParkingLotSortMode): string {
   if (sortMode === 'newest') return 'Newest First';
   if (sortMode === 'oldest') return 'Oldest First';
   if (sortMode === 'arrival-date') return 'Arrival Date';
@@ -68,7 +69,7 @@ const intakeDateFormatter = new Intl.DateTimeFormat('en-US', {
 });
 
 function getRecordIntakeTimestamp(record: AirtableRecord): number {
-  const arrivalDate = typeof record.fields['Arrival Date'] === 'string' ? record.fields['Arrival Date'].trim() : '';
+  const arrivalDate = stringFieldValue(record, 'Arrival Date');
   const parsedArrival = arrivalDate ? Date.parse(arrivalDate) : Number.NaN;
   if (Number.isFinite(parsedArrival)) {
     return parsedArrival;
@@ -87,7 +88,7 @@ function formatIntakeDate(record: AirtableRecord): string {
   return 'Unknown';
 }
 
-export function UsedGearLotTwoSection({
+export function UsedGearParkingLotSection({
   onOpenGroupReview,
   onOpenReviewRecord,
   showSectionIntro = true,
@@ -95,13 +96,13 @@ export function UsedGearLotTwoSection({
   onSearchTermChange,
   sortMode: controlledSortMode,
   onSortModeChange,
-}: UsedGearLotTwoSectionProps) {
+}: UsedGearParkingLotSectionProps) {
   const [records, setRecords] = useState<AirtableRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
-  const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearLotTwoSortMode>('group-label');
+  const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearParkingLotSortMode>('group-label');
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
 
@@ -113,13 +114,13 @@ export function UsedGearLotTwoSection({
       setError(null);
 
       try {
-        const nextRecords = await loadLotTwoQueue();
+        const nextRecords = await loadParkingLotQueue();
         if (!cancelled) {
           setRecords(nextRecords);
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Unable to load the Parking Lot 2 queue.');
+          setError(loadError instanceof Error ? loadError.message : 'Unable to load the Parking Lot queue.');
         }
       } finally {
         if (!cancelled) {
@@ -170,14 +171,22 @@ export function UsedGearLotTwoSection({
       return left.label.localeCompare(right.label);
     });
   }, [filteredRecords, sortMode]);
+
+  const matrixGroups = useMemo<IntakeItemsMatrixGroup<AirtableRecord>[]>(() => groupedRecords.map((group) => ({
+    id: group.id,
+    label: group.label,
+    description: group.description,
+    items: group.records,
+  })), [groupedRecords]);
+
   const refreshQueue = async () => {
     setRefreshing(true);
     setError(null);
 
     try {
-      setRecords(await loadLotTwoQueue());
+      setRecords(await loadParkingLotQueue());
     } catch (refreshError) {
-      setError(refreshError instanceof Error ? refreshError.message : 'Unable to refresh the Parking Lot 2 queue.');
+      setError(refreshError instanceof Error ? refreshError.message : 'Unable to refresh the Parking Lot queue.');
     } finally {
       setRefreshing(false);
     }
@@ -191,7 +200,7 @@ export function UsedGearLotTwoSection({
     onSearchTermChange?.(value);
   };
 
-  const handleSortModeChange = (value: UsedGearLotTwoSortMode) => {
+  const handleSortModeChange = (value: UsedGearParkingLotSortMode) => {
     if (!controlledSortMode) {
       setUncontrolledSortMode(value);
     }
@@ -200,25 +209,25 @@ export function UsedGearLotTwoSection({
   };
 
   return (
-    <AppPageSectionSurface id="used-gear-lot-two" className="space-y-5">
+    <AppPageSectionSurface id="used-gear-parking-lot" className="space-y-5">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
-          <AppSectionTitle title="Parking Lot 2" />
+          <AppSectionTitle title="Parking Lot" />
         ) : null}
         <QueueSearchToolbar
-          searchAriaLabel="Search Parking Lot 2"
+          searchAriaLabel="Search Parking Lot"
           searchPlaceholder="Search by SKU, make, model, source, or status"
           searchValue={searchTerm}
           onSearchChange={handleSearchTermChange}
-          refreshLabel="Refresh Parking Lot 2 queue"
-          refreshLoadingLabel="Refreshing Parking Lot 2 queue"
+          refreshLabel="Refresh Parking Lot queue"
+          refreshLoadingLabel="Refreshing Parking Lot queue"
           refreshing={refreshing}
           onRefresh={() => {
             void refreshQueue();
           }}
-          sortAriaLabel={`Sort Parking Lot 2 queue. Current order: ${getLotTwoSortLabel(sortMode)}`}
+          sortAriaLabel={`Sort Parking Lot queue. Current order: ${getParkingLotSortLabel(sortMode)}`}
           sortValue={sortMode}
-          onSortChange={(value) => handleSortModeChange(value as UsedGearLotTwoSortMode)}
+          onSortChange={(value) => handleSortModeChange(value as UsedGearParkingLotSortMode)}
           sortOptions={[
             { value: 'group-label', label: 'Default Order' },
             { value: 'newest', label: 'Newest First' },
@@ -236,9 +245,9 @@ export function UsedGearLotTwoSection({
       ) : null}
 
       {!loading && records.length === 0 ? (
-        <EmptySurface title="Parking Lot 2 is clear" message="No accepted arrival-stage operational rows are currently waiting in Parking Lot 2.">
+        <EmptySurface title="Parking Lot is clear" message="No used-gear operational rows are currently waiting in the Parking Lot.">
           <p className="mt-3 text-sm text-[var(--muted)]">
-            Next route: promote accepted intake rows out of Parking Lot 1, then work each Lot 2 card through intake, testing, photos, or the current operational surface.
+            Next route: check Manual Intake for new in-app deals, or open Trash Review when a rejected intake needs to be restored.
           </p>
         </EmptySurface>
       ) : null}
@@ -246,7 +255,7 @@ export function UsedGearLotTwoSection({
       <div className="space-y-4">
         {loading ? (
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-sm text-[var(--muted)]">
-            Loading Parking Lot 2 queue...
+            Loading Parking Lot queue...
           </div>
         ) : (() => {
           const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
@@ -259,27 +268,20 @@ export function UsedGearLotTwoSection({
             {
               key: 'item',
               label: 'Item',
-              width: 'minmax(0,1.3fr)',
+              width: 'minmax(0,1.6fr)',
               renderCell: (record) => (
                 <div className="min-w-0">
-                  <div className="truncate text-sm text-[var(--ink)]">{getLotTwoItemTitle(record)}</div>
+                  <div className="truncate text-sm text-[var(--ink)]">{getParkingLotItemTitle(record)}</div>
                 </div>
               ),
             },
             {
               key: 'status',
               label: 'Status',
-              width: '14rem',
+              width: '12rem',
               renderCell: (record) => {
-                const statusLabel = getLotTwoStatusLabel(record);
-
-                return (
-                  <div className="min-w-0">
-                    <span className={`${getWorkflowStatusChipClasses(statusLabel)} overflow-hidden text-ellipsis px-2 text-[0.64rem]`} title={statusLabel}>
-                      {statusLabel}
-                    </span>
-                  </div>
-                );
+                const statusLabel = getParkingLotStatusLabel(record) || 'Unknown';
+                return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
               },
             },
             {
@@ -296,19 +298,17 @@ export function UsedGearLotTwoSection({
               headerClassName: 'border-l border-[var(--line)]/60',
               cellClassName: 'border-l border-[var(--line)]/60',
               renderCell: (record) => (
-                <div className="flex min-h-[4.5rem] w-full items-center justify-center">
-                  <CompactIconActionButton label="Open Review" variant="compact-primary" icon="edit" onClick={() => onOpenReviewRecord(record.id)} />
+                <div className="flex min-h-[4.5rem] w-full flex-col items-center justify-center gap-1.5">
+                  <CompactIconActionButton
+                    label="Open Review"
+                    variant="compact-primary"
+                    icon="edit"
+                    onClick={() => onOpenReviewRecord(record)}
+                  />
                 </div>
               ),
             },
           ];
-
-          const matrixGroups: IntakeItemsMatrixGroup<AirtableRecord>[] = groupedRecords.map((group) => ({
-            id: group.id,
-            label: group.label,
-            description: group.description,
-            items: group.records,
-          }));
 
           return (
             <IntakeItemsMatrix
@@ -317,6 +317,9 @@ export function UsedGearLotTwoSection({
               getItemKey={(record) => record.id}
               groupColumnLabel="Group"
               renderGroupCell={(group) => {
+                const needsSubmissionId = group.description === 'Submission group'
+                  && group.items.some((record) => stringFieldValue(record, 'Submission Group ID').trim().length === 0);
+
                 if (group.items.length === 1) {
                   return <span className="text-xs text-[var(--muted)]/45">-</span>;
                 }
@@ -324,6 +327,7 @@ export function UsedGearLotTwoSection({
                 return (
                   <div className="flex min-h-[4.5rem] flex-col items-center justify-center gap-1">
                     <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{group.items.length}</span>
+                    {needsSubmissionId ? <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-300">ID</span> : null}
                   </div>
                 );
               }}
@@ -333,13 +337,18 @@ export function UsedGearLotTwoSection({
                   return <span className="text-xs text-[var(--muted)]/45">-</span>;
                 }
 
+                const sourceGroup = groupedRecords.find((candidate) => candidate.id === group.id);
+                if (!sourceGroup) {
+                  return <span className="text-xs text-[var(--muted)]/45">-</span>;
+                }
+
                 return (
                   <div className="flex items-center justify-center">
                     <CompactIconActionButton
-                      label={group.description === 'Pickup group' ? `Open pickup set handoff ${group.label}` : `Open submission set handoff ${group.label}`}
+                      label={group.description === 'Pickup group' ? `Open pickup set ${group.label}` : `Open submission set ${group.label}`}
                       variant="small-secondary"
                       icon="group"
-                      onClick={() => onOpenGroupReview(group.id)}
+                      onClick={() => onOpenGroupReview(sourceGroup)}
                     />
                   </div>
                 );

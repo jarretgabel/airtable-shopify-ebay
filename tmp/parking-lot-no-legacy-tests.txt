@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/user/Sites/airtable-shopify-ebay
+
+······································································································
+
+ Test Files  5 passed (5)
+      Tests  102 passed (102)
+   Start at  06:08:59
+   Duration  1.20s (transform 480ms, setup 265ms, collect 864ms, tests 357ms, environment 1.81s, prepare 331ms)
+

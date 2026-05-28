@@ -42,7 +42,7 @@ const COMBINED_SOURCE_MANAGED_FIELD_NAMES = new Set([
   CONDITION_FIELD.toLowerCase(),
 ]);
 
-const COMBINED_HIDDEN_KEY_FEATURE_NAMES = ['Make', 'Model', 'Serial Number', 'Condition', 'Component Type', 'Cosmetic Notes', 'Includes', 'Original Box', 'Manual', 'Remote', 'Power Cable', 'Voltage', 'Audiogon Rating'];
+const COMBINED_HIDDEN_KEY_FEATURE_NAMES = ['Make', 'Model', 'Serial Number', 'Condition', 'Component Type', 'Cosmetic Notes', 'Includes', 'Original Box', 'Manual', 'Remote', 'Power Cable', 'Voltage', 'Shipping Weight', 'Shipping Dimensions', 'Audiogon Rating'];
 
 function isSourceManagedCombinedField(fieldName: string): boolean {
   return COMBINED_SOURCE_MANAGED_FIELD_NAMES.has(normalizeSharedFieldName(fieldName));
@@ -194,7 +194,7 @@ export function ListingApprovalCombinedSharedSection({
               helperNotice={(
                 <p className="m-0 leading-5">
                   <span className="font-semibold uppercase tracking-[0.08em]">Automatic Mapping</span>{' '}
-                  Make, Model, Serial Number, Condition, Component Type, Cosmetic Notes, Includes, Original Box, Manual, Remote, Power Cable, Voltage, and Audiogon Rating come from the listing record automatically. Add one here only when you need to override the listing value.
+                  Make, Model, Serial Number, Condition, Component Type, Cosmetic Notes, Includes, Original Box, Manual, Remote, Power Cable, Voltage, Shipping Weight, Shipping Dimensions, and Audiogon Rating come from the listing record automatically. Add one here only when you need to override the listing value.
                 </p>
               )}
             />

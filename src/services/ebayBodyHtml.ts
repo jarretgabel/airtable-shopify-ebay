@@ -14,6 +14,8 @@ interface EbaySupplementalBodyFields {
   powerCable?: string;
   manual?: string;
   voltage?: string;
+  shippingWeight?: string;
+  shippingDimensions?: string;
   audiogonRating?: string;
 }
 
@@ -79,6 +81,8 @@ function mergeTemplateKeyFeatureEntries(
     { feature: 'Remote', value: supplementalFields.remote ?? '' },
     { feature: 'Power Cable', value: supplementalFields.powerCable ?? '' },
     { feature: 'Manual', value: supplementalFields.manual ?? '' },
+    { feature: 'Shipping Weight', value: supplementalFields.shippingWeight ?? '' },
+    { feature: 'Shipping Dimensions', value: supplementalFields.shippingDimensions ?? '' },
   ]));
 }
 

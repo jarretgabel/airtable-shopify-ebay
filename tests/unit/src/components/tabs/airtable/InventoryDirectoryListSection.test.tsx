@@ -15,7 +15,7 @@ describe('InventoryDirectoryListSection', () => {
               Make: 'McIntosh',
               Model: 'MC240',
               'Component Type': 'Amplifier',
-              Status: 'Testing and Photography In Progress',
+              Status: 'Testing In Progress',
               'Arrival Date': '2026-05-06',
             },
           },
@@ -24,7 +24,7 @@ describe('InventoryDirectoryListSection', () => {
         searchTerm=""
         statusFilter="all"
         sortMode="intake-newest"
-        statusOptions={['Testing and Photography In Progress']}
+        statusOptions={['Testing In Progress']}
         onSearchTermChange={vi.fn()}
         onStatusFilterChange={vi.fn()}
         onSortModeChange={vi.fn()}
@@ -35,7 +35,7 @@ describe('InventoryDirectoryListSection', () => {
 
     expect(screen.getAllByRole('columnheader', { name: /Status/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('columnheader', { name: /Intake/i }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Testing and Photography In Progress').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Testing In Progress').length).toBeGreaterThan(0);
     expect(screen.getByText('May 6, 2026')).toBeInTheDocument();
     expect(screen.queryByText('Amplifier')).not.toBeInTheDocument();
   });

@@ -37,7 +37,7 @@ describe('usedGearWorkflowAging', () => {
       buildRecord({
         id: 'rec-aging-2',
         fields: {
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Testing In Progress',
           'Processing Signed At': '2026-05-06T00:00:00.000Z',
         },
       }),

@@ -70,26 +70,11 @@ export function buildUsedGearStageHandoffNotification({
   }
 
   const signoffs = buildUsedGearConcurrentStageSignoffs(record.fields);
-  const nextTeams = deriveUsedGearNextTeams(status, signoffs);
+  deriveUsedGearNextTeams(status, signoffs);
   const recordLabel = getOperationalRecordLabel(record);
 
-  if (status === 'Testing and Photography In Progress') {
-    if (nextTeams.includes('Testing') && nextTeams.includes('Photography')) {
-      const eventKeys: UsedGearWorkflowNotificationEvent[] = ['testing', 'photography'];
-      if (!areAnyWorkflowEventsEnabled(currentUser, eventKeys)) {
-        return null;
-      }
-
-      return {
-        key: `used-gear-stage-handoff:${record.id}:${completedStage}`,
-        digestKey: 'used-gear-stage-handoff:testing-photography',
-        tone: 'info',
-        title: 'Processing complete: testing and photography next',
-        message: `${recordLabel} is ready for concurrent testing and photography work.`,
-      };
-    }
-
-    if (nextTeams.length === 1 && nextTeams[0] === 'Testing') {
+  if (status === 'Testing In Progress') {
+    if (completedStage === 'processing') {
       const eventKeys: UsedGearWorkflowNotificationEvent[] = ['testing'];
       if (!areAnyWorkflowEventsEnabled(currentUser, eventKeys)) {
         return null;
@@ -99,12 +84,13 @@ export function buildUsedGearStageHandoffNotification({
         key: `used-gear-stage-handoff:${record.id}:${completedStage}`,
         digestKey: 'used-gear-stage-handoff:testing-only',
         tone: 'info',
-        title: 'Photography complete: testing next',
-        message: `${recordLabel} is now waiting only on testing completion.`,
+        title: 'Processing complete: testing next',
+        message: `${recordLabel} is ready for testing.`,
       };
     }
+  }
 
-    if (nextTeams.length === 1 && nextTeams[0] === 'Photography') {
+  if (status === 'Photography In Progress') {
       const eventKeys: UsedGearWorkflowNotificationEvent[] = ['photography'];
       if (!areAnyWorkflowEventsEnabled(currentUser, eventKeys)) {
         return null;
@@ -115,9 +101,8 @@ export function buildUsedGearStageHandoffNotification({
         digestKey: 'used-gear-stage-handoff:photography-only',
         tone: 'info',
         title: 'Testing complete: photography next',
-        message: `${recordLabel} is now waiting only on photography completion.`,
+        message: `${recordLabel} is now ready for photography.`,
       };
-    }
   }
 
   if (status === 'Awaiting Pre-Listing Review') {
@@ -131,7 +116,7 @@ export function buildUsedGearStageHandoffNotification({
       digestKey: 'used-gear-stage-handoff:pre-listing-review',
       tone: 'warning',
       title: 'Stage handoff complete: pre-listing review next',
-      message: `${recordLabel} cleared testing and photography and is ready for pre-listing review.`,
+      message: `${recordLabel} cleared photography and is ready for pre-listing review.`,
     };
   }
 

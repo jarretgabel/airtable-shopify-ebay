@@ -68,7 +68,7 @@ describe('buildEbaySnapshotFromAirtable', () => {
         createdTime: '2026-05-08T00:00:00.000Z',
         fields: {
           SKU: 'READY-SKU',
-          'Workflow Status': 'Testing and Photography In Progress',
+          'Workflow Status': 'Testing In Progress',
           'eBay Inventory SKU': 'READY-SKU',
           'eBay Inventory Product Title': 'Should not surface',
           'eBay Offer Price Value': '2499.00',

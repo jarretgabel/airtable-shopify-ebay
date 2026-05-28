@@ -1,20 +1,20 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { within } from '@testing-library/react';
-import { UsedGearLotTwoRecordPage } from '@/components/tabs/UsedGearLotTwoRecordPage';
+import { UsedGearParkingLotArrivalRecordPage } from '@/components/tabs/UsedGearParkingLotArrivalRecordPage';
 
 const {
   completeProcessingStageMock,
   loadUsedGearOperationalRecordContextMock,
   markPendingReviewUnqualifiedMock,
   navigateMock,
-  saveLotTwoReviewRecordMock,
+  saveParkingLotArrivalReviewRecordMock,
 } = vi.hoisted(() => ({
   completeProcessingStageMock: vi.fn(),
   loadUsedGearOperationalRecordContextMock: vi.fn(),
   markPendingReviewUnqualifiedMock: vi.fn(),
   navigateMock: vi.fn(),
-  saveLotTwoReviewRecordMock: vi.fn(),
+  saveParkingLotArrivalReviewRecordMock: vi.fn(),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -30,20 +30,20 @@ vi.mock('@/services/usedGearQueue', () => ({
   completeProcessingStage: completeProcessingStageMock,
   loadUsedGearOperationalRecordContext: loadUsedGearOperationalRecordContextMock,
   markPendingReviewUnqualified: markPendingReviewUnqualifiedMock,
-  saveLotTwoReviewRecord: saveLotTwoReviewRecordMock,
+  saveParkingLotArrivalReviewRecord: saveParkingLotArrivalReviewRecordMock,
 }));
 
 vi.mock('@/services/inventoryDirectory', () => ({
   displayInventoryValue: (value: unknown) => String(value ?? ''),
 }));
 
-describe('UsedGearLotTwoRecordPage', () => {
+describe('UsedGearParkingLotArrivalRecordPage', () => {
   beforeEach(() => {
     completeProcessingStageMock.mockReset();
     loadUsedGearOperationalRecordContextMock.mockReset();
     markPendingReviewUnqualifiedMock.mockReset();
     navigateMock.mockReset();
-    saveLotTwoReviewRecordMock.mockReset();
+    saveParkingLotArrivalReviewRecordMock.mockReset();
 
     loadUsedGearOperationalRecordContextMock.mockResolvedValue({
       record: {
@@ -71,7 +71,7 @@ describe('UsedGearLotTwoRecordPage', () => {
       },
     });
 
-    saveLotTwoReviewRecordMock.mockImplementation(async (recordId: string, values: { arrivalDate: string; sku: string }) => ({
+    saveParkingLotArrivalReviewRecordMock.mockImplementation(async (recordId: string, values: { arrivalDate: string; sku: string }) => ({
       id: recordId,
       createdTime: '2026-05-09T00:00:00.000Z',
       fields: {
@@ -86,11 +86,11 @@ describe('UsedGearLotTwoRecordPage', () => {
     }));
   });
 
-  it('opens the grouped review and intake actions from the Lot 2 review page', async () => {
+  it('opens the grouped review and intake actions from the Parking Lot arrival-stage review page', async () => {
     const onOpenManualIntake = vi.fn();
 
     render(
-      <UsedGearLotTwoRecordPage
+      <UsedGearParkingLotArrivalRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-lot-two-1"
         onOpenManualIntake={onOpenManualIntake}
@@ -98,21 +98,25 @@ describe('UsedGearLotTwoRecordPage', () => {
     );
 
     expect(await screen.findByText('Update The Handoff Fields')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to Parking Lot 2' })).toBeInTheDocument();
-    expect(screen.getByRole('navigation', { name: 'Parking Lot 2 sections' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to Parking Lot' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Parking Lot arrival-stage sections' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Route To Trash' })).toBeInTheDocument();
     expect(screen.queryByText('Current Context')).not.toBeInTheDocument();
 
+    const snapshotHeading = screen.getByText('Intake Snapshot');
+    const reviewHeading = screen.getByText('Parking Lot Review');
+    expect(snapshotHeading.compareDocumentPosition(reviewHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
     fireEvent.click(screen.getByRole('button', { name: 'Open Group Review' }));
-    expect(navigateMock).toHaveBeenCalledWith('/parking-lot-2/group/group-1?reviewMode=test');
+    expect(navigateMock).toHaveBeenCalledWith('/parking-lot-1/arrival/group/group-1?reviewMode=test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Intake' }));
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-lot-two-1');
   });
 
-  it('saves the minimal Lot 2 review fields', async () => {
+  it('saves the minimal Parking Lot review fields', async () => {
     render(
-      <UsedGearLotTwoRecordPage
+      <UsedGearParkingLotArrivalRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-lot-two-1"
         onOpenManualIntake={vi.fn()}
@@ -125,20 +129,20 @@ describe('UsedGearLotTwoRecordPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save Review' }));
 
     await waitFor(() => {
-      expect(saveLotTwoReviewRecordMock).toHaveBeenCalledWith('rec-lot-two-1', {
+      expect(saveParkingLotArrivalReviewRecordMock).toHaveBeenCalledWith('rec-lot-two-1', {
         arrivalDate: '2026-05-12',
         sku: 'SKU-LOT2-1',
       });
     });
 
-    expect(await screen.findByText('Saved Parking Lot 2 review fields.')).toBeInTheDocument();
+    expect(await screen.findByText('Saved Parking Lot review fields.')).toBeInTheDocument();
   });
 
-  it('routes the row into trash from the Lot 2 review page', async () => {
+  it('routes the row into trash from the Parking Lot arrival-stage review page', async () => {
     markPendingReviewUnqualifiedMock.mockResolvedValue(undefined);
 
     render(
-      <UsedGearLotTwoRecordPage
+      <UsedGearParkingLotArrivalRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-lot-two-1"
         onOpenManualIntake={vi.fn()}
@@ -171,12 +175,12 @@ describe('UsedGearLotTwoRecordPage', () => {
       createdTime: '2026-05-09T00:00:00.000Z',
       fields: {
         SKU: 'SKU-LOT2-1',
-        'Workflow Status': 'Testing and Photography In Progress',
+        'Workflow Status': 'Testing In Progress',
       },
     });
 
     render(
-      <UsedGearLotTwoRecordPage
+      <UsedGearParkingLotArrivalRecordPage
         currentUserName="Taylor Reviewer"
         recordId="rec-lot-two-1"
         onOpenManualIntake={vi.fn()}
@@ -189,7 +193,7 @@ describe('UsedGearLotTwoRecordPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Complete Processing' }));
 
     await waitFor(() => {
-      expect(saveLotTwoReviewRecordMock).toHaveBeenCalledWith('rec-lot-two-1', {
+      expect(saveParkingLotArrivalReviewRecordMock).toHaveBeenCalledWith('rec-lot-two-1', {
         arrivalDate: '2026-05-12',
         sku: 'SKU-LOT2-1',
       });

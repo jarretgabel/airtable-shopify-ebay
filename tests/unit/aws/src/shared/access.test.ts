@@ -49,6 +49,22 @@ test('Airtable users source routes are marked admin-only', () => {
   assert.deepEqual(writeRequirement.anyPage, ['users']);
 });
 
+test('Airtable user-guide routes are marked full-access only', () => {
+  const readRequirement = resolveRouteAccessRequirement(createEvent({
+    rawPath: '/api/airtable/configured-records',
+    queryStringParameters: { source: 'user-guide' },
+  }));
+  const writeRequirement = resolveRouteAccessRequirement(createEvent({
+    rawPath: '/api/airtable/configured-records/user-guide',
+    pathParameters: { source: 'user-guide' },
+  }));
+
+  assert.equal(readRequirement.adminOnly, true);
+  assert.deepEqual(readRequirement.anyPage, ['workflow-guide-editor']);
+  assert.equal(writeRequirement.adminOnly, true);
+  assert.deepEqual(writeRequirement.anyPage, ['workflow-guide-editor']);
+});
+
 test('non-user Airtable configured routes keep page-based access rules', () => {
   const inventoryRequirement = resolveRouteAccessRequirement(createEvent({
     rawPath: '/api/airtable/configured-records/inventory-directory',
@@ -60,9 +76,9 @@ test('non-user Airtable configured routes keep page-based access rules', () => {
   }));
 
   assert.equal(inventoryRequirement.adminOnly, undefined);
-  assert.deepEqual(inventoryRequirement.anyPage, ['manual-intake', 'inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos']);
+  assert.deepEqual(inventoryRequirement.anyPage, ['manual-intake', 'inventory', 'parking-lot-1', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos']);
   assert.equal(usedGearRequirement.adminOnly, undefined);
-  assert.deepEqual(usedGearRequirement.anyPage, ['manual-intake', 'inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos']);
+  assert.deepEqual(usedGearRequirement.anyPage, ['manual-intake', 'inventory', 'parking-lot-1', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos']);
 });
 
 test('airtable listings route uses inventory access', () => {

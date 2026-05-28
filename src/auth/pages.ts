@@ -1,10 +1,10 @@
 export const APP_PAGES = [
   'dashboard',
   'workflow-guide',
+  'workflow-guide-editor',
   'manual-intake',
   'jotform',
   'parking-lot-1',
-  'parking-lot-2',
   'trash-review',
   'inventory',
   'testing-queue',
@@ -34,6 +34,7 @@ export interface PageDefinition {
 export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   dashboard: { label: 'Dashboard', path: '/dashboard' },
   'workflow-guide': { label: 'User Guide', path: '/workflow-guide' },
+  'workflow-guide-editor': { label: 'User Guide Admin', path: '/workflow-guide/edit', adminOnly: true },
   'manual-intake': { label: 'Manual Intake', path: '/manual-intake' },
   jotform: { label: 'JotForm', path: '/jotform' },
   inventory: { label: 'Workflow Hub', path: '/workflow-hub' },
@@ -42,8 +43,7 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   archive: { label: 'Completed Shipments', path: '/workflow/archive' },
   shopify: { label: 'Shopify Products', path: '/shopify/products' },
   market: { label: 'Market Prices', path: '/market' },
-  'parking-lot-1': { label: 'Parking Lot 1', path: '/parking-lot-1' },
-  'parking-lot-2': { label: 'Parking Lot 2', path: '/parking-lot-2' },
+  'parking-lot-1': { label: 'Parking Lot', path: '/parking-lot-1' },
   'trash-review': { label: 'Trash Review', path: '/trash-review' },
   'testing-queue': { label: 'Testing Queue', path: '/workflow/testing' },
   'photography-queue': { label: 'Photography Queue', path: '/workflow/photography' },
@@ -56,4 +56,4 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   users: { label: 'User Management', path: '/account/users', adminOnly: true },
 };
 
-export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'settings' && page !== 'notifications' && page !== 'manual-intake' && page !== 'testing' && page !== 'photos');
+export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'workflow-guide-editor' && page !== 'settings' && page !== 'notifications' && page !== 'manual-intake' && page !== 'testing' && page !== 'photos');

@@ -6,6 +6,8 @@ interface ImportMetaEnv {
   readonly VITE_AI_PROVIDER?: 'github' | 'openai' | 'none';
   readonly VITE_AIRTABLE_USERS_TABLE_REF?: string;
   readonly VITE_AIRTABLE_USERS_TABLE_NAME?: string;
+  readonly VITE_AIRTABLE_USER_GUIDE_TABLE_REF?: string;
+  readonly VITE_AIRTABLE_USER_GUIDE_TABLE_NAME?: string;
   readonly VITE_AIRTABLE_APPROVAL_TABLE_REF?: string;
   readonly VITE_AIRTABLE_APPROVAL_TABLE_NAME?: string;
   readonly VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF?: string;

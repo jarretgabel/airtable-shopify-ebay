@@ -3,6 +3,7 @@ import type { ShopifyApprovalPreviewResult, ShopifyApprovalPublishResult } from 
 
 export type AirtableConfiguredRecordsSource =
   | 'users'
+  | 'user-guide'
   | 'inventory-directory'
   | 'used-gear-workflow'
   | 'approval-ebay'
@@ -28,6 +29,8 @@ export interface ApprovalEbayBodyPreviewInput {
   powerCable?: string;
   manual?: string;
   voltage?: string;
+  shippingWeight?: string;
+  shippingDimensions?: string;
   audiogonRating?: string;
   fieldName?: string;
 }
@@ -104,6 +107,7 @@ export type ContractValidationResult<TValue> = ContractValidationFailure | Contr
 
 const CONFIGURED_RECORD_SOURCES = new Set<AirtableConfiguredRecordsSource>([
   'users',
+  'user-guide',
   'inventory-directory',
   'used-gear-workflow',
   'approval-ebay',
@@ -160,6 +164,8 @@ export function validateApprovalEbayBodyPreviewInput(value: unknown): ContractVa
     || !isOptionalString(value.powerCable)
     || !isOptionalString(value.manual)
     || !isOptionalString(value.voltage)
+    || !isOptionalString(value.shippingWeight)
+    || !isOptionalString(value.shippingDimensions)
     || !isOptionalString(value.audiogonRating)
     || !isOptionalString(value.fieldName)) {
     return failure('bodyPreview is invalid');
@@ -185,6 +191,8 @@ export function validateApprovalEbayBodyPreviewInput(value: unknown): ContractVa
     ...(typeof value.powerCable === 'string' ? { powerCable: value.powerCable } : {}),
     ...(typeof value.manual === 'string' ? { manual: value.manual } : {}),
     ...(typeof value.voltage === 'string' ? { voltage: value.voltage } : {}),
+    ...(typeof value.shippingWeight === 'string' ? { shippingWeight: value.shippingWeight } : {}),
+    ...(typeof value.shippingDimensions === 'string' ? { shippingDimensions: value.shippingDimensions } : {}),
     ...(typeof value.audiogonRating === 'string' ? { audiogonRating: value.audiogonRating } : {}),
     ...(typeof value.fieldName === 'string' ? { fieldName: value.fieldName } : {}),
   });

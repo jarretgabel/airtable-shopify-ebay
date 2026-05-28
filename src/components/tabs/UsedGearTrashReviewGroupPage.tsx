@@ -178,9 +178,9 @@ export function UsedGearTrashReviewGroupPage({
 
     try {
       await Promise.all(records.map((record) => restoreTrashRecord(record.id)));
-      navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-pending-review' });
+      navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-parking-lot' });
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to restore this Trash Review group to Parking Lot 1.');
+      setError(actionError instanceof Error ? actionError.message : 'Unable to restore this Trash Review group to Parking Lot.');
       setSaving(null);
     }
   };
@@ -199,9 +199,9 @@ export function UsedGearTrashReviewGroupPage({
         acceptedStatus: requalifyStatus,
         qualificationNotes: requalifyNotes,
       })));
-      navigate({ pathname: '/parking-lot-2', search: location.search });
+      navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-parking-lot' });
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to re-qualify this Trash Review group into Lot 2.');
+      setError(actionError instanceof Error ? actionError.message : 'Unable to re-qualify this Trash Review group into Parking Lot.');
       setSaving(null);
     }
   };
@@ -270,7 +270,7 @@ export function UsedGearTrashReviewGroupPage({
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.15fr)]">
           <section id="restore" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
-            <AppSectionTitle title="Restore To Parking Lot 1" titleClassName="text-lg" className="pt-0" />
+            <AppSectionTitle title="Restore To Parking Lot" titleClassName="text-lg" className="pt-0" />
             <button
               type="button"
               className="mt-3 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
@@ -279,15 +279,15 @@ export function UsedGearTrashReviewGroupPage({
               }}
               disabled={saving !== null}
             >
-              {saving === 'restore' ? 'Saving...' : 'Restore To Lot 1'}
+              {saving === 'restore' ? 'Saving...' : 'Restore To Parking Lot'}
             </button>
           </section>
 
           <section id="requalify" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
-            <AppSectionTitle title="Re-qualify Into Lot 2" titleClassName="text-lg" className="pt-0" />
+            <AppSectionTitle title="Re-qualify Into Parking Lot" titleClassName="text-lg" className="pt-0" />
             <div className="mt-3 grid gap-3">
               <label className="block">
-                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Lot 2 Route</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Parking Lot Status</span>
                 <select
                   className={inputClassName}
                   value={requalifyStatus}
@@ -305,7 +305,7 @@ export function UsedGearTrashReviewGroupPage({
                   rows={5}
                   value={requalifyNotes}
                   onChange={(event) => setRequalifyNotes(event.currentTarget.value)}
-                  placeholder="Required before re-qualifying this grouped set into Lot 2"
+                  placeholder="Required before re-qualifying this grouped set into Parking Lot"
                 />
               </label>
               <QualificationTemplateRow
@@ -314,7 +314,7 @@ export function UsedGearTrashReviewGroupPage({
                 }}
               />
               {!hasPricingCoverage ? (
-                <p className="m-0 text-sm text-amber-200">Offer amount, paid amount, or confirmed grand total is still required before this grouped set can be re-qualified into Lot 2.</p>
+                <p className="m-0 text-sm text-amber-200">Offer amount, paid amount, or confirmed grand total is still required before this grouped set can be re-qualified into Parking Lot.</p>
               ) : null}
               <button
                 type="button"
@@ -324,7 +324,7 @@ export function UsedGearTrashReviewGroupPage({
                 }}
                 disabled={saving !== null || requalifyNotes.trim().length === 0 || !hasPricingCoverage}
               >
-                {saving === 'requalify' ? 'Saving...' : 'Re-qualify Into Lot 2'}
+                {saving === 'requalify' ? 'Saving...' : 'Re-qualify Into Parking Lot'}
               </button>
             </div>
           </section>

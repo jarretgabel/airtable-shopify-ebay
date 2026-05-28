@@ -11,6 +11,8 @@
   "VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME": "tbl0K0nFQL64jQMx8",
   "VITE_AIRTABLE_USERS_TABLE_REF": "tblj2Gt9USORo6Vi5",
   "VITE_AIRTABLE_USERS_TABLE_NAME": "tblj2Gt9USORo6Vi5",
+  "VITE_AIRTABLE_USER_GUIDE_TABLE_REF": "tblquB9pdwSRXsI7c/viwjzN0eLhjaXThiI",
+  "VITE_AIRTABLE_USER_GUIDE_TABLE_NAME": "tblquB9pdwSRXsI7c",
   "VITE_EBAY_AUTH_HOST": "https://auth.ebay.com/oauth2/authorize",
   "VITE_EBAY_OAUTH_SCOPES": "https://api.ebay.com/oauth/api_scope https://api.ebay.com/oauth/api_scope/sell.inventory https://api.ebay.com/oauth/api_scope/sell.account",
   "VITE_EBAY_APP_SCOPE": "https://api.ebay.com/oauth/api_scope",

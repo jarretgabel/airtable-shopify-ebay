@@ -60,7 +60,7 @@ function buildNotification(
 }
 
 describe('buildUsedGearStageHandoffNotification', () => {
-  it('notifies when processing hands off to concurrent testing and photography', () => {
+  it('notifies when processing hands off to testing', () => {
     const user = makeUser({
       notificationPreferences: {
         infoEnabled: true,
@@ -82,15 +82,15 @@ describe('buildUsedGearStageHandoffNotification', () => {
     });
 
     const notification = buildNotification('processing', makeRecord({
-      'Workflow Status': 'Testing and Photography In Progress',
+      'Workflow Status': 'Testing In Progress',
     }), user);
 
     expect(notification).toEqual({
       key: 'used-gear-stage-handoff:rec-stage-1:processing',
-      digestKey: 'used-gear-stage-handoff:testing-photography',
+      digestKey: 'used-gear-stage-handoff:testing-only',
       tone: 'info',
-      title: 'Processing complete: testing and photography next',
-      message: 'UG-100 (McIntosh MC275) is ready for concurrent testing and photography work.',
+      title: 'Processing complete: testing next',
+      message: 'UG-100 (McIntosh MC275) is ready for testing.',
     });
   });
 
@@ -116,7 +116,7 @@ describe('buildUsedGearStageHandoffNotification', () => {
     });
 
     const notification = buildNotification('testing', makeRecord({
-      'Workflow Status': 'Testing and Photography In Progress',
+      'Workflow Status': 'Photography In Progress',
       'Testing Signed By': 'Taylor Reviewer',
       'Testing Signed At': '2026-05-08T01:00:00.000Z',
     }), user);
@@ -126,7 +126,7 @@ describe('buildUsedGearStageHandoffNotification', () => {
       digestKey: 'used-gear-stage-handoff:photography-only',
       tone: 'info',
       title: 'Testing complete: photography next',
-      message: 'UG-100 (McIntosh MC275) is now waiting only on photography completion.',
+      message: 'UG-100 (McIntosh MC275) is now ready for photography.',
     });
   });
 
@@ -164,7 +164,7 @@ describe('buildUsedGearStageHandoffNotification', () => {
       digestKey: 'used-gear-stage-handoff:pre-listing-review',
       tone: 'warning',
       title: 'Stage handoff complete: pre-listing review next',
-      message: 'UG-100 (McIntosh MC275) cleared testing and photography and is ready for pre-listing review.',
+      message: 'UG-100 (McIntosh MC275) cleared photography and is ready for pre-listing review.',
     });
   });
 
@@ -172,7 +172,7 @@ describe('buildUsedGearStageHandoffNotification', () => {
     const user = makeUser();
 
     const notification = buildNotification('testing', makeRecord({
-      'Workflow Status': 'Testing and Photography In Progress',
+      'Workflow Status': 'Photography In Progress',
       'Testing Signed By': 'Taylor Reviewer',
       'Testing Signed At': '2026-05-08T01:00:00.000Z',
     }), user);

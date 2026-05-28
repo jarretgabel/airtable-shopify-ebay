@@ -37,7 +37,7 @@ function createEvent(overrides: Partial<APIGatewayProxyEventV2> = {}): APIGatewa
         Email: 'processor@example.com',
         Role: 'processor',
         MustChangePassword: false,
-        'Allowed Pages': 'dashboard,manual-intake,inventory,parking-lot-1,parking-lot-2,trash-review,testing-queue,photography-queue,testing,photos',
+        'Allowed Pages': 'dashboard,manual-intake,inventory,jotform,parking-lot-1,trash-review,testing-queue,photography-queue,testing,photos,listings,post-publish,archive,shopify,ebay,market,settings,notifications,imagelab',
         Notifications: '{"workflowAssignedAlertsEnabled":true}',
         'Updated At': '2026-05-13',
       },
@@ -61,7 +61,7 @@ test('allows non-admin users to update their own Airtable user record when prote
         email: 'processor@example.com',
         mustChangePassword: false,
         role: 'processor',
-        allowedPages: ['dashboard', 'manual-intake', 'inventory', 'parking-lot-1', 'parking-lot-2', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos'],
+        allowedPages: ['dashboard', 'manual-intake', 'inventory', 'jotform', 'parking-lot-1', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab'],
       };
     },
     updateConfiguredRecord: async (source, recordId, fields, options) => {

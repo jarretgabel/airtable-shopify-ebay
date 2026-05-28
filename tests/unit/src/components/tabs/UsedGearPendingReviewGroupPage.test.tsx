@@ -102,15 +102,15 @@ describe('UsedGearPendingReviewGroupPage', () => {
     );
 
     expect((await screen.findAllByText('SUB-42')).length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: 'Back to Parking Lot 1' })).toBeInTheDocument();
-    expect(screen.getByRole('navigation', { name: 'Parking Lot 1 group sections' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to Parking Lot' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Parking Lot group sections' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Grouped Items' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Grouped Items' })).toBeInTheDocument();
     expect(screen.getAllByText('GRP-1').length).toBeGreaterThan(0);
     expect(screen.getAllByText('GRP-2').length).toBeGreaterThan(0);
     expect(screen.queryByText('JotForm')).not.toBeInTheDocument();
     expect(screen.queryByText('Manual Entry')).not.toBeInTheDocument();
-    expect(screen.getAllByLabelText('Lot 2 Route').length).toBe(2);
+    expect(screen.getAllByLabelText('Parking Lot Status').length).toBe(2);
     expect(screen.getAllByLabelText('Offer Amount').length).toBe(2);
     expect(screen.getAllByLabelText('Paid Amount').length).toBe(2);
     expect(screen.getAllByLabelText('Qualification Notes').length).toBe(2);

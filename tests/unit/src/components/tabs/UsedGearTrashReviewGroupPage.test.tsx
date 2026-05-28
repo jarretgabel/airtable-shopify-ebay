@@ -89,7 +89,7 @@ describe('UsedGearTrashReviewGroupPage', () => {
     });
   });
 
-  it('restores every row in the grouped trash review page back to parking lot 1', async () => {
+  it('restores every row in the grouped trash review page back to parking lot', async () => {
     restoreTrashRecordMock.mockResolvedValue(undefined);
 
     render(
@@ -100,8 +100,8 @@ describe('UsedGearTrashReviewGroupPage', () => {
       />,
     );
 
-    await screen.findByRole('heading', { name: 'Restore To Parking Lot 1' });
-    fireEvent.click(screen.getByRole('button', { name: 'Restore To Lot 1' }));
+    await screen.findByRole('heading', { name: 'Restore To Parking Lot' });
+    fireEvent.click(screen.getByRole('button', { name: 'Restore To Parking Lot' }));
 
     await waitFor(() => {
       expect(restoreTrashRecordMock).toHaveBeenCalledWith('rec-trash-1');
@@ -111,11 +111,11 @@ describe('UsedGearTrashReviewGroupPage', () => {
     expect(navigateMock).toHaveBeenCalledWith({
       pathname: '/parking-lot-1',
       search: '?reviewMode=test',
-      hash: '#used-gear-pending-review',
+      hash: '#used-gear-parking-lot',
     });
   });
 
-  it('re-qualifies every row in the grouped trash review page into lot 2', async () => {
+  it('re-qualifies every row in the grouped trash review page into parking lot arrival-stage work', async () => {
     requalifyTrashRecordMock.mockResolvedValue(undefined);
 
     render(
@@ -126,14 +126,14 @@ describe('UsedGearTrashReviewGroupPage', () => {
       />,
     );
 
-    await screen.findByRole('heading', { name: 'Re-qualify Into Lot 2' });
-    fireEvent.change(screen.getByRole('combobox', { name: 'Lot 2 Route' }), {
+    await screen.findByRole('heading', { name: 'Re-qualify Into Parking Lot' });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Parking Lot Status' }), {
       target: { value: 'Accepted - Arrived, Awaiting Missing Item' },
     });
     fireEvent.change(screen.getByRole('textbox', { name: 'Qualification Notes' }), {
       target: { value: 'Recovered after shared bench inspection.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Re-qualify Into Lot 2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Re-qualify Into Parking Lot' }));
 
     await waitFor(() => {
       expect(requalifyTrashRecordMock).toHaveBeenCalledWith('rec-trash-1', 'Taylor Reviewer', {
@@ -147,8 +147,9 @@ describe('UsedGearTrashReviewGroupPage', () => {
     });
 
     expect(navigateMock).toHaveBeenCalledWith({
-      pathname: '/parking-lot-2',
+      pathname: '/parking-lot-1',
       search: '?reviewMode=test',
+      hash: '#used-gear-parking-lot',
     });
   });
 

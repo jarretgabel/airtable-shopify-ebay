@@ -1,19 +1,19 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { UsedGearLotTwoGroupPage } from '@/components/tabs/UsedGearLotTwoGroupPage';
+import { UsedGearParkingLotArrivalGroupPage } from '@/components/tabs/UsedGearParkingLotArrivalGroupPage';
 
-const { completeProcessingStageMock, loadLotTwoGroupMock, markPendingReviewUnqualifiedMock, saveLotTwoReviewRecordMock } = vi.hoisted(() => ({
+const { completeProcessingStageMock, loadParkingLotArrivalGroupMock, markPendingReviewUnqualifiedMock, saveParkingLotArrivalReviewRecordMock } = vi.hoisted(() => ({
   completeProcessingStageMock: vi.fn(),
-  loadLotTwoGroupMock: vi.fn(),
+  loadParkingLotArrivalGroupMock: vi.fn(),
   markPendingReviewUnqualifiedMock: vi.fn(),
-  saveLotTwoReviewRecordMock: vi.fn(),
+  saveParkingLotArrivalReviewRecordMock: vi.fn(),
 }));
 
 vi.mock('@/services/usedGearQueue', () => ({
   completeProcessingStage: completeProcessingStageMock,
-  loadLotTwoGroup: loadLotTwoGroupMock,
+  loadParkingLotArrivalGroup: loadParkingLotArrivalGroupMock,
   markPendingReviewUnqualified: markPendingReviewUnqualifiedMock,
-  saveLotTwoReviewRecord: saveLotTwoReviewRecordMock,
+  saveParkingLotArrivalReviewRecord: saveParkingLotArrivalReviewRecordMock,
 }));
 
 vi.mock('@/services/inventoryDirectory', () => ({
@@ -25,13 +25,13 @@ vi.mock('@/services/usedGearOperationalRouting', () => ({
   shouldShowOperationalAction: () => true,
 }));
 
-describe('UsedGearLotTwoGroupPage', () => {
+describe('UsedGearParkingLotArrivalGroupPage', () => {
   beforeEach(() => {
     completeProcessingStageMock.mockReset();
-    loadLotTwoGroupMock.mockReset();
+    loadParkingLotArrivalGroupMock.mockReset();
     markPendingReviewUnqualifiedMock.mockReset();
-    saveLotTwoReviewRecordMock.mockReset();
-    loadLotTwoGroupMock.mockResolvedValue({
+    saveParkingLotArrivalReviewRecordMock.mockReset();
+    loadParkingLotArrivalGroupMock.mockResolvedValue({
       id: 'pickup-100',
       key: 'pickup-100',
       label: 'PICKUP-100',
@@ -67,7 +67,7 @@ describe('UsedGearLotTwoGroupPage', () => {
         },
       ],
     });
-    saveLotTwoReviewRecordMock.mockImplementation(async (recordId: string, values: { arrivalDate: string; sku: string }) => ({
+    saveParkingLotArrivalReviewRecordMock.mockImplementation(async (recordId: string, values: { arrivalDate: string; sku: string }) => ({
       id: recordId,
       createdTime: '2026-05-07T00:00:00.000Z',
       fields: {
@@ -86,7 +86,7 @@ describe('UsedGearLotTwoGroupPage', () => {
       createdTime: '2026-05-07T00:00:00.000Z',
       fields: {
         SKU: 'LOT2-1',
-        'Workflow Status': 'Testing and Photography In Progress',
+        'Workflow Status': 'Testing In Progress',
       },
     });
     markPendingReviewUnqualifiedMock.mockResolvedValue(undefined);
@@ -96,7 +96,7 @@ describe('UsedGearLotTwoGroupPage', () => {
     const onOpenManualIntake = vi.fn();
 
     render(
-      <UsedGearLotTwoGroupPage
+      <UsedGearParkingLotArrivalGroupPage
         currentUserName="Taylor Reviewer"
         groupId="pickup-100"
         onBackToParkingLot={vi.fn()}
@@ -106,7 +106,7 @@ describe('UsedGearLotTwoGroupPage', () => {
     );
 
     expect(await screen.findByRole('heading', { name: 'Group Review' })).toBeInTheDocument();
-    expect(screen.getByRole('navigation', { name: 'Parking Lot 2 group sections' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Parking Lot arrival-stage group sections' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Group Review' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Trash' })).toBeInTheDocument();
     expect(screen.queryByText('Group Handoff')).not.toBeInTheDocument();
@@ -116,20 +116,20 @@ describe('UsedGearLotTwoGroupPage', () => {
     expect(screen.getAllByText('Arrival Date').length).toBeGreaterThan(0);
     expect(screen.queryByText('Intake Date')).not.toBeInTheDocument();
     expect(screen.getByText(/Marantz/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to Parking Lot 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to Parking Lot' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Complete Ready Items' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit Workflow Record' })).not.toBeInTheDocument();
-    expect(screen.queryByText('Arrival Date and SKU are required before this item can leave Parking Lot 2.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Arrival Date and SKU are required before this item can leave Parking Lot.')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Open Intake' })[0]!);
 
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-lot-two-1');
-    expect(screen.getByText('Arrival Date and SKU are required before each remaining item can leave Parking Lot 2.')).toBeInTheDocument();
+    expect(screen.getByText('Arrival Date and SKU are required before each remaining item can leave Parking Lot.')).toBeInTheDocument();
   });
 
-  it('saves grouped Lot 2 handoff fields for the batch', async () => {
+  it('saves grouped Parking Lot handoff fields for the batch', async () => {
     render(
-      <UsedGearLotTwoGroupPage
+      <UsedGearParkingLotArrivalGroupPage
         currentUserName="Taylor Reviewer"
         groupId="pickup-100"
         onBackToParkingLot={vi.fn()}
@@ -145,22 +145,22 @@ describe('UsedGearLotTwoGroupPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save Review' }));
 
     await waitFor(() => {
-      expect(saveLotTwoReviewRecordMock).toHaveBeenCalledWith('rec-lot-two-1', {
+      expect(saveParkingLotArrivalReviewRecordMock).toHaveBeenCalledWith('rec-lot-two-1', {
         arrivalDate: '2026-05-07',
         sku: 'LOT2-1',
       });
-      expect(saveLotTwoReviewRecordMock).toHaveBeenCalledWith('rec-lot-two-2', {
+      expect(saveParkingLotArrivalReviewRecordMock).toHaveBeenCalledWith('rec-lot-two-2', {
         arrivalDate: '2026-05-08',
         sku: 'LOT2-2',
       });
     });
 
-    expect(await screen.findByText('Saved Parking Lot 2 review fields for this batch.')).toBeInTheDocument();
+    expect(await screen.findByText('Saved Parking Lot review fields for this batch.')).toBeInTheDocument();
   });
 
-  it('moves ready items out of Parking Lot 2 in one batch action', async () => {
+  it('moves ready items out of Parking Lot in one batch action', async () => {
     render(
-      <UsedGearLotTwoGroupPage
+      <UsedGearParkingLotArrivalGroupPage
         currentUserName="Taylor Reviewer"
         groupId="pickup-100"
         onBackToParkingLot={vi.fn()}
@@ -173,7 +173,7 @@ describe('UsedGearLotTwoGroupPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Complete Ready Items' }));
 
     await waitFor(() => {
-      expect(saveLotTwoReviewRecordMock).toHaveBeenCalledWith('rec-lot-two-1', {
+      expect(saveParkingLotArrivalReviewRecordMock).toHaveBeenCalledWith('rec-lot-two-1', {
         arrivalDate: '2026-05-07',
         sku: 'LOT2-1',
       });
@@ -183,11 +183,11 @@ describe('UsedGearLotTwoGroupPage', () => {
     expect(completeProcessingStageMock).not.toHaveBeenCalledWith('rec-lot-two-2', 'Taylor Reviewer');
   });
 
-  it('routes the full Lot 2 batch into trash review', async () => {
+  it('routes the full Parking Lot batch into trash review', async () => {
     const onOpenTrashReview = vi.fn();
 
     render(
-      <UsedGearLotTwoGroupPage
+      <UsedGearParkingLotArrivalGroupPage
         currentUserName="Taylor Reviewer"
         groupId="pickup-100"
         onBackToParkingLot={vi.fn()}
@@ -198,7 +198,7 @@ describe('UsedGearLotTwoGroupPage', () => {
 
     await screen.findByRole('heading', { name: 'Route To Trash' });
     fireEvent.change(screen.getByRole('textbox', { name: 'Unqualified Reason' }), {
-      target: { value: 'The entire pickup needs to stop in Lot 2 because the handoff failed validation.' },
+      target: { value: 'The entire pickup needs to stop in Parking Lot because the handoff failed validation.' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send To Trash' }));
 
@@ -206,8 +206,8 @@ describe('UsedGearLotTwoGroupPage', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Send To Trash' }));
 
     await waitFor(() => {
-      expect(markPendingReviewUnqualifiedMock).toHaveBeenCalledWith('rec-lot-two-1', 'The entire pickup needs to stop in Lot 2 because the handoff failed validation.');
-      expect(markPendingReviewUnqualifiedMock).toHaveBeenCalledWith('rec-lot-two-2', 'The entire pickup needs to stop in Lot 2 because the handoff failed validation.');
+      expect(markPendingReviewUnqualifiedMock).toHaveBeenCalledWith('rec-lot-two-1', 'The entire pickup needs to stop in Parking Lot because the handoff failed validation.');
+      expect(markPendingReviewUnqualifiedMock).toHaveBeenCalledWith('rec-lot-two-2', 'The entire pickup needs to stop in Parking Lot because the handoff failed validation.');
     });
 
     expect(onOpenTrashReview).toHaveBeenCalled();

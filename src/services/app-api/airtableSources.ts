@@ -5,6 +5,7 @@ export const DEFAULT_COMBINED_LISTINGS_TABLE_NAME = 'tbl0K0nFQL64jQMx8';
 
 export type AirtableConfiguredRecordsSource =
   | 'users'
+  | 'user-guide'
   | 'inventory-directory'
   | 'used-gear-workflow'
   | 'approval-ebay'
@@ -29,6 +30,13 @@ export function getConfiguredRecordsSourceDefinition(source: AirtableConfiguredR
   reference?: string;
   tableName: string;
 } {
+  if (source === 'user-guide') {
+    return {
+      reference: checkOptionalEnv('VITE_AIRTABLE_USER_GUIDE_TABLE_REF'),
+      tableName: checkOptionalEnv('VITE_AIRTABLE_USER_GUIDE_TABLE_NAME') || 'tblquB9pdwSRXsI7c',
+    };
+  }
+
   if (source === 'users') {
     return getUsersTableReference();
   }
@@ -78,7 +86,7 @@ export function resolveConfiguredRecordsSource(
   const inputReference = normalizeValue(reference);
   const inputTableName = normalizeValue(tableName);
 
-  for (const source of ['approval-ebay', 'approval-shopify', 'approval-combined'] as const) {
+  for (const source of ['user-guide', 'approval-ebay', 'approval-shopify', 'approval-combined'] as const) {
     const definition = getConfiguredRecordsSourceDefinition(source);
     const definitionReference = normalizeValue(definition.reference);
     const definitionTableName = normalizeValue(definition.tableName);

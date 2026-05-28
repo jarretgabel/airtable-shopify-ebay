@@ -14,7 +14,7 @@ interface TabSection {
 
 const INTAKE_SECTION_KEYS = {
   forms: ['manual-intake', 'jotform'] as const,
-  parkingLots: ['parking-lot-1', 'parking-lot-2'] as const,
+  parkingLots: ['parking-lot-1'] as const,
   trash: ['trash-review'] as const,
 };
 
@@ -77,7 +77,7 @@ export function AppFrameHeaderNavigation({
         .filter((tab): tab is AppTab => Boolean(tab)),
     },
     {
-      title: 'Parking Lots',
+      title: 'Parking Lot',
       tabs: INTAKE_SECTION_KEYS.parkingLots
         .map((key) => intakeTabLookup.get(key))
         .filter((tab): tab is AppTab => Boolean(tab)),

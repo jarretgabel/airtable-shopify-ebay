@@ -257,6 +257,7 @@ export function useListingApprovalCombinedFieldState({
       if (isInternalReferenceListingFieldName(fieldName)) return false;
       if (shopifyOnlySet.has(normalized) || ebayOnlySet.has(normalized)) return false;
       if (isItemZipCodeField(fieldName)) return false;
+      if (normalized === 'weight' || normalized === 'shipping weight' || normalized === 'shipping dims') return false;
       if (isCombinedEbayPriceField) return false;
       if (EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       if (EBAY_DURATION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;

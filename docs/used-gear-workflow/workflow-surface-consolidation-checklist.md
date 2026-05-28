@@ -52,7 +52,7 @@ This checklist tracks the filesystem work required to deliver the workflow surfa
 
 ## 7. Restrict Listings To Post-Testing And Post-Photography Rows
 - [x] Update listing-surface visibility logic in `src/services/usedGearWorkflowListingVisibility.ts` so Listings begins at the listing phase.
-- [x] Ensure `Testing and Photography In Progress` rows do not appear in listing directory views.
+- [x] Ensure `Testing In Progress` and `Photography In Progress` rows do not appear in listing directory views.
 - [x] Treat `Awaiting Pre-Listing Review` as the first listing-phase state shown in Listings.
 - [x] Update tests in `tests/unit/src/services/usedGearWorkflowListingVisibility.test.ts`.
 

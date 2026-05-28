@@ -24,7 +24,7 @@ describe('usedGearWorkflowListingVisibility', () => {
 
     expect(isUsedGearWorkflowListingSurfaceEligible(buildRecord('rec-2', {
       SKU: 'SKU-2',
-      'Workflow Status': 'Testing and Photography In Progress',
+      'Workflow Status': 'Testing In Progress',
       Price: '1000',
     }))).toBe(false);
   });

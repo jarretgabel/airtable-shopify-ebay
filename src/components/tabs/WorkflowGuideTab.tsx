@@ -1,22 +1,27 @@
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { PAGE_DEFINITIONS, type AppPage } from '@/auth/pages';
+import { hasFullAccessRole } from '@/auth/roleAccess';
+import { CompactActionIcon } from '@/components/app/CompactIconActionButton';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import type { UserRole } from '@/stores/auth/authTypes';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import {
+  DEFAULT_WORKFLOW_GUIDE_CONTENT,
   getVisibleRecordCards,
   getVisiblePageCards,
   getRoleStartPoints,
   getWorkflowFlowStagesForRole,
-  ROLE_GUIDES,
   roleSummary,
   shouldShowWorkflowTrashPath,
   type GuideStep,
+  type WorkflowGuideContent,
   type WorkflowFlowStage,
-  WORKFLOW_ADVANCEMENT_RULES,
 } from '@/components/tabs/workflowGuideContent';
+import {
+  loadWorkflowGuideContent,
+} from '@/services/userGuideContent';
 
 interface WorkflowGuideTabProps {
   currentUserRole: UserRole;
@@ -135,11 +140,13 @@ function GuideReferenceCard({
 function RoleStartStrip({
   currentUserRole,
   accessiblePages,
+  roleStartPoints,
 }: {
   currentUserRole: UserRole;
   accessiblePages: AppPage[];
+  roleStartPoints: WorkflowGuideContent['roleStartPoints'];
 }) {
-  const startPoints = getRoleStartPoints(currentUserRole, accessiblePages);
+  const startPoints = getRoleStartPoints(currentUserRole, accessiblePages, roleStartPoints);
 
   if (startPoints.length === 0) {
     return null;
@@ -259,8 +266,8 @@ function FlowStageCard({
   );
 }
 
-function WorkflowFlowChart({ currentUserRole }: { currentUserRole: UserRole }) {
-  const visibleStages = getWorkflowFlowStagesForRole(currentUserRole);
+function WorkflowFlowChart({ currentUserRole, flowStages }: { currentUserRole: UserRole; flowStages: WorkflowGuideContent['flowStages'] }) {
+  const visibleStages = getWorkflowFlowStagesForRole(currentUserRole, flowStages);
   const showTrashPath = shouldShowWorkflowTrashPath(currentUserRole);
 
   return (
@@ -290,7 +297,7 @@ function WorkflowFlowChart({ currentUserRole }: { currentUserRole: UserRole }) {
         <div className="rounded-2xl border border-dashed border-rose-400/30 bg-[color:color-mix(in_srgb,var(--bg)_92%,#3f0d1a_8%)] p-4">
           <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-rose-200">Side path</p>
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-            Items that fail qualification move to Trash Review. They can be restored, re-qualified back into Parking Lot 2, or permanently removed.
+            Items that fail qualification move to Trash Review. They can be restored, re-qualified back into Parking Lot, or permanently removed.
           </p>
         </div>
       ) : null}
@@ -299,9 +306,30 @@ function WorkflowFlowChart({ currentUserRole }: { currentUserRole: UserRole }) {
 }
 
 export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUserName, accessiblePages }: WorkflowGuideTabProps) {
-  const roleGuide = ROLE_GUIDES[currentUserRole];
-  const visiblePageCards = getVisiblePageCards(accessiblePages);
-  const visibleRecordCards = getVisibleRecordCards(accessiblePages);
+  const [guideContent, setGuideContent] = useState<WorkflowGuideContent>(DEFAULT_WORKFLOW_GUIDE_CONTENT);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadGuide = async () => {
+      const result = await loadWorkflowGuideContent();
+      if (cancelled) {
+        return;
+      }
+      setGuideContent(result.content);
+    };
+
+    void loadGuide();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const roleGuide = guideContent.roleGuides[currentUserRole];
+  const visiblePageCards = getVisiblePageCards(accessiblePages, guideContent.pageCards);
+  const visibleRecordCards = getVisibleRecordCards(accessiblePages, guideContent.recordCards);
+
   const guideSections = useMemo(
     () => [
       { id: 'workflow-lane', key: 'workflow-lane', label: 'Workflow Lane' },
@@ -318,7 +346,20 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
 
   return (
     <AppPageLayout>
-      <PageTitleHeader eyebrow="Guide" title="User Guide" />
+      <PageTitleHeader
+        eyebrow="Guide"
+        title="User Guide"
+        actions={hasFullAccessRole(currentUserRole) ? (
+          <a
+            href={PAGE_DEFINITIONS['workflow-guide-editor'].path}
+            aria-label="Open User Guide Admin"
+            title="Open User Guide Admin"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] transition hover:border-[var(--accent)] hover:bg-[var(--line)] hover:text-[var(--ink)]"
+          >
+            <CompactActionIcon icon="edit" />
+          </a>
+        ) : null}
+      />
 
       <MainPageSectionNav
         ariaLabel="User guide sections"
@@ -330,9 +371,9 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
 
       <section className="rounded-2xl border border-[var(--line)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--panel)_92%,transparent),color-mix(in_srgb,var(--bg)_88%,transparent))] p-5 shadow-[0_20px_45px_rgba(2,6,23,0.2)]">
         <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Your Starting Point</p>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{roleSummary(currentUserRole)}</p>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{roleSummary(currentUserRole, guideContent.roleGuides)}</p>
         <div className="mt-4">
-          <RoleStartStrip currentUserRole={currentUserRole} accessiblePages={accessiblePages} />
+          <RoleStartStrip currentUserRole={currentUserRole} accessiblePages={accessiblePages} roleStartPoints={guideContent.roleStartPoints} />
         </div>
       </section>
 
@@ -342,7 +383,7 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
         title="Your Workflow Lane"
         summary="Read this in order. The chart is trimmed to the stages this role usually touches, with adjacent handoffs left in when they help explain the flow. The page references below are the strictly access-scoped part."
       >
-        <WorkflowFlowChart currentUserRole={currentUserRole} />
+        <WorkflowFlowChart currentUserRole={currentUserRole} flowStages={guideContent.flowStages} />
       </GuideSection>
 
       <GuideSection
@@ -369,7 +410,7 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
         title="How Items Move To The Next Step"
         summary="Use this section when the question is what qualifies a row to advance. These are the stage gates that keep the workflow moving forward only when the current step is actually complete."
       >
-        <StepList steps={WORKFLOW_ADVANCEMENT_RULES} />
+        <StepList steps={guideContent.advancementRules} />
       </GuideSection>
 
       <GuideSection

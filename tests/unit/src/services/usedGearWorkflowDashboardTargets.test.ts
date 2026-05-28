@@ -37,7 +37,7 @@ describe('usedGearWorkflowDashboardTargets', () => {
           id: 'rec-progress-1',
           createdTime: '2026-05-04T00:00:00.000Z',
           fields: {
-            'Workflow Status': 'Testing and Photography In Progress',
+            'Workflow Status': 'Testing In Progress',
             'Submission Group ID': 'submission-b',
           },
         }),
