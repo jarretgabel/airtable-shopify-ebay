@@ -1,0 +1,2657 @@
+[
+  {
+    "id": "recbWVCjxoyYfNWJ4",
+    "createdTime": "2026-05-28T04:24:15.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 0,
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 1 Pending Review",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-01"
+      },
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-01T14:00:00.000Z",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-01",
+      "Workflow Status": "Pending Review",
+      "Make": "McIntosh",
+      "Workflow Source": "JotForm",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Waiting for purchasing review in Parking Lot 1.",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 1 Pending Review",
+      "Confirmed Grand Total": 850,
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Pending review sample row for Parking Lot 1 intake triage.\n",
+      "Ebay Approved": "FALSE",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 1 queue coverage.",
+      "Model": "C28 Pending Intake",
+      "Offer Amount": 850,
+      "Submission Group ID": "sample-workflow-submission-pl1-set-a",
+      "Component Type": [
+        "Preamp"
+      ]
+    }
+  },
+  {
+    "id": "recTvHb402AJ3Q7zk",
+    "createdTime": "2026-05-28T04:24:15.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 0,
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 1 Submission Companion",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-02"
+      },
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-02T14:00:00.000Z",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-02",
+      "Workflow Status": "Pending Review",
+      "Make": "McIntosh",
+      "Workflow Source": "JotForm",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Companion item from the same customer submission waiting for intake review.",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 1 Submission Companion",
+      "Confirmed Grand Total": 575,
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Second pending review sample row sharing the same submission group for Parking Lot 1.\n",
+      "Ebay Approved": "FALSE",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 1 grouped submission coverage.",
+      "Model": "MR74 Pending Intake",
+      "Offer Amount": 575,
+      "Submission Group ID": "sample-workflow-submission-pl1-set-a",
+      "Component Type": [
+        "Tuner"
+      ]
+    }
+  },
+  {
+    "id": "rec5cwtI6vfaxOWlS",
+    "createdTime": "2026-05-28T04:24:15.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 0,
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Trash Review Unqualified",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-03"
+      },
+      "Unqualified Reason": "Cabinet damage beyond resale standards.",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-03T14:00:00.000Z",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-03",
+      "Qualification Complete": true,
+      "Workflow Status": "Unqualified",
+      "Make": "Pioneer",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Rejected during intake review.",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Trash Review Unqualified",
+      "Confirmed Grand Total": 150,
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Unqualified sample row that should surface in Trash Review only.\n",
+      "Ebay Approved": "FALSE",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Trash queue coverage.",
+      "Model": "SX-780 Rejected",
+      "Trash Status": "Active Trash",
+      "Offer Amount": 150,
+      "Submission Group ID": "sample-workflow-submission-trash-set-a",
+      "Component Type": [
+        "Receiver"
+      ]
+    }
+  },
+  {
+    "id": "rec8gfhld4bkBvmBv",
+    "createdTime": "2026-05-28T04:24:15.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 0,
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Trash Review Group Companion",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-04"
+      },
+      "Unqualified Reason": "Matching set item also failed intake inspection.",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-04T14:00:00.000Z",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-04",
+      "Qualification Complete": true,
+      "Workflow Status": "Unqualified",
+      "Make": "Pioneer",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Grouped companion rejected during intake review.",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Trash Review Group Companion",
+      "Confirmed Grand Total": 95,
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Second unqualified sample row sharing the same submission group for grouped trash-review testing.\n",
+      "Ebay Approved": "FALSE",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Trash grouped coverage.",
+      "Model": "CT-F9191 Rejected Companion",
+      "Trash Status": "Active Trash",
+      "Offer Amount": 95,
+      "Submission Group ID": "sample-workflow-submission-trash-set-a",
+      "Component Type": [
+        "Cassette Deck"
+      ]
+    }
+  },
+  {
+    "id": "recreUERcslDhSpxl",
+    "createdTime": "2026-05-28T04:24:15.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 250,
+      "Pick Up ID": "sample-workflow-pickup-lot2-set-a",
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Awaiting Arrival",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-05"
+      },
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-03T15:00:00.000Z",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-05",
+      "Qualification Complete": true,
+      "Workflow Status": "Accepted - Awaiting Arrival",
+      "Make": "Luxman",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Accepted and waiting for physical intake.",
+      "Accepted At": "2026-05-03T15:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Awaiting Arrival",
+      "Confirmed Grand Total": 1200,
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Accepted arrival-stage sample for Parking Lot 2.\n",
+      "Ebay Approved": "FALSE",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Lot 2 arrival coverage.",
+      "Model": "L-430 Awaiting Arrival",
+      "Accepted By": "Paula Purchasing",
+      "Offer Amount": 1200,
+      "Submission Group ID": "sample-workflow-group-05",
+      "Component Type": [
+        "Amplifier"
+      ]
+    }
+  },
+  {
+    "id": "recuu32BkdmxVpTDT",
+    "createdTime": "2026-05-28T04:24:15.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 150,
+      "Pick Up ID": "sample-workflow-pickup-lot2-set-a",
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Arrival Set Companion",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-06"
+      },
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-03T16:00:00.000Z",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-06",
+      "Qualification Complete": true,
+      "Workflow Status": "Accepted - Awaiting Arrival",
+      "Make": "Luxman",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Accepted as part of the same pickup set and waiting for coordinated arrival handling.",
+      "Accepted At": "2026-05-03T16:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Arrival Set Companion",
+      "Confirmed Grand Total": 650,
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Second accepted arrival-stage sample sharing the same pickup handoff set in Parking Lot 2.\n",
+      "Ebay Approved": "FALSE",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Lot 2 grouped arrival coverage.",
+      "Model": "T-110 Arrival Companion",
+      "Accepted By": "Paula Purchasing",
+      "Offer Amount": 650,
+      "Submission Group ID": "sample-workflow-group-06",
+      "Component Type": [
+        "Tuner"
+      ]
+    }
+  },
+  {
+    "id": "recKYcw3TlmYSwdWN",
+    "createdTime": "2026-05-28T04:24:15.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 700,
+      "Manual": [
+        "Yes"
+      ],
+      "Pick Up ID": "sample-workflow-pickup-07",
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Awaiting SKU",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-07"
+      },
+      "Shipping Weight": "42",
+      "Cost": 700,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-04T15:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0007",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Arrival Date": "2026-05-08",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-07",
+      "Qualification Complete": true,
+      "Workflow Status": "Accepted - Arrived, Awaiting SKU",
+      "Make": "Accuphase",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Arrived and pending SKU assignment.",
+      "Accepted At": "2026-05-04T15:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Awaiting SKU",
+      "Confirmed Grand Total": 1750,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Accepted sample row that arrived but still needs SKU assignment.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Accuphase E-202 Awaiting SKU cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Lot 2 SKU coverage.",
+      "Model": "E-202 Awaiting SKU",
+      "Accepted By": "Paula Purchasing",
+      "Shipping Dims": "22x19x11",
+      "Offer Amount": 1750,
+      "Submission Group ID": "sample-workflow-group-07",
+      "Component Type": [
+        "Amplifier"
+      ]
+    }
+  },
+  {
+    "id": "recZHgsnyp9Z2wkuo",
+    "createdTime": "2026-05-28T04:24:15.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 450,
+      "Manual": [
+        "Yes"
+      ],
+      "Pick Up ID": "sample-workflow-pickup-08",
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Awaiting Missing Item",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-08"
+      },
+      "Shipping Weight": "42",
+      "Cost": 450,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-05T15:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0008",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Arrival Date": "2026-05-09",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-08",
+      "Qualification Complete": true,
+      "Workflow Status": "Accepted - Arrived, Awaiting Missing Item",
+      "Make": "Technics",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Missing accessory must be resolved before testing.",
+      "Accepted At": "2026-05-05T15:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Parking Lot 2 Awaiting Missing Item",
+      "Confirmed Grand Total": 900,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Accepted sample row blocked by missing accessory follow-up.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Technics SL-1200 Missing Dust Cover cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Lot 2 missing-item coverage.",
+      "Model": "SL-1200 Missing Dust Cover",
+      "Accepted By": "Paula Purchasing",
+      "Shipping Dims": "22x19x11",
+      "Offer Amount": 900,
+      "Submission Group ID": "sample-workflow-group-08",
+      "Component Type": [
+        "Turntable"
+      ]
+    }
+  },
+  {
+    "id": "recyop9xW5bOmVZtF",
+    "createdTime": "2026-05-28T04:24:15.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 525,
+      "Images": [
+        {
+          "id": "attYfT5t7XvurnRob",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/pHBV2EaDioW9C7OhsIvgfg/-0eG5S9A9hKR9Q5GxQHJ6HckSIPWNPQkFe0Rgu8GIxZhOpeFQqoATb-Z8FuKx0u0j6Qh_tPaG2RC8GFPuCTftPyVTnYekxsCTXXcF8PatSuZt9B8zerNFXs3qU0H7x8rqL37TR9h3sreqHNZhtB205xbrHwDGZ4HzFCzT4gRzYhEWJriHUkZToqsoEnZNQ9axjr1ySAlpAJu6XshIXXSWA/nQZZRn3DMR7hnx75VDTHkVwTe2VuVWZXXjmxQkIWcwk",
+          "filename": "09-sansui-au-717-testing-pending-photos-1.png",
+          "size": 21756,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/KlJUm9ElVrRc7jMVIoOfgg/dUVOFEe1hw4_MhmQAvYCCgrCbWD3RJM7KyczngcPQ22yk9vPOxizEWdg4z2J-ivCXlAB2JpWMEqDtyUW6qajZKIQ3IEf1yYDgJr-k3eJDDsDtMKNQ85VW7_Pq8sCU0omTnchWOHZGEodov0NX_VELQ/-Hh78CwQhsAgkpl-mvMEFr4qn1TtCEE8fgZHfGDtvM8",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/rDMgzyugnm8ab__YZt2bbQ/248QAm7ORWt_s3Ei0CSVUg0bmMetLbZz_GxEH_5aVdvCjGjAwvDiFUNjly1HQeo8rC7z4hiWAggp46OGzQaMDLD_ZzMU_HEUlWvIQ4_rA3s5qkRzF8cuYR-x6IoOwNZ0SqttKA71Ej61ERgefyBAnQ/op-QyGovaiXwklZCUAZ5suth6LeU83DlqP7M-v_pTF0",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/7O53nuL_DxLmBmyw6F-G2A/EcEs3iRTUqyO9ArwUE2m9bBp7HfrrbxWvOA4_kXxAnFECcYEGovOVkGZH0p4VMuZ-0xgWxxRgcDwklrJT5QShNP5401c1p8eGTHh-KJIJQkwpsQ_RshizvcRcObFf6PcFSYU2FtfmbjpjwCChU6AJg/geoA3zDO83VZF8OA11FYgIkUocCW9JvbVqjlCOWPFxw",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attTh4EFirFJwsgTw",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/wj_t9FOl7WY7jSyRpdLDOQ/6vAfUFNRrvz-731FKGEiqMjigqo9oZkvrBs6hojl0s1OvdVZWr2kt6BE8RSHL-fUcauvSABiWZRYuFruWUHjgE5iyJRhHTWCqbQCaeeTKqdSzR9-j6BLFhDDWP-hPduw2MilxmjQLkG9fH5PES1xOaWheLZdB7NlCaAlqr8zIgJ93YNBbb0jm2Z8rMaES7QDSNd3vkDowu4rtaJ5w7Rc6Q/_chSqyJ-vStFMUlu_L8tDUxUpCnWE3yP-C5ncYDtYc4",
+          "filename": "09-sansui-au-717-testing-pending-photos-2.png",
+          "size": 21530,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/0cErJgKGfyrj3fwiXMf7Yw/3Au5eBwpX7VN9XCpU3HLN0grTLXlhSNpyRjinDsh6EUuPE9lMt30RGRiewIXL-ZhTrmyKQlr2m_q1PDWydhK6wUtFgveZLj-c8CotQnDHzLwqu2PQYh0WuFx0t8do5VyMztgvjz8GiG7SIvwu6j47w/yPkTZ2TsyI3_OGaUS3Lf1zuVjWmqbpUbQ1_fXsG84UI",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/A5R24sRCJTeD7qQyckaeEA/xdeoBsGMhmZeSzQ57rrtk1CalPqSH2-gINl4epEmOiUX65axIxt8u0wEkRP7I_Y2Vx2Mp8Oth7jUKk5CPc66q5peCk8M8iNqlcK96kJTCkK8CzXZ0Bj54K3fLAVRxvTIZDFwvjHXvCeVq0zLhsm-Qw/NNfs6GeflAxqkqtyASLohRj4N_-I5JWt9T-U_Axn3C0",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/LVIfzJBomRzqtUbnEsMhOA/asNm9FGoiVtENmlFi0aUkHO1kF1247OoinQs2gqhI01BA3plOrdER8BjvURl3zXq7hzEqJyz7eobdx1eXXJzXXvZR0jdmUT6Dw8-YMdDD1carxfUdPI83DxkF28Zs1uMestXzirSrqMOs5uIgZnsMw/FUo233sqARhpF9QbJfP4bFXhWea0cXyxE40emYJADx8",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "att4CZ0n9ArmWbrEW",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/D7rTqDBdQ1OzuLNlr2yA6w/JjqGn2gwI3tGCS0EEadgefi-QOh2IYENKZNCibVlRUfjxYlm_iSVmO0aiqfEofRjoVTGlu0tF06hXRv2b8LHNaAHkoiReKK_h_gg2gvvVw9QZIK3QfWqWjFUljJYagamZP9N_4dGzE9EI68jqLeeZ7SWGaek-rCx9eDZCS020YgBh6r9LkXYeVgAuNfz85sv-OuhGFgpnd0J-pgKJgtnJw/jtWutAjJZhMXpQVJ5Nevhv6hVcLE-YrXbqQW4ukOTdg",
+          "filename": "09-sansui-au-717-testing-pending-photos-3.png",
+          "size": 22004,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/EXj6fXaiEjhLW5ului4tfw/z3n0HryStRXqS5UsTAcNMrJZDeFqoJiRba2iggAQpYOfXPkdiHFeDClxjBYWiPSodo_oQ3WG0bqyIUSqKvu6eS_eIllAdtwu-KblDQfwiI0l4hrRwq1LSfJsdN0BkZo6_xoJQCLlM6LtbYgnjODmiA/v-6c6DxRXWQ3Sbxk0Ie0CrRniD_auHP6gwNbwMnSEmA",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/VlnXDrlT6RALL8NQVtO8aw/q1rPHTFFX2dk0GMec_Fv8ZaPINn3nsJ7xLZo5201ZnHDdvGbrGFSLTjc2O1qGglbFg7-F1qyAgeA-_wqIjEpmQyEShcHrKBoieChn5tIvZAZ71ptEZoeBCE91tQLc5__8xWWNB6gl6s8ZY60CNsPiw/1GFX8fMoLY7sCncYdMz3UrQjrO9AebKhyZWx6DVVHb4",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/nAiGCaeNLWhS_wknWnhx_w/h5MTvEEPoqqJiCkBpy-rLQFhdBYROTx8lCoGHfXyng2NlV2AKRtVwznCcreC5pjVFU6BQtB1zL3Zg6ck8_y2IuVDG8W1Xt1t4futgaq2LtEXXDDxowJqjD74Ctl6ZdPlENwKND-_M5MvZZV1fdTg3Q/HAWQ5HvMMvPyxPvVmP377YqsY-mNo5ONBORP5SHUB0o",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        }
+      ],
+      "Manual": [
+        "Yes"
+      ],
+      "Pick Up ID": "sample-workflow-pickup-09",
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Testing Queue Pending Testing",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Sansui AU-717 Testing Pending captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Perry Photos",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-09"
+      },
+      "Shipping Weight": "42",
+      "Cost": 525,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-06T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0009",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-11",
+      "Status": "Photo'd",
+      "Arrival Date": "2026-05-10",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-09",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-07T11:00:00.000Z",
+      "Workflow Status": "Testing In Progress",
+      "Make": "Sansui",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Waiting on testing signoff only.",
+      "Accepted At": "2026-05-06T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Testing Queue Pending Testing",
+      "Confirmed Grand Total": 950,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Testing-stage sample row that still needs testing signoff before photography can begin.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Processing Signed At": "2026-05-06T16:00:00.000Z",
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Sansui AU-717 Testing Pending cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Iris Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Testing queue unique pending-testing coverage.",
+      "Model": "AU-717 Testing Pending",
+      "Accepted By": "Paula Purchasing",
+      "Shipping Dims": "22x19x11",
+      "Offer Amount": 950,
+      "Submission Group ID": "sample-workflow-group-09",
+      "Component Type": [
+        "Amplifier"
+      ]
+    }
+  },
+  {
+    "id": "recSQlsS9bQquzDHH",
+    "createdTime": "2026-05-28T04:24:15.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 310,
+      "Testing Signed By": "Tina Testing",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pick Up ID": "sample-workflow-pickup-10",
+      "Testing Time": 5400,
+      "Item Title": "[WORKFLOW_QUEUE_SAMPLE_DATA] Photography Queue Pending Photography",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-10"
+      },
+      "Shipping Weight": "42",
+      "Cost": 310,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-07T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0010",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Status": "Tested",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Nakamichi BX-300 Photo Pending. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-11",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-10",
+      "Qualification Complete": true,
+      "Workflow Status": "Photography In Progress",
+      "Make": "Nakamichi",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Waiting on photography signoff only.",
+      "Accepted At": "2026-05-07T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Photography Queue Pending Photography",
+      "Confirmed Grand Total": 625,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Photography-stage sample row with testing complete and photography still pending.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Workflow Image Metadata JSON": "[{\"attachmentId\":\"att-sample-workflow-testing-10-1\",\"url\":\"https://placehold.co/1600x1200/png?text=10-nakamichi-bx-300-photo-pending-testing-bench\",\"filename\":\"10-nakamichi-bx-300-photo-pending-testing-1.png\",\"alt\":\"Nakamichi BX-300 Photo Pending testing sample image 1\",\"sortOrder\":1,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-10-2\",\"url\":\"https://placehold.co/1600x1200/png?text=10-nakamichi-bx-300-photo-pending-testing-rear\",\"filename\":\"10-nakamichi-bx-300-photo-pending-testing-2.png\",\"alt\":\"Nakamichi BX-300 Photo Pending testing sample image 2\",\"sortOrder\":2,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-10-3\",\"url\":\"https://placehold.co/1600x1200/png?text=10-nakamichi-bx-300-photo-pending-testing-detail\",\"filename\":\"10-nakamichi-bx-300-photo-pending-testing-3.png\",\"alt\":\"Nakamichi BX-300 Photo Pending testing sample image 3\",\"sortOrder\":3,\"sourceStage\":\"testing\",\"includedInListing\":false}]",
+      "Processing Signed At": "2026-05-07T16:00:00.000Z",
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Nakamichi BX-300 Photo Pending cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Iris Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-08T11:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Photography queue unique pending-photo coverage.",
+      "Model": "BX-300 Photo Pending",
+      "Accepted By": "Paula Purchasing",
+      "Tested": "2026-05-12",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Offer Amount": 625,
+      "Submission Group ID": "sample-workflow-group-10",
+      "Component Type": [
+        "Cassette Deck"
+      ]
+    }
+  },
+  {
+    "id": "rect5r3VkSf034NPL",
+    "createdTime": "2026-05-28T04:24:16.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 800,
+      "Images": [
+        {
+          "id": "attdiFl5IDEzVMfyH",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/R1UxJCY7_e2eFh-eYHCC8g/M9VD0qu6z-kMj_WE4CrTWVNwdV-LcswZTxVJSt7SuMtdatA4CpDV9WQoexWmjG7C7VBtmt1sGXkxd4_jAuEQGbnFUDRJ8knuVll5OYVGQO--Y_bloEyldpNE9ykVciysUOXHrugatTHJrFnLJ09JC1gg8QqO3Pt8MbH0MUTkcI22cUMn-zaCxMkciZ7_iY3t7v9NwabNjEiZ2vySF0v_1w/7LxvfC5F2eHBUE31f-3oFRKlJZSZpFNntRAWngtxLWk",
+          "filename": "11-audio-research-sp-9-pre-listing-testing-1.png",
+          "size": 21578,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/VMAKC4Tw2tml-2JBLXZqeg/K_OGa_32LSfbu_1McrvYBXAZcZKi4vOe1Nw49xiJYBfvHyzjbuGEkF915-aVN8PO4Ej8KU9t17Rm7asPH60zcPa7cKk1bq61Yd0h9yw8wIKT3dLDstSHJbNZbue-dXlHL75CIaFeUD5ksEK4B29cNw/hgVw-K_EaJFkDJvqu8_Sbbzc_l9fdeysCb8bii_4uxU",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/jX2dDmOjsoRyH2qkzgHE4w/MGAFDXjF759kcG5D_ZqX0YKwommhiVV9psP2X32Ffma98huJGu5sTr948H1_dv3nUbvIeH9X7RVBH6nU3G196Xn-7dqT5gMg9YAzETEH2E1o4CTGw7--r0dbvWeWm4q3oxEZ6ICuxwoNtFwBHQPcyg/jpy7U3PO3c13S2NRW34SCnf_gQpNCoqs9CZdxti9YH8",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/dJ_rwxbct38lN5vqBbgdsA/W4RsUJUPkkqmbHzqc0nLyoBh9zd3Dibcns7GtXe6Bp41uImCV5qonNx4szdd7Q9Y2Dq_5eFAP2Q17ScFIETuXO-oANvmkcl0bqXzV16Bucdatb5P3yUb0Uvk_4UX_bscHPxcsupXNXTo_1l3QR8aMg/xNjMWVJnC6HsmQ6nJKU5KOdKPrhxbUeSG7YNZ8J1_i8",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "atto2szGn8uTXK9Z1",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/xczF8TBhPcH8hAjcV1LFxg/v0-yB0V0rfZT0I6aW93iQysBc6Pp5Zs3xnuv3SukPBjNvg4qAup_k2ktDPAk-YZxky2bXZ93-JMngPP6sP_bHN7x2Rd_eKW866S4xvNiWH5jd5attp6JRtUTF443V3H8j_BsvqxBJnJD-3yI466pLdGo_ZdvX49IBRllL4xnWwuNEHedRTkfFLejyi9XPsUmOhhBahc1sfOYouMVnfkCYA/du5kzs1xW0wTAlFMqQRLIzibNNriRSPFn-UZSCEfmPM",
+          "filename": "11-audio-research-sp-9-pre-listing-testing-2.png",
+          "size": 21754,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/nnWp_p0icynaFVknyhx6ng/fU8foC1q8D72uekupdphjC6Z-Jq5JxcgR_jhBtyNaRGGzt5aCiSYgNP7xMZbLU3vxwpEJ0AzIV2JYCTZs9Rm79erWRJfdb_o5GFL71xqOOwzBg7LWZRgu9JOwSIKqq_NLgTGu8Wx2RpyrMAdHPebsw/r9ptuiEUsnyOlBFQ5gh7I0LAYACJ6_6Y8V28dUjYlzM",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/maWJA6u3iz_GCoflf2b_zA/fjeLeWQ1YKuyQ_mmR9d1BKMxBpB3iEJa567t0zDe-s7PnnUg8979oJT8uWg0R4plKSDyqZYm9JBGXJCgkmgS4gj3eWPOdz8oXm7ImHB7-AoMOwitE3KQW4hAprrElezKBjzVVY8ayJsqRYmg3HoDow/D3HyaoXM5oN6sXeSJtIZ6aInSkP0zGmfiD2EvsSuX2U",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/WidXqvFcwP3hCG_4l6HByA/leTu2NCey_e4qGPKV9Bu9cD9Jdo8Os-5PaoRNrfyTpBGP6kpWladf4gklf6h7D4pmXdECQXeTyFbbvNhAysoxoenj7y58vxo-vHC1i0ays9_flM1o2XosfQZWphtxmYni-qX-s5eU_EKbCuBWnounA/bpg5k14kFHyzcggfLn-docw544Q6OICd5T03fI4tX50",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attvvBzDwyJOKGDS1",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/tjoYceObKXXBVkOAHAOxuA/gChZ1zS3W8L6r3SbAmh4ZuUb87GIYCPYgauLbZ7Ls7OnknGXn8jV2-doBbEhuoZUPd7uKlLidTGZKcfOZkE-ADN2ogqghwJsPSkRqlKqbhuhwwSZWoC_Sg6XHVqMwTtfE7dxnCY1rWH3bFDijNeZJN-rNWj3de0r_DdoRYlN3Eh0PL-d7vtKXZdKhJTxLqt_p2tJuYhLrncKjSoVL5M5MA/HQwg5rIwk0C2dTDhHnictYib7q-f3lmQQtGZJihVPlI",
+          "filename": "11-audio-research-sp-9-pre-listing-testing-3.png",
+          "size": 21786,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/QrTjGuDaqYzhWWyPBrU_fA/_O3auBJpfYzOS0b1-RMGgOMYXEA2O3vVGRcqljhEwsnIc8qWhHxhf4paFhHaC61mF56Hl14p75YysZeNwftJP64yIkQa_kQGljO8ugQ_aFqV_MocojDDXsfLobNEAisjO2PAez0i5yGoHKL_9jVByQ/7U4oiLyLFXv4KpWT_UrWUw_y_-jq8_bqfCtPy-NVias",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/XP9AP0U7fT9z3pGmJTk8mQ/EtGUGqN9ekNoCvs_jqk8K7iRVsI6Q6YSALnDpXLgseT7OcF2o2SlWxUVdQTOCaxnSQfl5H3zatDYUE2lf2_S800taZSTA9EnfJU151XzQTFk0eQ6avlEBDqRPvxLfwdXooHQRTJdC12cuIdlLA9BMA/9dznqqS5Zu1HXpL6wy9c05Gz9D5tTGURaxAq5SVqoqI",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/vycapRm20ffnc1zRgrKE2w/YMAvUoF9xRKKrSpGNevQUKkSZ9k4zmnIfGUeLC7tLJR9ZLrOBNWkGksj_2p4xUF6K8VK4vgtwo71nonenUmPI08nqbfzQqdAO6AjOYQdvnhv-XxA8MKYQAjFySMbcGT5mTnDHJyJbFjqJaOVwal_Ew/7UODTo75m2AkQqrmJKSUHp6EqCXcuVpLRzUKnoQayPg",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attUVC2VFDwaCFz2H",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/CFvHeLoKyV9DMG5cU4yD0Q/HcAXD48FFwO2CfSRa_kV6id1vBdkKdGUbjP1UxJ42VOrDfnvyr9tnMiZ535CWuLN3mChSBPT8enieDqAFncFcYJZuaHobJOPiltVHqp3H7lhr9Jbl2PSlfOS4kdwk6EGAKLtZrnB24k0wl6Xdp8c1EldIfZlr_NUV8rDrx1eT1QhRx2mDfx6aARF-tu5uO0sur0q1Mr8UCgmyuTgJY-fRw/0IRDbqgfj6Eo677IRkmnw1YqUm4qaGewmdDV3jUriSg",
+          "filename": "11-audio-research-sp-9-pre-listing-photos-1.png",
+          "size": 21382,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/EMLwLMVwcU9XAVOptkELfg/da36VUt0uGvTgz8-2PALUBy9hX0uqjuPkIcX8jn_ioaWRVi5rnp-F5ayNxpZ8e2xIx5RSV0snds-JfzlUIV6Ei4jlnV6Qrw-dqMGJePnyNHzW970HHuP4Vgti7eoM945UNI0R7AgSH-8eny6UuaQAg/niV8d2lSKl2mrHd2zqvoyHUztvphmMLtJH8b5HEasqc",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/dvxwcSAY3Ps6oTgWdJxpbA/qzi3W2qMVsdCpOCSxXF_jUHlxQMH_7BBRfvlNcshGzIm2fXS-2n1hY7WWQ9FhYYDr-uOmjQ1vTpVrVx_gc_qG2uRHXNLh5IQgXMOLfBCE-t766i7u-a4xe4fWuhmuc4OC8QUcg-p_BDGgOer8ndamQ/cwFCE_pvbHfE4Lc3AJT-umaZCtNDmZFcY4HzWmej9OY",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/xYML21zDDHs0B-JYZcujgw/GwxCI5EKCUWe6ky4cXv8Tt82kMUWe00QPgO8OEBfQj9habrXkK7LQddKVPxCWolDo9TifPdUv48fpLxSJr7hd7DTHxnx-ptVxh9JlRSPLHXqp8POx6jm4vBFBeLfolPXfEf-sIcmqcvLmTpzDEGgMg/XUIdWG0Qn0NQQU6WROqQnKIrLoBa3w0HFjNU3LuV78o",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attbzK7pTTJLezMGA",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/m5W0_xMEpEPvBdNa4W3WRw/Xv0vwxbKll7zltK6j31wCNmyj2okxVs0Z0B6WtvAfPtZcMAjM1bFYnRI0UTS43EPjrENY4RPA7ZfleTd0zP3ylunkxvopl2Su-6KDw-1WgThHDvUdbm7YmCvP041DrQdWrka3WJWTywkWZxQVthfFRmywSdMe76bcoxuOku7YmOdPCMdGR3GkrVUcjQH8H-eNtED25mbdHx07pzg8Ak9lQ/vSLAhfEQE-c6CvejiueRQKmAWsdNMoP2IGpNFYSV_Zs",
+          "filename": "11-audio-research-sp-9-pre-listing-photos-2.png",
+          "size": 21358,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/qurg1Zkfxp7evH_-8EMmiQ/WAGyTdrvcZ34UY9ZvST2d57fcE0L9Br2sV14ilQ7ha1fFrVUaNcMLSxemI32OpxOLS_k0yEjVYQBDYmjVhOd11YDjmNYobiiAfzUh4WgkWXYGE_Slj2jsBIvyRTWtJEQiUFSmH8jB8xjrgmaNeN_rA/Vg6hfVhUg0LKyEi8tibWpB6wCd3k1Ygw2sm7aTcETrg",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/1ppnzmx6DVxoaoM3MYuoJw/pdjxO1TVXWMvjtrbWL3foYKAMYY4WImA8e2OW8MSLTEwdUPepmoLsW3M-4rEOJHTcNN6bjTd9zBrzMVMl9qMHk9aXXX1lTQ2j-nCKzfRRCQhJhNF2311_xaKJI0TH6PHGyv_bQmly00KVCrFIIpzGQ/HCAeS4_BebdAUyvINszrJqXmtKzCxXSDPwTdfuJ9MqE",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/XUR0gtxtLAgpjoTDLTq8qQ/lxMdJHeI_QyWYXrlQq-ATgJ_fKyImEoUByNbc5_WGAq9Swue2xodeUiVM1AdcYuifgY496MPtTFgbmaULtKWhpV5FzJMfwhORe0I3TFi_Uypk08BCixKQSy5D022HTZ3881fg_npXszoRXmCa5oN7g/FPk4NRpd07Qs4KFaYaxgIPFMaIawZcw8Bvpzg2oL4G0",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "att3RPI0pYPUQIn5y",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/CKbFOMvHPPUBc5qXBqh3Fg/01NCCq_CXGuTAFoteP79cx5Pnw3Jv_LibhVkdukJ5CQSrDqr7ApCCp0pnPJflCT8SNWFWy5Z5QEDisQJ2ynyy_nwfT6ntT3-ttsBfOU-43Xmwb-ONyxTQCFWfV763s4ugSxzLZZfCYdYigBFlHbUAAy6XJU-1Ivf-Mk5de0EquFYzoYeUkffqIL3AeKANicklLmss-I0LSAgzJaSk9gfPg/q4SfJAuinyz3jDLCGiMnfgM-lh-E3jMhrWT8RMuQ9_0",
+          "filename": "11-audio-research-sp-9-pre-listing-photos-3.png",
+          "size": 21800,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/lvWIhQWWj-CmZi2hfpaxew/TUAHVJZoq4-syOmels68LYnoQ_dvW1QYoKS2DkAZmzEU71SJYFaWoVkCQnFv7kadF39LGyAZEY5vtd94U6VB_qXnYHM3Q_VMEXhrYSutetDZCF6Ai6JIlS6mSo3lgWKiZKZcBr8_wVSUB-Qafd6hAQ/cP78TXufE0KlceWdaL_OPwscHXJB7vnqRGFqqL9jGEM",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/ZHmMwRzewFPQbSUBHmVr8g/TkjQwksB6a6GDnudasuU6NDTYWSYMzAIeQdlFzxSJwyCaT-lan9hBau0qDBwu2H5eHslfCqHIIiLGo0ttjPzJINPcuNt5TBOF3D_4s1O6x2pZw8fJuNfruGaoBY3UzYdTltd6HJwSW_D5iVnznUxjw/kOyFof_ZlVqPgpGsHqzhiZj65MvBcQodll_edOF2Y3I",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/x643aSyGlAXKsbtNXRqRjw/PEk0EGqRmlFNK9fS5rGm1bVP7cUGWSUXj6_RT9kscICgbkYj-pRobYir-SNlaVDRDmEiw4IPL7ZeLHGQwwbl7YwZfdERrPzAdqRnMp4TwF5OlJgxG1FYk4KeNZPMEPwAQXihLGevC04dvIaqoj2_BQ/Qra6RQN0AzAV7xM5gZAcqXJxTuzm1JVOpa5Q6NLPCfk",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        }
+      ],
+      "Testing Signed By": "Tina Testing",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pick Up ID": "sample-workflow-pickup-11",
+      "Testing Time": 5400,
+      "Item Title": "Audio Research SP-9 Pre-Listing",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Audio Research SP-9 Pre-Listing captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Perry Photos",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-11"
+      },
+      "Shipping Weight": "42",
+      "Cost": 800,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-08T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0011",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-13",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Audio Research SP-9 Pre-Listing. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-12",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-11",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-09T12:00:00.000Z",
+      "Workflow Status": "Awaiting Pre-Listing Review",
+      "Make": "Audio Research",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Ready for final listing QA.",
+      "Accepted At": "2026-05-08T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Pre-Listing Queue Ready",
+      "Confirmed Grand Total": 1400,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Audio Research SP-9 Pre-Listing sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Workflow Image Metadata JSON": "[{\"attachmentId\":\"att-sample-workflow-testing-11-1\",\"url\":\"https://placehold.co/1600x1200/png?text=11-audio-research-sp-9-pre-listing-testing-bench\",\"filename\":\"11-audio-research-sp-9-pre-listing-testing-1.png\",\"alt\":\"Audio Research SP-9 Pre-Listing testing sample image 1\",\"sortOrder\":1,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-11-2\",\"url\":\"https://placehold.co/1600x1200/png?text=11-audio-research-sp-9-pre-listing-testing-rear\",\"filename\":\"11-audio-research-sp-9-pre-listing-testing-2.png\",\"alt\":\"Audio Research SP-9 Pre-Listing testing sample image 2\",\"sortOrder\":2,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-11-3\",\"url\":\"https://placehold.co/1600x1200/png?text=11-audio-research-sp-9-pre-listing-testing-detail\",\"filename\":\"11-audio-research-sp-9-pre-listing-testing-3.png\",\"alt\":\"Audio Research SP-9 Pre-Listing testing sample image 3\",\"sortOrder\":3,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-photos-11-1\",\"url\":\"https://placehold.co/1600x1200/png?text=11-audio-research-sp-9-pre-listing-photo-front\",\"filename\":\"11-audio-research-sp-9-pre-listing-photos-1.png\",\"alt\":\"Audio Research SP-9 Pre-Listing photos sample image 1\",\"sortOrder\":1,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-11-2\",\"url\":\"https://placehold.co/1600x1200/png?text=11-audio-research-sp-9-pre-listing-photo-rear\",\"filename\":\"11-audio-research-sp-9-pre-listing-photos-2.png\",\"alt\":\"Audio Research SP-9 Pre-Listing photos sample image 2\",\"sortOrder\":2,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-11-3\",\"url\":\"https://placehold.co/1600x1200/png?text=11-audio-research-sp-9-pre-listing-photo-detail\",\"filename\":\"11-audio-research-sp-9-pre-listing-photos-3.png\",\"alt\":\"Audio Research SP-9 Pre-Listing photos sample image 3\",\"sortOrder\":3,\"sourceStage\":\"photos\",\"includedInListing\":true}]",
+      "Processing Signed At": "2026-05-08T16:00:00.000Z",
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Audio Research SP-9 Pre-Listing cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Iris Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-09T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Pre-listing queue coverage.",
+      "Model": "SP-9 Pre-Listing",
+      "Accepted By": "Paula Purchasing",
+      "Tested": "2026-05-13",
+      "Awaiting Pre-Listing Review At": "2026-05-09T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Offer Amount": 1400,
+      "Submission Group ID": "sample-workflow-group-11",
+      "Component Type": [
+        "Preamp"
+      ]
+    }
+  },
+  {
+    "id": "reczN4jA3s0hm4lZD",
+    "createdTime": "2026-05-28T04:24:16.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Shopify Type": "Turntable",
+      "Paid Amount": 1000,
+      "Images": [
+        {
+          "id": "attbjCWFcRwW5BaBr",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/LmuaWjccEsx-wd30eyIV4A/z_fHeclfHQWimoqbfs1fw9X2QMjqjKmFbsES2fwdwGbsJISmx_fClavBAC3cZwLLZBpTQmCFU5CxShbAw-UxFO6O4UrzYq3mgAw4EievRJPAyNNaiY_jHqqCf6qud1XFn5cXK-sTjtLTEZyuMD76rx8GA7N37BOldRvT0AKoIXjm-8HdlxBCOw7K3edK2PsdOdVNc4FqWuKHVBsmq5nmOg/vFjUKTBpepO_M2qis84lD3M5aKxeUhGTe3yjVNzi4DU",
+          "filename": "12-rega-planar-8-publish-ready-testing-1.png",
+          "size": 22161,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/kfBSkA6SQzbTw2ZpZdTbKA/r5bmQJMlBy9ynRAGtJmr7cyb8E51oF5P_qIQJLjXs3qMWZiWnTtupbBpYOtlBcYokrtz_pw1rb1Qn41eK-xMHrsqWB3O7f71zj0gcdtJyUOle96pyuqJBNLDqRgd_7Nat9o14vGBMI6QywbwGbj9sw/XDtd51y2tm-8XxYK7ZeSzSvo6xQwyi5kUUGINIlEvQk",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/-g_AEydraVZFLbAGzH3RRQ/D6H22_CPzMqEOWBHcV5LMbCopVJSLO5IL_chonfp8pj3IZiGF_RzTp-8h_Xkn-Pc-US8m-56q19slj-Iq00u4y_zWGrOj8RqvnsMVDyYH0FLsBqP0-uP1yeiwtGXteMjIMthUPqee2ZN5zg6D3JhYw/hS_OuuBobB92pa2q9gX7BDan9T3YIBOhRdADREwXaHk",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/kgphEyTBWO-qcRdqnUPZEw/q2fVNofUPSJgG5STqfew2VXtNSr99AqLiS6v9quj0gZpMFA0UJCPVdHcnoFcjg6QBBDeqWnVPPynJzS_SZu7XSCYO9FnVzuQueCMAL-aF49CZoF147SNjkvbCkhe0Yx6Z0bnHgeO0uRw0wVPY-oiag/-ZFumfDFPds3l86RzjxzSOLHL4wB7nRDwrAr_-MK9oI",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attp0Mq3vZDHc7QYd",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Nq0k7uoK5dfghKYWbuSVEA/yyvSozxqS8OzlzJm1akhWR64WTH9Sw1PgzD2nYC7fim44EkLI9PJ8-X3wNcI4yeds426Tt9Kfg1DA0vLc8zwtHmxyWZ0CnG7tb_GgR1WMtsT-dSg5mG9tC9Ue1gC-kyz21_FDxRvlWy7mlxOFaVzDSwitfVTRrAB_-l6Pcm8KG6soUm4FDO1NowPG8vWtQ92XSILalH2rCXr85YSvVJV-g/C1bTNvXD0guiad6BbKONuOCDz_4HkPgrO_w6oQecrIU",
+          "filename": "12-rega-planar-8-publish-ready-testing-2.png",
+          "size": 22114,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/2CdSFDbf5PihOM9upIVxkQ/lMPx3P466_A29Sop3gRECSnnliMFquKqANwhvfZ9UZZVXt9E95LMb9sYN0hIbl7favHXItIxXhDGxc6UkksWbE56I6oFt1pTmg69PJv9TRXwiG9zq1t7oYsugGgqmrYnPqESnxuMldNNkeSzs9bcCA/kP8_uTLc4Xf5Kpr7DW820Vj7ATI9hMs_O1x_adYp7us",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/WDCnmIYfYsiQ7hxvJin_kA/kYZ1zgyuzSMT8cePq2TOs9kBlRZUEmEcKzYdEnXlYTYoCL0KM7wa_xt3Q8t6YEY8vE-QboTi6LnCxee-_bn6RYmcwMPHFZREg-_1bBk94rNZ_6kRO56ZQZyXeOuqpbD-0WUcNJjV19hauuqblziCQA/Sy61o8nI6Ll7M8bXmoaRq5VzqK8Gh5z7lSU9Y-UvWsc",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/eZkNlH4nbOv2MNSN9-eWrw/wllPM8EoPoTPETfWQVdGLiO9931MzzECJxxw7sTSwJvaObJ0KUP0QQH_rGOjibx1K1zpAwl6yu8Bdk76tZDaDRsJEvw5CrARNfoh0vn9fqpGRK9Gr8MBixwanIaLvfK1NviH3sjalcLH2Wezjr8E2w/q_1ZZvlEEGmovQbJBgNp1HVHtovs_D8rHqm9Z-ho_VM",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attFFxgV31BkQJQed",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/J3q2xKkP4NtFVIY0EEminQ/Xd-dYoco5-Z7msURuBxCglCtgNgWojGG6zaM5FukemkKa5PLKUxO8grFY9gBr2y-RCYSkVR2QZxxfYEfw9WJ-bcNRtgt7na3YdgNApelR1uGEtUd9V1vNyQaHcOUkN5QLoxpHdIMtzfFD2Zh1C5M48Br0k-IS2BVGhBMfpKmT4yorZicPZlvrErfN81h_bbTsZt2DwXYbIxOKbbPKEP27g/LYjp0HXrbfAlkbi9dqx_CkFei6OXoTgvb88-TQzDVZ4",
+          "filename": "12-rega-planar-8-publish-ready-testing-3.png",
+          "size": 22318,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/nJ1lQjlptaLgTQ9eqgilJQ/g6AoyR9hJkbVOzAMlwDbTT9WNJh6dEH5B3gcb03mwDo8Nok5ii_UUSUHkWfL4FUU7S6ticsJ9fjhx1DT6bqijRF1g7JRNp3hOpe3m9MLlGhls6kDv8TC0vs9NczvKXnHDmMAUUPA8onkwyfWofdBkQ/CNLZMftJOO3Lu_JnRQtI7-8iNbHwKLj1bwnDhXi1OHM",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/dWVaeuQr2qEXiPjqF4GMpg/XdCvipGWTRMcp8RjqH5rdX3uor_CJBusrLbJcCoaxyXMBSn5IFRiBLpCN0S5HHVBaWj-_LWowFC26z1pKxG9I9TyusooAFI_CcTum80U7SnT-61gefNAcPEVNCfvNhCXNpp38MR2rEjDj4tfRYQf0Q/rKFybXZwsz_2fpCdZGM0U-xAfMmn8dJoW7FfjSplgXk",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/3TgwZvcUgJZAbwJgtXRHzg/mBpY3M8trAiU6Q-M1TODNEt_1ussR8ybQZYek-2CXNge4iBDMflZb-Vz5QTA7myb3vASQaWbyxkJ4o9C_F3GuPsV-x_ahxYKwhwhfs4ahyStZppzVoz8yEkMdK9eO_4S9WCUn4FZakjrYHAmJctevg/P-AgxI0pMEG_pFttkKyETOlZ2PiF-51LNjl8asdTIFs",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attKc6DsTI0X1BmBd",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/_Vr_g-gLu9f4br5QucE6rQ/duPUYVeMWHzRBdHGLlTjZvsrGf9yojgjJ7MD2fdiUr84EvnPgWLcdsWwYuuQZYMm4b3LIqt4K4Hg8YD5sjI7LSvSW1S5OKo9_StIefCnBz-YhdUj6LVFKSY3QepOivHOouE79RA_OLcsA8rQBJ4g6Ku6ffaAzBHRBkxDXo9EPRc6AS53__1uE4LuY0GE3CffVn1DUpFdu18VM-5RYJamYQ/bSpxi96d_0BKhbAoNpNYQ6yUqGt2wOk-1MWAe5X6Jn8",
+          "filename": "12-rega-planar-8-publish-ready-photos-1.png",
+          "size": 21751,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/-JCmO1EL0onuviLhnFG8BQ/KoLB_dtzb7gajWRzmMv95NwpVeyKma2_zUBxbcpdEDBEF-FIsPyYMAwZnonW2eEq1FPD38FEEcYrRDteDEjRf_mG7j1lD3dhA7tfeocOa6NMDaJREtU3lxuHuXNC1fSjafDdljiiAInp8eo-Q3lylw/eog9OrX-bEs6YfaJjc6cEXWL1E5pe8PHa27pvC6FdR0",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/cGHRk-gca2Zp01liKR1i1w/JzJycL609RF2KrYcBYbAUR0KHq2YfJTABmPVEnFiBLXLS3riRPzYGKYDZNxJuL01pHSc8uXFZHEgHpoN-2_q8-mU9SVbeMzJeW2mIniUlrgTas62yaDy-RKwStizun-87IYrSL3UorwBho7y9C62Hg/rMAc0BStXTdwbM_9y8WwtpPQetXz5vVoS4V1fybwlUs",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Zg1TbczzRi3lD06_a1DsXQ/oGVHB2ZDGiUxaY-4f330U8Bvy1YoIE27_g5vXzOU8tciOU4iXCy5SYrkhYVXYI2lQyfHS4L6hkNE3DI7Ii6Rr8sG_7-i2f-uECct5ESWoD7Mz_JLpA4wiOuvayKDaYTDQIqKrkzKlX3vAc_JwdbkYg/6FXR94gU-Nz9EAyvCcv_CUUrzdnhTPXlBdNnBn_2dno",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attdCsltCqReBvyIC",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/t7ERmIzsdf0nlTmpCX3Lvw/g9AoJjP9wj2csEOT_sWhlMeBFKnBZP30lvGknlWFj2-yPPmSobGlkk1mJO-aQsZ-WnT91z7aQR0QvuX_2S8J0Y3GPp0AOMVgzDBf22OPGCyupHPSvhVhzSEgv6N3LKXrM09_TN3lh4HmVflUbmpcUQQGQO9NveHMjtCa5MJitnlDRTBmeXkePw_FLauYM27TU97peQIAncnJHT-lWz6Wxw/NCKnUIbPkzmY-5ataixDO31GRPQazwkZNuduaWSOeSE",
+          "filename": "12-rega-planar-8-publish-ready-photos-2.png",
+          "size": 21901,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/vVjL2PixLYrn9ChkNNwdaw/GkLi_OqOBKHkAlm5FK34BzFt0NVnpKUFDly4SSeRqvxKt4igpIrag7TqtQu5oQSEL9RfDXxYDxdbHsApf0XES6gRO8gPkr4TQpgUzZ8my5AP6_dlx-ejl0uipjogNw9S4sP_EXlqmLL9iZ036nPBFg/mW-JLBUs9Ox6VZEl7UlQJKGBYdGwE-myJ9k2mPdx6uY",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/DyDCt7-8e26ItfNvqzDVyw/mY3MaRhGp_cX9tf4Y4gg2BFhlCtUzp5-ATfw5c-SpvSuobFP5Sx2YUDm_Z4Ue5uLKq2swXJSDoPyB3KZP9iE1-UUki5Fm4Gujvdx8Emtd1iu6RgcCAEiim9dNWmItQfMJDZVEKxQHDdx95fv6elCcA/ppUeyMOt-qhYIUGw-ZElUnN3E_LUv8MaH57ZDIe5OAI",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/wd1YeTshpQqzhwP1Q9uSug/G3vnaJsNLZra9mGndkE2j6XSDVZ8okfm_Oa_eVGCZTRCy9aNadwsk9kp2Fu9oeeF3knbVijEzt0tuCY0dRV2qdR38tilfaDPeC3XXm8VcysXmeV02DoLAFs6KkvcHNLvec6IM8ZKhpJQEHmgAhUa5Q/a6ba1TNjIW9RhyQIawk7BZKhybOyWKczmrqIe-Pp7mE",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attnJP2yzYQiFBJhH",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/HUZD4nxSfKK0Pgip-0_elQ/RA-X0GSME1DI-tiQ8H9H_ny8tlPJlpW3PSCeIn_LYx0jqJ37Sy0GuwQ9opz8ly8jfRPJ6gVpOyn5J5tmRDRil0gm0GDfllfr6bESEmYdI6roEThadbKtp9scf6KpdTGOmPyYNGN99qytCpIuXu_4NiyfJpnTk9atA5CgVkd72l60sWkmppPO2DQbHfqS-n-NQObK2YqL1Sz_xk0CNBfSMQ/xzqNnL2V4XjgtzLXnDtO_MfZXethupTzKZPJ-Uo58Uc",
+          "filename": "12-rega-planar-8-publish-ready-photos-3.png",
+          "size": 22126,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/lkyyY37P5NDCzHwjDLsb6w/cUazdfV96ccP0DxJflL9Nz58SeGndq9mYFH1HZbvYU6VAjZHSoiu9DPLjuA5HvWKPTLpjkI84EqTAYkzPQwkv1F-JxjOjNor8u3JWQs44YxCDOgFoyswHm0xoF-Mh1qvL8BObUiA3yAQ3nA2QW-rUg/3vW-68kfuurY-XMk8Lx8xSmIZKxIw7uUQU98JGIEDy0",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/ct80ObFrNCI04DrghG1qng/zu3priHSgJVGjrtEYTZzyX2cOLGapnlaDBaRhFQbKnIrvHQxCza-rK1i4uFUmI2xkG3lUohaNk2cZu8HbvaEtVV-BhWR8BmQb3Qnxsit3vJwiSqRenkOyrRnlzJT58kUxbMlfhX_rLIlEdX_YVtM8g/yQektKgc_BXC0ndW1uiCtx2n0lsdOKwoKqs0pDMmcso",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/S6Wl2gCYVrWP-fYOuoTVdQ/6z3kf4STB0R29jhWyfP6QhUYiFvS9oHcXp1mfUEF0HPnao4Cc0hx0yZZdgKjnrpOkTGLhmYKttBKsR1GG9sEvTQZfo1ucAw9q_anolf0kRjpfSKSwt3nZdk0QLUK2kTUjoOnj3-jkCv4jX6DWg8h7Q/62Q39dXwNrl5OmGGThc2V2dv20s82DHV2inVVwBRNYA",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        }
+      ],
+      "Testing Signed By": "Tina Testing",
+      "Shopify Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Rega Planar 8 Publish Ready sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-10T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-10T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-12",
+      "Ebay Listing Format": "Fixed Price",
+      "Testing Time": 5400,
+      "Shopify Price": 1800,
+      "Item Title": "Rega Planar 8 Publish Ready",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Rega Planar 8 Publish Ready captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Perry Photos",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-12"
+      },
+      "Ebay Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Rega Planar 8 Publish Ready sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Lana Listing",
+      "Cost": 1000,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-09T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0012",
+      "Ebay Categories": [
+        "Vintage Audio"
+      ],
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-14",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Rega Planar 8 Publish Ready. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-13",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-12",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-10T12:00:00.000Z",
+      "Workflow Status": "Approved for Publish",
+      "Make": "Rega",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Publish handoff approved.",
+      "Accepted At": "2026-05-09T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Approved For Publish",
+      "Confirmed Grand Total": 1800,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Ebay Price": 1800,
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Rega Planar 8 Publish Ready sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Workflow Image Metadata JSON": "[{\"attachmentId\":\"att-sample-workflow-testing-12-1\",\"url\":\"https://placehold.co/1600x1200/png?text=12-rega-planar-8-publish-ready-testing-bench\",\"filename\":\"12-rega-planar-8-publish-ready-testing-1.png\",\"alt\":\"Rega Planar 8 Publish Ready testing sample image 1\",\"sortOrder\":1,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-12-2\",\"url\":\"https://placehold.co/1600x1200/png?text=12-rega-planar-8-publish-ready-testing-rear\",\"filename\":\"12-rega-planar-8-publish-ready-testing-2.png\",\"alt\":\"Rega Planar 8 Publish Ready testing sample image 2\",\"sortOrder\":2,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-12-3\",\"url\":\"https://placehold.co/1600x1200/png?text=12-rega-planar-8-publish-ready-testing-detail\",\"filename\":\"12-rega-planar-8-publish-ready-testing-3.png\",\"alt\":\"Rega Planar 8 Publish Ready testing sample image 3\",\"sortOrder\":3,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-photos-12-1\",\"url\":\"https://placehold.co/1600x1200/png?text=12-rega-planar-8-publish-ready-photo-front\",\"filename\":\"12-rega-planar-8-publish-ready-photos-1.png\",\"alt\":\"Rega Planar 8 Publish Ready photos sample image 1\",\"sortOrder\":1,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-12-2\",\"url\":\"https://placehold.co/1600x1200/png?text=12-rega-planar-8-publish-ready-photo-rear\",\"filename\":\"12-rega-planar-8-publish-ready-photos-2.png\",\"alt\":\"Rega Planar 8 Publish Ready photos sample image 2\",\"sortOrder\":2,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-12-3\",\"url\":\"https://placehold.co/1600x1200/png?text=12-rega-planar-8-publish-ready-photo-detail\",\"filename\":\"12-rega-planar-8-publish-ready-photos-3.png\",\"alt\":\"Rega Planar 8 Publish Ready photos sample image 3\",\"sortOrder\":3,\"sourceStage\":\"photos\",\"includedInListing\":true}]",
+      "Processing Signed At": "2026-05-09T16:00:00.000Z",
+      "Ebay Quantity": 1,
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Rega Planar 8 Publish Ready cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "TRUE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Iris Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-10T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Approved-for-publish coverage.",
+      "Model": "Planar 8 Publish Ready",
+      "Accepted By": "Paula Purchasing",
+      "Tested": "2026-05-14",
+      "Awaiting Pre-Listing Review At": "2026-05-10T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Offer Amount": 1800,
+      "Submission Group ID": "sample-workflow-group-12",
+      "Component Type": [
+        "Turntable"
+      ],
+      "Shopify Tags": [
+        "Rega",
+        "Turntable",
+        "[WORKFLOW_QUEUE_SAMPLE_DATA]"
+      ],
+      "Shopify Approved": "TRUE"
+    }
+  },
+  {
+    "id": "rec9QQkOryhKitjDW",
+    "createdTime": "2026-05-28T04:24:16.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Shopify Type": "Turntable",
+      "Paid Amount": 650,
+      "Images": [
+        {
+          "id": "attBruAzxSMWLARz7",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/xUkZ_mIiP06fN0t4WaWq7A/O4X0FKVdT5ZL0tRA0xTnEizuI831KrfPQD7EIuKx4iY2v2QGzjQnktR5WYle6ibzY1Tq2DGAIcRM9w223SFwKwQiS-HGbFckdAh9narwWk70gx9wWLtM7iy-lnSbbfuDVJ7-ledaGMnHshPOxNZRa5eXcsUVOVcRDuoxGLESihudt9LjCy-bCPbRhNSUVfLtvRwzS-Pn9SH_sraP8y2h_g/QmxKJ_Q7J7_R_DqxDLkFCUG9UrZisgum4egsHbhTdnw",
+          "filename": "13-thorens-td-160-shopify-live-testing-1.png",
+          "size": 21936,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/pmg1y-8GPOUazAiUsGdlTw/jnPKPFwc023voX25QIcdKjEnIoz9VI5DdPwhBUBiraVhnjBuIii3E4SYYV5_urWfV0T5Gk8nALHUD2gYFLdcJQxU7UnVYMDtn2G_XksWCbzkvID71AducfI2eG6n7OlHY-BDMu0JTcwZCYPxPYZXZQ/S09Pa4EHwFbRjZeC5e8TSGwafopilQgcSO6PgH8JnAw",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/cB1ipFNqKXTRV3UczDXRXg/vHxqYBiUoapJfEs5ZH0_Y1s0q-OiwGmMWN3TXMQlGo08fgz4Kuy2rKgaYR5oRuAyDBT2n50H28mrvG7xn_1jGcN7-WKEnYaCde-WpMgu_iTRoQhw5NIqO4X3qA4k5C8vJcpbVSOza4uPVldSIQqJjg/RW8zyYZpSpFr5_KtU-WyVgJYz-iMb02ixtYp5sGBLoI",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Hfxmi7NcK4F685CRKcr1TQ/RtCqb-r3qpLZgFRr05FSohW13aYjCPStpYauXBgpYKLdGj8y7Odq3t3DVOaRGtJ1CDTomYRtiWFK7xcoSFUOdkF_GPhlRjP3DXvFnMjd_aowcQPNZOoQSYVkeccsjcR8HXY87b92CI00El9eQH2sEw/NiNw8eU0rL3u9Q5fXWobzFVxs54FqasxiVpO8Ebf7ZQ",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attLr29G0hihEmSJQ",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/051zGDl2sIvHkecvvk2T-A/DMgN1DZizdc2EoVrpOmdJ5MsB038PyFkYbAWw_5p08VvPxLZyulaUX9p4C1gU-BY4WpF4u1ImkJ8r6zVRQMNWMPuOTn512XUu6zJA0o0jsrRDLyIm4hJyfoVZtfLRt5io_tG_MlQrMTzXuwKGCm_hw94qTdvbCgfzPbhAh-WzAP-cRKNRMx6ftYCGoV_p3DMl1Mk8ntD8DQHh1Z-dGLGVA/b_ZmtrTrrp4llA4hHgNwJ21K2em_rfw8ljQfcQIMwRo",
+          "filename": "13-thorens-td-160-shopify-live-testing-2.png",
+          "size": 22152,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/CT2cQbG79jlubwvSdqhBWg/VNs7ahg8ccnmDzgTgJJoMV4drudUxhC-FniEfY8T6OE-wpN_JVuaq9j3ckZFRBW8UtCDC-4J9JcxsSxgjy-Dkvmm4wVPtbYXvgA20bVT08zjM8WV81cjUK6S8vIO5FxvoZReOy1sRSONU-ps_NFnBQ/NpuDvFMxthzDtrU4LvBWs1zy-P-Q_xCSJZJ_U6ZGm_4",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/BKTO0rlTlwYskAuWeiJaaw/wNvgwBhy6lTxrlaLLM3X84KyfbwG8-N9wJ6eYtg10frnMuljISous9TLLUU2F72I_PJmG2UZgGiN0r79ydRl27NrYxBRU3xQnPvhOXEKRMjiUdWvgQBrZ6UFrn7FLpaFnhoq2plAa8jYVRBz3F6H5g/tcRLfIOYaXzOrNAgwd6FZio2LIJGb2YfA7YX1-otAo8",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/L5GpuaBxPLJqluESIu3Qtg/u6G65Q6BhvNdWBbzNK7a8ffc9ZAnIpiFOJOUJ1Ob0ItpdjH6KVjtBxh20jsqxqRvwL2-WVXAbw3aXLqHV-P34ef_kOa0MMA_BOllKVPmdrbP4h-2uyR7mm3y5j3zzsCi4YgpcnIheFhlxyBdqM4pUg/Y9goNC1o-scRmB4v0x1kj0Ve34kdu8lkuo74C6yUinE",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attyP8aR0WvxTv9ex",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/riqNfwrABwtVoQzm7HJoWg/R7M6WvnDpvU0NjFP7pu2TkNg4bRAQyQ8xzSPOwCLweA8v_9FOz0WfajWOUPkN68ZaijWFemQvvwYiwcApoWXIU-y9lxRSD-sdXIyoLhc4ilLKeLqlGpor0Pq1Godv4KoK47oaFZ56NcVlIVkqseUk-li_rNUqiQ-yxrQ1dbSO_5zokr1HLmyQ2hF30uTJAbbSTs2UmN3HSHTmg0VdbPBlA/DtvfpLNPR38_8KSyE9dKJ5kJEw5FuaEyenmofLK_S7M",
+          "filename": "13-thorens-td-160-shopify-live-testing-3.png",
+          "size": 22136,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/X9jGKgUYnvmiBedzWKYl0Q/T-Ku6cXMSdbT4qq5glgJHP-iMxRtG-1AZbljX9bNHvVGN-btSwyUek2nOBNXWNBKNEIW4J2G9ta-jKmgK01S319HcQnX0R60SXUwDIuwqdhUO6tFI86RkvMKY4czomzte8Vn_iV0vCyTBFA_kQlBcA/90SFrbHzLp3rDmUBBQAscIGN8DhB7GQ3UQHBKVCXEkM",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/N0fZGrc9Kha011GFER7Lpg/t6MAlT7kPPVKbm-XqkRwK8lbOm8FkGzfcrOccmXy2iwU3zYB1fOT9hlfUzMfk8BjcpQ-10HxkAJRPX6j42wr-Ewv8jTqGa1i2Qufedo__aIKu8v6Ww4Zh2MsoANbWJXIIqeRboni0qPj4Ygy8iXM8A/6q0H6xm7jQr0nvxff0lDhJnYAbAvz3C3XYPG93UYKpc",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/ENMFn6Ta2qtkYOilHAsXUw/Oja05WcMCgXbMrfji9fiD_3MlwXETXqJu3oRHQgJx-f3Ka1yg90_aEuweNjQ-GCIcuVCTwjQ-xaEGEcrbbZ8-RjVLsdLqRKI_3LBCni-NCWsLYFuSuH1UY8Eowkekq7-Qh3GsHoMfBEnZ-M18KNUkQ/DakY4I4bD-sBNCe2FNKjahTi1pNHEyYjNrh5wvd_4Vs",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "att5TzIvGex6WhyGV",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/KKtgyJfaYJxcfnDoeLEZWw/AQ9P9eszslP9eByp_2rV0M-00gYS-g-Y_IXkUZGsssCfyHQS8mtcBmWMrgv2SaYMDErAVVQRCo6sYhmX8KRaCn6T6zUpLKfWnmAzS0OGBgDa5ooPr_0whzz86CTTk42rFnknTfl0h7Ft6iq9CC4ljzM_kD1hw2PnJQDIfLNDCMHrPgDTbgeTx7oMgeW-jzY7Ni0a6M2SFZpQReCHGSvBhQ/Cb2vOGdxqohdxUB5Owpf-KyxtjTfl7Jda4Qd5Z1e1WQ",
+          "filename": "13-thorens-td-160-shopify-live-photos-1.png",
+          "size": 21546,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/EdATyIQlHWXBOftWta4Pdw/iMtMcSLjelADFfeyKrxn_jhesqzJ2T6a2Xdn0M7z1URWzu6dDxhG7ozOao96LvPRnBWmkxXIE7SgUGSpTzYQ4epqrAnUsWLzL0GiZbpUD7gbicXvQxX5e2UctwwFxocKLv_3ifb1XOGo1foc3yU92Q/E0ZUsHE4cfmSSVAFL70MqS8HiKGKmchr3YkFJh1tyV4",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/5v7S7nW47WK_uJCwMBZ6hQ/2BXx4sayHi8x7qHIJzPv0BAhpO2sUJPnejbz6AwZkgc4MKW-dEYoyFZGUOBVBaAmvj8Qz8iCUGi4rN4dXW91cIpmeW-SJKzU0qjMQ_uM5pUTY_K-tM02ngOZM14cmztvtQ9NF4lEvI-Rxf7vsvJFGw/ots6TxsH1exGJ59MafdB1nOxY3dlWqz9ib8bgBx9uoY",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/oKuyvPWfsSA_fwSwsPQnOw/biG_tg4yDRvS72xnju5yOpDnpOf7lQuPLbbHTh5cRv56zeJNcv2-VOOl_8vGHR7YDde0IUpoA3LlIeHSuNCuME68Zn-TlCdk-0IOcomTADh7-_Rp6jkgsPESJ-aNrtMeS3ped6ilOx2Co1aatiiwYw/sixntLxKQvITtiT_VjFVadzbDrAPMFPagcuvLmMiJIc",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "atto9LtE89DtiRp8x",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/GOvKSo1mFbwg_OmOsr6xDQ/61Tc8aJ5VyUXN7k5kyjwgBqlu7NOsMOiLMP9Wc9z8D6d9hobhETYR1JQblDqxaP6u-qOJHKLoP8qHoTR7RKVmpYR8CsOdqX3WmAbU3ybnWCEffOGAtEHvwqJAwzyNGyWMq7ybwmZpK_9j5WneZJt3BcWl43AdLIWucTSg5zQENCPa-zB1VFzRXXHqTiAbDboMpgjEIAr0KAZ8riDJu29ng/g6f3s4Qg9Lg-LehiJR4ai1nWvih3jdxuX27InQ36MO8",
+          "filename": "13-thorens-td-160-shopify-live-photos-2.png",
+          "size": 21991,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/IiR0GOropLEe5z8Yvxyczg/s_nXY8jSpVLlJ999hn6GyAYT_oeWbhd3cr2uDblyrqhWSYl_VlYop-A2k-W9Jeiqk4X7IcpZc41c057WHbSmuOisdf7vWPNIh-6EcOoNIaRt6FFpW2adsMyF8l0m-FpLqZ_GhDHybMBRLOB_KXXAww/OF-fx9z1inKgZI_3C0Vv95chs3Rgwz9kkUzWRhObn64",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/MkzDXaxYarUWBLWtANX9OQ/ofB9o12jzAjDt17fbpfROIejOa2pnB4zVR0sPGBIpksU6oTxO-zn4CXYqCE2lDuAHGtogWAci6x42e5fW5cymYpQfCu9ARNrEHNrEdfb_reODWS6u1ruis2Zs5266wx-qk4pAaCcA0cfZiZ95rv_hw/fYDM2jRRc1k3TkpW2F_RX51zzYZSDT-Gm-9sN9UUMXo",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/qXe3ANp6d_-uEpc2zNhwww/CML7bXhTCWuglSxu0zwT338c3kXZhTbsw6MN0orAb6Y984x6d1uwf-PbecH7U7wmrf_eSKUUrz9fVtnx-PMnwGmCxPbZT8kWiSNhyfUxqPD3tGi0MIJLp0J4yKYf6fKfk0C6md3tLR8LJ3rXvkHCwg/TtHkgZlW3nbNoxZjae0ZdzxWJ0U1RG5neTXZFWW1k78",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attz0EIruTXlqm5bh",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/MffFlXLmVak7B395tYorlA/ctJrRA4qIuyiF6yRo8lZeTykTrqFwCByYsR9Afx263FmQIsYrfIbCozEEEMi7CixgPqi6JqDREBl-AHscz5vyrP5oNp2oCSZjStR_ykdLrIn90HXpCYIqG3rRaFOvFQrvthKa9FfKkyZj967ktAdJr5_slkZVrXIjFbPIIj7nGXwRahQrkVSsrnXznbDsKMt76K5qKaXvssEVxSatuLtOg/CqeQ7qyCM68TwP5FwQs9xK3Ou3KYZxN0uYkmvrmr1HM",
+          "filename": "13-thorens-td-160-shopify-live-photos-3.png",
+          "size": 21960,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/ZrxDZ1cnJgDdOQBc6rubvg/GuFLi5UZ10Ijzs1GnGks53uth1KuuZSiGxFNzj6CA2yPdnYS2rGXWs5LamoQiv_NPgFGIncQbbFEoBfwkGLAroLH8ih9nLDovBi7gPxSKqliQHRgJwR5hKpN2s8rAL5oqh4_N1IWvwvWF6_0alQomg/gCXPMHtV19kzfEdfSPBdgq2dz8fW_2MaKOklLTiWNA4",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/_R2kLwPlxlVYUBR-zuUUSA/BdqzB2Kz__cHzb7rYht4DuqItJDokAMTBhak-VJuNx-iLX86hEIPDlTrcw2e6vvl4zv0XtSaSgJdhM8qxbnxZDe4fkm94y3PgstkEH2gYSA-D6PeRsbSyyzxmSPMjIvwh7LAr5WaJEdshY9Fyc6wWw/ttr7tmlWysto9Yiv6PI7ff4MfpF1voOimrfz09OgpJw",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/CqK2ZmVsapJuOh7h7O93dg/6X308iCS9vH5Li0P-aBufwTDSkYD6AaBCZQ7CLDppxRucd6El5vQk1kTmzeVpjukv8Yt-GrO0z4YGvbHffKSL6zME0ycKYcJoFtS7qeDyeH80eDGqSN4M7x8K8fYg-9cQ6o2UuWOvX2h-fvO2XZxeg/z75JM3fIChmBpwsjvS84ENrWLn_-eSuY8UOqGG_pYxI",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        }
+      ],
+      "Testing Signed By": "Tina Testing",
+      "Shopify Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Thorens TD-160 Shopify Live sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-11T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-11T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-13",
+      "Testing Time": 5400,
+      "Shopify Price": 1100,
+      "Item Title": "Thorens TD-160 Shopify Live",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Thorens TD-160 Shopify Live captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Perry Photos",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-13"
+      },
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Lana Listing",
+      "Cost": 650,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-10T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0013",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-15",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Thorens TD-160 Shopify Live. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-14",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-13",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-11T12:00:00.000Z",
+      "Workflow Status": "Listed, Shopify",
+      "Make": "Thorens",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Published on Shopify.",
+      "Accepted At": "2026-05-10T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Listed Shopify",
+      "Confirmed Grand Total": 1100,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Thorens TD-160 Shopify Live sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Workflow Image Metadata JSON": "[{\"attachmentId\":\"att-sample-workflow-testing-13-1\",\"url\":\"https://placehold.co/1600x1200/png?text=13-thorens-td-160-shopify-live-testing-bench\",\"filename\":\"13-thorens-td-160-shopify-live-testing-1.png\",\"alt\":\"Thorens TD-160 Shopify Live testing sample image 1\",\"sortOrder\":1,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-13-2\",\"url\":\"https://placehold.co/1600x1200/png?text=13-thorens-td-160-shopify-live-testing-rear\",\"filename\":\"13-thorens-td-160-shopify-live-testing-2.png\",\"alt\":\"Thorens TD-160 Shopify Live testing sample image 2\",\"sortOrder\":2,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-13-3\",\"url\":\"https://placehold.co/1600x1200/png?text=13-thorens-td-160-shopify-live-testing-detail\",\"filename\":\"13-thorens-td-160-shopify-live-testing-3.png\",\"alt\":\"Thorens TD-160 Shopify Live testing sample image 3\",\"sortOrder\":3,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-photos-13-1\",\"url\":\"https://placehold.co/1600x1200/png?text=13-thorens-td-160-shopify-live-photo-front\",\"filename\":\"13-thorens-td-160-shopify-live-photos-1.png\",\"alt\":\"Thorens TD-160 Shopify Live photos sample image 1\",\"sortOrder\":1,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-13-2\",\"url\":\"https://placehold.co/1600x1200/png?text=13-thorens-td-160-shopify-live-photo-rear\",\"filename\":\"13-thorens-td-160-shopify-live-photos-2.png\",\"alt\":\"Thorens TD-160 Shopify Live photos sample image 2\",\"sortOrder\":2,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-13-3\",\"url\":\"https://placehold.co/1600x1200/png?text=13-thorens-td-160-shopify-live-photo-detail\",\"filename\":\"13-thorens-td-160-shopify-live-photos-3.png\",\"alt\":\"Thorens TD-160 Shopify Live photos sample image 3\",\"sortOrder\":3,\"sourceStage\":\"photos\",\"includedInListing\":true}]",
+      "Processing Signed At": "2026-05-10T16:00:00.000Z",
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Thorens TD-160 Shopify Live cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Iris Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-11T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Listed Shopify coverage.",
+      "Model": "TD-160 Shopify Live",
+      "Accepted By": "Paula Purchasing",
+      "Tested": "2026-05-15",
+      "Awaiting Pre-Listing Review At": "2026-05-11T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Listed At": "2026-05-12T11:00:00.000Z",
+      "Offer Amount": 1100,
+      "Submission Group ID": "sample-workflow-group-13",
+      "Component Type": [
+        "Turntable"
+      ],
+      "Shopify Tags": [
+        "Thorens",
+        "Turntable",
+        "[WORKFLOW_QUEUE_SAMPLE_DATA]"
+      ],
+      "Shopify Approved": "TRUE"
+    }
+  },
+  {
+    "id": "reccg0SUYaislHDJt",
+    "createdTime": "2026-05-28T04:24:16.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 540,
+      "Images": [
+        {
+          "id": "att3SRQBfPvQkfmDE",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/h6j4IoHIN3xdplEZEZSTuA/xeE5bVwPljx0bM04RHa8XI9pZN7bcfNYMGqpBkpjio4phZbuiBtsAzfJ-yTbR8om9UqIcccMzVyOpO9VQBxcvtDNAMrMyvX1krepqH97-bFGC146ngdYnULbI8yw6-XGAwExkrXVYLOFJ3pNahZKTEXCqc6iH7KbYF6jlTtGbsQFcUtkTkcab4KiBxYarwEGdkArZVpXTIUPn9FVqswAaQ/mvgo8fOzCiZ3EH5p5bMk5W0DTwJs8jedlVVvutdifMI",
+          "filename": "14-marantz-2230-ebay-live-testing-1.png",
+          "size": 22320,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/yu0kcFPBsYQkfynyXvdgVQ/EnIkfb-pNX9_FgH1vGsz_LJvtk1EI06TmkgFz_t9GE01esnyybCKR15S7i4HM69aojuKg-NNfSruRu_b9ZrD9uO3ffTGZKLsNWbf1KFwbr14_vxVdaGK2gXDGxY0RzS8aDWKEYnkkBghMnhKIBiJZg/0Nic1FimkDWkVbGxR5PY4vLMVGleEosYGApvSLO7XOU",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/XzRq3mWR08ZScuPaPc06Pw/rwE1Lo4Ftbt7VYOx36_BBasOoaSg640Hy5u1G4DKr-BN9xHTbstCDNfFpUyIEnap3jweH61v4w61BsFKQ72GPlPX-1EydE_cNDv5azSY0zLSXslmPyXWy1_L08sr0VvxvAziQ88zvPur-EjlnwBAlQ/Xnwo8I7iJIOA2EIIG0Xzm1f6jUt0RD-USI0v3uyjGqc",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/H5EScu0UNoHp8LFyCCmNqA/ITmniTahETw3FVkNhhHvfVwsiIbG8oXW1SSgcNxuWp7OLgBuoBkuZcxjfwHbtHNQmXWm8ZfXQwsGwKMIEtGd3twpXoI3PST8fxhbd-tbb9wosZ9aQzcgbYWQ8JMdsBaIRwU_YkRhWvEOatsCObU2YQ/9VaLV61AeCLUS9OSy8TWEj5W_s6uNaihH9nt2e-nIPs",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attBZhiYAKbdsaayj",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/P-EflKq0-l72gTFPbnnjNA/z0mX_cmug4aPVkc3dijzyZ2SonH59u5KqT0KTByibBUThwP95v1pbtvySVaFgu_uaYJUwR5q7WXdWRyesPsVVgSS_k_Ktfve13AtOfpxwrFKqww_0eksTKHcqhj7MmszUGGJ-VVYe8dDCkSbRkj9Y3Nkok9jt-YnpLUk8ia3E9aNyK7eDaVPApjrAQLaOIQq_BWFpHjsEyviTNtIhlRfng/tJoCW5-5ATyiPZhWH4YPz7i9fNpZrVHfjCrezD_33-4",
+          "filename": "14-marantz-2230-ebay-live-testing-2.png",
+          "size": 22185,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/1N1gZhILcojWv-fzmVFBsQ/us2cmxK0czPI88rc-Ke-IC4EhFe9NUUv-sJRWJcS__QFez_1uX4TRaEg_At8cZZ3vBCL6Hc-tdJUoxPHXMA-zGzXaiSCRgPz1S71dEV1EE_a1m6RvRejs8TbKwLE_ru-k7FKdEnMuOODDKhkkKNF0Q/qdQex22QO4tqFyZia8afx6aghvOLVwXH0EEM5baUoDc",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/mTWoN_79lkJyZDnDDRqKAg/3uvJWuLUcx8SlLWvp7JhWDii48POufAuGLiLhASfS3WZMLDRNLItqMhylR6fTWr4Gyt_9LYVMoyaHyEEZ--SsaPIucv5x5WCDtOIvlJNMXFWplpuKRHw4OV2vxknDJOTUG_cg333mITTxZuv3WE-kw/xZ1AhF9GWKjsATntWzUYmlbB-fD_0OLY2SFnsA6OgAM",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/lFNDHCk4B86V0Aew_qj2oA/EIlZgBOKQMqumhrsYGK04lU-rnTFHQAAxDEquVzt5aDbCu16Pwa9ID6z4neheeIlu0d7XG-nQbyPtOKq-8h5bDnKWU05_lI7D7-VXZwMPobmwIcTDlSyNDq1EIDdrSBMm4sUK8eHKJ7VZriLfVD3pA/_RxTOne9o0z3mF0ytdBgo2retfmsg8a3kllLXvsumJg",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attM4bRq7AxCx4kbO",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/jFKZNPrnDegDKwnFNBtbZg/uXREXhUUoUDANAOqI-q8hm86_Eh_wsK0fo_dXRMhWZia4Te6GTmjfGmwWynx1K322x0_OgEu9Lq-wX7xDWWsbFEoivifrn_XI4YIW3QQr0WukqI1JV4GaKAcncn2lTMIa7JeEwiGgWDu6-ArwXFv5jy44Bd1wkE7xvta5UsEAE7W94Gb8Iq43Fef1Bh0d64pc68kOLR-wO9HmxIZz5p3Dg/dcvq0kzL_AFFCrar9ZapqNG0BDYluWfvWgCucHflPiE",
+          "filename": "14-marantz-2230-ebay-live-testing-3.png",
+          "size": 22238,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/HBh-61t2J8A_fTnJPnWy-Q/FFHClg-b1aOfyoCRT2xVDnlgj2qC6Mhxn8nPAOzETYU0loXgcLl9_jWi1XxA0f524XM-JRjIalf4kD_HOgYQGEnlzNSL5Jdtif9Hiebd-u3dck8xWzKD5cxdfFpIcHavamZaGqsUVZXq2AUzjfZT9g/DXG5Q7glURQO_0_nxkOGQbrjfC206dG_kAVqnri7UN4",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/OGTy9TkiEuKWMIy5VPqFBQ/_giM1MIW3-5GS4xtegUl-6YxU3W369kmENbywfSC27SltJ-IbQdJbudON71zwHS2y1BgZj5tIiR6HMUJ_21cKvFPVhsBdnGN16SDs9kI-83AefRE9O2WVL78dqBP2e9uJuH-sq1keicjko_ln74r7A/KOf4N8vPkkv4JOG76aTgTLbMVR9EPuSBDWo7RfZ8Djg",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/GU5c2ixNCcRGvdzU7RjU1w/GPBS4EJTb6zBLmPbFLhVFVvwm8SO1YWzhDly8usB1-A0DAklXcMJ7KA970k3QXnAMFpHFTzx6DU71FvUo3I7deqAY1WDV9JbZ1zEpp-Hm2UexI41Gwp-FqcI_zc8-h8s6lYBXvCZ4SJSqo-1dxRrZw/qhX18JrO7RhE1TuY4l4i6kY758O3yS5RFbff49idKqw",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attD4OLlUQFyrYSqd",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/v7hLMR3XK6cidsobFVANDg/-7TcYVARdVLFFV5wjgHfEcEnLNgKSqEfyBTgtAhhYOrCpyl3DGEysC4iIR6D_kYy2FmlLMTngd1qUgKUVqMgH1_UVT9yG9oOGy4Hi9QKlMN9lvnkJmGVE8CcSOKsylOF4XyafL3V8zy9qgijr3Kj_oQQhU7-p4b6Dir1MVW2Z1xpYFnwvYF9124I32SvW1YJ/lHG8HtUjn1A2TWt7auLi3s4l89-gpjbeJeDvHsZljXE",
+          "filename": "14-marantz-2230-ebay-live-photos-1.png",
+          "size": 21786,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/j5Tr26VTMTu2QLvMG1YWoA/HqywrDMvfTzomMaxeMsfMCC4rMjMIAsVUXQscm0us8osr8GRE_RF_DwUUqy4e0-xP64_OjUs-kBIetil6e6Y8dAVvl7_Vlxj-mn-N8YEQWUl2qKHGpypi9L0eVSs7kYwNh5iWcjURLBiI6larUv_nQ/3n00TRWbPM_ZR-dKcFTqfLeWF0hw6xRJJH1HHK6J6xU",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/OF5ZduDKxbU-gBGuKnbP6Q/MmePbyFtBy44mgjarcTkYxLks1zEl2sR5eXsQ6UEvGBFnEudpyjfGTJPi6S3g6B0hLhU3nd1NlIzjGqLJTKzRBRWCEE7qfCe3Uu673L6xf2omULwAJX9m2Sm7xKSSZf6PZakSxDCw0zjNh7-GWBDrw/sBHoXhc5-Crr9JLmOcTqJqhg2fllRLAO-RMn40w8j2I",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/nykfS0LHLOVD5xrjmXpezQ/vu2tHdQ84qkxDPvrlIDRrddzDOxMUjCIPjS71Q1Nvo0UC9qRlG2-ZAnWG7wRJXkx_f_QNR-QhThwdVsz6-UJ5H9a6nRnqQr9-cKGSrmF3Ch-rDIqu5Y2xPDyMt8a1cNxatpXlNplqewZfM9FMmPxHg/RqSGfBqOZQ7QaD7o32LJoG2Rpxsd1RceDhvFqTKT0Y8",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "att7VT4reskTd8VpH",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/yqwSymZOQwbiLu6mOCPgTw/NvKwYNZTZb6sexuVvnwQXuIitw0eicDRLzy8xcEts3Ojrnj44o6VkH-wfhZxRhEv7lgdE0ZXl7tYXJHwaaEB2o1vsm0lEqtRhae7LhB5ldus8TLDe7wn08jYVamnehQswzU54Iu2jM1fnQ5qbyYLN82723CeCFgEXvNZlUbo7G5pNfYTv3qqIet6GE0q4k8u/PPQ9R606jLDkOoSv_KfCKGXrflfld_uimP5QN7vV_ro",
+          "filename": "14-marantz-2230-ebay-live-photos-2.png",
+          "size": 21858,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/s-LDAOXw2rDt_v5N76VqUw/TQPMIAwbfQ4xp62S2iKinmjv8qsIKlxMWXSJluAI3LVCiDKJjAYcF2LDzY2rIqjeeQg1jVyOe_DbzjpP-NqDoiSY-Ae26uQaAWmDajmgHx6KmaXyV_QAaEsgf3LY8YE_iKvhjc68RYBHS3KbZg0CXw/cMxj3xLpNgLXbA8nXnt-GsyN6Hmzl6zckAK_6-2ZcPU",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/WQ4wfK3vRAUstD7Bwblhrw/ns46RDqcqobCnGYqICL0labDky-I3XYEjnZzH0UhOinH8Mz3_jo839qCv4IMx7DQBPLRO4NZGOL2B_ywosIynwLJxFYNEh8KHOatI4f49t-FZ0WeLar6xqPKxc6K6W07oBHI_K6Ns12lzGhhbgg5Kg/wrJ-Ryd5P8NZ60Ab-DuVzyfjaAV8Csq9KFjmC0OyYnE",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Xf_MwBFs4Q6VruayFBLCpQ/8d33ptEN8Ac6cl0xtqCHlIvM6YvsrKLwTmIhpFtGhjlQKhOcK6HahH0UnkvCEKZM7FvP6XRa6IuDFZMibCo4is68pCWU_0EHpTM_QBjdfiQ7gitSkPC8f27ciQXMa7K7S9usC1_yJtDdoA23Dn4DRg/c2ajuGLg0oJepbaaR0VbP6c1DI_q3lWxTcCq8PFtBxI",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attVUOk6zgwSNCp0T",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/9MF8cxX4mxeunVXpwfbAlA/06sRK9RonODUFo8pnTOpAq435yB0tBT_fxprM3PlAa2q7nWBSjFFpbmw0QkrOmm4ItvxbVpLSkat-Kx3MdmTAgQtQlGdAMRmM7moMiapmSNbsDeaYpCRfhq8wNFJahU37DxmiTjXyVKVt1tYs4G9hRcRFgBQ6Oiakh3qx55eYqdShFtARR1-2ye79VMSoEL3/RY9PDj4_qCLHPmBvxoH7HQ8vg8duJIGc1E7HKk4N2NM",
+          "filename": "14-marantz-2230-ebay-live-photos-3.png",
+          "size": 21968,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/yChel9eE--H84UB_dyVm1w/VHoMO2udPmo-oJUZ3X0lydpezKTGA03_32umQCEWReVVY3Dd7Ko-_oFvFRJE3cua_45zn3fcczzpyykgJ1vObFRFza0SF_nfv56i_QVJpv24mmsHBoDWt0qqI0qDgVyeaA5l5r0M3ZUsbj16C36X5A/C0CqE1G_t_K8cvH-qXZcQZqE83Wpa4MPCb47u0LJfpg",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/ve1E_g1dvtHFguK3EgvhLQ/1tCG5pTWHsmzjvvGWP6sSHeFy03c1btVLwyoBhxXCWN5dd_3fDUxXCNth7Fyu7PZW7ff1PIfuVHjmE33GCPlcjUYEDuDcUGYYK0b01ks2A-xZ0MLN1gT1lNOxthFXW0D1lyMP4TE-XWIK-vHvoNzjg/tjSACpTgpQtgGvGUjYk5DUW98MpdNY-7l2sexxqH2X8",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Yc840X6xxkjakUzdsZcgNg/vW7eNgnvV2TIe0WZrujVrUPkJjLSHjFGqNSrT1XKrxYiorAOgx4TwypaK1_P2uVupkfY_5r_jzesBjdt0gVxMNZwH3EKEx3b9DSgJd4OKppmPSBq6xWQP-9orulbDdhq9n-0r8607ro7FjJj-uSSqw/Obh13O-tBxbaM-WsdhPh7yqf3Wcl3sFiRCd7dZu3OVw",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        }
+      ],
+      "Testing Signed By": "Tina Testing",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-12T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-12T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-14",
+      "eBay Listing ID": "sample-workflow-listing-11",
+      "Ebay Listing Format": "Fixed Price",
+      "Testing Time": 5400,
+      "Item Title": "Marantz 2230 eBay Live",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Marantz 2230 eBay Live captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Perry Photos",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-14"
+      },
+      "Ebay Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Marantz 2230 eBay Live sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Lana Listing",
+      "Cost": 540,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-11T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0014",
+      "Ebay Categories": [
+        "Vintage Audio"
+      ],
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-16",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Marantz 2230 eBay Live. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-15",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-14",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-12T12:00:00.000Z",
+      "Workflow Status": "Listed, eBay",
+      "Make": "Marantz",
+      "eBay Offer ID": "v1|sample-workflow-offer-11|0",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Published on eBay.",
+      "Accepted At": "2026-05-11T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Listed eBay",
+      "Confirmed Grand Total": 975,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Ebay Price": 975,
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Marantz 2230 eBay Live sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Workflow Image Metadata JSON": "[{\"attachmentId\":\"att-sample-workflow-testing-14-1\",\"url\":\"https://placehold.co/1600x1200/png?text=14-marantz-2230-ebay-live-testing-bench\",\"filename\":\"14-marantz-2230-ebay-live-testing-1.png\",\"alt\":\"Marantz 2230 eBay Live testing sample image 1\",\"sortOrder\":1,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-14-2\",\"url\":\"https://placehold.co/1600x1200/png?text=14-marantz-2230-ebay-live-testing-rear\",\"filename\":\"14-marantz-2230-ebay-live-testing-2.png\",\"alt\":\"Marantz 2230 eBay Live testing sample image 2\",\"sortOrder\":2,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-14-3\",\"url\":\"https://placehold.co/1600x1200/png?text=14-marantz-2230-ebay-live-testing-detail\",\"filename\":\"14-marantz-2230-ebay-live-testing-3.png\",\"alt\":\"Marantz 2230 eBay Live testing sample image 3\",\"sortOrder\":3,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-photos-14-1\",\"url\":\"https://placehold.co/1600x1200/png?text=14-marantz-2230-ebay-live-photo-front\",\"filename\":\"14-marantz-2230-ebay-live-photos-1.png\",\"alt\":\"Marantz 2230 eBay Live photos sample image 1\",\"sortOrder\":1,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-14-2\",\"url\":\"https://placehold.co/1600x1200/png?text=14-marantz-2230-ebay-live-photo-rear\",\"filename\":\"14-marantz-2230-ebay-live-photos-2.png\",\"alt\":\"Marantz 2230 eBay Live photos sample image 2\",\"sortOrder\":2,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-14-3\",\"url\":\"https://placehold.co/1600x1200/png?text=14-marantz-2230-ebay-live-photo-detail\",\"filename\":\"14-marantz-2230-ebay-live-photos-3.png\",\"alt\":\"Marantz 2230 eBay Live photos sample image 3\",\"sortOrder\":3,\"sourceStage\":\"photos\",\"includedInListing\":true}]",
+      "Processing Signed At": "2026-05-11T16:00:00.000Z",
+      "Ebay Quantity": 1,
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Marantz 2230 eBay Live cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "TRUE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Iris Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-12T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Listed eBay coverage.",
+      "Model": "2230 eBay Live",
+      "Accepted By": "Paula Purchasing",
+      "Tested": "2026-05-16",
+      "Awaiting Pre-Listing Review At": "2026-05-12T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Listed At": "2026-05-13T11:00:00.000Z",
+      "Offer Amount": 975,
+      "Submission Group ID": "sample-workflow-group-14",
+      "Component Type": [
+        "Receiver"
+      ]
+    }
+  },
+  {
+    "id": "reck8bUFT7Ne2qukd",
+    "createdTime": "2026-05-28T04:24:16.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Shopify Type": "Turntable",
+      "Paid Amount": 1200,
+      "Images": [
+        {
+          "id": "att1Hp7veCb1JanEm",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/0Jl_P5NpuVb72cYDn3FNbA/FxI8QIQchWthdSRTvkH19hqOCizJ1CQQP9-8KberEWQUbKMzyo2mrfshavILsWMmNhRumvY0JFtp0o1ODSMbMx2W7Ojce74gc1ijIpU3HgAn3gKmFW4dwbUeuxxscKg1FOQVk9-u10gMMkrRIryLmWINVAOjW0yAabkVxutRtV7vj-wFDwoNrHu4xeij6uq3lSqIKgYYx6ljHqbYKJmuXg/1U8yAsnF_obuLljV67D8ug8AEdifI04pDiAZJYpqP30",
+          "filename": "15-oracle-alexandria-stale-shopify-testing-1.png",
+          "size": 22237,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/bCyULjO955SQF2Ksxb_nKw/wDrSy0IRYoHr9LO38z278gFXc3G-bqdgHC0buHJZrlQwBke300KSppz78Vi4z7uoa6uzi7F8uNbAs1aTkHs7u0rC6nTjrjeALWYklYa7AaTlqtIa5T0bMN03xA5zMltBXqr-9p0YcntfXLJvSClmMg/22jPMEgNAwC_AdWyZ3E6b3pvhVGImQWDgcC2h5RozYM",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Ci7kLd7_g_YPKQUrwh9zLg/0Bo1TQHXz39ZjfKeSbTzmNqYz2UcbhXioJddNfJzaiZa_PNYyTUUS6EJFQoJyEXd33WNstsg_uBwBWuOQuoBaMXkMGZxsLWcK0o_I-g0F__Q3WRZjB45qzhecE0EpgJDRk5U-dEmxGqhEOHIMMnKbA/mwLzqFXAh4UFu4KLSTf_N0MeZI3vC3hPj1kH6iKYxU8",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/FbiMZllG3F_ihb9He-SWLg/xZcFmq18grWSapVPKV68sOiLKaTLRGqg-LAs0qsn6Gy1u4soFAV7YBpzjJcxxCjOXJY2eJEd1Uj-1_os25ZUzzvP24hefPkG-L8ZVuVkVFGrfQzDUEovtK3Ax2EE9pif3x7tD6--cU1k1C4HT3xGDA/q93iw9Zpk6A-gAzbh_WkaNKUzir_RWE-TcjwSImJgSo",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attcQRY9FAg45ocu8",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/3xk0R84hf2TkuU6qXDsEBA/J5IcEN2ZONDgwLf3oS3i1Vph4swQ3Fm_Bu2QSsdZAUqtA4lnSAYik_rktowzw0y-dvXzchlNbC5dcPOcnQh_8nr4Wzy8ua9vnBsBeHWmrdph_vODwXTDRu4E17GSowjsW6zqn3H89qy8cedcC8Qd4L8dSu2K_jkcjwh0jfFUiqPDExPfwQEHEVS7LDg205Q6kAsjWvKIArHtyQvhyYjJtw/lgdrJXcTI3igyP145wzXXymY4ZfMJHfwcLtmLCKHVZI",
+          "filename": "15-oracle-alexandria-stale-shopify-testing-2.png",
+          "size": 22155,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/bPt4MMbLeqtmAMfccGysSQ/F3_GdiGpVLjfWS5L6EJxasfALsxpZg4_uKUYqrKmVO8f_TfYyJJHC7l7-XAvth3pcOZmeqHKR4y9MZaOKOMpY3-u9V99PPUkwoVIegoX-m65gDSaAun9QJhHgCKwjsUCaRIvD5esyCFiqtLckaKCNA/GiELo0Zgcs1DBUB3ZFyKsQ5_RRbye77LX0-1xVFO3B4",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/H9tFdBS0JWthbLo3OpukOg/7E-74SWMtzLfx8JlQLT_F8hE1DDuYT3bHQ2Oqb7fZlCdPaZtwndhRXEX2Mh7ANwJrSFG5blnSfn0zU2j2aH-6Eb2hMcvw8qRmZH699ak67U-6b63J7gmB_vCEfxP21s69gtpfJhR4dhzuiyE6E-xhw/ZYmE6jmsDD9KlQwpp2XNmf6edbjthnhA2B6VIcmlp3U",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/h0usPxeZpN89VU_6tBthnA/3RShIjj9WmjrRcbnJ0s6mLtyXpE66QGA_WaHTeqcGmfHOxtWEiJChdetbyAZsVlZChna4GA3CnLxpoN7XREDCSC8j5Bs3mX_7MZEPmJ7bJ9hghTIItuDRX4q7VKrbuqr6ODfX4UwVld--VIAaFScJw/_TJpoNRCWLijATete0XoiuD9Dfp-Ud_Kp3CbMTRnyB8",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attdrQ0l6Mrmzmz1d",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/NGkOZAp0iY8B-5W3xha4zQ/GNJYf-fS5AHgIcjYK8lbcP39FF4Ig4EDUi4xo_F5qEMf-zI1ebgpRD6yNdHkSfc07PAWpGvCCc5Bs4yWKwGDCkO-UrDyKGbi79UdFJADJY_AqmGZbNqyJVJ17Iq0DI-Uy-3EzyzWowJaysw6_QU-Y-NG6scGOe42SZs7ZWYETajGBauZqUOa1IqRwBqoDSY-MaKzs_y-57ZNow6Bw1u-MQ/-b8Z8efPZ6hQDSYfCAaZCm01hf9C9C0eDraljbFgNV0",
+          "filename": "15-oracle-alexandria-stale-shopify-testing-3.png",
+          "size": 22295,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Bsi4hZrJDtefEUx96SAK7Q/KsmZ00OGtypwiQ7gOgVxNzP5CBWbUnRll_IQNIC-KolBzIwso2YRkt-c-px7JMvs8_MuqVT-Xen-YocjPxrLdxJYbHmoLwbJOHm7-27y6Yo7JXZtNycBa-zK3LBAwgMW7odFkXvudta839oMX2NnuQ/zx7gnIVXonZrgAen_FCtT9eZn5kzZWZUrcMIbI9n4jg",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/l-1RXMnnFGnfGFwAjr3ZxA/0e2iFk3X9nWP_k0dNNcjmLGp84_vVkTxXi1r1ofjqJnspaBT4H77W-4cyt8WDuj2gI7DggdE1z5liWWfxleqr4gbjyEYiWVJgFtsqH2zqERTXg15uoUqgWKv6StmQimvqdHN2wzWWSunWEhh9qvTqQ/j2A9PtVMkBLK0j_3N5Ip0UIHIWXS8SiLA5EpEyc2lpM",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/OZ4fKoR8H7AX2a2WYdWmVg/_1oQWbeDNm8Si0RNLcvDJmyaE43FQ4stbGj3Y5upfvtn5HbglzMDbL-B9Ib0Ow7c7YNHJvJdmbothKZek-Jjf_gVqrmumKhhLwrQE5FyJ76JHWJ8UsjfjObbRLQR543EGs3WLmGxhbS7WWPNiv3a6A/wPwgmTrIeypZwQvAH9U0OX3p5JwC439KqKRIMasLxqE",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attttvEmy81s68Vu3",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/2sVkYgLXAOm95cIP_o9fHQ/p3jsGJAuh5BlkigrvLky5EdsOO-LaDMQZqWK3GC6dAfFm4bItL4E8rIuseaN7zRy7kfS_DEkT1vhQqqrA5zRE1WpmxmdtP7dGAo0cmTI0oukXZBN0d3GRAKovsvlnSgVi4qm2d7ou-4o-etEFcgiPcKDRQpDFfZ-Ix9uGneMtIGU4lHapNGDXeoyyxXNvXmzPvWleQW1xg--PLHoUR2--A/g7hyGjMTWh0meLbV2C26Faouzi8nb8WNtmQ6vLlCOVo",
+          "filename": "15-oracle-alexandria-stale-shopify-photos-1.png",
+          "size": 21734,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/CQzhKL2LzEcoB3pzDzev5Q/ZzCoVirq89uZhcD-XKWCDnVPvvKRV4y8f3JO30wiWbP2HVPyJBSbDskT2aOv5PS-olnGvaoJVt7hM5j60MwWFQpkztAZ3mLuaHk7Fq7rx4yZy5g5XK6wePJ8fq5sgiVBOe55t18NsKgon0Sw6AtwhQ/aWiHiVjpPlEMa0TZYjMauvbvS6sR8pdr-VGzsc0UyCo",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/VVHDxYVawTe1wkX_Jv_9JQ/tQV4KvlRHIUGHf2XkUlSJyt9_AGcjK_jyoAxkarkbo0gtodikbM2MQkmAn-b8wOHEI4MDzqKRku185IIkwdoGVPZvVxUthJKfWeE8ubEf6bNxg3iEtO09sxSi1__mux4CtOsySmDLmqM2bJLBjhnmg/55IsvJrQH_q0CDfTZvVgD4zLRj26SIt5jI22nIyTUsI",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/dYZXjPlirci4EAi79zrn6g/TbiPXZFrkiTpSRV04mwbIMwDYvwFYN7-yjPx2ufOSksJaoc57RxMNVtgTCIVZqYbCNHGi0dR8JS6mxF6uv3GobjIZvzzcKA8yzyBQr3OLkKoS_W25zfzV2MFSiwtFkaMNKq0caH-wC-RvvkWbpf6yA/ep2KYHsv6b8azH2-rDsMqlHBvgJO9iUuQIntslFGTGw",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attYQpmJu8SgHQrKZ",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Qa7f9z6gsFTtwINOxYOBpA/QfL5pB3It4jQ3uCoSPTYkIyvis4ZbWqYZ77ZMZ3suuOziwx6kmHkc7ctlXyjHPNLnQPbKlcDnQ0bmFG_v1X2DnO92HunVY86sfskeqRSMItWHBAhSeiqrYUqO3z7PyD3SeCrdrXpMMDS8OcP6sLMQb-jOxRJWHW8eBHxeIMadIwABRmRDQmaiBfeimgK9ta5CWJqYqs0HoVKOna0taOwqA/DydYyqfydjIzYj0LxXQct190bZdN2kx0oVBYweZojQs",
+          "filename": "15-oracle-alexandria-stale-shopify-photos-2.png",
+          "size": 21651,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/QCr8Cxtga9XYjKLJGq94eQ/q51nn__2QehRVZRuoYr8q82icnt0_Fq2-sE87ZGcJl3gpNZvEWoOz9wHDrz8G3lVYVYS92LyChqmcR6XFywwqBvRjv4pD7Hu3u3PeONtFMeH93gItgS_zW6K0TExYtD1QqWKYvq43ZO5K4LxmGqq6Q/Ekjy2Zi3qvzSV9oeel7aDV9spW1abcpTNtcSTjKR7Jw",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/cS520WHikt1OY2CtO-rM-A/v4Vn57vDPymo61rzSDq5DloFUhuYgMfaMMLwOnISsE2jE0ZSZcQGb62IoA_xmvBiVrg6w_bE3TGjS4Y11TMNHaCSORSwhwoXqyXzIMWTB8lw8eoLJzn8KDH2p6x5xXbMF5bVfF72hfJbweadZBVGAA/5oYFW2SdYgi08BB9LXHnBzCY0xkS_mjL_S0RZmSx5fA",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/aLAlFiz_fr942n1qRWp9eg/53VZ219NWf3ysfMWwykolPz1_FCdk_iIq5f1V513eUx3lJcflStQa5rwYSqcJPP3NN87WGurw9EPqww0l3kdVd952yefLF-lm_G2vWqj4-0vlQ0OPgryIjF7lXuvh0NRI91wfyT17_U5VX-PBZj44g/RtoMfmjFx2a1Tz0stZ5ZnPjvUb6uL13SYsaQsUrgXXI",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attqOT1Mai40scdJz",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/TRezsllIVdVySPw79r8O4g/UKjE8hhijjPeQ6Kc8Ef-xJZQUCQpKRxF56pkM-M1mkY3oajS7uRrbwi2--sRooKAls7YARJUDJ_JRIcgl_EnAGcayrbeQvZCMNvkZnCy2n3YPztdO25xZSFoh5qnD2TA4b01ZcfW5u7wciJSA6c9TbCNZkhcYYDFNn2wir00UoH8AUvpu5wFkzRgfw00dbJQHlZRleVkiufUsrBv7xrXKQ/ET5N8sF1SHNKDXkgX8JXs-U6wDAQDX8ekB38CHgoj_U",
+          "filename": "15-oracle-alexandria-stale-shopify-photos-3.png",
+          "size": 22167,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/__vNBOgRdq27-ad9GJVeqg/zcTKTPSIvXH7MQr8GZouz035uWJwnMhk_9fVMDNbIfotJasJwVa1C4KtL_aelwkzhAvEaZY5p9qnNsP_Jt1QvxaUVZ3lXvb43j2uVNX5lgECnyPvaZR2bV6tfj-Nb1tTcvA9FJZ521oItS2ROHcu4g/9SGuZrP2Q7uw2qVXbklwzCghibXySuQ3X_1NZHtUrmk",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/tT6MYVY0dbJUET9qu22MYQ/6crl8d6NLbh52WavibFIx_hGTUwMWd-27BUSnyZgOEw4exVmTdpBUh8IUmdlwxU_lTmeL6DQw-sH29MJQcbamia_VDyh0_Ru_Gr9KTDfgC8ZcLz4szrMCEw4X1BLv_2Cml56rVrXJ_mtxZh3F_qIRw/q4qaAs5-DX6KLKvdiMo2Et8sMWLlzDEALLS8F-VW4Oc",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/BZoM-u3WnbkKSGIL1iZKqw/XAmbVaOavgsMGGerpAzsZcspK68BqGme-rBIACYGeQBXvYcIYC27ujp9k8_4s7Xcw7xtmRT99zA0fj0w_6u4am_89ezyUwB7m21FTvb9YgUyiJp69p5NDVlsUvfrM4Iw2wOazT7tvl-4tY_VbCMn8w/C0Hau_j5shk_6oqOadSLPc06UMKCmnGwFwG5NL3S4eI",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        }
+      ],
+      "Testing Signed By": "Tina Testing",
+      "Stale Recovery Updated At": "2026-05-20T09:00:00.000Z",
+      "Shopify Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Oracle Alexandria Stale Shopify sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-13T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-13T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-15",
+      "Testing Time": 5400,
+      "Shopify Price": 2100,
+      "Item Title": "Oracle Alexandria Stale Shopify",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Oracle Alexandria Stale Shopify captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Perry Photos",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-15"
+      },
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Lana Listing",
+      "Cost": 1200,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-12T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0015",
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-17",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Oracle Alexandria Stale Shopify. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-16",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-15",
+      "Stale Recovery Status": "Needs Review",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-13T12:00:00.000Z",
+      "Workflow Status": "Stale Listing, Shopify",
+      "Make": "Oracle",
+      "Stale Listing At": "2026-05-20T09:00:00.000Z",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Stale Shopify listing needs review.",
+      "Accepted At": "2026-05-12T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Stale Listing Shopify",
+      "Confirmed Grand Total": 2100,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Oracle Alexandria Stale Shopify sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Workflow Image Metadata JSON": "[{\"attachmentId\":\"att-sample-workflow-testing-15-1\",\"url\":\"https://placehold.co/1600x1200/png?text=15-oracle-alexandria-stale-shopify-testing-bench\",\"filename\":\"15-oracle-alexandria-stale-shopify-testing-1.png\",\"alt\":\"Oracle Alexandria Stale Shopify testing sample image 1\",\"sortOrder\":1,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-15-2\",\"url\":\"https://placehold.co/1600x1200/png?text=15-oracle-alexandria-stale-shopify-testing-rear\",\"filename\":\"15-oracle-alexandria-stale-shopify-testing-2.png\",\"alt\":\"Oracle Alexandria Stale Shopify testing sample image 2\",\"sortOrder\":2,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-15-3\",\"url\":\"https://placehold.co/1600x1200/png?text=15-oracle-alexandria-stale-shopify-testing-detail\",\"filename\":\"15-oracle-alexandria-stale-shopify-testing-3.png\",\"alt\":\"Oracle Alexandria Stale Shopify testing sample image 3\",\"sortOrder\":3,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-photos-15-1\",\"url\":\"https://placehold.co/1600x1200/png?text=15-oracle-alexandria-stale-shopify-photo-front\",\"filename\":\"15-oracle-alexandria-stale-shopify-photos-1.png\",\"alt\":\"Oracle Alexandria Stale Shopify photos sample image 1\",\"sortOrder\":1,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-15-2\",\"url\":\"https://placehold.co/1600x1200/png?text=15-oracle-alexandria-stale-shopify-photo-rear\",\"filename\":\"15-oracle-alexandria-stale-shopify-photos-2.png\",\"alt\":\"Oracle Alexandria Stale Shopify photos sample image 2\",\"sortOrder\":2,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-15-3\",\"url\":\"https://placehold.co/1600x1200/png?text=15-oracle-alexandria-stale-shopify-photo-detail\",\"filename\":\"15-oracle-alexandria-stale-shopify-photos-3.png\",\"alt\":\"Oracle Alexandria Stale Shopify photos sample image 3\",\"sortOrder\":3,\"sourceStage\":\"photos\",\"includedInListing\":true}]",
+      "Processing Signed At": "2026-05-12T16:00:00.000Z",
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Oracle Alexandria Stale Shopify cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "FALSE",
+      "Voltage": "120V",
+      "Stale Recovery Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Shopify stale listing sample.",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Iris Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-13T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Stale Shopify coverage.",
+      "Model": "Alexandria Stale Shopify",
+      "Accepted By": "Paula Purchasing",
+      "Tested": "2026-05-17",
+      "Awaiting Pre-Listing Review At": "2026-05-13T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Listed At": "2026-05-14T10:00:00.000Z",
+      "Offer Amount": 2100,
+      "Submission Group ID": "sample-workflow-group-15",
+      "Component Type": [
+        "Turntable"
+      ],
+      "Shopify Tags": [
+        "Oracle",
+        "Turntable",
+        "[WORKFLOW_QUEUE_SAMPLE_DATA]"
+      ],
+      "Shopify Approved": "TRUE"
+    }
+  },
+  {
+    "id": "reccW7p0t2qZX5Gi5",
+    "createdTime": "2026-05-28T04:24:16.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Paid Amount": 1040,
+      "Images": [
+        {
+          "id": "attP2sijWVvJAvoA0",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/qOeIa6caK51lp4m-KE8bXg/0-5yY4Xr7fUXnXQARd2P7sati_NDhv22YJ4uFCJTzjLT9QuK9BjmoHJsTxCCrwB66_C83BJe03swdIN7tYlgGP8A3P1fqH1YvOx76BChLM7URDKqEcNi5bZr5BFs233yeBGzCAr6g4jVcP6yeR5bALBLpEqOnZywQZjGIe3UkAXtuRrT_yoKVfupSxIsMUTc/0353nXcKy0h_znzw2u9flURcI38e_YJOD5B2eK6C74E",
+          "filename": "16-jbl-l100-stale-ebay-testing-1.png",
+          "size": 22547,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/XjbcNw4eUmTznZJB91n80g/onVY-FJXd93DvapPXcnu2n-hS0XH4zUQtKNnODXCC2cK3Uk2VnpYCyrr5zX1A3KxJFhw4p3MUK68w1mW33LFsMP1rG-6ULxAEul7OgADXAkGeIyXjvlfBOMOOy-hY9iktRjnSYMl4e_c8TBON03vMg/6SZV9BzsGbTlmXbRPBpB4fGAuX5dYbN3-KrOdPaZRB8",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/wzfx4ccR3q7TugO0FcCqJA/FzUk3YNVYp28OURKz6b88W3tTI8Et_37UU78gNLAC0bDTdoLls5irVr1kFgiKdSzFl9MbVaQD5w6jOqWpLr9Cl841KQJ9h4yr6PHQS_6aDw3AXL1PyEONN5s897ADBR3scKCm6Q1D25U6aWGXEEUag/zVBjR-4W82Sx_dFwKMWKr5fXC7i6j8dC04spOatACqY",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/vz06jECH8nTBFxR-q_lR-Q/UVdQNLNczTYz1xWXS_lkKi83HchOVyexTcicD4DLyctquybM3Pi3_pWLPUlrCvjV78u8qAruuuQ4AMtaqytJgW16jtZ_m4pOXn_J49vGp2LipFOjY7lJeR60mHilN7Gzzrvttd4kiRuPA8MoV8ZPvg/e38qvtPMt6juEppPJESIxr6pDDuajt7natechdX8NIo",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attDiM7nC9yiVs9iH",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/p3bvS4dc48c83UImNAKSsA/G7LFHsefgbDVyfjK7nGBBZW2X1AIdAk78vCCQ_JLcG5KqW224GFzD0Myy2Qke8liNhdmG0Gcq7_b_-ZcPHcoJCLqF8VNV7imkP0fmvflUz5kKVqy3-lqioUJaa0H8hB5ueundnXOgO55U6XghF6pJitthfEJjyQQw43_o2kOAB9V77M3_xsRQPDHzU4cPqx8/BHW-Q67GphtJGmXEgBw0HFbd6qYx4GxEOyodO1aZg4Q",
+          "filename": "16-jbl-l100-stale-ebay-testing-2.png",
+          "size": 22465,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/AXMQrG_5NosRS9p0lNP-mA/cC1Hmut65vWElK1txrcPL2BEJ9XSOyiueRKPH_laoNEcp32_vvDs3AIRChRLzu6wEe_adLJCJ8-CBvba0Wl3UKQ8rjnSbGBsolkXnxJeeYLnh7mMiyE6GzP8GZcsMqjXpd-IHZF0UHc7USxhnVoOQw/NA4ZcpRqqXF1VvUUHlvXdh_LWPzeANN_IDKtytASw_E",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/9Cbs5XLTpuEmRkMyFe9KPg/JDDn5jxpSslcwhS6rr7eX_TuXFeLYvvTcpg4Y4NNWG0ymloRkSmPCrSzAZ6FP_oeWVy9hzp-uXR1OMw6qCev3hzrnaKQJBcZ9PSVqzegB_44XyqgKy2DCo_rsXrC-JiC-12A2pR6OTNh-mT2A7a9GA/CK-W-bjJHoPUybW6L-piC-mCfFbU_Nv1zzj8AGWDDW8",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/acHQ7Po-VpQGrOswkBNgag/UskQrQU_wC8QhSiB_trTBQ-0wTJZ5NuvktLdmbViyC_vvvkINsqvMBt_kRPJYE83pBIhgPJyRGgAydpbKmJCQoDfkkAgX1d6oKuuqwLyrN68aqz3roViBjs2rghkjg9eR2QQ6Kq-Naam8rmb7FUkUg/re44W-YsPfx4i8H91kFNRTnm60HzNnUiaVz3KGcQOBg",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attrx4zdm8AFMfWK0",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/oD4yssGRdEmkCKm5sAni3g/qlsC4qGM_q6TNhBBWy-ELFLcjSMyCULlR5fs2cJ0rqZpwmTLWUc26DiEPaNZjfNaCD2SZSYCMK1aX-RlBB0SvwIbtMGx48Da00Cz8MGIMmkx7mUjxyce6f5rWp9YDv6IO0nDnoM0I8llcfsgryoxVC9aVglguyQABrlTYfjEf0TXr9TA1ODPgauVKPuhmB3h/a_kJ8ebPfZQDjXHmBpNOyiyd7XaYIESTFwogRlviw_Q",
+          "filename": "16-jbl-l100-stale-ebay-testing-3.png",
+          "size": 22823,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/mL6bvPu2SswjaBEQqVhdUA/ooljPCDD-xdPfG5SoO3Euy86tsJODWBY-IM0l1wkn4JyUmoboYk1b0FLsFrTb4iHbbnJ7GurF7UVxTJO4_Xx-aXiW1DHBXx9VhNwQ8H62DKs9bEHWeKXKtBXjJqxsLffRexWWxinMZkC0TpPurZr3Q/uaAUVEAYhKciBSOjnyBf0IHE4PLRDZKFkOibqtl-1_Y",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/dAOoKdESdfbt9fnfnhf6Fg/Pz2WnI33ORTBRSx-qYCXgf-wSIWqR0TfIR3pYwLXBV_8LDMBRDGd303mnSvuN9OxHzWSGyU2KXtdGM_gpA50hTnvZa5ghMBoErJJ0Dwxe_v1vl2QuTZdxaOsXUJw0B1Qx4r40Q6IAyPwW9PWwzRTlw/0LKOmspjNdXH1PoA4FP2qD6GqySn0hI6u1WbDdK8uE0",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/38vdnyCXPZmbHU5ODqhdzw/kkfMuVBgXH-Kk2Z0NaBdS6NFT_UOuPrXkVnr5OEqzO0ntsD7g--25dNQxSwVAlH4LNIfCKyulXEEMLcW-BuEbp62UVMrCS2Rim21dpVIqSEVjK1tbDQeM_voik36WhENSdfDJHV6Xqk8iX8odudeAQ/tfRU0mmpZHSTKhcmCGf3TJQm3mOWPEHensu9-RNJMDA",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attSL1v5u1XGKXgjG",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/_5OhpzLCdmTVvaLj90GURA/8kCujg_5HqB_PLKouxEmCfDgtnrG25ryR3YfqozPyL1bQ2o0TlEJm5VXE9rc0TVfecsJ8IzmbZutfBmZk6f1XDI24tS96qze8_iX6YTz6wSrVeW5QFozqC89HJEQL-OQLby1j5ee7isE7J3KcehL_D2SA4VowhPQyuy2CuJQtYZpMeJjABxnCLSbpVaCaCDV/KLZG0MBzLnFFqfEpb71ckfyIdT-LyTDDN6CIVF2Z15c",
+          "filename": "16-jbl-l100-stale-ebay-photos-1.png",
+          "size": 22260,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/0e3TFf8rsSwgwEyYk7GpMQ/L0InvJXrHLwNru_ksFQK2XWjfF6ZHR6ANAOVdOoH9cM2OQYacVDGgsuW0BSxmBMRExiHuYVxQlQlweoX_ifI6AJsk0NhOx8Kk8NvBvPMrdQCf8EXa5Tlk7mlpmePYHyGvBIyF9UG8i45ShOj6YgLQA/5mPkafSg9ZnJynbj5JMD_872Kowb-nAUVFuAA3EK-qs",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/-PT5Fe_9WXJq96GDDHBrcA/IFwlJapF0ls3A3wyrGv8zoa2NedNgiOeEH0HEJ0gkJW4mEKA1inpVfdYT87H4ByF0KPYNRQoFZuXOhHlOdGK-vpNDpbscubBpZdL1MSfS8IFCK-5jvc8WJDmUKb92ETBptgaQEVNRpiHqBJL-QnxZg/E3NebK_KhPhFrYirLASnhuKqSx6hKwjLqnqr7aVRvCE",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/VHWArXLA5xRuosKu_qgS_w/EXxfttdLNRIcl5XS-59k5nk0x1_9n3Ukzl0WJmC2hW0X_LvyEDY0Hw5-5fPZgUZqyL9hNq0p4KUBEZldQDgC0V4PpvPdv1ZWxD-gNFlg3eQh-9XVVPxZ-4adWLxbqlaYZW0yjNrkV4kwBbYvIsE7Uw/6m4WZgkdJB80oZkxSaDJC0FZRAQ4lrbzVHgFu4kyiQY",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attSwzFRUKhWYlMd8",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/SxIqGsyB1wQBF-kxX3qNHA/klLsGk-NkIcV4biOTG4w5qmTRqR8AABuPZ2eP6DadE2smJ-ZpXUyN1SmJ752iExFlPRnxVOsntLhDq3N9GFu6xjyOyjOVjTWazEpP9ar-spsyMSLwmT-b4yAnAhcgZV3BCKm746dbWr1gE1PjTtioTaVoLDPX5s0PHgS0uv9saGnZDbyn5YojBcgMj9aTpGc/jaApEs-kZYBhozjZV5U3xDLdpn4VyQ8MHBYzTxo2_6Q",
+          "filename": "16-jbl-l100-stale-ebay-photos-2.png",
+          "size": 22523,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/HzFJadmOYUASUtGRQNR2iw/rcXs_v5xXmIoQf1Mk1wbaXmoDmZdFm5p2ullRT2nEl7G4S48f0MhuOOiWdFIXuO4DZ36ArPaFUa6YtxokoHKKYN2LT_bEWBQYeix3mBEgkaqg8rorR_w-MYOXdf_27WmZxWcW9GakUuobBy2SM-DKA/f6XIAaVKsmKZsOpnvNL7jKMVeq7fNYm8BAaDls24H3k",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/eDS1cZ4CaHOyRyWMdU4ptQ/YStSpccMv5OB3BJSopof51_wEmOcOOLcyaMAnnc-El0wiiMAWRCqhbJrZexZAMKDPQcz3evcM-GTYpQFiHCimlyNVLJEP4GxuIGiwPtwdGzWk6aXD_8wRXhsReY4l3el8IzU1Nw71atFIfWpGV122Q/5ljeIGQjO6lRAheE3sOyosPkzVxaHmCcIRCkMU9yy_c",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/5t5gcNPcYK8DsTWLgdAV5w/N5PnuYtZUgSlxmQ4Z8McKxkESMi9NFRjuu1CN2zTDNrKAXWgaX1LoVvVsq3qgiE1TO5F3aBqEo49xcrSeG-GIuPqQDmkzIgM_Dheu0a1MyA5EYISvIYHP6O8xmHAhapE7VyemV5jBXnFIokl7bsktA/KDo0UyTPY4108uULPsaQezDWFF4zvH3L2UY3Zp26q0I",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attSR2Mzh4aeFVIWG",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/i1S0n1OKTZjs-3fhdl71LQ/7bZmAsY3M-KzqQfTmD7JjZFU394Gtmfg1tL-d4HlgIWZggjmHqwwN4V3wikIH6V2pbqe9C5CNx7AXGL1R_wcoN2pLPULlvHqAb7e9PNRroKEqzgV0V-KF6FnwWc9EDfdXdyJXNtjAol9X-9Z4rFBbnn5r51GgvatCD2DOZns06nWi1lHCqlumTzR0jBpOR6A/L9I9N8U9AQ3AT0lpykNU9YmWaNzAmWcV0spJTq1Uqq0",
+          "filename": "16-jbl-l100-stale-ebay-photos-3.png",
+          "size": 22310,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/CC6noo5fdC27YgfyHwWFmw/TB7gNfXDvS5NxPpq9GMJNRbHbY-U9W7t6osZko2DNe4t5uGgh78OtGBCkM7XObUgFynju8moo5PitGtrvY7WGonsbUAptVLwYo0peLIAfBvyEaPHFh7yKzQinIWdny4E1G9rUVDmEJZDIR_8aDbCWw/F5PZcv_uRuD-cJR3A0VX90oobAX4x0eCXFRrpkB4wJE",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/7ApcaN4-u2krykhxfgSv8Q/pE1tQvQS0d_KkUl6YYs47p5njR9i7-MhZ_-B_T9mH6mH9m_dp3i6gJOPP-tKCJSAATzMPR1oFVEAt_R_sr6dYOhe-OpvAy6P3cifgrhcSe8gZP4rby7VIbOmnvJcQDRv7kOMUqnnZgTNm9eRLvQ-DQ/gQ4SBHjaCdTxByjxnehDID3fwfYfZoHpQDeFyf44WaI",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/vocmsINkzECzEGT-Ji3LDg/cDkHoAHwaLa569O45_OK2_5ulYF0S5WI-DmXrd_j09tsmUnFAf2EBEjpyzZhU_AuBUemPr4fI594p26TlPtobVAshI6lc8gNrmZ4eY0pFjPaX_Kcf615yT3bCdUaJqkgcEfXSRvuXnIyeJqW_leFBw/RqTLtifFhv-t-0_kZ9zWV-u6SteTCXa7WoMwF4sKhFI",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        }
+      ],
+      "Testing Signed By": "Tina Testing",
+      "Stale Recovery Updated At": "2026-05-21T09:00:00.000Z",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-14T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-14T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-16",
+      "eBay Listing ID": "sample-workflow-listing-13",
+      "Ebay Listing Format": "Fixed Price",
+      "Testing Time": 5400,
+      "Item Title": "JBL L100 Stale eBay",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for JBL L100 Stale eBay captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Perry Photos",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-16"
+      },
+      "Ebay Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] JBL L100 Stale eBay sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Lana Listing",
+      "Cost": 1040,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-13T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0016",
+      "Ebay Categories": [
+        "Vintage Audio"
+      ],
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-18",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested JBL L100 Stale eBay. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-17",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-16",
+      "Stale Recovery Status": "Price Refresh",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-14T12:00:00.000Z",
+      "Workflow Status": "Stale Listing, eBay",
+      "Make": "JBL",
+      "Stale Listing At": "2026-05-21T09:00:00.000Z",
+      "eBay Offer ID": "v1|sample-workflow-offer-13|0",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Stale eBay listing needs review.",
+      "Accepted At": "2026-05-13T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Stale Listing eBay",
+      "Confirmed Grand Total": 1950,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Ebay Price": 1950,
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] JBL L100 Stale eBay sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Workflow Image Metadata JSON": "[{\"attachmentId\":\"att-sample-workflow-testing-16-1\",\"url\":\"https://placehold.co/1600x1200/png?text=16-jbl-l100-stale-ebay-testing-bench\",\"filename\":\"16-jbl-l100-stale-ebay-testing-1.png\",\"alt\":\"JBL L100 Stale eBay testing sample image 1\",\"sortOrder\":1,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-16-2\",\"url\":\"https://placehold.co/1600x1200/png?text=16-jbl-l100-stale-ebay-testing-rear\",\"filename\":\"16-jbl-l100-stale-ebay-testing-2.png\",\"alt\":\"JBL L100 Stale eBay testing sample image 2\",\"sortOrder\":2,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-16-3\",\"url\":\"https://placehold.co/1600x1200/png?text=16-jbl-l100-stale-ebay-testing-detail\",\"filename\":\"16-jbl-l100-stale-ebay-testing-3.png\",\"alt\":\"JBL L100 Stale eBay testing sample image 3\",\"sortOrder\":3,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-photos-16-1\",\"url\":\"https://placehold.co/1600x1200/png?text=16-jbl-l100-stale-ebay-photo-front\",\"filename\":\"16-jbl-l100-stale-ebay-photos-1.png\",\"alt\":\"JBL L100 Stale eBay photos sample image 1\",\"sortOrder\":1,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-16-2\",\"url\":\"https://placehold.co/1600x1200/png?text=16-jbl-l100-stale-ebay-photo-rear\",\"filename\":\"16-jbl-l100-stale-ebay-photos-2.png\",\"alt\":\"JBL L100 Stale eBay photos sample image 2\",\"sortOrder\":2,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-16-3\",\"url\":\"https://placehold.co/1600x1200/png?text=16-jbl-l100-stale-ebay-photo-detail\",\"filename\":\"16-jbl-l100-stale-ebay-photos-3.png\",\"alt\":\"JBL L100 Stale eBay photos sample image 3\",\"sortOrder\":3,\"sourceStage\":\"photos\",\"includedInListing\":true}]",
+      "Processing Signed At": "2026-05-13T16:00:00.000Z",
+      "Ebay Quantity": 1,
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] JBL L100 Stale eBay cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "TRUE",
+      "Voltage": "120V",
+      "Stale Recovery Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] eBay stale listing sample.",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Iris Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-14T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Stale eBay coverage.",
+      "Model": "L100 Stale eBay",
+      "Accepted By": "Paula Purchasing",
+      "Tested": "2026-05-18",
+      "Awaiting Pre-Listing Review At": "2026-05-14T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Listed At": "2026-05-15T10:00:00.000Z",
+      "Offer Amount": 1950,
+      "Submission Group ID": "sample-workflow-group-16",
+      "Component Type": [
+        "Speakers"
+      ]
+    }
+  },
+  {
+    "id": "recwz1E6jmEk8tUYb",
+    "createdTime": "2026-05-28T04:24:16.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Shopify Type": "Speakers",
+      "Paid Amount": 1200,
+      "Images": [
+        {
+          "id": "att9pOA6XKMrVOSs0",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/xFqVAFjAva3Cs4ciLAY25A/_jB6rf2m_PEzcZkVTUiegGzBGMqht2DdCz5T6BmhPMJvomuSQOg5LI1R35RaPJaBHQbCd2o5JKAYRnz06LSjSTptHgWehGsIripUGnwS7EaczAy7FIQUacSt-ncdzPcbCdnjKGCExm4K7UZ-8Y3NensY6bTFvBuIB-Uuk3f_vI2M227tkbU5zg4y0TenL1asJmMd0SOdNNcXFeqCPLT1-Q/EDYhMDLXiutKDZ-42aHVnEOuqUOULmDF2CVSr7__sjs",
+          "filename": "17-klipsch-cornwall-sold-ready-testing-1.png",
+          "size": 21889,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/07h5FoYnhqwQPItnK8uZow/Zq9z7ffuHVwHQZg_6ISGW6kSpBAea5zT6Wo_SV_kphsSf2LTZ10YvusLfoBgiHa440Hfmf-AvTSke-uDarN17kxJmg1NNTlPSP02YjiXdBXTYS2otlXQl_c9d1Zeb74dpQXDwfQw_wQKYv1Vn2lyaQ/6MCdBHXWnxL3cVsxNAcWBv1JD3-lvL0QmmzRdpd5qfY",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/pINm5XFTov-xihykbxE29A/rqNM7lq6YPotYy1N1oKF6Mx7ZnBX9BbR2U2_5dT3CT7Zf0GHQfeXWezmTisajSBfLIKJTQIie5ay_SJi2oA9vOXDHshDBjTHsc8UYUHFWJs3qaIeA0I-1iOo94EDPDrg4LZvGjbvhjdapCkWBDfuBA/2JEMuuti6Z1Z-pW8cIjTWp8nSL1BCDwRVnJS5uMgRQk",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/dJKWWEsS0ZtUmhbtiXiU9w/gYIc9bYdswx-47grbzLLcowqZtKk_Cq8reh5E-bEGrI3lU4WBipR6CO8haaHbB-6llZwhnIUOAaY0cXHZ7xxpJn6VhLKBnR6-FgovJ0Azu9SkPDDiHh6BKfR8VOGM-DmO8JeOeuEgOal8RB0a5BxAw/jjYMZ0d6_z5D5h_ET_DLV4PwTJ-vwuIi8pPqUqP7k78",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attn8xmyTbd3JGJUY",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/TBqNUzZX-AQcLceCCzPJxQ/qeEVJRLnuSLtOj2rQDrowWHFsvYhQspsNoYkJ-60WE_9KUcV5QasY3H8bpWwPa7PA_MBj8jpOlY-korNBIBwOssjQ0v_YY1C_nCnE7W4pxD-wLbvON5o26Kq4Up0cPIoRCdzExYKmwaeBuV0Kv10gyAHTHVjv7RmjnNZ9hECENljaS7AIqwKdC4FRO49oTKGSCSna6TsiC9HzoB3oCaBUw/6KTiGOrc9jQ-YWxV9Kx6ZK88dqsyEjMdurdgo3nfIlA",
+          "filename": "17-klipsch-cornwall-sold-ready-testing-2.png",
+          "size": 21740,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/-ntAAf7ZMOJThsMV2bLhYw/mieuAqWrhg-mBprlVeWCxGy5RH6vG7gmYFk2FlnZ4bsllcInWkdIGlqiS_vvFRZpOvPLkP7RHo2fTdH57QLlLiSkjsIzvWNquqpjotqefZlyaRhlybAVN0mKTIgrRg3nMZUYcfX6hmtPrmfG9Mlyiw/rMsCuEmNbwTLEDkp67g_ODNmP6Pv6bv5VFIwpRL2Q_k",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/EaH0cppRoXEvRNOsu9axVw/ZJvT2E4ZhCCWgZ1-hjDtqS4Ej5_4zUwmZEpcOIWEP9iF9YFA1konfMgyE_z-q2FF4RKpmF1lKdpY6qLE1A_rbejC0qPKlFq1tYHw-4OYpDS5xHKjvoDb1M-2UhlfSwhjbZ-iszO9DhntxWvbuALTRg/V7iWKIde5zeKkBvhyXoeekqgguSPvk0s_Vq9qT9NZpQ",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/CAyBLT-oSHxpZeCjoqxgtA/H9Uc-2vr9qxHcZKrv6J57FROtE_GH1_yATkjj70mNro5ScJvt7m_fGVI5G6WTTHd4HzPACCfN9Wkul4egKAcSQlghHMVZeVcCrknCVKGRsetHegyBQgYzLoj8C2SRPgF-mQcnyjwd6Y-zef1VKDidg/OzzxuCyxs4JbgylhXvRUQcaBnJUlpaWpIQReXTc3Hk8",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "atttqEYfsXwKEsNPz",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/X0tgiVNg4T4I9jkR4A42Ig/1wh7IMg95Eh-eO3mzYAj3cAsb9SxL2VvC2AIFvti0SPffkRYXKxXuNYk2sa5JvD_saf7OFtW6NIXqEzW5GLrrq90lCnba-eAQFeB9pLeoY7ZRnPTIZapp1Zv6yb4KmzGwEPLm_wPTjJemoLuGvC8JTibQrL9IS1PjtIoQf6o6k-ETbKYbdmm4eD2y9KUyysunfEw2BgQ72B-npca7OFwYw/xAdzlr1ZdRCqAE7faVCLO-xp_yNSEf0_A6ueNmryGb8",
+          "filename": "17-klipsch-cornwall-sold-ready-testing-3.png",
+          "size": 21860,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/8HcEwtT69PT5lqU_2L2cbg/Up42uuY79pmycy5g_36mK5OaK2kLSElTA2PWAWajF3oqpS3NKaGRMkY_L6agS6i_DdA6-SvkIZK8bq0QvHHoEauyCtD5ooDlbUbTV_KVYuENTGdMNAZdr9DKXTkDuLG4SimLHGaBSzHowAeMUm_Srw/TYJ_Dof8SHaTOlbnKPsj7tm925ZYnirjYpE6k4h-z08",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/U_f_feGzSfEI2qH6OmVlpg/ufxAEdAvHyShT_htrMUebfz2vk0wQfKSCs4sNb1YFCoSKupiAD9TZw6LrBvhdgNAR1fjA2LoSRKoNjJHQH7HVO9cwRYMY4AVUuwGHNRP_o9dSdT5KSJ0BYH2r4GKm5rjcNkrf8EQa52avO3OijzxZw/Zq_MWwnvE98tsVV8lv-SIW23UwDsPbWBIVPs7CPg2lE",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/VYyQ3DCmGXH8OeJ8NYTYTg/TymaPHR0UbQZv7q0ajRXnc6c42nUWY8yH3oCn9tx28wCGYg2wrEc01LJGRo5RZNP8dNKt3_Pxc6AS0BYaaSComGIeUQfHwc1HNryv8l1RBhaC6RwFr2xcjA4Kf9D6eLIwE7SqejdzVfR-pvPUXSYHg/wW7z6nw3-ETvO_sIDiwFl_DmLt0tSozVZPlz0Q9arJU",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attVtZZbo6Mx4bOKq",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/zzsite_BiUjvwS2HjzUepg/0ruTiYhl0iSO8L7TQe6VGOIqTAVk87MiiN0KlQShS0PDMtDtHga9WI-i27YmeGNZ3QFxvs-dB3MXfEDNCMo60AvCehatiEBAikvxNEK5JMMrEKlMVpFo5FLSLRtdckLitCy3yI_FaGvIHGhot4tbLJ_g0Ih-VqDkAIqPqFaq-tzRcmxnZAH6EhYrGpLHKXnkYbTMECZ5M_Fj1GQOTJtEow/UWYZSQ_7ip98-jjpNBqPhEdGBmrFRou5s48mgmwnM4g",
+          "filename": "17-klipsch-cornwall-sold-ready-photos-1.png",
+          "size": 21482,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/cmnStHHngiOummGlhpMUBg/eCk9kTwc3DfpQf30nUAySZhei7k5bTx5O2ZKYIvRpkdVTq6l8DHoxnbcqVy1q74TQZXzFGzYF7G2D_3ePilPtolRqhz7L29nye4DUm4-vd2_9kVsaB_jEEOFDm2d_6I3yw0YI2EDyXZ-Hoge82yLUQ/jBMT-P7kop-p0hvofe51WTFTzcNTmEKC07Ai82NJFfQ",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/OzWwh_ydTSGXnUZcxDOglw/v7Fj2ehF-mIZVVxvX9F2-JDr0qr7PuKQhJRb6wOU6ZATcwZ4jM36aACW9XAjo_m-5w5vwO7iItefQK3V3oTzEsHKl8XfqWlyAUXbeNtedNDMTXw7SDzjSfoa4AZ3iILTPWQFW-7xnc9samOmXEQFdA/TLvJpRb1dcxkHv7bZJ4yqHDkvLmcmY3AyAvBdNSlUC4",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/kkrx1cHDVG20gIoKtEzT-g/mtGgnf73Gf0oc6CimGwrqsxoqe1ptqA1mjYi1oOJ_OCX8az7tec0rC5X1L8f8BYBDADpKOiSqfZafzsfbI3wblKvupUmjFTJOMQRUluM0M3Mlsym1j5Koadp5r0hetxzepFzRHokdUBBBb11VItejA/Cv7qURRgDeJBAJcknUDJeURLvTGN5YHU6JlxsFkgorA",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attFjeDcbBXz1ocDm",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/jBEeLMGyQTFNzpE_suprDQ/c__8meLePkzWA1I9wFZWU_PlTDLta0w6TS3wUs3QXDQKdzR793dECwTqOmzLvPPlAp__511HcemBksY1BhHJz_8aVa3By2yyxFQD6wIPza1pLlO117_yXZGaxVfJXVK6RVElfBHJs2_DBfF-U-7YI5G-FFEhuA_01B2xuikineF_tyS-vZeGxU5k6GHctN0Cn3NA8kSJE6kVoKseTrRirA/Hgbu0I_cCJjsJWYxWiZ2dfW5Syvcb1zPOPlappGRznI",
+          "filename": "17-klipsch-cornwall-sold-ready-photos-2.png",
+          "size": 21619,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/UWB538GSsuVY7CetunA_jw/RmesxOdd3R4zjLvkLNDGle5TkkWcdZE168xYrZEtuzifMkNE-_Ex7og6vPTD-ap3-OaKiJdPSMAdTiDafNMgxfB68BwJGnj3DCPaAwTISQT1gt3UODGpcCRmo0cvncF_AKb69tVDAru0DaC3BjMHLg/XSCZpbn58gTZ3KAYBth6Uuu7WMswiMxxKXNmTrpgLeM",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/VCbSvg4chWfohqMVZ9Zq3g/vixr4IYCmIGEMA8yOfVgip3fQuaw0GxSksN0sxM0CxT_hY4pb9mZZLb1n62ljIcCeNwqGRZ92FRjvYDIWlG0dNKsnAnuwebJqraNidtqUlaB3WfG9Bte8NCn2CWHdrfV55uLOBkOnfmoTy2VW11QIw/FGblbFTfXdgQQFHZZBozaNgmtNkpJvTW0sV2ocjukJU",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/1oLNvjgtn7xGlpIQXXK13g/7dc7JajnJDYMmwiEs-BLq6zGfsSOVEeJ0djwvCs8h8JMFLBL-uvMqx30zxhIlhZ36_6gmn7mo0uUsn5pCltww8b6XnaDqHHKX50yUyakTgHGmIRUUqI5-biwKW3TrV3ZzqnhGZ2KS8ElRQj_gajbXQ/3UqzooT-Xi1uNEtgbeegOObmt9-HP_GBAHxCMypRCHs",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attAyUpLD2gi9q0os",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Kf0hS8635L4SOnGJvjjGCQ/vZEdQPdGJ39zLYVW9mDutzIbklw_nr8debEKp7fP5nQnN098sQh2R5lt6TJ_EYVnOk7sJE21vlo8aGzCJjR3HSfEieZzKiT5JzG93Fdxe_4cTkEd9W_sPRMSVdeYSUpIdjzXKN8t7ihIlc0FpaJPmlnV9am2bribKLlDheF4AqcjRQpk9IwH5iDD5Bn9MwU32IfWMUxxgTEhEVuLZt7hiw/oR1T_X_Op4dTVlX8pj5Y2iW1vAgL9YYtCMtx3gGMR_E",
+          "filename": "17-klipsch-cornwall-sold-ready-photos-3.png",
+          "size": 21708,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/8QI8e0gA-OqEuNahPScpDw/OTH9njgdht-AfwqdSUfaAYCWB2kYryThRJt1ZK7Nah98VWRf_R-9Q4Vhg73hKaqwvrBhAQvAgNAfqgH3NavHubtOExx1D4T740T1a7DWGHFm2u1Y_DUAKLKOJakGMCxta0aODrLLqcwft1TACtx3hg/GUiMngVfa5usv1u-HDb-dJsGnq5kwhvh8KhjpU7m4UY",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/MQDCGUTzE9HTyw0nWAYTog/7_h4G25HdeuIW7zyCTL8XNDJq3FuFA1KnO-78V5ypnSVV9R_hW41GNC7_WI1k2Qgln2GAxTA-Z00yKmmmEOq3Bdnwf3Z1loWcsWAWkLr7mhLbsvdHkd9BPJJeUlpKjsF1TD2LnL2fiHHKKlM0FK3YA/Ggz0x5I_qFU_K5GO-ty3Pjk4mCsSd5hPPwQUtaCCAY8",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/roS2Onx5WyE6s5tydWf3IQ/-hG9TpP1QzlJlqSxhQ3r4GS4msIDFxKsgVJE41l9eMMEu6f4yu1kHh7uJ2A5YJp8KvT3SQU6qh5F_XQjZnKgdX5pNNV_IoaFenQy8ioVAHk7Q-CcD87tS47EfbkBj2UthTzJ4sHMeZOknlBFisnHBg/2MQB55eOgPxPjOqq763f2zSUuNn6OskOKlIoyb329ng",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        }
+      ],
+      "Sold Ready To Ship At": "2026-05-18T09:00:00.000Z",
+      "Testing Signed By": "Tina Testing",
+      "Shopify Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Klipsch Cornwall Sold Ready sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-15T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-15T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-17",
+      "Ebay Listing Format": "Fixed Price",
+      "Testing Time": 5400,
+      "Shopify Price": 2400,
+      "Item Title": "Klipsch Cornwall Sold Ready",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Klipsch Cornwall Sold Ready captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Perry Photos",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-17"
+      },
+      "Ebay Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Klipsch Cornwall Sold Ready sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Lana Listing",
+      "Cost": 1200,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-14T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0017",
+      "Ebay Categories": [
+        "Vintage Audio"
+      ],
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-19",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Klipsch Cornwall Sold Ready. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-18",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-17",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-15T12:00:00.000Z",
+      "Workflow Status": "Sold - Ready to Ship",
+      "Make": "Klipsch",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Sold and waiting to ship.",
+      "Accepted At": "2026-05-14T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Sold Ready To Ship",
+      "Confirmed Grand Total": 2400,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Ebay Price": 2400,
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Klipsch Cornwall Sold Ready sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Workflow Image Metadata JSON": "[{\"attachmentId\":\"att-sample-workflow-testing-17-1\",\"url\":\"https://placehold.co/1600x1200/png?text=17-klipsch-cornwall-sold-ready-testing-bench\",\"filename\":\"17-klipsch-cornwall-sold-ready-testing-1.png\",\"alt\":\"Klipsch Cornwall Sold Ready testing sample image 1\",\"sortOrder\":1,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-17-2\",\"url\":\"https://placehold.co/1600x1200/png?text=17-klipsch-cornwall-sold-ready-testing-rear\",\"filename\":\"17-klipsch-cornwall-sold-ready-testing-2.png\",\"alt\":\"Klipsch Cornwall Sold Ready testing sample image 2\",\"sortOrder\":2,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-17-3\",\"url\":\"https://placehold.co/1600x1200/png?text=17-klipsch-cornwall-sold-ready-testing-detail\",\"filename\":\"17-klipsch-cornwall-sold-ready-testing-3.png\",\"alt\":\"Klipsch Cornwall Sold Ready testing sample image 3\",\"sortOrder\":3,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-photos-17-1\",\"url\":\"https://placehold.co/1600x1200/png?text=17-klipsch-cornwall-sold-ready-photo-front\",\"filename\":\"17-klipsch-cornwall-sold-ready-photos-1.png\",\"alt\":\"Klipsch Cornwall Sold Ready photos sample image 1\",\"sortOrder\":1,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-17-2\",\"url\":\"https://placehold.co/1600x1200/png?text=17-klipsch-cornwall-sold-ready-photo-rear\",\"filename\":\"17-klipsch-cornwall-sold-ready-photos-2.png\",\"alt\":\"Klipsch Cornwall Sold Ready photos sample image 2\",\"sortOrder\":2,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-17-3\",\"url\":\"https://placehold.co/1600x1200/png?text=17-klipsch-cornwall-sold-ready-photo-detail\",\"filename\":\"17-klipsch-cornwall-sold-ready-photos-3.png\",\"alt\":\"Klipsch Cornwall Sold Ready photos sample image 3\",\"sortOrder\":3,\"sourceStage\":\"photos\",\"includedInListing\":true}]",
+      "Processing Signed At": "2026-05-14T16:00:00.000Z",
+      "Ebay Quantity": 1,
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Klipsch Cornwall Sold Ready cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "TRUE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Iris Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-15T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Sold-ready coverage.",
+      "Model": "Cornwall Sold Ready",
+      "Accepted By": "Paula Purchasing",
+      "Tested": "2026-05-19",
+      "Awaiting Pre-Listing Review At": "2026-05-15T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Listed At": "2026-05-16T10:00:00.000Z",
+      "Offer Amount": 2400,
+      "Submission Group ID": "sample-workflow-group-17",
+      "Component Type": [
+        "Speakers"
+      ],
+      "Shopify Tags": [
+        "Klipsch",
+        "Speakers",
+        "[WORKFLOW_QUEUE_SAMPLE_DATA]"
+      ],
+      "Shopify Approved": "TRUE"
+    }
+  },
+  {
+    "id": "receF21tiOq7kO0av",
+    "createdTime": "2026-05-28T04:24:16.000Z",
+    "fields": {
+      "Customer Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported light cosmetic wear with one notable finish mark documented at intake.",
+      "Shopify Type": "Cassette Deck",
+      "Paid Amount": 740,
+      "Images": [
+        {
+          "id": "att9WGrX4ZKfC6BbZ",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/n2zq7JSDx9CLKUQu7qS_fA/ShgzW6iYpmGX8EE-zvSEWviEx6k2b3FDoUZwpOfQX6GsFTmEan3yKjW3mRckRyYUsIpgj_wSCehGoOSso2D_CESHmI0TXGIiK0HSJkko8NywG2BRAV2hgWE_P1mKnkioUJzt1RHzW7XB-i9DfHo2TgrO_gulZBJtOUZOS6p-eolh-PKh_12CfKYsKbdcCF6-rHF8v27AbAbNjjzZB1z3XQ/8XIriPjSN3xcUzZvwf0HdOwIDhvTsypm_EHXcOG-wmE",
+          "filename": "18-tandberg-3014a-shipped-testing-1.png",
+          "size": 22859,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Gd6mHA6ke0SZj_0mkOM7qQ/0Tz-hhmS4FY7TrRv9A1R6kNs3jysNBN3wNlpzpvqMPIAtGV2UXqEIuFdCcBkr2_8o98-LX3yk1k2jFpnQvnA1ZhQOJtJKfBZyoBDifW_flOcx3X6r-XULgJQlZudHQ09Gcoksz90UfaM260NjS0lSA/PeNwcNG0myXKnILUbuI2UOoHvyRQoiAkcz6wcWovOa4",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/SGYO2kN_YkgX2s5xJZ-BtQ/XXcKQF22y6IQ6VJRh35j3VxgFQ6Qvhd2IDedYxsmGaJfNDCcPxRHycpvxDu0JfRJmabId9eln2IDXC89WKhKjH6-9GpSRhh313T8tBhs-noK4CW-t3HY2F8XuGd73dfs-iwwVBK-MnWSw_bEHRiiWQ/jmxWzjk3nK2xTCCFebfCzXHf9v2LwX-bz5-uDpl9cXA",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/zo8fL8uJT3hYYhNR6RoFDA/df7n9ZlK85LjjcK7crn06-9JuyYQekoT71PRq1NIvAFFYoj8ova7YFG46wHvaYK4C3Sr47A4euyEwgLH4VP3A6QTQWF8-bSu6hDJLKbmvJg_EwpwJxDQybgbJycsCbTKwmMu4Hca_eKXOZM1eO9Pmg/kbZHkybMwLzPyEw2JpIUuCPqpAkoWKP6Zv7Q8vt5FSw",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attXC8CCO8CxftfPZ",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/u41yV4kzrgEzjKO11jgEkQ/FDLKmr6GnH_wniLUcXfblyRX8AowCRN_PaDE8BrzCnnoy_fKxP4kp7fkM7nBbHtECwTxgP4wNi-w5uosL4byV28FgZGS9B0ecJPrmvmfKSryP_WE0oiyUfGdRusOTvkg0BvyiPj63DQdBhG60O_H5Z1d1XrI4OWSOW7E94zM25WJvlbbUP2Sj4te5Ga_L6l-lBFSAnquPjoRvCnVwFJ-MQ/CM0n1KLRmzYnvKV5hBnbECGE3ApK-fREEGyA6vkkS-g",
+          "filename": "18-tandberg-3014a-shipped-testing-2.png",
+          "size": 22753,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/UvhQi9IW96QX9mc3XThZIQ/V6-YcDkFsTVkog6UAmJw0hPvZIO5Z5IuAVtKiGe_UpTvASD_DvkywjRg6vuEet5AcukmhxEgxzlocNSMFDZsr3IJpMM00DowIjAibShOi_avDqSdYXmgLfpLzh4z1FFj7OUeuK7G0ivcvHosGP7GBg/zq58j9N38eQJNBlHlrkCTxcCR_5m-gfSO1uWdS7NcqU",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/xh6iDcyA-_GbMkvKzws0ZQ/qLsCQhGOXPirUVypMhSRv4SXGzwk9Q88YN25U8DwNH-_cawp5aVEbaUXRMbaKSrhbf8EEiE6LbHZtSA7CnWAR2Q-8wmTOkB3n4OG1a_V8mrA_YtTWnpf9sQXWt5yhqW6IFNOZjPt2PKypo-zzOQ3RQ/EPUGxqHoAwWwzxVV5p-pJTWGvZAkwDdbKeHcRoAlFP8",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Rpj8HKJl1XFc0_6wM8bbog/2YPmfTqn42hsLiHNRUuF6xPHgM7juIvrZrK5oBYye6iO1J9c-HAmu7Cx_u7bNBxzg3GslDLrKjH7qVRQeCZTfWnX3VEgWYE5ypDN8UWeXDjftpzzEmCQyQc5hRvRG-YSXUF1CMaWHzxvUShku3fGkw/TQSArlECshofC4ZK0g5lQKQyUeQMd4-8qYL20O-LLRA",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "att3FA5UH6cF7jEM1",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/25uAZi5KaYZtWcPk7OSlGg/lQRLWgmYNlERn_UMzzwNOOaCL8v5jJ96XZRhZdfwyEqN9TAw_ngdowjF8stJlN2uqTbD2I-jhFDDXGwQesTeHh4nWvr66TG9sBIPfRbMRL7Cbbav-BfoOtwwtnXOLXwO60Tc00n6aupD5CgZvqRoR4OZFqfKfPIArVyOzdtgt9uXkjVDVDWe4POQFWzf8-h8P_nxlWXWArxgmg7H_5f5FQ/7dHZNSWNS1i7E47GS62Q_lcNQcxNNo6gjOqqQrJwxHM",
+          "filename": "18-tandberg-3014a-shipped-testing-3.png",
+          "size": 22821,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/tddFzCf0nk2mx20HZZg44Q/ivgJ9wkm-nXqBgWfPHxl26sSFvQ71wJFcIYMWAFoDu83sNfbPK2fxjjWpbx9Ud6JCmE4Joj9W-dspZODXHXYPTP1CwL6vMrwec1jVlACnx_6xE_aoXpiMPBf-8lbAaYd8KQ-azq8dhChlwrjyWsVZg/GzeCjnyWJN77wU8bphpuQb0vYz2lQwikEpq-fgZEjG0",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Qp_xraa4KIW1iYS1jjpFow/e7v6nF3gy6o6D8gtjsKz0Q-AovwF9naOvJSa0d_RBJj4EkK3IUihbxMcR6WieG42zFb3EGaO60Y0rR_3d-CcNq5BRjlkvJex_-EhssK01ruWxROPpNlpF-A93CE3FkQYLZV1WvLtX9tc82ROgug1Xg/UQPGp7KJ9dFJ8p5UE_bjaXm8hhGX9WkzC_C4Q0SpU4Y",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/jDLJTkFw5Th_BNNQkPRN9w/df0w_KX5nn89V3vkykkM7SxRdm0_g0iQdn5lmXMS9gdO6UHkPgOUUVMOgipb4rRafPf08pC9_ZHFlogZ21Qrtj_q9qTNMuCJAje1G5VCODjGqDDjVwjmSC0kx1T-5xGgBYreyBTGNmsMEgUe4EeRlg/pCZeXpX85Ha7RQeAsLbqy-coprToF_XJ5ju8YOZEKD8",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "atthREYyfiUI2hA15",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/4_HaSWW4gtYbN8kvE_kzdg/Ii_ZS1DZdL_HibEmwlLTzmvVn3v6u_8D-0LZS5Q_B9Djgz6ybYli0-1Jawi6qsdd-CSEv9PBVCxOL2XifVBZGKNhaov7gwhyaeSp04Vr636ThzWuhIeEHEffQC4N3Q9dnGjWdsly6ZnF6dErWTVYrKQUF2u7-r03hjtO-xBSE4ClLwT_gFeno3XH95-gfAZ0/T-CzE2Wa5t0nFBHlAjRT_q2BVDA4GtMJsbLxv_-H85k",
+          "filename": "18-tandberg-3014a-shipped-photos-1.png",
+          "size": 22552,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/wN6IUeOPaeFcvGtkrS_zAQ/zKsnc9dPUe1Rju2nk_5E4EmsVkIMClPdlIaZuYnn4qWyGWCldnVys6WR3yCBo-JVplALH0nLVhbQH4xe-ZBOiMKH7cZoJpI5AAghbXFhN0KyKv6hfo9v-lAC1tZBJIjZC48H21J4L8KiovvJGz9hjw/fxO2OsUrbuzr9NQLQ7c_uhI1ZPTMymV85Uc-SS2QM18",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/Q12zJiZyl_VT6MrZw-fanw/z_LhZ1Fc_AoQbxenwtS73FAuM3RcU9mNbFxe-oWBiinPAebk5m8rphpwPnsrSiK-nDlUNcIyOIoJCO2oU0_Z1dCPfwz-zQcqpw-ljfNbsdjO2NIBU_8Xs20eGLfVwZauGa2kC5jLpUfhgbXi4Qubxg/-IojzBM4aNzTdFqKDm7yOPLvmdNLjsZpLFYkO2surYQ",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/SKc8n833ahauYC5fmOfaVQ/MEFAuZgXGl--8PctXFa3Mt01g8Yk7-nYrgXwMXe2mYmvwpvu-dYsHOg-B7aOOgAoangpcQQ_kwHwwRpAy0seBukW3UA_oRoQRPdGsdyac4huGAUojT5lFff9_UVb6nnzaGS37DCBjbWGCL9dJlRxdA/gGuWEmViDYB-3qbStGIGmqK6TWZvE3O_UejxNwVQvtc",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attBDcWIKakU8T93C",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/IX-aSFdSiZgXNxfSKylHNA/f_I2d8ZoOCqtI91eA5TXBTyXuWqNjKiMZUAPQ4v6kHJNTwolBV6i7Jnkn8vJeTTuKylX2PEhQoRoQMpZXbXfWlPc5q-QAzwr9-wYMzCa31S4SeqE-29DkXSM3AyL2tUCmcfdg_YeiC3DCYeyjzK4y1dIsD3BdONCY-E9qKMWTubHTVNXLRmMAP1EdoE0Etqi/CtmgxXvL4gQsFvA3udD3Iv-YcDPZmgpQ98Xfwabv-EA",
+          "filename": "18-tandberg-3014a-shipped-photos-2.png",
+          "size": 22455,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/7kHUnjo0Pe6rFLXfqW0u1A/jYq-jQ8pqpxwN8jce-Es5HEHJ2F2AIF0pZwSeC3L_0tOYpDf8FUqp9gtuBOi_tQ67vU89NaMBXNf-07HUOda-b9KNURziT8_IQgaD0NUQPJ_vp3hQtaky2vYeVQVTKJpz_HtXWb2eB-WzEGw_3BaUw/_TlQ9PM2Ypd6aDHhil9DYkEVm17WLTk_dclqw99QB1I",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/mti8gFlhDlAItjJifXAKqA/3PVakuAnSv5xHVbWPgaetZ_N1s47zyV_YvAD7tEvpVLyTY9af36QnSlTF-s0C31IO56yiP5DcIKJez5VQ4x3e1CnnX-kBh226nz-QliKWsxuZYW3WOmMnuHZU-15OwMuoX_Ao6GmmCAFEvZI6JkdjA/QWsaUfV5fsp4e6AjiABk-cnCCj9KNM3rFMw2Ixe5bPU",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/irwAOTb1DLUPU_g_qLu_Mw/MHR68bAWP1oCp8l6AbuqpAlMGHYLEMmIGly1GM79pIXxFH9BaBRysOGGxkRnrdaaIlBv1yZZEv6Vo8pz9A1icgc_RmXj18XhsIv075wxOjTBZ343C-idIz2siMIlgxVzeP6culhUj1lZ3cgAe-mCtw/3IO9iGpGABGZjQWOuLCxQkzEPUmAjx_gZoNL1LMg75I",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        },
+        {
+          "id": "attoIXX0ygBeAdjDo",
+          "width": 1600,
+          "height": 1200,
+          "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/0ZOzAsSSlzUJ944FMlKzfA/J1jwLRohyDzWbZYB4-QdBml6tqtZ6pkqap6Ag_L3veOvbLB1G2sfgl26-n-e84D_Ui1saNBg_GAKSG1qQ3C08KC3xYJ-NeCydI1VfIRbkp5EeqzewApsh9DZYzTVRODnPqJlCIucGoW0zixoH0dJU3WJkdC0Xl51qjD7vLelP-lUQKtg_RVJK8lqqsVMuAKw/37eave01Y_etI2aV5TWAl4GRgCyOsOJlNC0ac0d5s8g",
+          "filename": "18-tandberg-3014a-shipped-photos-3.png",
+          "size": 22588,
+          "type": "image/png",
+          "thumbnails": {
+            "small": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/7LF-ACRWm9g8qdXZTriD6w/UqrIxNvX6wovD3VJjevQRyU6nTBIwmRt7JF0Jlv8EvIL0NpR28pzxMHlgyc5K__fgW_82NlAg0gN33ImUaCa7MJhorZ7i7uGiRGrOtHh01dp3OSbW7h_CVVTcTJ1UBz4r4urRrlk5PwD2xdUis6WgQ/bpwdczZ-OyOyorGs5-u-inzB-oQOt6LoLrveO0x07js",
+              "width": 48,
+              "height": 36
+            },
+            "large": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/2KEBREPKB9sxmd8Tpz4vFQ/9eEAwdTGIw1zwLg6N15d25Yky9DISWSeZBWVTe_yYt5Ig2oclKcYOcGVELnTfV2-tn8sETtG243V6MR1tMXZj-tY__5ErE39lX2nqHL501-HtxSz9XlH9zWHgCe6vtSMfTkXbNP5irlAB0sfWEGM-Q/T3m8i6ak3agcFvvTc5_fIHBQXnDminIGOypr1Hsuq6o",
+              "width": 683,
+              "height": 512
+            },
+            "full": {
+              "url": "https://v5.airtableusercontent.com/v3/u/53/53/1779955200000/rmpRcGk06X6S0ZZc8A068Q/REpb_wNmn6jHTqb7VGib-ESBwCgMdLQ1AXuE1c6VGqowFE4gwWFP0yTP3O4Rh_F62k3OgOzal5Hv6NnKIKo0BDXE_T4ybzwAXfeAVFSZwYHQHCWSs1RklX9L52ajAzQ-8b5E1QCn94FNoYdPC9zD1Q/vpQ-UhUJCYEUbYiqqL1ywEqk_zsk-BNr7PxNgBeo4uw",
+              "width": 1600,
+              "height": 1200
+            }
+          }
+        }
+      ],
+      "Sold Ready To Ship At": "2026-05-18T09:00:00.000Z",
+      "Testing Signed By": "Tina Testing",
+      "Shipped At": "2026-05-19T14:00:00.000Z",
+      "Shopify Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Tandberg 3014A Shipped sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Testing Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Minor cosmetic wear documented during bench evaluation.",
+      "Manual": [
+        "Yes"
+      ],
+      "Approved For Publish At": "2026-05-16T15:00:00.000Z",
+      "Service Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Controls cleaned, switches exercised, and sample preventative service documented for workflow coverage.",
+      "Pre-Listing Reviewed At": "2026-05-16T15:00:00.000Z",
+      "Pick Up ID": "sample-workflow-pickup-18",
+      "Ebay Listing Format": "Fixed Price",
+      "Testing Time": 5400,
+      "Shopify Price": 1300,
+      "Item Title": "Tandberg 3014A Shipped",
+      "Photography Cosmetic Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Cosmetic review for Tandberg 3014A Shipped captured with clear front, rear, side, and detail-image callouts.",
+      "Photography Signed By": "Perry Photos",
+      "Workflow Owner": "Wes Workflow",
+      "SKU": {
+        "text": "SAMPLE-WORKFLOW-QUEUE-18"
+      },
+      "Ebay Body (HTML)": "<p>[WORKFLOW_QUEUE_SAMPLE_DATA] Tandberg 3014A Shipped sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.</p>",
+      "Shipping Weight": "42",
+      "Pre-Listing Reviewed By": "Lana Listing",
+      "Cost": 740,
+      "Acquired From": "Local Seller Trade-In",
+      "Item Zip Code": 11205,
+      "Workflow Owner Assigned At": "2026-05-15T14:00:00.000Z",
+      "Serial Number": "SAMPLE-SN-0018",
+      "Ebay Categories": [
+        "Vintage Audio"
+      ],
+      "Additional Items": "[WORKFLOW_QUEUE_SAMPLE_DATA] Power cable, shelf card, and documented included accessories.",
+      "Shipping Method": [
+        "FedEx Ground"
+      ],
+      "Photo'd": "2026-05-20",
+      "Status": "Photo'd",
+      "Testing Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Bench-tested Tandberg 3014A Shipped. Core functions verified, inputs exercised, and workflow sample notes captured for the testing stage.",
+      "Arrival Date": "2026-05-19",
+      "SKU Legacy Backup": "SAMPLE-WORKFLOW-QUEUE-18",
+      "Qualification Complete": true,
+      "Photography Signed At": "2026-05-16T12:00:00.000Z",
+      "Workflow Status": "Shipped",
+      "Make": "Tandberg",
+      "Workflow Source": "Manual Entry",
+      "Qualification Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Completed shipped state sample.",
+      "Accepted At": "2026-05-15T14:00:00.000Z",
+      "Template Name": "[WORKFLOW_QUEUE_SAMPLE_DATA] Shipped",
+      "Confirmed Grand Total": 1300,
+      "Power Cable": [
+        "Yes"
+      ],
+      "Ebay Price": 1300,
+      "Original Box": [
+        "No"
+      ],
+      "Customer Submitted Photos Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer supplied reference photos before handoff into the workflow.",
+      "Allocation Mode": "Equal Split",
+      "Ebay Handling Time Days": 3,
+      "Description": "[WORKFLOW_QUEUE_SAMPLE\\_DATA] Tandberg 3014A Shipped sample listing copy with stage-appropriate notes, included accessories, and cosmetic context for workflow QA.\n",
+      "Audiogon Rating": [
+        "8"
+      ],
+      "Workflow Image Metadata JSON": "[{\"attachmentId\":\"att-sample-workflow-testing-18-1\",\"url\":\"https://placehold.co/1600x1200/png?text=18-tandberg-3014a-shipped-testing-bench\",\"filename\":\"18-tandberg-3014a-shipped-testing-1.png\",\"alt\":\"Tandberg 3014A Shipped testing sample image 1\",\"sortOrder\":1,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-18-2\",\"url\":\"https://placehold.co/1600x1200/png?text=18-tandberg-3014a-shipped-testing-rear\",\"filename\":\"18-tandberg-3014a-shipped-testing-2.png\",\"alt\":\"Tandberg 3014A Shipped testing sample image 2\",\"sortOrder\":2,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-testing-18-3\",\"url\":\"https://placehold.co/1600x1200/png?text=18-tandberg-3014a-shipped-testing-detail\",\"filename\":\"18-tandberg-3014a-shipped-testing-3.png\",\"alt\":\"Tandberg 3014A Shipped testing sample image 3\",\"sortOrder\":3,\"sourceStage\":\"testing\",\"includedInListing\":false},{\"attachmentId\":\"att-sample-workflow-photos-18-1\",\"url\":\"https://placehold.co/1600x1200/png?text=18-tandberg-3014a-shipped-photo-front\",\"filename\":\"18-tandberg-3014a-shipped-photos-1.png\",\"alt\":\"Tandberg 3014A Shipped photos sample image 1\",\"sortOrder\":1,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-18-2\",\"url\":\"https://placehold.co/1600x1200/png?text=18-tandberg-3014a-shipped-photo-rear\",\"filename\":\"18-tandberg-3014a-shipped-photos-2.png\",\"alt\":\"Tandberg 3014A Shipped photos sample image 2\",\"sortOrder\":2,\"sourceStage\":\"photos\",\"includedInListing\":true},{\"attachmentId\":\"att-sample-workflow-photos-18-3\",\"url\":\"https://placehold.co/1600x1200/png?text=18-tandberg-3014a-shipped-photo-detail\",\"filename\":\"18-tandberg-3014a-shipped-photos-3.png\",\"alt\":\"Tandberg 3014A Shipped photos sample image 3\",\"sortOrder\":3,\"sourceStage\":\"photos\",\"includedInListing\":true}]",
+      "Processing Signed At": "2026-05-15T16:00:00.000Z",
+      "Ebay Quantity": 1,
+      "Inventory Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Tandberg 3014A Shipped cleared intake with documented condition notes, included accessories, and purchase context for downstream workflow handling.",
+      "Ebay Approved": "TRUE",
+      "Voltage": "120V",
+      "Customer Functional Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Customer reported unit powers on and passes basic functional checks.",
+      "Processing Signed By": "Iris Intake",
+      "Customer Inclusion Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Intake includes the accessories documented for workflow sample coverage.",
+      "Testing Signed At": "2026-05-16T10:00:00.000Z",
+      "Remote": [
+        "No"
+      ],
+      "Allocation Notes": "[WORKFLOW_QUEUE_SAMPLE_DATA] Shipped coverage.",
+      "Model": "3014A Shipped",
+      "Accepted By": "Paula Purchasing",
+      "Tested": "2026-05-20",
+      "Awaiting Pre-Listing Review At": "2026-05-16T12:00:00.000Z",
+      "Service Time": 1800,
+      "Shipping Dims": "22x19x11",
+      "Listed At": "2026-05-17T10:00:00.000Z",
+      "Offer Amount": 1300,
+      "Submission Group ID": "sample-workflow-group-18",
+      "Component Type": [
+        "Cassette Deck"
+      ],
+      "Shopify Tags": [
+        "Tandberg",
+        "Cassette Deck",
+        "[WORKFLOW_QUEUE_SAMPLE_DATA]"
+      ],
+      "Shopify Approved": "TRUE"
+    }
+  }
+]

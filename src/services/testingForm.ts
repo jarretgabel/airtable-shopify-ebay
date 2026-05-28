@@ -312,15 +312,17 @@ function buildStageContext(record: AirtableRecord): TestingFormStageContext {
         nowIso: new Date().toISOString(),
       })
     : parsedImageMetadata;
-  const existingAttachments = filterWorkflowAttachmentsByStage(
-    allAttachments,
-    imageMetadata,
-    'testing',
-  );
+  const existingAttachments = imageMetadata.length > 0
+    ? filterWorkflowAttachmentsByStage(
+      allAttachments,
+      imageMetadata,
+      'testing',
+    )
+    : [];
 
   return {
     existingAttachments: existingAttachments.length > 0 ? existingAttachments : buildContextAttachmentsFromStageMetadata(imageMetadata, 'testing'),
-    referenceAttachments: parsedImageMetadata.length === 0 ? allAttachments : [],
+    referenceAttachments: [],
     imageMetadata,
   };
 }

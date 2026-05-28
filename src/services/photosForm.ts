@@ -68,7 +68,8 @@ export interface PhotosFormStageContext {
   testingNotes: string;
   testingCosmeticNotes: string;
   existingAttachments: PhotosFormContextAttachment[];
-  referenceAttachments: PhotosFormContextAttachment[];
+  intakeReferenceAttachments: PhotosFormContextAttachment[];
+  testingReferenceAttachments: PhotosFormContextAttachment[];
   imageMetadata: WorkflowImageMetadataRecord[];
 }
 
@@ -270,7 +271,16 @@ async function syncWorkflowImageMetadataForRecord(params: {
 }
 
 async function loadConfiguredPhotosRecord(recordId: string): Promise<{ source: PhotosFormRecordSource; record: AirtableRecord }> {
-  const workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
+  let workflowRecord: AirtableRecord;
+
+  try {
+    workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
+  } catch (error) {
+    const nextError = new Error('This workflow record could not be found in the current Airtable workflow table. If sample data was reseeded, reopen the item from the workflow queue to use its current record URL.') as Error & { cause?: unknown };
+    nextError.cause = error;
+    throw nextError;
+  }
+
   assertApprovedPhotosWorkflowRecord(workflowRecord);
   return { source: 'used-gear-workflow', record: workflowRecord };
 }
@@ -304,6 +314,19 @@ function extractAttachments(value: unknown): PhotosFormContextAttachment[] {
   });
 }
 
+function isAttachmentLinkedToMetadata(
+  attachment: PhotosFormContextAttachment,
+  metadata: WorkflowImageMetadataRecord[],
+): boolean {
+  return metadata.some((record) => {
+    if (attachment.id && record.attachmentId) {
+      return attachment.id === record.attachmentId;
+    }
+
+    return Boolean(attachment.url && record.url && attachment.url === record.url);
+  });
+}
+
 function buildCustomerReference(record: AirtableRecord): PhotosFormCustomerReference {
   return {
     cosmeticNotes: extractInventoryScalarValue(record.fields['Customer Cosmetic Notes']),
@@ -319,19 +342,35 @@ function buildStageContext(record: AirtableRecord): PhotosFormStageContext {
     : [];
   const allAttachments = extractAttachments(record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME]);
   const parsedImageMetadata = parseWorkflowImageMetadata(record.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME]);
+  const attachmentsForMetadataMerge = parsedImageMetadata.length > 0
+    ? allAttachments
+      .filter((attachment) => isAttachmentLinkedToMetadata(attachment, parsedImageMetadata))
+      .map((attachment) => ({
+        id: attachment.id,
+        url: attachment.url,
+        filename: attachment.filename,
+      }))
+    : attachments;
   const imageMetadata = parsedImageMetadata.length > 0 && attachments.length > 0
     ? mergeWorkflowImageMetadata({
-        attachments,
+        attachments: attachmentsForMetadataMerge,
         existingMetadata: parsedImageMetadata,
         sourceStage: 'photos',
         nowIso: new Date().toISOString(),
       })
     : parsedImageMetadata;
-  const existingAttachments = filterWorkflowAttachmentsByStage(
-    allAttachments,
-    imageMetadata,
-    'photos',
-  );
+  const existingAttachments = imageMetadata.length > 0
+    ? filterWorkflowAttachmentsByStage(
+      allAttachments,
+      imageMetadata,
+      'photos',
+    )
+    : [];
+  const intakeReferenceAttachments = filterWorkflowImageMetadataByStage(imageMetadata, 'intake').map((reference) => ({
+    id: reference.attachmentId,
+    url: reference.url,
+    filename: reference.filename,
+  }));
   const testingReferenceAttachments = filterWorkflowImageMetadataByStage(imageMetadata, 'testing').map((reference) => ({
     id: reference.attachmentId,
     url: reference.url,
@@ -343,7 +382,8 @@ function buildStageContext(record: AirtableRecord): PhotosFormStageContext {
     testingNotes: extractInventoryScalarValue(record.fields['Testing Notes']),
     testingCosmeticNotes: extractInventoryScalarValue(record.fields[TESTING_COSMETIC_NOTES_FIELD_NAME] ?? record.fields[LEGACY_TESTING_COSMETIC_NOTES_FIELD_NAME]),
     existingAttachments: existingAttachments.length > 0 ? existingAttachments : buildContextAttachmentsFromMetadata(imageMetadata),
-    referenceAttachments: testingReferenceAttachments.length > 0 ? testingReferenceAttachments : (parsedImageMetadata.length === 0 ? allAttachments : []),
+    intakeReferenceAttachments,
+    testingReferenceAttachments,
     imageMetadata,
   };
 }
@@ -377,10 +417,13 @@ export async function loadPhotosFormValues(recordId: string): Promise<PhotosForm
     };
   } catch (error) {
     logServiceError('photosForm', `Error loading Photos form values for ${recordId}`, error);
+    const userMessage = error instanceof Error && error.message.includes('could not be found in the current Airtable workflow table')
+      ? error.message
+      : 'Unable to load the selected inventory record into Photos.';
     const serviceError = createServiceError({
       service: 'photosForm',
       code: 'PHOTOS_FORM_LOAD_FAILED',
-      userMessage: 'Unable to load the selected inventory record into Photos.',
+      userMessage,
       retryable: true,
       cause: error,
     });

@@ -90,7 +90,8 @@ describe('PhotosFormTab', () => {
         testingNotes: 'Passed tuner test.',
         testingCosmeticNotes: 'Light wear on the top cover edges.',
         existingAttachments: [{ id: 'att-1', url: 'https://example.com/hero.jpg', filename: 'hero.jpg' }],
-        referenceAttachments: [{ id: 'att-2', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' }],
+        intakeReferenceAttachments: [{ id: 'att-3', url: 'https://drive.google.com/uc?export=view&id=file-intake', filename: 'intake.jpg' }],
+        testingReferenceAttachments: [{ id: 'att-2', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' }],
         imageMetadata: [
           {
             attachmentId: 'att-1',
@@ -178,8 +179,12 @@ describe('PhotosFormTab', () => {
     expect(screen.getByText('Capture the serial plate and top cover.')).toBeInTheDocument();
     expect(screen.getByText('Testing Cosmetic Notes')).toBeInTheDocument();
     expect(screen.getByText('Light wear on the top cover edges.')).toBeInTheDocument();
-    expect(screen.getByText('Previous Step Images')).toBeInTheDocument();
+    expect(screen.getByText('Intake Images')).toBeInTheDocument();
+    expect(screen.getByText('Testing Images')).toBeInTheDocument();
+    expect(screen.getByText('intake.jpg')).toBeInTheDocument();
     expect(screen.getByText('testing.jpg')).toBeInTheDocument();
+    expect(screen.queryByText('Customer Intake Reference')).not.toBeInTheDocument();
+    expect(screen.getByAltText('intake.jpg')).toHaveAttribute('src', 'https://drive.google.com/thumbnail?id=file-intake&sz=w1600');
 
     fireEvent.click(screen.getByRole('button', { name: 'Photos Complete' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Yes, complete photography' }));
@@ -271,7 +276,8 @@ describe('PhotosFormTab', () => {
         testingNotes: 'Passed tuner test.',
         testingCosmeticNotes: 'Light wear on the top cover edges.',
         existingAttachments: [],
-        referenceAttachments: [],
+        intakeReferenceAttachments: [],
+        testingReferenceAttachments: [],
         imageMetadata: [],
       },
       values: {

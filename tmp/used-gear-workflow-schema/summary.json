@@ -1,16 +1,9 @@
 {
-  "renamedCount": 1,
-  "renamedFields": [
-    {
-      "id": "fld5HseHNQSaCZuRY",
-      "from": "Cosmetic Condition Notes",
-      "to": "Testing Cosmetic Notes",
-      "type": "multilineText"
-    }
-  ],
+  "renamedCount": 0,
+  "renamedFields": [],
   "createdCount": 1,
   "createdFieldNames": [
-    "Photography Cosmetic Notes"
+    "Workflow Image Metadata JSON"
   ],
-  "approvedWorkflowFieldCount": 47
+  "approvedWorkflowFieldCount": 48
 }

@@ -1,0 +1,936 @@
+{
+  "updatedAt": "2026-05-28T04:58:12.347Z",
+  "baseId": "apprsAm2FOohEmL2u",
+  "tableId": "tbl0K0nFQL64jQMx8",
+  "updatedCount": 8,
+  "results": [
+    {
+      "recordId": "rec9QQkOryhKitjDW",
+      "itemTitle": "Thorens TD-160 Shopify Live",
+      "workflowStatus": "Listed, Shopify",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-13",
+      "folderId": "11qLUNAjZ_CUEatS8aoQD3q_PAiWOme5O",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=11L579bHLvJTMB4XxM5kvivgQO8ktmMMt",
+        "https://drive.google.com/uc?export=view&id=1iFbDdVt4DJWHS9pBWbULhU9iO_2cGY0Y",
+        "https://drive.google.com/uc?export=view&id=1uTHZQGepHyDxQp-73bi-8tk83TUZfPf0"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1osivb9WmkVKJTRXrg8aQK8m9KRk4-w6E",
+        "https://drive.google.com/uc?export=view&id=1C90LpbaLiMUgv-qi8Kwk_rD85SEkhpL5",
+        "https://drive.google.com/uc?export=view&id=1H2UGthjPr3P0T7cZah2Y9ZkDq8a5SMaZ"
+      ],
+      "deletedLegacyFiles": [
+        {
+          "id": "1j7YZqhirlPc4vHCzbqamu8yfdXXmFMYH",
+          "name": "photos--sample-workflow-queue-13-thorens-td-160-shopify-live-photos-3-processed.svg"
+        },
+        {
+          "id": "1inF0ItHrZ-zUhXo3npskjnHPmj0rquAL",
+          "name": "photos--sample-workflow-queue-13-thorens-td-160-shopify-live-photos-3-original--original.svg"
+        },
+        {
+          "id": "1IznFhh-uFF82kx6-FzHPAFiAfI28DznO",
+          "name": "photos--sample-workflow-queue-13-thorens-td-160-shopify-live-photos-2-processed.svg"
+        },
+        {
+          "id": "1rRDMMJ5FCb5LJe_WviyXbmv3Fts3TG4U",
+          "name": "photos--sample-workflow-queue-13-thorens-td-160-shopify-live-photos-2-original--original.svg"
+        },
+        {
+          "id": "1U6iROyZKlC5uBLBLYE_eMSE3G5BkmLpm",
+          "name": "photos--sample-workflow-queue-13-thorens-td-160-shopify-live-photos-1-processed.svg"
+        },
+        {
+          "id": "1KK0J5Rk3UzwjA7YTiYemEvVSVR2kcRCQ",
+          "name": "photos--sample-workflow-queue-13-thorens-td-160-shopify-live-photos-1-original--original.svg"
+        },
+        {
+          "id": "1I7OzovDK-s4_URBsOaMXCF65sl-qUgkb",
+          "name": "testing--sample-workflow-queue-13-thorens-td-160-shopify-live-testing-3-processed.svg"
+        },
+        {
+          "id": "1NQVktNG67dK2ilPbzsQ6DcQgly5w_6pW",
+          "name": "testing--sample-workflow-queue-13-thorens-td-160-shopify-live-testing-3-original--original.svg"
+        },
+        {
+          "id": "1kmMCjCDKbfrgr_sWmTmrutH8J2Z1_FHl",
+          "name": "testing--sample-workflow-queue-13-thorens-td-160-shopify-live-testing-2-processed.svg"
+        },
+        {
+          "id": "1sqpKf8JRsUZ10I_vG6XeguY6uLaRJJPf",
+          "name": "testing--sample-workflow-queue-13-thorens-td-160-shopify-live-testing-2-original--original.svg"
+        },
+        {
+          "id": "1xoyQPHk-NLIGgKh5NcDJ9a5knkJoJV7L",
+          "name": "testing--sample-workflow-queue-13-thorens-td-160-shopify-live-testing-1-processed.svg"
+        },
+        {
+          "id": "1jJyiZ9BHWxARXP7j34sH766Q8uiHnI0i",
+          "name": "testing--sample-workflow-queue-13-thorens-td-160-shopify-live-testing-1-original--original.svg"
+        },
+        {
+          "id": "16EVgjEi4tgUToOE8L7IHUxXzwIShCCwH",
+          "name": "photos--sample-workflow-queue-13-thorens-td-160-shopify-live-photos-3-processed.png"
+        },
+        {
+          "id": "19wW-XOLM4PNu7zSS1ockvyTo70nwMsgj",
+          "name": "photos--sample-workflow-queue-13-thorens-td-160-shopify-live-photos-3-original--original.png"
+        },
+        {
+          "id": "12Kqkgfsadmd-boY_w6iE5pen5Ni2zQ8f",
+          "name": "photos--sample-workflow-queue-13-thorens-td-160-shopify-live-photos-2-processed.png"
+        },
+        {
+          "id": "1IaixghtV-DktQ3D-UZMrDDaY9iGLjm8t",
+          "name": "photos--sample-workflow-queue-13-thorens-td-160-shopify-live-photos-2-original--original.png"
+        },
+        {
+          "id": "1NhNBobFgIs00aHDnt3SICvGeyYiub-X7",
+          "name": "photos--sample-workflow-queue-13-thorens-td-160-shopify-live-photos-1-processed.png"
+        },
+        {
+          "id": "1wAl_lYznwkY958MFP_P22sQ31OLS1EVN",
+          "name": "photos--sample-workflow-queue-13-thorens-td-160-shopify-live-photos-1-original--original.png"
+        },
+        {
+          "id": "1jRMddq5hyPKEJUuPHR0CUATmh5vimE9x",
+          "name": "testing--sample-workflow-queue-13-thorens-td-160-shopify-live-testing-3-processed.png"
+        },
+        {
+          "id": "169QO14L515zyJzJYV5yesfq0mdM6eLq3",
+          "name": "testing--sample-workflow-queue-13-thorens-td-160-shopify-live-testing-3-original--original.png"
+        },
+        {
+          "id": "1qpidLNLgY5Y6Vm5Wfd6nViw3To2ra0rS",
+          "name": "testing--sample-workflow-queue-13-thorens-td-160-shopify-live-testing-2-processed.png"
+        },
+        {
+          "id": "1JlHqnVvKvkDDcWEen2HmGaxNbPS8Z9cx",
+          "name": "testing--sample-workflow-queue-13-thorens-td-160-shopify-live-testing-2-original--original.png"
+        },
+        {
+          "id": "1bukEB9tKLuYV2Fv2RScSrwThc-RQFKJd",
+          "name": "testing--sample-workflow-queue-13-thorens-td-160-shopify-live-testing-1-processed.png"
+        },
+        {
+          "id": "1SpOgQGgAUOMz2nAbup6rG5qQo-21tVeY",
+          "name": "testing--sample-workflow-queue-13-thorens-td-160-shopify-live-testing-1-original--original.png"
+        }
+      ],
+      "updatedRecordId": "rec9QQkOryhKitjDW"
+    },
+    {
+      "recordId": "reccW7p0t2qZX5Gi5",
+      "itemTitle": "JBL L100 Stale eBay",
+      "workflowStatus": "Stale Listing, eBay",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-16",
+      "folderId": "1mkMZxWMz-uqWt-zcN15FLP5TcC3FpaRL",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1IEZwNZyU1GcoXPtJZddS0XR2gulWGkX6",
+        "https://drive.google.com/uc?export=view&id=10oE6ug7UQGh2VtaLY1UwuU-EJe5X9-sX",
+        "https://drive.google.com/uc?export=view&id=1c25ojubPNIfw96qEmGw3TWJcXEThpm33"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=13NvJa1NgLExsQPyOjr3puEZ7qMx7E1Wq",
+        "https://drive.google.com/uc?export=view&id=1HHcMUxvx6iR2rlYoYat_qCHn9_iwysHE",
+        "https://drive.google.com/uc?export=view&id=10McgRNLlUVF2X7iE2fsDToZ7PNaX507V"
+      ],
+      "deletedLegacyFiles": [
+        {
+          "id": "1R5LK0YX75QO0pXMtOf0NLSTJ-5fpMvex",
+          "name": "photos--sample-workflow-queue-16-jbl-l100-stale-ebay-photos-3-processed.svg"
+        },
+        {
+          "id": "1iPgsuWTIuFivP3qfujE0ngMFcI_Aw8LV",
+          "name": "photos--sample-workflow-queue-16-jbl-l100-stale-ebay-photos-3-original--original.svg"
+        },
+        {
+          "id": "1Y_ZKQjAN7LgVf8muXzvFm_4OsZHEAHTr",
+          "name": "photos--sample-workflow-queue-16-jbl-l100-stale-ebay-photos-2-processed.svg"
+        },
+        {
+          "id": "12zRp2G707Mved32jFPZSldEeNbFiXV2i",
+          "name": "photos--sample-workflow-queue-16-jbl-l100-stale-ebay-photos-2-original--original.svg"
+        },
+        {
+          "id": "1NuTgllAI8bED5wibWmjCD9lYB86UVb24",
+          "name": "photos--sample-workflow-queue-16-jbl-l100-stale-ebay-photos-1-processed.svg"
+        },
+        {
+          "id": "1sHhOi99eJLaBZchyHdvielRpoAeChuxB",
+          "name": "photos--sample-workflow-queue-16-jbl-l100-stale-ebay-photos-1-original--original.svg"
+        },
+        {
+          "id": "1ieVK7LVLSuI35piqiboMZpf0VtjIoqMj",
+          "name": "testing--sample-workflow-queue-16-jbl-l100-stale-ebay-testing-3-processed.svg"
+        },
+        {
+          "id": "1FyTk3rHOYNgosvyhJfDekr7QghfaiGpQ",
+          "name": "testing--sample-workflow-queue-16-jbl-l100-stale-ebay-testing-3-original--original.svg"
+        },
+        {
+          "id": "1Y0pJs3WqQCBmcTwADjFbA2URjIWsFjnx",
+          "name": "testing--sample-workflow-queue-16-jbl-l100-stale-ebay-testing-2-processed.svg"
+        },
+        {
+          "id": "1hZPNLuvt68KzRMDFjJhVB7vIjy9CTLnM",
+          "name": "testing--sample-workflow-queue-16-jbl-l100-stale-ebay-testing-2-original--original.svg"
+        },
+        {
+          "id": "1yqSsxXUwkBKNfLj-189rAmiVPODWUPS6",
+          "name": "testing--sample-workflow-queue-16-jbl-l100-stale-ebay-testing-1-processed.svg"
+        },
+        {
+          "id": "1yfel4D1wG7t8Q5cdPPv63GsQexYoSvd9",
+          "name": "testing--sample-workflow-queue-16-jbl-l100-stale-ebay-testing-1-original--original.svg"
+        },
+        {
+          "id": "1ehNtaoCboI37YoNN24edeFsSvts3z4Mr",
+          "name": "photos--sample-workflow-queue-16-jbl-l100-stale-ebay-photos-3-processed.png"
+        },
+        {
+          "id": "1P7AQ0-fml6WHIprQ2b6KLU-tVLgXGFbD",
+          "name": "photos--sample-workflow-queue-16-jbl-l100-stale-ebay-photos-3-original--original.png"
+        },
+        {
+          "id": "1bYCamzdDvpyOMvNO-Vq5YNE6gvqw-2C8",
+          "name": "photos--sample-workflow-queue-16-jbl-l100-stale-ebay-photos-2-processed.png"
+        },
+        {
+          "id": "1TclEFfKcz9E1IjmmP6GqK_Wa5kh3zXTj",
+          "name": "photos--sample-workflow-queue-16-jbl-l100-stale-ebay-photos-2-original--original.png"
+        },
+        {
+          "id": "1mPulDfoqscUK73fLOEgcURKO9YxVjsJc",
+          "name": "photos--sample-workflow-queue-16-jbl-l100-stale-ebay-photos-1-processed.png"
+        },
+        {
+          "id": "1ileH84mT3K1_G1M9xh75vsx96FTmYmmz",
+          "name": "photos--sample-workflow-queue-16-jbl-l100-stale-ebay-photos-1-original--original.png"
+        },
+        {
+          "id": "1rAMq3KMtaBeygNnMMbVlYdrmCGlRP0ui",
+          "name": "testing--sample-workflow-queue-16-jbl-l100-stale-ebay-testing-3-processed.png"
+        },
+        {
+          "id": "1eSd5LcN0eXjCf7QTnRzpbfvtnpg5bqxc",
+          "name": "testing--sample-workflow-queue-16-jbl-l100-stale-ebay-testing-3-original--original.png"
+        },
+        {
+          "id": "1FX1aFUIGpgoqQOSh-VczOG_la7sylF95",
+          "name": "testing--sample-workflow-queue-16-jbl-l100-stale-ebay-testing-2-processed.png"
+        },
+        {
+          "id": "1aoVj4qKzu5aQRWWu0huMbwmU0LlkUfqm",
+          "name": "testing--sample-workflow-queue-16-jbl-l100-stale-ebay-testing-2-original--original.png"
+        },
+        {
+          "id": "1yloS0OARDhP5tDGWLLHnWuUSTIrWwfEi",
+          "name": "testing--sample-workflow-queue-16-jbl-l100-stale-ebay-testing-1-processed.png"
+        },
+        {
+          "id": "1oRRMhk9a284_pcfC2RoXnRTnv4x17ZGP",
+          "name": "testing--sample-workflow-queue-16-jbl-l100-stale-ebay-testing-1-original--original.png"
+        }
+      ],
+      "updatedRecordId": "reccW7p0t2qZX5Gi5"
+    },
+    {
+      "recordId": "reccg0SUYaislHDJt",
+      "itemTitle": "Marantz 2230 eBay Live",
+      "workflowStatus": "Listed, eBay",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-14",
+      "folderId": "1XnF_YGfc5AyCGaodGNCJs4yGWwULo0TG",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1lPkpAtMdjt2Z2PN3XAi0LxEYa1bIqlCP",
+        "https://drive.google.com/uc?export=view&id=1IGWKuZB6e9TYISVjEYMV5tWRWav8y7sw",
+        "https://drive.google.com/uc?export=view&id=1jgxDMnzqPEcvhNpSuziiaTdnhyFHPAN8"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1QzrQMK98kMI8uSbW0RTda6CVeDe1fWKB",
+        "https://drive.google.com/uc?export=view&id=1Nqvwmg2B_uD40Z8NsmJG3DQjF8VhRMfd",
+        "https://drive.google.com/uc?export=view&id=1OucCsNAf8Qo2iUgj15v3lyRxFmH-vGWL"
+      ],
+      "deletedLegacyFiles": [
+        {
+          "id": "1KR9VGMaPGxZVsDRLZtZdpE3I-S35GaGn",
+          "name": "photos--sample-workflow-queue-14-marantz-2230-ebay-live-photos-3-processed.svg"
+        },
+        {
+          "id": "1SXJYlXvqHZVj3wxNUh2j-QAtnllYkb4_",
+          "name": "photos--sample-workflow-queue-14-marantz-2230-ebay-live-photos-3-original--original.svg"
+        },
+        {
+          "id": "1dD-5hkAo9z3zEXFPZsMsA8Uh3seq79uv",
+          "name": "photos--sample-workflow-queue-14-marantz-2230-ebay-live-photos-2-processed.svg"
+        },
+        {
+          "id": "1DkZ8fTH9cXpY6Ey92vBpeiO1GERFkNTf",
+          "name": "photos--sample-workflow-queue-14-marantz-2230-ebay-live-photos-2-original--original.svg"
+        },
+        {
+          "id": "1oU6KhNVTwDkO4Qp6QTxej1hEHt77LTAy",
+          "name": "photos--sample-workflow-queue-14-marantz-2230-ebay-live-photos-1-processed.svg"
+        },
+        {
+          "id": "16WC8oVI3JX0zA13FfdPy8OLrEbo-mgJs",
+          "name": "photos--sample-workflow-queue-14-marantz-2230-ebay-live-photos-1-original--original.svg"
+        },
+        {
+          "id": "1D0w9QFkO0Ih62YF-1qXe4lQ_CAJmbKmV",
+          "name": "testing--sample-workflow-queue-14-marantz-2230-ebay-live-testing-3-processed.svg"
+        },
+        {
+          "id": "1XL_tKGJHU9rlMwzelDXXLJdMVoPvy8Gn",
+          "name": "testing--sample-workflow-queue-14-marantz-2230-ebay-live-testing-3-original--original.svg"
+        },
+        {
+          "id": "1jhM2nRPMguNCJgRcHhPLVHXcRkq99Rxa",
+          "name": "testing--sample-workflow-queue-14-marantz-2230-ebay-live-testing-2-processed.svg"
+        },
+        {
+          "id": "1mIRBFM32Rb3wEyEFsaYf82DIk16Y0APu",
+          "name": "testing--sample-workflow-queue-14-marantz-2230-ebay-live-testing-2-original--original.svg"
+        },
+        {
+          "id": "1FRZbGPzisBE6aoyB09PBB5ACkeYWFvzq",
+          "name": "testing--sample-workflow-queue-14-marantz-2230-ebay-live-testing-1-processed.svg"
+        },
+        {
+          "id": "1cYihJPYYHBiTniFkjegFPwCe9Ql5JXps",
+          "name": "testing--sample-workflow-queue-14-marantz-2230-ebay-live-testing-1-original--original.svg"
+        },
+        {
+          "id": "1j98YI_kcUKhdmsPVkduPUygiaS2B8Bgy",
+          "name": "photos--sample-workflow-queue-14-marantz-2230-ebay-live-photos-3-processed.png"
+        },
+        {
+          "id": "18woD96DKCsn5_uO_Q28XOLmFL7rpmsKn",
+          "name": "photos--sample-workflow-queue-14-marantz-2230-ebay-live-photos-3-original--original.png"
+        },
+        {
+          "id": "1g8n3dlZPubFn-BReDnk3iLKRbnGXKl_Z",
+          "name": "photos--sample-workflow-queue-14-marantz-2230-ebay-live-photos-2-processed.png"
+        },
+        {
+          "id": "1tQyvJSSV-_xdaGFMXIs_uQU2bw_Dywyl",
+          "name": "photos--sample-workflow-queue-14-marantz-2230-ebay-live-photos-2-original--original.png"
+        },
+        {
+          "id": "1xfqr-BAmZdZpCDGminbk1W5ge6vTR3HH",
+          "name": "photos--sample-workflow-queue-14-marantz-2230-ebay-live-photos-1-processed.png"
+        },
+        {
+          "id": "1h98tvkIV0C7c9UvAQ6EevqA6qiwQEV0V",
+          "name": "photos--sample-workflow-queue-14-marantz-2230-ebay-live-photos-1-original--original.png"
+        },
+        {
+          "id": "1aAH7teFMUzXuBo9fuVjE0zI-3puQlpwt",
+          "name": "testing--sample-workflow-queue-14-marantz-2230-ebay-live-testing-3-processed.png"
+        },
+        {
+          "id": "1erpihAavCzwhh3zsZYzHmg2CKxPKYUDL",
+          "name": "testing--sample-workflow-queue-14-marantz-2230-ebay-live-testing-3-original--original.png"
+        },
+        {
+          "id": "1LyHJqGsrMOBLy7moKUytPf1OBdO5OxrK",
+          "name": "testing--sample-workflow-queue-14-marantz-2230-ebay-live-testing-2-processed.png"
+        },
+        {
+          "id": "1wf1dU5rNPJJ7_qkpujaYPXDQVwAW4Peq",
+          "name": "testing--sample-workflow-queue-14-marantz-2230-ebay-live-testing-2-original--original.png"
+        },
+        {
+          "id": "1IKBcQ1rtdbCduoe9F-IrL9Z4FkYI2mNS",
+          "name": "testing--sample-workflow-queue-14-marantz-2230-ebay-live-testing-1-processed.png"
+        },
+        {
+          "id": "1PJ-zdu3XegD6Q4G4NWlg019RY0xNx5Vu",
+          "name": "testing--sample-workflow-queue-14-marantz-2230-ebay-live-testing-1-original--original.png"
+        }
+      ],
+      "updatedRecordId": "reccg0SUYaislHDJt"
+    },
+    {
+      "recordId": "receF21tiOq7kO0av",
+      "itemTitle": "Tandberg 3014A Shipped",
+      "workflowStatus": "Shipped",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-18",
+      "folderId": "1X1G3dGnCYs5N_26REBHztjAxQy1nLM8u",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1VYPoASeWOPP7iH1c5boJWOXs6GuStWnI",
+        "https://drive.google.com/uc?export=view&id=1GSq9HFvheXboZulsK2IsRFipiRZlk3NG",
+        "https://drive.google.com/uc?export=view&id=1dGY22DiukjMe3KlUsoxR8mLiAO5CdfUv"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1_-a6nxtDU6GIBDhIbeJz7V_38ndi0lNm",
+        "https://drive.google.com/uc?export=view&id=1w2iiAEYBqdQIjCPUF0FL5b-kUB1ZPJEt",
+        "https://drive.google.com/uc?export=view&id=1EBO4vdC49H9kez6RK_Q73kgqhZkNPtXr"
+      ],
+      "deletedLegacyFiles": [
+        {
+          "id": "1Oe5_kDMMzKjLSFeft9o8vai46Bqf76VQ",
+          "name": "photos--sample-workflow-queue-18-tandberg-3014a-shipped-photos-3-processed.svg"
+        },
+        {
+          "id": "1OWJNziBJqM7BBaAZwW0tp1L9JVrhRVtj",
+          "name": "photos--sample-workflow-queue-18-tandberg-3014a-shipped-photos-3-original--original.svg"
+        },
+        {
+          "id": "1Nj5N6mKVq6QjJJ3jfeP1ldakwpFZc4sO",
+          "name": "photos--sample-workflow-queue-18-tandberg-3014a-shipped-photos-2-processed.svg"
+        },
+        {
+          "id": "1rdMs0e3tkOpoWuF17YlbcOPQ2A0Lo-tl",
+          "name": "photos--sample-workflow-queue-18-tandberg-3014a-shipped-photos-2-original--original.svg"
+        },
+        {
+          "id": "1HS6VljZHuG88lHINHFTY9yl6YxKzaiNz",
+          "name": "photos--sample-workflow-queue-18-tandberg-3014a-shipped-photos-1-processed.svg"
+        },
+        {
+          "id": "1-aL8J0s945k0Dm-8zElgJZyWVAV0PgvR",
+          "name": "photos--sample-workflow-queue-18-tandberg-3014a-shipped-photos-1-original--original.svg"
+        },
+        {
+          "id": "1ywAwHJl5efcr2oriKoLT1DtT2-e1uVGj",
+          "name": "testing--sample-workflow-queue-18-tandberg-3014a-shipped-testing-3-processed.svg"
+        },
+        {
+          "id": "1Ks0Sp4mF7FlFXlzf9nB0mNHBZQunqukm",
+          "name": "testing--sample-workflow-queue-18-tandberg-3014a-shipped-testing-3-original--original.svg"
+        },
+        {
+          "id": "1Ym1N24pe1BwDoy197ktkNYvWfiO94uTC",
+          "name": "testing--sample-workflow-queue-18-tandberg-3014a-shipped-testing-2-processed.svg"
+        },
+        {
+          "id": "1i0_qWasspCZBx2ndfh4JYvysVuWaSmes",
+          "name": "testing--sample-workflow-queue-18-tandberg-3014a-shipped-testing-2-original--original.svg"
+        },
+        {
+          "id": "17OiQ_ju_GD3QVjnWyjBEQaRSAsMF3qBZ",
+          "name": "testing--sample-workflow-queue-18-tandberg-3014a-shipped-testing-1-processed.svg"
+        },
+        {
+          "id": "15uPm9z7bYueNx2lb8QoDghJyS91u4Zl5",
+          "name": "testing--sample-workflow-queue-18-tandberg-3014a-shipped-testing-1-original--original.svg"
+        },
+        {
+          "id": "1kgJcNAYxBYAl1uDfY0HLMu6KIYRqlDIX",
+          "name": "photos--sample-workflow-queue-18-tandberg-3014a-shipped-photos-3-processed.png"
+        },
+        {
+          "id": "1Bn768FtEeLjlYgn4bmQSBHVoT9O0SRgg",
+          "name": "photos--sample-workflow-queue-18-tandberg-3014a-shipped-photos-3-original--original.png"
+        },
+        {
+          "id": "1xoG1CFm3683N33ywXoISSfNb0tlWkV16",
+          "name": "photos--sample-workflow-queue-18-tandberg-3014a-shipped-photos-2-processed.png"
+        },
+        {
+          "id": "17k6une574xdqIHr2ieSHc3OvFggPofPb",
+          "name": "photos--sample-workflow-queue-18-tandberg-3014a-shipped-photos-2-original--original.png"
+        },
+        {
+          "id": "1YCScuqpbw6skYz3O9IUdQA7Vg7tg9wq2",
+          "name": "photos--sample-workflow-queue-18-tandberg-3014a-shipped-photos-1-processed.png"
+        },
+        {
+          "id": "1F_rOj74OqSWoGlVXJsw6UVM7yFDMx6vO",
+          "name": "photos--sample-workflow-queue-18-tandberg-3014a-shipped-photos-1-original--original.png"
+        },
+        {
+          "id": "1sO4AumNhCVoRtI7N6P_-MF2zwDtM_kcm",
+          "name": "testing--sample-workflow-queue-18-tandberg-3014a-shipped-testing-3-processed.png"
+        },
+        {
+          "id": "1i9AlgvbrJrMz968cw7AfNHT8tJqWuslM",
+          "name": "testing--sample-workflow-queue-18-tandberg-3014a-shipped-testing-3-original--original.png"
+        },
+        {
+          "id": "1VtfjTu7KBSqB-Z-P_MxBLujPew2UKr_B",
+          "name": "testing--sample-workflow-queue-18-tandberg-3014a-shipped-testing-2-processed.png"
+        },
+        {
+          "id": "169MuZfMdHfKUJIVrLnxoGXLl66ruFuvL",
+          "name": "testing--sample-workflow-queue-18-tandberg-3014a-shipped-testing-2-original--original.png"
+        },
+        {
+          "id": "17LUkPRGGOJhWIsqB5ZS3qVMtrF7MoQkJ",
+          "name": "testing--sample-workflow-queue-18-tandberg-3014a-shipped-testing-1-processed.png"
+        },
+        {
+          "id": "1WgN46mUtrVIta4s8X_Nhc9mK1t8hAWIj",
+          "name": "testing--sample-workflow-queue-18-tandberg-3014a-shipped-testing-1-original--original.png"
+        }
+      ],
+      "updatedRecordId": "receF21tiOq7kO0av"
+    },
+    {
+      "recordId": "reck8bUFT7Ne2qukd",
+      "itemTitle": "Oracle Alexandria Stale Shopify",
+      "workflowStatus": "Stale Listing, Shopify",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-15",
+      "folderId": "1qLxEoOAguwDiMk4aSfStYu_5RUJsrs35",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1nDrTHv3c6uBCl7nXnNbCDl7GfBg9a9ir",
+        "https://drive.google.com/uc?export=view&id=18DHbZF2jg25Zx8E9oFgv6pfPUYHMhjDi",
+        "https://drive.google.com/uc?export=view&id=1wMy3hML58wGlJUsb3s_bqlGWgsaOr7eq"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1UH2TPLBt0rm3OCSogjBbJIk8InM1OiII",
+        "https://drive.google.com/uc?export=view&id=1oJdGPG86aZmq0_wGzHR_LJfL5K3a_eXa",
+        "https://drive.google.com/uc?export=view&id=1kyLu6QVrFU2WTO1Fiq7O9oNXXuMYGmv7"
+      ],
+      "deletedLegacyFiles": [
+        {
+          "id": "1vMJay5azdq1F7_Mr2ld4fcxqUoToB51F",
+          "name": "photos--sample-workflow-queue-15-oracle-alexandria-stale-shopify-photos-3-processed.svg"
+        },
+        {
+          "id": "1vhy5d5kDMawDV9FvU-gH4cxpIZCX0CQe",
+          "name": "photos--sample-workflow-queue-15-oracle-alexandria-stale-shopify-photos-3-original--original.svg"
+        },
+        {
+          "id": "17v4ILqXvy2yr7bA_GL5i-UCoPx0CPCli",
+          "name": "photos--sample-workflow-queue-15-oracle-alexandria-stale-shopify-photos-2-processed.svg"
+        },
+        {
+          "id": "1kfysxJtoeW4e6qy5VvApjngzuAXoLD3V",
+          "name": "photos--sample-workflow-queue-15-oracle-alexandria-stale-shopify-photos-2-original--original.svg"
+        },
+        {
+          "id": "1Hmrdzp7A-tzz-xAGDuwelVD1iQKD8PqL",
+          "name": "photos--sample-workflow-queue-15-oracle-alexandria-stale-shopify-photos-1-processed.svg"
+        },
+        {
+          "id": "13C9Inp8GTZ7Cpd2npaIFK4BvXavx5ZX7",
+          "name": "photos--sample-workflow-queue-15-oracle-alexandria-stale-shopify-photos-1-original--original.svg"
+        },
+        {
+          "id": "1uxJJ2IERF4yikOkpTIwMFrFLUnCjL8eb",
+          "name": "testing--sample-workflow-queue-15-oracle-alexandria-stale-shopify-testing-3-processed.svg"
+        },
+        {
+          "id": "1oLRRmdJQ8940w4szdZHGE1oPzZT9JXQb",
+          "name": "testing--sample-workflow-queue-15-oracle-alexandria-stale-shopify-testing-3-original--original.svg"
+        },
+        {
+          "id": "17SeXFy66kl_OjRKvre2fWbmgMMPdPZK_",
+          "name": "testing--sample-workflow-queue-15-oracle-alexandria-stale-shopify-testing-2-processed.svg"
+        },
+        {
+          "id": "1cCeIsYAWFv-fI4hyQHFHHphn8c05tQBm",
+          "name": "testing--sample-workflow-queue-15-oracle-alexandria-stale-shopify-testing-2-original--original.svg"
+        },
+        {
+          "id": "10taWvovZOuPKepn_6HuZ62DtxRUFidlY",
+          "name": "testing--sample-workflow-queue-15-oracle-alexandria-stale-shopify-testing-1-processed.svg"
+        },
+        {
+          "id": "1E50a5MTPbrhl_IYh40MuxWidRbBvXJxW",
+          "name": "testing--sample-workflow-queue-15-oracle-alexandria-stale-shopify-testing-1-original--original.svg"
+        },
+        {
+          "id": "1pQjn6SrBsCNAtLRgHvKcs_65Tv7aIN85",
+          "name": "photos--sample-workflow-queue-15-oracle-alexandria-stale-shopify-photos-3-processed.png"
+        },
+        {
+          "id": "1QozFsP7jsG_uaxQMv0HLErn1FZ6poBSh",
+          "name": "photos--sample-workflow-queue-15-oracle-alexandria-stale-shopify-photos-3-original--original.png"
+        },
+        {
+          "id": "1iGgU04lnEStYpfXwTyEE3AwqsZpasKN8",
+          "name": "photos--sample-workflow-queue-15-oracle-alexandria-stale-shopify-photos-2-processed.png"
+        },
+        {
+          "id": "1gZSVvMlduEzvOF1JQrfy-qplPPMd-M_v",
+          "name": "photos--sample-workflow-queue-15-oracle-alexandria-stale-shopify-photos-2-original--original.png"
+        },
+        {
+          "id": "1bsEvrf9giS6Ykwoympv81xih3QoyMuvs",
+          "name": "photos--sample-workflow-queue-15-oracle-alexandria-stale-shopify-photos-1-processed.png"
+        },
+        {
+          "id": "1xiKVhCsOSNht2G-1_aeOKp20f7DoaGyw",
+          "name": "photos--sample-workflow-queue-15-oracle-alexandria-stale-shopify-photos-1-original--original.png"
+        },
+        {
+          "id": "1pT-oSH4fhiJ5pnF9Sluw5QRCN8W6t8hE",
+          "name": "testing--sample-workflow-queue-15-oracle-alexandria-stale-shopify-testing-3-processed.png"
+        },
+        {
+          "id": "1cf_Yxr7R2eEVgeC47cwHgZyeYHmemWgV",
+          "name": "testing--sample-workflow-queue-15-oracle-alexandria-stale-shopify-testing-3-original--original.png"
+        },
+        {
+          "id": "1oEx7AXvN7df-eI231CcfbO2hBtr8ZfiN",
+          "name": "testing--sample-workflow-queue-15-oracle-alexandria-stale-shopify-testing-2-processed.png"
+        },
+        {
+          "id": "1PKu2fwaciBTqcs7nHHLtEK_3zX6bbWA6",
+          "name": "testing--sample-workflow-queue-15-oracle-alexandria-stale-shopify-testing-2-original--original.png"
+        },
+        {
+          "id": "1l0XrUW3wVNPyB9W7HDew7F8NYCfS_bFU",
+          "name": "testing--sample-workflow-queue-15-oracle-alexandria-stale-shopify-testing-1-processed.png"
+        },
+        {
+          "id": "1xItD9Q_Mt3Ei9GFefh1uETG4FKlck9w5",
+          "name": "testing--sample-workflow-queue-15-oracle-alexandria-stale-shopify-testing-1-original--original.png"
+        }
+      ],
+      "updatedRecordId": "reck8bUFT7Ne2qukd"
+    },
+    {
+      "recordId": "rect5r3VkSf034NPL",
+      "itemTitle": "Audio Research SP-9 Pre-Listing",
+      "workflowStatus": "Awaiting Pre-Listing Review",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-11",
+      "folderId": "1oF-hfsWo7_m-BmEX5A2vqps_v6EOkLhJ",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1Rj2nCtffhalCR7ad2OQ2M-qx7aGa4ELG",
+        "https://drive.google.com/uc?export=view&id=1MtonPyT9HS9j1wgDwCBOh6nFx3Et0TUJ",
+        "https://drive.google.com/uc?export=view&id=1lJL-dfBLRKbD2HZS0G1Z-1c2I5nGg7Kz"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1C9x_v-Lu4PIQD32LiYJM1XyZzd0zkRGf",
+        "https://drive.google.com/uc?export=view&id=1JZQRZD6E_X7enLgpBj-1IG0mxoCI9cjr",
+        "https://drive.google.com/uc?export=view&id=1OE0I3A0JBNvzjmcKcVMYP2jdfFSS_-3c"
+      ],
+      "deletedLegacyFiles": [
+        {
+          "id": "1COTjVbBapj0XsJjAEPpqenCpw1UwO9nb",
+          "name": "photos--sample-workflow-queue-11-audio-research-sp-9-pre-listing-photos-3-processed.svg"
+        },
+        {
+          "id": "1w9X-8rFUFs_dvrqYK7lOksEq9il_0FKA",
+          "name": "photos--sample-workflow-queue-11-audio-research-sp-9-pre-listing-photos-3-original--original.svg"
+        },
+        {
+          "id": "1sscscxLRdTQMX7JhbDlNVfUXZ3zaGi36",
+          "name": "photos--sample-workflow-queue-11-audio-research-sp-9-pre-listing-photos-2-processed.svg"
+        },
+        {
+          "id": "1bnzlFD72JmDFMj76DXgJI6wPfJqOabMY",
+          "name": "photos--sample-workflow-queue-11-audio-research-sp-9-pre-listing-photos-2-original--original.svg"
+        },
+        {
+          "id": "197Gdw-TwkopbFZFksatt4lAnXUEVJpms",
+          "name": "photos--sample-workflow-queue-11-audio-research-sp-9-pre-listing-photos-1-processed.svg"
+        },
+        {
+          "id": "1sZi3ksNLmL-imf7z0shzutWGopmQ-Omg",
+          "name": "photos--sample-workflow-queue-11-audio-research-sp-9-pre-listing-photos-1-original--original.svg"
+        },
+        {
+          "id": "16ujvZabR5_Tj6ZeXgcen89gw-dIANUeY",
+          "name": "testing--sample-workflow-queue-11-audio-research-sp-9-pre-listing-testing-3-processed.svg"
+        },
+        {
+          "id": "1mj6ehlc4zOW-JJFxgQ56RrPF9hxYTGRf",
+          "name": "testing--sample-workflow-queue-11-audio-research-sp-9-pre-listing-testing-3-original--original.svg"
+        },
+        {
+          "id": "1Ajx5lgBuA84H-EnecO8DQDIhhMw4gOtb",
+          "name": "testing--sample-workflow-queue-11-audio-research-sp-9-pre-listing-testing-2-processed.svg"
+        },
+        {
+          "id": "1Vx8xEkSfVfUYNJnKIGE4f9tH1ocGi7Fx",
+          "name": "testing--sample-workflow-queue-11-audio-research-sp-9-pre-listing-testing-2-original--original.svg"
+        },
+        {
+          "id": "1ubK5Q7W_DlSuM6PVTpxorrjVZ036mJ41",
+          "name": "testing--sample-workflow-queue-11-audio-research-sp-9-pre-listing-testing-1-processed.svg"
+        },
+        {
+          "id": "1CIooKjMLvpRrncnS_DrYEFOTQtTb8pp-",
+          "name": "testing--sample-workflow-queue-11-audio-research-sp-9-pre-listing-testing-1-original--original.svg"
+        },
+        {
+          "id": "1prZlSdvMkqJN_vxleiJroCNBuGIa2ury",
+          "name": "photos--sample-workflow-queue-11-audio-research-sp-9-pre-listing-photos-3-processed.png"
+        },
+        {
+          "id": "1jzQAvNjTvksqjMXJyqBs9HTC73GGHKkZ",
+          "name": "photos--sample-workflow-queue-11-audio-research-sp-9-pre-listing-photos-3-original--original.png"
+        },
+        {
+          "id": "1_BwED2qteGzJWNxmDzLSc1JDq10l3zVf",
+          "name": "photos--sample-workflow-queue-11-audio-research-sp-9-pre-listing-photos-2-processed.png"
+        },
+        {
+          "id": "16sKBnbGY9C-V57zHGHxCtdpWndXh210u",
+          "name": "photos--sample-workflow-queue-11-audio-research-sp-9-pre-listing-photos-2-original--original.png"
+        },
+        {
+          "id": "1DchojfFwRDSxD2N-ryu8B5d7aO9RgVbb",
+          "name": "photos--sample-workflow-queue-11-audio-research-sp-9-pre-listing-photos-1-processed.png"
+        },
+        {
+          "id": "1YMpnkkA13hsqSs_vJQuXrmDI75zktq4C",
+          "name": "photos--sample-workflow-queue-11-audio-research-sp-9-pre-listing-photos-1-original--original.png"
+        },
+        {
+          "id": "1uHuJHyjicHxRkX3LgufkCZjA3UtB2-1B",
+          "name": "testing--sample-workflow-queue-11-audio-research-sp-9-pre-listing-testing-3-processed.png"
+        },
+        {
+          "id": "1UngsUXyhOZgCpi-vfL4TYj5wECf_bHE5",
+          "name": "testing--sample-workflow-queue-11-audio-research-sp-9-pre-listing-testing-3-original--original.png"
+        },
+        {
+          "id": "1p4SlT_H7zJfmg9s3vH5RzMHYZbQ0_6Sp",
+          "name": "testing--sample-workflow-queue-11-audio-research-sp-9-pre-listing-testing-2-processed.png"
+        },
+        {
+          "id": "1EGoSoARXOZ0BgrsxqXynZVZHgXGUznYi",
+          "name": "testing--sample-workflow-queue-11-audio-research-sp-9-pre-listing-testing-2-original--original.png"
+        },
+        {
+          "id": "1pko9vyKdtBng1WM9jm-h1TdT9vizTqkc",
+          "name": "testing--sample-workflow-queue-11-audio-research-sp-9-pre-listing-testing-1-processed.png"
+        },
+        {
+          "id": "1vFg7YvRM8t6zP_07xQSMB2Vcr3VaWYUf",
+          "name": "testing--sample-workflow-queue-11-audio-research-sp-9-pre-listing-testing-1-original--original.png"
+        }
+      ],
+      "updatedRecordId": "rect5r3VkSf034NPL"
+    },
+    {
+      "recordId": "recwz1E6jmEk8tUYb",
+      "itemTitle": "Klipsch Cornwall Sold Ready",
+      "workflowStatus": "Sold - Ready to Ship",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-17",
+      "folderId": "1f-mNXgmpcPLBwNX_lcsZRJGmVvaCZN6U",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1Mb1IgmJ7RLRwkTRIIFKceeSKiU3qtbE3",
+        "https://drive.google.com/uc?export=view&id=1nlM7AMUX3ijeSs0vynofVilehutKwYFe",
+        "https://drive.google.com/uc?export=view&id=1nCSgyx9z4uW-uCKnXnLRcL4nPxytu90a"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1YSQUoSCmglrgscWBbB4ChlHYGFKaHTKG",
+        "https://drive.google.com/uc?export=view&id=1bS9Bw87trUcu33hLkMWnjwQm_4HJd7A3",
+        "https://drive.google.com/uc?export=view&id=1uGmqk0yySJV3xpWCh2V1rKM6yJbk0vAG"
+      ],
+      "deletedLegacyFiles": [
+        {
+          "id": "1Wde_9Be7p_nWvf0m0S1E2GonrRl1O7l9",
+          "name": "photos--sample-workflow-queue-17-klipsch-cornwall-sold-ready-photos-3-processed.svg"
+        },
+        {
+          "id": "1NPrOQIusApysPCbBaLxjmmAWECBOogYc",
+          "name": "photos--sample-workflow-queue-17-klipsch-cornwall-sold-ready-photos-3-original--original.svg"
+        },
+        {
+          "id": "1fsQNIuGMpt0J4tiDC7qdAMBO_OvmdWgP",
+          "name": "photos--sample-workflow-queue-17-klipsch-cornwall-sold-ready-photos-2-processed.svg"
+        },
+        {
+          "id": "1RlMNyAdtxNObj71wSR8F3OSXBxCGCThB",
+          "name": "photos--sample-workflow-queue-17-klipsch-cornwall-sold-ready-photos-2-original--original.svg"
+        },
+        {
+          "id": "1Dc70XnJ-EReuYOdwXXZS1FlIZ82lyeAh",
+          "name": "photos--sample-workflow-queue-17-klipsch-cornwall-sold-ready-photos-1-processed.svg"
+        },
+        {
+          "id": "150uhxoORkL-oVhb6uBAL9fXixMjbf_-v",
+          "name": "photos--sample-workflow-queue-17-klipsch-cornwall-sold-ready-photos-1-original--original.svg"
+        },
+        {
+          "id": "1Oe4IJLnjgfaHYy0V2TwIqBpESHDba6Qr",
+          "name": "testing--sample-workflow-queue-17-klipsch-cornwall-sold-ready-testing-3-processed.svg"
+        },
+        {
+          "id": "1dlY6f91NTgWv_SpMOnAoSTO2FAnBZzPQ",
+          "name": "testing--sample-workflow-queue-17-klipsch-cornwall-sold-ready-testing-3-original--original.svg"
+        },
+        {
+          "id": "1E8fMBcXLnAZdjpUaNxwx0bpu96vbIyUO",
+          "name": "testing--sample-workflow-queue-17-klipsch-cornwall-sold-ready-testing-2-processed.svg"
+        },
+        {
+          "id": "1X63ILDs72JpXDysjI7L81qL8SuPP84eq",
+          "name": "testing--sample-workflow-queue-17-klipsch-cornwall-sold-ready-testing-2-original--original.svg"
+        },
+        {
+          "id": "1xsNsWdjU4Z-sT_ko5Qh_DaKJtmeNfIh8",
+          "name": "testing--sample-workflow-queue-17-klipsch-cornwall-sold-ready-testing-1-processed.svg"
+        },
+        {
+          "id": "1GTDQIKJRb-8iTh8WGAFj_eKZEj1_7xH2",
+          "name": "testing--sample-workflow-queue-17-klipsch-cornwall-sold-ready-testing-1-original--original.svg"
+        },
+        {
+          "id": "1jNlfXMYTLBR-Ze41gugxwbU7uIl3Dia5",
+          "name": "photos--sample-workflow-queue-17-klipsch-cornwall-sold-ready-photos-3-processed.png"
+        },
+        {
+          "id": "1_Gv456zuvlTO4o2sfxu_hRZSVceek6aB",
+          "name": "photos--sample-workflow-queue-17-klipsch-cornwall-sold-ready-photos-3-original--original.png"
+        },
+        {
+          "id": "1CzrN72_sRvcb2Gcj9TQ4lFkglaryJxZa",
+          "name": "photos--sample-workflow-queue-17-klipsch-cornwall-sold-ready-photos-2-processed.png"
+        },
+        {
+          "id": "1Vn5DfIKX3Q3HiKhVjCY8NKgPj5IEzcFK",
+          "name": "photos--sample-workflow-queue-17-klipsch-cornwall-sold-ready-photos-2-original--original.png"
+        },
+        {
+          "id": "1khGFgLOW32RcZmHaOK1OYMQQOpk5i0y8",
+          "name": "photos--sample-workflow-queue-17-klipsch-cornwall-sold-ready-photos-1-processed.png"
+        },
+        {
+          "id": "1gFu1q-wIqPXQdskUaoUqdGzEworQme3U",
+          "name": "photos--sample-workflow-queue-17-klipsch-cornwall-sold-ready-photos-1-original--original.png"
+        },
+        {
+          "id": "1hPXDUBIRx3IVs7Ttm2maTKUMeAQl7xY4",
+          "name": "testing--sample-workflow-queue-17-klipsch-cornwall-sold-ready-testing-3-processed.png"
+        },
+        {
+          "id": "1uJLBXi4wYtoccRtYXRSRF75Fr3kN-wka",
+          "name": "testing--sample-workflow-queue-17-klipsch-cornwall-sold-ready-testing-3-original--original.png"
+        },
+        {
+          "id": "13UDMluGhFzSsGOp_TQcs1JVhx1g3P2sm",
+          "name": "testing--sample-workflow-queue-17-klipsch-cornwall-sold-ready-testing-2-processed.png"
+        },
+        {
+          "id": "1dWHCvu5Eh5aV_hoO3f4W1yEgot1xq_lQ",
+          "name": "testing--sample-workflow-queue-17-klipsch-cornwall-sold-ready-testing-2-original--original.png"
+        },
+        {
+          "id": "16oJ744bsrmEA3um_kqlfBp9Xz62Zfd4B",
+          "name": "testing--sample-workflow-queue-17-klipsch-cornwall-sold-ready-testing-1-processed.png"
+        },
+        {
+          "id": "1WZgmWuvYDc7bSi5nJBQ3qSn5JxjAlDkI",
+          "name": "testing--sample-workflow-queue-17-klipsch-cornwall-sold-ready-testing-1-original--original.png"
+        }
+      ],
+      "updatedRecordId": "recwz1E6jmEk8tUYb"
+    },
+    {
+      "recordId": "reczN4jA3s0hm4lZD",
+      "itemTitle": "Rega Planar 8 Publish Ready",
+      "workflowStatus": "Approved for Publish",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-12",
+      "folderId": "1eSBw_Q7gic0oMUowOGxfN-P_J3h5CuHI",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1QKXc6VlLtAD8I2S6aeTzkuJF8TSqMbSi",
+        "https://drive.google.com/uc?export=view&id=1DDSwG5hAZkmUMtw4GZcWtf15-wBRIbG_",
+        "https://drive.google.com/uc?export=view&id=1NpElG2EcRmXse67nJA1u_Mi5pVUC6KFm"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1svDliAq523Beac1bbAvF3TPbA4D3skNd",
+        "https://drive.google.com/uc?export=view&id=1dv2A5Rq5piGVFyPbt1LJg_O5ITSxUomO",
+        "https://drive.google.com/uc?export=view&id=1-8VSwEK9r2A0dIsW-7nMJQyeKo-Cu226"
+      ],
+      "deletedLegacyFiles": [
+        {
+          "id": "1PkXhPaiK4cdCKLpG8VpTgmOrD8qa5ipf",
+          "name": "photos--sample-workflow-queue-12-rega-planar-8-publish-ready-photos-3-processed.svg"
+        },
+        {
+          "id": "1AzSRqLFkSBzOE3FKuGGyrdNXIhmALYP0",
+          "name": "photos--sample-workflow-queue-12-rega-planar-8-publish-ready-photos-3-original--original.svg"
+        },
+        {
+          "id": "1Phczy-GpwIOuh2Axvtg2d7dGdS8jCLjc",
+          "name": "photos--sample-workflow-queue-12-rega-planar-8-publish-ready-photos-2-processed.svg"
+        },
+        {
+          "id": "142fcgDT9z6k33Kr0HFVmej2gJBN6Kroa",
+          "name": "photos--sample-workflow-queue-12-rega-planar-8-publish-ready-photos-2-original--original.svg"
+        },
+        {
+          "id": "1b0Uej_GtiJVsx_e0MX35FFxCX-7umQd-",
+          "name": "photos--sample-workflow-queue-12-rega-planar-8-publish-ready-photos-1-processed.svg"
+        },
+        {
+          "id": "1lHiRVGZYByr1UL7gNG2derz7tZL1uHCi",
+          "name": "photos--sample-workflow-queue-12-rega-planar-8-publish-ready-photos-1-original--original.svg"
+        },
+        {
+          "id": "10_HGWEEniLi1Lm4tPc0JOY6pZfoPjZiB",
+          "name": "testing--sample-workflow-queue-12-rega-planar-8-publish-ready-testing-3-processed.svg"
+        },
+        {
+          "id": "1M2XuY76oKPJ02WyFm4N4Zn9qEEqVVIAi",
+          "name": "testing--sample-workflow-queue-12-rega-planar-8-publish-ready-testing-3-original--original.svg"
+        },
+        {
+          "id": "1rThBjdLW5I6285OCkH4rqXW1ZmhprcBn",
+          "name": "testing--sample-workflow-queue-12-rega-planar-8-publish-ready-testing-2-processed.svg"
+        },
+        {
+          "id": "1E6iy_hTCZjdvKxoRB2NcNuNBReZ5lQSc",
+          "name": "testing--sample-workflow-queue-12-rega-planar-8-publish-ready-testing-2-original--original.svg"
+        },
+        {
+          "id": "1y7_KCbFfUuX0hvscwbfpa_riH75OTiUr",
+          "name": "testing--sample-workflow-queue-12-rega-planar-8-publish-ready-testing-1-processed.svg"
+        },
+        {
+          "id": "1INOmnH0ACmuiFuQwJsM5np7yI-1OVxM-",
+          "name": "testing--sample-workflow-queue-12-rega-planar-8-publish-ready-testing-1-original--original.svg"
+        },
+        {
+          "id": "1lyQFfCZNtYnhbtgEAZViejY_8hStnebI",
+          "name": "photos--sample-workflow-queue-12-rega-planar-8-publish-ready-photos-3-processed.png"
+        },
+        {
+          "id": "1cdXFtiWxvZDCQ4q2fc3XRHGjxoq5Ew4Y",
+          "name": "photos--sample-workflow-queue-12-rega-planar-8-publish-ready-photos-3-original--original.png"
+        },
+        {
+          "id": "1N9sKByGiHhTdl-bZtAghkibZof9817KT",
+          "name": "photos--sample-workflow-queue-12-rega-planar-8-publish-ready-photos-2-processed.png"
+        },
+        {
+          "id": "1iQUNBVsKlJoqPhoESAgT1BEX-Mg8iUcw",
+          "name": "photos--sample-workflow-queue-12-rega-planar-8-publish-ready-photos-2-original--original.png"
+        },
+        {
+          "id": "1o_LfTJR8V7RoH_-Qw8bwauRfZIUYkePN",
+          "name": "photos--sample-workflow-queue-12-rega-planar-8-publish-ready-photos-1-processed.png"
+        },
+        {
+          "id": "1cTQEW8Z74YFvESUCyrtt4dSwYKh8ZmCP",
+          "name": "photos--sample-workflow-queue-12-rega-planar-8-publish-ready-photos-1-original--original.png"
+        },
+        {
+          "id": "1l3R9Aobq-QsZaicA4zCUNHcicUrjdEav",
+          "name": "testing--sample-workflow-queue-12-rega-planar-8-publish-ready-testing-3-processed.png"
+        },
+        {
+          "id": "1VY2bJhx2vujr1LU8iIfjDYFovI1RSY9Z",
+          "name": "testing--sample-workflow-queue-12-rega-planar-8-publish-ready-testing-3-original--original.png"
+        },
+        {
+          "id": "19SCInFGRh933i6ATKkt9Yy8FlzBH03mq",
+          "name": "testing--sample-workflow-queue-12-rega-planar-8-publish-ready-testing-2-processed.png"
+        },
+        {
+          "id": "1ZHGfZXZSlB8CeygfidMd4eJLXXLtYpaR",
+          "name": "testing--sample-workflow-queue-12-rega-planar-8-publish-ready-testing-2-original--original.png"
+        },
+        {
+          "id": "1DTVwV0hzawPt-FzEgsAWLcu44U_r1B3s",
+          "name": "testing--sample-workflow-queue-12-rega-planar-8-publish-ready-testing-1-processed.png"
+        },
+        {
+          "id": "1Z3vRXCTHrEFHubAyHZiVHFE7S1ShFwq4",
+          "name": "testing--sample-workflow-queue-12-rega-planar-8-publish-ready-testing-1-original--original.png"
+        }
+      ],
+      "updatedRecordId": "reczN4jA3s0hm4lZD"
+    }
+  ]
+}

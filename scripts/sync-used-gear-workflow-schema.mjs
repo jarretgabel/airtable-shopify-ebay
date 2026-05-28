@@ -63,6 +63,7 @@ const APPROVED_FIELD_DEFINITIONS = [
   { name: 'Customer Submitted Photos Notes', type: 'multilineText' },
   { name: 'Testing Cosmetic Notes', type: 'multilineText' },
   { name: 'Photography Cosmetic Notes', type: 'multilineText' },
+  { name: 'Workflow Image Metadata JSON', type: 'multilineText' },
   { name: 'Internal Cosmetic Notes', type: 'multilineText' },
   { name: 'Internal Functional Notes', type: 'multilineText' },
   { name: 'Internal Inclusion Notes', type: 'multilineText' },

@@ -55,7 +55,7 @@ function normalizeDriveArchive(body: AttachmentBody): {
   const processedFilename = body.filename?.trim();
   const processedFile = body.file?.trim();
 
-  if (!sku || (stage !== 'testing' && stage !== 'photos') || !originalFilename || !originalFile || !processedFilename || !processedFile) {
+  if (!sku || (stage !== 'intake' && stage !== 'testing' && stage !== 'photos') || !originalFilename || !originalFile || !processedFilename || !processedFile) {
     throw new HttpError(400, 'Invalid Google Drive archive payload', {
       service: 'google-drive',
       code: 'GOOGLE_DRIVE_ARCHIVE_PAYLOAD_INVALID',

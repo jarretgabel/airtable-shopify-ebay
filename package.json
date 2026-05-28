@@ -17,6 +17,7 @@
     "workflow:queue-samples:list": "node scripts/used-gear-workflow-queue-samples.mjs list",
     "workflow:queue-samples:seed": "node scripts/used-gear-workflow-queue-samples.mjs seed",
     "workflow:queue-samples:cleanup": "node scripts/used-gear-workflow-queue-samples.mjs cleanup",
+    "workflow:queue-samples:drive-backfill": "node scripts/backfill-sample-workflow-drive-images.mjs",
     "listings:samples:list": "node scripts/approval-combined-samples.mjs list",
     "listings:samples:seed": "node scripts/approval-combined-samples.mjs seed",
     "listings:samples:cleanup": "node scripts/approval-combined-samples.mjs cleanup",

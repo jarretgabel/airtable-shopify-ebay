@@ -11,6 +11,7 @@ import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
+import { WorkflowReferenceImagesPanel } from '@/components/tabs/WorkflowReferenceImagesPanel';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
   loadUsedGearOperationalRecordContext,
@@ -20,6 +21,10 @@ import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkf
 import { getUsedGearWorkflowPostPublishSnapshot } from '@/services/usedGearWorkflowLifecycle';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 import { buildUsedGearWorkflowTimeline } from '@/services/usedGearWorkflowTimeline';
+import {
+  filterWorkflowImageMetadataByStage,
+  parseWorkflowImageMetadata,
+} from '@/services/workflowImageMetadata';
 
 interface WorkflowSnapshotPageProps {
   recordId: string;
@@ -49,12 +54,14 @@ function SnapshotCard({
   fields,
   actionLabel,
   onAction,
+  children,
 }: {
   sectionId: WorkflowSnapshotSectionKey;
   title: string;
   fields: Array<{ label: string; value: unknown }>;
   actionLabel?: string;
   onAction?: (() => void) | null;
+  children?: React.ReactNode;
 }) {
   return (
     <section id={sectionId} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] scroll-mt-28">
@@ -74,8 +81,42 @@ function SnapshotCard({
           </div>
         ))}
       </dl>
+
+      {children}
     </section>
   );
+}
+
+interface SnapshotReferenceImage {
+  id?: string;
+  url?: string;
+  filename: string;
+}
+
+function buildSnapshotStageImages(record: UsedGearOperationalRecordContext['record']): {
+  testingImages: SnapshotReferenceImage[];
+  photographyImages: SnapshotReferenceImage[];
+} {
+  const parsedMetadata = parseWorkflowImageMetadata(record.fields['Workflow Image Metadata JSON']);
+
+  if (parsedMetadata.length > 0) {
+    return {
+      testingImages: filterWorkflowImageMetadataByStage(parsedMetadata, 'testing').map((image) => ({
+        id: image.attachmentId,
+        url: image.url,
+        filename: image.filename,
+      })),
+      photographyImages: filterWorkflowImageMetadataByStage(parsedMetadata, 'photos').map((image) => ({
+        id: image.attachmentId,
+        url: image.url,
+        filename: image.filename,
+      })),
+    };
+  }
+  return {
+    testingImages: [],
+    photographyImages: [],
+  };
 }
 
 function countFieldItems(value: unknown): string {
@@ -150,6 +191,7 @@ export function WorkflowSnapshotPage({
   const record = context?.record ?? null;
   const workflowSummary = useMemo(() => (record ? buildSnapshotWorkflowSummary(record) : null), [record]);
   const workflowStatus = record ? getUsedGearWorkflowStatus(record.fields) ?? '' : '';
+  const stageImages = useMemo(() => (record ? buildSnapshotStageImages(record) : { testingImages: [], photographyImages: [] }), [record]);
   const postPublishSnapshot = useMemo(() => (record ? getUsedGearWorkflowPostPublishSnapshot(record) : null), [record]);
   const showSpecialistCards = workflowStatus !== 'Pending Review' && workflowStatus !== 'Unqualified';
   const showListingsCard = showSpecialistCards && workflowStatus !== 'Accepted - Awaiting Arrival';
@@ -237,7 +279,13 @@ export function WorkflowSnapshotPage({
                   { label: 'Testing Time', value: record.fields['Testing Time'] },
                   { label: 'Tested', value: record.fields.Tested },
                 ]}
-              />
+              >
+                <WorkflowReferenceImagesPanel
+                  title="Testing Images"
+                  description="Saved testing-stage images appear here for record review and listing handoff context."
+                  images={stageImages.testingImages}
+                />
+              </SnapshotCard>
 
               <SnapshotCard
                 sectionId="photography"
@@ -247,10 +295,21 @@ export function WorkflowSnapshotPage({
                 fields={[
                   { label: 'Photography Cosmetic Notes', value: record.fields['Photography Cosmetic Notes'] },
                   { label: "Photo'd", value: record.fields["Photo'd"] },
-                  { label: 'Images', value: countFieldItems(record.fields.Images) },
+                  { label: 'Images', value: stageImages.photographyImages.length > 0 ? `${stageImages.photographyImages.length} item${stageImages.photographyImages.length === 1 ? '' : 's'}` : countFieldItems(record.fields.Images) },
                   { label: 'Additional Items', value: record.fields['Additional Items'] },
                 ]}
-              />
+              >
+                <WorkflowReferenceImagesPanel
+                  title="Testing Reference Images"
+                  description="These prior-step testing images stay visible here so photography and listing review can compare earlier documentation against final media."
+                  images={stageImages.testingImages}
+                />
+                <WorkflowReferenceImagesPanel
+                  title="Photography Images"
+                  description="Saved photography-stage images appear here as the current listing-media source for this record."
+                  images={stageImages.photographyImages}
+                />
+              </SnapshotCard>
 
               <SnapshotCard
                 sectionId="listings"

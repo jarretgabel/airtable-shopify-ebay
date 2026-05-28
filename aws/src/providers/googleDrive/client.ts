@@ -1,7 +1,7 @@
 import { HttpError } from '../../shared/errors.js';
 import { getOptionalSecret, requireSecret } from '../../shared/secrets.js';
 
-export type WorkflowImageArchiveStage = 'testing' | 'photos';
+export type WorkflowImageArchiveStage = 'intake' | 'testing' | 'photos';
 
 interface GoogleDriveArchiveFilePayload {
   filename: string;

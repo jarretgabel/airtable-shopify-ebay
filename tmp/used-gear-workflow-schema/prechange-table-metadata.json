@@ -96,6 +96,11 @@
             "id": "sel9DUaXHsRQTqXip",
             "name": "Other Consumer Electronics",
             "color": "redLight2"
+          },
+          {
+            "id": "seldzWglYl2tJMUhk",
+            "name": "Vintage Audio",
+            "color": "blueLight2"
           }
         ]
       },
@@ -114,6 +119,11 @@
           {
             "id": "selJgVCPnWaeeyAD8",
             "name": "Auction",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selcHO6pmj0cM48zp",
+            "name": "Fixed Price",
             "color": "blueLight2"
           }
         ]
@@ -542,6 +552,46 @@
             "id": "selW81I9C8TZSqHN1",
             "name": "Testing",
             "color": "cyanLight2"
+          },
+          {
+            "id": "selVshh7gxhHVihVd",
+            "name": "Rega",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selVi5LAUU5V0g2l9",
+            "name": "[WORKFLOW_QUEUE_SAMPLE_DATA]",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "selB2QJRo3F6kDAdV",
+            "name": "Thorens",
+            "color": "tealLight2"
+          },
+          {
+            "id": "selnFQknpmZq8lQAx",
+            "name": "Oracle",
+            "color": "greenLight2"
+          },
+          {
+            "id": "selJf9gx8Y18Pnwr1",
+            "name": "Klipsch",
+            "color": "yellowLight2"
+          },
+          {
+            "id": "selBu4E0UvMe0VNQd",
+            "name": "Speakers",
+            "color": "orangeLight2"
+          },
+          {
+            "id": "sel86GOYk6e1aHS7q",
+            "name": "Tandberg",
+            "color": "redLight2"
+          },
+          {
+            "id": "selbCJRj7FMfCnetV",
+            "name": "Cassette Deck",
+            "color": "pinkLight2"
           }
         ]
       },
@@ -4371,7 +4421,7 @@
     {
       "type": "multilineText",
       "id": "fld5HseHNQSaCZuRY",
-      "name": "Cosmetic Condition Notes"
+      "name": "Testing Cosmetic Notes"
     },
     {
       "type": "multipleSelects",
@@ -4512,6 +4562,11 @@
             "id": "sel6Arbjb1A6nUYdC",
             "name": "Local Pickup",
             "color": "tealBright"
+          },
+          {
+            "id": "selpaJcYO2MvUGPP9",
+            "name": "FedEx Ground",
+            "color": "blueLight2"
           }
         ]
       },
@@ -4575,6 +4630,11 @@
           {
             "id": "selIUDrvKFGq3wyKi",
             "name": "8/10",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selzfZ7q4Rt1gqmXQ",
+            "name": "8",
             "color": "blueLight2"
           }
         ]
@@ -5047,6 +5107,16 @@
             "id": "seldvBv0scd9eodVY",
             "name": "Shipped",
             "color": "grayLight2"
+          },
+          {
+            "id": "selvTIz9KkK0Demo6",
+            "name": "Testing In Progress",
+            "color": "blueLight2"
+          },
+          {
+            "id": "seldgE1WSp4ASv1kf",
+            "name": "Photography In Progress",
+            "color": "cyanLight2"
           }
         ]
       },
@@ -5195,6 +5265,11 @@
       },
       "id": "fldMbaeLyP2S1dBxJ",
       "name": "Workflow Owner Assigned At"
+    },
+    {
+      "type": "multilineText",
+      "id": "fldABa0GnVNhsgByb",
+      "name": "Photography Cosmetic Notes"
     }
   ],
   "views": [

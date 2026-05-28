@@ -108,7 +108,8 @@ describe('photosForm', () => {
         existingAttachments: [
           { id: 'att-1', url: 'https://example.com/hero.jpg', filename: 'hero.jpg' },
         ],
-        referenceAttachments: [],
+        intakeReferenceAttachments: [],
+        testingReferenceAttachments: [],
         imageMetadata: [
           {
             attachmentId: 'att-1',
@@ -138,6 +139,58 @@ describe('photosForm', () => {
         status: "Photo'd",
       },
     });
+  });
+
+  it('uses only metadata-backed prior-step attachments on the photography snapshot', async () => {
+    vi.mocked(getConfiguredRecord).mockImplementation(async (source) => {
+      if (source === 'used-gear-workflow') {
+        return buildRecord({
+          'Workflow Status': 'Photography In Progress',
+          SKU: 'SKU-301',
+          Make: 'Audio Research',
+          Model: 'SP-9',
+          'Component Type': ['Preamp'],
+          Status: "Photo'd",
+          Images: [
+            { id: 'att-intake', url: 'https://example.com/intake.jpg', filename: 'intake.jpg' },
+            { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
+            { id: 'att-photo', url: 'https://example.com/photo.jpg', filename: 'photo.jpg' },
+          ],
+          'Workflow Image Metadata JSON': JSON.stringify([
+            {
+              attachmentId: 'att-testing',
+              url: 'https://example.com/testing.jpg',
+              filename: 'testing.jpg',
+              alt: 'Bench view',
+              sortOrder: 1,
+              sourceStage: 'testing',
+              includedInListing: false,
+            },
+            {
+              attachmentId: 'att-photo',
+              url: 'https://example.com/photo.jpg',
+              filename: 'photo.jpg',
+              alt: 'Final hero',
+              sortOrder: 2,
+              sourceStage: 'photos',
+              includedInListing: true,
+            },
+          ]),
+        });
+      }
+
+      throw new Error('inventory fallback should not be used in this test');
+    });
+
+    const result = await loadPhotosFormValues('recPhotosLegacy');
+
+    expect(result.stageContext.existingAttachments).toEqual([
+      { id: 'att-photo', url: 'https://example.com/photo.jpg', filename: 'photo.jpg' },
+    ]);
+    expect(result.stageContext.intakeReferenceAttachments).toEqual([]);
+    expect(result.stageContext.testingReferenceAttachments).toEqual([
+      { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
+    ]);
   });
 
   it('submits photo changes back to the workflow source when photography is completed', async () => {
@@ -638,7 +691,8 @@ describe('photosForm', () => {
     expect(result.stageContext.existingAttachments).toEqual([
       { id: 'att-photo', url: 'https://example.com/photo.jpg', filename: 'photo.jpg' },
     ]);
-    expect(result.stageContext.referenceAttachments).toEqual([
+    expect(result.stageContext.intakeReferenceAttachments).toEqual([]);
+    expect(result.stageContext.testingReferenceAttachments).toEqual([
       { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
     ]);
     expect(result.stageContext.imageMetadata).toHaveLength(2);

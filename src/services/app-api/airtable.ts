@@ -45,7 +45,7 @@ export interface AirtableMetadataField {
   };
 }
 
-export type AirtableDriveArchiveStage = 'testing' | 'photos';
+export type AirtableDriveArchiveStage = 'intake' | 'testing' | 'photos';
 
 export interface AirtableAttachmentUploadDriveArchive {
   sku: string;

@@ -1,0 +1,160 @@
+{
+  "updatedAt": "2026-05-28T05:04:41.566Z",
+  "baseId": "apprsAm2FOohEmL2u",
+  "tableId": "tbl0K0nFQL64jQMx8",
+  "updatedCount": 8,
+  "results": [
+    {
+      "recordId": "rec9QQkOryhKitjDW",
+      "itemTitle": "Thorens TD-160 Shopify Live",
+      "workflowStatus": "Listed, Shopify",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-13",
+      "folderId": "11qLUNAjZ_CUEatS8aoQD3q_PAiWOme5O",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=11L579bHLvJTMB4XxM5kvivgQO8ktmMMt",
+        "https://drive.google.com/uc?export=view&id=1iFbDdVt4DJWHS9pBWbULhU9iO_2cGY0Y",
+        "https://drive.google.com/uc?export=view&id=1uTHZQGepHyDxQp-73bi-8tk83TUZfPf0"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1osivb9WmkVKJTRXrg8aQK8m9KRk4-w6E",
+        "https://drive.google.com/uc?export=view&id=1C90LpbaLiMUgv-qi8Kwk_rD85SEkhpL5",
+        "https://drive.google.com/uc?export=view&id=1H2UGthjPr3P0T7cZah2Y9ZkDq8a5SMaZ"
+      ],
+      "deletedLegacyFiles": [],
+      "updatedRecordId": "rec9QQkOryhKitjDW"
+    },
+    {
+      "recordId": "reccW7p0t2qZX5Gi5",
+      "itemTitle": "JBL L100 Stale eBay",
+      "workflowStatus": "Stale Listing, eBay",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-16",
+      "folderId": "1mkMZxWMz-uqWt-zcN15FLP5TcC3FpaRL",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1IEZwNZyU1GcoXPtJZddS0XR2gulWGkX6",
+        "https://drive.google.com/uc?export=view&id=10oE6ug7UQGh2VtaLY1UwuU-EJe5X9-sX",
+        "https://drive.google.com/uc?export=view&id=1c25ojubPNIfw96qEmGw3TWJcXEThpm33"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=13NvJa1NgLExsQPyOjr3puEZ7qMx7E1Wq",
+        "https://drive.google.com/uc?export=view&id=1HHcMUxvx6iR2rlYoYat_qCHn9_iwysHE",
+        "https://drive.google.com/uc?export=view&id=10McgRNLlUVF2X7iE2fsDToZ7PNaX507V"
+      ],
+      "deletedLegacyFiles": [],
+      "updatedRecordId": "reccW7p0t2qZX5Gi5"
+    },
+    {
+      "recordId": "reccg0SUYaislHDJt",
+      "itemTitle": "Marantz 2230 eBay Live",
+      "workflowStatus": "Listed, eBay",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-14",
+      "folderId": "1XnF_YGfc5AyCGaodGNCJs4yGWwULo0TG",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1lPkpAtMdjt2Z2PN3XAi0LxEYa1bIqlCP",
+        "https://drive.google.com/uc?export=view&id=1IGWKuZB6e9TYISVjEYMV5tWRWav8y7sw",
+        "https://drive.google.com/uc?export=view&id=1jgxDMnzqPEcvhNpSuziiaTdnhyFHPAN8"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1QzrQMK98kMI8uSbW0RTda6CVeDe1fWKB",
+        "https://drive.google.com/uc?export=view&id=1Nqvwmg2B_uD40Z8NsmJG3DQjF8VhRMfd",
+        "https://drive.google.com/uc?export=view&id=1OucCsNAf8Qo2iUgj15v3lyRxFmH-vGWL"
+      ],
+      "deletedLegacyFiles": [],
+      "updatedRecordId": "reccg0SUYaislHDJt"
+    },
+    {
+      "recordId": "receF21tiOq7kO0av",
+      "itemTitle": "Tandberg 3014A Shipped",
+      "workflowStatus": "Shipped",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-18",
+      "folderId": "1X1G3dGnCYs5N_26REBHztjAxQy1nLM8u",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1VYPoASeWOPP7iH1c5boJWOXs6GuStWnI",
+        "https://drive.google.com/uc?export=view&id=1GSq9HFvheXboZulsK2IsRFipiRZlk3NG",
+        "https://drive.google.com/uc?export=view&id=1dGY22DiukjMe3KlUsoxR8mLiAO5CdfUv"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1_-a6nxtDU6GIBDhIbeJz7V_38ndi0lNm",
+        "https://drive.google.com/uc?export=view&id=1w2iiAEYBqdQIjCPUF0FL5b-kUB1ZPJEt",
+        "https://drive.google.com/uc?export=view&id=1EBO4vdC49H9kez6RK_Q73kgqhZkNPtXr"
+      ],
+      "deletedLegacyFiles": [],
+      "updatedRecordId": "receF21tiOq7kO0av"
+    },
+    {
+      "recordId": "reck8bUFT7Ne2qukd",
+      "itemTitle": "Oracle Alexandria Stale Shopify",
+      "workflowStatus": "Stale Listing, Shopify",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-15",
+      "folderId": "1qLxEoOAguwDiMk4aSfStYu_5RUJsrs35",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1nDrTHv3c6uBCl7nXnNbCDl7GfBg9a9ir",
+        "https://drive.google.com/uc?export=view&id=18DHbZF2jg25Zx8E9oFgv6pfPUYHMhjDi",
+        "https://drive.google.com/uc?export=view&id=1wMy3hML58wGlJUsb3s_bqlGWgsaOr7eq"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1UH2TPLBt0rm3OCSogjBbJIk8InM1OiII",
+        "https://drive.google.com/uc?export=view&id=1oJdGPG86aZmq0_wGzHR_LJfL5K3a_eXa",
+        "https://drive.google.com/uc?export=view&id=1kyLu6QVrFU2WTO1Fiq7O9oNXXuMYGmv7"
+      ],
+      "deletedLegacyFiles": [],
+      "updatedRecordId": "reck8bUFT7Ne2qukd"
+    },
+    {
+      "recordId": "rect5r3VkSf034NPL",
+      "itemTitle": "Audio Research SP-9 Pre-Listing",
+      "workflowStatus": "Awaiting Pre-Listing Review",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-11",
+      "folderId": "1oF-hfsWo7_m-BmEX5A2vqps_v6EOkLhJ",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1Rj2nCtffhalCR7ad2OQ2M-qx7aGa4ELG",
+        "https://drive.google.com/uc?export=view&id=1MtonPyT9HS9j1wgDwCBOh6nFx3Et0TUJ",
+        "https://drive.google.com/uc?export=view&id=1lJL-dfBLRKbD2HZS0G1Z-1c2I5nGg7Kz"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1C9x_v-Lu4PIQD32LiYJM1XyZzd0zkRGf",
+        "https://drive.google.com/uc?export=view&id=1JZQRZD6E_X7enLgpBj-1IG0mxoCI9cjr",
+        "https://drive.google.com/uc?export=view&id=1OE0I3A0JBNvzjmcKcVMYP2jdfFSS_-3c"
+      ],
+      "deletedLegacyFiles": [],
+      "updatedRecordId": "rect5r3VkSf034NPL"
+    },
+    {
+      "recordId": "recwz1E6jmEk8tUYb",
+      "itemTitle": "Klipsch Cornwall Sold Ready",
+      "workflowStatus": "Sold - Ready to Ship",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-17",
+      "folderId": "1f-mNXgmpcPLBwNX_lcsZRJGmVvaCZN6U",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1Mb1IgmJ7RLRwkTRIIFKceeSKiU3qtbE3",
+        "https://drive.google.com/uc?export=view&id=1nlM7AMUX3ijeSs0vynofVilehutKwYFe",
+        "https://drive.google.com/uc?export=view&id=1nCSgyx9z4uW-uCKnXnLRcL4nPxytu90a"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1YSQUoSCmglrgscWBbB4ChlHYGFKaHTKG",
+        "https://drive.google.com/uc?export=view&id=1bS9Bw87trUcu33hLkMWnjwQm_4HJd7A3",
+        "https://drive.google.com/uc?export=view&id=1uGmqk0yySJV3xpWCh2V1rKM6yJbk0vAG"
+      ],
+      "deletedLegacyFiles": [],
+      "updatedRecordId": "recwz1E6jmEk8tUYb"
+    },
+    {
+      "recordId": "reczN4jA3s0hm4lZD",
+      "itemTitle": "Rega Planar 8 Publish Ready",
+      "workflowStatus": "Approved for Publish",
+      "sku": "SAMPLE-WORKFLOW-QUEUE-12",
+      "folderId": "1eSBw_Q7gic0oMUowOGxfN-P_J3h5CuHI",
+      "photoUrls": [
+        "https://drive.google.com/uc?export=view&id=1QKXc6VlLtAD8I2S6aeTzkuJF8TSqMbSi",
+        "https://drive.google.com/uc?export=view&id=1DDSwG5hAZkmUMtw4GZcWtf15-wBRIbG_",
+        "https://drive.google.com/uc?export=view&id=1NpElG2EcRmXse67nJA1u_Mi5pVUC6KFm"
+      ],
+      "testingUrls": [
+        "https://drive.google.com/uc?export=view&id=1svDliAq523Beac1bbAvF3TPbA4D3skNd",
+        "https://drive.google.com/uc?export=view&id=1dv2A5Rq5piGVFyPbt1LJg_O5ITSxUomO",
+        "https://drive.google.com/uc?export=view&id=1-8VSwEK9r2A0dIsW-7nMJQyeKo-Cu226"
+      ],
+      "deletedLegacyFiles": [],
+      "updatedRecordId": "reczN4jA3s0hm4lZD"
+    }
+  ]
+}

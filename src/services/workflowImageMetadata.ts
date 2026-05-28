@@ -1,4 +1,4 @@
-export type WorkflowImageSourceStage = 'testing' | 'photos';
+export type WorkflowImageSourceStage = 'intake' | 'testing' | 'photos';
 
 export interface WorkflowImageMetadataRecord {
   attachmentId?: string;
@@ -25,7 +25,9 @@ interface WorkflowImageAttachmentRecord {
 }
 
 function normalizeStage(value: unknown): WorkflowImageSourceStage {
-  return value === 'testing' ? 'testing' : 'photos';
+  if (value === 'intake') return 'intake';
+  if (value === 'testing') return 'testing';
+  return 'photos';
 }
 
 function normalizeString(value: unknown): string {
@@ -169,6 +171,25 @@ function normalizeAttachmentRecord(value: unknown): WorkflowImageAttachmentRecor
   };
 }
 
+function inferStageToken(value: string): WorkflowImageSourceStage | null {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return null;
+
+  if (normalized.includes('intake-') || normalized.includes('-intake-') || normalized.includes('intake_') || normalized.includes('_intake_')) {
+    return 'intake';
+  }
+
+  if (normalized.includes('testing-') || normalized.includes('-testing-') || normalized.includes('testing_') || normalized.includes('_testing_')) {
+    return 'testing';
+  }
+
+  if (normalized.includes('photos-') || normalized.includes('-photos-') || normalized.includes('photos_') || normalized.includes('_photos_') || normalized.includes('photography-')) {
+    return 'photos';
+  }
+
+  return null;
+}
+
 function dedupeMetadataRecords(records: WorkflowImageMetadataRecord[]): WorkflowImageMetadataRecord[] {
   const seen = new Set<string>();
 
@@ -296,6 +317,17 @@ export function filterWorkflowAttachmentsByStage<T extends WorkflowImageAttachme
     const url = attachment.url?.trim().toLowerCase();
     return Boolean(url && stageUrls.has(url));
   });
+}
+
+export function inferWorkflowAttachmentStage(attachment: WorkflowImageAttachmentLike): WorkflowImageSourceStage | null {
+  return inferStageToken(attachment.filename) || inferStageToken(attachment.url ?? '');
+}
+
+export function filterWorkflowAttachmentsByInferredStage<T extends WorkflowImageAttachmentLike>(
+  attachments: T[],
+  stage: WorkflowImageSourceStage,
+): T[] {
+  return attachments.filter((attachment) => inferWorkflowAttachmentStage(attachment) === stage);
 }
 
 export function mergeWorkflowImageMetadata(params: {

@@ -45,7 +45,8 @@ const EMPTY_STAGE_CONTEXT: PhotosFormStageContext = {
   testingNotes: '',
   testingCosmeticNotes: '',
   existingAttachments: [],
-  referenceAttachments: [],
+  intakeReferenceAttachments: [],
+  testingReferenceAttachments: [],
   imageMetadata: [],
 };
 
@@ -386,7 +387,6 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     return <ErrorSurface title="Unable to load Photos form" message={optionsError ?? 'The Airtable Photos form configuration is unavailable.'} />;
   }
 
-  const hasCustomerReference = Object.values(customerReference).some((value) => value.trim().length > 0);
   const applicableIncludedItems = buildApplicableIncludedItems(formValues);
   const hasOperationalContext = Boolean(
     stageContext.inventoryNotes.trim()
@@ -447,26 +447,6 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
           </div>
         ) : null}
 
-        {hasCustomerReference ? (
-          <div className="rounded-2xl border border-sky-400/25 bg-sky-500/10 p-5">
-            <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-sky-100">Customer Intake Reference</p>
-            <p className="mt-2 text-sm leading-6 text-sky-50/90">
-              Keep customer-submitted context separate from the photography assessment below so listing media notes remain clearly staff-owned.
-            </p>
-            <div className="mt-4 grid gap-3 lg:grid-cols-2">
-              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
-                <span className="font-semibold text-sky-50">Customer Functional Notes:</span> {customerReference.functionalNotes || 'None provided'}
-              </div>
-              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
-                <span className="font-semibold text-sky-50">Customer Inclusion Notes:</span> {customerReference.inclusionNotes || 'None provided'}
-              </div>
-              <div className="rounded-xl border border-sky-300/20 bg-slate-950/20 p-3 text-sm text-sky-50/90">
-                <span className="font-semibold text-sky-50">Customer Submitted Photos Notes:</span> {customerReference.submittedPhotosNotes || 'None provided'}
-              </div>
-            </div>
-          </div>
-        ) : null}
-
         <IntakeSnapshotSection
           fields={snapshotFields.map((field) => ({
             label: field.label,
@@ -483,9 +463,14 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
           ]}
         >
           <WorkflowReferenceImagesPanel
-            title="Previous Step Images"
-            description="These earlier-step images are available for reference while you photograph the current stage. They do not become part of the active photo upload set unless you upload them here again."
-            images={stageContext.referenceAttachments}
+            title="Intake Images"
+            description="These intake-stage images are available for reference while you photograph the current stage. They do not become part of the active photo upload set unless you upload them here again."
+            images={stageContext.intakeReferenceAttachments}
+          />
+          <WorkflowReferenceImagesPanel
+            title="Testing Images"
+            description="These testing-stage images are available for reference while you photograph the current stage. They do not become part of the active photo upload set unless you upload them here again."
+            images={stageContext.testingReferenceAttachments}
           />
         </IntakeSnapshotSection>
 

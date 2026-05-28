@@ -170,39 +170,55 @@ function buildShipmentNotes(config) {
   return `${SAMPLE_MARKER} ${config.make} ${config.model} packed, labeled, and documented for shipment follow-through coverage.`;
 }
 
-function buildSampleImageUrls(config, index) {
-  const sampleKey = `${String(index + 1).padStart(2, '0')}-${config.make}-${config.model}`
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-');
-
-  return [
-    `https://placehold.co/1600x1200/png?text=${encodeURIComponent(`${sampleKey}-front`)}`,
-    `https://placehold.co/1600x1200/png?text=${encodeURIComponent(`${sampleKey}-rear`)}`,
-    `https://placehold.co/1600x1200/png?text=${encodeURIComponent(`${sampleKey}-detail`)}`,
-  ];
+function buildSampleImageUrls() {
+  // Sample workflow image records are populated by the Drive backfill so seeds never reintroduce placeholder URLs.
+  return [];
 }
 
 function buildSampleImageAttachments(config, index) {
-  return buildSampleImageUrls(config, index).map((url, imageIndex) => ({
+  return buildSampleImageUrls(config, index, 'photos').map((url, imageIndex) => ({
     url,
-    filename: `${String(index + 1).padStart(2, '0')}-${config.make}-${config.model}-${imageIndex + 1}.png`
+    filename: `${String(index + 1).padStart(2, '0')}-${config.make}-${config.model}-photos-${imageIndex + 1}.png`
       .toLowerCase()
       .replace(/[^a-z0-9.]+/g, '-'),
   }));
 }
 
-function buildSampleImageMetadata(config, index) {
-  return buildSampleImageUrls(config, index).map((url, imageIndex) => ({
-    attachmentId: `att-sample-workflow-${index + 1}-${imageIndex + 1}`,
+function buildStageSampleImageAttachments(config, index, stage) {
+  return buildSampleImageUrls(config, index, stage).map((url, imageIndex) => ({
     url,
-    filename: `${String(index + 1).padStart(2, '0')}-${config.make}-${config.model}-${imageIndex + 1}.png`
+    filename: `${String(index + 1).padStart(2, '0')}-${config.make}-${config.model}-${stage}-${imageIndex + 1}.png`
       .toLowerCase()
       .replace(/[^a-z0-9.]+/g, '-'),
-    alt: `${config.make} ${config.model} sample image ${imageIndex + 1}`,
-    sortOrder: imageIndex + 1,
-    sourceStage: 'photos',
-    includedInListing: true,
   }));
+}
+
+function buildWorkflowSampleImageAttachments(config, index, { includeTesting, includePhotos }) {
+  return [
+    ...(includeTesting ? buildStageSampleImageAttachments(config, index, 'testing') : []),
+    ...(includePhotos ? buildStageSampleImageAttachments(config, index, 'photos') : []),
+  ];
+}
+
+function buildSampleImageMetadata(config, index, stage, includedInListing) {
+  return buildSampleImageUrls(config, index, stage).map((url, imageIndex) => ({
+    attachmentId: `att-sample-workflow-${stage}-${index + 1}-${imageIndex + 1}`,
+    url,
+    filename: `${String(index + 1).padStart(2, '0')}-${config.make}-${config.model}-${stage}-${imageIndex + 1}.png`
+      .toLowerCase()
+      .replace(/[^a-z0-9.]+/g, '-'),
+    alt: `${config.make} ${config.model} ${stage} sample image ${imageIndex + 1}`,
+    sortOrder: imageIndex + 1,
+    sourceStage: stage,
+    includedInListing,
+  }));
+}
+
+function buildWorkflowSampleImageMetadata(config, index, { includeTesting, includePhotos }) {
+  return [
+    ...(includeTesting ? buildSampleImageMetadata(config, index, 'testing', false) : []),
+    ...(includePhotos ? buildSampleImageMetadata(config, index, 'photos', true) : []),
+  ];
 }
 
 function buildStageFields(index, config) {
@@ -274,6 +290,11 @@ function buildStageFields(index, config) {
   const isShopifyTrack = ['listed-shopify', 'stale-shopify'].includes(profile);
   const hasShopifyListingFields = ['approved', 'listed-shopify', 'stale-shopify', 'sold-ready', 'shipped'].includes(profile);
   const hasEbayListingFields = ['approved', 'listed-ebay', 'stale-ebay', 'sold-ready', 'shipped'].includes(profile);
+  const hasPassedPhotography = hasListingReadiness;
+  const workflowImageMetadata = buildWorkflowSampleImageMetadata(config, index, {
+    includeTesting: hasTestingComplete,
+    includePhotos: hasPassedPhotography,
+  });
 
   return {
     'Customer Cosmetic Notes': `${SAMPLE_MARKER} Customer reported light cosmetic wear with one notable finish mark documented at intake.`,
@@ -313,8 +334,13 @@ function buildStageFields(index, config) {
     ...(hasPhotographyComplete ? {
       'Photography Cosmetic Notes': config.photographyCosmeticNotes ?? photographyNotes,
       "Photo'd": photographedAt,
-      Images: config.images ?? buildSampleImageAttachments(config, index),
+      Images: config.images ?? (hasPassedPhotography
+        ? buildWorkflowSampleImageAttachments(config, index, { includeTesting: true, includePhotos: true })
+        : buildSampleImageAttachments(config, index)),
       Status: config.status ?? recordStatus,
+    } : {}),
+    ...(workflowImageMetadata.length > 0 ? {
+      'Workflow Image Metadata JSON': JSON.stringify(workflowImageMetadata),
     } : {}),
     ...(hasListingReadiness ? {
       'Item Title': `${config.make} ${config.model}`,
@@ -910,17 +936,42 @@ async function createRecords(apiKey, records) {
 
   for (const batch of chunk(records, BATCH_SIZE)) {
     const url = `https://api.airtable.com/v0/${encodeURIComponent(APPROVED_BASE_ID)}/${encodeURIComponent(APPROVED_TABLE_ID)}`;
-    const payload = await fetchJson(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        typecast: true,
-        records: batch,
-      }),
-    });
+    let payload;
+    try {
+      payload = await fetchJson(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          typecast: true,
+          records: batch,
+        }),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes('Unknown field name: "Workflow Image Metadata JSON"')) {
+        throw error;
+      }
+
+      payload = await fetchJson(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          typecast: true,
+          records: batch.map((record) => ({
+            ...record,
+            fields: Object.fromEntries(
+              Object.entries(record.fields).filter(([fieldName]) => fieldName !== 'Workflow Image Metadata JSON'),
+            ),
+          })),
+        }),
+      });
+    }
 
     createdRecords.push(...(payload.records || []));
   }
