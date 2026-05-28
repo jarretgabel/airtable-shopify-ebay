@@ -168,11 +168,11 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     ],
   },
   processor: {
-    roleSummary: 'Start with Parking Lot 1, JotForm reference, the Workflow Hub, and the specialist queues. Use Post-Publish once a live listing needs stale, sold-ready, or shipment follow-through.',
+    roleSummary: 'Start with Parking Lot 1, the intake directories, the Workflow Hub, and the specialist queues. Use Post-Publish once a live listing needs stale, sold-ready, or shipment follow-through.',
     quickStartTitle: 'Processor quick start',
     quickStartSummary: 'This is the operational lane for intake, handoff, and getting an item ready for the next specialist.',
     quickStartItems: [
-      'Start in Parking Lot 1 for fresh intake, use JotForm as the raw source-feed reference when you need submission context, use the Workflow Hub for accepted-row lookup and workflow snapshots, or open Post-Publish for live listing follow-through.',
+      'Start in Parking Lot 1 for fresh intake, use Manual Intake and JotForm for editable intake directories, use JotForm Audit when you need raw submission context, use the Workflow Hub for accepted-row lookup and workflow snapshots, or open Post-Publish for live listing follow-through.',
       'Clean up notes, confirm the next stage, and move the item into the next real handoff instead of leaving it parked.',
       'Use the testing and photography queues for specialist work, then use Listings once the item reaches listing review.',
     ],
@@ -184,7 +184,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Turn accepted items into owned workflow',
-        detail: 'Once a row is accepted, use JotForm when you need to verify the original submission details, then use the Workflow Hub to confirm stage status and open the exact page that owns the next step. Use Post-Publish later for live listing follow-through; neither page is the listing review page.',
+        detail: 'Once a row is accepted, use JotForm when you need to edit the webhooked intake row, use JotForm Audit when you need to verify the original submission details, then use the Workflow Hub to confirm stage status and open the exact page that owns the next step. Use Post-Publish later for live listing follow-through; neither page is the listing review page.',
       },
       {
         title: 'Move work through testing and photography',
@@ -329,7 +329,7 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   {
     title: 'Intake Arrives',
     detail: 'New gear enters from intake sources and lands in the front-door review path.',
-    pages: ['manual-intake', 'jotform', 'parking-lot-1'],
+    pages: ['manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot-1'],
     tone: 'intake',
     primaryRoles: ['processor', 'admin', 'owner'],
     supportRoles: ['developer'],
@@ -421,24 +421,24 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
   },
   {
     title: 'JotForm',
-    pages: ['jotform'],
-    summary: 'Use JotForm as the raw source-feed reference page for incoming quote and intake submissions.',
+    pages: ['jotform', 'jotform-audit'],
+    summary: 'Use JotForm as the editable directory for webhooked intake rows, and use JotForm Audit as the raw source-feed reference page for incoming submissions.',
     modules: [
-      'Live submission feed: read-only list of active submissions.',
-      'Expanded submission detail: raw seller answers and source timestamps.',
+      'JotForm directory: searchable list of workflow rows created from JotForm webhooks.',
+      'JotForm Audit: read-only submission feed with raw seller answers and source timestamps.',
     ],
     workflows: [
-      'Use it to verify source intake data before or during Parking Lot 1 review.',
-      'Treat it as reference only; do not use it as the operational decision surface.',
+      'Use JotForm to open the editable intake record that came from a webhooked submission.',
+      'Use JotForm Audit to verify raw source intake data before or during Parking Lot 1 review.',
     ],
   },
   {
     title: 'Manual Intake',
-    pages: ['manual-intake'],
-    summary: 'Use Manual Intake when staff is creating a used-gear row inside the app instead of waiting for a JotForm submission.',
+    pages: ['manual-intake', 'create-intake-item'],
+    summary: 'Use Manual Intake as the directory for staff-created intake rows, and use Create Intake Item when staff needs to create a new row inside the app.',
     modules: [
-      'Manual intake form: seller reference, condition context, grouping IDs, and route selection.',
-      'Route controls: send the row into Parking Lot 1 or directly into an accepted arrival-stage bucket when appropriate.',
+      'Manual intake directory: searchable list of staff-created intake rows with direct access into the intake editor.',
+      'Create Intake Item: staff-facing intake form for seller reference, condition context, grouping IDs, and route selection.',
     ],
     workflows: [
       'Use it for phone deals, repeat-customer intake, or accepted arrivals that were assembled outside the quote-request flow.',

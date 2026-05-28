@@ -154,18 +154,46 @@ describe('useAuthRouteGuard', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('redirects legacy manual-intake detail routes to the canonical intake detail path', () => {
+  it('allows the create-intake-item route when the user has access', () => {
     const navigate = vi.fn();
 
     render(
       <GuardHarness
-        normalizedPath="/manual-intake/rec-legacy-1"
+        normalizedPath="/create-intake-item"
+        canAccessPage={(tab) => tab === 'create-intake-item' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('allows the jotform audit route when the user has access', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/jotform-audit"
+        canAccessPage={(tab) => tab === 'jotform-audit' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('redirects legacy intake detail routes to the canonical manual-intake detail path', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/intake/rec-legacy-1"
         canAccessPage={(tab) => tab === 'manual-intake' || tab === 'dashboard'}
         navigate={navigate}
       />,
     );
 
-    expect(navigate).toHaveBeenCalledWith('/intake/rec-legacy-1', { replace: true });
+    expect(navigate).toHaveBeenCalledWith('/manual-intake/rec-legacy-1', { replace: true });
   });
 
   it('redirects legacy pending-review record routes to the flattened Parking Lot 1 record path', () => {

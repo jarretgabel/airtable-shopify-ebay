@@ -32,7 +32,7 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, currentUs
   const postPublishEnabled = enabled && canAccessPage('post-publish');
   const shopifyEnabled = enabled && canAccessPage('shopify') && (dashboardActive || activeTab === 'shopify');
   const runtimeFeatures = getRuntimeFeatureCapabilities();
-  const jotformEnabled = enabled && runtimeFeatures.jotform.available && canAccessPage('jotform') && (dashboardActive || activeTab === 'jotform');
+  const jotformEnabled = enabled && runtimeFeatures.jotform.available && canAccessPage('jotform-audit') && (dashboardActive || activeTab === 'jotform-audit');
   const ebayEnabled = enabled && runtimeFeatures.ebay.available && canAccessPage('ebay') && (dashboardActive || activeTab === 'ebay');
   const tableName = requireEnv('VITE_AIRTABLE_TABLE_NAME');
   const viewId = checkOptionalEnv('VITE_AIRTABLE_VIEW_ID');

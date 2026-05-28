@@ -90,12 +90,15 @@ describe('authContextHelpers', () => {
     expect(canUserAccessPage(admin, 'workflow-guide-editor')).toBe(true);
     expect(canUserAccessPage(admin, 'market')).toBe(false);
     expect(canUserAccessPage(admin, 'imagelab')).toBe(true);
+    expect(canUserAccessPage(admin, 'jotform-audit')).toBe(true);
     expect(canUserAccessPage(owner, 'users')).toBe(true);
     expect(canUserAccessPage(owner, 'workflow-guide-editor')).toBe(true);
     expect(canUserAccessPage(owner, 'market')).toBe(true);
+    expect(canUserAccessPage(owner, 'jotform-audit')).toBe(true);
     expect(canUserAccessPage(user, 'dashboard')).toBe(true);
     expect(canUserAccessPage(user, 'workflow-guide')).toBe(true);
     expect(canUserAccessPage(user, 'manual-intake')).toBe(true);
+    expect(canUserAccessPage(user, 'jotform-audit')).toBe(true);
     expect(canUserAccessPage(user, 'testing-queue')).toBe(true);
     expect(canUserAccessPage(user, 'photography-queue')).toBe(true);
     expect(canUserAccessPage(user, 'testing')).toBe(true);
@@ -112,6 +115,7 @@ describe('authContextHelpers', () => {
     expect(canUserAccessPage(developer, 'dashboard')).toBe(true);
     expect(canUserAccessPage(developer, 'workflow-guide')).toBe(true);
     expect(canUserAccessPage(developer, 'jotform')).toBe(true);
+    expect(canUserAccessPage(developer, 'jotform-audit')).toBe(true);
     expect(canUserAccessPage(developer, 'market')).toBe(true);
     expect(canUserAccessPage(developer, 'imagelab')).toBe(true);
     expect(canUserAccessPage(developer, 'users')).toBe(true);

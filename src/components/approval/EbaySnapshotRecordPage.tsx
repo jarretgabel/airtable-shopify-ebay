@@ -151,7 +151,7 @@ export function EbaySnapshotRecordPage({
 
   if (viewModel.state.loading && viewModel.inventory.items.length === 0 && viewModel.inventory.recentListings.length === 0) {
     return (
-      <WorkflowRecordPageLayout eyebrow="Channels" title="eBay Snapshot" actions={headerActions}>
+      <WorkflowRecordPageLayout eyebrow="eBay Listing Snapshot" title="eBay Snapshot" actions={headerActions}>
         <LoadingSurface message="Loading eBay snapshot..." />
       </WorkflowRecordPageLayout>
     );
@@ -159,7 +159,7 @@ export function EbaySnapshotRecordPage({
 
   if (!resolvedDirectItem && !resolvedDirectOffer && !resolvedRecentListing) {
     return (
-      <WorkflowRecordPageLayout eyebrow="Channels" title="eBay Snapshot" actions={headerActions}>
+      <WorkflowRecordPageLayout eyebrow="eBay Listing Snapshot" title="eBay Snapshot" actions={headerActions}>
         <EmptySurface title="eBay snapshot not found" message="This SKU is no longer available in the current eBay snapshot.">
           <div className="mt-4 flex flex-wrap gap-2">
             <BackToolbarButton label="Back to eBay Snapshot" onClick={onBackToSnapshot} />
@@ -171,7 +171,7 @@ export function EbaySnapshotRecordPage({
   }
 
   return (
-    <WorkflowRecordPageLayout eyebrow="Channels" title="eBay Snapshot" actions={headerActions}>
+    <WorkflowRecordPageLayout eyebrow="eBay Listing Snapshot" title="eBay Snapshot" actions={headerActions}>
 
       <ListingApprovalWorkflowProcessCard
         summary={workflowSummary}

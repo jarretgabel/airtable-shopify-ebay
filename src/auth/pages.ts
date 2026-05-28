@@ -3,7 +3,9 @@ export const APP_PAGES = [
   'workflow-guide',
   'workflow-guide-editor',
   'manual-intake',
+  'create-intake-item',
   'jotform',
+  'jotform-audit',
   'parking-lot-1',
   'trash-review',
   'inventory',
@@ -36,7 +38,9 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   'workflow-guide': { label: 'User Guide', path: '/workflow-guide' },
   'workflow-guide-editor': { label: 'User Guide Admin', path: '/workflow-guide/edit', adminOnly: true },
   'manual-intake': { label: 'Manual Intake', path: '/manual-intake' },
+  'create-intake-item': { label: 'Create Intake Item', path: '/create-intake-item' },
   jotform: { label: 'JotForm', path: '/jotform' },
+  'jotform-audit': { label: 'JotForm Audit', path: '/jotform-audit' },
   inventory: { label: 'Workflow Hub', path: '/workflow-hub' },
   listings: { label: 'Listings', path: '/listings' },
   'post-publish': { label: 'Post-Publish', path: '/workflow/post-publish' },
@@ -56,4 +60,4 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   users: { label: 'User Management', path: '/account/users', adminOnly: true },
 };
 
-export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'workflow-guide-editor' && page !== 'settings' && page !== 'notifications' && page !== 'manual-intake' && page !== 'testing' && page !== 'photos');
+export const ASSIGNABLE_PAGES: AppPage[] = APP_PAGES.filter((page) => page !== 'users' && page !== 'workflow-guide-editor' && page !== 'settings' && page !== 'notifications' && page !== 'testing' && page !== 'photos');

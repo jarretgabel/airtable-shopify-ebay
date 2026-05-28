@@ -23,6 +23,15 @@ interface InventoryDirectoryListSectionProps {
   onSortModeChange: (value: 'intake-newest' | 'intake-oldest') => void;
   onRefresh?: () => void;
   onSelectRecord: (recordId: string) => void;
+  getNextStepLabel?: (record: AirtableRecord) => string | null;
+  onOpenNextStep?: (record: AirtableRecord) => void;
+  selectRecordLabel?: string;
+  searchAriaLabel?: string;
+  searchPlaceholder?: string;
+  refreshLabel?: string;
+  refreshLoadingLabel?: string;
+  resultLabel?: string;
+  emptyMessage?: string;
 }
 
 const intakeDateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -83,6 +92,15 @@ export function InventoryDirectoryListSection({
   onSortModeChange,
   onRefresh,
   onSelectRecord,
+  getNextStepLabel,
+  onOpenNextStep,
+  selectRecordLabel = 'Open Workflow Snapshot',
+  searchAriaLabel = 'Search inventory',
+  searchPlaceholder = 'Search by SKU, make, model, source, or status',
+  refreshLabel = 'Refresh Workflow Hub directory',
+  refreshLoadingLabel = 'Refreshing Workflow Hub directory',
+  resultLabel = 'workflow rows',
+  emptyMessage = 'No workflow rows match the current search and status filters.',
 }: InventoryDirectoryListSectionProps) {
   const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
     {
@@ -128,13 +146,20 @@ export function InventoryDirectoryListSection({
     {
       key: 'actions',
       label: 'Actions',
-      width: '7rem',
+      width: '11rem',
       align: 'right',
-      renderCell: (record) => (
-        <div className="flex flex-wrap justify-end gap-1.5">
-          <CompactIconActionButton label="Open Workflow Snapshot" variant="small-secondary" icon="edit" onClick={() => onSelectRecord(record.id)} />
-        </div>
-      ),
+      renderCell: (record) => {
+        const nextStepLabel = getNextStepLabel?.(record) ?? null;
+
+        return (
+          <div className="flex flex-wrap justify-end gap-1.5">
+            {nextStepLabel && onOpenNextStep ? (
+              <CompactIconActionButton label={nextStepLabel} variant="small-secondary" icon="open" onClick={() => onOpenNextStep(record)} />
+            ) : null}
+            <CompactIconActionButton label={selectRecordLabel} variant="small-secondary" icon="open" onClick={() => onSelectRecord(record.id)} />
+          </div>
+        );
+      },
     },
   ];
 
@@ -142,12 +167,12 @@ export function InventoryDirectoryListSection({
     <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
       <QueueSearchToolbar
         className="mb-4"
-        searchAriaLabel="Search inventory"
-        searchPlaceholder="Search by SKU, make, model, component, or status"
+        searchAriaLabel={searchAriaLabel}
+        searchPlaceholder={searchPlaceholder}
         searchValue={searchTerm}
         onSearchChange={onSearchTermChange}
-        refreshLabel="Refresh inventory directory"
-        refreshLoadingLabel="Refreshing inventory directory"
+        refreshLabel={refreshLabel}
+        refreshLoadingLabel={refreshLoadingLabel}
         refreshing={refreshing}
         onRefresh={onRefresh}
         sortAriaLabel={`Sort workflow hub directory. Current order: ${getDirectorySortLabel(sortMode)}`}
@@ -172,7 +197,7 @@ export function InventoryDirectoryListSection({
       />
 
       <p className="mb-3 text-sm text-[var(--muted)]">
-        Showing <strong>{records.length}</strong> of <strong>{totalCount}</strong> SB Inventory records
+        Showing <strong>{records.length}</strong> of <strong>{totalCount}</strong> {resultLabel}
       </p>
 
       {records.length > 0 ? (
@@ -181,7 +206,7 @@ export function InventoryDirectoryListSection({
         </div>
       ) : (
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-center text-sm text-[var(--muted)]">
-          No inventory records match the current search and status filters.
+          {emptyMessage}
         </div>
       )}
     </section>

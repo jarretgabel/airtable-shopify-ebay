@@ -35,6 +35,7 @@ const MarketTab = lazy(async () => ({ default: (await import('@/components/tabs/
 const PhotosFormTab = lazy(async () => ({ default: (await import('@/components/tabs/PhotosFormTab')).PhotosFormTab }));
 const TestingFormTab = lazy(async () => ({ default: (await import('@/components/tabs/TestingFormTab')).TestingFormTab }));
 const UsedGearManualIntakePage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearManualIntakePage')).UsedGearManualIntakePage }));
+const UsedGearWorkflowSourceDirectoryPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearWorkflowSourceDirectoryPage')).UsedGearWorkflowSourceDirectoryPage }));
 const UsedGearParkingLotArrivalGroupPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearParkingLotArrivalGroupPage')).UsedGearParkingLotArrivalGroupPage }));
 const UsedGearParkingLotArrivalRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearParkingLotArrivalRecordPage')).UsedGearParkingLotArrivalRecordPage }));
 const UsedGearTrashReviewGroupPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearTrashReviewGroupPage')).UsedGearTrashReviewGroupPage }));
@@ -190,12 +191,14 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
       return 'Parking Lot';
     case 'jotform':
       return 'JotForm';
+    case 'jotform-audit':
+      return 'JotForm Audit';
     case 'trash-review':
       return 'Trash Review';
     case 'testing-queue':
-      return 'Testing queue';
+      return 'Testing';
     case 'photography-queue':
-      return 'Photography queue';
+      return 'Photography';
     case 'post-publish':
       return 'post-publish';
     case 'market':
@@ -208,6 +211,8 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
       return 'notifications';
     case 'manual-intake':
       return 'manual intake';
+    case 'create-intake-item':
+      return 'create intake item';
     case 'testing':
       return 'testing record';
     case 'photos':
@@ -234,6 +239,7 @@ export function AppTabContent({
   manualIntakeMode,
   jotformReviewGroupId,
   jotformReviewRecordId,
+  jotformDirectoryRecordId,
   parkingLotArrivalGroupId,
   parkingLotArrivalRecordId,
   trashReviewGroupId,
@@ -252,7 +258,9 @@ export function AppTabContent({
   navigateToInventoryList,
   navigateToInventoryWorkflowView,
   navigateToInventoryPostPublishBucket,
+  navigateToPath,
   navigateToManualIntake,
+  navigateToCreateIntakeItem,
   navigateToManualIntakeForm,
   navigateToTestingForm,
   navigateToPhotosForm,
@@ -337,6 +345,7 @@ export function AppTabContent({
     manualIntakeMode,
     jotformReviewGroupId,
     jotformReviewRecordId,
+    jotformDirectoryRecordId,
     parkingLotArrivalGroupId,
     parkingLotArrivalRecordId,
     trashReviewGroupId,
@@ -353,6 +362,7 @@ export function AppTabContent({
   });
   const isRouteTransitionPending = deferredRouteState.activeTab !== activeTab
     || deferredRouteState.manualIntakeRecordId !== manualIntakeRecordId
+    || deferredRouteState.jotformDirectoryRecordId !== jotformDirectoryRecordId
     || deferredRouteState.jotformReviewGroupId !== jotformReviewGroupId
     || deferredRouteState.jotformReviewRecordId !== jotformReviewRecordId
     || deferredRouteState.parkingLotArrivalGroupId !== parkingLotArrivalGroupId
@@ -602,7 +612,27 @@ export function AppTabContent({
       case 'market':
         return <MarketTab viewModel={marketViewModel} />;
       case 'manual-intake':
-        return <UsedGearManualIntakePage recordId={deferredRouteState.manualIntakeRecordId} />;
+        if (deferredRouteState.manualIntakeRecordId) {
+          return (
+            <UsedGearManualIntakePage
+              recordId={deferredRouteState.manualIntakeRecordId}
+              eyebrow="Manual Intake"
+              onBackToDirectory={() => navigateToManualIntake()}
+              backToDirectoryLabel="Back to Manual Intake"
+            />
+          );
+        }
+        return (
+          <UsedGearWorkflowSourceDirectoryPage
+            title="Manual Intake"
+            workflowSource="Manual Entry"
+            onOpenRecord={(recordId) => navigateToManualIntakeForm(recordId)}
+            createActionLabel="Create Intake Item"
+            onCreateAction={() => navigateToCreateIntakeItem()}
+          />
+        );
+      case 'create-intake-item':
+        return <UsedGearManualIntakePage />;
       case 'testing':
         if (!deferredRouteState.testingRecordId) {
           return (
@@ -617,7 +647,7 @@ export function AppTabContent({
             />
           );
         }
-        return <TestingFormTab recordId={deferredRouteState.testingRecordId} onBackToDirectory={() => navigateToTab('testing-queue')} />;
+        return <TestingFormTab recordId={deferredRouteState.testingRecordId} eyebrow="Testing" onBackToDirectory={() => navigateToTab('testing-queue')} />;
       case 'photos':
         if (!deferredRouteState.photosRecordId) {
           return (
@@ -632,7 +662,7 @@ export function AppTabContent({
             />
           );
         }
-        return <PhotosFormTab recordId={deferredRouteState.photosRecordId} onBackToDirectory={() => navigateToTab('photography-queue')} />;
+        return <PhotosFormTab recordId={deferredRouteState.photosRecordId} eyebrow="Photography" onBackToDirectory={() => navigateToTab('photography-queue')} />;
       case 'parking-lot-1':
         if (deferredRouteState.parkingLotArrivalGroupId) {
           return (
@@ -680,8 +710,28 @@ export function AppTabContent({
           />
         );
       case 'jotform':
+        if (deferredRouteState.jotformDirectoryRecordId) {
+          return (
+            <UsedGearManualIntakePage
+              recordId={deferredRouteState.jotformDirectoryRecordId}
+              eyebrow="JotForm"
+              onBackToDirectory={() => navigateToTab('jotform')}
+              backToDirectoryLabel="Back to JotForm"
+            />
+          );
+        }
+        return (
+          <UsedGearWorkflowSourceDirectoryPage
+            title="JotForm"
+            workflowSource="JotForm"
+            onOpenRecord={(recordId) => navigateToPath(`/jotform/${encodeURIComponent(recordId)}`)}
+            secondaryActionLabel="JotForm Feed"
+            onSecondaryAction={() => navigateToTab('jotform-audit')}
+          />
+        );
+      case 'jotform-audit':
         if (!runtimeFeatures.jotform.available && runtimeFeatures.jotform.message) {
-          return <FeatureUnavailableTab title="JotForm unavailable" message={runtimeFeatures.jotform.message} />;
+          return <FeatureUnavailableTab title="JotForm Audit unavailable" message={runtimeFeatures.jotform.message} />;
         }
         return <JotformTab viewModel={jotformViewModel} />;
       case 'trash-review':

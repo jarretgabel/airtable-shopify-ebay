@@ -20,18 +20,27 @@ test('developers keep the full page bundle', () => {
 });
 
 test('non-tester roles get Image Lab according to their role bundle', () => {
-  assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'processor'), ['dashboard', 'manual-intake', 'jotform', 'parking-lot-1', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab']);
-  assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'photographer'), ['dashboard', 'photography-queue', 'photos', 'imagelab']);
-  assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'tester'), ['dashboard', 'testing-queue', 'testing']);
+  assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'processor'), ['dashboard', 'workflow-guide', 'manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot-1', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab']);
+  assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'photographer'), ['dashboard', 'workflow-guide', 'photography-queue', 'photos', 'imagelab']);
+  assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'tester'), ['dashboard', 'workflow-guide', 'testing-queue', 'testing']);
 });
 
 test('processor normalization restores commerce and account pages when legacy inventory access is present', () => {
   const pages = normalizeAllowedPages(['dashboard', 'inventory'], 'processor');
 
+  assert.equal(pages.includes('create-intake-item'), true);
   assert.equal(pages.includes('jotform'), true);
+  assert.equal(pages.includes('jotform-audit'), true);
   assert.equal(pages.includes('listings'), true);
   assert.equal(pages.includes('shopify'), true);
   assert.equal(pages.includes('ebay'), true);
   assert.equal(pages.includes('settings'), true);
   assert.equal(pages.includes('notifications'), true);
+});
+
+test('legacy manual intake and jotform access restore companion intake pages', () => {
+  const pages = normalizeAllowedPages(['dashboard', 'manual-intake', 'jotform'], 'processor');
+
+  assert.equal(pages.includes('create-intake-item'), true);
+  assert.equal(pages.includes('jotform-audit'), true);
 });

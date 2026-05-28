@@ -32,8 +32,8 @@ const SORT_MODES: UsedGearWorkflowProgressSortMode[] = ['group-label', 'newest',
 function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode, 'all'>): QueueTabConfig {
   if (queueMode === 'testing') {
     return {
-      eyebrow: 'Review Queues',
-      title: 'Testing Queue',
+      eyebrow: 'Processing',
+      title: 'Testing',
       searchParamName: 'workflowTestingQueueSearch',
       sortParamName: 'workflowTestingQueueSort',
       sectionId: 'used-gear-testing-queue',
@@ -43,8 +43,8 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
 
   if (queueMode === 'photography') {
     return {
-      eyebrow: 'Review Queues',
-      title: 'Photography Queue',
+      eyebrow: 'Processing',
+      title: 'Photography',
       searchParamName: 'workflowPhotographyQueueSearch',
       sortParamName: 'workflowPhotographyQueueSort',
       sectionId: 'used-gear-photography-queue',
@@ -53,8 +53,8 @@ function getQueueTabConfig(queueMode: Exclude<UsedGearWorkflowProgressQueueMode,
   }
 
   return {
-    eyebrow: 'Review Queues',
-    title: 'Testing Queue',
+    eyebrow: 'Processing',
+    title: 'Testing',
     searchParamName: 'workflowTestingQueueSearch',
     sortParamName: 'workflowTestingQueueSort',
     sectionId: 'used-gear-testing-queue',

@@ -17,6 +17,7 @@ import { assertUsedGearWorkflowReadyForPublish } from '@/services/usedGearWorkfl
 import type { AirtableRecord } from '@/types/airtable';
 
 const USED_GEAR_PENDING_REVIEW_QUEUE_FIELDS = [
+  'Item Title',
   'Arrival Date',
   'SKU',
   'Make',
@@ -544,6 +545,14 @@ export async function loadParkingLotQueue(): Promise<AirtableRecord[]> {
   return records
     .map(withWorkflow)
     .filter((record) => isParkingLotStatus(getUsedGearWorkflowStatus(record.fields)));
+}
+
+export async function loadWorkflowHubDirectory(): Promise<AirtableRecord[]> {
+  const records = await getConfiguredRecords('used-gear-workflow', {
+    fields: [...USED_GEAR_PENDING_REVIEW_QUEUE_FIELDS],
+  });
+
+  return records.map(withWorkflow);
 }
 
 export async function loadPendingReviewGroup(groupId: string): Promise<UsedGearWorkflowGroup> {

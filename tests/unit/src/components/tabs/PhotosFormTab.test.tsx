@@ -142,16 +142,16 @@ describe('PhotosFormTab', () => {
 
     render(<PhotosFormTab recordId="rec-photo" onBackToDirectory={onBackToDirectory} />);
 
-    await screen.findByText('Photos');
+    await screen.findByRole('heading', { name: 'SKU-400' });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to Photography Queue' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Photography' }));
     expect(onBackToDirectory).toHaveBeenCalledTimes(1);
   });
 
   it('requires included-item confirmations before allowing photo-stage completion', async () => {
     render(<PhotosFormTab recordId="rec-photo" />);
 
-    await screen.findByText('Photos');
+    await screen.findByRole('heading', { name: 'SKU-400' });
 
     expect(screen.queryByLabelText('Alt text for testing.jpg')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Additional Items')).not.toBeInTheDocument();
@@ -228,7 +228,7 @@ describe('PhotosFormTab', () => {
   it('submits upload-editor files through the photos save flow', async () => {
     render(<PhotosFormTab recordId="rec-photo" />);
 
-    await screen.findByText('Photos');
+    await screen.findByRole('heading', { name: 'SKU-400' });
 
     fireEvent.click(screen.getByRole('button', { name: 'Mock add processed photos' }));
     fireEvent.click(screen.getByLabelText('I checked and photographed Manual for this unit.'));
@@ -299,7 +299,7 @@ describe('PhotosFormTab', () => {
 
     render(<PhotosFormTab recordId="rec-photo" />);
 
-    await screen.findByText('Photos');
+    await screen.findByRole('heading', { name: 'SKU-400' });
 
     fireEvent.click(screen.getByRole('button', { name: 'Save Photos' }));
 
@@ -310,7 +310,7 @@ describe('PhotosFormTab', () => {
   it('shows processing progress and disables submission while photo images are still being prepared', async () => {
     render(<PhotosFormTab recordId="rec-photo" />);
 
-    await screen.findByText('Photos');
+    await screen.findByRole('heading', { name: 'SKU-400' });
 
     fireEvent.click(screen.getByRole('button', { name: 'Mock photo processing in progress' }));
 
@@ -332,7 +332,7 @@ describe('PhotosFormTab', () => {
 
     render(<PhotosFormTab recordId="rec-photo" />);
 
-    await screen.findByText('Photos');
+    await screen.findByRole('heading', { name: 'SKU-400' });
 
     fireEvent.click(screen.getByRole('button', { name: 'Mock add processed photos' }));
     fireEvent.click(screen.getByLabelText('I checked and photographed Manual for this unit.'));

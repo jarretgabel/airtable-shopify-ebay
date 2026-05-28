@@ -17,7 +17,7 @@ export function ArchiveQueueTab({
   onOpenListingsRecord,
 }: ArchiveQueueTabProps) {
   return (
-    <WorkflowQueuePageTemplate eyebrow="Completed" title="Completed Shipments">
+    <WorkflowQueuePageTemplate eyebrow="Selling" title="Completed Shipments">
       <UsedGearWorkflowPostPublishSection
         currentUserName={currentUserName}
         showSectionIntro={false}

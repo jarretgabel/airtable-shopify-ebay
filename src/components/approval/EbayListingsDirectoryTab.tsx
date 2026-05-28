@@ -35,13 +35,13 @@ export function EbayListingsDirectoryTab({
   return (
     <AppPageLayout>
       <WorkflowPageHeader
-        eyebrow="Channels"
+        eyebrow="Selling"
         title="eBay Listing Snapshot"
       />
 
       <AppPageSectionSurface className="space-y-5">
         <ListingsServiceSummaryPanel
-          eyebrow="Channels"
+          eyebrow="Selling"
           title="eBay Listing Snapshot"
           description={pageDescription}
           showHeader={false}

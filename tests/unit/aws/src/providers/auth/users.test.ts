@@ -136,8 +136,8 @@ test('ensureSampleAuthUsers skips sample accounts that already exist', async () 
 
   try {
     await ensureSampleAuthUsers([
-      { ...baseUser, email: 'developer@example.com', role: 'developer', passwordState: { scheme: 'legacy', legacyPassword: 'Developer123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'manual-intake', 'parking-lot-1', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'jotform', 'market', 'settings', 'notifications', 'imagelab', 'users'] },
-      { ...baseUser, email: 'processor@example.com', role: 'processor', passwordState: { scheme: 'legacy', legacyPassword: 'Processor123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'manual-intake', 'inventory', 'jotform', 'parking-lot-1', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab'] },
+      { ...baseUser, email: 'developer@example.com', role: 'developer', passwordState: { scheme: 'legacy', legacyPassword: 'Developer123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'workflow-guide', 'workflow-guide-editor', 'manual-intake', 'create-intake-item', 'parking-lot-1', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'jotform', 'jotform-audit', 'market', 'settings', 'notifications', 'imagelab', 'users'] },
+      { ...baseUser, email: 'processor@example.com', role: 'processor', passwordState: { scheme: 'legacy', legacyPassword: 'Processor123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'workflow-guide', 'manual-intake', 'create-intake-item', 'inventory', 'jotform', 'jotform-audit', 'parking-lot-1', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab'] },
       { ...baseUser, email: 'tester@example.com', role: 'tester', passwordState: { scheme: 'legacy', legacyPassword: 'Tester123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'testing-queue', 'testing'] },
       { ...baseUser, email: 'photographer@example.com', role: 'photographer', passwordState: { scheme: 'legacy', legacyPassword: 'Photographer123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'photography-queue', 'photos', 'imagelab'] },
     ]);
@@ -176,7 +176,7 @@ test('ensureSampleAuthUsers resyncs sample accounts with stale passwords', async
         role: 'developer',
         passwordState: { scheme: 'legacy', legacyPassword: 'Developer123!' },
         mustChangePassword: false,
-        allowedPages: ['dashboard', 'manual-intake', 'parking-lot-1', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'jotform', 'market', 'settings', 'notifications', 'imagelab', 'users'],
+        allowedPages: ['dashboard', 'workflow-guide', 'workflow-guide-editor', 'manual-intake', 'create-intake-item', 'parking-lot-1', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'jotform', 'jotform-audit', 'market', 'settings', 'notifications', 'imagelab', 'users'],
       },
       {
         ...baseUser,
@@ -185,7 +185,7 @@ test('ensureSampleAuthUsers resyncs sample accounts with stale passwords', async
         role: 'processor',
         passwordState: { scheme: 'legacy', legacyPassword: 'Processor123!' },
         mustChangePassword: false,
-        allowedPages: ['dashboard', 'manual-intake', 'inventory', 'jotform', 'parking-lot-1', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab'],
+        allowedPages: ['dashboard', 'workflow-guide', 'manual-intake', 'create-intake-item', 'inventory', 'jotform', 'jotform-audit', 'parking-lot-1', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab'],
       },
       { ...baseUser, airtableRecordId: 'rec-tester', email: 'tester@example.com', role: 'tester', passwordState: { scheme: 'legacy', legacyPassword: 'old-password' }, mustChangePassword: true, allowedPages: ['dashboard'] },
       {

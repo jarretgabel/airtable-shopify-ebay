@@ -1,7 +1,7 @@
 import { Tab, INTAKE_TAB_SET, INVENTORY_PROCESSING_TAB_SET, LISTINGS_TAB_SET, POST_PUBLISH_TAB_SET, UTILITY_TAB_SET, navLabel } from './appNavigation';
 
 const FORM_ONLY_TAB_SET = new Set<Tab>(['testing', 'photos']);
-const HIDDEN_TAB_SET = new Set<Tab>(['workflow-guide-editor']);
+const HIDDEN_TAB_SET = new Set<Tab>(['workflow-guide-editor', 'jotform-audit', 'create-intake-item', 'market']);
 
 interface NavTab {
   key: Tab;
@@ -37,7 +37,7 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     visibleTabs,
     activeTab,
     exportingPdf,
-    workflowInventoryBadgeCount,
+    workflowInventoryBadgeCount: _workflowInventoryBadgeCount,
     listingsBadgeCount,
     disabledTabReasons = {},
     navigateToTab,
@@ -63,7 +63,7 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     key: tab,
     label: navLabel(tab),
     active: activeTab === tab,
-    badgeCount: tab === 'inventory' ? workflowInventoryBadgeCount : undefined,
+    badgeCount: undefined,
     ...resolveDisabledState(tab),
     onClick: () => navigateToTab(tab),
   }));

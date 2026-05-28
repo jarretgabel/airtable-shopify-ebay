@@ -13,6 +13,7 @@ interface AppNavigationHandlers {
   navigateToInventorySection: (sectionId: string, replace?: boolean) => void;
   navigateToParkingLotPendingReviewGroup: (groupId: string, replace?: boolean) => void;
   navigateToManualIntake: (replace?: boolean) => void;
+  navigateToCreateIntakeItem: (replace?: boolean) => void;
   navigateToManualIntakeForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
@@ -67,7 +68,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
 
   const navigateToManualIntakeForm = useCallback((recordId?: string | null, replace = false): void => {
     const path = recordId
-      ? `/intake/${encodeURIComponent(recordId)}`
+      ? `${TAB_PATHS['manual-intake']}/${encodeURIComponent(recordId)}`
       : TAB_PATHS['manual-intake'];
     navigate(path, { replace });
     scrollToPageTop();
@@ -75,6 +76,11 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
 
   const navigateToManualIntake = useCallback((replace = false): void => {
     navigate(TAB_PATHS['manual-intake'], { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
+  const navigateToCreateIntakeItem = useCallback((replace = false): void => {
+    navigate(TAB_PATHS['create-intake-item'], { replace });
     scrollToPageTop();
   }, [navigate]);
 
@@ -222,6 +228,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     navigateToInventorySection,
     navigateToParkingLotPendingReviewGroup,
     navigateToManualIntake,
+    navigateToCreateIntakeItem,
     navigateToManualIntakeForm,
     navigateToTestingForm,
     navigateToPhotosForm,

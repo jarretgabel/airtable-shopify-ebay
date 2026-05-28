@@ -210,7 +210,7 @@ export function UsedGearTrashSection({
     <AppPageSectionSurface id="used-gear-trash" className="space-y-5">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
-          <AppSectionTitle title="Trash Review" />
+          <AppSectionTitle title="Trash" />
         ) : null}
         <QueueSearchToolbar
           searchAriaLabel="Search workflow trash"

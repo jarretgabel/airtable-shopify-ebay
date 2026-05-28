@@ -20,6 +20,8 @@ export interface UsedGearParkingLotSectionProps {
   onSearchTermChange?: (value: string) => void;
   sortMode?: UsedGearParkingLotSortMode;
   onSortModeChange?: (value: UsedGearParkingLotSortMode) => void;
+  sourceFilter?: string;
+  onSourceFilterChange?: (value: string) => void;
 }
 
 export type UsedGearParkingLotSortMode = 'group-label' | 'newest' | 'oldest' | 'arrival-date' | 'make-model';
@@ -109,6 +111,8 @@ export function UsedGearParkingLotSection({
   onSearchTermChange,
   sortMode: controlledSortMode,
   onSortModeChange,
+  sourceFilter: controlledSourceFilter,
+  onSourceFilterChange,
 }: UsedGearParkingLotSectionProps) {
   const [records, setRecords] = useState<AirtableRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,8 +120,10 @@ export function UsedGearParkingLotSection({
   const [error, setError] = useState<string | null>(null);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearParkingLotSortMode>('group-label');
+  const [uncontrolledSourceFilter, setUncontrolledSourceFilter] = useState('all');
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
+  const sourceFilter = controlledSourceFilter ?? uncontrolledSourceFilter;
 
   useEffect(() => {
     let cancelled = false;
@@ -151,12 +157,19 @@ export function UsedGearParkingLotSection({
 
   const filteredRecords = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
-    if (!normalizedSearch) {
-      return records;
-    }
+    return records.filter((record) => {
+      const workflowSource = displayInventoryValue(record.fields['Workflow Source']);
+      if (sourceFilter !== 'all' && workflowSource !== sourceFilter) {
+        return false;
+      }
 
-    return records.filter((record) => recordSearchText(record).includes(normalizedSearch));
-  }, [records, searchTerm]);
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      return recordSearchText(record).includes(normalizedSearch);
+    });
+  }, [records, searchTerm, sourceFilter]);
 
   const groupedRecords = useMemo(() => {
     const groups = groupUsedGearWorkflowRecords(filteredRecords);
@@ -221,6 +234,14 @@ export function UsedGearParkingLotSection({
     onSortModeChange?.(value);
   };
 
+  const handleSourceFilterChange = (value: string) => {
+    if (!controlledSourceFilter) {
+      setUncontrolledSourceFilter(value);
+    }
+
+    onSourceFilterChange?.(value);
+  };
+
   return (
     <AppPageSectionSurface id="used-gear-parking-lot" className="space-y-5">
       <div className="flex flex-col gap-4">
@@ -247,6 +268,19 @@ export function UsedGearParkingLotSection({
             { value: 'oldest', label: 'Oldest First' },
             { value: 'arrival-date', label: 'Arrival Date' },
             { value: 'make-model', label: 'Make Then Model' },
+          ]}
+          compactFilters
+          filters={[
+            {
+              ariaLabel: 'Filter Parking Lot by source',
+              value: sourceFilter,
+              onChange: handleSourceFilterChange,
+              options: [
+                { value: 'all', label: 'All Sources' },
+                { value: 'JotForm', label: 'JotForm' },
+                { value: 'Manual Entry', label: 'Manual Entry' },
+              ],
+            },
           ]}
         />
       </div>

@@ -23,14 +23,14 @@ export function ShopifyListingsDirectoryTab({
   return (
     <AppPageLayout>
       <WorkflowPageHeader
-        eyebrow="Channels"
+        eyebrow="Selling"
         title="Shopify Product Snapshot"
         actions={shopifyStoreHref ? <OpenLinkToolbarButton label="Open Shopify store" href={shopifyStoreHref} /> : null}
       />
 
       <AppPageSectionSurface className="space-y-5">
         <ListingsServiceSummaryPanel
-          eyebrow="Channels"
+          eyebrow="Selling"
           title="Shopify Product Snapshot"
           description="This page is read-only. Use the combined Listings page for all approvals, edits, and publishing decisions; keep this screen for store-side product visibility only."
           showHeader={false}

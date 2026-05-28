@@ -19,7 +19,9 @@ describe('AppFrameHeaderNavigation', () => {
         tabs={[createTab('dashboard', 'Dashboard')]}
         intakeTabs={[
           createTab('manual-intake', 'Manual Intake'),
+          createTab('create-intake-item', 'Create Intake Item'),
           createTab('jotform', 'JotForm'),
+          createTab('jotform-audit', 'JotForm Audit'),
           createTab('parking-lot-1', 'Parking Lot'),
           createTab('trash-review', 'Trash Review'),
         ]}
@@ -37,12 +39,14 @@ describe('AppFrameHeaderNavigation', () => {
       />,
     );
 
-    expect(screen.getByText('Intake Forms')).toBeInTheDocument();
+    expect(screen.queryByText('Intake Forms')).not.toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Parking Lot' })).toBeInTheDocument();
-    expect(screen.getByText('Trash')).toBeInTheDocument();
+    expect(screen.queryByText('Trash')).not.toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Manual Intake' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Create Intake Item' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'JotForm' })).toBeInTheDocument();
-    expect(screen.getAllByText('Parking Lot')).toHaveLength(2);
+    expect(screen.getByRole('menuitem', { name: 'JotForm Audit' })).toBeInTheDocument();
+    expect(screen.getAllByText('Parking Lot')).toHaveLength(1);
     expect(screen.getByRole('menuitem', { name: 'Trash Review' })).toBeInTheDocument();
   });
 
@@ -97,9 +101,9 @@ describe('AppFrameHeaderNavigation', () => {
     );
 
     expect(screen.getByRole('button', { name: /Selling/ })).toBeInTheDocument();
-    expect(screen.getByText('Review')).toBeInTheDocument();
-    expect(screen.getByText('Lifecycle')).toBeInTheDocument();
-    expect(screen.getByText('Channels')).toBeInTheDocument();
+    expect(screen.queryByText('Review')).not.toBeInTheDocument();
+    expect(screen.queryByText('Lifecycle')).not.toBeInTheDocument();
+    expect(screen.queryByText('Channels')).not.toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Listings' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Post-Publish' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Completed Shipments' })).toBeInTheDocument();

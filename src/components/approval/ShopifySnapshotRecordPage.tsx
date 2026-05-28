@@ -149,7 +149,7 @@ export function ShopifySnapshotRecordPage({
 
   if (viewModel.loading && viewModel.products.length === 0) {
     return (
-      <WorkflowRecordPageLayout eyebrow="Channels" title="Shopify Snapshot" actions={headerActions}>
+      <WorkflowRecordPageLayout eyebrow="Shopify Product Snapshot" title="Shopify Snapshot" actions={headerActions}>
         <LoadingSurface message="Loading Shopify snapshot..." />
       </WorkflowRecordPageLayout>
     );
@@ -157,7 +157,7 @@ export function ShopifySnapshotRecordPage({
 
   if (!product) {
     return (
-      <WorkflowRecordPageLayout eyebrow="Channels" title="Shopify Snapshot" actions={headerActions}>
+      <WorkflowRecordPageLayout eyebrow="Shopify Product Snapshot" title="Shopify Snapshot" actions={headerActions}>
         <EmptySurface title="Shopify snapshot not found" message="This product is no longer available in the current Shopify snapshot.">
           <div className="mt-4 flex flex-wrap gap-2">
             <BackToolbarButton label="Back to Shopify Snapshot" onClick={onBackToSnapshot} />
@@ -169,7 +169,7 @@ export function ShopifySnapshotRecordPage({
   }
 
   return (
-    <WorkflowRecordPageLayout eyebrow="Channels" title="Shopify Snapshot" actions={headerActions}>
+    <WorkflowRecordPageLayout eyebrow="Shopify Product Snapshot" title="Shopify Snapshot" actions={headerActions}>
 
       <ListingApprovalWorkflowProcessCard
         summary={workflowSummary}

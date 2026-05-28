@@ -93,7 +93,7 @@ export function PostPublishQueueTab({
 
   return (
     <WorkflowQueuePageTemplate
-      eyebrow="Follow-Through"
+      eyebrow="Selling"
       title="Post-Publish"
     >
       <MainPageSectionNav

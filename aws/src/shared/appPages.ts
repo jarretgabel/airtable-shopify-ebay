@@ -3,6 +3,7 @@ export const APP_PAGES = [
   'workflow-guide',
   'workflow-guide-editor',
   'manual-intake',
+  'create-intake-item',
   'parking-lot-1',
   'trash-review',
   'inventory',
@@ -16,6 +17,7 @@ export const APP_PAGES = [
   'shopify',
   'ebay',
   'jotform',
+  'jotform-audit',
   'market',
   'settings',
   'notifications',
@@ -38,7 +40,9 @@ const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'dashboard',
     'workflow-guide',
     'manual-intake',
+    'create-intake-item',
     'jotform',
+    'jotform-audit',
     'parking-lot-1',
     'trash-review',
     'inventory',
@@ -73,8 +77,20 @@ export function normalizeAllowedPages(pages: AppPage[], role: UserRole): AppPage
   const allowedSet = new Set(ROLE_ALLOWED_PAGES[role]);
   const nextPages = new Set(uniquePages.filter((page) => allowedSet.has(page)));
 
+  if (allowedSet.has('workflow-guide')) {
+    nextPages.add('workflow-guide');
+  }
+
+  if (nextPages.has('manual-intake') && allowedSet.has('create-intake-item')) {
+    nextPages.add('create-intake-item');
+  }
+
+  if (nextPages.has('jotform') && allowedSet.has('jotform-audit')) {
+    nextPages.add('jotform-audit');
+  }
+
   if (role === 'processor' && nextPages.has('inventory')) {
-    ['manual-intake', 'jotform', 'parking-lot-1', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'settings', 'notifications'].forEach((page) => nextPages.add(page as AppPage));
+    ['manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot-1', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'settings', 'notifications'].forEach((page) => nextPages.add(page as AppPage));
   }
 
   return ROLE_ALLOWED_PAGES[role].filter((page) => nextPages.has(page));

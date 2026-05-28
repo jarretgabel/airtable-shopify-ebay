@@ -31,6 +31,7 @@ describe('InventoryDirectoryListSection', () => {
         onSortModeChange={vi.fn()}
         onRefresh={vi.fn()}
         onSelectRecord={vi.fn()}
+        getNextStepLabel={() => null}
       />,
     );
 
@@ -59,7 +60,7 @@ describe('InventoryDirectoryListSection', () => {
               Make: 'Pioneer',
               Model: 'SX-1250',
               Component: 'Receiver',
-              Status: 'Approved for Publish',
+              'Workflow Status': 'Approved for Publish',
             },
           },
         ]}
@@ -73,6 +74,8 @@ describe('InventoryDirectoryListSection', () => {
         onSortModeChange={onSortModeChange}
         onRefresh={vi.fn()}
         onSelectRecord={onSelectRecord}
+        getNextStepLabel={() => 'Open Listings'}
+        onOpenNextStep={vi.fn()}
       />,
     );
 
@@ -82,8 +85,7 @@ describe('InventoryDirectoryListSection', () => {
     fireEvent.change(screen.getByLabelText('Sort workflow hub directory. Current order: Intake Date: Newest First'), { target: { value: 'intake-oldest' } });
     expect(onSortModeChange).toHaveBeenCalledWith('intake-oldest');
 
-    expect(screen.queryByRole('button', { name: 'Open Testing' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Open Photos' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open Listings' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Workflow Snapshot' }));
     expect(onSelectRecord).toHaveBeenCalledWith('rec-directory-2');
@@ -113,6 +115,7 @@ describe('InventoryDirectoryListSection', () => {
         onSortModeChange={vi.fn()}
         onRefresh={vi.fn()}
         onSelectRecord={vi.fn()}
+        getNextStepLabel={() => null}
       />,
     );
 

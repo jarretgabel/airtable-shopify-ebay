@@ -200,6 +200,7 @@ function makeSampleFields(index, config) {
       : 'Awaiting Pre-Listing Review');
   const defaultWorkflowFields = {
     'Workflow Status': resolvedWorkflowStatus,
+    'Workflow Source': 'Manual Entry',
     ...buildWorkflowSampleFields(index, resolvedWorkflowStatus),
     ...(config.workflowFields ?? {}),
   };

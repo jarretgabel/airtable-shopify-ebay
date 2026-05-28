@@ -110,14 +110,14 @@ export function useAppShellControls({
     dashboard: dashboardRefreshing,
     inventory: atLoading,
     shopify: spLoading,
-    jotform: jfLoading,
+    'jotform-audit': jfLoading,
   };
 
   const tabRefetchers: Partial<Record<Tab, () => void | Promise<void>>> = {
     dashboard: handleDashboardRefresh,
     inventory: airtableRefetch,
     shopify: shopifyRefetch,
-    jotform: jotformRefetch,
+    'jotform-audit': jotformRefetch,
   };
 
   const loading = tabLoadingState[activeTab] ?? false;
@@ -162,7 +162,7 @@ export function useAppShellControls({
     workflowInventoryBadgeCount,
     listingsBadgeCount,
     disabledTabReasons: {
-      jotform: runtimeFeatures.jotform.message ?? undefined,
+      'jotform-audit': runtimeFeatures.jotform.message ?? undefined,
       listings: runtimeFeatures.approvalCombined.message ?? undefined,
     },
     navigateToTab: (tab) => navigateToTab(tab),

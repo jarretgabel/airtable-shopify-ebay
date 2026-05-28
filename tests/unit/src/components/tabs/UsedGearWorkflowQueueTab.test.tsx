@@ -45,7 +45,7 @@ describe('UsedGearWorkflowQueueTab', () => {
       'testing',
     );
 
-    expect(screen.getByRole('heading', { name: 'Testing Queue' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Testing' })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /how to use this queue/i })).not.toBeInTheDocument();
   expect(screen.queryByText('Working Rules')).not.toBeInTheDocument();
 
@@ -61,7 +61,7 @@ describe('UsedGearWorkflowQueueTab', () => {
       'photography',
     );
 
-    expect(screen.getByRole('heading', { name: 'Photography Queue' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Photography' })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /how to use this queue/i })).not.toBeInTheDocument();
 
     const progressSection = screen.getByTestId('progress-section');

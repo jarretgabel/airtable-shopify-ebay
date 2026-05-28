@@ -25,7 +25,7 @@ export function JotformTab({
     <AppPageLayout>
       <WorkflowPageHeader
         eyebrow="Intake"
-        title="JotForm"
+        title="JotForm Audit"
       />
 
       <AppPageSectionSurface className="space-y-4">
@@ -41,7 +41,7 @@ export function JotformTab({
         <div className="flex flex-col gap-2 rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-sm md:flex-row md:items-center md:justify-between">
           <div className="flex min-w-0 flex-wrap items-center gap-2 text-[var(--muted)]">
             <span className={`inline-block h-2.5 w-2.5 rounded-full ${polling ? 'bg-amber-500' : 'bg-emerald-500'} ${polling ? '' : 'animate-pulse'}`} />
-            <span className="font-semibold text-[var(--ink)]">Live JotForm Feed · Reference Only</span>
+            <span className="font-semibold text-[var(--ink)]">Live JotForm Audit Feed · Reference Only</span>
             {lastUpdated && (
               <span>Updated {lastUpdated.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' })}</span>
             )}

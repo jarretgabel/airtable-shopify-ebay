@@ -5,7 +5,9 @@ const PROCESSOR_PAGES: AppPage[] = [
   'dashboard',
   'workflow-guide',
   'manual-intake',
+  'create-intake-item',
   'jotform',
+  'jotform-audit',
   'parking-lot-1',
   'trash-review',
   'inventory',
@@ -31,6 +33,7 @@ const DEVELOPER_PAGES: AppPage[] = [
   'workflow-guide',
   'workflow-guide-editor',
   'manual-intake',
+  'create-intake-item',
   'parking-lot-1',
   'trash-review',
   'inventory',
@@ -44,6 +47,7 @@ const DEVELOPER_PAGES: AppPage[] = [
   'shopify',
   'ebay',
   'jotform',
+  'jotform-audit',
   'market',
   'settings',
   'notifications',
@@ -65,6 +69,7 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'workflow-guide',
     'workflow-guide-editor',
     'manual-intake',
+    'create-intake-item',
     'parking-lot-1',
     'trash-review',
     'inventory',
@@ -78,6 +83,7 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'shopify',
     'ebay',
     'jotform',
+    'jotform-audit',
     'settings',
     'notifications',
     'imagelab',
@@ -88,6 +94,7 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'workflow-guide',
     'workflow-guide-editor',
     'manual-intake',
+    'create-intake-item',
     'parking-lot-1',
     'trash-review',
     'inventory',
@@ -101,6 +108,7 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'shopify',
     'ebay',
     'jotform',
+    'jotform-audit',
     'market',
     'settings',
     'notifications',
@@ -115,7 +123,9 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
 
 const PROCESSOR_LEGACY_EXPANSIONS: AppPage[] = [
   'manual-intake',
+  'create-intake-item',
   'jotform',
+  'jotform-audit',
   'parking-lot-1',
   'trash-review',
   'testing-queue',
@@ -133,6 +143,7 @@ const PROCESSOR_LEGACY_EXPANSIONS: AppPage[] = [
 
 export const WORKFLOW_DASHBOARD_PAGES: AppPage[] = [
   'manual-intake',
+  'jotform',
   'inventory',
   'parking-lot-1',
   'trash-review',
@@ -164,6 +175,14 @@ export function normalizeRolePages(pages: AppPage[], role: UserRole): AppPage[] 
   // Keep the shared reference guide available to existing users whose stored page bundles predate it.
   if (allowedSet.has('workflow-guide')) {
     nextPages.add('workflow-guide');
+  }
+
+  if (nextPages.has('manual-intake') && allowedSet.has('create-intake-item')) {
+    nextPages.add('create-intake-item');
+  }
+
+  if (nextPages.has('jotform') && allowedSet.has('jotform-audit')) {
+    nextPages.add('jotform-audit');
   }
 
   if (role === 'processor' && nextPages.has('inventory')) {

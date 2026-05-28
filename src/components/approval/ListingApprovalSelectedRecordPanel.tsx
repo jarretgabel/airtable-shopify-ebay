@@ -165,7 +165,7 @@ export function ListingApprovalSelectedRecordPanel({
 
   return (
     <WorkflowRecordPageLayout
-      eyebrow="Review"
+      eyebrow="Listings"
       title={selectedRecordTitle}
       actions={backButton}
       belowHeader={combinedSectionNav}

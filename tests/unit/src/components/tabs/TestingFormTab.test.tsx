@@ -148,16 +148,16 @@ describe('TestingFormTab', () => {
 
     render(<TestingFormTab recordId="rec-testing" onBackToDirectory={onBackToDirectory} />);
 
-    await screen.findByText('Testing');
+    await screen.findByRole('heading', { name: 'SKU-500' });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to Testing Queue' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Testing' }));
     expect(onBackToDirectory).toHaveBeenCalledTimes(1);
   });
 
   it('submits edited workflow image metadata only after testing completion is confirmed', async () => {
     render(<TestingFormTab recordId="rec-testing" />);
 
-    await screen.findByText('Testing');
+    await screen.findByRole('heading', { name: 'SKU-500' });
 
     expect(screen.queryByLabelText('Alt text for photo.jpg')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Arrival Date')).not.toBeInTheDocument();
@@ -214,7 +214,7 @@ describe('TestingFormTab', () => {
   it('submits upload-editor files through the testing save flow', async () => {
     render(<TestingFormTab recordId="rec-testing" />);
 
-    await screen.findByText('Testing');
+    await screen.findByRole('heading', { name: 'SKU-500' });
 
     fireEvent.click(screen.getByRole('button', { name: 'Mock add processed testing photos' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Testing' }));
@@ -291,7 +291,7 @@ describe('TestingFormTab', () => {
 
     render(<TestingFormTab recordId="rec-testing" />);
 
-    await screen.findByText('Testing');
+    await screen.findByRole('heading', { name: 'SKU-500' });
 
     fireEvent.click(screen.getByRole('button', { name: 'Save Testing' }));
 
@@ -302,7 +302,7 @@ describe('TestingFormTab', () => {
   it('shows processing progress and disables submission while testing images are still being prepared', async () => {
     render(<TestingFormTab recordId="rec-testing" />);
 
-    await screen.findByText('Testing');
+    await screen.findByRole('heading', { name: 'SKU-500' });
 
     fireEvent.click(screen.getByRole('button', { name: 'Mock testing processing in progress' }));
 
@@ -324,7 +324,7 @@ describe('TestingFormTab', () => {
 
     render(<TestingFormTab recordId="rec-testing" />);
 
-    await screen.findByText('Testing');
+    await screen.findByRole('heading', { name: 'SKU-500' });
 
     fireEvent.click(screen.getByRole('button', { name: 'Mock add processed testing photos' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Testing' }));

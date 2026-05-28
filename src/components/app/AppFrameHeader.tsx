@@ -67,7 +67,7 @@ export function AppFrameHeader({
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 py-3">
         <div className="flex min-w-0 flex-col">
           <h1 className="m-0 max-w-[12ch] text-[0.96rem] font-semibold leading-[1.02] tracking-[-0.01em] text-[var(--ink)] sm:max-w-none">
-            Control Center
+            ResolutionAV & Stereobuyers
           </h1>
         </div>
         <div className="flex flex-wrap items-center gap-2" data-export-ignore="true">

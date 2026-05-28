@@ -19,7 +19,7 @@ describe('UsedGearManualIntakePage', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Manual Intake' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Create Intake Item' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /how to use this page/i })).not.toBeInTheDocument();
     expect(screen.queryByText('Routing Outcomes')).not.toBeInTheDocument();
     expect(screen.getByTestId('airtable-embedded-form')).toHaveAttribute('data-record-id', '');
@@ -34,5 +34,21 @@ describe('UsedGearManualIntakePage', () => {
 
     expect(screen.getByRole('heading', { name: 'Intake Record' })).toBeInTheDocument();
     expect(screen.getByTestId('airtable-embedded-form')).toHaveAttribute('data-record-id', 'rec-intake-1');
+  });
+
+  it('shows a back button for detail routes when a directory callback is provided', () => {
+    const onBackToDirectory = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <UsedGearManualIntakePage
+          recordId="rec-intake-1"
+          onBackToDirectory={onBackToDirectory}
+          backToDirectoryLabel="Back to Manual Intake"
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Back to Manual Intake' })).toBeInTheDocument();
   });
 });

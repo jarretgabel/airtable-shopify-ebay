@@ -18,6 +18,7 @@ export interface AppTabContentProps {
   manualIntakeMode: boolean;
   jotformReviewGroupId: string | null;
   jotformReviewRecordId: string | null;
+  jotformDirectoryRecordId: string | null;
   parkingLotArrivalGroupId: string | null;
   parkingLotArrivalRecordId: string | null;
   trashReviewGroupId: string | null;
@@ -44,6 +45,7 @@ export interface AppTabContentProps {
     options?: { replace?: boolean },
   ) => void;
   navigateToManualIntake: (replace?: boolean) => void;
+  navigateToCreateIntakeItem: (replace?: boolean) => void;
   navigateToManualIntakeForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToTestingForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
@@ -57,6 +59,7 @@ export interface AppTabContentProps {
   navigateToUsersList: (replace?: boolean) => void;
   navigateToTab: (tab: Tab, replace?: boolean) => void;
   navigateToParkingLotPendingReviewGroup: (groupId: string, replace?: boolean) => void;
+  navigateToPath: (path: string, replace?: boolean) => void;
   runtimeFeatures: RuntimeFeatureMap;
   metrics: ReturnType<typeof useDashboardMetrics>;
   accessiblePages: Tab[];

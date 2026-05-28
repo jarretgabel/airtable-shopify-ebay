@@ -122,9 +122,10 @@ function FieldShell({ definition, children }: { definition: TestingFormFieldDefi
 interface TestingFormTabProps {
   recordId?: string | null;
   onBackToDirectory?: () => void;
+  eyebrow?: string;
 }
 
-export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabProps) {
+export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }: TestingFormTabProps) {
   const [formValues, setFormValues] = useState<TestingFormValues>(() => createTestingFormDefaults());
   const [recordSource, setRecordSource] = useState<TestingFormRecordSource>('inventory-directory');
   const [customerReference, setCustomerReference] = useState<TestingFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
@@ -361,10 +362,10 @@ export function TestingFormTab({ recordId, onBackToDirectory }: TestingFormTabPr
     <AppPageLayout>
       <div className="flex flex-col gap-6">
         <WorkflowPageHeader
-          eyebrow="Forms"
-          title="Testing"
+          eyebrow={eyebrow}
+          title={formValues.sku.trim() || 'Testing'}
           actions={onBackToDirectory ? (
-            <BackToolbarButton label="Back to Testing Queue" onClick={onBackToDirectory} />
+            <BackToolbarButton label="Back to Testing" onClick={onBackToDirectory} />
           ) : undefined}
         />
 

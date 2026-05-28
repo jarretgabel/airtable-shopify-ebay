@@ -10,8 +10,8 @@ import {
   getInventoryDirectoryItemLabel,
   getInventoryDirectorySku,
   getInventoryDirectoryStatus,
-  loadInventoryDirectory,
 } from '@/services/inventoryDirectory';
+import { loadWorkflowHubDirectory } from '@/services/usedGearQueue';
 import type { UserRole } from '@/stores/auth/authTypes';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -150,12 +150,12 @@ export function AirtableTab({
       setDirectoryError(null);
 
       try {
-        const data = await loadInventoryDirectory();
+        const data = await loadWorkflowHubDirectory();
         if (cancelled) return;
-        setRecords(data.records);
+        setRecords(data);
       } catch (error) {
         if (cancelled) return;
-        setDirectoryError(error instanceof Error ? error.message : 'Unable to load SB Inventory directory.');
+        setDirectoryError(error instanceof Error ? error.message : 'Unable to load the Workflow Hub directory.');
       } finally {
         if (!cancelled) {
           setDirectoryLoading(false);
@@ -217,10 +217,10 @@ export function AirtableTab({
     setDirectoryError(null);
 
     try {
-      const data = await loadInventoryDirectory();
-      setRecords(data.records);
+      const data = await loadWorkflowHubDirectory();
+      setRecords(data);
     } catch (error) {
-      setDirectoryError(error instanceof Error ? error.message : 'Unable to refresh SB Inventory directory.');
+      setDirectoryError(error instanceof Error ? error.message : 'Unable to refresh the Workflow Hub directory.');
     } finally {
       setDirectoryRefreshing(false);
     }
@@ -242,19 +242,19 @@ export function AirtableTab({
       <section id="inventory-directory-list" className="space-y-4">
         {directoryLoading && records.length === 0 ? (
           <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-10 text-center text-sm text-[var(--muted)]">
-            Loading SB Inventory directory...
+            Loading Workflow Hub directory...
           </div>
         ) : null}
 
         {directoryError && records.length === 0 ? (
           <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-4 text-sm text-amber-200">
-            <p className="m-0 font-semibold">SB Inventory directory is currently unavailable.</p>
+            <p className="m-0 font-semibold">Workflow Hub directory is currently unavailable.</p>
             <p className="mt-2 mb-0">{directoryError}</p>
           </div>
         ) : null}
 
           {!directoryLoading && !directoryError && records.length === 0 ? (
-            <EmptySurface title="No inventory rows found" message="SB Inventory currently has no editable rows in this table.">
+            <EmptySurface title="No workflow rows found" message="The Workflow Hub currently has no rows in this table.">
               <p className="mt-3 text-sm text-[var(--muted)]">
                 Next route: start in Parking Lot 1 for customer-submitted intake, or open Intake when staff needs to create the first manual operational row inside the app.
               </p>

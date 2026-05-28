@@ -12,6 +12,7 @@ interface ParkingLotOneTabProps {
 
 const WORKFLOW_PARKING_LOT_SEARCH_PARAM = 'workflowParkingLotSearch';
 const WORKFLOW_PARKING_LOT_SORT_PARAM = 'workflowParkingLotSort';
+const WORKFLOW_PARKING_LOT_SOURCE_PARAM = 'workflowParkingLotSource';
 
 function isArrivalStageRecord(record: AirtableRecord): boolean {
   return isParkingLotArrivalStageStatus(getUsedGearWorkflowStatus(record.fields));
@@ -32,6 +33,10 @@ export function ParkingLotOneTab({ currentUserName }: ParkingLotOneTabProps) {
   const workflowParkingLotSort = useMemo(() => {
     const value = new URLSearchParams(location.search).get(WORKFLOW_PARKING_LOT_SORT_PARAM);
     return value === 'newest' || value === 'oldest' || value === 'arrival-date' || value === 'make-model' ? value : 'group-label';
+  }, [location.search]);
+  const workflowParkingLotSource = useMemo(() => {
+    const value = new URLSearchParams(location.search).get(WORKFLOW_PARKING_LOT_SOURCE_PARAM);
+    return value === 'JotForm' || value === 'Manual Entry' ? value : 'all';
   }, [location.search]);
 
   const updateIntakeRouteState = (update: (params: URLSearchParams) => void, hash: string) => {
@@ -54,7 +59,7 @@ export function ParkingLotOneTab({ currentUserName }: ParkingLotOneTabProps) {
 
   return (
     <WorkflowQueuePageTemplate
-      eyebrow="Parking Lot"
+      eyebrow="Intake"
       title="Parking Lot"
     >
       <UsedGearParkingLotSection
@@ -76,6 +81,14 @@ export function ParkingLotOneTab({ currentUserName }: ParkingLotOneTabProps) {
             params.delete(WORKFLOW_PARKING_LOT_SORT_PARAM);
           } else {
             params.set(WORKFLOW_PARKING_LOT_SORT_PARAM, value);
+          }
+        }, '#used-gear-parking-lot')}
+        sourceFilter={workflowParkingLotSource}
+        onSourceFilterChange={(value) => updateIntakeRouteState((params) => {
+          if (value === 'all') {
+            params.delete(WORKFLOW_PARKING_LOT_SOURCE_PARAM);
+          } else {
+            params.set(WORKFLOW_PARKING_LOT_SOURCE_PARAM, value);
           }
         }, '#used-gear-parking-lot')}
       />

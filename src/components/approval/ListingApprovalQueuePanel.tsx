@@ -998,7 +998,7 @@ export function ListingApprovalQueuePanel({
   return (
     <AppPageLayout>
       <WorkflowPageHeader
-        eyebrow="Review"
+        eyebrow="Selling"
         title="Listings"
       />
 

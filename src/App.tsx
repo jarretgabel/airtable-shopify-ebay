@@ -36,6 +36,7 @@ function App() {
     manualIntakeMode,
     jotformReviewGroupId,
     jotformReviewRecordId,
+    jotformDirectoryRecordId,
     parkingLotArrivalGroupId,
     parkingLotArrivalRecordId,
     trashReviewGroupId,
@@ -70,6 +71,7 @@ function App() {
     navigateToInventorySection,
     navigateToParkingLotPendingReviewGroup,
     navigateToManualIntake,
+    navigateToCreateIntakeItem,
     navigateToManualIntakeForm,
     navigateToTestingForm,
     navigateToPhotosForm,
@@ -255,6 +257,7 @@ function App() {
             manualIntakeMode={manualIntakeMode}
             jotformReviewGroupId={jotformReviewGroupId}
             jotformReviewRecordId={jotformReviewRecordId}
+            jotformDirectoryRecordId={jotformDirectoryRecordId}
             parkingLotArrivalGroupId={parkingLotArrivalGroupId}
             parkingLotArrivalRecordId={parkingLotArrivalRecordId}
             trashReviewGroupId={trashReviewGroupId}
@@ -274,7 +277,9 @@ function App() {
             navigateToInventoryList={navigateToInventoryList}
             navigateToInventoryWorkflowView={navigateToInventoryWorkflowView}
             navigateToInventoryPostPublishBucket={navigateToInventoryPostPublishBucket}
+            navigateToPath={navigateToPath}
             navigateToManualIntake={navigateToManualIntake}
+            navigateToCreateIntakeItem={navigateToCreateIntakeItem}
             navigateToManualIntakeForm={navigateToManualIntakeForm}
             navigateToTestingForm={navigateToTestingForm}
             navigateToPhotosForm={navigateToPhotosForm}

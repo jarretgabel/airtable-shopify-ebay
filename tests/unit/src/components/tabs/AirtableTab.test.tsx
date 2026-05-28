@@ -3,15 +3,15 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AirtableTab } from '@/components/tabs/AirtableTab';
 
-const { loadInventoryDirectoryMock } = vi.hoisted(() => ({
-  loadInventoryDirectoryMock: vi.fn(),
+const { loadWorkflowHubDirectoryMock } = vi.hoisted(() => ({
+  loadWorkflowHubDirectoryMock: vi.fn(),
 }));
 
-vi.mock('@/services/inventoryDirectory', async () => {
-  const actual = await vi.importActual<typeof import('@/services/inventoryDirectory')>('@/services/inventoryDirectory');
+vi.mock('@/services/usedGearQueue', async () => {
+  const actual = await vi.importActual<typeof import('@/services/usedGearQueue')>('@/services/usedGearQueue');
   return {
     ...actual,
-    loadInventoryDirectory: loadInventoryDirectoryMock,
+    loadWorkflowHubDirectory: loadWorkflowHubDirectoryMock,
   };
 });
 
@@ -74,21 +74,19 @@ function LocationState() {
 
 describe('AirtableTab', () => {
   beforeEach(() => {
-    loadInventoryDirectoryMock.mockReset();
+    loadWorkflowHubDirectoryMock.mockReset();
     window.localStorage.clear();
     Element.prototype.scrollIntoView = vi.fn();
-    loadInventoryDirectoryMock.mockResolvedValue({
-      records: [
+    loadWorkflowHubDirectoryMock.mockResolvedValue([
         {
           id: 'rec-1',
           createdTime: '2026-05-07T00:00:00.000Z',
           fields: {
             SKU: 'INV-1',
-            Status: 'Ready',
+            'Workflow Status': 'Pending Review',
           },
         },
-      ],
-    });
+      ]);
   });
 
   it('keeps directory state and strips obsolete workflow queue params from the workflow hub URL', async () => {
@@ -118,7 +116,7 @@ describe('AirtableTab', () => {
     );
 
     await waitFor(() => {
-      expect(loadInventoryDirectoryMock).toHaveBeenCalledTimes(1);
+      expect(loadWorkflowHubDirectoryMock).toHaveBeenCalledTimes(1);
     });
 
     await waitFor(() => {
@@ -184,7 +182,7 @@ describe('AirtableTab', () => {
   });
 
   it('shows the directory error state even when the inventory directory load fails', async () => {
-    loadInventoryDirectoryMock.mockRejectedValue(new Error('Failed to load Airtable records from tblInventory.'));
+    loadWorkflowHubDirectoryMock.mockRejectedValue(new Error('Failed to load workflow records from tbl0K0nFQL64jQMx8.'));
 
     render(
       <MemoryRouter initialEntries={['/workflow-hub#used-gear-progress-queue']}>
@@ -213,7 +211,7 @@ describe('AirtableTab', () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText('SB Inventory directory is currently unavailable.')).toBeInTheDocument();
+    expect(await screen.findByText('Workflow Hub directory is currently unavailable.')).toBeInTheDocument();
     expect(screen.getByTestId('location-state')).toHaveTextContent('/workflow-hub');
   });
 });

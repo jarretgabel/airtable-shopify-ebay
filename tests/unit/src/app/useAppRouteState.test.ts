@@ -49,6 +49,12 @@ describe('useAppRouteState', () => {
     expect(state.inventoryRecordId).toBeNull();
   });
 
+  it('maps the dedicated create-intake-item route', () => {
+    const state = useAppRouteState(locationFor('/create-intake-item'), ['dashboard', 'create-intake-item']);
+    expect(state.activeTab).toBe('create-intake-item');
+    expect(state.manualIntakeMode).toBe(true);
+  });
+
   it('maps the workflow guide route', () => {
     const state = useAppRouteState(locationFor('/workflow-guide'), ['dashboard', 'workflow-guide']);
     expect(state.activeTab).toBe('workflow-guide');
@@ -73,6 +79,17 @@ describe('useAppRouteState', () => {
     const state = useAppRouteState(locationFor('/manual-intake/rec%20123'), ['dashboard', 'manual-intake']);
     expect(state.activeTab).toBe('manual-intake');
     expect(state.manualIntakeRecordId).toBe('rec 123');
+  });
+
+  it('maps jotform deep links with record ids', () => {
+    const state = useAppRouteState(locationFor('/jotform/rec%20jf-123'), ['dashboard', 'jotform']);
+    expect(state.activeTab).toBe('jotform');
+    expect(state.jotformDirectoryRecordId).toBe('rec jf-123');
+  });
+
+  it('maps the dedicated jotform audit route', () => {
+    const state = useAppRouteState(locationFor('/jotform-audit'), ['dashboard', 'jotform-audit']);
+    expect(state.activeTab).toBe('jotform-audit');
   });
 
   it('maps intake deep links with record ids', () => {

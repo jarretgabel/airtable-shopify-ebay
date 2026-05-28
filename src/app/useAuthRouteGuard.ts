@@ -51,6 +51,11 @@ export function useAuthRouteGuard({
       return;
     }
 
+    if (normalizedPath === '/jotform-feed') {
+      navigate('/jotform-audit', { replace: true });
+      return;
+    }
+
     const legacyInventoryPriceEditorMatch = normalizedPath.match(/^\/inventory\/price\/([^/]+)$/);
     if (legacyInventoryPriceEditorMatch) {
       navigate(`/workflow-hub/price/${legacyInventoryPriceEditorMatch[1]}`, { replace: true });
@@ -63,9 +68,9 @@ export function useAuthRouteGuard({
       return;
     }
 
-    const legacyManualIntakeDetailMatch = normalizedPath.match(/^\/manual-intake\/([^/]+)$/);
-    if (legacyManualIntakeDetailMatch) {
-      navigate(`/intake/${legacyManualIntakeDetailMatch[1]}`, { replace: true });
+    const legacyIntakeDetailMatch = normalizedPath.match(/^\/intake\/([^/]+)$/);
+    if (legacyIntakeDetailMatch) {
+      navigate(`/manual-intake/${legacyIntakeDetailMatch[1]}`, { replace: true });
       return;
     }
 
@@ -81,8 +86,12 @@ export function useAuthRouteGuard({
     const isParkingLotArrivalGroupPath = /^\/parking-lot-1\/arrival\/group\/[^/]+$/.test(normalizedPath);
     const isTrashReviewGroupPath = /^\/trash-review\/group\/[^/]+$/.test(normalizedPath);
     const isTrashReviewRecordPath = /^\/trash-review\/review\/[^/]+$/.test(normalizedPath);
+    const isCreateIntakeItemPath = normalizedPath === '/create-intake-item';
     const isManualIntakeDetailPath = /^\/manual-intake\/[^/]+$/.test(normalizedPath);
     const isIntakeDetailPath = /^\/intake\/[^/]+$/.test(normalizedPath);
+    const isJotformAuditPath = normalizedPath === '/jotform-audit';
+    const isJotformDirectoryPath = normalizedPath === '/jotform';
+    const isJotformDirectoryDetailPath = /^\/jotform\/[^/]+$/.test(normalizedPath);
     const isTestingDetailPath = /^\/testing\/[^/]+$/.test(normalizedPath);
     const isPhotosDetailPath = /^\/photography\/[^/]+$/.test(normalizedPath);
     const isInventoryPriceEditorPath = /^\/workflow-hub\/price\/[^/]+$/.test(normalizedPath);
@@ -96,8 +105,12 @@ export function useAuthRouteGuard({
       normalizedPath === '/workflow-hub' ||
       isInventoryPriceEditorPath ||
       isInventoryManualIntakePath ||
+      isCreateIntakeItemPath ||
       isManualIntakeDetailPath ||
       isIntakeDetailPath ||
+      isJotformAuditPath ||
+      isJotformDirectoryPath ||
+      isJotformDirectoryDetailPath ||
       isInventoryDetailPath ||
       normalizedPath === '/listings' ||
       isListingsDetailPath ||
@@ -153,10 +166,16 @@ export function useAuthRouteGuard({
                 ? 'parking-lot-1'
               : isInventoryManualIntakePath
                 ? 'manual-intake'
+              : isCreateIntakeItemPath
+                ? 'create-intake-item'
               : isManualIntakeDetailPath
                 ? 'manual-intake'
               : isIntakeDetailPath
                 ? 'manual-intake'
+              : isJotformAuditPath
+                ? 'jotform-audit'
+              : isJotformDirectoryPath || isJotformDirectoryDetailPath
+                ? 'jotform'
               : normalizedPath === '/testing'
                 ? 'testing-queue'
               : isTestingDetailPath

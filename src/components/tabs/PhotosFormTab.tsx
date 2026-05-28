@@ -158,9 +158,10 @@ function FieldShell({ definition, children }: { definition: PhotosFormFieldDefin
 interface PhotosFormTabProps {
   recordId?: string | null;
   onBackToDirectory?: () => void;
+  eyebrow?: string;
 }
 
-export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProps) {
+export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }: PhotosFormTabProps) {
   const [formValues, setFormValues] = useState<PhotosFormValues>(() => createPhotosFormDefaults());
   const [recordSource, setRecordSource] = useState<PhotosFormRecordSource>('inventory-directory');
   const [customerReference, setCustomerReference] = useState<PhotosFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
@@ -395,10 +396,10 @@ export function PhotosFormTab({ recordId, onBackToDirectory }: PhotosFormTabProp
     <AppPageLayout>
       <div className="flex flex-col gap-6">
         <WorkflowPageHeader
-          eyebrow="Forms"
-          title="Photos"
+          eyebrow={eyebrow}
+          title={formValues.sku.trim() || 'Photography'}
           actions={onBackToDirectory ? (
-            <BackToolbarButton label="Back to Photography Queue" onClick={onBackToDirectory} />
+            <BackToolbarButton label="Back to Photography" onClick={onBackToDirectory} />
           ) : undefined}
         />
 

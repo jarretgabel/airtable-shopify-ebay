@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppTabContent } from '@/app/AppTabContent';
 import type { AppTabContentProps } from '@/app/appTabContentTypes';
@@ -103,6 +103,21 @@ vi.mock('@/components/tabs/UsedGearManualIntakePage', () => ({
   UsedGearManualIntakePage: () => <div>Manual intake page</div>,
 }));
 
+vi.mock('@/components/tabs/UsedGearWorkflowSourceDirectoryPage', () => ({
+  UsedGearWorkflowSourceDirectoryPage: ({
+    title,
+    secondaryActionLabel,
+    onSecondaryAction,
+  }: {
+    title: string;
+    secondaryActionLabel?: string;
+    onSecondaryAction?: () => void;
+  }) => <div>
+    <div>{title} directory page</div>
+    {secondaryActionLabel && onSecondaryAction ? <button type="button" onClick={onSecondaryAction}>{secondaryActionLabel}</button> : null}
+  </div>,
+}));
+
 vi.mock('@/components/tabs/TestingFormTab', () => ({
   TestingFormTab: ({ recordId }: { recordId: string }) => <div>Testing form {recordId}</div>,
 }));
@@ -136,6 +151,7 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     manualIntakeMode: false,
     jotformReviewGroupId: null,
     jotformReviewRecordId: null,
+    jotformDirectoryRecordId: null,
     parkingLotArrivalGroupId: null,
     parkingLotArrivalRecordId: null,
     trashReviewGroupId: null,
@@ -155,7 +171,9 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     navigateToInventoryList: vi.fn(),
     navigateToInventoryWorkflowView: vi.fn(),
     navigateToInventoryPostPublishBucket: vi.fn(),
+    navigateToPath: vi.fn(),
     navigateToManualIntake: vi.fn(),
+    navigateToCreateIntakeItem: vi.fn(),
     navigateToManualIntakeForm: vi.fn(),
     navigateToTestingForm: vi.fn(),
     navigateToPhotosForm: vi.fn(),
@@ -406,7 +424,7 @@ describe('AppTabContent', () => {
     const { rerender } = render(
       <AppTabContent
         {...buildProps({
-          activeTab: 'jotform',
+          activeTab: 'jotform-audit',
           runtimeFeatures: buildRuntimeFeatures({
             jotform: {
               available: false,
@@ -418,7 +436,7 @@ describe('AppTabContent', () => {
       />,
     );
 
-    expect(await screen.findByText('JotForm unavailable')).toBeInTheDocument();
+    expect(await screen.findByText('JotForm Audit unavailable')).toBeInTheDocument();
     expect(screen.queryByText('JotForm content')).not.toBeInTheDocument();
 
     rerender(
@@ -455,6 +473,25 @@ describe('AppTabContent', () => {
 
     expect(await screen.findByText('Combined listings unavailable')).toBeInTheDocument();
     expect(screen.queryByText('Combined listings content')).not.toBeInTheDocument();
+  });
+
+  it('shows a JotForm page action that opens JotForm Feed', async () => {
+    const navigateToTab = vi.fn();
+
+    render(
+      <AppTabContent
+        {...buildProps({
+          activeTab: 'jotform',
+          navigateToTab,
+        })}
+      />,
+    );
+
+    expect(await screen.findByText('JotForm directory page')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'JotForm Feed' }));
+
+    expect(navigateToTab).toHaveBeenCalledWith('jotform-audit');
   });
 
   it('renders the dedicated inventory price editor for inventory price routes', async () => {
@@ -521,7 +558,7 @@ describe('AppTabContent', () => {
     expect(await screen.findByText('Archive queue content')).toBeInTheDocument();
   });
 
-  it('renders the dedicated manual-intake page for the manual-intake route', async () => {
+  it('renders the manual-intake directory for the manual-intake route', async () => {
     render(
       <AppTabContent
         {...buildProps({
@@ -531,7 +568,7 @@ describe('AppTabContent', () => {
       />,
     );
 
-    expect(await screen.findByText('Manual intake page')).toBeInTheDocument();
+    expect(await screen.findByText('Manual Intake directory page')).toBeInTheDocument();
   });
 
   it('falls back to the testing queue when no testing record id is present', async () => {

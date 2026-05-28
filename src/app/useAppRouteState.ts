@@ -9,6 +9,7 @@ interface AppRouteState {
   manualIntakeMode: boolean;
   jotformReviewGroupId: string | null;
   jotformReviewRecordId: string | null;
+  jotformDirectoryRecordId: string | null;
   parkingLotArrivalGroupId: string | null;
   parkingLotArrivalRecordId: string | null;
   trashReviewGroupId: string | null;
@@ -33,8 +34,9 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const isResetPasswordPath = normalizedPath === '/reset-password';
   const resetToken = searchParams.get('token');
   const manualIntakeRecordMatch = normalizedPath.match(/^\/manual-intake\/([^/]+)$/);
+  const jotformDirectoryRecordMatch = normalizedPath.match(/^\/jotform\/([^/]+)$/);
   const intakeRecordMatch = normalizedPath.match(/^\/intake\/([^/]+)$/);
-  const manualIntakeMode = normalizedPath === '/manual-intake' || Boolean(manualIntakeRecordMatch) || Boolean(intakeRecordMatch);
+  const manualIntakeMode = normalizedPath === '/manual-intake' || normalizedPath === '/create-intake-item' || Boolean(manualIntakeRecordMatch) || Boolean(intakeRecordMatch);
   const jotformReviewGroupMatch = normalizedPath.match(/^\/parking-lot-1\/group\/([^/]+)$/);
   const jotformReviewRecordMatch = normalizedPath.match(/^\/parking-lot-1\/(?!group\/|arrival\/|review\/)([^/]+)$/);
   const parkingLotArrivalGroupMatch = normalizedPath.match(/^\/parking-lot-1\/arrival\/group\/([^/]+)$/);
@@ -61,7 +63,10 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     if (normalizedPath === '/trash-review' || trashReviewGroupMatch || trashReviewRecordMatch) return 'trash-review';
     if (normalizedPath === '/workflow/testing') return 'testing-queue';
     if (normalizedPath === '/workflow/photography') return 'photography-queue';
-    if (manualIntakeMode) return 'manual-intake';
+    if (normalizedPath === '/create-intake-item') return 'create-intake-item';
+    if (normalizedPath === '/manual-intake' || manualIntakeRecordMatch || intakeRecordMatch) return 'manual-intake';
+    if (normalizedPath === '/jotform-audit') return 'jotform-audit';
+    if (normalizedPath === '/jotform' || jotformDirectoryRecordMatch) return 'jotform';
     if (normalizedPath === '/testing') return 'testing-queue';
     if (testingRecordMatch) return 'testing';
     if (normalizedPath === '/photography') return 'photography-queue';
@@ -86,6 +91,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     manualIntakeMode,
     jotformReviewGroupId: jotformReviewGroupMatch ? decodeURIComponent(jotformReviewGroupMatch[1]) : null,
     jotformReviewRecordId: jotformReviewRecordMatch ? decodeURIComponent(jotformReviewRecordMatch[1]) : null,
+    jotformDirectoryRecordId: jotformDirectoryRecordMatch ? decodeURIComponent(jotformDirectoryRecordMatch[1]) : null,
     parkingLotArrivalGroupId: parkingLotArrivalGroupMatch ? decodeURIComponent(parkingLotArrivalGroupMatch[1]) : null,
     parkingLotArrivalRecordId: parkingLotArrivalRecordMatch ? decodeURIComponent(parkingLotArrivalRecordMatch[1]) : null,
     trashReviewGroupId: trashReviewGroupMatch ? decodeURIComponent(trashReviewGroupMatch[1]) : null,

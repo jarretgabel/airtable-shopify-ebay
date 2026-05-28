@@ -13,7 +13,7 @@ interface TabSection {
 }
 
 const INTAKE_SECTION_KEYS = {
-  forms: ['manual-intake', 'jotform'] as const,
+  forms: ['manual-intake', 'create-intake-item', 'jotform', 'jotform-audit'] as const,
   parkingLots: ['parking-lot-1'] as const,
   trash: ['trash-review'] as const,
 };
@@ -157,7 +157,6 @@ export function AppFrameHeaderNavigation({
 
                       return (
                         <div key={section.title} className="rounded-lg border border-white/5 bg-white/[0.03] px-1.5 py-1.5">
-                          <p className="px-2 pb-1.5 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">{section.title}</p>
                           <DropdownTabList
                             tabs={section.tabs}
                             onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }}
@@ -197,7 +196,6 @@ export function AppFrameHeaderNavigation({
 
                       return (
                         <div key={section.title} className="rounded-lg border border-white/5 bg-white/[0.03] px-1.5 py-1.5">
-                          <p className="px-2 pb-1.5 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">{section.title}</p>
                           <DropdownTabList
                             tabs={section.tabs}
                             onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }}
@@ -236,7 +234,6 @@ export function AppFrameHeaderNavigation({
 
                       return (
                         <div key={section.title} className="rounded-lg border border-white/5 bg-white/[0.03] px-1.5 py-1.5">
-                          <p className="px-2 pb-1.5 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">{section.title}</p>
                           <DropdownTabList
                             tabs={section.tabs}
                             onSelect={(tab) => { onCloseDropdowns(); tab.onClick(); }}

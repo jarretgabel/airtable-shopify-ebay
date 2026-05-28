@@ -250,10 +250,10 @@ export function UsedGearTrashReviewGroupPage({
 
   return (
     <WorkflowRecordPageLayout
-      eyebrow="Trash Review"
-      title={`Trash Review ${group.label}`}
+      eyebrow="Trash"
+      title={`Trash ${group.label}`}
       belowHeader={sectionNav}
-      actions={<BackToolbarButton label="Back to Trash Review" onClick={backToTrash} />}
+      actions={<BackToolbarButton label="Back to Trash" onClick={backToTrash} />}
     >
       <div className="space-y-6">
         {error ? (

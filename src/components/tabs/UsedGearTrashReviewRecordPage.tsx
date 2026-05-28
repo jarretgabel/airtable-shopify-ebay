@@ -230,10 +230,10 @@ export function UsedGearTrashReviewRecordPage({
 
   return (
     <WorkflowRecordPageLayout
-      eyebrow="Trash Review"
+      eyebrow="Trash"
       title={displayInventoryValue(record.fields.SKU)}
       belowHeader={sectionNav}
-      actions={<BackToolbarButton label="Back to Trash Review" onClick={backToTrash} />}
+      actions={<BackToolbarButton label="Back to Trash" onClick={backToTrash} />}
     >
       <div className="space-y-6">
 
