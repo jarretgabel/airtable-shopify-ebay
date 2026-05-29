@@ -37,6 +37,8 @@ import {
   permanentlyDeleteTrashRecord,
   requalifyTrashRecord,
   restoreTrashRecord,
+  saveParkingLotArrivalReviewRecord,
+  savePendingReviewRecordReview,
   savePendingReviewGroupReview,
   saveUsedGearWorkflowStageSignoff,
   summarizeUsedGearWorkflowPostPublishQueue,
@@ -524,6 +526,43 @@ describe('usedGearQueue', () => {
     );
   });
 
+  it('saves single-record pending-review notes and handoff fields', async () => {
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'recPending',
+      createdTime: 'now',
+      fields: {
+        'Qualification Notes': 'Ready for same-day testing.',
+        'Arrival Date': '2026-05-12',
+        SKU: 'SKU-42',
+      },
+    });
+
+    await savePendingReviewRecordReview('recPending', {
+      qualificationNotes: 'Ready for same-day testing.',
+      arrivalDate: '2026-05-12',
+      sku: 'SKU-42',
+    });
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'recPending',
+      {
+        'Qualification Notes': 'Ready for same-day testing.',
+        'Arrival Date': '2026-05-12',
+        SKU: 'SKU-42',
+      },
+      { typecast: true },
+    );
+  });
+
+  it('requires arrival date before saving a sku on a pending-review row', async () => {
+    await expect(savePendingReviewRecordReview('recPending', {
+      qualificationNotes: 'Ready for same-day testing.',
+      arrivalDate: '   ',
+      sku: 'SKU-42',
+    })).rejects.toThrow('Arrival Date is required before saving a SKU in Parking Lot.');
+  });
+
   it('accepts a grouped intake review after validation passes', async () => {
     mockGetConfiguredRecord
       .mockResolvedValueOnce({ id: 'rec1', createdTime: 'now', fields: { 'Confirmed Grand Total': 100 } })
@@ -613,6 +652,42 @@ describe('usedGearQueue', () => {
 
   it('requires a reason before routing a row to unqualified', async () => {
     await expect(markPendingReviewUnqualified('recPending', '')).rejects.toThrow('Unqualified reason is required.');
+  });
+
+  it('prevents saving a parking lot SKU before arrival is recorded', async () => {
+    await expect(saveParkingLotArrivalReviewRecord('recPending', {
+      arrivalDate: '',
+      sku: 'SKU-123',
+    })).rejects.toThrow('Arrival Date is required before saving a SKU in Parking Lot.');
+
+    expect(mockUpdateConfiguredRecord).not.toHaveBeenCalled();
+  });
+
+  it('saves parking lot arrival review fields once arrival is recorded', async () => {
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'recPending',
+      createdTime: 'now',
+      fields: {
+        'Arrival Date': '2026-05-12',
+        SKU: 'SKU-123',
+        'Workflow Status': 'Accepted - Arrived, Awaiting SKU',
+      },
+    });
+
+    await saveParkingLotArrivalReviewRecord('recPending', {
+      arrivalDate: '2026-05-12',
+      sku: 'SKU-123',
+    });
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'recPending',
+      {
+        'Arrival Date': '2026-05-12',
+        SKU: 'SKU-123',
+      },
+      { typecast: true },
+    );
   });
 
   it('writes workflow signoff fields through the workflow source', async () => {
@@ -1244,18 +1319,18 @@ describe('usedGearQueue', () => {
       },
       targets: {
         pendingReview: {
-          destinationTab: 'parking-lot-1',
+          destinationTab: 'parking-lot',
           recordId: null,
           sectionId: 'used-gear-pending-review',
           groupId: 'pickup-100',
-          path: '/parking-lot-1?workflowPendingReviewGroup=pickup-100#used-gear-pending-review',
+          path: '/parking-lot?workflowPendingReviewGroup=pickup-100#used-gear-pending-review',
         },
         processing: {
-          destinationTab: 'parking-lot-1',
+          destinationTab: 'parking-lot',
           recordId: 'recProcessing',
           sectionId: 'used-gear-parking-lot',
           groupId: null,
-          path: '/parking-lot-1#used-gear-parking-lot',
+          path: '/parking-lot#used-gear-parking-lot',
         },
         testing: {
           destinationTab: 'testing-queue',
@@ -1319,11 +1394,11 @@ describe('usedGearQueue', () => {
       },
       targets: {
         pendingReview: {
-          destinationTab: 'parking-lot-1',
+          destinationTab: 'parking-lot',
           recordId: null,
           sectionId: 'used-gear-pending-review',
           groupId: 'pickup-100',
-          path: '/parking-lot-1?workflowPendingReviewGroup=pickup-100#used-gear-pending-review',
+          path: '/parking-lot?workflowPendingReviewGroup=pickup-100#used-gear-pending-review',
         },
         processing: null,
         testing: null,
@@ -1351,11 +1426,11 @@ describe('usedGearQueue', () => {
       targets: {
         pendingReview: null,
         processing: {
-          destinationTab: 'parking-lot-1',
+          destinationTab: 'parking-lot',
           recordId: 'recUnassigned',
           sectionId: 'used-gear-parking-lot',
           groupId: null,
-          path: '/parking-lot-1#used-gear-parking-lot',
+          path: '/parking-lot#used-gear-parking-lot',
         },
         testing: null,
         photography: null,

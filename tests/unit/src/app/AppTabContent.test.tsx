@@ -511,7 +511,7 @@ describe('AppTabContent', () => {
     render(
       <AppTabContent
         {...buildProps({
-          activeTab: 'parking-lot-1',
+          activeTab: 'parking-lot',
           parkingLotArrivalGroupId: 'set-1',
         })}
       />,
@@ -524,7 +524,7 @@ describe('AppTabContent', () => {
     render(
       <AppTabContent
         {...buildProps({
-          activeTab: 'parking-lot-1',
+          activeTab: 'parking-lot',
           parkingLotArrivalRecordId: 'rec-lot-two-1',
         })}
       />,

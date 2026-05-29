@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { WorkflowQueuePageTemplate } from '@/components/app/WorkflowQueuePageTemplate';
+import { getParkingLotEffectiveStatus } from '@/components/tabs/airtable/usedGearParkingLotPresentation';
 import { UsedGearParkingLotSection } from '@/components/tabs/airtable/UsedGearParkingLotSection';
-import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 import { isParkingLotArrivalStageStatus, type UsedGearWorkflowGroup } from '@/services/usedGearQueue';
 import type { AirtableRecord } from '@/types/airtable';
 
-interface ParkingLotOneTabProps {
+interface ParkingLotTabProps {
   currentUserName: string;
 }
 
@@ -15,14 +15,14 @@ const WORKFLOW_PARKING_LOT_SORT_PARAM = 'workflowParkingLotSort';
 const WORKFLOW_PARKING_LOT_SOURCE_PARAM = 'workflowParkingLotSource';
 
 function isArrivalStageRecord(record: AirtableRecord): boolean {
-  return isParkingLotArrivalStageStatus(getUsedGearWorkflowStatus(record.fields));
+  return isParkingLotArrivalStageStatus(getParkingLotEffectiveStatus(record));
 }
 
 function isArrivalStageGroup(group: UsedGearWorkflowGroup): boolean {
   return group.records.every((record) => isArrivalStageRecord(record));
 }
 
-export function ParkingLotOneTab({ currentUserName }: ParkingLotOneTabProps) {
+export function ParkingLotTab({ currentUserName }: ParkingLotTabProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -66,11 +66,11 @@ export function ParkingLotOneTab({ currentUserName }: ParkingLotOneTabProps) {
         currentUserName={currentUserName}
         showSectionIntro={false}
         onOpenGroupReview={(group) => navigate(
-          `${isArrivalStageGroup(group) ? '/parking-lot-1/arrival/group' : '/parking-lot-1/group'}/${encodeURIComponent(group.id)}${location.search}`,
+          `${isArrivalStageGroup(group) ? '/parking-lot/arrival/group' : '/parking-lot/group'}/${encodeURIComponent(group.id)}${location.search}`,
           { replace: false },
         )}
         onOpenReviewRecord={(record) => navigate(
-          `${isArrivalStageRecord(record) ? '/parking-lot-1/arrival' : '/parking-lot-1'}/${encodeURIComponent(record.id)}${location.search}`,
+          `${isArrivalStageRecord(record) ? '/parking-lot/arrival' : '/parking-lot'}/${encodeURIComponent(record.id)}${location.search}`,
           { replace: false },
         )}
         searchTerm={workflowParkingLotSearch}

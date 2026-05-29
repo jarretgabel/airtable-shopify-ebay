@@ -127,6 +127,7 @@ interface TestingFormTabProps {
 
 export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }: TestingFormTabProps) {
   const [formValues, setFormValues] = useState<TestingFormValues>(() => createTestingFormDefaults());
+  const [itemTitle, setItemTitle] = useState('');
   const [recordSource, setRecordSource] = useState<TestingFormRecordSource>('inventory-directory');
   const [customerReference, setCustomerReference] = useState<TestingFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
   const [stageContext, setStageContext] = useState<TestingFormStageContext>(EMPTY_STAGE_CONTEXT);
@@ -157,6 +158,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
             ? loadTestingFormValues(recordId)
             : Promise.resolve({
                 source: 'inventory-directory' as const,
+                itemTitle: '',
                 values: createTestingFormDefaults(),
                 customerReference: EMPTY_CUSTOMER_REFERENCE,
                 stageContext: EMPTY_STAGE_CONTEXT,
@@ -164,6 +166,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
         ]);
         if (!cancelled) {
           setOptionSets(nextOptionSets);
+          setItemTitle(nextFormValues.itemTitle);
           setRecordSource(nextFormValues.source);
           setCustomerReference(nextFormValues.customerReference);
           setStageContext(nextFormValues.stageContext);
@@ -363,7 +366,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
       <div className="flex flex-col gap-6">
         <WorkflowPageHeader
           eyebrow={eyebrow}
-          title={formValues.sku.trim() || 'Testing'}
+          title={itemTitle || formValues.sku.trim() || 'Testing'}
           actions={onBackToDirectory ? (
             <BackToolbarButton label="Back to Testing" onClick={onBackToDirectory} />
           ) : undefined}

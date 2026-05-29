@@ -17,7 +17,7 @@ export const LISTINGS_TABS = ['listings', 'post-publish', 'archive', 'shopify', 
 export const LISTINGS_TAB_SET = new Set<Tab>(LISTINGS_TABS as readonly Tab[]);
 export const POST_PUBLISH_TABS = [] as const satisfies readonly Tab[];
 export const POST_PUBLISH_TAB_SET = new Set<Tab>(POST_PUBLISH_TABS as readonly Tab[]);
-export const INTAKE_TABS = ['manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot-1', 'trash-review'] as const satisfies readonly Tab[];
+export const INTAKE_TABS = ['manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot', 'trash-review'] as const satisfies readonly Tab[];
 export const INTAKE_TAB_SET = new Set<Tab>(INTAKE_TABS as readonly Tab[]);
 export const INVENTORY_PROCESSING_TABS = ['testing-queue', 'photography-queue', 'testing', 'photos'] as const satisfies readonly Tab[];
 export const INVENTORY_PROCESSING_TAB_SET = new Set<Tab>(INVENTORY_PROCESSING_TABS as readonly Tab[]);
@@ -36,7 +36,7 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   market: 'HiFi Shark',
   'manual-intake': 'Manual Intake',
   'create-intake-item': 'Create Intake Item',
-  'parking-lot-1': 'Parking Lot',
+  'parking-lot': 'Parking Lot',
   jotform: 'JotForm',
   'jotform-audit': 'JotForm Audit',
   'trash-review': 'Trash Review',

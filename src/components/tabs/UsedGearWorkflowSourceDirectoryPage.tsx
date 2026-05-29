@@ -5,11 +5,17 @@ import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { InventoryDirectoryListSection } from '@/components/tabs/airtable/InventoryDirectoryListSection';
 import { loadWorkflowHubDirectory } from '@/services/usedGearQueue';
-import { isParkingLotStatus } from '@/services/usedGearQueue';
-import { getInventoryDirectoryStatus } from '@/services/inventoryDirectory';
+import { getInventoryDirectorySku, getInventoryDirectoryStatus, getInventoryDirectoryTitle } from '@/services/inventoryDirectory';
 import type { AirtableRecord } from '@/types/airtable';
 
 type IntakeDirectorySource = 'JotForm' | 'Manual Entry';
+
+const INTAKE_DIRECTORY_WORKFLOW_STATUSES = new Set([
+  'Pending Review',
+  'Accepted - Awaiting Arrival',
+  'Accepted - Arrived, Awaiting SKU',
+  'Accepted - Arrived, Awaiting Missing Item',
+]);
 
 interface UsedGearWorkflowSourceDirectoryPageProps {
   title: string;
@@ -20,6 +26,45 @@ interface UsedGearWorkflowSourceDirectoryPageProps {
   onCreateAction?: () => void;
   secondaryActionLabel?: string;
   onSecondaryAction?: () => void;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildDirectoryShortRecordId(recordId: string): string {
+  const trimmedRecordId = recordId.trim();
+  const normalizedRecordId = trimmedRecordId.replace(/^rec[-_]?/i, '');
+  if (!normalizedRecordId) {
+    return trimmedRecordId;
+  }
+
+  return normalizedRecordId.slice(-6);
+}
+
+function getWorkflowSourceDirectoryItemLabel(record: AirtableRecord): string {
+  const itemTitle = getInventoryDirectoryTitle(record.fields).trim();
+  if (!itemTitle) {
+    return '';
+  }
+
+  const normalizedRecordId = record.id.trim().replace(/^rec[-_]?/i, '');
+  const shortRecordId = buildDirectoryShortRecordId(record.id);
+  if (!normalizedRecordId || !shortRecordId || normalizedRecordId === shortRecordId) {
+    return itemTitle;
+  }
+
+  const normalizedSuffixPattern = new RegExp(`${escapeRegExp(normalizedRecordId)}$`);
+  return normalizedSuffixPattern.test(itemTitle)
+    ? itemTitle.replace(normalizedSuffixPattern, shortRecordId)
+    : itemTitle;
+}
+
+function isSourceDirectoryIntakeRecord(record: AirtableRecord): boolean {
+  const workflowStatus = getInventoryDirectoryStatus(record.fields);
+  const sku = getInventoryDirectorySku(record.fields);
+
+  return INTAKE_DIRECTORY_WORKFLOW_STATUSES.has(workflowStatus) && sku.length === 0;
 }
 
 function getRecordIntakeTimestamp(record: AirtableRecord): number {
@@ -65,7 +110,7 @@ export function UsedGearWorkflowSourceDirectoryPage({
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Unable to load intake directory rows.');
+              setError(loadError instanceof Error ? loadError.message : 'Unable to load workflow directory rows.');
         }
       } finally {
         if (!cancelled) {
@@ -82,10 +127,7 @@ export function UsedGearWorkflowSourceDirectoryPage({
   }, []);
 
   const sourceRecords = useMemo(
-    () => records.filter((record) => (
-      record.fields['Workflow Source'] === workflowSource
-      && isParkingLotStatus(getInventoryDirectoryStatus(record.fields))
-    )),
+    () => records.filter((record) => record.fields['Workflow Source'] === workflowSource && isSourceDirectoryIntakeRecord(record)),
     [records, workflowSource],
   );
 
@@ -130,7 +172,7 @@ export function UsedGearWorkflowSourceDirectoryPage({
     try {
       setRecords(await loadWorkflowHubDirectory());
     } catch (refreshError) {
-      setError(refreshError instanceof Error ? refreshError.message : 'Unable to refresh intake directory rows.');
+          setError(refreshError instanceof Error ? refreshError.message : 'Unable to refresh workflow directory rows.');
     } finally {
       setRefreshing(false);
     }
@@ -162,14 +204,14 @@ export function UsedGearWorkflowSourceDirectoryPage({
 
       {!loading && !error && sourceRecords.length === 0 ? (
         <EmptySurface
-          title={`No ${workflowSource} intake-stage rows found`}
-          message={`The workflow table currently has no ${workflowSource} rows in the intake-stage workflow statuses.`}
+          title={`No ${workflowSource} workflow rows found`}
+          message={`The workflow table currently has no ${workflowSource} rows.`}
         />
       ) : null}
 
       {loading && sourceRecords.length === 0 ? (
         <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-10 text-center text-sm text-[var(--muted)]">
-          Loading intake directory...
+              Loading workflow directory...
         </div>
       ) : null}
 
@@ -194,8 +236,11 @@ export function UsedGearWorkflowSourceDirectoryPage({
           searchPlaceholder="Search by SKU, make, model, or status"
           refreshLabel={`Refresh ${title}`}
           refreshLoadingLabel={`Refreshing ${title}`}
-          resultLabel="intake rows"
-          emptyMessage="No intake rows match the current search and status filters."
+          resultLabel="workflow rows"
+          emptyMessage="No workflow rows match the current search and status filters."
+          getItemLabel={workflowSource === 'Manual Entry'
+            ? getWorkflowSourceDirectoryItemLabel
+            : (record) => getInventoryDirectoryTitle(record.fields)}
         />
       ) : null}
     </AppPageLayout>

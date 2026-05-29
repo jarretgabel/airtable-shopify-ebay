@@ -336,7 +336,7 @@ export function UsedGearParkingLotArrivalGroupPage({
                 }}
                 disabled={saving !== null || readyRecordIds.length === 0}
               >
-                {saving === 'complete' ? 'Moving...' : 'Complete Ready Items'}
+                {saving === 'complete' ? 'Moving...' : 'Move Ready Items to Testing'}
               </button>
             </div>
 

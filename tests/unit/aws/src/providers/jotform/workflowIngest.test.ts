@@ -97,7 +97,7 @@ test('workflowIngest creates a workflow row and persists archived intake metadat
   const result = await ingest('form-abc', 'sub-123');
 
   assert.equal(createCalls.length, 1);
-  assert.equal(updateCalls.length, 1);
+  assert.equal(updateCalls.length, 2);
   assert.equal(archiveCalls.length, 1);
   assert.equal(archiveCalls[0]?.recordId, 'rec-new-1');
   assert.deepEqual(archiveCalls[0]?.imageUrls, ['https://files.example.com/front.jpg', 'https://files.example.com/rear.jpg']);
@@ -105,7 +105,9 @@ test('workflowIngest creates a workflow row and persists archived intake metadat
   assert.equal(createCalls[0]?.['Workflow Status'], 'Pending Review');
   assert.equal(createCalls[0]?.['JotForm Submission ID'], 'sub-123');
   assert.equal(createCalls[0]?.['Submission Group ID'], 'group-77');
-  const metadataPayload = String(updateCalls[0]?.fields['Workflow Image Metadata JSON'] || '');
+  assert.equal(createCalls[0]?.['Item Title'], 'McIntosh MC275');
+  assert.equal(updateCalls[0]?.fields['Item Title'], 'McIntosh MC275 - new-1');
+  const metadataPayload = String(updateCalls[1]?.fields['Workflow Image Metadata JSON'] || '');
   const metadata = JSON.parse(metadataPayload) as Array<Record<string, unknown>>;
   assert.equal(metadata.length, 2);
   assert.equal(metadata[0]?.sourceStage, 'intake');
@@ -164,6 +166,7 @@ test('workflowIngest updates an existing pending-review row and replaces intake 
   assert.equal(updateCalls.length, 2);
   assert.equal(updateCalls[0]?.recordId, 'rec-existing-1');
   assert.equal(updateCalls[0]?.fields['Workflow Status'], 'Pending Review');
+  assert.equal(updateCalls[0]?.fields['Item Title'], 'McIntosh MC275 - existing-1');
   const metadataPayload = String(updateCalls[1]?.fields['Workflow Image Metadata JSON'] || '');
   const metadata = JSON.parse(metadataPayload) as Array<Record<string, unknown>>;
   assert.equal(metadata.length, 2);

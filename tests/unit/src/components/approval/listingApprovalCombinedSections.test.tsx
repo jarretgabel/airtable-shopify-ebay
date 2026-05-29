@@ -229,7 +229,7 @@ describe('combined approval sections', () => {
           name: 'Devon Developer',
           email: 'developer@example.com',
           role: 'developer',
-          allowedPages: ['dashboard', 'workflow-guide', 'manual-intake', 'jotform', 'parking-lot-1', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab', 'users'],
+          allowedPages: ['dashboard', 'workflow-guide', 'manual-intake', 'jotform', 'parking-lot', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab', 'users'],
           notificationPreferences: {
             infoEnabled: true,
             successEnabled: true,

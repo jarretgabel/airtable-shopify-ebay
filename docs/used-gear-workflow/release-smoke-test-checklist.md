@@ -15,7 +15,7 @@ npm run local:api:check
 - [ ] Open Inventory and confirm Pending Review, Progress, and Post-Publish sections all render.
 - [ ] Sign in as a processor, open a clean `/inventory` route with no existing query or hash state, and confirm it defaults to Pending Review.
 - [ ] Verify the Inventory workflow badge count still appears when actionable rows exist.
-- [ ] Open Parking Lot 1 and confirm it shows workflow-only intake triage.
+- [ ] Open Parking Lot and confirm it shows workflow-only intake triage.
 - [ ] Open JotForm from the utility nav and confirm it shows the raw source feed without the workflow queue embedded.
 - [ ] Confirm `Reset Workflow View` clears search, focused group, bucket, history, collapsed-state, and sort params.
 - [ ] Save a named workflow view preset, reapply it, and delete it.
@@ -24,7 +24,7 @@ npm run local:api:check
 - [ ] In each workflow queue, confirm the row cards show a `Last touched` summary that reflects the newest available owner, stage, or stale-recovery update instead of a blank audit state.
 
 ## Dashboard Routing And Ownership
-- [ ] Sign in as a processor and confirm the dashboard action rail emphasizes Parking Lot 1, workflow blockers, and Listings review work.
+- [ ] Sign in as a processor and confirm the dashboard action rail emphasizes Parking Lot, workflow blockers, and Listings review work.
 - [ ] Sign in as a tester and confirm the dashboard action rail emphasizes Testing Queue and bench-aging work.
 - [ ] Sign in as a photographer and confirm the dashboard action rail emphasizes Photography Queue and photo handoff work.
 - [ ] With owned work in Pending Review, Progress, and Post-Publish, confirm the dashboard `My Queue` card shows the combined owned total and opens the highest-priority owned Inventory queue with the `mine` owner filter applied.

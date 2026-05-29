@@ -4,6 +4,7 @@ import {
   buildUsedGearWorkflowFields,
   trimToUndefined,
 } from '../../shared/contracts/usedGearIntakeFields.js';
+import { buildUsedGearItemTitle } from '../../shared/contracts/usedGearItemTitle.js';
 
 export interface NormalizedJotFormWorkflowItem {
   submissionId: string;
@@ -153,6 +154,15 @@ export function mapJotFormSubmissionToWorkflowItems(submission: JotFormSubmissio
       pickUpId: readIndexedValue(answerIndex, ['Pick Up ID', 'Pickup ID', 'Pick Up Number', 'Pickup Number']),
       qualificationComplete: false,
       jotFormSubmissionId: submission.id,
+    }),
+    'Item Title': buildUsedGearItemTitle({
+      make: readIndexedValue(answerIndex, ['Make', 'Brand', 'Manufacturer']),
+      model: readIndexedValue(answerIndex, ['Model', 'Model Number']),
+      componentType: readIndexedValue(answerIndex, ['Component Type', 'Category', 'Equipment Type']),
+      serialNumber: readIndexedValue(answerIndex, ['Serial Number', 'Serial']),
+      jotFormSubmissionId: submission.id,
+      pickUpId: readIndexedValue(answerIndex, ['Pick Up ID', 'Pickup ID', 'Pick Up Number', 'Pickup Number']),
+      submissionGroupId,
     }),
   };
 

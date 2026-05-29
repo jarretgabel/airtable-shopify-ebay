@@ -7,7 +7,7 @@ describe('buildAppFrameNavTabs', () => {
     const navigateToUsersList = vi.fn();
 
     const result = buildAppFrameNavTabs({
-      visibleTabs: ['dashboard', 'listings', 'parking-lot-1', 'jotform', 'ebay', 'shopify', 'market'],
+      visibleTabs: ['dashboard', 'listings', 'parking-lot', 'jotform', 'ebay', 'shopify', 'market'],
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
@@ -20,7 +20,7 @@ describe('buildAppFrameNavTabs', () => {
       navigateToUsersList,
     });
 
-    expect(result.intakeNavTabs.find((tab) => tab.key === 'parking-lot-1')).toMatchObject({
+    expect(result.intakeNavTabs.find((tab) => tab.key === 'parking-lot')).toMatchObject({
       disabled: false,
       disabledReason: undefined,
     });
@@ -109,7 +109,7 @@ describe('buildAppFrameNavTabs', () => {
 
   it('preserves intake, processing, and commerce order from the canonical page sequence', () => {
     const result = buildAppFrameNavTabs({
-      visibleTabs: ['dashboard', 'manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot-1', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'shopify', 'ebay'],
+      visibleTabs: ['dashboard', 'manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'shopify', 'ebay'],
       activeTab: 'dashboard',
       exportingPdf: false,
       workflowInventoryBadgeCount: 0,
@@ -118,7 +118,7 @@ describe('buildAppFrameNavTabs', () => {
       navigateToUsersList: vi.fn(),
     });
 
-    expect(result.intakeNavTabs.map((tab) => tab.key)).toEqual(['manual-intake', 'jotform', 'parking-lot-1', 'trash-review']);
+    expect(result.intakeNavTabs.map((tab) => tab.key)).toEqual(['manual-intake', 'jotform', 'parking-lot', 'trash-review']);
     expect(result.tabs.map((tab) => tab.key)).toEqual(['dashboard', 'inventory']);
     expect(result.tabs.find((tab) => tab.key === 'jotform-audit')).toBeUndefined();
     expect(result.intakeNavTabs.find((tab) => tab.key === 'create-intake-item')).toBeUndefined();

@@ -34,6 +34,7 @@ describe('app-api http csrf handling', () => {
     await postJson('/api/airtable/configured-records/users', { fields: { Name: 'User' } });
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/auth/session', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -89,6 +90,7 @@ describe('app-api http csrf handling', () => {
     await getJson('/api/ebay/runtime-config');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/ebay/runtime-config', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });

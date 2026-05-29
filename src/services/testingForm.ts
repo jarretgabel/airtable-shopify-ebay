@@ -26,6 +26,8 @@ import {
   serializeWorkflowImageMetadata,
   type WorkflowImageMetadataRecord,
 } from '@/services/workflowImageMetadata';
+import { buildUsedGearItemTitle } from '../../aws/src/shared/contracts/usedGearItemTitle';
+import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
 
 const INVENTORY_IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
 const WORKFLOW_IMAGE_ATTACHMENT_FIELD_ID = 'fld1zIzmZEciQECah';
@@ -69,6 +71,7 @@ export interface TestingFormStageContext {
 
 export interface TestingFormLoadResult {
   source: TestingFormRecordSource;
+  itemTitle: string;
   values: TestingFormValues;
   customerReference: TestingFormCustomerReference;
   stageContext: TestingFormStageContext;
@@ -354,6 +357,7 @@ export async function loadTestingFormValues(recordId: string): Promise<TestingFo
 
     return {
       source,
+      itemTitle: getUsedGearRecordItemTitle(record.fields, record.id),
       customerReference: buildCustomerReference(record),
       stageContext: buildStageContext(record),
       values: {
@@ -456,6 +460,16 @@ export async function submitTestingForm(
     const serviceTimeMinutes = trimToUndefined(values.serviceTimeMinutes);
     const baseFields = compactFields({
       SKU: trimToUndefined(values.sku),
+      'Item Title': buildUsedGearItemTitle({
+        make: values.make,
+        model: values.model,
+        componentType: values.componentType,
+        serialNumber: values.serialNumber,
+        jotFormSubmissionId: extractInventoryScalarValue(workflowRecord.fields['JotForm Submission ID']),
+        pickUpId: extractInventoryScalarValue(workflowRecord.fields['Pick Up ID'] ?? workflowRecord.fields['Pick Up #']),
+        submissionGroupId: extractInventoryScalarValue(workflowRecord.fields['Submission Group ID']),
+        recordId,
+      }),
       'Arrival Date': trimToUndefined(values.arrivalDate),
       'Acquired From': trimToUndefined(values.acquiredFrom),
       Make: trimToUndefined(values.make),

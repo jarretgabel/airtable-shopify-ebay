@@ -18,7 +18,7 @@ export const USER_PAGE_ACCESS_GROUPS: UserPageAccessGroup[] = [
     key: 'intake',
     title: 'Used Gear Intake',
     description: 'Parking Lot and Trash Review are the intake workflow assignments and should be granted intentionally.',
-    pages: ['parking-lot-1', 'trash-review'],
+    pages: ['parking-lot', 'trash-review'],
   },
   {
     key: 'utility',

@@ -7,13 +7,14 @@ import {
 } from '@/services/app-api/airtable';
 import {
   buildUsedGearIntakeBaseFields,
-  buildUsedGearWorkflowFields,
   trimToUndefined,
 } from '../../aws/src/shared/contracts/usedGearIntakeFields';
+import { buildUsedGearItemTitle } from '../../aws/src/shared/contracts/usedGearItemTitle';
 import { logServiceError } from '@/services/logger';
 import { createServiceError, type ServiceError } from '@/services/serviceErrors';
 import { createManualIntakeFormDefaults, type ManualIntakeFormOptionFieldName, type ManualIntakeFormValues } from '@/components/tabs/manual-intake/manualIntakeFormSchema';
 import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
+import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
 import type { AirtableRecord } from '@/types/airtable';
 
 const IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
@@ -33,11 +34,11 @@ const OPTION_FIELD_NAMES = [
 type ManualIntakeOptionSet = Record<ManualIntakeFormOptionFieldName, string[]>;
 
 export type ManualIntakeRecordSource = 'inventory-directory' | 'used-gear-workflow';
-export type ManualIntakeRoute = 'lot-1' | 'lot-2-awaiting-arrival' | 'lot-2-awaiting-sku' | 'lot-2-awaiting-missing-item';
 
 export interface ManualIntakeFormLoadResult {
   source: ManualIntakeRecordSource;
   values: ManualIntakeFormValues;
+  itemTitle: string;
   workflowSource?: string;
   jotFormSubmissionId?: string;
 }
@@ -47,31 +48,8 @@ export interface ManualIntakeFormSubmitResult {
   action: 'created' | 'updated';
 }
 
-function normalizeQualificationNotes(value: string): string {
-  return value.trim();
-}
-
-function requiresQualificationGate(route: ManualIntakeRoute): boolean {
-  return route !== 'lot-1';
-}
-
-function assertQualificationGate(route: ManualIntakeRoute, qualificationNotes: string): void {
-  if (!requiresQualificationGate(route)) {
-    return;
-  }
-
-  if (!normalizeQualificationNotes(qualificationNotes)) {
-    throw new Error('Qualification Notes are required before routing a manual-entry intake row directly into an accepted Parking Lot status.');
-  }
-}
-
 function dedupeOptions(values: string[]): string[] {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
-}
-
-function dateOrFallback(value: unknown, fallback: string): string {
-  const normalizedValue = extractInventoryScalarValue(value);
-  return normalizedValue ? normalizedValue.slice(0, 10) : fallback;
 }
 
 async function uploadManualIntakeImages(recordId: string, files: File[]): Promise<void> {
@@ -90,11 +68,20 @@ async function loadConfiguredManualIntakeRecord(recordId: string): Promise<{ sou
   }
 }
 
-function resolveManualEntryWorkflowStatus(route: ManualIntakeRoute): string {
-  if (route === 'lot-2-awaiting-arrival') return 'Accepted - Awaiting Arrival';
-  if (route === 'lot-2-awaiting-sku') return 'Accepted - Arrived, Awaiting SKU';
-  if (route === 'lot-2-awaiting-missing-item') return 'Accepted - Arrived, Awaiting Missing Item';
-  return 'Pending Review';
+function buildManualIntakeItemTitle(
+  values: ManualIntakeFormValues,
+  options: {
+    recordId?: string | null;
+  } = {},
+): string {
+  return buildUsedGearItemTitle({
+    make: values.make,
+    model: values.model,
+    componentType: values.componentType,
+    serialNumber: values.serialNumber,
+    pickUpId: values.pickUpNumber,
+    recordId: options.recordId,
+  });
 }
 
 export async function loadManualIntakeFormValues(recordId: string): Promise<ManualIntakeFormLoadResult> {
@@ -104,11 +91,11 @@ export async function loadManualIntakeFormValues(recordId: string): Promise<Manu
 
     return {
       source,
+      itemTitle: getUsedGearRecordItemTitle(record.fields, record.id),
       workflowSource: extractInventoryScalarValue(record.fields['Workflow Source']),
       jotFormSubmissionId: extractInventoryScalarValue(record.fields['JotForm Submission ID']),
       values: {
         ...defaults,
-        arrivalDate: dateOrFallback(record.fields['Arrival Date'], defaults.arrivalDate),
         pickUpNumber: extractInventoryScalarValue(record.fields['Pick Up #'] ?? record.fields['Pick Up ID']),
         acquiredFrom: extractInventoryScalarValue(record.fields['Acquired From']),
         cost: extractInventoryScalarValue(record.fields.Cost),
@@ -187,21 +174,12 @@ export async function submitManualIntakeForm(
   recordId?: string | null,
   options: {
     recordSource?: ManualIntakeRecordSource;
-    manualEntryRoute?: ManualIntakeRoute;
-    submissionGroupId?: string;
-    pickUpId?: string;
-    qualificationNotes?: string;
   } = {},
 ): Promise<ManualIntakeFormSubmitResult> {
   const costValue = trimToUndefined(values.cost);
   const statusValue = trimToUndefined(values.status) ?? DEFAULT_STATUS;
-  const manualRoute = options.manualEntryRoute ?? 'lot-1';
-  const qualificationNotes = normalizeQualificationNotes(options.qualificationNotes ?? '');
-
-  assertQualificationGate(manualRoute, qualificationNotes);
 
   const baseFields = buildUsedGearIntakeBaseFields({
-    arrivalDate: values.arrivalDate,
     pickUpNumber: values.pickUpNumber,
     acquiredFrom: values.acquiredFrom,
     cost: costValue,
@@ -226,26 +204,13 @@ export async function submitManualIntakeForm(
     shippingDims: values.shippingDims,
     shippingMethod: values.shippingMethod,
   });
-
-  const workflowFields = buildUsedGearWorkflowFields({
-    workflowSource: WORKFLOW_SOURCE_MANUAL_ENTRY,
-    workflowStatus: resolveManualEntryWorkflowStatus(manualRoute),
-    submissionGroupId: options.submissionGroupId ?? '',
-    pickUpId: options.pickUpId ?? '',
-    qualificationNotes,
-    qualificationComplete: manualRoute === 'lot-1' ? false : true,
-    acceptedBy: manualRoute === 'lot-1' ? undefined : WORKFLOW_SOURCE_MANUAL_ENTRY,
-    acceptedAt: manualRoute === 'lot-1' ? undefined : new Date().toISOString(),
-    trashStatus: null,
-    unqualifiedReason: null,
-  });
+  const intakeFields = baseFields;
 
   if (recordId) {
     try {
       const writeSource = options.recordSource ?? 'inventory-directory';
-      const fieldsToUpdate = writeSource === 'used-gear-workflow'
-        ? { ...baseFields, ...workflowFields }
-        : baseFields;
+      const itemTitle = buildManualIntakeItemTitle(values, { recordId });
+      const fieldsToUpdate = { ...intakeFields, 'Item Title': itemTitle };
       const updatedRecord = await updateConfiguredRecord(
         writeSource,
         recordId,
@@ -278,12 +243,28 @@ export async function submitManualIntakeForm(
 
   let lastError: unknown = null;
 
+  const createWorkflowFields = {
+    'Workflow Source': WORKFLOW_SOURCE_MANUAL_ENTRY,
+    'Workflow Status': 'Pending Review',
+    'Qualification Complete': false,
+    'Trash Status': null,
+    'Unqualified Reason': null,
+  };
+
   try {
+    const initialItemTitle = buildManualIntakeItemTitle(values);
     const createdRecord = await createConfiguredRecord(
       'used-gear-workflow',
-      { ...baseFields, ...workflowFields },
+      { ...intakeFields, ...createWorkflowFields, 'Item Title': initialItemTitle },
       { typecast: true },
     );
+
+    const finalItemTitle = buildManualIntakeItemTitle(values, { recordId: createdRecord.id });
+    if (finalItemTitle !== initialItemTitle) {
+      await updateConfiguredRecord('used-gear-workflow', createdRecord.id, {
+        'Item Title': finalItemTitle,
+      }, { typecast: true });
+    }
 
     if (values.imageFiles.length > 0) {
       await uploadManualIntakeImages(createdRecord.id, values.imageFiles);

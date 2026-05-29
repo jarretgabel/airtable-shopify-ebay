@@ -27,7 +27,7 @@
 - Every intake item, whether created by JotForm or by staff in the app, exists as a row in the `used-gear-workflow` Airtable source.
 - `Workflow Status` remains the authoritative lifecycle field.
 - `Workflow Source` identifies whether the row originated from `JotForm` or `Manual Entry`.
-- Parking Lot 1, Parking Lot 2, Trash, Testing, Photography, and Listings all operate on the same Airtable-backed workflow rows.
+- Parking Lot review, Parking Lot arrival-stage handling, Trash, Testing, Photography, and Listings all operate on the same Airtable-backed workflow rows.
 
 ### JotForm Surface Role
 
@@ -270,7 +270,7 @@ This keeps the Airtable write contract stable even if JotForm question IDs or la
 - Keep the current Manual Intake form as the editable intake surface.
 - Allow that form to open and edit rows whose `Workflow Source` is `JotForm`.
 - This keeps one staff editing experience for all intake rows.
-- JotForm-origin and manual-entry rows should both enter the same Parking Lot 1 review flow when their initial `Workflow Status` is `Pending Review`.
+- JotForm-origin and manual-entry rows should both enter the same Parking Lot review flow when their initial `Workflow Status` is `Pending Review`.
 
 ### Follow-Up UI Work
 
@@ -316,7 +316,7 @@ This keeps the Airtable write contract stable even if JotForm question IDs or la
 
 ### Phase 2: Workflow Integration
 
-- Ensure created rows appear correctly in Parking Lot 1 and grouped intake review.
+- Ensure created rows appear correctly in Parking Lot and grouped intake review.
 - Add source-aware affordances in record pages and manual intake editing.
 - Keep the raw JotForm tab as source monitoring rather than workflow ownership.
 
@@ -353,7 +353,7 @@ This keeps the Airtable write contract stable even if JotForm question IDs or la
 - Unit tests for idempotent create-vs-update behavior.
 - Local API validation for the webhook handler.
 - End-to-end scratch test using a captured JotForm submission payload and a test Airtable row set.
-- Queue-level validation confirming new webhook-created rows appear in Parking Lot 1 without manual intervention.
+- Queue-level validation confirming new webhook-created rows appear in Parking Lot without manual intervention.
 
 ## Recommended First Delivery Slice
 

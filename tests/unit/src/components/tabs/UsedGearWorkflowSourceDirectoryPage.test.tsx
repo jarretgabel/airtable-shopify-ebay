@@ -28,7 +28,7 @@ describe('UsedGearWorkflowSourceDirectoryPage', () => {
     inventoryDirectoryListSectionMock.mockReset();
   });
 
-  it('limits source directories to intake-stage rows for the selected source', async () => {
+  it('shows only intake-stage rows without SKUs for the selected manual source', async () => {
     loadWorkflowHubDirectoryMock.mockResolvedValue([
       {
         id: 'rec-manual-pending',
@@ -58,6 +58,16 @@ describe('UsedGearWorkflowSourceDirectoryPage', () => {
         },
       },
       {
+        id: 'rec-manual-arrived-sku',
+        createdTime: '2026-05-03T12:00:00.000Z',
+        fields: {
+          'Workflow Source': 'Manual Entry',
+          'Workflow Status': 'Accepted - Arrived, Awaiting SKU',
+          SKU: 'MAN-100',
+          'Item Title': 'Manual Arrived With Sku',
+        },
+      },
+      {
         id: 'rec-jotform-pending',
         createdTime: '2026-05-04T00:00:00.000Z',
         fields: {
@@ -84,13 +94,92 @@ describe('UsedGearWorkflowSourceDirectoryPage', () => {
     });
 
     const props = inventoryDirectoryListSectionMock.mock.calls[0][0] as {
-      records: Array<{ id: string }>;
+      records: Array<{ id: string; fields: Record<string, unknown> }>;
       totalCount: number;
       statusOptions: string[];
+      getItemLabel: (record: { id: string; fields: Record<string, unknown> }) => string;
     };
 
     expect(props.totalCount).toBe(2);
     expect(props.records.map((record) => record.id)).toEqual(['rec-manual-awaiting-arrival', 'rec-manual-pending']);
     expect(props.statusOptions).toEqual(['Accepted - Awaiting Arrival', 'Pending Review']);
+    expect(props.getItemLabel({
+      id: 'recAbc123456789',
+      fields: { Make: 'McIntosh', Model: 'MC275', 'Item Title': 'McIntosh MC275 - Abc123456789' },
+    })).toBe('McIntosh MC275 - 456789');
+  });
+
+  it('shows only intake-stage rows without SKUs for the selected jotform source and preserves full stored titles', async () => {
+    loadWorkflowHubDirectoryMock.mockResolvedValue([
+      {
+        id: 'rec-jotform-pending',
+        createdTime: '2026-05-01T00:00:00.000Z',
+        fields: {
+          'Workflow Source': 'JotForm',
+          'Workflow Status': 'Pending Review',
+          'Item Title': 'JotForm Pending',
+        },
+      },
+      {
+        id: 'rec-jotform-approved',
+        createdTime: '2026-05-02T00:00:00.000Z',
+        fields: {
+          'Workflow Source': 'JotForm',
+          'Workflow Status': 'Approved for Publish',
+          'Item Title': 'JotForm Approved',
+        },
+      },
+      {
+        id: 'rec-jotform-arrived-sku',
+        createdTime: '2026-05-02T12:00:00.000Z',
+        fields: {
+          'Workflow Source': 'JotForm',
+          'Workflow Status': 'Accepted - Arrived, Awaiting SKU',
+          SKU: 'JF-200',
+          'Item Title': 'JotForm Arrived With Sku',
+        },
+      },
+      {
+        id: 'rec-manual-pending',
+        createdTime: '2026-05-03T00:00:00.000Z',
+        fields: {
+          'Workflow Source': 'Manual Entry',
+          'Workflow Status': 'Pending Review',
+          'Item Title': 'Manual Pending',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearWorkflowSourceDirectoryPage
+        title="JotForm"
+        detail="JotForm directory"
+        workflowSource="JotForm"
+        onOpenRecord={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Inventory directory list section')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(inventoryDirectoryListSectionMock).toHaveBeenCalledTimes(1);
+    });
+
+    const props = inventoryDirectoryListSectionMock.mock.calls[0][0] as {
+      records: Array<{ id: string; fields: Record<string, unknown> }>;
+      totalCount: number;
+      statusOptions: string[];
+      resultLabel: string;
+      getItemLabel: (record: { id: string; fields: Record<string, unknown> }) => string;
+    };
+
+    expect(props.totalCount).toBe(1);
+    expect(props.records.map((record) => record.id)).toEqual(['rec-jotform-pending']);
+    expect(props.statusOptions).toEqual(['Pending Review']);
+    expect(props.resultLabel).toBe('workflow rows');
+    expect(props.getItemLabel({
+      id: 'recTv8SETONJoog2c',
+      fields: { Make: 'JBL', Model: 'L100', 'Item Title': 'JBL L100 - Tv8SETONJoog2c' },
+    })).toBe('JBL L100 - Tv8SETONJoog2c');
   });
 });

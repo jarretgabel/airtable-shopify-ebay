@@ -9,6 +9,7 @@ import {
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
+import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
 import {
   loadUsedGearOperationalRecordContext,
   type UsedGearOperationalRecordContext,
@@ -199,7 +200,7 @@ export function InventoryRecordEditorPage({
     <>
       <WorkflowRecordPageLayout
         eyebrow="Workflow Hub"
-        title="Workflow Snapshot"
+        title={record ? getUsedGearRecordItemTitle(record.fields, record.id) : 'Workflow Snapshot'}
         actions={(
           <div className="flex flex-wrap gap-2">
             <button

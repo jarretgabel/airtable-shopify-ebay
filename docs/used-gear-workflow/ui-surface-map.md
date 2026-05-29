@@ -8,7 +8,7 @@ This document tracks the app-owned pages, forms, queues, and review surfaces inv
 - Keep form, queue, and detail pages aligned with the approved workflow model.
 
 ### Current Navigation Order
-- `Intake`: `manual-intake`, `jotform`, `parking-lot-1`, `parking-lot-2`, `trash-review`
+- `Intake`: `manual-intake`, `jotform`, `parking-lot-1`, `trash-review`
 - `Processing`: `inventory`, `testing-queue`, `photography-queue`, `testing`, `photos`
 - `Listing`: `listings`, `shopify`, `ebay`
 - Utility pages remain outside the operational workflow sequence.
@@ -23,8 +23,8 @@ This document tracks the app-owned pages, forms, queues, and review surfaces inv
 ### Planned Surfaces
 
 #### Phase 2
-- [x] Parking Lot 1 queue page
-- [x] Parking Lot 2 queue page
+- [x] Parking Lot queue page
+- [x] Parking Lot arrival-stage review routes inside the Parking Lot page
 - [x] Trash page
 - [x] Manual entry intake page
 - [ ] Intake detail/review page for grouped submissions if needed
@@ -36,12 +36,12 @@ Implemented route keys, paths, and file targets:
 - `jotform`
 	- Path: `/jotform`
 	- Component: `src/components/tabs/JotformTab.tsx`
-- `parking-lot-2`
-	- Path: `/parking-lot-2`
-	- Component: `src/components/tabs/UsedGearLotTwoTab.tsx`
-- `parking-lot-2-group-review`
-	- Path: `/parking-lot-2/review/:groupId`
-	- Component: `src/components/tabs/UsedGearLotTwoGroupPage.tsx`
+- `parking-lot-arrival-record`
+	- Path: `/parking-lot-1/arrival/:recordId`
+	- Component: `src/components/tabs/UsedGearParkingLotArrivalRecordPage.tsx`
+- `parking-lot-arrival-group-review`
+	- Path: `/parking-lot-1/arrival/group/:groupId`
+	- Component: `src/components/tabs/UsedGearParkingLotArrivalGroupPage.tsx`
 - `trash-review`
 	- Path: `/trash-review`
 	- Component: `src/components/tabs/UsedGearTrashTab.tsx`
@@ -72,7 +72,7 @@ Implemented route keys, paths, and file targets:
 	- Path: `/workflow/photography`
 	- Component: `src/components/tabs/UsedGearWorkflowQueueTab.tsx`
 - `photo-review`
-	- Path: `/photos/:recordId`
+	- Path: `/photography/:recordId`
 	- Component: `src/components/tabs/PhotosFormTab.tsx`
 
 Implemented Phase 3 surfaces in the current app:
@@ -88,9 +88,9 @@ Implemented Phase 3 surfaces in the current app:
 - `pending review grouped queue`
 	- Path: `/parking-lot-1/review/:groupId`
 	- Component: `src/components/tabs/UsedGearPendingReviewGroupPage.tsx`
-- `parking lot 2 grouped handoff`
-	- Path: `/parking-lot-2/review/:groupId`
-	- Component: `src/components/tabs/UsedGearLotTwoGroupPage.tsx`
+- `parking lot arrival-stage grouped handoff`
+	- Path: `/parking-lot-1/arrival/group/:groupId`
+	- Component: `src/components/tabs/UsedGearParkingLotArrivalGroupPage.tsx`
 
 #### Phase 4
 - [x] Listing review begins in Combined Listings at `Awaiting Pre-Listing Review`

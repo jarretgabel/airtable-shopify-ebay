@@ -271,7 +271,7 @@ export function UsedGearPendingReviewSection({
       {!loading && records.length === 0 ? (
         <EmptySurface title="Pending review queue is clear" message="No used-gear operational rows currently need initial intake review.">
           <p className="mt-3 text-sm text-[var(--muted)]">
-            Next route: check Parking Lot 1 for fresh customer submissions, or open the dedicated manual intake page when intake starts inside the app.
+            Next route: check Parking Lot for fresh customer submissions, or open the dedicated manual intake page when intake starts inside the app.
           </p>
         </EmptySurface>
       ) : null}

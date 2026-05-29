@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { Tab, TAB_PATHS, isTab } from './appNavigation';
+import { loadUsedGearOperationalRecord } from '@/services/usedGearQueue';
+import { resolveUsedGearOperationalPath } from '@/services/usedGearOperationalRouting';
 
 interface UseAuthRouteGuardInput {
   authReady: boolean;
@@ -74,16 +76,23 @@ export function useAuthRouteGuard({
       return;
     }
 
-    const legacyPendingReviewRecordMatch = normalizedPath.match(/^\/parking-lot-1\/review-record\/([^/]+)$/);
+    const legacyPendingReviewRecordMatch = normalizedPath.match(/^\/parking-lot\/review-record\/([^/]+)$/);
     if (legacyPendingReviewRecordMatch) {
-      navigate(`/parking-lot-1/${legacyPendingReviewRecordMatch[1]}`, { replace: true });
+      const recordId = legacyPendingReviewRecordMatch[1];
+      void loadUsedGearOperationalRecord(recordId)
+        .then((record) => {
+          navigate(resolveUsedGearOperationalPath(recordId, record.fields), { replace: true });
+        })
+        .catch(() => {
+          navigate(`/parking-lot/${recordId}`, { replace: true });
+        });
       return;
     }
 
     const isKnownTabPath = isTab(normalizedPath.slice(1));
-    const isJotformReviewRecordPath = /^\/parking-lot-1\/(?!group\/|arrival\/|review\/)[^/]+$/.test(normalizedPath);
-    const isParkingLotArrivalRecordPath = /^\/parking-lot-1\/arrival\/[^/]+$/.test(normalizedPath);
-    const isParkingLotArrivalGroupPath = /^\/parking-lot-1\/arrival\/group\/[^/]+$/.test(normalizedPath);
+    const isJotformReviewRecordPath = /^\/parking-lot\/(?!group\/|arrival\/|review\/)[^/]+$/.test(normalizedPath);
+    const isParkingLotArrivalRecordPath = /^\/parking-lot\/arrival\/[^/]+$/.test(normalizedPath);
+    const isParkingLotArrivalGroupPath = /^\/parking-lot\/arrival\/group\/[^/]+$/.test(normalizedPath);
     const isTrashReviewGroupPath = /^\/trash-review\/group\/[^/]+$/.test(normalizedPath);
     const isTrashReviewRecordPath = /^\/trash-review\/review\/[^/]+$/.test(normalizedPath);
     const isCreateIntakeItemPath = normalizedPath === '/create-intake-item';
@@ -123,8 +132,8 @@ export function useAuthRouteGuard({
       isTrashReviewRecordPath ||
       normalizedPath === '/workflow/testing' ||
       normalizedPath === '/workflow/photography' ||
-      normalizedPath === '/parking-lot-1' ||
-      /^\/parking-lot-1\/group\/[^/]+$/.test(normalizedPath) ||
+      normalizedPath === '/parking-lot' ||
+      /^\/parking-lot\/group\/[^/]+$/.test(normalizedPath) ||
       isParkingLotArrivalGroupPath ||
       isJotformReviewRecordPath ||
       isParkingLotArrivalRecordPath ||
@@ -162,8 +171,8 @@ export function useAuthRouteGuard({
                   ? 'testing-queue'
                 : normalizedPath === '/workflow/photography'
                   ? 'photography-queue'
-              : normalizedPath === '/parking-lot-1' || /^\/parking-lot-1\/group\/[^/]+$/.test(normalizedPath) || isParkingLotArrivalGroupPath || /^\/parking-lot-1\/review\/[^/]+$/.test(normalizedPath) || isJotformReviewRecordPath || isParkingLotArrivalRecordPath
-                ? 'parking-lot-1'
+              : normalizedPath === '/parking-lot' || /^\/parking-lot\/group\/[^/]+$/.test(normalizedPath) || isParkingLotArrivalGroupPath || /^\/parking-lot\/review\/[^/]+$/.test(normalizedPath) || isJotformReviewRecordPath || isParkingLotArrivalRecordPath
+                ? 'parking-lot'
               : isInventoryManualIntakePath
                 ? 'manual-intake'
               : isCreateIntakeItemPath

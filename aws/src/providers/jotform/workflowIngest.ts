@@ -7,6 +7,7 @@ import {
 import { archiveWorkflowImagesToGoogleDrive } from '../googleDrive/client.js';
 import { getSubmission, type JotFormSubmission } from './client.js';
 import { mapJotFormSubmissionToWorkflowItems } from './workflowIngestMapper.js';
+import { buildUsedGearItemTitle } from '../../shared/contracts/usedGearItemTitle.js';
 import { logError } from '../../shared/logging.js';
 
 export interface JotFormWorkflowIngestItemResult {
@@ -147,6 +148,15 @@ function buildImageFilename(url: string, fallback: string): string {
   return fallback;
 }
 
+function buildWorkflowItemTitle(fields: Record<string, unknown>, recordId: string): string {
+  return buildUsedGearItemTitle({
+    make: readStringField({ fields } as AirtableRecord, 'Make'),
+    model: readStringField({ fields } as AirtableRecord, 'Model'),
+    componentType: readStringField({ fields } as AirtableRecord, 'Component Type'),
+    recordId,
+  });
+}
+
 async function fetchRemoteFileAsArchivePayload(url: string, fallbackName: string): Promise<{ filename: string; contentType: string; file: string }> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -221,6 +231,12 @@ export function createIngestJotFormSubmissionWorkflow(dependencies: WorkflowInge
 
       if (!existingRecord) {
         const createdRecord = await createRecord('used-gear-workflow', item.airtableFields, { typecast: true });
+        const nextItemTitle = buildWorkflowItemTitle(createdRecord.fields, createdRecord.id);
+        if (createdRecord.fields['Item Title'] !== nextItemTitle) {
+          await updateRecord('used-gear-workflow', createdRecord.id, {
+            'Item Title': nextItemTitle,
+          }, { typecast: true });
+        }
         const archivedIntakeFiles = await archiveImages(createdRecord.id, item.imageUrls);
         if (archivedIntakeFiles.length > 0) {
           await updateRecord('used-gear-workflow', createdRecord.id, {
@@ -239,7 +255,10 @@ export function createIngestJotFormSubmissionWorkflow(dependencies: WorkflowInge
       }
 
       if (canRefreshPendingReview(existingRecord)) {
-        const updatedRecord = await updateRecord('used-gear-workflow', existingRecord.id, item.airtableFields, { typecast: true });
+        const updatedRecord = await updateRecord('used-gear-workflow', existingRecord.id, {
+          ...item.airtableFields,
+          'Item Title': buildWorkflowItemTitle(item.airtableFields, existingRecord.id),
+        }, { typecast: true });
         const archivedIntakeFiles = await archiveImages(updatedRecord.id, item.imageUrls);
         if (archivedIntakeFiles.length > 0) {
           const existingMetadata = parseWorkflowImageMetadata(existingRecord.fields['Workflow Image Metadata JSON']);

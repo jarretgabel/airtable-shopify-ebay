@@ -85,7 +85,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
   }, [navigate]);
 
   const navigateToParkingLotPendingReviewGroup = useCallback((groupId: string, replace = false): void => {
-    navigate(`/parking-lot-1/group/${encodeURIComponent(groupId)}`, { replace });
+    navigate(`/parking-lot/group/${encodeURIComponent(groupId)}`, { replace });
     scrollToPageTop();
   }, [navigate]);
 

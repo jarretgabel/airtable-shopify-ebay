@@ -106,6 +106,7 @@ describe('testingForm', () => {
 
     expect(result).toEqual({
       source: 'used-gear-workflow',
+      itemTitle: 'McIntosh MC275 - Testing123',
       customerReference: {
         cosmeticNotes: 'Faceplate has one small nick.',
         functionalNotes: 'Seller reports both channels are working.',
@@ -126,6 +127,8 @@ describe('testingForm', () => {
             sortOrder: 1,
             sourceStage: 'testing',
             includedInListing: true,
+            createdAt: undefined,
+            updatedAt: undefined,
           },
         ],
       },
@@ -232,6 +235,7 @@ describe('testingForm', () => {
       'recTesting123',
       expect.objectContaining({
         SKU: 'SKU-100',
+        'Item Title': 'McIntosh MC275 - Testing123',
         'Arrival Date': '2026-04-01',
         'Acquired From': 'Walk-in seller',
         Make: 'McIntosh',
@@ -270,6 +274,7 @@ describe('testingForm', () => {
         .filter((field) => field.type !== 'file')
         .map((field) => field.airtableFieldName)
         .concat([
+          'Item Title',
           'Testing Signed At',
           'Testing Signed By',
           'Workflow Status',

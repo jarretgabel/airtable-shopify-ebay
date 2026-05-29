@@ -13,6 +13,7 @@ import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import { WorkflowReferenceImagesPanel } from '@/components/tabs/WorkflowReferenceImagesPanel';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
+import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
 import {
   loadUsedGearOperationalRecordContext,
   type UsedGearOperationalRecordContext,
@@ -239,7 +240,7 @@ export function WorkflowSnapshotPage({
     <>
       <WorkflowRecordPageLayout
         eyebrow="Workflow Hub"
-        title="Workflow Snapshot"
+        title={record ? getUsedGearRecordItemTitle(record.fields, record.id) : 'Workflow Snapshot'}
         belowHeader={sectionNav}
         actions={<BackToolbarButton label="Back to Workflow Hub" onClick={onBackToDirectory} />}
       >
@@ -248,7 +249,7 @@ export function WorkflowSnapshotPage({
           <div className="space-y-6">
             <section id="overview" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] scroll-mt-28">
               <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Record Overview</p>
-              <h2 className="m-0 mt-2 text-2xl font-semibold text-[var(--ink)]">SKU {displayInventoryValue(record.fields.SKU)}</h2>
+              <h2 className="m-0 mt-2 text-2xl font-semibold text-[var(--ink)]">{getUsedGearRecordItemTitle(record.fields, record.id)}</h2>
             </section>
 
             <section id="timeline" className="scroll-mt-28">

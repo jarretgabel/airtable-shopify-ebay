@@ -14,8 +14,8 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 ## End-To-End Workflow
 
 1. Intake arrives through JotForm or Manual Intake.
-2. Parking Lot 1 decides whether the row qualifies into workflow or moves to Trash Review.
-3. Parking Lot 2 handles accepted arrival-stage work, grouped handoffs, and early routing.
+2. Parking Lot decides whether the row qualifies into workflow or moves to Trash Review.
+3. Parking Lot handles accepted arrival-stage work, grouped handoffs, and early routing inside the same intake surface.
 4. Workflow Hub handles active-stage triage, shared routing, and blocker cleanup.
 5. Testing Queue plus the Testing record page complete hands-on signoff.
 6. Photography Queue plus the Photos record page complete image work and handoff.
@@ -55,7 +55,7 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
   - live submissions list
   - expanded answer detail
 - Use it for:
-  - verifying seller-provided source data before or during Parking Lot 1 review
+  - verifying seller-provided source data before or during Parking Lot review
   - checking the original intake context without turning JotForm into the operational decision page
 
 ### Manual Intake
@@ -63,12 +63,12 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
   - create or correct intake rows inside the app when the work did not start from JotForm
 - Modules:
   - manual intake form
-  - route selection into Parking Lot 1 or Parking Lot 2
+  - route selection into Parking Lot review or accepted Parking Lot arrival-stage work
 - Use it for:
   - phone deals, repeat customers, or accepted arrival-stage edits
   - capturing seller-reference notes, grouping IDs, and qualification context cleanly before downstream work
 
-### Parking Lot 1
+### Parking Lot
 - Purpose:
   - qualify new intake and decide whether it continues or stops
 - Modules:
@@ -76,7 +76,7 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
   - grouped review flow
   - selected record and group review pages
 - Use it for:
-  - accepting qualified rows into Parking Lot 2
+  - accepting qualified rows into Parking Lot arrival-stage handling
   - routing unqualified rows into Trash Review with a reason
   - handling grouped submission allocation and shared intake decisions
 
@@ -91,7 +91,7 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
   - re-qualify
   - permanent delete
 
-### Parking Lot 2
+### Parking Lot Arrival-Stage Work
 - Purpose:
   - handle accepted arrival-stage work before the item settles into active workflow or specialist queues
 - Modules:
@@ -271,8 +271,8 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 
 ## Suggested Daily Flow
 
-1. Start in Parking Lot 1 for new intake.
-2. Move accepted rows through Parking Lot 2 and into active workflow handling.
+1. Start in Parking Lot for new intake.
+2. Move accepted rows through Parking Lot arrival-stage handling and into active workflow handling.
 3. Use Workflow Hub for routing and blocker cleanup.
 4. Work specialist signoffs from Testing Queue and Photography Queue, then complete details in the Testing and Photos pages.
 5. Use Listings for final review and approve-for-publish work.

@@ -354,9 +354,9 @@ Rule summary:
 
 Do not store `Manual Entry Route` as a separate Airtable field. Treat it as an app-side choice made on the manual-entry page that determines the row's initial workflow state.
 
-- Manual entry sent to Lot 1 creates a row with `Workflow Source = Manual Entry` and initial `Workflow Status = Pending Review`.
+- Manual entry sent to Parking Lot review creates a row with `Workflow Source = Manual Entry` and initial `Workflow Status = Pending Review`.
 - JotForm webhook ingestion creates a row with `Workflow Source = JotForm` and initial `Workflow Status = Pending Review`.
-- Manual entry sent directly to Lot 2 creates a row with `Workflow Source = Manual Entry` and an initial accepted workflow status such as `Accepted - Awaiting Arrival`.
+- Manual entry sent directly to Parking Lot arrival-stage handling creates a row with `Workflow Source = Manual Entry` and an initial accepted workflow status such as `Accepted - Awaiting Arrival`.
 - After creation, the workflow should rely on `Workflow Status`, not a separate stored route field, to determine where the item currently belongs.
 
 ### Proposed Derived Next-Team Routing Rule
@@ -399,8 +399,8 @@ Rule summary:
 - `Awaiting Pre-Listing Review` -> `Approved for Publish`
 	- Requires: pre-listing review completion, reviewer/pricing confirmation captured.
 
-### Proposed Acceptance-Gate Requirements For Lot 2 Routing
-An item may move from Lot 1 intake review into the accepted workflow and Lot 2 only when all of the following are true:
+### Proposed Acceptance-Gate Requirements For Parking Lot Arrival-Stage Routing
+An item may move from Parking Lot review into the accepted workflow and Parking Lot arrival-stage handling only when all of the following are true:
 
 - `Workflow Status` is transitioning from `Pending Review` to an accepted status, normally `Accepted - Awaiting Arrival`.
 - `Qualification Complete` is true.
@@ -413,7 +413,7 @@ An item may move from Lot 1 intake review into the accepted workflow and Lot 2 o
 - If the intake creates multiple sellable rows from one submission, `Submission Group ID` is populated for all rows in that group.
 - If the accepted items are tied to a real-world pickup or arrival batch, `Pick Up ID` is populated before or at arrival handling.
 
-The workflow must block Lot 2 routing when any of the following are true:
+The workflow must block Parking Lot arrival-stage routing when any of the following are true:
 
 - `Qualification Complete` is false or blank.
 - `Accepted By` is missing.
@@ -421,7 +421,7 @@ The workflow must block Lot 2 routing when any of the following are true:
 - No offer, paid value, or confirmed grouped total has been recorded.
 - A multi-item accepted submission does not yet have a `Submission Group ID`.
 
-The workflow must route to trash instead of Lot 2 when all of the following are true:
+The workflow must route to trash instead of accepted Parking Lot arrival-stage handling when all of the following are true:
 
 - `Workflow Status` is set to `Unqualified`.
 - `Unqualified Reason` is populated.

@@ -108,7 +108,7 @@ describe('UsedGearParkingLotArrivalRecordPage', () => {
     expect(snapshotHeading.compareDocumentPosition(reviewHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Group Review' }));
-    expect(navigateMock).toHaveBeenCalledWith('/parking-lot-1/arrival/group/group-1?reviewMode=test');
+    expect(navigateMock).toHaveBeenCalledWith('/parking-lot/arrival/group/group-1?reviewMode=test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Intake' }));
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-lot-two-1');
@@ -190,7 +190,7 @@ describe('UsedGearParkingLotArrivalRecordPage', () => {
     await screen.findByText('Update The Handoff Fields');
     fireEvent.change(screen.getByLabelText('Arrival Date'), { target: { value: '2026-05-12' } });
     fireEvent.change(screen.getByLabelText('SKU'), { target: { value: 'SKU-LOT2-1' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Complete Processing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Move to Testing' }));
 
     await waitFor(() => {
       expect(saveParkingLotArrivalReviewRecordMock).toHaveBeenCalledWith('rec-lot-two-1', {

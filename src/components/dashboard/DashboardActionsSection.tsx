@@ -103,14 +103,14 @@ function addRoleWorkflowActionItems({
   const processingBlockerCount = awaitingSkuCount + awaitingMissingCount;
 
   if (currentUserRole === 'processor') {
-    if (accessiblePages.includes('parking-lot-1') && pendingReviewCount > 0) {
+    if (accessiblePages.includes('parking-lot') && pendingReviewCount > 0) {
       items.push({
         key: 'workflow-pending-review',
         label: `${pendingReviewCount} pending review`,
         count: pendingReviewCount,
         detail: `${processingBlockerCount} blocked in processing · ${downstreamStageCount} in testing or photos`,
         severity: 'critical',
-        targetTab: 'parking-lot-1',
+        targetTab: 'parking-lot',
       });
     }
 

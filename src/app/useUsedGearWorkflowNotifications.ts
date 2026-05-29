@@ -123,14 +123,14 @@ function buildNotificationAction(
   if (eventKey === 'pendingReview') {
     return {
       actionLabel: 'Open Parking Lot',
-      onAction: () => navigateToTab('parking-lot-1'),
+      onAction: () => navigateToTab('parking-lot'),
     };
   }
 
   if (eventKey === 'processing') {
     return {
       actionLabel: 'Open Parking Lot',
-      onAction: () => navigateToTab('parking-lot-1'),
+      onAction: () => navigateToTab('parking-lot'),
     };
   }
 
@@ -173,7 +173,7 @@ export function useUsedGearWorkflowNotifications({
 }: UsedGearWorkflowNotificationParams): void {
   const upsertByKey = useNotificationStore((state) => state.upsertByKey);
   const dismissByKey = useNotificationStore((state) => state.dismissByKey);
-  const canAccessWorkflowSurfaces = canAccessPage('parking-lot-1')
+  const canAccessWorkflowSurfaces = canAccessPage('parking-lot')
     || canAccessPage('inventory')
     || canAccessPage('testing-queue')
     || canAccessPage('photography-queue')

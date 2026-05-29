@@ -95,6 +95,7 @@ describe('photosForm', () => {
 
     expect(result).toEqual({
       source: 'used-gear-workflow',
+      itemTitle: 'Marantz 2270 - Photos123',
       customerReference: {
         cosmeticNotes: 'Seller flagged scratches on the top cover.',
         functionalNotes: 'Tuner lamp flickers intermittently.',
@@ -119,6 +120,8 @@ describe('photosForm', () => {
             sortOrder: 1,
             sourceStage: 'photos',
             includedInListing: true,
+            createdAt: undefined,
+            updatedAt: undefined,
           },
         ],
       },

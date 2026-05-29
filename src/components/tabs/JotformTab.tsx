@@ -87,7 +87,7 @@ export function JotformTab({
             <div className="mb-4 border-b border-[var(--line)] pb-3">
               <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Reference Feed</p>
               <p className="mt-2 text-sm text-[var(--muted)]">
-                Keep this feed available for source verification while Parking Lot 1 operational rows are being triaged above.
+                Keep this feed available for source verification while Parking Lot operational rows are being triaged above.
               </p>
             </div>
             <ul className="list-none m-0 p-0">

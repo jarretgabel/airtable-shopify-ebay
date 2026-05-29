@@ -25,6 +25,9 @@ interface InventoryDirectoryListSectionProps {
   onSelectRecord: (recordId: string) => void;
   getNextStepLabel?: (record: AirtableRecord) => string | null;
   onOpenNextStep?: (record: AirtableRecord) => void;
+  getSecondaryActionLabel?: (record: AirtableRecord) => string | null;
+  onOpenSecondaryAction?: (record: AirtableRecord) => void;
+  secondaryActionIcon?: 'open' | 'group' | 'check' | 'truck' | 'form' | 'edit';
   selectRecordLabel?: string;
   searchAriaLabel?: string;
   searchPlaceholder?: string;
@@ -32,6 +35,7 @@ interface InventoryDirectoryListSectionProps {
   refreshLoadingLabel?: string;
   resultLabel?: string;
   emptyMessage?: string;
+  getItemLabel?: (record: AirtableRecord) => string;
 }
 
 const intakeDateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -94,6 +98,9 @@ export function InventoryDirectoryListSection({
   onSelectRecord,
   getNextStepLabel,
   onOpenNextStep,
+  getSecondaryActionLabel,
+  onOpenSecondaryAction,
+  secondaryActionIcon = 'edit',
   selectRecordLabel = 'Open Workflow Snapshot',
   searchAriaLabel = 'Search inventory',
   searchPlaceholder = 'Search by SKU, make, model, source, or status',
@@ -101,6 +108,7 @@ export function InventoryDirectoryListSection({
   refreshLoadingLabel = 'Refreshing Workflow Hub directory',
   resultLabel = 'workflow rows',
   emptyMessage = 'No workflow rows match the current search and status filters.',
+  getItemLabel = (record) => getInventoryDirectoryItemLabel(record.fields),
 }: InventoryDirectoryListSectionProps) {
   const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
     {
@@ -113,7 +121,7 @@ export function InventoryDirectoryListSection({
       key: 'item',
       label: 'Item',
       width: 'minmax(0,1.55fr)',
-      renderCell: (record) => <div className="min-w-0 truncate text-sm text-[var(--ink)]">{displayInventoryValue(getInventoryDirectoryItemLabel(record.fields))}</div>,
+      renderCell: (record) => <div className="min-w-0 truncate text-sm text-[var(--ink)]">{displayInventoryValue(getItemLabel(record))}</div>,
     },
     {
       key: 'source',
@@ -150,11 +158,15 @@ export function InventoryDirectoryListSection({
       align: 'right',
       renderCell: (record) => {
         const nextStepLabel = getNextStepLabel?.(record) ?? null;
+        const secondaryActionLabel = getSecondaryActionLabel?.(record) ?? null;
 
         return (
           <div className="flex flex-wrap justify-end gap-1.5">
             {nextStepLabel && onOpenNextStep ? (
               <CompactIconActionButton label={nextStepLabel} variant="small-secondary" icon="open" onClick={() => onOpenNextStep(record)} />
+            ) : null}
+            {secondaryActionLabel && onOpenSecondaryAction ? (
+              <CompactIconActionButton label={secondaryActionLabel} variant="small-secondary" icon={secondaryActionIcon} onClick={() => onOpenSecondaryAction(record)} />
             ) : null}
             <CompactIconActionButton label={selectRecordLabel} variant="small-secondary" icon="open" onClick={() => onSelectRecord(record.id)} />
           </div>

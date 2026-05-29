@@ -20,7 +20,7 @@ test('developers keep the full page bundle', () => {
 });
 
 test('non-tester roles get Image Lab according to their role bundle', () => {
-  assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'processor'), ['dashboard', 'workflow-guide', 'manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot-1', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab']);
+  assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'processor'), ['dashboard', 'workflow-guide', 'manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab']);
   assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'photographer'), ['dashboard', 'workflow-guide', 'photography-queue', 'photos', 'imagelab']);
   assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'tester'), ['dashboard', 'workflow-guide', 'testing-queue', 'testing']);
 });

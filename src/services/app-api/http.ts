@@ -152,6 +152,7 @@ export function clearCsrfToken(): void {
 
 export async function getJson<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
   return requestJson<T>(path, {
+    cache: 'no-store',
     headers: {
       Accept: 'application/json',
     },

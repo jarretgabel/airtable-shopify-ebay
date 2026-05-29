@@ -4,7 +4,7 @@ export const APP_PAGES = [
   'workflow-guide-editor',
   'manual-intake',
   'create-intake-item',
-  'parking-lot-1',
+  'parking-lot',
   'trash-review',
   'inventory',
   'testing-queue',
@@ -43,7 +43,7 @@ const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'create-intake-item',
     'jotform',
     'jotform-audit',
-    'parking-lot-1',
+    'parking-lot',
     'trash-review',
     'inventory',
     'testing-queue',
@@ -90,7 +90,7 @@ export function normalizeAllowedPages(pages: AppPage[], role: UserRole): AppPage
   }
 
   if (role === 'processor' && nextPages.has('inventory')) {
-    ['manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot-1', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'settings', 'notifications'].forEach((page) => nextPages.add(page as AppPage));
+    ['manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'settings', 'notifications'].forEach((page) => nextPages.add(page as AppPage));
   }
 
   return ROLE_ALLOWED_PAGES[role].filter((page) => nextPages.has(page));

@@ -11,6 +11,7 @@ import {
   getInventoryDirectorySku,
   getInventoryDirectoryStatus,
 } from '@/services/inventoryDirectory';
+import { resolveUsedGearOperationalPath } from '@/services/usedGearOperationalRouting';
 import { loadWorkflowHubDirectory } from '@/services/usedGearQueue';
 import type { UserRole } from '@/stores/auth/authTypes';
 import type { AirtableRecord } from '@/types/airtable';
@@ -20,6 +21,16 @@ const INVENTORY_DIRECTORY_STATUS_PARAM = 'inventoryDirectoryStatus';
 const INVENTORY_DIRECTORY_SORT_PARAM = 'inventoryDirectorySort';
 
 type InventoryDirectorySortMode = 'intake-newest' | 'intake-oldest';
+
+const WORKFLOW_HUB_INTAKE_EDIT_BLOCKED_STATUSES = new Set([
+  'Approved for Publish',
+  'Listed, Shopify',
+  'Listed, eBay',
+  'Stale Listing, Shopify',
+  'Stale Listing, eBay',
+  'Sold - Ready to Ship',
+  'Shipped',
+]);
 
 function parseInventoryDirectorySortMode(search: string): InventoryDirectorySortMode {
   const value = new URLSearchParams(search).get(INVENTORY_DIRECTORY_SORT_PARAM);
@@ -52,6 +63,8 @@ interface AirtableTabProps {
 
 export function AirtableTab({
   viewModel,
+  onOpenManualIntake,
+  onOpenOperationalRecord,
   onSelectRecord,
 }: AirtableTabProps) {
   const location = useLocation();
@@ -226,6 +239,41 @@ export function AirtableTab({
     }
   };
 
+  const getWorkflowHubIntakeEditLabel = (record: AirtableRecord): string | null => {
+    const status = getInventoryDirectoryStatus(record.fields ?? {});
+    return WORKFLOW_HUB_INTAKE_EDIT_BLOCKED_STATUSES.has(status) ? null : 'Edit Intake';
+  };
+
+  const getWorkflowHubNextStepLabel = (record: AirtableRecord): string => {
+    const nextPath = resolveUsedGearOperationalPath(record.id, record.fields);
+
+    if (nextPath.startsWith('/parking-lot/arrival/')) {
+      return 'Open Parking Lot';
+    }
+
+    if (nextPath.startsWith('/parking-lot/')) {
+      return 'Open Parking Lot Review';
+    }
+
+    if (nextPath.startsWith('/testing/')) {
+      return 'Open Testing';
+    }
+
+    if (nextPath.startsWith('/photography/')) {
+      return 'Open Photography';
+    }
+
+    if (nextPath.startsWith('/trash-review/')) {
+      return 'Open Trash Review';
+    }
+
+    if (nextPath.startsWith('/listings/')) {
+      return 'Open Listings';
+    }
+
+    return 'Open Next Step';
+  };
+
   return (
     <AppPageLayout>
       <WorkflowPageHeader
@@ -256,7 +304,7 @@ export function AirtableTab({
           {!directoryLoading && !directoryError && records.length === 0 ? (
             <EmptySurface title="No workflow rows found" message="The Workflow Hub currently has no rows in this table.">
               <p className="mt-3 text-sm text-[var(--muted)]">
-                Next route: start in Parking Lot 1 for customer-submitted intake, or open Intake when staff needs to create the first manual operational row inside the app.
+                Next route: start in Parking Lot for customer-submitted intake, or open Intake when staff needs to create the first manual operational row inside the app.
               </p>
             </EmptySurface>
           ) : null}
@@ -276,6 +324,11 @@ export function AirtableTab({
               onRefresh={() => {
                 void loadDirectoryData();
               }}
+              getNextStepLabel={getWorkflowHubNextStepLabel}
+              onOpenNextStep={(record) => onOpenOperationalRecord(record.id)}
+              getSecondaryActionLabel={getWorkflowHubIntakeEditLabel}
+              onOpenSecondaryAction={(record) => onOpenManualIntake(record.id)}
+              secondaryActionIcon="edit"
               onSelectRecord={onSelectRecord}
             />
           ) : null}

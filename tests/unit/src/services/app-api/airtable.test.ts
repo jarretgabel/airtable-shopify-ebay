@@ -43,6 +43,7 @@ describe('app-api airtable', () => {
     const result = await getListings('tbl123', { view: 'viw123' });
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/listings?tableName=tbl123&view=viw123', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -84,6 +85,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredRecords('inventory-directory');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=inventory-directory', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -101,6 +103,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredRecords('inventory-directory', { fields: ['SKU', 'Status'] });
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=inventory-directory&fields=SKU%2CStatus', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -118,6 +121,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredRecordsSummary('approval-ebay');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-ebay&summary=queue', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -135,6 +139,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredRecord('inventory-directory', 'recInv1');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records/inventory-directory/recInv1', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -333,6 +338,7 @@ describe('app-api airtable', () => {
     const records = await getRecordsFromResolvedSource('appShopify/viwShopify', undefined);
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-shopify', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -354,6 +360,7 @@ describe('app-api airtable', () => {
     const result = await getRecordsSummaryFromResolvedSource('appShopify/viwShopify', undefined);
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-shopify&summary=queue', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -395,6 +402,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredFieldMetadata('inventory-directory');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-metadata?source=inventory-directory', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -412,6 +420,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredFieldMetadata('used-gear-workflow');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-metadata?source=used-gear-workflow', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });

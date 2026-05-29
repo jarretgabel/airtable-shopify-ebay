@@ -19,7 +19,7 @@ import {
   type UsedGearPendingReviewAcceptedStatus,
   type UsedGearOperationalRecordContext,
 } from '@/services/usedGearQueue';
-import { displayInventoryValue } from '@/services/inventoryDirectory';
+import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
 import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
 
 interface UsedGearTrashReviewRecordPageProps {
@@ -160,7 +160,7 @@ export function UsedGearTrashReviewRecordPage({
 
     try {
       await restoreTrashRecord(record.id);
-      navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-parking-lot' });
+      navigate({ pathname: '/parking-lot', search: location.search, hash: '#used-gear-parking-lot' });
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'Unable to restore this trash row to Parking Lot.');
       setSaving(false);
@@ -180,7 +180,7 @@ export function UsedGearTrashReviewRecordPage({
         acceptedStatus: requalifyStatus,
         qualificationNotes: requalifyNotes,
       });
-      navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-parking-lot' });
+      navigate({ pathname: '/parking-lot', search: location.search, hash: '#used-gear-parking-lot' });
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'Unable to re-qualify this trash row into Parking Lot.');
       setSaving(false);
@@ -231,7 +231,7 @@ export function UsedGearTrashReviewRecordPage({
   return (
     <WorkflowRecordPageLayout
       eyebrow="Trash"
-      title={displayInventoryValue(record.fields.SKU)}
+      title={getUsedGearRecordItemTitle(record.fields, record.id)}
       belowHeader={sectionNav}
       actions={<BackToolbarButton label="Back to Trash" onClick={backToTrash} />}
     >

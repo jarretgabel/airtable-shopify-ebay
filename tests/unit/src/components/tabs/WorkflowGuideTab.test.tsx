@@ -82,7 +82,7 @@ describe('WorkflowGuideTab', () => {
       <WorkflowGuideTab
         currentUserRole="processor"
         currentUserName="Pat Processor"
-        accessiblePages={['dashboard', 'workflow-guide', 'jotform', 'inventory', 'parking-lot-1', 'testing-queue', 'testing', 'listings']}
+        accessiblePages={['dashboard', 'workflow-guide', 'jotform', 'inventory', 'parking-lot', 'testing-queue', 'testing', 'listings']}
       />,
     );
 
@@ -92,7 +92,7 @@ describe('WorkflowGuideTab', () => {
     expect(screen.getByText('How Items Move To The Next Step')).toBeInTheDocument();
     expect(screen.getByText('Record And Detail Pages')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Start fresh intake here' })).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Open Parking Lot' })[0]).toHaveAttribute('href', '/parking-lot-1');
+    expect(screen.getAllByRole('link', { name: 'Open Parking Lot' })[0]).toHaveAttribute('href', '/parking-lot');
     expect(screen.getAllByRole('link', { name: 'Open Workflow Hub' })[0]).toHaveAttribute('href', '/workflow-hub');
     expect(screen.getAllByRole('link', { name: 'Open Listings' })[0]).toHaveAttribute('href', '/listings');
     expect(screen.getByRole('heading', { name: 'Parking Lot' })).toBeInTheDocument();
@@ -102,7 +102,7 @@ describe('WorkflowGuideTab', () => {
     expect(screen.getByRole('heading', { name: 'Listings' })).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Manual Intake' })[0]).toHaveAttribute('href', '/manual-intake');
     expect(screen.getAllByRole('link', { name: 'JotForm' })[0]).toHaveAttribute('href', '/jotform');
-    expect(screen.getAllByRole('link', { name: 'Parking Lot' })[0]).toHaveAttribute('href', '/parking-lot-1');
+    expect(screen.getAllByRole('link', { name: 'Parking Lot' })[0]).toHaveAttribute('href', '/parking-lot');
     expect(screen.getAllByRole('link', { name: 'Testing' })[0]).toHaveAttribute('href', '/testing');
     expect(screen.getAllByRole('link', { name: 'Photography' })[0]).toHaveAttribute('href', '/photography');
     expect(screen.getAllByText(/JotForm/i).length).toBeGreaterThan(0);
@@ -143,7 +143,7 @@ describe('WorkflowGuideTab', () => {
       <WorkflowGuideTab
         currentUserRole="admin"
         currentUserName="Taylor Admin"
-        accessiblePages={['dashboard', 'workflow-guide', 'parking-lot-1', 'inventory', 'listings']}
+        accessiblePages={['dashboard', 'workflow-guide', 'parking-lot', 'inventory', 'listings']}
       />,
     );
 

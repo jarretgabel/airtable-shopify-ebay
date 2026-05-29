@@ -214,7 +214,7 @@ describe('DashboardActionsSection', () => {
 
     render(
       <DashboardActionsSection
-        accessiblePages={['dashboard', 'inventory', 'parking-lot-1', 'listings']}
+        accessiblePages={['dashboard', 'inventory', 'parking-lot', 'listings']}
         currentUserRole="processor"
         currentUserName="Taylor Reviewer"
         ebayAuthenticated={false}
@@ -256,7 +256,7 @@ describe('DashboardActionsSection', () => {
     fireEvent.click(screen.getByRole('button', { name: /2 processing blockers/i }));
     fireEvent.click(screen.getByRole('button', { name: /2 listing-phase rows/i }));
 
-    expect(onSelectTab).toHaveBeenNthCalledWith(1, 'parking-lot-1');
+    expect(onSelectTab).toHaveBeenNthCalledWith(1, 'parking-lot');
     expect(onSelectTab).toHaveBeenNthCalledWith(2, 'inventory');
     expect(onSelectTab).toHaveBeenNthCalledWith(3, 'listings');
   });

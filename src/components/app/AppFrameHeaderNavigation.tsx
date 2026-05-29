@@ -14,7 +14,7 @@ interface TabSection {
 
 const INTAKE_SECTION_KEYS = {
   forms: ['manual-intake', 'create-intake-item', 'jotform', 'jotform-audit'] as const,
-  parkingLots: ['parking-lot-1'] as const,
+  parkingLots: ['parking-lot'] as const,
   trash: ['trash-review'] as const,
 };
 

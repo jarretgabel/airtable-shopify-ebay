@@ -8,17 +8,21 @@ import { UsedGearTrashRouteCard } from '@/components/tabs/UsedGearTrashRouteCard
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
+import { DatePickerField } from '@/components/tabs/date-picker-field';
 import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
 import { buildUsedGearIntakeSnapshot } from '@/components/tabs/usedGearIntakeSnapshot';
 import {
   acceptPendingReviewRecord,
+  completeProcessingStage,
   hasUsedGearPendingReviewPricingPath,
   loadUsedGearOperationalRecordContext,
   markPendingReviewUnqualified,
-  type UsedGearPendingReviewAcceptedStatus,
+  savePendingReviewRecordReview,
   type UsedGearOperationalRecordContext,
+  type UsedGearPendingReviewAcceptedStatus,
 } from '@/services/usedGearQueue';
-import { displayInventoryValue } from '@/services/inventoryDirectory';
+import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
+import { resolveUsedGearOperationalPath } from '@/services/usedGearOperationalRouting';
 import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
 
 interface UsedGearPendingReviewRecordPageProps {
@@ -29,28 +33,6 @@ interface UsedGearPendingReviewRecordPageProps {
 
 type PendingReviewSectionKey = 'group' | 'lot-two' | 'trash' | 'snapshot';
 
-const ACCEPT_ROUTE_OPTIONS: Array<{
-  value: UsedGearPendingReviewAcceptedStatus;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: 'Accepted - Awaiting Arrival',
-    label: 'Awaiting Arrival',
-    description: 'Use when the offer is accepted and the item has not arrived yet.',
-  },
-  {
-    value: 'Accepted - Arrived, Awaiting SKU',
-    label: 'Arrived, Awaiting SKU',
-    description: 'Use when the item is on-site and still needs SKU assignment.',
-  },
-  {
-    value: 'Accepted - Arrived, Awaiting Missing Item',
-    label: 'Arrived, Awaiting Missing Item',
-    description: 'Use when the intake is accepted but still needs a missing unit or accessory.',
-  },
-];
-
 function stringFieldValue(fields: Record<string, unknown>, fieldName: string): string {
   const value = fields[fieldName];
   if (typeof value === 'string') {
@@ -60,6 +42,11 @@ function stringFieldValue(fields: Record<string, unknown>, fieldName: string): s
     return String(value);
   }
   return '';
+}
+
+function dateFieldValue(fields: Record<string, unknown>, fieldName: string): string {
+  const value = stringFieldValue(fields, fieldName).trim();
+  return value ? value.slice(0, 10) : '';
 }
 
 function NoteTemplateRow({
@@ -99,12 +86,16 @@ export function UsedGearPendingReviewRecordPage({
 }: UsedGearPendingReviewRecordPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const currentPathname = location.pathname ?? `/parking-lot/${encodeURIComponent(recordId)}`;
   const [context, setContext] = useState<UsedGearOperationalRecordContext | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState<'save' | 'move' | 'trash' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [acceptStatus, setAcceptStatus] = useState<UsedGearPendingReviewAcceptedStatus>('Accepted - Awaiting Arrival');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [acceptStatus, setAcceptStatus] = useState<UsedGearPendingReviewAcceptedStatus | null>(null);
   const [qualificationNotes, setQualificationNotes] = useState('');
+  const [arrivalDate, setArrivalDate] = useState('');
+  const [sku, setSku] = useState('');
   const [unqualifiedReason, setUnqualifiedReason] = useState('');
 
   useEffect(() => {
@@ -117,14 +108,16 @@ export function UsedGearPendingReviewRecordPage({
       try {
         const nextContext = await loadUsedGearOperationalRecordContext(recordId);
         if (!cancelled) {
+          const nextPath = resolveUsedGearOperationalPath(nextContext.record.id, nextContext.record.fields);
+          if (nextPath !== currentPathname) {
+            navigate({ pathname: nextPath, search: location.search }, { replace: true });
+            return;
+          }
+
           setContext(nextContext);
-          setAcceptStatus(
-            nextContext.record.fields['Workflow Status'] === 'Accepted - Arrived, Awaiting SKU'
-              || nextContext.record.fields['Workflow Status'] === 'Accepted - Arrived, Awaiting Missing Item'
-              ? nextContext.record.fields['Workflow Status'] as UsedGearPendingReviewAcceptedStatus
-              : 'Accepted - Awaiting Arrival',
-          );
           setQualificationNotes(stringFieldValue(nextContext.record.fields, 'Qualification Notes'));
+          setArrivalDate(dateFieldValue(nextContext.record.fields, 'Arrival Date'));
+          setSku(stringFieldValue(nextContext.record.fields, 'SKU'));
           setUnqualifiedReason(stringFieldValue(nextContext.record.fields, 'Unqualified Reason'));
         }
       } catch (loadError) {
@@ -143,17 +136,20 @@ export function UsedGearPendingReviewRecordPage({
     return () => {
       cancelled = true;
     };
-  }, [recordId]);
+  }, [currentPathname, location.search, navigate, recordId]);
 
   const record = context?.record ?? null;
   const group = context?.group ?? null;
   const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
+  const dateButtonClassName = 'inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
 
   const hasPricingPath = useMemo(() => record ? hasUsedGearPendingReviewPricingPath(record.fields) : false, [record]);
   const groupNeedsSubmissionId = useMemo(
     () => Boolean(group && group.records.length > 1 && stringFieldValue(record?.fields ?? {}, 'Submission Group ID').trim().length === 0),
     [group, record],
   );
+  const handoffFieldsReady = arrivalDate.trim().length > 0 && sku.trim().length > 0;
+  const canMoveToTesting = hasPricingPath && !groupNeedsSubmissionId && handoffFieldsReady;
   const sectionItems = useMemo<Array<{ id: PendingReviewSectionKey; key: PendingReviewSectionKey; label: string }>>(() => {
     const items: Array<{ id: PendingReviewSectionKey; key: PendingReviewSectionKey; label: string }> = [];
     if (group) {
@@ -175,26 +171,69 @@ export function UsedGearPendingReviewRecordPage({
   );
 
   const backToQueue = () => {
-    navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-parking-lot' });
+    navigate({ pathname: '/parking-lot', search: location.search, hash: '#used-gear-parking-lot' });
   };
 
-  const handleAccept = async () => {
+  const handleSaveReview = async () => {
     if (!record) {
       return;
     }
 
-    setSaving(true);
+    setSaving('save');
     setError(null);
+    setSuccessMessage(null);
 
     try {
+      const updatedRecord = await savePendingReviewRecordReview(record.id, {
+        qualificationNotes,
+        arrivalDate,
+        sku,
+      });
+      if (acceptStatus !== null) {
+        await acceptPendingReviewRecord(record.id, currentUserName, {
+          acceptedStatus: acceptStatus,
+          qualificationNotes,
+        });
+        navigate({ pathname: '/parking-lot', search: location.search, hash: '#used-gear-parking-lot' });
+        return;
+      }
+      setContext((current) => current ? { ...current, record: updatedRecord } : current);
+      setQualificationNotes(stringFieldValue(updatedRecord.fields, 'Qualification Notes'));
+      setArrivalDate(dateFieldValue(updatedRecord.fields, 'Arrival Date'));
+      setSku(stringFieldValue(updatedRecord.fields, 'SKU'));
+      setSuccessMessage('Saved pending-review fields.');
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Unable to save the pending-review fields.');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleMoveToTesting = async () => {
+    if (!record || !canMoveToTesting) {
+      return;
+    }
+
+    setSaving('move');
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const savedRecord = await savePendingReviewRecordReview(record.id, {
+        qualificationNotes,
+        arrivalDate,
+        sku,
+      });
+      setContext((current) => current ? { ...current, record: savedRecord } : current);
       await acceptPendingReviewRecord(record.id, currentUserName, {
-        acceptedStatus: acceptStatus,
+        acceptedStatus: 'Accepted - Arrived, Awaiting SKU',
         qualificationNotes,
       });
-      backToQueue();
+      const updatedRecord = await completeProcessingStage(record.id, currentUserName);
+      navigate(resolveUsedGearOperationalPath(updatedRecord.id, updatedRecord.fields));
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to move this parking-lot row into an accepted Parking Lot status.');
-      setSaving(false);
+      setError(actionError instanceof Error ? actionError.message : 'Unable to move this parking-lot row into testing.');
+      setSaving(null);
     }
   };
 
@@ -203,15 +242,16 @@ export function UsedGearPendingReviewRecordPage({
       return;
     }
 
-    setSaving(true);
+    setSaving('trash');
     setError(null);
+    setSuccessMessage(null);
 
     try {
       await markPendingReviewUnqualified(record.id, unqualifiedReason);
       navigate({ pathname: '/trash-review', search: location.search, hash: '#used-gear-trash' });
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'Unable to move this parking-lot row into trash.');
-      setSaving(false);
+      setSaving(null);
     }
   };
 
@@ -223,13 +263,12 @@ export function UsedGearPendingReviewRecordPage({
     return <ErrorSurface title="Unable to load parking-lot review" message={error ?? 'The selected Parking Lot record could not be loaded.'} />;
   }
 
-  const acceptRouteDescription = ACCEPT_ROUTE_OPTIONS.find((option) => option.value === acceptStatus)?.description;
   const intakeSnapshot = buildUsedGearIntakeSnapshot(record);
 
   return (
     <WorkflowRecordPageLayout
       eyebrow="Parking Lot"
-      title={displayInventoryValue(record.fields.SKU)}
+      title={getUsedGearRecordItemTitle(record.fields, record.id)}
       belowHeader={sectionNav}
       actions={<BackToolbarButton label="Back to Parking Lot" onClick={backToQueue} />}
     >
@@ -238,6 +277,12 @@ export function UsedGearPendingReviewRecordPage({
         {error ? (
           <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
             {error}
+          </div>
+        ) : null}
+
+        {successMessage ? (
+          <div className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+            {successMessage}
           </div>
         ) : null}
 
@@ -253,7 +298,7 @@ export function UsedGearPendingReviewRecordPage({
               <button
                 type="button"
                 className="rounded-xl border border-sky-300/40 bg-white/5 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-white/10"
-                onClick={() => navigate(`/parking-lot-1/group/${encodeURIComponent(group.id)}${location.search}`)}
+                onClick={() => navigate(`/parking-lot/group/${encodeURIComponent(group.id)}${location.search}`)}
               >
                 Open Group Review
               </button>
@@ -263,21 +308,24 @@ export function UsedGearPendingReviewRecordPage({
 
         <div className="grid gap-6">
           <section id="lot-two" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
-            <AppSectionTitle title="Qualify Into Parking Lot" titleClassName="text-lg" className="pt-0" />
-            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Choose the correct accepted Parking Lot status and leave the qualification note that explains why this intake should stay in the sellable workflow.</p>
+            <AppSectionTitle title="Review & Qualify" titleClassName="text-lg" className="pt-0" />
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Select a parking lot status to accept the item into the workflow, fill in arrival details to move directly to testing, or save your notes without committing.</p>
             <div className="mt-4 grid gap-3">
               <label className="block">
                 <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Parking Lot Status</span>
                 <select
-                  className={inputClassName}
-                  value={acceptStatus}
-                  onChange={(event) => setAcceptStatus(event.currentTarget.value as UsedGearPendingReviewAcceptedStatus)}
+                  className={`${inputClassName} mt-2`}
+                  value={acceptStatus ?? ''}
+                  onChange={(event) => {
+                    const value = event.currentTarget.value;
+                    setAcceptStatus(value ? (value as UsedGearPendingReviewAcceptedStatus) : null);
+                  }}
                 >
-                  {ACCEPT_ROUTE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
+                  <option value="">— No Status Change —</option>
+                  <option value="Accepted - Awaiting Arrival">Accepted – Awaiting Arrival</option>
+                  <option value="Accepted - Arrived, Awaiting SKU">Accepted – Arrived, Awaiting SKU</option>
+                  <option value="Accepted - Arrived, Awaiting Missing Item">Accepted – Arrived, Awaiting Missing Item</option>
                 </select>
-                {acceptRouteDescription ? <p className="mt-1 text-xs text-[var(--muted)]/80">{acceptRouteDescription}</p> : null}
               </label>
               <label className="block">
                 <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Qualification Notes</span>
@@ -286,7 +334,7 @@ export function UsedGearPendingReviewRecordPage({
                   rows={5}
                   value={qualificationNotes}
                   onChange={(event) => setQualificationNotes(event.currentTarget.value)}
-                  placeholder="Required before routing this item into Parking Lot"
+                  placeholder="Optional — notes about why this intake should stay in the sellable workflow"
                 />
               </label>
               <NoteTemplateRow
@@ -296,22 +344,73 @@ export function UsedGearPendingReviewRecordPage({
                   setQualificationNotes((currentValue) => applyUsedGearWorkflowNoteTemplate(currentValue, templateValue));
                 }}
               />
-              {groupNeedsSubmissionId ? (
-                <p className="m-0 text-sm text-amber-300">This grouped intake still needs a Submission Group ID before it can be accepted into Parking Lot.</p>
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="block">
+                  <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Arrival Date</span>
+                  <DatePickerField
+                    containerClassName="mt-2 flex gap-2"
+                    inputClassName={`${inputClassName} flex-1`}
+                    buttonClassName={dateButtonClassName}
+                    value={arrivalDate}
+                    pickerLabel="Arrival Date"
+                    onValueChange={setArrivalDate}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">SKU</span>
+                  <input
+                    type="text"
+                    className={`${inputClassName} mt-2`}
+                    value={sku}
+                    onChange={(event) => setSku(event.currentTarget.value)}
+                    placeholder="Required before this row can move to testing"
+                  />
+                </label>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    void handleSaveReview();
+                  }}
+                  disabled={saving !== null}
+                >
+                  {saving === 'save' ? 'Saving...' : 'Save Review'}
+                </button>
+                <button
+                  type="button"
+                  className="rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    void handleMoveToTesting();
+                  }}
+                  disabled={saving !== null || !canMoveToTesting}
+                >
+                  {saving === 'move' ? 'Moving...' : 'Move to Testing'}
+                </button>
+                {(!hasPricingPath || groupNeedsSubmissionId) ? (
+                  <button
+                    type="button"
+                    className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-200 transition hover:bg-amber-500/20"
+                    onClick={() => onOpenManualIntake(record.id)}
+                  >
+                    Edit Intake
+                  </button>
+                ) : null}
+              </div>
+              {!canMoveToTesting ? (
+                <div className="flex flex-col gap-2">
+                  {!hasPricingPath ? (
+                    <p className="m-0 text-sm text-amber-300">Offer amount, paid amount, or confirmed grand total is required before this row can move to testing.</p>
+                  ) : null}
+                  {groupNeedsSubmissionId ? (
+                    <p className="m-0 text-sm text-amber-300">This grouped intake still needs a Submission Group ID before it can move to testing.</p>
+                  ) : null}
+                  {!handoffFieldsReady && hasPricingPath && !groupNeedsSubmissionId ? (
+                    <p className="m-0 text-sm text-amber-300">Arrival Date and SKU are required before this row can move to testing.</p>
+                  ) : null}
+                </div>
               ) : null}
-              {!hasPricingPath ? (
-                <p className="m-0 text-sm text-amber-300">Offer amount, paid amount, or confirmed grand total is required before this row can enter an accepted Parking Lot status.</p>
-              ) : null}
-              <button
-                type="button"
-                className="rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={() => {
-                  void handleAccept();
-                }}
-                disabled={saving || qualificationNotes.trim().length === 0 || !hasPricingPath || groupNeedsSubmissionId}
-              >
-                {saving ? 'Saving...' : 'Accept Into Parking Lot'}
-              </button>
             </div>
           </section>
         </div>
@@ -327,9 +426,9 @@ export function UsedGearPendingReviewRecordPage({
           onSubmit={() => {
             void handleUnqualify();
           }}
-          disabled={saving || unqualifiedReason.trim().length === 0}
+          disabled={saving !== null || unqualifiedReason.trim().length === 0}
           textareaClassName={inputClassName}
-          isSaving={saving}
+          isSaving={saving === 'trash'}
         />
 
         <IntakeSnapshotSection

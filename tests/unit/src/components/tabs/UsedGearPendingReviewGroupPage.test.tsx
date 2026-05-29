@@ -4,18 +4,32 @@ import { UsedGearPendingReviewGroupPage } from '@/components/tabs/UsedGearPendin
 
 const {
   acceptPendingReviewGroupMock,
+  loadParkingLotArrivalGroupMock,
   loadPendingReviewGroupMock,
   markPendingReviewGroupUnqualifiedMock,
+  navigateMock,
   savePendingReviewGroupReviewMock,
 } = vi.hoisted(() => ({
   acceptPendingReviewGroupMock: vi.fn(),
+  loadParkingLotArrivalGroupMock: vi.fn(),
   loadPendingReviewGroupMock: vi.fn(),
   markPendingReviewGroupUnqualifiedMock: vi.fn(),
+  navigateMock: vi.fn(),
   savePendingReviewGroupReviewMock: vi.fn(),
 }));
 
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useLocation: () => ({ search: '?reviewMode=test' }),
+    useNavigate: () => navigateMock,
+  };
+});
+
 vi.mock('@/services/usedGearQueue', () => ({
   acceptPendingReviewGroup: acceptPendingReviewGroupMock,
+  loadParkingLotArrivalGroup: loadParkingLotArrivalGroupMock,
   loadPendingReviewGroup: loadPendingReviewGroupMock,
   markPendingReviewGroupUnqualified: markPendingReviewGroupUnqualifiedMock,
   savePendingReviewGroupReview: savePendingReviewGroupReviewMock,
@@ -28,8 +42,10 @@ vi.mock('@/services/inventoryDirectory', () => ({
 describe('UsedGearPendingReviewGroupPage', () => {
   beforeEach(() => {
     acceptPendingReviewGroupMock.mockReset();
+    loadParkingLotArrivalGroupMock.mockReset();
     loadPendingReviewGroupMock.mockReset();
     markPendingReviewGroupUnqualifiedMock.mockReset();
+    navigateMock.mockReset();
     savePendingReviewGroupReviewMock.mockReset();
 
     loadPendingReviewGroupMock.mockResolvedValue({
@@ -85,6 +101,34 @@ describe('UsedGearPendingReviewGroupPage', () => {
           },
         },
       ],
+    });
+    loadParkingLotArrivalGroupMock.mockResolvedValue({
+      id: 'group-42',
+      key: 'group-42',
+      label: 'SUB-42',
+      description: 'Submission group',
+      records: [],
+    });
+  });
+
+  it('redirects stale pending-review group routes to the arrival-stage parking lot group page', async () => {
+    loadPendingReviewGroupMock.mockRejectedValueOnce(new Error('Unable to load the selected pending-review group.'));
+
+    render(
+      <UsedGearPendingReviewGroupPage
+        currentUserName="Taylor Reviewer"
+        groupId="group-42"
+        onBackToParkingLot={vi.fn()}
+        onOpenTrashReview={vi.fn()}
+        onOpenManualIntake={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith({
+        pathname: '/parking-lot/arrival/group/group-42',
+        search: '?reviewMode=test',
+      }, { replace: true });
     });
   });
 
@@ -202,6 +246,20 @@ describe('UsedGearPendingReviewGroupPage', () => {
         ],
       });
     });
+  });
+
+  it('uses arrival-stage wording for the grouped acceptance action', async () => {
+    render(
+      <UsedGearPendingReviewGroupPage
+        currentUserName="Taylor Reviewer"
+        groupId="group-42"
+        onBackToParkingLot={vi.fn()}
+        onOpenTrashReview={vi.fn()}
+        onOpenManualIntake={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole('button', { name: 'Accept Group With Selected Statuses' })).toBeInTheDocument();
   });
 
   it('routes the full grouped intake into trash review', async () => {

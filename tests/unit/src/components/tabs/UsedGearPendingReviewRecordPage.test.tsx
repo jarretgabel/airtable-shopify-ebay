@@ -5,16 +5,20 @@ import { UsedGearPendingReviewRecordPage } from '@/components/tabs/UsedGearPendi
 
 const {
   acceptPendingReviewRecordMock,
+  completeProcessingStageMock,
   hasUsedGearPendingReviewPricingPathMock,
   loadUsedGearOperationalRecordContextMock,
   markPendingReviewUnqualifiedMock,
   navigateMock,
+  savePendingReviewRecordReviewMock,
 } = vi.hoisted(() => ({
   acceptPendingReviewRecordMock: vi.fn(),
+  completeProcessingStageMock: vi.fn(),
   hasUsedGearPendingReviewPricingPathMock: vi.fn(),
   loadUsedGearOperationalRecordContextMock: vi.fn(),
   markPendingReviewUnqualifiedMock: vi.fn(),
   navigateMock: vi.fn(),
+  savePendingReviewRecordReviewMock: vi.fn(),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -28,9 +32,11 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('@/services/usedGearQueue', () => ({
   acceptPendingReviewRecord: acceptPendingReviewRecordMock,
+  completeProcessingStage: completeProcessingStageMock,
   hasUsedGearPendingReviewPricingPath: hasUsedGearPendingReviewPricingPathMock,
   loadUsedGearOperationalRecordContext: loadUsedGearOperationalRecordContextMock,
   markPendingReviewUnqualified: markPendingReviewUnqualifiedMock,
+  savePendingReviewRecordReview: savePendingReviewRecordReviewMock,
 }));
 
 vi.mock('@/services/inventoryDirectory', () => ({
@@ -40,10 +46,12 @@ vi.mock('@/services/inventoryDirectory', () => ({
 describe('UsedGearPendingReviewRecordPage', () => {
   beforeEach(() => {
     acceptPendingReviewRecordMock.mockReset();
+    completeProcessingStageMock.mockReset();
     hasUsedGearPendingReviewPricingPathMock.mockReset();
     loadUsedGearOperationalRecordContextMock.mockReset();
     markPendingReviewUnqualifiedMock.mockReset();
     navigateMock.mockReset();
+    savePendingReviewRecordReviewMock.mockReset();
 
     hasUsedGearPendingReviewPricingPathMock.mockReturnValue(true);
     loadUsedGearOperationalRecordContextMock.mockResolvedValue({
@@ -56,6 +64,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
           Model: 'C28',
           'Workflow Source': 'JotForm',
           'Workflow Status': 'Pending Review',
+          'Arrival Date': '',
           'Qualification Notes': 'Carry forward note',
           'Submission Group ID': 'group-1',
           'Offer Amount': 100,
@@ -80,6 +89,22 @@ describe('UsedGearPendingReviewRecordPage', () => {
         ],
       },
     });
+    savePendingReviewRecordReviewMock.mockImplementation(async (recordId: string, values: { qualificationNotes: string; arrivalDate: string; sku: string }) => ({
+      id: recordId,
+      createdTime: '2026-05-09T00:00:00.000Z',
+      fields: {
+        SKU: values.sku,
+        Make: 'McIntosh',
+        Model: 'C28',
+        'Workflow Source': 'JotForm',
+        'Workflow Status': 'Pending Review',
+        'Arrival Date': values.arrivalDate,
+        'Qualification Notes': values.qualificationNotes,
+        'Submission Group ID': 'group-1',
+        'Offer Amount': 100,
+        'Confirmed Grand Total': 100,
+      },
+    }));
   });
 
   it('opens linked group and manual-intake actions from the isolated review page', async () => {
@@ -93,21 +118,58 @@ describe('UsedGearPendingReviewRecordPage', () => {
       />,
     );
 
-    expect(await screen.findByText('Qualify Into Parking Lot')).toBeInTheDocument();
+    expect(await screen.findByText('Review & Qualify')).toBeInTheDocument();
+    expect(screen.getByLabelText('Parking Lot Status')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save Review' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Move to Testing' })).toBeInTheDocument();
+    expect(screen.getByLabelText('SKU')).toBeInTheDocument();
     const routeHeading = screen.getByRole('heading', { name: 'Route To Trash' });
     const snapshotHeading = screen.getByText('Intake Snapshot');
     expect(snapshotHeading.compareDocumentPosition(routeHeading) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Back to Parking Lot' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Group Review' }));
-    expect(navigateMock).toHaveBeenCalledWith('/parking-lot-1/group/group-1?reviewMode=test');
+    expect(navigateMock).toHaveBeenCalledWith('/parking-lot/group/group-1?reviewMode=test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Intake' }));
     expect(onOpenManualIntake).toHaveBeenCalledWith('rec-pending-1');
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
   });
 
-  it('accepts the row into parking lot and returns to the queue', async () => {
+  it('redirects stale pending-review routes to the arrival-stage parking lot page', async () => {
+    loadUsedGearOperationalRecordContextMock.mockResolvedValueOnce({
+      record: {
+        id: 'rec-pending-1',
+        createdTime: '2026-05-09T00:00:00.000Z',
+        fields: {
+          SKU: '',
+          Make: 'McIntosh',
+          Model: 'C28',
+          'Workflow Source': 'JotForm',
+          'Workflow Status': 'Accepted - Awaiting Arrival',
+          'Qualification Notes': 'Carry forward note',
+        },
+      },
+      group: null,
+    });
+
+    render(
+      <UsedGearPendingReviewRecordPage
+        currentUserName="Taylor Reviewer"
+        recordId="rec-pending-1"
+        onOpenManualIntake={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith({
+        pathname: '/parking-lot/arrival/rec-pending-1',
+        search: '?reviewMode=test',
+      }, { replace: true });
+    });
+  });
+
+  it('accepts the row into a parking lot status when one is selected on save', async () => {
     acceptPendingReviewRecordMock.mockResolvedValue(undefined);
 
     render(
@@ -118,10 +180,18 @@ describe('UsedGearPendingReviewRecordPage', () => {
       />,
     );
 
-    await screen.findByText('Qualify Into Parking Lot');
-    fireEvent.click(screen.getByRole('button', { name: 'Accept Into Parking Lot' }));
+    await screen.findByText('Review & Qualify');
+    fireEvent.change(screen.getByLabelText('Parking Lot Status'), {
+      target: { value: 'Accepted - Awaiting Arrival' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Review' }));
 
     await waitFor(() => {
+      expect(savePendingReviewRecordReviewMock).toHaveBeenCalledWith('rec-pending-1', {
+        qualificationNotes: 'Carry forward note',
+        arrivalDate: '',
+        sku: 'SKU-PENDING-1',
+      });
       expect(acceptPendingReviewRecordMock).toHaveBeenCalledWith('rec-pending-1', 'Taylor Reviewer', {
         acceptedStatus: 'Accepted - Awaiting Arrival',
         qualificationNotes: 'Carry forward note',
@@ -129,10 +199,79 @@ describe('UsedGearPendingReviewRecordPage', () => {
     });
 
     expect(navigateMock).toHaveBeenCalledWith({
-      pathname: '/parking-lot-1',
+      pathname: '/parking-lot',
       search: '?reviewMode=test',
       hash: '#used-gear-parking-lot',
     });
+  });
+
+  it('saves the pending-review fields without accepting the row', async () => {
+    render(
+      <UsedGearPendingReviewRecordPage
+        currentUserName="Taylor Reviewer"
+        recordId="rec-pending-1"
+        onOpenManualIntake={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Review & Qualify');
+    fireEvent.change(screen.getByLabelText('Arrival Date'), { target: { value: '2026-05-12' } });
+    fireEvent.change(screen.getByLabelText('SKU'), { target: { value: 'SKU-LOT2-1' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Qualification Notes' }), {
+      target: { value: 'Ready for same-day testing.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Review' }));
+
+    await waitFor(() => {
+      expect(savePendingReviewRecordReviewMock).toHaveBeenCalledWith('rec-pending-1', {
+        qualificationNotes: 'Ready for same-day testing.',
+        arrivalDate: '2026-05-12',
+        sku: 'SKU-LOT2-1',
+      });
+    });
+
+    expect(await screen.findByText('Saved pending-review fields.')).toBeInTheDocument();
+    expect(acceptPendingReviewRecordMock).not.toHaveBeenCalled();
+  });
+
+  it('moves the row straight to testing when the handoff is complete', async () => {
+    acceptPendingReviewRecordMock.mockResolvedValue(undefined);
+    completeProcessingStageMock.mockResolvedValue({
+      id: 'rec-pending-1',
+      createdTime: '2026-05-09T00:00:00.000Z',
+      fields: {
+        SKU: 'SKU-LOT2-1',
+        'Workflow Status': 'Testing In Progress',
+      },
+    });
+
+    render(
+      <UsedGearPendingReviewRecordPage
+        currentUserName="Taylor Reviewer"
+        recordId="rec-pending-1"
+        onOpenManualIntake={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Review & Qualify');
+    fireEvent.change(screen.getByLabelText('Arrival Date'), { target: { value: '2026-05-12' } });
+    fireEvent.change(screen.getByLabelText('SKU'), { target: { value: 'SKU-LOT2-1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Move to Testing' }));
+
+    await waitFor(() => {
+      expect(savePendingReviewRecordReviewMock).toHaveBeenCalledWith('rec-pending-1', {
+        qualificationNotes: 'Carry forward note',
+        arrivalDate: '2026-05-12',
+        sku: 'SKU-LOT2-1',
+      });
+      expect(acceptPendingReviewRecordMock).toHaveBeenCalledWith('rec-pending-1', 'Taylor Reviewer', {
+        acceptedStatus: 'Accepted - Arrived, Awaiting SKU',
+        qualificationNotes: 'Carry forward note',
+      });
+      expect(completeProcessingStageMock).toHaveBeenCalledWith('rec-pending-1', 'Taylor Reviewer');
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith('/testing/rec-pending-1');
   });
 
   it('routes the row into trash from the isolated review page', async () => {
@@ -175,7 +314,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
       />,
     );
 
-    expect(await screen.findByText('Qualify Into Parking Lot')).toBeInTheDocument();
+    expect(await screen.findByText('Review & Qualify')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sellable Clean Pass' }));
     expect(screen.getByRole('textbox', { name: 'Qualification Notes' })).toHaveValue(

@@ -109,7 +109,7 @@ describe('UsedGearTrashReviewGroupPage', () => {
     });
 
     expect(navigateMock).toHaveBeenCalledWith({
-      pathname: '/parking-lot-1',
+      pathname: '/parking-lot',
       search: '?reviewMode=test',
       hash: '#used-gear-parking-lot',
     });
@@ -147,7 +147,7 @@ describe('UsedGearTrashReviewGroupPage', () => {
     });
 
     expect(navigateMock).toHaveBeenCalledWith({
-      pathname: '/parking-lot-1',
+      pathname: '/parking-lot',
       search: '?reviewMode=test',
       hash: '#used-gear-parking-lot',
     });

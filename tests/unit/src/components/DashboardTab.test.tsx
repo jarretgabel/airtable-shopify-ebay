@@ -222,7 +222,7 @@ describe('DashboardTab', () => {
     const viewModel = buildViewModel();
     viewModel.workflow.currentUserRole = 'processor';
     viewModel.workflow.canViewSensitiveMetrics = false;
-    viewModel.workflow.accessiblePages = ['dashboard', 'inventory', 'parking-lot-1'];
+    viewModel.workflow.accessiblePages = ['dashboard', 'inventory', 'parking-lot'];
 
     render(<DashboardTab viewModel={viewModel} />);
 

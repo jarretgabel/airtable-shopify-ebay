@@ -8,7 +8,6 @@ export type ManualIntakeFormOptionFieldName =
   | 'Shipping Method';
 
 export interface ManualIntakeFormValues {
-  arrivalDate: string;
   pickUpNumber: string;
   acquiredFrom: string;
   cost: string;
@@ -58,7 +57,6 @@ export interface ManualIntakeFormIntroBlock {
 
 export function createManualIntakeFormDefaults(): ManualIntakeFormValues {
   return {
-    arrivalDate: new Date().toISOString().slice(0, 10),
     pickUpNumber: '',
     acquiredFrom: '',
     cost: '',
@@ -101,7 +99,7 @@ export const manualIntakeFormIntro: {
     {
       type: 'labelBody',
       label: 'SB Quote Request Form:',
-      body: 'Filled and submitted by potential clients. If a deal is accepted, submitted details are routed into inventory with a "Waiting for Item" status and can be found in the "JotForm" and "Parking Lot 1" intake workflow views.',
+      body: 'Filled and submitted by potential clients. If a deal is accepted, submitted details are routed into inventory with a "Waiting for Item" status and can be found in the "JotForm" and "Parking Lot" intake workflow views.',
     },
     {
       type: 'labelBody',
@@ -138,13 +136,6 @@ export const manualIntakeFormIntro: {
 };
 
 export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
-  {
-    name: 'arrivalDate',
-    airtableFieldName: 'Arrival Date',
-    label: 'Arrival Date',
-    type: 'date',
-    required: true,
-  },
   {
     name: 'pickUpNumber',
     airtableFieldName: 'Pick Up #',

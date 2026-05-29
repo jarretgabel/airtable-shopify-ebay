@@ -178,7 +178,7 @@ export function UsedGearTrashReviewGroupPage({
 
     try {
       await Promise.all(records.map((record) => restoreTrashRecord(record.id)));
-      navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-parking-lot' });
+      navigate({ pathname: '/parking-lot', search: location.search, hash: '#used-gear-parking-lot' });
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'Unable to restore this Trash Review group to Parking Lot.');
       setSaving(null);
@@ -199,7 +199,7 @@ export function UsedGearTrashReviewGroupPage({
         acceptedStatus: requalifyStatus,
         qualificationNotes: requalifyNotes,
       })));
-      navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-parking-lot' });
+      navigate({ pathname: '/parking-lot', search: location.search, hash: '#used-gear-parking-lot' });
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'Unable to re-qualify this Trash Review group into Parking Lot.');
       setSaving(null);

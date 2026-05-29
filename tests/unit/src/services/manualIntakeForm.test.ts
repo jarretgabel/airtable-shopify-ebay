@@ -43,7 +43,6 @@ describe('manualIntakeForm', () => {
 
   it('loads Manual Intake values for the full schema field set', async () => {
     vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
-      'Arrival Date': '2026-04-01T00:00:00.000Z',
       'Pick Up #': 'PU-42',
       'Acquired From': 'Walk-in seller',
       Cost: 1499.5,
@@ -51,7 +50,6 @@ describe('manualIntakeForm', () => {
       'Customer Functional Notes': 'Seller reports fully working on both channels.',
       'Customer Inclusion Notes': 'Original cage and spare tubes included.',
       'Customer Submitted Photos Notes': 'Customer sent rear-panel serial photo.',
-      SKU: 'SKU-100',
       Status: 'Ready to Test',
       Make: 'McIntosh',
       Model: 'MC275',
@@ -74,10 +72,10 @@ describe('manualIntakeForm', () => {
 
     expect(result).toEqual({
       source: 'used-gear-workflow',
+      itemTitle: 'McIntosh MC275 - Incoming123',
       workflowSource: '',
       jotFormSubmissionId: '',
       values: {
-        arrivalDate: '2026-04-01',
         pickUpNumber: 'PU-42',
         acquiredFrom: 'Walk-in seller',
         cost: '1499.5',
@@ -131,7 +129,6 @@ describe('manualIntakeForm', () => {
 
   it('submits every non-file Manual Intake schema field and uploads images', async () => {
     const values: ManualIntakeFormValues = {
-      arrivalDate: '2026-04-01',
       pickUpNumber: 'PU-42',
       acquiredFrom: 'Walk-in seller',
       cost: '1499.5',
@@ -172,7 +169,6 @@ describe('manualIntakeForm', () => {
       'inventory-directory',
       'recIncoming123',
       {
-        'Arrival Date': '2026-04-01',
         'Pick Up #': 'PU-42',
         'Acquired From': 'Walk-in seller',
         Cost: 1499.5,
@@ -181,6 +177,7 @@ describe('manualIntakeForm', () => {
         'Customer Inclusion Notes': 'Original cage included.',
         'Customer Submitted Photos Notes': 'Customer sent front and rear photos.',
         Status: 'Ready to Test',
+        'Item Title': 'McIntosh MC275 - Incoming123',
         Make: 'McIntosh',
         Model: 'MC275',
         'Component Type': ['Amplifier'],
@@ -205,6 +202,7 @@ describe('manualIntakeForm', () => {
       manualIntakeFormFields
         .filter((field) => field.type !== 'file')
         .map((field) => field.airtableFieldName)
+        .concat(['Item Title'])
         .sort(),
     );
 
@@ -216,9 +214,8 @@ describe('manualIntakeForm', () => {
     );
   });
 
-  it('creates manual-entry rows through the workflow source with lot-routing fields', async () => {
+  it('creates manual-entry rows through the workflow source with Pending Review status', async () => {
     const values: ManualIntakeFormValues = {
-      arrivalDate: '2026-04-01',
       pickUpNumber: 'PU-77',
       acquiredFrom: 'Phone deal',
       cost: '999',
@@ -247,23 +244,16 @@ describe('manualIntakeForm', () => {
 
     vi.mocked(createConfiguredRecord).mockResolvedValue(buildRecord({}));
 
-    const result = await submitManualIntakeForm(values, null, {
-      manualEntryRoute: 'lot-2-awaiting-arrival',
-      submissionGroupId: 'SUB-42',
-      pickUpId: 'PU-77',
-      qualificationNotes: 'Seller already approved over phone.',
-    });
+    const result = await submitManualIntakeForm(values, null);
 
     expect(result.action).toBe('created');
     expect(createConfiguredRecord).toHaveBeenCalledWith(
       'used-gear-workflow',
       expect.objectContaining({
         'Workflow Source': 'Manual Entry',
-        'Workflow Status': 'Accepted - Awaiting Arrival',
-        'Submission Group ID': 'SUB-42',
-        'Pick Up ID': 'PU-77',
-        'Qualification Notes': 'Seller already approved over phone.',
-        'Qualification Complete': true,
+        'Workflow Status': 'Pending Review',
+        'Item Title': 'Marantz Model 8B',
+        'Qualification Complete': false,
         'Customer Cosmetic Notes': 'Seller reports light edge wear.',
         'Customer Functional Notes': 'Seller says both channels work.',
         'Customer Inclusion Notes': 'Power cable only.',
@@ -271,40 +261,13 @@ describe('manualIntakeForm', () => {
       }),
       { typecast: true },
     );
-  });
-
-  it('requires qualification notes before routing manual entry directly into Parking Lot', async () => {
-    const values: ManualIntakeFormValues = {
-      arrivalDate: '2026-04-01',
-      pickUpNumber: 'PU-88',
-      acquiredFrom: 'Walk-in seller',
-      cost: '500',
-      customerCosmeticNotes: '',
-      customerFunctionalNotes: '',
-      customerInclusionNotes: '',
-      customerSubmittedPhotosNotes: '',
-      status: 'Needs Initial Processing',
-      make: 'Adcom',
-      model: 'GFA-555',
-      componentType: 'Amplifier',
-      serialNumber: '',
-      voltage: '',
-      inventoryNotes: '',
-      imageFiles: [],
-      cosmeticConditionNotes: '',
-      originalBox: '',
-      manual: '',
-      remote: '',
-      powerCable: '',
-      additionalItems: '',
-      weight: '',
-      shippingDims: '',
-      shippingMethod: '',
-    };
-
-    await expect(submitManualIntakeForm(values, null, {
-      manualEntryRoute: 'lot-2-awaiting-arrival',
-      qualificationNotes: '',
-    })).rejects.toThrow('Qualification Notes are required before routing a manual-entry intake row directly into an accepted Parking Lot status.');
+    expect(updateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'recIncoming123',
+      {
+        'Item Title': 'Marantz Model 8B - Incoming123',
+      },
+      { typecast: true },
+    );
   });
 });

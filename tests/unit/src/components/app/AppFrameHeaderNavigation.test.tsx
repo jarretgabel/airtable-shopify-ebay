@@ -22,7 +22,7 @@ describe('AppFrameHeaderNavigation', () => {
           createTab('create-intake-item', 'Create Intake Item'),
           createTab('jotform', 'JotForm'),
           createTab('jotform-audit', 'JotForm Audit'),
-          createTab('parking-lot-1', 'Parking Lot'),
+          createTab('parking-lot', 'Parking Lot'),
           createTab('trash-review', 'Trash Review'),
         ]}
         listingsTabs={[]}

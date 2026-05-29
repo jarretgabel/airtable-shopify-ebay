@@ -68,7 +68,7 @@ export const WORKFLOW_ADVANCEMENT_RULES: GuideStep[] = [
   },
   {
     title: 'Parking Lot to specialist work',
-    detail: 'Accepted rows should only move past Parking Lot once the arrival-stage handoff is complete for the current situation: arrival captured, SKU assigned when needed, and missing-item issues resolved before downstream work starts.',
+    detail: 'Accepted rows should only move past Parking Lot once the arrival-stage handoff is complete for the current situation: arrival captured, SKU assigned when needed, and missing-item issues resolved before downstream work starts. When those handoff details are already known during intake review, the record page can save them and move the row directly into Testing.',
   },
   {
     title: 'Testing, then Photography, then Listings',
@@ -95,7 +95,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartSummary: 'Keep the whole operation moving, then drop into the exact queue or record that needs intervention.',
     quickStartItems: [
       'Start on the dashboard to spot backlog, handoff gaps, and publish blockers.',
-      'Use Parking Lot 1 for intake decisions, the Workflow Hub for directory lookup and workflow snapshots, and Post-Publish for live-listing follow-through issues.',
+      'Use Parking Lot for intake decisions, the Workflow Hub for directory lookup and workflow snapshots, and Post-Publish for live-listing follow-through issues.',
       'Check Listings when items are entering listing review or need publish decisions.',
     ],
     flowSummary: 'You need the whole map because your role crosses intake, active workflow, listings, and follow-through.',
@@ -106,7 +106,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Resolve intake and routing blockers first',
-        detail: 'Parking Lot 1 handles intake decisions, while the Workflow Hub helps you look up accepted rows, confirm current workflow state, and open the real working page that owns the blocker.',
+        detail: 'Parking Lot handles intake decisions, while the Workflow Hub helps you look up accepted rows, confirm current workflow state, and open the real working page that owns the blocker.',
       },
       {
         title: 'Confirm publish readiness before release',
@@ -141,7 +141,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     flowSteps: [
       {
         title: 'Track the front door',
-        detail: 'Parking Lot 1 shows what is new, what still needs qualification, and what should not continue.',
+        detail: 'Parking Lot shows what is new, what still needs qualification, and what should not continue.',
       },
       {
         title: 'Keep active work moving between teams',
@@ -168,18 +168,18 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     ],
   },
   processor: {
-    roleSummary: 'Start with Parking Lot 1, the intake directories, the Workflow Hub, and the specialist queues. Use Post-Publish once a live listing needs stale, sold-ready, or shipment follow-through.',
+    roleSummary: 'Start with Parking Lot, the intake directories, the Workflow Hub, and the specialist queues. Use Post-Publish once a live listing needs stale, sold-ready, or shipment follow-through.',
     quickStartTitle: 'Processor quick start',
     quickStartSummary: 'This is the operational lane for intake, handoff, and getting an item ready for the next specialist.',
     quickStartItems: [
-      'Start in Parking Lot 1 for fresh intake, use Manual Intake and JotForm for editable intake directories, use JotForm Audit when you need raw submission context, use the Workflow Hub for accepted-row lookup and workflow snapshots, or open Post-Publish for live listing follow-through.',
+      'Start in Parking Lot for fresh intake, use Manual Intake and JotForm for editable intake directories, use JotForm Audit when you need raw submission context, use the Workflow Hub for accepted-row lookup and workflow snapshots, or open Post-Publish for live listing follow-through.',
       'Clean up notes, confirm the next stage, and move the item into the next real handoff instead of leaving it parked.',
       'Use the testing and photography queues for specialist work, then use Listings once the item reaches listing review.',
     ],
     flowSummary: 'Your role spans intake and handoff, so the most relevant map is the path from qualification through listing readiness.',
     flowSteps: [
       {
-        title: 'Review new intake in Parking Lot 1',
+        title: 'Review new intake in Parking Lot',
         detail: 'Each row either qualifies into the normal workflow or gets routed out with a clear reason.',
       },
       {
@@ -198,7 +198,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     questions: [
       {
         question: 'Where should I start if I am working intake?',
-        answer: 'Start in Parking Lot 1. That is the front door for new used-gear rows and the place where items are accepted or rejected.',
+        answer: 'Start in Parking Lot. That is the front door for new used-gear rows and the place where items are accepted or rejected.',
       },
       {
         question: 'Where do I go when a queue card feels too light?',
@@ -329,22 +329,22 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   {
     title: 'Intake Arrives',
     detail: 'New gear enters from intake sources and lands in the front-door review path.',
-    pages: ['manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot-1'],
+    pages: ['manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot'],
     tone: 'intake',
     primaryRoles: ['processor', 'admin', 'owner'],
     supportRoles: ['developer'],
   },
   {
     title: 'Qualify Or Trash',
-    detail: 'Parking Lot 1 decides whether the item continues into workflow or moves to Trash Review with a reason.',
-    pages: ['parking-lot-1', 'trash-review'],
+    detail: 'Parking Lot decides whether the item continues into workflow or moves to Trash Review with a reason.',
+    pages: ['parking-lot', 'trash-review'],
     tone: 'decision',
     primaryRoles: ['processor', 'admin', 'owner'],
   },
   {
     title: 'Arrival And Routing',
     detail: 'Accepted items stay inside Parking Lot for arrival handling and then move into the specialist queues, while the Workflow Hub stays focused on record lookup and workflow snapshots.',
-    pages: ['manual-intake', 'parking-lot-1', 'inventory'],
+    pages: ['manual-intake', 'parking-lot', 'inventory'],
     tone: 'routing',
     primaryRoles: ['processor'],
     supportRoles: ['admin', 'owner'],
@@ -416,7 +416,7 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     ],
     workflows: [
       'Start here when you do not yet know which queue owns the problem.',
-      'Use the dashboard to jump into Parking Lot 1, Workflow Hub, Listings, or Post-Publish rather than working records directly here.',
+      'Use the dashboard to jump into Parking Lot, Workflow Hub, Listings, or Post-Publish rather than working records directly here.',
     ],
   },
   {
@@ -424,12 +424,12 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     pages: ['jotform', 'jotform-audit'],
     summary: 'Use JotForm as the editable directory for webhooked intake rows, and use JotForm Audit as the raw source-feed reference page for incoming submissions.',
     modules: [
-      'JotForm directory: searchable list of workflow rows created from JotForm webhooks.',
+      'JotForm directory: searchable list of webhooked intake rows that are still in intake-stage Parking Lot statuses and do not have a SKU yet.',
       'JotForm Audit: read-only submission feed with raw seller answers and source timestamps.',
     ],
     workflows: [
       'Use JotForm to open the editable intake record that came from a webhooked submission.',
-      'Use JotForm Audit to verify raw source intake data before or during Parking Lot 1 review.',
+      'Use JotForm Audit to verify raw source intake data before or during Parking Lot review.',
     ],
   },
   {
@@ -437,7 +437,7 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     pages: ['manual-intake', 'create-intake-item'],
     summary: 'Use Manual Intake as the directory for staff-created intake rows, and use Create Intake Item when staff needs to create a new row inside the app.',
     modules: [
-      'Manual intake directory: searchable list of staff-created intake rows with direct access into the intake editor.',
+      'Manual intake directory: searchable list of staff-created intake rows that are still in intake-stage Parking Lot statuses and do not have a SKU yet, with short-id item labels and direct access into the intake editor.',
       'Create Intake Item: staff-facing intake form for seller reference, condition context, grouping IDs, and route selection.',
     ],
     workflows: [
@@ -447,7 +447,7 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
   },
   {
     title: 'Parking Lot',
-    pages: ['parking-lot-1'],
+    pages: ['parking-lot'],
     summary: 'Parking Lot is the single intake page for new used-gear review and accepted arrival-stage handling.',
     modules: [
       'Parking Lot queue: review Pending Review, Awaiting Arrival, Awaiting SKU, and Awaiting Missing Item rows in one place.',
@@ -461,7 +461,7 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
   },
   {
     title: 'Arrival-stage work inside Parking Lot',
-    pages: ['parking-lot-1'],
+    pages: ['parking-lot'],
     summary: 'Accepted arrival-stage rows stay inside Parking Lot until intake handoff is complete.',
     modules: [
       'Arrival-stage review pages: accepted rows, missing item follow-up, and grouped arrivals.',
@@ -697,7 +697,7 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
 const RECORD_GUIDE_CARDS: RecordGuideCard[] = [
   {
     title: 'Pending Review Record And Group Pages',
-    pages: ['parking-lot-1'],
+    pages: ['parking-lot'],
     summary: 'These pages are the deeper intake decision surfaces when the queue row alone is not enough, especially for grouped submissions.',
     surfaces: [
       'Selected record page: one intake row with qualification, routing, and next-step context.',
@@ -710,7 +710,7 @@ const RECORD_GUIDE_CARDS: RecordGuideCard[] = [
   },
   {
     title: 'Parking Lot Group Handoff Page',
-    pages: ['parking-lot-1'],
+    pages: ['parking-lot'],
     summary: 'This page keeps one accepted pickup or submission set together during arrival-stage handoff work.',
     surfaces: [
       'Group handoff page: batch arrival-date and SKU review for the full set, plus direct actions into Manual Intake and the operational record for each row.',
@@ -826,7 +826,7 @@ const RECORD_GUIDE_CARDS: RecordGuideCard[] = [
 const ROLE_START_POINTS: Record<UserRole, RoleStartPoint[]> = {
   admin: [
     { page: 'dashboard', title: 'Check overall pressure first', detail: 'Open Dashboard when you need to spot the queue, stage, or publish issue that deserves attention first.' },
-    { page: 'parking-lot-1', title: 'Start intake cleanup here', detail: 'Open Parking Lot 1 when the front door is backing up or new submissions need qualification decisions.' },
+    { page: 'parking-lot', title: 'Start intake cleanup here', detail: 'Open Parking Lot when the front door is backing up or new submissions need qualification decisions.' },
     { page: 'listings', title: 'Open final review here', detail: 'Open Listings when the work is publish readiness, channel prep, or listing-phase blockers.' },
   ],
   owner: [
@@ -835,7 +835,7 @@ const ROLE_START_POINTS: Record<UserRole, RoleStartPoint[]> = {
     { page: 'listings', title: 'Review publish readiness here', detail: 'Open Listings when an item is nearing release or channel detail needs review.' },
   ],
   processor: [
-    { page: 'parking-lot-1', title: 'Start fresh intake here', detail: 'Open Parking Lot 1 first when you are qualifying new used-gear intake.' },
+    { page: 'parking-lot', title: 'Start fresh intake here', detail: 'Open Parking Lot first when you are qualifying new used-gear intake.' },
     { page: 'inventory', title: 'Look up accepted work here', detail: 'Open Workflow Hub when the item is accepted and you need its current workflow snapshot or the next owning page.' },
     { page: 'post-publish', title: 'Work live follow-through here', detail: 'Open Post-Publish once the item is already live and now needs stale, sold-ready, or shipping follow-through.' },
   ],

@@ -27,7 +27,7 @@ const UserManagementTab = lazy(async () => ({ default: (await import('@/componen
 const AirtableTab = lazy(async () => ({ default: (await import('@/components/tabs/AirtableTab')).AirtableTab }));
 const WorkflowSnapshotPage = lazy(async () => ({ default: (await import('@/components/tabs/WorkflowSnapshotPage')).WorkflowSnapshotPage }));
 const InventoryPriceEditorPage = lazy(async () => ({ default: (await import('../components/tabs/InventoryPriceEditorPage')).InventoryPriceEditorPage }));
-const ParkingLotOneTab = lazy(async () => ({ default: (await import('@/components/tabs/ParkingLotOneTab')).ParkingLotOneTab }));
+const ParkingLotTab = lazy(async () => ({ default: (await import('@/components/tabs/ParkingLotTab')).ParkingLotTab }));
 const UsedGearPendingReviewGroupPage = lazy(async () => ({ default: (await import('../components/tabs/UsedGearPendingReviewGroupPage')).UsedGearPendingReviewGroupPage }));
 const UsedGearPendingReviewRecordPage = lazy(async () => ({ default: (await import('@/components/tabs/UsedGearPendingReviewRecordPage')).UsedGearPendingReviewRecordPage }));
 const JotformTab = lazy(async () => ({ default: (await import('@/components/tabs/JotformTab')).JotformTab }));
@@ -187,7 +187,7 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
       return 'Shopify';
     case 'ebay':
       return 'eBay';
-    case 'parking-lot-1':
+    case 'parking-lot':
       return 'Parking Lot';
     case 'jotform':
       return 'JotForm';
@@ -663,13 +663,13 @@ export function AppTabContent({
           );
         }
         return <PhotosFormTab recordId={deferredRouteState.photosRecordId} eyebrow="Photography" onBackToDirectory={() => navigateToTab('photography-queue')} />;
-      case 'parking-lot-1':
+      case 'parking-lot':
         if (deferredRouteState.parkingLotArrivalGroupId) {
           return (
             <UsedGearParkingLotArrivalGroupPage
               currentUserName={currentUserName}
               groupId={deferredRouteState.parkingLotArrivalGroupId}
-              onBackToParkingLot={() => navigateToTab('parking-lot-1')}
+              onBackToParkingLot={() => navigateToTab('parking-lot')}
               onOpenTrashReview={() => navigateToTab('trash-review')}
               onOpenManualIntake={(recordId) => navigateToManualIntakeForm(recordId)}
             />
@@ -689,7 +689,7 @@ export function AppTabContent({
             <UsedGearPendingReviewGroupPage
               currentUserName={currentUserName}
               groupId={deferredRouteState.jotformReviewGroupId}
-              onBackToParkingLot={() => navigateToTab('parking-lot-1')}
+              onBackToParkingLot={() => navigateToTab('parking-lot')}
               onOpenTrashReview={() => navigateToTab('trash-review')}
               onOpenManualIntake={(recordId: string) => navigateToManualIntakeForm(recordId)}
             />
@@ -705,7 +705,7 @@ export function AppTabContent({
           );
         }
         return (
-          <ParkingLotOneTab
+          <ParkingLotTab
             currentUserName={currentUserName}
           />
         );

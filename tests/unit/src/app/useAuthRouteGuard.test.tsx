@@ -1,7 +1,15 @@
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useAuthRouteGuard } from '@/app/useAuthRouteGuard';
 import type { AppPage } from '@/auth/pages';
+
+const { loadUsedGearOperationalRecordMock } = vi.hoisted(() => ({
+  loadUsedGearOperationalRecordMock: vi.fn(),
+}));
+
+vi.mock('@/services/usedGearQueue', () => ({
+  loadUsedGearOperationalRecord: loadUsedGearOperationalRecordMock,
+}));
 
 function GuardHarness({
   normalizedPath,
@@ -28,6 +36,29 @@ function GuardHarness({
 }
 
 describe('useAuthRouteGuard', () => {
+  it('redirects legacy pending-review record routes to the current parking lot arrival path when the item has advanced', async () => {
+    const navigate = vi.fn();
+    loadUsedGearOperationalRecordMock.mockResolvedValueOnce({
+      id: 'rec-legacy-1',
+      createdTime: '2026-05-09T00:00:00.000Z',
+      fields: {
+        'Workflow Status': 'Accepted - Awaiting Arrival',
+      },
+    });
+
+    render(
+      <GuardHarness
+        normalizedPath="/parking-lot/review-record/rec-legacy-1"
+        canAccessPage={(tab) => tab === 'parking-lot' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/parking-lot/arrival/rec-legacy-1', { replace: true });
+    });
+  });
+
   it('redirects retired inventory workflow detail routes away', () => {
     const navigate = vi.fn();
 
@@ -103,8 +134,8 @@ describe('useAuthRouteGuard', () => {
 
     render(
       <GuardHarness
-        normalizedPath="/parking-lot-1/arrival/rec-lot-two-1"
-        canAccessPage={(tab) => tab === 'parking-lot-1' || tab === 'dashboard'}
+        normalizedPath="/parking-lot/arrival/rec-lot-two-1"
+        canAccessPage={(tab) => tab === 'parking-lot' || tab === 'dashboard'}
         navigate={navigate}
       />,
     );
@@ -117,8 +148,8 @@ describe('useAuthRouteGuard', () => {
 
     render(
       <GuardHarness
-        normalizedPath="/parking-lot-1/arrival/group/pickup%3Apickup-100"
-        canAccessPage={(tab) => tab === 'parking-lot-1' || tab === 'dashboard'}
+        normalizedPath="/parking-lot/arrival/group/pickup%3Apickup-100"
+        canAccessPage={(tab) => tab === 'parking-lot' || tab === 'dashboard'}
         navigate={navigate}
       />,
     );
@@ -196,18 +227,21 @@ describe('useAuthRouteGuard', () => {
     expect(navigate).toHaveBeenCalledWith('/manual-intake/rec-legacy-1', { replace: true });
   });
 
-  it('redirects legacy pending-review record routes to the flattened Parking Lot 1 record path', () => {
+  it('falls back to the flattened Parking Lot record path when a legacy pending-review record cannot be resolved', async () => {
     const navigate = vi.fn();
+    loadUsedGearOperationalRecordMock.mockRejectedValueOnce(new Error('not found'));
 
     render(
       <GuardHarness
-        normalizedPath="/parking-lot-1/review-record/rec-legacy-1"
-        canAccessPage={(tab) => tab === 'parking-lot-1' || tab === 'dashboard'}
+        normalizedPath="/parking-lot/review-record/rec-legacy-1"
+        canAccessPage={(tab) => tab === 'parking-lot' || tab === 'dashboard'}
         navigate={navigate}
       />,
     );
 
-    expect(navigate).toHaveBeenCalledWith('/parking-lot-1/rec-legacy-1', { replace: true });
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/parking-lot/rec-legacy-1', { replace: true });
+    });
   });
 
   it('redirects the legacy workflow hub root to the new path', () => {

@@ -99,20 +99,20 @@ describe('useAppRouteState', () => {
   });
 
   it('maps jotform record review deep links with record ids', () => {
-    const state = useAppRouteState(locationFor('/parking-lot-1/rec%20pending'), ['dashboard', 'parking-lot-1']);
-    expect(state.activeTab).toBe('parking-lot-1');
+    const state = useAppRouteState(locationFor('/parking-lot/rec%20pending'), ['dashboard', 'parking-lot']);
+    expect(state.activeTab).toBe('parking-lot');
     expect(state.jotformReviewRecordId).toBe('rec pending');
   });
 
   it('maps Parking Lot arrival-stage group routes and decodes id', () => {
-    const state = useAppRouteState(locationFor('/parking-lot-1/arrival/group/pickup%20set'), ['dashboard', 'parking-lot-1']);
-    expect(state.activeTab).toBe('parking-lot-1');
+    const state = useAppRouteState(locationFor('/parking-lot/arrival/group/pickup%20set'), ['dashboard', 'parking-lot']);
+    expect(state.activeTab).toBe('parking-lot');
     expect(state.parkingLotArrivalGroupId).toBe('pickup set');
   });
 
   it('maps Parking Lot arrival-stage record routes and decodes id', () => {
-    const state = useAppRouteState(locationFor('/parking-lot-1/arrival/rec%20lot-two'), ['dashboard', 'parking-lot-1']);
-    expect(state.activeTab).toBe('parking-lot-1');
+    const state = useAppRouteState(locationFor('/parking-lot/arrival/rec%20lot-two'), ['dashboard', 'parking-lot']);
+    expect(state.activeTab).toBe('parking-lot');
     expect(state.parkingLotArrivalRecordId).toBe('rec lot-two');
   });
 

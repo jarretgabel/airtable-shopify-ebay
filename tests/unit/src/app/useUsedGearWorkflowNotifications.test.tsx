@@ -57,11 +57,11 @@ describe('useUsedGearWorkflowNotifications', () => {
       },
       targets: {
         pendingReview: {
-          destinationTab: 'parking-lot-1',
+          destinationTab: 'parking-lot',
           recordId: null,
           sectionId: 'used-gear-pending-review',
           groupId: 'pickup-1',
-          path: '/parking-lot-1?workflowPendingReviewGroup=pickup-1#used-gear-pending-review',
+          path: '/parking-lot?workflowPendingReviewGroup=pickup-1#used-gear-pending-review',
         },
         processing: null,
         testing: null,
@@ -121,7 +121,7 @@ describe('useUsedGearWorkflowNotifications', () => {
       includeAssignedToCurrentUser: true,
       includeUnassigned: false,
     });
-    expect(navigateToPath).toHaveBeenCalledWith('/parking-lot-1?workflowPendingReviewGroup=pickup-1#used-gear-pending-review');
+    expect(navigateToPath).toHaveBeenCalledWith('/parking-lot?workflowPendingReviewGroup=pickup-1#used-gear-pending-review');
     expect(navigateToUsedGearOperationalRecord).not.toHaveBeenCalled();
     expect(navigateToInventorySection).not.toHaveBeenCalled();
     expect(navigateToTab).not.toHaveBeenCalled();

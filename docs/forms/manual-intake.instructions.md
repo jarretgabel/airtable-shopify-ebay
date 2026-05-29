@@ -31,7 +31,7 @@ It is shown in the app under:
 - Uploads selected images to `Images` after the record exists.
 - Generates a temporary `SKU` if the field is left blank.
 - Defaults `Status` to `Needs Initial Processing` if no status is selected.
-- Supports routing new manual-entry records into Parking Lot 1 review or the accepted-arrival Parking Lot 2 states.
+- Supports routing new manual-entry records into Parking Lot review or directly into the accepted arrival-stage Parking Lot statuses.
 
 ## Current Field Order
 

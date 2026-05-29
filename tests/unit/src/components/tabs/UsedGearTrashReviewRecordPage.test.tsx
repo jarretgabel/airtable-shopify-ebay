@@ -82,7 +82,7 @@ describe('UsedGearTrashReviewRecordPage', () => {
     );
 
     await screen.findByRole('heading', { name: 'Restore To Parking Lot' });
-    expect(screen.getByRole('button', { name: 'Back to Trash Review' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to Trash' })).toBeInTheDocument();
   const deleteHeading = screen.getByRole('heading', { name: 'Delete From Workflow' });
   const snapshotHeading = screen.getByText('Intake Snapshot');
     expect(snapshotHeading.compareDocumentPosition(deleteHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -97,7 +97,7 @@ describe('UsedGearTrashReviewRecordPage', () => {
     });
 
     expect(navigateMock).toHaveBeenCalledWith({
-      pathname: '/parking-lot-1',
+      pathname: '/parking-lot',
       search: '?reviewMode=test',
       hash: '#used-gear-parking-lot',
     });
@@ -131,7 +131,7 @@ describe('UsedGearTrashReviewRecordPage', () => {
     });
 
     expect(navigateMock).toHaveBeenCalledWith({
-      pathname: '/parking-lot-1',
+      pathname: '/parking-lot',
       search: '?reviewMode=test',
       hash: '#used-gear-parking-lot',
     });

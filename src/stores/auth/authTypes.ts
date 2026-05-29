@@ -24,7 +24,7 @@ export const USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS = [
   {
     key: 'pendingReview',
     label: 'Intake review queue',
-    description: 'Rows waiting in Parking Lot 1 for initial purchasing review.',
+    description: 'Rows waiting in Parking Lot for initial purchasing review.',
   },
   {
     key: 'processing',

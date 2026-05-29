@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
@@ -10,6 +11,7 @@ import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLay
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import {
   acceptPendingReviewGroup,
+  loadParkingLotArrivalGroup,
   loadPendingReviewGroup,
   markPendingReviewGroupUnqualified,
   savePendingReviewGroupReview,
@@ -140,6 +142,8 @@ export function UsedGearPendingReviewGroupPage({
   onOpenTrashReview,
   onOpenManualIntake,
 }: UsedGearPendingReviewGroupPageProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [group, setGroup] = useState<UsedGearWorkflowGroup | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -172,8 +176,16 @@ export function UsedGearPendingReviewGroupPage({
           setRecordEditors(buildRecordEditors(sortedRecords));
         }
       } catch (loadError) {
-        if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Unable to load the selected parking-lot review group.');
+        try {
+          await loadParkingLotArrivalGroup(groupId);
+          if (!cancelled) {
+            navigate({ pathname: `/parking-lot/arrival/group/${encodeURIComponent(groupId)}`, search: location.search }, { replace: true });
+            return;
+          }
+        } catch {
+          if (!cancelled) {
+            setError(loadError instanceof Error ? loadError.message : 'Unable to load the selected parking-lot review group.');
+          }
         }
       } finally {
         if (!cancelled) {
@@ -187,7 +199,7 @@ export function UsedGearPendingReviewGroupPage({
     return () => {
       cancelled = true;
     };
-  }, [groupId]);
+  }, [groupId, location.search, navigate]);
 
   const records = useMemo(() => group?.records ?? [], [group]);
   const parsedGrandTotal = parseCurrency(confirmedGrandTotal);
@@ -504,7 +516,7 @@ export function UsedGearPendingReviewGroupPage({
                 }}
                 disabled={saving || groupNeedsSubmissionId || !pricingCoverage || !qualificationCoverage}
               >
-                {saving ? 'Saving...' : 'Accept Group Into Parking Lot'}
+                {saving ? 'Saving...' : 'Accept Group With Selected Statuses'}
               </button>
             </div>
 

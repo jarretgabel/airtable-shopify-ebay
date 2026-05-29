@@ -3,8 +3,9 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AirtableTab } from '@/components/tabs/AirtableTab';
 
-const { loadWorkflowHubDirectoryMock } = vi.hoisted(() => ({
+const { loadWorkflowHubDirectoryMock, inventoryDirectoryListSectionMock } = vi.hoisted(() => ({
   loadWorkflowHubDirectoryMock: vi.fn(),
+  inventoryDirectoryListSectionMock: vi.fn(),
 }));
 
 vi.mock('@/services/usedGearQueue', async () => {
@@ -15,57 +16,64 @@ vi.mock('@/services/usedGearQueue', async () => {
   };
 });
 
-vi.mock('@/components/tabs/airtable/InventoryDirectoryListSection', () => ({
-  InventoryDirectoryListSection: ({
-    searchTerm,
-    statusFilter,
-    sortMode,
-    onSearchTermChange,
-    onStatusFilterChange,
-    onSortModeChange,
-  }: {
-    searchTerm: string;
-    statusFilter: string;
-    sortMode: 'intake-newest' | 'intake-oldest';
-    onSearchTermChange: (value: string) => void;
-    onStatusFilterChange: (value: string) => void;
-    onSortModeChange: (value: 'intake-newest' | 'intake-oldest') => void;
-  }) => (
-    <div>
-      <label>
-        Directory Search
-        <input
-          aria-label="Directory Search"
-          value={searchTerm}
-          onChange={(event) => onSearchTermChange(event.currentTarget.value)}
-        />
-      </label>
-      <label>
-        Directory Status
-        <select
-          aria-label="Directory Status"
-          value={statusFilter}
-          onChange={(event) => onStatusFilterChange(event.currentTarget.value)}
-        >
-          <option value="all">All Statuses</option>
-          <option value="Ready">Ready</option>
-          <option value="Sold">Sold</option>
-        </select>
-      </label>
-      <label>
-        Directory Sort
-        <select
-          aria-label="Directory Sort"
-          value={sortMode}
-          onChange={(event) => onSortModeChange(event.currentTarget.value as 'intake-newest' | 'intake-oldest')}
-        >
-          <option value="intake-newest">Intake Date: Newest First</option>
-          <option value="intake-oldest">Intake Date: Oldest First</option>
-        </select>
-      </label>
-    </div>
-  ),
-}));
+vi.mock('@/components/tabs/airtable/InventoryDirectoryListSection', () => {
+  return {
+    InventoryDirectoryListSection: ({
+      searchTerm,
+      statusFilter,
+      sortMode,
+      onSearchTermChange,
+      onStatusFilterChange,
+      onSortModeChange,
+      ...rest
+    }: {
+      searchTerm: string;
+      statusFilter: string;
+      sortMode: 'intake-newest' | 'intake-oldest';
+      onSearchTermChange: (value: string) => void;
+      onStatusFilterChange: (value: string) => void;
+      onSortModeChange: (value: 'intake-newest' | 'intake-oldest') => void;
+    }) => {
+      inventoryDirectoryListSectionMock({ searchTerm, statusFilter, sortMode, onSearchTermChange, onStatusFilterChange, onSortModeChange, ...rest });
+
+      return (
+        <div>
+          <label>
+            Directory Search
+            <input
+              aria-label="Directory Search"
+              value={searchTerm}
+              onChange={(event) => onSearchTermChange(event.currentTarget.value)}
+            />
+          </label>
+          <label>
+            Directory Status
+            <select
+              aria-label="Directory Status"
+              value={statusFilter}
+              onChange={(event) => onStatusFilterChange(event.currentTarget.value)}
+            >
+              <option value="all">All Statuses</option>
+              <option value="Ready">Ready</option>
+              <option value="Sold">Sold</option>
+            </select>
+          </label>
+          <label>
+            Directory Sort
+            <select
+              aria-label="Directory Sort"
+              value={sortMode}
+              onChange={(event) => onSortModeChange(event.currentTarget.value as 'intake-newest' | 'intake-oldest')}
+            >
+              <option value="intake-newest">Intake Date: Newest First</option>
+              <option value="intake-oldest">Intake Date: Oldest First</option>
+            </select>
+          </label>
+        </div>
+      );
+    },
+  };
+});
 
 function LocationState() {
   const location = useLocation();
@@ -75,6 +83,7 @@ function LocationState() {
 describe('AirtableTab', () => {
   beforeEach(() => {
     loadWorkflowHubDirectoryMock.mockReset();
+    inventoryDirectoryListSectionMock.mockReset();
     window.localStorage.clear();
     Element.prototype.scrollIntoView = vi.fn();
     loadWorkflowHubDirectoryMock.mockResolvedValue([
@@ -179,6 +188,94 @@ describe('AirtableTab', () => {
     await waitFor(() => {
       expect(screen.getByTestId('location-state').textContent).toBe('/workflow-hub');
     });
+  });
+
+  it('wires workflow hub next-step and edit-intake actions for each directory row', async () => {
+    const onOpenManualIntake = vi.fn();
+    const onOpenOperationalRecord = vi.fn();
+
+    render(
+      <MemoryRouter initialEntries={['/workflow-hub']}>
+        <AirtableTab
+          viewModel={{
+            loading: false,
+            error: null,
+            listings: [],
+            displayValue: (value) => String(value ?? ''),
+            hasValue: (value) => value !== null && value !== undefined && value !== '',
+            recordTitle: () => 'Inventory Record',
+          }}
+          currentUserRole="processor"
+          currentUserName="Taylor Reviewer"
+          onAddNewRecord={vi.fn()}
+          onOpenManualIntake={onOpenManualIntake}
+          onOpenTestingForm={vi.fn()}
+          onOpenPhotosForm={vi.fn()}
+          onOpenOperationalRecord={onOpenOperationalRecord}
+          onOpenListingsRecord={vi.fn()}
+          onSelectRecord={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(inventoryDirectoryListSectionMock).toHaveBeenCalledTimes(1);
+    });
+
+    const props = inventoryDirectoryListSectionMock.mock.calls[0][0] as {
+      getNextStepLabel: (record: { id: string; fields: Record<string, unknown> }) => string | null;
+      onOpenNextStep: (record: { id: string }) => void;
+      getSecondaryActionLabel: (record: { id: string }) => string | null;
+      onOpenSecondaryAction: (record: { id: string }) => void;
+      secondaryActionIcon: string;
+    };
+
+    expect(props.getNextStepLabel({ id: 'rec-1', fields: { 'Workflow Status': 'Pending Review' } })).toBe('Open Parking Lot Review');
+    props.onOpenNextStep({ id: 'rec-1' });
+    expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-1');
+    expect(props.getSecondaryActionLabel({ id: 'rec-1' })).toBe('Edit Intake');
+    expect(props.secondaryActionIcon).toBe('edit');
+    props.onOpenSecondaryAction({ id: 'rec-1' });
+    expect(onOpenManualIntake).toHaveBeenCalledWith('rec-1');
+  });
+
+  it('hides the workflow hub edit-intake action once a row is listed, ready to ship, or shipped', async () => {
+    render(
+      <MemoryRouter initialEntries={['/workflow-hub']}>
+        <AirtableTab
+          viewModel={{
+            loading: false,
+            error: null,
+            listings: [],
+            displayValue: (value) => String(value ?? ''),
+            hasValue: (value) => value !== null && value !== undefined && value !== '',
+            recordTitle: () => 'Inventory Record',
+          }}
+          currentUserRole="processor"
+          currentUserName="Taylor Reviewer"
+          onAddNewRecord={vi.fn()}
+          onOpenManualIntake={vi.fn()}
+          onOpenTestingForm={vi.fn()}
+          onOpenPhotosForm={vi.fn()}
+          onOpenOperationalRecord={vi.fn()}
+          onOpenListingsRecord={vi.fn()}
+          onSelectRecord={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(inventoryDirectoryListSectionMock).toHaveBeenCalledTimes(1);
+    });
+
+    const props = inventoryDirectoryListSectionMock.mock.calls[0][0] as {
+      getSecondaryActionLabel: (record: { id: string; fields: Record<string, unknown> }) => string | null;
+    };
+
+    expect(props.getSecondaryActionLabel({ id: 'rec-listed', fields: { 'Workflow Status': 'Listed, Shopify' } })).toBeNull();
+    expect(props.getSecondaryActionLabel({ id: 'rec-ready', fields: { 'Workflow Status': 'Sold - Ready to Ship' } })).toBeNull();
+    expect(props.getSecondaryActionLabel({ id: 'rec-shipped', fields: { 'Workflow Status': 'Shipped' } })).toBeNull();
+    expect(props.getSecondaryActionLabel({ id: 'rec-pending', fields: { 'Workflow Status': 'Pending Review' } })).toBe('Edit Intake');
   });
 
   it('shows the directory error state even when the inventory directory load fails', async () => {

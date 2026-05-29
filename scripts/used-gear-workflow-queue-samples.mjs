@@ -65,6 +65,22 @@ function getTrimmedString(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function buildShortRecordId(recordId) {
+  const trimmed = typeof recordId === 'string' ? recordId.trim() : '';
+  const normalized = trimmed.replace(/^rec[-_]?/i, '');
+  return normalized || trimmed;
+}
+
+function buildSeedItemTitle(fields, recordId) {
+  const shortId = buildShortRecordId(recordId);
+  const make = getTrimmedString(fields.Make);
+  const model = getTrimmedString(fields.Model);
+  const base = [make, model].filter(Boolean).join(' ') || 'Item';
+  const currentTitle = getTrimmedString(fields['Item Title']);
+  const hasMarker = currentTitle.startsWith(SAMPLE_MARKER);
+  return hasMarker ? `${SAMPLE_MARKER} ${base} - ${shortId}` : `${base} - ${shortId}`;
+}
+
 function replaceSampleWorkflowUser(value) {
   if (typeof value !== 'string') {
     return value;
@@ -468,22 +484,22 @@ function buildCommonFields(index, config) {
   });
 }
 
-function buildSampleRecords() {
+function buildSampleConfigs() {
   return [
     {
-      label: 'Parking Lot 1 Pending Review',
-      title: 'Parking Lot 1 Pending Review',
-      description: 'Pending review sample row for Parking Lot 1 intake triage.',
+      label: 'Parking Lot Pending Review',
+      title: 'Parking Lot Pending Review',
+      description: 'Pending review sample row for Parking Lot intake triage.',
       make: 'McIntosh',
       model: 'C28 Pending Intake',
       componentType: 'Preamp',
       workflowStatus: 'Pending Review',
       qualificationComplete: false,
-      qualificationNotes: 'Waiting for purchasing review in Parking Lot 1.',
+      qualificationNotes: 'Waiting for purchasing review in Parking Lot.',
       offerAmount: 850,
       paidAmount: 0,
       confirmedGrandTotal: 850,
-      allocationNotes: 'Parking Lot 1 queue coverage.',
+      allocationNotes: 'Parking Lot queue coverage.',
       stageProfile: 'pending-review',
       workflowSource: 'JotForm',
       pickUpId: '',
@@ -492,9 +508,32 @@ function buildSampleRecords() {
       },
     },
     {
-      label: 'Parking Lot 1 Submission Companion',
-      title: 'Parking Lot 1 Submission Companion',
-      description: 'Second pending review sample row sharing the same submission group for Parking Lot 1.',
+      label: 'Parking Lot Manual Intake',
+      title: 'Parking Lot Manual Intake',
+      description: 'Pending review sample row entered via manual intake form for Parking Lot triage.',
+      make: 'Marantz',
+      model: 'PM8006 Manual Intake',
+      componentType: 'Integrated Amplifier',
+      workflowStatus: 'Pending Review',
+      qualificationComplete: false,
+      qualificationNotes: 'Submitted via manual intake — awaiting arrival and SKU assignment.',
+      offerAmount: 650,
+      paidAmount: 0,
+      confirmedGrandTotal: 650,
+      allocationNotes: 'Manual intake queue coverage.',
+      stageProfile: 'pending-review',
+      workflowSource: 'Manual Entry',
+      pickUpId: '',
+      extraFields: {
+        'Submission Group ID': '',
+        SKU: '',
+        'SKU Legacy Backup': '',
+      },
+    },
+    {
+      label: 'Parking Lot Submission Companion',
+      title: 'Parking Lot Submission Companion',
+      description: 'Second pending review sample row sharing the same submission group for Parking Lot.',
       make: 'McIntosh',
       model: 'MR74 Pending Intake',
       componentType: 'Tuner',
@@ -504,7 +543,7 @@ function buildSampleRecords() {
       offerAmount: 575,
       paidAmount: 0,
       confirmedGrandTotal: 575,
-      allocationNotes: 'Parking Lot 1 grouped submission coverage.',
+      allocationNotes: 'Parking Lot grouped submission coverage.',
       stageProfile: 'pending-review',
       workflowSource: 'JotForm',
       pickUpId: '',
@@ -557,9 +596,9 @@ function buildSampleRecords() {
       },
     },
     {
-      label: 'Parking Lot 2 Awaiting Arrival',
-      title: 'Parking Lot 2 Awaiting Arrival',
-      description: 'Accepted arrival-stage sample for Parking Lot 2.',
+      label: 'Parking Lot Accepted Awaiting Arrival',
+      title: 'Parking Lot Accepted Awaiting Arrival',
+      description: 'Accepted arrival-stage sample for the folded Parking Lot intake flow.',
       make: 'Luxman',
       model: 'L-430 Awaiting Arrival',
       componentType: 'Amplifier',
@@ -569,7 +608,7 @@ function buildSampleRecords() {
       offerAmount: 1200,
       paidAmount: 250,
       confirmedGrandTotal: 1200,
-      allocationNotes: 'Lot 2 arrival coverage.',
+      allocationNotes: 'Parking Lot arrival coverage.',
       stageProfile: 'awaiting-arrival',
       acceptedAt: isoAt(3, 15),
       extraFields: {
@@ -579,9 +618,9 @@ function buildSampleRecords() {
       },
     },
     {
-      label: 'Parking Lot 2 Arrival Set Companion',
-      title: 'Parking Lot 2 Arrival Set Companion',
-      description: 'Second accepted arrival-stage sample sharing the same pickup handoff set in Parking Lot 2.',
+      label: 'Parking Lot Arrival Set Companion',
+      title: 'Parking Lot Arrival Set Companion',
+      description: 'Second accepted arrival-stage sample sharing the same pickup handoff set inside Parking Lot.',
       make: 'Luxman',
       model: 'T-110 Arrival Companion',
       componentType: 'Tuner',
@@ -591,7 +630,7 @@ function buildSampleRecords() {
       offerAmount: 650,
       paidAmount: 150,
       confirmedGrandTotal: 650,
-      allocationNotes: 'Lot 2 grouped arrival coverage.',
+      allocationNotes: 'Parking Lot grouped arrival coverage.',
       stageProfile: 'awaiting-arrival',
       acceptedAt: isoAt(3, 16),
       extraFields: {
@@ -601,8 +640,8 @@ function buildSampleRecords() {
       },
     },
     {
-      label: 'Parking Lot 2 Awaiting SKU',
-      title: 'Parking Lot 2 Awaiting SKU',
+      label: 'Parking Lot Arrived Awaiting SKU',
+      title: 'Parking Lot Arrived Awaiting SKU',
       description: 'Accepted sample row that arrived but still needs SKU assignment.',
       make: 'Accuphase',
       model: 'E-202 Awaiting SKU',
@@ -613,7 +652,7 @@ function buildSampleRecords() {
       offerAmount: 1750,
       paidAmount: 700,
       confirmedGrandTotal: 1750,
-      allocationNotes: 'Lot 2 SKU coverage.',
+      allocationNotes: 'Parking Lot SKU coverage.',
       stageProfile: 'awaiting-sku',
       acceptedAt: isoAt(4, 15),
       extraFields: {
@@ -622,8 +661,8 @@ function buildSampleRecords() {
       },
     },
     {
-      label: 'Parking Lot 2 Awaiting Missing Item',
-      title: 'Parking Lot 2 Awaiting Missing Item',
+      label: 'Parking Lot Arrived Awaiting Missing Item',
+      title: 'Parking Lot Arrived Awaiting Missing Item',
       description: 'Accepted sample row blocked by missing accessory follow-up.',
       make: 'Technics',
       model: 'SL-1200 Missing Dust Cover',
@@ -634,7 +673,7 @@ function buildSampleRecords() {
       offerAmount: 900,
       paidAmount: 450,
       confirmedGrandTotal: 900,
-      allocationNotes: 'Lot 2 missing-item coverage.',
+      allocationNotes: 'Parking Lot missing-item coverage.',
       stageProfile: 'awaiting-missing',
       acceptedAt: isoAt(5, 15),
       extraFields: {
@@ -956,7 +995,11 @@ function buildSampleRecords() {
         'Shipped At': isoAt(19, 14),
       },
     },
-  ].map((config, index) => ({ fields: buildCommonFields(index, config) }));
+  ];
+}
+
+function buildSampleRecords() {
+  return buildSampleConfigs().map((config, index) => ({ fields: buildCommonFields(index, config) }));
 }
 
 function isSampleRecord(record) {
@@ -1038,6 +1081,27 @@ async function deleteRecords(apiKey, recordIds) {
   }
 }
 
+async function updateRecord(apiKey, recordId, fields) {
+  const url = `https://api.airtable.com/v0/${encodeURIComponent(APPROVED_BASE_ID)}/${encodeURIComponent(APPROVED_TABLE_ID)}/${encodeURIComponent(recordId)}`;
+  return fetchJson(url, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ fields, typecast: true }),
+  });
+}
+
+async function applyTitlesToCreatedRecords(apiKey, createdRecords) {
+  for (const record of createdRecords) {
+    const correctTitle = buildSeedItemTitle(record.fields, record.id);
+    if (getTrimmedString(record.fields['Item Title']) !== correctTitle) {
+      await updateRecord(apiKey, record.id, { 'Item Title': correctTitle });
+    }
+  }
+}
+
 async function runList() {
   const apiKey = requireEnv('VITE_AIRTABLE_API_KEY');
   const records = await fetchAllWorkflowRecords(apiKey);
@@ -1068,6 +1132,7 @@ async function runSeed(confirmToken, replaceExisting = false) {
 
   const sampleRecords = buildSampleRecords();
   const createdRecords = await createRecords(apiKey, sampleRecords);
+  await applyTitlesToCreatedRecords(apiKey, createdRecords);
   const runDir = createRunDirectory('seed');
 
   writeJson(path.join(runDir, 'created-records.json'), createdRecords);
@@ -1084,6 +1149,99 @@ async function runSeed(confirmToken, replaceExisting = false) {
 
   console.log(`Created ${createdRecords.length} workflow queue sample row(s).`);
   console.log(`Artifacts saved in ${runDir}`);
+}
+
+async function runSeedOne(label) {
+  if (!label) {
+    throw new Error('seed-one requires --label "<record label>".');
+  }
+
+  const allConfigs = buildSampleConfigs();
+  const matchIndex = allConfigs.findIndex((config) => config.label === label);
+  if (matchIndex === -1) {
+    const available = allConfigs.map((config) => `  - ${config.label}`).join('\n');
+    throw new Error(`No sample record found with label "${label}".\nAvailable labels:\n${available}`);
+  }
+
+  const apiKey = requireEnv('VITE_AIRTABLE_API_KEY');
+  const existingRecords = await fetchAllWorkflowRecords(apiKey);
+  const existingSampleRecords = existingRecords.filter(isSampleRecord);
+
+  // Use an index beyond existing samples to avoid SKU collisions.
+  const insertIndex = existingSampleRecords.length;
+  const config = allConfigs[matchIndex];
+  const createdRecords = await createRecords(apiKey, [{ fields: buildCommonFields(insertIndex, config) }]);
+  await applyTitlesToCreatedRecords(apiKey, createdRecords);
+
+  const runDir = createRunDirectory('seed-one');
+  writeJson(path.join(runDir, 'created-records.json'), createdRecords);
+  console.log(`Created 1 workflow queue sample row (${label}).`);
+  console.log(`Artifacts saved in ${runDir}`);
+}
+
+async function runFixTitles() {
+  const apiKey = requireEnv('VITE_AIRTABLE_API_KEY');
+  const records = await fetchAllWorkflowRecords(apiKey);
+  const sampleRecords = records.filter(isSampleRecord);
+
+  let fixedCount = 0;
+  for (const record of sampleRecords) {
+    const correctTitle = buildSeedItemTitle(record.fields, record.id);
+    if (getTrimmedString(record.fields['Item Title']) === correctTitle) {
+      continue;
+    }
+    await updateRecord(apiKey, record.id, { 'Item Title': correctTitle });
+    console.log(`  Fixed ${record.id} :: "${getTrimmedString(record.fields['Item Title'])}" → "${correctTitle}"`);
+    fixedCount += 1;
+  }
+
+  if (fixedCount === 0) {
+    console.log(`All ${sampleRecords.length} sample record title(s) are already correct.`);
+  } else {
+    console.log(`Fixed ${fixedCount} of ${sampleRecords.length} sample record title(s).`);
+  }
+}
+
+async function runFixAllTitles(confirmToken, dryRun = false) {
+  if (!dryRun && confirmToken !== 'FIX_ALL_USED_GEAR_WORKFLOW_TITLES') {
+    throw new Error('fix-all-titles requires --confirm FIX_ALL_USED_GEAR_WORKFLOW_TITLES (or --dry-run true to preview).');
+  }
+
+  const apiKey = requireEnv('VITE_AIRTABLE_API_KEY');
+  const records = await fetchAllWorkflowRecords(apiKey);
+
+  let fixedCount = 0;
+  let alreadyCorrect = 0;
+
+  for (const record of records) {
+    const shortId = buildShortRecordId(record.id);
+    const currentTitle = getTrimmedString(record.fields['Item Title']);
+
+    if (currentTitle.endsWith(`- ${shortId}`)) {
+      alreadyCorrect += 1;
+      continue;
+    }
+
+    const make = getTrimmedString(record.fields.Make);
+    const model = getTrimmedString(record.fields.Model);
+    const componentType = getTrimmedString(record.fields['Component Type']);
+    const base = currentTitle
+      || [make, model].filter(Boolean).join(' ')
+      || componentType
+      || 'Item';
+    const newTitle = `${base} - ${shortId}`;
+
+    if (dryRun) {
+      console.log(`  [dry-run] ${record.id} :: "${currentTitle || '(empty)'}" → "${newTitle}"`);
+    } else {
+      await updateRecord(apiKey, record.id, { 'Item Title': newTitle });
+      console.log(`  Fixed ${record.id} :: "${currentTitle || '(empty)'}" → "${newTitle}"`);
+    }
+    fixedCount += 1;
+  }
+
+  const verb = dryRun ? 'Would fix' : 'Fixed';
+  console.log(`${verb} ${fixedCount} of ${records.length} record title(s). ${alreadyCorrect} already correct.`);
 }
 
 async function runCleanup(confirmToken) {
@@ -1139,7 +1297,17 @@ function printHelp() {
   console.log('    Show existing workflow queue sample rows in the linked Airtable table.');
   console.log('');
   console.log('  seed --confirm CREATE_USED_GEAR_WORKFLOW_QUEUE_SAMPLES [--replace true]');
-  console.log('    Insert workflow queue sample rows covering Parking Lot 1, Parking Lot 2, Trash, testing, photography, pre-listing, and downstream states.');
+  console.log('    Insert workflow queue sample rows covering pending review, accepted Parking Lot arrival-stage work, Trash, testing, photography, pre-listing, and downstream states.');
+  console.log('');
+  console.log('  seed-one --label "<record label>"');
+  console.log('    Insert a single named sample record without touching existing rows.');
+  console.log('');
+  console.log('  fix-titles');
+  console.log('    Update Item Title on existing sample records to include the short record ID suffix.');
+  console.log('');
+  console.log('  fix-all-titles --confirm FIX_ALL_USED_GEAR_WORKFLOW_TITLES [--dry-run true]');
+  console.log('    Update Item Title on ALL records in the table to include the short record ID suffix.');
+  console.log('    Use --dry-run true to preview changes without writing.');
   console.log('');
   console.log('  cleanup --confirm DELETE_USED_GEAR_WORKFLOW_QUEUE_SAMPLES');
   console.log('    Delete only rows created by this workflow queue sample helper.');
@@ -1162,6 +1330,15 @@ async function main() {
       return;
     case 'seed':
       await runSeed(args.confirm || '', args.replace === 'true');
+      return;
+    case 'seed-one':
+      await runSeedOne(args.label || '');
+      return;
+    case 'fix-titles':
+      await runFixTitles();
+      return;
+    case 'fix-all-titles':
+      await runFixAllTitles(args.confirm || '', args['dry-run'] === 'true');
       return;
     case 'cleanup':
       await runCleanup(args.confirm || '');

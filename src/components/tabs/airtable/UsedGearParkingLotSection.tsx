@@ -6,7 +6,11 @@ import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrix
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
-import { getParkingLotItemTitle, getParkingLotStatusLabel } from '@/components/tabs/airtable/usedGearParkingLotPresentation';
+import {
+  getParkingLotEffectiveStatus,
+  getParkingLotItemTitle,
+  getParkingLotStatusLabel,
+} from '@/components/tabs/airtable/usedGearParkingLotPresentation';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { groupUsedGearWorkflowRecords, loadParkingLotQueue, type UsedGearWorkflowGroup } from '@/services/usedGearQueue';
 import type { AirtableRecord } from '@/types/airtable';
@@ -327,8 +331,9 @@ export function UsedGearParkingLotSection({
               label: 'Status',
               width: '12rem',
               renderCell: (record) => {
+                const rawStatus = getParkingLotEffectiveStatus(record) || 'Unknown';
                 const statusLabel = getParkingLotStatusLabel(record) || 'Unknown';
-                return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
+                return <span className={getWorkflowStatusChipClasses(rawStatus)}>{statusLabel}</span>;
               },
             },
             {

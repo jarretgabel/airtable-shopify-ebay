@@ -14,7 +14,7 @@ interface RouteAccessRequirement {
 const WORKFLOW_ACCESS_PAGES: AppPage[] = [
   'manual-intake',
   'inventory',
-  'parking-lot-1',
+  'parking-lot',
   'trash-review',
   'testing-queue',
   'photography-queue',

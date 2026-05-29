@@ -165,7 +165,7 @@ interface LoadUsedGearWorkflowNotificationSummaryOptions {
 export type UsedGearWorkflowNotificationCounts = Record<UsedGearWorkflowNotificationEvent, number>;
 
 export interface UsedGearWorkflowNotificationTarget {
-  destinationTab: 'inventory' | 'parking-lot-1' | 'jotform' | 'testing-queue' | 'photography-queue' | 'listings';
+  destinationTab: 'inventory' | 'parking-lot' | 'jotform' | 'testing-queue' | 'photography-queue' | 'listings';
   recordId: string | null;
   sectionId: string | null;
   groupId?: string | null;
@@ -200,6 +200,12 @@ export interface SaveUsedGearWorkflowStaleRecoveryInput {
 
 export interface SaveUsedGearWorkflowShipmentFollowThroughInput {
   shipmentFollowThroughNotes: string | null;
+}
+
+export interface SavePendingReviewRecordReviewInput {
+  qualificationNotes: string;
+  arrivalDate: string;
+  sku: string;
 }
 
 function normalizeOwnerName(value: string): string {
@@ -295,8 +301,8 @@ function buildNotificationTarget(
   const groupId = getNotificationGroupId(record);
   const basePath = destinationTab === 'inventory'
     ? '/workflow-hub'
-    : destinationTab === 'parking-lot-1'
-      ? '/parking-lot-1'
+    : destinationTab === 'parking-lot'
+      ? '/parking-lot'
       : destinationTab === 'jotform'
         ? '/jotform'
         : destinationTab === 'testing-queue'
@@ -638,12 +644,44 @@ export async function saveParkingLotArrivalReviewRecord(
   recordId: string,
   { arrivalDate, sku }: SaveParkingLotArrivalReviewInput,
 ): Promise<AirtableRecord> {
+  const normalizedArrivalDate = arrivalDate.trim();
+  const normalizedSku = sku.trim();
+
+  if (normalizedSku && !normalizedArrivalDate) {
+    throw new Error('Arrival Date is required before saving a SKU in Parking Lot.');
+  }
+
   const record = await updateConfiguredRecord(
     'used-gear-workflow',
     recordId,
     {
-      'Arrival Date': trimToNull(arrivalDate),
-      SKU: trimToNull(sku),
+      'Arrival Date': trimToNull(normalizedArrivalDate),
+      SKU: trimToNull(normalizedSku),
+    },
+    { typecast: true },
+  );
+
+  return withWorkflow(record);
+}
+
+export async function savePendingReviewRecordReview(
+  recordId: string,
+  { qualificationNotes, arrivalDate, sku }: SavePendingReviewRecordReviewInput,
+): Promise<AirtableRecord> {
+  const normalizedArrivalDate = arrivalDate.trim();
+  const normalizedSku = sku.trim();
+
+  if (normalizedSku && !normalizedArrivalDate) {
+    throw new Error('Arrival Date is required before saving a SKU in Parking Lot.');
+  }
+
+  const record = await updateConfiguredRecord(
+    'used-gear-workflow',
+    recordId,
+    {
+      'Qualification Notes': trimToNull(qualificationNotes),
+      'Arrival Date': trimToNull(normalizedArrivalDate),
+      SKU: trimToNull(normalizedSku),
     },
     { typecast: true },
   );
@@ -776,14 +814,14 @@ export async function loadUsedGearWorkflowNotificationSummary(
     if (status === PENDING_REVIEW_STATUS) {
       summary.counts.pendingReview += 1;
       inventoryActionableRecordIds.add(record.id);
-      summary.targets.pendingReview ??= buildNotificationTarget(record, 'parking-lot-1', 'used-gear-pending-review', 'workflowPendingReviewGroup', true);
+      summary.targets.pendingReview ??= buildNotificationTarget(record, 'parking-lot', 'used-gear-pending-review', 'workflowPendingReviewGroup', true);
       return;
     }
 
     if (isParkingLotArrivalStageStatus(status)) {
       summary.counts.processing += 1;
       inventoryActionableRecordIds.add(record.id);
-      summary.targets.processing ??= buildNotificationTarget(record, 'parking-lot-1', 'used-gear-parking-lot', 'workflowParkingLotGroup', true);
+      summary.targets.processing ??= buildNotificationTarget(record, 'parking-lot', 'used-gear-parking-lot', 'workflowParkingLotGroup', true);
       return;
     }
 

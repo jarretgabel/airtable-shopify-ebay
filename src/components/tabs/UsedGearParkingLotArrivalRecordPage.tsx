@@ -18,7 +18,7 @@ import {
   saveParkingLotArrivalReviewRecord,
   type UsedGearOperationalRecordContext,
 } from '@/services/usedGearQueue';
-import { displayInventoryValue } from '@/services/inventoryDirectory';
+import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
 import { resolveUsedGearOperationalPath } from '@/services/usedGearOperationalRouting';
 import { applyUsedGearWorkflowNoteTemplate } from '@/services/usedGearWorkflowNoteTemplates';
 
@@ -118,7 +118,7 @@ export function UsedGearParkingLotArrivalRecordPage({
   );
 
   const backToQueue = () => {
-    navigate({ pathname: '/parking-lot-1', search: location.search, hash: '#used-gear-parking-lot' });
+    navigate({ pathname: '/parking-lot', search: location.search, hash: '#used-gear-parking-lot' });
   };
 
   const handleSave = async () => {
@@ -191,7 +191,7 @@ export function UsedGearParkingLotArrivalRecordPage({
   return (
     <WorkflowRecordPageLayout
       eyebrow="Parking Lot"
-      title={displayInventoryValue(record.fields.SKU) || record.id}
+      title={getUsedGearRecordItemTitle(record.fields, record.id)}
       belowHeader={sectionNav}
       actions={<BackToolbarButton label="Back to Parking Lot" onClick={backToQueue} />}
     >
@@ -220,7 +220,7 @@ export function UsedGearParkingLotArrivalRecordPage({
               <button
                 type="button"
                 className="rounded-xl border border-sky-300/40 bg-white/5 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-white/10"
-                onClick={() => navigate(`/parking-lot-1/arrival/group/${encodeURIComponent(group.id)}${location.search}`)}
+                onClick={() => navigate(`/parking-lot/arrival/group/${encodeURIComponent(group.id)}${location.search}`)}
               >
                 Open Group Review
               </button>
@@ -290,7 +290,7 @@ export function UsedGearParkingLotArrivalRecordPage({
                   }}
                   disabled={saving !== null || processingBlocked}
                 >
-                  {saving === 'complete' ? 'Moving...' : 'Complete Processing'}
+                  {saving === 'complete' ? 'Moving...' : 'Move to Testing'}
                 </button>
               </div>
 

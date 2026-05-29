@@ -163,6 +163,7 @@ interface PhotosFormTabProps {
 
 export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }: PhotosFormTabProps) {
   const [formValues, setFormValues] = useState<PhotosFormValues>(() => createPhotosFormDefaults());
+  const [itemTitle, setItemTitle] = useState('');
   const [recordSource, setRecordSource] = useState<PhotosFormRecordSource>('inventory-directory');
   const [customerReference, setCustomerReference] = useState<PhotosFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
   const [stageContext, setStageContext] = useState<PhotosFormStageContext>(EMPTY_STAGE_CONTEXT);
@@ -194,6 +195,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
             ? loadPhotosFormValues(recordId)
             : Promise.resolve({
                 source: 'inventory-directory' as const,
+                itemTitle: '',
                 values: createPhotosFormDefaults(),
                 customerReference: EMPTY_CUSTOMER_REFERENCE,
                 stageContext: EMPTY_STAGE_CONTEXT,
@@ -201,6 +203,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
         ]);
         if (!cancelled) {
           setOptionSets(nextOptionSets);
+          setItemTitle(nextFormValues.itemTitle);
           setRecordSource(nextFormValues.source);
           setCustomerReference(nextFormValues.customerReference);
           setStageContext(nextFormValues.stageContext);
@@ -397,7 +400,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
       <div className="flex flex-col gap-6">
         <WorkflowPageHeader
           eyebrow={eyebrow}
-          title={formValues.sku.trim() || 'Photography'}
+          title={itemTitle || formValues.sku.trim() || 'Photography'}
           actions={onBackToDirectory ? (
             <BackToolbarButton label="Back to Photography" onClick={onBackToDirectory} />
           ) : undefined}
