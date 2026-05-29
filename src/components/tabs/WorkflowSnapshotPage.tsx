@@ -95,6 +95,7 @@ interface SnapshotReferenceImage {
 }
 
 function buildSnapshotStageImages(record: UsedGearOperationalRecordContext['record']): {
+  intakeImages: SnapshotReferenceImage[];
   testingImages: SnapshotReferenceImage[];
   photographyImages: SnapshotReferenceImage[];
 } {
@@ -102,6 +103,11 @@ function buildSnapshotStageImages(record: UsedGearOperationalRecordContext['reco
 
   if (parsedMetadata.length > 0) {
     return {
+      intakeImages: filterWorkflowImageMetadataByStage(parsedMetadata, 'intake').map((image) => ({
+        id: image.attachmentId,
+        url: image.url,
+        filename: image.filename,
+      })),
       testingImages: filterWorkflowImageMetadataByStage(parsedMetadata, 'testing').map((image) => ({
         id: image.attachmentId,
         url: image.url,
@@ -115,6 +121,7 @@ function buildSnapshotStageImages(record: UsedGearOperationalRecordContext['reco
     };
   }
   return {
+    intakeImages: [],
     testingImages: [],
     photographyImages: [],
   };
@@ -203,7 +210,7 @@ export function WorkflowSnapshotPage({
   const record = context?.record ?? null;
   const workflowSummary = useMemo(() => (record ? buildSnapshotWorkflowSummary(record) : null), [record]);
   const workflowStatus = record ? getUsedGearWorkflowStatus(record.fields) ?? '' : '';
-  const stageImages = useMemo(() => (record ? buildSnapshotStageImages(record) : { testingImages: [], photographyImages: [] }), [record]);
+  const stageImages = useMemo(() => (record ? buildSnapshotStageImages(record) : { intakeImages: [], testingImages: [], photographyImages: [] }), [record]);
   const postPublishSnapshot = useMemo(() => (record ? getUsedGearWorkflowPostPublishSnapshot(record) : null), [record]);
   const showSpecialistCards = workflowStatus !== 'Pending Review' && workflowStatus !== 'Unqualified';
   const showListingsCard = showSpecialistCards && workflowStatus !== 'Accepted - Awaiting Arrival';
@@ -298,7 +305,13 @@ export function WorkflowSnapshotPage({
                   { label: 'Shipping Method', value: record.fields['Shipping Method'] },
                   { label: 'Inventory Notes', value: record.fields['Inventory Notes'] },
                 ]}
-              />
+              >
+                <WorkflowReferenceImagesPanel
+                  title="Intake Images"
+                  description="Images submitted at intake via JotForm, archived to Google Drive."
+                  images={stageImages.intakeImages}
+                />
+              </SnapshotCard>
 
               <SnapshotCard
                 sectionId="testing"

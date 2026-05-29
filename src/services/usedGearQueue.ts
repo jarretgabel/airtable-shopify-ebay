@@ -84,6 +84,8 @@ const USED_GEAR_WORKFLOW_RECORD_FIELDS = [
   'Customer Cosmetic Notes',
   'Customer Functional Notes',
   'Customer Inclusion Notes',
+  // Images (all stages — intake, testing, photos)
+  'Workflow Image Metadata JSON',
   // Testing
   'Testing Notes',
   'Testing Time',

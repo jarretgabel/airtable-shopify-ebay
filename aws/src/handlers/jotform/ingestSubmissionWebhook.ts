@@ -63,12 +63,16 @@ function parseWebhookBody(event: APIGatewayProxyEventV2): ParsedWebhookBody {
     return {};
   }
 
-  const contentType = readHeader(event, 'content-type').toLowerCase();
+  const rawContentType = readHeader(event, 'content-type');
+  const contentType = rawContentType.toLowerCase();
 
   // multipart/form-data — JotForm sends submissionID and formID as named text parts.
-  const boundaryMatch = contentType.match(/boundary=([^\s;]+)/);
+  // Use the raw (non-lowercased) header so the boundary value preserves its original case —
+  // the delimiter in the body is case-sensitive and must match exactly.
+  const boundaryMatch = rawContentType.match(/boundary=([^\s;]+)/i);
   if (boundaryMatch) {
-    const boundary = boundaryMatch[1];
+    // Strip surrounding quotes — some HTTP clients send boundary="value" instead of boundary=value.
+    const boundary = boundaryMatch[1].replace(/^"|"$/g, '');
     const submissionId = parseMultipartField(rawBody, boundary, 'submissionID')
       || parseMultipartField(rawBody, boundary, 'submissionId')
       || parseMultipartField(rawBody, boundary, 'submission_id')
@@ -101,7 +105,10 @@ function parseWebhookBody(event: APIGatewayProxyEventV2): ParsedWebhookBody {
   }
 
   const params = new URLSearchParams(rawBody);
-  const submissionId = params.get('submission_id') || params.get('submissionId') || params.get('submissionID') || undefined;
+  // JotForm URL-encoded webhooks embed file URLs inside the rawRequest JSON field —
+  // use those as a fallback to extract the submission ID if the top-level field is missing.
+  const submissionId = params.get('submission_id') || params.get('submissionId') || params.get('submissionID')
+    || extractSubmissionIdFromUrls(rawBody) || undefined;
   return {
     submissionId,
     formId: params.get('form_id') || params.get('formId') || params.get('formID') || undefined,
@@ -145,6 +152,12 @@ export function createHandler(dependencies: IngestSubmissionWebhookDependencies 
     const origin = getRequestOrigin(event);
     try {
       const body = parseWebhookBody(event);
+      if (!body.submissionId) {
+        logInfo('JotForm webhook body parse — submissionId not found', {
+          contentType: event.headers?.['content-type'] ?? event.headers?.['Content-Type'] ?? '(none)',
+          bodyPreview: (event.body ?? '').slice(0, 400),
+        });
+      }
       requireSecret(event, body);
       const formId = event.pathParameters?.formId?.trim()
         || body.formId
