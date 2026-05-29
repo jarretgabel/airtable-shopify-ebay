@@ -208,6 +208,7 @@ export function AirtableTab({
         getInventoryDirectorySku(record.fields),
         getInventoryDirectoryItemLabel(record.fields),
         record.fields['Component Type'],
+        record.fields['Workflow Source'],
         status,
       ]
         .flatMap((value) => Array.isArray(value) ? value : [value])
@@ -329,6 +330,7 @@ export function AirtableTab({
               getSecondaryActionLabel={getWorkflowHubIntakeEditLabel}
               onOpenSecondaryAction={(record) => onOpenManualIntake(record.id)}
               secondaryActionIcon="edit"
+              selectRecordIcon="eye"
               onSelectRecord={onSelectRecord}
             />
           ) : null}

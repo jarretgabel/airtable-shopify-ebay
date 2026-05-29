@@ -89,15 +89,27 @@ export function QueueSearchToolbar({
 
   return (
     <div className={['flex flex-col gap-3 lg:flex-row lg:items-center', className ?? ''].join(' ').trim()}>
-      <label className="min-w-[240px] flex-1">
+      <label className="relative min-w-[240px] flex-1">
         <span className="sr-only">{searchAriaLabel}</span>
         <input
           type="text"
-          className={inputClassName}
+          className={[inputClassName, searchValue ? 'pr-9' : ''].join(' ').trim()}
           value={searchValue}
           onChange={(event) => onSearchChange(event.currentTarget.value)}
           placeholder={searchPlaceholder}
         />
+        {searchValue ? (
+          <button
+            type="button"
+            aria-label="Clear search"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--muted)] transition hover:text-[var(--ink)]"
+            onClick={() => onSearchChange('')}
+          >
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+              <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+            </svg>
+          </button>
+        ) : null}
       </label>
       {visibleFilters.length > 0 && !compactFilters ? (
         <div className="flex flex-wrap items-center gap-3">

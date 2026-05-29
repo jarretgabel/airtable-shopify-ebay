@@ -358,7 +358,7 @@ function getTimelineStatusBadgeClassName(isCompleted: boolean, isActive: boolean
 function getTimelineCompletionGuidance(entryId: UsedGearWorkflowTimelineEntry['id']): string {
   switch (entryId) {
     case 'accepted':
-      return 'Use "Open Intake" to update the intake record after the item is accepted into Parking Lot.';
+      return 'Use "Open Parking Lot" to process the item when it arrives. Once received, complete the intake details and move the item out of Parking Lot.';
     case 'processing':
       return 'Finish the intake details in "Open Intake", then click "Complete Processing" when the item is ready to leave Parking Lot and move into testing.';
     case 'testing':

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
@@ -27,8 +28,9 @@ interface InventoryDirectoryListSectionProps {
   onOpenNextStep?: (record: AirtableRecord) => void;
   getSecondaryActionLabel?: (record: AirtableRecord) => string | null;
   onOpenSecondaryAction?: (record: AirtableRecord) => void;
-  secondaryActionIcon?: 'open' | 'group' | 'check' | 'truck' | 'form' | 'edit';
+  secondaryActionIcon?: 'open' | 'group' | 'check' | 'truck' | 'form' | 'edit' | 'eye';
   selectRecordLabel?: string;
+  selectRecordIcon?: 'open' | 'group' | 'check' | 'truck' | 'form' | 'edit' | 'eye';
   searchAriaLabel?: string;
   searchPlaceholder?: string;
   refreshLabel?: string;
@@ -37,6 +39,8 @@ interface InventoryDirectoryListSectionProps {
   emptyMessage?: string;
   getItemLabel?: (record: AirtableRecord) => string;
 }
+
+const PAGE_SIZE = 30;
 
 const intakeDateFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
@@ -102,6 +106,7 @@ export function InventoryDirectoryListSection({
   onOpenSecondaryAction,
   secondaryActionIcon = 'edit',
   selectRecordLabel = 'Open Workflow Snapshot',
+  selectRecordIcon = 'open',
   searchAriaLabel = 'Search inventory',
   searchPlaceholder = 'Search by SKU, make, model, source, or status',
   refreshLabel = 'Refresh Workflow Hub directory',
@@ -110,6 +115,15 @@ export function InventoryDirectoryListSection({
   emptyMessage = 'No workflow rows match the current search and status filters.',
   getItemLabel = (record) => getInventoryDirectoryItemLabel(record.fields),
 }: InventoryDirectoryListSectionProps) {
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    setPage(1);
+  }, [records]);
+
+  const totalPages = Math.ceil(records.length / PAGE_SIZE);
+  const pagedRecords = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
     {
       key: 'sku',
@@ -168,7 +182,7 @@ export function InventoryDirectoryListSection({
             {secondaryActionLabel && onOpenSecondaryAction ? (
               <CompactIconActionButton label={secondaryActionLabel} variant="small-secondary" icon={secondaryActionIcon} onClick={() => onOpenSecondaryAction(record)} />
             ) : null}
-            <CompactIconActionButton label={selectRecordLabel} variant="small-secondary" icon="open" onClick={() => onSelectRecord(record.id)} />
+            <CompactIconActionButton label={selectRecordLabel} variant="small-secondary" icon={selectRecordIcon} onClick={() => onSelectRecord(record.id)} />
           </div>
         );
       },
@@ -214,13 +228,42 @@ export function InventoryDirectoryListSection({
 
       {records.length > 0 ? (
         <div className="overflow-x-auto">
-          <IntakeItemsMatrix items={records} columns={columns} getItemKey={(record) => record.id} />
+          <IntakeItemsMatrix items={pagedRecords} columns={columns} getItemKey={(record) => record.id} />
         </div>
       ) : (
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-center text-sm text-[var(--muted)]">
           {emptyMessage}
         </div>
       )}
+
+      {totalPages > 1 ? (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-[var(--muted)]">
+            Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, records.length)} of {records.length}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--ink)] transition hover:border-[var(--accent)]/45 hover:bg-[var(--line)] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              ← Prev
+            </button>
+            <span className="min-w-[6rem] text-center text-sm text-[var(--muted)]">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              type="button"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--ink)] transition hover:border-[var(--accent)]/45 hover:bg-[var(--line)] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

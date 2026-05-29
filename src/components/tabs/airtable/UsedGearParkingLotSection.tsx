@@ -208,7 +208,11 @@ export function UsedGearParkingLotSection({
     description: group.description,
     items: group.records,
   })), [groupedRecords]);
-
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [matrixGroups]);
+  const totalGroupPages = Math.ceil(matrixGroups.length / 30);
+  const pagedGroups = matrixGroups.slice((page - 1) * 30, page * 30);
+  const pagedGroupRecordCount = pagedGroups.reduce((sum, g) => sum + g.items.length, 0);
   const refreshQueue = async () => {
     setRefreshing(true);
     setError(null);
@@ -370,7 +374,7 @@ export function UsedGearParkingLotSection({
 
           return (
             <IntakeItemsMatrix
-              groups={matrixGroups}
+              groups={pagedGroups}
               columns={columns}
               getItemKey={(record) => record.id}
               groupColumnLabel="Group"
@@ -414,6 +418,34 @@ export function UsedGearParkingLotSection({
             />
           );
         })()}
+        {!loading && totalGroupPages > 1 ? (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-[var(--muted)]">
+              Showing {pagedGroupRecordCount} of {filteredRecords.length}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+                className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--ink)] transition hover:border-[var(--accent)]/45 hover:bg-[var(--line)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ← Prev
+              </button>
+              <span className="min-w-[6rem] text-center text-sm text-[var(--muted)]">
+                Page {page} of {totalGroupPages}
+              </span>
+              <button
+                type="button"
+                disabled={page >= totalGroupPages}
+                onClick={() => setPage((p) => p + 1)}
+                className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--ink)] transition hover:border-[var(--accent)]/45 hover:bg-[var(--line)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </AppPageSectionSurface>
   );

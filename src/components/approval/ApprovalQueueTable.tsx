@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { displayValue } from '@/stores/approvalStore';
@@ -108,6 +109,11 @@ export function ApprovalQueueTable({
 	qtyFieldName,
 	openRecord,
 }: ApprovalQueueTableProps) {
+	const [page, setPage] = useState(1);
+	useEffect(() => { setPage(1); }, [records]);
+	const totalPages = Math.ceil(records.length / 30);
+	const pagedRecords = records.slice((page - 1) * 30, page * 30);
+
 	const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
 		{
 			key: 'title',
@@ -270,10 +276,40 @@ export function ApprovalQueueTable({
 	];
 
 	return (
-		<IntakeItemsMatrix
-			items={records}
-			columns={columns}
-			getItemKey={(record) => record.id}
-		/>
+		<>
+			<IntakeItemsMatrix
+				items={pagedRecords}
+				columns={columns}
+				getItemKey={(record) => record.id}
+			/>
+			{totalPages > 1 ? (
+				<div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+					<p className="text-sm text-[var(--muted)]">
+						Showing {(page - 1) * 30 + 1}–{Math.min(page * 30, records.length)} of {records.length}
+					</p>
+					<div className="flex items-center gap-2">
+						<button
+							type="button"
+							disabled={page <= 1}
+							onClick={() => setPage((p) => p - 1)}
+							className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--ink)] transition hover:border-[var(--accent)]/45 hover:bg-[var(--line)] disabled:cursor-not-allowed disabled:opacity-40"
+						>
+							← Prev
+						</button>
+						<span className="min-w-[6rem] text-center text-sm text-[var(--muted)]">
+							Page {page} of {totalPages}
+						</span>
+						<button
+							type="button"
+							disabled={page >= totalPages}
+							onClick={() => setPage((p) => p + 1)}
+							className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--ink)] transition hover:border-[var(--accent)]/45 hover:bg-[var(--line)] disabled:cursor-not-allowed disabled:opacity-40"
+						>
+							Next →
+						</button>
+					</div>
+				</div>
+			) : null}
+		</>
 	);
 }

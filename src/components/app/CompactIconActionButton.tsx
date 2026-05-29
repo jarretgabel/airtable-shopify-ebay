@@ -4,7 +4,7 @@ import { toolbarIconButtonClassName } from '@/components/app/ToolbarIconButton';
 interface CompactIconActionButtonBaseProps {
   label: string;
   variant?: 'compact-primary' | 'compact-secondary' | 'small-secondary' | 'toolbar-secondary';
-  icon?: 'open' | 'group' | 'check' | 'truck' | 'form' | 'edit';
+  icon?: 'open' | 'group' | 'check' | 'truck' | 'form' | 'edit' | 'eye';
   disabled?: boolean;
 }
 
@@ -63,6 +63,11 @@ export function CompactActionIcon({ icon = 'open', className = 'h-3.5 w-3.5' }: 
       <path d="M4.167 15.833h2.5l7.083-7.083-2.5-2.5-7.083 7.083v2.5Z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
       <path d="m10.833 6.667 2.5 2.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M4.167 15.833h11.666" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  ) : icon === 'eye' ? (
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className={className}>
+      <path d="M2.5 10c0 0 3-5.5 7.5-5.5s7.5 5.5 7.5 5.5-3 5.5-7.5 5.5S2.5 10 2.5 10Z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.75" />
     </svg>
   ) : (
     <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className={className}>
