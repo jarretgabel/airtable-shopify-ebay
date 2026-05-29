@@ -1,5 +1,4 @@
 export type ManualIntakeFormOptionFieldName =
-  | 'Status'
   | 'Component Type'
   | 'Original Box'
   | 'Manual'
@@ -19,8 +18,6 @@ export interface ManualIntakeFormValues {
   customerCosmeticNotes: string;
   customerFunctionalNotes: string;
   customerInclusionNotes: string;
-  customerSubmittedPhotosNotes: string;
-  status: string;
   make: string;
   model: string;
   componentType: string;
@@ -77,8 +74,6 @@ export function createManualIntakeFormDefaults(): ManualIntakeFormValues {
     customerCosmeticNotes: '',
     customerFunctionalNotes: '',
     customerInclusionNotes: '',
-    customerSubmittedPhotosNotes: '',
-    status: 'Needs Initial Processing',
     make: '',
     model: '',
     componentType: '',
@@ -248,21 +243,6 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     type: 'textarea',
     rows: 3,
     description: 'Seller-reported inclusions and exclusions such as remotes, boxes, or accessories.',
-  },
-  {
-    name: 'customerSubmittedPhotosNotes',
-    airtableFieldName: 'Customer Submitted Photos Notes',
-    label: 'Customer Submitted Photos Notes',
-    type: 'textarea',
-    rows: 3,
-    description: 'Reference notes about photos provided by the seller during intake.',
-  },
-  {
-    name: 'status',
-    airtableFieldName: 'Status',
-    label: 'Status',
-    type: 'select',
-    optionFieldName: 'Status',
   },
   {
     name: 'make',

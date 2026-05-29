@@ -112,7 +112,7 @@ export function mapJotFormSubmissionToWorkflowItems(submission: JotFormSubmissio
 
   // Shared fields — filled once per submission and copied onto every item row.
   const acquiredFrom = getAnswerByName(answers, 'name') || undefined;
-  const inventoryNotes = getAnswerByName(answers, 'anythingMore161') || undefined;
+  const customerInclusionNotes = getAnswerByName(answers, 'anythingMore161') || undefined;
   const sellerEmail = getAnswerByName(answers, 'email') || undefined;
   const sellerPhone = getAnswerByName(answers, 'typeA19') || undefined;
   const sellerZipCode = getAnswerByName(answers, 'zipCode') || undefined;
@@ -155,7 +155,8 @@ export function mapJotFormSubmissionToWorkflowItems(submission: JotFormSubmissio
         customerCosmeticNotes: cosmeticCondition,
         // "Any issues? Anything else included?" maps to customer functional notes.
         customerFunctionalNotes: anyIssues,
-        inventoryNotes,
+        // "Anything more you'd like us to know?" maps to customer inclusion notes.
+        customerInclusionNotes,
         originalBox: originalPackaging,
         originalOwner,
         smokeExposure,

@@ -62,7 +62,6 @@ const USED_GEAR_WORKFLOW_RECORD_FIELDS = [
   'Customer Cosmetic Notes',
   'Customer Functional Notes',
   'Customer Inclusion Notes',
-  'Customer Submitted Photos Notes',
   'Testing Cosmetic Notes',
   'Photography Cosmetic Notes',
   'Internal Cosmetic Notes',

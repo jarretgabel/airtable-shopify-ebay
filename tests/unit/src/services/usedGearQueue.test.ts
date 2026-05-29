@@ -781,7 +781,6 @@ describe('usedGearQueue', () => {
           'Customer Cosmetic Notes',
           'Customer Functional Notes',
           'Customer Inclusion Notes',
-          'Customer Submitted Photos Notes',
           'Internal Cosmetic Notes',
           'Internal Functional Notes',
           'Internal Inclusion Notes',

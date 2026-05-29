@@ -6,7 +6,6 @@ export interface UsedGearIntakeFieldInput {
   customerCosmeticNotes?: string | null;
   customerFunctionalNotes?: string | null;
   customerInclusionNotes?: string | null;
-  customerSubmittedPhotosNotes?: string | null;
   status?: string | null;
   make?: string | null;
   model?: string | null;
@@ -101,7 +100,6 @@ export function buildUsedGearIntakeBaseFields(input: UsedGearIntakeFieldInput): 
     'Customer Cosmetic Notes': trimToUndefined(input.customerCosmeticNotes),
     'Customer Functional Notes': trimToUndefined(input.customerFunctionalNotes),
     'Customer Inclusion Notes': trimToUndefined(input.customerInclusionNotes),
-    'Customer Submitted Photos Notes': trimToUndefined(input.customerSubmittedPhotosNotes),
     Status: trimToUndefined(input.status),
     Make: trimToUndefined(input.make),
     Model: trimToUndefined(input.model),

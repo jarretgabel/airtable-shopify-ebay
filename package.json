@@ -24,6 +24,8 @@
     "workflow:queue-samples:drive-backfill": "node scripts/backfill-sample-workflow-drive-images.mjs",
     "jotform:backfill:plan": "node --import tsx scripts/backfill-jotform-workflow-submissions.ts plan",
     "jotform:backfill:apply": "node --import tsx scripts/backfill-jotform-workflow-submissions.ts apply",
+    "jotform:backfill-fields:plan": "node --import tsx scripts/backfill-jotform-seller-fields.ts plan",
+    "jotform:backfill-fields:apply": "node --import tsx scripts/backfill-jotform-seller-fields.ts apply",
     "listings:samples:list": "node scripts/approval-combined-samples.mjs list",
     "listings:samples:seed": "node scripts/approval-combined-samples.mjs seed",
     "listings:samples:cleanup": "node scripts/approval-combined-samples.mjs cleanup",

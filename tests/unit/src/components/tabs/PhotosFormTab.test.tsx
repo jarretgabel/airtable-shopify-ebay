@@ -83,7 +83,6 @@ describe('PhotosFormTab', () => {
         cosmeticNotes: 'Seller noted cabinet scratches.',
         functionalNotes: '',
         inclusionNotes: 'Manual and power cable included.',
-        submittedPhotosNotes: '',
       },
       stageContext: {
         inventoryNotes: 'Capture the serial plate and top cover.',
@@ -268,7 +267,6 @@ describe('PhotosFormTab', () => {
         cosmeticNotes: 'Seller noted cabinet scratches.',
         functionalNotes: '',
         inclusionNotes: 'Manual and power cable included.',
-        submittedPhotosNotes: '',
       },
       stageContext: {
         inventoryNotes: 'Capture the serial plate and top cover.',

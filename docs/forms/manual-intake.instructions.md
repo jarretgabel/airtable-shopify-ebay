@@ -42,22 +42,21 @@ It is shown in the app under:
 5. `Customer Cosmetic Notes`
 6. `Customer Functional Notes`
 7. `Customer Inclusion Notes`
-8. `Customer Submitted Photos Notes`
-9. `SKU`
-10. `Status`
-11. `Make`
-12. `Model`
-13. `Component Type`
-14. `Serial Number`
-15. `Voltage`
-16. `Inventory Notes`
-17. `Images`
-18. `Testing Cosmetic Notes`
-19. `Original Box`
-20. `Manual`
-21. `Remote`
-22. `Power Cable`
-23. `Additional Items`
+8. `SKU`
+9. `Status`
+10. `Make`
+11. `Model`
+12. `Component Type`
+13. `Serial Number`
+14. `Voltage`
+15. `Inventory Notes`
+16. `Images`
+17. `Testing Cosmetic Notes`
+18. `Original Box`
+19. `Manual`
+20. `Remote`
+21. `Power Cable`
+22. `Additional Items`
 24. `Weight`
 25. `Shipping Dimensions`
 26. `Shipping Method`

@@ -22,7 +22,6 @@ const DEFAULT_STATUS = 'Needs Initial Processing';
 const WORKFLOW_SOURCE_MANUAL_ENTRY = 'Manual Entry';
 
 const OPTION_FIELD_NAMES = [
-  'Status',
   'Component Type',
   'Original Box',
   'Manual',
@@ -120,8 +119,6 @@ export async function loadManualIntakeFormValues(recordId: string): Promise<Manu
         customerCosmeticNotes: extractInventoryScalarValue(record.fields['Customer Cosmetic Notes']),
         customerFunctionalNotes: extractInventoryScalarValue(record.fields['Customer Functional Notes']),
         customerInclusionNotes: extractInventoryScalarValue(record.fields['Customer Inclusion Notes']),
-        customerSubmittedPhotosNotes: extractInventoryScalarValue(record.fields['Customer Submitted Photos Notes']),
-        status: extractInventoryScalarValue(record.fields.Status) || defaults.status,
         make: extractInventoryScalarValue(record.fields.Make),
         model: extractInventoryScalarValue(record.fields.Model),
         componentType: extractInventoryScalarValue(record.fields['Component Type']),
@@ -173,7 +170,6 @@ export async function loadManualIntakeFormOptionSets(): Promise<ManualIntakeOpti
       acc[fieldName] = dedupeOptions([...choices, ...seedOptions]);
       return acc;
     }, {
-      Status: [],
       'Component Type': [],
       'Original Box': [],
       Manual: [],
@@ -208,7 +204,6 @@ export async function submitManualIntakeForm(
   } = {},
 ): Promise<ManualIntakeFormSubmitResult> {
   const costValue = trimToUndefined(values.cost);
-  const statusValue = trimToUndefined(values.status) ?? DEFAULT_STATUS;
 
   const baseFields = buildUsedGearIntakeBaseFields({
     pickUpNumber: values.pickUpNumber,
@@ -217,8 +212,7 @@ export async function submitManualIntakeForm(
     customerCosmeticNotes: values.customerCosmeticNotes,
     customerFunctionalNotes: values.customerFunctionalNotes,
     customerInclusionNotes: values.customerInclusionNotes,
-    customerSubmittedPhotosNotes: values.customerSubmittedPhotosNotes,
-    status: statusValue,
+    status: recordId ? undefined : DEFAULT_STATUS,
     make: values.make,
     model: values.model,
     componentType: values.componentType,

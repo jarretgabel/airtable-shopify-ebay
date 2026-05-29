@@ -56,7 +56,6 @@ export interface PhotosFormCustomerReference {
   cosmeticNotes: string;
   functionalNotes: string;
   inclusionNotes: string;
-  submittedPhotosNotes: string;
 }
 
 export interface PhotosFormContextAttachment {
@@ -335,7 +334,6 @@ function buildCustomerReference(record: AirtableRecord): PhotosFormCustomerRefer
     cosmeticNotes: extractInventoryScalarValue(record.fields['Customer Cosmetic Notes']),
     functionalNotes: extractInventoryScalarValue(record.fields['Customer Functional Notes']),
     inclusionNotes: extractInventoryScalarValue(record.fields['Customer Inclusion Notes']),
-    submittedPhotosNotes: extractInventoryScalarValue(record.fields['Customer Submitted Photos Notes']),
   };
 }
 

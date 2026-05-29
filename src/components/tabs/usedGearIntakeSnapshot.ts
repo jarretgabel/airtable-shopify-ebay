@@ -39,7 +39,6 @@ export function buildUsedGearIntakeSnapshot(record: AirtableRecord) {
           `Cosmetic Notes: ${displayInventoryValue(record.fields['Customer Cosmetic Notes'])}`,
           `Functional Notes: ${displayInventoryValue(record.fields['Customer Functional Notes'])}`,
           `Inclusion Notes: ${displayInventoryValue(record.fields['Customer Inclusion Notes'])}`,
-          `Photos Notes: ${displayInventoryValue(record.fields['Customer Submitted Photos Notes'])}`,
           `Original Owner: ${displayInventoryValue(record.fields['Original Owner'])}`,
           `Smoke Exposure: ${displayInventoryValue(record.fields['Smoke Exposure'])}`,
         ].join('\n'),

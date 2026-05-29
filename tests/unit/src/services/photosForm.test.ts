@@ -68,7 +68,6 @@ describe('photosForm', () => {
           'Customer Cosmetic Notes': 'Seller flagged scratches on the top cover.',
           'Customer Functional Notes': 'Tuner lamp flickers intermittently.',
           'Customer Inclusion Notes': 'Manual and power cord included.',
-          'Customer Submitted Photos Notes': 'Customer sent front-panel and rear-panel photos.',
           'Inventory Notes': 'Keep reflection under control on the top cover.',
           'Testing Notes': 'Receiver passed tuner and phono checks.',
           Images: [
@@ -100,7 +99,6 @@ describe('photosForm', () => {
         cosmeticNotes: 'Seller flagged scratches on the top cover.',
         functionalNotes: 'Tuner lamp flickers intermittently.',
         inclusionNotes: 'Manual and power cord included.',
-        submittedPhotosNotes: 'Customer sent front-panel and rear-panel photos.',
       },
       stageContext: {
         inventoryNotes: 'Keep reflection under control on the top cover.',

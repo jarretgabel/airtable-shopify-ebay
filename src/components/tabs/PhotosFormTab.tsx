@@ -37,7 +37,6 @@ const EMPTY_CUSTOMER_REFERENCE: PhotosFormCustomerReference = {
   cosmeticNotes: '',
   functionalNotes: '',
   inclusionNotes: '',
-  submittedPhotosNotes: '',
 };
 
 const EMPTY_STAGE_CONTEXT: PhotosFormStageContext = {

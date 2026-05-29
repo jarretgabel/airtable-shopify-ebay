@@ -28,7 +28,6 @@ const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-cen
 
 function validateForm(values: ManualIntakeFormValues): string | null {
   if (!values.cost.trim()) return 'Cost is required.';
-  if (!values.status.trim()) return 'Status is required.';
   if (!values.make.trim()) return 'Make is required.';
   if (!values.model.trim()) return 'Model is required.';
   if (!values.componentType.trim()) return 'Component Type is required.';

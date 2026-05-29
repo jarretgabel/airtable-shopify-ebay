@@ -362,7 +362,6 @@ function buildStageFields(index, config) {
     'Customer Cosmetic Notes': `${SAMPLE_MARKER} Customer reported light cosmetic wear with one notable finish mark documented at intake.`,
     'Customer Functional Notes': `${SAMPLE_MARKER} Customer reported unit powers on and passes basic functional checks.`,
     'Customer Inclusion Notes': `${SAMPLE_MARKER} Intake includes the accessories documented for workflow sample coverage.`,
-    'Customer Submitted Photos Notes': `${SAMPLE_MARKER} Customer supplied reference photos before handoff into the workflow.`,
     ...(hasAccepted ? {
       'Accepted By': config.acceptedBy ?? 'Sample Buyer',
       'Accepted At': acceptedAt,

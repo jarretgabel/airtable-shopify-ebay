@@ -80,7 +80,6 @@ describe('TestingFormTab', () => {
         cosmeticNotes: 'Customer noted one chip on the rack handle.',
         functionalNotes: '',
         inclusionNotes: '',
-        submittedPhotosNotes: '',
       },
       stageContext: {
         existingAttachments: [{ id: 'att-1', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' }],
@@ -251,7 +250,6 @@ describe('TestingFormTab', () => {
         cosmeticNotes: 'Customer noted one chip on the rack handle.',
         functionalNotes: '',
         inclusionNotes: '',
-        submittedPhotosNotes: '',
       },
       stageContext: {
         existingAttachments: [],

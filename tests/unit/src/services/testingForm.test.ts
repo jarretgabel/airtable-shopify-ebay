@@ -81,7 +81,6 @@ describe('testingForm', () => {
           'Customer Cosmetic Notes': 'Faceplate has one small nick.',
           'Customer Functional Notes': 'Seller reports both channels are working.',
           'Customer Inclusion Notes': 'Original cage and manual included.',
-          'Customer Submitted Photos Notes': 'Customer sent rear serial sticker photo.',
           Images: [
             { id: 'att-1', url: 'https://example.com/front.jpg', filename: 'front.jpg' },
           ],
@@ -111,7 +110,6 @@ describe('testingForm', () => {
         cosmeticNotes: 'Faceplate has one small nick.',
         functionalNotes: 'Seller reports both channels are working.',
         inclusionNotes: 'Original cage and manual included.',
-        submittedPhotosNotes: 'Customer sent rear serial sticker photo.',
       },
       stageContext: {
         existingAttachments: [
