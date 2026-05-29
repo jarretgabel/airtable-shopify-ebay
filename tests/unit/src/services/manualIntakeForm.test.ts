@@ -77,7 +77,8 @@ describe('manualIntakeForm', () => {
       jotFormSubmissionId: '',
       values: {
         pickUpNumber: 'PU-42',
-        acquiredFrom: 'Walk-in seller',
+        sellerFirstName: 'Walk-in',
+        sellerLastName: 'seller',
         cost: '1499.5',
         customerCosmeticNotes: 'Seller says very clean faceplate.',
         customerFunctionalNotes: 'Seller reports fully working on both channels.',
@@ -100,6 +101,13 @@ describe('manualIntakeForm', () => {
         weight: '68 lbs',
         shippingDims: '27x25x11',
         shippingMethod: 'Freight',
+        sellerEmail: '',
+        sellerPhone: '',
+        sellerZipCode: '',
+        sellerLocation: '',
+        howDidYouHear: '',
+        originalOwner: '',
+        smokeExposure: '',
       },
     });
   });
@@ -130,7 +138,8 @@ describe('manualIntakeForm', () => {
   it('submits every non-file Manual Intake schema field and uploads images', async () => {
     const values: ManualIntakeFormValues = {
       pickUpNumber: 'PU-42',
-      acquiredFrom: 'Walk-in seller',
+      sellerFirstName: 'Walk-in seller',
+      sellerLastName: '',
       cost: '1499.5',
       customerCosmeticNotes: 'Seller says very clean faceplate.',
       customerFunctionalNotes: 'Seller reports no hum or crackle.',
@@ -153,6 +162,13 @@ describe('manualIntakeForm', () => {
       weight: '68 lbs',
       shippingDims: '27x25x11',
       shippingMethod: 'Freight',
+      sellerEmail: 'seller@example.com',
+      sellerPhone: '(212) 555-0100',
+      sellerZipCode: '10001',
+      sellerLocation: 'Greater NYC',
+      howDidYouHear: 'Friend',
+      originalOwner: 'Yes - original owner',
+      smokeExposure: 'No, smoke-free home',
     };
 
     vi.mocked(updateConfiguredRecord).mockResolvedValue(buildRecord({}));
@@ -193,17 +209,25 @@ describe('manualIntakeForm', () => {
         Weight: '68 lbs',
         'Shipping Dims': '27x25x11',
         'Shipping Method': ['Freight'],
+        'Seller Email': 'seller@example.com',
+        'Seller Phone': '(212) 555-0100',
+        'Seller Zip Code': '10001',
+        'Seller Location': 'Greater NYC',
+        'How Did You Hear': 'Friend',
+        'Original Owner': 'Yes - original owner',
+        'Smoke Exposure': 'No, smoke-free home',
       },
       { typecast: true },
     );
 
     const submittedFields = vi.mocked(updateConfiguredRecord).mock.calls[0]?.[2] ?? {};
     expect(Object.keys(submittedFields).sort()).toEqual(
-      manualIntakeFormFields
-        .filter((field) => field.type !== 'file')
-        .map((field) => field.airtableFieldName)
-        .concat(['Item Title'])
-        .sort(),
+      [...new Set(
+        manualIntakeFormFields
+          .filter((field) => field.type !== 'file')
+          .map((field) => field.airtableFieldName)
+          .concat(['Item Title']),
+      )].sort(),
     );
 
     expect(uploadConfiguredAttachment).toHaveBeenCalledWith(
@@ -217,7 +241,8 @@ describe('manualIntakeForm', () => {
   it('creates manual-entry rows through the workflow source with Pending Review status', async () => {
     const values: ManualIntakeFormValues = {
       pickUpNumber: 'PU-77',
-      acquiredFrom: 'Phone deal',
+      sellerFirstName: 'Phone',
+      sellerLastName: 'deal',
       cost: '999',
       customerCosmeticNotes: 'Seller reports light edge wear.',
       customerFunctionalNotes: 'Seller says both channels work.',
@@ -240,6 +265,13 @@ describe('manualIntakeForm', () => {
       weight: '',
       shippingDims: '',
       shippingMethod: '',
+      sellerEmail: '',
+      sellerPhone: '',
+      sellerZipCode: '',
+      sellerLocation: '',
+      howDidYouHear: '',
+      originalOwner: '',
+      smokeExposure: '',
     };
 
     vi.mocked(createConfiguredRecord).mockResolvedValue(buildRecord({}));

@@ -2,7 +2,7 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda
 import { ingestJotFormSubmissionWorkflow } from '../../providers/jotform/workflowIngest.js';
 import { requireWebhookSecret as requireSharedWebhookSecret } from '../../shared/access.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
-import { getRequestOrigin, jsonError, jsonOk, requirePathParam } from '../../shared/http.js';
+import { getRequestOrigin, jsonError, jsonOk } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
 
 interface ParsedWebhookBody {
@@ -27,6 +27,36 @@ function decodeBody(event: APIGatewayProxyEventV2): string {
     : event.body;
 }
 
+// JotForm embeds the submission ID in file upload URLs when it isn't sent as an explicit field.
+// Pattern: https://www.jotform.com/uploads/{user}/{formId}/{submissionId}/{filename}
+function extractSubmissionIdFromUrls(obj: unknown): string | undefined {
+  const json = JSON.stringify(obj);
+  const match = json.match(/jotform\.com\/uploads\/[^/]+\/\d+\/(\d+)\//);
+  return match?.[1];
+}
+
+// Parse named text fields out of a multipart/form-data body.
+// Handles the common JotForm case where submissionID and formID are plain text parts.
+function parseMultipartField(body: string, boundary: string, fieldName: string): string | undefined {
+  // Normalise CRLF/LF differences that can appear in decoded bodies.
+  const norm = body.replace(/\r\n/g, '\n');
+  const boundaryLine = '--' + boundary;
+  const parts = norm.split(boundaryLine);
+  for (const part of parts) {
+    const headerBodySplit = part.indexOf('\n\n');
+    if (headerBodySplit === -1) continue;
+    const headers = part.slice(0, headerBodySplit);
+    // Match Content-Disposition name="fieldName" (case-insensitive field name)
+    const nameMatch = headers.match(/content-disposition[^\n]*name="([^"]+)"/i);
+    if (!nameMatch) continue;
+    if (nameMatch[1].toLowerCase() !== fieldName.toLowerCase()) continue;
+    // Value is everything after the blank line, trim boundary/trailing dashes.
+    const value = part.slice(headerBodySplit + 2).replace(/\n--$/, '').trim();
+    return value || undefined;
+  }
+  return undefined;
+}
+
 function parseWebhookBody(event: APIGatewayProxyEventV2): ParsedWebhookBody {
   const rawBody = decodeBody(event).trim();
   if (!rawBody) {
@@ -34,16 +64,31 @@ function parseWebhookBody(event: APIGatewayProxyEventV2): ParsedWebhookBody {
   }
 
   const contentType = readHeader(event, 'content-type').toLowerCase();
-  if (contentType.includes('application/json')) {
+
+  // multipart/form-data — JotForm sends submissionID and formID as named text parts.
+  const boundaryMatch = contentType.match(/boundary=([^\s;]+)/);
+  if (boundaryMatch) {
+    const boundary = boundaryMatch[1];
+    const submissionId = parseMultipartField(rawBody, boundary, 'submissionID')
+      || parseMultipartField(rawBody, boundary, 'submissionId')
+      || parseMultipartField(rawBody, boundary, 'submission_id')
+      || extractSubmissionIdFromUrls(rawBody);
+    const formId = parseMultipartField(rawBody, boundary, 'formID')
+      || parseMultipartField(rawBody, boundary, 'formId')
+      || parseMultipartField(rawBody, boundary, 'form_id');
+    const token = parseMultipartField(rawBody, boundary, 'token');
+    return { submissionId, formId, token };
+  }
+
+  const looksLikeJson = rawBody.startsWith('{') || rawBody.startsWith('[');
+  if (contentType.includes('application/json') || looksLikeJson) {
     const parsed = JSON.parse(rawBody) as Record<string, unknown>;
+    const submissionId = (typeof parsed.submission_id === 'string' ? parsed.submission_id
+      : typeof parsed.submissionId === 'string' ? parsed.submissionId
+      : typeof parsed.submissionID === 'string' ? parsed.submissionID
+      : undefined) || extractSubmissionIdFromUrls(parsed);
     return {
-      submissionId: typeof parsed.submission_id === 'string'
-        ? parsed.submission_id
-        : typeof parsed.submissionId === 'string'
-          ? parsed.submissionId
-          : typeof parsed.submissionID === 'string'
-            ? parsed.submissionID
-            : undefined,
+      submissionId,
       formId: typeof parsed.form_id === 'string'
         ? parsed.form_id
         : typeof parsed.formId === 'string'
@@ -56,8 +101,9 @@ function parseWebhookBody(event: APIGatewayProxyEventV2): ParsedWebhookBody {
   }
 
   const params = new URLSearchParams(rawBody);
+  const submissionId = params.get('submission_id') || params.get('submissionId') || params.get('submissionID') || undefined;
   return {
-    submissionId: params.get('submission_id') || params.get('submissionId') || params.get('submissionID') || undefined,
+    submissionId,
     formId: params.get('form_id') || params.get('formId') || params.get('formID') || undefined,
     token: params.get('token') || undefined,
   };
@@ -98,9 +144,17 @@ export function createHandler(dependencies: IngestSubmissionWebhookDependencies 
   return async function ingestSubmissionWebhookHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
     const origin = getRequestOrigin(event);
     try {
-      const formId = requirePathParam(event, 'formId', 'jotform', 'MISSING_FORM_ID');
       const body = parseWebhookBody(event);
       requireSecret(event, body);
+      const formId = event.pathParameters?.formId?.trim()
+        || body.formId
+        || event.queryStringParameters?.formId?.trim()
+        || event.queryStringParameters?.formID?.trim()
+        || event.queryStringParameters?.form_id?.trim()
+        || '';
+      if (!formId) {
+        throw new HttpError(400, 'formId is required', { service: 'jotform', code: 'MISSING_FORM_ID', retryable: false });
+      }
       const submissionId = requireSubmissionId(body);
       const result = await ingestWorkflow(formId, submissionId);
       logInfo('Ingested JotForm submission into workflow', {

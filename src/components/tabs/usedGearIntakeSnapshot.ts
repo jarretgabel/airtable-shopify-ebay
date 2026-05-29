@@ -13,8 +13,14 @@ export function buildUsedGearIntakeSnapshot(record: AirtableRecord) {
       { label: 'Model', value: displayInventoryValue(record.fields.Model) },
       { label: 'Component Type', value: displayInventoryValue(record.fields['Component Type']) },
       { label: 'Includes', value: displayInventoryValue(getSnapshotIncludesValue(record)) },
-      { label: 'Acquired From', value: displayInventoryValue(record.fields['Acquired From']) },
+      { label: 'Seller Name', value: displayInventoryValue(record.fields['Acquired From']) },
       { label: 'Arrival Date', value: displayInventoryValue(record.fields['Arrival Date']) },
+      { label: 'Seller Email', value: displayInventoryValue(record.fields['Seller Email']) },
+      { label: 'Seller Phone', value: displayInventoryValue(record.fields['Seller Phone']) },
+      { label: 'Seller Zip Code', value: displayInventoryValue(record.fields['Seller Zip Code']) },
+      { label: 'Seller Location', value: displayInventoryValue(record.fields['Seller Location']) },
+      { label: 'How Did You Hear', value: displayInventoryValue(record.fields['How Did You Hear']) },
+      { label: 'Mailing List Opt In', value: displayInventoryValue(record.fields['Mailing List Opt In']) },
     ],
     cards: [
       {
@@ -34,6 +40,8 @@ export function buildUsedGearIntakeSnapshot(record: AirtableRecord) {
           `Functional Notes: ${displayInventoryValue(record.fields['Customer Functional Notes'])}`,
           `Inclusion Notes: ${displayInventoryValue(record.fields['Customer Inclusion Notes'])}`,
           `Photos Notes: ${displayInventoryValue(record.fields['Customer Submitted Photos Notes'])}`,
+          `Original Owner: ${displayInventoryValue(record.fields['Original Owner'])}`,
+          `Smoke Exposure: ${displayInventoryValue(record.fields['Smoke Exposure'])}`,
         ].join('\n'),
       },
       {

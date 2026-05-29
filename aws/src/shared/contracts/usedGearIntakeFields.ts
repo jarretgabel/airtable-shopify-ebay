@@ -23,6 +23,14 @@ export interface UsedGearIntakeFieldInput {
   weight?: string | null;
   shippingDims?: string | null;
   shippingMethod?: string | null;
+  sellerEmail?: string | null;
+  sellerPhone?: string | null;
+  sellerZipCode?: string | null;
+  sellerLocation?: string | null;
+  howDidYouHear?: string | null;
+  mailingListOptIn?: boolean | null;
+  originalOwner?: string | null;
+  smokeExposure?: string | null;
 }
 
 export interface UsedGearWorkflowFieldInput {
@@ -110,6 +118,14 @@ export function buildUsedGearIntakeBaseFields(input: UsedGearIntakeFieldInput): 
     Weight: trimToUndefined(input.weight),
     'Shipping Dims': trimToUndefined(input.shippingDims),
     'Shipping Method': arrayOrUndefined(input.shippingMethod),
+    'Seller Email': trimToUndefined(input.sellerEmail),
+    'Seller Phone': trimToUndefined(input.sellerPhone),
+    'Seller Zip Code': trimToUndefined(input.sellerZipCode),
+    'Seller Location': trimToUndefined(input.sellerLocation),
+    'How Did You Hear': trimToUndefined(input.howDidYouHear),
+    'Mailing List Opt In': input.mailingListOptIn ?? undefined,
+    'Original Owner': trimToUndefined(input.originalOwner),
+    'Smoke Exposure': trimToUndefined(input.smokeExposure),
   });
 }
 

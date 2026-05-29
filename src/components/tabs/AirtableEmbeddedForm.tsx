@@ -48,6 +48,25 @@ function FieldShell({ definition, children }: { definition: ManualIntakeFormFiel
   );
 }
 
+type FieldGroup = ManualIntakeFormFieldDefinition | [ManualIntakeFormFieldDefinition, ManualIntakeFormFieldDefinition];
+
+function groupFields(fields: ManualIntakeFormFieldDefinition[]): FieldGroup[] {
+  const groups: FieldGroup[] = [];
+  let i = 0;
+  while (i < fields.length) {
+    const curr = fields[i];
+    const next = fields[i + 1];
+    if (curr.halfWidth && next?.halfWidth) {
+      groups.push([curr, next]);
+      i += 2;
+    } else {
+      groups.push(curr);
+      i++;
+    }
+  }
+  return groups;
+}
+
 interface AirtableEmbeddedFormProps {
   recordId?: string | null;
   onLoadResult?: (result: ManualIntakeFormLoadResult) => void;
@@ -288,7 +307,7 @@ export function AirtableEmbeddedForm({
                     <span className="text-[var(--muted)]">Submission ID: <span className="font-medium text-[var(--ink)]">{jotFormSubmissionId}</span></span>
                   ) : null}
                 </div>
-                {jotFormSubmissionUrl ? (
+                {workflowSource === 'JotForm' && jotFormSubmissionUrl ? (
                   <a
                     className="inline-flex items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
                     href={jotFormSubmissionUrl}
@@ -302,11 +321,22 @@ export function AirtableEmbeddedForm({
             </section>
           ) : null}
 
-          {manualIntakeFormFields.map((field) => (
-            <div key={field.airtableFieldName}>
-              <FieldShell definition={field}>{renderField(field)}</FieldShell>
-            </div>
-          ))}
+          {groupFields(manualIntakeFormFields).map((group) => {
+            if (Array.isArray(group)) {
+              return (
+                <div key={`${group[0].name}-${group[1].name}`} className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  {group.map((field) => (
+                    <FieldShell key={field.name} definition={field}>{renderField(field)}</FieldShell>
+                  ))}
+                </div>
+              );
+            }
+            return (
+              <div key={group.name}>
+                <FieldShell definition={group}>{renderField(group)}</FieldShell>
+              </div>
+            );
+          })}
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap gap-3">

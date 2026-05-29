@@ -5,11 +5,16 @@ export type ManualIntakeFormOptionFieldName =
   | 'Manual'
   | 'Remote'
   | 'Power Cable'
-  | 'Shipping Method';
+  | 'Shipping Method'
+  | 'Seller Location'
+  | 'How Did You Hear'
+  | 'Original Owner'
+  | 'Smoke Exposure';
 
 export interface ManualIntakeFormValues {
   pickUpNumber: string;
-  acquiredFrom: string;
+  sellerFirstName: string;
+  sellerLastName: string;
   cost: string;
   customerCosmeticNotes: string;
   customerFunctionalNotes: string;
@@ -32,6 +37,13 @@ export interface ManualIntakeFormValues {
   weight: string;
   shippingDims: string;
   shippingMethod: string;
+  sellerEmail: string;
+  sellerPhone: string;
+  sellerZipCode: string;
+  sellerLocation: string;
+  howDidYouHear: string;
+  originalOwner: string;
+  smokeExposure: string;
 }
 
 export type ManualIntakeFormFieldType = 'text' | 'date' | 'currency' | 'textarea' | 'select' | 'searchable-select' | 'file';
@@ -46,6 +58,7 @@ export interface ManualIntakeFormFieldDefinition {
   description?: string;
   optionFieldName?: ManualIntakeFormOptionFieldName;
   rows?: number;
+  halfWidth?: boolean;
 }
 
 export interface ManualIntakeFormIntroBlock {
@@ -58,7 +71,8 @@ export interface ManualIntakeFormIntroBlock {
 export function createManualIntakeFormDefaults(): ManualIntakeFormValues {
   return {
     pickUpNumber: '',
-    acquiredFrom: '',
+    sellerFirstName: '',
+    sellerLastName: '',
     cost: '',
     customerCosmeticNotes: '',
     customerFunctionalNotes: '',
@@ -81,6 +95,13 @@ export function createManualIntakeFormDefaults(): ManualIntakeFormValues {
     weight: '',
     shippingDims: '',
     shippingMethod: '',
+    sellerEmail: '',
+    sellerPhone: '',
+    sellerZipCode: '',
+    sellerLocation: '',
+    howDidYouHear: '',
+    originalOwner: '',
+    smokeExposure: '',
   };
 }
 
@@ -143,11 +164,59 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     type: 'text',
   },
   {
-    name: 'acquiredFrom',
+    name: 'sellerFirstName',
     airtableFieldName: 'Acquired From',
-    label: 'Acquired From',
+    label: 'Seller First Name',
     type: 'text',
-    placeholder: 'Seller name or acquisition source',
+    placeholder: 'Adam',
+    halfWidth: true,
+  },
+  {
+    name: 'sellerLastName',
+    airtableFieldName: 'Acquired From',
+    label: 'Seller Last Name',
+    type: 'text',
+    placeholder: 'Wexler',
+    halfWidth: true,
+  },
+  {
+    name: 'sellerEmail',
+    airtableFieldName: 'Seller Email',
+    label: 'Seller Email',
+    type: 'text',
+    placeholder: 'seller@example.com',
+    halfWidth: true,
+  },
+  {
+    name: 'sellerPhone',
+    airtableFieldName: 'Seller Phone',
+    label: 'Seller Phone',
+    type: 'text',
+    placeholder: '(212) 555-1234',
+    halfWidth: true,
+  },
+  {
+    name: 'sellerZipCode',
+    airtableFieldName: 'Seller Zip Code',
+    label: 'Seller Zip Code',
+    type: 'text',
+    placeholder: '10001',
+    halfWidth: true,
+  },
+  {
+    name: 'sellerLocation',
+    airtableFieldName: 'Seller Location',
+    label: 'Seller Location',
+    type: 'select',
+    optionFieldName: 'Seller Location',
+    halfWidth: true,
+  },
+  {
+    name: 'howDidYouHear',
+    airtableFieldName: 'How Did You Hear',
+    label: 'How Did You Hear',
+    type: 'select',
+    optionFieldName: 'How Did You Hear',
   },
   {
     name: 'cost',
@@ -311,5 +380,20 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     label: 'Shipping Method',
     type: 'select',
     optionFieldName: 'Shipping Method',
+  },
+  {
+    name: 'originalOwner',
+    airtableFieldName: 'Original Owner',
+    label: 'Original Owner',
+    type: 'select',
+    optionFieldName: 'Original Owner',
+    description: 'Is the seller the original owner of this item?',
+  },
+  {
+    name: 'smokeExposure',
+    airtableFieldName: 'Smoke Exposure',
+    label: 'Smoke Exposure',
+    type: 'select',
+    optionFieldName: 'Smoke Exposure',
   },
 ];

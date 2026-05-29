@@ -14,47 +14,50 @@ function buildSubmission(overrides: Partial<JotFormSubmission> = {}): JotFormSub
     flag: '0',
     notes: '',
     answers: {
-      '1': {
-        name: 'sellerName',
-        order: '1',
-        text: 'Seller Name',
+      // Shared fields — filled once per submission
+      '3': {
+        name: 'name',
+        order: '3',
+        text: 'Name',
         type: 'control_fullname',
         answer: 'Pat Seller',
+        prettyFormat: 'Pat Seller',
       },
-      '2': {
-        name: 'make',
-        order: '2',
-        text: 'Make',
+      // Slot 1 item fields (order range 40-49)
+      '243': {
+        name: 'brand243',
+        order: '40',
+        text: 'Brand',
         type: 'control_textbox',
         answer: 'McIntosh',
       },
-      '3': {
-        name: 'model',
-        order: '3',
+      '244': {
+        name: 'model244',
+        order: '41',
         text: 'Model',
         type: 'control_textbox',
         answer: 'MC275',
       },
-      '4': {
-        name: 'componentType',
-        order: '4',
-        text: 'Component Type',
+      '247': {
+        name: 'cosmeticCondition247',
+        order: '44',
+        text: 'Cosmetic Condition',
         type: 'control_dropdown',
-        answer: 'Amplifier',
+        answer: 'Excellent condition',
       },
-      '5': {
-        name: 'submissionGroupId',
-        order: '5',
-        text: 'Submission Group ID',
-        type: 'control_textbox',
-        answer: 'group-77',
-      },
-      '6': {
-        name: 'photoUpload',
-        order: '6',
-        text: 'Photo Upload',
+      '249': {
+        name: 'pictures249',
+        order: '46',
+        text: 'Pictures',
         type: 'control_fileupload',
         answer: ['https://files.example.com/front.jpg', 'https://files.example.com/rear.jpg'],
+      },
+      '250': {
+        name: 'anyIssues250',
+        order: '47',
+        text: 'Any issues? Anything else included?',
+        type: 'control_textarea',
+        answer: 'Minor cosmetic scratches',
       },
     },
     ...overrides,
@@ -103,8 +106,8 @@ test('workflowIngest creates a workflow row and persists archived intake metadat
   assert.deepEqual(archiveCalls[0]?.imageUrls, ['https://files.example.com/front.jpg', 'https://files.example.com/rear.jpg']);
   assert.equal(createCalls[0]?.['Workflow Source'], 'JotForm');
   assert.equal(createCalls[0]?.['Workflow Status'], 'Pending Review');
-  assert.equal(createCalls[0]?.['JotForm Submission ID'], 'sub-123');
-  assert.equal(createCalls[0]?.['Submission Group ID'], 'group-77');
+  assert.equal(createCalls[0]?.['JotForm Submission ID'], 'sub-123-slot1');
+  assert.equal(createCalls[0]?.['Submission Group ID'], 'sub-123');
   assert.equal(createCalls[0]?.['Item Title'], 'McIntosh MC275');
   assert.equal(updateCalls[0]?.fields['Item Title'], 'McIntosh MC275 - new-1');
   const metadataPayload = String(updateCalls[1]?.fields['Workflow Image Metadata JSON'] || '');
@@ -115,7 +118,7 @@ test('workflowIngest creates a workflow row and persists archived intake metadat
   assert.deepEqual(result, {
     formId: 'form-abc',
     submissionId: 'sub-123',
-    items: [{ recordId: 'rec-new-1', submissionId: 'sub-123', action: 'created', imageCount: 2 }],
+    items: [{ recordId: 'rec-new-1', submissionId: 'sub-123-slot1', action: 'created', imageCount: 2 }],
   });
 });
 
@@ -145,7 +148,7 @@ test('workflowIngest updates an existing pending-review row and replaces intake 
   const ingest = createIngestJotFormSubmissionWorkflow({
     getSubmission: async () => buildSubmission(),
     getConfiguredRecords: async () => [buildRecord('rec-existing-1', {
-      'JotForm Submission ID': 'sub-123',
+      'JotForm Submission ID': 'sub-123-slot1',
       'Workflow Status': 'Pending Review',
       'Workflow Image Metadata JSON': existingMetadata,
     })],
@@ -177,7 +180,7 @@ test('workflowIngest updates an existing pending-review row and replaces intake 
   assert.deepEqual(result, {
     formId: 'form-abc',
     submissionId: 'sub-123',
-    items: [{ recordId: 'rec-existing-1', submissionId: 'sub-123', action: 'updated', imageCount: 2 }],
+    items: [{ recordId: 'rec-existing-1', submissionId: 'sub-123-slot1', action: 'updated', imageCount: 2 }],
   });
 });
 
@@ -189,7 +192,7 @@ test('workflowIngest skips rows that have already advanced beyond pending review
   const ingest = createIngestJotFormSubmissionWorkflow({
     getSubmission: async () => buildSubmission(),
     getConfiguredRecords: async () => [buildRecord('rec-existing-2', {
-      'JotForm Submission ID': 'sub-123',
+      'JotForm Submission ID': 'sub-123-slot1',
       'Workflow Status': 'Testing In Progress',
     })],
     createConfiguredRecord: async () => {
@@ -214,6 +217,6 @@ test('workflowIngest skips rows that have already advanced beyond pending review
   assert.deepEqual(result, {
     formId: 'form-abc',
     submissionId: 'sub-123',
-    items: [{ recordId: 'rec-existing-2', submissionId: 'sub-123', action: 'skipped', imageCount: 2 }],
+    items: [{ recordId: 'rec-existing-2', submissionId: 'sub-123-slot1', action: 'skipped', imageCount: 2 }],
   });
 });

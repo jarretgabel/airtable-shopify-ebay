@@ -59,7 +59,7 @@ const ROUTES = [
   ['POST', '/api/shopify/images', 'handlers/shopify/uploadImage.js', 'handler'],
   ['GET', '/api/jotform/forms', 'handlers/jotform/getForms.js', 'handler'],
   ['GET', '/api/jotform/forms/{formId}/submissions', 'handlers/jotform/getFormSubmissions.js', 'handler'],
-  ['POST', '/api/hooks/jotform/submissions/{formId}', 'handlers/jotform/ingestSubmissionWebhook.js', 'handler'],
+  ['POST', '/api/hooks/jotform/submissions', 'handlers/jotform/ingestSubmissionWebhook.js', 'handler'],
   ['GET', '/api/airtable/listings', 'handlers/airtable/getListings.js', 'handler'],
   ['GET', '/api/airtable/configured-records', 'handlers/airtable/getConfiguredRecords.js', 'handler'],
   ['GET', '/api/airtable/configured-records/{source}/{recordId}', 'handlers/airtable/getConfiguredRecord.js', 'handler'],

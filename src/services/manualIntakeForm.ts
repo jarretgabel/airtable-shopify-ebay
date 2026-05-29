@@ -29,9 +29,17 @@ const OPTION_FIELD_NAMES = [
   'Remote',
   'Power Cable',
   'Shipping Method',
+  'Seller Location',
+  'How Did You Hear',
+  'Original Owner',
+  'Smoke Exposure',
 ] as const satisfies readonly ManualIntakeFormOptionFieldName[];
 
 type ManualIntakeOptionSet = Record<ManualIntakeFormOptionFieldName, string[]>;
+
+// "Other (describe in notes)" was added to Original Box after the Airtable schema was cached;
+// seed it here so the UI always shows the option even before a record uses it.
+const ORIGINAL_BOX_SEED_OPTIONS = ['Other (describe in notes)'] as const;
 
 export type ManualIntakeRecordSource = 'inventory-directory' | 'used-gear-workflow';
 
@@ -97,7 +105,17 @@ export async function loadManualIntakeFormValues(recordId: string): Promise<Manu
       values: {
         ...defaults,
         pickUpNumber: extractInventoryScalarValue(record.fields['Pick Up #'] ?? record.fields['Pick Up ID']),
-        acquiredFrom: extractInventoryScalarValue(record.fields['Acquired From']),
+        ...(() => {
+          const full = extractInventoryScalarValue(record.fields['Acquired From']) ?? '';
+          const idx = full.lastIndexOf(' ');
+          const [rawFirst, rawLast] = idx >= 0
+            ? [full.slice(0, idx), full.slice(idx + 1)]
+            : [full, ''];
+          return {
+            sellerFirstName: rawFirst.replace(/,+$/, '').trimEnd(),
+            sellerLastName: rawLast,
+          };
+        })(),
         cost: extractInventoryScalarValue(record.fields.Cost),
         customerCosmeticNotes: extractInventoryScalarValue(record.fields['Customer Cosmetic Notes']),
         customerFunctionalNotes: extractInventoryScalarValue(record.fields['Customer Functional Notes']),
@@ -120,6 +138,13 @@ export async function loadManualIntakeFormValues(recordId: string): Promise<Manu
         weight: extractInventoryScalarValue(record.fields.Weight),
         shippingDims: extractInventoryScalarValue(record.fields['Shipping Dims']),
         shippingMethod: extractInventoryScalarValue(record.fields['Shipping Method']),
+        sellerEmail: extractInventoryScalarValue(record.fields['Seller Email']),
+        sellerPhone: extractInventoryScalarValue(record.fields['Seller Phone']),
+        sellerZipCode: extractInventoryScalarValue(record.fields['Seller Zip Code']),
+        sellerLocation: extractInventoryScalarValue(record.fields['Seller Location']),
+        howDidYouHear: extractInventoryScalarValue(record.fields['How Did You Hear']),
+        originalOwner: extractInventoryScalarValue(record.fields['Original Owner']),
+        smokeExposure: extractInventoryScalarValue(record.fields['Smoke Exposure']),
       },
     };
   } catch (error) {
@@ -143,7 +168,9 @@ export async function loadManualIntakeFormOptionSets(): Promise<ManualIntakeOpti
 
     return OPTION_FIELD_NAMES.reduce<ManualIntakeOptionSet>((acc, fieldName) => {
       const field = fields.find((entry) => entry.name === fieldName);
-      acc[fieldName] = dedupeOptions((field?.options?.choices ?? []).map((choice) => choice.name));
+      const choices = (field?.options?.choices ?? []).map((choice) => choice.name);
+      const seedOptions = fieldName === 'Original Box' ? ORIGINAL_BOX_SEED_OPTIONS : [];
+      acc[fieldName] = dedupeOptions([...choices, ...seedOptions]);
       return acc;
     }, {
       Status: [],
@@ -153,6 +180,10 @@ export async function loadManualIntakeFormOptionSets(): Promise<ManualIntakeOpti
       Remote: [],
       'Power Cable': [],
       'Shipping Method': [],
+      'Seller Location': [],
+      'How Did You Hear': [],
+      'Original Owner': [],
+      'Smoke Exposure': [],
     });
   } catch (error) {
     logServiceError('manualIntakeForm', 'Error loading Manual Intake form option sets', error);
@@ -181,7 +212,7 @@ export async function submitManualIntakeForm(
 
   const baseFields = buildUsedGearIntakeBaseFields({
     pickUpNumber: values.pickUpNumber,
-    acquiredFrom: values.acquiredFrom,
+    acquiredFrom: [values.sellerFirstName, values.sellerLastName].filter(Boolean).join(' ').trim() || undefined,
     cost: costValue,
     customerCosmeticNotes: values.customerCosmeticNotes,
     customerFunctionalNotes: values.customerFunctionalNotes,
@@ -203,6 +234,13 @@ export async function submitManualIntakeForm(
     weight: values.weight,
     shippingDims: values.shippingDims,
     shippingMethod: values.shippingMethod,
+    sellerEmail: values.sellerEmail,
+    sellerPhone: values.sellerPhone,
+    sellerZipCode: values.sellerZipCode,
+    sellerLocation: values.sellerLocation,
+    howDidYouHear: values.howDidYouHear,
+    originalOwner: values.originalOwner,
+    smokeExposure: values.smokeExposure,
   });
   const intakeFields = baseFields;
 
