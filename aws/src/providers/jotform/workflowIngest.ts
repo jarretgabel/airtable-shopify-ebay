@@ -23,7 +23,7 @@ export interface JotFormWorkflowIngestResult {
   items: JotFormWorkflowIngestItemResult[];
 }
 
-interface WorkflowImageMetadataRecord {
+export interface WorkflowImageMetadataRecord {
   attachmentId?: string;
   url: string;
   filename: string;
@@ -61,7 +61,7 @@ function canRefreshPendingReview(record: AirtableRecord): boolean {
   return readStringField(record, 'Workflow Status') === 'Pending Review';
 }
 
-function parseWorkflowImageMetadata(raw: unknown): WorkflowImageMetadataRecord[] {
+export function parseWorkflowImageMetadata(raw: unknown): WorkflowImageMetadataRecord[] {
   if (typeof raw !== 'string' || !raw.trim()) {
     return [];
   }
@@ -97,7 +97,7 @@ function parseWorkflowImageMetadata(raw: unknown): WorkflowImageMetadataRecord[]
   }
 }
 
-function serializeWorkflowImageMetadata(records: WorkflowImageMetadataRecord[]): string {
+export function serializeWorkflowImageMetadata(records: WorkflowImageMetadataRecord[]): string {
   if (records.length === 0) {
     return '';
   }
@@ -108,7 +108,7 @@ function serializeWorkflowImageMetadata(records: WorkflowImageMetadataRecord[]):
   })));
 }
 
-function replaceIntakeImageMetadata(
+export function replaceIntakeImageMetadata(
   existingRecords: WorkflowImageMetadataRecord[],
   nextIntakeFiles: Array<{ id: string; url: string; filename: string }>,
 ): WorkflowImageMetadataRecord[] {
@@ -175,7 +175,7 @@ async function fetchRemoteFileAsArchivePayload(url: string, fallbackName: string
   };
 }
 
-async function archiveIntakeImagesForRecord(recordId: string, imageUrls: string[]): Promise<Array<{ id: string; url: string; filename: string }>> {
+export async function archiveIntakeImagesForRecord(recordId: string, imageUrls: string[]): Promise<Array<{ id: string; url: string; filename: string }>> {
   const archivedFiles: Array<{ id: string; url: string; filename: string }> = [];
 
   for (const [index, imageUrl] of imageUrls.entries()) {
