@@ -1,3 +1,6 @@
+# Project Reference Summary
+- [ ] Have you reviewed and updated `docs/PROJECT_REFERENCE_SUMMARY.md` for any changes to architecture, workflow, or patterns?
+- [ ] Have you updated or referenced all relevant instruction files and documentation?
 # Code Review Checklist
 
 Use this checklist for pull request reviews and self-review before posting PRs. Organize by concern area.

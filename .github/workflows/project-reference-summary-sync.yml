@@ -1,0 +1,34 @@
+# Project Reference Summary Sync Check
+
+This workflow ensures that any PR which modifies core architecture, documentation, or instruction files also updates the canonical docs/PROJECT_REFERENCE_SUMMARY.md reference file.
+
+name: Project Reference Summary Sync
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/**'
+      - 'src/services/userGuideContent.ts'
+      - 'src/components/tabs/workflowGuideContent.ts'
+      - 'docs/PROJECT_REFERENCE_SUMMARY.md'
+
+jobs:
+  check-summary-updated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for summary update
+        run: |
+          set -e
+          # List files changed in the PR
+          git fetch origin ${{ github.base_ref }}
+          git diff --name-only origin/${{ github.base_ref }} > changed_files.txt
+          cat changed_files.txt
+          # If any core doc/instruction file changed, PROJECT_REFERENCE_SUMMARY.md must also be changed
+          if grep -E 'docs/(architecture-conventions|forms/|used-gear-workflow/|migrations/|PROJECT_REFERENCE_SUMMARY)\\.md|.github/(copilot-instructions|engineering-rules|code-review-checklist|CONTRIBUTING)\\.md|src/services/userGuideContent\\.ts|src/components/tabs/workflowGuideContent\\.ts' changed_files.txt; then
+            if ! grep -q 'docs/PROJECT_REFERENCE_SUMMARY.md' changed_files.txt; then
+              echo 'ERROR: You must update docs/PROJECT_REFERENCE_SUMMARY.md when changing architecture, workflow, or instruction files.'
+              exit 1
+            fi
+          fi

@@ -1,3 +1,6 @@
+# Project Reference Summary
+
+All contributors and reviewers **must consult** `docs/PROJECT_REFERENCE_SUMMARY.md` before making or approving changes to architecture, workflow, UI, or major patterns. This file is the canonical source for project conventions, patterns, and workflow rules. Update it as part of any major refactor or feature addition.
 # Contributing Standards
 
 This project uses a strict implementation baseline so the app remains visually consistent and safe to evolve.

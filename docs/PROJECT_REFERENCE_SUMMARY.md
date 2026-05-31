@@ -1,5 +1,18 @@
 
+
 # Project Patterns & Functionality Reference
+
+> **See Also:**
+> - [Onboarding Guide](ONBOARDING_GUIDE.md)
+> - [How to Update Patterns](HOW_TO_UPDATE_PATTERNS.md)
+> - [How to Add Workflow or Form](HOW_TO_ADD_WORKFLOW_OR_FORM.md)
+> - [Troubleshooting Guide](TROUBLESHOOTING.md)
+> - [FAQ & Gotchas](GOTCHAS_AND_FAQ.md)
+> - [Architecture & Data Flow](ARCHITECTURE_AND_DATA_FLOW.md)
+> - [Decision Log](DECISION_LOG.md)
+> - [Examples](examples/)
+
+
 
 ## 1. Documentation & Instruction Sources
 - `.github/copilot-instructions.md`: Engineering, UI, and workflow rules for all contributors.

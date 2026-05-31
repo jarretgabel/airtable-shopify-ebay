@@ -1,0 +1,25 @@
+{
+  "id": "rec7w6hKc247kI086",
+  "fields": {
+    "Name": "Canon EOS R5 Camera Body",
+    "SKU": "C-EOSR5-001",
+    "Status": "Ready for Approval",
+    "Images": [
+      {
+        "url": "https://drive.google.com/uc?id=1abc...xyz",
+        "type": "gallery",
+        "stage": "listing",
+        "included": true
+      },
+      {
+        "url": "https://drive.google.com/uc?id=1def...uvw",
+        "type": "intake",
+        "stage": "intake",
+        "included": false
+      }
+    ],
+    "Price": 2499.99,
+    "Condition": "Excellent",
+    "Approval Notes": "All functions tested."
+  }
+}

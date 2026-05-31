@@ -2,9 +2,11 @@
 
 These are the default implementation rules for this repository.
 
+
 ## Documentation Overview
 
 **Quick Reference:**
+- [Project Reference Summary](../docs/PROJECT_REFERENCE_SUMMARY.md) — Canonical source for all project patterns, architecture, workflow, and conventions. **All contributors and AI agents must consult this file before making changes to architecture, workflow, or UI.**
 - [Naming & Organization](./naming-and-organization.md) — Component/hook/store naming, folder structure, file size guidelines
 - [State Management](./state-management.md) — Zustand store patterns, hook design, selector best practices
 - [Service Organization](./service-organization.md) — Service module structure, request builders, mappers, error handling

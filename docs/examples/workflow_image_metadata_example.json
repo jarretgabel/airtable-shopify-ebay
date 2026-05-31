@@ -1,0 +1,23 @@
+[
+  {
+    "url": "https://drive.google.com/uc?id=1abc...xyz",
+    "type": "gallery",
+    "stage": "listing",
+    "included": true,
+    "label": "Main Product Shot"
+  },
+  {
+    "url": "https://drive.google.com/uc?id=1def...uvw",
+    "type": "intake",
+    "stage": "intake",
+    "included": false,
+    "label": "Serial Number"
+  },
+  {
+    "url": "https://drive.google.com/uc?id=1ghi...rst",
+    "type": "testing",
+    "stage": "testing",
+    "included": true,
+    "label": "LCD Test"
+  }
+]

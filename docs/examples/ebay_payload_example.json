@@ -1,0 +1,16 @@
+{
+  "title": "Canon EOS R5 Camera Body",
+  "description": "Excellent condition — All functions tested.",
+  "price": 2499.99,
+  "condition": "Excellent",
+  "images": [
+    "https://drive.google.com/uc?id=1abc...xyz"
+  ],
+  "sku": "C-EOSR5-001",
+  "category_id": "31388",
+  "quantity": 1,
+  "shipping": {
+    "type": "Flat",
+    "cost": 25.00
+  }
+}
