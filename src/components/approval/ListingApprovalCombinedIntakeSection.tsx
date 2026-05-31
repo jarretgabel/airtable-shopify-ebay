@@ -1,10 +1,18 @@
+import { useMemo } from 'react';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
+import { WorkflowReferenceImagesPanel } from '@/components/tabs/WorkflowReferenceImagesPanel';
 import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
+import { parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 import {
   ListingApprovalTestingSection,
   resolveListingApprovalTestingSectionFields,
 } from '@/components/approval/listingApprovalTestingSection';
+import {
+  findWorkflowImageAttachmentFieldName,
+  findWorkflowImageMetadataFieldName,
+  parseWorkflowImageAttachments,
+} from '@/components/approval/workflowListingImageHelpers';
 import { CONDITION_FIELD } from '@/stores/approvalStore';
 import type { ListingApprovalCombinedIntakeSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
@@ -149,6 +157,22 @@ export function ListingApprovalCombinedIntakeSection({
   onOpenOperationalRecord,
   onOpenTestingForm,
 }: ListingApprovalCombinedIntakeSectionProps) {
+  const allOriginalFieldNames = useMemo(() => Object.keys(originalFieldValues), [originalFieldValues]);
+
+  const intakeImages = useMemo(() => {
+    const attachmentFieldName = findWorkflowImageAttachmentFieldName(allOriginalFieldNames);
+    const metadataFieldName = findWorkflowImageMetadataFieldName(allOriginalFieldNames);
+    const attachments = parseWorkflowImageAttachments(attachmentFieldName ? (originalFieldValues[attachmentFieldName] ?? '') : '');
+    if (attachments.length === 0) return [];
+    const metadata = parseWorkflowImageMetadata(metadataFieldName ? (originalFieldValues[metadataFieldName] ?? '') : '');
+    if (metadata.length === 0) return attachments;
+    const metadataByUrl = new Map(metadata.map((m) => [m.url.trim().toLowerCase(), m]));
+    return attachments.filter((a) => {
+      const meta = metadataByUrl.get(a.url.trim().toLowerCase());
+      return meta?.sourceStage === 'intake';
+    });
+  }, [allOriginalFieldNames, originalFieldValues]);
+
   const effectiveSharedTestingSourceFieldValues = {
     ...originalFieldValues,
     ...sharedTestingSourceFieldValues,
@@ -209,14 +233,14 @@ export function ListingApprovalCombinedIntakeSection({
       <EditIcon />
     </button>
   ) : null;
-  const hasSections = intakeSnapshotFields.length > 0 || displayedTestingFields.length > 0;
+  const hasSections = intakeSnapshotFields.length > 0 || displayedTestingFields.length > 0 || intakeImages.length > 0;
 
   if (!hasSections) return null;
 
   return (
     <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
       <div className="space-y-4">
-        {intakeSnapshotFields.length > 0 || displayedTestingFields.length > 0 ? (
+        {intakeSnapshotFields.length > 0 || displayedTestingFields.length > 0 || intakeImages.length > 0 ? (
           <IntakeSnapshotSection
             title="Intake Details"
             actions={workflowHeaderAction}
@@ -230,6 +254,11 @@ export function ListingApprovalCombinedIntakeSection({
               headerAction={testingHeaderAction}
               className="mt-4 border-t border-[var(--line)] pt-4"
               embedded
+            />
+            <WorkflowReferenceImagesPanel
+              title="Intake Photos"
+              description="Images captured during intake."
+              images={intakeImages}
             />
           </IntakeSnapshotSection>
         ) : null}

@@ -95,7 +95,7 @@ export function BodyHtmlPreview({
         className="w-full rounded-lg border border-[var(--line)] bg-white"
         style={{ height: `${iframeHeight}px`, overflow: 'hidden' }}
         srcDoc={sanitizedIframeDoc}
-        sandbox="allow-same-origin"
+        sandbox="allow-same-origin allow-scripts"
         scrolling="no"
         onLoad={(event) => {
           const iframe = event.currentTarget;

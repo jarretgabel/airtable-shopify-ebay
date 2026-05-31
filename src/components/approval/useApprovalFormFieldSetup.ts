@@ -126,11 +126,21 @@ export function useApprovalFormFieldSetup({
       const attachments = parseWorkflowImageAttachments(workflowImageAttachmentFieldName ? (originalFieldValues[workflowImageAttachmentFieldName] ?? '') : '');
       if (workflowImageMetadata.length === 0) return attachments;
 
+      const metadataByUrl = new Map(
+        workflowImageMetadata.map((record) => [record.url.trim().toLowerCase(), record] as const),
+      );
+
+      // Only include testing and photography images in the listing image selector
+      const listingAttachments = attachments.filter((attachment) => {
+        const meta = metadataByUrl.get(attachment.url.trim().toLowerCase());
+        return !meta || meta.sourceStage !== 'intake';
+      });
+
       const sortOrderByUrl = new Map(
         workflowImageMetadata.map((record) => [record.url.trim().toLowerCase(), record.sortOrder] as const),
       );
 
-      return [...attachments].sort((left, right) => {
+      return [...listingAttachments].sort((left, right) => {
         const leftOrder = sortOrderByUrl.get(left.url.trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
         const rightOrder = sortOrderByUrl.get(right.url.trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
         if (leftOrder !== rightOrder) return leftOrder - rightOrder;
@@ -146,7 +156,10 @@ export function useApprovalFormFieldSetup({
       shopifyImagePayloadFieldName ? (formValues[shopifyImagePayloadFieldName] ?? '') : '',
     );
     if (currentRows.length === 0) {
-      return buildWorkflowListingSelectionFromMetadata(workflowImageMetadata);
+      // Exclude intake images from the default listing selection
+      return buildWorkflowListingSelectionFromMetadata(
+        workflowImageMetadata.filter((m) => m.sourceStage !== 'intake'),
+      );
     }
 
     const attachmentLookup = new Map(

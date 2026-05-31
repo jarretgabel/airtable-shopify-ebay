@@ -54,6 +54,7 @@ export function ListingApprovalCombinedShopifySection({
   isShopifyPayloadPreviewContext,
   shopifyProductSetRequest,
 }: ListingApprovalCombinedShopifySectionProps) {
+  // Group advanced Shopify variant fields for separate rendering with clear labels
   const standardShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => !isShopifyAdvancedOptionField(fieldName));
   const advancedShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => isShopifyAdvancedOptionField(fieldName));
   const displayedShopifyBodyHtml = currentPageShopifyBodyHtml || combinedShopifyBodyHtmlValue;
@@ -101,7 +102,7 @@ export function ListingApprovalCombinedShopifySection({
 
         {advancedShopifyFieldNames.length > 0 && (
           <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
-            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Advanced Shopify Fields</summary>
+            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Advanced Shopify Variant Fields</summary>
             <div className="border-t border-[var(--line)] px-3 py-3">
               <ApprovalFormFields
                 recordId={selectedRecord.id}

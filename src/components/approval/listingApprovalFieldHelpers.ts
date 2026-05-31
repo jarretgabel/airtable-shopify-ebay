@@ -478,7 +478,13 @@ export function isWorkflowOnlyListingFieldName(fieldName: string): boolean {
     || compact === 'approvedat'
     || compact === 'approvedby'
     || compact === 'photographedat'
-    || compact === 'photographedby';
+    || compact === 'photographedby'
+    || normalized === 'jot form submission id'
+    || compact === 'jotformsubmissionid'
+    || normalized === 'workflow image metadata json'
+    || normalized === 'workflow image metadata'
+    || compact === 'workflowimagemetadatajson'
+    || compact === 'workflowimagemetadata';
 }
 
 export function isSystemManagedListingFieldName(fieldName: string): boolean {
@@ -514,6 +520,14 @@ export function isInternalReferenceListingFieldName(fieldName: string): boolean 
     || normalized === 'inventory notes'
     || normalized === 'service notes'
     || normalized === 'sku legacy backup'
+    || normalized === 'seller email'
+    || normalized === 'seller phone'
+    || normalized === 'seller zip code'
+    || normalized === 'seller location'
+    || normalized === 'how did you hear'
+    || normalized === 'mailing list opt in'
+    || normalized === 'original owner'
+    || normalized === 'smoke exposure'
     || compact === 'acquiredfrom'
     || compact === 'additionalitems'
     || compact === 'arrivaldate'
@@ -527,7 +541,15 @@ export function isInternalReferenceListingFieldName(fieldName: string): boolean 
     || compact === 'internalinclusionnotes'
     || compact === 'inventorynotes'
     || compact === 'servicenotes'
-    || compact === 'skulegacybackup';
+    || compact === 'skulegacybackup'
+    || compact === 'selleremail'
+    || compact === 'sellerphone'
+    || compact === 'sellerzipcode'
+    || compact === 'sellerlocation'
+    || compact === 'howdidyouhear'
+    || compact === 'mailinglistoptin'
+    || compact === 'originalowner'
+    || compact === 'smokeexposure';
 }
 
 function isNonListingRecordMetadataFieldName(fieldName: string): boolean {

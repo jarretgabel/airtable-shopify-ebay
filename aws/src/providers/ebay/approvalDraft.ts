@@ -1,6 +1,7 @@
 import { parseCategoryIds, parseCategoryIdsFromFields } from './approvalCategories.js';
 import { collectImageUrlsFromFields, dedupeCaseInsensitive, parseImageUrls } from './approvalImages.js';
 import { getField, getRawField, parseInteger, parseKeyFeatureEntries, type ApprovalFieldMap } from './approvalShared.js';
+import { getIncludedWorkflowImages, parseWorkflowImageMetadata } from '../../shared/workflowImages.js';
 
 const EBAY_CONDITION_ENUMS = new Set([
   'NEW',
@@ -121,9 +122,17 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
   const condition = normalizeEbayCondition(getField(fields, ['__Condition__', 'Item Condition', 'Condition', 'eBay Inventory Condition']));
   const conditionDescription = getField(fields, ['eBay Inventory Condition Description']);
   const quantity = parseInteger(getField(fields, ['eBay Inventory Ship To Location Quantity', 'Quantity', 'Qty']), 1);
+  const workflowImageUrls = getIncludedWorkflowImages(parseWorkflowImageMetadata(getRawField(fields, [
+    'Workflow Image Metadata JSON',
+    'Workflow Image Metadata',
+    'workflow_image_metadata_json',
+    'workflow_image_metadata',
+  ]))).map((record) => record.url);
   const imageUrls = parseImageUrls(getRawField(fields, ['eBay Inventory Product Image URLs JSON', 'eBay Inventory Product ImageURLs JSON', 'eBay Inventory Product Image URLs', 'eBay Inventory Product Image URL', 'eBay Inventory Product Image URL 1', 'eBay Inventory Product Image URL 2', 'eBay Inventory Product Image URL 3', 'ebay_inventory_product_imageurls_json', 'ebay_inventory_product_imageurls', 'ebay_inventory_product_imageurl', 'ebay_inventory_product_imageurl_1', 'ebay_inventory_product_imageurl_2', 'ebay_inventory_product_imageurl_3', 'Photo URLs (comma-separated)', 'Photo URLs', 'Images (comma-separated)', 'photo_urls', 'Shopify REST Images JSON', 'shopify_rest_images_json', 'Shopify Images JSON', 'shopify_images_json', 'Images', 'images', 'Image URL', 'Image URLs', 'image_url', 'image_urls']));
   const fallbackImageUrls = collectImageUrlsFromFields(fields);
-  const resolvedImageUrls = dedupeCaseInsensitive([...imageUrls, ...fallbackImageUrls]);
+  const resolvedImageUrls = workflowImageUrls.length > 0
+    ? dedupeCaseInsensitive(workflowImageUrls)
+    : dedupeCaseInsensitive([...imageUrls, ...fallbackImageUrls]);
   const marketplaceId = getField(fields, ['eBay Offer Marketplace ID']) || 'EBAY_US';
   const format = getField(fields, ['eBay Offer Format']) || 'FIXED_PRICE';
   const categoryIdsFromCategoriesField = parseCategoryIds(getRawField(fields, ['Categories', 'categories']));

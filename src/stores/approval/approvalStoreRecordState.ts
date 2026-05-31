@@ -73,6 +73,17 @@ export function createHydrateFormAction(set: ApprovalStoreSet): ApprovalStore['h
       nextKinds[CONDITION_FIELD] = 'text';
     }
 
+    for (const fieldName of allFieldNames) {
+      const n = fieldName.trim().toLowerCase().replace(/\s+/g, ' ');
+      const compact = n.replace(/[^a-z0-9]/g, '');
+      const isFulfillmentField = (n.includes('variant') || compact.includes('variant'))
+        && (n.includes('fulfillment') || compact.includes('fulfillment'));
+      // Always default fulfillment_service to 'manual' for all variant fulfillment fields
+      if (isFulfillmentField) {
+        nextValues[fieldName] = 'manual';
+      }
+    }
+
     applyWorkflowListingPrefills(record.fields, nextValues, nextKinds);
 
     const collectionIds = buildShopifyCollectionIdsFromApprovalFields(record.fields);

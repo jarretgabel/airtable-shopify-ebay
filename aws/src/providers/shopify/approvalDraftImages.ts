@@ -1,5 +1,6 @@
 import type { ApprovalFieldMap, ShopifyProduct } from './approvalDraftTypes.js';
 import { getField, getRawField, parseInteger, parseJsonArray } from './approvalDraftFieldUtils.js';
+import { getIncludedWorkflowImages, parseWorkflowImageMetadata } from '../../shared/workflowImages.js';
 
 function parseImageAltTextList(raw: unknown): string[] {
   if (Array.isArray(raw)) {
@@ -44,6 +45,20 @@ function getStructuredImageSource(image: Record<string, unknown>): string {
 }
 
 export function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] | undefined {
+  const workflowMetadata = getIncludedWorkflowImages(parseWorkflowImageMetadata(getRawField(fields, [
+    'Workflow Image Metadata JSON',
+    'Workflow Image Metadata',
+    'workflow_image_metadata_json',
+    'workflow_image_metadata',
+  ])));
+  if (workflowMetadata.length > 0) {
+    return workflowMetadata.map((record, index) => ({
+      src: record.url,
+      alt: record.alt,
+      position: index + 1,
+    }));
+  }
+
   const imageAltTexts = parseImageAltTextList(getRawField(fields, ['Images Alt Text', 'Images Alt Text (comma separated)', 'Images Alt Text (comma-separated)', 'Image Alt Text', 'images_alt_text', 'image_alt_text']));
   const rawImages = getRawField(fields, ['Shopify REST Images JSON', 'Shopify Images JSON', 'shopify_rest_images_json', 'shopify_images_json', 'Shopify REST Images', 'Shopify Images', 'shopify_rest_images', 'shopify_images', 'Images', 'Images (comma separated)', 'Images (comma-separated)', 'images', 'Image URL', 'Image URLs', 'Image-URL', 'Image-URLs', 'image_url', 'image_urls']);
   const imagesJson = parseJsonArray<unknown>(rawImages);

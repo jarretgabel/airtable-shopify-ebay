@@ -68,7 +68,8 @@
     "test": "npm run test:web && npm run test:aws",
     "test:web": "vitest run",
     "test:aws": "node --import tsx --import ./tests/unit/aws/network-guard.ts --test tests/unit/aws/**/*.test.ts",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "sync-drive-images": "tsx scripts/sync_drive_images_to_airtable.ts"
   },
   "dependencies": {
     "axios": "^1.6.0",
