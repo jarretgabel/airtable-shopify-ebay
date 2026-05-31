@@ -1,4 +1,9 @@
+
 # Copilot Senior Engineer Principles
+
+## Purpose & Scope
+
+This document defines the senior engineering standards for all code, documentation, and reviews in this repository. It applies to all contributors and AI agents. Follow these principles for every feature, bug fix, refactor, or documentation update to ensure code quality, maintainability, and team alignment.
 
 **Audience:** All AI agents and contributors. This file encodes senior-level engineering standards for this codebase. Always follow these rules when coding, reviewing, or generating documentation.
 
