@@ -6,6 +6,7 @@ import { useAppNavigationHandlers } from '@/app/useAppNavigationHandlers';
 import type { AppRouteState } from '@/app/useAppRouteState';
 import { useAppShellControls } from '@/app/useAppShellControls';
 import { useActionGuidanceNotifications } from '@/app/useActionGuidanceNotifications';
+import { useEbayListingNotifications } from '@/app/useEbayListingNotifications';
 import { useUsedGearWorkflowNotifications } from '@/app/useUsedGearWorkflowNotifications';
 import { displayValue, hasValue, recordTitle } from '@/app/appNavigation';
 import { AppFrame } from '@/components/app/AppFrame';
@@ -156,6 +157,13 @@ export function AuthenticatedAppShell({
     spError: shopify.error,
     jfError: jotform.error,
     ebayError: ebay.error,
+  });
+
+  useEbayListingNotifications({
+    enabled: appDataEnabled,
+    canAccessPage: canAccessPage as (tab: Tab) => boolean,
+    offers: ebay.offers,
+    navigateToEbayRecord,
   });
 
   useUsedGearWorkflowNotifications({

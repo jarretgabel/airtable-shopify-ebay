@@ -110,6 +110,7 @@ const USED_GEAR_WORKFLOW_RECORD_FIELDS = [
   'Stale Recovery Status',
   'Stale Recovery Notes',
   'Stale Recovery Updated At',
+  'eBay Sync Locked',
   'Relisted At',
   'Sold Ready To Ship At',
   'Shipment Follow-Through Notes',
@@ -146,6 +147,7 @@ const SOLD_READY_TO_SHIP_STATUS = 'Sold - Ready to Ship';
 const SHIPPED_STATUS = 'Shipped';
 const UNQUALIFIED_STATUS = 'Unqualified';
 const ACTIVE_TRASH_STATUS = 'Active Trash';
+const EBAY_SYNC_LOCK_FIELD = 'eBay Sync Locked';
 
 const USED_GEAR_PARKING_LOT_STATUSES = new Set([
   PENDING_REVIEW_STATUS,
@@ -1116,6 +1118,20 @@ export async function requalifyTrashRecord(
 
 export async function permanentlyDeleteTrashRecord(recordId: string): Promise<void> {
   await deleteConfiguredRecord('used-gear-workflow', recordId);
+}
+
+export function isUsedGearWorkflowEbaySyncLocked(fields: Record<string, unknown>): boolean {
+  const value = fields[EBAY_SYNC_LOCK_FIELD];
+  if (value === true || value === 1) {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'locked';
+  }
+
+  return false;
 }
 
 export async function saveUsedGearWorkflowStageSignoff(

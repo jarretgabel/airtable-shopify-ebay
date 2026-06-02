@@ -58,6 +58,7 @@ const ROUTES = [
   ['POST', '/api/shopify/products/{productId}/category', 'handlers/shopify/updateProductCategory.js', 'handler'],
   ['POST', '/api/shopify/images', 'handlers/shopify/uploadImage.js', 'handler'],
   ['POST', '/api/hooks/shopify/{topic}', 'handlers/shopify/receiveWebhook.js', 'handler'],
+  ['POST', '/api/hooks/ebay/listings', 'handlers/ebay/receiveWebhook.js', 'handler'],
   ['GET', '/api/jotform/forms', 'handlers/jotform/getForms.js', 'handler'],
   ['GET', '/api/jotform/forms/{formId}/submissions', 'handlers/jotform/getFormSubmissions.js', 'handler'],
   ['POST', '/api/hooks/jotform/submissions', 'handlers/jotform/ingestSubmissionWebhook.js', 'handler'],
@@ -166,6 +167,10 @@ function setAwsEnv() {
   process.env.EBAY_PAYMENT_POLICY_ID = getOptionalEnv(mergedEnv, 'VITE_EBAY_PAYMENT_POLICY_ID');
   process.env.EBAY_RETURN_POLICY_ID = getOptionalEnv(mergedEnv, 'VITE_EBAY_RETURN_POLICY_ID');
   process.env.EBAY_LISTING_API = getOptionalEnv(mergedEnv, 'VITE_EBAY_LISTING_API');
+  process.env.EBAY_WEBHOOK_SECRET = getOptionalEnv(mergedEnv, 'EBAY_WEBHOOK_SECRET')
+    || getOptionalEnv(mergedEnv, 'VITE_EBAY_WEBHOOK_SECRET');
+  process.env.EBAY_WEBHOOK_BASE_URL = getOptionalEnv(mergedEnv, 'EBAY_WEBHOOK_BASE_URL')
+    || getOptionalEnv(mergedEnv, 'VITE_EBAY_WEBHOOK_BASE_URL');
 
   process.env.GOOGLE_GMAIL_ACCESS_TOKEN = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_GMAIL_ACCESS_TOKEN');
   process.env.GOOGLE_GMAIL_FROM_EMAIL = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_GMAIL_FROM_EMAIL');

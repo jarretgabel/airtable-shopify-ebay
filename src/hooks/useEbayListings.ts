@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import type { EbayInventoryItem, EbayOffer, EbayPublishedListing, EbayRuntimeConfig } from '@/services/ebay/types';
 import { useEbayListingsStore } from '@/stores/ebay/ebayListingsStore';
 
 export type { EbayPublishedListing } from '@/services/ebay/types';
+
+const EBAY_POLL_INTERVAL_MS = 60_000;
 
 export interface EbayListingsState {
   authenticated: boolean;
@@ -48,11 +50,35 @@ export function useEbayListings(enabled = true): EbayListingsState {
     bootstrap,
     refetch,
   } = useEbayListingsStore(selector);
+  const pollTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setEnabled(enabled);
     void bootstrap(enabled, false);
   }, [enabled, setEnabled, bootstrap]);
+
+  useEffect(() => {
+    if (!enabled) {
+      if (pollTimerRef.current !== null) {
+        window.clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+      return;
+    }
+
+    const tick = () => {
+      void refetch(true);
+    };
+
+    pollTimerRef.current = window.setInterval(tick, EBAY_POLL_INTERVAL_MS);
+
+    return () => {
+      if (pollTimerRef.current !== null) {
+        window.clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, [enabled, refetch]);
 
   return {
     authenticated,

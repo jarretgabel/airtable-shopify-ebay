@@ -89,6 +89,13 @@ Parameters:
   EbayListingApi:
     Type: String
     Default: inventory
+  EbayWebhookSecret:
+    Type: String
+    NoEcho: true
+    Default: ''
+  EbayWebhookBaseUrl:
+    Type: String
+    Default: ''
   JotformApiKey:
     Type: String
     NoEcho: true
@@ -190,6 +197,8 @@ Globals:
         EBAY_PAYMENT_POLICY_ID: !Ref EbayPaymentPolicyId
         EBAY_RETURN_POLICY_ID: !Ref EbayReturnPolicyId
         EBAY_LISTING_API: !Ref EbayListingApi
+        EBAY_WEBHOOK_SECRET: !Ref EbayWebhookSecret
+        EBAY_WEBHOOK_BASE_URL: !Ref EbayWebhookBaseUrl
         JOTFORM_API_KEY: !Ref JotformApiKey
         GITHUB_TOKEN: !If
           - HasGithubToken
@@ -633,6 +642,21 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: GET
             Path: /api/ebay/dashboard-snapshot
+
+  EbayReceiveWebhookFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/receiveWebhook.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/hooks/ebay/listings
 
   EbayCreateSampleListingFunction:
     Type: AWS::Serverless::Function
