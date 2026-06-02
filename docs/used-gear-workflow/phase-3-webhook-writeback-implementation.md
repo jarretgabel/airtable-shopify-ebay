@@ -1,8 +1,8 @@
 # Phase 3: Webhook Writeback Implementation Summary
 
-## Status: ✅ Complete
+## Status: ✅ Complete For Phase 3 Scope
 
-All Phase 3 webhook writeback goals have been implemented and tested.
+Phase 3 webhook writeback is implemented and tested for order matching, audit metadata, automatic `Cancelled` / refund outcome writes, refund-detail enrichment when supported payload data is available, and conservative Shopify return handling. Broader dispute/chargeback resolution and eBay return lifecycle automation remain out of scope for this phase.
 
 ## Completed Deliverables
 
@@ -19,11 +19,17 @@ All Phase 3 webhook writeback goals have been implemented and tested.
   - `Shopify Order Name` — Human-readable ref (e.g., `#1001`)
 - Post-sale outcome writes:
   - `ORDERS_CANCELLED` → `Post-Sale Outcome: "Cancelled"` + timestamp
-  - `REFUNDS_CREATE` → `Post-Sale Outcome: "Refunded"` + timestamp
+  - `REFUNDS_CREATE` → `Post-Sale Outcome: "Refunded"` or `"Partial Refund"` when the refund amount is below the row's `Paid Amount`
+  - `REFUNDS_CREATE` also fills `Refund Amount` / `Refund Reason` when the webhook payload provides those values and the row does not already contain manual entries
+  - `RETURNS_PROCESS` → `Post-Sale Outcome: "Returned"` + `Return Received At` when no earlier post-sale outcome exists
+  - `DISPUTES_CREATE` / `DISPUTES_UPDATE` seed `Post-Sale Notes` when blank, but do not force a post-sale outcome
 - Audit trail fields:
   - `Shopify Last Webhook Event ID` — Idempotency key (x-shopify-event-id)
   - `Shopify Last Webhook At` — ISO 8601 timestamp
   - `Shopify Last Webhook Event` — Webhook topic audit
+- Cross-channel coordination:
+  - `ORDERS_PAID` attempts to close the matching eBay listing
+  - `ORDERS_CANCELLED` and `REFUNDS_CREATE` do not trigger the eBay close path
 
 **Guards Implemented:**
 - ✅ Idempotency guard: `x-shopify-event-id` prevents duplicate writes on webhook retries
@@ -47,10 +53,14 @@ All Phase 3 webhook writeback goals have been implemented and tested.
   - eBay has no stable event ID, so timestamp is primary dedup key
 - Post-sale outcome writes for order events:
   - `order.cancelled` → `Post-Sale Outcome: "Cancelled"` + timestamp
-  - `order.refunded` → `Post-Sale Outcome: "Refunded"` + timestamp
+  - `order.refunded` → `Post-Sale Outcome: "Refunded"` or `"Partial Refund"` when the refund amount is below the row's `Paid Amount`
+  - `order.refunded` also fills `Refund Amount` / `Refund Reason` when the payload provides those values and the row does not already contain manual entries
   - Non-order events (e.g., `listing.updated`) do NOT write outcomes
 - Precedence rule: Existing `Post-Sale Outcome` is never overwritten
 - Relist block: `Restock Disposition` is explicitly never written
+- Cross-channel coordination:
+  - Sale-confirming eBay order events currently mapped in the handler (`order.created`) can attempt to close the matching Shopify product
+  - Non-order listing events do not trigger the Shopify close path
 
 **Response Patterns:**
 - Matched & written: `{received:true, skipped:false, ...}`
@@ -72,12 +82,19 @@ All 6 fields marked for user approval in the approval checklist (awaiting user c
 
 ### 4. Comprehensive Test Coverage ✅
 
-#### Shopify Handler Tests (11 new test cases)
+#### Shopify Handler Tests (17 test cases)
 **File:** `tests/unit/aws/src/handlers/shopify/receiveWebhook.test.ts`
 
 - ✅ Writes orders/paid event and persists order identifiers
+- ✅ Triggers cross-channel eBay close for `orders/paid`
 - ✅ Writes ORDERS_CANCELLED outcome when not already set
 - ✅ Writes REFUNDS_CREATE outcome when not already set
+- ✅ Fills `Refund Amount` / `Refund Reason` from Shopify refund payloads
+- ✅ Infers `Partial Refund` when refund amount is below `Paid Amount`
+- ✅ Preserves existing manual refund fields when webhook enrichment arrives
+- ✅ Writes `Returned` / `Return Received At` from `returns/process` when no prior outcome exists
+- ✅ Accepts dispute webhooks and seeds notes without forcing a post-sale outcome
+- ✅ Does not trigger cross-channel eBay close for refund webhooks
 - ✅ Does not overwrite existing Post-Sale Outcome (precedence guard)
 - ✅ Skips write when sync lock is enabled
 - ✅ Skips duplicate event using idempotency key
@@ -89,15 +106,21 @@ All 6 fields marked for user approval in the approval checklist (awaiting user c
 
 **Status:** ✅ All 11 tests passing
 
-#### eBay Handler Tests (7 new test cases)
+#### eBay Handler Tests (13 test cases)
 **File:** `tests/unit/aws/src/handlers/ebay/receiveWebhook.test.ts`
 
 - ✅ Skips duplicate webhook events using timestamp+eventType dedup guard
 - ✅ Writes order.cancelled post-sale outcome when not already set
 - ✅ Writes order.refunded post-sale outcome when not already set
+- ✅ Fills `Refund Amount` / `Refund Reason` from eBay refund payloads
+- ✅ Infers `Partial Refund` when refund amount is below `Paid Amount`
+- ✅ Preserves existing manual refund fields when webhook enrichment arrives
+- ✅ Triggers cross-channel Shopify close for `order.*` events
+- ✅ Restricts cross-channel Shopify close away from refund/cancel order events
 - ✅ Does not overwrite existing Post-Sale Outcome (precedence guard)
 - ✅ Never writes Restock Disposition (relist block)
 - ✅ Does not write post-sale outcome for non-order events
+- ✅ Does not trigger cross-channel Shopify close for non-order events
 - ✅ (Existing test) Updates matched record when webhook arrives unlocked
 - ✅ (Existing test) Skips when sync lock is enabled
 
@@ -128,6 +151,12 @@ Per user approval from Phase 1/2, the following remain unchanged:
 - ✅ No new top-level post-sale page
 - ✅ Returned/refunded items do not auto-relist (relist block implemented)
 - ✅ Multi-event history is out of scope (single outcome write per row)
+
+## Current Boundary (Still Manual Today)
+
+- `Refund Amount` and `Refund Reason` are only auto-filled when the payload actually includes them; otherwise operators still complete them manually.
+- Shopify disputes are audit/note enrichment only; they do not auto-map to a post-sale outcome because the current approved model has no dispute-specific outcome value.
+- eBay return/dispute/chargeback webhook topics are still not part of the current verified automation boundary.
 
 ## Next Steps for User
 

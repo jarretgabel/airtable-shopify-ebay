@@ -92,6 +92,42 @@ test('shopify webhook handler writes orders/paid event and persists order identi
   assert.match(response.body || '', /"skipped":false/);
 });
 
+test('shopify webhook handler triggers cross-channel eBay close only for ORDERS_PAID', async () => {
+  const closeCalls: Array<{ recordId: string; fields: Record<string, unknown> }> = [];
+
+  const handler = createHandler({
+    getWebhookSecret: () => 'test-secret',
+    getConfiguredRecords: async () => ([
+      {
+        id: 'rec-close',
+        fields: {
+          'Shopify Product ID': '9876543210',
+          'Post-Sale Outcome': '',
+        },
+      },
+    ] as never),
+    updateConfiguredRecord: async (_source, recordId, fields) => ({ id: recordId, createdTime: 'now', fields } as never),
+    closeEbayListingWhenSoldOnShopify: async (recordId, fields) => {
+      closeCalls.push({ recordId, fields });
+      return { success: true, message: 'closed eBay listing' };
+    },
+  });
+
+  const response = await handler(createEvent('orders-paid', 'orders/paid', {
+    id: 12345,
+    order_id: 4700987949,
+    name: '#1001',
+    processed_at: '2025-06-01T12:00:00Z',
+    line_items: [{ product_id: 9876543210 }],
+  }));
+  if (typeof response === 'string') throw new Error('Expected structured response');
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(closeCalls.length, 1);
+  assert.equal(closeCalls[0]?.recordId, 'rec-close');
+  assert.equal(closeCalls[0]?.fields['Shopify Order ID'], '4700987949');
+});
+
 test('shopify webhook handler writes ORDERS_CANCELLED outcome when not already set', async () => {
   let capturedFields: Record<string, unknown> | null = null;
 
@@ -150,12 +186,203 @@ test('shopify webhook handler writes REFUNDS_CREATE outcome when not already set
     order_id: 4700987949,
     order_name: '#1001',
     created_at: '2025-06-02T11:00:00Z',
+    note: 'Buyer reported transit damage',
+    transactions: [{ amount: '29.99', status: 'success' }],
   }));
   if (typeof response === 'string') throw new Error('Expected structured response');
 
   assert.equal(response.statusCode, 200);
   assert.equal(capturedFields?.['Post-Sale Outcome'], 'Refunded');
   assert.equal(capturedFields?.['Post-Sale Outcome At'], '2025-06-02T11:00:00Z');
+  assert.equal(capturedFields?.['Refund Amount'], 29.99);
+  assert.equal(capturedFields?.['Refund Reason'], 'Buyer reported transit damage');
+});
+
+test('shopify refund webhook infers Partial Refund when refund amount is below Paid Amount', async () => {
+  let capturedFields: Record<string, unknown> | null = null;
+
+  const handler = createHandler({
+    getWebhookSecret: () => 'test-secret',
+    getConfiguredRecords: async () => ([
+      {
+        id: 'rec-partial-refund',
+        fields: {
+          'Shopify Order ID': '4700987949',
+          'Paid Amount': 150,
+          'Post-Sale Outcome': '',
+        },
+      },
+    ] as never),
+    updateConfiguredRecord: async (_source, _recordId, fields) => {
+      capturedFields = fields;
+      return { id: _recordId, createdTime: 'now', fields } as never;
+    },
+  });
+
+  const response = await handler(createEvent('refunds-create', 'refunds/create', {
+    id: 78,
+    order_id: 4700987949,
+    order_name: '#1002',
+    created_at: '2025-06-02T11:15:00Z',
+    transactions: [{ amount: '20', status: 'success' }],
+    note: 'Partial price adjustment after delivery',
+  }));
+  if (typeof response === 'string') throw new Error('Expected structured response');
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(capturedFields?.['Post-Sale Outcome'], 'Partial Refund');
+  assert.equal(capturedFields?.['Refund Amount'], 20);
+  assert.equal(capturedFields?.['Refund Reason'], 'Partial price adjustment after delivery');
+});
+
+test('shopify refund webhook preserves manual refund fields when they already exist', async () => {
+  let capturedFields: Record<string, unknown> | null = null;
+
+  const handler = createHandler({
+    getWebhookSecret: () => 'test-secret',
+    getConfiguredRecords: async () => ([
+      {
+        id: 'rec-manual-refund-fields',
+        fields: {
+          'Shopify Order ID': '4700987949',
+          'Post-Sale Outcome': '',
+          'Refund Amount': 15,
+          'Refund Reason': 'Manual staff note',
+        },
+      },
+    ] as never),
+    updateConfiguredRecord: async (_source, _recordId, fields) => {
+      capturedFields = fields;
+      return { id: _recordId, createdTime: 'now', fields } as never;
+    },
+  });
+
+  const response = await handler(createEvent('refunds-create', 'refunds/create', {
+    id: 79,
+    order_id: 4700987949,
+    order_name: '#1003',
+    created_at: '2025-06-02T11:20:00Z',
+    transactions: [{ amount: '29.99', status: 'success' }],
+    note: 'Webhook refund reason',
+  }));
+  if (typeof response === 'string') throw new Error('Expected structured response');
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(capturedFields?.['Refund Amount'], undefined);
+  assert.equal(capturedFields?.['Refund Reason'], undefined);
+});
+
+test('shopify webhook handler writes RETURNS_PROCESS as Returned when no outcome exists yet', async () => {
+  let capturedFields: Record<string, unknown> | null = null;
+
+  const handler = createHandler({
+    getWebhookSecret: () => 'test-secret',
+    getConfiguredRecords: async () => ([
+      {
+        id: 'rec-returned',
+        fields: {
+          'Shopify Order ID': '4700987949',
+          'Post-Sale Outcome': '',
+          'Return Received At': '',
+        },
+      },
+    ] as never),
+    updateConfiguredRecord: async (_source, _recordId, fields) => {
+      capturedFields = fields;
+      return { id: _recordId, createdTime: 'now', fields } as never;
+    },
+  });
+
+  const response = await handler(createEvent('returns-process', 'returns/process', {
+    id: 'gid://shopify/Return/123',
+    name: 'R-1001',
+    order: {
+      id: 'gid://shopify/Order/4700987949',
+    },
+    status: 'processed',
+    closed_at: '2026-06-02T12:30:00Z',
+  }));
+  if (typeof response === 'string') throw new Error('Expected structured response');
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(capturedFields?.['Post-Sale Outcome'], 'Returned');
+  assert.equal(capturedFields?.['Post-Sale Outcome At'], '2026-06-02T12:30:00Z');
+  assert.equal(capturedFields?.['Return Received At'], '2026-06-02T12:30:00Z');
+  assert.equal(capturedFields?.['Shopify Last Webhook Event'], 'returns/process');
+});
+
+test('shopify dispute webhooks record notes without forcing a post-sale outcome', async () => {
+  let capturedFields: Record<string, unknown> | null = null;
+
+  const handler = createHandler({
+    getWebhookSecret: () => 'test-secret',
+    getConfiguredRecords: async () => ([
+      {
+        id: 'rec-dispute',
+        fields: {
+          'Shopify Order ID': '4700987949',
+          'Post-Sale Outcome': '',
+          'Post-Sale Notes': '',
+        },
+      },
+    ] as never),
+    updateConfiguredRecord: async (_source, _recordId, fields) => {
+      capturedFields = fields;
+      return { id: _recordId, createdTime: 'now', fields } as never;
+    },
+  });
+
+  const response = await handler(createEvent('disputes-create', 'disputes/create', {
+    id: 991,
+    order: {
+      id: 'gid://shopify/Order/4700987949',
+    },
+    type: 'chargeback',
+    status: 'needs_response',
+    reason: 'fraudulent',
+    amount: '100.00',
+    currency: 'USD',
+    initiated_at: '2026-06-02T13:00:00Z',
+  }));
+  if (typeof response === 'string') throw new Error('Expected structured response');
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(capturedFields?.['Post-Sale Outcome'], undefined);
+  assert.equal(capturedFields?.['Post-Sale Notes'], 'Shopify dispute chargeback (needs_response) - fraudulent for 100.00 USD');
+  assert.equal(capturedFields?.['Shopify Last Webhook Event'], 'disputes/create');
+});
+
+test('shopify webhook handler does not trigger cross-channel eBay close for refund webhooks', async () => {
+  let closeCallCount = 0;
+
+  const handler = createHandler({
+    getWebhookSecret: () => 'test-secret',
+    getConfiguredRecords: async () => ([
+      {
+        id: 'rec-refund',
+        fields: {
+          'Shopify Order ID': '4700987949',
+          'Post-Sale Outcome': '',
+        },
+      },
+    ] as never),
+    updateConfiguredRecord: async (_source, recordId, fields) => ({ id: recordId, createdTime: 'now', fields } as never),
+    closeEbayListingWhenSoldOnShopify: async () => {
+      closeCallCount += 1;
+      return { success: true, message: 'should not run' };
+    },
+  });
+
+  const response = await handler(createEvent('refunds-create', 'refunds/create', {
+    id: 77,
+    order_id: 4700987949,
+    order_name: '#1001',
+    created_at: '2025-06-02T11:00:00Z',
+  }));
+  if (typeof response === 'string') throw new Error('Expected structured response');
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(closeCallCount, 0);
 });
 
 test('shopify webhook handler does not overwrite existing Post-Sale Outcome (precedence)', async () => {

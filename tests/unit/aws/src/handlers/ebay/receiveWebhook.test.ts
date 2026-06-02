@@ -212,11 +212,165 @@ test('writes order.refunded post-sale outcome when not already set', async () =>
     listingId: '5555555555',
     sku: 'SKU-5',
     occurredAt: '2026-06-02T11:00:00.000Z',
+    refundAmount: '42.50',
+    refundReason: 'Transit damage',
   }));
 
   assert.equal(response.statusCode, 200);
   assert.equal(capturedFields?.['Post-Sale Outcome'], 'Refunded');
   assert.equal(capturedFields?.['Post-Sale Outcome At'], '2026-06-02T11:00:00.000Z');
+  assert.equal(capturedFields?.['Refund Amount'], 42.5);
+  assert.equal(capturedFields?.['Refund Reason'], 'Transit damage');
+});
+
+test('infers Partial Refund for eBay refund events when refund amount is below Paid Amount', async () => {
+  let capturedFields: Record<string, unknown> | null = null;
+
+  const handler = createHandler({
+    getWebhookSecret: () => undefined,
+    getConfiguredRecords: async () => ([
+      {
+        id: 'rec-ebay-partial',
+        fields: {
+          SKU: 'SKU-9',
+          'eBay Listing ID': '9999999999',
+          'Paid Amount': 100,
+          'Post-Sale Outcome': '',
+        },
+      },
+    ] as never),
+    updateConfiguredRecord: async (_source, _recordId, fields) => {
+      capturedFields = fields;
+      return { id: _recordId, createdTime: 'now', fields } as never;
+    },
+  });
+
+  const response = await handler(createEvent({
+    eventType: 'order.refunded',
+    listingId: '9999999999',
+    sku: 'SKU-9',
+    occurredAt: '2026-06-02T11:10:00.000Z',
+    refundAmount: '15',
+    refundReason: 'Partial goodwill adjustment',
+  }));
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(capturedFields?.['Post-Sale Outcome'], 'Partial Refund');
+  assert.equal(capturedFields?.['Refund Amount'], 15);
+  assert.equal(capturedFields?.['Refund Reason'], 'Partial goodwill adjustment');
+});
+
+test('preserves manual refund fields when eBay refund details already exist', async () => {
+  let capturedFields: Record<string, unknown> | null = null;
+
+  const handler = createHandler({
+    getWebhookSecret: () => undefined,
+    getConfiguredRecords: async () => ([
+      {
+        id: 'rec-ebay-manual-fields',
+        fields: {
+          SKU: 'SKU-10',
+          'eBay Listing ID': '1010101010',
+          'Post-Sale Outcome': '',
+          'Refund Amount': 9,
+          'Refund Reason': 'Manual override',
+        },
+      },
+    ] as never),
+    updateConfiguredRecord: async (_source, _recordId, fields) => {
+      capturedFields = fields;
+      return { id: _recordId, createdTime: 'now', fields } as never;
+    },
+  });
+
+  const response = await handler(createEvent({
+    eventType: 'order.refunded',
+    listingId: '1010101010',
+    sku: 'SKU-10',
+    occurredAt: '2026-06-02T11:12:00.000Z',
+    refundAmount: '12',
+    refundReason: 'Webhook reason',
+  }));
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(capturedFields?.['Refund Amount'], undefined);
+  assert.equal(capturedFields?.['Refund Reason'], undefined);
+});
+
+test('triggers cross-channel Shopify close for sale-confirming eBay order events', async () => {
+  const closeCalls: Array<{ recordId: string; fields: Record<string, unknown> }> = [];
+
+  const handler = createHandler({
+    getWebhookSecret: () => undefined,
+    getConfiguredRecords: async () => ([
+      {
+        id: 'rec-cross-channel',
+        fields: {
+          SKU: 'SKU-11',
+          'eBay Listing ID': '1111111111',
+          'Post-Sale Outcome': '',
+        },
+      },
+    ] as never),
+    updateConfiguredRecord: async (_source, recordId, fields) => ({ id: recordId, createdTime: 'now', fields } as never),
+    closeShopifyProductWhenSoldOnEbay: async (recordId, fields) => {
+      closeCalls.push({ recordId, fields });
+      return { success: true, message: 'closed Shopify product' };
+    },
+  });
+
+  const response = await handler(createEvent({
+    eventType: 'order.created',
+    listingId: '1111111111',
+    sku: 'SKU-11',
+    occurredAt: '2026-06-02T11:00:00.000Z',
+  }));
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(closeCalls.length, 1);
+  assert.equal(closeCalls[0]?.recordId, 'rec-cross-channel');
+  assert.equal(closeCalls[0]?.fields['eBay Last Webhook Event'], 'order.created');
+});
+
+test('does not trigger cross-channel Shopify close for cancel or refund order events', async () => {
+  let closeCallCount = 0;
+
+  const handler = createHandler({
+    getWebhookSecret: () => undefined,
+    getConfiguredRecords: async () => ([
+      {
+        id: 'rec-no-cross-channel-refund',
+        fields: {
+          SKU: 'SKU-12',
+          'eBay Listing ID': '1212121212',
+          'Post-Sale Outcome': '',
+        },
+      },
+    ] as never),
+    updateConfiguredRecord: async (_source, recordId, fields) => ({ id: recordId, createdTime: 'now', fields } as never),
+    closeShopifyProductWhenSoldOnEbay: async () => {
+      closeCallCount += 1;
+      return { success: true, message: 'should not run' };
+    },
+  });
+
+  const refundResponse = await handler(createEvent({
+    eventType: 'order.refunded',
+    listingId: '1212121212',
+    sku: 'SKU-12',
+    occurredAt: '2026-06-02T11:30:00.000Z',
+  }));
+
+  const cancelResponse = await handler(createEvent({
+    eventType: 'order.cancelled',
+    listingId: '1212121212',
+    sku: 'SKU-12',
+    occurredAt: '2026-06-02T11:31:00.000Z',
+  }));
+
+  assert.equal(refundResponse.statusCode, 200);
+  assert.equal(cancelResponse.statusCode, 200);
+  assert.equal(closeCallCount, 0);
 });
 
 test('does not overwrite existing Post-Sale Outcome (precedence)', async () => {
@@ -291,6 +445,7 @@ test('never writes Restock Disposition (relist block)', async () => {
 
 test('does not write post-sale outcome for non-order events', async () => {
   let capturedFields: Record<string, unknown> | null = null;
+  let closeCallCount = 0;
 
   const handler = createHandler({
     getWebhookSecret: () => undefined,
@@ -308,6 +463,10 @@ test('does not write post-sale outcome for non-order events', async () => {
       capturedFields = fields;
       return { id: _recordId, createdTime: 'now', fields } as never;
     },
+    closeShopifyProductWhenSoldOnEbay: async () => {
+      closeCallCount += 1;
+      return { success: true, message: 'should not run' };
+    },
   });
 
   const response = await handler(createEvent({
@@ -324,4 +483,5 @@ test('does not write post-sale outcome for non-order events', async () => {
   assert.equal(capturedFields?.['Post-Sale Outcome At'], undefined);
   // Audit fields should still be updated
   assert.equal(capturedFields?.['eBay Last Webhook Event'], 'listing.updated');
+  assert.equal(closeCallCount, 0);
 });

@@ -16,6 +16,13 @@ interface EbayWebhookPayload {
   updatedAt?: string;
   recordId?: string;
   orderId?: string;
+  refundAmount?: number | string;
+  refundReason?: string;
+  reason?: string;
+  note?: string;
+  amount?: {
+    value?: number | string;
+  };
 }
 
 interface NormalizedEbayWebhookEvent {
@@ -27,18 +34,45 @@ interface NormalizedEbayWebhookEvent {
   occurredAt: string;
   recordId: string;
   orderId: string;
+  refundAmount: number | null;
+  refundReason: string;
 }
 
 interface EbayWebhookDependencies {
   getConfiguredRecords?: typeof getConfiguredRecords;
   updateConfiguredRecord?: typeof updateConfiguredRecord;
   getWebhookSecret?: () => string | undefined;
+  closeShopifyProductWhenSoldOnEbay?: typeof closeShopifyProductWhenSoldOnEbay;
 }
 
 const EBAY_SYNC_LOCK_FIELD = 'eBay Sync Locked';
 const EBAY_LISTING_ID_FIELDS = ['eBay Listing ID', 'eBay Item ID', 'Listing ID', 'Item ID'];
 const EBAY_OFFER_ID_FIELDS = ['eBay Offer ID', 'Offer ID'];
 const EBAY_SKU_FIELDS = ['eBay Inventory SKU', 'SKU'];
+
+function parseNumericValue(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    const parsed = Number(trimmed);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function normalizeCurrencyAmount(value: number): number {
+  return Math.round(value * 100) / 100;
+}
 
 function readHeader(event: APIGatewayProxyEventV2, name: string): string {
   const entries = Object.entries(event.headers || {});
@@ -75,6 +109,10 @@ function requireWebhookSecret(event: APIGatewayProxyEventV2, getWebhookSecret: (
 }
 
 function normalizeWebhookEvent(payload: EbayWebhookPayload): NormalizedEbayWebhookEvent {
+  const refundReason = trimString(payload.refundReason) || trimString(payload.reason) || trimString(payload.note);
+  const refundAmount = parseNumericValue(payload.refundAmount)
+    ?? parseNumericValue(payload.amount?.value);
+
   return {
     eventType: trimString(payload.eventType) || 'listing.updated',
     listingId: trimString(payload.listingId),
@@ -83,6 +121,9 @@ function normalizeWebhookEvent(payload: EbayWebhookPayload): NormalizedEbayWebho
     status: trimString(payload.status).toUpperCase(),
     occurredAt: trimString(payload.occurredAt) || trimString(payload.updatedAt),
     recordId: trimString(payload.recordId),
+    orderId: trimString(payload.orderId),
+    refundAmount: refundAmount !== null ? normalizeCurrencyAmount(refundAmount) : null,
+    refundReason,
   };
 }
 
@@ -126,6 +167,38 @@ function isDedupedEvent(fields: Record<string, unknown>, eventType: string, occu
 function hasPostSaleOutcomeAlready(fields: Record<string, unknown>): boolean {
   const outcome = getFieldValue(fields, ['Post-Sale Outcome']);
   return outcome.length > 0;
+}
+
+function getExistingNumericFieldValue(fields: Record<string, unknown>, fieldNames: string[]): number | null {
+  for (const fieldName of fieldNames) {
+    const parsed = parseNumericValue(fields[fieldName]);
+    if (parsed !== null) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function resolveRefundOutcome(currentFields: Record<string, unknown>, refundAmount: number | null): 'Refunded' | 'Partial Refund' {
+  if (refundAmount === null || refundAmount <= 0) {
+    return 'Refunded';
+  }
+
+  const paidAmount = getExistingNumericFieldValue(currentFields, ['Paid Amount']);
+  if (paidAmount !== null && paidAmount > 0 && refundAmount < paidAmount) {
+    return 'Partial Refund';
+  }
+
+  return 'Refunded';
+}
+
+function shouldTriggerCrossChannelClose(event: NormalizedEbayWebhookEvent): boolean {
+  if (!event.eventType.startsWith('order.')) {
+    return false;
+  }
+
+  return event.eventType !== 'order.cancelled' && event.eventType !== 'order.refunded';
 }
 
 function resolveMatchingRecordId(records: Array<{ id: string; fields: Record<string, unknown> }>, event: NormalizedEbayWebhookEvent): string {
@@ -185,8 +258,18 @@ function buildUpdateFields(event: NormalizedEbayWebhookEvent, currentFields: Rec
           updateFields['Post-Sale Outcome'] = 'Cancelled';
           updateFields['Post-Sale Outcome At'] = event.occurredAt;
         } else if (event.eventType === 'order.refunded') {
-          updateFields['Post-Sale Outcome'] = 'Refunded';
+          updateFields['Post-Sale Outcome'] = resolveRefundOutcome(currentFields, event.refundAmount);
           updateFields['Post-Sale Outcome At'] = event.occurredAt;
+        }
+      }
+
+      if (event.eventType === 'order.refunded') {
+        if (event.refundAmount !== null && getExistingNumericFieldValue(currentFields, ['Refund Amount']) === null) {
+          updateFields['Refund Amount'] = event.refundAmount;
+        }
+
+        if (event.refundReason && !getFieldValue(currentFields, ['Refund Reason'])) {
+          updateFields['Refund Reason'] = event.refundReason;
         }
       }
     }
@@ -202,6 +285,7 @@ export function createHandler(dependencies: EbayWebhookDependencies = {}) {
   const listRecords = dependencies.getConfiguredRecords ?? getConfiguredRecords;
   const updateRecord = dependencies.updateConfiguredRecord ?? updateConfiguredRecord;
   const getWebhookSecret = dependencies.getWebhookSecret ?? (() => getOptionalSecret('EBAY_WEBHOOK_SECRET'));
+  const closeShopifyProduct = dependencies.closeShopifyProductWhenSoldOnEbay ?? closeShopifyProductWhenSoldOnEbay;
 
   return async function receiveEbayWebhookHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
     const origin = getRequestOrigin(event);
@@ -266,10 +350,10 @@ export function createHandler(dependencies: EbayWebhookDependencies = {}) {
         updatedFieldNames: Object.keys(updateFields),
       });
 
-      // If item sold or order event on eBay (order.cancelled, order.refunded, etc.), trigger cross-channel Shopify close
-      if (normalizedEvent.eventType.startsWith('order.')) {
+      // Trigger Shopify close only for sale-confirming eBay order events.
+      if (shouldTriggerCrossChannelClose(normalizedEvent)) {
         try {
-          const closeResult = await closeShopifyProductWhenSoldOnEbay(
+          const closeResult = await closeShopifyProduct(
             recordId,
             {
               ...currentRecord.fields,

@@ -1,7 +1,13 @@
 import { HttpError } from '../../shared/errors.js';
 import { requireSecret } from '../../shared/secrets.js';
 
-export type ShopifyWebhookTopic = 'ORDERS_PAID' | 'ORDERS_CANCELLED' | 'REFUNDS_CREATE';
+export type ShopifyWebhookTopic =
+  | 'ORDERS_PAID'
+  | 'ORDERS_CANCELLED'
+  | 'REFUNDS_CREATE'
+  | 'DISPUTES_CREATE'
+  | 'DISPUTES_UPDATE'
+  | 'RETURNS_PROCESS';
 
 export interface ShopifyWebhookSubscriptionConfig {
   topic: ShopifyWebhookTopic;
@@ -23,6 +29,9 @@ const SHOPIFY_WEBHOOK_SUBSCRIPTIONS: ShopifyWebhookSubscriptionConfig[] = [
   { topic: 'ORDERS_PAID', callbackPath: '/api/hooks/shopify/orders-paid' },
   { topic: 'ORDERS_CANCELLED', callbackPath: '/api/hooks/shopify/orders-cancelled' },
   { topic: 'REFUNDS_CREATE', callbackPath: '/api/hooks/shopify/refunds-create' },
+  { topic: 'DISPUTES_CREATE', callbackPath: '/api/hooks/shopify/disputes-create' },
+  { topic: 'DISPUTES_UPDATE', callbackPath: '/api/hooks/shopify/disputes-update' },
+  { topic: 'RETURNS_PROCESS', callbackPath: '/api/hooks/shopify/returns-process' },
 ];
 
 export interface ShopifyProductRecord {

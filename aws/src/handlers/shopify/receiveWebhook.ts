@@ -8,11 +8,44 @@ import { getRequestOrigin, jsonError, jsonOk } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
 import { requireSecret } from '../../shared/secrets.js';
 
-type ShopifyWebhookPathTopic = 'orders-paid' | 'orders-cancelled' | 'refunds-create';
+type ShopifyWebhookPathTopic =
+  | 'orders-paid'
+  | 'orders-cancelled'
+  | 'refunds-create'
+  | 'disputes-create'
+  | 'disputes-update'
+  | 'returns-process';
+
+interface ShopifyOrderReference {
+  id?: number | string;
+  legacyResourceId?: number | string;
+  legacy_resource_id?: number | string;
+}
 
 interface ShopifyLineItem {
   product_id?: number | string;
   id?: number | string;
+}
+
+interface ShopifyMoneyAmount {
+  amount?: number | string;
+}
+
+interface ShopifyMoneySet {
+  shop_money?: ShopifyMoneyAmount;
+}
+
+interface ShopifyRefundLineItem {
+  subtotal?: number | string;
+  total_tax?: number | string;
+  subtotal_set?: ShopifyMoneySet;
+  total_tax_set?: ShopifyMoneySet;
+}
+
+interface ShopifyRefundTransaction {
+  amount?: number | string;
+  kind?: string;
+  status?: string;
 }
 
 interface ShopifyWebhookPayload {
@@ -21,11 +54,24 @@ interface ShopifyWebhookPayload {
   name?: string;
   order_id?: number | string;
   order_name?: string;
+  order?: ShopifyOrderReference;
   processed_at?: string;
   updated_at?: string;
   cancelled_at?: string;
   created_at?: string;
+  initiated_at?: string;
+  finalized_on?: string;
+  closed_at?: string;
+  request_approved_at?: string;
+  status?: string;
+  type?: string;
+  amount?: number | string;
+  currency?: string;
   line_items?: ShopifyLineItem[];
+  note?: string;
+  reason?: string;
+  refund_line_items?: ShopifyRefundLineItem[];
+  transactions?: ShopifyRefundTransaction[];
 }
 
 export interface NormalizedShopifyWebhookEvent {
@@ -48,17 +94,166 @@ interface ShopifyWebhookDependencies {
   logInfo?: typeof logInfo;
   getConfiguredRecords?: typeof getConfiguredRecords;
   updateConfiguredRecord?: typeof updateConfiguredRecord;
+  closeEbayListingWhenSoldOnShopify?: typeof closeEbayListingWhenSoldOnShopify;
 }
 
 const TOPIC_BY_PATH: Record<ShopifyWebhookPathTopic, { headerValue: string; topic: ShopifyWebhookTopic }> = {
   'orders-paid': { headerValue: 'orders/paid', topic: 'ORDERS_PAID' },
   'orders-cancelled': { headerValue: 'orders/cancelled', topic: 'ORDERS_CANCELLED' },
   'refunds-create': { headerValue: 'refunds/create', topic: 'REFUNDS_CREATE' },
+  'disputes-create': { headerValue: 'disputes/create', topic: 'DISPUTES_CREATE' },
+  'disputes-update': { headerValue: 'disputes/update', topic: 'DISPUTES_UPDATE' },
+  'returns-process': { headerValue: 'returns/process', topic: 'RETURNS_PROCESS' },
 };
 
 const SHOPIFY_SYNC_LOCK_FIELD = 'Shopify Sync Locked';
 const SHOPIFY_ORDER_ID_FIELDS = ['Shopify Order ID'];
 const SHOPIFY_PRODUCT_ID_FIELDS = ['Shopify Product ID', 'Product ID'];
+
+function parseNumericValue(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    const parsed = Number(trimmed);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function getExistingNumericFieldValue(fields: Record<string, unknown>, fieldNames: string[]): number | null {
+  for (const fieldName of fieldNames) {
+    const parsed = parseNumericValue(fields[fieldName]);
+    if (parsed !== null) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function normalizeCurrencyAmount(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function extractShopifyRefundAmount(payload: ShopifyWebhookPayload): number | null {
+  if (Array.isArray(payload.transactions) && payload.transactions.length > 0) {
+    const successfulAmounts = payload.transactions
+      .filter((transaction) => {
+        const kind = transaction.kind?.trim().toLowerCase();
+        const status = transaction.status?.trim().toLowerCase();
+        const kindAllowed = !kind || kind === 'refund' || kind === 'suggested_refund';
+        return kindAllowed && (!status || status === 'success');
+      })
+      .map((transaction) => parseNumericValue(transaction.amount))
+      .filter((amount): amount is number => amount !== null && amount > 0);
+
+    if (successfulAmounts.length > 0) {
+      return normalizeCurrencyAmount(successfulAmounts.reduce((sum, amount) => sum + amount, 0));
+    }
+  }
+
+  if (Array.isArray(payload.refund_line_items) && payload.refund_line_items.length > 0) {
+    const lineItemTotal = payload.refund_line_items.reduce((sum, lineItem) => {
+      const subtotal = parseNumericValue(lineItem.subtotal)
+        ?? parseNumericValue(lineItem.subtotal_set?.shop_money?.amount)
+        ?? 0;
+      const totalTax = parseNumericValue(lineItem.total_tax)
+        ?? parseNumericValue(lineItem.total_tax_set?.shop_money?.amount)
+        ?? 0;
+      return sum + subtotal + totalTax;
+    }, 0);
+
+    if (lineItemTotal > 0) {
+      return normalizeCurrencyAmount(lineItemTotal);
+    }
+  }
+
+  return null;
+}
+
+function extractShopifyRefundReason(payload: ShopifyWebhookPayload): string {
+  if (typeof payload.note === 'string' && payload.note.trim()) {
+    return payload.note.trim();
+  }
+
+  if (typeof payload.reason === 'string' && payload.reason.trim()) {
+    return payload.reason.trim();
+  }
+
+  return '';
+}
+
+function extractShopifyDisputeNote(payload: ShopifyWebhookPayload): string {
+  const type = payload.type?.trim();
+  const status = payload.status?.trim();
+  const reason = payload.reason?.trim();
+  const amount = parseNumericValue(payload.amount);
+  const amountText = amount !== null
+    ? `${normalizeCurrencyAmount(amount).toFixed(2)}${payload.currency ? ` ${payload.currency.trim()}` : ''}`
+    : '';
+
+  return [
+    'Shopify dispute',
+    type,
+    status ? `(${status})` : '',
+    reason ? `- ${reason}` : '',
+    amountText ? `for ${amountText}` : '',
+  ].filter(Boolean).join(' ').trim();
+}
+
+function resolveRefundOutcome(currentFields: Record<string, unknown>, refundAmount: number | null): 'Refunded' | 'Partial Refund' {
+  if (refundAmount === null || refundAmount <= 0) {
+    return 'Refunded';
+  }
+
+  const paidAmount = getExistingNumericFieldValue(currentFields, ['Paid Amount']);
+  if (paidAmount !== null && paidAmount > 0 && refundAmount < paidAmount) {
+    return 'Partial Refund';
+  }
+
+  return 'Refunded';
+}
+
+function shouldWriteReturnedOutcome(currentFields: Record<string, unknown>): boolean {
+  return !hasPostSaleOutcomeAlready(currentFields);
+}
+
+function extractLinkedOrderId(payload: ShopifyWebhookPayload): string {
+  if (typeof payload.order_id === 'number') {
+    return String(payload.order_id);
+  }
+
+  if (typeof payload.order_id === 'string' && payload.order_id.trim()) {
+    return payload.order_id.trim();
+  }
+
+  const nestedOrderId = payload.order?.legacyResourceId ?? payload.order?.legacy_resource_id ?? payload.order?.id;
+  if (typeof nestedOrderId === 'number') {
+    return String(nestedOrderId);
+  }
+
+  if (typeof nestedOrderId === 'string') {
+    const trimmed = nestedOrderId.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    const gidMatch = trimmed.match(/\/([0-9]+)$/);
+    return gidMatch?.[1] || trimmed;
+  }
+
+  return '';
+}
 
 function getFirstProductId(payload: ShopifyWebhookPayload): string {
   if (!Array.isArray(payload.line_items) || !payload.line_items[0]) {
@@ -152,6 +347,7 @@ function buildUpdateFields(
   orderName: string,
   eventId: string,
   occurredAt: string,
+  payload: ShopifyWebhookPayload,
   currentFields: Record<string, unknown>,
 ): Record<string, unknown> {
   const updateFields: Record<string, unknown> = {};
@@ -185,10 +381,36 @@ function buildUpdateFields(
     }
   } else if (topic === 'REFUNDS_CREATE') {
     eventTypeValue = 'refunds/create';
+    const refundAmount = extractShopifyRefundAmount(payload);
+    const refundReason = extractShopifyRefundReason(payload);
     // Write post-sale outcome only if not already set
     if (!hasPostSaleOutcomeAlready(currentFields)) {
-      updateFields['Post-Sale Outcome'] = 'Refunded';
+      updateFields['Post-Sale Outcome'] = resolveRefundOutcome(currentFields, refundAmount);
       updateFields['Post-Sale Outcome At'] = occurredAt;
+    }
+
+    if (refundAmount !== null && getExistingNumericFieldValue(currentFields, ['Refund Amount']) === null) {
+      updateFields['Refund Amount'] = refundAmount;
+    }
+
+    if (refundReason && !getFieldValue(currentFields, ['Refund Reason'])) {
+      updateFields['Refund Reason'] = refundReason;
+    }
+  } else if (topic === 'RETURNS_PROCESS') {
+    eventTypeValue = 'returns/process';
+
+    if (shouldWriteReturnedOutcome(currentFields)) {
+      updateFields['Post-Sale Outcome'] = 'Returned';
+      updateFields['Post-Sale Outcome At'] = occurredAt;
+      if (!getFieldValue(currentFields, ['Return Received At'])) {
+        updateFields['Return Received At'] = occurredAt;
+      }
+    }
+  } else if (topic === 'DISPUTES_CREATE' || topic === 'DISPUTES_UPDATE') {
+    eventTypeValue = topic === 'DISPUTES_CREATE' ? 'disputes/create' : 'disputes/update';
+    const disputeNote = extractShopifyDisputeNote(payload);
+    if (disputeNote && !getFieldValue(currentFields, ['Post-Sale Notes'])) {
+      updateFields['Post-Sale Notes'] = disputeNote;
     }
   }
 
@@ -314,7 +536,11 @@ function normalizeEvent(
     });
   }
 
-  const orderId = stringifyId(payload.order_id) || stringifyId(payload.id);
+  const orderId = expectedTopic.topic === 'ORDERS_PAID'
+    || expectedTopic.topic === 'ORDERS_CANCELLED'
+    || expectedTopic.topic === 'REFUNDS_CREATE'
+    ? (stringifyId(payload.order_id) || stringifyId(payload.id))
+    : extractLinkedOrderId(payload);
   const refundId = expectedTopic.topic === 'REFUNDS_CREATE' ? stringifyId(payload.id) : '';
   const orderName = payload.order_name?.trim() || payload.name?.trim() || '';
 
@@ -330,6 +556,10 @@ function normalizeEvent(
     orderName,
     refundId,
     occurredAt: payload.processed_at?.trim()
+      || payload.finalized_on?.trim()
+      || payload.closed_at?.trim()
+      || payload.request_approved_at?.trim()
+      || payload.initiated_at?.trim()
       || payload.cancelled_at?.trim()
       || payload.updated_at?.trim()
       || payload.created_at?.trim()
@@ -345,6 +575,7 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
   const infoLogger = dependencies.logInfo ?? logInfo;
   const listRecords = dependencies.getConfiguredRecords ?? getConfiguredRecords;
   const updateRecord = dependencies.updateConfiguredRecord ?? updateConfiguredRecord;
+  const closeEbayListing = dependencies.closeEbayListingWhenSoldOnShopify ?? closeEbayListingWhenSoldOnShopify;
 
   return async function receiveShopifyWebhookHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
     const origin = getRequestOrigin(event);
@@ -430,6 +661,7 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
         normalizedEvent.orderName,
         normalizedEvent.eventId,
         normalizedEvent.occurredAt,
+        payload,
         currentRecord.fields,
       );
 
@@ -447,7 +679,7 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
       // If item sold on Shopify (ORDERS_PAID), trigger cross-channel eBay close
       if (normalizedEvent.topic === 'ORDERS_PAID') {
         try {
-          const closeResult = await closeEbayListingWhenSoldOnShopify(
+          const closeResult = await closeEbayListing(
             matchedRecordId,
             {
               ...currentRecord.fields,

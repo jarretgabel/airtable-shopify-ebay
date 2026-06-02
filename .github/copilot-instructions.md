@@ -31,6 +31,8 @@ These are the default implementation rules for this repository.
 - For listing grids (`ApprovalQueueTable`), suppress channel-irrelevant columns by passing `''` as the field name prop at the call site. Shopify grids hide Condition and Price; eBay grids hide Condition, Format, and Qty. See Engineering Rules for the full column matrix.
 - When changing workflow behavior, queue behavior, or other user-facing functionality that alters how work moves through the app, update the Workflow Guide content in the same change.
 - Build changes to an advanced senior-level engineering bar: production-ready structure, clear abstractions, strong type safety, and maintainable patterns.
+- When changing Shopify/eBay webhook handling, update the handler tests, the workflow/operator docs, and the local validation route family in the same change so the documented automation boundary matches the implemented one.
+- Do not imply automatic webhook coverage for `Returned` on channels/topics that do not implement it, or for `Partial Refund`, `Refund Amount`, `Refund Reason`, or `Return Received At` unless the handler writeback actually implements those fields/outcomes for the specific supported topic and channel.
 
 ## UI and Styling Rules
 - Prefer expressive utility composition directly in JSX over custom class-name systems.

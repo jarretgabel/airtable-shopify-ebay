@@ -332,6 +332,17 @@ These are proposed additions or formalized workflow fields for `tbl0K0nFQL64jQMx
 
 These fields enable webhook-driven Airtable writes and cross-marketplace order tracking for post-sale outcomes (refunds/cancellations).
 
+Current implemented boundary:
+- Shopify webhook writeback currently auto-populates Shopify order tracking fields plus `Cancelled`, refund outcomes, conservative `Returned`, and dispute-note enrichment.
+- eBay webhook writeback currently auto-populates eBay audit fields plus `Cancelled` and refund outcomes for supported order events.
+- Refund webhooks can auto-populate `Refund Amount` / `Refund Reason` when those values are present and can infer `Partial Refund` when the row already has a larger `Paid Amount`.
+- Shopify `returns/process` can auto-populate `Return Received At` and set `Post-Sale Outcome = Returned` when no earlier post-sale outcome exists.
+- Shopify dispute webhooks can seed `Post-Sale Notes` when blank, but they do not auto-set a post-sale outcome because the approved field model has no dispute-specific outcome value.
+- Existing manual values remain authoritative: webhook enrichment does not overwrite an existing `Post-Sale Outcome`, `Refund Amount`, or `Refund Reason`.
+- eBay `Returned` and `Return Received At` remain manual post-sale follow-through fields in the current implementation.
+- Once `Post-Sale Outcome` is set, later webhook events may update audit metadata but do not overwrite the stored outcome.
+- Cross-channel close is currently scoped to Shopify `orders/paid` -> eBay close attempts and sale-confirming eBay order events currently mapped in the handler (`order.created`) -> Shopify close attempts.
+
 ##### Shopify Order Tracking Fields
 - `Shopify Order ID`
 	- Purpose: persist the Shopify order identifier from `orders/paid` webhooks so future `refunds/create` and `orders/cancelled` events can be matched back to the authoritative row even if the original product_id match is unavailable.
@@ -369,6 +380,18 @@ These fields enable webhook-driven Airtable writes and cross-marketplace order t
 	- Suggested values: `true`, `false`, or blank (default = not locked).
 	- Rule: when true/locked, webhook handlers skip automatic updates and return `{received:true, skipped:true, locked:true}`.
 	- When to use it: temporarily hold a row while manual intervention or review is in progress.
+
+##### Current Population Rules For Approved Post-Sale Fields
+- `Post-Sale Outcome`
+	- Automatically populated today for webhook-driven `Cancelled` plus refund outcomes.
+	- `Partial Refund` can be inferred when a refund webhook provides an amount smaller than the row's `Paid Amount`.
+	- Shopify `returns/process` can now set `Returned` when no earlier post-sale outcome exists.
+- `Refund Amount`
+	- Auto-populated when a supported refund webhook provides a refund amount and the row does not already have a manual value.
+- `Refund Reason`
+	- Auto-populated when a supported refund webhook provides a reason/note and the row does not already have a manual value.
+- `Return Received At`
+	- Auto-populated today for Shopify `returns/process` when no earlier post-sale outcome exists; otherwise operators still enter it manually when needed.
 
 ### Proposed Workflow Statuses And Allowed Transitions
 

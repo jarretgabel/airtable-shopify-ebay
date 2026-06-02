@@ -28,6 +28,11 @@
 - For Lambda-backed seams in `src/services/app-api/*`, treat `/api/*` as the runtime transport and keep local adapters, handlers, and validation scripts in sync.
 - When changing a Lambda-backed integration, update all affected surfaces in the same change: app-api wrapper, AWS handler/provider, no-Docker local adapter, and any parity/probe script that validates that route family.
 - Keep live mutation validation opt-in. Read parity can run by default; write probes must require explicit env vars or user-provided scratch ids.
+- For Shopify/eBay webhook handlers, keep the documented automation boundary explicit: update operator-facing docs, workflow docs, and tests whenever supported topics or auto-populated fields change.
+- Preserve post-sale precedence unless the approved workflow model changes: once `Post-Sale Outcome` is set, later webhook events may update audit metadata but must not overwrite the stored outcome.
+- Keep sync-lock, unmatched, duplicate, and relist-block behavior explicit and test-covered for webhook routes.
+- If a supported webhook topic exposes approved post-sale fields, either map those fields through the handler/local-validation surfaces in the same change or document that they remain manual.
+- When changing cross-channel close triggers, document the trigger rule and add handler-level test coverage for the affected webhook topics.
 
 ## Listing Form Parity
 - Keep Shopify and eBay listing form pages structurally parallel when implementing feature changes.

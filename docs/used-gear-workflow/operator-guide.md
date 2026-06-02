@@ -59,6 +59,19 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
   - `Returned`: record the outcome, capture `Return Received At`, then choose a manual `Restock Disposition`.
   - `Relist Candidate`: treat this as a manual disposition only after post-sale review. Returned or refunded items must not auto-relist.
   - repeated multi-event history is out of scope for this phase, so operators should keep the first approved outcome on the row instead of trying to build a separate event log.
+- Current webhook automation boundary:
+  - Shopify `orders/cancelled` and eBay `order.cancelled` can automatically set `Cancelled` when the webhook matches the authoritative row and the row is not sync-locked.
+  - Shopify `refunds/create` and eBay `order.refunded` can automatically populate `Refund Amount` / `Refund Reason` when the payload provides them and the row is not sync-locked.
+  - Refund webhooks can automatically infer `Partial Refund` when the webhook supplies a refund amount that is smaller than the row's `Paid Amount`; otherwise they fall back to `Refunded`.
+  - Shopify `returns/process` can automatically set `Returned` and `Return Received At` when the webhook matches the authoritative row and no earlier post-sale outcome has already claimed the row.
+  - Shopify dispute webhooks (`disputes/create`, `disputes/update`) are accepted and audited; they can seed `Post-Sale Notes` when blank, but they do not force a post-sale outcome because the approved workflow model has no dispute-specific outcome value.
+  - Existing manual values remain authoritative: once `Post-Sale Outcome` is set, later webhook events update audit metadata but do not replace the stored outcome, and existing `Refund Amount` / `Refund Reason` values are not overwritten.
+  - eBay `Returned` and `Return Received At` follow-through is still operator-managed; current eBay webhook handling does not populate them.
+  - Webhook automation follows the same first-outcome rule as the manual workflow: once `Post-Sale Outcome` is set, later webhook events update audit metadata but do not replace the stored outcome.
+  - Manual override options:
+    - edit the post-sale fields directly after the webhook write; later webhook deliveries will not overwrite existing outcome or refund-detail fields
+    - use `Shopify Sync Locked` or `eBay Sync Locked` to block automatic webhook writes on a row that needs manual handling
+  - Cross-channel close now only runs for sale-confirming events: Shopify `orders/paid` attempts to close the matching eBay listing, and eBay sale-confirming order events currently mapped in the handler (today: `order.created`) can attempt to close the matching Shopify product.
 
 ## Page And Module Reference
 

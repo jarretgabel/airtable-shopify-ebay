@@ -579,7 +579,7 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     ],
     workflows: [
       'Use it once the item is live and the work is now stale follow-up, payment-to-shipping handoff, shipment completion, or post-sale exception handling such as Cancelled, Refunded, Returned, or Partial Refund.',
-      'Treat it as the active ownership page for listing lifecycle follow-through. Record post-sale outcome, refund or partial-refund, return, and restock-disposition work on the same authoritative row, and do not auto-relist returned or refunded items.',
+      'Treat it as the active ownership page for listing lifecycle follow-through. Record post-sale outcome, refund or partial-refund, return, dispute notes, and restock-disposition work on the same authoritative row, and do not auto-relist returned or refunded items.',
     ],
   },
   {
