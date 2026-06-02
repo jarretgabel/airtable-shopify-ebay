@@ -9,6 +9,13 @@ interface JotFormApiResponse<T> {
   content: T;
 }
 
+interface JotFormWebhookRecord {
+  id?: string;
+  url?: string;
+  webhookURL?: string;
+  webhookUrl?: string;
+}
+
 export interface JotFormAnswer {
   name: string;
   order: string;
@@ -54,6 +61,16 @@ interface JotFormRequestParams {
   direction?: string;
 }
 
+export interface JotFormWebhookSubscriptionRecord {
+  id: string;
+  webhookUrl: string;
+}
+
+export interface JotFormWebhookSubscriptionInput {
+  formId: string;
+  webhookUrl: string;
+}
+
 async function requestJotForm<T>(path: string, params: JotFormRequestParams = {}): Promise<T> {
   const url = new URL(path, JOTFORM_API_BASE);
   url.searchParams.set('apiKey', requireSecret('JOTFORM_API_KEY'));
@@ -85,6 +102,57 @@ async function requestJotForm<T>(path: string, params: JotFormRequestParams = {}
   return body.content;
 }
 
+async function requestJotFormFormMutation<T>(formId: string, pathSuffix: string, body: Record<string, unknown>): Promise<T> {
+  const url = new URL(`/form/${formId}${pathSuffix}`, JOTFORM_API_BASE);
+  url.searchParams.set('apiKey', requireSecret('JOTFORM_API_KEY'));
+
+  const formBody = new URLSearchParams();
+  for (const [key, value] of Object.entries(body)) {
+    if (value === undefined || value === null || value === '') {
+      continue;
+    }
+
+    formBody.set(key, String(value));
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: formBody.toString(),
+  });
+
+  if (!response.ok) {
+    throw new HttpError(response.status, `JotForm API error: HTTP ${response.status} on /form/${formId}${pathSuffix}`, {
+      service: 'jotform',
+      code: 'JOTFORM_HTTP_ERROR',
+      retryable: response.status >= 500,
+    });
+  }
+
+  const payload = await response.json() as JotFormApiResponse<T>;
+  if (payload.responseCode !== 200) {
+    throw new HttpError(502, `JotForm API error ${payload.responseCode}: ${payload.message}`, {
+      service: 'jotform',
+      code: 'JOTFORM_API_ERROR',
+      retryable: true,
+    });
+  }
+
+  return payload.content;
+}
+
+function normalizeWebhookRecord(record: JotFormWebhookRecord): JotFormWebhookSubscriptionRecord | null {
+  const id = record.id?.trim() ?? '';
+  const webhookUrl = record.webhookURL?.trim() || record.webhookUrl?.trim() || record.url?.trim() || '';
+  if (!id || !webhookUrl) {
+    return null;
+  }
+
+  return { id, webhookUrl };
+}
+
 export function getForms(params: JotFormRequestParams = {}): Promise<JotFormForm[]> {
   return requestJotForm<JotFormForm[]>('/user/forms', params);
 }
@@ -98,4 +166,50 @@ export function getFormSubmissions(
 
 export function getSubmission(submissionId: string): Promise<JotFormSubmission> {
   return requestJotForm<JotFormSubmission>(`/submission/${submissionId}`);
+}
+
+export function listFormWebhooks(formId: string): Promise<JotFormWebhookSubscriptionRecord[]> {
+  return requestJotForm<JotFormWebhookRecord[]>(`/form/${formId}/webhooks`)
+    .then((records) => records.map(normalizeWebhookRecord).filter((record): record is JotFormWebhookSubscriptionRecord => record !== null));
+}
+
+export function registerFormWebhook(
+  input: JotFormWebhookSubscriptionInput,
+): Promise<JotFormWebhookSubscriptionRecord> {
+  return requestJotFormFormMutation<JotFormWebhookRecord>(input.formId, '/webhooks', { webhookURL: input.webhookUrl })
+    .then((record) => {
+      const normalized = normalizeWebhookRecord(record);
+      if (!normalized) {
+        throw new HttpError(502, 'JotForm webhook registration returned no webhook record.', {
+          service: 'jotform',
+          code: 'JOTFORM_WEBHOOK_REGISTRATION_EMPTY',
+          retryable: false,
+        });
+      }
+
+      return normalized;
+    });
+}
+
+export async function deleteFormWebhook(formId: string, webhookId: string): Promise<void> {
+  const url = new URL(`/form/${formId}/webhooks/${webhookId}`, JOTFORM_API_BASE);
+  url.searchParams.set('apiKey', requireSecret('JOTFORM_API_KEY'));
+
+  const response = await fetch(url, { method: 'DELETE' });
+  if (!response.ok) {
+    throw new HttpError(response.status, `JotForm API error: HTTP ${response.status} on /form/${formId}/webhooks/${webhookId}`, {
+      service: 'jotform',
+      code: 'JOTFORM_HTTP_ERROR',
+      retryable: response.status >= 500,
+    });
+  }
+
+  const payload = await response.json() as JotFormApiResponse<unknown>;
+  if (payload.responseCode !== 200) {
+    throw new HttpError(502, `JotForm API error ${payload.responseCode}: ${payload.message}`, {
+      service: 'jotform',
+      code: 'JOTFORM_API_ERROR',
+      retryable: true,
+    });
+  }
 }

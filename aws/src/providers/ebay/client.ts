@@ -191,7 +191,35 @@ interface EbayCategorySubtreeResponse {
   categorySubtreeNode?: EbayCategoryTreeNodeResponse;
 }
 
+interface EbayWebhookSubscriptionResponse {
+  id?: string;
+  subscriptionId?: string;
+  callbackUrl?: string;
+  destinationUrl?: string;
+  eventTypes?: string[];
+  topics?: string[];
+}
+
+export interface EbayWebhookSubscriptionRecord {
+  id: string;
+  callbackUrl: string;
+  eventTypes: string[];
+}
+
+export interface EbayWebhookSubscriptionInput {
+  callbackUrl: string;
+  eventTypes: string[];
+  requestUrl?: string;
+}
+
 const DEFAULT_EBAY_APP_SCOPE = 'https://api.ebay.com/oauth/api_scope';
+const DEFAULT_EBAY_WEBHOOK_SUBSCRIPTION_PATH = '/sell/notification/v1/subscription';
+const DEFAULT_EBAY_WEBHOOK_EVENT_TYPES = [
+  'listing.updated',
+  'order.created',
+  'order.cancelled',
+  'order.refunded',
+];
 const EBAY_OFFERS_MAX_PAGE_SIZE = 25;
 const SAMPLE_SKU = 'RAVMCINTOSHMA8900DEMO';
 const MAX_VISIBLE_LISTINGS = 20;
@@ -237,6 +265,151 @@ function normalizeMarketplaceId(marketplaceId: string): string {
 
 function cleanOptional(value: string | undefined): string {
   return value?.trim() ?? '';
+}
+
+function buildHttpsUrl(baseUrl: string, path: string): string {
+  const trimmedBaseUrl = baseUrl.trim().replace(/\/$/, '');
+  if (!trimmedBaseUrl) {
+    throw new HttpError(400, 'eBay webhook base URL is required.', {
+      service: 'ebay',
+      code: 'EBAY_WEBHOOK_BASE_URL_REQUIRED',
+      retryable: false,
+    });
+  }
+
+  if (!/^https:\/\//i.test(trimmedBaseUrl)) {
+    throw new HttpError(400, 'eBay webhook base URL must use HTTPS.', {
+      service: 'ebay',
+      code: 'EBAY_WEBHOOK_BASE_URL_INVALID',
+      retryable: false,
+    });
+  }
+
+  return `${trimmedBaseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+}
+
+function parseCsvEnv(name: string, fallback: string[]): string[] {
+  const raw = cleanOptional(getOptionalSecret(name));
+  if (!raw) {
+    return fallback;
+  }
+
+  const values = raw
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+
+  return values.length > 0 ? values : fallback;
+}
+
+function getEbayWebhookSubscriptionPath(): string {
+  return cleanOptional(getOptionalSecret('EBAY_WEBHOOK_SUBSCRIPTION_PATH')) || DEFAULT_EBAY_WEBHOOK_SUBSCRIPTION_PATH;
+}
+
+function getEbayWebhookSubscriptionUrl(): string {
+  return resolveApiUrl(getEbayWebhookSubscriptionPath());
+}
+
+export function getRequiredEbayWebhookCallbackUrl(): string {
+  return buildHttpsUrl(requireSecret('EBAY_WEBHOOK_BASE_URL'), '/api/hooks/ebay/listings');
+}
+
+export function getEbayWebhookEventTypes(): string[] {
+  return parseCsvEnv('EBAY_WEBHOOK_EVENT_TYPES', DEFAULT_EBAY_WEBHOOK_EVENT_TYPES);
+}
+
+function buildWebhookSubscriptionBody(callbackUrl: string, eventTypes: string[]): Record<string, unknown> {
+  const rawOverride = cleanOptional(getOptionalSecret('EBAY_WEBHOOK_REQUEST_BODY_JSON'));
+  if (rawOverride) {
+    try {
+      return JSON.parse(rawOverride) as Record<string, unknown>;
+    } catch {
+      throw new HttpError(400, 'EBAY_WEBHOOK_REQUEST_BODY_JSON must be valid JSON.', {
+        service: 'ebay',
+        code: 'EBAY_WEBHOOK_REQUEST_BODY_INVALID',
+        retryable: false,
+      });
+    }
+  }
+
+  return {
+    callbackUrl,
+    eventTypes,
+  };
+}
+
+function normalizeWebhookSubscriptionResponse(
+  response: EbayWebhookSubscriptionResponse,
+  callbackUrl: string,
+  eventTypes: string[],
+): EbayWebhookSubscriptionRecord {
+  const id = cleanOptional(response.id) || cleanOptional(response.subscriptionId);
+  const resolvedCallbackUrl = cleanOptional(response.callbackUrl) || cleanOptional(response.destinationUrl) || callbackUrl;
+  const resolvedEventTypes = (response.eventTypes ?? response.topics ?? eventTypes)
+    .map((value) => cleanOptional(value))
+    .filter((value) => value.length > 0);
+
+  if (!id) {
+    throw new HttpError(502, 'eBay webhook registration returned no subscription identifier.', {
+      service: 'ebay',
+      code: 'EBAY_WEBHOOK_SUBSCRIPTION_ID_MISSING',
+      retryable: false,
+    });
+  }
+
+  return {
+    id,
+    callbackUrl: resolvedCallbackUrl,
+    eventTypes: resolvedEventTypes,
+  };
+}
+
+export async function registerWebhookSubscription(input: EbayWebhookSubscriptionInput): Promise<EbayWebhookSubscriptionRecord> {
+  const token = await getValidUserToken();
+  const requestUrl = input.requestUrl?.trim() || getEbayWebhookSubscriptionUrl();
+  const body = buildWebhookSubscriptionBody(input.callbackUrl, input.eventTypes);
+
+  const response = await fetch(requestUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Accept-Language': 'en-US',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new HttpError(response.status, `eBay webhook registration failed: ${await readErrorPayload(response)}`, {
+      service: 'ebay',
+      code: 'EBAY_WEBHOOK_REGISTRATION_FAILED',
+      retryable: response.status >= 500,
+    });
+  }
+
+  const responseBody = await response.json() as EbayWebhookSubscriptionResponse;
+  return normalizeWebhookSubscriptionResponse(responseBody, input.callbackUrl, input.eventTypes);
+}
+
+export async function deleteWebhookSubscription(subscriptionId: string, requestUrl?: string): Promise<void> {
+  const token = await getValidUserToken();
+  const resolvedRequestUrl = requestUrl?.trim() || `${getEbayWebhookSubscriptionUrl().replace(/\/$/, '')}/${encodeURIComponent(subscriptionId)}`;
+
+  const response = await fetch(resolvedRequestUrl, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Accept-Language': 'en-US',
+    },
+  });
+
+  if (!response.ok) {
+    throw new HttpError(response.status, `eBay webhook deletion failed: ${await readErrorPayload(response)}`, {
+      service: 'ebay',
+      code: 'EBAY_WEBHOOK_DELETE_FAILED',
+      retryable: response.status >= 500,
+    });
+  }
 }
 
 function isValidEbaySku(sku: string): boolean {

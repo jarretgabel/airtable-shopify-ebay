@@ -72,6 +72,7 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
     - edit the post-sale fields directly after the webhook write; later webhook deliveries will not overwrite existing outcome or refund-detail fields
     - use `Shopify Sync Locked` or `eBay Sync Locked` to block automatic webhook writes on a row that needs manual handling
   - Cross-channel close now only runs for sale-confirming events: Shopify `orders/paid` attempts to close the matching eBay listing, and eBay sale-confirming order events currently mapped in the handler (today: `order.created`) can attempt to close the matching Shopify product.
+  - Webhook automation scripts exist for the supported surfaces: use `npm run shopify:webhooks:register` / `npm run shopify:webhooks:delete`, `npm run ebay:webhooks:register` / `npm run ebay:webhooks:delete`, and `npm run jotform:webhooks:register` / `npm run jotform:webhooks:delete` when the matching callback base and credentials are configured.
 
 ## Page And Module Reference
 

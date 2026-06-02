@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  deleteWebhookSubscription,
   ensureRequiredWebhookSubscriptions,
   getRequiredShopifyWebhookCallbackUrl,
   listWebhookSubscriptions,
@@ -127,13 +128,52 @@ test('ensureRequiredWebhookSubscriptions creates only missing required subscript
       topic: 'ORDERS_PAID',
       callbackUrl: 'https://example.com/api/hooks/shopify/orders-paid',
     }]);
-    assert.equal(result.created.length, 2);
-    assert.deepEqual(result.created.map((item) => item.topic).sort(), ['ORDERS_CANCELLED', 'REFUNDS_CREATE']);
-    assert.equal(requests.filter((request) => request.query.includes('mutation RegisterWebhookSubscription')).length, 2);
+    assert.equal(result.created.length, 5);
+    assert.deepEqual(result.created.map((item) => item.topic).sort(), [
+      'DISPUTES_CREATE',
+      'DISPUTES_UPDATE',
+      'ORDERS_CANCELLED',
+      'REFUNDS_CREATE',
+      'RETURNS_PROCESS',
+    ]);
+    assert.equal(requests.filter((request) => request.query.includes('mutation RegisterWebhookSubscription')).length, 5);
   } finally {
     globalThis.fetch = originalFetch;
     process.env.SHOPIFY_STORE_DOMAIN = originalStoreDomain;
     process.env.SHOPIFY_ACCESS_TOKEN = originalAccessToken;
     process.env.SHOPIFY_WEBHOOK_BASE_URL = originalBaseUrl;
+  }
+});
+
+test('deleteWebhookSubscription sends the expected GraphQL mutation', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalStoreDomain = process.env.SHOPIFY_STORE_DOMAIN;
+  const originalAccessToken = process.env.SHOPIFY_ACCESS_TOKEN;
+
+  process.env.SHOPIFY_STORE_DOMAIN = 'test-shop.myshopify.com';
+  process.env.SHOPIFY_ACCESS_TOKEN = 'token';
+
+  globalThis.fetch = async (_input, init) => {
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { query?: string; variables?: Record<string, unknown> };
+
+    assert.match(payload.query ?? '', /mutation DeleteWebhookSubscription/);
+    assert.equal(payload.variables?.id, 'gid://shopify/WebhookSubscription/1');
+
+    return new Response(JSON.stringify({
+      data: {
+        webhookSubscriptionDelete: {
+          deletedWebhookSubscriptionId: 'gid://shopify/WebhookSubscription/1',
+          userErrors: [],
+        },
+      },
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+
+  try {
+    await deleteWebhookSubscription('gid://shopify/WebhookSubscription/1');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.SHOPIFY_STORE_DOMAIN = originalStoreDomain;
+    process.env.SHOPIFY_ACCESS_TOKEN = originalAccessToken;
   }
 });

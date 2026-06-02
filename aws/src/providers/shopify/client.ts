@@ -437,6 +437,43 @@ export async function registerWebhookSubscription(topic: ShopifyWebhookTopic, ca
   };
 }
 
+export async function deleteWebhookSubscription(id: string): Promise<void> {
+  const data = await graphQlRequest<{
+    webhookSubscriptionDelete: {
+      deletedWebhookSubscriptionId: string | null;
+      userErrors: Array<{ message: string }>;
+    };
+  }>(
+    `mutation DeleteWebhookSubscription($id: ID!) {
+      webhookSubscriptionDelete(id: $id) {
+        deletedWebhookSubscriptionId
+        userErrors {
+          message
+        }
+      }
+    }`,
+    { id },
+  );
+
+  const userErrors = data.webhookSubscriptionDelete.userErrors ?? [];
+  if (userErrors.length > 0) {
+    const message = userErrors.map((error) => error.message?.trim()).filter(Boolean).join('; ');
+    throw new HttpError(502, message || 'Shopify rejected webhook deletion.', {
+      service: 'shopify',
+      code: 'SHOPIFY_WEBHOOK_DELETE_FAILED',
+      retryable: false,
+    });
+  }
+
+  if (!data.webhookSubscriptionDelete.deletedWebhookSubscriptionId) {
+    throw new HttpError(502, 'Shopify webhook deletion returned no subscription id.', {
+      service: 'shopify',
+      code: 'SHOPIFY_WEBHOOK_DELETE_EMPTY',
+      retryable: false,
+    });
+  }
+}
+
 export async function ensureRequiredWebhookSubscriptions(): Promise<ShopifyWebhookRegistrationResult> {
   const existingSubscriptions = await listWebhookSubscriptions();
   const created: ShopifyWebhookSubscriptionRecord[] = [];

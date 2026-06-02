@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getDashboardSnapshot, getRuntimeConfig } from '../../../../../../aws/src/providers/ebay/client.js';
+import {
+  getDashboardSnapshot,
+  getRequiredEbayWebhookCallbackUrl,
+  getRuntimeConfig,
+  deleteWebhookSubscription,
+  registerWebhookSubscription,
+} from '../../../../../../aws/src/providers/ebay/client.js';
 
 function withEnv(overrides: Record<string, string | undefined>, run: () => void): void {
   const previousValues = new Map<string, string | undefined>();
@@ -130,6 +136,18 @@ test('getRuntimeConfig falls back to sandbox inventory mode and reports missing 
   );
 });
 
+test('getRequiredEbayWebhookCallbackUrl builds HTTPS callback URLs from env config', () => {
+  const originalBaseUrl = process.env.EBAY_WEBHOOK_BASE_URL;
+
+  process.env.EBAY_WEBHOOK_BASE_URL = 'https://example.com/';
+
+  try {
+    assert.equal(getRequiredEbayWebhookCallbackUrl(), 'https://example.com/api/hooks/ebay/listings');
+  } finally {
+    process.env.EBAY_WEBHOOK_BASE_URL = originalBaseUrl;
+  }
+});
+
 test('getDashboardSnapshot returns a warning-backed empty snapshot when eBay inventory fetch fails', async () => {
   const originalFetch = global.fetch;
   let requestCount = 0;
@@ -191,5 +209,149 @@ test('getDashboardSnapshot returns a warning-backed empty snapshot when eBay inv
     assert.equal(requestCount, 2);
   } finally {
     global.fetch = originalFetch;
+  }
+});
+
+test('registerWebhookSubscription sends the configured callback URL and event types', async () => {
+  const originalFetch = global.fetch;
+  const previousEnv = new Map<string, string | undefined>();
+  const envOverrides: Record<string, string | undefined> = {
+    EBAY_ENV: 'production',
+    EBAY_CLIENT_ID: 'test-client-id',
+    EBAY_CLIENT_SECRET: 'test-client-secret',
+    EBAY_REFRESH_TOKEN: 'test-refresh-token',
+    EBAY_WEBHOOK_BASE_URL: 'https://example.com',
+    EBAY_WEBHOOK_EVENT_TYPES: 'listing.updated,order.created',
+  };
+
+  for (const [key, value] of Object.entries(envOverrides)) {
+    previousEnv.set(key, process.env[key]);
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+
+  global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
+    const url = typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url;
+
+    if (url.includes('/identity/v1/oauth2/token')) {
+      return new Response(JSON.stringify({
+        access_token: 'test-access-token',
+        expires_in: 7200,
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (url.includes('/sell/notification/v1/subscription')) {
+      assert.equal(init?.method, 'POST');
+      assert.equal(String(init?.headers instanceof Headers ? init?.headers.get('Authorization') : (init?.headers as Record<string, string> | undefined)?.Authorization), 'Bearer test-access-token');
+
+      const payload = JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>;
+      assert.deepEqual(payload, {
+        callbackUrl: 'https://example.com/api/hooks/ebay/listings',
+        eventTypes: ['listing.updated', 'order.created'],
+      });
+
+      return new Response(JSON.stringify({
+        id: 'sub-123',
+        callbackUrl: 'https://example.com/api/hooks/ebay/listings',
+        eventTypes: ['listing.updated', 'order.created'],
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    throw new Error(`Unexpected fetch URL in test: ${url}`);
+  };
+
+  try {
+    const result = await registerWebhookSubscription({
+      callbackUrl: 'https://example.com/api/hooks/ebay/listings',
+      eventTypes: ['listing.updated', 'order.created'],
+    });
+
+    assert.deepEqual(result, {
+      id: 'sub-123',
+      callbackUrl: 'https://example.com/api/hooks/ebay/listings',
+      eventTypes: ['listing.updated', 'order.created'],
+    });
+  } finally {
+    global.fetch = originalFetch;
+    for (const [key, value] of previousEnv.entries()) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+});
+
+test('deleteWebhookSubscription sends a DELETE request for the configured subscription id', async () => {
+  const originalFetch = global.fetch;
+  const previousEnv = new Map<string, string | undefined>();
+  const envOverrides: Record<string, string | undefined> = {
+    EBAY_ENV: 'production',
+    EBAY_CLIENT_ID: 'test-client-id',
+    EBAY_CLIENT_SECRET: 'test-client-secret',
+    EBAY_REFRESH_TOKEN: 'test-refresh-token',
+    EBAY_WEBHOOK_BASE_URL: 'https://example.com',
+  };
+
+  for (const [key, value] of Object.entries(envOverrides)) {
+    previousEnv.set(key, process.env[key]);
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+
+  global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
+    const url = typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url;
+
+    if (url.includes('/identity/v1/oauth2/token')) {
+      return new Response(JSON.stringify({
+        access_token: 'test-access-token',
+        expires_in: 7200,
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    assert.match(url, /\/sell\/notification\/v1\/subscription\/sub-123$/);
+    assert.equal(init?.method, 'DELETE');
+
+    return new Response(JSON.stringify({ deleted: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  try {
+    await deleteWebhookSubscription('sub-123');
+  } finally {
+    global.fetch = originalFetch;
+    for (const [key, value] of previousEnv.entries()) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
   }
 });
