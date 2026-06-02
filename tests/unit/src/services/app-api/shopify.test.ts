@@ -21,6 +21,7 @@ describe('app-api shopify', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
     vi.stubEnv('VITE_APP_API_BASE_URL', '');
+    vi.stubEnv('VITE_AIRTABLE_API_KEY', '');
     fetchMock.mockReset();
   });
 
@@ -40,6 +41,7 @@ describe('app-api shopify', () => {
     const result = await getProducts(250);
 
     expect(fetchMock).toHaveBeenCalledWith('/api/shopify/products?limit=250', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -80,6 +82,7 @@ describe('app-api shopify', () => {
     const result = await resolveTaxonomyCategory('Electric Guitars');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/shopify/taxonomy-categories/resolve?searchOrId=Electric+Guitars', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -124,18 +127,22 @@ describe('app-api shopify', () => {
     const searchedCollections = await searchCollections('', 5);
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/shopify/collections?first=100', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/shopify/taxonomy-categories/search?search=synth&first=20', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/shopify/products/44', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(4, '/api/shopify/collections/search?first=5', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });

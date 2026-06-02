@@ -18,6 +18,7 @@ describe('app-api ai', () => {
     vi.stubGlobal('fetch', fetchMock);
     vi.stubEnv('VITE_APP_API_BASE_URL', '');
     vi.stubEnv('VITE_AI_PROVIDER', 'none');
+    vi.stubEnv('VITE_AIRTABLE_API_KEY', '');
     getLambdaAiProviderHintMock.mockReset();
     getLambdaAiProviderHintMock.mockReturnValue('none');
     fetchMock.mockReset();

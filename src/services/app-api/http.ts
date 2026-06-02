@@ -1,4 +1,5 @@
 import { AppApiHttpError } from './errors';
+import { isLocalBrowserSession } from './flags';
 
 function getProcessEnvVar(name: string): string | undefined {
   const runtimeGlobal = globalThis as typeof globalThis & {
@@ -89,7 +90,22 @@ function maybePersistCsrfToken(body: unknown): void {
 
 function buildUrl(path: string, params?: Record<string, string | number | undefined>): string {
   // Always use VITE_APP_API_BASE_URL if set (for scripts/Node.js), else fallback to browser origin
-  const base = getProcessEnvVar('VITE_APP_API_BASE_URL') || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+  const configuredBaseUrl = getProcessEnvVar('VITE_APP_API_BASE_URL');
+  if (typeof window !== 'undefined' && isLocalBrowserSession()) {
+    const url = new URL(path, window.location.origin);
+
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== '') {
+          url.searchParams.set(key, String(value));
+        }
+      });
+    }
+
+    return `${url.pathname}${url.search}${url.hash}`;
+  }
+
+  const base = configuredBaseUrl || 'http://localhost';
   const url = new URL(path, base);
 
   if (params) {
@@ -127,6 +143,17 @@ async function readErrorBody(response: Response): Promise<ApiErrorBody & { messa
 }
 
 async function requestJson<T>(path: string, init: RequestInit, params?: Record<string, string | number | undefined>): Promise<T> {
+  if (isLocalBrowserSession() && /^https?:\/\//i.test(path)) {
+    const requestOrigin = new URL(path).origin;
+    if (requestOrigin !== window.location.origin) {
+      throw new AppApiHttpError('Remote app API URLs are blocked in localhost browser sessions.', {
+        statusCode: 403,
+        code: 'LOCAL_REMOTE_API_BLOCKED',
+        retryable: false,
+      });
+    }
+  }
+
   const response = await fetch(buildUrl(path, params), {
     credentials: 'include',
     ...init,

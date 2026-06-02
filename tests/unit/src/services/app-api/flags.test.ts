@@ -9,6 +9,7 @@ describe('app-api flags', () => {
 
   it('exposes the configured remote app api base url for localhost notices', async () => {
     vi.stubEnv('VITE_APP_API_BASE_URL', '');
+    vi.stubEnv('VITE_AIRTABLE_API_KEY', '');
     window.__APP_RUNTIME_CONFIG__ = {
       VITE_APP_API_BASE_URL: 'https://example.execute-api.us-east-1.amazonaws.com',
     };
@@ -22,6 +23,7 @@ describe('app-api flags', () => {
 
   it('suppresses the warning when localhost is already using same-origin api routing', async () => {
     vi.stubEnv('VITE_APP_API_BASE_URL', '');
+    vi.stubEnv('VITE_AIRTABLE_API_KEY', '');
     window.__APP_RUNTIME_CONFIG__ = {
       VITE_APP_API_BASE_URL: '/api',
     };
@@ -33,6 +35,7 @@ describe('app-api flags', () => {
 
   it('reports localhost diagnostics with a forced local api route and ignored remote base url', async () => {
     vi.stubEnv('VITE_APP_API_BASE_URL', '');
+    vi.stubEnv('VITE_AIRTABLE_API_KEY', '');
     window.__APP_RUNTIME_CONFIG__ = {
       VITE_APP_API_BASE_URL: 'https://example.execute-api.us-east-1.amazonaws.com',
     };

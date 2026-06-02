@@ -6,6 +6,7 @@ describe('app-api gmail', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
     vi.stubEnv('VITE_APP_API_BASE_URL', '');
+    vi.stubEnv('VITE_AIRTABLE_API_KEY', '');
     fetchMock.mockReset();
   });
 

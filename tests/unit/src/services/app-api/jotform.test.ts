@@ -6,6 +6,7 @@ describe('app-api jotform', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
     vi.stubEnv('VITE_APP_API_BASE_URL', '');
+    vi.stubEnv('VITE_AIRTABLE_API_KEY', '');
     fetchMock.mockReset();
   });
 
@@ -25,6 +26,7 @@ describe('app-api jotform', () => {
     const result = await getForms();
 
     expect(fetchMock).toHaveBeenCalledWith('/api/jotform/forms', {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -44,6 +46,7 @@ describe('app-api jotform', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/jotform/forms/abc/submissions?limit=100&offset=0&orderby=created_at&direction=DESC',
       {
+        cache: 'no-store',
         credentials: 'include',
         headers: { Accept: 'application/json' },
       },

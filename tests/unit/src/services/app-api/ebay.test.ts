@@ -26,6 +26,7 @@ describe('app-api ebay', () => {
 
   beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
+    vi.stubEnv('VITE_AIRTABLE_API_KEY', '');
     fetchMock.mockReset();
   });
 
@@ -50,14 +51,17 @@ describe('app-api ebay', () => {
     const dashboardSnapshot = await getEbayDashboardSnapshot();
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, expectApiPath('/api/ebay/inventory-items?limit=100'), {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, expectApiPath('/api/ebay/offers?sku=ABC123&limit=10'), {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(3, expectApiPath('/api/ebay/offers/123'), {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -71,10 +75,12 @@ describe('app-api ebay', () => {
       body: JSON.stringify({ skus: ['ABC123'] }),
     });
     expect(fetchMock).toHaveBeenNthCalledWith(5, expectApiPath('/api/ebay/runtime-config'), {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(6, expectApiPath('/api/ebay/dashboard-snapshot'), {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -99,18 +105,22 @@ describe('app-api ebay', () => {
     const packageTypes = await getEbayPackageTypes('EBAY_US');
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, expectApiPath('/api/ebay/taxonomy/suggestions?query=amp&marketplaceId=EBAY_US'), {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, expectApiPath('/api/ebay/taxonomy/root-categories?marketplaceId=EBAY_US'), {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(3, expectApiPath('/api/ebay/taxonomy/child-categories?parentCategoryId=2&marketplaceId=EBAY_US'), {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
     expect(fetchMock).toHaveBeenNthCalledWith(4, expectApiPath('/api/ebay/package-types?marketplaceId=EBAY_US'), {
+      cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
