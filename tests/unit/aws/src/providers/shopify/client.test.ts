@@ -36,7 +36,7 @@ test('listWebhookSubscriptions returns normalized HTTP webhook subscriptions', a
           {
             node: {
               id: 'gid://shopify/WebhookSubscription/1',
-              topic: 'ORDERS_PAID',
+              topic: 'ORDERS_UPDATED',
               endpoint: {
                 __typename: 'WebhookHttpEndpoint',
                 callbackUrl: 'https://example.com/api/hooks/shopify/orders-paid',
@@ -52,7 +52,7 @@ test('listWebhookSubscriptions returns normalized HTTP webhook subscriptions', a
     const result = await listWebhookSubscriptions();
     assert.deepEqual(result, [{
       id: 'gid://shopify/WebhookSubscription/1',
-      topic: 'ORDERS_PAID',
+      topic: 'ORDERS_UPDATED',
       callbackUrl: 'https://example.com/api/hooks/shopify/orders-paid',
     }]);
   } finally {
@@ -85,7 +85,7 @@ test('ensureRequiredWebhookSubscriptions creates only missing required subscript
               {
                 node: {
                   id: 'gid://shopify/WebhookSubscription/1',
-                  topic: 'ORDERS_PAID',
+                  topic: 'ORDERS_UPDATED',
                   endpoint: {
                     __typename: 'WebhookHttpEndpoint',
                     callbackUrl: 'https://example.com/api/hooks/shopify/orders-paid',
@@ -125,16 +125,16 @@ test('ensureRequiredWebhookSubscriptions creates only missing required subscript
     const result = await ensureRequiredWebhookSubscriptions();
     assert.deepEqual(result.existing, [{
       id: 'gid://shopify/WebhookSubscription/1',
-      topic: 'ORDERS_PAID',
+      topic: 'ORDERS_UPDATED',
       callbackUrl: 'https://example.com/api/hooks/shopify/orders-paid',
     }]);
     assert.equal(result.created.length, 5);
     assert.deepEqual(result.created.map((item) => item.topic).sort(), [
       'DISPUTES_CREATE',
       'DISPUTES_UPDATE',
-      'ORDERS_CANCELLED',
+      'ORDERS_UPDATED',
       'REFUNDS_CREATE',
-      'RETURNS_PROCESS',
+      'RETURNS_APPROVE',
     ]);
     assert.equal(requests.filter((request) => request.query.includes('mutation RegisterWebhookSubscription')).length, 5);
   } finally {

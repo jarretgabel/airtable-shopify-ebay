@@ -2,6 +2,13 @@ import { HttpError } from '../../shared/errors.js';
 import { requireSecret } from '../../shared/secrets.js';
 
 export type ShopifyWebhookTopic =
+  | 'ORDERS_UPDATED'
+  | 'REFUNDS_CREATE'
+  | 'DISPUTES_CREATE'
+  | 'DISPUTES_UPDATE'
+  | 'RETURNS_APPROVE';
+
+export type ShopifyWebhookSubscriptionKey =
   | 'ORDERS_PAID'
   | 'ORDERS_CANCELLED'
   | 'REFUNDS_CREATE'
@@ -10,6 +17,7 @@ export type ShopifyWebhookTopic =
   | 'RETURNS_PROCESS';
 
 export interface ShopifyWebhookSubscriptionConfig {
+  key: ShopifyWebhookSubscriptionKey;
   topic: ShopifyWebhookTopic;
   callbackPath: string;
 }
@@ -26,13 +34,57 @@ export interface ShopifyWebhookRegistrationResult {
 }
 
 const SHOPIFY_WEBHOOK_SUBSCRIPTIONS: ShopifyWebhookSubscriptionConfig[] = [
-  { topic: 'ORDERS_PAID', callbackPath: '/api/hooks/shopify/orders-paid' },
-  { topic: 'ORDERS_CANCELLED', callbackPath: '/api/hooks/shopify/orders-cancelled' },
-  { topic: 'REFUNDS_CREATE', callbackPath: '/api/hooks/shopify/refunds-create' },
-  { topic: 'DISPUTES_CREATE', callbackPath: '/api/hooks/shopify/disputes-create' },
-  { topic: 'DISPUTES_UPDATE', callbackPath: '/api/hooks/shopify/disputes-update' },
-  { topic: 'RETURNS_PROCESS', callbackPath: '/api/hooks/shopify/returns-process' },
+  { key: 'ORDERS_PAID', topic: 'ORDERS_UPDATED', callbackPath: '/api/hooks/shopify/orders-paid' },
+  { key: 'ORDERS_CANCELLED', topic: 'ORDERS_UPDATED', callbackPath: '/api/hooks/shopify/orders-cancelled' },
+  { key: 'REFUNDS_CREATE', topic: 'REFUNDS_CREATE', callbackPath: '/api/hooks/shopify/refunds-create' },
+  { key: 'DISPUTES_CREATE', topic: 'DISPUTES_CREATE', callbackPath: '/api/hooks/shopify/disputes-create' },
+  { key: 'DISPUTES_UPDATE', topic: 'DISPUTES_UPDATE', callbackPath: '/api/hooks/shopify/disputes-update' },
+  { key: 'RETURNS_PROCESS', topic: 'RETURNS_APPROVE', callbackPath: '/api/hooks/shopify/returns-process' },
 ];
+
+/**
+ * Maps internal topic representation to Shopify's GraphQL WebhookSubscriptionTopic enum.
+ * Shopify uses UPPER_SNAKE_CASE format (e.g., 'ORDERS_PAID').
+ */
+function mapToShopifyWebhookTopic(topic: ShopifyWebhookTopic): string {
+  // The internal format already matches Shopify's GraphQL enum format
+  return topic;
+}
+
+/**
+ * Maps Shopify's WebhookSubscriptionTopic back to our internal representation.
+ */
+function mapFromShopifyWebhookTopic(shopifyTopic: string): ShopifyWebhookTopic | null {
+  const validTopics: Record<string, ShopifyWebhookTopic> = {
+    'ORDERS_UPDATED': 'ORDERS_UPDATED',
+    'REFUNDS_CREATE': 'REFUNDS_CREATE',
+    'DISPUTES_CREATE': 'DISPUTES_CREATE',
+    'DISPUTES_UPDATE': 'DISPUTES_UPDATE',
+    'RETURNS_APPROVE': 'RETURNS_APPROVE',
+  };
+  return validTopics[shopifyTopic] ?? null;
+}
+
+export async function getCurrentShopifyAccessScopes(): Promise<string[]> {
+  const data = await graphQlRequest<{
+    currentAppInstallation: {
+      accessScopes: Array<{ handle?: string | null }>;
+    } | null;
+  }>(
+    `query CurrentShopifyAccessScopes {
+      currentAppInstallation {
+        accessScopes {
+          handle
+        }
+      }
+    }`,
+    {},
+  );
+
+  return (data.currentAppInstallation?.accessScopes ?? [])
+    .map((scope) => scope.handle?.trim() ?? '')
+    .filter((scope): scope is string => scope.length > 0);
+}
 
 export interface ShopifyProductRecord {
   id: number;
@@ -303,10 +355,10 @@ export function getRequiredShopifyWebhookSubscriptions(): ShopifyWebhookSubscrip
   return [...SHOPIFY_WEBHOOK_SUBSCRIPTIONS];
 }
 
-export function getRequiredShopifyWebhookCallbackUrl(topic: ShopifyWebhookTopic): string {
-  const subscription = SHOPIFY_WEBHOOK_SUBSCRIPTIONS.find((item) => item.topic === topic);
+export function getRequiredShopifyWebhookCallbackUrl(key: ShopifyWebhookSubscriptionKey): string {
+  const subscription = SHOPIFY_WEBHOOK_SUBSCRIPTIONS.find((item) => item.key === key);
   if (!subscription) {
-    throw new HttpError(500, `Unsupported Shopify webhook topic: ${topic}`, {
+    throw new HttpError(500, `Unsupported Shopify webhook key: ${key}`, {
       service: 'shopify',
       code: 'SHOPIFY_WEBHOOK_TOPIC_UNSUPPORTED',
       retryable: false,
@@ -322,7 +374,7 @@ export async function listWebhookSubscriptions(): Promise<ShopifyWebhookSubscrip
       edges: Array<{
         node: {
           id: string;
-          topic: ShopifyWebhookTopic;
+          topic: string;
           endpoint?: {
             __typename: string;
             callbackUrl?: string | null;
@@ -359,9 +411,14 @@ export async function listWebhookSubscriptions(): Promise<ShopifyWebhookSubscrip
         return null;
       }
 
+      const topic = mapFromShopifyWebhookTopic(edge.node.topic);
+      if (!topic) {
+        return null;
+      }
+
       return {
         id: edge.node.id,
-        topic: edge.node.topic,
+        topic,
         callbackUrl,
       } satisfies ShopifyWebhookSubscriptionRecord;
     })
@@ -369,11 +426,12 @@ export async function listWebhookSubscriptions(): Promise<ShopifyWebhookSubscrip
 }
 
 export async function registerWebhookSubscription(topic: ShopifyWebhookTopic, callbackUrl: string): Promise<ShopifyWebhookSubscriptionRecord> {
+  const shopifyTopic = mapToShopifyWebhookTopic(topic);
   const data = await graphQlRequest<{
     webhookSubscriptionCreate: {
       webhookSubscription: {
         id: string;
-        topic: ShopifyWebhookTopic;
+        topic: string;
         endpoint?: {
           __typename: string;
           callbackUrl?: string | null;
@@ -405,7 +463,7 @@ export async function registerWebhookSubscription(topic: ShopifyWebhookTopic, ca
         }
       }
     }`,
-    { topic, callbackUrl },
+    { topic: shopifyTopic, callbackUrl },
   );
 
   const userErrors = data.webhookSubscriptionCreate.userErrors ?? [];
@@ -432,7 +490,7 @@ export async function registerWebhookSubscription(topic: ShopifyWebhookTopic, ca
 
   return {
     id: subscription.id,
-    topic: subscription.topic,
+    topic: mapFromShopifyWebhookTopic(subscription.topic),
     callbackUrl: createdCallbackUrl,
   };
 }

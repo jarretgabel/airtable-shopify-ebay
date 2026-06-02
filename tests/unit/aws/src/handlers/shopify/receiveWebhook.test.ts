@@ -70,11 +70,12 @@ test('shopify webhook handler writes orders/paid event and persists order identi
     },
   });
 
-  const response = await handler(createEvent('orders-paid', 'orders/paid', {
+  const response = await handler(createEvent('orders-paid', 'orders/updated', {
     id: 12345,
     order_id: 4700987949,
     name: '#1001',
     processed_at: '2025-06-01T12:00:00Z',
+    financial_status: 'paid',
     line_items: [{ product_id: 9876543210 }],
   }));
   if (typeof response === 'string') throw new Error('Expected structured response');
@@ -113,11 +114,12 @@ test('shopify webhook handler triggers cross-channel eBay close only for ORDERS_
     },
   });
 
-  const response = await handler(createEvent('orders-paid', 'orders/paid', {
+  const response = await handler(createEvent('orders-paid', 'orders/updated', {
     id: 12345,
     order_id: 4700987949,
     name: '#1001',
     processed_at: '2025-06-01T12:00:00Z',
+    financial_status: 'paid',
     line_items: [{ product_id: 9876543210 }],
   }));
   if (typeof response === 'string') throw new Error('Expected structured response');
@@ -148,7 +150,7 @@ test('shopify webhook handler writes ORDERS_CANCELLED outcome when not already s
     },
   });
 
-  const response = await handler(createEvent('orders-cancelled', 'orders/cancelled', {
+  const response = await handler(createEvent('orders-cancelled', 'orders/updated', {
     id: 4700987949,
     order_id: 4700987949,
     name: '#1001',
@@ -293,7 +295,7 @@ test('shopify webhook handler writes RETURNS_PROCESS as Returned when no outcome
     },
   });
 
-  const response = await handler(createEvent('returns-process', 'returns/process', {
+  const response = await handler(createEvent('returns-process', 'returns/approve', {
     id: 'gid://shopify/Return/123',
     name: 'R-1001',
     order: {
@@ -442,11 +444,12 @@ test('shopify webhook handler skips write when sync lock is enabled', async () =
     },
   });
 
-  const response = await handler(createEvent('orders-paid', 'orders/paid', {
+  const response = await handler(createEvent('orders-paid', 'orders/updated', {
     id: 12345,
     order_id: 4700987949,
     name: '#1001',
     processed_at: '2025-06-01T12:00:00Z',
+    financial_status: 'paid',
     line_items: [{ product_id: 9876543210 }],
   }));
   if (typeof response === 'string') throw new Error('Expected structured response');
@@ -477,11 +480,12 @@ test('shopify webhook handler skips duplicate event using idempotency key', asyn
     },
   });
 
-  const response = await handler(createEvent('orders-paid', 'orders/paid', {
+  const response = await handler(createEvent('orders-paid', 'orders/updated', {
     id: 12345,
     order_id: 4700987949,
     name: '#1001',
     processed_at: '2025-06-01T12:00:00Z',
+    financial_status: 'paid',
     line_items: [{ product_id: 9876543210 }],
   }));
   if (typeof response === 'string') throw new Error('Expected structured response');
@@ -508,11 +512,12 @@ test('shopify webhook handler gracefully handles unmatched order (returns unmatc
     },
   });
 
-  const response = await handler(createEvent('orders-paid', 'orders/paid', {
+  const response = await handler(createEvent('orders-paid', 'orders/updated', {
     id: 12345,
     order_id: 4700987949,
     name: '#1001',
     processed_at: '2025-06-01T12:00:00Z',
+    financial_status: 'paid',
     line_items: [{ product_id: 9876543210 }],
   }));
   if (typeof response === 'string') throw new Error('Expected structured response');
@@ -576,7 +581,7 @@ test('shopify webhook handler never writes Restock Disposition (relist block)', 
     },
   });
 
-  const response = await handler(createEvent('orders-cancelled', 'orders/cancelled', {
+  const response = await handler(createEvent('orders-cancelled', 'orders/updated', {
     id: 4700987949,
     order_id: 4700987949,
     name: '#1001',
@@ -594,7 +599,7 @@ test('shopify webhook handler rejects invalid signatures', async () => {
     getWebhookSecret: () => 'wrong-secret',
   });
 
-  const response = await handler(createEvent('orders-paid', 'orders/paid', { id: 12345 }, 'test-secret'));
+  const response = await handler(createEvent('orders-paid', 'orders/updated', { id: 12345, financial_status: 'paid' }, 'test-secret'));
   if (typeof response === 'string') throw new Error('Expected structured response');
 
   assert.equal(response.statusCode, 401);

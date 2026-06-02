@@ -123,15 +123,32 @@ async function requestJotFormFormMutation<T>(formId: string, pathSuffix: string,
     body: formBody.toString(),
   });
 
+  const rawPayload = await response.text();
+  let payload: JotFormApiResponse<T> | null = null;
+  if (rawPayload) {
+    try {
+      payload = JSON.parse(rawPayload) as JotFormApiResponse<T>;
+    } catch {
+      payload = null;
+    }
+  }
+
   if (!response.ok) {
-    throw new HttpError(response.status, `JotForm API error: HTTP ${response.status} on /form/${formId}${pathSuffix}`, {
+    throw new HttpError(response.status, payload?.message?.trim() || `JotForm API error: HTTP ${response.status} on /form/${formId}${pathSuffix}`, {
       service: 'jotform',
       code: 'JOTFORM_HTTP_ERROR',
       retryable: response.status >= 500,
     });
   }
 
-  const payload = await response.json() as JotFormApiResponse<T>;
+  if (!payload) {
+    throw new HttpError(502, 'JotForm API returned an empty response.', {
+      service: 'jotform',
+      code: 'JOTFORM_API_EMPTY_RESPONSE',
+      retryable: false,
+    });
+  }
+
   if (payload.responseCode !== 200) {
     throw new HttpError(502, `JotForm API error ${payload.responseCode}: ${payload.message}`, {
       service: 'jotform',
@@ -153,6 +170,38 @@ function normalizeWebhookRecord(record: JotFormWebhookRecord): JotFormWebhookSub
   return { id, webhookUrl };
 }
 
+function normalizeWebhookCollection(content: unknown): JotFormWebhookSubscriptionRecord[] {
+  if (Array.isArray(content)) {
+    return content
+      .map((record) => (record && typeof record === 'object' ? normalizeWebhookRecord(record as JotFormWebhookRecord) : null))
+      .filter((record): record is JotFormWebhookSubscriptionRecord => record !== null);
+  }
+
+  if (!content || typeof content !== 'object') {
+    return [];
+  }
+
+  const record = content as Record<string, unknown>;
+  const normalized = normalizeWebhookRecord(record as JotFormWebhookRecord);
+  if (normalized) {
+    return [normalized];
+  }
+
+  return Object.entries(record).flatMap(([id, value]) => {
+    if (typeof value === 'string') {
+      const webhookUrl = value.trim();
+      return webhookUrl ? [{ id: id.trim(), webhookUrl }] : [];
+    }
+
+    if (!value || typeof value !== 'object') {
+      return [];
+    }
+
+    const normalizedRecord = normalizeWebhookRecord({ id, ...(value as JotFormWebhookRecord) });
+    return normalizedRecord ? [normalizedRecord] : [];
+  });
+}
+
 export function getForms(params: JotFormRequestParams = {}): Promise<JotFormForm[]> {
   return requestJotForm<JotFormForm[]>('/user/forms', params);
 }
@@ -169,26 +218,35 @@ export function getSubmission(submissionId: string): Promise<JotFormSubmission> 
 }
 
 export function listFormWebhooks(formId: string): Promise<JotFormWebhookSubscriptionRecord[]> {
-  return requestJotForm<JotFormWebhookRecord[]>(`/form/${formId}/webhooks`)
-    .then((records) => records.map(normalizeWebhookRecord).filter((record): record is JotFormWebhookSubscriptionRecord => record !== null));
+  return requestJotForm<unknown>(`/form/${formId}/webhooks`)
+    .then((content) => normalizeWebhookCollection(content));
 }
 
-export function registerFormWebhook(
+export async function registerFormWebhook(
   input: JotFormWebhookSubscriptionInput,
 ): Promise<JotFormWebhookSubscriptionRecord> {
-  return requestJotFormFormMutation<JotFormWebhookRecord>(input.formId, '/webhooks', { webhookURL: input.webhookUrl })
-    .then((record) => {
-      const normalized = normalizeWebhookRecord(record);
-      if (!normalized) {
-        throw new HttpError(502, 'JotForm webhook registration returned no webhook record.', {
-          service: 'jotform',
-          code: 'JOTFORM_WEBHOOK_REGISTRATION_EMPTY',
-          retryable: false,
-        });
-      }
+  try {
+    const content = await requestJotFormFormMutation<unknown>(input.formId, '/webhooks', { webhookURL: input.webhookUrl });
+    const normalized = normalizeWebhookCollection(content)[0];
+    if (!normalized) {
+      throw new HttpError(502, 'JotForm webhook registration returned no webhook record.', {
+        service: 'jotform',
+        code: 'JOTFORM_WEBHOOK_REGISTRATION_EMPTY',
+        retryable: false,
+      });
+    }
 
-      return normalized;
-    });
+    return normalized;
+  } catch (error) {
+    if (error instanceof HttpError && error.message.includes('already in WebHooks List')) {
+      const existingWebhook = (await listFormWebhooks(input.formId)).find((webhook) => webhook.webhookUrl === input.webhookUrl);
+      if (existingWebhook) {
+        return existingWebhook;
+      }
+    }
+
+    throw error;
+  }
 }
 
 export async function deleteFormWebhook(formId: string, webhookId: string): Promise<void> {

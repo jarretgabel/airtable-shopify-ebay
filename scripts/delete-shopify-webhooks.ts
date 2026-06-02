@@ -23,7 +23,7 @@ async function main(): Promise<void> {
   const deleted: Array<{ id: string; topic: string; callbackUrl: string }> = [];
 
   for (const subscription of requiredSubscriptions) {
-    const callbackUrl = getRequiredShopifyWebhookCallbackUrl(subscription.topic);
+    const callbackUrl = getRequiredShopifyWebhookCallbackUrl(subscription.key);
     const match = existingSubscriptions.find((item) => item.topic === subscription.topic && item.callbackUrl === callbackUrl);
     if (!match) {
       continue;

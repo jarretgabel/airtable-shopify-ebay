@@ -80,7 +80,7 @@ STEP 5: Register webhook subscriptions
 ─────────────────────────────────────
 Set this in your .env.local first:
   VITE_SHOPIFY_WEBHOOK_SECRET=<your-shopify-app-secret>
-  VITE_SHOPIFY_WEBHOOK_BASE_URL=https://your-public-app-host
+  VITE_SHOPIFY_WEBHOOK_BASE_URL=https://your-api-id.execute-api.your-region.amazonaws.com
 
 Then run:
   npm run shopify:webhooks:register

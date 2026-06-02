@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import type { ShopifyWebhookTopic } from '../../providers/shopify/client.js';
+import type { ShopifyWebhookSubscriptionKey, ShopifyWebhookTopic } from '../../providers/shopify/client.js';
 import { getConfiguredRecords, updateConfiguredRecord } from '../../providers/airtable/sources.js';
 import { closeEbayListingWhenSoldOnShopify } from '../../services/crossChannelClose.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
@@ -63,6 +63,8 @@ interface ShopifyWebhookPayload {
   finalized_on?: string;
   closed_at?: string;
   request_approved_at?: string;
+  financial_status?: string;
+  display_financial_status?: string;
   status?: string;
   type?: string;
   amount?: number | string;
@@ -75,7 +77,7 @@ interface ShopifyWebhookPayload {
 }
 
 export interface NormalizedShopifyWebhookEvent {
-  topic: ShopifyWebhookTopic;
+  topic: ShopifyWebhookSubscriptionKey;
   topicName: string;
   pathTopic: ShopifyWebhookPathTopic;
   eventId: string;
@@ -97,13 +99,13 @@ interface ShopifyWebhookDependencies {
   closeEbayListingWhenSoldOnShopify?: typeof closeEbayListingWhenSoldOnShopify;
 }
 
-const TOPIC_BY_PATH: Record<ShopifyWebhookPathTopic, { headerValue: string; topic: ShopifyWebhookTopic }> = {
-  'orders-paid': { headerValue: 'orders/paid', topic: 'ORDERS_PAID' },
-  'orders-cancelled': { headerValue: 'orders/cancelled', topic: 'ORDERS_CANCELLED' },
-  'refunds-create': { headerValue: 'refunds/create', topic: 'REFUNDS_CREATE' },
-  'disputes-create': { headerValue: 'disputes/create', topic: 'DISPUTES_CREATE' },
-  'disputes-update': { headerValue: 'disputes/update', topic: 'DISPUTES_UPDATE' },
-  'returns-process': { headerValue: 'returns/process', topic: 'RETURNS_PROCESS' },
+const TOPIC_BY_PATH: Record<ShopifyWebhookPathTopic, { headerValue: string; topic: ShopifyWebhookSubscriptionKey; subscriptionTopic: ShopifyWebhookTopic }> = {
+  'orders-paid': { headerValue: 'orders/updated', topic: 'ORDERS_PAID', subscriptionTopic: 'ORDERS_UPDATED' },
+  'orders-cancelled': { headerValue: 'orders/updated', topic: 'ORDERS_CANCELLED', subscriptionTopic: 'ORDERS_UPDATED' },
+  'refunds-create': { headerValue: 'refunds/create', topic: 'REFUNDS_CREATE', subscriptionTopic: 'REFUNDS_CREATE' },
+  'disputes-create': { headerValue: 'disputes/create', topic: 'DISPUTES_CREATE', subscriptionTopic: 'DISPUTES_CREATE' },
+  'disputes-update': { headerValue: 'disputes/update', topic: 'DISPUTES_UPDATE', subscriptionTopic: 'DISPUTES_UPDATE' },
+  'returns-process': { headerValue: 'returns/approve', topic: 'RETURNS_PROCESS', subscriptionTopic: 'RETURNS_APPROVE' },
 };
 
 const SHOPIFY_SYNC_LOCK_FIELD = 'Shopify Sync Locked';
@@ -342,7 +344,7 @@ function resolveMatchingRecordId(
 }
 
 function buildUpdateFields(
-  topic: ShopifyWebhookTopic,
+  topic: ShopifyWebhookSubscriptionKey,
   orderId: string,
   orderName: string,
   eventId: string,
@@ -444,7 +446,7 @@ function getWebhookSecret(): string {
   return requireSecret('SHOPIFY_WEBHOOK_SECRET');
 }
 
-function resolveExpectedTopic(event: APIGatewayProxyEventV2): { pathTopic: ShopifyWebhookPathTopic; headerValue: string; topic: ShopifyWebhookTopic } {
+function resolveExpectedTopic(event: APIGatewayProxyEventV2): { pathTopic: ShopifyWebhookPathTopic; headerValue: string; topic: ShopifyWebhookSubscriptionKey; subscriptionTopic: ShopifyWebhookTopic } {
   const pathTopic = event.pathParameters?.topic?.trim() as ShopifyWebhookPathTopic | undefined;
   if (!pathTopic || !(pathTopic in TOPIC_BY_PATH)) {
     throw new HttpError(400, 'Unsupported Shopify webhook topic path.', {
@@ -525,7 +527,7 @@ function stringifyId(value: string | number | undefined): string {
 function normalizeEvent(
   event: APIGatewayProxyEventV2,
   payload: ShopifyWebhookPayload,
-  expectedTopic: { pathTopic: ShopifyWebhookPathTopic; headerValue: string; topic: ShopifyWebhookTopic },
+  expectedTopic: { pathTopic: ShopifyWebhookPathTopic; headerValue: string; topic: ShopifyWebhookSubscriptionKey; subscriptionTopic: ShopifyWebhookTopic },
 ): NormalizedShopifyWebhookEvent {
   const receivedTopic = readHeader(event, 'x-shopify-topic').toLowerCase();
   if (receivedTopic !== expectedTopic.headerValue) {
@@ -567,6 +569,25 @@ function normalizeEvent(
   };
 }
 
+function isPaidOrderPayload(payload: ShopifyWebhookPayload): boolean {
+  const financialStatus = payload.display_financial_status?.trim().toLowerCase()
+    || payload.financial_status?.trim().toLowerCase()
+    || '';
+  return financialStatus === 'paid';
+}
+
+function shouldProcessPathTopic(pathTopic: ShopifyWebhookPathTopic, payload: ShopifyWebhookPayload): boolean {
+  if (pathTopic === 'orders-paid') {
+    return isPaidOrderPayload(payload);
+  }
+
+  if (pathTopic === 'orders-cancelled') {
+    return Boolean(payload.cancelled_at?.trim());
+  }
+
+  return true;
+}
+
 export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
   const getSecret = dependencies.getWebhookSecret ?? getWebhookSecret;
   const verifySignature = dependencies.verifyWebhookSignature ?? ((event, rawBody) => {
@@ -585,6 +606,21 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
       verifySignature(event, rawBody);
       const payload = parsePayload(rawBody);
       const normalizedEvent = normalizeEvent(event, payload, expectedTopic);
+
+      if (!shouldProcessPathTopic(normalizedEvent.pathTopic, payload)) {
+        infoLogger('Skipped Shopify webhook event because payload did not match path-specific criteria.', {
+          topic: normalizedEvent.topic,
+          pathTopic: normalizedEvent.pathTopic,
+          topicName: normalizedEvent.topicName,
+        });
+
+        return jsonOk({
+          received: true,
+          skipped: true,
+          ignored: true,
+          event: normalizedEvent,
+        }, { origin });
+      }
 
       // Attempt to find matching record for writeback
       const firstProductId = getFirstProductId(payload);
