@@ -76,6 +76,15 @@ STEP 4: Save Token to .env.local
 Add to your .env.local:
   VITE_SHOPIFY_OAUTH_ACCESS_TOKEN=<the-token-from-step-3>
 
+STEP 5: Register webhook subscriptions
+─────────────────────────────────────
+Set this in your .env.local first:
+  VITE_SHOPIFY_WEBHOOK_SECRET=<your-shopify-app-secret>
+  VITE_SHOPIFY_WEBHOOK_BASE_URL=https://your-public-app-host
+
+Then run:
+  npm run shopify:webhooks:register
+
 Then test the connection:
   node tests/test-shopify-connection.mjs
 `);

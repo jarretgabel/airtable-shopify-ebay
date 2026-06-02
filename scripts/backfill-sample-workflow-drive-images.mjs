@@ -5,11 +5,20 @@ import process from 'node:process';
 import { execFileSync } from 'node:child_process';
 import dotenv from 'dotenv';
 import { archiveWorkflowImagesToGoogleDrive } from '../aws/dist/providers/googleDrive/client.js';
+import { getSubmission } from '../aws/dist/providers/jotform/client.js';
+import { mapJotFormSubmissionToWorkflowItems } from '../aws/dist/providers/jotform/workflowIngestMapper.js';
+import { archiveIntakeImagesForRecord } from '../aws/dist/providers/jotform/workflowIngest.js';
 
 const BASE_ID = 'apprsAm2FOohEmL2u';
 const TABLE_ID = 'tbl0K0nFQL64jQMx8';
 const SAMPLE_MARKER = '[WORKFLOW_QUEUE_SAMPLE_DATA]';
+const SAMPLE_SKU_PREFIX = 'SAMPLE-WORKFLOW-QUEUE-';
 const TARGET_STATUSES = new Set([
+  'Pending Review',
+  'Unqualified',
+  'Accepted - Awaiting Arrival',
+  'Accepted - Arrived, Awaiting SKU',
+  'Accepted - Arrived, Awaiting Missing Item',
   'Testing In Progress',
   'Photography In Progress',
   'Awaiting Pre-Listing Review',
@@ -23,6 +32,31 @@ const TARGET_STATUSES = new Set([
 ]);
 const RUNS_DIR = path.join(process.cwd(), 'tmp', 'sample-workflow-drive-backfill');
 const GOOGLE_DRIVE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const TESTING_AND_LATER_STATUSES = new Set([
+  'Testing In Progress',
+  'Photography In Progress',
+  'Awaiting Pre-Listing Review',
+  'Approved for Publish',
+  'Listed, Shopify',
+  'Listed, eBay',
+  'Stale Listing, Shopify',
+  'Stale Listing, eBay',
+  'Sold - Ready to Ship',
+  'Shipped',
+]);
+const PHOTOGRAPHY_AND_LATER_STATUSES = new Set([
+  'Photography In Progress',
+  'Awaiting Pre-Listing Review',
+  'Approved for Publish',
+  'Listed, Shopify',
+  'Listed, eBay',
+  'Stale Listing, Shopify',
+  'Stale Listing, eBay',
+  'Sold - Ready to Ship',
+  'Shipped',
+]);
+
+const jotFormSubmissionItemsCache = new Map();
 
 function loadEnv() {
   let merged = { ...process.env };
@@ -202,35 +236,47 @@ function getTrimmedString(value) {
   return '';
 }
 
+function extractJotFormSubmissionId(slotSubmissionId) {
+  const match = slotSubmissionId.match(/^(.+)-slot\d+$/);
+  return match?.[1] ?? slotSubmissionId;
+}
+
+function isOldFormatSubmissionId(slotSubmissionId) {
+  return !/-slot\d+$/.test(slotSubmissionId);
+}
+
 function isSampleRecord(record) {
   const fields = record.fields ?? {};
+  const sku = getTrimmedString(fields.SKU);
+  const skuLegacyBackup = getTrimmedString(fields['SKU Legacy Backup']);
   return [
     fields['Template Name'],
     fields['Item Title'],
     fields['Qualification Notes'],
     fields['Allocation Notes'],
     fields.Description,
-  ].some((value) => getTrimmedString(value).includes(SAMPLE_MARKER));
+  ].some((value) => getTrimmedString(value).includes(SAMPLE_MARKER))
+    || sku.startsWith(SAMPLE_SKU_PREFIX)
+    || skuLegacyBackup.startsWith(SAMPLE_SKU_PREFIX);
 }
 
 function getStagePlan(workflowStatus) {
-  if (workflowStatus === 'Testing In Progress') {
-    return {
-      metadataStages: ['intake'],
-      imageStage: null,
-    };
+  const metadataStages = ['intake'];
+  let imageStage = null;
+
+  if (TESTING_AND_LATER_STATUSES.has(workflowStatus)) {
+    metadataStages.push('testing');
+    imageStage = 'testing';
   }
 
-  if (workflowStatus === 'Photography In Progress') {
-    return {
-      metadataStages: ['intake', 'testing'],
-      imageStage: null,
-    };
+  if (PHOTOGRAPHY_AND_LATER_STATUSES.has(workflowStatus)) {
+    metadataStages.push('photos');
+    imageStage = 'photos';
   }
 
   return {
-    metadataStages: ['intake', 'testing', 'photos'],
-    imageStage: 'photos',
+    metadataStages,
+    imageStage,
   };
 }
 
@@ -272,10 +318,11 @@ function buildImageDescriptor(record, stage, index) {
   const sku = getTrimmedString(record.fields.SKU) || getTrimmedString(record.fields['SKU Legacy Backup']);
   const make = getTrimmedString(record.fields.Make).toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const model = getTrimmedString(record.fields.Model).toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const stem = `${sku || 'sample'}-${make || 'item'}-${model || 'model'}-${stage}-${index}`.toLowerCase();
+  const imageKey = sku || record.id;
+  const stem = `${imageKey}-${make || 'item'}-${model || 'model'}-${stage}-${index}`.toLowerCase();
   const title = `${getTrimmedString(record.fields.Make)} ${getTrimmedString(record.fields.Model)}`.trim() || 'Sample Item';
   return {
-    sku,
+    sku: imageKey,
     originalFilename: `${stem}-original.jpg`,
     processedFilename: `${stem}-processed.jpg`,
     alt: `${getTrimmedString(record.fields.Make)} ${getTrimmedString(record.fields.Model)} ${stage} sample image ${index}`.trim(),
@@ -311,15 +358,11 @@ async function archiveStageImages(record, stage) {
   const results = [];
   for (let index = 1; index <= 3; index += 1) {
     const descriptor = buildImageDescriptor(record, stage, index);
-    if (!descriptor.sku) {
-      throw new Error(`Record ${record.id} is missing SKU.`);
-    }
-
     const originalFile = await renderSampleJpegBase64(descriptor, 'original');
     const processedFile = await renderSampleJpegBase64(descriptor, 'processed');
 
     const archive = await archiveWorkflowImagesToGoogleDrive({
-      sku: descriptor.sku,
+      folderKey: record.id,
       stage,
       original: {
         filename: descriptor.originalFilename,
@@ -333,21 +376,94 @@ async function archiveStageImages(record, stage) {
       },
     });
 
+    const timestamp = new Date().toISOString();
+    results.push({
+      folderId: archive.folderId,
+      attachmentId: archive.original.id,
+      url: archive.original.url,
+      filename: archive.original.filename,
+      alt: `${descriptor.alt} original`,
+      sortOrder: results.length + 1,
+      sourceStage: stage,
+      includedInListing: stage !== 'intake',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
     results.push({
       folderId: archive.folderId,
       attachmentId: archive.processed.id,
       url: archive.processed.url,
       filename: archive.processed.filename,
-      alt: descriptor.alt,
-      sortOrder: index,
+      alt: `${descriptor.alt} processed`,
+      sortOrder: results.length + 1,
       sourceStage: stage,
       includedInListing: stage !== 'intake',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: timestamp,
+      updatedAt: timestamp,
     });
   }
 
   return results;
+}
+
+async function getJotFormSubmissionItems(slotSubmissionId) {
+  const rootSubmissionId = extractJotFormSubmissionId(slotSubmissionId);
+  if (!rootSubmissionId) {
+    return [];
+  }
+
+  const cached = jotFormSubmissionItemsCache.get(rootSubmissionId);
+  if (cached) {
+    return cached;
+  }
+
+  const submission = await getSubmission(rootSubmissionId);
+  const items = mapJotFormSubmissionToWorkflowItems(submission);
+  jotFormSubmissionItemsCache.set(rootSubmissionId, items);
+  return items;
+}
+
+async function archiveIntakeImages(record) {
+  const slotSubmissionId = getTrimmedString(record.fields['JotForm Submission ID']);
+  if (!slotSubmissionId) {
+    return {
+      source: 'seed',
+      images: await archiveStageImages(record, 'intake'),
+    };
+  }
+
+  try {
+    const submissionItems = await getJotFormSubmissionItems(slotSubmissionId);
+    const imageUrls = isOldFormatSubmissionId(slotSubmissionId)
+      ? submissionItems.flatMap((item) => item.imageUrls)
+      : (submissionItems.find((item) => item.submissionId === slotSubmissionId)?.imageUrls ?? []);
+
+    if (imageUrls.length > 0) {
+      const archivedFiles = await archiveIntakeImagesForRecord(record.id, imageUrls);
+      const nowIso = new Date().toISOString();
+      return {
+        source: 'jotform',
+        images: archivedFiles.map((file, index) => ({
+          attachmentId: file.id,
+          url: file.url,
+          filename: file.filename,
+          alt: '',
+          sortOrder: index + 1,
+          sourceStage: 'intake',
+          includedInListing: false,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+        })),
+      };
+    }
+  } catch (error) {
+    console.warn(`Falling back to seeded intake images for ${record.id}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  return {
+    source: 'seed-fallback',
+    images: await archiveStageImages(record, 'intake'),
+  };
 }
 
 function parseArgs(argv) {
@@ -405,6 +521,11 @@ async function main() {
     const archivedByStage = {};
 
     for (const stage of metadataStages) {
+      if (stage === 'intake') {
+        archivedByStage.intake = (await archiveIntakeImages(record)).images;
+        continue;
+      }
+
       archivedByStage[stage] = await archiveStageImages(record, stage);
     }
 
@@ -432,6 +553,7 @@ async function main() {
       workflowStatus: getTrimmedString(record.fields['Workflow Status']),
       sku,
       folderId,
+      intakeSource: getTrimmedString(record.fields['JotForm Submission ID']) ? 'jotform-or-fallback' : 'seed',
       intakeUrls: intakeImages.map((image) => image.url),
       photoUrls: photoImages.map((image) => image.url),
       testingUrls: testingImages.map((image) => image.url),

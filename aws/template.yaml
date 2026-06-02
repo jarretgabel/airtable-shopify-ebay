@@ -32,6 +32,13 @@ Parameters:
   ShopifyAccessToken:
     Type: String
     NoEcho: true
+  ShopifyWebhookSecret:
+    Type: String
+    NoEcho: true
+    Default: ''
+  ShopifyWebhookBaseUrl:
+    Type: String
+    Default: ''
   EbayEnv:
     Type: String
     Default: ''
@@ -165,6 +172,8 @@ Globals:
         AIRTABLE_COMBINED_LISTINGS_TABLE_NAME: !Ref AirtableCombinedListingsTableName
         SHOPIFY_STORE_DOMAIN: !Ref ShopifyStoreDomain
         SHOPIFY_ACCESS_TOKEN: !Ref ShopifyAccessToken
+        SHOPIFY_WEBHOOK_SECRET: !Ref ShopifyWebhookSecret
+        SHOPIFY_WEBHOOK_BASE_URL: !Ref ShopifyWebhookBaseUrl
         EBAY_ENV: !Ref EbayEnv
         EBAY_CLIENT_ID: !Ref EbayClientId
         EBAY_CLIENT_SECRET: !Ref EbayClientSecret
@@ -459,6 +468,21 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: POST
             Path: /api/shopify/images
+
+  ShopifyReceiveWebhookFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/shopify/receiveWebhook.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/hooks/shopify/{topic}
 
   EbayGetInventoryItemsFunction:
     Type: AWS::Serverless::Function

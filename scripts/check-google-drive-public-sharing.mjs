@@ -99,8 +99,8 @@ async function main() {
     throw new Error(`Configured root ID ${folderId} is not a Drive folder.`);
   }
 
-  const probeName = `workflow-image-archive-check-${Date.now().toString(36)}.png`;
-  const boundary = `drive-check-${Date.now().toString(36)}`;
+  const probeName = `workflow-image-sharing-check-${Date.now().toString(36)}.png`;
+  const boundary = `drive-sharing-check-${Date.now().toString(36)}`;
   const metadata = JSON.stringify({ name: probeName, parents: [folderId] });
   const tinyPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+lmRsAAAAASUVORK5CYII=', 'base64');
   const multipartBody = Buffer.concat([
@@ -109,7 +109,7 @@ async function main() {
     Buffer.from(`\r\n--${boundary}--`, 'utf8'),
   ]);
 
-  const createdProbe = await driveRequest('/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType&supportsAllDrives=true', token, {
+  const createdProbe = await driveRequest('/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,webViewLink&supportsAllDrives=true', token, {
     method: 'POST',
     headers: {
       'Content-Type': `multipart/related; boundary=${boundary}`,
@@ -117,12 +117,29 @@ async function main() {
     body: new Uint8Array(multipartBody),
   });
 
-  await deleteDriveFile(createdProbe.id, token);
+  try {
+    await driveRequest(`/drive/v3/files/${encodeURIComponent(createdProbe.id)}/permissions?supportsAllDrives=true`, token, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        role: 'reader',
+        type: 'anyone',
+      }),
+    });
 
-  console.log('OK  Google Drive refresh-token access verified');
-  console.log(`  folder id: ${folder.id}`);
-  console.log(`  folder name: ${folder.name}`);
-  console.log(`  probe file upload/delete: ${probeName}`);
+    const publicUrl = `https://drive.google.com/uc?export=view&id=${encodeURIComponent(createdProbe.id)}`;
+    const publicResponse = await fetch(publicUrl, { method: 'HEAD', redirect: 'follow' });
+
+    console.log('OK  Google Drive public sharing verified');
+    console.log(`  folder id: ${folder.id}`);
+    console.log(`  folder name: ${folder.name}`);
+    console.log(`  probe file id: ${createdProbe.id}`);
+    console.log(`  public URL status: ${publicResponse.status}`);
+  } finally {
+    await deleteDriveFile(createdProbe.id, token);
+  }
 }
 
 main().catch((error) => {

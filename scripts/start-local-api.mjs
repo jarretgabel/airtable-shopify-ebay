@@ -57,6 +57,7 @@ const ROUTES = [
   ['POST', '/api/shopify/products/{productId}/collections', 'handlers/shopify/addProductToCollections.js', 'handler'],
   ['POST', '/api/shopify/products/{productId}/category', 'handlers/shopify/updateProductCategory.js', 'handler'],
   ['POST', '/api/shopify/images', 'handlers/shopify/uploadImage.js', 'handler'],
+  ['POST', '/api/hooks/shopify/{topic}', 'handlers/shopify/receiveWebhook.js', 'handler'],
   ['GET', '/api/jotform/forms', 'handlers/jotform/getForms.js', 'handler'],
   ['GET', '/api/jotform/forms/{formId}/submissions', 'handlers/jotform/getFormSubmissions.js', 'handler'],
   ['POST', '/api/hooks/jotform/submissions', 'handlers/jotform/ingestSubmissionWebhook.js', 'handler'],
@@ -143,6 +144,11 @@ function setAwsEnv() {
   process.env.SHOPIFY_ADMIN_API_TOKEN = getOptionalEnv(mergedEnv, 'VITE_SHOPIFY_ADMIN_API_TOKEN');
   process.env.SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_OAUTH_ACCESS_TOKEN || process.env.SHOPIFY_ADMIN_API_TOKEN;
   process.env.SHOPIFY_LOCATION_ID = getOptionalEnv(mergedEnv, 'VITE_SHOPIFY_LOCATION_ID');
+  process.env.SHOPIFY_WEBHOOK_SECRET = getOptionalEnv(mergedEnv, 'SHOPIFY_WEBHOOK_SECRET')
+    || getOptionalEnv(mergedEnv, 'VITE_SHOPIFY_WEBHOOK_SECRET')
+    || getOptionalEnv(mergedEnv, 'VITE_SHOPIFY_CLIENT_SECRET');
+  process.env.SHOPIFY_WEBHOOK_BASE_URL = getOptionalEnv(mergedEnv, 'SHOPIFY_WEBHOOK_BASE_URL')
+    || getOptionalEnv(mergedEnv, 'VITE_SHOPIFY_WEBHOOK_BASE_URL');
 
   process.env.EBAY_ENV = getOptionalEnv(mergedEnv, 'VITE_EBAY_ENV');
   process.env.EBAY_CLIENT_ID = getOptionalEnv(mergedEnv, 'VITE_EBAY_CLIENT_ID');

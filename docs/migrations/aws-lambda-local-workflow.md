@@ -39,12 +39,14 @@ Google Drive image archiving:
 - testing and photography image uploads can now archive both the original upload and the processed upload into Google Drive before the Airtable attachment write completes
 - a plain Google API key is not sufficient for this flow because Drive uploads to private folders require OAuth
 - for the root `.env.local` used by `npm run local:api`, set `VITE_GOOGLE_DRIVE_CLIENT_ID`, `VITE_GOOGLE_DRIVE_CLIENT_SECRET`, `VITE_GOOGLE_DRIVE_REFRESH_TOKEN`, and `VITE_GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID`
-- run `npm run google-drive:authorize` once to mint a refresh token for the Google account that owns the personal Drive folder
+- run `npm run google-drive:authorize` once to mint a refresh token for the Google account that has access to the target Google Drive folder or Shared Drive inside the business Workspace
 - for deployed Lambda configuration, use `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`, `GOOGLE_DRIVE_REFRESH_TOKEN`, and `GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID`
 - after setting those values locally, run `npm run google-drive:check` to confirm the backend can read the configured folder and upload/delete a tiny probe image inside it
+- then run `npm run google-drive:check:sharing` to confirm the Workspace policy also allows the current app behavior of setting processed images to public read access
 - by default the backend creates or reuses a single `Workflow Image Archive` folder in Drive root and stores each SKU subfolder under it
 - each SKU folder stores stage-prefixed originals and processed files together, for example `testing--front--original.jpg` and `testing--front_edited.jpg`
 - for `used-gear-workflow` image uploads, the app now stores the processed Google Drive URL in `Workflow Image Metadata JSON` and no longer depends on Airtable `Images` attachments for the saved workflow image source
+- a validated real-provider smoke test can be run by calling `archiveWorkflowImagesToGoogleDrive` with tiny image payloads; this should create both original and processed files, return a public processed URL, and then clean up the temporary folder when used as a probe
 
 ## Command Workflow
 

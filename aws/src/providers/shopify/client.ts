@@ -1,6 +1,30 @@
 import { HttpError } from '../../shared/errors.js';
 import { requireSecret } from '../../shared/secrets.js';
 
+export type ShopifyWebhookTopic = 'ORDERS_PAID' | 'ORDERS_CANCELLED' | 'REFUNDS_CREATE';
+
+export interface ShopifyWebhookSubscriptionConfig {
+  topic: ShopifyWebhookTopic;
+  callbackPath: string;
+}
+
+export interface ShopifyWebhookSubscriptionRecord {
+  id: string;
+  topic: ShopifyWebhookTopic;
+  callbackUrl: string;
+}
+
+export interface ShopifyWebhookRegistrationResult {
+  created: ShopifyWebhookSubscriptionRecord[];
+  existing: ShopifyWebhookSubscriptionRecord[];
+}
+
+const SHOPIFY_WEBHOOK_SUBSCRIPTIONS: ShopifyWebhookSubscriptionConfig[] = [
+  { topic: 'ORDERS_PAID', callbackPath: '/api/hooks/shopify/orders-paid' },
+  { topic: 'ORDERS_CANCELLED', callbackPath: '/api/hooks/shopify/orders-cancelled' },
+  { topic: 'REFUNDS_CREATE', callbackPath: '/api/hooks/shopify/refunds-create' },
+];
+
 export interface ShopifyProductRecord {
   id: number;
   title: string;
@@ -188,6 +212,24 @@ interface ShopifyGraphQlResponse<TData> {
   errors?: ShopifyGraphQlError[];
 }
 
+function getShopifyWebhookBaseUrl(): string {
+  const baseUrl = requireSecret('SHOPIFY_WEBHOOK_BASE_URL').replace(/\/+$/, '');
+  if (!/^https:\/\//i.test(baseUrl)) {
+    throw new HttpError(500, 'Shopify webhook base URL must use HTTPS.', {
+      service: 'shopify',
+      code: 'SHOPIFY_WEBHOOK_BASE_URL_INVALID',
+      retryable: false,
+    });
+  }
+
+  return baseUrl;
+}
+
+function buildShopifyWebhookCallbackUrl(callbackPath: string): string {
+  const normalizedPath = callbackPath.startsWith('/') ? callbackPath : `/${callbackPath}`;
+  return `${getShopifyWebhookBaseUrl()}${normalizedPath}`;
+}
+
 function parseShopifyNumericId(value: string | number): number {
   if (typeof value === 'number') return value;
 
@@ -246,6 +288,163 @@ async function graphQlRequest<TData>(query: string, variables?: Record<string, u
   }
 
   return body.data;
+}
+
+export function getRequiredShopifyWebhookSubscriptions(): ShopifyWebhookSubscriptionConfig[] {
+  return [...SHOPIFY_WEBHOOK_SUBSCRIPTIONS];
+}
+
+export function getRequiredShopifyWebhookCallbackUrl(topic: ShopifyWebhookTopic): string {
+  const subscription = SHOPIFY_WEBHOOK_SUBSCRIPTIONS.find((item) => item.topic === topic);
+  if (!subscription) {
+    throw new HttpError(500, `Unsupported Shopify webhook topic: ${topic}`, {
+      service: 'shopify',
+      code: 'SHOPIFY_WEBHOOK_TOPIC_UNSUPPORTED',
+      retryable: false,
+    });
+  }
+
+  return buildShopifyWebhookCallbackUrl(subscription.callbackPath);
+}
+
+export async function listWebhookSubscriptions(): Promise<ShopifyWebhookSubscriptionRecord[]> {
+  const data = await graphQlRequest<{
+    webhookSubscriptions: {
+      edges: Array<{
+        node: {
+          id: string;
+          topic: ShopifyWebhookTopic;
+          endpoint?: {
+            __typename: string;
+            callbackUrl?: string | null;
+          } | null;
+        };
+      }>;
+    };
+  }>(
+    `query ListWebhookSubscriptions($first: Int!) {
+      webhookSubscriptions(first: $first) {
+        edges {
+          node {
+            id
+            topic
+            endpoint {
+              __typename
+              ... on WebhookHttpEndpoint {
+                callbackUrl
+              }
+            }
+          }
+        }
+      }
+    }`,
+    { first: 50 },
+  );
+
+  return (data.webhookSubscriptions.edges ?? [])
+    .map((edge) => {
+      const callbackUrl = edge.node.endpoint?.__typename === 'WebhookHttpEndpoint'
+        ? edge.node.endpoint.callbackUrl?.trim() ?? ''
+        : '';
+      if (!edge.node.id || !edge.node.topic || !callbackUrl) {
+        return null;
+      }
+
+      return {
+        id: edge.node.id,
+        topic: edge.node.topic,
+        callbackUrl,
+      } satisfies ShopifyWebhookSubscriptionRecord;
+    })
+    .filter((subscription): subscription is ShopifyWebhookSubscriptionRecord => subscription !== null);
+}
+
+export async function registerWebhookSubscription(topic: ShopifyWebhookTopic, callbackUrl: string): Promise<ShopifyWebhookSubscriptionRecord> {
+  const data = await graphQlRequest<{
+    webhookSubscriptionCreate: {
+      webhookSubscription: {
+        id: string;
+        topic: ShopifyWebhookTopic;
+        endpoint?: {
+          __typename: string;
+          callbackUrl?: string | null;
+        } | null;
+      } | null;
+      userErrors: Array<{ message: string }>;
+    };
+  }>(
+    `mutation RegisterWebhookSubscription($topic: WebhookSubscriptionTopic!, $callbackUrl: URL!) {
+      webhookSubscriptionCreate(
+        topic: $topic
+        webhookSubscription: {
+          callbackUrl: $callbackUrl,
+          format: JSON
+        }
+      ) {
+        webhookSubscription {
+          id
+          topic
+          endpoint {
+            __typename
+            ... on WebhookHttpEndpoint {
+              callbackUrl
+            }
+          }
+        }
+        userErrors {
+          message
+        }
+      }
+    }`,
+    { topic, callbackUrl },
+  );
+
+  const userErrors = data.webhookSubscriptionCreate.userErrors ?? [];
+  if (userErrors.length > 0) {
+    const message = userErrors.map((error) => error.message?.trim()).filter(Boolean).join('; ');
+    throw new HttpError(502, message || 'Shopify rejected webhook registration.', {
+      service: 'shopify',
+      code: 'SHOPIFY_WEBHOOK_REGISTRATION_FAILED',
+      retryable: false,
+    });
+  }
+
+  const subscription = data.webhookSubscriptionCreate.webhookSubscription;
+  const createdCallbackUrl = subscription?.endpoint?.__typename === 'WebhookHttpEndpoint'
+    ? subscription.endpoint.callbackUrl?.trim() ?? ''
+    : '';
+  if (!subscription?.id || !subscription.topic || !createdCallbackUrl) {
+    throw new HttpError(502, 'Shopify webhook registration returned no subscription.', {
+      service: 'shopify',
+      code: 'SHOPIFY_WEBHOOK_REGISTRATION_EMPTY',
+      retryable: false,
+    });
+  }
+
+  return {
+    id: subscription.id,
+    topic: subscription.topic,
+    callbackUrl: createdCallbackUrl,
+  };
+}
+
+export async function ensureRequiredWebhookSubscriptions(): Promise<ShopifyWebhookRegistrationResult> {
+  const existingSubscriptions = await listWebhookSubscriptions();
+  const created: ShopifyWebhookSubscriptionRecord[] = [];
+  const existing: ShopifyWebhookSubscriptionRecord[] = [];
+
+  for (const subscription of SHOPIFY_WEBHOOK_SUBSCRIPTIONS) {
+    const callbackUrl = buildShopifyWebhookCallbackUrl(subscription.callbackPath);
+    const match = existingSubscriptions.find((item) => item.topic === subscription.topic && item.callbackUrl === callbackUrl);
+    if (match) {
+      existing.push(match);
+      continue;
+    }
+
+    created.push(await registerWebhookSubscription(subscription.topic, callbackUrl));
+  }
+
+  return { created, existing };
 }
 
 export async function getProducts(limit = 50): Promise<ShopifyProductRecord[]> {

@@ -55,6 +55,10 @@ test('archiveWorkflowImagesToGoogleDrive exchanges a refresh token for an access
       return Response.json({ id: `file-${calls.length}`, name: 'archived-file' });
     }
 
+    if (url.includes('/permissions?supportsAllDrives=true') && method === 'POST') {
+      return Response.json({ id: 'permission-1' });
+    }
+
     throw new Error(`Unexpected fetch call: ${method} ${url}`);
   };
 
