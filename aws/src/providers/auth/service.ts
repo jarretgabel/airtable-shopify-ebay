@@ -1,8 +1,7 @@
 import { HttpError } from '../../shared/errors.js';
-import { hasFullAccessRole } from '../../shared/appPages.js';
 import type { UserRole } from '../../shared/appPages.js';
 import { sendPlainTextEmail } from '../gmail/client.js';
-import { ensureSampleAuthUsers, findAuthUserByEmail, findAuthUserById, loadAuthUsers, updateAuthUserEmail, updateAuthUserPassword } from './users.js';
+import { findAuthUserByEmail, findAuthUserById, updateAuthUserEmail, updateAuthUserPassword, type AuthUserRecord } from './users.js';
 import { needsPasswordUpgrade, verifyStoredPassword } from './passwords.js';
 import { issueEmailChangeToken, issuePasswordResetToken, issueSessionToken, verifyToken } from './tokens.js';
 
@@ -27,6 +26,16 @@ interface AuthSessionResult {
   allowedPages: string[];
 }
 
+interface SessionTokenClaims {
+  userId: string;
+  airtableRecordId: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  allowedPages: string[];
+  mustChangePassword: boolean;
+}
+
 interface PasswordResetRequestResult {
   sent: boolean;
   message: string;
@@ -38,6 +47,14 @@ interface EmailChangeRequestResult {
   message: string;
   confirmationLink?: string;
 }
+
+export const authServiceDependencies = {
+  findAuthUserByEmail,
+  findAuthUserById,
+  updateAuthUserEmail,
+  updateAuthUserPassword,
+  sendPlainTextEmail,
+};
 
 function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
@@ -54,6 +71,23 @@ function requireSessionToken(sessionToken: string): string {
     code: 'AUTH_SESSION_INVALID',
     retryable: false,
   });
+}
+
+function getSessionTokenClaims(sessionToken: string): SessionTokenClaims {
+  const payload = verifyToken(requireSessionToken(sessionToken), 'session');
+  return {
+    userId: payload.userId,
+    airtableRecordId: payload.airtableRecordId,
+    name: payload.name,
+    email: payload.email,
+    role: payload.role,
+    allowedPages: payload.allowedPages,
+    mustChangePassword: payload.mustChangePassword,
+  };
+}
+
+function hasEmbeddedSessionClaims(payload: SessionTokenClaims): boolean {
+  return Boolean(payload.airtableRecordId && payload.name && payload.email && payload.allowedPages.length > 0);
 }
 
 function buildResetLink(origin: string, token: string): string {
@@ -84,30 +118,8 @@ function buildEmailChangeBody(link: string): string {
   ].join('\n');
 }
 
-async function maybeEnsureSampleAuthUsers(role: UserRole): Promise<void> {
-  if (!hasFullAccessRole(role)) {
-    return;
-  }
-
-  try {
-    await ensureSampleAuthUsers(await loadAuthUsers());
-  } catch {
-    // Keep the authenticated admin/owner flow working even if sample-user seeding fails.
-  }
-}
-
-async function maybeEnsureSampleAuthUsersBeforeLogin(): Promise<void> {
-  try {
-    await ensureSampleAuthUsers(await loadAuthUsers());
-  } catch {
-    // Keep login working even if sample-user seeding fails.
-  }
-}
-
 export async function login(email: string, password: string): Promise<AuthLoginResult> {
-  await maybeEnsureSampleAuthUsersBeforeLogin();
-
-  const user = await findAuthUserByEmail(normalizeEmail(email));
+  const user = await authServiceDependencies.findAuthUserByEmail(normalizeEmail(email));
   if (!user || !verifyStoredPassword(password, user.passwordState)) {
     throw new HttpError(401, 'Invalid email or password.', {
       service: 'auth',
@@ -117,17 +129,23 @@ export async function login(email: string, password: string): Promise<AuthLoginR
   }
 
   if (needsPasswordUpgrade(user.passwordState)) {
-    await updateAuthUserPassword(user, password, user.mustChangePassword);
+    await authServiceDependencies.updateAuthUserPassword(user, password, user.mustChangePassword);
   }
-
-  await maybeEnsureSampleAuthUsers(user.role);
 
   return {
     userId: user.id,
     airtableRecordId: user.airtableRecordId,
     name: user.name,
     email: user.email,
-    sessionToken: issueSessionToken(user.id, user.mustChangePassword),
+    sessionToken: issueSessionToken({
+      userId: user.id,
+      airtableRecordId: user.airtableRecordId,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      allowedPages: user.allowedPages,
+      mustChangePassword: user.mustChangePassword,
+    }),
     mustChangePassword: user.mustChangePassword,
     role: user.role,
     allowedPages: user.allowedPages,
@@ -135,8 +153,20 @@ export async function login(email: string, password: string): Promise<AuthLoginR
 }
 
 export async function resolveSession(sessionToken: string): Promise<AuthSessionResult> {
-  const payload = verifyToken(requireSessionToken(sessionToken), 'session');
-  const user = await findAuthUserById(payload.userId);
+  const payload = getSessionTokenClaims(sessionToken);
+  if (hasEmbeddedSessionClaims(payload)) {
+    return {
+      userId: payload.userId,
+      airtableRecordId: payload.airtableRecordId,
+      name: payload.name,
+      email: payload.email,
+      mustChangePassword: payload.mustChangePassword,
+      role: payload.role,
+      allowedPages: payload.allowedPages,
+    };
+  }
+
+  const user = await authServiceDependencies.findAuthUserById(payload.userId);
   if (!user) {
     throw new HttpError(401, 'Session is invalid.', {
       service: 'auth',
@@ -145,21 +175,19 @@ export async function resolveSession(sessionToken: string): Promise<AuthSessionR
     });
   }
 
-  await maybeEnsureSampleAuthUsers(user.role);
-
   return {
-    userId: user.id,
+    userId: payload.userId,
     airtableRecordId: user.airtableRecordId,
     name: user.name,
     email: user.email,
-    mustChangePassword: user.mustChangePassword,
-    role: user.role,
-    allowedPages: user.allowedPages,
+    mustChangePassword: payload.mustChangePassword,
+    role: payload.role,
+    allowedPages: payload.allowedPages,
   };
 }
 
 export async function requestPasswordReset(email: string, origin: string): Promise<PasswordResetRequestResult> {
-  const user = await findAuthUserByEmail(normalizeEmail(email));
+  const user = await authServiceDependencies.findAuthUserByEmail(normalizeEmail(email));
   if (!user) {
     return {
       sent: true,
@@ -171,7 +199,7 @@ export async function requestPasswordReset(email: string, origin: string): Promi
   const resetLink = buildResetLink(origin, token);
 
   try {
-    const delivered = await sendPlainTextEmail(user.email, 'Password reset request', buildPasswordResetBody(resetLink));
+    const delivered = await authServiceDependencies.sendPlainTextEmail(user.email, 'Password reset request', buildPasswordResetBody(resetLink));
     return {
       sent: delivered,
       message: delivered
@@ -190,7 +218,7 @@ export async function requestPasswordReset(email: string, origin: string): Promi
 
 export async function resetPassword(token: string, nextPassword: string): Promise<void> {
   const payload = verifyToken(token, 'password-reset');
-  const user = await findAuthUserById(payload.userId);
+  const user = await authServiceDependencies.findAuthUserById(payload.userId);
   if (!user) {
     throw new HttpError(404, 'Could not find user for this reset link.', {
       service: 'auth',
@@ -199,12 +227,12 @@ export async function resetPassword(token: string, nextPassword: string): Promis
     });
   }
 
-  await updateAuthUserPassword(user, nextPassword, false);
+  await authServiceDependencies.updateAuthUserPassword(user, nextPassword, false);
 }
 
 export async function requestEmailChange(sessionToken: string, nextEmail: string, currentPassword: string, origin: string): Promise<EmailChangeRequestResult> {
-  const session = verifyToken(requireSessionToken(sessionToken), 'session');
-  const user = await findAuthUserById(session.userId);
+  const session = getSessionTokenClaims(sessionToken);
+  const user = await authServiceDependencies.findAuthUserById(session.userId);
   if (!user) {
     throw new HttpError(404, 'Current user was not found.', {
       service: 'auth',
@@ -231,10 +259,10 @@ export async function requestEmailChange(sessionToken: string, nextEmail: string
   }
 
   if (needsPasswordUpgrade(user.passwordState)) {
-    await updateAuthUserPassword(user, currentPassword, user.mustChangePassword);
+    await authServiceDependencies.updateAuthUserPassword(user, currentPassword, user.mustChangePassword);
   }
 
-  const duplicate = await findAuthUserByEmail(normalizedEmail);
+  const duplicate = await authServiceDependencies.findAuthUserByEmail(normalizedEmail);
   if (duplicate && duplicate.id !== user.id) {
     throw new HttpError(400, 'Another user already uses that email.', {
       service: 'auth',
@@ -247,7 +275,7 @@ export async function requestEmailChange(sessionToken: string, nextEmail: string
   const confirmationLink = buildEmailChangeLink(origin, token);
 
   try {
-    const delivered = await sendPlainTextEmail(normalizedEmail, 'Confirm your email change', buildEmailChangeBody(confirmationLink));
+    const delivered = await authServiceDependencies.sendPlainTextEmail(normalizedEmail, 'Confirm your email change', buildEmailChangeBody(confirmationLink));
     return {
       success: true,
       message: delivered
@@ -266,7 +294,7 @@ export async function requestEmailChange(sessionToken: string, nextEmail: string
 
 export async function confirmEmailChange(token: string): Promise<void> {
   const payload = verifyToken(token, 'email-change');
-  const user = await findAuthUserById(payload.userId);
+  const user = await authServiceDependencies.findAuthUserById(payload.userId);
   if (!user) {
     throw new HttpError(404, 'Current user was not found.', {
       service: 'auth',
@@ -275,7 +303,7 @@ export async function confirmEmailChange(token: string): Promise<void> {
     });
   }
 
-  const duplicate = await findAuthUserByEmail(payload.nextEmail);
+  const duplicate = await authServiceDependencies.findAuthUserByEmail(payload.nextEmail);
   if (duplicate && duplicate.id !== user.id) {
     throw new HttpError(400, 'Another user already uses this email address.', {
       service: 'auth',
@@ -284,12 +312,12 @@ export async function confirmEmailChange(token: string): Promise<void> {
     });
   }
 
-  await updateAuthUserEmail(user, payload.nextEmail);
+  await authServiceDependencies.updateAuthUserEmail(user, payload.nextEmail);
 }
 
 export async function updatePassword(sessionToken: string, currentPassword: string | undefined, nextPassword: string): Promise<{ mustChangePassword: boolean }> {
-  const payload = verifyToken(requireSessionToken(sessionToken), 'session');
-  const user = await findAuthUserById(payload.userId);
+  const payload = getSessionTokenClaims(sessionToken);
+  const user = await authServiceDependencies.findAuthUserById(payload.userId);
   if (!user) {
     throw new HttpError(404, 'Current user was not found.', {
       service: 'auth',
@@ -321,6 +349,6 @@ export async function updatePassword(sessionToken: string, currentPassword: stri
     });
   }
 
-  await updateAuthUserPassword(user, nextPassword, false);
+  await authServiceDependencies.updateAuthUserPassword(user, nextPassword, false);
   return { mustChangePassword: false };
 }

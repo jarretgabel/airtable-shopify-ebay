@@ -60,6 +60,7 @@ interface AirtableWriteOptions {
 
 interface AirtableListOptions {
   fields?: string[];
+  filterByFormula?: string;
 }
 
 interface AirtableAttachmentUploadPayload {
@@ -85,6 +86,10 @@ function buildUrl(baseId: string, tableName: string, view?: string, offset?: str
     if (trimmed) {
       url.searchParams.append('fields[]', trimmed);
     }
+  }
+
+  if (options.filterByFormula) {
+    url.searchParams.set('filterByFormula', options.filterByFormula);
   }
 
   return url.toString();

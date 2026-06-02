@@ -32,6 +32,24 @@ npm run dev
 
 This will start a development server on `http://localhost:3000`
 
+## Staging Environment
+
+**Staging URL:** https://d1eeifzci4774p.cloudfront.net
+
+### Sample Test Accounts
+
+Use these credentials to test the staging environment. These are sample accounts and will be removed before production. Login buttons for quick access are available in dev mode and optionally in staging.
+
+| Email | Password | Role |
+|-------|----------|------|
+| admin@example.com | Admin123! | admin |
+| jarretisagabel@gmail.com | Jarret123! | developer |
+| developer@example.com | Developer123! | developer |
+| owner@example.com | Owner123! | owner |
+| processor@example.com | Processor123! | processor |
+| photographer@example.com | Photographer123! | photographer |
+| tester@example.com | Tester123! | tester |
+
 ## CloudFront + S3 Frontend Deployment
 
 The recommended frontend hosting target for this app is CloudFront + S3.

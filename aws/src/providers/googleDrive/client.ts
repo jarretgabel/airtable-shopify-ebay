@@ -63,10 +63,10 @@ async function requestDriveAccessToken(): Promise<GoogleDriveTokenResponse> {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams({
-      client_id: requireSecret('GOOGLE_DRIVE_CLIENT_ID'),
-      client_secret: requireSecret('GOOGLE_DRIVE_CLIENT_SECRET'),
+      client_id: requireSecret('VITE_GOOGLE_DRIVE_CLIENT_ID'),
+      client_secret: requireSecret('VITE_GOOGLE_DRIVE_CLIENT_SECRET'),
       grant_type: 'refresh_token',
-      refresh_token: requireSecret('GOOGLE_DRIVE_REFRESH_TOKEN'),
+      refresh_token: requireSecret('VITE_GOOGLE_DRIVE_REFRESH_TOKEN'),
     }),
   });
 
@@ -92,9 +92,9 @@ async function requireDriveAccessToken(): Promise<string> {
   }
 
   const hasRefreshTokenConfig = Boolean(
-    getOptionalSecret('GOOGLE_DRIVE_CLIENT_ID')
-    && getOptionalSecret('GOOGLE_DRIVE_CLIENT_SECRET')
-    && getOptionalSecret('GOOGLE_DRIVE_REFRESH_TOKEN'),
+    getOptionalSecret('VITE_GOOGLE_DRIVE_CLIENT_ID')
+    && getOptionalSecret('VITE_GOOGLE_DRIVE_CLIENT_SECRET')
+    && getOptionalSecret('VITE_GOOGLE_DRIVE_REFRESH_TOKEN'),
   );
 
   if (!hasRefreshTokenConfig) {
@@ -130,7 +130,7 @@ async function requireDriveAccessToken(): Promise<string> {
 }
 
 function getConfiguredDriveRootFolderId(): string | undefined {
-  return getOptionalSecret('GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID');
+  return getOptionalSecret('VITE_GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID');
 }
 
 function normalizeArchiveFolderName(folderKey: string): string {

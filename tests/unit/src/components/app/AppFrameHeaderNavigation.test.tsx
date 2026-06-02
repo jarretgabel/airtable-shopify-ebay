@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AppFrameHeaderNavigation } from '@/components/app/AppFrameHeaderNavigation';
 import type { AppTab } from '@/components/app/appFrameTypes';
@@ -136,5 +136,38 @@ describe('AppFrameHeaderNavigation', () => {
 
     expect(screen.getByRole('button', { name: /^Selling/ })).toHaveTextContent('Selling');
     expect(screen.getByRole('button', { name: /^Selling/ })).not.toHaveTextContent('4');
+  });
+
+  it('renders a compact navigation menu with grouped sections when mobile nav is open', () => {
+    render(
+      <AppFrameHeaderNavigation
+        tabs={[{ ...createTab('dashboard', 'Dashboard'), active: true }, createTab('inventory', 'Workflow Hub')]}
+        intakeTabs={[createTab('manual-intake', 'Manual Intake')]}
+        listingsTabs={[createTab('listings', 'Listings')]}
+        postPublishTabs={[createTab('post-publish', 'Post-Publish')]}
+        inventoryProcessingTabs={[createTab('testing-queue', 'Testing Queue')]}
+        postEbayTabs={[]}
+        utilityTabs={[createTab('settings', 'Settings')]}
+        exportDisabled={false}
+        onExportCurrentPage={vi.fn()}
+        onExportAllPages={vi.fn()}
+        openDropdown="mobile-nav"
+        onToggleDropdown={vi.fn()}
+        onCloseDropdowns={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Open navigation menu' })).toBeInTheDocument();
+
+    const mobileMenu = screen.getByRole('menu', { name: 'Mobile navigation menu' });
+    const mobileMenuQueries = within(mobileMenu);
+
+    expect(mobileMenuQueries.getByText('Main')).toBeInTheDocument();
+    expect(mobileMenuQueries.getByText('Processing')).toBeInTheDocument();
+    expect(mobileMenuQueries.getByText('Export')).toBeInTheDocument();
+    expect(mobileMenuQueries.getByRole('menuitem', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(mobileMenuQueries.getByRole('menuitem', { name: 'Manual Intake' })).toBeInTheDocument();
+    expect(mobileMenuQueries.getByRole('menuitem', { name: 'Listings' })).toBeInTheDocument();
+    expect(mobileMenuQueries.getByRole('menuitem', { name: 'Settings' })).toBeInTheDocument();
   });
 });

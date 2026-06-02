@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { HttpError } from '../../../../../../aws/src/shared/errors.js';
-import { authUserDependencies, ensureSampleAuthUsers, updateAuthUserPassword, type AuthUserRecord } from '../../../../../../aws/src/providers/auth/users.js';
+import { authUserDependencies, clearAuthUserLookupCache, ensureSampleAuthUsers, findAuthUserByEmail, findAuthUserById, updateAuthUserPassword, type AuthUserRecord } from '../../../../../../aws/src/providers/auth/users.js';
 
 const baseUser: AuthUserRecord = {
   id: 'user-1',
@@ -80,6 +80,193 @@ test('updateAuthUserPassword rethrows unrelated Airtable write errors', async ()
   } finally {
     authUserDependencies.updateConfiguredRecord = original;
   }
+});
+
+test('findAuthUserByEmail tries the exact-match projected lookup before the lowercase fallback', async () => {
+  const original = authUserDependencies.getConfiguredRecords;
+  const calls: Array<{ source: string; options?: { fields?: string[]; filterByFormula?: string } }> = [];
+
+  authUserDependencies.getConfiguredRecords = async (source, options = {}) => {
+    calls.push({ source, options });
+    return calls.length === 1
+      ? [{
+          id: 'rec-dev',
+          createdTime: new Date().toISOString(),
+          fields: {
+            'User Id': 'u-dev',
+            Name: 'Devon Developer',
+            Email: 'developer@example.com',
+            Role: 'developer',
+            Password: 'Developer123!',
+            MustChangePassword: false,
+            'Allowed Pages': 'dashboard',
+          },
+        }]
+      : [];
+  };
+
+  try {
+    const user = await findAuthUserByEmail('Developer@Example.com');
+    assert.equal(user?.email, 'developer@example.com');
+  } finally {
+    authUserDependencies.getConfiguredRecords = original;
+  }
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0]?.source, 'users');
+  assert.deepEqual(calls[0]?.options?.fields, ['User Id', 'Name', 'Email', 'Role', 'Password', 'MustChangePassword', 'Allowed Pages']);
+  assert.equal(calls[0]?.options?.filterByFormula, '{Email} = "developer@example.com"');
+});
+
+test('findAuthUserByEmail falls back when the projected lookup returns no exact match', async () => {
+  clearAuthUserLookupCache();
+  const original = authUserDependencies.getConfiguredRecords;
+  const calls: Array<{ source: string; options?: { fields?: string[]; filterByFormula?: string } }> = [];
+
+  authUserDependencies.getConfiguredRecords = async (source, options = {}) => {
+    calls.push({ source, options });
+    return calls.length === 2
+      ? [{
+          id: 'rec-dev',
+          createdTime: new Date().toISOString(),
+          fields: {
+            'User Id': 'u-dev',
+            Name: 'Devon Developer',
+            Email: 'Developer@Example.com',
+            Role: 'developer',
+            Password: 'Developer123!',
+            MustChangePassword: false,
+            'Allowed Pages': 'dashboard',
+          },
+        }]
+      : [];
+  };
+
+  try {
+    const user = await findAuthUserByEmail('developer@example.com');
+    assert.equal(user?.email, 'developer@example.com');
+  } finally {
+    authUserDependencies.getConfiguredRecords = original;
+  }
+
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0]?.options?.filterByFormula, '{Email} = "developer@example.com"');
+  assert.equal(calls[1]?.options?.filterByFormula, 'LOWER({Email}) = "developer@example.com"');
+  clearAuthUserLookupCache();
+});
+
+test('findAuthUserByEmail retries without projected fields when Airtable rejects them', async () => {
+  clearAuthUserLookupCache();
+  const original = authUserDependencies.getConfiguredRecords;
+  const calls: Array<{ source: string; options?: { fields?: string[]; filterByFormula?: string } }> = [];
+
+  authUserDependencies.getConfiguredRecords = async (source, options = {}) => {
+    calls.push({ source, options });
+    if (calls.length === 1) {
+      throw new HttpError(422, 'Unknown field name: "MustChangePassword"', {
+        service: 'airtable',
+        code: 'AIRTABLE_HTTP_ERROR',
+        retryable: false,
+      });
+    }
+
+    return [{
+      id: 'rec-dev',
+      createdTime: new Date().toISOString(),
+      fields: {
+        'User Id': 'u-dev',
+        Name: 'Devon Developer',
+        Email: 'developer@example.com',
+        Role: 'developer',
+        Password: 'Developer123!',
+        'Allowed Pages': 'dashboard',
+      },
+    }];
+  };
+
+  try {
+    const user = await findAuthUserByEmail('developer@example.com');
+    assert.equal(user?.email, 'developer@example.com');
+  } finally {
+    authUserDependencies.getConfiguredRecords = original;
+  }
+
+  assert.equal(calls.length, 2);
+  assert.deepEqual(calls[0]?.options?.fields, ['User Id', 'Name', 'Email', 'Role', 'Password', 'MustChangePassword', 'Allowed Pages']);
+  assert.equal(calls[1]?.options?.fields, undefined);
+  clearAuthUserLookupCache();
+});
+
+test('findAuthUserByEmail serves successive lookups from the in-memory cache', async () => {
+  clearAuthUserLookupCache();
+  const original = authUserDependencies.getConfiguredRecords;
+  let callCount = 0;
+
+  authUserDependencies.getConfiguredRecords = async () => {
+    callCount += 1;
+    return [{
+      id: 'rec-dev',
+      createdTime: new Date().toISOString(),
+      fields: {
+        'User Id': 'u-dev',
+        Name: 'Devon Developer',
+        Email: 'developer@example.com',
+        Role: 'developer',
+        Password: 'Developer123!',
+        MustChangePassword: false,
+        'Allowed Pages': 'dashboard',
+      },
+    }];
+  };
+
+  try {
+    const first = await findAuthUserByEmail('developer@example.com');
+    const second = await findAuthUserByEmail('developer@example.com');
+
+    assert.equal(first?.email, 'developer@example.com');
+    assert.equal(second?.email, 'developer@example.com');
+  } finally {
+    authUserDependencies.getConfiguredRecords = original;
+    clearAuthUserLookupCache();
+  }
+
+  assert.equal(callCount, 1);
+});
+
+test('findAuthUserById shares the cache with the email lookup', async () => {
+  clearAuthUserLookupCache();
+  const original = authUserDependencies.getConfiguredRecords;
+  let callCount = 0;
+
+  authUserDependencies.getConfiguredRecords = async () => {
+    callCount += 1;
+    return [{
+      id: 'rec-dev',
+      createdTime: new Date().toISOString(),
+      fields: {
+        'User Id': 'u-dev',
+        Name: 'Devon Developer',
+        Email: 'developer@example.com',
+        Role: 'developer',
+        Password: 'Developer123!',
+        MustChangePassword: false,
+        'Allowed Pages': 'dashboard',
+      },
+    }];
+  };
+
+  try {
+    const byEmail = await findAuthUserByEmail('developer@example.com');
+    const byId = await findAuthUserById('u-dev');
+
+    assert.equal(byEmail?.id, 'u-dev');
+    assert.equal(byId?.email, 'developer@example.com');
+  } finally {
+    authUserDependencies.getConfiguredRecords = original;
+    clearAuthUserLookupCache();
+  }
+
+  assert.equal(callCount, 1);
 });
 
 test('ensureSampleAuthUsers creates missing developer, processor, tester, and photographer users', async () => {

@@ -9,12 +9,13 @@
   "VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME": "tblqh6yC0p74UrHZo",
   "VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF": "tbl0K0nFQL64jQMx8/viwZdrQSBohX1m35D",
   "VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME": "tbl0K0nFQL64jQMx8",
-  "VITE_AIRTABLE_USERS_TABLE_REF": "tblj2Gt9USORo6Vi5",
+  "VITE_AIRTABLE_USERS_TABLE_REF": "apprsAm2FOohEmL2u/tblj2Gt9USORo6Vi5/viwQ5UCBYPIwW3HP3",
   "VITE_AIRTABLE_USERS_TABLE_NAME": "tblj2Gt9USORo6Vi5",
   "VITE_EBAY_AUTH_HOST": "https://auth.ebay.com/oauth2/authorize",
   "VITE_EBAY_OAUTH_SCOPES": "https://api.ebay.com/oauth/api_scope https://api.ebay.com/oauth/api_scope/sell.inventory https://api.ebay.com/oauth/api_scope/sell.account",
   "VITE_EBAY_APP_SCOPE": "https://api.ebay.com/oauth/api_scope",
   "VITE_JOTFORM_FORM_ID": "213604252654047",
   "VITE_ANALYTICS_ENABLED": "true",
-  "VITE_AI_PROVIDER": "none"
+  "VITE_AI_PROVIDER": "none",
+  "VITE_SHOW_TEST_LOGINS": "true"
 }

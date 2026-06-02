@@ -1,5 +1,12 @@
 import { AppApiHttpError } from './errors';
-import { getAppApiBaseUrl, isLocalBrowserSession } from './flags';
+
+function getProcessEnvVar(name: string): string | undefined {
+  const runtimeGlobal = globalThis as typeof globalThis & {
+    process?: { env?: Record<string, string | undefined> };
+  };
+
+  return runtimeGlobal.process?.env?.[name];
+}
 
 interface ApiErrorBody {
   message?: string;
@@ -14,21 +21,6 @@ interface CsrfAwareBody {
 
 const CSRF_STORAGE_KEY = 'app_api_csrf_token';
 let csrfTokenCache: string | null = null;
-
-function isAbsoluteHttpUrl(value: string): boolean {
-  return /^(https?:)?\/\//i.test(value);
-}
-
-function assertLocalBrowserPath(path: string): void {
-  if (!isLocalBrowserSession()) return;
-  if (!isAbsoluteHttpUrl(path)) return;
-
-  throw new AppApiHttpError('Localhost browser sessions must use the local /api routes. Remote app API URLs are blocked until deployment.', {
-    statusCode: 403,
-    code: 'LOCAL_REMOTE_API_BLOCKED',
-    retryable: false,
-  });
-}
 
 function canUseSessionStorage(): boolean {
   return typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
@@ -60,20 +52,32 @@ function isUnsafeMethod(method: string | undefined): boolean {
   return normalized !== 'GET' && normalized !== 'HEAD' && normalized !== 'OPTIONS';
 }
 
-function withCsrfHeader(headers: HeadersInit | undefined, method: string | undefined): HeadersInit {
-  if (!isUnsafeMethod(method)) {
-    return headers ?? {};
+
+function withAuthAndCsrfHeader(headers: HeadersInit | undefined, method: string | undefined): HeadersInit {
+  let result: HeadersInit = headers ?? {};
+  const airtableApiKey = getProcessEnvVar('VITE_AIRTABLE_API_KEY');
+
+  // Add Authorization and X-API-KEY headers for API key if present (Node.js scripts)
+  if (airtableApiKey) {
+    result = {
+      ...result,
+      Authorization: `Bearer ${airtableApiKey}`,
+      'X-API-KEY': airtableApiKey,
+    };
   }
 
-  const csrfToken = readStoredCsrfToken();
-  if (!csrfToken) {
-    return headers ?? {};
+  // Add CSRF token for unsafe methods
+  if (isUnsafeMethod(method)) {
+    const csrfToken = readStoredCsrfToken();
+    if (csrfToken) {
+      result = {
+        ...result,
+        'x-csrf-token': csrfToken,
+      };
+    }
   }
 
-  return {
-    ...(headers ?? {}),
-    'x-csrf-token': csrfToken,
-  };
+  return result;
 }
 
 function maybePersistCsrfToken(body: unknown): void {
@@ -84,11 +88,9 @@ function maybePersistCsrfToken(body: unknown): void {
 }
 
 function buildUrl(path: string, params?: Record<string, string | number | undefined>): string {
-  assertLocalBrowserPath(path);
-
-  const base = getAppApiBaseUrl();
-  const origin = typeof window === 'undefined' ? 'http://localhost' : window.location.origin;
-  const url = new URL(path, base || origin);
+  // Always use VITE_APP_API_BASE_URL if set (for scripts/Node.js), else fallback to browser origin
+  const base = getProcessEnvVar('VITE_APP_API_BASE_URL') || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+  const url = new URL(path, base);
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -98,7 +100,7 @@ function buildUrl(path: string, params?: Record<string, string | number | undefi
     });
   }
 
-  return base ? url.toString() : `${url.pathname}${url.search}`;
+  return url.toString();
 }
 
 async function readErrorBody(response: Response): Promise<ApiErrorBody & { message: string }> {
@@ -128,7 +130,7 @@ async function requestJson<T>(path: string, init: RequestInit, params?: Record<s
   const response = await fetch(buildUrl(path, params), {
     credentials: 'include',
     ...init,
-    headers: withCsrfHeader(init.headers, init.method),
+    headers: withAuthAndCsrfHeader(init.headers, init.method),
   });
 
   if (!response.ok) {

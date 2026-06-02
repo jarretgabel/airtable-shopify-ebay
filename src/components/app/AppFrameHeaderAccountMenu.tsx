@@ -50,9 +50,10 @@ export function AppFrameHeaderAccountMenu({
         aria-label="Open account menu"
         onClick={() => onToggleDropdown('account')}
         onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'account', onToggleDropdown, onCloseDropdowns)}
+        className="!px-2.5 !py-2 sm:!px-3 lg:!px-3 lg:!py-2 xl:!px-4 xl:!py-2.5"
       >
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500/20 text-[0.66rem] font-bold text-cyan-200">{initials}</span>
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500/20 text-[0.66rem] font-bold text-cyan-200 lg:h-5 lg:w-5 lg:text-[0.62rem] xl:h-6 xl:w-6 xl:text-[0.66rem]">{initials}</span>
           <span className={`text-[0.72rem] transition-transform ${openDropdown === 'account' ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
         </span>
       </SecondaryActionButton>

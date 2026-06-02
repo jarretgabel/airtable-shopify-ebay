@@ -40,4 +40,4 @@ export interface AppFrameProps {
   children: ReactNode;
 }
 
-export type OpenDropdown = 'intake' | 'listings' | 'inventory-processing' | 'utilities' | 'notifications' | 'account' | null;
+export type OpenDropdown = 'intake' | 'listings' | 'inventory-processing' | 'utilities' | 'notifications' | 'account' | 'mobile-nav' | null;

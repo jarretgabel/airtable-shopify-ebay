@@ -10,6 +10,8 @@ import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
+import { NotReadyForStageSurface } from '@/components/app/NotReadyForStageSurface';
+import { isUsedGearWorkflowListingSurfaceEligible } from '@/services/usedGearWorkflowListingVisibility';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import { WorkflowReferenceImagesPanel } from '@/components/tabs/WorkflowReferenceImagesPanel';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
@@ -243,6 +245,9 @@ export function WorkflowSnapshotPage({
     );
   }
 
+  // Listings stage access control
+  const isListingsEligible = record ? isUsedGearWorkflowListingSurfaceEligible(record) : false;
+
   return (
     <>
       <WorkflowRecordPageLayout
@@ -251,7 +256,6 @@ export function WorkflowSnapshotPage({
         belowHeader={sectionNav}
         actions={<BackToolbarButton label="Back to Workflow Hub" onClick={onBackToDirectory} />}
       >
-
         {record ? (
           <div className="space-y-6">
             <section id="overview" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] scroll-mt-28">
@@ -356,21 +360,31 @@ export function WorkflowSnapshotPage({
                 />
               </SnapshotCard>
 
-              <SnapshotCard
-                sectionId="listings"
-                title="Listings"
-                actionLabel={showListingsCard ? 'Open Listings' : undefined}
-                onAction={showListingsCard ? () => onOpenListings(record.id) : null}
-                fields={[
-                  { label: 'Item Title', value: record.fields['Item Title'] },
-                  { label: 'Shopify Price', value: record.fields['Shopify Price'] },
-                  { label: 'eBay Price', value: record.fields['Ebay Price'] },
-                  { label: 'Shopify Tags', value: countFieldItems(record.fields['Shopify Tags']) },
-                  { label: 'eBay Categories', value: countFieldItems(record.fields['Ebay Categories']) },
-                  { label: 'Shopify Approved', value: record.fields['Shopify Approved'] },
-                  { label: 'eBay Approved', value: record.fields['Ebay Approved'] },
-                ]}
-              />
+              {/* Listings section: show error if not eligible, else show normal card */}
+              {isListingsEligible ? (
+                <SnapshotCard
+                  sectionId="listings"
+                  title="Listings"
+                  actionLabel={showListingsCard ? 'Open Listings' : undefined}
+                  onAction={showListingsCard ? () => onOpenListings(record.id) : null}
+                  fields={[
+                    { label: 'Item Title', value: record.fields['Item Title'] },
+                    { label: 'Shopify Price', value: record.fields['Shopify Price'] },
+                    { label: 'eBay Price', value: record.fields['Ebay Price'] },
+                    { label: 'Shopify Tags', value: countFieldItems(record.fields['Shopify Tags']) },
+                    { label: 'eBay Categories', value: countFieldItems(record.fields['Ebay Categories']) },
+                    { label: 'Shopify Approved', value: record.fields['Shopify Approved'] },
+                    { label: 'eBay Approved', value: record.fields['Ebay Approved'] },
+                  ]}
+                />
+              ) : (
+                <NotReadyForStageSurface
+                  stageLabel="Listings"
+                  nextStepLabel={deriveNextStepLabel(workflowStatus)}
+                  onGoToNextStep={() => handleGoToNextStep(workflowStatus, record)}
+                  currentStepLabel={workflowStatus}
+                />
+              )}
 
               {postPublishSnapshot ? (
                 <SnapshotCard
@@ -394,4 +408,39 @@ export function WorkflowSnapshotPage({
       </WorkflowRecordPageLayout>
     </>
   );
+}
+
+function deriveNextStepLabel(status: string): string {
+  switch (status) {
+    case 'Photography In Progress':
+      return 'Pre-Listing Review';
+    case 'Testing In Progress':
+      return 'Photography';
+    case 'Accepted - Arrived, Awaiting SKU':
+    case 'Accepted - Arrived, Awaiting Missing Item':
+      return 'Testing';
+    case 'Accepted - Awaiting Arrival':
+      return 'Intake';
+    default:
+      return 'Workflow Home';
+  }
+}
+
+function handleGoToNextStep(status: string, record: { id?: string } | null) {
+  switch (status) {
+    case 'Photography In Progress':
+    case 'Testing In Progress':
+    case 'Accepted - Arrived, Awaiting SKU':
+    case 'Accepted - Arrived, Awaiting Missing Item':
+    case 'Accepted - Awaiting Arrival':
+      if (typeof record?.id === 'string' && typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      break;
+    default:
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
+      break;
+  }
 }

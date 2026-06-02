@@ -17,6 +17,7 @@ export interface PublicRuntimeConfig {
   VITE_EBAY_OAUTH_SCOPES?: string;
   VITE_EBAY_APP_SCOPE?: string;
   VITE_ANALYTICS_ENABLED?: string;
+  VITE_SHOW_TEST_LOGINS?: string;
 }
 
 declare global {

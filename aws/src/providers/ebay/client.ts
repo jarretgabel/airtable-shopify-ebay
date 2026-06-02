@@ -986,19 +986,38 @@ function buildVisibleInventoryItems(items: EbayInventoryItem[], offers: EbayOffe
     .filter((item) => isValidEbaySku(item.sku));
 }
 
-export async function getDashboardSnapshot(): Promise<EbayDashboardSnapshot> {
-  const itemsPage = await getInventoryItems(100);
-  const offersPage = await getOffersForInventorySkus(itemsPage.inventoryItems.map((item) => item.sku));
-  const visibleItems = buildVisibleInventoryItems(itemsPage.inventoryItems, offersPage.offers);
+function buildDashboardWarning(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
 
-  return {
-    inventoryItems: visibleItems.slice(0, MAX_VISIBLE_LISTINGS),
-    offers: offersPage.offers,
-    recentListings: buildPublishedListings(visibleItems, offersPage.offers),
-    total: visibleItems.length,
-    warning: null,
-    runtimeConfig: getRuntimeConfig(),
-  };
+  return 'The eBay dashboard snapshot is temporarily unavailable.';
+}
+
+export async function getDashboardSnapshot(): Promise<EbayDashboardSnapshot> {
+  try {
+    const itemsPage = await getInventoryItems(100);
+    const offersPage = await getOffersForInventorySkus(itemsPage.inventoryItems.map((item) => item.sku));
+    const visibleItems = buildVisibleInventoryItems(itemsPage.inventoryItems, offersPage.offers);
+
+    return {
+      inventoryItems: visibleItems.slice(0, MAX_VISIBLE_LISTINGS),
+      offers: offersPage.offers,
+      recentListings: buildPublishedListings(visibleItems, offersPage.offers),
+      total: visibleItems.length,
+      warning: null,
+      runtimeConfig: getRuntimeConfig(),
+    };
+  } catch (error) {
+    return {
+      inventoryItems: [],
+      offers: [],
+      recentListings: [],
+      total: 0,
+      warning: buildDashboardWarning(error),
+      runtimeConfig: getRuntimeConfig(),
+    };
+  }
 }
 
 export async function searchEbayCategorySuggestions(

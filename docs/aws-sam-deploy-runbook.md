@@ -151,6 +151,12 @@ Record these values immediately:
 4. Any function-specific environment overrides you added
 5. Where the secrets are stored
 
+## Staging auth source
+
+Staging should point at the existing Airtable users table/view instead of seeding a separate sample dataset. Keep `AIRTABLE_USERS_TABLE_REF` and `AIRTABLE_USERS_TABLE_NAME` aligned with the live staging users table so the deployed auth handlers read the same records the app UI expects.
+
+For this workspace, the staging users source is the Airtable table at `apprsAm2FOohEmL2u/tblj2Gt9USORo6Vi5/viwQ5UCBYPIwW3HP3`.
+
 ## IAM permissions required for SAM deploy
 
 If `npm run deploy:dev` fails with `cloudformation:CreateChangeSet` on `aws-sam-cli-managed-default`, the AWS user or role can authenticate but does not have enough deployment permissions for SAM-managed CloudFormation resources.

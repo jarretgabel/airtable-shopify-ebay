@@ -1,7 +1,7 @@
 import type { Location } from 'react-router-dom';
 import { type Tab, isTab } from '@/app/appNavigation';
 
-interface AppRouteState {
+export interface AppRouteState {
   normalizedPath: string;
   isLoginPath: boolean;
   isResetPasswordPath: boolean;

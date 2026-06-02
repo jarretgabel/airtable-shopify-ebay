@@ -22,9 +22,12 @@ import {
 import {
   createUserInAirtable,
   deleteUserInAirtable,
+  clearUsersCacheFromSession,
+  loadUsersCacheFromSession,
   normalizePages,
   sendWelcomeEmail,
   loadUsersFromAirtable,
+  saveUsersCacheToSession,
   updateUserInAirtable,
 } from './authStorage';
 import type { AppUser, CreateUserInput, UserRole } from './authTypes';
@@ -69,37 +72,8 @@ function buildAuthenticatedSessionUser(input: {
   };
 }
 
-const SAMPLE_USER_DEFINITIONS: Array<{ id: string; name: string; email: string; role: UserRole; password: string }> = [
-  { id: 'u-developer-sample', name: 'Devon Developer', email: 'developer@example.com', role: 'developer', password: 'Developer123!' },
-  { id: 'u-processor-sample', name: 'Parker Processor', email: 'processor@example.com', role: 'processor', password: 'Processor123!' },
-  { id: 'u-tester-sample', name: 'Taylor Tester', email: 'tester@example.com', role: 'tester', password: 'Tester123!' },
-  { id: 'u-photographer-sample', name: 'Phoebe Photographer', email: 'photographer@example.com', role: 'photographer', password: 'Photographer123!' },
-];
-
 function isOwnerRoleChangeLocked(currentRole: UserRole, nextRole: UserRole): boolean {
   return currentRole === 'owner' || nextRole === 'owner';
-}
-
-async function ensureSampleUsers(users: AppUser[]): Promise<AppUser[]> {
-  const normalizedEmails = new Set(users.map((user) => user.email.toLowerCase()));
-  const missingDefinitions = SAMPLE_USER_DEFINITIONS.filter((definition) => !normalizedEmails.has(definition.email));
-
-  if (missingDefinitions.length === 0) {
-    return users;
-  }
-
-  const createdUsers = await Promise.all(missingDefinitions.map(async (definition) => createUserInAirtable({
-    id: definition.id,
-    name: definition.name,
-    email: definition.email,
-    role: definition.role,
-    password: definition.password,
-    mustChangePassword: false,
-    allowedPages: getRoleDefaultPages(definition.role),
-    notificationPreferences: createNotificationPreferencesForRole(definition.role),
-  })));
-
-  return [...users, ...createdUsers].sort((left, right) => left.email.localeCompare(right.email));
 }
 
 export interface AuthStoreState {
@@ -148,13 +122,14 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     try {
       let resolvedUserId: string | null = null;
       let requiresPasswordChange = false;
+      let resolvedSessionUser: AppUser | null = null;
 
       try {
         const session = await resolveSessionViaApi();
         resolvedUserId = session.userId;
         requiresPasswordChange = session.mustChangePassword;
 
-        const sessionUser = buildAuthenticatedSessionUser({
+        resolvedSessionUser = buildAuthenticatedSessionUser({
           userId: session.userId,
           airtableRecordId: session.airtableRecordId,
           name: session.name,
@@ -166,11 +141,11 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
         if (!hasFullAccessRole(session.role)) {
           set({
-            users: [sessionUser],
+            users: [resolvedSessionUser],
             usersReady: true,
-            currentUserId: sessionUser.id,
+            currentUserId: resolvedSessionUser.id,
             hasAuthenticatedSession: true,
-            requiresPasswordChange: requiresPasswordChange || Boolean(sessionUser.mustChangePassword),
+            requiresPasswordChange: requiresPasswordChange || Boolean(resolvedSessionUser.mustChangePassword),
           });
           return;
         }
@@ -189,32 +164,36 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
         return;
       }
 
-      let users = await loadUsersFromAirtable();
-      let roleNotificationDefaults = loadRoleWorkflowNotificationDefaults();
+      const roleNotificationDefaults = loadRoleWorkflowNotificationDefaults();
+      const cachedUsers = loadUsersCacheFromSession();
+      const users = cachedUsers?.users;
+      const sessionUser = resolvedUserId && users
+        ? users.find((user) => user.id === resolvedUserId) ?? null
+        : resolvedSessionUser;
 
-      try {
-        roleNotificationDefaults = await syncRoleWorkflowNotificationDefaultsFromAirtable();
-      } catch {
-        roleNotificationDefaults = loadRoleWorkflowNotificationDefaults();
-      }
-
-      let sessionUser = resolvedUserId ? users.find((user) => user.id === resolvedUserId) ?? null : null;
-      if (sessionUser && hasFullAccessRole(sessionUser.role)) {
-        try {
-          users = await ensureSampleUsers(users);
-          sessionUser = users.find((user) => user.id === resolvedUserId) ?? sessionUser;
-        } catch (error) {
-          console.error('Failed to seed sample users:', error);
-        }
-      }
+      // Mark ready immediately so the dashboard renders without waiting for nonessential work.
       set({
-        users,
+        users: users ?? [sessionUser].filter((user): user is AppUser => Boolean(user)),
         roleNotificationDefaults,
         usersReady: true,
         currentUserId: sessionUser?.id ?? null,
         hasAuthenticatedSession: Boolean(sessionUser),
         requiresPasswordChange: requiresPasswordChange || Boolean(sessionUser?.mustChangePassword),
       });
+
+      if (users) {
+        saveUsersCacheToSession(users);
+      }
+
+      if (sessionUser && hasFullAccessRole(sessionUser.role)) {
+        void syncRoleWorkflowNotificationDefaultsFromAirtable()
+          .then((defaults) => {
+            set({ roleNotificationDefaults: defaults });
+          })
+          .catch((error) => {
+            console.error('Failed to sync role notification defaults:', error);
+          });
+      }
     } catch (error) {
       console.error('Failed to load users from Airtable:', error);
       set({ usersReady: true });
@@ -246,21 +225,35 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
         return { success: true, message: 'Login successful.' };
       }
 
-      let latestUsers = await loadUsersFromAirtable();
-      if (hasFullAccessRole(authenticatedUser.role)) {
-        try {
-          latestUsers = await ensureSampleUsers(latestUsers);
-        } catch (error) {
-          console.error('Failed to seed sample users after login:', error);
-        }
-      }
+      const loginUser = buildAuthenticatedSessionUser({
+        userId: auth.userId,
+        airtableRecordId: auth.airtableRecordId,
+        name: auth.name,
+        email: auth.email,
+        role: auth.role,
+        allowedPages: auth.allowedPages,
+        mustChangePassword: auth.mustChangePassword,
+      });
+      const initialUsers = auth.users?.map((user) => buildAuthenticatedSessionUser({
+        userId: user.userId,
+        airtableRecordId: user.airtableRecordId,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        allowedPages: user.allowedPages,
+        mustChangePassword: user.mustChangePassword,
+      })) ?? [loginUser];
+
+      // Mark ready immediately so the dashboard renders without waiting for sample-user seeding.
       set({
-        users: latestUsers,
+        users: initialUsers,
         usersReady: true,
         currentUserId: auth.userId,
         hasAuthenticatedSession: true,
         requiresPasswordChange: auth.mustChangePassword,
       });
+      saveUsersCacheToSession(initialUsers);
+
       return { success: true, message: 'Login successful.' };
     } catch (error) {
       return {
@@ -271,6 +264,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
   },
   logout: () => {
     void logoutViaApi().catch(() => undefined);
+    clearUsersCacheFromSession();
     set({ currentUserId: null, hasAuthenticatedSession: false, requiresPasswordChange: false });
   },
   canAccessPage: (page) => {

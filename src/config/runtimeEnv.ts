@@ -1,24 +1,69 @@
+declare const process: { env?: Record<string, string | undefined> } | undefined;
+
+// Helper to safely access process.env in Node.js only
+function getProcessEnvVar(name: string): string | undefined {
+  if (typeof process !== 'undefined' && typeof process.env !== 'undefined') {
+    return process.env[name];
+  }
+  return undefined;
+}
 import { hasRuntimeConfigValue, readRuntimeConfigValue, type PublicRuntimeConfig } from '@/config/runtimeConfig';
 
 const bundledEnvValues: Partial<Record<keyof PublicRuntimeConfig, string>> = {
-  VITE_AIRTABLE_TABLE_NAME: import.meta.env.VITE_AIRTABLE_TABLE_NAME,
-  VITE_AIRTABLE_VIEW_ID: import.meta.env.VITE_AIRTABLE_VIEW_ID,
-  VITE_AI_PROVIDER: import.meta.env.VITE_AI_PROVIDER,
-  VITE_AIRTABLE_USERS_TABLE_REF: import.meta.env.VITE_AIRTABLE_USERS_TABLE_REF,
-  VITE_AIRTABLE_USERS_TABLE_NAME: import.meta.env.VITE_AIRTABLE_USERS_TABLE_NAME,
-  VITE_AIRTABLE_APPROVAL_TABLE_REF: import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_REF,
-  VITE_AIRTABLE_APPROVAL_TABLE_NAME: import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_NAME,
-  VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF: import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF,
-  VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME: import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME,
-  VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF: import.meta.env.VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF,
-  VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME: import.meta.env.VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME,
-  VITE_APP_API_BASE_URL: import.meta.env.VITE_APP_API_BASE_URL,
-  VITE_SHOPIFY_STORE_DOMAIN: import.meta.env.VITE_SHOPIFY_STORE_DOMAIN,
-  VITE_JOTFORM_FORM_ID: import.meta.env.VITE_JOTFORM_FORM_ID,
-  VITE_EBAY_AUTH_HOST: import.meta.env.VITE_EBAY_AUTH_HOST,
-  VITE_EBAY_OAUTH_SCOPES: import.meta.env.VITE_EBAY_OAUTH_SCOPES,
-  VITE_EBAY_APP_SCOPE: import.meta.env.VITE_EBAY_APP_SCOPE,
-  VITE_ANALYTICS_ENABLED: import.meta.env.VITE_ANALYTICS_ENABLED,
+  VITE_AIRTABLE_TABLE_NAME: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_TABLE_NAME !== undefined
+    ? import.meta.env.VITE_AIRTABLE_TABLE_NAME
+    : getProcessEnvVar('VITE_AIRTABLE_TABLE_NAME'),
+  VITE_AIRTABLE_VIEW_ID: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_VIEW_ID !== undefined
+    ? import.meta.env.VITE_AIRTABLE_VIEW_ID
+    : getProcessEnvVar('VITE_AIRTABLE_VIEW_ID'),
+  VITE_AI_PROVIDER: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AI_PROVIDER !== undefined
+    ? import.meta.env.VITE_AI_PROVIDER
+    : getProcessEnvVar('VITE_AI_PROVIDER'),
+  VITE_AIRTABLE_USERS_TABLE_REF: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_USERS_TABLE_REF !== undefined
+    ? import.meta.env.VITE_AIRTABLE_USERS_TABLE_REF
+    : getProcessEnvVar('VITE_AIRTABLE_USERS_TABLE_REF'),
+  VITE_AIRTABLE_USERS_TABLE_NAME: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_USERS_TABLE_NAME !== undefined
+    ? import.meta.env.VITE_AIRTABLE_USERS_TABLE_NAME
+    : getProcessEnvVar('VITE_AIRTABLE_USERS_TABLE_NAME'),
+  VITE_AIRTABLE_APPROVAL_TABLE_REF: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_REF !== undefined
+    ? import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_REF
+    : getProcessEnvVar('VITE_AIRTABLE_APPROVAL_TABLE_REF'),
+  VITE_AIRTABLE_APPROVAL_TABLE_NAME: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_NAME !== undefined
+    ? import.meta.env.VITE_AIRTABLE_APPROVAL_TABLE_NAME
+    : getProcessEnvVar('VITE_AIRTABLE_APPROVAL_TABLE_NAME'),
+  VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF !== undefined
+    ? import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF
+    : getProcessEnvVar('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF'),
+  VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME !== undefined
+    ? import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME
+    : getProcessEnvVar('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME'),
+  VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF !== undefined
+    ? import.meta.env.VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF
+    : getProcessEnvVar('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF'),
+  VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME !== undefined
+    ? import.meta.env.VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME
+    : getProcessEnvVar('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME'),
+  VITE_APP_API_BASE_URL: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_APP_API_BASE_URL !== undefined
+    ? import.meta.env.VITE_APP_API_BASE_URL
+    : getProcessEnvVar('VITE_APP_API_BASE_URL'),
+  VITE_SHOPIFY_STORE_DOMAIN: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SHOPIFY_STORE_DOMAIN !== undefined
+    ? import.meta.env.VITE_SHOPIFY_STORE_DOMAIN
+    : getProcessEnvVar('VITE_SHOPIFY_STORE_DOMAIN'),
+  VITE_JOTFORM_FORM_ID: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_JOTFORM_FORM_ID !== undefined
+    ? import.meta.env.VITE_JOTFORM_FORM_ID
+    : getProcessEnvVar('VITE_JOTFORM_FORM_ID'),
+  VITE_EBAY_AUTH_HOST: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_EBAY_AUTH_HOST !== undefined
+    ? import.meta.env.VITE_EBAY_AUTH_HOST
+    : getProcessEnvVar('VITE_EBAY_AUTH_HOST'),
+  VITE_EBAY_OAUTH_SCOPES: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_EBAY_OAUTH_SCOPES !== undefined
+    ? import.meta.env.VITE_EBAY_OAUTH_SCOPES
+    : getProcessEnvVar('VITE_EBAY_OAUTH_SCOPES'),
+  VITE_EBAY_APP_SCOPE: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_EBAY_APP_SCOPE !== undefined
+    ? import.meta.env.VITE_EBAY_APP_SCOPE
+    : getProcessEnvVar('VITE_EBAY_APP_SCOPE'),
+  VITE_ANALYTICS_ENABLED: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_ANALYTICS_ENABLED !== undefined
+    ? import.meta.env.VITE_ANALYTICS_ENABLED
+    : getProcessEnvVar('VITE_ANALYTICS_ENABLED'),
 };
 
 function readEnv(name: string): string {

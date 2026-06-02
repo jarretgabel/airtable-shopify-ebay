@@ -3,6 +3,10 @@ import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { HttpError } from './errors.js';
 
 const CSRF_HEADER_NAME = 'x-csrf-token';
+const CSRF_TOKEN_CACHE_LIMIT = 500;
+
+const csrfTokenCache = new Map<string, string>();
+let cachedCsrfSecret = '';
 
 function getCsrfSecret(): string {
   const secret = (process.env.APP_AUTH_CSRF_SECRET || process.env.APP_AUTH_TOKEN_SECRET || '').trim();
@@ -27,9 +31,28 @@ function isSafeMethod(event: APIGatewayProxyEventV2): boolean {
 }
 
 export function buildCsrfToken(sessionToken: string): string {
-  return createHmac('sha256', getCsrfSecret())
-    .update(sessionToken)
+  const secret = getCsrfSecret();
+  if (secret !== cachedCsrfSecret) {
+    csrfTokenCache.clear();
+    cachedCsrfSecret = secret;
+  }
+
+  const normalizedSessionToken = sessionToken.trim();
+  const cachedToken = csrfTokenCache.get(normalizedSessionToken);
+  if (cachedToken) {
+    return cachedToken;
+  }
+
+  const token = createHmac('sha256', secret)
+    .update(normalizedSessionToken)
     .digest('base64url');
+
+  if (csrfTokenCache.size >= CSRF_TOKEN_CACHE_LIMIT) {
+    csrfTokenCache.clear();
+  }
+
+  csrfTokenCache.set(normalizedSessionToken, token);
+  return token;
 }
 
 export function requireSessionCsrf(event: APIGatewayProxyEventV2, sessionToken: string): void {

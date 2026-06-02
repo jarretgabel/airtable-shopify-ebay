@@ -115,7 +115,7 @@ export function CompactIconActionButton({
       onClick={onClick}
       disabled={disabled}
     >
-      <CompactActionIcon icon={icon} className={iconClassName} />
+      {icon ? <CompactActionIcon icon={icon} className={iconClassName} /> : <span className="px-2 text-sm font-medium">{label}</span>}
     </button>
   );
 }

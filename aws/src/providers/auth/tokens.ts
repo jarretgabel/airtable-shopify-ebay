@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { HttpError } from '../../shared/errors.js';
 import { requireSecret } from '../../shared/secrets.js';
+import type { AppPage, UserRole } from '../../shared/appPages.js';
 
 type TokenKind = 'session' | 'password-reset' | 'email-change';
 
@@ -12,6 +13,11 @@ interface BaseTokenPayload {
 
 interface SessionTokenPayload extends BaseTokenPayload {
   kind: 'session';
+  airtableRecordId: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  allowedPages: AppPage[];
   mustChangePassword: boolean;
 }
 
@@ -62,13 +68,58 @@ function decodePayload(encodedPayload: string): AuthTokenPayload {
   return JSON.parse(fromBase64Url(encodedPayload).toString('utf8')) as AuthTokenPayload;
 }
 
-export function issueSessionToken(userId: string, mustChangePassword: boolean, ttlMs = 1000 * 60 * 60 * 24 * 14): string {
-  const payload: SessionTokenPayload = {
-    kind: 'session',
-    userId,
-    mustChangePassword,
-    exp: Date.now() + ttlMs,
-  };
+export function issueSessionToken(userId: string, mustChangePassword: boolean, ttlMs?: number): string;
+export function issueSessionToken(input: {
+  userId: string;
+  airtableRecordId: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  allowedPages: AppPage[];
+  mustChangePassword: boolean;
+  ttlMs?: number;
+}): string;
+export function issueSessionToken(
+  userIdOrInput: string | {
+    userId: string;
+    airtableRecordId: string;
+    name: string;
+    email: string;
+    role: UserRole;
+    allowedPages: AppPage[];
+    mustChangePassword: boolean;
+    ttlMs?: number;
+  },
+  mustChangePasswordOrTtlMs?: boolean | number,
+  ttlMs = 1000 * 60 * 60 * 24 * 14,
+): string {
+  let payload: SessionTokenPayload;
+
+  if (typeof userIdOrInput === 'string') {
+    payload = {
+      kind: 'session',
+      userId: userIdOrInput,
+      airtableRecordId: '',
+      name: '',
+      email: '',
+      role: 'processor',
+      allowedPages: [],
+      mustChangePassword: Boolean(mustChangePasswordOrTtlMs),
+      exp: Date.now() + (typeof mustChangePasswordOrTtlMs === 'number' ? mustChangePasswordOrTtlMs : ttlMs),
+    };
+  } else {
+    payload = {
+      kind: 'session',
+      userId: userIdOrInput.userId,
+      airtableRecordId: userIdOrInput.airtableRecordId,
+      name: userIdOrInput.name,
+      email: userIdOrInput.email.trim().toLowerCase(),
+      role: userIdOrInput.role,
+      allowedPages: [...userIdOrInput.allowedPages],
+      mustChangePassword: userIdOrInput.mustChangePassword,
+      exp: Date.now() + (userIdOrInput.ttlMs ?? ttlMs),
+    };
+  }
   const encodedPayload = encodePayload(payload);
   return `${encodedPayload}.${sign(encodedPayload)}`;
 }

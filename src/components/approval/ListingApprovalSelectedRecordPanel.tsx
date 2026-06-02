@@ -7,6 +7,9 @@ import { ListingApprovalRecordActions } from '@/components/approval/ListingAppro
 import { ListingApprovalRecordAlerts } from '@/components/approval/ListingApprovalRecordAlerts';
 import { COMBINED_RECORD_SECTION_ITEMS, type CombinedRecordSectionKey } from '@/components/approval/listingApprovalCombinedSectionNav';
 import { ListingApprovalSelectedRecordView } from '@/components/approval/ListingApprovalSelectedRecordView';
+import { NotReadyForStageSurface } from '@/components/app/NotReadyForStageSurface';
+import { isUsedGearWorkflowListingSurfaceEligible } from '@/services/usedGearWorkflowListingVisibility';
+import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 import { ListingApprovalWorkflowSummary, type ListingApprovalWorkflowSummaryData } from '@/components/approval/ListingApprovalWorkflowSummary';
 import type { buildListingApprovalSelectedRecordStatusProps } from '@/components/approval/listingApprovalSelectedRecordStatusProps';
 import type { buildListingApprovalSelectedRecordViewProps } from '@/components/approval/listingApprovalSelectedRecordViewProps';
@@ -115,7 +118,35 @@ export function ListingApprovalSelectedRecordPanel({
     [workflowSummary?.workflowStatus],
   );
 
-  const selectedRecordView = (
+  // Enforce listing surface eligibility
+  const isEligible = isUsedGearWorkflowListingSurfaceEligible(selectedRecord);
+  const currentStep = getUsedGearWorkflowStatus(selectedRecord.fields) || 'Unknown';
+  // Helper to get a user-friendly label for the current step
+  function getStepLabel(status: string): string {
+    switch (status) {
+      case 'Pending Review': return 'Intake Review';
+      case 'Accepted - Awaiting Arrival': return 'Arrival';
+      case 'Accepted - Arrived, Awaiting SKU':
+      case 'Accepted - Arrived, Awaiting Missing Item': return 'Intake';
+      case 'Testing In Progress': return 'Testing';
+      case 'Photography In Progress': return 'Photography';
+      case 'Awaiting Pre-Listing Review': return 'Pre-Listing Review';
+      case 'Approved for Publish': return 'Approval';
+      case 'Listed, Shopify': return 'Shopify Listing';
+      case 'Listed, eBay': return 'eBay Listing';
+      case 'Stale Listing, Shopify': return 'Shopify Listing (Stale)';
+      case 'Stale Listing, eBay': return 'eBay Listing (Stale)';
+      case 'Sold - Ready to Ship': return 'Shipping';
+      case 'Shipped': return 'Shipped';
+      case 'Unqualified': return 'Unqualified';
+      default: return status;
+    }
+  }
+  // Handler to go to the current step (fallback to backToList)
+  function handleGoToCurrentStep() {
+    onBackToList();
+  }
+  const selectedRecordView = isEligible ? (
     <ListingApprovalSelectedRecordView
       selectedRecord={selectedRecord}
       titleFieldName={titleFieldName}
@@ -161,6 +192,12 @@ export function ListingApprovalSelectedRecordPanel({
           </Suspense>
         )}
     />
+  ) : (
+    <NotReadyForStageSurface
+      stageLabel="Listings"
+      nextStepLabel="Workflow Home"
+      onGoToNextStep={onBackToList}
+    />
   );
 
   return (
@@ -168,9 +205,16 @@ export function ListingApprovalSelectedRecordPanel({
       eyebrow="Listings"
       title={selectedRecordTitle}
       actions={backButton}
-      belowHeader={combinedSectionNav}
+      belowHeader={isEligible ? combinedSectionNav : null}
     >
-      {selectedRecordView}
+      {isEligible ? selectedRecordView : (
+        <NotReadyForStageSurface
+          stageLabel="Listings"
+          nextStepLabel={getStepLabel(currentStep)}
+          onGoToNextStep={handleGoToCurrentStep}
+          currentStepLabel={getStepLabel(currentStep)}
+        />
+      )}
     </WorkflowRecordPageLayout>
   );
 }

@@ -39,9 +39,63 @@ export interface AuthUserRecord {
 }
 
 export const authUserDependencies = {
+  getConfiguredRecords,
   createConfiguredRecord,
   updateConfiguredRecord,
 };
+
+const AUTH_LOOKUP_FIELDS = [
+  USER_FIELD_KEYS.id[0],
+  USER_FIELD_KEYS.name[0],
+  USER_FIELD_KEYS.email[0],
+  USER_FIELD_KEYS.role[0],
+  USER_FIELD_KEYS.password[0],
+  USER_FIELD_KEYS.mustChangePassword[0],
+  USER_FIELD_KEYS.allowedPages[0],
+];
+
+const AUTH_LOOKUP_CACHE_TTL_MS = 60 * 1000;
+
+interface AuthLookupCacheEntry {
+  expiresAt: number;
+  user: AuthUserRecord | null;
+}
+
+const authLookupCache = new Map<string, AuthLookupCacheEntry>();
+
+function getCachedAuthLookup(key: string): AuthUserRecord | null | undefined {
+  const cached = authLookupCache.get(key);
+  if (!cached) {
+    return undefined;
+  }
+
+  if (cached.expiresAt <= Date.now()) {
+    authLookupCache.delete(key);
+    return undefined;
+  }
+
+  return cached.user;
+}
+
+function setCachedAuthLookup(key: string, user: AuthUserRecord | null): void {
+  authLookupCache.set(key, {
+    expiresAt: Date.now() + AUTH_LOOKUP_CACHE_TTL_MS,
+    user,
+  });
+}
+
+function cacheAuthUser(user: AuthUserRecord | null): void {
+  if (!user) {
+    return;
+  }
+
+  setCachedAuthLookup(getAuthLookupCacheKey('email', user.email), user);
+  setCachedAuthLookup(getAuthLookupCacheKey('id', user.id), user);
+}
+
+export function clearAuthUserLookupCache(): void {
+  authLookupCache.clear();
+}
 
 function normalizeFieldName(value: string): string {
   return value.trim().toLowerCase();
@@ -136,6 +190,25 @@ function getUnknownFieldName(error: unknown): string | undefined {
   return match?.[1];
 }
 
+async function getAuthLookupRecords(options: { filterByFormula?: string } = {}): Promise<Array<{ id: string; fields: Record<string, unknown> }>> {
+  try {
+    return await authUserDependencies.getConfiguredRecords('users', {
+      ...options,
+      fields: AUTH_LOOKUP_FIELDS,
+    });
+  } catch (error) {
+    if (!getUnknownFieldName(error)) {
+      throw error;
+    }
+
+    return authUserDependencies.getConfiguredRecords('users', options);
+  }
+}
+
+function getAuthLookupCacheKey(kind: 'email' | 'id', value: string): string {
+  return `${kind}:${value.trim().toLowerCase()}`;
+}
+
 function mapUserRecord(recordId: string, fields: Record<string, unknown>): AuthUserRecord | null {
   const id = toSingleString(getFieldValue(fields, USER_FIELD_KEYS.id)) || recordId;
   if (isRoleDefaultsRecordId(id)) {
@@ -165,7 +238,7 @@ function mapUserRecord(recordId: string, fields: Record<string, unknown>): AuthU
 }
 
 export async function loadAuthUsers(): Promise<AuthUserRecord[]> {
-  const records = await getConfiguredRecords('users');
+  const records = await authUserDependencies.getConfiguredRecords('users');
   return records
     .map((record) => mapUserRecord(record.id, record.fields))
     .filter((record): record is AuthUserRecord => Boolean(record));
@@ -177,8 +250,35 @@ export async function findAuthUserByEmail(email: string): Promise<AuthUserRecord
     return null;
   }
 
-  const users = await loadAuthUsers();
-  return users.find((user) => user.email === normalizedEmail) ?? null;
+  const cacheKey = getAuthLookupCacheKey('email', normalizedEmail);
+  const cached = getCachedAuthLookup(cacheKey);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const exactMatchRecords = await getAuthLookupRecords({
+    filterByFormula: `{Email} = ${JSON.stringify(normalizedEmail)}`,
+  });
+
+  const exactMatch = exactMatchRecords
+    .map((record) => mapUserRecord(record.id, record.fields))
+    .find((record): record is AuthUserRecord => Boolean(record)) ?? null;
+
+  if (exactMatch) {
+    cacheAuthUser(exactMatch);
+    return exactMatch;
+  }
+
+  const fallbackRecords = await getAuthLookupRecords({
+    filterByFormula: `LOWER({Email}) = ${JSON.stringify(normalizedEmail)}`,
+  });
+
+  const fallbackMatch = fallbackRecords
+    .map((record) => mapUserRecord(record.id, record.fields))
+    .find((record): record is AuthUserRecord => Boolean(record)) ?? null;
+
+  cacheAuthUser(fallbackMatch);
+  return fallbackMatch;
 }
 
 export async function findAuthUserById(userId: string): Promise<AuthUserRecord | null> {
@@ -187,8 +287,22 @@ export async function findAuthUserById(userId: string): Promise<AuthUserRecord |
     return null;
   }
 
-  const users = await loadAuthUsers();
-  return users.find((user) => user.id === normalizedId) ?? null;
+  const cacheKey = getAuthLookupCacheKey('id', normalizedId);
+  const cached = getCachedAuthLookup(cacheKey);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const records = await getAuthLookupRecords({
+    filterByFormula: `{User Id} = ${JSON.stringify(normalizedId)}`,
+  });
+
+  const user = records
+    .map((record) => mapUserRecord(record.id, record.fields))
+    .find((record): record is AuthUserRecord => Boolean(record)) ?? null;
+
+  cacheAuthUser(user);
+  return user;
 }
 
 export async function updateAuthUserPassword(user: AuthUserRecord, password: string, mustChangePassword: boolean): Promise<void> {
@@ -208,6 +322,9 @@ export async function updateAuthUserPassword(user: AuthUserRecord, password: str
       [USER_FIELD_KEYS.password[0]]: passwordFieldValue,
     }, { typecast: true });
   }
+
+  authLookupCache.delete(getAuthLookupCacheKey('email', user.email));
+  authLookupCache.delete(getAuthLookupCacheKey('id', user.id));
 }
 
 export async function updateAuthUserEmail(user: AuthUserRecord, nextEmail: string): Promise<void> {
@@ -223,6 +340,9 @@ export async function updateAuthUserEmail(user: AuthUserRecord, nextEmail: strin
   await updateConfiguredRecord('users', user.airtableRecordId, {
     [USER_FIELD_KEYS.email[0]]: normalizedEmail,
   }, { typecast: true });
+
+  authLookupCache.delete(getAuthLookupCacheKey('email', user.email));
+  authLookupCache.delete(getAuthLookupCacheKey('id', user.id));
 }
 
 async function createAuthUserRecord(fields: Record<string, unknown>): Promise<void> {

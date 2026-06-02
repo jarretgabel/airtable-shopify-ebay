@@ -5,6 +5,16 @@ import { getJson, postJson } from './http';
 import type { AppPage } from '@/auth/pages';
 import type { UserRole } from '@/stores/auth/authTypes';
 
+interface AuthLoginUserSummary {
+  userId: string;
+  airtableRecordId?: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  allowedPages: AppPage[];
+  mustChangePassword: boolean;
+}
+
 interface AuthLoginResponse {
   userId: string;
   airtableRecordId?: string;
@@ -13,6 +23,7 @@ interface AuthLoginResponse {
   role: UserRole;
   allowedPages: AppPage[];
   mustChangePassword: boolean;
+  users?: AuthLoginUserSummary[];
   csrfToken?: string;
 }
 

@@ -3,9 +3,34 @@
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 import type { AppTab, OpenDropdown } from '@/components/app/appFrameTypes';
 
+function responsiveLabel(label: string, shortLabel?: string): ReactNode {
+  if (!shortLabel || shortLabel === label) return label;
+
+  return (
+    <>
+      <span className="xl:hidden">{shortLabel}</span>
+      <span className="hidden xl:inline">{label}</span>
+    </>
+  );
+}
+
+function compactTabLabel(tab: AppTab): ReactNode {
+  if (tab.key === 'inventory') {
+    return responsiveLabel(tab.label, 'Workflow');
+  }
+
+  return tab.label;
+}
+
+function compactDropdownLabel(label: string): ReactNode {
+  if (label === 'Processing') return responsiveLabel(label, 'Process');
+  if (label === 'Utilities') return responsiveLabel(label, 'Tools');
+  return label;
+}
+
 export function tabClassName(active: boolean): string {
   const base =
-    'relative inline-flex items-center justify-center whitespace-nowrap px-4 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-55';
+    'relative inline-flex items-center justify-center whitespace-nowrap px-2.5 py-2 text-[0.82rem] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-55 sm:px-3 sm:py-2.5 sm:text-sm xl:px-4 xl:py-3';
   if (active) {
     return `${base} text-[var(--accent)] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[var(--accent)]`;
   }
@@ -50,8 +75,8 @@ function DisabledTabIndicator({ reason }: { reason?: string }): ReactNode {
 
 export function TabButton({ tab }: { tab: AppTab }): ReactNode {
   return (
-    <button type="button" className={tabClassName(tab.active)} disabled={tab.disabled} title={tab.disabledReason} onClick={tab.onClick}>
-      {tab.label}
+    <button type="button" className={tabClassName(tab.active)} disabled={tab.disabled} title={tab.disabledReason} aria-label={tab.label} onClick={tab.onClick}>
+      {compactTabLabel(tab)}
       <TabBadge count={tab.badgeCount} />
       {!tab.badgeCount && <DisabledTabIndicator reason={tab.disabledReason} />}
     </button>
@@ -127,7 +152,7 @@ export function DropdownTrigger({
       className={tabClassName(active || expanded)}
     >
       <span className="inline-flex items-center gap-1.5">
-        {label}
+        {compactDropdownLabel(label)}
         <TabBadge count={badgeCount} />
         <span className={`text-[0.72rem] transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
       </span>

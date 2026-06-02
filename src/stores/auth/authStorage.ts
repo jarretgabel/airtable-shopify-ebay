@@ -34,6 +34,8 @@ const PASSWORD_FIELD_PAYLOAD_PREFIX = '__LCC_PASSWORD__:';
 const PASSWORD_HASH_SCHEME = 'pbkdf2-sha256';
 const PASSWORD_HASH_ITERATIONS = 210000;
 const ROLE_DEFAULTS_RECORD_PREFIX = '__role-defaults__:';
+const USERS_CACHE_STORAGE_KEY = 'auth_users_cache';
+const USERS_CACHE_TTL_MS = 2 * 60 * 1000;
 
 interface StoredPasswordPayload {
   scheme?: string;
@@ -42,6 +44,73 @@ interface StoredPasswordPayload {
   hash?: string;
   password?: string;
   mustChangePassword?: boolean;
+}
+
+interface UsersCacheEntry {
+  cachedAt: number;
+  users: AppUser[];
+}
+
+function canUseSessionStorage(): boolean {
+  return typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
+}
+
+export function saveUsersCacheToSession(users: AppUser[]): void {
+  if (!canUseSessionStorage()) {
+    return;
+  }
+
+  const entry: UsersCacheEntry = {
+    cachedAt: Date.now(),
+    users,
+  };
+
+  try {
+    window.sessionStorage.setItem(USERS_CACHE_STORAGE_KEY, JSON.stringify(entry));
+  } catch {
+    // Ignore cache write failures; the auth flow still works without the cache.
+  }
+}
+
+export function loadUsersCacheFromSession(): UsersCacheEntry | null {
+  if (!canUseSessionStorage()) {
+    return null;
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(USERS_CACHE_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<UsersCacheEntry>;
+    if (!Array.isArray(parsed.users) || typeof parsed.cachedAt !== 'number') {
+      return null;
+    }
+
+    if (Date.now() - parsed.cachedAt > USERS_CACHE_TTL_MS) {
+      return null;
+    }
+
+    return {
+      cachedAt: parsed.cachedAt,
+      users: parsed.users as AppUser[],
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function clearUsersCacheFromSession(): void {
+  if (!canUseSessionStorage()) {
+    return;
+  }
+
+  try {
+    window.sessionStorage.removeItem(USERS_CACHE_STORAGE_KEY);
+  } catch {
+    // Ignore cache removal failures.
+  }
 }
 
 function getUnknownFieldName(error: unknown): string | undefined {

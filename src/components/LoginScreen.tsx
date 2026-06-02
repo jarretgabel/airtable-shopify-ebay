@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { useAuthStore } from '@/stores/auth/authStore';
+import { readRuntimeConfigValue } from '@/config/runtimeConfig';
 
 const TEST_USERS = [
   { label: 'Admin', email: 'admin@example.com', password: 'Admin123!' },
@@ -17,6 +18,7 @@ interface LoginScreenProps {
 export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
   const login = useAuthStore((state) => state.login);
   const requestPasswordReset = useAuthStore((state) => state.requestPasswordReset);
+  const showSampleAccounts = import.meta.env.MODE !== 'production' || readRuntimeConfigValue('VITE_SHOW_TEST_LOGINS') === 'true';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -149,27 +151,29 @@ export function LoginScreen({ onLoggedIn }: LoginScreenProps) {
           </form>
         )}
 
-        <div className="mt-5 border-t border-white/10 pt-4 text-xs leading-6 text-slate-400">
-          <p className="m-0 font-semibold uppercase tracking-[0.12em] text-sky-200/80">Test account logins</p>
-          {TEST_USERS.map((user) => (
-            <div key={user.email} className="flex items-center justify-between gap-3 py-1.5">
-              <p className="m-0 min-w-0 flex-1 truncate">
-                {user.label}: {user.email} / {user.password}
-              </p>
-              <button
-                type="button"
-                aria-label={`Log In as ${user.label}`}
-                className="shrink-0 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-slate-100 transition hover:bg-white/10"
-                disabled={submitting}
-                onClick={() => {
-                  void handleUseSampleAccount(user);
-                }}
-              >
-                {submitting && activeSampleEmail === user.email ? 'Logging In...' : 'Log In'}
-              </button>
-            </div>
-          ))}
-        </div>
+        {showSampleAccounts && (
+          <div className="mt-5 border-t border-white/10 pt-4 text-xs leading-6 text-slate-400">
+            <p className="m-0 font-semibold uppercase tracking-[0.12em] text-sky-200/80">Test account logins</p>
+            {TEST_USERS.map((user) => (
+              <div key={user.email} className="flex items-center justify-between gap-3 py-1.5">
+                <p className="m-0 min-w-0 flex-1 truncate">
+                  {user.label}: {user.email} / {user.password}
+                </p>
+                <button
+                  type="button"
+                  aria-label={`Log In as ${user.label}`}
+                  className="shrink-0 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-slate-100 transition hover:bg-white/10"
+                  disabled={submitting}
+                  onClick={() => {
+                    void handleUseSampleAccount(user);
+                  }}
+                >
+                  {submitting && activeSampleEmail === user.email ? 'Logging In...' : 'Log In'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </main>
   );

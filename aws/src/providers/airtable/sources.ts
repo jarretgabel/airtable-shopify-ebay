@@ -36,6 +36,7 @@ export type AirtableConfiguredAttachmentSource = 'inventory-directory' | 'used-g
 
 interface AirtableConfiguredReadOptions {
   fields?: string[];
+  filterByFormula?: string;
 }
 
 export interface AirtableConfiguredRecordsSummary {
