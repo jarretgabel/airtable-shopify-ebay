@@ -2,14 +2,14 @@
 
 import axios from 'axios';
 
-// Load environment variables from .env.local
-const API_KEY = process.env.AIRTABLE_API_KEY;
+// Load Airtable API key from environment
+const API_KEY = process.env.VITE_AIRTABLE_API_KEY;
 
 if (!API_KEY) {
   console.error(
-    'Error: AIRTABLE_API_KEY environment variable is not set.\n' +
+    'Error: VITE_AIRTABLE_API_KEY environment variable is not set.\n' +
     'Please add it to .env.local or set it in your shell environment.\n' +
-    'Example: export AIRTABLE_API_KEY="patXXXXXXX.xxxxxxxxxxxxx"'
+    'Example: export VITE_AIRTABLE_API_KEY="patXXXXXXX.xxxxxxxxxxxxx"'
   );
   process.exit(1);
 }

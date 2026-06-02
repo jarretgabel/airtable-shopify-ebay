@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import type { ShopifyWebhookTopic } from '../../providers/shopify/client.js';
 import { getConfiguredRecords, updateConfiguredRecord } from '../../providers/airtable/sources.js';
+import { closeEbayListingWhenSoldOnShopify } from '../../services/crossChannelClose.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
@@ -442,6 +443,37 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
         eventId: normalizedEvent.eventId,
         updatedFieldNames: Object.keys(updateFields),
       });
+
+      // If item sold on Shopify (ORDERS_PAID), trigger cross-channel eBay close
+      if (normalizedEvent.topic === 'ORDERS_PAID') {
+        try {
+          const closeResult = await closeEbayListingWhenSoldOnShopify(
+            matchedRecordId,
+            {
+              ...currentRecord.fields,
+              ...updateFields,
+            },
+          );
+
+          if (closeResult.success) {
+            infoLogger('Cross-channel eBay close triggered from Shopify sale', {
+              recordId: matchedRecordId,
+              orderId: normalizedEvent.orderId,
+              message: closeResult.message,
+            });
+          } else {
+            logError('Cross-channel eBay close failed', new Error(closeResult.message), {
+              recordId: matchedRecordId,
+              orderId: normalizedEvent.orderId,
+            });
+          }
+        } catch (closeError) {
+          logError('Exception during cross-channel eBay close (Shopify sale)', closeError, {
+            recordId: matchedRecordId,
+            orderId: normalizedEvent.orderId,
+          });
+        }
+      }
 
       return jsonOk({
         received: true,
