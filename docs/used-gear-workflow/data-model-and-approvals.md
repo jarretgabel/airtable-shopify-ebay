@@ -118,6 +118,29 @@ Use this checklist to approve, reject, or revise the proposed Airtable/workflow 
 - [x] Approve `Sold - Ready to Ship`
 - [x] Approve `Shipped`
 
+#### Phase-1 Post-Sale Decisions
+- [x] Approve `Post-Sale Outcome`
+- [x] Approve `Post-Sale Outcome At`
+- [x] Approve `Post-Sale Notes`
+- [x] Approve `Refund Amount`
+- [x] Approve `Refund Reason`
+- [x] Approve `Return Received At`
+- [x] Approve `Restock Disposition`
+- [x] Approve `Post-Sale Outcome` values: `Cancelled`, `Refunded`, `Returned`, `Partial Refund`.
+- [x] Approve `Restock Disposition` values: `Relist Candidate`, `Needs Re-Intake`, `Parts / Damaged`, `Archive Only`.
+- [x] Approve keeping `Workflow Status` unchanged through `Shipped` while deriving post-sale visibility from the new fields.
+- [x] Approve Post-Publish and Archive as the owning app surfaces for post-sale workflow and shipped lookup.
+- [x] Approve that returned/refunded items must not auto-relist.
+- [x] Approve repeated multi-event post-sale history as out of scope for phase 1.
+
+#### Phase 3: Webhook Writeback And Post-Sale Order Tracking
+- [x] Approve `Shopify Order ID`
+- [x] Approve `Shopify Order Name`
+- [x] Approve `Shopify Last Webhook Event ID`
+- [x] Approve `Shopify Last Webhook At`
+- [x] Approve `Shopify Last Webhook Event`
+- [x] Approve `Shopify Sync Locked`
+
 #### Workflow Logic Decisions
 - [x] Approve the acceptance-gate requirements for moving from Lot 1 to Lot 2.
 - [x] Approve deriving intake decision from `Workflow Status` instead of storing it as a separate field.
@@ -275,6 +298,77 @@ These are proposed additions or formalized workflow fields for `tbl0K0nFQL64jQMx
 	- Rule: set when the sold item enters the shipping-prep queue.
 - `Shipped At`
 	- Rule: set when shipment is complete.
+
+#### Post-Sale Outcomes
+- `Post-Sale Outcome`
+	- Purpose: capture the first approved phase-1 post-sale exception without changing `Workflow Status`.
+	- Allowed values: `Cancelled`, `Refunded`, `Returned`, `Partial Refund`.
+	- Rule: use for the first outcome only; repeated event history is out of scope for phase 1.
+- `Post-Sale Outcome At`
+	- Purpose: timestamp when the post-sale exception was first recorded.
+	- Rule: set once when `Post-Sale Outcome` is first recorded.
+- `Post-Sale Notes`
+	- Purpose: hold short narrative context for the exception or follow-up.
+- `Refund Amount`
+	- Purpose: store the refunded dollar amount when the item was refunded or partially refunded.
+- `Refund Reason`
+	- Purpose: explain why the refund was issued.
+- `Return Received At`
+	- Purpose: timestamp when a returned item physically came back in.
+- `Restock Disposition`
+	- Purpose: record how a returned or otherwise exception-handled item should be handled after review.
+	- Allowed values: `Relist Candidate`, `Needs Re-Intake`, `Parts / Damaged`, `Archive Only`.
+	- Rule: keep the disposition separate from marketplace relist logic; returned or refunded items must not auto-relist.
+
+#### Phase-1 Post-Sale Operating Rules
+- The authoritative record remains one Airtable row per sellable item.
+- `Workflow Status` remains the lifecycle field through `Shipped`; post-sale outcomes are stored in the approved post-sale fields instead of inventing new workflow statuses.
+- Post-Publish is the active operator surface for post-sale handling after publish, and Archive is the shipped lookup/reference surface once active follow-through is done.
+- `Cancelled`, `Refunded`, `Returned`, and `Partial Refund` are single-outcome phase-1 values, not a repeated event-history model.
+- `Relist Candidate` is a manual restock decision only. It does not auto-relist the row, and returned/refunded items must still be reviewed manually before any future listing work.
+- No new top-level post-sale page family is required for phase 1.
+
+#### Phase 3: Webhook Writeback And Post-Sale Order Tracking
+
+These fields enable webhook-driven Airtable writes and cross-marketplace order tracking for post-sale outcomes (refunds/cancellations).
+
+##### Shopify Order Tracking Fields
+- `Shopify Order ID`
+	- Purpose: persist the Shopify order identifier from `orders/paid` webhooks so future `refunds/create` and `orders/cancelled` events can be matched back to the authoritative row even if the original product_id match is unavailable.
+	- Suggested format: numeric Shopify order ID as delivered by Shopify API.
+	- Sample values: `4700987949`, `4701048392`.
+	- Rule: set automatically by `orders/paid` webhook writeback; treat as system-owned metadata.
+	- When to use it: fallback row matching when refund/cancel events arrive and product_id is not available.
+
+- `Shopify Order Name`
+	- Purpose: human-readable reference for the Shopify order (e.g., `#1001`) to support audit trails and manual troubleshooting.
+	- Suggested format: exactly as returned by Shopify API (normally `#NNNN`).
+	- Sample values: `#1001`, `#1002`.
+	- Rule: set automatically by `orders/paid` webhook writeback; read-only audit field.
+
+- `Shopify Last Webhook Event ID`
+	- Purpose: store the `x-shopify-event-id` header value for idempotency; prevents duplicate writes if Shopify retries the same webhook.
+	- Suggested format: exactly as delivered in the `x-shopify-event-id` header.
+	- Sample values: `1234567890-abc123def`, `1234567890-xyz789uvw`.
+	- Rule: updated on every successful webhook write; used to skip duplicate events.
+	- When to use it: detect and skip retried events with identical event IDs.
+
+- `Shopify Last Webhook At`
+	- Purpose: audit timestamp for the most recent Shopify webhook write to this row.
+	- Suggested format: ISO 8601 timestamp.
+	- Sample values: `2026-06-01T12:00:00.000Z`, `2026-06-02T13:30:45.000Z`.
+	- Rule: updated on every successful webhook write; treat as system-owned audit metadata.
+
+- `Shopify Last Webhook Event`
+	- Purpose: audit trail of which webhook topic last touched this row (e.g., `orders/paid`, `refunds/create`, `orders/cancelled`).
+	- Suggested values: `orders/paid`, `orders/cancelled`, `refunds/create`.
+	- Rule: updated on every successful webhook write; helps trace post-sale event sequences.
+
+- `Shopify Sync Locked`
+	- Purpose: manual override to prevent webhook writeback on this row, mirroring the existing `eBay Sync Locked` pattern.
+	- Suggested values: `true`, `false`, or blank (default = not locked).
+	- Rule: when true/locked, webhook handlers skip automatic updates and return `{received:true, skipped:true, locked:true}`.
+	- When to use it: temporarily hold a row while manual intervention or review is in progress.
 
 ### Proposed Workflow Statuses And Allowed Transitions
 

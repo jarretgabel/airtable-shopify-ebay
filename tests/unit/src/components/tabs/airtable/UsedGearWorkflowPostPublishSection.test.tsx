@@ -8,16 +8,26 @@ const { loadWorkflowPostPublishQueueMock, clipboardWriteTextMock } = vi.hoisted(
 }));
 
 const {
+  markWorkflowCancelledMock,
+  markWorkflowPartialRefundMock,
+  markWorkflowRefundedMock,
+  markWorkflowReturnReceivedMock,
   markWorkflowListingStaleMock,
   markWorkflowRelistedMock,
   markWorkflowSoldReadyToShipMock,
   markWorkflowShippedMock,
+  resolveWorkflowRestockDispositionMock,
   saveWorkflowStaleRecoveryMock,
 } = vi.hoisted(() => ({
+  markWorkflowCancelledMock: vi.fn(),
+  markWorkflowPartialRefundMock: vi.fn(),
+  markWorkflowRefundedMock: vi.fn(),
+  markWorkflowReturnReceivedMock: vi.fn(),
   markWorkflowListingStaleMock: vi.fn(),
   markWorkflowRelistedMock: vi.fn(),
   markWorkflowSoldReadyToShipMock: vi.fn(),
   markWorkflowShippedMock: vi.fn(),
+  resolveWorkflowRestockDispositionMock: vi.fn(),
   saveWorkflowStaleRecoveryMock: vi.fn(),
 }));
 
@@ -25,11 +35,16 @@ vi.mock('@/services/usedGearQueue', async () => {
   const actual = await vi.importActual<typeof import('@/services/usedGearQueue')>('@/services/usedGearQueue');
   return {
     ...actual,
+    markWorkflowCancelled: markWorkflowCancelledMock,
+    markWorkflowPartialRefund: markWorkflowPartialRefundMock,
+    markWorkflowRefunded: markWorkflowRefundedMock,
+    markWorkflowReturnReceived: markWorkflowReturnReceivedMock,
     loadWorkflowPostPublishQueue: loadWorkflowPostPublishQueueMock,
     markWorkflowListingStale: markWorkflowListingStaleMock,
     markWorkflowRelisted: markWorkflowRelistedMock,
     markWorkflowSoldReadyToShip: markWorkflowSoldReadyToShipMock,
     markWorkflowShipped: markWorkflowShippedMock,
+    resolveWorkflowRestockDisposition: resolveWorkflowRestockDispositionMock,
     saveWorkflowStaleRecovery: saveWorkflowStaleRecoveryMock,
   };
 });
@@ -44,9 +59,14 @@ describe('UsedGearWorkflowPostPublishSection', () => {
       },
     });
     markWorkflowListingStaleMock.mockReset();
+    markWorkflowCancelledMock.mockReset();
+    markWorkflowPartialRefundMock.mockReset();
+    markWorkflowRefundedMock.mockReset();
+    markWorkflowReturnReceivedMock.mockReset();
     markWorkflowRelistedMock.mockReset();
     markWorkflowSoldReadyToShipMock.mockReset();
     markWorkflowShippedMock.mockReset();
+    resolveWorkflowRestockDispositionMock.mockReset();
     saveWorkflowStaleRecoveryMock.mockReset();
     window.history.replaceState({}, '', '/workflow-hub');
   });
@@ -301,6 +321,132 @@ describe('UsedGearWorkflowPostPublishSection', () => {
 
     await waitFor(() => {
       expect(markWorkflowShippedMock).toHaveBeenCalledWith('rec-sold');
+    });
+  });
+
+  it('shows post-sale chips and hides outcome action buttons when outcome is already recorded', async () => {
+    loadWorkflowPostPublishQueueMock.mockResolvedValue([
+      {
+        id: 'rec-post-sale',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'POST-1',
+          Make: 'Pioneer',
+          Model: 'SX-1250',
+          'Workflow Status': 'Shipped',
+          'Shipped At': '2026-05-08T05:00:00.000Z',
+          'Post-Sale Outcome': 'Refunded',
+          'Post-Sale Outcome At': '2026-05-09T05:00:00.000Z',
+          'Refund Amount': 19.99,
+          'Refund Reason': 'Transit issue',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearWorkflowPostPublishSection
+        currentUserName="Taylor Reviewer"
+        sectionDefinitions={[{ key: 'shipped', id: 'used-gear-post-publish-shipped', title: 'Completed Shipments', description: '' }]}
+        overviewSectionId="used-gear-archive"
+        queueTitle="Completed Shipments"
+        queueNoun="completed shipments"
+        focusedBucketNotice=""
+        showSectionTitles={false}
+        searchPlaceholder="Search by status, SKU, model, or ship date"
+        onOpenOperationalRecord={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Outcome: Refunded')).toBeInTheDocument();
+    expect(screen.getByText(/Refund: \$19\.99/)).toBeInTheDocument();
+    // outcome already set — outcome action buttons must be hidden
+    expect(screen.queryByRole('button', { name: 'Mark Cancelled' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Mark Partial Refund' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Mark Refunded' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Mark Return Received' })).not.toBeInTheDocument();
+    // workflow snapshot always available
+    expect(screen.getByRole('button', { name: 'Open Workflow Snapshot' })).toBeInTheDocument();
+  });
+
+  it('shows all outcome action buttons for a shipped row with no post-sale outcome yet', async () => {
+    loadWorkflowPostPublishQueueMock.mockResolvedValue([
+      {
+        id: 'rec-fresh-shipped',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'SHIP-2',
+          Make: 'Sansui',
+          Model: '9090DB',
+          'Workflow Status': 'Shipped',
+          'Shipped At': '2026-05-08T05:00:00.000Z',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearWorkflowPostPublishSection
+        currentUserName="Taylor Reviewer"
+        sectionDefinitions={[{ key: 'shipped', id: 'used-gear-post-publish-shipped', title: 'Completed Shipments', description: '' }]}
+        overviewSectionId="used-gear-archive"
+        queueTitle="Completed Shipments"
+        queueNoun="completed shipments"
+        focusedBucketNotice=""
+        showSectionTitles={false}
+        searchPlaceholder="Search by status, SKU, model, or ship date"
+        onOpenOperationalRecord={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('SHIP-2');
+
+    expect(screen.getByRole('button', { name: 'Mark Cancelled' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mark Partial Refund' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mark Refunded' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mark Return Received' })).toBeInTheDocument();
+  });
+
+  it('supports partial-refund reconciliation from row actions', async () => {
+    loadWorkflowPostPublishQueueMock.mockResolvedValue([
+      {
+        id: 'rec-sold',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'SOLD-2',
+          Make: 'Accuphase',
+          Model: 'E-202',
+          'Workflow Status': 'Sold - Ready to Ship',
+          'Sold Ready To Ship At': '2026-05-08T05:00:00.000Z',
+        },
+      },
+    ]);
+    markWorkflowPartialRefundMock.mockResolvedValue({
+      id: 'rec-sold',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        SKU: 'SOLD-2',
+        Make: 'Accuphase',
+        Model: 'E-202',
+        'Workflow Status': 'Sold - Ready to Ship',
+        'Sold Ready To Ship At': '2026-05-08T05:00:00.000Z',
+        'Post-Sale Outcome': 'Partial Refund',
+        'Post-Sale Outcome At': '2026-05-09T07:00:00.000Z',
+      },
+    });
+
+    render(
+      <UsedGearWorkflowPostPublishSection
+        currentUserName="Taylor Reviewer"
+        onOpenOperationalRecord={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Mark Partial Refund' }));
+
+    await waitFor(() => {
+      expect(markWorkflowPartialRefundMock).toHaveBeenCalledWith('rec-sold');
     });
   });
 

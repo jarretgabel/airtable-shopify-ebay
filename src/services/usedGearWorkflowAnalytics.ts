@@ -24,6 +24,13 @@ const USED_GEAR_WORKFLOW_ANALYTICS_FIELDS = [
   'Stale Listing At',
   'Sold Ready To Ship At',
   'Shipped At',
+  'Post-Sale Outcome',
+  'Post-Sale Outcome At',
+  'Post-Sale Notes',
+  'Refund Amount',
+  'Refund Reason',
+  'Return Received At',
+  'Restock Disposition',
 ] as const;
 
 const PROGRESS_STATUSES = new Set<UsedGearWorkflowStatus>([
@@ -77,6 +84,19 @@ export interface UsedGearWorkflowAnalyticsOwnershipSummary {
   progressUnassignedCount: number;
 }
 
+export interface UsedGearWorkflowAnalyticsPostSaleSummary {
+  exceptionCount: number;
+  unresolvedExceptionCount: number;
+  resolvedExceptionCount: number;
+  cancelledCount: number;
+  refundedCount: number;
+  returnedCount: number;
+  partialRefundCount: number;
+  returnReceivedCount: number;
+  refundExposure: number;
+  missingDispositionCount: number;
+}
+
 export interface UsedGearWorkflowAnalyticsSnapshot {
   totalCount: number;
   pendingReviewCount: number;
@@ -88,6 +108,7 @@ export interface UsedGearWorkflowAnalyticsSnapshot {
   age: UsedGearWorkflowAnalyticsAgeSummary;
   lifecycle: UsedGearWorkflowAnalyticsLifecycleSummary;
   ownership: UsedGearWorkflowAnalyticsOwnershipSummary;
+  postSale: UsedGearWorkflowAnalyticsPostSaleSummary;
 }
 
 function roundLifecycleDays(value: number): number {
@@ -118,6 +139,21 @@ function createEmptyOwnershipSummary(): UsedGearWorkflowAnalyticsOwnershipSummar
   };
 }
 
+function createEmptyPostSaleSummary(): UsedGearWorkflowAnalyticsPostSaleSummary {
+  return {
+    exceptionCount: 0,
+    unresolvedExceptionCount: 0,
+    resolvedExceptionCount: 0,
+    cancelledCount: 0,
+    refundedCount: 0,
+    returnedCount: 0,
+    partialRefundCount: 0,
+    returnReceivedCount: 0,
+    refundExposure: 0,
+    missingDispositionCount: 0,
+  };
+}
+
 export function createEmptyUsedGearWorkflowAnalyticsSnapshot(): UsedGearWorkflowAnalyticsSnapshot {
   return {
     totalCount: 0,
@@ -144,6 +180,7 @@ export function createEmptyUsedGearWorkflowAnalyticsSnapshot(): UsedGearWorkflow
       oldestSoldReadyAgeDays: null,
     },
     ownership: createEmptyOwnershipSummary(),
+    postSale: createEmptyPostSaleSummary(),
   };
 }
 
@@ -251,6 +288,53 @@ export function buildUsedGearWorkflowAnalyticsSnapshot(
         return counts;
     }
   }, createEmptyMarketplaceCounts());
+
+  snapshot.postSale = postPublishRecords.reduce<UsedGearWorkflowAnalyticsPostSaleSummary>((summary, record) => {
+    const postPublishSnapshot = getUsedGearWorkflowPostPublishSnapshot(record, nowMs);
+    if (!postPublishSnapshot || !postPublishSnapshot.hasPostSaleException) {
+      return summary;
+    }
+
+    summary.exceptionCount += 1;
+
+    if (postPublishSnapshot.isPostSaleResolved) {
+      summary.resolvedExceptionCount += 1;
+    } else {
+      summary.unresolvedExceptionCount += 1;
+    }
+
+    switch (postPublishSnapshot.postSaleOutcome) {
+      case 'Cancelled':
+        summary.cancelledCount += 1;
+        break;
+      case 'Refunded':
+        summary.refundedCount += 1;
+        break;
+      case 'Returned':
+        summary.returnedCount += 1;
+        break;
+      case 'Partial Refund':
+        summary.partialRefundCount += 1;
+        break;
+      default:
+        break;
+    }
+
+    if (postPublishSnapshot.returnReceivedAt) {
+      summary.returnReceivedCount += 1;
+    }
+
+    if (postPublishSnapshot.refundAmount !== null) {
+      summary.refundExposure += postPublishSnapshot.refundAmount;
+    }
+
+    if (!postPublishSnapshot.restockDisposition) {
+      summary.missingDispositionCount += 1;
+    }
+
+    return summary;
+  }, createEmptyPostSaleSummary());
+  snapshot.postSale.refundExposure = Math.round(snapshot.postSale.refundExposure * 100) / 100;
 
   let sellDurationTotalDays = 0;
   let sellDurationCount = 0;

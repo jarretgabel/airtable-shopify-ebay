@@ -42,6 +42,13 @@ function formatLifecycleMetric(value: number | null): string {
   return value === null ? 'N/A' : `${value.toFixed(1)}d`;
 }
 
+function formatCurrencyMetric(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(value);
+}
+
 export function DashboardWorkflowAnalyticsSection({
   loading,
   error,
@@ -51,7 +58,7 @@ export function DashboardWorkflowAnalyticsSection({
   embedded = false,
 }: DashboardWorkflowAnalyticsSectionProps) {
   const compactRows = (
-    <div className="grid gap-4 xl:grid-cols-2">
+    <div className="grid gap-4 xl:grid-cols-3">
       <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
         <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Queue Health</h4>
         <div className="mt-2">
@@ -73,6 +80,17 @@ export function DashboardWorkflowAnalyticsSection({
           <MetricRow label="Sold Ready Unassigned" value={soldReadyUnassignedCount} />
         </div>
       </section>
+
+      <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
+        <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Post-Sale Reporting</h4>
+        <div className="mt-2">
+          <MetricRow label="Open Exceptions" value={snapshot.postSale.unresolvedExceptionCount} />
+          <MetricRow label="Resolved Exceptions" value={snapshot.postSale.resolvedExceptionCount} />
+          <MetricRow label="Missing Disposition" value={snapshot.postSale.missingDispositionCount} />
+          <MetricRow label="Returns Received" value={snapshot.postSale.returnReceivedCount} />
+          <MetricRow label="Refund Exposure" value={formatCurrencyMetric(snapshot.postSale.refundExposure)} />
+        </div>
+      </section>
     </div>
   );
 
@@ -88,7 +106,7 @@ export function DashboardWorkflowAnalyticsSection({
       {loading ? (
         <>
           <DashboardStatTileSkeletonGrid />
-          <div className={`grid gap-4 ${embedded ? 'xl:grid-cols-2' : 'xl:grid-cols-4'}`}>
+          <div className={`grid gap-4 ${embedded ? 'xl:grid-cols-2' : 'xl:grid-cols-3 2xl:grid-cols-5'}`}>
             <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
               <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">By Status</h4>
               <div className="mt-2"><DashboardMetricRowSkeletonList count={8} /></div>
@@ -105,6 +123,10 @@ export function DashboardWorkflowAnalyticsSection({
                 </section>
                 <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
                   <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Post-Publish Ops</h4>
+                  <div className="mt-2"><DashboardMetricRowSkeletonList count={6} /></div>
+                </section>
+                <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
+                  <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Post-Sale Reporting</h4>
                   <div className="mt-2"><DashboardMetricRowSkeletonList count={6} /></div>
                 </section>
               </>
@@ -127,7 +149,7 @@ export function DashboardWorkflowAnalyticsSection({
               <summary className="cursor-pointer list-none text-[0.8rem] font-semibold text-[var(--ink)]">
                 More workflow context
               </summary>
-              <div className="mt-3 grid gap-4 xl:grid-cols-4">
+              <div className="mt-3 grid gap-4 xl:grid-cols-3 2xl:grid-cols-5">
                 <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
                   <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">By Status</h4>
                   <div className="mt-2">
@@ -172,10 +194,25 @@ export function DashboardWorkflowAnalyticsSection({
                     <MetricRow label="Oldest Sold Ready" value={formatLifecycleMetric(snapshot.lifecycle.oldestSoldReadyAgeDays)} />
                   </div>
                 </section>
+
+                <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
+                  <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Post-Sale Reporting</h4>
+                  <div className="mt-2">
+                    <MetricRow label="Open Exceptions" value={snapshot.postSale.unresolvedExceptionCount} />
+                    <MetricRow label="Resolved Exceptions" value={snapshot.postSale.resolvedExceptionCount} />
+                    <MetricRow label="Refunded" value={snapshot.postSale.refundedCount} />
+                    <MetricRow label="Returned" value={snapshot.postSale.returnedCount} />
+                    <MetricRow label="Partial Refund" value={snapshot.postSale.partialRefundCount} />
+                    <MetricRow label="Cancelled" value={snapshot.postSale.cancelledCount} />
+                    <MetricRow label="Returns Received" value={snapshot.postSale.returnReceivedCount} />
+                    <MetricRow label="Missing Disposition" value={snapshot.postSale.missingDispositionCount} />
+                    <MetricRow label="Refund Exposure" value={formatCurrencyMetric(snapshot.postSale.refundExposure)} />
+                  </div>
+                </section>
               </div>
             </details>
           ) : (
-            <div className="grid gap-4 xl:grid-cols-4">
+            <div className="grid gap-4 xl:grid-cols-3 2xl:grid-cols-5">
               <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
                 <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">By Status</h4>
                 <div className="mt-2">
@@ -224,6 +261,21 @@ export function DashboardWorkflowAnalyticsSection({
                   <MetricRow label="Oldest Sold Ready" value={formatLifecycleMetric(snapshot.lifecycle.oldestSoldReadyAgeDays)} />
                   <MetricRow label="Stale Unassigned" value={staleListingUnassignedCount} />
                   <MetricRow label="Sold Ready Unassigned" value={soldReadyUnassignedCount} />
+                </div>
+              </section>
+
+              <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
+                <h4 className="m-0 border-b border-[var(--line)] pb-3 text-[0.84rem] font-bold uppercase tracking-[0.08em] text-[var(--ink)]">Post-Sale Reporting</h4>
+                <div className="mt-2">
+                  <MetricRow label="Open Exceptions" value={snapshot.postSale.unresolvedExceptionCount} />
+                  <MetricRow label="Resolved Exceptions" value={snapshot.postSale.resolvedExceptionCount} />
+                  <MetricRow label="Refunded" value={snapshot.postSale.refundedCount} />
+                  <MetricRow label="Returned" value={snapshot.postSale.returnedCount} />
+                  <MetricRow label="Partial Refund" value={snapshot.postSale.partialRefundCount} />
+                  <MetricRow label="Cancelled" value={snapshot.postSale.cancelledCount} />
+                  <MetricRow label="Returns Received" value={snapshot.postSale.returnReceivedCount} />
+                  <MetricRow label="Missing Disposition" value={snapshot.postSale.missingDispositionCount} />
+                  <MetricRow label="Refund Exposure" value={formatCurrencyMetric(snapshot.postSale.refundExposure)} />
                 </div>
               </section>
             </div>

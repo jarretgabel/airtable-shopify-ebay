@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   getUsedGearWorkflowPostPublishSnapshot,
+  getUsedGearWorkflowPostSaleOutcome,
+  getUsedGearWorkflowRestockDisposition,
   getUsedGearWorkflowStaleRecoveryStatus,
   resolveWorkflowStatusAfterPublish,
   USED_GEAR_STALE_THRESHOLD_DAYS,
@@ -87,6 +89,91 @@ describe('usedGearWorkflowLifecycle', () => {
     expect(snapshot?.staleRecoveryStatus).toBe('Price Refresh');
     expect(snapshot?.staleRecoveryNotes).toBe('Refresh title and pricing before relist.');
     expect(snapshot?.relistedAt).toBe('2026-05-07T12:00:00.000Z');
+  });
+
+  it('reads phase-1 post-sale fields from the operational row without changing workflow status', () => {
+    const record: AirtableRecord = {
+      id: 'rec-post-sale',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        'Workflow Status': 'Shipped',
+        'Shipped At': '2026-05-07T00:00:00.000Z',
+        'Post-Sale Outcome': 'Returned',
+        'Post-Sale Outcome At': '2026-05-08T09:00:00.000Z',
+        'Post-Sale Notes': 'Customer returned the item after delivery.',
+        'Refund Amount': 42.5,
+        'Refund Reason': 'Transit damage',
+        'Return Received At': '2026-05-09T14:15:00.000Z',
+        'Restock Disposition': 'Needs Re-Intake',
+      },
+    };
+
+    const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+
+    expect(getUsedGearWorkflowPostSaleOutcome(record.fields)).toBe('Returned');
+    expect(getUsedGearWorkflowRestockDisposition(record.fields)).toBe('Needs Re-Intake');
+    expect(snapshot?.status).toBe('Shipped');
+    expect(snapshot?.postSaleOutcome).toBe('Returned');
+    expect(snapshot?.postSaleOutcomeAt).toBe('2026-05-08T09:00:00.000Z');
+    expect(snapshot?.postSaleNotes).toBe('Customer returned the item after delivery.');
+    expect(snapshot?.refundAmount).toBe(42.5);
+    expect(snapshot?.refundReason).toBe('Transit damage');
+    expect(snapshot?.returnReceivedAt).toBe('2026-05-09T14:15:00.000Z');
+    expect(snapshot?.restockDisposition).toBe('Needs Re-Intake');
+    expect(snapshot?.hasPostSaleException).toBe(true);
+  });
+
+  it('marks isPostSaleResolved when both outcome and restock disposition are set', () => {
+    const record: AirtableRecord = {
+      id: 'rec-resolved',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        'Workflow Status': 'Shipped',
+        'Shipped At': '2026-05-07T00:00:00.000Z',
+        'Post-Sale Outcome': 'Returned',
+        'Return Received At': '2026-05-09T14:15:00.000Z',
+        'Restock Disposition': 'Archive Only',
+      },
+    };
+
+    const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+
+    expect(snapshot?.isPostSaleResolved).toBe(true);
+  });
+
+  it('does not mark isPostSaleResolved when outcome is set but disposition is missing', () => {
+    const record: AirtableRecord = {
+      id: 'rec-pending-disposition',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        'Workflow Status': 'Shipped',
+        'Shipped At': '2026-05-07T00:00:00.000Z',
+        'Post-Sale Outcome': 'Refunded',
+        'Refund Amount': 29.99,
+      },
+    };
+
+    const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+
+    expect(snapshot?.isPostSaleResolved).toBe(false);
+    expect(snapshot?.hasPostSaleException).toBe(true);
+  });
+
+  it('rejects unknown post-sale values', () => {
+    const record: AirtableRecord = {
+      id: 'rec-invalid-post-sale',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        'Workflow Status': 'Sold - Ready to Ship',
+        'Post-Sale Outcome': 'Not A Real Outcome',
+        'Restock Disposition': 'Not A Real Disposition',
+      },
+    };
+
+    const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+
+    expect(snapshot?.postSaleOutcome).toBeNull();
+    expect(snapshot?.restockDisposition).toBeNull();
   });
 
   it('resolves publish writeback status for the combined publish path', () => {

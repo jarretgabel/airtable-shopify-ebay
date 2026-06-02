@@ -9,9 +9,23 @@ export const USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS = [
   'Ready To Relist',
   'Do Not Relist',
 ] as const;
+export const USED_GEAR_POST_SALE_OUTCOME_OPTIONS = [
+  'Cancelled',
+  'Refunded',
+  'Returned',
+  'Partial Refund',
+] as const;
+export const USED_GEAR_RESTOCK_DISPOSITION_OPTIONS = [
+  'Relist Candidate',
+  'Needs Re-Intake',
+  'Parts / Damaged',
+  'Archive Only',
+] as const;
 
 export type UsedGearWorkflowListingChannel = 'shopify' | 'ebay';
 export type UsedGearWorkflowPostPublishBucket = 'active-listing' | 'stale-listing' | 'sold-ready' | 'shipped';
+export type UsedGearWorkflowPostSaleOutcome = (typeof USED_GEAR_POST_SALE_OUTCOME_OPTIONS)[number];
+export type UsedGearWorkflowRestockDisposition = (typeof USED_GEAR_RESTOCK_DISPOSITION_OPTIONS)[number];
 export type UsedGearWorkflowStaleRecoveryStatus = (typeof USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS)[number];
 
 export interface UsedGearWorkflowPostPublishSnapshot {
@@ -28,6 +42,15 @@ export interface UsedGearWorkflowPostPublishSnapshot {
   shipmentFollowThroughNotes: string | null;
   shipmentFollowThroughUpdatedAt: string | null;
   shippedAt: string | null;
+  postSaleOutcome: UsedGearWorkflowPostSaleOutcome | null;
+  postSaleOutcomeAt: string | null;
+  postSaleNotes: string | null;
+  refundAmount: number | null;
+  refundReason: string | null;
+  returnReceivedAt: string | null;
+  restockDisposition: UsedGearWorkflowRestockDisposition | null;
+  hasPostSaleException: boolean;
+  isPostSaleResolved: boolean;
   daysSinceListed: number | null;
   staleThresholdDays: number;
   isPastStaleThreshold: boolean;
@@ -55,9 +78,27 @@ export function isUsedGearWorkflowStaleRecoveryStatus(value: string): value is U
   return (USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS as readonly string[]).includes(value);
 }
 
+export function isUsedGearWorkflowPostSaleOutcome(value: string): value is UsedGearWorkflowPostSaleOutcome {
+  return (USED_GEAR_POST_SALE_OUTCOME_OPTIONS as readonly string[]).includes(value);
+}
+
+export function isUsedGearWorkflowRestockDisposition(value: string): value is UsedGearWorkflowRestockDisposition {
+  return (USED_GEAR_RESTOCK_DISPOSITION_OPTIONS as readonly string[]).includes(value);
+}
+
 export function getUsedGearWorkflowStaleRecoveryStatus(fields: Record<string, unknown>): UsedGearWorkflowStaleRecoveryStatus | null {
   const rawValue = getTrimmedString(fields['Stale Recovery Status']);
   return rawValue && isUsedGearWorkflowStaleRecoveryStatus(rawValue) ? rawValue : null;
+}
+
+export function getUsedGearWorkflowPostSaleOutcome(fields: Record<string, unknown>): UsedGearWorkflowPostSaleOutcome | null {
+  const rawValue = getTrimmedString(fields['Post-Sale Outcome']);
+  return rawValue && isUsedGearWorkflowPostSaleOutcome(rawValue) ? rawValue : null;
+}
+
+export function getUsedGearWorkflowRestockDisposition(fields: Record<string, unknown>): UsedGearWorkflowRestockDisposition | null {
+  const rawValue = getTrimmedString(fields['Restock Disposition']);
+  return rawValue && isUsedGearWorkflowRestockDisposition(rawValue) ? rawValue : null;
 }
 
 function getDaysBetween(nowMs: number, timestamp: string | null): number | null {
@@ -102,8 +143,27 @@ export function getUsedGearWorkflowPostPublishSnapshot(
   const shipmentFollowThroughNotes = getTrimmedString(record.fields['Shipment Follow-Through Notes']);
   const shipmentFollowThroughUpdatedAt = getIsoTimestamp(record.fields['Shipment Follow-Through Updated At']);
   const shippedAt = getIsoTimestamp(record.fields['Shipped At']);
+  const postSaleOutcome = getUsedGearWorkflowPostSaleOutcome(record.fields);
+  const postSaleOutcomeAt = getIsoTimestamp(record.fields['Post-Sale Outcome At']);
+  const postSaleNotes = getTrimmedString(record.fields['Post-Sale Notes']);
+  const refundAmount = typeof record.fields['Refund Amount'] === 'number' && Number.isFinite(record.fields['Refund Amount'])
+    ? Math.round(record.fields['Refund Amount'] * 100) / 100
+    : null;
+  const refundReason = getTrimmedString(record.fields['Refund Reason']);
+  const returnReceivedAt = getIsoTimestamp(record.fields['Return Received At']);
+  const restockDisposition = getUsedGearWorkflowRestockDisposition(record.fields);
   const daysSinceListed = getDaysBetween(nowMs, listedAt);
   const isPastStaleThreshold = daysSinceListed !== null && daysSinceListed >= staleThresholdDays;
+  const hasPostSaleException = Boolean(
+    postSaleOutcome
+    || postSaleOutcomeAt
+    || postSaleNotes
+    || refundAmount !== null
+    || refundReason
+    || returnReceivedAt
+    || restockDisposition
+  );
+  const isPostSaleResolved = Boolean(postSaleOutcome && restockDisposition);
 
   switch (status) {
     case 'Listed, Shopify':
@@ -122,6 +182,15 @@ export function getUsedGearWorkflowPostPublishSnapshot(
         shipmentFollowThroughNotes,
         shipmentFollowThroughUpdatedAt,
         shippedAt,
+        postSaleOutcome,
+        postSaleOutcomeAt,
+        postSaleNotes,
+        refundAmount,
+        refundReason,
+        returnReceivedAt,
+        restockDisposition,
+        hasPostSaleException,
+        isPostSaleResolved,
         daysSinceListed,
         staleThresholdDays,
         isPastStaleThreshold,
@@ -142,6 +211,15 @@ export function getUsedGearWorkflowPostPublishSnapshot(
         shipmentFollowThroughNotes,
         shipmentFollowThroughUpdatedAt,
         shippedAt,
+        postSaleOutcome,
+        postSaleOutcomeAt,
+        postSaleNotes,
+        refundAmount,
+        refundReason,
+        returnReceivedAt,
+        restockDisposition,
+        hasPostSaleException,
+        isPostSaleResolved,
         daysSinceListed,
         staleThresholdDays,
         isPastStaleThreshold: true,
@@ -161,6 +239,15 @@ export function getUsedGearWorkflowPostPublishSnapshot(
         shipmentFollowThroughNotes,
         shipmentFollowThroughUpdatedAt,
         shippedAt,
+        postSaleOutcome,
+        postSaleOutcomeAt,
+        postSaleNotes,
+        refundAmount,
+        refundReason,
+        returnReceivedAt,
+        restockDisposition,
+        hasPostSaleException,
+        isPostSaleResolved,
         daysSinceListed,
         staleThresholdDays,
         isPastStaleThreshold,
@@ -180,6 +267,15 @@ export function getUsedGearWorkflowPostPublishSnapshot(
         shipmentFollowThroughNotes,
         shipmentFollowThroughUpdatedAt,
         shippedAt,
+        postSaleOutcome,
+        postSaleOutcomeAt,
+        postSaleNotes,
+        refundAmount,
+        refundReason,
+        returnReceivedAt,
+        restockDisposition,
+        hasPostSaleException,
+        isPostSaleResolved,
         daysSinceListed,
         staleThresholdDays,
         isPastStaleThreshold,

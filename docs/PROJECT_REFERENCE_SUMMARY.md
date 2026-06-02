@@ -64,7 +64,7 @@
 
 ## 4. Workflow & Functional Patterns
 ### Workflow Surfaces
-- Intake > Processing > Listings > Post-Publish.
+- Intake > Processing > Listings > Post-Publish > Archive.
 - Utility pages: User Guide, Market Research, JotForm, Image Lab, Settings, Notifications, User Management.
 
 ### Workflow Advancement
@@ -72,7 +72,7 @@
 - Accepted rows stay in Parking Lot for arrival-stage handling; rejected rows move to Trash Review.
 - Testing and Photography must be complete before Listings.
 - Listings move to live status only after review and publish action.
-- Post-publish work handled in Active Listings or Post-Publish, not Listings.
+- Post-Publish owns active post-sale follow-through and Archive owns shipped lookup/reference; Listings keeps record context but does not own post-sale workflow.
 
 ### Approval & Listing Flow
 - Approval queues and listing review use shared UI conventions and change-tracking.

@@ -28,8 +28,13 @@ import {
   markWorkflowListingStale,
   markWorkflowRowsShipped,
   markWorkflowRowsSoldReadyToShip,
+  markWorkflowCancelled,
+  markWorkflowPartialRefund,
+  markWorkflowRefunded,
+  markWorkflowReturnReceived,
   markPendingReviewUnqualified,
   markPendingReviewGroupUnqualified,
+  resolveWorkflowRestockDisposition,
   saveWorkflowStaleRecovery,
   saveWorkflowShipmentFollowThrough,
   markWorkflowShipped,
@@ -1113,6 +1118,260 @@ describe('usedGearQueue', () => {
       expect.objectContaining({
         'Workflow Status': 'Shipped',
         'Shipped At': expect.any(String),
+      }),
+      { typecast: true },
+    );
+  });
+
+  it('marks sold-ready operational rows cancelled without changing workflow status', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Sold - Ready to Ship',
+          'Sold Ready To Ship At': '2026-05-06T00:00:00.000Z',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: {
+        'Workflow Status': 'Sold - Ready to Ship',
+        'Post-Sale Outcome': 'Cancelled',
+      },
+    });
+
+    await markWorkflowCancelled('rec1');
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Post-Sale Outcome': 'Cancelled',
+        'Post-Sale Outcome At': expect.any(String),
+      }),
+      { typecast: true },
+    );
+  });
+
+  it('marks sold-ready operational rows refunded and stores refund details when provided', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Sold - Ready to Ship',
+          'Sold Ready To Ship At': '2026-05-06T00:00:00.000Z',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: {
+        'Workflow Status': 'Sold - Ready to Ship',
+        'Post-Sale Outcome': 'Refunded',
+      },
+    });
+
+    await markWorkflowRefunded('rec1', {
+      refundAmount: 29.99,
+      refundReason: 'Customer returned the unit after delivery.',
+      postSaleNotes: 'Refund issued after inspection.',
+    });
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Post-Sale Outcome': 'Refunded',
+        'Post-Sale Outcome At': expect.any(String),
+        'Refund Amount': 29.99,
+        'Refund Reason': 'Customer returned the unit after delivery.',
+        'Post-Sale Notes': 'Refund issued after inspection.',
+      }),
+      { typecast: true },
+    );
+  });
+
+  it('marks sold-ready operational rows partial refund and stores refund details when provided', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Sold - Ready to Ship',
+          'Sold Ready To Ship At': '2026-05-06T00:00:00.000Z',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: {
+        'Workflow Status': 'Sold - Ready to Ship',
+        'Post-Sale Outcome': 'Partial Refund',
+      },
+    });
+
+    await markWorkflowPartialRefund('rec1', {
+      refundAmount: 12.5,
+      refundReason: 'Partial price adjustment after delivery.',
+      postSaleNotes: 'Adjusted after cosmetic variance review.',
+    });
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Post-Sale Outcome': 'Partial Refund',
+        'Post-Sale Outcome At': expect.any(String),
+        'Refund Amount': 12.5,
+        'Refund Reason': 'Partial price adjustment after delivery.',
+        'Post-Sale Notes': 'Adjusted after cosmetic variance review.',
+      }),
+      { typecast: true },
+    );
+  });
+
+  it('marks shipped operational rows return received before disposition resolution', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Shipped',
+          'Shipped At': '2026-05-06T00:00:00.000Z',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: {
+        'Workflow Status': 'Shipped',
+        'Post-Sale Outcome': 'Returned',
+      },
+    });
+
+    await markWorkflowReturnReceived('rec1');
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Post-Sale Outcome': 'Returned',
+        'Post-Sale Outcome At': expect.any(String),
+        'Return Received At': expect.any(String),
+      }),
+      { typecast: true },
+    );
+  });
+
+  it('resolves a restock disposition only after a post-sale outcome exists', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Shipped',
+          'Shipped At': '2026-05-06T00:00:00.000Z',
+          'Post-Sale Outcome': 'Returned',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: {
+        'Workflow Status': 'Shipped',
+        'Restock Disposition': 'Archive Only',
+      },
+    });
+
+    await resolveWorkflowRestockDisposition('rec1', {
+      restockDisposition: 'Archive Only',
+      postSaleNotes: 'Hold for archive lookup only.',
+    });
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Restock Disposition': 'Archive Only',
+        'Post-Sale Notes': 'Hold for archive lookup only.',
+      }),
+      { typecast: true },
+    );
+  });
+
+  it('rejects post-sale mutation attempts for non post-publish rows', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Approved for Publish',
+        },
+      },
+    ]);
+
+    await expect(markWorkflowCancelled('rec1')).rejects.toThrow('Only sold-ready or shipped operational rows can be marked cancelled.');
+    await expect(markWorkflowPartialRefund('rec1')).rejects.toThrow('Only sold-ready or shipped operational rows can be marked partial refund.');
+    await expect(markWorkflowRefunded('rec1')).rejects.toThrow('Only sold-ready or shipped operational rows can be marked refunded.');
+    await expect(markWorkflowReturnReceived('rec1')).rejects.toThrow('Only shipped operational rows can be marked as return received.');
+    await expect(resolveWorkflowRestockDisposition('rec1', { restockDisposition: 'Archive Only' })).rejects.toThrow('Only sold-ready or shipped operational rows can resolve a restock disposition.');
+  });
+
+  it('rejects relist-candidate disposition for returned rows without Return Received At', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Shipped',
+          'Shipped At': '2026-05-06T00:00:00.000Z',
+          'Post-Sale Outcome': 'Returned',
+        },
+      },
+    ]);
+
+    await expect(resolveWorkflowRestockDisposition('rec1', { restockDisposition: 'Relist Candidate' })).rejects.toThrow(
+      'Return Received At must be set before a returned item can be marked as a relist candidate.',
+    );
+  });
+
+  it('allows relist-candidate disposition for returned rows when Return Received At is set', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Shipped',
+          'Shipped At': '2026-05-06T00:00:00.000Z',
+          'Post-Sale Outcome': 'Returned',
+          'Return Received At': '2026-05-09T14:15:00.000Z',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: {
+        'Workflow Status': 'Shipped',
+        'Restock Disposition': 'Relist Candidate',
+      },
+    });
+
+    await resolveWorkflowRestockDisposition('rec1', { restockDisposition: 'Relist Candidate' });
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Restock Disposition': 'Relist Candidate',
       }),
       { typecast: true },
     );

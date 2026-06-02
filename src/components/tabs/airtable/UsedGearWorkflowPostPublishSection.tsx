@@ -8,9 +8,14 @@ import { EmptySurface } from '@/components/app/StateSurfaces';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import {
+  markWorkflowCancelled,
+  markWorkflowPartialRefund,
+  markWorkflowRefunded,
+  markWorkflowReturnReceived,
   loadWorkflowPostPublishQueue,
   markWorkflowShipped,
   markWorkflowSoldReadyToShip,
+  resolveWorkflowRestockDisposition,
 } from '@/services/usedGearQueue';
 import {
   getUsedGearWorkflowPostPublishSnapshot,
@@ -165,6 +170,85 @@ function getPostPublishListingsActionLabel(bucket: UsedGearWorkflowPostPublishBu
   }
 
   return 'Open Listings Approval';
+}
+
+function getPostSaleChipClassName(label: string): string {
+  const normalizedLabel = label.trim().toLowerCase();
+
+  if (normalizedLabel.includes('cancelled')) {
+    return 'border-rose-400/35 bg-rose-500/15 text-rose-100';
+  }
+
+  if (normalizedLabel.includes('refunded')) {
+    return 'border-sky-400/35 bg-sky-500/15 text-sky-100';
+  }
+
+  if (normalizedLabel.includes('returned')) {
+    return 'border-amber-400/35 bg-amber-500/15 text-amber-100';
+  }
+
+  if (normalizedLabel.includes('partial refund')) {
+    return 'border-cyan-400/35 bg-cyan-500/15 text-cyan-100';
+  }
+
+  if (normalizedLabel.includes('resolved')) {
+    return 'border-emerald-400/35 bg-emerald-500/15 text-emerald-100';
+  }
+
+  if (normalizedLabel.includes('disposition')) {
+    return 'border-slate-300/20 bg-white/8 text-slate-100';
+  }
+
+  return 'border-slate-300/20 bg-white/8 text-slate-100';
+}
+
+function formatCurrency(value: number | null | undefined): string | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+}
+
+function buildPostSaleChipValues(snapshot: ReturnType<typeof getUsedGearWorkflowPostPublishSnapshot>) {
+  if (!snapshot) {
+    return [] as Array<{ label: string; className: string }>;
+  }
+
+  const chips: Array<{ label: string; className: string }> = [];
+
+  if (snapshot.isPostSaleResolved) {
+    chips.push({ label: 'Post-Sale Resolved', className: getPostSaleChipClassName('resolved') });
+  }
+
+  if (snapshot.postSaleOutcome) {
+    chips.push({ label: `Outcome: ${snapshot.postSaleOutcome}`, className: getPostSaleChipClassName(snapshot.postSaleOutcome) });
+  }
+
+  if (snapshot.refundAmount !== null) {
+    const formattedAmount = formatCurrency(snapshot.refundAmount);
+    if (formattedAmount) {
+      chips.push({ label: `Refund: ${formattedAmount}`, className: getPostSaleChipClassName('Refunded') });
+    }
+  }
+
+  if (snapshot.refundReason) {
+    chips.push({ label: 'Refund Reason', className: getPostSaleChipClassName('Disposition') });
+  }
+
+  if (snapshot.returnReceivedAt) {
+    chips.push({ label: 'Return Received', className: getPostSaleChipClassName('Returned') });
+  }
+
+  if (snapshot.restockDisposition) {
+    chips.push({ label: `Disposition: ${snapshot.restockDisposition}`, className: getPostSaleChipClassName('Disposition') });
+  }
+
+  if (snapshot.postSaleNotes) {
+    chips.push({ label: 'Notes Added', className: getPostSaleChipClassName('Disposition') });
+  }
+
+  return chips;
 }
 
 export function UsedGearWorkflowPostPublishSection({
@@ -369,17 +453,131 @@ export function UsedGearWorkflowPostPublishSection({
           },
         },
         {
+          key: 'post-sale',
+          label: 'Post-Sale',
+          width: 'minmax(0,1.25fr)',
+          renderCell: (record) => {
+            const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+            const chips = buildPostSaleChipValues(snapshot);
+
+            if (!snapshot || chips.length === 0) {
+              return <span className="text-xs text-[var(--muted)]">—</span>;
+            }
+
+            return (
+              <div className="flex flex-wrap gap-1.5">
+                {chips.map((chip) => (
+                  <span key={chip.label} className={`${getWorkflowStatusChipClasses(chip.label)} ${chip.className}`}>
+                    {chip.label}
+                  </span>
+                ))}
+              </div>
+            );
+          },
+        },
+        {
           key: 'actions',
           label: 'Actions',
-          width: '10rem',
+          width: '14rem',
           align: 'center',
           headerClassName: 'border-l border-[var(--line)]/60',
           cellClassName: 'border-l border-[var(--line)]/60',
           renderCell: (record) => {
+            const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
             const recordBusy = updatingRecordIds.includes(record.id);
+            const noOutcomeYet = !snapshot?.postSaleOutcome;
+            const showMarkCancelled = (snapshot?.bucket === 'sold-ready' || snapshot?.bucket === 'shipped') && noOutcomeYet;
+            const showMarkPartialRefund = (snapshot?.bucket === 'sold-ready' || snapshot?.bucket === 'shipped') && noOutcomeYet;
+            const showMarkRefunded = (snapshot?.bucket === 'sold-ready' || snapshot?.bucket === 'shipped') && noOutcomeYet;
+            const showMarkReturnReceived = snapshot?.bucket === 'shipped' && noOutcomeYet;
+            const showDispositionActions = Boolean(snapshot?.postSaleOutcome) && !snapshot?.restockDisposition;
 
             return (
-              <div className="flex min-h-[4.5rem] w-full items-center justify-center gap-1.5">
+              <div className="flex min-h-[4.5rem] w-full flex-wrap items-center justify-center gap-1.5">
+                {showMarkCancelled ? (
+                  <CompactIconActionButton
+                    label="Mark Cancelled"
+                    variant="compact-secondary"
+                    icon="edit"
+                    onClick={() => {
+                      void handleRecordAction(record.id, markWorkflowCancelled);
+                    }}
+                    disabled={recordBusy}
+                  />
+                ) : null}
+                {showMarkPartialRefund ? (
+                  <CompactIconActionButton
+                    label="Mark Partial Refund"
+                    variant="compact-secondary"
+                    icon="check"
+                    onClick={() => {
+                      void handleRecordAction(record.id, markWorkflowPartialRefund);
+                    }}
+                    disabled={recordBusy}
+                  />
+                ) : null}
+                {showMarkRefunded ? (
+                  <CompactIconActionButton
+                    label="Mark Refunded"
+                    variant="compact-secondary"
+                    icon="check"
+                    onClick={() => {
+                      void handleRecordAction(record.id, markWorkflowRefunded);
+                    }}
+                    disabled={recordBusy}
+                  />
+                ) : null}
+                {showMarkReturnReceived ? (
+                  <CompactIconActionButton
+                    label="Mark Return Received"
+                    variant="compact-secondary"
+                    icon="truck"
+                    onClick={() => {
+                      void handleRecordAction(record.id, markWorkflowReturnReceived);
+                    }}
+                    disabled={recordBusy}
+                  />
+                ) : null}
+                {showDispositionActions ? (
+                  <div className="flex flex-wrap items-center justify-center gap-1.5">
+                    <CompactIconActionButton
+                      label="Disposition: Relist Candidate"
+                      variant="compact-secondary"
+                      icon="form"
+                      onClick={() => {
+                        void handleRecordAction(record.id, (nextRecordId) => resolveWorkflowRestockDisposition(nextRecordId, { restockDisposition: 'Relist Candidate' }));
+                      }}
+                      disabled={recordBusy}
+                    />
+                    <CompactIconActionButton
+                      label="Disposition: Needs Re-Intake"
+                      variant="compact-secondary"
+                      icon="form"
+                      onClick={() => {
+                        void handleRecordAction(record.id, (nextRecordId) => resolveWorkflowRestockDisposition(nextRecordId, { restockDisposition: 'Needs Re-Intake' }));
+                      }}
+                      disabled={recordBusy}
+                    />
+                    <CompactIconActionButton
+                      label="Disposition: Parts / Damaged"
+                      variant="compact-secondary"
+                      icon="form"
+                      onClick={() => {
+                        void handleRecordAction(record.id, (nextRecordId) => resolveWorkflowRestockDisposition(nextRecordId, { restockDisposition: 'Parts / Damaged' }));
+                      }}
+                      disabled={recordBusy}
+                    />
+                    <CompactIconActionButton
+                      label="Disposition: Archive Only"
+                      variant="compact-secondary"
+                      icon="form"
+                      onClick={() => {
+                        void handleRecordAction(record.id, (nextRecordId) => resolveWorkflowRestockDisposition(nextRecordId, { restockDisposition: 'Archive Only' }));
+                      }}
+                      disabled={recordBusy}
+                    />
+                  </div>
+                ) : null}
                 <CompactIconActionButton
                   label="Open Workflow Snapshot"
                   onClick={() => onOpenOperationalRecord(record.id)}
@@ -432,9 +630,32 @@ export function UsedGearWorkflowPostPublishSection({
         },
       },
       {
+        key: 'post-sale',
+        label: 'Post-Sale',
+        width: 'minmax(0,1.25fr)',
+        renderCell: (record) => {
+          const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+          const chips = buildPostSaleChipValues(snapshot);
+
+          if (!snapshot || chips.length === 0) {
+            return <span className="text-xs text-[var(--muted)]">—</span>;
+          }
+
+          return (
+            <div className="flex flex-wrap gap-1.5">
+              {chips.map((chip) => (
+                <span key={chip.label} className={`${getWorkflowStatusChipClasses(chip.label)} ${chip.className}`}>
+                  {chip.label}
+                </span>
+              ))}
+            </div>
+          );
+        },
+      },
+      {
         key: 'actions',
         label: 'Actions',
-        width: '8.5rem',
+        width: '14rem',
         align: 'center',
         headerClassName: 'border-l border-[var(--line)]/60',
         cellClassName: 'border-l border-[var(--line)]/60',
@@ -444,9 +665,15 @@ export function UsedGearWorkflowPostPublishSection({
           const recordBusy = updatingRecordIds.includes(record.id);
           const showMarkSoldReady = snapshot?.bucket === 'active-listing' || snapshot?.bucket === 'stale-listing';
           const showMarkShipped = snapshot?.bucket === 'sold-ready';
+          const noOutcomeYet = !snapshot?.postSaleOutcome;
+          const showMarkCancelled = (snapshot?.bucket === 'sold-ready' || snapshot?.bucket === 'shipped') && noOutcomeYet;
+          const showMarkPartialRefund = (snapshot?.bucket === 'sold-ready' || snapshot?.bucket === 'shipped') && noOutcomeYet;
+          const showMarkRefunded = (snapshot?.bucket === 'sold-ready' || snapshot?.bucket === 'shipped') && noOutcomeYet;
+          const showMarkReturnReceived = snapshot?.bucket === 'shipped' && noOutcomeYet;
+          const showDispositionActions = Boolean(snapshot?.postSaleOutcome) && !snapshot?.restockDisposition;
 
           return (
-            <div className="flex min-h-[4.5rem] w-full items-center justify-center gap-1.5">
+            <div className="flex min-h-[4.5rem] w-full flex-wrap items-center justify-center gap-1.5">
               {showMarkSoldReady ? (
                 <CompactIconActionButton
                   label="Mark Sold Ready"
@@ -468,6 +695,90 @@ export function UsedGearWorkflowPostPublishSection({
                   }}
                   disabled={recordBusy}
                 />
+              ) : null}
+              {showMarkCancelled ? (
+                <CompactIconActionButton
+                  label="Mark Cancelled"
+                  variant="compact-secondary"
+                  icon="edit"
+                  onClick={() => {
+                    void handleRecordAction(record.id, markWorkflowCancelled);
+                  }}
+                  disabled={recordBusy}
+                />
+              ) : null}
+              {showMarkPartialRefund ? (
+                <CompactIconActionButton
+                  label="Mark Partial Refund"
+                  variant="compact-secondary"
+                  icon="check"
+                  onClick={() => {
+                    void handleRecordAction(record.id, markWorkflowPartialRefund);
+                  }}
+                  disabled={recordBusy}
+                />
+              ) : null}
+              {showMarkRefunded ? (
+                <CompactIconActionButton
+                  label="Mark Refunded"
+                  variant="compact-secondary"
+                  icon="check"
+                  onClick={() => {
+                    void handleRecordAction(record.id, markWorkflowRefunded);
+                  }}
+                  disabled={recordBusy}
+                />
+              ) : null}
+              {showMarkReturnReceived ? (
+                <CompactIconActionButton
+                  label="Mark Return Received"
+                  variant="compact-secondary"
+                  icon="truck"
+                  onClick={() => {
+                    void handleRecordAction(record.id, markWorkflowReturnReceived);
+                  }}
+                  disabled={recordBusy}
+                />
+              ) : null}
+              {showDispositionActions ? (
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  <CompactIconActionButton
+                    label="Disposition: Relist Candidate"
+                    variant="compact-secondary"
+                    icon="form"
+                    onClick={() => {
+                      void handleRecordAction(record.id, (nextRecordId) => resolveWorkflowRestockDisposition(nextRecordId, { restockDisposition: 'Relist Candidate' }));
+                    }}
+                    disabled={recordBusy}
+                  />
+                  <CompactIconActionButton
+                    label="Disposition: Needs Re-Intake"
+                    variant="compact-secondary"
+                    icon="form"
+                    onClick={() => {
+                      void handleRecordAction(record.id, (nextRecordId) => resolveWorkflowRestockDisposition(nextRecordId, { restockDisposition: 'Needs Re-Intake' }));
+                    }}
+                    disabled={recordBusy}
+                  />
+                  <CompactIconActionButton
+                    label="Disposition: Parts / Damaged"
+                    variant="compact-secondary"
+                    icon="form"
+                    onClick={() => {
+                      void handleRecordAction(record.id, (nextRecordId) => resolveWorkflowRestockDisposition(nextRecordId, { restockDisposition: 'Parts / Damaged' }));
+                    }}
+                    disabled={recordBusy}
+                  />
+                  <CompactIconActionButton
+                    label="Disposition: Archive Only"
+                    variant="compact-secondary"
+                    icon="form"
+                    onClick={() => {
+                      void handleRecordAction(record.id, (nextRecordId) => resolveWorkflowRestockDisposition(nextRecordId, { restockDisposition: 'Archive Only' }));
+                    }}
+                    disabled={recordBusy}
+                  />
+                </div>
               ) : null}
               {listingsActionLabel ? (
                 <CompactIconActionButton label={listingsActionLabel} onClick={() => onOpenListingsRecord(record.id)} disabled={recordBusy} />

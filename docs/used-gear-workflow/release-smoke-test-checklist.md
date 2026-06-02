@@ -65,6 +65,7 @@ npm run local:api:check
 - [ ] Approve a row for publish and confirm workflow status/writeback still advances correctly.
 - [ ] Publish to eBay and confirm `eBay Published At`, `eBay Offer ID`, and `eBay Listing ID` write back to the workflow row.
 - [ ] Publish to Shopify and eBay together and confirm the workflow row keeps the expected listed status while preserving both channel-specific writeback fields.
+- [ ] Confirm the dashboard workflow snapshot shows post-sale exception counts, refund exposure, and missing-disposition pressure while Post-Publish and Archive remain the only operational follow-through surfaces.
 - [ ] Confirm post-publish bucket filters and history filter remain URL-backed and shareable.
 - [ ] Confirm stale, sold-ready, and shipped actions still update the workflow row and refresh the queue state.
 - [ ] On a sold-ready row, save shipment follow-through notes and confirm the Listings workflow context plus post-publish queue both show the saved note.

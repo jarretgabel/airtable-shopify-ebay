@@ -10,7 +10,10 @@ import {
 } from '@/services/usedGearWorkflow';
 import {
   getUsedGearWorkflowPostPublishSnapshot,
+  getUsedGearWorkflowPostSaleOutcome,
   isUsedGearWorkflowStaleRecoveryStatus,
+  type UsedGearWorkflowPostSaleOutcome,
+  type UsedGearWorkflowRestockDisposition,
   type UsedGearWorkflowStaleRecoveryStatus,
 } from '@/services/usedGearWorkflowLifecycle';
 import { assertUsedGearWorkflowReadyForPublish } from '@/services/usedGearWorkflowListingReadiness';
@@ -116,6 +119,13 @@ const USED_GEAR_WORKFLOW_RECORD_FIELDS = [
   'Shipment Follow-Through Notes',
   'Shipment Follow-Through Updated At',
   'Shipped At',
+  'Post-Sale Outcome',
+  'Post-Sale Outcome At',
+  'Post-Sale Notes',
+  'Refund Amount',
+  'Refund Reason',
+  'Return Received At',
+  'Restock Disposition',
   'Shopify Price',
   'Ebay Price',
 ] as const;
@@ -234,6 +244,17 @@ export interface SaveUsedGearWorkflowStaleRecoveryInput {
 
 export interface SaveUsedGearWorkflowShipmentFollowThroughInput {
   shipmentFollowThroughNotes: string | null;
+}
+
+export interface SaveUsedGearWorkflowRefundInput {
+  refundAmount?: number | null;
+  refundReason?: string | null;
+  postSaleNotes?: string | null;
+}
+
+export interface SaveUsedGearWorkflowDispositionInput {
+  restockDisposition: UsedGearWorkflowRestockDisposition;
+  postSaleNotes?: string | null;
 }
 
 export interface SavePendingReviewRecordReviewInput {
@@ -490,6 +511,14 @@ function normalizeAllocationText(value: string | undefined): string | null {
 function normalizeTextAreaValue(value: string | null | undefined): string | null {
   const trimmed = value?.trim() ?? '';
   return trimmed ? trimmed : null;
+}
+
+function normalizePostSaleAmount(value: number | null | undefined): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+
+  return Math.round(value * 100) / 100;
 }
 
 async function updateWorkflowOwnerFields(
@@ -1375,6 +1404,152 @@ export async function markWorkflowSoldReadyToShip(recordId: string): Promise<Air
     {
       [USED_GEAR_WORKFLOW_STATUS_FIELD]: SOLD_READY_TO_SHIP_STATUS,
       'Sold Ready To Ship At': getTrimmedFieldValue(currentRecord, 'Sold Ready To Ship At') || soldReadyAt,
+    },
+    { typecast: true },
+  );
+
+  return withWorkflow(record);
+}
+
+function assertPostSaleMutationAllowed(currentRecord: AirtableRecord, desiredOutcome: UsedGearWorkflowPostSaleOutcome): void {
+  const currentOutcome = getUsedGearWorkflowPostSaleOutcome(currentRecord.fields);
+  if (currentOutcome && currentOutcome !== desiredOutcome) {
+    throw new Error('This operational row already has a different post-sale outcome recorded.');
+  }
+}
+
+function assertPostSaleDispositionAllowed(currentRecord: AirtableRecord): void {
+  const currentOutcome = getUsedGearWorkflowPostSaleOutcome(currentRecord.fields);
+  if (!currentOutcome) {
+    throw new Error('A post-sale outcome is required before recording a restock disposition.');
+  }
+}
+
+export async function markWorkflowCancelled(recordId: string): Promise<AirtableRecord> {
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
+  const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
+  if (!snapshot || (snapshot.bucket !== 'sold-ready' && snapshot.bucket !== 'shipped')) {
+    throw new Error('Only sold-ready or shipped operational rows can be marked cancelled.');
+  }
+
+  assertPostSaleMutationAllowed(currentRecord, 'Cancelled');
+
+  const postSaleOutcomeAt = getTrimmedFieldValue(currentRecord, 'Post-Sale Outcome At') || new Date().toISOString();
+  const record = await updateConfiguredRecord(
+    'used-gear-workflow',
+    recordId,
+    {
+      'Post-Sale Outcome': 'Cancelled',
+      'Post-Sale Outcome At': postSaleOutcomeAt,
+    },
+    { typecast: true },
+  );
+
+  return withWorkflow(record);
+}
+
+export async function markWorkflowRefunded(recordId: string, input: SaveUsedGearWorkflowRefundInput = {}): Promise<AirtableRecord> {
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
+  const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
+  if (!snapshot || (snapshot.bucket !== 'sold-ready' && snapshot.bucket !== 'shipped')) {
+    throw new Error('Only sold-ready or shipped operational rows can be marked refunded.');
+  }
+
+  assertPostSaleMutationAllowed(currentRecord, 'Refunded');
+
+  const postSaleOutcomeAt = getTrimmedFieldValue(currentRecord, 'Post-Sale Outcome At') || new Date().toISOString();
+  const record = await updateConfiguredRecord(
+    'used-gear-workflow',
+    recordId,
+    {
+      'Post-Sale Outcome': 'Refunded',
+      'Post-Sale Outcome At': postSaleOutcomeAt,
+      'Post-Sale Notes': normalizeTextAreaValue(input.postSaleNotes),
+      'Refund Amount': normalizePostSaleAmount(input.refundAmount),
+      'Refund Reason': normalizeTextAreaValue(input.refundReason),
+    },
+    { typecast: true },
+  );
+
+  return withWorkflow(record);
+}
+
+export async function markWorkflowPartialRefund(recordId: string, input: SaveUsedGearWorkflowRefundInput = {}): Promise<AirtableRecord> {
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
+  const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
+  if (!snapshot || (snapshot.bucket !== 'sold-ready' && snapshot.bucket !== 'shipped')) {
+    throw new Error('Only sold-ready or shipped operational rows can be marked partial refund.');
+  }
+
+  assertPostSaleMutationAllowed(currentRecord, 'Partial Refund');
+
+  const postSaleOutcomeAt = getTrimmedFieldValue(currentRecord, 'Post-Sale Outcome At') || new Date().toISOString();
+  const record = await updateConfiguredRecord(
+    'used-gear-workflow',
+    recordId,
+    {
+      'Post-Sale Outcome': 'Partial Refund',
+      'Post-Sale Outcome At': postSaleOutcomeAt,
+      'Post-Sale Notes': normalizeTextAreaValue(input.postSaleNotes),
+      'Refund Amount': normalizePostSaleAmount(input.refundAmount),
+      'Refund Reason': normalizeTextAreaValue(input.refundReason),
+    },
+    { typecast: true },
+  );
+
+  return withWorkflow(record);
+}
+
+export async function markWorkflowReturnReceived(recordId: string): Promise<AirtableRecord> {
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
+  const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
+  if (!snapshot || snapshot.bucket !== 'shipped') {
+    throw new Error('Only shipped operational rows can be marked as return received.');
+  }
+
+  assertPostSaleMutationAllowed(currentRecord, 'Returned');
+
+  const postSaleOutcomeAt = getTrimmedFieldValue(currentRecord, 'Post-Sale Outcome At') || new Date().toISOString();
+  const returnReceivedAt = getTrimmedFieldValue(currentRecord, 'Return Received At') || postSaleOutcomeAt;
+  const record = await updateConfiguredRecord(
+    'used-gear-workflow',
+    recordId,
+    {
+      'Post-Sale Outcome': 'Returned',
+      'Post-Sale Outcome At': postSaleOutcomeAt,
+      'Return Received At': returnReceivedAt,
+    },
+    { typecast: true },
+  );
+
+  return withWorkflow(record);
+}
+
+export async function resolveWorkflowRestockDisposition(
+  recordId: string,
+  input: SaveUsedGearWorkflowDispositionInput,
+): Promise<AirtableRecord> {
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
+  const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
+  if (!snapshot || (snapshot.bucket !== 'sold-ready' && snapshot.bucket !== 'shipped')) {
+    throw new Error('Only sold-ready or shipped operational rows can resolve a restock disposition.');
+  }
+
+  assertPostSaleDispositionAllowed(currentRecord);
+
+  if (input.restockDisposition === 'Relist Candidate') {
+    const currentOutcome = getUsedGearWorkflowPostSaleOutcome(currentRecord.fields);
+    if (currentOutcome === 'Returned' && !getTrimmedFieldValue(currentRecord, 'Return Received At')) {
+      throw new Error('Return Received At must be set before a returned item can be marked as a relist candidate.');
+    }
+  }
+
+  const record = await updateConfiguredRecord(
+    'used-gear-workflow',
+    recordId,
+    {
+      'Restock Disposition': input.restockDisposition,
+      'Post-Sale Notes': normalizeTextAreaValue(input.postSaleNotes),
     },
     { typecast: true },
   );

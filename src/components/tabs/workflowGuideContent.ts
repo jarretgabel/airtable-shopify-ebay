@@ -80,7 +80,7 @@ export const WORKFLOW_ADVANCEMENT_RULES: GuideStep[] = [
   },
   {
     title: 'Live listings to follow-through',
-    detail: 'Once a row is already listed, the work belongs to Active Listings or Post-Publish follow-through depending on the state. Sold-ready and shipped rows should not return to Listings review because they have already moved past publish readiness.',
+    detail: 'Once a row is already listed, Post-Publish owns active follow-through and Archive owns shipped lookup, while Listings stays as record context only. Workflow Status stays unchanged through Shipped, and post-sale outcomes stay in the approved post-sale fields instead of becoming new workflow statuses.',
   },
 ];
 
@@ -95,7 +95,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartSummary: 'Keep the whole operation moving, then drop into the exact queue or record that needs intervention.',
     quickStartItems: [
       'Start on the dashboard to spot backlog, handoff gaps, and publish blockers.',
-      'Use Parking Lot for intake decisions, the Workflow Hub for directory lookup and workflow snapshots, and Post-Publish for live-listing follow-through issues.',
+      'Use Parking Lot for intake decisions, the Workflow Hub for directory lookup and workflow snapshots, Post-Publish for active live-listing and post-sale follow-through, and Archive for shipped lookup.',
       'Check Listings when items are entering listing review or need publish decisions.',
     ],
     flowSummary: 'You need the whole map because your role crosses intake, active workflow, listings, and follow-through.',
@@ -114,7 +114,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Close the loop after publish',
-        detail: 'Use the Listings record view for stale recovery, sold-ready handoff, shipment completion, and workflow audit once the item reaches listing-phase work.',
+        detail: 'Use Post-Publish for active stale, sold-ready, shipment, and post-sale exception work, then use Archive for shipped lookup while Listings remains the record-context surface.',
       },
     ],
     questions: [
@@ -153,7 +153,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Finish the sale-to-shipment cycle',
-        detail: 'Post-Publish and listing record detail pages matter because sold items still need clean stale follow-up, shipment completion, and history.',
+        detail: 'Post-Publish and Archive matter because sold items still need clean stale follow-up, shipment completion, post-sale exception handling, and shipped reference.',
       },
     ],
     questions: [
@@ -163,16 +163,16 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         question: 'What is the shortest path to understanding a problem item?',
-        answer: 'Open the operational record for the current stage. Listings now carries the workflow audit and post-publish context once the item reaches listing-phase work.',
+        answer: 'Open the operational record for the current stage. Listings carries listing-phase context, while Post-Publish and Archive own active post-sale follow-through and shipped lookup.',
       },
     ],
   },
   processor: {
-    roleSummary: 'Start with Parking Lot, the intake directories, the Workflow Hub, and the specialist queues. Use Post-Publish once a live listing needs stale, sold-ready, or shipment follow-through.',
+    roleSummary: 'Start with Parking Lot, the intake directories, the Workflow Hub, and the specialist queues. Use Post-Publish once a live listing needs stale, sold-ready, shipment, or post-sale follow-through, and use Archive for shipped lookup.',
     quickStartTitle: 'Processor quick start',
     quickStartSummary: 'This is the operational lane for intake, handoff, and getting an item ready for the next specialist.',
     quickStartItems: [
-      'Start in Parking Lot for fresh intake, use Manual Intake and JotForm for editable intake directories, use JotForm Audit when you need raw submission context, use the Workflow Hub for accepted-row lookup and workflow snapshots, or open Post-Publish for live listing follow-through.',
+      'Start in Parking Lot for fresh intake, use Manual Intake and JotForm for editable intake directories, use JotForm Audit when you need raw submission context, use the Workflow Hub for accepted-row lookup and workflow snapshots, open Post-Publish for active live-listing and post-sale follow-through, or use Archive for shipped lookup.',
       'Clean up notes, confirm the next stage, and move the item into the next real handoff instead of leaving it parked.',
       'Use the testing and photography queues for specialist work, then use Listings once the item reaches listing review.',
     ],
@@ -184,7 +184,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
       },
       {
         title: 'Turn accepted items into owned workflow',
-        detail: 'Once a row is accepted, use JotForm when you need to edit the webhooked intake row, use JotForm Audit when you need to verify the original submission details, then use the Workflow Hub to confirm stage status and open the exact page that owns the next step. Use Post-Publish later for live listing follow-through; neither page is the listing review page.',
+        detail: 'Once a row is accepted, use JotForm when you need to edit the webhooked intake row, use JotForm Audit when you need to verify the original submission details, then use the Workflow Hub to confirm stage status and open the exact page that owns the next step. Use Post-Publish later for active live-listing and post-sale follow-through; neither page is the listing review page.',
       },
       {
         title: 'Move work through testing and photography',
@@ -375,8 +375,8 @@ export const WORKFLOW_FLOW_STAGES: WorkflowFlowStage[] = [
   },
   {
     title: 'Post-Publish Follow-Through',
-    detail: 'Post-Publish handles stale listings, sold-ready work, and shipment completion after publish, while Listings stays focused on listing-phase review and publish decisions.',
-    pages: ['post-publish', 'listings', 'dashboard'],
+    detail: 'Post-Publish handles active stale listings, sold-ready work, shipment completion, and post-sale exception handling after publish, while Archive holds shipped lookup and Listings stays focused on listing-phase review and record context.',
+    pages: ['post-publish', 'archive', 'listings', 'dashboard'],
     tone: 'follow-through',
     primaryRoles: ['admin', 'owner'],
     supportRoles: ['processor'],
@@ -413,10 +413,12 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
       'Overview: high-level workflow and commerce KPIs.',
       'Actions: role-aware shortcuts into the exact queue, bucket, or handoff that needs work.',
       'Insights: alert-style prompts that explain backlog, stale follow-up, and publish blockers.',
+      'Workflow snapshot reporting: post-sale exception counts, refund exposure, and disposition gaps derived from the approved workflow row without creating a separate post-sale workflow.',
     ],
     workflows: [
       'Start here when you do not yet know which queue owns the problem.',
       'Use the dashboard to jump into Parking Lot, Workflow Hub, Listings, or Post-Publish rather than working records directly here.',
+      'Use dashboard post-sale reporting for visibility only; Post-Publish and Archive remain the operational surfaces for follow-through and shipped lookup.',
     ],
   },
   {
@@ -559,38 +561,38 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     modules: [
       'Combined listings queue: ready-for-publishing, active-listings, and needs-further-work sections with shared search and filters.',
       'Selected record page: shared, Shopify, and eBay sections with workflow summary, actions, and payload visibility.',
-      'Record detail workflow shell: final approve-for-publish work and post-publish context once the item reaches listing-phase ownership.',
+      'Record detail workflow shell: final approve-for-publish work and listing-phase context once the item reaches Listings ownership.',
     ],
     workflows: [
-      'Use it for Awaiting Pre-Listing Review and Approved for Publish rows, and for quick verification of already-listed rows before handing active follow-through to Post-Publish. Listing review starts here, and sold-ready and shipped rows should stay out of Listings.',
-      'Confirm title, price, notes, signoffs, and publish decisions here before any channel-facing action.',
+      'Use it for Awaiting Pre-Listing Review and Approved for Publish rows, and for quick verification of already-listed rows before handing active follow-through to Post-Publish. Listing review starts here, and sold-ready, shipped, and post-sale handling should stay out of Listings.',
+      'Confirm title, price, notes, signoffs, and publish decisions here before any channel-facing action. After publish, treat this page as record context, not the owning post-sale workflow surface.',
     ],
   },
   {
     title: 'Post-Publish',
     pages: ['post-publish'],
-    summary: 'Post-Publish is the dedicated lifecycle follow-through page for live listings after publish.',
+    summary: 'Post-Publish is the dedicated lifecycle and active post-sale follow-through page for live listings after publish.',
     modules: [
       'Overview and bucket sections: Active Listings, Stale Listings, and Sold Ready To Ship.',
       'Shared search and sort toolbar: filter one lifecycle workset instead of scanning the full history.',
-      'Per-row actions: mark stale, mark sold ready, mark shipped, and open the listing or operational record.',
+      'Per-row actions: mark stale, mark sold ready, mark shipped, and open the listing or operational record for the approved post-sale fields.',
     ],
     workflows: [
-      'Use it once the item is live and the work is now stale follow-up, payment-to-shipping handoff, or shipment completion.',
-      'Treat it as the active ownership page for listing lifecycle follow-through, not as part of the Workflow Hub.',
+      'Use it once the item is live and the work is now stale follow-up, payment-to-shipping handoff, shipment completion, or post-sale exception handling such as Cancelled, Refunded, Returned, or Partial Refund.',
+      'Treat it as the active ownership page for listing lifecycle follow-through. Record post-sale outcome, refund or partial-refund, return, and restock-disposition work on the same authoritative row, and do not auto-relist returned or refunded items.',
     ],
   },
   {
     title: 'Archive',
     pages: ['archive'],
-    summary: 'Archive is the completed-items page for shipped used-gear workflow rows.',
+    summary: 'Archive is the shipped lookup and completed post-sale reference page for used-gear workflow rows.',
     modules: [
       'Shipped section: completed shipments retained for lookup after fulfillment is done.',
       'Shared search and sort toolbar: quickly find completed shipped items by SKU, model, status, or lifecycle dates.',
     ],
     workflows: [
       'Use it after shipment completion when the work is done and the team needs referenceable history instead of an active queue.',
-      'Keep Post-Publish focused on active follow-through and use Archive for completed shipped outcomes.',
+      'Keep Post-Publish focused on active follow-through and use Archive for completed shipped outcomes, returned-item lookup, and manual restock-disposition reference.',
     ],
   },
   {
@@ -792,7 +794,7 @@ const RECORD_GUIDE_CARDS: RecordGuideCard[] = [
     ],
     workflows: [
       'Use it when one listing row needs final readiness work, approve-for-publish action, or listing-phase audit context.',
-      'Treat it as the detailed home for listing review once the item reaches Listings ownership.',
+      'Treat it as the detailed home for listing review once the item reaches Listings ownership, but use Post-Publish and Archive for active post-sale workflow and shipped lookup.',
     ],
   },
   {
@@ -831,13 +833,13 @@ const ROLE_START_POINTS: Record<UserRole, RoleStartPoint[]> = {
   ],
   owner: [
     { page: 'dashboard', title: 'Start with the operation view', detail: 'Open Dashboard to see where throughput, aging work, or follow-through needs intervention.' },
-    { page: 'post-publish', title: 'Check live listing follow-through', detail: 'Open Post-Publish when the question is stale listings, sold-ready handoff, or shipment completion.' },
+    { page: 'post-publish', title: 'Check live listing follow-through', detail: 'Open Post-Publish when the question is stale listings, sold-ready handoff, shipment completion, or active post-sale exception handling.' },
     { page: 'listings', title: 'Review publish readiness here', detail: 'Open Listings when an item is nearing release or channel detail needs review.' },
   ],
   processor: [
     { page: 'parking-lot', title: 'Start fresh intake here', detail: 'Open Parking Lot first when you are qualifying new used-gear intake.' },
     { page: 'inventory', title: 'Look up accepted work here', detail: 'Open Workflow Hub when the item is accepted and you need its current workflow snapshot or the next owning page.' },
-    { page: 'post-publish', title: 'Work live follow-through here', detail: 'Open Post-Publish once the item is already live and now needs stale, sold-ready, or shipping follow-through.' },
+    { page: 'post-publish', title: 'Work live follow-through here', detail: 'Open Post-Publish once the item is already live and now needs stale, sold-ready, shipping, or active post-sale follow-through.' },
   ],
   tester: [
     { page: 'testing-queue', title: 'Start ready work here', detail: 'Open Testing Queue to find the rows that are actually ready for hands-on bench work.' },

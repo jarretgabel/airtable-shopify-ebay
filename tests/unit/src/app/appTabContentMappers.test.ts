@@ -164,6 +164,18 @@ function buildInput(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
         progressMineCount: 0,
         progressUnassignedCount: 0,
       },
+      postSale: {
+        exceptionCount: 0,
+        unresolvedExceptionCount: 0,
+        resolvedExceptionCount: 0,
+        cancelledCount: 0,
+        refundedCount: 0,
+        returnedCount: 0,
+        partialRefundCount: 0,
+        returnReceivedCount: 0,
+        refundExposure: 0,
+        missingDispositionCount: 0,
+      },
       age: {
         pendingReviewAlertCount: 0,
         oldestPendingReviewAgeDays: null,

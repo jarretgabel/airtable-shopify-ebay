@@ -14,6 +14,7 @@ interface EbayWebhookPayload {
   occurredAt?: string;
   updatedAt?: string;
   recordId?: string;
+  orderId?: string;
 }
 
 interface NormalizedEbayWebhookEvent {
@@ -24,6 +25,7 @@ interface NormalizedEbayWebhookEvent {
   status: string;
   occurredAt: string;
   recordId: string;
+  orderId: string;
 }
 
 interface EbayWebhookDependencies {
@@ -108,6 +110,23 @@ function isSyncLocked(fields: Record<string, unknown>): boolean {
   return false;
 }
 
+function isDedupedEvent(fields: Record<string, unknown>, eventType: string, occurredAt: string): boolean {
+  // Skip if same eventType and occurredAt already stored (dedup using timestamp+eventType)
+  if (!eventType || !occurredAt) {
+    return false;
+  }
+
+  const lastEventType = getFieldValue(fields, ['eBay Last Webhook Event']);
+  const lastEventAt = getFieldValue(fields, ['eBay Last Webhook At']);
+
+  return lastEventType === eventType && lastEventAt === occurredAt;
+}
+
+function hasPostSaleOutcomeAlready(fields: Record<string, unknown>): boolean {
+  const outcome = getFieldValue(fields, ['Post-Sale Outcome']);
+  return outcome.length > 0;
+}
+
 function resolveMatchingRecordId(records: Array<{ id: string; fields: Record<string, unknown> }>, event: NormalizedEbayWebhookEvent): string {
   if (event.recordId) {
     return event.recordId;
@@ -135,7 +154,7 @@ function resolveMatchingRecordId(records: Array<{ id: string; fields: Record<str
   return matchedRecord.id;
 }
 
-function buildUpdateFields(event: NormalizedEbayWebhookEvent): Record<string, unknown> {
+function buildUpdateFields(event: NormalizedEbayWebhookEvent, currentFields: Record<string, unknown>): Record<string, unknown> {
   const updateFields: Record<string, unknown> = {};
 
   if (event.listingId) {
@@ -157,7 +176,23 @@ function buildUpdateFields(event: NormalizedEbayWebhookEvent): Record<string, un
 
   if (event.eventType) {
     updateFields['eBay Last Webhook Event'] = event.eventType;
+
+    // Write post-sale outcome for order events (e.g., order.cancelled, order.refunded)
+    if (event.eventType.startsWith('order.')) {
+      if (!hasPostSaleOutcomeAlready(currentFields)) {
+        if (event.eventType === 'order.cancelled') {
+          updateFields['Post-Sale Outcome'] = 'Cancelled';
+          updateFields['Post-Sale Outcome At'] = event.occurredAt;
+        } else if (event.eventType === 'order.refunded') {
+          updateFields['Post-Sale Outcome'] = 'Refunded';
+          updateFields['Post-Sale Outcome At'] = event.occurredAt;
+        }
+      }
+    }
   }
+
+  // Explicit relist block: never write Restock Disposition
+  // (omitted from updateFields by design)
 
   return updateFields;
 }
@@ -202,7 +237,24 @@ export function createHandler(dependencies: EbayWebhookDependencies = {}) {
         }, { origin });
       }
 
-      const updateFields = buildUpdateFields(normalizedEvent);
+      // Check dedup: skip if same eventType and occurredAt already stored
+      if (isDedupedEvent(currentRecord.fields, normalizedEvent.eventType, normalizedEvent.occurredAt)) {
+        logInfo('Skipped duplicate eBay webhook event (dedup)', {
+          recordId,
+          eventType: normalizedEvent.eventType,
+          occurredAt: normalizedEvent.occurredAt,
+        });
+
+        return jsonOk({
+          received: true,
+          skipped: true,
+          deduped: true,
+          recordId,
+          event: normalizedEvent,
+        }, { origin });
+      }
+
+      const updateFields = buildUpdateFields(normalizedEvent, currentRecord.fields);
       const updatedRecord = await updateRecord('used-gear-workflow', recordId, updateFields, { typecast: true });
 
       logInfo('Applied eBay webhook update to Airtable', {
@@ -217,6 +269,7 @@ export function createHandler(dependencies: EbayWebhookDependencies = {}) {
         received: true,
         skipped: false,
         locked: false,
+        deduped: false,
         recordId,
         event: normalizedEvent,
         updatedFields: updateFields,

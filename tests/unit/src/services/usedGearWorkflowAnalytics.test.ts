@@ -55,6 +55,10 @@ describe('usedGearWorkflowAnalytics', () => {
           'Workflow Status': 'Stale Listing, eBay',
           'Listed At': '2026-03-01T00:00:00.000Z',
           'Stale Listing At': '2026-04-10T00:00:00.000Z',
+          'Post-Sale Outcome': 'Refunded',
+          'Post-Sale Outcome At': '2026-05-07T00:00:00.000Z',
+          'Refund Amount': 125.5,
+          'Refund Reason': 'Buyer issue',
         },
       }),
       buildRecord({
@@ -63,6 +67,10 @@ describe('usedGearWorkflowAnalytics', () => {
           'Workflow Status': 'Sold - Ready to Ship',
           'Listed At': '2026-03-05T00:00:00.000Z',
           'Sold Ready To Ship At': '2026-05-05T00:00:00.000Z',
+          'Post-Sale Outcome': 'Returned',
+          'Post-Sale Outcome At': '2026-05-06T00:00:00.000Z',
+          'Return Received At': '2026-05-07T00:00:00.000Z',
+          'Restock Disposition': 'Needs Re-Intake',
         },
       }),
       buildRecord({
@@ -71,6 +79,11 @@ describe('usedGearWorkflowAnalytics', () => {
           'Workflow Status': 'Shipped',
           'Sold Ready To Ship At': '2026-05-05T00:00:00.000Z',
           'Shipped At': '2026-05-06T00:00:00.000Z',
+          'Post-Sale Outcome': 'Partial Refund',
+          'Post-Sale Outcome At': '2026-05-07T00:00:00.000Z',
+          'Post-Sale Notes': 'Refunded shipping difference',
+          'Refund Amount': 20,
+          'Restock Disposition': 'Archive Only',
         },
       }),
     ], Date.parse('2026-05-08T00:00:00.000Z'), 'Taylor Reviewer');
@@ -97,5 +110,15 @@ describe('usedGearWorkflowAnalytics', () => {
     expect(snapshot.lifecycle.averageDaysToShip).toBe(1);
     expect(snapshot.lifecycle.soldReadyAwaitingShipmentCount).toBe(1);
     expect(snapshot.lifecycle.oldestSoldReadyAgeDays).toBe(3);
+    expect(snapshot.postSale.exceptionCount).toBe(3);
+    expect(snapshot.postSale.unresolvedExceptionCount).toBe(1);
+    expect(snapshot.postSale.resolvedExceptionCount).toBe(2);
+    expect(snapshot.postSale.refundedCount).toBe(1);
+    expect(snapshot.postSale.returnedCount).toBe(1);
+    expect(snapshot.postSale.partialRefundCount).toBe(1);
+    expect(snapshot.postSale.cancelledCount).toBe(0);
+    expect(snapshot.postSale.returnReceivedCount).toBe(1);
+    expect(snapshot.postSale.refundExposure).toBe(145.5);
+    expect(snapshot.postSale.missingDispositionCount).toBe(1);
   });
 });

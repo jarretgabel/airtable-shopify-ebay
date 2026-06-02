@@ -4,11 +4,12 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 
 ## Primary Navigation Order
 
-- Workflow surfaces follow `Intake > Processing > Listings` in the app shell.
+- Workflow surfaces follow `Intake > Processing > Listings > Post-Publish > Archive` in the app shell.
 - Use Intake for qualification, trash decisions, arrival routing, and manual-entry creation.
 - Use Processing for the Workflow Hub plus dedicated Testing and Photography work discovery and form completion.
-- Use Listings for final readiness review, approve-for-publish work, channel visibility, and post-publish record context once the item reaches listing-phase ownership.
-- Use Post-Publish for live listing lifecycle follow-through after the item is already published.
+- Use Listings for final readiness review, approve-for-publish work, channel visibility, and record context once the item reaches listing-phase ownership.
+- Use Post-Publish for live listing lifecycle follow-through plus post-sale exception handling after the item is already published.
+- Use Archive for shipped lookup and completed post-sale reference after fulfillment is done.
 - Utility pages such as User Guide, Market Research, JotForm, Image Lab, Settings, Notifications, and User Management sit outside the main operational lane.
 
 ## End-To-End Workflow
@@ -21,7 +22,43 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 6. Photography Queue plus the Photos record page complete image work and handoff.
 7. Listings handles final pricing, note review, approve-for-publish work, and listing-phase record context.
 8. Shopify Products and eBay are read-only snapshot views after listing work is prepared.
-9. Post-Publish handles stale listings, sold-ready follow-through, shipment completion, and shipped history.
+9. Post-Publish handles stale listings, sold-ready follow-through, shipment completion, and active post-sale exception handling.
+10. Archive holds completed shipped lookup plus post-sale reference once the item no longer needs active follow-through.
+
+## Phase-1 Post-Sale Operator Path
+
+- Ownership:
+  - Post-Publish owns active post-sale work for listed, sold-ready, and newly shipped items.
+  - Archive owns shipped lookup and completed-item reference once active handling is done.
+  - Listings may still show record context, but it does not own the post-sale workflow.
+- Record model:
+  - keep one authoritative Airtable row per sellable item
+  - keep `Workflow Status` unchanged through `Shipped`
+  - store post-sale outcomes separately from `Workflow Status`
+- Approved phase-1 fields:
+  - `Post-Sale Outcome`
+  - `Post-Sale Outcome At`
+  - `Post-Sale Notes`
+  - `Refund Amount`
+  - `Refund Reason`
+  - `Return Received At`
+  - `Restock Disposition`
+- Allowed `Post-Sale Outcome` values:
+  - `Cancelled`
+  - `Refunded`
+  - `Returned`
+  - `Partial Refund`
+- Allowed `Restock Disposition` values:
+  - `Relist Candidate`
+  - `Needs Re-Intake`
+  - `Parts / Damaged`
+  - `Archive Only`
+- Operator handling rules:
+  - `Cancelled`: record the outcome on the same authoritative row, add notes if needed, and keep the row out of relist flow.
+  - `Refunded` or `Partial Refund`: record the outcome on the same row from Post-Publish or Archive, capture `Refund Amount`, `Refund Reason`, and operator notes, and do not auto-relist.
+  - `Returned`: record the outcome, capture `Return Received At`, then choose a manual `Restock Disposition`.
+  - `Relist Candidate`: treat this as a manual disposition only after post-sale review. Returned or refunded items must not auto-relist.
+  - repeated multi-event history is out of scope for this phase, so operators should keep the first approved outcome on the row instead of trying to build a separate event log.
 
 ## Page And Module Reference
 
@@ -170,22 +207,35 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
   - `Awaiting Pre-Listing Review`
   - `Approved for Publish`
   - final pricing and note review before publish
-  - listing-phase audit and post-publish record context once the item reaches Listings ownership
+  - listing-phase audit and read-only post-sale context once the item reaches Listings ownership
 
 ### Post-Publish
 - Purpose:
-  - own live listing lifecycle follow-through after publish
+  - own live listing lifecycle follow-through and active post-sale exception handling after publish
 - Modules:
-  - bucket sections for Active Listings, Stale Listings, Sold Ready To Ship, and Shipped History
+  - bucket sections for Active Listings, Stale Listings, and Sold Ready To Ship
   - shared search and sort toolbar
-  - per-row lifecycle actions
+  - per-row lifecycle actions plus access into the operational record for post-sale fields
 - Use it for:
   - stale follow-up
   - sold-ready handoff
   - shipment completion
-  - shipped history lookup
+  - recording `Cancelled`, `Refunded`, `Returned`, and manual restock disposition follow-through on the authoritative row
 - Note:
-  - the page no longer uses top-level stats cards; work directly from the section buckets and toolbar
+  - use the operational record from this page when the post-sale work needs the approved phase-1 fields and notes; do not create a separate post-sale page family
+
+### Archive
+- Purpose:
+  - own shipped lookup and completed post-sale reference after active follow-through is complete
+- Modules:
+  - completed shipments section
+  - shared search and sort toolbar
+- Use it for:
+  - shipped history lookup
+  - reviewing completed post-sale outcomes on already-shipped rows
+  - confirming whether a returned item ended in `Relist Candidate`, `Needs Re-Intake`, `Parts / Damaged`, or `Archive Only`
+- Note:
+  - Archive is reference-first; if an item still needs active follow-through, work it from Post-Publish instead
 
 ### Shopify Products
 - Purpose:
@@ -277,4 +327,5 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
 4. Work specialist signoffs from Testing Queue and Photography Queue, then complete details in the Testing and Photos pages.
 5. Use Listings for final review and approve-for-publish work.
 6. Use Shopify Products and eBay only for read-only channel visibility after listing work is prepared.
-7. Use Post-Publish for stale listings, sold-ready handoff, shipment completion, and shipped history.
+7. Use Post-Publish for stale listings, sold-ready handoff, shipment completion, and active post-sale exception handling.
+8. Use Archive for shipped lookup and completed post-sale reference.

@@ -58,6 +58,14 @@ describe('DashboardWorkflowCardGrid', () => {
     snapshot.age.pendingReviewAlertCount = 1;
     snapshot.lifecycle.averageDaysToSell = 18.5;
     snapshot.lifecycle.averageDaysToShip = 2;
+    snapshot.postSale.unresolvedExceptionCount = 2;
+    snapshot.postSale.resolvedExceptionCount = 3;
+    snapshot.postSale.refundedCount = 2;
+    snapshot.postSale.returnedCount = 1;
+    snapshot.postSale.partialRefundCount = 1;
+    snapshot.postSale.returnReceivedCount = 1;
+    snapshot.postSale.missingDispositionCount = 2;
+    snapshot.postSale.refundExposure = 145.5;
 
     render(
       <DashboardWorkflowAnalyticsSection
@@ -76,8 +84,12 @@ describe('DashboardWorkflowCardGrid', () => {
     expect(screen.getByText('Shopify Live')).toBeInTheDocument();
     expect(screen.getByText('eBay Stale')).toBeInTheDocument();
     expect(screen.getByText('Post-Publish Ops')).toBeInTheDocument();
+    expect(screen.getAllByText('Post-Sale Reporting').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Open Exceptions').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Refund Exposure').length).toBeGreaterThan(0);
     expect(screen.getByText('Avg Days To Sell')).toBeInTheDocument();
     expect(screen.getByText('18.5d')).toBeInTheDocument();
+    expect(screen.getAllByText('$145.50').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Stale Unassigned').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Sold Ready Unassigned').length).toBeGreaterThan(0);
   });
