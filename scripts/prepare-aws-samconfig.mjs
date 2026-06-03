@@ -51,6 +51,10 @@ function upsertParameterOverride(parameterOverrides, key, value) {
 const replacements = [
   ['AirtableApiKey', requireEnv('VITE_AIRTABLE_API_KEY')],
   ['ShopifyAccessToken', shopifyToken],
+  ['AppAllowedOrigins', getOptionalEnv('VITE_APP_ALLOWED_ORIGINS')],
+  ['AppAuthCookieSameSite', getOptionalEnv('APP_AUTH_COOKIE_SAME_SITE')],
+  ['AppAuthCookieSecureMode', getOptionalEnv('APP_AUTH_COOKIE_SECURE_MODE')],
+  ['AppAuthCookieDomain', getOptionalEnv('APP_AUTH_COOKIE_DOMAIN')],
   ['JotformApiKey', requireEnv('VITE_JOTFORM_API_KEY')],
   ['GithubToken', getOptionalEnv('VITE_GITHUB_TOKEN')],
   ['OpenAiApiKey', getOptionalEnv('VITE_OPENAI_API_KEY')],

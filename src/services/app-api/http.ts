@@ -1,5 +1,5 @@
 import { AppApiHttpError } from './errors';
-import { isLocalBrowserSession } from './flags';
+import { getAppApiBaseUrl, isLocalBrowserSession } from './flags';
 
 function getProcessEnvVar(name: string): string | undefined {
   const runtimeGlobal = globalThis as typeof globalThis & {
@@ -89,8 +89,6 @@ function maybePersistCsrfToken(body: unknown): void {
 }
 
 function buildUrl(path: string, params?: Record<string, string | number | undefined>): string {
-  // Always use VITE_APP_API_BASE_URL if set (for scripts/Node.js), else fallback to browser origin
-  const configuredBaseUrl = getProcessEnvVar('VITE_APP_API_BASE_URL');
   if (typeof window !== 'undefined' && isLocalBrowserSession()) {
     const url = new URL(path, window.location.origin);
 
@@ -105,7 +103,11 @@ function buildUrl(path: string, params?: Record<string, string | number | undefi
     return `${url.pathname}${url.search}${url.hash}`;
   }
 
-  const base = configuredBaseUrl || 'http://localhost';
+  const configuredBaseUrl = getAppApiBaseUrl().trim();
+  const processBaseUrl = getProcessEnvVar('VITE_APP_API_BASE_URL')?.trim() ?? '';
+  const base = configuredBaseUrl
+    || processBaseUrl
+    || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
   const url = new URL(path, base);
 
   if (params) {

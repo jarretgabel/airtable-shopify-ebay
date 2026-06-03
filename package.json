@@ -69,6 +69,7 @@
     "validate:cloudfront-deploy-config": "node scripts/validate-cloudfront-deploy-config.mjs .cloudfront-frontend.staging.deploy.json .cloudfront-frontend.prod.deploy.json",
     "validate:runtime-config": "node scripts/validate-runtime-config.mjs public/runtime-config.json public/runtime-config.staging.example.json public/runtime-config.prod.example.json",
     "build:cloudfront": "npm run validate:runtime-config && tsc && vite build && node scripts/render-runtime-config.mjs && node scripts/validate-runtime-config.mjs dist/runtime-config.json",
+    "deploy:staging": "cd aws && npm run prepare:samconfig:staging && npm run deploy:staging && cd .. && npm run deploy:cloudfront -- --config .cloudfront-frontend.staging.deploy.json",
     "deploy:cloudfront": "node scripts/deploy-cloudfront-frontend.mjs",
     "deploy:cloudfront:runtime-only": "node scripts/deploy-cloudfront-frontend.mjs --runtime-only",
     "preview": "vite preview",
