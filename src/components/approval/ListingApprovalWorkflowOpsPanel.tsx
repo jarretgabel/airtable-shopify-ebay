@@ -28,7 +28,6 @@ interface ListingApprovalWorkflowOpsPanelProps {
   tableReference: string;
   tableName?: string;
   loadRecords: (tableReference: string, tableName?: string, force?: boolean) => Promise<void>;
-  onOpenOperationalRecord?: (recordId: string) => void;
 }
 
 function normalizeStaleRecoveryStatus(value: unknown): UsedGearWorkflowStaleRecoveryStatus | '' {
@@ -83,7 +82,6 @@ export function ListingApprovalWorkflowOpsPanel({
   tableReference,
   tableName,
   loadRecords,
-  onOpenOperationalRecord,
 }: ListingApprovalWorkflowOpsPanelProps) {
   const [workflowRecord, setWorkflowRecord] = useState(selectedRecord);
   const [saving, setSaving] = useState(false);

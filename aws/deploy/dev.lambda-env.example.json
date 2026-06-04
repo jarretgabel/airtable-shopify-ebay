@@ -30,6 +30,7 @@
   "EBAY_RETURN_POLICY_ID": "replace-with-ebay-return-policy",
   "EBAY_LISTING_API": "inventory",
   "JOTFORM_API_KEY": "replace-with-jotform-api-key",
+  "JOTFORM_WEBHOOK_SECRET": "replace-with-jotform-webhook-secret",
   "GITHUB_TOKEN": "optional-github-models-token",
   "OPENAI_API_KEY": "optional-openai-api-key",
   "GOOGLE_GMAIL_ACCESS_TOKEN": "optional-gmail-access-token",

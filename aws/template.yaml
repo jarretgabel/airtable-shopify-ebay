@@ -99,6 +99,10 @@ Parameters:
   JotformApiKey:
     Type: String
     NoEcho: true
+  JotformWebhookSecret:
+    Type: String
+    NoEcho: true
+    Default: ''
   GithubToken:
     Type: String
     NoEcho: true
@@ -200,6 +204,7 @@ Globals:
         EBAY_WEBHOOK_SECRET: !Ref EbayWebhookSecret
         EBAY_WEBHOOK_BASE_URL: !Ref EbayWebhookBaseUrl
         JOTFORM_API_KEY: !Ref JotformApiKey
+        JOTFORM_WEBHOOK_SECRET: !Ref JotformWebhookSecret
         GITHUB_TOKEN: !If
           - HasGithubToken
           - !Ref GithubToken
@@ -763,6 +768,21 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: GET
             Path: /api/jotform/forms/{formId}/submissions
+
+  JotformIngestSubmissionWebhookFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/jotform/ingestSubmissionWebhook.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/hooks/jotform/submissions/{formId}
 
   AirtableGetListingsFunction:
     Type: AWS::Serverless::Function

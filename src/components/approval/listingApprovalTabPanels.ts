@@ -352,7 +352,6 @@ export function buildListingApprovalTabPanels({
         tableReference,
         tableName,
         loadRecords,
-        onOpenOperationalRecord,
       })
     : null;
 

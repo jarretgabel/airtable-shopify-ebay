@@ -56,6 +56,7 @@ const replacements = [
   ['AppAuthCookieSecureMode', getOptionalEnv('APP_AUTH_COOKIE_SECURE_MODE')],
   ['AppAuthCookieDomain', getOptionalEnv('APP_AUTH_COOKIE_DOMAIN')],
   ['JotformApiKey', requireEnv('VITE_JOTFORM_API_KEY')],
+  ['JotformWebhookSecret', getOptionalEnv('JOTFORM_WEBHOOK_SECRET')],
   ['GithubToken', getOptionalEnv('VITE_GITHUB_TOKEN')],
   ['OpenAiApiKey', getOptionalEnv('VITE_OPENAI_API_KEY')],
   ['GoogleGmailAccessToken', getOptionalEnv('VITE_GOOGLE_GMAIL_ACCESS_TOKEN')],

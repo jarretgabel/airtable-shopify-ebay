@@ -5,8 +5,10 @@ import {
   ApprovalFieldMap,
   coerceStructuredToString,
   coerceToString,
+  getField,
   getRawField,
   normalizeKey,
+  parseJsonArray,
 } from '@/services/shopifyDraftFromAirtable/shared';
 
 export function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] | undefined {

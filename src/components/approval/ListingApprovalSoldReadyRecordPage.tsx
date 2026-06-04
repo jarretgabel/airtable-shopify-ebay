@@ -65,7 +65,7 @@ export function ListingApprovalSoldReadyRecordPage({
 
   const readiness = getUsedGearWorkflowListingReadiness(selectedRecord);
   const recordTitle = readiness.title
-    || displayValue(selectedRecord.fields[readiness.titleFieldName])
+    || (readiness.titleFieldName ? displayValue(selectedRecord.fields[readiness.titleFieldName]) : '')
     || 'Sold-Ready Listing';
 
   return (

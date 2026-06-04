@@ -72,7 +72,6 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
         selectedRecord={buildRecord()}
         tableReference="appApproval/table"
         loadRecords={vi.fn(async () => {})}
-        onOpenOperationalRecord={vi.fn()}
       />,
     );
 
