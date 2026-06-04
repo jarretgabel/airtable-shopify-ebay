@@ -5,54 +5,9 @@ import {
 import { buildShopifyUnifiedProductSetRequest } from '@/services/shopify';
 
 describe('buildShopifyDraftProductFromApprovalFields', () => {
-  it('preserves image alt text from JSON image objects', () => {
+  it('uses workflow image metadata for listing images', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Shopify Test Product',
-      'Shopify REST Images JSON': JSON.stringify([
-        { src: 'https://cdn.example.com/a.jpg', alt: 'Front view' },
-        { src: 'https://cdn.example.com/b.jpg', alt: 'Back view' },
-      ]),
-    });
-
-    expect(product.title).toBe('Shopify Test Product');
-    expect(product.images).toEqual([
-      { src: 'https://cdn.example.com/a.jpg', alt: 'Front view', position: 1 },
-      { src: 'https://cdn.example.com/b.jpg', alt: 'Back view', position: 2 },
-    ]);
-  });
-
-  it('normalizes string image arrays to objects with alt key', () => {
-    const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Shopify Test Product',
-      'Shopify REST Images JSON': JSON.stringify([
-        'https://cdn.example.com/a.jpg',
-        'https://cdn.example.com/b.jpg',
-      ]),
-    });
-
-    expect(product.images).toEqual([
-      { src: 'https://cdn.example.com/a.jpg', alt: '', position: 1 },
-      { src: 'https://cdn.example.com/b.jpg', alt: '', position: 2 },
-    ]);
-  });
-
-  it('maps shared Images and Images Alt Text columns into Shopify images payload', () => {
-    const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Shared Images Product',
-      Images: 'https://cdn.example.com/a.jpg, https://cdn.example.com/b.jpg',
-      'Images Alt Text': 'Front view, Back view',
-    });
-
-    expect(product.images).toEqual([
-      { src: 'https://cdn.example.com/a.jpg', alt: 'Front view', position: 1 },
-      { src: 'https://cdn.example.com/b.jpg', alt: 'Back view', position: 2 },
-    ]);
-  });
-
-  it('prefers workflow image metadata over listing image fields when metadata exists', () => {
-    const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Workflow Metadata Product',
-      Images: 'https://cdn.example.com/legacy.jpg',
+      'Shopify Title': 'Workflow Metadata Product',
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-2',
@@ -81,10 +36,19 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     ]);
   });
 
+  it('omits images when workflow metadata is missing', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify Title': 'No Metadata Product',
+      Images: 'https://cdn.example.com/a.jpg',
+    });
+
+    expect(product.images).toBeUndefined();
+  });
+
   it('uses only workflow metadata rows marked for listing inclusion', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Workflow Metadata Inclusion Product',
-      Images: 'https://cdn.example.com/legacy.jpg',
+      Images: 'https://cdn.example.com/fallback.jpg',
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-photos',
@@ -112,105 +76,17 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     ]);
   });
 
-  it('maps Shopify REST Images list field into Shopify image objects for ProductSet files', () => {
+  it('omits ProductSet image files when workflow metadata is missing', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Shopify Images Field Product',
-      'Shopify REST Images': JSON.stringify([
-        { src: 'https://cdn.example.com/a.jpg', alt: 'Front view' },
-        { src: 'https://cdn.example.com/b.jpg', alt: 'Back view' },
-      ]),
-    });
-
-    expect(product.images).toEqual([
-      { src: 'https://cdn.example.com/a.jpg', alt: 'Front view', position: 1 },
-      { src: 'https://cdn.example.com/b.jpg', alt: 'Back view', position: 2 },
-    ]);
-  });
-
-  it('prefers image-editor source fields over legacy flat Shopify image columns', () => {
-    const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Editor Priority Product',
-      'Shopify REST Image 1 Src': 'https://cdn.example.com/legacy.jpg',
-      Images: JSON.stringify([
-        { src: 'https://cdn.example.com/editor-a.jpg', alt: 'Editor A' },
-        { src: 'https://cdn.example.com/editor-b.jpg', alt: 'Editor B' },
-      ]),
-    });
-
-    expect(product.images).toEqual([
-      { src: 'https://cdn.example.com/editor-a.jpg', alt: 'Editor A', position: 1 },
-      { src: 'https://cdn.example.com/editor-b.jpg', alt: 'Editor B', position: 2 },
-    ]);
-  });
-
-  it('maps Airtable attachment-style image objects into Shopify images', () => {
-    const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Attachment Images Product',
-      Images: JSON.stringify([
-        { url: 'https://cdn.example.com/attachment-a.jpg', alt: 'Attachment A' },
-        {
-          thumbnails: {
-            large: {
-              url: 'https://cdn.example.com/attachment-b-large.jpg',
-            },
-          },
-          altText: 'Attachment B',
-        },
-      ]),
-    });
-
-    expect(product.images).toEqual([
-      { src: 'https://cdn.example.com/attachment-a.jpg', alt: 'Attachment A', position: 1 },
-      { src: 'https://cdn.example.com/attachment-b-large.jpg', alt: 'Attachment B', position: 2 },
-    ]);
-  });
-
-  it('maps shared image editor rows into ProductSet files', () => {
-    const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Combined Preview Product',
+      'Shopify Title': 'Combined Preview Product',
       Images: JSON.stringify([
         { src: 'https://cdn.example.com/combined-a.jpg', alt: 'Combined A' },
-        { url: 'https://cdn.example.com/combined-b.jpg', alt: 'Combined B' },
       ]),
     });
 
     const request = buildShopifyUnifiedProductSetRequest(product);
 
-    expect(request.input.files).toEqual([
-      {
-        originalSource: 'https://cdn.example.com/combined-a.jpg',
-        alt: 'Combined A',
-        contentType: 'IMAGE',
-      },
-      {
-        originalSource: 'https://cdn.example.com/combined-b.jpg',
-        alt: 'Combined B',
-        contentType: 'IMAGE',
-      },
-    ]);
-  });
-
-  it('maps combined shared image columns into ProductSet files', () => {
-    const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Combined Shared Columns Product',
-      'Images (comma-separated)': 'https://cdn.example.com/shared-a.jpg, https://cdn.example.com/shared-b.jpg',
-      'Images Alt Text (comma separated)': 'Shared A, Shared B',
-    });
-
-    const request = buildShopifyUnifiedProductSetRequest(product);
-
-    expect(request.input.files).toEqual([
-      {
-        originalSource: 'https://cdn.example.com/shared-a.jpg',
-        alt: 'Shared A',
-        contentType: 'IMAGE',
-      },
-      {
-        originalSource: 'https://cdn.example.com/shared-b.jpg',
-        alt: 'Shared B',
-        contentType: 'IMAGE',
-      },
-    ]);
+    expect(request.input.files).toBeUndefined();
   });
 
   it('does not use eBay-specific title fallback for Shopify payloads', () => {
@@ -277,12 +153,12 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
 
   it('renders Shopify body HTML from template tokens and dynamic fields', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Marantz 2230 Receiver',
-      'Shopify REST Vendor': 'Marantz',
-      'Shopify REST Variant 1 Price': '1799.00',
-      'Shopify REST Variant 1 SKU': 'MARANTZ-2230',
+      'Shopify Title': 'Marantz 2230 Receiver',
+      'Shopify Vendor': 'Marantz',
+      'Shopify Variant 1 Price': '1799.00',
+      'Shopify Variant 1 SKU': 'MARANTZ-2230',
       '__Condition__': 'Used',
-      'Shopify REST Body HTML Template': '<p>{{body_intro}}</p>{{body_highlights}}<p>Price: {{price}}</p><p>SKU: {{sku}}</p><p>{{vendor}} {{title}} ({{condition}})</p>',
+      'Shopify Body HTML Template': '<p>{{body_intro}}</p>{{body_highlights}}<p>Price: {{price}}</p><p>SKU: {{sku}}</p><p>{{vendor}} {{title}} ({{condition}})</p>',
       'Shopify Body Intro': 'Restored unit with warm analog sound.',
       'Shopify Body Highlights': 'Serviced controls\nOriginal wood case',
     });
@@ -290,35 +166,17 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     expect(product.body_html).toBe('<p>Restored unit with warm analog sound.</p><ul><li>Serviced controls</li><li>Original wood case</li></ul><p>Price: 1799.00</p><p>SKU: MARANTZ-2230</p><p>Resolution Audio Video NYC Marantz 2230 Receiver (Used)</p>');
   });
 
-  it('keeps legacy body_html unchanged when no template token is present', () => {
-    const legacyHtml = '<p>Legacy HTML that should stay unchanged.</p>';
+  it('returns no body html when no template fields are provided', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Legacy Product',
-      'Shopify REST Body HTML': legacyHtml,
-      'Shopify Body Intro': 'Should not be injected without a tokenized template',
+      'Shopify Title': 'Feature Product',
     });
 
-    expect(product.body_html).toBe(legacyHtml);
-  });
-
-  it('rebuilds body html from description and key features for legacy non-templated body html', () => {
-    const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Feature Product',
-      'Shopify REST Body HTML': '<p>Legacy base block.</p>',
-      'Shopify Body Description': 'Freshly serviced and bench tested.',
-      'Shopify Body Key Features JSON': JSON.stringify([
-        { feature: 'Condition', value: 'Used Excellent' },
-        { feature: 'Includes', value: 'Remote, power cable' },
-      ]),
-    });
-
-    expect(product.body_html).toBe('<p>Freshly serviced and bench tested.</p>\n<ul><li><strong>Condition:</strong> Used Excellent</li><li><strong>Includes:</strong> Remote, power cable</li></ul>');
+    expect(product.body_html).toBeUndefined();
   });
 
   it('rebuilds body html directly from description and features when no dedicated template exists', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Structured Product',
-      'Shopify REST Body HTML': '<div class="product-body"><p>Old description</p><ul><li><strong>Old:</strong> Value</li></ul><p class="footnote">Ships insured.</p></div>',
+      'Shopify Title': 'Structured Product',
       'Shopify Body Description': 'Updated description from form.',
       'Shopify Body Key Features JSON': JSON.stringify([
         { feature: 'Condition', value: 'Excellent' },
@@ -331,9 +189,8 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
 
   it('uses the dedicated body html template when one is provided', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Template Product',
-      'Shopify REST Body HTML': '<div class="product-body"><p>Old description</p><ul><li><strong>Old:</strong> Value</li></ul><p class="footnote">Ships insured.</p></div>',
-      'Shopify REST Body HTML Template': '<div class="product-body"><p>Template description</p><ul><li><strong>Template:</strong> Value</li></ul><p class="footnote">Ships insured.</p></div>',
+      'Shopify Title': 'Template Product',
+      'Shopify Body HTML Template': '<div class="product-body"><p>Template description</p><ul><li><strong>Template:</strong> Value</li></ul><p class="footnote">Ships insured.</p></div>',
       'Shopify Body Description': 'Updated description from form.',
       'Shopify Body Key Features JSON': JSON.stringify([
         { feature: 'Condition', value: 'Excellent' },
@@ -346,8 +203,8 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
 
   it('strips dir and role attributes and unwraps spans from Airtable body html templates', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Airtable Template Product',
-      'Shopify REST Body HTML': '<p dir="ltr"><span>Old description</span></p><h3 dir="ltr"><span>Key Features</span></h3><ul><li role="presentation" dir="ltr"><span>Old feature</span></li></ul><h3 dir="ltr"><span>Technical Specifications</span></h3><ul><li role="presentation" dir="ltr"><span>Ignore me</span></li></ul>',
+      'Shopify Title': 'Airtable Template Product',
+      'Shopify Body HTML Template': '<p dir="ltr"><span>Old description</span></p><h3 dir="ltr"><span>Key Features</span></h3><ul><li role="presentation" dir="ltr"><span>Old feature</span></li></ul><h3 dir="ltr"><span>Technical Specifications</span></h3><ul><li role="presentation" dir="ltr"><span>Ignore me</span></li></ul>',
       'Shopify Body Description': 'Updated description from form.',
       'Shopify Body Key Features JSON': JSON.stringify([
         { feature: 'Condition', value: 'Excellent' },
@@ -360,8 +217,8 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
 
   it('wraps multi-paragraph descriptions in separate p tags before the key features heading', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
-      'Shopify REST Title': 'Multi Paragraph Product',
-      'Shopify REST Body HTML': '<p dir="ltr"><span>Old description</span></p><h3 dir="ltr"><span>Key Features</span></h3><ul><li role="presentation" dir="ltr"><span>Old feature</span></li></ul><h3 dir="ltr"><span>Technical Specifications</span></h3><ul><li role="presentation" dir="ltr"><span>Ignore me</span></li></ul>',
+      'Shopify Title': 'Multi Paragraph Product',
+      'Shopify Body HTML Template': '<p dir="ltr"><span>Old description</span></p><h3 dir="ltr"><span>Key Features</span></h3><ul><li role="presentation" dir="ltr"><span>Old feature</span></li></ul><h3 dir="ltr"><span>Technical Specifications</span></h3><ul><li role="presentation" dir="ltr"><span>Ignore me</span></li></ul>',
       'Shopify Body Description': 'First paragraph.\n\nSecond paragraph.',
       'Shopify Body Key Features JSON': JSON.stringify([
         { feature: 'Condition', value: 'Excellent' },

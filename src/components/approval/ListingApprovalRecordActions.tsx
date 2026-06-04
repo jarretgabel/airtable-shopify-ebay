@@ -51,6 +51,7 @@ export function ListingApprovalRecordActions({
 }: ListingApprovalRecordActionsProps) {
   const isWorkflowListingReview = isCombinedApproval && workflowStatus === 'Awaiting Pre-Listing Review';
   const showCombinedPublishButtons = isCombinedApproval && !isWorkflowListingReview;
+  const isPostPublishLocked = workflowStatus === 'Sold - Ready to Ship' || workflowStatus === 'Shipped';
 
   return (
     <div className="mt-4 flex flex-wrap justify-end gap-3">
@@ -62,7 +63,7 @@ export function ListingApprovalRecordActions({
       </SecondaryActionButton>
       <PrimaryActionButton
         onClick={onSaveUpdates}
-        disabled={saving}
+        disabled={saving || isPostPublishLocked}
       >
         {saving ? 'Saving...' : 'Save Updates'}
       </PrimaryActionButton>
@@ -80,7 +81,7 @@ export function ListingApprovalRecordActions({
                 : 'Approve for Publish'}
         </AccentActionButton>
       )}
-      {showCombinedPublishButtons && (
+      {showCombinedPublishButtons && !isPostPublishLocked && (
         <>
           <SecondaryActionButton
             onClick={onPublishShopify}
@@ -125,6 +126,7 @@ export function ListingApprovalRecordActions({
             || (!canUpdateApprovedShopifyListing && isApproved)
             || (approvalChannel === 'shopify' && hasMissingShopifyRequiredFields)
             || (approvalChannel === 'ebay' && hasMissingEbayRequiredFields)
+            || isPostPublishLocked
           }
         >
           {approving

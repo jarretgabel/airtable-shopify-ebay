@@ -70,7 +70,7 @@ This checklist tracks the filesystem work required to deliver the workflow surfa
 ## 9. Remove Dedicated Pre-Listing Page Wiring
 - [x] Remove the `pre-listing-queue` route rendering from `src/app/AppTabContent.tsx`.
 - [x] Remove `pre-listing-queue` from `src/app/appNavigation.ts`.
-- [x] Remove the `/workflow/pre-listing` mapping from `src/app/useAppRouteState.ts`.
+- [x] Remove the pre-listing mapping from `src/app/useAppRouteState.ts`.
 - [x] Remove dedicated `pre-listing-queue` handling from `src/app/useAuthRouteGuard.ts`.
 - [x] Remove `pre-listing-queue` from `src/auth/pages.ts`.
 - [x] Update route and navigation tests, including:
@@ -109,7 +109,7 @@ This checklist tracks the filesystem work required to deliver the workflow surfa
 - [x] Reorder workflow navigation to reflect `Intake > Processing > Listing`.
 - [x] Place intake-owned pages before processing-owned pages in app navigation.
 - [x] Place Testing and Photography overview pages before Listings in app navigation.
-- [x] Remove any legacy nav ordering that no longer matches the workflow sequence.
+- [x] Remove any retired nav ordering that no longer matches the workflow sequence.
 - [x] Update navigation-related tests, including `tests/unit/src/app/appShellNav.test.ts` and any header-navigation tests.
 
 ## 14. Reassess Workflow Detail Page

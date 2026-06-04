@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { useListingApprovalPublishFieldState } from '@/components/approval/useListingApprovalPublishFieldState';
 
 describe('useListingApprovalPublishFieldState', () => {
-  it('prefers the current Shopify status field over legacy Shopify status fields', () => {
+  it('prefers Status when present for Shopify listings', () => {
     const { result } = renderHook(() => useListingApprovalPublishFieldState({
-      allFieldNames: ['Status', 'Shopify Status', 'Shopify REST Status'],
+      allFieldNames: ['Status', 'Shopify Status'],
       approvalChannel: 'shopify',
       selectedRecord: null,
     }));
@@ -13,7 +13,7 @@ describe('useListingApprovalPublishFieldState', () => {
     expect(result.current.formatFieldName).toBe('Status');
   });
 
-  it('prefers the current eBay listing format field over the generic legacy status field', () => {
+  it('prefers the eBay listing format field over generic status fields', () => {
     const { result } = renderHook(() => useListingApprovalPublishFieldState({
       allFieldNames: ['Status', 'Ebay Listing Format'],
       approvalChannel: 'ebay',

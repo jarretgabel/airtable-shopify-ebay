@@ -9,6 +9,7 @@ import { buildListingApprovalQueuePanelProps } from '@/components/approval/listi
 import { buildListingApprovalSelectedRecordPanelProps } from '@/components/approval/listingApprovalSelectedRecordPanelProps';
 import { buildListingApprovalSelectedRecordStatusProps } from '@/components/approval/listingApprovalSelectedRecordStatusProps';
 import { buildListingApprovalSelectedRecordViewProps } from '@/components/approval/listingApprovalSelectedRecordViewProps';
+import { ListingApprovalSoldReadyPanel } from '@/components/approval/ListingApprovalSoldReadyPanel';
 import { ListingApprovalWorkflowOpsPanel } from '@/components/approval/ListingApprovalWorkflowOpsPanel';
 import {
   buildListingApprovalWorkflowSummaryData,
@@ -339,13 +340,20 @@ export function buildListingApprovalTabPanels({
     : null;
 
   const workflowDetails = selectedRecord && isCombinedApproval && workflowSummary && hasTableReference
-    ? createElement(ListingApprovalWorkflowOpsPanel, {
-      selectedRecord,
-      tableReference,
-      tableName,
-      loadRecords,
-      onOpenOperationalRecord,
-    })
+    ? workflowSummary.workflowStatus === 'Sold - Ready to Ship' || workflowSummary.workflowStatus === 'Shipped'
+      ? createElement(ListingApprovalSoldReadyPanel, {
+        selectedRecord,
+        tableReference,
+        tableName,
+        loadRecords,
+      })
+      : createElement(ListingApprovalWorkflowOpsPanel, {
+        selectedRecord,
+        tableReference,
+        tableName,
+        loadRecords,
+        onOpenOperationalRecord,
+      })
     : null;
 
   return {

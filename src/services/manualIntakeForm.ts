@@ -103,7 +103,7 @@ export async function loadManualIntakeFormValues(recordId: string): Promise<Manu
       jotFormSubmissionId: extractInventoryScalarValue(record.fields['JotForm Submission ID']),
       values: {
         ...defaults,
-        pickUpNumber: extractInventoryScalarValue(record.fields['Pick Up #'] ?? record.fields['Pick Up ID']),
+        pickUpNumber: extractInventoryScalarValue(record.fields['Pick Up ID']),
         ...(() => {
           const full = extractInventoryScalarValue(record.fields['Acquired From']) ?? '';
           const idx = full.lastIndexOf(' ');
@@ -126,7 +126,7 @@ export async function loadManualIntakeFormValues(recordId: string): Promise<Manu
         voltage: extractInventoryScalarValue(record.fields.Voltage),
         inventoryNotes: extractInventoryScalarValue(record.fields['Inventory Notes']),
         imageFiles: [],
-        cosmeticConditionNotes: extractInventoryScalarValue(record.fields['Testing Cosmetic Notes'] ?? record.fields['Cosmetic Condition Notes']),
+        cosmeticConditionNotes: extractInventoryScalarValue(record.fields['Testing Cosmetic Notes']),
         originalBox: extractInventoryScalarValue(record.fields['Original Box']),
         manual: extractInventoryScalarValue(record.fields.Manual),
         remote: extractInventoryScalarValue(record.fields.Remote),

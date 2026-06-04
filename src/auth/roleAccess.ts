@@ -121,26 +121,6 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
   photographer: PHOTOGRAPHER_PAGES,
 };
 
-const PROCESSOR_LEGACY_EXPANSIONS: AppPage[] = [
-  'manual-intake',
-  'create-intake-item',
-  'jotform',
-  'jotform-audit',
-  'parking-lot',
-  'trash-review',
-  'testing-queue',
-  'photography-queue',
-  'testing',
-  'photos',
-  'listings',
-  'post-publish',
-  'archive',
-  'shopify',
-  'ebay',
-  'settings',
-  'notifications',
-];
-
 export const WORKFLOW_DASHBOARD_PAGES: AppPage[] = [
   'manual-intake',
   'jotform',
@@ -183,10 +163,6 @@ export function normalizeRolePages(pages: AppPage[], role: UserRole): AppPage[] 
 
   if (nextPages.has('jotform') && allowedSet.has('jotform-audit')) {
     nextPages.add('jotform-audit');
-  }
-
-  if (role === 'processor' && nextPages.has('inventory')) {
-    PROCESSOR_LEGACY_EXPANSIONS.forEach((page) => nextPages.add(page));
   }
 
   return roleAllowedPages.filter((page) => nextPages.has(page));

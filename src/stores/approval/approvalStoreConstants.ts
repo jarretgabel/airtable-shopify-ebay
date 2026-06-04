@@ -2,7 +2,7 @@ export const DEFAULT_APPROVAL_TABLE_REFERENCE = '3yTb0JkzUMFNnS/viw21kEduXKNub4V
 export const SHIPPING_SERVICE_FIELD = '__Shipping Services__';
 export const CONDITION_FIELD = '__Condition__';
 
-// Legacy humanized options (old Airtable schema)
+// Humanized options (Airtable schema)
 export const ITEM_CONDITION_OPTIONS = ['Used', 'New', 'Open Box', 'For Parts or not working'];
 export const SHIPPING_SERVICE_OPTIONS = [
   'UPS Ground',

@@ -7,7 +7,6 @@ import {
   EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD_CANDIDATES,
   EBAY_DURATION_FIELD_CANDIDATES,
   EBAY_FORMAT_FIELD_CANDIDATES,
-  EBAY_IMAGE_LIST_FIELD_CANDIDATES,
   EBAY_INTERNATIONAL_SHIPPING_FEES_FIELD_CANDIDATES,
   EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD_CANDIDATES,
   EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES,
@@ -25,7 +24,6 @@ import {
   CONDITION_FIELD_CANDIDATES,
   SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES,
   SHOPIFY_BODY_KEY_FEATURES_FIELD_CANDIDATES,
-  SHOPIFY_IMAGE_LIST_FIELD_CANDIDATES,
   SHOPIFY_PRICE_FIELD_CANDIDATES,
   SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES,
   SHOPIFY_TITLE_FIELD_CANDIDATES,
@@ -83,11 +81,6 @@ export function useListingApprovalFieldNames({
 
       names.add('Collections');
 
-      const preferredImageField = existingNames.find((name) =>
-        SHOPIFY_IMAGE_LIST_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? SHOPIFY_IMAGE_LIST_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
-      if (preferredImageField) names.add(preferredImageField);
-
       const preferredDescriptionField = existingNames.find((name) =>
         SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       ) ?? SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
@@ -111,11 +104,6 @@ export function useListingApprovalFieldNames({
       const preferredPriceField = findEbayPriceFieldName(existingNames)
         || EBAY_PRICE_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
       if (preferredPriceField) names.add(preferredPriceField);
-
-      const preferredImageField = existingNames.find((name) =>
-        EBAY_IMAGE_LIST_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? EBAY_IMAGE_LIST_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
-      if (preferredImageField) names.add(preferredImageField);
 
       const preferredDescriptionField = existingNames.find((name) =>
         EBAY_DESCRIPTION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),

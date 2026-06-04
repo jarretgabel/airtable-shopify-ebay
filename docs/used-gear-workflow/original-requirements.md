@@ -12,7 +12,7 @@ This document captures the original user requirements and guardrails for the use
 - Limit direct Airtable changes to table `tbl0K0nFQL64jQMx8` in base `apprsAm2FOohEmL2u`.
 - Require explicit approval before adding or relying on any new Airtable fields.
 - Do not modify the live JotForm itself or other external systems as part of this rollout.
-- Do not preserve legacy workflow URLs, retired workflow detail pages, or compatibility-only routing/code paths unless a later requirement explicitly asks for them.
+- Do not preserve retired workflow URLs, retired workflow detail pages, or compatibility-only routing/code paths unless a later requirement explicitly asks for them.
 - If other Airtable tables are ever needed, treat them as reference-only tables linked back to the in-scope workflow rows instead of duplicating business data.
 
 ### Intake Workflow Requirements

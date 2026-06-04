@@ -19,6 +19,13 @@ describe('useAppRouteState', () => {
     expect(state.listingsRecordId).toBe('abc 123');
   });
 
+  it('maps sold-ready listings routes and decodes id', () => {
+    const state = useAppRouteState(locationFor('/sold-ready/rec%20sold'), ['dashboard']);
+    expect(state.activeTab).toBe('listings');
+    expect(state.soldReadyListingsRecordId).toBe('rec sold');
+    expect(state.listingsRecordId).toBeNull();
+  });
+
   it('maps users detail route and decodes id', () => {
     const state = useAppRouteState(locationFor('/account/users/u%40id'), ['dashboard']);
     expect(state.activeTab).toBe('users');
@@ -66,12 +73,12 @@ describe('useAppRouteState', () => {
   });
 
   it('maps the post-publish route', () => {
-    const state = useAppRouteState(locationFor('/workflow/post-publish'), ['dashboard', 'post-publish']);
+    const state = useAppRouteState(locationFor('/post-publish'), ['dashboard', 'post-publish']);
     expect(state.activeTab).toBe('post-publish');
   });
 
   it('maps the archive route', () => {
-    const state = useAppRouteState(locationFor('/workflow/archive'), ['dashboard', 'archive']);
+    const state = useAppRouteState(locationFor('/completed-shipments'), ['dashboard', 'archive']);
     expect(state.activeTab).toBe('archive');
   });
 
@@ -90,12 +97,6 @@ describe('useAppRouteState', () => {
   it('maps the dedicated jotform audit route', () => {
     const state = useAppRouteState(locationFor('/jotform-audit'), ['dashboard', 'jotform-audit']);
     expect(state.activeTab).toBe('jotform-audit');
-  });
-
-  it('maps intake deep links with record ids', () => {
-    const state = useAppRouteState(locationFor('/intake/rec%20123'), ['dashboard', 'manual-intake']);
-    expect(state.activeTab).toBe('manual-intake');
-    expect(state.manualIntakeRecordId).toBe('rec 123');
   });
 
   it('maps jotform record review deep links with record ids', () => {
@@ -132,12 +133,6 @@ describe('useAppRouteState', () => {
     expect(state.activeTab).toBe('photography-queue');
   });
 
-  it('treats retired photos routes as unsupported paths', () => {
-    const state = useAppRouteState(locationFor('/photos'), ['dashboard', 'photography-queue']);
-    expect(state.activeTab).toBe('dashboard');
-    expect(state.photosRecordId).toBeNull();
-  });
-
   it('maps photography deep links with record ids', () => {
     const state = useAppRouteState(locationFor('/photography/rec%20789'), ['dashboard', 'photos']);
     expect(state.activeTab).toBe('photos');
@@ -162,13 +157,6 @@ describe('useAppRouteState', () => {
     expect(state.inventoryRecordId).toBeNull();
   });
 
-  it('treats retired workflow detail routes as unsupported paths', () => {
-    const state = useAppRouteState(locationFor('/inventory/workflow/rec%20workflow'), ['dashboard', 'inventory']);
-    expect(state.activeTab).toBe('dashboard');
-    expect(state.inventoryRecordId).toBeNull();
-    expect(state.inventoryPriceEditorRecordId).toBeNull();
-  });
-
   it('maps trash review record deep links with record ids', () => {
     const state = useAppRouteState(locationFor('/trash-review/review/rec%20trash'), ['dashboard', 'trash-review']);
     expect(state.activeTab).toBe('trash-review');
@@ -182,13 +170,13 @@ describe('useAppRouteState', () => {
   });
 
   it('maps Shopify listing detail routes and decodes id', () => {
-    const state = useAppRouteState(locationFor('/shopify/products/rec%20shopify'), ['dashboard', 'shopify']);
+    const state = useAppRouteState(locationFor('/shopify/rec%20shopify'), ['dashboard', 'shopify']);
     expect(state.activeTab).toBe('shopify');
     expect(state.shopifyListingsRecordId).toBe('rec shopify');
   });
 
   it('maps eBay listing detail routes and decodes id', () => {
-    const state = useAppRouteState(locationFor('/ebay/listings/rec%20ebay'), ['dashboard', 'ebay']);
+    const state = useAppRouteState(locationFor('/ebay/rec%20ebay'), ['dashboard', 'ebay']);
     expect(state.activeTab).toBe('ebay');
     expect(state.ebayListingsRecordId).toBe('rec ebay');
   });

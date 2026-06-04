@@ -18,7 +18,6 @@ interface PostPublishQueueTabProps {
   onOpenListingsRecord: (recordId: string) => void;
 }
 
-const WORKFLOW_POST_PUBLISH_SEARCH_PARAM = 'workflowPostPublishSearch';
 const WORKFLOW_POST_PUBLISH_SORT_PARAM = 'workflowPostPublishSort';
 type PostPublishSectionNavKey = 'overview' | UsedGearWorkflowPostPublishBucket;
 
@@ -35,7 +34,6 @@ export function PostPublishQueueTab({
   const location = useLocation();
   const navigate = useNavigate();
 
-  const searchTerm = useMemo(() => new URLSearchParams(location.search).get(WORKFLOW_POST_PUBLISH_SEARCH_PARAM) ?? '', [location.search]);
   const sortMode = useMemo(() => parsePostPublishSortMode(location.search), [location.search]);
   const focusedBucket = useMemo<UsedGearWorkflowPostPublishBucket | null>(() => {
     const bucket = new URLSearchParams(location.search).get('workflowPostPublishBucket');
@@ -109,14 +107,7 @@ export function PostPublishQueueTab({
         focusedBucket={focusedBucket}
         onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={onOpenListingsRecord}
-        searchTerm={searchTerm}
-        onSearchTermChange={(value) => updateRouteState((params) => {
-          if (value.trim()) {
-            params.set(WORKFLOW_POST_PUBLISH_SEARCH_PARAM, value);
-          } else {
-            params.delete(WORKFLOW_POST_PUBLISH_SEARCH_PARAM);
-          }
-        })}
+        sectionSearchEnabled
         sortMode={sortMode}
         onSortModeChange={(value) => updateRouteState((params) => {
           if (value === 'latest-activity') {

@@ -42,7 +42,7 @@ function LocationState() {
 describe('ArchiveQueueTab', () => {
   it('renders the completed shipments page without an inner duplicate section title', () => {
     render(
-      <MemoryRouter initialEntries={['/workflow/archive']}>
+      <MemoryRouter initialEntries={['/completed-shipments']}>
         <ArchiveQueueTab
           currentUserName="Taylor Reviewer"
           onOpenWorkflowSnapshot={vi.fn()}
@@ -59,6 +59,6 @@ describe('ArchiveQueueTab', () => {
     expect(screen.getByTestId('archive-focused-notice')).toHaveTextContent('');
     expect(screen.getByTestId('archive-search-placeholder')).toHaveTextContent('Search by status, SKU, model, or ship date');
     expect(screen.getByTestId('archive-show-section-titles')).toHaveTextContent('false');
-    expect(screen.getByTestId('location-state')).toHaveTextContent('/workflow/archive');
+    expect(screen.getByTestId('location-state')).toHaveTextContent('/completed-shipments');
   });
 });

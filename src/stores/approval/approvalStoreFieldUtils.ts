@@ -203,7 +203,7 @@ export function fromFormValueForField(fieldName: string, raw: string, kind: Appr
 export function getDropdownOptions(fieldName: string): string[] | null {
   const n = fieldName.trim().toLowerCase();
 
-  // Legacy humanized field names (old Airtable schema)
+  // Humanized field names (Airtable schema)
   if (n === SHIPPING_SERVICE_FIELD.trim().toLowerCase()) {
     return SHIPPING_SERVICE_OPTIONS;
   }

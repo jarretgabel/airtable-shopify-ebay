@@ -2,9 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   markWorkflowListingStale,
   markWorkflowRelisted,
+  markWorkflowCancelled,
+  markWorkflowPartialRefund,
+  markWorkflowRefunded,
+  markWorkflowReturnReceived,
   markWorkflowShipped,
   markWorkflowSoldReadyToShip,
   loadUsedGearOperationalRecordContext,
+  resolveWorkflowRestockDisposition,
   saveWorkflowShipmentFollowThrough,
   saveWorkflowStaleRecovery,
 } from '@/services/usedGearQueue';
@@ -14,6 +19,7 @@ import {
   type UsedGearWorkflowStaleRecoveryStatus,
 } from '@/services/usedGearWorkflowLifecycle';
 import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
+import { compactRowPrimaryActionButtonClass, compactRowSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { displayValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -77,6 +83,7 @@ export function ListingApprovalWorkflowOpsPanel({
   tableReference,
   tableName,
   loadRecords,
+  onOpenOperationalRecord,
 }: ListingApprovalWorkflowOpsPanelProps) {
   const [workflowRecord, setWorkflowRecord] = useState(selectedRecord);
   const [saving, setSaving] = useState(false);
@@ -121,6 +128,14 @@ export function ListingApprovalWorkflowOpsPanel({
     ? workflowRecord.fields['Shipment Follow-Through Updated At']
     : '';
   const postPublishSnapshot = useMemo(() => getUsedGearWorkflowPostPublishSnapshot(workflowRecord), [workflowRecord]);
+  const showMarkSoldReady = postPublishSnapshot?.bucket === 'active-listing' || postPublishSnapshot?.bucket === 'stale-listing';
+  const showMarkShipped = postPublishSnapshot?.status === 'Sold - Ready to Ship';
+  const noOutcomeYet = !postPublishSnapshot?.postSaleOutcome;
+  const showMarkCancelled = (postPublishSnapshot?.bucket === 'sold-ready' || postPublishSnapshot?.bucket === 'shipped') && noOutcomeYet;
+  const showMarkPartialRefund = (postPublishSnapshot?.bucket === 'sold-ready' || postPublishSnapshot?.bucket === 'shipped') && noOutcomeYet;
+  const showMarkRefunded = (postPublishSnapshot?.bucket === 'sold-ready' || postPublishSnapshot?.bucket === 'shipped') && noOutcomeYet;
+  const showMarkReturnReceived = postPublishSnapshot?.status === 'Shipped' && noOutcomeYet;
+  const showDispositionActions = Boolean(postPublishSnapshot?.postSaleOutcome) && !postPublishSnapshot?.restockDisposition;
   useEffect(() => {
     setStaleRecoveryDraftStatus(normalizeStaleRecoveryStatus(staleRecoveryStatus));
     setStaleRecoveryDraftNotes(staleRecoveryNotes);
@@ -281,16 +296,6 @@ export function ListingApprovalWorkflowOpsPanel({
                     >
                       {saving ? 'Saving...' : 'Save Shipment Notes'}
                     </button>
-                    <button
-                      type="button"
-                      className="rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                      onClick={() => {
-                        void runAction(() => markWorkflowShipped(selectedRecord.id));
-                      }}
-                      disabled={saving}
-                    >
-                      {saving ? 'Saving...' : 'Mark Shipped'}
-                    </button>
                   </div>
                 ) : null}
               </div>
@@ -309,19 +314,127 @@ export function ListingApprovalWorkflowOpsPanel({
                   {saving ? 'Saving...' : 'Mark Stale'}
                 </button>
               ) : null}
-              {postPublishSnapshot?.bucket === 'active-listing' || postPublishSnapshot?.bucket === 'stale-listing' ? (
-                <button
-                  type="button"
-                  className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={() => {
-                    void runAction(() => markWorkflowSoldReadyToShip(selectedRecord.id));
-                  }}
-                  disabled={saving}
-                >
-                  {saving ? 'Saving...' : 'Mark Sold Ready'}
-                </button>
-              ) : null}
             </div>
+            {postPublishSnapshot ? (
+              <div className="flex flex-wrap gap-2 border-t border-[var(--line)]/70 pt-4">
+                {showMarkSoldReady ? (
+                  <button
+                    type="button"
+                    className={compactRowPrimaryActionButtonClass}
+                    onClick={() => {
+                      void runAction(() => markWorkflowSoldReadyToShip(selectedRecord.id));
+                    }}
+                    disabled={saving}
+                  >
+                    Sold Ready
+                  </button>
+                ) : null}
+                {showMarkShipped ? (
+                  <button
+                    type="button"
+                    className={compactRowPrimaryActionButtonClass}
+                    onClick={() => {
+                      void runAction(() => markWorkflowShipped(selectedRecord.id));
+                    }}
+                    disabled={saving}
+                  >
+                    Shipped
+                  </button>
+                ) : null}
+                {showMarkCancelled ? (
+                  <button
+                    type="button"
+                    className={compactRowSecondaryActionButtonClass}
+                    onClick={() => {
+                      void runAction(() => markWorkflowCancelled(selectedRecord.id));
+                    }}
+                    disabled={saving}
+                  >
+                    Cancelled
+                  </button>
+                ) : null}
+                {showMarkPartialRefund ? (
+                  <button
+                    type="button"
+                    className={compactRowSecondaryActionButtonClass}
+                    onClick={() => {
+                      void runAction(() => markWorkflowPartialRefund(selectedRecord.id));
+                    }}
+                    disabled={saving}
+                  >
+                    Partial Refund
+                  </button>
+                ) : null}
+                {showMarkRefunded ? (
+                  <button
+                    type="button"
+                    className={compactRowSecondaryActionButtonClass}
+                    onClick={() => {
+                      void runAction(() => markWorkflowRefunded(selectedRecord.id));
+                    }}
+                    disabled={saving}
+                  >
+                    Refunded
+                  </button>
+                ) : null}
+                {showMarkReturnReceived ? (
+                  <button
+                    type="button"
+                    className={compactRowSecondaryActionButtonClass}
+                    onClick={() => {
+                      void runAction(() => markWorkflowReturnReceived(selectedRecord.id));
+                    }}
+                    disabled={saving}
+                  >
+                    Return Received
+                  </button>
+                ) : null}
+                {showDispositionActions ? (
+                  <>
+                    <button
+                      type="button"
+                      className={compactRowSecondaryActionButtonClass}
+                      onClick={() => {
+                        void runAction(() => resolveWorkflowRestockDisposition(selectedRecord.id, { restockDisposition: 'Relist Candidate' }));
+                      }}
+                      disabled={saving}
+                    >
+                      Relist Candidate
+                    </button>
+                    <button
+                      type="button"
+                      className={compactRowSecondaryActionButtonClass}
+                      onClick={() => {
+                        void runAction(() => resolveWorkflowRestockDisposition(selectedRecord.id, { restockDisposition: 'Needs Re-Intake' }));
+                      }}
+                      disabled={saving}
+                    >
+                      Needs Re-Intake
+                    </button>
+                    <button
+                      type="button"
+                      className={compactRowSecondaryActionButtonClass}
+                      onClick={() => {
+                        void runAction(() => resolveWorkflowRestockDisposition(selectedRecord.id, { restockDisposition: 'Parts / Damaged' }));
+                      }}
+                      disabled={saving}
+                    >
+                      Parts / Damaged
+                    </button>
+                    <button
+                      type="button"
+                      className={compactRowSecondaryActionButtonClass}
+                      onClick={() => {
+                        void runAction(() => resolveWorkflowRestockDisposition(selectedRecord.id, { restockDisposition: 'Archive Only' }));
+                      }}
+                      disabled={saving}
+                    >
+                      Archive Only
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </details>
       ) : null}

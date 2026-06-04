@@ -94,7 +94,7 @@ function normalizeNumber(value: string | number | null | undefined): number | un
 export function buildUsedGearIntakeBaseFields(input: UsedGearIntakeFieldInput): Record<string, unknown> {
   return compactFields({
     'Arrival Date': trimToUndefined(input.arrivalDate),
-    'Pick Up #': trimToUndefined(input.pickUpNumber),
+    'Pick Up ID': trimToUndefined(input.pickUpNumber),
     'Acquired From': trimToUndefined(input.acquiredFrom),
     Cost: normalizeNumber(input.cost),
     'Customer Cosmetic Notes': trimToUndefined(input.customerCosmeticNotes),

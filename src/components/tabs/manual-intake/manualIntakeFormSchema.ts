@@ -154,8 +154,8 @@ export const manualIntakeFormIntro: {
 export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
   {
     name: 'pickUpNumber',
-    airtableFieldName: 'Pick Up #',
-    label: 'Pick Up #',
+    airtableFieldName: 'Pick Up ID',
+    label: 'Pick Up ID',
     type: 'text',
   },
   {

@@ -25,22 +25,18 @@ test('non-tester roles get Image Lab according to their role bundle', () => {
   assert.deepEqual(normalizeAllowedPages([...APP_PAGES], 'tester'), ['dashboard', 'workflow-guide', 'testing-queue', 'testing']);
 });
 
-test('processor normalization restores commerce and account pages when legacy inventory access is present', () => {
-  const pages = normalizeAllowedPages(['dashboard', 'inventory'], 'processor');
-
-  assert.equal(pages.includes('create-intake-item'), true);
-  assert.equal(pages.includes('jotform'), true);
-  assert.equal(pages.includes('jotform-audit'), true);
-  assert.equal(pages.includes('listings'), true);
-  assert.equal(pages.includes('shopify'), true);
-  assert.equal(pages.includes('ebay'), true);
-  assert.equal(pages.includes('settings'), true);
-  assert.equal(pages.includes('notifications'), true);
-});
-
-test('legacy manual intake and jotform access restore companion intake pages', () => {
+test('manual intake and jotform access restore companion intake pages', () => {
   const pages = normalizeAllowedPages(['dashboard', 'manual-intake', 'jotform'], 'processor');
 
   assert.equal(pages.includes('create-intake-item'), true);
   assert.equal(pages.includes('jotform-audit'), true);
+});
+
+test('processor normalization does not expand beyond the provided bundle', () => {
+  const pages = normalizeAllowedPages(['dashboard', 'inventory'], 'processor');
+
+  assert.equal(pages.includes('dashboard'), true);
+  assert.equal(pages.includes('inventory'), true);
+  assert.equal(pages.includes('shopify'), false);
+  assert.equal(pages.includes('ebay'), false);
 });

@@ -118,9 +118,10 @@ export function ListingApprovalSelectedRecordPanel({
     [workflowSummary?.workflowStatus],
   );
 
-  // Enforce listing surface eligibility
-  const isEligible = isUsedGearWorkflowListingSurfaceEligible(selectedRecord);
+  // Enforce listing surface eligibility, but allow post-publish access for follow-through actions.
   const currentStep = getUsedGearWorkflowStatus(selectedRecord.fields) || 'Unknown';
+  const isPostPublishAccess = currentStep === 'Sold - Ready to Ship' || currentStep === 'Shipped';
+  const isEligible = isPostPublishAccess || isUsedGearWorkflowListingSurfaceEligible(selectedRecord);
   // Helper to get a user-friendly label for the current step
   function getStepLabel(status: string): string {
     switch (status) {

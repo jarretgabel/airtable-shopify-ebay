@@ -22,25 +22,19 @@ describe('roleAccess', () => {
     ]));
   });
 
-  it('restores commerce and account pages for processor users normalized from legacy inventory access', () => {
-    expect(normalizeRolePages(['dashboard', 'inventory'], 'processor')).toEqual(expect.arrayContaining([
-      'create-intake-item',
-      'jotform',
-      'jotform-audit',
-      'listings',
-      'shopify',
-      'ebay',
-      'settings',
-      'notifications',
-    ]));
-  });
-
-  it('adds create-intake-item and jotform-audit when legacy users only have the parent intake pages', () => {
+  it('adds create-intake-item and jotform-audit when users only have the parent intake pages', () => {
     expect(normalizeRolePages(['dashboard', 'manual-intake', 'jotform'], 'processor')).toEqual(expect.arrayContaining([
       'manual-intake',
       'create-intake-item',
       'jotform',
       'jotform-audit',
     ]));
+  });
+
+  it('does not expand processor pages beyond the provided bundle', () => {
+    const pages = normalizeRolePages(['dashboard', 'inventory'], 'processor');
+
+    expect(pages).toEqual(expect.arrayContaining(['dashboard', 'inventory']));
+    expect(pages).not.toEqual(expect.arrayContaining(['shopify', 'ebay', 'settings', 'notifications']));
   });
 });

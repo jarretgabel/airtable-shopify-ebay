@@ -48,7 +48,7 @@ export function useListingApprovalPublishFieldState({
 
   const titleFieldName = useMemo(
     () => approvalChannel === 'shopify'
-      ? resolveFieldName(['Item Title', 'Shopify Title', 'Shopify REST Title', 'Title', 'Name'], 'Item Title')
+      ? resolveFieldName(['Item Title', 'Shopify Title', 'Title', 'Name'], 'Item Title')
       : resolveFieldName([...EBAY_TITLE_FIELD_CANDIDATES], 'Item Title'),
     [approvalChannel, resolveFieldName],
   );
@@ -62,7 +62,7 @@ export function useListingApprovalPublishFieldState({
 
   const priceFieldName = useMemo(
     () => approvalChannel === 'shopify'
-      ? resolveFieldName(['Shopify REST Variant 1 Price', 'Shopify Variant 1 Price', 'Price'], '')
+      ? resolveFieldName(['Shopify Variant 1 Price', 'Price'], '')
       : findEbayPriceFieldName(Object.keys(selectedRecord?.fields ?? {})),
     [approvalChannel, resolveFieldName, selectedRecord],
   );
@@ -76,14 +76,14 @@ export function useListingApprovalPublishFieldState({
 
   const vendorFieldName = useMemo(
     () => approvalChannel === 'shopify'
-      ? resolveFieldName(['Shopify REST Vendor', 'Shopify Vendor', 'Vendor', 'Manufacturer', 'Brand'], '')
+      ? resolveFieldName(['Shopify Vendor', 'Vendor', 'Manufacturer', 'Brand'], '')
       : resolveFieldName([...EBAY_VENDOR_FIELD_CANDIDATES], ''),
     [approvalChannel, resolveFieldName],
   );
 
   const qtyFieldName = useMemo(
     () => approvalChannel === 'shopify'
-      ? resolveFieldName(['Shopify REST Variant 1 Inventory Quantity', 'Shopify Variant 1 Inventory Quantity', 'Quantity', 'Qty'], '')
+      ? resolveFieldName(['Shopify Variant 1 Inventory Quantity', 'Quantity', 'Qty'], '')
       : resolveFieldName([...EBAY_QTY_FIELD_CANDIDATES], ''),
     [approvalChannel, resolveFieldName],
   );

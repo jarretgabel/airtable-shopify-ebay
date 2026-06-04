@@ -159,7 +159,7 @@ describe('AirtableTab', () => {
     });
   });
 
-  it('leaves the workflow hub route on the directory when no legacy workflow state is present', async () => {
+  it('leaves the workflow hub route on the directory when no workflow state is present', async () => {
     render(
       <MemoryRouter initialEntries={['/workflow-hub']}>
         <AirtableTab

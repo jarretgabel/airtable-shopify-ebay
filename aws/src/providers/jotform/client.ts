@@ -36,7 +36,7 @@ export interface JotFormForm {
   last_submission: string | null;
   new: number;
   count: number;
-  type: 'LEGACY' | 'CARD';
+  type: 'CARD';
   favorite: '0' | '1';
   archived: '0' | '1';
   url: string;

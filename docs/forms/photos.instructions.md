@@ -8,7 +8,7 @@ It is shown in the app under:
 
 - Menu: `Inventory Processing`
 - Route key: `photos`
-- Path: `/photos`
+- Path: `/photography`
 
 ## Current Implementation
 

@@ -111,28 +111,6 @@ export function isShopifyBodyHtmlTemplateField(fieldName: string): boolean {
     || normalized === 'shopify_body_html_template';
 }
 
-export function isLegacyShopifySingleImageField(fieldName: string): boolean {
-  const normalized = fieldName.trim().toLowerCase();
-  if (/^shopify\s+rest\s+image(\s+\d+)?\s+(src|position|alt|alt\s+text)$/.test(normalized)) return true;
-  if (/^shopify_rest_image(_\d+)?_(src|position|alt|alt_text)$/.test(normalized)) return true;
-  if (normalized === 'image position' || normalized === 'image_position') return true;
-  if (/^image\s+position\s+\d+$/.test(normalized)) return true;
-  if (/^image_position_\d+$/.test(normalized)) return true;
-  if (/^image\s+\d+\s+position$/.test(normalized)) return true;
-  if (/^image_\d+_position$/.test(normalized)) return true;
-  if (normalized === 'image alt' || normalized === 'image_alt') return true;
-  if (normalized === 'image alt text' || normalized === 'image_alt_text') return true;
-  if (/^image\s+alt\s+\d+$/.test(normalized)) return true;
-  if (/^image_alt_\d+$/.test(normalized)) return true;
-  if (/^image\s+alt\s+text\s+\d+$/.test(normalized)) return true;
-  if (/^image_alt_text_\d+$/.test(normalized)) return true;
-  if (/^image\s+\d+\s+alt$/.test(normalized)) return true;
-  if (/^image_\d+_alt$/.test(normalized)) return true;
-  if (/^image\s+\d+\s+alt\s+text$/.test(normalized)) return true;
-  if (/^image_\d+_alt_text$/.test(normalized)) return true;
-  return false;
-}
-
 export function isHiddenApprovalField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'shopify rest product id'
@@ -145,8 +123,7 @@ export function isHiddenApprovalField(fieldName: string): boolean {
     || normalized === 'shopify rest published at'
     || normalized === 'shopify published at'
     || normalized === 'shopify rest published scope'
-    || normalized === 'shopify published scope'
-    || isLegacyShopifySingleImageField(fieldName);
+    || normalized === 'shopify published scope';
 }
 
 export function isShopifyVariantBooleanField(fieldName: string): boolean {

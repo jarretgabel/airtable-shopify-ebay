@@ -13,8 +13,10 @@ const baseUser: AuthUserRecord = {
   email: 'developer@example.com',
   role: 'developer',
   passwordState: {
-    scheme: 'legacy',
-    legacyPassword: 'Developer123!',
+    scheme: 'pbkdf2-sha256',
+    salt: 'test-salt',
+    hash: 'test-hash',
+    iterations: 210000,
   },
   mustChangePassword: false,
   allowedPages: ['dashboard', 'inventory'],
@@ -58,24 +60,10 @@ test('resolveSession uses embedded claims without Airtable for successive auth c
   assert.equal(lookupCount, 0);
 });
 
-test('resolveSession falls back to Airtable for legacy session tokens without embedded claims', async () => {
-  const originalFindById = authServiceDependencies.findAuthUserById;
-  let lookupCount = 0;
-
-  authServiceDependencies.findAuthUserById = async () => {
-    lookupCount += 1;
-    return baseUser;
-  };
-
-  try {
-    const token = issueSessionToken(baseUser.id, baseUser.mustChangePassword);
-    const session = await resolveSession(token);
-
-    assert.equal(session.userId, baseUser.id);
-    assert.equal(session.email, baseUser.email);
-  } finally {
-    authServiceDependencies.findAuthUserById = originalFindById;
-  }
-
-  assert.equal(lookupCount, 1);
+test('resolveSession rejects tokens without embedded claims', async () => {
+  await assert.rejects(async () => {
+    await resolveSession(issueSessionToken(baseUser.id, baseUser.mustChangePassword));
+  }, (error: unknown) => {
+    return error instanceof Error && error.message.includes('Session is invalid.');
+  });
 });

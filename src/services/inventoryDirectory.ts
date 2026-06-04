@@ -6,7 +6,6 @@ import { displayReadableValue, extractReadableValue } from '@/utils/valueDisplay
 
 const INVENTORY_DIRECTORY_LIST_FIELD_NAMES = [
   'SKU',
-  'SKU Legacy Backup',
   'Make',
   'Model',
   'Item Title',
@@ -16,7 +15,7 @@ const INVENTORY_DIRECTORY_LIST_FIELD_NAMES = [
   'Arrival Date',
 ] as const;
 
-const INVENTORY_DIRECTORY_SKU_FIELDS = ['SKU', 'SKU Legacy Backup'] as const;
+const INVENTORY_DIRECTORY_SKU_FIELDS = ['SKU'] as const;
 const INVENTORY_DIRECTORY_MAKE_FIELDS = ['Make'] as const;
 const INVENTORY_DIRECTORY_MODEL_FIELDS = ['Model'] as const;
 const INVENTORY_DIRECTORY_TITLE_FIELDS = ['Item Title'] as const;

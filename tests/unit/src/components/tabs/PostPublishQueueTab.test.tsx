@@ -12,23 +12,20 @@ vi.mock('@/components/tabs/airtable/UsedGearWorkflowPostPublishSection', () => (
   ],
   getPostPublishSectionId: (bucket: string) => `used-gear-post-publish-${bucket}`,
   UsedGearWorkflowPostPublishSection: ({
-    searchTerm,
     sortMode,
     focusedBucket,
-    onSearchTermChange,
     onSortModeChange,
+    sectionSearchEnabled,
   }: {
-    searchTerm?: string;
     sortMode?: string;
     focusedBucket?: string | null;
-    onSearchTermChange?: (value: string) => void;
     onSortModeChange?: (value: 'latest-activity' | 'oldest-activity' | 'sku') => void;
+    sectionSearchEnabled?: boolean;
   }) => (
     <div>
-      <div data-testid="post-publish-search-term">{searchTerm ?? ''}</div>
       <div data-testid="post-publish-sort-mode">{sortMode ?? ''}</div>
       <div data-testid="post-publish-focused-bucket">{focusedBucket ?? ''}</div>
-      <button type="button" onClick={() => onSearchTermChange?.('sold')}>Set Search</button>
+      <div data-testid="post-publish-section-search">{sectionSearchEnabled ? 'enabled' : 'disabled'}</div>
       <button type="button" onClick={() => onSortModeChange?.('sku')}>Set Sort</button>
     </div>
   ),
@@ -42,7 +39,7 @@ function LocationState() {
 describe('PostPublishQueueTab', () => {
   it('hydrates and persists post-publish route state on the standalone page', () => {
     render(
-      <MemoryRouter initialEntries={['/workflow/post-publish?workflowPostPublishSearch=stale&workflowPostPublishSort=oldest-activity&workflowPostPublishBucket=sold-ready#used-gear-post-publish']}>
+      <MemoryRouter initialEntries={['/post-publish?workflowPostPublishSort=oldest-activity&workflowPostPublishBucket=sold-ready#used-gear-post-publish']}>
         <PostPublishQueueTab
           currentUserName="Taylor Reviewer"
           onOpenOperationalRecord={vi.fn()}
@@ -54,14 +51,13 @@ describe('PostPublishQueueTab', () => {
 
     expect(screen.getByRole('heading', { name: 'Post-Publish' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Overview' })).toBeInTheDocument();
-    expect(screen.getByTestId('post-publish-search-term')).toHaveTextContent('stale');
     expect(screen.getByTestId('post-publish-sort-mode')).toHaveTextContent('oldest-activity');
     expect(screen.getByTestId('post-publish-focused-bucket')).toHaveTextContent('sold-ready');
+    expect(screen.getByTestId('post-publish-section-search')).toHaveTextContent('enabled');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Set Search' }));
     fireEvent.click(screen.getByRole('button', { name: 'Set Sort' }));
     fireEvent.click(screen.getByRole('button', { name: 'Sold Ready To Ship' }));
 
-    expect(screen.getByTestId('location-state')).toHaveTextContent('/workflow/post-publish?workflowPostPublishSearch=sold&workflowPostPublishSort=sku&workflowPostPublishBucket=sold-ready#used-gear-post-publish');
+    expect(screen.getByTestId('location-state')).toHaveTextContent('/post-publish?workflowPostPublishSort=sku&workflowPostPublishBucket=sold-ready#used-gear-post-publish');
   });
 });

@@ -576,7 +576,7 @@ Backfill and normalization must follow these rules:
 - Classify each existing row into one of three buckets before writing workflow fields:
 	- `Active Workflow Candidate`
 		- A row that is already part of current intake, processing, listing, or fulfillment work and needs workflow fields to remain operable.
-	- `Likely Legacy Inventory Record`
+	- `Historical Inventory Record`
 		- A row that represents older inventory or historical data that should remain readable but does not need to be forced into the new workflow.
 	- `Needs Manual Review`
 		- A row with incomplete, conflicting, or ambiguous data that cannot be safely normalized automatically.
@@ -589,7 +589,7 @@ Rows classified as `Active Workflow Candidate` may receive only the minimum back
 - `Pick Up ID` only when the physical pickup/arrival grouping is already known or can be reconstructed with high confidence.
 - Required lifecycle or signoff timestamps only when there is an authoritative existing timestamp or event source.
 
-Rows classified as `Likely Legacy Inventory Record` must not be forced through the new workflow. For those rows:
+Rows classified as `Historical Inventory Record` must not be forced through the new workflow. For those rows:
 
 - Preserve existing values as-is.
 - Leave new workflow fields blank unless a field is required for harmless read-only filtering or reporting.
@@ -612,6 +612,6 @@ Operational notes:
 
 - Prefer additive backfill over destructive normalization.
 - Preserve original data whenever a workflow field cannot be inferred safely.
-- It is acceptable for some legacy rows to remain partially unnormalized if that is safer than inventing workflow history.
+- It is acceptable for some historical rows to remain partially unnormalized if that is safer than inventing workflow history.
 - The purpose of backfill is to make active work operable, not to rewrite the historical truth of the table.
 

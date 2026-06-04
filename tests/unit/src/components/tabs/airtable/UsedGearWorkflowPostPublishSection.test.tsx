@@ -194,6 +194,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
 
   it('removes the open-operational button and keeps listing approval actions for listing buckets', async () => {
     const onOpenListingsRecord = vi.fn();
+    const onOpenOperationalRecord = vi.fn();
 
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {
@@ -213,7 +214,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     render(
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
-        onOpenOperationalRecord={vi.fn()}
+        onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={onOpenListingsRecord}
       />,
     );
@@ -222,8 +223,10 @@ describe('UsedGearWorkflowPostPublishSection', () => {
 
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Listings Approval' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Workflow Snapshot' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Sold-Ready View' }));
 
+    expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-stale');
     expect(onOpenListingsRecord).toHaveBeenCalledWith('rec-stale');
   });
 
@@ -276,13 +279,13 @@ describe('UsedGearWorkflowPostPublishSection', () => {
 
     await screen.findByText('ACT-1');
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Mark Sold Ready' })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Sold Ready' })[0]!);
     await waitFor(() => {
       expect(markWorkflowSoldReadyToShipMock).toHaveBeenCalledWith('rec-active');
     });
   });
 
-  it('supports shipped reconciliation from row actions', async () => {
+  it('hides shipped reconciliation actions in the sold-ready directory', async () => {
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {
         id: 'rec-sold',
@@ -296,19 +299,6 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         },
       },
     ]);
-    markWorkflowShippedMock.mockResolvedValue({
-      id: 'rec-sold',
-      createdTime: '2026-05-07T00:00:00.000Z',
-      fields: {
-        SKU: 'SOLD-1',
-        Make: 'Pioneer',
-        Model: 'SX-1250',
-        'Workflow Status': 'Shipped',
-        'Sold Ready To Ship At': '2026-05-08T05:00:00.000Z',
-        'Shipped At': '2026-05-09T07:00:00.000Z',
-      },
-    });
-
     render(
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
@@ -317,11 +307,8 @@ describe('UsedGearWorkflowPostPublishSection', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Mark Shipped' }));
-
-    await waitFor(() => {
-      expect(markWorkflowShippedMock).toHaveBeenCalledWith('rec-sold');
-    });
+    await screen.findByText('SOLD-1');
+    expect(screen.queryByRole('button', { name: 'Shipped' })).not.toBeInTheDocument();
   });
 
   it('shows post-sale chips and hides outcome action buttons when outcome is already recorded', async () => {
@@ -361,10 +348,10 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     expect(await screen.findByText('Outcome: Refunded')).toBeInTheDocument();
     expect(screen.getByText(/Refund: \$19\.99/)).toBeInTheDocument();
     // outcome already set — outcome action buttons must be hidden
-    expect(screen.queryByRole('button', { name: 'Mark Cancelled' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Mark Partial Refund' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Mark Refunded' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Mark Return Received' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cancelled' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Partial Refund' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Refunded' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Return Received' })).not.toBeInTheDocument();
     // workflow snapshot always available
     expect(screen.getByRole('button', { name: 'Open Workflow Snapshot' })).toBeInTheDocument();
   });
@@ -401,13 +388,13 @@ describe('UsedGearWorkflowPostPublishSection', () => {
 
     await screen.findByText('SHIP-2');
 
-    expect(screen.getByRole('button', { name: 'Mark Cancelled' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mark Partial Refund' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mark Refunded' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mark Return Received' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancelled' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Partial Refund' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Refunded' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Return Received' })).toBeInTheDocument();
   });
 
-  it('supports partial-refund reconciliation from row actions', async () => {
+  it('hides refund actions in the sold-ready directory', async () => {
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {
         id: 'rec-sold',
@@ -421,20 +408,6 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         },
       },
     ]);
-    markWorkflowPartialRefundMock.mockResolvedValue({
-      id: 'rec-sold',
-      createdTime: '2026-05-07T00:00:00.000Z',
-      fields: {
-        SKU: 'SOLD-2',
-        Make: 'Accuphase',
-        Model: 'E-202',
-        'Workflow Status': 'Sold - Ready to Ship',
-        'Sold Ready To Ship At': '2026-05-08T05:00:00.000Z',
-        'Post-Sale Outcome': 'Partial Refund',
-        'Post-Sale Outcome At': '2026-05-09T07:00:00.000Z',
-      },
-    });
-
     render(
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
@@ -443,11 +416,9 @@ describe('UsedGearWorkflowPostPublishSection', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Mark Partial Refund' }));
-
-    await waitFor(() => {
-      expect(markWorkflowPartialRefundMock).toHaveBeenCalledWith('rec-sold');
-    });
+    await screen.findByText('SOLD-2');
+    expect(screen.queryByRole('button', { name: 'Partial Refund' })).not.toBeInTheDocument();
+    expect(markWorkflowPartialRefundMock).not.toHaveBeenCalled();
   });
 
   it('shows last touched as a plain timestamp without action copy', async () => {

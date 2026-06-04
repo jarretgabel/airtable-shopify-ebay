@@ -183,7 +183,7 @@ describe('photosForm', () => {
       throw new Error('inventory fallback should not be used in this test');
     });
 
-    const result = await loadPhotosFormValues('recPhotosLegacy');
+    const result = await loadPhotosFormValues('recPhotosSample');
 
     expect(result.stageContext.existingAttachments).toEqual([
       { id: 'att-photo', url: 'https://example.com/photo.jpg', filename: 'photo.jpg' },

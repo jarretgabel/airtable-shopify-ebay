@@ -61,7 +61,6 @@ const USED_GEAR_WORKFLOW_RECORD_FIELDS = [
   'Workflow Owner',
   'Workflow Owner Assigned At',
   // Intake
-  'Pick Up #',
   'Acquired From',
   'Cost',
   'Component Type',

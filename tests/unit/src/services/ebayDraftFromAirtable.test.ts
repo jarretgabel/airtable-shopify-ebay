@@ -10,9 +10,21 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       'eBay Inventory Product MPN': 'MA8900',
       'eBay Inventory Condition': 'USED_EXCELLENT',
       'eBay Inventory Ship To Location Quantity': '2',
-      ebay_inventory_product_imageurls_json: JSON.stringify([
-        { src: 'https://cdn.example.com/1.jpg', alt: 'ignored for eBay API' },
-        { src: 'https://cdn.example.com/2.jpg' },
+      'Workflow Image Metadata JSON': JSON.stringify([
+        {
+          attachmentId: 'att-1',
+          url: 'https://cdn.example.com/1.jpg',
+          filename: '1.jpg',
+          sourceStage: 'photos',
+          includedInListing: true,
+        },
+        {
+          attachmentId: 'att-2',
+          url: 'https://cdn.example.com/2.jpg',
+          filename: '2.jpg',
+          sourceStage: 'photos',
+          includedInListing: true,
+        },
       ]),
       'eBay Offer Marketplace ID': 'EBAY_US',
       'eBay Offer Format': 'FIXED_PRICE',
@@ -58,20 +70,6 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       },
       quantityLimitPerBuyer: 1,
       includeCatalogProductDetails: false,
-    });
-  });
-
-  it('parses comma-separated image urls when JSON is not provided', () => {
-    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
-      'eBay Inventory SKU': 'EBAY-SKU-2',
-      'Image URLs': 'https://cdn.example.com/a.jpg, https://cdn.example.com/b.jpg',
-    });
-
-    expect(payload.inventoryItem).toMatchObject({
-      sku: 'EBAY-SKU-2',
-      product: {
-        imageUrls: ['https://cdn.example.com/a.jpg', 'https://cdn.example.com/b.jpg'],
-      },
     });
   });
 
@@ -123,25 +121,9 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     });
   });
 
-  it('maps shared Images column into eBay inventory imageUrls', () => {
-    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
-      'eBay Inventory SKU': 'EBAY-SKU-IMAGES',
-      Images: 'https://cdn.example.com/c.jpg, https://cdn.example.com/d.jpg',
-      'Images Alt Text': 'Front view, Back view',
-    });
-
-    expect(payload.inventoryItem).toMatchObject({
-      sku: 'EBAY-SKU-IMAGES',
-      product: {
-        imageUrls: ['https://cdn.example.com/c.jpg', 'https://cdn.example.com/d.jpg'],
-      },
-    });
-  });
-
-  it('prefers workflow image metadata over legacy listing image columns', () => {
+  it('uses workflow image metadata for eBay image urls', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-WORKFLOW-META',
-      Images: 'https://cdn.example.com/legacy.jpg',
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-2',
@@ -175,7 +157,6 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
   it('excludes workflow metadata rows that are not marked for listing inclusion', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-WORKFLOW-INCLUSION',
-      Images: 'https://cdn.example.com/legacy.jpg',
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-photos',

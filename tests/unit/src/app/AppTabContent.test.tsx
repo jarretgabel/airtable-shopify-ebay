@@ -79,6 +79,10 @@ vi.mock('@/components/approval/ShopifySnapshotRecordPage', () => ({
   ShopifySnapshotRecordPage: () => <div>Shopify snapshot record page</div>,
 }));
 
+vi.mock('@/components/approval/ListingApprovalSoldReadyRecordPage', () => ({
+  ListingApprovalSoldReadyRecordPage: () => <div>Sold-ready record page</div>,
+}));
+
 vi.mock('@/components/tabs/JotformTab', () => ({
   JotformTab: () => <div>JotForm content</div>,
 }));
@@ -162,6 +166,7 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     inventoryRecordId: null,
     inventoryPriceEditorRecordId: null,
     listingsRecordId: null,
+    soldReadyListingsRecordId: null,
     shopifyListingsRecordId: null,
     ebayListingsRecordId: null,
     userRecordId: null,
@@ -178,6 +183,7 @@ function buildProps(overrides: Partial<AppTabContentProps> = {}): AppTabContentP
     navigateToTestingForm: vi.fn(),
     navigateToPhotosForm: vi.fn(),
     navigateToListingsRecord: vi.fn(),
+    navigateToSoldReadyListingRecord: vi.fn(),
     navigateToListingsList: vi.fn(),
     navigateToShopifyRecord: vi.fn(),
     navigateToShopifyList: vi.fn(),

@@ -4,7 +4,7 @@ This runbook operationalizes the approved backfill and normalization strategy fo
 
 ## Purpose
 - Convert the approved backfill approach into an execution checklist.
-- Minimize risk while normalizing legacy rows into the approved workflow statuses.
+- Minimize risk while normalizing historical rows into the approved workflow statuses.
 - Keep current operations running while the data model is adopted.
 
 ## Inputs
@@ -123,7 +123,7 @@ Rows should be moved to manual review when any of these are true:
 
 Recommended manual-review output per row:
 - record id
-- current legacy cues
+- current historical cues
 - proposed normalized status
 - reason the row needs review
 - operator decision
@@ -202,7 +202,5 @@ Artifacts are written under a new apply run directory:
 ## References
 - `docs/used-gear-workflow/data-model-and-approvals.md`
 - `docs/used-gear-workflow/schema-update-approval-guide.md`
-- `docs/used-gear-workflow/history/stale-listing-recovery-design.md` (historical reference)
-- `docs/used-gear-workflow/history/phase-1-foundation.md` (historical reference)
 - `src/services/usedGearWorkflow.ts`
 - `src/services/usedGearQueue.ts`

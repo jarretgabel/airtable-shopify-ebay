@@ -30,6 +30,7 @@ interface AppNavigationHandlers {
     options?: { replace?: boolean },
   ) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
+  navigateToSoldReadyListingRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsList: (replace?: boolean) => void;
   navigateToShopifyRecord: (recordId: string, replace?: boolean) => void;
   navigateToShopifyList: (replace?: boolean) => void;
@@ -182,13 +183,18 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     scrollToPageTop();
   }, [navigate]);
 
+  const navigateToSoldReadyListingRecord = useCallback((recordId: string, replace = false): void => {
+    navigate(`/sold-ready/${encodeURIComponent(recordId)}`, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
   const navigateToListingsList = useCallback((replace = false): void => {
     navigate(TAB_PATHS.listings, { replace });
     scrollToPageTop();
   }, [navigate]);
 
   const navigateToShopifyRecord = useCallback((recordId: string, replace = false): void => {
-    navigate(`/shopify/products/${encodeURIComponent(recordId)}`, { replace });
+    navigate(`/shopify/${encodeURIComponent(recordId)}`, { replace });
     scrollToPageTop();
   }, [navigate]);
 
@@ -198,7 +204,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
   }, [navigate]);
 
   const navigateToEbayRecord = useCallback((recordId: string, replace = false): void => {
-    navigate(`/ebay/listings/${encodeURIComponent(recordId)}`, { replace });
+    navigate(`/ebay/${encodeURIComponent(recordId)}`, { replace });
     scrollToPageTop();
   }, [navigate]);
 
@@ -239,6 +245,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     navigateToInventoryWorkflowView,
     navigateToInventoryPostPublishBucket,
     navigateToListingsRecord,
+    navigateToSoldReadyListingRecord,
     navigateToListingsList,
     navigateToShopifyRecord,
     navigateToShopifyList,

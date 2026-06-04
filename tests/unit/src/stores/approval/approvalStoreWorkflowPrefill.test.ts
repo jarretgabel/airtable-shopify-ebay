@@ -95,9 +95,9 @@ describe('applyWorkflowListingPrefills', () => {
 
   it('overrides existing listing details and testing notes when testing-form source fields are present', () => {
     const values = {
-      'Key Features': 'Legacy,Manual listing copy',
-      'Testing Notes': 'Legacy listing notes',
-      'eBay Body Key Features JSON': JSON.stringify([{ feature: 'Legacy', value: 'Manual listing copy' }]),
+      'Key Features': 'Preset,Manual listing copy',
+      'Testing Notes': 'Preset listing notes',
+      'eBay Body Key Features JSON': JSON.stringify([{ feature: 'Preset', value: 'Manual listing copy' }]),
     };
     const kinds = {
       'Key Features': 'text',
@@ -115,7 +115,7 @@ describe('applyWorkflowListingPrefills', () => {
       'Testing Notes': 'Passed extended bench and listening tests.',
     }, values, { ...kinds });
 
-    expect(values['Key Features']).toBe('Legacy,Manual listing copy');
+    expect(values['Key Features']).toBe('Preset,Manual listing copy');
     expect(values['Testing Notes']).toBe('Passed extended bench and listening tests.');
     expect(values['eBay Body Key Features JSON']).toBe(JSON.stringify([
       { feature: 'Make', value: 'Marantz' },

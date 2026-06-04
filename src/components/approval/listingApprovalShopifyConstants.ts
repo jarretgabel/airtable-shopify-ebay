@@ -51,23 +51,6 @@ export const CONDITION_FIELD_CANDIDATES = [
   'item_condition',
 ] as const;
 
-export const SHOPIFY_IMAGE_LIST_FIELD_CANDIDATES = [
-  'Shopify REST Images JSON',
-  'shopify_rest_images_json',
-  'Shopify Images JSON',
-  'shopify_images_json',
-  'Shopify REST Images',
-  'shopify_rest_images',
-  'Images',
-  'images',
-  'Image URL',
-  'Image URLs',
-  'Image-URL',
-  'Image-URLs',
-  'image_url',
-  'image_urls',
-] as const;
-
 export const SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES = [
   'Shopify Body Description',
   'Shopify REST Body Description',

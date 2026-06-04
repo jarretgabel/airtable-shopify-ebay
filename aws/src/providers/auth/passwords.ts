@@ -16,8 +16,7 @@ interface StoredPasswordPayload {
 
 export interface StoredPasswordState {
   mustChangePassword?: boolean;
-  legacyPassword?: string;
-  scheme: 'legacy' | typeof PASSWORD_HASH_SCHEME;
+  scheme: typeof PASSWORD_HASH_SCHEME;
   iterations?: number;
   salt?: string;
   hash?: string;
@@ -46,8 +45,7 @@ export function parseStoredPasswordField(value: unknown): StoredPasswordState {
   const decoded = decodeBase64(typeof value === 'string' ? value : '');
   if (!decoded.startsWith(PASSWORD_FIELD_PAYLOAD_PREFIX)) {
     return {
-      legacyPassword: decoded,
-      scheme: 'legacy',
+      scheme: PASSWORD_HASH_SCHEME,
     };
   }
 
@@ -66,21 +64,12 @@ export function parseStoredPasswordField(value: unknown): StoredPasswordState {
         mustChangePassword: typeof parsed.mustChangePassword === 'boolean' ? parsed.mustChangePassword : undefined,
       };
     }
-
-    if (typeof parsed.password === 'string') {
-      return {
-        legacyPassword: parsed.password,
-        scheme: 'legacy',
-        mustChangePassword: typeof parsed.mustChangePassword === 'boolean' ? parsed.mustChangePassword : undefined,
-      };
-    }
   } catch {
-    // Fall through to legacy parsing below.
+    // Fall through to default parsing below.
   }
 
   return {
-    legacyPassword: decoded,
-    scheme: 'legacy',
+    scheme: PASSWORD_HASH_SCHEME,
   };
 }
 
@@ -98,10 +87,6 @@ export function serializePasswordField(password: string, mustChangePassword: boo
 }
 
 export function verifyStoredPassword(candidatePassword: string, state: StoredPasswordState): boolean {
-  if (state.scheme === 'legacy') {
-    return state.legacyPassword === candidatePassword;
-  }
-
   const expectedHash = state.hash;
   const salt = state.salt;
   const iterations = state.iterations ?? PASSWORD_HASH_ITERATIONS;
@@ -120,5 +105,5 @@ export function verifyStoredPassword(candidatePassword: string, state: StoredPas
 }
 
 export function needsPasswordUpgrade(state: StoredPasswordState): boolean {
-  return state.scheme === 'legacy';
+  return !state.hash || !state.salt;
 }

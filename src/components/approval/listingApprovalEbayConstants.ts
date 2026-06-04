@@ -2,24 +2,6 @@ import ebayListingInsertTemplate from '@/templates/ebay/ebay-listing-insert.html
 import ebayListingImpactSlateTemplate from '@/templates/ebay/ebay-listing-impact-slate.html?raw';
 import ebayListingImpactLuxeTemplate from '@/templates/ebay/ebay-listing-impact-luxe.html?raw';
 
-export const EBAY_IMAGE_LIST_FIELD_CANDIDATES = [
-  'eBay Inventory Product Image URLs JSON',
-  'eBay Inventory Product ImageURLs JSON',
-  'ebay_inventory_product_imageurls_json',
-  'Shopify REST Images JSON',
-  'shopify_rest_images_json',
-  'Shopify Images JSON',
-  'shopify_images_json',
-  'Images',
-  'images',
-  'Image URL',
-  'Image URLs',
-  'Image-URL',
-  'Image-URLs',
-  'image_url',
-  'image_urls',
-] as const;
-
 export const EBAY_TITLE_FIELD_CANDIDATES = [
   'eBay Inventory Product Title',
   'Item Title',
@@ -221,7 +203,7 @@ export function normalizeEbayListingTemplateId(value: string): EbayListingTempla
   const normalized = value.trim().toLowerCase();
   if (!normalized) return 'classic';
 
-  if (normalized === 'classic' || normalized.includes('insert') || normalized.includes('legacy') || normalized.includes('heritage')) {
+  if (normalized === 'classic' || normalized.includes('insert') || normalized.includes('heritage')) {
     return 'classic';
   }
 

@@ -181,12 +181,12 @@ describe('authContextHelpers', () => {
   });
 
   it('adds the workflow guide for existing users whose stored role bundle predates the page', () => {
-    const legacyTester = {
+    const existingTester = {
       ...baseUsers[3],
       allowedPages: ['dashboard', 'testing-queue', 'testing'] as AppPage[],
     };
 
-    expect(getAccessiblePages(legacyTester)).toEqual([
+    expect(getAccessiblePages(existingTester)).toEqual([
       'dashboard',
       'workflow-guide',
       'testing-queue',

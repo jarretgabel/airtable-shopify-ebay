@@ -72,10 +72,12 @@ export function resolveUsedGearOperationalPath(recordId: string, fields: Record<
     || status === 'Listed, eBay'
     || status === 'Stale Listing, Shopify'
     || status === 'Stale Listing, eBay'
-    || status === 'Sold - Ready to Ship'
-    || status === 'Shipped'
   ) {
     return `/listings/${encodedRecordId}`;
+  }
+
+  if (status === 'Sold - Ready to Ship' || status === 'Shipped') {
+    return `/sold-ready/${encodedRecordId}`;
   }
 
   return `/workflow-hub/${encodedRecordId}`;

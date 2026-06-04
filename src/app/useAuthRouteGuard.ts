@@ -1,7 +1,5 @@
 import { useEffect } from 'react';
 import { Tab, TAB_PATHS, isTab } from './appNavigation';
-import { loadUsedGearOperationalRecord } from '@/services/usedGearQueue';
-import { resolveUsedGearOperationalPath } from '@/services/usedGearOperationalRouting';
 
 interface UseAuthRouteGuardInput {
   authReady: boolean;
@@ -43,52 +41,6 @@ export function useAuthRouteGuard({
       return;
     }
 
-    if (normalizedPath === '/inventory') {
-      navigate('/workflow-hub', { replace: true });
-      return;
-    }
-
-    if (normalizedPath === '/intake') {
-      navigate('/manual-intake', { replace: true });
-      return;
-    }
-
-    if (normalizedPath === '/jotform-feed') {
-      navigate('/jotform-audit', { replace: true });
-      return;
-    }
-
-    const legacyInventoryPriceEditorMatch = normalizedPath.match(/^\/inventory\/price\/([^/]+)$/);
-    if (legacyInventoryPriceEditorMatch) {
-      navigate(`/workflow-hub/price/${legacyInventoryPriceEditorMatch[1]}`, { replace: true });
-      return;
-    }
-
-    const legacyInventoryDetailMatch = normalizedPath.match(/^\/inventory\/(?!price\/|manual-intake\/|workflow\/)([^/]+)$/);
-    if (legacyInventoryDetailMatch) {
-      navigate(`/workflow-hub/${legacyInventoryDetailMatch[1]}`, { replace: true });
-      return;
-    }
-
-    const legacyIntakeDetailMatch = normalizedPath.match(/^\/intake\/([^/]+)$/);
-    if (legacyIntakeDetailMatch) {
-      navigate(`/manual-intake/${legacyIntakeDetailMatch[1]}`, { replace: true });
-      return;
-    }
-
-    const legacyPendingReviewRecordMatch = normalizedPath.match(/^\/parking-lot\/review-record\/([^/]+)$/);
-    if (legacyPendingReviewRecordMatch) {
-      const recordId = legacyPendingReviewRecordMatch[1];
-      void loadUsedGearOperationalRecord(recordId)
-        .then((record) => {
-          navigate(resolveUsedGearOperationalPath(recordId, record.fields), { replace: true });
-        })
-        .catch(() => {
-          navigate(`/parking-lot/${recordId}`, { replace: true });
-        });
-      return;
-    }
-
     const isKnownTabPath = isTab(normalizedPath.slice(1));
     const isJotformReviewRecordPath = /^\/parking-lot\/(?!group\/|arrival\/|review\/)[^/]+$/.test(normalizedPath);
     const isParkingLotArrivalRecordPath = /^\/parking-lot\/arrival\/[^/]+$/.test(normalizedPath);
@@ -97,7 +49,6 @@ export function useAuthRouteGuard({
     const isTrashReviewRecordPath = /^\/trash-review\/review\/[^/]+$/.test(normalizedPath);
     const isCreateIntakeItemPath = normalizedPath === '/create-intake-item';
     const isManualIntakeDetailPath = /^\/manual-intake\/[^/]+$/.test(normalizedPath);
-    const isIntakeDetailPath = /^\/intake\/[^/]+$/.test(normalizedPath);
     const isJotformAuditPath = normalizedPath === '/jotform-audit';
     const isJotformDirectoryPath = normalizedPath === '/jotform';
     const isJotformDirectoryDetailPath = /^\/jotform\/[^/]+$/.test(normalizedPath);
@@ -107,8 +58,9 @@ export function useAuthRouteGuard({
     const isInventoryManualIntakePath = normalizedPath === '/manual-intake';
     const isInventoryDetailPath = /^\/workflow-hub\/[^/]+$/.test(normalizedPath);
     const isListingsDetailPath = /^\/listings\/[^/]+$/.test(normalizedPath);
-    const isEbayListingsDetailPath = /^\/ebay\/listings\/[^/]+$/.test(normalizedPath);
-    const isShopifyProductsDetailPath = /^\/shopify\/products\/[^/]+$/.test(normalizedPath);
+    const isSoldReadyListingsDetailPath = /^\/sold-ready\/[^/]+$/.test(normalizedPath);
+    const isEbayListingsDetailPath = /^\/ebay\/(?!listings$)[^/]+$/.test(normalizedPath);
+    const isShopifyProductsDetailPath = /^\/shopify\/(?!products$)[^/]+$/.test(normalizedPath);
     const isUserDetailPath = /^\/account\/users\/[^/]+$/.test(normalizedPath);
     const isKnownSubPath =
       normalizedPath === '/workflow-hub' ||
@@ -116,16 +68,16 @@ export function useAuthRouteGuard({
       isInventoryManualIntakePath ||
       isCreateIntakeItemPath ||
       isManualIntakeDetailPath ||
-      isIntakeDetailPath ||
       isJotformAuditPath ||
       isJotformDirectoryPath ||
       isJotformDirectoryDetailPath ||
       isInventoryDetailPath ||
       normalizedPath === '/listings' ||
       isListingsDetailPath ||
-      normalizedPath === '/workflow/post-publish' ||
-      normalizedPath === '/workflow/archive' ||
-      normalizedPath === '/ebay/listings' ||
+      isSoldReadyListingsDetailPath ||
+      normalizedPath === '/post-publish' ||
+      normalizedPath === '/completed-shipments' ||
+      normalizedPath === '/ebay' ||
       isEbayListingsDetailPath ||
       normalizedPath === '/trash-review' ||
       isTrashReviewGroupPath ||
@@ -141,7 +93,7 @@ export function useAuthRouteGuard({
       isTestingDetailPath ||
       normalizedPath === '/photography' ||
       isPhotosDetailPath ||
-      normalizedPath === '/shopify/products' ||
+      normalizedPath === '/shopify' ||
       isShopifyProductsDetailPath ||
       normalizedPath === '/account/settings' ||
       normalizedPath === '/account/notifications' ||
@@ -155,15 +107,15 @@ export function useAuthRouteGuard({
     }
 
     const requestedTab: Tab | null =
-      normalizedPath === '/listings' || isListingsDetailPath
+        normalizedPath === '/listings' || isListingsDetailPath || isSoldReadyListingsDetailPath
           ? 'listings'
-        : normalizedPath === '/workflow/post-publish'
+        : normalizedPath === '/post-publish'
           ? 'post-publish'
-        : normalizedPath === '/workflow/archive'
+        : normalizedPath === '/completed-shipments'
           ? 'archive'
-        : normalizedPath === '/ebay/listings' || isEbayListingsDetailPath
+        : normalizedPath === '/ebay' || isEbayListingsDetailPath
             ? 'ebay'
-            : normalizedPath === '/shopify/products' || isShopifyProductsDetailPath
+            : normalizedPath === '/shopify' || isShopifyProductsDetailPath
               ? 'shopify'
                 : normalizedPath === '/trash-review' || isTrashReviewGroupPath || isTrashReviewRecordPath
                   ? 'trash-review'
@@ -178,8 +130,6 @@ export function useAuthRouteGuard({
               : isCreateIntakeItemPath
                 ? 'create-intake-item'
               : isManualIntakeDetailPath
-                ? 'manual-intake'
-              : isIntakeDetailPath
                 ? 'manual-intake'
               : isJotformAuditPath
                 ? 'jotform-audit'

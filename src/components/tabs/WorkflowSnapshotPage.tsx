@@ -280,7 +280,7 @@ export function WorkflowSnapshotPage({
                       ? `${context.group.label} (${context.group.records.length} row${context.group.records.length === 1 ? '' : 's'})`
                       : 'Single record',
                   },
-                  { label: 'Pick Up #', value: record.fields['Pick Up #'] },
+                  { label: 'Pick Up ID', value: record.fields['Pick Up ID'] },
                   { label: 'Arrival Date', value: record.fields['Arrival Date'] },
                   { label: 'Acquired From', value: record.fields['Acquired From'] },
                   { label: 'Seller Email', value: record.fields['Seller Email'] },

@@ -86,10 +86,6 @@ function getSessionTokenClaims(sessionToken: string): SessionTokenClaims {
   };
 }
 
-function hasEmbeddedSessionClaims(payload: SessionTokenClaims): boolean {
-  return Boolean(payload.airtableRecordId && payload.name && payload.email && payload.allowedPages.length > 0);
-}
-
 function buildResetLink(origin: string, token: string): string {
   return `${origin.replace(/\/+$/, '')}/reset-password?token=${encodeURIComponent(token)}`;
 }
@@ -154,20 +150,7 @@ export async function login(email: string, password: string): Promise<AuthLoginR
 
 export async function resolveSession(sessionToken: string): Promise<AuthSessionResult> {
   const payload = getSessionTokenClaims(sessionToken);
-  if (hasEmbeddedSessionClaims(payload)) {
-    return {
-      userId: payload.userId,
-      airtableRecordId: payload.airtableRecordId,
-      name: payload.name,
-      email: payload.email,
-      mustChangePassword: payload.mustChangePassword,
-      role: payload.role,
-      allowedPages: payload.allowedPages,
-    };
-  }
-
-  const user = await authServiceDependencies.findAuthUserById(payload.userId);
-  if (!user) {
+  if (!payload.airtableRecordId || !payload.name || !payload.email || payload.allowedPages.length === 0) {
     throw new HttpError(401, 'Session is invalid.', {
       service: 'auth',
       code: 'AUTH_SESSION_INVALID',
@@ -177,9 +160,9 @@ export async function resolveSession(sessionToken: string): Promise<AuthSessionR
 
   return {
     userId: payload.userId,
-    airtableRecordId: user.airtableRecordId,
-    name: user.name,
-    email: user.email,
+    airtableRecordId: payload.airtableRecordId,
+    name: payload.name,
+    email: payload.email,
     mustChangePassword: payload.mustChangePassword,
     role: payload.role,
     allowedPages: payload.allowedPages,

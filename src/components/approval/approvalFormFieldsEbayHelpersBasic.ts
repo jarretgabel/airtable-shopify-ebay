@@ -8,7 +8,7 @@ export function normalizeEbayListingTemplateId(value: string): EbayListingTempla
   const normalized = value.trim().toLowerCase();
   if (!normalized) return DEFAULT_EBAY_LISTING_TEMPLATE_ID;
 
-  if (normalized === 'classic' || normalized.includes('insert') || normalized.includes('legacy') || normalized.includes('heritage')) {
+  if (normalized === 'classic' || normalized.includes('insert') || normalized.includes('heritage')) {
     return 'classic';
   }
 

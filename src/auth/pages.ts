@@ -43,9 +43,9 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   'jotform-audit': { label: 'JotForm Audit', path: '/jotform-audit' },
   inventory: { label: 'Workflow Hub', path: '/workflow-hub' },
   listings: { label: 'Listings', path: '/listings' },
-  'post-publish': { label: 'Post-Publish', path: '/workflow/post-publish' },
-  archive: { label: 'Completed Shipments', path: '/workflow/archive' },
-  shopify: { label: 'Shopify Products', path: '/shopify/products' },
+  'post-publish': { label: 'Post-Publish', path: '/post-publish' },
+  archive: { label: 'Completed Shipments', path: '/completed-shipments' },
+  shopify: { label: 'Shopify Products', path: '/shopify' },
   market: { label: 'Market Prices', path: '/market' },
   'parking-lot': { label: 'Parking Lot', path: '/parking-lot' },
   'trash-review': { label: 'Trash Review', path: '/trash-review' },
@@ -56,7 +56,7 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   settings: { label: 'Settings', path: '/account/settings' },
   notifications: { label: 'Notifications', path: '/account/notifications' },
   imagelab: { label: 'Image Lab', path: '/imagelab' },
-  ebay: { label: 'eBay', path: '/ebay/listings' },
+  ebay: { label: 'eBay', path: '/ebay' },
   users: { label: 'User Management', path: '/account/users', adminOnly: true },
 };
 

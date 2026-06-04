@@ -47,7 +47,7 @@ export function getUsedGearRecordItemTitle(
     componentType: readFieldValue(fields, 'Component Type'),
     serialNumber: readFieldValue(fields, 'Serial Number'),
     jotFormSubmissionId: readFieldValue(fields, 'JotForm Submission ID'),
-    pickUpId: readFieldValue(fields, 'Pick Up ID') || readFieldValue(fields, 'Pick Up #'),
+    pickUpId: readFieldValue(fields, 'Pick Up ID'),
     submissionGroupId: readFieldValue(fields, 'Submission Group ID'),
     recordId,
   });

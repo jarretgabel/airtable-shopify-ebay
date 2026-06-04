@@ -23,6 +23,7 @@ const NotificationsTab = lazy(async () => ({ default: (await import('@/component
 const SettingsTab = lazy(async () => ({ default: (await import('@/components/SettingsTab')).SettingsTab }));
 const ShopifySnapshotRecordPage = lazy(async () => ({ default: (await import('@/components/approval/ShopifySnapshotRecordPage')).ShopifySnapshotRecordPage }));
 const ShopifyListingsDirectoryTab = lazy(async () => ({ default: (await import('@/components/approval/ShopifyListingsDirectoryTab')).ShopifyListingsDirectoryTab }));
+const ListingApprovalSoldReadyRecordPage = lazy(async () => ({ default: (await import('@/components/approval/ListingApprovalSoldReadyRecordPage')).ListingApprovalSoldReadyRecordPage }));
 const UserManagementTab = lazy(async () => ({ default: (await import('@/components/UserManagementTab')).UserManagementTab }));
 const AirtableTab = lazy(async () => ({ default: (await import('@/components/tabs/AirtableTab')).AirtableTab }));
 const WorkflowSnapshotPage = lazy(async () => ({ default: (await import('@/components/tabs/WorkflowSnapshotPage')).WorkflowSnapshotPage }));
@@ -250,6 +251,7 @@ export function AppTabContent({
   inventoryRecordId,
   inventoryPriceEditorRecordId,
   listingsRecordId,
+  soldReadyListingsRecordId,
   shopifyListingsRecordId,
   ebayListingsRecordId,
   userRecordId,
@@ -265,6 +267,7 @@ export function AppTabContent({
   navigateToTestingForm,
   navigateToPhotosForm,
   navigateToListingsRecord,
+  navigateToSoldReadyListingRecord,
   navigateToListingsList,
   navigateToShopifyList,
   navigateToShopifyRecord,
@@ -356,6 +359,7 @@ export function AppTabContent({
     inventoryRecordId,
     inventoryPriceEditorRecordId,
     listingsRecordId,
+    soldReadyListingsRecordId,
     shopifyListingsRecordId,
     ebayListingsRecordId,
     userRecordId,
@@ -374,6 +378,7 @@ export function AppTabContent({
     || deferredRouteState.inventoryRecordId !== inventoryRecordId
     || deferredRouteState.inventoryPriceEditorRecordId !== inventoryPriceEditorRecordId
     || deferredRouteState.listingsRecordId !== listingsRecordId
+    || deferredRouteState.soldReadyListingsRecordId !== soldReadyListingsRecordId
     || deferredRouteState.shopifyListingsRecordId !== shopifyListingsRecordId
     || deferredRouteState.ebayListingsRecordId !== ebayListingsRecordId
     || deferredRouteState.userRecordId !== userRecordId;
@@ -509,6 +514,15 @@ export function AppTabContent({
         if (!runtimeFeatures.approvalCombined.available && runtimeFeatures.approvalCombined.message) {
           return <FeatureUnavailableTab title="Combined listings unavailable" message={runtimeFeatures.approvalCombined.message} />;
         }
+        if (deferredRouteState.soldReadyListingsRecordId) {
+          return (
+            <ListingApprovalSoldReadyRecordPage
+              recordId={deferredRouteState.soldReadyListingsRecordId}
+              onBackToPostPublish={() => navigateToTab('post-publish')}
+              onOpenWorkflowSnapshot={(recordId) => navigateToInventoryRecord(recordId)}
+            />
+          );
+        }
         return <CombinedListingsApprovalTab viewModel={listingsViewModel} />;
       case 'ebay':
         if (deferredRouteState.ebayListingsRecordId) {
@@ -580,7 +594,7 @@ export function AppTabContent({
           <PostPublishQueueTab
             currentUserName={currentUserName}
             onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
-            onOpenListingsRecord={(recordId) => navigateToListingsRecord(recordId)}
+            onOpenListingsRecord={(recordId) => navigateToSoldReadyListingRecord(recordId)}
           />
         );
       case 'archive':

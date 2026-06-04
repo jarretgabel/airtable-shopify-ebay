@@ -30,7 +30,7 @@ export interface JotFormForm {
   last_submission: string | null;
   new: number;          // unread submission count
   count: number;        // total submission count
-  type: 'LEGACY' | 'CARD';
+  type: 'CARD';
   favorite: '0' | '1';
   archived: '0' | '1';
   url: string;

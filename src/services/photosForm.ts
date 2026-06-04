@@ -35,7 +35,6 @@ const DEFAULT_STATUS = "Photo'd";
 const WORKFLOW_IMAGE_METADATA_FIELD_NAME = 'Workflow Image Metadata JSON';
 const WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME = 'Images';
 const TESTING_COSMETIC_NOTES_FIELD_NAME = 'Testing Cosmetic Notes';
-const LEGACY_TESTING_COSMETIC_NOTES_FIELD_NAME = 'Cosmetic Condition Notes';
 const PHOTOGRAPHY_COSMETIC_NOTES_FIELD_NAME = 'Photography Cosmetic Notes';
 
 const OPTION_FIELD_NAMES = [
@@ -381,7 +380,7 @@ function buildStageContext(record: AirtableRecord): PhotosFormStageContext {
   return {
     inventoryNotes: extractInventoryScalarValue(record.fields['Inventory Notes']),
     testingNotes: extractInventoryScalarValue(record.fields['Testing Notes']),
-    testingCosmeticNotes: extractInventoryScalarValue(record.fields[TESTING_COSMETIC_NOTES_FIELD_NAME] ?? record.fields[LEGACY_TESTING_COSMETIC_NOTES_FIELD_NAME]),
+    testingCosmeticNotes: extractInventoryScalarValue(record.fields[TESTING_COSMETIC_NOTES_FIELD_NAME]),
     existingAttachments: existingAttachments.length > 0 ? existingAttachments : buildContextAttachmentsFromMetadata(imageMetadata),
     intakeReferenceAttachments,
     testingReferenceAttachments,
@@ -497,7 +496,7 @@ export async function submitPhotosForm(
           componentType: values.componentType,
           serialNumber: extractInventoryScalarValue(workflowRecord.fields['Serial Number']),
           jotFormSubmissionId: extractInventoryScalarValue(workflowRecord.fields['JotForm Submission ID']),
-          pickUpId: extractInventoryScalarValue(workflowRecord.fields['Pick Up ID'] ?? workflowRecord.fields['Pick Up #']),
+          pickUpId: extractInventoryScalarValue(workflowRecord.fields['Pick Up ID']),
           submissionGroupId: extractInventoryScalarValue(workflowRecord.fields['Submission Group ID']),
           recordId,
         }),

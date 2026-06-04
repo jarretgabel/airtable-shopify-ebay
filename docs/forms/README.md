@@ -51,7 +51,7 @@ This section documents the local forms under the `Inventory Processing` menu:
 - Testing route key: `testing`
 - Testing path: `/testing`
 - Photos route key: `photos`
-- Photos path: `/photos`
+- Photos path: `/photography`
 
 ## Change Checklist
 

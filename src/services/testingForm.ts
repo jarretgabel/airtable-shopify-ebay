@@ -35,7 +35,6 @@ const WORKFLOW_IMAGE_METADATA_FIELD_NAME = 'Workflow Image Metadata JSON';
 const WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME = 'Images';
 const DEFAULT_STATUS = 'Tested';
 const TESTING_COSMETIC_NOTES_FIELD_NAME = 'Testing Cosmetic Notes';
-const LEGACY_TESTING_COSMETIC_NOTES_FIELD_NAME = 'Cosmetic Condition Notes';
 const OPTION_FIELD_NAMES = [
   'Status',
   'Component Type',
@@ -371,7 +370,7 @@ export async function loadTestingFormValues(recordId: string): Promise<TestingFo
         serialNumber: extractInventoryScalarValue(record.fields['Serial Number']),
         voltage: extractInventoryScalarValue(record.fields.Voltage),
         audiogonRating: extractInventoryScalarValue(record.fields['Audiogon Rating']),
-        cosmeticConditionNotes: extractInventoryScalarValue(record.fields[TESTING_COSMETIC_NOTES_FIELD_NAME] ?? record.fields[LEGACY_TESTING_COSMETIC_NOTES_FIELD_NAME]),
+        cosmeticConditionNotes: extractInventoryScalarValue(record.fields[TESTING_COSMETIC_NOTES_FIELD_NAME]),
         originalBox: extractInventoryScalarValue(record.fields['Original Box']),
         manual: extractInventoryScalarValue(record.fields.Manual),
         remote: extractInventoryScalarValue(record.fields.Remote),
@@ -464,7 +463,7 @@ export async function submitTestingForm(
         componentType: values.componentType,
         serialNumber: values.serialNumber,
         jotFormSubmissionId: extractInventoryScalarValue(workflowRecord.fields['JotForm Submission ID']),
-        pickUpId: extractInventoryScalarValue(workflowRecord.fields['Pick Up ID'] ?? workflowRecord.fields['Pick Up #']),
+        pickUpId: extractInventoryScalarValue(workflowRecord.fields['Pick Up ID']),
         submissionGroupId: extractInventoryScalarValue(workflowRecord.fields['Submission Group ID']),
         recordId,
       }),

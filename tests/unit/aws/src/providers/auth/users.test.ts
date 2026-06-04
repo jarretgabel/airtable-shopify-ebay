@@ -3,15 +3,19 @@ import assert from 'node:assert/strict';
 import { HttpError } from '../../../../../../aws/src/shared/errors.js';
 import { authUserDependencies, clearAuthUserLookupCache, ensureSampleAuthUsers, findAuthUserByEmail, findAuthUserById, updateAuthUserPassword, type AuthUserRecord } from '../../../../../../aws/src/providers/auth/users.js';
 
+const hashedPasswordState = {
+  scheme: 'pbkdf2-sha256',
+  salt: 'test-salt',
+  hash: 'test-hash',
+  iterations: 210000,
+} as const;
+
 const baseUser: AuthUserRecord = {
   id: 'user-1',
   airtableRecordId: 'rec123',
   email: 'admin@example.com',
   role: 'admin',
-  passwordState: {
-    scheme: 'legacy',
-    legacyPassword: 'legacy-pass',
-  },
+  passwordState: hashedPasswordState,
   mustChangePassword: true,
   allowedPages: [],
 };
@@ -323,10 +327,10 @@ test('ensureSampleAuthUsers skips sample accounts that already exist', async () 
 
   try {
     await ensureSampleAuthUsers([
-      { ...baseUser, email: 'developer@example.com', role: 'developer', passwordState: { scheme: 'legacy', legacyPassword: 'Developer123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'workflow-guide', 'workflow-guide-editor', 'manual-intake', 'create-intake-item', 'parking-lot', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'jotform', 'jotform-audit', 'market', 'settings', 'notifications', 'imagelab', 'users'] },
-      { ...baseUser, email: 'processor@example.com', role: 'processor', passwordState: { scheme: 'legacy', legacyPassword: 'Processor123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'workflow-guide', 'manual-intake', 'create-intake-item', 'inventory', 'jotform', 'jotform-audit', 'parking-lot', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab'] },
-      { ...baseUser, email: 'tester@example.com', role: 'tester', passwordState: { scheme: 'legacy', legacyPassword: 'Tester123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'testing-queue', 'testing'] },
-      { ...baseUser, email: 'photographer@example.com', role: 'photographer', passwordState: { scheme: 'legacy', legacyPassword: 'Photographer123!' }, mustChangePassword: false, allowedPages: ['dashboard', 'photography-queue', 'photos', 'imagelab'] },
+      { ...baseUser, email: 'developer@example.com', role: 'developer', passwordState: hashedPasswordState, mustChangePassword: false, allowedPages: ['dashboard', 'workflow-guide', 'workflow-guide-editor', 'manual-intake', 'create-intake-item', 'parking-lot', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'jotform', 'jotform-audit', 'market', 'settings', 'notifications', 'imagelab', 'users'] },
+      { ...baseUser, email: 'processor@example.com', role: 'processor', passwordState: hashedPasswordState, mustChangePassword: false, allowedPages: ['dashboard', 'workflow-guide', 'manual-intake', 'create-intake-item', 'inventory', 'jotform', 'jotform-audit', 'parking-lot', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab'] },
+      { ...baseUser, email: 'tester@example.com', role: 'tester', passwordState: hashedPasswordState, mustChangePassword: false, allowedPages: ['dashboard', 'testing-queue', 'testing'] },
+      { ...baseUser, email: 'photographer@example.com', role: 'photographer', passwordState: hashedPasswordState, mustChangePassword: false, allowedPages: ['dashboard', 'photography-queue', 'photos', 'imagelab'] },
     ]);
   } finally {
     authUserDependencies.createConfiguredRecord = originalCreate;
@@ -361,7 +365,7 @@ test('ensureSampleAuthUsers resyncs sample accounts with stale passwords', async
         airtableRecordId: 'rec-developer',
         email: 'developer@example.com',
         role: 'developer',
-        passwordState: { scheme: 'legacy', legacyPassword: 'Developer123!' },
+        passwordState: hashedPasswordState,
         mustChangePassword: false,
         allowedPages: ['dashboard', 'workflow-guide', 'workflow-guide-editor', 'manual-intake', 'create-intake-item', 'parking-lot', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'jotform', 'jotform-audit', 'market', 'settings', 'notifications', 'imagelab', 'users'],
       },
@@ -370,17 +374,17 @@ test('ensureSampleAuthUsers resyncs sample accounts with stale passwords', async
         airtableRecordId: 'rec-processor',
         email: 'processor@example.com',
         role: 'processor',
-        passwordState: { scheme: 'legacy', legacyPassword: 'Processor123!' },
+        passwordState: hashedPasswordState,
         mustChangePassword: false,
         allowedPages: ['dashboard', 'workflow-guide', 'manual-intake', 'create-intake-item', 'inventory', 'jotform', 'jotform-audit', 'parking-lot', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab'],
       },
-      { ...baseUser, airtableRecordId: 'rec-tester', email: 'tester@example.com', role: 'tester', passwordState: { scheme: 'legacy', legacyPassword: 'old-password' }, mustChangePassword: true, allowedPages: ['dashboard'] },
+      { ...baseUser, airtableRecordId: 'rec-tester', email: 'tester@example.com', role: 'tester', passwordState: hashedPasswordState, mustChangePassword: true, allowedPages: ['dashboard'] },
       {
         ...baseUser,
         airtableRecordId: 'rec-photographer',
         email: 'photographer@example.com',
         role: 'photographer',
-        passwordState: { scheme: 'legacy', legacyPassword: 'Photographer123!' },
+        passwordState: hashedPasswordState,
         mustChangePassword: false,
         allowedPages: ['dashboard', 'photography-queue', 'photos', 'imagelab'],
       },

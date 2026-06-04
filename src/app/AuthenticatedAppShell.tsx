@@ -60,6 +60,7 @@ export function AuthenticatedAppShell({
     inventoryRecordId,
     inventoryPriceEditorRecordId,
     listingsRecordId,
+    soldReadyListingsRecordId,
     shopifyListingsRecordId,
     ebayListingsRecordId,
     userRecordId,
@@ -94,6 +95,7 @@ export function AuthenticatedAppShell({
     navigateToInventoryWorkflowView,
     navigateToInventoryPostPublishBucket,
     navigateToListingsRecord,
+    navigateToSoldReadyListingRecord,
     navigateToListingsList,
     navigateToShopifyRecord,
     navigateToShopifyList,
@@ -247,6 +249,7 @@ export function AuthenticatedAppShell({
             inventoryRecordId={inventoryRecordId}
             inventoryPriceEditorRecordId={inventoryPriceEditorRecordId}
             listingsRecordId={listingsRecordId}
+            soldReadyListingsRecordId={soldReadyListingsRecordId}
             shopifyListingsRecordId={shopifyListingsRecordId}
             ebayListingsRecordId={ebayListingsRecordId}
             userRecordId={userRecordId}
@@ -263,6 +266,7 @@ export function AuthenticatedAppShell({
             navigateToTestingForm={navigateToTestingForm}
             navigateToPhotosForm={navigateToPhotosForm}
             navigateToListingsRecord={navigateToListingsRecord}
+            navigateToSoldReadyListingRecord={navigateToSoldReadyListingRecord}
             navigateToListingsList={navigateToListingsList}
             navigateToShopifyRecord={navigateToShopifyRecord}
             navigateToShopifyList={navigateToShopifyList}

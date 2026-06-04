@@ -151,32 +151,8 @@ export function getHandleField(fields: ApprovalFieldMap): string {
   return fuzzy && typeof fuzzy[1] === 'string' ? fuzzy[1].trim() : '';
 }
 
-export function getBodyHtmlField(fields: ApprovalFieldMap): string {
-  const explicit = getField(fields, [
-    'Shopify REST Body HTML',
-    'Shopify Body HTML',
-    'Shopify GraphQL Description HTML',
-    'Body (HTML)',
-    'Body HTML',
-    'body_html',
-    'shopify_rest_body_html',
-    'Item Description',
-    'Description',
-  ]);
-  if (explicit.length > 0) return explicit;
-
-  const fuzzy = Object.entries(fields).find(([key, value]) => {
-    const normalized = normalizeKey(key);
-    if (!(normalized.includes('bodyhtml') || normalized.includes('descriptionhtml'))) return false;
-    return typeof value === 'string' && value.trim().length > 0;
-  });
-
-  return fuzzy && typeof fuzzy[1] === 'string' ? fuzzy[1].trim() : '';
-}
-
 export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   const explicitTemplate = getField(fields, [...SHOPIFY_BODY_HTML_TEMPLATE_FIELD_CANDIDATES]);
-  const fallbackBodyHtml = getBodyHtmlField(fields);
   const template = explicitTemplate || '<p>{{body_description}}</p>{{body_key_features}}';
   if (!template) return '';
 
@@ -220,13 +196,12 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   const hasEditableBodyFields = hasAnyField(fields, bodyDescriptionCandidates) || hasAnyField(fields, bodyKeyFeaturesCandidates);
   const usesStructuredBodyTokens = /\{\{\s*(body_description|body_key_features)\s*\}\}/i.test(explicitTemplate || '');
 
-  if (!explicitTemplate && (bodyDescription || bodyKeyFeatures)) {
-    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, fallbackBodyHtml, testingNotes);
+  if (!explicitTemplate && !bodyDescription && !bodyKeyFeatures) {
+    return '';
   }
 
   if (!explicitTemplate) {
-    if (!hasEditableBodyFields) return fallbackBodyHtml;
-    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, fallbackBodyHtml, testingNotes);
+    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, template, testingNotes);
   }
 
   if (usesStructuredBodyTokens || hasEditableBodyFields) {

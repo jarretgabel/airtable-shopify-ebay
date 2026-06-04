@@ -43,7 +43,7 @@ describe('manualIntakeForm', () => {
 
   it('loads Manual Intake values for the full schema field set', async () => {
     vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
-      'Pick Up #': 'PU-42',
+      'Pick Up ID': 'PU-42',
       'Acquired From': 'Walk-in seller',
       Cost: 1499.5,
       'Customer Cosmetic Notes': 'Seller says very clean faceplate.',
@@ -180,7 +180,7 @@ describe('manualIntakeForm', () => {
       'inventory-directory',
       'recIncoming123',
       {
-        'Pick Up #': 'PU-42',
+        'Pick Up ID': 'PU-42',
         'Acquired From': 'Walk-in seller',
         Cost: 1499.5,
         'Customer Cosmetic Notes': 'Seller says very clean faceplate.',

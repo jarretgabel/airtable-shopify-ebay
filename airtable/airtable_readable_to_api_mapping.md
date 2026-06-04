@@ -27,7 +27,7 @@ Use it when you need to convert a readable column such as `Shopify REST Variant 
 | `Shopify REST Product Type` | `product.product_type` | `"product_type": "Integrated Amplifier"` | Merchant-defined type. |
 | `Shopify REST Handle` | `product.handle` | `"handle": "mcintosh-ma8900-integrated-amplifier"` | URL slug. |
 | `Shopify REST Published At` | `product.published_at` | `"published_at": "2026-03-19T18:00:00Z"` | Optional. |
-| `Shopify REST Published Scope` | `product.published_scope` | `"published_scope": "web"` | Legacy REST publication field. |
+| `Shopify REST Published Scope` | `product.published_scope` | `"published_scope": "web"` | Deprecated REST publication field. |
 | `Shopify REST Status` | `product.status` | `"status": "draft"` | Typical values: `draft`, `active`, `archived`. |
 | `Shopify REST Template Suffix` | `product.template_suffix` | `"template_suffix": "premium-audio"` | Optional theme template suffix. |
 | `Shopify REST Tag N` | `product.tags` | `"tags": "mcintosh, integrated amplifier, used"` | Airtable splits tags into separate columns; Shopify REST receives a comma-separated string. |

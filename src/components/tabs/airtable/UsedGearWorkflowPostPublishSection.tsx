@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { compactRowPrimaryActionButtonClass, compactRowSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
+import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
@@ -45,6 +47,7 @@ interface UsedGearWorkflowPostPublishSectionProps {
   emptyStateMessage?: string;
   nextRouteMessage?: string;
   searchPlaceholder?: string;
+  sectionSearchEnabled?: boolean;
 }
 
 export type UsedGearWorkflowPostPublishSortMode = 'latest-activity' | 'oldest-activity' | 'sku';
@@ -164,13 +167,6 @@ function getPostPublishSortLabel(sortMode: UsedGearWorkflowPostPublishSortMode):
   return 'Latest Activity';
 }
 
-function getPostPublishListingsActionLabel(bucket: UsedGearWorkflowPostPublishBucket): string | null {
-  if (bucket === 'sold-ready' || bucket === 'shipped') {
-    return null;
-  }
-
-  return 'Open Listings Approval';
-}
 
 function getPostSaleChipClassName(label: string): string {
   const normalizedLabel = label.trim().toLowerCase();
@@ -270,6 +266,7 @@ export function UsedGearWorkflowPostPublishSection({
   emptyStateMessage = 'The used-gear workflow currently has no listed, stale, sold-ready, or shipped operational rows.',
   nextRouteMessage = 'Next route: open Listings for newly approved publish work, then return here when a live item needs stale, sold-ready, or shipped follow-through.',
   searchPlaceholder = 'Search by status, SKU, model, or lifecycle date',
+  sectionSearchEnabled = false,
 }: UsedGearWorkflowPostPublishSectionProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [records, setRecords] = useState<AirtableRecord[]>([]);
@@ -279,8 +276,15 @@ export function UsedGearWorkflowPostPublishSection({
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowPostPublishSortMode>('latest-activity');
   const [updatingRecordIds, setUpdatingRecordIds] = useState<string[]>([]);
+  const [sectionSearchTerms, setSectionSearchTerms] = useState<Record<UsedGearWorkflowPostPublishBucket, string>>({
+    'active-listing': '',
+    'stale-listing': '',
+    'sold-ready': '',
+    shipped: '',
+  });
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
+  const useGlobalSearch = !sectionSearchEnabled;
 
   useEffect(() => {
     if (!focusedBucket || !sectionRef.current) {
@@ -325,6 +329,10 @@ export function UsedGearWorkflowPostPublishSection({
   }, []);
 
   const filteredRecords = useMemo(() => {
+    if (!useGlobalSearch) {
+      return records;
+    }
+
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
     return records.filter((record) => {
@@ -334,7 +342,7 @@ export function UsedGearWorkflowPostPublishSection({
 
       return recordSearchText(record).includes(normalizedSearch);
     });
-  }, [records, searchTerm]);
+  }, [records, searchTerm, useGlobalSearch]);
 
   const recordsBySection = useMemo(() => {
     const entries = sectionDefinitions.map((section) => [section.key, [] as AirtableRecord[]] as const);
@@ -407,6 +415,13 @@ export function UsedGearWorkflowPostPublishSection({
     }
 
     onSortModeChange?.(value);
+  };
+
+  const handleSectionSearchChange = (bucket: UsedGearWorkflowPostPublishBucket, value: string) => {
+    setSectionSearchTerms((current) => ({
+      ...current,
+      [bucket]: value,
+    }));
   };
 
   const getSectionColumns = (sectionKey: UsedGearWorkflowPostPublishBucket): IntakeItemsMatrixColumn<AirtableRecord>[] => {
@@ -495,48 +510,52 @@ export function UsedGearWorkflowPostPublishSection({
             return (
               <div className="flex min-h-[4.5rem] w-full flex-wrap items-center justify-center gap-1.5">
                 {showMarkCancelled ? (
-                  <CompactIconActionButton
-                    label="Mark Cancelled"
-                    variant="compact-secondary"
-                    icon="edit"
+                  <button
+                    type="button"
+                    className={compactRowSecondaryActionButtonClass}
                     onClick={() => {
                       void handleRecordAction(record.id, markWorkflowCancelled);
                     }}
                     disabled={recordBusy}
-                  />
+                  >
+                    Cancelled
+                  </button>
                 ) : null}
                 {showMarkPartialRefund ? (
-                  <CompactIconActionButton
-                    label="Mark Partial Refund"
-                    variant="compact-secondary"
-                    icon="check"
+                  <button
+                    type="button"
+                    className={compactRowSecondaryActionButtonClass}
                     onClick={() => {
                       void handleRecordAction(record.id, markWorkflowPartialRefund);
                     }}
                     disabled={recordBusy}
-                  />
+                  >
+                    Partial Refund
+                  </button>
                 ) : null}
                 {showMarkRefunded ? (
-                  <CompactIconActionButton
-                    label="Mark Refunded"
-                    variant="compact-secondary"
-                    icon="check"
+                  <button
+                    type="button"
+                    className={compactRowSecondaryActionButtonClass}
                     onClick={() => {
                       void handleRecordAction(record.id, markWorkflowRefunded);
                     }}
                     disabled={recordBusy}
-                  />
+                  >
+                    Refunded
+                  </button>
                 ) : null}
                 {showMarkReturnReceived ? (
-                  <CompactIconActionButton
-                    label="Mark Return Received"
-                    variant="compact-secondary"
-                    icon="truck"
+                  <button
+                    type="button"
+                    className={compactRowSecondaryActionButtonClass}
                     onClick={() => {
                       void handleRecordAction(record.id, markWorkflowReturnReceived);
                     }}
                     disabled={recordBusy}
-                  />
+                  >
+                    Return Received
+                  </button>
                 ) : null}
                 {showDispositionActions ? (
                   <div className="flex flex-wrap items-center justify-center gap-1.5">
@@ -578,11 +597,14 @@ export function UsedGearWorkflowPostPublishSection({
                     />
                   </div>
                 ) : null}
-                <CompactIconActionButton
-                  label="Open Workflow Snapshot"
+                <button
+                  type="button"
+                  className={compactRowSecondaryActionButtonClass}
                   onClick={() => onOpenOperationalRecord(record.id)}
                   disabled={recordBusy}
-                />
+                >
+                  Open Workflow Snapshot
+                </button>
               </div>
             );
           },
@@ -661,8 +683,8 @@ export function UsedGearWorkflowPostPublishSection({
         cellClassName: 'border-l border-[var(--line)]/60',
         renderCell: (record) => {
           const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
-          const listingsActionLabel = getPostPublishListingsActionLabel(sectionKey);
           const recordBusy = updatingRecordIds.includes(record.id);
+          const hideTextActions = sectionKey === 'sold-ready';
           const showMarkSoldReady = snapshot?.bucket === 'active-listing' || snapshot?.bucket === 'stale-listing';
           const showMarkShipped = snapshot?.bucket === 'sold-ready';
           const noOutcomeYet = !snapshot?.postSaleOutcome;
@@ -674,71 +696,77 @@ export function UsedGearWorkflowPostPublishSection({
 
           return (
             <div className="flex min-h-[4.5rem] w-full flex-wrap items-center justify-center gap-1.5">
-              {showMarkSoldReady ? (
-                <CompactIconActionButton
-                  label="Mark Sold Ready"
-                  variant="compact-primary"
-                  icon="check"
+              {showMarkSoldReady && !hideTextActions ? (
+                <button
+                  type="button"
+                  className={compactRowPrimaryActionButtonClass}
                   onClick={() => {
                     void handleRecordAction(record.id, markWorkflowSoldReadyToShip);
                   }}
                   disabled={recordBusy}
-                />
+                >
+                  Sold Ready
+                </button>
               ) : null}
-              {showMarkShipped ? (
-                <CompactIconActionButton
-                  label="Mark Shipped"
-                  variant="compact-primary"
-                  icon="truck"
+              {showMarkShipped && !hideTextActions ? (
+                <button
+                  type="button"
+                  className={compactRowPrimaryActionButtonClass}
                   onClick={() => {
                     void handleRecordAction(record.id, markWorkflowShipped);
                   }}
                   disabled={recordBusy}
-                />
+                >
+                  Shipped
+                </button>
               ) : null}
-              {showMarkCancelled ? (
-                <CompactIconActionButton
-                  label="Mark Cancelled"
-                  variant="compact-secondary"
-                  icon="edit"
+              {showMarkCancelled && !hideTextActions ? (
+                <button
+                  type="button"
+                  className={compactRowSecondaryActionButtonClass}
                   onClick={() => {
                     void handleRecordAction(record.id, markWorkflowCancelled);
                   }}
                   disabled={recordBusy}
-                />
+                >
+                  Cancelled
+                </button>
               ) : null}
-              {showMarkPartialRefund ? (
-                <CompactIconActionButton
-                  label="Mark Partial Refund"
-                  variant="compact-secondary"
-                  icon="check"
+              {showMarkPartialRefund && !hideTextActions ? (
+                <button
+                  type="button"
+                  className={compactRowSecondaryActionButtonClass}
                   onClick={() => {
                     void handleRecordAction(record.id, markWorkflowPartialRefund);
                   }}
                   disabled={recordBusy}
-                />
+                >
+                  Partial Refund
+                </button>
               ) : null}
-              {showMarkRefunded ? (
-                <CompactIconActionButton
-                  label="Mark Refunded"
-                  variant="compact-secondary"
-                  icon="check"
+              {showMarkRefunded && !hideTextActions ? (
+                <button
+                  type="button"
+                  className={compactRowSecondaryActionButtonClass}
                   onClick={() => {
                     void handleRecordAction(record.id, markWorkflowRefunded);
                   }}
                   disabled={recordBusy}
-                />
+                >
+                  Refunded
+                </button>
               ) : null}
-              {showMarkReturnReceived ? (
-                <CompactIconActionButton
-                  label="Mark Return Received"
-                  variant="compact-secondary"
-                  icon="truck"
+              {showMarkReturnReceived && !hideTextActions ? (
+                <button
+                  type="button"
+                  className={compactRowSecondaryActionButtonClass}
                   onClick={() => {
                     void handleRecordAction(record.id, markWorkflowReturnReceived);
                   }}
                   disabled={recordBusy}
-                />
+                >
+                  Return Received
+                </button>
               ) : null}
               {showDispositionActions ? (
                 <div className="flex flex-wrap items-center justify-center gap-1.5">
@@ -780,9 +808,20 @@ export function UsedGearWorkflowPostPublishSection({
                   />
                 </div>
               ) : null}
-              {listingsActionLabel ? (
-                <CompactIconActionButton label={listingsActionLabel} onClick={() => onOpenListingsRecord(record.id)} disabled={recordBusy} />
-              ) : null}
+              <CompactIconActionButton
+                label="Open Sold-Ready View"
+                icon="open"
+                variant="compact-secondary"
+                onClick={() => onOpenListingsRecord(record.id)}
+                disabled={recordBusy}
+              />
+              <CompactIconActionButton
+                label="Open Workflow Snapshot"
+                icon="eye"
+                variant="compact-secondary"
+                onClick={() => onOpenOperationalRecord(record.id)}
+                disabled={recordBusy}
+              />
             </div>
           );
         },
@@ -796,26 +835,53 @@ export function UsedGearWorkflowPostPublishSection({
         {showSectionIntro ? (
           <AppSectionTitle title={queueTitle} />
         ) : null}
-        <QueueSearchToolbar
-          searchAriaLabel={`Search used gear ${queueNoun}`}
-          searchPlaceholder={searchPlaceholder}
-          searchValue={searchTerm}
-          onSearchChange={handleSearchTermChange}
-          refreshLabel={`Refresh ${queueNoun}`}
-          refreshLoadingLabel={`Refreshing ${queueNoun}`}
-          refreshing={refreshing}
-          onRefresh={() => {
-            void refreshQueue();
-          }}
-          sortAriaLabel={`Sort used gear ${queueNoun}. Current order: ${getPostPublishSortLabel(sortMode)}`}
-          sortValue={sortMode}
-          onSortChange={(value) => handleSortModeChange(value as UsedGearWorkflowPostPublishSortMode)}
-          sortOptions={[
-            { value: 'latest-activity', label: 'Latest Activity' },
-            { value: 'oldest-activity', label: 'Oldest Activity' },
-            { value: 'sku', label: 'SKU' },
-          ]}
-        />
+        {sectionSearchEnabled ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <RefreshIconButton
+              onClick={() => {
+                void refreshQueue();
+              }}
+              disabled={refreshing}
+              loading={refreshing}
+              label={`Refresh ${queueNoun}`}
+              loadingLabel={`Refreshing ${queueNoun}`}
+            />
+            <label className="flex min-w-[200px] flex-1">
+              <span className="sr-only">{`Sort used gear ${queueNoun}. Current order: ${getPostPublishSortLabel(sortMode)}`}</span>
+              <select
+                aria-label={`Sort used gear ${queueNoun}. Current order: ${getPostPublishSortLabel(sortMode)}`}
+                className="h-[42px] w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                value={sortMode}
+                onChange={(event) => handleSortModeChange(event.currentTarget.value as UsedGearWorkflowPostPublishSortMode)}
+              >
+                <option value="latest-activity">Latest Activity</option>
+                <option value="oldest-activity">Oldest Activity</option>
+                <option value="sku">SKU</option>
+              </select>
+            </label>
+          </div>
+        ) : (
+          <QueueSearchToolbar
+            searchAriaLabel={`Search used gear ${queueNoun}`}
+            searchPlaceholder={searchPlaceholder}
+            searchValue={searchTerm}
+            onSearchChange={handleSearchTermChange}
+            refreshLabel={`Refresh ${queueNoun}`}
+            refreshLoadingLabel={`Refreshing ${queueNoun}`}
+            refreshing={refreshing}
+            onRefresh={() => {
+              void refreshQueue();
+            }}
+            sortAriaLabel={`Sort used gear ${queueNoun}. Current order: ${getPostPublishSortLabel(sortMode)}`}
+            sortValue={sortMode}
+            onSortChange={(value) => handleSortModeChange(value as UsedGearWorkflowPostPublishSortMode)}
+            sortOptions={[
+              { value: 'latest-activity', label: 'Latest Activity' },
+              { value: 'oldest-activity', label: 'Oldest Activity' },
+              { value: 'sku', label: 'SKU' },
+            ]}
+          />
+        )}
       </div>
 
       {focusedBucket && focusedBucketNotice ? (
@@ -845,6 +911,11 @@ export function UsedGearWorkflowPostPublishSection({
           </div>
         ) : sectionDefinitions.map((section) => {
           const sectionRecords = recordsBySection.get(section.key) ?? [];
+          const sectionSearchTerm = sectionSearchEnabled ? sectionSearchTerms[section.key] ?? '' : searchTerm;
+          const normalizedSectionSearch = sectionSearchTerm.trim().toLowerCase();
+          const visibleSectionRecords = normalizedSectionSearch
+            ? sectionRecords.filter((record) => recordSearchText(record).includes(normalizedSectionSearch))
+            : sectionRecords;
 
           return (
             <AppPageSectionSurface id={section.id} key={section.key} className="scroll-mt-24 bg-[var(--bg)]/60 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
@@ -856,15 +927,34 @@ export function UsedGearWorkflowPostPublishSection({
               ) : null}
               {section.description ? <p className="max-w-xl text-sm text-[var(--muted)]">{section.description}</p> : null}
 
-              {sectionRecords.length === 0 ? (
+              {sectionSearchEnabled ? (
+                <div className="mt-4">
+                  <QueueSearchToolbar
+                    searchAriaLabel={`Search ${section.title}`}
+                    searchPlaceholder={`Search ${section.title.toLowerCase()}...`}
+                    searchValue={sectionSearchTerm}
+                    onSearchChange={(value) => handleSectionSearchChange(section.key, value)}
+                  />
+                </div>
+              ) : null}
+
+              {visibleSectionRecords.length === 0 ? (
                 <div className="mt-4 rounded-xl border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-4 text-sm text-[var(--muted)]">
-                  <p className="m-0">No rows currently match this post-publish stage.</p>
-                  <p className="mt-2 mb-0">{getPostPublishSectionEmptyGuidance(section.key)}</p>
+                  <p className="m-0">
+                    {normalizedSectionSearch
+                      ? 'No rows match the current search for this section.'
+                      : 'No rows currently match this post-publish stage.'}
+                  </p>
+                  <p className="mt-2 mb-0">
+                    {normalizedSectionSearch
+                      ? 'Adjust the search terms or clear the filter to see all items in this section.'
+                      : getPostPublishSectionEmptyGuidance(section.key)}
+                  </p>
                 </div>
               ) : (
                 <div className="mt-4">
                   <IntakeItemsMatrix
-                    items={sectionRecords}
+                    items={visibleSectionRecords}
                     columns={getSectionColumns(section.key)}
                     getItemKey={(record) => record.id}
                   />

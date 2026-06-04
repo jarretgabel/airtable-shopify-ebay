@@ -45,7 +45,6 @@ describe('inventoryDirectory', () => {
     expect(mockGetConfiguredRecords).toHaveBeenCalledWith('inventory-directory', {
       fields: [
         'SKU',
-        'SKU Legacy Backup',
         'Make',
         'Model',
         'Item Title',

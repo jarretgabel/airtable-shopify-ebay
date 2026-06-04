@@ -89,9 +89,5 @@ export function normalizeAllowedPages(pages: AppPage[], role: UserRole): AppPage
     nextPages.add('jotform-audit');
   }
 
-  if (role === 'processor' && nextPages.has('inventory')) {
-    ['manual-intake', 'create-intake-item', 'jotform', 'jotform-audit', 'parking-lot', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'settings', 'notifications'].forEach((page) => nextPages.add(page as AppPage));
-  }
-
   return ROLE_ALLOWED_PAGES[role].filter((page) => nextPages.has(page));
 }
