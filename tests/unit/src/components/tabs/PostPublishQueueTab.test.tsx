@@ -44,6 +44,7 @@ describe('PostPublishQueueTab', () => {
           currentUserName="Taylor Reviewer"
           onOpenOperationalRecord={vi.fn()}
           onOpenListingsRecord={vi.fn()}
+          onOpenShipmentRecord={vi.fn()}
         />
         <LocationState />
       </MemoryRouter>,

@@ -103,6 +103,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         focusedBucket="sold-ready"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenShipmentRecord={vi.fn()}
       />,
     );
 
@@ -120,6 +121,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         sectionSearchEnabled
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenShipmentRecord={vi.fn()}
       />,
     );
 
@@ -182,6 +184,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenShipmentRecord={vi.fn()}
       />,
     );
 
@@ -217,6 +220,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={onOpenListingsRecord}
+        onOpenShipmentRecord={vi.fn()}
       />,
     );
 
@@ -262,6 +266,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenShipmentRecord={vi.fn()}
       />,
     );
 
@@ -290,6 +295,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenShipmentRecord={vi.fn()}
       />,
     );
 
@@ -328,6 +334,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         searchPlaceholder="Search by status, SKU, model, or ship date"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenShipmentRecord={vi.fn()}
       />,
     );
 
@@ -369,6 +376,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         searchPlaceholder="Search by status, SKU, model, or ship date"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenShipmentRecord={vi.fn()}
       />,
     );
 
@@ -399,6 +407,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenShipmentRecord={vi.fn()}
       />,
     );
 
@@ -427,6 +436,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenShipmentRecord={vi.fn()}
       />,
     );
 
@@ -465,6 +475,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         searchPlaceholder="Search by status, SKU, model, or ship date"
         onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={vi.fn()}
+        onOpenShipmentRecord={vi.fn()}
       />,
     );
 

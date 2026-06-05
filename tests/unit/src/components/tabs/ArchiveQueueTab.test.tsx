@@ -47,6 +47,7 @@ describe('ArchiveQueueTab', () => {
           currentUserName="Taylor Reviewer"
           onOpenWorkflowSnapshot={vi.fn()}
           onOpenListingsRecord={vi.fn()}
+          onOpenShipmentRecord={vi.fn()}
         />
         <LocationState />
       </MemoryRouter>,

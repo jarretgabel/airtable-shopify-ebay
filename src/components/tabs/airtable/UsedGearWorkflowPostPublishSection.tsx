@@ -15,7 +15,6 @@ import {
   markWorkflowReturnReceived,
   loadWorkflowPostPublishQueue,
   markWorkflowShipped,
-  markWorkflowSoldReadyToShip,
   resolveWorkflowRestockDisposition,
 } from '@/services/usedGearQueue';
 import {
@@ -498,8 +497,7 @@ export function UsedGearWorkflowPostPublishSection({
           align: 'center',
           headerClassName: 'border-l border-[var(--line)]/60',
           cellClassName: 'border-l border-[var(--line)]/60',
-          renderCell: (record) => {
-            const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+          renderCell: (record: AirtableRecord) => {
             const recordBusy = updatingRecordIds.includes(record.id);
 
             return (
@@ -533,7 +531,7 @@ export function UsedGearWorkflowPostPublishSection({
         key: 'status',
         label: 'Status',
         width: '14rem',
-        renderCell: (record) => {
+        renderCell: (record: AirtableRecord) => {
           const statusLabel = getUsedGearWorkflowPostPublishSnapshot(record)?.status ?? 'Unknown';
 
           return <span className={getWorkflowStatusChipClasses(statusLabel)}>{statusLabel}</span>;
@@ -543,7 +541,7 @@ export function UsedGearWorkflowPostPublishSection({
         key: 'overview',
         label: 'Days Live',
         width: '7rem',
-        renderCell: (record) => {
+        renderCell: (record: AirtableRecord) => {
           const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
           if (!snapshot) {
             return <span className="text-xs text-[var(--muted)]">No lifecycle snapshot</span>;
@@ -558,7 +556,7 @@ export function UsedGearWorkflowPostPublishSection({
         key: 'activity',
         label: 'Last Touched',
         width: '11rem',
-        renderCell: (record) => {
+        renderCell: (record: AirtableRecord) => {
           const lastTouchedSummary = buildPostPublishLastTouchedSummary(record);
 
           return (
@@ -572,7 +570,7 @@ export function UsedGearWorkflowPostPublishSection({
             key: 'post-sale',
             label: 'Post-Sale',
             width: 'minmax(0,1.25fr)',
-            renderCell: (record) => {
+            renderCell: (record: AirtableRecord) => {
               const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
               const chips = buildPostSaleChipValues(snapshot);
 
@@ -600,7 +598,7 @@ export function UsedGearWorkflowPostPublishSection({
         align: 'center',
         headerClassName: 'border-l border-[var(--line)]/60',
         cellClassName: 'border-l border-[var(--line)]/60',
-        renderCell: (record) => {
+        renderCell: (record: AirtableRecord) => {
           const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
           const recordBusy = updatingRecordIds.includes(record.id);
           const hideTextActions = sectionKey === 'sold-ready';

@@ -171,21 +171,6 @@ export function ListingApprovalSoldReadyPanel({
     setSelectedAction((current) => (actionOptions.some((option) => option.value === current) ? current : ''));
   }, [actionOptions]);
 
-  const runAction = async (action: () => Promise<AirtableRecord>) => {
-    setSaving(true);
-    setError(null);
-
-    try {
-      const updatedRecord = await action();
-      setWorkflowRecord(updatedRecord);
-      await loadRecords(tableReference, tableName, true);
-    } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to update the operational row.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleSave = async () => {
     if (!hasNotesChange && !selectedAction) {
       return;
