@@ -457,7 +457,6 @@ function buildCommonFields(index, config) {
     'Item Title': `${SAMPLE_MARKER} ${config.title}`,
     Description: `${SAMPLE_MARKER} ${config.description}`,
     SKU: sku,
-    'SKU Legacy Backup': sku,
     Make: config.make,
     Model: config.model,
     'Component Type': config.componentType,
@@ -526,7 +525,6 @@ function buildSampleConfigs() {
       extraFields: {
         'Submission Group ID': '',
         SKU: '',
-        'SKU Legacy Backup': '',
       },
     },
     {
@@ -1007,14 +1005,12 @@ function isSampleRecord(record) {
   const qualificationNotes = getTrimmedString(record.fields['Qualification Notes']);
   const allocationNotes = getTrimmedString(record.fields['Allocation Notes']);
   const sku = getTrimmedString(record.fields.SKU);
-  const skuLegacyBackup = getTrimmedString(record.fields['SKU Legacy Backup']);
 
   return templateName.includes(SAMPLE_MARKER)
     || itemTitle.includes(SAMPLE_MARKER)
     || qualificationNotes.includes(SAMPLE_MARKER)
     || allocationNotes.includes(SAMPLE_MARKER)
-    || sku.startsWith(SAMPLE_SKU_PREFIX)
-    || skuLegacyBackup.startsWith(SAMPLE_SKU_PREFIX);
+    || sku.startsWith(SAMPLE_SKU_PREFIX);
 }
 
 async function createRecords(apiKey, records) {

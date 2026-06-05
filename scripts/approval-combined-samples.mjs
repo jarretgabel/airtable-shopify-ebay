@@ -214,7 +214,7 @@ function makeSampleFields(index, config) {
     'Images (comma-separated) 2': '',
     'Images Alt Text (comma separated)': config.altTexts.join(', '),
     'Key Features (Key, Value)': listingKeyFeatures,
-    'SKU Legacy Backup': sku,
+    SKU: sku,
     'Item Zip Code': config.zipCode,
     Condition: config.condition,
     'Shopify Type': config.shopifyType,
@@ -598,12 +598,12 @@ function isSampleRecord(record) {
   const templateName = getTrimmedString(record.fields['Template Name']);
   const itemTitle = getTrimmedString(record.fields['Item Title']);
   const description = getTrimmedString(record.fields.Description);
-  const skuLegacyBackup = getTrimmedString(record.fields['SKU Legacy Backup']);
+  const sku = getTrimmedString(record.fields.SKU);
 
   return templateName.includes(SAMPLE_MARKER)
     || itemTitle.includes(SAMPLE_MARKER)
     || description.includes(SAMPLE_MARKER)
-    || skuLegacyBackup.startsWith(SAMPLE_SKU_PREFIX);
+    || sku.startsWith(SAMPLE_SKU_PREFIX);
 }
 
 async function createRecords(apiKey, records) {

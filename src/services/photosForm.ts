@@ -37,6 +37,11 @@ const WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME = 'Images';
 const TESTING_COSMETIC_NOTES_FIELD_NAME = 'Testing Cosmetic Notes';
 const PHOTOGRAPHY_COSMETIC_NOTES_FIELD_NAME = 'Photography Cosmetic Notes';
 
+function isProcessedWorkflowImage(filename: string, url?: string): boolean {
+  const sample = `${filename} ${url ?? ''}`.toLowerCase();
+  return /(^|[-_])processed/.test(sample);
+}
+
 const OPTION_FIELD_NAMES = [
   'Status',
   'Component Type',
@@ -351,14 +356,18 @@ function buildStageContext(record: AirtableRecord): PhotosFormStageContext {
         filename: attachment.filename,
       }))
     : attachments;
-  const imageMetadata = parsedImageMetadata.length > 0 && attachments.length > 0
+  const mergedPhotosMetadata = parsedImageMetadata.length > 0 && attachments.length > 0
     ? mergeWorkflowImageMetadata({
         attachments: attachmentsForMetadataMerge,
-        existingMetadata: parsedImageMetadata,
+        existingMetadata: filterWorkflowImageMetadataByStage(parsedImageMetadata, 'photos'),
         sourceStage: 'photos',
         nowIso: new Date().toISOString(),
       })
-    : parsedImageMetadata;
+    : filterWorkflowImageMetadataByStage(parsedImageMetadata, 'photos');
+  const imageMetadata = [
+    ...parsedImageMetadata.filter((entry) => entry.sourceStage !== 'photos'),
+    ...mergedPhotosMetadata,
+  ];
   const existingAttachments = imageMetadata.length > 0
     ? filterWorkflowAttachmentsByStage(
       allAttachments,
@@ -375,7 +384,7 @@ function buildStageContext(record: AirtableRecord): PhotosFormStageContext {
     id: reference.attachmentId,
     url: reference.url,
     filename: reference.filename,
-  }));
+  })).filter((reference) => isProcessedWorkflowImage(reference.filename, reference.url));
 
   return {
     inventoryNotes: extractInventoryScalarValue(record.fields['Inventory Notes']),

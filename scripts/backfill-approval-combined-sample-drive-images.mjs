@@ -98,9 +98,8 @@ function isSampleRecord(record) {
     fields['Template Name'],
     fields['Item Title'],
     fields.Description,
-    fields['SKU Legacy Backup'],
   ].some((value) => getTrimmedString(value).includes(SAMPLE_MARKER))
-    || getTrimmedString(fields['SKU Legacy Backup']).startsWith(SAMPLE_SKU_PREFIX);
+    || getTrimmedString(fields.SKU).startsWith(SAMPLE_SKU_PREFIX);
 }
 
 async function fetchJson(url, apiKey, options = {}) {
@@ -153,8 +152,7 @@ function resolveSampleTitle(record) {
 }
 
 function resolveSku(record) {
-  return getTrimmedString(record.fields?.SKU)
-    || getTrimmedString(record.fields?.['SKU Legacy Backup']);
+  return getTrimmedString(record.fields?.SKU);
 }
 
 function resolveAltTexts(record) {

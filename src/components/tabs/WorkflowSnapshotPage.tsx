@@ -340,14 +340,14 @@ export function WorkflowSnapshotPage({
                 ]}
               >
                 <WorkflowReferenceImagesPanel
-                  title="Testing Reference Images"
-                  description="These prior-step testing images stay visible here so photography and listing review can compare earlier documentation against final media."
-                  images={stageImages.testingImages}
+                  title="Intake Images"
+                  description="These intake-stage images are available for reference while photography work is completed."
+                  images={stageImages.intakeImages}
                 />
                 <WorkflowReferenceImagesPanel
-                  title="Photography Images"
-                  description="Saved photography-stage images appear here as the current listing-media source for this record."
-                  images={stageImages.photographyImages}
+                  title="Testing Images"
+                  description="These testing-stage images are available for reference while photography work is completed."
+                  images={stageImages.testingImages}
                 />
               </SnapshotCard>
 

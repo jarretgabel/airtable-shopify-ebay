@@ -455,16 +455,35 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
             ...(hasOperationalContext ? [{ title: 'Testing Notes', value: stageContext.testingNotes, emptyValue: 'No testing notes available yet.' }] : []),
           ]}
         >
-          <WorkflowReferenceImagesPanel
-            title="Intake Images"
-            description="These intake-stage images are available for reference while you photograph the current stage."
-            images={stageContext.intakeReferenceAttachments}
-          />
-          <WorkflowReferenceImagesPanel
-            title="Testing Images"
-            description="These testing-stage images are available for reference while you photograph the current stage."
-            images={stageContext.testingReferenceAttachments}
-          />
+          <div className="mt-4 space-y-4">
+            <AppSectionTitle title="Image Snapshot" titleClassName="text-base" />
+
+            {stageContext.intakeReferenceAttachments.length > 0 ? (
+              <WorkflowReferenceImagesPanel
+                title="Intake Images"
+                description="These intake-stage images are available for reference while you photograph the current stage."
+                images={stageContext.intakeReferenceAttachments}
+              />
+            ) : (
+              <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4">
+                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Intake Images</p>
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">No intake reference images are available for this record yet.</p>
+              </div>
+            )}
+
+            {stageContext.testingReferenceAttachments.length > 0 ? (
+              <WorkflowReferenceImagesPanel
+                title="Testing Images"
+                description="These testing-stage images are available for reference while you photograph the current stage."
+                images={stageContext.testingReferenceAttachments}
+              />
+            ) : (
+              <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4">
+                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Testing Images</p>
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">No testing reference images are available for this record yet.</p>
+              </div>
+            )}
+          </div>
         </WorkflowFormSnapshotSection>
 
         <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>

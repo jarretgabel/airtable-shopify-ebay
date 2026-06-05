@@ -410,6 +410,8 @@ export function isHiddenCombinedFieldName(fieldName: string): boolean {
   const compact = normalized.replace(/[^a-z0-9]/g, '');
   return normalized === 'images (comma separated) 2'
     || compact === 'imagescommaseparated2'
+    || normalized === 'sku legacy backup'
+    || compact === 'skulegacybackup'
     || normalized === 'shopify approved'
     || normalized === 'ebay approved'
     || compact === 'shopifyapproved'

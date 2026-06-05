@@ -176,7 +176,7 @@ function getStagePlan(workflowStatus) {
 }
 
 function buildImageDescriptor(record, stage, index) {
-  const sku = getTrimmedString(record.fields.SKU) || getTrimmedString(record.fields['SKU Legacy Backup']);
+  const sku = getTrimmedString(record.fields.SKU);
   const make = getTrimmedString(record.fields.Make).toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const model = getTrimmedString(record.fields.Model).toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const imageKey = sku || record.id;
@@ -349,7 +349,6 @@ async function loadWorkflowRecords() {
       'Images',
       'JotForm Submission ID',
       'SKU',
-      'SKU Legacy Backup',
       'Make',
       'Model',
       'Item Title',
