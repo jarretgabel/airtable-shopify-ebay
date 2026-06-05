@@ -5,7 +5,6 @@ import { compactRowPrimaryActionButtonClass, compactRowSecondaryActionButtonClas
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
-import { RefreshIconButton } from '@/components/app/RefreshIconButton';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
@@ -34,6 +33,7 @@ interface UsedGearWorkflowPostPublishSectionProps {
   focusedBucket?: UsedGearWorkflowPostPublishBucket | null;
   onOpenOperationalRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
+  onOpenShipmentRecord: (recordId: string) => void;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
   sortMode?: UsedGearWorkflowPostPublishSortMode;
@@ -253,6 +253,7 @@ export function UsedGearWorkflowPostPublishSection({
   focusedBucket = null,
   onOpenOperationalRecord,
   onOpenListingsRecord,
+  onOpenShipmentRecord,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
   sortMode: controlledSortMode,
@@ -500,117 +501,31 @@ export function UsedGearWorkflowPostPublishSection({
           renderCell: (record) => {
             const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
             const recordBusy = updatingRecordIds.includes(record.id);
-            const noOutcomeYet = !snapshot?.postSaleOutcome;
-            const showMarkCancelled = (snapshot?.bucket === 'sold-ready' || snapshot?.bucket === 'shipped') && noOutcomeYet;
-            const showMarkPartialRefund = (snapshot?.bucket === 'sold-ready' || snapshot?.bucket === 'shipped') && noOutcomeYet;
-            const showMarkRefunded = (snapshot?.bucket === 'sold-ready' || snapshot?.bucket === 'shipped') && noOutcomeYet;
-            const showMarkReturnReceived = snapshot?.bucket === 'shipped' && noOutcomeYet;
-            const showDispositionActions = Boolean(snapshot?.postSaleOutcome) && !snapshot?.restockDisposition;
 
             return (
               <div className="flex min-h-[4.5rem] w-full flex-wrap items-center justify-center gap-1.5">
-                {showMarkCancelled ? (
-                  <button
-                    type="button"
-                    className={compactRowSecondaryActionButtonClass}
-                    onClick={() => {
-                      void handleRecordAction(record.id, markWorkflowCancelled);
-                    }}
-                    disabled={recordBusy}
-                  >
-                    Cancelled
-                  </button>
-                ) : null}
-                {showMarkPartialRefund ? (
-                  <button
-                    type="button"
-                    className={compactRowSecondaryActionButtonClass}
-                    onClick={() => {
-                      void handleRecordAction(record.id, markWorkflowPartialRefund);
-                    }}
-                    disabled={recordBusy}
-                  >
-                    Partial Refund
-                  </button>
-                ) : null}
-                {showMarkRefunded ? (
-                  <button
-                    type="button"
-                    className={compactRowSecondaryActionButtonClass}
-                    onClick={() => {
-                      void handleRecordAction(record.id, markWorkflowRefunded);
-                    }}
-                    disabled={recordBusy}
-                  >
-                    Refunded
-                  </button>
-                ) : null}
-                {showMarkReturnReceived ? (
-                  <button
-                    type="button"
-                    className={compactRowSecondaryActionButtonClass}
-                    onClick={() => {
-                      void handleRecordAction(record.id, markWorkflowReturnReceived);
-                    }}
-                    disabled={recordBusy}
-                  >
-                    Return Received
-                  </button>
-                ) : null}
-                {showDispositionActions ? (
-                  <div className="flex flex-wrap items-center justify-center gap-1.5">
-                    <CompactIconActionButton
-                      label="Disposition: Relist Candidate"
-                      variant="compact-secondary"
-                      icon="form"
-                      onClick={() => {
-                        void handleRecordAction(record.id, (nextRecordId) => resolveWorkflowRestockDisposition(nextRecordId, { restockDisposition: 'Relist Candidate' }));
-                      }}
-                      disabled={recordBusy}
-                    />
-                    <CompactIconActionButton
-                      label="Disposition: Needs Re-Intake"
-                      variant="compact-secondary"
-                      icon="form"
-                      onClick={() => {
-                        void handleRecordAction(record.id, (nextRecordId) => resolveWorkflowRestockDisposition(nextRecordId, { restockDisposition: 'Needs Re-Intake' }));
-                      }}
-                      disabled={recordBusy}
-                    />
-                    <CompactIconActionButton
-                      label="Disposition: Parts / Damaged"
-                      variant="compact-secondary"
-                      icon="form"
-                      onClick={() => {
-                        void handleRecordAction(record.id, (nextRecordId) => resolveWorkflowRestockDisposition(nextRecordId, { restockDisposition: 'Parts / Damaged' }));
-                      }}
-                      disabled={recordBusy}
-                    />
-                    <CompactIconActionButton
-                      label="Disposition: Archive Only"
-                      variant="compact-secondary"
-                      icon="form"
-                      onClick={() => {
-                        void handleRecordAction(record.id, (nextRecordId) => resolveWorkflowRestockDisposition(nextRecordId, { restockDisposition: 'Archive Only' }));
-                      }}
-                      disabled={recordBusy}
-                    />
-                  </div>
-                ) : null}
-                <button
-                  type="button"
-                  className={compactRowSecondaryActionButtonClass}
+                <CompactIconActionButton
+                  label="Open Completed Shipment"
+                  icon="open"
+                  variant="compact-secondary"
+                  onClick={() => onOpenShipmentRecord(record.id)}
+                  disabled={recordBusy}
+                />
+                <CompactIconActionButton
+                  label="Open Workflow Snapshot"
+                  icon="eye"
+                  variant="compact-secondary"
                   onClick={() => onOpenOperationalRecord(record.id)}
                   disabled={recordBusy}
-                >
-                  Open Workflow Snapshot
-                </button>
+                />
               </div>
             );
           },
         },
       ];
     }
+
+    const includePostSale = sectionKey === 'sold-ready';
 
     return [
       ...baseColumns,
@@ -651,29 +566,33 @@ export function UsedGearWorkflowPostPublishSection({
           );
         },
       },
-      {
-        key: 'post-sale',
-        label: 'Post-Sale',
-        width: 'minmax(0,1.25fr)',
-        renderCell: (record) => {
-          const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
-          const chips = buildPostSaleChipValues(snapshot);
+      ...(includePostSale
+        ? [
+          {
+            key: 'post-sale',
+            label: 'Post-Sale',
+            width: 'minmax(0,1.25fr)',
+            renderCell: (record) => {
+              const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
+              const chips = buildPostSaleChipValues(snapshot);
 
-          if (!snapshot || chips.length === 0) {
-            return <span className="text-xs text-[var(--muted)]">—</span>;
-          }
+              if (!snapshot || chips.length === 0) {
+                return <span className="text-xs text-[var(--muted)]">—</span>;
+              }
 
-          return (
-            <div className="flex flex-wrap gap-1.5">
-              {chips.map((chip) => (
-                <span key={chip.label} className={`${getWorkflowStatusChipClasses(chip.label)} ${chip.className}`}>
-                  {chip.label}
-                </span>
-              ))}
-            </div>
-          );
-        },
-      },
+              return (
+                <div className="flex flex-wrap gap-1.5">
+                  {chips.map((chip) => (
+                    <span key={chip.label} className={`${getWorkflowStatusChipClasses(chip.label)} ${chip.className}`}>
+                      {chip.label}
+                    </span>
+                  ))}
+                </div>
+              );
+            },
+          },
+        ]
+        : []),
       {
         key: 'actions',
         label: 'Actions',
@@ -685,7 +604,6 @@ export function UsedGearWorkflowPostPublishSection({
           const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
           const recordBusy = updatingRecordIds.includes(record.id);
           const hideTextActions = sectionKey === 'sold-ready';
-          const showMarkSoldReady = snapshot?.bucket === 'active-listing' || snapshot?.bucket === 'stale-listing';
           const showMarkShipped = snapshot?.bucket === 'sold-ready';
           const noOutcomeYet = !snapshot?.postSaleOutcome;
           const showMarkCancelled = (snapshot?.bucket === 'sold-ready' || snapshot?.bucket === 'shipped') && noOutcomeYet;
@@ -696,18 +614,6 @@ export function UsedGearWorkflowPostPublishSection({
 
           return (
             <div className="flex min-h-[4.5rem] w-full flex-wrap items-center justify-center gap-1.5">
-              {showMarkSoldReady && !hideTextActions ? (
-                <button
-                  type="button"
-                  className={compactRowPrimaryActionButtonClass}
-                  onClick={() => {
-                    void handleRecordAction(record.id, markWorkflowSoldReadyToShip);
-                  }}
-                  disabled={recordBusy}
-                >
-                  Sold Ready
-                </button>
-              ) : null}
               {showMarkShipped && !hideTextActions ? (
                 <button
                   type="button"
@@ -835,32 +741,7 @@ export function UsedGearWorkflowPostPublishSection({
         {showSectionIntro ? (
           <AppSectionTitle title={queueTitle} />
         ) : null}
-        {sectionSearchEnabled ? (
-          <div className="flex flex-wrap items-center gap-3">
-            <RefreshIconButton
-              onClick={() => {
-                void refreshQueue();
-              }}
-              disabled={refreshing}
-              loading={refreshing}
-              label={`Refresh ${queueNoun}`}
-              loadingLabel={`Refreshing ${queueNoun}`}
-            />
-            <label className="flex min-w-[200px] flex-1">
-              <span className="sr-only">{`Sort used gear ${queueNoun}. Current order: ${getPostPublishSortLabel(sortMode)}`}</span>
-              <select
-                aria-label={`Sort used gear ${queueNoun}. Current order: ${getPostPublishSortLabel(sortMode)}`}
-                className="h-[42px] w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                value={sortMode}
-                onChange={(event) => handleSortModeChange(event.currentTarget.value as UsedGearWorkflowPostPublishSortMode)}
-              >
-                <option value="latest-activity">Latest Activity</option>
-                <option value="oldest-activity">Oldest Activity</option>
-                <option value="sku">SKU</option>
-              </select>
-            </label>
-          </div>
-        ) : (
+        {!sectionSearchEnabled ? (
           <QueueSearchToolbar
             searchAriaLabel={`Search used gear ${queueNoun}`}
             searchPlaceholder={searchPlaceholder}
@@ -881,7 +762,7 @@ export function UsedGearWorkflowPostPublishSection({
               { value: 'sku', label: 'SKU' },
             ]}
           />
-        )}
+        ) : null}
       </div>
 
       {focusedBucket && focusedBucketNotice ? (
@@ -934,6 +815,20 @@ export function UsedGearWorkflowPostPublishSection({
                     searchPlaceholder={`Search ${section.title.toLowerCase()}...`}
                     searchValue={sectionSearchTerm}
                     onSearchChange={(value) => handleSectionSearchChange(section.key, value)}
+                    refreshLabel={`Refresh ${section.title}`}
+                    refreshLoadingLabel={`Refreshing ${section.title}`}
+                    refreshing={refreshing}
+                    onRefresh={() => {
+                      void refreshQueue();
+                    }}
+                    sortAriaLabel={`Sort ${section.title}. Current order: ${getPostPublishSortLabel(sortMode)}`}
+                    sortValue={sortMode}
+                    onSortChange={(value) => handleSortModeChange(value as UsedGearWorkflowPostPublishSortMode)}
+                    sortOptions={[
+                      { value: 'latest-activity', label: 'Latest Activity' },
+                      { value: 'oldest-activity', label: 'Oldest Activity' },
+                      { value: 'sku', label: 'SKU' },
+                    ]}
                   />
                 </div>
               ) : null}

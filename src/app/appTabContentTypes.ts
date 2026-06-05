@@ -30,6 +30,7 @@ export interface AppTabContentProps {
   inventoryPriceEditorRecordId: string | null;
   listingsRecordId: string | null;
   soldReadyListingsRecordId: string | null;
+  shippedListingsRecordId: string | null;
   shopifyListingsRecordId: string | null;
   ebayListingsRecordId: string | null;
   userRecordId: string | null;
@@ -52,6 +53,7 @@ export interface AppTabContentProps {
   navigateToPhotosForm: (recordId?: string | null, replace?: boolean) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   navigateToSoldReadyListingRecord: (recordId: string, replace?: boolean) => void;
+  navigateToShippedListingRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsList: (replace?: boolean) => void;
   navigateToShopifyRecord: (recordId: string, replace?: boolean) => void;
   navigateToShopifyList: (replace?: boolean) => void;

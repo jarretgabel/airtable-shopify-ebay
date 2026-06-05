@@ -84,6 +84,7 @@ interface DashboardOverviewSectionProps {
   salesTrend?: TrendSummary;
   marginTrend?: TrendSummary;
   onSelectTab: (tab: DashboardTargetTab) => void;
+  showWarnings?: boolean;
   embedded?: boolean;
 }
 
@@ -93,9 +94,14 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
     currentUserRole,
     workflowAnalytics,
     onSelectTab,
+    showWarnings,
     embedded,
   } = props;
-  const workflowUnavailableReason = workflowAnalytics.error;
+  const shouldShowWarnings = showWarnings ?? true;
+  if (!shouldShowWarnings && workflowAnalytics.error) {
+    return null;
+  }
+  const workflowUnavailableReason = shouldShowWarnings ? workflowAnalytics.error : null;
   const testingStageCount = workflowAnalytics.statusCounts['Testing In Progress'] ?? 0;
   const photographyStageCount = workflowAnalytics.statusCounts['Photography In Progress'] ?? 0;
   const downstreamStageCount = testingStageCount + photographyStageCount;

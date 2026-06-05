@@ -218,16 +218,25 @@ function buildViewModel(): DashboardTabViewModel {
 }
 
 describe('DashboardTab', () => {
-  it('shows the partial-data notice and exposes expanded sections for full-access roles', () => {
+  it('exposes expanded sections for full-access roles', () => {
     render(<DashboardTab viewModel={buildViewModel()} />);
 
     expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
-    expect(screen.getByText('Partial dashboard data')).toBeInTheDocument();
+    expect(screen.queryByText('Partial dashboard data')).not.toBeInTheDocument();
     expect(screen.getByText('Section nav')).toBeInTheDocument();
     expect(screen.getByText('Overview section')).toBeInTheDocument();
     expect(screen.getAllByText('Actions section')).toHaveLength(1);
     expect(screen.queryByText('Airtable section:Inventory fetch failed')).not.toBeInTheDocument();
     expect(screen.queryByText('Shopify section')).not.toBeInTheDocument();
+  });
+
+  it('shows the partial-data notice for developer roles', () => {
+    const viewModel = buildViewModel();
+    viewModel.workflow.currentUserRole = 'developer';
+
+    render(<DashboardTab viewModel={viewModel} />);
+
+    expect(screen.getByText('Partial dashboard data')).toBeInTheDocument();
   });
 
   it('keeps limited-role dashboards focused on the overview section', () => {

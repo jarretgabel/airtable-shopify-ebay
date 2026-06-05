@@ -39,10 +39,9 @@ interface WorkflowSnapshotPageProps {
   onOpenPostPublish: (bucket: UsedGearWorkflowPostPublishBucket) => void;
 }
 
-type WorkflowSnapshotSectionKey = 'overview' | 'timeline' | 'intake' | 'testing' | 'photography' | 'listings' | 'post-publish';
+type WorkflowSnapshotSectionKey = 'timeline' | 'intake' | 'testing' | 'photography' | 'listings' | 'post-publish';
 
 const WORKFLOW_SNAPSHOT_SECTION_ITEMS: Array<{ id: WorkflowSnapshotSectionKey; key: WorkflowSnapshotSectionKey; label: string }> = [
-  { id: 'overview', key: 'overview', label: 'Overview' },
   { id: 'timeline', key: 'timeline', label: 'Timeline' },
   { id: 'intake', key: 'intake', label: 'Intake' },
   { id: 'testing', key: 'testing', label: 'Testing' },
@@ -50,6 +49,11 @@ const WORKFLOW_SNAPSHOT_SECTION_ITEMS: Array<{ id: WorkflowSnapshotSectionKey; k
   { id: 'listings', key: 'listings', label: 'Listings' },
   { id: 'post-publish', key: 'post-publish', label: 'Post-Publish' },
 ];
+
+function isProcessedWorkflowImage(filename: string, url?: string): boolean {
+  const sample = `${filename} ${url ?? ''}`.toLowerCase();
+  return /(^|[-_])processed/.test(sample);
+}
 
 function SnapshotCard({
   sectionId,
@@ -110,12 +114,16 @@ function buildSnapshotStageImages(record: UsedGearOperationalRecordContext['reco
         url: image.url,
         filename: image.filename,
       })),
-      testingImages: filterWorkflowImageMetadataByStage(parsedMetadata, 'testing').map((image) => ({
+      testingImages: filterWorkflowImageMetadataByStage(parsedMetadata, 'testing')
+        .filter((image) => image.includedInListing && isProcessedWorkflowImage(image.filename, image.url))
+        .map((image) => ({
         id: image.attachmentId,
         url: image.url,
         filename: image.filename,
       })),
-      photographyImages: filterWorkflowImageMetadataByStage(parsedMetadata, 'photos').map((image) => ({
+      photographyImages: filterWorkflowImageMetadataByStage(parsedMetadata, 'photos')
+        .filter((image) => image.includedInListing && isProcessedWorkflowImage(image.filename, image.url))
+        .map((image) => ({
         id: image.attachmentId,
         url: image.url,
         filename: image.filename,
@@ -127,17 +135,6 @@ function buildSnapshotStageImages(record: UsedGearOperationalRecordContext['reco
     testingImages: [],
     photographyImages: [],
   };
-}
-
-function countPhotographyImages(record: UsedGearOperationalRecordContext['record']): string {
-  const parsedMetadata = parseWorkflowImageMetadata(record.fields['Workflow Image Metadata JSON']);
-  const photographyImages = filterWorkflowImageMetadataByStage(parsedMetadata, 'photos');
-  const count = photographyImages.length;
-  if (count > 0) {
-    return `${count} item${count === 1 ? '' : 's'}`;
-  }
-
-  return countFieldItems(record.fields.Images);
 }
 
 function countFieldItems(value: unknown): string {
@@ -214,6 +211,7 @@ export function WorkflowSnapshotPage({
   const workflowStatus = record ? getUsedGearWorkflowStatus(record.fields) ?? '' : '';
   const stageImages = useMemo(() => (record ? buildSnapshotStageImages(record) : { intakeImages: [], testingImages: [], photographyImages: [] }), [record]);
   const postPublishSnapshot = useMemo(() => (record ? getUsedGearWorkflowPostPublishSnapshot(record) : null), [record]);
+  const listingsComplete = postPublishSnapshot?.bucket === 'sold-ready' || postPublishSnapshot?.bucket === 'shipped';
   const showSpecialistCards = workflowStatus !== 'Pending Review' && workflowStatus !== 'Unqualified';
   const showListingsCard = showSpecialistCards && workflowStatus !== 'Accepted - Awaiting Arrival';
   const sectionItems = useMemo(
@@ -258,11 +256,6 @@ export function WorkflowSnapshotPage({
       >
         {record ? (
           <div className="space-y-6">
-            <section id="overview" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] scroll-mt-28">
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Record Overview</p>
-              <h2 className="m-0 mt-2 text-2xl font-semibold text-[var(--ink)]">{getUsedGearRecordItemTitle(record.fields, record.id)}</h2>
-            </section>
-
             <section id="timeline" className="scroll-mt-28">
               <ListingApprovalWorkflowProcessCard summary={workflowSummary} timelineOnly />
             </section>
@@ -343,9 +336,7 @@ export function WorkflowSnapshotPage({
                 onAction={showSpecialistCards ? () => onOpenPhotos(record.id) : null}
                 fields={[
                   { label: 'Photography Cosmetic Notes', value: record.fields['Photography Cosmetic Notes'] },
-                  { label: "Photo'd", value: record.fields["Photo'd"] },
-                  { label: 'Images', value: countPhotographyImages(record) },
-                  { label: 'Additional Items', value: record.fields['Additional Items'] },
+                  { label: "Photo'd At", value: record.fields['Photography Signed At'] },
                 ]}
               >
                 <WorkflowReferenceImagesPanel
@@ -377,7 +368,7 @@ export function WorkflowSnapshotPage({
                     { label: 'eBay Approved', value: record.fields['Ebay Approved'] },
                   ]}
                 />
-              ) : (
+              ) : listingsComplete ? null : (
                 <NotReadyForStageSurface
                   stageLabel="Listings"
                   nextStepLabel={deriveNextStepLabel(workflowStatus)}

@@ -20,6 +20,7 @@ interface DashboardShopifySectionProps {
   activeProductsCount: number;
   draftProductsCount: number;
   archivedProductsCount: number;
+  showWarnings?: boolean;
 }
 
 export function DashboardShopifySection(props: DashboardShopifySectionProps) {
@@ -32,7 +33,16 @@ export function DashboardShopifySection(props: DashboardShopifySectionProps) {
     activeProductsCount,
     draftProductsCount,
     archivedProductsCount,
+    showWarnings,
   } = props;
+  const shouldShowWarnings = showWarnings ?? true;
+  const hasData = productsCount > 0;
+  if (!shouldShowWarnings && errorMessage && !hasData) {
+    return null;
+  }
+  const visibleCards = shouldShowWarnings
+    ? shopifyCards
+    : shopifyCards.filter((card) => !card.unavailableReason);
 
   const safeProductsCount = Math.max(productsCount, 1);
   const activeShare = productsCount > 0 ? Math.round((activeProductsCount / safeProductsCount) * 100) : 0;
@@ -42,7 +52,7 @@ export function DashboardShopifySection(props: DashboardShopifySectionProps) {
 
   return (
     <DashboardSectionPanel id="pipeline" title="Shopify">
-      {errorMessage && !spLoading && (
+      {shouldShowWarnings && errorMessage && !spLoading && (
         <DashboardSourceWarning
           title={productsCount > 0 ? 'Shopify metrics are showing the last successful snapshot' : 'Shopify data is unavailable right now'}
           message={errorMessage}
@@ -79,8 +89,8 @@ export function DashboardShopifySection(props: DashboardShopifySectionProps) {
 
       {spLoading ? (
         <DashboardWorkflowCardSkeletonGrid />
-      ) : shopifyCards.length > 0 && (
-        <DashboardWorkflowCardGrid title="Shopify Snapshot & Queue" cards={shopifyCards} onSelect={onSelectTab} />
+      ) : visibleCards.length > 0 && (
+        <DashboardWorkflowCardGrid title="Shopify Snapshot & Queue" cards={visibleCards} onSelect={onSelectTab} />
       )}
     </DashboardSectionPanel>
   );

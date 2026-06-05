@@ -21,6 +21,7 @@ interface DashboardAirtableSectionProps {
   maxComponentTypeCount: number;
   maxAirtableBrandCount: number;
   onSelectTab: (tab: DashboardTargetTab) => void;
+  showWarnings?: boolean;
 }
 
 function toPercent(count: number, max: number): number {
@@ -42,7 +43,13 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
     maxComponentTypeCount,
     maxAirtableBrandCount,
     onSelectTab,
+    showWarnings,
   } = props;
+  const shouldShowWarnings = showWarnings ?? true;
+  const hasData = nonEmptyListingCount > 0;
+  if (!shouldShowWarnings && errorMessage && !hasData) {
+    return null;
+  }
   const distributorCount = airtableDistributorSummary.length;
   const topComponentTypes = componentTypeSummary.slice(0, 6);
   const topBrands = airtableBrandSummary.slice(0, 6);
@@ -75,7 +82,7 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
         </>
       ) : nonEmptyListingCount > 0 ? (
         <>
-          {errorMessage && (
+          {shouldShowWarnings && errorMessage && (
             <DashboardSourceWarning
               title="Inventory data is showing the last successful snapshot"
               message={errorMessage}
@@ -112,7 +119,7 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
         </>
       ) : (
         <>
-          {errorMessage && (
+          {shouldShowWarnings && errorMessage && (
             <DashboardSourceWarning
               title="Inventory data is unavailable right now"
               message={errorMessage}

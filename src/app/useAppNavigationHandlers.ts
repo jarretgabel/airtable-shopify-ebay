@@ -31,6 +31,7 @@ interface AppNavigationHandlers {
   ) => void;
   navigateToListingsRecord: (recordId: string, replace?: boolean) => void;
   navigateToSoldReadyListingRecord: (recordId: string, replace?: boolean) => void;
+  navigateToShippedListingRecord: (recordId: string, replace?: boolean) => void;
   navigateToListingsList: (replace?: boolean) => void;
   navigateToShopifyRecord: (recordId: string, replace?: boolean) => void;
   navigateToShopifyList: (replace?: boolean) => void;
@@ -188,6 +189,11 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     scrollToPageTop();
   }, [navigate]);
 
+  const navigateToShippedListingRecord = useCallback((recordId: string, replace = false): void => {
+    navigate(`/completed-shipments/${encodeURIComponent(recordId)}`, { replace });
+    scrollToPageTop();
+  }, [navigate]);
+
   const navigateToListingsList = useCallback((replace = false): void => {
     navigate(TAB_PATHS.listings, { replace });
     scrollToPageTop();
@@ -246,6 +252,7 @@ export function useAppNavigationHandlers(navigate: NavigateFunction, logout: () 
     navigateToInventoryPostPublishBucket,
     navigateToListingsRecord,
     navigateToSoldReadyListingRecord,
+    navigateToShippedListingRecord,
     navigateToListingsList,
     navigateToShopifyRecord,
     navigateToShopifyList,

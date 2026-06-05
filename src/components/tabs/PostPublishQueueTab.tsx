@@ -16,6 +16,7 @@ interface PostPublishQueueTabProps {
   currentUserName: string;
   onOpenOperationalRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
+  onOpenShipmentRecord: (recordId: string) => void;
 }
 
 const WORKFLOW_POST_PUBLISH_SORT_PARAM = 'workflowPostPublishSort';
@@ -30,6 +31,7 @@ export function PostPublishQueueTab({
   currentUserName,
   onOpenOperationalRecord,
   onOpenListingsRecord,
+  onOpenShipmentRecord,
 }: PostPublishQueueTabProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -107,6 +109,7 @@ export function PostPublishQueueTab({
         focusedBucket={focusedBucket}
         onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={onOpenListingsRecord}
+        onOpenShipmentRecord={onOpenShipmentRecord}
         sectionSearchEnabled
         sortMode={sortMode}
         onSortModeChange={(value) => updateRouteState((params) => {

@@ -6,6 +6,7 @@ import {
   markWorkflowRefunded,
   markWorkflowReturnReceived,
   markWorkflowShipped,
+  saveWorkflowShipmentFollowThrough,
 } from '@/services/usedGearQueue';
 import { getUsedGearWorkflowPostPublishSnapshot } from '@/services/usedGearWorkflowLifecycle';
 import { primaryActionButtonClass } from '@/components/app/buttonStyles';
@@ -52,6 +53,7 @@ export function ListingApprovalSoldReadyPanel({
   const [workflowRecord, setWorkflowRecord] = useState(selectedRecord);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shipmentNotesDraft, setShipmentNotesDraft] = useState('');
 
   useEffect(() => {
     setWorkflowRecord(selectedRecord);
@@ -88,12 +90,22 @@ export function ListingApprovalSoldReadyPanel({
   const shipNotes = typeof workflowRecord.fields['Shipment Follow-Through Notes'] === 'string'
     ? workflowRecord.fields['Shipment Follow-Through Notes']
     : '';
+  const shipNotesUpdatedAt = typeof workflowRecord.fields['Shipment Follow-Through Updated At'] === 'string'
+    ? workflowRecord.fields['Shipment Follow-Through Updated At']
+    : '';
   const noOutcomeYet = !postPublishSnapshot?.postSaleOutcome;
   const showMarkShipped = workflowStatus === 'Sold - Ready to Ship';
   const showMarkCancelled = (workflowStatus === 'Sold - Ready to Ship' || workflowStatus === 'Shipped') && noOutcomeYet;
   const showMarkPartialRefund = (workflowStatus === 'Sold - Ready to Ship' || workflowStatus === 'Shipped') && noOutcomeYet;
   const showMarkRefunded = (workflowStatus === 'Sold - Ready to Ship' || workflowStatus === 'Shipped') && noOutcomeYet;
   const showMarkReturnReceived = workflowStatus === 'Shipped' && noOutcomeYet;
+  const canEditShipNotes = workflowStatus === 'Sold - Ready to Ship';
+  const showShipNotesSnapshot = workflowStatus === 'Shipped';
+  const hasNotesChange = canEditShipNotes && shipmentNotesDraft.trim() !== shipNotes.trim();
+
+  useEffect(() => {
+    setShipmentNotesDraft(shipNotes);
+  }, [shipNotes, workflowRecord.id]);
 
   const actionOptions = useMemo(() => {
     const options: Array<{ value: string; label: string; run: () => Promise<AirtableRecord> }> = [];
@@ -174,6 +186,38 @@ export function ListingApprovalSoldReadyPanel({
     }
   };
 
+  const handleSave = async () => {
+    if (!hasNotesChange && !selectedAction) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      let updatedRecord = workflowRecord;
+      if (hasNotesChange) {
+        updatedRecord = await saveWorkflowShipmentFollowThrough(selectedRecord.id, {
+          shipmentFollowThroughNotes: shipmentNotesDraft.trim() || null,
+        });
+      }
+
+      if (selectedAction) {
+        const action = actionOptions.find((option) => option.value === selectedAction);
+        if (action) {
+          updatedRecord = await action.run();
+        }
+      }
+
+      setWorkflowRecord(updatedRecord);
+      await loadRecords(tableReference, tableName, true);
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Unable to update the operational row.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <section className="mt-4 space-y-4">
       {error ? (
@@ -197,10 +241,31 @@ export function ListingApprovalSoldReadyPanel({
           { label: 'Power Cable', value: displayValue(workflowRecord.fields['Power Cable']) },
           { label: 'Additional Items', value: displayValue(workflowRecord.fields['Additional Items']) },
         ]}
-        cards={[
-          { title: 'Ship Notes', value: shipNotes, emptyValue: 'No ship notes available.' },
-        ]}
+        cards={showShipNotesSnapshot
+          ? [{ title: 'Ship Notes', value: shipNotes, emptyValue: 'No ship notes available.' }]
+          : []}
       />
+
+      {canEditShipNotes ? (
+        <section className="rounded-2xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Shipment Follow-Through</p>
+          <label className="mt-4 block">
+            <span className="sr-only">Shipment follow-through notes</span>
+            <textarea
+              className="min-h-24 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+              value={shipmentNotesDraft}
+              onChange={(event) => setShipmentNotesDraft(event.currentTarget.value)}
+              placeholder="Add packing, carrier, or shipment confirmation notes"
+              disabled={saving}
+            />
+          </label>
+          {shipNotesUpdatedAt ? (
+            <p className="mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+              Last updated {shipNotesUpdatedAt}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-4">
         <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Shipping Actions</p>
@@ -226,14 +291,11 @@ export function ListingApprovalSoldReadyPanel({
                 type="button"
                 className={`${primaryActionButtonClass} w-full`}
                 onClick={() => {
-                  const action = actionOptions.find((option) => option.value === selectedAction);
-                  if (action) {
-                    void runAction(action.run);
-                  }
+                  void handleSave();
                 }}
-                disabled={saving || !selectedAction}
+                disabled={saving || (!selectedAction && !hasNotesChange)}
               >
-                Saved
+                {saving ? 'Saving...' : 'Save Updates'}
               </button>
             </>
           ) : (

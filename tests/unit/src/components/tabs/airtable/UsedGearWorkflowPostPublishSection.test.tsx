@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsedGearWorkflowPostPublishSection } from '@/components/tabs/airtable/UsedGearWorkflowPostPublishSection';
 
@@ -111,20 +111,21 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     expect(screen.getByText('Active Listings')).toBeInTheDocument();
   });
 
-  it('shows the sort control as an icon-triggered select in the header', async () => {
+  it('shows the sort control in the section toolbar when section search is enabled', async () => {
     loadWorkflowPostPublishQueueMock.mockResolvedValue([]);
 
     render(
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
+        sectionSearchEnabled
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
       />,
     );
 
-    await screen.findByText('Post-Publish Queue');
+    await screen.findByText('Active Listings');
 
-    expect(screen.getByLabelText(/Sort used gear post-publish queue/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Sort Active Listings/i)).toBeInTheDocument();
   });
 
   it('keeps post-publish rows visible without owner-scoped filtering', async () => {
@@ -230,7 +231,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     expect(onOpenListingsRecord).toHaveBeenCalledWith('rec-stale');
   });
 
-  it('supports sold-ready reconciliation from row actions', async () => {
+  it('hides sold-ready reconciliation actions from row controls', async () => {
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {
         id: 'rec-active',
@@ -256,19 +257,6 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         },
       },
     ]);
-    markWorkflowSoldReadyToShipMock.mockResolvedValue({
-      id: 'rec-active',
-      createdTime: '2026-05-07T00:00:00.000Z',
-      fields: {
-        SKU: 'ACT-1',
-        Make: 'McIntosh',
-        Model: 'C28',
-        'Workflow Status': 'Sold - Ready to Ship',
-        'Listed At': '2099-01-01T00:00:00.000Z',
-        'Sold Ready To Ship At': '2026-05-08T06:00:00.000Z',
-      },
-    });
-
     render(
       <UsedGearWorkflowPostPublishSection
         currentUserName="Taylor Reviewer"
@@ -279,10 +267,8 @@ describe('UsedGearWorkflowPostPublishSection', () => {
 
     await screen.findByText('ACT-1');
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Sold Ready' })[0]!);
-    await waitFor(() => {
-      expect(markWorkflowSoldReadyToShipMock).toHaveBeenCalledWith('rec-active');
-    });
+    expect(screen.queryByRole('button', { name: 'Sold Ready' })).not.toBeInTheDocument();
+    expect(markWorkflowSoldReadyToShipMock).not.toHaveBeenCalled();
   });
 
   it('hides shipped reconciliation actions in the sold-ready directory', async () => {

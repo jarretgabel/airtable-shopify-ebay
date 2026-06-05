@@ -187,7 +187,7 @@ export async function archiveIntakeImagesForRecord(recordId: string, imageUrls: 
         original,
         processed: original,
       });
-      archivedFiles.push(archiveResult.processed);
+      archivedFiles.push(archiveResult.original);
     } catch (error) {
       logError('Failed to archive JotForm intake image', error, { recordId, imageUrl });
     }

@@ -59,6 +59,7 @@ export function useAuthRouteGuard({
     const isInventoryDetailPath = /^\/workflow-hub\/[^/]+$/.test(normalizedPath);
     const isListingsDetailPath = /^\/listings\/[^/]+$/.test(normalizedPath);
     const isSoldReadyListingsDetailPath = /^\/sold-ready\/[^/]+$/.test(normalizedPath);
+    const isCompletedShipmentsDetailPath = /^\/completed-shipments\/[^/]+$/.test(normalizedPath);
     const isEbayListingsDetailPath = /^\/ebay\/(?!listings$)[^/]+$/.test(normalizedPath);
     const isShopifyProductsDetailPath = /^\/shopify\/(?!products$)[^/]+$/.test(normalizedPath);
     const isUserDetailPath = /^\/account\/users\/[^/]+$/.test(normalizedPath);
@@ -77,6 +78,7 @@ export function useAuthRouteGuard({
       isSoldReadyListingsDetailPath ||
       normalizedPath === '/post-publish' ||
       normalizedPath === '/completed-shipments' ||
+      isCompletedShipmentsDetailPath ||
       normalizedPath === '/ebay' ||
       isEbayListingsDetailPath ||
       normalizedPath === '/trash-review' ||
@@ -107,11 +109,11 @@ export function useAuthRouteGuard({
     }
 
     const requestedTab: Tab | null =
-        normalizedPath === '/listings' || isListingsDetailPath || isSoldReadyListingsDetailPath
+        normalizedPath === '/listings' || isListingsDetailPath
           ? 'listings'
-        : normalizedPath === '/post-publish'
+        : normalizedPath === '/post-publish' || isSoldReadyListingsDetailPath
           ? 'post-publish'
-        : normalizedPath === '/completed-shipments'
+        : normalizedPath === '/completed-shipments' || isCompletedShipmentsDetailPath
           ? 'archive'
         : normalizedPath === '/ebay' || isEbayListingsDetailPath
             ? 'ebay'

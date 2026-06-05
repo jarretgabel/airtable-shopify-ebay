@@ -25,6 +25,7 @@ interface DashboardJotformSectionProps {
   jfSubmissions: JotFormSubmission[];
   now: number;
   onSelectTab: (tab: DashboardTargetTab) => void;
+  showWarnings?: boolean;
 }
 
 function toPercent(count: number, max: number): number {
@@ -47,10 +48,17 @@ export function DashboardJotformSection({
   jfSubmissions,
   now,
   onSelectTab,
+  showWarnings,
 }: DashboardJotformSectionProps) {
+  const shouldShowWarnings = showWarnings ?? true;
+  const hasData = jfSubmissions.length > 0;
+  if (!shouldShowWarnings && errorMessage && !hasData) {
+    return null;
+  }
+
   return (
     <DashboardSectionPanel id="inquiries" title="JotForm">
-      {errorMessage && !jfLoading && (
+      {shouldShowWarnings && errorMessage && !jfLoading && (
         <DashboardSourceWarning
           title={jfSubmissions.length > 0 ? 'JotForm is showing the last successful snapshot' : 'JotForm data is unavailable right now'}
           message={errorMessage}

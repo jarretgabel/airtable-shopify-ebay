@@ -36,6 +36,7 @@ interface DashboardWorkflowAnalyticsSectionProps {
   staleListingUnassignedCount?: number;
   soldReadyUnassignedCount?: number;
   embedded?: boolean;
+  showWarnings?: boolean;
 }
 
 function formatLifecycleMetric(value: number | null): string {
@@ -56,7 +57,13 @@ export function DashboardWorkflowAnalyticsSection({
   staleListingUnassignedCount = 0,
   soldReadyUnassignedCount = 0,
   embedded = false,
+  showWarnings,
 }: DashboardWorkflowAnalyticsSectionProps) {
+  const shouldShowWarnings = showWarnings ?? true;
+  const hasData = snapshot.totalCount > 0;
+  if (!shouldShowWarnings && error && !hasData) {
+    return null;
+  }
   const compactRows = (
     <div className="grid gap-4 xl:grid-cols-3">
       <section className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-4 py-4">
@@ -101,7 +108,7 @@ export function DashboardWorkflowAnalyticsSection({
       </p>
 
       {loading ? <DashboardLoadingBanner label="Refreshing used-gear workflow analytics..." /> : null}
-      {error ? <DashboardSourceWarning title="Workflow analytics unavailable" message={error} /> : null}
+      {shouldShowWarnings && error ? <DashboardSourceWarning title="Workflow analytics unavailable" message={error} /> : null}
 
       {loading ? (
         <>

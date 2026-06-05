@@ -21,6 +21,7 @@ export interface AppRouteState {
   inventoryPriceEditorRecordId: string | null;
   listingsRecordId: string | null;
   soldReadyListingsRecordId: string | null;
+  shippedListingsRecordId: string | null;
   shopifyListingsRecordId: string | null;
   ebayListingsRecordId: string | null;
   userRecordId: string | null;
@@ -50,6 +51,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const ebayListingsRecordMatch = normalizedPath.match(/^\/ebay\/(?!listings$)([^/]+)$/);
   const shopifyListingsRecordMatch = normalizedPath.match(/^\/shopify\/(?!products$)([^/]+)$/);
   const soldReadyListingsRecordMatch = normalizedPath.match(/^\/sold-ready\/([^/]+)$/);
+  const shippedListingsRecordMatch = normalizedPath.match(/^\/completed-shipments\/([^/]+)$/);
   const listingsRecordMatch = soldReadyListingsRecordMatch
     ? null
     : normalizedPath.match(/^\/listings\/(?!sold-ready\/)([^/]+)$/);
@@ -57,9 +59,9 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const firstAccessibleTab = (accessiblePages[0] ?? 'dashboard') as Tab;
 
   const activeTab: Tab = (() => {
-    if (normalizedPath === '/listings' || listingsRecordMatch || soldReadyListingsRecordMatch) return 'listings';
-    if (normalizedPath === '/post-publish') return 'post-publish';
-    if (normalizedPath === '/completed-shipments') return 'archive';
+    if (normalizedPath === '/listings' || listingsRecordMatch) return 'listings';
+    if (normalizedPath === '/post-publish' || soldReadyListingsRecordMatch) return 'post-publish';
+    if (normalizedPath === '/completed-shipments' || shippedListingsRecordMatch) return 'archive';
     if (normalizedPath === '/ebay' || ebayListingsRecordMatch) return 'ebay';
     if (normalizedPath === '/shopify' || shopifyListingsRecordMatch) return 'shopify';
     if (normalizedPath === '/parking-lot' || jotformReviewGroupMatch || jotformReviewRecordMatch || parkingLotArrivalGroupMatch || parkingLotArrivalRecordMatch) return 'parking-lot';
@@ -106,6 +108,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     inventoryRecordId: inventoryRecordMatch ? decodeURIComponent(inventoryRecordMatch[1]) : null,
     listingsRecordId: listingsRecordMatch ? decodeURIComponent(listingsRecordMatch[1]) : null,
     soldReadyListingsRecordId: soldReadyListingsRecordMatch ? decodeURIComponent(soldReadyListingsRecordMatch[1]) : null,
+    shippedListingsRecordId: shippedListingsRecordMatch ? decodeURIComponent(shippedListingsRecordMatch[1]) : null,
     shopifyListingsRecordId: shopifyListingsRecordMatch ? decodeURIComponent(shopifyListingsRecordMatch[1]) : null,
     ebayListingsRecordId: ebayListingsRecordMatch ? decodeURIComponent(ebayListingsRecordMatch[1]) : null,
     userRecordId: userRecordMatch ? decodeURIComponent(userRecordMatch[1]) : null,

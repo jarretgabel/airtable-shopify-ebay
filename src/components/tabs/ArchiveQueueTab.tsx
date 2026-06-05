@@ -9,12 +9,14 @@ interface ArchiveQueueTabProps {
   currentUserName: string;
   onOpenWorkflowSnapshot: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
+  onOpenShipmentRecord: (recordId: string) => void;
 }
 
 export function ArchiveQueueTab({
   currentUserName,
   onOpenWorkflowSnapshot,
   onOpenListingsRecord,
+  onOpenShipmentRecord,
 }: ArchiveQueueTabProps) {
   return (
     <WorkflowQueuePageTemplate eyebrow="Selling" title="Completed Shipments">
@@ -33,6 +35,7 @@ export function ArchiveQueueTab({
         searchPlaceholder="Search by status, SKU, model, or ship date"
         onOpenOperationalRecord={onOpenWorkflowSnapshot}
         onOpenListingsRecord={onOpenListingsRecord}
+        onOpenShipmentRecord={onOpenShipmentRecord}
       />
     </WorkflowQueuePageTemplate>
   );

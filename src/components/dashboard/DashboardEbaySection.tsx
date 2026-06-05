@@ -21,6 +21,7 @@ interface DashboardEbaySectionProps {
   ebayTotal: number;
   ebayPublishedCount: number;
   ebayDraftCount: number;
+  showWarnings?: boolean;
 }
 
 export function DashboardEbaySection({
@@ -33,8 +34,17 @@ export function DashboardEbaySection({
   ebayTotal,
   ebayPublishedCount,
   ebayDraftCount,
+  showWarnings,
 }: DashboardEbaySectionProps) {
-  if (cards.length === 0) return null;
+  const shouldShowWarnings = showWarnings ?? true;
+  const hasData = ebayTotal > 0;
+  if (!shouldShowWarnings && ebayError && !hasData) {
+    return null;
+  }
+  const visibleCards = shouldShowWarnings
+    ? cards
+    : cards.filter((card) => !card.unavailableReason);
+  if (visibleCards.length === 0) return null;
 
   const safeTotal = Math.max(ebayTotal, 1);
   const liveShare = ebayTotal > 0 ? Math.round((ebayPublishedCount / safeTotal) * 100) : 0;
@@ -54,7 +64,7 @@ export function DashboardEbaySection({
           </div>
         ) : (
           <>
-            {ebayError && (
+            {shouldShowWarnings && ebayError && (
               <DashboardSourceWarning
                 title={ebayTotal > 0 ? 'eBay metrics are showing the last successful snapshot' : 'eBay data is unavailable right now'}
                 message={ebayError}
@@ -83,7 +93,7 @@ export function DashboardEbaySection({
       {ebayLoading ? (
         <DashboardWorkflowCardSkeletonGrid />
       ) : (
-        <DashboardWorkflowCardGrid title="eBay Snapshot & Queue" cards={cards} onSelect={onSelectTab} />
+        <DashboardWorkflowCardGrid title="eBay Snapshot & Queue" cards={visibleCards} onSelect={onSelectTab} />
       )}
     </DashboardSectionPanel>
   );

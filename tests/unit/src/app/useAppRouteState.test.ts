@@ -21,7 +21,7 @@ describe('useAppRouteState', () => {
 
   it('maps sold-ready listings routes and decodes id', () => {
     const state = useAppRouteState(locationFor('/sold-ready/rec%20sold'), ['dashboard']);
-    expect(state.activeTab).toBe('listings');
+    expect(state.activeTab).toBe('post-publish');
     expect(state.soldReadyListingsRecordId).toBe('rec sold');
     expect(state.listingsRecordId).toBeNull();
   });
@@ -80,6 +80,12 @@ describe('useAppRouteState', () => {
   it('maps the archive route', () => {
     const state = useAppRouteState(locationFor('/completed-shipments'), ['dashboard', 'archive']);
     expect(state.activeTab).toBe('archive');
+  });
+
+  it('maps completed shipment record routes and decodes id', () => {
+    const state = useAppRouteState(locationFor('/completed-shipments/rec%20ship'), ['dashboard', 'archive']);
+    expect(state.activeTab).toBe('archive');
+    expect(state.shippedListingsRecordId).toBe('rec ship');
   });
 
   it('maps manual-intake deep links with record ids', () => {
