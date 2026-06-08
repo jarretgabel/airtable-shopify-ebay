@@ -136,6 +136,7 @@ function buildSharedProps(): ListingApprovalCombinedSharedSectionProps {
     sharedDrawerRequiredStatus: { hasRequired: true, allFilled: true },
     onOpenOperationalRecord: vi.fn(),
     onOpenTestingForm: vi.fn(),
+    onOpenPhotosForm: vi.fn(),
   };
 }
 
@@ -152,9 +153,13 @@ function buildIntakeProps(): ListingApprovalCombinedIntakeSectionProps {
       'Testing Notes': 'Bench tested',
       'Audiogon Rating': '8/10',
       'Testing Cosmetic Notes': 'Light wear on the top cover.',
+      'Additional Items': 'Power cable and shelf card',
+      "Photo'd": '2026-05-12',
+      'Photography Cosmetic Notes': 'Small nick near right edge in bright light.',
     },
     onOpenOperationalRecord: vi.fn(),
     onOpenTestingForm: vi.fn(),
+    onOpenPhotosForm: vi.fn(),
   };
 }
 
@@ -266,6 +271,9 @@ describe('combined approval sections', () => {
       'Testing Notes': 'Bench tested',
       'Audiogon Rating': '["8/10"]',
       'Testing Cosmetic Notes': 'Light wear on the top cover.',
+      'Additional Items': 'Power cable and shelf card',
+      "Photo'd": '2026-05-12',
+      'Photography Cosmetic Notes': 'Small nick near right edge in bright light.',
     };
     props.formValues = {
       ...props.formValues,
@@ -278,7 +286,10 @@ describe('combined approval sections', () => {
 
     expect(screen.getByText('Intake Details')).toBeInTheDocument();
     expect(screen.getByText('Testing')).toBeInTheDocument();
+    expect(screen.getByText('Photography')).toBeInTheDocument();
     expect(screen.getByText('Testing Notes')).toBeInTheDocument();
+    expect(screen.getByText('Photo Date')).toBeInTheDocument();
+    expect(screen.getByText('Additional Items')).toBeInTheDocument();
     expect(screen.queryByText('Shared Fields')).not.toBeInTheDocument();
     expect(screen.getAllByText('Manual').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Original Box').length).toBeGreaterThan(0);
@@ -295,9 +306,12 @@ describe('combined approval sections', () => {
     expect(screen.getByText('120V')).toBeInTheDocument();
     expect(screen.getByText('42 lbs')).toBeInTheDocument();
     expect(screen.getByText('22x19x11')).toBeInTheDocument();
-    expect(screen.getByText('8/10')).toBeInTheDocument();
+    expect(screen.getAllByText('8/10').length).toBeGreaterThan(0);
+    expect(screen.getByText('2026-05-12')).toBeInTheDocument();
+    expect(screen.getByText('Power cable and shelf card')).toBeInTheDocument();
     expect(screen.getByText('Bench tested')).toBeInTheDocument();
     expect(screen.getByText('Light wear on the top cover.')).toBeInTheDocument();
+    expect(screen.getByText('Small nick near right edge in bright light.')).toBeInTheDocument();
   });
 
   it('renders item title above description in the shared section', () => {
@@ -389,9 +403,11 @@ describe('combined approval sections', () => {
     expect(screen.getByText('SKU').compareDocumentPosition(screen.getByText('Serial Number')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Edit workflow source record' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit testing form' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit photos form' }));
 
     expect(props.onOpenOperationalRecord).toHaveBeenCalledWith('rec-combined-1');
     expect(props.onOpenTestingForm).toHaveBeenCalledWith('rec-combined-1');
+    expect(props.onOpenPhotosForm).toHaveBeenCalledWith('rec-combined-1');
   });
 
   it('forwards combined shared quick-link callbacks through the wrapper', () => {
@@ -429,6 +445,7 @@ describe('combined approval sections', () => {
         sharedDrawerRequiredStatus={sharedProps.sharedDrawerRequiredStatus}
         onOpenOperationalRecord={sharedProps.onOpenOperationalRecord}
         onOpenTestingForm={sharedProps.onOpenTestingForm}
+        onOpenPhotosForm={sharedProps.onOpenPhotosForm}
         {...shopifyProps}
         {...ebayProps}
       />,
@@ -436,9 +453,11 @@ describe('combined approval sections', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit workflow source record' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit testing form' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit photos form' }));
 
     expect(sharedProps.onOpenOperationalRecord).toHaveBeenCalledWith('rec-combined-1');
     expect(sharedProps.onOpenTestingForm).toHaveBeenCalledWith('rec-combined-1');
+    expect(sharedProps.onOpenPhotosForm).toHaveBeenCalledWith('rec-combined-1');
   });
 
   it('keeps source-managed and testing snapshot fields out of the shared editor fields', () => {
@@ -495,7 +514,7 @@ describe('combined approval sections', () => {
     render(<ListingApprovalCombinedShopifySection {...buildShopifyProps()} />);
 
     expect(screen.getByText('Shopify-Specific Fields')).toBeInTheDocument();
-    expect(screen.getByText('Advanced Shopify Fields')).toBeInTheDocument();
+    expect(screen.getByText('Advanced Shopify Variant Fields')).toBeInTheDocument();
     expect(screen.getByLabelText('Contains missing required fields')).toBeInTheDocument();
     expect(approvalFormFieldsSpy).toHaveBeenCalledTimes(2);
     expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({

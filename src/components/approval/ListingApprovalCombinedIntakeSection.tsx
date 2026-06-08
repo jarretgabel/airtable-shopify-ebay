@@ -9,6 +9,10 @@ import {
   resolveListingApprovalTestingSectionFields,
 } from '@/components/approval/listingApprovalTestingSection';
 import {
+  ListingApprovalPhotographySection,
+  resolveListingApprovalPhotographySectionFields,
+} from '@/components/approval/listingApprovalPhotographySection';
+import {
   findWorkflowImageAttachmentFieldName,
   findWorkflowImageMetadataFieldName,
   parseWorkflowImageAttachments,
@@ -156,6 +160,7 @@ export function ListingApprovalCombinedIntakeSection({
   sharedTestingSourceFieldValues,
   onOpenOperationalRecord,
   onOpenTestingForm,
+  onOpenPhotosForm,
 }: ListingApprovalCombinedIntakeSectionProps) {
   const allOriginalFieldNames = useMemo(() => Object.keys(originalFieldValues), [originalFieldValues]);
 
@@ -188,6 +193,13 @@ export function ListingApprovalCombinedIntakeSection({
   const displayedTestingFields = sharedTestingFields.filter((field) => (
     !INTAKE_TESTING_FIELD_NAMES.has(normalizeSharedFieldName(field.fieldName))
   ));
+  const displayedPhotographyFields = resolveListingApprovalPhotographySectionFields(
+    Array.from(new Set([
+      ...Object.keys(originalFieldValues),
+      ...Object.keys(sharedTestingSourceFieldValues),
+    ])),
+    { includeMissing: true },
+  );
   const readOnlySharedFieldNames = combinedSharedFieldNames.filter(isSourceManagedCombinedField);
   const intakeSnapshotFields = [
     ...readOnlySharedFieldNames.map((fieldName) => ({
@@ -233,7 +245,21 @@ export function ListingApprovalCombinedIntakeSection({
       <EditIcon />
     </button>
   ) : null;
-  const hasSections = intakeSnapshotFields.length > 0 || displayedTestingFields.length > 0 || intakeImages.length > 0;
+  const photographyHeaderAction = onOpenPhotosForm ? (
+    <button
+      type="button"
+      className={iconActionButtonClass}
+      onClick={() => onOpenPhotosForm(selectedRecord.id)}
+      aria-label="Edit photos form"
+      title="Edit photos form"
+    >
+      <EditIcon />
+    </button>
+  ) : null;
+  const hasSections = intakeSnapshotFields.length > 0
+    || displayedTestingFields.length > 0
+    || displayedPhotographyFields.length > 0
+    || intakeImages.length > 0;
 
   if (!hasSections) return null;
 
@@ -252,6 +278,13 @@ export function ListingApprovalCombinedIntakeSection({
               fields={displayedTestingFields}
               formValues={effectiveSharedTestingSourceFieldValues}
               headerAction={testingHeaderAction}
+              className="mt-4 border-t border-[var(--line)] pt-4"
+              embedded
+            />
+            <ListingApprovalPhotographySection
+              fields={displayedPhotographyFields}
+              formValues={effectiveSharedTestingSourceFieldValues}
+              headerAction={photographyHeaderAction}
               className="mt-4 border-t border-[var(--line)] pt-4"
               embedded
             />

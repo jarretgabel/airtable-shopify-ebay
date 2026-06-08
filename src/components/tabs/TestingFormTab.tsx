@@ -414,6 +414,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
             additionalItems: formValues.additionalItems,
             audiogonRating: formValues.audiogonRating,
           }}
+          omittedFieldKeys={['audiogonRating']}
           customerCosmeticNotes={customerReference.cosmeticNotes}
           inventoryNotes={formValues.inventoryNotes}
         >

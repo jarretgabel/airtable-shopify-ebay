@@ -18,6 +18,7 @@ export interface WorkflowFormSnapshotSectionProps {
   values: WorkflowFormSnapshotValues;
   customerCosmeticNotes: string;
   inventoryNotes: string;
+  omittedFieldKeys?: Array<keyof WorkflowFormSnapshotValues>;
   extraCards?: IntakeSnapshotCard[];
   className?: string;
   title?: string;
@@ -45,16 +46,20 @@ export function WorkflowFormSnapshotSection({
   values,
   customerCosmeticNotes,
   inventoryNotes,
+  omittedFieldKeys = [],
   extraCards = [],
   className,
   title,
   children,
 }: WorkflowFormSnapshotSectionProps) {
-  const fields: IntakeSnapshotField[] = BASE_SNAPSHOT_FIELDS.map((field) => ({
-    label: field.label,
-    value: values[field.key],
-    description: field.description,
-  }));
+  const omittedFieldSet = new Set(omittedFieldKeys);
+  const fields: IntakeSnapshotField[] = BASE_SNAPSHOT_FIELDS
+    .filter((field) => !omittedFieldSet.has(field.key))
+    .map((field) => ({
+      label: field.label,
+      value: values[field.key],
+      description: field.description,
+    }));
 
   return (
     <IntakeSnapshotSection

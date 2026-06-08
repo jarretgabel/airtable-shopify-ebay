@@ -42,6 +42,7 @@ export interface ListingApprovalCombinedSharedSectionProps extends CombinedSecti
   sharedDrawerRequiredStatus: DrawerRequiredStatus;
   onOpenOperationalRecord?: (recordId: string) => void;
   onOpenTestingForm?: (recordId: string) => void;
+  onOpenPhotosForm?: (recordId: string) => void;
 }
 
 export interface ListingApprovalCombinedIntakeSectionProps extends CombinedSectionCommonProps {
@@ -50,6 +51,7 @@ export interface ListingApprovalCombinedIntakeSectionProps extends CombinedSecti
   sharedTestingSourceFieldValues: Record<string, string>;
   onOpenOperationalRecord?: (recordId: string) => void;
   onOpenTestingForm?: (recordId: string) => void;
+  onOpenPhotosForm?: (recordId: string) => void;
 }
 
 export interface ListingApprovalCombinedShopifySectionProps extends CombinedSectionCommonProps, ShopifyApprovalPayloadPreviewData {

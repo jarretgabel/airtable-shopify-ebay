@@ -40,6 +40,7 @@ export function ListingApprovalCombinedSections({
   sharedDrawerRequiredStatus,
   onOpenOperationalRecord,
   onOpenTestingForm,
+  onOpenPhotosForm,
   combinedShopifyOnlyFieldNames,
   shopifyDrawerRequiredStatus,
   currentPageShopifyBodyHtml,
@@ -94,6 +95,7 @@ export function ListingApprovalCombinedSections({
         sharedTestingSourceFieldValues={sharedTestingSourceFieldValues}
         onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenTestingForm={onOpenTestingForm}
+        onOpenPhotosForm={onOpenPhotosForm}
       />
 
       <ListingApprovalCombinedSharedSection
@@ -121,6 +123,7 @@ export function ListingApprovalCombinedSections({
         sharedDrawerRequiredStatus={sharedDrawerRequiredStatus}
         onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenTestingForm={onOpenTestingForm}
+        onOpenPhotosForm={onOpenPhotosForm}
       />
 
       <ListingApprovalCombinedShopifySection
