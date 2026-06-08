@@ -18,6 +18,7 @@ const baseProps = {
   pushShopifyDisabled: false,
   pushEbayDisabled: false,
   pushBothDisabled: false,
+  isShopifyPublishBlockedByAuctionFormat: false,
   onResetData: vi.fn(),
   onSaveUpdates: vi.fn(),
   onPublishShopify: vi.fn(),
@@ -60,5 +61,20 @@ describe('ListingApprovalRecordActions', () => {
     expect(screen.getByRole('button', { name: 'Publish eBay' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Publish Both' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Approve for Publish' })).not.toBeInTheDocument();
+  });
+
+  it('shows buy-it-now guidance when auction format blocks Shopify-related publish actions', () => {
+    render(
+      <ListingApprovalRecordActions
+        {...baseProps}
+        workflowStatus="Approved for Publish"
+        isShopifyPublishBlockedByAuctionFormat
+        pushShopifyDisabled
+        pushBothDisabled
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Set Buy It Now Format' })).toBeDisabled();
+    expect(screen.getAllByRole('button', { name: 'Set Buy It Now Format' })).toHaveLength(2);
   });
 });

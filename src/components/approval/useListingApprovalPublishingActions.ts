@@ -22,6 +22,7 @@ type PublishingActionsParams = Pick<UseListingApprovalRecordActionsParams,
   | 'canUpdateApprovedShopifyListing'
   | 'hasMissingShopifyRequiredFields'
   | 'hasMissingEbayRequiredFields'
+  | 'isShopifyPublishBlockedByAuctionFormat'
   | 'missingShopifyRequiredFieldLabels'
   | 'missingEbayRequiredFieldLabels'
   | 'approvalPublishSource'
@@ -52,6 +53,7 @@ export function useListingApprovalPublishingActions({
   canUpdateApprovedShopifyListing,
   hasMissingShopifyRequiredFields,
   hasMissingEbayRequiredFields,
+  isShopifyPublishBlockedByAuctionFormat,
   missingShopifyRequiredFieldLabels,
   missingEbayRequiredFieldLabels,
   approvalPublishSource,
@@ -65,6 +67,7 @@ export function useListingApprovalPublishingActions({
     selectedRecord,
     hasMissingShopifyRequiredFields,
     hasMissingEbayRequiredFields,
+    isShopifyPublishBlockedByAuctionFormat,
     missingShopifyRequiredFieldLabels,
     missingEbayRequiredFieldLabels,
     approvalPublishSource,

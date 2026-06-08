@@ -30,7 +30,7 @@ export function EbayCategoriesSelect({
   onChange,
   helperWarning,
 }: EbayCategoriesSelectProps) {
-  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const {
     browseStack,
     categoryMap,
@@ -61,14 +61,37 @@ export function EbayCategoriesSelect({
     onChange,
   });
 
-  useEffect(() => () => {
-    if (blurTimerRef.current) {
-      clearTimeout(blurTimerRef.current);
-    }
-  }, []);
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const isOutsideRoot = (target: EventTarget | null): boolean => {
+      const node = target as Node | null;
+      return Boolean(node && rootRef.current && !rootRef.current.contains(node));
+    };
+
+    const handleDocumentMouseDown = (event: MouseEvent) => {
+      if (isOutsideRoot(event.target)) {
+        closeMenu();
+      }
+    };
+
+    const handleDocumentFocusIn = (event: FocusEvent) => {
+      if (isOutsideRoot(event.target)) {
+        closeMenu();
+      }
+    };
+
+    document.addEventListener('mousedown', handleDocumentMouseDown);
+    document.addEventListener('focusin', handleDocumentFocusIn);
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentMouseDown);
+      document.removeEventListener('focusin', handleDocumentFocusIn);
+    };
+  }, [closeMenu, isOpen]);
 
   return (
-    <div className="relative col-span-1 flex flex-col gap-2 md:col-span-2">
+    <div ref={rootRef} className="relative col-span-1 flex flex-col gap-2 md:col-span-2">
       <span className={labelClass}>{label}</span>
 
       <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3">
@@ -165,11 +188,6 @@ export function EbayCategoriesSelect({
                 event.preventDefault();
                 toggleSelection(options[0]);
               }
-            }}
-            onBlur={() => {
-              blurTimerRef.current = setTimeout(() => {
-                closeMenu();
-              }, 120);
             }}
             aria-label={label}
             aria-expanded={isOpen}

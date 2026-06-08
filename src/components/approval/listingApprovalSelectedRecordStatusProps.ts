@@ -29,6 +29,7 @@ interface BuildListingApprovalSelectedRecordStatusPropsParams {
   pushShopifyDisabled: boolean;
   pushEbayDisabled: boolean;
   pushBothDisabled: boolean;
+  isShopifyPublishBlockedByAuctionFormat: boolean;
   onResetData: () => void;
   onSaveUpdates: () => void;
   onPrimaryAction: () => void;
@@ -59,6 +60,7 @@ export function buildListingApprovalSelectedRecordStatusProps({
   pushShopifyDisabled,
   pushEbayDisabled,
   pushBothDisabled,
+  isShopifyPublishBlockedByAuctionFormat,
   onResetData,
   onSaveUpdates,
   onPrimaryAction,
@@ -96,6 +98,7 @@ export function buildListingApprovalSelectedRecordStatusProps({
       pushShopifyDisabled,
       pushEbayDisabled,
       pushBothDisabled,
+      isShopifyPublishBlockedByAuctionFormat,
       onResetData,
       onSaveUpdates,
       onPublishShopify: () => { void runCombinedPush('shopify'); },

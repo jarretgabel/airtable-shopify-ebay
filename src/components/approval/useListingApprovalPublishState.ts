@@ -31,6 +31,10 @@ interface UseListingApprovalPublishStateParams {
   tableName?: string;
 }
 
+function normalizeEbayListingFormatValue(value: string): string {
+  return value.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_');
+}
+
 export function useListingApprovalPublishState({
   allFieldNames,
   approvalChannel,
@@ -96,6 +100,12 @@ export function useListingApprovalPublishState({
   );
 
   const hasMissingEbayRequiredFields = missingEbayRequiredFieldNames.length > 0;
+
+  const isShopifyPublishBlockedByAuctionFormat = useMemo(() => {
+    if (approvalChannel !== 'combined') return false;
+    const normalizedFormat = normalizeEbayListingFormatValue(currentEbayListingFormat);
+    return normalizedFormat === 'AUCTION';
+  }, [approvalChannel, currentEbayListingFormat]);
 
   const drawerSourceFields = useMemo(
     () => mergedDraftSourceFields ?? selectedRecord?.fields ?? {},
@@ -172,9 +182,14 @@ export function useListingApprovalPublishState({
     && isApproved
     && hasExistingShopifyRestProductId;
 
-  const pushShopifyDisabled = (approvalChannel !== 'combined' && approvalChannel !== 'shopify') || hasMissingShopifyRequiredFields;
+  const pushShopifyDisabled = (approvalChannel !== 'combined' && approvalChannel !== 'shopify')
+    || hasMissingShopifyRequiredFields
+    || isShopifyPublishBlockedByAuctionFormat;
   const pushEbayDisabled = (approvalChannel !== 'combined' && approvalChannel !== 'ebay') || hasMissingEbayRequiredFields;
-  const pushBothDisabled = approvalChannel !== 'combined' || hasMissingShopifyRequiredFields || hasMissingEbayRequiredFields;
+  const pushBothDisabled = approvalChannel !== 'combined'
+    || hasMissingShopifyRequiredFields
+    || hasMissingEbayRequiredFields
+    || isShopifyPublishBlockedByAuctionFormat;
 
   const approvalPublishSource = useMemo(
     () => resolveApprovalPublishSource(approvalChannel, tableReference, tableName),
@@ -199,6 +214,7 @@ export function useListingApprovalPublishState({
     hasMissingEbayRequiredFields,
     hasMissingShopifyRequiredFields,
     hasUnsavedChanges,
+    isShopifyPublishBlockedByAuctionFormat,
     isApproved,
     missingEbayRequiredFieldLabels,
     missingEbayRequiredFieldNames,

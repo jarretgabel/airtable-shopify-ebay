@@ -74,6 +74,7 @@ export function useEbayCategoriesSelect({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [options, setOptions] = useState<CategoryOption[]>([]);
+  const [optionsSource, setOptionsSource] = useState<'browse' | 'search'>('browse');
   const [knownCategoriesById, setKnownCategoriesById] = useState<Record<string, CategoryOption>>({});
   const [browseStack, setBrowseStack] = useState<CategoryOption[]>([]);
   const [draggingCategoryId, setDraggingCategoryId] = useState<string | null>(null);
@@ -97,6 +98,7 @@ export function useEbayCategoriesSelect({
     const nextOptions = roots.map(toCategoryOption);
     setBrowseStack([]);
     setOptions(nextOptions);
+    setOptionsSource('browse');
     rememberCategories(nextOptions);
   }, [rememberCategories]);
 
@@ -105,6 +107,7 @@ export function useEbayCategoriesSelect({
     const nextOptions = children.map(toCategoryOption);
     setBrowseStack((current) => [...current, parent]);
     setOptions(nextOptions);
+    setOptionsSource('browse');
     rememberCategories(nextOptions);
   }, [rememberCategories]);
 
@@ -125,6 +128,7 @@ export function useEbayCategoriesSelect({
     const nextOptions = children.map(toCategoryOption);
     setBrowseStack(targetStack);
     setOptions(nextOptions);
+    setOptionsSource('browse');
     rememberCategories(nextOptions);
   }, [browseStack, loadRootBrowseOptions, rememberCategories]);
 
@@ -137,6 +141,12 @@ export function useEbayCategoriesSelect({
         const activeMarketplaceId = marketplaceId.trim().toUpperCase() || 'EBAY_US';
 
         if (!query.trim()) {
+          if (optionsSource === 'browse' && options.length > 0) {
+            setError('');
+            setIsLoading(false);
+            return;
+          }
+
           setError('');
           setIsLoading(true);
           try {
@@ -146,6 +156,7 @@ export function useEbayCategoriesSelect({
               const nextOptions = children.map(toCategoryOption);
               if (!cancelled) {
                 setOptions(nextOptions);
+                setOptionsSource('browse');
                 rememberCategories(nextOptions);
               }
             } else {
@@ -170,6 +181,7 @@ export function useEbayCategoriesSelect({
           if (!cancelled) {
             const mapped = matches.map(toCategoryOption);
             setOptions(mapped);
+            setOptionsSource('search');
             const cached = cachedSuggestionsByMarketplace.get(activeMarketplaceId) ?? [];
             cachedSuggestionsByMarketplace.set(activeMarketplaceId, mergeUniqueSuggestions(cached, matches));
             rememberCategories(mapped);
@@ -191,7 +203,7 @@ export function useEbayCategoriesSelect({
       cancelled = true;
       clearTimeout(timeoutId);
     };
-  }, [browseStack, disabled, isOpen, loadRootBrowseOptions, marketplaceId, query, rememberCategories]);
+  }, [browseStack, disabled, isOpen, loadRootBrowseOptions, marketplaceId, options.length, optionsSource, query, rememberCategories]);
 
   const normalizedSelectedSet = useMemo(
     () => new Set(value.map((item) => normalizeSelectionValue(item))),
@@ -230,17 +242,16 @@ export function useEbayCategoriesSelect({
   const openMenu = useCallback(() => {
     if (disabled) return;
     const activeMarketplaceId = marketplaceId.trim().toUpperCase() || 'EBAY_US';
-    if (!query.trim()) {
-      void loadRootBrowseOptions(activeMarketplaceId);
-    } else {
+    if (query.trim()) {
       const cached = cachedSuggestionsByMarketplace.get(activeMarketplaceId) ?? [];
       if (cached.length > 0) {
         setOptions(cached.map(toCategoryOption));
+        setOptionsSource('search');
         setError('');
       }
     }
     setIsOpen(true);
-  }, [disabled, loadRootBrowseOptions, marketplaceId, query]);
+  }, [disabled, marketplaceId, query]);
 
   const closeMenu = useCallback(() => {
     setIsOpen(false);

@@ -124,6 +124,7 @@ function createBaseParams(selectedRecord: AirtableRecord | null): Parameters<typ
     pushShopifyDisabled: false,
     pushEbayDisabled: false,
     pushBothDisabled: false,
+    isShopifyPublishBlockedByAuctionFormat: false,
     onResetData: vi.fn(),
     onSaveUpdates: vi.fn(),
     onPrimaryAction: vi.fn(),

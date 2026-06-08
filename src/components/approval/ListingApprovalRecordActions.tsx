@@ -18,6 +18,7 @@ interface ListingApprovalRecordActionsProps {
   pushShopifyDisabled: boolean;
   pushEbayDisabled: boolean;
   pushBothDisabled: boolean;
+  isShopifyPublishBlockedByAuctionFormat: boolean;
   onResetData: () => void;
   onSaveUpdates: () => void;
   onPublishShopify: () => void;
@@ -42,6 +43,7 @@ export function ListingApprovalRecordActions({
   pushShopifyDisabled,
   pushEbayDisabled,
   pushBothDisabled,
+  isShopifyPublishBlockedByAuctionFormat,
   onResetData,
   onSaveUpdates,
   onPublishShopify,
@@ -89,7 +91,9 @@ export function ListingApprovalRecordActions({
           >
             {pushingTarget === 'shopify'
               ? 'Publishing Shopify...'
-              : pushShopifyDisabled
+              : isShopifyPublishBlockedByAuctionFormat
+                  ? 'Set Buy It Now Format'
+                  : pushShopifyDisabled
                   ? 'Complete Shopify Fields'
                   : 'Publish Shopify'}
           </SecondaryActionButton>
@@ -109,7 +113,9 @@ export function ListingApprovalRecordActions({
           >
             {pushingTarget === 'both'
               ? 'Publishing Both...'
-              : pushBothDisabled
+              : isShopifyPublishBlockedByAuctionFormat
+                  ? 'Set Buy It Now Format'
+                  : pushBothDisabled
                   ? 'Complete Required Fields'
                   : 'Publish Both'}
           </AccentActionButton>

@@ -11,8 +11,6 @@ import {
 } from './approvalFormFieldsEbayHelpers';
 import { ApprovalFormFieldGrid } from './ApprovalFormFieldGrid';
 import type { ApprovalFormFieldsSupplementalEditorsProps } from './ApprovalFormFieldsSupplementalEditors';
-import { EbayCategoriesSelect } from './EbayCategoriesSelect';
-import { EBAY_QTY_FIELD_CANDIDATES } from './listingApprovalEbayConstants';
 import { resolveListingApprovalTestingSectionFields } from './listingApprovalTestingSection';
 import { useApprovalFormFieldSetup } from './useApprovalFormFieldSetup';
 import { useApprovalFormFieldRequirements } from './useApprovalFormFieldRequirements';
@@ -318,7 +316,6 @@ export function ApprovalFormFields({
     effectiveCollectionEditorLabelsById,
     setShopifyCollectionIds,
     hasEbayCategoryEditor,
-    renderEbayCategoryEditor: false,
     effectiveEbayCategoriesFieldName,
     ebayMarketplaceId,
     ebaySelectedCategoryDisplayValues,
@@ -339,29 +336,6 @@ export function ApprovalFormFields({
       <ApprovalFormFieldsSupplementalEditors {...supplementalEditorsProps} />
     </Suspense>
   );
-  const ebayCategoryEditor = hasEbayCategoryEditor ? (
-    <Suspense fallback={<div className="col-span-1 rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-sm text-[var(--muted)] md:col-span-2">Loading eBay categories...</div>}>
-      <EbayCategoriesSelect
-        fieldName={effectiveEbayCategoriesFieldName}
-        label="eBay Categories"
-        marketplaceId={ebayMarketplaceId}
-        value={ebaySelectedCategoryDisplayValues}
-        labelsById={normalizedEbayCategoryLabelsById}
-        onChange={(nextIds, labelsById) => {
-          setEbayCategoryIds(nextIds);
-          if (labelsById) {
-            onEbayCategoryLabelsChange?.(labelsById);
-          }
-        }}
-        disabled={saving}
-        helperWarning={hasSecondaryEbayCategory ? (
-          <span className="text-xs font-semibold text-rose-300">
-            Adding a second category incurrs extra fees
-          </span>
-        ) : null}
-      />
-    </Suspense>
-  ) : null;
 
   return (
     <ApprovalFormFieldGrid
@@ -373,8 +347,6 @@ export function ApprovalFormFields({
       pinnedPreDescriptionFieldName={pinnedPreDescriptionFieldName}
       standardFieldProps={standardFieldProps}
       supplementalEditors={supplementalEditors}
-      inlineAfterFieldNames={[...EBAY_QTY_FIELD_CANDIDATES]}
-      inlineAfterFieldContent={ebayCategoryEditor}
     />
   );
 }

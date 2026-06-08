@@ -16,6 +16,7 @@ type PublishActionsParams = Pick<UseListingApprovalRecordActionsParams,
   'selectedRecord'
   | 'hasMissingShopifyRequiredFields'
   | 'hasMissingEbayRequiredFields'
+  | 'isShopifyPublishBlockedByAuctionFormat'
   | 'missingShopifyRequiredFieldLabels'
   | 'missingEbayRequiredFieldLabels'
   | 'approvalPublishSource'
@@ -30,6 +31,7 @@ export function useListingApprovalPublishActions({
   selectedRecord,
   hasMissingShopifyRequiredFields,
   hasMissingEbayRequiredFields,
+  isShopifyPublishBlockedByAuctionFormat,
   missingShopifyRequiredFieldLabels,
   missingEbayRequiredFieldLabels,
   approvalPublishSource,
@@ -110,6 +112,15 @@ export function useListingApprovalPublishActions({
 
   const runCombinedPush = async (target: 'shopify' | 'ebay' | 'both') => {
     if (!selectedRecord) return;
+
+    if ((target === 'shopify' || target === 'both') && isShopifyPublishBlockedByAuctionFormat) {
+      pushInlineActionNotice(
+        'warning',
+        'Shopify publish blocked',
+        'Listing Format is set to Auction. Set Listing Format to Buy It Now before publishing to Shopify or Publish Both.',
+      );
+      return;
+    }
 
     const validationNotice = getPublishRequiredFieldValidationNotice(target, {
       shopify: {

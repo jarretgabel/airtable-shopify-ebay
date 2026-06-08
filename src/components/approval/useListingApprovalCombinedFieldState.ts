@@ -218,7 +218,8 @@ export function useListingApprovalCombinedFieldState({
     if (!isCombinedApproval) return [] as string[];
     return selectedRecordFieldNames.filter((fieldName) => {
       const normalized = fieldName.trim().toLowerCase();
-      if (!shouldIncludeEbayListingRecordFieldName(fieldName)) return false;
+      const isEbayFormatCandidate = EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized);
+      if (!isEbayFormatCandidate && !shouldIncludeEbayListingRecordFieldName(fieldName)) return false;
       if (isRemovedCombinedEbayPriceFieldName(fieldName)) return false;
       if (isHiddenCombinedFieldName(fieldName)) return false;
       if (isWorkflowOnlyListingFieldName(fieldName)) return false;
@@ -227,7 +228,6 @@ export function useListingApprovalCombinedFieldState({
       if (isEbayTestingNotesField(fieldName)) return false;
       if (!isEbayOnlyFieldName(fieldName) || isShopifyOnlyFieldName(fieldName)) return false;
       if (normalized.includes('primary category') || normalized.includes('secondary category')) return false;
-      if (EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       if (EBAY_DURATION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       if (EBAY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       return true;
