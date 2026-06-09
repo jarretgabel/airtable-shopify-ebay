@@ -10,11 +10,19 @@ export type ManualIntakeFormOptionFieldName =
   | 'Original Owner'
   | 'Smoke Exposure';
 
-export interface ManualIntakeFormValues {
+export interface ManualIntakeSharedFormValues {
   pickUpNumber: string;
   sellerFirstName: string;
   sellerLastName: string;
   cost: string;
+  sellerEmail: string;
+  sellerPhone: string;
+  sellerZipCode: string;
+  sellerLocation: string;
+  howDidYouHear: string;
+}
+
+export interface ManualIntakeItemFormValues {
   customerCosmeticNotes: string;
   customerFunctionalNotes: string;
   customerInclusionNotes: string;
@@ -34,14 +42,11 @@ export interface ManualIntakeFormValues {
   weight: string;
   shippingDims: string;
   shippingMethod: string;
-  sellerEmail: string;
-  sellerPhone: string;
-  sellerZipCode: string;
-  sellerLocation: string;
-  howDidYouHear: string;
   originalOwner: string;
   smokeExposure: string;
 }
+
+export interface ManualIntakeFormValues extends ManualIntakeSharedFormValues, ManualIntakeItemFormValues {}
 
 export type ManualIntakeFormFieldType = 'text' | 'date' | 'currency' | 'textarea' | 'select' | 'searchable-select' | 'file';
 
@@ -65,12 +70,22 @@ export interface ManualIntakeFormIntroBlock {
   body?: string;
 }
 
-export function createManualIntakeFormDefaults(): ManualIntakeFormValues {
+export function createManualIntakeSharedFormDefaults(): ManualIntakeSharedFormValues {
   return {
     pickUpNumber: '',
     sellerFirstName: '',
     sellerLastName: '',
     cost: '',
+    sellerEmail: '',
+    sellerPhone: '',
+    sellerZipCode: '',
+    sellerLocation: '',
+    howDidYouHear: '',
+  };
+}
+
+export function createManualIntakeItemFormDefaults(): ManualIntakeItemFormValues {
+  return {
     customerCosmeticNotes: '',
     customerFunctionalNotes: '',
     customerInclusionNotes: '',
@@ -90,13 +105,26 @@ export function createManualIntakeFormDefaults(): ManualIntakeFormValues {
     weight: '',
     shippingDims: '',
     shippingMethod: '',
-    sellerEmail: '',
-    sellerPhone: '',
-    sellerZipCode: '',
-    sellerLocation: '',
-    howDidYouHear: '',
     originalOwner: '',
     smokeExposure: '',
+  };
+}
+
+export function createManualIntakeFormDefaults(): ManualIntakeFormValues {
+  return {
+    ...createManualIntakeSharedFormDefaults(),
+    ...createManualIntakeItemFormDefaults(),
+  };
+}
+
+export function mergeManualIntakeFormValues(
+  sharedValues: ManualIntakeSharedFormValues,
+  itemValues: ManualIntakeItemFormValues,
+): ManualIntakeFormValues {
+  return {
+    ...createManualIntakeFormDefaults(),
+    ...sharedValues,
+    ...itemValues,
   };
 }
 
@@ -151,12 +179,13 @@ export const manualIntakeFormIntro: {
   ],
 };
 
-export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
+export const manualIntakeSharedFormFields: ManualIntakeFormFieldDefinition[] = [
   {
     name: 'pickUpNumber',
     airtableFieldName: 'Pick Up ID',
     label: 'Pick Up ID',
     type: 'text',
+    required: true,
   },
   {
     name: 'sellerFirstName',
@@ -219,6 +248,28 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     label: 'Cost',
     type: 'currency',
     placeholder: '1500',
+    required: true,
+  },
+];
+
+export const manualIntakeItemFormFields: ManualIntakeFormFieldDefinition[] = [
+  {
+    name: 'make',
+    airtableFieldName: 'Make',
+    label: 'Make',
+    type: 'text',
+    required: true,
+    placeholder: 'McIntosh',
+    halfWidth: true,
+  },
+  {
+    name: 'model',
+    airtableFieldName: 'Model',
+    label: 'Model',
+    type: 'text',
+    required: true,
+    placeholder: 'MC275',
+    halfWidth: true,
   },
   {
     name: 'customerCosmeticNotes',
@@ -243,22 +294,6 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     type: 'textarea',
     rows: 3,
     description: 'Seller-reported inclusions and exclusions such as remotes, boxes, or accessories.',
-  },
-  {
-    name: 'make',
-    airtableFieldName: 'Make',
-    label: 'Make',
-    type: 'text',
-    required: true,
-    placeholder: 'McIntosh',
-  },
-  {
-    name: 'model',
-    airtableFieldName: 'Model',
-    label: 'Model',
-    type: 'text',
-    required: true,
-    placeholder: 'MC275',
   },
   {
     name: 'componentType',
@@ -310,6 +345,7 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     label: 'Original Box',
     type: 'select',
     optionFieldName: 'Original Box',
+    halfWidth: true,
   },
   {
     name: 'manual',
@@ -317,6 +353,7 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     label: 'Manual',
     type: 'select',
     optionFieldName: 'Manual',
+    halfWidth: true,
   },
   {
     name: 'remote',
@@ -324,6 +361,7 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     label: 'Remote',
     type: 'select',
     optionFieldName: 'Remote',
+    halfWidth: true,
   },
   {
     name: 'powerCable',
@@ -331,6 +369,7 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     label: 'Power Cable',
     type: 'select',
     optionFieldName: 'Power Cable',
+    halfWidth: true,
   },
   {
     name: 'additionalItems',
@@ -346,6 +385,7 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     label: 'Weight',
     type: 'text',
     placeholder: '35 lbs',
+    halfWidth: true,
   },
   {
     name: 'shippingDims',
@@ -353,6 +393,7 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     label: 'Shipping Dimensions',
     type: 'text',
     placeholder: '27x25x11',
+    halfWidth: true,
   },
   {
     name: 'shippingMethod',
@@ -360,6 +401,7 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     label: 'Shipping Method',
     type: 'select',
     optionFieldName: 'Shipping Method',
+    halfWidth: true,
   },
   {
     name: 'originalOwner',
@@ -367,7 +409,7 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     label: 'Original Owner',
     type: 'select',
     optionFieldName: 'Original Owner',
-    description: 'Is the seller the original owner of this item?',
+    halfWidth: true,
   },
   {
     name: 'smokeExposure',
@@ -375,5 +417,11 @@ export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
     label: 'Smoke Exposure',
     type: 'select',
     optionFieldName: 'Smoke Exposure',
+    halfWidth: true,
   },
+];
+
+export const manualIntakeFormFields: ManualIntakeFormFieldDefinition[] = [
+  ...manualIntakeSharedFormFields,
+  ...manualIntakeItemFormFields,
 ];
