@@ -455,7 +455,7 @@ export function AirtableEmbeddedForm({
         </div>
       ) : null}
 
-      <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
+      <form className="space-y-5" onSubmit={handleSubmit}>
         {isEditMode && recordSource === 'used-gear-workflow' && workflowSource ? (
           <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
             <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow Source</p>
@@ -511,7 +511,7 @@ export function AirtableEmbeddedForm({
         ) : (
           <>
             <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-              <div className="mt-5 space-y-5">
+              <div className="space-y-5">
                 {sharedFieldGroups.map((group) => {
                   if (Array.isArray(group)) {
                     return (

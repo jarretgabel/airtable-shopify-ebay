@@ -312,13 +312,6 @@ export const manualIntakeItemFormFields: ManualIntakeFormFieldDefinition[] = [
     placeholder: 'AGY1016',
   },
   {
-    name: 'voltage',
-    airtableFieldName: 'Voltage',
-    label: 'Voltage',
-    type: 'text',
-    placeholder: '120V 60Hz',
-  },
-  {
     name: 'inventoryNotes',
     airtableFieldName: 'Inventory Notes',
     label: 'Inventory Notes',
