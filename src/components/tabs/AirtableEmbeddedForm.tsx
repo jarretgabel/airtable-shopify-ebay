@@ -511,12 +511,6 @@ export function AirtableEmbeddedForm({
         ) : (
           <>
             <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-              <div className="flex flex-col gap-2 border-b border-[var(--line)] pb-4">
-                <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Shared seller details</p>
-                <h2 className="text-xl font-semibold text-[var(--ink)]">One seller, one grouped intake</h2>
-                <p className="text-sm text-[var(--muted)]">Fill the shared deal fields once, then add one card for each item that should become its own Airtable row.</p>
-              </div>
-
               <div className="mt-5 space-y-5">
                 {sharedFieldGroups.map((group) => {
                   if (Array.isArray(group)) {
@@ -549,8 +543,7 @@ export function AirtableEmbeddedForm({
             <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
               <div className="flex flex-col gap-3 border-b border-[var(--line)] pb-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Grouped items</p>
-                  <h2 className="mt-1 text-xl font-semibold text-[var(--ink)]">Create one Airtable row per item</h2>
+                  <h2 className="mt-1 text-xl font-semibold text-[var(--ink)]">Intake Items</h2>
                 </div>
                 <button
                   type="button"
