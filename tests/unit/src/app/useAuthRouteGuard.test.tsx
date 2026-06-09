@@ -90,7 +90,7 @@ describe('useAuthRouteGuard', () => {
     render(
       <GuardHarness
         normalizedPath="/sold-ready/rec-sold-1"
-        canAccessPage={(tab) => tab === 'listings' || tab === 'dashboard'}
+        canAccessPage={(tab) => tab === 'post-publish' || tab === 'dashboard'}
         navigate={navigate}
       />,
     );

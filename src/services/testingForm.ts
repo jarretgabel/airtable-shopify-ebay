@@ -464,7 +464,6 @@ export async function submitTestingForm(
         serialNumber: values.serialNumber,
         jotFormSubmissionId: extractInventoryScalarValue(workflowRecord.fields['JotForm Submission ID']),
         pickUpId: extractInventoryScalarValue(workflowRecord.fields['Pick Up ID']),
-        submissionGroupId: extractInventoryScalarValue(workflowRecord.fields['Submission Group ID']),
         recordId,
       }),
       'Arrival Date': trimToUndefined(values.arrivalDate),

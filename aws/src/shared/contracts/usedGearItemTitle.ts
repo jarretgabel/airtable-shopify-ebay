@@ -5,7 +5,6 @@ export interface UsedGearItemTitleInput {
   serialNumber?: string | null;
   jotFormSubmissionId?: string | null;
   pickUpId?: string | null;
-  submissionGroupId?: string | null;
   recordId?: string | null;
 }
 

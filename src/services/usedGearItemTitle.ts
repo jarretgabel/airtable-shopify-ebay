@@ -48,7 +48,6 @@ export function getUsedGearRecordItemTitle(
     serialNumber: readFieldValue(fields, 'Serial Number'),
     jotFormSubmissionId: readFieldValue(fields, 'JotForm Submission ID'),
     pickUpId: readFieldValue(fields, 'Pick Up ID'),
-    submissionGroupId: readFieldValue(fields, 'Submission Group ID'),
     recordId,
   });
 }

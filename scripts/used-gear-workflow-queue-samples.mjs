@@ -461,7 +461,6 @@ function buildCommonFields(index, config) {
     Model: config.model,
     'Component Type': config.componentType,
     'Workflow Source': config.workflowSource ?? 'Manual Entry',
-    'Submission Group ID': config.submissionGroupId ?? `sample-workflow-group-${sequence}`,
     'Pick Up ID': config.pickUpId ?? `sample-workflow-pickup-${sequence}`,
     'Workflow Owner': config.workflowOwner ?? 'Sample Operator',
     'Workflow Owner Assigned At': config.workflowOwnerAssignedAt ?? config.acceptedAt ?? isoAt(index + 1, 14),
@@ -500,10 +499,7 @@ function buildSampleConfigs() {
       allocationNotes: 'Parking Lot queue coverage.',
       stageProfile: 'pending-review',
       workflowSource: 'JotForm',
-      pickUpId: '',
-      extraFields: {
-        'Submission Group ID': 'sample-workflow-submission-pl1-set-a',
-      },
+      pickUpId: 'sample-workflow-pickup-pl1-set-a',
     },
     {
       label: 'Parking Lot Manual Intake',
@@ -523,7 +519,6 @@ function buildSampleConfigs() {
       workflowSource: 'Manual Entry',
       pickUpId: '',
       extraFields: {
-        'Submission Group ID': '',
         SKU: '',
       },
     },
@@ -543,10 +538,7 @@ function buildSampleConfigs() {
       allocationNotes: 'Parking Lot grouped submission coverage.',
       stageProfile: 'pending-review',
       workflowSource: 'JotForm',
-      pickUpId: '',
-      extraFields: {
-        'Submission Group ID': 'sample-workflow-submission-pl1-set-a',
-      },
+      pickUpId: 'sample-workflow-pickup-pl1-set-a',
     },
     {
       label: 'Trash Review Unqualified',
@@ -563,10 +555,9 @@ function buildSampleConfigs() {
       confirmedGrandTotal: 150,
       allocationNotes: 'Trash queue coverage.',
       stageProfile: 'trash',
-      pickUpId: '',
+      pickUpId: 'sample-workflow-pickup-trash-set-a',
       extraFields: {
         'Trash Status': 'Active Trash',
-        'Submission Group ID': 'sample-workflow-submission-trash-set-a',
         'Unqualified Reason': 'Cabinet damage beyond resale standards.',
       },
     },
@@ -585,10 +576,9 @@ function buildSampleConfigs() {
       confirmedGrandTotal: 95,
       allocationNotes: 'Trash grouped coverage.',
       stageProfile: 'trash',
-      pickUpId: '',
+      pickUpId: 'sample-workflow-pickup-trash-set-a',
       extraFields: {
         'Trash Status': 'Active Trash',
-        'Submission Group ID': 'sample-workflow-submission-trash-set-a',
         'Unqualified Reason': 'Matching set item also failed intake inspection.',
       },
     },

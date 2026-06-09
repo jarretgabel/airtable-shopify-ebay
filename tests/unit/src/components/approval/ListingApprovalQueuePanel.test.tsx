@@ -150,19 +150,17 @@ describe('ListingApprovalQueuePanel', () => {
     );
 
     expect(screen.getByLabelText('Search ready for publishing combined listings')).toBeInTheDocument();
-    expect(screen.getByLabelText('Search active combined listings')).toBeInTheDocument();
     expect(screen.getByLabelText('Search combined listings that need further work')).toBeInTheDocument();
     expect(screen.getByLabelText('Combined listings sections')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ready for Publishing' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Active Listings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Needs Further Work' })).toBeInTheDocument();
     expect(screen.getAllByText('Workflow Status').length).toBeGreaterThan(0);
     expect(screen.queryByText('Approved')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Needs Fields/i })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Refresh listing approval queue' })).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: 'Refresh listing approval queue' })).toHaveLength(2);
   });
 
-  it('splits combined rows into ready, active listings, and needs-further-work sections', () => {
+  it('splits combined rows into ready and needs-further-work sections', () => {
     render(
       <ListingApprovalQueuePanel
         {...baseProps}
@@ -178,27 +176,24 @@ describe('ListingApprovalQueuePanel', () => {
     );
 
     const readySection = document.getElementById('combined-listings-ready-for-publishing');
-    const activeSection = document.getElementById('combined-listings-active-listings');
     const workSection = document.getElementById('combined-listings-needs-further-work');
 
     expect(readySection).not.toBeNull();
-    expect(activeSection).not.toBeNull();
     expect(workSection).not.toBeNull();
     expect(within(readySection as HTMLElement).queryByText('Ready Listing')).not.toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Sold Ready Listing')).not.toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Shipped Listing')).not.toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Approved Missing Vendor')).not.toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Already Listed')).not.toBeInTheDocument();
-    expect(within(activeSection as HTMLElement).getByText('Already Listed')).toBeInTheDocument();
-    expect(within(activeSection as HTMLElement).queryByText('Ready Listing')).not.toBeInTheDocument();
-    expect(within(activeSection as HTMLElement).queryByText('Sold Ready Listing')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).getByText('Approved Missing Vendor')).toBeInTheDocument();
+    expect(within(workSection as HTMLElement).queryByText('Already Listed')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).getByText('Ready Listing')).toBeInTheDocument();
     expect(within(workSection as HTMLElement).getAllByText('Awaiting Pre-Listing Review').length).toBeGreaterThan(1);
     expect(within(workSection as HTMLElement).getAllByText('Approved for Publish').length).toBeGreaterThan(1);
     expect(within(workSection as HTMLElement).queryByText('Sold Ready Listing')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Shipped Listing')).not.toBeInTheDocument();
-    expect(within(workSection as HTMLElement).queryByText('Already Listed')).not.toBeInTheDocument();
+    expect(within(workSection as HTMLElement).queryByText('Sold Ready Listing')).not.toBeInTheDocument();
+    expect(within(workSection as HTMLElement).queryByText('Shipped Listing')).not.toBeInTheDocument();
   });
 
   it('keeps only approved-for-publish workflow rows in the ready-for-publishing section', () => {
@@ -223,7 +218,7 @@ describe('ListingApprovalQueuePanel', () => {
     expect(within(readySection as HTMLElement).queryByText('Shipped Row')).not.toBeInTheDocument();
   });
 
-  it('shows listed workflow status in the active listings section even when the raw approved field is false', () => {
+  it('keeps listed workflow rows off the combined page even when the raw approved field is false', () => {
     render(
       <ListingApprovalQueuePanel
         {...baseProps}
@@ -234,14 +229,14 @@ describe('ListingApprovalQueuePanel', () => {
       />,
     );
 
-    const activeSection = document.getElementById('combined-listings-active-listings');
+    const workSection = document.getElementById('combined-listings-needs-further-work');
 
-    expect(activeSection).not.toBeNull();
-    expect(within(activeSection as HTMLElement).getByText('Shopify Live Row')).toBeInTheDocument();
-    expect(within(activeSection as HTMLElement).getAllByText('Listed, Shopify').length).toBeGreaterThan(1);
+    expect(workSection).not.toBeNull();
+    expect(within(workSection as HTMLElement).queryByText('Shopify Live Row')).not.toBeInTheDocument();
+    expect(within(workSection as HTMLElement).queryByText('Listed, Shopify')).not.toBeInTheDocument();
   });
 
-  it('shows live channel status instead of needs-fields badges for already listed rows in the active section', () => {
+  it('keeps eBay listed workflow rows off the combined page', () => {
     render(
       <ListingApprovalQueuePanel
         {...baseProps}
@@ -252,13 +247,13 @@ describe('ListingApprovalQueuePanel', () => {
       />,
     );
 
-    const activeSection = document.getElementById('combined-listings-active-listings');
+    const workSection = document.getElementById('combined-listings-needs-further-work');
 
-    expect(activeSection).not.toBeNull();
-    expect(within(activeSection as HTMLElement).getByText('eBay Live Row')).toBeInTheDocument();
-    expect(within(activeSection as HTMLElement).getByText('Live')).toBeInTheDocument();
-    expect(within(activeSection as HTMLElement).getByText('Not Live')).toBeInTheDocument();
-    expect(within(activeSection as HTMLElement).queryByText('Needs Fields')).not.toBeInTheDocument();
+    expect(workSection).not.toBeNull();
+    expect(within(workSection as HTMLElement).queryByText('eBay Live Row')).not.toBeInTheDocument();
+    expect(within(workSection as HTMLElement).queryByText('Live')).not.toBeInTheDocument();
+    expect(within(workSection as HTMLElement).queryByText('Not Live')).not.toBeInTheDocument();
+    expect(within(workSection as HTMLElement).queryByText('Needs Fields')).not.toBeInTheDocument();
   });
 
   it('keeps combined rows with no workflow status off the listings page', () => {
@@ -294,7 +289,6 @@ describe('ListingApprovalQueuePanel', () => {
     expect(screen.queryByText('Sold Ready Row')).not.toBeInTheDocument();
     expect(screen.queryByText('Shipped Row')).not.toBeInTheDocument();
     expect(screen.getByText('No combined listing rows are currently ready for publishing.')).toBeInTheDocument();
-    expect(screen.getByText('No combined listing rows are currently active listings.')).toBeInTheDocument();
     expect(screen.getByText('No combined listing rows currently need additional listing work.')).toBeInTheDocument();
   });
 
@@ -311,7 +305,6 @@ describe('ListingApprovalQueuePanel', () => {
 
     expect(screen.queryByText('Trash Review Row')).not.toBeInTheDocument();
     expect(screen.getByText('No combined listing rows are currently ready for publishing.')).toBeInTheDocument();
-    expect(screen.getByText('No combined listing rows are currently active listings.')).toBeInTheDocument();
     expect(screen.getByText('No combined listing rows currently need additional listing work.')).toBeInTheDocument();
   });
 });

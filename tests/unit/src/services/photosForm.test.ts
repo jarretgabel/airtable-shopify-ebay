@@ -186,12 +186,11 @@ describe('photosForm', () => {
     const result = await loadPhotosFormValues('recPhotosSample');
 
     expect(result.stageContext.existingAttachments).toEqual([
+      { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
       { id: 'att-photo', url: 'https://example.com/photo.jpg', filename: 'photo.jpg' },
     ]);
     expect(result.stageContext.intakeReferenceAttachments).toEqual([]);
-    expect(result.stageContext.testingReferenceAttachments).toEqual([
-      { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
-    ]);
+    expect(result.stageContext.testingReferenceAttachments).toEqual([]);
   });
 
   it('submits photo changes back to the workflow source when photography is completed', async () => {
@@ -689,13 +688,12 @@ describe('photosForm', () => {
     const result = await loadPhotosFormValues('recPhotosStage');
 
     expect(result.stageContext.existingAttachments).toEqual([
+      { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
       { id: 'att-photo', url: 'https://example.com/photo.jpg', filename: 'photo.jpg' },
     ]);
     expect(result.stageContext.intakeReferenceAttachments).toEqual([]);
-    expect(result.stageContext.testingReferenceAttachments).toEqual([
-      { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
-    ]);
-    expect(result.stageContext.imageMetadata).toHaveLength(2);
-    expect(result.stageContext.imageMetadata.map((record) => record.sourceStage)).toEqual(['testing', 'photos']);
+    expect(result.stageContext.testingReferenceAttachments).toEqual([]);
+    expect(result.stageContext.imageMetadata).toHaveLength(3);
+    expect(result.stageContext.imageMetadata.map((record) => record.sourceStage)).toEqual(['testing', 'photos', 'photos']);
   });
 });

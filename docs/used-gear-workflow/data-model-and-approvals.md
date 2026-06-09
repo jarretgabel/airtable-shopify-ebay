@@ -44,7 +44,6 @@ Use this checklist to approve, reject, or revise the proposed Airtable/workflow 
 
 #### Workflow And Routing Fields
 - [x] Approve `Workflow Source`
-- [x] Approve `Submission Group ID`
 - [x] Approve `JotForm Submission ID`
 - [x] Approve `Pick Up ID`
 - [x] Approve `Trash Status`
@@ -149,7 +148,7 @@ Use this checklist to approve, reject, or revise the proposed Airtable/workflow 
 - [x] Approve keeping stage signoff fields as explicit audit metadata instead of trying to derive them from status alone.
 - [x] Approve allowing testing and photography to proceed concurrently after processing is complete.
 - [x] Approve one-row-per-sellable-item as the record identity model.
-- [x] Approve `Submission Group ID` and `Pick Up ID` as the grouping model.
+- [x] Approve `Pick Up ID` as the grouping model.
 - [x] Approve `Offer Amount` and `Paid Amount` as distinct values.
 - [x] Approve equal split as the default grand-total allocation mode.
 - [x] Approve manual override after allocation.
@@ -166,26 +165,18 @@ These are proposed additions or formalized workflow fields for `tbl0K0nFQL64jQMx
 	- Sample values: `JotForm`, `Manual Entry`.
 	- Rule: set once at row creation and do not reuse it to describe current state or routing.
 	- When to use it: use this when you need to answer "where did this row originate?"
-- `Submission Group ID`
-	- Purpose: group multiple item rows created from the same customer submission.
-	- Plain-language meaning: if one customer submission produces three sellable items, all three Airtable rows share the same `Submission Group ID` so the app knows they belong to the same intake event.
-	- Example: one seller submits a camera body, lens, and battery grip in one JotForm. The app creates three rows, each with its own Airtable record id, but all three rows share one `Submission Group ID`.
-	- Suggested format: stable generated group key such as `SG-20260507-001` or the source submission id when it is already unique and reliable.
-	- Sample values: `SG-20260507-001`, `SG-20260507-014`, `JF-103842`, `SUB-2026-05-07-ACME-01`.
-	- Rule: use only for items created from the same single intake submission. Do not repurpose it for later pickups, merges, or shipping batches.
-	- When to use it: use this when you need to answer "which rows came from the same original submission?"
 - `JotForm Submission ID`
 	- Purpose: store the exact external JotForm submission identity for webhook idempotency, audit, and replay-safe updates.
-	- Plain-language meaning: this is the source submission id that came from JotForm itself; it is not the same thing as the grouped internal `Submission Group ID` used to relate multiple sellable rows.
-	- Example: one JotForm submission creates three sellable rows. All three rows share one `Submission Group ID`, and all three rows also carry the same `JotForm Submission ID` so the app can trace them back to the one external submission.
+	- Plain-language meaning: this is the source submission id that came from JotForm itself; it is separate from workflow grouping so replay/idempotency remains stable even when pickup grouping changes later.
+	- Example: one JotForm submission creates three sellable rows. All three rows carry their own per-slot `JotForm Submission ID` values (for example `sub-123-slot1`, `sub-123-slot2`, `sub-123-slot3`) and are initially grouped through `Pick Up ID` seeding.
 	- Suggested format: exact JotForm submission id as delivered by the JotForm API.
 	- Sample values: `6132456789012345678`, `6132456789012345689`.
 	- Rule: set at creation for `Workflow Source = JotForm` rows and do not mutate it later. Manual-entry rows should leave it blank.
 	- When to use it: use this when you need to answer "which exact JotForm submission created or last synced this workflow row?"
 - `Pick Up ID`
-	- Purpose: group manually processed or physically received items tied to the same pickup/arrival workflow.
-	- Plain-language meaning: if multiple rows were brought in, dropped off, or received together as one real-world handoff, they share the same `Pick Up ID`.
-	- Example: a seller submits gear online on Monday, drops off two items on Wednesday, and brings the rest on Friday. All rows may share one `Submission Group ID`, but Wednesday and Friday arrivals would use different `Pick Up ID` values.
+	- Purpose: group item rows for workflow handling.
+	- Plain-language meaning: if multiple rows should move together, they share the same `Pick Up ID`.
+	- Example: one seller submits three items in one intake. The workflow seeds `Pick Up ID` from the submission identity so the rows group together immediately; if physical arrivals later split across separate handoffs, operators can update `Pick Up ID` to match each real-world batch.
 	- Suggested format: stable pickup or arrival key such as `PU-20260507-001`.
 	- Sample values: `PU-20260507-001`, `PU-20260507-JOHNSMITH`, `ARR-2026-05-07-02`, `PICKUP-NYC-20260507-AM`.
 	- Rule: use only when items share a real-world pickup or arrival event. Leave blank for standalone intake rows that are not part of a pickup group.
@@ -527,7 +518,7 @@ An item may move from Parking Lot review into the accepted workflow and Parking 
 	- `Offer Amount` is populated, or
 	- `Paid Amount` is populated, or
 	- the submission is explicitly using grouped-total allocation with `Confirmed Grand Total`.
-- If the intake creates multiple sellable rows from one submission, `Submission Group ID` is populated for all rows in that group.
+- If the intake creates multiple sellable rows from one submission, `Pick Up ID` is seeded consistently so all rows are grouped together.
 - If the accepted items are tied to a real-world pickup or arrival batch, `Pick Up ID` is populated before or at arrival handling.
 
 The workflow must block Parking Lot arrival-stage routing when any of the following are true:
@@ -536,7 +527,7 @@ The workflow must block Parking Lot arrival-stage routing when any of the follow
 - `Accepted By` is missing.
 - `Accepted At` is missing.
 - No offer, paid value, or confirmed grouped total has been recorded.
-- A multi-item accepted submission does not yet have a `Submission Group ID`.
+- A multi-item accepted submission does not yet have a `Pick Up ID`.
 
 The workflow must route to trash instead of accepted Parking Lot arrival-stage handling when all of the following are true:
 
@@ -552,10 +543,9 @@ Operational notes:
 
 ### Proposed Record Identity Strategy
 - One Airtable row per sellable item.
-- `Submission Group ID` ties together all item rows created from the same JotForm submission.
 - `Pick Up ID` ties together physically related or manually grouped intake records.
 - The Airtable row id remains the authoritative per-item id used by app routes and deep links.
-- Queue/detail pages may be grouped by `Submission Group ID` or `Pick Up ID`, but actions ultimately resolve to one or more authoritative row ids.
+- Queue/detail pages are grouped by `Pick Up ID`, and actions ultimately resolve to one or more authoritative row ids.
 
 ### Proposed Offer Amount Vs Paid Amount Behavior
 - `Offer Amount` is the proposed value communicated during intake review.
@@ -585,7 +575,6 @@ Rows classified as `Active Workflow Candidate` may receive only the minimum back
 
 - `Workflow Source` only when the origin can be determined with high confidence.
 - `Workflow Status` only when the current operational stage can be inferred safely from existing data.
-- `Submission Group ID` only when grouped submission membership is already known or can be reconstructed with high confidence.
 - `Pick Up ID` only when the physical pickup/arrival grouping is already known or can be reconstructed with high confidence.
 - Required lifecycle or signoff timestamps only when there is an authoritative existing timestamp or event source.
 

@@ -53,7 +53,7 @@ describe('UsedGearTrashReviewGroupPage', () => {
       id: 'trash-set-a',
       key: 'trash-set-a',
       label: 'trash-set-a',
-      description: 'Submission group',
+      description: 'Pickup group',
       records: [
         {
           id: 'rec-trash-1',

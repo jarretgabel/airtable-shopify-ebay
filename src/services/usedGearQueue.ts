@@ -27,7 +27,6 @@ const USED_GEAR_PENDING_REVIEW_QUEUE_FIELDS = [
   'Model',
   'Workflow Source',
   'Workflow Status',
-  'Submission Group ID',
   'Pick Up ID',
   'Workflow Owner',
   'Workflow Owner Assigned At',
@@ -190,7 +189,6 @@ const USED_GEAR_POST_PUBLISH_STATUSES = new Set([
 
 const USED_GEAR_WORKFLOW_NOTIFICATION_FIELDS = [
   USED_GEAR_WORKFLOW_STATUS_FIELD,
-  'Submission Group ID',
   'Pick Up ID',
   'Workflow Owner',
   'Testing Signed By',
@@ -410,7 +408,7 @@ export interface UsedGearPendingReviewGroupRecordInput {
 
 export interface UsedGearPendingReviewGroupReviewInput {
   records: UsedGearPendingReviewGroupRecordInput[];
-  submissionGroupId?: string | null;
+  pickUpId?: string | null;
   confirmedGrandTotal?: number | null;
   allocationMode: UsedGearPendingReviewAllocationMode;
   allocationNotes?: string;
@@ -568,15 +566,6 @@ function groupKeyForRecord(record: AirtableRecord): { key: string; label: string
       key: pickupId,
       label: pickupId,
       description: 'Pickup group',
-    };
-  }
-
-  const submissionGroupId = getTrimmedFieldValue(record, 'Submission Group ID');
-  if (submissionGroupId) {
-    return {
-      key: submissionGroupId,
-      label: submissionGroupId,
-      description: 'Submission group',
     };
   }
 
@@ -967,6 +956,7 @@ export async function acceptPendingReviewRecord(
   options: {
     acceptedStatus: UsedGearPendingReviewAcceptedStatus;
     qualificationNotes: string;
+    pickUpId?: string;
   },
 ): Promise<AirtableRecord> {
   const normalizedUserName = userName.trim();
@@ -978,6 +968,7 @@ export async function acceptPendingReviewRecord(
   if (!normalizedQualificationNotes) {
     throw new Error('Qualification Notes are required before routing a pending-review row into Parking Lot.');
   }
+  const normalizedPickUpId = options.pickUpId?.trim() ?? '';
 
   const currentRecord = await getConfiguredRecord('used-gear-workflow', recordId);
   if (!hasUsedGearPendingReviewPricingPath(currentRecord.fields)) {
@@ -989,6 +980,7 @@ export async function acceptPendingReviewRecord(
     recordId,
     {
       [USED_GEAR_WORKFLOW_STATUS_FIELD]: options.acceptedStatus,
+      'Pick Up ID': normalizedPickUpId || undefined,
       'Qualification Complete': true,
       'Qualification Notes': normalizedQualificationNotes,
       'Accepted By': normalizedUserName,
@@ -1009,9 +1001,9 @@ export async function savePendingReviewGroupReview(
     throw new Error('Pending-review group review requires at least one intake row.');
   }
 
-  const normalizedSubmissionGroupId = input.submissionGroupId?.trim() ?? '';
-  if (input.records.length > 1 && !normalizedSubmissionGroupId) {
-    throw new Error('Submission Group ID is required before saving a multi-item intake review.');
+  const normalizedPickUpId = input.pickUpId?.trim() ?? '';
+  if (input.records.length > 1 && !normalizedPickUpId) {
+    throw new Error('Pick Up ID is required before saving a multi-item intake review.');
   }
 
   const normalizedAllocationNotes = normalizeAllocationText(input.allocationNotes);
@@ -1033,7 +1025,7 @@ export async function savePendingReviewGroupReview(
       'used-gear-workflow',
       record.recordId,
       {
-        'Submission Group ID': normalizedSubmissionGroupId || null,
+        'Pick Up ID': normalizedPickUpId || null,
         'Qualification Notes': normalizedQualificationNotes || null,
         'Offer Amount': offerAmount,
         'Paid Amount': paidAmount,
@@ -1054,9 +1046,9 @@ export async function acceptPendingReviewGroup(
   input: UsedGearPendingReviewGroupReviewInput,
   userName: string,
 ): Promise<AirtableRecord[]> {
-  const normalizedSubmissionGroupId = input.submissionGroupId?.trim() ?? '';
-  if (input.records.length > 1 && !normalizedSubmissionGroupId) {
-    throw new Error('Submission Group ID is required before routing a multi-item intake review into Parking Lot.');
+  const normalizedPickUpId = input.pickUpId?.trim() ?? '';
+  if (input.records.length > 1 && !normalizedPickUpId) {
+    throw new Error('Pick Up ID is required before routing a multi-item intake review into Parking Lot.');
   }
 
   const acceptedRecords: AirtableRecord[] = [];
@@ -1065,6 +1057,7 @@ export async function acceptPendingReviewGroup(
     acceptedRecords.push(await acceptPendingReviewRecord(record.recordId, userName, {
       acceptedStatus: record.acceptedStatus,
       qualificationNotes: record.qualificationNotes,
+      pickUpId: normalizedPickUpId || undefined,
     }));
   }
 

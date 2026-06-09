@@ -59,7 +59,7 @@ describe('UsedGearTrashSection', () => {
 
     render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenGroupReview={vi.fn()} />);
 
-    await screen.findByText('Trash Review');
+    await screen.findByText('Trash');
     expect(screen.getByLabelText(/Sort trash review queue/i)).toBeInTheDocument();
   });
 
@@ -95,7 +95,7 @@ describe('UsedGearTrashSection', () => {
 
     render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenGroupReview={vi.fn()} searchTerm="transformer cover" />);
 
-    await screen.findByText('Trash Review');
+    await screen.findByText('Trash');
 
     expect(screen.getAllByText('TRASH-REASON').length).toBeGreaterThan(0);
     expect(screen.queryByText('TRASH-OTHER')).not.toBeInTheDocument();
@@ -122,7 +122,7 @@ describe('UsedGearTrashSection', () => {
 
     render(<UsedGearTrashSection onOpenReviewRecord={onOpenReviewRecord} onOpenGroupReview={vi.fn()} />);
 
-    await screen.findByText('Trash Review');
+    await screen.findByText('Trash');
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Open Review' })[0]!);
 
@@ -146,7 +146,7 @@ describe('UsedGearTrashSection', () => {
           Model: 'SX-750',
           'Workflow Status': 'Unqualified',
           'Trash Status': 'Active Trash',
-          'Submission Group ID': 'trash-set-a',
+          'Pick Up ID': 'trash-set-a',
         },
       },
       {
@@ -158,14 +158,14 @@ describe('UsedGearTrashSection', () => {
           Model: 'CT-F9191',
           'Workflow Status': 'Unqualified',
           'Trash Status': 'Active Trash',
-          'Submission Group ID': 'trash-set-a',
+          'Pick Up ID': 'trash-set-a',
         },
       },
     ]);
 
     render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenGroupReview={onOpenGroupReview} />);
 
-    await screen.findByText('Trash Review');
+    await screen.findByText('Trash');
     fireEvent.click(screen.getByRole('button', { name: 'Open Group Review' }));
 
     expect(onOpenGroupReview).toHaveBeenCalledWith('trash-set-a');
@@ -189,7 +189,7 @@ describe('UsedGearTrashSection', () => {
 
     render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenGroupReview={vi.fn()} />);
 
-    await screen.findByText('Trash Review');
+    await screen.findByText('Trash');
 
     expect(screen.queryByText('Single intake item')).not.toBeInTheDocument();
     expect(screen.getAllByRole('columnheader', { name: /Group/i }).length).toBeGreaterThan(0);

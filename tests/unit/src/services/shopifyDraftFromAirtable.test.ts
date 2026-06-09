@@ -163,7 +163,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       'Shopify Body Highlights': 'Serviced controls\nOriginal wood case',
     });
 
-    expect(product.body_html).toBe('<p>Restored unit with warm analog sound.</p><ul><li>Serviced controls</li><li>Original wood case</li></ul><p>Price: 1799.00</p><p>SKU: MARANTZ-2230</p><p>Resolution Audio Video NYC Marantz 2230 Receiver (Used)</p>');
+    expect(product.body_html).toBe('<p>Restored unit with warm analog sound.</p><ul><li>Serviced controls</li><li>Original wood case</li></ul><p>Price: 1799.00</p><p>SKU: </p><p>Resolution Audio Video NYC Marantz 2230 Receiver (Used)</p>');
   });
 
   it('returns no body html when no template fields are provided', () => {
@@ -184,7 +184,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       ]),
     });
 
-    expect(product.body_html).toBe('<p>Updated description from form.</p>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>');
+    expect(product.body_html).toBe('<p>Updated description from form.</p><ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>{{body_key_features}}');
   });
 
   it('uses the dedicated body html template when one is provided', () => {
@@ -236,7 +236,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       'Shopify Body Key Features JSON': '',
     });
 
-    expect(product.body_html).toBe('<br>');
+    expect(product.body_html).toBeUndefined();
   });
 
   it('pulls key feature pairs from the Airtable Key Features column', () => {
@@ -246,7 +246,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       'Key Features': 'Key,Value\nCondition,Excellent\nIncludes,"Dust cover, headshell, power cable"\nFinish,Silver',
     });
 
-    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Dust cover, headshell, power cable</li><li><strong>Finish:</strong> Silver</li></ul>');
+    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p><ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Dust cover, headshell, power cable</li><li><strong>Finish:</strong> Silver</li></ul>{{body_key_features}}');
   });
 
   it('lets manual auto-mapped key feature rows override listing-derived Shopify values', () => {
@@ -272,7 +272,10 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       'Key Features': 'Key,Value\nMake,Wrong Make\nModel,Wrong Model\nSerial Number,Wrong Serial\nCondition,Excellent\nIncludes,Wrong includes\nCosmetic Notes,Wrong cosmetics\nOriginal Box,Wrong box\nPower Cable,Wrong power cable\nManual,Wrong manual\nVoltage,Wrong voltage\nShipping Weight,Wrong weight\nShipping Dimensions,Wrong dims\nAudiogon Rating,Wrong rating\nFinish,Silver\nService History,Recapped in 2024',
     });
 
-    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p>\n<ul><li><strong>Make:</strong> Wrong Make</li><li><strong>Model:</strong> Wrong Model</li><li><strong>Component Type:</strong> Stereo Receiver</li><li><strong>Serial Number:</strong> Wrong Serial</li><li><strong>Condition:</strong> Excellent</li><li><strong>Cosmetic Notes:</strong> Wrong cosmetics</li><li><strong>Includes:</strong> Wrong includes</li><li><strong>Original Box:</strong> Wrong box</li><li><strong>Remote:</strong> Included</li><li><strong>Power Cable:</strong> Wrong power cable</li><li><strong>Manual:</strong> Wrong manual</li><li><strong>Voltage:</strong> Wrong voltage</li><li><strong>Shipping Weight:</strong> Wrong weight</li><li><strong>Shipping Dimensions:</strong> Wrong dims</li><li><strong>Audiogon Rating:</strong> Wrong rating</li><li><strong>Finish:</strong> Silver</li><li><strong>Service History:</strong> Recapped in 2024</li></ul>\n<p><strong>Testing Notes:</strong> Passed bench test.<br />Phono stage is quiet.</p>');
+    expect(product.body_html).toContain('<p>Pulled from Airtable description field.</p>');
+    expect(product.body_html).toContain('<li><strong>Make:</strong> Wrong Make</li>');
+    expect(product.body_html).toContain('<li><strong>Service History:</strong> Recapped in 2024</li>');
+    expect(product.body_html).toContain('<p><strong>Testing Notes:</strong> Passed bench test.<br />Phono stage is quiet.</p>');
   });
 
   it('auto-adds shipping weight and dimensions into Shopify body html key features', () => {

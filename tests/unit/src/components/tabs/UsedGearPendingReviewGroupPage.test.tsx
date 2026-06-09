@@ -51,8 +51,8 @@ describe('UsedGearPendingReviewGroupPage', () => {
     loadPendingReviewGroupMock.mockResolvedValue({
       id: 'group-42',
       key: 'group-42',
-      label: 'SUB-42',
-      description: 'Submission group',
+      label: 'PICKUP-42',
+      description: 'Pickup group',
       records: [
         {
           id: 'rec-group-1',
@@ -64,7 +64,7 @@ describe('UsedGearPendingReviewGroupPage', () => {
             Model: 'C28',
             'Workflow Source': 'JotForm',
             'Workflow Status': 'Accepted - Awaiting Arrival',
-            'Submission Group ID': 'SUB-42',
+            'Pick Up ID': 'PICKUP-42',
             'Confirmed Grand Total': 300,
             'Allocation Mode': 'Equal Split',
             'Allocation Notes': 'Split evenly',
@@ -87,7 +87,7 @@ describe('UsedGearPendingReviewGroupPage', () => {
             Model: '8B',
             'Workflow Source': 'Manual Entry',
             'Workflow Status': 'Accepted - Arrived, Awaiting SKU',
-            'Submission Group ID': 'SUB-42',
+            'Pick Up ID': 'PICKUP-42',
             'Confirmed Grand Total': 300,
             'Allocation Mode': 'Equal Split',
             'Allocation Notes': 'Split evenly',
@@ -105,8 +105,8 @@ describe('UsedGearPendingReviewGroupPage', () => {
     loadParkingLotArrivalGroupMock.mockResolvedValue({
       id: 'group-42',
       key: 'group-42',
-      label: 'SUB-42',
-      description: 'Submission group',
+      label: 'PICKUP-42',
+      description: 'Pickup group',
       records: [],
     });
   });
@@ -145,7 +145,7 @@ describe('UsedGearPendingReviewGroupPage', () => {
       />,
     );
 
-    expect((await screen.findAllByText('SUB-42')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('PICKUP-42')).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Back to Parking Lot' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Parking Lot group sections' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Grouped Items' })).toBeInTheDocument();
@@ -212,7 +212,7 @@ describe('UsedGearPendingReviewGroupPage', () => {
       />,
     );
 
-    expect((await screen.findAllByText('SUB-42')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('PICKUP-42')).length).toBeGreaterThan(0);
 
     fireEvent.change(screen.getAllByRole('spinbutton', { name: 'Offer Amount' })[0]!, {
       target: { value: '150.00' },
@@ -224,7 +224,7 @@ describe('UsedGearPendingReviewGroupPage', () => {
 
     await waitFor(() => {
       expect(savePendingReviewGroupReviewMock).toHaveBeenCalledWith({
-        submissionGroupId: 'SUB-42',
+        pickUpId: 'PICKUP-42',
         confirmedGrandTotal: 300,
         allocationMode: 'Equal Split',
         allocationNotes: 'Split evenly',
@@ -276,7 +276,7 @@ describe('UsedGearPendingReviewGroupPage', () => {
       />,
     );
 
-    expect((await screen.findAllByText('SUB-42')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('PICKUP-42')).length).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Unqualified Reason' }), {
       target: { value: 'The full submission should be rejected due to condition and repair exposure.' },

@@ -40,7 +40,6 @@ const ISO_DATE_TIME_OPTIONS = {
 const APPROVED_FIELD_DEFINITIONS = [
   { name: 'Workflow Source', type: 'singleSelect', options: { choices: [{ name: 'JotForm', color: 'blueLight2' }, { name: 'Manual Entry', color: 'cyanLight2' }] } },
   { name: 'JotForm Submission ID', type: 'singleLineText' },
-  { name: 'Submission Group ID', type: 'singleLineText' },
   { name: 'Pick Up ID', type: 'singleLineText' },
   { name: 'Workflow Owner', type: 'singleLineText' },
   { name: 'Workflow Owner Assigned At', type: 'dateTime', options: ISO_DATE_TIME_OPTIONS },

@@ -113,7 +113,7 @@ describe('UsedGearPendingReviewSection', () => {
           Make: 'McIntosh',
           Model: 'MC240',
           'Workflow Status': 'Pending Review',
-          'Submission Group ID': 'SUB-42',
+          'Pick Up ID': 'SUB-42',
           'Confirmed Grand Total': 1000,
         },
       },
@@ -125,7 +125,7 @@ describe('UsedGearPendingReviewSection', () => {
           Make: 'McIntosh',
           Model: 'C28',
           'Workflow Status': 'Pending Review',
-          'Submission Group ID': 'SUB-42',
+          'Pick Up ID': 'SUB-42',
           'Confirmed Grand Total': 1000,
         },
       },
@@ -139,7 +139,7 @@ describe('UsedGearPendingReviewSection', () => {
       />,
     );
 
-    expect(await screen.findByRole('button', { name: /Open submission set SUB-42/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Open pickup set SUB-42/i })).toBeInTheDocument();
     expect(screen.queryByText('Grouped intake review has moved off the queue cards.')).not.toBeInTheDocument();
     expect(screen.queryByText('SUB-42')).not.toBeInTheDocument();
   });

@@ -33,7 +33,6 @@ This runbook operationalizes the approved backfill and normalization strategy fo
 - Reconfirm the approved status vocabulary.
 - Reconfirm the grouped-row rules:
   - one row per sellable item
-  - `Submission Group ID` groups original submission rows
   - `Pick Up ID` groups physical arrival/pickup events
 - Reconfirm the transition rules and later-stage guardrails.
 
@@ -48,7 +47,6 @@ This runbook operationalizes the approved backfill and normalization strategy fo
 - For each row, calculate proposed values for:
   - `Workflow Status`
   - `Workflow Source`
-  - `Submission Group ID`
   - `Pick Up ID`
   - `Trash Status`
   - lifecycle timestamps only when derivable
@@ -82,11 +80,6 @@ When evidence is incomplete:
 - Set to `JotForm` when the row clearly originated from the external intake workflow.
 - Set to `Manual Entry` when the row clearly originated from staff-created intake.
 - Leave for manual review when provenance is unclear.
-
-### Submission Group ID
-- Populate when multiple rows can be confidently tied to the same original submission.
-- Reuse an existing stable submission id when present and reliable.
-- Do not invent grouping keys that merge unrelated submissions.
 
 ### Pick Up ID
 - Populate only when rows can be confidently tied to the same real-world arrival or pickup event.

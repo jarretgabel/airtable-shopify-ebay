@@ -703,7 +703,7 @@ const RECORD_GUIDE_CARDS: RecordGuideCard[] = [
     summary: 'These pages are the deeper intake decision surfaces when the queue row alone is not enough, especially for grouped submissions.',
     surfaces: [
       'Selected record page: one intake row with qualification, routing, and next-step context.',
-      'Group review page: shared submission review, submission group ID, and allocation decisions for multi-item intake.',
+      'Group review page: shared submission review, Pick Up ID linkage, and allocation decisions for multi-item intake.',
     ],
     workflows: [
       'Use them when a single queue row needs deeper qualification work or a grouped submission needs one coordinated decision.',

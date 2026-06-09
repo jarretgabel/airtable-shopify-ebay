@@ -379,9 +379,6 @@ export function UsedGearParkingLotSection({
               getItemKey={(record) => record.id}
               groupColumnLabel="Group"
               renderGroupCell={(group) => {
-                const needsSubmissionId = group.description === 'Submission group'
-                  && group.items.some((record) => stringFieldValue(record, 'Submission Group ID').trim().length === 0);
-
                 if (group.items.length === 1) {
                   return <span className="text-xs text-[var(--muted)]/45">-</span>;
                 }
@@ -389,7 +386,6 @@ export function UsedGearParkingLotSection({
                 return (
                   <div className="flex min-h-[4.5rem] flex-col items-center justify-center gap-1">
                     <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{group.items.length}</span>
-                    {needsSubmissionId ? <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-300">ID</span> : null}
                   </div>
                 );
               }}
@@ -407,7 +403,7 @@ export function UsedGearParkingLotSection({
                 return (
                   <div className="flex items-center justify-center">
                     <CompactIconActionButton
-                      label={group.description === 'Pickup group' ? `Open pickup set ${group.label}` : `Open submission set ${group.label}`}
+                      label={`Open pickup set ${group.label}`}
                       variant="small-secondary"
                       icon="group"
                       onClick={() => onOpenGroupReview(sourceGroup)}

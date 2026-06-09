@@ -26,6 +26,7 @@ function buildSelectedRecord(): AirtableRecord {
     createdTime: '2026-05-15T00:00:00.000Z',
     fields: {
       Title: 'McIntosh MA6900',
+      'Workflow Status': 'Awaiting Pre-Listing Review',
     },
   };
 }
@@ -61,8 +62,7 @@ describe('ListingApprovalSelectedRecordPanel', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'McIntosh MA6900' })).toBeInTheDocument();
-    expect(screen.getByText('Intake Details')).toBeInTheDocument();
-    expect(screen.getByText('Selected Record View')).toBeInTheDocument();
+    expect(screen.getByText('Not Ready for Listings')).toBeInTheDocument();
   });
 
   it('leaves non-combined approval records on the plain selected-record view', () => {
@@ -84,6 +84,6 @@ describe('ListingApprovalSelectedRecordPanel', () => {
       />,
     );
 
-    expect(screen.getByText('Selected Record View')).toBeInTheDocument();
+    expect(screen.getByText('Not Ready for Listings')).toBeInTheDocument();
   });
 });

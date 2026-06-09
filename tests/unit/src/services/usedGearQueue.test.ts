@@ -374,29 +374,31 @@ describe('usedGearQueue', () => {
     });
   });
 
-  it('groups operational rows by pickup first, then submission id', () => {
+  it('groups operational rows by pickup first, then record id fallback', () => {
     const groups = groupUsedGearWorkflowRecords([
       {
         id: 'rec1',
         createdTime: 'now',
-        fields: { SKU: 'A', 'Pick Up ID': 'PU-1', 'Submission Group ID': 'SUB-1' },
+        fields: { SKU: 'A', 'Pick Up ID': 'PU-1' },
       },
       {
         id: 'rec2',
         createdTime: 'now',
-        fields: { SKU: 'B', 'Pick Up ID': 'PU-1', 'Submission Group ID': 'SUB-2' },
+        fields: { SKU: 'B', 'Pick Up ID': 'PU-1' },
       },
       {
         id: 'rec3',
         createdTime: 'now',
-        fields: { SKU: 'C', 'Submission Group ID': 'SUB-9' },
+        fields: { SKU: 'C' },
       },
     ]);
 
     expect(groups).toHaveLength(2);
-    expect(groups[0]?.key).toBe('PU-1');
-    expect(groups[0]?.records).toHaveLength(2);
-    expect(groups[1]?.key).toBe('SUB-9');
+    const pickupGroup = groups.find((group) => group.key === 'PU-1');
+    const fallbackGroup = groups.find((group) => group.key === 'rec3');
+
+    expect(pickupGroup?.records).toHaveLength(2);
+    expect(fallbackGroup?.records).toHaveLength(1);
   });
 
   it('accepts a pending-review row with the approved status transition fields', async () => {
@@ -454,12 +456,12 @@ describe('usedGearQueue', () => {
       {
         id: 'recPendingA',
         createdTime: 'now',
-        fields: { 'Workflow Status': 'Pending Review', 'Submission Group ID': 'SUB-42', SKU: 'A-1' },
+        fields: { 'Workflow Status': 'Pending Review', 'Pick Up ID': 'SUB-42', SKU: 'A-1' },
       },
       {
         id: 'recPendingB',
         createdTime: 'later',
-        fields: { 'Workflow Status': 'Pending Review', 'Submission Group ID': 'SUB-42', SKU: 'A-2' },
+        fields: { 'Workflow Status': 'Pending Review', 'Pick Up ID': 'SUB-42', SKU: 'A-2' },
       },
     ]);
 
@@ -489,7 +491,7 @@ describe('usedGearQueue', () => {
       .mockResolvedValueOnce({ id: 'rec2', createdTime: 'now', fields: {} });
 
     await savePendingReviewGroupReview({
-      submissionGroupId: 'SUB-42',
+      pickUpId: 'PICKUP-42',
       confirmedGrandTotal: 100,
       allocationMode: 'Equal Split',
       allocationNotes: 'Split evenly across the stereo pair.',
@@ -512,6 +514,7 @@ describe('usedGearQueue', () => {
       'used-gear-workflow',
       'rec1',
       expect.objectContaining({
+        'Pick Up ID': 'PICKUP-42',
         'Offer Amount': 50,
         'Confirmed Grand Total': 100,
         'Allocation Mode': 'Equal Split',
@@ -523,6 +526,7 @@ describe('usedGearQueue', () => {
       'used-gear-workflow',
       'rec2',
       expect.objectContaining({
+        'Pick Up ID': 'PICKUP-42',
         'Offer Amount': 50,
         'Confirmed Grand Total': 100,
         'Allocation Mode': 'Equal Split',
@@ -577,7 +581,7 @@ describe('usedGearQueue', () => {
       .mockResolvedValueOnce({ id: 'rec2', createdTime: 'now', fields: { 'Workflow Status': 'Accepted - Arrived, Awaiting SKU' } });
 
     const result = await acceptPendingReviewGroup({
-      submissionGroupId: 'SUB-42',
+      pickUpId: 'PICKUP-42',
       confirmedGrandTotal: 100,
       allocationMode: 'Equal Split',
       records: [
@@ -596,6 +600,26 @@ describe('usedGearQueue', () => {
 
     expect(result).toHaveLength(2);
     expect(mockUpdateConfiguredRecord).toHaveBeenCalledTimes(2);
+    expect(mockUpdateConfiguredRecord).toHaveBeenNthCalledWith(
+      1,
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Pick Up ID': 'PICKUP-42',
+        'Workflow Status': 'Accepted - Awaiting Arrival',
+      }),
+      { typecast: true },
+    );
+    expect(mockUpdateConfiguredRecord).toHaveBeenNthCalledWith(
+      2,
+      'used-gear-workflow',
+      'rec2',
+      expect.objectContaining({
+        'Pick Up ID': 'PICKUP-42',
+        'Workflow Status': 'Accepted - Arrived, Awaiting SKU',
+      }),
+      { typecast: true },
+    );
   });
 
   it('restores an active trash row back to pending review', async () => {
@@ -765,7 +789,7 @@ describe('usedGearQueue', () => {
       expect.objectContaining({
         fields: expect.arrayContaining([
           'Workflow Source',
-          'Submission Group ID',
+          'Pick Up ID',
           'Pick Up ID',
           'Workflow Owner',
           'Workflow Owner Assigned At',
@@ -815,12 +839,12 @@ describe('usedGearQueue', () => {
       {
         id: 'rec1',
         createdTime: 'now',
-        fields: { 'Workflow Status': 'Pending Review', 'Submission Group ID': 'SUB-42', SKU: 'SKU-1' },
+        fields: { 'Workflow Status': 'Pending Review', 'Pick Up ID': 'SUB-42', SKU: 'SKU-1' },
       },
       {
         id: 'rec2',
         createdTime: 'later',
-        fields: { 'Workflow Status': 'Accepted - Awaiting Arrival', 'Submission Group ID': 'SUB-42', SKU: 'SKU-2' },
+        fields: { 'Workflow Status': 'Accepted - Awaiting Arrival', 'Pick Up ID': 'SUB-42', SKU: 'SKU-2' },
       },
     ]);
 

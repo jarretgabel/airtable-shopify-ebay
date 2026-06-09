@@ -58,7 +58,6 @@ Primary source wiring:
   - `Model`
   - `Workflow Source`
   - `Workflow Status`
-  - `Submission Group ID`
   - `Pick Up ID`
   - `Qualification Complete`
   - `Qualification Notes`
@@ -67,9 +66,8 @@ Primary source wiring:
   - `Accepted At`
   - `Trash Status`
 - Grouping contract:
-  - group by `Pick Up ID` first
-  - fall back to `Submission Group ID`
-  - fall back to record id when no group keys exist
+  - group by `Pick Up ID`
+  - fall back to record id when no group key exists
 
 ### Progress Queue Read
 - Service: `loadWorkflowProgressQueue`

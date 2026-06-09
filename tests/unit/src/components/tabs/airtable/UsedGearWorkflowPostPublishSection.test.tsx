@@ -349,7 +349,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     expect(screen.getByRole('button', { name: 'Open Workflow Snapshot' })).toBeInTheDocument();
   });
 
-  it('shows all outcome action buttons for a shipped row with no post-sale outcome yet', async () => {
+  it('keeps shipped rows without an outcome in read-only state until an outcome flow is opened elsewhere', async () => {
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {
         id: 'rec-fresh-shipped',
@@ -382,10 +382,10 @@ describe('UsedGearWorkflowPostPublishSection', () => {
 
     await screen.findByText('SHIP-2');
 
-    expect(screen.getByRole('button', { name: 'Cancelled' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Partial Refund' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Refunded' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Return Received' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cancelled' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Partial Refund' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Refunded' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Return Received' })).not.toBeInTheDocument();
   });
 
   it('hides refund actions in the sold-ready directory', async () => {

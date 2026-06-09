@@ -149,7 +149,7 @@ export function UsedGearPendingReviewGroupPage({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [submissionGroupId, setSubmissionGroupId] = useState('');
+  const [pickUpId, setPickUpId] = useState('');
   const [confirmedGrandTotal, setConfirmedGrandTotal] = useState('');
   const [allocationMode, setAllocationMode] = useState<UsedGearPendingReviewAllocationMode>('Equal Split');
   const [allocationNotes, setAllocationNotes] = useState('');
@@ -168,7 +168,7 @@ export function UsedGearPendingReviewGroupPage({
         if (!cancelled) {
           const sortedRecords = sortGroupRecords(nextGroup.records);
           setGroup({ ...nextGroup, records: sortedRecords });
-          setSubmissionGroupId(stringFieldValue(sortedRecords[0]!, 'Submission Group ID'));
+          setPickUpId(stringFieldValue(sortedRecords[0]!, 'Pick Up ID'));
           setConfirmedGrandTotal(stringFieldValue(sortedRecords[0]!, 'Confirmed Grand Total'));
           setAllocationMode((stringFieldValue(sortedRecords[0]!, 'Allocation Mode') as UsedGearPendingReviewAllocationMode) || 'Equal Split');
           setAllocationNotes(stringFieldValue(sortedRecords[0]!, 'Allocation Notes'));
@@ -203,7 +203,7 @@ export function UsedGearPendingReviewGroupPage({
 
   const records = useMemo(() => group?.records ?? [], [group]);
   const parsedGrandTotal = parseCurrency(confirmedGrandTotal);
-  const groupNeedsSubmissionId = records.length > 1 && submissionGroupId.trim().length === 0;
+  const groupNeedsPickupId = records.length > 1 && pickUpId.trim().length === 0;
   const pricingCoverage = useMemo(() => records.every((record) => {
     const editor = recordEditors[record.id];
     if (!editor) {
@@ -235,7 +235,7 @@ export function UsedGearPendingReviewGroupPage({
   );
 
   const buildReviewInput = () => ({
-    submissionGroupId,
+    pickUpId,
     confirmedGrandTotal: parsedGrandTotal,
     allocationMode,
     allocationNotes,
@@ -330,11 +330,11 @@ export function UsedGearPendingReviewGroupPage({
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <label className="block">
-                <span className="text-sm font-semibold text-[var(--ink)]">Submission Group ID</span>
+                <span className="text-sm font-semibold text-[var(--ink)]">Pick Up ID</span>
                 <input
                   className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                  value={submissionGroupId}
-                  onChange={(event) => setSubmissionGroupId(event.currentTarget.value)}
+                  value={pickUpId}
+                  onChange={(event) => setPickUpId(event.currentTarget.value)}
                   placeholder="Required for multi-item intake batches"
                 />
               </label>
@@ -514,13 +514,13 @@ export function UsedGearPendingReviewGroupPage({
                 onClick={() => {
                   void handleAcceptGroup();
                 }}
-                disabled={saving || groupNeedsSubmissionId || !pricingCoverage || !qualificationCoverage}
+                disabled={saving || groupNeedsPickupId || !pricingCoverage || !qualificationCoverage}
               >
                 {saving ? 'Saving...' : 'Accept Group With Selected Statuses'}
               </button>
             </div>
 
-            {groupNeedsSubmissionId ? <p className="mt-3 m-0 text-sm text-amber-300">Multi-item groups require Submission Group ID before acceptance.</p> : null}
+            {groupNeedsPickupId ? <p className="mt-3 m-0 text-sm text-amber-300">Multi-item groups require Pick Up ID before acceptance.</p> : null}
             {!pricingCoverage ? <p className="mt-3 m-0 text-sm text-amber-300">Each row needs offer amount, paid amount, or the shared confirmed group total.</p> : null}
           </div>
         </section>

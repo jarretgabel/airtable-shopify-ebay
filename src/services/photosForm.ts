@@ -506,7 +506,6 @@ export async function submitPhotosForm(
           serialNumber: extractInventoryScalarValue(workflowRecord.fields['Serial Number']),
           jotFormSubmissionId: extractInventoryScalarValue(workflowRecord.fields['JotForm Submission ID']),
           pickUpId: extractInventoryScalarValue(workflowRecord.fields['Pick Up ID']),
-          submissionGroupId: extractInventoryScalarValue(workflowRecord.fields['Submission Group ID']),
           recordId,
         }),
         Make: trimToUndefined(values.make),

@@ -23,7 +23,7 @@ This document captures the original user requirements and guardrails for the use
 - Route unqualified intake rows into a trash workflow instead of deleting them immediately.
 - Make manual entry mirror the JotForm intake experience as closely as practical.
 - Allow manual entry to land in Parking Lot 1 by default or be routed directly into Parking Lot 2 in special cases.
-- Support grouped intake review by `Submission Group ID` and `Pick Up ID`.
+- Support grouped intake review by `Pick Up ID`.
 
 ### Workflow Status And Routing Requirements
 - `Workflow Status` is the authoritative workflow-state field.
@@ -52,7 +52,7 @@ This document captures the original user requirements and guardrails for the use
     - `Offer Amount`, or
     - `Paid Amount`, or
     - grouped `Confirmed Grand Total`
-- Multi-item accepted submissions must have `Submission Group ID` populated.
+- Multi-item accepted submissions must have `Pick Up ID` populated.
 
 ### Pricing And Allocation Requirements
 - `Offer Amount` and `Paid Amount` are distinct item-level values.

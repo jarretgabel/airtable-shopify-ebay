@@ -456,7 +456,6 @@ export function isWorkflowOnlyListingFieldName(fieldName: string): boolean {
     || normalized === 'stale recovery notes'
     || normalized === 'stale recovery status'
     || normalized === 'stale recovery updated at'
-    || normalized === 'submission group id'
     || normalized === 'testing signed at'
     || normalized === 'testing signed by'
     || normalized === 'trash status'
@@ -471,7 +470,6 @@ export function isWorkflowOnlyListingFieldName(fieldName: string): boolean {
 
   return compact === 'pickupid'
     || compact === 'photod'
-    || compact === 'submissiongroupid'
     || compact === 'approvedat'
     || compact === 'approvedby'
     || compact === 'photographedat'

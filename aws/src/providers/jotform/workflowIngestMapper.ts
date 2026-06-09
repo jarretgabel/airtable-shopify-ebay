@@ -7,7 +7,7 @@ import { buildUsedGearItemTitle } from '../../shared/contracts/usedGearItemTitle
 
 export interface NormalizedJotFormWorkflowItem {
   submissionId: string;       // per-slot unique ID used for Airtable upsert idempotency
-  submissionGroupId: string;  // always submission.id — groups all slots from the same submission
+  pickUpId: string;           // seeded from submission.id until pickup assignment is known
   airtableFields: Record<string, unknown>;
   imageUrls: string[];
 }
@@ -122,8 +122,8 @@ export function mapJotFormSubmissionToWorkflowItems(submission: JotFormSubmissio
   const joinOurRaw = getAnswerByName(answers, 'joinOur');
   const mailingListOptIn = joinOurRaw ? true : undefined;
 
-  // All items from the same submission share a group ID so staff can view them together.
-  const submissionGroupId = submission.id;
+  // Seed Pick Up ID from submission id so multi-item submissions group immediately.
+  const pickUpId = submission.id;
 
   const items: NormalizedJotFormWorkflowItem[] = [];
 
@@ -170,7 +170,7 @@ export function mapJotFormSubmissionToWorkflowItems(submission: JotFormSubmissio
       ...buildUsedGearWorkflowFields({
         workflowSource: 'JotForm',
         workflowStatus: 'Pending Review',
-        submissionGroupId,
+        pickUpId,
         qualificationComplete: false,
         jotFormSubmissionId: slotSubmissionId,
       }),
@@ -178,13 +178,13 @@ export function mapJotFormSubmissionToWorkflowItems(submission: JotFormSubmissio
         make: brand || undefined,
         model: model || undefined,
         jotFormSubmissionId: slotSubmissionId,
-        submissionGroupId,
+        pickUpId,
       }),
     };
 
     items.push({
       submissionId: slotSubmissionId,
-      submissionGroupId,
+      pickUpId,
       airtableFields,
       imageUrls,
     });

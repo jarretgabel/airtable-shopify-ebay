@@ -57,13 +57,13 @@ describe('UsedGearParkingLotArrivalRecordPage', () => {
           'Workflow Status': 'Accepted - Awaiting Arrival',
           'Arrival Date': '',
           'Qualification Notes': 'Carry forward note',
-          'Submission Group ID': 'group-1',
+          'Pick Up ID': 'group-1',
         },
       },
       group: {
         id: 'group-1',
         label: 'group-1',
-        description: 'Submission group',
+        description: 'Pickup group',
         records: [
           { id: 'rec-lot-two-1', createdTime: '2026-05-09T00:00:00.000Z', fields: { SKU: '' } },
           { id: 'rec-lot-two-2', createdTime: '2026-05-09T00:00:00.000Z', fields: { SKU: 'SKU-2' } },

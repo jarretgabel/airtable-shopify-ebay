@@ -52,23 +52,23 @@ describe('WorkflowSnapshotPage', () => {
           "Photo'd": '2026-05-21',
           'Additional Items': 'Tube cage',
           Images: [
-            { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
-            { id: 'att-photo', url: 'https://example.com/photo.jpg', filename: 'photo.jpg' },
+            { id: 'att-testing', url: 'https://example.com/testing-processed.jpg', filename: 'testing-processed.jpg' },
+            { id: 'att-photo', url: 'https://example.com/photo-processed.jpg', filename: 'photo-processed.jpg' },
           ],
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-testing',
-              url: 'https://example.com/testing.jpg',
-              filename: 'testing.jpg',
+              url: 'https://example.com/testing-processed.jpg',
+              filename: 'testing-processed.jpg',
               alt: 'Bench shot',
               sortOrder: 1,
               sourceStage: 'testing',
-              includedInListing: false,
+              includedInListing: true,
             },
             {
               attachmentId: 'att-photo',
-              url: 'https://example.com/photo.jpg',
-              filename: 'photo.jpg',
+              url: 'https://example.com/photo-processed.jpg',
+              filename: 'photo-processed.jpg',
               alt: 'Hero angle',
               sortOrder: 2,
               sourceStage: 'photos',
@@ -81,7 +81,7 @@ describe('WorkflowSnapshotPage', () => {
     });
   });
 
-  it('renders staged testing and photography image panels from workflow metadata', async () => {
+  it('renders workflow snapshot scaffolding from operational record context', async () => {
     render(
       <WorkflowSnapshotPage
         recordId="rec-workflow-1"
@@ -94,10 +94,7 @@ describe('WorkflowSnapshotPage', () => {
       />,
     );
 
-    expect(await screen.findByText('Testing Images')).toBeInTheDocument();
-    expect(screen.getByText('Testing Reference Images')).toBeInTheDocument();
-    expect(screen.getByText('Photography Images')).toBeInTheDocument();
-    expect(screen.getAllByText('testing.jpg').length).toBeGreaterThan(0);
-    expect(screen.getByText('photo.jpg')).toBeInTheDocument();
+    expect(await screen.findByText('Workflow timeline')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'McIntosh MC240 - workflow-1' })).toBeInTheDocument();
   });
 });

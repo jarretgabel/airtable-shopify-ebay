@@ -107,7 +107,7 @@ test('workflowIngest creates a workflow row and persists archived intake metadat
   assert.equal(createCalls[0]?.['Workflow Source'], 'JotForm');
   assert.equal(createCalls[0]?.['Workflow Status'], 'Pending Review');
   assert.equal(createCalls[0]?.['JotForm Submission ID'], 'sub-123-slot1');
-  assert.equal(createCalls[0]?.['Submission Group ID'], 'sub-123');
+  assert.equal(createCalls[0]?.['Pick Up ID'], 'sub-123');
   assert.equal(createCalls[0]?.['Item Title'], 'McIntosh MC275');
   assert.equal(updateCalls[0]?.fields['Item Title'], 'McIntosh MC275 - new-1');
   const metadataPayload = String(updateCalls[1]?.fields['Workflow Image Metadata JSON'] || '');

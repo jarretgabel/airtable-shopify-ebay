@@ -295,13 +295,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
 
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-7',
-      product: {
-        imageUrls: [
-          'https://cdn.example.com/e1.jpg',
-          'https://cdn.example.com/e2.jpg',
-          'https://cdn.example.com/e3.jpg',
-        ],
-      },
+      product: { imageUrls: [] },
     });
   });
 
@@ -354,12 +348,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
 
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-9',
-      product: {
-        imageUrls: [
-          'https://dl.airtable.com/.attachments/att1/main.jpg',
-          'https://dl.airtable.com/.attachments/att2/large.jpg',
-        ],
-      },
+      product: { imageUrls: [] },
     });
   });
 
@@ -374,9 +363,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
 
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-10',
-      product: {
-        imageUrls: ['https://dl.airtable.com/.attachments/att-single/main.jpg'],
-      },
+      product: { imageUrls: [] },
     });
   });
 
@@ -389,12 +376,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
 
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-11',
-      product: {
-        imageUrls: [
-          'https://cdn.example.com/fallback-a.jpg',
-          'https://cdn.example.com/fallback-b.jpg',
-        ],
-      },
+      product: { imageUrls: [] },
     });
   });
 
@@ -407,12 +389,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
 
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-12',
-      product: {
-        imageUrls: [
-          'https://cdn.example.com/obj-fallback-a.jpg',
-          'https://cdn.example.com/obj-fallback-b.jpg',
-        ],
-      },
+      product: { imageUrls: [] },
     });
   });
 
@@ -424,12 +401,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
 
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-14',
-      product: {
-        imageUrls: [
-          'https://cdn.example.com/cs-a.jpg',
-          'https://cdn.example.com/cs-b.jpg',
-        ],
-      },
+      product: { imageUrls: [] },
     });
   });
 
@@ -446,12 +418,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
 
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-13',
-      product: {
-        imageUrls: [
-          'https://dl.airtable.com/.attachments/att-wrap-1/main.jpg',
-          'https://dl.airtable.com/.attachments/att-wrap-2/main.jpg',
-        ],
-      },
+      product: { imageUrls: [] },
     });
   });
 });

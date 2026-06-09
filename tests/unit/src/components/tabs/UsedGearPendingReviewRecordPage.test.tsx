@@ -66,7 +66,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
           'Workflow Status': 'Pending Review',
           'Arrival Date': '',
           'Qualification Notes': 'Carry forward note',
-          'Submission Group ID': 'group-1',
+          'Pick Up ID': 'group-1',
           'Offer Amount': 100,
           'Confirmed Grand Total': 100,
         },
@@ -74,7 +74,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
       group: {
         id: 'group-1',
         label: 'group-1',
-        description: 'Submission group',
+        description: 'Pickup group',
         records: [
           {
             id: 'rec-pending-1',
@@ -100,7 +100,7 @@ describe('UsedGearPendingReviewRecordPage', () => {
         'Workflow Status': 'Pending Review',
         'Arrival Date': values.arrivalDate,
         'Qualification Notes': values.qualificationNotes,
-        'Submission Group ID': 'group-1',
+        'Pick Up ID': 'group-1',
         'Offer Amount': 100,
         'Confirmed Grand Total': 100,
       },

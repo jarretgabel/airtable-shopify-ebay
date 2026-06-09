@@ -141,8 +141,7 @@ Use a thin webhook handler that follows the existing `aws/src/handlers/*` patter
   - `Customer Inclusion Notes`
   - `Customer Submitted Photos Notes`
 - Intake identity/grouping fields map into:
-  - `Submission Group ID`
-  - `Pick Up ID` when present
+  - `Pick Up ID` (seeded from submission id at intake)
 - Fields like `Make`, `Model`, `Component Type`, and pricing candidates should be populated from the submission when available.
 
 ### Recommended Write Order
@@ -178,9 +177,9 @@ These fields make it possible to:
 
 ### If Additional Identity Fields Are Not Approved Immediately
 
-- Use `Submission Group ID` as a temporary submission-level correlation key.
+- Seed `Pick Up ID` from the submission id so grouped intake rows stay linked.
 - Derive a per-item stable key from the submission answer structure if multi-item submissions are present.
-- Treat this as an interim implementation only; it is weaker than dedicated external identity fields beyond the approved `JotForm Submission ID`.
+- Keep this aligned with the approved `JotForm Submission ID` idempotency model.
 
 ### Shared Mapping Goal
 
@@ -216,7 +215,7 @@ This keeps the Airtable write contract stable even if JotForm question IDs or la
 ## Multi-Item Submission Handling
 
 - If a single JotForm submission can describe multiple intake items, the webhook must create one workflow row per item.
-- All rows from the same submission should share the same `Submission Group ID`.
+- All rows from the same submission should share the same seeded `Pick Up ID` until a real-world pickup assignment overrides it.
 - Pricing/allocation behavior continues to operate at the grouped submission level using existing workflow rules.
 
 ## Image Handling
@@ -240,7 +239,7 @@ This keeps the Airtable write contract stable even if JotForm question IDs or la
 - SKU is not stable at the time intake begins and does not work cleanly for JotForm-origin or early manual-intake images.
 - Use one folder per workflow item row, even when multiple rows came from the same grouped submission.
 - Preferred folder key: the Airtable workflow `recordId` for the item row, or the stable per-item external key if archiving occurs before the Airtable row exists.
-- Do not add a `Submission Group ID` parent folder by default.
+- Do not add a pickup-group parent folder by default.
 - Group membership should remain a data attribute in Airtable, not part of the Drive folder structure.
 - Human-readable labels can still include make/model/SKU in filenames, but the folder identity should use immutable workflow ids.
 - This keeps every item's intake image bundle aligned with the unit that will actually be tested, photographed, reviewed, and listed on its own.

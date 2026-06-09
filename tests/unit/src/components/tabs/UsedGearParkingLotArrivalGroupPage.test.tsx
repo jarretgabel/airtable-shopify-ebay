@@ -47,7 +47,6 @@ describe('UsedGearParkingLotArrivalGroupPage', () => {
             Model: 'C28',
             'Workflow Source': 'JotForm',
             'Workflow Status': 'Accepted - Arrived, Awaiting SKU',
-            'Submission Group ID': 'SUB-42',
             'Pick Up ID': 'PICKUP-100',
           },
         },
@@ -61,7 +60,6 @@ describe('UsedGearParkingLotArrivalGroupPage', () => {
             Model: '8B',
             'Workflow Source': 'Manual Entry',
             'Workflow Status': 'Accepted - Arrived, Awaiting Missing Item',
-            'Submission Group ID': 'SUB-42',
             'Pick Up ID': 'PICKUP-100',
           },
         },
@@ -77,7 +75,6 @@ describe('UsedGearParkingLotArrivalGroupPage', () => {
         Model: recordId === 'rec-lot-two-1' ? 'C28' : '8B',
         'Workflow Source': 'JotForm',
         'Workflow Status': recordId === 'rec-lot-two-1' ? 'Accepted - Arrived, Awaiting SKU' : 'Accepted - Arrived, Awaiting Missing Item',
-        'Submission Group ID': 'SUB-42',
         'Pick Up ID': 'PICKUP-100',
       },
     }));
@@ -117,7 +114,7 @@ describe('UsedGearParkingLotArrivalGroupPage', () => {
     expect(screen.queryByText('Intake Date')).not.toBeInTheDocument();
     expect(screen.getByText(/Marantz/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Back to Parking Lot' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Complete Ready Items' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Move Ready Items to Testing' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit Workflow Record' })).not.toBeInTheDocument();
     expect(screen.queryByText('Arrival Date and SKU are required before this item can leave Parking Lot.')).not.toBeInTheDocument();
 
@@ -170,7 +167,7 @@ describe('UsedGearParkingLotArrivalGroupPage', () => {
     );
 
     await screen.findByRole('heading', { name: 'Group Review' });
-    fireEvent.click(screen.getByRole('button', { name: 'Complete Ready Items' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Move Ready Items to Testing' }));
 
     await waitFor(() => {
       expect(saveParkingLotArrivalReviewRecordMock).toHaveBeenCalledWith('rec-lot-two-1', {

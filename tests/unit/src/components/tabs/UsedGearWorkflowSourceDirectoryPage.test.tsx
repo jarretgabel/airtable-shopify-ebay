@@ -182,4 +182,63 @@ describe('UsedGearWorkflowSourceDirectoryPage', () => {
       fields: { Make: 'JBL', Model: 'L100', 'Item Title': 'JBL L100 - Tv8SETONJoog2c' },
     })).toBe('JBL L100 - Tv8SETONJoog2c');
   });
+
+  it('surfaces multi-item pickup groups as one directory row and routes them through group editing', async () => {
+    const onOpenRecord = vi.fn();
+    const onOpenGroup = vi.fn();
+
+    loadWorkflowHubDirectoryMock.mockResolvedValue([
+      {
+        id: 'rec-group-a',
+        createdTime: '2026-05-01T00:00:00.000Z',
+        fields: {
+          'Workflow Source': 'JotForm',
+          'Workflow Status': 'Pending Review',
+          'Pick Up ID': 'PICKUP-42',
+          'Item Title': 'Grouped Item One',
+        },
+      },
+      {
+        id: 'rec-group-b',
+        createdTime: '2026-05-01T01:00:00.000Z',
+        fields: {
+          'Workflow Source': 'JotForm',
+          'Workflow Status': 'Pending Review',
+          'Pick Up ID': 'PICKUP-42',
+          'Item Title': 'Grouped Item Two',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearWorkflowSourceDirectoryPage
+        title="JotForm"
+        workflowSource="JotForm"
+        onOpenRecord={onOpenRecord}
+        onOpenGroup={onOpenGroup}
+      />,
+    );
+
+    expect(await screen.findByText('Inventory directory list section')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(inventoryDirectoryListSectionMock).toHaveBeenCalledTimes(1);
+    });
+
+    const props = inventoryDirectoryListSectionMock.mock.calls[0][0] as {
+      records: Array<{ id: string; fields: Record<string, unknown> }>;
+      totalCount: number;
+      onSelectRecord: (recordId: string) => void;
+      getItemLabel: (record: { id: string; fields: Record<string, unknown> }) => string;
+    };
+
+    expect(props.totalCount).toBe(1);
+    expect(props.records.map((record) => record.id)).toEqual(['PICKUP-42']);
+    expect(props.getItemLabel(props.records[0]!)).toBe('PICKUP-42 (2 items)');
+
+    props.onSelectRecord('PICKUP-42');
+
+    expect(onOpenGroup).toHaveBeenCalledWith('PICKUP-42', 'pending-review');
+    expect(onOpenRecord).not.toHaveBeenCalled();
+  });
 });

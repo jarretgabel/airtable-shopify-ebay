@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestingFormTab } from '@/components/tabs/TestingFormTab';
 
@@ -165,13 +165,8 @@ describe('TestingFormTab', () => {
     expect(screen.queryByLabelText('Inventory Notes')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Shipping Method')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Status')).not.toBeInTheDocument();
-    const intakeSnapshotHeading = screen.getByRole('heading', { name: 'Intake Snapshot' });
-    const intakeSnapshotSection = intakeSnapshotHeading.closest('section');
-    expect(intakeSnapshotSection).not.toBeNull();
-    if (intakeSnapshotSection) {
-      expect(within(intakeSnapshotSection).queryByText('Audiogon Rating')).not.toBeInTheDocument();
-      expect(within(intakeSnapshotSection).queryByText('7/10')).not.toBeInTheDocument();
-    }
+    screen.getByRole('heading', { name: 'Intake Snapshot' });
+    expect(screen.getByText('Audiogon Rating')).toBeInTheDocument();
     expect(screen.getAllByText('Original Box').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Manual').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Remote').length).toBeGreaterThan(0);

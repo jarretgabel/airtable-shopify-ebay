@@ -4,7 +4,7 @@ import { EmptySurface } from '@/components/app/StateSurfaces';
 import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { InventoryDirectoryListSection } from '@/components/tabs/airtable/InventoryDirectoryListSection';
-import { loadWorkflowHubDirectory } from '@/services/usedGearQueue';
+import { groupUsedGearWorkflowRecords, isParkingLotArrivalStageStatus, loadWorkflowHubDirectory } from '@/services/usedGearQueue';
 import { getInventoryDirectorySku, getInventoryDirectoryStatus, getInventoryDirectoryTitle } from '@/services/inventoryDirectory';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -22,11 +22,21 @@ interface UsedGearWorkflowSourceDirectoryPageProps {
   detail?: string;
   workflowSource: IntakeDirectorySource;
   onOpenRecord: (recordId: string) => void;
+  onOpenGroup?: (groupId: string, routeKind: 'pending-review' | 'arrival-stage') => void;
   createActionLabel?: string;
   onCreateAction?: () => void;
   secondaryActionLabel?: string;
   onSecondaryAction?: () => void;
 }
+
+type WorkflowSourceDirectoryEntry = AirtableRecord & {
+  fields: AirtableRecord['fields'] & {
+    '__directoryEntryKind'?: 'record' | 'group';
+    '__directoryGroupRouteKind'?: 'pending-review' | 'arrival-stage';
+    '__directoryItemLabel'?: string;
+    '__directorySearchText'?: string;
+  };
+};
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -67,6 +77,51 @@ function isSourceDirectoryIntakeRecord(record: AirtableRecord): boolean {
   return INTAKE_DIRECTORY_WORKFLOW_STATUSES.has(workflowStatus) && sku.length === 0;
 }
 
+function isPendingReviewStatus(status: string): boolean {
+  return status === 'Pending Review';
+}
+
+function getDirectoryGroupRouteKind(records: AirtableRecord[]): 'pending-review' | 'arrival-stage' | null {
+  if (records.length < 2) {
+    return null;
+  }
+
+  const statuses = records.map((record) => getInventoryDirectoryStatus(record.fields));
+  if (statuses.every((status) => isPendingReviewStatus(status))) {
+    return 'pending-review';
+  }
+
+  if (statuses.every((status) => isParkingLotArrivalStageStatus(status))) {
+    return 'arrival-stage';
+  }
+
+  return null;
+}
+
+function buildGroupDirectoryEntry(groupId: string, routeKind: 'pending-review' | 'arrival-stage', records: AirtableRecord[]): WorkflowSourceDirectoryEntry {
+  const representativeRecord = [...records].sort((left, right) => getRecordIntakeTimestamp(right) - getRecordIntakeTimestamp(left))[0] ?? records[0]!;
+  const itemLabel = `${groupId} (${records.length} items)`;
+  const workflowStatus = routeKind === 'arrival-stage' ? 'Arrival-Stage Group' : 'Pending Review Group';
+
+  return {
+    ...representativeRecord,
+    id: groupId,
+    fields: {
+      ...representativeRecord.fields,
+      'Item Title': itemLabel,
+      'Workflow Status': workflowStatus,
+      '__directoryEntryKind': 'group',
+      '__directoryGroupRouteKind': routeKind,
+      '__directoryItemLabel': itemLabel,
+      '__directorySearchText': records.map((record) => JSON.stringify(record.fields)).join(' '),
+    },
+  };
+}
+
+function isGroupDirectoryEntry(record: WorkflowSourceDirectoryEntry): boolean {
+  return record.fields.__directoryEntryKind === 'group';
+}
+
 function getRecordIntakeTimestamp(record: AirtableRecord): number {
   const arrivalDate = typeof record.fields['Arrival Date'] === 'string' ? record.fields['Arrival Date'].trim() : '';
   const parsedArrival = arrivalDate ? Date.parse(arrivalDate) : Number.NaN;
@@ -83,6 +138,7 @@ export function UsedGearWorkflowSourceDirectoryPage({
   detail,
   workflowSource,
   onOpenRecord,
+  onOpenGroup,
   createActionLabel,
   onCreateAction,
   secondaryActionLabel,
@@ -131,19 +187,44 @@ export function UsedGearWorkflowSourceDirectoryPage({
     [records, workflowSource],
   );
 
+  const directoryEntries = useMemo<WorkflowSourceDirectoryEntry[]>(() => {
+    const groups = groupUsedGearWorkflowRecords(sourceRecords);
+    const entries: WorkflowSourceDirectoryEntry[] = [];
+
+    groups.forEach((group) => {
+      const routeKind = getDirectoryGroupRouteKind(group.records);
+      if (routeKind) {
+        entries.push(buildGroupDirectoryEntry(group.id, routeKind, group.records));
+        return;
+      }
+
+      group.records.forEach((record) => {
+        entries.push({
+          ...record,
+          fields: {
+            ...record.fields,
+            '__directoryEntryKind': 'record',
+          },
+        });
+      });
+    });
+
+    return entries;
+  }, [sourceRecords]);
+
   const statusOptions = useMemo(
     () => Array.from(new Set(
-      sourceRecords
+      directoryEntries
         .map((record) => getInventoryDirectoryStatus(record.fields))
         .filter((value): value is string => value.trim().length > 0),
     )).sort((left, right) => left.localeCompare(right)),
-    [sourceRecords],
+    [directoryEntries],
   );
 
   const filteredRecords = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    const matchingRecords = sourceRecords.filter((record) => {
+    const matchingRecords = directoryEntries.filter((record) => {
       const status = getInventoryDirectoryStatus(record.fields);
       if (statusFilter !== 'all' && status !== statusFilter) {
         return false;
@@ -163,7 +244,7 @@ export function UsedGearWorkflowSourceDirectoryPage({
         ? leftTimestamp - rightTimestamp
         : rightTimestamp - leftTimestamp;
     });
-  }, [searchTerm, sortMode, sourceRecords, statusFilter]);
+  }, [directoryEntries, searchTerm, sortMode, statusFilter]);
 
   const refreshDirectory = async () => {
     setRefreshing(true);
@@ -218,7 +299,7 @@ export function UsedGearWorkflowSourceDirectoryPage({
       {sourceRecords.length > 0 ? (
         <InventoryDirectoryListSection
           records={filteredRecords}
-          totalCount={sourceRecords.length}
+          totalCount={directoryEntries.length}
           searchTerm={searchTerm}
           statusFilter={statusFilter}
           sortMode={sortMode}
@@ -230,17 +311,37 @@ export function UsedGearWorkflowSourceDirectoryPage({
           onRefresh={() => {
             void refreshDirectory();
           }}
-          onSelectRecord={onOpenRecord}
-          selectRecordLabel="Open Intake Record"
+          onSelectRecord={(recordId) => {
+            const selectedEntry = directoryEntries.find((record) => record.id === recordId) ?? null;
+            if (selectedEntry && isGroupDirectoryEntry(selectedEntry) && onOpenGroup) {
+              const routeKind = selectedEntry.fields.__directoryGroupRouteKind;
+              if (routeKind === 'pending-review' || routeKind === 'arrival-stage') {
+                onOpenGroup(recordId, routeKind);
+                return;
+              }
+            }
+
+            onOpenRecord(recordId);
+          }}
+          selectRecordLabel="Open Intake Review"
           searchAriaLabel={`Search ${title}`}
           searchPlaceholder="Search by SKU, make, model, or status"
           refreshLabel={`Refresh ${title}`}
           refreshLoadingLabel={`Refreshing ${title}`}
           resultLabel="workflow rows"
           emptyMessage="No workflow rows match the current search and status filters."
-          getItemLabel={workflowSource === 'Manual Entry'
-            ? getWorkflowSourceDirectoryItemLabel
-            : (record) => getInventoryDirectoryTitle(record.fields)}
+          getItemLabel={(record) => {
+            const customLabel = typeof record.fields.__directoryItemLabel === 'string' ? record.fields.__directoryItemLabel : '';
+            if (customLabel) {
+              return customLabel;
+            }
+
+            if (workflowSource === 'Manual Entry') {
+              return getWorkflowSourceDirectoryItemLabel(record);
+            }
+
+            return getInventoryDirectoryTitle(record.fields);
+          }}
         />
       ) : null}
     </AppPageLayout>

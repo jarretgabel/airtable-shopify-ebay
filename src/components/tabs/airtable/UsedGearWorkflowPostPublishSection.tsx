@@ -136,7 +136,6 @@ function recordSearchText(record: AirtableRecord): string {
     record.fields['Workflow Owner'],
     record.fields['Listed At'],
     record.fields['Shipment Follow-Through Notes'],
-    record.fields['Submission Group ID'],
     record.fields['Pick Up ID'],
   ]
     .flatMap((value) => Array.isArray(value) ? value : [value])

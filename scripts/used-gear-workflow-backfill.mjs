@@ -32,7 +32,6 @@ const APPROVED_ALLOCATION_MODES = new Set(['Equal Split', 'Manual Override']);
 
 const APPROVED_WRITE_FIELDS = new Set([
   'Workflow Source',
-  'Submission Group ID',
   'Pick Up ID',
   'Trash Status',
   'Accepted By',
@@ -69,7 +68,6 @@ const APPROVED_WRITE_FIELDS = new Set([
 const SNAPSHOT_STATUS_FIELDS = [
   'Workflow Status',
   'Workflow Source',
-  'Submission Group ID',
   'Pick Up ID',
   'Trash Status',
   'Qualification Complete',
@@ -277,7 +275,6 @@ function buildPlanEntry(record) {
   }
 
   for (const fieldName of [
-    'Submission Group ID',
     'Pick Up ID',
     'Qualification Complete',
     'Unqualified Reason',

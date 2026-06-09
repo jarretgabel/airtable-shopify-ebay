@@ -38,7 +38,7 @@ describe('usedGearWorkflowDashboardTargets', () => {
           createdTime: '2026-05-04T00:00:00.000Z',
           fields: {
             'Workflow Status': 'Testing In Progress',
-            'Submission Group ID': 'submission-b',
+            'Pick Up ID': 'submission-b',
           },
         }),
         buildRecord({
@@ -46,7 +46,7 @@ describe('usedGearWorkflowDashboardTargets', () => {
           createdTime: '2026-05-02T00:00:00.000Z',
           fields: {
             'Workflow Status': 'Accepted - Awaiting Arrival',
-            'Submission Group ID': 'submission-a',
+            'Pick Up ID': 'submission-a',
           },
         }),
       ],

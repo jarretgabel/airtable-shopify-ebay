@@ -33,7 +33,7 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    await screen.findByText('Processing And Holding Queue');
+    await screen.findByText('Processing And Specialist Queue');
     expect(screen.getByLabelText(/Sort used gear processing and holding queue/i)).toBeInTheDocument();
   });
 
@@ -63,7 +63,7 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    await screen.findByText('Processing And Holding Queue');
+    await screen.findByText('Processing And Specialist Queue');
 
     expect(screen.queryByText('Single workflow item')).not.toBeInTheDocument();
     expect(screen.queryByText('Single item')).not.toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('UsedGearWorkflowProgressSection', () => {
           Make: 'Marantz',
           Model: '8B',
           'Workflow Status': 'Accepted - Awaiting Arrival',
-          'Submission Group ID': 'submission-a',
+          'Pick Up ID': 'submission-a',
         },
       },
     ]);
@@ -99,7 +99,7 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    await screen.findByText('Processing And Holding Queue');
+    await screen.findByText('Processing And Specialist Queue');
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Intake' }));
 
@@ -137,7 +137,7 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    await screen.findByText('Processing And Holding Queue');
+    await screen.findByText('Processing And Specialist Queue');
     expect(screen.getByText('Accuphase · E-202')).toBeInTheDocument();
     expect(screen.queryByText('Accuphase · E-202 Awaiting SKU')).not.toBeInTheDocument();
     expect(screen.getByText('May 6, 2026')).toBeInTheDocument();
@@ -196,7 +196,7 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    await screen.findByText('Processing And Holding Queue');
+    await screen.findByText('Processing And Specialist Queue');
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Testing' }));
     expect(onOpenTestingForm).toHaveBeenCalledWith('rec-progress-testing-all');
@@ -254,7 +254,7 @@ describe('UsedGearWorkflowProgressSection', () => {
       />,
     );
 
-    expect(await screen.findByText('Processing And Holding Queue')).toBeInTheDocument();
+    expect(await screen.findByText('Processing And Specialist Queue')).toBeInTheDocument();
     expect(screen.getAllByText('PROG-1').length).toBeGreaterThan(0);
     expect(screen.getAllByText('PROG-2').length).toBeGreaterThan(0);
     expect(screen.getAllByText('PROG-3').length).toBeGreaterThan(0);

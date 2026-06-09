@@ -35,7 +35,6 @@ export interface UsedGearIntakeFieldInput {
 export interface UsedGearWorkflowFieldInput {
   workflowSource: string;
   workflowStatus: string;
-  submissionGroupId?: string | null;
   pickUpId?: string | null;
   qualificationNotes?: string | null;
   qualificationComplete?: boolean;
@@ -131,7 +130,6 @@ export function buildUsedGearWorkflowFields(input: UsedGearWorkflowFieldInput): 
   return compactFields({
     'Workflow Source': trimToUndefined(input.workflowSource),
     'Workflow Status': trimToUndefined(input.workflowStatus),
-    'Submission Group ID': trimToUndefined(input.submissionGroupId),
     'Pick Up ID': trimToUndefined(input.pickUpId),
     'Qualification Notes': trimToUndefined(input.qualificationNotes),
     'Qualification Complete': input.qualificationComplete,

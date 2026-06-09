@@ -74,7 +74,8 @@ describe('ListingApprovalRecordActions', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Set Buy It Now Format' })).toBeDisabled();
-    expect(screen.getAllByRole('button', { name: 'Set Buy It Now Format' })).toHaveLength(2);
+    const buyItNowButtons = screen.getAllByRole('button', { name: 'Set Buy It Now Format' });
+    expect(buyItNowButtons).toHaveLength(2);
+    expect(buyItNowButtons.every((button) => button.hasAttribute('disabled'))).toBe(true);
   });
 });

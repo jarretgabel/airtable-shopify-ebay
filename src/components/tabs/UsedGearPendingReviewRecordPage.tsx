@@ -144,12 +144,12 @@ export function UsedGearPendingReviewRecordPage({
   const dateButtonClassName = 'inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
 
   const hasPricingPath = useMemo(() => record ? hasUsedGearPendingReviewPricingPath(record.fields) : false, [record]);
-  const groupNeedsSubmissionId = useMemo(
-    () => Boolean(group && group.records.length > 1 && stringFieldValue(record?.fields ?? {}, 'Submission Group ID').trim().length === 0),
+  const groupNeedsPickupId = useMemo(
+    () => Boolean(group && group.records.length > 1 && stringFieldValue(record?.fields ?? {}, 'Pick Up ID').trim().length === 0),
     [group, record],
   );
   const handoffFieldsReady = arrivalDate.trim().length > 0 && sku.trim().length > 0;
-  const canMoveToTesting = hasPricingPath && !groupNeedsSubmissionId && handoffFieldsReady;
+  const canMoveToTesting = hasPricingPath && !groupNeedsPickupId && handoffFieldsReady;
   const sectionItems = useMemo<Array<{ id: PendingReviewSectionKey; key: PendingReviewSectionKey; label: string }>>(() => {
     const items: Array<{ id: PendingReviewSectionKey; key: PendingReviewSectionKey; label: string }> = [];
     if (group) {
@@ -388,7 +388,7 @@ export function UsedGearPendingReviewRecordPage({
                 >
                   {saving === 'move' ? 'Moving...' : 'Move to Testing'}
                 </button>
-                {(!hasPricingPath || groupNeedsSubmissionId) ? (
+                {(!hasPricingPath || groupNeedsPickupId) ? (
                   <button
                     type="button"
                     className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-200 transition hover:bg-amber-500/20"
@@ -403,10 +403,10 @@ export function UsedGearPendingReviewRecordPage({
                   {!hasPricingPath ? (
                     <p className="m-0 text-sm text-amber-300">Offer amount, paid amount, or confirmed grand total is required before this row can move to testing.</p>
                   ) : null}
-                  {groupNeedsSubmissionId ? (
-                    <p className="m-0 text-sm text-amber-300">This grouped intake still needs a Submission Group ID before it can move to testing.</p>
+                  {groupNeedsPickupId ? (
+                    <p className="m-0 text-sm text-amber-300">This grouped intake still needs a Pick Up ID before it can move to testing.</p>
                   ) : null}
-                  {!handoffFieldsReady && hasPricingPath && !groupNeedsSubmissionId ? (
+                  {!handoffFieldsReady && hasPricingPath && !groupNeedsPickupId ? (
                     <p className="m-0 text-sm text-amber-300">Arrival Date and SKU are required before this row can move to testing.</p>
                   ) : null}
                 </div>

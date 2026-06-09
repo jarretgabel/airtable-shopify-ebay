@@ -263,6 +263,7 @@ export function AppTabContent({
   navigateToInventoryWorkflowView,
   navigateToInventoryPostPublishBucket,
   navigateToPath,
+  navigateToParkingLotPendingReviewGroup,
   navigateToManualIntake,
   navigateToCreateIntakeItem,
   navigateToManualIntakeForm,
@@ -657,6 +658,14 @@ export function AppTabContent({
             title="Manual Intake"
             workflowSource="Manual Entry"
             onOpenRecord={(recordId) => navigateToManualIntakeForm(recordId)}
+            onOpenGroup={(groupId, routeKind) => {
+              if (routeKind === 'arrival-stage') {
+                navigateToPath(`/parking-lot/arrival/group/${encodeURIComponent(groupId)}`);
+                return;
+              }
+
+              navigateToParkingLotPendingReviewGroup(groupId);
+            }}
             createActionLabel="Create Intake Item"
             onCreateAction={() => navigateToCreateIntakeItem()}
           />
@@ -755,6 +764,14 @@ export function AppTabContent({
             title="JotForm"
             workflowSource="JotForm"
             onOpenRecord={(recordId) => navigateToPath(`/jotform/${encodeURIComponent(recordId)}`)}
+            onOpenGroup={(groupId, routeKind) => {
+              if (routeKind === 'arrival-stage') {
+                navigateToPath(`/parking-lot/arrival/group/${encodeURIComponent(groupId)}`);
+                return;
+              }
+
+              navigateToParkingLotPendingReviewGroup(groupId);
+            }}
             secondaryActionLabel="JotForm Feed"
             onSecondaryAction={() => navigateToTab('jotform-audit')}
           />
