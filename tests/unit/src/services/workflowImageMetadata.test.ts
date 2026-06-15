@@ -9,6 +9,7 @@ import {
   serializeWorkflowImageMetadata,
   updateWorkflowImageAltText,
   updateWorkflowImageInclusion,
+  updateWorkflowImageRole,
 } from '@/services/workflowImageMetadata';
 
 describe('workflowImageMetadata', () => {
@@ -28,6 +29,7 @@ describe('workflowImageMetadata', () => {
         url: 'https://cdn.example.com/a.jpg',
         filename: 'a.jpg',
         alt: 'Front',
+        imageRole: 'front',
         sortOrder: 1,
         sourceStage: 'testing',
         includedInListing: false,
@@ -40,6 +42,7 @@ describe('workflowImageMetadata', () => {
         url: 'https://cdn.example.com/a.jpg',
         filename: 'a.jpg',
         alt: 'Front',
+        imageRole: 'front',
         sortOrder: 1,
         sourceStage: 'testing',
         includedInListing: false,
@@ -68,6 +71,7 @@ describe('workflowImageMetadata', () => {
         url: 'https://cdn.example.com/a.jpg',
         filename: 'a.jpg',
         alt: 'Front',
+        imageRole: 'front',
         sortOrder: 1,
         sourceStage: 'testing',
         includedInListing: true,
@@ -82,6 +86,7 @@ describe('workflowImageMetadata', () => {
         url: 'https://cdn.example.com/a.jpg',
         filename: 'a.jpg',
         alt: 'Front',
+        imageRole: 'front',
         sortOrder: 1,
         sourceStage: 'testing',
         includedInListing: true,
@@ -107,6 +112,7 @@ describe('workflowImageMetadata', () => {
         url: 'https://cdn.example.com/a.jpg',
         filename: 'a.jpg',
         alt: 'Front',
+        imageRole: 'front',
         sortOrder: 1,
         sourceStage: 'testing',
         includedInListing: true,
@@ -125,18 +131,21 @@ describe('workflowImageMetadata', () => {
     const reordered = reorderWorkflowImageMetadata(initial, ['https://cdn.example.com/b.jpg', 'https://cdn.example.com/a.jpg']);
     const withAlt = updateWorkflowImageAltText(reordered, 'https://cdn.example.com/b.jpg', 'Rear angle', '2026-05-10T13:00:00.000Z');
     const withInclusion = updateWorkflowImageInclusion(withAlt, 'https://cdn.example.com/b.jpg', true, '2026-05-10T14:00:00.000Z');
+    const withRole = updateWorkflowImageRole(withInclusion, 'https://cdn.example.com/b.jpg', 'custom', 'serial plate', '2026-05-10T15:00:00.000Z');
 
-    expect(withInclusion[0]).toEqual({
+    expect(withRole[0]).toEqual({
       attachmentId: 'att-2',
       url: 'https://cdn.example.com/b.jpg',
       filename: 'b.jpg',
       alt: 'Rear angle',
+      imageRole: 'custom',
+      customImageRole: 'serial plate',
       sortOrder: 1,
       sourceStage: 'photos',
       includedInListing: true,
-      updatedAt: '2026-05-10T14:00:00.000Z',
+      updatedAt: '2026-05-10T15:00:00.000Z',
     });
-    expect(withInclusion[1].sortOrder).toBe(2);
+    expect(withRole[1].sortOrder).toBe(2);
   });
 
   it('filters and replaces metadata within a single stage while preserving the other stage', () => {

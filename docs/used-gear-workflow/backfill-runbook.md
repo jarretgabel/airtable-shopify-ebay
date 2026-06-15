@@ -192,6 +192,57 @@ Artifacts are written under a new apply run directory:
 - refresh the app and confirm queue counts still look correct
 - spot-check any rows that were manually classified before apply
 
+## Processed Image Filename Backfill
+
+Use this workflow when standardizing existing testing/photography processed image filenames to:
+
+`{brand}-{model}-{product-type}-{metadata}.jpg`
+
+Guardrails:
+- Targets processed images in `testing` and `photos` metadata stages only.
+- Keeps `alt` text and image role metadata separate from filename content.
+- Renames Drive files by file id and updates Airtable metadata in the same apply step.
+
+### 1. Generate Rename Plan
+
+Run:
+
+```bash
+npm run workflow:image-filename-backfill:plan
+```
+
+Artifacts are written under `tmp/workflow-image-filename-backfill/...`:
+- `summary.json`
+- `rename-plan.json`
+
+### 2. Review Rename Plan
+- Verify each proposed filename is clear and descriptive.
+- Confirm no company names, camera tokens, or random version suffixes are present.
+- Confirm stage coverage is only `testing` and `photos` processed images.
+
+### 3. Apply Rename Backfill
+
+Run:
+
+```bash
+npm run workflow:image-filename-backfill:apply
+```
+
+Or direct apply with explicit token:
+
+```bash
+node --import tsx scripts/backfill-workflow-image-filenames.ts apply --confirm RENAME_WORKFLOW_PROCESSED_IMAGES
+```
+
+Artifacts are written under a new apply run directory:
+- `summary.json`
+- `rename-apply.json`
+
+### 4. Validate Post-Rename
+- Open testing and photography records and confirm renamed filenames appear in image metadata panels.
+- Confirm listing/gallery flows still render images from updated metadata urls.
+- Spot-check at least one renamed image per stage to ensure Drive URL accessibility remains intact.
+
 ## References
 - `docs/used-gear-workflow/data-model-and-approvals.md`
 - `docs/used-gear-workflow/schema-update-approval-guide.md`

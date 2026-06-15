@@ -1,10 +1,29 @@
 export type WorkflowImageSourceStage = 'intake' | 'testing' | 'photos';
 
+export const WORKFLOW_IMAGE_ROLE_OPTIONS = [
+  'front',
+  'rear',
+  'serial-plate',
+  'cosmetic-detail',
+  'connections',
+  'top',
+  'bottom',
+  'side',
+  'interior',
+  'accessories',
+  'packaging',
+  'custom',
+] as const;
+
+export type WorkflowImageRole = (typeof WORKFLOW_IMAGE_ROLE_OPTIONS)[number];
+
 export interface WorkflowImageMetadataRecord {
   attachmentId?: string;
   url: string;
   filename: string;
   alt: string;
+  imageRole?: WorkflowImageRole;
+  customImageRole?: string;
   sortOrder: number;
   sourceStage: WorkflowImageSourceStage;
   includedInListing: boolean;
@@ -32,6 +51,13 @@ function normalizeStage(value: unknown): WorkflowImageSourceStage {
 
 function normalizeString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function normalizeImageRole(value: unknown): WorkflowImageRole | undefined {
+  const normalized = normalizeString(value).toLowerCase();
+  if (!normalized) return undefined;
+
+  return WORKFLOW_IMAGE_ROLE_OPTIONS.find((role) => role === normalized);
 }
 
 function normalizeBoolean(value: unknown, fallback: boolean): boolean {
@@ -76,6 +102,8 @@ function normalizeMetadataRecord(value: unknown, fallbackOrder: number): Workflo
     url,
     filename: buildFilename(url, normalizeString(record.filename) || normalizeString(record.name)),
     alt: normalizeString(record.alt) || normalizeString(record.altText) || normalizeString(record.alt_text),
+    imageRole: normalizeImageRole(record.imageRole ?? record.image_role ?? record.role ?? record.imageCategory ?? record.image_category),
+    customImageRole: normalizeString(record.customImageRole ?? record.custom_image_role ?? record.customRole ?? record.custom_role) || undefined,
     sortOrder: normalizeSortOrder(record.sortOrder ?? record.sort_order ?? record.position, fallbackOrder),
     sourceStage: normalizeStage(record.sourceStage ?? record.source_stage),
     includedInListing: normalizeBoolean(record.includedInListing ?? record.included_in_listing, true),
@@ -373,6 +401,8 @@ export function mergeWorkflowImageMetadata(params: {
       url: attachment.url,
       filename: attachment.filename,
       alt: '',
+      imageRole: undefined,
+      customImageRole: undefined,
       sortOrder: existing.length + appendedNew.length + 1,
       sourceStage: params.sourceStage,
       includedInListing: true,
@@ -450,4 +480,25 @@ export function updateWorkflowImageInclusion(
         }
       : record
   ));
+}
+
+export function updateWorkflowImageRole(
+  records: WorkflowImageMetadataRecord[],
+  url: string,
+  imageRole: WorkflowImageRole | undefined,
+  customImageRole: string,
+  nowIso: string,
+): WorkflowImageMetadataRecord[] {
+  const key = url.trim().toLowerCase();
+  return compactAndSortRecords(records).map((record) => {
+    if (record.url.toLowerCase() !== key) return record;
+
+    const normalizedCustomRole = customImageRole.trim();
+    return {
+      ...record,
+      imageRole,
+      customImageRole: imageRole === 'custom' && normalizedCustomRole ? normalizedCustomRole : undefined,
+      updatedAt: nowIso,
+    };
+  });
 }

@@ -13,6 +13,7 @@ import { WorkflowReferenceImagesPanel } from '@/components/tabs/WorkflowReferenc
 import { WorkflowImageMetadataEditor } from '@/components/tabs/WorkflowImageMetadataEditor';
 import type { FormImageProcessingSummary } from '@/components/tabs/FormImageUploadEditor';
 import type { FormImageUploadAsset } from '@/services/formImageUploads';
+import { isImageRoleComplete } from '@/services/imageNamingFormatter';
 import { filterWorkflowImageMetadataByStage, replaceWorkflowImageMetadataStage } from '@/services/workflowImageMetadata';
 import {
   createTestingFormDefaults,
@@ -213,6 +214,12 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
       return;
     }
 
+    const missingImageRole = imageUploadAssets.some((asset) => !isImageRoleComplete(asset.imageRole, asset.customImageRole));
+    if (missingImageRole) {
+      setSubmitError('Select an image role for every uploaded testing image before saving.');
+      return;
+    }
+
     setSubmitting(true);
     setImageUploadProgress(null);
     try {
@@ -271,6 +278,13 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
           required={definition.required}
           description={definition.description}
           disabled={submitting}
+          namingContext={{
+            brand: formValues.make,
+            model: formValues.model,
+            productType: formValues.componentType,
+            companyName: 'Resolution AV',
+          }}
+          requireImageRole
           resetKey={uploadEditorResetKey}
           onFilesChange={(files) => setFieldValue(definition.name, files as TestingFormValues[typeof definition.name])}
           onUploadAssetsChange={setImageUploadAssets}

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type KeyboardEvent, type ReactNode } from 'react';
-import { FormImageCropPreview } from '@/components/tabs/FormImageCropPreview';
 import {
   buildProcessingOptions,
   loadFormImageProcessingDefaults,
@@ -7,7 +6,16 @@ import {
   type FormImageProcessingDefaults,
 } from '@/services/formImageProcessingDefaults';
 import type { FormImageUploadAsset } from '@/services/formImageUploads';
-import { formatBytes, processImage, revokeProcessedImage, type ProcessedImage } from '@/services/imageProcessor';
+
+import { formatBytes, processImage, revokeProcessedImage, type CropInsetsPercent, type ProcessedImage } from '@/services/imageProcessor';
+import { FormImageCropPreview } from '@/components/tabs/FormImageCropPreview';
+import {
+  buildImageAltText,
+  buildImageFilename,
+  isImageRoleComplete,
+  type ImageNamingContext,
+} from '@/services/imageNamingFormatter';
+import type { WorkflowImageRole } from '@/services/workflowImageMetadata';
 
 interface EditableUploadItem {
   id: string;
@@ -18,8 +26,11 @@ interface EditableUploadItem {
   status: 'idle' | 'processing' | 'done' | 'error';
   error?: string;
   outputFilename: string;
-  settings: FormImageProcessingDefaults;
-  optionsExpanded: boolean;
+  outputWarnings: string[];
+  imageRole?: WorkflowImageRole;
+  customImageRole: string;
+  altText: string;
+  crop: CropInsetsPercent;
 }
 
 export interface FormImageProcessingSummary {
@@ -40,6 +51,8 @@ export interface FormImageUploadEditorProps {
   required?: boolean;
   description?: string;
   className?: string;
+  namingContext?: ImageNamingContext;
+  requireImageRole?: boolean;
   afterUploadContent?: ReactNode;
 }
 
@@ -48,7 +61,33 @@ function buildDefaultOutputFilename(fileName: string): string {
   return `${stem}_edited.jpg`;
 }
 
-function createUploadItem(file: File, defaults: FormImageProcessingDefaults): EditableUploadItem {
+function buildItemOutputFilename(
+  fileName: string,
+  namingContext: ImageNamingContext | undefined,
+  role: WorkflowImageRole | undefined,
+  customRole: string,
+  manualOutputFilename?: string,
+): { filename: string; warnings: string[] } {
+  if (!namingContext) {
+    const trimmedManual = (manualOutputFilename ?? '').trim();
+    return {
+      filename: trimmedManual || buildDefaultOutputFilename(fileName),
+      warnings: [],
+    };
+  }
+
+  return buildImageFilename(namingContext, {
+    role,
+    customRole,
+  });
+}
+
+function createUploadItem(
+  file: File,
+  defaults: FormImageProcessingDefaults,
+  namingContext: ImageNamingContext | undefined,
+): EditableUploadItem {
+  const nextOutput = buildItemOutputFilename(file.name, namingContext, undefined, '');
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     originalFile: file,
@@ -56,12 +95,12 @@ function createUploadItem(file: File, defaults: FormImageProcessingDefaults): Ed
     editedFile: null,
     processed: null,
     status: 'idle',
-    outputFilename: buildDefaultOutputFilename(file.name),
-    optionsExpanded: true,
-    settings: {
-      ...defaults,
-      crop: { ...defaults.crop },
-    },
+    outputFilename: nextOutput.filename,
+    outputWarnings: nextOutput.warnings,
+    imageRole: undefined,
+    customImageRole: '',
+    altText: namingContext ? buildImageAltText(namingContext) : '',
+    crop: { ...defaults.crop },
   };
 }
 
@@ -72,8 +111,18 @@ function disposeItem(item: EditableUploadItem) {
   }
 }
 
-function getUploadReadyItems(items: EditableUploadItem[]): EditableUploadItem[] {
-  return items.filter((item) => item.status === 'done' && item.editedFile);
+function getUploadReadyItems(items: EditableUploadItem[], requireImageRole: boolean): EditableUploadItem[] {
+  return items.filter((item) => {
+    if (!(item.status === 'done' && item.editedFile)) {
+      return false;
+    }
+
+    if (!requireImageRole) {
+      return true;
+    }
+
+    return isImageRoleComplete(item.imageRole, item.customImageRole);
+  });
 }
 
 function buildProcessingSummary(items: EditableUploadItem[]): FormImageProcessingSummary {
@@ -85,14 +134,17 @@ function buildProcessingSummary(items: EditableUploadItem[]): FormImageProcessin
   };
 }
 
-function toUploadFiles(items: EditableUploadItem[]): File[] {
-  return getUploadReadyItems(items).flatMap((item) => item.editedFile ? [item.editedFile] : []);
+function toUploadFiles(items: EditableUploadItem[], requireImageRole: boolean): File[] {
+  return getUploadReadyItems(items, requireImageRole).flatMap((item) => item.editedFile ? [item.editedFile] : []);
 }
 
-function toUploadAssets(items: EditableUploadItem[]): FormImageUploadAsset[] {
-  return getUploadReadyItems(items).map((item) => ({
+function toUploadAssets(items: EditableUploadItem[], requireImageRole: boolean): FormImageUploadAsset[] {
+  return getUploadReadyItems(items, requireImageRole).map((item) => ({
     originalFile: item.originalFile,
     uploadFile: item.editedFile ?? item.originalFile,
+    imageRole: item.imageRole,
+    customImageRole: item.customImageRole || undefined,
+    altText: item.altText || undefined,
   }));
 }
 
@@ -107,6 +159,8 @@ export function FormImageUploadEditor({
   required = false,
   description,
   className = '',
+  namingContext,
+  requireImageRole = false,
   afterUploadContent,
 }: FormImageUploadEditorProps) {
   const [defaultSettings, setDefaultSettings] = useState<FormImageProcessingDefaults>(() => loadFormImageProcessingDefaults());
@@ -160,13 +214,13 @@ export function FormImageUploadEditor({
   }, [resetKey]);
 
   useEffect(() => {
-    const uploadAssets = toUploadAssets(items);
+    const uploadAssets = toUploadAssets(items, requireImageRole);
     const summary = buildProcessingSummary(items);
-    onFilesChangeRef.current(toUploadFiles(items));
+    onFilesChangeRef.current(toUploadFiles(items, requireImageRole));
     onUploadAssetsChangeRef.current?.(uploadAssets);
     onProcessingStateChangeRef.current?.(summary.processing > 0);
     onProcessingSummaryChangeRef.current?.(summary);
-  }, [items]);
+  }, [items, requireImageRole]);
 
   useEffect(() => {
     if (items.length > 0) {
@@ -183,11 +237,13 @@ export function FormImageUploadEditor({
     const nextFiles = files.filter((file) => file.type.startsWith('image/'));
     if (nextFiles.length === 0) return;
 
-    const nextItems = nextFiles.map((file) => createUploadItem(file, defaultSettings));
+    const nextItems = nextFiles.map((file) => createUploadItem(file, defaultSettings, namingContext));
     setItems((current) => [...current, ...nextItems]);
-    nextItems.forEach((item) => {
-      void processSingleItem(item.id, item);
-    });
+    if (!requireImageRole) {
+      nextItems.forEach((item) => {
+        void processSingleItem(item.id, item);
+      });
+    }
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -236,37 +292,20 @@ export function FormImageUploadEditor({
     });
   };
 
-  const applyDefaultsToAll = () => {
-    setItems((current) => current.map((item) => ({
-      ...item,
-      settings: {
-        ...defaultSettings,
-        crop: { ...defaultSettings.crop },
-      },
-    })));
-  };
-
-  const toggleItemOptions = (itemId: string) => {
-    updateItem(itemId, (item) => ({
-      ...item,
-      optionsExpanded: !item.optionsExpanded,
-    }));
-  };
-
   const resetItemEdits = (itemId: string) => {
     updateItem(itemId, (item) => {
       if (item.processed) revokeProcessedImage(item.processed);
+      const nextOutput = buildItemOutputFilename(item.originalFile.name, namingContext, item.imageRole, item.customImageRole);
       return {
         ...item,
         editedFile: null,
         processed: null,
         status: 'idle',
         error: undefined,
-        outputFilename: buildDefaultOutputFilename(item.originalFile.name),
-        settings: {
-          ...defaultSettings,
-          crop: { ...defaultSettings.crop },
-        },
+        outputFilename: nextOutput.filename,
+        outputWarnings: nextOutput.warnings,
+        altText: namingContext ? buildImageAltText(namingContext) : item.altText,
+        crop: { ...defaultSettings.crop },
       };
     });
   };
@@ -275,12 +314,32 @@ export function FormImageUploadEditor({
     const currentItem = sourceItem ?? itemsRef.current.find((item) => item.id === itemId);
     if (!currentItem) return;
 
+    if (requireImageRole && !isImageRoleComplete(currentItem.imageRole, currentItem.customImageRole)) {
+      updateItem(itemId, (item) => ({
+        ...item,
+        status: 'error',
+        error: 'Select an image role before processing.',
+      }));
+      return;
+    }
+
+    const nextOutput = buildItemOutputFilename(
+      currentItem.originalFile.name,
+      namingContext,
+      currentItem.imageRole,
+      currentItem.customImageRole,
+      currentItem.outputFilename,
+    );
+
     updateItem(itemId, (item) => ({ ...item, status: 'processing', error: undefined }));
 
     try {
       const processed = await processImage(
         currentItem.originalFile,
-        buildProcessingOptions(currentItem.settings, currentItem.outputFilename),
+        buildProcessingOptions({
+          ...defaultSettings,
+          crop: { ...currentItem.crop },
+        }, nextOutput.filename),
       );
 
       updateItem(itemId, (item) => {
@@ -292,6 +351,7 @@ export function FormImageUploadEditor({
           status: 'done',
           error: undefined,
           outputFilename: processed.filename,
+          outputWarnings: nextOutput.warnings,
         };
       });
     } catch (error) {
@@ -509,15 +569,6 @@ export function FormImageUploadEditor({
                     <button
                       type="button"
                       className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
-                      onClick={applyDefaultsToAll}
-                      disabled={disabled || items.length === 0}
-                      title="Copies the current default resize and watermark settings into every uploaded image."
-                    >
-                      Apply defaults to all
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
                       onClick={saveDefaults}
                       disabled={disabled}
                     >
@@ -527,6 +578,7 @@ export function FormImageUploadEditor({
                   </div>
                 </div>
               </div>
+
             </div>
           ) : null}
         </div>
@@ -535,7 +587,10 @@ export function FormImageUploadEditor({
       {items.length > 0 ? (
         <p className="mt-4 text-sm text-[var(--muted)]">
           Current upload set: <strong className="text-[var(--ink)]">{items.length}</strong> image{items.length === 1 ? '' : 's'}.
-          Images auto-process after you add them. Only completed processed files are included on submit, and you can re-run edits anytime.
+          {requireImageRole
+            ? ' Select an image role for each item, then use Process all to generate compliant filenames.'
+            : ' Images auto-process after you add them.'}
+          {' '}Only completed processed files are included on submit, and you can re-run Process all anytime.
         </p>
       ) : null}
 
@@ -554,16 +609,6 @@ export function FormImageUploadEditor({
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
-                    onClick={() => toggleItemOptions(item.id)}
-                    disabled={disabled}
-                    aria-expanded={item.optionsExpanded}
-                    aria-controls={`image-options-${item.id}`}
-                  >
-                    {item.optionsExpanded ? 'Hide options' : 'Show options'}
-                  </button>
                   <button
                     type="button"
                     className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
@@ -592,19 +637,15 @@ export function FormImageUploadEditor({
                   </button>
                 </div>
               </div>
-                {item.optionsExpanded ? (
-                  <div id={`image-options-${item.id}`} className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,1fr)]">
+                  <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,1fr)]">
                     <div className="grid gap-4 md:grid-cols-2">
                       <FormImageCropPreview
                         imageUrl={item.originalUrl}
                         alt={`Original ${item.originalFile.name}`}
-                        crop={item.settings.crop}
+                        crop={item.crop}
                         onCropChange={(nextCrop) => updateItem(item.id, (current) => ({
                           ...current,
-                          settings: {
-                            ...current.settings,
-                            crop: nextCrop,
-                          },
+                          crop: nextCrop,
                         }))}
                         disabled={disabled}
                       />
@@ -614,13 +655,92 @@ export function FormImageUploadEditor({
                           <img src={item.processed.objectUrl} alt={`Edited ${item.processed.filename}`} className="h-72 w-full object-contain" />
                         ) : (
                           <div className="flex h-72 items-center justify-center px-4 text-center text-sm text-[var(--muted)]">
-                            Apply edits to generate the upload version and compare it against the original file.
+                            Drag crop handles on the left, then click Apply edits to preview.
                           </div>
                         )}
                       </div>
                     </div>
 
                     <div className="grid gap-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <label className="block">
+                          <span className="text-sm font-semibold text-[var(--ink)]">Image role</span>
+                          <select
+                            className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                            value={item.imageRole ?? ''}
+                            onChange={(event) => {
+                              const nextRole = event.currentTarget.value as WorkflowImageRole | '';
+                              updateItem(item.id, (current) => {
+                                if (current.processed) {
+                                  revokeProcessedImage(current.processed);
+                                }
+
+                                const normalizedRole = nextRole || undefined;
+                                const nextCustomRole = normalizedRole === 'custom' ? current.customImageRole : '';
+                                const nextOutput = buildItemOutputFilename(current.originalFile.name, namingContext, normalizedRole, nextCustomRole);
+                                return {
+                                  ...current,
+                                  imageRole: normalizedRole,
+                                  customImageRole: nextCustomRole,
+                                  outputFilename: nextOutput.filename,
+                                  outputWarnings: nextOutput.warnings,
+                                  editedFile: null,
+                                  processed: null,
+                                  status: 'idle',
+                                  error: undefined,
+                                };
+                              });
+                            }}
+                            disabled={disabled}
+                          >
+                            <option value="">Select image role</option>
+                            <option value="front">Front</option>
+                            <option value="rear">Rear</option>
+                            <option value="serial-plate">Serial Plate</option>
+                            <option value="cosmetic-detail">Cosmetic Detail</option>
+                            <option value="connections">Connections</option>
+                            <option value="top">Top</option>
+                            <option value="bottom">Bottom</option>
+                            <option value="side">Side</option>
+                            <option value="interior">Interior</option>
+                            <option value="accessories">Accessories</option>
+                            <option value="packaging">Packaging</option>
+                            <option value="custom">Custom</option>
+                          </select>
+                        </label>
+
+                        <label className="block">
+                          <span className="text-sm font-semibold text-[var(--ink)]">Custom role</span>
+                          <input
+                            type="text"
+                            className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                            value={item.customImageRole}
+                            onChange={(event) => {
+                              const nextCustomImageRole = event.currentTarget.value;
+                              updateItem(item.id, (current) => {
+                                if (current.processed) {
+                                  revokeProcessedImage(current.processed);
+                                }
+
+                                const nextOutput = buildItemOutputFilename(current.originalFile.name, namingContext, current.imageRole, nextCustomImageRole);
+                                return {
+                                  ...current,
+                                  customImageRole: nextCustomImageRole,
+                                  outputFilename: nextOutput.filename,
+                                  outputWarnings: nextOutput.warnings,
+                                  editedFile: null,
+                                  processed: null,
+                                  status: 'idle',
+                                  error: undefined,
+                                };
+                              });
+                            }}
+                            placeholder="For example: side-profile"
+                            disabled={disabled || item.imageRole !== 'custom'}
+                          />
+                        </label>
+                      </div>
+
                       <label className="block">
                         <span className="text-sm font-semibold text-[var(--ink)]">Output filename</span>
                         <input
@@ -628,172 +748,35 @@ export function FormImageUploadEditor({
                           className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
                           value={item.outputFilename}
                           onChange={(event) => {
+                            if (namingContext) return;
                             const nextOutputFilename = event.currentTarget.value;
                             updateItem(item.id, (current) => ({ ...current, outputFilename: nextOutputFilename }));
                           }}
                           disabled={disabled}
+                          readOnly={Boolean(namingContext)}
                         />
                       </label>
 
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <label className="block">
-                          <span className="text-sm font-semibold text-[var(--ink)]">Max size</span>
-                          <select
-                            className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                            value={item.settings.maxPx}
-                            onChange={(event) => {
-                              const nextMaxPx = Number(event.currentTarget.value);
-                              updateItem(item.id, (current) => ({
-                                ...current,
-                                settings: {
-                                  ...current.settings,
-                                  maxPx: nextMaxPx,
-                                },
-                              }));
-                            }}
-                            disabled={disabled}
-                          >
-                            <option value={800}>800 px</option>
-                            <option value={1200}>1200 px</option>
-                            <option value={1600}>1600 px</option>
-                            <option value={2400}>2400 px</option>
-                          </select>
-                        </label>
+                      {item.outputWarnings.length > 0 ? (
+                        <p className="text-xs text-amber-200/90">{item.outputWarnings.join(' ')}</p>
+                      ) : null}
 
-                        <label className="block">
-                          <span className="text-sm font-semibold text-[var(--ink)]">JPEG quality</span>
-                          <input
-                            type="number"
-                            min={40}
-                            max={100}
-                            className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                            value={item.settings.quality}
-                            onChange={(event) => {
-                              const nextQuality = Number(event.currentTarget.value);
-                              updateItem(item.id, (current) => ({
-                                ...current,
-                                settings: {
-                                  ...current.settings,
-                                  quality: nextQuality,
-                                },
-                              }));
-                            }}
-                            disabled={disabled}
-                          />
-                        </label>
-                      </div>
-
-                      <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="m-0 text-sm font-semibold text-[var(--ink)]">Watermark</p>
-                          <label className="flex items-center gap-2 text-sm text-[var(--ink)]">
-                            <input
-                              type="checkbox"
-                              checked={item.settings.watermarkEnabled}
-                              onChange={(event) => {
-                                const nextWatermarkEnabled = event.currentTarget.checked;
-                                updateItem(item.id, (current) => ({
-                                  ...current,
-                                  settings: {
-                                    ...current.settings,
-                                    watermarkEnabled: nextWatermarkEnabled,
-                                  },
-                                }));
-                              }}
-                              disabled={disabled}
-                            />
-                            Enabled
-                          </label>
-                        </div>
-
-                        <div className="mt-4 grid gap-4 md:grid-cols-2">
-                          <label className="block">
-                            <span className="text-sm font-semibold text-[var(--ink)]">Text</span>
-                            <input
-                              type="text"
-                              className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                              value={item.settings.watermarkText}
-                              onChange={(event) => {
-                                const nextWatermarkText = event.currentTarget.value;
-                                updateItem(item.id, (current) => ({
-                                  ...current,
-                                  settings: {
-                                    ...current.settings,
-                                    watermarkText: nextWatermarkText,
-                                  },
-                                }));
-                              }}
-                              disabled={disabled}
-                            />
-                          </label>
-
-                          <label className="block">
-                            <span className="text-sm font-semibold text-[var(--ink)]">Position</span>
-                            <select
-                              className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                              value={item.settings.watermarkPos}
-                              onChange={(event) => {
-                                const nextWatermarkPos = event.currentTarget.value as FormImageProcessingDefaults['watermarkPos'];
-                                updateItem(item.id, (current) => ({
-                                  ...current,
-                                  settings: {
-                                    ...current.settings,
-                                    watermarkPos: nextWatermarkPos,
-                                  },
-                                }));
-                              }}
-                              disabled={disabled}
-                            >
-                              <option value="bottom-right">Bottom right</option>
-                              <option value="bottom-left">Bottom left</option>
-                              <option value="bottom-center">Bottom center</option>
-                              <option value="top-right">Top right</option>
-                            </select>
-                          </label>
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-                        <p className="m-0 text-sm font-semibold text-[var(--ink)]">Crop percentages</p>
-                        <p className="mt-1 text-xs text-[var(--muted)]">Trim from the edges before resizing. Keep totals under 95% per axis.</p>
-                        <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-                          {([
-                            ['left', 'Left'],
-                            ['top', 'Top'],
-                            ['right', 'Right'],
-                            ['bottom', 'Bottom'],
-                          ] as const).map(([key, label]) => (
-                            <label key={key} className="block">
-                              <span className="text-sm font-semibold text-[var(--ink)]">{label}</span>
-                              <input
-                                type="number"
-                                min={0}
-                                max={45}
-                                step={0.5}
-                                className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                                value={item.settings.crop[key]}
-                                onChange={(event) => {
-                                  const nextCropValue = Number(event.currentTarget.value);
-                                  updateItem(item.id, (current) => ({
-                                    ...current,
-                                    settings: {
-                                      ...current.settings,
-                                      crop: {
-                                        ...current.settings.crop,
-                                        [key]: nextCropValue,
-                                      },
-                                    },
-                                  }));
-                                }}
-                                disabled={disabled}
-                              />
-                            </label>
-                          ))}
-                        </div>
-                      </div>
+                      <label className="block">
+                        <span className="text-sm font-semibold text-[var(--ink)]">Image alt text</span>
+                        <input
+                          type="text"
+                          className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                          value={item.altText}
+                          onChange={(event) => {
+                            const nextAltText = event.currentTarget.value;
+                            updateItem(item.id, (current) => ({ ...current, altText: nextAltText }));
+                          }}
+                          disabled={disabled}
+                          placeholder="Brand Model product type available at Resolution AV"
+                        />
+                      </label>
                     </div>
                   </div>
-                ) : null}
             </article>
           ))}
         </div>

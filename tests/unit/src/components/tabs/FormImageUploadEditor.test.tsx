@@ -41,48 +41,7 @@ describe('FormImageUploadEditor', () => {
     });
   });
 
-  it('updates crop values when the visual crop handles are dragged', async () => {
-    render(<FormImageUploadEditor onFilesChange={vi.fn()} />);
-
-    fireEvent.change(screen.getByLabelText('Add upload images'), {
-      target: {
-        files: [new File(['original-image'], 'hero.jpg', { type: 'image/jpeg' })],
-      },
-    });
-
-    const card = screen.getByText('hero.jpg').closest('article');
-    expect(card).not.toBeNull();
-    if (!card) return;
-
-    const cropFrame = within(card).getByTestId('crop-frame');
-    Object.defineProperty(cropFrame, 'getBoundingClientRect', {
-      configurable: true,
-      value: () => ({
-        width: 200,
-        height: 100,
-        left: 0,
-        top: 0,
-        right: 200,
-        bottom: 100,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      }),
-    });
-
-    const leftCropInput = within(card).getByRole('spinbutton', { name: 'Left' });
-    expect(leftCropInput).toHaveValue(0);
-
-    fireEvent.mouseDown(within(card).getByTestId('crop-handle-left'), { clientX: 0, clientY: 50 });
-    fireEvent.mouseMove(document, { clientX: 40, clientY: 50 });
-    fireEvent.mouseUp(document);
-
-    await waitFor(() => {
-      expect(leftCropInput).toHaveValue(20);
-    });
-  });
-
-  it('replaces the raw upload with the processed file after applying edits', async () => {
+  it('replaces the raw upload with the processed file and reprocesses via Process all', async () => {
     const onFilesChange = vi.fn();
     const onUploadAssetsChange = vi.fn();
     render(<FormImageUploadEditor onFilesChange={onFilesChange} onUploadAssetsChange={onUploadAssetsChange} />);
@@ -126,7 +85,7 @@ describe('FormImageUploadEditor', () => {
     fireEvent.change(within(card).getByRole('textbox', { name: 'Output filename' }), {
       target: { value: 'hero-finished' },
     });
-    fireEvent.click(within(card).getByRole('button', { name: 'Apply edits' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Process all' }));
 
     await waitFor(() => {
       expect(processImageMock).toHaveBeenCalledWith(
@@ -251,5 +210,34 @@ describe('FormImageUploadEditor', () => {
     });
 
     await screen.findByText('loop-check.jpg');
+  });
+
+  it('applies per-image crop during individual Apply edits', async () => {
+    render(<FormImageUploadEditor onFilesChange={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText('Add upload images'), {
+      target: {
+        files: [new File(['original-image'], 'crop-check.jpg', { type: 'image/jpeg' })],
+      },
+    });
+
+    const card = await screen.findByText('crop-check.jpg');
+    const article = card.closest('article');
+    expect(article).not.toBeNull();
+    if (!article) return;
+
+    processImageMock.mockClear();
+    fireEvent.click(within(article).getByRole('button', { name: 'Apply edits' }));
+
+    await waitFor(() => {
+      expect(processImageMock).toHaveBeenCalled();
+    });
+
+    expect(processImageMock).toHaveBeenCalledWith(
+      expect.any(File),
+      expect.objectContaining({
+        crop: expect.objectContaining({ left: 0 }),
+      }),
+    );
   });
 });

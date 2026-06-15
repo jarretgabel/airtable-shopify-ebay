@@ -13,6 +13,7 @@ import { WorkflowReferenceImagesPanel } from '@/components/tabs/WorkflowReferenc
 import { WorkflowImageMetadataEditor } from '@/components/tabs/WorkflowImageMetadataEditor';
 import type { FormImageProcessingSummary } from '@/components/tabs/FormImageUploadEditor';
 import type { FormImageUploadAsset } from '@/services/formImageUploads';
+import { isImageRoleComplete } from '@/services/imageNamingFormatter';
 import { filterWorkflowImageMetadataByStage, replaceWorkflowImageMetadataStage } from '@/services/workflowImageMetadata';
 import {
   createPhotosFormDefaults,
@@ -239,6 +240,12 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
   const submitPhotos = async (submitIntent: PhotosSubmitIntent) => {
     setSubmitError(null);
     setSubmitSuccess(null);
+
+    const missingImageRole = imageUploadAssets.some((asset) => !isImageRoleComplete(asset.imageRole, asset.customImageRole));
+    if (missingImageRole) {
+      setSubmitError('Select an image role for every uploaded photography image before saving.');
+      return;
+    }
 
     const validationError = validateForm(formValues, stageContext, inclusionConfirmations, submitIntent, imagesProcessing);
     if (validationError) {
@@ -498,6 +505,13 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
                     required={field.required}
                     description={field.description}
                     disabled={submitting}
+                    namingContext={{
+                      brand: formValues.make,
+                      model: formValues.model,
+                      productType: formValues.componentType,
+                      companyName: 'Resolution AV',
+                    }}
+                    requireImageRole
                     resetKey={uploadEditorResetKey}
                     onFilesChange={(files) => setFieldValue(field.name, files as PhotosFormValues[typeof field.name])}
                     onUploadAssetsChange={setImageUploadAssets}

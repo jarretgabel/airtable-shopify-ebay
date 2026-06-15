@@ -12,7 +12,13 @@ vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
     description,
   }: {
     onFilesChange: (files: File[]) => void;
-    onUploadAssetsChange?: (assets: Array<{ originalFile: File; uploadFile: File }>) => void;
+    onUploadAssetsChange?: (assets: Array<{
+      originalFile: File;
+      uploadFile: File;
+      imageRole?: string;
+      customImageRole?: string;
+      altText?: string;
+    }>) => void;
     onProcessingStateChange?: (isProcessing: boolean) => void;
     onProcessingSummaryChange?: (summary: { total: number; processed: number; processing: number; failed: number }) => void;
     afterUploadContent?: React.ReactNode;
@@ -26,7 +32,12 @@ vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
           const originalFile = new File(['original-photo'], 'original-photo.jpg', { type: 'image/jpeg' });
           const processedFile = new File(['processed-photo'], 'processed-photo.jpg', { type: 'image/jpeg' });
           onFilesChange([processedFile]);
-          onUploadAssetsChange?.([{ originalFile, uploadFile: processedFile }]);
+          onUploadAssetsChange?.([{
+            originalFile,
+            uploadFile: processedFile,
+            imageRole: 'front',
+            altText: 'Sansui 9090DB receiver available at Resolution AV',
+          }]);
         }}
       >
         Mock add processed photos

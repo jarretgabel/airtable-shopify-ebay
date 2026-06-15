@@ -4,6 +4,8 @@ import {
   reorderWorkflowImageMetadata,
   updateWorkflowImageAltText,
   updateWorkflowImageInclusion,
+  updateWorkflowImageRole,
+  type WorkflowImageRole,
 } from '@/services/workflowImageMetadata';
 
 export interface WorkflowImageMetadataEditorProps {
@@ -87,6 +89,47 @@ export function WorkflowImageMetadataEditor({
                     </span>
                     <span className="truncate text-sm font-semibold text-[var(--ink)]">{record.filename}</span>
                   </div>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-[var(--ink)]">Image Role</span>
+                    <select
+                      className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                      value={record.imageRole ?? ''}
+                      onChange={(event) => {
+                        const nextRole = (event.currentTarget.value || undefined) as WorkflowImageRole | undefined;
+                        onChange(updateWorkflowImageRole(sortedMetadata, record.url, nextRole, record.customImageRole ?? '', getNextIsoTimestamp()));
+                      }}
+                      aria-label={`Image role for ${record.filename}`}
+                      disabled={disabled}
+                    >
+                      <option value="">Select image role</option>
+                      <option value="front">Front</option>
+                      <option value="rear">Rear</option>
+                      <option value="serial-plate">Serial Plate</option>
+                      <option value="cosmetic-detail">Cosmetic Detail</option>
+                      <option value="connections">Connections</option>
+                      <option value="top">Top</option>
+                      <option value="bottom">Bottom</option>
+                      <option value="side">Side</option>
+                      <option value="interior">Interior</option>
+                      <option value="accessories">Accessories</option>
+                      <option value="packaging">Packaging</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-[var(--ink)]">Custom Image Role</span>
+                    <input
+                      type="text"
+                      className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                      value={record.customImageRole ?? ''}
+                      onChange={(event) => onChange(updateWorkflowImageRole(sortedMetadata, record.url, record.imageRole, event.currentTarget.value, getNextIsoTimestamp()))}
+                      placeholder="For example: side profile"
+                      aria-label={`Custom image role for ${record.filename}`}
+                      disabled={disabled || record.imageRole !== 'custom'}
+                    />
+                  </label>
 
                   <label className="block">
                     <span className="text-sm font-semibold text-[var(--ink)]">Alt Text</span>

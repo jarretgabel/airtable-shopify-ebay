@@ -11,7 +11,13 @@ vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
     afterUploadContent,
   }: {
     onFilesChange: (files: File[]) => void;
-    onUploadAssetsChange?: (assets: Array<{ originalFile: File; uploadFile: File }>) => void;
+    onUploadAssetsChange?: (assets: Array<{
+      originalFile: File;
+      uploadFile: File;
+      imageRole?: string;
+      customImageRole?: string;
+      altText?: string;
+    }>) => void;
     onProcessingStateChange?: (isProcessing: boolean) => void;
     onProcessingSummaryChange?: (summary: { total: number; processed: number; processing: number; failed: number }) => void;
     afterUploadContent?: React.ReactNode;
@@ -23,7 +29,12 @@ vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
           const originalFile = new File(['original-testing'], 'original-testing.jpg', { type: 'image/jpeg' });
           const processedFile = new File(['processed-testing'], 'processed-testing.jpg', { type: 'image/jpeg' });
           onFilesChange([processedFile]);
-          onUploadAssetsChange?.([{ originalFile, uploadFile: processedFile }]);
+          onUploadAssetsChange?.([{
+            originalFile,
+            uploadFile: processedFile,
+            imageRole: 'front',
+            altText: 'Accuphase P-300 amplifier available at Resolution AV',
+          }]);
         }}
       >
         Mock add processed testing photos

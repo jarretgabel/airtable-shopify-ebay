@@ -212,7 +212,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartSummary: 'Your lane is narrow on purpose: pick up ready items, capture hands-on findings, and sign off or flag blockers.',
     quickStartItems: [
       'Start in the testing queue to see what is ready for hands-on work.',
-      'Open the testing form to capture working condition, issues, and signoff notes.',
+      'Open the testing form to capture working condition, issues, and signoff notes, and tag each processed image with a role label (front/rear/serial-plate/cosmetic-detail/connections/custom).',
       'If something blocks the next step, leave a clear note so workflow can route it correctly.',
     ],
     flowSummary: 'You do not need the full commerce map every day. The relevant part is where an item enters testing, gets documented, and returns to workflow.',
@@ -251,7 +251,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartSummary: 'Your lane is the photography handoff: find ready items, complete image work, and hand the record back cleanly.',
     quickStartItems: [
       'Start in the photography queue to see what is ready for image work.',
-      'Open the photos form when you are doing the actual image work and record handoff notes there.',
+      'Open the photos form when you are doing the actual image work, assign a role label per image, and keep filenames in the `{brand}-{model}-{product-type}-{metadata}.jpg` format.',
       'Use clear completion notes so the next listing step is not guessing about image readiness.',
     ],
     flowSummary: 'You only need the slice of the workflow that delivers items into photography and hands them onward after images are complete.',

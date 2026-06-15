@@ -37,9 +37,9 @@ const WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME = 'Images';
 const TESTING_COSMETIC_NOTES_FIELD_NAME = 'Testing Cosmetic Notes';
 const PHOTOGRAPHY_COSMETIC_NOTES_FIELD_NAME = 'Photography Cosmetic Notes';
 
-function isProcessedWorkflowImage(filename: string, url?: string): boolean {
+function isReferenceWorkflowImage(filename: string, url?: string): boolean {
   const sample = `${filename} ${url ?? ''}`.toLowerCase();
-  return /(^|[-_])processed/.test(sample);
+  return !sample.includes('--original');
 }
 
 const OPTION_FIELD_NAMES = [
@@ -116,6 +116,7 @@ function buildContextAttachmentsFromMetadata(records: WorkflowImageMetadataRecor
 function appendArchivedStageMetadata(
   records: WorkflowImageMetadataRecord[],
   archivedFiles: Array<{ id: string; url: string; filename: string }>,
+  assetMetadataByFilename: Map<string, FormImageUploadAsset>,
 ): WorkflowImageMetadataRecord[] {
   const currentStageRecords = filterWorkflowImageMetadataByStage(records, 'photos');
   const existingUrls = new Set(currentStageRecords.map((record) => record.url.trim().toLowerCase()));
@@ -125,17 +126,23 @@ function appendArchivedStageMetadata(
       const key = file.url.trim().toLowerCase();
       return Boolean(key) && !existingUrls.has(key);
     })
-    .map((file, index) => ({
-      attachmentId: file.id,
-      url: file.url,
-      filename: file.filename,
-      alt: '',
-      sortOrder: currentStageRecords.length + index + 1,
-      sourceStage: 'photos',
-      includedInListing: true,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-    } satisfies WorkflowImageMetadataRecord));
+    .map((file, index) => {
+      const metadata = assetMetadataByFilename.get(file.filename.toLowerCase());
+      const normalizedCustomRole = metadata?.customImageRole?.trim();
+      return {
+        attachmentId: file.id,
+        url: file.url,
+        filename: file.filename,
+        alt: metadata?.altText?.trim() || '',
+        imageRole: metadata?.imageRole,
+        customImageRole: metadata?.imageRole === 'custom' && normalizedCustomRole ? normalizedCustomRole : undefined,
+        sortOrder: currentStageRecords.length + index + 1,
+        sourceStage: 'photos',
+        includedInListing: true,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      } satisfies WorkflowImageMetadataRecord;
+    });
 
   return replaceWorkflowImageMetadataStage(records, 'photos', [...currentStageRecords, ...additions]);
 }
@@ -384,7 +391,7 @@ function buildStageContext(record: AirtableRecord): PhotosFormStageContext {
     id: reference.attachmentId,
     url: reference.url,
     filename: reference.filename,
-  })).filter((reference) => isProcessedWorkflowImage(reference.filename, reference.url));
+  })).filter((reference) => isReferenceWorkflowImage(reference.filename, reference.url));
 
   return {
     inventoryNotes: extractInventoryScalarValue(record.fields['Inventory Notes']),
@@ -530,6 +537,9 @@ export async function submitPhotosForm(
 
       if (values.imageFiles.length > 0) {
         const totalUploads = values.imageFiles.length;
+        const assetMetadataByFilename = new Map(
+          (options.imageUploadAssets ?? []).map((asset) => [asset.uploadFile.name.toLowerCase(), asset]),
+        );
         for (const [index, file] of values.imageFiles.entries()) {
           options.onImageUploadProgress?.({
             total: totalUploads,
@@ -561,7 +571,7 @@ export async function submitPhotosForm(
 
           if (shouldArchiveOnly && uploadResult.archive?.processed) {
             usedArchiveOnlyWorkflowUpload = true;
-            finalImageMetadata = appendArchivedStageMetadata(finalImageMetadata, [uploadResult.archive.processed]);
+            finalImageMetadata = appendArchivedStageMetadata(finalImageMetadata, [uploadResult.archive.processed], assetMetadataByFilename);
           }
 
           options.onImageUploadProgress?.({

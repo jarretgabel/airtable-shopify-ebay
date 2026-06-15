@@ -35,6 +35,12 @@ export interface WorkflowImageArchiveResult {
   processed: ArchivedWorkflowImageFile;
 }
 
+export interface WorkflowImageRenameResult {
+  id: string;
+  filename: string;
+  url: string;
+}
+
 interface GoogleDriveListResponse {
   files?: GoogleDriveFile[];
 }
@@ -319,6 +325,20 @@ function buildDrivePublicImageUrl(fileId: string): string {
   return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(fileId)}`;
 }
 
+function normalizeArchivedFilename(filename: string): string {
+  const trimmed = filename.trim();
+  if (!trimmed) {
+    throw new HttpError(400, 'Filename is required for Google Drive rename operations', {
+      service: 'google-drive',
+      code: 'GOOGLE_DRIVE_FILENAME_REQUIRED',
+      retryable: false,
+    });
+  }
+
+  const sanitized = trimmed.replace(/[\\/:*?"<>|]+/g, '-');
+  return /\.jpe?g$/i.test(sanitized) ? sanitized : `${sanitized}.jpg`;
+}
+
 async function ensurePublicReadAccess(fileId: string): Promise<void> {
   await driveRequest(
     `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}/permissions?supportsAllDrives=true`,
@@ -367,5 +387,35 @@ export async function archiveWorkflowImagesToGoogleDrive(request: WorkflowImageA
       filename: processedFile.name,
       url: buildDrivePublicImageUrl(processedFile.id),
     },
+  };
+}
+
+export async function renameWorkflowArchivedFile(fileId: string, filename: string): Promise<WorkflowImageRenameResult> {
+  const normalizedFileId = fileId.trim();
+  if (!normalizedFileId) {
+    throw new HttpError(400, 'File id is required for Google Drive rename operations', {
+      service: 'google-drive',
+      code: 'GOOGLE_DRIVE_FILE_ID_REQUIRED',
+      retryable: false,
+    });
+  }
+
+  const nextFilename = normalizeArchivedFilename(filename);
+  const renamedFile = await driveRequest<GoogleDriveFile>(
+    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(normalizedFileId)}?fields=id,name&supportsAllDrives=true`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name: nextFilename }),
+    },
+    'GOOGLE_DRIVE_RENAME_FILE_FAILED',
+  );
+
+  return {
+    id: renamedFile.id,
+    filename: renamedFile.name,
+    url: buildDrivePublicImageUrl(renamedFile.id),
   };
 }
