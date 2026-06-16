@@ -51,7 +51,7 @@ export function AppFrameHeaderAccountMenu({
         aria-label="Open account menu"
         onClick={() => onToggleDropdown('account')}
         onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'account', onToggleDropdown, onCloseDropdowns)}
-        className="!px-2.5 !py-2 sm:!px-3 lg:!px-3 lg:!py-2 xl:!px-4 xl:!py-2.5"
+        className="!px-2.5 !py-2 focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-sky-400/60 focus-visible:!ring-offset-2 focus-visible:!ring-offset-[var(--header-surface)] sm:!px-3 lg:!px-3 lg:!py-2 xl:!px-4 xl:!py-2.5"
       >
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent-soft-bg)] text-[0.66rem] font-bold text-[var(--accent-soft-ink)] lg:h-5 lg:w-5 lg:text-[0.62rem] xl:h-6 xl:w-6 xl:text-[0.66rem]">{initials}</span>
