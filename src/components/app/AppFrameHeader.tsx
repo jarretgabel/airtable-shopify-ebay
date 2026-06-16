@@ -77,12 +77,6 @@ export function AppFrameHeader({
           </h1>
         </div>
         <div className="flex flex-wrap items-center gap-1.5 xl:gap-2" data-export-ignore="true">
-          <AppFrameHeaderNotificationsMenu
-            openDropdown={openDropdown}
-            onToggleDropdown={onToggleDropdown}
-            onCloseDropdowns={onCloseDropdowns}
-            onOpenNotifications={onOpenNotifications}
-          />
           <SecondaryActionButton
             aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
             title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
@@ -102,6 +96,12 @@ export function AppFrameHeader({
               )}
             </span>
           </SecondaryActionButton>
+          <AppFrameHeaderNotificationsMenu
+            openDropdown={openDropdown}
+            onToggleDropdown={onToggleDropdown}
+            onCloseDropdowns={onCloseDropdowns}
+            onOpenNotifications={onOpenNotifications}
+          />
           <AppFrameHeaderAccountMenu
             currentUserLabel={currentUserLabel}
             canManageUsers={canManageUsers}
