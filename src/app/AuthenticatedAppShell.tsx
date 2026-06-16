@@ -15,6 +15,12 @@ import { isDeveloperRole } from '@/auth/roleAccess';
 import type { AppPage } from '@/auth/pages';
 import { requireEnv } from '@/config/runtimeEnv';
 import { getLocalAppApiRoutingWarning } from '@/services/app-api/flags';
+import {
+  applyThemeToDocument,
+  loadThemePreference,
+  saveThemePreference,
+  type AppTheme,
+} from '@/services/themePreference';
 import { createEmptyUsedGearWorkflowNotificationSummary } from '@/services/usedGearQueue';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { useAppUIStore } from '@/stores/appUIStore';
@@ -77,6 +83,7 @@ export function AuthenticatedAppShell({
   const completeRequiredPasswordChange = useAuthStore((state) => state.completeRequiredPasswordChange);
   const clearNotifications = useNotificationStore((state) => state.clear);
   const applyCurrentUserPreferences = useNotificationStore((state) => state.applyCurrentUserPreferences);
+  const [theme, setTheme] = useState<AppTheme>(() => loadThemePreference(currentUser.id));
   const [workflowNotificationSummary, setWorkflowNotificationSummary] = useState(createEmptyUsedGearWorkflowNotificationSummary);
   const shellRef = useRef<HTMLElement>(null);
   const {
@@ -183,6 +190,17 @@ export function AuthenticatedAppShell({
   });
 
   useEffect(() => {
+    const nextTheme = loadThemePreference(currentUser.id);
+    setTheme(nextTheme);
+    applyThemeToDocument(nextTheme);
+  }, [currentUser.id]);
+
+  useEffect(() => {
+    applyThemeToDocument(theme);
+    saveThemePreference(theme, currentUser.id);
+  }, [theme, currentUser.id]);
+
+  useEffect(() => {
     clearNotifications();
     applyCurrentUserPreferences();
   }, [applyCurrentUserPreferences, clearNotifications, currentUser.id]);
@@ -221,6 +239,8 @@ export function AuthenticatedAppShell({
           onOpenUserManagement={() => navigateToTab('users')}
           canManageUsers={currentUser.role === 'admin' || currentUser.role === 'owner'}
           onLogout={handleLogout}
+          theme={theme}
+          onToggleTheme={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
           exportProgress={exportingPdf ? exportProgress : null}
           exporting={exportingPdf}
         >

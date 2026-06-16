@@ -8,6 +8,26 @@ import {
 import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { EmptySurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import {
+  detailDisclosureBodyClass,
+  detailDisclosureClass,
+  detailDisclosureSummaryClass,
+  detailPreBlockClass,
+  sectionLabelClass,
+  sectionTitleDescriptionClass,
+  sectionTitleHeadingClass,
+  snapshotOpenListingsButtonClass,
+  snapshotTableCellClass,
+  snapshotTableClass,
+  snapshotTableEmptyCellClass,
+  snapshotTableHeadClass,
+  snapshotTableMutedCellClass,
+  snapshotTableRowClass,
+  snapshotTableWrapClass,
+  insetPanelClass,
+  insetPanelMutedClass,
+  insetPillClass,
+} from '@/components/tabs/uiClasses';
 import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
 import { loadUsedGearOperationalRecordBySku } from '@/services/usedGearQueue';
 import type { ShopifyProduct } from '@/types/shopify';
@@ -30,7 +50,7 @@ function stringifyJson(value: unknown): string {
 
 function FieldRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-[var(--line)] bg-white/5 px-3 py-2">
+    <div className={`${insetPanelClass} px-3 py-2`}>
       <p className="m-0 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{label}</p>
       <p className="m-0 mt-1 text-sm text-[var(--ink)] break-words">{value || '—'}</p>
     </div>
@@ -59,18 +79,18 @@ function formatMoney(value?: string | null): string {
 function SectionTitle({ title, description }: { title: string; description: string }) {
   return (
     <div>
-      <h3 className="m-0 text-base font-semibold text-[var(--ink)]">{title}</h3>
-      <p className="m-0 mt-2 text-sm text-[var(--muted)]">{description}</p>
+      <h3 className={sectionTitleHeadingClass}>{title}</h3>
+      <p className={sectionTitleDescriptionClass}>{description}</p>
     </div>
   );
 }
 
 function DetailJsonPanel({ title, value }: { title: string; value: unknown }) {
   return (
-    <details className="rounded-lg border border-[var(--line)] bg-white/5">
-      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">{title}</summary>
-      <div className="border-t border-[var(--line)] px-3 py-3">
-        <pre className="m-0 overflow-x-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{stringifyJson(value)}</pre>
+    <details className={detailDisclosureClass}>
+      <summary className={detailDisclosureSummaryClass}>{title}</summary>
+      <div className={detailDisclosureBodyClass}>
+        <pre className={detailPreBlockClass}>{stringifyJson(value)}</pre>
       </div>
     </details>
   );
@@ -98,7 +118,7 @@ export function ShopifySnapshotRecordPage({
   const headerActions = (
     <>
       <BackToolbarButton label="Back to Shopify Snapshot" onClick={onBackToSnapshot} />
-      <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
+      <button type="button" className={snapshotOpenListingsButtonClass} onClick={onOpenListings}>Open Listings</button>
     </>
   );
 
@@ -161,7 +181,7 @@ export function ShopifySnapshotRecordPage({
         <EmptySurface title="Shopify snapshot not found" message="This product is no longer available in the current Shopify snapshot.">
           <div className="mt-4 flex flex-wrap gap-2">
             <BackToolbarButton label="Back to Shopify Snapshot" onClick={onBackToSnapshot} />
-            <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
+            <button type="button" className={snapshotOpenListingsButtonClass} onClick={onOpenListings}>Open Listings</button>
           </div>
         </EmptySurface>
       </WorkflowRecordPageLayout>
@@ -205,24 +225,24 @@ export function ShopifySnapshotRecordPage({
       <PanelSurface>
         <SectionTitle title="Merchandising Details" description="Snapshot of the customer-facing content that drives the Shopify listing." />
         <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-          <div className="rounded-lg border border-[var(--line)] bg-white/5 p-4">
-            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Body Copy</p>
+          <div className={insetPanelClass}>
+            <p className={sectionLabelClass}>Body Copy</p>
             <p className="m-0 mt-3 whitespace-pre-wrap text-sm leading-6 text-[var(--ink)]">{product.body_html ? product.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || '—' : '—'}</p>
           </div>
           <div className="space-y-4">
-            <div className="rounded-lg border border-[var(--line)] bg-white/5 p-4">
-              <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Tags</p>
+            <div className={insetPanelClass}>
+              <p className={sectionLabelClass}>Tags</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {tags.length > 0 ? tags.map((tag) => (
-                  <span key={tag} className="rounded-full border border-[var(--line)] bg-black/20 px-2.5 py-1 text-xs text-[var(--ink)]">{tag}</span>
+                  <span key={tag} className={insetPillClass}>{tag}</span>
                 )) : <p className="m-0 text-sm text-[var(--muted)]">No tags on this Shopify product.</p>}
               </div>
             </div>
-            <div className="rounded-lg border border-[var(--line)] bg-white/5 p-4">
-              <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Options</p>
+            <div className={insetPanelClass}>
+              <p className={sectionLabelClass}>Options</p>
               <div className="mt-3 space-y-2">
                 {options.length > 0 ? options.map((option) => (
-                  <div key={option.name} className="rounded-md border border-[var(--line)] bg-black/20 px-3 py-2">
+                  <div key={option.name} className={`${insetPanelMutedClass} px-3 py-2`}>
                     <p className="m-0 text-sm font-semibold text-[var(--ink)]">{option.name}</p>
                     <p className="m-0 mt-1 text-xs text-[var(--muted)]">{option.values.join(', ') || '—'}</p>
                   </div>
@@ -235,35 +255,35 @@ export function ShopifySnapshotRecordPage({
 
       <PanelSurface>
         <SectionTitle title="Variant Breakdown" description="Inventory-facing variant data captured from the live Shopify product." />
-        <div className="mt-4 overflow-x-auto rounded-lg border border-[var(--line)]">
-          <table className="min-w-full border-collapse text-sm">
-            <thead className="bg-black/20 text-left text-xs font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">
+        <div className={snapshotTableWrapClass}>
+          <table className={snapshotTableClass}>
+            <thead className={snapshotTableHeadClass}>
               <tr>
-                <th scope="col" className="px-3 py-2">Variant</th>
-                <th scope="col" className="px-3 py-2">SKU</th>
-                <th scope="col" className="px-3 py-2">Price</th>
-                <th scope="col" className="px-3 py-2">Compare At</th>
-                <th scope="col" className="px-3 py-2">Qty</th>
-                <th scope="col" className="px-3 py-2">Inventory</th>
-                <th scope="col" className="px-3 py-2">Shipping</th>
-                <th scope="col" className="px-3 py-2">Weight</th>
+                <th scope="col" className={snapshotTableCellClass}>Variant</th>
+                <th scope="col" className={snapshotTableCellClass}>SKU</th>
+                <th scope="col" className={snapshotTableCellClass}>Price</th>
+                <th scope="col" className={snapshotTableCellClass}>Compare At</th>
+                <th scope="col" className={snapshotTableCellClass}>Qty</th>
+                <th scope="col" className={snapshotTableCellClass}>Inventory</th>
+                <th scope="col" className={snapshotTableCellClass}>Shipping</th>
+                <th scope="col" className={snapshotTableCellClass}>Weight</th>
               </tr>
             </thead>
             <tbody>
               {variants.length > 0 ? variants.map((variant, index) => (
-                <tr key={variant.id ?? index} className="border-t border-[var(--line)] text-[var(--ink)]">
-                  <td className="px-3 py-2">{variant.title || `Variant ${index + 1}`}</td>
-                  <td className="px-3 py-2 font-mono text-[var(--muted)]">{variant.sku || '—'}</td>
-                  <td className="px-3 py-2">{formatMoney(variant.price)}</td>
-                  <td className="px-3 py-2 text-[var(--muted)]">{formatMoney(variant.compare_at_price)}</td>
-                  <td className="px-3 py-2">{variant.inventory_quantity ?? '—'}</td>
-                  <td className="px-3 py-2 text-[var(--muted)]">{variant.inventory_management || variant.inventory_policy || '—'}</td>
-                  <td className="px-3 py-2 text-[var(--muted)]">{variant.requires_shipping === undefined ? '—' : variant.requires_shipping ? 'Requires shipping' : 'No shipping'}</td>
-                  <td className="px-3 py-2 text-[var(--muted)]">{variant.weight != null ? `${variant.weight} ${variant.weight_unit ?? ''}`.trim() : '—'}</td>
+                <tr key={variant.id ?? index} className={snapshotTableRowClass}>
+                  <td className={snapshotTableCellClass}>{variant.title || `Variant ${index + 1}`}</td>
+                  <td className={`${snapshotTableMutedCellClass} font-mono`}>{variant.sku || '—'}</td>
+                  <td className={snapshotTableCellClass}>{formatMoney(variant.price)}</td>
+                  <td className={snapshotTableMutedCellClass}>{formatMoney(variant.compare_at_price)}</td>
+                  <td className={snapshotTableCellClass}>{variant.inventory_quantity ?? '—'}</td>
+                  <td className={snapshotTableMutedCellClass}>{variant.inventory_management || variant.inventory_policy || '—'}</td>
+                  <td className={snapshotTableMutedCellClass}>{variant.requires_shipping === undefined ? '—' : variant.requires_shipping ? 'Requires shipping' : 'No shipping'}</td>
+                  <td className={snapshotTableMutedCellClass}>{variant.weight != null ? `${variant.weight} ${variant.weight_unit ?? ''}`.trim() : '—'}</td>
                 </tr>
               )) : (
                 <tr>
-                  <td className="px-3 py-4 text-sm text-[var(--muted)]" colSpan={8}>No variants on this product.</td>
+                  <td className={snapshotTableEmptyCellClass} colSpan={8}>No variants on this product.</td>
                 </tr>
               )}
             </tbody>
@@ -274,27 +294,27 @@ export function ShopifySnapshotRecordPage({
       <PanelSurface>
         <SectionTitle title="Media And Metafields" description="Supporting assets and Shopify-specific metadata surfaced on this snapshot." />
         <div className="mt-4 grid gap-4 xl:grid-cols-2">
-          <div className="rounded-lg border border-[var(--line)] bg-white/5 p-4">
-            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Images</p>
+          <div className={insetPanelClass}>
+            <p className={sectionLabelClass}>Images</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {images.length > 0 ? images.map((image, index) => (
-                <figure key={image.id ?? index} className="m-0 overflow-hidden rounded-lg border border-[var(--line)] bg-black/20">
+                <figure key={image.id ?? index} className={`${insetPanelMutedClass} m-0 overflow-hidden`}>
                   <img src={image.src} alt={image.alt || `Product image ${index + 1}`} className="h-36 w-full object-cover" loading="lazy" />
                   <figcaption className="px-3 py-2 text-xs text-[var(--muted)]">Image #{image.position ?? index + 1}{image.alt ? ` · ${image.alt}` : ''}</figcaption>
                 </figure>
               )) : <p className="m-0 text-sm text-[var(--muted)]">No Shopify media on this product.</p>}
             </div>
           </div>
-          <div className="rounded-lg border border-[var(--line)] bg-white/5 p-4">
-            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Metafields</p>
+          <div className={insetPanelClass}>
+            <p className={sectionLabelClass}>Metafields</p>
             <div className="mt-3 space-y-2">
               {metafields.length > 0 ? metafields.map((metafield, index) => (
-                <div key={metafield.id ?? `${metafield.namespace}.${metafield.key}.${index}`} className="rounded-md border border-[var(--line)] bg-black/20 px-3 py-2">
+                <div key={metafield.id ?? `${metafield.namespace}.${metafield.key}.${index}`} className={`${insetPanelMutedClass} px-3 py-2`}>
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="m-0 text-sm font-semibold text-[var(--ink)]">{metafield.namespace}.{metafield.key}</p>
                     <span className="rounded-full border border-[var(--line)] bg-white/5 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.05em] text-[var(--muted)]">{metafield.type}</span>
                   </div>
-                  <pre className="m-0 mt-2 overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-[var(--line)] bg-black/30 p-2 text-xs text-[var(--ink)]">{metafield.value}</pre>
+                  <pre className={`${detailPreBlockClass} mt-2 p-2`}>{metafield.value}</pre>
                 </div>
               )) : <p className="m-0 text-sm text-[var(--muted)]">No Shopify metafields on this product.</p>}
             </div>

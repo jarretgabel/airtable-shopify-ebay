@@ -5,6 +5,14 @@ import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { WorkflowFormSnapshotSection } from '@/components/tabs/WorkflowFormSnapshotSection';
+import {
+  tabFormControlClass,
+  tabFormDateButtonClass,
+  tabFormHelpClass,
+  tabFormLabelClass,
+  tabFormSecondaryActionClass,
+  uploadProgressBannerClass,
+} from '@/components/tabs/uiClasses';
 import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
@@ -55,10 +63,10 @@ const EMPTY_IMAGE_PROCESSING_SUMMARY: FormImageProcessingSummary = {
 
 type TestingOptionSets = Record<TestingFormOptionFieldName, string[]>;
 
-const FIELD_CLASS = 'mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
-const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
-const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
-const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
+const FIELD_CLASS = tabFormControlClass;
+const LABEL_CLASS = tabFormLabelClass;
+const HELP_CLASS = tabFormHelpClass;
+const DATE_BUTTON_CLASS = tabFormDateButtonClass;
 
 const EDITABLE_TESTING_FIELD_NAMES: Array<keyof TestingFormValues> = [
   'serialNumber',
@@ -400,7 +408,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
         ) : null}
 
         {submitting && imageUploadProgress && imageUploadProgress.total > 0 ? (
-          <div className="rounded-xl border border-sky-400/25 bg-sky-500/10 px-4 py-3 text-sm text-sky-50/90">
+          <div className={uploadProgressBannerClass}>
             {imageUploadProgress.phase === 'finalizing'
               ? `Finalizing saved image metadata for ${imageUploadProgress.total} ${imageUploadProgress.total === 1 ? 'image' : 'images'}.`
               : `Uploading images: ${imageUploadProgress.completed} of ${imageUploadProgress.total} complete.${imageUploadProgress.currentFilename ? ` Current file: ${imageUploadProgress.currentFilename}.` : ''}`}
@@ -462,7 +470,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
               </button>
               <button
                 type="button"
-                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-5 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                className={tabFormSecondaryActionClass}
                 onClick={async () => {
                   const confirmed = await requestConfirmation({
                     title: 'Mark testing as complete?',

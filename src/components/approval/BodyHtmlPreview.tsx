@@ -1,5 +1,11 @@
 import DOMPurify from 'dompurify';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  detailDisclosureBodyClass,
+  detailDisclosureClass,
+  detailDisclosureSummaryClass,
+  detailPreBlockClass,
+} from '@/components/tabs/uiClasses';
 
 interface BodyHtmlTemplateOption {
   id: string;
@@ -196,21 +202,21 @@ export function BodyHtmlPreview({
         </div>
       )}
 
-      <details className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2 mb-4">
-        <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+      <details className={`${detailDisclosureClass} col-span-1 mb-4 md:col-span-2`}>
+        <summary className={detailDisclosureSummaryClass}>
           Body HTML Code
         </summary>
-        <div className="border-t border-[var(--line)] px-3 py-3">
+        <div className={detailDisclosureBodyClass}>
           <p className="m-0 text-sm text-[var(--muted)]">{helperText}</p>
-          <pre className="m-0 mt-3 overflow-x-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)] whitespace-pre-wrap">{hasValue ? value : '<p></p>'}</pre>
+          <pre className={`${detailPreBlockClass} mt-3 whitespace-pre-wrap`}>{hasValue ? value : '<p></p>'}</pre>
         </div>
       </details>
 
-      <details className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2">
-        <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+      <details className={`${detailDisclosureClass} col-span-1 md:col-span-2`}>
+        <summary className={detailDisclosureSummaryClass}>
           Body Rendered Preview
         </summary>
-        <div className="border-t border-[var(--line)] px-3 py-3">
+        <div className={detailDisclosureBodyClass}>
           {renderedPreview}
         </div>
       </details>

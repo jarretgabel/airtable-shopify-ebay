@@ -12,6 +12,18 @@ import { DatePickerField } from '@/components/tabs/date-picker-field';
 import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
 import { buildUsedGearIntakeSnapshot } from '@/components/tabs/usedGearIntakeSnapshot';
 import {
+  groupedIntakeNoticeActionClass,
+  groupedIntakeNoticeSectionClass,
+  successInlineBannerClass,
+  tabFormControlBaseClass,
+  tabFormControlClass,
+  tabFormDateButtonClass,
+  tabSectionPrimaryActionClass,
+  tabSectionSurfaceClass,
+  tabTemplatePillClass,
+  warningInlineBannerClass,
+} from '@/components/tabs/uiClasses';
+import {
   acceptPendingReviewRecord,
   completeProcessingStage,
   hasUsedGearPendingReviewPricingPath,
@@ -68,7 +80,7 @@ function NoteTemplateRow({
           <button
             key={template.id}
             type="button"
-            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] shadow-[0_4px_14px_rgba(17,32,49,0.04)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--panel)] hover:text-[var(--ink)]"
+            className={tabTemplatePillClass}
             onClick={() => onApplyTemplate(template.value)}
           >
             {template.label}
@@ -140,8 +152,8 @@ export function UsedGearPendingReviewRecordPage({
 
   const record = context?.record ?? null;
   const group = context?.group ?? null;
-  const inputClassName = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
-  const dateButtonClassName = 'inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
+  const inputClassName = tabFormControlBaseClass;
+  const dateButtonClassName = tabFormDateButtonClass;
 
   const hasPricingPath = useMemo(() => record ? hasUsedGearPendingReviewPricingPath(record.fields) : false, [record]);
   const groupNeedsPickupId = useMemo(
@@ -275,19 +287,19 @@ export function UsedGearPendingReviewRecordPage({
       <div className="space-y-6">
 
         {error ? (
-          <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <div className={warningInlineBannerClass}>
             {error}
           </div>
         ) : null}
 
         {successMessage ? (
-          <div className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+          <div className={successInlineBannerClass}>
             {successMessage}
           </div>
         ) : null}
 
         {group ? (
-          <section id="group" className="rounded-2xl border border-sky-400/30 bg-sky-500/10 px-5 py-4 text-sm text-sky-100 scroll-mt-28">
+          <section id="group" className={groupedIntakeNoticeSectionClass}>
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <AppSectionTitle title="Grouped Intake" className="border-b-sky-300/25 pt-0" titleClassName="text-lg text-sky-50" />
@@ -297,7 +309,7 @@ export function UsedGearPendingReviewRecordPage({
               </div>
               <button
                 type="button"
-                className="rounded-xl border border-sky-300/40 bg-white/5 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-white/10"
+                className={groupedIntakeNoticeActionClass}
                 onClick={() => navigate(`/parking-lot/group/${encodeURIComponent(group.id)}${location.search}`)}
               >
                 Open Group Review
@@ -307,14 +319,14 @@ export function UsedGearPendingReviewRecordPage({
         ) : null}
 
         <div className="grid gap-6">
-          <section id="lot-two" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
+          <section id="lot-two" className={`${tabSectionSurfaceClass} scroll-mt-28`}>
             <AppSectionTitle title="Review & Qualify" titleClassName="text-lg" className="pt-0" />
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Select a parking lot status to accept the item into the workflow, fill in arrival details to move directly to testing, or save your notes without committing.</p>
             <div className="mt-4 grid gap-3">
               <label className="block">
                 <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Parking Lot Status</span>
                 <select
-                  className={`${inputClassName} mt-2`}
+                  className={tabFormControlClass}
                   value={acceptStatus ?? ''}
                   onChange={(event) => {
                     const value = event.currentTarget.value;
@@ -370,7 +382,7 @@ export function UsedGearPendingReviewRecordPage({
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
-                  className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  className={tabSectionPrimaryActionClass}
                   onClick={() => {
                     void handleSaveReview();
                   }}
@@ -427,7 +439,7 @@ export function UsedGearPendingReviewRecordPage({
             void handleUnqualify();
           }}
           disabled={saving !== null || unqualifiedReason.trim().length === 0}
-          textareaClassName={inputClassName}
+          textareaClassName={tabFormControlBaseClass}
           isSaving={saving === 'trash'}
         />
 

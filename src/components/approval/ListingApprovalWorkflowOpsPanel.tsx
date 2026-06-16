@@ -20,6 +20,12 @@ import {
 } from '@/services/usedGearWorkflowLifecycle';
 import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
 import { compactRowPrimaryActionButtonClass, compactRowSecondaryActionButtonClass } from '@/components/app/buttonStyles';
+import {
+  tabFormControlBaseClass,
+  tabFormControlMultilineClass,
+  tabTemplatePillClass,
+  warningInlineBannerClass,
+} from '@/components/tabs/uiClasses';
 import { displayValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -67,7 +73,7 @@ function NoteTemplateRow({
         <button
           key={template.id}
           type="button"
-          className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          className={tabTemplatePillClass}
           onClick={() => onApplyTemplate(template.value)}
         >
           {template.label}
@@ -161,7 +167,7 @@ export function ListingApprovalWorkflowOpsPanel({
   return (
     <section className="mt-4 space-y-4">
       {error ? (
-        <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+        <div className={warningInlineBannerClass}>
           {error}
         </div>
       ) : null}
@@ -196,7 +202,7 @@ export function ListingApprovalWorkflowOpsPanel({
                   <label>
                     <span className="sr-only">Stale recovery status</span>
                     <select
-                      className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                      className={tabFormControlBaseClass}
                       value={staleRecoveryDraftStatus}
                       onChange={(event) => setStaleRecoveryDraftStatus(normalizeStaleRecoveryStatus(event.currentTarget.value))}
                       disabled={saving}
@@ -210,7 +216,7 @@ export function ListingApprovalWorkflowOpsPanel({
                   <label>
                     <span className="sr-only">Stale recovery notes</span>
                     <textarea
-                      className="min-h-24 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                      className={tabFormControlMultilineClass}
                       value={staleRecoveryDraftNotes}
                       onChange={(event) => setStaleRecoveryDraftNotes(event.currentTarget.value)}
                       placeholder="Add relist, pricing, or content-refresh notes"
@@ -259,7 +265,7 @@ export function ListingApprovalWorkflowOpsPanel({
                 <label className="mt-4 block">
                   <span className="sr-only">Shipment follow-through notes</span>
                   <textarea
-                    className="min-h-24 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                    className={tabFormControlMultilineClass}
                     value={shipmentFollowThroughDraftNotes}
                     onChange={(event) => setShipmentFollowThroughDraftNotes(event.currentTarget.value)}
                     placeholder="Add packing, carrier, or shipment confirmation notes"

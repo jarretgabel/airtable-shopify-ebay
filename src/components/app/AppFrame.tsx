@@ -21,6 +21,8 @@ export function AppFrame({
   onOpenUserManagement,
   canManageUsers,
   onLogout,
+  theme,
+  onToggleTheme,
   exportProgress,
   exporting,
   children,
@@ -76,6 +78,8 @@ export function AppFrame({
         onOpenUserManagement={onOpenUserManagement}
         canManageUsers={canManageUsers}
         onLogout={onLogout}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
         openDropdown={openDropdown}
         onToggleDropdown={toggleDropdown}
         onCloseDropdowns={closeDropdowns}

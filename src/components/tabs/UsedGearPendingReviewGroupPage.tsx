@@ -7,6 +7,15 @@ import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import { UsedGearTrashRouteCard } from '@/components/tabs/UsedGearTrashRouteCard';
+import {
+  successInlineBannerClass,
+  tabFormControlBaseClass,
+  tabFormControlClass,
+  tabFormLabelClass,
+  tabSectionSurfaceClass,
+  tabTemplatePillClass,
+  warningInlineBannerClass,
+} from '@/components/tabs/uiClasses';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import {
@@ -64,7 +73,7 @@ function NoteTemplateRow({
           <button
             key={template.id}
             type="button"
-            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] shadow-[0_4px_14px_rgba(17,32,49,0.04)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--panel)] hover:text-[var(--ink)]"
+            className={tabTemplatePillClass}
             onClick={() => onApplyTemplate(template.value)}
           >
             {template.label}
@@ -322,26 +331,26 @@ export function UsedGearPendingReviewGroupPage({
       )}
     >
 
-        {error ? <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">{error}</div> : null}
-        {successMessage ? <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{successMessage}</div> : null}
+        {error ? <div className={warningInlineBannerClass}>{error}</div> : null}
+        {successMessage ? <div className={successInlineBannerClass}>{successMessage}</div> : null}
         <section id="review" className="scroll-mt-28">
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+          <div className={tabSectionSurfaceClass}>
             <AppSectionTitle title="Group Review" />
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <label className="block">
-                <span className="text-sm font-semibold text-[var(--ink)]">Pick Up ID</span>
+                <span className={tabFormLabelClass}>Pick Up ID</span>
                 <input
-                  className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                  className={tabFormControlClass}
                   value={pickUpId}
                   onChange={(event) => setPickUpId(event.currentTarget.value)}
                   placeholder="Required for multi-item intake batches"
                 />
               </label>
               <label className="block">
-                <span className="text-sm font-semibold text-[var(--ink)]">Confirmed Grand Total</span>
+                <span className={tabFormLabelClass}>Confirmed Grand Total</span>
                 <input
-                  className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                  className={tabFormControlClass}
                   type="number"
                   step="0.01"
                   value={confirmedGrandTotal}
@@ -350,9 +359,9 @@ export function UsedGearPendingReviewGroupPage({
                 />
               </label>
               <label className="block">
-                <span className="text-sm font-semibold text-[var(--ink)]">Allocation Mode</span>
+                <span className={tabFormLabelClass}>Allocation Mode</span>
                 <select
-                  className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                  className={tabFormControlClass}
                   value={allocationMode}
                   onChange={(event) => setAllocationMode(event.currentTarget.value as UsedGearPendingReviewAllocationMode)}
                 >
@@ -361,9 +370,9 @@ export function UsedGearPendingReviewGroupPage({
                 </select>
               </label>
               <label className="block md:col-span-2">
-                <span className="text-sm font-semibold text-[var(--ink)]">Allocation Notes</span>
+                <span className={tabFormLabelClass}>Allocation Notes</span>
                 <textarea
-                  className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                  className={tabFormControlClass}
                   rows={3}
                   value={allocationNotes}
                   onChange={(event) => setAllocationNotes(event.currentTarget.value)}
@@ -535,7 +544,7 @@ export function UsedGearPendingReviewGroupPage({
           }}
           onSubmit={handleSendGroupToTrash}
           disabled={saving || unqualifiedReason.trim().length === 0}
-          textareaClassName="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+          textareaClassName={tabFormControlBaseClass}
           isSaving={saving}
         />
     </WorkflowRecordPageLayout>

@@ -124,7 +124,7 @@ export function FormImageCropPreview({
   };
 
   return (
-    <div className={`overflow-hidden rounded-2xl border border-[var(--line)] bg-slate-950/30 ${className}`.trim()}>
+    <div className={`overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-veil-soft)] ${className}`.trim()}>
       <div className="border-b border-[var(--line)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
         Visual crop
       </div>
@@ -132,10 +132,10 @@ export function FormImageCropPreview({
         <div ref={frameRef} data-testid="crop-frame" className="relative inline-block max-h-full max-w-full">
           <img src={imageUrl} alt={alt} className="block max-h-[240px] max-w-full object-contain" draggable={false} />
           <div className="pointer-events-none absolute inset-0">
-            <div className="absolute left-0 right-0 top-0 bg-slate-950/55" style={{ height: `${crop.top}%` }} />
-            <div className="absolute bottom-0 left-0 right-0 bg-slate-950/55" style={{ height: `${crop.bottom}%` }} />
+            <div className="absolute left-0 right-0 top-0 bg-[var(--surface-veil)]" style={{ height: `${crop.top}%` }} />
+            <div className="absolute bottom-0 left-0 right-0 bg-[var(--surface-veil)]" style={{ height: `${crop.bottom}%` }} />
             <div
-              className="absolute bottom-0 left-0 top-0 bg-slate-950/55"
+              className="absolute bottom-0 left-0 top-0 bg-[var(--surface-veil)]"
               style={{
                 top: `${crop.top}%`,
                 bottom: `${crop.bottom}%`,
@@ -143,7 +143,7 @@ export function FormImageCropPreview({
               }}
             />
             <div
-              className="absolute bottom-0 right-0 top-0 bg-slate-950/55"
+              className="absolute bottom-0 right-0 top-0 bg-[var(--surface-veil)]"
               style={{
                 top: `${crop.top}%`,
                 bottom: `${crop.bottom}%`,

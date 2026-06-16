@@ -8,6 +8,19 @@ import {
 import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { EmptySurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
+import {
+  detailDisclosureBodyClass,
+  detailDisclosureClass,
+  detailDisclosureSummaryClass,
+  detailPreBlockClass,
+  infoPillClass,
+  insetPanelClass,
+  insetPanelMutedClass,
+  sectionLabelClass,
+  sectionTitleDescriptionClass,
+  sectionTitleHeadingClass,
+  snapshotOpenListingsButtonClass,
+} from '@/components/tabs/uiClasses';
 import type { EbayTabViewModel } from '@/app/appTabViewModels';
 import { loadUsedGearOperationalRecordBySku } from '@/services/usedGearQueue';
 import type { EbayInventoryItem, EbayOffer, EbayPublishedListing } from '@/services/ebay/types';
@@ -30,7 +43,7 @@ function stringifyJson(value: unknown): string {
 
 function FieldRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-[var(--line)] bg-white/5 px-3 py-2">
+    <div className={`${insetPanelClass} px-3 py-2`}>
       <p className="m-0 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{label}</p>
       <p className="m-0 mt-1 text-sm text-[var(--ink)] break-words">{value || '—'}</p>
     </div>
@@ -46,8 +59,8 @@ function formatMoney(value?: { value: string; currency: string }): string {
 function SectionTitle({ title, description }: { title: string; description: string }) {
   return (
     <div>
-      <h3 className="m-0 text-base font-semibold text-[var(--ink)]">{title}</h3>
-      <p className="m-0 mt-2 text-sm text-[var(--muted)]">{description}</p>
+      <h3 className={sectionTitleHeadingClass}>{title}</h3>
+      <p className={sectionTitleDescriptionClass}>{description}</p>
     </div>
   );
 }
@@ -58,10 +71,10 @@ function humanizeCondition(value?: string): string {
 
 function DetailJsonPanel({ title, value }: { title: string; value: unknown }) {
   return (
-    <details className="rounded-lg border border-[var(--line)] bg-white/5">
-      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">{title}</summary>
-      <div className="border-t border-[var(--line)] px-3 py-3">
-        <pre className="m-0 overflow-x-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{stringifyJson(value)}</pre>
+    <details className={detailDisclosureClass}>
+      <summary className={detailDisclosureSummaryClass}>{title}</summary>
+      <div className={detailDisclosureBodyClass}>
+        <pre className={detailPreBlockClass}>{stringifyJson(value)}</pre>
       </div>
     </details>
   );
@@ -100,7 +113,7 @@ export function EbaySnapshotRecordPage({
   const headerActions = (
     <>
       <BackToolbarButton label="Back to eBay Snapshot" onClick={onBackToSnapshot} />
-      <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
+      <button type="button" className={snapshotOpenListingsButtonClass} onClick={onOpenListings}>Open Listings</button>
     </>
   );
 
@@ -163,7 +176,7 @@ export function EbaySnapshotRecordPage({
         <EmptySurface title="eBay snapshot not found" message="This SKU is no longer available in the current eBay snapshot.">
           <div className="mt-4 flex flex-wrap gap-2">
             <BackToolbarButton label="Back to eBay Snapshot" onClick={onBackToSnapshot} />
-            <button type="button" className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100" onClick={onOpenListings}>Open Listings</button>
+            <button type="button" className={snapshotOpenListingsButtonClass} onClick={onOpenListings}>Open Listings</button>
           </div>
         </EmptySurface>
       </WorkflowRecordPageLayout>
@@ -207,8 +220,8 @@ export function EbaySnapshotRecordPage({
       <PanelSurface>
         <SectionTitle title="Offer Setup" description="Marketplace, pricing, and policy configuration present on this eBay snapshot." />
         <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <div className="rounded-lg border border-[var(--line)] bg-white/5 p-4">
-            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Pricing And Publishing</p>
+          <div className={insetPanelClass}>
+            <p className={sectionLabelClass}>Pricing And Publishing</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <FieldRow label="Price" value={formatMoney(resolvedOffer?.pricingSummary?.price)} />
               <FieldRow label="Include Catalog Details" value={resolvedOffer?.includeCatalogProductDetails === undefined ? '—' : resolvedOffer.includeCatalogProductDetails ? 'Yes' : 'No'} />
@@ -216,8 +229,8 @@ export function EbaySnapshotRecordPage({
               <FieldRow label="Recent Listing" value={resolvedRecentListing ? 'Yes' : 'No'} />
             </div>
           </div>
-          <div className="rounded-lg border border-[var(--line)] bg-white/5 p-4">
-            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Business Policies</p>
+          <div className={insetPanelClass}>
+            <p className={sectionLabelClass}>Business Policies</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <FieldRow label="Fulfillment Policy" value={listingPolicies?.fulfillmentPolicyId ?? '—'} />
               <FieldRow label="Payment Policy" value={listingPolicies?.paymentPolicyId ?? '—'} />
@@ -232,8 +245,8 @@ export function EbaySnapshotRecordPage({
         <SectionTitle title="Inventory Details" description="Product-facing information from the current inventory item snapshot." />
         <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="space-y-4">
-            <div className="rounded-lg border border-[var(--line)] bg-white/5 p-4">
-              <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Product Metadata</p>
+            <div className={insetPanelClass}>
+              <p className={sectionLabelClass}>Product Metadata</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <FieldRow label="Title" value={resolvedItem?.product?.title ?? '—'} />
                 <FieldRow label="Brand" value={resolvedItem?.product?.brand ?? '—'} />
@@ -241,20 +254,20 @@ export function EbaySnapshotRecordPage({
                 <FieldRow label="Condition Notes" value={resolvedItem?.conditionDescription ?? '—'} />
               </div>
             </div>
-            <div className="rounded-lg border border-[var(--line)] bg-white/5 p-4">
-              <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Aspects</p>
+            <div className={insetPanelClass}>
+              <p className={sectionLabelClass}>Aspects</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {aspects.length > 0 ? aspects.map(([key, values]) => (
-                  <span key={key} className="rounded-full border border-blue-400/35 bg-blue-500/20 px-2.5 py-1 text-xs text-blue-100">{key}: {values.join(', ')}</span>
+                  <span key={key} className={infoPillClass}>{key}: {values.join(', ')}</span>
                 )) : <p className="m-0 text-sm text-[var(--muted)]">No item aspects on this record.</p>}
               </div>
             </div>
           </div>
-          <div className="rounded-lg border border-[var(--line)] bg-white/5 p-4">
-            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Images</p>
+          <div className={insetPanelClass}>
+            <p className={sectionLabelClass}>Images</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {imageUrls.length > 0 ? imageUrls.map((imageUrl, index) => (
-                <figure key={`${imageUrl}-${index}`} className="m-0 overflow-hidden rounded-lg border border-[var(--line)] bg-black/20">
+                <figure key={`${imageUrl}-${index}`} className={`${insetPanelMutedClass} m-0 overflow-hidden`}>
                   <img src={imageUrl} alt={`${resolvedItem?.product?.title ?? recordId} image ${index + 1}`} className="h-36 w-full object-cover" loading="lazy" />
                   <figcaption className="px-3 py-2 text-xs text-[var(--muted)]">Image #{index + 1}</figcaption>
                 </figure>

@@ -9,6 +9,16 @@ import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import {
+  dangerSectionActionClass,
+  dangerSectionBodyClass,
+  dangerSectionSurfaceClass,
+  dangerSectionTitleClass,
+  successInlineBannerClass,
+  tabSectionPrimaryActionClass,
+  tabSectionSurfaceClass,
+  warningInlineBannerClass,
+} from '@/components/tabs/uiClasses';
+import {
   hasUsedGearPendingReviewPricingPath,
   loadTrashGroup,
   permanentlyDeleteTrashRecord,
@@ -257,23 +267,23 @@ export function UsedGearTrashReviewGroupPage({
     >
       <div className="space-y-6">
         {error ? (
-          <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <div className={warningInlineBannerClass}>
             {error}
           </div>
         ) : null}
 
         {successMessage ? (
-          <div className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+          <div className={successInlineBannerClass}>
             {successMessage}
           </div>
         ) : null}
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.15fr)]">
-          <section id="restore" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
+          <section id="restore" className={`${tabSectionSurfaceClass} scroll-mt-28`}>
             <AppSectionTitle title="Restore To Parking Lot" titleClassName="text-lg" className="pt-0" />
             <button
               type="button"
-              className="mt-3 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+              className={`mt-3 ${tabSectionPrimaryActionClass}`}
               onClick={() => {
                 void handleRestoreGroup();
               }}
@@ -283,7 +293,7 @@ export function UsedGearTrashReviewGroupPage({
             </button>
           </section>
 
-          <section id="requalify" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
+          <section id="requalify" className={`${tabSectionSurfaceClass} scroll-mt-28`}>
             <AppSectionTitle title="Re-qualify Into Parking Lot" titleClassName="text-lg" className="pt-0" />
             <div className="mt-3 grid gap-3">
               <label className="block">
@@ -318,7 +328,7 @@ export function UsedGearTrashReviewGroupPage({
               ) : null}
               <button
                 type="button"
-                className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                className={tabSectionPrimaryActionClass}
                 onClick={() => {
                   void handleRequalifyGroup();
                 }}
@@ -333,7 +343,7 @@ export function UsedGearTrashReviewGroupPage({
         <section id="review" className="space-y-4 scroll-mt-28">
           <div className="grid gap-3 md:grid-cols-2">
             {records.map((record) => (
-              <article key={record.id} className="h-full rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+              <article key={record.id} className={`h-full ${tabSectionSurfaceClass}`}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <p className="m-0 text-lg font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</p>
@@ -349,12 +359,12 @@ export function UsedGearTrashReviewGroupPage({
           </div>
         </section>
 
-        <section id="delete" className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-5 scroll-mt-28">
-          <AppSectionTitle title="Delete From Workflow" titleClassName="text-lg text-rose-100" className="pt-0" />
-          <p className="mt-2 text-sm leading-6 text-rose-100/80">Permanently remove every row in this grouped Trash Review set when the batch should not return to workflow.</p>
+        <section id="delete" className={`${dangerSectionSurfaceClass} scroll-mt-28`}>
+          <AppSectionTitle title="Delete From Workflow" titleClassName={dangerSectionTitleClass} className="pt-0" />
+          <p className={`mt-2 ${dangerSectionBodyClass}`}>Permanently remove every row in this grouped Trash Review set when the batch should not return to workflow.</p>
           <button
             type="button"
-            className="mt-4 w-full rounded-xl border border-rose-300/40 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:border-rose-200/70 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+            className={`mt-4 ${dangerSectionActionClass}`}
             onClick={() => {
               void handleDeleteGroup();
             }}

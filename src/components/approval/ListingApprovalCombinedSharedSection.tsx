@@ -9,6 +9,7 @@ import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
 import { resolveListingApprovalTestingSectionFields } from '@/components/approval/listingApprovalTestingSection';
+import { tabFormControlMultilineClass } from '@/components/tabs/uiClasses';
 import { CONDITION_FIELD } from '@/stores/approvalStore';
 import type { ListingApprovalCombinedSharedSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
@@ -18,7 +19,7 @@ const KeyFeaturesEditor = lazy(async () => ({
 
 function CombinedSharedEditorFallback() {
   return (
-    <div className="rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 text-sm text-[var(--muted)]">
+    <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-sm text-[var(--muted)]">
       Loading shared editor...
     </div>
   );
@@ -149,7 +150,7 @@ export function ListingApprovalCombinedSharedSection({
           <label className="flex flex-col gap-2">
             <span className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Description</span>
             <textarea
-              className="min-h-[120px] w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70"
+              className={`${tabFormControlMultilineClass} min-h-[120px] bg-[var(--panel)] disabled:cursor-not-allowed disabled:opacity-70`}
               value={formValues[combinedDescriptionFieldName] ?? ''}
               onChange={(event) => setFormValue(combinedDescriptionFieldName, event.target.value)}
               disabled={saving}

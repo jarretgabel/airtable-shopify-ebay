@@ -1,6 +1,12 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
 import type { OpenDropdown } from '@/components/app/appFrameTypes';
+import {
+  appFrameMenuFilterButtonActiveClass,
+  appFrameMenuFilterButtonClass,
+  appFrameMenuFilterButtonIdleClass,
+  appFrameMenuPanelClass,
+} from '@/components/app/appFrameHeaderStyles';
 import { handleDropdownTriggerKeyDown } from '@/components/app/AppFrameHeaderShared';
 import { useNotificationStore } from '@/stores/notificationStore';
 
@@ -72,7 +78,7 @@ export function AppFrameHeaderNotificationsMenu({
           id="notifications-menu"
           role="menu"
           aria-label="Notifications menu"
-          className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] w-[min(420px,92vw)] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+          className={`${appFrameMenuPanelClass} w-[min(420px,92vw)]`}
         >
           <div className="flex items-center justify-between px-3 pb-1.5 pt-1">
             <span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Recent notifications</span>
@@ -83,21 +89,21 @@ export function AppFrameHeaderNotificationsMenu({
             <button
               type="button"
               onClick={() => setNotificationQuickFilter('all')}
-              className={`rounded-full border px-2 py-1 text-[0.62rem] font-bold uppercase tracking-[0.06em] transition ${notificationQuickFilter === 'all' ? 'border-cyan-500/45 bg-cyan-500/15 text-cyan-200' : 'border-[var(--line)] text-[var(--muted)] hover:text-[var(--ink)]'}`}
+              className={`${appFrameMenuFilterButtonClass} ${notificationQuickFilter === 'all' ? appFrameMenuFilterButtonActiveClass : appFrameMenuFilterButtonIdleClass}`}
             >
               All
             </button>
             <button
               type="button"
               onClick={() => setNotificationQuickFilter('unread')}
-              className={`rounded-full border px-2 py-1 text-[0.62rem] font-bold uppercase tracking-[0.06em] transition ${notificationQuickFilter === 'unread' ? 'border-cyan-500/45 bg-cyan-500/15 text-cyan-200' : 'border-[var(--line)] text-[var(--muted)] hover:text-[var(--ink)]'}`}
+              className={`${appFrameMenuFilterButtonClass} ${notificationQuickFilter === 'unread' ? appFrameMenuFilterButtonActiveClass : appFrameMenuFilterButtonIdleClass}`}
             >
               Unread
             </button>
             <button
               type="button"
               onClick={() => setNotificationQuickFilter('error')}
-              className={`rounded-full border px-2 py-1 text-[0.62rem] font-bold uppercase tracking-[0.06em] transition ${notificationQuickFilter === 'error' ? 'border-cyan-500/45 bg-cyan-500/15 text-cyan-200' : 'border-[var(--line)] text-[var(--muted)] hover:text-[var(--ink)]'}`}
+              className={`${appFrameMenuFilterButtonClass} ${notificationQuickFilter === 'error' ? appFrameMenuFilterButtonActiveClass : appFrameMenuFilterButtonIdleClass}`}
             >
               Errors
             </button>
@@ -112,11 +118,11 @@ export function AppFrameHeaderNotificationsMenu({
               {recentNotifications.map((notification, index) => (
                 <article
                   key={notification.id}
-                  className="rounded-lg border border-[var(--line)] bg-[rgba(9,16,26,0.55)] px-3 py-2"
+                  className="rounded-lg border border-[var(--line)] bg-[var(--panel-soft)] px-3 py-2"
                 >
                   <div className="flex w-full items-center justify-between gap-2">
                     <span className="text-[0.82rem] font-semibold text-[var(--ink)]">{notification.title}</span>
-                    {!notification.seen && <span className="rounded-full bg-cyan-500/20 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase text-cyan-200">New</span>}
+                    {!notification.seen && <span className="rounded-full bg-[var(--accent-soft-bg)] px-1.5 py-0.5 text-[0.6rem] font-bold uppercase text-[var(--accent-soft-ink)]">New</span>}
                   </div>
                   <span className="mt-1 line-clamp-2 text-[0.76rem] leading-relaxed text-[var(--muted)]">{notification.message}</span>
                   <div className="mt-1 flex items-center justify-between gap-2">
@@ -128,7 +134,7 @@ export function AppFrameHeaderNotificationsMenu({
                           role="menuitem"
                           type="button"
                           onClick={() => markSeen(notification.id)}
-                          className="rounded-md border border-cyan-500/35 bg-cyan-500/10 px-2 py-1 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-cyan-200 transition hover:bg-cyan-500/20"
+                          className="rounded-md border border-[var(--accent)]/40 bg-[var(--accent-soft-bg)] px-2 py-1 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--accent-soft-ink)] transition hover:brightness-95"
                         >
                           Seen
                         </button>
@@ -155,7 +161,7 @@ export function AppFrameHeaderNotificationsMenu({
               onCloseDropdowns();
               onOpenNotifications();
             }}
-            className="mx-1 mt-1.5 flex w-[calc(100%-0.5rem)] items-center justify-center rounded-lg border border-cyan-500/35 bg-cyan-500/10 px-3 py-2 text-[0.76rem] font-bold uppercase tracking-[0.07em] text-cyan-200 transition hover:bg-cyan-500/20"
+            className="mx-1 mt-1.5 flex w-[calc(100%-0.5rem)] items-center justify-center rounded-lg border border-[var(--accent)]/40 bg-[var(--accent-soft-bg)] px-3 py-2 text-[0.76rem] font-bold uppercase tracking-[0.07em] text-[var(--accent-soft-ink)] transition hover:brightness-95"
           >
             View all notifications
           </button>

@@ -1,4 +1,10 @@
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import {
+  dangerSectionActionClass,
+  dangerSectionBodyClass,
+  dangerSectionSurfaceClass,
+  dangerSectionTitleClass,
+} from '@/components/tabs/uiClasses';
 import { useConfirmationDialog } from '@/hooks/useConfirmationDialog';
 import { getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
 
@@ -59,12 +65,12 @@ export function UsedGearTrashRouteCard({
       <section
         id={sectionId}
         className={[
-          'rounded-2xl border border-rose-400/20 bg-rose-500/10 p-5 scroll-mt-28',
+          `${dangerSectionSurfaceClass} scroll-mt-28`,
           className ?? '',
         ].join(' ').trim()}
       >
-        <AppSectionTitle title="Route To Trash" titleClassName="text-lg text-white" className="border-b-rose-300/20 pt-0" />
-        <p className="mt-2 text-sm text-rose-100/80">{description}</p>
+        <AppSectionTitle title="Route To Trash" titleClassName={dangerSectionTitleClass} className="border-b-rose-300/20 pt-0" />
+        <p className={`mt-2 ${dangerSectionBodyClass}`}>{description}</p>
         <label className="mt-4 block">
           <span className="text-xs font-semibold uppercase tracking-[0.08em] text-rose-100/70">Unqualified Reason</span>
           <textarea
@@ -92,7 +98,7 @@ export function UsedGearTrashRouteCard({
         </div>
         <button
           type="button"
-          className="mt-4 w-full rounded-xl border border-rose-300/35 bg-rose-500/20 px-4 py-3 text-sm font-semibold text-rose-50 transition hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`mt-4 ${dangerSectionActionClass}`}
           onClick={() => {
             void handleConfirmSubmit();
           }}

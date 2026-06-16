@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
 import type { OpenDropdown } from '@/components/app/appFrameTypes';
+import { appFrameMenuItemClass, appFrameMenuPanelClass } from '@/components/app/appFrameHeaderStyles';
 import { TabBadge, handleDropdownTriggerKeyDown } from '@/components/app/AppFrameHeaderShared';
 import { useNotificationStore } from '@/stores/notificationStore';
 
@@ -53,7 +54,7 @@ export function AppFrameHeaderAccountMenu({
         className="!px-2.5 !py-2 sm:!px-3 lg:!px-3 lg:!py-2 xl:!px-4 xl:!py-2.5"
       >
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500/20 text-[0.66rem] font-bold text-cyan-200 lg:h-5 lg:w-5 lg:text-[0.62rem] xl:h-6 xl:w-6 xl:text-[0.66rem]">{initials}</span>
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent-soft-bg)] text-[0.66rem] font-bold text-[var(--accent-soft-ink)] lg:h-5 lg:w-5 lg:text-[0.62rem] xl:h-6 xl:w-6 xl:text-[0.66rem]">{initials}</span>
           <span className={`text-[0.72rem] transition-transform ${openDropdown === 'account' ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
         </span>
       </SecondaryActionButton>
@@ -63,7 +64,7 @@ export function AppFrameHeaderAccountMenu({
           id="account-menu"
           role="menu"
           aria-label="Account menu"
-          className="absolute right-0 top-[calc(100%+0.45rem)] z-[70] min-w-[220px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+          className={`${appFrameMenuPanelClass} min-w-[220px]`}
         >
           <button
             role="menuitem"
@@ -73,7 +74,7 @@ export function AppFrameHeaderAccountMenu({
               onCloseDropdowns();
               onOpenNotifications();
             }}
-            className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5"
+            className={`${appFrameMenuItemClass} justify-between`}
           >
             <span>Notifications</span>
             <TabBadge count={notificationCount > 0 ? notificationCount : undefined} />
@@ -85,7 +86,7 @@ export function AppFrameHeaderAccountMenu({
               onCloseDropdowns();
               onOpenSettings();
             }}
-            className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5"
+            className={appFrameMenuItemClass}
           >
             Settings
           </button>
@@ -97,7 +98,7 @@ export function AppFrameHeaderAccountMenu({
                 onCloseDropdowns();
                 onOpenUserManagement();
               }}
-              className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5"
+                className={appFrameMenuItemClass}
             >
               User Management
             </button>
@@ -109,7 +110,7 @@ export function AppFrameHeaderAccountMenu({
               onCloseDropdowns();
               onLogout();
             }}
-            className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--ink)] transition hover:bg-white/5"
+            className={appFrameMenuItemClass}
           >
             Log Out
           </button>

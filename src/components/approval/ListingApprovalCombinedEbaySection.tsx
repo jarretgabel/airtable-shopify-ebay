@@ -9,6 +9,13 @@ import {
   normalizeEbayListingTemplateId,
 } from '@/components/approval/listingApprovalEbayConstants';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
+import {
+  detailDisclosureBodyClass,
+  detailDisclosureClass,
+  detailDisclosureSummaryClass,
+  detailPreBlockClass,
+  insetPanelClass,
+} from '@/components/tabs/uiClasses';
 import type { ListingApprovalCombinedEbaySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 import { useAuthStore } from '@/stores/auth/authStore';
 
@@ -18,7 +25,7 @@ const EbayApprovalPayloadDetails = lazy(async () => ({
 
 function EbayPayloadFallback() {
   return (
-    <div className="mt-4 rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 text-sm text-[var(--muted)]">
+    <div className={`${insetPanelClass} mt-4 text-sm text-[var(--muted)]`}>
       Loading eBay payload preview...
     </div>
   );
@@ -126,20 +133,20 @@ export function ListingApprovalCombinedEbaySection({
           className="mt-5 border-t border-[var(--line)]/80"
         />
 
-        <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
-          <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">eBay Body (HTML)</summary>
-          <div className="border-t border-[var(--line)] px-3 py-3">
+        <details className={`mt-4 ${detailDisclosureClass}`}>
+          <summary className={detailDisclosureSummaryClass}>eBay Body (HTML)</summary>
+          <div className={detailDisclosureBodyClass}>
             <p className="m-0 mb-2 text-xs text-[var(--muted)]">Read-only HTML from Airtable field.</p>
             {!combinedEbayBodyHtmlFieldName && (
               <p className="m-0 mb-2 text-xs text-[var(--muted)]">No eBay Body HTML field was found for this record.</p>
             )}
-            <pre className="m-0 max-h-[260px] overflow-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{combinedEbayBodyHtmlValue}</pre>
+            <pre className={`${detailPreBlockClass} max-h-[260px] overflow-auto`}>{combinedEbayBodyHtmlValue}</pre>
           </div>
         </details>
 
-        <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
-          <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">eBay Body Rendered</summary>
-          <div className="border-t border-[var(--line)] px-3 py-3">
+        <details className={`mt-4 ${detailDisclosureClass}`}>
+          <summary className={detailDisclosureSummaryClass}>eBay Body Rendered</summary>
+          <div className={detailDisclosureBodyClass}>
             <BodyHtmlPreview
               value={combinedEbayGeneratedBodyHtml || bodyHtmlPreview || combinedEbayBodyHtmlValue}
               previewOnly

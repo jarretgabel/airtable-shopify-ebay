@@ -1,5 +1,6 @@
 import type { ReactNode, Ref } from 'react';
 import type { AppPage } from '@/auth/pages';
+import type { AppTheme } from '@/services/themePreference';
 
 export interface AppTab {
   key: AppPage;
@@ -35,6 +36,8 @@ export interface AppFrameProps {
   onOpenUserManagement: () => void;
   canManageUsers: boolean;
   onLogout: () => void;
+  theme: AppTheme;
+  onToggleTheme: () => void;
   exportProgress: ExportProgress | null;
   exporting: boolean;
   children: ReactNode;

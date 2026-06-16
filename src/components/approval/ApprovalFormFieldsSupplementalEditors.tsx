@@ -9,6 +9,7 @@ import {
   parseWorkflowSelectedImageRows,
   type WorkflowListingImageAttachment,
 } from './workflowListingImageHelpers';
+import { insetPanelClass, sharedIconActionButtonClass } from '@/components/tabs/uiClasses';
 
 const EbayAttributesEditor = lazy(async () => ({
   default: (await import('./EbayAttributesEditor')).EbayAttributesEditor,
@@ -27,7 +28,7 @@ const TestingNotesTextareaEditor = lazy(async () => ({
 }));
 
 const lazyEditorFallback = (
-  <div className="col-span-1 rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 text-sm text-[var(--muted)] md:col-span-2">
+  <div className={`${insetPanelClass} col-span-1 text-sm text-[var(--muted)] md:col-span-2`}>
     Loading editor...
   </div>
 );
@@ -94,7 +95,7 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
   getInputClassName: (fieldName: string, extraClassName?: string) => string;
 }
 
-const iconActionButtonClass = 'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--line)] bg-white/5 text-[var(--muted)] transition hover:border-[var(--accent)] hover:bg-white/10 hover:text-[var(--ink)]';
+const iconActionButtonClass = sharedIconActionButtonClass;
 
 function EditIcon() {
   return (

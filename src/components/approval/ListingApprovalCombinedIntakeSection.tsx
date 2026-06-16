@@ -17,10 +17,11 @@ import {
   findWorkflowImageMetadataFieldName,
   parseWorkflowImageAttachments,
 } from '@/components/approval/workflowListingImageHelpers';
+import { sharedIconActionButtonClass } from '@/components/tabs/uiClasses';
 import { CONDITION_FIELD } from '@/stores/approvalStore';
 import type { ListingApprovalCombinedIntakeSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
-const iconActionButtonClass = 'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--line)] bg-white/5 text-[var(--muted)] transition hover:border-[var(--accent)] hover:bg-white/10 hover:text-[var(--ink)]';
+const iconActionButtonClass = sharedIconActionButtonClass;
 
 function EditIcon() {
   return (

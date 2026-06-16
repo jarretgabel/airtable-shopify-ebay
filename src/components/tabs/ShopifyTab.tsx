@@ -1,7 +1,13 @@
 import { useState, useMemo } from 'react';
 import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
 import { EmptySurface, ErrorSurface, LoadingSurface, PanelSurface } from '@/components/app/StateSurfaces';
-import { darkTableRowHoverClass, listingSummaryClass } from '@/components/tabs/uiClasses';
+import {
+  compactStatPillClass,
+  compactTagPillClass,
+  darkTableRowHoverClass,
+  listingSummaryClass,
+  snapshotOpenListingsButtonClass,
+} from '@/components/tabs/uiClasses';
 import type { ShopifyProduct, ShopifyProductVariant } from '@/types/shopify';
 
 function StatusBadge({ status }: { status: string }) {
@@ -143,10 +149,10 @@ export function ShopifyTab({ viewModel, onOpenProduct }: ShopifyTabProps) {
                   <div className="mt-1.5 text-sm text-[var(--muted)]">{product.vendor || 'No vendor'} · {product.product_type ? trimProductType(product.product_type) : 'No type'}</div>
                   {descriptionPreview && <p className="m-0 mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{descriptionPreview}</p>}
                   <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
-                    <span className="rounded-full border border-[var(--line)] bg-white/5 px-2.5 py-1">{product.variants?.length ?? 0} variant{product.variants?.length === 1 ? '' : 's'}</span>
-                    <span className="rounded-full border border-[var(--line)] bg-white/5 px-2.5 py-1">{product.images?.length ?? 0} image{product.images?.length === 1 ? '' : 's'}</span>
-                    <span className="rounded-full border border-[var(--line)] bg-white/5 px-2.5 py-1">{tags.length} tag{tags.length === 1 ? '' : 's'}</span>
-                    {product.published_at && <span className="rounded-full border border-[var(--line)] bg-white/5 px-2.5 py-1">Published {formatDate(product.published_at)}</span>}
+                    <span className={compactStatPillClass}>{product.variants?.length ?? 0} variant{product.variants?.length === 1 ? '' : 's'}</span>
+                    <span className={compactStatPillClass}>{product.images?.length ?? 0} image{product.images?.length === 1 ? '' : 's'}</span>
+                    <span className={compactStatPillClass}>{tags.length} tag{tags.length === 1 ? '' : 's'}</span>
+                    {product.published_at && <span className={compactStatPillClass}>Published {formatDate(product.published_at)}</span>}
                   </div>
                 </div>
                 <div className="text-left md:min-w-[180px] md:text-right">
@@ -161,13 +167,13 @@ export function ShopifyTab({ viewModel, onOpenProduct }: ShopifyTabProps) {
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] bg-[var(--bg)] px-4 py-3">
               <div className="flex flex-wrap gap-1.5">
                 {tags.slice(0, 4).map((tag) => (
-                  <span key={tag} className="rounded-full border border-[var(--line)] bg-white/5 px-2 py-0.5 text-xs text-[var(--muted)]">{tag}</span>
+                  <span key={tag} className={compactTagPillClass}>{tag}</span>
                 ))}
-                {tags.length > 4 && <span className="rounded-full border border-[var(--line)] bg-white/5 px-2 py-0.5 text-xs text-[var(--muted)]">+{tags.length - 4} more</span>}
+                {tags.length > 4 && <span className={compactTagPillClass}>+{tags.length - 4} more</span>}
               </div>
               <button
                 type="button"
-                className="rounded-md border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100 transition hover:border-sky-300/50 hover:bg-sky-500/25"
+                className={snapshotOpenListingsButtonClass}
                 onClick={openSnapshot}
               >
                 Open Snapshot

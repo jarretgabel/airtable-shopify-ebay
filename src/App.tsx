@@ -12,11 +12,11 @@ const AuthenticatedAppShell = lazy(async () => ({
 
 function AuthenticatedAppShellFallback() {
   return (
-    <main className="min-h-screen px-5 py-8 text-slate-100">
-      <section className="mx-auto w-full max-w-xl rounded-[1.4rem] border border-white/15 bg-slate-950/70 p-6 shadow-[0_24px_48px_rgba(6,13,23,0.45)] backdrop-blur">
-        <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-sky-200/80">Listing Control Center</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Loading workspace</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-300">Preparing the authenticated workspace shell...</p>
+    <main className="min-h-screen px-5 py-8 text-[var(--ink)]">
+      <section className="mx-auto w-full max-w-xl rounded-[1.4rem] border border-[var(--line)] bg-[var(--panel)]/90 p-6 shadow-[var(--elevation-lg)] backdrop-blur">
+        <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-[var(--muted)]">Listing Control Center</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--ink)]">Loading workspace</h1>
+        <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Preparing the authenticated workspace shell...</p>
       </section>
     </main>
   );
@@ -49,11 +49,11 @@ function App() {
 
   if (!usersReady) {
     return (
-      <main className="min-h-screen px-5 py-8 text-slate-100">
-        <section className="mx-auto w-full max-w-xl rounded-[1.4rem] border border-white/15 bg-slate-950/70 p-6 shadow-[0_24px_48px_rgba(6,13,23,0.45)] backdrop-blur">
-          <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-sky-200/80">Listing Control Center</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Loading users</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-300">
+      <main className="min-h-screen px-5 py-8 text-[var(--ink)]">
+        <section className="mx-auto w-full max-w-xl rounded-[1.4rem] border border-[var(--line)] bg-[var(--panel)]/90 p-6 shadow-[var(--elevation-lg)] backdrop-blur">
+          <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-[var(--muted)]">Listing Control Center</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--ink)]">Loading users</h1>
+          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
             {usersLoading ? 'Syncing account access from Airtable...' : 'Preparing account access...'}
           </p>
         </section>

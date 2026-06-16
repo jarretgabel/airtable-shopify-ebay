@@ -1,4 +1,9 @@
 import type { ReactNode } from 'react';
+import {
+  detailDisclosureBodyClass,
+  detailDisclosureClass,
+  detailDisclosureSummaryClass,
+} from '@/components/tabs/uiClasses';
 
 interface TestingNotesTextareaEditorProps {
   fieldName: string;
@@ -25,12 +30,12 @@ export function TestingNotesTextareaEditor({
   headerAction,
 }: TestingNotesTextareaEditorProps) {
   return (
-    <details className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2" open>
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+    <details className={`${detailDisclosureClass} col-span-1 md:col-span-2`} open>
+      <summary className={`${detailDisclosureSummaryClass} flex list-none items-center justify-between gap-3`}>
         <span>{label}</span>
         {headerAction ? <span onClick={(event) => event.stopPropagation()}>{headerAction}</span> : null}
       </summary>
-      <div className="flex flex-col gap-3 border-t border-[var(--line)] px-3 py-3">
+      <div className={`${detailDisclosureBodyClass} flex flex-col gap-3`}>
         <p className="m-0 text-[0.74rem] leading-5 text-[var(--muted)]">
           {helperText}
         </p>

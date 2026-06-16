@@ -6,6 +6,13 @@ import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { isDeveloperRole } from '@/auth/roleAccess';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
 import { isShopifyAdvancedOptionField } from '@/components/approval/approvalFormFieldsShopifyHelpersBasic';
+import {
+  detailDisclosureBodyClass,
+  detailDisclosureClass,
+  detailDisclosureSummaryClass,
+  detailPreBlockClass,
+  insetPanelClass,
+} from '@/components/tabs/uiClasses';
 import type { ListingApprovalCombinedShopifySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 import { useAuthStore } from '@/stores/auth/authStore';
 
@@ -15,7 +22,7 @@ const ShopifyApprovalPayloadDetails = lazy(async () => ({
 
 function ShopifyPayloadFallback() {
   return (
-    <div className="mt-4 rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 text-sm text-[var(--muted)]">
+    <div className={`${insetPanelClass} mt-4 text-sm text-[var(--muted)]`}>
       Loading Shopify payload preview...
     </div>
   );
@@ -101,9 +108,9 @@ export function ListingApprovalCombinedShopifySection({
         )}
 
         {advancedShopifyFieldNames.length > 0 && (
-          <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
-            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Advanced Shopify Variant Fields</summary>
-            <div className="border-t border-[var(--line)] px-3 py-3">
+          <details className={`mt-4 ${detailDisclosureClass}`}>
+            <summary className={detailDisclosureSummaryClass}>Advanced Shopify Variant Fields</summary>
+            <div className={detailDisclosureBodyClass}>
               <ApprovalFormFields
                 recordId={selectedRecord.id}
                 approvalChannel="shopify"
@@ -142,20 +149,20 @@ export function ListingApprovalCombinedShopifySection({
           />
         )}
 
-        <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
-          <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify Body (HTML)</summary>
-          <div className="border-t border-[var(--line)] px-3 py-3">
+        <details className={`mt-4 ${detailDisclosureClass}`}>
+          <summary className={detailDisclosureSummaryClass}>Shopify Body (HTML)</summary>
+          <div className={detailDisclosureBodyClass}>
             <p className="m-0 mb-2 text-xs text-[var(--muted)]">Generated from the current Shopify body preview when available, otherwise falls back to the saved Airtable field.</p>
             {!combinedShopifyBodyHtmlFieldName && (
               <p className="m-0 mb-2 text-xs text-[var(--muted)]">No Shopify Body HTML field was found for this record.</p>
             )}
-            <pre className="m-0 max-h-[260px] overflow-auto rounded-md border border-[var(--line)] bg-black/30 p-3 text-xs text-[var(--ink)]">{displayedShopifyBodyHtml}</pre>
+            <pre className={`${detailPreBlockClass} max-h-[260px] overflow-auto`}>{displayedShopifyBodyHtml}</pre>
           </div>
         </details>
 
-        <details className="mt-4 rounded-lg border border-[var(--line)] bg-white/5">
-          <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">Shopify Body Rendered</summary>
-          <div className="border-t border-[var(--line)] px-3 py-3">
+        <details className={`mt-4 ${detailDisclosureClass}`}>
+          <summary className={detailDisclosureSummaryClass}>Shopify Body Rendered</summary>
+          <div className={detailDisclosureBodyClass}>
             <BodyHtmlPreview value={displayedShopifyBodyHtml} previewOnly />
           </div>
         </details>

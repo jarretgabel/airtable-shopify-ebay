@@ -1,5 +1,10 @@
 import { Fragment, type ComponentProps, type ReactNode } from 'react';
 import { ApprovalFormStandardField } from './ApprovalFormStandardField';
+import {
+  detailDisclosureBodyClass,
+  detailDisclosureClass,
+  detailDisclosureSummaryClass,
+} from '@/components/tabs/uiClasses';
 
 type StandardFieldSharedProps = Omit<ComponentProps<typeof ApprovalFormStandardField>, 'fieldName'>;
 
@@ -39,11 +44,11 @@ function renderAdvancedOptionsBlock(
   if (!showEbayAdvancedOptions || ebayAdvancedOptionFieldNames.length === 0) return null;
 
   return (
-    <details className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2">
-      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+    <details className={`${detailDisclosureClass} col-span-1 md:col-span-2`}>
+      <summary className={detailDisclosureSummaryClass}>
         Advanced Options
       </summary>
-      <div className="grid grid-cols-1 gap-4 border-t border-[var(--line)] px-3 py-3 md:grid-cols-2">
+      <div className={`${detailDisclosureBodyClass} grid grid-cols-1 gap-4 md:grid-cols-2`}>
         {ebayAdvancedOptionFieldNames.map((fieldName) => renderStandardField(fieldName, standardFieldProps, true))}
       </div>
     </details>

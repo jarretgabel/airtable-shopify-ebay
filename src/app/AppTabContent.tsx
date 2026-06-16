@@ -49,15 +49,15 @@ const ArchiveQueueTab = lazy(async () => ({ default: (await import('@/components
 
 function TabLoadingFallback({ tabLabel }: { tabLabel: string }) {
   return (
-    <section className="rounded-[1.25rem] border border-white/10 bg-slate-950/50 p-5 text-sm text-slate-300 shadow-[0_18px_40px_rgba(6,13,23,0.32)]">
-      <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-slate-400">Loading view</p>
-      <p className="m-0 mt-2 text-base font-semibold text-slate-100">Preparing {tabLabel}</p>
+    <section className="rounded-[1.25rem] border border-[var(--line)] bg-[var(--surface-veil-soft)] p-5 text-sm text-[var(--muted)] shadow-[var(--elevation-lg)]">
+      <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Loading view</p>
+      <p className="m-0 mt-2 text-base font-semibold text-[var(--ink)]">Preparing {tabLabel}</p>
       <div className="mt-4 space-y-3" aria-hidden="true">
-        <div className="h-4 w-40 animate-pulse rounded-md bg-white/10" />
-        <div className="h-24 animate-pulse rounded-xl bg-white/5" />
+        <div className="h-4 w-40 animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
+        <div className="h-24 animate-pulse rounded-xl bg-[var(--skeleton-soft)]" />
         <div className="grid gap-3 md:grid-cols-2">
-          <div className="h-20 animate-pulse rounded-xl bg-white/5" />
-          <div className="h-20 animate-pulse rounded-xl bg-white/5" />
+          <div className="h-20 animate-pulse rounded-xl bg-[var(--skeleton-soft)]" />
+          <div className="h-20 animate-pulse rounded-xl bg-[var(--skeleton-soft)]" />
         </div>
       </div>
     </section>
@@ -69,32 +69,32 @@ function DashboardTabLoadingFallback() {
 
   return (
     <section className="flex flex-col gap-12 pt-1" aria-hidden="true">
-      <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(7,17,28,0.94),rgba(7,17,28,0.82))] px-3 py-3 shadow-[0_18px_40px_rgba(2,6,23,0.35)] backdrop-blur-md">
+      <div className="rounded-[18px] border border-[var(--line)] bg-[var(--surface-veil)] px-3 py-3 shadow-[var(--elevation-lg)] backdrop-blur-md">
         <div className="flex min-w-max items-center gap-2">
           {Array.from({ length: 6 }, (_, index) => (
-            <div key={index} className="h-11 w-28 animate-pulse rounded-full bg-white/8" />
+            <div key={index} className="h-11 w-28 animate-pulse rounded-full bg-[var(--skeleton-soft)]" />
           ))}
         </div>
       </div>
-      <div className="rounded-[14px] border border-amber-400/20 bg-amber-500/8 px-4 py-4 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]">
-        <div className="h-3 w-40 animate-pulse rounded-md bg-amber-200/15" />
-        <div className="mt-3 h-4 w-[min(42rem,85%)] animate-pulse rounded-md bg-white/10" />
-        <div className="mt-2 h-4 w-[min(32rem,70%)] animate-pulse rounded-md bg-white/10" />
+      <div className="rounded-[14px] border border-[var(--info-border)] bg-[var(--info-bg)] px-4 py-4 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]">
+        <div className="h-3 w-40 animate-pulse rounded-md bg-[var(--skeleton-soft)]" />
+        <div className="mt-3 h-4 w-[min(42rem,85%)] animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
+        <div className="mt-2 h-4 w-[min(32rem,70%)] animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
       </div>
       <div className={sectionPanelClass}>
-        <div className="mb-4 h-8 w-32 animate-pulse rounded-md bg-white/10" />
+        <div className="mb-4 h-8 w-32 animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
         <div className="space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
-          <div className="h-6 w-36 animate-pulse rounded-md bg-white/10" />
+          <div className="h-6 w-36 animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }, (_, index) => (
-              <div key={index} className="h-40 animate-pulse rounded-[14px] border border-[var(--line)] bg-white/5" />
+              <div key={index} className="h-40 animate-pulse rounded-[14px] border border-[var(--line)] bg-[var(--skeleton-soft)]" />
             ))}
           </div>
         </div>
         <div className="mt-4 space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
-          <div className="h-6 w-40 animate-pulse rounded-md bg-white/10" />
+          <div className="h-6 w-40 animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
           {Array.from({ length: 3 }, (_, index) => (
-            <div key={index} className="h-20 animate-pulse rounded-[12px] border border-[var(--line)] bg-white/5" />
+            <div key={index} className="h-20 animate-pulse rounded-[12px] border border-[var(--line)] bg-[var(--skeleton-soft)]" />
           ))}
         </div>
         <div className="mt-4 space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
@@ -833,7 +833,7 @@ export function AppTabContent({
   return (
     <div className="relative">
       {isRouteTransitionPending && (
-        <div className="pointer-events-none absolute right-3 top-3 z-10 rounded-full border border-sky-300/30 bg-slate-950/80 px-3 py-1 text-[0.72rem] font-semibold tracking-[0.04em] text-sky-100 shadow-[0_10px_24px_rgba(6,13,23,0.28)]">
+        <div className="pointer-events-none absolute right-3 top-3 z-10 rounded-full border border-[var(--info-border)] bg-[var(--surface-veil)] px-3 py-1 text-[0.72rem] font-semibold tracking-[0.04em] text-[var(--info-ink)] shadow-[var(--elevation-lg)]">
           Loading {getTabLoadingLabel(activeTab)}...
         </div>
       )}

@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 
 import { flattenEbayAspects, serializeEbayAspects } from '@/services/ebayAspects';
+import {
+  detailDisclosureBodyClass,
+  detailDisclosureClass,
+  detailDisclosureSummaryClass,
+} from '@/components/tabs/uiClasses';
 import { ApprovalSelect } from './ApprovalSelect';
 
 interface EbayAttributesEditorProps {
@@ -258,8 +263,8 @@ export function EbayAttributesEditor({
   const filledRowCount = rows.filter((row) => row.name.trim() && row.value.trim()).length;
 
   return (
-    <details className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2" open>
-      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-[var(--ink)]">
+    <details className={`${detailDisclosureClass} col-span-1 md:col-span-2`} open>
+      <summary className={detailDisclosureSummaryClass}>
         <span className="inline-flex items-center gap-2">
           <span>{label}</span>
           <span className="rounded-full border border-[var(--line)] px-2 py-0.5 text-[0.68rem] font-medium text-[var(--muted)]">
@@ -267,7 +272,7 @@ export function EbayAttributesEditor({
           </span>
         </span>
       </summary>
-      <div className="flex flex-col gap-3 border-t border-[var(--line)] px-3 py-3">
+      <div className={`${detailDisclosureBodyClass} flex flex-col gap-3`}>
         <p className="m-0 text-[0.74rem] leading-5 text-[var(--muted)]">
           eBay item specifics used for buyer filters and product attributes. Choose a preset to add the common rows for that listing type.
         </p>

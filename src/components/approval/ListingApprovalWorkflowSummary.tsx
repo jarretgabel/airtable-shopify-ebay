@@ -7,6 +7,18 @@ import {
 } from '@/services/usedGearWorkflow';
 import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
 import { buildUsedGearWorkflowTimeline, type UsedGearWorkflowTimelineEntry } from '@/services/usedGearWorkflowTimeline';
+import {
+  sectionLabelClass,
+  sectionTitleHeadingClass,
+  sectionTitleDescriptionClass,
+  workflowCardSurfaceClass,
+  workflowInnerPanelClass,
+  workflowMetaChipClass,
+  workflowPrimaryActionClass,
+  workflowReadinessBoxClass,
+  workflowSecondaryActionClass,
+  workflowTimelineTooltipBaseClass,
+} from '@/components/tabs/uiClasses';
 import type { AirtableRecord } from '@/types/airtable';
 
 export interface ListingApprovalWorkflowSummaryData {
@@ -418,7 +430,7 @@ export function ListingApprovalWorkflowProcessCard({
 }: ListingApprovalWorkflowProcessCardProps) {
   if (loading) {
     return (
-      <section className="mb-4 rounded-2xl border border-[var(--line)] bg-white/5 p-4">
+      <section className={workflowCardSurfaceClass}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-2">
             <div className="h-3 w-40 animate-pulse rounded bg-white/10" />
@@ -427,7 +439,7 @@ export function ListingApprovalWorkflowProcessCard({
           <div className="h-7 w-36 animate-pulse rounded-full bg-white/10" />
         </div>
         <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
+          <div className={workflowInnerPanelClass}>
             <div className="h-4 w-40 animate-pulse rounded bg-white/10" />
             <div className="mt-4 h-2 animate-pulse rounded-full bg-white/10" />
             <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -451,12 +463,12 @@ export function ListingApprovalWorkflowProcessCard({
 
   if (!summary) {
     return (
-      <section className="mb-4 rounded-2xl border border-[var(--line)] bg-white/5 p-4">
+      <section className={workflowCardSurfaceClass}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{eyebrow}</p>
-            <h4 className="m-0 mt-2 text-base font-semibold text-[var(--ink)]">{title}</h4>
-            <p className="m-0 mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{description}</p>
+            <p className={sectionLabelClass}>{eyebrow}</p>
+            <h4 className={`${sectionTitleHeadingClass} mt-2`}>{title}</h4>
+            <p className={`${sectionTitleDescriptionClass} max-w-3xl leading-6`}>{description}</p>
           </div>
         </div>
         <div className={[
@@ -575,7 +587,7 @@ export function ListingApprovalWorkflowProcessCard({
                         <p className="m-0 truncate text-sm font-semibold text-[var(--ink)]">{entry.label}</p>
                       </div>
 
-                      <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-xl border border-[var(--line)] bg-[var(--panel)]/95 px-3 py-3 opacity-0 shadow-[0_20px_45px_rgba(0,0,0,0.35)] backdrop-blur transition md:block group-hover:pointer-events-auto group-hover:opacity-100 group-focus:pointer-events-auto group-focus:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                      <div className={`${workflowTimelineTooltipBaseClass} w-72`}>
                         <div>
                           <p className="m-0 mt-1 text-sm font-semibold text-[var(--ink)]">{entry.label}</p>
                         </div>
@@ -616,7 +628,7 @@ export function ListingApprovalWorkflowProcessCard({
                       />
                       <span className="sr-only">{entry.label} {isCompleted ? 'Completed' : 'Pending'}</span>
 
-                      <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-64 -translate-x-1/2 rounded-xl border border-[var(--line)] bg-[var(--panel)]/95 px-3 py-3 opacity-0 shadow-[0_20px_45px_rgba(0,0,0,0.35)] backdrop-blur transition md:block group-hover:pointer-events-auto group-hover:opacity-100 group-focus:pointer-events-auto group-focus:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                      <div className={`${workflowTimelineTooltipBaseClass} w-64`}>
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="m-0 mt-1 text-sm font-semibold text-[var(--ink)]">{entry.label}</p>
@@ -651,9 +663,9 @@ export function ListingApprovalWorkflowProcessCard({
 
   if (timelineOnly) {
     return (
-      <section className="mb-4 rounded-2xl border border-[var(--line)] bg-white/5 p-4">
+      <section className={workflowCardSurfaceClass}>
         <div>
-          <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow Timeline</p>
+          <p className={sectionLabelClass}>Workflow Timeline</p>
         </div>
         <div className="mt-4">
           {milestonesContent}
@@ -663,17 +675,17 @@ export function ListingApprovalWorkflowProcessCard({
   }
 
   return (
-    <section className="mb-4 rounded-2xl border border-[var(--line)] bg-white/5 p-4">
+    <section className={workflowCardSurfaceClass}>
       <div>
-        <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{eyebrow}</p>
-        <h4 className="m-0 mt-2 text-base font-semibold text-[var(--ink)]">{title}</h4>
-        <p className="m-0 mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{description}</p>
+        <p className={sectionLabelClass}>{eyebrow}</p>
+        <h4 className={`${sectionTitleHeadingClass} mt-2`}>{title}</h4>
+        <p className={`${sectionTitleDescriptionClass} max-w-3xl leading-6`}>{description}</p>
       </div>
 
       <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
+        <div className={workflowInnerPanelClass}>
           <div>
-            <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Process Overview</p>
+            <p className={sectionLabelClass}>Process Overview</p>
             <h5 className="m-0 mt-2 text-sm font-semibold text-[var(--ink)]">{statusPresentation.statusLabel}</h5>
             <p className="m-0 mt-1 max-w-2xl text-sm leading-6 text-[var(--muted)]">{statusPresentation.statusDescription}</p>
           </div>
@@ -693,19 +705,19 @@ export function ListingApprovalWorkflowProcessCard({
             </div>
           ) : null}
           <div className="mt-4 flex flex-wrap gap-2">
-            <div className="rounded-full border border-[var(--line)] bg-white/5 px-3 py-1.5 text-sm text-[var(--muted)]">
+            <div className={workflowMetaChipClass}>
               <span className="font-semibold text-[var(--ink)]">{completedCount}/{summary.timeline.length}</span> milestones
             </div>
-            <div className="rounded-full border border-[var(--line)] bg-white/5 px-3 py-1.5 text-sm text-[var(--muted)]">
+            <div className={workflowMetaChipClass}>
               <span className="text-[var(--muted)]">Next:</span>{' '}
               <span className="font-semibold text-[var(--ink)]">{summary.workflowNextTeam || 'No open handoff'}</span>
             </div>
-            <div className="rounded-full border border-[var(--line)] bg-white/5 px-3 py-1.5 text-sm text-[var(--muted)]">
+            <div className={workflowMetaChipClass}>
               <span className="text-[var(--muted)]">Price:</span>{' '}
               <span className="font-semibold text-[var(--ink)]">{summary.resolvedPrice || 'Missing price'}</span>
             </div>
             {summary.preListingReviewedBy ? (
-              <div className="rounded-full border border-[var(--line)] bg-white/5 px-3 py-1.5 text-sm text-[var(--muted)]">
+              <div className={workflowMetaChipClass}>
                 <span className="text-[var(--muted)]">Reviewer:</span>{' '}
                 <span className="font-semibold text-[var(--ink)]">{summary.preListingReviewedBy}</span>
               </div>
@@ -715,7 +727,7 @@ export function ListingApprovalWorkflowProcessCard({
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
-                className="rounded-xl border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100 transition hover:border-sky-300/45 hover:bg-sky-500/20"
+                className={workflowPrimaryActionClass}
                 onClick={onPrimaryAction}
               >
                 {primaryActionLabel}
@@ -723,7 +735,7 @@ export function ListingApprovalWorkflowProcessCard({
               {secondaryActionLabel && onSecondaryAction ? (
                 <button
                   type="button"
-                  className="rounded-xl border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                  className={workflowSecondaryActionClass}
                   onClick={onSecondaryAction}
                 >
                   {secondaryActionLabel}
@@ -733,9 +745,9 @@ export function ListingApprovalWorkflowProcessCard({
           ) : null}
         </div>
 
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
-          <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Listing Readiness</p>
-          <div className="mt-3 rounded-xl border border-[var(--line)] bg-white/5 px-3 py-3 text-sm text-[var(--muted)]">
+        <div className={workflowInnerPanelClass}>
+          <p className={sectionLabelClass}>Listing Readiness</p>
+          <div className={workflowReadinessBoxClass}>
             <div className="text-[var(--muted)]">Resolved price</div>
             <div className="mt-1 font-semibold text-[var(--ink)]">{summary.resolvedPrice || 'Missing price'}</div>
           </div>
