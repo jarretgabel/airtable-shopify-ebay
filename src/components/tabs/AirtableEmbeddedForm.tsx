@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
@@ -199,6 +199,12 @@ export function AirtableEmbeddedForm({
   recordId,
   onLoadResult,
 }: AirtableEmbeddedFormProps) {
+  const onLoadResultRef = useRef<typeof onLoadResult>(onLoadResult);
+
+  useEffect(() => {
+    onLoadResultRef.current = onLoadResult;
+  }, [onLoadResult]);
+
   const [editFormValues, setEditFormValues] = useState<ManualIntakeFormValues>(() => createManualIntakeFormDefaults());
   const [initialEditFormValues, setInitialEditFormValues] = useState<ManualIntakeFormValues>(() => createManualIntakeFormDefaults());
   const [sharedValues, setSharedValues] = useState<ManualIntakeSharedFormValues>(() => createManualIntakeSharedFormDefaults());
@@ -254,7 +260,7 @@ export function AirtableEmbeddedForm({
             setCollapsedItemIndexes([]);
           }
 
-          onLoadResult?.(nextFormValues);
+          onLoadResultRef.current?.(nextFormValues);
         }
       } catch (error) {
         if (!cancelled) {
@@ -273,7 +279,7 @@ export function AirtableEmbeddedForm({
     return () => {
       cancelled = true;
     };
-  }, [onLoadResult, recordId]);
+  }, [recordId]);
 
   const clearSubmissionState = () => {
     setSubmitError(null);

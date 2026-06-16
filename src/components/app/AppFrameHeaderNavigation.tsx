@@ -18,7 +18,8 @@ interface MobileNavSection {
 }
 
 const INTAKE_SECTION_KEYS = {
-  forms: ['manual-intake', 'create-intake-item', 'jotform', 'jotform-audit'] as const,
+  create: ['create-intake-item'] as const,
+  forms: ['manual-intake', 'jotform', 'jotform-audit'] as const,
   parkingLots: ['parking-lot'] as const,
   trash: ['trash-review'] as const,
 };
@@ -77,6 +78,12 @@ export function AppFrameHeaderNavigation({
   const activeMobileTab = [...tabs, ...intakeTabs, ...inventoryProcessingTabs, ...sellingMobileTabs, ...utilityTabs].find((tab) => tab.active) ?? null;
   const intakeTabLookup = new Map(intakeTabs.map((tab) => [tab.key, tab]));
   const intakeSections: TabSection[] = [
+    {
+      title: 'Create',
+      tabs: INTAKE_SECTION_KEYS.create
+        .map((key) => intakeTabLookup.get(key))
+        .filter((tab): tab is AppTab => Boolean(tab)),
+    },
     {
       title: 'Intake Forms',
       tabs: INTAKE_SECTION_KEYS.forms

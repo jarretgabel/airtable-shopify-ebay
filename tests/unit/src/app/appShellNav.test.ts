@@ -118,10 +118,10 @@ describe('buildAppFrameNavTabs', () => {
       navigateToUsersList: vi.fn(),
     });
 
-    expect(result.intakeNavTabs.map((tab) => tab.key)).toEqual(['manual-intake', 'jotform', 'parking-lot', 'trash-review']);
+    expect(result.intakeNavTabs.map((tab) => tab.key)).toEqual(['manual-intake', 'create-intake-item', 'jotform', 'parking-lot', 'trash-review']);
     expect(result.tabs.map((tab) => tab.key)).toEqual(['dashboard', 'inventory']);
     expect(result.tabs.find((tab) => tab.key === 'jotform-audit')).toBeUndefined();
-    expect(result.intakeNavTabs.find((tab) => tab.key === 'create-intake-item')).toBeUndefined();
+    expect(result.intakeNavTabs.find((tab) => tab.key === 'create-intake-item')).toBeDefined();
     expect(result.inventoryProcessingNavTabs.map((tab) => tab.key)).toEqual(['testing-queue', 'photography-queue']);
     expect(result.listingsNavTabs.map((tab) => tab.key)).toEqual(['listings', 'post-publish', 'shopify', 'ebay']);
     expect(result.postPublishNavTabs).toEqual([]);

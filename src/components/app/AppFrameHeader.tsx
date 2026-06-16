@@ -87,16 +87,16 @@ export function AppFrameHeader({
             aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
             title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
             onClick={onToggleTheme}
-            className="!h-9 !w-9 !p-0 sm:!h-10 sm:!w-10"
+            className="!px-2.5 !py-2 sm:!px-3 lg:!px-3 lg:!py-2 xl:!px-4 xl:!py-2.5"
           >
-            <span className="inline-flex h-5 w-5 items-center justify-center" aria-hidden="true">
+            <span className="inline-flex h-6 w-6 items-center justify-center lg:h-5 lg:w-5 xl:h-6 xl:w-6" aria-hidden="true">
               {theme === 'dark' ? (
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
+                <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 lg:h-4 lg:w-4 xl:h-4.5 xl:w-4.5" fill="none" stroke="currentColor" strokeWidth="1.9">
                   <circle cx="12" cy="12" r="4" />
                   <path d="M12 2.75v2.2M12 19.05v2.2M4.92 4.92l1.56 1.56M17.52 17.52l1.56 1.56M2.75 12h2.2M19.05 12h2.2M4.92 19.08l1.56-1.56M17.52 6.48l1.56-1.56" />
                 </svg>
               ) : (
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
+                <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 lg:h-4 lg:w-4 xl:h-4.5 xl:w-4.5" fill="none" stroke="currentColor" strokeWidth="1.9">
                   <path d="M20.6 14.3A8.4 8.4 0 1 1 9.7 3.4 7.2 7.2 0 0 0 20.6 14.3Z" />
                 </svg>
               )}

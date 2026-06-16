@@ -44,6 +44,7 @@ describe('AppFrameHeaderNavigation', () => {
     expect(screen.queryByText('Trash')).not.toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Manual Intake' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Create Intake Item' })).toBeInTheDocument();
+    expect(screen.getAllByRole('menuitem')[0]).toHaveTextContent('Create Intake Item');
     expect(screen.getByRole('menuitem', { name: 'JotForm' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'JotForm Audit' })).toBeInTheDocument();
     expect(screen.getAllByText('Parking Lot')).toHaveLength(1);

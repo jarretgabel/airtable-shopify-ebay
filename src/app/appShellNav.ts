@@ -1,7 +1,7 @@
 import { Tab, INTAKE_TAB_SET, INVENTORY_PROCESSING_TAB_SET, LISTINGS_TAB_SET, POST_PUBLISH_TAB_SET, UTILITY_TAB_SET, navLabel } from './appNavigation';
 
 const FORM_ONLY_TAB_SET = new Set<Tab>(['testing', 'photos']);
-const HIDDEN_TAB_SET = new Set<Tab>(['workflow-guide-editor', 'jotform-audit', 'create-intake-item', 'market']);
+const HIDDEN_TAB_SET = new Set<Tab>(['workflow-guide-editor', 'jotform-audit', 'market']);
 
 interface NavTab {
   key: Tab;
