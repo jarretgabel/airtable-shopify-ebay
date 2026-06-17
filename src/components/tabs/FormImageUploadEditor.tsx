@@ -99,7 +99,7 @@ function createUploadItem(
     outputWarnings: nextOutput.warnings,
     imageRole: undefined,
     customImageRole: '',
-    altText: namingContext ? buildImageAltText(namingContext) : '',
+    altText: namingContext ? buildImageAltText(namingContext, { role: undefined, customRole: '' }) : '',
     crop: { ...defaults.crop },
   };
 }
@@ -304,7 +304,9 @@ export function FormImageUploadEditor({
         error: undefined,
         outputFilename: nextOutput.filename,
         outputWarnings: nextOutput.warnings,
-        altText: namingContext ? buildImageAltText(namingContext) : item.altText,
+        altText: namingContext
+          ? buildImageAltText(namingContext, { role: item.imageRole, customRole: item.customImageRole })
+          : item.altText,
         crop: { ...defaultSettings.crop },
       };
     });
@@ -684,6 +686,9 @@ export function FormImageUploadEditor({
                                   customImageRole: nextCustomRole,
                                   outputFilename: nextOutput.filename,
                                   outputWarnings: nextOutput.warnings,
+                                  altText: namingContext
+                                    ? buildImageAltText(namingContext, { role: normalizedRole, customRole: nextCustomRole })
+                                    : current.altText,
                                   editedFile: null,
                                   processed: null,
                                   status: 'idle',
@@ -728,6 +733,9 @@ export function FormImageUploadEditor({
                                   customImageRole: nextCustomImageRole,
                                   outputFilename: nextOutput.filename,
                                   outputWarnings: nextOutput.warnings,
+                                  altText: namingContext
+                                    ? buildImageAltText(namingContext, { role: current.imageRole, customRole: nextCustomImageRole })
+                                    : current.altText,
                                   editedFile: null,
                                   processed: null,
                                   status: 'idle',
@@ -772,7 +780,7 @@ export function FormImageUploadEditor({
                             updateItem(item.id, (current) => ({ ...current, altText: nextAltText }));
                           }}
                           disabled={disabled}
-                          placeholder="Brand Model product type available at Resolution AV"
+                          placeholder="McIntosh MC225 Stereo Tube Power Amplifier Left Side"
                         />
                       </label>
                     </div>

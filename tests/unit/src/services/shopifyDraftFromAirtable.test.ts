@@ -89,6 +89,33 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     expect(request.input.files).toBeUndefined();
   });
 
+  it('passes workflow metadata alt text into Shopify unified file payload', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify Title': 'Alt Text Payload Product',
+      'Workflow Image Metadata JSON': JSON.stringify([
+        {
+          attachmentId: 'att-side',
+          url: 'https://cdn.example.com/mc225-left-side.jpg',
+          filename: 'mc225-left-side.jpg',
+          alt: 'McIntosh MC225 Stereo Tube Power Amplifier Left Side',
+          sortOrder: 1,
+          sourceStage: 'photos',
+          includedInListing: true,
+        },
+      ]),
+    });
+
+    const request = buildShopifyUnifiedProductSetRequest(product);
+
+    expect(request.input.files).toEqual([
+      {
+        originalSource: 'https://cdn.example.com/mc225-left-side.jpg',
+        alt: 'McIntosh MC225 Stereo Tube Power Amplifier Left Side',
+        contentType: 'IMAGE',
+      },
+    ]);
+  });
+
   it('does not use eBay-specific title fallback for Shopify payloads', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'eBay Inventory Product Title': 'Should Not Be Used',

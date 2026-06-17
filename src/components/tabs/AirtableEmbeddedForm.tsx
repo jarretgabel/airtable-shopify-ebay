@@ -29,6 +29,7 @@ type ManualIntakeOptionSets = Record<ManualIntakeFormOptionFieldName, string[]>;
 type FieldValueMap = Record<string, string | File[]>;
 
 const FIELD_CLASS = 'mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
+const SELECT_FIELD_CLASS = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
 const LABEL_CLASS = 'text-sm font-semibold text-[var(--ink)]';
 const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'mt-2 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus:ring-[var(--accent)]/20';
@@ -147,16 +148,34 @@ function renderField(
     const options = definition.optionFieldName ? optionSets[definition.optionFieldName] : [];
 
     return (
-      <select
-        className={FIELD_CLASS}
-        value={(value as string) ?? ''}
-        onChange={(event) => onValueChange(event.currentTarget.value)}
-      >
-        <option value="">Select an option</option>
-        {options.map((option) => (
-          <option key={option} value={option}>{option}</option>
-        ))}
-      </select>
+      <div className="relative mt-2">
+        <select
+          className={`${SELECT_FIELD_CLASS} appearance-none pr-12`}
+          value={(value as string) ?? ''}
+          onChange={(event) => onValueChange(event.currentTarget.value)}
+        >
+          <option value="">Select an option</option>
+          {options.map((option) => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+        >
+          <svg
+            viewBox="0 0 16 16"
+            className="block h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M4 6.25 8 10.25 12 6.25" />
+          </svg>
+        </span>
+      </div>
     );
   }
 

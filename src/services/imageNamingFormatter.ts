@@ -21,6 +21,20 @@ export interface ImageNamingResult {
   warnings: string[];
 }
 
+const ROLE_LABELS: Record<Exclude<WorkflowImageRole, 'custom'>, string> = {
+  front: 'Front View',
+  rear: 'Rear View',
+  'serial-plate': 'Serial Plate',
+  'cosmetic-detail': 'Cosmetic Detail',
+  connections: 'Connections',
+  top: 'Top View',
+  bottom: 'Bottom View',
+  side: 'Side View',
+  interior: 'Interior',
+  accessories: 'Accessories',
+  packaging: 'Packaging',
+};
+
 function splitIntoTokens(value: string): string[] {
   return value
     .toLowerCase()
@@ -48,6 +62,15 @@ function toTitle(value: string): string {
     .map((token) => token ? `${token.slice(0, 1).toUpperCase()}${token.slice(1)}` : '')
     .join(' ')
     .trim();
+}
+
+function resolveRoleLabel(role: WorkflowImageRole | undefined, customRole: string | undefined): string {
+  if (!role) return '';
+  if (role === 'custom') {
+    return toTitle(customRole ?? '');
+  }
+
+  return ROLE_LABELS[role];
 }
 
 function clampTokens(tokens: string[]): { tokens: string[]; warnings: string[] } {
@@ -92,18 +115,12 @@ export function buildImageFilename(context: ImageNamingContext, options: ImageNa
   };
 }
 
-export function buildImageAltText(context: ImageNamingContext): string {
+export function buildImageAltText(context: ImageNamingContext, options: ImageNamingOptions = {}): string {
   const brand = toTitle(context.brand);
   const model = context.model.trim();
-  const productType = context.productType.trim().toLowerCase();
-  const prefix = [brand, model, productType].filter(Boolean).join(' ').trim();
-  const company = context.companyName?.trim();
-
-  if (!company) {
-    return prefix;
-  }
-
-  return `${prefix} available at ${company}`.trim();
+  const productType = toTitle(context.productType);
+  const roleLabel = resolveRoleLabel(options.role, options.customRole);
+  return [brand, model, productType, roleLabel].filter(Boolean).join(' ').trim();
 }
 
 export function isImageRoleComplete(role: WorkflowImageRole | undefined, customRole: string | undefined): boolean {
