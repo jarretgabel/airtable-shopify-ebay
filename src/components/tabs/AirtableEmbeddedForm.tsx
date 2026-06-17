@@ -434,6 +434,7 @@ export function AirtableEmbeddedForm({
 
   const jotFormSubmissionUrl = buildJotFormSubmissionUrl(jotFormSubmissionId);
   const isEditMode = Boolean(recordId);
+  const editFieldGroups = groupFields(manualIntakeFormFields);
   const sharedFieldGroups = groupFields(manualIntakeSharedFormFields);
   const itemFieldGroups = groupFields(manualIntakeItemFormFields);
   const editFieldValues = editFormValues as unknown as FieldValueMap;
@@ -489,7 +490,7 @@ export function AirtableEmbeddedForm({
         ) : null}
 
         {isEditMode ? (
-          manualIntakeFormFields.map((group) => {
+          editFieldGroups.map((group) => {
             if (Array.isArray(group)) {
               return (
                 <div key={`${group[0].name}-${group[1].name}`} className="grid grid-cols-1 gap-5 sm:grid-cols-2">

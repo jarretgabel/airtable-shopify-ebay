@@ -29,6 +29,7 @@
     "workflow:image-filename-backfill:apply": "node --import tsx scripts/backfill-workflow-image-filenames.ts apply --confirm RENAME_WORKFLOW_PROCESSED_IMAGES",
     "workflow:seed-reference:plan": "node --import tsx scripts/seed-reference-workflow-statuses.ts plan",
     "workflow:seed-reference:apply": "node --import tsx scripts/seed-reference-workflow-statuses.ts apply --confirm SEED_REFERENCE_WORKFLOW_STATUSES",
+    "workflow:seed-reference:rollback": "node --import tsx scripts/seed-reference-workflow-statuses.ts rollback --confirm ROLLBACK_SEED_REFERENCE_WORKFLOW_STATUSES",
     "jotform:backfill:plan": "node --import tsx scripts/backfill-jotform-workflow-submissions.ts plan",
     "jotform:backfill:apply": "node --import tsx scripts/backfill-jotform-workflow-submissions.ts apply",
     "jotform:backfill-fields:plan": "node --import tsx scripts/backfill-jotform-seller-fields.ts plan",

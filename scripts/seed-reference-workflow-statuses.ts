@@ -3,16 +3,17 @@ import path from 'node:path';
 import process from 'node:process';
 import dotenv from 'dotenv';
 
-import { archiveWorkflowImagesToGoogleDrive, type WorkflowImageArchiveStage } from '../aws/src/providers/googleDrive/client.ts';
-import { createRecord, getRecords, getTableMetadata, updateRecord, type AirtableRecord } from '../aws/src/providers/airtable/client.ts';
+import { createRecord, getRecords, getTableMetadata, updateRecord, type AirtableMetadataField, type AirtableRecord } from '../aws/src/providers/airtable/client.ts';
 
 const SOURCE_BASE_ID = 'appjQj8FQfFZ2ogMz';
 const SOURCE_TABLE_ID = 'tblirsoRIFPDMHxb0';
+const SOURCE_VIEW_ID = 'viwaPByxQY4QBJS3K';
 const DEST_BASE_ID = 'apprsAm2FOohEmL2u';
 const DEST_TABLE_ID = 'tbl0K0nFQL64jQMx8';
 
 const RUNS_DIR = path.join(process.cwd(), 'tmp', 'reference-workflow-seed');
 const APPLY_CONFIRM_TOKEN = 'SEED_REFERENCE_WORKFLOW_STATUSES';
+const ROLLBACK_CONFIRM_TOKEN = 'ROLLBACK_SEED_REFERENCE_WORKFLOW_STATUSES';
 const BATCH_SIZE = 10;
 
 const APPROVED_WORKFLOW_STATUSES = new Set([
@@ -33,27 +34,25 @@ const APPROVED_WORKFLOW_STATUSES = new Set([
   'Shipped',
 ]);
 
-const ALLOWED_WRITE_FIELDS = new Set([
+const NON_WRITABLE_FIELD_TYPES = new Set([
+  'autoNumber',
+  'button',
+  'count',
+  'createdBy',
+  'createdTime',
+  'formula',
+  'lastModifiedBy',
+  'lastModifiedTime',
+  'multipleLookupValues',
+  'rollup',
+]);
+
+const MANAGED_FIELD_NAMES = new Set([
   'JotForm Submission ID',
   'Workflow Status',
   'Workflow Source',
   'Pick Up ID',
-  'Item Title',
-  'Description',
-  'Shopify Price',
-  'Ebay Price',
-  'eBay Price',
-  'Shopify Body (HTML)',
-  'Ebay Body (HTML)',
-  'Brand',
-  'Model',
-  'Category',
-  'Subcategory',
-  'Condition',
-  'Workflow Image Metadata JSON',
 ]);
-
-const SKU_FIELD_MATCHERS = [/\bsku\b/i, /inventory sku/i];
 
 const SOURCE_STATUS_FIELDS = [
   'Workflow Status',
@@ -67,14 +66,6 @@ const SOURCE_PICKUP_FIELDS = [
   'Pickup ID',
   'PickUp ID',
   'Group ID',
-];
-
-const SOURCE_IMAGE_FIELDS = [
-  'Images',
-  'Image',
-  'Photos',
-  'Photo',
-  'Attachments',
 ];
 
 const SOURCE_WORKFLOW_SOURCE_FIELDS = ['Workflow Source', 'Source'];
@@ -95,8 +86,11 @@ const EXACT_COPY_CANDIDATES = [
 ];
 
 const FIELD_ALIASES: Record<string, string[]> = {
+  Make: ['Brand', 'make'],
+  'Component Type': ['Component Type', 'component type', 'Type'],
+  SKU: ['Sku', 'sku'],
   'Item Title': ['Title', 'Product Title', 'Name'],
-  'Description': ['Item Description', 'Product Description'],
+  Description: ['Item Description', 'Product Description'],
   'Shopify Price': ['Price'],
   'Ebay Price': ['eBay Price', 'Price'],
   'eBay Price': ['Ebay Price', 'Price'],
@@ -104,7 +98,7 @@ const FIELD_ALIASES: Record<string, string[]> = {
   'Ebay Body (HTML)': ['eBay Body (HTML)', 'Body HTML'],
 };
 
-type ScriptCommand = 'plan' | 'apply';
+type ScriptCommand = 'plan' | 'apply' | 'rollback';
 type PlanAction = 'create' | 'update' | 'skip' | 'conflict';
 
 interface ScriptArgs {
@@ -112,25 +106,9 @@ interface ScriptArgs {
   options: Record<string, string>;
 }
 
-interface SourceAttachment {
-  url: string;
-  filename: string;
-}
-
-interface MetadataRecord {
-  attachmentId?: string;
-  url: string;
-  filename: string;
-  alt: string;
-  sortOrder: number;
-  sourceStage: 'intake' | 'testing' | 'photos';
-  includedInListing: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 interface PlanRow {
   sourceRecordId: string;
+  sourceCreatedTime: string;
   dedupeKey: string;
   sourceStatus: string;
   mappedStatus: string;
@@ -140,15 +118,20 @@ interface PlanRow {
   targetRecordId?: string;
   groupKey: string;
   fieldsToWrite: Record<string, unknown>;
-  sourceImageAttachments: SourceAttachment[];
 }
 
 interface PlanOutput {
   generatedAt: string;
   sourceBaseId: string;
   sourceTableId: string;
+  sourceViewId: string;
   destBaseId: string;
   destTableId: string;
+  filters: {
+    year?: number;
+    fromYear?: number;
+    toYear?: number;
+  };
   summary: Record<string, unknown>;
   statusMapping: Record<string, string | null>;
   rows: PlanRow[];
@@ -162,21 +145,14 @@ interface ApplyResultRow {
   targetRecordId?: string;
   groupKey: string;
   message: string;
-  imagesUploaded: number;
+  wasCreated: boolean;
 }
 
-interface UploadCheckpointRecord {
-  attachmentUrl: string;
-  processedFileId: string;
-  processedFilename: string;
-  processedUrl: string;
-  originalFileId: string;
-  originalFilename: string;
-  originalUrl: string;
-  stage: WorkflowImageArchiveStage;
+interface RollbackResultRow {
+  recordId: string;
+  deleted: boolean;
+  message: string;
 }
-
-type UploadCheckpoint = Record<string, UploadCheckpointRecord>;
 
 function readEnvFile(filePath: string): Record<string, string> {
   if (!fs.existsSync(filePath)) {
@@ -202,19 +178,6 @@ function setMergedEnv(): void {
   if (!process.env.AIRTABLE_API_KEY && mergedEnv.VITE_AIRTABLE_API_KEY) {
     process.env.AIRTABLE_API_KEY = mergedEnv.VITE_AIRTABLE_API_KEY;
   }
-
-  if (!process.env.GOOGLE_DRIVE_CLIENT_ID && mergedEnv.VITE_GOOGLE_DRIVE_CLIENT_ID) {
-    process.env.GOOGLE_DRIVE_CLIENT_ID = mergedEnv.VITE_GOOGLE_DRIVE_CLIENT_ID;
-  }
-  if (!process.env.GOOGLE_DRIVE_CLIENT_SECRET && mergedEnv.VITE_GOOGLE_DRIVE_CLIENT_SECRET) {
-    process.env.GOOGLE_DRIVE_CLIENT_SECRET = mergedEnv.VITE_GOOGLE_DRIVE_CLIENT_SECRET;
-  }
-  if (!process.env.GOOGLE_DRIVE_REFRESH_TOKEN && mergedEnv.VITE_GOOGLE_DRIVE_REFRESH_TOKEN) {
-    process.env.GOOGLE_DRIVE_REFRESH_TOKEN = mergedEnv.VITE_GOOGLE_DRIVE_REFRESH_TOKEN;
-  }
-  if (!process.env.GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID && mergedEnv.VITE_GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID) {
-    process.env.GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID = mergedEnv.VITE_GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID;
-  }
 }
 
 function requireEnv(name: string): string {
@@ -226,11 +189,20 @@ function requireEnv(name: string): string {
   return value;
 }
 
+function usage(): string {
+  return [
+    'Usage:',
+    '  node --import tsx scripts/seed-reference-workflow-statuses.ts plan [--output-dir path] [--year N | --from-year N --to-year N]',
+    '  node --import tsx scripts/seed-reference-workflow-statuses.ts apply --plan path/to/plan.json --confirm SEED_REFERENCE_WORKFLOW_STATUSES [--output-dir path]',
+    '  node --import tsx scripts/seed-reference-workflow-statuses.ts rollback --apply-results path/to/apply-results.json --confirm ROLLBACK_SEED_REFERENCE_WORKFLOW_STATUSES [--output-dir path]',
+  ].join('\n');
+}
+
 function parseArgs(argv: string[]): ScriptArgs {
   const [rawCommand, ...rest] = argv;
   const command = (rawCommand || 'plan') as ScriptCommand;
-  if (command !== 'plan' && command !== 'apply') {
-    throw new Error('Usage: node --import tsx scripts/seed-reference-workflow-statuses.ts [plan|apply] [--plan path] [--output-dir path]');
+  if (command !== 'plan' && command !== 'apply' && command !== 'rollback') {
+    throw new Error(usage());
   }
 
   const options: Record<string, string> = {};
@@ -253,6 +225,57 @@ function parseArgs(argv: string[]): ScriptArgs {
   }
 
   return { command, options };
+}
+
+function parseYear(value: string | undefined, name: string): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || Number.isNaN(parsed) || parsed < 1900 || parsed > 3000) {
+    throw new Error(`Invalid ${name}: ${value}`);
+  }
+
+  return parsed;
+}
+
+function parseYearFilter(options: Record<string, string>): { year?: number; fromYear?: number; toYear?: number } {
+  const year = parseYear(options.year, 'year');
+  const fromYear = parseYear(options['from-year'], 'from-year');
+  const toYear = parseYear(options['to-year'], 'to-year');
+
+  if (year && (fromYear || toYear)) {
+    throw new Error('Use either --year N or --from-year/--to-year, not both.');
+  }
+
+  if (fromYear && toYear && fromYear > toYear) {
+    throw new Error('--from-year must be less than or equal to --to-year.');
+  }
+
+  return { year, fromYear, toYear };
+}
+
+function isRecordInYearFilter(createdTime: string, filter: { year?: number; fromYear?: number; toYear?: number }): boolean {
+  const date = new Date(createdTime);
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  const utcYear = date.getUTCFullYear();
+  if (filter.year && utcYear !== filter.year) {
+    return false;
+  }
+
+  if (filter.fromYear && utcYear < filter.fromYear) {
+    return false;
+  }
+
+  if (filter.toYear && utcYear > filter.toYear) {
+    return false;
+  }
+
+  return true;
 }
 
 function ensureDirectory(dirPath: string): void {
@@ -305,49 +328,6 @@ function firstTrimmedString(fields: Record<string, unknown>, names: string[]): s
   }
 
   return '';
-}
-
-function parseAttachments(value: unknown): SourceAttachment[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  const attachments: SourceAttachment[] = [];
-  for (const item of value) {
-    if (!item || typeof item !== 'object') {
-      continue;
-    }
-
-    const record = item as Record<string, unknown>;
-    const url = getTrimmedString(record.url);
-    if (!url) {
-      continue;
-    }
-
-    const filename = getTrimmedString(record.filename)
-      || getTrimmedString(record.name)
-      || url.split('/').pop()?.split('?')[0]
-      || 'image.jpg';
-
-    attachments.push({ url, filename });
-  }
-
-  return attachments;
-}
-
-function extractSourceAttachments(fields: Record<string, unknown>): SourceAttachment[] {
-  for (const field of SOURCE_IMAGE_FIELDS) {
-    const attachments = parseAttachments(fields[field]);
-    if (attachments.length > 0) {
-      return attachments;
-    }
-  }
-
-  return [];
-}
-
-function hasSkuLikeField(fieldName: string): boolean {
-  return SKU_FIELD_MATCHERS.some((pattern) => pattern.test(fieldName));
 }
 
 function mapSourceStatus(rawStatus: string): string {
@@ -406,53 +386,6 @@ function mapSourceStatus(rawStatus: string): string {
   return map[normalized] || '';
 }
 
-function stageForStatus(status: string): WorkflowImageArchiveStage {
-  if (status === 'Testing In Progress') {
-    return 'testing';
-  }
-
-  if (status === 'Pending Review'
-    || status === 'Accepted - Awaiting Arrival'
-    || status === 'Accepted - Arrived, Awaiting SKU'
-    || status === 'Accepted - Arrived, Awaiting Missing Item') {
-    return 'intake';
-  }
-
-  return 'photos';
-}
-
-function parseMetadata(raw: unknown): MetadataRecord[] {
-  if (typeof raw !== 'string' || !raw.trim()) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed.filter((entry): entry is MetadataRecord => Boolean(entry && typeof entry === 'object')) as MetadataRecord[];
-  } catch {
-    return [];
-  }
-}
-
-function serializeMetadata(records: MetadataRecord[]): string {
-  if (records.length === 0) {
-    return '';
-  }
-
-  const sorted = [...records]
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((record, index) => ({
-      ...record,
-      sortOrder: index + 1,
-    }));
-
-  return JSON.stringify(sorted);
-}
-
 function pickSourceValue(
   sourceFields: Record<string, unknown>,
   destinationFieldName: string,
@@ -470,9 +403,39 @@ function pickSourceValue(
   return undefined;
 }
 
+function normalizeAttachmentValue(value: unknown): Array<{ url: string; filename?: string }> | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  const normalized: Array<{ url: string; filename?: string }> = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object') {
+      continue;
+    }
+
+    const record = item as Record<string, unknown>;
+    const url = getTrimmedString(record.url);
+    if (!url) {
+      continue;
+    }
+
+    const filename = getTrimmedString(record.filename) || getTrimmedString(record.name);
+    if (filename) {
+      normalized.push({ url, filename });
+      continue;
+    }
+
+    normalized.push({ url });
+  }
+
+  return normalized.length > 0 ? normalized : undefined;
+}
+
 function buildWriteFields(
   sourceFields: Record<string, unknown>,
-  destinationFieldNames: Set<string>,
+  destinationWritableFieldNames: Set<string>,
+  destinationFieldTypeByName: Map<string, string>,
   dedupeKey: string,
   mappedStatus: string,
   sourcePickupId: string,
@@ -480,16 +443,16 @@ function buildWriteFields(
 ): Record<string, unknown> {
   const fieldsToWrite: Record<string, unknown> = {};
 
-  if (destinationFieldNames.has('JotForm Submission ID')) {
+  if (destinationWritableFieldNames.has('JotForm Submission ID')) {
     fieldsToWrite['JotForm Submission ID'] = dedupeKey;
   }
 
-  if (destinationFieldNames.has('Workflow Status')) {
+  if (destinationWritableFieldNames.has('Workflow Status')) {
     fieldsToWrite['Workflow Status'] = mappedStatus;
   }
 
   const sourceWorkflowSource = firstTrimmedString(sourceFields, SOURCE_WORKFLOW_SOURCE_FIELDS);
-  if (destinationFieldNames.has('Workflow Source')) {
+  if (destinationWritableFieldNames.has('Workflow Source')) {
     if (sourceWorkflowSource === 'JotForm' || sourceWorkflowSource === 'Manual Entry') {
       fieldsToWrite['Workflow Source'] = sourceWorkflowSource;
     } else {
@@ -497,7 +460,7 @@ function buildWriteFields(
     }
   }
 
-  if (destinationFieldNames.has('Pick Up ID') && sourcePickupId.length > 0) {
+  if (destinationWritableFieldNames.has('Pick Up ID') && sourcePickupId.length > 0) {
     const existingPickup = getRawString(existingRecord?.fields?.['Pick Up ID']);
     if (!existingRecord || existingPickup.length === 0) {
       fieldsToWrite['Pick Up ID'] = sourcePickupId;
@@ -505,7 +468,7 @@ function buildWriteFields(
   }
 
   for (const candidate of EXACT_COPY_CANDIDATES) {
-    if (!destinationFieldNames.has(candidate)) {
+    if (!destinationWritableFieldNames.has(candidate)) {
       continue;
     }
 
@@ -517,20 +480,49 @@ function buildWriteFields(
     fieldsToWrite[candidate] = sourceValue;
   }
 
-  const filtered: Record<string, unknown> = {};
-  for (const [field, value] of Object.entries(fieldsToWrite)) {
-    if (!ALLOWED_WRITE_FIELDS.has(field)) {
+  // Copy any other fields that have a direct name match between source and destination.
+  for (const destinationFieldName of destinationWritableFieldNames) {
+    if (destinationFieldName in fieldsToWrite) {
       continue;
     }
 
-    if (hasSkuLikeField(field)) {
+    if (MANAGED_FIELD_NAMES.has(destinationFieldName)) {
       continue;
     }
 
-    filtered[field] = value;
+    const sourceValue = pickSourceValue(sourceFields, destinationFieldName);
+    if (sourceValue === undefined || sourceValue === null || sourceValue === '') {
+      continue;
+    }
+
+    const destinationFieldType = destinationFieldTypeByName.get(destinationFieldName);
+    if (destinationFieldType === 'multipleAttachments') {
+      const normalizedAttachments = normalizeAttachmentValue(sourceValue);
+      if (!normalizedAttachments) {
+        continue;
+      }
+
+      fieldsToWrite[destinationFieldName] = normalizedAttachments;
+      continue;
+    }
+
+    fieldsToWrite[destinationFieldName] = sourceValue;
   }
 
-  return filtered;
+  return fieldsToWrite;
+}
+
+function buildWritableFieldTypeMap(metadata: AirtableMetadataField[]): Map<string, string> {
+  const writable = new Map<string, string>();
+  for (const field of metadata) {
+    if (NON_WRITABLE_FIELD_TYPES.has(field.type)) {
+      continue;
+    }
+
+    writable.set(field.name, field.type);
+  }
+
+  return writable;
 }
 
 function summarizePlanRows(rows: PlanRow[]): Record<string, number> {
@@ -540,7 +532,6 @@ function summarizePlanRows(rows: PlanRow[]): Record<string, number> {
     updates: 0,
     skips: 0,
     conflicts: 0,
-    withImages: 0,
   };
 
   for (const row of rows) {
@@ -548,7 +539,6 @@ function summarizePlanRows(rows: PlanRow[]): Record<string, number> {
     if (row.action === 'update') summary.updates += 1;
     if (row.action === 'skip') summary.skips += 1;
     if (row.action === 'conflict') summary.conflicts += 1;
-    if (row.sourceImageAttachments.length > 0) summary.withImages += 1;
   }
 
   return summary;
@@ -561,16 +551,15 @@ function sanitizeForGroup(value: string, sourceRecordId: string): string {
 async function runPlan(options: Record<string, string>): Promise<void> {
   setMergedEnv();
   requireEnv('AIRTABLE_API_KEY');
-  requireEnv('GOOGLE_DRIVE_CLIENT_ID');
-  requireEnv('GOOGLE_DRIVE_CLIENT_SECRET');
-  requireEnv('GOOGLE_DRIVE_REFRESH_TOKEN');
 
+  const yearFilter = parseYearFilter(options);
   const runDir = createRunDirectory('plan', options['output-dir']);
 
-  const sourceRecords = await getRecords(SOURCE_BASE_ID, SOURCE_TABLE_ID);
+  const sourceRecords = await getRecords(SOURCE_BASE_ID, SOURCE_TABLE_ID, SOURCE_VIEW_ID);
   const destinationRecords = await getRecords(DEST_BASE_ID, DEST_TABLE_ID);
   const destinationFieldMetadata = await getTableMetadata(DEST_BASE_ID, DEST_TABLE_ID);
-  const destinationFieldNames = new Set(destinationFieldMetadata.map((field) => field.name));
+  const destinationFieldTypeByName = buildWritableFieldTypeMap(destinationFieldMetadata);
+  const destinationWritableFieldNames = new Set(destinationFieldTypeByName.keys());
 
   const dedupeIndex = new Map<string, AirtableRecord[]>();
   for (const record of destinationRecords) {
@@ -589,6 +578,10 @@ async function runPlan(options: Record<string, string>): Promise<void> {
   const seenDedupeInSource = new Map<string, string>();
 
   for (const sourceRecord of sourceRecords) {
+    if (!isRecordInYearFilter(sourceRecord.createdTime, yearFilter)) {
+      continue;
+    }
+
     const sourceFields = sourceRecord.fields;
     const sourceStatusRaw = firstTrimmedString(sourceFields, SOURCE_STATUS_FIELDS);
     if (!sourceStatusRaw) {
@@ -602,7 +595,6 @@ async function runPlan(options: Record<string, string>): Promise<void> {
 
     const dedupeKey = `sb-ref:${sourceRecord.id}`;
     const sourcePickupId = firstRawString(sourceFields, SOURCE_PICKUP_FIELDS);
-    const attachments = extractSourceAttachments(sourceFields);
 
     let action: PlanAction = 'skip';
     let reason = '';
@@ -634,18 +626,19 @@ async function runPlan(options: Record<string, string>): Promise<void> {
           } else {
             action = 'update';
             reason = 'Matched existing row by external dedupe key';
-            fieldsToWrite = buildWriteFields(sourceFields, destinationFieldNames, dedupeKey, mappedStatus, sourcePickupId, existing);
+            fieldsToWrite = buildWriteFields(sourceFields, destinationWritableFieldNames, destinationFieldTypeByName, dedupeKey, mappedStatus, sourcePickupId, existing);
           }
         } else {
           action = 'create';
           reason = 'No existing row matched the external dedupe key';
-          fieldsToWrite = buildWriteFields(sourceFields, destinationFieldNames, dedupeKey, mappedStatus, sourcePickupId);
+          fieldsToWrite = buildWriteFields(sourceFields, destinationWritableFieldNames, destinationFieldTypeByName, dedupeKey, mappedStatus, sourcePickupId);
         }
       }
     }
 
     rows.push({
       sourceRecordId: sourceRecord.id,
+      sourceCreatedTime: sourceRecord.createdTime,
       dedupeKey,
       sourceStatus: sourceStatusRaw,
       mappedStatus,
@@ -655,7 +648,6 @@ async function runPlan(options: Record<string, string>): Promise<void> {
       targetRecordId,
       groupKey: sanitizeForGroup(sourcePickupId, sourceRecord.id),
       fieldsToWrite,
-      sourceImageAttachments: attachments,
     });
   }
 
@@ -664,8 +656,10 @@ async function runPlan(options: Record<string, string>): Promise<void> {
     generatedAt: new Date().toISOString(),
     sourceBaseId: SOURCE_BASE_ID,
     sourceTableId: SOURCE_TABLE_ID,
+    sourceViewId: SOURCE_VIEW_ID,
     destBaseId: DEST_BASE_ID,
     destTableId: DEST_TABLE_ID,
+    filters: yearFilter,
     summary,
     statusMapping,
     rows,
@@ -677,6 +671,7 @@ async function runPlan(options: Record<string, string>): Promise<void> {
 
   console.log('Plan completed.');
   console.log(`Run directory: ${runDir}`);
+  console.log(`Source view: ${SOURCE_VIEW_ID}`);
   console.log(`Rows in scope: ${summary.sourceRowsInScope}`);
   console.log(`Creates: ${summary.creates}, Updates: ${summary.updates}, Skips: ${summary.skips}, Conflicts: ${summary.conflicts}`);
 }
@@ -688,117 +683,6 @@ function readPlan(planPath: string): PlanOutput {
 
   const raw = fs.readFileSync(planPath, 'utf8');
   return JSON.parse(raw) as PlanOutput;
-}
-
-function loadCheckpoint(filePath: string): UploadCheckpoint {
-  if (!fs.existsSync(filePath)) {
-    return {};
-  }
-
-  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as UploadCheckpoint;
-}
-
-function saveCheckpoint(filePath: string, checkpoint: UploadCheckpoint): void {
-  writeJson(filePath, checkpoint);
-}
-
-async function downloadAsBase64(url: string): Promise<{ base64: string; contentType: string }> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to download source image (${response.status})`);
-  }
-
-  const contentType = response.headers.get('content-type') || 'application/octet-stream';
-  const arrayBuffer = await response.arrayBuffer();
-  return {
-    base64: Buffer.from(arrayBuffer).toString('base64'),
-    contentType,
-  };
-}
-
-function createMetadataEntry(
-  upload: UploadCheckpointRecord,
-  stage: WorkflowImageArchiveStage,
-  sortOrder: number,
-): MetadataRecord {
-  const now = new Date().toISOString();
-
-  return {
-    attachmentId: upload.processedFileId,
-    url: upload.processedUrl,
-    filename: upload.processedFilename,
-    alt: '',
-    sortOrder,
-    sourceStage: stage,
-    includedInListing: stage !== 'intake',
-    createdAt: now,
-    updatedAt: now,
-  };
-}
-
-async function uploadImagesForRow(
-  row: PlanRow,
-  targetRecordId: string,
-  existingMetadataRaw: unknown,
-  checkpointPath: string,
-): Promise<{ metadataJson: string; imagesUploaded: number }> {
-  const existingMetadata = parseMetadata(existingMetadataRaw);
-  const checkpoint = loadCheckpoint(checkpointPath);
-
-  const stage = stageForStatus(row.mappedStatus);
-  const nextMetadata = [...existingMetadata];
-  let uploadedCount = 0;
-
-  for (const attachment of row.sourceImageAttachments) {
-    const checkpointKey = `${row.sourceRecordId}|${attachment.url}`;
-    let checkpointRecord = checkpoint[checkpointKey];
-
-    if (!checkpointRecord) {
-      const downloaded = await downloadAsBase64(attachment.url);
-      const archiveResult = await archiveWorkflowImagesToGoogleDrive({
-        folderKey: targetRecordId,
-        stage,
-        original: {
-          filename: attachment.filename,
-          contentType: downloaded.contentType,
-          file: downloaded.base64,
-        },
-        processed: {
-          filename: attachment.filename,
-          contentType: downloaded.contentType,
-          file: downloaded.base64,
-        },
-      });
-
-      checkpointRecord = {
-        attachmentUrl: attachment.url,
-        processedFileId: archiveResult.processed.id,
-        processedFilename: archiveResult.processed.filename,
-        processedUrl: archiveResult.processed.url,
-        originalFileId: archiveResult.original.id,
-        originalFilename: archiveResult.original.filename,
-        originalUrl: archiveResult.original.url,
-        stage,
-      };
-
-      checkpoint[checkpointKey] = checkpointRecord;
-      saveCheckpoint(checkpointPath, checkpoint);
-      uploadedCount += 1;
-    }
-
-    const alreadyPresent = nextMetadata.some(
-      (record) => record.attachmentId === checkpointRecord.processedFileId || record.url === checkpointRecord.processedUrl,
-    );
-
-    if (!alreadyPresent) {
-      nextMetadata.push(createMetadataEntry(checkpointRecord, stage, nextMetadata.length + 1));
-    }
-  }
-
-  return {
-    metadataJson: serializeMetadata(nextMetadata),
-    imagesUploaded: uploadedCount,
-  };
 }
 
 function groupRows(rows: PlanRow[]): Map<string, PlanRow[]> {
@@ -813,12 +697,13 @@ function groupRows(rows: PlanRow[]): Map<string, PlanRow[]> {
   return grouped;
 }
 
+function sleep(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
 async function runApply(options: Record<string, string>): Promise<void> {
   setMergedEnv();
   requireEnv('AIRTABLE_API_KEY');
-  requireEnv('GOOGLE_DRIVE_CLIENT_ID');
-  requireEnv('GOOGLE_DRIVE_CLIENT_SECRET');
-  requireEnv('GOOGLE_DRIVE_REFRESH_TOKEN');
 
   const token = options.confirm || '';
   if (token !== APPLY_CONFIRM_TOKEN) {
@@ -832,7 +717,6 @@ async function runApply(options: Record<string, string>): Promise<void> {
 
   const plan = readPlan(path.resolve(planPath));
   const runDir = createRunDirectory('apply', options['output-dir']);
-  const checkpointPath = path.join(runDir, 'upload-checkpoint.json');
 
   const destinationRecords = await getRecords(DEST_BASE_ID, DEST_TABLE_ID);
   const dedupeIndex = new Map<string, AirtableRecord>();
@@ -861,7 +745,7 @@ async function runApply(options: Record<string, string>): Promise<void> {
           targetRecordId: row.targetRecordId,
           groupKey,
           message: row.reason,
-          imagesUploaded: 0,
+          wasCreated: false,
         });
       }
       continue;
@@ -880,7 +764,7 @@ async function runApply(options: Record<string, string>): Promise<void> {
           targetRecordId: row.targetRecordId,
           groupKey,
           message: 'Skipped because previous row in group failed',
-          imagesUploaded: 0,
+          wasCreated: false,
         });
         continue;
       }
@@ -888,34 +772,15 @@ async function runApply(options: Record<string, string>): Promise<void> {
       try {
         const existing = dedupeIndex.get(row.dedupeKey);
         let targetRecordId = existing?.id;
+        let wasCreated = false;
 
         if (!existing) {
           const created = await createRecord(DEST_BASE_ID, DEST_TABLE_ID, row.fieldsToWrite, { typecast: true });
           targetRecordId = created.id;
           dedupeIndex.set(row.dedupeKey, created);
+          wasCreated = true;
         } else {
           await updateRecord(DEST_BASE_ID, DEST_TABLE_ID, existing.id, row.fieldsToWrite, { typecast: true });
-        }
-
-        let imagesUploaded = 0;
-        if (row.sourceImageAttachments.length > 0 && targetRecordId) {
-          const latestRecord = await getRecords(DEST_BASE_ID, DEST_TABLE_ID, undefined, {
-            filterByFormula: `RECORD_ID()='${targetRecordId}'`,
-          });
-          const current = latestRecord[0];
-          const imageResult = await uploadImagesForRow(
-            row,
-            targetRecordId,
-            current?.fields?.['Workflow Image Metadata JSON'],
-            checkpointPath,
-          );
-          imagesUploaded = imageResult.imagesUploaded;
-
-          if (imageResult.metadataJson) {
-            await updateRecord(DEST_BASE_ID, DEST_TABLE_ID, targetRecordId, {
-              'Workflow Image Metadata JSON': imageResult.metadataJson,
-            });
-          }
         }
 
         results.push({
@@ -926,7 +791,7 @@ async function runApply(options: Record<string, string>): Promise<void> {
           targetRecordId,
           groupKey,
           message: 'Applied successfully',
-          imagesUploaded,
+          wasCreated,
         });
       } catch (error) {
         groupFailed = true;
@@ -938,12 +803,12 @@ async function runApply(options: Record<string, string>): Promise<void> {
           targetRecordId: row.targetRecordId,
           groupKey,
           message: error instanceof Error ? error.message : String(error),
-          imagesUploaded: 0,
+          wasCreated: false,
         });
       }
 
       if ((index + 1) % BATCH_SIZE === 0) {
-        await new Promise((resolve) => setTimeout(resolve, 250));
+        await sleep(250);
       }
     }
   }
@@ -951,9 +816,10 @@ async function runApply(options: Record<string, string>): Promise<void> {
   const summary = {
     total: results.length,
     applied: results.filter((result) => result.applied).length,
+    createdApplied: results.filter((result) => result.applied && result.wasCreated).length,
+    updatedApplied: results.filter((result) => result.applied && !result.wasCreated && result.action === 'update').length,
     failed: results.filter((result) => !result.applied && (result.action === 'create' || result.action === 'update')).length,
     skipped: results.filter((result) => result.action === 'skip' || result.action === 'conflict').length,
-    imagesUploaded: results.reduce((acc, row) => acc + row.imagesUploaded, 0),
   };
 
   writeJson(path.join(runDir, 'apply-results.json'), results);
@@ -961,7 +827,102 @@ async function runApply(options: Record<string, string>): Promise<void> {
 
   console.log('Apply completed.');
   console.log(`Run directory: ${runDir}`);
-  console.log(`Applied: ${summary.applied}, Failed: ${summary.failed}, Skipped: ${summary.skipped}, Images uploaded: ${summary.imagesUploaded}`);
+  console.log(`Applied: ${summary.applied}, Created: ${summary.createdApplied}, Updated: ${summary.updatedApplied}, Failed: ${summary.failed}, Skipped: ${summary.skipped}`);
+}
+
+async function deleteDestinationRecord(recordId: string, apiKey: string): Promise<'deleted' | 'not-found'> {
+  const encodedTableName = encodeURIComponent(DEST_TABLE_ID);
+  const encodedRecordId = encodeURIComponent(recordId);
+  const url = `https://api.airtable.com/v0/${DEST_BASE_ID}/${encodedTableName}/${encodedRecordId}`;
+
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+  });
+
+  if (response.status === 404) {
+    return 'not-found';
+  }
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Failed to delete ${recordId}: HTTP ${response.status} ${text}`);
+  }
+
+  return 'deleted';
+}
+
+function readApplyResults(filePath: string): ApplyResultRow[] {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Apply results file not found: ${filePath}`);
+  }
+
+  const raw = fs.readFileSync(filePath, 'utf8');
+  return JSON.parse(raw) as ApplyResultRow[];
+}
+
+async function runRollback(options: Record<string, string>): Promise<void> {
+  setMergedEnv();
+  const apiKey = requireEnv('AIRTABLE_API_KEY');
+
+  const token = options.confirm || '';
+  if (token !== ROLLBACK_CONFIRM_TOKEN) {
+    throw new Error(`Rollback requires --confirm ${ROLLBACK_CONFIRM_TOKEN}`);
+  }
+
+  const applyResultsPath = options['apply-results'];
+  if (!applyResultsPath) {
+    throw new Error('Rollback requires --apply-results path/to/apply-results.json');
+  }
+
+  const runDir = createRunDirectory('rollback', options['output-dir']);
+  const results = readApplyResults(path.resolve(applyResultsPath));
+
+  const createdIds = Array.from(new Set(
+    results
+      .filter((result) => result.applied && result.wasCreated && Boolean(result.targetRecordId))
+      .map((result) => result.targetRecordId as string),
+  ));
+
+  const rollbackRows: RollbackResultRow[] = [];
+  for (let index = 0; index < createdIds.length; index += 1) {
+    const recordId = createdIds[index]!;
+
+    try {
+      const outcome = await deleteDestinationRecord(recordId, apiKey);
+      rollbackRows.push({
+        recordId,
+        deleted: outcome === 'deleted',
+        message: outcome === 'deleted' ? 'Deleted' : 'Already missing',
+      });
+    } catch (error) {
+      rollbackRows.push({
+        recordId,
+        deleted: false,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    if ((index + 1) % BATCH_SIZE === 0) {
+      await sleep(250);
+    }
+  }
+
+  const summary = {
+    totalCandidates: createdIds.length,
+    deleted: rollbackRows.filter((row) => row.deleted).length,
+    alreadyMissing: rollbackRows.filter((row) => !row.deleted && row.message === 'Already missing').length,
+    failed: rollbackRows.filter((row) => !row.deleted && row.message !== 'Already missing').length,
+  };
+
+  writeJson(path.join(runDir, 'rollback-results.json'), rollbackRows);
+  writeJson(path.join(runDir, 'summary.json'), summary);
+
+  console.log('Rollback completed.');
+  console.log(`Run directory: ${runDir}`);
+  console.log(`Deleted: ${summary.deleted}, Already missing: ${summary.alreadyMissing}, Failed: ${summary.failed}`);
 }
 
 async function main(): Promise<void> {
@@ -972,7 +933,12 @@ async function main(): Promise<void> {
     return;
   }
 
-  await runApply(options);
+  if (command === 'apply') {
+    await runApply(options);
+    return;
+  }
+
+  await runRollback(options);
 }
 
 main().catch((error) => {

@@ -241,6 +241,7 @@ export const manualIntakeSharedFormFields: ManualIntakeFormFieldDefinition[] = [
     label: 'How Did You Hear',
     type: 'select',
     optionFieldName: 'How Did You Hear',
+    halfWidth: true,
   },
   {
     name: 'cost',
@@ -249,6 +250,7 @@ export const manualIntakeSharedFormFields: ManualIntakeFormFieldDefinition[] = [
     type: 'currency',
     placeholder: '1500',
     required: true,
+    halfWidth: true,
   },
 ];
 

@@ -488,9 +488,18 @@ export async function registerWebhookSubscription(topic: ShopifyWebhookTopic, ca
     });
   }
 
+  const mappedTopic = mapFromShopifyWebhookTopic(subscription.topic);
+  if (!mappedTopic) {
+    throw new HttpError(502, 'Shopify webhook registration returned unsupported topic.', {
+      service: 'shopify',
+      code: 'SHOPIFY_WEBHOOK_TOPIC_UNSUPPORTED',
+      retryable: false,
+    });
+  }
+
   return {
     id: subscription.id,
-    topic: mapFromShopifyWebhookTopic(subscription.topic),
+    topic: mappedTopic,
     callbackUrl: createdCallbackUrl,
   };
 }
