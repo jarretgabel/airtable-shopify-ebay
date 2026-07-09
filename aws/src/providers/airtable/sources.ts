@@ -11,6 +11,7 @@ import {
   uploadAttachment,
 } from './client.js';
 import { parseAirtableReferenceCandidates } from './reference.js';
+import { invalidateConfiguredRecordsCache } from './configuredRecordsCache.js';
 
 export const airtableSourceDependencies = {
   createRecord,
@@ -33,10 +34,203 @@ export type AirtableConfiguredRecordsSource =
 export type AirtableConfiguredWriteSource = AirtableConfiguredRecordsSource;
 export type AirtableConfiguredMetadataSource = 'inventory-directory' | 'used-gear-workflow';
 export type AirtableConfiguredAttachmentSource = 'inventory-directory' | 'used-gear-workflow';
+export type AirtableConfiguredRecordsSubset = 'ready-for-publishing' | 'listings-page';
 
 interface AirtableConfiguredReadOptions {
   fields?: string[];
   filterByFormula?: string;
+  subset?: AirtableConfiguredRecordsSubset;
+  maxRecords?: number;
+}
+
+const LISTINGS_PAGE_MAX_RECORDS = 200;
+const UNKNOWN_FIELD_CACHE_TTL_MS = 10 * 60 * 1000;
+
+interface UnknownFieldCacheEntry {
+  expiresAt: number;
+  fields: Set<string>;
+}
+
+const unknownFieldNameCache = new Map<string, UnknownFieldCacheEntry>();
+
+function resolveSubsetFilterByFormula(
+  source: AirtableConfiguredRecordsSource,
+  subset: AirtableConfiguredRecordsSubset | undefined,
+): string | undefined {
+  if (!subset) return undefined;
+
+  if (subset === 'ready-for-publishing') {
+    if (source !== 'approval-combined') {
+      throw new HttpError(400, 'ready-for-publishing subset is only supported for approval-combined.', {
+        service: 'airtable',
+        code: 'AIRTABLE_SUBSET_NOT_ALLOWED',
+        retryable: false,
+      });
+    }
+
+    return "{Workflow Status}='Approved for Publish'";
+  }
+
+  if (subset === 'listings-page') {
+    if (source !== 'approval-combined') {
+      throw new HttpError(400, 'listings-page subset is only supported for approval-combined.', {
+        service: 'airtable',
+        code: 'AIRTABLE_SUBSET_NOT_ALLOWED',
+        retryable: false,
+      });
+    }
+
+    return "OR({Workflow Status}='Awaiting Pre-Listing Review', {Workflow Status}='Approved for Publish')";
+  }
+
+  return undefined;
+}
+
+function mergeFilterByFormula(
+  baseFilter: string | undefined,
+  subsetFilter: string | undefined,
+): string | undefined {
+  const normalizedBase = baseFilter?.trim();
+  const normalizedSubset = subsetFilter?.trim();
+
+  if (normalizedBase && normalizedSubset) {
+    return `AND(${normalizedBase}, ${normalizedSubset})`;
+  }
+
+  return normalizedBase || normalizedSubset;
+}
+
+function normalizeRequestedFields(fields?: string[]): string[] | undefined {
+  const normalized = fields
+    ?.map((value) => value.trim())
+    .filter((value) => value.length > 0);
+
+  if (!normalized || normalized.length === 0) {
+    return undefined;
+  }
+
+  return Array.from(new Set(normalized));
+}
+
+function buildUnknownFieldCacheKey(baseId: string, tableName: string, viewId: string | undefined): string {
+  return `${baseId}::${tableName}::${viewId ?? ''}`;
+}
+
+function getCachedUnknownFields(cacheKey: string): Set<string> | null {
+  const entry = unknownFieldNameCache.get(cacheKey);
+  if (!entry) {
+    return null;
+  }
+
+  if (entry.expiresAt <= Date.now()) {
+    unknownFieldNameCache.delete(cacheKey);
+    return null;
+  }
+
+  return entry.fields;
+}
+
+function rememberUnknownFields(cacheKey: string, fieldNames: string[]): void {
+  if (fieldNames.length === 0) {
+    return;
+  }
+
+  const existing = getCachedUnknownFields(cacheKey);
+  const next = new Set(existing ?? []);
+  for (const fieldName of fieldNames) {
+    if (fieldName.trim()) {
+      next.add(fieldName);
+    }
+  }
+
+  unknownFieldNameCache.set(cacheKey, {
+    fields: next,
+    expiresAt: Date.now() + UNKNOWN_FIELD_CACHE_TTL_MS,
+  });
+}
+
+function stripUnknownFields(fields: string[] | undefined, unknownFields: Set<string> | null): string[] | undefined {
+  if (!fields || fields.length === 0 || !unknownFields || unknownFields.size === 0) {
+    return fields;
+  }
+
+  const filtered = fields.filter((fieldName) => !unknownFields.has(fieldName));
+  return filtered.length > 0 ? filtered : undefined;
+}
+
+function getUnknownFieldNames(error: unknown): string[] {
+  if (!(error instanceof HttpError)) {
+    return [];
+  }
+
+  if (error.statusCode !== 400 && error.statusCode !== 422) {
+    return [];
+  }
+
+  const message = error.message || '';
+  if (!/Unknown field name/i.test(message)) {
+    return [];
+  }
+
+  const quotedMatches = Array.from(message.matchAll(/['"]([^'"]+)['"]/g))
+    .map((match) => match[1]?.trim())
+    .filter((value): value is string => Boolean(value));
+  if (quotedMatches.length > 0) {
+    return Array.from(new Set(quotedMatches));
+  }
+
+  const suffixMatch = message.match(/Unknown field names?:\s*(.+)$/i);
+  if (!suffixMatch?.[1]) {
+    return [];
+  }
+
+  return Array.from(new Set(
+    suffixMatch[1]
+      .split(',')
+      .map((value) => value.trim().replace(/^['"]|['"]$/g, ''))
+      .filter((value) => value.length > 0),
+  ));
+}
+
+async function getRecordsWithUnknownFieldFallback(
+  baseId: string,
+  tableName: string,
+  viewId: string | undefined,
+  options: AirtableConfiguredReadOptions,
+): Promise<AirtableRecord[]> {
+  const cacheKey = buildUnknownFieldCacheKey(baseId, tableName, viewId);
+  const baseOptions: AirtableConfiguredReadOptions = {
+    filterByFormula: options.filterByFormula,
+    maxRecords: options.maxRecords,
+  };
+  let fields = stripUnknownFields(
+    normalizeRequestedFields(options.fields),
+    getCachedUnknownFields(cacheKey),
+  );
+
+  while (true) {
+    try {
+      return await airtableSourceDependencies.getRecords(baseId, tableName, viewId, {
+        ...baseOptions,
+        ...(fields ? { fields } : {}),
+      });
+    } catch (error) {
+      const unknownFields = getUnknownFieldNames(error);
+      if (unknownFields.length === 0 || !fields || fields.length === 0) {
+        throw error;
+      }
+
+      rememberUnknownFields(cacheKey, unknownFields);
+
+      const unknownFieldSet = new Set(unknownFields);
+      const nextFields = fields.filter((fieldName) => !unknownFieldSet.has(fieldName));
+      if (nextFields.length === fields.length) {
+        throw error;
+      }
+
+      fields = nextFields.length > 0 ? nextFields : undefined;
+    }
+  }
 }
 
 export interface AirtableConfiguredRecordsSummary {
@@ -221,9 +415,21 @@ export async function getConfiguredRecords(
   options: AirtableConfiguredReadOptions = {},
 ): Promise<AirtableRecord[]> {
   const definition = getSourceDefinition(source);
+  const subsetFilterByFormula = resolveSubsetFilterByFormula(source, options.subset);
+  const mergedFilterByFormula = mergeFilterByFormula(options.filterByFormula, subsetFilterByFormula);
+  const readOptions: AirtableConfiguredReadOptions = {
+    ...options,
+    filterByFormula: mergedFilterByFormula || undefined,
+    maxRecords: options.maxRecords ?? (options.subset === 'listings-page' ? LISTINGS_PAGE_MAX_RECORDS : undefined),
+  };
 
   if (!definition.reference) {
-    return airtableSourceDependencies.getRecords(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, undefined, options);
+    return getRecordsWithUnknownFieldFallback(
+      process.env.AIRTABLE_BASE_ID?.trim() || '',
+      definition.tableName,
+      undefined,
+      readOptions,
+    );
   }
 
   const candidates = parseAirtableReferenceCandidates(
@@ -235,7 +441,12 @@ export async function getConfiguredRecords(
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
-      return await airtableSourceDependencies.getRecords(candidate.baseId, candidate.tableName, candidate.viewId, options);
+      return await getRecordsWithUnknownFieldFallback(
+        candidate.baseId,
+        candidate.tableName,
+        candidate.viewId,
+        readOptions,
+      );
     } catch (error) {
       lastError = error;
     }
@@ -299,7 +510,9 @@ export async function createConfiguredRecord(
   const definition = getWriteSourceDefinition(source);
 
   if (!definition.reference) {
-    return airtableSourceDependencies.createRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, fields, options);
+    const createdRecord = await airtableSourceDependencies.createRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, fields, options);
+    invalidateConfiguredRecordsCache();
+    return createdRecord;
   }
 
   const candidates = parseAirtableReferenceCandidates(
@@ -311,7 +524,9 @@ export async function createConfiguredRecord(
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
-      return await airtableSourceDependencies.createRecord(candidate.baseId, candidate.tableName, fields, options);
+      const createdRecord = await airtableSourceDependencies.createRecord(candidate.baseId, candidate.tableName, fields, options);
+      invalidateConfiguredRecordsCache();
+      return createdRecord;
     } catch (error) {
       lastError = error;
       if (!isRetryableReferenceError(error)) {
@@ -332,7 +547,9 @@ export async function updateConfiguredRecord(
   const definition = getWriteSourceDefinition(source);
 
   if (!definition.reference) {
-    return airtableSourceDependencies.updateRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, recordId, fields, options);
+    const updatedRecord = await airtableSourceDependencies.updateRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, recordId, fields, options);
+    invalidateConfiguredRecordsCache();
+    return updatedRecord;
   }
 
   const candidates = parseAirtableReferenceCandidates(
@@ -344,7 +561,9 @@ export async function updateConfiguredRecord(
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
-      return await airtableSourceDependencies.updateRecord(candidate.baseId, candidate.tableName, recordId, fields, options);
+      const updatedRecord = await airtableSourceDependencies.updateRecord(candidate.baseId, candidate.tableName, recordId, fields, options);
+      invalidateConfiguredRecordsCache();
+      return updatedRecord;
     } catch (error) {
       lastError = error;
       if (!isRetryableReferenceError(error)) {
@@ -361,6 +580,7 @@ export async function deleteConfiguredRecord(source: AirtableConfiguredWriteSour
 
   if (!definition.reference) {
     await airtableSourceDependencies.deleteRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, recordId);
+    invalidateConfiguredRecordsCache();
     return;
   }
 
@@ -374,6 +594,7 @@ export async function deleteConfiguredRecord(source: AirtableConfiguredWriteSour
   for (const candidate of candidates) {
     try {
       await airtableSourceDependencies.deleteRecord(candidate.baseId, candidate.tableName, recordId);
+      invalidateConfiguredRecordsCache();
       return;
     } catch (error) {
       lastError = error;
@@ -408,4 +629,5 @@ export async function uploadConfiguredAttachment(
   }
 
   await airtableSourceDependencies.uploadAttachment(definition.baseId, recordId, fieldId, payload);
+  invalidateConfiguredRecordsCache();
 }

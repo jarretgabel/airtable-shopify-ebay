@@ -6,8 +6,66 @@ import { logError, logInfo } from '../../shared/logging.js';
 import {
   getConfiguredRecords,
   getConfiguredRecordsSummary,
+  type AirtableConfiguredRecordsSubset,
   type AirtableConfiguredRecordsSource,
 } from '../../providers/airtable/sources.js';
+import { getOrLoadConfiguredRecordsCache } from '../../providers/airtable/configuredRecordsCache.js';
+
+const DEFAULT_APPROVAL_QUEUE_FIELDS = [
+  'Workflow Status',
+  'Shopify Approved',
+  'eBay Approved',
+  'Shopify REST Title',
+  'Shopify Title',
+  'Item Title',
+  'Title',
+  'eBay Title',
+  'Vendor',
+  'Shopify REST Variant 1 Price',
+  'Shopify Variant 1 Price',
+  'Buy It Now/Starting Price',
+  'Buy It Now / Starting Price',
+  'Price',
+  'eBay Offer Price Value',
+  'eBay Offer Auction Start Price Value',
+  'Quantity',
+  'Qty',
+  'Shopify Status',
+  'Shopify REST Status',
+  'eBay Offer Status',
+  'eBay Format',
+  'eBay Offer Format',
+  'Listing Format',
+];
+
+function resolveRequestedFields(
+  source: AirtableConfiguredRecordsSource,
+  subset: AirtableConfiguredRecordsSubset | undefined,
+  rawFields: string | undefined,
+): string[] | undefined {
+  const requestedFields = rawFields
+    ?.split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+
+  if (requestedFields && requestedFields.length > 0) {
+    return requestedFields;
+  }
+
+  if (subset === 'ready-for-publishing' || subset === 'listings-page') {
+    return undefined;
+  }
+
+  if (
+    source === 'approval-ebay'
+    || source === 'approval-shopify'
+    || source === 'approval-combined'
+  ) {
+    return DEFAULT_APPROVAL_QUEUE_FIELDS;
+  }
+
+  return undefined;
+}
 
 function validateSource(value: string): AirtableConfiguredRecordsSource {
   if (
@@ -29,6 +87,33 @@ function validateSource(value: string): AirtableConfiguredRecordsSource {
   });
 }
 
+function validateSubset(value: string | undefined): AirtableConfiguredRecordsSubset | undefined {
+  if (!value) return undefined;
+  if (value === 'ready-for-publishing') return value;
+  if (value === 'listings-page') return value;
+
+  throw new HttpError(400, 'Unsupported Airtable configured subset', {
+    service: 'airtable',
+    code: 'AIRTABLE_SUBSET_NOT_ALLOWED',
+    retryable: false,
+  });
+}
+
+function validateMaxRecords(value: string | undefined): number | undefined {
+  if (!value) return undefined;
+
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 1 || parsed > 1000) {
+    throw new HttpError(400, 'maxRecords must be an integer between 1 and 1000.', {
+      service: 'airtable',
+      code: 'AIRTABLE_MAX_RECORDS_INVALID',
+      retryable: false,
+    });
+  }
+
+  return parsed;
+}
+
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   const origin = getRequestOrigin(event);
   try {
@@ -42,11 +127,23 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       return jsonOk(queueSummary, { origin });
     }
 
-    const fields = getOptionalQueryParam(event, 'fields')
-      ?.split(',')
-      .map((value) => value.trim())
-      .filter((value) => value.length > 0);
-    const records = await getConfiguredRecords(source, { fields });
+    const subset = validateSubset(getOptionalQueryParam(event, 'subset'));
+    const maxRecords = validateMaxRecords(getOptionalQueryParam(event, 'maxRecords'));
+    const fields = resolveRequestedFields(source, subset, getOptionalQueryParam(event, 'fields'));
+    const shouldCacheCombinedSubset = source === 'approval-combined'
+      && (subset === 'ready-for-publishing' || subset === 'listings-page');
+
+    const records = shouldCacheCombinedSubset
+      ? await getOrLoadConfiguredRecordsCache(
+        {
+          source,
+          subset,
+          fields,
+          maxRecords,
+        },
+        () => getConfiguredRecords(source, { fields, subset, maxRecords }),
+      )
+      : await getConfiguredRecords(source, { fields, subset, maxRecords });
     logInfo('Fetched Airtable configured records', { source, count: records.length });
     return jsonOk(records, { origin });
   } catch (error) {

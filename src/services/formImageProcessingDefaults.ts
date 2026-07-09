@@ -6,6 +6,20 @@ import {
 } from '@/services/imageProcessor';
 
 const STORAGE_KEY = 'form-image-processing-defaults:v1';
+const LEGACY_WATERMARK_TEXT = 'Resolution AV';
+
+function normalizeWatermarkTextForComparison(value: string): string {
+  return value
+    .replace(/^\s*(?:©|\(c\))\s*/i, '')
+    .replace(/\s*(?:©|\(c\))\s*$/i, '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+function isLegacyWatermarkText(value: string): boolean {
+  return normalizeWatermarkTextForComparison(value) === normalizeWatermarkTextForComparison(LEGACY_WATERMARK_TEXT);
+}
 
 export interface FormImageProcessingDefaults {
   maxPx: number;
@@ -47,11 +61,17 @@ function normalizeDefaults(raw: unknown): FormImageProcessingDefaults {
   }
 
   const record = raw as Record<string, unknown>;
+  const normalizedWatermarkText = typeof record.watermarkText === 'string'
+    ? record.watermarkText
+    : DEFAULT_FORM_IMAGE_PROCESSING_DEFAULTS.watermarkText;
+
   return {
     maxPx: typeof record.maxPx === 'number' ? record.maxPx : DEFAULT_FORM_IMAGE_PROCESSING_DEFAULTS.maxPx,
     quality: typeof record.quality === 'number' ? record.quality : DEFAULT_FORM_IMAGE_PROCESSING_DEFAULTS.quality,
     watermarkEnabled: typeof record.watermarkEnabled === 'boolean' ? record.watermarkEnabled : DEFAULT_FORM_IMAGE_PROCESSING_DEFAULTS.watermarkEnabled,
-    watermarkText: typeof record.watermarkText === 'string' ? record.watermarkText : DEFAULT_FORM_IMAGE_PROCESSING_DEFAULTS.watermarkText,
+    watermarkText: isLegacyWatermarkText(normalizedWatermarkText)
+      ? DEFAULT_FORM_IMAGE_PROCESSING_DEFAULTS.watermarkText
+      : normalizedWatermarkText,
     watermarkPos: isWatermarkPosition(record.watermarkPos) ? record.watermarkPos : DEFAULT_FORM_IMAGE_PROCESSING_DEFAULTS.watermarkPos,
     crop: normalizeCrop(record.crop),
   };

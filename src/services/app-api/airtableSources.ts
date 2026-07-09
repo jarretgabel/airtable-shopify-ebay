@@ -86,7 +86,9 @@ export function resolveConfiguredRecordsSource(
   const inputReference = normalizeValue(reference);
   const inputTableName = normalizeValue(tableName);
 
-  for (const source of ['user-guide', 'approval-ebay', 'approval-shopify', 'approval-combined'] as const) {
+  // Prefer combined listings when multiple approval sources share the same
+  // Airtable reference in runtime config (common in staging/prod bundles).
+  for (const source of ['user-guide', 'approval-combined', 'approval-ebay', 'approval-shopify'] as const) {
     const definition = getConfiguredRecordsSourceDefinition(source);
     const definitionReference = normalizeValue(definition.reference);
     const definitionTableName = normalizeValue(definition.tableName);

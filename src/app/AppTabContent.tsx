@@ -671,7 +671,7 @@ export function AppTabContent({
           />
         );
       case 'create-intake-item':
-        return <UsedGearManualIntakePage />;
+        return <UsedGearManualIntakePage onCreateSuccess={() => navigateToManualIntake()} />;
       case 'testing':
         if (!deferredRouteState.testingRecordId) {
           return (

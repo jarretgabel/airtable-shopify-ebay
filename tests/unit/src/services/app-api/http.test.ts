@@ -34,12 +34,12 @@ describe('app-api http csrf handling', () => {
     await getJson('/api/auth/session');
     await postJson('/api/airtable/configured-records/users', { fields: { Name: 'User' } });
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/auth/session', {
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/auth/session', expect.objectContaining({
       cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
-    });
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/airtable/configured-records/users', {
+    }));
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/airtable/configured-records/users', expect.objectContaining({
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -48,7 +48,7 @@ describe('app-api http csrf handling', () => {
         'x-csrf-token': 'csrf-123',
       },
       body: JSON.stringify({ fields: { Name: 'User' } }),
-    });
+    }));
   });
 
   it('clears the cached csrf token when requested', async () => {
@@ -66,7 +66,7 @@ describe('app-api http csrf handling', () => {
     clearCsrfToken();
     await postJson('/api/auth/logout', {});
 
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/auth/logout', {
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/auth/logout', expect.objectContaining({
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -74,7 +74,7 @@ describe('app-api http csrf handling', () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({}),
-    });
+    }));
   });
 
   it('keeps localhost browser requests on same-origin api paths even when a remote app api base url is configured', async () => {
@@ -90,11 +90,11 @@ describe('app-api http csrf handling', () => {
 
     await getJson('/api/ebay/runtime-config');
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/ebay/runtime-config', {
+    expect(fetchMock).toHaveBeenCalledWith('/api/ebay/runtime-config', expect.objectContaining({
       cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
-    });
+    }));
   });
 
   it('blocks absolute remote api urls from localhost browser sessions', async () => {
@@ -107,5 +107,16 @@ describe('app-api http csrf handling', () => {
     });
 
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('normalizes aborted requests into timeout errors', async () => {
+    fetchMock.mockRejectedValueOnce(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+
+    await expect(getJson('/api/airtable/configured-records')).rejects.toMatchObject({
+      name: 'AppApiHttpError',
+      statusCode: 504,
+      code: 'APP_API_TIMEOUT',
+      retryable: true,
+    });
   });
 });

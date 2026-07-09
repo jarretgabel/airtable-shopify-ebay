@@ -64,10 +64,34 @@ export function useListingApprovalCombinedFieldState({
   setDerivedFormValue,
   setSelectedEbayTemplateId,
 }: UseListingApprovalCombinedFieldStateParams) {
-  const selectedRecord = useMemo(
+  const selectedRecordFromQueue = useMemo(
     () => records.find((record) => record.id === selectedRecordId) ?? null,
     [records, selectedRecordId],
   );
+
+  const selectedRecord = useMemo(() => {
+    if (!selectedRecordFromQueue) return null;
+
+    const hydratedMissingFieldEntries = Object.entries(formValues).filter(([fieldName, value]) => {
+      if (Object.prototype.hasOwnProperty.call(selectedRecordFromQueue.fields, fieldName)) {
+        return false;
+      }
+
+      return value.trim().length > 0;
+    });
+
+    if (hydratedMissingFieldEntries.length === 0) {
+      return selectedRecordFromQueue;
+    }
+
+    return {
+      ...selectedRecordFromQueue,
+      fields: {
+        ...selectedRecordFromQueue.fields,
+        ...Object.fromEntries(hydratedMissingFieldEntries),
+      },
+    };
+  }, [formValues, selectedRecordFromQueue]);
 
   const selectedRecordFieldNames = useMemo(() => {
     const names = new Set<string>(allFieldNames);

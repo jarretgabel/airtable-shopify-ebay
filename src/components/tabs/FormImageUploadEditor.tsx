@@ -134,6 +134,18 @@ function buildProcessingSummary(items: EditableUploadItem[]): FormImageProcessin
   };
 }
 
+function getImageRoleValidationError(role: WorkflowImageRole | undefined, customRole: string | undefined): string | undefined {
+  if (!role) {
+    return 'Select an image role before processing.';
+  }
+
+  if (role === 'custom' && !(customRole && customRole.trim().length > 0)) {
+    return 'Enter a custom image role before processing.';
+  }
+
+  return undefined;
+}
+
 function toUploadFiles(items: EditableUploadItem[], requireImageRole: boolean): File[] {
   return getUploadReadyItems(items, requireImageRole).flatMap((item) => item.editedFile ? [item.editedFile] : []);
 }
@@ -316,11 +328,15 @@ export function FormImageUploadEditor({
     const currentItem = sourceItem ?? itemsRef.current.find((item) => item.id === itemId);
     if (!currentItem) return;
 
-    if (requireImageRole && !isImageRoleComplete(currentItem.imageRole, currentItem.customImageRole)) {
+    const roleValidationError = requireImageRole
+      ? getImageRoleValidationError(currentItem.imageRole, currentItem.customImageRole)
+      : undefined;
+
+    if (roleValidationError) {
       updateItem(itemId, (item) => ({
         ...item,
         status: 'error',
-        error: 'Select an image role before processing.',
+        error: roleValidationError,
       }));
       return;
     }
@@ -366,7 +382,36 @@ export function FormImageUploadEditor({
   };
 
   const processAll = async () => {
-    for (const item of items) {
+    const snapshot = itemsRef.current;
+    if (requireImageRole) {
+      const validationById = new Map<string, string>();
+      snapshot.forEach((item) => {
+        const nextValidationError = getImageRoleValidationError(item.imageRole, item.customImageRole);
+        if (nextValidationError) {
+          validationById.set(item.id, nextValidationError);
+        }
+      });
+
+      if (validationById.size > 0) {
+        setItems((current) => current.map((item) => {
+          const nextValidationError = validationById.get(item.id);
+          if (!nextValidationError) {
+            return item;
+          }
+
+          return {
+            ...item,
+            status: 'error',
+            error: nextValidationError,
+          };
+        }));
+      }
+    }
+
+    for (const item of snapshot) {
+      if (requireImageRole && getImageRoleValidationError(item.imageRole, item.customImageRole)) {
+        continue;
+      }
       await processSingleItem(item.id);
     }
   };
@@ -598,11 +643,16 @@ export function FormImageUploadEditor({
 
       {items.length > 0 ? (
         <div className="mt-4 grid gap-5">
-          {items.map((item) => (
+          {items.map((item) => {
+            const roleValidationError = requireImageRole
+              ? getImageRoleValidationError(item.imageRole, item.customImageRole)
+              : undefined;
+
+            return (
             <article key={item.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div>
-                  <p className="m-0 text-sm font-semibold text-[var(--ink)]">{item.originalFile.name}</p>
+                <div className="min-w-0 xl:flex-1">
+                  <p className="m-0 break-all text-sm font-semibold text-[var(--ink)]">{item.originalFile.name}</p>
                   <p className="mt-1 text-xs text-[var(--muted)]">
                     Original {formatBytes(item.originalFile.size)}
                     {item.processed ? ` · Edited ${formatBytes(item.processed.processedBytes)} · ${item.processed.width}×${item.processed.height}` : ''}
@@ -617,7 +667,7 @@ export function FormImageUploadEditor({
                     onClick={() => {
                       void processSingleItem(item.id);
                     }}
-                    disabled={disabled || item.status === 'processing'}
+                    disabled={disabled || item.status === 'processing' || Boolean(roleValidationError)}
                   >
                     {item.status === 'processing' ? 'Processing…' : 'Apply edits'}
                   </button>
@@ -769,6 +819,10 @@ export function FormImageUploadEditor({
                         <p className="text-xs text-amber-200/90">{item.outputWarnings.join(' ')}</p>
                       ) : null}
 
+                      {roleValidationError ? (
+                        <p className="text-xs text-amber-200/90">{roleValidationError}</p>
+                      ) : null}
+
                       <label className="block">
                         <span className="text-sm font-semibold text-[var(--ink)]">Image alt text</span>
                         <input
@@ -786,7 +840,8 @@ export function FormImageUploadEditor({
                     </div>
                   </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       ) : null}
 

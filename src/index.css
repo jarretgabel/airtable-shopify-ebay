@@ -61,6 +61,7 @@
 
 	body {
 		font-family: var(--font-sans);
+		overflow-x: hidden;
 		background: radial-gradient(circle at 90% -12%, rgba(78, 143, 228, 0.16), transparent 36%),
 		            radial-gradient(circle at 10% -2%, rgba(32, 140, 160, 0.12), transparent 32%),
 		            linear-gradient(180deg, #02050b, #040913 30%, #03070f 100%);

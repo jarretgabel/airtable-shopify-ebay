@@ -56,8 +56,12 @@ export function useListingApprovalRecordLifecycle({
   useEffect(() => {
     if (!hasTableReference) return;
     void loadRecords(tableReference, tableName, false);
+  }, [hasTableReference, loadRecords, tableName, tableReference]);
+
+  useEffect(() => {
+    if (!selectedRecordId) return;
     void loadListingFormatOptions(false);
-  }, [hasTableReference, loadListingFormatOptions, loadRecords, tableName, tableReference]);
+  }, [loadListingFormatOptions, selectedRecordId]);
 
   useEffect(() => {
     if (!selectedRecord) return;

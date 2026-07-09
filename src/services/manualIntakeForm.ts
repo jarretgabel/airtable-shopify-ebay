@@ -17,7 +17,8 @@ import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
 import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
 import type { AirtableRecord } from '@/types/airtable';
 
-const IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
+const INVENTORY_IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
+const WORKFLOW_IMAGE_ATTACHMENT_FIELD_ID = 'fld1zIzmZEciQECah';
 const DEFAULT_STATUS = 'Needs Initial Processing';
 const WORKFLOW_SOURCE_MANUAL_ENTRY = 'Manual Entry';
 
@@ -59,9 +60,17 @@ function dedupeOptions(values: string[]): string[] {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
 
-async function uploadManualIntakeImages(recordId: string, files: File[]): Promise<void> {
+function getImageAttachmentFieldId(source: ManualIntakeRecordSource): string {
+  return source === 'used-gear-workflow'
+    ? WORKFLOW_IMAGE_ATTACHMENT_FIELD_ID
+    : INVENTORY_IMAGE_ATTACHMENT_FIELD_ID;
+}
+
+async function uploadManualIntakeImages(source: ManualIntakeRecordSource, recordId: string, files: File[]): Promise<void> {
+  const imageAttachmentFieldId = getImageAttachmentFieldId(source);
+
   for (const file of files) {
-    await uploadConfiguredAttachment('inventory-directory', recordId, IMAGE_ATTACHMENT_FIELD_ID, file);
+    await uploadConfiguredAttachment(source, recordId, imageAttachmentFieldId, file);
   }
 }
 
@@ -251,7 +260,7 @@ export async function submitManualIntakeForm(
       );
 
       if (values.imageFiles.length > 0) {
-        await uploadManualIntakeImages(updatedRecord.id, values.imageFiles);
+        await uploadManualIntakeImages(writeSource, updatedRecord.id, values.imageFiles);
       }
 
       return {
@@ -299,7 +308,7 @@ export async function submitManualIntakeForm(
     }
 
     if (values.imageFiles.length > 0) {
-      await uploadManualIntakeImages(createdRecord.id, values.imageFiles);
+      await uploadManualIntakeImages('used-gear-workflow', createdRecord.id, values.imageFiles);
     }
 
     return {

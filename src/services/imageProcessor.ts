@@ -45,7 +45,7 @@ export const DEFAULT_OPTIONS: ProcessingOptions = {
   maxPx: 1200,
   quality: 85,
   watermarkEnabled: true,
-  watermarkText: 'Resolution AV',
+  watermarkText: '© Resolution Audio Video',
   watermarkPos: 'bottom-right',
   crop: {
     left: 0,
@@ -175,52 +175,65 @@ function drawWatermark(
   text: string,
   pos: WatermarkPosition,
 ) {
-  // Scale font to ~2.2% of image width, but clamp between 13px and 42px
-  const fontSize = Math.max(13, Math.min(42, Math.round(w * 0.022)));
-  ctx.save();
-  ctx.font = `700 ${fontSize}px Inter, -apple-system, BlinkMacSystemFont, sans-serif`;
+  // Scale font to ~2.1% of image width, but clamp between 13px and 40px
+  const fontSize = Math.max(13, Math.min(40, Math.round(w * 0.021)));
+  const watermarkLabel = buildWatermarkLabel(text);
 
-  const textW = ctx.measureText(text).width;
-  const padX = Math.round(fontSize * 0.65);
-  const padY = Math.round(fontSize * 0.55);
-  const bgH = fontSize + padY * 2;
-  const bgW = textW + padX * 2;
-  const margin = Math.max(12, Math.round(w * 0.018));
-
-  let bx: number, by: number;
-  switch (pos) {
-    case 'bottom-right':  bx = w - bgW - margin;     by = h - bgH - margin; break;
-    case 'bottom-left':   bx = margin;                by = h - bgH - margin; break;
-    case 'bottom-center': bx = (w - bgW) / 2;         by = h - bgH - margin; break;
-    case 'top-right':     bx = w - bgW - margin;     by = margin;            break;
+  if (!watermarkLabel) {
+    return;
   }
 
-  // Semi-transparent dark pill
-  ctx.fillStyle = 'rgba(10, 18, 28, 0.58)';
-  roundedRect(ctx, bx, by, bgW, bgH, Math.round(fontSize * 0.38));
-  ctx.fill();
+  ctx.save();
+  ctx.font = `700 ${fontSize}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+  ctx.textBaseline = 'alphabetic';
 
-  // White label text
+  const metrics = ctx.measureText(watermarkLabel);
+  const textW = metrics.width;
+  const textAscent = metrics.actualBoundingBoxAscent || Math.round(fontSize * 0.78);
+  const textDescent = metrics.actualBoundingBoxDescent || Math.round(fontSize * 0.22);
+  const marginX = Math.max(14, Math.round(w * 0.02));
+  const marginY = Math.max(14, Math.round(h * 0.02));
+
+  let x: number;
+  let baselineY: number;
+  switch (pos) {
+    case 'bottom-right':
+      x = w - textW - marginX;
+      baselineY = h - marginY - textDescent;
+      break;
+    case 'bottom-left':
+      x = marginX;
+      baselineY = h - marginY - textDescent;
+      break;
+    case 'bottom-center':
+      x = (w - textW) / 2;
+      baselineY = h - marginY - textDescent;
+      break;
+    case 'top-right':
+      x = w - textW - marginX;
+      baselineY = marginY + textAscent;
+      break;
+  }
+
+  // Subtle drop shadow for readability without a background panel
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+  ctx.shadowBlur = Math.max(2, Math.round(fontSize * 0.14));
+  ctx.shadowOffsetX = Math.max(1, Math.round(fontSize * 0.07));
+  ctx.shadowOffsetY = Math.max(1, Math.round(fontSize * 0.1));
   ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
-  ctx.fillText(text, bx + padX, by + padY + fontSize * 0.78);
+  ctx.fillText(watermarkLabel, x, baselineY);
   ctx.restore();
 }
 
-function roundedRect(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number, r: number,
-) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
+function buildWatermarkLabel(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return '';
+
+  if (/^(©|\(c\))/i.test(trimmed)) {
+    return trimmed.replace(/^\(c\)/i, '©');
+  }
+
+  return `© ${trimmed}`;
 }
 
 export function formatBytes(bytes: number): string {

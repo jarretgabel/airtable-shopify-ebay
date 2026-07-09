@@ -21,6 +21,7 @@ interface CsrfAwareBody {
 }
 
 const CSRF_STORAGE_KEY = 'app_api_csrf_token';
+const APP_API_REQUEST_TIMEOUT_MS = 12000;
 let csrfTokenCache: string | null = null;
 
 function canUseSessionStorage(): boolean {
@@ -121,6 +122,48 @@ function buildUrl(path: string, params?: Record<string, string | number | undefi
   return url.toString();
 }
 
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === 'AbortError';
+}
+
+function shouldUseRequestTimeout(): boolean {
+  const nodeEnv = getProcessEnvVar('NODE_ENV');
+  const vitest = getProcessEnvVar('VITEST');
+  return nodeEnv !== 'test' && vitest !== 'true';
+}
+
+function buildRequestSignal(existingSignal: AbortSignal | null | undefined): {
+  signal: AbortSignal;
+  cleanup: () => void;
+} {
+  const controller = new AbortController();
+  const timeoutId = globalThis.setTimeout(() => {
+    controller.abort();
+  }, APP_API_REQUEST_TIMEOUT_MS);
+
+  const onAbort = () => {
+    controller.abort();
+  };
+
+  if (existingSignal) {
+    if (existingSignal.aborted) {
+      controller.abort();
+    } else {
+      existingSignal.addEventListener('abort', onAbort, { once: true });
+    }
+  }
+
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      globalThis.clearTimeout(timeoutId);
+      if (existingSignal) {
+        existingSignal.removeEventListener('abort', onAbort);
+      }
+    },
+  };
+}
+
 async function readErrorBody(response: Response): Promise<ApiErrorBody & { message: string }> {
   const fallbackMessage = `Request failed: ${response.status}`;
   const text = await response.text();
@@ -156,11 +199,30 @@ async function requestJson<T>(path: string, init: RequestInit, params?: Record<s
     }
   }
 
-  const response = await fetch(buildUrl(path, params), {
-    credentials: 'include',
-    ...init,
-    headers: withAuthAndCsrfHeader(init.headers, init.method),
-  });
+  const timeoutEnabled = shouldUseRequestTimeout();
+  const timeoutContext = timeoutEnabled ? buildRequestSignal(init.signal) : null;
+
+  let response: Response;
+  try {
+    response = await fetch(buildUrl(path, params), {
+      credentials: 'include',
+      ...init,
+      ...(timeoutContext ? { signal: timeoutContext.signal } : {}),
+      headers: withAuthAndCsrfHeader(init.headers, init.method),
+    });
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw new AppApiHttpError(`Request timed out after ${APP_API_REQUEST_TIMEOUT_MS}ms.`, {
+        statusCode: 504,
+        code: 'APP_API_TIMEOUT',
+        retryable: true,
+      });
+    }
+
+    throw error;
+  } finally {
+    timeoutContext?.cleanup();
+  }
 
   if (!response.ok) {
     const body = await readErrorBody(response);

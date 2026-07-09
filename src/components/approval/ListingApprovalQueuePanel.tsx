@@ -618,7 +618,7 @@ export function ListingApprovalQueuePanel({
         </section>
       )}
 
-      {hasTableReference && loading ? (
+      {hasTableReference && loading && records.length === 0 ? (
         isCombinedApproval ? (
           <AppPageSectionSurface>
             <ListingApprovalQueueSkeleton />

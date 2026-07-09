@@ -240,4 +240,46 @@ describe('FormImageUploadEditor', () => {
       }),
     );
   });
+
+  it('requires a complete role selection before enabling Apply edits in role-required mode', async () => {
+    render(
+      <FormImageUploadEditor
+        onFilesChange={vi.fn()}
+        requireImageRole
+        namingContext={{
+          brand: 'Acme',
+          model: 'M1',
+          productType: 'Amplifier',
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText('Add upload images'), {
+      target: {
+        files: [new File(['original-image'], 'role-check.jpg', { type: 'image/jpeg' })],
+      },
+    });
+
+    const card = await screen.findByText('role-check.jpg');
+    const article = card.closest('article');
+    expect(article).not.toBeNull();
+    if (!article) return;
+
+    const applyEditsButton = within(article).getByRole('button', { name: 'Apply edits' });
+    expect(applyEditsButton).toBeDisabled();
+
+    fireEvent.change(within(article).getByRole('combobox', { name: 'Image role' }), {
+      target: { value: 'front' },
+    });
+
+    await waitFor(() => {
+      expect(within(article).getByRole('button', { name: 'Apply edits' })).toBeEnabled();
+    });
+
+    fireEvent.click(within(article).getByRole('button', { name: 'Apply edits' }));
+
+    await waitFor(() => {
+      expect(processImageMock).toHaveBeenCalled();
+    });
+  });
 });

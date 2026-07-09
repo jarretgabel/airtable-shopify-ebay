@@ -50,6 +50,18 @@ function upsertParameterOverride(parameterOverrides, key, value) {
 
 const replacements = [
   ['AirtableApiKey', requireEnv('VITE_AIRTABLE_API_KEY')],
+  ['AirtableBaseId', getOptionalEnv('VITE_AIRTABLE_BASE_ID')],
+  ['AllowedAirtableTableName', getOptionalEnv('VITE_AIRTABLE_TABLE_NAME')],
+  ['AllowedAirtableViewId', getOptionalEnv('VITE_AIRTABLE_VIEW_ID')],
+  ['AirtableUsersTableRef', getOptionalEnv('VITE_AIRTABLE_USERS_TABLE_REF')],
+  ['AirtableUsersTableName', getOptionalEnv('VITE_AIRTABLE_USERS_TABLE_NAME')],
+  ['AirtableApprovalTableRef', getOptionalEnv('VITE_AIRTABLE_APPROVAL_TABLE_REF')],
+  ['AirtableApprovalTableName', getOptionalEnv('VITE_AIRTABLE_APPROVAL_TABLE_NAME')],
+  ['AirtableShopifyApprovalTableRef', getOptionalEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF')],
+  ['AirtableShopifyApprovalTableName', getOptionalEnv('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME')],
+  ['AirtableCombinedListingsTableRef', getOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF')],
+  ['AirtableCombinedListingsTableName', getOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME')],
+  ['ShopifyStoreDomain', getOptionalEnv('VITE_SHOPIFY_STORE_DOMAIN')],
   ['ShopifyAccessToken', shopifyToken],
   ['AppAllowedOrigins', getOptionalEnv('VITE_APP_ALLOWED_ORIGINS')],
   ['AppAuthCookieSameSite', getOptionalEnv('APP_AUTH_COOKIE_SAME_SITE')],

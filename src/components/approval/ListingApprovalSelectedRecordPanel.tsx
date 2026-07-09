@@ -8,7 +8,6 @@ import { ListingApprovalRecordAlerts } from '@/components/approval/ListingApprov
 import { COMBINED_RECORD_SECTION_ITEMS, type CombinedRecordSectionKey } from '@/components/approval/listingApprovalCombinedSectionNav';
 import { ListingApprovalSelectedRecordView } from '@/components/approval/ListingApprovalSelectedRecordView';
 import { NotReadyForStageSurface } from '@/components/app/NotReadyForStageSurface';
-import { isUsedGearWorkflowListingSurfaceEligible } from '@/services/usedGearWorkflowListingVisibility';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 import { ListingApprovalWorkflowSummary, type ListingApprovalWorkflowSummaryData } from '@/components/approval/ListingApprovalWorkflowSummary';
 import type { buildListingApprovalSelectedRecordStatusProps } from '@/components/approval/listingApprovalSelectedRecordStatusProps';
@@ -19,6 +18,17 @@ import type { AirtableRecord } from '@/types/airtable';
 const ApprovalFormFields = lazy(async () => ({ default: (await import('@/components/approval/ApprovalFormFields')).ApprovalFormFields }));
 const ListingApprovalCombinedSections = lazy(async () => ({ default: (await import('@/components/approval/ListingApprovalCombinedSections')).ListingApprovalCombinedSections }));
 const ListingApprovalRecordPayloadPanels = lazy(async () => ({ default: (await import('@/components/approval/ListingApprovalRecordPayloadPanels')).ListingApprovalRecordPayloadPanels }));
+
+const LISTING_SURFACE_WORKFLOW_STATUSES = new Set([
+  'Awaiting Pre-Listing Review',
+  'Approved for Publish',
+  'Listed, Shopify',
+  'Listed, eBay',
+  'Stale Listing, Shopify',
+  'Stale Listing, eBay',
+  'Sold - Ready to Ship',
+  'Shipped',
+]);
 
 function getWorkflowSummaryActionSectionConfig(workflowStatus: string | null): { sectionId: string; label: string } | null {
   switch (workflowStatus) {
@@ -118,10 +128,9 @@ export function ListingApprovalSelectedRecordPanel({
     [workflowSummary?.workflowStatus],
   );
 
-  // Enforce listing surface eligibility, but allow post-publish access for follow-through actions.
+  // Gate listing detail access by workflow stage so records do not briefly fail eligibility while full field hydration is in flight.
   const currentStep = getUsedGearWorkflowStatus(selectedRecord.fields) || 'Unknown';
-  const isPostPublishAccess = currentStep === 'Sold - Ready to Ship' || currentStep === 'Shipped';
-  const isEligible = isPostPublishAccess || isUsedGearWorkflowListingSurfaceEligible(selectedRecord);
+  const isEligible = LISTING_SURFACE_WORKFLOW_STATUSES.has(currentStep);
   // Helper to get a user-friendly label for the current step
   function getStepLabel(status: string): string {
     switch (status) {

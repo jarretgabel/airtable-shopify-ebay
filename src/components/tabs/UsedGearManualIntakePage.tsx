@@ -10,6 +10,7 @@ interface UsedGearManualIntakePageProps {
   onBackToDirectory?: () => void;
   backToDirectoryLabel?: string;
   eyebrow?: string;
+  onCreateSuccess?: (createdRecordIds: string[]) => void;
 }
 
 export function UsedGearManualIntakePage({
@@ -17,6 +18,7 @@ export function UsedGearManualIntakePage({
   onBackToDirectory,
   backToDirectoryLabel = 'Back to Intake Directory',
   eyebrow = 'Intake',
+  onCreateSuccess,
 }: UsedGearManualIntakePageProps) {
   const [itemTitle, setItemTitle] = useState('');
 
@@ -37,6 +39,7 @@ export function UsedGearManualIntakePage({
       <AirtableEmbeddedForm
         recordId={recordId}
         onLoadResult={handleLoadResult}
+        onCreateSuccess={onCreateSuccess}
       />
     </AppPageLayout>
   );

@@ -29,7 +29,7 @@ interface AppDataParams {
 export function useAppData({ enabled = true, canAccessPage, activeTab, currentUserName, users }: AppDataParams) {
   const dashboardActive = enabled && activeTab === 'dashboard';
   const airtableEnabled = enabled && canAccessPage('inventory') && (dashboardActive || activeTab === 'inventory');
-  const postPublishEnabled = enabled && canAccessPage('post-publish');
+  const postPublishEnabled = enabled && canAccessPage('post-publish') && (dashboardActive || activeTab === 'post-publish');
   const shopifyEnabled = enabled && canAccessPage('shopify') && (dashboardActive || activeTab === 'shopify');
   const runtimeFeatures = getRuntimeFeatureCapabilities();
   const jotformEnabled = enabled && runtimeFeatures.jotform.available && canAccessPage('jotform-audit') && (dashboardActive || activeTab === 'jotform-audit');
@@ -42,9 +42,14 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, currentUs
   const shopify = useShopifyProducts(shopifyEnabled);
   const market = useHiFiShark();
   const ebay = useEbayListings(ebayEnabled);
-  const approval = useApprovalQueueSummary(enabled && canAccessPage('listings') && runtimeFeatures.approvalEbay.available);
-  const shopifyApproval = useShopifyApprovalQueueSummary(enabled && canAccessPage('listings') && runtimeFeatures.approvalShopify.available);
-  const combinedListingsReadyForPublishing = useCombinedListingsReadyForPublishingCount(enabled && canAccessPage('listings') && runtimeFeatures.approvalCombined.available);
+  const approval = useApprovalQueueSummary(enabled && dashboardActive && canAccessPage('listings') && runtimeFeatures.approvalEbay.available);
+  const shopifyApproval = useShopifyApprovalQueueSummary(enabled && dashboardActive && canAccessPage('listings') && runtimeFeatures.approvalShopify.available);
+  const combinedListingsReadyForPublishing = useCombinedListingsReadyForPublishingCount(
+    enabled
+    && activeTab === 'dashboard'
+    && canAccessPage('listings')
+    && runtimeFeatures.approvalCombined.available,
+  );
   const workflowDashboardPages = enabled ? TAB_VALUES.filter((tab) => canAccessPage(tab)) : [];
   const usedGearWorkflowDashboardTargets = useUsedGearWorkflowDashboardTargets(enabled && activeTab === 'dashboard' && canAccessPage('inventory'));
   const usedGearWorkflowAnalytics = useUsedGearWorkflowAnalyticsSnapshot(

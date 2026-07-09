@@ -219,7 +219,7 @@ describe('manualIntakeForm', () => {
         manualIntakeFormFields
           .filter((field) => field.type !== 'file')
           .map((field) => field.airtableFieldName)
-          .concat(['Item Title']),
+          .concat(['Item Title', 'Voltage']),
       )].sort(),
     );
 
@@ -290,6 +290,52 @@ describe('manualIntakeForm', () => {
         'Item Title': 'Marantz Model 8B - Incoming123',
       },
       { typecast: true },
+    );
+  });
+
+  it('uploads create-mode intake images through workflow source attachment route', async () => {
+    const values: ManualIntakeFormValues = {
+      pickUpNumber: 'PU-88',
+      sellerFirstName: 'Grouped',
+      sellerLastName: 'Intake',
+      cost: '1250',
+      customerCosmeticNotes: 'Clean unit',
+      customerFunctionalNotes: 'Powers on',
+      customerInclusionNotes: 'Power cable included',
+      make: 'McIntosh',
+      model: 'MC225',
+      componentType: 'Stereo Tube Power Amplifier',
+      serialNumber: '',
+      voltage: '120V',
+      inventoryNotes: '',
+      imageFiles: [new File(['image-a'], 'front.jpg', { type: 'image/jpeg' })],
+      cosmeticConditionNotes: '',
+      originalBox: '',
+      manual: '',
+      remote: '',
+      powerCable: '',
+      additionalItems: '',
+      weight: '',
+      shippingDims: '',
+      shippingMethod: '',
+      sellerEmail: '',
+      sellerPhone: '',
+      sellerZipCode: '',
+      sellerLocation: '',
+      howDidYouHear: '',
+      originalOwner: '',
+      smokeExposure: '',
+    };
+
+    vi.mocked(createConfiguredRecord).mockResolvedValue(buildRecord({}));
+
+    await submitManualIntakeForm(values, null);
+
+    expect(uploadConfiguredAttachment).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'recIncoming123',
+      'fld1zIzmZEciQECah',
+      values.imageFiles[0],
     );
   });
 });

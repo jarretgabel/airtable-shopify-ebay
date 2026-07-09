@@ -111,6 +111,60 @@ describe('app-api airtable', () => {
     expect(result).toEqual([{ id: 'recSlim', fields: { SKU: 'ABC' }, createdTime: 'later' }]);
   });
 
+  it('supports requesting configured-record subsets in Lambda mode', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([{ id: 'recReady', fields: { Title: 'Amp' }, createdTime: 'later' }]), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await getConfiguredRecords('approval-combined', { subset: 'ready-for-publishing' });
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-combined&subset=ready-for-publishing', {
+      cache: 'no-store',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    });
+    expect(result).toEqual([{ id: 'recReady', fields: { Title: 'Amp' }, createdTime: 'later' }]);
+  });
+
+  it('supports requesting listings-page subset in Lambda mode', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([{ id: 'recList1', fields: { Title: 'Receiver' }, createdTime: 'later' }]), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await getConfiguredRecords('approval-combined', { subset: 'listings-page' });
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-combined&subset=listings-page', {
+      cache: 'no-store',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    });
+    expect(result).toEqual([{ id: 'recList1', fields: { Title: 'Receiver' }, createdTime: 'later' }]);
+  });
+
+  it('supports requesting maxRecords in Lambda mode', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([{ id: 'recList2', fields: { Title: 'Preamp' }, createdTime: 'later' }]), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await getConfiguredRecords('approval-combined', { subset: 'listings-page', maxRecords: 150 });
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-combined&subset=listings-page&maxRecords=150', {
+      cache: 'no-store',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    });
+    expect(result).toEqual([{ id: 'recList2', fields: { Title: 'Preamp' }, createdTime: 'later' }]);
+  });
+
   it('calls the configured-records summary mode', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ total: 12, approved: 4, pending: 8 }), {
@@ -366,6 +420,33 @@ describe('app-api airtable', () => {
       headers: { Accept: 'application/json' },
     });
     expect(result).toEqual({ total: 9, approved: 3, pending: 6 });
+  });
+
+  it('prefers approval-combined when approval sources share the same Airtable reference', async () => {
+    window.__APP_RUNTIME_CONFIG__ = {
+      VITE_APP_API_BASE_URL: '',
+      VITE_AIRTABLE_APPROVAL_TABLE_REF: 'appShared/tblShared/viwShared',
+      VITE_AIRTABLE_APPROVAL_TABLE_NAME: 'tblShared',
+      VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF: 'appShared/tblShared/viwShared',
+      VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME: 'tblShared',
+      VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF: 'appShared/tblShared/viwShared',
+      VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME: 'tblShared',
+    };
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([{ id: 'recCombined1', fields: { Title: 'Combined' }, createdTime: 'now' }]), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const records = await getRecordsFromResolvedSource('appShared/tblShared/viwShared', 'tblShared');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-combined', {
+      cache: 'no-store',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    });
+    expect(records).toEqual([{ id: 'recCombined1', fields: { Title: 'Combined' }, createdTime: 'now' }]);
   });
 
   it('resolves approval deletes through the Lambda configured-record endpoint', async () => {

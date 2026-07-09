@@ -212,11 +212,13 @@ function renderField(
 interface AirtableEmbeddedFormProps {
   recordId?: string | null;
   onLoadResult?: (result: ManualIntakeFormLoadResult) => void;
+  onCreateSuccess?: (createdRecordIds: string[]) => void;
 }
 
 export function AirtableEmbeddedForm({
   recordId,
   onLoadResult,
+  onCreateSuccess,
 }: AirtableEmbeddedFormProps) {
   const onLoadResultRef = useRef<typeof onLoadResult>(onLoadResult);
 
@@ -444,6 +446,7 @@ export function AirtableEmbeddedForm({
           : `Grouped intake saved to Airtable. ${createdRecordIds.length} records created.`,
       );
       resetGroupedFormValues();
+      onCreateSuccess?.(createdRecordIds);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Unable to submit the grouped Manual Intake form.');
     } finally {

@@ -24,6 +24,8 @@ interface AirtableWriteOptions {
 
 interface AirtableConfiguredReadOptions {
   fields?: string[];
+  subset?: 'ready-for-publishing' | 'listings-page';
+  maxRecords?: number;
 }
 
 export interface AirtableConfiguredRecordsSummary {
@@ -95,10 +97,14 @@ function toAirtableError(error: unknown, tableName: string) {
 }
 
 function toConfiguredSourceError(error: unknown, source: AirtableConfiguredRecordsSource) {
+  const causeMessage = error instanceof Error && error.message.trim().length > 0
+    ? ` ${error.message}`
+    : '';
+
   return toServiceErrorMessage(
     'airtable',
     'AIRTABLE_GET_RECORDS_FAILED',
-    `Failed to load Airtable records for ${source}.`,
+    `Failed to load Airtable records for ${source}.${causeMessage}`,
     error,
     true,
   );
@@ -157,6 +163,10 @@ export async function getConfiguredRecords(
     return await getJson<AirtableRecord[]>('/api/airtable/configured-records', {
       source,
       fields: options.fields?.join(',') || undefined,
+      subset: options.subset,
+      maxRecords: typeof options.maxRecords === 'number' && Number.isFinite(options.maxRecords)
+        ? String(Math.trunc(options.maxRecords))
+        : undefined,
     });
   } catch (error) {
     throw toConfiguredSourceError(error, source);
@@ -190,11 +200,12 @@ export async function getConfiguredRecord(
 export async function getRecordsFromResolvedSource(
   tableReference: string | undefined,
   tableName: string | undefined,
+  options: AirtableConfiguredReadOptions = {},
 ): Promise<AirtableRecord[]> {
   const resolvedSource = resolveConfiguredRecordsSource(tableReference, tableName);
 
   if (resolvedSource) {
-    return getConfiguredRecords(resolvedSource);
+    return getConfiguredRecords(resolvedSource, options);
   }
 
   if (!tableReference) {

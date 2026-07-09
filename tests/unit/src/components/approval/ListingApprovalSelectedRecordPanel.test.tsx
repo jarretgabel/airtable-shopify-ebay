@@ -20,13 +20,13 @@ vi.mock('@/components/approval/ListingApprovalRecordActions', () => ({
   ListingApprovalRecordActions: () => <div>Actions</div>,
 }));
 
-function buildSelectedRecord(): AirtableRecord {
+function buildSelectedRecord(workflowStatus = 'Awaiting Pre-Listing Review'): AirtableRecord {
   return {
     id: 'rec-listing-1',
     createdTime: '2026-05-15T00:00:00.000Z',
     fields: {
       Title: 'McIntosh MA6900',
-      'Workflow Status': 'Awaiting Pre-Listing Review',
+      'Workflow Status': workflowStatus,
     },
   };
 }
@@ -42,7 +42,7 @@ function buildWorkflowSummary(workflowStatus: string): ListingApprovalWorkflowSu
 }
 
 describe('ListingApprovalSelectedRecordPanel', () => {
-  it('wraps combined approval records in the listing-phase review shell', () => {
+  it('renders the listing view for listing-phase workflow records', () => {
     render(
       <ListingApprovalSelectedRecordPanel
         selectedRecord={buildSelectedRecord()}
@@ -62,13 +62,13 @@ describe('ListingApprovalSelectedRecordPanel', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'McIntosh MA6900' })).toBeInTheDocument();
-    expect(screen.getByText('Not Ready for Listings')).toBeInTheDocument();
+    expect(screen.getByText('Selected Record View')).toBeInTheDocument();
   });
 
-  it('leaves non-combined approval records on the plain selected-record view', () => {
+  it('keeps non-listing workflow records on the not-ready surface', () => {
     render(
       <ListingApprovalSelectedRecordPanel
-        selectedRecord={buildSelectedRecord()}
+        selectedRecord={buildSelectedRecord('Testing In Progress')}
         titleFieldName="Title"
         eyebrowLabel="Shopify Listing Editor"
         isApproved={false}

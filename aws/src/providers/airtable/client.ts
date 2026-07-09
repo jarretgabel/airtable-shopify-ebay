@@ -61,12 +61,80 @@ interface AirtableWriteOptions {
 interface AirtableListOptions {
   fields?: string[];
   filterByFormula?: string;
+  maxRecords?: number;
 }
 
 interface AirtableAttachmentUploadPayload {
   filename: string;
   contentType: string;
   file: string;
+}
+
+const AIRTABLE_MAX_RETRY_ATTEMPTS = 2;
+const AIRTABLE_RETRY_BASE_DELAY_MS = 300;
+const AIRTABLE_RETRY_MAX_DELAY_MS = 1500;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function isRetryableStatus(statusCode: number): boolean {
+  return statusCode === 429 || statusCode >= 500;
+}
+
+function parseRetryAfterDelayMs(retryAfterValue: string | null): number | null {
+  if (!retryAfterValue) return null;
+
+  const numericSeconds = Number.parseFloat(retryAfterValue);
+  if (Number.isFinite(numericSeconds) && numericSeconds >= 0) {
+    return Math.round(numericSeconds * 1000);
+  }
+
+  const asDate = Date.parse(retryAfterValue);
+  if (Number.isFinite(asDate)) {
+    return Math.max(0, asDate - Date.now());
+  }
+
+  return null;
+}
+
+function computeRetryDelayMs(attempt: number, retryAfterValue: string | null): number {
+  const retryAfterDelay = parseRetryAfterDelayMs(retryAfterValue);
+  if (retryAfterDelay !== null) {
+    return Math.min(retryAfterDelay, AIRTABLE_RETRY_MAX_DELAY_MS);
+  }
+
+  const exponentialDelay = AIRTABLE_RETRY_BASE_DELAY_MS * (2 ** attempt);
+  const jitter = Math.floor(Math.random() * 120);
+  return Math.min(exponentialDelay + jitter, AIRTABLE_RETRY_MAX_DELAY_MS);
+}
+
+async function airtableFetchWithRetry(input: string, init: RequestInit): Promise<Response> {
+  let attempt = 0;
+
+  while (true) {
+    try {
+      const response = await fetch(input, init);
+      const canRetry = isRetryableStatus(response.status) && attempt < AIRTABLE_MAX_RETRY_ATTEMPTS;
+      if (!canRetry) {
+        return response;
+      }
+
+      const delayMs = computeRetryDelayMs(attempt, response.headers.get('retry-after'));
+      attempt += 1;
+      await sleep(delayMs);
+    } catch (error) {
+      if (attempt >= AIRTABLE_MAX_RETRY_ATTEMPTS) {
+        throw error;
+      }
+
+      const delayMs = computeRetryDelayMs(attempt, null);
+      attempt += 1;
+      await sleep(delayMs);
+    }
+  }
 }
 
 function buildUrl(baseId: string, tableName: string, view?: string, offset?: string, options: AirtableListOptions = {}): string {
@@ -92,6 +160,10 @@ function buildUrl(baseId: string, tableName: string, view?: string, offset?: str
     url.searchParams.set('filterByFormula', options.filterByFormula);
   }
 
+  if (typeof options.maxRecords === 'number' && Number.isFinite(options.maxRecords) && options.maxRecords > 0) {
+    url.searchParams.set('maxRecords', String(Math.trunc(options.maxRecords)));
+  }
+
   return url.toString();
 }
 
@@ -102,7 +174,7 @@ function buildRecordUrl(baseId: string, tableName: string, recordId?: string): s
 }
 
 async function fetchPage(baseId: string, tableName: string, view?: string, offset?: string, options: AirtableListOptions = {}): Promise<AirtableListResponse> {
-  const response = await fetch(buildUrl(baseId, tableName, view, offset, options), {
+  const response = await airtableFetchWithRetry(buildUrl(baseId, tableName, view, offset, options), {
     headers: {
       Authorization: `Bearer ${requireSecret('AIRTABLE_API_KEY')}`,
     },
@@ -142,7 +214,7 @@ export async function getRecord(
   tableName: string,
   recordId: string,
 ): Promise<AirtableRecord> {
-  const response = await fetch(buildRecordUrl(baseId, tableName, recordId), {
+  const response = await airtableFetchWithRetry(buildRecordUrl(baseId, tableName, recordId), {
     headers: {
       Authorization: `Bearer ${requireSecret('AIRTABLE_API_KEY')}`,
     },
@@ -166,7 +238,7 @@ export async function createRecord(
   fields: Record<string, unknown>,
   options: AirtableWriteOptions = {},
 ): Promise<AirtableRecord> {
-  const response = await fetch(buildRecordUrl(baseId, tableName), {
+  const response = await airtableFetchWithRetry(buildRecordUrl(baseId, tableName), {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${requireSecret('AIRTABLE_API_KEY')}`,
@@ -197,7 +269,7 @@ export async function updateRecord(
   fields: Record<string, unknown>,
   options: AirtableWriteOptions = {},
 ): Promise<AirtableRecord> {
-  const response = await fetch(buildRecordUrl(baseId, tableName, recordId), {
+  const response = await airtableFetchWithRetry(buildRecordUrl(baseId, tableName, recordId), {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${requireSecret('AIRTABLE_API_KEY')}`,
@@ -222,7 +294,7 @@ export async function updateRecord(
 }
 
 export async function deleteRecord(baseId: string, tableName: string, recordId: string): Promise<void> {
-  const response = await fetch(buildRecordUrl(baseId, tableName, recordId), {
+  const response = await airtableFetchWithRetry(buildRecordUrl(baseId, tableName, recordId), {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${requireSecret('AIRTABLE_API_KEY')}`,
@@ -240,7 +312,7 @@ export async function deleteRecord(baseId: string, tableName: string, recordId: 
 }
 
 export async function getTableMetadata(baseId: string, tableId: string): Promise<AirtableMetadataField[]> {
-  const response = await fetch(`https://api.airtable.com/v0/meta/bases/${baseId}/tables`, {
+  const response = await airtableFetchWithRetry(`https://api.airtable.com/v0/meta/bases/${baseId}/tables`, {
     headers: {
       Authorization: `Bearer ${requireSecret('AIRTABLE_API_KEY')}`,
     },
@@ -273,7 +345,7 @@ export async function uploadAttachment(
   fieldId: string,
   payload: AirtableAttachmentUploadPayload,
 ): Promise<void> {
-  const response = await fetch(
+  const response = await airtableFetchWithRetry(
     `https://content.airtable.com/v0/${baseId}/${encodeURIComponent(recordId)}/${encodeURIComponent(fieldId)}/uploadAttachment`,
     {
       method: 'POST',

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { HttpError } from '../../../../../../aws/src/shared/errors.js';
 import {
   airtableSourceDependencies,
   getConfiguredRecords,
@@ -112,5 +113,137 @@ test('getConfiguredRecords resolves inventory-directory through the combined lis
     process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF = originalInventoryReference;
     process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME = originalInventoryTableName;
     process.env.AIRTABLE_BASE_ID = originalBaseId;
+  }
+});
+
+test('getConfiguredRecords drops unknown requested fields and retries', async () => {
+  const original = airtableSourceDependencies.getRecords;
+  const calls: string[][] = [];
+
+  airtableSourceDependencies.getRecords = async (_baseId, _tableName, _viewId, options) => {
+    const fields = options?.fields ?? [];
+    calls.push(fields);
+
+    if (fields.includes('Approved')) {
+      throw new HttpError(422, 'Unknown field name: "Approved"', {
+        service: 'airtable',
+        code: 'AIRTABLE_HTTP_ERROR',
+      });
+    }
+
+    return [buildRecord({ 'Workflow Status': 'Pending' })];
+  };
+
+  try {
+    const records = await getConfiguredRecords('approval-combined', {
+      fields: ['Workflow Status', 'Approved', 'eBay Offer Status'],
+    });
+
+    assert.equal(records.length, 1);
+    assert.deepEqual(calls, [
+      ['Workflow Status', 'Approved', 'eBay Offer Status'],
+      ['Workflow Status', 'eBay Offer Status'],
+    ]);
+  } finally {
+    airtableSourceDependencies.getRecords = original;
+  }
+});
+
+test('getConfiguredRecords drops multiple unknown fields from plural Airtable errors', async () => {
+  const original = airtableSourceDependencies.getRecords;
+  const calls: string[][] = [];
+
+  airtableSourceDependencies.getRecords = async (_baseId, _tableName, _viewId, options) => {
+    const fields = options?.fields ?? [];
+    calls.push(fields);
+
+    if (fields.includes('Approved') || fields.includes('Shopify Approved')) {
+      throw new HttpError(422, 'Unknown field names: Approved, Shopify Approved', {
+        service: 'airtable',
+        code: 'AIRTABLE_HTTP_ERROR',
+      });
+    }
+
+    return [buildRecord({ 'Workflow Status': 'Pending' })];
+  };
+
+  try {
+    const records = await getConfiguredRecords('approval-combined', {
+      fields: ['Workflow Status', 'Approved', 'Shopify Approved', 'eBay Offer Status'],
+    });
+
+    assert.equal(records.length, 1);
+    assert.deepEqual(calls, [
+      ['Workflow Status', 'Approved', 'Shopify Approved', 'eBay Offer Status'],
+      ['Workflow Status', 'eBay Offer Status'],
+    ]);
+  } finally {
+    airtableSourceDependencies.getRecords = original;
+  }
+});
+
+test('getConfiguredRecords caches unknown field names to skip repeat retry calls', async () => {
+  const original = airtableSourceDependencies.getRecords;
+  const calls: string[][] = [];
+
+  airtableSourceDependencies.getRecords = async (_baseId, _tableName, _viewId, options) => {
+    const fields = options?.fields ?? [];
+    calls.push(fields);
+
+    if (fields.includes('Approved')) {
+      throw new HttpError(422, 'Unknown field name: "Approved"', {
+        service: 'airtable',
+        code: 'AIRTABLE_HTTP_ERROR',
+      });
+    }
+
+    return [buildRecord({ 'Workflow Status': 'Pending' })];
+  };
+
+  try {
+    const request = {
+      fields: ['Workflow Status', 'Approved', 'eBay Offer Status'],
+    };
+
+    const firstRecords = await getConfiguredRecords('approval-combined', request);
+    const secondRecords = await getConfiguredRecords('approval-combined', request);
+
+    assert.equal(firstRecords.length, 1);
+    assert.equal(secondRecords.length, 1);
+    assert.deepEqual(calls, [
+      ['Workflow Status', 'Approved', 'eBay Offer Status'],
+      ['Workflow Status', 'eBay Offer Status'],
+      ['Workflow Status', 'eBay Offer Status'],
+    ]);
+  } finally {
+    airtableSourceDependencies.getRecords = original;
+  }
+});
+
+test('getConfiguredRecords applies ready-for-publishing subset filter for approval-combined', async () => {
+  const original = airtableSourceDependencies.getRecords;
+  const calls: Array<{ fields?: string[]; filterByFormula?: string }> = [];
+
+  airtableSourceDependencies.getRecords = async (_baseId, _tableName, _viewId, options) => {
+    calls.push({
+      fields: options?.fields,
+      filterByFormula: options?.filterByFormula,
+    });
+    return [buildRecord({ 'Workflow Status': 'Approved for Publish', Title: 'Amp' })];
+  };
+
+  try {
+    const records = await getConfiguredRecords('approval-combined', {
+      fields: ['Workflow Status', 'Title'],
+      subset: 'ready-for-publishing',
+    });
+
+    assert.equal(records.length, 1);
+    assert.deepEqual(calls, [{
+      fields: ['Workflow Status', 'Title'],
+      filterByFormula: "{Workflow Status}='Approved for Publish'",
+    }]);
+  } finally {
+    airtableSourceDependencies.getRecords = original;
   }
 });

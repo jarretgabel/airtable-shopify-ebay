@@ -1,4 +1,3 @@
-import { isReadyForRequiredFields } from '@/components/approval/requiredFieldStatus';
 import {
   EBAY_PRICE_FIELD_CANDIDATES,
   EBAY_TITLE_FIELD_CANDIDATES,
@@ -28,11 +27,8 @@ const VISIBLE_COMBINED_WORKFLOW_STATUSES = new Set([
 ]);
 
 function resolveFieldName(fieldNames: string[], candidates: string[]): string {
-  const fieldNameSet = new Set(fieldNames.map((fieldName) => fieldName.toLowerCase()));
   const exactMatch = fieldNames.find((fieldName) => candidates.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()));
-  if (exactMatch) return exactMatch;
-
-  return candidates.find((candidate) => !fieldNameSet.has(candidate.toLowerCase())) ?? candidates[0] ?? '';
+  return exactMatch ?? '';
 }
 
 export function getRecordFieldText(record: AirtableRecord, fieldNames: string[]): string {
@@ -84,14 +80,11 @@ export function getCombinedListingsRequiredFieldNames(records: AirtableRecord[])
 
 export function isCombinedRecordReadyForPublishing(
   record: AirtableRecord,
-  combinedRequiredFieldNames: string[],
-  shopifyRequiredFieldNames: string[],
-  ebayRequiredFieldNames: string[],
+  _combinedRequiredFieldNames: string[],
+  _shopifyRequiredFieldNames: string[],
+  _ebayRequiredFieldNames: string[],
 ): boolean {
-  return READY_FOR_PUBLISH_WORKFLOW_STATUSES.has(normalizeCombinedWorkflowStatus(record))
-    && isReadyForRequiredFields(record.fields, combinedRequiredFieldNames)
-    && isReadyForRequiredFields(record.fields, shopifyRequiredFieldNames)
-    && isReadyForRequiredFields(record.fields, ebayRequiredFieldNames);
+  return READY_FOR_PUBLISH_WORKFLOW_STATUSES.has(normalizeCombinedWorkflowStatus(record));
 }
 
 export function filterCombinedReadyForPublishingRecords(
