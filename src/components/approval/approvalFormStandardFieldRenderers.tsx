@@ -14,6 +14,9 @@ import { isImageUrlListField } from './approvalFormFieldsImageHelpers';
 import { ImageUrlListEditor } from './ImageUrlListEditor';
 import { isShopifyTypeField } from './approvalFormFieldsShopifyHelpersBasic';
 import { ShopifyTaxonomyTypeSelect } from './ShopifyTaxonomyTypeSelect';
+import { isTitleLikeFieldName } from './listingApprovalFieldHelpers';
+
+const TITLE_FIELD_MAX_LENGTH = 80;
 
 interface ApprovalFormStandardFieldRendererParams {
   fieldName: string;
@@ -185,6 +188,9 @@ export function renderApprovalFormTextField({
   getInputClassName,
   setFormValue,
 }: ApprovalFormStandardFieldRendererParams): JSX.Element {
+  const inputType = kind === 'number' ? 'number' : 'text';
+  const maxLength = inputType === 'text' && isTitleLikeFieldName(fieldName) ? TITLE_FIELD_MAX_LENGTH : undefined;
+
   return (
     <label className="flex flex-col gap-2">
       {renderFieldLabel(fieldName)}
@@ -205,7 +211,8 @@ export function renderApprovalFormTextField({
       ) : (
         <input
           className={getInputClassName(fieldName)}
-          type={kind === 'number' ? 'number' : 'text'}
+          type={inputType}
+          maxLength={maxLength}
           value={value}
           onChange={(event) => setFormValue(fieldName, event.target.value)}
           disabled={inputDisabled}

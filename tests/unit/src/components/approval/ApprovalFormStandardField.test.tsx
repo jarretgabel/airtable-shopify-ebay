@@ -92,4 +92,42 @@ describe('ApprovalFormStandardField', () => {
 
     expect(setFormValue).toHaveBeenCalledWith('eBay Allow Offers', 'false');
   });
+
+  it('limits title-like text fields to 80 characters', () => {
+    render(
+      <ApprovalFormStandardField
+        fieldName="Item Title"
+        approvalChannel="combined"
+        isCombinedApproval
+        allFieldNames={['Item Title']}
+        hasEbayShippingServicesEditor={false}
+        approvedFieldName="Approved"
+        hasShopifyTagEditor={false}
+        hasShopifyCollectionEditor={false}
+        ebayAttributesCandidateFieldNames={[]}
+        hasEbayCategoryEditor={false}
+        effectiveEbayCategoriesFieldName=""
+        useCombinedImageAltEditor={false}
+        suppressImageScalarFields
+        hasCanonicalConditionField={false}
+        testingSectionFieldNames={[]}
+        readOnlyFieldNames={[]}
+        formValues={{ 'Item Title': 'Marantz 2270 - Tv8SETONJoog2c' }}
+        fieldKinds={{ 'Item Title': 'text' }}
+        saving={false}
+        listingFormatOptions={[]}
+        listingDurationOptions={[]}
+        ebayPackageTypeOptions={[]}
+        setFormValue={vi.fn()}
+        isRequiredField={() => false}
+        renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
+        toFieldLabel={(fieldName) => fieldName}
+        getSelectClassName={() => 'select'}
+        getInputClassName={() => 'input'}
+      />,
+    );
+
+    const input = screen.getByRole('textbox', { name: 'Item Title' });
+    expect(input).toHaveAttribute('maxlength', '80');
+  });
 });

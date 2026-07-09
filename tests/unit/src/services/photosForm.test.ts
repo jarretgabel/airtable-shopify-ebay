@@ -61,6 +61,7 @@ describe('photosForm', () => {
           'Power Cable': ['Included'],
           'Additional Items': 'Replacement feet',
           'Audiogon Rating': ['7/10'],
+          Cost: 1250,
           'Testing Cosmetic Notes': 'Moderate test-stage wear.',
           'Photography Cosmetic Notes': 'Moderate photo-stage wear.',
           "Photo'd": '2026-05-04T00:00:00.000Z',
@@ -124,6 +125,7 @@ describe('photosForm', () => {
         ],
       },
       values: {
+        cost: '1250',
         sku: 'SKU-300',
         make: 'Marantz',
         model: '2270',
@@ -147,6 +149,7 @@ describe('photosForm', () => {
       if (source === 'used-gear-workflow') {
         return buildRecord({
           'Workflow Status': 'Photography In Progress',
+          Price: '1499.99',
           SKU: 'SKU-301',
           Make: 'Audio Research',
           Model: 'SP-9',
@@ -184,6 +187,8 @@ describe('photosForm', () => {
     });
 
     const result = await loadPhotosFormValues('recPhotosSample');
+
+    expect(result.values.cost).toBe('1499.99');
 
     expect(result.stageContext.existingAttachments).toEqual([
       { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },

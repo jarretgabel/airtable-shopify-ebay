@@ -124,6 +124,7 @@ describe('PhotosFormTab', () => {
         ],
       },
       values: {
+        cost: '1200',
         sku: 'SKU-400',
         make: 'Sansui',
         model: '9090DB',
@@ -184,6 +185,8 @@ describe('PhotosFormTab', () => {
     expect(screen.getByText('Photos should cover all sides of the unit with close ups of any cosmetic issues. Photograph additional items also.')).toBeInTheDocument();
     expect(screen.getAllByText('Additional Items').length).toBeGreaterThan(0);
     expect(screen.getByText('Rack handles')).toBeInTheDocument();
+    expect(screen.getByText('Cost')).toBeInTheDocument();
+    expect(screen.getByText('1200')).toBeInTheDocument();
     expect(screen.getByText('Inventory Notes')).toBeInTheDocument();
     expect(screen.getByText('Capture the serial plate and top cover.')).toBeInTheDocument();
     expect(screen.getByText('Testing Cosmetic Notes')).toBeInTheDocument();
@@ -289,6 +292,7 @@ describe('PhotosFormTab', () => {
         imageMetadata: [],
       },
       values: {
+        cost: '1200',
         sku: 'SKU-400',
         make: 'Sansui',
         model: '9090DB',

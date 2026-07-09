@@ -36,6 +36,11 @@ describe('approvalStoreFieldUtils single-value selection fields', () => {
     expect(inferFieldKindForField('SKU', { text: 'SAMPLE-WORKFLOW-QUEUE-12' })).toBe('text');
   });
 
+  it('treats Quantity and Qty fields as numeric inputs', () => {
+    expect(inferFieldKindForField('Quantity', '4')).toBe('number');
+    expect(inferFieldKindForField('Qty', 2)).toBe('number');
+  });
+
   it('keeps multi-property objects as json when they are not simple wrappers', () => {
     expect(toFormValueForField('Custom JSON', { text: 'SKU-100', locale: 'en-US' })).toBe('{\n  "text": "SKU-100",\n  "locale": "en-US"\n}');
     expect(inferFieldKindForField('Custom JSON', { text: 'SKU-100', locale: 'en-US' })).toBe('json');

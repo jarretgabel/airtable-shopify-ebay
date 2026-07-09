@@ -452,6 +452,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
 
         <WorkflowFormSnapshotSection
           values={{
+            cost: formValues.cost,
             sku: formValues.sku,
             make: formValues.make,
             model: formValues.model,

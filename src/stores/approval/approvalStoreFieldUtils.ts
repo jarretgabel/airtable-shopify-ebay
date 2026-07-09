@@ -69,6 +69,11 @@ const CATEGORY_VALUE_FIELDS = new Set([
   'ebay_offer_secondarycategoryid',
 ]);
 
+const QUANTITY_VALUE_FIELDS = new Set([
+  'quantity',
+  'qty',
+]);
+
 const READABLE_OBJECT_KEYS = new Set([
   'text',
   'name',
@@ -99,6 +104,10 @@ export function isSingleValueSelectionField(fieldName: string): boolean {
 
 export function isCategoryValueField(fieldName: string): boolean {
   return CATEGORY_VALUE_FIELDS.has(fieldName.trim().toLowerCase());
+}
+
+function isQuantityValueField(fieldName: string): boolean {
+  return QUANTITY_VALUE_FIELDS.has(fieldName.trim().toLowerCase());
 }
 
 function isReadableWrappedObject(value: unknown): boolean {
@@ -132,6 +141,10 @@ export function inferFieldKind(value: unknown): ApprovalFieldKind {
 }
 
 export function inferFieldKindForField(fieldName: string, value: unknown): ApprovalFieldKind {
+  if (isQuantityValueField(fieldName)) {
+    return 'number';
+  }
+
   if (isSingleValueSelectionField(fieldName) || isCategoryValueField(fieldName)) {
     return 'text';
   }

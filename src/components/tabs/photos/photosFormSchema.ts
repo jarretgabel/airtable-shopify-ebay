@@ -8,6 +8,7 @@ export type PhotosFormOptionFieldName =
   | 'Power Cable';
 
 export interface PhotosFormValues {
+  cost?: string;
   sku: string;
   make: string;
   model: string;
@@ -40,6 +41,7 @@ export interface PhotosFormFieldDefinition {
 
 export function createPhotosFormDefaults(): PhotosFormValues {
   return {
+    cost: '',
     sku: '',
     make: '',
     model: '',

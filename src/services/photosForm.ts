@@ -189,6 +189,23 @@ function dateOrFallback(value: unknown, fallback: string): string {
   return normalizedValue ? normalizedValue.slice(0, 10) : fallback;
 }
 
+function resolvePhotosSnapshotCost(record: AirtableRecord): string {
+  const candidates = [
+    record.fields.Cost,
+    record.fields['Purchase Price'],
+    record.fields.Price,
+  ];
+
+  for (const candidate of candidates) {
+    const resolved = extractInventoryScalarValue(candidate);
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return '';
+}
+
 function arrayOrUndefined(value: string): string[] | undefined {
   const trimmed = trimToUndefined(value);
   return trimmed ? [trimmed] : undefined;
@@ -416,6 +433,7 @@ export async function loadPhotosFormValues(recordId: string): Promise<PhotosForm
       stageContext: buildStageContext(record),
       values: {
         ...defaults,
+        cost: resolvePhotosSnapshotCost(record),
         sku: extractInventoryScalarValue(record.fields.SKU),
         make: extractInventoryScalarValue(record.fields.Make),
         model: extractInventoryScalarValue(record.fields.Model),

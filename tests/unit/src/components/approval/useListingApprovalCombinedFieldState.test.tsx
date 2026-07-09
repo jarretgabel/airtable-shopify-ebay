@@ -147,6 +147,20 @@ describe('useListingApprovalCombinedFieldState', () => {
     expect(result.current.combinedSharedFieldNames).toEqual(expect.arrayContaining(['Make', 'Model']));
   });
 
+  it('prefers Quantity over Qty in shared fields when both columns exist', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      Quantity: 2,
+      Qty: 3,
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedSharedFieldNames).toEqual(expect.arrayContaining(['Quantity']));
+    expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining(['Qty']));
+  });
+
   it('routes Shopify tags into Shopify-only fields and keeps Testing Notes out of the combined eBay-only group', () => {
     const record = buildRecord({
       Title: 'Sansui AU-717',

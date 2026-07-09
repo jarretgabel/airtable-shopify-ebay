@@ -261,6 +261,7 @@ describe('combined approval sections', () => {
   it('renders the intake drawer with snapshot modules and testing notes nested under intake details', () => {
     const props = buildIntakeProps();
     props.sharedTestingSourceFieldValues = {
+      Cost: '1450',
       Manual: '["Included"]',
       'Original Box': '["No"]',
       Voltage: '120V',
@@ -285,6 +286,7 @@ describe('combined approval sections', () => {
     render(<ListingApprovalCombinedIntakeSection {...props} />);
 
     expect(screen.getByText('Intake Details')).toBeInTheDocument();
+    expect(screen.getByText('Cost')).toBeInTheDocument();
     expect(screen.getByText('Testing')).toBeInTheDocument();
     expect(screen.getByText('Photography')).toBeInTheDocument();
     expect(screen.getByText('Testing Notes')).toBeInTheDocument();
@@ -310,6 +312,7 @@ describe('combined approval sections', () => {
     expect(screen.getByText('2026-05-12')).toBeInTheDocument();
     expect(screen.getByText('Power cable and shelf card')).toBeInTheDocument();
     expect(screen.getByText('Bench tested')).toBeInTheDocument();
+    expect(screen.getByText('1450')).toBeInTheDocument();
     expect(screen.getByText('Light wear on the top cover.')).toBeInTheDocument();
     expect(screen.getByText('Small nick near right edge in bright light.')).toBeInTheDocument();
   });
@@ -371,6 +374,7 @@ describe('combined approval sections', () => {
     props.combinedSharedFieldNames = ['Title', 'SKU', 'Make', 'Model', 'Serial Number', 'Component Type', '__Condition__', 'Price'];
     props.formValues = {
       ...props.formValues,
+      Cost: '0',
       SKU: '',
       Make: '',
       Model: 'Stale model',
@@ -380,6 +384,7 @@ describe('combined approval sections', () => {
     };
     props.sharedTestingSourceFieldValues = {
       ...props.sharedTestingSourceFieldValues,
+      Cost: '2295',
       SKU: 'MARANTZ-2270',
       Make: 'Marantz',
       Model: '2270',
@@ -393,11 +398,13 @@ describe('combined approval sections', () => {
     expect(screen.getByText('Intake Details')).toBeInTheDocument();
     expect(screen.queryByText('Make, Model, Condition, SKU, and Component Type are auto-populated from the workflow and testing source forms.')).not.toBeInTheDocument();
     expect(screen.getByText('MARANTZ-2270')).toBeInTheDocument();
+    expect(screen.getByText('2295')).toBeInTheDocument();
     expect(screen.getByText('Marantz')).toBeInTheDocument();
     expect(screen.getByText('2270')).toBeInTheDocument();
     expect(screen.getByText('SN-2270-4455')).toBeInTheDocument();
     expect(screen.getByText('Stereo Receiver')).toBeInTheDocument();
     expect(screen.getByText('Used - Very Good')).toBeInTheDocument();
+    expect(screen.getByText('Cost').compareDocumentPosition(screen.getByText('Make')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText('Make').compareDocumentPosition(screen.getByText('Model')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText('Model').compareDocumentPosition(screen.getByText('SKU')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText('SKU').compareDocumentPosition(screen.getByText('Serial Number')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

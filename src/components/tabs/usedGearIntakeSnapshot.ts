@@ -5,9 +5,14 @@ function getSnapshotIncludesValue(record: AirtableRecord): unknown {
   return record.fields['Customer Inclusion Notes'] || record.fields['Internal Inclusion Notes'];
 }
 
+function getSnapshotCostValue(record: AirtableRecord): unknown {
+  return record.fields.Cost ?? record.fields['Purchase Price'];
+}
+
 export function buildUsedGearIntakeSnapshot(record: AirtableRecord) {
   return {
     fields: [
+      { label: 'Cost', value: displayInventoryValue(getSnapshotCostValue(record)) },
       { label: 'SKU', value: displayInventoryValue(record.fields.SKU) },
       { label: 'Make', value: displayInventoryValue(record.fields.Make) },
       { label: 'Model', value: displayInventoryValue(record.fields.Model) },

@@ -54,6 +54,15 @@ interface UseListingApprovalCombinedFieldStateParams {
   setSelectedEbayTemplateId: Dispatch<SetStateAction<EbayListingTemplateId>>;
 }
 
+function normalizeListingFieldName(fieldName: string): string {
+  return fieldName.trim().toLowerCase();
+}
+
+function isSharedQuantityFieldName(fieldName: string): boolean {
+  const normalized = normalizeListingFieldName(fieldName);
+  return normalized === 'quantity' || normalized === 'qty';
+}
+
 export function useListingApprovalCombinedFieldState({
   records,
   selectedRecordId,
@@ -263,6 +272,9 @@ export function useListingApprovalCombinedFieldState({
     const shopifyOnlySet = new Set(combinedShopifyOnlyFieldNames.map((fieldName) => fieldName.toLowerCase()));
     const ebayOnlySet = new Set(combinedEbayOnlyFieldNames.map((fieldName) => fieldName.toLowerCase()));
     const conditionCandidateSet = new Set(CONDITION_FIELD_CANDIDATES.map((fieldName) => fieldName.toLowerCase()));
+    const sharedQuantityFieldName = selectedRecordFieldNames.find((fieldName) => normalizeListingFieldName(fieldName) === 'quantity')
+      ?? selectedRecordFieldNames.find((fieldName) => normalizeListingFieldName(fieldName) === 'qty')
+      ?? '';
 
     return selectedRecordFieldNames.filter((fieldName) => {
       const normalized = fieldName.trim().toLowerCase();
@@ -280,6 +292,7 @@ export function useListingApprovalCombinedFieldState({
       if (isSystemManagedListingFieldName(fieldName)) return false;
       if (isInternalReferenceListingFieldName(fieldName)) return false;
       if (shopifyOnlySet.has(normalized) || ebayOnlySet.has(normalized)) return false;
+      if (isSharedQuantityFieldName(fieldName) && sharedQuantityFieldName && fieldName !== sharedQuantityFieldName) return false;
       if (isItemZipCodeField(fieldName)) return false;
       if (normalized === 'weight' || normalized === 'shipping weight' || normalized === 'shipping dims') return false;
       if (isCombinedEbayPriceField) return false;

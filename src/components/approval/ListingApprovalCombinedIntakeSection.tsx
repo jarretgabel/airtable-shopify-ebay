@@ -58,17 +58,18 @@ const INTAKE_TESTING_FIELD_NAMES = new Set([
 ]);
 
 const INTAKE_SNAPSHOT_FIELD_ORDER: Record<string, number> = {
-  make: 0,
-  model: 1,
-  sku: 2,
-  'serial number': 3,
-  'component type': 4,
-  condition: 5,
-  includes: 6,
-  'original box': 7,
-  manual: 8,
-  remote: 9,
-  'power cable': 10,
+  cost: 0,
+  make: 1,
+  model: 2,
+  sku: 3,
+  'serial number': 4,
+  'component type': 5,
+  condition: 6,
+  includes: 7,
+  'original box': 8,
+  manual: 9,
+  remote: 10,
+  'power cable': 11,
 };
 
 function isSourceManagedCombinedField(fieldName: string): boolean {
@@ -152,6 +153,23 @@ function resolveIncludesSnapshotValue(
   ], 'Includes'));
 }
 
+function resolveIntakeCostSnapshotValue(
+  sourceValues: Record<string, string>,
+  formValues: Record<string, string>,
+): string {
+  const sourceValue = sourceValues.Cost;
+  if (sourceValue?.trim()) {
+    return normalizeSnapshotValue(sourceValue);
+  }
+
+  const formValue = formValues.Cost;
+  if (formValue?.trim()) {
+    return normalizeSnapshotValue(formValue);
+  }
+
+  return '';
+}
+
 export function ListingApprovalCombinedIntakeSection({
   sectionId,
   selectedRecord,
@@ -203,6 +221,10 @@ export function ListingApprovalCombinedIntakeSection({
   );
   const readOnlySharedFieldNames = combinedSharedFieldNames.filter(isSourceManagedCombinedField);
   const intakeSnapshotFields = [
+    {
+      label: 'Cost',
+      value: resolveIntakeCostSnapshotValue(effectiveSharedTestingSourceFieldValues, formValues),
+    },
     ...readOnlySharedFieldNames.map((fieldName) => ({
       label: toSourceManagedSnapshotLabel(fieldName),
       value: normalizeSnapshotValue(

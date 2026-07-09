@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { IntakeSnapshotSection, type IntakeSnapshotCard, type IntakeSnapshotField } from '@/components/tabs/IntakeSnapshotSection';
 
 export interface WorkflowFormSnapshotValues {
+  cost?: string;
   sku: string;
   make: string;
   model: string;
@@ -30,6 +31,7 @@ const BASE_SNAPSHOT_FIELDS: Array<{
   key: keyof WorkflowFormSnapshotValues;
   description?: string;
 }> = [
+  { label: 'Cost', key: 'cost' },
   { label: 'SKU', key: 'sku' },
   { label: 'Make', key: 'make' },
   { label: 'Model', key: 'model' },
@@ -57,7 +59,7 @@ export function WorkflowFormSnapshotSection({
     .filter((field) => !omittedFieldSet.has(field.key))
     .map((field) => ({
       label: field.label,
-      value: values[field.key],
+      value: values[field.key] ?? '',
       description: field.description,
     }));
 

@@ -2,6 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { buildUsedGearIntakeSnapshot } from '@/components/tabs/usedGearIntakeSnapshot';
 
 describe('buildUsedGearIntakeSnapshot', () => {
+  it('adds Cost as the first intake snapshot field', () => {
+    const snapshot = buildUsedGearIntakeSnapshot({
+      id: 'rec-intake-cost',
+      createdTime: '2026-05-18T00:00:00.000Z',
+      fields: {
+        Cost: 1499.5,
+        SKU: 'MC275',
+      },
+    });
+
+    expect(snapshot.fields[0]).toEqual({ label: 'Cost', value: '1499.5' });
+  });
+
   it('adds Includes to the top intake details fields using customer notes first', () => {
     const snapshot = buildUsedGearIntakeSnapshot({
       id: 'rec-intake',
