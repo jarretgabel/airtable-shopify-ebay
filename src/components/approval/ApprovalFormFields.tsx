@@ -26,6 +26,7 @@ interface ApprovalFormFieldsProps {
   recordId?: string;
   approvalChannel?: 'shopify' | 'ebay' | 'combined';
   forceShowShopifyCollectionsEditor?: boolean;
+  showSupplementalEditors?: boolean;
   isCombinedApproval?: boolean;
   hideEbayAdvancedOptions?: boolean;
   showOnlyEbayAdvancedOptions?: boolean;
@@ -64,6 +65,7 @@ export function ApprovalFormFields({
   recordId,
   approvalChannel,
   forceShowShopifyCollectionsEditor = false,
+  showSupplementalEditors = true,
   isCombinedApproval = false,
   hideEbayAdvancedOptions = false,
   showOnlyEbayAdvancedOptions = false,
@@ -342,11 +344,11 @@ export function ApprovalFormFields({
     getSelectClassName,
     getInputClassName,
   };
-  const supplementalEditors = (
+  const supplementalEditors = showSupplementalEditors ? (
     <Suspense fallback={<div className="col-span-1 rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-sm text-[var(--muted)] md:col-span-2">Loading supplemental editors...</div>}>
       <ApprovalFormFieldsSupplementalEditors {...supplementalEditorsProps} />
     </Suspense>
-  );
+  ) : null;
 
   return (
     <ApprovalFormFieldGrid

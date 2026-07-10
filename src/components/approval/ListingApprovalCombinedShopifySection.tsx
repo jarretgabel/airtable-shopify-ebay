@@ -19,6 +19,7 @@ import { useAuthStore } from '@/stores/auth/authStore';
 const ShopifyApprovalPayloadDetails = lazy(async () => ({
   default: (await import('@/components/approval/ListingApprovalRecordPayloadPanels')).ShopifyApprovalPayloadDetails,
 }));
+const SHOPIFY_CONDITION_METAFIELD_VALUE_FIELD = 'Shopify Condition Metafield Value';
 
 function ShopifyPayloadFallback() {
   return (
@@ -63,7 +64,10 @@ export function ListingApprovalCombinedShopifySection({
 }: ListingApprovalCombinedShopifySectionProps) {
   // Group advanced Shopify variant fields for separate rendering with clear labels
   const standardShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => !isShopifyAdvancedOptionField(fieldName));
-  const advancedShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => isShopifyAdvancedOptionField(fieldName));
+  const advancedShopifyFieldNames = Array.from(new Set([
+    ...combinedShopifyOnlyFieldNames.filter((fieldName) => isShopifyAdvancedOptionField(fieldName)),
+    SHOPIFY_CONDITION_METAFIELD_VALUE_FIELD,
+  ]));
   const displayedShopifyBodyHtml = currentPageShopifyBodyHtml || combinedShopifyBodyHtmlValue;
   const showDeveloperPayloadPanels = useAuthStore((state) => {
     const currentUser = state.users.find((user) => user.id === state.currentUserId);
@@ -109,12 +113,13 @@ export function ListingApprovalCombinedShopifySection({
 
         {advancedShopifyFieldNames.length > 0 && (
           <details className={`mt-4 ${detailDisclosureClass}`}>
-            <summary className={detailDisclosureSummaryClass}>Advanced Shopify Variant Fields</summary>
+            <summary className={detailDisclosureSummaryClass}>Advanced Shopify Fields</summary>
             <div className={detailDisclosureBodyClass}>
               <ApprovalFormFields
                 recordId={selectedRecord.id}
                 approvalChannel="shopify"
                 isCombinedApproval
+                showSupplementalEditors={false}
                 allFieldNames={advancedShopifyFieldNames}
                 writableFieldNames={writableFieldNames}
                 requiredFieldNames={shopifyRequiredFieldNames}

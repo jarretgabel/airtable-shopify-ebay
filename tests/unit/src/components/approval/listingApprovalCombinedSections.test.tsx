@@ -521,7 +521,7 @@ describe('combined approval sections', () => {
     render(<ListingApprovalCombinedShopifySection {...buildShopifyProps()} />);
 
     expect(screen.getByText('Shopify-Specific Fields')).toBeInTheDocument();
-    expect(screen.getByText('Advanced Shopify Variant Fields')).toBeInTheDocument();
+    expect(screen.getByText('Advanced Shopify Fields')).toBeInTheDocument();
     expect(screen.getByLabelText('Contains missing required fields')).toBeInTheDocument();
     expect(approvalFormFieldsSpy).toHaveBeenCalledTimes(2);
     expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({
@@ -531,7 +531,8 @@ describe('combined approval sections', () => {
     }));
     expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({
       approvalChannel: 'shopify',
-      allFieldNames: ['Shopify Variant Taxable', 'Shopify Variant Fulfillment', 'Shopify Variant Requires Shipping'],
+      allFieldNames: ['Shopify Variant Taxable', 'Shopify Variant Fulfillment', 'Shopify Variant Requires Shipping', 'Shopify Condition Metafield Value'],
+      showSupplementalEditors: false,
     }));
     expect(screen.getByRole('separator', { name: 'Listing content divider' })).toBeInTheDocument();
     expect(screen.getByTestId('body-html-preview')).toHaveTextContent('<p>Rendered Shopify body</p>');

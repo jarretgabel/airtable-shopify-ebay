@@ -154,6 +154,10 @@ export function isShopifyVariantBooleanField(fieldName: string): boolean {
 export function isShopifyAdvancedOptionField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase().replace(/\s+/g, ' ');
   const compact = normalized.replace(/[^a-z0-9]/g, '');
+  const isMetafieldField = normalized.includes('metafield') || compact.includes('metafield');
+
+  if (isMetafieldField) return true;
+
   const isVariantField = normalized.includes('variant') || compact.includes('variant');
 
   if (!isVariantField) return false;

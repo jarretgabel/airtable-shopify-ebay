@@ -244,6 +244,43 @@ export interface ShopifyUnifiedUpsertWithCollectionsResult {
   collectionFailures: string[];
 }
 
+function ensureConditionMetafieldInRequest(request: ShopifyUnifiedProductSetRequest): ShopifyUnifiedProductSetRequest {
+  const existingMetafields = request.input.metafields ?? [];
+  type ShopifyUnifiedMetafield = NonNullable<ShopifyUnifiedProductSetInput['metafields']>[number];
+  const deduped = new Map<string, ShopifyUnifiedMetafield>();
+
+  deduped.set('custom:condition', {
+    namespace: 'custom',
+    key: 'condition',
+    type: 'single_line_text_field',
+    value: 'Pre-Owned',
+  });
+
+  existingMetafields.forEach((metafield) => {
+    const namespace = metafield?.namespace?.trim();
+    const key = metafield?.key?.trim();
+    const type = metafield?.type?.trim();
+    const value = metafield?.value?.trim();
+    if (!namespace || !key || !type || !value) return;
+
+    deduped.set(`${namespace.toLowerCase()}:${key.toLowerCase()}`, {
+      ...metafield,
+      namespace,
+      key,
+      type,
+      value,
+    });
+  });
+
+  return {
+    ...request,
+    input: {
+      ...request.input,
+      metafields: Array.from(deduped.values()),
+    },
+  };
+}
+
 interface ShopifyStagedUploadParameter {
   name: string;
   value: string;
@@ -618,6 +655,7 @@ export async function getProduct(id: number): Promise<ShopifyUnifiedProductResul
 export async function upsertProductWithUnifiedRequest(
   request: ShopifyUnifiedProductSetRequest,
 ): Promise<ShopifyUnifiedProductResult> {
+  const ensuredRequest = ensureConditionMetafieldInRequest(request);
   const data = await graphQlRequest<{
     productSet: {
       product: {
@@ -641,7 +679,7 @@ export async function upsertProductWithUnifiedRequest(
         }
       }
     }`,
-    request as unknown as Record<string, unknown>,
+    ensuredRequest as unknown as Record<string, unknown>,
   );
 
   const userErrors = data.productSet.userErrors ?? [];
@@ -670,6 +708,7 @@ export async function upsertExistingProductWithCollectionsInSingleMutation(
   request: ShopifyUnifiedProductSetRequest,
   collectionIds: string[],
 ): Promise<ShopifyUnifiedUpsertWithCollectionsResult> {
+  const ensuredRequest = ensureConditionMetafieldInRequest(request);
   if (!request.identifier?.id) {
     throw new Error('Single-mutation collection update requires an existing Shopify product ID identifier.');
   }
@@ -712,9 +751,9 @@ export async function upsertExistingProductWithCollectionsInSingleMutation(
   ];
 
   const variables: Record<string, unknown> = {
-    input: request.input,
-    identifier: request.identifier,
-    synchronous: request.synchronous,
+    input: ensuredRequest.input,
+    identifier: ensuredRequest.identifier,
+    synchronous: ensuredRequest.synchronous,
     productIds: [request.identifier.id],
   };
 

@@ -37,6 +37,8 @@ interface ShopifyCategoryResolutionSummary {
 
 export interface ShopifyPayloadDebug {
   collectionsToJoin: string[];
+  conditionMetafieldValue: string;
+  metafieldsCount: number;
   tags: string[];
 }
 
@@ -61,12 +63,22 @@ function stringifyJson(value: unknown, fallback: string) {
 function buildShopifyPayloadDebug(shopifyProductSetRequest: ShopifyUnifiedProductSetRequest | null): ShopifyPayloadDebug {
   if (!shopifyProductSetRequest) {
     return {
+      conditionMetafieldValue: '',
+      metafieldsCount: 0,
       tags: [],
       collectionsToJoin: [],
     };
   }
 
+  const metafields = shopifyProductSetRequest.input.metafields ?? [];
+  const conditionMetafield = metafields.find((metafield) => (
+    metafield.namespace.trim().toLowerCase() === 'custom'
+    && metafield.key.trim().toLowerCase() === 'condition'
+  ));
+
   return {
+    conditionMetafieldValue: conditionMetafield?.value ?? '',
+    metafieldsCount: metafields.length,
     tags: shopifyProductSetRequest.input.tags ?? [],
     collectionsToJoin: shopifyProductSetRequest.input.collectionsToJoin ?? [],
   };
@@ -75,10 +87,35 @@ function buildShopifyPayloadDebug(shopifyProductSetRequest: ShopifyUnifiedProduc
 function buildShopifyDraftCreatePayloadJson(shopifyProductSetRequest: ShopifyUnifiedProductSetRequest | null) {
   if (!shopifyProductSetRequest) return '';
 
+  const dedupedMetafields = new Map<string, NonNullable<ShopifyUnifiedProductSetRequest['input']['metafields']>[number]>();
+  dedupedMetafields.set('custom:condition', {
+    namespace: 'custom',
+    key: 'condition',
+    type: 'single_line_text_field',
+    value: 'Pre-Owned',
+  });
+
+  (shopifyProductSetRequest.input.metafields ?? []).forEach((metafield) => {
+    const namespace = metafield?.namespace?.trim();
+    const key = metafield?.key?.trim();
+    const type = metafield?.type?.trim();
+    const value = metafield?.value?.trim();
+    if (!namespace || !key || !type || !value) return;
+
+    dedupedMetafields.set(`${namespace.toLowerCase()}:${key.toLowerCase()}`, {
+      ...metafield,
+      namespace,
+      key,
+      type,
+      value,
+    });
+  });
+
   const previewVariables: ShopifyUnifiedProductSetRequest = {
     ...shopifyProductSetRequest,
     input: {
       ...shopifyProductSetRequest.input,
+      metafields: Array.from(dedupedMetafields.values()),
       tags: shopifyProductSetRequest.input.tags ?? [],
       collectionsToJoin: shopifyProductSetRequest.input.collectionsToJoin ?? [],
     },
@@ -194,6 +231,8 @@ export function ShopifyApprovalPayloadDetails({
             <p className="m-0 font-semibold text-emerald-100">Payload Field Debug</p>
             <p className="m-0 mt-1">Tags: <code>{shopifyPayloadDebug.tags.length > 0 ? shopifyPayloadDebug.tags.join(', ') : '(none)'}</code></p>
             <p className="m-0 mt-1">Collections: <code>{shopifyPayloadDebug.collectionsToJoin.length > 0 ? shopifyPayloadDebug.collectionsToJoin.join(', ') : '(none)'}</code></p>
+            <p className="m-0 mt-1">Metafields Count: <code>{String(shopifyPayloadDebug.metafieldsCount)}</code></p>
+            <p className="m-0 mt-1">custom.condition: <code>{shopifyPayloadDebug.conditionMetafieldValue || '(missing)'}</code></p>
           </div>
           <p className="m-0 mb-2 text-xs text-[var(--muted)]">GraphQL <code>productSet</code> request</p>
           <pre className={detailPreBlockClass}>{shopifyDraftCreatePayloadJson || '{\n  "query": "",\n  "variables": {\n    "input": {}\n  }\n}'}</pre>

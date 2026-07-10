@@ -190,6 +190,12 @@ export function renderApprovalFormTextField({
 }: ApprovalFormStandardFieldRendererParams): JSX.Element {
   const inputType = kind === 'number' ? 'number' : 'text';
   const maxLength = inputType === 'text' && isTitleLikeFieldName(fieldName) ? TITLE_FIELD_MAX_LENGTH : undefined;
+  const normalizedFieldName = fieldName.trim().toLowerCase();
+  const placeholder = normalizedFieldName === 'shopify condition metafield value'
+    || normalizedFieldName === 'shopify metafield condition value'
+    || normalizedFieldName === 'condition'
+    ? 'Pre-Owned'
+    : undefined;
 
   return (
     <label className="flex flex-col gap-2">
@@ -213,6 +219,7 @@ export function renderApprovalFormTextField({
           className={getInputClassName(fieldName)}
           type={inputType}
           maxLength={maxLength}
+          placeholder={placeholder}
           value={value}
           onChange={(event) => setFormValue(fieldName, event.target.value)}
           disabled={inputDisabled}

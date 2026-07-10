@@ -130,4 +130,41 @@ describe('ApprovalFormStandardField', () => {
     const input = screen.getByRole('textbox', { name: 'Item Title' });
     expect(input).toHaveAttribute('maxlength', '80');
   });
+
+  it('shows Pre-Owned placeholder for Shopify condition metafield value field', () => {
+    render(
+      <ApprovalFormStandardField
+        fieldName="Shopify Condition Metafield Value"
+        approvalChannel="shopify"
+        isCombinedApproval={false}
+        allFieldNames={['Shopify Condition Metafield Value']}
+        hasEbayShippingServicesEditor={false}
+        approvedFieldName="Approved"
+        hasShopifyTagEditor={false}
+        hasShopifyCollectionEditor={false}
+        ebayAttributesCandidateFieldNames={[]}
+        hasEbayCategoryEditor={false}
+        effectiveEbayCategoriesFieldName=""
+        useCombinedImageAltEditor={false}
+        suppressImageScalarFields
+        hasCanonicalConditionField={false}
+        testingSectionFieldNames={[]}
+        readOnlyFieldNames={[]}
+        formValues={{ 'Shopify Condition Metafield Value': '' }}
+        fieldKinds={{ 'Shopify Condition Metafield Value': 'text' }}
+        saving={false}
+        listingFormatOptions={[]}
+        listingDurationOptions={[]}
+        ebayPackageTypeOptions={[]}
+        setFormValue={vi.fn()}
+        isRequiredField={() => false}
+        renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
+        toFieldLabel={(fieldName) => fieldName}
+        getSelectClassName={() => 'select'}
+        getInputClassName={() => 'input'}
+      />,
+    );
+
+    expect(screen.getByPlaceholderText('Pre-Owned')).toBeInTheDocument();
+  });
 });

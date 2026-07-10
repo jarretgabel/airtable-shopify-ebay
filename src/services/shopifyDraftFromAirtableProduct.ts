@@ -29,6 +29,12 @@ import {
   toMoneyString,
 } from '@/services/shopifyDraftFromAirtable/shared';
 
+const SHOPIFY_CONDITION_METAFIELD_VALUE_FIELD_CANDIDATES = [
+  'Shopify Condition Metafield Value',
+  'Shopify Metafield Condition Value',
+  'shopify_condition_metafield_value',
+] as const;
+
 function hasFlatOptionFields(fields: ApprovalFieldMap): boolean {
   const candidates: string[] = [];
   for (let i = 1; i <= 3; i += 1) {
@@ -120,7 +126,24 @@ function applyConditionToShopifyOptionsAndVariants(
 }
 
 function buildMetafields(fields: ApprovalFieldMap): ShopifyMetafield[] | undefined {
-  const metafields: ShopifyMetafield[] = [];
+  const metafields: ShopifyMetafield[] = [
+    {
+      namespace: 'custom',
+      key: 'condition',
+      type: 'single_line_text_field',
+      value: 'Pre-Owned',
+    },
+  ];
+
+  const friendlyConditionMetafieldValue = getField(fields, [...SHOPIFY_CONDITION_METAFIELD_VALUE_FIELD_CANDIDATES]);
+  if (friendlyConditionMetafieldValue) {
+    metafields.push({
+      namespace: 'custom',
+      key: 'condition',
+      type: 'single_line_text_field',
+      value: friendlyConditionMetafieldValue,
+    });
+  }
 
   for (let i = 1; i <= 30; i += 1) {
     const namespace = getField(fields, [`Shopify REST Metafield ${i} Namespace`, `Shopify Metafield ${i} Namespace`, `Shopify Extra Metafield ${i} Namespace`, `Shopify GraphQL Metafield ${i} Namespace`]);
@@ -145,8 +168,6 @@ function buildMetafields(fields: ApprovalFieldMap): ShopifyMetafield[] | undefin
 
   if (seoTitle) metafields.push({ namespace: 'global', key: 'title_tag', type: 'single_line_text_field', value: seoTitle });
   if (seoDescription) metafields.push({ namespace: 'global', key: 'description_tag', type: 'single_line_text_field', value: seoDescription });
-  if (metafields.length === 0) return undefined;
-
   const deduped = new Map<string, ShopifyMetafield>();
   metafields.forEach((metafield) => {
     deduped.set(`${metafield.namespace}:${metafield.key}`, metafield);

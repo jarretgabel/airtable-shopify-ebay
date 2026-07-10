@@ -181,6 +181,54 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     expect(product.vendor).toBe('Resolution Audio Video NYC');
   });
 
+  it('adds a default condition metafield for Shopify payloads', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Default Condition Metafield Product',
+    });
+
+    expect(product.metafields).toEqual(expect.arrayContaining([
+      {
+        namespace: 'custom',
+        key: 'condition',
+        type: 'single_line_text_field',
+        value: 'Pre-Owned',
+      },
+    ]));
+  });
+
+  it('lets advanced Shopify metafield rows override the default condition metafield', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Override Condition Metafield Product',
+      'Shopify REST Metafield 1 Namespace': 'custom',
+      'Shopify REST Metafield 1 Key': 'condition',
+      'Shopify REST Metafield 1 Type': 'single_line_text_field',
+      'Shopify REST Metafield 1 Value': 'pre-owned',
+    });
+
+    const conditionMetafield = product.metafields?.find((metafield) => metafield.namespace === 'custom' && metafield.key === 'condition');
+    expect(conditionMetafield).toEqual({
+      namespace: 'custom',
+      key: 'condition',
+      type: 'single_line_text_field',
+      value: 'pre-owned',
+    });
+  });
+
+  it('lets friendly condition metafield value field override the default condition metafield', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Friendly Condition Metafield Product',
+      'Shopify Condition Metafield Value': 'refurbished',
+    });
+
+    const conditionMetafield = product.metafields?.find((metafield) => metafield.namespace === 'custom' && metafield.key === 'condition');
+    expect(conditionMetafield).toEqual({
+      namespace: 'custom',
+      key: 'condition',
+      type: 'single_line_text_field',
+      value: 'refurbished',
+    });
+  });
+
   it('maps generic Airtable Tags field into Shopify tags payload', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Generic Tags Product',
@@ -379,5 +427,38 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       'gid://shopify/Collection/555',
       'gid://shopify/Collection/222',
     ]);
+  });
+
+  it('includes condition metafield in unified ProductSet payload by default', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Unified Metafield Default Product',
+    });
+
+    const request = buildShopifyUnifiedProductSetRequest(product);
+    const conditionMetafield = request.input.metafields?.find((metafield) => metafield.namespace === 'custom' && metafield.key === 'condition');
+
+    expect(conditionMetafield).toEqual({
+      namespace: 'custom',
+      key: 'condition',
+      type: 'single_line_text_field',
+      value: 'Pre-Owned',
+    });
+  });
+
+  it('keeps explicit condition metafield override in unified ProductSet payload', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Unified Metafield Override Product',
+      'Shopify Condition Metafield Value': 'Like New',
+    });
+
+    const request = buildShopifyUnifiedProductSetRequest(product);
+    const conditionMetafield = request.input.metafields?.find((metafield) => metafield.namespace === 'custom' && metafield.key === 'condition');
+
+    expect(conditionMetafield).toEqual({
+      namespace: 'custom',
+      key: 'condition',
+      type: 'single_line_text_field',
+      value: 'Like New',
+    });
   });
 });

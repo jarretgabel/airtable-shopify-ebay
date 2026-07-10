@@ -299,6 +299,37 @@ function buildUnifiedVariants(
   return normalized.length > 0 ? normalized : undefined;
 }
 
+function buildUnifiedMetafields(metafields: ShopifyProduct['metafields']): ShopifyProduct['metafields'] | undefined {
+  const defaultConditionMetafield: ShopifyMetafield = {
+    namespace: 'custom',
+    key: 'condition',
+    type: 'single_line_text_field',
+    value: 'Pre-Owned',
+  };
+
+  const deduped = new Map<string, ShopifyMetafield>();
+  deduped.set('custom:condition', defaultConditionMetafield);
+
+  (metafields ?? []).forEach((metafield) => {
+    const namespace = metafield?.namespace?.trim();
+    const key = metafield?.key?.trim();
+    const type = metafield?.type?.trim();
+    const value = metafield?.value?.trim();
+    if (!namespace || !key || !type || !value) return;
+
+    deduped.set(`${namespace.toLowerCase()}:${key.toLowerCase()}`, {
+      ...metafield,
+      namespace,
+      key,
+      type,
+      value,
+    });
+  });
+
+  const result = Array.from(deduped.values());
+  return result.length > 0 ? result : undefined;
+}
+
 export function normalizeShopifyProductForUpsert(product: ShopifyProduct): ShopifyProduct {
   return {
     ...product,
@@ -341,7 +372,7 @@ export function buildShopifyUnifiedProductSetRequest(
       tags: splitShopifyTags(normalizedProduct.tags),
       templateSuffix: normalizedProduct.template_suffix?.trim() || undefined,
       category: normalizedCategoryId || undefined,
-      metafields: normalizedProduct.metafields,
+      metafields: buildUnifiedMetafields(normalizedProduct.metafields),
       files: unifiedFiles,
       productOptions: unifiedOptions,
       variants: unifiedVariants,
