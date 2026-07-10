@@ -1,5 +1,4 @@
 import { buildShopifyBodyHtml, formatKeyFeatureHtml, parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
-import { SHOPIFY_DEFAULT_VENDOR } from '@/services/shopifyDraftFromAirtable/shared';
 import {
   ApprovalFieldMap,
   getField,
@@ -183,9 +182,7 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
 
   const tokenValues = new Map<string, string>();
   SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.forEach((spec) => {
-    const rawValue = spec.token === 'vendor'
-      ? SHOPIFY_DEFAULT_VENDOR
-      : spec.token === 'body_key_features'
+    const rawValue = spec.token === 'body_key_features'
         ? mergedKeyFeatures
         : getField(fields, spec.candidates);
     tokenValues.set(spec.token, spec.formatter ? spec.formatter(rawValue) : rawValue);

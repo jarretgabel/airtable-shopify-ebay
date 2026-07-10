@@ -3,6 +3,19 @@ export function isShopifyTypeField(fieldName: string): boolean {
   return normalized === 'type' || normalized === 'shopify type';
 }
 
+export function isShopifyVendorField(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  return normalized === 'shopify rest vendor'
+    || normalized === 'shopify vendor'
+    || normalized === 'shopify graphql vendor'
+    || normalized === 'vendor'
+    || compact === 'shopifyrestvendor'
+    || compact === 'shopifyvendor'
+    || compact === 'shopifygraphqlvendor'
+    || compact === 'vendor';
+}
+
 export function isShopifyTypesFreeformField(fieldName: string): boolean {
   return fieldName.trim().toLowerCase() === 'shopify types';
 }

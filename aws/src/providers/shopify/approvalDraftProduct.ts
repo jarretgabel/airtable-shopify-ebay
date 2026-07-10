@@ -272,7 +272,7 @@ export function buildShopifyDraftProductFromApprovalFields(fields: ApprovalField
   const candidate: ShopifyProduct = {
     title: getField(fields, ['Shopify REST Title', 'Shopify Title', 'Shopify GraphQL Title', 'Item Title', 'Title', 'Name', 'shopify_rest_title']) || 'Untitled Listing',
     body_html: resolveShopifyBodyHtml(fields) || undefined,
-    vendor: SHOPIFY_DEFAULT_VENDOR,
+    vendor: getField(fields, ['Shopify REST Vendor', 'Shopify Vendor', 'Shopify GraphQL Vendor', 'Vendor', 'Brand', 'Manufacturer']) || SHOPIFY_DEFAULT_VENDOR,
     product_type: trimShopifyProductType(getField(fields, [...SHOPIFY_PRODUCT_TYPE_FIELD_CANDIDATES])) || undefined,
     handle: getHandleField(fields) || undefined,
     published_at: getField(fields, ['Shopify REST Published At', 'Shopify Published At']) || undefined,

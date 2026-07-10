@@ -156,6 +156,7 @@ export function ApprovalFormFields({
     hasSecondaryEbayCategory,
     hasShopifyCollectionEditor,
     hasShopifyTagEditor,
+    hasShopifyVendorEditor,
     imageAltTextSourceField,
     imageUrlSourceField,
     internationalService1FieldName,
@@ -177,6 +178,8 @@ export function ApprovalFormFields({
     shopifyKeyFeaturesSyncFieldNames,
     shopifyTagStrategy,
     shopifyTagValues,
+    shopifyVendorDefaultValue,
+    shopifyVendorFieldName,
     useCombinedImageAltEditor,
     workflowImageAttachments,
   } = useApprovalFormFieldSetup({
@@ -311,6 +314,14 @@ export function ApprovalFormFields({
     setShopifyTagValues,
     shopifyTagMaxTags: shopifyTagStrategy.writeSingleFields.length > 0 ? shopifyTagStrategy.writeSingleFields.length : undefined,
     hasShopifyCollectionEditor,
+    hasShopifyVendorEditor,
+    shopifyVendorFieldName,
+    shopifyVendorValue: shopifyVendorFieldName ? (formValues[shopifyVendorFieldName] ?? '') : '',
+    shopifyVendorDefaultValue,
+    setShopifyVendorValue: (nextVendor: string) => {
+      if (!shopifyVendorFieldName) return;
+      setFormValue(shopifyVendorFieldName, nextVendor);
+    },
     shopifyCollectionsFieldName: shopifyCollectionStrategy.writeCompoundFields[0] ?? shopifyCollectionStrategy.writeSingleFields[0] ?? 'Collections',
     effectiveShopifyCollectionIds,
     effectiveCollectionEditorLabelsById,

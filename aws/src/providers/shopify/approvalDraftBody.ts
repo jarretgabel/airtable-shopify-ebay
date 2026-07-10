@@ -7,7 +7,6 @@ import {
 import type { ApprovalFieldMap } from './approvalDraftTypes.js';
 import {
   SHOPIFY_BODY_HTML_TEMPLATE_FIELD_CANDIDATES,
-  SHOPIFY_DEFAULT_VENDOR,
   SHOPIFY_PRODUCT_TYPE_FIELD_CANDIDATES,
   type ShopifyBodyDynamicTokenSpec,
 } from './approvalDraftTypes.js';
@@ -280,9 +279,7 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   const testingNotes = getField(fields, ['Testing Notes', 'Shopify Body Testing Notes', 'shopify_body_testing_notes']);
   const tokenValues = new Map<string, string>();
   SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.forEach((spec) => {
-    const rawValue = spec.token === 'vendor'
-      ? SHOPIFY_DEFAULT_VENDOR
-      : spec.token === 'body_key_features'
+    const rawValue = spec.token === 'body_key_features'
         ? mergedKeyFeatures
         : getField(fields, spec.candidates);
     tokenValues.set(spec.token, spec.formatter ? spec.formatter(rawValue) : rawValue);

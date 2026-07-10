@@ -24,6 +24,7 @@ import {
   CONDITION_FIELD_CANDIDATES,
   SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES,
   SHOPIFY_BODY_KEY_FEATURES_FIELD_CANDIDATES,
+  SHOPIFY_VENDOR_FIELD_CANDIDATES,
   SHOPIFY_PRICE_FIELD_CANDIDATES,
   SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES,
   SHOPIFY_TITLE_FIELD_CANDIDATES,
@@ -78,6 +79,11 @@ export function useListingApprovalFieldNames({
         SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       ) ?? SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
       if (preferredProductTypeField) names.add(preferredProductTypeField);
+
+      const preferredVendorField = existingNames.find((name) =>
+        SHOPIFY_VENDOR_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? SHOPIFY_VENDOR_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredVendorField) names.add(preferredVendorField);
 
       names.add('Collections');
 

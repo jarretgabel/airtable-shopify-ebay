@@ -9,6 +9,8 @@
   "AIRTABLE_APPROVAL_TABLE_NAME": "replace-with-ebay-approval-table-name",
   "AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF": "replace-with-shopify-approval-table-ref",
   "AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME": "replace-with-shopify-approval-table-name",
+  "AIRTABLE_SHOPIFY_VENDORS_TABLE_REF": "apprsAm2FOohEmL2u/tblF0B5TUhy20hJCv",
+  "AIRTABLE_SHOPIFY_VENDORS_TABLE_NAME": "tblF0B5TUhy20hJCv",
   "AIRTABLE_COMBINED_LISTINGS_TABLE_REF": "replace-with-combined-listings-table-ref",
   "AIRTABLE_COMBINED_LISTINGS_TABLE_NAME": "replace-with-combined-listings-table-name",
   "SHOPIFY_STORE_DOMAIN": "your-store.myshopify.com",

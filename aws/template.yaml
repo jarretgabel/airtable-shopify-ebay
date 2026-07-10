@@ -23,6 +23,12 @@ Parameters:
     Type: String
   AirtableShopifyApprovalTableName:
     Type: String
+  AirtableShopifyVendorsTableRef:
+    Type: String
+    Default: apprsAm2FOohEmL2u/tblF0B5TUhy20hJCv
+  AirtableShopifyVendorsTableName:
+    Type: String
+    Default: tblF0B5TUhy20hJCv
   AirtableCombinedListingsTableRef:
     Type: String
   AirtableCombinedListingsTableName:
@@ -179,6 +185,8 @@ Globals:
         AIRTABLE_APPROVAL_TABLE_NAME: !Ref AirtableApprovalTableName
         AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF: !Ref AirtableShopifyApprovalTableRef
         AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME: !Ref AirtableShopifyApprovalTableName
+        AIRTABLE_SHOPIFY_VENDORS_TABLE_REF: !Ref AirtableShopifyVendorsTableRef
+        AIRTABLE_SHOPIFY_VENDORS_TABLE_NAME: !Ref AirtableShopifyVendorsTableName
         AIRTABLE_COMBINED_LISTINGS_TABLE_REF: !Ref AirtableCombinedListingsTableRef
         AIRTABLE_COMBINED_LISTINGS_TABLE_NAME: !Ref AirtableCombinedListingsTableName
         SHOPIFY_STORE_DOMAIN: !Ref ShopifyStoreDomain

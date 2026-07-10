@@ -35,6 +35,7 @@ function validateWriteSource(value: string): AirtableConfiguredWriteSource {
     || value === 'approval-ebay'
     || value === 'approval-shopify'
     || value === 'approval-combined'
+    || value === 'shopify-vendors'
   ) {
     return value;
   }

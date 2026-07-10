@@ -2,6 +2,8 @@ import { resolveConfiguredRecordsSource, type AirtableConfiguredRecordsSource } 
 import type { AirtableRecord } from '@/types/airtable';
 import type { ShopifyProduct } from '@/types/shopify';
 
+type ApprovalPublishSource = Extract<AirtableConfiguredRecordsSource, 'approval-shopify' | 'approval-combined' | 'approval-ebay'>;
+
 export interface ShopifyApprovalNotice {
   tone: 'info' | 'success' | 'warning' | 'error';
   title: string;
@@ -12,13 +14,17 @@ export function resolveApprovalPublishSource(
   approvalChannel: 'shopify' | 'ebay' | 'combined',
   tableReference: string | undefined,
   tableName: string | undefined,
-): AirtableConfiguredRecordsSource {
-  return resolveConfiguredRecordsSource(tableReference, tableName)
-    || (approvalChannel === 'shopify'
-      ? 'approval-shopify'
-      : approvalChannel === 'combined'
-        ? 'approval-combined'
-        : 'approval-ebay');
+): ApprovalPublishSource {
+  const resolved = resolveConfiguredRecordsSource(tableReference, tableName);
+  if (resolved === 'approval-shopify' || resolved === 'approval-combined' || resolved === 'approval-ebay') {
+    return resolved;
+  }
+
+  return approvalChannel === 'shopify'
+    ? 'approval-shopify'
+    : approvalChannel === 'combined'
+      ? 'approval-combined'
+      : 'approval-ebay';
 }
 
 export async function createNewShopifyListingRecord(params: {

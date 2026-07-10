@@ -234,6 +234,10 @@ function buildCategoryRetryValues(value: unknown, originalValue: unknown): unkno
 function isAllowedMissingWritableFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return isTagLikeFieldName(fieldName)
+    || normalized === 'vendor'
+    || normalized === 'shopify vendor'
+    || normalized === 'shopify rest vendor'
+    || normalized === 'shopify graphql vendor'
     || normalized === 'collections'
     || normalized === 'ebay price'
     || normalized === 'buy it now/starting price'

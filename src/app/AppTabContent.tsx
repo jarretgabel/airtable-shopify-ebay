@@ -238,7 +238,6 @@ function FeatureUnavailableTab({ title, message }: { title: string; message: str
 
 export function AppTabContent({
   activeTab,
-  manualIntakeMode,
   jotformReviewGroupId,
   jotformReviewRecordId,
   jotformDirectoryRecordId,
@@ -348,8 +347,6 @@ export function AppTabContent({
   recordTitle,
 }: AppTabContentProps) {
   const deferredRouteState = useDeferredValue({
-    activeTab,
-    manualIntakeMode,
     jotformReviewGroupId,
     jotformReviewRecordId,
     jotformDirectoryRecordId,
@@ -369,8 +366,7 @@ export function AppTabContent({
     ebayListingsRecordId,
     userRecordId,
   });
-  const isRouteTransitionPending = deferredRouteState.activeTab !== activeTab
-    || deferredRouteState.manualIntakeRecordId !== manualIntakeRecordId
+  const isRouteTransitionPending = deferredRouteState.manualIntakeRecordId !== manualIntakeRecordId
     || deferredRouteState.jotformDirectoryRecordId !== jotformDirectoryRecordId
     || deferredRouteState.jotformReviewGroupId !== jotformReviewGroupId
     || deferredRouteState.jotformReviewRecordId !== jotformReviewRecordId
@@ -389,139 +385,40 @@ export function AppTabContent({
     || deferredRouteState.ebayListingsRecordId !== ebayListingsRecordId
     || deferredRouteState.userRecordId !== userRecordId;
 
-  const ebayViewModel = buildEbayTabViewModel({
-    ebayAuthenticated,
-    ebayRestoringSession,
-    ebayLoading,
-    ebayError,
-    ebayRuntimeConfig,
-    ebayInventoryItems,
-    ebayOffers,
-    ebayRecentListings,
-    ebayTotal,
-    ebayRefetch,
-    airtableRefetch,
-    nonEmptyListings,
-    runtimeFeatures,
-  });
-
-  const dashboardViewModel = buildDashboardTabViewModel({
-    atLoading,
-    atError,
-    spLoading,
-    spError,
-    jfLoading,
-    jfError,
-    nonEmptyListings,
-    products,
-    jfSubmissions,
-    metrics,
-    accessiblePages,
-    currentUserRole,
-    currentUserName,
-    approvalLoading,
-    approvalError,
-    approvalTotal,
-    approvalApproved,
-    approvalPending,
-    shopifyApprovalLoading,
-    shopifyApprovalError,
-    shopifyApprovalTotal,
-    shopifyApprovalApproved,
-    shopifyApprovalPending,
-    workflowDashboardTargets,
-    workflowAnalytics,
-    workflowPostPublishLoading,
-    workflowPostPublishError,
-    workflowActiveListingCount,
-    workflowStaleListingCount,
-    workflowStaleListingMineCount,
-    workflowStaleListingUnassignedCount,
-    workflowSoldReadyCount,
-    workflowSoldReadyMineCount,
-    workflowSoldReadyUnassignedCount,
-    workflowShippedCount,
-    aiProvider,
-    ebayAuthenticated,
-    ebayRestoringSession,
-    ebayLoading,
-    ebayError,
-    ebayTotal,
-    ebayPublishedCount,
-    ebayDraftCount,
-    sharkLoading,
-    sharkError,
-    currentSlug,
-    sharkListings,
-    usersCount,
-    adminCount,
-    runtimeFeatures,
-    navigateToTab,
-    navigateToInventoryWorkflowView,
-    navigateToInventoryPostPublishBucket,
-  });
-
-  const airtableViewModel = buildAirtableTabViewModel({
-    atLoading,
-    atError,
-    nonEmptyListings,
-    displayValue,
-    hasValue,
-    recordTitle,
-  });
-
-  const shopifyViewModel = buildShopifyTabViewModel({
-    spLoading,
-    spError,
-    products,
-    nonEmptyListings,
-    storeDomain,
-  });
-
-  const marketViewModel = buildMarketTabViewModel({
-    sharkLoading,
-    sharkError,
-    sharkListings,
-    currentSlug,
-    sharkSearch,
-  });
-
-  const jotformViewModel = buildJotformTabViewModel({
-    jfSubmissions,
-    jfLoading,
-    jfPolling,
-    jfError,
-    jfRefetch,
-    jfLastUpdated,
-    jfFreshCount,
-    jfClearFresh,
-  });
-
-  const listingsViewModel = buildApprovalTabViewModel({
-    approvalRecordId: listingsRecordId,
-    navigateToApprovalRecord: navigateToListingsRecord,
-    navigateToApprovalList: navigateToListingsList,
-    navigateToOperationalRecord: navigateToUsedGearOperationalRecord,
-    navigateToTestingForm,
-    navigateToPhotosForm,
-  });
-
-  const usersViewModel = buildUsersTabViewModel({
-    userRecordId,
-    navigateToUserRecord,
-    navigateToUsersList,
-  });
-
   const renderActiveTab = () => {
-    switch (deferredRouteState.activeTab) {
+    switch (activeTab) {
       case 'imagelab':
         return <ImageLab />;
-      case 'listings':
+      case 'listings': {
         if (!runtimeFeatures.approvalCombined.available && runtimeFeatures.approvalCombined.message) {
           return <FeatureUnavailableTab title="Combined listings unavailable" message={runtimeFeatures.approvalCombined.message} />;
         }
+        const listingsViewModel = buildApprovalTabViewModel({
+          approvalRecordId: listingsRecordId,
+          navigateToApprovalRecord: navigateToListingsRecord,
+          navigateToApprovalList: navigateToListingsList,
+          navigateToOperationalRecord: navigateToUsedGearOperationalRecord,
+          navigateToTestingForm,
+          navigateToPhotosForm,
+        });
         return <CombinedListingsApprovalTab viewModel={listingsViewModel} />;
-      case 'ebay':
+      }
+      case 'ebay': {
+        const ebayViewModel = buildEbayTabViewModel({
+          ebayAuthenticated,
+          ebayRestoringSession,
+          ebayLoading,
+          ebayError,
+          ebayRuntimeConfig,
+          ebayInventoryItems,
+          ebayOffers,
+          ebayRecentListings,
+          ebayTotal,
+          ebayRefetch,
+          airtableRefetch,
+          nonEmptyListings,
+          runtimeFeatures,
+        });
         if (deferredRouteState.ebayListingsRecordId) {
           return (
             <EbaySnapshotRecordPage
@@ -539,14 +436,77 @@ export function AppTabContent({
             onOpenSnapshotRecord={navigateToEbayRecord}
           />
         );
-      case 'users':
+      }
+      case 'users': {
+        const usersViewModel = buildUsersTabViewModel({
+          userRecordId,
+          navigateToUserRecord,
+          navigateToUsersList,
+        });
         return <UserManagementTab viewModel={usersViewModel} />;
+      }
       case 'settings':
         return <SettingsTab />;
       case 'notifications':
         return <NotificationsTab />;
-      case 'dashboard':
+      case 'dashboard': {
+        const dashboardViewModel = buildDashboardTabViewModel({
+          atLoading,
+          atError,
+          spLoading,
+          spError,
+          jfLoading,
+          jfError,
+          nonEmptyListings,
+          products,
+          jfSubmissions,
+          metrics,
+          accessiblePages,
+          currentUserRole,
+          currentUserName,
+          approvalLoading,
+          approvalError,
+          approvalTotal,
+          approvalApproved,
+          approvalPending,
+          shopifyApprovalLoading,
+          shopifyApprovalError,
+          shopifyApprovalTotal,
+          shopifyApprovalApproved,
+          shopifyApprovalPending,
+          workflowDashboardTargets,
+          workflowAnalytics,
+          workflowPostPublishLoading,
+          workflowPostPublishError,
+          workflowActiveListingCount,
+          workflowStaleListingCount,
+          workflowStaleListingMineCount,
+          workflowStaleListingUnassignedCount,
+          workflowSoldReadyCount,
+          workflowSoldReadyMineCount,
+          workflowSoldReadyUnassignedCount,
+          workflowShippedCount,
+          aiProvider,
+          ebayAuthenticated,
+          ebayRestoringSession,
+          ebayLoading,
+          ebayError,
+          ebayTotal,
+          ebayPublishedCount,
+          ebayDraftCount,
+          sharkLoading,
+          sharkError,
+          currentSlug,
+          sharkListings,
+          usersCount,
+          adminCount,
+          runtimeFeatures,
+          navigateToTab,
+          navigateToInventoryWorkflowView,
+          navigateToInventoryPostPublishBucket,
+        });
         return <DashboardTab viewModel={dashboardViewModel} />;
+      }
       case 'workflow-guide':
         return <WorkflowGuideTab currentUserRole={currentUserRole} currentUserName={currentUserName} accessiblePages={accessiblePages} />;
       case 'workflow-guide-editor':
@@ -574,7 +534,14 @@ export function AppTabContent({
           )
           : (
             <AirtableTab
-              viewModel={airtableViewModel}
+              viewModel={buildAirtableTabViewModel({
+                atLoading,
+                atError,
+                nonEmptyListings,
+                displayValue,
+                hasValue,
+                recordTitle,
+              })}
               currentUserRole={currentUserRole}
               currentUserName={currentUserName}
               onAddNewRecord={() => navigateToManualIntake()}
@@ -622,7 +589,14 @@ export function AppTabContent({
             onOpenShipmentRecord={(recordId) => navigateToShippedListingRecord(recordId)}
           />
         );
-      case 'shopify':
+      case 'shopify': {
+        const shopifyViewModel = buildShopifyTabViewModel({
+          spLoading,
+          spError,
+          products,
+          nonEmptyListings,
+          storeDomain,
+        });
         if (deferredRouteState.shopifyListingsRecordId) {
           return (
             <ShopifySnapshotRecordPage
@@ -640,8 +614,15 @@ export function AppTabContent({
             onOpenSnapshotRecord={navigateToShopifyRecord}
           />
         );
+      }
       case 'market':
-        return <MarketTab viewModel={marketViewModel} />;
+        return <MarketTab viewModel={buildMarketTabViewModel({
+          sharkLoading,
+          sharkError,
+          sharkListings,
+          currentSlug,
+          sharkSearch,
+        })} />;
       case 'manual-intake':
         if (deferredRouteState.manualIntakeRecordId) {
           return (
@@ -780,7 +761,16 @@ export function AppTabContent({
         if (!runtimeFeatures.jotform.available && runtimeFeatures.jotform.message) {
           return <FeatureUnavailableTab title="JotForm Audit unavailable" message={runtimeFeatures.jotform.message} />;
         }
-        return <JotformTab viewModel={jotformViewModel} />;
+        return <JotformTab viewModel={buildJotformTabViewModel({
+          jfSubmissions,
+          jfLoading,
+          jfPolling,
+          jfError,
+          jfRefetch,
+          jfLastUpdated,
+          jfFreshCount,
+          jfClearFresh,
+        })} />;
       case 'trash-review':
         if (deferredRouteState.trashReviewGroupId) {
           return (
@@ -838,7 +828,7 @@ export function AppTabContent({
         </div>
       )}
       <div className={isRouteTransitionPending ? 'opacity-95 transition-opacity' : 'transition-opacity'} aria-busy={isRouteTransitionPending}>
-        <Suspense fallback={deferredRouteState.activeTab === 'dashboard' ? <DashboardTabLoadingFallback /> : <TabLoadingFallback tabLabel={getTabLoadingLabel(deferredRouteState.activeTab)} />}>
+        <Suspense fallback={activeTab === 'dashboard' ? <DashboardTabLoadingFallback /> : <TabLoadingFallback tabLabel={getTabLoadingLabel(activeTab)} />}>
           {renderActiveTab()}
         </Suspense>
       </div>

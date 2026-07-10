@@ -23,6 +23,9 @@ const KeyFeaturesEditor = lazy(async () => ({
 const ShopifyCollectionsSelect = lazy(async () => ({
   default: (await import('./ShopifyCollectionsSelect')).ShopifyCollectionsSelect,
 }));
+const ShopifyVendorSelect = lazy(async () => ({
+  default: (await import('./ShopifyVendorSelect')).ShopifyVendorSelect,
+}));
 const TestingNotesTextareaEditor = lazy(async () => ({
   default: (await import('./TestingNotesTextareaEditor')).TestingNotesTextareaEditor,
 }));
@@ -74,6 +77,11 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
   setShopifyTagValues: (nextTags: string[]) => void;
   shopifyTagMaxTags?: number;
   hasShopifyCollectionEditor: boolean;
+  hasShopifyVendorEditor?: boolean;
+  shopifyVendorFieldName?: string;
+  shopifyVendorValue?: string;
+  shopifyVendorDefaultValue?: string;
+  setShopifyVendorValue?: (nextVendor: string) => void;
   shopifyCollectionsFieldName: string;
   effectiveShopifyCollectionIds: string[];
   effectiveCollectionEditorLabelsById: Record<string, string>;
@@ -145,6 +153,11 @@ export function ApprovalFormFieldsSupplementalEditors({
   setShopifyTagValues,
   shopifyTagMaxTags,
   hasShopifyCollectionEditor,
+  hasShopifyVendorEditor = false,
+  shopifyVendorFieldName,
+  shopifyVendorValue = '',
+  shopifyVendorDefaultValue,
+  setShopifyVendorValue = () => {},
   shopifyCollectionsFieldName,
   effectiveShopifyCollectionIds,
   effectiveCollectionEditorLabelsById,
@@ -373,6 +386,18 @@ export function ApprovalFormFieldsSupplementalEditors({
             value={effectiveShopifyCollectionIds}
             labelsById={effectiveCollectionEditorLabelsById}
             onChange={setShopifyCollectionIds}
+            disabled={saving}
+          />
+        </Suspense>
+      )}
+
+      {hasShopifyVendorEditor && shopifyVendorFieldName && (
+        <Suspense fallback={lazyEditorFallback}>
+          <ShopifyVendorSelect
+            fieldName={shopifyVendorFieldName}
+            value={shopifyVendorValue}
+            onChange={setShopifyVendorValue}
+            defaultValue={shopifyVendorDefaultValue}
             disabled={saving}
           />
         </Suspense>

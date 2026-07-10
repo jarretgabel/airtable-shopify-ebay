@@ -13,7 +13,7 @@ import { AppFrame } from '@/components/app/AppFrame';
 import { RequiredPasswordChangeModal } from '@/components/auth/RequiredPasswordChangeModal';
 import { isDeveloperRole } from '@/auth/roleAccess';
 import type { AppPage } from '@/auth/pages';
-import { requireEnv } from '@/config/runtimeEnv';
+import { checkOptionalEnv, requireEnv } from '@/config/runtimeEnv';
 import { getLocalAppApiRoutingWarning } from '@/services/app-api/flags';
 import {
   applyThemeToDocument,
@@ -27,6 +27,7 @@ import { useAppUIStore } from '@/stores/appUIStore';
 import { useAuthStore } from '@/stores/auth/authStore';
 import type { AppUser } from '@/stores/auth/authTypes';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { useApprovalStore } from '@/stores/approvalStore';
 import { useNavigate } from 'react-router-dom';
 
 interface AuthenticatedAppShellProps {
@@ -212,6 +213,27 @@ export function AuthenticatedAppShell({
       role: currentUser.role,
     });
   }, [activeTab, currentUser]);
+
+  useEffect(() => {
+    if (!appDataEnabled || activeTab === 'listings' || !canAccessPage('listings') || !runtimeFeatures.approvalCombined.available) {
+      return;
+    }
+
+    const tableReference = checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF').trim();
+    if (!tableReference) {
+      return;
+    }
+
+    const tableNameRaw = checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME').trim();
+    const tableName = tableNameRaw.length > 0 ? tableNameRaw : undefined;
+    const timeoutId = window.setTimeout(() => {
+      void useApprovalStore.getState().loadRecords(tableReference, tableName, false);
+    }, 700);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeTab, appDataEnabled, canAccessPage, runtimeFeatures.approvalCombined.available]);
 
   const showRequiredPasswordModal = requiresPasswordChange;
   const localApiRoutingWarning = import.meta.env.DEV && isDeveloperRole(currentUser.role)

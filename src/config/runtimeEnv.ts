@@ -37,6 +37,12 @@ const bundledEnvValues: Partial<Record<keyof PublicRuntimeConfig, string>> = {
   VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME !== undefined
     ? import.meta.env.VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME
     : getProcessEnvVar('VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME'),
+  VITE_AIRTABLE_SHOPIFY_VENDORS_TABLE_REF: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_SHOPIFY_VENDORS_TABLE_REF !== undefined
+    ? import.meta.env.VITE_AIRTABLE_SHOPIFY_VENDORS_TABLE_REF
+    : getProcessEnvVar('VITE_AIRTABLE_SHOPIFY_VENDORS_TABLE_REF'),
+  VITE_AIRTABLE_SHOPIFY_VENDORS_TABLE_NAME: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_SHOPIFY_VENDORS_TABLE_NAME !== undefined
+    ? import.meta.env.VITE_AIRTABLE_SHOPIFY_VENDORS_TABLE_NAME
+    : getProcessEnvVar('VITE_AIRTABLE_SHOPIFY_VENDORS_TABLE_NAME'),
   VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF !== undefined
     ? import.meta.env.VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF
     : getProcessEnvVar('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF'),

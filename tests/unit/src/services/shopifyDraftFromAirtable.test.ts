@@ -156,17 +156,29 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     expect(product.variants?.[0]?.option1).toBe('Open Box');
   });
 
-  it('forces the Shopify vendor and aggregates tags from Airtable tag fields', () => {
+  it('uses Shopify vendor from Airtable fields and aggregates tags from Airtable tag fields', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Tag Product',
-      'Shopify REST Vendor': 'Do Not Use',
+      'Shopify REST Vendor': 'Luxman',
       'Shopify REST Tag 1': 'Vintage Audio',
       'Shopify REST Tag 2': 'Turntable',
       'Shopify GraphQL Tags JSON': JSON.stringify(['vintage audio', 'Belt Drive']),
     });
 
-    expect(product.vendor).toBe('Resolution Audio Video NYC');
+    expect(product.vendor).toBe('Luxman');
     expect(product.tags).toBe('Vintage Audio, Turntable, Belt Drive');
+  });
+
+  it('falls back to default vendor when Airtable vendor fields are blank', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Fallback Vendor Product',
+      'Shopify REST Vendor': '',
+      Vendor: '',
+      Brand: '',
+      Manufacturer: '',
+    });
+
+    expect(product.vendor).toBe('Resolution Audio Video NYC');
   });
 
   it('maps generic Airtable Tags field into Shopify tags payload', () => {
@@ -190,7 +202,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       'Shopify Body Highlights': 'Serviced controls\nOriginal wood case',
     });
 
-    expect(product.body_html).toBe('<p>Restored unit with warm analog sound.</p><ul><li>Serviced controls</li><li>Original wood case</li></ul><p>Price: 1799.00</p><p>SKU: </p><p>Resolution Audio Video NYC Marantz 2230 Receiver (Used)</p>');
+    expect(product.body_html).toBe('<p>Restored unit with warm analog sound.</p><ul><li>Serviced controls</li><li>Original wood case</li></ul><p>Price: 1799.00</p><p>SKU: </p><p>Marantz Marantz 2230 Receiver (Used)</p>');
   });
 
   it('returns no body html when no template fields are provided', () => {

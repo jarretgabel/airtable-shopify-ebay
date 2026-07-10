@@ -114,6 +114,18 @@ export const SHOPIFY_PRICE_FIELD_CANDIDATES = [
   'variant_compare_price',
 ] as const;
 
+export const SHOPIFY_VENDOR_FIELD_CANDIDATES = [
+  'Shopify REST Vendor',
+  'Shopify Vendor',
+  'Shopify GraphQL Vendor',
+  'Vendor',
+  'Brand',
+  'Manufacturer',
+  'shopify_rest_vendor',
+  'shopify_vendor',
+  'shopify_graphql_vendor',
+] as const;
+
 export const SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES = [
   'Shopify Type',
   'Type',

@@ -3,6 +3,7 @@ import {
   isShopifyBodyHtmlPrimaryField,
   isShopifyBodyHtmlTemplateField,
   isShopifyKeyFeaturesField,
+  isShopifyVendorField,
 } from './approvalFormFieldsShopifyHelpersBasic';
 import type { ApprovalFormFieldSetupParams } from './approvalFormFieldSetupTypes';
 import { useApprovalFormShopifyCollectionsSetup } from './useApprovalFormShopifyCollectionsSetup';
@@ -37,6 +38,25 @@ export function useApprovalFormShopifySetup({
   setFormValue,
 }: UseApprovalFormShopifySetupParams) {
   const isShopifyApprovalForm = approvalChannel === 'shopify';
+  const vendorFieldCandidates = Array.from(new Set([
+    ...allFieldNames,
+    ...writableFieldNames,
+    ...Object.keys(formValues),
+  ]));
+  const shopifyVendorFieldName = isShopifyApprovalForm
+    ? vendorFieldCandidates.find((fieldName) => isShopifyVendorField(fieldName))
+    : undefined;
+  const shopifyVendorDefaultValue = isShopifyApprovalForm
+    ? (
+      formValues.Make
+      || formValues.Brand
+      || formValues.Manufacturer
+      || formValues['Item Brand']
+      || formValues['Intake Brand']
+      || ''
+    ).trim()
+    : '';
+  const hasShopifyVendorEditor = Boolean(isShopifyApprovalForm && shopifyVendorFieldName);
   const shopifyBodyDescriptionFieldName = isShopifyApprovalForm
     ? allFieldNames.find((fieldName) => isShopifyBodyDescriptionField(fieldName))
     : undefined;
@@ -99,6 +119,7 @@ export function useApprovalFormShopifySetup({
     effectiveShopifyCollectionIds,
     hasShopifyCollectionEditor,
     hasShopifyTagEditor,
+    hasShopifyVendorEditor,
     isShopifyApprovalForm,
     setShopifyCollectionIds,
     setShopifyTagValues,
@@ -110,5 +131,7 @@ export function useApprovalFormShopifySetup({
     shopifyKeyFeaturesSyncFieldNames,
     shopifyTagStrategy,
     shopifyTagValues,
+    shopifyVendorDefaultValue,
+    shopifyVendorFieldName,
   };
 }

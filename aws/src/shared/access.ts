@@ -64,6 +64,8 @@ function resolveAirtableRequirement(event: APIGatewayProxyEventV2): RouteAccessR
       return { anyPage: ['listings'] };
     case 'approval-combined':
       return { anyPage: ['listings'] };
+    case 'shopify-vendors':
+      return { anyPage: ['listings'] };
     default:
       return { anyPage: WORKFLOW_ACCESS_PAGES };
   }

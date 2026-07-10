@@ -76,6 +76,7 @@ function validateSource(value: string): AirtableConfiguredRecordsSource {
     || value === 'approval-ebay'
     || value === 'approval-shopify'
     || value === 'approval-combined'
+    || value === 'shopify-vendors'
   ) {
     return value;
   }

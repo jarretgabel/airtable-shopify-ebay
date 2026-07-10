@@ -30,7 +30,8 @@ export type AirtableConfiguredRecordsSource =
   | 'used-gear-workflow'
   | 'approval-ebay'
   | 'approval-shopify'
-  | 'approval-combined';
+  | 'approval-combined'
+  | 'shopify-vendors';
 export type AirtableConfiguredWriteSource = AirtableConfiguredRecordsSource;
 export type AirtableConfiguredMetadataSource = 'inventory-directory' | 'used-gear-workflow';
 export type AirtableConfiguredAttachmentSource = 'inventory-directory' | 'used-gear-workflow';
@@ -276,6 +277,8 @@ const DEFAULT_USERS_TABLE_NAME = 'j2Gt9USORo6Vi5';
 const DEFAULT_USER_GUIDE_TABLE_NAME = 'tblquB9pdwSRXsI7c';
 const DEFAULT_APPROVAL_TABLE_REFERENCE = '3yTb0JkzUMFNnS/viw21kEduXKNub4Vn';
 const DEFAULT_COMBINED_LISTINGS_TABLE_NAME = 'tbl0K0nFQL64jQMx8';
+const DEFAULT_SHOPIFY_VENDORS_TABLE_REFERENCE = 'apprsAm2FOohEmL2u/tblF0B5TUhy20hJCv/viwx2RONDo3Ii85Gl';
+const DEFAULT_SHOPIFY_VENDORS_TABLE_NAME = 'tblF0B5TUhy20hJCv';
 const INVENTORY_DIRECTORY_ATTACHMENT_FIELD_IDS = new Set(['fldMXp0EaUHGglU8M']);
 const USED_GEAR_WORKFLOW_ATTACHMENT_FIELD_IDS = new Set(['fld1zIzmZEciQECah']);
 
@@ -326,6 +329,13 @@ function getSourceDefinition(source: AirtableConfiguredRecordsSource): { referen
     return {
       reference: process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF?.trim(),
       tableName: process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME?.trim() || DEFAULT_COMBINED_LISTINGS_TABLE_NAME,
+    };
+  }
+
+  if (source === 'shopify-vendors') {
+    return {
+      reference: process.env.AIRTABLE_SHOPIFY_VENDORS_TABLE_REF?.trim() || DEFAULT_SHOPIFY_VENDORS_TABLE_REFERENCE,
+      tableName: process.env.AIRTABLE_SHOPIFY_VENDORS_TABLE_NAME?.trim() || DEFAULT_SHOPIFY_VENDORS_TABLE_NAME,
     };
   }
 

@@ -67,6 +67,7 @@
     "jotform:webhooks:list": "node --import tsx scripts/list-jotform-webhooks.ts",
     "cleanup:ebay:probe": "node scripts/cleanup-ebay-probe-listings.mjs",
     "cleanup:shopify:probe": "node scripts/cleanup-shopify-probe-product.mjs",
+    "airtable:sync-brands-to-vendors": "node scripts/sync-listing-brands-to-vendors.mjs",
     "prepare:aws:env": "node scripts/prepare-aws-env.mjs",
     "typecheck": "tsc --noEmit",
     "build": "tsc && vite build",
