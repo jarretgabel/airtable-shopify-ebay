@@ -1,4 +1,5 @@
 import { HttpError } from '../../shared/errors.js';
+import { normalizeProductImageFilename } from '../../shared/imageNaming.js';
 import { requireSecret } from '../../shared/secrets.js';
 
 export type ShopifyWebhookTopic =
@@ -159,6 +160,7 @@ export interface ShopifyUnifiedProductResult {
   id: number;
   adminGraphqlApiId: string;
   title: string;
+  handle?: string | null;
   status?: string | null;
 }
 
@@ -622,11 +624,84 @@ export async function getProducts(limit = 50): Promise<ShopifyProductRecord[]> {
   return body.products ?? [];
 }
 
+export async function findLatestProductByTitleOrHandle(
+  params: {
+    title?: string;
+    handle?: string;
+    maxPages?: number;
+  },
+): Promise<ShopifyProductRecord | null> {
+  const normalizedTitle = params.title?.trim().toLowerCase() ?? '';
+  const normalizedHandle = params.handle?.trim().toLowerCase() ?? '';
+  const maxPages = Number.isFinite(params.maxPages) && (params.maxPages ?? 0) > 0
+    ? Math.trunc(Number(params.maxPages))
+    : 40;
+
+  if (!normalizedTitle && !normalizedHandle) {
+    return null;
+  }
+
+  const storeDomain = requireSecret('SHOPIFY_STORE_DOMAIN');
+  const accessToken = requireSecret('SHOPIFY_ACCESS_TOKEN');
+  const matches: ShopifyProductRecord[] = [];
+  let sinceId = 0;
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const url = new URL(`https://${storeDomain}/admin/api/2024-04/products.json`);
+    url.searchParams.set('limit', '250');
+    if (sinceId > 0) {
+      url.searchParams.set('since_id', String(sinceId));
+    }
+
+    const response = await fetch(url, {
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const body = await response.json().catch(() => ({})) as ShopifyProductsResponse;
+    if (!response.ok) {
+      throw new HttpError(response.status, `Shopify API error: HTTP ${response.status} on /products.json`, {
+        service: 'shopify',
+        code: 'SHOPIFY_HTTP_ERROR',
+        retryable: response.status >= 500,
+      });
+    }
+
+    const products = Array.isArray(body.products) ? body.products : [];
+    if (products.length === 0) {
+      break;
+    }
+
+    for (const product of products) {
+      const title = product.title?.trim().toLowerCase() ?? '';
+      const handle = product.handle?.trim().toLowerCase() ?? '';
+      const titleMatch = Boolean(normalizedTitle) && title === normalizedTitle;
+      const handleMatch = Boolean(normalizedHandle)
+        && (handle === normalizedHandle || handle.startsWith(`${normalizedHandle}-`));
+
+      if (titleMatch || handleMatch) {
+        matches.push(product);
+      }
+    }
+
+    sinceId = Number(products[products.length - 1]?.id ?? sinceId);
+  }
+
+  if (matches.length === 0) {
+    return null;
+  }
+
+  return [...matches].sort((left, right) => right.id - left.id)[0] ?? null;
+}
+
 export async function getProduct(id: number): Promise<ShopifyUnifiedProductResult | null> {
   const data = await graphQlRequest<{
     product: {
       id: string;
       title: string;
+      handle?: string | null;
       status?: string | null;
     } | null;
   }>(
@@ -634,6 +709,7 @@ export async function getProduct(id: number): Promise<ShopifyUnifiedProductResul
       product(id: $id) {
         id
         title
+        handle
         status
       }
     }`,
@@ -648,6 +724,7 @@ export async function getProduct(id: number): Promise<ShopifyUnifiedProductResul
     id: parseShopifyNumericId(data.product.id),
     adminGraphqlApiId: data.product.id,
     title: data.product.title,
+    handle: data.product.handle,
     status: data.product.status,
   };
 }
@@ -1032,6 +1109,7 @@ export async function uploadImageFile(
   file: string,
   alt?: string,
 ): Promise<ShopifyUploadedImageResult> {
+  const normalizedFilename = normalizeProductImageFilename(filename);
   const stagedData = await graphQlRequest<{
     stagedUploadsCreate: {
       stagedTargets: ShopifyStagedUploadTarget[];
@@ -1057,7 +1135,7 @@ export async function uploadImageFile(
     {
       input: [
         {
-          filename,
+          filename: normalizedFilename,
           mimeType,
           resource: 'IMAGE',
           httpMethod: 'POST',
@@ -1081,7 +1159,7 @@ export async function uploadImageFile(
   stagedTarget.parameters.forEach((parameter) => {
     formData.append(parameter.name, parameter.value);
   });
-  formData.append('file', new Blob([Buffer.from(file, 'base64')], { type: mimeType || 'image/jpeg' }), filename);
+  formData.append('file', new Blob([Buffer.from(file, 'base64')], { type: mimeType || 'image/jpeg' }), normalizedFilename);
 
   const stagedUploadResponse = await fetch(stagedTarget.url, {
     method: 'POST',

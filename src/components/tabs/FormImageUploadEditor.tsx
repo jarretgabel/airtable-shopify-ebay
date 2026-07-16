@@ -11,6 +11,7 @@ import { formatBytes, processImage, revokeProcessedImage, type CropInsetsPercent
 import { FormImageCropPreview } from '@/components/tabs/FormImageCropPreview';
 import {
   buildImageAltText,
+  buildFallbackImageFilename,
   buildImageFilename,
   isImageRoleComplete,
   type ImageNamingContext,
@@ -57,8 +58,7 @@ export interface FormImageUploadEditorProps {
 }
 
 function buildDefaultOutputFilename(fileName: string): string {
-  const stem = fileName.replace(/\.[^.]+$/, '');
-  return `${stem}_edited.jpg`;
+  return buildFallbackImageFilename(fileName);
 }
 
 function buildItemOutputFilename(

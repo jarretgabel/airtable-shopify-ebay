@@ -3,6 +3,8 @@
  * Runs entirely in the browser — no server required.
  */
 
+import { buildFallbackImageFilename } from '@/services/imageNamingFormatter';
+
 export type WatermarkPosition = 'bottom-right' | 'bottom-left' | 'bottom-center' | 'top-right';
 
 export interface CropInsetsPercent {
@@ -139,11 +141,10 @@ function roundPercent(value: number): number {
 function buildOutputFilename(originalName: string, outputFilename?: string): string {
   const trimmedOverride = (outputFilename ?? '').trim();
   if (trimmedOverride) {
-    return /\.jpe?g$/i.test(trimmedOverride) ? trimmedOverride : `${trimmedOverride}.jpg`;
+    return buildFallbackImageFilename(trimmedOverride);
   }
 
-  const stem = originalName.replace(/\.[^.]+$/, '');
-  return `${stem}_processed.jpg`;
+  return buildFallbackImageFilename(originalName);
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -184,7 +185,7 @@ function drawWatermark(
   }
 
   ctx.save();
-  ctx.font = `700 ${fontSize}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+  ctx.font = `700 ${fontSize}px Helvetica, Arial, sans-serif`;
   ctx.textBaseline = 'alphabetic';
 
   const metrics = ctx.measureText(watermarkLabel);

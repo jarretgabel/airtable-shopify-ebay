@@ -150,7 +150,7 @@ export function UsedGearWorkflowSourceDirectoryPage({
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [sortMode, setSortMode] = useState<'intake-newest' | 'intake-oldest'>('intake-newest');
+  const [sortMode, setSortMode] = useState<'intake-newest' | 'intake-oldest' | 'sku-asc' | 'sku-desc'>('intake-newest');
 
   useEffect(() => {
     let cancelled = false;
@@ -236,6 +236,20 @@ export function UsedGearWorkflowSourceDirectoryPage({
 
       return JSON.stringify(record.fields).toLowerCase().includes(normalizedSearch);
     });
+
+    if (sortMode === 'sku-asc' || sortMode === 'sku-desc') {
+      const direction = sortMode === 'sku-asc' ? 1 : -1;
+      return [...matchingRecords].sort((left, right) => {
+        const leftSku = getInventoryDirectorySku(left.fields);
+        const rightSku = getInventoryDirectorySku(right.fields);
+        const skuCompare = leftSku.localeCompare(rightSku, undefined, { numeric: true, sensitivity: 'base' });
+        if (skuCompare !== 0) {
+          return skuCompare * direction;
+        }
+
+        return getRecordIntakeTimestamp(right) - getRecordIntakeTimestamp(left);
+      });
+    }
 
     return [...matchingRecords].sort((left, right) => {
       const leftTimestamp = getRecordIntakeTimestamp(left);

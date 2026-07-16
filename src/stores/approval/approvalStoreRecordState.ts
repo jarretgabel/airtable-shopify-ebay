@@ -44,8 +44,13 @@ const APPROVAL_QUEUE_FIELDS = [
   'Vendor',
   'Shopify REST Variant 1 Price',
   'Shopify Variant 1 Price',
+  'eBay Price',
+  'Ebay Price',
   'Buy It Now/Starting Price',
   'Buy It Now / Starting Price',
+  'Buy It Now/Starting Bid',
+  'Buy It Now USD',
+  'Starting Bid USD',
   'Price',
   'eBay Offer Price Value',
   'eBay Offer Auction Start Price Value',
@@ -66,16 +71,28 @@ function getApprovalSourceCacheKey(tableReference: string, tableName?: string): 
 
 export function createSetFormValueAction(set: ApprovalStoreSet): ApprovalStore['setFormValue'] {
   return (fieldName, value) => {
-    set((state) => ({ formValues: { ...state.formValues, [fieldName]: value } }));
+    set((state) => {
+      if ((state.formValues[fieldName] ?? '') === value) {
+        return state;
+      }
+
+      return { formValues: { ...state.formValues, [fieldName]: value } };
+    });
   };
 }
 
 export function createSetDerivedFormValueAction(set: ApprovalStoreSet): ApprovalStore['setDerivedFormValue'] {
   return (fieldName, value) => {
-    set((state) => ({
-      formValues: { ...state.formValues, [fieldName]: value },
-      initialFormValues: { ...state.initialFormValues, [fieldName]: value },
-    }));
+    set((state) => {
+      if ((state.formValues[fieldName] ?? '') === value && (state.initialFormValues[fieldName] ?? '') === value) {
+        return state;
+      }
+
+      return {
+        formValues: { ...state.formValues, [fieldName]: value },
+        initialFormValues: { ...state.initialFormValues, [fieldName]: value },
+      };
+    });
   };
 }
 

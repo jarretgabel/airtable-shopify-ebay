@@ -8,6 +8,7 @@ import {
   SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES,
   SHOPIFY_TITLE_FIELD_CANDIDATES,
 } from '@/components/approval/listingApprovalShopifyConstants';
+import { isReadyForRequiredFields } from '@/components/approval/requiredFieldStatus';
 import { displayValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -80,11 +81,18 @@ export function getCombinedListingsRequiredFieldNames(records: AirtableRecord[])
 
 export function isCombinedRecordReadyForPublishing(
   record: AirtableRecord,
-  _combinedRequiredFieldNames: string[],
-  _shopifyRequiredFieldNames: string[],
-  _ebayRequiredFieldNames: string[],
+  combinedRequiredFieldNames: string[],
+  shopifyRequiredFieldNames: string[],
+  ebayRequiredFieldNames: string[],
 ): boolean {
-  return READY_FOR_PUBLISH_WORKFLOW_STATUSES.has(normalizeCombinedWorkflowStatus(record));
+  if (!READY_FOR_PUBLISH_WORKFLOW_STATUSES.has(normalizeCombinedWorkflowStatus(record))) {
+    return false;
+  }
+
+  // A combined row is only publish-ready when every required listing field is present.
+  return isReadyForRequiredFields(record.fields, combinedRequiredFieldNames)
+    && isReadyForRequiredFields(record.fields, shopifyRequiredFieldNames)
+    && isReadyForRequiredFields(record.fields, ebayRequiredFieldNames);
 }
 
 export function filterCombinedReadyForPublishingRecords(

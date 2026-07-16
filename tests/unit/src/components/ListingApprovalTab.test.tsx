@@ -398,7 +398,7 @@ describe('ListingApprovalTab', () => {
     });
   });
 
-  it('shows a not-found state for a direct listing URL whose record no longer exists', () => {
+  it('shows a not-found state for a direct listing URL whose record no longer exists', async () => {
     const onBackToList = vi.fn();
 
     render(
@@ -414,7 +414,9 @@ describe('ListingApprovalTab', () => {
       />,
     );
 
-    expect(screen.getByText('Listing record not found')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Listing record not found')).toBeInTheDocument();
+    });
     expect(screen.getByText(/old record ID may no longer exist/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to listings directory' }));

@@ -1,8 +1,10 @@
+import { useEffect, useRef } from 'react';
 import { recordTitle } from '@/app/appNavigation';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { saveEbayApprovalSupplementalFields } from './listingApprovalEbayFieldPersistence';
 import { buildListingApprovalSaveResultNotification } from './listingApprovalResultSummary';
+import { useApprovalStore, toFormValue } from '@/stores/approvalStore';
 import type { UseListingApprovalRecordActionsParams } from './listingApprovalRecordActionTypes';
 
 type SaveActionsParams = Pick<UseListingApprovalRecordActionsParams,
@@ -51,6 +53,34 @@ export function useListingApprovalSaveActions({
   requestConfirmation,
 }: SaveActionsParams) {
   const pushResultNotification = useNotificationStore.getState().upsertByKey;
+  const saveBaselineByFieldRef = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!selectedRecord) {
+      saveBaselineByFieldRef.current = {};
+      return;
+    }
+
+    const { initialFormValues } = useApprovalStore.getState();
+    saveBaselineByFieldRef.current = { ...initialFormValues };
+  }, [selectedRecord?.id]);
+
+  const getEffectiveChangedFieldNames = (): string[] => {
+    if (!selectedRecord) return [];
+
+    const latestStoreState = useApprovalStore.getState();
+    const latestFormValues = latestStoreState.formValues;
+    const savedBaseline = saveBaselineByFieldRef.current;
+
+    const liveChangedFieldNames = Object.entries(latestFormValues)
+      .filter(([fieldName, currentValue]) => {
+        const baseline = savedBaseline[fieldName] ?? toFormValue(selectedRecord.fields[fieldName]);
+        return currentValue !== baseline;
+      })
+      .map(([fieldName]) => fieldName);
+
+    return liveChangedFieldNames.length > 0 ? liveChangedFieldNames : changedFieldNames;
+  };
 
   const handleResetData = async () => {
     if (!selectedRecord) return;
@@ -74,6 +104,7 @@ export function useListingApprovalSaveActions({
 
   const handleSaveUpdates = async () => {
     if (!selectedRecord) return;
+    const effectiveChangedFieldNames = getEffectiveChangedFieldNames();
     const confirmed = await requestConfirmation({
       title: 'Save listing updates',
       message: 'Write the current page values back to Airtable for this listing.',
@@ -81,7 +112,7 @@ export function useListingApprovalSaveActions({
       bullets: [
         `Record: ${recordTitle(selectedRecord.fields)}`,
         `Channel: ${approvalChannel}`,
-        `${changedFieldNames.length} changed field${changedFieldNames.length === 1 ? '' : 's'} will be saved.`,
+        `${effectiveChangedFieldNames.length} changed field${effectiveChangedFieldNames.length === 1 ? '' : 's'} will be saved.`,
       ],
     });
     if (!confirmed) return;
@@ -125,7 +156,7 @@ export function useListingApprovalSaveActions({
           buildListingApprovalSaveResultNotification({
             record: selectedRecord,
             approvalChannel,
-            changedFieldCount: changedFieldNames.length,
+            changedFieldCount: effectiveChangedFieldNames.length,
             succeeded: true,
           }),
         );
@@ -136,7 +167,7 @@ export function useListingApprovalSaveActions({
           buildListingApprovalSaveResultNotification({
             record: selectedRecord,
             approvalChannel,
-            changedFieldCount: changedFieldNames.length,
+            changedFieldCount: effectiveChangedFieldNames.length,
             succeeded: false,
           }),
         );
@@ -153,7 +184,7 @@ export function useListingApprovalSaveActions({
         buildListingApprovalSaveResultNotification({
           record: selectedRecord,
           approvalChannel,
-          changedFieldCount: changedFieldNames.length,
+          changedFieldCount: effectiveChangedFieldNames.length,
           succeeded: false,
           errorMessage: message,
         }),

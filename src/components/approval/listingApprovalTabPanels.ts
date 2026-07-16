@@ -17,6 +17,7 @@ import {
 } from '@/components/approval/ListingApprovalWorkflowSummary';
 import type { InlineNoticeTone } from '@/components/approval/listingApprovalRecordActionTypes';
 import { errorSurfaceClass } from '@/components/tabs/uiClasses';
+import { checkOptionalEnv } from '@/config/runtimeEnv';
 import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -30,6 +31,61 @@ function getSelectedRecordEyebrowLabel(approvalChannel: 'shopify' | 'ebay' | 'co
     default:
       return 'Combined Listing Editor';
   }
+}
+
+function toExternalUrl(baseUrl: string, path: string): string {
+  const trimmedBaseUrl = baseUrl.trim();
+  if (!trimmedBaseUrl) return '';
+
+  const normalizedBaseUrl = /^https?:\/\//i.test(trimmedBaseUrl)
+    ? trimmedBaseUrl
+    : `https://${trimmedBaseUrl}`;
+
+  return `${normalizedBaseUrl.replace(/\/$/, '')}${path}`;
+}
+
+function getFirstTrimmedValue(source: Record<string, string>, fieldNames: readonly string[]): string {
+  for (const fieldName of fieldNames) {
+    const rawValue = source[fieldName];
+    if (typeof rawValue !== 'string') continue;
+
+    const value = rawValue.trim();
+    if (value) return value;
+  }
+
+  return '';
+}
+
+function resolveShopifyServiceListingUrl(storeDomain: string, formValues: Record<string, string>): string {
+  const explicitListingUrl = getFirstTrimmedValue(formValues, [
+    'Shopify Product URL',
+    'Shopify Storefront URL',
+  ]);
+  if (explicitListingUrl) {
+    return /^https?:\/\//i.test(explicitListingUrl)
+      ? explicitListingUrl
+      : `https://${explicitListingUrl}`;
+  }
+
+  const handle = getFirstTrimmedValue(formValues, [
+    'Shopify REST Handle',
+    'Shopify Handle',
+    'Shopify GraphQL Handle',
+    'Handle',
+    'handle',
+  ]);
+  if (!handle) return '';
+
+  return toExternalUrl(storeDomain, `/products/${encodeURIComponent(handle)}`);
+}
+
+function isPostPublishMarketplaceStatus(status: string | null): boolean {
+  return status === 'Listed, Shopify'
+    || status === 'Listed, eBay'
+    || status === 'Stale Listing, Shopify'
+    || status === 'Stale Listing, eBay'
+    || status === 'Sold - Ready to Ship'
+    || status === 'Shipped';
 }
 
 interface BuildListingApprovalTabPanelsParams {
@@ -128,6 +184,11 @@ interface BuildListingApprovalTabPanelsParams {
   tableName?: string;
   records: AirtableRecord[];
   formatFieldName: string;
+  hasExistingEbayOfferId: boolean;
+  shopifyAdminListingUrl: string | null;
+  shopifyServiceListingUrl: string | null;
+  ebayAdminListingUrl: string | null;
+  ebayServiceListingUrl: string | null;
   priceFieldName: string;
   vendorFieldName: string;
   qtyFieldName: string;
@@ -229,6 +290,11 @@ export function buildListingApprovalTabPanels({
   tableName,
   records,
   formatFieldName,
+  hasExistingEbayOfferId,
+  shopifyAdminListingUrl,
+  shopifyServiceListingUrl,
+  ebayAdminListingUrl,
+  ebayServiceListingUrl,
   priceFieldName,
   vendorFieldName,
   qtyFieldName,
@@ -240,6 +306,40 @@ export function buildListingApprovalTabPanels({
   selectedRecordPanelProps: ListingApprovalSelectedRecordPanelProps | null;
   queuePanelProps: ReturnType<typeof buildListingApprovalQueuePanelProps>;
 } {
+  const resolvedShopifyStoreDomain = checkOptionalEnv('VITE_SHOPIFY_STORE_DOMAIN');
+  const shopifyProductId = getFirstTrimmedValue(formValues, ['Shopify REST Product ID', 'Shopify Product ID']);
+  const ebayOfferId = getFirstTrimmedValue(formValues, ['eBay Offer ID']);
+  const ebayListingId = getFirstTrimmedValue(formValues, ['eBay Listing ID', 'eBay Item ID', 'Listing ID', 'Item ID']);
+
+  const derivedShopifyAdminListingUrl = shopifyProductId
+    ? toExternalUrl(resolvedShopifyStoreDomain, `/admin/products/${encodeURIComponent(shopifyProductId)}`)
+    : '';
+  const derivedShopifyServiceListingUrl = resolveShopifyServiceListingUrl(resolvedShopifyStoreDomain, formValues);
+  const derivedEbayAdminListingUrl = ebayOfferId
+    ? `https://www.ebay.com/sh/lst/active?offerId=${encodeURIComponent(ebayOfferId)}`
+    : '';
+  const derivedEbayServiceListingUrl = ebayListingId
+    ? `https://www.ebay.com/itm/${encodeURIComponent(ebayListingId)}`
+    : '';
+
+  const workflowStatus = selectedRecord && typeof selectedRecord.fields['Workflow Status'] === 'string'
+    ? selectedRecord.fields['Workflow Status'].trim()
+    : null;
+  const allowMarketplaceListingLinks = !isCombinedApproval || isPostPublishMarketplaceStatus(workflowStatus);
+
+  const resolvedShopifyAdminListingUrl = allowMarketplaceListingLinks
+    ? (shopifyAdminListingUrl ?? (derivedShopifyAdminListingUrl || null))
+    : null;
+  const resolvedShopifyServiceListingUrl = allowMarketplaceListingLinks
+    ? (shopifyServiceListingUrl ?? (derivedShopifyServiceListingUrl || null))
+    : null;
+  const resolvedEbayAdminListingUrl = allowMarketplaceListingLinks
+    ? (ebayAdminListingUrl ?? (derivedEbayAdminListingUrl || null))
+    : null;
+  const resolvedEbayServiceListingUrl = allowMarketplaceListingLinks
+    ? (ebayServiceListingUrl ?? (derivedEbayServiceListingUrl || null))
+    : null;
+
   const workflowSummary: ListingApprovalWorkflowSummaryData | null = selectedRecord && isCombinedApproval
     ? buildListingApprovalWorkflowSummaryData(selectedRecord)
     : null;
@@ -330,11 +430,16 @@ export function buildListingApprovalTabPanels({
       fadingInlineNoticeIds,
       canUpdateApprovedShopifyListing,
       isApproved,
+      hasExistingEbayOfferId,
       hasExistingShopifyRestProductId,
       pushShopifyDisabled,
       pushEbayDisabled,
       pushBothDisabled,
       isShopifyPublishBlockedByAuctionFormat,
+      shopifyAdminListingUrl: resolvedShopifyAdminListingUrl,
+      shopifyServiceListingUrl: resolvedShopifyServiceListingUrl,
+      ebayAdminListingUrl: resolvedEbayAdminListingUrl,
+      ebayServiceListingUrl: resolvedEbayServiceListingUrl,
       onResetData,
       onSaveUpdates,
       onPrimaryAction,
@@ -355,6 +460,19 @@ export function buildListingApprovalTabPanels({
         tableReference,
         tableName,
         loadRecords,
+        onMovedBackToReady: () => {
+          setDerivedFormValue('Workflow Status', 'Approved for Publish');
+          setDerivedFormValue('Shopify REST Product ID', '');
+          setDerivedFormValue('Shopify Product ID', '');
+          setDerivedFormValue('Shopify REST Published At', '');
+          setDerivedFormValue('Shopify REST Published Scope', '');
+          setDerivedFormValue('eBay Offer ID', '');
+          setDerivedFormValue('eBay Listing ID', '');
+          setDerivedFormValue('eBay Item ID', '');
+          setDerivedFormValue('Listing ID', '');
+          setDerivedFormValue('Item ID', '');
+          setDerivedFormValue('eBay Published At', '');
+        },
       })
     : null;
 

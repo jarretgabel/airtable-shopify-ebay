@@ -26,6 +26,7 @@ import {
   loadPendingReviewGroup,
   markWorkflowRelisted,
   markWorkflowListingStale,
+  moveWorkflowBackToReadyForPublish,
   markWorkflowRowsShipped,
   markWorkflowRowsSoldReadyToShip,
   markWorkflowCancelled,
@@ -1117,6 +1118,81 @@ describe('usedGearQueue', () => {
     );
   });
 
+  it('moves active listed operational rows back to ready and clears publish identifiers', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Listed, Shopify',
+          'Listed At': '2026-03-01T00:00:00.000Z',
+          'Shopify REST Product ID': '1234567890',
+          'Shopify REST Published At': '2026-03-01T01:00:00.000Z',
+          'Shopify REST Published Scope': 'web',
+          'eBay Offer ID': 'offer-123',
+          'eBay Listing ID': 'listing-123',
+          'eBay Published At': '2026-03-01T01:00:00.000Z',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: {
+        'Workflow Status': 'Approved for Publish',
+      },
+    });
+
+    await moveWorkflowBackToReadyForPublish('rec1');
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({
+        'Workflow Status': 'Approved for Publish',
+        'Approved For Publish At': expect.any(String),
+        'Shopify REST Published At': null,
+        'Shopify REST Published Scope': null,
+        'Shopify REST Product ID': null,
+        'eBay Published At': null,
+        'eBay Offer ID': null,
+        'eBay Listing ID': null,
+      }),
+      { typecast: true },
+    );
+  });
+
+  it('retries move-back write without unknown published fields when Airtable schema is missing them', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Listed, Shopify',
+          'Listed At': '2026-03-01T00:00:00.000Z',
+          'Shopify REST Product ID': '1234567890',
+        },
+      },
+    ]);
+
+    mockUpdateConfiguredRecord
+      .mockRejectedValueOnce(new Error('Unknown field name: "Shopify REST Published At"'))
+      .mockResolvedValueOnce({
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Approved for Publish',
+        },
+      });
+
+    await moveWorkflowBackToReadyForPublish('rec1');
+
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledTimes(2);
+    const secondCallFields = mockUpdateConfiguredRecord.mock.calls[1]?.[2] as Record<string, unknown>;
+    expect(secondCallFields).not.toHaveProperty('Shopify REST Published At');
+    expect(secondCallFields).toHaveProperty('Shopify REST Product ID', null);
+  });
+
   it('marks sold-ready operational rows shipped', async () => {
     mockGetConfiguredRecords.mockResolvedValue([
       {
@@ -1174,7 +1250,6 @@ describe('usedGearQueue', () => {
       'rec1',
       expect.objectContaining({
         'Post-Sale Outcome': 'Cancelled',
-        'Post-Sale Outcome At': expect.any(String),
       }),
       { typecast: true },
     );
@@ -1211,7 +1286,6 @@ describe('usedGearQueue', () => {
       'rec1',
       expect.objectContaining({
         'Post-Sale Outcome': 'Refunded',
-        'Post-Sale Outcome At': expect.any(String),
         'Refund Amount': 29.99,
         'Refund Reason': 'Customer returned the unit after delivery.',
         'Post-Sale Notes': 'Refund issued after inspection.',
@@ -1251,7 +1325,6 @@ describe('usedGearQueue', () => {
       'rec1',
       expect.objectContaining({
         'Post-Sale Outcome': 'Partial Refund',
-        'Post-Sale Outcome At': expect.any(String),
         'Refund Amount': 12.5,
         'Refund Reason': 'Partial price adjustment after delivery.',
         'Post-Sale Notes': 'Adjusted after cosmetic variance review.',
@@ -1287,7 +1360,6 @@ describe('usedGearQueue', () => {
       'rec1',
       expect.objectContaining({
         'Post-Sale Outcome': 'Returned',
-        'Post-Sale Outcome At': expect.any(String),
         'Return Received At': expect.any(String),
       }),
       { typecast: true },
@@ -1430,7 +1502,6 @@ describe('usedGearQueue', () => {
       'rec1',
       expect.objectContaining({
         'Shipment Follow-Through Notes': 'Carrier pickup booked.',
-        'Shipment Follow-Through Updated At': expect.any(String),
       }),
       { typecast: true },
     );

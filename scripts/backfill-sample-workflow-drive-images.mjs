@@ -356,10 +356,13 @@ async function renderSampleJpegBase64(descriptor, variant) {
 
 async function archiveStageImages(record, stage) {
   const results = [];
+  const isIntakeStage = stage === 'intake';
   for (let index = 1; index <= 3; index += 1) {
     const descriptor = buildImageDescriptor(record, stage, index);
     const originalFile = await renderSampleJpegBase64(descriptor, 'original');
-    const processedFile = await renderSampleJpegBase64(descriptor, 'processed');
+    const processedFile = isIntakeStage
+      ? originalFile
+      : await renderSampleJpegBase64(descriptor, 'processed');
 
     const archive = await archiveWorkflowImagesToGoogleDrive({
       folderKey: record.id,
@@ -389,18 +392,20 @@ async function archiveStageImages(record, stage) {
       createdAt: timestamp,
       updatedAt: timestamp,
     });
-    results.push({
-      folderId: archive.folderId,
-      attachmentId: archive.processed.id,
-      url: archive.processed.url,
-      filename: archive.processed.filename,
-      alt: `${descriptor.alt} processed`,
-      sortOrder: results.length + 1,
-      sourceStage: stage,
-      includedInListing: stage !== 'intake',
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    });
+    if (!isIntakeStage) {
+      results.push({
+        folderId: archive.folderId,
+        attachmentId: archive.processed.id,
+        url: archive.processed.url,
+        filename: archive.processed.filename,
+        alt: `${descriptor.alt} processed`,
+        sortOrder: results.length + 1,
+        sourceStage: stage,
+        includedInListing: true,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      });
+    }
   }
 
   return results;

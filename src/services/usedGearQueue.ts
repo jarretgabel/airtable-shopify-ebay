@@ -1,4 +1,8 @@
 import { deleteConfiguredRecord, getConfiguredRecord, getConfiguredRecords, updateConfiguredRecord } from '@/services/app-api/airtable';
+import {
+  takeDownApprovalRecord,
+  type ApprovalTakeDownTarget,
+} from '@/services/app-api/approval';
 import type { UsedGearWorkflowNotificationEvent } from '@/stores/auth/authTypes';
 import {
   enrichUsedGearWorkflowRecord,
@@ -18,6 +22,8 @@ import {
 } from '@/services/usedGearWorkflowLifecycle';
 import { assertUsedGearWorkflowReadyForPublish } from '@/services/usedGearWorkflowListingReadiness';
 import type { AirtableRecord } from '@/types/airtable';
+
+const WORKFLOW_TRANSITION_REQUEST_TIMEOUT_MS = 45000;
 
 const USED_GEAR_PENDING_REVIEW_QUEUE_FIELDS = [
   'Item Title',
@@ -510,6 +516,60 @@ function normalizeTextAreaValue(value: string | null | undefined): string | null
   return trimmed ? trimmed : null;
 }
 
+function getUnknownFieldNamesFromWriteError(message: string): string[] {
+  const quotedMatches = Array.from(message.matchAll(/["']([^"']+)["']/g))
+    .map((match) => (typeof match[1] === 'string' ? match[1].trim() : ''))
+    .filter((value) => value.length > 0);
+
+  if (/Unknown field name/i.test(message) && quotedMatches.length > 0) {
+    return Array.from(new Set(quotedMatches));
+  }
+
+  const suffixMatch = message.match(/Unknown field names?:\s*(.+)$/i);
+  if (!suffixMatch?.[1]) {
+    return [];
+  }
+
+  return Array.from(new Set(
+    suffixMatch[1]
+      .split(',')
+      .map((value) => value.trim().replace(/^["']|["']$/g, ''))
+      .filter((value) => value.length > 0),
+  ));
+}
+
+async function updateWorkflowRecordWithUnknownFieldFallback(
+  recordId: string,
+  fields: Record<string, unknown>,
+  options: { typecast?: boolean; timeoutMs?: number } = {},
+): Promise<AirtableRecord> {
+  let writableFields = { ...fields };
+
+  while (true) {
+    try {
+      return await updateConfiguredRecord('used-gear-workflow', recordId, writableFields, options);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const unknownFieldNames = getUnknownFieldNamesFromWriteError(message);
+      if (unknownFieldNames.length === 0) {
+        throw error;
+      }
+
+      let removed = false;
+      for (const fieldName of unknownFieldNames) {
+        if (fieldName in writableFields) {
+          delete writableFields[fieldName];
+          removed = true;
+        }
+      }
+
+      if (!removed || Object.keys(writableFields).length === 0) {
+        throw error;
+      }
+    }
+  }
+}
+
 function normalizePostSaleAmount(value: number | null | undefined): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return null;
@@ -526,7 +586,7 @@ async function updateWorkflowOwnerFields(
     'used-gear-workflow',
     recordId,
     fields,
-    { typecast: true },
+    { typecast: true, timeoutMs: WORKFLOW_TRANSITION_REQUEST_TIMEOUT_MS },
   );
 
   return withWorkflow(record);
@@ -709,7 +769,7 @@ export async function saveParkingLotArrivalReviewRecord(
       'Arrival Date': trimToNull(normalizedArrivalDate),
       SKU: trimToNull(normalizedSku),
     },
-    { typecast: true },
+    { typecast: true, timeoutMs: WORKFLOW_TRANSITION_REQUEST_TIMEOUT_MS },
   );
 
   return withWorkflow(record);
@@ -1382,6 +1442,62 @@ export async function markWorkflowRelisted(recordId: string): Promise<AirtableRe
   return withWorkflow(record);
 }
 
+export async function moveWorkflowBackToReadyForPublish(recordId: string): Promise<AirtableRecord> {
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
+  const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
+  if (!snapshot || (snapshot.bucket !== 'active-listing' && snapshot.bucket !== 'stale-listing')) {
+    throw new Error('Only active or stale listed operational rows can move back to ready for listing edits.');
+  }
+
+  const approvedAt = new Date().toISOString();
+  const record = await updateWorkflowRecordWithUnknownFieldFallback(
+    recordId,
+    {
+      [USED_GEAR_WORKFLOW_STATUS_FIELD]: APPROVED_FOR_PUBLISH_STATUS,
+      'Approved For Publish At': approvedAt,
+      'Listed At': null,
+      'Stale Listing At': null,
+      'Stale Recovery Status': null,
+      'Stale Recovery Notes': null,
+      'Stale Recovery Updated At': null,
+      'Relisted At': null,
+      'Shopify REST Published At': null,
+      'Shopify REST Published Scope': null,
+      'Shopify REST Product ID': null,
+      'eBay Published At': null,
+      'eBay Offer ID': null,
+      'eBay Listing ID': null,
+      'Sold Ready To Ship At': null,
+      'Shipment Follow-Through Notes': null,
+      'Shipped At': null,
+      'Post-Sale Outcome': null,
+      'Post-Sale Notes': null,
+      'Refund Amount': null,
+      'Refund Reason': null,
+      'Return Received At': null,
+      'Restock Disposition': null,
+    },
+    { typecast: true, timeoutMs: WORKFLOW_TRANSITION_REQUEST_TIMEOUT_MS },
+  );
+
+  return withWorkflow(record);
+}
+
+export async function takeDownWorkflowMarketplaceListingAndMoveBack(
+  recordId: string,
+  target: ApprovalTakeDownTarget,
+): Promise<AirtableRecord> {
+  const result = await takeDownApprovalRecord(recordId, target);
+  if (!result.success) {
+    const failedMessages = result.results
+      .filter((channelResult) => !channelResult.success)
+      .map((channelResult) => `${channelResult.channel}: ${channelResult.message}`);
+    throw new Error(failedMessages[0] ?? 'Marketplace takedown failed.');
+  }
+
+  return await moveWorkflowBackToReadyForPublish(recordId);
+}
+
 export async function markWorkflowSoldReadyToShip(recordId: string): Promise<AirtableRecord> {
   const currentRecord = await loadUsedGearOperationalRecord(recordId);
   const snapshot = getUsedGearWorkflowPostPublishSnapshot(currentRecord);
@@ -1426,13 +1542,11 @@ export async function markWorkflowCancelled(recordId: string): Promise<AirtableR
 
   assertPostSaleMutationAllowed(currentRecord, 'Cancelled');
 
-  const postSaleOutcomeAt = getTrimmedFieldValue(currentRecord, 'Post-Sale Outcome At') || new Date().toISOString();
   const record = await updateConfiguredRecord(
     'used-gear-workflow',
     recordId,
     {
       'Post-Sale Outcome': 'Cancelled',
-      'Post-Sale Outcome At': postSaleOutcomeAt,
     },
     { typecast: true },
   );
@@ -1449,13 +1563,11 @@ export async function markWorkflowRefunded(recordId: string, input: SaveUsedGear
 
   assertPostSaleMutationAllowed(currentRecord, 'Refunded');
 
-  const postSaleOutcomeAt = getTrimmedFieldValue(currentRecord, 'Post-Sale Outcome At') || new Date().toISOString();
   const record = await updateConfiguredRecord(
     'used-gear-workflow',
     recordId,
     {
       'Post-Sale Outcome': 'Refunded',
-      'Post-Sale Outcome At': postSaleOutcomeAt,
       'Post-Sale Notes': normalizeTextAreaValue(input.postSaleNotes),
       'Refund Amount': normalizePostSaleAmount(input.refundAmount),
       'Refund Reason': normalizeTextAreaValue(input.refundReason),
@@ -1475,13 +1587,11 @@ export async function markWorkflowPartialRefund(recordId: string, input: SaveUse
 
   assertPostSaleMutationAllowed(currentRecord, 'Partial Refund');
 
-  const postSaleOutcomeAt = getTrimmedFieldValue(currentRecord, 'Post-Sale Outcome At') || new Date().toISOString();
   const record = await updateConfiguredRecord(
     'used-gear-workflow',
     recordId,
     {
       'Post-Sale Outcome': 'Partial Refund',
-      'Post-Sale Outcome At': postSaleOutcomeAt,
       'Post-Sale Notes': normalizeTextAreaValue(input.postSaleNotes),
       'Refund Amount': normalizePostSaleAmount(input.refundAmount),
       'Refund Reason': normalizeTextAreaValue(input.refundReason),
@@ -1501,14 +1611,12 @@ export async function markWorkflowReturnReceived(recordId: string): Promise<Airt
 
   assertPostSaleMutationAllowed(currentRecord, 'Returned');
 
-  const postSaleOutcomeAt = getTrimmedFieldValue(currentRecord, 'Post-Sale Outcome At') || new Date().toISOString();
-  const returnReceivedAt = getTrimmedFieldValue(currentRecord, 'Return Received At') || postSaleOutcomeAt;
+  const returnReceivedAt = getTrimmedFieldValue(currentRecord, 'Return Received At') || new Date().toISOString();
   const record = await updateConfiguredRecord(
     'used-gear-workflow',
     recordId,
     {
       'Post-Sale Outcome': 'Returned',
-      'Post-Sale Outcome At': postSaleOutcomeAt,
       'Return Received At': returnReceivedAt,
     },
     { typecast: true },
@@ -1559,13 +1667,11 @@ export async function saveWorkflowShipmentFollowThrough(
     throw new Error('Only sold-ready or shipped operational rows can save shipment follow-through notes.');
   }
 
-  const shipmentFollowThroughUpdatedAt = new Date().toISOString();
   const record = await updateConfiguredRecord(
     'used-gear-workflow',
     recordId,
     {
       'Shipment Follow-Through Notes': normalizeTextAreaValue(shipmentFollowThroughNotes),
-      'Shipment Follow-Through Updated At': shipmentFollowThroughUpdatedAt,
     },
     { typecast: true },
   );

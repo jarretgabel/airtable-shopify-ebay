@@ -67,6 +67,7 @@ export function AuthenticatedAppShell({
     inventoryRecordId,
     inventoryPriceEditorRecordId,
     listingsRecordId,
+    postPublishRecordId,
     soldReadyListingsRecordId,
     shippedListingsRecordId,
     shopifyListingsRecordId,
@@ -104,6 +105,7 @@ export function AuthenticatedAppShell({
     navigateToInventoryWorkflowView,
     navigateToInventoryPostPublishBucket,
     navigateToListingsRecord,
+    navigateToPostPublishRecord,
     navigateToSoldReadyListingRecord,
     navigateToShippedListingRecord,
     navigateToListingsList,
@@ -212,10 +214,13 @@ export function AuthenticatedAppShell({
       userId: currentUser.id,
       role: currentUser.role,
     });
-  }, [activeTab, currentUser]);
+  }, [activeTab, currentUser.id, currentUser.role]);
+
+  const combinedListingsPrefetchKeyRef = useRef('');
+  const canAccessListings = canAccessPage('listings');
 
   useEffect(() => {
-    if (!appDataEnabled || activeTab === 'listings' || !canAccessPage('listings') || !runtimeFeatures.approvalCombined.available) {
+    if (!appDataEnabled || activeTab === 'listings' || activeTab === 'post-publish' || !canAccessListings || !runtimeFeatures.approvalCombined.available) {
       return;
     }
 
@@ -226,6 +231,12 @@ export function AuthenticatedAppShell({
 
     const tableNameRaw = checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME').trim();
     const tableName = tableNameRaw.length > 0 ? tableNameRaw : undefined;
+    const prefetchKey = `${activeTab}:${tableReference}:${tableName ?? ''}`;
+    if (combinedListingsPrefetchKeyRef.current === prefetchKey) {
+      return;
+    }
+
+    combinedListingsPrefetchKeyRef.current = prefetchKey;
     const timeoutId = window.setTimeout(() => {
       void useApprovalStore.getState().loadRecords(tableReference, tableName, false);
     }, 700);
@@ -233,7 +244,7 @@ export function AuthenticatedAppShell({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [activeTab, appDataEnabled, canAccessPage, runtimeFeatures.approvalCombined.available]);
+  }, [activeTab, appDataEnabled, canAccessListings, runtimeFeatures.approvalCombined.available]);
 
   const showRequiredPasswordModal = requiresPasswordChange;
   const localApiRoutingWarning = import.meta.env.DEV && isDeveloperRole(currentUser.role)
@@ -293,6 +304,7 @@ export function AuthenticatedAppShell({
             inventoryRecordId={inventoryRecordId}
             inventoryPriceEditorRecordId={inventoryPriceEditorRecordId}
             listingsRecordId={listingsRecordId}
+            postPublishRecordId={postPublishRecordId}
             soldReadyListingsRecordId={soldReadyListingsRecordId}
             shippedListingsRecordId={shippedListingsRecordId}
             shopifyListingsRecordId={shopifyListingsRecordId}
@@ -311,6 +323,7 @@ export function AuthenticatedAppShell({
             navigateToTestingForm={navigateToTestingForm}
             navigateToPhotosForm={navigateToPhotosForm}
             navigateToListingsRecord={navigateToListingsRecord}
+            navigateToPostPublishRecord={navigateToPostPublishRecord}
             navigateToSoldReadyListingRecord={navigateToSoldReadyListingRecord}
             navigateToShippedListingRecord={navigateToShippedListingRecord}
             navigateToListingsList={navigateToListingsList}

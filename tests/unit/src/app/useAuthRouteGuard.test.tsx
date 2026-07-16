@@ -98,6 +98,20 @@ describe('useAuthRouteGuard', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it('allows post-publish detail routes when the user has access', () => {
+    const navigate = vi.fn();
+
+    render(
+      <GuardHarness
+        normalizedPath="/post-publish/rec-post-1"
+        canAccessPage={(tab) => tab === 'post-publish' || tab === 'dashboard'}
+        navigate={navigate}
+      />,
+    );
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('allows Parking Lot arrival-stage record review routes when the user has access', () => {
     const navigate = vi.fn();
 

@@ -1,4 +1,5 @@
 import { HttpError } from '../../shared/errors.js';
+import { normalizeProductImageFilename } from '../../shared/imageNaming.js';
 import { getOptionalSecret, requireSecret } from '../../shared/secrets.js';
 
 export interface EbayInventoryItem {
@@ -1695,7 +1696,7 @@ export async function uploadImageToEbayHostedPictures(
   mimeType: string,
   file: string,
 ): Promise<EbayUploadedImageResult> {
-  const normalizedName = filename.trim();
+  const normalizedName = normalizeProductImageFilename(filename);
   const normalizedMimeType = mimeType.trim() || 'image/jpeg';
   const normalizedFile = file.trim();
 

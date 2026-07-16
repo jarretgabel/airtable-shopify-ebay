@@ -48,6 +48,7 @@ export function useListingApprovalDerivedState({
     approvalChannel,
     isCombinedApproval,
     formValues,
+    initialFormValues,
     setFormValue,
     setDerivedFormValue,
     selectedEbayTemplateId,

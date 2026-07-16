@@ -134,10 +134,35 @@ export function buildListingApprovalSelectedRecordViewProps({
   onOpenTestingForm,
   onOpenPhotosForm,
 }: BuildListingApprovalSelectedRecordViewPropsParams) {
-  const approvalFormFieldNames = allFieldNames.filter((fieldName) => shouldIncludeListingRecordFieldName(fieldName, approvalChannel));
+  const workflowImageSourceFieldNames = [
+    'Images',
+    'Workflow Images',
+    'Workflow Photos',
+    'Workflow Image Metadata JSON',
+    'Workflow Image Metadata',
+  ];
+
+  const hydratedWorkflowImageSourceFieldNames = workflowImageSourceFieldNames.filter((fieldName) => {
+    if (Object.prototype.hasOwnProperty.call(selectedRecord.fields, fieldName)) {
+      return true;
+    }
+
+    const hydratedValue = formValues[fieldName];
+    return typeof hydratedValue === 'string' && hydratedValue.trim().length > 0;
+  });
+
+  const approvalFormFieldNames = Array.from(new Set([
+    ...allFieldNames.filter((fieldName) => shouldIncludeListingRecordFieldName(fieldName, approvalChannel)),
+    ...hydratedWorkflowImageSourceFieldNames,
+  ])).sort((left, right) => left.localeCompare(right));
   const approvalFormWritableFieldNames = Object.keys(selectedRecord.fields).filter((fieldName) => shouldIncludeListingRecordFieldName(fieldName, approvalChannel));
   const approvalFormOriginalFieldValues = Object.fromEntries(
-    Object.entries(selectedRecord.fields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
+    approvalFormFieldNames.map((fieldName) => {
+      const recordHasField = Object.prototype.hasOwnProperty.call(selectedRecord.fields, fieldName);
+      const recordValue = recordHasField ? toFormValue(selectedRecord.fields[fieldName]) : '';
+      const hydratedValue = formValues[fieldName] ?? '';
+      return [fieldName, recordValue || hydratedValue];
+    }),
   );
 
   return {

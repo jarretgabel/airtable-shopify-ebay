@@ -159,6 +159,20 @@ async function main() {
 
   console.log('OK  approval publish validation -> publishSetup is invalid');
 
+  const takedownResult = await postProtectedJson(origin, '/api/approval/takedown', auth, {
+    recordId: 'rec-smoke-test',
+  });
+
+  if (takedownResult.statusCode !== 400) {
+    throw new Error(`Expected approval takedown validation failure, received ${takedownResult.statusCode}.`);
+  }
+
+  if (!String(takedownResult.body?.message || '').includes('target and recordId are required')) {
+    throw new Error('Approval takedown validation response did not report the target and recordId contract error.');
+  }
+
+  console.log('OK  approval takedown validation -> target and recordId are required');
+
   await postProtectedJson(origin, '/api/auth/logout', auth, {});
 }
 

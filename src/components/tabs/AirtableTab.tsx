@@ -20,7 +20,7 @@ const INVENTORY_DIRECTORY_SEARCH_PARAM = 'inventoryDirectorySearch';
 const INVENTORY_DIRECTORY_STATUS_PARAM = 'inventoryDirectoryStatus';
 const INVENTORY_DIRECTORY_SORT_PARAM = 'inventoryDirectorySort';
 
-type InventoryDirectorySortMode = 'intake-newest' | 'intake-oldest';
+type InventoryDirectorySortMode = 'intake-newest' | 'intake-oldest' | 'sku-asc' | 'sku-desc';
 
 const WORKFLOW_HUB_INTAKE_EDIT_BLOCKED_STATUSES = new Set([
   'Approved for Publish',
@@ -34,7 +34,11 @@ const WORKFLOW_HUB_INTAKE_EDIT_BLOCKED_STATUSES = new Set([
 
 function parseInventoryDirectorySortMode(search: string): InventoryDirectorySortMode {
   const value = new URLSearchParams(search).get(INVENTORY_DIRECTORY_SORT_PARAM);
-  return value === 'intake-oldest' ? value : 'intake-newest';
+  if (value === 'intake-oldest' || value === 'sku-asc' || value === 'sku-desc') {
+    return value;
+  }
+
+  return 'intake-newest';
 }
 
 function getRecordIntakeTimestamp(record: AirtableRecord): number {
@@ -218,6 +222,20 @@ export function AirtableTab({
 
       return haystack.includes(normalizedSearch);
     });
+
+    if (inventoryDirectorySortMode === 'sku-asc' || inventoryDirectorySortMode === 'sku-desc') {
+      const direction = inventoryDirectorySortMode === 'sku-asc' ? 1 : -1;
+      return [...nextRecords].sort((left, right) => {
+        const leftSku = getInventoryDirectorySku(left.fields);
+        const rightSku = getInventoryDirectorySku(right.fields);
+        const skuCompare = leftSku.localeCompare(rightSku, undefined, { numeric: true, sensitivity: 'base' });
+        if (skuCompare !== 0) {
+          return skuCompare * direction;
+        }
+
+        return getRecordIntakeTimestamp(right) - getRecordIntakeTimestamp(left);
+      });
+    }
 
     if (inventoryDirectorySortMode === 'intake-oldest') {
       return [...nextRecords].sort((left, right) => getRecordIntakeTimestamp(left) - getRecordIntakeTimestamp(right));

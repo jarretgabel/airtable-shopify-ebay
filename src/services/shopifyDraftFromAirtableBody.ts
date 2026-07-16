@@ -85,7 +85,7 @@ const SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS: ShopifyBodyDynamicTokenSpec[] = [
   { token: 'sku', candidates: ['Shopify REST Variant 1 SKU', 'SKU', 'shopify_rest_variant_1_sku'] },
   {
     token: 'body_description',
-    candidates: ['Shopify Body Description', 'Shopify REST Body Description', 'Item Description', 'Description', 'shopify_body_description', 'shopify_rest_body_description'],
+    candidates: ['Description', 'Item Description', 'Shopify REST Body Description', 'Shopify Body Description', 'shopify_rest_body_description', 'shopify_body_description'],
   },
   {
     token: 'body_key_features',

@@ -29,10 +29,10 @@ vi.mock('@/components/tabs/airtable/InventoryDirectoryListSection', () => {
     }: {
       searchTerm: string;
       statusFilter: string;
-      sortMode: 'intake-newest' | 'intake-oldest';
+      sortMode: 'intake-newest' | 'intake-oldest' | 'sku-asc' | 'sku-desc';
       onSearchTermChange: (value: string) => void;
       onStatusFilterChange: (value: string) => void;
-      onSortModeChange: (value: 'intake-newest' | 'intake-oldest') => void;
+      onSortModeChange: (value: 'intake-newest' | 'intake-oldest' | 'sku-asc' | 'sku-desc') => void;
     }) => {
       inventoryDirectoryListSectionMock({ searchTerm, statusFilter, sortMode, onSearchTermChange, onStatusFilterChange, onSortModeChange, ...rest });
 
@@ -63,10 +63,12 @@ vi.mock('@/components/tabs/airtable/InventoryDirectoryListSection', () => {
             <select
               aria-label="Directory Sort"
               value={sortMode}
-              onChange={(event) => onSortModeChange(event.currentTarget.value as 'intake-newest' | 'intake-oldest')}
+              onChange={(event) => onSortModeChange(event.currentTarget.value as 'intake-newest' | 'intake-oldest' | 'sku-asc' | 'sku-desc')}
             >
               <option value="intake-newest">Intake Date: Newest First</option>
               <option value="intake-oldest">Intake Date: Oldest First</option>
+              <option value="sku-asc">SKU: A to Z</option>
+              <option value="sku-desc">SKU: Z to A</option>
             </select>
           </label>
         </div>
@@ -157,6 +159,77 @@ describe('AirtableTab', () => {
     await waitFor(() => {
       expect(screen.getByTestId('location-state')).toHaveTextContent('inventoryDirectorySort=intake-oldest');
     });
+
+    fireEvent.change(screen.getByLabelText('Directory Sort'), { target: { value: 'sku-desc' } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location-state')).toHaveTextContent('inventoryDirectorySort=sku-desc');
+    });
+  });
+
+  it('sorts workflow hub rows by SKU when sku sort is selected from route state', async () => {
+    loadWorkflowHubDirectoryMock.mockResolvedValue([
+      {
+        id: 'rec-10',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'INV-10',
+          'Workflow Status': 'Pending Review',
+        },
+      },
+      {
+        id: 'rec-2',
+        createdTime: '2026-05-08T00:00:00.000Z',
+        fields: {
+          SKU: 'INV-2',
+          'Workflow Status': 'Pending Review',
+        },
+      },
+      {
+        id: 'rec-1',
+        createdTime: '2026-05-09T00:00:00.000Z',
+        fields: {
+          SKU: 'INV-1',
+          'Workflow Status': 'Pending Review',
+        },
+      },
+    ]);
+
+    render(
+      <MemoryRouter initialEntries={['/workflow-hub?inventoryDirectorySort=sku-asc']}>
+        <AirtableTab
+          viewModel={{
+            loading: false,
+            error: null,
+            listings: [],
+            displayValue: (value) => String(value ?? ''),
+            hasValue: (value) => value !== null && value !== undefined && value !== '',
+            recordTitle: () => 'Inventory Record',
+          }}
+          currentUserRole="admin"
+          currentUserName="Taylor Reviewer"
+          onAddNewRecord={vi.fn()}
+          onOpenManualIntake={vi.fn()}
+          onOpenTestingForm={vi.fn()}
+          onOpenPhotosForm={vi.fn()}
+          onOpenOperationalRecord={vi.fn()}
+          onOpenListingsRecord={vi.fn()}
+          onSelectRecord={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(loadWorkflowHubDirectoryMock).toHaveBeenCalledTimes(1);
+      expect(inventoryDirectoryListSectionMock).toHaveBeenCalled();
+    });
+
+    const latestCall = inventoryDirectoryListSectionMock.mock.calls[inventoryDirectoryListSectionMock.mock.calls.length - 1]?.[0] as {
+      sortMode: string;
+      records: Array<{ fields: { SKU?: string } }>;
+    };
+    expect(latestCall.sortMode).toBe('sku-asc');
+    expect(latestCall.records.map((record) => record.fields.SKU)).toEqual(['INV-1', 'INV-2', 'INV-10']);
   });
 
   it('leaves the workflow hub route on the directory when no workflow state is present', async () => {

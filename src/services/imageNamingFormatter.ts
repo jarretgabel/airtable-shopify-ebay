@@ -1,7 +1,7 @@
 import type { WorkflowImageRole } from '@/services/workflowImageMetadata';
+import { buildSopFallbackFilename, ensureMinWords, IMAGE_NAMING_RULES, splitImageNameTokens } from '@shared/imageNamingRules';
 
-const CAMERA_TOKEN_PATTERN = /^(img|dsc|pxl|pixel|canon|nikon|sony|iphone|gopro|v\d+)\d*$/;
-const NUMBER_ONLY_PATTERN = /^\d+$/;
+const OPTIONAL_DESCRIPTOR_SET = new Set(['mint', 'serviced', 'restored', 'pair', 'black', 'walnut', 'rare', 'limited']);
 
 export interface ImageNamingContext {
   brand: string;
@@ -14,6 +14,7 @@ export interface ImageNamingOptions {
   role?: WorkflowImageRole;
   customRole?: string;
   manualName?: string;
+  optionalDescriptor?: string;
 }
 
 export interface ImageNamingResult {
@@ -35,24 +36,80 @@ const ROLE_LABELS: Record<Exclude<WorkflowImageRole, 'custom'>, string> = {
   packaging: 'Packaging',
 };
 
+const ROLE_FILENAME_DETAIL_TOKENS: Record<Exclude<WorkflowImageRole, 'custom'>, string[]> = {
+  front: ['front', 'view'],
+  rear: ['rear', 'panel'],
+  'serial-plate': ['serial', 'number'],
+  'cosmetic-detail': ['cosmetic', 'detail'],
+  connections: ['rear', 'connections'],
+  top: ['top', 'view'],
+  bottom: ['bottom', 'view'],
+  side: ['side', 'angle'],
+  interior: ['interior', 'detail'],
+  accessories: ['included', 'accessory'],
+  packaging: ['original', 'packaging'],
+};
+
 function splitIntoTokens(value: string): string[] {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .split(' ')
-    .map((token) => token.trim())
-    .filter(Boolean)
-    .filter((token) => !CAMERA_TOKEN_PATTERN.test(token));
+  return splitImageNameTokens(value);
 }
 
-function formatRoleToken(role: WorkflowImageRole | undefined, customRole: string | undefined): string[] {
-  if (!role) return ['image'];
-  if (role === 'custom') {
-    const customTokens = splitIntoTokens(customRole ?? '').filter((token) => !NUMBER_ONLY_PATTERN.test(token));
-    return customTokens.length > 0 ? customTokens : ['image'];
+function ensureMinWordCount(tokens: string[], min = 5): string[] {
+  return ensureMinWords(tokens, min);
+}
+
+function buildRoleDetailTokens(role: WorkflowImageRole | undefined, customRole: string | undefined): string[] {
+  if (!role) {
+    return ['hero', 'image'];
   }
 
-  return splitIntoTokens(role);
+  if (role === 'custom') {
+    const customTokens = splitIntoTokens(customRole ?? '').filter((token) => !IMAGE_NAMING_RULES.numberOnlyPattern.test(token));
+    if (customTokens.length >= 2) {
+      return customTokens.slice(0, 3);
+    }
+
+    if (customTokens.length === 1) {
+      return [customTokens[0], 'detail'];
+    }
+
+    return ['custom', 'detail'];
+  }
+
+  return ROLE_FILENAME_DETAIL_TOKENS[role];
+}
+
+function normalizeOptionalDescriptor(value: string | undefined): string | undefined {
+  const normalized = splitIntoTokens(value ?? '').join('-').replace(/-/g, '');
+  if (!normalized) return undefined;
+  return OPTIONAL_DESCRIPTOR_SET.has(normalized) ? normalized : undefined;
+}
+
+function clampFilenameTokens(
+  leadingTokens: string[],
+  detailTokens: string[],
+): { tokens: string[]; warnings: string[] } {
+  const warnings: string[] = [];
+  const cleanLeading = leadingTokens.filter((token) => !IMAGE_NAMING_RULES.numberOnlyPattern.test(token));
+  const cleanDetail = detailTokens.filter((token) => !IMAGE_NAMING_RULES.numberOnlyPattern.test(token));
+
+  const safeDetail = cleanDetail.length > 0 ? cleanDetail : ['image', 'detail'];
+  const maxWords = IMAGE_NAMING_RULES.maxWords;
+  const maxLeadingWords = Math.max(1, maxWords - safeDetail.length);
+  const trimmedLeading = cleanLeading.slice(0, maxLeadingWords);
+
+  if (trimmedLeading.length !== cleanLeading.length) {
+    warnings.push('Filename trimmed to 10 words max.');
+  }
+
+  let nextTokens = [...trimmedLeading, ...safeDetail].slice(0, maxWords);
+  nextTokens = ensureMinWordCount(nextTokens, 5);
+
+  if (nextTokens.length !== cleanLeading.length + safeDetail.length) {
+    warnings.push('Filename auto-adjusted to comply with naming rules.');
+  }
+
+  return { tokens: nextTokens, warnings };
 }
 
 function toTitle(value: string): string {
@@ -73,46 +130,40 @@ function resolveRoleLabel(role: WorkflowImageRole | undefined, customRole: strin
   return ROLE_LABELS[role];
 }
 
-function clampTokens(tokens: string[]): { tokens: string[]; warnings: string[] } {
-  const warnings: string[] = [];
-  const filtered = tokens.filter((token) => !NUMBER_ONLY_PATTERN.test(token));
-
-  if (filtered.length > 10) {
-    warnings.push('Filename trimmed to 10 words max.');
-  }
-
-  const next = filtered.slice(0, 10);
-  while (next.length < 5) {
-    next.push('image');
-  }
-
-  if (next.length !== filtered.length) {
-    warnings.push('Filename auto-adjusted to comply with naming rules.');
-  }
-
-  return { tokens: next, warnings };
-}
-
 export function buildImageFilename(context: ImageNamingContext, options: ImageNamingOptions = {}): ImageNamingResult {
   const warnings: string[] = [];
-  const baseTokens = [
-    ...splitIntoTokens(context.brand),
-    ...splitIntoTokens(context.model),
-    ...splitIntoTokens(context.productType),
-    ...formatRoleToken(options.role, options.customRole),
-  ];
+  const brandTokens = splitIntoTokens(context.brand);
+  const modelTokens = splitIntoTokens(context.model);
+  const productTypeTokens = splitIntoTokens(context.productType);
+  const detailTokens = buildRoleDetailTokens(options.role, options.customRole);
+
+  const leadingTokens = [...brandTokens, ...modelTokens, ...productTypeTokens];
+  const { tokens: baseTokens, warnings: clampWarnings } = clampFilenameTokens(leadingTokens, detailTokens);
 
   if (options.manualName && options.manualName.trim().length > 0) {
     warnings.push('Manual filename entry is normalized to workflow naming rules.');
   }
 
-  const { tokens, warnings: clampWarnings } = clampTokens(baseTokens);
+  const optionalDescriptor = normalizeOptionalDescriptor(options.optionalDescriptor);
+  let tokens = [...baseTokens];
+  if (optionalDescriptor && !tokens.includes(optionalDescriptor)) {
+    if (tokens.length >= 10) {
+      tokens = [...tokens.slice(0, 9), optionalDescriptor];
+    } else {
+      tokens.push(optionalDescriptor);
+    }
+  }
+
   warnings.push(...clampWarnings);
 
   return {
     filename: `${tokens.join('-')}.jpg`,
     warnings,
   };
+}
+
+export function buildFallbackImageFilename(inputName: string): string {
+  return buildSopFallbackFilename(inputName);
 }
 
 export function buildImageAltText(context: ImageNamingContext, options: ImageNamingOptions = {}): string {

@@ -16,6 +16,7 @@ interface PostPublishQueueTabProps {
   currentUserName: string;
   onOpenOperationalRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
+  onOpenSoldReadyRecord: (recordId: string) => void;
   onOpenShipmentRecord: (recordId: string) => void;
 }
 
@@ -31,6 +32,7 @@ export function PostPublishQueueTab({
   currentUserName,
   onOpenOperationalRecord,
   onOpenListingsRecord,
+  onOpenSoldReadyRecord,
   onOpenShipmentRecord,
 }: PostPublishQueueTabProps) {
   const location = useLocation();
@@ -109,6 +111,7 @@ export function PostPublishQueueTab({
         focusedBucket={focusedBucket}
         onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={onOpenListingsRecord}
+        onOpenSoldReadyRecord={onOpenSoldReadyRecord}
         onOpenShipmentRecord={onOpenShipmentRecord}
         sectionSearchEnabled
         sortMode={sortMode}

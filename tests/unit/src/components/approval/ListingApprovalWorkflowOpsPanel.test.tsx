@@ -6,9 +6,17 @@ import type { AirtableRecord } from '@/types/airtable';
 const {
   loadUsedGearOperationalRecordContextMock,
   markWorkflowListingStaleMock,
+  takeDownWorkflowMarketplaceListingAndMoveBackMock,
+  updateRecordFromResolvedSourceMock,
 } = vi.hoisted(() => ({
   loadUsedGearOperationalRecordContextMock: vi.fn(),
   markWorkflowListingStaleMock: vi.fn(),
+  takeDownWorkflowMarketplaceListingAndMoveBackMock: vi.fn(),
+  updateRecordFromResolvedSourceMock: vi.fn(),
+}));
+
+vi.mock('@/services/app-api/airtable', () => ({
+  updateRecordFromResolvedSource: updateRecordFromResolvedSourceMock,
 }));
 
 vi.mock('@/services/usedGearQueue', async () => {
@@ -17,6 +25,7 @@ vi.mock('@/services/usedGearQueue', async () => {
     ...actual,
     loadUsedGearOperationalRecordContext: loadUsedGearOperationalRecordContextMock,
     markWorkflowListingStale: markWorkflowListingStaleMock,
+    takeDownWorkflowMarketplaceListingAndMoveBack: takeDownWorkflowMarketplaceListingAndMoveBackMock,
   };
 });
 
@@ -40,6 +49,8 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
   beforeEach(() => {
     loadUsedGearOperationalRecordContextMock.mockReset();
     markWorkflowListingStaleMock.mockReset();
+    takeDownWorkflowMarketplaceListingAndMoveBackMock.mockReset();
+    updateRecordFromResolvedSourceMock.mockReset();
   });
 
   it('does not render the removed workflow audit section inside Listings', async () => {
@@ -110,4 +121,128 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
       expect(loadRecords).toHaveBeenCalledWith('appApproval/table', undefined, true);
     });
   });
+
+  it('runs shopify takedown and moves the row back to ready', async () => {
+    const loadRecords = vi.fn(async () => {});
+    const updatedRecord = buildRecord({
+      'Workflow Status': 'Approved for Publish',
+      'Shopify REST Product ID': '12345',
+    });
+
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({
+      record: buildRecord({ 'Shopify REST Product ID': '12345' }),
+      group: null,
+    });
+    takeDownWorkflowMarketplaceListingAndMoveBackMock.mockResolvedValue(updatedRecord);
+
+    render(
+      <ListingApprovalWorkflowOpsPanel
+        selectedRecord={buildRecord({ 'Shopify REST Product ID': '12345' })}
+        tableReference="appApproval/table"
+        loadRecords={loadRecords}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Shopify + Back To Ready' }));
+
+    await waitFor(() => {
+      expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).toHaveBeenCalledWith('rec-workflow-1', 'shopify');
+      expect(loadRecords).toHaveBeenCalledWith('appApproval/table', undefined, true);
+    });
+  });
+
+  it('keeps shopify takedown action visible when refreshed workflow context omits product id field', async () => {
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({
+      record: buildRecord(),
+      group: null,
+    });
+
+    render(
+      <ListingApprovalWorkflowOpsPanel
+        selectedRecord={buildRecord({ 'Shopify REST Product ID': '12345' })}
+        tableReference="appApproval/table"
+        loadRecords={vi.fn(async () => {})}
+      />,
+    );
+
+    expect(await screen.findByRole('button', { name: 'Take Down Shopify + Back To Ready' })).toBeInTheDocument();
+  });
+
+  it('shows shopify takedown action for Listed, Shopify even when product id is missing', async () => {
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({
+      record: buildRecord({ 'Shopify REST Product ID': '' }),
+      group: null,
+    });
+
+    render(
+      <ListingApprovalWorkflowOpsPanel
+        selectedRecord={buildRecord({ 'Shopify REST Product ID': '' })}
+        tableReference="appApproval/table"
+        loadRecords={vi.fn(async () => {})}
+      />,
+    );
+
+    expect(await screen.findByRole('button', { name: 'Take Down Shopify + Back To Ready' })).toBeInTheDocument();
+  });
+
+  it('skips source sync write when current source is used-gear-workflow', async () => {
+    const loadRecords = vi.fn(async () => {});
+    const updatedRecord = buildRecord({
+      'Workflow Status': 'Approved for Publish',
+      'Shopify REST Product ID': '12345',
+    });
+
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({
+      record: buildRecord({ 'Shopify REST Product ID': '12345' }),
+      group: null,
+    });
+    takeDownWorkflowMarketplaceListingAndMoveBackMock.mockResolvedValue(updatedRecord);
+
+    render(
+      <ListingApprovalWorkflowOpsPanel
+        selectedRecord={buildRecord({ 'Shopify REST Product ID': '12345' })}
+        tableReference="used-gear-workflow"
+        loadRecords={loadRecords}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Shopify + Back To Ready' }));
+
+    await waitFor(() => {
+      expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).toHaveBeenCalledWith('rec-workflow-1', 'shopify');
+    });
+
+    expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
+  });
+
+  it('skips source sync write when current source resolves to approval-combined', async () => {
+    const loadRecords = vi.fn(async () => {});
+    const updatedRecord = buildRecord({
+      'Workflow Status': 'Approved for Publish',
+      'Shopify REST Product ID': '12345',
+    });
+
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({
+      record: buildRecord({ 'Shopify REST Product ID': '12345' }),
+      group: null,
+    });
+    takeDownWorkflowMarketplaceListingAndMoveBackMock.mockResolvedValue(updatedRecord);
+
+    render(
+      <ListingApprovalWorkflowOpsPanel
+        selectedRecord={buildRecord({ 'Shopify REST Product ID': '12345' })}
+        tableReference="approval-combined"
+        loadRecords={loadRecords}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Shopify + Back To Ready' }));
+
+    await waitFor(() => {
+      expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).toHaveBeenCalledWith('rec-workflow-1', 'shopify');
+    });
+
+    expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
+  });
+
 });

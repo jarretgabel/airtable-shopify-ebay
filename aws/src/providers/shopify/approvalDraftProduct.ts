@@ -154,7 +154,7 @@ function buildVariant(fields: ApprovalFieldMap, options: ShopifyProductOption[])
   const option3 = getField(fields, ['Shopify REST Variant 1 Option 3', 'shopify_rest_variant_1_option_3']) || options[2]?.values[0] || null;
   const compareAtPrice = getField(fields, ['Shopify REST Variant 1 Compare At Price', 'Shopify Variant 1 Compare At Price', 'shopify_rest_variant_1_compare_at_price']);
   const variantComparePrice = getField(fields, ['Variant-Compare-Price', 'Variant Compare Price', 'variant_compare_price']);
-  const basePrice = getField(fields, ['Shopify REST Variant 1 Price', 'Shopify Variant 1 Price', 'Price', 'shopify_rest_variant_1_price']);
+  const basePrice = getField(fields, ['Price', 'Shopify REST Variant 1 Price', 'Shopify Variant 1 Price', 'shopify_rest_variant_1_price']);
   const listingPrice = variantComparePrice || compareAtPrice || basePrice;
   const numericListingPrice = Number(listingPrice);
   const numericBasePrice = Number(basePrice);

@@ -21,13 +21,17 @@ export type AirtableConfiguredAttachmentSource = 'inventory-directory' | 'used-g
 
 interface AirtableWriteOptions {
   typecast?: boolean;
+  timeoutMs?: number;
 }
 
 interface AirtableConfiguredReadOptions {
   fields?: string[];
   subset?: 'ready-for-publishing' | 'listings-page';
   maxRecords?: number;
+  timeoutMs?: number;
 }
+
+const CONFIGURED_RECORDS_READ_TIMEOUT_MS = 45000;
 
 export interface AirtableConfiguredRecordsSummary {
   total: number;
@@ -168,6 +172,8 @@ export async function getConfiguredRecords(
       maxRecords: typeof options.maxRecords === 'number' && Number.isFinite(options.maxRecords)
         ? String(Math.trunc(options.maxRecords))
         : undefined,
+    }, {
+      timeoutMs: options.timeoutMs ?? CONFIGURED_RECORDS_READ_TIMEOUT_MS,
     });
   } catch (error) {
     throw toConfiguredSourceError(error, source);
@@ -264,6 +270,8 @@ export async function createConfiguredRecord(
     return await postJson<AirtableRecord>(`/api/airtable/configured-records/${encodeURIComponent(source)}`, {
       fields,
       typecast: options.typecast,
+    }, {
+      timeoutMs: options.timeoutMs,
     });
   } catch (error) {
     throw toWriteError(error);
@@ -282,6 +290,9 @@ export async function updateConfiguredRecord(
       {
         fields,
         typecast: options.typecast,
+      },
+      {
+        timeoutMs: options.timeoutMs,
       },
     );
   } catch (error) {

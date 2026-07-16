@@ -61,7 +61,17 @@ function normalizeImageRole(value: unknown): WorkflowImageRole | undefined {
 }
 
 function normalizeBoolean(value: unknown, fallback: boolean): boolean {
-  return typeof value === 'boolean' ? value : fallback;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1' || normalized === 'yes') return true;
+    if (normalized === 'false' || normalized === '0' || normalized === 'no') return false;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (value === 1) return true;
+    if (value === 0) return false;
+  }
+  return fallback;
 }
 
 function normalizeSortOrder(value: unknown, fallback: number): number {
@@ -106,7 +116,15 @@ function normalizeMetadataRecord(value: unknown, fallbackOrder: number): Workflo
     customImageRole: normalizeString(record.customImageRole ?? record.custom_image_role ?? record.customRole ?? record.custom_role) || undefined,
     sortOrder: normalizeSortOrder(record.sortOrder ?? record.sort_order ?? record.position, fallbackOrder),
     sourceStage: normalizeStage(record.sourceStage ?? record.source_stage),
-    includedInListing: normalizeBoolean(record.includedInListing ?? record.included_in_listing, true),
+    includedInListing: normalizeBoolean(
+      record.includedInListing
+      ?? record.included_in_listing
+      ?? record.includeInListing
+      ?? record.include_in_listing
+      ?? record.included
+      ?? record.isIncluded,
+      true,
+    ),
     createdAt: normalizeString(record.createdAt) || normalizeString(record.created_at) || undefined,
     updatedAt: normalizeString(record.updatedAt) || normalizeString(record.updated_at) || undefined,
   };

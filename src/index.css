@@ -23,6 +23,12 @@
 		--info-bg: rgba(77, 163, 255, 0.16);
 		--info-border: rgba(77, 163, 255, 0.4);
 		--info-ink: #d7ebff;
+		--required-badge-border: rgba(251, 113, 133, 0.45);
+		--required-badge-bg: rgba(244, 63, 94, 0.15);
+		--required-badge-ink: #fecdd3;
+		--required-label-ink: #fecdd3;
+		--status-ok-ink: #a7f3d0;
+		--status-warn-ink: #fecdd3;
 		--elevation-lg: 0 18px 36px rgba(0, 0, 0, 0.42);
 		--error-bg: #3b181d;
 		--error-text: #ffd6d0;
@@ -46,6 +52,12 @@
 		--info-bg: rgba(0, 94, 203, 0.12);
 		--info-border: rgba(0, 94, 203, 0.3);
 		--info-ink: #0b4f9f;
+		--required-badge-border: rgba(225, 29, 72, 0.6);
+		--required-badge-bg: rgba(251, 113, 133, 0.22);
+		--required-badge-ink: #9f1239;
+		--required-label-ink: #be123c;
+		--status-ok-ink: #047857;
+		--status-warn-ink: #b91c1c;
 		--elevation-lg: 0 14px 30px rgba(17, 33, 52, 0.12);
 		--error-bg: #fdeaea;
 		--error-text: #7d1f1f;

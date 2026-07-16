@@ -400,6 +400,21 @@ Resources:
             Method: POST
             Path: /api/approval/publish
 
+  ApprovalTakeDownFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/approval/takeDown.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/approval/takedown
+
   ApprovalNormalizeFunction:
     Type: AWS::Serverless::Function
     Metadata:

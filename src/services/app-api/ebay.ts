@@ -18,6 +18,9 @@ import type { AirtableConfiguredRecordsSource } from './airtableSources';
 import { isAppApiHttpError } from './errors';
 import { getJson, postJson } from './http';
 
+const ebayPackageTypesCache = new Map<string, string[]>();
+const ebayPackageTypesInFlight = new Map<string, Promise<string[]>>();
+
 export type { EbayApprovalPreviewResult } from '@contracts/ebayApproval';
 
 function toEbayError(error: unknown): Error {
@@ -130,8 +133,33 @@ export async function getEbayChildCategories(
 }
 
 export async function getEbayPackageTypes(marketplaceId = 'EBAY_US'): Promise<string[]> {
+  const cacheKey = marketplaceId.trim().toUpperCase() || 'EBAY_US';
+  const cached = ebayPackageTypesCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const existingRequest = ebayPackageTypesInFlight.get(cacheKey);
+  if (existingRequest) {
+    return existingRequest;
+  }
+
+  const request = (async () => {
+    try {
+      const result = await getJson<string[]>('/api/ebay/package-types', { marketplaceId: cacheKey });
+      ebayPackageTypesCache.set(cacheKey, result);
+      return result;
+    } catch (error) {
+      throw toEbayError(error);
+    } finally {
+      ebayPackageTypesInFlight.delete(cacheKey);
+    }
+  })();
+
+  ebayPackageTypesInFlight.set(cacheKey, request);
+
   try {
-    return await getJson<string[]>('/api/ebay/package-types', { marketplaceId });
+    return await request;
   } catch (error) {
     throw toEbayError(error);
   }

@@ -11,6 +11,7 @@ type PublishingActionsParams = Pick<UseListingApprovalRecordActionsParams,
   | 'tableName'
   | 'formValues'
   | 'setFormValue'
+  | 'setDerivedFormValue'
   | 'saveRecord'
   | 'createShopifyDraftOnApprove'
   | 'shopifyApprovalPreview'
@@ -42,6 +43,7 @@ export function useListingApprovalPublishingActions({
   tableName,
   formValues,
   setFormValue,
+  setDerivedFormValue,
   saveRecord,
   createShopifyDraftOnApprove,
   shopifyApprovalPreview,
@@ -71,9 +73,12 @@ export function useListingApprovalPublishingActions({
     missingShopifyRequiredFieldLabels,
     missingEbayRequiredFieldLabels,
     approvalPublishSource,
+    tableReference,
+    tableName,
     mergedDraftSourceFields,
     workflowPublishSummary,
     setFormValue,
+    setDerivedFormValue,
     pushInlineActionNotice,
     requestConfirmation,
   });

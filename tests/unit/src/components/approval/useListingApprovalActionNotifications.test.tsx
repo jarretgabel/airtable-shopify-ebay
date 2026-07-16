@@ -9,10 +9,12 @@ const {
   publishApprovalRecordMock,
   trackWorkflowEventMock,
   updateConfiguredRecordMock,
+  loadRecordsMock,
 } = vi.hoisted(() => ({
   publishApprovalRecordMock: vi.fn(),
   trackWorkflowEventMock: vi.fn(),
   updateConfiguredRecordMock: vi.fn(),
+  loadRecordsMock: vi.fn(),
 }));
 
 vi.mock('@/services/app-api/approval', () => ({
@@ -25,6 +27,28 @@ vi.mock('@/services/workflowAnalytics', () => ({
 
 vi.mock('@/services/app-api/airtable', () => ({
   updateConfiguredRecord: updateConfiguredRecordMock,
+}));
+
+vi.mock('@/stores/approvalStore', () => ({
+  useApprovalStore: {
+    getState: () => ({
+      loadRecords: loadRecordsMock,
+      formValues: {},
+      initialFormValues: {},
+    }),
+  },
+  toFormValue: (value: unknown) => {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+    return '';
+  },
 }));
 
 const record: AirtableRecord = {
@@ -44,6 +68,8 @@ describe('approval action notifications', () => {
     publishApprovalRecordMock.mockReset();
     trackWorkflowEventMock.mockReset();
     updateConfiguredRecordMock.mockReset();
+    loadRecordsMock.mockReset();
+    loadRecordsMock.mockResolvedValue(undefined);
   });
 
   it('publishes a save result notification after a successful save', async () => {
@@ -119,6 +145,8 @@ describe('approval action notifications', () => {
       missingShopifyRequiredFieldLabels: [],
       missingEbayRequiredFieldLabels: [],
       approvalPublishSource: 'approval-shopify',
+      tableReference: 'appApproval/viwApproval',
+      tableName: 'Approval',
       mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
       workflowPublishSummary: {
         workflowStatus: 'Approved for Publish',
@@ -179,6 +207,7 @@ describe('approval action notifications', () => {
     );
     expect(setFormValue).toHaveBeenCalledWith('Shopify REST Product ID', '88');
     expect(setFormValue).toHaveBeenCalledWith('Workflow Status', 'Listed, Shopify');
+    expect(loadRecordsMock).toHaveBeenCalledWith('appApproval/viwApproval', 'Approval', true);
     expect(pushInlineActionNotice).toHaveBeenCalledWith(
       'success',
       'Shopify listing created',
@@ -210,6 +239,8 @@ describe('approval action notifications', () => {
       missingShopifyRequiredFieldLabels: [],
       missingEbayRequiredFieldLabels: [],
       approvalPublishSource: 'approval-shopify',
+      tableReference: 'appApproval/viwApproval',
+      tableName: 'Approval',
       mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
       workflowPublishSummary: null,
       setFormValue,
@@ -265,6 +296,8 @@ describe('approval action notifications', () => {
       missingShopifyRequiredFieldLabels: [],
       missingEbayRequiredFieldLabels: [],
       approvalPublishSource: 'approval-shopify',
+      tableReference: 'appApproval/viwApproval',
+      tableName: 'Approval',
       mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
       workflowPublishSummary: {
         workflowStatus: 'Approved for Publish',
@@ -361,6 +394,8 @@ describe('approval action notifications', () => {
       missingShopifyRequiredFieldLabels: [],
       missingEbayRequiredFieldLabels: [],
       approvalPublishSource: 'approval-shopify',
+      tableReference: 'appApproval/viwApproval',
+      tableName: 'Approval',
       mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
       workflowPublishSummary: null,
       setFormValue,
@@ -393,5 +428,197 @@ describe('approval action notifications', () => {
       'eBay listing published',
       'SKU MCINTOSH-MA6900 is live as listing listing-9 via offer offer-9.',
     );
+  });
+
+  it('retries writeback without unknown Airtable fields when publish metadata includes unsupported keys', async () => {
+    publishApprovalRecordMock.mockResolvedValue({
+      target: 'shopify',
+      shopify: {
+        productId: '88',
+        mode: 'created',
+        warnings: [],
+        wroteProductId: true,
+        staleProductIdCleared: false,
+      },
+      failures: [],
+    });
+
+    updateConfiguredRecordMock
+      .mockRejectedValueOnce(new Error('Unknown field name: "Shopify REST Published Scope"'))
+      .mockResolvedValueOnce({
+        id: 'rec-notify-1',
+        fields: {
+          'Workflow Status': 'Listed, Shopify',
+          'Listed At': '2026-04-29T00:00:00.000Z',
+          'Shopify REST Published At': '2026-04-29T00:00:00.000Z',
+          'Shopify REST Product ID': '88',
+        },
+      });
+
+    const requestConfirmation = vi.fn(async () => true);
+    const pushInlineActionNotice = vi.fn();
+    const setFormValue = vi.fn();
+
+    const { result } = renderHook(() => useListingApprovalPublishActions({
+      selectedRecord: record,
+      hasMissingShopifyRequiredFields: false,
+      hasMissingEbayRequiredFields: false,
+      isShopifyPublishBlockedByAuctionFormat: false,
+      missingShopifyRequiredFieldLabels: [],
+      missingEbayRequiredFieldLabels: [],
+      approvalPublishSource: 'approval-shopify',
+      tableReference: 'appApproval/viwApproval',
+      tableName: 'Approval',
+      mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
+      workflowPublishSummary: null,
+      setFormValue,
+      pushInlineActionNotice,
+      requestConfirmation,
+    }));
+
+    await act(async () => {
+      await result.current.runCombinedPush('shopify');
+    });
+
+    expect(updateConfiguredRecordMock).toHaveBeenCalledTimes(2);
+    expect(updateConfiguredRecordMock).toHaveBeenNthCalledWith(
+      1,
+      'approval-shopify',
+      'rec-notify-1',
+      expect.objectContaining({
+        'Shopify REST Published Scope': 'web',
+      }),
+      { typecast: true },
+    );
+    expect(updateConfiguredRecordMock).toHaveBeenNthCalledWith(
+      2,
+      'approval-shopify',
+      'rec-notify-1',
+      expect.not.objectContaining({
+        'Shopify REST Published Scope': 'web',
+      }),
+      { typecast: true },
+    );
+    expect(pushInlineActionNotice).not.toHaveBeenCalledWith(
+      'warning',
+      'Workflow lifecycle writeback failed',
+      expect.any(String),
+    );
+  });
+
+  it('forces Shopify publish to use included workflow images from metadata over stale Shopify image JSON', async () => {
+    publishApprovalRecordMock.mockResolvedValue({
+      target: 'shopify',
+      shopify: {
+        productId: '88',
+        mode: 'created',
+        warnings: [],
+        wroteProductId: true,
+        staleProductIdCleared: false,
+      },
+      failures: [],
+    });
+
+    const requestConfirmation = vi.fn(async () => true);
+    const pushInlineActionNotice = vi.fn();
+    const setFormValue = vi.fn();
+
+    const { result } = renderHook(() => useListingApprovalPublishActions({
+      selectedRecord: record,
+      hasMissingShopifyRequiredFields: false,
+      hasMissingEbayRequiredFields: false,
+      isShopifyPublishBlockedByAuctionFormat: false,
+      missingShopifyRequiredFieldLabels: [],
+      missingEbayRequiredFieldLabels: [],
+      approvalPublishSource: 'approval-shopify',
+      tableReference: 'appApproval/viwApproval',
+      tableName: 'Approval',
+      mergedDraftSourceFields: {
+        Name: 'McIntosh MA6900',
+        Description: 'Listing detail description should win.',
+        'Shopify REST Images JSON': JSON.stringify([
+          { src: 'https://legacy.example/1.jpg', alt: '', position: 1 },
+          { src: 'https://legacy.example/2.jpg', alt: '', position: 2 },
+          { src: 'https://legacy.example/3.jpg', alt: '', position: 3 },
+          { src: 'https://legacy.example/4.jpg', alt: '', position: 4 },
+          { src: 'https://legacy.example/5.jpg', alt: '', position: 5 },
+          { src: 'https://legacy.example/6.jpg', alt: '', position: 6 },
+        ]),
+        'Workflow Image Metadata JSON': JSON.stringify([
+          { url: 'https://approved.example/a.jpg', alt: 'A', sortOrder: 1, includedInListing: true },
+          { url: 'https://approved.example/b.jpg', alt: 'B', sortOrder: 2, includedInListing: true },
+          { url: 'https://approved.example/c.jpg', alt: 'C', sortOrder: 3, includedInListing: true },
+          { url: 'https://approved.example/d.jpg', alt: 'D', sortOrder: 4, includedInListing: false },
+        ]),
+      },
+      workflowPublishSummary: null,
+      setFormValue,
+      pushInlineActionNotice,
+      requestConfirmation,
+    }));
+
+    await act(async () => {
+      await result.current.runCombinedPush('shopify');
+    });
+
+    const publishCall = publishApprovalRecordMock.mock.calls[0];
+    const publishOptions = publishCall?.[3] as { fields?: Record<string, unknown> } | undefined;
+    const imageJsonRaw = publishOptions?.fields?.['Shopify REST Images JSON'];
+    const imageRows = typeof imageJsonRaw === 'string' ? JSON.parse(imageJsonRaw) as Array<{ src: string }> : [];
+
+    expect(imageRows.map((row) => row.src)).toEqual([
+      'https://approved.example/a.jpg',
+      'https://approved.example/b.jpg',
+      'https://approved.example/c.jpg',
+    ]);
+  });
+
+  it('forces Shopify body description writeback source to listing Description when present', async () => {
+    publishApprovalRecordMock.mockResolvedValue({
+      target: 'shopify',
+      shopify: {
+        productId: '88',
+        mode: 'created',
+        warnings: [],
+        wroteProductId: true,
+        staleProductIdCleared: false,
+      },
+      failures: [],
+    });
+
+    const requestConfirmation = vi.fn(async () => true);
+    const pushInlineActionNotice = vi.fn();
+    const setFormValue = vi.fn();
+
+    const { result } = renderHook(() => useListingApprovalPublishActions({
+      selectedRecord: record,
+      hasMissingShopifyRequiredFields: false,
+      hasMissingEbayRequiredFields: false,
+      isShopifyPublishBlockedByAuctionFormat: false,
+      missingShopifyRequiredFieldLabels: [],
+      missingEbayRequiredFieldLabels: [],
+      approvalPublishSource: 'approval-shopify',
+      tableReference: 'appApproval/viwApproval',
+      tableName: 'Approval',
+      mergedDraftSourceFields: {
+        Name: 'McIntosh MA6900',
+        Description: 'Primary listing detail description.',
+        'Item Description': 'Stale fallback description.',
+      },
+      workflowPublishSummary: null,
+      setFormValue,
+      pushInlineActionNotice,
+      requestConfirmation,
+    }));
+
+    await act(async () => {
+      await result.current.runCombinedPush('shopify');
+    });
+
+    const publishCall = publishApprovalRecordMock.mock.calls[0];
+    const publishOptions = publishCall?.[3] as { fields?: Record<string, unknown> } | undefined;
+
+    expect(publishOptions?.fields?.['Shopify REST Body Description']).toBe('Primary listing detail description.');
+    expect(publishOptions?.fields?.['Shopify Body Description']).toBe('Primary listing detail description.');
   });
 });

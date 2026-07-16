@@ -12,6 +12,7 @@ interface ListingApprovalRecordActionsProps {
   hasUnsavedChanges: boolean;
   canUpdateApprovedShopifyListing: boolean;
   isApproved: boolean;
+  hasExistingEbayOfferId: boolean;
   hasExistingShopifyRestProductId: boolean;
   hasMissingShopifyRequiredFields: boolean;
   hasMissingEbayRequiredFields: boolean;
@@ -19,6 +20,10 @@ interface ListingApprovalRecordActionsProps {
   pushEbayDisabled: boolean;
   pushBothDisabled: boolean;
   isShopifyPublishBlockedByAuctionFormat: boolean;
+  shopifyAdminListingUrl: string | null;
+  shopifyServiceListingUrl: string | null;
+  ebayAdminListingUrl: string | null;
+  ebayServiceListingUrl: string | null;
   onResetData: () => void;
   onSaveUpdates: () => void;
   onPublishShopify: () => void;
@@ -37,6 +42,7 @@ export function ListingApprovalRecordActions({
   hasUnsavedChanges,
   canUpdateApprovedShopifyListing,
   isApproved,
+  hasExistingEbayOfferId,
   hasExistingShopifyRestProductId,
   hasMissingShopifyRequiredFields,
   hasMissingEbayRequiredFields,
@@ -44,6 +50,10 @@ export function ListingApprovalRecordActions({
   pushEbayDisabled,
   pushBothDisabled,
   isShopifyPublishBlockedByAuctionFormat,
+  shopifyAdminListingUrl,
+  shopifyServiceListingUrl,
+  ebayAdminListingUrl,
+  ebayServiceListingUrl,
   onResetData,
   onSaveUpdates,
   onPublishShopify,
@@ -54,6 +64,18 @@ export function ListingApprovalRecordActions({
   const isWorkflowListingReview = isCombinedApproval && workflowStatus === 'Awaiting Pre-Listing Review';
   const showCombinedPublishButtons = isCombinedApproval && !isWorkflowListingReview;
   const isPostPublishLocked = workflowStatus === 'Sold - Ready to Ship' || workflowStatus === 'Shipped';
+  const shouldForcePublishLabels = workflowStatus === 'Approved for Publish' || workflowStatus === 'Awaiting Pre-Listing Review';
+  const hasExistingShopifyForActionLabel = hasExistingShopifyRestProductId && !shouldForcePublishLabels;
+  const hasExistingEbayForActionLabel = hasExistingEbayOfferId && !shouldForcePublishLabels;
+  const shopifyActionLabel = hasExistingShopifyForActionLabel ? 'Update Shopify' : 'Publish Shopify';
+  const ebayActionLabel = hasExistingEbayForActionLabel ? 'Update eBay' : 'Publish eBay';
+  const bothActionLabel = hasExistingShopifyForActionLabel && hasExistingEbayForActionLabel
+    ? 'Update Both'
+    : hasExistingShopifyForActionLabel
+      ? 'Update Shopify + Publish eBay'
+      : hasExistingEbayForActionLabel
+        ? 'Publish Shopify + Update eBay'
+        : 'Publish Both';
 
   return (
     <div className="mt-4 flex flex-wrap justify-end gap-3">
@@ -69,6 +91,26 @@ export function ListingApprovalRecordActions({
       >
         {saving ? 'Saving...' : 'Save Updates'}
       </PrimaryActionButton>
+      {shopifyAdminListingUrl && (
+        <SecondaryActionButton href={shopifyAdminListingUrl} target="_blank" rel="noreferrer noopener">
+          Open Shopify Admin
+        </SecondaryActionButton>
+      )}
+      {shopifyServiceListingUrl && (
+        <SecondaryActionButton href={shopifyServiceListingUrl} target="_blank" rel="noreferrer noopener">
+          Open Shopify Listing
+        </SecondaryActionButton>
+      )}
+      {ebayAdminListingUrl && (
+        <SecondaryActionButton href={ebayAdminListingUrl} target="_blank" rel="noreferrer noopener">
+          Open eBay Seller
+        </SecondaryActionButton>
+      )}
+      {ebayServiceListingUrl && (
+        <SecondaryActionButton href={ebayServiceListingUrl} target="_blank" rel="noreferrer noopener">
+          Open eBay Listing
+        </SecondaryActionButton>
+      )}
       {isWorkflowListingReview && (
         <AccentActionButton
           onClick={onPrimaryAction}
@@ -90,34 +132,34 @@ export function ListingApprovalRecordActions({
             disabled={saving || approving || pushingTarget !== null || pushShopifyDisabled}
           >
             {pushingTarget === 'shopify'
-              ? 'Publishing Shopify...'
+              ? (hasExistingShopifyForActionLabel ? 'Updating Shopify...' : 'Publishing Shopify...')
               : isShopifyPublishBlockedByAuctionFormat
                   ? 'Set Buy It Now Format'
                   : pushShopifyDisabled
                   ? 'Complete Shopify Fields'
-                  : 'Publish Shopify'}
+                  : shopifyActionLabel}
           </SecondaryActionButton>
           <SecondaryActionButton
             onClick={onPublishEbay}
             disabled={saving || approving || pushingTarget !== null || pushEbayDisabled}
           >
             {pushingTarget === 'ebay'
-              ? 'Publishing eBay...'
+              ? (hasExistingEbayForActionLabel ? 'Updating eBay...' : 'Publishing eBay...')
               : pushEbayDisabled
                   ? 'Complete eBay Fields'
-                  : 'Publish eBay'}
+                  : ebayActionLabel}
           </SecondaryActionButton>
           <AccentActionButton
             onClick={onPublishBoth}
             disabled={saving || approving || pushingTarget !== null || pushBothDisabled}
           >
             {pushingTarget === 'both'
-              ? 'Publishing Both...'
+              ? (hasExistingShopifyForActionLabel || hasExistingEbayForActionLabel ? 'Updating / Publishing...' : 'Publishing Both...')
               : isShopifyPublishBlockedByAuctionFormat
                   ? 'Set Buy It Now Format'
                   : pushBothDisabled
                   ? 'Complete Required Fields'
-                  : 'Publish Both'}
+                  : bothActionLabel}
           </AccentActionButton>
         </>
       )}

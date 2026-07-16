@@ -10,6 +10,111 @@ interface WorkflowListingImageSelectorProps {
   sourceActions?: ReactNode;
 }
 
+function getGoogleDriveFileId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.includes('drive.google.com')) {
+      return null;
+    }
+
+    const queryId = parsed.searchParams.get('id')?.trim();
+    if (queryId) {
+      return queryId;
+    }
+
+    const pathMatch = parsed.pathname.match(/\/d\/([^/]+)/);
+    return pathMatch?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function getPreviewUrl(url: string): string {
+  const fileId = getGoogleDriveFileId(url);
+  if (!fileId) {
+    return url;
+  }
+
+  return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1600`;
+}
+
+function normalizeUrlForLookup(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+
+  const driveId = getGoogleDriveFileId(trimmed);
+  if (driveId) {
+    return `gdrive:${driveId.toLowerCase()}`;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    return `${parsed.origin}${parsed.pathname}`.toLowerCase();
+  } catch {
+    return trimmed.toLowerCase();
+  }
+}
+
+function getUrlBasename(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+
+  try {
+    const parsed = new URL(trimmed);
+    return (parsed.pathname.split('/').pop() ?? '').trim().toLowerCase();
+  } catch {
+    return (trimmed.split('/').pop() ?? '').trim().toLowerCase();
+  }
+}
+
+function getAttachmentLookupKeys(attachment: WorkflowListingImageAttachment): string[] {
+  const keys = new Set<string>();
+  const normalizedUrl = normalizeUrlForLookup(attachment.url);
+  if (normalizedUrl) keys.add(`url:${normalizedUrl}`);
+
+  const basename = getUrlBasename(attachment.url);
+  if (basename) keys.add(`basename:${basename}`);
+
+  const normalizedFilename = attachment.filename.trim().toLowerCase();
+  if (normalizedFilename) keys.add(`filename:${normalizedFilename}`);
+
+  if (attachment.id?.trim()) {
+    keys.add(`id:${attachment.id.trim().toLowerCase()}`);
+  }
+
+  return Array.from(keys);
+}
+
+function getAttachmentIdentity(attachment: WorkflowListingImageAttachment): string {
+  const normalizedUrl = normalizeUrlForLookup(attachment.url);
+  if (normalizedUrl.startsWith('gdrive:')) {
+    return normalizedUrl;
+  }
+
+  const basename = getUrlBasename(attachment.url);
+  if (basename) {
+    return `basename:${basename}`;
+  }
+
+  const normalizedFilename = attachment.filename.trim().toLowerCase();
+  if (normalizedFilename) {
+    return `filename:${normalizedFilename}`;
+  }
+
+  return `url:${normalizedUrl}`;
+}
+
+function getSelectedLookupKeys(url: string): string[] {
+  const keys = new Set<string>();
+  const normalizedUrl = normalizeUrlForLookup(url);
+  if (normalizedUrl) keys.add(`url:${normalizedUrl}`);
+
+  const basename = getUrlBasename(url);
+  if (basename) keys.add(`basename:${basename}`);
+
+  return Array.from(keys);
+}
+
 export function WorkflowListingImageSelector({
   attachments,
   selectedUrls,
@@ -19,27 +124,58 @@ export function WorkflowListingImageSelector({
   sourceActions,
 }: WorkflowListingImageSelectorProps) {
   const [previewAttachment, setPreviewAttachment] = useState<WorkflowListingImageAttachment | null>(null);
-  const selectedLookup = new Set(selectedUrls.map((url) => url.trim().toLowerCase()).filter(Boolean));
-  const selectedCount = attachments.filter((attachment) => selectedLookup.has(attachment.url.trim().toLowerCase())).length;
-  const attachmentLookup = new Map(
-    attachments.map((attachment) => [attachment.url.trim().toLowerCase(), attachment] as const),
-  );
-  const selectedAttachments = selectedUrls
-    .map((url) => attachmentLookup.get(url.trim().toLowerCase()))
-    .filter((attachment): attachment is WorkflowListingImageAttachment => Boolean(attachment));
-  const availableAttachments = attachments.filter((attachment) => !selectedLookup.has(attachment.url.trim().toLowerCase()));
+  const attachmentByLookupKey = new Map<string, WorkflowListingImageAttachment>();
+  attachments.forEach((attachment) => {
+    getAttachmentLookupKeys(attachment).forEach((key) => {
+      if (!attachmentByLookupKey.has(key)) {
+        attachmentByLookupKey.set(key, attachment);
+      }
+    });
+  });
+
+  const selectedAttachments: WorkflowListingImageAttachment[] = [];
+  const selectedAttachmentIdentity = new Set<string>();
+  selectedUrls.forEach((url) => {
+    const match = getSelectedLookupKeys(url)
+      .map((key) => attachmentByLookupKey.get(key))
+      .find((attachment): attachment is WorkflowListingImageAttachment => Boolean(attachment));
+    if (!match) return;
+
+    const identity = getAttachmentIdentity(match);
+    if (!identity || selectedAttachmentIdentity.has(identity)) return;
+    selectedAttachmentIdentity.add(identity);
+    selectedAttachments.push(match);
+  });
+
+  const selectedCount = selectedAttachments.length;
+  const availableAttachments = attachments.filter((attachment) => {
+    const identity = getAttachmentIdentity(attachment);
+    return !selectedAttachmentIdentity.has(identity);
+  });
 
   const handleToggle = (url: string, checked: boolean) => {
     const normalizedUrl = url.trim();
     if (!normalizedUrl) return;
 
+    const candidateAttachment = getSelectedLookupKeys(normalizedUrl)
+      .map((key) => attachmentByLookupKey.get(key))
+      .find((attachment): attachment is WorkflowListingImageAttachment => Boolean(attachment));
+    const candidateKeys = candidateAttachment ? getAttachmentLookupKeys(candidateAttachment) : getSelectedLookupKeys(normalizedUrl);
+    const hasExistingSelection = selectedUrls.some((selectedUrl) => {
+      const selectedKeys = new Set(getSelectedLookupKeys(selectedUrl));
+      return candidateKeys.some((key) => selectedKeys.has(key));
+    });
+
     if (checked) {
-      if (selectedLookup.has(normalizedUrl.toLowerCase())) return;
+      if (hasExistingSelection) return;
       onSelectionChange([...selectedUrls, normalizedUrl]);
       return;
     }
 
-    onSelectionChange(selectedUrls.filter((selectedUrl) => selectedUrl.trim().toLowerCase() !== normalizedUrl.toLowerCase()));
+    onSelectionChange(selectedUrls.filter((selectedUrl) => {
+      const selectedKeys = new Set(getSelectedLookupKeys(selectedUrl));
+      return !candidateKeys.some((key) => selectedKeys.has(key));
+    }));
   };
 
   const reorderSelectedUrls = (sourceUrl: string, targetUrl: string) => {
@@ -103,7 +239,8 @@ export function WorkflowListingImageSelector({
             alt={attachment.filename}
             className="h-full w-full object-cover transition group-hover:scale-[1.02]"
             loading="lazy"
-            src={attachment.url}
+            referrerPolicy="no-referrer"
+            src={getPreviewUrl(attachment.url)}
           />
           <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-slate-950/70 px-2 py-1 text-white">
             <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -259,7 +396,8 @@ export function WorkflowListingImageSelector({
               <img
                 alt={previewAttachment.filename}
                 className="max-h-[75vh] w-full rounded-xl object-contain"
-                src={previewAttachment.url}
+                referrerPolicy="no-referrer"
+                src={getPreviewUrl(previewAttachment.url)}
               />
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { within } from '@testing-library/react';
 import { useState } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { WorkflowListingImageSelector } from '@/components/approval/WorkflowListingImageSelector';
 
 function SelectorHarness() {
@@ -78,5 +78,41 @@ describe('WorkflowListingImageSelector', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
     expect(screen.queryByRole('dialog', { name: 'Expanded listing image preview' })).not.toBeInTheDocument();
+  });
+
+  it('does not show URL variants of selected images in available uploads', () => {
+    const onSelectionChange = vi.fn();
+
+    render(
+      <WorkflowListingImageSelector
+        attachments={[
+          {
+            id: 'att-photo-1',
+            url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+            filename: 'photo-1-processed.jpg',
+          },
+          {
+            id: 'att-photo-1-variant',
+            url: 'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600',
+            filename: 'photo-1-processed.jpg',
+          },
+          {
+            id: 'att-testing-1',
+            url: 'https://drive.google.com/uc?export=view&id=file-testing-1',
+            filename: 'testing-1-processed.jpg',
+          },
+        ]}
+        selectedUrls={['https://drive.google.com/uc?export=view&id=file-photo-1']}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+
+    const selectedCards = screen.getAllByTestId('selected-listing-image-card');
+    expect(selectedCards).toHaveLength(1);
+    expect(selectedCards[0]).toHaveTextContent('photo-1-processed.jpg');
+
+    const availableCards = screen.getAllByTestId('available-listing-image-card');
+    expect(availableCards).toHaveLength(1);
+    expect(availableCards[0]).toHaveTextContent('testing-1-processed.jpg');
   });
 });

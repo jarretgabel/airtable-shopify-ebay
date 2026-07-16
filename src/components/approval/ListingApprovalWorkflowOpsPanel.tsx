@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   markWorkflowListingStale,
   markWorkflowRelisted,
+  moveWorkflowBackToReadyForPublish,
+  takeDownWorkflowMarketplaceListingAndMoveBack,
   markWorkflowCancelled,
   markWorkflowPartialRefund,
   markWorkflowRefunded,
@@ -26,6 +28,8 @@ import {
   tabTemplatePillClass,
   warningInlineBannerClass,
 } from '@/components/tabs/uiClasses';
+import { updateRecordFromResolvedSource } from '@/services/app-api/airtable';
+import { resolveConfiguredRecordsSource } from '@/services/app-api/airtableSources';
 import { displayValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -34,6 +38,7 @@ interface ListingApprovalWorkflowOpsPanelProps {
   tableReference: string;
   tableName?: string;
   loadRecords: (tableReference: string, tableName?: string, force?: boolean) => Promise<void>;
+  onMovedBackToReady?: (updatedRecord: AirtableRecord) => void;
 }
 
 function normalizeStaleRecoveryStatus(value: unknown): UsedGearWorkflowStaleRecoveryStatus | '' {
@@ -53,6 +58,27 @@ function hasPostPublishStatus(status: unknown): boolean {
       || status === 'Sold - Ready to Ship'
       || status === 'Shipped'
     );
+}
+
+function isUsedGearWorkflowSource(reference: string, tableName?: string): boolean {
+  const normalizedReference = reference.trim().toLowerCase();
+  const normalizedTableName = (tableName ?? '').trim().toLowerCase();
+  return normalizedReference === 'used-gear-workflow' || normalizedTableName === 'used-gear-workflow';
+}
+
+function shouldSkipListingSourceSync(reference: string, tableName?: string): boolean {
+  const normalizedReference = reference.trim().toLowerCase();
+  const normalizedTableName = (tableName ?? '').trim().toLowerCase();
+  if (normalizedReference === 'approval-combined' || normalizedTableName === 'approval-combined') {
+    return true;
+  }
+
+  if (isUsedGearWorkflowSource(reference, tableName)) {
+    return true;
+  }
+
+  const resolvedSource = resolveConfiguredRecordsSource(reference, tableName);
+  return resolvedSource === 'approval-combined';
 }
 
 function NoteTemplateRow({
@@ -88,6 +114,7 @@ export function ListingApprovalWorkflowOpsPanel({
   tableReference,
   tableName,
   loadRecords,
+  onMovedBackToReady,
 }: ListingApprovalWorkflowOpsPanelProps) {
   const [workflowRecord, setWorkflowRecord] = useState(selectedRecord);
   const [saving, setSaving] = useState(false);
@@ -140,6 +167,24 @@ export function ListingApprovalWorkflowOpsPanel({
   const showMarkRefunded = (postPublishSnapshot?.bucket === 'sold-ready' || postPublishSnapshot?.bucket === 'shipped') && noOutcomeYet;
   const showMarkReturnReceived = postPublishSnapshot?.status === 'Shipped' && noOutcomeYet;
   const showDispositionActions = Boolean(postPublishSnapshot?.postSaleOutcome) && !postPublishSnapshot?.restockDisposition;
+  const workflowShopifyProductId = typeof workflowRecord.fields['Shopify REST Product ID'] === 'string'
+    ? workflowRecord.fields['Shopify REST Product ID'].trim()
+    : '';
+  const selectedShopifyProductId = typeof selectedRecord.fields['Shopify REST Product ID'] === 'string'
+    ? selectedRecord.fields['Shopify REST Product ID'].trim()
+    : '';
+  const hasShopifyProductId = workflowShopifyProductId.length > 0 || selectedShopifyProductId.length > 0;
+  const workflowEbayOfferId = typeof workflowRecord.fields['eBay Offer ID'] === 'string'
+    ? workflowRecord.fields['eBay Offer ID'].trim()
+    : '';
+  const selectedEbayOfferId = typeof selectedRecord.fields['eBay Offer ID'] === 'string'
+    ? selectedRecord.fields['eBay Offer ID'].trim()
+    : '';
+  const hasEbayOfferId = workflowEbayOfferId.length > 0 || selectedEbayOfferId.length > 0;
+  const canTakeDownShopify = (postPublishSnapshot?.bucket === 'active-listing' || postPublishSnapshot?.bucket === 'stale-listing')
+    && (hasShopifyProductId || postPublishSnapshot?.status === 'Listed, Shopify' || postPublishSnapshot?.status === 'Stale Listing, Shopify');
+  const canTakeDownEbay = (postPublishSnapshot?.bucket === 'active-listing' || postPublishSnapshot?.bucket === 'stale-listing')
+    && (hasEbayOfferId || postPublishSnapshot?.status === 'Listed, eBay' || postPublishSnapshot?.status === 'Stale Listing, eBay');
   useEffect(() => {
     setStaleRecoveryDraftStatus(normalizeStaleRecoveryStatus(staleRecoveryStatus));
     setStaleRecoveryDraftNotes(staleRecoveryNotes);
@@ -161,6 +206,83 @@ export function ListingApprovalWorkflowOpsPanel({
       setError(actionError instanceof Error ? actionError.message : 'Unable to update the operational row.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const getUnknownFieldNamesFromWriteError = (message: string): string[] => {
+    const quotedMatches = Array.from(message.matchAll(/["']([^"']+)["']/g))
+      .map((match) => (typeof match[1] === 'string' ? match[1].trim() : ''))
+      .filter((value) => value.length > 0);
+
+    if (/Unknown field name/i.test(message) && quotedMatches.length > 0) {
+      return Array.from(new Set(quotedMatches));
+    }
+
+    const suffixMatch = message.match(/Unknown field names?:\s*(.+)$/i);
+    if (!suffixMatch?.[1]) {
+      return [];
+    }
+
+    return Array.from(new Set(
+      suffixMatch[1]
+        .split(',')
+        .map((value) => value.trim().replace(/^["']|["']$/g, ''))
+        .filter((value) => value.length > 0),
+    ));
+  };
+
+  const syncListingSourceMoveBackState = async () => {
+    if (shouldSkipListingSourceSync(tableReference, tableName)) {
+      return;
+    }
+
+    let writableFields: Record<string, unknown> = {
+      'Workflow Status': 'Approved for Publish',
+      'Shopify REST Product ID': null,
+      'Shopify Product ID': null,
+      'Shopify REST Published At': null,
+      'Shopify REST Published Scope': null,
+      'eBay Offer ID': null,
+      'eBay Listing ID': null,
+      'eBay Item ID': null,
+      'Listing ID': null,
+      'Item ID': null,
+      'eBay Published At': null,
+    };
+
+    try {
+      while (Object.keys(writableFields).length > 0) {
+        try {
+          await updateRecordFromResolvedSource(
+            tableReference,
+            tableName,
+            selectedRecord.id,
+            writableFields,
+            { typecast: true },
+          );
+          return;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          const unknownFieldNames = getUnknownFieldNamesFromWriteError(message);
+          if (unknownFieldNames.length === 0) {
+            throw error;
+          }
+
+          let removedAny = false;
+          unknownFieldNames.forEach((fieldName) => {
+            if (fieldName in writableFields) {
+              delete writableFields[fieldName];
+              removedAny = true;
+            }
+          });
+
+          if (!removedAny) {
+            throw error;
+          }
+        }
+      }
+    } catch {
+      // Best-effort sync: workflow source mutation already succeeded.
     }
   };
 
@@ -316,6 +438,57 @@ export function ListingApprovalWorkflowOpsPanel({
                   disabled={saving}
                 >
                   {saving ? 'Saving...' : 'Mark Stale'}
+                </button>
+              ) : null}
+              {postPublishSnapshot?.bucket === 'active-listing' || postPublishSnapshot?.bucket === 'stale-listing' ? (
+                <button
+                  type="button"
+                  className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    void runAction(async () => {
+                      const updatedRecord = await moveWorkflowBackToReadyForPublish(selectedRecord.id);
+                      await syncListingSourceMoveBackState();
+                      onMovedBackToReady?.(updatedRecord);
+                      return updatedRecord;
+                    });
+                  }}
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Back To Ready For Listing'}
+                </button>
+              ) : null}
+              {canTakeDownShopify ? (
+                <button
+                  type="button"
+                  className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    void runAction(async () => {
+                      const updatedRecord = await takeDownWorkflowMarketplaceListingAndMoveBack(selectedRecord.id, 'shopify');
+                      await syncListingSourceMoveBackState();
+                      onMovedBackToReady?.(updatedRecord);
+                      return updatedRecord;
+                    });
+                  }}
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Take Down Shopify + Back To Ready'}
+                </button>
+              ) : null}
+              {canTakeDownEbay ? (
+                <button
+                  type="button"
+                  className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    void runAction(async () => {
+                      const updatedRecord = await takeDownWorkflowMarketplaceListingAndMoveBack(selectedRecord.id, 'ebay');
+                      await syncListingSourceMoveBackState();
+                      onMovedBackToReady?.(updatedRecord);
+                      return updatedRecord;
+                    });
+                  }}
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Take Down eBay + Back To Ready'}
                 </button>
               ) : null}
             </div>

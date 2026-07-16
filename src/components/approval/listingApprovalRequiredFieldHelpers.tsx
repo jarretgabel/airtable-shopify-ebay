@@ -70,7 +70,7 @@ export function getDrawerRequiredStatus(
 export function DrawerStatusIcon({ allFilled }: { allFilled: boolean }) {
   return (
     <span
-      className={`inline-flex items-center ${allFilled ? 'text-emerald-200' : 'text-rose-200'}`}
+      className={`inline-flex items-center ${allFilled ? 'text-[var(--status-ok-ink)]' : 'text-[var(--status-warn-ink)]'}`}
       aria-label={allFilled ? 'All required fields filled' : 'Contains missing required fields'}
       title={allFilled ? 'All required fields filled' : 'Contains missing required fields'}
     >

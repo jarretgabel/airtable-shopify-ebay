@@ -104,6 +104,7 @@ export interface ShopifyUnifiedProductResult {
   id: number;
   adminGraphqlApiId: string;
   title: string;
+  handle?: string | null;
   status?: string | null;
 }
 

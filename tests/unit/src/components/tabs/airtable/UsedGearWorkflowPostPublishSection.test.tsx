@@ -14,6 +14,7 @@ const {
   markWorkflowReturnReceivedMock,
   markWorkflowListingStaleMock,
   markWorkflowRelistedMock,
+  moveWorkflowBackToReadyForPublishMock,
   markWorkflowSoldReadyToShipMock,
   markWorkflowShippedMock,
   resolveWorkflowRestockDispositionMock,
@@ -25,6 +26,7 @@ const {
   markWorkflowReturnReceivedMock: vi.fn(),
   markWorkflowListingStaleMock: vi.fn(),
   markWorkflowRelistedMock: vi.fn(),
+  moveWorkflowBackToReadyForPublishMock: vi.fn(),
   markWorkflowSoldReadyToShipMock: vi.fn(),
   markWorkflowShippedMock: vi.fn(),
   resolveWorkflowRestockDispositionMock: vi.fn(),
@@ -42,6 +44,7 @@ vi.mock('@/services/usedGearQueue', async () => {
     loadWorkflowPostPublishQueue: loadWorkflowPostPublishQueueMock,
     markWorkflowListingStale: markWorkflowListingStaleMock,
     markWorkflowRelisted: markWorkflowRelistedMock,
+    moveWorkflowBackToReadyForPublish: moveWorkflowBackToReadyForPublishMock,
     markWorkflowSoldReadyToShip: markWorkflowSoldReadyToShipMock,
     markWorkflowShipped: markWorkflowShippedMock,
     resolveWorkflowRestockDisposition: resolveWorkflowRestockDispositionMock,
@@ -64,6 +67,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     markWorkflowRefundedMock.mockReset();
     markWorkflowReturnReceivedMock.mockReset();
     markWorkflowRelistedMock.mockReset();
+    moveWorkflowBackToReadyForPublishMock.mockReset();
     markWorkflowSoldReadyToShipMock.mockReset();
     markWorkflowShippedMock.mockReset();
     resolveWorkflowRestockDispositionMock.mockReset();
@@ -103,6 +107,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         focusedBucket="sold-ready"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenSoldReadyRecord={vi.fn()}
         onOpenShipmentRecord={vi.fn()}
       />,
     );
@@ -121,6 +126,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         sectionSearchEnabled
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenSoldReadyRecord={vi.fn()}
         onOpenShipmentRecord={vi.fn()}
       />,
     );
@@ -184,6 +190,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenSoldReadyRecord={vi.fn()}
         onOpenShipmentRecord={vi.fn()}
       />,
     );
@@ -220,6 +227,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={onOpenListingsRecord}
+        onOpenSoldReadyRecord={vi.fn()}
         onOpenShipmentRecord={vi.fn()}
       />,
     );
@@ -227,9 +235,10 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     await screen.findByText('STALE-1');
 
     expect(screen.queryByRole('button', { name: 'Open Operational Record' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back To Ready' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Workflow Snapshot' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Open Sold-Ready View' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Post-Publish Detail' }));
 
     expect(onOpenOperationalRecord).toHaveBeenCalledWith('rec-stale');
     expect(onOpenListingsRecord).toHaveBeenCalledWith('rec-stale');
@@ -266,6 +275,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenSoldReadyRecord={vi.fn()}
         onOpenShipmentRecord={vi.fn()}
       />,
     );
@@ -295,6 +305,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenSoldReadyRecord={vi.fn()}
         onOpenShipmentRecord={vi.fn()}
       />,
     );
@@ -334,6 +345,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         searchPlaceholder="Search by status, SKU, model, or ship date"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenSoldReadyRecord={vi.fn()}
         onOpenShipmentRecord={vi.fn()}
       />,
     );
@@ -376,6 +388,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         searchPlaceholder="Search by status, SKU, model, or ship date"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenSoldReadyRecord={vi.fn()}
         onOpenShipmentRecord={vi.fn()}
       />,
     );
@@ -407,6 +420,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenSoldReadyRecord={vi.fn()}
         onOpenShipmentRecord={vi.fn()}
       />,
     );
@@ -436,6 +450,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         currentUserName="Taylor Reviewer"
         onOpenOperationalRecord={vi.fn()}
         onOpenListingsRecord={vi.fn()}
+        onOpenSoldReadyRecord={vi.fn()}
         onOpenShipmentRecord={vi.fn()}
       />,
     );
@@ -475,6 +490,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
         searchPlaceholder="Search by status, SKU, model, or ship date"
         onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={vi.fn()}
+        onOpenSoldReadyRecord={vi.fn()}
         onOpenShipmentRecord={vi.fn()}
       />,
     );

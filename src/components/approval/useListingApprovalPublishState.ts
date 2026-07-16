@@ -169,13 +169,20 @@ export function useListingApprovalPublishState({
   const hasUnsavedChanges = changedFieldNames.length > 0;
 
   const hasExistingShopifyRestProductId = useMemo(() => {
-    if (approvalChannel !== 'shopify') return false;
+    if (approvalChannel === 'ebay') return false;
 
     const rawExistingProductId = formValues['Shopify REST Product ID']?.trim() ?? '';
     if (!rawExistingProductId) return false;
 
     const parsedExistingProductId = Number(rawExistingProductId);
     return Number.isFinite(parsedExistingProductId) && parsedExistingProductId > 0;
+  }, [approvalChannel, formValues]);
+
+  const hasExistingEbayOfferId = useMemo(() => {
+    if (approvalChannel === 'shopify') return false;
+
+    const rawExistingOfferId = formValues['eBay Offer ID']?.trim() ?? '';
+    return rawExistingOfferId.length > 0;
   }, [approvalChannel, formValues]);
 
   const canUpdateApprovedShopifyListing = approvalChannel === 'shopify'
@@ -210,6 +217,7 @@ export function useListingApprovalPublishState({
     formRequiredFieldNames,
     formShopifyRequiredFieldNames,
     formatFieldName,
+    hasExistingEbayOfferId,
     hasExistingShopifyRestProductId,
     hasMissingEbayRequiredFields,
     hasMissingShopifyRequiredFields,

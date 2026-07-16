@@ -1,4 +1,4 @@
-import { normalizeApprovalRecord, publishApprovalRecord } from '@/services/app-api/approval';
+import { normalizeApprovalRecord, publishApprovalRecord, takeDownApprovalRecord } from '@/services/app-api/approval';
 
 describe('app-api approval', () => {
   const fetchMock = vi.fn<typeof fetch>();
@@ -126,5 +126,36 @@ describe('app-api approval', () => {
     expect(result.shopify?.collectionLabelsById).toEqual({ 'gid://shopify/Collection/2': 'Amplifiers' });
     expect(result.ebay?.categoryFieldUpdates).toEqual({ 'Primary Category Name': 'Amplifiers & Preamps' });
     expect(result.ebay?.generatedBodyHtml).toBe('<p>Preview</p>');
+  });
+
+  it('calls the backend approval takedown endpoint', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({
+        target: 'shopify',
+        recordId: 'rec123',
+        success: true,
+        results: [{ channel: 'shopify', success: true, message: 'Shopify product deleted', closedAt: '2026-07-14T00:00:00.000Z' }],
+      }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await takeDownApprovalRecord('rec123', 'shopify');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/approval/takedown', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        target: 'shopify',
+        recordId: 'rec123',
+      }),
+    });
+    expect(result.success).toBe(true);
+    expect(result.results[0]?.channel).toBe('shopify');
   });
 });

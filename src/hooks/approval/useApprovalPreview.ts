@@ -34,6 +34,23 @@ function resolveCombinedPreviewValue(
   return toPreviewTextValue(selectedRecord?.fields[fieldName]).trim();
 }
 
+function stableSerialize(value: unknown): string {
+  if (value === null || value === undefined) {
+    return 'null';
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => stableSerialize(entry)).join(',')}]`;
+  }
+
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>).sort(([left], [right]) => left.localeCompare(right));
+    return `{${entries.map(([key, entryValue]) => `${JSON.stringify(key)}:${stableSerialize(entryValue)}`).join(',')}}`;
+  }
+
+  return JSON.stringify(value);
+}
+
 interface UseApprovalPreviewParams {
   approvalChannel: 'shopify' | 'ebay' | 'combined';
   selectedRecord: AirtableRecord | null;
@@ -80,6 +97,7 @@ export function useApprovalPreview({
   const [shopifyApprovalPreview, setShopifyApprovalPreview] = useState<ShopifyApprovalPreviewResult | null>(null);
   const [ebayApprovalPreview, setEbayApprovalPreview] = useState<EbayApprovalPreviewResult | null>(null);
   const normalizePreviewRequestRef = useRef(0);
+  const lastNormalizeSignatureRef = useRef('');
   const latestFormValuesRef = useRef(formValues);
 
   useEffect(() => {
@@ -154,6 +172,7 @@ export function useApprovalPreview({
     if (!mergedDraftSourceFields || (!isShopifyPayloadPreviewContext && !isEbayPayloadPreviewContext)) {
       setShopifyApprovalPreview(null);
       setEbayApprovalPreview(null);
+      lastNormalizeSignatureRef.current = '';
       return;
     }
 
@@ -164,6 +183,19 @@ export function useApprovalPreview({
       : isShopifyPayloadPreviewContext
         ? 'shopify'
         : 'ebay';
+
+    const requestSignature = stableSerialize({
+      target,
+      fields: mergedDraftSourceFields,
+      bodyPreview: isEbayPayloadPreviewContext ? currentEbayPreviewBodyInput : undefined,
+      categoryPreview: currentEbayCategoryPreviewInput,
+    });
+
+    if (lastNormalizeSignatureRef.current === requestSignature) {
+      return;
+    }
+
+    lastNormalizeSignatureRef.current = requestSignature;
 
     void normalizeApprovalRecord(mergedDraftSourceFields, target, {
       bodyPreview: isEbayPayloadPreviewContext ? currentEbayPreviewBodyInput : undefined,

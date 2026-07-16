@@ -1,5 +1,5 @@
 import type { ApprovalFieldMap, ShopifyProduct } from './approvalDraftTypes.js';
-import { getField, getRawField, parseInteger, parseJsonArray } from './approvalDraftFieldUtils.js';
+import { getRawField, parseJsonArray } from './approvalDraftFieldUtils.js';
 import { getIncludedWorkflowImages, parseWorkflowImageMetadata } from '../../shared/workflowImages.js';
 
 function parseImageAltTextList(raw: unknown): string[] {
@@ -45,25 +45,20 @@ function getStructuredImageSource(image: Record<string, unknown>): string {
 }
 
 export function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] | undefined {
-  const workflowMetadata = getIncludedWorkflowImages(parseWorkflowImageMetadata(getRawField(fields, [
-    'Workflow Image Metadata JSON',
-    'Workflow Image Metadata',
-    'workflow_image_metadata_json',
-    'workflow_image_metadata',
-  ])));
-  if (workflowMetadata.length > 0) {
-    return workflowMetadata.map((record, index) => ({
-      src: record.url,
-      alt: record.alt,
-      position: index + 1,
-    }));
-  }
-
-  const imageAltTexts = parseImageAltTextList(getRawField(fields, ['Images Alt Text', 'Images Alt Text (comma separated)', 'Images Alt Text (comma-separated)', 'Image Alt Text', 'images_alt_text', 'image_alt_text']));
-  const rawImages = getRawField(fields, ['Shopify REST Images JSON', 'Shopify Images JSON', 'shopify_rest_images_json', 'shopify_images_json', 'Shopify REST Images', 'Shopify Images', 'shopify_rest_images', 'shopify_images', 'Images', 'Images (comma separated)', 'Images (comma-separated)', 'images', 'Image URL', 'Image URLs', 'Image-URL', 'Image-URLs', 'image_url', 'image_urls']);
-  const imagesJson = parseJsonArray<unknown>(rawImages);
-  if (imagesJson && imagesJson.length > 0) {
-    const normalizedImages = imagesJson.map((item, index) => {
+  const rawShopifyImages = getRawField(fields, [
+    'Shopify REST Images JSON',
+    'Shopify Images JSON',
+    'shopify_rest_images_json',
+    'shopify_images_json',
+    'Shopify REST Images',
+    'Shopify Images',
+    'shopify_rest_images',
+    'shopify_images',
+  ]);
+  const shopifyImagesJson = parseJsonArray<unknown>(rawShopifyImages);
+  if (shopifyImagesJson && shopifyImagesJson.length > 0) {
+    const imageAltTexts = parseImageAltTextList(getRawField(fields, ['Images Alt Text', 'Images Alt Text (comma separated)', 'Images Alt Text (comma-separated)', 'Image Alt Text', 'images_alt_text', 'image_alt_text']));
+    const normalizedShopifyImages = shopifyImagesJson.map((item, index) => {
       if (typeof item === 'string') {
         const src = item.trim();
         if (!src) return null;
@@ -79,23 +74,22 @@ export function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] 
       const position = typeof rawPosition === 'number' && Number.isFinite(rawPosition) ? rawPosition : index + 1;
       return { src, alt: imageAltTexts[index] ?? altFromImage, position };
     }).filter((image): image is { src: string; alt: string; position: number } => image !== null);
-    if (normalizedImages.length > 0) return normalizedImages;
+    if (normalizedShopifyImages.length > 0) return normalizedShopifyImages;
   }
 
-  if (typeof rawImages === 'string' && rawImages.trim()) {
-    const parts = rawImages.trim().split(/[\n,]/).map((value) => value.trim()).filter(Boolean);
-    if (parts.length > 0) return parts.map((url, index) => ({ src: url, alt: imageAltTexts[index] ?? '', position: index + 1 }));
+  const workflowMetadata = getIncludedWorkflowImages(parseWorkflowImageMetadata(getRawField(fields, [
+    'Workflow Image Metadata JSON',
+    'Workflow Image Metadata',
+    'workflow_image_metadata_json',
+    'workflow_image_metadata',
+  ])));
+  if (workflowMetadata.length > 0) {
+    return workflowMetadata.map((record, index) => ({
+      src: record.url,
+      alt: record.alt,
+      position: index + 1,
+    }));
   }
 
-  const images: NonNullable<ShopifyProduct['images']> = [];
-  for (let i = 1; i <= 10; i += 1) {
-    const src = getField(fields, [`Shopify REST Image ${i} Src`, `Shopify Image ${i} Src`, `Shopify GraphQL Media ${i} Original Source`, `Shopify Extra Media ${i} Original Source`, `shopify_rest_image_${i}_src`]);
-    if (!src) continue;
-    images.push({
-      src,
-      alt: getField(fields, [`Shopify REST Image ${i} Alt`, `Shopify Image ${i} Alt`, `Shopify GraphQL Media ${i} Alt`, `Shopify Extra Media ${i} Alt`, `shopify_rest_image_${i}_alt`]) || imageAltTexts[i - 1] || undefined,
-      position: parseInteger(getField(fields, [`Shopify REST Image ${i} Position`, `shopify_rest_image_${i}_position`])),
-    });
-  }
-  return images.length > 0 ? images : undefined;
+  return undefined;
 }

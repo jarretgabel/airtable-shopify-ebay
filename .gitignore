@@ -39,3 +39,4 @@ aws/.aws-sam/
 
 # Generated run artifacts
 tmp/
+downloads/

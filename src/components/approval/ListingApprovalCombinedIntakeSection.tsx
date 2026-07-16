@@ -3,7 +3,7 @@ import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
 import { WorkflowReferenceImagesPanel } from '@/components/tabs/WorkflowReferenceImagesPanel';
 import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
-import { parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
+import { filterWorkflowImageMetadataByStage, parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 import {
   ListingApprovalTestingSection,
   resolveListingApprovalTestingSectionFields,
@@ -22,6 +22,11 @@ import { CONDITION_FIELD } from '@/stores/approvalStore';
 import type { ListingApprovalCombinedIntakeSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
 const iconActionButtonClass = sharedIconActionButtonClass;
+
+function isProcessedWorkflowImage(filename: string, url?: string): boolean {
+  const sample = `${filename} ${url ?? ''}`.toLowerCase();
+  return /(^|[-_])processed/.test(sample);
+}
 
 function EditIcon() {
   return (
@@ -182,20 +187,50 @@ export function ListingApprovalCombinedIntakeSection({
   onOpenPhotosForm,
 }: ListingApprovalCombinedIntakeSectionProps) {
   const allOriginalFieldNames = useMemo(() => Object.keys(originalFieldValues), [originalFieldValues]);
+  const workflowImageMetadata = useMemo(() => {
+    const metadataFieldName = findWorkflowImageMetadataFieldName(allOriginalFieldNames);
+    return parseWorkflowImageMetadata(metadataFieldName ? (originalFieldValues[metadataFieldName] ?? '') : '');
+  }, [allOriginalFieldNames, originalFieldValues]);
 
   const intakeImages = useMemo(() => {
     const attachmentFieldName = findWorkflowImageAttachmentFieldName(allOriginalFieldNames);
-    const metadataFieldName = findWorkflowImageMetadataFieldName(allOriginalFieldNames);
     const attachments = parseWorkflowImageAttachments(attachmentFieldName ? (originalFieldValues[attachmentFieldName] ?? '') : '');
+    if (workflowImageMetadata.length > 0) {
+      return filterWorkflowImageMetadataByStage(workflowImageMetadata, 'intake').map((image) => ({
+        id: image.attachmentId,
+        url: image.url,
+        filename: image.filename,
+      }));
+    }
     if (attachments.length === 0) return [];
-    const metadata = parseWorkflowImageMetadata(metadataFieldName ? (originalFieldValues[metadataFieldName] ?? '') : '');
-    if (metadata.length === 0) return attachments;
-    const metadataByUrl = new Map(metadata.map((m) => [m.url.trim().toLowerCase(), m]));
+    const metadataByUrl = new Map(workflowImageMetadata.map((m) => [m.url.trim().toLowerCase(), m]));
     return attachments.filter((a) => {
       const meta = metadataByUrl.get(a.url.trim().toLowerCase());
       return meta?.sourceStage === 'intake';
     });
-  }, [allOriginalFieldNames, originalFieldValues]);
+  }, [allOriginalFieldNames, originalFieldValues, workflowImageMetadata]);
+
+  const testingImages = useMemo(
+    () => filterWorkflowImageMetadataByStage(workflowImageMetadata, 'testing')
+      .filter((image) => image.includedInListing && isProcessedWorkflowImage(image.filename, image.url))
+      .map((image) => ({
+        id: image.attachmentId,
+        url: image.url,
+        filename: image.filename,
+      })),
+    [workflowImageMetadata],
+  );
+
+  const photographyImages = useMemo(
+    () => filterWorkflowImageMetadataByStage(workflowImageMetadata, 'photos')
+      .filter((image) => image.includedInListing && isProcessedWorkflowImage(image.filename, image.url))
+      .map((image) => ({
+        id: image.attachmentId,
+        url: image.url,
+        filename: image.filename,
+      })),
+    [workflowImageMetadata],
+  );
 
   const effectiveSharedTestingSourceFieldValues = {
     ...originalFieldValues,
@@ -282,7 +317,9 @@ export function ListingApprovalCombinedIntakeSection({
   const hasSections = intakeSnapshotFields.length > 0
     || displayedTestingFields.length > 0
     || displayedPhotographyFields.length > 0
-    || intakeImages.length > 0;
+    || intakeImages.length > 0
+    || testingImages.length > 0
+    || photographyImages.length > 0;
 
   if (!hasSections) return null;
 
@@ -315,6 +352,16 @@ export function ListingApprovalCombinedIntakeSection({
               title="Intake Photos"
               description="Images captured during intake."
               images={intakeImages}
+            />
+            <WorkflowReferenceImagesPanel
+              title="Testing Images"
+              description="Testing-stage processed images approved for listing context."
+              images={testingImages}
+            />
+            <WorkflowReferenceImagesPanel
+              title="Photography Images"
+              description="Photography-stage processed images approved for listing context."
+              images={photographyImages}
             />
           </IntakeSnapshotSection>
         ) : null}

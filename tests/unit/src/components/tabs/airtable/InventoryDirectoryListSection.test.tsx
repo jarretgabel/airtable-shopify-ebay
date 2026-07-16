@@ -88,6 +88,9 @@ describe('InventoryDirectoryListSection', () => {
     fireEvent.change(screen.getByLabelText('Sort workflow hub directory. Current order: Intake Date: Newest First'), { target: { value: 'intake-oldest' } });
     expect(onSortModeChange).toHaveBeenCalledWith('intake-oldest');
 
+    fireEvent.change(screen.getByLabelText('Sort workflow hub directory. Current order: Intake Date: Newest First'), { target: { value: 'sku-desc' } });
+    expect(onSortModeChange).toHaveBeenCalledWith('sku-desc');
+
     expect(screen.getByRole('button', { name: 'Open Listings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit Intake' })).toBeInTheDocument();
 

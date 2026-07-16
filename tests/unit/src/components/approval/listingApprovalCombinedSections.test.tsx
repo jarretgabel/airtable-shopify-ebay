@@ -166,7 +166,7 @@ function buildIntakeProps(): ListingApprovalCombinedIntakeSectionProps {
 function buildShopifyProps(): ListingApprovalCombinedShopifySectionProps {
   return {
     ...buildCommonProps(),
-    combinedShopifyOnlyFieldNames: ['Vendor', 'Tags', 'Shopify Variant Taxable', 'Shopify Variant Fulfillment', 'Shopify Variant Requires Shipping'],
+    combinedShopifyOnlyFieldNames: ['Vendor', 'Tags', 'Shopify REST Body Description', 'Shopify Variant Taxable', 'Shopify Variant Fulfillment', 'Shopify Variant Requires Shipping'],
     shopifyRequiredFieldNames: ['Vendor'],
     shopifyDrawerRequiredStatus: { hasRequired: true, allFilled: false },
     currentPageShopifyBodyHtml: '<p>Rendered Shopify body</p>',

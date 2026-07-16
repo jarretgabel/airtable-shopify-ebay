@@ -32,6 +32,7 @@ interface UsedGearWorkflowPostPublishSectionProps {
   focusedBucket?: UsedGearWorkflowPostPublishBucket | null;
   onOpenOperationalRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
+  onOpenSoldReadyRecord: (recordId: string) => void;
   onOpenShipmentRecord: (recordId: string) => void;
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
@@ -251,6 +252,7 @@ export function UsedGearWorkflowPostPublishSection({
   focusedBucket = null,
   onOpenOperationalRecord,
   onOpenListingsRecord,
+  onOpenSoldReadyRecord,
   onOpenShipmentRecord,
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
@@ -712,10 +714,17 @@ export function UsedGearWorkflowPostPublishSection({
                 </div>
               ) : null}
               <CompactIconActionButton
-                label="Open Sold-Ready View"
+                label={snapshot?.bucket === 'sold-ready' ? 'Open Sold-Ready View' : 'Open Post-Publish Detail'}
                 icon="open"
                 variant="compact-secondary"
-                onClick={() => onOpenListingsRecord(record.id)}
+                onClick={() => {
+                  if (snapshot?.bucket === 'sold-ready') {
+                    onOpenSoldReadyRecord(record.id);
+                    return;
+                  }
+
+                  onOpenListingsRecord(record.id);
+                }}
                 disabled={recordBusy}
               />
               <CompactIconActionButton

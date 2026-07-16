@@ -77,6 +77,12 @@ describe('useAppRouteState', () => {
     expect(state.activeTab).toBe('post-publish');
   });
 
+  it('maps post-publish record routes and decodes id', () => {
+    const state = useAppRouteState(locationFor('/post-publish/rec%20post'), ['dashboard', 'post-publish']);
+    expect(state.activeTab).toBe('post-publish');
+    expect(state.postPublishRecordId).toBe('rec post');
+  });
+
   it('maps the archive route', () => {
     const state = useAppRouteState(locationFor('/completed-shipments'), ['dashboard', 'archive']);
     expect(state.activeTab).toBe('archive');

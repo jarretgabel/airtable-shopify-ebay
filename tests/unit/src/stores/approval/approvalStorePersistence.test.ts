@@ -186,4 +186,67 @@ describe('approvalStorePersistence', () => {
     );
     expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
   });
+
+  it('fails when Airtable rejects all changed fields with 422 responses', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: { Description: 'Updated listing description' },
+      fieldKinds: { Description: 'text' },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockRejectedValue(
+      createAirtable422Error('Field "Description" is read only in this view'),
+    );
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Description: 'Original description' }),
+      'base/table',
+      'Approval',
+      ['Description'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(false);
+    expect(loadRecordsMock).not.toHaveBeenCalled();
+    expect(setMock).toHaveBeenCalledWith(expect.objectContaining({
+      error: expect.stringContaining('Failed to save fields. Description: Field "Description" is read only in this view'),
+    }));
+  });
+
+  it('fails when changed fields are dropped because they are not writable in the active source schema', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: { Description: 'Updated listing description' },
+      fieldKinds: { Description: 'text' },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Original title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(false);
+    expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
+    expect(loadRecordsMock).not.toHaveBeenCalled();
+    expect(setMock).toHaveBeenCalledWith(expect.objectContaining({
+      error: 'Failed to save fields. Description are not writable in the current Airtable source.',
+    }));
+  });
 });

@@ -22,6 +22,11 @@ interface CsrfAwareBody {
 
 const CSRF_STORAGE_KEY = 'app_api_csrf_token';
 const APP_API_REQUEST_TIMEOUT_MS = 12000;
+
+export interface AppApiRequestOptions {
+  timeoutMs?: number;
+}
+
 let csrfTokenCache: string | null = null;
 
 function canUseSessionStorage(): boolean {
@@ -132,14 +137,17 @@ function shouldUseRequestTimeout(): boolean {
   return nodeEnv !== 'test' && vitest !== 'true';
 }
 
-function buildRequestSignal(existingSignal: AbortSignal | null | undefined): {
+function buildRequestSignal(
+  existingSignal: AbortSignal | null | undefined,
+  timeoutMs: number,
+): {
   signal: AbortSignal;
   cleanup: () => void;
 } {
   const controller = new AbortController();
   const timeoutId = globalThis.setTimeout(() => {
     controller.abort();
-  }, APP_API_REQUEST_TIMEOUT_MS);
+  }, timeoutMs);
 
   const onAbort = () => {
     controller.abort();
@@ -187,7 +195,12 @@ async function readErrorBody(response: Response): Promise<ApiErrorBody & { messa
   return { message: fallbackMessage };
 }
 
-async function requestJson<T>(path: string, init: RequestInit, params?: Record<string, string | number | undefined>): Promise<T> {
+async function requestJson<T>(
+  path: string,
+  init: RequestInit,
+  params?: Record<string, string | number | undefined>,
+  options: AppApiRequestOptions = {},
+): Promise<T> {
   if (isLocalBrowserSession() && /^https?:\/\//i.test(path)) {
     const requestOrigin = new URL(path).origin;
     if (requestOrigin !== window.location.origin) {
@@ -200,7 +213,10 @@ async function requestJson<T>(path: string, init: RequestInit, params?: Record<s
   }
 
   const timeoutEnabled = shouldUseRequestTimeout();
-  const timeoutContext = timeoutEnabled ? buildRequestSignal(init.signal) : null;
+  const timeoutMs = Number.isFinite(options.timeoutMs) && (options.timeoutMs ?? 0) > 0
+    ? Number(options.timeoutMs)
+    : APP_API_REQUEST_TIMEOUT_MS;
+  const timeoutContext = timeoutEnabled ? buildRequestSignal(init.signal, timeoutMs) : null;
 
   let response: Response;
   try {
@@ -212,7 +228,7 @@ async function requestJson<T>(path: string, init: RequestInit, params?: Record<s
     });
   } catch (error) {
     if (isAbortError(error)) {
-      throw new AppApiHttpError(`Request timed out after ${APP_API_REQUEST_TIMEOUT_MS}ms.`, {
+      throw new AppApiHttpError(`Request timed out after ${timeoutMs}ms.`, {
         statusCode: 504,
         code: 'APP_API_TIMEOUT',
         retryable: true,
@@ -243,16 +259,20 @@ export function clearCsrfToken(): void {
   persistCsrfToken('');
 }
 
-export async function getJson<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
+export async function getJson<T>(
+  path: string,
+  params?: Record<string, string | number | undefined>,
+  options?: AppApiRequestOptions,
+): Promise<T> {
   return requestJson<T>(path, {
     cache: 'no-store',
     headers: {
       Accept: 'application/json',
     },
-  }, params);
+  }, params, options);
 }
 
-export async function postJson<T>(path: string, body: unknown): Promise<T> {
+export async function postJson<T>(path: string, body: unknown, options?: AppApiRequestOptions): Promise<T> {
   return requestJson<T>(path, {
     method: 'POST',
     headers: {
@@ -260,10 +280,10 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
-  });
+  }, undefined, options);
 }
 
-export async function patchJson<T>(path: string, body: unknown): Promise<T> {
+export async function patchJson<T>(path: string, body: unknown, options?: AppApiRequestOptions): Promise<T> {
   return requestJson<T>(path, {
     method: 'PATCH',
     headers: {
@@ -271,14 +291,14 @@ export async function patchJson<T>(path: string, body: unknown): Promise<T> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
-  });
+  }, undefined, options);
 }
 
-export async function deleteJson<T>(path: string): Promise<T> {
+export async function deleteJson<T>(path: string, options?: AppApiRequestOptions): Promise<T> {
   return requestJson<T>(path, {
     method: 'DELETE',
     headers: {
       Accept: 'application/json',
     },
-  });
+  }, undefined, options);
 }

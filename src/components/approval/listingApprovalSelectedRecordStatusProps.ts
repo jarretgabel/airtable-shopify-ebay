@@ -25,11 +25,16 @@ interface BuildListingApprovalSelectedRecordStatusPropsParams {
   fadingInlineNoticeIds: string[];
   canUpdateApprovedShopifyListing: boolean;
   isApproved: boolean;
+  hasExistingEbayOfferId: boolean;
   hasExistingShopifyRestProductId: boolean;
   pushShopifyDisabled: boolean;
   pushEbayDisabled: boolean;
   pushBothDisabled: boolean;
   isShopifyPublishBlockedByAuctionFormat: boolean;
+  shopifyAdminListingUrl: string | null;
+  shopifyServiceListingUrl: string | null;
+  ebayAdminListingUrl: string | null;
+  ebayServiceListingUrl: string | null;
   onResetData: () => void;
   onSaveUpdates: () => void;
   onPrimaryAction: () => void;
@@ -56,11 +61,16 @@ export function buildListingApprovalSelectedRecordStatusProps({
   fadingInlineNoticeIds,
   canUpdateApprovedShopifyListing,
   isApproved,
+  hasExistingEbayOfferId,
   hasExistingShopifyRestProductId,
   pushShopifyDisabled,
   pushEbayDisabled,
   pushBothDisabled,
   isShopifyPublishBlockedByAuctionFormat,
+  shopifyAdminListingUrl,
+  shopifyServiceListingUrl,
+  ebayAdminListingUrl,
+  ebayServiceListingUrl,
   onResetData,
   onSaveUpdates,
   onPrimaryAction,
@@ -92,6 +102,7 @@ export function buildListingApprovalSelectedRecordStatusProps({
       hasUnsavedChanges,
       canUpdateApprovedShopifyListing,
       isApproved,
+      hasExistingEbayOfferId,
       hasExistingShopifyRestProductId,
       hasMissingShopifyRequiredFields,
       hasMissingEbayRequiredFields,
@@ -99,6 +110,10 @@ export function buildListingApprovalSelectedRecordStatusProps({
       pushEbayDisabled,
       pushBothDisabled,
       isShopifyPublishBlockedByAuctionFormat,
+      shopifyAdminListingUrl,
+      shopifyServiceListingUrl,
+      ebayAdminListingUrl,
+      ebayServiceListingUrl,
       onResetData,
       onSaveUpdates,
       onPublishShopify: () => { void runCombinedPush('shopify'); },

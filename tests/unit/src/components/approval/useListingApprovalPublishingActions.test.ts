@@ -91,6 +91,8 @@ describe('useListingApprovalPublishingActions', () => {
       missingShopifyRequiredFieldLabels: [],
       missingEbayRequiredFieldLabels: [],
       approvalPublishSource: 'approval-shopify',
+      tableReference: 'appApproval/viwApproval',
+      tableName: 'Approval',
       mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
       setFormValue: params.setFormValue,
       pushInlineActionNotice: params.pushInlineActionNotice,

@@ -20,6 +20,7 @@ export interface AppRouteState {
   inventoryRecordId: string | null;
   inventoryPriceEditorRecordId: string | null;
   listingsRecordId: string | null;
+  postPublishRecordId: string | null;
   soldReadyListingsRecordId: string | null;
   shippedListingsRecordId: string | null;
   shopifyListingsRecordId: string | null;
@@ -51,6 +52,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
   const ebayListingsRecordMatch = normalizedPath.match(/^\/ebay\/(?!listings$)([^/]+)$/);
   const shopifyListingsRecordMatch = normalizedPath.match(/^\/shopify\/(?!products$)([^/]+)$/);
   const soldReadyListingsRecordMatch = normalizedPath.match(/^\/sold-ready\/([^/]+)$/);
+  const postPublishRecordMatch = normalizedPath.match(/^\/post-publish\/([^/]+)$/);
   const shippedListingsRecordMatch = normalizedPath.match(/^\/completed-shipments\/([^/]+)$/);
   const listingsRecordMatch = soldReadyListingsRecordMatch
     ? null
@@ -60,7 +62,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
 
   const activeTab: Tab = (() => {
     if (normalizedPath === '/listings' || listingsRecordMatch) return 'listings';
-    if (normalizedPath === '/post-publish' || soldReadyListingsRecordMatch) return 'post-publish';
+    if (normalizedPath === '/post-publish' || postPublishRecordMatch || soldReadyListingsRecordMatch) return 'post-publish';
     if (normalizedPath === '/completed-shipments' || shippedListingsRecordMatch) return 'archive';
     if (normalizedPath === '/ebay' || ebayListingsRecordMatch) return 'ebay';
     if (normalizedPath === '/shopify' || shopifyListingsRecordMatch) return 'shopify';
@@ -107,6 +109,7 @@ export function useAppRouteState(location: Location, accessiblePages: string[]):
     inventoryPriceEditorRecordId: inventoryPriceEditorRecordMatch ? decodeURIComponent(inventoryPriceEditorRecordMatch[1]) : null,
     inventoryRecordId: inventoryRecordMatch ? decodeURIComponent(inventoryRecordMatch[1]) : null,
     listingsRecordId: listingsRecordMatch ? decodeURIComponent(listingsRecordMatch[1]) : null,
+    postPublishRecordId: postPublishRecordMatch ? decodeURIComponent(postPublishRecordMatch[1]) : null,
     soldReadyListingsRecordId: soldReadyListingsRecordMatch ? decodeURIComponent(soldReadyListingsRecordMatch[1]) : null,
     shippedListingsRecordId: shippedListingsRecordMatch ? decodeURIComponent(shippedListingsRecordMatch[1]) : null,
     shopifyListingsRecordId: shopifyListingsRecordMatch ? decodeURIComponent(shopifyListingsRecordMatch[1]) : null,

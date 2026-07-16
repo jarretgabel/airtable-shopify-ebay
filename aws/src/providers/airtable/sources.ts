@@ -81,7 +81,7 @@ function resolveSubsetFilterByFormula(
       });
     }
 
-    return "OR({Workflow Status}='Awaiting Pre-Listing Review', {Workflow Status}='Approved for Publish')";
+    return "OR({Workflow Status}='Awaiting Pre-Listing Review', {Workflow Status}='Approved for Publish', {Workflow Status}='Listed, Shopify', {Workflow Status}='Listed, eBay', {Workflow Status}='Stale Listing, Shopify', {Workflow Status}='Stale Listing, eBay')";
   }
 
   return undefined;

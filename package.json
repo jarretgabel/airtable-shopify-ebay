@@ -68,6 +68,7 @@
     "cleanup:ebay:probe": "node scripts/cleanup-ebay-probe-listings.mjs",
     "cleanup:shopify:probe": "node scripts/cleanup-shopify-probe-product.mjs",
     "airtable:sync-brands-to-vendors": "node scripts/sync-listing-brands-to-vendors.mjs",
+    "airtable:download-images": "node scripts/download-airtable-images.mjs",
     "prepare:aws:env": "node scripts/prepare-aws-env.mjs",
     "typecheck": "tsc --noEmit",
     "build": "tsc && vite build",

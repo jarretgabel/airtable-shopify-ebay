@@ -4,12 +4,13 @@ import { checkOptionalEnv } from '@/config/runtimeEnv';
 
 interface CombinedListingsApprovalTabProps {
   viewModel: ApprovalTabViewModel;
+  backToListLabel?: string;
 }
 
 const COMBINED_LISTINGS_TABLE_NAME = checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME');
 const COMBINED_LISTINGS_TABLE_REF = checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF');
 
-export function CombinedListingsApprovalTab({ viewModel }: CombinedListingsApprovalTabProps) {
+export function CombinedListingsApprovalTab({ viewModel, backToListLabel }: CombinedListingsApprovalTabProps) {
   const tableReference = COMBINED_LISTINGS_TABLE_REF;
 
   return (
@@ -19,6 +20,7 @@ export function CombinedListingsApprovalTab({ viewModel }: CombinedListingsAppro
       tableName={COMBINED_LISTINGS_TABLE_NAME}
       approvalChannel="combined"
       createShopifyDraftOnApprove
+      backToListLabel={backToListLabel}
     />
   );
 }

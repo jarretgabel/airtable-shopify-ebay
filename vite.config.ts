@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': new URL('./src', import.meta.url).pathname,
           '@contracts': new URL('./aws/src/shared/contracts', import.meta.url).pathname,
+          '@shared': new URL('./aws/src/shared', import.meta.url).pathname,
         },
       },
       define: {

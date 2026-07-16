@@ -48,6 +48,7 @@ interface UseListingApprovalCombinedFieldStateParams {
   approvalChannel: 'shopify' | 'ebay' | 'combined';
   isCombinedApproval: boolean;
   formValues: Record<string, string>;
+  initialFormValues?: Record<string, string>;
   setFormValue: (fieldName: string, value: string) => void;
   setDerivedFormValue: (fieldName: string, value: string) => void;
   selectedEbayTemplateId: EbayListingTemplateId;
@@ -70,6 +71,7 @@ export function useListingApprovalCombinedFieldState({
   approvalChannel,
   isCombinedApproval,
   formValues,
+  initialFormValues = {},
   setDerivedFormValue,
   setSelectedEbayTemplateId,
 }: UseListingApprovalCombinedFieldStateParams) {
@@ -78,10 +80,15 @@ export function useListingApprovalCombinedFieldState({
     [records, selectedRecordId],
   );
 
+  const selectionInitialFormValues = useMemo(
+    () => initialFormValues,
+    [selectedRecordFromQueue?.id, initialFormValues],
+  );
+
   const selectedRecord = useMemo(() => {
     if (!selectedRecordFromQueue) return null;
 
-    const hydratedMissingFieldEntries = Object.entries(formValues).filter(([fieldName, value]) => {
+    const hydratedMissingFieldEntries = Object.entries(selectionInitialFormValues).filter(([fieldName, value]) => {
       if (Object.prototype.hasOwnProperty.call(selectedRecordFromQueue.fields, fieldName)) {
         return false;
       }
@@ -100,7 +107,7 @@ export function useListingApprovalCombinedFieldState({
         ...Object.fromEntries(hydratedMissingFieldEntries),
       },
     };
-  }, [formValues, selectedRecordFromQueue]);
+  }, [selectionInitialFormValues, selectedRecordFromQueue]);
 
   const selectedRecordFieldNames = useMemo(() => {
     const names = new Set<string>(allFieldNames);

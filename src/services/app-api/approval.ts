@@ -5,10 +5,14 @@ import type {
   ApprovalNormalizeTarget,
   ApprovalPublishExecutionResult,
   ApprovalPublishTarget,
+  ApprovalTakeDownExecutionResult,
+  ApprovalTakeDownTarget,
   AirtableConfiguredRecordsSource,
 } from '@contracts/approval';
 import { isAppApiHttpError } from './errors';
 import { postJson } from './http';
+
+const APPROVAL_TAKEDOWN_REQUEST_TIMEOUT_MS = 45000;
 
 export type {
   ApprovalEbayBodyPreviewInput,
@@ -17,6 +21,8 @@ export type {
   ApprovalNormalizeTarget,
   ApprovalPublishExecutionResult,
   ApprovalPublishTarget,
+  ApprovalTakeDownExecutionResult,
+  ApprovalTakeDownTarget,
 };
 
 function toApprovalError(error: unknown): Error {
@@ -63,6 +69,22 @@ export async function publishApprovalRecord(
       recordId,
       productIdFieldName: options.productIdFieldName,
       fields: options.fields,
+    });
+  } catch (error) {
+    throw toApprovalError(error);
+  }
+}
+
+export async function takeDownApprovalRecord(
+  recordId: string,
+  target: ApprovalTakeDownTarget,
+): Promise<ApprovalTakeDownExecutionResult> {
+  try {
+    return await postJson<ApprovalTakeDownExecutionResult>('/api/approval/takedown', {
+      target,
+      recordId,
+    }, {
+      timeoutMs: APPROVAL_TAKEDOWN_REQUEST_TIMEOUT_MS,
     });
   } catch (error) {
     throw toApprovalError(error);

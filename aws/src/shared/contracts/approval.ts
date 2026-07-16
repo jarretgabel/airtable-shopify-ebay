@@ -12,6 +12,7 @@ export type AirtableConfiguredRecordsSource =
 
 export type ApprovalPublishTarget = 'shopify' | 'ebay' | 'both';
 export type ApprovalNormalizeTarget = ApprovalPublishTarget;
+export type ApprovalTakeDownTarget = ApprovalPublishTarget;
 
 export interface ApprovalEbayBodyPreviewInput {
   templateHtml: string;
@@ -91,6 +92,30 @@ export interface ApprovalPublishExecutionResult {
   shopify?: ShopifyApprovalPublishResult;
   ebay?: ApprovalPublishEbayExecutionResult;
   failures: ApprovalPublishFailure[];
+}
+
+export interface ApprovalTakeDownRequestBody {
+  target?: ApprovalTakeDownTarget;
+  recordId?: string;
+}
+
+export interface ApprovalTakeDownRequest {
+  target: ApprovalTakeDownTarget;
+  recordId: string;
+}
+
+export interface ApprovalTakeDownChannelResult {
+  channel: 'shopify' | 'ebay';
+  success: boolean;
+  message: string;
+  closedAt: string;
+}
+
+export interface ApprovalTakeDownExecutionResult {
+  target: ApprovalTakeDownTarget;
+  recordId: string;
+  success: boolean;
+  results: ApprovalTakeDownChannelResult[];
 }
 
 export interface ContractValidationFailure {
@@ -303,5 +328,16 @@ export function validateApprovalPublishRequestBody(body: ApprovalPublishRequestB
     ...(body.productIdFieldName ? { productIdFieldName: body.productIdFieldName } : {}),
     ...(body.fields ? { fields: body.fields } : {}),
     ...(publishSetupResult.value ? { publishSetup: publishSetupResult.value } : {}),
+  });
+}
+
+export function validateApprovalTakeDownRequestBody(body: ApprovalTakeDownRequestBody): ContractValidationResult<ApprovalTakeDownRequest> {
+  if (!isApprovalTarget(body.target) || !isNonEmptyString(body.recordId)) {
+    return failure('target and recordId are required');
+  }
+
+  return success({
+    target: body.target,
+    recordId: body.recordId,
   });
 }

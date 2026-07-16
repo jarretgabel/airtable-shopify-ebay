@@ -27,9 +27,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@contracts/*": ["aws/src/shared/contracts/*"]
+      "@contracts/*": ["aws/src/shared/contracts/*"],
+      "@shared/*": ["aws/src/shared/*"]
     }
   },
-  "include": ["src", "aws/src/shared/contracts/**/*.ts", "tests/unit/src/**/*.ts", "tests/unit/src/**/*.tsx"],
+  "include": ["src", "aws/src/shared/contracts/**/*.ts", "aws/src/shared/imageNamingRules.ts", "tests/unit/src/**/*.ts", "tests/unit/src/**/*.tsx"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

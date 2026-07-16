@@ -218,7 +218,7 @@ const SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS: ShopifyBodyDynamicTokenSpec[] = [
   { token: 'condition', candidates: ['__Condition__', 'Item Condition', 'Condition', 'Shopify Condition', 'Shopify REST Condition'] },
   { token: 'price', candidates: ['Shopify REST Variant 1 Price', 'Shopify Variant 1 Price', 'Price'] },
   { token: 'sku', candidates: ['Shopify REST Variant 1 SKU', 'SKU', 'shopify_rest_variant_1_sku'] },
-  { token: 'body_description', candidates: ['Shopify Body Description', 'Shopify REST Body Description', 'Item Description', 'Description', 'shopify_body_description', 'shopify_rest_body_description'] },
+  { token: 'body_description', candidates: ['Description', 'Item Description', 'Shopify REST Body Description', 'Shopify Body Description', 'shopify_rest_body_description', 'shopify_body_description'] },
   {
     token: 'body_key_features',
     candidates: [
@@ -251,19 +251,8 @@ export function getHandleField(fields: ApprovalFieldMap): string {
   return fuzzy ? coerceStructuredToString(fuzzy[1]) : '';
 }
 
-function getBodyHtmlField(fields: ApprovalFieldMap): string {
-  const explicit = getField(fields, ['Shopify REST Body HTML', 'Shopify Body HTML', 'Shopify GraphQL Description HTML', 'Body (HTML)', 'Body HTML', 'body_html', 'shopify_rest_body_html', 'Item Description', 'Description']);
-  if (explicit.length > 0) return explicit;
-  const fuzzy = Object.entries(fields).find(([key, value]) => {
-    const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, '');
-    return (normalized.includes('bodyhtml') || normalized.includes('descriptionhtml')) && coerceStructuredToString(value).length > 0;
-  });
-  return fuzzy ? coerceStructuredToString(fuzzy[1]) : '';
-}
-
 export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   const explicitTemplate = getField(fields, [...SHOPIFY_BODY_HTML_TEMPLATE_FIELD_CANDIDATES]);
-  const fallbackBodyHtml = getBodyHtmlField(fields);
   const template = explicitTemplate || '<p>{{body_description}}</p>{{body_key_features}}';
   if (!template) return '';
   const bodyDescriptionCandidates = SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.find((spec) => spec.token === 'body_description')?.candidates ?? [];
@@ -288,12 +277,18 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   const bodyKeyFeatures = tokenValues.get('body_key_features') ?? '';
   const hasEditableBodyFields = hasAnyField(fields, bodyDescriptionCandidates) || hasAnyField(fields, bodyKeyFeaturesCandidates);
   const usesStructuredBodyTokens = /\{\{\s*(body_description|body_key_features)\s*\}\}/i.test(explicitTemplate || '');
-  if (!explicitTemplate) {
-    if (!hasEditableBodyFields) return fallbackBodyHtml;
-    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, fallbackBodyHtml, testingNotes);
+
+  if (!explicitTemplate && !bodyDescription && !bodyKeyFeatures) {
+    return '';
   }
+
+  if (!explicitTemplate) {
+    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, template, testingNotes);
+  }
+
   if (usesStructuredBodyTokens || hasEditableBodyFields) {
     return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, explicitTemplate, testingNotes);
   }
+
   return template.replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, (_match, tokenName: string) => tokenValues.get(tokenName.toLowerCase()) ?? '');
 }

@@ -22,6 +22,7 @@ export interface UseListingApprovalRecordActionsParams {
   tableName?: string;
   formValues: Record<string, string>;
   setFormValue: (fieldName: string, value: string) => void;
+  setDerivedFormValue?: (fieldName: string, value: string) => void;
   hydrateForm: (record: AirtableRecord, fieldNames: string[], approvedFieldName: string) => void;
   saveRecord: (
     shouldApprove: boolean,

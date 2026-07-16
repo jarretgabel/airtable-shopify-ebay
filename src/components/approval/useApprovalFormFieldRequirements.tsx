@@ -9,7 +9,7 @@ import {
 import { getEbayPriceFieldLabel } from './approvalFormFieldsEbayHelpersBasic';
 
 const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
-const requiredBadgeClass = 'inline-block rounded-full border border-rose-400/45 bg-rose-500/15 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-rose-200';
+const requiredBadgeClass = 'inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]';
 
 interface UseApprovalFormFieldRequirementsParams {
   approvalChannel?: 'shopify' | 'ebay' | 'combined';
@@ -126,7 +126,7 @@ export function useApprovalFormFieldRequirements({
 
   const getLabelClassName = useCallback((fieldName?: string): string => {
     if (fieldName && isRequiredField(fieldName)) {
-      return `${labelClass} text-rose-200`;
+      return `${labelClass} text-[var(--required-label-ink)]`;
     }
 
     return labelClass;

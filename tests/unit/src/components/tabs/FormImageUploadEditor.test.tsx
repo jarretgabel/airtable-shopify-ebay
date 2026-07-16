@@ -55,7 +55,7 @@ describe('FormImageUploadEditor', () => {
       expect(processImageMock).toHaveBeenCalledWith(
         originalFile,
         expect.objectContaining({
-          outputFilename: 'hero_edited.jpg',
+          outputFilename: 'hero-model-product-hero-image.jpg',
         }),
       );
     });

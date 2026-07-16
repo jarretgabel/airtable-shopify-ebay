@@ -19,6 +19,11 @@ import { parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 import { useApprovalFormEbaySetup } from './useApprovalFormEbaySetup';
 import { useApprovalFormShopifySetup } from './useApprovalFormShopifySetup';
 
+function isProcessedWorkflowImage(filename: string, url?: string): boolean {
+  const sample = `${filename} ${url ?? ''}`.toLowerCase();
+  return /(^|[-_])processed/.test(sample);
+}
+
 export function useApprovalFormFieldSetup({
   recordId,
   approvalChannel,
@@ -110,28 +115,80 @@ export function useApprovalFormFieldSetup({
     })())
     : '';
   const workflowImageAttachmentFieldName = useMemo(
-    () => findWorkflowImageAttachmentFieldName(allFieldNames),
-    [allFieldNames],
+    () => {
+      const discoveryFieldNames = Array.from(new Set([
+        ...allFieldNames,
+        ...Object.keys(originalFieldValues),
+        ...Object.keys(formValues),
+      ]));
+      return findWorkflowImageAttachmentFieldName(discoveryFieldNames);
+    },
+    [allFieldNames, formValues, originalFieldValues],
   );
   const workflowImageMetadataFieldName = useMemo(
-    () => findWorkflowImageMetadataFieldName(allFieldNames),
-    [allFieldNames],
+    () => {
+      const discoveryFieldNames = Array.from(new Set([
+        ...allFieldNames,
+        ...Object.keys(originalFieldValues),
+        ...Object.keys(formValues),
+      ]));
+      return findWorkflowImageMetadataFieldName(discoveryFieldNames);
+    },
+    [allFieldNames, formValues, originalFieldValues],
   );
   const workflowImageMetadata = useMemo(
-    () => parseWorkflowImageMetadata(workflowImageMetadataFieldName ? (originalFieldValues[workflowImageMetadataFieldName] ?? '') : ''),
-    [originalFieldValues, workflowImageMetadataFieldName],
+    () => {
+      const metadataRaw = workflowImageMetadataFieldName
+        ? (originalFieldValues[workflowImageMetadataFieldName] ?? formValues[workflowImageMetadataFieldName] ?? '')
+        : (
+          originalFieldValues['Workflow Image Metadata JSON']
+          ?? formValues['Workflow Image Metadata JSON']
+          ?? originalFieldValues['Workflow Image Metadata']
+          ?? formValues['Workflow Image Metadata']
+          ?? ''
+        );
+
+      return parseWorkflowImageMetadata(metadataRaw);
+    },
+    [formValues, originalFieldValues, workflowImageMetadataFieldName],
   );
   const workflowImageAttachments = useMemo(
     () => {
-      const attachments = parseWorkflowImageAttachments(workflowImageAttachmentFieldName ? (originalFieldValues[workflowImageAttachmentFieldName] ?? '') : '');
+      const attachmentsRaw = workflowImageAttachmentFieldName
+        ? (originalFieldValues[workflowImageAttachmentFieldName] ?? formValues[workflowImageAttachmentFieldName] ?? '')
+        : (originalFieldValues.Images ?? formValues.Images ?? '');
+      const attachments = parseWorkflowImageAttachments(attachmentsRaw);
       if (workflowImageMetadata.length === 0) return attachments;
+
+      const metadataAttachments = workflowImageMetadata
+        .filter((record) => record.sourceStage !== 'intake')
+        .filter((record) => isProcessedWorkflowImage(record.filename, record.url))
+        .map((record) => ({
+          id: record.attachmentId,
+          url: record.url,
+          filename: record.filename,
+        }));
+
+      const mergedByUrl = new Map<string, { id?: string; url: string; filename: string }>();
+
+      metadataAttachments.forEach((attachment) => {
+        const key = attachment.url.trim().toLowerCase();
+        if (!key) return;
+        mergedByUrl.set(key, attachment);
+      });
+
+      attachments.forEach((attachment) => {
+        const key = attachment.url.trim().toLowerCase();
+        if (!key || mergedByUrl.has(key)) return;
+        mergedByUrl.set(key, attachment);
+      });
 
       const metadataByUrl = new Map(
         workflowImageMetadata.map((record) => [record.url.trim().toLowerCase(), record] as const),
       );
 
-      // Only include testing and photography images in the listing image selector
-      const listingAttachments = attachments.filter((attachment) => {
+      // Only include testing and photography images in the listing image selector.
+      const listingAttachments = Array.from(mergedByUrl.values()).filter((attachment) => {
         const meta = metadataByUrl.get(attachment.url.trim().toLowerCase());
         return !meta || meta.sourceStage !== 'intake';
       });
@@ -147,7 +204,7 @@ export function useApprovalFormFieldSetup({
         return left.filename.localeCompare(right.filename);
       });
     },
-    [originalFieldValues, workflowImageAttachmentFieldName, workflowImageMetadata],
+    [formValues, originalFieldValues, workflowImageAttachmentFieldName, workflowImageMetadata],
   );
   const selectedWorkflowImageUrls = useMemo(() => {
     const currentRows = parseWorkflowSelectedImageRows(
@@ -194,6 +251,7 @@ export function useApprovalFormFieldSetup({
   const shopifySetup = useApprovalFormShopifySetup({
     recordId,
     approvalChannel,
+    isCombinedApproval,
     forceShowShopifyCollectionsEditor,
     allFieldNames,
     writableFieldNames,

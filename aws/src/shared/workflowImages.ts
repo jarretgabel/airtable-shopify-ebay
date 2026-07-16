@@ -18,6 +18,20 @@ function normalizeSortOrder(value: unknown, fallback: number): number {
   return fallback;
 }
 
+function normalizeBoolean(value: unknown, fallback: boolean): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1' || normalized === 'yes') return true;
+    if (normalized === 'false' || normalized === '0' || normalized === 'no') return false;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (value === 1) return true;
+    if (value === 0) return false;
+  }
+  return fallback;
+}
+
 function normalizeRecord(value: unknown, fallbackOrder: number): WorkflowImageRecord | null {
   if (!value || typeof value !== 'object') return null;
   const record = value as Record<string, unknown>;
@@ -31,10 +45,15 @@ function normalizeRecord(value: unknown, fallbackOrder: number): WorkflowImageRe
     url,
     alt: normalizeString(record.alt) || normalizeString(record.altText) || normalizeString(record.alt_text),
     sortOrder: normalizeSortOrder(record.sortOrder ?? record.sort_order ?? record.position, fallbackOrder),
-    includedInListing:
-      typeof (record.includedInListing ?? record.included_in_listing) === 'boolean'
-        ? Boolean(record.includedInListing ?? record.included_in_listing)
-        : true,
+    includedInListing: normalizeBoolean(
+      record.includedInListing
+      ?? record.included_in_listing
+      ?? record.includeInListing
+      ?? record.include_in_listing
+      ?? record.included
+      ?? record.isIncluded,
+      true,
+    ),
   };
 }
 

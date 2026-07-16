@@ -6,8 +6,10 @@ import { CompactIconActionButton } from '@/components/app/CompactIconActionButto
 import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ListingApprovalSoldReadyPanel } from '@/components/approval/ListingApprovalSoldReadyPanel';
+import { ListingApprovalWorkflowOpsPanel } from '@/components/approval/ListingApprovalWorkflowOpsPanel';
 import { useListingApprovalTabState } from '@/components/approval/useListingApprovalTabState';
 import { checkOptionalEnv } from '@/config/runtimeEnv';
+import { getUsedGearWorkflowPostPublishSnapshot } from '@/services/usedGearWorkflowLifecycle';
 import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
 import { useApprovalStore, displayValue } from '@/stores/approvalStore';
 
@@ -15,6 +17,7 @@ interface ListingApprovalSoldReadyRecordPageProps {
   recordId: string;
   onBackToPostPublish: () => void;
   onOpenWorkflowSnapshot: (recordId: string) => void;
+  onOpenListingEditor: (recordId: string) => void;
 }
 
 const COMBINED_LISTINGS_TABLE_NAME = checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME');
@@ -24,6 +27,7 @@ export function ListingApprovalSoldReadyRecordPage({
   recordId,
   onBackToPostPublish,
   onOpenWorkflowSnapshot,
+  onOpenListingEditor,
 }: ListingApprovalSoldReadyRecordPageProps) {
   const viewModel: ApprovalTabViewModel = useMemo(() => ({
     selectedRecordId: recordId,
@@ -67,6 +71,8 @@ export function ListingApprovalSoldReadyRecordPage({
   const recordTitle = readiness.title
     || (readiness.titleFieldName ? displayValue(selectedRecord.fields[readiness.titleFieldName]) : '')
     || 'Sold-Ready Listing';
+  const snapshot = getUsedGearWorkflowPostPublishSnapshot(selectedRecord);
+  const renderSoldReadyPanel = snapshot?.bucket === 'sold-ready' || snapshot?.bucket === 'shipped';
 
   return (
     <WorkflowRecordPageLayout
@@ -81,15 +87,30 @@ export function ListingApprovalSoldReadyRecordPage({
             variant="toolbar-secondary"
             onClick={() => onOpenWorkflowSnapshot(recordId)}
           />
+          <CompactIconActionButton
+            label="Open Listing Editor"
+            icon="edit"
+            variant="toolbar-secondary"
+            onClick={() => onOpenListingEditor(recordId)}
+          />
         </>
       )}
     >
-      <ListingApprovalSoldReadyPanel
-        selectedRecord={selectedRecord}
-        tableReference={COMBINED_LISTINGS_TABLE_REF}
-        tableName={COMBINED_LISTINGS_TABLE_NAME}
-        loadRecords={loadRecords}
-      />
+      {renderSoldReadyPanel ? (
+        <ListingApprovalSoldReadyPanel
+          selectedRecord={selectedRecord}
+          tableReference={COMBINED_LISTINGS_TABLE_REF}
+          tableName={COMBINED_LISTINGS_TABLE_NAME}
+          loadRecords={loadRecords}
+        />
+      ) : (
+        <ListingApprovalWorkflowOpsPanel
+          selectedRecord={selectedRecord}
+          tableReference={COMBINED_LISTINGS_TABLE_REF}
+          tableName={COMBINED_LISTINGS_TABLE_NAME}
+          loadRecords={loadRecords}
+        />
+      )}
     </WorkflowRecordPageLayout>
   );
 }

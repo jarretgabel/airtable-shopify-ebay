@@ -6,12 +6,14 @@ import {
   isShopifyVendorField,
 } from './approvalFormFieldsShopifyHelpersBasic';
 import type { ApprovalFormFieldSetupParams } from './approvalFormFieldSetupTypes';
+import { pickPreferredField } from './approvalFormFieldsImageHelpers';
 import { useApprovalFormShopifyCollectionsSetup } from './useApprovalFormShopifyCollectionsSetup';
 import { useApprovalFormShopifyTagsSetup } from './useApprovalFormShopifyTagsSetup';
 
 type UseApprovalFormShopifySetupParams = Pick<ApprovalFormFieldSetupParams,
   'recordId'
   | 'approvalChannel'
+  | 'isCombinedApproval'
   | 'forceShowShopifyCollectionsEditor'
   | 'allFieldNames'
   | 'writableFieldNames'
@@ -27,6 +29,7 @@ type UseApprovalFormShopifySetupParams = Pick<ApprovalFormFieldSetupParams,
 export function useApprovalFormShopifySetup({
   recordId,
   approvalChannel,
+  isCombinedApproval,
   forceShowShopifyCollectionsEditor,
   allFieldNames,
   writableFieldNames,
@@ -46,7 +49,7 @@ export function useApprovalFormShopifySetup({
   const shopifyVendorFieldName = isShopifyApprovalForm
     ? vendorFieldCandidates.find((fieldName) => isShopifyVendorField(fieldName))
     : undefined;
-  const shopifyVendorDefaultValue = isShopifyApprovalForm
+  const shopifyVendorDefaultValue = isShopifyApprovalForm && !isCombinedApproval
     ? (
       formValues.Make
       || formValues.Brand
@@ -57,8 +60,22 @@ export function useApprovalFormShopifySetup({
     ).trim()
     : '';
   const hasShopifyVendorEditor = Boolean(isShopifyApprovalForm && shopifyVendorFieldName);
+  const shopifyBodyDescriptionCandidateFieldNames = isShopifyApprovalForm
+    ? allFieldNames.filter((fieldName) => isShopifyBodyDescriptionField(fieldName))
+    : [];
   const shopifyBodyDescriptionFieldName = isShopifyApprovalForm
-    ? allFieldNames.find((fieldName) => isShopifyBodyDescriptionField(fieldName))
+    ? pickPreferredField(
+      shopifyBodyDescriptionCandidateFieldNames,
+      [
+        'Shopify REST Body Description',
+        'Shopify Body Description',
+        'shopify_rest_body_description',
+        'shopify_body_description',
+        'Item Description',
+        'Description',
+      ],
+      formValues,
+    )
     : undefined;
   const shopifyKeyFeaturesCandidateFieldNames = isShopifyApprovalForm
     ? allFieldNames.filter((fieldName) => isShopifyKeyFeaturesField(fieldName))

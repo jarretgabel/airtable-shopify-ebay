@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { ApprovalTabViewModel } from '@/app/appTabViewModels';
 import type { ListingApprovalSelectedRecordPanelProps } from '@/components/approval/ListingApprovalSelectedRecordPanel';
 import type { EbayListingTemplateId } from '@/components/approval/listingApprovalEbayConstants';
@@ -11,6 +11,8 @@ import { useListingApprovalFieldNames } from '@/components/approval/useListingAp
 import { useListingApprovalRecordActions } from '@/components/approval/useListingApprovalRecordActions';
 import { useListingApprovalRecordLifecycle } from '@/components/approval/useListingApprovalRecordLifecycle';
 import { checkOptionalEnv } from '@/config/runtimeEnv';
+import { getRecordFromResolvedSource } from '@/services/app-api/airtable';
+import { getProduct as getShopifyProduct } from '@/services/app-api/shopify';
 import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
 import {
   useApprovalStore,
@@ -31,6 +33,52 @@ interface UseListingApprovalTabStateResult {
   selectedRecordPanelProps: ListingApprovalSelectedRecordPanelProps | null;
   queuePanelProps: ReturnType<typeof buildListingApprovalQueuePanelProps>;
   confirmationModal: ReactNode;
+}
+
+function toExternalUrl(baseUrl: string, path: string): string {
+  const trimmedBaseUrl = baseUrl.trim();
+  if (!trimmedBaseUrl) return '';
+
+  const normalizedBaseUrl = /^https?:\/\//i.test(trimmedBaseUrl)
+    ? trimmedBaseUrl
+    : `https://${trimmedBaseUrl}`;
+
+  return `${normalizedBaseUrl.replace(/\/$/, '')}${path}`;
+}
+
+function getFirstTrimmedValue(source: Record<string, string>, fieldNames: readonly string[]): string {
+  for (const fieldName of fieldNames) {
+    const rawValue = source[fieldName];
+    if (typeof rawValue !== 'string') continue;
+
+    const value = rawValue.trim();
+    if (value) return value;
+  }
+
+  return '';
+}
+
+function resolveShopifyStorefrontUrl(storeDomain: string, formValues: Record<string, string>): string {
+  const explicitListingUrl = getFirstTrimmedValue(formValues, [
+    'Shopify Product URL',
+    'Shopify Storefront URL',
+  ]);
+  if (explicitListingUrl) {
+    return /^https?:\/\//i.test(explicitListingUrl)
+      ? explicitListingUrl
+      : `https://${explicitListingUrl}`;
+  }
+
+  const handle = getFirstTrimmedValue(formValues, [
+    'Shopify REST Handle',
+    'Shopify Handle',
+    'Shopify GraphQL Handle',
+    'Handle',
+    'handle',
+  ]);
+  if (!handle) return '';
+
+  return toExternalUrl(storeDomain, `/products/${encodeURIComponent(handle)}`);
 }
 
 export function useListingApprovalTabState({
@@ -78,12 +126,150 @@ export function useListingApprovalTabState({
   const [bodyHtmlPreview, setBodyHtmlPreview] = useState('');
   const [selectedEbayTemplateId, setSelectedEbayTemplateId] = useState<EbayListingTemplateId>('classic');
   const [ebayCategoryLabelsById, setEbayCategoryLabelsById] = useState<Record<string, string>>({});
+  const [directSelectedRecord, setDirectSelectedRecord] = useState<AirtableRecord | null>(null);
+  const [directSelectedRecordLoading, setDirectSelectedRecordLoading] = useState(false);
+  const [shopifyServiceListingUrl, setShopifyServiceListingUrl] = useState<string | null>(null);
+
+  const shopifyStoreDomain = checkOptionalEnv('VITE_SHOPIFY_STORE_DOMAIN');
+  const explicitShopifyStorefrontUrl = useMemo(
+    () => resolveShopifyStorefrontUrl(shopifyStoreDomain, formValues),
+    [formValues, shopifyStoreDomain],
+  );
+  const shopifyRestProductId = useMemo(() => {
+    const rawProductId = getFirstTrimmedValue(formValues, ['Shopify REST Product ID', 'Shopify Product ID']);
+    const parsedProductId = Number(rawProductId);
+    return Number.isFinite(parsedProductId) && parsedProductId > 0
+      ? parsedProductId
+      : null;
+  }, [formValues]);
+
+  const recordsForSelection = useMemo(() => {
+    if (!directSelectedRecord) {
+      return records;
+    }
+
+    if (records.some((record) => record.id === directSelectedRecord.id)) {
+      return records.map((record) => (record.id === directSelectedRecord.id ? directSelectedRecord : record));
+    }
+
+    return [directSelectedRecord, ...records];
+  }, [directSelectedRecord, records]);
+
+  useEffect(() => {
+    if (!selectedRecordId) {
+      setDirectSelectedRecord(null);
+      setDirectSelectedRecordLoading(false);
+      return;
+    }
+
+    if (!tableReference.trim()) {
+      setDirectSelectedRecordLoading(false);
+      return;
+    }
+
+    const queuedRecord = records.find((record) => record.id === selectedRecordId);
+    const queuedRecordHasDetailFields = Boolean(
+      queuedRecord
+      && (
+        Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'Workflow Image Metadata JSON')
+        || Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'Images')
+      )
+    );
+
+    if (queuedRecordHasDetailFields) {
+      setDirectSelectedRecord(null);
+      setDirectSelectedRecordLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadDirectRecord = async () => {
+      setDirectSelectedRecordLoading(true);
+      try {
+        let record: AirtableRecord | null = null;
+
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          try {
+            record = await getRecordFromResolvedSource(tableReference, tableName, selectedRecordId);
+            break;
+          } catch {
+            if (attempt === 1) {
+              throw new Error('Direct record lookup failed.');
+            }
+          }
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        setDirectSelectedRecord(record);
+      } catch {
+        if (cancelled) {
+          return;
+        }
+
+        setDirectSelectedRecord(null);
+      } finally {
+        if (cancelled) {
+          return;
+        }
+
+        setDirectSelectedRecordLoading(false);
+      }
+    };
+
+    void loadDirectRecord();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [records, selectedRecordId, tableName, tableReference]);
+
+  useEffect(() => {
+    if (explicitShopifyStorefrontUrl) {
+      setShopifyServiceListingUrl(explicitShopifyStorefrontUrl);
+      return;
+    }
+
+    if (!shopifyStoreDomain.trim() || !shopifyRestProductId) {
+      setShopifyServiceListingUrl(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const resolveStorefrontUrlFromShopifyProduct = async () => {
+      try {
+        const product = await getShopifyProduct(shopifyRestProductId);
+        if (cancelled) return;
+
+        const handle = typeof product?.handle === 'string' ? product.handle.trim() : '';
+        if (!handle) {
+          setShopifyServiceListingUrl(null);
+          return;
+        }
+
+        setShopifyServiceListingUrl(toExternalUrl(shopifyStoreDomain, `/products/${encodeURIComponent(handle)}`));
+      } catch {
+        if (cancelled) return;
+        setShopifyServiceListingUrl(null);
+      }
+    };
+
+    void resolveStorefrontUrlFromShopifyProduct();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [explicitShopifyStorefrontUrl, shopifyRestProductId, shopifyStoreDomain]);
 
   const {
     actualFieldNames,
     allFieldNames,
   } = useListingApprovalFieldNames({
-    records,
+    records: recordsForSelection,
     approvalChannel,
   });
 
@@ -122,6 +308,7 @@ export function useListingApprovalTabState({
     formRequiredFieldNames,
     formShopifyRequiredFieldNames,
     formatFieldName,
+    hasExistingEbayOfferId,
     hasExistingShopifyRestProductId,
     hasMissingEbayRequiredFields,
     hasMissingShopifyRequiredFields,
@@ -153,7 +340,7 @@ export function useListingApprovalTabState({
     titleFieldName,
     vendorFieldName,
   } = useListingApprovalDerivedState({
-    records,
+    records: recordsForSelection,
     selectedRecordId,
     allFieldNames,
     approvalChannel,
@@ -169,6 +356,12 @@ export function useListingApprovalTabState({
     tableReference,
     tableName,
   });
+
+  const queueLoading = loading || (
+    Boolean(selectedRecordId)
+    && !selectedRecord
+    && directSelectedRecordLoading
+  );
 
   const interactionState = useListingApprovalInteractionState({
     selectedRecord,
@@ -240,6 +433,7 @@ export function useListingApprovalTabState({
     tableName,
     formValues,
     setFormValue,
+    setDerivedFormValue,
     hydrateForm,
     saveRecord,
     bodyHtmlPreview,
@@ -359,12 +553,17 @@ export function useListingApprovalTabState({
     onPrimaryAction: handlePrimaryAction,
     runCombinedPush,
     hasTableReference,
-    loading,
+    loading: queueLoading,
     creatingShopifyListing,
     tableReference,
     tableName,
     records,
     formatFieldName,
+    hasExistingEbayOfferId,
+    shopifyAdminListingUrl: null,
+    shopifyServiceListingUrl,
+    ebayAdminListingUrl: null,
+    ebayServiceListingUrl: null,
     priceFieldName,
     vendorFieldName,
     qtyFieldName,

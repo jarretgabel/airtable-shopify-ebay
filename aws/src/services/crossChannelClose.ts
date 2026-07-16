@@ -4,13 +4,30 @@ import { getOptionalSecret, requireSecret } from '../shared/secrets.js';
 
 interface CrossChannelCloseDependencies {
   updateRecord?: typeof updateConfiguredRecord;
+  forceShopifyDelete?: boolean;
+}
+
+function normalizeFieldValue(value: unknown): string {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  if (typeof value === 'bigint') {
+    return String(value);
+  }
+
+  return '';
 }
 
 function getFieldValue(fields: Record<string, unknown>, fieldNames: string[]): string {
   for (const fieldName of fieldNames) {
-    const value = fields[fieldName];
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
+    const normalized = normalizeFieldValue(fields[fieldName]);
+    if (normalized) {
+      return normalized;
     }
   }
   return '';
@@ -24,7 +41,16 @@ function isAlreadyClosed(fields: Record<string, unknown>, channel: 'shopify' | '
   }
   if (channel === 'shopify') {
     const closedAt = getFieldValue(fields, ['Shopify Closed At']);
-    return closedAt.length > 0;
+    if (closedAt.length === 0) {
+      return false;
+    }
+
+    const closeResult = getFieldValue(fields, ['Shopify Close Result']).toLowerCase();
+    if (!closeResult) {
+      return false;
+    }
+
+    return closeResult.includes('deleted') || closeResult.includes('already closed');
   }
   return false;
 }
@@ -47,8 +73,19 @@ async function deleteShopifyProduct(productId: string): Promise<{ success: boole
     const storeDomain = requireSecret('SHOPIFY_STORE_DOMAIN');
     const accessToken = requireSecret('SHOPIFY_ACCESS_TOKEN');
 
+    const normalizedProductId = productId.includes('gid://shopify/Product/')
+      ? productId.split('/').pop()?.trim() ?? ''
+      : productId.trim();
+
+    if (!/^\d+$/.test(normalizedProductId)) {
+      return {
+        success: false,
+        message: `Shopify delete failed: invalid product id ${productId}`,
+      };
+    }
+
     const response = await fetch(
-      `https://${storeDomain}/admin/api/2024-04/products/${encodeURIComponent(productId)}.json`,
+      `https://${storeDomain}/admin/api/2024-04/products/${encodeURIComponent(normalizedProductId)}.json`,
       {
         method: 'DELETE',
         headers: {
@@ -68,7 +105,7 @@ async function deleteShopifyProduct(productId: string): Promise<{ success: boole
 
     return {
       success: true,
-      message: 'Shopify product deleted',
+      message: response.status === 404 ? 'Shopify product already deleted' : 'Shopify product deleted',
     };
   } catch (error) {
     return {
@@ -263,10 +300,11 @@ export async function closeShopifyProductWhenSoldOnEbay(
   dependencies: CrossChannelCloseDependencies = {},
 ): Promise<CloseResult> {
   const updateRecord = dependencies.updateRecord ?? updateConfiguredRecord;
+  const forceShopifyDelete = dependencies.forceShopifyDelete === true;
   const closedAtIso = new Date().toISOString();
 
   // Check if Shopify is already closed
-  if (isAlreadyClosed(fields, 'shopify')) {
+  if (!forceShopifyDelete && isAlreadyClosed(fields, 'shopify')) {
     logInfo('Shopify product already closed (skipping cross-channel close)', {
       recordId,
       channel: 'shopify',
@@ -277,6 +315,13 @@ export async function closeShopifyProductWhenSoldOnEbay(
       message: 'Shopify product was already closed',
       closedAt: closedAtIso,
     };
+  }
+
+  if (forceShopifyDelete) {
+    logInfo('Forcing Shopify product delete attempt during takedown', {
+      recordId,
+      channel: 'shopify',
+    });
   }
 
   // Validate required Shopify ID exists
@@ -290,7 +335,6 @@ export async function closeShopifyProductWhenSoldOnEbay(
 
     // Write failure to Airtable for operator recovery
     await updateRecord('used-gear-workflow', recordId, {
-      'Shopify Closed At': closedAtIso,
       'Shopify Close Result': missingMsg,
     }, { typecast: true }).catch((err) => {
       logError('Failed to write close result to Airtable', err);
@@ -311,7 +355,6 @@ export async function closeShopifyProductWhenSoldOnEbay(
     if (!result.success) {
       // Write failure to Airtable
       await updateRecord('used-gear-workflow', recordId, {
-        'Shopify Closed At': closedAtIso,
         'Shopify Close Result': result.message,
       }, { typecast: true }).catch((err) => {
         logError('Failed to write close result to Airtable', err);
@@ -333,7 +376,9 @@ export async function closeShopifyProductWhenSoldOnEbay(
     // Write success to Airtable
     await updateRecord('used-gear-workflow', recordId, {
       'Shopify Closed At': closedAtIso,
-      'Shopify Close Result': 'Cross-channel auto-close: Product deleted when sold on eBay',
+      'Shopify Close Result': result.message.includes('already deleted')
+        ? 'Cross-channel auto-close: Product already deleted'
+        : 'Cross-channel auto-close: Product deleted when sold on eBay',
     }, { typecast: true });
 
     logInfo('Shopify product closed (cross-channel auto-close from eBay sale)', {
@@ -352,7 +397,6 @@ export async function closeShopifyProductWhenSoldOnEbay(
 
     // Write error to Airtable
     await updateRecord('used-gear-workflow', recordId, {
-      'Shopify Closed At': closedAtIso,
       'Shopify Close Result': errorMsg,
     }, { typecast: true }).catch((err) => {
       logError('Failed to write close result to Airtable', err);

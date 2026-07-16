@@ -136,6 +136,48 @@ describe('Cross-Channel Close Service', () => {
       expect(mockUpdateRecord).not.toHaveBeenCalled();
     });
 
+    it('should force delete when takedown requests override already-closed flags', async () => {
+      const mockUpdateRecord = vi.fn().mockResolvedValue({});
+      const fields = {
+        'Shopify Closed At': '2024-01-01T12:00:00Z',
+        'Shopify Close Result': 'Cross-channel auto-close: Product deleted when sold on eBay',
+        'Shopify REST Product ID': '123456789',
+      };
+
+      process.env.SHOPIFY_STORE_DOMAIN = 'example.myshopify.com';
+      process.env.SHOPIFY_ACCESS_TOKEN = 'test-token';
+
+      const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => '',
+      } as Response);
+
+      const result = await closeShopifyProductWhenSoldOnEbay(
+        'record-force-1',
+        fields,
+        { updateRecord: mockUpdateRecord, forceShopifyDelete: true },
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('deleted');
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://example.myshopify.com/admin/api/2024-04/products/123456789.json',
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+      expect(mockUpdateRecord).toHaveBeenCalledWith(
+        'used-gear-workflow',
+        'record-force-1',
+        expect.objectContaining({
+          'Shopify Closed At': expect.any(String),
+          'Shopify Close Result': expect.stringContaining('Product deleted'),
+        }),
+        { typecast: true },
+      );
+
+      fetchMock.mockRestore();
+    });
+
     it('should return error when Shopify REST Product ID is missing', async () => {
       const mockUpdateRecord = vi.fn().mockResolvedValue({});
       const fields = {
@@ -154,14 +196,13 @@ describe('Cross-Channel Close Service', () => {
         'used-gear-workflow',
         'record-123',
         expect.objectContaining({
-          'Shopify Closed At': expect.any(String),
           'Shopify Close Result': expect.stringContaining('Missing Shopify REST Product ID'),
         }),
         { typecast: true },
       );
     });
 
-    it('should write closedAt timestamp to Airtable', async () => {
+    it('should return closedAt timestamp even when close fails validation', async () => {
       const mockUpdateRecord = vi.fn().mockResolvedValue({});
       const fields = {
         // Missing product ID - trigger error path
@@ -181,12 +222,13 @@ describe('Cross-Channel Close Service', () => {
       expect(closedAtTime.getTime()).toBeLessThanOrEqual(after.getTime());
     });
 
-    it('should distinguish between Shopify Closed At field types', async () => {
+    it('should not treat Shopify Closed At alone as already closed without a successful close result', async () => {
       const mockUpdateRecord = vi.fn();
 
       // Test with Shopify Closed At as string
       const fields1 = {
         'Shopify Closed At': '2024-01-01T12:00:00Z',
+        'Shopify Close Result': 'Shopify delete failed: 500 upstream error',
         'Shopify REST Product ID': 'product-123',
       };
 
@@ -196,8 +238,8 @@ describe('Cross-Channel Close Service', () => {
         { updateRecord: mockUpdateRecord },
       );
 
-      expect(result1.success).toBe(true);
-      expect(result1.message).toContain('already closed');
+      expect(result1.success).toBe(false);
+      expect(result1.message).toContain('invalid product id');
 
       // Test with empty string (not closed)
       const fields2 = {
@@ -251,6 +293,7 @@ describe('Cross-Channel Close Service', () => {
 
       const fields = {
         'Shopify Closed At': '2024-01-01T12:00:00Z',
+        'Shopify Close Result': 'Cross-channel auto-close: Product deleted when sold on eBay',
         'Shopify REST Product ID': 'product-123',
       };
 
@@ -272,6 +315,56 @@ describe('Cross-Channel Close Service', () => {
       expect(result1.success).toBe(true);
       expect(result2.success).toBe(true);
       expect(mockUpdateRecord).not.toHaveBeenCalled();
+    });
+
+    it('accepts a gid-style Shopify product id and attempts deletion', async () => {
+      const mockUpdateRecord = vi.fn().mockResolvedValue({});
+      const fields = {
+        'Shopify REST Product ID': 'gid://shopify/Product/123456789',
+      };
+
+      process.env.SHOPIFY_STORE_DOMAIN = 'example.myshopify.com';
+      process.env.SHOPIFY_ACCESS_TOKEN = 'test-token';
+
+      const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => '',
+      } as Response);
+
+      const result = await closeShopifyProductWhenSoldOnEbay('record-123', fields, { updateRecord: mockUpdateRecord });
+
+      expect(result.success).toBe(true);
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://example.myshopify.com/admin/api/2024-04/products/123456789.json',
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+      fetchMock.mockRestore();
+    });
+
+    it('accepts a numeric Shopify product id and attempts deletion', async () => {
+      const mockUpdateRecord = vi.fn().mockResolvedValue({});
+      const fields = {
+        'Shopify REST Product ID': 123456789,
+      };
+
+      process.env.SHOPIFY_STORE_DOMAIN = 'example.myshopify.com';
+      process.env.SHOPIFY_ACCESS_TOKEN = 'test-token';
+
+      const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => '',
+      } as Response);
+
+      const result = await closeShopifyProductWhenSoldOnEbay('record-123', fields, { updateRecord: mockUpdateRecord });
+
+      expect(result.success).toBe(true);
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://example.myshopify.com/admin/api/2024-04/products/123456789.json',
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+      fetchMock.mockRestore();
     });
   });
 

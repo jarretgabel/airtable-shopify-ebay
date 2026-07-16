@@ -5,7 +5,10 @@ import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { isDeveloperRole } from '@/auth/roleAccess';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
-import { isShopifyAdvancedOptionField } from '@/components/approval/approvalFormFieldsShopifyHelpersBasic';
+import {
+  isShopifyAdvancedOptionField,
+  isShopifyBodyDescriptionField,
+} from '@/components/approval/approvalFormFieldsShopifyHelpersBasic';
 import {
   detailDisclosureBodyClass,
   detailDisclosureClass,
@@ -63,7 +66,11 @@ export function ListingApprovalCombinedShopifySection({
   shopifyProductSetRequest,
 }: ListingApprovalCombinedShopifySectionProps) {
   // Group advanced Shopify variant fields for separate rendering with clear labels
-  const standardShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => !isShopifyAdvancedOptionField(fieldName));
+  const standardShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => {
+    if (isShopifyAdvancedOptionField(fieldName)) return false;
+    if (isShopifyBodyDescriptionField(fieldName)) return false;
+    return true;
+  });
   const advancedShopifyFieldNames = Array.from(new Set([
     ...combinedShopifyOnlyFieldNames.filter((fieldName) => isShopifyAdvancedOptionField(fieldName)),
     SHOPIFY_CONDITION_METAFIELD_VALUE_FIELD,

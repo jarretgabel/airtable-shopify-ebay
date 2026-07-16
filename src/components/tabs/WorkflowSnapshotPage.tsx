@@ -349,6 +349,11 @@ export function WorkflowSnapshotPage({
                   description="These testing-stage images are available for reference while photography work is completed."
                   images={stageImages.testingImages}
                 />
+                <WorkflowReferenceImagesPanel
+                  title="Photography Images"
+                  description="Photography-stage processed images selected for listing context appear here."
+                  images={stageImages.photographyImages}
+                />
               </SnapshotCard>
 
               {/* Listings section: show error if not eligible, else show normal card */}

@@ -344,6 +344,7 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
 
       const mappedValues = mapShippingServiceToFields(nextValues);
       const payload: Record<string, unknown> = {};
+      const droppedChangedFieldNames: string[] = [];
 
       const assignSystemFieldValues = () => {
         Object.entries(systemFieldValues).forEach(([fieldName, rawValue]) => {
@@ -374,11 +375,14 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           const existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, fieldName);
           const existsInSchema = actualFieldLookup.has(fieldName.toLowerCase());
           const allowMissingWritableField = isAllowedMissingWritableFieldName(fieldName);
-          if (!existsOnRecord && !existsInSchema && !allowMissingWritableField) return;
-
           const originalValue = toFormValueForField(fieldName, selectedRecord.fields[fieldName]);
           if (fieldName.toLowerCase() === resolvedApprovedFieldName.toLowerCase() && forceApproved) return;
           if (rawValue === originalValue) return;
+
+          if (!existsOnRecord && !existsInSchema && !allowMissingWritableField) {
+            droppedChangedFieldNames.push(fieldName);
+            return;
+          }
 
           const fieldKind = fieldKinds[fieldName] ?? 'text';
           payload[fieldName] = fromFormValueForField(fieldName, rawValue, fieldKind);
@@ -505,6 +509,13 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
             if (categorySkipMessages.length > 0) {
               throw new Error(`Failed to save category fields. ${categorySkipMessages.join(' | ')}`);
             }
+
+            if (updatedFields.length === 0) {
+              const skippedMessages = skippedFields
+                .map((field) => `${field.name}: ${field.reason ?? 'Airtable rejected the value'}`)
+                .join(' | ');
+              throw new Error(`Failed to save fields. ${skippedMessages}`);
+            }
           }
 
           if (updatedFields.length === 0 && skippedFields.length === 0) {
@@ -540,6 +551,8 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
         }
 
         await get().loadRecords(tableReference, tableName, true);
+      } else if (mode === 'full' && droppedChangedFieldNames.length > 0) {
+        throw new Error(`Failed to save fields. ${droppedChangedFieldNames.join(', ')} are not writable in the current Airtable source.`);
       }
 
       onSuccess();

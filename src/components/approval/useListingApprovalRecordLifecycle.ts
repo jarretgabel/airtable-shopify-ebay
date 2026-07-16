@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { createNewShopifyListingRecord } from '@/components/approval/listingApprovalShopifyActions';
 import {
   createRecordFromResolvedSource,
@@ -46,10 +46,18 @@ export function useListingApprovalRecordLifecycle({
   titleFieldName,
   describeShopifyCreateError,
 }: UseListingApprovalRecordLifecycleParams) {
+  const hydratedRecordIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     resetInlineActionNotices();
     setEbayCategoryLabelsById({});
   }, [resetInlineActionNotices, selectedRecordId, setEbayCategoryLabelsById]);
+
+  useEffect(() => {
+    if (!selectedRecordId) {
+      hydratedRecordIdRef.current = null;
+    }
+  }, [selectedRecordId]);
 
   const hasTableReference = tableReference.trim().length > 0;
 
@@ -60,11 +68,13 @@ export function useListingApprovalRecordLifecycle({
 
   useEffect(() => {
     if (!selectedRecordId) return;
+    if (approvalChannel !== 'ebay') return;
     void loadListingFormatOptions(false);
-  }, [loadListingFormatOptions, selectedRecordId]);
+  }, [approvalChannel, loadListingFormatOptions, selectedRecordId]);
 
   useEffect(() => {
     if (!selectedRecord) return;
+    if (hydratedRecordIdRef.current === selectedRecord.id) return;
 
     let cancelled = false;
 
@@ -88,6 +98,7 @@ export function useListingApprovalRecordLifecycle({
         ])).sort((left, right) => left.localeCompare(right));
 
         hydrateForm(mergedRecord, hydrateFieldNames, approvedFieldName);
+        hydratedRecordIdRef.current = selectedRecord.id;
       } catch {
         if (cancelled) return;
         const hydrateFieldNames = Array.from(new Set([
@@ -96,6 +107,7 @@ export function useListingApprovalRecordLifecycle({
         ])).sort((left, right) => left.localeCompare(right));
 
         hydrateForm(selectedRecord, hydrateFieldNames, approvedFieldName);
+        hydratedRecordIdRef.current = selectedRecord.id;
       }
     };
 

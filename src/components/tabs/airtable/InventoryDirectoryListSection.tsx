@@ -16,12 +16,12 @@ interface InventoryDirectoryListSectionProps {
   totalCount: number;
   searchTerm: string;
   statusFilter: string;
-  sortMode: 'intake-newest' | 'intake-oldest';
+  sortMode: 'intake-newest' | 'intake-oldest' | 'sku-asc' | 'sku-desc';
   statusOptions: string[];
   refreshing?: boolean;
   onSearchTermChange: (value: string) => void;
   onStatusFilterChange: (value: string) => void;
-  onSortModeChange: (value: 'intake-newest' | 'intake-oldest') => void;
+  onSortModeChange: (value: 'intake-newest' | 'intake-oldest' | 'sku-asc' | 'sku-desc') => void;
   onRefresh?: () => void;
   onSelectRecord: (recordId: string) => void;
   getNextStepLabel?: (record: AirtableRecord) => string | null;
@@ -69,8 +69,10 @@ function formatIntakeDate(record: AirtableRecord): string {
   return 'Unknown';
 }
 
-function getDirectorySortLabel(sortMode: 'intake-newest' | 'intake-oldest'): string {
+function getDirectorySortLabel(sortMode: 'intake-newest' | 'intake-oldest' | 'sku-asc' | 'sku-desc'): string {
   if (sortMode === 'intake-oldest') return 'Intake Date: Oldest First';
+  if (sortMode === 'sku-asc') return 'SKU: A to Z';
+  if (sortMode === 'sku-desc') return 'SKU: Z to A';
   return 'Intake Date: Newest First';
 }
 
@@ -203,10 +205,12 @@ export function InventoryDirectoryListSection({
         onRefresh={onRefresh}
         sortAriaLabel={`Sort workflow hub directory. Current order: ${getDirectorySortLabel(sortMode)}`}
         sortValue={sortMode}
-        onSortChange={(value) => onSortModeChange(value as 'intake-newest' | 'intake-oldest')}
+        onSortChange={(value) => onSortModeChange(value as 'intake-newest' | 'intake-oldest' | 'sku-asc' | 'sku-desc')}
         sortOptions={[
           { value: 'intake-newest', label: 'Intake Date: Newest First' },
           { value: 'intake-oldest', label: 'Intake Date: Oldest First' },
+          { value: 'sku-asc', label: 'SKU: A to Z' },
+          { value: 'sku-desc', label: 'SKU: Z to A' },
         ]}
         compactFilters
         filters={[

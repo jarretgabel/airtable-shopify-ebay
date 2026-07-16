@@ -29,6 +29,7 @@ const ROUTES = [
   ['POST', '/api/auth/logout', 'handlers/auth/logout.js', 'handler'],
   ['POST', '/api/approval/normalize', 'handlers/approval/normalize.js', 'handler'],
   ['POST', '/api/approval/publish', 'handlers/approval/publish.js', 'handler'],
+  ['POST', '/api/approval/takedown', 'handlers/approval/takeDown.js', 'handler'],
   ['GET', '/api/ebay/inventory-items', 'handlers/ebay/getInventoryItems.js', 'handler'],
   ['GET', '/api/ebay/offers', 'handlers/ebay/getOffers.js', 'handler'],
   ['GET', '/api/ebay/offers/{offerId}', 'handlers/ebay/getOffer.js', 'handler'],

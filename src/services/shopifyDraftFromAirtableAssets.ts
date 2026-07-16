@@ -12,6 +12,38 @@ import {
 } from '@/services/shopifyDraftFromAirtable/shared';
 
 export function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] | undefined {
+  const rawShopifyImages = getRawField(fields, [
+    'Shopify REST Images JSON',
+    'Shopify Images JSON',
+    'shopify_rest_images_json',
+    'shopify_images_json',
+    'Shopify REST Images',
+    'Shopify Images',
+    'shopify_rest_images',
+    'shopify_images',
+  ]);
+  const explicitShopifyImages = parseJsonArray<unknown>(rawShopifyImages);
+  if (explicitShopifyImages && explicitShopifyImages.length > 0) {
+    return explicitShopifyImages
+      .map((item, index) => {
+        if (typeof item === 'string') {
+          const src = item.trim();
+          if (!src) return null;
+          return { src, alt: '', position: index + 1 };
+        }
+
+        if (!item || typeof item !== 'object') return null;
+        const image = item as Record<string, unknown>;
+        const src = coerceToString(image.src ?? image.url ?? image.originalSource ?? image.original_source);
+        if (!src) return null;
+        const alt = coerceToString(image.alt ?? image.altText ?? image.alt_text);
+        const rawPosition = image.position;
+        const position = typeof rawPosition === 'number' && Number.isFinite(rawPosition) ? rawPosition : index + 1;
+        return { src, alt, position };
+      })
+      .filter((image): image is { src: string; alt: string; position: number } => image !== null);
+  }
+
   const workflowMetadata = getIncludedWorkflowImageMetadata(parseWorkflowImageMetadata(getRawField(fields, [
     'Workflow Image Metadata JSON',
     'Workflow Image Metadata',
@@ -25,6 +57,7 @@ export function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] 
       position: index + 1,
     }));
   }
+
   return undefined;
 }
 

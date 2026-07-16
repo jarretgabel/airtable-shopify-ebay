@@ -112,7 +112,7 @@ async function main() {
         const filename = path.basename(imageUrl.split('?')[0]);
         try {
           const { base64, contentType } = await downloadImageAsBase64(imageUrl);
-          // Upload both original and processed (identical for now)
+          const isIntakeStage = stage === 'intake';
           const payload = {
             folderKey: record.id,
             stage,
@@ -120,7 +120,10 @@ async function main() {
             processed: { filename, contentType, file: base64 },
           };
           const result = await archiveWorkflowImagesToGoogleDrive(payload);
-          console.log(`Uploaded ${filename} for ${record.id} (${stage}):`, result.processed.url);
+          console.log(
+            `Uploaded ${filename} for ${record.id} (${stage}):`,
+            isIntakeStage ? result.original.url : result.processed.url,
+          );
         } catch (err) {
           console.error(`Failed to upload ${filename} for ${record.id}:`, err.message);
         }

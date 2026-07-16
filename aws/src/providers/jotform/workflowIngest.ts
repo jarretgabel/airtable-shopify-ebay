@@ -8,6 +8,7 @@ import { archiveWorkflowImagesToGoogleDrive } from '../googleDrive/client.js';
 import { getSubmission, type JotFormSubmission } from './client.js';
 import { mapJotFormSubmissionToWorkflowItems } from './workflowIngestMapper.js';
 import { buildUsedGearItemTitle } from '../../shared/contracts/usedGearItemTitle.js';
+import { normalizeProductImageFilename } from '../../shared/imageNaming.js';
 import { logError } from '../../shared/logging.js';
 
 export interface JotFormWorkflowIngestItemResult {
@@ -139,13 +140,13 @@ function buildImageFilename(url: string, fallback: string): string {
     const parsed = new URL(url);
     const pathName = parsed.pathname.split('/').pop()?.trim();
     if (pathName) {
-      return decodeURIComponent(pathName);
+      return normalizeProductImageFilename(decodeURIComponent(pathName));
     }
   } catch {
     // Ignore URL parsing failures and fall back.
   }
 
-  return fallback;
+  return normalizeProductImageFilename(fallback);
 }
 
 function buildWorkflowItemTitle(fields: Record<string, unknown>, recordId: string): string {
