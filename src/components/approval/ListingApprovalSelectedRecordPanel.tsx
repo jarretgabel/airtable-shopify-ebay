@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, type ReactNode } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
@@ -47,7 +47,15 @@ function getWorkflowSummaryActionSectionConfig(workflowStatus: string | null): {
   }
 }
 
-function ApprovalEditorFallback() {
+function ApprovalEditorFallback({ onVisibleChange }: { onVisibleChange?: (visible: boolean) => void }) {
+  useEffect(() => {
+    onVisibleChange?.(true);
+
+    return () => {
+      onVisibleChange?.(false);
+    };
+  }, [onVisibleChange]);
+
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-4 text-sm text-slate-300">
       <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-slate-400">Loading record editor</p>
@@ -127,6 +135,10 @@ export function ListingApprovalSelectedRecordPanel({
     () => getWorkflowSummaryActionSectionConfig(workflowSummary?.workflowStatus ?? null),
     [workflowSummary?.workflowStatus],
   );
+  const [isEditorLoading, setIsEditorLoading] = useState(false);
+  const handleEditorFallbackVisibleChange = useCallback((visible: boolean) => {
+    setIsEditorLoading(visible);
+  }, []);
 
   // Gate listing detail access by workflow stage so records do not briefly fail eligibility while full field hydration is in flight.
   const currentStep = getUsedGearWorkflowStatus(selectedRecord.fields) || 'Unknown';
@@ -169,7 +181,7 @@ export function ListingApprovalSelectedRecordPanel({
       onBackToList={onBackToList}
       backToListLabel={backToListLabel}
       errorSurfaceClass={errorSurfaceClass}
-      workflowSummary={workflowSummary ? (
+      workflowSummary={!isEditorLoading && workflowSummary ? (
         <ListingApprovalWorkflowSummary
           summary={workflowSummary}
           timelineOnly
@@ -182,9 +194,9 @@ export function ListingApprovalSelectedRecordPanel({
             : null}
         />
       ) : null}
-      workflowDetails={workflowDetails}
+      workflowDetails={isEditorLoading ? null : workflowDetails}
       editor={(
-        <Suspense fallback={<ApprovalEditorFallback />}>
+        <Suspense fallback={<ApprovalEditorFallback onVisibleChange={handleEditorFallbackVisibleChange} />}>
           {isCombinedApproval ? (
             <ListingApprovalCombinedSections {...selectedRecordViewProps.combinedSectionsProps} />
           ) : (
@@ -193,7 +205,7 @@ export function ListingApprovalSelectedRecordPanel({
         </Suspense>
       )}
       alerts={<ListingApprovalRecordAlerts {...selectedRecordStatusProps.alertsProps} />}
-      actions={<ListingApprovalRecordActions {...selectedRecordStatusProps.actionsProps} />}
+      actions={isEditorLoading ? null : <ListingApprovalRecordActions {...selectedRecordStatusProps.actionsProps} />}
       payloadPanels={isCombinedApproval
         ? null
         : (
