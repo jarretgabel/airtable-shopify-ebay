@@ -25,6 +25,7 @@ const SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES = [
 ] as const;
 
 const SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES = [
+  'Shopify Type',
   'Type',
   'Product Type',
   'Shopify REST Product Type',
@@ -38,6 +39,7 @@ const SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES = [
   'Product Category',
   'Category',
   'shopify_rest_product_type',
+  'shopify_type',
   'shopify_product_type',
   'shopify_product_category',
   'shopify_rest_product_category',
@@ -49,9 +51,20 @@ const SHOPIFY_GRAPHQL_CATEGORY_ID_FIELD_CANDIDATES = [
   'Shopify GraphQL Category ID',
   'Shopify Extra Category ID',
   'Shopify Category ID',
+  'Category ID',
+  'Shopify Taxonomy Category ID',
+  'Shopify Product Category ID',
+  'Shopify Category',
+  'Shopify Product Category',
+  'Category',
   'shopify_graphql_category_id',
   'shopify_extra_category_id',
   'shopify_category_id',
+  'category_id',
+  'shopify_taxonomy_category_id',
+  'shopify_product_category_id',
+  'shopify_category',
+  'shopify_product_category',
 ] as const;
 
 function normalizeKey(input: string): string {
@@ -62,6 +75,10 @@ export function coerceToString(value: unknown): string {
   if (typeof value === 'string') return value.trim();
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   return '';
+}
+
+function isTaxonomyCategoryGid(value: string): boolean {
+  return /^gid:\/\/shopify\/TaxonomyCategory\//i.test(value.trim());
 }
 
 export function trimShopifyProductType(value: string): string {
@@ -177,7 +194,29 @@ export function resolveProductCategory(fields: ApprovalFieldMap, draftProduct: S
 
 export function resolveCategoryId(fields: ApprovalFieldMap): ShopifyApprovalFieldResolution {
   const exact = buildExactOrNormalizedResolution(fields, SHOPIFY_GRAPHQL_CATEGORY_ID_FIELD_CANDIDATES);
-  return exact ?? {
+  if (exact && isTaxonomyCategoryGid(exact.value)) {
+    return exact;
+  }
+
+  const fuzzy = Object.entries(fields).find(([key, value]) => {
+    if (typeof value !== 'string') return false;
+    if (!isTaxonomyCategoryGid(value)) return false;
+    const normalized = key.toLowerCase();
+    return normalized.includes('category id')
+      || normalized.includes('taxonomy category')
+      || normalized.includes('category gid');
+  });
+
+  if (fuzzy) {
+    const fuzzyValue = typeof fuzzy[1] === 'string' ? fuzzy[1] : '';
+    return {
+      sourceFieldName: fuzzy[0],
+      sourceType: 'fuzzy',
+      value: fuzzyValue,
+    };
+  }
+
+  return {
     sourceFieldName: '',
     sourceType: 'none',
     value: '',

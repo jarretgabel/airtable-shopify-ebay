@@ -462,6 +462,10 @@ export function ListingApprovalWorkflowOpsPanel({
                   type="button"
                   className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => {
+                    const confirmed = window.confirm('Take down this Shopify listing and move this record back to Ready?');
+                    if (!confirmed) {
+                      return;
+                    }
                     void runAction(async () => {
                       const updatedRecord = await takeDownWorkflowMarketplaceListingAndMoveBack(selectedRecord.id, 'shopify');
                       await syncListingSourceMoveBackState();
@@ -479,6 +483,10 @@ export function ListingApprovalWorkflowOpsPanel({
                   type="button"
                   className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => {
+                    const confirmed = window.confirm('Take down this eBay listing and move this record back to Ready?');
+                    if (!confirmed) {
+                      return;
+                    }
                     void runAction(async () => {
                       const updatedRecord = await takeDownWorkflowMarketplaceListingAndMoveBack(selectedRecord.id, 'ebay');
                       await syncListingSourceMoveBackState();

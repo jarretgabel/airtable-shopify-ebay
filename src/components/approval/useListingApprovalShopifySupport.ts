@@ -82,8 +82,8 @@ export function useListingApprovalShopifySupport({
     upsertProduct: upsertShopifyProduct,
   });
 
-  const syncExistingShopifyListing = async (record: { fields: Record<string, unknown> }, productId: number) => {
-    const preview = shopifyApprovalPreview ?? await loadShopifyApprovalPreviewNow(record.fields);
+  const syncExistingShopifyListing = async (fields: Record<string, unknown>, productId: number) => {
+    const preview = shopifyApprovalPreview ?? await loadShopifyApprovalPreviewNow(fields);
     const categoryId = preview.resolvedCategoryId || await resolveShopifyCategoryId();
     await upsertShopifyProductWithCollectionFallback({
       product: preview.effectiveProduct,

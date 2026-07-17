@@ -152,6 +152,9 @@ function setAwsEnv() {
   process.env.SHOPIFY_ADMIN_API_TOKEN = getOptionalEnv(mergedEnv, 'VITE_SHOPIFY_ADMIN_API_TOKEN');
   process.env.SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_OAUTH_ACCESS_TOKEN || process.env.SHOPIFY_ADMIN_API_TOKEN;
   process.env.SHOPIFY_LOCATION_ID = getOptionalEnv(mergedEnv, 'VITE_SHOPIFY_LOCATION_ID');
+  process.env.SHOPIFY_INVENTORY_LOCATION_ID = getOptionalEnv(mergedEnv, 'SHOPIFY_INVENTORY_LOCATION_ID')
+    || getOptionalEnv(mergedEnv, 'VITE_SHOPIFY_INVENTORY_LOCATION_ID')
+    || process.env.SHOPIFY_LOCATION_ID;
   process.env.SHOPIFY_WEBHOOK_SECRET = getOptionalEnv(mergedEnv, 'SHOPIFY_WEBHOOK_SECRET')
     || getOptionalEnv(mergedEnv, 'VITE_SHOPIFY_WEBHOOK_SECRET')
     || getOptionalEnv(mergedEnv, 'VITE_SHOPIFY_CLIENT_SECRET');

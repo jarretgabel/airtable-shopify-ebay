@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { recordTitle } from '@/app/appNavigation';
 import {
   ensureShopifyDraftBeforeApproval,
-  updateApprovedShopifyListing,
   writeShopifyProductIdToAirtable,
 } from '@/components/approval/listingApprovalShopifyActions';
 import { getApprovalRequiredFieldValidationNotice } from '@/components/approval/listingApprovalActionValidation';
+import { publishApprovalRecord } from '@/services/app-api/approval';
 import { updateRecordFromResolvedSource } from '@/services/app-api/airtable';
 import { resolveCurrentActorName } from '@/services/currentUserAudit';
 import { getProduct as getShopifyProduct } from '@/services/app-api/shopify';
@@ -38,6 +38,8 @@ type ApproveActionParams = Pick<UseListingApprovalRecordActionsParams,
   | 'onBackToList'
   | 'pushInlineActionNotice'
   | 'requestConfirmation'
+  | 'mergedDraftSourceFields'
+  | 'approvalPublishSource'
 >;
 
 function resolveExistingFieldName(fieldCandidates: string[], selectedRecord: AirtableRecord, actualFieldNames: string[]): string | null {
@@ -111,6 +113,8 @@ export function useListingApprovalApproveAction({
   onBackToList,
   pushInlineActionNotice,
   requestConfirmation,
+  mergedDraftSourceFields,
+  approvalPublishSource,
 }: ApproveActionParams) {
   const [approving, setApproving] = useState(false);
 
@@ -130,23 +134,41 @@ export function useListingApprovalApproveAction({
       });
       if (!confirmed) return;
 
-      const runUpdate = async () => {
-        setApproving(true);
-        try {
-          const notice = await updateApprovedShopifyListing({
-            existingProductId: formValues['Shopify REST Product ID'] ?? '',
-            record: selectedRecord,
-          }, {
-            syncExistingShopifyListing,
-            describeError: describeShopifyCreateError,
-          });
-          pushInlineActionNotice(notice.tone, notice.title, notice.message);
-        } finally {
-          setApproving(false);
-        }
-      };
+      setApproving(true);
+      try {
+        const result = await publishApprovalRecord(
+          approvalPublishSource,
+          selectedRecord.id,
+          'shopify',
+          {
+            productIdFieldName: 'Shopify REST Product ID',
+            fields: mergedDraftSourceFields ?? selectedRecord.fields,
+          },
+        );
 
-      await runUpdate();
+        if (result.shopify) {
+          const productIdValue = String(result.shopify.productId);
+          setFormValue('Shopify REST Product ID', productIdValue);
+          result.shopify.warnings.forEach((warning) => {
+            pushInlineActionNotice('warning', 'Shopify update warning', warning);
+          });
+          pushInlineActionNotice(
+            'success',
+            'Shopify listing updated',
+            `Listing #${productIdValue} was updated with the current page values.`,
+          );
+        }
+
+        const failure = result.failures.find((item) => item.target === 'shopify');
+        if (failure) {
+          pushInlineActionNotice('error', 'Shopify listing update failed', failure.message);
+        }
+      } catch (error) {
+        pushInlineActionNotice('error', 'Shopify listing update failed', describeShopifyCreateError(error));
+      } finally {
+        setApproving(false);
+      }
+
       return;
     }
 
@@ -185,12 +207,13 @@ export function useListingApprovalApproveAction({
       setApproving(true);
       try {
         if (createShopifyDraftOnApprove) {
-          const preview = shopifyApprovalPreview ?? await loadShopifyApprovalPreviewNow(selectedRecord.fields as Record<string, unknown>);
+          const preview = shopifyApprovalPreview ?? await loadShopifyApprovalPreviewNow((mergedDraftSourceFields ?? selectedRecord.fields) as Record<string, unknown>);
           const draftResult = await ensureShopifyDraftBeforeApproval({
             existingProductId: formValues[shopifyProductIdField] ?? '',
             productIdFieldName: shopifyProductIdField,
             createPayload: preview.effectiveProduct,
             record: selectedRecord,
+            sourceFields: mergedDraftSourceFields ?? selectedRecord.fields,
             collectionIds: preview.collectionIds,
             tableReference,
             tableName,

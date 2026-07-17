@@ -121,6 +121,7 @@ describe('useListingApprovalPublishingActions', () => {
       hasMissingEbayRequiredFields: false,
       missingShopifyRequiredFieldLabels: [],
       missingEbayRequiredFieldLabels: [],
+      approvalPublishSource: 'approval-shopify',
       onBackToList: params.onBackToList,
       pushInlineActionNotice: params.pushInlineActionNotice,
       requestConfirmation: params.requestConfirmation,

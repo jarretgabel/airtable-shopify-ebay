@@ -105,6 +105,7 @@ export function useListingApprovalPublishingActions({
     hasMissingEbayRequiredFields,
     missingShopifyRequiredFieldLabels,
     missingEbayRequiredFieldLabels,
+    approvalPublishSource,
     onBackToList,
     pushInlineActionNotice,
     requestConfirmation,

@@ -5,6 +5,7 @@ import { publishApprovalRecord } from '@/services/app-api/approval';
 import { updateConfiguredRecord } from '@/services/app-api/airtable';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 import { resolveWorkflowStatusAfterPublish } from '@/services/usedGearWorkflowLifecycle';
+import { resolveShopifyBodyHtml } from '@/services/shopifyDraftFromAirtableBody';
 import { getIncludedWorkflowImageMetadata, parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 import { useApprovalStore } from '@/stores/approvalStore';
 import { useNotificationStore } from '@/stores/notificationStore';
@@ -172,6 +173,14 @@ export function useListingApprovalPublishActions({
     if (listingDescription.length > 0) {
       nextFields['Shopify REST Body Description'] = listingDescription;
       nextFields['Shopify Body Description'] = listingDescription;
+    }
+
+    const renderedShopifyBodyHtml = resolveShopifyBodyHtml(nextFields).trim();
+    if (renderedShopifyBodyHtml.length > 0) {
+      nextFields['Shopify REST Body HTML'] = renderedShopifyBodyHtml;
+      nextFields['Shopify Body HTML'] = renderedShopifyBodyHtml;
+      nextFields['Shopify GraphQL Description HTML'] = renderedShopifyBodyHtml;
+      nextFields['body_html'] = renderedShopifyBodyHtml;
     }
 
     return nextFields;

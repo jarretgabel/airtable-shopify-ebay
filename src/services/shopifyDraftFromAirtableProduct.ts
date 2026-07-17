@@ -219,21 +219,79 @@ function buildVariant(fields: ApprovalFieldMap, options: ShopifyProductOption[])
   const option1 = getField(fields, ['Shopify REST Variant 1 Option 1', 'shopify_rest_variant_1_option_1']) || options[0]?.values[0] || null;
   const option2 = getField(fields, ['Shopify REST Variant 1 Option 2', 'shopify_rest_variant_1_option_2']) || options[1]?.values[0] || null;
   const option3 = getField(fields, ['Shopify REST Variant 1 Option 3', 'shopify_rest_variant_1_option_3']) || options[2]?.values[0] || null;
-  const compareAtPrice = getField(fields, ['Shopify REST Variant 1 Compare At Price', 'Shopify Variant 1 Compare At Price', 'shopify_rest_variant_1_compare_at_price']);
-  const variantComparePrice = getField(fields, ['Variant-Compare-Price', 'Variant Compare Price', 'variant_compare_price']);
-  const basePrice = getField(fields, ['Price', 'Shopify REST Variant 1 Price', 'Shopify Variant 1 Price', 'shopify_rest_variant_1_price']);
-  const listingPrice = variantComparePrice || compareAtPrice || basePrice;
+  const compareAtPrice = getField(fields, [
+    'Shopify REST Variant 1 Compare At Price',
+    'Shopify Variant 1 Compare At Price',
+    'Shopify Compare At Price',
+    'Variant-Compare-Price',
+    'Variant Compare Price',
+    'shopify_rest_variant_1_compare_at_price',
+    'variant_compare_price',
+    'shopify_compare_at_price',
+  ]);
+  const listingPrice = getField(fields, [
+    'Shopify REST Variant 1 Price',
+    'Shopify Variant 1 Price',
+    'Shopify Price',
+    'Variant Price',
+    'Price',
+    'shopify_rest_variant_1_price',
+    'shopify_price',
+    'variant_price',
+  ]);
   const numericListingPrice = Number(listingPrice);
-  const numericBasePrice = Number(basePrice);
-  const shouldIncludeCompareAt = Number.isFinite(numericListingPrice) && Number.isFinite(numericBasePrice) && numericBasePrice > numericListingPrice;
-  const inventoryQuantity = parseInteger(getField(fields, ['Shopify REST Variant 1 Inventory Quantity', 'Shopify Variant 1 Inventory Quantity', 'Quantity', 'Qty', 'shopify_rest_variant_1_inventory_quantity']));
+  const numericCompareAtPrice = Number(compareAtPrice);
+  const shouldIncludeCompareAt = Number.isFinite(numericListingPrice) && Number.isFinite(numericCompareAtPrice) && numericCompareAtPrice > numericListingPrice;
+  const inventoryQuantity = parseInteger(getField(fields, [
+    'Shopify REST Variant 1 Inventory Quantity',
+    'Shopify Variant 1 Inventory Quantity',
+    'Shopify Inventory Quantity',
+    'Shopify Variant Quantity',
+    'Shopify Variant Available',
+    'Shopify Variant Available Quantity',
+    'Variant Quantity',
+    'Variant Available',
+    'Variant Available Quantity',
+    'Variant Count',
+    'Variant Available Number',
+    'Shopify Quantity',
+    'Shopify Qty',
+    'Available Quantity',
+    'Shopify Available Quantity',
+    'Available',
+    'Inventory Quantity',
+    'Inventory Qty',
+    'In Stock',
+    'Stock',
+    'Quantity',
+    'Qty',
+    'shopify_rest_variant_1_inventory_quantity',
+    'shopify_inventory_quantity',
+    'shopify_variant_quantity',
+    'shopify_variant_available',
+    'shopify_variant_available_quantity',
+    'variant_quantity',
+    'variant_available',
+    'variant_available_quantity',
+    'variant_count',
+    'variant_available_number',
+    'shopify_quantity',
+    'shopify_qty',
+    'available_quantity',
+    'shopify_available_quantity',
+    'inventory_quantity',
+    'inventory_qty',
+    'in_stock',
+    'stock',
+    'available',
+  ]));
   const inventoryManagement = getField(fields, ['Shopify REST Variant 1 Inventory Management', 'shopify_rest_variant_1_inventory_management']) || undefined;
   const sku = getField(fields, ['Shopify REST Variant 1 SKU', 'SKU', 'shopify_rest_variant_1_sku']) || undefined;
   const barcode = sku || getField(fields, ['Shopify REST Variant 1 Barcode', 'shopify_rest_variant_1_barcode']) || undefined;
 
   return {
     ...(listingPrice ? { price: listingPrice } : {}),
-    compare_at_price: shouldIncludeCompareAt ? basePrice : undefined,
+    compare_at_price: shouldIncludeCompareAt ? compareAtPrice : undefined,
     sku,
     barcode,
     inventory_quantity: inventoryQuantity,

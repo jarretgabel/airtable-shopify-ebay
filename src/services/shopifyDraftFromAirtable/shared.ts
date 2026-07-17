@@ -13,6 +13,7 @@ export const SHOPIFY_BODY_HTML_TEMPLATE_FIELD_CANDIDATES = [
 ] as const;
 
 export const SHOPIFY_PRODUCT_TYPE_FIELD_CANDIDATES = [
+  'Shopify Type',
   'Type',
   'Product Type',
   'Shopify REST Product Type',
@@ -26,6 +27,7 @@ export const SHOPIFY_PRODUCT_TYPE_FIELD_CANDIDATES = [
   'Product Category',
   'Category',
   'shopify_rest_product_type',
+  'shopify_type',
   'shopify_product_type',
   'shopify_product_category',
   'shopify_rest_product_category',

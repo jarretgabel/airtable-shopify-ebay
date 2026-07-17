@@ -1,6 +1,7 @@
 import { HttpError } from '../../shared/errors.js';
+import { logInfo } from '../../shared/logging.js';
 import { normalizeProductImageFilename } from '../../shared/imageNaming.js';
-import { requireSecret } from '../../shared/secrets.js';
+import { getOptionalSecret, requireSecret } from '../../shared/secrets.js';
 
 export type ShopifyWebhookTopic =
   | 'ORDERS_UPDATED'
@@ -991,6 +992,58 @@ export async function searchTaxonomyCategories(search: string, first = 10): Prom
   return data.taxonomy.categories.edges.map((edge) => edge.node);
 }
 
+function buildTaxonomySearchCandidates(raw: string): string[] {
+  const normalized = raw.trim();
+  if (!normalized) return [];
+
+  const candidates: string[] = [normalized];
+  const segments = normalized
+    .split('>')
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  if (segments.length > 0) {
+    const leaf = segments[segments.length - 1];
+    candidates.push(leaf);
+    if (segments.length > 1) {
+      const leafPair = `${segments[segments.length - 2]} ${leaf}`.trim();
+      candidates.push(leafPair);
+    }
+  }
+
+  candidates.push(normalized.replace(/\s*>\s*/g, ' '));
+
+  return Array.from(new Set(candidates.map((candidate) => candidate.trim()).filter(Boolean)));
+}
+
+function scoreTaxonomyMatch(match: ShopifyTaxonomyCategoryMatch, lookup: string): number {
+  const normalizedLookup = lookup.trim().toLowerCase();
+  const normalizedName = match.name.trim().toLowerCase();
+  const normalizedFullName = match.fullName.trim().toLowerCase();
+  const lookupSegments = lookup
+    .split('>')
+    .map((segment) => segment.trim().toLowerCase())
+    .filter(Boolean);
+  const leafLookup = lookupSegments[lookupSegments.length - 1] ?? normalizedLookup;
+
+  let score = 0;
+
+  if (normalizedFullName === normalizedLookup) score += 100;
+  if (normalizedName === normalizedLookup) score += 80;
+  if (normalizedName === leafLookup) score += 50;
+  if (normalizedFullName.includes(leafLookup)) score += 20;
+
+  if (lookupSegments.length > 0) {
+    const matchedSegments = lookupSegments.filter((segment) => normalizedFullName.includes(segment)).length;
+    score += matchedSegments * 8;
+    if (matchedSegments === lookupSegments.length) score += 20;
+  }
+
+  if (match.isLeaf) score += 5;
+
+  return score;
+}
+
 export async function resolveTaxonomyCategory(searchOrId: string): Promise<ShopifyTaxonomyCategoryMatch | null> {
   const normalized = searchOrId.trim();
   if (!normalized) return null;
@@ -1004,7 +1057,19 @@ export async function resolveTaxonomyCategory(searchOrId: string): Promise<Shopi
     };
   }
 
-  const matches = await searchTaxonomyCategories(normalized);
+  const candidates = buildTaxonomySearchCandidates(normalized);
+  const matchesById = new Map<string, ShopifyTaxonomyCategoryMatch>();
+
+  for (const candidate of candidates) {
+    const candidateMatches = await searchTaxonomyCategories(candidate, 25);
+    candidateMatches.forEach((match) => {
+      if (!matchesById.has(match.id)) {
+        matchesById.set(match.id, match);
+      }
+    });
+  }
+
+  const matches = Array.from(matchesById.values());
   if (matches.length === 0) return null;
 
   const normalizedLower = normalized.toLowerCase();
@@ -1015,6 +1080,16 @@ export async function resolveTaxonomyCategory(searchOrId: string): Promise<Shopi
   if (exactLeafNameMatches.length === 1) return exactLeafNameMatches[0];
 
   if (matches.length === 1) return matches[0];
+
+  const scored = matches
+    .map((match) => ({ match, score: scoreTaxonomyMatch(match, normalized) }))
+    .sort((left, right) => right.score - left.score);
+
+  const best = scored[0];
+  const runnerUp = scored[1];
+  if (best && best.score >= 25 && (!runnerUp || best.score > runnerUp.score)) {
+    return best.match;
+  }
 
   return null;
 }
@@ -1100,6 +1175,194 @@ export async function updateProductCategory(productId: number, categoryId: strin
       .filter(Boolean)
       .join('; ');
     throw new Error(message || 'Shopify rejected the product category update.');
+  }
+}
+
+export async function syncProductVariantInventoryLevels(
+  productId: number,
+  variants: Array<{ sku?: string; position?: number; quantity: number }>,
+): Promise<void> {
+  if (!Number.isFinite(productId) || productId <= 0) return;
+
+  const debugEnabled = (() => {
+    const normalized = String(process.env.SHOPIFY_APPROVAL_PUBLISH_DEBUG ?? '').trim().toLowerCase();
+    return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+  })();
+
+  const targetVariants = variants
+    .map((variant, index) => ({
+      sku: variant.sku?.trim() || undefined,
+      position: Number.isFinite(variant.position) ? Number(variant.position) : index + 1,
+      quantity: Math.max(0, Math.trunc(Number(variant.quantity))),
+    }))
+    .filter((variant) => Number.isFinite(variant.quantity));
+
+  if (targetVariants.length === 0) return;
+
+  if (debugEnabled) {
+    logInfo('Shopify inventory sync target variants resolved', {
+      productId,
+      targetVariants,
+    });
+  }
+
+  const storeDomain = requireSecret('SHOPIFY_STORE_DOMAIN');
+  const accessToken = requireSecret('SHOPIFY_ACCESS_TOKEN');
+
+  const productResponse = await fetch(`https://${storeDomain}/admin/api/2024-04/products/${productId}.json?fields=id,variants`, {
+    headers: {
+      'X-Shopify-Access-Token': accessToken,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const productBody = await productResponse.json().catch(() => ({})) as {
+    product?: {
+      variants?: Array<{
+        id?: number;
+        sku?: string;
+        position?: number;
+        inventory_item_id?: number;
+      }>;
+    };
+  };
+
+  if (!productResponse.ok) {
+    throw new Error(`Unable to fetch Shopify product variants for inventory sync (HTTP ${productResponse.status}).`);
+  }
+
+  if (debugEnabled) {
+    const debugVariants = (productBody.product?.variants ?? []).map((variant) => ({
+      id: variant.id,
+      sku: variant.sku,
+      position: variant.position,
+      inventory_item_id: variant.inventory_item_id,
+    }));
+    logInfo('Shopify inventory sync loaded live product variants', {
+      productId,
+      liveVariantCount: debugVariants.length,
+      liveVariants: debugVariants,
+    });
+  }
+
+  const configuredLocationIdRaw = getOptionalSecret('SHOPIFY_INVENTORY_LOCATION_ID')
+    || getOptionalSecret('SHOPIFY_LOCATION_ID')
+    || getOptionalSecret('VITE_SHOPIFY_INVENTORY_LOCATION_ID')
+    || getOptionalSecret('VITE_SHOPIFY_LOCATION_ID');
+  const configuredLocationId = configuredLocationIdRaw ? Number(configuredLocationIdRaw) : undefined;
+  const hasConfiguredLocationId = Number.isFinite(configuredLocationId) && Number(configuredLocationId) > 0;
+
+  let selectedLocation: { id?: number; active?: boolean } | undefined;
+  let locationCount = 0;
+  const locationId = hasConfiguredLocationId
+    ? Number(configuredLocationId)
+    : await (async () => {
+      const locationResponse = await fetch(`https://${storeDomain}/admin/api/2024-04/locations.json?limit=1`, {
+        headers: {
+          'X-Shopify-Access-Token': accessToken,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const locationBody = await locationResponse.json().catch(() => ({})) as {
+        locations?: Array<{ id?: number; active?: boolean }>;
+      };
+
+      if (!locationResponse.ok) {
+        if (locationResponse.status === 403) {
+          throw new Error('Unable to fetch Shopify locations for inventory sync (HTTP 403). Configure SHOPIFY_INVENTORY_LOCATION_ID or grant the app read_locations scope.');
+        }
+        throw new Error(`Unable to fetch Shopify locations for inventory sync (HTTP ${locationResponse.status}).`);
+      }
+
+      locationCount = (locationBody.locations ?? []).length;
+      selectedLocation = (locationBody.locations ?? []).find((location) => location.active !== false) ?? locationBody.locations?.[0];
+      return selectedLocation?.id;
+    })();
+
+  if (!Number.isFinite(locationId) || Number(locationId) <= 0) {
+    throw new Error('Unable to determine Shopify location for inventory sync.');
+  }
+
+  if (debugEnabled) {
+    logInfo('Shopify inventory sync selected location', {
+      productId,
+      locationId: Number(locationId),
+      locationSource: hasConfiguredLocationId ? 'configured' : 'shopify-locations-api',
+      configuredLocationIdRaw,
+      selectedLocation,
+      locationCount,
+    });
+  }
+
+  const liveVariants = productBody.product?.variants ?? [];
+  const updateFailures: string[] = [];
+
+  for (const targetVariant of targetVariants) {
+    const matchedVariant = (() => {
+      if (targetVariant.sku) {
+        const skuMatch = liveVariants.find((variant) => (variant.sku?.trim() || '') === targetVariant.sku);
+        if (skuMatch) return skuMatch;
+      }
+
+      return liveVariants.find((variant) => {
+        const variantPosition = Number.isFinite(variant.position) ? Number(variant.position) : undefined;
+        return variantPosition === targetVariant.position;
+      });
+    })();
+
+    const inventoryItemId = matchedVariant?.inventory_item_id;
+    if (!Number.isFinite(inventoryItemId) || Number(inventoryItemId) <= 0) {
+      if (debugEnabled) {
+        logInfo('Shopify inventory sync variant mapping failed', {
+          productId,
+          targetVariant,
+          reason: 'inventory_item_id_missing',
+        });
+      }
+      updateFailures.push(`Could not map inventory item for variant ${targetVariant.sku ? `SKU ${targetVariant.sku}` : `position ${targetVariant.position}`}.`);
+      continue;
+    }
+
+    const setResponse = await fetch(`https://${storeDomain}/admin/api/2024-04/inventory_levels/set.json`, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        location_id: Number(locationId),
+        inventory_item_id: Number(inventoryItemId),
+        available: targetVariant.quantity,
+      }),
+    });
+
+    if (debugEnabled) {
+      const errorBody = setResponse.ok
+        ? undefined
+        : await setResponse.text().catch(() => '');
+      logInfo('Shopify inventory sync set response', {
+        productId,
+        targetVariant,
+        inventoryItemId: Number(inventoryItemId),
+        locationId: Number(locationId),
+        httpStatus: setResponse.status,
+        ok: setResponse.ok,
+        errorBody,
+      });
+    }
+
+    if (!setResponse.ok) {
+      if (setResponse.status === 403) {
+        updateFailures.push(`Shopify rejected inventory update for ${targetVariant.sku ? `SKU ${targetVariant.sku}` : `position ${targetVariant.position}`} (HTTP 403). Ensure the app token has write_inventory scope and access to location ${Number(locationId)}.`);
+      } else {
+        updateFailures.push(`Shopify rejected inventory update for ${targetVariant.sku ? `SKU ${targetVariant.sku}` : `position ${targetVariant.position}`} (HTTP ${setResponse.status}).`);
+      }
+    }
+  }
+
+  if (updateFailures.length > 0) {
+    throw new Error(`Inventory quantity sync failed for ${updateFailures.length} variant(s): ${updateFailures.join(' | ')}`);
   }
 }
 

@@ -44,7 +44,7 @@ export interface UseListingApprovalRecordActionsParams {
   createShopifyDraftOnApprove: boolean;
   shopifyApprovalPreview?: ShopifyApprovalPreviewShape | null;
   loadShopifyApprovalPreviewNow: (fields: Record<string, unknown>) => Promise<ShopifyApprovalPreviewShape>;
-  syncExistingShopifyListing: (record: AirtableRecord, productId: number) => Promise<void>;
+  syncExistingShopifyListing: (fields: Record<string, unknown>, productId: number) => Promise<void>;
   describeShopifyCreateError: (error: unknown) => string;
   resolveShopifyCategoryId: () => Promise<string | undefined>;
   upsertShopifyProductWithCollectionFallback: (params: {

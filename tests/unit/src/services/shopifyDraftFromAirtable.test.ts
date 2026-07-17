@@ -271,7 +271,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       ]),
     });
 
-    expect(product.body_html).toBe('<p>Updated description from form.</p><ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>{{body_key_features}}');
+    expect(product.body_html).toBe('<p>Updated description from form.</p><ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>');
   });
 
   it('uses the dedicated body html template when one is provided', () => {
@@ -333,7 +333,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       'Key Features': 'Key,Value\nCondition,Excellent\nIncludes,"Dust cover, headshell, power cable"\nFinish,Silver',
     });
 
-    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p><ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Dust cover, headshell, power cable</li><li><strong>Finish:</strong> Silver</li></ul>{{body_key_features}}');
+    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p><ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Dust cover, headshell, power cable</li><li><strong>Finish:</strong> Silver</li></ul>');
   });
 
   it('lets manual auto-mapped key feature rows override listing-derived Shopify values', () => {
@@ -387,15 +387,26 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     expect(product.product_type).toBe('Turntables & Record Players');
   });
 
-  it('uses Airtable variant compare price as Shopify variant price in payload', () => {
+  it('uses Airtable variant price as Shopify variant price and compare price as compare_at_price', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Compare Price Product',
-      'Shopify REST Variant 1 Price': '299.00',
-      'Variant-Compare-Price': '249.00',
+      'Shopify REST Variant 1 Price': '249.00',
+      'Variant-Compare-Price': '299.00',
     });
 
     expect(product.variants?.[0]?.price).toBe('249.00');
     expect(product.variants?.[0]?.compare_at_price).toBe('299.00');
+  });
+
+  it('maps Shopify Price and Available aliases into variant price and inventory quantity', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Alias Price Quantity Product',
+      'Shopify Price': '1599.00',
+      Available: '3',
+    });
+
+    expect(product.variants?.[0]?.price).toBe('1599.00');
+    expect(product.variants?.[0]?.inventory_quantity).toBe(3);
   });
 
   it('maps the internal sku to the Shopify variant barcode', () => {

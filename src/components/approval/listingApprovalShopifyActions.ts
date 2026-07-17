@@ -137,13 +137,14 @@ export async function updateApprovedShopifyListing(
   params: {
     existingProductId: string;
     record: AirtableRecord;
+    sourceFields?: Record<string, unknown>;
   },
   dependencies: {
-    syncExistingShopifyListing: (record: AirtableRecord, productId: number) => Promise<void>;
+    syncExistingShopifyListing: (fields: Record<string, unknown>, productId: number) => Promise<void>;
     describeError: (error: unknown) => string;
   },
 ): Promise<ShopifyApprovalNotice> {
-  const { existingProductId, record } = params;
+  const { existingProductId, record, sourceFields } = params;
   const { describeError, syncExistingShopifyListing } = dependencies;
 
   const normalizedProductId = existingProductId.trim();
@@ -158,7 +159,7 @@ export async function updateApprovedShopifyListing(
   }
 
   try {
-    await syncExistingShopifyListing(record, parsedExistingId);
+    await syncExistingShopifyListing(sourceFields ?? record.fields, parsedExistingId);
     return {
       tone: 'success',
       title: 'Shopify listing updated',
@@ -179,13 +180,14 @@ export async function ensureShopifyDraftBeforeApproval(
     productIdFieldName: string;
     createPayload: ShopifyProduct;
     record: AirtableRecord;
+    sourceFields?: Record<string, unknown>;
     collectionIds: string[];
     tableReference?: string;
     tableName?: string;
   },
   dependencies: {
     getShopifyProduct: (productId: number) => Promise<unknown>;
-    syncExistingShopifyListing: (record: AirtableRecord, productId: number) => Promise<void>;
+    syncExistingShopifyListing: (fields: Record<string, unknown>, productId: number) => Promise<void>;
     describeError: (error: unknown) => string;
     resolveShopifyCategoryId: () => Promise<string | undefined>;
     upsertShopifyProductWithCollectionFallback: (params: {
@@ -214,6 +216,7 @@ export async function ensureShopifyDraftBeforeApproval(
     existingProductId,
     productIdFieldName,
     record,
+    sourceFields,
     tableName,
     tableReference,
   } = params;
@@ -237,7 +240,7 @@ export async function ensureShopifyDraftBeforeApproval(
 
       if (existingProduct) {
         try {
-          await syncExistingShopifyListing(record, parsedExistingId);
+          await syncExistingShopifyListing(sourceFields ?? record.fields, parsedExistingId);
           return {
             status: 'existing-updated',
             notices: [

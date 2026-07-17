@@ -158,29 +158,6 @@ function extractKeyFeaturesHeading(html: string): string {
   return match ? match[0].trim() : '';
 }
 
-function replaceFirstParagraph(html: string, replacement: string): string {
-  const paragraphPattern = /<p\b[^>]*>[\s\S]*?<\/p>/i;
-  if (paragraphPattern.test(html)) {
-    return html.replace(paragraphPattern, replacement);
-  }
-  return replacement ? `${replacement}${html}` : html;
-}
-
-function replaceFirstList(html: string, replacement: string): string {
-  const listPattern = /<(ul|ol)\b[^>]*>[\s\S]*?<\/\1>/i;
-  if (listPattern.test(html)) {
-    return replacement ? html.replace(listPattern, replacement) : html.replace(listPattern, '');
-  }
-  if (!replacement) return html;
-  const paragraphPattern = /<p\b[^>]*>[\s\S]*?<\/p>/i;
-  const paragraphMatch = html.match(paragraphPattern);
-  if (paragraphMatch && paragraphMatch.index !== undefined) {
-    const insertAt = paragraphMatch.index + paragraphMatch[0].length;
-    return `${html.slice(0, insertAt)}${replacement}${html.slice(insertAt)}`;
-  }
-  return `${html}${replacement}`;
-}
-
 export function buildShopifyBodyHtml(description: string, keyFeaturesRaw: string, templateHtml = '', testingNotes = ''): string {
   const descriptionHtml = formatDescriptionHtml(description);
   const keyFeaturesHtml = ensureListWrapped(formatKeyFeatureHtml(keyFeaturesRaw));
@@ -200,8 +177,22 @@ export function buildShopifyBodyHtml(description: string, keyFeaturesRaw: string
     if (testingNotesHtml) parts.push(testingNotesHtml);
     return parts.join('\n').trim();
   }
-  const withDescriptionAndFeatures = replaceFirstList(replaceFirstParagraph(baseTemplate, descriptionHtml), keyFeaturesHtml).trim();
-  return testingNotesHtml ? `${withDescriptionAndFeatures}\n${testingNotesHtml}`.trim() : withDescriptionAndFeatures;
+
+  const includesTestingNotesToken = /\{\{\s*body_testing_notes\s*\}\}/i.test(baseTemplate);
+  const tokenResolved = baseTemplate
+    .replace(/<p\b[^>]*>\s*\{\{\s*body_description\s*\}\}\s*<\/p>/gi, descriptionHtml)
+    .replace(/<p\b[^>]*>\s*\{\{\s*body_key_features\s*\}\}\s*<\/p>/gi, keyFeaturesHtml)
+    .replace(/\{\{\s*body_description\s*\}\}/gi, descriptionHtml)
+    .replace(/\{\{\s*body_key_features\s*\}\}/gi, keyFeaturesHtml)
+    .replace(/\{\{\s*body_testing_notes\s*\}\}/gi, testingNotesHtml)
+    .replace(/\{\{\s*[a-z0-9_]+\s*\}\}/gi, '')
+    .trim();
+
+  if (testingNotesHtml && !includesTestingNotesToken) {
+    return tokenResolved ? `${tokenResolved}\n${testingNotesHtml}`.trim() : testingNotesHtml;
+  }
+
+  return tokenResolved;
 }
 
 function formatBulletList(value: string): string {

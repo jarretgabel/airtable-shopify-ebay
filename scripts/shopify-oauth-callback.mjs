@@ -20,7 +20,7 @@ const CLIENT_ID = process.env.VITE_SHOPIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.VITE_SHOPIFY_CLIENT_SECRET;
 const STORE_DOMAIN = process.env.VITE_SHOPIFY_STORE_DOMAIN;
 const REDIRECT_URI = 'http://localhost:3000/auth/callback';
-const SCOPES = 'write_products,read_products,read_inventory,write_inventory';
+const SCOPES = 'write_products,read_products,read_inventory,write_inventory,read_locations';
 const STATE = Math.random().toString(36).substring(2, 10);
 
 if (!CLIENT_ID || !CLIENT_SECRET || !STORE_DOMAIN) {
