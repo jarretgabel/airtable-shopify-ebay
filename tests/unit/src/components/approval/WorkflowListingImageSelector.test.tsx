@@ -115,4 +115,72 @@ describe('WorkflowListingImageSelector', () => {
     expect(availableCards).toHaveLength(1);
     expect(availableCards[0]).toHaveTextContent('testing-1-processed.jpg');
   });
+
+  it('hides same-filename URL variants from available uploads', () => {
+    render(
+      <WorkflowListingImageSelector
+        attachments={[
+          {
+            id: 'att-photo-1-primary',
+            url: 'https://images.example.com/proxy/abc123?asset=photo1',
+            filename: 'photos--photos--rec-example-photos-1-processed.jpg',
+          },
+          {
+            id: 'att-photo-1-variant',
+            url: 'https://cdn.example.com/render/xyz789?variant=thumb',
+            filename: 'photos--photos--rec-example-photos-1-processed.jpg',
+          },
+          {
+            id: 'att-testing-1',
+            url: 'https://cdn.example.com/testing-1.jpg',
+            filename: 'testing--testing--rec-example-testing-1-processed.jpg',
+          },
+        ]}
+        selectedUrls={['https://images.example.com/proxy/abc123?asset=photo1']}
+        onSelectionChange={() => {}}
+      />,
+    );
+
+    const selectedCards = screen.getAllByTestId('selected-listing-image-card');
+    expect(selectedCards).toHaveLength(1);
+    expect(selectedCards[0]).toHaveTextContent('photos--photos--rec-example-photos-1-processed.jpg');
+
+    const availableCards = screen.getAllByTestId('available-listing-image-card');
+    expect(availableCards).toHaveLength(1);
+    expect(availableCards[0]).toHaveTextContent('testing--testing--rec-example-testing-1-processed.jpg');
+  });
+
+  it('dedupes filename variants that differ only by punctuation', () => {
+    render(
+      <WorkflowListingImageSelector
+        attachments={[
+          {
+            id: 'att-photo-1-a',
+            url: 'https://cdn.example.com/images/photos--rec-example-photos-1-processed.jpg?token=abc',
+            filename: 'photos--rec-example-photos-1-processed.jpg',
+          },
+          {
+            id: 'att-photo-1-b',
+            url: 'https://cdn.example.com/images/photos__rec_example_photos_1_processed.jpg?token=xyz',
+            filename: 'photos__rec_example_photos_1_processed.jpg',
+          },
+          {
+            id: 'att-testing-1',
+            url: 'https://cdn.example.com/images/testing-1-processed.jpg',
+            filename: 'testing-1-processed.jpg',
+          },
+        ]}
+        selectedUrls={['https://cdn.example.com/images/photos--rec-example-photos-1-processed.jpg?token=abc']}
+        onSelectionChange={() => {}}
+      />,
+    );
+
+    const selectedCards = screen.getAllByTestId('selected-listing-image-card');
+    expect(selectedCards).toHaveLength(1);
+    expect(selectedCards[0]).toHaveTextContent('photos--rec-example-photos-1-processed.jpg');
+
+    const availableCards = screen.getAllByTestId('available-listing-image-card');
+    expect(availableCards).toHaveLength(1);
+    expect(availableCards[0]).toHaveTextContent('testing-1-processed.jpg');
+  });
 });

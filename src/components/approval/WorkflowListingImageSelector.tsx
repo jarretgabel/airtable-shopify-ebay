@@ -67,6 +67,14 @@ function getUrlBasename(url: string): string {
   }
 }
 
+function normalizeIdentityToken(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
 function getAttachmentLookupKeys(attachment: WorkflowListingImageAttachment): string[] {
   const keys = new Set<string>();
   const normalizedUrl = normalizeUrlForLookup(attachment.url);
@@ -74,8 +82,10 @@ function getAttachmentLookupKeys(attachment: WorkflowListingImageAttachment): st
 
   const basename = getUrlBasename(attachment.url);
   if (basename) keys.add(`basename:${basename}`);
+  const normalizedBasename = normalizeIdentityToken(basename);
+  if (normalizedBasename) keys.add(`basename-normalized:${normalizedBasename}`);
 
-  const normalizedFilename = attachment.filename.trim().toLowerCase();
+  const normalizedFilename = normalizeIdentityToken(attachment.filename);
   if (normalizedFilename) keys.add(`filename:${normalizedFilename}`);
 
   if (attachment.id?.trim()) {
@@ -91,14 +101,14 @@ function getAttachmentIdentity(attachment: WorkflowListingImageAttachment): stri
     return normalizedUrl;
   }
 
+  const normalizedFilename = normalizeIdentityToken(attachment.filename);
+  if (normalizedFilename) {
+    return `filename:${normalizedFilename}`;
+  }
+
   const basename = getUrlBasename(attachment.url);
   if (basename) {
     return `basename:${basename}`;
-  }
-
-  const normalizedFilename = attachment.filename.trim().toLowerCase();
-  if (normalizedFilename) {
-    return `filename:${normalizedFilename}`;
   }
 
   return `url:${normalizedUrl}`;
@@ -111,6 +121,8 @@ function getSelectedLookupKeys(url: string): string[] {
 
   const basename = getUrlBasename(url);
   if (basename) keys.add(`basename:${basename}`);
+  const normalizedBasename = normalizeIdentityToken(basename);
+  if (normalizedBasename) keys.add(`basename-normalized:${normalizedBasename}`);
 
   return Array.from(keys);
 }
@@ -124,6 +136,14 @@ export function WorkflowListingImageSelector({
   sourceActions,
 }: WorkflowListingImageSelectorProps) {
   const [previewAttachment, setPreviewAttachment] = useState<WorkflowListingImageAttachment | null>(null);
+  const uniqueAttachments: WorkflowListingImageAttachment[] = [];
+  const seenAttachmentIdentity = new Set<string>();
+  attachments.forEach((attachment) => {
+    const identity = getAttachmentIdentity(attachment);
+    if (!identity || seenAttachmentIdentity.has(identity)) return;
+    seenAttachmentIdentity.add(identity);
+    uniqueAttachments.push(attachment);
+  });
   const attachmentByLookupKey = new Map<string, WorkflowListingImageAttachment>();
   attachments.forEach((attachment) => {
     getAttachmentLookupKeys(attachment).forEach((key) => {
@@ -148,7 +168,7 @@ export function WorkflowListingImageSelector({
   });
 
   const selectedCount = selectedAttachments.length;
-  const availableAttachments = attachments.filter((attachment) => {
+  const availableAttachments = uniqueAttachments.filter((attachment) => {
     const identity = getAttachmentIdentity(attachment);
     return !selectedAttachmentIdentity.has(identity);
   });
@@ -327,11 +347,11 @@ export function WorkflowListingImageSelector({
           ) : null}
         </div>
         <div className="rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--ink)]">
-          {selectedCount} of {attachments.length} selected
+          {selectedCount} of {uniqueAttachments.length} selected
         </div>
       </div>
 
-      {attachments.length === 0 ? (
+      {uniqueAttachments.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-[var(--line)] bg-[var(--panel)]/60 px-4 py-6 text-sm text-[var(--muted)]">
           Upload images in the Testing or Photos form before selecting them for the listing.
         </div>

@@ -24,6 +24,54 @@ function isProcessedWorkflowImage(filename: string, url?: string): boolean {
   return /(^|[-_])processed/.test(sample);
 }
 
+function getGoogleDriveFileId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.includes('drive.google.com')) return null;
+
+    const queryId = parsed.searchParams.get('id')?.trim();
+    if (queryId) return queryId;
+
+    const pathMatch = parsed.pathname.match(/\/d\/([^/]+)/);
+    return pathMatch?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeIdentityToken(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function getUrlBasename(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+
+  try {
+    const parsed = new URL(trimmed);
+    return (parsed.pathname.split('/').pop() ?? '').trim();
+  } catch {
+    return (trimmed.split('/').pop() ?? '').trim();
+  }
+}
+
+function getWorkflowAttachmentIdentity(attachment: { filename: string; url: string }): string {
+  const driveId = getGoogleDriveFileId(attachment.url);
+  if (driveId) return `gdrive:${driveId.toLowerCase()}`;
+
+  const normalizedFilename = normalizeIdentityToken(attachment.filename);
+  if (normalizedFilename) return `filename:${normalizedFilename}`;
+
+  const normalizedBasename = normalizeIdentityToken(getUrlBasename(attachment.url));
+  if (normalizedBasename) return `basename:${normalizedBasename}`;
+
+  return `url:${attachment.url.trim().toLowerCase()}`;
+}
+
 export function useApprovalFormFieldSetup({
   recordId,
   approvalChannel,
@@ -193,11 +241,20 @@ export function useApprovalFormFieldSetup({
         return !meta || meta.sourceStage !== 'intake';
       });
 
+      const dedupedListingAttachments: typeof listingAttachments = [];
+      const seenIdentities = new Set<string>();
+      listingAttachments.forEach((attachment) => {
+        const identity = getWorkflowAttachmentIdentity(attachment);
+        if (!identity || seenIdentities.has(identity)) return;
+        seenIdentities.add(identity);
+        dedupedListingAttachments.push(attachment);
+      });
+
       const sortOrderByUrl = new Map(
         workflowImageMetadata.map((record) => [record.url.trim().toLowerCase(), record.sortOrder] as const),
       );
 
-      return [...listingAttachments].sort((left, right) => {
+      return [...dedupedListingAttachments].sort((left, right) => {
         const leftOrder = sortOrderByUrl.get(left.url.trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
         const rightOrder = sortOrderByUrl.get(right.url.trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
         if (leftOrder !== rightOrder) return leftOrder - rightOrder;
