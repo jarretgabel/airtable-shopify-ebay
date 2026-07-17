@@ -1004,16 +1004,25 @@ function buildTaxonomySearchCandidates(raw: string): string[] {
 
   if (segments.length > 0) {
     const leaf = segments[segments.length - 1];
-    candidates.push(leaf);
     if (segments.length > 1) {
       const leafPair = `${segments[segments.length - 2]} ${leaf}`.trim();
       candidates.push(leafPair);
     }
+    candidates.push(leaf);
   }
 
   candidates.push(normalized.replace(/\s*>\s*/g, ' '));
 
   return Array.from(new Set(candidates.map((candidate) => candidate.trim()).filter(Boolean)));
+}
+
+function getTaxonomyCandidateSpecificity(lookupCandidate: string): number {
+  const normalized = lookupCandidate.trim().toLowerCase();
+  if (!normalized) return 0;
+  if (normalized.includes('>')) return 4;
+  const tokenCount = normalized.split(/\s+/).filter(Boolean).length;
+  if (tokenCount >= 2) return 3;
+  return 1;
 }
 
 function scoreTaxonomyMatch(match: ShopifyTaxonomyCategoryMatch, lookup: string): number {
@@ -1025,6 +1034,8 @@ function scoreTaxonomyMatch(match: ShopifyTaxonomyCategoryMatch, lookup: string)
     .map((segment) => segment.trim().toLowerCase())
     .filter(Boolean);
   const leafLookup = lookupSegments[lookupSegments.length - 1] ?? normalizedLookup;
+  const prefixTwo = lookupSegments.slice(0, 2).join(' > ');
+  const prefixOne = lookupSegments.slice(0, 1).join(' > ');
 
   let score = 0;
 
@@ -1037,6 +1048,12 @@ function scoreTaxonomyMatch(match: ShopifyTaxonomyCategoryMatch, lookup: string)
     const matchedSegments = lookupSegments.filter((segment) => normalizedFullName.includes(segment)).length;
     score += matchedSegments * 8;
     if (matchedSegments === lookupSegments.length) score += 20;
+  }
+
+  if (prefixTwo && normalizedFullName.startsWith(prefixTwo)) {
+    score += 35;
+  } else if (prefixOne && normalizedFullName.startsWith(prefixOne)) {
+    score += 15;
   }
 
   if (match.isLeaf) score += 5;
@@ -1059,12 +1076,18 @@ export async function resolveTaxonomyCategory(searchOrId: string): Promise<Shopi
 
   const candidates = buildTaxonomySearchCandidates(normalized);
   const matchesById = new Map<string, ShopifyTaxonomyCategoryMatch>();
+  const matchSpecificityById = new Map<string, number>();
 
   for (const candidate of candidates) {
+    const candidateSpecificity = getTaxonomyCandidateSpecificity(candidate);
     const candidateMatches = await searchTaxonomyCategories(candidate, 25);
     candidateMatches.forEach((match) => {
       if (!matchesById.has(match.id)) {
         matchesById.set(match.id, match);
+      }
+      const previousSpecificity = matchSpecificityById.get(match.id) ?? 0;
+      if (candidateSpecificity > previousSpecificity) {
+        matchSpecificityById.set(match.id, candidateSpecificity);
       }
     });
   }
@@ -1082,12 +1105,15 @@ export async function resolveTaxonomyCategory(searchOrId: string): Promise<Shopi
   if (matches.length === 1) return matches[0];
 
   const scored = matches
-    .map((match) => ({ match, score: scoreTaxonomyMatch(match, normalized) }))
+    .map((match) => ({
+      match,
+      score: scoreTaxonomyMatch(match, normalized) + ((matchSpecificityById.get(match.id) ?? 0) * 10),
+    }))
     .sort((left, right) => right.score - left.score);
 
   const best = scored[0];
   const runnerUp = scored[1];
-  if (best && best.score >= 25 && (!runnerUp || best.score > runnerUp.score)) {
+  if (best && best.score >= 25 && (!runnerUp || best.score >= runnerUp.score)) {
     return best.match;
   }
 
