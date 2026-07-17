@@ -1046,7 +1046,25 @@ async function validateFulfillmentPolicyForMarketplace(
   }
 
   if (!response.ok) {
-    throw new HttpError(response.status, `Unable to load eBay fulfillment policy "${normalizedPolicyId}": ${await readErrorPayload(response)}`, {
+    const errorPayloadText = await readErrorPayload(response);
+    let errorPayload: { errors?: Array<{ errorId?: number; longMessage?: string; message?: string }> } = {};
+    try {
+      errorPayload = errorPayloadText ? JSON.parse(errorPayloadText) as typeof errorPayload : {};
+    } catch {
+      errorPayload = {};
+    }
+
+    const notEligible = (errorPayload.errors ?? []).some((error) =>
+      error.errorId === 20403 || (error.longMessage ?? error.message ?? '').toLowerCase().includes('not eligible for business policy'));
+    if (response.status === 400 && notEligible) {
+      throw new HttpError(400, 'This eBay seller account is not eligible for Business Policies. Enable Business Policies in Seller Hub (or switch to an eligible seller account), then update fulfillment/payment/return policy IDs and retry.', {
+        service: 'ebay',
+        code: 'EBAY_BUSINESS_POLICIES_NOT_ELIGIBLE',
+        retryable: false,
+      });
+    }
+
+    throw new HttpError(response.status, `Unable to load eBay fulfillment policy "${normalizedPolicyId}": ${errorPayloadText}`, {
       service: 'ebay',
       code: 'EBAY_FULFILLMENT_POLICY_LOOKUP_FAILED',
       retryable: response.status >= 500,
