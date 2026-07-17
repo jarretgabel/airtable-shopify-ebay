@@ -118,6 +118,93 @@ export interface EbayUploadedImageResult {
   url: string;
 }
 
+function isGoogleDriveUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname === 'drive.google.com' || parsed.hostname === 'docs.google.com';
+  } catch {
+    return false;
+  }
+}
+
+function extractGoogleDriveFileId(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const fromQuery = parsed.searchParams.get('id')?.trim();
+    if (fromQuery) return fromQuery;
+    const match = parsed.pathname.match(/\/file\/d\/([^/]+)/i);
+    return match?.[1]?.trim() ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function buildGoogleDriveDownloadUrl(url: string): string {
+  const fileId = extractGoogleDriveFileId(url);
+  if (!fileId) return url;
+  return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+}
+
+function inferImageFileNameFromUrl(url: string, index: number): string {
+  try {
+    const parsed = new URL(url);
+    const pathnamePart = parsed.pathname.split('/').filter(Boolean).at(-1) || '';
+    const clean = pathnamePart.replace(/[^a-zA-Z0-9._-]/g, '').trim();
+    if (clean && /\.[a-z0-9]{2,5}$/i.test(clean)) return clean;
+  } catch {
+    // Fall through.
+  }
+  return `listing-image-${index + 1}.jpg`;
+}
+
+async function maybeConvertExternalImageUrlsToEbayHosted(
+  inventoryItem: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const product = inventoryItem.product;
+  if (!product || typeof product !== 'object') return inventoryItem;
+
+  const productRecord = product as Record<string, unknown>;
+  const rawImageUrls = productRecord.imageUrls;
+  if (!Array.isArray(rawImageUrls) || rawImageUrls.length === 0) return inventoryItem;
+
+  const convertedUrls = await Promise.all(rawImageUrls.map(async (entry, index) => {
+    if (typeof entry !== 'string' || !entry.trim()) return entry;
+    const trimmed = entry.trim();
+    if (!isGoogleDriveUrl(trimmed)) return trimmed;
+
+    const fetchUrl = buildGoogleDriveDownloadUrl(trimmed);
+    try {
+      const response = await fetch(fetchUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; ResolutionAVBot/1.0)',
+        },
+      });
+      if (!response.ok) return trimmed;
+      const mimeType = response.headers.get('content-type')?.split(';')[0]?.trim() || 'image/jpeg';
+      if (!mimeType.startsWith('image/')) return trimmed;
+      const bytes = Buffer.from(await response.arrayBuffer());
+      if (bytes.length === 0) return trimmed;
+
+      const uploaded = await uploadImageToEbayHostedPictures(
+        inferImageFileNameFromUrl(trimmed, index),
+        mimeType,
+        bytes.toString('base64'),
+      );
+      return uploaded.url || trimmed;
+    } catch {
+      return trimmed;
+    }
+  }));
+
+  return {
+    ...inventoryItem,
+    product: {
+      ...productRecord,
+      imageUrls: convertedUrls,
+    },
+  };
+}
+
 export interface EbayPublishedListing {
   item: EbayInventoryItem;
   offer: EbayOffer;
@@ -1006,6 +1093,21 @@ function isFulfillmentPolicyPublishError(errorBody: unknown, responseText: strin
     && (combined.includes('shipping service option') || combined.includes('shipping service'));
 }
 
+function readOfferPriceValue(offerPayload: Record<string, unknown>): { format: string; value: string; numeric: number } {
+  const format = String(offerPayload.format ?? 'FIXED_PRICE').trim().toUpperCase() || 'FIXED_PRICE';
+  const pricingSummary = (offerPayload.pricingSummary ?? {}) as {
+    price?: { value?: unknown };
+    auctionStartPrice?: { value?: unknown };
+  };
+
+  const rawValue = format === 'AUCTION'
+    ? pricingSummary.auctionStartPrice?.value
+    : pricingSummary.price?.value;
+  const value = String(rawValue ?? '').trim();
+  const numeric = Number(value);
+  return { format, value, numeric };
+}
+
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -1811,7 +1913,8 @@ export async function pushApprovalBundleToEbay(
   const token = await getValidUserToken();
   const sku = normalizeSku(bundle);
   await upsertWarehouseLocation(token, resolvedPublishSetup.locationConfig);
-  await upsertInventoryItem(token, sku, bundle.inventoryItem);
+  const inventoryItemPayload = await maybeConvertExternalImageUrlsToEbayHosted(bundle.inventoryItem);
+  await upsertInventoryItem(token, sku, inventoryItemPayload);
 
   const existingOffers = await getOffersWithToken(token, sku, 1);
   const existingOffer = existingOffers.offers[0];
@@ -1846,6 +1949,18 @@ export async function pushApprovalBundleToEbay(
       returnPolicyId: resolvedPublishSetup.policyConfig.returnPolicyId,
     },
   };
+
+  const offerPrice = readOfferPriceValue(offerPayload);
+  if (!offerPrice.value || !Number.isFinite(offerPrice.numeric) || offerPrice.numeric <= 0) {
+    const fieldHint = offerPrice.format === 'AUCTION'
+      ? 'eBay Offer Auction Start Price Value'
+      : 'eBay Offer Price Value (or Price / Buy It Now fields)';
+    throw new HttpError(400, `Invalid eBay ${offerPrice.format} price "${offerPrice.value || '<empty>'}". Set a positive price in ${fieldHint} before publishing.`, {
+      service: 'ebay',
+      code: 'EBAY_PRICE_INVALID',
+      retryable: false,
+    });
+  }
 
   await validateFulfillmentPolicyForMarketplace(
     token,

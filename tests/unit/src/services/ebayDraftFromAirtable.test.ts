@@ -39,11 +39,11 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       sku: 'EBAY-SKU-1',
       product: {
         title: 'eBay Product Title',
-        description: '<p>eBay description</p>',
+        description: 'eBay description',
         imageUrls: ['https://cdn.example.com/1.jpg', 'https://cdn.example.com/2.jpg'],
         brand: 'McIntosh',
         mpn: 'MA8900',
-        aspects: { Brand: ['McIntosh'] },
+        aspects: { Brand: ['McIntosh'], Model: ['MA8900'], MPN: ['MA8900'] },
       },
       condition: 'USED_EXCELLENT',
       conditionDescription: undefined,
@@ -88,6 +88,181 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
           Condition: ['Excellent'],
           Includes: ['Remote and manual'],
           Finish: ['Black'],
+        },
+      },
+    });
+  });
+
+  it('converts plain description text into HTML for eBay listing description fields', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-DESC-HTML',
+      Description: 'Line one\nLine two',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-DESC-HTML',
+      product: {
+        description: 'Line one\nLine two',
+      },
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-DESC-HTML',
+      listingDescription: '<p>Line one<br />Line two</p>',
+    });
+  });
+
+  it('keeps full eBay body HTML for listingDescription and keeps inventory description plain text', () => {
+    const fullHtml = '<!DOCTYPE html><html><head><style>p{color:red;}</style></head><body><div><p>Line One</p><p>Line Two</p></div></body></html>';
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-FULL-DOC',
+      'Ebay Body (HTML)': fullHtml,
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-FULL-DOC',
+      product: {
+        description: 'Line One\nLine Two',
+      },
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-FULL-DOC',
+      listingDescription: fullHtml,
+    });
+  });
+
+  it('prefers plain Description for inventory description while keeping full eBay body HTML for listingDescription', () => {
+    const fullHtml = '<!DOCTYPE html><html><head><style>.x{color:#111;}</style></head><body><div class="x"><p>Styled HTML Body</p></div></body></html>';
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-SPLIT-DESC',
+      'Ebay Body (HTML)': fullHtml,
+      Description: 'Plain summary from Description field',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-SPLIT-DESC',
+      product: {
+        description: 'Plain summary from Description field',
+      },
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-SPLIT-DESC',
+      listingDescription: fullHtml,
+    });
+  });
+
+  it('maps Model alias into eBay product aspects', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-MODEL',
+      Brand: 'Marantz',
+      Model: '2270',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-MODEL',
+      product: {
+        mpn: '2270',
+        aspects: {
+          Brand: ['Marantz'],
+          Model: ['2270'],
+          MPN: ['2270'],
+        },
+      },
+    });
+  });
+
+  it('maps Make into eBay Brand when Brand field is missing', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-MAKE-BRAND',
+      Make: 'McIntosh',
+      Model: 'MC275',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-MAKE-BRAND',
+      product: {
+        brand: 'McIntosh',
+        mpn: 'MC275',
+        aspects: {
+          Brand: ['McIntosh'],
+          Model: ['MC275'],
+          MPN: ['MC275'],
+        },
+      },
+    });
+  });
+
+  it('maps Component Type into eBay Type when Type field is missing', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-TYPE',
+      Make: 'Accuphase',
+      Model: 'E-470',
+      'Component Type': 'Integrated Amplifier',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-TYPE',
+      product: {
+        type: 'Integrated Amplifier',
+        aspects: {
+          Type: ['Integrated Amplifier'],
+        },
+      },
+    });
+  });
+
+  it('prefers Component Type array over Shopify Type taxonomy for eBay Type', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-TYPE-PREF',
+      'Component Type': ['Stereo Receiver'],
+      'Shopify Type': 'Electronics > Audio > Receivers',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-TYPE-PREF',
+      product: {
+        type: 'Stereo Receiver',
+        aspects: {
+          Connectivity: ['Wired'],
+          Type: ['Stereo Receiver'],
+        },
+      },
+    });
+  });
+
+  it('maps explicit connectivity aliases into eBay Connectivity', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-CONNECTIVITY',
+      Brand: 'KEF',
+      Model: 'LSX II',
+      Connectivity: 'Bluetooth',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-CONNECTIVITY',
+      product: {
+        aspects: {
+          Connectivity: ['Wireless'],
+        },
+      },
+    });
+  });
+
+  it('infers Model from title when explicit model is missing', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-MODEL-INFER',
+      Brand: 'Marantz',
+      Title: 'Marantz 2270 - Fully Restored',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-MODEL-INFER',
+      product: {
+        aspects: {
+          Brand: ['Marantz'],
+          Model: ['2270'],
         },
       },
     });
@@ -199,7 +374,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     });
   });
 
-  it('prefers Airtable Body HTML over Description for eBay payload descriptions', () => {
+  it('prefers Airtable Body HTML for listingDescription while inventory description prefers plain Description', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-BODY-HTML',
       Description: 'Plain text fallback description',
@@ -209,7 +384,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-BODY-HTML',
       product: {
-        description: '<p>Rich HTML description</p>',
+        description: 'Plain text fallback description',
       },
     });
 
@@ -218,6 +393,27 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       listingDescription: '<p>Rich HTML description</p>',
     });
   });
+
+    it('prefers eBay Body HTML over generic Body HTML for listingDescription while inventory description prefers plain Description', () => {
+      const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+        'eBay Inventory SKU': 'EBAY-SKU-EBAY-BODY-HTML',
+        'eBay Body HTML': '<p>eBay-specific HTML</p>',
+        'Body HTML': '<p>Generic Body HTML</p>',
+        Description: 'Plain text fallback description',
+      });
+
+      expect(payload.inventoryItem).toMatchObject({
+        sku: 'EBAY-SKU-EBAY-BODY-HTML',
+        product: {
+          description: 'Plain text fallback description',
+        },
+      });
+
+      expect(payload.offer).toMatchObject({
+        sku: 'EBAY-SKU-EBAY-BODY-HTML',
+        listingDescription: '<p>eBay-specific HTML</p>',
+      });
+    });
 
   it('always includes an offer format and defaults to FIXED_PRICE when Airtable is blank', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
@@ -228,6 +424,26 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     expect(payload.offer).toMatchObject({
       sku: 'EBAY-SKU-DEFAULT-FORMAT',
       format: 'FIXED_PRICE',
+    });
+  });
+
+  it('supports legacy Airtable alias "Ebay Body (HTML)" for listingDescription while inventory description prefers plain Description', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-EBAY-BODY-ALIAS',
+      'Ebay Body (HTML)': '<p>Legacy Airtable eBay HTML</p>',
+      Description: 'Plain text fallback description',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: 'EBAY-SKU-EBAY-BODY-ALIAS',
+      product: {
+        description: 'Plain text fallback description',
+      },
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-EBAY-BODY-ALIAS',
+      listingDescription: '<p>Legacy Airtable eBay HTML</p>',
     });
   });
 
@@ -351,6 +567,23 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       sku: 'EBAY-SKU-8A',
       categoryId: '293',
       secondaryCategoryId: '11700',
+    });
+  });
+
+  it('maps Ebay Price alias into fixed price listing payload', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-8P',
+      'Ebay Price': 2299,
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-8P',
+      pricingSummary: {
+        price: {
+          value: '2299',
+          currency: 'USD',
+        },
+      },
     });
   });
 
