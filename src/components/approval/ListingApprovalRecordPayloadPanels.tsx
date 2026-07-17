@@ -241,6 +241,12 @@ export function ShopifyApprovalPayloadDetails({
             <p className="m-0 mt-1">Metafields Count: <code>{String(shopifyPayloadDebug.metafieldsCount)}</code></p>
             <p className="m-0 mt-1">custom.condition: <code>{shopifyPayloadDebug.conditionMetafieldValue || '(missing)'}</code></p>
           </div>
+          {!shopifyDraftCreatePayloadJson && (
+            <div className={`${cautionInlineBannerClass} mb-2 px-2 py-2 text-xs text-rose-100/90`}>
+              <p className="m-0 font-semibold text-rose-100">Shopify payload preview unavailable</p>
+              <p className="m-0 mt-1">The latest Shopify preview response did not include a payload. The fallback JSON below is a placeholder, not the live request.</p>
+            </div>
+          )}
           <p className="m-0 mb-2 text-xs text-[var(--muted)]">GraphQL <code>productSet</code> request</p>
           <pre className={detailPreBlockClass}>{shopifyDraftCreatePayloadJson || '{\n  "query": "",\n  "variables": {\n    "input": {}\n  }\n}'}</pre>
           {shopifyCategorySyncPreviewJson && (
@@ -283,6 +289,12 @@ export function EbayApprovalPayloadDetails({
           <p className="m-0 mb-2 text-xs text-[var(--muted)]">
             Live payload preview for eBay Inventory Item and Offer requests using the current page values.
           </p>
+          {!ebayDraftPayloadBundleJson && (
+            <div className={`${cautionInlineBannerClass} mb-2 px-2 py-2 text-xs text-rose-100/90`}>
+              <p className="m-0 font-semibold text-rose-100">eBay payload preview unavailable</p>
+              <p className="m-0 mt-1">The latest eBay preview response did not include a payload. The fallback JSON below is a placeholder, not the live request.</p>
+            </div>
+          )}
           <pre className={detailPreBlockClass}>{ebayDraftPayloadBundleJson || '{\n  "inventoryItem": {},\n  "offer": {}\n}'}</pre>
         </div>
       </details>

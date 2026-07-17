@@ -26,11 +26,27 @@ export async function normalizeApprovalFields(
   };
 
   if (params.target === 'shopify' || params.target === 'both') {
-    result.shopify = await dependencies.buildShopifyApprovalPreviewFromFields(params.fields);
+    if (params.target === 'both') {
+      try {
+        result.shopify = await dependencies.buildShopifyApprovalPreviewFromFields(params.fields);
+      } catch {
+        // In combined preview mode, keep eBay preview available even when Shopify preview fails.
+      }
+    } else {
+      result.shopify = await dependencies.buildShopifyApprovalPreviewFromFields(params.fields);
+    }
   }
 
   if (params.target === 'ebay' || params.target === 'both') {
-    result.ebay = dependencies.buildEbayApprovalPreviewFromFields(params.fields, params.bodyPreview, params.categoryPreview);
+    if (params.target === 'both') {
+      try {
+        result.ebay = dependencies.buildEbayApprovalPreviewFromFields(params.fields, params.bodyPreview, params.categoryPreview);
+      } catch {
+        // In combined preview mode, keep Shopify preview available even when eBay preview fails.
+      }
+    } else {
+      result.ebay = dependencies.buildEbayApprovalPreviewFromFields(params.fields, params.bodyPreview, params.categoryPreview);
+    }
   }
 
   return result;

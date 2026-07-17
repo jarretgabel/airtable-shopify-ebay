@@ -166,7 +166,7 @@ export const SHOPIFY_UNIFIED_PRODUCT_SET_DOCS_EXAMPLE: {
       category: 'gid://shopify/TaxonomyCategory/el-2-3-10',
       tags: ['Vintage Audio', 'Turntable'],
       collectionsToJoin: ['gid://shopify/Collection/1234567890'],
-      templateSuffix: 'product-template',
+      templateSuffix: 'used-products',
       files: [
         {
           originalSource: 'https://example.com/image-1.jpg',

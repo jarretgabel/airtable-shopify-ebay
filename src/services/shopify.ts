@@ -339,9 +339,8 @@ export function normalizeShopifyProductForUpsert(product: ShopifyProduct): Shopi
     published_scope: typeof product.published_scope === 'string' && product.published_scope.trim().length > 0
       ? product.published_scope
       : 'web',
-    template_suffix: typeof product.template_suffix === 'string' && product.template_suffix.trim().length > 0
-      ? product.template_suffix
-      : 'product-template',
+    // Force a single theme template for all upserts; ignore source/template field input.
+    template_suffix: 'used-products',
     variants: ensureRequiredVariant(product),
   };
 }

@@ -407,7 +407,8 @@ function sanitizeProductPayload(product: ShopifyProduct): ShopifyProduct {
     status: normalizeStatus(product.status) ?? 'draft',
     tags: coerceToString(product.tags ?? '') || undefined,
     published_scope: normalizePublishedScope(product.published_scope),
-    template_suffix: coerceToString(product.template_suffix ?? '') || undefined,
+    // Force a single theme template for all payloads; ignore source/template field input.
+    template_suffix: 'used-products',
     variants: normalizedVariants,
     options,
     images: sanitizeImages(product.images),

@@ -13,7 +13,10 @@ import {
   isRemovedCombinedEbayPriceFieldName,
 } from '@/components/approval/listingApprovalFieldHelpers';
 import { buildEbayBodyHtmlFromTemplate } from '@/services/ebayBodyHtml';
+import { buildEbayDraftPayloadBundleFromApprovalFields } from '@/services/ebayDraftFromAirtable';
+import { buildShopifyDraftProductFromApprovalFields } from '@/services/shopifyDraftFromAirtableProduct';
 import { resolveShopifyBodyHtml } from '@/services/shopifyDraftFromAirtableBody';
+import { buildShopifyUnifiedProductSetRequest } from '@/services/shopify';
 import { useApprovalPreview } from '@/hooks/approval/useApprovalPreview';
 import { fromFormValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
@@ -145,7 +148,19 @@ export function useListingApprovalPreviewState({
   const currentPageCategoryIdResolution = shopifyApprovalPreview?.categoryIdResolution ?? EMPTY_SHOPIFY_FIELD_RESOLUTION;
   const shopifyCategoryLookupValue = shopifyApprovalPreview?.categoryLookupValue ?? '';
   const shopifyCategoryResolution = shopifyApprovalPreview?.categoryResolution ?? EMPTY_SHOPIFY_CATEGORY_RESOLUTION;
-  const shopifyProductSetRequest = shopifyApprovalPreview?.productSetRequest ?? null;
+  const localFallbackShopifyProductSetRequest = useMemo(() => {
+    if (!isShopifyPayloadPreviewContext) return null;
+    if (!mergedDraftSourceFields && !selectedRecord?.fields) return null;
+
+    try {
+      const previewFields = buildCombinedPreviewSourceFields(formValues, mergedDraftSourceFields, selectedRecord);
+      const draftProduct = buildShopifyDraftProductFromApprovalFields(previewFields);
+      return buildShopifyUnifiedProductSetRequest(draftProduct);
+    } catch {
+      return null;
+    }
+  }, [formValues, isShopifyPayloadPreviewContext, mergedDraftSourceFields, selectedRecord]);
+  const shopifyProductSetRequest = shopifyApprovalPreview?.productSetRequest ?? localFallbackShopifyProductSetRequest;
   const localCombinedEbayGeneratedBodyHtml = useMemo(() => {
     if (!isCombinedApproval) return '';
     if (!selectedEbayTemplateHtml.trim()) return '';
@@ -208,8 +223,21 @@ export function useListingApprovalPreviewState({
 
   const ebayDraftPayloadBundle = useMemo(() => {
     if (!isEbayPayloadPreviewContext) return null;
-    return ebayApprovalPreview?.draftPayloadBundle ?? null;
-  }, [ebayApprovalPreview, isEbayPayloadPreviewContext]);
+    if (ebayApprovalPreview?.draftPayloadBundle) {
+      return ebayApprovalPreview.draftPayloadBundle;
+    }
+
+    if (!mergedDraftSourceFields && !selectedRecord?.fields) {
+      return null;
+    }
+
+    try {
+      const previewFields = buildCombinedPreviewSourceFields(formValues, mergedDraftSourceFields, selectedRecord);
+      return buildEbayDraftPayloadBundleFromApprovalFields(previewFields);
+    } catch {
+      return null;
+    }
+  }, [ebayApprovalPreview, formValues, isEbayPayloadPreviewContext, mergedDraftSourceFields, selectedRecord]);
 
   return {
     combinedEbayGeneratedBodyHtml,

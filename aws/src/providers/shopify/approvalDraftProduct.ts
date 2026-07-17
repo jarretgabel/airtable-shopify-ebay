@@ -335,7 +335,8 @@ function sanitizeProductPayload(product: ShopifyProduct): ShopifyProduct {
     status: normalizeStatus(product.status) ?? 'draft',
     tags: product.tags?.trim() || undefined,
     published_scope: normalizePublishedScope(product.published_scope),
-    template_suffix: product.template_suffix?.trim() || undefined,
+    // Force a single theme template for all payloads; ignore source/template field input.
+    template_suffix: 'used-products',
     variants: normalizedVariants,
     options,
     images: sanitizeImages(product.images),

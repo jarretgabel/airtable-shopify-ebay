@@ -194,7 +194,8 @@ export function normalizeShopifyProductForUpsert(product: ShopifyProduct): Shopi
     title: typeof product.title === 'string' && product.title.trim().length > 0 ? product.title.trim() : 'Untitled Listing',
     status: normalizeStatus(product.status) ?? 'draft',
     published_scope: normalizePublishedScope(product.published_scope) ?? 'web',
-    template_suffix: typeof product.template_suffix === 'string' && product.template_suffix.trim().length > 0 ? product.template_suffix : 'product-template',
+    // Force a single theme template for all upserts; ignore source/template field input.
+    template_suffix: 'used-products',
     variants: (Array.isArray(product.variants) && product.variants.length > 0 ? product.variants : [{} as ShopifyProductVariant]).map((variant, index) => {
       const priceRaw = typeof variant?.price === 'string' ? variant.price.trim() : '';
       const price = priceRaw.length > 0 ? priceRaw : undefined;

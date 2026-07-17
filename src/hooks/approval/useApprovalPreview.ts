@@ -203,8 +203,20 @@ export function useApprovalPreview({
     })
       .then((preview) => {
         if (normalizePreviewRequestRef.current !== requestId) return;
-        setShopifyApprovalPreview(preview.shopify ?? null);
-        setEbayApprovalPreview(preview.ebay ?? null);
+        if (target === 'both') {
+          if (preview.shopify !== undefined) {
+            setShopifyApprovalPreview(preview.shopify ?? null);
+          }
+          if (preview.ebay !== undefined) {
+            setEbayApprovalPreview(preview.ebay ?? null);
+          }
+        } else if (target === 'shopify') {
+          setShopifyApprovalPreview(preview.shopify ?? null);
+          setEbayApprovalPreview(null);
+        } else {
+          setEbayApprovalPreview(preview.ebay ?? null);
+          setShopifyApprovalPreview(null);
+        }
         Object.entries(preview.ebay?.categoryFieldUpdates ?? {}).forEach(([fieldName, value]) => {
           if ((latestFormValuesRef.current[fieldName] ?? '') !== value) {
             setDerivedFormValue(fieldName, value);
