@@ -213,8 +213,8 @@ export function useApprovalPreview({
       })
       .catch(() => {
         if (normalizePreviewRequestRef.current !== requestId) return;
-        setShopifyApprovalPreview(null);
-        setEbayApprovalPreview(null);
+        // Keep the last successful preview visible on transient failures and allow retry.
+        lastNormalizeSignatureRef.current = '';
       });
   }, [currentEbayCategoryPreviewInput, currentEbayPreviewBodyInput, isEbayPayloadPreviewContext, isShopifyPayloadPreviewContext, mergedDraftSourceFields, setDerivedFormValue]);
 

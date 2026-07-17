@@ -22,20 +22,6 @@ export interface ImageNamingResult {
   warnings: string[];
 }
 
-const ROLE_LABELS: Record<Exclude<WorkflowImageRole, 'custom'>, string> = {
-  front: 'Front View',
-  rear: 'Rear View',
-  'serial-plate': 'Serial Plate',
-  'cosmetic-detail': 'Cosmetic Detail',
-  connections: 'Connections',
-  top: 'Top View',
-  bottom: 'Bottom View',
-  side: 'Side View',
-  interior: 'Interior',
-  accessories: 'Accessories',
-  packaging: 'Packaging',
-};
-
 const ROLE_FILENAME_DETAIL_TOKENS: Record<Exclude<WorkflowImageRole, 'custom'>, string[]> = {
   front: ['front', 'view'],
   rear: ['rear', 'panel'],
@@ -112,22 +98,63 @@ function clampFilenameTokens(
   return { tokens: nextTokens, warnings };
 }
 
-function toTitle(value: string): string {
+function splitPreservingCase(value: string): string[] {
   return value
     .trim()
-    .split(/\s+/)
-    .map((token) => token ? `${token.slice(0, 1).toUpperCase()}${token.slice(1)}` : '')
-    .join(' ')
-    .trim();
+    .replace(/[^A-Za-z0-9]+/g, ' ')
+    .split(' ')
+    .map((token) => token.trim())
+    .filter(Boolean);
 }
 
-function resolveRoleLabel(role: WorkflowImageRole | undefined, customRole: string | undefined): string {
-  if (!role) return '';
-  if (role === 'custom') {
-    return toTitle(customRole ?? '');
+function toPreferredTokenDisplay(token: string): string {
+  if (token.length === 0) return '';
+
+  if (/[a-z]/.test(token) && /[A-Z]/.test(token)) {
+    return token;
   }
 
-  return ROLE_LABELS[role];
+  if (/^[A-Z0-9]+$/.test(token)) {
+    return token;
+  }
+
+  return `${token.slice(0, 1).toUpperCase()}${token.slice(1)}`;
+}
+
+function buildPreferredTokenCaseMap(context: ImageNamingContext, options: ImageNamingOptions): Map<string, string> {
+  const tokenCaseMap = new Map<string, string>();
+  const roleDetailTokens = buildRoleDetailTokens(options.role, options.customRole);
+  const roleDetailPhrase = roleDetailTokens.join(' ');
+
+  [
+    context.brand,
+    context.model,
+    context.productType,
+    options.customRole ?? '',
+    roleDetailPhrase,
+    options.optionalDescriptor ?? '',
+  ].forEach((value) => {
+    splitPreservingCase(value).forEach((token) => {
+      const normalized = token.toLowerCase();
+      if (!normalized || tokenCaseMap.has(normalized)) {
+        return;
+      }
+
+      tokenCaseMap.set(normalized, toPreferredTokenDisplay(token));
+    });
+  });
+
+  return tokenCaseMap;
+}
+
+function humanizeFilenameToken(token: string, tokenCaseMap: Map<string, string>): string {
+  const normalized = token.toLowerCase();
+  const preferred = tokenCaseMap.get(normalized);
+  if (preferred) {
+    return preferred;
+  }
+
+  return toPreferredTokenDisplay(token);
 }
 
 export function buildImageFilename(context: ImageNamingContext, options: ImageNamingOptions = {}): ImageNamingResult {
@@ -167,11 +194,16 @@ export function buildFallbackImageFilename(inputName: string): string {
 }
 
 export function buildImageAltText(context: ImageNamingContext, options: ImageNamingOptions = {}): string {
-  const brand = toTitle(context.brand);
-  const model = context.model.trim();
-  const productType = toTitle(context.productType);
-  const roleLabel = resolveRoleLabel(options.role, options.customRole);
-  return [brand, model, productType, roleLabel].filter(Boolean).join(' ').trim();
+  const { filename } = buildImageFilename(context, options);
+  const tokenCaseMap = buildPreferredTokenCaseMap(context, options);
+  const tokens = filename
+    .replace(/\.jpg$/i, '')
+    .split('-')
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .map((token) => humanizeFilenameToken(token, tokenCaseMap));
+
+  return tokens.join(' ').trim();
 }
 
 export function isImageRoleComplete(role: WorkflowImageRole | undefined, customRole: string | undefined): boolean {

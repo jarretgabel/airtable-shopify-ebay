@@ -97,6 +97,101 @@ function buildFilename(url: string, fallback: string): string {
   return urlPart || 'Image';
 }
 
+function extractFilenameStem(filename: string): string {
+  return filename.trim().replace(/\.[^.]+$/, '');
+}
+
+function isLegacyWorkflowAltText(alt: string): boolean {
+  const normalized = alt.trim().toLowerCase();
+  if (!normalized) return true;
+
+  const markers = [
+    'intake',
+    'testing',
+    'photos',
+    'photo',
+    'original',
+    'processed',
+    'workflow',
+  ];
+  const markerCount = markers.reduce((count, marker) => count + (normalized.includes(marker) ? 1 : 0), 0);
+
+  if (/\brec[a-z0-9]{8,}\b/i.test(normalized)) {
+    return true;
+  }
+
+  if (markerCount >= 2) {
+    return true;
+  }
+
+  if (markerCount >= 1 && /\b\d+\b/.test(normalized)) {
+    return true;
+  }
+
+  return false;
+}
+
+function normalizeAltComparisonKey(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function formatWorkflowAltToken(token: string): string {
+  if (/^[a-z]{1,4}\d{2,5}$/i.test(token)) {
+    const prefix = token.match(/^[a-z]+/i)?.[0] ?? '';
+    const suffix = token.slice(prefix.length);
+    return `${prefix.toUpperCase()}${suffix}`;
+  }
+
+  return `${token.slice(0, 1).toUpperCase()}${token.slice(1)}`;
+}
+
+function buildWorkflowAltFromFilename(filename: string, url: string): string {
+  const stem = extractFilenameStem(filename) || extractFilenameStem(url.split('/').pop() ?? '');
+  if (!stem) return '';
+
+  const rawTokens = stem
+    .toLowerCase()
+    .split(/[^a-z0-9]+/g)
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .filter((token) => !/^rec[a-z0-9]{8,}$/.test(token));
+
+  if (rawTokens.length === 0) {
+    return '';
+  }
+
+  return rawTokens.slice(0, 10).map((token) => formatWorkflowAltToken(token)).join(' ');
+}
+
+function resolveWorkflowAltText(rawAlt: string, filename: string, url: string): string {
+  const fallbackAlt = buildWorkflowAltFromFilename(filename, url);
+  if (!rawAlt) {
+    return fallbackAlt;
+  }
+
+  if (isLegacyWorkflowAltText(rawAlt)) {
+    return fallbackAlt || rawAlt;
+  }
+
+  const fallbackWordCount = fallbackAlt.split(/\s+/).filter(Boolean).length;
+  const rawWordCount = rawAlt.split(/\s+/).filter(Boolean).length;
+  if (
+    fallbackAlt
+    && rawWordCount <= 2
+    && fallbackWordCount >= 4
+    && normalizeAltComparisonKey(rawAlt) !== normalizeAltComparisonKey(fallbackAlt)
+  ) {
+    return fallbackAlt;
+  }
+
+  return rawAlt;
+}
+
 function normalizeMetadataRecord(value: unknown, fallbackOrder: number): WorkflowImageMetadataRecord | null {
   if (!value || typeof value !== 'object') return null;
 
@@ -107,11 +202,14 @@ function normalizeMetadataRecord(value: unknown, fallbackOrder: number): Workflo
     || normalizeString(record.original_source);
   if (!url) return null;
 
+  const filename = buildFilename(url, normalizeString(record.filename) || normalizeString(record.name));
+  const rawAlt = normalizeString(record.alt) || normalizeString(record.altText) || normalizeString(record.alt_text);
+
   return {
     attachmentId: normalizeString(record.attachmentId) || normalizeString(record.attachment_id) || normalizeString(record.id) || undefined,
     url,
-    filename: buildFilename(url, normalizeString(record.filename) || normalizeString(record.name)),
-    alt: normalizeString(record.alt) || normalizeString(record.altText) || normalizeString(record.alt_text),
+    filename,
+    alt: resolveWorkflowAltText(rawAlt, filename, url),
     imageRole: normalizeImageRole(record.imageRole ?? record.image_role ?? record.role ?? record.imageCategory ?? record.image_category),
     customImageRole: normalizeString(record.customImageRole ?? record.custom_image_role ?? record.customRole ?? record.custom_role) || undefined,
     sortOrder: normalizeSortOrder(record.sortOrder ?? record.sort_order ?? record.position, fallbackOrder),

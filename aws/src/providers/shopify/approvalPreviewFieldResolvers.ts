@@ -13,8 +13,6 @@ const SHOPIFY_BODY_HTML_FIELD_CANDIDATES = [
   'Body HTML',
   'body_html',
   'shopify_rest_body_html',
-  'Item Description',
-  'Description',
 ] as const;
 
 const SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES = [

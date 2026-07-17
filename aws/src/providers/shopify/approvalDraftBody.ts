@@ -244,6 +244,17 @@ const SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS: ShopifyBodyDynamicTokenSpec[] = [
   { token: 'body_shipping_notes', candidates: ['Shopify Body Shipping Notes', 'Shopify REST Body Shipping Notes', 'shopify_body_shipping_notes', 'shopify_rest_body_shipping_notes'] },
 ];
 
+const SHOPIFY_RENDERED_BODY_HTML_FIELD_CANDIDATES = [
+  'Shopify REST Body HTML',
+  'Shopify Body HTML',
+  'Shopify Body (HTML)',
+  'Shopify GraphQL Description HTML',
+  'Body (HTML)',
+  'Body HTML',
+  'body_html',
+  'shopify_rest_body_html',
+] as const;
+
 export function getHandleField(fields: ApprovalFieldMap): string {
   const explicit = getField(fields, ['Shopify REST Handle', 'Shopify Handle', 'Shopify GraphQL Handle', 'shopify_rest_handle', 'shopify_handle', 'Handle', 'handle']);
   if (explicit.length > 0) return explicit;
@@ -252,6 +263,8 @@ export function getHandleField(fields: ApprovalFieldMap): string {
 }
 
 export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
+  const explicitRenderedBodyHtml = getField(fields, [...SHOPIFY_RENDERED_BODY_HTML_FIELD_CANDIDATES]);
+
   const explicitTemplate = getField(fields, [...SHOPIFY_BODY_HTML_TEMPLATE_FIELD_CANDIDATES]);
   const template = explicitTemplate || '<p>{{body_description}}</p>{{body_key_features}}';
   if (!template) return '';
@@ -279,16 +292,19 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   const usesStructuredBodyTokens = /\{\{\s*(body_description|body_key_features)\s*\}\}/i.test(explicitTemplate || '');
 
   if (!explicitTemplate && !bodyDescription && !bodyKeyFeatures) {
-    return '';
+    return explicitRenderedBodyHtml;
   }
 
   if (!explicitTemplate) {
-    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, template, testingNotes);
+    const generated = buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, template, testingNotes);
+    return generated || explicitRenderedBodyHtml;
   }
 
   if (usesStructuredBodyTokens || hasEditableBodyFields) {
-    return buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, explicitTemplate, testingNotes);
+    const generated = buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, explicitTemplate, testingNotes);
+    return generated || explicitRenderedBodyHtml;
   }
 
-  return template.replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, (_match, tokenName: string) => tokenValues.get(tokenName.toLowerCase()) ?? '');
+  const tokenRendered = template.replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, (_match, tokenName: string) => tokenValues.get(tokenName.toLowerCase()) ?? '');
+  return tokenRendered || explicitRenderedBodyHtml;
 }

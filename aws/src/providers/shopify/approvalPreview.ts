@@ -84,7 +84,8 @@ export function buildShopifyApprovalPreviewFromFields(fields: ApprovalFieldMap):
   ]).then(([categoryResolution, collectionPreview]) => {
     const effectiveProduct: ShopifyProduct = {
       ...normalizedProduct,
-      body_html: bodyHtmlResolution.value || normalizedProduct.body_html || '',
+      // Always drive payload descriptionHtml from the rendered Shopify body.
+      body_html: normalizedProduct.body_html || bodyHtmlResolution.value || '',
       product_type: trimShopifyProductType(productCategoryResolution.value)
         || trimShopifyProductType(normalizedProduct.product_type ?? ''),
     };

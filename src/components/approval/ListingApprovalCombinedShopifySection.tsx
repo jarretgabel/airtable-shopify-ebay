@@ -182,6 +182,7 @@ export function ListingApprovalCombinedShopifySection({
         {showDeveloperPayloadPanels ? (
           <Suspense fallback={<ShopifyPayloadFallback />}>
             <ShopifyApprovalPayloadDetails
+              currentPageShopifyBodyHtml={displayedShopifyBodyHtml}
               currentPageProductDescriptionResolution={currentPageProductDescriptionResolution}
               currentPageProductDescription={currentPageProductDescription}
               currentPageProductCategoryResolution={currentPageProductCategoryResolution}

@@ -36,7 +36,7 @@ describe('buildImageAltText', () => {
       },
     );
 
-    expect(altText).toBe('McIntosh MC225 Stereo Tube Power Amplifier Side View');
+    expect(altText).toBe('McIntosh MC225 Stereo Tube Power Amplifier Side Angle');
   });
 
   it('uses custom role label text when custom image role is selected', () => {
@@ -53,5 +53,22 @@ describe('buildImageAltText', () => {
     );
 
     expect(altText).toBe('McIntosh MC225 Stereo Tube Power Amplifier Left Side');
+  });
+
+  it('uses the same token sequence as the generated filename when no role is selected', () => {
+    const filename = buildImageFilename({
+      brand: 'McIntosh',
+      model: 'MC225',
+      productType: 'Stereo Tube Power Amplifier',
+    }).filename;
+
+    const altText = buildImageAltText({
+      brand: 'McIntosh',
+      model: 'MC225',
+      productType: 'Stereo Tube Power Amplifier',
+    });
+
+    expect(filename).toBe('mcintosh-mc225-stereo-tube-power-amplifier-hero-image.jpg');
+    expect(altText).toBe('McIntosh MC225 Stereo Tube Power Amplifier Hero Image');
   });
 });

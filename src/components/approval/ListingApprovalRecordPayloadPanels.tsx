@@ -84,7 +84,10 @@ function buildShopifyPayloadDebug(shopifyProductSetRequest: ShopifyUnifiedProduc
   };
 }
 
-function buildShopifyDraftCreatePayloadJson(shopifyProductSetRequest: ShopifyUnifiedProductSetRequest | null) {
+function buildShopifyDraftCreatePayloadJson(
+  shopifyProductSetRequest: ShopifyUnifiedProductSetRequest | null,
+  currentPageShopifyBodyHtml: string,
+) {
   if (!shopifyProductSetRequest) return '';
 
   const dedupedMetafields = new Map<string, NonNullable<ShopifyUnifiedProductSetRequest['input']['metafields']>[number]>();
@@ -115,6 +118,7 @@ function buildShopifyDraftCreatePayloadJson(shopifyProductSetRequest: ShopifyUni
     ...shopifyProductSetRequest,
     input: {
       ...shopifyProductSetRequest.input,
+      descriptionHtml: currentPageShopifyBodyHtml.trim() || shopifyProductSetRequest.input.descriptionHtml,
       metafields: Array.from(dedupedMetafields.values()),
       tags: shopifyProductSetRequest.input.tags ?? [],
       collectionsToJoin: shopifyProductSetRequest.input.collectionsToJoin ?? [],
@@ -164,6 +168,7 @@ const SHOPIFY_CREATE_PAYLOAD_DOCS_JSON = stringifyJson(SHOPIFY_UNIFIED_PRODUCT_S
 const EBAY_PAYLOAD_DOCS_JSON = stringifyJson(EBAY_DRAFT_PAYLOAD_DOCS_EXAMPLE, '{\n  "inventoryItem": {},\n  "offer": {}\n}');
 
 export interface ShopifyApprovalPayloadDetailsProps extends ShopifyApprovalPayloadPreviewData {
+  currentPageShopifyBodyHtml: string;
   currentPageProductDescriptionResolution: ShopifyFieldResolutionSummary;
   currentPageProductDescription: string;
   currentPageProductCategoryResolution: ShopifyFieldResolutionSummary;
@@ -179,6 +184,7 @@ interface ListingApprovalRecordPayloadPanelsProps extends ShopifyApprovalPayload
 }
 
 export function ShopifyApprovalPayloadDetails({
+  currentPageShopifyBodyHtml,
   currentPageProductDescriptionResolution,
   currentPageProductDescription,
   currentPageProductCategoryResolution,
@@ -189,7 +195,7 @@ export function ShopifyApprovalPayloadDetails({
   shopifyProductSetRequest,
 }: ShopifyApprovalPayloadDetailsProps) {
   const shopifyPayloadDebug = buildShopifyPayloadDebug(shopifyProductSetRequest);
-  const shopifyDraftCreatePayloadJson = buildShopifyDraftCreatePayloadJson(shopifyProductSetRequest);
+  const shopifyDraftCreatePayloadJson = buildShopifyDraftCreatePayloadJson(shopifyProductSetRequest, currentPageShopifyBodyHtml);
   const shopifyCategorySyncPreviewJson = buildShopifyCategorySyncPreviewJson({
     isShopifyPayloadPreviewContext,
     shopifyCategoryLookupValue,
@@ -212,6 +218,7 @@ export function ShopifyApprovalPayloadDetails({
             <p className="m-0 mt-1">Field: <code>{currentPageProductDescriptionResolution.sourceFieldName || '(none)'}</code></p>
             <p className="m-0 mt-1">Match: <code>{currentPageProductDescriptionResolution.sourceType}</code></p>
             <p className="m-0 mt-1">Resolved Length: <code>{String(currentPageProductDescription.length)}</code></p>
+            <p className="m-0 mt-1">Rendered Body Length: <code>{String(currentPageShopifyBodyHtml.length)}</code></p>
           </div>
           <div className={`${infoInlineBannerClass} mb-2 px-2 py-2 text-xs text-sky-100/90`}>
             <p className="m-0 font-semibold text-sky-100">Category Sync Debug</p>
@@ -297,6 +304,7 @@ export function EbayApprovalPayloadDetails({
 
 export function ListingApprovalRecordPayloadPanels({
   approvalChannel,
+  currentPageShopifyBodyHtml,
   currentPageProductDescriptionResolution,
   currentPageProductDescription,
   currentPageProductCategoryResolution,
@@ -312,6 +320,7 @@ export function ListingApprovalRecordPayloadPanels({
     <>
       {approvalChannel === 'shopify' && (
         <ShopifyApprovalPayloadDetails
+          currentPageShopifyBodyHtml={currentPageShopifyBodyHtml}
           currentPageProductDescriptionResolution={currentPageProductDescriptionResolution}
           currentPageProductDescription={currentPageProductDescription}
           currentPageProductCategoryResolution={currentPageProductCategoryResolution}

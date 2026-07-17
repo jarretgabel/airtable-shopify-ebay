@@ -253,4 +253,36 @@ describe('workflowImageMetadata', () => {
       { url: 'https://cdn.example.com/photos-no-id.jpg', filename: 'photos-no-id.jpg' },
     ]);
   });
+
+  it('builds alt text from filename tokens when alt text is missing', () => {
+    const parsed = parseWorkflowImageMetadata(JSON.stringify([
+      {
+        attachmentId: 'att-1',
+        url: 'https://cdn.example.com/mcintosh-mc225-stereo-tube-power-amplifier-left-side.jpg',
+        filename: 'mcintosh-mc225-stereo-tube-power-amplifier-left-side.jpg',
+        alt: '',
+        sortOrder: 1,
+        sourceStage: 'photos',
+        includedInListing: true,
+      },
+    ]));
+
+    expect(parsed[0]?.alt).toBe('Mcintosh MC225 Stereo Tube Power Amplifier Left Side');
+  });
+
+  it('replaces legacy workflow alt text with humanized filename tokens', () => {
+    const parsed = parseWorkflowImageMetadata(JSON.stringify([
+      {
+        attachmentId: 'att-1',
+        url: 'https://drive.google.com/uc?export=view&id=1WAjQWQjX_ntSK9bvGy9AeJyFL85xPVR_',
+        filename: 'testing--testing--rectv8setonjoog2c-marantz-2270-testing-1-processed.jpg',
+        alt: 'Marantz 2270 testing processed 1',
+        sortOrder: 1,
+        sourceStage: 'testing',
+        includedInListing: true,
+      },
+    ]));
+
+    expect(parsed[0]?.alt).toBe('Testing Testing Marantz 2270 Testing 1 Processed');
+  });
 });

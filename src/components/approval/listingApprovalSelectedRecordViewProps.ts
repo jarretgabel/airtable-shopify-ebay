@@ -263,6 +263,7 @@ export function buildListingApprovalSelectedRecordViewProps({
     },
     payloadPanelProps: {
       approvalChannel,
+      currentPageShopifyBodyHtml,
       currentPageProductDescriptionResolution,
       currentPageProductDescription,
       currentPageProductCategoryResolution,
