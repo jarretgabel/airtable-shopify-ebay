@@ -152,6 +152,19 @@ interface EbayTokenResponse {
   expires_in: number;
 }
 
+interface EbayFulfillmentPolicyShippingService {
+  shippingServiceCode?: string;
+}
+
+interface EbayFulfillmentPolicyShippingOption {
+  shippingServices?: EbayFulfillmentPolicyShippingService[];
+}
+
+interface EbayFulfillmentPolicyResponse {
+  marketplaceId?: string;
+  shippingOptions?: EbayFulfillmentPolicyShippingOption[];
+}
+
 interface EbayCategoryTreeResponse {
   categoryTreeId?: string;
 }
@@ -213,6 +226,11 @@ export interface EbayWebhookSubscriptionInput {
   requestUrl?: string;
 }
 
+interface PublishOfferContext {
+  marketplaceId?: string;
+  fulfillmentPolicyId?: string;
+}
+
 const DEFAULT_EBAY_APP_SCOPE = 'https://api.ebay.com/oauth/api_scope';
 const DEFAULT_EBAY_WEBHOOK_SUBSCRIPTION_PATH = '/sell/notification/v1/subscription';
 const DEFAULT_EBAY_WEBHOOK_EVENT_TYPES = [
@@ -223,6 +241,7 @@ const DEFAULT_EBAY_WEBHOOK_EVENT_TYPES = [
 ];
 const EBAY_OFFERS_MAX_PAGE_SIZE = 25;
 const SAMPLE_SKU = 'RAVMCINTOSHMA8900DEMO';
+const DEFAULT_EBAY_CATEGORY_ID = '14990';
 const MAX_VISIBLE_LISTINGS = 20;
 const FALLBACK_PACKAGE_TYPES = [
   'Package/Thick Envelope',
@@ -266,6 +285,16 @@ function normalizeMarketplaceId(marketplaceId: string): string {
 
 function cleanOptional(value: string | undefined): string {
   return value?.trim() ?? '';
+}
+
+function normalizeRefreshToken(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  try {
+    return decodeURIComponent(trimmed);
+  } catch {
+    return trimmed;
+  }
 }
 
 function buildHttpsUrl(baseUrl: string, path: string): string {
@@ -528,7 +557,7 @@ async function getValidUserToken(): Promise<string> {
     return pendingUserTokenPromise;
   }
 
-  const refreshToken = requireSecret('EBAY_REFRESH_TOKEN');
+  const refreshToken = normalizeRefreshToken(requireSecret('EBAY_REFRESH_TOKEN'));
   pendingUserTokenPromise = requestToken(new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: refreshToken,
@@ -764,7 +793,7 @@ function buildSampleOfferPayload(
     marketplaceId: 'EBAY_US',
     format: 'FIXED_PRICE',
     availableQuantity: 1,
-    categoryId: '3276',
+    categoryId: DEFAULT_EBAY_CATEGORY_ID,
     listingDescription:
       '<p>McIntosh MA8900 200W Integrated Amplifier — demo listing created by Resolution AV inventory dashboard.</p>',
     listingDuration: 'GTC',
@@ -796,7 +825,7 @@ function shouldUpdateOfferForPublish(
     || details.listingPolicies?.paymentPolicyId !== policyConfig.paymentPolicyId
     || details.listingPolicies?.returnPolicyId !== policyConfig.returnPolicyId
     || details.availableQuantity !== 1
-    || details.categoryId !== '3276'
+    || details.categoryId !== DEFAULT_EBAY_CATEGORY_ID
     || details.listingDuration !== 'GTC';
 }
 
@@ -964,10 +993,90 @@ function isInventoryUpsertTemporarilyUnavailable(errorBody: unknown): boolean {
   });
 }
 
+function isFulfillmentPolicyPublishError(errorBody: unknown, responseText: string): boolean {
+  const responseMessage = responseText.toLowerCase();
+  const errors = (errorBody as { errors?: Array<{ message?: string }> })?.errors ?? [];
+  const errorMessage = errors
+    .map((error) => cleanOptional(error.message))
+    .join(' ')
+    .toLowerCase();
+
+  const combined = `${responseMessage} ${errorMessage}`;
+  return combined.includes('fulfillment policy')
+    && (combined.includes('shipping service option') || combined.includes('shipping service'));
+}
+
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+function countFulfillmentPolicyShippingServices(policy: EbayFulfillmentPolicyResponse): number {
+  return (policy.shippingOptions ?? []).reduce((total, option) => {
+    const count = (option.shippingServices ?? [])
+      .map((service) => cleanOptional(service.shippingServiceCode))
+      .filter(Boolean)
+      .length;
+    return total + count;
+  }, 0);
+}
+
+async function validateFulfillmentPolicyForMarketplace(
+  token: string,
+  marketplaceId: string,
+  fulfillmentPolicyId: string,
+): Promise<void> {
+  const normalizedPolicyId = cleanOptional(fulfillmentPolicyId);
+  if (!normalizedPolicyId) return;
+
+  const normalizedMarketplace = normalizeMarketplaceId(marketplaceId);
+  const response = await fetch(`${getApiBaseUrl()}/sell/account/v1/fulfillment_policy/${encodeURIComponent(normalizedPolicyId)}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Accept-Language': 'en-US',
+    },
+  });
+
+  // Some user tokens may not include sell.account policy read access.
+  // In that case, skip preflight and allow publish path to continue.
+  if (response.status === 401 || response.status === 403) {
+    return;
+  }
+
+  if (!response.ok) {
+    throw new HttpError(response.status, `Unable to load eBay fulfillment policy "${normalizedPolicyId}": ${await readErrorPayload(response)}`, {
+      service: 'ebay',
+      code: 'EBAY_FULFILLMENT_POLICY_LOOKUP_FAILED',
+      retryable: response.status >= 500,
+    });
+  }
+
+  let policy: EbayFulfillmentPolicyResponse = {};
+  try {
+    policy = await response.json() as EbayFulfillmentPolicyResponse;
+  } catch {
+    policy = {};
+  }
+
+  const policyMarketplace = cleanOptional(policy.marketplaceId);
+  if (policyMarketplace && normalizeMarketplaceId(policyMarketplace) !== normalizedMarketplace) {
+    throw new HttpError(400, `eBay fulfillment policy "${normalizedPolicyId}" belongs to ${normalizeMarketplaceId(policyMarketplace)}, but this offer targets ${normalizedMarketplace}.`, {
+      service: 'ebay',
+      code: 'EBAY_FULFILLMENT_POLICY_MARKETPLACE_MISMATCH',
+      retryable: false,
+    });
+  }
+
+  const shippingServiceCount = countFulfillmentPolicyShippingServices(policy);
+  if (shippingServiceCount < 1) {
+    throw new HttpError(400, `eBay fulfillment policy "${normalizedPolicyId}" has no valid shipping service options for ${normalizedMarketplace}. Add at least one shipping service in Seller Hub > Business Policies > Shipping.`, {
+      service: 'ebay',
+      code: 'EBAY_FULFILLMENT_POLICY_SHIPPING_REQUIRED',
+      retryable: false,
+    });
+  }
 }
 
 async function callTradingApi(token: string, callName: string, body: BodyInit, siteId = '0'): Promise<string> {
@@ -1386,6 +1495,10 @@ async function createOrUpdateSampleOffer(
     await upsertWarehouseLocation(token, publishSetup.locationConfig);
   }
 
+  if (hasPolicyConfig) {
+    await validateFulfillmentPolicyForMarketplace(token, 'EBAY_US', publishSetup.policyConfig.fulfillmentPolicyId);
+  }
+
   const payload = buildSampleOfferPayload(
     hasLocationConfig ? publishSetup.locationConfig : null,
     hasPolicyConfig ? publishSetup.policyConfig : null,
@@ -1414,7 +1527,7 @@ async function createOrUpdateSampleOffer(
         }
       }
 
-      throw new HttpError(createResponse.status, `createOffer ${createResponse.status}: ${errorText || '{}'}`, {
+      throw new HttpError(createResponse.status, `createOffer ${createResponse.status} (marketplace=EBAY_US, categoryId=${DEFAULT_EBAY_CATEGORY_ID}): ${errorText || '{}'}`, {
         service: 'ebay',
         code: 'EBAY_CREATE_OFFER_FAILED',
         retryable: createResponse.status >= 500,
@@ -1442,7 +1555,11 @@ async function createOrUpdateSampleOffer(
   return { sku: SAMPLE_SKU, offerId };
 }
 
-async function publishOfferById(token: string, offerId: string): Promise<{ listingId: string }> {
+async function publishOfferById(
+  token: string,
+  offerId: string,
+  context: PublishOfferContext = {},
+): Promise<{ listingId: string }> {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const response = await fetch(`${getApiBaseUrl()}/sell/inventory/v1/offer/${encodeURIComponent(offerId)}/publish/`, {
       method: 'POST',
@@ -1464,6 +1581,16 @@ async function publishOfferById(token: string, offerId: string): Promise<{ listi
       if (attempt < 2 && isOfferTemporarilyUnavailable(publishData)) {
         await delay(1500 * (attempt + 1));
         continue;
+      }
+
+      if (isFulfillmentPolicyPublishError(publishData, responseText)) {
+        const marketplace = normalizeMarketplaceId(String(context.marketplaceId ?? 'EBAY_US'));
+        const fulfillmentPolicyId = cleanOptional(context.fulfillmentPolicyId) || '<unknown>';
+        throw new HttpError(response.status, `publishOffer ${response.status}: eBay fulfillment policy "${fulfillmentPolicyId}" for ${marketplace} has no valid shipping service options. Update that Shipping policy in Seller Hub > Business Policies, then retry publish.`, {
+          service: 'ebay',
+          code: 'EBAY_FULFILLMENT_POLICY_SHIPPING_REQUIRED',
+          retryable: false,
+        });
       }
 
       const firstError = publishData.errors?.[0];
@@ -1536,10 +1663,12 @@ async function createOrUpdateOffer(
   offerPayload: Record<string, unknown>,
   existingOfferId?: string,
 ): Promise<{ offerId: string; wasExistingOffer: boolean }> {
-  const payload = {
+  const payload: Record<string, unknown> = {
     ...offerPayload,
     sku,
   };
+  const categoryIdContext = String(payload.categoryId ?? '').trim() || '<empty>';
+  const marketplaceContext = String(payload.marketplaceId ?? '').trim().toUpperCase() || 'EBAY_US';
 
   if (existingOfferId) {
     const updateResponse = await fetch(`${getApiBaseUrl()}/sell/inventory/v1/offer/${encodeURIComponent(existingOfferId)}`, {
@@ -1549,7 +1678,7 @@ async function createOrUpdateOffer(
     });
 
     if (!updateResponse.ok) {
-      throw new HttpError(updateResponse.status, `updateOffer ${updateResponse.status}: ${await readErrorPayload(updateResponse)}`, {
+      throw new HttpError(updateResponse.status, `updateOffer ${updateResponse.status} (marketplace=${marketplaceContext}, categoryId=${categoryIdContext}): ${await readErrorPayload(updateResponse)}`, {
         service: 'ebay',
         code: 'EBAY_UPDATE_OFFER_FAILED',
         retryable: updateResponse.status >= 500,
@@ -1566,7 +1695,7 @@ async function createOrUpdateOffer(
   });
 
   if (!createResponse.ok) {
-    throw new HttpError(createResponse.status, `createOffer ${createResponse.status}: ${await readErrorPayload(createResponse)}`, {
+    throw new HttpError(createResponse.status, `createOffer ${createResponse.status} (marketplace=${marketplaceContext}, categoryId=${categoryIdContext}): ${await readErrorPayload(createResponse)}`, {
       service: 'ebay',
       code: 'EBAY_CREATE_OFFER_FAILED',
       retryable: createResponse.status >= 500,
@@ -1647,7 +1776,10 @@ export async function publishSampleDraftListing(
     await createOrUpdateSampleOffer(token, resolvedPublishSetup, offerId);
   }
 
-  const { listingId } = await publishOfferById(token, offerId);
+  const { listingId } = await publishOfferById(token, offerId, {
+    marketplaceId: 'EBAY_US',
+    fulfillmentPolicyId: resolvedPublishSetup.policyConfig.fulfillmentPolicyId,
+  });
   return { sku, offerId, listingId };
 }
 
@@ -1665,10 +1797,30 @@ export async function pushApprovalBundleToEbay(
 
   const existingOffers = await getOffersWithToken(token, sku, 1);
   const existingOffer = existingOffers.offers[0];
+  const categoryId = String(bundle.offer.categoryId ?? '').trim();
+  if (!/^\d{3,12}$/.test(categoryId)) {
+    throw new HttpError(400, `Invalid eBay Offer Category ID "${categoryId || '<empty>'}". Provide a numeric eBay category ID (for example: 14990).`, {
+      service: 'ebay',
+      code: 'EBAY_CATEGORY_ID_INVALID',
+      retryable: false,
+    });
+  }
+
+  const secondaryCategoryId = String(bundle.offer.secondaryCategoryId ?? '').trim();
+  if (secondaryCategoryId && !/^\d{3,12}$/.test(secondaryCategoryId)) {
+    throw new HttpError(400, `Invalid eBay Offer Secondary Category ID "${secondaryCategoryId}". Provide a numeric eBay category ID or leave it blank.`, {
+      service: 'ebay',
+      code: 'EBAY_SECONDARY_CATEGORY_ID_INVALID',
+      retryable: false,
+    });
+  }
+
   const offerPayload: Record<string, unknown> = {
     ...bundle.offer,
     sku,
     marketplaceId: String(bundle.offer.marketplaceId ?? 'EBAY_US').trim().toUpperCase() || 'EBAY_US',
+    categoryId,
+    secondaryCategoryId: secondaryCategoryId || undefined,
     merchantLocationKey: resolvedPublishSetup.locationConfig.key,
     listingPolicies: {
       fulfillmentPolicyId: resolvedPublishSetup.policyConfig.fulfillmentPolicyId,
@@ -1676,6 +1828,13 @@ export async function pushApprovalBundleToEbay(
       returnPolicyId: resolvedPublishSetup.policyConfig.returnPolicyId,
     },
   };
+
+  await validateFulfillmentPolicyForMarketplace(
+    token,
+    String(offerPayload.marketplaceId ?? 'EBAY_US'),
+    resolvedPublishSetup.policyConfig.fulfillmentPolicyId,
+  );
+
   const { offerId, wasExistingOffer } = await createOrUpdateOffer(token, sku, offerPayload, existingOffer?.offerId);
 
   if (existingOffer?.listingId && existingOffer.status === 'PUBLISHED') {
@@ -1687,7 +1846,10 @@ export async function pushApprovalBundleToEbay(
     };
   }
 
-  const { listingId } = await publishOfferById(token, offerId);
+  const { listingId } = await publishOfferById(token, offerId, {
+    marketplaceId: String(offerPayload.marketplaceId ?? 'EBAY_US'),
+    fulfillmentPolicyId: resolvedPublishSetup.policyConfig.fulfillmentPolicyId,
+  });
   return { sku, offerId, listingId, wasExistingOffer };
 }
 

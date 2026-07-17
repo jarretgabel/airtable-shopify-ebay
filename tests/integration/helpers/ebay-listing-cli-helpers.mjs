@@ -19,7 +19,7 @@ export function normalizeToken(token) {
 }
 
 export function saveRefreshToken(envPath, refreshToken) {
-  const normalized = normalizeToken(refreshToken);
+  const normalized = encodeURIComponent(normalizeToken(refreshToken));
   let rawEnv = readFileSync(envPath, 'utf-8');
 
   if (rawEnv.includes('VITE_EBAY_REFRESH_TOKEN=')) {

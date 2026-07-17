@@ -17,6 +17,10 @@ function isLocalUrl(value) {
 }
 
 export function enforceLocalOnlyIntegrationTargets(scriptName, targets) {
+  if (process.env.ALLOW_REMOTE_INTEGRATION_TESTS === '1') {
+    return;
+  }
+
   const remoteTargets = normalizeTargets(targets).filter((target) => !isLocalUrl(target.url));
   if (remoteTargets.length === 0) {
     return;

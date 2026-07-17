@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { enforceLocalOnlyIntegrationTargets } from './helpers/local-only-test-guard.mjs';
 
 const env = Object.fromEntries(
-  readFileSync(new URL('../.env.local', import.meta.url), 'utf-8')
+  readFileSync(new URL('../../.env.local', import.meta.url), 'utf-8')
     .split('\n')
     .filter(line => line.trim() && !line.startsWith('#'))
     .map(line => {
@@ -13,7 +13,13 @@ const env = Object.fromEntries(
 
 const clientId = env.VITE_EBAY_CLIENT_ID ?? '';
 const clientSecret = env.VITE_EBAY_CLIENT_SECRET ?? '';
-const refreshToken = env.VITE_EBAY_REFRESH_TOKEN ?? '';
+const rawRefreshToken = env.VITE_EBAY_REFRESH_TOKEN ?? '';
+let refreshToken = rawRefreshToken;
+try {
+  refreshToken = decodeURIComponent(rawRefreshToken);
+} catch {
+  refreshToken = rawRefreshToken;
+}
 const isSandbox = (env.VITE_EBAY_ENV ?? 'sandbox').toLowerCase() !== 'production';
 const apiBase = env.VITE_EBAY_API_BASE ?? (isSandbox ? 'https://api.sandbox.ebay.com' : 'https://api.ebay.com');
 

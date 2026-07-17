@@ -89,12 +89,32 @@ function dedupeCaseInsensitive(values: string[]): string[] {
 }
 
 function parseCategoryIds(raw: unknown): string[] {
+  const parseToken = (value: unknown): string[] => {
+    const text = String(value ?? '').trim();
+    if (!text) return [];
+
+    if (/^\d{3,12}$/.test(text)) {
+      return [text];
+    }
+
+    const parenthesized = text.match(/\((\d{3,12})\)\s*$/);
+    if (parenthesized?.[1]) {
+      return [parenthesized[1]];
+    }
+
+    const leading = text.match(/^(\d{3,12})\s*[-:>]/);
+    if (leading?.[1]) {
+      return [leading[1]];
+    }
+
+    return [];
+  };
+
   if (Array.isArray(raw)) {
     const seen = new Set<string>();
     return raw
-      .map((item) => String(item ?? '').trim())
+      .flatMap((item) => parseToken(item))
       .filter((value) => {
-        if (!value) return false;
         const key = value.toLowerCase();
         if (seen.has(key)) return false;
         seen.add(key);
@@ -117,9 +137,8 @@ function parseCategoryIds(raw: unknown): string[] {
   const seen = new Set<string>();
   return text
     .split(/[\n,;|]/)
-    .map((item) => item.trim())
+    .flatMap((item) => parseToken(item))
     .filter((value) => {
-      if (!value) return false;
       const key = value.toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
@@ -288,7 +307,7 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
         .flatMap(([, value]) => parseCategoryIds(value)),
     )
     : [];
-  const primaryCategoryFromField = getField(fields, [
+  const primaryCategoryFromField = parseCategoryIds(getRawField(fields, [
     'eBay Offer Primary Category ID',
     'eBay Offer PrimaryCategoryID',
     'Primary Category ID',
@@ -302,8 +321,8 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     'ebay_offer_primarycategoryid',
     'primary_category_id',
     'category_id',
-  ]);
-  const secondaryCategoryFromField = getField(fields, [
+  ]))[0];
+  const secondaryCategoryFromField = parseCategoryIds(getRawField(fields, [
     'eBay Offer SecondaryCategoryID',
     'Secondary Category ID',
     'Secondary Category',
@@ -314,9 +333,9 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     'ebay_offer_secondary_category_id',
     'ebay_offer_secondarycategoryid',
     'secondary_category_id',
-  ]);
+  ]))[0];
 
-  const categoryId = categoryIdsFromCategoriesField[0] || primaryCategoryFromField || fallbackCategoryIds[0] || '3276';
+  const categoryId = categoryIdsFromCategoriesField[0] || primaryCategoryFromField || fallbackCategoryIds[0] || '14990';
   const secondaryCategoryId = categoryIdsFromCategoriesField[1] || secondaryCategoryFromField || fallbackCategoryIds[1];
   const listingDuration = getField(fields, [
     'eBay Offer Listing Duration',

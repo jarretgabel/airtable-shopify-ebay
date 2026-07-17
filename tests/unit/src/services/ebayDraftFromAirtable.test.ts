@@ -313,6 +313,34 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     });
   });
 
+  it('extracts numeric eBay category ids from human-readable category labels', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-8B',
+      'Primary Category': 'Consumer Electronics > Vintage Audio & Video (293)',
+      'Secondary Category': 'Receivers (14981)',
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-8B',
+      categoryId: '293',
+      secondaryCategoryId: '14981',
+    });
+  });
+
+  it('ignores incidental numbers in category text that are not explicit eBay category ids', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-8C',
+      'Primary Category': 'Vintage receiver lineup 2018 edition',
+      'Secondary Category': 'classic 2-channel setup',
+    });
+
+    expect(payload.offer).toMatchObject({
+      sku: 'EBAY-SKU-8C',
+      categoryId: '14990',
+      secondaryCategoryId: undefined,
+    });
+  });
+
   it('maps Airtable category alias fields into offer payload', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-8A',

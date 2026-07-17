@@ -1,10 +1,30 @@
 import { type ApprovalFieldMap } from './approvalShared.js';
 
+function parseCategoryToken(value: unknown): string[] {
+  const text = String(value ?? '').trim();
+  if (!text) return [];
+
+  if (/^\d{3,12}$/.test(text)) {
+    return [text];
+  }
+
+  const parenthesized = text.match(/\((\d{3,12})\)\s*$/);
+  if (parenthesized?.[1]) {
+    return [parenthesized[1]];
+  }
+
+  const leading = text.match(/^(\d{3,12})\s*[-:>]/);
+  if (leading?.[1]) {
+    return [leading[1]];
+  }
+
+  return [];
+}
+
 export function parseCategoryIds(raw: unknown): string[] {
   if (Array.isArray(raw)) {
     const seen = new Set<string>();
-    return raw.map((item) => String(item ?? '').trim()).filter((value) => {
-      if (!value) return false;
+    return raw.flatMap((item) => parseCategoryToken(item)).filter((value) => {
       const key = value.toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
@@ -22,8 +42,7 @@ export function parseCategoryIds(raw: unknown): string[] {
   }
 
   const seen = new Set<string>();
-  return text.split(/[\n,;|]/).map((item) => item.trim()).filter((value) => {
-    if (!value) return false;
+  return text.split(/[\n,;|]/).flatMap((item) => parseCategoryToken(item)).filter((value) => {
     const key = value.toLowerCase();
     if (seen.has(key)) return false;
     seen.add(key);

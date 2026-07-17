@@ -123,7 +123,13 @@ async function withdrawEbayOffer(offerId: string): Promise<{ success: boolean; m
 
     const clientId = requireSecret('EBAY_CLIENT_ID');
     const clientSecret = requireSecret('EBAY_CLIENT_SECRET');
-    const refreshToken = requireSecret('EBAY_REFRESH_TOKEN');
+    const rawRefreshToken = requireSecret('EBAY_REFRESH_TOKEN');
+    let refreshToken = rawRefreshToken;
+    try {
+      refreshToken = decodeURIComponent(rawRefreshToken);
+    } catch {
+      refreshToken = rawRefreshToken;
+    }
 
     // Get access token
     const tokenResponse = await fetch(`${apiBase}/identity/v1/oauth2/token`, {

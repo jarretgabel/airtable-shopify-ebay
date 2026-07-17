@@ -26,7 +26,7 @@ import {
 } from './helpers/ebay-listing-cli-helpers.mjs';
 
 // ── Load .env.local ────────────────────────────────────────────────────────────
-const ENV_PATH = new URL('../.env.local', import.meta.url).pathname;
+const ENV_PATH = new URL('../../.env.local', import.meta.url).pathname;
 const rawEnv = readFileSync(ENV_PATH, 'utf-8');
 const env = Object.fromEntries(
   rawEnv
@@ -46,9 +46,10 @@ const IS_SANDBOX    = (env['VITE_EBAY_ENV'] ?? 'sandbox').toLowerCase() !== 'pro
 const API_BASE  = env['VITE_EBAY_API_BASE'] ?? (IS_SANDBOX ? 'https://api.sandbox.ebay.com' : 'https://api.ebay.com');
 const AUTH_BASE = env['VITE_EBAY_AUTH_BASE'] ?? (IS_SANDBOX ? 'https://auth.sandbox.ebay.com' : 'https://auth.ebay.com');
 
-const SCOPES = [
+const SCOPES = (env['VITE_EBAY_OAUTH_SCOPES'] ?? '').trim() || [
   'https://api.ebay.com/oauth/api_scope',
   'https://api.ebay.com/oauth/api_scope/sell.inventory',
+  'https://api.ebay.com/oauth/api_scope/sell.account',
 ].join(' ');
 
 const credentials = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
@@ -80,6 +81,8 @@ const args = Object.fromEntries(
       return [k, rest.join('=')];
     })
 );
+
+const FORCE_AUTH = args['force-auth'] === '1' || args['force-auth'] === 'true';
 
   const rawApiMode = args.api?.toLowerCase();
   const API_MODE = rawApiMode === 'trading' || rawApiMode === 'trading-verify' ? rawApiMode : 'inventory';
@@ -154,7 +157,7 @@ if (args.code) {
     await createDraftListing(tokenData.access_token, API_BASE);
   }
 
-} else if (env['VITE_EBAY_REFRESH_TOKEN']) {
+} else if (env['VITE_EBAY_REFRESH_TOKEN'] && !FORCE_AUTH) {
   // ── Refresh token path ─────────────────────────────────────────────────────
   console.log('Step 1: Refreshing access token from stored refresh token…');
   const tokenRes = await fetch(`${API_BASE}/identity/v1/oauth2/token`, {
@@ -231,7 +234,7 @@ if (args.code) {
   console.log('  http://localhost:3000?code=XXXX&state=ebay_oauth');
   console.log('');
   console.log('Step 2: Copy the `code` value from the URL bar, then run:\n');
-  console.log('  node tests/test-create-ebay-listing.mjs --code=PASTE_CODE_HERE');
+  console.log('  node tests/integration/test-create-ebay-listing.mjs --api=inventory --code=PASTE_CODE_HERE');
   console.log('');
   console.log('Note: The app at localhost:3000 will ALSO auto-handle the code — you');
   console.log('      only need this script if the app\'s connect flow isn\'t working.');

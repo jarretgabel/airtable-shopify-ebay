@@ -10,7 +10,7 @@
 import { readFileSync } from 'fs';
 import { enforceLocalOnlyIntegrationTargets } from './helpers/local-only-test-guard.mjs';
 
-const ENV_PATH = new URL('../.env.local', import.meta.url).pathname;
+const ENV_PATH = new URL('../../.env.local', import.meta.url).pathname;
 const env = Object.fromEntries(
   readFileSync(ENV_PATH, 'utf-8')
     .split('\n')
