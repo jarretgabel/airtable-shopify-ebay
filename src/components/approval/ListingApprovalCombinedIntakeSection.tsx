@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
 import { WorkflowReferenceImagesPanel } from '@/components/tabs/WorkflowReferenceImagesPanel';
 import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
@@ -192,9 +191,12 @@ export function ListingApprovalCombinedIntakeSection({
     return parseWorkflowImageMetadata(metadataFieldName ? (originalFieldValues[metadataFieldName] ?? '') : '');
   }, [allOriginalFieldNames, originalFieldValues]);
 
-  const intakeImages = useMemo(() => {
+  const workflowImageAttachments = useMemo(() => {
     const attachmentFieldName = findWorkflowImageAttachmentFieldName(allOriginalFieldNames);
-    const attachments = parseWorkflowImageAttachments(attachmentFieldName ? (originalFieldValues[attachmentFieldName] ?? '') : '');
+    return parseWorkflowImageAttachments(attachmentFieldName ? (originalFieldValues[attachmentFieldName] ?? '') : '');
+  }, [allOriginalFieldNames, originalFieldValues]);
+
+  const intakeImages = useMemo(() => {
     if (workflowImageMetadata.length > 0) {
       return filterWorkflowImageMetadataByStage(workflowImageMetadata, 'intake').map((image) => ({
         id: image.attachmentId,
@@ -202,13 +204,13 @@ export function ListingApprovalCombinedIntakeSection({
         filename: image.filename,
       }));
     }
-    if (attachments.length === 0) return [];
+    if (workflowImageAttachments.length === 0) return [];
     const metadataByUrl = new Map(workflowImageMetadata.map((m) => [m.url.trim().toLowerCase(), m]));
-    return attachments.filter((a) => {
+    return workflowImageAttachments.filter((a) => {
       const meta = metadataByUrl.get(a.url.trim().toLowerCase());
       return meta?.sourceStage === 'intake';
     });
-  }, [allOriginalFieldNames, originalFieldValues, workflowImageMetadata]);
+  }, [workflowImageAttachments, workflowImageMetadata]);
 
   const testingImages = useMemo(
     () => filterWorkflowImageMetadataByStage(workflowImageMetadata, 'testing')
@@ -221,16 +223,27 @@ export function ListingApprovalCombinedIntakeSection({
     [workflowImageMetadata],
   );
 
-  const photographyImages = useMemo(
-    () => filterWorkflowImageMetadataByStage(workflowImageMetadata, 'photos')
+  const photographyImages = useMemo(() => {
+    const metadataPhotographyImages = filterWorkflowImageMetadataByStage(workflowImageMetadata, 'photos')
       .filter((image) => image.includedInListing && isProcessedWorkflowImage(image.filename, image.url))
       .map((image) => ({
         id: image.attachmentId,
         url: image.url,
         filename: image.filename,
-      })),
-    [workflowImageMetadata],
-  );
+      }));
+
+    if (metadataPhotographyImages.length > 0) {
+      return metadataPhotographyImages;
+    }
+
+    return workflowImageAttachments
+      .filter((image) => isProcessedWorkflowImage(image.filename, image.url))
+      .map((image) => ({
+        id: image.id,
+        url: image.url,
+        filename: image.filename,
+      }));
+  }, [workflowImageAttachments, workflowImageMetadata]);
 
   const effectiveSharedTestingSourceFieldValues = {
     ...originalFieldValues,
@@ -324,48 +337,49 @@ export function ListingApprovalCombinedIntakeSection({
   if (!hasSections) return null;
 
   return (
-    <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
-      <div className="space-y-4">
-        {intakeSnapshotFields.length > 0 || displayedTestingFields.length > 0 || intakeImages.length > 0 ? (
-          <IntakeSnapshotSection
-            title="Intake Details"
-            actions={workflowHeaderAction}
-            fields={intakeSnapshotFields}
-            cards={[]}
-            className="bg-[var(--panel)]/70"
-          >
-            <ListingApprovalTestingSection
-              fields={displayedTestingFields}
-              formValues={effectiveSharedTestingSourceFieldValues}
-              headerAction={testingHeaderAction}
-              className="mt-4 border-t border-[var(--line)] pt-4"
-              embedded
-            />
-            <ListingApprovalPhotographySection
-              fields={displayedPhotographyFields}
-              formValues={effectiveSharedTestingSourceFieldValues}
-              headerAction={photographyHeaderAction}
-              className="mt-4 border-t border-[var(--line)] pt-4"
-              embedded
-            />
-            <WorkflowReferenceImagesPanel
-              title="Intake Photos"
-              description="Images captured during intake."
-              images={intakeImages}
-            />
-            <WorkflowReferenceImagesPanel
-              title="Testing Images"
-              description="Testing-stage processed images approved for listing context."
-              images={testingImages}
-            />
-            <WorkflowReferenceImagesPanel
-              title="Photography Images"
-              description="Photography-stage processed images approved for listing context."
-              images={photographyImages}
-            />
-          </IntakeSnapshotSection>
-        ) : null}
-      </div>
-    </AppPageSectionSurface>
+    <IntakeSnapshotSection
+      title="Intake Details"
+      actions={workflowHeaderAction}
+      fields={intakeSnapshotFields}
+      cards={[]}
+      className="scroll-mt-24 bg-[var(--panel)]/70"
+      sectionId={sectionId}
+    >
+      <WorkflowReferenceImagesPanel
+        title="Intake Photos"
+        description="Images captured during intake."
+        images={intakeImages}
+        collapsible
+        defaultCollapsed
+      />
+      <ListingApprovalTestingSection
+        fields={displayedTestingFields}
+        formValues={effectiveSharedTestingSourceFieldValues}
+        headerAction={testingHeaderAction}
+        className="mt-4 border-t border-[var(--line)] pt-4"
+        embedded
+      />
+      <WorkflowReferenceImagesPanel
+        title="Testing Images"
+        description="Testing-stage processed images approved for listing context."
+        images={testingImages}
+        collapsible
+        defaultCollapsed
+      />
+      <ListingApprovalPhotographySection
+        fields={displayedPhotographyFields}
+        formValues={effectiveSharedTestingSourceFieldValues}
+        headerAction={photographyHeaderAction}
+        className="mt-4 border-t border-[var(--line)] pt-4"
+        embedded
+      />
+      <WorkflowReferenceImagesPanel
+        title="Photography Images"
+        description="Photography-stage processed images approved for listing context."
+        images={photographyImages}
+        collapsible
+        defaultCollapsed
+      />
+    </IntakeSnapshotSection>
   );
 }
