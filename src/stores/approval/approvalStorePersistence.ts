@@ -102,8 +102,29 @@ function isCategoryLikeFieldName(fieldName: string): boolean {
     || normalized === 'secondary_category_name'
     || normalized === 'ebay offer category id'
     || normalized === 'ebay offer secondary category id'
+    || normalized === 'ebay offer fulfillment policy id'
+    || normalized === 'ebay offer payment policy id'
+    || normalized === 'ebay offer return policy id'
     || normalized === 'ebay_offer_category_id'
     || normalized === 'ebay_offer_secondary_category_id'
+    || normalized === 'ebay_offer_fulfillment_policy_id'
+    || normalized === 'ebay_offer_payment_policy_id'
+    || normalized === 'ebay_offer_return_policy_id'
+    || normalized === 'e_bay_offer_fulfillment_policy_id'
+    || normalized === 'e_bay_offer_payment_policy_id'
+    || normalized === 'e_bay_offer_return_policy_id'
+    || normalized === 'ebay_offer_fulfillmentpolicyid'
+    || normalized === 'ebay_offer_paymentpolicyid'
+    || normalized === 'ebay_offer_returnpolicyid'
+    || normalized === 'e_bay_offer_fulfillmentpolicyid'
+    || normalized === 'e_bay_offer_paymentpolicyid'
+    || normalized === 'e_bay_offer_returnpolicyid'
+    || normalized === 'fulfillment policy id'
+    || normalized === 'payment policy id'
+    || normalized === 'return policy id'
+    || normalized === 'fulfillment_policy_id'
+    || normalized === 'payment_policy_id'
+    || normalized === 'return_policy_id'
     || normalized === 'ebay_offer_categoryid'
     || normalized === 'ebay_offer_secondarycategoryid';
 }
@@ -233,6 +254,7 @@ function buildCategoryRetryValues(value: unknown, originalValue: unknown): unkno
 
 function isAllowedMissingWritableFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
   return isTagLikeFieldName(fieldName)
     || normalized === 'vendor'
     || normalized === 'shopify vendor'
@@ -281,7 +303,31 @@ function isAllowedMissingWritableFieldName(fieldName: string): boolean {
     || normalized === 'ebay_offer_category_id'
     || normalized === 'ebay_offer_secondary_category_id'
     || normalized === 'ebay_offer_categoryid'
-    || normalized === 'ebay_offer_secondarycategoryid';
+    || normalized === 'ebay_offer_secondarycategoryid'
+    || normalized === 'ebay offer fulfillment policy id'
+    || normalized === 'ebay offer payment policy id'
+    || normalized === 'ebay offer return policy id'
+    || normalized === 'ebay_offer_fulfillment_policy_id'
+    || normalized === 'ebay_offer_payment_policy_id'
+    || normalized === 'ebay_offer_return_policy_id'
+    || normalized === 'e_bay_offer_fulfillment_policy_id'
+    || normalized === 'e_bay_offer_payment_policy_id'
+    || normalized === 'e_bay_offer_return_policy_id'
+    || normalized === 'ebay_offer_fulfillmentpolicyid'
+    || normalized === 'ebay_offer_paymentpolicyid'
+    || normalized === 'ebay_offer_returnpolicyid'
+    || normalized === 'e_bay_offer_fulfillmentpolicyid'
+    || normalized === 'e_bay_offer_paymentpolicyid'
+    || normalized === 'e_bay_offer_returnpolicyid'
+    || normalized === 'fulfillment policy id'
+    || normalized === 'payment policy id'
+    || normalized === 'return policy id'
+    || normalized === 'fulfillment_policy_id'
+    || normalized === 'payment_policy_id'
+    || normalized === 'return_policy_id'
+    || compact === 'ebayofferfulfillmentpolicyid'
+    || compact === 'ebayofferpaymentpolicyid'
+    || compact === 'ebayofferreturnpolicyid';
 }
 
 function getAirtableErrorStatus(error: unknown): number | undefined {

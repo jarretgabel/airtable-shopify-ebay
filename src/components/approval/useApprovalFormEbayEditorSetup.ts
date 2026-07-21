@@ -252,21 +252,21 @@ export function useApprovalFormEbayEditorSetup({
   const ebayFulfillmentPolicyFieldName = isEbayApprovalForm
     ? pickPreferredField(
       ebayPolicyFieldCandidates.filter((fieldName) => isEbayFulfillmentPolicyField(fieldName)),
-      ['eBay Offer Fulfillment Policy ID', 'ebay_offer_fulfillment_policy_id', 'Fulfillment Policy ID'],
+      ['eBay Offer Fulfillment Policy ID', 'ebay_offer_fulfillment_policy_id', 'e_bay_offer_fulfillment_policy_id', 'Fulfillment Policy ID'],
       formValues,
     ) ?? 'eBay Offer Fulfillment Policy ID'
     : undefined;
   const ebayPaymentPolicyFieldName = isEbayApprovalForm
     ? pickPreferredField(
       ebayPolicyFieldCandidates.filter((fieldName) => isEbayPaymentPolicyField(fieldName)),
-      ['eBay Offer Payment Policy ID', 'ebay_offer_payment_policy_id', 'Payment Policy ID'],
+      ['eBay Offer Payment Policy ID', 'ebay_offer_payment_policy_id', 'e_bay_offer_payment_policy_id', 'Payment Policy ID'],
       formValues,
     ) ?? 'eBay Offer Payment Policy ID'
     : undefined;
   const ebayReturnPolicyFieldName = isEbayApprovalForm
     ? pickPreferredField(
       ebayPolicyFieldCandidates.filter((fieldName) => isEbayReturnPolicyField(fieldName)),
-      ['eBay Offer Return Policy ID', 'ebay_offer_return_policy_id', 'Return Policy ID'],
+      ['eBay Offer Return Policy ID', 'ebay_offer_return_policy_id', 'e_bay_offer_return_policy_id', 'Return Policy ID'],
       formValues,
     ) ?? 'eBay Offer Return Policy ID'
     : undefined;

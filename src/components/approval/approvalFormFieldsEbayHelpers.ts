@@ -67,8 +67,11 @@ function normalizePolicyFieldName(fieldName: string): string {
 export function isEbayFulfillmentPolicyField(fieldName: string): boolean {
   const normalized = normalizePolicyFieldName(fieldName);
   return normalized === 'ebay offer fulfillment policy id'
+    || normalized === 'ebay offer fulfillmentpolicyid'
     || normalized === 'ebay_offer_fulfillment_policy_id'
+    || normalized === 'e_bay_offer_fulfillment_policy_id'
     || normalized === 'ebay_offer_fulfillmentpolicyid'
+    || normalized === 'e_bay_offer_fulfillmentpolicyid'
     || normalized === 'fulfillment policy id'
     || normalized === 'fulfillment_policy_id';
 }
@@ -76,8 +79,11 @@ export function isEbayFulfillmentPolicyField(fieldName: string): boolean {
 export function isEbayPaymentPolicyField(fieldName: string): boolean {
   const normalized = normalizePolicyFieldName(fieldName);
   return normalized === 'ebay offer payment policy id'
+    || normalized === 'ebay offer paymentpolicyid'
     || normalized === 'ebay_offer_payment_policy_id'
+    || normalized === 'e_bay_offer_payment_policy_id'
     || normalized === 'ebay_offer_paymentpolicyid'
+    || normalized === 'e_bay_offer_paymentpolicyid'
     || normalized === 'payment policy id'
     || normalized === 'payment_policy_id';
 }
@@ -85,8 +91,11 @@ export function isEbayPaymentPolicyField(fieldName: string): boolean {
 export function isEbayReturnPolicyField(fieldName: string): boolean {
   const normalized = normalizePolicyFieldName(fieldName);
   return normalized === 'ebay offer return policy id'
+    || normalized === 'ebay offer returnpolicyid'
     || normalized === 'ebay_offer_return_policy_id'
+    || normalized === 'e_bay_offer_return_policy_id'
     || normalized === 'ebay_offer_returnpolicyid'
+    || normalized === 'e_bay_offer_returnpolicyid'
     || normalized === 'return policy id'
     || normalized === 'return_policy_id';
 }

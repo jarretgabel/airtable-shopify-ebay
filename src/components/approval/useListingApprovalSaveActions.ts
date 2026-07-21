@@ -122,7 +122,7 @@ export function useListingApprovalSaveActions({
     });
 
     const runSave = async () => {
-      if (approvalChannel === 'ebay') {
+      if (approvalChannel === 'ebay' || approvalChannel === 'combined') {
         await saveEbayApprovalSupplementalFields({
           selectedRecord,
           tableReference,
@@ -161,7 +161,9 @@ export function useListingApprovalSaveActions({
           }),
         );
       } else {
-        pushInlineActionNotice('error', 'Save failed', 'Could not save listing changes to Airtable. Review the error section and try again.');
+        const saveErrorMessage = useApprovalStore.getState().error
+          || 'Could not save listing changes to Airtable. Review the error section and try again.';
+        pushInlineActionNotice('error', 'Save failed', saveErrorMessage);
         pushResultNotification(
           `approval-save-result:${selectedRecord.id}`,
           buildListingApprovalSaveResultNotification({
@@ -169,6 +171,7 @@ export function useListingApprovalSaveActions({
             approvalChannel,
             changedFieldCount: effectiveChangedFieldNames.length,
             succeeded: false,
+            errorMessage: saveErrorMessage,
           }),
         );
       }

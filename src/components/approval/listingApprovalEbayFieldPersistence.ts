@@ -23,6 +23,42 @@ interface SaveEbayApprovalFieldsParams {
   combinedEbayTestingNotesFieldName?: string;
 }
 
+const FULFILLMENT_POLICY_FIELD_CANDIDATES = [
+  'eBay Offer Fulfillment Policy ID',
+  'eBay Offer FulfillmentPolicyID',
+  'eBay Offer FulfillmentPolicyId',
+  'ebay_offer_fulfillment_policy_id',
+  'e_bay_offer_fulfillment_policy_id',
+  'ebay_offer_fulfillmentpolicyid',
+  'e_bay_offer_fulfillmentpolicyid',
+  'Fulfillment Policy ID',
+  'fulfillment_policy_id',
+] as const;
+
+const PAYMENT_POLICY_FIELD_CANDIDATES = [
+  'eBay Offer Payment Policy ID',
+  'eBay Offer PaymentPolicyID',
+  'eBay Offer PaymentPolicyId',
+  'ebay_offer_payment_policy_id',
+  'e_bay_offer_payment_policy_id',
+  'ebay_offer_paymentpolicyid',
+  'e_bay_offer_paymentpolicyid',
+  'Payment Policy ID',
+  'payment_policy_id',
+] as const;
+
+const RETURN_POLICY_FIELD_CANDIDATES = [
+  'eBay Offer Return Policy ID',
+  'eBay Offer ReturnPolicyID',
+  'eBay Offer ReturnPolicyId',
+  'ebay_offer_return_policy_id',
+  'e_bay_offer_return_policy_id',
+  'ebay_offer_returnpolicyid',
+  'e_bay_offer_returnpolicyid',
+  'Return Policy ID',
+  'return_policy_id',
+] as const;
+
 function buildExistingFieldLookup(selectedRecord: AirtableRecord): Map<string, string> {
   return new Map(
     Object.keys(selectedRecord.fields).map((fieldName) => [fieldName.toLowerCase(), fieldName]),
@@ -37,6 +73,27 @@ function resolveExistingFieldName(existingFieldLookup: Map<string, string>, cand
     if (existing) return existing;
   }
   return null;
+}
+
+function isUnknownFieldNameError(error: unknown): boolean {
+  if (axios.isAxiosError(error)) {
+    const message = String(error.response?.data?.error?.message ?? error.message ?? '').toLowerCase();
+    return message.includes('unknown field name');
+  }
+
+  if (error instanceof Error) {
+    return error.message.toLowerCase().includes('unknown field name');
+  }
+
+  return false;
+}
+
+function resolveFirstNonEmptyValue(values: Record<string, string>, candidates: readonly string[]): string {
+  for (const candidate of candidates) {
+    const value = (values[candidate] ?? '').trim();
+    if (value) return value;
+  }
+  return '';
 }
 
 async function trySaveEbayField({
@@ -89,6 +146,11 @@ async function trySaveEbayField({
         );
         return candidate;
       } catch (error) {
+        if (isUnknownFieldNameError(error)) {
+          last422Error = error;
+          continue;
+        }
+
         if (axios.isAxiosError(error) && error.response?.status === 422) {
           last422Error = error;
           continue;
@@ -99,6 +161,9 @@ async function trySaveEbayField({
   }
 
   if (last422Error) {
+    if (isUnknownFieldNameError(last422Error)) {
+      return null;
+    }
     throw last422Error;
   }
 
@@ -119,6 +184,32 @@ export async function saveEbayApprovalSupplementalFields({
   combinedEbayTestingNotesFieldName,
 }: SaveEbayApprovalFieldsParams): Promise<void> {
   const existingFieldLookup = buildExistingFieldLookup(selectedRecord);
+
+  const savePolicyValue = async (candidates: readonly string[]) => {
+    const rawValue = resolveFirstNonEmptyValue(formValues, candidates);
+    if (!rawValue) return;
+
+    const existingFieldName = resolveExistingFieldName(existingFieldLookup, [...candidates]);
+    const originalRawValue = existingFieldName ? toFormValue(selectedRecord.fields[existingFieldName]) : '';
+    if (rawValue === originalRawValue) return;
+
+    const savedField = await trySaveEbayField({
+      candidates: [...candidates],
+      rawValue,
+      selectedRecord,
+      tableReference,
+      tableName,
+      options: { typecast: false, coerceNumber: false },
+    });
+
+    if (savedField) {
+      setFormValue(savedField, rawValue);
+    }
+  };
+
+  await savePolicyValue(FULFILLMENT_POLICY_FIELD_CANDIDATES);
+  await savePolicyValue(PAYMENT_POLICY_FIELD_CANDIDATES);
+  await savePolicyValue(RETURN_POLICY_FIELD_CANDIDATES);
 
   const priceRaw = priceFieldName ? (formValues[priceFieldName] ?? '') : '';
   const priceCandidates = [priceFieldName, ...EBAY_PRICE_FIELD_CANDIDATES];
