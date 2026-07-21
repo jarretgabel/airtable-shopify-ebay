@@ -656,6 +656,21 @@ Resources:
             Method: GET
             Path: /api/ebay/runtime-config
 
+  EbayGetBusinessPoliciesFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/getBusinessPolicies.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/ebay/business-policies
+
   EbayGetDashboardSnapshotFunction:
     Type: AWS::Serverless::Function
     Metadata:

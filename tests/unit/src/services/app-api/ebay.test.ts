@@ -1,5 +1,6 @@
 import {
   createSampleListing,
+  getEbayBusinessPolicies,
   getEbayApprovalPreview,
   getEbayChildCategories,
   getEbayDashboardSnapshot,
@@ -97,12 +98,19 @@ describe('app-api ebay', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify([{ id: '1', name: 'Amplifiers', path: 'Amplifiers', level: 1 }]), { status: 200, headers: { 'content-type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify([{ id: '2', name: 'Audio', path: 'Audio', level: 0, hasChildren: true }]), { status: 200, headers: { 'content-type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify([{ id: '3', name: 'Tube Amps', path: 'Audio > Tube Amps', level: 1, hasChildren: false }]), { status: 200, headers: { 'content-type': 'application/json' } }))
-      .mockResolvedValueOnce(new Response(JSON.stringify(['Letter', 'Package/Thick Envelope']), { status: 200, headers: { 'content-type': 'application/json' } }));
+      .mockResolvedValueOnce(new Response(JSON.stringify(['Letter', 'Package/Thick Envelope']), { status: 200, headers: { 'content-type': 'application/json' } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        marketplaceId: 'EBAY_US',
+        fulfillmentPolicies: [{ policyId: 'f1', name: 'Shipping Policy', marketplaceId: 'EBAY_US' }],
+        paymentPolicies: [{ policyId: 'p1', name: 'Payment Policy', marketplaceId: 'EBAY_US' }],
+        returnPolicies: [{ policyId: 'r1', name: 'Returns 30 Days', marketplaceId: 'EBAY_US' }],
+      }), { status: 200, headers: { 'content-type': 'application/json' } }));
 
     const suggestions = await searchEbayCategorySuggestions('amp', 'EBAY_US');
     const roots = await getEbayRootCategories('EBAY_US');
     const children = await getEbayChildCategories('2', 'EBAY_US');
     const packageTypes = await getEbayPackageTypes('EBAY_US');
+    const businessPolicies = await getEbayBusinessPolicies('EBAY_US');
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, expectApiPath('/api/ebay/taxonomy/suggestions?query=amp&marketplaceId=EBAY_US'), {
       cache: 'no-store',
@@ -124,10 +132,16 @@ describe('app-api ebay', () => {
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
+    expect(fetchMock).toHaveBeenNthCalledWith(5, expectApiPath('/api/ebay/business-policies?marketplaceId=EBAY_US'), {
+      cache: 'no-store',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    });
     expect(suggestions).toHaveLength(1);
     expect(roots).toHaveLength(1);
     expect(children).toHaveLength(1);
     expect(packageTypes).toEqual(['Letter', 'Package/Thick Envelope']);
+    expect(businessPolicies.fulfillmentPolicies).toHaveLength(1);
   });
 
   it('calls the Lambda eBay write endpoints', async () => {

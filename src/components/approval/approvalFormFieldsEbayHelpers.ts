@@ -60,6 +60,37 @@ export function isEbayMarketplaceIdField(fieldName: string): boolean {
     || normalized === 'ebay_offer_marketplaceid';
 }
 
+function normalizePolicyFieldName(fieldName: string): string {
+  return fieldName.trim().toLowerCase().replace(/\s*\([^)]*\)\s*$/g, '').trim();
+}
+
+export function isEbayFulfillmentPolicyField(fieldName: string): boolean {
+  const normalized = normalizePolicyFieldName(fieldName);
+  return normalized === 'ebay offer fulfillment policy id'
+    || normalized === 'ebay_offer_fulfillment_policy_id'
+    || normalized === 'ebay_offer_fulfillmentpolicyid'
+    || normalized === 'fulfillment policy id'
+    || normalized === 'fulfillment_policy_id';
+}
+
+export function isEbayPaymentPolicyField(fieldName: string): boolean {
+  const normalized = normalizePolicyFieldName(fieldName);
+  return normalized === 'ebay offer payment policy id'
+    || normalized === 'ebay_offer_payment_policy_id'
+    || normalized === 'ebay_offer_paymentpolicyid'
+    || normalized === 'payment policy id'
+    || normalized === 'payment_policy_id';
+}
+
+export function isEbayReturnPolicyField(fieldName: string): boolean {
+  const normalized = normalizePolicyFieldName(fieldName);
+  return normalized === 'ebay offer return policy id'
+    || normalized === 'ebay_offer_return_policy_id'
+    || normalized === 'ebay_offer_returnpolicyid'
+    || normalized === 'return policy id'
+    || normalized === 'return_policy_id';
+}
+
 export function isEbayFormatField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'ebay offer format'

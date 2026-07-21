@@ -30,9 +30,12 @@ import {
   getCanonicalShippingServiceAlias,
   isEbayAdvancedOptionField,
   isEbayDomesticShippingFlatFeeField,
+  isEbayFulfillmentPolicyField,
   isEbayInternationalShippingFeesField,
   isEbayInternationalShippingFlatFeeField,
+  isEbayPaymentPolicyField,
   isEbayPrimaryCategoryField,
+  isEbayReturnPolicyField,
   isEbaySecondaryCategoryField,
   isEbayShippingServiceFieldName,
   isEbayShippingTypeField,
@@ -73,6 +76,10 @@ export interface ApprovalFormStandardFieldVisibilityParams {
   ebayTestingNotesFieldName?: string;
   ebayAttributesCandidateFieldNames: string[];
   hasEbayCategoryEditor: boolean;
+  hasEbayBusinessPoliciesEditor: boolean;
+  ebayFulfillmentPolicyFieldName?: string;
+  ebayPaymentPolicyFieldName?: string;
+  ebayReturnPolicyFieldName?: string;
   ebayCategoriesFieldName?: string;
   effectiveEbayCategoriesFieldName: string;
   preferredShopifyPriceFieldName?: string;
@@ -105,6 +112,10 @@ export function shouldHideApprovalFormStandardField({
   ebayTestingNotesFieldName,
   ebayAttributesCandidateFieldNames,
   hasEbayCategoryEditor,
+  hasEbayBusinessPoliciesEditor,
+  ebayFulfillmentPolicyFieldName,
+  ebayPaymentPolicyFieldName,
+  ebayReturnPolicyFieldName,
   ebayCategoriesFieldName,
   effectiveEbayCategoriesFieldName,
   preferredShopifyPriceFieldName,
@@ -132,6 +143,14 @@ export function shouldHideApprovalFormStandardField({
 
   if (isEbayHandlingCostField(fieldName)) return true;
   if (isEbayGlobalShippingField(fieldName)) return true;
+  if (hasEbayBusinessPoliciesEditor && (
+    (ebayFulfillmentPolicyFieldName && fieldName === ebayFulfillmentPolicyFieldName)
+    || (ebayPaymentPolicyFieldName && fieldName === ebayPaymentPolicyFieldName)
+    || (ebayReturnPolicyFieldName && fieldName === ebayReturnPolicyFieldName)
+    || isEbayFulfillmentPolicyField(fieldName)
+    || isEbayPaymentPolicyField(fieldName)
+    || isEbayReturnPolicyField(fieldName)
+  )) return true;
   if (isEbayDomesticShippingFlatFeeField(fieldName)) return true;
   if (isEbayInternationalShippingFlatFeeField(fieldName)) return true;
   if (isEbayShippingTypeField(fieldName)) return true;

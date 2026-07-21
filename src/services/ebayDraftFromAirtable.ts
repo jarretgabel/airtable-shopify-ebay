@@ -526,6 +526,27 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     'ebay_offer_listingDuration',
     'ebay_offer_listing_duration',
   ]) || 'GTC';
+  const fulfillmentPolicyId = getField(fields, [
+    'eBay Offer Fulfillment Policy ID',
+    'ebay_offer_fulfillment_policy_id',
+    'ebay_offer_fulfillmentpolicyid',
+    'Fulfillment Policy ID',
+    'fulfillment_policy_id',
+  ]);
+  const paymentPolicyId = getField(fields, [
+    'eBay Offer Payment Policy ID',
+    'ebay_offer_payment_policy_id',
+    'ebay_offer_paymentpolicyid',
+    'Payment Policy ID',
+    'payment_policy_id',
+  ]);
+  const returnPolicyId = getField(fields, [
+    'eBay Offer Return Policy ID',
+    'ebay_offer_return_policy_id',
+    'ebay_offer_returnpolicyid',
+    'Return Policy ID',
+    'return_policy_id',
+  ]);
   const priceValue = getField(fields, [
     'eBay Offer Price Value',
     'eBay Offer Auction Start Price Value',
@@ -574,6 +595,15 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
       : { price: { value: priceValue, currency } },
     quantityLimitPerBuyer,
     includeCatalogProductDetails: false,
+    ...((fulfillmentPolicyId || paymentPolicyId || returnPolicyId)
+      ? {
+          listingPolicies: {
+            ...(fulfillmentPolicyId ? { fulfillmentPolicyId } : {}),
+            ...(paymentPolicyId ? { paymentPolicyId } : {}),
+            ...(returnPolicyId ? { returnPolicyId } : {}),
+          },
+        }
+      : {}),
   };
 
   return {

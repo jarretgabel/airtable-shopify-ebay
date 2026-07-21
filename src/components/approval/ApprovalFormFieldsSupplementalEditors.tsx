@@ -17,6 +17,9 @@ const EbayAttributesEditor = lazy(async () => ({
 const EbayCategoriesSelect = lazy(async () => ({
   default: (await import('./EbayCategoriesSelect')).EbayCategoriesSelect,
 }));
+const EbayPolicySelectGroup = lazy(async () => ({
+  default: (await import('./EbayPolicySelectGroup')).EbayPolicySelectGroup,
+}));
 const KeyFeaturesEditor = lazy(async () => ({
   default: (await import('./KeyFeaturesEditor')).KeyFeaturesEditor,
 }));
@@ -67,6 +70,10 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
   ebayInternationalShippingFeesFieldName?: string;
   ebayDomesticShippingFlatFeeFieldName: string;
   ebayInternationalShippingFlatFeeFieldName: string;
+  hasEbayBusinessPoliciesEditor: boolean;
+  ebayFulfillmentPolicyFieldName?: string;
+  ebayPaymentPolicyFieldName?: string;
+  ebayReturnPolicyFieldName?: string;
   hasEbayShippingServicesEditor: boolean;
   domesticService1FieldName?: string;
   domesticService2FieldName?: string;
@@ -143,6 +150,10 @@ export function ApprovalFormFieldsSupplementalEditors({
   ebayInternationalShippingFeesFieldName,
   ebayDomesticShippingFlatFeeFieldName,
   ebayInternationalShippingFlatFeeFieldName,
+  hasEbayBusinessPoliciesEditor,
+  ebayFulfillmentPolicyFieldName,
+  ebayPaymentPolicyFieldName,
+  ebayReturnPolicyFieldName,
   hasEbayShippingServicesEditor,
   domesticService1FieldName,
   domesticService2FieldName,
@@ -336,6 +347,23 @@ export function ApprovalFormFieldsSupplementalEditors({
             syncFieldNames={ebayAttributesSyncFieldNames}
             disabled={saving}
             label="Attributes"
+          />
+        </Suspense>
+      )}
+
+      {isEbayApprovalForm && (
+        <Suspense fallback={lazyEditorFallback}>
+          <EbayPolicySelectGroup
+            enabled={hasEbayBusinessPoliciesEditor}
+            marketplaceId={ebayMarketplaceId}
+            fulfillmentPolicyFieldName={ebayFulfillmentPolicyFieldName}
+            paymentPolicyFieldName={ebayPaymentPolicyFieldName}
+            returnPolicyFieldName={ebayReturnPolicyFieldName}
+            formValues={formValues}
+            setFormValue={setFormValue}
+            disabled={saving}
+            renderFieldLabel={renderFieldLabel}
+            getSelectClassName={getSelectClassName}
           />
         </Suspense>
       )}

@@ -20,6 +20,9 @@ import {
   isEbayFormatField,
   isEbayInternationalShippingFeesField,
   isEbayInternationalShippingFlatFeeField,
+  isEbayFulfillmentPolicyField,
+  isEbayPaymentPolicyField,
+  isEbayReturnPolicyField,
   isEbayShippingServiceFieldName,
   isEbayShippingTypeField,
   isLikelyDerivedAirtableField,
@@ -241,6 +244,33 @@ export function useApprovalFormEbayEditorSetup({
 
   const ebayFormatFieldName = allFieldNames.find((fieldName) => isEbayFormatField(fieldName));
   const pinnedPreDescriptionFieldName = isEbayListingForm ? ebayFormatFieldName : undefined;
+  const ebayPolicyFieldCandidates = Array.from(new Set([
+    ...allFieldNames,
+    ...writableFieldNames,
+    ...Object.keys(formValues),
+  ]));
+  const ebayFulfillmentPolicyFieldName = isEbayApprovalForm
+    ? pickPreferredField(
+      ebayPolicyFieldCandidates.filter((fieldName) => isEbayFulfillmentPolicyField(fieldName)),
+      ['eBay Offer Fulfillment Policy ID', 'ebay_offer_fulfillment_policy_id', 'Fulfillment Policy ID'],
+      formValues,
+    ) ?? 'eBay Offer Fulfillment Policy ID'
+    : undefined;
+  const ebayPaymentPolicyFieldName = isEbayApprovalForm
+    ? pickPreferredField(
+      ebayPolicyFieldCandidates.filter((fieldName) => isEbayPaymentPolicyField(fieldName)),
+      ['eBay Offer Payment Policy ID', 'ebay_offer_payment_policy_id', 'Payment Policy ID'],
+      formValues,
+    ) ?? 'eBay Offer Payment Policy ID'
+    : undefined;
+  const ebayReturnPolicyFieldName = isEbayApprovalForm
+    ? pickPreferredField(
+      ebayPolicyFieldCandidates.filter((fieldName) => isEbayReturnPolicyField(fieldName)),
+      ['eBay Offer Return Policy ID', 'ebay_offer_return_policy_id', 'Return Policy ID'],
+      formValues,
+    ) ?? 'eBay Offer Return Policy ID'
+    : undefined;
+  const hasEbayBusinessPoliciesEditor = isEbayApprovalForm;
 
   return {
     domesticService1FieldName,
@@ -257,10 +287,14 @@ export function useApprovalFormEbayEditorSetup({
     ebayInternationalShippingFeesFieldName,
     ebayInternationalShippingFlatFeeFieldName,
     ebayKeyFeaturesFieldName,
+    ebayFulfillmentPolicyFieldName,
+    ebayPaymentPolicyFieldName,
+    ebayReturnPolicyFieldName,
     ebayKeyFeaturesSyncFieldNames,
     ebayPackageTypeOptions,
     ebayShippingServiceFieldNames,
     ebayTestingNotesFieldName,
+    hasEbayBusinessPoliciesEditor,
     hasEbayShippingServicesEditor,
     internationalService1FieldName,
     internationalService2FieldName,

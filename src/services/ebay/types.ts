@@ -88,6 +88,21 @@ export interface EbayCategoryTreeNode {
   hasChildren: boolean;
 }
 
+export interface EbayBusinessPolicyOption {
+  policyId: string;
+  name: string;
+  marketplaceId: string;
+  description?: string;
+  categoryTypes?: string[];
+}
+
+export interface EbayBusinessPoliciesByType {
+  marketplaceId: string;
+  fulfillmentPolicies: EbayBusinessPolicyOption[];
+  paymentPolicies: EbayBusinessPolicyOption[];
+  returnPolicies: EbayBusinessPolicyOption[];
+}
+
 export interface EbayPublicListing {
   itemId: string;
   title: string;

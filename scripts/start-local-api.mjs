@@ -38,6 +38,7 @@ const ROUTES = [
   ['GET', '/api/ebay/taxonomy/root-categories', 'handlers/ebay/getRootCategories.js', 'handler'],
   ['GET', '/api/ebay/taxonomy/child-categories', 'handlers/ebay/getChildCategories.js', 'handler'],
   ['GET', '/api/ebay/package-types', 'handlers/ebay/getPackageTypes.js', 'handler'],
+  ['GET', '/api/ebay/business-policies', 'handlers/ebay/getBusinessPolicies.js', 'handler'],
   ['GET', '/api/ebay/runtime-config', 'handlers/ebay/getRuntimeConfig.js', 'handler'],
   ['GET', '/api/ebay/dashboard-snapshot', 'handlers/ebay/getDashboardSnapshot.js', 'handler'],
   ['POST', '/api/ebay/sample-listings', 'handlers/ebay/createSampleListing.js', 'handler'],

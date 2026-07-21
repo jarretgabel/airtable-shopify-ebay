@@ -79,6 +79,21 @@ export interface EbayCategoryTreeNode {
   hasChildren: boolean;
 }
 
+export interface EbayBusinessPolicyOption {
+  policyId: string;
+  name: string;
+  marketplaceId: string;
+  description?: string;
+  categoryTypes?: string[];
+}
+
+export interface EbayBusinessPoliciesByType {
+  marketplaceId: string;
+  fulfillmentPolicies: EbayBusinessPolicyOption[];
+  paymentPolicies: EbayBusinessPolicyOption[];
+  returnPolicies: EbayBusinessPolicyOption[];
+}
+
 export interface EbayLocationConfig {
   key: string;
   name: string;
@@ -252,6 +267,30 @@ interface EbayFulfillmentPolicyResponse {
   shippingOptions?: EbayFulfillmentPolicyShippingOption[];
 }
 
+interface EbayBusinessPolicyListResponse {
+  fulfillmentPolicies?: Array<{
+    fulfillmentPolicyId?: string;
+    name?: string;
+    marketplaceId?: string;
+    description?: string;
+    categoryTypes?: string[];
+  }>;
+  paymentPolicies?: Array<{
+    paymentPolicyId?: string;
+    name?: string;
+    marketplaceId?: string;
+    description?: string;
+    categoryTypes?: string[];
+  }>;
+  returnPolicies?: Array<{
+    returnPolicyId?: string;
+    name?: string;
+    marketplaceId?: string;
+    description?: string;
+    categoryTypes?: string[];
+  }>;
+}
+
 interface EbayCategoryTreeResponse {
   categoryTreeId?: string;
 }
@@ -346,6 +385,7 @@ const treeIdByMarketplace = new Map<string, string>();
 const rootNodesByMarketplace = new Map<string, EbayCategoryTreeNode[]>();
 const childNodesByMarketplaceAndParent = new Map<string, EbayCategoryTreeNode[]>();
 const packageTypesByMarketplace = new Map<string, string[]>();
+const businessPoliciesByMarketplace = new Map<string, EbayBusinessPoliciesByType>();
 
 let cachedUserToken: { accessToken: string; expiresAt: number } | null = null;
 let cachedAppToken: { accessToken: string; expiresAt: number } | null = null;
@@ -370,8 +410,10 @@ function normalizeMarketplaceId(marketplaceId: string): string {
   return marketplaceId.trim().toUpperCase() || 'EBAY_US';
 }
 
-function cleanOptional(value: string | undefined): string {
-  return value?.trim() ?? '';
+function cleanOptional(value: unknown): string {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '';
 }
 
 function normalizeRefreshToken(value: string): string {
@@ -1053,6 +1095,26 @@ function validatePublishSetup(publishSetup: EbayPublishSetup, options: { require
   }
 }
 
+function resolvePolicyConfigForOffer(
+  offerPayload: Record<string, unknown>,
+  defaultPolicyConfig: EbayBusinessPolicyConfig,
+): EbayBusinessPolicyConfig {
+  const listingPolicies = offerPayload.listingPolicies;
+  const listingPolicyRecord = listingPolicies && typeof listingPolicies === 'object'
+    ? listingPolicies as Record<string, unknown>
+    : {};
+
+  const fulfillmentPolicyId = cleanOptional(listingPolicyRecord.fulfillmentPolicyId) || defaultPolicyConfig.fulfillmentPolicyId;
+  const paymentPolicyId = cleanOptional(listingPolicyRecord.paymentPolicyId) || defaultPolicyConfig.paymentPolicyId;
+  const returnPolicyId = cleanOptional(listingPolicyRecord.returnPolicyId) || defaultPolicyConfig.returnPolicyId;
+
+  return {
+    fulfillmentPolicyId,
+    paymentPolicyId,
+    returnPolicyId,
+  };
+}
+
 function isExistingWarehouseLocationError(errorBody: unknown): boolean {
   if (!errorBody || typeof errorBody !== 'object') return false;
   const errors = (errorBody as { errors?: Array<{ errorId?: number; message?: string }> }).errors;
@@ -1496,6 +1558,152 @@ export async function getEbayChildCategories(parentCategoryId: string, marketpla
   return children;
 }
 
+function buildBusinessPolicyOption(params: {
+  policyId: string;
+  name: string;
+  marketplaceId: string;
+  description?: string;
+  categoryTypes?: string[];
+}): EbayBusinessPolicyOption {
+  return {
+    policyId: params.policyId,
+    name: params.name,
+    marketplaceId: params.marketplaceId,
+    ...(params.description ? { description: params.description } : {}),
+    ...(params.categoryTypes && params.categoryTypes.length > 0 ? { categoryTypes: params.categoryTypes } : {}),
+  };
+}
+
+async function readBusinessPolicyType(
+  token: string,
+  marketplaceId: string,
+  policyType: 'fulfillment' | 'payment' | 'return',
+): Promise<EbayBusinessPolicyOption[]> {
+  const normalizedMarketplace = normalizeMarketplaceId(marketplaceId);
+  const endpoint = policyType === 'fulfillment'
+    ? 'fulfillment_policy'
+    : policyType === 'payment'
+      ? 'payment_policy'
+      : 'return_policy';
+
+  const response = await fetch(
+    `${getApiBaseUrl()}/sell/account/v1/${endpoint}?marketplace_id=${encodeURIComponent(normalizedMarketplace)}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Accept-Language': 'en-US',
+      },
+    },
+  );
+
+  // Some environments do not include sell.account scope. Keep UI functional with empty policy lists.
+  if (response.status === 401 || response.status === 403) {
+    return [];
+  }
+
+  if (!response.ok) {
+    throw new HttpError(response.status, `Unable to load eBay ${policyType} policies: ${await readErrorPayload(response)}`, {
+      service: 'ebay',
+      code: 'EBAY_BUSINESS_POLICIES_LOOKUP_FAILED',
+      retryable: response.status >= 500,
+    });
+  }
+
+  let payload: EbayBusinessPolicyListResponse = {};
+  try {
+    payload = await response.json() as EbayBusinessPolicyListResponse;
+  } catch {
+    payload = {};
+  }
+
+  const seenIds = new Set<string>();
+  const options: EbayBusinessPolicyOption[] = [];
+
+  const addOption = (params: {
+    policyId: unknown;
+    name?: unknown;
+    marketplaceId?: unknown;
+    description?: unknown;
+    categoryTypes?: unknown;
+  }): void => {
+    const policyId = cleanOptional(params.policyId);
+    if (!policyId || seenIds.has(policyId.toLowerCase())) return;
+
+    seenIds.add(policyId.toLowerCase());
+    const name = cleanOptional(params.name) || policyId;
+    const policyMarketplaceId = normalizeMarketplaceId(cleanOptional(params.marketplaceId) || normalizedMarketplace);
+    const description = cleanOptional(params.description);
+    const categoryTypes = Array.isArray(params.categoryTypes)
+      ? params.categoryTypes.map((value) => cleanOptional(value)).filter(Boolean)
+      : [];
+
+    options.push(buildBusinessPolicyOption({
+      policyId,
+      name,
+      marketplaceId: policyMarketplaceId,
+      description: description || undefined,
+      categoryTypes,
+    }));
+  };
+
+  if (policyType === 'fulfillment') {
+    (payload.fulfillmentPolicies ?? []).forEach((row) => {
+      addOption({
+        policyId: row.fulfillmentPolicyId,
+        name: row.name,
+        marketplaceId: row.marketplaceId,
+        description: row.description,
+        categoryTypes: row.categoryTypes,
+      });
+    });
+  } else if (policyType === 'payment') {
+    (payload.paymentPolicies ?? []).forEach((row) => {
+      addOption({
+        policyId: row.paymentPolicyId,
+        name: row.name,
+        marketplaceId: row.marketplaceId,
+        description: row.description,
+        categoryTypes: row.categoryTypes,
+      });
+    });
+  } else {
+    (payload.returnPolicies ?? []).forEach((row) => {
+      addOption({
+        policyId: row.returnPolicyId,
+        name: row.name,
+        marketplaceId: row.marketplaceId,
+        description: row.description,
+        categoryTypes: row.categoryTypes,
+      });
+    });
+  }
+
+  return options.sort((left, right) => left.name.localeCompare(right.name));
+}
+
+export async function getEbayBusinessPolicies(marketplaceId = 'EBAY_US'): Promise<EbayBusinessPoliciesByType> {
+  const normalizedMarketplace = normalizeMarketplaceId(marketplaceId);
+  const cached = businessPoliciesByMarketplace.get(normalizedMarketplace);
+  if (cached) return cached;
+
+  const token = await getValidUserToken();
+  const [fulfillmentPolicies, paymentPolicies, returnPolicies] = await Promise.all([
+    readBusinessPolicyType(token, normalizedMarketplace, 'fulfillment'),
+    readBusinessPolicyType(token, normalizedMarketplace, 'payment'),
+    readBusinessPolicyType(token, normalizedMarketplace, 'return'),
+  ]);
+
+  const result: EbayBusinessPoliciesByType = {
+    marketplaceId: normalizedMarketplace,
+    fulfillmentPolicies,
+    paymentPolicies,
+    returnPolicies,
+  };
+  businessPoliciesByMarketplace.set(normalizedMarketplace, result);
+  return result;
+}
+
 export async function getEbayPackageTypes(marketplaceId = 'EBAY_US'): Promise<string[]> {
   const normalizedMarketplace = normalizeMarketplaceId(marketplaceId);
   const cached = packageTypesByMarketplace.get(normalizedMarketplace);
@@ -1908,7 +2116,16 @@ export async function pushApprovalBundleToEbay(
   publishSetup?: EbayPublishSetup,
 ): Promise<EbayApprovalPushResult> {
   const resolvedPublishSetup = publishSetup ?? getDefaultPublishSetup();
-  validatePublishSetup(resolvedPublishSetup, { requirePolicies: true, context: 'pushing' });
+  validatePublishSetup(resolvedPublishSetup, { requirePolicies: false, context: 'pushing' });
+  const resolvedPolicyConfig = resolvePolicyConfigForOffer(bundle.offer, resolvedPublishSetup.policyConfig);
+  const missingPolicies = getMissingPolicyFields(resolvedPolicyConfig);
+  if (missingPolicies.length > 0) {
+    throw new HttpError(400, `Before pushing to eBay, set policy IDs for this listing (or configure defaults): ${missingPolicies.join(', ')}.`, {
+      service: 'ebay',
+      code: 'EBAY_POLICY_CONFIG_REQUIRED',
+      retryable: false,
+    });
+  }
 
   const token = await getValidUserToken();
   const sku = normalizeSku(bundle);
@@ -1944,9 +2161,9 @@ export async function pushApprovalBundleToEbay(
     secondaryCategoryId: secondaryCategoryId || undefined,
     merchantLocationKey: resolvedPublishSetup.locationConfig.key,
     listingPolicies: {
-      fulfillmentPolicyId: resolvedPublishSetup.policyConfig.fulfillmentPolicyId,
-      paymentPolicyId: resolvedPublishSetup.policyConfig.paymentPolicyId,
-      returnPolicyId: resolvedPublishSetup.policyConfig.returnPolicyId,
+      fulfillmentPolicyId: resolvedPolicyConfig.fulfillmentPolicyId,
+      paymentPolicyId: resolvedPolicyConfig.paymentPolicyId,
+      returnPolicyId: resolvedPolicyConfig.returnPolicyId,
     },
   };
 
@@ -1965,7 +2182,7 @@ export async function pushApprovalBundleToEbay(
   await validateFulfillmentPolicyForMarketplace(
     token,
     String(offerPayload.marketplaceId ?? 'EBAY_US'),
-    resolvedPublishSetup.policyConfig.fulfillmentPolicyId,
+    resolvedPolicyConfig.fulfillmentPolicyId,
   );
 
   const { offerId, wasExistingOffer } = await createOrUpdateOffer(token, sku, offerPayload, existingOffer?.offerId);
@@ -1981,7 +2198,7 @@ export async function pushApprovalBundleToEbay(
 
   const { listingId } = await publishOfferById(token, offerId, {
     marketplaceId: String(offerPayload.marketplaceId ?? 'EBAY_US'),
-    fulfillmentPolicyId: resolvedPublishSetup.policyConfig.fulfillmentPolicyId,
+    fulfillmentPolicyId: resolvedPolicyConfig.fulfillmentPolicyId,
   });
   return { sku, offerId, listingId, wasExistingOffer };
 }
