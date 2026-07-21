@@ -221,7 +221,8 @@ function normalizeTypeValue(type: string): string {
   const trimmed = type.trim();
   if (!trimmed) return '';
   if (!trimmed.includes('>')) return trimmed;
-  return trimmed.split('>').map((part) => part.trim()).filter(Boolean).at(-1) ?? trimmed;
+  const parts = trimmed.split('>').map((part) => part.trim()).filter(Boolean);
+  return parts.length > 0 ? parts[parts.length - 1] : trimmed;
 }
 
 function ensureHtmlDescription(value: string): string {

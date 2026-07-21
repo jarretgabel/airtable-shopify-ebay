@@ -47,7 +47,7 @@ interface ApprovalFormStandardFieldProps {
   ebayTestingNotesFieldName?: string;
   ebayAttributesCandidateFieldNames: string[];
   hasEbayCategoryEditor: boolean;
-  hasEbayBusinessPoliciesEditor: boolean;
+  hasEbayBusinessPoliciesEditor?: boolean;
   ebayFulfillmentPolicyFieldName?: string;
   ebayPaymentPolicyFieldName?: string;
   ebayReturnPolicyFieldName?: string;
@@ -96,7 +96,7 @@ export function ApprovalFormStandardField({
   ebayTestingNotesFieldName,
   ebayAttributesCandidateFieldNames,
   hasEbayCategoryEditor,
-  hasEbayBusinessPoliciesEditor,
+  hasEbayBusinessPoliciesEditor = false,
   ebayFulfillmentPolicyFieldName,
   ebayPaymentPolicyFieldName,
   ebayReturnPolicyFieldName,

@@ -7,6 +7,7 @@ import {
 import { ApprovalSelect } from '@/components/approval/ApprovalSelect';
 
 const panelClass = 'col-span-1 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3 md:col-span-2';
+const requiredBadgeClass = 'inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]';
 
 interface EbayPolicySelectGroupProps {
   enabled: boolean;
@@ -54,6 +55,18 @@ function withCurrentOption(options: PolicyOption[], value: string): PolicyOption
   }
 
   return [{ id: current, label: `Current (${current})` }, ...options];
+}
+
+function renderVisuallyRequiredLabel(
+  fieldName: string,
+  renderFieldLabel: (fieldName: string) => JSX.Element,
+): JSX.Element {
+  return (
+    <span className="flex items-center gap-2 [&>span]:mb-0">
+      {renderFieldLabel(fieldName)}
+      <span className={`${requiredBadgeClass} self-center`}>Required</span>
+    </span>
+  );
 }
 
 export function EbayPolicySelectGroup({
@@ -115,32 +128,6 @@ export function EbayPolicySelectGroup({
     };
   }, [enabled, marketplaceId]);
 
-  useEffect(() => {
-    if (!enabled) return;
-
-    if (fulfillmentPolicyFieldName && !String(formValues[fulfillmentPolicyFieldName] ?? '').trim() && defaultPolicyIds.fulfillmentPolicyId) {
-      setFormValue(fulfillmentPolicyFieldName, defaultPolicyIds.fulfillmentPolicyId);
-    }
-
-    if (paymentPolicyFieldName && !String(formValues[paymentPolicyFieldName] ?? '').trim() && defaultPolicyIds.paymentPolicyId) {
-      setFormValue(paymentPolicyFieldName, defaultPolicyIds.paymentPolicyId);
-    }
-
-    if (returnPolicyFieldName && !String(formValues[returnPolicyFieldName] ?? '').trim() && defaultPolicyIds.returnPolicyId) {
-      setFormValue(returnPolicyFieldName, defaultPolicyIds.returnPolicyId);
-    }
-  }, [
-    defaultPolicyIds.fulfillmentPolicyId,
-    defaultPolicyIds.paymentPolicyId,
-    defaultPolicyIds.returnPolicyId,
-    enabled,
-    fulfillmentPolicyFieldName,
-    formValues,
-    paymentPolicyFieldName,
-    returnPolicyFieldName,
-    setFormValue,
-  ]);
-
   const fulfillmentOptions = useMemo(
     () => normalizePolicyOptions(policiesByType?.fulfillmentPolicies ?? []),
     [policiesByType],
@@ -167,7 +154,7 @@ export function EbayPolicySelectGroup({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {fulfillmentPolicyFieldName && (
           <label className="col-span-1 flex flex-col gap-2">
-            {renderFieldLabel(fulfillmentPolicyFieldName)}
+            {renderVisuallyRequiredLabel(fulfillmentPolicyFieldName, renderFieldLabel)}
             <ApprovalSelect
               selectClassName={getSelectClassName(fulfillmentPolicyFieldName)}
               value={(formValues[fulfillmentPolicyFieldName] ?? '').trim() || defaultPolicyIds.fulfillmentPolicyId || ''}
@@ -185,7 +172,7 @@ export function EbayPolicySelectGroup({
 
         {paymentPolicyFieldName && (
           <label className="col-span-1 flex flex-col gap-2">
-            {renderFieldLabel(paymentPolicyFieldName)}
+            {renderVisuallyRequiredLabel(paymentPolicyFieldName, renderFieldLabel)}
             <ApprovalSelect
               selectClassName={getSelectClassName(paymentPolicyFieldName)}
               value={(formValues[paymentPolicyFieldName] ?? '').trim() || defaultPolicyIds.paymentPolicyId || ''}
@@ -203,7 +190,7 @@ export function EbayPolicySelectGroup({
 
         {returnPolicyFieldName && (
           <label className="col-span-1 flex flex-col gap-2">
-            {renderFieldLabel(returnPolicyFieldName)}
+            {renderVisuallyRequiredLabel(returnPolicyFieldName, renderFieldLabel)}
             <ApprovalSelect
               selectClassName={getSelectClassName(returnPolicyFieldName)}
               value={(formValues[returnPolicyFieldName] ?? '').trim() || defaultPolicyIds.returnPolicyId || ''}

@@ -343,7 +343,6 @@ export function ApprovalFormFields({
     setShopifyCollectionIds,
     hasEbayCategoryEditor,
     effectiveEbayCategoriesFieldName,
-    ebayMarketplaceId,
     ebaySelectedCategoryDisplayValues,
     normalizedEbayCategoryLabelsById,
     setEbayCategoryIds,

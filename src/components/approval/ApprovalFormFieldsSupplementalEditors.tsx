@@ -70,7 +70,7 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
   ebayInternationalShippingFeesFieldName?: string;
   ebayDomesticShippingFlatFeeFieldName: string;
   ebayInternationalShippingFlatFeeFieldName: string;
-  hasEbayBusinessPoliciesEditor: boolean;
+  hasEbayBusinessPoliciesEditor?: boolean;
   ebayFulfillmentPolicyFieldName?: string;
   ebayPaymentPolicyFieldName?: string;
   ebayReturnPolicyFieldName?: string;
@@ -150,7 +150,7 @@ export function ApprovalFormFieldsSupplementalEditors({
   ebayInternationalShippingFeesFieldName,
   ebayDomesticShippingFlatFeeFieldName,
   ebayInternationalShippingFlatFeeFieldName,
-  hasEbayBusinessPoliciesEditor,
+  hasEbayBusinessPoliciesEditor = false,
   ebayFulfillmentPolicyFieldName,
   ebayPaymentPolicyFieldName,
   ebayReturnPolicyFieldName,
