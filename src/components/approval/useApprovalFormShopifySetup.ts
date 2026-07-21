@@ -10,6 +10,36 @@ import { pickPreferredField } from './approvalFormFieldsImageHelpers';
 import { useApprovalFormShopifyCollectionsSetup } from './useApprovalFormShopifyCollectionsSetup';
 import { useApprovalFormShopifyTagsSetup } from './useApprovalFormShopifyTagsSetup';
 
+const SHOPIFY_VENDOR_DEFAULT_FIELD_CANDIDATES = [
+  'Make',
+  'Brand',
+  'Manufacturer',
+  'Item Brand',
+  'Intake Brand',
+] as const;
+
+function normalizeFieldName(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function resolveShopifyVendorDefaultValue(formValues: Record<string, string>): string {
+  const valuesByNormalizedFieldName = new Map<string, string>();
+
+  for (const [fieldName, fieldValue] of Object.entries(formValues)) {
+    valuesByNormalizedFieldName.set(normalizeFieldName(fieldName), fieldValue);
+  }
+
+  for (const candidateFieldName of SHOPIFY_VENDOR_DEFAULT_FIELD_CANDIDATES) {
+    const candidateValue = valuesByNormalizedFieldName.get(normalizeFieldName(candidateFieldName));
+    if (typeof candidateValue !== 'string') continue;
+
+    const normalizedValue = candidateValue.trim();
+    if (normalizedValue) return normalizedValue;
+  }
+
+  return '';
+}
+
 type UseApprovalFormShopifySetupParams = Pick<ApprovalFormFieldSetupParams,
   'recordId'
   | 'approvalChannel'
@@ -50,14 +80,7 @@ export function useApprovalFormShopifySetup({
     ? vendorFieldCandidates.find((fieldName) => isShopifyVendorField(fieldName))
     : undefined;
   const shopifyVendorDefaultValue = isShopifyApprovalForm && !isCombinedApproval
-    ? (
-      formValues.Make
-      || formValues.Brand
-      || formValues.Manufacturer
-      || formValues['Item Brand']
-      || formValues['Intake Brand']
-      || ''
-    ).trim()
+    ? resolveShopifyVendorDefaultValue(formValues)
     : '';
   const hasShopifyVendorEditor = Boolean(isShopifyApprovalForm && shopifyVendorFieldName);
   const shopifyBodyDescriptionCandidateFieldNames = isShopifyApprovalForm

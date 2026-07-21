@@ -50,6 +50,30 @@ const DESCRIPTION_FIELD_CANDIDATES = [
   'Description',
 ];
 
+const VENDOR_FIELD_CANDIDATES = [
+  'Vendor',
+  'Shopify Vendor',
+  'Shopify REST Vendor',
+  'Shopify GraphQL Vendor',
+  'vendor',
+  'shopify_vendor',
+  'shopify_rest_vendor',
+  'shopify_graphql_vendor',
+];
+
+const VENDOR_SOURCE_FIELD_CANDIDATES = [
+  'Make',
+  'Brand',
+  'Manufacturer',
+  'Item Brand',
+  'Intake Brand',
+  'make',
+  'brand',
+  'manufacturer',
+  'item_brand',
+  'intake_brand',
+];
+
 const KEY_FEATURE_FIELD_CANDIDATES = [
   'Shopify Body Key Features JSON',
   'Shopify REST Body Key Features JSON',
@@ -380,6 +404,12 @@ export function applyWorkflowListingPrefills(
   kinds: ApprovalFieldKinds,
 ) {
   if (!hasWorkflowListingSourceContext(fields)) return;
+
+  const vendorFieldNames = findMatchingFieldNames(values, VENDOR_FIELD_CANDIDATES);
+  const existingVendor = firstNonEmptyFormValue(values, VENDOR_FIELD_CANDIDATES);
+  const vendorFallback = firstNonEmptyFormValue(values, VENDOR_SOURCE_FIELD_CANDIDATES)
+    || firstNonEmptyField(fields, VENDOR_SOURCE_FIELD_CANDIDATES);
+  applyTextPrefill(values, kinds, vendorFieldNames, existingVendor || vendorFallback);
 
   const titleFieldNames = findMatchingFieldNames(values, TITLE_FIELD_CANDIDATES);
   const existingTitle = firstNonEmptyFormValue(values, TITLE_FIELD_CANDIDATES);

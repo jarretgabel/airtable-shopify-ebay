@@ -2,6 +2,27 @@ import { describe, expect, it } from 'vitest';
 import { applyWorkflowListingPrefills } from '@/stores/approval/approvalStoreWorkflowPrefill';
 
 describe('applyWorkflowListingPrefills', () => {
+  it('prefills blank vendor fields from make when vendor is missing', () => {
+    const values = {
+      Vendor: '',
+      'Shopify REST Vendor': '',
+      Make: 'McIntosh',
+    };
+    const kinds = {
+      Vendor: 'text',
+      'Shopify REST Vendor': 'text',
+      Make: 'text',
+    } as const;
+
+    applyWorkflowListingPrefills({
+      'Workflow Status': 'Approved for Publish',
+      Make: 'McIntosh',
+    }, values, { ...kinds });
+
+    expect(values.Vendor).toBe('McIntosh');
+    expect(values['Shopify REST Vendor']).toBe('McIntosh');
+  });
+
   it('prefills blank listing fields from workflow fields', () => {
     const values = {
       Title: '',
