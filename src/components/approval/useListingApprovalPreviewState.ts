@@ -205,22 +205,6 @@ export function useListingApprovalPreviewState({
     ? localCombinedEbayGeneratedBodyHtml
     : (ebayApprovalPreview?.generatedBodyHtml?.trim() ? ebayApprovalPreview.generatedBodyHtml : '');
 
-  useEffect(() => {
-    if (!isCombinedApproval || !combinedEbayBodyHtmlFieldName) return;
-    if (!combinedEbayGeneratedBodyHtml.trim()) return;
-
-    const current = formValues[combinedEbayBodyHtmlFieldName] ?? '';
-    if (current !== combinedEbayGeneratedBodyHtml) {
-      setDerivedFormValue(combinedEbayBodyHtmlFieldName, combinedEbayGeneratedBodyHtml);
-    }
-  }, [
-    combinedEbayBodyHtmlFieldName,
-    combinedEbayGeneratedBodyHtml,
-    formValues,
-    isCombinedApproval,
-    setDerivedFormValue,
-  ]);
-
   const ebayDraftPayloadBundle = useMemo(() => {
     if (!isEbayPayloadPreviewContext) return null;
     if (ebayApprovalPreview?.draftPayloadBundle) {

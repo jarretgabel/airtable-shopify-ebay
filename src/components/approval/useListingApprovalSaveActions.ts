@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { recordTitle } from '@/app/appNavigation';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { useNotificationStore } from '@/stores/notificationStore';
@@ -53,24 +52,13 @@ export function useListingApprovalSaveActions({
   requestConfirmation,
 }: SaveActionsParams) {
   const pushResultNotification = useNotificationStore.getState().upsertByKey;
-  const saveBaselineByFieldRef = useRef<Record<string, string>>({});
-
-  useEffect(() => {
-    if (!selectedRecord) {
-      saveBaselineByFieldRef.current = {};
-      return;
-    }
-
-    const { initialFormValues } = useApprovalStore.getState();
-    saveBaselineByFieldRef.current = { ...initialFormValues };
-  }, [selectedRecord?.id]);
 
   const getEffectiveChangedFieldNames = (): string[] => {
     if (!selectedRecord) return [];
 
     const latestStoreState = useApprovalStore.getState();
     const latestFormValues = latestStoreState.formValues;
-    const savedBaseline = saveBaselineByFieldRef.current;
+    const savedBaseline = latestStoreState.initialFormValues;
 
     const liveChangedFieldNames = Object.entries(latestFormValues)
       .filter(([fieldName, currentValue]) => {

@@ -323,33 +323,6 @@ export function useApprovalFormFieldSetup({
 
   const derivedBodyHtmlPreview = normalizedBodyHtmlPreview ?? '';
 
-  useEffect(() => {
-    if (!shopifySetup.shopifyBodyHtmlFieldName) return;
-
-    const nextBodyHtml = derivedBodyHtmlPreview;
-    const currentBodyHtml = formValues[shopifySetup.shopifyBodyHtmlFieldName] ?? '';
-
-    if (currentBodyHtml !== nextBodyHtml) {
-      setDerivedFormValue(shopifySetup.shopifyBodyHtmlFieldName, nextBodyHtml);
-    }
-  }, [
-    derivedBodyHtmlPreview,
-    setDerivedFormValue,
-    shopifySetup.shopifyBodyHtmlFieldName,
-    formValues,
-  ]);
-
-  useEffect(() => {
-    if (!ebaySetup.ebayBodyHtmlFieldName) return;
-
-    const nextBodyHtml = derivedBodyHtmlPreview;
-    const currentBodyHtml = formValues[ebaySetup.ebayBodyHtmlFieldName] ?? '';
-
-    if (currentBodyHtml !== nextBodyHtml) {
-      setDerivedFormValue(ebaySetup.ebayBodyHtmlFieldName, nextBodyHtml);
-    }
-  }, [derivedBodyHtmlPreview, ebaySetup.ebayBodyHtmlFieldName, formValues, setDerivedFormValue]);
-
   const activeBodyDescriptionFieldName = shopifySetup.shopifyBodyDescriptionFieldName ?? ebaySetup.ebayBodyDescriptionFieldName;
 
   return {

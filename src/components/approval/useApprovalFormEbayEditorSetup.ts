@@ -227,7 +227,7 @@ export function useApprovalFormEbayEditorSetup({
 
     if (ebayBodyHtmlTemplateFieldName) {
       const currentTemplateValue = formValues[ebayBodyHtmlTemplateFieldName] ?? '';
-      if (normalizeEbayListingTemplateId(currentTemplateValue) !== resolvedEbayTemplateId) {
+      if (currentTemplateValue.trim() && normalizeEbayListingTemplateId(currentTemplateValue) !== resolvedEbayTemplateId) {
         setDerivedFormValue(ebayBodyHtmlTemplateFieldName, resolvedEbayTemplateId);
       }
     }

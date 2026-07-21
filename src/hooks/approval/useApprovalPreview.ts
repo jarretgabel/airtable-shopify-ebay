@@ -217,11 +217,13 @@ export function useApprovalPreview({
           setEbayApprovalPreview(preview.ebay ?? null);
           setShopifyApprovalPreview(null);
         }
-        Object.entries(preview.ebay?.categoryFieldUpdates ?? {}).forEach(([fieldName, value]) => {
-          if ((latestFormValuesRef.current[fieldName] ?? '') !== value) {
-            setDerivedFormValue(fieldName, value);
-          }
-        });
+        if (approvalChannel === 'ebay') {
+          Object.entries(preview.ebay?.categoryFieldUpdates ?? {}).forEach(([fieldName, value]) => {
+            if ((latestFormValuesRef.current[fieldName] ?? '') !== value) {
+              setDerivedFormValue(fieldName, value);
+            }
+          });
+        }
       })
       .catch(() => {
         if (normalizePreviewRequestRef.current !== requestId) return;

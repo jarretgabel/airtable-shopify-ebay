@@ -70,10 +70,7 @@ describe('useListingApprovalPreviewState', () => {
     });
 
     expect(result.current.combinedEbayGeneratedBodyHtml).toContain('2270');
-    expect(setDerivedFormValue).toHaveBeenCalledWith(
-      'eBay Body HTML',
-      expect.stringContaining('Marantz'),
-    );
+    expect(setDerivedFormValue).not.toHaveBeenCalled();
   });
 
   it('builds local combined eBay body html from merged source fields when the selected record is stale', async () => {
