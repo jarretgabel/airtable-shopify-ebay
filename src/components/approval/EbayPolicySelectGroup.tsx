@@ -27,6 +27,21 @@ interface PolicyOption {
   label: string;
 }
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function sanitizePolicyLabel(name: string, id: string): string {
+  const trimmedName = name.trim();
+  if (!trimmedName) return 'Unnamed policy';
+
+  const idPattern = new RegExp(`(?:\\s*\\(${escapeRegex(id)}\\))+\\s*$`, 'i');
+  return trimmedName
+    .replace(idPattern, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim() || 'Unnamed policy';
+}
+
 function normalizePolicyOptions(options: Array<{ policyId: string; name: string }>): PolicyOption[] {
   const seen = new Set<string>();
   const normalized: PolicyOption[] = [];
@@ -37,33 +52,34 @@ function normalizePolicyOptions(options: Array<{ policyId: string; name: string 
     const key = id.toLowerCase();
     if (seen.has(key)) return;
     seen.add(key);
-    const name = option.name.trim() || id;
+    const name = sanitizePolicyLabel(option.name, id);
     normalized.push({
       id,
-      label: name === id ? id : `${name} (${id})`,
+      label: name,
     });
   });
 
   return normalized;
 }
 
-function withCurrentOption(options: PolicyOption[], value: string): PolicyOption[] {
+function withCurrentOption(options: PolicyOption[], value: string, fallbackLabel = 'Selected policy'): PolicyOption[] {
   const current = value.trim();
   if (!current) return options;
   if (options.some((option) => option.id.toLowerCase() === current.toLowerCase())) {
     return options;
   }
 
-  return [{ id: current, label: `Current (${current})` }, ...options];
+  return [{ id: current, label: fallbackLabel }, ...options];
 }
 
 function renderVisuallyRequiredLabel(
   fieldName: string,
   renderFieldLabel: (fieldName: string) => JSX.Element,
+  visibleLabelFieldName?: string,
 ): JSX.Element {
   return (
     <span className="flex items-center gap-2 [&>span]:mb-0">
-      {renderFieldLabel(fieldName)}
+      {renderFieldLabel(visibleLabelFieldName ?? fieldName)}
       <span className={`${requiredBadgeClass} self-center`}>Required</span>
     </span>
   );
@@ -154,7 +170,7 @@ export function EbayPolicySelectGroup({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {fulfillmentPolicyFieldName && (
           <label className="col-span-1 flex flex-col gap-2">
-            {renderVisuallyRequiredLabel(fulfillmentPolicyFieldName, renderFieldLabel)}
+            {renderVisuallyRequiredLabel(fulfillmentPolicyFieldName, renderFieldLabel, 'Fulfillment policy')}
             <ApprovalSelect
               selectClassName={getSelectClassName(fulfillmentPolicyFieldName)}
               value={(formValues[fulfillmentPolicyFieldName] ?? '').trim() || defaultPolicyIds.fulfillmentPolicyId || ''}
@@ -162,7 +178,11 @@ export function EbayPolicySelectGroup({
               disabled={disabled || loading}
             >
               <option value="">Select fulfillment policy</option>
-              {withCurrentOption(fulfillmentOptions, (formValues[fulfillmentPolicyFieldName] ?? '').trim() || defaultPolicyIds.fulfillmentPolicyId)
+              {withCurrentOption(
+                fulfillmentOptions,
+                (formValues[fulfillmentPolicyFieldName] ?? '').trim() || defaultPolicyIds.fulfillmentPolicyId,
+                'Selected fulfillment policy',
+              )
                 .map((option) => (
                   <option key={option.id} value={option.id}>{option.label}</option>
                 ))}
@@ -172,7 +192,7 @@ export function EbayPolicySelectGroup({
 
         {paymentPolicyFieldName && (
           <label className="col-span-1 flex flex-col gap-2">
-            {renderVisuallyRequiredLabel(paymentPolicyFieldName, renderFieldLabel)}
+            {renderVisuallyRequiredLabel(paymentPolicyFieldName, renderFieldLabel, 'Payment policy')}
             <ApprovalSelect
               selectClassName={getSelectClassName(paymentPolicyFieldName)}
               value={(formValues[paymentPolicyFieldName] ?? '').trim() || defaultPolicyIds.paymentPolicyId || ''}
@@ -180,7 +200,11 @@ export function EbayPolicySelectGroup({
               disabled={disabled || loading}
             >
               <option value="">Select payment policy</option>
-              {withCurrentOption(paymentOptions, (formValues[paymentPolicyFieldName] ?? '').trim() || defaultPolicyIds.paymentPolicyId)
+              {withCurrentOption(
+                paymentOptions,
+                (formValues[paymentPolicyFieldName] ?? '').trim() || defaultPolicyIds.paymentPolicyId,
+                'Selected payment policy',
+              )
                 .map((option) => (
                   <option key={option.id} value={option.id}>{option.label}</option>
                 ))}
@@ -190,7 +214,7 @@ export function EbayPolicySelectGroup({
 
         {returnPolicyFieldName && (
           <label className="col-span-1 flex flex-col gap-2">
-            {renderVisuallyRequiredLabel(returnPolicyFieldName, renderFieldLabel)}
+            {renderVisuallyRequiredLabel(returnPolicyFieldName, renderFieldLabel, 'Return policy')}
             <ApprovalSelect
               selectClassName={getSelectClassName(returnPolicyFieldName)}
               value={(formValues[returnPolicyFieldName] ?? '').trim() || defaultPolicyIds.returnPolicyId || ''}
@@ -198,7 +222,11 @@ export function EbayPolicySelectGroup({
               disabled={disabled || loading}
             >
               <option value="">Select return policy</option>
-              {withCurrentOption(returnOptions, (formValues[returnPolicyFieldName] ?? '').trim() || defaultPolicyIds.returnPolicyId)
+              {withCurrentOption(
+                returnOptions,
+                (formValues[returnPolicyFieldName] ?? '').trim() || defaultPolicyIds.returnPolicyId,
+                'Selected return policy',
+              )
                 .map((option) => (
                   <option key={option.id} value={option.id}>{option.label}</option>
                 ))}
