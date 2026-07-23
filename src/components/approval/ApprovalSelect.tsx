@@ -1,17 +1,18 @@
-import type { ChangeEventHandler, ReactNode } from 'react';
+import type { ChangeEventHandler, FocusEventHandler, ReactNode } from 'react';
 
 interface ApprovalSelectProps {
 	children: ReactNode;
 	selectClassName: string;
 	value: string;
 	onChange: ChangeEventHandler<HTMLSelectElement>;
+	onFocus?: FocusEventHandler<HTMLSelectElement>;
 	disabled?: boolean;
 }
 
-export function ApprovalSelect({ children, selectClassName, value, onChange, disabled = false }: ApprovalSelectProps) {
+export function ApprovalSelect({ children, selectClassName, value, onChange, onFocus, disabled = false }: ApprovalSelectProps) {
 	return (
 		<div className="relative">
-			<select className={selectClassName} value={value} onChange={onChange} disabled={disabled}>
+			<select className={selectClassName} value={value} onChange={onChange} onFocus={onFocus} disabled={disabled}>
 				{children}
 			</select>
 			<span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--muted)]" aria-hidden="true">

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   EMPTY_SHOPIFY_CATEGORY_RESOLUTION,
   EMPTY_SHOPIFY_FIELD_RESOLUTION,
