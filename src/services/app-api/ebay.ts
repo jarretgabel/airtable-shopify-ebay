@@ -21,8 +21,6 @@ import { getJson, postJson } from './http';
 
 const ebayPackageTypesCache = new Map<string, string[]>();
 const ebayPackageTypesInFlight = new Map<string, Promise<string[]>>();
-const ebayBusinessPoliciesCache = new Map<string, EbayBusinessPoliciesByType>();
-const ebayBusinessPoliciesInFlight = new Map<string, Promise<EbayBusinessPoliciesByType>>();
 
 export type { EbayApprovalPreviewResult } from '@contracts/ebayApproval';
 
@@ -171,32 +169,11 @@ export async function getEbayPackageTypes(marketplaceId = 'EBAY_US'): Promise<st
 
 export async function getEbayBusinessPolicies(marketplaceId = 'EBAY_US'): Promise<EbayBusinessPoliciesByType> {
   const cacheKey = marketplaceId.trim().toUpperCase() || 'EBAY_US';
-  const cached = ebayBusinessPoliciesCache.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
-
-  const existingRequest = ebayBusinessPoliciesInFlight.get(cacheKey);
-  if (existingRequest) {
-    return existingRequest;
-  }
-
-  const request = (async () => {
-    try {
-      const result = await getJson<EbayBusinessPoliciesByType>('/api/ebay/business-policies', { marketplaceId: cacheKey });
-      ebayBusinessPoliciesCache.set(cacheKey, result);
-      return result;
-    } catch (error) {
-      throw toEbayError(error);
-    } finally {
-      ebayBusinessPoliciesInFlight.delete(cacheKey);
-    }
-  })();
-
-  ebayBusinessPoliciesInFlight.set(cacheKey, request);
-
   try {
-    return await request;
+    return await getJson<EbayBusinessPoliciesByType>('/api/ebay/business-policies', {
+      marketplaceId: cacheKey,
+      t: String(Date.now()),
+    });
   } catch (error) {
     throw toEbayError(error);
   }

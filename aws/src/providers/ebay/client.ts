@@ -385,7 +385,6 @@ const treeIdByMarketplace = new Map<string, string>();
 const rootNodesByMarketplace = new Map<string, EbayCategoryTreeNode[]>();
 const childNodesByMarketplaceAndParent = new Map<string, EbayCategoryTreeNode[]>();
 const packageTypesByMarketplace = new Map<string, string[]>();
-const businessPoliciesByMarketplace = new Map<string, EbayBusinessPoliciesByType>();
 
 let cachedUserToken: { accessToken: string; expiresAt: number } | null = null;
 let cachedAppToken: { accessToken: string; expiresAt: number } | null = null;
@@ -393,7 +392,8 @@ let pendingUserTokenPromise: Promise<string> | null = null;
 let pendingAppTokenPromise: Promise<string> | null = null;
 
 function isSandbox(): boolean {
-  return (getOptionalSecret('EBAY_ENV') ?? '').toLowerCase() !== 'production';
+  const environment = (getOptionalSecret('EBAY_ENV') ?? 'production').trim().toLowerCase();
+  return environment === 'sandbox';
 }
 
 function getApiBaseUrl(): string {
@@ -1684,8 +1684,6 @@ async function readBusinessPolicyType(
 
 export async function getEbayBusinessPolicies(marketplaceId = 'EBAY_US'): Promise<EbayBusinessPoliciesByType> {
   const normalizedMarketplace = normalizeMarketplaceId(marketplaceId);
-  const cached = businessPoliciesByMarketplace.get(normalizedMarketplace);
-  if (cached) return cached;
 
   const token = await getValidUserToken();
   const [fulfillmentPolicies, paymentPolicies, returnPolicies] = await Promise.all([
@@ -1700,7 +1698,6 @@ export async function getEbayBusinessPolicies(marketplaceId = 'EBAY_US'): Promis
     paymentPolicies,
     returnPolicies,
   };
-  businessPoliciesByMarketplace.set(normalizedMarketplace, result);
   return result;
 }
 

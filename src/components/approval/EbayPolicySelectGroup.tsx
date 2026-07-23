@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type JSX } from 'react';
+import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 import {
   getEbayBusinessPolicies,
   getEbayRuntimeConfig,
@@ -62,14 +62,20 @@ function normalizePolicyOptions(options: Array<{ policyId: string; name: string 
   return normalized;
 }
 
-function withCurrentOption(options: PolicyOption[], value: string, fallbackLabel = 'Selected policy'): PolicyOption[] {
-  const current = value.trim();
-  if (!current) return options;
-  if (options.some((option) => option.id.toLowerCase() === current.toLowerCase())) {
-    return options;
+function hasPolicyOption(options: PolicyOption[], value: string): boolean {
+  const normalizedValue = value.trim().toLowerCase();
+  if (!normalizedValue) return false;
+  return options.some((option) => option.id.toLowerCase() === normalizedValue);
+}
+
+function resolveSelectedPolicyValue(options: PolicyOption[], ...candidates: string[]): string {
+  for (const candidate of candidates) {
+    const trimmed = candidate.trim();
+    if (!trimmed) continue;
+    if (hasPolicyOption(options, trimmed)) return trimmed;
   }
 
-  return [{ id: current, label: fallbackLabel }, ...options];
+  return '';
 }
 
 function renderVisuallyRequiredLabel(
@@ -97,6 +103,12 @@ export function EbayPolicySelectGroup({
   renderFieldLabel,
   getSelectClassName,
 }: EbayPolicySelectGroupProps) {
+  const emptyPoliciesByType = useMemo<EbayBusinessPoliciesByType>(() => ({
+    marketplaceId: marketplaceId.trim().toUpperCase() || 'EBAY_US',
+    fulfillmentPolicies: [],
+    paymentPolicies: [],
+    returnPolicies: [],
+  }), [marketplaceId]);
   const [policiesByType, setPoliciesByType] = useState<EbayBusinessPoliciesByType | null>(null);
   const [defaultPolicyIds, setDefaultPolicyIds] = useState({
     fulfillmentPolicyId: '',
@@ -106,12 +118,36 @@ export function EbayPolicySelectGroup({
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const refreshPolicyOptions = useCallback(() => {
+    if (!enabled || loading) return;
+
+    setLoading(true);
+    setLoadError(null);
+    // Clear visible options first so removed policies cannot linger in the UI.
+    setPoliciesByType(emptyPoliciesByType);
+    const normalizedMarketplaceId = marketplaceId.trim().toUpperCase() || 'EBAY_US';
+
+    void getEbayBusinessPolicies(normalizedMarketplaceId)
+      .then((policies) => {
+        setPoliciesByType(policies);
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        setLoadError(message || 'Unable to load eBay policy options.');
+        setPoliciesByType(emptyPoliciesByType);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [enabled, loading, marketplaceId, emptyPoliciesByType]);
+
   useEffect(() => {
     if (!enabled) return;
 
     let cancelled = false;
     setLoading(true);
     setLoadError(null);
+    setPoliciesByType(emptyPoliciesByType);
 
     void (async () => {
       try {
@@ -132,6 +168,7 @@ export function EbayPolicySelectGroup({
         if (cancelled) return;
         const message = error instanceof Error ? error.message : String(error);
         setLoadError(message || 'Unable to load eBay policy options.');
+        setPoliciesByType(emptyPoliciesByType);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -142,7 +179,7 @@ export function EbayPolicySelectGroup({
     return () => {
       cancelled = true;
     };
-  }, [enabled, marketplaceId]);
+  }, [enabled, marketplaceId, emptyPoliciesByType]);
 
   const fulfillmentOptions = useMemo(
     () => normalizePolicyOptions(policiesByType?.fulfillmentPolicies ?? []),
@@ -173,19 +210,19 @@ export function EbayPolicySelectGroup({
             {renderVisuallyRequiredLabel(fulfillmentPolicyFieldName, renderFieldLabel, 'Fulfillment policy')}
             <ApprovalSelect
               selectClassName={getSelectClassName(fulfillmentPolicyFieldName)}
-              value={(formValues[fulfillmentPolicyFieldName] ?? '').trim() || defaultPolicyIds.fulfillmentPolicyId || ''}
+              value={resolveSelectedPolicyValue(
+                fulfillmentOptions,
+                (formValues[fulfillmentPolicyFieldName] ?? '').trim(),
+                defaultPolicyIds.fulfillmentPolicyId,
+              )}
               onChange={(event) => setFormValue(fulfillmentPolicyFieldName, event.target.value)}
+              onFocus={refreshPolicyOptions}
               disabled={disabled || loading}
             >
               <option value="">Select fulfillment policy</option>
-              {withCurrentOption(
-                fulfillmentOptions,
-                (formValues[fulfillmentPolicyFieldName] ?? '').trim() || defaultPolicyIds.fulfillmentPolicyId,
-                'Selected fulfillment policy',
-              )
-                .map((option) => (
-                  <option key={option.id} value={option.id}>{option.label}</option>
-                ))}
+              {fulfillmentOptions.map((option) => (
+                <option key={option.id} value={option.id}>{option.label}</option>
+              ))}
             </ApprovalSelect>
           </label>
         )}
@@ -195,19 +232,19 @@ export function EbayPolicySelectGroup({
             {renderVisuallyRequiredLabel(paymentPolicyFieldName, renderFieldLabel, 'Payment policy')}
             <ApprovalSelect
               selectClassName={getSelectClassName(paymentPolicyFieldName)}
-              value={(formValues[paymentPolicyFieldName] ?? '').trim() || defaultPolicyIds.paymentPolicyId || ''}
+              value={resolveSelectedPolicyValue(
+                paymentOptions,
+                (formValues[paymentPolicyFieldName] ?? '').trim(),
+                defaultPolicyIds.paymentPolicyId,
+              )}
               onChange={(event) => setFormValue(paymentPolicyFieldName, event.target.value)}
+              onFocus={refreshPolicyOptions}
               disabled={disabled || loading}
             >
               <option value="">Select payment policy</option>
-              {withCurrentOption(
-                paymentOptions,
-                (formValues[paymentPolicyFieldName] ?? '').trim() || defaultPolicyIds.paymentPolicyId,
-                'Selected payment policy',
-              )
-                .map((option) => (
-                  <option key={option.id} value={option.id}>{option.label}</option>
-                ))}
+              {paymentOptions.map((option) => (
+                <option key={option.id} value={option.id}>{option.label}</option>
+              ))}
             </ApprovalSelect>
           </label>
         )}
@@ -217,23 +254,33 @@ export function EbayPolicySelectGroup({
             {renderVisuallyRequiredLabel(returnPolicyFieldName, renderFieldLabel, 'Return policy')}
             <ApprovalSelect
               selectClassName={getSelectClassName(returnPolicyFieldName)}
-              value={(formValues[returnPolicyFieldName] ?? '').trim() || defaultPolicyIds.returnPolicyId || ''}
+              value={resolveSelectedPolicyValue(
+                returnOptions,
+                (formValues[returnPolicyFieldName] ?? '').trim(),
+                defaultPolicyIds.returnPolicyId,
+              )}
               onChange={(event) => setFormValue(returnPolicyFieldName, event.target.value)}
+              onFocus={refreshPolicyOptions}
               disabled={disabled || loading}
             >
               <option value="">Select return policy</option>
-              {withCurrentOption(
-                returnOptions,
-                (formValues[returnPolicyFieldName] ?? '').trim() || defaultPolicyIds.returnPolicyId,
-                'Selected return policy',
-              )
-                .map((option) => (
-                  <option key={option.id} value={option.id}>{option.label}</option>
-                ))}
+              {returnOptions.map((option) => (
+                <option key={option.id} value={option.id}>{option.label}</option>
+              ))}
             </ApprovalSelect>
           </label>
         )}
       </div>
+      <p className="m-0 mt-3 text-xs">
+        <a
+          className="text-[var(--link)] underline decoration-dotted underline-offset-2 hover:opacity-90"
+          href="https://www.ebay.com/bp/manage?sortType=-listingCount&_pgn=1&limit=25"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Add new business policy
+        </a>
+      </p>
       {loading && (
         <p className="m-0 mt-2 text-xs text-[var(--muted)]">Loading policy options...</p>
       )}

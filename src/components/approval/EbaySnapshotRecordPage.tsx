@@ -231,6 +231,16 @@ export function EbaySnapshotRecordPage({
           </div>
           <div className={insetPanelClass}>
             <p className={sectionLabelClass}>Business Policies</p>
+            <p className="m-0 mt-2 text-xs text-[var(--muted)]">
+              <a
+                className="text-[var(--link)] underline decoration-dotted underline-offset-2 hover:opacity-90"
+                href="https://www.ebay.com/bp/manage?sortType=-listingCount&_pgn=1&limit=25"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Manage business policies
+              </a>
+            </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <FieldRow label="Fulfillment Policy" value={listingPolicies?.fulfillmentPolicyId ?? '—'} />
               <FieldRow label="Payment Policy" value={listingPolicies?.paymentPolicyId ?? '—'} />
