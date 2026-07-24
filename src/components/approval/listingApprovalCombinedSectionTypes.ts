@@ -49,6 +49,7 @@ export interface ListingApprovalCombinedIntakeSectionProps extends CombinedSecti
   sectionId?: string;
   combinedSharedFieldNames: string[];
   sharedTestingSourceFieldValues: Record<string, string>;
+  onOpenIntakeForm?: (recordId: string) => void;
   onOpenOperationalRecord?: (recordId: string) => void;
   onOpenTestingForm?: (recordId: string) => void;
   onOpenPhotosForm?: (recordId: string) => void;

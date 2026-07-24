@@ -2,7 +2,7 @@ import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflow
 import { getUsedGearWorkflowStatus, type UsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 import type { AirtableRecord } from '@/types/airtable';
 
-const LISTING_SURFACE_STATUSES = new Set<UsedGearWorkflowStatus>([
+export const USED_GEAR_WORKFLOW_LISTING_PHASE_STATUSES = new Set<UsedGearWorkflowStatus>([
   'Awaiting Pre-Listing Review',
   'Approved for Publish',
   'Listed, Shopify',
@@ -44,7 +44,7 @@ export function getUsedGearWorkflowListingSku(record: AirtableRecord): string {
 
 export function isUsedGearWorkflowListingSurfaceEligible(record: AirtableRecord): boolean {
   const status = getUsedGearWorkflowStatus(record.fields);
-  if (!status || !LISTING_SURFACE_STATUSES.has(status)) {
+  if (!status || !USED_GEAR_WORKFLOW_LISTING_PHASE_STATUSES.has(status)) {
     return false;
   }
 

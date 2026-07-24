@@ -11,6 +11,7 @@ interface UsedGearManualIntakePageProps {
   backToDirectoryLabel?: string;
   eyebrow?: string;
   onCreateSuccess?: (createdRecordIds: string[]) => void;
+  onOpenListingDetail?: (recordId: string) => void;
 }
 
 export function UsedGearManualIntakePage({
@@ -19,6 +20,7 @@ export function UsedGearManualIntakePage({
   backToDirectoryLabel = 'Back to Intake Directory',
   eyebrow = 'Intake',
   onCreateSuccess,
+  onOpenListingDetail,
 }: UsedGearManualIntakePageProps) {
   const [itemTitle, setItemTitle] = useState('');
 
@@ -40,6 +42,7 @@ export function UsedGearManualIntakePage({
         recordId={recordId}
         onLoadResult={handleLoadResult}
         onCreateSuccess={onCreateSuccess}
+        onOpenListingDetail={onOpenListingDetail}
       />
     </AppPageLayout>
   );

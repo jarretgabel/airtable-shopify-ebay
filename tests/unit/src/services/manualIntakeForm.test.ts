@@ -73,6 +73,7 @@ describe('manualIntakeForm', () => {
       source: 'used-gear-workflow',
       itemTitle: 'McIntosh MC275 - Incoming123',
       workflowSource: '',
+      workflowStatus: '',
       jotFormSubmissionId: '',
       values: {
         pickUpNumber: 'PU-42',
@@ -229,6 +230,49 @@ describe('manualIntakeForm', () => {
       'fldMXp0EaUHGglU8M',
       values.imageFiles[0],
     );
+  });
+
+  it('normalizes currency-style cost strings without changing the intended amount', async () => {
+    const values: ManualIntakeFormValues = {
+      pickUpNumber: 'PU-10000',
+      sellerFirstName: 'Seller',
+      sellerLastName: 'One',
+      cost: '$10,000',
+      customerCosmeticNotes: '',
+      customerFunctionalNotes: '',
+      customerInclusionNotes: '',
+      make: 'Luxman',
+      model: 'L-509X',
+      componentType: 'Amplifier',
+      serialNumber: '',
+      voltage: '',
+      inventoryNotes: '',
+      imageFiles: [],
+      cosmeticConditionNotes: '',
+      originalBox: '',
+      manual: '',
+      remote: '',
+      powerCable: '',
+      additionalItems: '',
+      weight: '',
+      shippingDims: '',
+      shippingMethod: '',
+      sellerEmail: '',
+      sellerPhone: '',
+      sellerZipCode: '',
+      sellerLocation: '',
+      howDidYouHear: '',
+      originalOwner: '',
+      smokeExposure: '',
+    };
+
+    vi.mocked(updateConfiguredRecord).mockResolvedValue(buildRecord({}));
+
+    await submitManualIntakeForm(values, 'recIncoming123');
+
+    expect(updateConfiguredRecord).toHaveBeenCalled();
+    const submittedFields = vi.mocked(updateConfiguredRecord).mock.calls[0]?.[2] ?? {};
+    expect(submittedFields.Cost).toBe(10000);
   });
 
   it('creates manual-entry rows through the workflow source with Pending Review status', async () => {

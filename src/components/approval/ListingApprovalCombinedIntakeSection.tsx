@@ -181,6 +181,7 @@ export function ListingApprovalCombinedIntakeSection({
   combinedSharedFieldNames,
   originalFieldValues,
   sharedTestingSourceFieldValues,
+  onOpenIntakeForm,
   onOpenOperationalRecord,
   onOpenTestingForm,
   onOpenPhotosForm,
@@ -294,13 +295,14 @@ export function ListingApprovalCombinedIntakeSection({
     const rightOrder = INTAKE_SNAPSHOT_FIELD_ORDER[normalizeSharedFieldName(right.label)] ?? Number.MAX_SAFE_INTEGER;
     return leftOrder - rightOrder;
   });
-  const workflowHeaderAction = onOpenOperationalRecord ? (
+  const openIntakeRecord = onOpenIntakeForm ?? onOpenOperationalRecord;
+  const workflowHeaderAction = openIntakeRecord ? (
     <button
       type="button"
       className={iconActionButtonClass}
-      onClick={() => onOpenOperationalRecord(selectedRecord.id)}
-      aria-label="Edit workflow source record"
-      title="Edit workflow source record"
+      onClick={() => openIntakeRecord(selectedRecord.id)}
+      aria-label="Edit intake form"
+      title="Edit intake form"
     >
       <EditIcon />
     </button>

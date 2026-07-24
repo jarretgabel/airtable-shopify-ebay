@@ -1,4 +1,4 @@
-import { type ChangeEvent, type JSX } from 'react';
+import { type ChangeEvent, type JSX, useMemo, useState } from 'react';
 import { isAllowOffersField } from '@/stores/approvalStore';
 
 import { ApprovalSelect } from './ApprovalSelect';
@@ -22,8 +22,10 @@ interface ApprovalFormStandardFieldRendererParams {
   fieldName: string;
   kind: 'boolean' | 'number' | 'json' | 'text';
   value: string;
+  formValues: Record<string, string>;
   inputDisabled: boolean;
   dropdownOptions?: string[];
+  approvalChannel?: 'shopify' | 'ebay' | 'combined';
   isRequiredField: (fieldName: string) => boolean;
   renderFieldLabel: (fieldName: string) => JSX.Element;
   toFieldLabel: (fieldName: string) => string;
@@ -32,6 +34,144 @@ interface ApprovalFormStandardFieldRendererParams {
   setFormValue: (fieldName: string, value: string) => void;
   isShippingTypeDropdown?: boolean;
   isListingDurationField?: boolean;
+}
+
+function parseCurrencyValue(rawValue: string): number | null {
+  const cleaned = rawValue.replace(/[^0-9.-]+/g, '').trim();
+  if (!cleaned) return null;
+  const parsed = Number.parseFloat(cleaned);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toCurrencyDisplay(value: number | null): string {
+  if (value == null || !Number.isFinite(value)) return 'N/A';
+  return value.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function resolveIntakeCostValue(formValues: Record<string, string>): number | null {
+  const costValue = formValues.Cost ?? formValues['Purchase Price'] ?? '';
+  return parseCurrencyValue(costValue);
+}
+
+function isEbayListingPriceField(fieldName: string, approvalChannel?: 'shopify' | 'ebay' | 'combined'): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+
+  if (normalized === 'price') {
+    return approvalChannel === 'ebay';
+  }
+
+  return normalized === 'ebay offer price value'
+    || normalized === 'ebay offer auction start price value'
+    || normalized === 'ebay price'
+    || normalized === 'buy it now usd'
+    || normalized === 'starting bid usd'
+    || normalized === 'buy it now/starting bid'
+    || normalized === 'buy it now/starting price'
+    || normalized === 'buy it now / starting price';
+}
+
+function isShopifyListingPriceField(fieldName: string, approvalChannel?: 'shopify' | 'ebay' | 'combined'): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+
+  if (normalized === 'price') {
+    return approvalChannel === 'shopify';
+  }
+
+  return normalized === 'shopify rest variant 1 price'
+    || normalized === 'shopify variant 1 price'
+    || normalized === 'shopify price'
+    || normalized === 'shopify_rest_variant_1_price';
+}
+
+function PriceFieldWithCalculator({
+  fieldName,
+  value,
+  formValues,
+  inputDisabled,
+  approvalChannel,
+  renderFieldLabel,
+  getInputClassName,
+  setFormValue,
+}: {
+  fieldName: string;
+  value: string;
+  formValues: Record<string, string>;
+  inputDisabled: boolean;
+  approvalChannel?: 'shopify' | 'ebay' | 'combined';
+  renderFieldLabel: (fieldName: string) => JSX.Element;
+  getInputClassName: (fieldName: string, extra?: string) => string;
+  setFormValue: (fieldName: string, value: string) => void;
+}): JSX.Element {
+  const [percentInput, setPercentInput] = useState('');
+  const intakeCost = useMemo(() => resolveIntakeCostValue(formValues), [formValues]);
+  const percentValue = useMemo(() => {
+    if (!percentInput.trim()) return null;
+    const parsed = Number.parseFloat(percentInput);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [percentInput]);
+  const calculatedPrice = useMemo(() => {
+    if (intakeCost == null || percentValue == null) return null;
+    return intakeCost * (1 + (percentValue / 100));
+  }, [intakeCost, percentValue]);
+
+  const calculatorLabel = isEbayListingPriceField(fieldName, approvalChannel)
+    ? 'eBay calculator'
+    : 'Shopify calculator';
+
+  return (
+    <label className="flex flex-col gap-2">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,1fr)_170px] md:items-start">
+        <div>{renderFieldLabel(fieldName)}</div>
+        <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">
+          Calculator
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,1fr)_170px] md:items-start">
+        <div className="relative">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--muted)]">$</span>
+          <input
+            className={getInputClassName(fieldName, 'pl-7')}
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            value={value}
+            onChange={(event) => setFormValue(fieldName, event.target.value)}
+            disabled={inputDisabled}
+          />
+        </div>
+        <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)]">
+          <div className="flex items-center gap-2">
+            <span className="text-xs uppercase tracking-[0.06em] text-[var(--muted)]">%</span>
+            <input
+              className="approval-calculator-percent-input w-full bg-transparent text-right text-sm text-[var(--ink)] outline-none"
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              value={percentInput}
+              onChange={(event) => setPercentInput(event.target.value)}
+              disabled={inputDisabled}
+              aria-label={`${calculatorLabel} percent input`}
+              placeholder="Add"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-1 md:grid-cols-[minmax(0,1fr)_170px]">
+        <p className="m-0 text-xs text-[var(--muted)]">
+          Intake cost: {toCurrencyDisplay(intakeCost)}
+        </p>
+        <p className="m-0 text-xs text-[var(--muted)]">
+          Cost + percent: {toCurrencyDisplay(calculatedPrice)}
+        </p>
+      </div>
+    </label>
+  );
 }
 
 export function renderApprovalFormBooleanField({
@@ -183,7 +323,9 @@ export function renderApprovalFormTextField({
   fieldName,
   kind,
   value,
+  formValues,
   inputDisabled,
+  approvalChannel,
   renderFieldLabel,
   getInputClassName,
   setFormValue,
@@ -196,6 +338,23 @@ export function renderApprovalFormTextField({
     || normalizedFieldName === 'condition'
     ? 'Pre-Owned'
     : undefined;
+  const shouldRenderListingPriceCalculator = isCurrencyLikeField(fieldName)
+    && (isEbayListingPriceField(fieldName, approvalChannel) || isShopifyListingPriceField(fieldName, approvalChannel));
+
+  if (shouldRenderListingPriceCalculator) {
+    return (
+      <PriceFieldWithCalculator
+        fieldName={fieldName}
+        value={value}
+        formValues={formValues}
+        inputDisabled={inputDisabled}
+        approvalChannel={approvalChannel}
+        renderFieldLabel={renderFieldLabel}
+        getInputClassName={getInputClassName}
+        setFormValue={setFormValue}
+      />
+    );
+  }
 
   return (
     <label className="flex flex-col gap-2">

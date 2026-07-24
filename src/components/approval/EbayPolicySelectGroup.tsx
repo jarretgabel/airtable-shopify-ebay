@@ -123,8 +123,6 @@ export function EbayPolicySelectGroup({
 
     setLoading(true);
     setLoadError(null);
-    // Clear visible options first so removed policies cannot linger in the UI.
-    setPoliciesByType(emptyPoliciesByType);
     const normalizedMarketplaceId = marketplaceId.trim().toUpperCase() || 'EBAY_US';
 
     void getEbayBusinessPolicies(normalizedMarketplaceId)
@@ -134,12 +132,11 @@ export function EbayPolicySelectGroup({
       .catch((error) => {
         const message = error instanceof Error ? error.message : String(error);
         setLoadError(message || 'Unable to load eBay policy options.');
-        setPoliciesByType(emptyPoliciesByType);
       })
       .finally(() => {
         setLoading(false);
       });
-  }, [enabled, loading, marketplaceId, emptyPoliciesByType]);
+  }, [enabled, loading, marketplaceId]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -147,7 +144,6 @@ export function EbayPolicySelectGroup({
     let cancelled = false;
     setLoading(true);
     setLoadError(null);
-    setPoliciesByType(emptyPoliciesByType);
 
     void (async () => {
       try {
@@ -168,7 +164,6 @@ export function EbayPolicySelectGroup({
         if (cancelled) return;
         const message = error instanceof Error ? error.message : String(error);
         setLoadError(message || 'Unable to load eBay policy options.');
-        setPoliciesByType(emptyPoliciesByType);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -179,7 +174,7 @@ export function EbayPolicySelectGroup({
     return () => {
       cancelled = true;
     };
-  }, [enabled, marketplaceId, emptyPoliciesByType]);
+  }, [enabled, marketplaceId]);
 
   const fulfillmentOptions = useMemo(
     () => normalizePolicyOptions(policiesByType?.fulfillmentPolicies ?? []),
@@ -217,7 +212,7 @@ export function EbayPolicySelectGroup({
               )}
               onChange={(event) => setFormValue(fulfillmentPolicyFieldName, event.target.value)}
               onFocus={refreshPolicyOptions}
-              disabled={disabled || loading}
+              disabled={disabled}
             >
               <option value="">Select fulfillment policy</option>
               {fulfillmentOptions.map((option) => (
@@ -239,7 +234,7 @@ export function EbayPolicySelectGroup({
               )}
               onChange={(event) => setFormValue(paymentPolicyFieldName, event.target.value)}
               onFocus={refreshPolicyOptions}
-              disabled={disabled || loading}
+              disabled={disabled}
             >
               <option value="">Select payment policy</option>
               {paymentOptions.map((option) => (
@@ -261,7 +256,7 @@ export function EbayPolicySelectGroup({
               )}
               onChange={(event) => setFormValue(returnPolicyFieldName, event.target.value)}
               onFocus={refreshPolicyOptions}
-              disabled={disabled || loading}
+              disabled={disabled}
             >
               <option value="">Select return policy</option>
               {returnOptions.map((option) => (
@@ -271,7 +266,7 @@ export function EbayPolicySelectGroup({
           </label>
         )}
       </div>
-      <p className="m-0 mt-3 text-xs">
+      <div className="mt-3 flex items-center justify-between gap-3 text-xs">
         <a
           className="text-[var(--link)] underline decoration-dotted underline-offset-2 hover:opacity-90"
           href="https://www.ebay.com/bp/manage?sortType=-listingCount&_pgn=1&limit=25"
@@ -280,10 +275,8 @@ export function EbayPolicySelectGroup({
         >
           Add new business policy
         </a>
-      </p>
-      {loading && (
-        <p className="m-0 mt-2 text-xs text-[var(--muted)]">Loading policy options...</p>
-      )}
+        <span className="text-[var(--muted)]">{loading ? 'Loading policy options...' : ''}</span>
+      </div>
       {loadError && (
         <p className="m-0 mt-2 text-xs text-rose-300">Policy lookup unavailable: {loadError}</p>
       )}

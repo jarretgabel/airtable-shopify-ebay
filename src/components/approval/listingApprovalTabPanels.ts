@@ -108,6 +108,7 @@ interface BuildListingApprovalTabPanelsParams {
   currentPageShopifyTagValues: string[];
   currentPageShopifyCollectionIds: string[];
   currentPageShopifyCollectionLabelsById: Record<string, string>;
+  onOpenIntakeForm?: (recordId: string) => void;
   onOpenOperationalRecord?: (recordId: string) => void;
   onOpenTestingForm?: (recordId: string) => void;
   onOpenPhotosForm?: (recordId: string) => void;
@@ -218,6 +219,7 @@ export function buildListingApprovalTabPanels({
   currentPageShopifyTagValues,
   currentPageShopifyCollectionIds,
   currentPageShopifyCollectionLabelsById,
+  onOpenIntakeForm,
   onOpenOperationalRecord,
   onOpenTestingForm,
   onOpenPhotosForm,
@@ -366,6 +368,7 @@ export function buildListingApprovalTabPanels({
       currentPageShopifyTagValues,
       currentPageShopifyCollectionIds,
       currentPageShopifyCollectionLabelsById,
+      onOpenIntakeForm,
       onOpenOperationalRecord,
       onOpenTestingForm,
       onOpenPhotosForm,

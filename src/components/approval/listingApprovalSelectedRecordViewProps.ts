@@ -70,6 +70,7 @@ interface BuildListingApprovalSelectedRecordViewPropsParams {
   isEbayPayloadPreviewContext: boolean;
   ebayDraftPayloadBundle: EbayApprovalPayloadPreviewData['ebayDraftPayloadBundle'];
   onOpenOperationalRecord?: (recordId: string) => void;
+  onOpenIntakeForm?: (recordId: string) => void;
   onOpenTestingForm?: (recordId: string) => void;
   onOpenPhotosForm?: (recordId: string) => void;
 }
@@ -131,6 +132,7 @@ export function buildListingApprovalSelectedRecordViewProps({
   isEbayPayloadPreviewContext,
   ebayDraftPayloadBundle,
   onOpenOperationalRecord,
+  onOpenIntakeForm,
   onOpenTestingForm,
   onOpenPhotosForm,
 }: BuildListingApprovalSelectedRecordViewPropsParams) {
@@ -192,6 +194,7 @@ export function buildListingApprovalSelectedRecordViewProps({
         Object.entries(drawerSourceFields).map(([fieldName, value]) => [fieldName, toFormValue(value)]),
       ),
       sharedDrawerRequiredStatus,
+      onOpenIntakeForm,
       onOpenOperationalRecord,
       onOpenTestingForm,
       onOpenPhotosForm,

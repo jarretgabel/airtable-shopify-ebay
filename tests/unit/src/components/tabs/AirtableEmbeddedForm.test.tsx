@@ -10,8 +10,10 @@ vi.mock('@/services/manualIntakeForm', () => ({
 
 import {
   loadManualIntakeFormOptionSets,
+  loadManualIntakeFormValues,
   submitManualIntakeForm,
 } from '@/services/manualIntakeForm';
+import { createManualIntakeFormDefaults } from '@/components/tabs/manual-intake/manualIntakeFormSchema';
 
 const OPTION_SETS = {
   'Component Type': ['Amplifier', 'Receiver'],
@@ -144,5 +146,41 @@ describe('AirtableEmbeddedForm grouped intake', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
 
     expect(screen.getByLabelText('Make *')).toBeInTheDocument();
+  });
+
+  it('shows an Open Listing Details button in edit mode for listing-phase records', async () => {
+    vi.mocked(loadManualIntakeFormValues).mockResolvedValue({
+      source: 'used-gear-workflow',
+      itemTitle: 'McIntosh MA6900',
+      workflowSource: 'Manual Entry',
+      workflowStatus: 'Awaiting Pre-Listing Review',
+      jotFormSubmissionId: '',
+      values: createManualIntakeFormDefaults(),
+    });
+
+    const onOpenListingDetail = vi.fn();
+
+    render(<AirtableEmbeddedForm recordId="rec-listing-1" onOpenListingDetail={onOpenListingDetail} />);
+
+    const button = await screen.findByRole('button', { name: 'Open Listing Details' });
+    fireEvent.click(button);
+
+    expect(onOpenListingDetail).toHaveBeenCalledWith('rec-listing-1');
+  });
+
+  it('does not show Open Listing Details button in edit mode for non-listing workflow status', async () => {
+    vi.mocked(loadManualIntakeFormValues).mockResolvedValue({
+      source: 'used-gear-workflow',
+      itemTitle: 'McIntosh MA6900',
+      workflowSource: 'Manual Entry',
+      workflowStatus: 'Testing In Progress',
+      jotFormSubmissionId: '',
+      values: createManualIntakeFormDefaults(),
+    });
+
+    render(<AirtableEmbeddedForm recordId="rec-testing-1" onOpenListingDetail={vi.fn()} />);
+
+    await screen.findByRole('button', { name: 'Save Intake' });
+    expect(screen.queryByRole('button', { name: 'Open Listing Details' })).not.toBeInTheDocument();
   });
 });

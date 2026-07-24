@@ -86,7 +86,12 @@ function normalizeNumber(value: string | number | null | undefined): number | un
     return undefined;
   }
 
-  const parsed = Number.parseFloat(trimmed);
+  const cleaned = trimmed.replace(/[$,\s]/g, '');
+  if (!/^-?(?:\d+|\d+\.\d+|\.\d+)$/.test(cleaned)) {
+    return undefined;
+  }
+
+  const parsed = Number.parseFloat(cleaned);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 

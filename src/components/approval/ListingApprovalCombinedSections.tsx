@@ -38,6 +38,7 @@ export function ListingApprovalCombinedSections({
   combinedSharedKeyFeaturesSyncFieldNames,
   sharedTestingSourceFieldValues,
   sharedDrawerRequiredStatus,
+  onOpenIntakeForm,
   onOpenOperationalRecord,
   onOpenTestingForm,
   onOpenPhotosForm,
@@ -93,6 +94,7 @@ export function ListingApprovalCombinedSections({
         originalFieldValues={originalFieldValues}
         combinedSharedFieldNames={combinedSharedFieldNames}
         sharedTestingSourceFieldValues={sharedTestingSourceFieldValues}
+        onOpenIntakeForm={onOpenIntakeForm}
         onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenTestingForm={onOpenTestingForm}
         onOpenPhotosForm={onOpenPhotosForm}

@@ -23,6 +23,7 @@ import {
   type ManualIntakeFormLoadResult,
   type ManualIntakeRecordSource,
 } from '@/services/manualIntakeForm';
+import { USED_GEAR_WORKFLOW_LISTING_PHASE_STATUSES } from '@/services/usedGearWorkflowListingVisibility';
 import { buildJotFormSubmissionUrl } from '@/services/jotform';
 
 type ManualIntakeOptionSets = Record<ManualIntakeFormOptionFieldName, string[]>;
@@ -195,13 +196,14 @@ function renderField(
     );
   }
 
-  const inputType = definition.type === 'currency' ? 'number' : definition.type;
+  const inputType = definition.type === 'currency' ? 'text' : definition.type;
 
   return (
     <input
       className={FIELD_CLASS}
       type={inputType}
-      step={definition.type === 'currency' ? '0.01' : undefined}
+      inputMode={definition.type === 'currency' ? 'decimal' : undefined}
+      autoComplete={definition.type === 'currency' ? 'off' : undefined}
       value={(value as string) ?? ''}
       placeholder={definition.placeholder}
       onChange={(event) => onValueChange(event.currentTarget.value)}
@@ -213,12 +215,14 @@ interface AirtableEmbeddedFormProps {
   recordId?: string | null;
   onLoadResult?: (result: ManualIntakeFormLoadResult) => void;
   onCreateSuccess?: (createdRecordIds: string[]) => void;
+  onOpenListingDetail?: (recordId: string) => void;
 }
 
 export function AirtableEmbeddedForm({
   recordId,
   onLoadResult,
   onCreateSuccess,
+  onOpenListingDetail,
 }: AirtableEmbeddedFormProps) {
   const onLoadResultRef = useRef<typeof onLoadResult>(onLoadResult);
 
@@ -232,6 +236,7 @@ export function AirtableEmbeddedForm({
   const [itemValues, setItemValues] = useState<ManualIntakeItemFormValues[]>(() => [createManualIntakeItemFormDefaults()]);
   const [recordSource, setRecordSource] = useState<ManualIntakeRecordSource>('used-gear-workflow');
   const [workflowSource, setWorkflowSource] = useState('');
+  const [workflowStatus, setWorkflowStatus] = useState<ManualIntakeFormLoadResult['workflowStatus']>('');
   const [jotFormSubmissionId, setJotFormSubmissionId] = useState('');
   const [optionSets, setOptionSets] = useState<ManualIntakeOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -249,24 +254,28 @@ export function AirtableEmbeddedForm({
       setLoadingOptions(true);
       setOptionsError(null);
 
+      const fallbackLoadPromise: Promise<ManualIntakeFormLoadResult> = Promise.resolve({
+        source: 'used-gear-workflow',
+        itemTitle: '',
+        workflowSource: '',
+        workflowStatus: '',
+        jotFormSubmissionId: '',
+        values: createManualIntakeFormDefaults(),
+      });
+
       try {
-        const [nextOptionSets, nextFormValues] = await Promise.all([
+        const [nextOptionSets, nextFormValues]: [ManualIntakeOptionSets, ManualIntakeFormLoadResult] = await Promise.all([
           loadManualIntakeFormOptionSets(),
           recordId
             ? loadManualIntakeFormValues(recordId)
-            : Promise.resolve({
-              source: 'used-gear-workflow' as ManualIntakeRecordSource,
-              itemTitle: '',
-              workflowSource: '',
-              jotFormSubmissionId: '',
-              values: createManualIntakeFormDefaults(),
-            }),
+            : fallbackLoadPromise,
         ]);
 
         if (!cancelled) {
           setOptionSets(nextOptionSets);
           setRecordSource(nextFormValues.source);
           setWorkflowSource(nextFormValues.workflowSource ?? '');
+          setWorkflowStatus(nextFormValues.workflowStatus ?? '');
           setJotFormSubmissionId(nextFormValues.jotFormSubmissionId ?? '');
           setSubmitError(null);
           setSubmitSuccess(null);
@@ -456,6 +465,13 @@ export function AirtableEmbeddedForm({
 
   const jotFormSubmissionUrl = buildJotFormSubmissionUrl(jotFormSubmissionId);
   const isEditMode = Boolean(recordId);
+  const showListingDetailsButton = Boolean(
+    isEditMode
+    && recordId
+    && onOpenListingDetail
+    && workflowStatus
+    && USED_GEAR_WORKFLOW_LISTING_PHASE_STATUSES.has(workflowStatus),
+  );
   const editFieldGroups = groupFields(manualIntakeFormFields);
   const sharedFieldGroups = groupFields(manualIntakeSharedFormFields);
   const itemFieldGroups = groupFields(manualIntakeItemFormFields);
@@ -676,7 +692,19 @@ export function AirtableEmbeddedForm({
           </>
         )}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {showListingDetailsButton ? (
+            <div className="flex">
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                onClick={() => onOpenListingDetail?.(recordId!)}
+                disabled={submitting}
+              >
+                Open Listing Details
+              </button>
+            </div>
+          ) : <div />}
           <div className="flex flex-wrap justify-end gap-3">
             <button
               type="button"

@@ -15,6 +15,7 @@ import { createServiceError, type ServiceError } from '@/services/serviceErrors'
 import { createManualIntakeFormDefaults, type ManualIntakeFormOptionFieldName, type ManualIntakeFormValues } from '@/components/tabs/manual-intake/manualIntakeFormSchema';
 import { extractInventoryScalarValue } from '@/services/inventoryDirectory';
 import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
+import { getUsedGearWorkflowStatus, type UsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 import type { AirtableRecord } from '@/types/airtable';
 
 const INVENTORY_IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
@@ -48,6 +49,7 @@ export interface ManualIntakeFormLoadResult {
   values: ManualIntakeFormValues;
   itemTitle: string;
   workflowSource?: string;
+  workflowStatus?: UsedGearWorkflowStatus | '';
   jotFormSubmissionId?: string;
 }
 
@@ -109,6 +111,7 @@ export async function loadManualIntakeFormValues(recordId: string): Promise<Manu
       source,
       itemTitle: getUsedGearRecordItemTitle(record.fields, record.id),
       workflowSource: extractInventoryScalarValue(record.fields['Workflow Source']),
+      workflowStatus: getUsedGearWorkflowStatus(record.fields) ?? '',
       jotFormSubmissionId: extractInventoryScalarValue(record.fields['JotForm Submission ID']),
       values: {
         ...defaults,

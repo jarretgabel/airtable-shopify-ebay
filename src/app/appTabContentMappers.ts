@@ -112,6 +112,7 @@ interface ApprovalInput {
   approvalRecordId: string | null;
   navigateToApprovalRecord: (recordId: string, replace?: boolean) => void;
   navigateToApprovalList: (replace?: boolean) => void;
+  navigateToIntakeForm?: (recordId?: string | null, replace?: boolean) => void;
   navigateToOperationalRecord?: (recordId: string, replace?: boolean) => void;
   navigateToTestingForm?: (recordId?: string | null, replace?: boolean) => void;
   navigateToPhotosForm?: (recordId?: string | null, replace?: boolean) => void;
@@ -332,6 +333,9 @@ export function buildApprovalTabViewModel(input: ApprovalInput): ApprovalTabView
     selectedRecordId: input.approvalRecordId,
     onSelectRecord: (recordId) => input.navigateToApprovalRecord(recordId),
     onBackToList: () => input.navigateToApprovalList(),
+    onOpenIntakeForm: input.navigateToIntakeForm
+      ? (recordId) => input.navigateToIntakeForm?.(recordId)
+      : undefined,
     onOpenOperationalRecord: input.navigateToOperationalRecord
       ? (recordId) => input.navigateToOperationalRecord?.(recordId)
       : undefined,

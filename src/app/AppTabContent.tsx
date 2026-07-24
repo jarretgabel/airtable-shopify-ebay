@@ -400,6 +400,7 @@ export function AppTabContent({
           approvalRecordId: listingsRecordId,
           navigateToApprovalRecord: navigateToListingsRecord,
           navigateToApprovalList: navigateToListingsList,
+          navigateToIntakeForm: navigateToManualIntakeForm,
           navigateToOperationalRecord: navigateToUsedGearOperationalRecord,
           navigateToTestingForm,
           navigateToPhotosForm,
@@ -562,6 +563,7 @@ export function AppTabContent({
             approvalRecordId: deferredRouteState.postPublishRecordId,
             navigateToApprovalRecord: navigateToPostPublishRecord,
             navigateToApprovalList: () => navigateToTab('post-publish'),
+            navigateToIntakeForm: navigateToManualIntakeForm,
             navigateToOperationalRecord: navigateToUsedGearOperationalRecord,
             navigateToTestingForm,
             navigateToPhotosForm,
@@ -575,6 +577,7 @@ export function AppTabContent({
             approvalRecordId: deferredRouteState.soldReadyListingsRecordId,
             navigateToApprovalRecord: navigateToPostPublishRecord,
             navigateToApprovalList: () => navigateToTab('post-publish'),
+            navigateToIntakeForm: navigateToManualIntakeForm,
             navigateToOperationalRecord: navigateToUsedGearOperationalRecord,
             navigateToTestingForm,
             navigateToPhotosForm,
@@ -653,6 +656,7 @@ export function AppTabContent({
               eyebrow="Manual Intake"
               onBackToDirectory={() => navigateToManualIntake()}
               backToDirectoryLabel="Back to Manual Intake"
+              onOpenListingDetail={(recordId) => navigateToListingsRecord(recordId)}
             />
           );
         }
@@ -759,6 +763,7 @@ export function AppTabContent({
               eyebrow="JotForm"
               onBackToDirectory={() => navigateToTab('jotform')}
               backToDirectoryLabel="Back to JotForm"
+              onOpenListingDetail={(recordId) => navigateToListingsRecord(recordId)}
             />
           );
         }
