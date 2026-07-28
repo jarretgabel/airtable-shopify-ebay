@@ -114,6 +114,11 @@ const SOURCE_PICKUP_FIELDS = [
 
 const SOURCE_WORKFLOW_SOURCE_FIELDS = ['Workflow Source', 'Source'];
 const SOURCE_SKU_FIELDS = ['SKU', 'Sku', 'sku'];
+const SOURCE_TITLE_FIELDS = ['Item Title', 'Title', 'Product Title', 'Name'];
+const SOURCE_MAKE_FIELDS = ['Make', 'Brand'];
+const SOURCE_MODEL_FIELDS = ['Model'];
+const SOURCE_COMPONENT_TYPE_FIELDS = ['Component Type', 'Type'];
+const DESTINATION_TITLE_FIELDS = ['Item Title', 'Title', 'Shopify Title', 'Shopify REST Title', 'eBay Title'];
 
 const EXACT_COPY_CANDIDATES = [
   'Item Title',
@@ -445,6 +450,27 @@ function isImageFieldName(fieldName: string): boolean {
   return normalized.includes('image') || normalized.startsWith('workflow image');
 }
 
+function buildGeneratedItemTitle(sourceFields: Record<string, unknown>): string {
+  const existingTitle = firstTrimmedString(sourceFields, SOURCE_TITLE_FIELDS);
+  if (existingTitle) {
+    return existingTitle;
+  }
+
+  const make = firstTrimmedString(sourceFields, SOURCE_MAKE_FIELDS);
+  const model = firstTrimmedString(sourceFields, SOURCE_MODEL_FIELDS);
+  const componentType = firstTrimmedString(sourceFields, SOURCE_COMPONENT_TYPE_FIELDS);
+  const sku = firstTrimmedString(sourceFields, SOURCE_SKU_FIELDS);
+
+  return [make, model].filter(Boolean).join(' ')
+    || [make, componentType].filter(Boolean).join(' ')
+    || [model, componentType].filter(Boolean).join(' ')
+    || componentType
+    || make
+    || model
+    || sku
+    || '';
+}
+
 function buildWriteFields(
   sourceFields: Record<string, unknown>,
   destinationWritableFieldNames: Set<string>,
@@ -528,6 +554,20 @@ function buildWriteFields(
     const sourceSku = firstTrimmedString(sourceFields, SOURCE_SKU_FIELDS);
     if (sourceSku) {
       fieldsToWrite.SKU = sourceSku;
+    }
+  }
+
+  const generatedTitle = buildGeneratedItemTitle(sourceFields);
+  if (generatedTitle) {
+    const hasIncomingTitle = DESTINATION_TITLE_FIELDS.some((fieldName) => getTrimmedString(fieldsToWrite[fieldName]).length > 0);
+    const hasExistingTitle = DESTINATION_TITLE_FIELDS.some((fieldName) => getTrimmedString(existingRecord?.fields?.[fieldName]).length > 0);
+
+    if (!hasIncomingTitle && !hasExistingTitle) {
+      if (destinationWritableFieldNames.has('Item Title')) {
+        fieldsToWrite['Item Title'] = generatedTitle;
+      } else if (destinationWritableFieldNames.has('Title')) {
+        fieldsToWrite.Title = generatedTitle;
+      }
     }
   }
 
