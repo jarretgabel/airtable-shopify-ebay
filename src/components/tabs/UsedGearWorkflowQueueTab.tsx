@@ -66,7 +66,7 @@ function parseSortMode(search: string, paramName: string): UsedGearWorkflowProgr
   const rawValue = new URLSearchParams(search).get(paramName)?.trim() ?? '';
   return SORT_MODES.includes(rawValue as UsedGearWorkflowProgressSortMode)
     ? rawValue as UsedGearWorkflowProgressSortMode
-    : 'group-label';
+    : 'newest';
 }
 
 export function UsedGearWorkflowQueueTab({
@@ -124,7 +124,7 @@ export function UsedGearWorkflowQueueTab({
         })}
         sortMode={sortMode}
         onSortModeChange={(value) => updateRouteState((params) => {
-          if (value === 'group-label') {
+          if (value === 'newest') {
             params.delete(config.sortParamName);
           } else {
             params.set(config.sortParamName, value);

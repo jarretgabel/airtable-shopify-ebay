@@ -4,6 +4,7 @@ import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
+import { SortableColumnLabel } from '@/components/app/SortableColumnLabel';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
@@ -33,12 +34,6 @@ export interface UsedGearWorkflowProgressSectionProps {
 
 export type UsedGearWorkflowProgressSortMode = 'group-label' | 'newest' | 'oldest';
 export type UsedGearWorkflowProgressQueueMode = 'all' | 'testing' | 'photography';
-
-function getWorkflowProgressSortLabel(sortMode: UsedGearWorkflowProgressSortMode): string {
-  if (sortMode === 'newest') return 'Newest First';
-  if (sortMode === 'oldest') return 'Oldest First';
-  return 'Default Order';
-}
 
 interface ProgressQueuePresentation {
   eyebrow: string;
@@ -265,7 +260,7 @@ export function UsedGearWorkflowProgressSection({
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
-  const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowProgressSortMode>('group-label');
+  const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowProgressSortMode>('newest');
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
 
@@ -407,14 +402,6 @@ export function UsedGearWorkflowProgressSection({
           onRefresh={() => {
             void refreshQueue();
           }}
-          sortAriaLabel={`Sort used gear processing and holding queue. Current order: ${getWorkflowProgressSortLabel(sortMode)}`}
-          sortValue={sortMode}
-          onSortChange={(value) => handleSortModeChange(value as UsedGearWorkflowProgressSortMode)}
-          sortOptions={[
-            { value: 'group-label', label: 'Default Order' },
-            { value: 'newest', label: 'Newest First' },
-            { value: 'oldest', label: 'Oldest First' },
-          ]}
         />
       </div>
 
@@ -438,6 +425,8 @@ export function UsedGearWorkflowProgressSection({
             Loading used-gear processing and holding queue...
           </div>
         ) : (() => {
+          const nextIntakeSortMode: UsedGearWorkflowProgressSortMode = sortMode === 'newest' ? 'oldest' : 'newest';
+
           const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
             {
               key: 'sku',
@@ -493,7 +482,15 @@ export function UsedGearWorkflowProgressSection({
               },
               {
                 key: 'intake',
-                label: 'Intake',
+                label: (
+                  <SortableColumnLabel
+                    label="Intake"
+                    active={sortMode === 'newest' || sortMode === 'oldest'}
+                    direction={sortMode === 'oldest' ? 'asc' : 'desc'}
+                    onClick={() => handleSortModeChange(nextIntakeSortMode)}
+                    ariaLabel="Sort used gear processing and holding queue by intake"
+                  />
+                ),
                 width: '8rem',
                 renderCell: (record) => <span className="text-xs text-[var(--muted)]">{formatIntakeDate(record)}</span>,
               },
@@ -502,7 +499,15 @@ export function UsedGearWorkflowProgressSection({
             columns.splice(2, 0,
               {
                 key: 'intake',
-                label: 'Intake',
+                label: (
+                  <SortableColumnLabel
+                    label="Intake"
+                    active={sortMode === 'newest' || sortMode === 'oldest'}
+                    direction={sortMode === 'oldest' ? 'asc' : 'desc'}
+                    onClick={() => handleSortModeChange(nextIntakeSortMode)}
+                    ariaLabel="Sort used gear processing and holding queue by intake"
+                  />
+                ),
                 width: '8rem',
                 renderCell: (record) => <span className="text-xs text-[var(--muted)]">{formatIntakeDate(record)}</span>,
               },
@@ -523,7 +528,15 @@ export function UsedGearWorkflowProgressSection({
               groups={pagedGroups}
               columns={columns}
               getItemKey={(record) => record.id}
-              groupColumnLabel={shouldShowGroupColumn ? 'Group' : undefined}
+              groupColumnLabel={shouldShowGroupColumn ? (
+                <SortableColumnLabel
+                  label="Group"
+                  active={sortMode === 'group-label'}
+                  direction={sortMode === 'group-label' ? 'asc' : null}
+                  onClick={() => handleSortModeChange('group-label')}
+                  ariaLabel="Sort used gear processing and holding queue by group"
+                />
+              ) : undefined}
               renderGroupCell={shouldShowGroupColumn ? ((group) => {
                 if (group.items.length === 1) {
                   return <span className="text-xs text-[var(--muted)]/45">-</span>;

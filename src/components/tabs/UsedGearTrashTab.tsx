@@ -16,7 +16,7 @@ export function UsedGearTrashTab({}: UsedGearTrashTabProps) {
     const value = new URLSearchParams(location.search).get(WORKFLOW_TRASH_SORT_PARAM);
     return value === 'newest' || value === 'oldest' || value === 'arrival-date' || value === 'make-model'
       ? value as UsedGearTrashSortMode
-      : 'group-label';
+      : 'newest';
   }, [location.search]);
 
   const updateRouteState = (update: (params: URLSearchParams) => void) => {
@@ -50,7 +50,7 @@ export function UsedGearTrashTab({}: UsedGearTrashTabProps) {
         })}
         sortMode={workflowTrashSort}
         onSortModeChange={(value) => updateRouteState((params) => {
-          if (value === 'group-label') {
+          if (value === 'newest') {
             params.delete(WORKFLOW_TRASH_SORT_PARAM);
           } else {
             params.set(WORKFLOW_TRASH_SORT_PARAM, value);

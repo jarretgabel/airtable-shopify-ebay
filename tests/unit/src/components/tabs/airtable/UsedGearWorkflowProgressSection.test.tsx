@@ -19,8 +19,19 @@ describe('UsedGearWorkflowProgressSection', () => {
     window.history.replaceState({}, '', '/workflow-hub');
   });
 
-  it('shows inline sort options in the header by default', async () => {
-    loadWorkflowProgressQueueMock.mockResolvedValue([]);
+  it('shows header sort controls by default', async () => {
+    loadWorkflowProgressQueueMock.mockResolvedValue([
+      {
+        id: 'rec-progress-sort',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PROG-SORT-1',
+          Make: 'Marantz',
+          Model: '8B',
+          'Workflow Status': 'Testing In Progress',
+        },
+      },
+    ]);
 
     render(
       <UsedGearWorkflowProgressSection
@@ -34,7 +45,7 @@ describe('UsedGearWorkflowProgressSection', () => {
     );
 
     await screen.findByText('Processing And Specialist Queue');
-    expect(screen.getByLabelText(/Sort used gear processing and holding queue/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sort used gear processing and holding queue by intake' })).toBeInTheDocument();
   });
 
   it('labels single workflow progress records without group wording', async () => {

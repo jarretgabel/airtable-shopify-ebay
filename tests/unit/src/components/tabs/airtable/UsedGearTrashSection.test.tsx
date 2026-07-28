@@ -54,13 +54,25 @@ describe('UsedGearTrashSection', () => {
     expect(onSearchTermChange).toHaveBeenCalledWith('luxman');
   });
 
-  it('shows inline sort options in the header', async () => {
-    loadTrashQueueMock.mockResolvedValue([]);
+  it('shows header sort controls', async () => {
+    loadTrashQueueMock.mockResolvedValue([
+      {
+        id: 'rec-trash-sort',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'TRASH-SORT-1',
+          Make: 'Pioneer',
+          Model: 'SX-750',
+          'Workflow Status': 'Unqualified',
+          'Trash Status': 'Active Trash',
+        },
+      },
+    ]);
 
     render(<UsedGearTrashSection onOpenReviewRecord={vi.fn()} onOpenGroupReview={vi.fn()} />);
 
     await screen.findByText('Trash');
-    expect(screen.getByLabelText(/Sort trash review queue/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sort trash review queue by intake' })).toBeInTheDocument();
   });
 
   it('filters trash rows by shared source or status fields and trash reason', async () => {

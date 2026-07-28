@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
+import { SortableColumnLabel } from '@/components/app/SortableColumnLabel';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import type { AirtableRecord } from '@/types/airtable';
 import {
@@ -69,13 +70,6 @@ function formatIntakeDate(record: AirtableRecord): string {
   return 'Unknown';
 }
 
-function getDirectorySortLabel(sortMode: 'intake-newest' | 'intake-oldest' | 'sku-asc' | 'sku-desc'): string {
-  if (sortMode === 'intake-oldest') return 'Intake Date: Oldest First';
-  if (sortMode === 'sku-asc') return 'SKU: A to Z';
-  if (sortMode === 'sku-desc') return 'SKU: Z to A';
-  return 'Intake Date: Newest First';
-}
-
 function renderWorkflowSource(value: unknown) {
   const sourceLabel = displayInventoryValue(value);
   if (!sourceLabel) {
@@ -126,10 +120,21 @@ export function InventoryDirectoryListSection({
   const totalPages = Math.ceil(records.length / PAGE_SIZE);
   const pagedRecords = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  const nextSkuSortMode = sortMode === 'sku-asc' ? 'sku-desc' : 'sku-asc';
+  const nextIntakeSortMode = sortMode === 'intake-oldest' ? 'intake-newest' : 'intake-oldest';
+
   const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
     {
       key: 'sku',
-      label: 'SKU',
+      label: (
+        <SortableColumnLabel
+          label="SKU"
+          active={sortMode === 'sku-asc' || sortMode === 'sku-desc'}
+          direction={sortMode === 'sku-asc' ? 'asc' : sortMode === 'sku-desc' ? 'desc' : null}
+          onClick={() => onSortModeChange(nextSkuSortMode)}
+          ariaLabel="Sort workflow hub directory by SKU"
+        />
+      ),
       width: '9rem',
       renderCell: (record) => <span className="font-medium text-[var(--ink)]">{displayInventoryValue(getInventoryDirectorySku(record.fields))}</span>,
     },
@@ -163,7 +168,15 @@ export function InventoryDirectoryListSection({
     },
     {
       key: 'intake',
-      label: 'Intake',
+      label: (
+        <SortableColumnLabel
+          label="Intake"
+          active={sortMode === 'intake-newest' || sortMode === 'intake-oldest'}
+          direction={sortMode === 'intake-oldest' ? 'asc' : 'desc'}
+          onClick={() => onSortModeChange(nextIntakeSortMode)}
+          ariaLabel="Sort workflow hub directory by intake date"
+        />
+      ),
       width: '8rem',
       renderCell: (record) => <span className="text-xs text-[var(--muted)]">{formatIntakeDate(record)}</span>,
     },
@@ -203,15 +216,6 @@ export function InventoryDirectoryListSection({
         refreshLoadingLabel={refreshLoadingLabel}
         refreshing={refreshing}
         onRefresh={onRefresh}
-        sortAriaLabel={`Sort workflow hub directory. Current order: ${getDirectorySortLabel(sortMode)}`}
-        sortValue={sortMode}
-        onSortChange={(value) => onSortModeChange(value as 'intake-newest' | 'intake-oldest' | 'sku-asc' | 'sku-desc')}
-        sortOptions={[
-          { value: 'intake-newest', label: 'Intake Date: Newest First' },
-          { value: 'intake-oldest', label: 'Intake Date: Oldest First' },
-          { value: 'sku-asc', label: 'SKU: A to Z' },
-          { value: 'sku-desc', label: 'SKU: Z to A' },
-        ]}
         compactFilters
         filters={[
           {

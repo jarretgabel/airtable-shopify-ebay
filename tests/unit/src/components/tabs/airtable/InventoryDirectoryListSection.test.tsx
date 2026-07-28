@@ -85,11 +85,11 @@ describe('InventoryDirectoryListSection', () => {
     fireEvent.change(screen.getByLabelText('Filter inventory by status'), { target: { value: 'Approved for Publish' } });
     expect(onStatusFilterChange).toHaveBeenCalledWith('Approved for Publish');
 
-    fireEvent.change(screen.getByLabelText('Sort workflow hub directory. Current order: Intake Date: Newest First'), { target: { value: 'intake-oldest' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sort workflow hub directory by intake date' }));
     expect(onSortModeChange).toHaveBeenCalledWith('intake-oldest');
 
-    fireEvent.change(screen.getByLabelText('Sort workflow hub directory. Current order: Intake Date: Newest First'), { target: { value: 'sku-desc' } });
-    expect(onSortModeChange).toHaveBeenCalledWith('sku-desc');
+    fireEvent.click(screen.getByRole('button', { name: 'Sort workflow hub directory by SKU' }));
+    expect(onSortModeChange).toHaveBeenCalledWith('sku-asc');
 
     expect(screen.getByRole('button', { name: 'Open Listings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit Intake' })).toBeInTheDocument();

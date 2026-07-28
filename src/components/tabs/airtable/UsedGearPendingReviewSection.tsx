@@ -4,6 +4,7 @@ import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
+import { SortableColumnLabel } from '@/components/app/SortableColumnLabel';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import {
@@ -83,14 +84,6 @@ function formatIntakeDate(record: AirtableRecord): string {
   return 'Unknown';
 }
 
-function getPendingReviewSortLabel(sortMode: UsedGearPendingReviewSortMode): string {
-  if (sortMode === 'newest') return 'Newest First';
-  if (sortMode === 'oldest') return 'Oldest First';
-  if (sortMode === 'arrival-date') return 'Arrival Date';
-  if (sortMode === 'make-model') return 'Make Then Model';
-  return 'Default Order';
-}
-
 function renderWorkflowSource(value: unknown) {
   const sourceLabel = displayInventoryValue(value);
   if (!sourceLabel) {
@@ -119,7 +112,7 @@ export function UsedGearPendingReviewSection({
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
-  const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearPendingReviewSortMode>('group-label');
+  const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearPendingReviewSortMode>('newest');
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
 
@@ -254,16 +247,6 @@ export function UsedGearPendingReviewSection({
           onRefresh={() => {
             void refreshQueue();
           }}
-          sortAriaLabel={`Sort pending review queue. Current order: ${getPendingReviewSortLabel(sortMode)}`}
-          sortValue={sortMode}
-          onSortChange={(value) => handleSortModeChange(value as UsedGearPendingReviewSortMode)}
-          sortOptions={[
-            { value: 'group-label', label: 'Default Order' },
-            { value: 'newest', label: 'Newest First' },
-            { value: 'oldest', label: 'Oldest First' },
-            { value: 'arrival-date', label: 'Arrival Date' },
-            { value: 'make-model', label: 'Make Then Model' },
-          ]}
         />
       </div>
 
@@ -287,6 +270,12 @@ export function UsedGearPendingReviewSection({
             Loading pending review queue...
           </div>
         ) : (() => {
+          const nextIntakeSortMode: UsedGearPendingReviewSortMode = sortMode === 'newest'
+            ? 'oldest'
+            : sortMode === 'oldest'
+              ? 'arrival-date'
+              : 'newest';
+
           const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
             {
               key: 'sku',
@@ -298,7 +287,15 @@ export function UsedGearPendingReviewSection({
             },
             {
               key: 'item',
-              label: 'Item',
+              label: (
+                <SortableColumnLabel
+                  label="Item"
+                  active={sortMode === 'make-model'}
+                  direction={sortMode === 'make-model' ? 'asc' : null}
+                  onClick={() => handleSortModeChange(sortMode === 'make-model' ? 'group-label' : 'make-model')}
+                  ariaLabel="Sort pending review queue by make and model"
+                />
+              ),
               width: 'minmax(0,1.6fr)',
               renderCell: (record) => (
                 <div className="min-w-0">
@@ -324,7 +321,15 @@ export function UsedGearPendingReviewSection({
             },
             {
               key: 'intake',
-              label: 'Intake',
+              label: (
+                <SortableColumnLabel
+                  label="Intake"
+                  active={sortMode === 'newest' || sortMode === 'oldest' || sortMode === 'arrival-date'}
+                  direction={sortMode === 'oldest' ? 'asc' : sortMode === 'newest' ? 'desc' : null}
+                  onClick={() => handleSortModeChange(nextIntakeSortMode)}
+                  ariaLabel="Sort pending review queue by intake"
+                />
+              ),
               width: '8rem',
               renderCell: (record) => <span className="text-xs text-[var(--muted)]">{formatIntakeDate(record)}</span>,
             },
@@ -362,7 +367,15 @@ export function UsedGearPendingReviewSection({
               groups={pagedGroups}
               columns={columns}
               getItemKey={(record) => record.id}
-              groupColumnLabel="Group"
+              groupColumnLabel={(
+                <SortableColumnLabel
+                  label="Group"
+                  active={sortMode === 'group-label'}
+                  direction={sortMode === 'group-label' ? 'asc' : null}
+                  onClick={() => handleSortModeChange('group-label')}
+                  ariaLabel="Sort pending review queue by group"
+                />
+              )}
               renderGroupCell={(group) => {
                 if (group.items.length === 1) {
                   return <span className="text-xs text-[var(--muted)]/45">-</span>;

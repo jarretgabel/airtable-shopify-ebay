@@ -18,13 +18,29 @@ import {
 import { errorSurfaceClass } from '@/components/tabs/uiClasses';
 import { isReadyForRequiredFields } from '@/components/approval/requiredFieldStatus';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
+import { updateRecordFromResolvedSource } from '@/services/app-api/airtable';
 import { displayValue } from '@/stores/approvalStore';
 import { AirtableRecord } from '@/types/airtable';
 
 type QueueQuickFilter = 'all' | 'pending' | 'ready' | 'needs-fields' | 'approved';
 type QueueExtraFilter = 'all' | 'shopify-active' | 'shopify-draft' | 'shopify-archived' | 'ebay-live' | 'ebay-draft-offer' | 'ebay-approved-to-publish' | 'ebay-stale' | 'workflow-pre-listing-review' | 'workflow-approved-for-publish';
 type CombinedQueueSectionKey = 'ready-for-publishing' | 'needs-further-work';
-type CombinedQueueSortMode = 'default' | 'title-asc' | 'vendor-asc' | 'price-desc' | 'price-asc';
+type CombinedQueueSortMode =
+  | 'default'
+  | 'title-asc'
+  | 'title-desc'
+  | 'vendor-asc'
+  | 'vendor-desc'
+  | 'price-desc'
+  | 'price-asc'
+  | 'sku-asc'
+  | 'sku-desc'
+  | 'shopify-ready-asc'
+  | 'shopify-ready-desc'
+  | 'ebay-ready-asc'
+  | 'ebay-ready-desc'
+  | 'workflow-status-asc'
+  | 'workflow-status-desc';
 
 interface QueueExtraFilterDefinition {
   id: Exclude<QueueExtraFilter, 'all'>;
@@ -81,21 +97,6 @@ function normalizeEbayOfferStatus(record: AirtableRecord): string {
   return getRecordFieldText(record, ['eBay Offer Status']).trim().toLowerCase();
 }
 
-function getCombinedSortLabel(mode: CombinedQueueSortMode): string {
-  switch (mode) {
-    case 'title-asc':
-      return 'Title A-Z';
-    case 'vendor-asc':
-      return 'Vendor A-Z';
-    case 'price-desc':
-      return 'Highest Price';
-    case 'price-asc':
-      return 'Lowest Price';
-    default:
-      return 'Default Order';
-  }
-}
-
 function parseSortableNumber(value: unknown): number | null {
   const raw = displayValue(value).replace(/[^0-9.-]+/g, '');
   if (!raw) return null;
@@ -110,17 +111,50 @@ function sortCombinedRecords(
   titleFieldName: string,
   vendorFieldName: string,
   priceFieldName: string,
+  skuFieldName: string,
+  shopifyRequiredFieldNames: string[],
+  ebayRequiredFieldNames: string[],
 ): AirtableRecord[] {
   if (sortMode === 'default') return records;
 
   const sortedRecords = [...records];
   sortedRecords.sort((left, right) => {
-    if (sortMode === 'title-asc') {
-      return getRecordFieldText(left, [titleFieldName]).localeCompare(getRecordFieldText(right, [titleFieldName]), undefined, { sensitivity: 'base' });
+    if (sortMode === 'title-asc' || sortMode === 'title-desc') {
+      const comparison = getRecordFieldText(left, [titleFieldName]).localeCompare(getRecordFieldText(right, [titleFieldName]), undefined, { sensitivity: 'base' });
+      return sortMode === 'title-desc' ? -comparison : comparison;
     }
 
-    if (sortMode === 'vendor-asc') {
-      return getRecordFieldText(left, [vendorFieldName]).localeCompare(getRecordFieldText(right, [vendorFieldName]), undefined, { sensitivity: 'base' });
+    if (sortMode === 'vendor-asc' || sortMode === 'vendor-desc') {
+      const comparison = getRecordFieldText(left, [vendorFieldName]).localeCompare(getRecordFieldText(right, [vendorFieldName]), undefined, { sensitivity: 'base' });
+      return sortMode === 'vendor-desc' ? -comparison : comparison;
+    }
+
+    if (sortMode === 'sku-asc' || sortMode === 'sku-desc') {
+      const leftSku = getRecordFieldText(left, [skuFieldName, 'SKU']);
+      const rightSku = getRecordFieldText(right, [skuFieldName, 'SKU']);
+      const comparison = leftSku.localeCompare(rightSku, undefined, { sensitivity: 'base', numeric: true });
+      return sortMode === 'sku-desc' ? -comparison : comparison;
+    }
+
+    if (sortMode === 'workflow-status-asc' || sortMode === 'workflow-status-desc') {
+      const leftStatus = normalizeCombinedWorkflowStatus(left);
+      const rightStatus = normalizeCombinedWorkflowStatus(right);
+      const comparison = leftStatus.localeCompare(rightStatus, undefined, { sensitivity: 'base' });
+      return sortMode === 'workflow-status-desc' ? -comparison : comparison;
+    }
+
+    if (sortMode === 'shopify-ready-asc' || sortMode === 'shopify-ready-desc') {
+      const leftValue = isReadyForRequiredFields(left.fields, shopifyRequiredFieldNames) ? 'Ready' : 'Needs Fields';
+      const rightValue = isReadyForRequiredFields(right.fields, shopifyRequiredFieldNames) ? 'Ready' : 'Needs Fields';
+      const comparison = leftValue.localeCompare(rightValue, undefined, { sensitivity: 'base' });
+      return sortMode === 'shopify-ready-desc' ? -comparison : comparison;
+    }
+
+    if (sortMode === 'ebay-ready-asc' || sortMode === 'ebay-ready-desc') {
+      const leftValue = isReadyForRequiredFields(left.fields, ebayRequiredFieldNames) ? 'Ready' : 'Needs Fields';
+      const rightValue = isReadyForRequiredFields(right.fields, ebayRequiredFieldNames) ? 'Ready' : 'Needs Fields';
+      const comparison = leftValue.localeCompare(rightValue, undefined, { sensitivity: 'base' });
+      return sortMode === 'ebay-ready-desc' ? -comparison : comparison;
     }
 
     const leftPrice = parseSortableNumber(left.fields[priceFieldName]);
@@ -518,7 +552,16 @@ export function ListingApprovalQueuePanel({
       ]).includes(normalizedQuery);
     });
 
-    return sortCombinedRecords(readyRecords, combinedReadySortMode, titleFieldName, vendorFieldName, priceFieldName);
+    return sortCombinedRecords(
+      readyRecords,
+      combinedReadySortMode,
+      titleFieldName,
+      vendorFieldName,
+      priceFieldName,
+      'SKU',
+      shopifyRequiredFieldNames,
+      ebayRequiredFieldNames,
+    );
   }, [
     combinedReadyForPublishingRecords,
     combinedReadySearchQuery,
@@ -550,15 +593,26 @@ export function ListingApprovalQueuePanel({
       ]).includes(normalizedQuery);
     });
 
-    return sortCombinedRecords(workRecords, combinedWorkSortMode, titleFieldName, vendorFieldName, priceFieldName);
+    return sortCombinedRecords(
+      workRecords,
+      combinedWorkSortMode,
+      titleFieldName,
+      vendorFieldName,
+      priceFieldName,
+      'SKU',
+      shopifyRequiredFieldNames,
+      ebayRequiredFieldNames,
+    );
   }, [
     combinedNeedsFurtherWorkRecords,
     combinedWorkSearchQuery,
     combinedWorkSortMode,
     combinedWorkWorkflowFilter,
+    ebayRequiredFieldNames,
     isCombinedApproval,
     priceFieldName,
     qtyFieldName,
+    shopifyRequiredFieldNames,
     titleFieldName,
     vendorFieldName,
   ]);
@@ -598,6 +652,27 @@ export function ListingApprovalQueuePanel({
       tableReference,
     });
     void loadRecords(tableReference, tableName ?? '', true);
+  };
+
+  const updateQueueQuantity = async (record: AirtableRecord, nextQtyRaw: string) => {
+    if (!qtyFieldName.trim()) {
+      throw new Error('Quantity field is not configured for this listing queue.');
+    }
+
+    const normalizedQty = nextQtyRaw.trim();
+    if (!/^\d+$/.test(normalizedQty)) {
+      throw new Error('Quantity must be a whole number greater than or equal to 0.');
+    }
+
+    await updateRecordFromResolvedSource(
+      tableReference,
+      tableName,
+      record.id,
+      { [qtyFieldName]: Number.parseInt(normalizedQty, 10) },
+      { typecast: true },
+    );
+
+    await loadRecords(tableReference, tableName ?? '', true);
   };
 
   const queuePanel = (
@@ -733,6 +808,7 @@ export function ListingApprovalQueuePanel({
               qtyFieldName={approvalChannel === 'ebay' ? '' : qtyFieldName}
               openRecord={openRecord}
               onSelectRecord={onSelectRecord}
+              onUpdateQty={approvalChannel === 'ebay' ? undefined : updateQueueQuantity}
             />
           ) : null}
 
@@ -753,16 +829,6 @@ export function ListingApprovalQueuePanel({
                   refreshLoadingLabel="Refreshing listing approval queue"
                   refreshing={loading}
                   onRefresh={refreshQueue}
-                  sortAriaLabel={`Sort ready-for-publishing combined listings. Current order: ${getCombinedSortLabel(combinedReadySortMode)}`}
-                  sortValue={combinedReadySortMode}
-                  onSortChange={(value) => setCombinedReadySortMode(value as CombinedQueueSortMode)}
-                  sortOptions={[
-                    { value: 'default', label: 'Default Order' },
-                    { value: 'title-asc', label: 'Title A-Z' },
-                    { value: 'vendor-asc', label: 'Vendor A-Z' },
-                    { value: 'price-desc', label: 'Highest Price' },
-                    { value: 'price-asc', label: 'Lowest Price' },
-                  ]}
                   filters={combinedReadyWorkflowOptions.length > 1 ? [{
                     ariaLabel: 'Filter ready-for-publishing combined listings by workflow status',
                     value: combinedReadyWorkflowFilter,
@@ -788,9 +854,12 @@ export function ListingApprovalQueuePanel({
                     formatFieldName=""
                     priceFieldName={priceFieldName}
                     vendorFieldName={vendorFieldName}
-                    qtyFieldName={qtyFieldName}
+                    qtyFieldName="SKU"
+                    qtyColumnLabel="SKU"
                     openRecord={openRecord}
                     onSelectRecord={onSelectRecord}
+                    sortMode={combinedReadySortMode}
+                    onSortModeChange={setCombinedReadySortMode}
                   />
                 ) : (
                   <section className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-8 text-center text-sm text-[var(--muted)]">
@@ -816,16 +885,6 @@ export function ListingApprovalQueuePanel({
                   refreshLoadingLabel="Refreshing listing approval queue"
                   refreshing={loading}
                   onRefresh={refreshQueue}
-                  sortAriaLabel={`Sort combined listings that need further work. Current order: ${getCombinedSortLabel(combinedWorkSortMode)}`}
-                  sortValue={combinedWorkSortMode}
-                  onSortChange={(value) => setCombinedWorkSortMode(value as CombinedQueueSortMode)}
-                  sortOptions={[
-                    { value: 'default', label: 'Default Order' },
-                    { value: 'title-asc', label: 'Title A-Z' },
-                    { value: 'vendor-asc', label: 'Vendor A-Z' },
-                    { value: 'price-desc', label: 'Highest Price' },
-                    { value: 'price-asc', label: 'Lowest Price' },
-                  ]}
                   filters={combinedWorkWorkflowOptions.length > 1 ? [{
                     ariaLabel: 'Filter combined listings that need further work by workflow status',
                     value: combinedWorkWorkflowFilter,
@@ -851,9 +910,12 @@ export function ListingApprovalQueuePanel({
                     formatFieldName=""
                     priceFieldName={priceFieldName}
                     vendorFieldName={vendorFieldName}
-                    qtyFieldName={qtyFieldName}
+                    qtyFieldName="SKU"
+                    qtyColumnLabel="SKU"
                     openRecord={openRecord}
                     onSelectRecord={onSelectRecord}
+                    sortMode={combinedWorkSortMode}
+                    onSortModeChange={setCombinedWorkSortMode}
                   />
                 ) : (
                   <section className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-8 text-center text-sm text-[var(--muted)]">

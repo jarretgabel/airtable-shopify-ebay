@@ -32,7 +32,7 @@ export function ParkingLotTab({ currentUserName }: ParkingLotTabProps) {
   }, [location.search]);
   const workflowParkingLotSort = useMemo(() => {
     const value = new URLSearchParams(location.search).get(WORKFLOW_PARKING_LOT_SORT_PARAM);
-    return value === 'newest' || value === 'oldest' || value === 'arrival-date' || value === 'make-model' ? value : 'group-label';
+    return value === 'newest' || value === 'oldest' || value === 'arrival-date' || value === 'make-model' ? value : 'newest';
   }, [location.search]);
   const workflowParkingLotSource = useMemo(() => {
     const value = new URLSearchParams(location.search).get(WORKFLOW_PARKING_LOT_SOURCE_PARAM);
@@ -77,7 +77,7 @@ export function ParkingLotTab({ currentUserName }: ParkingLotTabProps) {
         onSearchTermChange={(value) => updateQueueSearch(WORKFLOW_PARKING_LOT_SEARCH_PARAM, value, '#used-gear-parking-lot')}
         sortMode={workflowParkingLotSort}
         onSortModeChange={(value) => updateIntakeRouteState((params) => {
-          if (value === 'group-label') {
+          if (value === 'newest') {
             params.delete(WORKFLOW_PARKING_LOT_SORT_PARAM);
           } else {
             params.set(WORKFLOW_PARKING_LOT_SORT_PARAM, value);

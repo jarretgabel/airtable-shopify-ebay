@@ -1,9 +1,27 @@
 import { useEffect, useState } from 'react';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
+import { SortableColumnLabel } from '@/components/app/SortableColumnLabel';
 import { displayValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 import { isReadyForRequiredFields } from '@/components/approval/requiredFieldStatus';
+
+type ApprovalQueueSortMode =
+	| 'default'
+	| 'title-asc'
+	| 'title-desc'
+	| 'vendor-asc'
+	| 'vendor-desc'
+	| 'price-desc'
+	| 'price-asc'
+	| 'sku-asc'
+	| 'sku-desc'
+	| 'shopify-ready-asc'
+	| 'shopify-ready-desc'
+	| 'ebay-ready-asc'
+	| 'ebay-ready-desc'
+	| 'workflow-status-asc'
+	| 'workflow-status-desc';
 
 interface ApprovalReadinessColumn {
 	key: string;
@@ -27,8 +45,12 @@ interface ApprovalQueueTableProps {
 	priceFieldName: string;
 	vendorFieldName: string;
 	qtyFieldName: string;
+	qtyColumnLabel?: string;
 	openRecord: (record: AirtableRecord) => void;
 	onSelectRecord?: (recordId: string) => void;
+	onUpdateQty?: (record: AirtableRecord, nextQty: string) => Promise<void>;
+	sortMode?: ApprovalQueueSortMode;
+	onSortModeChange?: (nextMode: ApprovalQueueSortMode) => void;
 }
 
 const LISTED_WORKFLOW_STATUSES = new Set(['Listed, Shopify', 'Listed, eBay']);
@@ -91,6 +113,16 @@ function workflowStatusClasses(status: string): string {
 	return 'border border-slate-400/25 bg-slate-500/10 text-slate-300';
 }
 
+function nextSortMode(
+	currentMode: ApprovalQueueSortMode | undefined,
+	ascMode: ApprovalQueueSortMode,
+	descMode: ApprovalQueueSortMode,
+): ApprovalQueueSortMode {
+	if (currentMode === ascMode) return descMode;
+	if (currentMode === descMode) return 'default';
+	return ascMode;
+}
+
 export function ApprovalQueueTable({
 	records,
 	approvedFieldName,
@@ -107,17 +139,113 @@ export function ApprovalQueueTable({
 	priceFieldName,
 	vendorFieldName,
 	qtyFieldName,
+	qtyColumnLabel = 'Qty',
 	openRecord,
+	onUpdateQty,
+	sortMode,
+	onSortModeChange,
 }: ApprovalQueueTableProps) {
 	const [page, setPage] = useState(1);
+	const [editingQtyRecordId, setEditingQtyRecordId] = useState<string | null>(null);
+	const [editingQtyValue, setEditingQtyValue] = useState('');
+	const [updatingQtyRecordId, setUpdatingQtyRecordId] = useState<string | null>(null);
+	const [qtyUpdateError, setQtyUpdateError] = useState<string | null>(null);
 	useEffect(() => { setPage(1); }, [records]);
+	useEffect(() => {
+		if (!editingQtyRecordId) return;
+		if (!records.some((record) => record.id === editingQtyRecordId)) {
+			setEditingQtyRecordId(null);
+			setEditingQtyValue('');
+		}
+	}, [editingQtyRecordId, records]);
+
+	const startQtyEdit = (record: AirtableRecord) => {
+		setQtyUpdateError(null);
+		setEditingQtyRecordId(record.id);
+		setEditingQtyValue(getCell(record, qtyFieldName));
+	};
+
+	const cancelQtyEdit = () => {
+		if (updatingQtyRecordId) return;
+		setEditingQtyRecordId(null);
+		setEditingQtyValue('');
+		setQtyUpdateError(null);
+	};
+
+	const saveQtyEdit = async (record: AirtableRecord) => {
+		if (!onUpdateQty) return;
+
+		setQtyUpdateError(null);
+		setUpdatingQtyRecordId(record.id);
+		try {
+			await onUpdateQty(record, editingQtyValue.trim());
+			setEditingQtyRecordId(null);
+			setEditingQtyValue('');
+		} catch (error) {
+			setQtyUpdateError(error instanceof Error ? error.message : 'Unable to update quantity.');
+		} finally {
+			setUpdatingQtyRecordId(null);
+		}
+	};
+
 	const totalPages = Math.ceil(records.length / 30);
 	const pagedRecords = records.slice((page - 1) * 30, page * 30);
+
+	const titleColumnLabel = onSortModeChange ? (
+		<SortableColumnLabel
+			label="Title"
+			active={sortMode === 'title-asc' || sortMode === 'title-desc'}
+			direction={sortMode === 'title-asc' ? 'asc' : sortMode === 'title-desc' ? 'desc' : null}
+			onClick={() => onSortModeChange(nextSortMode(sortMode, 'title-asc', 'title-desc'))}
+			ariaLabel="Sort listing directory by title"
+		/>
+	) : 'Title';
+
+	const vendorColumnLabel = onSortModeChange ? (
+		<SortableColumnLabel
+			label="Vendor"
+			active={sortMode === 'vendor-asc' || sortMode === 'vendor-desc'}
+			direction={sortMode === 'vendor-asc' ? 'asc' : sortMode === 'vendor-desc' ? 'desc' : null}
+			onClick={() => onSortModeChange(nextSortMode(sortMode, 'vendor-asc', 'vendor-desc'))}
+			ariaLabel="Sort listing directory by vendor"
+		/>
+	) : 'Vendor';
+
+	const priceColumnLabel = onSortModeChange ? (
+		<SortableColumnLabel
+			label="Price"
+			active={sortMode === 'price-desc' || sortMode === 'price-asc'}
+			direction={sortMode === 'price-asc' ? 'asc' : sortMode === 'price-desc' ? 'desc' : null}
+			onClick={() => onSortModeChange(nextSortMode(sortMode, 'price-desc', 'price-asc'))}
+			ariaLabel="Sort listing directory by price"
+		/>
+	) : 'Price';
+
+	const qtyDisplayLabel = typeof qtyColumnLabel === 'string' ? qtyColumnLabel.trim().toLowerCase() : '';
+	const skuColumnLabel = onSortModeChange && qtyDisplayLabel === 'sku' ? (
+		<SortableColumnLabel
+			label="SKU"
+			active={sortMode === 'sku-asc' || sortMode === 'sku-desc'}
+			direction={sortMode === 'sku-asc' ? 'asc' : sortMode === 'sku-desc' ? 'desc' : null}
+			onClick={() => onSortModeChange(nextSortMode(sortMode, 'sku-asc', 'sku-desc'))}
+			ariaLabel="Sort listing directory by SKU"
+		/>
+	) : qtyColumnLabel;
+
+	const workflowStatusColumnLabel = onSortModeChange ? (
+		<SortableColumnLabel
+			label="Workflow Status"
+			active={sortMode === 'workflow-status-asc' || sortMode === 'workflow-status-desc'}
+			direction={sortMode === 'workflow-status-asc' ? 'asc' : sortMode === 'workflow-status-desc' ? 'desc' : null}
+			onClick={() => onSortModeChange(nextSortMode(sortMode, 'workflow-status-asc', 'workflow-status-desc'))}
+			ariaLabel="Sort listing directory by workflow status"
+		/>
+	) : 'Workflow Status';
 
 	const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
 		{
 			key: 'title',
-			label: 'Title',
+			label: titleColumnLabel,
 			width: 'minmax(0,1.8fr)',
 			renderCell: (record) => (
 				<div className="min-w-0">
@@ -149,7 +277,7 @@ export function ApprovalQueueTable({
 			priceFieldName
 				? [{
 					key: 'price',
-					label: 'Price',
+					label: priceColumnLabel,
 					width: '8rem',
 					renderCell: (record: AirtableRecord) => <span className="text-[var(--muted)]">{getCell(record, priceFieldName)}</span>,
 				} satisfies IntakeItemsMatrixColumn<AirtableRecord>]
@@ -159,7 +287,7 @@ export function ApprovalQueueTable({
 			vendorFieldName
 				? [{
 					key: 'vendor',
-					label: 'Vendor',
+					label: vendorColumnLabel,
 					width: '10rem',
 					renderCell: (record: AirtableRecord) => <span className="text-[var(--muted)]">{getCell(record, vendorFieldName)}</span>,
 				} satisfies IntakeItemsMatrixColumn<AirtableRecord>]
@@ -169,16 +297,97 @@ export function ApprovalQueueTable({
 			qtyFieldName
 				? [{
 					key: 'qty',
-					label: 'Qty',
+					label: skuColumnLabel,
 					width: '7rem',
 					align: 'center',
-					renderCell: (record: AirtableRecord) => <span className="text-[var(--muted)]">{getCell(record, qtyFieldName)}</span>,
+					renderCell: (record: AirtableRecord) => {
+						const isEditing = editingQtyRecordId === record.id;
+						const isSavingQty = updatingQtyRecordId === record.id;
+
+						if (isEditing && onUpdateQty) {
+							return (
+								<div className="flex min-w-[8rem] items-center justify-center gap-2">
+									<input
+										type="number"
+										min="0"
+										step="1"
+										value={editingQtyValue}
+										onChange={(event) => setEditingQtyValue(event.target.value)}
+										onKeyDown={(event) => {
+											if (event.key === 'Enter') {
+												event.preventDefault();
+												void saveQtyEdit(record);
+											}
+											if (event.key === 'Escape') {
+												event.preventDefault();
+												cancelQtyEdit();
+											}
+										}}
+										disabled={isSavingQty}
+										className="w-16 rounded-md border border-[var(--line)] bg-[var(--bg)] px-2 py-1 text-center text-sm text-[var(--ink)]"
+									/>
+									<button
+										type="button"
+										onClick={() => { void saveQtyEdit(record); }}
+										disabled={isSavingQty}
+										className="rounded-md border border-emerald-400/35 bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-100 disabled:opacity-60"
+									>
+										{isSavingQty ? '...' : 'Save'}
+									</button>
+									<button
+										type="button"
+										onClick={cancelQtyEdit}
+										disabled={isSavingQty}
+										className="rounded-md border border-[var(--line)] bg-[var(--bg)] px-2 py-1 text-xs font-semibold text-[var(--muted)] disabled:opacity-60"
+									>
+										Cancel
+									</button>
+								</div>
+							);
+						}
+
+						return (
+							<div className="flex min-w-[7rem] items-center justify-center gap-2">
+								<span className="text-[var(--muted)]">{getCell(record, qtyFieldName)}</span>
+								{onUpdateQty ? (
+									<button
+										type="button"
+										onClick={() => startQtyEdit(record)}
+										className="rounded-md border border-[var(--line)] bg-[var(--bg)] px-2 py-1 text-[11px] font-semibold text-[var(--muted)] hover:text-[var(--ink)]"
+									>
+										Edit
+									</button>
+								) : null}
+							</div>
+						);
+					},
 				} satisfies IntakeItemsMatrixColumn<AirtableRecord>]
 				: []
 		),
 		...readinessColumns.map((column) => ({
 			key: column.key,
-			label: column.label,
+			label: onSortModeChange && (column.key === 'shopify' || column.key === 'ebay')
+				? (
+					<SortableColumnLabel
+						label={column.label}
+						active={
+							(column.key === 'shopify' && (sortMode === 'shopify-ready-asc' || sortMode === 'shopify-ready-desc'))
+							|| (column.key === 'ebay' && (sortMode === 'ebay-ready-asc' || sortMode === 'ebay-ready-desc'))
+						}
+						direction={
+							column.key === 'shopify'
+								? (sortMode === 'shopify-ready-asc' ? 'asc' : sortMode === 'shopify-ready-desc' ? 'desc' : null)
+								: (sortMode === 'ebay-ready-asc' ? 'asc' : sortMode === 'ebay-ready-desc' ? 'desc' : null)
+						}
+						onClick={() => onSortModeChange(
+							column.key === 'shopify'
+								? nextSortMode(sortMode, 'shopify-ready-asc', 'shopify-ready-desc')
+								: nextSortMode(sortMode, 'ebay-ready-asc', 'ebay-ready-desc'),
+						)}
+						ariaLabel={`Sort listing directory by ${column.label}`}
+					/>
+				)
+				: column.label,
 			width: '11rem',
 			renderCell: (record: AirtableRecord) => {
 				const listedChannelStatus = showLiveChannelStatusForListedRows ? getListedChannelStatus(record) : null;
@@ -215,7 +424,7 @@ export function ApprovalQueueTable({
 			workflowStatusFieldName
 				? [{
 					key: 'workflow-status',
-					label: 'Workflow Status',
+					label: workflowStatusColumnLabel,
 					width: '14rem',
 					renderCell: (record: AirtableRecord) => {
 						const status = getWorkflowStatusCell(record, workflowStatusFieldName);
@@ -277,6 +486,11 @@ export function ApprovalQueueTable({
 
 	return (
 		<>
+			{qtyUpdateError ? (
+				<div className="mb-3 rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+					{qtyUpdateError}
+				</div>
+			) : null}
 			<IntakeItemsMatrix
 				items={pagedRecords}
 				columns={columns}

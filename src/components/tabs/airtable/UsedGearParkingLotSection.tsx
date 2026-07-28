@@ -4,6 +4,7 @@ import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn, type IntakeItemsMatrixGroup } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
+import { SortableColumnLabel } from '@/components/app/SortableColumnLabel';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import {
@@ -57,14 +58,6 @@ function arrivalTimestamp(record: AirtableRecord): number {
 
 function makeModelSortValue(record: AirtableRecord): string {
   return `${stringFieldValue(record, 'Make')} ${stringFieldValue(record, 'Model')} ${stringFieldValue(record, 'SKU')}`.trim().toLowerCase();
-}
-
-function getParkingLotSortLabel(sortMode: UsedGearParkingLotSortMode): string {
-  if (sortMode === 'newest') return 'Newest First';
-  if (sortMode === 'oldest') return 'Oldest First';
-  if (sortMode === 'arrival-date') return 'Arrival Date';
-  if (sortMode === 'make-model') return 'Make Then Model';
-  return 'Default Order';
 }
 
 function renderWorkflowSource(value: unknown) {
@@ -123,7 +116,7 @@ export function UsedGearParkingLotSection({
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
-  const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearParkingLotSortMode>('group-label');
+  const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearParkingLotSortMode>('newest');
   const [uncontrolledSourceFilter, setUncontrolledSourceFilter] = useState('all');
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
@@ -267,16 +260,6 @@ export function UsedGearParkingLotSection({
           onRefresh={() => {
             void refreshQueue();
           }}
-          sortAriaLabel={`Sort Parking Lot queue. Current order: ${getParkingLotSortLabel(sortMode)}`}
-          sortValue={sortMode}
-          onSortChange={(value) => handleSortModeChange(value as UsedGearParkingLotSortMode)}
-          sortOptions={[
-            { value: 'group-label', label: 'Default Order' },
-            { value: 'newest', label: 'Newest First' },
-            { value: 'oldest', label: 'Oldest First' },
-            { value: 'arrival-date', label: 'Arrival Date' },
-            { value: 'make-model', label: 'Make Then Model' },
-          ]}
           compactFilters
           filters={[
             {
@@ -313,6 +296,12 @@ export function UsedGearParkingLotSection({
             Loading Parking Lot queue...
           </div>
         ) : (() => {
+          const nextIntakeSortMode: UsedGearParkingLotSortMode = sortMode === 'newest'
+            ? 'oldest'
+            : sortMode === 'oldest'
+              ? 'arrival-date'
+              : 'newest';
+
           const columns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
             {
               key: 'sku',
@@ -322,7 +311,15 @@ export function UsedGearParkingLotSection({
             },
             {
               key: 'item',
-              label: 'Item',
+              label: (
+                <SortableColumnLabel
+                  label="Item"
+                  active={sortMode === 'make-model'}
+                  direction={sortMode === 'make-model' ? 'asc' : null}
+                  onClick={() => handleSortModeChange(sortMode === 'make-model' ? 'group-label' : 'make-model')}
+                  ariaLabel="Sort Parking Lot queue by make and model"
+                />
+              ),
               width: 'minmax(0,1.6fr)',
               renderCell: (record) => (
                 <div className="min-w-0">
@@ -348,7 +345,15 @@ export function UsedGearParkingLotSection({
             },
             {
               key: 'intake',
-              label: 'Intake',
+              label: (
+                <SortableColumnLabel
+                  label="Intake"
+                  active={sortMode === 'newest' || sortMode === 'oldest' || sortMode === 'arrival-date'}
+                  direction={sortMode === 'oldest' ? 'asc' : sortMode === 'newest' ? 'desc' : null}
+                  onClick={() => handleSortModeChange(nextIntakeSortMode)}
+                  ariaLabel="Sort Parking Lot queue by intake"
+                />
+              ),
               width: '8rem',
               renderCell: (record) => <span className="text-xs text-[var(--muted)]">{formatIntakeDate(record)}</span>,
             },
@@ -377,7 +382,15 @@ export function UsedGearParkingLotSection({
               groups={pagedGroups}
               columns={columns}
               getItemKey={(record) => record.id}
-              groupColumnLabel="Group"
+              groupColumnLabel={(
+                <SortableColumnLabel
+                  label="Group"
+                  active={sortMode === 'group-label'}
+                  direction={sortMode === 'group-label' ? 'asc' : null}
+                  onClick={() => handleSortModeChange('group-label')}
+                  ariaLabel="Sort Parking Lot queue by group"
+                />
+              )}
               renderGroupCell={(group) => {
                 if (group.items.length === 1) {
                   return <span className="text-xs text-[var(--muted)]/45">-</span>;

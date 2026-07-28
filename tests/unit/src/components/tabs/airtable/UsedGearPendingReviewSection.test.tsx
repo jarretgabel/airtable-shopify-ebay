@@ -19,8 +19,19 @@ describe('UsedGearPendingReviewSection', () => {
     window.history.replaceState({}, '', '/workflow-hub');
   });
 
-  it('shows inline sort options in the header by default', async () => {
-    loadPendingReviewQueueMock.mockResolvedValue([]);
+  it('shows header sort controls by default', async () => {
+    loadPendingReviewQueueMock.mockResolvedValue([
+      {
+        id: 'rec-pending-sort',
+        createdTime: '2026-05-07T00:00:00.000Z',
+        fields: {
+          SKU: 'PEND-SORT-1',
+          Make: 'Luxman',
+          Model: 'R-117',
+          'Workflow Status': 'Pending Review',
+        },
+      },
+    ]);
 
     render(
       <UsedGearPendingReviewSection
@@ -30,7 +41,7 @@ describe('UsedGearPendingReviewSection', () => {
     );
 
     await screen.findByText('Pending Review Queue');
-    expect(screen.getByLabelText(/Sort pending review queue/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sort pending review queue by intake' })).toBeInTheDocument();
   });
 
   it('labels single pending-review records without group wording', async () => {

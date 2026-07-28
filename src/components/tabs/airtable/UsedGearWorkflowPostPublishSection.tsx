@@ -5,6 +5,7 @@ import { compactRowPrimaryActionButtonClass, compactRowSecondaryActionButtonClas
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
+import { SortableColumnLabel } from '@/components/app/SortableColumnLabel';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
@@ -153,19 +154,6 @@ function sortByLifecycleDate(left: AirtableRecord, right: AirtableRecord): numbe
 
   return new Date(rightDate || 0).getTime() - new Date(leftDate || 0).getTime();
 }
-
-function getPostPublishSortLabel(sortMode: UsedGearWorkflowPostPublishSortMode): string {
-  if (sortMode === 'oldest-activity') {
-    return 'Oldest Activity';
-  }
-
-  if (sortMode === 'sku') {
-    return 'SKU';
-  }
-
-  return 'Latest Activity';
-}
-
 
 function getPostSaleChipClassName(label: string): string {
   const normalizedLabel = label.trim().toLowerCase();
@@ -426,10 +414,20 @@ export function UsedGearWorkflowPostPublishSection({
   };
 
   const getSectionColumns = (sectionKey: UsedGearWorkflowPostPublishBucket): IntakeItemsMatrixColumn<AirtableRecord>[] => {
+    const nextActivitySortMode: UsedGearWorkflowPostPublishSortMode = sortMode === 'latest-activity' ? 'oldest-activity' : 'latest-activity';
+
     const baseColumns: IntakeItemsMatrixColumn<AirtableRecord>[] = [
       {
         key: 'sku',
-        label: 'SKU',
+        label: (
+          <SortableColumnLabel
+            label="SKU"
+            active={sortMode === 'sku'}
+            direction={sortMode === 'sku' ? 'asc' : null}
+            onClick={() => handleSortModeChange(sortMode === 'sku' ? 'latest-activity' : 'sku')}
+            ariaLabel="Sort used gear post-publish queue by SKU"
+          />
+        ),
         width: '8.5rem',
         renderCell: (record) => <span className="font-semibold text-[var(--ink)]">{displayInventoryValue(record.fields.SKU)}</span>,
       },
@@ -461,7 +459,15 @@ export function UsedGearWorkflowPostPublishSection({
         ...baseColumns,
         {
           key: 'ship-date',
-          label: 'Ship Date',
+          label: (
+            <SortableColumnLabel
+              label="Ship Date"
+              active={sortMode === 'latest-activity' || sortMode === 'oldest-activity'}
+              direction={sortMode === 'oldest-activity' ? 'asc' : 'desc'}
+              onClick={() => handleSortModeChange(nextActivitySortMode)}
+              ariaLabel="Sort used gear post-publish queue by shipment date"
+            />
+          ),
           width: '9rem',
           renderCell: (record) => {
             const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
@@ -555,7 +561,15 @@ export function UsedGearWorkflowPostPublishSection({
       },
       {
         key: 'activity',
-        label: 'Last Touched',
+        label: (
+          <SortableColumnLabel
+            label="Last Touched"
+            active={sortMode === 'latest-activity' || sortMode === 'oldest-activity'}
+            direction={sortMode === 'oldest-activity' ? 'asc' : 'desc'}
+            onClick={() => handleSortModeChange(nextActivitySortMode)}
+            ariaLabel="Sort used gear post-publish queue by last activity"
+          />
+        ),
         width: '11rem',
         renderCell: (record: AirtableRecord) => {
           const lastTouchedSummary = buildPostPublishLastTouchedSummary(record);
@@ -759,14 +773,6 @@ export function UsedGearWorkflowPostPublishSection({
             onRefresh={() => {
               void refreshQueue();
             }}
-            sortAriaLabel={`Sort used gear ${queueNoun}. Current order: ${getPostPublishSortLabel(sortMode)}`}
-            sortValue={sortMode}
-            onSortChange={(value) => handleSortModeChange(value as UsedGearWorkflowPostPublishSortMode)}
-            sortOptions={[
-              { value: 'latest-activity', label: 'Latest Activity' },
-              { value: 'oldest-activity', label: 'Oldest Activity' },
-              { value: 'sku', label: 'SKU' },
-            ]}
           />
         ) : null}
       </div>
@@ -827,14 +833,6 @@ export function UsedGearWorkflowPostPublishSection({
                     onRefresh={() => {
                       void refreshQueue();
                     }}
-                    sortAriaLabel={`Sort ${section.title}. Current order: ${getPostPublishSortLabel(sortMode)}`}
-                    sortValue={sortMode}
-                    onSortChange={(value) => handleSortModeChange(value as UsedGearWorkflowPostPublishSortMode)}
-                    sortOptions={[
-                      { value: 'latest-activity', label: 'Latest Activity' },
-                      { value: 'oldest-activity', label: 'Oldest Activity' },
-                      { value: 'sku', label: 'SKU' },
-                    ]}
                   />
                 </div>
               ) : null}

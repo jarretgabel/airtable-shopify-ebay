@@ -12,7 +12,7 @@ export interface IntakeItemsMatrixCellContext<TItem> {
 
 export interface IntakeItemsMatrixColumn<TItem> {
   key: string;
-  label: string;
+  label: ReactNode;
   width?: string;
   align?: IntakeItemsMatrixAlign;
   headerClassName?: string;
@@ -32,9 +32,9 @@ interface IntakeItemsMatrixProps<TItem> {
   groups?: IntakeItemsMatrixGroup<TItem>[];
   columns: IntakeItemsMatrixColumn<TItem>[];
   getItemKey: (item: TItem) => string;
-  groupColumnLabel?: string;
+  groupColumnLabel?: ReactNode;
   renderGroupCell?: (group: IntakeItemsMatrixGroup<TItem>) => ReactNode;
-  groupActionColumnLabel?: string;
+  groupActionColumnLabel?: ReactNode;
   renderGroupActionCell?: (group: IntakeItemsMatrixGroup<TItem>) => ReactNode;
 }
 
