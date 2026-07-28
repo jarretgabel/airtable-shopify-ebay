@@ -103,12 +103,6 @@ export function EbayPolicySelectGroup({
   renderFieldLabel,
   getSelectClassName,
 }: EbayPolicySelectGroupProps) {
-  const emptyPoliciesByType = useMemo<EbayBusinessPoliciesByType>(() => ({
-    marketplaceId: marketplaceId.trim().toUpperCase() || 'EBAY_US',
-    fulfillmentPolicies: [],
-    paymentPolicies: [],
-    returnPolicies: [],
-  }), [marketplaceId]);
   const [policiesByType, setPoliciesByType] = useState<EbayBusinessPoliciesByType | null>(null);
   const [defaultPolicyIds, setDefaultPolicyIds] = useState({
     fulfillmentPolicyId: '',
