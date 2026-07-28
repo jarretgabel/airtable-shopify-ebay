@@ -3,6 +3,8 @@ interface ConfiguredRecordsCacheKeyInput {
   subset?: string;
   fields?: string[];
   maxRecords?: number;
+  searchQuery?: string;
+  searchFields?: string[];
 }
 
 const CACHE_TTL_MS = 120_000;
@@ -33,8 +35,10 @@ function buildCacheKey(input: ConfiguredRecordsCacheKeyInput): string {
   const maxRecords = typeof input.maxRecords === 'number' && Number.isFinite(input.maxRecords)
     ? Math.max(0, Math.trunc(input.maxRecords))
     : 0;
+  const searchQuery = input.searchQuery?.trim().toLowerCase() || '';
+  const searchFields = normalizeFields(input.searchFields);
 
-  return `${input.source}::${subset}::${fields}::${maxRecords}`;
+  return `${input.source}::${subset}::${fields}::${maxRecords}::${searchQuery}::${searchFields}`;
 }
 
 export async function getOrLoadConfiguredRecordsCache<TValue>(

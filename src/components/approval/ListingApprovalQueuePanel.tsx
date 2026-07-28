@@ -18,8 +18,8 @@ import {
 import { errorSurfaceClass } from '@/components/tabs/uiClasses';
 import { isReadyForRequiredFields } from '@/components/approval/requiredFieldStatus';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
-import { updateRecordFromResolvedSource } from '@/services/app-api/airtable';
-import { displayValue } from '@/stores/approvalStore';
+import { getRecordsFromResolvedSource, updateRecordFromResolvedSource } from '@/services/app-api/airtable';
+import { displayValue, useApprovalStore } from '@/stores/approvalStore';
 import { AirtableRecord } from '@/types/airtable';
 
 type QueueQuickFilter = 'all' | 'pending' | 'ready' | 'needs-fields' | 'approved';
@@ -51,6 +51,21 @@ interface QueueExtraFilterDefinition {
 const queueFilterButtonClass = 'rounded-lg border px-3.5 py-2 text-[0.82rem] font-semibold transition';
 const FILTER_STORAGE_PREFIX = 'approval-queue-filter';
 const approvalQueueSurfaceClass = 'rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5';
+const COMBINED_QUEUE_INITIAL_FETCH_LIMIT = 40;
+const COMBINED_QUEUE_FETCH_STEP = 80;
+const COMBINED_QUEUE_MAX_FETCH_LIMIT = 1000;
+const COMBINED_WORK_SERVER_SEARCH_FIELDS = [
+  'SKU',
+  'Item Title',
+  'Title',
+  'Shopify Title',
+  'Shopify REST Title',
+  'Vendor',
+  'Brand',
+  'Model',
+  'Workflow Status',
+  'Make',
+];
 const COMBINED_QUEUE_SECTION_IDS: Record<CombinedQueueSectionKey, string> = {
   'ready-for-publishing': 'combined-listings-ready-for-publishing',
   'needs-further-work': 'combined-listings-needs-further-work',
@@ -345,7 +360,14 @@ interface ListingApprovalQueuePanelProps {
   openRecord: (record: AirtableRecord) => void;
   onSelectRecord: (recordId: string) => void;
   createNewShopifyListing: () => Promise<void>;
-  loadRecords: (tableReference: string, tableName?: string, force?: boolean) => Promise<void>;
+  loadRecords: (
+    tableReference: string,
+    tableName?: string,
+    force?: boolean,
+    options?: {
+      combinedMaxRecords?: number;
+    },
+  ) => Promise<void>;
 }
 
 export function ListingApprovalQueuePanel({
@@ -397,6 +419,11 @@ export function ListingApprovalQueuePanel({
   const [combinedWorkSortMode, setCombinedWorkSortMode] = useState<CombinedQueueSortMode>('default');
   const [combinedReadyWorkflowFilter, setCombinedReadyWorkflowFilter] = useState('all');
   const [combinedWorkWorkflowFilter, setCombinedWorkWorkflowFilter] = useState('all');
+  const [combinedFetchLimit, setCombinedFetchLimit] = useState(COMBINED_QUEUE_INITIAL_FETCH_LIMIT);
+  const [combinedLoadingMore, setCombinedLoadingMore] = useState(false);
+  const [combinedWorkServerSearchRecords, setCombinedWorkServerSearchRecords] = useState<AirtableRecord[] | null>(null);
+  const [combinedWorkServerSearchLoading, setCombinedWorkServerSearchLoading] = useState(false);
+  const [combinedWorkServerSearchError, setCombinedWorkServerSearchError] = useState<string | null>(null);
   const [activeQuickFilter, setActiveQuickFilter] = useState<QueueQuickFilter>(() => readStoredFilter(quickFilterStorageKey, defaultQuickFilterForChannel(approvalChannel), ['all', 'pending', 'ready', 'needs-fields', 'approved'] as const));
   const [activeExtraFilter, setActiveExtraFilter] = useState<QueueExtraFilter>(() => readStoredFilter(extraFilterStorageKey, 'all', ['all', 'shopify-active', 'shopify-draft', 'shopify-archived', 'ebay-live', 'ebay-draft-offer', 'ebay-approved-to-publish', 'ebay-stale', 'workflow-pre-listing-review', 'workflow-approved-for-publish'] as const));
   const requiredFieldNames = approvalChannel === 'shopify'
@@ -408,6 +435,50 @@ export function ListingApprovalQueuePanel({
     () => buildExtraFilterDefinitions(approvalChannel, records, formatFieldName),
     [approvalChannel, formatFieldName, records],
   );
+  const combinedWorkSearchQueryTrimmed = combinedWorkSearchQuery.trim();
+  const isCombinedWorkServerSearchEnabled = isCombinedApproval && combinedWorkSearchQueryTrimmed.length > 0;
+
+  useEffect(() => {
+    if (!isCombinedWorkServerSearchEnabled) {
+      setCombinedWorkServerSearchRecords(null);
+      setCombinedWorkServerSearchError(null);
+      setCombinedWorkServerSearchLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setCombinedWorkServerSearchLoading(true);
+    setCombinedWorkServerSearchError(null);
+
+    void getRecordsFromResolvedSource(tableReference, tableName, {
+      subset: 'listings-page',
+      maxRecords: COMBINED_QUEUE_MAX_FETCH_LIMIT,
+      searchQuery: combinedWorkSearchQueryTrimmed,
+      searchFields: COMBINED_WORK_SERVER_SEARCH_FIELDS,
+    })
+      .then((nextRecords) => {
+        if (cancelled) {
+          return;
+        }
+        setCombinedWorkServerSearchRecords(nextRecords);
+      })
+      .catch((error) => {
+        if (cancelled) {
+          return;
+        }
+        setCombinedWorkServerSearchError(error instanceof Error ? error.message : 'Unable to search combined listings.');
+        setCombinedWorkServerSearchRecords([]);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCombinedWorkServerSearchLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [combinedWorkSearchQueryTrimmed, isCombinedWorkServerSearchEnabled, tableName, tableReference]);
 
   useEffect(() => {
     if (!supportsQuickFilters) return;
@@ -488,18 +559,29 @@ export function ListingApprovalQueuePanel({
       shopifyRequiredFieldNames,
     ],
   );
+  const combinedNeedsFurtherWorkSourceRecords = useMemo(() => {
+    if (!isCombinedApproval) {
+      return [] as AirtableRecord[];
+    }
+
+    if (isCombinedWorkServerSearchEnabled) {
+      return combinedWorkServerSearchRecords ?? [];
+    }
+
+    return filteredRecords;
+  }, [combinedWorkServerSearchRecords, filteredRecords, isCombinedApproval, isCombinedWorkServerSearchEnabled]);
   const combinedNeedsFurtherWorkRecords = useMemo(
     () => isCombinedApproval
-      ? filterCombinedNeedsFurtherWorkRecords(filteredRecords, {
+      ? filterCombinedNeedsFurtherWorkRecords(combinedNeedsFurtherWorkSourceRecords, {
           combinedRequiredFieldNames,
           shopifyRequiredFieldNames,
           ebayRequiredFieldNames,
         })
       : [],
     [
+      combinedNeedsFurtherWorkSourceRecords,
       combinedRequiredFieldNames,
       ebayRequiredFieldNames,
-      filteredRecords,
       isCombinedApproval,
       shopifyRequiredFieldNames,
     ],
@@ -575,7 +657,7 @@ export function ListingApprovalQueuePanel({
   ]);
   const filteredCombinedNeedsFurtherWorkRecords = useMemo(() => {
     if (!isCombinedApproval) return [];
-    const normalizedQuery = combinedWorkSearchQuery.trim().toLowerCase();
+    const normalizedQuery = combinedWorkSearchQueryTrimmed.toLowerCase();
     const workRecords = combinedNeedsFurtherWorkRecords.filter((record) => {
       const workflowStatus = normalizeCombinedWorkflowStatus(record);
       if (combinedWorkWorkflowFilter !== 'all' && workflowStatus !== combinedWorkWorkflowFilter) return false;
@@ -605,7 +687,7 @@ export function ListingApprovalQueuePanel({
     );
   }, [
     combinedNeedsFurtherWorkRecords,
-    combinedWorkSearchQuery,
+    combinedWorkSearchQueryTrimmed,
     combinedWorkSortMode,
     combinedWorkWorkflowFilter,
     ebayRequiredFieldNames,
@@ -647,11 +729,51 @@ export function ListingApprovalQueuePanel({
     ];
   }, [quickFilterCounts, records.length]);
 
+  const combinedHasMoreRecords = isCombinedApproval
+    && !isCombinedWorkServerSearchEnabled
+    && records.length >= combinedFetchLimit
+    && combinedFetchLimit < COMBINED_QUEUE_MAX_FETCH_LIMIT;
+
   const refreshQueue = () => {
     trackWorkflowEvent('approval_queue_refreshed', {
       tableReference,
     });
-    void loadRecords(tableReference, tableName ?? '', true);
+    void loadRecords(
+      tableReference,
+      tableName ?? '',
+      true,
+      isCombinedApproval ? { combinedMaxRecords: combinedFetchLimit } : undefined,
+    );
+  };
+
+  const requestMoreCombinedRecords = async (nextPage: number, pageSize: number): Promise<boolean> => {
+    if (!isCombinedApproval || combinedLoadingMore) {
+      return false;
+    }
+
+    const minimumRequiredCount = nextPage * pageSize;
+    if (records.length >= minimumRequiredCount) {
+      return true;
+    }
+
+    const nextLimit = Math.min(
+      COMBINED_QUEUE_MAX_FETCH_LIMIT,
+      Math.max(combinedFetchLimit + COMBINED_QUEUE_FETCH_STEP, minimumRequiredCount),
+    );
+
+    if (nextLimit <= combinedFetchLimit) {
+      return false;
+    }
+
+    setCombinedLoadingMore(true);
+    try {
+      await loadRecords(tableReference, tableName ?? '', true, { combinedMaxRecords: nextLimit });
+      setCombinedFetchLimit(nextLimit);
+      const loadedCount = useApprovalStore.getState().records.length;
+      return loadedCount >= minimumRequiredCount;
+    } finally {
+      setCombinedLoadingMore(false);
+    }
   };
 
   const updateQueueQuantity = async (record: AirtableRecord, nextQtyRaw: string) => {
@@ -860,6 +982,9 @@ export function ListingApprovalQueuePanel({
                     onSelectRecord={onSelectRecord}
                     sortMode={combinedReadySortMode}
                     onSortModeChange={setCombinedReadySortMode}
+                    hasMoreRecords={combinedHasMoreRecords}
+                    loadingNextPage={combinedLoadingMore}
+                    onRequestNextPage={requestMoreCombinedRecords}
                   />
                 ) : (
                   <section className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-8 text-center text-sm text-[var(--muted)]">
@@ -883,7 +1008,7 @@ export function ListingApprovalQueuePanel({
                   onSearchChange={setCombinedWorkSearchQuery}
                   refreshLabel="Refresh listing approval queue"
                   refreshLoadingLabel="Refreshing listing approval queue"
-                  refreshing={loading}
+                  refreshing={loading || combinedWorkServerSearchLoading}
                   onRefresh={refreshQueue}
                   filters={combinedWorkWorkflowOptions.length > 1 ? [{
                     ariaLabel: 'Filter combined listings that need further work by workflow status',
@@ -893,6 +1018,11 @@ export function ListingApprovalQueuePanel({
                   }] : undefined}
                   compactFilters
                 />
+                {combinedWorkServerSearchError ? (
+                  <section className="mb-3 rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                    {combinedWorkServerSearchError}
+                  </section>
+                ) : null}
                 {filteredCombinedNeedsFurtherWorkRecords.length > 0 ? (
                   <ApprovalQueueTable
                     records={filteredCombinedNeedsFurtherWorkRecords}
@@ -916,6 +1046,9 @@ export function ListingApprovalQueuePanel({
                     onSelectRecord={onSelectRecord}
                     sortMode={combinedWorkSortMode}
                     onSortModeChange={setCombinedWorkSortMode}
+                    hasMoreRecords={combinedHasMoreRecords}
+                    loadingNextPage={combinedLoadingMore}
+                    onRequestNextPage={requestMoreCombinedRecords}
                   />
                 ) : (
                   <section className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--bg)] px-4 py-8 text-center text-sm text-[var(--muted)]">

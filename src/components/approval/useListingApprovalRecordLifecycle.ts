@@ -13,7 +13,12 @@ interface UseListingApprovalRecordLifecycleParams {
   approvedFieldName: string;
   hydrateForm: (record: AirtableRecord, fieldNames: string[], approvedFieldName: string) => void;
   loadListingFormatOptions: (force?: boolean) => Promise<void>;
-  loadRecords: (tableReference: string, tableName?: string, force?: boolean) => Promise<void>;
+  loadRecords: (
+    tableReference: string,
+    tableName?: string,
+    force?: boolean,
+    options?: { combinedMaxRecords?: number },
+  ) => Promise<void>;
   onSelectRecord: (recordId: string) => void;
   pushInlineActionNotice: (tone: 'success' | 'error', title: string, message: string) => void;
   resetInlineActionNotices: () => void;

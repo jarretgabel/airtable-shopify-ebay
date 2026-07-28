@@ -28,8 +28,7 @@ let listingFormatOptionsLoadedAt: number | null = null;
 let listingFormatOptionsLoadFailedAt: number | null = null;
 const LISTING_FORMAT_OPTIONS_ERROR_RETRY_MS = 60_000;
 const COMBINED_LISTINGS_INITIAL_MAX_RECORDS = 40;
-const COMBINED_LISTINGS_HYDRATE_MAX_RECORDS = 100;
-const COMBINED_LISTINGS_HYDRATE_DELAY_MS = 1200;
+const COMBINED_LISTINGS_MAX_RECORDS_CAP = 1000;
 
 // Keep queue reads lightweight so Lambda responses stay below payload limits.
 const APPROVAL_QUEUE_FIELDS = [
@@ -151,7 +150,7 @@ export function createHydrateFormAction(set: ApprovalStoreSet): ApprovalStore['h
 }
 
 export function createLoadRecordsAction(set: ApprovalStoreSet, get: ApprovalStoreGet): ApprovalStore['loadRecords'] {
-  return async (tableReference, tableName, force = false) => {
+  return async (tableReference, tableName, force = false, options) => {
     const cacheKey = getApprovalSourceCacheKey(tableReference, tableName);
     const currentGeneration = (approvalRecordsLoadGenerationBySource.get(cacheKey) ?? 0) + 1;
     approvalRecordsLoadGenerationBySource.set(cacheKey, currentGeneration);
@@ -168,10 +167,17 @@ export function createLoadRecordsAction(set: ApprovalStoreSet, get: ApprovalStor
       const isCombinedListingsSource = resolvedSource === 'approval-combined';
 
       if (isCombinedListingsSource) {
+        const requestedMaxRecords = Math.max(
+          COMBINED_LISTINGS_INITIAL_MAX_RECORDS,
+          Math.min(
+            COMBINED_LISTINGS_MAX_RECORDS_CAP,
+            Math.trunc(options?.combinedMaxRecords ?? COMBINED_LISTINGS_INITIAL_MAX_RECORDS),
+          ),
+        );
         const initialData = await getRecordsFromResolvedSource(tableReference, tableName, {
           fields: APPROVAL_QUEUE_FIELDS,
           subset: 'listings-page',
-          maxRecords: COMBINED_LISTINGS_INITIAL_MAX_RECORDS,
+          maxRecords: requestedMaxRecords,
         });
 
         if (approvalRecordsLoadGenerationBySource.get(cacheKey) !== currentGeneration) {
@@ -180,37 +186,6 @@ export function createLoadRecordsAction(set: ApprovalStoreSet, get: ApprovalStor
 
         set({ records: initialData });
         approvalRecordsLoadedAtBySource.set(cacheKey, Date.now());
-
-        if (initialData.length >= COMBINED_LISTINGS_INITIAL_MAX_RECORDS) {
-          void (async () => {
-            try {
-              await new Promise<void>((resolve) => {
-                setTimeout(resolve, COMBINED_LISTINGS_HYDRATE_DELAY_MS);
-              });
-
-              if (approvalRecordsLoadGenerationBySource.get(cacheKey) !== currentGeneration) {
-                return;
-              }
-
-              const hydratedData = await getRecordsFromResolvedSource(tableReference, tableName, {
-                fields: APPROVAL_QUEUE_FIELDS,
-                subset: 'listings-page',
-                maxRecords: COMBINED_LISTINGS_HYDRATE_MAX_RECORDS,
-              });
-
-              if (approvalRecordsLoadGenerationBySource.get(cacheKey) !== currentGeneration) {
-                return;
-              }
-
-              if (hydratedData.length > initialData.length) {
-                set({ records: hydratedData });
-                approvalRecordsLoadedAtBySource.set(cacheKey, Date.now());
-              }
-            } catch {
-              // Keep initial queue data when background hydration fails.
-            }
-          })();
-        }
 
         return;
       }

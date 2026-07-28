@@ -37,7 +37,12 @@ interface ListingApprovalWorkflowOpsPanelProps {
   selectedRecord: AirtableRecord;
   tableReference: string;
   tableName?: string;
-  loadRecords: (tableReference: string, tableName?: string, force?: boolean) => Promise<void>;
+  loadRecords: (
+    tableReference: string,
+    tableName?: string,
+    force?: boolean,
+    options?: { combinedMaxRecords?: number },
+  ) => Promise<void>;
   onMovedBackToReady?: (updatedRecord: AirtableRecord) => void;
 }
 

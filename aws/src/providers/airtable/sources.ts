@@ -42,6 +42,8 @@ interface AirtableConfiguredReadOptions {
   filterByFormula?: string;
   subset?: AirtableConfiguredRecordsSubset;
   maxRecords?: number;
+  searchQuery?: string;
+  searchFields?: string[];
 }
 
 const LISTINGS_PAGE_MAX_RECORDS = 200;
@@ -99,6 +101,35 @@ function mergeFilterByFormula(
   }
 
   return normalizedBase || normalizedSubset;
+}
+
+function escapeAirtableStringLiteral(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"');
+}
+
+function normalizeSearchFieldName(fieldName: string): string {
+  return fieldName.replace(/}/g, '\\}').trim();
+}
+
+function resolveSearchFilterByFormula(searchQuery: string | undefined, searchFields: string[] | undefined): string | undefined {
+  const normalizedQuery = searchQuery?.trim().toLowerCase() ?? '';
+  if (!normalizedQuery) {
+    return undefined;
+  }
+
+  const fields = (searchFields ?? [])
+    .map((fieldName) => normalizeSearchFieldName(fieldName))
+    .filter((fieldName) => fieldName.length > 0);
+
+  if (fields.length === 0) {
+    return undefined;
+  }
+
+  const escapedQuery = escapeAirtableStringLiteral(normalizedQuery);
+  const clauses = fields.map((fieldName) => `SEARCH("${escapedQuery}", LOWER({${fieldName}}&"")) > 0`);
+  return `OR(${clauses.join(',')})`;
 }
 
 function normalizeRequestedFields(fields?: string[]): string[] | undefined {
@@ -426,7 +457,11 @@ export async function getConfiguredRecords(
 ): Promise<AirtableRecord[]> {
   const definition = getSourceDefinition(source);
   const subsetFilterByFormula = resolveSubsetFilterByFormula(source, options.subset);
-  const mergedFilterByFormula = mergeFilterByFormula(options.filterByFormula, subsetFilterByFormula);
+  const searchFilterByFormula = resolveSearchFilterByFormula(options.searchQuery, options.searchFields);
+  const mergedFilterByFormula = mergeFilterByFormula(
+    mergeFilterByFormula(options.filterByFormula, subsetFilterByFormula),
+    searchFilterByFormula,
+  );
   const readOptions: AirtableConfiguredReadOptions = {
     ...options,
     filterByFormula: mergedFilterByFormula || undefined,

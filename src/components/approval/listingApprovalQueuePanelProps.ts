@@ -26,7 +26,14 @@ interface BuildListingApprovalQueuePanelPropsParams {
   openRecord: (record: AirtableRecord) => void;
   onSelectRecord: (recordId: string) => void;
   createNewShopifyListing: () => Promise<void>;
-  loadRecords: (tableReference: string, tableName?: string, force?: boolean) => Promise<void>;
+  loadRecords: (
+    tableReference: string,
+    tableName?: string,
+    force?: boolean,
+    options?: {
+      combinedMaxRecords?: number;
+    },
+  ) => Promise<void>;
 }
 
 export function buildListingApprovalQueuePanelProps({

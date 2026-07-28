@@ -51,6 +51,9 @@ interface ApprovalQueueTableProps {
 	onUpdateQty?: (record: AirtableRecord, nextQty: string) => Promise<void>;
 	sortMode?: ApprovalQueueSortMode;
 	onSortModeChange?: (nextMode: ApprovalQueueSortMode) => void;
+	hasMoreRecords?: boolean;
+	loadingNextPage?: boolean;
+	onRequestNextPage?: (nextPage: number, pageSize: number) => Promise<boolean> | boolean;
 }
 
 const LISTED_WORKFLOW_STATUSES = new Set(['Listed, Shopify', 'Listed, eBay']);
@@ -144,13 +147,34 @@ export function ApprovalQueueTable({
 	onUpdateQty,
 	sortMode,
 	onSortModeChange,
+	hasMoreRecords = false,
+	loadingNextPage = false,
+	onRequestNextPage,
 }: ApprovalQueueTableProps) {
 	const [page, setPage] = useState(1);
+	const [requestingNextPage, setRequestingNextPage] = useState(false);
+	const [lastSeenFirstRecordId, setLastSeenFirstRecordId] = useState<string | null>(records[0]?.id ?? null);
+	const [lastSeenRecordCount, setLastSeenRecordCount] = useState(records.length);
 	const [editingQtyRecordId, setEditingQtyRecordId] = useState<string | null>(null);
 	const [editingQtyValue, setEditingQtyValue] = useState('');
 	const [updatingQtyRecordId, setUpdatingQtyRecordId] = useState<string | null>(null);
 	const [qtyUpdateError, setQtyUpdateError] = useState<string | null>(null);
-	useEffect(() => { setPage(1); }, [records]);
+	useEffect(() => {
+		const currentFirstRecordId = records[0]?.id ?? null;
+		const recordCountIncreased = records.length > lastSeenRecordCount;
+		const firstRecordChanged = currentFirstRecordId !== lastSeenFirstRecordId;
+
+		if (firstRecordChanged) {
+			setPage(1);
+		}
+
+		setLastSeenFirstRecordId(currentFirstRecordId);
+		setLastSeenRecordCount(records.length);
+
+		if (!recordCountIncreased && records.length === 0) {
+			setPage(1);
+		}
+	}, [lastSeenFirstRecordId, lastSeenRecordCount, records]);
 	useEffect(() => {
 		if (!editingQtyRecordId) return;
 		if (!records.some((record) => record.id === editingQtyRecordId)) {
@@ -188,8 +212,36 @@ export function ApprovalQueueTable({
 		}
 	};
 
-	const totalPages = Math.ceil(records.length / 30);
-	const pagedRecords = records.slice((page - 1) * 30, page * 30);
+	const pageSize = 30;
+	const totalPages = Math.max(1, Math.ceil(records.length / pageSize));
+	useEffect(() => {
+		setPage((currentPage) => Math.min(currentPage, totalPages));
+	}, [totalPages]);
+	const pagedRecords = records.slice((page - 1) * pageSize, page * pageSize);
+	const isLoadingNextPage = loadingNextPage || requestingNextPage;
+	const canRequestMore = Boolean(onRequestNextPage) && hasMoreRecords;
+	const canGoNext = page < totalPages || canRequestMore;
+
+	const handleNextPage = async () => {
+		if (page < totalPages) {
+			setPage((p) => p + 1);
+			return;
+		}
+
+		if (!canRequestMore || !onRequestNextPage || isLoadingNextPage) {
+			return;
+		}
+
+		setRequestingNextPage(true);
+		try {
+			const shouldAdvance = await onRequestNextPage(page + 1, pageSize);
+			if (shouldAdvance) {
+				setPage((p) => p + 1);
+			}
+		} finally {
+			setRequestingNextPage(false);
+		}
+	};
 
 	const titleColumnLabel = onSortModeChange ? (
 		<SortableColumnLabel
@@ -491,6 +543,15 @@ export function ApprovalQueueTable({
 					{qtyUpdateError}
 				</div>
 			) : null}
+			{isLoadingNextPage ? (
+				<div
+					role="status"
+					aria-live="polite"
+					className="mb-3 rounded-lg border border-sky-400/35 bg-sky-500/10 px-3 py-2 text-sm text-sky-100"
+				>
+					Loading more rows...
+				</div>
+			) : null}
 			<IntakeItemsMatrix
 				items={pagedRecords}
 				columns={columns}
@@ -499,7 +560,7 @@ export function ApprovalQueueTable({
 			{totalPages > 1 ? (
 				<div className="mt-4 flex flex-wrap items-center justify-between gap-3">
 					<p className="text-sm text-[var(--muted)]">
-						Showing {(page - 1) * 30 + 1}–{Math.min(page * 30, records.length)} of {records.length}
+						Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, records.length)} of {hasMoreRecords ? `at least ${records.length}` : records.length}
 					</p>
 					<div className="flex items-center gap-2">
 						<button
@@ -511,17 +572,28 @@ export function ApprovalQueueTable({
 							← Prev
 						</button>
 						<span className="min-w-[6rem] text-center text-sm text-[var(--muted)]">
-							Page {page} of {totalPages}
+							Page {page} of {hasMoreRecords ? `${totalPages}+` : totalPages}
 						</span>
 						<button
 							type="button"
-							disabled={page >= totalPages}
-							onClick={() => setPage((p) => p + 1)}
+							disabled={!canGoNext || isLoadingNextPage}
+							onClick={() => { void handleNextPage(); }}
 							className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--ink)] transition hover:border-[var(--accent)]/45 hover:bg-[var(--line)] disabled:cursor-not-allowed disabled:opacity-40"
 						>
-							Next →
+							{isLoadingNextPage ? 'Loading...' : 'Next →'}
 						</button>
 					</div>
+				</div>
+			) : canRequestMore ? (
+				<div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+					<button
+						type="button"
+						disabled={isLoadingNextPage}
+						onClick={() => { void handleNextPage(); }}
+						className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--ink)] transition hover:border-[var(--accent)]/45 hover:bg-[var(--line)] disabled:cursor-not-allowed disabled:opacity-40"
+					>
+						{isLoadingNextPage ? 'Loading...' : 'Load more'}
+					</button>
 				</div>
 			) : null}
 		</>

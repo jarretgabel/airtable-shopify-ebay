@@ -15,7 +15,14 @@ export interface ApprovalStore {
   setFormValue: (fieldName: string, value: string) => void;
   setDerivedFormValue: (fieldName: string, value: string) => void;
   hydrateForm: (record: AirtableRecord, allFieldNames: string[], approvedFieldName: string) => void;
-  loadRecords: (tableReference: string, tableName?: string, force?: boolean) => Promise<void>;
+  loadRecords: (
+    tableReference: string,
+    tableName?: string,
+    force?: boolean,
+    options?: {
+      combinedMaxRecords?: number;
+    },
+  ) => Promise<void>;
   loadListingFormatOptions: (force?: boolean) => Promise<void>;
   saveRecord: (
     forceApproved: boolean,

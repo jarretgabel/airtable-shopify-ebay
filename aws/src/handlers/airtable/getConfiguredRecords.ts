@@ -120,6 +120,35 @@ function validateMaxRecords(value: string | undefined): number | undefined {
   return parsed;
 }
 
+function validateSearchQuery(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length > 120) {
+    throw new HttpError(400, 'search must be 120 characters or fewer.', {
+      service: 'airtable',
+      code: 'AIRTABLE_SEARCH_INVALID',
+      retryable: false,
+    });
+  }
+
+  return trimmed;
+}
+
+function resolveSearchFields(rawSearchFields: string | undefined): string[] | undefined {
+  const fields = rawSearchFields
+    ?.split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+
+  if (!fields || fields.length === 0) {
+    return undefined;
+  }
+
+  return Array.from(new Set(fields));
+}
+
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   const origin = getRequestOrigin(event);
   try {
@@ -135,9 +164,12 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
 
     const subset = validateSubset(getOptionalQueryParam(event, 'subset'));
     const maxRecords = validateMaxRecords(getOptionalQueryParam(event, 'maxRecords'));
+    const searchQuery = validateSearchQuery(getOptionalQueryParam(event, 'search'));
+    const searchFields = resolveSearchFields(getOptionalQueryParam(event, 'searchFields'));
     const fields = resolveRequestedFields(source, subset, getOptionalQueryParam(event, 'fields'));
     const shouldCacheCombinedSubset = source === 'approval-combined'
-      && (subset === 'ready-for-publishing' || subset === 'listings-page');
+      && (subset === 'ready-for-publishing' || subset === 'listings-page')
+      && !searchQuery;
 
     const records = shouldCacheCombinedSubset
       ? await getOrLoadConfiguredRecordsCache(
@@ -146,10 +178,24 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
           subset,
           fields,
           maxRecords,
+          searchQuery,
+          searchFields,
         },
-        () => getConfiguredRecords(source, { fields, subset, maxRecords }),
+        () => getConfiguredRecords(source, {
+          fields,
+          subset,
+          maxRecords,
+          searchQuery,
+          searchFields,
+        }),
       )
-      : await getConfiguredRecords(source, { fields, subset, maxRecords });
+      : await getConfiguredRecords(source, {
+        fields,
+        subset,
+        maxRecords,
+        searchQuery,
+        searchFields,
+      });
     logInfo('Fetched Airtable configured records', { source, count: records.length });
     return jsonOk(records, { origin });
   } catch (error) {

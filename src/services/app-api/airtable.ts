@@ -28,6 +28,8 @@ interface AirtableConfiguredReadOptions {
   fields?: string[];
   subset?: 'ready-for-publishing' | 'listings-page';
   maxRecords?: number;
+  searchQuery?: string;
+  searchFields?: string[];
   timeoutMs?: number;
 }
 
@@ -172,6 +174,8 @@ export async function getConfiguredRecords(
       maxRecords: typeof options.maxRecords === 'number' && Number.isFinite(options.maxRecords)
         ? String(Math.trunc(options.maxRecords))
         : undefined,
+      search: options.searchQuery?.trim() || undefined,
+      searchFields: options.searchFields?.join(',') || undefined,
     }, {
       timeoutMs: options.timeoutMs ?? CONFIGURED_RECORDS_READ_TIMEOUT_MS,
     });
