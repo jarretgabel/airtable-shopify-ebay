@@ -51,4 +51,24 @@ describe('combinedListingsReadyForPublishing', () => {
     expect(filterCombinedNeedsFurtherWorkRecords(records, requiredFieldNames).map((record) => record.id)).toEqual(['needs-work']);
     expect(getCombinedReadyForPublishingCount(records)).toBe(1);
   });
+
+  it('keeps awaiting pre-listing review rows out of needs-work until a SKU is assigned', () => {
+    const records: AirtableRecord[] = [
+      createRecord('awaiting-no-sku', {
+        'Workflow Status': 'Awaiting Pre-Listing Review',
+        'Item Title': 'Receiver Missing SKU',
+        Price: '249.99',
+      }),
+      createRecord('awaiting-with-sku', {
+        'Workflow Status': 'Awaiting Pre-Listing Review',
+        'Item Title': 'Receiver With SKU',
+        SKU: 'SKU-1234',
+        Price: '249.99',
+      }),
+    ];
+
+    const requiredFieldNames = getCombinedListingsRequiredFieldNames(records);
+
+    expect(filterCombinedNeedsFurtherWorkRecords(records, requiredFieldNames).map((record) => record.id)).toEqual(['awaiting-with-sku']);
+  });
 });

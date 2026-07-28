@@ -20,12 +20,20 @@ export interface CombinedListingsRequiredFieldNames {
 
 const READY_FOR_PUBLISH_WORKFLOW_STATUSES = new Set(['Approved for Publish']);
 const ACTIVE_LISTING_WORKFLOW_STATUSES = new Set(['Listed, Shopify', 'Listed, eBay']);
+const AWAITING_PRE_LISTING_REVIEW_STATUS = 'Awaiting Pre-Listing Review';
 const VISIBLE_COMBINED_WORKFLOW_STATUSES = new Set([
   'Awaiting Pre-Listing Review',
   'Approved for Publish',
   'Listed, Shopify',
   'Listed, eBay',
 ]);
+const LISTING_SKU_FIELD_CANDIDATES = [
+  'SKU',
+  'eBay Inventory SKU',
+  'Shopify Variant 1 SKU',
+  'Shopify SKU',
+  'Variant SKU',
+];
 
 function resolveFieldName(fieldNames: string[], candidates: string[]): string {
   const exactMatch = fieldNames.find((fieldName) => candidates.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()));
@@ -46,6 +54,15 @@ export function getRecordFieldText(record: AirtableRecord, fieldNames: string[])
 
 export function normalizeCombinedWorkflowStatus(record: AirtableRecord): string {
   return getRecordFieldText(record, ['Workflow Status']).trim();
+}
+
+function getCombinedListingSku(record: AirtableRecord): string {
+  return getRecordFieldText(record, LISTING_SKU_FIELD_CANDIDATES).trim();
+}
+
+function isAwaitingPreListingReviewWithoutSku(record: AirtableRecord): boolean {
+  return normalizeCombinedWorkflowStatus(record) === AWAITING_PRE_LISTING_REVIEW_STATUS
+    && getCombinedListingSku(record).length === 0;
 }
 
 export function isCombinedRecordAlreadyListed(record: AirtableRecord): boolean {
@@ -118,6 +135,7 @@ export function filterCombinedNeedsFurtherWorkRecords(
   requiredFieldNames: CombinedListingsRequiredFieldNames,
 ): AirtableRecord[] {
   return records.filter((record) => isCombinedRecordVisibleOnListingsPage(record)
+    && !isAwaitingPreListingReviewWithoutSku(record)
     && !isCombinedRecordAlreadyListed(record)
     && !isCombinedRecordReadyForPublishing(
       record,

@@ -776,6 +776,42 @@ export function ListingApprovalQueuePanel({
     }
   };
 
+  useEffect(() => {
+    if (!isCombinedApproval || loading || combinedLoadingMore || isCombinedWorkServerSearchEnabled) {
+      return;
+    }
+
+    // If the first lazy slice has no needs-work rows, pull the next slice automatically.
+    if (combinedNeedsFurtherWorkRecords.length > 0 || !combinedHasMoreRecords) {
+      return;
+    }
+
+    const nextLimit = Math.min(COMBINED_QUEUE_MAX_FETCH_LIMIT, combinedFetchLimit + COMBINED_QUEUE_FETCH_STEP);
+    if (nextLimit <= combinedFetchLimit) {
+      return;
+    }
+
+    setCombinedLoadingMore(true);
+    void loadRecords(tableReference, tableName ?? '', true, { combinedMaxRecords: nextLimit })
+      .then(() => {
+        setCombinedFetchLimit(nextLimit);
+      })
+      .finally(() => {
+        setCombinedLoadingMore(false);
+      });
+  }, [
+    combinedFetchLimit,
+    combinedHasMoreRecords,
+    combinedLoadingMore,
+    combinedNeedsFurtherWorkRecords.length,
+    isCombinedApproval,
+    isCombinedWorkServerSearchEnabled,
+    loadRecords,
+    loading,
+    tableName,
+    tableReference,
+  ]);
+
   const updateQueueQuantity = async (record: AirtableRecord, nextQtyRaw: string) => {
     if (!qtyFieldName.trim()) {
       throw new Error('Quantity field is not configured for this listing queue.');

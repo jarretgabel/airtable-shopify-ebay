@@ -166,7 +166,7 @@ describe('ListingApprovalQueuePanel', () => {
         {...baseProps}
         approvalChannel="combined"
         records={[
-          buildRecord('1', { Title: 'Ready Listing', Approved: true, Vendor: 'McIntosh', Price: '1200', 'Workflow Status': 'Awaiting Pre-Listing Review' }),
+          buildRecord('1', { Title: 'Ready Listing', SKU: 'READY-001', Approved: true, Vendor: 'McIntosh', Price: '1200', 'Workflow Status': 'Awaiting Pre-Listing Review' }),
           buildRecord('2', { Title: 'Approved Missing Vendor', Approved: true, Price: '800', 'Workflow Status': 'Approved for Publish' }),
           buildRecord('3', { Title: 'Already Listed', Approved: true, Vendor: 'Yamaha', Price: '1500', 'Workflow Status': 'Listed, eBay' }),
           buildRecord('4', { Title: 'Sold Ready Listing', Approved: true, Vendor: 'Klipsch', Price: '2400', 'Workflow Status': 'Sold - Ready to Ship' }),
