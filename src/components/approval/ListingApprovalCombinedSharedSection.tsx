@@ -55,6 +55,13 @@ function isListingImageSupportField(fieldName: string): boolean {
     || isShopifyImagePayloadField(fieldName);
 }
 
+function hasWorkflowImageMetadataPayload(value: string | undefined): boolean {
+  if (!value) return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  return trimmed.startsWith('[') || trimmed.startsWith('{');
+}
+
 function resolveComponentTypeValue(
   formValues: Record<string, string>,
   recordFields: Record<string, unknown>,
@@ -111,6 +118,24 @@ export function ListingApprovalCombinedSharedSection({
   });
   const editableSharedFieldNames = standardSharedFieldNames.filter((fieldName) => !isSourceManagedCombinedField(fieldName));
   const imageSupportSharedFieldNames = editableSharedFieldNames.filter(isListingImageSupportField);
+  const discoveredImageSupportFieldNames = Array.from(new Set([
+    ...Object.keys(originalFieldValues),
+    ...Object.keys(formValues),
+  ])).filter(isListingImageSupportField);
+  const hasWorkflowImageMetadata = hasWorkflowImageMetadataPayload(
+    originalFieldValues['Workflow Image Metadata JSON']
+      ?? formValues['Workflow Image Metadata JSON']
+      ?? originalFieldValues['Workflow Image Metadata']
+      ?? formValues['Workflow Image Metadata'],
+  );
+  const syntheticImageSupportFieldNames = hasWorkflowImageMetadata
+    ? ['Images', 'Shopify REST Images JSON']
+    : [];
+  const imageSupportFieldNames = Array.from(new Set([
+    ...imageSupportSharedFieldNames,
+    ...discoveredImageSupportFieldNames,
+    ...syntheticImageSupportFieldNames,
+  ]));
   const postKeyFeaturesSharedFieldNames = editableSharedFieldNames.filter((fieldName) => !isListingImageSupportField(fieldName));
   const componentTypeValue = resolveComponentTypeValue(formValues, selectedRecord.fields);
 
@@ -158,12 +183,12 @@ export function ListingApprovalCombinedSharedSection({
           </label>
         )}
 
-        {imageSupportSharedFieldNames.length > 0 && (
+        {imageSupportFieldNames.length > 0 && (
           <ApprovalFormFields
             recordId={selectedRecord.id}
             approvalChannel="combined"
             isCombinedApproval
-            allFieldNames={imageSupportSharedFieldNames}
+            allFieldNames={imageSupportFieldNames}
             writableFieldNames={writableFieldNames}
             readOnlyFieldNames={[]}
             requiredFieldNames={combinedRequiredFieldNames}

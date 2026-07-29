@@ -1,3 +1,5 @@
+import type { SyntheticEvent } from 'react';
+
 interface WorkflowReferenceImage {
   id?: string;
   url?: string;
@@ -44,6 +46,14 @@ function getReferencePreviewUrl(url?: string): string | undefined {
   return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1600`;
 }
 
+function applyImageFallback(event: SyntheticEvent<HTMLImageElement, Event>, fallbackUrl?: string): void {
+  if (!fallbackUrl) return;
+  const image = event.currentTarget;
+  if (image.dataset.fallbackApplied === 'true') return;
+  image.dataset.fallbackApplied = 'true';
+  image.src = fallbackUrl;
+}
+
 export function WorkflowReferenceImagesPanel({
   title,
   description,
@@ -66,7 +76,14 @@ export function WorkflowReferenceImagesPanel({
             <div key={image.id ?? `${image.filename}-${image.url ?? ''}`} className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--bg)]">
               {previewUrl ? (
                 <a href={image.url} target="_blank" rel="noreferrer" className="block">
-                  <img src={previewUrl} alt={image.filename} className="aspect-[4/3] w-full bg-slate-950/30 object-cover" loading="lazy" referrerPolicy="no-referrer" />
+                  <img
+                    src={previewUrl}
+                    alt={image.filename}
+                    className="aspect-[4/3] w-full bg-slate-950/30 object-cover"
+                    loading="lazy"
+                    onError={(event) => applyImageFallback(event, image.url)}
+                    referrerPolicy="no-referrer"
+                  />
                 </a>
               ) : (
                 <div className="flex aspect-[4/3] items-center justify-center bg-slate-950/30 px-4 text-center text-sm text-[var(--muted)]">

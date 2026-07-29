@@ -204,7 +204,7 @@ export function ListingApprovalSelectedRecordPanel({
           )}
         </Suspense>
       )}
-      alerts={<ListingApprovalRecordAlerts {...selectedRecordStatusProps.alertsProps} />}
+      alerts={isEditorLoading ? null : <ListingApprovalRecordAlerts {...selectedRecordStatusProps.alertsProps} />}
       actions={isEditorLoading ? null : <ListingApprovalRecordActions {...selectedRecordStatusProps.actionsProps} />}
       payloadPanels={isCombinedApproval
         ? null

@@ -408,7 +408,7 @@ describe('combined approval sections', () => {
     expect(screen.getByText('Make').compareDocumentPosition(screen.getByText('Model')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText('Model').compareDocumentPosition(screen.getByText('SKU')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText('SKU').compareDocumentPosition(screen.getByText('Serial Number')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Edit workflow source record' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit intake form' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit testing form' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit photos form' }));
 
@@ -458,7 +458,7 @@ describe('combined approval sections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit workflow source record' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit intake form' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit testing form' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit photos form' }));
 

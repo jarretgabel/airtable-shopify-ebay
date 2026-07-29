@@ -1,11 +1,19 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { ListingApprovalSelectedRecordPanel } from '@/components/approval/ListingApprovalSelectedRecordPanel';
 import type { ListingApprovalWorkflowSummaryData } from '@/components/approval/ListingApprovalWorkflowSummary';
 import type { AirtableRecord } from '@/types/airtable';
 
 vi.mock('@/components/approval/ListingApprovalSelectedRecordView', () => ({
-  ListingApprovalSelectedRecordView: () => <div>Selected Record View</div>,
+  ListingApprovalSelectedRecordView: ({ editor, alerts, actions }: { editor: ReactNode; alerts: ReactNode; actions: ReactNode }) => (
+    <div>
+      <div>Selected Record View</div>
+      {editor}
+      {alerts}
+      {actions}
+    </div>
+  ),
 }));
 
 vi.mock('@/components/approval/ListingApprovalWorkflowSummary', () => ({
@@ -42,7 +50,7 @@ function buildWorkflowSummary(workflowStatus: string): ListingApprovalWorkflowSu
 }
 
 describe('ListingApprovalSelectedRecordPanel', () => {
-  it('renders the listing view for listing-phase workflow records', () => {
+  it('renders the listing view for listing-phase workflow records and suppresses alerts while loading', async () => {
     render(
       <ListingApprovalSelectedRecordPanel
         selectedRecord={buildSelectedRecord()}
@@ -63,6 +71,12 @@ describe('ListingApprovalSelectedRecordPanel', () => {
 
     expect(screen.getByRole('heading', { name: 'McIntosh MA6900' })).toBeInTheDocument();
     expect(screen.getByText('Selected Record View')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('Loading record editor')).toBeInTheDocument();
+      expect(screen.queryByText('Alerts')).not.toBeInTheDocument();
+      expect(screen.queryByText('Actions')).not.toBeInTheDocument();
+    });
   });
 
   it('keeps non-listing workflow records on the not-ready surface', () => {

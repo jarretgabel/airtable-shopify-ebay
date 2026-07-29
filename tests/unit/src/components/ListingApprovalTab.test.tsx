@@ -422,4 +422,24 @@ describe('ListingApprovalTab', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back to listings directory' }));
     expect(onBackToList).toHaveBeenCalledTimes(1);
   });
+
+  it('shows a record-loading surface instead of the listings directory while direct record hydration is in progress', () => {
+    getRecordFromResolvedSourceMock.mockImplementation(() => new Promise(() => {}));
+
+    render(
+      <ListingApprovalTab
+        viewModel={{
+          selectedRecordId: 'rec-loading-selected-record',
+          onSelectRecord: vi.fn(),
+          onBackToList: vi.fn(),
+        }}
+        tableReference="test-base/test-table"
+        tableName="Approval Listings"
+        approvalChannel="combined"
+      />,
+    );
+
+    expect(screen.getByText('Loading listing record')).toBeInTheDocument();
+    expect(screen.queryByText('Back to listings directory')).not.toBeInTheDocument();
+  });
 });

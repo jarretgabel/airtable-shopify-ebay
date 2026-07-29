@@ -91,6 +91,21 @@ export function useApprovalFormFieldSetup({
   selectedEbayTemplateId,
   onEbayTemplateIdChange,
 }: ApprovalFormFieldSetupParams) {
+  const hasScopedImageField = allFieldNames.some((fieldName) => (
+    isGenericImageUrlField(fieldName)
+    || isGenericImageAltField(fieldName)
+    || isShopifyImagePayloadField(fieldName)
+  ));
+
+  const imageFieldDiscoveryNames = useMemo(
+    () => Array.from(new Set([
+      ...allFieldNames,
+      ...Object.keys(originalFieldValues),
+      ...Object.keys(formValues),
+    ])),
+    [allFieldNames, formValues, originalFieldValues],
+  );
+
   const preferredShopifyPriceFieldName = useMemo(
     () => pickPreferredField(
       allFieldNames.filter((fieldName) => {
@@ -114,17 +129,17 @@ export function useApprovalFormFieldSetup({
   );
 
   const imageUrlSourceField = pickPreferredField(
-    allFieldNames.filter((fieldName) => !isHiddenCombinedFieldName(fieldName) && isGenericImageUrlField(fieldName)),
+    imageFieldDiscoveryNames.filter((fieldName) => !isHiddenCombinedFieldName(fieldName) && isGenericImageUrlField(fieldName)),
     ['Images', 'images', 'Image URLs', 'image_urls', 'Image URL', 'image_url'],
     formValues,
   );
   const imageAltTextSourceField = pickPreferredField(
-    allFieldNames.filter((fieldName) => isGenericImageAltField(fieldName)),
+    imageFieldDiscoveryNames.filter((fieldName) => isGenericImageAltField(fieldName)),
     ['Images Alt Text', 'images_alt_text', 'Image Alt Text', 'image_alt_text'],
     formValues,
   );
   const shopifyImagePayloadFieldName = pickPreferredField(
-    allFieldNames.filter((fieldName) => isShopifyImagePayloadField(fieldName)),
+    imageFieldDiscoveryNames.filter((fieldName) => isShopifyImagePayloadField(fieldName)),
     [
       'Shopify REST Images JSON',
       'shopify_rest_images_json',
@@ -138,7 +153,7 @@ export function useApprovalFormFieldSetup({
     formValues,
   );
   const useCombinedImageAltEditor = Boolean(
-    ((allFieldNames.some((fieldName) => {
+    ((imageFieldDiscoveryNames.some((fieldName) => {
       const normalized = fieldName.toLowerCase();
       return normalized.startsWith('ebay ') || normalized.startsWith('ebay_');
     })) || isCombinedApproval)
@@ -164,25 +179,15 @@ export function useApprovalFormFieldSetup({
     : '';
   const workflowImageAttachmentFieldName = useMemo(
     () => {
-      const discoveryFieldNames = Array.from(new Set([
-        ...allFieldNames,
-        ...Object.keys(originalFieldValues),
-        ...Object.keys(formValues),
-      ]));
-      return findWorkflowImageAttachmentFieldName(discoveryFieldNames);
+      return findWorkflowImageAttachmentFieldName(imageFieldDiscoveryNames);
     },
-    [allFieldNames, formValues, originalFieldValues],
+    [imageFieldDiscoveryNames],
   );
   const workflowImageMetadataFieldName = useMemo(
     () => {
-      const discoveryFieldNames = Array.from(new Set([
-        ...allFieldNames,
-        ...Object.keys(originalFieldValues),
-        ...Object.keys(formValues),
-      ]));
-      return findWorkflowImageMetadataFieldName(discoveryFieldNames);
+      return findWorkflowImageMetadataFieldName(imageFieldDiscoveryNames);
     },
-    [allFieldNames, formValues, originalFieldValues],
+    [imageFieldDiscoveryNames],
   );
   const workflowImageMetadata = useMemo(
     () => {
@@ -263,11 +268,15 @@ export function useApprovalFormFieldSetup({
     },
     [formValues, originalFieldValues, workflowImageAttachmentFieldName, workflowImageMetadata],
   );
+  const effectiveImageUrlSourceField = imageUrlSourceField
+    ?? ((isCombinedApproval && hasScopedImageField && workflowImageAttachments.length > 0) ? 'Images' : undefined);
+  const effectiveShopifyImagePayloadFieldName = shopifyImagePayloadFieldName
+    ?? ((isCombinedApproval && hasScopedImageField && workflowImageAttachments.length > 0) ? 'Shopify REST Images JSON' : undefined);
   const selectedWorkflowImageUrls = useMemo(() => {
     const currentRows = parseWorkflowSelectedImageRows(
-      imageUrlSourceField ? (formValues[imageUrlSourceField] ?? '') : '',
+      effectiveImageUrlSourceField ? (formValues[effectiveImageUrlSourceField] ?? '') : '',
       imageAltTextSourceField ? (formValues[imageAltTextSourceField] ?? '') : '',
-      shopifyImagePayloadFieldName ? (formValues[shopifyImagePayloadFieldName] ?? '') : '',
+      effectiveShopifyImagePayloadFieldName ? (formValues[effectiveShopifyImagePayloadFieldName] ?? '') : '',
     );
     if (currentRows.length === 0) {
       // Exclude intake images from the default listing selection
@@ -284,10 +293,10 @@ export function useApprovalFormFieldSetup({
       .filter(Boolean)
       .map((url) => attachmentLookup.get(url.toLowerCase()) ?? url);
   }, [
+    effectiveImageUrlSourceField,
+    effectiveShopifyImagePayloadFieldName,
     formValues,
     imageAltTextSourceField,
-    imageUrlSourceField,
-    shopifyImagePayloadFieldName,
     workflowImageAttachments,
     workflowImageMetadata,
   ]);
@@ -332,10 +341,10 @@ export function useApprovalFormFieldSetup({
     ...ebaySetup,
     ...shopifySetup,
     imageAltTextSourceField,
-    imageUrlSourceField,
+    imageUrlSourceField: effectiveImageUrlSourceField,
     preferredShopifyPriceFieldName,
     selectedWorkflowImageUrls,
-    shopifyImagePayloadFieldName,
+    shopifyImagePayloadFieldName: effectiveShopifyImagePayloadFieldName,
     useCombinedImageAltEditor,
     workflowImageAttachments,
   };

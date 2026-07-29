@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, type SyntheticEvent } from 'react';
 import type { WorkflowListingImageAttachment } from '@/components/approval/workflowListingImageHelpers';
 
 interface WorkflowListingImageSelectorProps {
@@ -36,6 +36,16 @@ function getPreviewUrl(url: string): string {
   }
 
   return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1600`;
+}
+
+function applyPreviewFallback(
+  event: SyntheticEvent<HTMLImageElement, Event>,
+  fallbackUrl: string,
+): void {
+  const image = event.currentTarget;
+  if (image.dataset.fallbackApplied === 'true') return;
+  image.dataset.fallbackApplied = 'true';
+  image.src = fallbackUrl;
 }
 
 function normalizeUrlForLookup(url: string): string {
@@ -259,6 +269,7 @@ export function WorkflowListingImageSelector({
             alt={attachment.filename}
             className="h-full w-full object-cover transition group-hover:scale-[1.02]"
             loading="lazy"
+            onError={(event) => applyPreviewFallback(event, attachment.url)}
             referrerPolicy="no-referrer"
             src={getPreviewUrl(attachment.url)}
           />
@@ -416,6 +427,7 @@ export function WorkflowListingImageSelector({
               <img
                 alt={previewAttachment.filename}
                 className="max-h-[75vh] w-full rounded-xl object-contain"
+                onError={(event) => applyPreviewFallback(event, previewAttachment.url)}
                 referrerPolicy="no-referrer"
                 src={getPreviewUrl(previewAttachment.url)}
               />

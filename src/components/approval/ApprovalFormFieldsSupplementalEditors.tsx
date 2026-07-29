@@ -189,9 +189,10 @@ export function ApprovalFormFieldsSupplementalEditors({
   getSelectClassName,
   getInputClassName,
 }: ApprovalFormFieldsSupplementalEditorsProps) {
-  const currentWorkflowImageRows = imageUrlSourceField
+  const imageSelectionWritableFieldName = imageUrlSourceField ?? shopifyImagePayloadFieldName;
+  const currentWorkflowImageRows = imageSelectionWritableFieldName
     ? parseWorkflowSelectedImageRows(
-      formValues[imageUrlSourceField] ?? '',
+      imageUrlSourceField ? (formValues[imageUrlSourceField] ?? '') : '',
       imageAltTextSourceField ? (formValues[imageAltTextSourceField] ?? '') : '',
       shopifyImagePayloadFieldName ? (formValues[shopifyImagePayloadFieldName] ?? '') : '',
     )
@@ -241,7 +242,7 @@ export function ApprovalFormFieldsSupplementalEditors({
   ) : null;
   return (
     <>
-      {imageUrlSourceField && (
+      {imageSelectionWritableFieldName && (
         <WorkflowListingImageSelector
           attachments={workflowImageAttachments}
           selectedUrls={selectedWorkflowImageUrls}
@@ -253,7 +254,9 @@ export function ApprovalFormFieldsSupplementalEditors({
               currentRows: currentWorkflowImageRows,
             });
 
-            setFormValue(imageUrlSourceField, nextValues.imageValue);
+            if (imageUrlSourceField) {
+              setFormValue(imageUrlSourceField, nextValues.imageValue);
+            }
             if (imageAltTextSourceField) {
               setFormValue(imageAltTextSourceField, nextValues.imageAltTextValue);
             }
@@ -261,7 +264,7 @@ export function ApprovalFormFieldsSupplementalEditors({
               setFormValue(shopifyImagePayloadFieldName, nextValues.shopifyImagePayloadValue);
             }
           }}
-          disabled={saving || isReadOnlyApprovalField(imageUrlSourceField)}
+          disabled={saving || isReadOnlyApprovalField(imageSelectionWritableFieldName)}
           sourceActions={imageSourceActions}
         />
       )}

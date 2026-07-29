@@ -129,6 +129,7 @@ export function useListingApprovalTabState({
   const [ebayCategoryLabelsById, setEbayCategoryLabelsById] = useState<Record<string, string>>({});
   const [directSelectedRecord, setDirectSelectedRecord] = useState<AirtableRecord | null>(null);
   const [directSelectedRecordLoading, setDirectSelectedRecordLoading] = useState(false);
+  const [selectedRecordLookupSettledId, setSelectedRecordLookupSettledId] = useState<string | null>(null);
   const [shopifyServiceListingUrl, setShopifyServiceListingUrl] = useState<string | null>(null);
 
   const shopifyStoreDomain = checkOptionalEnv('VITE_SHOPIFY_STORE_DOMAIN');
@@ -160,26 +161,32 @@ export function useListingApprovalTabState({
     if (!selectedRecordId) {
       setDirectSelectedRecord(null);
       setDirectSelectedRecordLoading(false);
+      setSelectedRecordLookupSettledId(null);
       return;
     }
 
     if (!tableReference.trim()) {
       setDirectSelectedRecordLoading(false);
+      setSelectedRecordLookupSettledId(selectedRecordId);
       return;
     }
 
     const queuedRecord = records.find((record) => record.id === selectedRecordId);
     const queuedRecordHasDetailFields = Boolean(
       queuedRecord
+      && Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'Workflow Image Metadata JSON')
       && (
-        Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'Workflow Image Metadata JSON')
-        || Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'Images')
+        Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'Images')
+        || Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'Shopify REST Images JSON')
+        || Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'shopify_rest_images_json')
+        || Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'Shopify Images JSON')
       )
     );
 
     if (queuedRecordHasDetailFields) {
       setDirectSelectedRecord(null);
       setDirectSelectedRecordLoading(false);
+      setSelectedRecordLookupSettledId(selectedRecordId);
       return;
     }
 
@@ -218,6 +225,7 @@ export function useListingApprovalTabState({
         }
 
         setDirectSelectedRecordLoading(false);
+        setSelectedRecordLookupSettledId(selectedRecordId);
       }
     };
 
@@ -361,7 +369,7 @@ export function useListingApprovalTabState({
   const queueLoading = loading || (
     Boolean(selectedRecordId)
     && !selectedRecord
-    && directSelectedRecordLoading
+    && (directSelectedRecordLoading || selectedRecordLookupSettledId !== selectedRecordId)
   );
 
   const interactionState = useListingApprovalInteractionState({

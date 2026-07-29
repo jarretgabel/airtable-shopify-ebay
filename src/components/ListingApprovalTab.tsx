@@ -45,6 +45,23 @@ export function ListingApprovalTab({
     );
   }
 
+  if (viewModel.selectedRecordId && queuePanelProps.loading && !queuePanelProps.error) {
+    return (
+      <AppPageLayout>
+        <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-6">
+          <div className="space-y-3" aria-hidden="true">
+            <div className="h-3 w-28 animate-pulse rounded bg-white/10" />
+            <div className="h-8 w-72 animate-pulse rounded bg-white/10" />
+            <div className="h-4 w-full max-w-2xl animate-pulse rounded bg-white/5" />
+            <div className="h-4 w-full max-w-xl animate-pulse rounded bg-white/5" />
+          </div>
+          <p className="sr-only" role="status" aria-live="polite">Loading listing record</p>
+        </section>
+        {confirmationModal}
+      </AppPageLayout>
+    );
+  }
+
   if (viewModel.selectedRecordId && !queuePanelProps.loading && !queuePanelProps.error) {
     return (
       <AppPageLayout>
