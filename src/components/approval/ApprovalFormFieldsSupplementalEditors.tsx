@@ -41,6 +41,7 @@ const lazyEditorFallback = (
 
 export interface ApprovalFormFieldsSupplementalEditorsProps {
   recordId?: string;
+  showWorkflowImageSelector?: boolean;
   imageUrlSourceField?: string;
   useCombinedImageAltEditor: boolean;
   combinedImageEditorValue: string;
@@ -123,6 +124,7 @@ function EditIcon() {
 
 export function ApprovalFormFieldsSupplementalEditors({
   recordId,
+  showWorkflowImageSelector = true,
   imageUrlSourceField,
   imageAltTextSourceField,
   shopifyImagePayloadFieldName,
@@ -242,7 +244,7 @@ export function ApprovalFormFieldsSupplementalEditors({
   ) : null;
   return (
     <>
-      {imageSelectionWritableFieldName && (
+      {showWorkflowImageSelector && imageSelectionWritableFieldName && (
         <WorkflowListingImageSelector
           attachments={workflowImageAttachments}
           selectedUrls={selectedWorkflowImageUrls}

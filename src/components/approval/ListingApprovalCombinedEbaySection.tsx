@@ -75,6 +75,7 @@ export function ListingApprovalCombinedEbaySection({
           recordId={selectedRecord.id}
           approvalChannel="ebay"
           isCombinedApproval
+          showWorkflowImageSelector={false}
           hideEbayAdvancedOptions
           allFieldNames={combinedEbayOnlyFieldNames}
           writableFieldNames={writableFieldNames}
@@ -103,6 +104,7 @@ export function ListingApprovalCombinedEbaySection({
           recordId={selectedRecord.id}
           approvalChannel="ebay"
           isCombinedApproval
+          showWorkflowImageSelector={false}
           showOnlyEbayAdvancedOptions
           allFieldNames={combinedEbayOnlyFieldNames}
           writableFieldNames={writableFieldNames}

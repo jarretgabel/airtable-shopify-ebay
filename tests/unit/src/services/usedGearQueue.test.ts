@@ -741,6 +741,17 @@ describe('usedGearQueue', () => {
   });
 
   it('marks processing complete and advances into testing', async () => {
+    mockGetConfiguredRecords.mockResolvedValueOnce([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Accepted - Arrived, Awaiting SKU',
+          'Arrival Date': '2026-05-12',
+          SKU: 'SKU-123',
+        },
+      },
+    ]);
     mockUpdateConfiguredRecord.mockResolvedValue({
       id: 'rec1',
       createdTime: 'now',
@@ -758,6 +769,57 @@ describe('usedGearQueue', () => {
       }),
       { typecast: true },
     );
+  });
+
+  it('requires sku before moving a parking lot row to testing', async () => {
+    mockGetConfiguredRecords.mockResolvedValueOnce([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Accepted - Arrived, Awaiting SKU',
+          'Arrival Date': '2026-05-12',
+          SKU: '',
+        },
+      },
+    ]);
+
+    await expect(completeProcessingStage('rec1', 'Taylor Reviewer')).rejects.toThrow('SKU is required before moving this row to Testing.');
+    expect(mockUpdateConfiguredRecord).not.toHaveBeenCalled();
+  });
+
+  it('requires arrival date before moving a parking lot row to testing', async () => {
+    mockGetConfiguredRecords.mockResolvedValueOnce([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Accepted - Arrived, Awaiting SKU',
+          'Arrival Date': '',
+          SKU: 'SKU-123',
+        },
+      },
+    ]);
+
+    await expect(completeProcessingStage('rec1', 'Taylor Reviewer')).rejects.toThrow('Arrival Date is required before moving this row to Testing.');
+    expect(mockUpdateConfiguredRecord).not.toHaveBeenCalled();
+  });
+
+  it('blocks processing completion for rows not in parking lot arrival statuses', async () => {
+    mockGetConfiguredRecords.mockResolvedValueOnce([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Testing In Progress',
+          'Arrival Date': '2026-05-12',
+          SKU: 'SKU-123',
+        },
+      },
+    ]);
+
+    await expect(completeProcessingStage('rec1', 'Taylor Reviewer')).rejects.toThrow('Only Parking Lot arrival rows can be moved to Testing.');
+    expect(mockUpdateConfiguredRecord).not.toHaveBeenCalled();
   });
 
   it('loads a single operational record through the workflow source', async () => {

@@ -27,6 +27,7 @@ interface ApprovalFormFieldsProps {
   approvalChannel?: 'shopify' | 'ebay' | 'combined';
   forceShowShopifyCollectionsEditor?: boolean;
   showSupplementalEditors?: boolean;
+  showWorkflowImageSelector?: boolean;
   isCombinedApproval?: boolean;
   hideEbayAdvancedOptions?: boolean;
   showOnlyEbayAdvancedOptions?: boolean;
@@ -66,6 +67,7 @@ export function ApprovalFormFields({
   approvalChannel,
   forceShowShopifyCollectionsEditor = false,
   showSupplementalEditors = true,
+  showWorkflowImageSelector = true,
   isCombinedApproval = false,
   hideEbayAdvancedOptions = false,
   showOnlyEbayAdvancedOptions = false,
@@ -285,6 +287,7 @@ export function ApprovalFormFields({
     getInputClassName,
   };
   const supplementalEditorsProps: ApprovalFormFieldsSupplementalEditorsProps = {
+    showWorkflowImageSelector,
     imageUrlSourceField,
     useCombinedImageAltEditor,
     combinedImageEditorValue,

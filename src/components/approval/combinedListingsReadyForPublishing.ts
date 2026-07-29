@@ -20,7 +20,6 @@ export interface CombinedListingsRequiredFieldNames {
 
 const READY_FOR_PUBLISH_WORKFLOW_STATUSES = new Set(['Approved for Publish']);
 const ACTIVE_LISTING_WORKFLOW_STATUSES = new Set(['Listed, Shopify', 'Listed, eBay']);
-const AWAITING_PRE_LISTING_REVIEW_STATUS = 'Awaiting Pre-Listing Review';
 const VISIBLE_COMBINED_WORKFLOW_STATUSES = new Set([
   'Awaiting Pre-Listing Review',
   'Approved for Publish',
@@ -58,11 +57,6 @@ export function normalizeCombinedWorkflowStatus(record: AirtableRecord): string 
 
 function getCombinedListingSku(record: AirtableRecord): string {
   return getRecordFieldText(record, LISTING_SKU_FIELD_CANDIDATES).trim();
-}
-
-function isAwaitingPreListingReviewWithoutSku(record: AirtableRecord): boolean {
-  return normalizeCombinedWorkflowStatus(record) === AWAITING_PRE_LISTING_REVIEW_STATUS
-    && getCombinedListingSku(record).length === 0;
 }
 
 export function isCombinedRecordAlreadyListed(record: AirtableRecord): boolean {
@@ -106,10 +100,11 @@ export function isCombinedRecordReadyForPublishing(
     return false;
   }
 
-  // A combined row is only publish-ready when every required listing field is present.
+  // A combined row is only publish-ready when every required listing field and a SKU are present.
   return isReadyForRequiredFields(record.fields, combinedRequiredFieldNames)
     && isReadyForRequiredFields(record.fields, shopifyRequiredFieldNames)
-    && isReadyForRequiredFields(record.fields, ebayRequiredFieldNames);
+    && isReadyForRequiredFields(record.fields, ebayRequiredFieldNames)
+    && getCombinedListingSku(record).length > 0;
 }
 
 export function filterCombinedReadyForPublishingRecords(
@@ -135,7 +130,7 @@ export function filterCombinedNeedsFurtherWorkRecords(
   requiredFieldNames: CombinedListingsRequiredFieldNames,
 ): AirtableRecord[] {
   return records.filter((record) => isCombinedRecordVisibleOnListingsPage(record)
-    && !isAwaitingPreListingReviewWithoutSku(record)
+    && getCombinedListingSku(record).length > 0
     && !isCombinedRecordAlreadyListed(record)
     && !isCombinedRecordReadyForPublishing(
       record,

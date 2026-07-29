@@ -22,12 +22,14 @@ describe('combinedListingsReadyForPublishing', () => {
       createRecord('ready', {
         'Workflow Status': 'Approved for Publish',
         'Item Title': 'Stereo Receiver',
+        SKU: 'READY-001',
         Price: '499.99',
         'Product Category': 'Receivers',
       }),
       createRecord('needs-work', {
         'Workflow Status': 'Approved for Publish',
         'Item Title': 'Turntable',
+        SKU: 'NEEDS-001',
         Price: '399.99',
       }),
       createRecord('active', {
@@ -70,5 +72,48 @@ describe('combinedListingsReadyForPublishing', () => {
     const requiredFieldNames = getCombinedListingsRequiredFieldNames(records);
 
     expect(filterCombinedNeedsFurtherWorkRecords(records, requiredFieldNames).map((record) => record.id)).toEqual(['awaiting-with-sku']);
+  });
+
+  it('requires a SKU for approved rows to appear in needs-further-work', () => {
+    const records: AirtableRecord[] = [
+      createRecord('approved-no-sku', {
+        'Workflow Status': 'Approved for Publish',
+        'Item Title': 'Needs copy edits',
+        Price: '799.99',
+        'Product Category': 'Receivers',
+      }),
+      createRecord('approved-with-sku', {
+        'Workflow Status': 'Approved for Publish',
+        'Item Title': 'Needs missing vendor',
+        SKU: 'WORK-1001',
+        Price: '899.99',
+      }),
+    ];
+
+    const requiredFieldNames = getCombinedListingsRequiredFieldNames(records);
+
+    expect(filterCombinedNeedsFurtherWorkRecords(records, requiredFieldNames).map((record) => record.id)).toEqual(['approved-with-sku']);
+  });
+
+  it('requires a SKU for approved rows to appear in ready-for-publishing', () => {
+    const records: AirtableRecord[] = [
+      createRecord('approved-no-sku', {
+        'Workflow Status': 'Approved for Publish',
+        'Item Title': 'No SKU Yet',
+        Price: '799.99',
+        'Product Category': 'Receivers',
+      }),
+      createRecord('approved-with-sku', {
+        'Workflow Status': 'Approved for Publish',
+        'Item Title': 'With SKU',
+        SKU: 'SKU-READY-1',
+        Price: '899.99',
+        'Product Category': 'Amplifiers',
+      }),
+    ];
+
+    const requiredFieldNames = getCombinedListingsRequiredFieldNames(records);
+
+    expect(filterCombinedReadyForPublishingRecords(records, requiredFieldNames).map((record) => record.id)).toEqual(['approved-with-sku']);
   });
 });

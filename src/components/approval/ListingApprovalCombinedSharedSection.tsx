@@ -152,6 +152,7 @@ export function ListingApprovalCombinedSharedSection({
             recordId={selectedRecord.id}
             approvalChannel="combined"
             isCombinedApproval
+            showWorkflowImageSelector={false}
             allFieldNames={[titleFieldName]}
             writableFieldNames={writableFieldNames}
             readOnlyFieldNames={[]}
@@ -232,6 +233,7 @@ export function ListingApprovalCombinedSharedSection({
             recordId={selectedRecord.id}
             approvalChannel="combined"
             isCombinedApproval
+            showWorkflowImageSelector={false}
             allFieldNames={postKeyFeaturesSharedFieldNames}
             writableFieldNames={writableFieldNames}
             readOnlyFieldNames={[]}

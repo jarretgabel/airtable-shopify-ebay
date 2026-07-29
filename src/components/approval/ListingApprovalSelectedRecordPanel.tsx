@@ -142,7 +142,8 @@ export function ListingApprovalSelectedRecordPanel({
 
   // Gate listing detail access by workflow stage so records do not briefly fail eligibility while full field hydration is in flight.
   const currentStep = getUsedGearWorkflowStatus(selectedRecord.fields) || 'Unknown';
-  const isEligible = LISTING_SURFACE_WORKFLOW_STATUSES.has(currentStep);
+  // During detail hydration we can briefly see sparse fields; avoid flashing fallback surfaces.
+  const isEligible = currentStep === 'Unknown' || LISTING_SURFACE_WORKFLOW_STATUSES.has(currentStep);
   // Helper to get a user-friendly label for the current step
   function getStepLabel(status: string): string {
     switch (status) {

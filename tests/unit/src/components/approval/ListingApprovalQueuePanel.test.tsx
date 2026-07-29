@@ -142,8 +142,8 @@ describe('ListingApprovalQueuePanel', () => {
         {...baseProps}
         approvalChannel="combined"
         records={[
-          buildRecord('1', { Title: 'Needs Review Listing', Approved: false, 'Workflow Status': 'Awaiting Pre-Listing Review' }),
-          buildRecord('2', { Title: 'Approved Listing', Approved: true, Vendor: 'McIntosh', Price: '1200', 'Workflow Status': 'Approved for Publish' }),
+          buildRecord('1', { Title: 'Needs Review Listing', SKU: 'WORK-2001', Approved: false, 'Workflow Status': 'Awaiting Pre-Listing Review' }),
+          buildRecord('2', { Title: 'Approved Listing', SKU: 'READY-2001', Approved: true, Vendor: 'McIntosh', Price: '1200', 'Workflow Status': 'Approved for Publish' }),
           buildRecord('3', { Title: 'Listed Listing', Approved: true, Vendor: 'Marantz', Price: '1300', 'Workflow Status': 'Listed, Shopify' }),
         ]}
       />,
@@ -167,7 +167,8 @@ describe('ListingApprovalQueuePanel', () => {
         approvalChannel="combined"
         records={[
           buildRecord('1', { Title: 'Ready Listing', SKU: 'READY-001', Approved: true, Vendor: 'McIntosh', Price: '1200', 'Workflow Status': 'Awaiting Pre-Listing Review' }),
-          buildRecord('2', { Title: 'Approved Missing Vendor', Approved: true, Price: '800', 'Workflow Status': 'Approved for Publish' }),
+          buildRecord('2', { Title: 'Approved Missing Vendor', SKU: 'WORK-001', Approved: true, Price: '800', 'Workflow Status': 'Approved for Publish' }),
+          buildRecord('6', { Title: 'Approved Missing SKU', Approved: true, Price: '700', 'Workflow Status': 'Approved for Publish' }),
           buildRecord('3', { Title: 'Already Listed', Approved: true, Vendor: 'Yamaha', Price: '1500', 'Workflow Status': 'Listed, eBay' }),
           buildRecord('4', { Title: 'Sold Ready Listing', Approved: true, Vendor: 'Klipsch', Price: '2400', 'Workflow Status': 'Sold - Ready to Ship' }),
           buildRecord('5', { Title: 'Shipped Listing', Approved: true, Vendor: 'Tandberg', Price: '1300', 'Workflow Status': 'Shipped' }),
@@ -184,8 +185,10 @@ describe('ListingApprovalQueuePanel', () => {
     expect(within(readySection as HTMLElement).queryByText('Sold Ready Listing')).not.toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Shipped Listing')).not.toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Approved Missing Vendor')).not.toBeInTheDocument();
+    expect(within(readySection as HTMLElement).queryByText('Approved Missing SKU')).not.toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Already Listed')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).getByText('Approved Missing Vendor')).toBeInTheDocument();
+    expect(within(workSection as HTMLElement).queryByText('Approved Missing SKU')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Already Listed')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).getByText('Ready Listing')).toBeInTheDocument();
     expect(within(workSection as HTMLElement).getAllByText('Awaiting Pre-Listing Review').length).toBeGreaterThan(1);
@@ -202,7 +205,7 @@ describe('ListingApprovalQueuePanel', () => {
         {...baseProps}
         approvalChannel="combined"
         records={[
-          buildRecord('1', { Title: 'Approved Publish Row', Approved: false, Vendor: 'Rega', Price: '1800', 'Workflow Status': 'Approved for Publish' }),
+          buildRecord('1', { Title: 'Approved Publish Row', SKU: 'READY-1001', Approved: false, Vendor: 'Rega', Price: '1800', 'Workflow Status': 'Approved for Publish' }),
           buildRecord('2', { Title: 'Sold Ready Row', Approved: true, Vendor: 'Klipsch', Price: '2400', 'Workflow Status': 'Sold - Ready to Ship' }),
           buildRecord('3', { Title: 'Shipped Row', Approved: true, Vendor: 'Tandberg', Price: '1300', 'Workflow Status': 'Shipped' }),
         ]}

@@ -87,13 +87,17 @@ function normalizeIdentityToken(value: string): string {
 
 function getAttachmentLookupKeys(attachment: WorkflowListingImageAttachment): string[] {
   const keys = new Set<string>();
+  const driveId = getGoogleDriveFileId(attachment.url);
   const normalizedUrl = normalizeUrlForLookup(attachment.url);
   if (normalizedUrl) keys.add(`url:${normalizedUrl}`);
+  if (driveId) keys.add(`drive-id:${driveId.toLowerCase()}`);
 
-  const basename = getUrlBasename(attachment.url);
-  if (basename) keys.add(`basename:${basename}`);
-  const normalizedBasename = normalizeIdentityToken(basename);
-  if (normalizedBasename) keys.add(`basename-normalized:${normalizedBasename}`);
+  if (!driveId) {
+    const basename = getUrlBasename(attachment.url);
+    if (basename) keys.add(`basename:${basename}`);
+    const normalizedBasename = normalizeIdentityToken(basename);
+    if (normalizedBasename) keys.add(`basename-normalized:${normalizedBasename}`);
+  }
 
   const normalizedFilename = normalizeIdentityToken(attachment.filename);
   if (normalizedFilename) keys.add(`filename:${normalizedFilename}`);
@@ -126,13 +130,17 @@ function getAttachmentIdentity(attachment: WorkflowListingImageAttachment): stri
 
 function getSelectedLookupKeys(url: string): string[] {
   const keys = new Set<string>();
+  const driveId = getGoogleDriveFileId(url);
   const normalizedUrl = normalizeUrlForLookup(url);
   if (normalizedUrl) keys.add(`url:${normalizedUrl}`);
+  if (driveId) keys.add(`drive-id:${driveId.toLowerCase()}`);
 
-  const basename = getUrlBasename(url);
-  if (basename) keys.add(`basename:${basename}`);
-  const normalizedBasename = normalizeIdentityToken(basename);
-  if (normalizedBasename) keys.add(`basename-normalized:${normalizedBasename}`);
+  if (!driveId) {
+    const basename = getUrlBasename(url);
+    if (basename) keys.add(`basename:${basename}`);
+    const normalizedBasename = normalizeIdentityToken(basename);
+    if (normalizedBasename) keys.add(`basename-normalized:${normalizedBasename}`);
+  }
 
   return Array.from(keys);
 }
@@ -177,11 +185,19 @@ export function WorkflowListingImageSelector({
     selectedAttachments.push(match);
   });
 
+  const selectedAttachmentLookupKeys = new Set<string>();
+  selectedAttachments.forEach((attachment) => {
+    getAttachmentLookupKeys(attachment).forEach((key) => {
+      selectedAttachmentLookupKeys.add(key);
+    });
+  });
+
   const selectedCount = selectedAttachments.length;
   const availableAttachments = uniqueAttachments.filter((attachment) => {
-    const identity = getAttachmentIdentity(attachment);
-    return !selectedAttachmentIdentity.has(identity);
+    const lookupKeys = getAttachmentLookupKeys(attachment);
+    return !lookupKeys.some((key) => selectedAttachmentLookupKeys.has(key));
   });
+  const totalDistinctAttachments = selectedCount + availableAttachments.length;
 
   const handleToggle = (url: string, checked: boolean) => {
     const normalizedUrl = url.trim();
@@ -358,7 +374,7 @@ export function WorkflowListingImageSelector({
           ) : null}
         </div>
         <div className="rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--ink)]">
-          {selectedCount} of {uniqueAttachments.length} selected
+          {selectedCount} of {totalDistinctAttachments} selected
         </div>
       </div>
 

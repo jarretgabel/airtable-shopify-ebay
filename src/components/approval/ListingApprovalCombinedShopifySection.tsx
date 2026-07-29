@@ -93,6 +93,7 @@ export function ListingApprovalCombinedShopifySection({
             recordId={selectedRecord.id}
             approvalChannel="shopify"
             isCombinedApproval
+            showWorkflowImageSelector={false}
             forceShowShopifyCollectionsEditor
             allFieldNames={standardShopifyFieldNames}
             writableFieldNames={writableFieldNames}

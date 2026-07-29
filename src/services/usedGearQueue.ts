@@ -1291,6 +1291,20 @@ export async function completeProcessingStage(recordId: string, userName: string
     throw new Error('Processing completion requires the current user name.');
   }
 
+  const currentRecord = await loadUsedGearOperationalRecord(recordId);
+  const currentStatus = getUsedGearWorkflowStatus(currentRecord.fields);
+  if (!isParkingLotArrivalStageStatus(currentStatus)) {
+    throw new Error('Only Parking Lot arrival rows can be moved to Testing.');
+  }
+
+  if (!getTrimmedFieldValue(currentRecord, 'Arrival Date')) {
+    throw new Error('Arrival Date is required before moving this row to Testing.');
+  }
+
+  if (!getTrimmedFieldValue(currentRecord, 'SKU')) {
+    throw new Error('SKU is required before moving this row to Testing.');
+  }
+
   const fieldNames = getUsedGearWorkflowSignoffFieldNames('processing');
   const record = await updateConfiguredRecord(
     'used-gear-workflow',

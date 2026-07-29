@@ -100,4 +100,27 @@ describe('ListingApprovalSelectedRecordPanel', () => {
 
     expect(screen.getByText('Not Ready for Listings')).toBeInTheDocument();
   });
+
+  it('keeps detail view visible while workflow status is temporarily unknown', () => {
+    render(
+      <ListingApprovalSelectedRecordPanel
+        selectedRecord={buildSelectedRecord('')}
+        titleFieldName="Title"
+        eyebrowLabel="Combined Listing Editor"
+        isApproved={false}
+        saving={false}
+        error={null}
+        onBackToList={vi.fn()}
+        errorSurfaceClass="rounded"
+        isCombinedApproval
+        workflowSummary={null}
+        workflowDetails={null}
+        selectedRecordViewProps={{ combinedSectionsProps: {}, payloadPanelProps: {}, approvalFormFieldsProps: {} } as never}
+        selectedRecordStatusProps={{ alertsProps: {}, actionsProps: {} } as never}
+      />,
+    );
+
+    expect(screen.queryByText('Not Ready for Listings')).not.toBeInTheDocument();
+    expect(screen.getByText('Selected Record View')).toBeInTheDocument();
+  });
 });
