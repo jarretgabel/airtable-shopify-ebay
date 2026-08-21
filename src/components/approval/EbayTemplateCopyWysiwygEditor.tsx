@@ -16,7 +16,7 @@ interface EbayTemplateCopyWysiwygEditorProps {
 }
 
 const toolbarButtonClass = 'inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--line)] text-[var(--ink)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50';
-const editorSurfaceClass = 'min-h-[180px] w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
+const editorSurfaceClass = 'min-h-[180px] w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70 [&_a]:text-blue-700 [&_a]:underline [&_a]:decoration-blue-600 [&_a]:underline-offset-2 [&_a]:decoration-2 [&_a:hover]:text-blue-800 [&_a:focus-visible]:outline-none [&_a:focus-visible]:ring-2 [&_a:focus-visible]:ring-blue-400/50 [&_a:focus-visible]:rounded-sm';
 
 function IconBold() {
   return <span aria-hidden="true" className="text-sm font-black">B</span>;
@@ -293,10 +293,10 @@ export function EbayTemplateCopyWysiwygEditor({
     const editor = editorRef.current;
     if (!editor) return;
     if (document.activeElement === editor) return;
-    if (lastRenderedScopedHtmlRef.current === scopedHtml) return;
+    if (editor.innerHTML === scopedHtml) return;
     editor.innerHTML = scopedHtml;
     lastRenderedScopedHtmlRef.current = scopedHtml;
-  }, [scopedHtml]);
+  }, [scopedHtml, sourceMode]);
 
   const commitScopedHtml = (nextScopedHtml: string) => {
     const normalizedScoped = normalizeEditorHtml(nextScopedHtml);

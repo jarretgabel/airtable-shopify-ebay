@@ -175,7 +175,7 @@ export function ListingApprovalCombinedEbaySection({
             <BodyHtmlPreview
               value={effectiveEbayBodyHtmlForPreview}
               previewOnly
-              showTemplateSelector
+              showTemplateSelector={false}
               templateOptions={EBAY_LISTING_TEMPLATE_OPTIONS}
               selectedTemplateId={selectedEbayTemplateId}
               onTemplateChange={(templateId) => setSelectedEbayTemplateId(normalizeEbayListingTemplateId(templateId))}
