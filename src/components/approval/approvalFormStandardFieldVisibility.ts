@@ -57,6 +57,7 @@ import {
 
 export interface ApprovalFormStandardFieldVisibilityParams {
   fieldName: string;
+  showWorkflowImageSelector: boolean;
   allowAdvancedOptionField?: boolean;
   approvalChannel?: 'shopify' | 'ebay' | 'combined';
   isCombinedApproval: boolean;
@@ -93,6 +94,7 @@ export interface ApprovalFormStandardFieldVisibilityParams {
 
 export function shouldHideApprovalFormStandardField({
   fieldName,
+  showWorkflowImageSelector,
   allowAdvancedOptionField = false,
   approvalChannel,
   isCombinedApproval,
@@ -185,10 +187,11 @@ export function shouldHideApprovalFormStandardField({
 
   if (approvalChannel === 'shopify' && isImageUrlListField(fieldName)) return true;
   if (approvalChannel === 'ebay' && isImageUrlListField(fieldName)) return true;
+  if (showWorkflowImageSelector && isImageUrlListField(fieldName)) return true;
   if (isEbayInventoryImageUrlsField(fieldName)) return true;
   if (isEbayPhotoCountMaxField(fieldName)) return true;
 
-  if (preferredShopifyPriceFieldName) {
+  if (approvalChannel === 'shopify' && preferredShopifyPriceFieldName) {
     const normalized = fieldName.trim().toLowerCase();
     const isPriceCandidate = normalized === 'shopify rest variant 1 price'
       || normalized === 'shopify variant 1 price'

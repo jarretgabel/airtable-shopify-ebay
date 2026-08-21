@@ -12,6 +12,7 @@ import {
   isGenericSharedKeyFeaturesField,
   normalizeEbayListingTemplateId,
 } from './approvalFormFieldsEbayHelpersBasic';
+import { findEbayBodyHtmlFieldName } from './listingApprovalFieldHelpers';
 import {
   SYNTHETIC_EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD,
   SYNTHETIC_EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD,
@@ -179,8 +180,15 @@ export function useApprovalFormEbayEditorSetup({
       formValues,
     )
     : undefined;
+  const ebayBodyHtmlFieldCandidates = Array.from(new Set([
+    ...allFieldNames,
+    ...writableFieldNames,
+    ...Object.keys(formValues),
+    ...Object.keys(originalFieldValues),
+  ]));
   const ebayBodyHtmlFieldName = isEbayApprovalForm
-    ? allFieldNames.find((fieldName) => isEbayBodyHtmlField(fieldName))
+    ? (allFieldNames.find((fieldName) => isEbayBodyHtmlField(fieldName))
+      ?? findEbayBodyHtmlFieldName(ebayBodyHtmlFieldCandidates))
     : undefined;
   const ebayBodyHtmlTemplateFieldName = isEbayApprovalForm
     ? allFieldNames.find((fieldName) => isEbayBodyHtmlTemplateField(fieldName))

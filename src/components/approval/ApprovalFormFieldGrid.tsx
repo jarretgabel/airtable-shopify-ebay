@@ -12,6 +12,7 @@ interface ApprovalFormFieldGridProps {
   showOnlyEbayAdvancedOptions: boolean;
   showEbayAdvancedOptions: boolean;
   ebayAdvancedOptionFieldNames: string[];
+  ebayAdvancedOptionsExtraContent?: ReactNode;
   requiredOrderedFieldNames: string[];
   optionalOrderedFieldNames: string[];
   pinnedPreDescriptionFieldName?: string;
@@ -40,8 +41,9 @@ function renderAdvancedOptionsBlock(
   showEbayAdvancedOptions: boolean,
   ebayAdvancedOptionFieldNames: string[],
   standardFieldProps: StandardFieldSharedProps,
+  ebayAdvancedOptionsExtraContent?: ReactNode,
 ): ReactNode {
-  if (!showEbayAdvancedOptions || ebayAdvancedOptionFieldNames.length === 0) return null;
+  if (!showEbayAdvancedOptions || (ebayAdvancedOptionFieldNames.length === 0 && !ebayAdvancedOptionsExtraContent)) return null;
 
   return (
     <details className={`${detailDisclosureClass} col-span-1 md:col-span-2`}>
@@ -50,6 +52,7 @@ function renderAdvancedOptionsBlock(
       </summary>
       <div className={`${detailDisclosureBodyClass} grid grid-cols-1 gap-4 md:grid-cols-2`}>
         {ebayAdvancedOptionFieldNames.map((fieldName) => renderStandardField(fieldName, standardFieldProps, true))}
+        {ebayAdvancedOptionsExtraContent ? <div className="col-span-1 md:col-span-2">{ebayAdvancedOptionsExtraContent}</div> : null}
       </div>
     </details>
   );
@@ -59,6 +62,7 @@ export function ApprovalFormFieldGrid({
   showOnlyEbayAdvancedOptions,
   showEbayAdvancedOptions,
   ebayAdvancedOptionFieldNames,
+  ebayAdvancedOptionsExtraContent,
   requiredOrderedFieldNames,
   optionalOrderedFieldNames,
   pinnedPreDescriptionFieldName,
@@ -71,6 +75,7 @@ export function ApprovalFormFieldGrid({
     showEbayAdvancedOptions,
     ebayAdvancedOptionFieldNames,
     standardFieldProps,
+    ebayAdvancedOptionsExtraContent,
   );
   let hasRenderedInlineAfterFieldContent = false;
 

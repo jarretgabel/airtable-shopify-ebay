@@ -32,6 +32,9 @@ const ShopifyVendorSelect = lazy(async () => ({
 const TestingNotesTextareaEditor = lazy(async () => ({
   default: (await import('./TestingNotesTextareaEditor')).TestingNotesTextareaEditor,
 }));
+const EbayBodyHtmlEditor = lazy(async () => ({
+  default: (await import('./EbayBodyHtmlEditor')).EbayBodyHtmlEditor,
+}));
 
 const lazyEditorFallback = (
   <div className={`${insetPanelClass} col-span-1 text-sm text-[var(--muted)] md:col-span-2`}>
@@ -65,6 +68,7 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
   ebayKeyFeaturesFieldName?: string;
   ebayKeyFeaturesSyncFieldNames: string[];
   ebayTestingNotesFieldName?: string;
+  ebayBodyHtmlFieldName?: string;
   ebayAttributesFieldName?: string;
   ebayAttributesSyncFieldNames: string[];
   ebayDomesticShippingFeesFieldName?: string;
@@ -146,6 +150,7 @@ export function ApprovalFormFieldsSupplementalEditors({
   ebayKeyFeaturesFieldName,
   ebayKeyFeaturesSyncFieldNames,
   ebayTestingNotesFieldName,
+  ebayBodyHtmlFieldName,
   ebayAttributesFieldName,
   ebayAttributesSyncFieldNames,
   ebayDomesticShippingFeesFieldName,
@@ -318,6 +323,18 @@ export function ApprovalFormFieldsSupplementalEditors({
             disabled={saving}
           />
         </label>
+      )}
+
+      {ebayBodyHtmlFieldName && (
+        <Suspense fallback={lazyEditorFallback}>
+          <EbayBodyHtmlEditor
+            fieldName={ebayBodyHtmlFieldName}
+            value={formValues[ebayBodyHtmlFieldName] ?? ''}
+            setFormValue={setFormValue}
+            disabled={saving || isReadOnlyApprovalField(ebayBodyHtmlFieldName)}
+            helperText="Optional per-listing override for eBay HTML. Use Visual mode for quick formatting or HTML Source for direct edits."
+          />
+        </Suspense>
       )}
 
       {hasTestingSection && (

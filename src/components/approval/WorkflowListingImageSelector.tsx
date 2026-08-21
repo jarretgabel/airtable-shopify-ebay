@@ -110,14 +110,14 @@ function getAttachmentLookupKeys(attachment: WorkflowListingImageAttachment): st
 }
 
 function getAttachmentIdentity(attachment: WorkflowListingImageAttachment): string {
-  const normalizedUrl = normalizeUrlForLookup(attachment.url);
-  if (normalizedUrl.startsWith('gdrive:')) {
-    return normalizedUrl;
-  }
-
   const normalizedFilename = normalizeIdentityToken(attachment.filename);
   if (normalizedFilename) {
     return `filename:${normalizedFilename}`;
+  }
+
+  const normalizedUrl = normalizeUrlForLookup(attachment.url);
+  if (normalizedUrl.startsWith('gdrive:')) {
+    return normalizedUrl;
   }
 
   const basename = getUrlBasename(attachment.url);

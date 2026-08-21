@@ -16,8 +16,10 @@ import {
   detailPreBlockClass,
   insetPanelClass,
 } from '@/components/tabs/uiClasses';
+import { findEbayBodyHtmlFieldName } from '@/components/approval/listingApprovalFieldHelpers';
 import type { ListingApprovalCombinedEbaySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 import { useAuthStore } from '@/stores/auth/authStore';
+import { EbayTemplateCopyWysiwygEditor } from '@/components/approval/EbayTemplateCopyWysiwygEditor';
 
 const EbayApprovalPayloadDetails = lazy(async () => ({
   default: (await import('@/components/approval/ListingApprovalRecordPayloadPanels')).EbayApprovalPayloadDetails,
@@ -59,6 +61,16 @@ export function ListingApprovalCombinedEbaySection({
   isEbayPayloadPreviewContext,
   ebayDraftPayloadBundle,
 }: ListingApprovalCombinedEbaySectionProps) {
+  const editableEbayBodyHtmlFieldName = combinedEbayBodyHtmlFieldName
+    || findEbayBodyHtmlFieldName(Object.keys(selectedRecord.fields));
+  const editableEbayBodyHtmlValue = editableEbayBodyHtmlFieldName
+    ? (formValues[editableEbayBodyHtmlFieldName] ?? '')
+    : '';
+  const effectiveEbayBodyHtmlForPreview = editableEbayBodyHtmlValue
+    || combinedEbayBodyHtmlValue
+    || bodyHtmlPreview
+    || combinedEbayGeneratedBodyHtml;
+
   const showDeveloperPayloadPanels = useAuthStore((state) => {
     const currentUser = state.users.find((user) => user.id === state.currentUserId);
     return currentUser ? isDeveloperRole(currentUser.role) : false;
@@ -127,6 +139,17 @@ export function ListingApprovalCombinedEbaySection({
           onBodyHtmlPreviewChange={setBodyHtmlPreview}
           selectedEbayTemplateId={selectedEbayTemplateId}
           onEbayTemplateIdChange={setSelectedEbayTemplateId}
+          ebayAdvancedOptionsExtraContent={editableEbayBodyHtmlFieldName ? (
+            <EbayTemplateCopyWysiwygEditor
+              fieldName={editableEbayBodyHtmlFieldName}
+              value={effectiveEbayBodyHtmlForPreview}
+              setFormValue={setFormValue}
+              onValueChange={setBodyHtmlPreview}
+              disabled={saving}
+              label="Advanced: eBay Template Copy"
+              helperText="WYSIWYG editor for this body text block only (not the full template HTML)."
+            />
+          ) : null}
         />
 
         <div
@@ -138,11 +161,11 @@ export function ListingApprovalCombinedEbaySection({
         <details className={`mt-4 ${detailDisclosureClass}`}>
           <summary className={detailDisclosureSummaryClass}>eBay Body (HTML)</summary>
           <div className={detailDisclosureBodyClass}>
-            <p className="m-0 mb-2 text-xs text-[var(--muted)]">Read-only HTML from Airtable field.</p>
+            <p className="m-0 mb-2 text-xs text-[var(--muted)]">Current HTML source saved for this listing.</p>
             {!combinedEbayBodyHtmlFieldName && (
-              <p className="m-0 mb-2 text-xs text-[var(--muted)]">No eBay Body HTML field was found for this record.</p>
+              <p className="m-0 mb-2 text-xs text-[var(--muted)]">No canonical eBay Body HTML field was found; showing the currently edited preview source.</p>
             )}
-            <pre className={`${detailPreBlockClass} max-h-[260px] overflow-auto`}>{combinedEbayBodyHtmlValue}</pre>
+            <pre className={`${detailPreBlockClass} max-h-[260px] overflow-auto`}>{effectiveEbayBodyHtmlForPreview}</pre>
           </div>
         </details>
 
@@ -150,7 +173,7 @@ export function ListingApprovalCombinedEbaySection({
           <summary className={detailDisclosureSummaryClass}>eBay Body Rendered</summary>
           <div className={detailDisclosureBodyClass}>
             <BodyHtmlPreview
-              value={combinedEbayGeneratedBodyHtml || bodyHtmlPreview || combinedEbayBodyHtmlValue}
+              value={effectiveEbayBodyHtmlForPreview}
               previewOnly
               showTemplateSelector
               templateOptions={EBAY_LISTING_TEMPLATE_OPTIONS}

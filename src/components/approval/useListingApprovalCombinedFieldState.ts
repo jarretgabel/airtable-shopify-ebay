@@ -64,6 +64,15 @@ function isSharedQuantityFieldName(fieldName: string): boolean {
   return normalized === 'quantity' || normalized === 'qty';
 }
 
+function isEbayPriceLikeFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase();
+  return EBAY_PRICE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)
+    || normalized.includes('buy it now')
+    || normalized.includes('starting bid')
+    || normalized.includes('starting price')
+    || normalized === 'price';
+}
+
 export function useListingApprovalCombinedFieldState({
   records,
   selectedRecordId,
@@ -256,11 +265,10 @@ export function useListingApprovalCombinedFieldState({
 
   const combinedEbayOnlyFieldNames = useMemo(() => {
     if (!isCombinedApproval) return [] as string[];
-    return selectedRecordFieldNames.filter((fieldName) => {
+    const filteredEbayFields = selectedRecordFieldNames.filter((fieldName) => {
       const normalized = fieldName.trim().toLowerCase();
       const isEbayFormatCandidate = EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized);
       if (!isEbayFormatCandidate && !shouldIncludeEbayListingRecordFieldName(fieldName)) return false;
-      if (isRemovedCombinedEbayPriceFieldName(fieldName)) return false;
       if (isHiddenCombinedFieldName(fieldName)) return false;
       if (isWorkflowOnlyListingFieldName(fieldName)) return false;
       if (isSystemManagedListingFieldName(fieldName)) return false;
@@ -272,6 +280,13 @@ export function useListingApprovalCombinedFieldState({
       if (EBAY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       return true;
     });
+
+    const hasEbayPriceField = filteredEbayFields.some((fieldName) => isEbayPriceLikeFieldName(fieldName));
+    if (hasEbayPriceField) {
+      return filteredEbayFields;
+    }
+
+    return ['eBay Offer Price Value', ...filteredEbayFields];
   }, [isCombinedApproval, selectedRecordFieldNames]);
 
   const combinedSharedFieldNames = useMemo(() => {

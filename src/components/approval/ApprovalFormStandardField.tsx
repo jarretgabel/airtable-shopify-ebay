@@ -28,6 +28,7 @@ import {
 
 interface ApprovalFormStandardFieldProps {
   fieldName: string;
+  showWorkflowImageSelector?: boolean;
   allowAdvancedOptionField?: boolean;
   approvalChannel?: 'shopify' | 'ebay' | 'combined';
   isCombinedApproval: boolean;
@@ -77,6 +78,7 @@ interface ApprovalFormStandardFieldProps {
 
 export function ApprovalFormStandardField({
   fieldName,
+  showWorkflowImageSelector = true,
   allowAdvancedOptionField = false,
   approvalChannel,
   isCombinedApproval,
@@ -125,6 +127,7 @@ export function ApprovalFormStandardField({
 }: ApprovalFormStandardFieldProps) {
   if (shouldHideApprovalFormStandardField({
     fieldName,
+    showWorkflowImageSelector,
     allowAdvancedOptionField,
     approvalChannel,
     isCombinedApproval,

@@ -324,6 +324,7 @@ export function isEbayOnlyFieldName(fieldName: string): boolean {
   if (normalized.includes('key feature')) return false;
   if (isEbayTestingNotesField(fieldName)) return true;
   if (fieldName === SHIPPING_SERVICE_FIELD) return true;
+  if (normalized === 'price') return true;
   return normalized.includes('ebay')
     || normalized.includes('buy it now')
     || normalized.includes('starting bid')
@@ -590,7 +591,6 @@ export function shouldIncludeEbayListingRecordFieldName(fieldName: string): bool
   const normalized = normalizeCombinedFieldName(fieldName);
 
   if (isNonListingRecordMetadataFieldName(fieldName)) return false;
-  if (isRemovedCombinedEbayPriceFieldName(fieldName)) return false;
   if (isHiddenCombinedFieldName(fieldName)) return false;
   if (isWorkflowOnlyListingFieldName(fieldName)) return false;
   if (isSystemManagedListingFieldName(fieldName)) return false;

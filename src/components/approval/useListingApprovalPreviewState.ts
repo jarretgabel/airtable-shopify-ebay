@@ -201,9 +201,14 @@ export function useListingApprovalPreviewState({
     mergedDraftSourceFields,
     selectedEbayTemplateHtml,
   ]);
-  const combinedEbayGeneratedBodyHtml = localCombinedEbayGeneratedBodyHtml.trim()
-    ? localCombinedEbayGeneratedBodyHtml
-    : (ebayApprovalPreview?.generatedBodyHtml?.trim() ? ebayApprovalPreview.generatedBodyHtml : '');
+  const combinedEbayManualBodyHtmlOverride = useMemo(
+    () => resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayBodyHtmlFieldName).trim(),
+    [combinedEbayBodyHtmlFieldName, formValues, mergedDraftSourceFields, selectedRecord],
+  );
+  const combinedEbayGeneratedBodyHtml = combinedEbayManualBodyHtmlOverride
+    || (localCombinedEbayGeneratedBodyHtml.trim()
+      ? localCombinedEbayGeneratedBodyHtml
+      : (ebayApprovalPreview?.generatedBodyHtml?.trim() ? ebayApprovalPreview.generatedBodyHtml : ''));
 
   const ebayDraftPayloadBundle = useMemo(() => {
     if (!isEbayPayloadPreviewContext) return null;

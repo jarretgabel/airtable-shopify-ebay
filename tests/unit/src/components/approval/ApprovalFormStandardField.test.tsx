@@ -167,4 +167,43 @@ describe('ApprovalFormStandardField', () => {
 
     expect(screen.getByPlaceholderText('Pre-Owned')).toBeInTheDocument();
   });
+
+  it('hides Shopify REST Images JSON when workflow image selector is enabled', () => {
+    render(
+      <ApprovalFormStandardField
+        fieldName="Shopify REST Images JSON"
+        showWorkflowImageSelector
+        approvalChannel="combined"
+        isCombinedApproval
+        allFieldNames={['Shopify REST Images JSON']}
+        hasEbayShippingServicesEditor={false}
+        approvedFieldName="Approved"
+        hasShopifyTagEditor={false}
+        hasShopifyCollectionEditor={false}
+        ebayAttributesCandidateFieldNames={[]}
+        hasEbayCategoryEditor={false}
+        effectiveEbayCategoriesFieldName=""
+        useCombinedImageAltEditor={false}
+        suppressImageScalarFields
+        hasCanonicalConditionField={false}
+        testingSectionFieldNames={[]}
+        readOnlyFieldNames={[]}
+        formValues={{ 'Shopify REST Images JSON': '[{"src":"https://example.com/a.jpg","alt":""}]' }}
+        fieldKinds={{ 'Shopify REST Images JSON': 'text' }}
+        saving={false}
+        listingFormatOptions={[]}
+        listingDurationOptions={[]}
+        ebayPackageTypeOptions={[]}
+        setFormValue={vi.fn()}
+        isRequiredField={() => false}
+        renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
+        toFieldLabel={(fieldName) => fieldName}
+        getSelectClassName={() => 'select'}
+        getInputClassName={() => 'input'}
+      />,
+    );
+
+    expect(screen.queryByText('Shopify REST Images JSON')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('https://example.com/image.jpg')).not.toBeInTheDocument();
+  });
 });

@@ -1,14 +1,17 @@
 import { Suspense, lazy, useEffect, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { hasWorkflowListingSourceContext } from '@/stores/approval/approvalStoreWorkflowPrefill';
 import {
   isReadOnlyApprovalField,
 } from './approvalFormFieldsSharedHelpers';
+import { findEbayBodyHtmlFieldName } from './listingApprovalFieldHelpers';
 import {
   type EbayListingTemplateId,
 } from './approvalFormFieldsEbayHelpersBasic';
 import {
   isEbayAdvancedOptionField,
 } from './approvalFormFieldsEbayHelpers';
+import { EbayTemplateCopyWysiwygEditor } from './EbayTemplateCopyWysiwygEditor';
 import { ApprovalFormFieldGrid } from './ApprovalFormFieldGrid';
 import type { ApprovalFormFieldsSupplementalEditorsProps } from './ApprovalFormFieldsSupplementalEditors';
 import { resolveListingApprovalTestingSectionFields } from './listingApprovalTestingSection';
@@ -22,6 +25,8 @@ const ApprovalFormFieldsSupplementalEditors = lazy(async () => ({
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
 
+const EBAY_BODY_HTML_FALLBACK_EDITOR_FIELD = '__ebay_body_html_override__';
+
 interface ApprovalFormFieldsProps {
   recordId?: string;
   approvalChannel?: 'shopify' | 'ebay' | 'combined';
@@ -31,6 +36,7 @@ interface ApprovalFormFieldsProps {
   isCombinedApproval?: boolean;
   hideEbayAdvancedOptions?: boolean;
   showOnlyEbayAdvancedOptions?: boolean;
+  ebayAdvancedOptionsExtraContent?: ReactNode;
   allFieldNames: string[];
   writableFieldNames?: string[];
   readOnlyFieldNames?: string[];
@@ -71,6 +77,7 @@ export function ApprovalFormFields({
   isCombinedApproval = false,
   hideEbayAdvancedOptions = false,
   showOnlyEbayAdvancedOptions = false,
+  ebayAdvancedOptionsExtraContent,
   allFieldNames,
   writableFieldNames = [],
   readOnlyFieldNames = [],
@@ -241,6 +248,7 @@ export function ApprovalFormFields({
   }, [derivedBodyHtmlPreview, onBodyHtmlPreviewChange]);
 
   const standardFieldProps = {
+    showWorkflowImageSelector,
     approvalChannel,
     isCombinedApproval,
     allFieldNames,
@@ -311,6 +319,7 @@ export function ApprovalFormFields({
     ebayKeyFeaturesFieldName,
     ebayKeyFeaturesSyncFieldNames,
     ebayTestingNotesFieldName,
+    ebayBodyHtmlFieldName: approvalChannel === 'ebay' ? undefined : ebayBodyHtmlFieldName,
     ebayAttributesFieldName,
     ebayAttributesSyncFieldNames,
     ebayDomesticShippingFeesFieldName,
@@ -365,11 +374,40 @@ export function ApprovalFormFields({
     </Suspense>
   ) : null;
 
+  const editableEbayBodyHtmlFieldName = approvalChannel === 'ebay'
+    ? (ebayBodyHtmlFieldName
+      || findEbayBodyHtmlFieldName(Array.from(new Set([
+        ...allFieldNames,
+        ...Object.keys(formValues),
+        ...Object.keys(originalFieldValues),
+      ])))
+      || EBAY_BODY_HTML_FALLBACK_EDITOR_FIELD)
+    : '';
+
+  const hasDetectedEbayBodyHtmlField = approvalChannel === 'ebay'
+    && editableEbayBodyHtmlFieldName !== EBAY_BODY_HTML_FALLBACK_EDITOR_FIELD;
+
+  const effectiveEbayAdvancedOptionsExtraContent = ebayAdvancedOptionsExtraContent
+    ?? (approvalChannel === 'ebay' ? (
+      <EbayTemplateCopyWysiwygEditor
+        fieldName={editableEbayBodyHtmlFieldName}
+        value={formValues[editableEbayBodyHtmlFieldName] || normalizedBodyHtmlPreview || ''}
+        setFormValue={setFormValue}
+        onValueChange={onBodyHtmlPreviewChange}
+        disabled={saving || (hasDetectedEbayBodyHtmlField && isReadOnlyApprovalField(editableEbayBodyHtmlFieldName))}
+        label="Advanced: eBay Template Copy"
+        helperText={hasDetectedEbayBodyHtmlField
+          ? 'WYSIWYG editor for this body text block only (not the full template HTML).'
+          : 'WYSIWYG live preview editor for this body text block only. This record has no detected Body HTML field, so edits preview immediately but may not persist to Airtable.'}
+      />
+    ) : undefined);
+
   return (
     <ApprovalFormFieldGrid
       showOnlyEbayAdvancedOptions={showOnlyEbayAdvancedOptions}
       showEbayAdvancedOptions={approvalChannel === 'ebay' && !hideEbayAdvancedOptions}
       ebayAdvancedOptionFieldNames={ebayAdvancedOptionFieldNames}
+      ebayAdvancedOptionsExtraContent={effectiveEbayAdvancedOptionsExtraContent}
       requiredOrderedFieldNames={requiredOrderedFieldNames}
       optionalOrderedFieldNames={optionalOrderedFieldNames}
       pinnedPreDescriptionFieldName={pinnedPreDescriptionFieldName}

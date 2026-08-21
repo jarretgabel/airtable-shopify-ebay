@@ -231,6 +231,7 @@ export function useApprovalFormFieldSetup({
       });
 
       attachments.forEach((attachment) => {
+        if (!isProcessedWorkflowImage(attachment.filename, attachment.url)) return;
         const key = attachment.url.trim().toLowerCase();
         if (!key || mergedByUrl.has(key)) return;
         mergedByUrl.set(key, attachment);
@@ -291,7 +292,8 @@ export function useApprovalFormFieldSetup({
     return currentRows
       .map((row) => row.src.trim())
       .filter(Boolean)
-      .map((url) => attachmentLookup.get(url.toLowerCase()) ?? url);
+      .map((url) => attachmentLookup.get(url.toLowerCase()) ?? '')
+      .filter(Boolean);
   }, [
     effectiveImageUrlSourceField,
     effectiveShopifyImagePayloadFieldName,

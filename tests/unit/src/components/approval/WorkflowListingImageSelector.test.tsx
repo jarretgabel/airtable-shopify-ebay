@@ -183,4 +183,52 @@ describe('WorkflowListingImageSelector', () => {
     expect(availableCards).toHaveLength(1);
     expect(availableCards[0]).toHaveTextContent('testing-1-processed.jpg');
   });
+
+  it('does not duplicate available uploads after deselecting a selected URL variant', () => {
+    function DeselectVariantHarness() {
+      const [selectedUrls, setSelectedUrls] = useState([
+        'https://drive.google.com/uc?export=view&id=file-photo-1',
+      ]);
+
+      return (
+        <WorkflowListingImageSelector
+          attachments={[
+            {
+              id: 'att-photo-1-drive',
+              url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+              filename: 'b-w-805-woofer-detail-processed.jpg',
+            },
+            {
+              id: 'att-photo-1-proxy',
+              url: 'https://lh3.googleusercontent.com/proxy/example-rendered-photo-1',
+              filename: 'b-w-805-woofer-detail-processed.jpg',
+            },
+            {
+              id: 'att-testing-1',
+              url: 'https://cdn.example.com/testing-1-processed.jpg',
+              filename: 'testing-1-processed.jpg',
+            },
+          ]}
+          selectedUrls={selectedUrls}
+          onSelectionChange={setSelectedUrls}
+        />
+      );
+    }
+
+    render(<DeselectVariantHarness />);
+
+    const selectedCardsBefore = screen.getAllByTestId('selected-listing-image-card');
+    expect(selectedCardsBefore).toHaveLength(1);
+
+    const selectedCheckbox = within(selectedCardsBefore[0]).getByRole('checkbox');
+    fireEvent.click(selectedCheckbox);
+
+    expect(screen.queryAllByTestId('selected-listing-image-card')).toHaveLength(0);
+
+    const availableCards = screen.getAllByTestId('available-listing-image-card');
+    expect(availableCards).toHaveLength(2);
+    const availableFilenames = availableCards.map((card) => card.textContent ?? '').join('\n');
+    expect(availableFilenames).toContain('b-w-805-woofer-detail-processed.jpg');
+    expect(availableFilenames).toContain('testing-1-processed.jpg');
+  });
 });

@@ -321,6 +321,44 @@ describe('useListingApprovalCombinedFieldState', () => {
     ]));
   });
 
+  it('keeps generic Price in eBay-only fields for combined approval', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      Price: '1899.99',
+      'Shopify REST Variant 1 Price': '2099.99',
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedEbayOnlyFieldNames).toEqual(expect.arrayContaining(['Price']));
+  });
+
+  it('keeps Buy It Now/Starting Price in eBay-only fields for combined approval', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      'Buy It Now/Starting Price': '1899.99',
+      'Shopify REST Variant 1 Price': '2099.99',
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedEbayOnlyFieldNames).toEqual(expect.arrayContaining(['Buy It Now/Starting Price']));
+  });
+
+  it('injects eBay Offer Price Value when no eBay price field exists', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      Cost: 850,
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedEbayOnlyFieldNames).toEqual(expect.arrayContaining(['eBay Offer Price Value']));
+  });
+
   it('removes eBay product aspects fields from combined listing record sections', () => {
     const record = buildRecord({
       Title: 'Sansui AU-717',

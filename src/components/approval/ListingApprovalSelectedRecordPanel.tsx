@@ -228,7 +228,7 @@ export function ListingApprovalSelectedRecordPanel({
       eyebrow="Listings"
       title={selectedRecordTitle}
       actions={backButton}
-      belowHeader={isEligible ? combinedSectionNav : null}
+      belowHeader={isEligible && !isEditorLoading ? combinedSectionNav : null}
     >
       {isEligible ? selectedRecordView : (
         <NotReadyForStageSurface
