@@ -1,4 +1,4 @@
-import { useEffect, useRef, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useRef, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import type { CropInsetsPercent } from '@/services/imageProcessor';
 
 type CropEdge = 'left' | 'top' | 'right' | 'bottom';
@@ -10,6 +10,7 @@ export interface FormImageCropPreviewProps {
   onCropChange: (crop: CropInsetsPercent) => void;
   disabled?: boolean;
   className?: string;
+  headerActions?: ReactNode;
 }
 
 interface DragState {
@@ -71,6 +72,7 @@ export function FormImageCropPreview({
   onCropChange,
   disabled = false,
   className = '',
+  headerActions,
 }: FormImageCropPreviewProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<DragState | null>(null);
@@ -125,8 +127,9 @@ export function FormImageCropPreview({
 
   return (
     <div className={`overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-veil-soft)] ${className}`.trim()}>
-      <div className="border-b border-[var(--line)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-        Visual crop
+      <div className="flex items-center justify-between border-b border-[var(--line)] px-3 py-2">
+        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visual crop</span>
+        {headerActions ? <div>{headerActions}</div> : null}
       </div>
       <div className="flex h-72 items-center justify-center px-4 py-3">
         <div ref={frameRef} data-testid="crop-frame" className="relative inline-block max-h-full max-w-full">
@@ -183,9 +186,6 @@ export function FormImageCropPreview({
             );
           })}
         </div>
-      </div>
-      <div className="border-t border-[var(--line)] px-3 py-2 text-xs text-[var(--muted)]">
-        Drag the crop handles to trim the original image before resizing and export.
       </div>
     </div>
   );

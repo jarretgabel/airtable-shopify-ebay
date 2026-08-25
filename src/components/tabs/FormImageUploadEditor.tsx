@@ -63,6 +63,12 @@ export interface FormImageUploadEditorProps {
   afterUploadContent?: ReactNode;
 }
 
+interface EnlargedPreviewState {
+  src: string;
+  alt: string;
+  title: string;
+}
+
 function buildDefaultOutputFilename(fileName: string): string {
   return buildFallbackImageFilename(fileName);
 }
@@ -257,6 +263,7 @@ export function FormImageUploadEditor({
   const [defaultsSavedNotice, setDefaultsSavedNotice] = useState(false);
   const [defaultsExpanded, setDefaultsExpanded] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [enlargedPreview, setEnlargedPreview] = useState<EnlargedPreviewState | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const itemsRef = useRef<EditableUploadItem[]>([]);
   const onFilesChangeRef = useRef(onFilesChange);
@@ -772,9 +779,49 @@ export function FormImageUploadEditor({
                           crop: nextCrop,
                         }))}
                         disabled={disabled}
+                        headerActions={(
+                          <button
+                            type="button"
+                            className="rounded-md border border-[var(--line)] bg-[var(--bg)] p-1.5 text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                            onClick={() => {
+                              setEnlargedPreview({
+                                src: item.originalUrl,
+                                alt: `Original ${item.originalFile.name}`,
+                                title: 'Original image',
+                              });
+                            }}
+                            aria-label="View original image large"
+                            title="View original image large"
+                          >
+                            <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5" aria-hidden="true">
+                              <path fillRule="evenodd" d="M9 3a6 6 0 1 0 3.874 10.583l2.771 2.771a.75.75 0 1 0 1.06-1.06l-2.77-2.772A6 6 0 0 0 9 3Zm-4.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0Z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        )}
                       />
                       <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-slate-950/30">
-                        <div className="border-b border-[var(--line)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Edited preview</div>
+                        <div className="flex items-center justify-between border-b border-[var(--line)] px-3 py-2">
+                          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Edited preview</span>
+                          <button
+                            type="button"
+                            className="rounded-md border border-[var(--line)] bg-[var(--bg)] p-1.5 text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+                            onClick={() => {
+                              if (!item.processed) return;
+                              setEnlargedPreview({
+                                src: item.processed.objectUrl,
+                                alt: `Edited ${item.processed.filename}`,
+                                title: 'Edited image',
+                              });
+                            }}
+                            aria-label="View edited image large"
+                            title="View edited image large"
+                            disabled={!item.processed}
+                          >
+                            <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5" aria-hidden="true">
+                              <path fillRule="evenodd" d="M9 3a6 6 0 1 0 3.874 10.583l2.771 2.771a.75.75 0 1 0 1.06-1.06l-2.77-2.772A6 6 0 0 0 9 3Zm-4.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0Z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
                         {item.processed ? (
                           <img src={item.processed.objectUrl} alt={`Edited ${item.processed.filename}`} className="h-72 w-full object-contain" />
                         ) : (
@@ -961,6 +1008,35 @@ export function FormImageUploadEditor({
           >
             Process all
           </button>
+        </div>
+      ) : null}
+
+      {enlargedPreview ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 px-4 py-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label={enlargedPreview.title}
+          onClick={() => setEnlargedPreview(null)}
+        >
+          <div
+            className="relative h-[94vh] w-[96vw] rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-3"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-2 flex items-center justify-between px-1">
+              <p className="m-0 text-sm font-semibold text-[var(--ink)]">{enlargedPreview.title}</p>
+              <button
+                type="button"
+                className="rounded-md border border-[var(--line)] bg-[var(--bg)] px-2 py-1 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                onClick={() => setEnlargedPreview(null)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="h-[calc(94vh-52px)] overflow-auto rounded-xl bg-slate-950/25 p-2">
+              <img src={enlargedPreview.src} alt={enlargedPreview.alt} className="mx-auto h-full w-full object-contain" />
+            </div>
+          </div>
         </div>
       ) : null}
     </section>
