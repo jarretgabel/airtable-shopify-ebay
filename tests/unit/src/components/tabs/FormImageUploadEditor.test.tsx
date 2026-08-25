@@ -82,6 +82,7 @@ describe('FormImageUploadEditor', () => {
       height: 900,
     });
 
+    fireEvent.click(within(card).getByRole('button', { name: 'Unlock filename editing' }));
     fireEvent.change(within(card).getByRole('textbox', { name: 'Output filename' }), {
       target: { value: 'hero-finished' },
     });
@@ -167,6 +168,8 @@ describe('FormImageUploadEditor', () => {
     await waitFor(() => {
       expect(processImageMock).toHaveBeenCalledTimes(1);
     });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show options' }));
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Default watermark text' }), {
       target: { value: 'Studio Watermark' },
@@ -272,7 +275,7 @@ describe('FormImageUploadEditor', () => {
     const applyEditsButton = within(article).getByRole('button', { name: 'Apply edits' });
     expect(applyEditsButton).toBeDisabled();
 
-    fireEvent.change(within(article).getByRole('combobox', { name: 'Image role' }), {
+    fireEvent.change(within(article).getByRole('combobox', { name: /Image role/i }), {
       target: { value: 'front' },
     });
 
@@ -284,6 +287,61 @@ describe('FormImageUploadEditor', () => {
 
     await waitFor(() => {
       expect(processImageMock).toHaveBeenCalled();
+    });
+  });
+
+  it('accepts a dropped folder by extracting nested image files', async () => {
+    const onFilesChange = vi.fn();
+    render(<FormImageUploadEditor onFilesChange={onFilesChange} />);
+
+    const folderImage = new File(['folder-image'], 'from-folder.jpg', { type: 'image/jpeg' });
+
+    const fileEntry = {
+      isFile: true,
+      isDirectory: false,
+      file: (resolve: (file: File) => void) => resolve(folderImage),
+    };
+
+    const directoryEntry = {
+      isFile: false,
+      isDirectory: true,
+      createReader: () => {
+        let callCount = 0;
+        return {
+          readEntries: (resolve: (entries: unknown[]) => void) => {
+            callCount += 1;
+            resolve(callCount === 1 ? [fileEntry] : []);
+          },
+        };
+      },
+    };
+
+    const dropzone = screen.getByRole('button', { name: 'Drag and drop images or click to add images' });
+    fireEvent.drop(dropzone, {
+      dataTransfer: {
+        files: [],
+        items: [
+          {
+            kind: 'file',
+            webkitGetAsEntry: () => directoryEntry,
+          },
+        ],
+      },
+    });
+
+    await waitFor(() => {
+      expect(processImageMock).toHaveBeenCalledWith(
+        folderImage,
+        expect.objectContaining({
+          outputFilename: 'from-folder-product-hero-image.jpg',
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      const latestCall = onFilesChange.mock.calls[onFilesChange.mock.calls.length - 1] as [File[]];
+      expect(latestCall[0]).toHaveLength(1);
+      expect(latestCall[0][0]?.name).toBe('hero-finished.jpg');
     });
   });
 });

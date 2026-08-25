@@ -9,6 +9,7 @@ import type { FormImageUploadAsset } from '@/services/formImageUploads';
 
 import { formatBytes, processImage, revokeProcessedImage, type CropInsetsPercent, type ProcessedImage } from '@/services/imageProcessor';
 import { FormImageCropPreview } from '@/components/tabs/FormImageCropPreview';
+import { ApprovalSelect } from '@/components/approval/ApprovalSelect';
 import {
   buildImageAltText,
   buildFallbackImageFilename,
@@ -27,12 +28,17 @@ interface EditableUploadItem {
   status: 'idle' | 'processing' | 'done' | 'error';
   error?: string;
   outputFilename: string;
+  outputFilenameLocked: boolean;
   outputWarnings: string[];
   imageRole?: WorkflowImageRole;
   customImageRole: string;
   altText: string;
   crop: CropInsetsPercent;
 }
+
+type WebkitDataTransferItem = DataTransferItem & {
+  webkitGetAsEntry?: () => FileSystemEntry | null;
+};
 
 export interface FormImageProcessingSummary {
   total: number;
@@ -96,6 +102,7 @@ function createUploadItem(
     processed: null,
     status: 'idle',
     outputFilename: nextOutput.filename,
+    outputFilenameLocked: true,
     outputWarnings: nextOutput.warnings,
     imageRole: undefined,
     customImageRole: '',
@@ -158,6 +165,76 @@ function toUploadAssets(items: EditableUploadItem[], requireImageRole: boolean):
     customImageRole: item.customImageRole || undefined,
     altText: item.altText || undefined,
   }));
+}
+
+function readFileEntry(entry: FileSystemFileEntry): Promise<File | null> {
+  return new Promise((resolve) => {
+    entry.file(
+      (file) => resolve(file),
+      () => resolve(null),
+    );
+  });
+}
+
+function readDirectoryEntries(directory: FileSystemDirectoryEntry): Promise<FileSystemEntry[]> {
+  return new Promise((resolve) => {
+    const reader = directory.createReader();
+    const entries: FileSystemEntry[] = [];
+
+    const readBatch = () => {
+      reader.readEntries(
+        (batch) => {
+          if (!batch.length) {
+            resolve(entries);
+            return;
+          }
+          entries.push(...batch);
+          readBatch();
+        },
+        () => resolve(entries),
+      );
+    };
+
+    readBatch();
+  });
+}
+
+async function collectFilesFromEntry(entry: FileSystemEntry): Promise<File[]> {
+  if (entry.isFile) {
+    const file = await readFileEntry(entry as FileSystemFileEntry);
+    return file ? [file] : [];
+  }
+
+  if (!entry.isDirectory) {
+    return [];
+  }
+
+  const children = await readDirectoryEntries(entry as FileSystemDirectoryEntry);
+  const nested = await Promise.all(children.map((child) => collectFilesFromEntry(child)));
+  return nested.flat();
+}
+
+async function extractDroppedFiles(dataTransfer: DataTransfer): Promise<File[]> {
+  const items = Array.from(dataTransfer.items ?? []) as WebkitDataTransferItem[];
+  if (items.length === 0) {
+    return Array.from(dataTransfer.files ?? []);
+  }
+
+  const entries = items
+    .filter((item) => item.kind === 'file')
+    .map((item) => item.webkitGetAsEntry?.() ?? null)
+    .filter((entry): entry is FileSystemEntry => Boolean(entry));
+
+  if (entries.length === 0) {
+    return Array.from(dataTransfer.files ?? []);
+  }
+
+  const fileGroups = await Promise.all(entries.map((entry) => collectFilesFromEntry(entry)));
+  const flattened = fileGroups.flat();
+  if (flattened.length > 0) {
+    return flattened;
+  }
+  return Array.from(dataTransfer.files ?? []);
 }
 
 export function FormImageUploadEditor({
@@ -234,12 +311,6 @@ export function FormImageUploadEditor({
     onProcessingSummaryChangeRef.current?.(summary);
   }, [items, requireImageRole]);
 
-  useEffect(() => {
-    if (items.length > 0) {
-      setDefaultsExpanded(true);
-    }
-  }, [items.length]);
-
   const hasItemsToProcess = useMemo(
     () => items.some((item) => item.status === 'idle' || item.status === 'done' || item.status === 'error'),
     [items],
@@ -282,11 +353,12 @@ export function FormImageUploadEditor({
     }
   };
 
-  const handleDropzoneDrop = (event: DragEvent<HTMLDivElement>) => {
+  const handleDropzoneDrop = async (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragActive(false);
     if (disabled) return;
-    addFiles(Array.from(event.dataTransfer.files ?? []));
+    const droppedFiles = await extractDroppedFiles(event.dataTransfer);
+    addFiles(droppedFiles);
   };
 
   const updateItem = (itemId: string, updater: (item: EditableUploadItem) => EditableUploadItem) => {
@@ -477,10 +549,10 @@ export function FormImageUploadEditor({
               </div>
               <div>
                 <p className="m-0 text-base font-semibold text-[var(--ink)] sm:text-lg">
-                  {isDragActive ? 'Drop images to add them' : 'Drag and drop images here'}
+                  {isDragActive ? 'Drop images to add them' : 'Drag and drop images or folders here'}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-[var(--muted)] sm:text-base">
-                  {isDragActive ? 'Release to add these files to the upload set.' : 'Click anywhere in this area or drop image files to start a photo upload set.'}
+                  {isDragActive ? 'Release to add these files to the upload set.' : 'Click anywhere in this area or drop image files/folders to start a photo upload set.'}
                 </p>
               </div>
             </div>
@@ -689,7 +761,7 @@ export function FormImageUploadEditor({
                   </button>
                 </div>
               </div>
-                  <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,1fr)]">
+                  <div className="mt-4 grid items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,1fr)]">
                     <div className="grid gap-4 md:grid-cols-2">
                       <FormImageCropPreview
                         imageUrl={item.originalUrl}
@@ -714,11 +786,14 @@ export function FormImageUploadEditor({
                     </div>
 
                     <div className="grid gap-4">
-                      <div className="grid gap-4 md:grid-cols-2">
+                      <div className={`grid gap-4 ${item.imageRole === 'custom' ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
                         <label className="block">
-                          <span className="text-sm font-semibold text-[var(--ink)]">Image role</span>
-                          <select
-                            className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                          <span className="text-sm font-semibold text-[var(--ink)]">
+                            Image role
+                            {requireImageRole ? <span className="ml-1 text-rose-300">*</span> : null}
+                          </span>
+                          <ApprovalSelect
+                            selectClassName="mt-2 w-full appearance-none rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 pr-10 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
                             value={item.imageRole ?? ''}
                             onChange={(event) => {
                               const nextRole = event.currentTarget.value as WorkflowImageRole | '';
@@ -761,67 +836,48 @@ export function FormImageUploadEditor({
                             <option value="accessories">Accessories</option>
                             <option value="packaging">Packaging</option>
                             <option value="custom">Custom</option>
-                          </select>
+                          </ApprovalSelect>
+                          {roleValidationError ? (
+                            <p className="mt-2 text-xs text-amber-200/90">{roleValidationError}</p>
+                          ) : null}
                         </label>
 
-                        <label className="block">
-                          <span className="text-sm font-semibold text-[var(--ink)]">Custom role</span>
-                          <input
-                            type="text"
-                            className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                            value={item.customImageRole}
-                            onChange={(event) => {
-                              const nextCustomImageRole = event.currentTarget.value;
-                              updateItem(item.id, (current) => {
-                                if (current.processed) {
-                                  revokeProcessedImage(current.processed);
-                                }
+                        {item.imageRole === 'custom' ? (
+                          <label className="block">
+                            <span className="text-sm font-semibold text-[var(--ink)]">Custom role</span>
+                            <input
+                              type="text"
+                              className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                              value={item.customImageRole}
+                              onChange={(event) => {
+                                const nextCustomImageRole = event.currentTarget.value;
+                                updateItem(item.id, (current) => {
+                                  if (current.processed) {
+                                    revokeProcessedImage(current.processed);
+                                  }
 
-                                const nextOutput = buildItemOutputFilename(current.originalFile.name, namingContext, current.imageRole, nextCustomImageRole);
-                                return {
-                                  ...current,
-                                  customImageRole: nextCustomImageRole,
-                                  outputFilename: nextOutput.filename,
-                                  outputWarnings: nextOutput.warnings,
-                                  altText: namingContext
-                                    ? buildImageAltText(namingContext, { role: current.imageRole, customRole: nextCustomImageRole })
-                                    : current.altText,
-                                  editedFile: null,
-                                  processed: null,
-                                  status: 'idle',
-                                  error: undefined,
-                                };
-                              });
-                            }}
-                            placeholder="For example: side-profile"
-                            disabled={disabled || item.imageRole !== 'custom'}
-                          />
-                        </label>
+                                  const nextOutput = buildItemOutputFilename(current.originalFile.name, namingContext, current.imageRole, nextCustomImageRole);
+                                  return {
+                                    ...current,
+                                    customImageRole: nextCustomImageRole,
+                                    outputFilename: nextOutput.filename,
+                                    outputWarnings: nextOutput.warnings,
+                                    altText: namingContext
+                                      ? buildImageAltText(namingContext, { role: current.imageRole, customRole: nextCustomImageRole })
+                                      : current.altText,
+                                    editedFile: null,
+                                    processed: null,
+                                    status: 'idle',
+                                    error: undefined,
+                                  };
+                                });
+                              }}
+                              placeholder="For example: side-profile"
+                              disabled={disabled}
+                            />
+                          </label>
+                        ) : null}
                       </div>
-
-                      <label className="block">
-                        <span className="text-sm font-semibold text-[var(--ink)]">Output filename</span>
-                        <input
-                          type="text"
-                          className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                          value={item.outputFilename}
-                          onChange={(event) => {
-                            if (namingContext) return;
-                            const nextOutputFilename = event.currentTarget.value;
-                            updateItem(item.id, (current) => ({ ...current, outputFilename: nextOutputFilename }));
-                          }}
-                          disabled={disabled}
-                          readOnly={Boolean(namingContext)}
-                        />
-                      </label>
-
-                      {item.outputWarnings.length > 0 ? (
-                        <p className="text-xs text-amber-200/90">{item.outputWarnings.join(' ')}</p>
-                      ) : null}
-
-                      {roleValidationError ? (
-                        <p className="text-xs text-amber-200/90">{roleValidationError}</p>
-                      ) : null}
 
                       <label className="block">
                         <span className="text-sm font-semibold text-[var(--ink)]">Image alt text</span>
@@ -837,6 +893,52 @@ export function FormImageUploadEditor({
                           placeholder="McIntosh MC225 Stereo Tube Power Amplifier Left Side"
                         />
                       </label>
+
+                      <div className="block">
+                        <label htmlFor={`output-filename-${item.id}`} className="text-sm font-semibold text-[var(--ink)]">Output filename</label>
+                        <div className="relative mt-2">
+                          <input
+                            id={`output-filename-${item.id}`}
+                            type="text"
+                            className="w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 pr-11 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                            value={item.outputFilename}
+                            onChange={(event) => {
+                              const nextOutputFilename = event.currentTarget.value;
+                              updateItem(item.id, (current) => ({ ...current, outputFilename: nextOutputFilename }));
+                            }}
+                            disabled={disabled}
+                            readOnly={item.outputFilenameLocked}
+                          />
+                          <button
+                            type="button"
+                            className="absolute inset-y-0 right-2 inline-flex items-center rounded-md px-1.5 text-[var(--muted)] transition hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+                            onClick={() => {
+                              updateItem(item.id, (current) => ({
+                                ...current,
+                                outputFilenameLocked: !current.outputFilenameLocked,
+                              }));
+                            }}
+                            aria-label={item.outputFilenameLocked ? 'Unlock filename editing' : 'Lock filename editing'}
+                            title={item.outputFilenameLocked ? 'Unlock filename editing' : 'Lock filename editing'}
+                            disabled={disabled}
+                          >
+                            {item.outputFilenameLocked ? (
+                              <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+                                <path fillRule="evenodd" d="M10 1a4 4 0 0 0-4 4v2H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-1V5a4 4 0 0 0-4-4Zm2.5 6V5a2.5 2.5 0 0 0-5 0v2h5Z" clipRule="evenodd" />
+                              </svg>
+                            ) : (
+                              <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+                                <path d="M5 8a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5Z" />
+                                <path d="M7.5 8V5a2.5 2.5 0 0 1 4.584-1.387.75.75 0 1 0 1.232-.856A4 4 0 0 0 6 5v3h1.5Z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {item.outputWarnings.length > 0 ? (
+                        <p className="text-xs text-amber-200/90">{item.outputWarnings.join(' ')}</p>
+                      ) : null}
                     </div>
                   </div>
             </article>
