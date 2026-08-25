@@ -57,11 +57,7 @@ const COMBINED_QUEUE_MAX_FETCH_LIMIT = 1000;
 const COMBINED_WORK_SERVER_SEARCH_FIELDS = [
   'SKU',
   'Item Title',
-  'Title',
-  'Shopify Title',
-  'Shopify REST Title',
   'Vendor',
-  'Brand',
   'Model',
   'Workflow Status',
   'Make',

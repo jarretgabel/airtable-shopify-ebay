@@ -358,6 +358,11 @@ export function UsedGearWorkflowProgressSection({
     });
   }, [filteredRecords, sortMode]);
 
+  const hasSearchTerm = searchTerm.trim().length > 0;
+  const showSearchMissEmptyState = hasSearchTerm
+    && groupedRecords.length === 0
+    && (queueMode === 'testing' || queueMode === 'photography');
+
   const visibleGroups = useMemo(() => {
     if (!focusedGroupId) {
       return groupedRecords;
@@ -439,11 +444,15 @@ export function UsedGearWorkflowProgressSection({
       ) : null}
 
       {!loading && groupedRecords.length === 0 ? (
-        <EmptySurface title={queuePresentation.emptyTitle} message={queuePresentation.emptyMessage}>
-          <p className="mt-3 text-sm text-[var(--muted)]">
-            {queuePresentation.emptyGuidance}
-          </p>
-        </EmptySurface>
+        showSearchMissEmptyState ? (
+          <EmptySurface title="Item not found" message="" />
+        ) : (
+          <EmptySurface title={queuePresentation.emptyTitle} message={queuePresentation.emptyMessage}>
+            <p className="mt-3 text-sm text-[var(--muted)]">
+              {queuePresentation.emptyGuidance}
+            </p>
+          </EmptySurface>
+        )
       ) : null}
 
       <div className="space-y-4">
@@ -542,6 +551,10 @@ export function UsedGearWorkflowProgressSection({
           }
 
           if (!matrixGroups.length) {
+            if (showSearchMissEmptyState) {
+              return null;
+            }
+
             return (
               <EmptySurface
                 title="Focused progress group not found"
