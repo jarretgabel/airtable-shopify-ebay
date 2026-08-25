@@ -82,6 +82,7 @@ function validateSource(value: string): AirtableConfiguredRecordsSource {
     || value === 'approval-shopify'
     || value === 'approval-combined'
     || value === 'shopify-vendors'
+    || value === 'workflow-image-roles'
   ) {
     return value;
   }

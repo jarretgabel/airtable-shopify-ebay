@@ -31,7 +31,8 @@ export type AirtableConfiguredRecordsSource =
   | 'approval-ebay'
   | 'approval-shopify'
   | 'approval-combined'
-  | 'shopify-vendors';
+  | 'shopify-vendors'
+  | 'workflow-image-roles';
 export type AirtableConfiguredWriteSource = AirtableConfiguredRecordsSource;
 export type AirtableConfiguredMetadataSource = 'inventory-directory' | 'used-gear-workflow';
 export type AirtableConfiguredAttachmentSource = 'inventory-directory' | 'used-gear-workflow';
@@ -310,6 +311,8 @@ const DEFAULT_APPROVAL_TABLE_REFERENCE = '3yTb0JkzUMFNnS/viw21kEduXKNub4Vn';
 const DEFAULT_COMBINED_LISTINGS_TABLE_NAME = 'tbl0K0nFQL64jQMx8';
 const DEFAULT_SHOPIFY_VENDORS_TABLE_REFERENCE = 'apprsAm2FOohEmL2u/tblF0B5TUhy20hJCv/viwx2RONDo3Ii85Gl';
 const DEFAULT_SHOPIFY_VENDORS_TABLE_NAME = 'tblF0B5TUhy20hJCv';
+const DEFAULT_WORKFLOW_IMAGE_ROLES_TABLE_REFERENCE = 'apprsAm2FOohEmL2u/tblkoqoSKypAaZRZe/viwyknqgRdLfWEpjn';
+const DEFAULT_WORKFLOW_IMAGE_ROLES_TABLE_NAME = 'tblkoqoSKypAaZRZe';
 const INVENTORY_DIRECTORY_ATTACHMENT_FIELD_IDS = new Set(['fldMXp0EaUHGglU8M']);
 const USED_GEAR_WORKFLOW_ATTACHMENT_FIELD_IDS = new Set(['fld1zIzmZEciQECah']);
 
@@ -367,6 +370,19 @@ function getSourceDefinition(source: AirtableConfiguredRecordsSource): { referen
     return {
       reference: process.env.AIRTABLE_SHOPIFY_VENDORS_TABLE_REF?.trim() || DEFAULT_SHOPIFY_VENDORS_TABLE_REFERENCE,
       tableName: process.env.AIRTABLE_SHOPIFY_VENDORS_TABLE_NAME?.trim() || DEFAULT_SHOPIFY_VENDORS_TABLE_NAME,
+    };
+  }
+
+  if (source === 'workflow-image-roles') {
+    return {
+      reference:
+        process.env.AIRTABLE_WORKFLOW_IMAGE_ROLES_TABLE_REF?.trim()
+        || process.env.VITE_AIRTABLE_WORKFLOW_IMAGE_ROLES_TABLE_REF?.trim()
+        || DEFAULT_WORKFLOW_IMAGE_ROLES_TABLE_REFERENCE,
+      tableName:
+        process.env.AIRTABLE_WORKFLOW_IMAGE_ROLES_TABLE_NAME?.trim()
+        || process.env.VITE_AIRTABLE_WORKFLOW_IMAGE_ROLES_TABLE_NAME?.trim()
+        || DEFAULT_WORKFLOW_IMAGE_ROLES_TABLE_NAME,
     };
   }
 

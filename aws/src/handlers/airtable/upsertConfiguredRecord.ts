@@ -36,6 +36,7 @@ function validateWriteSource(value: string): AirtableConfiguredWriteSource {
     || value === 'approval-shopify'
     || value === 'approval-combined'
     || value === 'shopify-vendors'
+    || value === 'workflow-image-roles'
   ) {
     return value;
   }

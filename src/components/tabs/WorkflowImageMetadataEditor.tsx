@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { WorkflowImageMetadataRecord } from '@/services/workflowImageMetadata';
 import {
   getSortedWorkflowImageMetadata,
@@ -5,8 +6,15 @@ import {
   updateWorkflowImageAltText,
   updateWorkflowImageInclusion,
   updateWorkflowImageRole,
-  type WorkflowImageRole,
 } from '@/services/workflowImageMetadata';
+import {
+  createWorkflowImageRoleOption,
+  findWorkflowImageRoleOption,
+  getWorkflowImageRoleSelectValue,
+  loadWorkflowImageRoleOptions,
+  toWorkflowImageRoleSelection,
+  type WorkflowImageRoleSelectOption,
+} from '@/services/workflowImageRoles';
 import { ApprovalSelect } from '@/components/approval/ApprovalSelect';
 
 export interface WorkflowImageMetadataEditorProps {
@@ -35,6 +43,88 @@ export function WorkflowImageMetadataEditor({
   className = '',
 }: WorkflowImageMetadataEditorProps) {
   const sortedMetadata = getSortedWorkflowImageMetadata(metadata);
+  const [imageRoleOptions, setImageRoleOptions] = useState<WorkflowImageRoleSelectOption[]>([]);
+  const [savingCustomRoleUrl, setSavingCustomRoleUrl] = useState<string | null>(null);
+  const [customRoleSaveErrors, setCustomRoleSaveErrors] = useState<Record<string, string>>({});
+  const [customRoleSaveSuccess, setCustomRoleSaveSuccess] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadOptions = async () => {
+      const nextOptions = await loadWorkflowImageRoleOptions();
+      if (!cancelled) {
+        setImageRoleOptions(nextOptions);
+      }
+    };
+
+    void loadOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const addCustomRoleToSharedTable = async (record: WorkflowImageMetadataRecord) => {
+    const customRoleValue = (record.customImageRole ?? '').trim();
+    if (!customRoleValue) {
+      setCustomRoleSaveErrors((current) => ({
+        ...current,
+        [record.url]: 'Enter a custom image role before adding it to Airtable.',
+      }));
+      setCustomRoleSaveSuccess((current) => ({ ...current, [record.url]: '' }));
+      return;
+    }
+
+    const existing = findWorkflowImageRoleOption(imageRoleOptions, customRoleValue);
+    if (existing) {
+      const existingSelection = toWorkflowImageRoleSelection(existing.value, customRoleValue);
+      setCustomRoleSaveErrors((current) => ({ ...current, [record.url]: '' }));
+      setCustomRoleSaveSuccess((current) => ({
+        ...current,
+        [record.url]: 'Role already exists in shared Airtable roles and is now selected.',
+      }));
+      onChange(updateWorkflowImageRole(
+        sortedMetadata,
+        record.url,
+        existingSelection.imageRole,
+        existingSelection.customImageRole,
+        getNextIsoTimestamp(),
+      ));
+      return;
+    }
+
+    setSavingCustomRoleUrl(record.url);
+    setCustomRoleSaveErrors((current) => ({ ...current, [record.url]: '' }));
+    setCustomRoleSaveSuccess((current) => ({ ...current, [record.url]: '' }));
+    try {
+      const createdOption = await createWorkflowImageRoleOption(customRoleValue);
+      const refreshedOptions = await loadWorkflowImageRoleOptions();
+      setImageRoleOptions(refreshedOptions);
+
+      const selectedOption = findWorkflowImageRoleOption(refreshedOptions, customRoleValue) ?? createdOption;
+      const createdSelection = toWorkflowImageRoleSelection(selectedOption.value, customRoleValue);
+      onChange(updateWorkflowImageRole(
+        sortedMetadata,
+        record.url,
+        createdSelection.imageRole,
+        createdSelection.customImageRole,
+        getNextIsoTimestamp(),
+      ));
+      setCustomRoleSaveSuccess((current) => ({
+        ...current,
+        [record.url]: 'Added to shared Airtable roles.',
+      }));
+    } catch (error) {
+      setCustomRoleSaveErrors((current) => ({
+        ...current,
+        [record.url]: error instanceof Error ? error.message : 'Unable to add role to Airtable.',
+      }));
+      setCustomRoleSaveSuccess((current) => ({ ...current, [record.url]: '' }));
+    } finally {
+      setSavingCustomRoleUrl(null);
+    }
+  };
 
   const moveRecord = (url: string, direction: -1 | 1) => {
     const orderedUrls = sortedMetadata.map((record) => record.url);
@@ -95,43 +185,65 @@ export function WorkflowImageMetadataEditor({
                     <span className="text-sm font-semibold text-[var(--ink)]">Image Role</span>
                     <ApprovalSelect
                       selectClassName="mt-2 w-full appearance-none rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 pr-10 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                      value={record.imageRole ?? ''}
+                      value={getWorkflowImageRoleSelectValue(record.imageRole, record.customImageRole, imageRoleOptions)}
                       onChange={(event) => {
-                        const nextRole = (event.currentTarget.value || undefined) as WorkflowImageRole | undefined;
-                        onChange(updateWorkflowImageRole(sortedMetadata, record.url, nextRole, record.customImageRole ?? '', getNextIsoTimestamp()));
+                        const selection = toWorkflowImageRoleSelection(event.currentTarget.value, record.customImageRole ?? '');
+                        onChange(updateWorkflowImageRole(
+                          sortedMetadata,
+                          record.url,
+                          selection.imageRole,
+                          selection.customImageRole,
+                          getNextIsoTimestamp(),
+                        ));
                       }}
                       disabled={disabled}
                       selectProps={{ 'aria-label': `Image role for ${record.filename}` }}
                     >
                       <option value="">Select image role</option>
-                      <option value="front">Front</option>
-                      <option value="rear">Rear</option>
-                      <option value="serial-plate">Serial Plate</option>
-                      <option value="cosmetic-detail">Cosmetic Detail</option>
-                      <option value="connections">Connections</option>
-                      <option value="top">Top</option>
-                      <option value="bottom">Bottom</option>
-                      <option value="side">Side</option>
-                      <option value="interior">Interior</option>
-                      <option value="accessories">Accessories</option>
-                      <option value="packaging">Packaging</option>
-                      <option value="custom">Custom</option>
+                      {imageRoleOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
                     </ApprovalSelect>
                   </label>
 
                   {record.imageRole === 'custom' ? (
-                    <label className="block">
-                      <span className="text-sm font-semibold text-[var(--ink)]">Custom Image Role</span>
-                      <input
-                        type="text"
-                        className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                        value={record.customImageRole ?? ''}
-                        onChange={(event) => onChange(updateWorkflowImageRole(sortedMetadata, record.url, record.imageRole, event.currentTarget.value, getNextIsoTimestamp()))}
-                        placeholder="For example: side profile"
-                        aria-label={`Custom image role for ${record.filename}`}
-                        disabled={disabled}
-                      />
-                    </label>
+                    <div className="grid gap-2">
+                      <label className="block">
+                        <span className="text-sm font-semibold text-[var(--ink)]">Custom Image Role</span>
+                        <input
+                          type="text"
+                          className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                          value={record.customImageRole ?? ''}
+                          onChange={(event) => {
+                            setCustomRoleSaveErrors((current) => ({ ...current, [record.url]: '' }));
+                            setCustomRoleSaveSuccess((current) => ({ ...current, [record.url]: '' }));
+                            onChange(updateWorkflowImageRole(sortedMetadata, record.url, record.imageRole, event.currentTarget.value, getNextIsoTimestamp()));
+                          }}
+                          placeholder="For example: side profile"
+                          aria-label={`Custom image role for ${record.filename}`}
+                          disabled={disabled}
+                        />
+                      </label>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+                          onClick={() => {
+                            void addCustomRoleToSharedTable(record);
+                          }}
+                          disabled={disabled || savingCustomRoleUrl === record.url}
+                        >
+                          {savingCustomRoleUrl === record.url ? 'Saving…' : 'Save'}
+                        </button>
+                        <span className="text-xs text-[var(--muted)]">Saves this custom role to the shared Airtable roles table.</span>
+                      </div>
+                      {customRoleSaveErrors[record.url] ? (
+                        <p className="m-0 text-xs text-rose-300">{customRoleSaveErrors[record.url]}</p>
+                      ) : null}
+                      {customRoleSaveSuccess[record.url] ? (
+                        <p className="m-0 text-xs text-emerald-300">{customRoleSaveSuccess[record.url]}</p>
+                      ) : null}
+                    </div>
                   ) : null}
 
                   <label className="block">

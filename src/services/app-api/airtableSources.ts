@@ -4,6 +4,8 @@ export const DEFAULT_USERS_TABLE_NAME = 'j2Gt9USORo6Vi5';
 export const DEFAULT_COMBINED_LISTINGS_TABLE_NAME = 'tbl0K0nFQL64jQMx8';
 export const DEFAULT_SHOPIFY_VENDORS_TABLE_REF = 'apprsAm2FOohEmL2u/tblF0B5TUhy20hJCv/viwx2RONDo3Ii85Gl';
 export const DEFAULT_SHOPIFY_VENDORS_TABLE_NAME = 'tblF0B5TUhy20hJCv';
+export const DEFAULT_WORKFLOW_IMAGE_ROLES_TABLE_REF = 'apprsAm2FOohEmL2u/tblkoqoSKypAaZRZe/viwyknqgRdLfWEpjn';
+export const DEFAULT_WORKFLOW_IMAGE_ROLES_TABLE_NAME = 'tblkoqoSKypAaZRZe';
 
 export type AirtableConfiguredRecordsSource =
   | 'users'
@@ -13,7 +15,8 @@ export type AirtableConfiguredRecordsSource =
   | 'approval-ebay'
   | 'approval-shopify'
   | 'approval-combined'
-  | 'shopify-vendors';
+  | 'shopify-vendors'
+  | 'workflow-image-roles';
 
 export function getUsersTableReference(): { reference?: string; tableName: string } {
   const envReference = checkOptionalEnv('VITE_AIRTABLE_USERS_TABLE_REF');
@@ -72,6 +75,13 @@ export function getConfiguredRecordsSourceDefinition(source: AirtableConfiguredR
     };
   }
 
+  if (source === 'workflow-image-roles') {
+    return {
+      reference: checkOptionalEnv('VITE_AIRTABLE_WORKFLOW_IMAGE_ROLES_TABLE_REF') || DEFAULT_WORKFLOW_IMAGE_ROLES_TABLE_REF,
+      tableName: checkOptionalEnv('VITE_AIRTABLE_WORKFLOW_IMAGE_ROLES_TABLE_NAME') || DEFAULT_WORKFLOW_IMAGE_ROLES_TABLE_NAME,
+    };
+  }
+
   if (source === 'used-gear-workflow') {
     return {
       reference: checkOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF'),
@@ -98,7 +108,7 @@ export function resolveConfiguredRecordsSource(
 
   // Prefer combined listings when multiple approval sources share the same
   // Airtable reference in runtime config (common in staging/prod bundles).
-  for (const source of ['user-guide', 'approval-combined', 'approval-ebay', 'approval-shopify', 'shopify-vendors'] as const) {
+  for (const source of ['user-guide', 'approval-combined', 'approval-ebay', 'approval-shopify', 'shopify-vendors', 'workflow-image-roles'] as const) {
     const definition = getConfiguredRecordsSourceDefinition(source);
     const definitionReference = normalizeValue(definition.reference);
     const definitionTableName = normalizeValue(definition.tableName);

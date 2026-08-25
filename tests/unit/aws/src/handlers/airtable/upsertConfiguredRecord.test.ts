@@ -161,3 +161,59 @@ test('rejects non-admin users who try to change protected fields on their own re
   assert.equal(response.statusCode, 403);
   assert.match(response.body || '', /role changes require admin or owner access/i);
 });
+
+test('accepts workflow-image-roles as a writable configured source', async () => {
+  let capturedSource = '';
+
+  const handler = createUpdateHandler({
+    requireRouteAccess: async () => ({
+      userId: 'u-owner',
+      airtableRecordId: 'rec-owner',
+      name: 'Owner User',
+      email: 'owner@example.com',
+      mustChangePassword: false,
+      role: 'owner',
+      allowedPages: ['dashboard'],
+    }),
+    updateConfiguredRecord: async (source, recordId, fields) => {
+      capturedSource = source;
+      return {
+        id: recordId,
+        createdTime: '2026-05-13T00:00:00.000Z',
+        fields,
+      };
+    },
+  });
+
+  const response = await handler(createEvent({
+    pathParameters: { source: 'workflow-image-roles', recordId: 'rec-role-1' },
+    rawPath: '/api/airtable/configured-records/workflow-image-roles/rec-role-1',
+    requestContext: {
+      accountId: 'test',
+      apiId: 'test',
+      domainName: 'localhost',
+      domainPrefix: 'localhost',
+      http: {
+        method: 'PATCH',
+        path: '/api/airtable/configured-records/workflow-image-roles/rec-role-1',
+        protocol: 'HTTP/1.1',
+        sourceIp: '127.0.0.1',
+        userAgent: 'test',
+      },
+      requestId: 'request',
+      routeKey: '$default',
+      stage: '$default',
+      time: 'now',
+      timeEpoch: 0,
+    },
+    body: JSON.stringify({
+      fields: {
+        'Image Role': 'Underside Detail',
+      },
+      typecast: true,
+    }),
+  }));
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(capturedSource, 'workflow-image-roles');
+});

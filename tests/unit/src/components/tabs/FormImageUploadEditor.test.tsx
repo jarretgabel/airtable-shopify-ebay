@@ -9,6 +9,11 @@ const { processImageMock, revokeProcessedImageMock } = vi.hoisted(() => ({
   revokeProcessedImageMock: vi.fn(),
 }));
 
+const { loadWorkflowImageRoleOptionsMock, createWorkflowImageRoleOptionMock } = vi.hoisted(() => ({
+  loadWorkflowImageRoleOptionsMock: vi.fn(),
+  createWorkflowImageRoleOptionMock: vi.fn(),
+}));
+
 vi.mock('@/services/imageProcessor', async () => {
   const actual = await vi.importActual<typeof import('@/services/imageProcessor')>('@/services/imageProcessor');
   return {
@@ -16,6 +21,15 @@ vi.mock('@/services/imageProcessor', async () => {
     formatBytes: (bytes: number) => `${bytes} B`,
     processImage: processImageMock,
     revokeProcessedImage: revokeProcessedImageMock,
+  };
+});
+
+vi.mock('@/services/workflowImageRoles', async () => {
+  const actual = await vi.importActual<typeof import('@/services/workflowImageRoles')>('@/services/workflowImageRoles');
+  return {
+    ...actual,
+    loadWorkflowImageRoleOptions: loadWorkflowImageRoleOptionsMock,
+    createWorkflowImageRoleOption: createWorkflowImageRoleOptionMock,
   };
 });
 
@@ -38,6 +52,26 @@ describe('FormImageUploadEditor', () => {
       sourceHeight: 1200,
       width: 1200,
       height: 900,
+    });
+
+    loadWorkflowImageRoleOptionsMock.mockResolvedValue([
+      {
+        value: 'front',
+        label: 'Front',
+        role: 'front',
+      },
+      {
+        value: 'custom',
+        label: 'Custom',
+        role: 'custom',
+      },
+    ]);
+
+    createWorkflowImageRoleOptionMock.mockResolvedValue({
+      value: 'custom:Underside Detail',
+      label: 'Underside Detail',
+      role: 'custom',
+      customImageRole: 'Underside Detail',
     });
   });
 
@@ -342,6 +376,72 @@ describe('FormImageUploadEditor', () => {
       const latestCall = onFilesChange.mock.calls[onFilesChange.mock.calls.length - 1] as [File[]];
       expect(latestCall[0]).toHaveLength(1);
       expect(latestCall[0][0]?.name).toBe('hero-finished.jpg');
+    });
+  });
+
+  it('quick-adds a custom role to the shared Airtable roles table', async () => {
+    loadWorkflowImageRoleOptionsMock
+      .mockResolvedValueOnce([
+        {
+          value: 'front',
+          label: 'Front',
+          role: 'front',
+        },
+        {
+          value: 'custom',
+          label: 'Custom',
+          role: 'custom',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          value: 'front',
+          label: 'Front',
+          role: 'front',
+        },
+        {
+          value: 'custom:Underside Detail',
+          label: 'Underside Detail',
+          role: 'custom',
+          customImageRole: 'Underside Detail',
+        },
+      ]);
+
+    render(
+      <FormImageUploadEditor
+        onFilesChange={vi.fn()}
+        requireImageRole
+        namingContext={{
+          brand: 'Acme',
+          model: 'M1',
+          productType: 'Amplifier',
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText('Add upload images'), {
+      target: {
+        files: [new File(['original-image'], 'quick-add.jpg', { type: 'image/jpeg' })],
+      },
+    });
+
+    const card = await screen.findByText('quick-add.jpg');
+    const article = card.closest('article');
+    expect(article).not.toBeNull();
+    if (!article) return;
+
+    fireEvent.change(within(article).getByRole('combobox', { name: /Image role/i }), {
+      target: { value: 'custom' },
+    });
+
+    fireEvent.change(within(article).getByRole('textbox', { name: 'Custom role' }), {
+      target: { value: 'Underside Detail' },
+    });
+
+    fireEvent.click(within(article).getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(createWorkflowImageRoleOptionMock).toHaveBeenCalledWith('Underside Detail');
     });
   });
 });

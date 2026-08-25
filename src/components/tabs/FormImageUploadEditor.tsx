@@ -18,6 +18,14 @@ import {
   type ImageNamingContext,
 } from '@/services/imageNamingFormatter';
 import type { WorkflowImageRole } from '@/services/workflowImageMetadata';
+import {
+  createWorkflowImageRoleOption,
+  findWorkflowImageRoleOption,
+  getWorkflowImageRoleSelectValue,
+  loadWorkflowImageRoleOptions,
+  toWorkflowImageRoleSelection,
+  type WorkflowImageRoleSelectOption,
+} from '@/services/workflowImageRoles';
 
 interface EditableUploadItem {
   id: string;
@@ -264,6 +272,10 @@ export function FormImageUploadEditor({
   const [defaultsExpanded, setDefaultsExpanded] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [enlargedPreview, setEnlargedPreview] = useState<EnlargedPreviewState | null>(null);
+  const [imageRoleOptions, setImageRoleOptions] = useState<WorkflowImageRoleSelectOption[]>([]);
+  const [savingCustomRoleItemId, setSavingCustomRoleItemId] = useState<string | null>(null);
+  const [customRoleSaveErrors, setCustomRoleSaveErrors] = useState<Record<string, string>>({});
+  const [customRoleSaveSuccess, setCustomRoleSaveSuccess] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const itemsRef = useRef<EditableUploadItem[]>([]);
   const onFilesChangeRef = useRef(onFilesChange);
@@ -290,6 +302,23 @@ export function FormImageUploadEditor({
   useEffect(() => {
     itemsRef.current = items;
   }, [items]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadOptions = async () => {
+      const nextOptions = await loadWorkflowImageRoleOptions();
+      if (!cancelled) {
+        setImageRoleOptions(nextOptions);
+      }
+    };
+
+    void loadOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -492,6 +521,84 @@ export function FormImageUploadEditor({
         continue;
       }
       await processSingleItem(item.id);
+    }
+  };
+
+  const addCustomRoleToSharedTable = async (itemId: string) => {
+    const currentItem = itemsRef.current.find((item) => item.id === itemId);
+    if (!currentItem) {
+      return;
+    }
+
+    const customRoleValue = currentItem.customImageRole.trim();
+    if (!customRoleValue) {
+      setCustomRoleSaveErrors((current) => ({
+        ...current,
+        [itemId]: 'Enter a custom role before adding it to Airtable.',
+      }));
+      setCustomRoleSaveSuccess((current) => ({ ...current, [itemId]: '' }));
+      return;
+    }
+
+    const existing = findWorkflowImageRoleOption(imageRoleOptions, customRoleValue);
+    if (existing) {
+      const existingSelection = toWorkflowImageRoleSelection(existing.value, customRoleValue);
+      setCustomRoleSaveErrors((current) => ({ ...current, [itemId]: '' }));
+      setCustomRoleSaveSuccess((current) => ({
+        ...current,
+        [itemId]: 'Role already exists in shared Airtable roles and is now selected.',
+      }));
+      updateItem(itemId, (item) => ({
+        ...item,
+        imageRole: existingSelection.imageRole,
+        customImageRole: existingSelection.customImageRole,
+      }));
+      return;
+    }
+
+    setSavingCustomRoleItemId(itemId);
+    setCustomRoleSaveErrors((current) => ({ ...current, [itemId]: '' }));
+    setCustomRoleSaveSuccess((current) => ({ ...current, [itemId]: '' }));
+    try {
+      const createdOption = await createWorkflowImageRoleOption(customRoleValue);
+      const refreshedOptions = await loadWorkflowImageRoleOptions();
+      setImageRoleOptions(refreshedOptions);
+
+      const selectedOption = findWorkflowImageRoleOption(refreshedOptions, customRoleValue) ?? createdOption;
+      const createdSelection = toWorkflowImageRoleSelection(selectedOption.value, customRoleValue);
+      updateItem(itemId, (item) => {
+        if (item.processed) {
+          revokeProcessedImage(item.processed);
+        }
+
+        const nextOutput = buildItemOutputFilename(item.originalFile.name, namingContext, createdSelection.imageRole, createdSelection.customImageRole);
+        return {
+          ...item,
+          imageRole: createdSelection.imageRole,
+          customImageRole: createdSelection.customImageRole,
+          outputFilename: nextOutput.filename,
+          outputWarnings: nextOutput.warnings,
+          altText: namingContext
+            ? buildImageAltText(namingContext, { role: createdSelection.imageRole, customRole: createdSelection.customImageRole })
+            : item.altText,
+          editedFile: null,
+          processed: null,
+          status: 'idle',
+          error: undefined,
+        };
+      });
+      setCustomRoleSaveSuccess((current) => ({
+        ...current,
+        [itemId]: 'Added to shared Airtable roles.',
+      }));
+    } catch (error) {
+      setCustomRoleSaveErrors((current) => ({
+        ...current,
+        [itemId]: error instanceof Error ? error.message : 'Unable to add role to Airtable.',
+      }));
+      setCustomRoleSaveSuccess((current) => ({ ...current, [itemId]: '' }));
+    } finally {
+      setSavingCustomRoleItemId(null);
     }
   };
 
@@ -841,16 +948,18 @@ export function FormImageUploadEditor({
                           </span>
                           <ApprovalSelect
                             selectClassName="mt-2 w-full appearance-none rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 pr-10 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                            value={item.imageRole ?? ''}
+                            value={getWorkflowImageRoleSelectValue(item.imageRole, item.customImageRole, imageRoleOptions)}
                             onChange={(event) => {
-                              const nextRole = event.currentTarget.value as WorkflowImageRole | '';
+                              const selectedValue = event.currentTarget.value;
                               updateItem(item.id, (current) => {
                                 if (current.processed) {
                                   revokeProcessedImage(current.processed);
                                 }
 
-                                const normalizedRole = nextRole || undefined;
-                                const nextCustomRole = normalizedRole === 'custom' ? current.customImageRole : '';
+                                const selection = toWorkflowImageRoleSelection(selectedValue, current.customImageRole);
+
+                                const normalizedRole = selection.imageRole;
+                                const nextCustomRole = selection.customImageRole;
                                 const nextOutput = buildItemOutputFilename(current.originalFile.name, namingContext, normalizedRole, nextCustomRole);
                                 return {
                                   ...current,
@@ -871,18 +980,9 @@ export function FormImageUploadEditor({
                             disabled={disabled}
                           >
                             <option value="">Select image role</option>
-                            <option value="front">Front</option>
-                            <option value="rear">Rear</option>
-                            <option value="serial-plate">Serial Plate</option>
-                            <option value="cosmetic-detail">Cosmetic Detail</option>
-                            <option value="connections">Connections</option>
-                            <option value="top">Top</option>
-                            <option value="bottom">Bottom</option>
-                            <option value="side">Side</option>
-                            <option value="interior">Interior</option>
-                            <option value="accessories">Accessories</option>
-                            <option value="packaging">Packaging</option>
-                            <option value="custom">Custom</option>
+                            {imageRoleOptions.map((option) => (
+                              <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
                           </ApprovalSelect>
                           {roleValidationError ? (
                             <p className="mt-2 text-xs text-amber-200/90">{roleValidationError}</p>
@@ -890,39 +990,62 @@ export function FormImageUploadEditor({
                         </label>
 
                         {item.imageRole === 'custom' ? (
-                          <label className="block">
-                            <span className="text-sm font-semibold text-[var(--ink)]">Custom role</span>
-                            <input
-                              type="text"
-                              className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                              value={item.customImageRole}
-                              onChange={(event) => {
-                                const nextCustomImageRole = event.currentTarget.value;
-                                updateItem(item.id, (current) => {
-                                  if (current.processed) {
-                                    revokeProcessedImage(current.processed);
-                                  }
+                          <div className="grid gap-2">
+                            <label className="block">
+                              <span className="text-sm font-semibold text-[var(--ink)]">Custom role</span>
+                              <input
+                                type="text"
+                                className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                                value={item.customImageRole}
+                                onChange={(event) => {
+                                  const nextCustomImageRole = event.currentTarget.value;
+                                  setCustomRoleSaveErrors((current) => ({ ...current, [item.id]: '' }));
+                                  setCustomRoleSaveSuccess((current) => ({ ...current, [item.id]: '' }));
+                                  updateItem(item.id, (current) => {
+                                    if (current.processed) {
+                                      revokeProcessedImage(current.processed);
+                                    }
 
-                                  const nextOutput = buildItemOutputFilename(current.originalFile.name, namingContext, current.imageRole, nextCustomImageRole);
-                                  return {
-                                    ...current,
-                                    customImageRole: nextCustomImageRole,
-                                    outputFilename: nextOutput.filename,
-                                    outputWarnings: nextOutput.warnings,
-                                    altText: namingContext
-                                      ? buildImageAltText(namingContext, { role: current.imageRole, customRole: nextCustomImageRole })
-                                      : current.altText,
-                                    editedFile: null,
-                                    processed: null,
-                                    status: 'idle',
-                                    error: undefined,
-                                  };
-                                });
-                              }}
-                              placeholder="For example: side-profile"
-                              disabled={disabled}
-                            />
-                          </label>
+                                    const nextOutput = buildItemOutputFilename(current.originalFile.name, namingContext, current.imageRole, nextCustomImageRole);
+                                    return {
+                                      ...current,
+                                      customImageRole: nextCustomImageRole,
+                                      outputFilename: nextOutput.filename,
+                                      outputWarnings: nextOutput.warnings,
+                                      altText: namingContext
+                                        ? buildImageAltText(namingContext, { role: current.imageRole, customRole: nextCustomImageRole })
+                                        : current.altText,
+                                      editedFile: null,
+                                      processed: null,
+                                      status: 'idle',
+                                      error: undefined,
+                                    };
+                                  });
+                                }}
+                                placeholder="For example: side-profile"
+                                disabled={disabled}
+                              />
+                            </label>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+                                onClick={() => {
+                                  void addCustomRoleToSharedTable(item.id);
+                                }}
+                                disabled={disabled || savingCustomRoleItemId === item.id}
+                              >
+                                {savingCustomRoleItemId === item.id ? 'Saving…' : 'Save'}
+                              </button>
+                              <span className="text-xs text-[var(--muted)]">Saves this custom role to the shared Airtable roles table.</span>
+                            </div>
+                            {customRoleSaveErrors[item.id] ? (
+                              <p className="m-0 text-xs text-rose-300">{customRoleSaveErrors[item.id]}</p>
+                            ) : null}
+                            {customRoleSaveSuccess[item.id] ? (
+                              <p className="m-0 text-xs text-emerald-300">{customRoleSaveSuccess[item.id]}</p>
+                            ) : null}
+                          </div>
                         ) : null}
                       </div>
 

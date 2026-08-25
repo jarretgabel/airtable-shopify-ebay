@@ -66,6 +66,8 @@ function resolveAirtableRequirement(event: APIGatewayProxyEventV2): RouteAccessR
       return { anyPage: ['listings'] };
     case 'shopify-vendors':
       return { anyPage: ['listings'] };
+    case 'workflow-image-roles':
+      return { anyPage: [...WORKFLOW_ACCESS_PAGES, 'listings'] };
     default:
       return { anyPage: WORKFLOW_ACCESS_PAGES };
   }

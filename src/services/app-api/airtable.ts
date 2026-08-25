@@ -15,7 +15,8 @@ export type AirtableConfiguredWriteSource =
   | 'approval-ebay'
   | 'approval-shopify'
   | 'approval-combined'
-  | 'shopify-vendors';
+  | 'shopify-vendors'
+  | 'workflow-image-roles';
 export type AirtableConfiguredMetadataSource = 'inventory-directory' | 'used-gear-workflow';
 export type AirtableConfiguredAttachmentSource = 'inventory-directory' | 'used-gear-workflow';
 
