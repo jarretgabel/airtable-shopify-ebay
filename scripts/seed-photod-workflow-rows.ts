@@ -244,7 +244,7 @@ function requireEnv(name: string): string {
 function usage(): string {
   return [
     'Usage:',
-    '  node --import tsx scripts/seed-photod-workflow-rows.ts plan [--stage "Approved for Publish"] [--output-dir path]',
+    '  node --import tsx scripts/seed-photod-workflow-rows.ts plan [--stage "Approved for Publish"] [--source-status "Photo\'d"] [--source-view viwXXXXXXXXXXXXXX] [--output-dir path]',
     '  node --import tsx scripts/seed-photod-workflow-rows.ts apply --plan path/to/plan.json --confirm SEED_PHOTOD_WORKFLOW_ROWS [--output-dir path]',
     '  node --import tsx scripts/seed-photod-workflow-rows.ts unseed --apply-results path/to/apply-results.json --confirm UNSEED_PHOTOD_WORKFLOW_ROWS [--output-dir path]',
     '',
@@ -253,6 +253,11 @@ function usage(): string {
     '  --stage "Awaiting Pre-Listing Review"',
     '  --stage "Approved for Publish"',
     '  --stage "listing approval" (alias for Approved for Publish)',
+    '',
+    'Source filters:',
+    '  --source-status "Photo\'d" (default)',
+    '  --source-status "Tested"',
+    '  --source-view viwXXXXXXXXXXXXXX (optional override for source view id)',
   ].join('\n');
 }
 
@@ -423,9 +428,28 @@ function normalizeStatus(rawStatus: string): string {
     .replace(/\s+/g, ' ');
 }
 
-function isPhotodStatus(rawStatus: string): boolean {
-  const normalized = normalizeStatus(rawStatus);
-  return normalized === "photo'd" || normalized === 'photod' || normalized === 'photo d';
+function normalizeSeedStatus(rawStatus: string): string {
+  return normalizeStatus(rawStatus).replace(/[^a-z0-9]+/g, '');
+}
+
+function resolveSourceStatusFilter(sourceStatusOptionValue: string | undefined): string {
+  if (!sourceStatusOptionValue || !sourceStatusOptionValue.trim()) {
+    return "Photo'd";
+  }
+
+  return sourceStatusOptionValue.trim();
+}
+
+function sourceStatusMatches(rawStatus: string, targetStatus: string): boolean {
+  const normalizedRaw = normalizeSeedStatus(rawStatus);
+  const normalizedTarget = normalizeSeedStatus(targetStatus);
+
+  // Backward-compatible aliases for historical Photo'd variants.
+  if (normalizedTarget === 'photod') {
+    return normalizedRaw === 'photod' || normalizedRaw === 'photoed';
+  }
+
+  return normalizedRaw === normalizedTarget;
 }
 
 function pickSourceValue(
@@ -632,10 +656,12 @@ async function runPlan(options: Record<string, string>): Promise<void> {
   requireEnv('AIRTABLE_API_KEY');
 
   const targetWorkflowStatus = resolveTargetWorkflowStatus(options.stage);
+  const sourceStatusFilter = resolveSourceStatusFilter(options['source-status']);
+  const sourceViewId = options['source-view']?.trim() || SOURCE_VIEW_ID;
 
   const runDir = createRunDirectory('plan', options['output-dir']);
 
-  const sourceRecords = await getRecords(SOURCE_BASE_ID, SOURCE_TABLE_ID, SOURCE_VIEW_ID);
+  const sourceRecords = await getRecords(SOURCE_BASE_ID, SOURCE_TABLE_ID, sourceViewId);
   const destinationRecords = await getRecords(DEST_BASE_ID, DEST_TABLE_ID);
   const destinationFieldMetadata = await getTableMetadata(DEST_BASE_ID, DEST_TABLE_ID);
   const destinationFieldTypeByName = buildWritableFieldTypeMap(destinationFieldMetadata);
@@ -660,7 +686,7 @@ async function runPlan(options: Record<string, string>): Promise<void> {
   for (const sourceRecord of sourceRecords) {
     const sourceFields = sourceRecord.fields;
     const sourceStatusRaw = firstTrimmedString(sourceFields, SOURCE_STATUS_FIELDS);
-    if (!sourceStatusRaw || !isPhotodStatus(sourceStatusRaw)) {
+    if (!sourceStatusRaw || !sourceStatusMatches(sourceStatusRaw, sourceStatusFilter)) {
       continue;
     }
 
@@ -731,25 +757,32 @@ async function runPlan(options: Record<string, string>): Promise<void> {
   }
 
   const summary = summarizePlanRows(rows);
+  const planSummary = {
+    ...summary,
+    sourceStatusFilter,
+    sourceViewId,
+  };
   const output: PlanOutput = {
     generatedAt: new Date().toISOString(),
     sourceBaseId: SOURCE_BASE_ID,
     sourceTableId: SOURCE_TABLE_ID,
-    sourceViewId: SOURCE_VIEW_ID,
+    sourceViewId,
     destBaseId: DEST_BASE_ID,
     destTableId: DEST_TABLE_ID,
     targetWorkflowStatus,
-    summary,
+    summary: planSummary,
     rows,
   };
 
   writeJson(path.join(runDir, 'plan.json'), output);
-  writeJson(path.join(runDir, 'summary.json'), summary);
+  writeJson(path.join(runDir, 'summary.json'), planSummary);
 
   console.log('Plan completed.');
   console.log(`Run directory: ${runDir}`);
+  console.log(`Source view: ${sourceViewId}`);
+  console.log(`Source status filter: ${sourceStatusFilter}`);
   console.log(`Target stage: ${targetWorkflowStatus}`);
-  console.log(`Rows with Photo'd status: ${summary.sourceRowsWithPhotodStatus}`);
+  console.log(`Rows matching source status: ${summary.sourceRowsWithPhotodStatus}`);
   console.log(`Creates: ${summary.creates}, Updates: ${summary.updates}, Skips: ${summary.skips}, Conflicts: ${summary.conflicts}`);
 }
 

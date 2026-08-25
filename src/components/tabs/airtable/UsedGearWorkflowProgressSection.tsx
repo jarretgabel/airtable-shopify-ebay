@@ -263,6 +263,7 @@ export function UsedGearWorkflowProgressSection({
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowProgressSortMode>('newest');
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
+  const hideSearchToolbarWhileLoading = loading && (queueMode === 'testing' || queueMode === 'photography');
 
   useEffect(() => {
     let cancelled = false;
@@ -387,23 +388,27 @@ export function UsedGearWorkflowProgressSection({
 
   return (
     <AppPageSectionSurface id={sectionId} className="space-y-4">
-      <div className="flex flex-col gap-4">
-        {showSectionIntro ? (
-          <AppSectionTitle title={queuePresentation.title} />
-        ) : null}
-        <QueueSearchToolbar
-          searchAriaLabel="Search used gear progress queue"
-          searchPlaceholder="Search by status, SKU, model, group, or next team"
-          searchValue={searchTerm}
-          onSearchChange={handleSearchTermChange}
-          refreshLabel="Refresh workflow processing and holding queue"
-          refreshLoadingLabel="Refreshing workflow processing and holding queue"
-          refreshing={refreshing}
-          onRefresh={() => {
-            void refreshQueue();
-          }}
-        />
-      </div>
+      {showSectionIntro || !hideSearchToolbarWhileLoading ? (
+        <div className="flex flex-col gap-4">
+          {showSectionIntro ? (
+            <AppSectionTitle title={queuePresentation.title} />
+          ) : null}
+          {!hideSearchToolbarWhileLoading ? (
+            <QueueSearchToolbar
+              searchAriaLabel="Search used gear progress queue"
+              searchPlaceholder="Search by status, SKU, model, group, or next team"
+              searchValue={searchTerm}
+              onSearchChange={handleSearchTermChange}
+              refreshLabel="Refresh workflow processing and holding queue"
+              refreshLoadingLabel="Refreshing workflow processing and holding queue"
+              refreshing={refreshing}
+              onRefresh={() => {
+                void refreshQueue();
+              }}
+            />
+          ) : null}
+        </div>
+      ) : null}
 
       {error ? (
         <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -421,7 +426,7 @@ export function UsedGearWorkflowProgressSection({
 
       <div className="space-y-4">
         {loading ? (
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-sm text-[var(--muted)]">
+          <div className="px-6 py-2 text-sm text-[var(--muted)]">
             Loading used-gear processing and holding queue...
           </div>
         ) : (() => {
