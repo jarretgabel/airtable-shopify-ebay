@@ -16,7 +16,8 @@ interface EbayTemplateCopyWysiwygEditorProps {
 }
 
 const toolbarButtonClass = 'inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--line)] text-[var(--ink)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50';
-const editorSurfaceClass = 'min-h-[180px] w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70 [&_a]:text-blue-700 [&_a]:underline [&_a]:decoration-blue-600 [&_a]:underline-offset-2 [&_a]:decoration-2 [&_a:hover]:text-blue-800 [&_a:focus-visible]:outline-none [&_a:focus-visible]:ring-2 [&_a:focus-visible]:ring-blue-400/50 [&_a:focus-visible]:rounded-sm';
+const editorSurfaceClass = 'min-h-[180px] w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70 [&_a]:text-blue-700 [&_a]:underline [&_a]:decoration-blue-600 [&_a]:underline-offset-2 [&_a]:decoration-2 [&_a:hover]:text-blue-800 [&_a:focus-visible]:outline-none [&_a:focus-visible]:ring-2 [&_a:focus-visible]:ring-blue-400/50 [&_a:focus-visible]:rounded-sm';
+const sourceEditorSurfaceClass = `${editorSurfaceClass} text-slate-900`;
 
 function IconBold() {
   return <span aria-hidden="true" className="text-sm font-black">B</span>;
@@ -116,6 +117,10 @@ function normalizeEditorHtml(rawHtml: string): string {
     return '<p><br></p>';
   }
 
+  if (/^\s*(<!doctype\s+html|<html\b)/i.test(trimmed)) {
+    return trimmed;
+  }
+
   return normalizeInlineFormattingTags(rawHtml);
 }
 
@@ -199,73 +204,29 @@ function normalizeInlineFormattingTags(rawHtml: string): string {
   return container.innerHTML;
 }
 
-function applyEditorCommand(command: string) {
-  if (typeof document === 'undefined') return;
-  document.execCommand(command, false);
+function applyEditorCommand(command: string, targetDocument?: Document | null) {
+  const doc = targetDocument ?? (typeof document !== 'undefined' ? document : null);
+  if (!doc) return;
+  doc.execCommand(command, false);
 }
 
-function applyEditorCommandWithValue(command: string, value: string) {
-  if (typeof document === 'undefined') return;
-  document.execCommand(command, false, value);
+function applyEditorCommandWithValue(command: string, value: string, targetDocument?: Document | null) {
+  const doc = targetDocument ?? (typeof document !== 'undefined' ? document : null);
+  if (!doc) return;
+  doc.execCommand(command, false, value);
+}
+
+function applyTextColor(value: string, targetDocument?: Document | null) {
+  const doc = targetDocument ?? (typeof document !== 'undefined' ? document : null);
+  if (!doc) return;
+  doc.execCommand('styleWithCSS', false, 'true');
+  doc.execCommand('foreColor', false, value);
+  doc.execCommand('styleWithCSS', false, 'false');
 }
 
 function preventToolbarMouseDown(event: React.MouseEvent<HTMLButtonElement>) {
   // Keep the current contentEditable selection so formatting applies to the selected text.
   event.preventDefault();
-}
-
-function getTemplateCopySegmentBounds(html: string): { start: number; openEnd: number; closeStart: number; closeEnd: number } | null {
-  const openMatch = /<div\b[^>]*\bclass\s*=\s*(?:"[^"]*\bh\b[^"]*"|'[^']*\bh\b[^']*'|h)\b[^>]*>/i.exec(html);
-  if (!openMatch || typeof openMatch.index !== 'number') return null;
-
-  const start = openMatch.index;
-  const openEnd = start + openMatch[0].length;
-  const divTagPattern = /<\/?div\b[^>]*>/gi;
-  divTagPattern.lastIndex = openEnd;
-
-  let depth = 1;
-  let closeStart = -1;
-  let closeEnd = -1;
-
-  for (let tagMatch = divTagPattern.exec(html); tagMatch; tagMatch = divTagPattern.exec(html)) {
-    const tag = tagMatch[0].toLowerCase();
-    const isClosing = tag.startsWith('</div');
-    const isSelfClosing = !isClosing && /\/\s*>$/.test(tag);
-
-    if (isSelfClosing) {
-      continue;
-    }
-
-    if (isClosing) {
-      depth -= 1;
-      if (depth === 0) {
-        closeStart = tagMatch.index;
-        closeEnd = closeStart + tagMatch[0].length;
-        break;
-      }
-    } else {
-      depth += 1;
-    }
-  }
-
-  if (closeStart < 0 || closeEnd < 0) return null;
-
-  return { start, openEnd, closeStart, closeEnd };
-}
-
-function extractTemplateCopyHtml(html: string): string {
-  const bounds = getTemplateCopySegmentBounds(html);
-  if (!bounds) return html;
-  return html.slice(bounds.openEnd, bounds.closeStart).trim() || '<p><br></p>';
-}
-
-function replaceTemplateCopyHtml(fullHtml: string, nextCopyHtml: string): string {
-  const bounds = getTemplateCopySegmentBounds(fullHtml);
-  if (!bounds) return fullHtml;
-
-  const before = fullHtml.slice(0, bounds.openEnd);
-  const after = fullHtml.slice(bounds.closeStart);
-  return `${before}${nextCopyHtml}${after}`;
 }
 
 export function EbayTemplateCopyWysiwygEditor({
@@ -275,40 +236,124 @@ export function EbayTemplateCopyWysiwygEditor({
   onValueChange,
   disabled = false,
   label = 'Advanced: eBay Template Copy',
-  helperText = 'WYSIWYG editor scoped to this disclaimer/body text block only. Add lines and apply formatting here.',
+  helperText = 'WYSIWYG editor for the full eBay Body HTML. Rich edits apply directly to the complete template markup.',
 }: EbayTemplateCopyWysiwygEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const savedSelectionRef = useRef<Range | null>(null);
   const lastRenderedScopedHtmlRef = useRef<string>('');
   const latestFullHtmlRef = useRef<string>(value);
   const [sourceMode, setSourceMode] = useState(false);
+  const [iframeHeight, setIframeHeight] = useState(560);
+  const [selectedTextColor, setSelectedTextColor] = useState('#cc0000');
 
-  const scopedHtml = extractTemplateCopyHtml(value);
+  const editorHtml = value.trim() || '<p><br></p>';
+  const isFullHtmlDocument = /^\s*(<!doctype\s+html|<html\b)/i.test(editorHtml);
+
+  const getIframeDocument = () => iframeRef.current?.contentDocument ?? null;
+
+  const getIframeSelection = () => iframeRef.current?.contentWindow?.getSelection() ?? null;
+
+  const getIframeHtml = () => {
+    const doc = getIframeDocument();
+    if (!doc) return '';
+    return doc.documentElement?.outerHTML?.trim() || '';
+  };
+
+  const measureIframeHeight = () => {
+    const doc = getIframeDocument();
+    if (!doc) return;
+    const bodyHeight = doc.body?.scrollHeight ?? 0;
+    const htmlHeight = doc.documentElement?.scrollHeight ?? 0;
+    const next = Math.max(bodyHeight, htmlHeight, 360);
+    if (next !== iframeHeight) {
+      setIframeHeight(next);
+    }
+  };
 
   useEffect(() => {
     latestFullHtmlRef.current = value;
   }, [value]);
 
   useEffect(() => {
+    if (isFullHtmlDocument && !sourceMode) return;
     const editor = editorRef.current;
     if (!editor) return;
     if (document.activeElement === editor) return;
-    if (editor.innerHTML === scopedHtml) return;
-    editor.innerHTML = scopedHtml;
-    lastRenderedScopedHtmlRef.current = scopedHtml;
-  }, [scopedHtml, sourceMode]);
+    if (editor.innerHTML === editorHtml) return;
+    editor.innerHTML = editorHtml;
+    lastRenderedScopedHtmlRef.current = editorHtml;
+  }, [editorHtml, sourceMode, isFullHtmlDocument]);
 
-  const commitScopedHtml = (nextScopedHtml: string) => {
-    const normalizedScoped = normalizeEditorHtml(nextScopedHtml);
-    lastRenderedScopedHtmlRef.current = normalizedScoped;
-    const baseFullHtml = latestFullHtmlRef.current;
-    const nextFullHtml = replaceTemplateCopyHtml(baseFullHtml, normalizedScoped);
-    latestFullHtmlRef.current = nextFullHtml;
-    setFormValue(fieldName, nextFullHtml);
-    onValueChange?.(nextFullHtml);
+  useEffect(() => {
+    if (!isFullHtmlDocument || sourceMode) return;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const doc = iframe.contentDocument;
+    if (!doc) return;
+
+    // Only rewrite iframe when source value changed externally.
+    if (lastRenderedScopedHtmlRef.current === editorHtml) return;
+
+    doc.open();
+    doc.write(editorHtml);
+    doc.close();
+    try {
+      doc.designMode = disabled ? 'off' : 'on';
+    } catch {
+      // Ignore browser restrictions and keep best-effort editing.
+    }
+    lastRenderedScopedHtmlRef.current = editorHtml;
+
+    const onInput = () => {
+      latestFullHtmlRef.current = getIframeHtml() || latestFullHtmlRef.current;
+      measureIframeHeight();
+    };
+    const onBlur = () => {
+      const next = getIframeHtml();
+      if (next) {
+        commitEditorHtml(next);
+      }
+      measureIframeHeight();
+    };
+    const onSelectionChange = () => {
+      saveEditorSelection();
+      measureIframeHeight();
+    };
+
+    doc.addEventListener('input', onInput);
+    doc.addEventListener('mouseup', onSelectionChange);
+    doc.addEventListener('keyup', onSelectionChange);
+    doc.addEventListener('focusin', onSelectionChange);
+    doc.addEventListener('focusout', onBlur);
+    measureIframeHeight();
+
+    return () => {
+      doc.removeEventListener('input', onInput);
+      doc.removeEventListener('mouseup', onSelectionChange);
+      doc.removeEventListener('keyup', onSelectionChange);
+      doc.removeEventListener('focusin', onSelectionChange);
+      doc.removeEventListener('focusout', onBlur);
+    };
+  }, [editorHtml, sourceMode, isFullHtmlDocument, disabled]);
+
+  const commitEditorHtml = (nextHtml: string) => {
+    const normalizedHtml = normalizeEditorHtml(nextHtml);
+    lastRenderedScopedHtmlRef.current = normalizedHtml;
+    latestFullHtmlRef.current = normalizedHtml;
+    setFormValue(fieldName, normalizedHtml);
+    onValueChange?.(normalizedHtml);
   };
 
   const saveEditorSelection = () => {
+    if (isFullHtmlDocument && !sourceMode) {
+      const iframeSelection = getIframeSelection();
+      if (!iframeSelection || iframeSelection.rangeCount === 0) return;
+      savedSelectionRef.current = iframeSelection.getRangeAt(0).cloneRange();
+      return;
+    }
+
     if (typeof window === 'undefined') return;
     const selection = window.getSelection();
     const editor = editorRef.current;
@@ -320,33 +365,74 @@ export function EbayTemplateCopyWysiwygEditor({
   };
 
   const restoreEditorSelection = () => {
+    const range = savedSelectionRef.current;
+    if (!range) return;
+
+    if (isFullHtmlDocument && !sourceMode) {
+      const iframeSelection = getIframeSelection();
+      if (!iframeSelection) return;
+      iframeSelection.removeAllRanges();
+      iframeSelection.addRange(range);
+      return;
+    }
+
     if (typeof window === 'undefined') return;
     const selection = window.getSelection();
-    const range = savedSelectionRef.current;
-    if (!selection || !range) return;
-
+    if (!selection) return;
     selection.removeAllRanges();
     selection.addRange(range);
   };
 
   const runToolbarCommand = (command: string, commandValue?: string) => {
-    const editor = editorRef.current;
-    if (!editor || disabled || sourceMode) return;
+    if (disabled || sourceMode) return;
+    const targetDocument = isFullHtmlDocument ? getIframeDocument() : (typeof document !== 'undefined' ? document : null);
+    if (!targetDocument) return;
 
-    editor.focus();
+    if (isFullHtmlDocument) {
+      iframeRef.current?.contentWindow?.focus();
+    } else {
+      const editor = editorRef.current;
+      if (!editor) return;
+      editor.focus();
+    }
     restoreEditorSelection();
 
     // Prefer semantic tags (<strong>/<em>/<u>) over inline style spans.
-    applyEditorCommandWithValue('styleWithCSS', 'false');
+    applyEditorCommandWithValue('styleWithCSS', 'false', targetDocument);
 
     if (typeof commandValue === 'string') {
-      applyEditorCommandWithValue(command, commandValue);
+      applyEditorCommandWithValue(command, commandValue, targetDocument);
     } else {
-      applyEditorCommand(command);
+      applyEditorCommand(command, targetDocument);
     }
 
     saveEditorSelection();
-    commitScopedHtml(editor.innerHTML ?? '');
+    const nextHtml = isFullHtmlDocument
+      ? getIframeHtml()
+      : (editorRef.current?.innerHTML ?? '');
+    commitEditorHtml(nextHtml);
+  };
+
+  const runColorCommand = (colorValue: string) => {
+    if (disabled || sourceMode) return;
+    const targetDocument = isFullHtmlDocument ? getIframeDocument() : (typeof document !== 'undefined' ? document : null);
+    if (!targetDocument) return;
+
+    if (isFullHtmlDocument) {
+      iframeRef.current?.contentWindow?.focus();
+    } else {
+      const editor = editorRef.current;
+      if (!editor) return;
+      editor.focus();
+    }
+    restoreEditorSelection();
+    applyTextColor(colorValue, targetDocument);
+    saveEditorSelection();
+
+    const nextHtml = isFullHtmlDocument
+      ? getIframeHtml()
+      : (editorRef.current?.innerHTML ?? '');
+    commitEditorHtml(nextHtml);
   };
 
   return (
@@ -381,31 +467,77 @@ export function EbayTemplateCopyWysiwygEditor({
           <button type="button" className={toolbarButtonClass} title="Align left" aria-label="Align left" onMouseDown={preventToolbarMouseDown} onClick={() => runToolbarCommand('justifyLeft')} disabled={disabled || sourceMode}><IconAlignLeft /></button>
           <button type="button" className={toolbarButtonClass} title="Align center" aria-label="Align center" onMouseDown={preventToolbarMouseDown} onClick={() => runToolbarCommand('justifyCenter')} disabled={disabled || sourceMode}><IconAlignCenter /></button>
           <button type="button" className={toolbarButtonClass} title="Align right" aria-label="Align right" onMouseDown={preventToolbarMouseDown} onClick={() => runToolbarCommand('justifyRight')} disabled={disabled || sourceMode}><IconAlignRight /></button>
+          <label
+            className={`${toolbarButtonClass} relative overflow-hidden`}
+            title="Choose text color"
+            aria-label="Choose text color"
+            onMouseDown={(event) => {
+              preventToolbarMouseDown(event as unknown as React.MouseEvent<HTMLButtonElement>);
+              saveEditorSelection();
+            }}
+          >
+            <span
+              aria-hidden="true"
+              className="h-4 w-4 rounded-sm border border-white/35 shadow-[inset_0_0_0_1px_rgba(0,0,0,.18)]"
+              style={{ backgroundColor: selectedTextColor }}
+            />
+            <input
+              type="color"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              value={selectedTextColor}
+              disabled={disabled || sourceMode}
+              onChange={(event) => {
+                const nextColor = event.target.value;
+                setSelectedTextColor(nextColor);
+                runColorCommand(nextColor);
+              }}
+            />
+          </label>
           <button type="button" className={toolbarButtonClass} title={sourceMode ? 'Switch to visual mode' : 'Switch to HTML source mode'} aria-label={sourceMode ? 'Switch to visual mode' : 'Switch to HTML source mode'} onClick={() => setSourceMode((current) => !current)} disabled={disabled}>{sourceMode ? <IconVisualMode /> : <IconSourceMode />}</button>
         </div>
 
         {sourceMode ? (
           <textarea
-            className={`${editorSurfaceClass} resize-y font-mono leading-[1.4]`}
-            value={scopedHtml}
-            onChange={(event) => commitScopedHtml(event.target.value)}
+            className={`${sourceEditorSurfaceClass} resize-y font-mono leading-[1.4]`}
+            value={editorHtml}
+            onChange={(event) => commitEditorHtml(event.target.value)}
             disabled={disabled}
-            aria-label="eBay template copy HTML source"
+            aria-label="eBay body HTML source"
           />
         ) : (
-          <div
-            ref={editorRef}
-            className={`${editorSurfaceClass} leading-[1.5]`}
-            contentEditable={!disabled}
-            suppressContentEditableWarning
-            onMouseUp={saveEditorSelection}
-            onKeyUp={saveEditorSelection}
-            onFocus={saveEditorSelection}
-            onInput={(event) => commitScopedHtml((event.currentTarget as HTMLDivElement).innerHTML)}
-            onBlur={(event) => commitScopedHtml((event.currentTarget as HTMLDivElement).innerHTML)}
-            aria-label="eBay template copy visual editor"
-            role="textbox"
-          />
+          isFullHtmlDocument ? (
+            <iframe
+              ref={iframeRef}
+              title="eBay body HTML visual editor"
+              className="w-full rounded-xl border border-[var(--line)] bg-white"
+              style={{ height: `${iframeHeight}px` }}
+              sandbox="allow-same-origin"
+              onLoad={() => {
+                const doc = getIframeDocument();
+                if (!doc) return;
+                try {
+                  doc.designMode = disabled ? 'off' : 'on';
+                } catch {
+                  // Ignore browser restrictions.
+                }
+                measureIframeHeight();
+              }}
+            />
+          ) : (
+            <div
+              ref={editorRef}
+              className={`${editorSurfaceClass} leading-[1.5]`}
+              contentEditable={!disabled}
+              suppressContentEditableWarning
+              onMouseUp={saveEditorSelection}
+              onKeyUp={saveEditorSelection}
+              onFocus={saveEditorSelection}
+              onInput={(event) => commitEditorHtml((event.currentTarget as HTMLDivElement).innerHTML)}
+              onBlur={(event) => commitEditorHtml((event.currentTarget as HTMLDivElement).innerHTML)}
+              aria-label="eBay body HTML visual editor"
+              role="textbox"
+            />
+          )
         )}
       </div>
     </details>

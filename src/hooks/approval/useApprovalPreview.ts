@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { normalizeApprovalRecord } from '@/services/app-api/approval';
+import {
+  EBAY_BODY_ABOUT_DEFAULT_TEXT,
+  EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
+  EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD,
+} from '@/components/approval/listingApprovalEbayConstants';
 import type { EbayApprovalPreviewResult } from '@/services/app-api/ebay';
 import type { ShopifyApprovalPreviewResult } from '@/services/app-api/shopify';
 import type { ApprovalFieldKind } from '@/stores/approval/approvalStoreFieldUtils';
@@ -32,6 +37,21 @@ function resolveCombinedPreviewValue(
   if (sourceValue) return sourceValue;
 
   return toPreviewTextValue(selectedRecord?.fields[fieldName]).trim();
+}
+
+function resolveEbayDescriptionPreviewValue(
+  formValues: Record<string, string>,
+  sourceFields: Record<string, unknown> | null | undefined,
+  selectedRecord: AirtableRecord | null,
+  combinedDescriptionFieldName: string,
+): string {
+  const overrideDescription = (formValues[EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD] ?? '').trim();
+  if (overrideDescription) return overrideDescription;
+  return resolveCombinedPreviewValue(formValues, sourceFields, selectedRecord, combinedDescriptionFieldName);
+}
+
+function resolveEbayAboutPreviewValue(formValues: Record<string, string>): string {
+  return (formValues[EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD] ?? '').trim() || EBAY_BODY_ABOUT_DEFAULT_TEXT;
 }
 
 function stableSerialize(value: unknown): string {
@@ -141,11 +161,12 @@ export function useApprovalPreview({
     return {
       templateHtml: selectedEbayTemplateHtml,
       title: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayTitleFieldName),
-      description: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedDescriptionFieldName),
+      description: resolveEbayDescriptionPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedDescriptionFieldName),
       keyFeatures: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedSharedKeyFeaturesFieldName),
       testingNotes: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayTestingNotesFieldName),
       make: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedMakeFieldName),
       model: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedModelFieldName),
+      about: resolveEbayAboutPreviewValue(formValues),
       componentType: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Component Type'),
       serialNumber: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Serial Number'),
       condition: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, '__Condition__')

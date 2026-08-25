@@ -238,6 +238,7 @@ export async function getEbayApprovalPreview(
     templateHtml: string;
     title: string;
     description: string;
+    about?: string;
     keyFeatures: string;
     testingNotes?: string;
     make?: string;

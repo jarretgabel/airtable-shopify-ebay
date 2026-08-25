@@ -82,10 +82,22 @@ export function isEbayGlobalShippingField(fieldName: string): boolean {
 
 export function isEbayBodyDescriptionField(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
   return normalized === 'description'
     || normalized === 'item description'
     || normalized === 'ebay inventory product description'
-    || normalized === 'ebay_inventory_product_description';
+    || normalized === 'ebay inventory description'
+    || normalized === 'ebay description'
+    || normalized === 'ebay body description'
+    || normalized === 'ebay listing description'
+    || normalized === 'ebay_inventory_product_description'
+    || normalized === 'ebay_inventory_description'
+    || normalized === 'ebay_body_description'
+    || normalized === 'ebay_listing_description'
+    || compact === 'ebayinventoryproductdescription'
+    || compact === 'ebayinventorydescription'
+    || compact === 'ebaybodydescription'
+    || compact === 'ebaylistingdescription';
 }
 
 export function isGenericSharedKeyFeaturesField(fieldName: string): boolean {

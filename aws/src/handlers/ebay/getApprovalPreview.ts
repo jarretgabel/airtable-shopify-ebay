@@ -11,6 +11,7 @@ interface GetEbayApprovalPreviewBody {
     templateHtml: string;
     title: string;
     description: string;
+    about?: string;
     keyFeatures: string;
     testingNotes?: string;
     fieldName?: string;

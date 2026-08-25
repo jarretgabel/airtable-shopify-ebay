@@ -1,4 +1,4 @@
-import ebayListingInsertTemplate from '@/templates/ebay/ebay-listing-insert.html?raw';
+import ebayListingHeaaTemplate from '@/templates/ebay/ebay-listing-heaa.html?raw';
 import ebayListingImpactSlateTemplate from '@/templates/ebay/ebay-listing-impact-slate.html?raw';
 import ebayListingImpactLuxeTemplate from '@/templates/ebay/ebay-listing-impact-luxe.html?raw';
 
@@ -139,16 +139,20 @@ export const EBAY_BODY_HTML_TEMPLATE_FIELD_CANDIDATES = [
   'ebay_listing_template',
 ] as const;
 
+export const EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD = '__ebay_body_description_override__';
+export const EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD = '__ebay_body_about_override__';
+export const EBAY_BODY_ABOUT_DEFAULT_TEXT = 'High-End Audio Auctions has been THE trusted source for high-end, classic and vintage audio components on eBay since 2000. Our unique products, unparalleled service and bombproof packaging keeps customers coming back again and again. We are experts at worldwide selling and shipping, with items ranging from $5 to $50,000.';
+
 export type EbayListingTemplateId = 'classic' | 'impact-slate' | 'impact-luxe';
 
 export const EBAY_LISTING_TEMPLATE_OPTIONS: ReadonlyArray<{ id: EbayListingTemplateId; label: string }> = [
-  { id: 'classic', label: 'Classic Heritage' },
+  { id: 'classic', label: 'HEAA Classic' },
   { id: 'impact-slate', label: 'Impact Slate' },
   { id: 'impact-luxe', label: 'Impact Luxe' },
 ] as const;
 
 const EBAY_LISTING_TEMPLATE_HTML_BY_ID: Record<EbayListingTemplateId, string> = {
-  classic: ebayListingInsertTemplate,
+  classic: ebayListingHeaaTemplate,
   'impact-slate': ebayListingImpactSlateTemplate,
   'impact-luxe': ebayListingImpactLuxeTemplate,
 };
@@ -219,7 +223,7 @@ export function normalizeEbayListingTemplateId(value: string): EbayListingTempla
 }
 
 export function resolveEbayListingTemplateHtml(templateId: EbayListingTemplateId): string {
-  return EBAY_LISTING_TEMPLATE_HTML_BY_ID[templateId] ?? ebayListingInsertTemplate;
+  return EBAY_LISTING_TEMPLATE_HTML_BY_ID[templateId] ?? ebayListingHeaaTemplate;
 }
 
 export const EBAY_DRAFT_PAYLOAD_DOCS_EXAMPLE = {

@@ -20,6 +20,8 @@ interface EbaySupplementalBodyFields {
   audiogonRating?: string;
 }
 
+const DEFAULT_HEAA_ABOUT_TEXT = 'High-End Audio Auctions has been THE trusted source for high-end, classic and vintage audio components on eBay since 2000. Our unique products, unparalleled service and bombproof packaging keeps customers coming back again and again. We are experts at worldwide selling and shipping, with items ranging from $5 to $50,000.';
+
 function normalizeTemplateFeatureName(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
 }
@@ -205,7 +207,8 @@ function mergeTemplateTestingEntries(rawValue: string, supplementalFields: EbayS
 export function buildEbayBodyHtmlFromTemplate(input: EbayBodyPreviewInput): string {
   const withTitle = replaceTemplateToken(input.templateHtml, 'title', input.title);
   const withDescription = replaceTemplateToken(withTitle, 'description', input.description);
-  const withKeyFeatures = applyTableRows(withDescription, {
+  const withAbout = replaceTemplateToken(withDescription, 'about', (input.about ?? '').trim() || DEFAULT_HEAA_ABOUT_TEXT);
+  const withKeyFeatures = applyTableRows(withAbout, {
     tableId: 'key-features',
     rawValue: mergeTemplateKeyFeatureEntries(input.keyFeatures, input.make ?? '', input.model ?? '', {
       componentType: input.componentType,

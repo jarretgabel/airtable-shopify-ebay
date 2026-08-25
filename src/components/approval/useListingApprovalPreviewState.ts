@@ -4,7 +4,10 @@ import {
   EMPTY_SHOPIFY_FIELD_RESOLUTION,
 } from '@/components/approval/listingApprovalShopifyConstants';
 import {
+  EBAY_BODY_ABOUT_DEFAULT_TEXT,
+  EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
   resolveEbayListingTemplateHtml,
+  EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD,
   type EbayListingTemplateId,
 } from '@/components/approval/listingApprovalEbayConstants';
 import {
@@ -65,6 +68,27 @@ function buildCombinedPreviewSourceFields(
   });
 
   return nextFields;
+}
+
+function resolveEbayDescriptionPreviewValue(params: {
+  formValues: Record<string, string>;
+  sourceFields: Record<string, unknown> | null | undefined;
+  selectedRecord: AirtableRecord | null;
+  combinedDescriptionFieldName: string;
+}): string {
+  const overrideDescription = (params.formValues[EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD] ?? '').trim();
+  if (overrideDescription) return overrideDescription;
+
+  return resolveCombinedPreviewFieldValue(
+    params.formValues,
+    params.sourceFields,
+    params.selectedRecord,
+    params.combinedDescriptionFieldName,
+  );
+}
+
+function resolveEbayAboutPreviewValue(formValues: Record<string, string>): string {
+  return (formValues[EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD] ?? '').trim() || EBAY_BODY_ABOUT_DEFAULT_TEXT;
 }
 
 interface UseListingApprovalPreviewStateParams {
@@ -168,7 +192,12 @@ export function useListingApprovalPreviewState({
     return buildEbayBodyHtmlFromTemplate(
       selectedEbayTemplateHtml,
       resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayTitleFieldName),
-      resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, combinedDescriptionFieldName),
+      resolveEbayDescriptionPreviewValue({
+        formValues,
+        sourceFields: mergedDraftSourceFields,
+        selectedRecord,
+        combinedDescriptionFieldName,
+      }),
       resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, combinedSharedKeyFeaturesFieldName),
       resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayTestingNotesFieldName),
       resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, combinedMakeFieldName),
@@ -188,6 +217,7 @@ export function useListingApprovalPreviewState({
         shippingDimensions: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Shipping Dims'),
         audiogonRating: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Audiogon Rating'),
       },
+      resolveEbayAboutPreviewValue(formValues),
     );
   }, [
     combinedDescriptionFieldName,
@@ -205,10 +235,10 @@ export function useListingApprovalPreviewState({
     () => resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayBodyHtmlFieldName).trim(),
     [combinedEbayBodyHtmlFieldName, formValues, mergedDraftSourceFields, selectedRecord],
   );
-  const combinedEbayGeneratedBodyHtml = combinedEbayManualBodyHtmlOverride
-    || (localCombinedEbayGeneratedBodyHtml.trim()
-      ? localCombinedEbayGeneratedBodyHtml
-      : (ebayApprovalPreview?.generatedBodyHtml?.trim() ? ebayApprovalPreview.generatedBodyHtml : ''));
+  const combinedEbayGeneratedBodyHtml = localCombinedEbayGeneratedBodyHtml.trim()
+    ? localCombinedEbayGeneratedBodyHtml
+    : (combinedEbayManualBodyHtmlOverride
+      || (ebayApprovalPreview?.generatedBodyHtml?.trim() ? ebayApprovalPreview.generatedBodyHtml : ''));
 
   const ebayDraftPayloadBundle = useMemo(() => {
     if (!isEbayPayloadPreviewContext) return null;

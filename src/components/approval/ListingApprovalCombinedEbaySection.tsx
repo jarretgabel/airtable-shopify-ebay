@@ -19,7 +19,6 @@ import {
 import { findEbayBodyHtmlFieldName } from '@/components/approval/listingApprovalFieldHelpers';
 import type { ListingApprovalCombinedEbaySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 import { useAuthStore } from '@/stores/auth/authStore';
-import { EbayTemplateCopyWysiwygEditor } from '@/components/approval/EbayTemplateCopyWysiwygEditor';
 
 const EbayApprovalPayloadDetails = lazy(async () => ({
   default: (await import('@/components/approval/ListingApprovalRecordPayloadPanels')).EbayApprovalPayloadDetails,
@@ -66,10 +65,10 @@ export function ListingApprovalCombinedEbaySection({
   const editableEbayBodyHtmlValue = editableEbayBodyHtmlFieldName
     ? (formValues[editableEbayBodyHtmlFieldName] ?? '')
     : '';
-  const effectiveEbayBodyHtmlForPreview = editableEbayBodyHtmlValue
-    || combinedEbayBodyHtmlValue
-    || bodyHtmlPreview
-    || combinedEbayGeneratedBodyHtml;
+  const effectiveEbayBodyHtmlForPreview = bodyHtmlPreview
+    || combinedEbayGeneratedBodyHtml
+    || editableEbayBodyHtmlValue
+    || combinedEbayBodyHtmlValue;
 
   const showDeveloperPayloadPanels = useAuthStore((state) => {
     const currentUser = state.users.find((user) => user.id === state.currentUserId);
@@ -139,17 +138,6 @@ export function ListingApprovalCombinedEbaySection({
           onBodyHtmlPreviewChange={setBodyHtmlPreview}
           selectedEbayTemplateId={selectedEbayTemplateId}
           onEbayTemplateIdChange={setSelectedEbayTemplateId}
-          ebayAdvancedOptionsExtraContent={editableEbayBodyHtmlFieldName ? (
-            <EbayTemplateCopyWysiwygEditor
-              fieldName={editableEbayBodyHtmlFieldName}
-              value={effectiveEbayBodyHtmlForPreview}
-              setFormValue={setFormValue}
-              onValueChange={setBodyHtmlPreview}
-              disabled={saving}
-              label="Advanced: eBay Template Copy"
-              helperText="WYSIWYG editor for this body text block only (not the full template HTML)."
-            />
-          ) : null}
         />
 
         <div

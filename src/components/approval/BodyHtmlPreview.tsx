@@ -35,7 +35,8 @@ export function BodyHtmlPreview({
 }: BodyHtmlPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const resizeTimerRef = useRef<number | null>(null);
-  const [iframeHeight, setIframeHeight] = useState<number>(900);
+  const observerDisconnectRef = useRef<(() => void) | null>(null);
+  const [iframeHeight, setIframeHeight] = useState<number>(520);
   const sanitizedHtml = useMemo(() => DOMPurify.sanitize(value), [value]);
   const sanitizedIframeDoc = useMemo(
     () => DOMPurify.sanitize(value, { WHOLE_DOCUMENT: true }),
@@ -48,13 +49,57 @@ export function BodyHtmlPreview({
     const doc = iframe.contentDocument;
     if (!doc) return;
 
-    const bodyHeight = doc.body?.scrollHeight ?? 0;
-    const htmlHeight = doc.documentElement?.scrollHeight ?? 0;
-    const nextHeight = Math.max(bodyHeight, htmlHeight, 320);
+    const bodyHeight = Math.max(
+      doc.body?.scrollHeight ?? 0,
+      doc.body?.offsetHeight ?? 0,
+      doc.body?.clientHeight ?? 0,
+    );
+    // Avoid documentElement.scrollHeight because it can mirror iframe viewport height
+    // and create a growth-only feedback loop when content shrinks.
+    const htmlOffsetHeight = doc.documentElement?.offsetHeight ?? 0;
+    const nextHeight = Math.max(bodyHeight, htmlOffsetHeight, 320);
     if (Number.isFinite(nextHeight) && nextHeight > 0) {
-      setIframeHeight(nextHeight);
+      setIframeHeight((currentHeight) => (Math.abs(currentHeight - nextHeight) > 1 ? nextHeight : currentHeight));
     }
   }, []);
+
+  const disconnectIframeObservers = useCallback(() => {
+    if (observerDisconnectRef.current) {
+      observerDisconnectRef.current();
+      observerDisconnectRef.current = null;
+    }
+  }, []);
+
+  const attachIframeObservers = useCallback((iframe: HTMLIFrameElement) => {
+    disconnectIframeObservers();
+
+    const doc = iframe.contentDocument;
+    if (!doc) return;
+
+    const body = doc.body;
+    const html = doc.documentElement;
+    if (!body || !html) return;
+
+    const scheduleMeasure = () => {
+      window.requestAnimationFrame(() => measureIframeHeight(iframe));
+    };
+
+    const resizeObserver = new ResizeObserver(scheduleMeasure);
+    resizeObserver.observe(body);
+
+    const mutationObserver = new MutationObserver(scheduleMeasure);
+    mutationObserver.observe(body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      characterData: true,
+    });
+
+    observerDisconnectRef.current = () => {
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, [disconnectIframeObservers, measureIframeHeight]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -67,12 +112,13 @@ export function BodyHtmlPreview({
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      disconnectIframeObservers();
       if (resizeTimerRef.current !== null) {
         window.clearInterval(resizeTimerRef.current);
         resizeTimerRef.current = null;
       }
     };
-  }, [measureIframeHeight]);
+  }, [disconnectIframeObservers, measureIframeHeight]);
 
   useEffect(() => {
     if (!isFullHtmlDocument || !hasValue || !iframeRef.current) return;
@@ -105,6 +151,7 @@ export function BodyHtmlPreview({
         scrolling="no"
         onLoad={(event) => {
           const iframe = event.currentTarget;
+          attachIframeObservers(iframe);
           measureIframeHeight(iframe);
 
           const win = iframe.contentWindow;
@@ -119,14 +166,14 @@ export function BodyHtmlPreview({
           }
           resizeTimerRef.current = window.setInterval(() => {
             measureIframeHeight(iframe);
-          }, 500);
+          }, 400);
 
           win.setTimeout(() => {
             if (resizeTimerRef.current !== null) {
               window.clearInterval(resizeTimerRef.current);
               resizeTimerRef.current = null;
             }
-          }, 5000);
+          }, 10000);
         }}
       />
     ) : (

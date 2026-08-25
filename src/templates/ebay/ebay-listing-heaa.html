@@ -1,1 +1,361 @@
-<html><head><meta charset="utf-8"><style>body{margin:0;font-family:Arial,sans-serif}.a{box-shadow:0 2px 8px rgba(0,0,0,.1)}.b img,.j{width:100%}.c,.i{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;list-style:none;margin:0;padding:0;text-align:center}.c{margin:12px 0}.c li,.i li{margin:4px}.c a,.i a{color:#000;text-decoration:none}.d{margin:14px 20px 0;background:#e7e7e7;border:1px solid #ccc;border-radius:8px 8px 0 0}.e{margin:0;padding:6px 20px;color:#fff;font:400 18px Arial,sans-serif;background:linear-gradient(#38635a,#104438);border-radius:6px 6px 0 0}.f{padding:20px;color:#003333}.g{color:#222;font:700 16px/1.6 Arial,sans-serif}.h{margin-top:16px;color:#000;font:400 11pt Arial,sans-serif}.h p{margin:0 0 12px}.w{font-style:italic;font-weight:700}.m{margin:18px 0;color:#000;font:700 15px/1.35 Arial,sans-serif;text-align:center}.t{width:100%;border-collapse:collapse}.t td,.t th{padding:5px;border:1px solid #000}.k{width:33%;font-weight:700}.o{margin-top:18px;font:400 16px/1.45 Arial,sans-serif;color:#003333}.n{margin:22px 0 10px;padding:12px;border:1px solid #003333;border-radius:4px;background:#fff;color:#003333;text-align:center}.i{padding:0 12px 20px;font:400 15px Arial,sans-serif}.j{margin:20px 0 35px}@media(max-width:1023px){.x{display:none}}@media(min-width:1024px){.y{display:none}}</style></head><body><div class=a><div class=b><a href="https://stores.ebay.com/highendaudioauctions/"><img src="https://www.highendaudioauctions.com/store-ebay/images/top-bg.jpg" alt="High End Audio Auctions banner"></a><ul class=c><li><a href="https://www.ebay.com/usr/highendaudioauctions" title=Follow>Follow us</a></li><li>|</li><li><a href="https://my.ebay.com/ws/eBayISAPI.dll?AcceptSavedSeller&amp;sellerid=highendaudioauctions" title="Sign up for our newsletter">Newsletter</a></li></ul></div><div class=d><h4 class=e>{{title}}</h4><div class=f><div class=g>{{description}}</div><div class=h><p>All included items are pictured.</p><p class=w>Items are fully tested; defects and service notes are listed below. Items are not restored unless specified. 30-day warranty included.</p><p><strong>Local pickup in NYC available.</strong></p></div><div class=m><div>{{title}}</div><div>Details &amp; Testing Notes</div></div><p><strong>Key Features</strong></p><table id="key-features" class=t><tbody><tr><th class=k scope=row>{{key}}:</th><td>{{value}}</td></tr></tbody></table><p><strong>Testing Notes</strong></p><table id="testing-notes" class=t><tbody><tr><th class=k scope=row>{{key}}:</th><td>{{value}}</td></tr></tbody></table><div class=o>High-End Audio Auctions has been a trusted source for high-end, classic, and vintage audio on eBay since 2000. We ship worldwide and pack with care.</div><div class=n>By placing a bid you agree to our terms &amp; conditions.<br><a href="https://stores.ebay.com/highendaudioauctions/Store-Policies" target=_blank rel="noopener noreferrer"><i><u>Learn more</u></i></a></div></div><ul class=i><li><a href="https://stores.ebay.com/highendaudioauctions/">Home</a></li><li>|</li><li><a href="https://stores.ebay.com/highendaudioauctions/About-us">About</a></li><li>|</li><li><a href="https://stores.ebay.com/highendaudioauctions/Store-Policies">Policies</a></li><li>|</li><li><a href="https://stores.ebay.com/highendaudioauctions/FAQs">FAQs</a></li><li>|</li><li><a href="https://stores.ebay.com/highendaudioauctions/Feedback">Feedback</a></li><li>|</li><li><a href="https://contact.ebay.com/ws/eBayISAPI.dll?ContactUserNextGen&amp;recipient=highendaudioauctions">Contact</a></li><li>|</li><li><a href="https://stores.ebay.com/highendaudioauctions/Custom-Tuned-Cables">Cables</a></li></ul></div><img class="j x" src="https://www.highendaudioauctions.com/store-ebay/images/HEAA-2000-11-20.jpg" alt="High End Audio Auctions ad"><img class="j y" src="https://www.highendaudioauctions.com/store-ebay/images/HEAA-2000-11-20-mobile.jpg" alt="High End Audio Auctions ad mobile"></div></body></html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>HIGH-END AUDIO AUCTIONS</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Oswald, Arial, sans-serif;
+      color: #003333;
+      background: #fff;
+    }
+
+    .container {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .shell {
+      padding: 20px 18px 0;
+    }
+
+    .banner {
+      position: relative;
+    }
+
+    .banner img {
+      width: 100%;
+      display: block;
+    }
+
+    .banner-links {
+      margin: 0;
+      padding: 8px 0 0;
+      list-style: none;
+      text-align: center;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 13px;
+      color: #000;
+    }
+
+    .banner-links li {
+      display: inline-block;
+      margin: 0 4px;
+    }
+
+    .banner-links a {
+      color: #000;
+      text-decoration: none;
+    }
+
+    .panel {
+      margin-top: 15px;
+      background: #e7e7e7;
+      border: 1px solid #ccc;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .item-title {
+      margin: 0;
+      padding: 7px 25px;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 1.3;
+      border-radius: 6px 6px 0 0;
+      background: linear-gradient(to bottom, #38635a 0%, #104438 100%);
+    }
+
+    .content-wrapper {
+      padding: 34px 25px 25px;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #003333;
+    }
+
+    .desc {
+      margin: 12px 0 20px;
+      color: #124248;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .alert {
+      margin: 14px 0;
+      color: #ff1a1a;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .pictured {
+      margin: 0 0 16px;
+      color: #222;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .pickup {
+      margin: 0 0 18px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #ff0000;
+      text-align: left;
+    }
+
+    .details-title {
+      margin: 8px 0 8px;
+      text-align: center;
+      font-size: 15px;
+      color: #000;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .section-label {
+      margin: 0 0 7px;
+      font-size: 15px;
+      color: #000;
+      font-weight: 700;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #124248;
+    }
+
+    .table th,
+    .table td {
+      border-top: 1px solid #d7d7d7;
+      border-bottom: 1px solid #d7d7d7;
+      border-left: 0;
+      border-right: 0;
+      padding: 8px 6px;
+      vertical-align: top;
+      font-size: 13px;
+      line-height: 1.45;
+      font-weight: 400;
+      text-align: left;
+    }
+
+    .table th {
+      width: 34%;
+      font-weight: 700;
+    }
+
+    #about {
+      margin-top: 8px;
+      color: #003333;
+      font-size: 16px;
+      line-height: 1.55;
+      text-align: center;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    #note {
+      margin: 28px auto 10px;
+      width: 100%;
+      max-width: 657px;
+      border: 1px solid #003333;
+      border-radius: 4px;
+      background: #fff;
+      color: #003333;
+      padding: 15px;
+      box-sizing: border-box;
+      text-align: center;
+      font-size: 17px;
+      line-height: 1.45;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    #note a {
+      color: #003333;
+    }
+
+    .footer-links {
+      margin: 0;
+      padding: 0 25px 18px;
+      list-style: none;
+      text-align: center;
+      font-family: Oswald, Arial, sans-serif;
+      font-size: 15px;
+      color: #6a6666;
+    }
+
+    .footer-links li {
+      display: inline-block;
+      padding: 4px 2px;
+      color: #6a6666;
+    }
+
+    .footer-links a {
+      color: #6a6666;
+      text-decoration: none;
+    }
+
+    .heaa-ads,
+    .heaa-mobile-ads {
+      width: 100%;
+      display: block;
+      margin: 8px 0 50px;
+    }
+
+    .heaa-mobile-ads {
+      display: none;
+    }
+
+    @media (max-width: 1023px) {
+      .shell {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .item-title {
+        font-size: 22px;
+      }
+
+      .desc {
+        font-size: 16px;
+      }
+
+      .alert {
+        font-size: 15px;
+      }
+
+      .pictured {
+        font-size: 16px;
+      }
+
+      .pickup {
+        font-size: 15px;
+      }
+
+      .details-title {
+        font-size: 15px;
+      }
+
+      .table th,
+      .table td {
+        font-size: 13px;
+      }
+
+      .heaa-ads {
+        display: none;
+      }
+
+      .heaa-mobile-ads {
+        display: block;
+      }
+    }
+
+    @media (max-width: 767px) {
+      .table th {
+        width: 50%;
+      }
+
+      .item-title {
+        padding-left: 14px;
+        padding-right: 14px;
+        font-size: 18px;
+      }
+
+      .banner-links {
+        font-size: 12px;
+      }
+
+      .content-wrapper {
+        padding: 16px 12px 18px;
+      }
+
+      .desc {
+        font-size: 13px;
+      }
+
+      .alert {
+        font-size: 15px;
+      }
+
+      .pictured,
+      .pickup,
+      .details-title {
+        font-size: 13px;
+      }
+
+      .table th,
+      .table td {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="shell">
+      <header class="banner">
+        <a href="https://stores.ebay.com/highendaudioauctions/">
+          <img src="https://www.highendaudioauctions.com/store-ebay/images/top-bg.jpg" alt="High End Audio Auctions">
+        </a>
+        <ul class="banner-links">
+          <li><a href="https://www.ebay.com/usr/highendaudioauctions" title="Follow">Follow us</a></li><li>|</li>
+          <li><a href="https://my.ebay.com/ws/eBayISAPI.dll?AcceptSavedSeller&amp;sellerid=highendaudioauctions" title="Sign up for our newsletter">Sign up for our newsletter</a></li>
+        </ul>
+      </header>
+
+      <section class="panel">
+        <h4 class="item-title">{{title}}</h4>
+
+        <div class="content-wrapper">
+          <div class="desc">{{description}}</div>
+
+          <div class="details-title">
+            <div>{{title}}</div>
+            <div>Details &amp; Testing Notes</div>
+          </div>
+
+          <table id="key-features" class="table">
+            <tbody>
+              <tr>
+                <th>{{key}}:</th>
+                <td>{{value}}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <table id="testing-notes" class="table">
+            <tbody>
+              <tr>
+                <th>{{key}}:</th>
+                <td>{{value}}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div id="about">{{about}}</div>
+
+          <div id="note">By placing a bid on any of our listings, you agree to our terms &amp; conditions<br>
+            <a href="https://stores.ebay.com/highendaudioauctions/Store-Policies" target="_blank" rel="noopener noreferrer"><i><u>Click here to learn more</u></i></a>
+          </div>
+        </div>
+
+        <ul class="footer-links">
+          <li><a href="https://stores.ebay.com/highendaudioauctions/">Home</a></li><li>|</li>
+          <li><a href="https://stores.ebay.com/highendaudioauctions/About-us">About Us</a></li><li>|</li>
+          <li><a href="https://stores.ebay.com/highendaudioauctions/Store-Policies">Store Policies</a></li><li>|</li>
+          <li><a href="https://stores.ebay.com/highendaudioauctions/FAQs">FAQs</a></li><li>|</li>
+          <li><a href="https://stores.ebay.com/highendaudioauctions/Feedback">Feedback</a></li><li>|</li>
+          <li><a href="https://contact.ebay.com/ws/eBayISAPI.dll?ContactUserNextGen&amp;recipient=highendaudioauctions">Contact Us</a></li><li>|</li>
+          <li><a href="https://stores.ebay.com/highendaudioauctions/Custom-Tuned-Cables">Custom Tuned Cables</a></li>
+        </ul>
+      </section>
+
+      <img class="heaa-ads" src="https://www.highendaudioauctions.com/store-ebay/images/HEAA-2000-11-20.jpg" alt="HEAA ads">
+      <img class="heaa-mobile-ads" src="https://www.highendaudioauctions.com/store-ebay/images/HEAA-2000-11-20-mobile.jpg" alt="HEAA mobile ads">
+    </div>
+  </div>
+</body>
+</html>

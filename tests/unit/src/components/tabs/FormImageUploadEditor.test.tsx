@@ -155,13 +155,17 @@ describe('FormImageUploadEditor', () => {
     });
   });
 
-  it('persists saved processing defaults in local storage', () => {
+  it('persists saved processing defaults in local storage', async () => {
     render(<FormImageUploadEditor onFilesChange={vi.fn()} />);
 
     fireEvent.change(screen.getByLabelText('Add upload images'), {
       target: {
         files: [new File(['original-image'], 'defaults-check.jpg', { type: 'image/jpeg' })],
       },
+    });
+
+    await waitFor(() => {
+      expect(processImageMock).toHaveBeenCalledTimes(1);
     });
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Default watermark text' }), {
