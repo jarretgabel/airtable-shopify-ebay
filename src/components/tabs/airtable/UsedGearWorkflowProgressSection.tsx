@@ -49,6 +49,29 @@ interface ProgressQueuePresentation {
   sharedFocusMessage: string;
 }
 
+function normalizeSearchValues(value: unknown): string[] {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed ? [trimmed] : [];
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return [String(value)];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => normalizeSearchValues(entry));
+  }
+
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return [record.text, record.name, record.id]
+      .flatMap((entry) => normalizeSearchValues(entry));
+  }
+
+  return [];
+}
+
 function recordSearchText(record: AirtableRecord): string {
   return [
     record.fields.SKU,
@@ -58,8 +81,7 @@ function recordSearchText(record: AirtableRecord): string {
     record.fields['Workflow Next Team'],
     record.fields['Pick Up ID'],
   ]
-    .flatMap((value) => Array.isArray(value) ? value : [value])
-    .filter((value): value is string => typeof value === 'string')
+    .flatMap((value) => normalizeSearchValues(value))
     .join(' ')
     .toLowerCase();
 }
