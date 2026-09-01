@@ -7,6 +7,7 @@ import {
 import { BackToolbarButton } from '@/components/app/BackToolbarButton';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { ConfirmationModal } from '@/components/app/ConfirmationModal';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { WorkflowRecordPageLayout } from '@/components/app/WorkflowRecordPageLayout';
 import { ErrorSurface, LoadingSurface } from '@/components/app/StateSurfaces';
@@ -18,11 +19,16 @@ import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
 import {
   loadUsedGearOperationalRecordContext,
+  setUsedGearWorkflowStatus,
   type UsedGearOperationalRecordContext,
 } from '@/services/usedGearQueue';
 import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 import { getUsedGearWorkflowPostPublishSnapshot } from '@/services/usedGearWorkflowLifecycle';
-import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
+import {
+  getUsedGearWorkflowStatus,
+  USED_GEAR_WORKFLOW_STATUSES,
+  type UsedGearWorkflowStatus,
+} from '@/services/usedGearWorkflow';
 import { buildUsedGearWorkflowTimeline } from '@/services/usedGearWorkflowTimeline';
 import {
   filterWorkflowImageMetadataByStage,
@@ -61,6 +67,7 @@ function SnapshotCard({
   fields,
   actionLabel,
   onAction,
+  fieldsClassName,
   children,
 }: {
   sectionId: WorkflowSnapshotSectionKey;
@@ -68,6 +75,7 @@ function SnapshotCard({
   fields: Array<{ label: string; value: unknown }>;
   actionLabel?: string;
   onAction?: (() => void) | null;
+  fieldsClassName?: string;
   children?: React.ReactNode;
 }) {
   return (
@@ -80,7 +88,7 @@ function SnapshotCard({
         className="pt-0"
       />
 
-      <dl className="mt-4 grid gap-3 md:grid-cols-2">
+      <dl className={fieldsClassName ?? 'mt-4 grid gap-3 md:grid-cols-2'}>
         {fields.map((field) => (
           <div key={field.label} className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3">
             <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{field.label}</dt>
@@ -176,6 +184,11 @@ export function WorkflowSnapshotPage({
   const [context, setContext] = useState<UsedGearOperationalRecordContext | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusDraft, setStatusDraft] = useState('');
+  const [savingStatus, setSavingStatus] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [statusSuccessMessage, setStatusSuccessMessage] = useState<string | null>(null);
+  const [showStatusConfirmModal, setShowStatusConfirmModal] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -220,6 +233,42 @@ export function WorkflowSnapshotPage({
   );
   const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, sectionItems[0]?.id ?? 'overview');
 
+  useEffect(() => {
+    setStatusDraft(workflowStatus);
+  }, [workflowStatus]);
+
+  const canApplyStatus = Boolean(record) && Boolean(statusDraft) && statusDraft !== workflowStatus && !savingStatus;
+  const statusTransitionLabel = `${workflowStatus || 'Not Set'} -> ${statusDraft || 'Not Set'}`;
+
+  const handleApplyStatus = async () => {
+    if (!record || !statusDraft || statusDraft === workflowStatus) {
+      return;
+    }
+
+    setSavingStatus(true);
+    setStatusError(null);
+    setStatusSuccessMessage(null);
+
+    try {
+      const updatedRecord = await setUsedGearWorkflowStatus(record.id, statusDraft as UsedGearWorkflowStatus);
+      setContext((currentContext) => {
+        if (!currentContext) {
+          return currentContext;
+        }
+
+        return {
+          ...currentContext,
+          record: updatedRecord,
+        };
+      });
+      setStatusSuccessMessage(`Workflow status moved to ${statusDraft}.`);
+    } catch (updateError) {
+      setStatusError(updateError instanceof Error ? updateError.message : 'Unable to update workflow status.');
+    } finally {
+      setSavingStatus(false);
+    }
+  };
+
   const sectionNav = record ? (
     <MainPageSectionNav
       ariaLabel="Workflow snapshot sections"
@@ -260,12 +309,57 @@ export function WorkflowSnapshotPage({
               <ListingApprovalWorkflowProcessCard summary={workflowSummary} timelineOnly />
             </section>
 
+            <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+              <AppSectionTitle title="Workflow Status" className="pt-0" />
+              <p className="mt-2 text-sm text-[var(--muted)]">
+                Manual override for correcting workflow placement after errors or process changes.
+              </p>
+              <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center">
+                <label className="relative w-full md:max-w-[360px]">
+                  <span className="sr-only">Set workflow status</span>
+                  <select
+                    aria-label="Set workflow status"
+                    className="h-[42px] w-full appearance-none rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 pr-10 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                    value={statusDraft}
+                    onChange={(event) => {
+                      setStatusDraft(event.currentTarget.value);
+                      setStatusError(null);
+                      setStatusSuccessMessage(null);
+                    }}
+                    disabled={savingStatus}
+                  >
+                    {USED_GEAR_WORKFLOW_STATUSES.map((statusOption) => (
+                      <option key={statusOption} value={statusOption}>{statusOption}</option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--muted)]" aria-hidden="true">
+                    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+                      <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  className="h-[42px] rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    setShowStatusConfirmModal(true);
+                  }}
+                  disabled={!canApplyStatus}
+                >
+                  {savingStatus ? 'Saving...' : 'Apply Status'}
+                </button>
+              </div>
+              {statusError ? <p className="mt-3 text-sm text-[var(--danger)]">{statusError}</p> : null}
+              {statusSuccessMessage ? <p className="mt-3 text-sm text-[var(--ok)]">{statusSuccessMessage}</p> : null}
+            </section>
+
             <div className="space-y-6">
               <SnapshotCard
                 sectionId="intake"
                 title="Intake Data"
                 actionLabel="Open Intake"
                 onAction={() => onOpenIntake(record.id)}
+                fieldsClassName="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3"
                 fields={[
                   {
                     label: 'Grouped Intake',
@@ -273,6 +367,7 @@ export function WorkflowSnapshotPage({
                       ? `${context.group.label} (${context.group.records.length} row${context.group.records.length === 1 ? '' : 's'})`
                       : 'Single record',
                   },
+                  { label: 'SKU', value: record.fields.SKU },
                   { label: 'Pick Up ID', value: record.fields['Pick Up ID'] },
                   { label: 'Arrival Date', value: record.fields['Arrival Date'] },
                   { label: 'Acquired From', value: record.fields['Acquired From'] },
@@ -402,6 +497,23 @@ export function WorkflowSnapshotPage({
           </div>
         ) : null}
       </WorkflowRecordPageLayout>
+
+      <ConfirmationModal
+        open={showStatusConfirmModal}
+        title="Confirm Workflow Status Change"
+        message="This manual override will immediately move the listing to the selected workflow status."
+        bullets={[
+          `Transition: ${statusTransitionLabel}`,
+          'Use this when recovering from workflow errors or rework needs.',
+        ]}
+        confirmLabel="Apply Status"
+        cancelLabel="Cancel"
+        onCancel={() => setShowStatusConfirmModal(false)}
+        onConfirm={() => {
+          setShowStatusConfirmModal(false);
+          void handleApplyStatus();
+        }}
+      />
     </>
   );
 }

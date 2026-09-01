@@ -17,8 +17,8 @@ describe('buildUsedGearWorkflowTimeline', () => {
     expect(timeline.map((entry) => entry.label)).toEqual([
       'Intake Accepted',
       'Processing Completed',
-      'Testing Signed',
-      'Photography Signed',
+      'Testing In Progress',
+      'Photography In Progress',
       'Listing Review',
       'Approved For Publish',
       'Listed',

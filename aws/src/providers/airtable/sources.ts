@@ -49,13 +49,20 @@ interface AirtableConfiguredReadOptions {
 
 const LISTINGS_PAGE_MAX_RECORDS = 200;
 const UNKNOWN_FIELD_CACHE_TTL_MS = 10 * 60 * 1000;
+const SEARCH_FIELD_METADATA_CACHE_TTL_MS = 10 * 60 * 1000;
 
 interface UnknownFieldCacheEntry {
   expiresAt: number;
   fields: Set<string>;
 }
 
+interface SearchFieldMetadataCacheEntry {
+  expiresAt: number;
+  fieldLookup: Map<string, string>;
+}
+
 const unknownFieldNameCache = new Map<string, UnknownFieldCacheEntry>();
+const searchFieldMetadataCache = new Map<string, SearchFieldMetadataCacheEntry>();
 
 function resolveSubsetFilterByFormula(
   source: AirtableConfiguredRecordsSource,
@@ -147,6 +154,146 @@ function normalizeRequestedFields(fields?: string[]): string[] | undefined {
 
 function buildUnknownFieldCacheKey(baseId: string, tableName: string, viewId: string | undefined): string {
   return `${baseId}::${tableName}::${viewId ?? ''}`;
+}
+
+function buildSearchFieldMetadataCacheKey(baseId: string, tableName: string): string {
+  return `${baseId}::${tableName}`;
+}
+
+function normalizeSearchFieldLookupKey(fieldName: string): string {
+  return fieldName
+    .trim()
+    .replace(/[_\s]+/g, ' ')
+    .toLowerCase();
+}
+
+function getCachedSearchFieldLookup(cacheKey: string): Map<string, string> | null {
+  const entry = searchFieldMetadataCache.get(cacheKey);
+  if (!entry) {
+    return null;
+  }
+
+  if (entry.expiresAt <= Date.now()) {
+    searchFieldMetadataCache.delete(cacheKey);
+    return null;
+  }
+
+  return entry.fieldLookup;
+}
+
+async function getSearchFieldLookup(baseId: string, tableName: string): Promise<Map<string, string>> {
+  const cacheKey = buildSearchFieldMetadataCacheKey(baseId, tableName);
+  const cached = getCachedSearchFieldLookup(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const metadataFields = await airtableSourceDependencies.getTableMetadata(baseId, tableName);
+  const fieldLookup = new Map<string, string>();
+  for (const field of metadataFields) {
+    const normalizedName = normalizeSearchFieldLookupKey(field.name);
+    if (normalizedName && !fieldLookup.has(normalizedName)) {
+      fieldLookup.set(normalizedName, field.name);
+    }
+  }
+
+  searchFieldMetadataCache.set(cacheKey, {
+    fieldLookup,
+    expiresAt: Date.now() + SEARCH_FIELD_METADATA_CACHE_TTL_MS,
+  });
+
+  return fieldLookup;
+}
+
+async function resolveSearchFieldsAgainstMetadata(
+  baseId: string,
+  tableName: string,
+  searchFields: string[] | undefined,
+): Promise<string[] | undefined> {
+  const requestedFields = normalizeRequestedFields(searchFields);
+  if (!requestedFields || requestedFields.length === 0) {
+    return undefined;
+  }
+
+  try {
+    const fieldLookup = await getSearchFieldLookup(baseId, tableName);
+    const resolvedFields: string[] = [];
+    const seen = new Set<string>();
+
+    for (const requestedField of requestedFields) {
+      const canonicalFieldName = fieldLookup.get(normalizeSearchFieldLookupKey(requestedField));
+      if (!canonicalFieldName || seen.has(canonicalFieldName)) {
+        continue;
+      }
+
+      seen.add(canonicalFieldName);
+      resolvedFields.push(canonicalFieldName);
+    }
+
+    return resolvedFields.length > 0 ? resolvedFields : undefined;
+  } catch {
+    // Preserve search when metadata is unavailable; unknown fields are stripped by runtime fallback.
+    return requestedFields;
+  }
+}
+
+function stripUnknownSearchFields(
+  searchFields: string[] | undefined,
+  unknownFields: string[],
+): string[] | undefined {
+  if (!searchFields || searchFields.length === 0 || unknownFields.length === 0) {
+    return searchFields;
+  }
+
+  const unknownLookup = new Set(unknownFields.map((value) => normalizeSearchFieldLookupKey(value)));
+  const nextFields = searchFields.filter((fieldName) => !unknownLookup.has(normalizeSearchFieldLookupKey(fieldName)));
+  return nextFields.length > 0 ? nextFields : undefined;
+}
+
+async function getConfiguredRecordsWithSearchFallback(
+  baseId: string,
+  tableName: string,
+  viewId: string | undefined,
+  baseReadOptions: AirtableConfiguredReadOptions,
+  subsetFilterByFormula: string | undefined,
+): Promise<AirtableRecord[]> {
+  let resolvedSearchFields = await resolveSearchFieldsAgainstMetadata(
+    baseId,
+    tableName,
+    baseReadOptions.searchFields,
+  );
+
+  while (true) {
+    const searchFilterByFormula = resolveSearchFilterByFormula(baseReadOptions.searchQuery, resolvedSearchFields);
+    const mergedFilterByFormula = mergeFilterByFormula(
+      mergeFilterByFormula(baseReadOptions.filterByFormula, subsetFilterByFormula),
+      searchFilterByFormula,
+    );
+
+    try {
+      return await getRecordsWithUnknownFieldFallback(
+        baseId,
+        tableName,
+        viewId,
+        {
+          ...baseReadOptions,
+          filterByFormula: mergedFilterByFormula || undefined,
+        },
+      );
+    } catch (error) {
+      const unknownFields = getUnknownFieldNames(error);
+      if (unknownFields.length === 0 || !resolvedSearchFields || resolvedSearchFields.length === 0) {
+        throw error;
+      }
+
+      const nextSearchFields = stripUnknownSearchFields(resolvedSearchFields, unknownFields);
+      if (!nextSearchFields || nextSearchFields.length === resolvedSearchFields.length) {
+        throw error;
+      }
+
+      resolvedSearchFields = nextSearchFields;
+    }
+  }
 }
 
 function getCachedUnknownFields(cacheKey: string): Set<string> | null {
@@ -473,23 +620,18 @@ export async function getConfiguredRecords(
 ): Promise<AirtableRecord[]> {
   const definition = getSourceDefinition(source);
   const subsetFilterByFormula = resolveSubsetFilterByFormula(source, options.subset);
-  const searchFilterByFormula = resolveSearchFilterByFormula(options.searchQuery, options.searchFields);
-  const mergedFilterByFormula = mergeFilterByFormula(
-    mergeFilterByFormula(options.filterByFormula, subsetFilterByFormula),
-    searchFilterByFormula,
-  );
-  const readOptions: AirtableConfiguredReadOptions = {
+  const baseReadOptions: AirtableConfiguredReadOptions = {
     ...options,
-    filterByFormula: mergedFilterByFormula || undefined,
     maxRecords: options.maxRecords ?? (options.subset === 'listings-page' ? LISTINGS_PAGE_MAX_RECORDS : undefined),
   };
 
   if (!definition.reference) {
-    return getRecordsWithUnknownFieldFallback(
+    return getConfiguredRecordsWithSearchFallback(
       process.env.AIRTABLE_BASE_ID?.trim() || '',
       definition.tableName,
       undefined,
-      readOptions,
+      baseReadOptions,
+      subsetFilterByFormula,
     );
   }
 
@@ -502,11 +644,12 @@ export async function getConfiguredRecords(
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
-      return await getRecordsWithUnknownFieldFallback(
+      return await getConfiguredRecordsWithSearchFallback(
         candidate.baseId,
         candidate.tableName,
         candidate.viewId,
-        readOptions,
+        baseReadOptions,
+        subsetFilterByFormula,
       );
     } catch (error) {
       lastError = error;

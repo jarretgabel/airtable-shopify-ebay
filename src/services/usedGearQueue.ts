@@ -11,6 +11,7 @@ import {
   USED_GEAR_WORKFLOW_NEXT_TEAM_FIELD,
   USED_GEAR_WORKFLOW_STATUS_FIELD,
   type UsedGearWorkflowStage,
+  type UsedGearWorkflowStatus,
 } from '@/services/usedGearWorkflow';
 import {
   getUsedGearWorkflowPostPublishSnapshot,
@@ -1283,6 +1284,21 @@ export async function clearWorkflowOwnerBatch(recordIds: string[]): Promise<Airt
   }
 
   return updatedRecords;
+}
+
+export async function setUsedGearWorkflowStatus(
+  recordId: string,
+  status: UsedGearWorkflowStatus,
+): Promise<AirtableRecord> {
+  const record = await updateWorkflowRecordWithUnknownFieldFallback(
+    recordId,
+    {
+      [USED_GEAR_WORKFLOW_STATUS_FIELD]: status,
+    },
+    { typecast: true, timeoutMs: WORKFLOW_TRANSITION_REQUEST_TIMEOUT_MS },
+  );
+
+  return withWorkflow(record);
 }
 
 export async function completeProcessingStage(recordId: string, userName: string): Promise<AirtableRecord> {

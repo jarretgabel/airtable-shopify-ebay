@@ -247,3 +247,62 @@ test('getConfiguredRecords applies ready-for-publishing subset filter for approv
     airtableSourceDependencies.getRecords = original;
   }
 });
+
+test('getConfiguredRecords canonicalizes search fields against metadata before building filter formulas', async () => {
+  const originalGetRecords = airtableSourceDependencies.getRecords;
+  const originalGetTableMetadata = airtableSourceDependencies.getTableMetadata;
+  const calls: Array<{ filterByFormula?: string }> = [];
+
+  airtableSourceDependencies.getTableMetadata = async () => [
+    { id: 'fldTitle', name: 'Title', type: 'singleLineText' },
+    { id: 'fldShopifyRestTitle', name: 'Shopify REST Title', type: 'singleLineText' },
+    { id: 'fldBrand', name: 'Brand', type: 'singleLineText' },
+  ];
+  airtableSourceDependencies.getRecords = async (_baseId, _tableName, _viewId, options) => {
+    calls.push({ filterByFormula: options?.filterByFormula });
+    return [];
+  };
+
+  try {
+    await getConfiguredRecords('approval-combined', {
+      searchQuery: '11796',
+      searchFields: ['title', 'shopify rest title', 'brand', 'unknown field'],
+    });
+
+    assert.equal(calls.length, 1);
+    assert.equal(
+      calls[0]?.filterByFormula,
+      'OR(SEARCH("11796", LOWER({Title}&"")) > 0,SEARCH("11796", LOWER({Shopify REST Title}&"")) > 0,SEARCH("11796", LOWER({Brand}&"")) > 0)',
+    );
+  } finally {
+    airtableSourceDependencies.getRecords = originalGetRecords;
+    airtableSourceDependencies.getTableMetadata = originalGetTableMetadata;
+  }
+});
+
+test('getConfiguredRecords skips search formula when no requested search fields exist in metadata', async () => {
+  const originalGetRecords = airtableSourceDependencies.getRecords;
+  const originalGetTableMetadata = airtableSourceDependencies.getTableMetadata;
+  const calls: Array<{ filterByFormula?: string }> = [];
+
+  airtableSourceDependencies.getTableMetadata = async () => [
+    { id: 'fldSku', name: 'SKU', type: 'singleLineText' },
+  ];
+  airtableSourceDependencies.getRecords = async (_baseId, _tableName, _viewId, options) => {
+    calls.push({ filterByFormula: options?.filterByFormula });
+    return [];
+  };
+
+  try {
+    await getConfiguredRecords('approval-combined', {
+      searchQuery: '11796',
+      searchFields: ['title', 'shopify title'],
+    });
+
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0]?.filterByFormula, undefined);
+  } finally {
+    airtableSourceDependencies.getRecords = originalGetRecords;
+    airtableSourceDependencies.getTableMetadata = originalGetTableMetadata;
+  }
+});
