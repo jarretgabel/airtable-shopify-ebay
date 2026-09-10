@@ -420,6 +420,7 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           if (isLikelyComputedAirtableField(fieldName)) return;
           const existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, fieldName);
           const existsInSchema = actualFieldLookup.has(fieldName.toLowerCase());
+          if (!existsOnRecord && !existsInSchema && isCategoryLikeFieldName(fieldName)) return;
           const allowMissingWritableField = isAllowedMissingWritableFieldName(fieldName);
           const originalValue = toFormValueForField(fieldName, selectedRecord.fields[fieldName]);
           if (fieldName.toLowerCase() === resolvedApprovedFieldName.toLowerCase() && forceApproved) return;
