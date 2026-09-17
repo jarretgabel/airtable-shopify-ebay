@@ -89,7 +89,7 @@ export function useListingApprovalFieldNames({
 
       const preferredDescriptionField = existingNames.find((name) =>
         SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      );
       if (preferredDescriptionField) names.add(preferredDescriptionField);
 
       const preferredKeyFeaturesField = existingNames.find((name) =>
@@ -113,7 +113,7 @@ export function useListingApprovalFieldNames({
 
       const preferredDescriptionField = existingNames.find((name) =>
         EBAY_DESCRIPTION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? EBAY_DESCRIPTION_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      );
       if (preferredDescriptionField) names.add(preferredDescriptionField);
 
       const preferredBodyHtmlField = findEbayBodyHtmlFieldName(existingNames);
@@ -178,34 +178,6 @@ export function useListingApprovalFieldNames({
         EBAY_CATEGORIES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       );
       if (preferredCategoriesField) names.add(preferredCategoriesField);
-
-      const hasAnyCategoryField = Array.from(names).some((name) => {
-        const normalized = name.trim().toLowerCase();
-        return normalized === 'categories'
-          || normalized === 'category ids'
-          || normalized === 'category_ids'
-          || normalized === 'ebay offer primary category id'
-          || normalized === 'ebay_offer_primary_category_id'
-          || normalized === 'ebay_offer_primarycategoryid'
-          || normalized === 'ebay offer category id'
-          || normalized === 'ebay_offer_category_id'
-          || normalized === 'ebay_offer_categoryid'
-          || normalized === 'primary category'
-          || normalized === 'primary category id'
-          || normalized === 'primary_category'
-          || normalized === 'primary_category_id'
-          || normalized === 'ebay offer secondary category id'
-          || normalized === 'ebay_offer_secondary_category_id'
-          || normalized === 'ebay_offer_secondarycategoryid'
-          || normalized === 'secondary category'
-          || normalized === 'secondary category id'
-          || normalized === 'secondary_category'
-          || normalized === 'secondary_category_id';
-      });
-
-      if (!hasAnyCategoryField) {
-        names.add('categories');
-      }
 
       names.add(SHIPPING_SERVICE_FIELD);
     }

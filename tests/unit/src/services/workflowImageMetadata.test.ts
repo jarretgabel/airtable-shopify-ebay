@@ -270,6 +270,80 @@ describe('workflowImageMetadata', () => {
     expect(parsed[0]?.alt).toBe('Mcintosh MC225 Stereo Tube Power Amplifier Left Side');
   });
 
+  it('preserves Google Drive URL when merging with Airtable attachment URL for same attachment id', () => {
+    const merged = mergeWorkflowImageMetadata({
+      attachments: [
+        {
+          id: 'att-1',
+          url: 'https://v5.airtableusercontent.com/v3/u/57/57/1789596000000/temporary-signed-token/example',
+          filename: 'mit-miterminator-4-badge-detail-processed.jpg',
+        },
+      ],
+      existingMetadata: [
+        {
+          attachmentId: 'att-1',
+          url: 'https://drive.google.com/uc?export=view&id=file-processed',
+          filename: 'mit-miterminator-4-badge-detail-processed.jpg',
+          alt: 'MITerminator badge detail',
+          sortOrder: 1,
+          sourceStage: 'testing',
+          includedInListing: true,
+        },
+      ],
+      sourceStage: 'testing',
+      nowIso: '2026-09-16T12:00:00.000Z',
+    });
+
+    expect(merged).toEqual([
+      {
+        attachmentId: 'att-1',
+        url: 'https://drive.google.com/uc?export=view&id=file-processed',
+        filename: 'mit-miterminator-4-badge-detail-processed.jpg',
+        alt: 'MITerminator badge detail',
+        sortOrder: 1,
+        sourceStage: 'testing',
+        includedInListing: true,
+      },
+    ]);
+  });
+
+  it('uses Airtable URL when no existing Google Drive URL is present', () => {
+    const merged = mergeWorkflowImageMetadata({
+      attachments: [
+        {
+          id: 'att-1',
+          url: 'https://v5.airtableusercontent.com/v3/u/57/57/1789596000000/temporary-signed-token/example',
+          filename: 'mit-miterminator-4-badge-detail-processed.jpg',
+        },
+      ],
+      existingMetadata: [
+        {
+          attachmentId: 'att-1',
+          url: 'https://v5.airtableusercontent.com/v3/u/57/57/1789595000000/older-token/example',
+          filename: 'mit-miterminator-4-badge-detail-processed.jpg',
+          alt: 'MITerminator badge detail',
+          sortOrder: 1,
+          sourceStage: 'testing',
+          includedInListing: true,
+        },
+      ],
+      sourceStage: 'testing',
+      nowIso: '2026-09-16T12:00:00.000Z',
+    });
+
+    expect(merged).toEqual([
+      {
+        attachmentId: 'att-1',
+        url: 'https://v5.airtableusercontent.com/v3/u/57/57/1789596000000/temporary-signed-token/example',
+        filename: 'mit-miterminator-4-badge-detail-processed.jpg',
+        alt: 'MITerminator badge detail',
+        sortOrder: 1,
+        sourceStage: 'testing',
+        includedInListing: true,
+      },
+    ]);
+  });
+
   it('replaces legacy workflow alt text with humanized filename tokens', () => {
     const parsed = parseWorkflowImageMetadata(JSON.stringify([
       {

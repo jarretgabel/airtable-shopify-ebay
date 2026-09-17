@@ -39,6 +39,17 @@ function getGoogleDriveFileId(url: string): string | null {
   }
 }
 
+function isGoogleDriveUrl(url: string): boolean {
+  if (getGoogleDriveFileId(url)) return true;
+
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.includes('googleusercontent.com');
+  } catch {
+    return false;
+  }
+}
+
 function normalizeIdentityToken(value: string): string {
   return value
     .trim()
@@ -247,14 +258,23 @@ export function useApprovalFormFieldSetup({
         return !meta || meta.sourceStage !== 'intake';
       });
 
-      const dedupedListingAttachments: typeof listingAttachments = [];
-      const seenIdentities = new Set<string>();
+      const dedupedByIdentity = new Map<string, (typeof listingAttachments)[number]>();
       listingAttachments.forEach((attachment) => {
         const identity = getWorkflowAttachmentIdentity(attachment);
-        if (!identity || seenIdentities.has(identity)) return;
-        seenIdentities.add(identity);
-        dedupedListingAttachments.push(attachment);
+        if (!identity) return;
+
+        const existing = dedupedByIdentity.get(identity);
+        if (!existing) {
+          dedupedByIdentity.set(identity, attachment);
+          return;
+        }
+
+        const shouldPromoteToDrive = isGoogleDriveUrl(attachment.url) && !isGoogleDriveUrl(existing.url);
+        if (shouldPromoteToDrive) {
+          dedupedByIdentity.set(identity, attachment);
+        }
       });
+      const dedupedListingAttachments = Array.from(dedupedByIdentity.values());
 
       const sortOrderByUrl = new Map(
         workflowImageMetadata.map((record) => [record.url.trim().toLowerCase(), record.sortOrder] as const),

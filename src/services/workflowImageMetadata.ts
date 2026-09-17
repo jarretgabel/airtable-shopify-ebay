@@ -43,6 +43,18 @@ interface WorkflowImageAttachmentRecord {
   filename: string;
 }
 
+function isGoogleDriveImageUrl(url: string): boolean {
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.hostname.includes('drive.google.com') || parsed.hostname.includes('googleusercontent.com');
+  } catch {
+    return false;
+  }
+}
+
 function normalizeStage(value: unknown): WorkflowImageSourceStage {
   if (value === 'intake') return 'intake';
   if (value === 'testing') return 'testing';
@@ -503,10 +515,11 @@ export function mergeWorkflowImageMetadata(params: {
 
     if (match) {
       matchedKeys.add(match.attachmentId ? `id:${match.attachmentId.toLowerCase()}` : `url:${match.url.toLowerCase()}`);
+      const canonicalUrl = isGoogleDriveImageUrl(match.url) ? match.url : attachment.url;
       matchedExisting.push({
         ...match,
         attachmentId: attachment.attachmentId ?? match.attachmentId,
-        url: attachment.url,
+        url: canonicalUrl,
         filename: attachment.filename,
       });
       return;

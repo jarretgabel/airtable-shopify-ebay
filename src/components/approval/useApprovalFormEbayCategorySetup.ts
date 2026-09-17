@@ -92,7 +92,7 @@ export function useApprovalFormEbayCategorySetup({
   );
   const effectiveEbayCategoriesFieldName = ebayCategoriesFieldName
     ?? fallbackCategoryTargetFieldName
-    ?? 'categories';
+    ?? '';
   const ebayMarketplaceIdFieldName = allFieldNames.find((fieldName) => isEbayMarketplaceIdField(fieldName));
   const isEbayListingForm = allFieldNames.some((fieldName) => {
     const normalized = fieldName.toLowerCase();
