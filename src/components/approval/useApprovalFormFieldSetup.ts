@@ -203,12 +203,12 @@ export function useApprovalFormFieldSetup({
   const workflowImageMetadata = useMemo(
     () => {
       const metadataRaw = workflowImageMetadataFieldName
-        ? (originalFieldValues[workflowImageMetadataFieldName] ?? formValues[workflowImageMetadataFieldName] ?? '')
+        ? (formValues[workflowImageMetadataFieldName] ?? originalFieldValues[workflowImageMetadataFieldName] ?? '')
         : (
-          originalFieldValues['Workflow Image Metadata JSON']
-          ?? formValues['Workflow Image Metadata JSON']
-          ?? originalFieldValues['Workflow Image Metadata']
+          formValues['Workflow Image Metadata JSON']
+          ?? originalFieldValues['Workflow Image Metadata JSON']
           ?? formValues['Workflow Image Metadata']
+          ?? originalFieldValues['Workflow Image Metadata']
           ?? ''
         );
 
@@ -219,10 +219,12 @@ export function useApprovalFormFieldSetup({
   const workflowImageAttachments = useMemo(
     () => {
       const attachmentsRaw = workflowImageAttachmentFieldName
-        ? (originalFieldValues[workflowImageAttachmentFieldName] ?? formValues[workflowImageAttachmentFieldName] ?? '')
-        : (originalFieldValues.Images ?? formValues.Images ?? '');
+        ? (formValues[workflowImageAttachmentFieldName] ?? originalFieldValues[workflowImageAttachmentFieldName] ?? '')
+        : (formValues.Images ?? originalFieldValues.Images ?? '');
       const attachments = parseWorkflowImageAttachments(attachmentsRaw);
-      if (workflowImageMetadata.length === 0) return attachments;
+      if (workflowImageMetadata.length === 0) {
+        return attachments.filter((attachment) => isProcessedWorkflowImage(attachment.filename, attachment.url));
+      }
 
       const metadataAttachments = workflowImageMetadata
         .filter((record) => record.sourceStage !== 'intake')
@@ -293,6 +295,14 @@ export function useApprovalFormFieldSetup({
     ?? ((isCombinedApproval && hasScopedImageField && workflowImageAttachments.length > 0) ? 'Images' : undefined);
   const effectiveShopifyImagePayloadFieldName = shopifyImagePayloadFieldName
     ?? ((isCombinedApproval && hasScopedImageField && workflowImageAttachments.length > 0) ? 'Shopify REST Images JSON' : undefined);
+  const writableFieldNameLookup = useMemo(
+    () => new Set(writableFieldNames.map((fieldName) => fieldName.trim().toLowerCase())),
+    [writableFieldNames],
+  );
+  const isWorkflowMetadataWritable = Boolean(
+    workflowImageMetadataFieldName
+    && writableFieldNameLookup.has(workflowImageMetadataFieldName.trim().toLowerCase()),
+  );
   const selectedWorkflowImageUrls = useMemo(() => {
     const imageUrlValue = effectiveImageUrlSourceField ? (formValues[effectiveImageUrlSourceField] ?? '') : '';
     const imageAltTextValue = imageAltTextSourceField ? (formValues[imageAltTextSourceField] ?? '') : '';
@@ -308,27 +318,122 @@ export function useApprovalFormFieldSetup({
       || imageAltTextValue.trim().length > 0
       || payloadValue.trim().length > 0;
 
+    const metadataSelectedUrls = workflowImageMetadataFieldName
+      ? (() => {
+          const attachmentUrlLookup = new Set(
+            workflowImageAttachments.map((attachment) => attachment.url.trim().toLowerCase()).filter(Boolean),
+          );
+          const attachmentUrlByFilenameIdentity = new Map<string, string>();
+          workflowImageAttachments.forEach((attachment) => {
+            const key = normalizeIdentityToken(attachment.filename);
+            const url = attachment.url.trim();
+            if (!key || !url || attachmentUrlByFilenameIdentity.has(key)) return;
+            attachmentUrlByFilenameIdentity.set(key, url);
+          });
+
+          return buildWorkflowListingSelectionFromMetadata(
+            workflowImageMetadata
+              .filter((record) => record.sourceStage !== 'intake')
+              .filter((record) => isProcessedWorkflowImage(record.filename, record.url))
+              .map((record) => {
+                const urlKey = record.url.trim().toLowerCase();
+                if (urlKey && attachmentUrlLookup.has(urlKey)) {
+                  return record;
+                }
+
+                const identityKey = normalizeIdentityToken(record.filename);
+                const canonicalAttachmentUrl = identityKey ? attachmentUrlByFilenameIdentity.get(identityKey) : undefined;
+                if (!canonicalAttachmentUrl) {
+                  return record;
+                }
+
+                return {
+                  ...record,
+                  url: canonicalAttachmentUrl,
+                };
+              }),
+          );
+        })()
+      : [];
+
+    if (explicitEmptySelection) {
+      return [];
+    }
+
+    if (workflowImageMetadataFieldName && workflowImageMetadata.length > 0 && isWorkflowMetadataWritable) {
+      return metadataSelectedUrls;
+    }
+
     if (currentRows.length === 0 && !hasExplicitSelectionInput) {
-      // Exclude intake images from the default listing selection
-      return buildWorkflowListingSelectionFromMetadata(
-        workflowImageMetadata.filter((m) => m.sourceStage !== 'intake'),
-      );
+      // Default listing detail pages to all available workflow attachments.
+      const defaultSelectedUrls: string[] = [];
+      const seenUrls = new Set<string>();
+      workflowImageAttachments.forEach((attachment) => {
+        const trimmed = attachment.url.trim();
+        const key = trimmed.toLowerCase();
+        if (!trimmed || seenUrls.has(key)) return;
+        seenUrls.add(key);
+        defaultSelectedUrls.push(trimmed);
+      });
+      return defaultSelectedUrls;
     }
 
     const attachmentLookup = new Map(
       workflowImageAttachments.map((attachment) => [attachment.url.trim().toLowerCase(), attachment.url.trim()] as const),
     );
-    return currentRows
+    const workflowAttachmentByIdentity = new Map(
+      workflowImageAttachments.map((attachment) => [getWorkflowAttachmentIdentity(attachment), attachment.url.trim()] as const),
+    );
+    const workflowAttachmentByFilenameIdentity = new Map(
+      workflowImageAttachments
+        .map((attachment) => [normalizeIdentityToken(attachment.filename), attachment.url.trim()] as const)
+        .filter(([identity]) => identity.length > 0),
+    );
+    const selectedImageAttachments = parseWorkflowImageAttachments(imageUrlValue);
+    const selectedAttachmentByUrl = new Map(
+      selectedImageAttachments.map((attachment) => [attachment.url.trim().toLowerCase(), attachment] as const),
+    );
+
+    const mappedCurrentRowUrls = currentRows
       .map((row) => row.src.trim())
       .filter(Boolean)
-      .map((url) => attachmentLookup.get(url.toLowerCase()) ?? '')
+      .map((url) => {
+        const normalizedUrl = url.toLowerCase();
+        const selectedAttachment = selectedAttachmentByUrl.get(normalizedUrl);
+        if (selectedAttachment) {
+          const identityMatch = workflowAttachmentByIdentity.get(getWorkflowAttachmentIdentity(selectedAttachment));
+          if (identityMatch) {
+            return identityMatch;
+          }
+
+          const filenameIdentityMatch = workflowAttachmentByFilenameIdentity.get(normalizeIdentityToken(selectedAttachment.filename));
+          if (filenameIdentityMatch) {
+            return filenameIdentityMatch;
+          }
+        }
+
+        const exactUrlMatch = attachmentLookup.get(normalizedUrl);
+        if (exactUrlMatch) {
+          return exactUrlMatch;
+        }
+
+        return url;
+      })
       .filter(Boolean);
+
+    if (workflowImageMetadataFieldName && metadataSelectedUrls.length > 0 && !hasExplicitSelectionInput) {
+      return metadataSelectedUrls;
+    }
+
+    return mappedCurrentRowUrls;
   }, [
     effectiveImageUrlSourceField,
     effectiveShopifyImagePayloadFieldName,
     formValues,
     imageAltTextSourceField,
     workflowImageAttachments,
+    workflowImageMetadataFieldName,
+    isWorkflowMetadataWritable,
     workflowImageMetadata,
   ]);
 
@@ -378,5 +483,6 @@ export function useApprovalFormFieldSetup({
     shopifyImagePayloadFieldName: effectiveShopifyImagePayloadFieldName,
     useCombinedImageAltEditor,
     workflowImageAttachments,
+    workflowImageMetadataFieldName,
   };
 }

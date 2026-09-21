@@ -209,6 +209,7 @@ export function ApprovalFormFields({
     shopifyVendorFieldName,
     useCombinedImageAltEditor,
     workflowImageAttachments,
+    workflowImageMetadataFieldName,
   } = useApprovalFormFieldSetup({
     recordId,
     approvalChannel,
@@ -314,6 +315,7 @@ export function ApprovalFormFields({
     imageAltTextSourceField,
     shopifyImagePayloadFieldName,
     workflowImageAttachments,
+    workflowImageMetadataFieldName,
     selectedWorkflowImageUrls,
     formValues,
     testingSectionValues,

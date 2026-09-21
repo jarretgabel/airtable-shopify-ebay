@@ -9,6 +9,7 @@ import {
   parseWorkflowSelectedImageRows,
   type WorkflowListingImageAttachment,
 } from './workflowListingImageHelpers';
+import { parseWorkflowImageMetadata, serializeWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 import { insetPanelClass, sharedIconActionButtonClass } from '@/components/tabs/uiClasses';
 
 const EbayAttributesEditor = lazy(async () => ({
@@ -50,6 +51,7 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
   combinedImageEditorValue: string;
   imageAltTextSourceField?: string;
   shopifyImagePayloadFieldName?: string;
+  workflowImageMetadataFieldName?: string;
   workflowImageAttachments: WorkflowListingImageAttachment[];
   selectedWorkflowImageUrls: string[];
   formValues: Record<string, string>;
@@ -117,6 +119,40 @@ export interface ApprovalFormFieldsSupplementalEditorsProps {
 
 const iconActionButtonClass = sharedIconActionButtonClass;
 
+function normalizeIdentityToken(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function getUrlBasename(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+
+  try {
+    const parsed = new URL(trimmed);
+    return (parsed.pathname.split('/').pop() ?? '').trim();
+  } catch {
+    return (trimmed.split('/').pop() ?? '').trim();
+  }
+}
+
+function isProcessedWorkflowImage(filename: string, url?: string): boolean {
+  const sample = `${filename} ${url ?? ''}`.toLowerCase();
+  return /(^|[-_])processed/.test(sample);
+}
+
+function inferWorkflowImageSourceStage(filename: string, url?: string): 'testing' | 'photos' {
+  const sample = `${filename} ${url ?? ''}`.toLowerCase();
+  if (sample.includes('testing')) {
+    return 'testing';
+  }
+
+  return 'photos';
+}
+
 function EditIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-none stroke-current" strokeWidth="1.5">
@@ -132,6 +168,7 @@ export function ApprovalFormFieldsSupplementalEditors({
   imageUrlSourceField,
   imageAltTextSourceField,
   shopifyImagePayloadFieldName,
+  workflowImageMetadataFieldName,
   workflowImageAttachments,
   selectedWorkflowImageUrls,
   formValues,
@@ -270,8 +307,81 @@ export function ApprovalFormFieldsSupplementalEditors({
             if (shopifyImagePayloadFieldName && shopifyImagePayloadFieldName !== imageUrlSourceField) {
               setFormValue(shopifyImagePayloadFieldName, nextValues.shopifyImagePayloadValue);
             }
+            if (workflowImageMetadataFieldName) {
+              const selectedLookup = new Set(nextSelectedUrls.map((url) => url.trim().toLowerCase()).filter(Boolean));
+              const attachmentByUrl = new Map(
+                workflowImageAttachments.map((attachment) => [attachment.url.trim().toLowerCase(), attachment] as const),
+              );
+              const selectedFilenameIdentityLookup = new Set(
+                nextSelectedUrls
+                  .map((url) => {
+                    const key = url.trim().toLowerCase();
+                    const attachment = attachmentByUrl.get(key);
+                    const filename = attachment?.filename ?? getUrlBasename(url);
+                    return normalizeIdentityToken(filename);
+                  })
+                  .filter((identity) => identity.length > 0),
+              );
+              const metadataRecords = parseWorkflowImageMetadata(formValues[workflowImageMetadataFieldName] ?? '');
+              const managedRecords = metadataRecords.filter((record) => record.sourceStage !== 'intake' && isProcessedWorkflowImage(record.filename, record.url));
+              const unmanagedRecords = metadataRecords.filter((record) => !(record.sourceStage !== 'intake' && isProcessedWorkflowImage(record.filename, record.url)));
+              const managedIdentityLookup = new Set(
+                managedRecords
+                  .map((record) => normalizeIdentityToken(record.filename))
+                  .filter((identity) => identity.length > 0),
+              );
+              const managedUrlLookup = new Set(
+                managedRecords
+                  .map((record) => record.url.trim().toLowerCase())
+                  .filter(Boolean),
+              );
+
+              const synthesizedManagedRecords = workflowImageAttachments
+                .filter((attachment) => isProcessedWorkflowImage(attachment.filename, attachment.url))
+                .filter((attachment) => {
+                  const urlKey = attachment.url.trim().toLowerCase();
+                  if (urlKey && managedUrlLookup.has(urlKey)) return false;
+
+                  const filenameIdentity = normalizeIdentityToken(attachment.filename);
+                  if (filenameIdentity && managedIdentityLookup.has(filenameIdentity)) return false;
+
+                  return true;
+                })
+                .map((attachment, index) => ({
+                  attachmentId: attachment.id,
+                  url: attachment.url.trim(),
+                  filename: attachment.filename,
+                  alt: '',
+                  sortOrder: managedRecords.length + index + 1,
+                  sourceStage: inferWorkflowImageSourceStage(attachment.filename, attachment.url),
+                  includedInListing: false,
+                }));
+
+              const allManagedRecords = [...managedRecords, ...synthesizedManagedRecords];
+              const isRecordSelected = (record: { url: string; filename: string }) => {
+                const recordUrlKey = record.url.trim().toLowerCase();
+                if (selectedLookup.has(recordUrlKey)) return true;
+                const recordFilenameIdentity = normalizeIdentityToken(record.filename);
+                return Boolean(recordFilenameIdentity && selectedFilenameIdentityLookup.has(recordFilenameIdentity));
+              };
+              const selectedRecords = allManagedRecords.filter((record) => isRecordSelected(record));
+              const unselectedRecords = allManagedRecords.filter((record) => !isRecordSelected(record));
+              const orderedManagedRecords = [...selectedRecords, ...unselectedRecords].map((record, index) => ({
+                ...record,
+                includedInListing: isRecordSelected(record),
+                sortOrder: index + 1,
+              }));
+              const orderedRecords = [
+                ...orderedManagedRecords,
+                ...unmanagedRecords.map((record) => ({
+                  ...record,
+                  includedInListing: false,
+                })),
+              ];
+              setFormValue(workflowImageMetadataFieldName, serializeWorkflowImageMetadata(orderedRecords));
+            }
           }}
-          disabled={saving || isReadOnlyApprovalField(imageSelectionWritableFieldName)}
+          disabled={saving}
           sourceActions={imageSourceActions}
         />
       )}

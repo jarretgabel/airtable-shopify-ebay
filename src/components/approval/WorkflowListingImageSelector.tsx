@@ -59,7 +59,7 @@ function normalizeUrlForLookup(url: string): string {
 
   try {
     const parsed = new URL(trimmed);
-    return `${parsed.origin}${parsed.pathname}`.toLowerCase();
+    return `${parsed.origin}${parsed.pathname}${parsed.search}`.toLowerCase();
   } catch {
     return trimmed.toLowerCase();
   }
@@ -77,6 +77,20 @@ function getUrlBasename(url: string): string {
   }
 }
 
+function urlHasQueryParams(url: string): boolean {
+  try {
+    return new URL(url.trim()).search.length > 1;
+  } catch {
+    return false;
+  }
+}
+
+function buildFallbackFilenameFromUrl(url: string): string {
+  const basename = getUrlBasename(url);
+  if (basename) return basename;
+  return 'Selected image';
+}
+
 function normalizeIdentityToken(value: string): string {
   return value
     .trim()
@@ -92,7 +106,7 @@ function getAttachmentLookupKeys(attachment: WorkflowListingImageAttachment): st
   if (normalizedUrl) keys.add(`url:${normalizedUrl}`);
   if (driveId) keys.add(`drive-id:${driveId.toLowerCase()}`);
 
-  if (!driveId) {
+  if (!driveId && !urlHasQueryParams(attachment.url)) {
     const basename = getUrlBasename(attachment.url);
     if (basename) keys.add(`basename:${basename}`);
     const normalizedBasename = normalizeIdentityToken(basename);
@@ -135,7 +149,7 @@ function getSelectedLookupKeys(url: string): string[] {
   if (normalizedUrl) keys.add(`url:${normalizedUrl}`);
   if (driveId) keys.add(`drive-id:${driveId.toLowerCase()}`);
 
-  if (!driveId) {
+  if (!driveId && !urlHasQueryParams(url)) {
     const basename = getUrlBasename(url);
     if (basename) keys.add(`basename:${basename}`);
     const normalizedBasename = normalizeIdentityToken(basename);
@@ -172,17 +186,26 @@ export function WorkflowListingImageSelector({
   });
 
   const selectedAttachments: WorkflowListingImageAttachment[] = [];
+  const selectedUrlKeys = new Set<string>();
   const selectedAttachmentIdentity = new Set<string>();
   selectedUrls.forEach((url) => {
+    const selectedUrlKey = url.trim().toLowerCase();
+    if (!selectedUrlKey || selectedUrlKeys.has(selectedUrlKey)) return;
+    selectedUrlKeys.add(selectedUrlKey);
+
     const match = getSelectedLookupKeys(url)
       .map((key) => attachmentByLookupKey.get(key))
       .find((attachment): attachment is WorkflowListingImageAttachment => Boolean(attachment));
-    if (!match) return;
 
-    const identity = getAttachmentIdentity(match);
+    const resolvedAttachment = match ?? {
+      url,
+      filename: buildFallbackFilenameFromUrl(url),
+    };
+
+    const identity = getAttachmentIdentity(resolvedAttachment);
     if (!identity || selectedAttachmentIdentity.has(identity)) return;
     selectedAttachmentIdentity.add(identity);
-    selectedAttachments.push(match);
+    selectedAttachments.push(resolvedAttachment);
   });
 
   const selectedAttachmentLookupKeys = new Set<string>();
@@ -212,16 +235,21 @@ export function WorkflowListingImageSelector({
       return candidateKeys.some((key) => selectedKeys.has(key));
     });
 
+    const selectedUrlsWithoutCandidate = selectedUrls.filter((selectedUrl) => {
+      const selectedKeys = new Set(getSelectedLookupKeys(selectedUrl));
+      return !candidateKeys.some((key) => selectedKeys.has(key));
+    });
+
     if (checked) {
-      if (hasExistingSelection) return;
+      if (hasExistingSelection) {
+        onSelectionChange([...selectedUrlsWithoutCandidate, normalizedUrl]);
+        return;
+      }
       onSelectionChange([...selectedUrls, normalizedUrl]);
       return;
     }
 
-    onSelectionChange(selectedUrls.filter((selectedUrl) => {
-      const selectedKeys = new Set(getSelectedLookupKeys(selectedUrl));
-      return !candidateKeys.some((key) => selectedKeys.has(key));
-    }));
+    onSelectionChange(selectedUrlsWithoutCandidate);
   };
 
   const reorderSelectedUrls = (sourceUrl: string, targetUrl: string) => {
@@ -255,13 +283,15 @@ export function WorkflowListingImageSelector({
     attachment,
     checked,
     index,
+    rowKey,
   }: {
     attachment: WorkflowListingImageAttachment;
     checked: boolean;
     index?: number;
+    rowKey?: string;
   }) => (
     <article
-      key={attachment.id ?? attachment.url}
+      key={rowKey ?? attachment.id ?? attachment.url}
       className={checked
         ? 'flex flex-col gap-3 rounded-2xl border border-[var(--accent)]/55 bg-[var(--accent)]/10 p-3 transition sm:flex-row sm:items-center'
         : 'flex flex-col gap-3 rounded-2xl border border-[var(--line)] bg-[var(--panel)]/80 p-3 transition hover:border-[var(--accent)]/35 sm:flex-row sm:items-center'}
@@ -391,7 +421,12 @@ export function WorkflowListingImageSelector({
             </div>
             {selectedAttachments.length > 0 ? (
               <div className="mt-3 space-y-3">
-                {selectedAttachments.map((attachment, index) => renderImageRow({ attachment, checked: true, index }))}
+                {selectedAttachments.map((attachment, index) => renderImageRow({
+                  attachment,
+                  checked: true,
+                  index,
+                  rowKey: `${attachment.id ?? attachment.url}::selected::${index}`,
+                }))}
               </div>
             ) : (
               <div className="mt-3 rounded-xl border border-dashed border-[var(--line)] bg-[var(--panel)]/60 px-4 py-5 text-sm text-[var(--muted)]">

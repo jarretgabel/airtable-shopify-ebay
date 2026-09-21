@@ -261,6 +261,14 @@ function isAllowedMissingWritableFieldName(fieldName: string): boolean {
     || normalized === 'shopify rest vendor'
     || normalized === 'shopify graphql vendor'
     || normalized === 'collections'
+    || normalized === 'shopify rest images json'
+    || normalized === 'shopify images json'
+    || normalized === 'shopify rest images'
+    || normalized === 'shopify images'
+    || normalized === 'shopify_rest_images_json'
+    || normalized === 'shopify_images_json'
+    || normalized === 'shopify_rest_images'
+    || normalized === 'shopify_images'
     || normalized === 'ebay price'
     || normalized === 'buy it now/starting price'
     || normalized === 'buy it now / starting price'
@@ -379,6 +387,56 @@ function resolveCanonicalFieldName(fieldName: string, existingFieldNameByLower: 
   return existingFieldNameByLower.get(fieldName.trim().toLowerCase()) ?? fieldName;
 }
 
+function isAttachmentRecord(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  return typeof record.url === 'string' || typeof record.id === 'string';
+}
+
+function isAttachmentArrayValue(value: unknown): value is Array<Record<string, unknown>> {
+  return Array.isArray(value) && value.every((entry) => isAttachmentRecord(entry));
+}
+
+function parseAttachmentUrlList(rawValue: string): string[] {
+  return rawValue
+    .split(/[\r\n,]/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function coerceAttachmentFieldValue(rawValue: string, existingValue: unknown): unknown | undefined {
+  if (!isAttachmentArrayValue(existingValue)) return undefined;
+
+  const trimmed = rawValue.trim();
+  if (!trimmed) return [];
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (isAttachmentArrayValue(parsed)) {
+      return parsed;
+    }
+  } catch {
+    // Fall through to URL-list parsing for plain-text editor values.
+  }
+
+  const selectedUrls = parseAttachmentUrlList(rawValue);
+  const existingByUrl = new Map<string, Record<string, unknown>>();
+  existingValue.forEach((attachment) => {
+    const url = typeof attachment.url === 'string' ? attachment.url.trim() : '';
+    if (!url) return;
+    existingByUrl.set(url.toLowerCase(), attachment);
+  });
+
+  const seen = new Set<string>();
+  return selectedUrls.reduce<Array<Record<string, unknown>>>((result, url) => {
+    const key = url.toLowerCase();
+    if (seen.has(key)) return result;
+    seen.add(key);
+    result.push(existingByUrl.get(key) ?? { url });
+    return result;
+  }, []);
+}
+
 export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStoreGet): ApprovalStore['saveRecord'] {
   return async (forceApproved, selectedRecord, tableReference, tableName, actualFieldNames, approvedFieldName, onSuccess, mode = 'full', systemFieldValues = {}) => {
     set({ saving: true, error: null });
@@ -430,7 +488,8 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           if (!existsOnRecord && !existsInSchema) return;
 
           const fieldKind = fieldKinds[writeFieldName] ?? inferFieldKindForField(writeFieldName, selectedRecord.fields[writeFieldName]);
-          payload[writeFieldName] = fromFormValueForField(writeFieldName, String(rawValue), fieldKind);
+          const attachmentFieldValue = coerceAttachmentFieldValue(String(rawValue), selectedRecord.fields[writeFieldName]);
+          payload[writeFieldName] = attachmentFieldValue ?? fromFormValueForField(writeFieldName, String(rawValue), fieldKind);
         });
       };
 
@@ -479,12 +538,12 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           }
 
           if (!existsOnRecord && !existsInSchema && allowMissingWritableField) {
-            droppedChangedFieldNames.push(fieldName);
             return;
           }
 
           const fieldKind = fieldKinds[writeFieldName] ?? 'text';
-          payload[writeFieldName] = fromFormValueForField(writeFieldName, rawValue, fieldKind);
+          const attachmentFieldValue = coerceAttachmentFieldValue(rawValue, selectedRecord.fields[writeFieldName]);
+          payload[writeFieldName] = attachmentFieldValue ?? fromFormValueForField(writeFieldName, rawValue, fieldKind);
         });
 
         assignSystemFieldValues();

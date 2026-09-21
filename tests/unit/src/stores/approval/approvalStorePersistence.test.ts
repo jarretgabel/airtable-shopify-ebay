@@ -284,4 +284,78 @@ describe('approvalStorePersistence', () => {
       error: 'Failed to save fields. Description are not writable in the current Airtable source.',
     }));
   });
+
+  it('skips non-writable Shopify REST Images JSON without failing the save', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const onSuccess = vi.fn();
+    const state = buildStoreState({
+      formValues: { 'Shopify REST Images JSON': '[{"src":"https://cdn.example.com/a.jpg","alt":"","position":1}]' },
+      fieldKinds: { 'Shopify REST Images JSON': 'text' },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      onSuccess,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
+    expect(loadRecordsMock).not.toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalled();
+  });
+
+  it('coerces comma-separated image URLs into attachment objects when saving Images fields', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: { Images: 'https://cdn.example.com/image-b.jpg, https://cdn.example.com/image-a.jpg' },
+      fieldKinds: { Images: 'text' },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({
+        Images: [
+          { id: 'att-image-a', url: 'https://cdn.example.com/image-a.jpg', filename: 'image-a.jpg' },
+          { id: 'att-image-b', url: 'https://cdn.example.com/image-b.jpg', filename: 'image-b.jpg' },
+        ],
+      }),
+      'base/table',
+      'Approval',
+      ['Images'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      {
+        Images: [
+          { id: 'att-image-b', url: 'https://cdn.example.com/image-b.jpg', filename: 'image-b.jpg' },
+          { id: 'att-image-a', url: 'https://cdn.example.com/image-a.jpg', filename: 'image-a.jpg' },
+        ],
+      },
+      undefined,
+    );
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
 });

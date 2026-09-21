@@ -375,6 +375,403 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     ]));
   });
 
+  it('writes both Images and Shopify REST Images JSON so persistence can save whichever field is writable', () => {
+    shippingEditorsSpy.mockReset();
+    keyFeaturesEditorSpy.mockReset();
+    testingNotesTextareaEditorSpy.mockReset();
+    const setFormValue = vi.fn();
+
+    render(
+      <ApprovalFormFieldsSupplementalEditors
+        imageUrlSourceField="Images"
+        useCombinedImageAltEditor
+        combinedImageEditorValue=""
+        imageAltTextSourceField="Images Alt Text"
+        shopifyImagePayloadFieldName="Shopify REST Images JSON"
+        workflowImageAttachments={[
+          { id: 'att-1', url: 'https://cdn.example.com/image-a.jpg', filename: 'image-a.jpg' },
+          { id: 'att-2', url: 'https://cdn.example.com/image-b.jpg', filename: 'image-b.jpg' },
+        ]}
+        selectedWorkflowImageUrls={['https://cdn.example.com/image-a.jpg']}
+        formValues={{
+          Images: 'https://cdn.example.com/image-a.jpg',
+          'Images Alt Text': 'Front view',
+          'Shopify REST Images JSON': JSON.stringify([
+            { src: 'https://cdn.example.com/image-a.jpg', alt: 'Front view', position: 1 },
+          ]),
+        }}
+        setFormValue={setFormValue}
+        saving={false}
+        isReadOnlyApprovalField={(fieldName) => fieldName === 'Shopify REST Images JSON'}
+        workflowManagedListingContent={false}
+        testingSectionFields={[]}
+        renderSpecialLabel={(label) => <span>{label}</span>}
+        inputBaseClass="input"
+        isEbayApprovalForm={false}
+        shopifyKeyFeaturesFieldName={undefined}
+        shopifyKeyFeaturesSyncFieldNames={[]}
+        ebayKeyFeaturesFieldName={undefined}
+        ebayKeyFeaturesSyncFieldNames={[]}
+        ebayTestingNotesFieldName={undefined}
+        ebayAttributesFieldName={undefined}
+        ebayAttributesSyncFieldNames={[]}
+        ebayDomesticShippingFeesFieldName={undefined}
+        ebayInternationalShippingFeesFieldName={undefined}
+        ebayDomesticShippingFlatFeeFieldName=""
+        ebayInternationalShippingFlatFeeFieldName=""
+        hasEbayShippingServicesEditor={false}
+        domesticService1FieldName={undefined}
+        domesticService2FieldName={undefined}
+        internationalService1FieldName={undefined}
+        internationalService2FieldName={undefined}
+        hasShopifyTagEditor={false}
+        shopifyTagValues={[]}
+        setShopifyTagValues={vi.fn()}
+        hasShopifyCollectionEditor={false}
+        shopifyCollectionsFieldName="Collections"
+        effectiveShopifyCollectionIds={[]}
+        effectiveCollectionEditorLabelsById={{}}
+        setShopifyCollectionIds={vi.fn()}
+        hasEbayCategoryEditor={false}
+        effectiveEbayCategoriesFieldName="categories"
+        ebayMarketplaceId="EBAY_US"
+        ebaySelectedCategoryDisplayValues={[]}
+        normalizedEbayCategoryLabelsById={{}}
+        setEbayCategoryIds={vi.fn()}
+        hasSecondaryEbayCategory={false}
+        renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
+        getSelectClassName={() => 'select'}
+        getInputClassName={() => 'input'}
+      />,
+    );
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(checkboxes[1]);
+
+    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', 'https://cdn.example.com/image-a.jpg, https://cdn.example.com/image-b.jpg');
+    expect(setFormValue).toHaveBeenNthCalledWith(2, 'Images Alt Text', 'Front view, ');
+    expect(setFormValue).toHaveBeenNthCalledWith(3, 'Shopify REST Images JSON', JSON.stringify([
+      { src: 'https://cdn.example.com/image-a.jpg', alt: 'Front view', position: 1 },
+      { src: 'https://cdn.example.com/image-b.jpg', alt: '', position: 2 },
+    ]));
+  });
+
+  it('persists deselection into workflow metadata when selected URLs are variants', () => {
+    shippingEditorsSpy.mockReset();
+    keyFeaturesEditorSpy.mockReset();
+    testingNotesTextareaEditorSpy.mockReset();
+    const setFormValue = vi.fn();
+
+    render(
+      <ApprovalFormFieldsSupplementalEditors
+        imageUrlSourceField="Images"
+        useCombinedImageAltEditor
+        combinedImageEditorValue=""
+        imageAltTextSourceField="Images Alt Text"
+        shopifyImagePayloadFieldName="Shopify REST Images JSON"
+        workflowImageMetadataFieldName="Workflow Image Metadata JSON"
+        workflowImageAttachments={[
+          {
+            id: 'att-photo-1',
+            url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+            filename: 'mit-miterminator-4-badge-detail-processed.jpg',
+          },
+          {
+            id: 'att-photo-2',
+            url: 'https://cdn.example.com/photo-2-processed.jpg',
+            filename: 'photo-2-processed.jpg',
+          },
+        ]}
+        selectedWorkflowImageUrls={[
+          'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600',
+          'https://cdn.example.com/photo-2-processed.jpg',
+        ]}
+        formValues={{
+          Images: 'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600, https://cdn.example.com/photo-2-processed.jpg',
+          'Images Alt Text': '',
+          'Shopify REST Images JSON': JSON.stringify([
+            { src: 'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600', alt: '', position: 1 },
+            { src: 'https://cdn.example.com/photo-2-processed.jpg', alt: '', position: 2 },
+          ]),
+          'Workflow Image Metadata JSON': JSON.stringify([
+            {
+              attachmentId: 'att-photo-1',
+              url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+              filename: 'mit-miterminator-4-badge-detail-processed.jpg',
+              alt: '',
+              sortOrder: 1,
+              sourceStage: 'photos',
+              includedInListing: true,
+            },
+            {
+              attachmentId: 'att-photo-2',
+              url: 'https://cdn.example.com/photo-2-processed.jpg',
+              filename: 'photo-2-processed.jpg',
+              alt: '',
+              sortOrder: 2,
+              sourceStage: 'photos',
+              includedInListing: true,
+            },
+          ]),
+        }}
+        setFormValue={setFormValue}
+        saving={false}
+        isReadOnlyApprovalField={() => false}
+        workflowManagedListingContent={false}
+        testingSectionFields={[]}
+        renderSpecialLabel={(label) => <span>{label}</span>}
+        inputBaseClass="input"
+        isEbayApprovalForm={false}
+        shopifyKeyFeaturesFieldName={undefined}
+        shopifyKeyFeaturesSyncFieldNames={[]}
+        ebayKeyFeaturesFieldName={undefined}
+        ebayKeyFeaturesSyncFieldNames={[]}
+        ebayTestingNotesFieldName={undefined}
+        ebayAttributesFieldName={undefined}
+        ebayAttributesSyncFieldNames={[]}
+        ebayDomesticShippingFeesFieldName={undefined}
+        ebayInternationalShippingFeesFieldName={undefined}
+        ebayDomesticShippingFlatFeeFieldName=""
+        ebayInternationalShippingFlatFeeFieldName=""
+        hasEbayShippingServicesEditor={false}
+        domesticService1FieldName={undefined}
+        domesticService2FieldName={undefined}
+        internationalService1FieldName={undefined}
+        internationalService2FieldName={undefined}
+        hasShopifyTagEditor={false}
+        shopifyTagValues={[]}
+        setShopifyTagValues={vi.fn()}
+        hasShopifyCollectionEditor={false}
+        shopifyCollectionsFieldName="Collections"
+        effectiveShopifyCollectionIds={[]}
+        effectiveCollectionEditorLabelsById={{}}
+        setShopifyCollectionIds={vi.fn()}
+        hasEbayCategoryEditor={false}
+        effectiveEbayCategoriesFieldName="categories"
+        ebayMarketplaceId="EBAY_US"
+        ebaySelectedCategoryDisplayValues={[]}
+        normalizedEbayCategoryLabelsById={{}}
+        setEbayCategoryIds={vi.fn()}
+        hasSecondaryEbayCategory={false}
+        renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
+        getSelectClassName={() => 'select'}
+        getInputClassName={() => 'input'}
+      />,
+    );
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(checkboxes[0]);
+
+    const metadataCall = setFormValue.mock.calls.find((call) => call[0] === 'Workflow Image Metadata JSON');
+    expect(metadataCall).toBeDefined();
+    const serializedMetadata = String(metadataCall?.[1] ?? '');
+    expect(serializedMetadata).toContain('"attachmentId":"att-photo-1"');
+    expect(serializedMetadata).toContain('"includedInListing":false');
+  });
+
+  it('adds missing processed metadata rows when selecting from available images', () => {
+    shippingEditorsSpy.mockReset();
+    keyFeaturesEditorSpy.mockReset();
+    testingNotesTextareaEditorSpy.mockReset();
+    const setFormValue = vi.fn();
+
+    render(
+      <ApprovalFormFieldsSupplementalEditors
+        imageUrlSourceField="Images"
+        useCombinedImageAltEditor
+        combinedImageEditorValue=""
+        imageAltTextSourceField="Images Alt Text"
+        shopifyImagePayloadFieldName="Shopify REST Images JSON"
+        workflowImageMetadataFieldName="Workflow Image Metadata JSON"
+        workflowImageAttachments={[
+          {
+            id: 'att-photo-1',
+            url: 'https://cdn.example.com/photo-1-processed.jpg',
+            filename: 'photo-1-processed.jpg',
+          },
+          {
+            id: 'att-photo-2',
+            url: 'https://cdn.example.com/photo-2-processed.jpg',
+            filename: 'photo-2-processed.jpg',
+          },
+        ]}
+        selectedWorkflowImageUrls={[
+          'https://cdn.example.com/photo-1-processed.jpg',
+        ]}
+        formValues={{
+          Images: 'https://cdn.example.com/photo-1-processed.jpg',
+          'Images Alt Text': '',
+          'Shopify REST Images JSON': JSON.stringify([
+            { src: 'https://cdn.example.com/photo-1-processed.jpg', alt: '', position: 1 },
+          ]),
+          'Workflow Image Metadata JSON': JSON.stringify([
+            {
+              attachmentId: 'att-photo-1',
+              url: 'https://cdn.example.com/photo-1-processed.jpg',
+              filename: 'photo-1-processed.jpg',
+              alt: '',
+              sortOrder: 1,
+              sourceStage: 'photos',
+              includedInListing: true,
+            },
+          ]),
+        }}
+        setFormValue={setFormValue}
+        saving={false}
+        isReadOnlyApprovalField={() => false}
+        workflowManagedListingContent={false}
+        testingSectionFields={[]}
+        renderSpecialLabel={(label) => <span>{label}</span>}
+        inputBaseClass="input"
+        isEbayApprovalForm={false}
+        shopifyKeyFeaturesFieldName={undefined}
+        shopifyKeyFeaturesSyncFieldNames={[]}
+        ebayKeyFeaturesFieldName={undefined}
+        ebayKeyFeaturesSyncFieldNames={[]}
+        ebayTestingNotesFieldName={undefined}
+        ebayAttributesFieldName={undefined}
+        ebayAttributesSyncFieldNames={[]}
+        ebayDomesticShippingFeesFieldName={undefined}
+        ebayInternationalShippingFeesFieldName={undefined}
+        ebayDomesticShippingFlatFeeFieldName=""
+        ebayInternationalShippingFlatFeeFieldName=""
+        hasEbayShippingServicesEditor={false}
+        domesticService1FieldName={undefined}
+        domesticService2FieldName={undefined}
+        internationalService1FieldName={undefined}
+        internationalService2FieldName={undefined}
+        hasShopifyTagEditor={false}
+        shopifyTagValues={[]}
+        setShopifyTagValues={vi.fn()}
+        hasShopifyCollectionEditor={false}
+        shopifyCollectionsFieldName="Collections"
+        effectiveShopifyCollectionIds={[]}
+        effectiveCollectionEditorLabelsById={{}}
+        setShopifyCollectionIds={vi.fn()}
+        hasEbayCategoryEditor={false}
+        effectiveEbayCategoriesFieldName="categories"
+        ebayMarketplaceId="EBAY_US"
+        ebaySelectedCategoryDisplayValues={[]}
+        normalizedEbayCategoryLabelsById={{}}
+        setEbayCategoryIds={vi.fn()}
+        hasSecondaryEbayCategory={false}
+        renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
+        getSelectClassName={() => 'select'}
+        getInputClassName={() => 'input'}
+      />,
+    );
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(checkboxes[1]);
+
+    const metadataCall = setFormValue.mock.calls.find((call) => call[0] === 'Workflow Image Metadata JSON');
+    expect(metadataCall).toBeDefined();
+    const serializedMetadata = String(metadataCall?.[1] ?? '');
+    expect(serializedMetadata).toContain('"attachmentId":"att-photo-2"');
+    expect(serializedMetadata).toContain('"url":"https://cdn.example.com/photo-2-processed.jpg"');
+    expect(serializedMetadata).toContain('"includedInListing":true');
+  });
+
+  it('keeps workflow image checkboxes enabled when Images is read-only but metadata is writable', () => {
+    shippingEditorsSpy.mockReset();
+    keyFeaturesEditorSpy.mockReset();
+    testingNotesTextareaEditorSpy.mockReset();
+    const setFormValue = vi.fn();
+
+    render(
+      <ApprovalFormFieldsSupplementalEditors
+        imageUrlSourceField="Images"
+        useCombinedImageAltEditor
+        combinedImageEditorValue=""
+        imageAltTextSourceField="Images Alt Text"
+        shopifyImagePayloadFieldName="Shopify REST Images JSON"
+        workflowImageMetadataFieldName="Workflow Image Metadata JSON"
+        workflowImageAttachments={[
+          {
+            id: 'att-photo-1',
+            url: 'https://cdn.example.com/photo-1-processed.jpg',
+            filename: 'photo-1-processed.jpg',
+          },
+          {
+            id: 'att-photo-2',
+            url: 'https://cdn.example.com/photo-2-processed.jpg',
+            filename: 'photo-2-processed.jpg',
+          },
+        ]}
+        selectedWorkflowImageUrls={[
+          'https://cdn.example.com/photo-1-processed.jpg',
+        ]}
+        formValues={{
+          Images: 'https://cdn.example.com/photo-1-processed.jpg',
+          'Images Alt Text': '',
+          'Shopify REST Images JSON': JSON.stringify([
+            { src: 'https://cdn.example.com/photo-1-processed.jpg', alt: '', position: 1 },
+          ]),
+          'Workflow Image Metadata JSON': JSON.stringify([
+            {
+              attachmentId: 'att-photo-1',
+              url: 'https://cdn.example.com/photo-1-processed.jpg',
+              filename: 'photo-1-processed.jpg',
+              alt: '',
+              sortOrder: 1,
+              sourceStage: 'photos',
+              includedInListing: true,
+            },
+          ]),
+        }}
+        setFormValue={setFormValue}
+        saving={false}
+        isReadOnlyApprovalField={(fieldName) => fieldName === 'Images'}
+        workflowManagedListingContent={false}
+        testingSectionFields={[]}
+        renderSpecialLabel={(label) => <span>{label}</span>}
+        inputBaseClass="input"
+        isEbayApprovalForm={false}
+        shopifyKeyFeaturesFieldName={undefined}
+        shopifyKeyFeaturesSyncFieldNames={[]}
+        ebayKeyFeaturesFieldName={undefined}
+        ebayKeyFeaturesSyncFieldNames={[]}
+        ebayTestingNotesFieldName={undefined}
+        ebayAttributesFieldName={undefined}
+        ebayAttributesSyncFieldNames={[]}
+        ebayDomesticShippingFeesFieldName={undefined}
+        ebayInternationalShippingFeesFieldName={undefined}
+        ebayDomesticShippingFlatFeeFieldName=""
+        ebayInternationalShippingFlatFeeFieldName=""
+        hasEbayShippingServicesEditor={false}
+        domesticService1FieldName={undefined}
+        domesticService2FieldName={undefined}
+        internationalService1FieldName={undefined}
+        internationalService2FieldName={undefined}
+        hasShopifyTagEditor={false}
+        shopifyTagValues={[]}
+        setShopifyTagValues={vi.fn()}
+        hasShopifyCollectionEditor={false}
+        shopifyCollectionsFieldName="Collections"
+        effectiveShopifyCollectionIds={[]}
+        effectiveCollectionEditorLabelsById={{}}
+        setShopifyCollectionIds={vi.fn()}
+        hasEbayCategoryEditor={false}
+        effectiveEbayCategoriesFieldName="categories"
+        ebayMarketplaceId="EBAY_US"
+        ebaySelectedCategoryDisplayValues={[]}
+        normalizedEbayCategoryLabelsById={{}}
+        setEbayCategoryIds={vi.fn()}
+        hasSecondaryEbayCategory={false}
+        renderFieldLabel={(fieldName) => <span>{fieldName}</span>}
+        getSelectClassName={() => 'select'}
+        getInputClassName={() => 'input'}
+      />,
+    );
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    expect(checkboxes[1]).not.toBeDisabled();
+    fireEvent.click(checkboxes[1]);
+
+    const metadataCall = setFormValue.mock.calls.find((call) => call[0] === 'Workflow Image Metadata JSON');
+    expect(metadataCall).toBeDefined();
+  });
+
   it('locks testing-derived detail editors to the Testing form when workflow-managed content is present', async () => {
     shippingEditorsSpy.mockReset();
     keyFeaturesEditorSpy.mockReset();

@@ -58,6 +58,38 @@ describe('WorkflowListingImageSelector', () => {
     expect(selectedCardsAfter[2]).toHaveTextContent('image-c.jpg');
   });
 
+  it('allows selecting available uploads that differ by query-string identifiers', () => {
+    function QueryIdHarness() {
+      const [selectedUrls, setSelectedUrls] = useState([
+        'https://lh3.googleusercontent.com/render?id=file-1&sz=w1600',
+      ]);
+
+      return (
+        <WorkflowListingImageSelector
+          attachments={[
+            { id: 'att-1', url: 'https://lh3.googleusercontent.com/render?id=file-1&sz=w1600', filename: 'image-1-processed.jpg' },
+            { id: 'att-2', url: 'https://lh3.googleusercontent.com/render?id=file-2&sz=w1600', filename: 'image-2-processed.jpg' },
+          ]}
+          selectedUrls={selectedUrls}
+          onSelectionChange={setSelectedUrls}
+        />
+      );
+    }
+
+    render(<QueryIdHarness />);
+
+    const availableCardsBefore = screen.getAllByTestId('available-listing-image-card');
+    expect(availableCardsBefore).toHaveLength(1);
+    expect(availableCardsBefore[0]).toHaveTextContent('image-2-processed.jpg');
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(checkboxes[1]);
+
+    const selectedCardsAfter = screen.getAllByTestId('selected-listing-image-card');
+    expect(selectedCardsAfter).toHaveLength(2);
+    expect(selectedCardsAfter[1]).toHaveTextContent('image-2-processed.jpg');
+  });
+
   it('shows image alt text under the filename', () => {
     render(<SelectorHarness />);
 
@@ -230,5 +262,122 @@ describe('WorkflowListingImageSelector', () => {
     const availableFilenames = availableCards.map((card) => card.textContent ?? '').join('\n');
     expect(availableFilenames).toContain('b-w-805-woofer-detail-processed.jpg');
     expect(availableFilenames).toContain('testing-1-processed.jpg');
+  });
+
+  it('keeps unmatched persisted selected URLs visible in Included In Listing', () => {
+    render(
+      <WorkflowListingImageSelector
+        attachments={[
+          {
+            id: 'att-photo-1-drive',
+            url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+            filename: 'photo-1-processed.jpg',
+          },
+        ]}
+        selectedUrls={['https://dl.airtableusercontent.com/.attachments/variant/photo-1.jpg']}
+        onSelectionChange={() => {}}
+      />,
+    );
+
+    const selectedCards = screen.getAllByTestId('selected-listing-image-card');
+    expect(selectedCards).toHaveLength(1);
+    expect(selectedCards[0]).toHaveTextContent('photo-1.jpg');
+  });
+
+  it('keeps unmatched explicit selected rows while deduping only confidently matched variants', () => {
+    render(
+      <WorkflowListingImageSelector
+        attachments={[
+          {
+            id: 'att-photo-1-drive',
+            url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+            filename: 'mit-miterminator-4-badge-detail-processed.jpg',
+          },
+          {
+            id: 'att-photo-2',
+            url: 'https://cdn.example.com/photo-2-processed.jpg',
+            filename: 'photo-2-processed.jpg',
+          },
+        ]}
+        selectedUrls={[
+          'https://dl.airtableusercontent.com/.attachments/variant/photo-1-token',
+          'https://cdn.example.com/photo-2-processed.jpg',
+          'https://drive.google.com/uc?export=view&id=file-photo-1',
+        ]}
+        onSelectionChange={() => {}}
+      />,
+    );
+
+    const selectedCards = screen.getAllByTestId('selected-listing-image-card');
+    expect(selectedCards).toHaveLength(3);
+  });
+
+  it('dedupes selected Google Drive URL variants for the same file id', () => {
+    render(
+      <WorkflowListingImageSelector
+        attachments={[
+          {
+            id: 'att-photo-1-drive',
+            url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+            filename: 'mit-miterminator-4-badge-detail-processed.jpg',
+          },
+        ]}
+        selectedUrls={[
+          'https://drive.google.com/uc?export=view&id=file-photo-1',
+          'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600',
+        ]}
+        onSelectionChange={() => {}}
+      />,
+    );
+
+    const selectedCards = screen.getAllByTestId('selected-listing-image-card');
+    expect(selectedCards).toHaveLength(1);
+  });
+
+  it('adds available query-id variants to selected images when checked', () => {
+    function VariantReplacementHarness() {
+      const [selectedUrls, setSelectedUrls] = useState([
+        'https://cdn.example.com/rendered/photo-1.jpg?token=old',
+      ]);
+
+      return (
+        <WorkflowListingImageSelector
+          attachments={[
+            {
+              id: 'att-photo-1',
+              url: 'https://cdn.example.com/rendered/photo-1.jpg?token=new',
+              filename: 'photo-1-processed.jpg',
+            },
+            {
+              id: 'att-photo-2',
+              url: 'https://cdn.example.com/rendered/photo-2.jpg?token=abc',
+              filename: 'photo-2-processed.jpg',
+            },
+          ]}
+          selectedUrls={selectedUrls}
+          onSelectionChange={setSelectedUrls}
+        />
+      );
+    }
+
+    render(<VariantReplacementHarness />);
+
+    const availableCards = screen.getAllByTestId('available-listing-image-card');
+    expect(availableCards).toHaveLength(2);
+
+    const photo1AvailableCard = availableCards.find((card) => card.textContent?.includes('photo-1-processed.jpg'));
+    expect(photo1AvailableCard).toBeDefined();
+    const checkbox = within(photo1AvailableCard as HTMLElement).getByRole('checkbox');
+    fireEvent.click(checkbox);
+
+    const selectedCards = screen.getAllByTestId('selected-listing-image-card');
+    expect(selectedCards).toHaveLength(2);
+    const selectedText = selectedCards.map((card) => card.textContent ?? '').join('\n');
+    expect(selectedText).toContain('photo-1.jpg');
+    expect(selectedText).toContain('photo-1-processed.jpg');
+
+    const availableCardsAfter = screen.getAllByTestId('available-listing-image-card');
+    expect(availableCardsAfter).toHaveLength(1);
+    expect(availableCardsAfter[0]).toHaveTextContent('photo-2-processed.jpg');
   });
 });
