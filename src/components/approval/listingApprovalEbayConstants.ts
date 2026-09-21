@@ -146,8 +146,6 @@ export const EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML = [
   '<p style="margin:0 0 12px;text-align:center;color:#cc0000;"><strong>LIST OF DEFECTS IS NOT EXHAUSTIVE - THERE MAY BE ADDITIONAL DEFECTS</strong></p>',
   '<p style="margin:0 0 14px;text-align:center;color:#cc0000;"><strong>NO RETURNS UNDER ANY CIRCUMSTANCES</strong></p>',
   '<p style="margin:0 0 14px;text-align:center;color:#0a3f3f;"><strong>Salvaged from a salt-water flooded warehouse. Considerable rust and corrosion. Please see all high resolution photographs below.</strong></p>',
-  '<p style="margin:0 0 12px;color:#111111;"><strong>All items included are pictured.</strong></p>',
-  '<p style="margin:0;color:#cc0000;"><strong>Local Pickup in NYC Available</strong></p>',
 ].join('');
 export const EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD = '__ebay_body_about_override__';
 export const EBAY_BODY_ABOUT_DEFAULT_TEXT = 'High-End Audio Auctions has been THE trusted source for high-end, classic and vintage audio components on eBay since 2000. Our unique products, unparalleled service and bombproof packaging keeps customers coming back again and again. We are experts at worldwide selling and shipping, with items ranging from $5 to $50,000.';
