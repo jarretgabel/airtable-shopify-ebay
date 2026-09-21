@@ -294,12 +294,21 @@ export function useApprovalFormFieldSetup({
   const effectiveShopifyImagePayloadFieldName = shopifyImagePayloadFieldName
     ?? ((isCombinedApproval && hasScopedImageField && workflowImageAttachments.length > 0) ? 'Shopify REST Images JSON' : undefined);
   const selectedWorkflowImageUrls = useMemo(() => {
+    const imageUrlValue = effectiveImageUrlSourceField ? (formValues[effectiveImageUrlSourceField] ?? '') : '';
+    const imageAltTextValue = imageAltTextSourceField ? (formValues[imageAltTextSourceField] ?? '') : '';
+    const payloadValue = effectiveShopifyImagePayloadFieldName ? (formValues[effectiveShopifyImagePayloadFieldName] ?? '') : '';
     const currentRows = parseWorkflowSelectedImageRows(
-      effectiveImageUrlSourceField ? (formValues[effectiveImageUrlSourceField] ?? '') : '',
-      imageAltTextSourceField ? (formValues[imageAltTextSourceField] ?? '') : '',
-      effectiveShopifyImagePayloadFieldName ? (formValues[effectiveShopifyImagePayloadFieldName] ?? '') : '',
+      imageUrlValue,
+      imageAltTextValue,
+      payloadValue,
     );
-    if (currentRows.length === 0) {
+    const explicitEmptySelection = payloadValue.trim() === '[]';
+    const hasExplicitSelectionInput = explicitEmptySelection
+      || imageUrlValue.trim().length > 0
+      || imageAltTextValue.trim().length > 0
+      || payloadValue.trim().length > 0;
+
+    if (currentRows.length === 0 && !hasExplicitSelectionInput) {
       // Exclude intake images from the default listing selection
       return buildWorkflowListingSelectionFromMetadata(
         workflowImageMetadata.filter((m) => m.sourceStage !== 'intake'),

@@ -226,7 +226,7 @@ export function buildWorkflowListingImageSelectionValues({
   return {
     imageValue: toCommaSeparatedImageValues(rows.map((row) => row.src)),
     imageAltTextValue: altValues.some((altValue) => altValue.trim().length > 0) ? toCommaSeparatedImageValues(altValues) : '',
-    shopifyImagePayloadValue: rows.length > 0 ? JSON.stringify(rows) : '',
+    shopifyImagePayloadValue: rows.length > 0 ? JSON.stringify(rows) : '[]',
   };
 }
 
