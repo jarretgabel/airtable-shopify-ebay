@@ -187,6 +187,41 @@ describe('approvalStorePersistence', () => {
     expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
   });
 
+  it('writes to canonical Airtable field names when form values use non-canonical casing', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: { 'Ebay Offer Price Value': '1799.00' },
+      fieldKinds: { 'Ebay Offer Price Value': 'text' },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ 'eBay Offer Price Value': '1499.00' }),
+      'base/table',
+      'Approval',
+      ['eBay Offer Price Value'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'eBay Offer Price Value': '1799.00' },
+      { typecast: true },
+    );
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
   it('fails when Airtable rejects all changed fields with 422 responses', async () => {
     const setMock = vi.fn();
     const loadRecordsMock = vi.fn(async () => {});

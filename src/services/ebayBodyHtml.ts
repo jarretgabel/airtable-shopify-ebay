@@ -97,6 +97,25 @@ function replaceTemplateToken(templateHtml: string, token: string, replacement: 
   return templateHtml.replace(pattern, replacement);
 }
 
+function applyTemplateCopy(templateHtml: string, templateCopy: string): string {
+  const normalizedTemplateCopy = templateCopy.trim();
+  const hasTemplateCopyToken = /\{\{\s*template_copy\s*\}\}/i.test(templateHtml);
+
+  if (hasTemplateCopyToken) {
+    return replaceTemplateToken(templateHtml, 'template_copy', normalizedTemplateCopy);
+  }
+
+  if (!normalizedTemplateCopy) {
+    return templateHtml;
+  }
+
+  if (/\{\{\s*description\s*\}\}/i.test(templateHtml)) {
+    return templateHtml.replace(/(\{\{\s*description\s*\}\})/i, `${normalizedTemplateCopy}$1`);
+  }
+
+  return `${normalizedTemplateCopy}${templateHtml}`;
+}
+
 function applyTableRows(templateHtml: string, options: {
   tableId: string;
   rawValue: string;
@@ -175,9 +194,11 @@ export function buildEbayBodyHtmlFromTemplate(
   modelValue = '',
   supplementalFields: EbaySupplementalBodyFields = {},
   aboutText = DEFAULT_HEAA_ABOUT_TEXT,
+  templateCopy = '',
 ): string {
   const withTitle = replaceTemplateToken(templateHtml, 'title', title);
-  const withDescription = replaceTemplateToken(withTitle, 'description', description);
+  const withTemplateCopy = applyTemplateCopy(withTitle, templateCopy);
+  const withDescription = replaceTemplateToken(withTemplateCopy, 'description', description);
   const withAbout = replaceTemplateToken(withDescription, 'about', aboutText || DEFAULT_HEAA_ABOUT_TEXT);
 
   const withKeyFeatures = applyTableRows(withAbout, {

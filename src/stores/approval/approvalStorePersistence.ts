@@ -360,12 +360,38 @@ function isLikelyComputedAirtableField(fieldName: string): boolean {
     || normalized.includes('(formula');
 }
 
+function resolveExistingFieldByCandidates(
+  candidates: string[],
+  existingFieldNameByLower: Map<string, string>,
+): string | null {
+  for (const candidate of candidates) {
+    const trimmedCandidate = candidate.trim();
+    if (!trimmedCandidate) continue;
+
+    const resolvedFieldName = existingFieldNameByLower.get(trimmedCandidate.toLowerCase());
+    if (resolvedFieldName) return resolvedFieldName;
+  }
+
+  return null;
+}
+
+function resolveCanonicalFieldName(fieldName: string, existingFieldNameByLower: Map<string, string>): string {
+  return existingFieldNameByLower.get(fieldName.trim().toLowerCase()) ?? fieldName;
+}
+
 export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStoreGet): ApprovalStore['saveRecord'] {
   return async (forceApproved, selectedRecord, tableReference, tableName, actualFieldNames, approvedFieldName, onSuccess, mode = 'full', systemFieldValues = {}) => {
     set({ saving: true, error: null });
     try {
       const { formValues, fieldKinds } = get();
       const actualFieldLookup = new Set(actualFieldNames.map((fieldName) => fieldName.toLowerCase()));
+      const existingFieldNameByLower = new Map<string, string>();
+      actualFieldNames.forEach((fieldName) => {
+        existingFieldNameByLower.set(fieldName.toLowerCase(), fieldName);
+      });
+      Object.keys(selectedRecord.fields).forEach((fieldName) => {
+        existingFieldNameByLower.set(fieldName.toLowerCase(), fieldName);
+      });
       const resolvedApprovedFieldName = Object.keys(selectedRecord.fields)
         .find((fieldName) => fieldName.toLowerCase() === approvedFieldName.toLowerCase())
         ?? approvedFieldName;
@@ -397,12 +423,14 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           if (rawValue === undefined || rawValue === null) return;
           if (isLikelyComputedAirtableField(fieldName)) return;
 
-          const existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, fieldName);
-          const existsInSchema = actualFieldLookup.has(fieldName.toLowerCase());
+          const writeFieldName = resolveCanonicalFieldName(fieldName, existingFieldNameByLower);
+
+          const existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, writeFieldName);
+          const existsInSchema = actualFieldLookup.has(writeFieldName.toLowerCase());
           if (!existsOnRecord && !existsInSchema) return;
 
-          const fieldKind = fieldKinds[fieldName] ?? inferFieldKindForField(fieldName, selectedRecord.fields[fieldName]);
-          payload[fieldName] = fromFormValueForField(fieldName, String(rawValue), fieldKind);
+          const fieldKind = fieldKinds[writeFieldName] ?? inferFieldKindForField(writeFieldName, selectedRecord.fields[writeFieldName]);
+          payload[writeFieldName] = fromFormValueForField(writeFieldName, String(rawValue), fieldKind);
         });
       };
 
@@ -418,12 +446,31 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           if (fieldName === SHIPPING_SERVICE_FIELD) return;
           if (fieldName === CONDITION_FIELD) return;
           if (isLikelyComputedAirtableField(fieldName)) return;
-          const existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, fieldName);
-          const existsInSchema = actualFieldLookup.has(fieldName.toLowerCase());
-          if (!existsOnRecord && !existsInSchema && isCategoryLikeFieldName(fieldName)) return;
+
+          let writeFieldName = resolveCanonicalFieldName(fieldName, existingFieldNameByLower);
+          let existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, writeFieldName);
+          let existsInSchema = actualFieldLookup.has(writeFieldName.toLowerCase());
+
+          // Some queues expose alias field names (for example, Ebay/eBay price variants)
+          // that are not actual Airtable columns. Remap those aliases to an existing
+          // price column before save so Airtable does not reject with "Unknown field name".
+          if (!existsOnRecord && !existsInSchema && isPriceLikeFieldName(writeFieldName)) {
+            const resolvedPriceFieldName = resolveExistingFieldByCandidates(
+              getPriceFieldRetryNames(writeFieldName),
+              existingFieldNameByLower,
+            );
+
+            if (resolvedPriceFieldName) {
+              writeFieldName = resolvedPriceFieldName;
+              existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, writeFieldName);
+              existsInSchema = actualFieldLookup.has(writeFieldName.toLowerCase());
+            }
+          }
+
+          if (!existsOnRecord && !existsInSchema && isCategoryLikeFieldName(writeFieldName)) return;
           const allowMissingWritableField = isAllowedMissingWritableFieldName(fieldName);
-          const originalValue = toFormValueForField(fieldName, selectedRecord.fields[fieldName]);
-          if (fieldName.toLowerCase() === resolvedApprovedFieldName.toLowerCase() && forceApproved) return;
+          const originalValue = toFormValueForField(writeFieldName, selectedRecord.fields[writeFieldName]);
+          if (writeFieldName.toLowerCase() === resolvedApprovedFieldName.toLowerCase() && forceApproved) return;
           if (rawValue === originalValue) return;
 
           if (!existsOnRecord && !existsInSchema && !allowMissingWritableField) {
@@ -431,8 +478,13 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
             return;
           }
 
-          const fieldKind = fieldKinds[fieldName] ?? 'text';
-          payload[fieldName] = fromFormValueForField(fieldName, rawValue, fieldKind);
+          if (!existsOnRecord && !existsInSchema && allowMissingWritableField) {
+            droppedChangedFieldNames.push(fieldName);
+            return;
+          }
+
+          const fieldKind = fieldKinds[writeFieldName] ?? 'text';
+          payload[writeFieldName] = fromFormValueForField(writeFieldName, rawValue, fieldKind);
         });
 
         assignSystemFieldValues();
@@ -502,17 +554,18 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
                 const retryFieldNames = getPriceFieldRetryNames(fieldName);
 
                 for (const retryFieldName of retryFieldNames) {
+                  const canonicalRetryFieldName = resolveCanonicalFieldName(retryFieldName, existingFieldNameByLower);
                   for (const retryValue of retryValues) {
                     try {
                       await updateRecordFromResolvedSource(
                         tableReference,
                         tableName,
                         selectedRecord.id,
-                        { [retryFieldName]: retryValue },
+                        { [canonicalRetryFieldName]: retryValue },
                         { typecast: true },
                       );
                       retrySucceeded = true;
-                      updatedFields.push(retryFieldName);
+                      updatedFields.push(canonicalRetryFieldName);
                       break;
                     } catch (retryError) {
                       const retryStatus = getAirtableErrorStatus(retryError);

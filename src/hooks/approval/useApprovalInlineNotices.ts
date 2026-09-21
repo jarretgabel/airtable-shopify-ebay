@@ -14,6 +14,21 @@ interface InlineNoticeTimers {
   remove: number;
 }
 
+function getNoticeLifetimeMs(tone: InlineActionNoticeTone): { fadeAfterMs: number; removeAfterMs: number } | null {
+  if (tone === 'error') return null;
+  if (tone === 'warning') {
+    return {
+      fadeAfterMs: 14000,
+      removeAfterMs: 16000,
+    };
+  }
+
+  return {
+    fadeAfterMs: 5500,
+    removeAfterMs: 6500,
+  };
+}
+
 export function useApprovalInlineNotices() {
   const [inlineActionNotices, setInlineActionNotices] = useState<InlineActionNotice[]>([]);
   const [fadingInlineNoticeIds, setFadingInlineNoticeIds] = useState<string[]>([]);
@@ -43,22 +58,47 @@ export function useApprovalInlineNotices() {
   }, [clearAllInlineNoticeTimers]);
 
   const pushInlineActionNotice = useCallback((tone: InlineActionNoticeTone, title: string, message: string) => {
-    const id = `inline-notice-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    setInlineActionNotices((current) => ([
-      { id, tone, title, message },
-      ...current,
-    ].slice(0, 8)));
+    const fallbackId = `inline-notice-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    let id = fallbackId;
+    setInlineActionNotices((current) => {
+      const duplicate = current.find((notice) => (
+        notice.tone === tone
+        && notice.title === title
+        && notice.message === message
+      ));
+
+      if (duplicate) {
+        id = duplicate.id;
+      }
+
+      const nextNotice: InlineActionNotice = {
+        id,
+        tone,
+        title,
+        message,
+      };
+
+      const retained = current.filter((notice) => notice.id !== id);
+      return [nextNotice, ...retained].slice(0, 6);
+    });
 
     clearInlineNoticeTimer(id);
+
+    const lifetime = getNoticeLifetimeMs(tone);
+    if (!lifetime) {
+      setFadingInlineNoticeIds((current) => current.filter((noticeId) => noticeId !== id));
+      return;
+    }
+
     const fadeTimer = window.setTimeout(() => {
       setFadingInlineNoticeIds((current) => (current.includes(id) ? current : [...current, id]));
-    }, 3700);
+    }, lifetime.fadeAfterMs);
 
     const removeTimer = window.setTimeout(() => {
       setInlineActionNotices((current) => current.filter((notice) => notice.id !== id));
       setFadingInlineNoticeIds((current) => current.filter((noticeId) => noticeId !== id));
       clearInlineNoticeTimer(id);
-    }, 4000);
+    }, lifetime.removeAfterMs);
 
     inlineNoticeTimersRef.current[id] = { fade: fadeTimer, remove: removeTimer };
   }, [clearInlineNoticeTimer]);

@@ -3,7 +3,8 @@ import { normalizeApprovalRecord } from '@/services/app-api/approval';
 import {
   EBAY_BODY_ABOUT_DEFAULT_TEXT,
   EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
-  EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD,
+  EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML,
+  EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD,
 } from '@/components/approval/listingApprovalEbayConstants';
 import type { EbayApprovalPreviewResult } from '@/services/app-api/ebay';
 import type { ShopifyApprovalPreviewResult } from '@/services/app-api/shopify';
@@ -45,9 +46,11 @@ function resolveEbayDescriptionPreviewValue(
   selectedRecord: AirtableRecord | null,
   combinedDescriptionFieldName: string,
 ): string {
-  const overrideDescription = (formValues[EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD] ?? '').trim();
-  if (overrideDescription) return overrideDescription;
   return resolveCombinedPreviewValue(formValues, sourceFields, selectedRecord, combinedDescriptionFieldName);
+}
+
+function resolveEbayTemplateCopyPreviewValue(formValues: Record<string, string>): string {
+  return (formValues[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD] ?? '').trim() || EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML;
 }
 
 function resolveEbayAboutPreviewValue(formValues: Record<string, string>): string {
@@ -156,12 +159,13 @@ export function useApprovalPreview({
   const isEbayPayloadPreviewContext = approvalChannel === 'ebay' || approvalChannel === 'combined';
 
   const currentEbayPreviewBodyInput = useMemo(() => {
-    if (!isCombinedApproval) return undefined;
+    if (!isEbayPayloadPreviewContext) return undefined;
 
     return {
       templateHtml: selectedEbayTemplateHtml,
       title: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayTitleFieldName),
       description: resolveEbayDescriptionPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedDescriptionFieldName),
+      templateCopy: resolveEbayTemplateCopyPreviewValue(formValues),
       keyFeatures: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedSharedKeyFeaturesFieldName),
       testingNotes: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayTestingNotesFieldName),
       make: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedMakeFieldName),
@@ -182,7 +186,20 @@ export function useApprovalPreview({
       audiogonRating: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Audiogon Rating'),
       fieldName: combinedEbayBodyHtmlFieldName || undefined,
     };
-  }, [combinedDescriptionFieldName, combinedEbayBodyHtmlFieldName, combinedEbayTestingNotesFieldName, combinedEbayTitleFieldName, combinedMakeFieldName, combinedModelFieldName, combinedSharedKeyFeaturesFieldName, formValues, isCombinedApproval, mergedDraftSourceFields, selectedEbayTemplateHtml, selectedRecord]);
+  }, [
+    combinedDescriptionFieldName,
+    combinedEbayBodyHtmlFieldName,
+    combinedEbayTestingNotesFieldName,
+    combinedEbayTitleFieldName,
+    combinedMakeFieldName,
+    combinedModelFieldName,
+    combinedSharedKeyFeaturesFieldName,
+    formValues,
+    isEbayPayloadPreviewContext,
+    mergedDraftSourceFields,
+    selectedEbayTemplateHtml,
+    selectedRecord,
+  ]);
 
   const currentEbayCategoryPreviewInput = useMemo(
     () => (isEbayPayloadPreviewContext ? { labelsById: ebayCategoryLabelsById } : undefined),

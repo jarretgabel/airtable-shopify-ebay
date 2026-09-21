@@ -97,6 +97,25 @@ function replaceTemplateToken(templateHtml: string, token: string, replacement: 
   return templateHtml.replace(pattern, replacement);
 }
 
+function applyTemplateCopy(templateHtml: string, templateCopy: string): string {
+  const normalizedTemplateCopy = templateCopy.trim();
+  const hasTemplateCopyToken = /\{\{\s*template_copy\s*\}\}/i.test(templateHtml);
+
+  if (hasTemplateCopyToken) {
+    return replaceTemplateToken(templateHtml, 'template_copy', normalizedTemplateCopy);
+  }
+
+  if (!normalizedTemplateCopy) {
+    return templateHtml;
+  }
+
+  if (/\{\{\s*description\s*\}\}/i.test(templateHtml)) {
+    return templateHtml.replace(/(\{\{\s*description\s*\}\})/i, `${normalizedTemplateCopy}$1`);
+  }
+
+  return `${normalizedTemplateCopy}${templateHtml}`;
+}
+
 function parseTemplateKeyFeatureEntries(raw: string): Array<{ feature: string; value: string }> {
   if (!raw.trim()) return [];
 
@@ -206,7 +225,8 @@ function mergeTemplateTestingEntries(rawValue: string, supplementalFields: EbayS
 
 export function buildEbayBodyHtmlFromTemplate(input: EbayBodyPreviewInput): string {
   const withTitle = replaceTemplateToken(input.templateHtml, 'title', input.title);
-  const withDescription = replaceTemplateToken(withTitle, 'description', input.description);
+  const withTemplateCopy = applyTemplateCopy(withTitle, input.templateCopy ?? '');
+  const withDescription = replaceTemplateToken(withTemplateCopy, 'description', input.description);
   const withAbout = replaceTemplateToken(withDescription, 'about', (input.about ?? '').trim() || DEFAULT_HEAA_ABOUT_TEXT);
   const withKeyFeatures = applyTableRows(withAbout, {
     tableId: 'key-features',

@@ -115,6 +115,42 @@ function parseArgs(argv) {
   return args;
 }
 
+function parseSinceDays(rawValue) {
+  if (!rawValue || rawValue === 'true') return null;
+
+  const parsed = Number.parseInt(String(rawValue), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error('Expected --since-days to be a positive integer.');
+  }
+
+  return parsed;
+}
+
+function filterRecordsByAge(records, sinceDays) {
+  if (!sinceDays) {
+    return {
+      filteredRecords: records,
+      cutoffIso: null,
+      skippedCount: 0,
+    };
+  }
+
+  const cutoffMs = Date.now() - (sinceDays * 24 * 60 * 60 * 1000);
+  const cutoffIso = new Date(cutoffMs).toISOString();
+  const filteredRecords = records.filter((record) => {
+    if (!record.createdTime) return false;
+    const createdMs = Date.parse(record.createdTime);
+    if (!Number.isFinite(createdMs)) return false;
+    return createdMs >= cutoffMs;
+  });
+
+  return {
+    filteredRecords,
+    cutoffIso,
+    skippedCount: records.length - filteredRecords.length,
+  };
+}
+
 function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
@@ -309,7 +345,14 @@ async function resolveIntakeImages(record) {
     : (submissionItems.find((item) => item.submissionId === slotSubmissionId)?.imageUrls ?? []);
 
   if (imageUrls.length === 0) {
-    throw new Error(`No JotForm intake images found for submission ${slotSubmissionId}.`);
+    logProgress(`No JotForm intake images found for submission ${slotSubmissionId}; seeding intake images instead.`, {
+      recordId: record.id,
+      submissionId: slotSubmissionId,
+    });
+    return {
+      source: 'seed-fallback',
+      images: await archiveSeededStageImages(record, 'intake'),
+    };
   }
 
   logProgress(`Archiving ${imageUrls.length} JotForm intake image(s) for record ${record.id}.`, {
@@ -526,8 +569,9 @@ async function runApply(records) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const mode = args._[0] || 'plan';
+  const sinceDays = parseSinceDays(args['since-days']);
   if (mode !== 'plan' && mode !== 'apply') {
-    throw new Error('Usage: node scripts/backfill-all-workflow-drive-images.mjs [plan|apply] [--confirm TOKEN]');
+    throw new Error('Usage: node scripts/backfill-all-workflow-drive-images.mjs [plan|apply] [--since-days N] [--confirm TOKEN]');
   }
 
   if (mode === 'apply' && (args.confirm || '') !== APPLY_CONFIRM_TOKEN) {
@@ -535,7 +579,17 @@ async function main() {
   }
 
   setProviderEnv();
-  const records = await loadWorkflowRecords();
+  const allRecords = await loadWorkflowRecords();
+  const { filteredRecords: records, cutoffIso, skippedCount } = filterRecordsByAge(allRecords, sinceDays);
+
+  if (sinceDays) {
+    logProgress(`Applied --since-days filter (${sinceDays} day(s)).`, {
+      cutoffIso,
+      totalRows: allRecords.length,
+      selectedRows: records.length,
+      skippedRows: skippedCount,
+    });
+  }
 
   if (mode === 'plan') {
     await runPlan(records);

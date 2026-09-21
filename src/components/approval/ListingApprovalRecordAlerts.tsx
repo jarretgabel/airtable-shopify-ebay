@@ -37,6 +37,34 @@ export function ListingApprovalRecordAlerts({
   fadingInlineNoticeIds,
 }: ListingApprovalRecordAlertsProps) {
   const isWorkflowListingReview = approvalChannel === 'combined' && workflowStatus === 'Awaiting Pre-Listing Review';
+  const shopifyMissingCount = missingShopifyRequiredFieldNames.length;
+  const ebayMissingCount = missingEbayRequiredFieldNames.length;
+  const blockerMessages: string[] = [
+    ...workflowReadinessMissingRequirements,
+    ...((approvalChannel === 'shopify' || approvalChannel === 'combined') && hasMissingShopifyRequiredFields
+      ? [`Shopify required (${shopifyMissingCount}): ${missingShopifyRequiredFieldLabels.join(', ')}`]
+      : []),
+    ...((approvalChannel === 'ebay' || approvalChannel === 'combined') && hasMissingEbayRequiredFields
+      ? [`eBay required (${ebayMissingCount}): ${missingEbayRequiredFieldLabels.join(', ')}`]
+      : []),
+  ].filter((entry) => entry.trim().length > 0);
+
+  const hasActionBlockers = blockerMessages.length > 0;
+  const changedFieldPreview = changedFieldNames.slice(0, 6);
+  const changedFieldRemainderCount = Math.max(changedFieldNames.length - changedFieldPreview.length, 0);
+  const sortedInlineActionNotices = [...inlineActionNotices].sort((left, right) => {
+    const toneWeight = (tone: InlineActionNotice['tone']) => {
+      switch (tone) {
+        case 'error': return 0;
+        case 'warning': return 1;
+        case 'info': return 2;
+        case 'success': return 3;
+        default: return 4;
+      }
+    };
+
+    return toneWeight(left.tone) - toneWeight(right.tone);
+  });
 
   return (
     <>
@@ -51,53 +79,47 @@ export function ListingApprovalRecordAlerts({
         </section>
       )}
 
-      {isWorkflowListingReview && workflowReadinessMissingRequirements.length > 0 && (
+      {isWorkflowListingReview && hasActionBlockers && (
         <section className="mt-4 rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-2">
           <p className="m-0 text-sm font-semibold text-amber-200">
-            Resolve listing readiness blockers before approving for publish.
+            Resolve action blockers before approving for publish.
           </p>
-          <p className="m-0 mt-1 text-xs text-amber-200/85">
-            {workflowReadinessMissingRequirements.join(' ')}
+          <ul className="m-0 mt-1 list-disc space-y-1 pl-5 text-xs text-amber-200/85">
+            {blockerMessages.map((message, index) => (
+              <li key={`blocker-${index}`}>{message}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {!isWorkflowListingReview && hasActionBlockers && (
+        <section className="mt-4 rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-2">
+          <p className="m-0 text-sm font-semibold text-rose-200">
+            Required fields are missing.
           </p>
+          <ul className="m-0 mt-1 list-disc space-y-1 pl-5 text-xs text-rose-200/85">
+            {blockerMessages.map((message, index) => (
+              <li key={`required-${index}`}>{message}</li>
+            ))}
+          </ul>
         </section>
       )}
 
       {hasUnsavedChanges && (
-        <section className="mt-4 rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-2">
-          <p className="m-0 text-sm font-semibold text-amber-200">
-            Fields changed ({changedFieldNames.length}). Save page data before approving.
+        <section className="mt-4 rounded-lg border border-sky-400/35 bg-sky-500/10 px-3 py-2">
+          <p className="m-0 text-sm font-semibold text-sky-200">
+            Unsaved changes ({changedFieldNames.length}). Save updates before approving.
           </p>
-          <p className="m-0 mt-1 text-xs text-amber-200/85">
-            {changedFieldNames.join(', ')}
-          </p>
-        </section>
-      )}
-
-      {(approvalChannel === 'shopify' || approvalChannel === 'combined') && hasMissingShopifyRequiredFields && (
-        <section className="mt-4 rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-2">
-          <p className="m-0 text-sm font-semibold text-rose-200">
-            Shopify required fields are missing ({missingShopifyRequiredFieldNames.length}).
-          </p>
-          <p className="m-0 mt-1 text-xs text-rose-200/85">
-            Complete before approving: {missingShopifyRequiredFieldLabels.join(', ')}
-          </p>
-        </section>
-      )}
-
-      {(approvalChannel === 'ebay' || approvalChannel === 'combined') && hasMissingEbayRequiredFields && (
-        <section className="mt-4 rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-2">
-          <p className="m-0 text-sm font-semibold text-rose-200">
-            eBay required fields are missing ({missingEbayRequiredFieldNames.length}).
-          </p>
-          <p className="m-0 mt-1 text-xs text-rose-200/85">
-            Complete before approving: {missingEbayRequiredFieldLabels.join(', ')}
+          <p className="m-0 mt-1 text-xs text-sky-200/85">
+            {changedFieldPreview.join(', ')}
+            {changedFieldRemainderCount > 0 ? `, +${changedFieldRemainderCount} more` : ''}
           </p>
         </section>
       )}
 
       {inlineActionNotices.length > 0 && (
         <div className="mt-3 space-y-2">
-          {inlineActionNotices.map((notice) => (
+          {sortedInlineActionNotices.map((notice) => (
             <section
               key={notice.id}
               className={`rounded-lg border px-3 py-2 transition-opacity duration-300 ${

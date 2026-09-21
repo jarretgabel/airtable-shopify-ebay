@@ -6,8 +6,9 @@ import {
 import {
   EBAY_BODY_ABOUT_DEFAULT_TEXT,
   EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
+  EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML,
   resolveEbayListingTemplateHtml,
-  EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD,
+  EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD,
   type EbayListingTemplateId,
 } from '@/components/approval/listingApprovalEbayConstants';
 import {
@@ -76,15 +77,16 @@ function resolveEbayDescriptionPreviewValue(params: {
   selectedRecord: AirtableRecord | null;
   combinedDescriptionFieldName: string;
 }): string {
-  const overrideDescription = (params.formValues[EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD] ?? '').trim();
-  if (overrideDescription) return overrideDescription;
-
   return resolveCombinedPreviewFieldValue(
     params.formValues,
     params.sourceFields,
     params.selectedRecord,
     params.combinedDescriptionFieldName,
   );
+}
+
+function resolveEbayTemplateCopyPreviewValue(formValues: Record<string, string>): string {
+  return (formValues[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD] ?? '').trim() || EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML;
 }
 
 function resolveEbayAboutPreviewValue(formValues: Record<string, string>): string {
@@ -218,6 +220,7 @@ export function useListingApprovalPreviewState({
         audiogonRating: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Audiogon Rating'),
       },
       resolveEbayAboutPreviewValue(formValues),
+      resolveEbayTemplateCopyPreviewValue(formValues),
     );
   }, [
     combinedDescriptionFieldName,

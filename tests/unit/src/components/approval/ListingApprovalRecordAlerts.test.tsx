@@ -34,7 +34,7 @@ describe('ListingApprovalRecordAlerts', () => {
       />,
     );
 
-    expect(screen.getByText('Resolve listing readiness blockers before approving for publish.')).toBeInTheDocument();
+    expect(screen.getByText('Resolve action blockers before approving for publish.')).toBeInTheDocument();
     expect(screen.getByText(/Capture a listing price/i)).toBeInTheDocument();
   });
 });

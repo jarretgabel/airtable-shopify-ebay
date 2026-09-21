@@ -10,7 +10,8 @@ import {
 import {
   EBAY_BODY_ABOUT_DEFAULT_TEXT,
   EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
-  EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD,
+  EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML,
+  EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD,
 } from './listingApprovalEbayConstants';
 import {
   isEbayAdvancedOptionField,
@@ -28,20 +29,6 @@ const ApprovalFormFieldsSupplementalEditors = lazy(async () => ({
 
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
-
-const EBAY_DESCRIPTION_EDITOR_DEFAULT_HTML = [
-  '<p style="margin:0 0 12px;text-align:center;color:#cc0000;"><strong>SOLD AS-IS</strong></p>',
-  '<p style="margin:0 0 12px;text-align:center;color:#cc0000;"><strong>LIST OF DEFECTS IS NOT EXHAUSTIVE - THERE MAY BE ADDITIONAL DEFECTS</strong></p>',
-  '<p style="margin:0 0 14px;text-align:center;color:#cc0000;"><strong>NO RETURNS UNDER ANY CIRCUMSTANCES</strong></p>',
-  '<p style="margin:0 0 14px;text-align:center;color:#0a3f3f;"><strong>Salvaged from a salt-water flooded warehouse. Considerable rust and corrosion. Please see all high resolution photographs below.</strong></p>',
-  '<p style="margin:0 0 12px;color:#111111;"><strong>All items included are pictured.</strong></p>',
-  '<p style="margin:0;color:#cc0000;"><strong>Local Pickup in NYC Available</strong></p>',
-].join('');
-
-function isGenericDescriptionFieldName(fieldName: string): boolean {
-  const normalized = fieldName.trim().toLowerCase();
-  return normalized === 'description' || normalized === 'item description';
-}
 
 function isEffectivelyEmptyHtml(value: string): boolean {
   const withoutTags = value
@@ -399,25 +386,14 @@ export function ApprovalFormFields({
     </Suspense>
   ) : null;
 
-  const editableEbayDescriptionFieldName = approvalChannel === 'ebay'
-    ? (
-      ebayBodyDescriptionFieldName && !isGenericDescriptionFieldName(ebayBodyDescriptionFieldName)
-        ? ebayBodyDescriptionFieldName
-        : EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD
-    )
-    : '';
+  const fallbackEbayTemplateCopySeed = useMemo(() => {
+    if (approvalChannel !== 'ebay') return '';
+    return EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML;
+  }, [approvalChannel]);
 
-  const hasDetectedEbayDescriptionField = approvalChannel === 'ebay'
-    && editableEbayDescriptionFieldName !== EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD;
-
-  const fallbackEbayDescriptionSeed = useMemo(() => {
-    if (approvalChannel !== 'ebay' || hasDetectedEbayDescriptionField) return '';
-    return EBAY_DESCRIPTION_EDITOR_DEFAULT_HTML;
-  }, [approvalChannel, hasDetectedEbayDescriptionField]);
-
-  const editableEbayDescriptionValue = hasDetectedEbayDescriptionField
-    ? (formValues[editableEbayDescriptionFieldName] || fallbackEbayDescriptionSeed || EBAY_DESCRIPTION_EDITOR_DEFAULT_HTML)
-    : (formValues[editableEbayDescriptionFieldName] || fallbackEbayDescriptionSeed || EBAY_DESCRIPTION_EDITOR_DEFAULT_HTML);
+  const editableEbayTemplateCopyValue = formValues[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD]
+    || fallbackEbayTemplateCopySeed
+    || EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML;
   const editableEbayAboutRawValue = formValues[EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD] ?? '';
   const editableEbayAboutValue = isEffectivelyEmptyHtml(editableEbayAboutRawValue)
     ? EBAY_BODY_ABOUT_DEFAULT_TEXT
@@ -427,14 +403,12 @@ export function ApprovalFormFields({
     ?? (approvalChannel === 'ebay' ? (
       <div className="space-y-3">
         <EbayTemplateCopyWysiwygEditor
-          fieldName={editableEbayDescriptionFieldName}
-          value={editableEbayDescriptionValue}
+          fieldName={EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD}
+          value={editableEbayTemplateCopyValue}
           setFormValue={setFormValue}
-          disabled={saving || (hasDetectedEbayDescriptionField && isReadOnlyApprovalField(editableEbayDescriptionFieldName))}
+          disabled={saving}
           label="Advanced: eBay Template Copy"
-          helperText={hasDetectedEbayDescriptionField
-            ? 'WYSIWYG editor for eBay description copy. Edit only the description content shown in the listing.'
-            : 'WYSIWYG editor for eBay description copy. This record has no detected description field, so this editor is preloaded from Body HTML and edits may not persist to Airtable.'}
+          helperText={'WYSIWYG editor for the copy block rendered above the product description in the eBay template.'}
         />
 
         <EbayTemplateCopyWysiwygEditor

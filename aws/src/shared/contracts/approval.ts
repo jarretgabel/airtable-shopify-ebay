@@ -18,6 +18,7 @@ export interface ApprovalEbayBodyPreviewInput {
   templateHtml: string;
   title: string;
   description: string;
+  templateCopy?: string;
   about?: string;
   keyFeatures: string;
   testingNotes?: string;
@@ -179,6 +180,7 @@ export function validateApprovalEbayBodyPreviewInput(value: unknown): ContractVa
   }
 
   if (!isNonEmptyString(value.templateHtml)
+    || !isOptionalString(value.templateCopy)
     || !isOptionalString(value.about)
     || !isOptionalString(value.testingNotes)
     || !isOptionalString(value.make)
@@ -206,6 +208,7 @@ export function validateApprovalEbayBodyPreviewInput(value: unknown): ContractVa
     templateHtml: value.templateHtml,
     title: typeof value.title === 'string' ? value.title : '',
     description: typeof value.description === 'string' ? value.description : '',
+    ...(typeof value.templateCopy === 'string' ? { templateCopy: value.templateCopy } : {}),
     ...(typeof value.about === 'string' ? { about: value.about } : {}),
     keyFeatures: typeof value.keyFeatures === 'string' ? value.keyFeatures : '',
     ...(typeof value.testingNotes === 'string' ? { testingNotes: value.testingNotes } : {}),
