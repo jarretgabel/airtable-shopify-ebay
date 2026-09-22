@@ -22,6 +22,32 @@ type ApprovalStoreSet = (partial: Partial<ApprovalStore> | ((state: ApprovalStor
 type ApprovalStoreGet = () => ApprovalStore;
 
 const SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD = 'Shopify GraphQL Collection IDs';
+const SHOPIFY_PRICE_ALIAS_FIELDS = [
+  'Shopify REST Variant 1 Price',
+  'Shopify Variant 1 Price',
+  'Shopify Price',
+  'Price',
+] as const;
+const EBAY_PRICE_ALIAS_FIELDS = [
+  'Buy It Now Price',
+  'Buy It Now/Starting Bid Price',
+  'Buy It Now / Starting Bid Price',
+  'Starting Auction Price',
+  'eBay Price',
+  'Ebay Price',
+  'Buy It Now/Starting Price',
+  'Buy It Now / Starting Price',
+  'Buy It Now/Starting Bid',
+  'eBay Offer Price Value',
+  'eBay Offer Auction Start Price Value',
+  'ebay_offer_price_value',
+  'ebay_offer_auctionStartPrice_value',
+  'ebay_offer_pricingSummary_price_value',
+  'ebay_offer_pricingSummary_auctionStartPrice_value',
+  'Buy It Now USD',
+  'Starting Bid USD',
+  'Price',
+] as const;
 const approvalRecordsLoadedAtBySource = new Map<string, number>();
 const approvalRecordsLoadGenerationBySource = new Map<string, number>();
 let listingFormatOptionsLoadedAt: number | null = null;
@@ -44,6 +70,10 @@ const APPROVAL_QUEUE_FIELDS = [
   'Shopify REST Variant 1 Price',
   'Shopify Variant 1 Price',
   'eBay Price',
+  'Buy It Now Price',
+  'Buy It Now/Starting Bid Price',
+  'Buy It Now / Starting Bid Price',
+  'Starting Auction Price',
   'Ebay Price',
   'Buy It Now/Starting Price',
   'Buy It Now / Starting Price',
@@ -149,6 +179,26 @@ export function createHydrateFormAction(set: ApprovalStoreSet): ApprovalStore['h
       nextValues[SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD] = JSON.stringify(collectionIds);
       nextKinds[SHOPIFY_COLLECTION_IDS_PREVIEW_FIELD] = 'json';
     }
+
+    const mirrorAliasValues = (fieldNames: readonly string[]) => {
+      const resolvedFieldNames = fieldNames
+        .map((candidate) => allFieldNames.find((fieldName) => fieldName.trim().toLowerCase() === candidate.toLowerCase()))
+        .filter((fieldName): fieldName is string => Boolean(fieldName));
+
+      const firstNonEmpty = resolvedFieldNames
+        .map((fieldName) => (nextValues[fieldName] ?? '').trim())
+        .find((value) => value.length > 0);
+
+      if (!firstNonEmpty) return;
+
+      resolvedFieldNames.forEach((fieldName) => {
+        if ((nextValues[fieldName] ?? '').trim().length > 0) return;
+        nextValues[fieldName] = firstNonEmpty;
+      });
+    };
+
+    mirrorAliasValues(SHOPIFY_PRICE_ALIAS_FIELDS);
+    mirrorAliasValues(EBAY_PRICE_ALIAS_FIELDS);
 
     set({ formValues: nextValues, initialFormValues: { ...nextValues }, fieldKinds: nextKinds });
   };

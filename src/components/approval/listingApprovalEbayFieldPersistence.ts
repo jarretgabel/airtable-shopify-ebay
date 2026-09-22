@@ -85,7 +85,43 @@ function isUnknownFieldNameError(error: unknown): boolean {
     return error.message.toLowerCase().includes('unknown field name');
   }
 
+  if (typeof error === 'string') {
+    return error.toLowerCase().includes('unknown field name');
+  }
+
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = String((error as { message?: unknown }).message ?? '').toLowerCase();
+    return message.includes('unknown field name');
+  }
+
   return false;
+}
+
+function getAirtableErrorStatus(error: unknown): number | undefined {
+  if (!error || typeof error !== 'object') return undefined;
+
+  if (axios.isAxiosError(error)) {
+    return error.response?.status;
+  }
+
+  if ('statusCode' in error && typeof (error as { statusCode?: unknown }).statusCode === 'number') {
+    return (error as { statusCode: number }).statusCode;
+  }
+
+  if ('response' in error) {
+    const response = (error as { response?: { status?: unknown } }).response;
+    if (response && typeof response.status === 'number') {
+      return response.status;
+    }
+  }
+
+  return undefined;
+}
+
+function isRetryableAirtableWriteError(error: unknown): boolean {
+  if (isUnknownFieldNameError(error)) return true;
+  const status = getAirtableErrorStatus(error);
+  return status === 400 || status === 404 || status === 422;
 }
 
 function resolveFirstNonEmptyValue(values: Record<string, string>, candidates: readonly string[]): string {
@@ -109,7 +145,7 @@ async function trySaveEbayField({
   selectedRecord: AirtableRecord;
   tableReference: string;
   tableName?: string;
-  options?: { typecast?: boolean; coerceNumber?: boolean };
+  options?: { typecast?: boolean; coerceNumber?: boolean; tolerateRetryableFailure?: boolean };
 }): Promise<string | null> {
   const uniqueCandidates = Array.from(new Set(candidates.map((candidate) => candidate.trim()).filter(Boolean)));
   if (uniqueCandidates.length === 0) return null;
@@ -146,12 +182,7 @@ async function trySaveEbayField({
         );
         return candidate;
       } catch (error) {
-        if (isUnknownFieldNameError(error)) {
-          last422Error = error;
-          continue;
-        }
-
-        if (axios.isAxiosError(error) && error.response?.status === 422) {
+        if (isRetryableAirtableWriteError(error)) {
           last422Error = error;
           continue;
         }
@@ -161,7 +192,7 @@ async function trySaveEbayField({
   }
 
   if (last422Error) {
-    if (isUnknownFieldNameError(last422Error)) {
+    if (isUnknownFieldNameError(last422Error) || options?.tolerateRetryableFailure) {
       return null;
     }
     throw last422Error;
@@ -212,7 +243,13 @@ export async function saveEbayApprovalSupplementalFields({
   await savePolicyValue(RETURN_POLICY_FIELD_CANDIDATES);
 
   const priceRaw = priceFieldName ? (formValues[priceFieldName] ?? '') : '';
-  const priceCandidates = [priceFieldName, ...EBAY_PRICE_FIELD_CANDIDATES];
+  const activePriceFieldNormalized = priceFieldName.trim().toLowerCase();
+  const priceCandidates = [priceFieldName, ...EBAY_PRICE_FIELD_CANDIDATES].filter((candidate) => {
+    const normalized = candidate.trim().toLowerCase();
+    if (!normalized) return false;
+    if (activePriceFieldNormalized === 'price') return true;
+    return normalized !== 'price';
+  });
   const existingPriceFieldName = resolveExistingFieldName(existingFieldLookup, priceCandidates);
   const originalPriceRaw = existingPriceFieldName ? toFormValue(selectedRecord.fields[existingPriceFieldName]) : '';
   const shouldSavePrice = priceRaw.trim().length > 0 && priceRaw !== originalPriceRaw;
@@ -223,7 +260,7 @@ export async function saveEbayApprovalSupplementalFields({
       selectedRecord,
       tableReference,
       tableName,
-      options: { typecast: true, coerceNumber: true },
+      options: { typecast: true, coerceNumber: true, tolerateRetryableFailure: true },
     });
     if (savedPriceField && savedPriceField !== priceFieldName) {
       setFormValue(savedPriceField, priceRaw);

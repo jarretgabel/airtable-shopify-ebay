@@ -10,6 +10,10 @@ export const EBAY_TITLE_FIELD_CANDIDATES = [
 ] as const;
 
 export const EBAY_PRICE_FIELD_CANDIDATES = [
+  'Buy It Now Price',
+  'Buy It Now/Starting Bid Price',
+  'Buy It Now / Starting Bid Price',
+  'Starting Auction Price',
   'eBay Price',
   'Ebay Price',
   'Buy It Now/Starting Price',
@@ -17,6 +21,10 @@ export const EBAY_PRICE_FIELD_CANDIDATES = [
   'Buy It Now/Starting Bid',
   'eBay Offer Price Value',
   'eBay Offer Auction Start Price Value',
+  'ebay_offer_price_value',
+  'ebay_offer_auctionStartPrice_value',
+  'ebay_offer_pricingSummary_price_value',
+  'ebay_offer_pricingSummary_auctionStartPrice_value',
   'Buy It Now USD',
   'Starting Bid USD',
   'Price',

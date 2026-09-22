@@ -91,7 +91,11 @@ describe('approvalStore saveRecord approve-only', () => {
       { 'Shopify Approved': 'TRUE' },
       { typecast: true },
     );
-    expect(getRecordsFromResolvedSource).toHaveBeenCalledWith('tblApproval', 'Approval');
+    expect(getRecordsFromResolvedSource).toHaveBeenCalledWith(
+      'tblApproval',
+      'Approval',
+      expect.objectContaining({ fields: expect.any(Array) }),
+    );
     expect(onSuccess).toHaveBeenCalledTimes(1);
     expect(useApprovalStore.getState().error).toBeNull();
   });
@@ -144,6 +148,50 @@ describe('approvalStore saveRecord approve-only', () => {
       'Shopify REST Title': 'Accuphase E-470',
       Description: 'One-owner unit with fresh service notes.',
       'Testing Notes': 'Functional Notes: Passed all bench tests.',
+    }));
+  });
+
+  it('mirrors canonical price values into eBay price alias fields during hydrate', () => {
+    const selectedRecord: AirtableRecord = {
+      id: 'recPriceMirror1',
+      createdTime: '2026-05-08T00:00:00.000Z',
+      fields: {
+        Price: '1899.00',
+        'eBay Offer Price Value': '',
+      },
+    };
+
+    useApprovalStore.getState().hydrateForm(
+      selectedRecord,
+      ['Price', 'eBay Offer Price Value', 'Shopify Approved'],
+      'Shopify Approved',
+    );
+
+    expect(useApprovalStore.getState().formValues).toEqual(expect.objectContaining({
+      Price: '1899.00',
+      'eBay Offer Price Value': '1899.00',
+    }));
+  });
+
+  it('mirrors Buy It Now Price into the visible eBay offer price field during hydrate', () => {
+    const selectedRecord: AirtableRecord = {
+      id: 'recBuyItNowPriceMirror1',
+      createdTime: '2026-05-08T00:00:00.000Z',
+      fields: {
+        'Buy It Now Price': 2299,
+        'eBay Offer Price Value': '',
+      },
+    };
+
+    useApprovalStore.getState().hydrateForm(
+      selectedRecord,
+      ['Buy It Now Price', 'eBay Offer Price Value'],
+      'eBay Offer Price Value',
+    );
+
+    expect(useApprovalStore.getState().formValues).toEqual(expect.objectContaining({
+      'Buy It Now Price': '2299',
+      'eBay Offer Price Value': '2299',
     }));
   });
 });

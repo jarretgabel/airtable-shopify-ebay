@@ -53,6 +53,12 @@ export function isCurrencyLikeField(fieldName: string): boolean {
     && (normalized.includes('fee') || normalized.includes('cost') || normalized.includes('rate'));
 
   return normalized === 'ebay offer price value'
+    || normalized === 'ebay_offer_price_value'
+    || normalized === 'ebay_offer_pricingsummary_price_value'
+    || normalized === 'buy it now price'
+    || normalized === 'buy it now/starting bid price'
+    || normalized === 'buy it now / starting bid price'
+    || normalized === 'starting auction price'
     || normalized === 'ebay price'
     || normalized === 'buy it now usd'
     || normalized === 'starting bid usd'

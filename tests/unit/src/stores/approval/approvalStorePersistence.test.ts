@@ -29,6 +29,33 @@ function createAirtable422Error(message = 'Unprocessable entity') {
   };
 }
 
+function createAirtable400Error(message = 'Unknown field name') {
+  return {
+    response: {
+      status: 400,
+      data: {
+        error: {
+          message,
+        },
+      },
+    },
+  };
+}
+
+function createGenericUnknownFieldError(message = 'Unknown field name') {
+  return {
+    statusCode: 400,
+    message,
+  };
+}
+
+function createGeneric400Error(message = 'Bad request') {
+  return {
+    statusCode: 400,
+    message,
+  };
+}
+
 function buildRecord(fields: Record<string, unknown>): AirtableRecord {
   return {
     id: 'rec-approval-save-1',
@@ -355,6 +382,590 @@ describe('approvalStorePersistence', () => {
         ],
       },
       undefined,
+    );
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('maps source alias fields to writable canonical fields during save', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Shopify REST Variant 1 Price': '1299.00',
+        'Shopify Type': 'Amplifiers',
+        'Ebay Listing Format': 'FixedPrice',
+      },
+      fieldKinds: {
+        'Shopify REST Variant 1 Price': 'text',
+        'Shopify Type': 'text',
+        'Ebay Listing Format': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({
+        Price: '1199.00',
+        Type: 'Receivers',
+        'Listing Format': 'Auction',
+      }),
+      'base/table',
+      'Approval',
+      ['Price', 'Type', 'Listing Format'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { Price: '1299.00' },
+      { typecast: true },
+    );
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { Type: 'Amplifiers' },
+      undefined,
+    );
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Listing Format': 'FixedPrice' },
+      undefined,
+    );
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('persists alias-only source fields by trying canonical fallback field names', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Shopify REST Variant 1 Price': '1299.00',
+        'Shopify Type': 'Amplifiers',
+        'Ebay Listing Format': 'FixedPrice',
+      },
+      fieldKinds: {
+        'Shopify REST Variant 1 Price': 'text',
+        'Shopify Type': 'text',
+        'Ebay Listing Format': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      const fieldName = Object.keys(payload)[0] ?? '';
+      const normalized = fieldName.toLowerCase();
+      if (normalized.includes('price')) return;
+      if (fieldName === 'Type') return;
+      if (normalized.includes('format')) return;
+      throw createAirtable422Error('Unknown field name');
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    const payloadFieldNames = updateRecordFromResolvedSourceMock.mock.calls.map((call) => {
+      const payload = (call[3] ?? {}) as Record<string, unknown>;
+      return Object.keys(payload)[0] ?? '';
+    });
+    const normalizedPayloadFieldNames = payloadFieldNames.map((fieldName) => fieldName.toLowerCase());
+
+    expect(normalizedPayloadFieldNames.some((fieldName) => fieldName.includes('price'))).toBe(true);
+    expect(payloadFieldNames).toContain('Type');
+    expect(normalizedPayloadFieldNames.some((fieldName) => fieldName.includes('format'))).toBe(true);
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('retries alias candidates when Airtable returns unknown field name errors', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Shopify REST Variant 1 Price': '1399.00',
+      },
+      fieldKinds: {
+        'Shopify REST Variant 1 Price': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      if ('Price' in payload) {
+        return;
+      }
+
+      throw createAirtable400Error(`Unknown field name: "${Object.keys(payload)[0] ?? ''}"`);
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    const attemptedPayloads = updateRecordFromResolvedSourceMock.mock.calls.map((call) => call[3] as Record<string, unknown>);
+    expect(attemptedPayloads.some((payload) => payload.Price === '1399.00' || payload.Price === 1399)).toBe(true);
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('retries alias candidates when unknown-field error is thrown as plain Error', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Shopify REST Variant 1 Price': '1499.00',
+      },
+      fieldKinds: {
+        'Shopify REST Variant 1 Price': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      if ('Price' in payload) {
+        return;
+      }
+
+      throw new Error(`Unknown field name: "${Object.keys(payload)[0] ?? ''}"`);
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    const attemptedPayloads = updateRecordFromResolvedSourceMock.mock.calls.map((call) => call[3] as Record<string, unknown>);
+    expect(attemptedPayloads.some((payload) => payload.Price === '1499.00' || payload.Price === 1499)).toBe(true);
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('persists Shopify Type via Product Type fallback when Type is unknown', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Shopify Type': 'Integrated Amplifier',
+      },
+      fieldKinds: {
+        'Shopify Type': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      if ('Product Type' in payload) {
+        return;
+      }
+
+      throw new Error(`Unknown field name: "${Object.keys(payload)[0] ?? ''}"`);
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Product Type': 'Integrated Amplifier' },
+      { typecast: true },
+    );
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('retries alias candidates when unknown-field error is object-shaped', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Shopify REST Variant 1 Price': '1599.00',
+      },
+      fieldKinds: {
+        'Shopify REST Variant 1 Price': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      if ('Price' in payload) {
+        return;
+      }
+
+      throw createGenericUnknownFieldError(`Unknown field name: "${Object.keys(payload)[0] ?? ''}"`);
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    const attemptedPayloads = updateRecordFromResolvedSourceMock.mock.calls.map((call) => call[3] as Record<string, unknown>);
+    expect(attemptedPayloads.some((payload) => payload.Price === '1599.00' || payload.Price === 1599)).toBe(true);
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('retries alias candidates on generic 400 errors and still reaches canonical price field', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Shopify REST Variant 1 Price': '1699.00',
+      },
+      fieldKinds: {
+        'Shopify REST Variant 1 Price': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      if ('Price' in payload) {
+        return;
+      }
+
+      throw createGeneric400Error('Bad request payload');
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    const attemptedPayloads = updateRecordFromResolvedSourceMock.mock.calls.map((call) => call[3] as Record<string, unknown>);
+    expect(attemptedPayloads.some((payload) => payload.Price === '1699.00' || payload.Price === 1699)).toBe(true);
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('retries Shopify price aliases with numeric values when Airtable rejects string values', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Shopify Price': '$1,999.50',
+      },
+      fieldKinds: {
+        'Shopify Price': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      if (payload['Shopify Price'] === 1999.5) {
+        return;
+      }
+
+      throw createAirtable422Error('Field "Shopify Price" cannot accept the provided value');
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ 'Shopify Price': '1800.00' }),
+      'base/table',
+      'Approval',
+      ['Shopify Price'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Shopify Price': 1999.5 },
+      { typecast: true },
+    );
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('prefers eBay price candidates before generic Price for missing-schema eBay aliases', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Buy It Now/Starting Bid': '2299.00',
+      },
+      fieldKinds: {
+        'Buy It Now/Starting Bid': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      if ('eBay Offer Price Value' in payload) {
+        return;
+      }
+
+      throw new Error(`Unknown field name: "${Object.keys(payload)[0] ?? ''}"`);
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    const attemptedPayloads = updateRecordFromResolvedSourceMock.mock.calls.map((call) => call[3] as Record<string, unknown>);
+    expect(attemptedPayloads.some((payload) => (
+      payload['Buy It Now Price'] === '2299.00'
+      || payload['Buy It Now Price'] === 2299
+      || payload['eBay Offer Price Value'] === '2299.00'
+      || payload['eBay Offer Price Value'] === 2299
+    ))).toBe(true);
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('persists eBay price alias values even when loaded schema lacks price fields', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Buy It Now/Starting Bid': '1799.00',
+      },
+      fieldKinds: {
+        'Buy It Now/Starting Bid': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      if ('eBay Offer Price Value' in payload) {
+        return;
+      }
+
+      throw new Error(`Unknown field name: "${Object.keys(payload)[0] ?? ''}"`);
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    const attemptedPayloads = updateRecordFromResolvedSourceMock.mock.calls.map((call) => call[3] as Record<string, unknown>);
+    expect(attemptedPayloads.some((payload) => payload['eBay Offer Price Value'] === '1799.00' || payload['eBay Offer Price Value'] === 1799)).toBe(true);
+    expect(attemptedPayloads.some((payload) => (
+      'Shopify Price' in payload
+      || 'Shopify Variant 1 Price' in payload
+      || 'Shopify REST Variant 1 Price' in payload
+      || 'Price' in payload
+    ))).toBe(false);
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('falls back from Buy It Now/Starting Bid Price to another eBay alias when Airtable rejects legacy field name', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Buy It Now/Starting Bid Price': '111.00',
+      },
+      fieldKinds: {
+        'Buy It Now/Starting Bid Price': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      if ('Buy It Now Price' in payload || 'eBay Offer Price Value' in payload) {
+        return;
+      }
+
+      throw new Error(`Unknown field name: "${Object.keys(payload)[0] ?? ''}"`);
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    const attemptedPayloads = updateRecordFromResolvedSourceMock.mock.calls.map((call) => call[3] as Record<string, unknown>);
+    expect(attemptedPayloads.some((payload) => payload['Buy It Now Price'] === '111.00' || payload['Buy It Now Price'] === 111)).toBe(true);
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('falls back to canonical flat ebay_offer_price_value when readable aliases are unknown', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Buy It Now/Starting Bid Price': '111.00',
+      },
+      fieldKinds: {
+        'Buy It Now/Starting Bid Price': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      if ('ebay_offer_price_value' in payload) {
+        return;
+      }
+
+      throw new Error(`Unknown field name: "${Object.keys(payload)[0] ?? ''}"`);
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { ebay_offer_price_value: 111 },
+      { typecast: true },
+    );
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('preserves exact field casing when retrying the live Airtable Ebay Price column', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Buy It Now/Starting Bid Price': '111.00',
+      },
+      fieldKinds: {
+        'Buy It Now/Starting Bid Price': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      if ('Ebay Price' in payload) {
+        return;
+      }
+
+      throw new Error(`Unknown field name: "${Object.keys(payload)[0] ?? ''}"`);
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Ebay Price': 111 },
+      { typecast: true },
     );
     expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
   });

@@ -131,14 +131,25 @@ function isCategoryLikeFieldName(fieldName: string): boolean {
 
 function isPriceLikeFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
-  return normalized === 'ebay price'
+  return normalized === 'buy it now price'
+    || normalized === 'buy it now/starting bid price'
+    || normalized === 'buy it now / starting bid price'
+    || normalized === 'starting auction price'
+    || normalized === 'ebay price'
     || normalized === 'buy it now/starting price'
     || normalized === 'buy it now / starting price'
     || normalized === 'buy it now/starting bid'
     || normalized === 'ebay offer price value'
     || normalized === 'ebay offer auction start price value'
+    || normalized === 'ebay_offer_price_value'
+    || normalized === 'ebay_offer_auctionstartprice_value'
+    || normalized === 'ebay_offer_pricingsummary_price_value'
+    || normalized === 'ebay_offer_pricingsummary_auctionstartprice_value'
     || normalized === 'buy it now usd'
     || normalized === 'starting bid usd'
+    || normalized === 'shopify rest variant 1 price'
+    || normalized === 'shopify variant 1 price'
+    || normalized === 'shopify price'
     || normalized === 'price';
 }
 
@@ -163,6 +174,13 @@ function toNumericRetryValues(value: unknown): unknown[] {
 function getPriceFieldRetryNames(fieldName: string): string[] {
   const candidates = [
     fieldName,
+    'Buy It Now Price',
+    'Buy It Now/Starting Bid Price',
+    'Buy It Now / Starting Bid Price',
+    'Starting Auction Price',
+    'Shopify REST Variant 1 Price',
+    'Shopify Variant 1 Price',
+    'Shopify Price',
     'eBay Price',
     'Ebay Price',
     'Buy It Now/Starting Price',
@@ -170,18 +188,182 @@ function getPriceFieldRetryNames(fieldName: string): string[] {
     'Buy It Now/Starting Bid',
     'eBay Offer Price Value',
     'eBay Offer Auction Start Price Value',
+    'ebay_offer_price_value',
+    'ebay_offer_auctionStartPrice_value',
+    'ebay_offer_pricingSummary_price_value',
+    'ebay_offer_pricingSummary_auctionStartPrice_value',
     'Buy It Now USD',
     'Starting Bid USD',
     'Price',
   ];
 
+  const normalizedFieldName = fieldName.trim().toLowerCase();
+  const isShopifyAlias = normalizedFieldName.includes('shopify');
+  const isEbayAlias = normalizedFieldName.includes('ebay')
+    || normalizedFieldName.includes('buy it now')
+    || normalizedFieldName.includes('starting bid');
+  const preferredOrder = isEbayAlias
+    ? [
+        'Ebay Price',
+        'Buy It Now Price',
+        'Buy It Now/Starting Bid Price',
+        'Buy It Now / Starting Bid Price',
+        'Starting Auction Price',
+        'eBay Offer Price Value',
+        'eBay Offer Auction Start Price Value',
+        'ebay_offer_price_value',
+        'ebay_offer_auctionStartPrice_value',
+        'ebay_offer_pricingSummary_price_value',
+        'ebay_offer_pricingSummary_auctionStartPrice_value',
+        'eBay Price',
+        'Buy It Now/Starting Price',
+        'Buy It Now / Starting Price',
+        'Buy It Now/Starting Bid',
+        'Buy It Now USD',
+        'Starting Bid USD',
+      ]
+    : isShopifyAlias
+      ? [
+          'Shopify REST Variant 1 Price',
+          'Shopify Variant 1 Price',
+          'Shopify Price',
+          'Price',
+          'Buy It Now Price',
+          'eBay Offer Price Value',
+          'eBay Offer Auction Start Price Value',
+          'ebay_offer_price_value',
+          'ebay_offer_auctionStartPrice_value',
+          'ebay_offer_pricingSummary_price_value',
+          'ebay_offer_pricingSummary_auctionStartPrice_value',
+          'eBay Price',
+          'Ebay Price',
+          'Buy It Now/Starting Price',
+          'Buy It Now / Starting Price',
+          'Buy It Now/Starting Bid',
+          'Buy It Now USD',
+          'Starting Bid USD',
+        ]
+      : candidates;
+
   const seen = new Set<string>();
-  return candidates.filter((candidate) => {
-    const key = candidate.trim().toLowerCase();
+  return preferredOrder.filter((candidate) => {
+    const key = candidate.trim();
     if (!key || seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+}
+
+function getPreferredPriceFallbackFieldName(fieldName: string): string | null {
+  const candidates = getPriceFieldRetryNames(fieldName);
+  const current = fieldName.trim().toLowerCase();
+  const isShopifyAlias = current.includes('shopify');
+  const isEbayAlias = current.includes('ebay') || current.includes('buy it now') || current.includes('starting bid');
+
+  const preferredOrder = isShopifyAlias
+    ? [
+        'Shopify REST Variant 1 Price',
+        'Shopify Variant 1 Price',
+        'Shopify Price',
+        'Price',
+      ]
+    : isEbayAlias
+      ? [
+          'Ebay Price',
+          'Buy It Now Price',
+          'Buy It Now/Starting Bid Price',
+          'Buy It Now / Starting Bid Price',
+          'Starting Auction Price',
+          'eBay Offer Price Value',
+          'eBay Offer Auction Start Price Value',
+          'eBay Price',
+          'Buy It Now/Starting Price',
+          'Buy It Now / Starting Price',
+          'Buy It Now/Starting Bid',
+          'Buy It Now USD',
+          'Starting Bid USD',
+        ]
+      : [
+          'Price',
+          'eBay Offer Price Value',
+          'eBay Price',
+          'Shopify REST Variant 1 Price',
+          'Shopify Variant 1 Price',
+          'Shopify Price',
+          'Buy It Now/Starting Price',
+          'Buy It Now/Starting Bid',
+        ];
+
+  for (const preferred of preferredOrder) {
+    if (preferred.trim().toLowerCase() === current) continue;
+    const match = candidates.find((candidate) => candidate.trim().toLowerCase() === preferred.trim().toLowerCase());
+    if (match) return match;
+  }
+
+  return candidates
+    .map((candidate) => candidate.trim())
+    .find((candidate) => candidate.length > 0 && candidate.toLowerCase() !== current)
+    ?? null;
+}
+
+function getFieldAliasRetryNames(fieldName: string): string[] {
+  const normalized = fieldName.trim().toLowerCase();
+
+  if (normalized === 'shopify rest variant 1 price' || normalized === 'shopify variant 1 price') {
+    return [
+      fieldName,
+      'Shopify REST Variant 1 Price',
+      'Shopify Variant 1 Price',
+      'Shopify Price',
+      'Price',
+    ];
+  }
+
+  if (
+    normalized === 'shopify type'
+    || normalized === 'type'
+    || normalized === 'product type'
+    || normalized === 'shopify product type'
+    || normalized === 'shopify rest product type'
+  ) {
+    return [
+      fieldName,
+      'Shopify Type',
+      'Type',
+      'Product Type',
+      'Shopify Product Type',
+      'Shopify REST Product Type',
+    ];
+  }
+
+  if (
+    normalized === 'ebay listing format'
+    || normalized === 'ebay format'
+    || normalized === 'ebay offer format'
+    || normalized === 'listing format'
+  ) {
+    return [
+      fieldName,
+      'eBay Listing Format',
+      'Ebay Listing Format',
+      'eBay Format',
+      'Ebay Format',
+      'eBay Offer Format',
+      'Listing Format',
+    ];
+  }
+
+  return [fieldName];
+}
+
+function getPrimaryAliasFallbackFieldName(fieldName: string): string | null {
+  const candidates = getFieldAliasRetryNames(fieldName)
+    .map((candidate) => candidate.trim())
+    .filter((candidate) => candidate.length > 0);
+
+  const current = fieldName.trim().toLowerCase();
+  const fallback = candidates.find((candidate) => candidate.toLowerCase() !== current);
+  return fallback ?? null;
 }
 
 function toCategoryTokens(value: unknown): string[] {
@@ -270,13 +452,27 @@ function isAllowedMissingWritableFieldName(fieldName: string): boolean {
     || normalized === 'shopify_rest_images'
     || normalized === 'shopify_images'
     || normalized === 'ebay price'
+    || normalized === 'buy it now price'
+    || normalized === 'buy it now/starting bid price'
+    || normalized === 'buy it now / starting bid price'
+    || normalized === 'starting auction price'
     || normalized === 'buy it now/starting price'
     || normalized === 'buy it now / starting price'
     || normalized === 'buy it now/starting bid'
     || normalized === 'ebay offer price value'
     || normalized === 'ebay offer auction start price value'
+    || normalized === 'ebay_offer_price_value'
+    || normalized === 'ebay_offer_auctionstartprice_value'
+    || normalized === 'ebay_offer_pricingsummary_price_value'
+    || normalized === 'ebay_offer_pricingsummary_auctionstartprice_value'
     || normalized === 'buy it now usd'
     || normalized === 'starting bid usd'
+    || normalized === 'shopify rest variant 1 price'
+    || normalized === 'shopify variant 1 price'
+    || normalized === 'shopify type'
+    || normalized === 'ebay listing format'
+    || normalized === 'ebay format'
+    || normalized === 'ebay offer format'
     || normalized === 'body html'
     || normalized === 'body (html)'
     || normalized === 'body_html'
@@ -339,13 +535,33 @@ function isAllowedMissingWritableFieldName(fieldName: string): boolean {
 }
 
 function getAirtableErrorStatus(error: unknown): number | undefined {
-  if (!error || typeof error !== 'object' || !('response' in error)) return undefined;
+  if (!error || typeof error !== 'object') return undefined;
+
+  if ('statusCode' in error && typeof (error as { statusCode?: unknown }).statusCode === 'number') {
+    return (error as { statusCode: number }).statusCode;
+  }
+
+  if (!('response' in error)) return undefined;
   const response = (error as { response?: { status?: number } }).response;
   return response?.status;
 }
 
 function getAirtableErrorMessage(error: unknown): string | undefined {
-  if (!error || typeof error !== 'object' || !('response' in error)) return undefined;
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (!error || typeof error !== 'object') return undefined;
+
+  if ('message' in error && typeof (error as { message?: unknown }).message === 'string') {
+    return (error as { message: string }).message;
+  }
+
+  if (!('response' in error)) return undefined;
 
   const response = (error as {
     response?: {
@@ -358,6 +574,23 @@ function getAirtableErrorMessage(error: unknown): string | undefined {
   }).response;
 
   return response?.data?.error?.message;
+}
+
+function isUnknownFieldNameError(error: unknown): boolean {
+  const responseMessage = getAirtableErrorMessage(error);
+  if (responseMessage?.toLowerCase().includes('unknown field name')) {
+    return true;
+  }
+  return false;
+}
+
+function isRetryableAliasCandidateError(error: unknown): boolean {
+  const status = getAirtableErrorStatus(error);
+  if (status === 400 || status === 404 || status === 422) {
+    return true;
+  }
+
+  return isUnknownFieldNameError(error);
 }
 
 function isLikelyComputedAirtableField(fieldName: string): boolean {
@@ -526,8 +759,35 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
             }
           }
 
+          if (!existsOnRecord && !existsInSchema) {
+            const resolvedAliasFieldName = resolveExistingFieldByCandidates(
+              getFieldAliasRetryNames(writeFieldName),
+              existingFieldNameByLower,
+            );
+
+            if (resolvedAliasFieldName) {
+              writeFieldName = resolvedAliasFieldName;
+              existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, writeFieldName);
+              existsInSchema = actualFieldLookup.has(writeFieldName.toLowerCase());
+            }
+          }
+
           if (!existsOnRecord && !existsInSchema && isCategoryLikeFieldName(writeFieldName)) return;
           const allowMissingWritableField = isAllowedMissingWritableFieldName(fieldName);
+          if (!existsOnRecord && !existsInSchema && allowMissingWritableField) {
+            let fallbackFieldName = getPrimaryAliasFallbackFieldName(writeFieldName);
+            if (!fallbackFieldName && isPriceLikeFieldName(writeFieldName)) {
+              fallbackFieldName = getPreferredPriceFallbackFieldName(writeFieldName);
+            }
+            if (!fallbackFieldName) {
+              return;
+            }
+
+            writeFieldName = fallbackFieldName;
+            existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, writeFieldName);
+            existsInSchema = actualFieldLookup.has(writeFieldName.toLowerCase());
+          }
+
           const originalValue = toFormValueForField(writeFieldName, selectedRecord.fields[writeFieldName]);
           if (writeFieldName.toLowerCase() === resolvedApprovedFieldName.toLowerCase() && forceApproved) return;
           if (rawValue === originalValue) return;
@@ -537,13 +797,13 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
             return;
           }
 
-          if (!existsOnRecord && !existsInSchema && allowMissingWritableField) {
-            return;
-          }
-
           const fieldKind = fieldKinds[writeFieldName] ?? 'text';
           const attachmentFieldValue = coerceAttachmentFieldValue(rawValue, selectedRecord.fields[writeFieldName]);
-          payload[writeFieldName] = attachmentFieldValue ?? fromFormValueForField(writeFieldName, rawValue, fieldKind);
+          const formFieldValue = fromFormValueForField(writeFieldName, rawValue, fieldKind);
+          const numericPriceValue = writeFieldName === 'Ebay Price'
+            ? toNumericRetryValues(rawValue)[0]
+            : undefined;
+          payload[writeFieldName] = attachmentFieldValue ?? numericPriceValue ?? formFieldValue;
         });
 
         assignSystemFieldValues();
@@ -572,8 +832,8 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
               );
               updatedFields.push(fieldName);
             } catch (singleFieldError) {
-              const singleFieldStatus = getAirtableErrorStatus(singleFieldError);
-              if (singleFieldStatus !== 422) {
+              const retryableAliasFieldError = isRetryableAliasCandidateError(singleFieldError);
+              if (!retryableAliasFieldError) {
                 throw singleFieldError;
               }
 
@@ -595,8 +855,8 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
                     updatedFields.push(fieldName);
                     break;
                   } catch (retryError) {
-                    const retryStatus = getAirtableErrorStatus(retryError);
-                    if (retryStatus !== 422) {
+                    const retryableAliasError = isRetryableAliasCandidateError(retryError);
+                    if (!retryableAliasError) {
                       throw retryError;
                     }
                   }
@@ -627,8 +887,8 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
                       updatedFields.push(canonicalRetryFieldName);
                       break;
                     } catch (retryError) {
-                      const retryStatus = getAirtableErrorStatus(retryError);
-                      if (retryStatus !== 422) {
+                      const retryableAliasError = isRetryableAliasCandidateError(retryError);
+                      if (!retryableAliasError) {
                         throw retryError;
                       }
                     }
@@ -636,6 +896,36 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
 
                   if (retrySucceeded) {
                     break;
+                  }
+                }
+
+                if (retrySucceeded) {
+                  continue;
+                }
+              }
+
+              const retryAliasFieldNames = getFieldAliasRetryNames(fieldName);
+              if (retryAliasFieldNames.length > 1) {
+                let retrySucceeded = false;
+
+                for (const retryFieldName of retryAliasFieldNames) {
+                  const canonicalRetryFieldName = resolveCanonicalFieldName(retryFieldName, existingFieldNameByLower);
+                  try {
+                    await updateRecordFromResolvedSource(
+                      tableReference,
+                      tableName,
+                      selectedRecord.id,
+                      { [canonicalRetryFieldName]: fieldValue },
+                      { typecast: true },
+                    );
+                    retrySucceeded = true;
+                    updatedFields.push(canonicalRetryFieldName);
+                    break;
+                  } catch (retryError) {
+                    const retryableAliasError = isRetryableAliasCandidateError(retryError);
+                    if (!retryableAliasError) {
+                      throw retryError;
+                    }
                   }
                 }
 

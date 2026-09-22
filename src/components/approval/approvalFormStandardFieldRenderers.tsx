@@ -66,6 +66,12 @@ function isEbayListingPriceField(fieldName: string, approvalChannel?: 'shopify' 
   }
 
   return normalized === 'ebay offer price value'
+    || normalized === 'ebay_offer_price_value'
+    || normalized === 'ebay_offer_pricingsummary_price_value'
+    || normalized === 'buy it now price'
+    || normalized === 'buy it now/starting bid price'
+    || normalized === 'buy it now / starting bid price'
+    || normalized === 'starting auction price'
     || normalized === 'ebay offer auction start price value'
     || normalized === 'ebay price'
     || normalized === 'buy it now usd'
