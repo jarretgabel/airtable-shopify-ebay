@@ -157,6 +157,28 @@ export function useListingApprovalTabState({
     return [directSelectedRecord, ...records];
   }, [directSelectedRecord, records]);
 
+  const queuedRecordHasDetailFields = useMemo(() => {
+    const queuedRecord = records.find((record) => record.id === selectedRecordId);
+    if (!queuedRecord) return false;
+
+    const hasDetailValue = (value: unknown): boolean => {
+      if (Array.isArray(value)) return value.length > 0;
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        return Boolean(trimmed && trimmed !== '[]' && trimmed !== '{}');
+      }
+      return Boolean(value);
+    };
+
+    return hasDetailValue(queuedRecord.fields['Workflow Image Metadata JSON'])
+      && [
+        'Images',
+        'Shopify REST Images JSON',
+        'shopify_rest_images_json',
+        'Shopify Images JSON',
+      ].some((fieldName) => hasDetailValue(queuedRecord.fields[fieldName]));
+  }, [records, selectedRecordId]);
+
   useEffect(() => {
     if (!selectedRecordId) {
       setDirectSelectedRecord(null);
@@ -170,18 +192,6 @@ export function useListingApprovalTabState({
       setSelectedRecordLookupSettledId(selectedRecordId);
       return;
     }
-
-    const queuedRecord = records.find((record) => record.id === selectedRecordId);
-    const queuedRecordHasDetailFields = Boolean(
-      queuedRecord
-      && Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'Workflow Image Metadata JSON')
-      && (
-        Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'Images')
-        || Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'Shopify REST Images JSON')
-        || Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'shopify_rest_images_json')
-        || Object.prototype.hasOwnProperty.call(queuedRecord.fields, 'Shopify Images JSON')
-      )
-    );
 
     if (queuedRecordHasDetailFields) {
       setDirectSelectedRecord(null);
@@ -220,12 +230,10 @@ export function useListingApprovalTabState({
 
         setDirectSelectedRecord(null);
       } finally {
-        if (cancelled) {
-          return;
+        if (!cancelled) {
+          setDirectSelectedRecordLoading(false);
+          setSelectedRecordLookupSettledId(selectedRecordId);
         }
-
-        setDirectSelectedRecordLoading(false);
-        setSelectedRecordLookupSettledId(selectedRecordId);
       }
     };
 
@@ -234,7 +242,7 @@ export function useListingApprovalTabState({
     return () => {
       cancelled = true;
     };
-  }, [records, selectedRecordId, tableName, tableReference]);
+  }, [queuedRecordHasDetailFields, selectedRecordId, tableName, tableReference]);
 
   useEffect(() => {
     if (explicitShopifyStorefrontUrl) {
@@ -366,10 +374,12 @@ export function useListingApprovalTabState({
     tableName,
   });
 
-  const queueLoading = loading || (
-    Boolean(selectedRecordId)
-    && !selectedRecord
-    && (directSelectedRecordLoading || selectedRecordLookupSettledId !== selectedRecordId)
+  const queueLoading = !selectedRecord && (
+    loading
+    || (
+      Boolean(selectedRecordId)
+      && (directSelectedRecordLoading || selectedRecordLookupSettledId !== selectedRecordId)
+    )
   );
 
   const interactionState = useListingApprovalInteractionState({

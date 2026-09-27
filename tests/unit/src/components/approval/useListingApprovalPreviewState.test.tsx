@@ -127,7 +127,8 @@ describe('useListingApprovalPreviewState', () => {
     });
 
     expect(result.current.combinedEbayGeneratedBodyHtml).toContain('2270');
-    expect(result.current.combinedEbayGeneratedBodyHtml).toContain('Stereo Receiver');
+    expect(result.current.combinedEbayGeneratedBodyHtml).not.toContain('Stereo Receiver');
+    expect(result.current.combinedEbayGeneratedBodyHtml).toContain('Original wood case');
   });
 
   it('prefers the local combined eBay body html over stale API preview html', async () => {

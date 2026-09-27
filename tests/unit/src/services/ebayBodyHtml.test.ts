@@ -27,14 +27,15 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
       '',
       '',
       JSON.stringify([
-        { feature: 'Condition', value: 'Very Good' },
+        { feature: 'Finish', value: 'Silver' },
         { feature: 'Serial', value: '12345' },
       ]),
       '',
     );
 
-    expect(html).toContain('<tr><th>Condition</th><td>Very Good</td></tr>');
+    expect(html).toContain('<tr><th>Finish</th><td>Silver</td></tr>');
     expect(html).toContain('<tr><th>Serial</th><td>12345</td></tr>');
+    expect(html).toContain('<tr><th>Serial Number</th><td></td></tr>');
     expect(html).not.toContain('{{key}}');
     expect(html).not.toContain('{{value}}');
   });
@@ -67,7 +68,7 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
     expect(html).toContain('<tr><th>Functional Notes</th><td>Fully tested.</td></tr>');
   });
 
-  it('renders plain Testing form text into the testing notes table', () => {
+  it('renders plain Testing form text into the ordered details rows', () => {
     const template = [
       '<table id="testing-notes">',
       '  <tbody>',
@@ -107,7 +108,7 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
     expect(html).toContain('<tr><th>Testing Notes</th><td>Passed extended bench and listening tests. Bias and DC offset are stable:<br />tuner locks cleanly and the phono stage is quiet</td></tr>');
   });
 
-  it('lets manual auto-mapped key feature rows override listing-derived eBay values', () => {
+  it('removes redundant and reserved rows while preserving Other Key Features in the middle', () => {
     const template = [
       '<table id="key-features">',
       '  <tbody>',
@@ -135,18 +136,16 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
       },
     );
 
-    expect(html).toContain('<tr><th>Make</th><td>Wrong Make</td></tr>');
-    expect(html).toContain('<tr><th>Model</th><td>Wrong Model</td></tr>');
-    expect(html).toContain('<tr><th>Component Type</th><td>Tube Amplifier</td></tr>');
-    expect(html).toContain('<tr><th>Condition</th><td>Very Good</td></tr>');
+    expect(html).not.toContain('<tr><th>Make</th>');
+    expect(html).not.toContain('<tr><th>Model</th>');
+    expect(html).not.toContain('<tr><th>Component Type</th>');
+    expect(html).not.toContain('<tr><th>Condition</th>');
     expect(html).toContain('<tr><th>Finish</th><td>Silver</td></tr>');
     expect(html).toContain('<tr><th>Service History</th><td>Recapped in 2024</td></tr>');
-    expect(html).toMatch(/<tr><th>Model<\/th><td>Wrong Model<\/td><\/tr>\n<tr><th>Component Type<\/th><td>Tube Amplifier<\/td><\/tr>\n<tr><th>Condition<\/th><td>Very Good<\/td><\/tr>\n<tr><th>Finish<\/th><td>Silver<\/td><\/tr>\n<tr><th>Service History<\/th><td>Recapped in 2024<\/td><\/tr>/);
-    expect(html).not.toContain('<tr><th>Make</th><td>McIntosh</td></tr>');
-    expect(html).not.toContain('<tr><th>Model</th><td>MC275</td></tr>');
+    expect(html).toMatch(/<tr><th>Serial Number<\/th><td><\/td><\/tr>\n<tr><th>Finish<\/th><td>Silver<\/td><\/tr>\n<tr><th>Service History<\/th><td>Recapped in 2024<\/td><\/tr>/);
   });
 
-  it('lets manual auto-mapped key feature and testing rows override listing-derived eBay values', () => {
+  it('orders the requested leading, middle, and trailing detail rows', () => {
     const template = [
       '<table id="key-features">',
       '  <tbody>',
@@ -178,36 +177,28 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
       'Marantz',
       '2270',
       {
+        componentType: 'Integrated Amplifier',
         serialNumber: 'SN-2270-4455',
-        condition: 'Used - Very Good',
+        cosmeticNotes: 'Light scratching on the case',
         originalBox: 'Yes',
-        remote: 'Included',
         powerCable: 'Included',
         manual: 'Included',
         voltage: '120V',
+        additionalItems: 'Remote control',
+        shippingMethod: 'UPS Ground',
+        shippingWeight: '42 lbs',
+        shippingDimensions: '22x19x11',
         audiogonRating: '8/10',
       },
     );
 
-    expect(html).toContain('<tr><th>Serial Number</th><td>Wrong Serial</td></tr>');
-    expect(html).toContain('<tr><th>Condition</th><td>Wrong Condition</td></tr>');
-    expect(html).toContain('<tr><th>Original Box</th><td>Wrong Box</td></tr>');
-    expect(html).toContain('<tr><th>Remote</th><td>Included</td></tr>');
-    expect(html).toContain('<tr><th>Power Cable</th><td>Included</td></tr>');
-    expect(html).toContain('<tr><th>Manual</th><td>Wrong Manual</td></tr>');
-    expect(html).toContain('<tr><th>Testing Notes</th><td>Fully tested.</td></tr>');
-    expect(html).toContain('<tr><th>Voltage</th><td>Wrong Voltage</td></tr>');
-    expect(html).toContain('<tr><th>Audiogon Rating</th><td>Wrong Rating</td></tr>');
-    expect(html).toMatch(/<tr><th>Voltage<\/th><td>Wrong Voltage<\/td><\/tr>\n<tr><th>Audiogon Rating<\/th><td>Wrong Rating<\/td><\/tr>\n<tr><th>Testing Notes<\/th><td>Fully tested\.<\/td><\/tr>/);
-    expect(html).not.toContain('<tr><th>Serial Number</th><td>SN-2270-4455</td></tr>');
-    expect(html).not.toContain('<tr><th>Condition</th><td>Used - Very Good</td></tr>');
-    expect(html).not.toContain('<tr><th>Original Box</th><td>Yes</td></tr>');
-    expect(html).not.toContain('<tr><th>Manual</th><td>Included</td></tr>');
-    expect(html).not.toContain('<tr><th>Voltage</th><td>120V</td></tr>');
-    expect(html).not.toContain('<tr><th>Audiogon Rating</th><td>8/10</td></tr>');
+    expect(html).toMatch(/<tr><th>Audiogon Rating<\/th><td>8\/10<\/td><\/tr>\n<tr><th>Testing Notes<\/th><td>Fully tested\.<\/td><\/tr>\n<tr><th>Serial Number<\/th><td>SN-2270-4455<\/td><\/tr>\n<tr><th>Voltage<\/th><td>120V<\/td><\/tr>/);
+    expect(html).toMatch(/<tr><th>Original Box<\/th><td>Yes<\/td><\/tr>\n<tr><th>Original Manual<\/th><td>Included<\/td><\/tr>\n<tr><th>Power Cable<\/th><td>Included<\/td><\/tr>\n<tr><th>Additional Items<\/th><td>Remote control<\/td><\/tr>\n<tr><th>Shipping Method<\/th><td>UPS Ground<\/td><\/tr>\n<tr><th>Shipping Weight<\/th><td>42 lbs<\/td><\/tr>\n<tr><th>Shipping Dimensions<\/th><td>22x19x11<\/td><\/tr>/);
+    expect(html).not.toContain('<tr><th>Cosmetic Notes</th>');
+    expect(html).not.toContain('<tr><th>Condition</th>');
   });
 
-  it('moves testing notes to the bottom of the eBay testing table', () => {
+  it('shows cosmetic notes at rating 7 or below and suppresses Power Cable for cables', () => {
     const template = [
       '<table id="testing-notes">',
       '  <tbody>',
@@ -228,15 +219,18 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
       '',
       '',
       {
-        voltage: '120V',
-        audiogonRating: '8/10',
+        componentType: 'Speaker Cables',
+        cosmeticNotes: 'Visible jacket wear.',
+        powerCable: 'Included',
+        audiogonRating: '7/10',
       },
     );
 
-    expect(html).toMatch(/<tr><th>Bias<\/th><td>Stable<\/td><\/tr>\n<tr><th>Voltage<\/th><td>120V<\/td><\/tr>\n<tr><th>Audiogon Rating<\/th><td>8\/10<\/td><\/tr>\n<tr><th>Testing Notes<\/th><td>Fully tested\.<\/td><\/tr>/);
+    expect(html).toMatch(/<tr><th>Audiogon Rating<\/th><td>7\/10<\/td><\/tr>\n<tr><th>Cosmetic Notes<\/th><td>Visible jacket wear\.<\/td><\/tr>\n<tr><th>Testing Notes<\/th><td>Fully tested\.<\/td><\/tr>\n<tr><th>Serial Number<\/th><td><\/td><\/tr>\n<tr><th>Bias<\/th><td>Stable<\/td><\/tr>/);
+    expect(html).not.toContain('<tr><th>Power Cable</th>');
   });
 
-  it('auto-adds shipping weight and dimensions into the eBay key-features table', () => {
+  it('auto-adds shipping weight and dimensions at the end of the eBay details tables', () => {
     const template = [
       '<table id="key-features">',
       '  <tbody>',

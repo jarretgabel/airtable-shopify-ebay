@@ -281,13 +281,19 @@ export function useListingApprovalCombinedFieldState({
       return true;
     });
 
-    const hasEbayPriceField = filteredEbayFields.some((fieldName) => isEbayPriceLikeFieldName(fieldName));
-    if (hasEbayPriceField) {
-      return filteredEbayFields;
+    const ebayPriceFields = filteredEbayFields.filter((fieldName) => isEbayPriceLikeFieldName(fieldName));
+    if (ebayPriceFields.length > 0) {
+      const chosenEbayPriceField = ebayPriceFields.find((fieldName) => fieldName.trim() === 'Ebay Price')
+        ?? ebayPriceFields.find((fieldName) => Object.prototype.hasOwnProperty.call(selectedRecord?.fields ?? {}, fieldName))
+        ?? ebayPriceFields[0];
+
+      return filteredEbayFields.filter((fieldName) =>
+        !isEbayPriceLikeFieldName(fieldName) || fieldName === chosenEbayPriceField,
+      );
     }
 
     return ['eBay Offer Price Value', ...filteredEbayFields];
-  }, [isCombinedApproval, selectedRecordFieldNames]);
+  }, [isCombinedApproval, selectedRecord, selectedRecordFieldNames]);
 
   const combinedSharedFieldNames = useMemo(() => {
     if (!isCombinedApproval) return allFieldNames;

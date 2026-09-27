@@ -123,7 +123,7 @@ describe('buildListingApprovalSelectedRecordViewProps', () => {
       onOpenPhotosForm: vi.fn(),
     });
 
-    expect(result.approvalFormFieldsProps.allFieldNames).toEqual(['Title', 'Price']);
+    expect(result.approvalFormFieldsProps.allFieldNames).toEqual(['Price', 'Title']);
     expect(result.approvalFormFieldsProps.writableFieldNames).toEqual(['Title', 'Price']);
   });
 
@@ -203,7 +203,7 @@ describe('buildListingApprovalSelectedRecordViewProps', () => {
       onOpenPhotosForm: vi.fn(),
     });
 
-    expect(result.approvalFormFieldsProps.allFieldNames).toEqual(['Title', 'Categories']);
+    expect(result.approvalFormFieldsProps.allFieldNames).toEqual(['Categories', 'Title']);
     expect(result.approvalFormFieldsProps.writableFieldNames).toEqual(['Title', 'Categories']);
   });
 
@@ -283,7 +283,7 @@ describe('buildListingApprovalSelectedRecordViewProps', () => {
       onOpenPhotosForm: vi.fn(),
     });
 
-    expect(result.approvalFormFieldsProps.allFieldNames).toEqual(['Title', 'Categories']);
+    expect(result.approvalFormFieldsProps.allFieldNames).toEqual(['Categories', 'Title']);
     expect(result.approvalFormFieldsProps.writableFieldNames).toEqual(['Title', 'Categories']);
   });
 
@@ -360,7 +360,7 @@ describe('buildListingApprovalSelectedRecordViewProps', () => {
       onOpenPhotosForm: vi.fn(),
     });
 
-    expect(result.approvalFormFieldsProps.allFieldNames).toEqual(['Title', '__Shipping Services__']);
+    expect(result.approvalFormFieldsProps.allFieldNames).toEqual(['__Shipping Services__', 'Title']);
     expect(result.approvalFormFieldsProps.writableFieldNames).toEqual(['Title', '__Shipping Services__']);
   });
 
@@ -440,7 +440,7 @@ describe('buildListingApprovalSelectedRecordViewProps', () => {
       onOpenPhotosForm: vi.fn(),
     });
 
-    expect(result.approvalFormFieldsProps.allFieldNames).toEqual(['Title', 'Categories']);
+    expect(result.approvalFormFieldsProps.allFieldNames).toEqual(['Categories', 'Title']);
     expect(result.approvalFormFieldsProps.writableFieldNames).toEqual(['Title', 'Categories']);
   });
 

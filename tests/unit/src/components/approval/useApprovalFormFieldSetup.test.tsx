@@ -119,6 +119,45 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
     ]);
   });
 
+  it('trusts explicit workflow stages when legacy filenames have no processed marker', () => {
+    const imageUrls = [
+      'https://v5.airtableusercontent.com/v3/u/example-one/uc',
+      'https://v5.airtableusercontent.com/v3/u/example-two/uc',
+    ];
+    const { result } = renderHook(() => useApprovalFormFieldSetup({
+      recordId: 'rec-listing-images-generic-filename',
+      approvalChannel: 'combined',
+      forceShowShopifyCollectionsEditor: false,
+      isCombinedApproval: true,
+      allFieldNames: ['Images', 'Workflow Image Metadata JSON'],
+      writableFieldNames: ['Images', 'Workflow Image Metadata JSON'],
+      formValues: {
+        Images: JSON.stringify(imageUrls.map((url, index) => ({ id: `att-testing-${index + 1}`, url, filename: 'uc' }))),
+        'Workflow Image Metadata JSON': JSON.stringify(imageUrls.map((url, index) => ({
+          attachmentId: `att-testing-${index + 1}`,
+          url,
+          filename: 'uc',
+          sourceStage: 'testing',
+          includedInListing: true,
+          sortOrder: index + 1,
+        }))),
+      },
+      fieldKinds: {},
+      originalFieldValues: {},
+      normalizedShopifyCollectionLabelsById: {},
+      setFormValue: vi.fn(),
+      setDerivedFormValue: vi.fn(),
+      selectedEbayTemplateId: 'classic',
+      onEbayTemplateIdChange: vi.fn(),
+    }));
+
+    expect(result.current.workflowImageAttachments).toEqual([
+      expect.objectContaining({ url: imageUrls[0], filename: 'uc' }),
+      expect.objectContaining({ url: imageUrls[1], filename: 'uc' }),
+    ]);
+    expect(result.current.selectedWorkflowImageUrls).toEqual(imageUrls);
+  });
+
   it('does not force metadata selection when metadata field is read-only', () => {
     const { result } = renderHook(() => useApprovalFormFieldSetup({
       recordId: 'rec-listing-images-readonly-metadata',

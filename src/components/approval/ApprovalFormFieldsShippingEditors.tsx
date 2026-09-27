@@ -111,10 +111,10 @@ export function ApprovalFormFieldsShippingEditors({
             </option>
           ))}
         </ApprovalSelect>
-        {!isInternational && selectedValue === 'Flat'
+        {!isInternational && selectedValue === 'Flat' && !ebayDomesticShippingFlatFeeFieldName.startsWith('__')
           ? renderShippingFlatFeeInput(ebayDomesticShippingFlatFeeFieldName, 'eBay Domestic Shipping Flat Fee')
           : null}
-        {isInternational && selectedValue === 'Flat'
+        {isInternational && selectedValue === 'Flat' && !ebayInternationalShippingFlatFeeFieldName.startsWith('__')
           ? renderShippingFlatFeeInput(ebayInternationalShippingFlatFeeFieldName, 'eBay International Shipping Flat Fee')
           : null}
       </label>

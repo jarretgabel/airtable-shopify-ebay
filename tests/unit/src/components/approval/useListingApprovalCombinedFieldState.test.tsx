@@ -347,6 +347,23 @@ describe('useListingApprovalCombinedFieldState', () => {
     expect(result.current.combinedEbayOnlyFieldNames).toEqual(expect.arrayContaining(['Buy It Now/Starting Price']));
   });
 
+  it('renders only the Airtable Ebay Price field when a synthetic price alias is also present', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+      'Buy It Now Price': '111.00',
+      'Ebay Price': '',
+    });
+
+    const { result } = renderCombinedFieldState(record);
+
+    expect(result.current.combinedEbayOnlyFieldNames).toEqual(expect.arrayContaining(['Ebay Price']));
+    expect(result.current.combinedEbayOnlyFieldNames).not.toEqual(expect.arrayContaining(['Buy It Now Price']));
+    expect(result.current.combinedEbayOnlyFieldNames.filter((fieldName) =>
+      fieldName === 'Ebay Price' || fieldName === 'Buy It Now Price',
+    )).toHaveLength(1);
+  });
+
   it('injects eBay Offer Price Value when no eBay price field exists', () => {
     const record = buildRecord({
       Title: 'Sansui AU-717',

@@ -40,47 +40,51 @@ function parseDelimitedCells(line: string, delimiter: ',' | '\t'): string[] {
 interface ShopifySupplementalFeatureEntry {
   feature: string;
   value: string;
+  alwaysInclude?: boolean;
 }
 
-const SHOPIFY_SUPPLEMENTAL_KEY_FEATURE_SPECS: ReadonlyArray<{ feature: string; candidates: string[] }> = [
-  { feature: 'Make', candidates: ['Make'] },
-  { feature: 'Model', candidates: ['Model'] },
-  { feature: 'Component Type', candidates: ['Component Type'] },
-  { feature: 'Serial Number', candidates: ['Serial Number'] },
-  { feature: 'Condition', candidates: ['__Condition__', 'Item Condition', 'Condition', 'Shopify Condition', 'Shopify REST Condition'] },
-  { feature: 'Cosmetic Notes', candidates: ['Cosmetic Notes', 'Testing Cosmetic Notes', 'Internal Cosmetic Notes', 'Customer Cosmetic Notes'] },
-  { feature: 'Includes', candidates: ['Includes', 'Internal Inclusion Notes', 'Customer Inclusion Notes'] },
+const SHOPIFY_TRAILING_KEY_FEATURE_SPECS: ReadonlyArray<{ feature: string; candidates: string[] }> = [
   { feature: 'Original Box', candidates: ['Original Box'] },
-  { feature: 'Remote', candidates: ['Remote'] },
+  { feature: 'Original Manual', candidates: ['Manual', 'Original Manual'] },
   { feature: 'Power Cable', candidates: ['Power Cable'] },
-  { feature: 'Manual', candidates: ['Manual'] },
-  { feature: 'Voltage', candidates: ['Voltage'] },
+  { feature: 'Additional Items', candidates: ['Additional Items'] },
+  { feature: 'Shipping Method', candidates: ['Shipping Method'] },
   { feature: 'Shipping Weight', candidates: ['Shipping Weight', 'Weight'] },
-  { feature: 'Shipping Dimensions', candidates: ['Shipping Dims'] },
-  { feature: 'Audiogon Rating', candidates: ['Audiogon Rating'] },
+  { feature: 'Shipping Dimensions', candidates: ['Shipping Dims', 'Shipping Dimensions'] },
 ];
 
 function normalizeFeatureName(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
 }
 
-function mergeShopifyKeyFeatureEntries(raw: string, supplementalEntries: ShopifySupplementalFeatureEntry[]): string {
-  const filteredSupplementalEntries = supplementalEntries.filter((entry) => entry.value.trim().length > 0);
-  if (filteredSupplementalEntries.length === 0) return raw;
+function mergeShopifyKeyFeatureEntries(raw: string, leadingEntries: ShopifySupplementalFeatureEntry[], trailingEntries: ShopifySupplementalFeatureEntry[]): string {
+  const includedLeadingEntries = leadingEntries.filter((entry) => entry.alwaysInclude || entry.value.trim().length > 0);
+  const includedTrailingEntries = trailingEntries.filter((entry) => entry.value.trim().length > 0);
+  const supplementalEntries = [...includedLeadingEntries, ...includedTrailingEntries];
+  if (supplementalEntries.length === 0) return raw;
 
   const parsedEntries = parseKeyFeatureEntries(raw);
-  const blockedFeatureNames = new Set(filteredSupplementalEntries.map((entry) => normalizeFeatureName(entry.feature)));
+  const blockedFeatureNames = new Set(supplementalEntries.map((entry) => normalizeFeatureName(entry.feature)));
+  ['Make', 'Model', 'Component Type', 'Condition', 'Includes', 'Remote', 'Cosmetic Notes']
+    .forEach((feature) => blockedFeatureNames.add(normalizeFeatureName(feature)));
   const overridingEntriesByName = new Map(
     parsedEntries
       .filter((entry) => blockedFeatureNames.has(normalizeFeatureName(entry.feature)))
       .map((entry) => [normalizeFeatureName(entry.feature), entry] as const),
   );
   const filteredEntries = parsedEntries.filter((entry) => !blockedFeatureNames.has(normalizeFeatureName(entry.feature)));
-  const orderedSupplementalEntries = filteredSupplementalEntries.map((entry) => {
+  const resolveEntry = (entry: ShopifySupplementalFeatureEntry) => {
     const overrideEntry = overridingEntriesByName.get(normalizeFeatureName(entry.feature));
     return overrideEntry ? { feature: entry.feature, value: overrideEntry.value } : entry;
-  });
-  return JSON.stringify([...orderedSupplementalEntries, ...filteredEntries]);
+  };
+  return JSON.stringify([...includedLeadingEntries.map(resolveEntry), ...filteredEntries, ...includedTrailingEntries.map(resolveEntry)]);
+}
+
+function parseAudiogonRating(raw: string): number | null {
+  const match = raw.match(/\d+(?:\.\d+)?/);
+  if (!match) return null;
+  const value = Number(match[0]);
+  return Number.isFinite(value) ? value : null;
 }
 
 function parseKeyFeatureEntries(raw: string): Array<{ feature: string; value: string }> {
@@ -119,7 +123,7 @@ function parseKeyFeatureEntries(raw: string): Array<{ feature: string; value: st
 function formatKeyFeatureHtml(raw: string): string {
   const entries = parseKeyFeatureEntries(raw);
   if (entries.length === 0) return '';
-  return `<ul>${entries.map((entry) => entry.feature && entry.value ? `<li><strong>${entry.feature}:</strong> ${entry.value}</li>` : `<li>${entry.feature || entry.value}</li>`).join('')}</ul>`;
+  return `<table><tbody>${entries.map((entry) => `<tr><th scope="row">${entry.feature}</th><td>${entry.value}</td></tr>`).join('')}</tbody></table>`;
 }
 
 function formatTestingNotesHtml(raw: string): string {
@@ -148,7 +152,7 @@ function hasTemplateTokens(html: string): boolean {
 function ensureListWrapped(html: string): string {
   const trimmed = html.trim();
   if (!trimmed) return '';
-  if (/^<(ul|ol)\b/i.test(trimmed)) return trimmed;
+  if (/^<(ul|ol|table)\b/i.test(trimmed)) return trimmed;
   if (/^<li\b/i.test(trimmed)) return `<ul>${trimmed}</ul>`;
   return `<ul><li>${trimmed}</li></ul>`;
 }
@@ -164,14 +168,13 @@ export function buildShopifyBodyHtml(description: string, keyFeaturesRaw: string
   const testingNotesHtml = formatTestingNotesHtml(testingNotes);
   const baseTemplate = normalizeTemplateHtml(templateHtml);
   if (!baseTemplate) {
-    const parts = [descriptionHtml, keyFeaturesHtml, testingNotesHtml].filter(Boolean);
+    const parts = [descriptionHtml, ...(keyFeaturesHtml ? ['<h3>Details &amp; Testing Notes</h3>', keyFeaturesHtml] : []), testingNotesHtml].filter(Boolean);
     return parts.join('\n').trim();
   }
   if (!hasTemplateTokens(baseTemplate)) {
     const parts = [descriptionHtml];
     if (keyFeaturesHtml) {
-      const heading = extractKeyFeaturesHeading(baseTemplate);
-      if (heading) parts.push(heading);
+      parts.push('<h3>Details &amp; Testing Notes</h3>');
       parts.push(keyFeaturesHtml);
     }
     if (testingNotesHtml) parts.push(testingNotesHtml);
@@ -179,11 +182,14 @@ export function buildShopifyBodyHtml(description: string, keyFeaturesRaw: string
   }
 
   const includesTestingNotesToken = /\{\{\s*body_testing_notes\s*\}\}/i.test(baseTemplate);
-  const tokenResolved = baseTemplate
+  const normalizedHeadingTemplate = baseTemplate.replace(/<(h[1-6])\b[^>]*>\s*(?:key features|details &(?:amp;|) testing notes)\s*<\/\1>/gi, '<h3>Details &amp; Testing Notes</h3>');
+  const hasDetailsHeading = Boolean(extractKeyFeaturesHeading(normalizedHeadingTemplate));
+  const keyFeaturesSectionHtml = keyFeaturesHtml ? `${hasDetailsHeading ? '' : '<h3>Details &amp; Testing Notes</h3>\n'}${keyFeaturesHtml}` : '';
+  const tokenResolved = normalizedHeadingTemplate
     .replace(/<p\b[^>]*>\s*\{\{\s*body_description\s*\}\}\s*<\/p>/gi, descriptionHtml)
-    .replace(/<p\b[^>]*>\s*\{\{\s*body_key_features\s*\}\}\s*<\/p>/gi, keyFeaturesHtml)
+    .replace(/<p\b[^>]*>\s*\{\{\s*body_key_features\s*\}\}\s*<\/p>/gi, keyFeaturesSectionHtml)
     .replace(/\{\{\s*body_description\s*\}\}/gi, descriptionHtml)
-    .replace(/\{\{\s*body_key_features\s*\}\}/gi, keyFeaturesHtml)
+    .replace(/\{\{\s*body_key_features\s*\}\}/gi, keyFeaturesSectionHtml)
     .replace(/\{\{\s*body_testing_notes\s*\}\}/gi, testingNotesHtml)
     .replace(/\{\{\s*[a-z0-9_]+\s*\}\}/gi, '')
     .trim();
@@ -262,14 +268,24 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   const bodyDescriptionCandidates = SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.find((spec) => spec.token === 'body_description')?.candidates ?? [];
   const bodyKeyFeaturesCandidates = SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.find((spec) => spec.token === 'body_key_features')?.candidates ?? [];
   const rawKeyFeatures = getFieldPreservingStructuredValues(fields, ['Shopify Body Key Features JSON', 'Shopify REST Body Key Features JSON', 'Shopify Body Key Features', 'Shopify REST Body Key Features', 'Key Features JSON', 'Key Features', 'Features JSON', 'Features', 'shopify_body_key_features_json', 'shopify_rest_body_key_features_json', 'shopify_body_key_features', 'shopify_rest_body_key_features']);
+  const audiogonRating = getField(fields, ['Audiogon Rating']);
+  const cosmeticNotes = getField(fields, ['Cosmetic Notes', 'Testing Cosmetic Notes', 'Internal Cosmetic Notes', 'Customer Cosmetic Notes']);
+  const ratingValue = parseAudiogonRating(audiogonRating);
+  const componentType = getField(fields, ['Component Type']);
+  const powerCableApplies = !/\b(?:cables?|speakers?|subwoofers?|monitors?)\b/i.test(componentType);
   const mergedKeyFeatures = mergeShopifyKeyFeatureEntries(
     rawKeyFeatures,
-    SHOPIFY_SUPPLEMENTAL_KEY_FEATURE_SPECS.map((spec) => ({
-      feature: spec.feature,
-      value: getField(fields, spec.candidates),
-    })),
+    [
+      { feature: 'Audiogon Rating', value: audiogonRating },
+      ...(ratingValue !== null && ratingValue <= 7 && cosmeticNotes.trim() ? [{ feature: 'Cosmetic Notes', value: cosmeticNotes }] : []),
+      { feature: 'Testing Notes', value: getField(fields, ['Testing Notes', 'Shopify Body Testing Notes', 'shopify_body_testing_notes']) },
+      { feature: 'Serial Number', value: getField(fields, ['Serial Number']), alwaysInclude: hasAnyField(fields, ['Serial Number']) },
+      { feature: 'Voltage', value: getField(fields, ['Voltage']) },
+    ],
+    SHOPIFY_TRAILING_KEY_FEATURE_SPECS
+      .filter((spec) => spec.feature !== 'Power Cable' || powerCableApplies)
+      .map((spec) => ({ feature: spec.feature, value: getField(fields, spec.candidates) })),
   );
-  const testingNotes = getField(fields, ['Testing Notes', 'Shopify Body Testing Notes', 'shopify_body_testing_notes']);
   const tokenValues = new Map<string, string>();
   SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.forEach((spec) => {
     const rawValue = spec.token === 'body_key_features'
@@ -283,16 +299,16 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   const usesStructuredBodyTokens = /\{\{\s*(body_description|body_key_features)\s*\}\}/i.test(explicitTemplate || '');
 
   if (!explicitTemplate && !bodyDescription && !bodyKeyFeatures) {
-    return explicitRenderedBodyHtml;
+    return hasEditableBodyFields ? '' : explicitRenderedBodyHtml;
   }
 
   if (!explicitTemplate) {
-    const generated = buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, template, testingNotes);
+    const generated = buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, template);
     return generated || explicitRenderedBodyHtml;
   }
 
   if (usesStructuredBodyTokens || hasEditableBodyFields) {
-    const generated = buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, explicitTemplate, testingNotes);
+    const generated = buildShopifyBodyHtml(bodyDescription, mergedKeyFeatures, explicitTemplate);
     return generated || explicitRenderedBodyHtml;
   }
 

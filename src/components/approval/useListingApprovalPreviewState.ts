@@ -6,7 +6,6 @@ import {
 import {
   EBAY_BODY_ABOUT_DEFAULT_TEXT,
   EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
-  EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML,
   resolveEbayListingTemplateHtml,
   EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD,
   type EbayListingTemplateId,
@@ -86,7 +85,7 @@ function resolveEbayDescriptionPreviewValue(params: {
 }
 
 function resolveEbayTemplateCopyPreviewValue(formValues: Record<string, string>): string {
-  return (formValues[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD] ?? '').trim() || EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML;
+  return (formValues[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD] ?? '').trim();
 }
 
 function resolveEbayAboutPreviewValue(formValues: Record<string, string>): string {
@@ -207,13 +206,16 @@ export function useListingApprovalPreviewState({
       {
         componentType: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Component Type'),
         serialNumber: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Serial Number'),
-        condition: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, '__Condition__')
-          || resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Condition'),
+        cosmeticNotes: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Cosmetic Notes')
+          || resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Testing Cosmetic Notes')
+          || resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Internal Cosmetic Notes')
+          || resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Customer Cosmetic Notes'),
         originalBox: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Original Box'),
-        remote: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Remote'),
         powerCable: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Power Cable'),
         manual: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Manual'),
         voltage: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Voltage'),
+        additionalItems: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Additional Items'),
+        shippingMethod: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Shipping Method'),
         shippingWeight: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Shipping Weight')
           || resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Weight'),
         shippingDimensions: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Shipping Dims'),

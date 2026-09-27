@@ -58,6 +58,10 @@ function normalizeIdentityToken(value: string): string {
     .replace(/[^a-z0-9]+/g, '');
 }
 
+function isGenericImageIdentity(value: string): boolean {
+  return ['uc', 'image', 'download', 'view'].includes(normalizeIdentityToken(value));
+}
+
 function getUrlBasename(url: string): string {
   const trimmed = url.trim();
   if (!trimmed) return '';
@@ -75,10 +79,10 @@ function getWorkflowAttachmentIdentity(attachment: { filename: string; url: stri
   if (driveId) return `gdrive:${driveId.toLowerCase()}`;
 
   const normalizedFilename = normalizeIdentityToken(attachment.filename);
-  if (normalizedFilename) return `filename:${normalizedFilename}`;
+  if (normalizedFilename && !isGenericImageIdentity(attachment.filename)) return `filename:${normalizedFilename}`;
 
   const normalizedBasename = normalizeIdentityToken(getUrlBasename(attachment.url));
-  if (normalizedBasename) return `basename:${normalizedBasename}`;
+  if (normalizedBasename && !isGenericImageIdentity(normalizedBasename)) return `basename:${normalizedBasename}`;
 
   return `url:${attachment.url.trim().toLowerCase()}`;
 }
@@ -226,9 +230,10 @@ export function useApprovalFormFieldSetup({
         return attachments.filter((attachment) => isProcessedWorkflowImage(attachment.filename, attachment.url));
       }
 
-      const metadataAttachments = workflowImageMetadata
-        .filter((record) => record.sourceStage !== 'intake')
-        .filter((record) => isProcessedWorkflowImage(record.filename, record.url))
+      const stagedMetadata = workflowImageMetadata.filter((record) => record.sourceStage !== 'intake');
+      const processedMetadata = stagedMetadata.filter((record) => isProcessedWorkflowImage(record.filename, record.url));
+      const listingMetadata = processedMetadata.length > 0 ? processedMetadata : stagedMetadata;
+      const metadataAttachments = listingMetadata
         .map((record) => ({
           id: record.attachmentId,
           url: record.url,
@@ -320,6 +325,9 @@ export function useApprovalFormFieldSetup({
 
     const metadataSelectedUrls = workflowImageMetadataFieldName
       ? (() => {
+          const stagedMetadata = workflowImageMetadata.filter((record) => record.sourceStage !== 'intake');
+          const processedMetadata = stagedMetadata.filter((record) => isProcessedWorkflowImage(record.filename, record.url));
+          const listingMetadata = processedMetadata.length > 0 ? processedMetadata : stagedMetadata;
           const attachmentUrlLookup = new Set(
             workflowImageAttachments.map((attachment) => attachment.url.trim().toLowerCase()).filter(Boolean),
           );
@@ -332,9 +340,7 @@ export function useApprovalFormFieldSetup({
           });
 
           return buildWorkflowListingSelectionFromMetadata(
-            workflowImageMetadata
-              .filter((record) => record.sourceStage !== 'intake')
-              .filter((record) => isProcessedWorkflowImage(record.filename, record.url))
+            listingMetadata
               .map((record) => {
                 const urlKey = record.url.trim().toLowerCase();
                 if (urlKey && attachmentUrlLookup.has(urlKey)) {

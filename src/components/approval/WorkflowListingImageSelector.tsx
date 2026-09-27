@@ -99,6 +99,10 @@ function normalizeIdentityToken(value: string): string {
     .replace(/[^a-z0-9]+/g, '');
 }
 
+function isGenericImageIdentity(value: string): boolean {
+  return ['uc', 'image', 'download', 'view'].includes(normalizeIdentityToken(value));
+}
+
 function getAttachmentLookupKeys(attachment: WorkflowListingImageAttachment): string[] {
   const keys = new Set<string>();
   const driveId = getGoogleDriveFileId(attachment.url);
@@ -125,7 +129,7 @@ function getAttachmentLookupKeys(attachment: WorkflowListingImageAttachment): st
 
 function getAttachmentIdentity(attachment: WorkflowListingImageAttachment): string {
   const normalizedFilename = normalizeIdentityToken(attachment.filename);
-  if (normalizedFilename) {
+  if (normalizedFilename && !isGenericImageIdentity(attachment.filename)) {
     return `filename:${normalizedFilename}`;
   }
 
@@ -135,7 +139,7 @@ function getAttachmentIdentity(attachment: WorkflowListingImageAttachment): stri
   }
 
   const basename = getUrlBasename(attachment.url);
-  if (basename) {
+  if (basename && !isGenericImageIdentity(basename)) {
     return `basename:${basename}`;
   }
 

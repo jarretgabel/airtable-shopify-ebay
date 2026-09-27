@@ -132,6 +132,66 @@ describe('approvalStorePersistence', () => {
     expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
   });
 
+  it('persists selected eBay categories and separated shipping choices before reloading', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Ebay Categories': '14990, 15032',
+        'Ebay Domestic Shipping Fees': 'Calculated',
+        'Ebay International Shipping Fees': 'Flat',
+      },
+      fieldKinds: {
+        'Ebay Categories': 'text',
+        'Ebay Domestic Shipping Fees': 'text',
+        'Ebay International Shipping Fees': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({
+        'Ebay Categories': [],
+        'Ebay Domestic Shipping Fees': '',
+        'Ebay International Shipping Fees': '',
+      }),
+      'base/table',
+      'Approval',
+      ['Ebay Categories', 'Ebay Domestic Shipping Fees', 'Ebay International Shipping Fees'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Ebay Categories': '14990, 15032' },
+      { typecast: true },
+    );
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Ebay Domestic Shipping Fees': 'Calculated' },
+      undefined,
+    );
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Ebay International Shipping Fees': 'Flat' },
+      undefined,
+    );
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
   it('retries price saves with numeric values after a 422 response', async () => {
     const setMock = vi.fn();
     const loadRecordsMock = vi.fn(async () => {});
@@ -270,6 +330,46 @@ describe('approvalStorePersistence', () => {
       'base/table',
       'Approval',
       ['Description'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(false);
+    expect(loadRecordsMock).not.toHaveBeenCalled();
+    expect(setMock).toHaveBeenCalledWith(expect.objectContaining({
+      error: expect.stringContaining('Failed to save fields. Description: Field "Description" is read only in this view'),
+    }));
+  });
+
+  it('fails instead of reporting success when Airtable accepts only some changed fields', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        Title: 'Updated title',
+        Description: 'Updated description',
+      },
+      fieldKinds: {
+        Title: 'text',
+        Description: 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef, _tableName, _recordId, payload: Record<string, unknown>) => {
+      if ('Title' in payload) return;
+      throw createAirtable422Error('Field "Description" is read only in this view');
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Original title', Description: 'Original description' }),
+      'base/table',
+      'Approval',
+      ['Title', 'Description'],
       'Approved',
       () => undefined,
       'full',

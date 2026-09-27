@@ -126,7 +126,10 @@ function isLegacyWorkflowAltText(alt: string): boolean {
     'processed',
     'workflow',
   ];
-  const markerCount = markers.reduce((count, marker) => count + (normalized.includes(marker) ? 1 : 0), 0);
+  const markerCount = markers.reduce(
+    (count, marker) => count + (new RegExp(`\\b${marker}\\b`).test(normalized) ? 1 : 0),
+    0,
+  );
 
   if (/\brec[a-z0-9]{8,}\b/i.test(normalized)) {
     return true;

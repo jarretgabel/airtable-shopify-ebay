@@ -27,11 +27,14 @@ export interface ApprovalEbayBodyPreviewInput {
   componentType?: string;
   serialNumber?: string;
   condition?: string;
+  cosmeticNotes?: string;
   originalBox?: string;
   remote?: string;
   powerCable?: string;
   manual?: string;
   voltage?: string;
+  additionalItems?: string;
+  shippingMethod?: string;
   shippingWeight?: string;
   shippingDimensions?: string;
   audiogonRating?: string;
@@ -188,11 +191,14 @@ export function validateApprovalEbayBodyPreviewInput(value: unknown): ContractVa
     || !isOptionalString(value.componentType)
     || !isOptionalString(value.serialNumber)
     || !isOptionalString(value.condition)
+    || !isOptionalString(value.cosmeticNotes)
     || !isOptionalString(value.originalBox)
     || !isOptionalString(value.remote)
     || !isOptionalString(value.powerCable)
     || !isOptionalString(value.manual)
     || !isOptionalString(value.voltage)
+    || !isOptionalString(value.additionalItems)
+    || !isOptionalString(value.shippingMethod)
     || !isOptionalString(value.shippingWeight)
     || !isOptionalString(value.shippingDimensions)
     || !isOptionalString(value.audiogonRating)
@@ -217,11 +223,14 @@ export function validateApprovalEbayBodyPreviewInput(value: unknown): ContractVa
     ...(typeof value.componentType === 'string' ? { componentType: value.componentType } : {}),
     ...(typeof value.serialNumber === 'string' ? { serialNumber: value.serialNumber } : {}),
     ...(typeof value.condition === 'string' ? { condition: value.condition } : {}),
+    ...(typeof value.cosmeticNotes === 'string' ? { cosmeticNotes: value.cosmeticNotes } : {}),
     ...(typeof value.originalBox === 'string' ? { originalBox: value.originalBox } : {}),
     ...(typeof value.remote === 'string' ? { remote: value.remote } : {}),
     ...(typeof value.powerCable === 'string' ? { powerCable: value.powerCable } : {}),
     ...(typeof value.manual === 'string' ? { manual: value.manual } : {}),
     ...(typeof value.voltage === 'string' ? { voltage: value.voltage } : {}),
+    ...(typeof value.additionalItems === 'string' ? { additionalItems: value.additionalItems } : {}),
+    ...(typeof value.shippingMethod === 'string' ? { shippingMethod: value.shippingMethod } : {}),
     ...(typeof value.shippingWeight === 'string' ? { shippingWeight: value.shippingWeight } : {}),
     ...(typeof value.shippingDimensions === 'string' ? { shippingDimensions: value.shippingDimensions } : {}),
     ...(typeof value.audiogonRating === 'string' ? { audiogonRating: value.audiogonRating } : {}),

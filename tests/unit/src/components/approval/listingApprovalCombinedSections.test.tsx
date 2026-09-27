@@ -558,8 +558,8 @@ describe('combined approval sections', () => {
     }));
     expect(screen.getByRole('separator', { name: 'Listing content divider' })).toBeInTheDocument();
     expect(bodyHtmlPreviewSpy).toHaveBeenCalledWith(expect.objectContaining({
-      value: '<p>Rendered eBay body</p>',
-      showTemplateSelector: true,
+      value: '<p>Preview body</p>',
+      showTemplateSelector: false,
     }));
     await waitFor(() => {
       expect(screen.getByText('eBay Create Listing API Payload (Exact Request)')).toBeInTheDocument();

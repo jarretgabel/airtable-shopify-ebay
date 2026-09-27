@@ -9,12 +9,13 @@ interface EbayTemplateEntry {
 interface EbaySupplementalBodyFields {
   componentType?: string;
   serialNumber?: string;
-  condition?: string;
+  cosmeticNotes?: string;
   originalBox?: string;
-  remote?: string;
   powerCable?: string;
   manual?: string;
   voltage?: string;
+  additionalItems?: string;
+  shippingMethod?: string;
   shippingWeight?: string;
   shippingDimensions?: string;
   audiogonRating?: string;
@@ -26,66 +27,63 @@ function normalizeTemplateFeatureName(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ');
 }
 
-function buildMakeModelTemplateEntries(makeValue: string, modelValue: string): EbayTemplateEntry[] {
-  const entries: EbayTemplateEntry[] = [];
+const RESERVED_DETAILS_FEATURES = new Set([
+  'make', 'model', 'component type', 'condition', 'audiogon rating', 'cosmetic notes',
+  'testing notes', 'serial number', 'voltage', 'original box', 'original manual',
+  'manual', 'remote', 'power cable', 'additional items', 'shipping method',
+  'shipping weight', 'shipping dimensions',
+]);
 
-  if (makeValue.trim()) {
-    entries.push({ feature: 'Make', value: makeValue.trim() });
-  }
-
-  if (modelValue.trim()) {
-    entries.push({ feature: 'Model', value: modelValue.trim() });
-  }
-
-  return entries;
+function parseAudiogonRating(raw: string): number | null {
+  const match = raw.match(/\d+(?:\.\d+)?/);
+  if (!match) return null;
+  const value = Number(match[0]);
+  return Number.isFinite(value) ? value : null;
 }
 
-function buildSupplementalTemplateEntries(entries: ReadonlyArray<EbayTemplateEntry>): EbayTemplateEntry[] {
-  return entries
-    .filter((entry) => entry.value.trim())
-    .map((entry) => ({ feature: entry.feature, value: entry.value.trim() }));
+function includeWhenFilled(feature: string, value: string | undefined): EbayTemplateEntry[] {
+  const trimmed = value?.trim() ?? '';
+  return trimmed ? [{ feature, value: trimmed }] : [];
 }
 
-function mergeTemplateEntries(rawValue: string, supplementalEntries: ReadonlyArray<EbayTemplateEntry>, options: {
-  supplementalFirst?: boolean;
-} = {}): string {
-  if (supplementalEntries.length === 0) return rawValue;
+function buildOrderedDetailEntries(
+  keyFeaturesRaw: string,
+  testingNotesRaw: string,
+  supplementalFields: EbaySupplementalBodyFields,
+): { main: EbayTemplateEntry[]; trailing: EbayTemplateEntry[] } {
+  const parsedKeyFeatures = parseTemplateKeyFeatureEntries(keyFeaturesRaw);
+  const parsedTestingEntries = parseTemplateKeyFeatureEntries(normalizeTestingNotesForTemplate(testingNotesRaw));
+  const testingNotes = parsedTestingEntries
+    .filter((entry) => normalizeTemplateFeatureName(entry.feature) === 'testing notes')
+    .map((entry) => entry.value.trim())
+    .filter(Boolean)
+    .join('<br />');
+  const otherFeatures = [...parsedKeyFeatures, ...parsedTestingEntries]
+    .filter((entry) => !RESERVED_DETAILS_FEATURES.has(normalizeTemplateFeatureName(entry.feature)))
+    .filter((entry) => entry.feature.trim() || entry.value.trim());
+  const audiogonRating = supplementalFields.audiogonRating?.trim() ?? '';
+  const ratingValue = parseAudiogonRating(audiogonRating);
+  const powerCableApplies = !/\b(?:cables?|speakers?|subwoofers?|monitors?)\b/i.test(supplementalFields.componentType ?? '');
 
-  const parsedEntries = parseTemplateKeyFeatureEntries(rawValue);
-  const blockedFeatureNames = new Set(supplementalEntries.map((entry) => normalizeTemplateFeatureName(entry.feature)));
-  const overridingEntriesByName = new Map(
-    parsedEntries
-      .filter((entry) => blockedFeatureNames.has(normalizeTemplateFeatureName(entry.feature)))
-      .map((entry) => [normalizeTemplateFeatureName(entry.feature), entry] as const),
-  );
-  const filteredEntries = parsedEntries.filter((entry) => !blockedFeatureNames.has(normalizeTemplateFeatureName(entry.feature)));
-  const orderedSupplementalEntries = supplementalEntries.map((entry) => {
-    const overrideEntry = overridingEntriesByName.get(normalizeTemplateFeatureName(entry.feature));
-    return overrideEntry ? { feature: entry.feature, value: overrideEntry.value } : entry;
-  });
-  return JSON.stringify(options.supplementalFirst === false
-    ? [...filteredEntries, ...orderedSupplementalEntries]
-    : [...orderedSupplementalEntries, ...filteredEntries]);
-}
-
-function mergeTemplateKeyFeatureEntries(
-  rawValue: string,
-  makeValue: string,
-  modelValue: string,
-  supplementalFields: EbaySupplementalBodyFields = {},
-): string {
-  return mergeTemplateEntries(rawValue, buildSupplementalTemplateEntries([
-    ...buildMakeModelTemplateEntries(makeValue, modelValue),
-    { feature: 'Component Type', value: supplementalFields.componentType ?? '' },
-    { feature: 'Serial Number', value: supplementalFields.serialNumber ?? '' },
-    { feature: 'Condition', value: supplementalFields.condition ?? '' },
-    { feature: 'Original Box', value: supplementalFields.originalBox ?? '' },
-    { feature: 'Remote', value: supplementalFields.remote ?? '' },
-    { feature: 'Power Cable', value: supplementalFields.powerCable ?? '' },
-    { feature: 'Manual', value: supplementalFields.manual ?? '' },
-    { feature: 'Shipping Weight', value: supplementalFields.shippingWeight ?? '' },
-    { feature: 'Shipping Dimensions', value: supplementalFields.shippingDimensions ?? '' },
-  ]));
+  return {
+    main: [
+      ...includeWhenFilled('Audiogon Rating', audiogonRating),
+      ...(ratingValue !== null && ratingValue <= 7 ? includeWhenFilled('Cosmetic Notes', supplementalFields.cosmeticNotes) : []),
+      ...includeWhenFilled('Testing Notes', testingNotes),
+      { feature: 'Serial Number', value: supplementalFields.serialNumber?.trim() ?? '' },
+      ...includeWhenFilled('Voltage', supplementalFields.voltage),
+      ...otherFeatures,
+    ],
+    trailing: [
+      ...includeWhenFilled('Original Box', supplementalFields.originalBox),
+      ...includeWhenFilled('Original Manual', supplementalFields.manual),
+      ...(powerCableApplies ? includeWhenFilled('Power Cable', supplementalFields.powerCable) : []),
+      ...includeWhenFilled('Additional Items', supplementalFields.additionalItems),
+      ...includeWhenFilled('Shipping Method', supplementalFields.shippingMethod),
+      ...includeWhenFilled('Shipping Weight', supplementalFields.shippingWeight),
+      ...includeWhenFilled('Shipping Dimensions', supplementalFields.shippingDimensions),
+    ],
+  };
 }
 
 function escapeRegExp(value: string): string {
@@ -211,49 +209,40 @@ function normalizeTestingNotesForTemplate(rawValue: string): string {
   return JSON.stringify([{ feature: 'Testing Notes', value: lines.join('<br />') }]);
 }
 
-function mergeTemplateTestingEntries(rawValue: string, supplementalFields: EbaySupplementalBodyFields = {}): string {
-  const mergedEntries = parseTemplateKeyFeatureEntries(mergeTemplateEntries(normalizeTestingNotesForTemplate(rawValue), buildSupplementalTemplateEntries([
-    { feature: 'Voltage', value: supplementalFields.voltage ?? '' },
-    { feature: 'Audiogon Rating', value: supplementalFields.audiogonRating ?? '' },
-  ]), { supplementalFirst: false }));
-  const normalizedTestingNotesFeature = normalizeTemplateFeatureName('Testing Notes');
-  const testingNotesEntries = mergedEntries.filter((entry) => normalizeTemplateFeatureName(entry.feature) === normalizedTestingNotesFeature);
-  const otherEntries = mergedEntries.filter((entry) => normalizeTemplateFeatureName(entry.feature) !== normalizedTestingNotesFeature);
-
-  return JSON.stringify([...otherEntries, ...testingNotesEntries]);
-}
-
 export function buildEbayBodyHtmlFromTemplate(input: EbayBodyPreviewInput): string {
   const withTitle = replaceTemplateToken(input.templateHtml, 'title', input.title);
   const withTemplateCopy = applyTemplateCopy(withTitle, input.templateCopy ?? '');
   const withDescription = replaceTemplateToken(withTemplateCopy, 'description', input.description);
   const withAbout = replaceTemplateToken(withDescription, 'about', (input.about ?? '').trim() || DEFAULT_HEAA_ABOUT_TEXT);
+  const detailEntries = buildOrderedDetailEntries(input.keyFeatures, input.testingNotes ?? '', {
+    componentType: input.componentType,
+    serialNumber: input.serialNumber,
+    cosmeticNotes: input.cosmeticNotes,
+    originalBox: input.originalBox,
+    powerCable: input.powerCable,
+    manual: input.manual,
+    voltage: input.voltage,
+    additionalItems: input.additionalItems,
+    shippingMethod: input.shippingMethod,
+    shippingWeight: input.shippingWeight,
+    shippingDimensions: input.shippingDimensions,
+    audiogonRating: input.audiogonRating,
+  });
+  const hasKeyFeaturesTable = /<table\b[^>]*\bid=(['"])key-features\1/i.test(withAbout);
+  const hasTestingNotesTable = /<table\b[^>]*\bid=(['"])testing-notes\1/i.test(withAbout);
+  const keyFeatureEntries = hasKeyFeaturesTable && !hasTestingNotesTable
+    ? [...detailEntries.main, ...detailEntries.trailing]
+    : detailEntries.main;
+  const testingEntries = hasTestingNotesTable && !hasKeyFeaturesTable
+    ? [...detailEntries.main, ...detailEntries.trailing]
+    : detailEntries.trailing;
   const withKeyFeatures = applyTableRows(withAbout, {
     tableId: 'key-features',
-    rawValue: mergeTemplateKeyFeatureEntries(input.keyFeatures, input.make ?? '', input.model ?? '', {
-      componentType: input.componentType,
-      serialNumber: input.serialNumber,
-      condition: input.condition,
-      originalBox: input.originalBox,
-      remote: input.remote,
-      powerCable: input.powerCable,
-      manual: input.manual,
-      voltage: input.voltage,
-      shippingWeight: input.shippingWeight,
-      shippingDimensions: input.shippingDimensions,
-      audiogonRating: input.audiogonRating,
-    }),
+    rawValue: JSON.stringify(keyFeatureEntries),
   });
 
   return applyTableRows(withKeyFeatures, {
     tableId: 'testing-notes',
-    rawValue: mergeTemplateTestingEntries(input.testingNotes ?? '', {
-      originalBox: input.originalBox,
-      remote: input.remote,
-      powerCable: input.powerCable,
-      manual: input.manual,
-      voltage: input.voltage,
-      audiogonRating: input.audiogonRating,
-    }),
+    rawValue: JSON.stringify(testingEntries),
   }).trim();
 }

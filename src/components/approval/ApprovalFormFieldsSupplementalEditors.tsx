@@ -323,8 +323,11 @@ export function ApprovalFormFieldsSupplementalEditors({
                   .filter((identity) => identity.length > 0),
               );
               const metadataRecords = parseWorkflowImageMetadata(formValues[workflowImageMetadataFieldName] ?? '');
-              const managedRecords = metadataRecords.filter((record) => record.sourceStage !== 'intake' && isProcessedWorkflowImage(record.filename, record.url));
-              const unmanagedRecords = metadataRecords.filter((record) => !(record.sourceStage !== 'intake' && isProcessedWorkflowImage(record.filename, record.url)));
+              const stagedRecords = metadataRecords.filter((record) => record.sourceStage !== 'intake');
+              const processedRecords = stagedRecords.filter((record) => isProcessedWorkflowImage(record.filename, record.url));
+              const managedRecords = processedRecords.length > 0 ? processedRecords : stagedRecords;
+              const managedRecordSet = new Set(managedRecords);
+              const unmanagedRecords = metadataRecords.filter((record) => !managedRecordSet.has(record));
               const managedIdentityLookup = new Set(
                 managedRecords
                   .map((record) => normalizeIdentityToken(record.filename))

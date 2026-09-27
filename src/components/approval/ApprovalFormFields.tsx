@@ -10,7 +10,6 @@ import {
 import {
   EBAY_BODY_ABOUT_DEFAULT_TEXT,
   EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
-  EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML,
   EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD,
 } from './listingApprovalEbayConstants';
 import {
@@ -388,14 +387,7 @@ export function ApprovalFormFields({
     </Suspense>
   ) : null;
 
-  const fallbackEbayTemplateCopySeed = useMemo(() => {
-    if (approvalChannel !== 'ebay') return '';
-    return EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML;
-  }, [approvalChannel]);
-
-  const editableEbayTemplateCopyValue = formValues[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD]
-    || fallbackEbayTemplateCopySeed
-    || EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML;
+  const editableEbayTemplateCopyValue = formValues[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD] ?? '';
   const editableEbayAboutRawValue = formValues[EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD] ?? '';
   const editableEbayAboutValue = isEffectivelyEmptyHtml(editableEbayAboutRawValue)
     ? EBAY_BODY_ABOUT_DEFAULT_TEXT
@@ -410,7 +402,8 @@ export function ApprovalFormFields({
           setFormValue={setFormValue}
           disabled={saving}
           label="Advanced: eBay Template Copy"
-          helperText={'WYSIWYG editor for the copy block rendered above the product description in the eBay template.'}
+          helperText={'Save reusable copy here, then load it only on listings that need it. Blank copy does not add anything above the product description.'}
+          enableTemplateLibrary
         />
 
         <EbayTemplateCopyWysiwygEditor

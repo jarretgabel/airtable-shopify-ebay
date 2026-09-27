@@ -133,12 +133,9 @@ export function formatKeyFeatureHtml(raw: string): string {
   const entries = parseKeyFeatureEntries(raw);
   if (entries.length === 0) return '';
 
-  return `<ul>${entries.map((entry) => {
-    if (entry.feature && entry.value) {
-      return `<li><strong>${entry.feature}:</strong> ${entry.value}</li>`;
-    }
-    return `<li>${entry.feature || entry.value}</li>`;
-  }).join('')}</ul>`;
+  return `<table><tbody>${entries.map((entry) => (
+    `<tr><th scope="row">${entry.feature}</th><td>${entry.value}</td></tr>`
+  )).join('')}</tbody></table>`;
 }
 
 export function formatTestingNotesHtml(raw: string): string {
@@ -199,21 +196,22 @@ function hasTemplateTokens(html: string): boolean {
 function ensureListWrapped(html: string): string {
   const trimmed = html.trim();
   if (!trimmed) return '';
-  if (/^<(ul|ol)\b/i.test(trimmed)) return trimmed;
+  if (/^<(ul|ol|table)\b/i.test(trimmed)) return trimmed;
   if (/^<li\b/i.test(trimmed)) return `<ul>${trimmed}</ul>`;
   return `<ul><li>${trimmed}</li></ul>`;
 }
 
 function extractKeyFeaturesHeading(html: string): string {
-  const match = html.match(/<(h[1-6])\b[^>]*>\s*key features\s*<\/\1>/i);
+  const match = html.match(/<(h[1-6])\b[^>]*>\s*(?:key features|details &(?:amp;|) testing notes)\s*<\/\1>/i);
   return match ? match[0].trim() : '';
 }
+
+const DETAILS_HEADING_HTML = '<h3>Details &amp; Testing Notes</h3>';
 
 function buildStructuredBodyHtml(
   descriptionHtml: string,
   keyFeaturesHtml: string,
   testingNotesHtml = '',
-  keyFeaturesHeading = '',
 ): string {
   const parts: string[] = [];
 
@@ -222,9 +220,7 @@ function buildStructuredBodyHtml(
   }
 
   if (keyFeaturesHtml) {
-    if (keyFeaturesHeading) {
-      parts.push(keyFeaturesHeading);
-    }
+    parts.push(DETAILS_HEADING_HTML);
     parts.push(keyFeaturesHtml);
   }
 
@@ -246,16 +242,23 @@ export function buildShopifyBodyHtml(description: string, keyFeaturesRaw: string
   }
 
   if (!hasTemplateTokens(baseTemplate)) {
-    const keyFeaturesHeading = keyFeaturesHtml ? extractKeyFeaturesHeading(baseTemplate) : '';
-    return buildStructuredBodyHtml(descriptionHtml, keyFeaturesHtml, testingNotesHtml, keyFeaturesHeading);
+    return buildStructuredBodyHtml(descriptionHtml, keyFeaturesHtml, testingNotesHtml);
   }
 
   const includesTestingNotesToken = /\{\{\s*body_testing_notes\s*\}\}/i.test(baseTemplate);
-  const tokenResolved = baseTemplate
+  const normalizedHeadingTemplate = baseTemplate.replace(
+    /<(h[1-6])\b[^>]*>\s*(?:key features|details &(?:amp;|) testing notes)\s*<\/\1>/gi,
+    DETAILS_HEADING_HTML,
+  );
+  const hasDetailsHeading = Boolean(extractKeyFeaturesHeading(normalizedHeadingTemplate));
+  const keyFeaturesSectionHtml = keyFeaturesHtml
+    ? `${hasDetailsHeading ? '' : `${DETAILS_HEADING_HTML}\n`}${keyFeaturesHtml}`
+    : '';
+  const tokenResolved = normalizedHeadingTemplate
     .replace(/<p\b[^>]*>\s*\{\{\s*body_description\s*\}\}\s*<\/p>/gi, descriptionHtml)
-    .replace(/<p\b[^>]*>\s*\{\{\s*body_key_features\s*\}\}\s*<\/p>/gi, keyFeaturesHtml)
+    .replace(/<p\b[^>]*>\s*\{\{\s*body_key_features\s*\}\}\s*<\/p>/gi, keyFeaturesSectionHtml)
     .replace(/\{\{\s*body_description\s*\}\}/gi, descriptionHtml)
-    .replace(/\{\{\s*body_key_features\s*\}\}/gi, keyFeaturesHtml)
+    .replace(/\{\{\s*body_key_features\s*\}\}/gi, keyFeaturesSectionHtml)
     .replace(/\{\{\s*body_testing_notes\s*\}\}/gi, testingNotesHtml)
     .replace(/\{\{\s*[a-z0-9_]+\s*\}\}/gi, '')
     .trim();

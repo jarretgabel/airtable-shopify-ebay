@@ -271,7 +271,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       ]),
     });
 
-    expect(product.body_html).toBe('<p>Updated description from form.</p><ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>');
+    expect(product.body_html).toBe('<p>Updated description from form.</p><h3>Details &amp; Testing Notes</h3>\n<table><tbody><tr><th scope="row">Condition</th><td>Excellent</td></tr><tr><th scope="row">Includes</th><td>Manual, remote</td></tr></tbody></table>');
   });
 
   it('uses the dedicated body html template when one is provided', () => {
@@ -285,7 +285,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       ]),
     });
 
-    expect(product.body_html).toBe('<p>Updated description from form.</p>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>');
+    expect(product.body_html).toBe('<p>Updated description from form.</p>\n<h3>Details &amp; Testing Notes</h3>\n<table><tbody><tr><th scope="row">Condition</th><td>Excellent</td></tr><tr><th scope="row">Includes</th><td>Manual, remote</td></tr></tbody></table>');
   });
 
   it('strips dir and role attributes and unwraps spans from Airtable body html templates', () => {
@@ -299,7 +299,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       ]),
     });
 
-    expect(product.body_html).toBe('<p>Updated description from form.</p>\n<h3>Key Features</h3>\n<ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Manual, remote</li></ul>');
+    expect(product.body_html).toBe('<p>Updated description from form.</p>\n<h3>Details &amp; Testing Notes</h3>\n<table><tbody><tr><th scope="row">Condition</th><td>Excellent</td></tr><tr><th scope="row">Includes</th><td>Manual, remote</td></tr></tbody></table>');
   });
 
   it('wraps multi-paragraph descriptions in separate p tags before the key features heading', () => {
@@ -312,7 +312,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       ]),
     });
 
-    expect(product.body_html).toBe('<p>First paragraph.</p>\n<p>Second paragraph.</p>\n<h3>Key Features</h3>\n<ul><li><strong>Condition:</strong> Excellent</li></ul>');
+    expect(product.body_html).toBe('<p>First paragraph.</p>\n<p>Second paragraph.</p>\n<h3>Details &amp; Testing Notes</h3>\n<table><tbody><tr><th scope="row">Condition</th><td>Excellent</td></tr></tbody></table>');
   });
 
   it('uses br when description is empty and does not leak old Airtable copy or features', () => {
@@ -333,7 +333,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       'Key Features': 'Key,Value\nCondition,Excellent\nIncludes,"Dust cover, headshell, power cable"\nFinish,Silver',
     });
 
-    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p><ul><li><strong>Condition:</strong> Excellent</li><li><strong>Includes:</strong> Dust cover, headshell, power cable</li><li><strong>Finish:</strong> Silver</li></ul>');
+    expect(product.body_html).toBe('<p>Pulled from Airtable description field.</p><h3>Details &amp; Testing Notes</h3>\n<table><tbody><tr><th scope="row">Condition</th><td>Excellent</td></tr><tr><th scope="row">Includes</th><td>Dust cover, headshell, power cable</td></tr><tr><th scope="row">Finish</th><td>Silver</td></tr></tbody></table>');
   });
 
   it('lets manual auto-mapped key feature rows override listing-derived Shopify values', () => {
@@ -360,9 +360,9 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     });
 
     expect(product.body_html).toContain('<p>Pulled from Airtable description field.</p>');
-    expect(product.body_html).toContain('<li><strong>Make:</strong> Wrong Make</li>');
-    expect(product.body_html).toContain('<li><strong>Service History:</strong> Recapped in 2024</li>');
-    expect(product.body_html).toContain('<p><strong>Testing Notes:</strong> Passed bench test.<br />Phono stage is quiet.</p>');
+    expect(product.body_html).not.toContain('<th scope="row">Make</th>');
+    expect(product.body_html).toContain('<tr><th scope="row">Service History</th><td>Recapped in 2024</td></tr>');
+    expect(product.body_html).toContain('<tr><th scope="row">Testing Notes</th><td>Passed bench test.\nPhono stage is quiet.</td></tr>');
   });
 
   it('auto-adds shipping weight and dimensions into Shopify body html key features', () => {
@@ -374,8 +374,34 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       'Key Features': 'Key,Value\nFinish,Silver',
     });
 
-    expect(product.body_html).toContain('<li><strong>Shipping Weight:</strong> 42 lbs</li>');
-    expect(product.body_html).toContain('<li><strong>Shipping Dimensions:</strong> 22x19x11</li>');
+    expect(product.body_html).toContain('<tr><th scope="row">Shipping Weight</th><td>42 lbs</td></tr>');
+    expect(product.body_html).toContain('<tr><th scope="row">Shipping Dimensions</th><td>22x19x11</td></tr>');
+  });
+
+  it('orders the details table and omits inapplicable or high-rating rows', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'MIT Terminator 4 Speaker Cables',
+      Description: 'Eight-foot bi-wire speaker cable pair.',
+      'Component Type': 'Speaker Cables',
+      'Audiogon Rating': '8/10: Very Good',
+      'Cosmetic Notes': 'Minor handling marks',
+      'Testing Notes': 'Functions as intended and sounds great.',
+      'Serial Number': '',
+      'Original Box': 'Yes',
+      Manual: 'No',
+      'Power Cable': 'Yes',
+      'Additional Items': 'Protective sleeves',
+      'Shipping Method': 'UPS Ground',
+      'Shipping Weight': '6 lbs',
+      'Shipping Dims': '20x18x10',
+      'Key Features': 'Termination,Spade to banana\nLength,8 ft',
+    });
+
+    expect(product.body_html).toContain('<h3>Details &amp; Testing Notes</h3>');
+    expect(product.body_html).not.toContain('Cosmetic Notes');
+    expect(product.body_html).not.toContain('<th scope="row">Power Cable</th>');
+    expect(product.body_html).toMatch(/Audiogon Rating[\s\S]*Testing Notes[\s\S]*Serial Number[\s\S]*Termination[\s\S]*Length[\s\S]*Original Box[\s\S]*Original Manual[\s\S]*Additional Items[\s\S]*Shipping Method[\s\S]*Shipping Weight[\s\S]*Shipping Dimensions/);
+    expect(product.body_html).toContain('<tr><th scope="row">Serial Number</th><td></td></tr>');
   });
 
   it('sends only the last segment of the Type breadcrumb as Shopify product_type', () => {

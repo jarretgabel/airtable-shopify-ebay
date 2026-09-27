@@ -51,7 +51,7 @@ export function useListingApprovalRecordLifecycle({
   titleFieldName,
   describeShopifyCreateError,
 }: UseListingApprovalRecordLifecycleParams) {
-  const hydratedRecordIdRef = useRef<string | null>(null);
+  const hydratedRecordRef = useRef<{ id: string; hasImageDetails: boolean } | null>(null);
 
   useEffect(() => {
     resetInlineActionNotices();
@@ -60,7 +60,7 @@ export function useListingApprovalRecordLifecycle({
 
   useEffect(() => {
     if (!selectedRecordId) {
-      hydratedRecordIdRef.current = null;
+      hydratedRecordRef.current = null;
     }
   }, [selectedRecordId]);
 
@@ -68,8 +68,9 @@ export function useListingApprovalRecordLifecycle({
 
   useEffect(() => {
     if (!hasTableReference) return;
+    if (selectedRecordId) return;
     void loadRecords(tableReference, tableName, false);
-  }, [hasTableReference, loadRecords, tableName, tableReference]);
+  }, [hasTableReference, loadRecords, selectedRecordId, tableName, tableReference]);
 
   useEffect(() => {
     if (!selectedRecordId) return;
@@ -79,7 +80,11 @@ export function useListingApprovalRecordLifecycle({
 
   useEffect(() => {
     if (!selectedRecord) return;
-    if (hydratedRecordIdRef.current === selectedRecord.id) return;
+    const hasImageDetails = Array.isArray(selectedRecord.fields.Images)
+      ? selectedRecord.fields.Images.length > 0
+      : Boolean(String(selectedRecord.fields['Workflow Image Metadata JSON'] ?? '').trim());
+    const hydratedRecord = hydratedRecordRef.current;
+    if (hydratedRecord?.id === selectedRecord.id && (hydratedRecord.hasImageDetails || !hasImageDetails)) return;
 
     let cancelled = false;
 
@@ -103,7 +108,12 @@ export function useListingApprovalRecordLifecycle({
         ])).sort((left, right) => left.localeCompare(right));
 
         hydrateForm(mergedRecord, hydrateFieldNames, approvedFieldName);
-        hydratedRecordIdRef.current = selectedRecord.id;
+        hydratedRecordRef.current = {
+          id: selectedRecord.id,
+          hasImageDetails: Array.isArray(mergedRecord.fields.Images)
+            ? mergedRecord.fields.Images.length > 0
+            : Boolean(String(mergedRecord.fields['Workflow Image Metadata JSON'] ?? '').trim()),
+        };
       } catch {
         if (cancelled) return;
         const hydrateFieldNames = Array.from(new Set([
@@ -112,7 +122,7 @@ export function useListingApprovalRecordLifecycle({
         ])).sort((left, right) => left.localeCompare(right));
 
         hydrateForm(selectedRecord, hydrateFieldNames, approvedFieldName);
-        hydratedRecordIdRef.current = selectedRecord.id;
+        hydratedRecordRef.current = { id: selectedRecord.id, hasImageDetails };
       }
     };
 

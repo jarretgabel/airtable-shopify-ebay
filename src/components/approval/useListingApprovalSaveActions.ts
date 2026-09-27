@@ -37,7 +37,6 @@ export function useListingApprovalSaveActions({
   actualFieldNames,
   tableReference,
   tableName,
-  formValues,
   setFormValue,
   hydrateForm,
   saveRecord,
@@ -110,12 +109,13 @@ export function useListingApprovalSaveActions({
     });
 
     const runSave = async () => {
+      const latestFormValues = useApprovalStore.getState().formValues;
       if (approvalChannel === 'ebay' || approvalChannel === 'combined') {
         await saveEbayApprovalSupplementalFields({
           selectedRecord,
           tableReference,
           tableName,
-          formValues,
+          formValues: latestFormValues,
           setFormValue,
           priceFieldName,
           bodyHtmlPreview,

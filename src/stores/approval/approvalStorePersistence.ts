@@ -79,6 +79,8 @@ function isCollectionLikeFieldName(fieldName: string): boolean {
 function isCategoryLikeFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'categories'
+    || normalized === 'ebay categories'
+    || normalized === 'e bay categories'
     || normalized === 'category'
     || normalized === 'categories airtable'
     || normalized === 'category airtable'
@@ -798,7 +800,9 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           }
 
           const fieldKind = fieldKinds[writeFieldName] ?? 'text';
-          const attachmentFieldValue = coerceAttachmentFieldValue(rawValue, selectedRecord.fields[writeFieldName]);
+          const attachmentFieldValue = isCategoryLikeFieldName(writeFieldName)
+            ? undefined
+            : coerceAttachmentFieldValue(rawValue, selectedRecord.fields[writeFieldName]);
           const formFieldValue = fromFormValueForField(writeFieldName, rawValue, fieldKind);
           const numericPriceValue = writeFieldName === 'Ebay Price'
             ? toNumericRetryValues(rawValue)[0]
@@ -959,12 +963,10 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
               throw new Error(`Failed to save category fields. ${categorySkipMessages.join(' | ')}`);
             }
 
-            if (updatedFields.length === 0) {
-              const skippedMessages = skippedFields
-                .map((field) => `${field.name}: ${field.reason ?? 'Airtable rejected the value'}`)
-                .join(' | ');
-              throw new Error(`Failed to save fields. ${skippedMessages}`);
-            }
+            const skippedMessages = skippedFields
+              .map((field) => `${field.name}: ${field.reason ?? 'Airtable rejected the value'}`)
+              .join(' | ');
+            throw new Error(`Failed to save fields. ${skippedMessages}`);
           }
 
           if (updatedFields.length === 0 && skippedFields.length === 0) {
@@ -1000,6 +1002,7 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
         }
 
         await get().loadRecords(tableReference, tableName, true);
+        set({ initialFormValues: { ...get().formValues } });
       } else if (mode === 'full' && droppedChangedFieldNames.length > 0) {
         throw new Error(`Failed to save fields. ${droppedChangedFieldNames.join(', ')} are not writable in the current Airtable source.`);
       }

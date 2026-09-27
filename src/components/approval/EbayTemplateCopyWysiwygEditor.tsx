@@ -4,8 +4,13 @@ import {
   detailDisclosureClass,
   detailDisclosureSummaryClass,
 } from '@/components/tabs/uiClasses';
+import {
+  deleteEbayTemplateCopy,
+  loadEbayTemplateCopyLibrary,
+  saveEbayTemplateCopy,
+} from '@/services/ebayTemplateCopyLibrary';
 
-interface EbayTemplateCopyWysiwygEditorProps {
+export interface EbayTemplateCopyWysiwygEditorProps {
   fieldName: string;
   value: string;
   setFormValue: (fieldName: string, value: string) => void;
@@ -13,6 +18,7 @@ interface EbayTemplateCopyWysiwygEditorProps {
   disabled?: boolean;
   label?: string;
   helperText?: string;
+  enableTemplateLibrary?: boolean;
 }
 
 const toolbarButtonClass = 'inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--line)] text-[var(--ink)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50';
@@ -237,6 +243,7 @@ export function EbayTemplateCopyWysiwygEditor({
   disabled = false,
   label = 'Advanced: eBay Template Copy',
   helperText = 'WYSIWYG editor for the full eBay Body HTML. Rich edits apply directly to the complete template markup.',
+  enableTemplateLibrary = false,
 }: EbayTemplateCopyWysiwygEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -246,6 +253,9 @@ export function EbayTemplateCopyWysiwygEditor({
   const [sourceMode, setSourceMode] = useState(false);
   const [iframeHeight, setIframeHeight] = useState(560);
   const [selectedTextColor, setSelectedTextColor] = useState('#cc0000');
+  const [templateEntries, setTemplateEntries] = useState(() => enableTemplateLibrary ? loadEbayTemplateCopyLibrary() : []);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [templateName, setTemplateName] = useState('');
 
   const editorHtml = value.trim() || '<p><br></p>';
   const isFullHtmlDocument = /^\s*(<!doctype\s+html|<html\b)/i.test(editorHtml);
@@ -440,6 +450,68 @@ export function EbayTemplateCopyWysiwygEditor({
       <summary className={detailDisclosureSummaryClass}>{label}</summary>
       <div className={`${detailDisclosureBodyClass} flex flex-col gap-3`}>
         <p className="m-0 text-[0.74rem] leading-5 text-[var(--muted)]">{helperText}</p>
+
+        {enableTemplateLibrary ? (
+          <div className="grid grid-cols-1 gap-2 border-b border-[var(--line)] pb-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto]">
+            <select
+              className="min-h-9 rounded-md border border-[var(--line)] bg-[var(--panel)] px-2 text-sm text-[var(--ink)]"
+              value={selectedTemplateId}
+              onChange={(event) => setSelectedTemplateId(event.target.value)}
+              disabled={disabled}
+              aria-label="Saved eBay copy template"
+            >
+              <option value="">Select saved copy</option>
+              {templateEntries.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+            </select>
+            <button
+              type="button"
+              className="min-h-9 rounded-md border border-[var(--line)] px-3 text-sm font-semibold text-[var(--ink)] disabled:opacity-50"
+              disabled={disabled || !selectedTemplateId}
+              onClick={() => {
+                const selected = templateEntries.find((entry) => entry.id === selectedTemplateId);
+                if (!selected) return;
+                setTemplateName(selected.name);
+                commitEditorHtml(selected.html);
+              }}
+            >
+              Load
+            </button>
+            <input
+              className="min-h-9 rounded-md border border-[var(--line)] bg-[var(--panel)] px-2 text-sm text-[var(--ink)]"
+              value={templateName}
+              onChange={(event) => setTemplateName(event.target.value)}
+              placeholder="Template name"
+              disabled={disabled}
+              aria-label="eBay copy template name"
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="min-h-9 rounded-md bg-[var(--accent)] px-3 text-sm font-semibold text-white disabled:opacity-50"
+                disabled={disabled || !templateName.trim() || !value.trim()}
+                onClick={() => {
+                  const next = saveEbayTemplateCopy(templateName, value);
+                  setTemplateEntries(next);
+                  setSelectedTemplateId(next.find((entry) => entry.name.toLowerCase() === templateName.trim().toLowerCase())?.id ?? '');
+                }}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                className="min-h-9 rounded-md border border-rose-400 px-3 text-sm font-semibold text-rose-500 disabled:opacity-50"
+                disabled={disabled || !selectedTemplateId}
+                onClick={() => {
+                  setTemplateEntries(deleteEbayTemplateCopy(selectedTemplateId));
+                  setSelectedTemplateId('');
+                  setTemplateName('');
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" className={toolbarButtonClass} title="Bold" aria-label="Bold" onMouseDown={preventToolbarMouseDown} onClick={() => runToolbarCommand('bold')} disabled={disabled || sourceMode}><IconBold /></button>

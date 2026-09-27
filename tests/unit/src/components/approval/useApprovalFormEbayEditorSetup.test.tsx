@@ -46,7 +46,7 @@ describe('useApprovalFormEbayEditorSetup', () => {
     expect(result.current.ebayAttributesSyncFieldNames).toEqual([]);
   });
 
-  it('syncs the normalized template id through the derived setter instead of user-edit state', () => {
+  it('does not inject a selected template id into a blank persisted field', () => {
     const setFormValue = vi.fn();
     const setDerivedFormValue = vi.fn();
 
@@ -68,7 +68,7 @@ describe('useApprovalFormEbayEditorSetup', () => {
       isEbayListingForm: true,
     }));
 
-    expect(setDerivedFormValue).toHaveBeenCalledWith('eBay Body HTML Template', 'impact-luxe');
+    expect(setDerivedFormValue).not.toHaveBeenCalled();
     expect(setFormValue).not.toHaveBeenCalled();
   });
 });
