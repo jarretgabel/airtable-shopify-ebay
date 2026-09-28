@@ -1,6 +1,10 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useApprovalFormEbayEditorSetup } from '@/components/approval/useApprovalFormEbayEditorSetup';
+import {
+  SYNTHETIC_EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD,
+  SYNTHETIC_EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD,
+} from '@/components/approval/approvalFormFieldsEbayHelpers';
 
 vi.mock('@/services/app-api/ebay', () => ({
   getEbayPackageTypes: vi.fn(async () => []),
@@ -70,5 +74,31 @@ describe('useApprovalFormEbayEditorSetup', () => {
 
     expect(setDerivedFormValue).not.toHaveBeenCalled();
     expect(setFormValue).not.toHaveBeenCalled();
+  });
+
+  it('does not resolve synthetic flat-fee form values as writable Airtable fields', () => {
+    const { result } = renderHook(() => useApprovalFormEbayEditorSetup({
+      recordId: 'rec-ebay-shipping',
+      approvalChannel: 'ebay',
+      isCombinedApproval: false,
+      allFieldNames: ['Ebay Domestic Shipping Fees', 'Ebay International Shipping Fees'],
+      writableFieldNames: ['Ebay Domestic Shipping Fees', 'Ebay International Shipping Fees'],
+      formValues: {
+        'Ebay Domestic Shipping Fees': 'Calculated',
+        'Ebay International Shipping Fees': 'Flat',
+        [SYNTHETIC_EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD]: '',
+        [SYNTHETIC_EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD]: '',
+      },
+      originalFieldValues: {},
+      setFormValue: vi.fn(),
+      setDerivedFormValue: vi.fn(),
+      selectedEbayTemplateId: undefined,
+      onEbayTemplateIdChange: undefined,
+      ebayMarketplaceId: 'EBAY_US',
+      isEbayListingForm: true,
+    }));
+
+    expect(result.current.ebayDomesticShippingFlatFeeFieldName).toBe(SYNTHETIC_EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD);
+    expect(result.current.ebayInternationalShippingFlatFeeFieldName).toBe(SYNTHETIC_EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD);
   });
 });

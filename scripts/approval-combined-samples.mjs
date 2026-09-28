@@ -102,6 +102,42 @@ async function fetchAllListingRecords(apiKey) {
   return records;
 }
 
+async function fetchListingFieldNames(apiKey) {
+  const url = `https://api.airtable.com/v0/meta/bases/${encodeURIComponent(APPROVED_BASE_ID)}/tables`;
+  const payload = await fetchJson(url, {
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+  });
+  const table = (payload.tables || []).find((candidate) => candidate.id === APPROVED_TABLE_ID);
+  if (!table) {
+    throw new Error(`Unable to find Airtable table ${APPROVED_TABLE_ID}.`);
+  }
+
+  return new Set((table.fields || []).map((field) => field.name));
+}
+
+function filterRecordsToKnownFields(records, fieldNames) {
+  const skippedFieldNames = new Set();
+  const filteredRecords = records.map((record) => ({
+    ...record,
+    fields: Object.fromEntries(
+      Object.entries(record.fields).filter(([fieldName]) => {
+        if (fieldNames.has(fieldName)) {
+          return true;
+        }
+        skippedFieldNames.add(fieldName);
+        return false;
+      }),
+    ),
+  }));
+
+  return {
+    records: filteredRecords,
+    skippedFieldNames: Array.from(skippedFieldNames).sort(),
+  };
+}
+
 function chunk(items, size) {
   const chunks = [];
   for (let index = 0; index < items.length; index += size) {
@@ -672,7 +708,11 @@ async function runSeed(confirmToken, replaceExisting = false) {
     await deleteRecords(apiKey, existingSampleRecords.map((record) => record.id));
   }
 
-  const sampleRecords = buildSampleRecords();
+  const fieldNames = await fetchListingFieldNames(apiKey);
+  const {
+    records: sampleRecords,
+    skippedFieldNames,
+  } = filterRecordsToKnownFields(buildSampleRecords(), fieldNames);
   const createdRecords = await createRecords(apiKey, sampleRecords);
   const driveBackfill = await backfillCombinedListingSampleDriveImages({
     apiKey,
@@ -689,11 +729,15 @@ async function runSeed(confirmToken, replaceExisting = false) {
     createdCount: createdRecords.length,
     createdRecordIds: createdRecords.map((record) => record.id),
     createdTitles: createdRecords.map((record) => record.fields['Item Title']),
+    skippedFieldNames,
     driveBackfillUpdatedCount: driveBackfill.updatedCount,
     driveBackfillRunDir: driveBackfill.runDir,
   });
 
   console.log(`Created ${createdRecords.length} sample combined listing row(s).`);
+  if (skippedFieldNames.length > 0) {
+    console.log(`Skipped ${skippedFieldNames.length} field(s) absent from the live schema: ${skippedFieldNames.join(', ')}`);
+  }
   console.log(`Backfilled ${driveBackfill.updatedCount} sample combined listing row(s) with Drive-backed images.`);
   console.log(`Artifacts saved in ${runDir}`);
 }

@@ -849,6 +849,41 @@ describe('approvalStorePersistence', () => {
     expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
   });
 
+  it('does not clear an eBay price from a blank synthetic Shopify price field', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Ebay Price': '1301.01',
+        'Shopify REST Variant 1 Price': '',
+      },
+      fieldKinds: {
+        'Ebay Price': 'number',
+        'Shopify REST Variant 1 Price': 'number',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ 'Ebay Price': 1234.56 }),
+      'base/table',
+      'Approval',
+      ['Ebay Price'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    const attemptedPayloads = updateRecordFromResolvedSourceMock.mock.calls.map((call) => call[3] as Record<string, unknown>);
+    expect(attemptedPayloads).toContainEqual({ 'Ebay Price': 1301.01 });
+    expect(attemptedPayloads).not.toContainEqual({ 'Ebay Price': null });
+  });
+
   it('prefers eBay price candidates before generic Price for missing-schema eBay aliases', async () => {
     const setMock = vi.fn();
     const loadRecordsMock = vi.fn(async () => {});

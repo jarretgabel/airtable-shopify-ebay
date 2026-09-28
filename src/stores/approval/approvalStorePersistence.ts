@@ -230,20 +230,6 @@ function getPriceFieldRetryNames(fieldName: string): string[] {
           'Shopify Variant 1 Price',
           'Shopify Price',
           'Price',
-          'Buy It Now Price',
-          'eBay Offer Price Value',
-          'eBay Offer Auction Start Price Value',
-          'ebay_offer_price_value',
-          'ebay_offer_auctionStartPrice_value',
-          'ebay_offer_pricingSummary_price_value',
-          'ebay_offer_pricingSummary_auctionStartPrice_value',
-          'eBay Price',
-          'Ebay Price',
-          'Buy It Now/Starting Price',
-          'Buy It Now / Starting Price',
-          'Buy It Now/Starting Bid',
-          'Buy It Now USD',
-          'Starting Bid USD',
         ]
       : candidates;
 

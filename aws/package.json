@@ -2,6 +2,9 @@
   "name": "airtable-shopify-ebay-aws",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "aws:whoami": "PATH=$(pwd)/node_modules/.bin:$HOME/Library/Python/3.9/bin:$PATH aws sts get-caller-identity",
     "build": "PATH=$(pwd)/node_modules/.bin:$HOME/Library/Python/3.9/bin:$PATH sam build --template-file template.yaml",
@@ -27,7 +30,7 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.147",
-    "@types/node": "^22.15.17",
+    "@types/node": "^24.19.0",
     "esbuild": "^0.25.11",
     "typescript": "^5.3.0"
   }

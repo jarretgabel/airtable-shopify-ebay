@@ -94,7 +94,7 @@ export function useListingApprovalFieldNames({
 
       const preferredKeyFeaturesField = existingNames.find((name) =>
         SHOPIFY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? SHOPIFY_BODY_KEY_FEATURES_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      );
       if (preferredKeyFeaturesField) names.add(preferredKeyFeaturesField);
     }
 
@@ -146,12 +146,12 @@ export function useListingApprovalFieldNames({
 
       const preferredDomesticShippingFlatFeeField = existingNames.find((name) =>
         EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      );
       if (preferredDomesticShippingFlatFeeField) names.add(preferredDomesticShippingFlatFeeField);
 
       const preferredInternationalShippingFlatFeeField = existingNames.find((name) =>
         EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      ) ?? EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      );
       if (preferredInternationalShippingFlatFeeField) names.add(preferredInternationalShippingFlatFeeField);
 
       const preferredPrimaryCategoryField = existingNames.find((name) =>

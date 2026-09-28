@@ -131,7 +131,7 @@ export function useApprovalFormEbayEditorSetup({
     ...allFieldNames,
     ...writableFieldNames,
     ...Object.keys(formValues),
-  ]));
+  ])).filter((fieldName) => !fieldName.startsWith('__'));
   const ebayDomesticShippingFeesFieldName = pickPreferredField(
     ebayShippingFeeFieldCandidates.filter((fieldName) => isEbayShippingTypeField(fieldName)),
     ['eBay Domestic Shipping Fees', 'Domestic Shipping Fees', 'ebay_domestic_shipping_fees', 'domestic_shipping_fees'],

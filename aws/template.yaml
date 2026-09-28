@@ -168,7 +168,7 @@ Conditions:
 
 Globals:
   Function:
-    Runtime: nodejs20.x
+    Runtime: nodejs24.x
     Timeout: 15
     MemorySize: 256
     Architectures:
@@ -422,6 +422,7 @@ Resources:
     Properties:
       CodeUri: .
       Handler: src/handlers/approval/normalize.handler
+      MemorySize: 512
       Events:
         ApiEvent:
           Type: HttpApi

@@ -51,6 +51,10 @@ function getTrimmedString(value) {
     return value.trim();
   }
 
+  if (value && typeof value === 'object' && typeof value.text === 'string') {
+    return value.text.trim();
+  }
+
   if (Array.isArray(value)) {
     return value
       .filter((entry) => typeof entry === 'string')
@@ -218,6 +222,7 @@ async function archiveSampleImages(record) {
     const processedFile = renderSampleJpegBase64(descriptor, 'processed');
 
     const archive = await archiveWorkflowImagesToGoogleDrive({
+      folderKey: record.id,
       sku: descriptor.sku,
       stage: 'photos',
       original: {
