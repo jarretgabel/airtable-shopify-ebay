@@ -1,12 +1,17 @@
-import test from 'node:test';
+import test, { beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { HttpError } from '../../../../../../aws/src/shared/errors.js';
 import {
   airtableSourceDependencies,
+  clearAirtableSourceCaches,
   getConfiguredRecords,
   getConfiguredRecordsSummary,
   uploadConfiguredAttachment,
 } from '../../../../../../aws/src/providers/airtable/sources.js';
+
+beforeEach(() => {
+  clearAirtableSourceCaches();
+});
 
 function buildRecord(fields: Record<string, unknown>) {
   return {
@@ -14,6 +19,14 @@ function buildRecord(fields: Record<string, unknown>) {
     createdTime: new Date().toISOString(),
     fields,
   };
+}
+
+function restoreEnv(name: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[name];
+  } else {
+    process.env[name] = value;
+  }
 }
 
 test('getConfiguredRecordsSummary counts eBay approvals using alternate approved field names', async () => {
@@ -65,7 +78,7 @@ test('uploadConfiguredAttachment supports used-gear-workflow sources', async () 
   };
 
   try {
-    await uploadConfiguredAttachment('used-gear-workflow', 'recWorkflow1', 'fldMXp0EaUHGglU8M', {
+    await uploadConfiguredAttachment('used-gear-workflow', 'recWorkflow1', 'fld1zIzmZEciQECah', {
       filename: 'photo.jpg',
       contentType: 'image/jpeg',
       file: 'abc123',
@@ -74,13 +87,13 @@ test('uploadConfiguredAttachment supports used-gear-workflow sources', async () 
     assert.deepEqual(calls, [{
       baseId: 'appWorkflow',
       recordId: 'recWorkflow1',
-      fieldId: 'fldMXp0EaUHGglU8M',
+      fieldId: 'fld1zIzmZEciQECah',
     }]);
   } finally {
     airtableSourceDependencies.uploadAttachment = original;
-    process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF = originalWorkflowReference;
-    process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME = originalWorkflowTableName;
-    process.env.AIRTABLE_BASE_ID = originalBaseId;
+    restoreEnv('AIRTABLE_COMBINED_LISTINGS_TABLE_REF', originalWorkflowReference);
+    restoreEnv('AIRTABLE_COMBINED_LISTINGS_TABLE_NAME', originalWorkflowTableName);
+    restoreEnv('AIRTABLE_BASE_ID', originalBaseId);
   }
 });
 
@@ -110,9 +123,9 @@ test('getConfiguredRecords resolves inventory-directory through the combined lis
     }]);
   } finally {
     airtableSourceDependencies.getRecords = original;
-    process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF = originalInventoryReference;
-    process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME = originalInventoryTableName;
-    process.env.AIRTABLE_BASE_ID = originalBaseId;
+    restoreEnv('AIRTABLE_COMBINED_LISTINGS_TABLE_REF', originalInventoryReference);
+    restoreEnv('AIRTABLE_COMBINED_LISTINGS_TABLE_NAME', originalInventoryTableName);
+    restoreEnv('AIRTABLE_BASE_ID', originalBaseId);
   }
 });
 

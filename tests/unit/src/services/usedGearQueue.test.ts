@@ -68,6 +68,14 @@ describe('usedGearQueue', () => {
     mockGetConfiguredRecord.mockReset();
     mockGetConfiguredRecords.mockReset();
     mockUpdateConfiguredRecord.mockReset();
+    mockGetConfiguredRecord.mockImplementation(async (source, recordId) => {
+      const records = await mockGetConfiguredRecords(source);
+      const record = records.find((candidate) => candidate.id === recordId);
+      if (!record) {
+        throw new Error('Record not found');
+      }
+      return record;
+    });
   });
 
   it('splits a confirmed grand total evenly with cent-safe remainder handling', () => {
@@ -274,57 +282,28 @@ describe('usedGearQueue', () => {
     expect(fields).not.toContain('Shipment Follow-Through Updated At');
   });
 
-  it('requests optional shipment fields when loading a single operational record', async () => {
-    mockGetConfiguredRecords
-      .mockResolvedValueOnce([
-        {
-          id: 'recSold',
-          createdTime: 'later',
-          fields: { 'Workflow Status': 'Sold - Ready to Ship', SKU: 'S-1' },
-        },
-      ])
-      .mockResolvedValueOnce([
-        {
-          id: 'recSold',
-          createdTime: 'later',
-          fields: {
-            'Shipment Follow-Through Notes': 'Carrier booking pending.',
-            'Shipment Follow-Through Updated At': '2026-05-13T00:00:00.000Z',
-          },
-        },
-      ]);
+  it('preserves optional shipment fields returned with a single operational record', async () => {
+    mockGetConfiguredRecord.mockResolvedValue({
+      id: 'recSold',
+      createdTime: 'later',
+      fields: {
+        'Workflow Status': 'Sold - Ready to Ship',
+        SKU: 'S-1',
+        'Shipment Follow-Through Notes': 'Carrier booking pending.',
+        'Shipment Follow-Through Updated At': '2026-05-13T00:00:00.000Z',
+      },
+    });
 
     const record = await loadUsedGearOperationalRecord('recSold');
 
     expect(record.fields['Shipment Follow-Through Notes']).toBe('Carrier booking pending.');
-    expect(mockGetConfiguredRecords).toHaveBeenCalledTimes(2);
-    expect(mockGetConfiguredRecords).toHaveBeenNthCalledWith(
-      2,
-      'used-gear-workflow',
-      expect.objectContaining({
-        fields: [
-          'Shipment Follow-Through Notes',
-          'Shipment Follow-Through Updated At',
-        ],
-      }),
-    );
+    expect(mockGetConfiguredRecords).not.toHaveBeenCalled();
   });
 
-  it('falls back to required operational fields when optional shipment fields are unavailable for detail reads', async () => {
-    mockGetConfiguredRecords
-      .mockResolvedValueOnce([
-        {
-          id: 'recSold',
-          createdTime: 'later',
-          fields: { 'Workflow Status': 'Sold - Ready to Ship', SKU: 'S-1' },
-        },
-      ])
-      .mockRejectedValueOnce(new Error('Failed to load Airtable records for used-gear-workflow.'));
+  it('propagates single operational record read failures', async () => {
+    mockGetConfiguredRecord.mockRejectedValue(new Error('Failed to load Airtable record for used-gear-workflow.'));
 
-    const record = await loadUsedGearOperationalRecord('recSold');
-
-    expect(record.id).toBe('recSold');
-    expect(mockGetConfiguredRecords).toHaveBeenCalledTimes(2);
+    await expect(loadUsedGearOperationalRecord('recSold')).rejects.toThrow('Failed to load Airtable record for used-gear-workflow.');
   });
 
   it('summarizes post-publish operational rows by lifecycle bucket', () => {
@@ -716,7 +695,7 @@ describe('usedGearQueue', () => {
         'Arrival Date': '2026-05-12',
         SKU: 'SKU-123',
       },
-      { typecast: true },
+      { typecast: true, timeoutMs: 45000 },
     );
   });
 
@@ -823,78 +802,29 @@ describe('usedGearQueue', () => {
   });
 
   it('loads a single operational record through the workflow source', async () => {
-    mockGetConfiguredRecords.mockResolvedValue([
-      {
-        id: 'rec1',
-        createdTime: 'now',
-        fields: { 'Workflow Status': 'Pending Review' },
-      },
-    ]);
+    mockGetConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: { 'Workflow Status': 'Pending Review' },
+    });
 
     const record = await loadUsedGearOperationalRecord('rec1');
 
     expect(record.id).toBe('rec1');
+    expect(mockGetConfiguredRecord).toHaveBeenCalledWith('used-gear-workflow', 'rec1');
+    expect(mockGetConfiguredRecords).not.toHaveBeenCalled();
   });
 
-  it('requests the approved workflow field inventory when loading a single operational record', async () => {
-    mockGetConfiguredRecords.mockResolvedValue([
-      {
-        id: 'rec1',
-        createdTime: 'now',
-        fields: { 'Workflow Status': 'Pending Review' },
-      },
-    ]);
+  it('enriches a single operational record with workflow fields', async () => {
+    mockGetConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: { 'Workflow Status': 'Pending Review' },
+    });
 
-    await loadUsedGearOperationalRecord('rec1');
+    const record = await loadUsedGearOperationalRecord('rec1');
 
-    expect(mockGetConfiguredRecords).toHaveBeenCalledWith(
-      'used-gear-workflow',
-      expect.objectContaining({
-        fields: expect.arrayContaining([
-          'Workflow Source',
-          'Pick Up ID',
-          'Pick Up ID',
-          'Workflow Owner',
-          'Workflow Owner Assigned At',
-          'Trash Status',
-          'Accepted By',
-          'Accepted At',
-          'Processing Signed By',
-          'Processing Signed At',
-          'Testing Signed By',
-          'Testing Signed At',
-          'Photography Signed By',
-          'Photography Signed At',
-          'Pre-Listing Reviewed By',
-          'Pre-Listing Reviewed At',
-          'Qualification Notes',
-          'Qualification Complete',
-          'Unqualified Reason',
-          'Customer Cosmetic Notes',
-          'Customer Functional Notes',
-          'Customer Inclusion Notes',
-          'Internal Cosmetic Notes',
-          'Internal Functional Notes',
-          'Internal Inclusion Notes',
-          'Offer Amount',
-          'Paid Amount',
-          'Confirmed Grand Total',
-          'Allocation Mode',
-          'Allocation Notes',
-          'Workflow Status',
-          'Awaiting Pre-Listing Review At',
-          'Approved For Publish At',
-          'Listed At',
-          'Stale Listing At',
-          'Stale Recovery Status',
-          'Stale Recovery Notes',
-          'Stale Recovery Updated At',
-          'Relisted At',
-          'Sold Ready To Ship At',
-          'Shipped At',
-        ]),
-      }),
-    );
+    expect(record.fields['Workflow Status']).toBe('Pending Review');
   });
 
   it('loads grouped operational context for a record with sibling rows', async () => {
@@ -995,7 +925,7 @@ describe('usedGearQueue', () => {
         'Workflow Owner': 'Taylor Reviewer',
         'Workflow Owner Assigned At': expect.any(String),
       }),
-      { typecast: true },
+      { typecast: true, timeoutMs: 45000 },
     );
   });
 
@@ -1015,7 +945,7 @@ describe('usedGearQueue', () => {
         'Workflow Owner': null,
         'Workflow Owner Assigned At': null,
       },
-      { typecast: true },
+      { typecast: true, timeoutMs: 45000 },
     );
   });
 
@@ -1032,14 +962,14 @@ describe('usedGearQueue', () => {
       'used-gear-workflow',
       'rec1',
       expect.objectContaining({ 'Workflow Owner': 'Taylor Reviewer' }),
-      { typecast: true },
+      { typecast: true, timeoutMs: 45000 },
     );
     expect(mockUpdateConfiguredRecord).toHaveBeenNthCalledWith(
       2,
       'used-gear-workflow',
       'rec2',
       expect.objectContaining({ 'Workflow Owner': 'Taylor Reviewer' }),
-      { typecast: true },
+      { typecast: true, timeoutMs: 45000 },
     );
   });
 
@@ -1219,8 +1149,17 @@ describe('usedGearQueue', () => {
         'eBay Published At': null,
         'eBay Offer ID': null,
         'eBay Listing ID': null,
+        'Sold Ready To Ship At': null,
+        'Shipment Follow-Through Notes': null,
+        'Shipped At': null,
+        'Post-Sale Outcome': null,
+        'Post-Sale Notes': null,
+        'Refund Amount': null,
+        'Refund Reason': null,
+        'Return Received At': null,
+        'Restock Disposition': null,
       }),
-      { typecast: true },
+      { typecast: true, timeoutMs: 45000 },
     );
   });
 

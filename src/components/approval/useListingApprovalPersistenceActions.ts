@@ -11,6 +11,7 @@ type PersistenceActionsParams = Pick<UseListingApprovalRecordActionsParams,
   | 'tableName'
   | 'formValues'
   | 'setFormValue'
+  | 'setDerivedFormValue'
   | 'hydrateForm'
   | 'saveRecord'
   | 'bodyHtmlPreview'
@@ -34,6 +35,7 @@ export function useListingApprovalPersistenceActions({
   tableName,
   formValues,
   setFormValue,
+  setDerivedFormValue,
   hydrateForm,
   saveRecord,
   bodyHtmlPreview,
@@ -56,6 +58,7 @@ export function useListingApprovalPersistenceActions({
     tableName,
     formValues,
     setFormValue,
+    setDerivedFormValue,
     hydrateForm,
     saveRecord,
     bodyHtmlPreview,

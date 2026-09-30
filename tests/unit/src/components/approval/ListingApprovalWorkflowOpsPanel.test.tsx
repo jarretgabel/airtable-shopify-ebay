@@ -23,6 +23,9 @@ vi.mock('@/services/usedGearQueue', async () => {
   const actual = await vi.importActual<typeof import('@/services/usedGearQueue')>('@/services/usedGearQueue');
   return {
     ...actual,
+    loadUsedGearOperationalRecord: async (recordId: string) => (
+      await loadUsedGearOperationalRecordContextMock(recordId)
+    ).record,
     loadUsedGearOperationalRecordContext: loadUsedGearOperationalRecordContextMock,
     markWorkflowListingStale: markWorkflowListingStaleMock,
     takeDownWorkflowMarketplaceListingAndMoveBack: takeDownWorkflowMarketplaceListingAndMoveBackMock,

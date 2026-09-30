@@ -157,6 +157,10 @@ Staging should point at the existing Airtable users table/view instead of seedin
 
 For this workspace, the staging users source is the Airtable table at `apprsAm2FOohEmL2u/tblj2Gt9USORo6Vi5/viwQ5UCBYPIwW3HP3`.
 
+### Combined Listings vendor field
+
+The listing form reads suggestions from the Airtable Vendors table and stores the selected name in the Combined Listings `Vendor` field. Keep that field as `singleLineText`; `npm run validate:airtable-schema` enforces the type so new vendor names can save without maintaining a duplicate Airtable select-choice list.
+
 ## IAM permissions required for SAM deploy
 
 If `npm run deploy:dev` fails with `cloudformation:CreateChangeSet` on `aws-sam-cli-managed-default`, the AWS user or role can authenticate but does not have enough deployment permissions for SAM-managed CloudFormation resources.

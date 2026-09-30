@@ -52,6 +52,7 @@ export function useListingApprovalRecordActions({
     tableName,
     formValues,
     setFormValue,
+    setDerivedFormValue,
     hydrateForm,
     saveRecord,
     bodyHtmlPreview,

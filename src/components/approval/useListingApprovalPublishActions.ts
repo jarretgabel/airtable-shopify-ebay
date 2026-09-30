@@ -80,7 +80,7 @@ export function useListingApprovalPublishActions({
     recordId: string,
     nextFields: Record<string, unknown>,
   ): Promise<Record<string, unknown>> => {
-    let writableFields = { ...nextFields };
+    const writableFields = { ...nextFields };
 
     while (true) {
       try {

@@ -728,6 +728,18 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           if (isLikelyComputedAirtableField(fieldName)) return;
 
           let writeFieldName = resolveCanonicalFieldName(fieldName, existingFieldNameByLower);
+          const normalizedWriteFieldName = writeFieldName.trim().toLowerCase();
+          const canonicalShopifyPriceFieldName = Object.keys(selectedRecord.fields)
+            .find((candidate) => candidate.trim().toLowerCase() === 'shopify price');
+          if (
+            canonicalShopifyPriceFieldName
+            && (
+              normalizedWriteFieldName === 'shopify rest variant 1 price'
+              || normalizedWriteFieldName === 'shopify variant 1 price'
+            )
+          ) {
+            writeFieldName = canonicalShopifyPriceFieldName;
+          }
           let existsOnRecord = Object.prototype.hasOwnProperty.call(selectedRecord.fields, writeFieldName);
           let existsInSchema = actualFieldLookup.has(writeFieldName.toLowerCase());
 
@@ -801,6 +813,25 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
 
       if (Object.keys(payload).length > 0) {
         if (mode === 'full') {
+          const shouldTypecastPayload = Object.keys(payload).some(
+            (fieldName) => isTagLikeFieldName(fieldName)
+              || isCollectionLikeFieldName(fieldName)
+              || isCategoryLikeFieldName(fieldName)
+              || isPriceLikeFieldName(fieldName),
+          );
+          try {
+            await updateRecordFromResolvedSource(
+              tableReference,
+              tableName,
+              selectedRecord.id,
+              payload,
+              shouldTypecastPayload ? { typecast: true } : undefined,
+            );
+          } catch (atomicSaveError) {
+            if (!isRetryableAliasCandidateError(atomicSaveError)) {
+              throw atomicSaveError;
+            }
+
           const updatedFields: string[] = [];
           const skippedFields: Array<{ name: string; reason?: string }> = [];
 
@@ -957,6 +988,7 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
 
           if (updatedFields.length === 0 && skippedFields.length === 0) {
             throw new Error('No Airtable fields were updated.');
+          }
           }
         } else {
           const shouldTypecast = Object.keys(payload).some(

@@ -157,6 +157,15 @@ Parameters:
   AppAllowedOrigins:
     Type: CommaDelimitedList
     Default: http://127.0.0.1:3000,http://localhost:3000
+  AlarmTopicArn:
+    Type: String
+    Default: ''
+  EnableCloudWatchAlarms:
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
 
 Conditions:
   HasGithubToken: !Not [!Equals [!Ref GithubToken, '']]
@@ -165,6 +174,8 @@ Conditions:
   HasGoogleDriveClientId: !Not [!Equals [!Ref GoogleDriveClientId, '']]
   HasGoogleDriveClientSecret: !Not [!Equals [!Ref GoogleDriveClientSecret, '']]
   HasGoogleDriveRefreshToken: !Not [!Equals [!Ref GoogleDriveRefreshToken, '']]
+  HasAlarmTopicArn: !Not [!Equals [!Ref AlarmTopicArn, '']]
+  CreateCloudWatchAlarms: !Equals [!Ref EnableCloudWatchAlarms, 'true']
 
 Globals:
   Function:
@@ -1124,6 +1135,134 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: POST
             Path: /api/auth/logout
+
+  ApprovalNormalizeErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreateCloudWatchAlarms
+    Properties:
+      AlarmDescription: Approval normalization Lambda errors.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref ApprovalNormalizeFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+
+  ApprovalNormalizeThrottlesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreateCloudWatchAlarms
+    Properties:
+      AlarmDescription: Approval normalization Lambda throttles.
+      Namespace: AWS/Lambda
+      MetricName: Throttles
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref ApprovalNormalizeFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+
+  ApprovalNormalizeDurationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreateCloudWatchAlarms
+    Properties:
+      AlarmDescription: Approval normalization duration is approaching the Lambda timeout.
+      Namespace: AWS/Lambda
+      MetricName: Duration
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref ApprovalNormalizeFunction
+      ExtendedStatistic: p95
+      Period: 300
+      EvaluationPeriods: 2
+      DatapointsToAlarm: 2
+      Threshold: 12000
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+
+  AirtableUpdateErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreateCloudWatchAlarms
+    Properties:
+      AlarmDescription: Configured Airtable record update errors.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref AirtableUpdateConfiguredRecordFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+
+  AirtableUpdateThrottlesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreateCloudWatchAlarms
+    Properties:
+      AlarmDescription: Configured Airtable record update throttles.
+      Namespace: AWS/Lambda
+      MetricName: Throttles
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref AirtableUpdateConfiguredRecordFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+
+  AirtableUpdateDurationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreateCloudWatchAlarms
+    Properties:
+      AlarmDescription: Configured Airtable record update duration is approaching the Lambda timeout.
+      Namespace: AWS/Lambda
+      MetricName: Duration
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref AirtableUpdateConfiguredRecordFunction
+      ExtendedStatistic: p95
+      Period: 300
+      EvaluationPeriods: 2
+      DatapointsToAlarm: 2
+      Threshold: 12000
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+
+  AppApiServerErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreateCloudWatchAlarms
+    Properties:
+      AlarmDescription: App HTTP API 5xx responses.
+      Namespace: AWS/ApiGateway
+      MetricName: 5XX
+      Dimensions:
+        - Name: ApiId
+          Value: !Ref AppHttpApi
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
 
 Outputs:
   AppApiUrl:

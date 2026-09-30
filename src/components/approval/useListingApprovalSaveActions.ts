@@ -16,6 +16,7 @@ type SaveActionsParams = Pick<UseListingApprovalRecordActionsParams,
   | 'tableName'
   | 'formValues'
   | 'setFormValue'
+  | 'setDerivedFormValue'
   | 'hydrateForm'
   | 'saveRecord'
   | 'bodyHtmlPreview'
@@ -38,6 +39,7 @@ export function useListingApprovalSaveActions({
   tableReference,
   tableName,
   setFormValue,
+  setDerivedFormValue,
   hydrateForm,
   saveRecord,
   bodyHtmlPreview,
@@ -116,7 +118,7 @@ export function useListingApprovalSaveActions({
           tableReference,
           tableName,
           formValues: latestFormValues,
-          setFormValue,
+          setFormValue: setDerivedFormValue ?? setFormValue,
           priceFieldName,
           bodyHtmlPreview,
           ebayBodyHtmlSaveFieldName,

@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { HttpError } from '../../../../../../aws/src/shared/errors.js';
 import { authUserDependencies, clearAuthUserLookupCache, ensureSampleAuthUsers, findAuthUserByEmail, findAuthUserById, updateAuthUserPassword, type AuthUserRecord } from '../../../../../../aws/src/providers/auth/users.js';
+import { APP_PAGES, normalizeAllowedPages, type UserRole } from '../../../../../../aws/src/shared/appPages.js';
+import { parseStoredPasswordField, serializePasswordField } from '../../../../../../aws/src/providers/auth/passwords.js';
 
 const hashedPasswordState = {
   scheme: 'pbkdf2-sha256',
@@ -19,6 +21,14 @@ const baseUser: AuthUserRecord = {
   mustChangePassword: true,
   allowedPages: [],
 };
+
+function sampleAllowedPages(role: UserRole) {
+  return normalizeAllowedPages([...APP_PAGES], role);
+}
+
+function samplePasswordState(password: string) {
+  return parseStoredPasswordField(serializePasswordField(password, false));
+}
 
 test('updateAuthUserPassword retries without MustChangePassword when Airtable schema omits that field', async () => {
   const calls: Array<{ source: string; recordId: string; fields: Record<string, unknown>; options: { typecast?: boolean } }> = [];
@@ -327,10 +337,10 @@ test('ensureSampleAuthUsers skips sample accounts that already exist', async () 
 
   try {
     await ensureSampleAuthUsers([
-      { ...baseUser, email: 'developer@example.com', role: 'developer', passwordState: hashedPasswordState, mustChangePassword: false, allowedPages: ['dashboard', 'workflow-guide', 'workflow-guide-editor', 'manual-intake', 'create-intake-item', 'parking-lot', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'jotform', 'jotform-audit', 'market', 'settings', 'notifications', 'imagelab', 'users'] },
-      { ...baseUser, email: 'processor@example.com', role: 'processor', passwordState: hashedPasswordState, mustChangePassword: false, allowedPages: ['dashboard', 'workflow-guide', 'manual-intake', 'create-intake-item', 'inventory', 'jotform', 'jotform-audit', 'parking-lot', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab'] },
-      { ...baseUser, email: 'tester@example.com', role: 'tester', passwordState: hashedPasswordState, mustChangePassword: false, allowedPages: ['dashboard', 'testing-queue', 'testing'] },
-      { ...baseUser, email: 'photographer@example.com', role: 'photographer', passwordState: hashedPasswordState, mustChangePassword: false, allowedPages: ['dashboard', 'photography-queue', 'photos', 'imagelab'] },
+      { ...baseUser, email: 'developer@example.com', role: 'developer', passwordState: samplePasswordState('Developer123!'), mustChangePassword: false, allowedPages: sampleAllowedPages('developer') },
+      { ...baseUser, email: 'processor@example.com', role: 'processor', passwordState: samplePasswordState('Processor123!'), mustChangePassword: false, allowedPages: sampleAllowedPages('processor') },
+      { ...baseUser, email: 'tester@example.com', role: 'tester', passwordState: samplePasswordState('Tester123!'), mustChangePassword: false, allowedPages: sampleAllowedPages('tester') },
+      { ...baseUser, email: 'photographer@example.com', role: 'photographer', passwordState: samplePasswordState('Photographer123!'), mustChangePassword: false, allowedPages: sampleAllowedPages('photographer') },
     ]);
   } finally {
     authUserDependencies.createConfiguredRecord = originalCreate;
@@ -365,28 +375,28 @@ test('ensureSampleAuthUsers resyncs sample accounts with stale passwords', async
         airtableRecordId: 'rec-developer',
         email: 'developer@example.com',
         role: 'developer',
-        passwordState: hashedPasswordState,
+        passwordState: samplePasswordState('Developer123!'),
         mustChangePassword: false,
-        allowedPages: ['dashboard', 'workflow-guide', 'workflow-guide-editor', 'manual-intake', 'create-intake-item', 'parking-lot', 'trash-review', 'inventory', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'jotform', 'jotform-audit', 'market', 'settings', 'notifications', 'imagelab', 'users'],
+        allowedPages: sampleAllowedPages('developer'),
       },
       {
         ...baseUser,
         airtableRecordId: 'rec-processor',
         email: 'processor@example.com',
         role: 'processor',
-        passwordState: hashedPasswordState,
+        passwordState: samplePasswordState('Processor123!'),
         mustChangePassword: false,
-        allowedPages: ['dashboard', 'workflow-guide', 'manual-intake', 'create-intake-item', 'inventory', 'jotform', 'jotform-audit', 'parking-lot', 'trash-review', 'testing-queue', 'photography-queue', 'testing', 'photos', 'listings', 'post-publish', 'archive', 'shopify', 'ebay', 'market', 'settings', 'notifications', 'imagelab'],
+        allowedPages: sampleAllowedPages('processor'),
       },
-      { ...baseUser, airtableRecordId: 'rec-tester', email: 'tester@example.com', role: 'tester', passwordState: hashedPasswordState, mustChangePassword: true, allowedPages: ['dashboard'] },
+      { ...baseUser, airtableRecordId: 'rec-tester', email: 'tester@example.com', role: 'tester', passwordState: hashedPasswordState, mustChangePassword: true, allowedPages: sampleAllowedPages('tester') },
       {
         ...baseUser,
         airtableRecordId: 'rec-photographer',
         email: 'photographer@example.com',
         role: 'photographer',
-        passwordState: hashedPasswordState,
+        passwordState: samplePasswordState('Photographer123!'),
         mustChangePassword: false,
-        allowedPages: ['dashboard', 'photography-queue', 'photos', 'imagelab'],
+        allowedPages: sampleAllowedPages('photographer'),
       },
     ]);
   } finally {

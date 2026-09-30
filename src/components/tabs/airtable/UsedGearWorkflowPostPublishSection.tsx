@@ -827,6 +827,14 @@ export function UsedGearWorkflowPostPublishSection({
                     searchPlaceholder={`Search ${section.title.toLowerCase()}...`}
                     searchValue={sectionSearchTerm}
                     onSearchChange={(value) => handleSectionSearchChange(section.key, value)}
+                    sortAriaLabel={`Sort ${section.title}`}
+                    sortValue={sortMode}
+                    sortOptions={[
+                      { value: 'latest-activity', label: 'Latest activity' },
+                      { value: 'oldest-activity', label: 'Oldest activity' },
+                      { value: 'sku', label: 'SKU' },
+                    ]}
+                    onSortChange={(value) => handleSortModeChange(value as UsedGearWorkflowPostPublishSortMode)}
                     refreshLabel={`Refresh ${section.title}`}
                     refreshLoadingLabel={`Refreshing ${section.title}`}
                     refreshing={refreshing}

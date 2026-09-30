@@ -252,7 +252,7 @@ export async function saveEbayApprovalSupplementalFields({
   });
   const existingPriceFieldName = resolveExistingFieldName(existingFieldLookup, priceCandidates);
   const originalPriceRaw = existingPriceFieldName ? toFormValue(selectedRecord.fields[existingPriceFieldName]) : '';
-  const shouldSavePrice = priceRaw.trim().length > 0 && priceRaw !== originalPriceRaw;
+  const shouldSavePrice = !existingPriceFieldName && priceRaw.trim().length > 0 && priceRaw !== originalPriceRaw;
   if (shouldSavePrice) {
     const savedPriceField = await trySaveEbayField({
       candidates: priceCandidates,
@@ -270,13 +270,14 @@ export async function saveEbayApprovalSupplementalFields({
   const bodyHtmlRaw = bodyHtmlPreview || (ebayBodyHtmlSaveFieldName ? (formValues[ebayBodyHtmlSaveFieldName] ?? '') : '');
   const bodyHtmlCandidates = [ebayBodyHtmlSaveFieldName, ...EBAY_BODY_HTML_FIELD_CANDIDATES, 'Body html'];
   const existingBodyHtmlFieldName = resolveExistingFieldName(existingFieldLookup, bodyHtmlCandidates);
+  const bodyHtmlSaveCandidates = [existingBodyHtmlFieldName ?? '', ...bodyHtmlCandidates];
   const originalBodyHtmlRaw = existingBodyHtmlFieldName ? toFormValue(selectedRecord.fields[existingBodyHtmlFieldName]) : '';
   const shouldSaveBodyHtml = Boolean(existingBodyHtmlFieldName) && bodyHtmlRaw.trim().length > 0 && (
     shouldForceEbayBodyHtmlSave || bodyHtmlRaw !== originalBodyHtmlRaw
   );
   if (shouldSaveBodyHtml) {
     const savedBodyHtmlField = await trySaveEbayField({
-      candidates: bodyHtmlCandidates,
+      candidates: bodyHtmlSaveCandidates,
       rawValue: bodyHtmlRaw,
       selectedRecord,
       tableReference,

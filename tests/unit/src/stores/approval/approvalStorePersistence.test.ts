@@ -172,23 +172,14 @@ describe('approvalStorePersistence', () => {
       'base/table',
       'Approval',
       'rec-approval-save-1',
-      { 'Ebay Categories': '14990, 15032' },
+      {
+        'Ebay Categories': '14990, 15032',
+        'Ebay Domestic Shipping Fees': 'Calculated',
+        'Ebay International Shipping Fees': 'Flat',
+      },
       { typecast: true },
     );
-    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
-      'base/table',
-      'Approval',
-      'rec-approval-save-1',
-      { 'Ebay Domestic Shipping Fees': 'Calculated' },
-      undefined,
-    );
-    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
-      'base/table',
-      'Approval',
-      'rec-approval-save-1',
-      { 'Ebay International Shipping Fees': 'Flat' },
-      undefined,
-    );
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledTimes(1);
     expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
   });
 
@@ -360,8 +351,10 @@ describe('approvalStorePersistence', () => {
     const saveRecord = createSaveRecordAction(setMock, getMock);
 
     updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef, _tableName, _recordId, payload: Record<string, unknown>) => {
+      if ('Description' in payload) {
+        throw createAirtable422Error('Field "Description" is read only in this view');
+      }
       if ('Title' in payload) return;
-      throw createAirtable422Error('Field "Description" is read only in this view');
     });
 
     const succeeded = await saveRecord(
@@ -527,24 +520,56 @@ describe('approvalStorePersistence', () => {
       'base/table',
       'Approval',
       'rec-approval-save-1',
-      { Price: '1299.00' },
+      {
+        Price: '1299.00',
+        Type: 'Amplifiers',
+        'Listing Format': 'FixedPrice',
+      },
       { typecast: true },
     );
-    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
-      'base/table',
-      'Approval',
-      'rec-approval-save-1',
-      { Type: 'Amplifiers' },
-      undefined,
-    );
-    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
-      'base/table',
-      'Approval',
-      'rec-approval-save-1',
-      { 'Listing Format': 'FixedPrice' },
-      undefined,
-    );
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledTimes(1);
     expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('prefers canonical Shopify Price when a legacy price alias is also loaded', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Shopify REST Variant 1 Price': '1299.00',
+        'Shopify Price': '1199.00',
+      },
+      fieldKinds: {
+        'Shopify REST Variant 1 Price': 'text',
+        'Shopify Price': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ 'Shopify Price': '1199.00' }),
+      'base/table',
+      'Approval',
+      ['Shopify REST Variant 1 Price', 'Shopify Price'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledTimes(1);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Shopify Price': '1299.00' },
+      { typecast: true },
+    );
   });
 
   it('persists alias-only source fields by trying canonical fallback field names', async () => {
@@ -587,9 +612,9 @@ describe('approvalStorePersistence', () => {
     );
 
     expect(succeeded).toBe(true);
-    const payloadFieldNames = updateRecordFromResolvedSourceMock.mock.calls.map((call) => {
+    const payloadFieldNames = updateRecordFromResolvedSourceMock.mock.calls.flatMap((call) => {
       const payload = (call[3] ?? {}) as Record<string, unknown>;
-      return Object.keys(payload)[0] ?? '';
+      return Object.keys(payload);
     });
     const normalizedPayloadFieldNames = payloadFieldNames.map((fieldName) => fieldName.toLowerCase());
 

@@ -238,10 +238,13 @@ export function useApprovalPreview({
 
     lastNormalizeSignatureRef.current = requestSignature;
 
-    void normalizeApprovalRecord(mergedDraftSourceFields, target, {
-      bodyPreview: isEbayPayloadPreviewContext ? currentEbayPreviewBodyInput : undefined,
-      categoryPreview: currentEbayCategoryPreviewInput,
-    })
+    const abortController = new AbortController();
+    const debounceId = globalThis.setTimeout(() => {
+      void normalizeApprovalRecord(mergedDraftSourceFields, target, {
+        bodyPreview: isEbayPayloadPreviewContext ? currentEbayPreviewBodyInput : undefined,
+        categoryPreview: currentEbayCategoryPreviewInput,
+        signal: abortController.signal,
+      })
       .then((preview) => {
         if (normalizePreviewRequestRef.current !== requestId) return;
         if (target === 'both') {
@@ -271,7 +274,13 @@ export function useApprovalPreview({
         // Keep the last successful preview visible on transient failures and allow retry.
         lastNormalizeSignatureRef.current = '';
       });
-  }, [currentEbayCategoryPreviewInput, currentEbayPreviewBodyInput, isEbayPayloadPreviewContext, isShopifyPayloadPreviewContext, mergedDraftSourceFields, setDerivedFormValue]);
+    }, 300);
+
+    return () => {
+      globalThis.clearTimeout(debounceId);
+      abortController.abort();
+    };
+  }, [approvalChannel, currentEbayCategoryPreviewInput, currentEbayPreviewBodyInput, isEbayPayloadPreviewContext, isShopifyPayloadPreviewContext, mergedDraftSourceFields, setDerivedFormValue]);
 
   const loadShopifyApprovalPreviewNow = async (fallbackFields: Record<string, unknown>) => {
     const preview = await normalizeApprovalRecord(mergedDraftSourceFields ?? fallbackFields, 'shopify');

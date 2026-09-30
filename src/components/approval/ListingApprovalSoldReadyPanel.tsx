@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  loadUsedGearOperationalRecordContext,
+  loadUsedGearOperationalRecord,
   markWorkflowCancelled,
   markWorkflowPartialRefund,
   markWorkflowRefunded,
@@ -69,12 +69,12 @@ export function ListingApprovalSoldReadyPanel({
 
     const loadContext = async () => {
       try {
-        const nextContext = await loadUsedGearOperationalRecordContext(selectedRecord.id);
+        const nextRecord = await loadUsedGearOperationalRecord(selectedRecord.id);
         if (cancelled) {
           return;
         }
 
-        setWorkflowRecord(nextContext.record);
+        setWorkflowRecord(nextRecord);
       } catch {
         if (!cancelled) {
           setWorkflowRecord(selectedRecord);

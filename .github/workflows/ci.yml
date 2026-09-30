@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
@@ -38,15 +39,18 @@ jobs:
         run: npm run lint
 
       - name: Unit tests
-        run: npm run test
+        run: npm run test:web
 
       - name: AWS type check
         working-directory: aws
         run: npm run typecheck
 
       - name: AWS tests
+        run: npm run test:aws
+
+      - name: Validate SAM template
         working-directory: aws
-        run: npm run test
+        run: sam validate --lint --template-file template.yaml
 
       - name: AWS build
         working-directory: aws
@@ -54,3 +58,33 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  staging-reliability:
+    name: Staging Schema And Save Canary
+    if: github.event_name == 'workflow_dispatch'
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Airtable schema
+        run: npm run validate:airtable-schema
+        env:
+          AIRTABLE_API_KEY: ${{ secrets.AIRTABLE_API_KEY }}
+
+      - name: Run staging listing save canary
+        run: npm run canary:staging-save -- --confirm RUN_STAGING_LISTING_SAVE_CANARY
+        env:
+          STAGING_CANARY_ORIGIN: ${{ vars.STAGING_CANARY_ORIGIN }}
+          STAGING_CANARY_EMAIL: ${{ secrets.STAGING_CANARY_EMAIL }}
+          STAGING_CANARY_PASSWORD: ${{ secrets.STAGING_CANARY_PASSWORD }}

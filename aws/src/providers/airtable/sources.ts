@@ -64,6 +64,11 @@ interface SearchFieldMetadataCacheEntry {
 const unknownFieldNameCache = new Map<string, UnknownFieldCacheEntry>();
 const searchFieldMetadataCache = new Map<string, SearchFieldMetadataCacheEntry>();
 
+export function clearAirtableSourceCaches(): void {
+  unknownFieldNameCache.clear();
+  searchFieldMetadataCache.clear();
+}
+
 function resolveSubsetFilterByFormula(
   source: AirtableConfiguredRecordsSource,
   subset: AirtableConfiguredRecordsSubset | undefined,

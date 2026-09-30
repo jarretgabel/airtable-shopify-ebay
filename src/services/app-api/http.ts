@@ -25,6 +25,7 @@ const APP_API_REQUEST_TIMEOUT_MS = 12000;
 
 export interface AppApiRequestOptions {
   timeoutMs?: number;
+  signal?: AbortSignal;
 }
 
 let csrfTokenCache: string | null = null;
@@ -216,14 +217,15 @@ async function requestJson<T>(
   const timeoutMs = Number.isFinite(options.timeoutMs) && (options.timeoutMs ?? 0) > 0
     ? Number(options.timeoutMs)
     : APP_API_REQUEST_TIMEOUT_MS;
-  const timeoutContext = timeoutEnabled ? buildRequestSignal(init.signal, timeoutMs) : null;
+  const requestSignal = options.signal ?? init.signal;
+  const timeoutContext = timeoutEnabled ? buildRequestSignal(requestSignal, timeoutMs) : null;
 
   let response: Response;
   try {
     response = await fetch(buildUrl(path, params), {
       credentials: 'include',
       ...init,
-      ...(timeoutContext ? { signal: timeoutContext.signal } : {}),
+      ...(timeoutContext ? { signal: timeoutContext.signal } : requestSignal ? { signal: requestSignal } : {}),
       headers: withAuthAndCsrfHeader(init.headers, init.method),
     });
   } catch (error) {

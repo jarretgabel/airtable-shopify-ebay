@@ -12,6 +12,8 @@
     "local:api": "node scripts/start-local-api.mjs",
     "local:api:check": "node scripts/local-api-check.mjs",
     "local:api:approval-check": "node scripts/local-api-approval-check.mjs",
+    "validate:airtable-schema": "node scripts/validate-approval-combined-schema.mjs",
+    "canary:staging-save": "node scripts/staging-listing-save-canary.mjs",
     "google-drive:authorize": "node scripts/setup-google-drive-oauth.mjs",
     "google-drive:check": "node scripts/check-google-drive-archive.mjs",
     "google-drive:check:sharing": "node scripts/check-google-drive-public-sharing.mjs",

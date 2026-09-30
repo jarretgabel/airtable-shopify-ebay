@@ -10,7 +10,7 @@ import {
   markWorkflowReturnReceived,
   markWorkflowShipped,
   markWorkflowSoldReadyToShip,
-  loadUsedGearOperationalRecordContext,
+  loadUsedGearOperationalRecord,
   resolveWorkflowRestockDisposition,
   saveWorkflowShipmentFollowThrough,
   saveWorkflowStaleRecovery,
@@ -137,12 +137,12 @@ export function ListingApprovalWorkflowOpsPanel({
 
     const loadContext = async () => {
       try {
-        const nextContext = await loadUsedGearOperationalRecordContext(selectedRecord.id);
+        const nextRecord = await loadUsedGearOperationalRecord(selectedRecord.id);
         if (cancelled) {
           return;
         }
 
-        setWorkflowRecord(nextContext.record);
+        setWorkflowRecord(nextRecord);
       } catch {
         if (!cancelled) {
           setWorkflowRecord(selectedRecord);
@@ -241,7 +241,7 @@ export function ListingApprovalWorkflowOpsPanel({
       return;
     }
 
-    let writableFields: Record<string, unknown> = {
+    const writableFields: Record<string, unknown> = {
       'Workflow Status': 'Approved for Publish',
       'Shopify REST Product ID': null,
       'Shopify Product ID': null,

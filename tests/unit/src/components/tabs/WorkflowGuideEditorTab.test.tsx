@@ -79,7 +79,7 @@ describe('WorkflowGuideEditorTab', () => {
     expect(screen.getByRole('button', { name: 'Role Guides By Audience' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Page Guides' })).toBeInTheDocument();
     expect(screen.getByText('Edit access:')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Admin quick start/ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Admin quick start/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Testing Queue/ })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Page Guides' }));

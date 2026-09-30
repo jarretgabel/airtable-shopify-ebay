@@ -25,15 +25,15 @@ test('resolveShopifyBodyHtml falls back to generated body when rendered html fie
   });
 
   assert.match(value, /Generated fallback description/);
-  assert.match(value, /<ul>/);
+  assert.match(value, /<table>/);
 });
 
-test('resolveShopifyBodyHtml falls back to explicit rendered body html when generated body inputs are empty', () => {
+test('resolveShopifyBodyHtml suppresses stale rendered body html when generated body inputs are empty', () => {
   const value = resolveShopifyBodyHtml({
     'Shopify REST Body HTML': '<p>Rendered body from Shopify field</p>',
     Description: '',
     'Key Features JSON': '',
   });
 
-  assert.equal(value, '<p>Rendered body from Shopify field</p>');
+  assert.equal(value, '');
 });

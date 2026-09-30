@@ -544,7 +544,7 @@ async function updateWorkflowRecordWithUnknownFieldFallback(
   fields: Record<string, unknown>,
   options: { typecast?: boolean; timeoutMs?: number } = {},
 ): Promise<AirtableRecord> {
-  let writableFields = { ...fields };
+  const writableFields = { ...fields };
 
   while (true) {
     try {
@@ -875,13 +875,7 @@ export function summarizeUsedGearWorkflowPostPublishQueue(
 }
 
 export async function loadUsedGearOperationalRecord(recordId: string): Promise<AirtableRecord> {
-  const records = await loadUsedGearOperationalRecords({ includeOptionalReadFields: true });
-
-  const record = records.find((candidate) => candidate.id === recordId);
-  if (!record) {
-    throw new Error('Unable to load the selected used-gear operational record.');
-  }
-
+  const record = await getConfiguredRecord('used-gear-workflow', recordId);
   return withWorkflow(record);
 }
 

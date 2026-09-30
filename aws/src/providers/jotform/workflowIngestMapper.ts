@@ -41,7 +41,6 @@ interface ItemSlotDescriptor {
 }
 
 const ITEM_SLOTS: readonly ItemSlotDescriptor[] = [
-  // eslint-disable-next-line max-len
   { slotIndex: 1,  brand: 'brand243', model: 'model244', cosmeticCondition: 'cosmeticCondition247', anyIssues: 'anyIssues250', pictures: 'pictures249',  originalOwner: 'originalOwner245',  originalPackaging: 'originalPackaging246', exposureTo: 'exposureTo'     },
   { slotIndex: 2,  brand: 'brand234', model: 'model235', cosmeticCondition: 'cosmeticCondition238', anyIssues: 'anyIssues241', pictures: 'pictures240',  originalOwner: 'originalOwner236',  originalPackaging: 'originalPackaging237', exposureTo: 'exposureTo239'  },
   { slotIndex: 3,  brand: 'brand225', model: 'model226', cosmeticCondition: 'cosmeticCondition229', anyIssues: 'anyIssues232', pictures: 'pictures231',  originalOwner: 'originalOwner227',  originalPackaging: 'originalPackaging228', exposureTo: 'exposureTo230'  },

@@ -315,7 +315,7 @@ describe('useAppData', () => {
 
     renderHook(() => useAppData({
       enabled: true,
-      activeTab: 'listings',
+      activeTab: 'dashboard',
       canAccessPage: (page) => page === 'listings',
       currentUserName: 'Taylor Reviewer',
       users: [{ role: 'admin' }],

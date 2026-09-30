@@ -39,6 +39,7 @@ export async function normalizeApprovalRecord(
   options: {
     bodyPreview?: ApprovalEbayBodyPreviewInput;
     categoryPreview?: ApprovalEbayCategoryPreviewInput;
+    signal?: AbortSignal;
   } = {},
 ): Promise<ApprovalNormalizeResult> {
   try {
@@ -47,6 +48,8 @@ export async function normalizeApprovalRecord(
       fields,
       bodyPreview: options.bodyPreview,
       categoryPreview: options.categoryPreview,
+    }, {
+      signal: options.signal,
     });
   } catch (error) {
     throw toApprovalError(error);
