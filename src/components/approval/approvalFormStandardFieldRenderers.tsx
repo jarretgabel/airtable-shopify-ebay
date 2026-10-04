@@ -136,7 +136,7 @@ function PriceFieldWithCalculator({
     <label className="flex flex-col gap-2">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,1fr)_170px] md:items-start">
         <div>{renderFieldLabel(fieldName)}</div>
-        <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">
+        <p className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
           Calculator
         </p>
       </div>

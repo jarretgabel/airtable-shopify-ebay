@@ -92,6 +92,15 @@
 		box-sizing: border-box;
 	}
 
+	.ebay-template-copy-editor,
+	.ebay-template-copy-editor * {
+		color: #0f172a !important;
+	}
+
+	.ebay-template-copy-editor a {
+		color: #1d4ed8 !important;
+	}
+
 	a {
 		color: inherit;
 	}

@@ -22,8 +22,14 @@ export interface EbayTemplateCopyWysiwygEditorProps {
 }
 
 const toolbarButtonClass = 'inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--line)] text-[var(--ink)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50';
-const editorSurfaceClass = 'min-h-[180px] w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70 [&_a]:text-blue-700 [&_a]:underline [&_a]:decoration-blue-600 [&_a]:underline-offset-2 [&_a]:decoration-2 [&_a:hover]:text-blue-800 [&_a:focus-visible]:outline-none [&_a:focus-visible]:ring-2 [&_a:focus-visible]:ring-blue-400/50 [&_a:focus-visible]:rounded-sm';
+const editorSurfaceClass = 'ebay-template-copy-editor min-h-[180px] w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70 [&_a]:underline [&_a]:decoration-blue-600 [&_a]:underline-offset-2 [&_a]:decoration-2 [&_a:focus-visible]:outline-none [&_a:focus-visible]:ring-2 [&_a:focus-visible]:rounded-sm';
 const sourceEditorSurfaceClass = `${editorSurfaceClass} text-slate-900`;
+
+function applyIframeEditorStyles(doc: Document): void {
+  const style = doc.createElement('style');
+  style.textContent = 'body, body * { color: #0f172a !important; }';
+  doc.head?.appendChild(style);
+}
 
 function IconBold() {
   return <span aria-hidden="true" className="text-sm font-black">B</span>;
@@ -309,6 +315,7 @@ export function EbayTemplateCopyWysiwygEditor({
     doc.open();
     doc.write(editorHtml);
     doc.close();
+    applyIframeEditorStyles(doc);
     try {
       doc.designMode = disabled ? 'off' : 'on';
     } catch {
@@ -571,6 +578,7 @@ export function EbayTemplateCopyWysiwygEditor({
         {sourceMode ? (
           <textarea
             className={`${sourceEditorSurfaceClass} resize-y font-mono leading-[1.4]`}
+            style={{ color: '#0f172a' }}
             value={editorHtml}
             onChange={(event) => commitEditorHtml(event.target.value)}
             disabled={disabled}
@@ -599,6 +607,7 @@ export function EbayTemplateCopyWysiwygEditor({
             <div
               ref={editorRef}
               className={`${editorSurfaceClass} leading-[1.5]`}
+              style={{ color: '#0f172a' }}
               contentEditable={!disabled}
               suppressContentEditableWarning
               onMouseUp={saveEditorSelection}
