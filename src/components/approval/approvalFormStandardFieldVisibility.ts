@@ -7,6 +7,7 @@ import {
 } from './approvalFormFieldsSharedHelpers';
 import {
   isInternalReferenceListingFieldName,
+  isEbayBodyTemplateCopyOverrideFieldName,
   isSystemManagedListingFieldName,
   isWorkflowOnlyListingFieldName,
 } from './listingApprovalFieldHelpers';
@@ -143,6 +144,7 @@ export function shouldHideApprovalFormStandardField({
 
   if (isEbayHandlingCostField(fieldName)) return true;
   if (isEbayGlobalShippingField(fieldName)) return true;
+  if (isEbayBodyTemplateCopyOverrideFieldName(fieldName)) return true;
   if (hasEbayBusinessPoliciesEditor && (
     (ebayFulfillmentPolicyFieldName && fieldName === ebayFulfillmentPolicyFieldName)
     || (ebayPaymentPolicyFieldName && fieldName === ebayPaymentPolicyFieldName)

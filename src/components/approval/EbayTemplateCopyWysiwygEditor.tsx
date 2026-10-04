@@ -27,7 +27,7 @@ const sourceEditorSurfaceClass = `${editorSurfaceClass} text-slate-900`;
 
 function applyIframeEditorStyles(doc: Document): void {
   const style = doc.createElement('style');
-  style.textContent = 'body, body * { color: #0f172a !important; }';
+  style.textContent = 'body { color: #0f172a; }';
   doc.head?.appendChild(style);
 }
 
@@ -228,12 +228,23 @@ function applyEditorCommandWithValue(command: string, value: string, targetDocum
   doc.execCommand(command, false, value);
 }
 
-function applyTextColor(value: string, targetDocument?: Document | null) {
+function applyTextColor(value: string, targetDocument?: Document | null, savedRange?: Range | null) {
   const doc = targetDocument ?? (typeof document !== 'undefined' ? document : null);
   if (!doc) return;
-  doc.execCommand('styleWithCSS', false, 'true');
-  doc.execCommand('foreColor', false, value);
-  doc.execCommand('styleWithCSS', false, 'false');
+  const selection = doc.defaultView?.getSelection();
+  if (!selection) return;
+  const range = savedRange?.cloneRange()
+    ?? (selection.rangeCount > 0 && !selection.isCollapsed ? selection.getRangeAt(0).cloneRange() : null);
+  if (!range) return;
+  const coloredText = doc.createElement('span');
+  coloredText.style.color = value;
+  coloredText.appendChild(range.extractContents());
+  range.insertNode(coloredText);
+
+  selection.removeAllRanges();
+  const nextRange = doc.createRange();
+  nextRange.selectNodeContents(coloredText);
+  selection.addRange(nextRange);
 }
 
 function preventToolbarMouseDown(event: React.MouseEvent<HTMLButtonElement>) {
@@ -443,7 +454,7 @@ export function EbayTemplateCopyWysiwygEditor({
       editor.focus();
     }
     restoreEditorSelection();
-    applyTextColor(colorValue, targetDocument);
+    applyTextColor(colorValue, targetDocument, savedSelectionRef.current);
     saveEditorSelection();
 
     const nextHtml = isFullHtmlDocument

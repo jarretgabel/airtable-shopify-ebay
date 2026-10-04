@@ -128,6 +128,11 @@ export function isEbayBodyHtmlFieldName(fieldName: string): boolean {
     || compact === 'ebaybodyhtml';
 }
 
+export function isEbayBodyTemplateCopyOverrideFieldName(fieldName: string): boolean {
+  const compact = fieldName.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  return compact === 'ebaybodytemplatecopyoverride';
+}
+
 export function isEbayBodyHtmlTemplateFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'ebay body html template'
