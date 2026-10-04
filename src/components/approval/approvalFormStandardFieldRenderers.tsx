@@ -14,9 +14,12 @@ import { isImageUrlListField } from './approvalFormFieldsImageHelpers';
 import { ImageUrlListEditor } from './ImageUrlListEditor';
 import { isShopifyTypeField } from './approvalFormFieldsShopifyHelpersBasic';
 import { ShopifyTaxonomyTypeSelect } from './ShopifyTaxonomyTypeSelect';
+import { ShopifyTaxonomyAttributesEditor } from './ShopifyTaxonomyAttributesEditor';
+import { SHOPIFY_TAXONOMY_ATTRIBUTES_FIELD_CANDIDATES } from './listingApprovalShopifyConstants';
 import { isTitleLikeFieldName } from './listingApprovalFieldHelpers';
 
 const TITLE_FIELD_MAX_LENGTH = 80;
+const SHOPIFY_TAXONOMY_ATTRIBUTES_EDITOR_ENABLED = false;
 
 interface ApprovalFormStandardFieldRendererParams {
   fieldName: string;
@@ -278,6 +281,7 @@ export function renderApprovalFormSpecialField({
   fieldName,
   kind,
   value,
+  formValues,
   inputDisabled,
   isRequiredField,
   renderFieldLabel,
@@ -285,6 +289,20 @@ export function renderApprovalFormSpecialField({
   getInputClassName,
   setFormValue,
 }: ApprovalFormStandardFieldRendererParams): JSX.Element | null {
+  if (SHOPIFY_TAXONOMY_ATTRIBUTES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase())) {
+    if (!SHOPIFY_TAXONOMY_ATTRIBUTES_EDITOR_ENABLED) return <></>;
+
+    return (
+      <ShopifyTaxonomyAttributesEditor
+        fieldName={fieldName}
+        value={value}
+        formValues={formValues}
+        setFormValue={setFormValue}
+        disabled={inputDisabled}
+      />
+    );
+  }
+
   if (isShopifyTypeField(fieldName)) {
     return (
       <ShopifyTaxonomyTypeSelect

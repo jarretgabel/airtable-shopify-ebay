@@ -27,6 +27,8 @@ Recommended source files:
 | Field Pattern | Suggested Airtable Type | Notes |
 | --- | --- | --- |
 | `Listing Key` | Single line text | Primary key for each listing. |
+| `Shopify Inventory Quantity` | Number, precision 0 | Canonical Shopify quantity on hand; leave blank when unknown. Existing variant quantity aliases remain supported. |
+| `Shopify Taxonomy Attributes JSON` | Long text | Canonical JSON edited from the verified Shopify category attributes. Preserve Shopify category, attribute, and choice IDs; labels are display metadata. |
 | title, handle, SKU, vendor, brand, policy ID, category ID fields | Single line text | Use text unless you have a strict numeric workflow. |
 | description or HTML fields | Long text | Keeps long listing copy readable. |
 | price, compare-at price, fee, VAT, quantity, repair score, weight, dimensions | Number | Use decimals where needed. |
@@ -34,6 +36,35 @@ Recommended source files:
 | `... Taxable`, `... Requires Shipping`, `... Apply Tax`, `... Best Offer Enabled` | Checkbox or text | Checkbox is cleaner, but text is easier when importing raw CSV values. |
 | image URLs, document URLs, contact URLs | URL | Optional but useful. |
 | published date, listing start date | Date with time | If you want scheduling in Airtable. |
+
+`Shopify Taxonomy Attributes JSON` uses this shape:
+
+```json
+{
+	"version": 1,
+	"categoryId": "gid://shopify/TaxonomyCategory/el-2-2-2",
+	"categoryFullName": "Electronics > Audio > Audio Components > Audio Amplifiers",
+	"attributes": [
+		{
+			"id": "gid://shopify/TaxonomyAttribute/1",
+			"name": "Color",
+			"type": "choice",
+			"values": [
+				{ "id": "gid://shopify/TaxonomyValue/1", "name": "Black" }
+			]
+		},
+		{
+			"id": "gid://shopify/TaxonomyAttribute/example",
+			"name": "Example measurement",
+			"type": "measurement",
+			"value": 12.5,
+			"option": { "key": "CM", "value": "Centimeters" }
+		}
+	]
+}
+```
+
+The publisher validates IDs against the live category definition. Unsupported, stale, malformed, or category-mismatched values are omitted rather than sent as labels.
 
 ### Import Checklist For One Wide Table
 

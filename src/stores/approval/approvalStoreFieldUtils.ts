@@ -210,6 +210,26 @@ export function fromFormValueForField(fieldName: string, raw: string, kind: Appr
     return normalized ? [normalized] : [];
   }
 
+  const normalizedFieldName = fieldName.trim().toLowerCase();
+  if (
+    normalizedFieldName === 'ebay categories'
+    || normalizedFieldName === 'e bay categories'
+    || normalizedFieldName === 'shopify collections'
+    || normalizedFieldName === 'collections'
+  ) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map((value) => String(value).trim()).filter(Boolean);
+    } catch {
+      // Fall through to delimiter parsing for editor values such as "123, 456".
+    }
+
+    return raw
+      .split(/[\n,;|]/)
+      .map((value) => value.trim())
+      .filter(Boolean);
+  }
+
   return fromFormValue(raw, kind);
 }
 
@@ -219,6 +239,24 @@ export function getDropdownOptions(fieldName: string): string[] | null {
   // Humanized field names (Airtable schema)
   if (n === SHIPPING_SERVICE_FIELD.trim().toLowerCase()) {
     return SHIPPING_SERVICE_OPTIONS;
+  }
+
+  if (
+    n === 'domestic service 1'
+    || n === 'domestic service 2'
+    || n === 'ebay domestic service 1'
+    || n === 'ebay domestic service 2'
+  ) {
+    return SHIPPING_SERVICE_OPTIONS.slice(0, 2);
+  }
+
+  if (
+    n === 'international service 1'
+    || n === 'international service 2'
+    || n === 'ebay international service 1'
+    || n === 'ebay international service 2'
+  ) {
+    return SHIPPING_SERVICE_OPTIONS.slice(2);
   }
 
   if (
@@ -330,6 +368,26 @@ export function resolveListingDurationOptions(durations: string[]): string[] {
 
 export function mapShippingServiceToFields(values: Record<string, string>): Record<string, string> {
   const selected = values[SHIPPING_SERVICE_FIELD] ?? '';
+  const getServiceValue = (candidates: string[]): string => {
+    const candidateNames = new Set(candidates.map((candidate) => candidate.toLowerCase()));
+    const entry = Object.entries(values).find(([fieldName]) => candidateNames.has(fieldName.trim().toLowerCase()));
+    return entry?.[1] ?? '';
+  };
+  const domesticService1 = getServiceValue(['Domestic Service 1', 'eBay Domestic Service 1']);
+  const domesticService2 = getServiceValue(['Domestic Service 2', 'eBay Domestic Service 2']);
+  const internationalService1 = getServiceValue(['International Service 1', 'eBay International Service 1']);
+  const internationalService2 = getServiceValue(['International Service 2', 'eBay International Service 2']);
+  const hasExplicitServiceValues = Boolean(
+    domesticService1.trim()
+    || domesticService2.trim()
+    || internationalService1.trim()
+    || internationalService2.trim(),
+  );
+
+  if (hasExplicitServiceValues) {
+    return values;
+  }
+
   return {
     ...values,
     'Domestic Service 1': selected === 'UPS Ground' || selected === 'UPS 3-Day Select' ? selected : '',

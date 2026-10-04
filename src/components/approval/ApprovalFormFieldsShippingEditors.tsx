@@ -74,33 +74,10 @@ export function ApprovalFormFieldsShippingEditors({
           selectClassName={getSelectClassName(fieldName)}
           value={selectedValue}
           onChange={(event: ChangeEvent<HTMLSelectElement>) => {
-            const nextSelectedValue = event.target.value;
-            const domesticFieldName = ebayDomesticShippingFeesFieldName ?? fieldName;
-            const internationalFieldName = ebayInternationalShippingFeesFieldName;
-            const domesticStoredValue = formValues[domesticFieldName] ?? '';
-            const internationalStoredValue = internationalFieldName ? (formValues[internationalFieldName] ?? '') : '';
-            const nextDomesticValue = isInternational
-              ? getSeparatedEbayShippingFeeValue({
-                  fieldName: domesticFieldName,
-                  fieldValue: domesticStoredValue,
-                  domesticFieldValue: domesticStoredValue,
-                })
-              : nextSelectedValue;
-            const nextInternationalValue = isInternational
-              ? nextSelectedValue
-              : getSeparatedEbayShippingFeeValue({
-                  fieldName: internationalFieldName ?? fieldName,
-                  fieldValue: internationalStoredValue,
-                  domesticFieldValue: domesticStoredValue,
-                });
-
-            if (domesticFieldName) {
-              setFormValue(domesticFieldName, nextDomesticValue);
-            }
-
-            if (internationalFieldName) {
-              setFormValue(internationalFieldName, nextInternationalValue);
-            }
+            const targetFieldName = isInternational
+              ? ebayInternationalShippingFeesFieldName ?? fieldName
+              : ebayDomesticShippingFeesFieldName ?? fieldName;
+            setFormValue(targetFieldName, event.target.value);
           }}
           disabled={inputDisabled}
         >
@@ -134,7 +111,6 @@ export function ApprovalFormFieldsShippingEditors({
   const internationalSelectedValue = getSeparatedEbayShippingFeeValue({
     fieldName: internationalFieldName,
     fieldValue: internationalStoredValue,
-    domesticFieldValue: domesticStoredValue,
   });
   const domesticDisabled = saving || isReadOnlyApprovalField(domesticFieldName);
   const internationalDisabled = saving || isReadOnlyApprovalField(internationalFieldName);

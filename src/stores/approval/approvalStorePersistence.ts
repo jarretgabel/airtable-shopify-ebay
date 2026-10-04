@@ -174,6 +174,11 @@ function toNumericRetryValues(value: unknown): unknown[] {
 }
 
 function getPriceFieldRetryNames(fieldName: string): string[] {
+  const normalizedFieldName = fieldName.trim().toLowerCase();
+  const isShopifyAlias = normalizedFieldName.includes('shopify');
+  const isEbayAlias = normalizedFieldName.includes('ebay')
+    || normalizedFieldName.includes('buy it now')
+    || normalizedFieldName.includes('starting bid');
   const candidates = [
     fieldName,
     'Buy It Now Price',
@@ -196,14 +201,7 @@ function getPriceFieldRetryNames(fieldName: string): string[] {
     'ebay_offer_pricingSummary_auctionStartPrice_value',
     'Buy It Now USD',
     'Starting Bid USD',
-    'Price',
   ];
-
-  const normalizedFieldName = fieldName.trim().toLowerCase();
-  const isShopifyAlias = normalizedFieldName.includes('shopify');
-  const isEbayAlias = normalizedFieldName.includes('ebay')
-    || normalizedFieldName.includes('buy it now')
-    || normalizedFieldName.includes('starting bid');
   const preferredOrder = isEbayAlias
     ? [
         'Ebay Price',
@@ -325,6 +323,69 @@ function getFieldAliasRetryNames(fieldName: string): string[] {
   }
 
   if (
+    normalized === 'shopify collections'
+    || normalized === 'shopify collection ids'
+    || normalized === 'shopify graphql collection ids'
+    || normalized === 'shopify graphql collections json'
+    || normalized === 'collections'
+  ) {
+    return [
+      fieldName,
+      'Shopify Collections',
+      'Shopify Collection IDs',
+      'Shopify GraphQL Collection IDs',
+      'Shopify GraphQL Collections JSON',
+      'Collections',
+    ];
+  }
+
+  if (
+    normalized === 'ebay categories'
+    || normalized === 'e bay categories'
+    || normalized === 'categories'
+  ) {
+    return [fieldName, 'Ebay Categories', 'eBay Categories', 'Categories'];
+  }
+
+  if (
+    normalized === 'domestic shipping fees'
+    || normalized === 'ebay domestic shipping fees'
+  ) {
+    return [fieldName, 'Ebay Domestic Shipping Fees', 'eBay Domestic Shipping Fees', 'Domestic Shipping Fees'];
+  }
+
+  if (
+    normalized === 'international shipping fees'
+    || normalized === 'ebay international shipping fees'
+  ) {
+    return [fieldName, 'Ebay International Shipping Fees', 'eBay International Shipping Fees', 'International Shipping Fees'];
+  }
+
+  if (
+    normalized === 'domestic shipping flat fee'
+    || normalized === 'ebay domestic shipping flat fee'
+  ) {
+    return [fieldName, 'Ebay Domestic Shipping Flat Fee', 'eBay Domestic Shipping Flat Fee', 'Domestic Shipping Flat Fee'];
+  }
+
+  if (
+    normalized === 'international shipping flat fee'
+    || normalized === 'ebay international shipping flat fee'
+  ) {
+    return [fieldName, 'Ebay International Shipping Flat Fee', 'eBay International Shipping Flat Fee', 'International Shipping Flat Fee'];
+  }
+
+  const shippingServiceAliases: Record<string, string[]> = {
+    'domestic service 1': ['Domestic Service 1', 'Ebay Domestic Service 1', 'eBay Domestic Service 1', 'Domestic Service', 'Ebay Domestic Service', 'eBay Domestic Service'],
+    'domestic service 2': ['Domestic Service 2', 'Ebay Domestic Service 2', 'eBay Domestic Service 2'],
+    'international service 1': ['International Service 1', 'Ebay International Service 1', 'eBay International Service 1', 'International Service', 'Ebay International Service', 'eBay International Service'],
+    'international service 2': ['International Service 2', 'Ebay International Service 2', 'eBay International Service 2'],
+  };
+  if (shippingServiceAliases[normalized]) {
+    return [fieldName, ...shippingServiceAliases[normalized]];
+  }
+
+  if (
     normalized === 'ebay listing format'
     || normalized === 'ebay format'
     || normalized === 'ebay offer format'
@@ -352,6 +413,39 @@ function getPrimaryAliasFallbackFieldName(fieldName: string): string | null {
   const current = fieldName.trim().toLowerCase();
   const fallback = candidates.find((candidate) => candidate.toLowerCase() !== current);
   return fallback ?? null;
+}
+
+function getKnownMissingWritableFieldName(fieldName: string): string | null {
+  const normalized = fieldName.trim().toLowerCase();
+  const canonicalFields: Record<string, string> = {
+    'categories': 'Ebay Categories',
+    'e bay categories': 'Ebay Categories',
+    'ebay categories': 'Ebay Categories',
+    'domestic shipping fees': 'Ebay Domestic Shipping Fees',
+    'ebay domestic shipping fees': 'Ebay Domestic Shipping Fees',
+    'international shipping fees': 'Ebay International Shipping Fees',
+    'ebay international shipping fees': 'Ebay International Shipping Fees',
+    'domestic shipping flat fee': 'Ebay Domestic Shipping Flat Fee',
+    'ebay domestic shipping flat fee': 'Ebay Domestic Shipping Flat Fee',
+    'international shipping flat fee': 'Ebay International Shipping Flat Fee',
+    'ebay international shipping flat fee': 'Ebay International Shipping Flat Fee',
+    'domestic service 1': 'Ebay Domestic Service 1',
+    'domestic service': 'Ebay Domestic Service 1',
+    'ebay domestic service 1': 'Ebay Domestic Service 1',
+    'domestic service 2': 'Ebay Domestic Service 2',
+    'ebay domestic service 2': 'Ebay Domestic Service 2',
+    'international service 1': 'Ebay International Service 1',
+    'international service': 'Ebay International Service 1',
+    'ebay international service 1': 'Ebay International Service 1',
+    'ebay international service': 'eBay International Service',
+    'international service 2': 'Ebay International Service 2',
+    'ebay international service 2': 'Ebay International Service 2',
+    'shopify collection ids': 'Shopify Collections',
+    'shopify collections': 'Shopify Collections',
+    'shopify graphql collection ids': 'Shopify Collections',
+  };
+
+  return canonicalFields[normalized] ?? null;
 }
 
 function toCategoryTokens(value: unknown): string[] {
@@ -426,6 +520,29 @@ function isAllowedMissingWritableFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   const compact = normalized.replace(/[^a-z0-9]/g, '');
   return isTagLikeFieldName(fieldName)
+    || normalized === 'ebay categories'
+    || normalized === 'e bay categories'
+    || normalized === 'shopify graphql collection ids'
+    || normalized === 'shopify collection ids'
+    || normalized === 'shopify collections'
+    || normalized === 'domestic shipping fees'
+    || normalized === 'ebay domestic shipping fees'
+    || normalized === 'international shipping fees'
+    || normalized === 'ebay international shipping fees'
+    || normalized === 'domestic shipping flat fee'
+    || normalized === 'ebay domestic shipping flat fee'
+    || normalized === 'international shipping flat fee'
+    || normalized === 'ebay international shipping flat fee'
+    || normalized === 'domestic service 1'
+    || normalized === 'ebay domestic service 1'
+    || normalized === 'domestic service 2'
+    || normalized === 'ebay domestic service 2'
+    || normalized === 'international service 1'
+    || normalized === 'international service'
+    || normalized === 'ebay international service 1'
+    || normalized === 'ebay international service'
+    || normalized === 'international service 2'
+    || normalized === 'ebay international service 2'
     || normalized === 'vendor'
     || normalized === 'shopify vendor'
     || normalized === 'shopify rest vendor'
@@ -625,8 +742,18 @@ function parseAttachmentUrlList(rawValue: string): string[] {
     .filter(Boolean);
 }
 
-function coerceAttachmentFieldValue(rawValue: string, existingValue: unknown): unknown | undefined {
-  if (!isAttachmentArrayValue(existingValue)) return undefined;
+function coerceAttachmentFieldValue(
+  rawValue: string,
+  existingValue: unknown,
+  fieldName: string,
+): unknown | undefined {
+  const normalizedFieldName = fieldName.trim().toLowerCase();
+  const isKnownAttachmentField = normalizedFieldName === 'images'
+    || normalizedFieldName === 'workflow images'
+    || normalizedFieldName === 'workflow photos'
+    || normalizedFieldName === 'photography images'
+    || normalizedFieldName === 'testing images';
+  if (!isAttachmentArrayValue(existingValue) && !isKnownAttachmentField) return undefined;
 
   const trimmed = rawValue.trim();
   if (!trimmed) return [];
@@ -642,7 +769,7 @@ function coerceAttachmentFieldValue(rawValue: string, existingValue: unknown): u
 
   const selectedUrls = parseAttachmentUrlList(rawValue);
   const existingByUrl = new Map<string, Record<string, unknown>>();
-  existingValue.forEach((attachment) => {
+  (isAttachmentArrayValue(existingValue) ? existingValue : []).forEach((attachment) => {
     const url = typeof attachment.url === 'string' ? attachment.url.trim() : '';
     if (!url) return;
     existingByUrl.set(url.toLowerCase(), attachment);
@@ -662,7 +789,7 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
   return async (forceApproved, selectedRecord, tableReference, tableName, actualFieldNames, approvedFieldName, onSuccess, mode = 'full', systemFieldValues = {}) => {
     set({ saving: true, error: null });
     try {
-      const { formValues, fieldKinds } = get();
+      const { formValues, initialFormValues, fieldKinds } = get();
       const actualFieldLookup = new Set(actualFieldNames.map((fieldName) => fieldName.toLowerCase()));
       const existingFieldNameByLower = new Map<string, string>();
       actualFieldNames.forEach((fieldName) => {
@@ -709,7 +836,7 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           if (!existsOnRecord && !existsInSchema) return;
 
           const fieldKind = fieldKinds[writeFieldName] ?? inferFieldKindForField(writeFieldName, selectedRecord.fields[writeFieldName]);
-          const attachmentFieldValue = coerceAttachmentFieldValue(String(rawValue), selectedRecord.fields[writeFieldName]);
+          const attachmentFieldValue = coerceAttachmentFieldValue(String(rawValue), selectedRecord.fields[writeFieldName], writeFieldName);
           payload[writeFieldName] = attachmentFieldValue ?? fromFormValueForField(writeFieldName, String(rawValue), fieldKind);
         });
       };
@@ -726,6 +853,9 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           if (fieldName === SHIPPING_SERVICE_FIELD) return;
           if (fieldName === CONDITION_FIELD) return;
           if (isLikelyComputedAirtableField(fieldName)) return;
+
+          const sourceOriginalValue = initialFormValues[fieldName];
+          if (sourceOriginalValue !== undefined && rawValue === sourceOriginalValue) return;
 
           let writeFieldName = resolveCanonicalFieldName(fieldName, existingFieldNameByLower);
           const normalizedWriteFieldName = writeFieldName.trim().toLowerCase();
@@ -772,10 +902,11 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
             }
           }
 
-          if (!existsOnRecord && !existsInSchema && isCategoryLikeFieldName(writeFieldName)) return;
           const allowMissingWritableField = isAllowedMissingWritableFieldName(fieldName);
+          if (!existsOnRecord && !existsInSchema && isCategoryLikeFieldName(writeFieldName) && !allowMissingWritableField) return;
           if (!existsOnRecord && !existsInSchema && allowMissingWritableField) {
-            let fallbackFieldName = getPrimaryAliasFallbackFieldName(writeFieldName);
+            let fallbackFieldName = getKnownMissingWritableFieldName(writeFieldName)
+              ?? getPrimaryAliasFallbackFieldName(writeFieldName);
             if (!fallbackFieldName && isPriceLikeFieldName(writeFieldName)) {
               fallbackFieldName = getPreferredPriceFallbackFieldName(writeFieldName);
             }
@@ -788,7 +919,8 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
             existsInSchema = actualFieldLookup.has(writeFieldName.toLowerCase());
           }
 
-          const originalValue = toFormValueForField(writeFieldName, selectedRecord.fields[writeFieldName]);
+          const originalValue = initialFormValues[writeFieldName]
+            ?? toFormValueForField(writeFieldName, selectedRecord.fields[writeFieldName]);
           if (writeFieldName.toLowerCase() === resolvedApprovedFieldName.toLowerCase() && forceApproved) return;
           if (rawValue === originalValue) return;
 
@@ -799,8 +931,9 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
 
           const fieldKind = fieldKinds[writeFieldName] ?? 'text';
           const attachmentFieldValue = isCategoryLikeFieldName(writeFieldName)
+            || isCollectionLikeFieldName(writeFieldName)
             ? undefined
-            : coerceAttachmentFieldValue(rawValue, selectedRecord.fields[writeFieldName]);
+            : coerceAttachmentFieldValue(rawValue, selectedRecord.fields[writeFieldName], writeFieldName);
           const formFieldValue = fromFormValueForField(writeFieldName, rawValue, fieldKind);
           const numericPriceValue = writeFieldName === 'Ebay Price'
             ? toNumericRetryValues(rawValue)[0]

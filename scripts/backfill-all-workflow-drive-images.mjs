@@ -151,6 +151,22 @@ function filterRecordsByAge(records, sinceDays) {
   };
 }
 
+function filterRecordsByRetrySummary(records, summaryPath) {
+  if (!summaryPath || summaryPath === 'true') {
+    return { filteredRecords: records, retryCount: null };
+  }
+
+  const summary = JSON.parse(fs.readFileSync(path.resolve(summaryPath), 'utf8'));
+  const failedRecordIds = new Set(
+    (Array.isArray(summary.results) ? summary.results : [])
+      .filter((result) => result && result.error)
+      .map((result) => result.recordId)
+      .filter((recordId) => typeof recordId === 'string' && recordId),
+  );
+  const filteredRecords = records.filter((record) => failedRecordIds.has(record.id));
+  return { filteredRecords, retryCount: failedRecordIds.size };
+}
+
 function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
@@ -192,6 +208,10 @@ function extractJotFormSubmissionId(slotSubmissionId) {
 
 function isOldFormatSubmissionId(slotSubmissionId) {
   return !/-slot\d+$/.test(slotSubmissionId);
+}
+
+function isSeededSubmissionReference(slotSubmissionId) {
+  return /^sb-[a-z0-9-]+:[A-Za-z0-9]+(?:-slot\d+)?$/.test(slotSubmissionId);
 }
 
 function getStagePlan(workflowStatus) {
@@ -331,6 +351,16 @@ async function resolveIntakeImages(record) {
     logProgress(`Record ${record.id} has no JotForm Submission ID; seeding intake images.`);
     return {
       source: 'seed',
+      images: await archiveSeededStageImages(record, 'intake'),
+    };
+  }
+
+  if (isSeededSubmissionReference(slotSubmissionId)) {
+    logProgress(`Record ${record.id} has a seeded submission reference; seeding intake images.`, {
+      submissionId: slotSubmissionId,
+    });
+    return {
+      source: 'seed-fallback',
       images: await archiveSeededStageImages(record, 'intake'),
     };
   }
@@ -580,7 +610,8 @@ async function main() {
 
   setProviderEnv();
   const allRecords = await loadWorkflowRecords();
-  const { filteredRecords: records, cutoffIso, skippedCount } = filterRecordsByAge(allRecords, sinceDays);
+  const { filteredRecords: ageFilteredRecords, cutoffIso, skippedCount } = filterRecordsByAge(allRecords, sinceDays);
+  const { filteredRecords: records, retryCount } = filterRecordsByRetrySummary(ageFilteredRecords, args['retry-summary']);
 
   if (sinceDays) {
     logProgress(`Applied --since-days filter (${sinceDays} day(s)).`, {
@@ -588,6 +619,14 @@ async function main() {
       totalRows: allRecords.length,
       selectedRows: records.length,
       skippedRows: skippedCount,
+    });
+  }
+
+  if (retryCount !== null) {
+    logProgress(`Applied retry summary filter.`, {
+      retrySummary: path.resolve(args['retry-summary']),
+      failedRowsInSummary: retryCount,
+      selectedRows: records.length,
     });
   }
 

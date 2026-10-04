@@ -6,8 +6,13 @@ import type {
   ShopifyApprovalPreviewResult as ShopifyApprovalPreview,
 } from '../../shared/contracts/shopifyApproval.js';
 import {
+  getTaxonomyCategoryAttributes,
   resolveTaxonomyCategory,
 } from './client.js';
+import {
+  buildShopifyTaxonomyChoiceMetafields,
+  parseShopifyTaxonomyAttributes,
+} from './taxonomyAttributes.js';
 
 export type {
   ShopifyApprovalCategoryResolution,
@@ -29,6 +34,7 @@ import {
   resolveCategoryId,
   resolveDescription,
   resolveProductCategory,
+  resolveTaxonomyAttributes,
   trimShopifyProductType,
   type ApprovalFieldMap,
 } from './approvalPreviewFieldResolvers.js';
@@ -91,16 +97,23 @@ export function buildShopifyApprovalPreviewFromFields(fields: ApprovalFieldMap):
     };
 
     const resolvedCategoryId = categoryIdResolution.value.trim() || categoryResolution.match?.id;
-    const productSetRequest = buildShopifyUnifiedProductSetRequest(effectiveProduct, {
+    const taxonomyDocument = parseShopifyTaxonomyAttributes(resolveTaxonomyAttributes(fields).value);
+    return Promise.all([
+      resolvedCategoryId && taxonomyDocument
+        ? getTaxonomyCategoryAttributes(resolvedCategoryId, categoryResolution.match?.fullName ?? taxonomyDocument.categoryFullName)
+        : Promise.resolve([]),
+    ]).then(([taxonomyDefinitions]) => {
+      const productSetRequest = buildShopifyUnifiedProductSetRequest(effectiveProduct, {
       categoryId: resolvedCategoryId || undefined,
       collectionIds: collectionPreview.collectionIds,
+      taxonomyMetafields: buildShopifyTaxonomyChoiceMetafields(taxonomyDocument, taxonomyDefinitions),
       existingProductId: (() => {
         const parsed = Number(coerceToString(fields['Shopify REST Product ID']));
         return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
       })(),
     });
 
-    return {
+      return {
       draftProduct,
       effectiveProduct,
       tagValues,
@@ -114,7 +127,8 @@ export function buildShopifyApprovalPreviewFromFields(fields: ApprovalFieldMap):
       categoryResolution,
       resolvedCategoryId: resolvedCategoryId || undefined,
       productSetRequest,
-    } satisfies ShopifyApprovalPreview;
+      } satisfies ShopifyApprovalPreview;
+    });
   });
 }
 

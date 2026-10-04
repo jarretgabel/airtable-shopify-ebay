@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  getEbayCategory,
   getEbayChildCategories,
   getEbayRootCategories,
   searchEbayCategorySuggestions,
@@ -92,6 +93,27 @@ export function useEbayCategoriesSelect({
       return next;
     });
   }, []);
+
+  useEffect(() => {
+    const unresolvedIds = value.filter((selectedValue) => (
+      /^\d+$/.test(selectedValue)
+      && !labelsById[selectedValue]
+      && !knownCategoriesById[selectedValue]
+    ));
+    if (unresolvedIds.length === 0) return;
+
+    let cancelled = false;
+    void Promise.all(unresolvedIds.map((categoryId) => getEbayCategory(categoryId, marketplaceId)))
+      .then((categories) => {
+        if (cancelled) return;
+        rememberCategories(categories.filter((category): category is EbayCategoryTreeNode => category !== null).map(toCategoryOption));
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [knownCategoriesById, labelsById, marketplaceId, rememberCategories, value]);
 
   const loadRootBrowseOptions = useCallback(async (activeMarketplaceId: string): Promise<void> => {
     const roots = await getEbayRootCategories(activeMarketplaceId);
@@ -228,6 +250,14 @@ export function useEbayCategoriesSelect({
     return map;
   }, [knownCategoriesById, labelsById, options]);
 
+  const selectedCategoryLabels = useMemo(
+    () => value.map((selectedValue) => {
+      const option = categoryMap.get(selectedValue) ?? categoryMap.get(normalizeSelectionValue(selectedValue));
+      return option?.name ?? selectedValue;
+    }),
+    [categoryMap, value],
+  );
+
   const buildLabelMap = useCallback((ids: string[]): Record<string, string> => {
     const nextLabelsById: Record<string, string> = {};
     ids.forEach((id) => {
@@ -311,6 +341,7 @@ export function useEbayCategoriesSelect({
     setDraggingCategoryId,
     setIsOpen,
     setQuery,
+    selectedCategoryLabels,
     toggleSelection,
   };
 }

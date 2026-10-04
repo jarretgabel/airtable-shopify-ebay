@@ -5,6 +5,7 @@ import {
   addProductToCollections,
   findLatestProductByTitleOrHandle,
   getProduct,
+  getTaxonomyCategoryAttributes,
   resolveTaxonomyCategory,
   syncProductVariantInventoryLevels,
   uploadImageFile,
@@ -18,6 +19,7 @@ import {
   buildShopifyUnifiedProductSetRequest,
 } from './approvalDraft.js';
 import { resolveCategoryId, resolveProductCategory } from './approvalPreviewFieldResolvers.js';
+import { buildShopifyTaxonomyChoiceMetafields, parseShopifyTaxonomyAttributes, findShopifyTaxonomyAttributesValue } from './taxonomyAttributes.js';
 
 interface PublishApprovalListingParams {
   source: AirtableConfiguredRecordsSource;
@@ -227,40 +229,57 @@ async function applyInventorySyncWarnings(
   }
 }
 
-async function reuploadProductImagesForShopify(product: ReturnType<typeof buildShopifyDraftProductFromApprovalFields>): Promise<ReturnType<typeof buildShopifyDraftProductFromApprovalFields>> {
+async function reuploadProductImagesForShopify(product: ReturnType<typeof buildShopifyDraftProductFromApprovalFields>): Promise<{
+  product: ReturnType<typeof buildShopifyDraftProductFromApprovalFields>;
+  warnings: string[];
+}> {
   if (!product.images || product.images.length === 0) {
-    return product;
+    return { product, warnings: [] };
   }
 
-  const reuploadedImages = await Promise.all(product.images.map(async (image, index) => {
+  const warnings: string[] = [];
+  const reuploadedImages = (await Promise.all(product.images.map(async (image, index) => {
     const sourceUrl = image.src?.trim() ?? '';
     if (!sourceUrl) {
-      throw new Error(`Image ${index + 1} is missing a source URL.`);
+      warnings.push(`Image ${index + 1} was skipped because it has no source URL.`);
+      return null;
     }
 
-    const response = await fetch(sourceUrl);
-    if (!response.ok) {
-      throw new Error(`Could not download image ${index + 1} (${response.status}).`);
+    try {
+      const response = await fetch(sourceUrl);
+      if (!response.ok) {
+        warnings.push(`Image ${index + 1} was skipped because its source returned HTTP ${response.status}.`);
+        return null;
+      }
+
+      const mimeType = response.headers.get('content-type')?.split(';')[0]?.trim() || 'image/jpeg';
+      const extension = getImageExtensionFromMimeType(mimeType);
+      const sourceFilename = image.filename?.trim().replace(/[^a-zA-Z0-9._-]+/g, '-');
+      const filename = sourceFilename && sourceFilename.includes('.')
+        ? sourceFilename
+        : `listing-image-${index + 1}.${extension}`;
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const file = buffer.toString('base64');
+      const uploaded = await uploadImageFile(filename, mimeType, file, image.alt);
+
+      return {
+        ...image,
+        src: uploaded.url,
+        alt: image.alt,
+        position: image.position ?? index + 1,
+      };
+    } catch (error) {
+      warnings.push(`Image ${index + 1} was skipped: ${error instanceof Error ? error.message : String(error)}`);
+      return null;
     }
-
-    const mimeType = response.headers.get('content-type')?.split(';')[0]?.trim() || 'image/jpeg';
-    const extension = getImageExtensionFromMimeType(mimeType);
-    const filename = `listing-image-${index + 1}.${extension}`;
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const file = buffer.toString('base64');
-    const uploaded = await uploadImageFile(filename, mimeType, file, image.alt);
-
-    return {
-      ...image,
-      src: uploaded.url,
-      alt: image.alt,
-      position: image.position ?? index + 1,
-    };
-  }));
+  }))).filter((image): image is NonNullable<typeof image> => image !== null);
 
   return {
-    ...product,
-    images: reuploadedImages,
+    product: {
+      ...product,
+      images: reuploadedImages,
+    },
+    warnings,
   };
 }
 
@@ -269,6 +288,7 @@ async function upsertWithCollectionFallback(params: {
   categoryId?: string;
   collectionIds: string[];
   existingProductId?: number;
+  taxonomyMetafields?: ReturnType<typeof buildShopifyTaxonomyChoiceMetafields>;
 }): Promise<{ product: ShopifyUnifiedProductResult; warnings: string[] }> {
   const warnings: string[] = [];
   const normalizedCollectionIds = Array.from(new Set(params.collectionIds.map((value) => value.trim()).filter(Boolean)));
@@ -277,6 +297,7 @@ async function upsertWithCollectionFallback(params: {
       categoryId: params.categoryId,
       collectionIds: normalizedCollectionIds,
       existingProductId: params.existingProductId,
+      taxonomyMetafields: params.taxonomyMetafields,
     });
     if (params.existingProductId && normalizedCollectionIds.length > 0) {
       const combinedResult = await upsertExistingProductWithCollectionsInSingleMutation(request, normalizedCollectionIds);
@@ -308,10 +329,15 @@ async function upsertWithCollectionFallback(params: {
   let productForUpsert = params.product;
 
   try {
+    const normalizedMedia = await reuploadProductImagesForShopify(productForUpsert);
+    productForUpsert = normalizedMedia.product;
+    warnings.push(...normalizedMedia.warnings);
     return { product: await runUpsert(productForUpsert), warnings };
   } catch (error) {
     if (isShopifyMediaFormatMismatchError(error) && (productForUpsert.images?.length ?? 0) > 0) {
-      productForUpsert = await reuploadProductImagesForShopify(productForUpsert);
+      const normalizedMedia = await reuploadProductImagesForShopify(productForUpsert);
+      productForUpsert = normalizedMedia.product;
+      warnings.push(...normalizedMedia.warnings);
       warnings.push('Shopify rejected source image format metadata; retried publish with normalized uploaded media files.');
       return { product: await runUpsert(productForUpsert), warnings };
     }
@@ -349,7 +375,10 @@ export async function publishApprovalListingToShopify({
       ...((await getConfiguredRecord(source, recordId)).fields ?? {}) as Record<string, unknown>,
       ...(fieldOverrides ?? {}),
     };
-  const product = preview?.effectiveProduct ?? buildShopifyDraftProductFromApprovalFields(fields);
+  const product = {
+    ...(preview?.effectiveProduct ?? buildShopifyDraftProductFromApprovalFields(fields)),
+    status: 'active' as const,
+  };
   const collectionIds = preview?.collectionIds ?? buildShopifyCollectionIdsFromApprovalFields(fields);
   const warnings = [...(preview?.categoryResolution.status === 'error' && preview.categoryResolution.error
     ? [`${preview.categoryResolution.error} Continuing without category assignment.`]
@@ -359,6 +388,22 @@ export async function publishApprovalListingToShopify({
     : await resolveCategoryForPublishWithoutPreview(fields, product);
   if (fallbackCategory.warning) warnings.push(fallbackCategory.warning);
   const categoryId = preview?.resolvedCategoryId || fallbackCategory.categoryId;
+  const taxonomyValue = findShopifyTaxonomyAttributesValue(fields);
+  const taxonomyDocument = parseShopifyTaxonomyAttributes(taxonomyValue);
+  if (taxonomyValue && !taxonomyDocument) {
+    warnings.push('Shopify taxonomy attributes JSON is malformed or unsupported; no taxonomy attributes were written.');
+  } else if (taxonomyDocument) {
+    const unsupportedCount = taxonomyDocument.attributes.filter((attribute) => attribute.type !== 'choice').length;
+    if (unsupportedCount > 0) {
+      warnings.push(`${unsupportedCount} Shopify taxonomy measurement/text attribute(s) were retained in Airtable but are not written natively.`);
+    }
+  }
+  const taxonomyMetafields = preview?.productSetRequest?.input.metafields?.filter((metafield) => metafield.namespace === 'shopify')
+    ?? await (async () => {
+      if (!taxonomyDocument || !categoryId) return [];
+      const definitions = await getTaxonomyCategoryAttributes(categoryId, taxonomyDocument.categoryFullName);
+      return buildShopifyTaxonomyChoiceMetafields(taxonomyDocument, definitions);
+    })();
   const targetInventoryLevels = getTargetVariantInventoryLevels(product);
   const existingProductIdRaw = coerceToString(fields[productIdFieldName]);
   const parsedExistingProductId = Number(existingProductIdRaw);
@@ -400,6 +445,7 @@ export async function publishApprovalListingToShopify({
         categoryId,
         collectionIds,
         existingProductId: parsedExistingProductId,
+        taxonomyMetafields,
       });
       const resolvedWarnings = await applyInventorySyncWarnings(
         updated.product.id,
@@ -428,6 +474,7 @@ export async function publishApprovalListingToShopify({
       categoryId,
       collectionIds,
       existingProductId: duplicateGuardMatch.id,
+      taxonomyMetafields,
     });
 
     let wroteProductId = false;
@@ -464,6 +511,7 @@ export async function publishApprovalListingToShopify({
     product,
     categoryId,
     collectionIds,
+    taxonomyMetafields,
   });
   let wroteProductId = false;
   try {

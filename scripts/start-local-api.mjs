@@ -35,6 +35,7 @@ const ROUTES = [
   ['GET', '/api/ebay/offers/{offerId}', 'handlers/ebay/getOffer.js', 'handler'],
   ['POST', '/api/ebay/offers/by-skus', 'handlers/ebay/getOffersForInventorySkus.js', 'handler'],
   ['GET', '/api/ebay/taxonomy/suggestions', 'handlers/ebay/searchCategorySuggestions.js', 'handler'],
+  ['GET', '/api/ebay/taxonomy/category', 'handlers/ebay/getCategory.js', 'handler'],
   ['GET', '/api/ebay/taxonomy/root-categories', 'handlers/ebay/getRootCategories.js', 'handler'],
   ['GET', '/api/ebay/taxonomy/child-categories', 'handlers/ebay/getChildCategories.js', 'handler'],
   ['GET', '/api/ebay/package-types', 'handlers/ebay/getPackageTypes.js', 'handler'],

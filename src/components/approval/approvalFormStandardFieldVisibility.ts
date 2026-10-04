@@ -39,7 +39,6 @@ import {
   isEbaySecondaryCategoryField,
   isEbayShippingServiceFieldName,
   isEbayShippingTypeField,
-  isRemovedEbayField,
 } from './approvalFormFieldsEbayHelpers';
 import {
   isEbayInventoryImageUrlsField,
@@ -132,7 +131,6 @@ export function shouldHideApprovalFormStandardField({
   if (isSystemManagedListingFieldName(fieldName)) return true;
   if (isInternalReferenceListingFieldName(fieldName)) return true;
   if (isCombinedApproval && isHiddenCombinedFieldName(fieldName)) return true;
-  if (isRemovedEbayField(fieldName)) return true;
   if (!allowAdvancedOptionField && approvalChannel === 'ebay' && isEbayAdvancedOptionField(fieldName)) return true;
 
   const canonicalShippingServiceAlias = getCanonicalShippingServiceAlias(fieldName);
@@ -160,6 +158,7 @@ export function shouldHideApprovalFormStandardField({
   if (isShopifyTypesFreeformField(fieldName)) return true;
   if (approvalChannel === 'shopify' && isShopifyVariantStatusField(fieldName)) return true;
   if (approvalChannel === 'shopify' && (isShopifyTemplateVariantNameField(fieldName) || isShopifyOptionValuesField(fieldName) || isShopifyVariantOptionField(fieldName))) return true;
+  if (fieldName === SHIPPING_SERVICE_FIELD && (isCombinedApproval || approvalChannel !== 'ebay')) return true;
   if (approvalChannel === 'ebay' && hasEbayShippingServicesEditor && (isEbayShippingServiceFieldName(fieldName) || fieldName === SHIPPING_SERVICE_FIELD)) return true;
   if (isShippingServiceField(fieldName) && approvalChannel !== 'ebay') return true;
   if (fieldName === approvedFieldName) return true;

@@ -67,6 +67,12 @@ const SHOPIFY_GRAPHQL_CATEGORY_ID_FIELD_CANDIDATES = [
   'shopify_product_category',
 ] as const;
 
+export const SHOPIFY_TAXONOMY_ATTRIBUTES_FIELD_CANDIDATES = [
+  'Shopify Taxonomy Attributes JSON',
+  'Shopify Taxonomy Attributes',
+  'shopify_taxonomy_attributes_json',
+] as const;
+
 function normalizeKey(input: string): string {
   return input.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
@@ -221,4 +227,9 @@ export function resolveCategoryId(fields: ApprovalFieldMap): ShopifyApprovalFiel
     sourceType: 'none',
     value: '',
   };
+}
+
+export function resolveTaxonomyAttributes(fields: ApprovalFieldMap): ShopifyApprovalFieldResolution {
+  const exact = buildExactOrNormalizedResolution(fields, SHOPIFY_TAXONOMY_ATTRIBUTES_FIELD_CANDIDATES);
+  return exact ?? { sourceFieldName: '', sourceType: 'none', value: '' };
 }

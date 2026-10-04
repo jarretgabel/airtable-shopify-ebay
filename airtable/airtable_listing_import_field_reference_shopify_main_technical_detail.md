@@ -50,6 +50,7 @@ Each variant is one sellable version of the product.
 | --- | --- | --- | --- |
 | `Shopify REST Variant N Price` | Yes | The selling price for that version. | `899.00` |
 | `Shopify REST Variant N SKU` | Yes | Your internal item code for that version. | `MAR2230-EXC-120V` |
+| `Shopify Inventory Quantity` | Yes | Canonical whole-number quantity available for the Shopify listing. Leave blank when unknown. | `1` |
 | `Shopify REST Variant N Inventory Quantity` | Yes | How many you have available. | `1` |
 | `Shopify REST Variant N Inventory Management` | Yes | Tells Shopify who should track stock. | `shopify` |
 | `Shopify REST Variant N Inventory Policy` | Yes | Decides what happens when stock reaches zero. | `deny` |

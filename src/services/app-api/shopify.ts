@@ -9,6 +9,7 @@ import type {
   ShopifyApprovalPreviewResult,
   ShopifyApprovalPublishResult,
   ShopifyApprovalTaxonomyCategoryMatch as ShopifyTaxonomyCategoryMatch,
+  ShopifyApprovalTaxonomyCategoryAttribute as ShopifyTaxonomyCategoryAttribute,
 } from '@contracts/shopifyApproval';
 import type { AirtableConfiguredRecordsSource } from './airtableSources';
 import type { ShopifyProductsResponse } from '@/types/shopify';
@@ -91,6 +92,14 @@ export async function searchTaxonomyCategories(search: string, first = 10): Prom
 export async function resolveTaxonomyCategory(searchOrId: string): Promise<ShopifyTaxonomyCategoryMatch | null> {
   try {
     return await getJson<ShopifyTaxonomyCategoryMatch | null>('/api/shopify/taxonomy-categories/resolve', { searchOrId });
+  } catch (error) {
+    throw toShopifyError(error);
+  }
+}
+
+export async function getTaxonomyCategoryAttributes(categoryId: string, categorySearch: string): Promise<ShopifyTaxonomyCategoryAttribute[]> {
+  try {
+    return await getJson<ShopifyTaxonomyCategoryAttribute[]>('/api/shopify/taxonomy-categories/attributes', { categoryId, categorySearch });
   } catch (error) {
     throw toShopifyError(error);
   }

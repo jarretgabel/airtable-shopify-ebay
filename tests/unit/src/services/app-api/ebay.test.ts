@@ -2,6 +2,7 @@ import {
   createSampleListing,
   getEbayBusinessPolicies,
   getEbayApprovalPreview,
+  getEbayCategory,
   getEbayChildCategories,
   getEbayDashboardSnapshot,
   getEbayPackageTypes,
@@ -98,6 +99,7 @@ describe('app-api ebay', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify([{ id: '1', name: 'Amplifiers', path: 'Amplifiers', level: 1 }]), { status: 200, headers: { 'content-type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify([{ id: '2', name: 'Audio', path: 'Audio', level: 0, hasChildren: true }]), { status: 200, headers: { 'content-type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify([{ id: '3', name: 'Tube Amps', path: 'Audio > Tube Amps', level: 1, hasChildren: false }]), { status: 200, headers: { 'content-type': 'application/json' } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: '852', name: 'DVDs & Blu-ray Discs', path: 'Movies & TV > DVDs & Blu-ray Discs', level: 2, hasChildren: false }), { status: 200, headers: { 'content-type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify(['Letter', 'Package/Thick Envelope']), { status: 200, headers: { 'content-type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({
         marketplaceId: 'EBAY_US',
@@ -109,6 +111,7 @@ describe('app-api ebay', () => {
     const suggestions = await searchEbayCategorySuggestions('amp', 'EBAY_US');
     const roots = await getEbayRootCategories('EBAY_US');
     const children = await getEbayChildCategories('2', 'EBAY_US');
+    const category = await getEbayCategory('852', 'EBAY_US');
     const packageTypes = await getEbayPackageTypes('EBAY_US');
     const businessPolicies = await getEbayBusinessPolicies('EBAY_US');
 
@@ -127,12 +130,17 @@ describe('app-api ebay', () => {
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
-    expect(fetchMock).toHaveBeenNthCalledWith(4, expectApiPath('/api/ebay/package-types?marketplaceId=EBAY_US'), {
+    expect(fetchMock).toHaveBeenNthCalledWith(4, expectApiPath('/api/ebay/taxonomy/category?categoryId=852&marketplaceId=EBAY_US'), {
       cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
-    expect(fetchMock).toHaveBeenNthCalledWith(5, expectApiPath('/api/ebay/business-policies?marketplaceId=EBAY_US'), {
+    expect(fetchMock).toHaveBeenNthCalledWith(5, expectApiPath('/api/ebay/package-types?marketplaceId=EBAY_US'), {
+      cache: 'no-store',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    });
+    expect(fetchMock).toHaveBeenNthCalledWith(6, expectApiPath('/api/ebay/business-policies?marketplaceId=EBAY_US'), {
       cache: 'no-store',
       credentials: 'include',
       headers: { Accept: 'application/json' },
@@ -140,6 +148,7 @@ describe('app-api ebay', () => {
     expect(suggestions).toHaveLength(1);
     expect(roots).toHaveLength(1);
     expect(children).toHaveLength(1);
+    expect(category?.name).toBe('DVDs & Blu-ray Discs');
     expect(packageTypes).toEqual(['Letter', 'Package/Thick Envelope']);
     expect(businessPolicies.fulfillmentPolicies).toHaveLength(1);
   });

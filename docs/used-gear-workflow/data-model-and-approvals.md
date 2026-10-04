@@ -165,6 +165,20 @@ These are proposed additions or formalized workflow fields for `tbl0K0nFQL64jQMx
 	- Sample values: `JotForm`, `Manual Entry`.
 	- Rule: set once at row creation and do not reuse it to describe current state or routing.
 	- When to use it: use this when you need to answer "where did this row originate?"
+
+#### Shopify Product Shipping Data
+- `Shipping Width`
+	- Purpose: store the product's shipping width as a separate numeric value in inches.
+	- Shopify mapping: product metafield `custom.shipping_width` with type `number_decimal`.
+- `Shipping Depth`
+	- Purpose: store the product's shipping depth as a separate numeric value in inches.
+	- Shopify mapping: product metafield `custom.shipping_depth` with type `number_decimal`.
+- `Shipping Height`
+	- Purpose: store the product's shipping height as a separate numeric value in inches.
+	- Shopify mapping: product metafield `custom.shipping_height` with type `number_decimal`.
+- `Shipping Dims`
+	- Compatibility: retain as a legacy bundled source for existing rows; it is not the canonical representation for new records.
+	- These fields are product data only and are not used for automatic package or carrier-rate calculations.
 - `JotForm Submission ID`
 	- Purpose: store the exact external JotForm submission identity for webhook idempotency, audit, and replay-safe updates.
 	- Plain-language meaning: this is the source submission id that came from JotForm itself; it is separate from workflow grouping so replay/idempotency remains stable even when pickup grouping changes later.

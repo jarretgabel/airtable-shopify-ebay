@@ -12,6 +12,7 @@ If you are filling out Shopify for the first time, start with these fields first
 - `Shopify Handle`
 - `Shopify Variant N Price`
 - `Shopify Variant N SKU`
+- `Shopify Inventory Quantity`
 - `Shopify Variant N Inventory Quantity`
 - `Shopify Status`
 - `Shopify Image 1 Src`
@@ -74,6 +75,7 @@ Each variant is one sellable version of the product.
 | --- | --- | --- | --- |
 | `Shopify Variant N Price` | Yes | The selling price for that version. | `899.00` |
 | `Shopify Variant N SKU` | Yes | Your internal item code for that version. | `MAR2230-EXC-120V` |
+| `Shopify Inventory Quantity` | Yes | Canonical whole-number quantity available for the Shopify listing. Leave blank when unknown. | `1` |
 | `Shopify Variant N Inventory Quantity` | Yes | How many you have available. | `1` |
 | `Shopify Variant N Inventory Management` | Yes | Tells Shopify who should track stock. | `shopify` |
 | `Shopify Variant N Inventory Policy` | Yes | Decides what happens when stock reaches zero. | `deny` |

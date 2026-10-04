@@ -140,7 +140,9 @@ export function parseBoolean(raw: string, fallback: boolean): boolean {
 export function parseNumber(raw: string): number | undefined {
   const cleaned = raw.trim();
   if (!cleaned) return undefined;
-  const parsed = Number(cleaned);
+  const numericPrefix = cleaned.match(/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)/)?.[0];
+  if (!numericPrefix) return undefined;
+  const parsed = Number(numericPrefix);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 

@@ -38,6 +38,9 @@ Parameters:
   ShopifyAccessToken:
     Type: String
     NoEcho: true
+  ShopifyInventoryLocationId:
+    Type: String
+    Default: ''
   ShopifyWebhookSecret:
     Type: String
     NoEcho: true
@@ -202,6 +205,7 @@ Globals:
         AIRTABLE_COMBINED_LISTINGS_TABLE_NAME: !Ref AirtableCombinedListingsTableName
         SHOPIFY_STORE_DOMAIN: !Ref ShopifyStoreDomain
         SHOPIFY_ACCESS_TOKEN: !Ref ShopifyAccessToken
+        SHOPIFY_INVENTORY_LOCATION_ID: !Ref ShopifyInventoryLocationId
         SHOPIFY_WEBHOOK_SECRET: !Ref ShopifyWebhookSecret
         SHOPIFY_WEBHOOK_BASE_URL: !Ref ShopifyWebhookBaseUrl
         EBAY_ENV: !Ref EbayEnv
@@ -366,6 +370,21 @@ Resources:
             Method: GET
             Path: /api/shopify/taxonomy-categories/resolve
 
+  ShopifyGetTaxonomyCategoryAttributesFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/shopify/getTaxonomyCategoryAttributes.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/shopify/taxonomy-categories/attributes
+
   ShopifyUpsertProductFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -403,6 +422,7 @@ Resources:
     Properties:
       CodeUri: .
       Handler: src/handlers/approval/publish.handler
+      Timeout: 30
       Events:
         ApiEvent:
           Type: HttpApi
@@ -637,6 +657,21 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: GET
             Path: /api/ebay/taxonomy/child-categories
+
+  EbayGetCategoryFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/getCategory.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/ebay/taxonomy/category
 
   EbayGetPackageTypesFunction:
     Type: AWS::Serverless::Function

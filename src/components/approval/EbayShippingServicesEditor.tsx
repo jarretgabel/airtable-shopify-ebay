@@ -21,7 +21,7 @@ const INTERNATIONAL_SERVICE_OPTIONS = [
   'eBay International Standard Delivery',
 ] as const;
 
-const checkboxClass = 'h-4 w-4 rounded border border-[var(--line)] bg-[var(--panel)] text-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-60';
+const selectClass = 'w-full appearance-none rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 pr-10 text-sm font-normal text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-60';
 
 function uniqueOptions(baseOptions: readonly string[], selectedValues: string[]): string[] {
   const seen = new Set<string>();
@@ -61,26 +61,15 @@ export function EbayShippingServicesEditor({
   const domesticOptions = uniqueOptions(DOMESTIC_SERVICE_OPTIONS, selectedDomesticServices);
   const internationalOptions = uniqueOptions(INTERNATIONAL_SERVICE_OPTIONS, selectedInternationalServices);
 
-  function writeFieldGroup(fieldNames: Array<string | undefined>, nextValues: string[]) {
-    fieldNames.forEach((fieldName, index) => {
-      if (!fieldName) return;
-      setFormValue(fieldName, nextValues[index] ?? '');
-    });
-
-    const fallbackSelected = nextValues[0] ?? '';
-    setFormValue(SHIPPING_SERVICE_FIELD, fallbackSelected);
+  function writeSingleService(fieldNames: Array<string | undefined>, nextValue: string, updateFallback: boolean) {
+    const [primaryFieldName, secondaryFieldName] = fieldNames;
+    if (primaryFieldName) setFormValue(primaryFieldName, nextValue);
+    if (secondaryFieldName) setFormValue(secondaryFieldName, '');
+    if (updateFallback) setFormValue(SHIPPING_SERVICE_FIELD, nextValue);
   }
 
-  function toggleOption(option: string, currentValues: string[], fieldNames: Array<string | undefined>) {
-    const alreadySelected = currentValues.some((value) => value.toLowerCase() === option.toLowerCase());
-    const nextValues = alreadySelected
-      ? currentValues.filter((value) => value.toLowerCase() !== option.toLowerCase())
-      : currentValues.length < 2
-        ? [...currentValues, option]
-        : currentValues;
-
-    writeFieldGroup(fieldNames, nextValues);
-  }
+  const selectedDomesticService = selectedDomesticServices[0] ?? '';
+  const selectedInternationalService = selectedInternationalServices[0] ?? '';
 
   return (
     <section className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2">
@@ -89,49 +78,39 @@ export function EbayShippingServicesEditor({
       </div>
       <div className="grid grid-cols-1 gap-4 px-3 py-3 md:grid-cols-2">
         <section className="rounded-lg border border-[var(--line)] bg-[var(--bg)] p-3">
-          <div className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Domestic</div>
-          <div className="flex flex-col gap-2">
-            {domesticOptions.map((option) => {
-              const checked = selectedDomesticServices.some((value) => value.toLowerCase() === option.toLowerCase());
-              const disableUnchecked = !checked && selectedDomesticServices.length >= 2;
-              return (
-                <label key={option} className="flex items-center gap-2 text-sm text-[var(--ink)]">
-                  <input
-                    className={checkboxClass}
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleOption(option, selectedDomesticServices, domesticFieldNames)}
-                    disabled={disabled || disableUnchecked}
-                  />
-                  <span>{option}</span>
-                </label>
-              );
-            })}
-          </div>
-          <p className="mb-0 mt-3 text-[0.74rem] leading-5 text-[var(--muted)]">Select up to two domestic services.</p>
+          <label className="flex flex-col gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+            Domestic
+            <span className="relative">
+              <select
+                className={selectClass}
+                value={selectedDomesticService}
+                onChange={(event) => writeSingleService(domesticFieldNames, event.target.value, true)}
+                disabled={disabled}
+              >
+                <option value="">Select a domestic service</option>
+                {domesticOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+              <span className="pointer-events-none absolute right-4 top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 border-b-2 border-r-2 border-[var(--muted)]" aria-hidden="true" />
+            </span>
+          </label>
         </section>
 
         <section className="rounded-lg border border-[var(--line)] bg-[var(--bg)] p-3">
-          <div className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">International</div>
-          <div className="flex flex-col gap-2">
-            {internationalOptions.map((option) => {
-              const checked = selectedInternationalServices.some((value) => value.toLowerCase() === option.toLowerCase());
-              const disableUnchecked = !checked && selectedInternationalServices.length >= 2;
-              return (
-                <label key={option} className="flex items-center gap-2 text-sm text-[var(--ink)]">
-                  <input
-                    className={checkboxClass}
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleOption(option, selectedInternationalServices, internationalFieldNames)}
-                    disabled={disabled || disableUnchecked}
-                  />
-                  <span>{option}</span>
-                </label>
-              );
-            })}
-          </div>
-          <p className="mb-0 mt-3 text-[0.74rem] leading-5 text-[var(--muted)]">Select up to two international services.</p>
+          <label className="flex flex-col gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+            International
+            <span className="relative">
+              <select
+                className={selectClass}
+                value={selectedInternationalService}
+                onChange={(event) => writeSingleService(internationalFieldNames, event.target.value, false)}
+                disabled={disabled}
+              >
+                <option value="">No international shipping</option>
+                {internationalOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+              <span className="pointer-events-none absolute right-4 top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 border-b-2 border-r-2 border-[var(--muted)]" aria-hidden="true" />
+            </span>
+          </label>
         </section>
       </div>
     </section>

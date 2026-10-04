@@ -21,6 +21,7 @@ import { getJson, postJson } from './http';
 
 const ebayPackageTypesCache = new Map<string, string[]>();
 const ebayPackageTypesInFlight = new Map<string, Promise<string[]>>();
+const ebayCategoriesByIdCache = new Map<string, EbayCategoryTreeNode>();
 
 export type { EbayApprovalPreviewResult } from '@contracts/ebayApproval';
 
@@ -129,6 +130,30 @@ export async function getEbayChildCategories(
       parentCategoryId,
       marketplaceId,
     });
+  } catch (error) {
+    throw toEbayError(error);
+  }
+}
+
+export async function getEbayCategory(
+  categoryId: string,
+  marketplaceId = 'EBAY_US',
+): Promise<EbayCategoryTreeNode | null> {
+  const normalizedCategoryId = categoryId.trim();
+  const normalizedMarketplaceId = marketplaceId.trim().toUpperCase() || 'EBAY_US';
+  if (!normalizedCategoryId) return null;
+
+  const cacheKey = `${normalizedMarketplaceId}:${normalizedCategoryId}`;
+  const cached = ebayCategoriesByIdCache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const category = await getJson<EbayCategoryTreeNode | null>('/api/ebay/taxonomy/category', {
+      categoryId: normalizedCategoryId,
+      marketplaceId: normalizedMarketplaceId,
+    });
+    if (category) ebayCategoriesByIdCache.set(cacheKey, category);
+    return category;
   } catch (error) {
     throw toEbayError(error);
   }

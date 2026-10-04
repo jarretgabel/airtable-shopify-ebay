@@ -91,6 +91,38 @@ describe('approvalStorePersistence', () => {
     logServiceInfoMock.mockReset();
   });
 
+  it('saves a value restored to the record snapshot after an earlier save changed the baseline', async () => {
+    const state = buildStoreState({
+      formValues: { 'Ebay International Service 1': 'International' },
+      initialFormValues: { 'Ebay International Service 1': 'USPS Priority Mail International' },
+      fieldKinds: { 'Ebay International Service 1': 'text' },
+    });
+    const saveRecord = createSaveRecordAction(vi.fn(), vi.fn(() => state));
+    updateRecordFromResolvedSourceMock.mockResolvedValue(buildRecord({
+      'Ebay International Service 1': 'International',
+    }));
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ 'Ebay International Service 1': 'International' }),
+      'base/table',
+      'Approval',
+      ['Ebay International Service 1'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Ebay International Service 1': 'International' },
+      undefined,
+    );
+  });
+
   it('retries category saves with alternate value shapes after a 422 response', async () => {
     const setMock = vi.fn();
     const loadRecordsMock = vi.fn(async () => {});
@@ -130,6 +162,98 @@ describe('approvalStorePersistence', () => {
       { typecast: true },
     );
     expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('redirects synthetic collection and shipping aliases to live Airtable fields', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: {
+        'Shopify GraphQL Collection IDs': '["Vintage Audio"]',
+        'Ebay Domestic Service 1': 'UPS Ground',
+      },
+      fieldKinds: {
+        'Shopify GraphQL Collection IDs': 'text',
+        'Ebay Domestic Service 1': 'text',
+      },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({
+        'Shopify Collections': [],
+        'Ebay Domestic Service 1': '',
+      }),
+      'base/table',
+      'Approval',
+      ['Shopify Collections', 'Ebay Domestic Service 1'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      {
+        'Shopify Collections': ['Vintage Audio'],
+        'Ebay Domestic Service 1': 'UPS Ground',
+      },
+      { typecast: true },
+    );
+  });
+
+  it('does not clear collections from an untouched synthetic alias during an unrelated save', async () => {
+    const state = buildStoreState({
+      formValues: {
+        'Shopify Collections': '["gid://shopify/Collection/514245656898"]',
+        Collections: '',
+        'Ebay Domestic Service 1': 'UPS Ground',
+      },
+      initialFormValues: {
+        'Shopify Collections': '["gid://shopify/Collection/514245656898"]',
+        Collections: '',
+        'Ebay Domestic Service 1': '',
+      },
+      fieldKinds: {
+        'Shopify Collections': 'json',
+        Collections: 'text',
+        'Ebay Domestic Service 1': 'text',
+      },
+      loadRecords: vi.fn(async () => {}),
+    });
+    const saveRecord = createSaveRecordAction(vi.fn(), vi.fn(() => state));
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({
+        'Shopify Collections': ['gid://shopify/Collection/514245656898'],
+        'Ebay Domestic Service 1': '',
+      }),
+      'base/table',
+      'Approval',
+      ['Shopify Collections', 'Ebay Domestic Service 1'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Ebay Domestic Service 1': 'UPS Ground' },
+      undefined,
+    );
   });
 
   it('persists selected eBay categories and separated shipping choices before reloading', async () => {
@@ -173,7 +297,7 @@ describe('approvalStorePersistence', () => {
       'Approval',
       'rec-approval-save-1',
       {
-        'Ebay Categories': '14990, 15032',
+        'Ebay Categories': ['14990', '15032'],
         'Ebay Domestic Shipping Fees': 'Calculated',
         'Ebay International Shipping Fees': 'Flat',
       },
@@ -181,6 +305,60 @@ describe('approvalStorePersistence', () => {
     );
     expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledTimes(1);
     expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('persists known blank eBay fields even when Airtable omits them from record data', async () => {
+    const state = buildStoreState({
+      formValues: {
+        'eBay Domestic Shipping Fees': 'Calculated',
+        'eBay International Shipping Fees': 'Flat',
+        'Ebay Categories': '14990, 15032',
+        'Domestic Service 1': 'UPS Ground',
+        'International Service': 'International',
+        'Ebay Domestic Shipping Flat Fee': '19.95',
+        'Ebay International Shipping Flat Fee': '49.95',
+      },
+      fieldKinds: {
+        'eBay Domestic Shipping Fees': 'text',
+        'eBay International Shipping Fees': 'text',
+        'Ebay Categories': 'text',
+        'Domestic Service 1': 'text',
+        'International Service': 'text',
+        'Ebay Domestic Shipping Flat Fee': 'number',
+        'Ebay International Shipping Flat Fee': 'number',
+      },
+      loadRecords: vi.fn(async () => {}),
+    });
+    const saveRecord = createSaveRecordAction(vi.fn(), vi.fn(() => state));
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({}),
+      'base/table',
+      'Approval',
+      [],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      {
+        'Ebay Domestic Shipping Fees': 'Calculated',
+        'Ebay International Shipping Fees': 'Flat',
+        'Ebay Categories': ['14990', '15032'],
+        'Ebay Domestic Service 1': 'UPS Ground',
+        'Ebay International Service 1': 'International',
+        'Ebay Domestic Shipping Flat Fee': 19.95,
+        'Ebay International Shipping Flat Fee': 49.95,
+      },
+      { typecast: true },
+    );
   });
 
   it('retries price saves with numeric values after a 422 response', async () => {
@@ -472,6 +650,46 @@ describe('approvalStorePersistence', () => {
         Images: [
           { id: 'att-image-b', url: 'https://cdn.example.com/image-b.jpg', filename: 'image-b.jpg' },
           { id: 'att-image-a', url: 'https://cdn.example.com/image-a.jpg', filename: 'image-a.jpg' },
+        ],
+      },
+      undefined,
+    );
+    expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
+  });
+
+  it('coerces blank-origin Images fields into attachment objects', async () => {
+    const setMock = vi.fn();
+    const loadRecordsMock = vi.fn(async () => {});
+    const state = buildStoreState({
+      formValues: { Images: 'https://cdn.example.com/image-a.jpg, https://cdn.example.com/image-b.jpg' },
+      fieldKinds: { Images: 'text' },
+      loadRecords: loadRecordsMock,
+    });
+    const getMock = vi.fn(() => state);
+    const saveRecord = createSaveRecordAction(setMock, getMock);
+
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Images'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      {
+        Images: [
+          { url: 'https://cdn.example.com/image-a.jpg' },
+          { url: 'https://cdn.example.com/image-b.jpg' },
         ],
       },
       undefined,

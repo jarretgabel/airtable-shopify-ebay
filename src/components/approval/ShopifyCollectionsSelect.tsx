@@ -348,7 +348,7 @@ export function ShopifyCollectionsSelect({
               >
                 <span className="text-sm text-[var(--ink)]">{option.title}</span>
                 <span className="text-[0.72rem] text-[var(--muted)]">
-                  {option.handle ? `/${option.handle}` : 'No handle'} · {collectionShortId(option.id)}
+                  {option.isSmartCollection ? 'Smart Collection' : 'Manual Collection'} · {option.handle ? `/${option.handle}` : 'No handle'} · {collectionShortId(option.id)}
                 </span>
               </button>
             );

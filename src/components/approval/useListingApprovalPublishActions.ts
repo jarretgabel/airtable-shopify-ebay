@@ -158,6 +158,7 @@ export function useListingApprovalPublishActions({
     if (workflowImageMetadata.length > 0) {
       const approvedRows = workflowImageMetadata.map((record, index) => ({
         src: record.url,
+        filename: record.filename,
         alt: record.alt,
         position: index + 1,
       }));

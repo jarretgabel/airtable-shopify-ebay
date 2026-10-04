@@ -178,17 +178,12 @@ export function isEbayInternationalShippingFeesField(fieldName: string): boolean
 export function getSeparatedEbayShippingFeeValue(params: {
   fieldName: string;
   fieldValue: string;
-  domesticFieldValue?: string;
 }): string {
-  const { fieldName, fieldValue, domesticFieldValue = '' } = params;
-
-  if (isEbayInternationalShippingFeesField(fieldName)) {
-    const ownSelections = parseEbayShippingFeeSelections(fieldValue);
-    if (ownSelections.international) return ownSelections.international;
-    return parseEbayShippingFeeSelections(domesticFieldValue).international;
-  }
-
-  return parseEbayShippingFeeSelections(fieldValue).domestic;
+  const { fieldName, fieldValue } = params;
+  const selections = parseEbayShippingFeeSelections(fieldValue);
+  return isEbayInternationalShippingFeesField(fieldName)
+    ? selections.international
+    : selections.domestic;
 }
 
 export function isEbayDomesticShippingFlatFeeField(fieldName: string): boolean {
@@ -262,6 +257,10 @@ export function getCanonicalShippingServiceAlias(fieldName: string): string | nu
   if (normalized === 'ebay domestic service 2') return 'domestic service 2';
   if (normalized === 'ebay international service 1') return 'international service 1';
   if (normalized === 'ebay international service 2') return 'international service 2';
+  if (normalized === 'domestic service') return 'domestic service 1';
+  if (normalized === 'international service') return 'international service 1';
+  if (normalized === 'ebay domestic service') return 'domestic service 1';
+  if (normalized === 'ebay international service') return 'international service 1';
   return null;
 }
 

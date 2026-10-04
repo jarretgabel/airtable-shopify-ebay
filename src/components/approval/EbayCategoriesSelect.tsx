@@ -52,6 +52,7 @@ export function EbayCategoriesSelect({
     setDraggingCategoryId,
     setIsOpen,
     setQuery,
+    selectedCategoryLabels,
     toggleSelection,
   } = useEbayCategoriesSelect({
     marketplaceId,
@@ -109,9 +110,9 @@ export function EbayCategoriesSelect({
           {value.length === 0 && (
             <span className="text-sm text-[var(--muted)]">No categories selected.</span>
           )}
-          {value.map((selectedValue) => {
+          {value.map((selectedValue, index) => {
             const option = categoryMap.get(selectedValue) ?? categoryMap.get(normalizeSelectionValue(selectedValue));
-            const chipLabel = option?.name || selectedValue;
+            const chipLabel = selectedCategoryLabels[index] || option?.name || selectedValue;
             return (
               <span
                 key={selectedValue}

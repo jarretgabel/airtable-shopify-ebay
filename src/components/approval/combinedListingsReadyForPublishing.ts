@@ -5,6 +5,7 @@ import {
 import { findEbayPriceFieldName } from '@/components/approval/listingApprovalFieldHelpers';
 import {
   SHOPIFY_PRICE_FIELD_CANDIDATES,
+  SHOPIFY_INVENTORY_QUANTITY_FIELD_CANDIDATES,
   SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES,
   SHOPIFY_TITLE_FIELD_CANDIDATES,
 } from '@/components/approval/listingApprovalShopifyConstants';
@@ -18,7 +19,7 @@ export interface CombinedListingsRequiredFieldNames {
   ebayRequiredFieldNames: string[];
 }
 
-const READY_FOR_PUBLISH_WORKFLOW_STATUSES = new Set(['Approved for Publish']);
+const READY_FOR_PUBLISH_WORKFLOW_STATUSES = new Set(['Awaiting Pre-Listing Review', 'Approved for Publish']);
 const ACTIVE_LISTING_WORKFLOW_STATUSES = new Set(['Listed, Shopify', 'Listed, eBay']);
 const VISIBLE_COMBINED_WORKFLOW_STATUSES = new Set([
   'Awaiting Pre-Listing Review',
@@ -73,6 +74,7 @@ export function getCombinedListingsRequiredFieldNames(records: AirtableRecord[])
   const shopifyRequiredFieldNames = Array.from(new Set([
     resolveFieldName(allFieldNames, [...SHOPIFY_TITLE_FIELD_CANDIDATES]),
     resolveFieldName(allFieldNames, [...SHOPIFY_PRICE_FIELD_CANDIDATES]),
+    resolveFieldName(allFieldNames, [...SHOPIFY_INVENTORY_QUANTITY_FIELD_CANDIDATES]),
     resolveFieldName(allFieldNames, [...SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES]),
   ].filter((fieldName) => fieldName.trim().length > 0)));
 

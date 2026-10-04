@@ -26,6 +26,13 @@ describe('combinedListingsReadyForPublishing', () => {
         Price: '499.99',
         'Product Category': 'Receivers',
       }),
+      createRecord('awaiting-ready', {
+        'Workflow Status': 'Awaiting Pre-Listing Review',
+        'Item Title': 'Integrated Amplifier',
+        SKU: 'READY-002',
+        Price: '699.99',
+        'Product Category': 'Amplifiers',
+      }),
       createRecord('needs-work', {
         'Workflow Status': 'Approved for Publish',
         'Item Title': 'Turntable',
@@ -48,13 +55,13 @@ describe('combinedListingsReadyForPublishing', () => {
 
     const requiredFieldNames = getCombinedListingsRequiredFieldNames(records);
 
-    expect(filterCombinedReadyForPublishingRecords(records, requiredFieldNames).map((record) => record.id)).toEqual(['ready']);
+    expect(filterCombinedReadyForPublishingRecords(records, requiredFieldNames).map((record) => record.id)).toEqual(['ready', 'awaiting-ready']);
     expect(filterCombinedActiveListingRecords(records).map((record) => record.id)).toEqual(['active']);
     expect(filterCombinedNeedsFurtherWorkRecords(records, requiredFieldNames).map((record) => record.id)).toEqual(['needs-work']);
-    expect(getCombinedReadyForPublishingCount(records)).toBe(1);
+    expect(getCombinedReadyForPublishingCount(records)).toBe(2);
   });
 
-  it('keeps awaiting pre-listing review rows out of needs-work until a SKU is assigned', () => {
+  it('moves awaiting pre-listing review rows to ready once a SKU is assigned', () => {
     const records: AirtableRecord[] = [
       createRecord('awaiting-no-sku', {
         'Workflow Status': 'Awaiting Pre-Listing Review',
@@ -71,7 +78,8 @@ describe('combinedListingsReadyForPublishing', () => {
 
     const requiredFieldNames = getCombinedListingsRequiredFieldNames(records);
 
-    expect(filterCombinedNeedsFurtherWorkRecords(records, requiredFieldNames).map((record) => record.id)).toEqual(['awaiting-with-sku']);
+    expect(filterCombinedReadyForPublishingRecords(records, requiredFieldNames).map((record) => record.id)).toEqual(['awaiting-with-sku']);
+    expect(filterCombinedNeedsFurtherWorkRecords(records, requiredFieldNames).map((record) => record.id)).toEqual([]);
   });
 
   it('requires a SKU for approved rows to appear in needs-further-work', () => {

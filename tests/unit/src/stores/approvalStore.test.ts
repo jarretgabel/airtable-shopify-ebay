@@ -1,4 +1,6 @@
 import { getRecordsFromResolvedSource, updateRecordFromResolvedSource } from '@/services/app-api/airtable';
+import { mapShippingServiceToFields, SHIPPING_SERVICE_FIELD } from '@/stores/approvalStore';
+import { fromFormValueForField, getDropdownOptions } from '@/stores/approval/approvalStoreFieldUtils';
 import { useApprovalStore } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 
@@ -171,6 +173,79 @@ describe('approvalStore saveRecord approve-only', () => {
       Price: '1899.00',
       'eBay Offer Price Value': '1899.00',
     }));
+  });
+
+  it('mirrors Shopify Type into the visible Type field during hydrate', () => {
+    const selectedRecord: AirtableRecord = {
+      id: 'recShopifyTypeMirror1',
+      createdTime: '2026-05-08T00:00:00.000Z',
+      fields: {
+        'Shopify Type': 'Electronics > Audio > Receivers',
+        Type: '',
+      },
+    };
+
+    useApprovalStore.getState().hydrateForm(
+      selectedRecord,
+      ['Shopify Type', 'Type'],
+      'Shopify Approved',
+    );
+
+    expect(useApprovalStore.getState().formValues).toEqual(expect.objectContaining({
+      'Shopify Type': 'Electronics > Audio > Receivers',
+      Type: 'Electronics > Audio > Receivers',
+    }));
+  });
+
+  it('preserves multiple explicit eBay shipping services during save mapping', () => {
+    expect(mapShippingServiceToFields({
+      '__Shipping Services__': 'UPS Ground',
+      'Ebay Domestic Service 1': 'UPS Ground',
+      'Ebay Domestic Service 2': 'UPS 3-Day Select',
+      'Ebay International Service 1': '',
+      'Ebay International Service 2': '',
+    })).toEqual({
+      '__Shipping Services__': 'UPS Ground',
+      'Ebay Domestic Service 1': 'UPS Ground',
+      'Ebay Domestic Service 2': 'UPS 3-Day Select',
+      'Ebay International Service 1': '',
+      'Ebay International Service 2': '',
+    });
+  });
+
+  it('hydrates the shipping services editor from prefixed Airtable service fields', () => {
+    const selectedRecord: AirtableRecord = {
+      id: 'recEbayShippingServiceHydrate1',
+      createdTime: '2026-05-08T00:00:00.000Z',
+      fields: {
+        'Ebay International Service 1': 'International',
+      },
+    };
+
+    useApprovalStore.getState().hydrateForm(
+      selectedRecord,
+      ['Ebay International Service 1'],
+      'Ebay Approved',
+    );
+
+    expect(useApprovalStore.getState().formValues[SHIPPING_SERVICE_FIELD]).toBe('International');
+  });
+
+  it('uses destination-specific options for canonical eBay shipping service fields', () => {
+    expect(getDropdownOptions('Ebay Domestic Service 1')).toEqual(['UPS Ground', 'UPS 3-Day Select']);
+    expect(getDropdownOptions('Ebay International Service 1')).toEqual([
+      'International',
+      'USPS Priority Mail International',
+      'eBay International Standard Delivery',
+    ]);
+  });
+
+  it('serializes editor category and collection values as Airtable multi-select arrays', () => {
+    expect(fromFormValueForField('Ebay Categories', '14981, 12345', 'json')).toEqual(['14981', '12345']);
+    expect(fromFormValueForField('Shopify Collections', '["Vintage Audio", "Receivers"]', 'json')).toEqual([
+      'Vintage Audio',
+      'Receivers',
+    ]);
   });
 
   it('mirrors Buy It Now Price into the visible eBay offer price field during hydrate', () => {

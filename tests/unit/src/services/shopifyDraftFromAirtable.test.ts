@@ -140,6 +140,68 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     expect(request.input.variants?.[0]?.price).toBeUndefined();
   });
 
+  it('maps the canonical shipping weight field to Shopify pounds measurement', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Shipping Weight Product',
+      'Shipping Weight': '42 lbs',
+    });
+
+    const request = buildShopifyUnifiedProductSetRequest(product);
+
+    expect(request.input.variants?.[0]?.inventoryItem?.measurement).toEqual({
+      weight: { value: 42, unit: 'POUNDS' },
+    });
+  });
+
+  it('maps separate shipping dimensions to product metafields', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Shipping Dimensions Product',
+      'Shipping Width': '22 in',
+      'Shipping Depth': '19',
+      'Shipping Height': '11 inches',
+    });
+
+    const request = buildShopifyUnifiedProductSetRequest(product);
+
+    expect(request.input.metafields).toEqual(expect.arrayContaining([
+      { namespace: 'custom', key: 'shipping_width', type: 'number_decimal', value: '22' },
+      { namespace: 'custom', key: 'shipping_depth', type: 'number_decimal', value: '19' },
+      { namespace: 'custom', key: 'shipping_height', type: 'number_decimal', value: '11' },
+    ]));
+  });
+
+  it('uses legacy bundled shipping dimensions only when separate fields are missing', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Legacy Shipping Dimensions Product',
+      'Shipping Dims': '22x19x11',
+      'Shipping Width': '24 in',
+    });
+
+    const request = buildShopifyUnifiedProductSetRequest(product);
+
+    expect(request.input.metafields).toEqual(expect.arrayContaining([
+      { namespace: 'custom', key: 'shipping_width', type: 'number_decimal', value: '24' },
+      { namespace: 'custom', key: 'shipping_depth', type: 'number_decimal', value: '19' },
+      { namespace: 'custom', key: 'shipping_height', type: 'number_decimal', value: '11' },
+    ]));
+  });
+
+  it('adds Shopify default product options when variants have no option fields', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Optionless Product',
+      'Shopify Price': '125.00',
+    });
+
+    const request = buildShopifyUnifiedProductSetRequest(product);
+
+    expect(request.input.productOptions).toEqual([
+      { name: 'Title', position: 1, values: [{ name: 'Default Title' }] },
+    ]);
+    expect(request.input.variants?.[0]?.optionValues).toEqual([
+      { optionName: 'Title', name: 'Default Title' },
+    ]);
+  });
+
   it('maps canonical condition field into Shopify options and variant selection', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Shopify Condition Test',
@@ -433,6 +495,19 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
 
     expect(product.variants?.[0]?.price).toBe('1599.00');
     expect(product.variants?.[0]?.inventory_quantity).toBe(3);
+  });
+
+  it('prefers canonical Shopify inventory quantity over legacy aliases in ProductSet payloads', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Canonical Quantity Product',
+      'Shopify Inventory Quantity': 7,
+      'Shopify Variant 1 Inventory Quantity': 2,
+    });
+
+    const request = buildShopifyUnifiedProductSetRequest(product);
+
+    expect(product.variants?.[0]?.inventory_quantity).toBe(7);
+    expect(request.input.variants?.[0]?.inventoryItem?.tracked).toBe(true);
   });
 
   it('maps the internal sku to the Shopify variant barcode', () => {

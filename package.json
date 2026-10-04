@@ -79,6 +79,7 @@
     "airtable:download-images": "node scripts/download-airtable-images.mjs",
     "prepare:aws:env": "node scripts/prepare-aws-env.mjs",
     "typecheck": "tsc --noEmit",
+    "airtable:ensure-shopify-taxonomy-field": "node scripts/ensure-shopify-taxonomy-field.mjs",
     "build": "tsc && vite build",
     "report:bundle": "node scripts/report-bundle-size.mjs",
     "build:bundle-report": "npm run build && npm run report:bundle",

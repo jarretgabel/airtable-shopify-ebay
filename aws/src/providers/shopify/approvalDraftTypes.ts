@@ -3,6 +3,7 @@ export type ApprovalFieldMap = Record<string, unknown>;
 export interface ShopifyProductImage {
   id?: number;
   src: string;
+  filename?: string;
   alt?: string;
   position?: number;
   variant_ids?: number[];
@@ -31,6 +32,9 @@ export interface ShopifyProductVariant {
   requires_shipping?: boolean;
   weight?: number;
   weight_unit?: string;
+  country_of_origin?: string;
+  harmonized_system_code?: string;
+  shipping_dimensions?: string;
   option1?: string | null;
   option2?: string | null;
   option3?: string | null;

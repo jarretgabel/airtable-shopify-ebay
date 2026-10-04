@@ -31,14 +31,20 @@ export function useApprovalFormEbayCategorySetup({
   originalFieldValues,
   setFormValue,
 }: UseApprovalFormEbayCategorySetupParams) {
+  const isAggregateCategoryField = (fieldName: string) => isEbayCategoriesField(fieldName)
+    && !isEbayPrimaryCategoryField(fieldName)
+    && !isEbaySecondaryCategoryField(fieldName)
+    && !isEbayPrimaryCategoryNameField(fieldName)
+    && !isEbaySecondaryCategoryNameField(fieldName)
+    && !isLikelyDerivedAirtableField(fieldName);
   const formCategoryFields = Object.keys(formValues).filter(
-    (fieldName) => isEbayCategoriesField(fieldName) && !isLikelyDerivedAirtableField(fieldName),
+    isAggregateCategoryField,
   );
   const writableCategoryFields = writableFieldNames.filter(
-    (fieldName) => isEbayCategoriesField(fieldName) && !isLikelyDerivedAirtableField(fieldName),
+    isAggregateCategoryField,
   );
   const allCategoryFields = allFieldNames.filter(
-    (fieldName) => isEbayCategoriesField(fieldName) && !isLikelyDerivedAirtableField(fieldName),
+    isAggregateCategoryField,
   );
   const categoryFieldCandidates = Array.from(new Set([
     ...formCategoryFields,
@@ -84,15 +90,11 @@ export function useApprovalFormEbayCategorySetup({
     ?? allFieldNames.find((fieldName) => isEbaySecondaryCategoryNameField(fieldName))
     ?? formValueFieldNames.find((fieldName) => isEbaySecondaryCategoryNameField(fieldName));
   const fallbackCategoryTargetFieldName = formValueFieldNames.find(
-    (fieldName) => (
-      isEbayCategoriesField(fieldName)
-      || isEbayPrimaryCategoryField(fieldName)
-      || isEbaySecondaryCategoryField(fieldName)
-    ) && !isLikelyDerivedAirtableField(fieldName),
+    isAggregateCategoryField,
   );
   const effectiveEbayCategoriesFieldName = ebayCategoriesFieldName
     ?? fallbackCategoryTargetFieldName
-    ?? '';
+    ?? 'Ebay Categories';
   const ebayMarketplaceIdFieldName = allFieldNames.find((fieldName) => isEbayMarketplaceIdField(fieldName));
   const isEbayListingForm = allFieldNames.some((fieldName) => {
     const normalized = fieldName.toLowerCase();

@@ -4,6 +4,7 @@ version = 0.1
 stack_name = "airtable-shopify-ebay-dev"
 
 [dev.deploy.parameters]
+# Include ShopifyInventoryLocationId=<your Shopify location ID> in parameter_overrides.
 region = "us-east-1"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
@@ -15,6 +16,7 @@ parameter_overrides = "AirtableApiKey=replace-with-airtable-pat AirtableBaseId=r
 stack_name = "airtable-shopify-ebay-staging"
 
 [staging.deploy.parameters]
+# Include ShopifyInventoryLocationId=<your Shopify location ID> in parameter_overrides.
 region = "us-east-1"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
@@ -26,6 +28,7 @@ parameter_overrides = "AirtableApiKey=replace-with-airtable-pat AirtableBaseId=r
 stack_name = "airtable-shopify-ebay-prod"
 
 [prod.deploy.parameters]
+# Include ShopifyInventoryLocationId=<your Shopify location ID> in parameter_overrides.
 region = "us-east-1"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true

@@ -61,8 +61,7 @@ export function ListingApprovalRecordActions({
   onPublishBoth,
   onPrimaryAction,
 }: ListingApprovalRecordActionsProps) {
-  const isWorkflowListingReview = isCombinedApproval && workflowStatus === 'Awaiting Pre-Listing Review';
-  const showCombinedPublishButtons = isCombinedApproval && !isWorkflowListingReview;
+  const showCombinedPublishButtons = isCombinedApproval;
   const isPostPublishLocked = workflowStatus === 'Sold - Ready to Ship' || workflowStatus === 'Shipped';
   const shouldForcePublishLabels = workflowStatus === 'Approved for Publish' || workflowStatus === 'Awaiting Pre-Listing Review';
   const hasExistingShopifyForActionLabel = hasExistingShopifyRestProductId && !shouldForcePublishLabels;
@@ -110,20 +109,6 @@ export function ListingApprovalRecordActions({
         <SecondaryActionButton href={ebayServiceListingUrl} target="_blank" rel="noreferrer noopener">
           Open eBay Listing
         </SecondaryActionButton>
-      )}
-      {isWorkflowListingReview && (
-        <AccentActionButton
-          onClick={onPrimaryAction}
-          disabled={saving || approving || hasUnsavedChanges || hasMissingShopifyRequiredFields || hasMissingEbayRequiredFields}
-        >
-          {approving
-            ? 'Approving for Publish...'
-            : hasUnsavedChanges
-              ? 'Save Updates Before Approving'
-              : hasMissingShopifyRequiredFields || hasMissingEbayRequiredFields
-                ? 'Complete Required Fields'
-                : 'Approve for Publish'}
-        </AccentActionButton>
       )}
       {showCombinedPublishButtons && !isPostPublishLocked && (
         <>

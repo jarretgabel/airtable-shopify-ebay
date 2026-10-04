@@ -35,23 +35,29 @@ const baseProps = {
 };
 
 describe('ListingApprovalRecordActions', () => {
-  it('shows approve-for-publish instead of publish buttons during listing review', () => {
-    const onPrimaryAction = vi.fn();
+  it('shows direct publish buttons during listing review', () => {
+    const onPublishShopify = vi.fn();
+    const onPublishEbay = vi.fn();
+    const onPublishBoth = vi.fn();
 
     render(
       <ListingApprovalRecordActions
         {...baseProps}
         workflowStatus="Awaiting Pre-Listing Review"
-        onPrimaryAction={onPrimaryAction}
+        onPublishShopify={onPublishShopify}
+        onPublishEbay={onPublishEbay}
+        onPublishBoth={onPublishBoth}
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Approve for Publish' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish Shopify' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish eBay' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish Both' }));
 
-    expect(onPrimaryAction).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole('button', { name: 'Publish Shopify' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Publish eBay' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Publish Both' })).not.toBeInTheDocument();
+    expect(onPublishShopify).toHaveBeenCalledTimes(1);
+    expect(onPublishEbay).toHaveBeenCalledTimes(1);
+    expect(onPublishBoth).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Approve for Publish' })).not.toBeInTheDocument();
   });
 
   it('keeps publish buttons once the operational row is approved for publish', () => {

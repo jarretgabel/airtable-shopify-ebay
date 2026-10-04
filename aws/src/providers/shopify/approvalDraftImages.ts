@@ -72,7 +72,9 @@ export function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] 
       const altFromImage = typeof rawAlt === 'string' ? rawAlt : typeof image.altText === 'string' ? image.altText : typeof image.alt_text === 'string' ? image.alt_text : '';
       const rawPosition = image.position;
       const position = typeof rawPosition === 'number' && Number.isFinite(rawPosition) ? rawPosition : index + 1;
-      return { src, alt: imageAltTexts[index] ?? altFromImage, position };
+      const rawFilename = image.filename ?? image.fileName ?? image.name;
+      const filename = typeof rawFilename === 'string' ? rawFilename.trim() : '';
+      return { src, filename: filename || undefined, alt: imageAltTexts[index] ?? altFromImage, position };
     }).filter((image): image is { src: string; alt: string; position: number } => image !== null);
     if (normalizedShopifyImages.length > 0) return normalizedShopifyImages;
   }
@@ -86,6 +88,7 @@ export function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] 
   if (workflowMetadata.length > 0) {
     return workflowMetadata.map((record, index) => ({
       src: record.url,
+      filename: record.url.split('/').pop()?.split('?')[0] || undefined,
       alt: record.alt,
       position: index + 1,
     }));

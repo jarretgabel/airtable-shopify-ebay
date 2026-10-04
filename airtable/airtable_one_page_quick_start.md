@@ -25,6 +25,7 @@ Check these off first for most Shopify listings.
 - [ ] `Shopify Status`: usually `draft` until ready
 - [ ] `Shopify Variant 1 Price`: selling price. Example: `899.00`
 - [ ] `Shopify Variant 1 SKU`: your item code. Example: `MAR2230-EXC-120V`
+- [ ] `Shopify Inventory Quantity`: canonical quantity on hand. Example: `1`
 - [ ] `Shopify Variant 1 Inventory Quantity`: quantity on hand. Example: `1`
 - [ ] `Shopify Variant 1 Inventory Management`: usually `shopify`
 - [ ] `Shopify Variant 1 Inventory Policy`: usually `deny`

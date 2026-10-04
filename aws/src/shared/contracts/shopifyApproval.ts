@@ -67,6 +67,11 @@ export interface ShopifyApprovalTaxonomyCategoryMatch {
   isLeaf: boolean;
 }
 
+export type ShopifyApprovalTaxonomyCategoryAttribute =
+  | { id: string; name: string; type: 'choice'; values: Array<{ id: string; name: string }> }
+  | { id: string; name: string; type: 'measurement'; options: Array<{ key: string; value: string }> }
+  | { id: string; name: string; type: 'text' };
+
 export interface ShopifyApprovalProductSetIdentifier {
   id?: string;
   handle?: string;

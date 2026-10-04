@@ -1558,6 +1558,21 @@ export async function getEbayChildCategories(parentCategoryId: string, marketpla
   return children;
 }
 
+export async function getEbayCategory(categoryId: string, marketplaceId = 'EBAY_US'): Promise<EbayCategoryTreeNode | null> {
+  const normalizedMarketplace = normalizeMarketplaceId(marketplaceId);
+  const normalizedCategoryId = categoryId.trim();
+  if (!normalizedCategoryId) return null;
+
+  const token = await getAppToken();
+  const treeId = await getDefaultCategoryTreeId(normalizedMarketplace);
+  const response = await ebayJsonRequest<EbayCategorySubtreeResponse>(
+    `/commerce/taxonomy/v1/category_tree/${encodeURIComponent(treeId)}/get_category_subtree?category_id=${encodeURIComponent(normalizedCategoryId)}`,
+    token,
+  );
+
+  return mapTreeNodes(response.categorySubtreeNode ? [response.categorySubtreeNode] : [])[0] ?? null;
+}
+
 function buildBusinessPolicyOption(params: {
   policyId: string;
   name: string;

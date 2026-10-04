@@ -27,6 +27,7 @@ import {
   SHOPIFY_VENDOR_FIELD_CANDIDATES,
   SHOPIFY_PRICE_FIELD_CANDIDATES,
   SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES,
+  SHOPIFY_TAXONOMY_ATTRIBUTES_FIELD_CANDIDATES,
   SHOPIFY_TITLE_FIELD_CANDIDATES,
 } from '@/components/approval/listingApprovalShopifyConstants';
 import { CONDITION_FIELD, SHIPPING_SERVICE_FIELD } from '@/stores/approvalStore';
@@ -79,6 +80,11 @@ export function useListingApprovalFieldNames({
         SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       ) ?? SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
       if (preferredProductTypeField) names.add(preferredProductTypeField);
+
+      const preferredTaxonomyAttributesField = existingNames.find((name) =>
+        SHOPIFY_TAXONOMY_ATTRIBUTES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
+      ) ?? SHOPIFY_TAXONOMY_ATTRIBUTES_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
+      if (preferredTaxonomyAttributesField) names.add(preferredTaxonomyAttributesField);
 
       const preferredVendorField = existingNames.find((name) =>
         SHOPIFY_VENDOR_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
@@ -146,13 +152,15 @@ export function useListingApprovalFieldNames({
 
       const preferredDomesticShippingFlatFeeField = existingNames.find((name) =>
         EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      );
+      ) ?? EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD_CANDIDATES[0];
       if (preferredDomesticShippingFlatFeeField) names.add(preferredDomesticShippingFlatFeeField);
 
       const preferredInternationalShippingFlatFeeField = existingNames.find((name) =>
         EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      );
+      ) ?? EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD_CANDIDATES[0];
       if (preferredInternationalShippingFlatFeeField) names.add(preferredInternationalShippingFlatFeeField);
+
+      names.add('Ebay Domestic Service 1');
 
       const preferredPrimaryCategoryField = existingNames.find((name) =>
         EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),

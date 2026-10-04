@@ -115,6 +115,7 @@ export function ListingApprovalCombinedEbaySection({
           recordId={selectedRecord.id}
           approvalChannel="ebay"
           isCombinedApproval
+          showSupplementalEditors={false}
           showWorkflowImageSelector={false}
           showOnlyEbayAdvancedOptions
           allFieldNames={combinedEbayOnlyFieldNames}

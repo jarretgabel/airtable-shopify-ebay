@@ -43,6 +43,72 @@ describe('WorkflowListingImageSelector', () => {
     expect(selectedCardsAfter[1]).toHaveTextContent('image-a.jpg');
   });
 
+  it('reorders selected images when persisted URLs use equivalent Drive variants', () => {
+    function DriveVariantHarness() {
+      const [selectedUrls, setSelectedUrls] = useState([
+        'https://drive.google.com/uc?export=view&id=file-a',
+        'https://drive.google.com/uc?export=view&id=file-b',
+      ]);
+
+      return (
+        <WorkflowListingImageSelector
+          attachments={[
+            { id: 'att-a', url: 'https://drive.google.com/thumbnail?id=file-a&sz=w1600', filename: 'image-a.jpg' },
+            { id: 'att-b', url: 'https://drive.google.com/thumbnail?id=file-b&sz=w1600', filename: 'image-b.jpg' },
+          ]}
+          selectedUrls={selectedUrls}
+          onSelectionChange={setSelectedUrls}
+        />
+      );
+    }
+
+    render(<DriveVariantHarness />);
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Move image later' })[0]);
+
+    const selectedCardsAfter = screen.getAllByTestId('selected-listing-image-card');
+    expect(selectedCardsAfter[0]).toHaveTextContent('image-b.jpg');
+    expect(selectedCardsAfter[1]).toHaveTextContent('image-a.jpg');
+  });
+
+  it('reorders selected images through the drag handle row events', () => {
+    const onSelectionChange = vi.fn();
+
+    render(
+      <WorkflowListingImageSelector
+        attachments={[
+          { id: 'att-a', url: 'https://drive.google.com/thumbnail?id=file-a&sz=w1600', filename: 'image-a.jpg' },
+          { id: 'att-b', url: 'https://drive.google.com/thumbnail?id=file-b&sz=w1600', filename: 'image-b.jpg' },
+        ]}
+        selectedUrls={[
+          'https://drive.google.com/uc?export=view&id=file-a',
+          'https://drive.google.com/uc?export=view&id=file-b',
+        ]}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+
+    const selectedCards = screen.getAllByTestId('selected-listing-image-card');
+    const dataTransfer = {
+      data: {} as Record<string, string>,
+      setData(type: string, value: string) {
+        this.data[type] = value;
+      },
+      getData(type: string) {
+        return this.data[type] ?? '';
+      },
+    };
+
+    fireEvent.dragStart(selectedCards[0], { dataTransfer });
+    fireEvent.drop(selectedCards[1], { dataTransfer });
+
+    expect(dataTransfer.getData('text/plain')).toBe('https://drive.google.com/thumbnail?id=file-a&sz=w1600');
+    expect(onSelectionChange).toHaveBeenCalledWith([
+      'https://drive.google.com/uc?export=view&id=file-b',
+      'https://drive.google.com/uc?export=view&id=file-a',
+    ]);
+  });
+
   it('adds available workflow uploads to the selected section', () => {
     render(<SelectorHarness />);
 

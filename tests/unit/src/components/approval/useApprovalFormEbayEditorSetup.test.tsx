@@ -101,4 +101,71 @@ describe('useApprovalFormEbayEditorSetup', () => {
     expect(result.current.ebayDomesticShippingFlatFeeFieldName).toBe(SYNTHETIC_EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD);
     expect(result.current.ebayInternationalShippingFlatFeeFieldName).toBe(SYNTHETIC_EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD);
   });
+
+  it('binds singular international service fields to the shipping services editor', () => {
+    const { result } = renderHook(() => useApprovalFormEbayEditorSetup({
+      recordId: 'rec-ebay-international-service',
+      approvalChannel: 'ebay',
+      isCombinedApproval: false,
+      allFieldNames: ['Domestic Service', 'International Service'],
+      writableFieldNames: ['Domestic Service', 'International Service'],
+      formValues: {
+        'Domestic Service': '',
+        'International Service': '',
+      },
+      originalFieldValues: {},
+      setFormValue: vi.fn(),
+      setDerivedFormValue: vi.fn(),
+      selectedEbayTemplateId: undefined,
+      onEbayTemplateIdChange: undefined,
+      ebayMarketplaceId: 'EBAY_US',
+      isEbayListingForm: true,
+    }));
+
+    expect(result.current.hasEbayShippingServicesEditor).toBe(true);
+    expect(result.current.domesticService1FieldName).toBe('Domestic Service');
+    expect(result.current.internationalService1FieldName).toBe('International Service');
+  });
+
+  it('provides an international service slot when Airtable omits the blank field', () => {
+    const { result } = renderHook(() => useApprovalFormEbayEditorSetup({
+      recordId: 'rec-ebay-missing-international-service',
+      approvalChannel: 'ebay',
+      isCombinedApproval: false,
+      allFieldNames: ['Ebay Domestic Service'],
+      writableFieldNames: ['Ebay Domestic Service'],
+      formValues: { 'Ebay Domestic Service': '' },
+      originalFieldValues: {},
+      setFormValue: vi.fn(),
+      setDerivedFormValue: vi.fn(),
+      selectedEbayTemplateId: undefined,
+      onEbayTemplateIdChange: undefined,
+      ebayMarketplaceId: 'EBAY_US',
+      isEbayListingForm: true,
+    }));
+
+    expect(result.current.hasEbayShippingServicesEditor).toBe(true);
+    expect(result.current.internationalService1FieldName).toBe('International Service');
+  });
+
+  it('enables the shipping services editor in combined approvals', () => {
+    const { result } = renderHook(() => useApprovalFormEbayEditorSetup({
+      recordId: 'rec-combined-ebay-services',
+      approvalChannel: 'ebay',
+      isCombinedApproval: true,
+      allFieldNames: ['Ebay Domestic Service'],
+      writableFieldNames: ['Ebay Domestic Service'],
+      formValues: { 'Ebay Domestic Service': '' },
+      originalFieldValues: {},
+      setFormValue: vi.fn(),
+      setDerivedFormValue: vi.fn(),
+      selectedEbayTemplateId: undefined,
+      onEbayTemplateIdChange: undefined,
+      ebayMarketplaceId: 'EBAY_US',
+      isEbayListingForm: true,
+    }));
+
+    expect(result.current.hasEbayShippingServicesEditor).toBe(true);
+    expect(result.current.internationalService1FieldName).toBe('International Service');
+  });
 });

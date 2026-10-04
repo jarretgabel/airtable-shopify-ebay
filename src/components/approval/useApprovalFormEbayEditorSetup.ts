@@ -123,7 +123,7 @@ export function useApprovalFormEbayEditorSetup({
     : [];
   const ebayAttributesFieldName = undefined;
   const ebayAttributesSyncFieldNames: string[] = [];
-  const ebayShippingServiceFieldNames = (!isCombinedApproval && isEbayApprovalForm)
+  const ebayShippingServiceFieldNames = isEbayApprovalForm
     ? allFieldNames.filter((fieldName) => isEbayShippingServiceFieldName(fieldName))
     : [];
   const hasEbayShippingServicesEditor = ebayShippingServiceFieldNames.length > 0;
@@ -154,8 +154,8 @@ export function useApprovalFormEbayEditorSetup({
   ) ?? SYNTHETIC_EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD;
   const domesticService1FieldName = hasEbayShippingServicesEditor
     ? pickPreferredField(
-      ebayShippingServiceFieldNames.filter((fieldName) => hasNormalizedFieldName(fieldName, ['Domestic Service 1', 'eBay Domestic Service 1'])),
-      ['Domestic Service 1', 'eBay Domestic Service 1'],
+      ebayShippingServiceFieldNames.filter((fieldName) => hasNormalizedFieldName(fieldName, ['Domestic Service 1', 'eBay Domestic Service 1', 'Domestic Service', 'eBay Domestic Service'])),
+      ['Domestic Service 1', 'eBay Domestic Service 1', 'Domestic Service', 'eBay Domestic Service'],
       formValues,
     )
     : undefined;
@@ -168,10 +168,10 @@ export function useApprovalFormEbayEditorSetup({
     : undefined;
   const internationalService1FieldName = hasEbayShippingServicesEditor
     ? pickPreferredField(
-      ebayShippingServiceFieldNames.filter((fieldName) => hasNormalizedFieldName(fieldName, ['International Service 1', 'eBay International Service 1'])),
-      ['International Service 1', 'eBay International Service 1'],
+      ebayShippingServiceFieldNames.filter((fieldName) => hasNormalizedFieldName(fieldName, ['International Service 1', 'eBay International Service 1', 'International Service', 'eBay International Service'])),
+      ['International Service 1', 'eBay International Service 1', 'International Service', 'eBay International Service'],
       formValues,
-    )
+    ) ?? 'International Service'
     : undefined;
   const internationalService2FieldName = hasEbayShippingServicesEditor
     ? pickPreferredField(

@@ -145,9 +145,17 @@ export function createHydrateFormAction(set: ApprovalStoreSet): ApprovalStore['h
 
     nextValues[SHIPPING_SERVICE_FIELD] =
       nextValues['Domestic Service 1']
+      || nextValues['Ebay Domestic Service 1']
+      || nextValues['eBay Domestic Service 1']
       || nextValues['Domestic Service 2']
+      || nextValues['Ebay Domestic Service 2']
+      || nextValues['eBay Domestic Service 2']
       || nextValues['International Service 1']
+      || nextValues['Ebay International Service 1']
+      || nextValues['eBay International Service 1']
       || nextValues['International Service 2']
+      || nextValues['Ebay International Service 2']
+      || nextValues['eBay International Service 2']
       || '';
     nextKinds[SHIPPING_SERVICE_FIELD] = 'text';
 
@@ -198,6 +206,7 @@ export function createHydrateFormAction(set: ApprovalStoreSet): ApprovalStore['h
     };
 
     mirrorAliasValues(SHOPIFY_PRICE_ALIAS_FIELDS);
+    mirrorAliasValues(SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES);
     mirrorAliasValues(EBAY_PRICE_ALIAS_FIELDS);
 
     set({ formValues: nextValues, initialFormValues: { ...nextValues }, fieldKinds: nextKinds });

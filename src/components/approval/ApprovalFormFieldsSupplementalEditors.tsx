@@ -139,6 +139,22 @@ function getUrlBasename(url: string): string {
   }
 }
 
+function getWorkflowImageOrderKey(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.hostname.includes('drive.google.com')) {
+      const driveId = parsed.searchParams.get('id')?.trim() || parsed.pathname.match(/\/d\/([^/]+)/)?.[1];
+      if (driveId) return `drive:${driveId.toLowerCase()}`;
+    }
+    return `url:${parsed.origin}${parsed.pathname}${parsed.search}`.toLowerCase();
+  } catch {
+    return `url:${trimmed.toLowerCase()}`;
+  }
+}
+
 function isProcessedWorkflowImage(filename: string, url?: string): boolean {
   const sample = `${filename} ${url ?? ''}`.toLowerCase();
   return /(^|[-_])processed/.test(sample);
@@ -361,13 +377,24 @@ export function ApprovalFormFieldsSupplementalEditors({
                 }));
 
               const allManagedRecords = [...managedRecords, ...synthesizedManagedRecords];
+              const selectedOrder = new Map(
+                nextSelectedUrls
+                  .map((url, index) => [getWorkflowImageOrderKey(url), index] as const)
+                  .filter(([key]) => key.length > 0),
+              );
               const isRecordSelected = (record: { url: string; filename: string }) => {
                 const recordUrlKey = record.url.trim().toLowerCase();
                 if (selectedLookup.has(recordUrlKey)) return true;
                 const recordFilenameIdentity = normalizeIdentityToken(record.filename);
                 return Boolean(recordFilenameIdentity && selectedFilenameIdentityLookup.has(recordFilenameIdentity));
               };
-              const selectedRecords = allManagedRecords.filter((record) => isRecordSelected(record));
+              const selectedRecords = allManagedRecords
+                .filter((record) => isRecordSelected(record))
+                .sort((left, right) => {
+                  const leftOrder = selectedOrder.get(getWorkflowImageOrderKey(left.url)) ?? Number.MAX_SAFE_INTEGER;
+                  const rightOrder = selectedOrder.get(getWorkflowImageOrderKey(right.url)) ?? Number.MAX_SAFE_INTEGER;
+                  return leftOrder - rightOrder;
+                });
               const unselectedRecords = allManagedRecords.filter((record) => !isRecordSelected(record));
               const orderedManagedRecords = [...selectedRecords, ...unselectedRecords].map((record, index) => ({
                 ...record,

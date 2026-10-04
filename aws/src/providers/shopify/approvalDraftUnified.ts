@@ -36,6 +36,8 @@ interface ShopifyUnifiedInventoryItemInput {
   sku?: string;
   tracked?: boolean;
   requiresShipping?: boolean;
+  countryCodeOfOrigin?: string;
+  harmonizedSystemCode?: string;
   measurement?: {
     weight: {
       value: number;
@@ -103,6 +105,16 @@ function buildUnifiedProductOptions(options: ShopifyProduct['options']): Shopify
   return normalized.length > 0 ? normalized : undefined;
 }
 
+function ensureProductOptionsForVariants(
+  options: ShopifyProduct['options'],
+  variants: ShopifyProduct['variants'],
+): ShopifyProduct['options'] {
+  if (options && options.length > 0) return options;
+  if (!variants || variants.length === 0) return options;
+
+  return [{ name: 'Title', position: 1, values: ['Default Title'] }];
+}
+
 function buildUnifiedProductFiles(images: ShopifyProduct['images']): ShopifyUnifiedProductSetFileInput[] | undefined {
   if (!images || images.length === 0) return undefined;
   const normalized = [...images].sort((left, right) => (left.position ?? 0) - (right.position ?? 0)).reduce<ShopifyUnifiedProductSetFileInput[]>((result, image) => {
@@ -118,15 +130,19 @@ function buildUnifiedVariantInventoryItem(variant: ShopifyProductVariant): Shopi
   const sku = variant.sku?.trim() || undefined;
   const tracked = normalizeInventoryManagement(variant.inventory_management) === 'shopify' ? true : undefined;
   const requiresShipping = typeof variant.requires_shipping === 'boolean' ? variant.requires_shipping : undefined;
+  const countryCodeOfOrigin = variant.country_of_origin?.trim() || undefined;
+  const harmonizedSystemCode = variant.harmonized_system_code?.trim() || undefined;
   const weightValue = typeof variant.weight === 'number' && Number.isFinite(variant.weight) ? variant.weight : undefined;
   const weightUnit = toShopifyGraphQlWeightUnit(variant.weight_unit);
   const inventoryItem: ShopifyUnifiedInventoryItemInput = {
     sku,
     tracked,
     requiresShipping,
+    countryCodeOfOrigin,
+    harmonizedSystemCode,
     measurement: weightValue !== undefined && weightUnit ? { weight: { value: weightValue, unit: weightUnit } } : undefined,
   };
-  if (!inventoryItem.sku && inventoryItem.tracked === undefined && inventoryItem.requiresShipping === undefined && !inventoryItem.measurement) {
+  if (!inventoryItem.sku && inventoryItem.tracked === undefined && inventoryItem.requiresShipping === undefined && !inventoryItem.countryCodeOfOrigin && !inventoryItem.harmonizedSystemCode && !inventoryItem.measurement) {
     return undefined;
   }
   return inventoryItem;
@@ -214,11 +230,12 @@ export function normalizeShopifyProductForUpsert(product: ShopifyProduct): Shopi
 
 export function buildShopifyUnifiedProductSetRequest(
   product: ShopifyProduct,
-  options?: { categoryId?: string; collectionIds?: string[]; existingProductId?: number },
+  options?: { categoryId?: string; collectionIds?: string[]; existingProductId?: number; taxonomyMetafields?: ShopifyProduct['metafields'] },
 ): ShopifyUnifiedProductSetRequest {
   const normalizedProduct = normalizeShopifyProductForUpsert(product);
   const normalizedCategoryId = options?.categoryId?.trim();
   const isExistingProductUpdate = Boolean(options?.existingProductId);
+  const effectiveProductOptions = ensureProductOptionsForVariants(normalizedProduct.options, normalizedProduct.variants);
   return {
     input: {
       title: normalizedProduct.title?.trim() || 'Untitled Listing',
@@ -230,10 +247,13 @@ export function buildShopifyUnifiedProductSetRequest(
       tags: splitShopifyTags(normalizedProduct.tags),
       templateSuffix: normalizedProduct.template_suffix?.trim() || undefined,
       category: normalizedCategoryId || undefined,
-      metafields: buildUnifiedMetafields(normalizedProduct.metafields),
+      metafields: buildUnifiedMetafields([
+        ...(normalizedProduct.metafields ?? []),
+        ...(options?.taxonomyMetafields ?? []),
+      ]),
       files: buildUnifiedProductFiles(normalizedProduct.images),
-      productOptions: buildUnifiedProductOptions(normalizedProduct.options),
-      variants: buildUnifiedVariants(normalizedProduct.variants, normalizedProduct.options),
+      productOptions: buildUnifiedProductOptions(effectiveProductOptions),
+      variants: buildUnifiedVariants(normalizedProduct.variants, effectiveProductOptions),
     },
     synchronous: true,
     identifier: options?.existingProductId ? { id: toShopifyProductGid(options.existingProductId) } : undefined,

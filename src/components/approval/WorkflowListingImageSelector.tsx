@@ -262,8 +262,14 @@ export function WorkflowListingImageSelector({
     if (!normalizedSourceUrl || !normalizedTargetUrl || normalizedSourceUrl === normalizedTargetUrl) return;
 
     const nextSelectedUrls = [...selectedUrls];
-    const sourceIndex = nextSelectedUrls.findIndex((url) => url.trim().toLowerCase() === normalizedSourceUrl.toLowerCase());
-    const targetIndex = nextSelectedUrls.findIndex((url) => url.trim().toLowerCase() === normalizedTargetUrl.toLowerCase());
+    const sourceKeys = new Set(getSelectedLookupKeys(normalizedSourceUrl));
+    const targetKeys = new Set(getSelectedLookupKeys(normalizedTargetUrl));
+    const findSelectedIndex = (lookupKeys: Set<string>) => nextSelectedUrls.findIndex((url) => {
+      const selectedKeys = getSelectedLookupKeys(url);
+      return selectedKeys.some((key) => lookupKeys.has(key));
+    });
+    const sourceIndex = findSelectedIndex(sourceKeys);
+    const targetIndex = findSelectedIndex(targetKeys);
     if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return;
 
     const [movedUrl] = nextSelectedUrls.splice(sourceIndex, 1);
@@ -272,7 +278,10 @@ export function WorkflowListingImageSelector({
   };
 
   const moveSelectedUrl = (url: string, direction: -1 | 1) => {
-    const currentIndex = selectedUrls.findIndex((entry) => entry.trim().toLowerCase() === url.trim().toLowerCase());
+    const lookupKeys = new Set(getSelectedLookupKeys(url));
+    const currentIndex = selectedUrls.findIndex((entry) => (
+      getSelectedLookupKeys(entry).some((key) => lookupKeys.has(key))
+    ));
     const targetIndex = currentIndex + direction;
     if (currentIndex < 0 || targetIndex < 0 || targetIndex >= selectedUrls.length) return;
     reorderSelectedUrls(selectedUrls[currentIndex], selectedUrls[targetIndex]);

@@ -16,6 +16,11 @@ export interface ShopifyTaxonomyCategoryMatch {
   isLeaf: boolean;
 }
 
+export type ShopifyTaxonomyCategoryAttribute =
+  | { id: string; name: string; type: 'choice'; values: Array<{ id: string; name: string }> }
+  | { id: string; name: string; type: 'measurement'; options: Array<{ key: string; value: string }> }
+  | { id: string; name: string; type: 'text' };
+
 export interface ShopifyCollectionMatch {
   id: string;
   title: string;
@@ -202,6 +207,16 @@ function buildUnifiedProductOptions(options: ShopifyProduct['options']): Shopify
   return normalized.length > 0 ? normalized : undefined;
 }
 
+function ensureProductOptionsForVariants(
+  options: ShopifyProduct['options'],
+  variants: ShopifyProduct['variants'],
+): ShopifyProduct['options'] {
+  if (options && options.length > 0) return options;
+  if (!variants || variants.length === 0) return options;
+
+  return [{ name: 'Title', position: 1, values: ['Default Title'] }];
+}
+
 function buildUnifiedProductFiles(images: ShopifyProduct['images']): ShopifyUnifiedProductSetFileInput[] | undefined {
   if (!images || images.length === 0) return undefined;
 
@@ -356,8 +371,9 @@ export function buildShopifyUnifiedProductSetRequest(
   const normalizedProduct = normalizeShopifyProductForUpsert(product);
   const normalizedCategoryId = options?.categoryId?.trim();
   const isExistingProductUpdate = Boolean(options?.existingProductId);
-  const unifiedOptions = buildUnifiedProductOptions(normalizedProduct.options);
-  const unifiedVariants = buildUnifiedVariants(normalizedProduct.variants, normalizedProduct.options);
+  const effectiveProductOptions = ensureProductOptionsForVariants(normalizedProduct.options, normalizedProduct.variants);
+  const effectiveUnifiedOptions = buildUnifiedProductOptions(effectiveProductOptions);
+  const unifiedVariants = buildUnifiedVariants(normalizedProduct.variants, effectiveProductOptions);
   const unifiedFiles = buildUnifiedProductFiles(normalizedProduct.images);
 
   return {
@@ -374,7 +390,7 @@ export function buildShopifyUnifiedProductSetRequest(
       category: normalizedCategoryId || undefined,
       metafields: buildUnifiedMetafields(normalizedProduct.metafields),
       files: unifiedFiles,
-      productOptions: unifiedOptions,
+      productOptions: effectiveUnifiedOptions,
       variants: unifiedVariants,
     },
     synchronous: true,

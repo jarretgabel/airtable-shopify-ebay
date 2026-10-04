@@ -114,6 +114,19 @@ export const SHOPIFY_PRICE_FIELD_CANDIDATES = [
   'variant_compare_price',
 ] as const;
 
+export const SHOPIFY_INVENTORY_QUANTITY_FIELD_CANDIDATES = [
+  'Shopify Inventory Quantity',
+  'Shopify REST Variant 1 Inventory Quantity',
+  'Shopify Variant 1 Inventory Quantity',
+  'Shopify Variant Quantity',
+  'Available Quantity',
+  'Available',
+  'Inventory Quantity',
+  'Quantity',
+  'Qty',
+  'Stock',
+] as const;
+
 export const SHOPIFY_VENDOR_FIELD_CANDIDATES = [
   'Shopify REST Vendor',
   'Shopify Vendor',
@@ -146,6 +159,12 @@ export const SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES = [
   'shopify_rest_product_category',
   'google_product_category',
   'product_category',
+] as const;
+
+export const SHOPIFY_TAXONOMY_ATTRIBUTES_FIELD_CANDIDATES = [
+  'Shopify Taxonomy Attributes JSON',
+  'Shopify Taxonomy Attributes',
+  'shopify_taxonomy_attributes_json',
 ] as const;
 
 export const SHOPIFY_UNIFIED_PRODUCT_SET_DOCS_EXAMPLE: {

@@ -337,6 +337,9 @@ export function ShopifyTaxonomyTypeSelect({
           Selected category: <span className="text-[var(--ink)]">{selectedCategory.fullName}</span>{selectedCategory.isLeaf ? ' (leaf)' : ''}
         </p>
       )}
+      {selectedCategory && !selectedCategory.isLeaf && (
+        <p className="m-0 text-[0.72rem] text-amber-200">Choose a leaf category for the most specific Shopify taxonomy attributes.</p>
+      )}
 
       {isOpen && (
         <div

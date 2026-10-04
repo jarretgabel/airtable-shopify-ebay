@@ -1,16 +1,19 @@
 import { CONDITION_FIELD } from '@/stores/approvalStore';
 
 export function toHumanReadableLabel(fieldName: string): string {
+  const normalizedFieldName = fieldName.trim().toLowerCase();
   if (fieldName === CONDITION_FIELD) return 'Condition';
-  if (fieldName.trim().toLowerCase() === 'ebay offer price value') return 'eBay Price';
-  if (fieldName.trim().toLowerCase() === 'ebay price') return 'eBay Price';
-  if (fieldName.trim().toLowerCase() === 'buy it now usd') return 'eBay Price';
-  if (fieldName.trim().toLowerCase() === 'starting bid usd') return 'eBay Price';
-  if (fieldName.trim().toLowerCase() === 'shopify rest variant 1 price') return 'Shopify Price';
-  if (fieldName.trim().toLowerCase() === 'shopify price') return 'Shopify Price';
-  if (fieldName.trim().toLowerCase() === 'type') return 'Shopify Type';
-  if (fieldName.trim().toLowerCase() === 'shipping weight') return 'Shipping Weight (in lbs)';
-  if (fieldName.trim().toLowerCase() === 'shipping dims') return 'Shipping Dimensions (L"W"H" in inches)';
+  if (normalizedFieldName === 'ebay offer price value') return 'eBay Price';
+  if (normalizedFieldName === 'ebay price') return 'eBay Price';
+  if (normalizedFieldName === 'buy it now usd') return 'eBay Price';
+  if (normalizedFieldName === 'starting bid usd') return 'eBay Price';
+  if (normalizedFieldName === 'shopify rest variant 1 price') return 'Shopify Price';
+  if (normalizedFieldName === 'shopify price') return 'Shopify Price';
+  if (normalizedFieldName === 'type') return 'Shopify Type';
+  if (normalizedFieldName === 'shipping weight') return 'Shipping Weight (in lbs)';
+  if (normalizedFieldName === 'shipping dims') return 'Shipping Dimensions (L"W"H" in inches)';
+  if (normalizedFieldName === 'ebay domestic service 1') return 'Ebay Domestic Service';
+  if (normalizedFieldName === 'ebay international service 1') return 'Ebay International Service';
 
   const withSpaces = fieldName
     .replace(/[_-]+/g, ' ')

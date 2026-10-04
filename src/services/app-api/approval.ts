@@ -12,6 +12,7 @@ import type {
 import { isAppApiHttpError } from './errors';
 import { postJson } from './http';
 
+const APPROVAL_PUBLISH_REQUEST_TIMEOUT_MS = 45000;
 const APPROVAL_TAKEDOWN_REQUEST_TIMEOUT_MS = 45000;
 
 export type {
@@ -72,6 +73,8 @@ export async function publishApprovalRecord(
       recordId,
       productIdFieldName: options.productIdFieldName,
       fields: options.fields,
+    }, {
+      timeoutMs: APPROVAL_PUBLISH_REQUEST_TIMEOUT_MS,
     });
   } catch (error) {
     throw toApprovalError(error);

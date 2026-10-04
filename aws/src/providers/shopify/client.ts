@@ -151,10 +151,26 @@ export interface ShopifyTaxonomyCategoryMatch {
   isLeaf: boolean;
 }
 
+export interface ShopifyTaxonomyAttributeValue {
+  id: string;
+  name: string;
+}
+
+export interface ShopifyTaxonomyMeasurementOption {
+  key: string;
+  value: string;
+}
+
+export type ShopifyTaxonomyCategoryAttribute =
+  | { id: string; name: string; type: 'choice'; values: ShopifyTaxonomyAttributeValue[] }
+  | { id: string; name: string; type: 'measurement'; options: ShopifyTaxonomyMeasurementOption[] }
+  | { id: string; name: string; type: 'text' };
+
 export interface ShopifyCollectionMatch {
   id: string;
   title: string;
   handle: string;
+  isSmartCollection?: boolean;
 }
 
 export interface ShopifyUnifiedProductResult {
@@ -199,6 +215,8 @@ export interface ShopifyUnifiedInventoryItemInput {
   sku?: string;
   tracked?: boolean;
   requiresShipping?: boolean;
+  countryCodeOfOrigin?: string;
+  harmonizedSystemCode?: string;
   measurement?: {
     weight: {
       value: number;
@@ -908,16 +926,17 @@ export async function upsertExistingProductWithCollectionsInSingleMutation(
 export async function getCollections(first = 250): Promise<ShopifyCollectionMatch[]> {
   const data = await graphQlRequest<{
     collections: {
-      edges: Array<{ node: ShopifyCollectionMatch }>;
+      edges: Array<{ node: ShopifyCollectionMatch & { ruleSet?: { appliedDisjunctively: boolean } | null } }>;
     };
   }>(
     `query GetCollections($first: Int!) {
-      collections(first: $first, query: "collection_type:custom", sortKey: TITLE) {
+      collections(first: $first, sortKey: TITLE) {
         edges {
           node {
             id
             title
             handle
+            ruleSet { appliedDisjunctively }
           }
         }
       }
@@ -925,7 +944,12 @@ export async function getCollections(first = 250): Promise<ShopifyCollectionMatc
     { first },
   );
 
-  return data.collections.edges.map((edge) => edge.node);
+  return data.collections.edges.map(({ node }) => ({
+    id: node.id,
+    title: node.title,
+    handle: node.handle,
+    isSmartCollection: Boolean(node.ruleSet),
+  }));
 }
 
 export async function searchCollections(search: string, first = 250): Promise<ShopifyCollectionMatch[]> {
@@ -936,7 +960,7 @@ export async function searchCollections(search: string, first = 250): Promise<Sh
 
   const data = await graphQlRequest<{
     collections: {
-      edges: Array<{ node: ShopifyCollectionMatch }>;
+      edges: Array<{ node: ShopifyCollectionMatch & { ruleSet?: { appliedDisjunctively: boolean } | null } }>;
     };
   }>(
     `query SearchCollections($query: String!, $first: Int!) {
@@ -946,17 +970,23 @@ export async function searchCollections(search: string, first = 250): Promise<Sh
             id
             title
             handle
+            ruleSet { appliedDisjunctively }
           }
         }
       }
     }`,
     {
-      query: `collection_type:custom ${normalizedSearch}`.trim(),
+      query: normalizedSearch,
       first,
     },
   );
 
-  return data.collections.edges.map((edge) => edge.node);
+  return data.collections.edges.map(({ node }) => ({
+    id: node.id,
+    title: node.title,
+    handle: node.handle,
+    isSmartCollection: Boolean(node.ruleSet),
+  }));
 }
 
 export async function searchTaxonomyCategories(search: string, first = 10): Promise<ShopifyTaxonomyCategoryMatch[]> {
@@ -990,6 +1020,81 @@ export async function searchTaxonomyCategories(search: string, first = 10): Prom
   );
 
   return data.taxonomy.categories.edges.map((edge) => edge.node);
+}
+
+export async function getTaxonomyCategoryAttributes(categoryId: string, categorySearch: string): Promise<ShopifyTaxonomyCategoryAttribute[]> {
+  const normalizedCategoryId = categoryId.trim();
+  const normalizedCategorySearch = categorySearch.trim();
+  if (!normalizedCategoryId || !normalizedCategorySearch) return [];
+
+  const data = await graphQlRequest<{
+    taxonomy: {
+      categories: {
+        nodes: Array<{
+          id: string;
+          attributes: {
+            nodes: Array<{
+              __typename: 'TaxonomyAttribute' | 'TaxonomyChoiceListAttribute' | 'TaxonomyMeasurementAttribute';
+              id: string;
+              name?: string;
+              values?: { nodes: Array<{ id: string; name: string }> };
+              options?: Array<{ key: string; value: string }>;
+            }>;
+          };
+        }>;
+      };
+    };
+  }>(
+    `query GetTaxonomyCategoryAttributes($categorySearch: String!) {
+      taxonomy {
+        categories(first: 25, search: $categorySearch) {
+          nodes {
+            id
+            attributes(first: 250) {
+              nodes {
+                __typename
+                ... on TaxonomyAttribute { id }
+                ... on TaxonomyChoiceListAttribute {
+                  id
+                  name
+                  values(first: 250) { nodes { id name } }
+                }
+                ... on TaxonomyMeasurementAttribute {
+                  id
+                  name
+                  options { key value }
+                }
+              }
+            }
+          }
+        }
+      }
+    }`,
+    { categorySearch: normalizedCategorySearch },
+  );
+
+  const category = data.taxonomy.categories.nodes.find((node) => node.id === normalizedCategoryId);
+  const attributes = category?.attributes.nodes ?? [];
+  return attributes.map((attribute) => {
+    const name = attribute.name?.trim() || attribute.id;
+    if (attribute.__typename === 'TaxonomyChoiceListAttribute') {
+      return {
+        id: attribute.id,
+        name,
+        type: 'choice' as const,
+        values: (attribute.values?.nodes ?? []).map(({ id, name: valueName }) => ({ id, name: valueName })),
+      };
+    }
+    if (attribute.__typename === 'TaxonomyMeasurementAttribute') {
+      return {
+        id: attribute.id,
+        name,
+        type: 'measurement' as const,
+        options: attribute.options ?? [],
+      };
+    }
+    return { id: attribute.id, name, type: 'text' as const };
+  });
 }
 
 function buildTaxonomySearchCandidates(raw: string): string[] {

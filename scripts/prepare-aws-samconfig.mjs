@@ -63,6 +63,7 @@ const replacements = [
   ['AirtableCombinedListingsTableName', getOptionalEnv('VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME')],
   ['ShopifyStoreDomain', getOptionalEnv('VITE_SHOPIFY_STORE_DOMAIN')],
   ['ShopifyAccessToken', shopifyToken],
+  ['ShopifyInventoryLocationId', getOptionalEnv('VITE_SHOPIFY_INVENTORY_LOCATION_ID')],
   ['AppAllowedOrigins', getOptionalEnv('VITE_APP_ALLOWED_ORIGINS')],
   ['AppAuthCookieSameSite', getOptionalEnv('APP_AUTH_COOKIE_SAME_SITE')],
   ['AppAuthCookieSecureMode', getOptionalEnv('APP_AUTH_COOKIE_SECURE_MODE')],

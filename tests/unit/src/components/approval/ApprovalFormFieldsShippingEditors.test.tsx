@@ -31,6 +31,7 @@ describe('ApprovalFormFieldsShippingEditors', () => {
 
     expect(setFormValue).toHaveBeenCalledWith('Ebay Domestic Shipping Fees', 'Calculated');
     expect(setFormValue).toHaveBeenCalledWith('Ebay International Shipping Fees', 'Flat');
+    expect(setFormValue).toHaveBeenCalledTimes(2);
     expect(screen.queryByText('eBay International Shipping Flat Fee')).not.toBeInTheDocument();
   });
 });

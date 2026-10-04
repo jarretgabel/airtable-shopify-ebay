@@ -9,6 +9,7 @@ import {
 import { findEbayBodyHtmlFieldName, findEbayPriceFieldName } from '@/components/approval/listingApprovalFieldHelpers';
 import {
   SHOPIFY_PRICE_FIELD_CANDIDATES,
+  SHOPIFY_INVENTORY_QUANTITY_FIELD_CANDIDATES,
   SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES,
   SHOPIFY_TITLE_FIELD_CANDIDATES,
 } from '@/components/approval/listingApprovalShopifyConstants';
@@ -92,6 +93,7 @@ export function useListingApprovalPublishFieldState({
     const required = [
       resolveFieldName([...SHOPIFY_TITLE_FIELD_CANDIDATES], ''),
       resolveFieldName([...SHOPIFY_PRICE_FIELD_CANDIDATES], ''),
+      resolveFieldName([...SHOPIFY_INVENTORY_QUANTITY_FIELD_CANDIDATES], ''),
       resolveFieldName([...SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES], ''),
     ].filter((fieldName): fieldName is string => fieldName.trim().length > 0);
 
