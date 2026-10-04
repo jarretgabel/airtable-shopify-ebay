@@ -7,6 +7,13 @@ export interface EbayTemplateCopyEntry {
 
 export const EBAY_TEMPLATE_COPY_LIBRARY_STORAGE_KEY = 'ebay-template-copy-library:v1';
 
+export const DEFAULT_EBAY_TEMPLATE_COPY_ENTRY: EbayTemplateCopyEntry = {
+  id: 'template-ebay-copy-default',
+  name: 'eBay Template Copy',
+  html: '<p>All included items are pictured.</p><p>Each unit is tested; defects or service notes are listed below. 30-day warranty included.</p><p>Local pickup in NYC available.</p>',
+  updatedAt: '2026-10-04T00:00:00.000Z',
+};
+
 function getStorage(): Storage | null {
   return typeof window !== 'undefined' && window.localStorage ? window.localStorage : null;
 }
@@ -31,7 +38,9 @@ export function loadEbayTemplateCopyLibrary(): EbayTemplateCopyEntry[] {
   if (!storage) return [];
 
   try {
-    return normalizeEntries(JSON.parse(storage.getItem(EBAY_TEMPLATE_COPY_LIBRARY_STORAGE_KEY) ?? '[]'));
+    const storedValue = storage.getItem(EBAY_TEMPLATE_COPY_LIBRARY_STORAGE_KEY);
+    if (storedValue === null) return [DEFAULT_EBAY_TEMPLATE_COPY_ENTRY];
+    return normalizeEntries(JSON.parse(storedValue));
   } catch {
     return [];
   }
