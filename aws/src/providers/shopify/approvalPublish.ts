@@ -284,12 +284,24 @@ async function reuploadProductImagesForShopify(product: ReturnType<typeof buildS
   };
 }
 
-async function upsertWithCollectionFallback(params: {
+interface UpsertWithCollectionFallbackDependencies {
+  addProductToCollections: typeof addProductToCollections;
+  reuploadProductImagesForShopify: typeof reuploadProductImagesForShopify;
+  upsertExistingProductWithCollectionsInSingleMutation: typeof upsertExistingProductWithCollectionsInSingleMutation;
+  upsertProductWithUnifiedRequest: typeof upsertProductWithUnifiedRequest;
+}
+
+export async function upsertWithCollectionFallback(params: {
   product: ReturnType<typeof buildShopifyDraftProductFromApprovalFields>;
   categoryId?: string;
   collectionIds: string[];
   existingProductId?: number;
   taxonomyMetafields?: ReturnType<typeof buildShopifyTaxonomyChoiceMetafields>;
+}, dependencies: UpsertWithCollectionFallbackDependencies = {
+  addProductToCollections,
+  reuploadProductImagesForShopify,
+  upsertExistingProductWithCollectionsInSingleMutation,
+  upsertProductWithUnifiedRequest,
 }): Promise<{ product: ShopifyUnifiedProductResult; warnings: string[] }> {
   const warnings: string[] = [];
   const normalizedCollectionIds = Array.from(new Set(params.collectionIds.map((value) => value.trim()).filter(Boolean)));
@@ -301,7 +313,7 @@ async function upsertWithCollectionFallback(params: {
       taxonomyMetafields: params.taxonomyMetafields,
     });
     if (params.existingProductId && normalizedCollectionIds.length > 0) {
-      const combinedResult = await upsertExistingProductWithCollectionsInSingleMutation(request, normalizedCollectionIds);
+      const combinedResult = await dependencies.upsertExistingProductWithCollectionsInSingleMutation(request, normalizedCollectionIds);
       if (combinedResult.collectionFailures.length > 0) {
         warnings.push(`Collection assignment failed for ${combinedResult.collectionFailures.length} collection(s): ${combinedResult.collectionFailures.join(' | ')}`);
         try {
@@ -313,7 +325,7 @@ async function upsertWithCollectionFallback(params: {
       return combinedResult.product;
     }
 
-    const upserted = await upsertProductWithUnifiedRequest(request);
+    const upserted = await dependencies.upsertProductWithUnifiedRequest(request);
     try {
       await ensureCollectionsApplied(upserted.id);
     } catch (collectionApplyError) {
@@ -324,19 +336,16 @@ async function upsertWithCollectionFallback(params: {
 
   const ensureCollectionsApplied = async (productId: number) => {
     if (!Number.isFinite(productId) || productId <= 0 || normalizedCollectionIds.length === 0) return;
-    await addProductToCollections(productId, normalizedCollectionIds);
+    await dependencies.addProductToCollections(productId, normalizedCollectionIds);
   };
 
   let productForUpsert = params.product;
 
   try {
-    const normalizedMedia = await reuploadProductImagesForShopify(productForUpsert);
-    productForUpsert = normalizedMedia.product;
-    warnings.push(...normalizedMedia.warnings);
     return { product: await runUpsert(productForUpsert), warnings };
   } catch (error) {
     if (isShopifyMediaFormatMismatchError(error) && (productForUpsert.images?.length ?? 0) > 0) {
-      const normalizedMedia = await reuploadProductImagesForShopify(productForUpsert);
+      const normalizedMedia = await dependencies.reuploadProductImagesForShopify(productForUpsert);
       productForUpsert = normalizedMedia.product;
       warnings.push(...normalizedMedia.warnings);
       warnings.push('Shopify rejected source image format metadata; retried publish with normalized uploaded media files.');
@@ -349,7 +358,7 @@ async function upsertWithCollectionFallback(params: {
       || errorMessage.includes('collectionstojoin')
       || errorMessage.includes('collection id');
     if (!isCollectionError) throw error;
-    const retried = await upsertProductWithUnifiedRequest(buildShopifyUnifiedProductSetRequest(productForUpsert, {
+    const retried = await dependencies.upsertProductWithUnifiedRequest(buildShopifyUnifiedProductSetRequest(productForUpsert, {
       categoryId: params.categoryId,
       existingProductId: params.existingProductId,
     }));
