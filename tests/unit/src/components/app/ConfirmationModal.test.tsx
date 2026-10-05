@@ -25,12 +25,20 @@ describe('ConfirmationModal', () => {
     const confirmButton = screen.getByRole('button', { name: 'Publish' });
     expect(confirmButton).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText('Type the publish command to confirm'), {
+    const confirmationInput = screen.getByLabelText('Type the publish command to confirm');
+    expect(confirmationInput).toHaveAttribute('name', 'confirmation-command');
+    expect(confirmationInput).toHaveAttribute('autocomplete', 'off');
+    expect(confirmationInput).toHaveAttribute('data-1p-ignore');
+    expect(confirmationInput).toHaveAttribute('data-lpignore', 'true');
+    expect(confirmationInput).toHaveAttribute('data-bwignore', 'true');
+    expect(confirmationInput).toHaveAttribute('data-form-type', 'other');
+
+    fireEvent.change(confirmationInput, {
       target: { value: 'PUBLISH' },
     });
     expect(confirmButton).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText('Type the publish command to confirm'), {
+    fireEvent.change(confirmationInput, {
       target: { value: 'PUBLISH SHOPIFY' },
     });
     expect(confirmButton).toBeEnabled();

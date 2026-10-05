@@ -94,7 +94,15 @@ export function ConfirmationModal({
             </p>
             <input
               id="confirmation-typed-input"
+              name="confirmation-command"
               type="text"
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              data-1p-ignore
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
               value={typedValue}
               onChange={(event) => setTypedValue(event.target.value)}
               placeholder={typedConfirmation.placeholder ?? typedConfirmation.expectedValue}
