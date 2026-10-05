@@ -70,7 +70,7 @@ function buildOrderedDetailEntries(
       ...includeWhenFilled('Audiogon Rating', audiogonRating),
       ...(ratingValue !== null && ratingValue <= 7 ? includeWhenFilled('Cosmetic Notes', supplementalFields.cosmeticNotes) : []),
       ...includeWhenFilled('Testing Notes', testingNotes),
-      { feature: 'Serial Number', value: supplementalFields.serialNumber?.trim() ?? '' },
+      ...includeWhenFilled('Serial Number', supplementalFields.serialNumber),
       ...includeWhenFilled('Voltage', supplementalFields.voltage),
       ...otherFeatures,
     ],

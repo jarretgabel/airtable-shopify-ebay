@@ -35,7 +35,7 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
 
     expect(html).toContain('<tr><th>Finish</th><td>Silver</td></tr>');
     expect(html).toContain('<tr><th>Serial</th><td>12345</td></tr>');
-    expect(html).toContain('<tr><th>Serial Number</th><td></td></tr>');
+    expect(html).not.toContain('<tr><th>Serial Number</th>');
     expect(html).not.toContain('{{key}}');
     expect(html).not.toContain('{{value}}');
   });
@@ -142,7 +142,7 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
     expect(html).not.toContain('<tr><th>Condition</th>');
     expect(html).toContain('<tr><th>Finish</th><td>Silver</td></tr>');
     expect(html).toContain('<tr><th>Service History</th><td>Recapped in 2024</td></tr>');
-    expect(html).toMatch(/<tr><th>Serial Number<\/th><td><\/td><\/tr>\n<tr><th>Finish<\/th><td>Silver<\/td><\/tr>\n<tr><th>Service History<\/th><td>Recapped in 2024<\/td><\/tr>/);
+    expect(html).toMatch(/<tr><th>Finish<\/th><td>Silver<\/td><\/tr>\n<tr><th>Service History<\/th><td>Recapped in 2024<\/td><\/tr>/);
   });
 
   it('orders the requested leading, middle, and trailing detail rows', () => {
@@ -226,7 +226,7 @@ describe('buildEbayBodyHtmlFromTemplate', () => {
       },
     );
 
-    expect(html).toMatch(/<tr><th>Audiogon Rating<\/th><td>7\/10<\/td><\/tr>\n<tr><th>Cosmetic Notes<\/th><td>Visible jacket wear\.<\/td><\/tr>\n<tr><th>Testing Notes<\/th><td>Fully tested\.<\/td><\/tr>\n<tr><th>Serial Number<\/th><td><\/td><\/tr>\n<tr><th>Bias<\/th><td>Stable<\/td><\/tr>/);
+    expect(html).toMatch(/<tr><th>Audiogon Rating<\/th><td>7\/10<\/td><\/tr>\n<tr><th>Cosmetic Notes<\/th><td>Visible jacket wear\.<\/td><\/tr>\n<tr><th>Testing Notes<\/th><td>Fully tested\.<\/td><\/tr>\n<tr><th>Bias<\/th><td>Stable<\/td><\/tr>/);
     expect(html).not.toContain('<tr><th>Power Cable</th>');
   });
 

@@ -34,6 +34,8 @@ describe('useApprovalPreview', () => {
           Model: '2270',
           'Key Features': 'Includes,Original wood case',
           'Testing Notes': 'Bench tested',
+          'Domestic Service 1': 'UPS Ground',
+          'International Service 1': 'USPS Priority Mail International',
         },
       },
       fieldKinds: {},
@@ -77,6 +79,7 @@ describe('useApprovalPreview', () => {
           testingNotes: 'Bench tested',
           make: 'Marantz',
           model: '2270',
+          shippingMethod: 'UPS Ground (Domestic) / USPS Priority Mail International (International)',
         }),
       }),
     );

@@ -39,6 +39,26 @@ function resolveCombinedPreviewValue(
   return toPreviewTextValue(selectedRecord?.fields[fieldName]).trim();
 }
 
+function resolveShippingMethod(
+  formValues: Record<string, string>,
+  sourceFields: Record<string, unknown> | null | undefined,
+  selectedRecord: AirtableRecord | null,
+): string {
+  const readFirstFilled = (fieldNames: string[]): string[] => fieldNames
+    .map((fieldName) => Object.prototype.hasOwnProperty.call(formValues, fieldName)
+      ? (formValues[fieldName] ?? '').trim()
+      : resolveCombinedPreviewValue(formValues, sourceFields, selectedRecord, fieldName))
+    .filter(Boolean)
+    .filter((value, index, values) => values.findIndex((candidate) => candidate.toLowerCase() === value.toLowerCase()) === index);
+  const domestic = readFirstFilled(['Domestic Service 1', 'Ebay Domestic Service 1', 'Domestic Service', 'Ebay Domestic Service', 'Domestic Service 2', 'Ebay Domestic Service 2']);
+  const international = readFirstFilled(['International Service 1', 'Ebay International Service 1', 'International Service', 'Ebay International Service', 'International Service 2', 'Ebay International Service 2']);
+
+  return [
+    domestic.length > 0 ? `${domestic.join(', ')} (Domestic)` : '',
+    international.length > 0 ? `${international.join(', ')} (International)` : '',
+  ].filter(Boolean).join(' / ');
+}
+
 function resolveEbayDescriptionPreviewValue(
   formValues: Record<string, string>,
   sourceFields: Record<string, unknown> | null | undefined,
@@ -182,7 +202,8 @@ export function useApprovalPreview({
       manual: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Manual'),
       voltage: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Voltage'),
       additionalItems: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Additional Items'),
-      shippingMethod: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Shipping Method'),
+      shippingMethod: resolveShippingMethod(formValues, mergedDraftSourceFields, selectedRecord)
+        || resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Shipping Method'),
       shippingWeight: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Shipping Weight')
         || resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Weight'),
       shippingDimensions: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, 'Shipping Dims'),
