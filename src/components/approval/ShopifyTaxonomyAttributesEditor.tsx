@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getTaxonomyCategoryAttributes, resolveTaxonomyCategory } from '@/services/app-api/shopify';
 import type { ShopifyTaxonomyCategoryAttribute } from '@/services/shopify';
+import { SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES } from './listingApprovalShopifyConstants';
+import {
+  detailDisclosureBodyClass,
+  detailDisclosureClass,
+  detailDisclosureSummaryClass,
+} from '@/components/tabs/uiClasses';
 import {
   buildEmptyShopifyTaxonomyAttributes,
   parseShopifyTaxonomyAttributes,
@@ -12,12 +18,10 @@ const inputClass = 'w-full rounded-xl border border-[var(--line)] bg-[var(--pane
 
 function getCategoryFieldValue(formValues: Record<string, string>): string {
   const preferred = [
+    ...SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES,
     'Shopify GraphQL Category ID',
     'Shopify Taxonomy Category ID',
     'Shopify Category ID',
-    'Shopify Type',
-    'Shopify Category',
-    'Category',
   ];
   for (const name of preferred) {
     const value = formValues[name]?.trim();
@@ -46,7 +50,9 @@ export function ShopifyTaxonomyAttributesEditor({
   disabled,
 }: ShopifyTaxonomyAttributesEditorProps) {
   const categoryValue = getCategoryFieldValue(formValues);
-  const categoryLabelValue = formValues['Shopify Type'] ?? formValues['Shopify Category'] ?? categoryValue;
+  const categoryLabelValue = formValues['Shopify Type']?.trim()
+    || formValues['Shopify Category']?.trim()
+    || categoryValue;
   const [category, setCategory] = useState<{ id: string; fullName: string } | null>(null);
   const [definitions, setDefinitions] = useState<ShopifyTaxonomyCategoryAttribute[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,13 +76,14 @@ export function ShopifyTaxonomyAttributesEditor({
     setError('');
     void (async () => {
       try {
-        const resolved = hasCategoryId(categoryValue)
-          ? { id: categoryValue, fullName: categoryLabelValue }
-          : await resolveTaxonomyCategory(categoryValue);
+        const categoryLookupValue = categoryLabelValue || categoryValue;
+        const resolved = hasCategoryId(categoryLookupValue)
+          ? { id: categoryLookupValue, fullName: categoryLabelValue || categoryLookupValue }
+          : await resolveTaxonomyCategory(categoryLookupValue);
         if (!resolved?.id || !resolved.fullName || cancelled) return;
+        setCategory({ id: resolved.id, fullName: resolved.fullName });
         const nextDefinitions = await getTaxonomyCategoryAttributes(resolved.id, resolved.fullName);
         if (cancelled) return;
-        setCategory({ id: resolved.id, fullName: resolved.fullName });
         setDefinitions(nextDefinitions);
       } catch (loadError) {
         if (!cancelled) setError(loadError instanceof Error ? loadError.message : 'Unable to load Shopify taxonomy attributes.');
@@ -89,7 +96,7 @@ export function ShopifyTaxonomyAttributesEditor({
   }, [categoryLabelValue, categoryValue]);
 
   useEffect(() => {
-    if (!category || !document || document.categoryId !== category.id) return;
+    if (loading || definitions.length === 0 || !category || !document || document.categoryId !== category.id) return;
     const allowed = new Map(definitions.map((definition) => [definition.id, definition]));
     const nextAttributes = document.attributes.flatMap((selection) => {
       const definition = allowed.get(selection.id);
@@ -104,10 +111,14 @@ export function ShopifyTaxonomyAttributesEditor({
     if (nextAttributes.length !== document.attributes.length) {
       setFormValue(fieldName, serializeShopifyTaxonomyAttributes({ ...document, attributes: nextAttributes }));
     }
-  }, [category, definitions, document, fieldName, setFormValue]);
+  }, [category, definitions, document, fieldName, loading, setFormValue]);
 
   const updateDocument = (next: ShopifyTaxonomyAttributesDocument) => setFormValue(fieldName, serializeShopifyTaxonomyAttributes(next));
   const selectionById = new Map((document?.attributes ?? []).map((selection) => [selection.id, selection]));
+  const selectedCount = (document?.attributes ?? []).reduce(
+    (count, selection) => count + (selection.type === 'choice' ? selection.values.length : 1),
+    0,
+  );
 
   if (value.trim() && !parsedDocument) {
     return <p className="col-span-1 text-sm text-rose-300 md:col-span-2">Shopify taxonomy attributes JSON is malformed or from an unsupported version. Choose the category attributes again to replace it.</p>;
@@ -118,14 +129,19 @@ export function ShopifyTaxonomyAttributesEditor({
   }
 
   return (
-    <section className="col-span-1 space-y-3 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-4 md:col-span-2">
-      <div>
-        <h3 className="m-0 text-sm font-semibold text-[var(--ink)]">Shopify taxonomy attributes</h3>
-        <p className="m-0 mt-1 text-xs text-[var(--muted)]">Values are saved with Shopify IDs and written to native Shopify taxonomy metafields when their definitions are available.</p>
-      </div>
-      {loading && <p className="m-0 text-sm text-[var(--muted)]">Loading category attributes...</p>}
-      {error && <p className="m-0 text-sm text-rose-300">{error}</p>}
-      {!loading && !error && definitions.map((definition) => {
+    <details className={`${detailDisclosureClass} col-span-1 md:col-span-2`}>
+      <summary className={detailDisclosureSummaryClass}>
+        <span className="inline-flex items-center gap-2">
+          <span>Shopify taxonomy attributes</span>
+          <span className="rounded-full border border-[var(--line)] px-2 py-0.5 text-[0.68rem] font-medium text-[var(--muted)]">
+            {selectedCount} selected
+          </span>
+        </span>
+      </summary>
+      <div className={`${detailDisclosureBodyClass} space-y-3`}>
+        {loading && <p className="m-0 text-sm text-[var(--muted)]">Loading category attributes...</p>}
+        {error && <p className="m-0 text-sm text-rose-300">{error}</p>}
+        {!loading && !error && definitions.map((definition) => {
         const selection = selectionById.get(definition.id);
         if (definition.type === 'choice') {
           const selected = new Set(selection?.type === 'choice' ? selection.values.map((option) => option.id) : []);
@@ -185,7 +201,8 @@ export function ShopifyTaxonomyAttributesEditor({
 
         const text = selection?.type === 'text' ? selection.value : '';
         return <label key={definition.id} className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{definition.name}<input className={inputClass} value={text} disabled={disabled} onChange={(event) => updateDocument({ ...(document ?? buildEmptyShopifyTaxonomyAttributes(category?.id ?? '', category?.fullName ?? '')), attributes: [...(document?.attributes ?? []).filter((candidate) => candidate.id !== definition.id), ...(event.target.value ? [{ id: definition.id, name: definition.name, type: 'text' as const, value: event.target.value }] : [])] })} /></label>;
-      })}
-    </section>
+        })}
+      </div>
+    </details>
   );
 }

@@ -19,7 +19,7 @@ import { SHOPIFY_TAXONOMY_ATTRIBUTES_FIELD_CANDIDATES } from './listingApprovalS
 import { isTitleLikeFieldName } from './listingApprovalFieldHelpers';
 
 const TITLE_FIELD_MAX_LENGTH = 80;
-const SHOPIFY_TAXONOMY_ATTRIBUTES_EDITOR_ENABLED = false;
+const SHOPIFY_TAXONOMY_ATTRIBUTES_EDITOR_ENABLED = true;
 
 interface ApprovalFormStandardFieldRendererParams {
   fieldName: string;

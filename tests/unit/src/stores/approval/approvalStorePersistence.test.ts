@@ -210,6 +210,44 @@ describe('approvalStorePersistence', () => {
     );
   });
 
+  it('saves Shopify taxonomy attributes when Airtable omits the empty field from records', async () => {
+    const taxonomyAttributes = JSON.stringify({
+      version: 1,
+      category: { id: 'gid://shopify/TaxonomyCategory/el-2', name: 'Audio' },
+      attributes: [{ id: 'gid://shopify/TaxonomyAttribute/1', name: 'Color', values: ['gid://shopify/TaxonomyValue/1'] }],
+    });
+    const state = buildStoreState({
+      formValues: {
+        'Shopify Taxonomy Attributes JSON': taxonomyAttributes,
+      },
+      fieldKinds: {
+        'Shopify Taxonomy Attributes JSON': 'text',
+      },
+    });
+    const saveRecord = createSaveRecordAction(vi.fn(), vi.fn(() => state));
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Shopify Taxonomy Attributes JSON': taxonomyAttributes },
+      undefined,
+    );
+  });
+
   it('does not clear collections from an untouched synthetic alias during an unrelated save', async () => {
     const state = buildStoreState({
       formValues: {

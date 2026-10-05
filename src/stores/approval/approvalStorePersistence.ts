@@ -443,6 +443,9 @@ function getKnownMissingWritableFieldName(fieldName: string): string | null {
     'shopify collection ids': 'Shopify Collections',
     'shopify collections': 'Shopify Collections',
     'shopify graphql collection ids': 'Shopify Collections',
+    'shopify taxonomy attributes json': 'Shopify Taxonomy Attributes JSON',
+    'shopify taxonomy attributes': 'Shopify Taxonomy Attributes JSON',
+    'shopify_taxonomy_attributes_json': 'Shopify Taxonomy Attributes JSON',
   };
 
   return canonicalFields[normalized] ?? null;
@@ -525,6 +528,9 @@ function isAllowedMissingWritableFieldName(fieldName: string): boolean {
     || normalized === 'shopify graphql collection ids'
     || normalized === 'shopify collection ids'
     || normalized === 'shopify collections'
+    || normalized === 'shopify taxonomy attributes json'
+    || normalized === 'shopify taxonomy attributes'
+    || normalized === 'shopify_taxonomy_attributes_json'
     || normalized === 'domestic shipping fees'
     || normalized === 'ebay domestic shipping fees'
     || normalized === 'international shipping fees'

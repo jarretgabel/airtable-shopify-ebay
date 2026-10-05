@@ -53,6 +53,7 @@ const ROUTES = [
   ['GET', '/api/shopify/collections/search', 'handlers/shopify/searchCollections.js', 'handler'],
   ['GET', '/api/shopify/taxonomy-categories/search', 'handlers/shopify/searchTaxonomyCategories.js', 'handler'],
   ['GET', '/api/shopify/taxonomy-categories/resolve', 'handlers/shopify/resolveTaxonomyCategory.js', 'handler'],
+  ['GET', '/api/shopify/taxonomy-categories/attributes', 'handlers/shopify/getTaxonomyCategoryAttributes.js', 'handler'],
   ['POST', '/api/shopify/product-set', 'handlers/shopify/upsertProduct.js', 'handler'],
   ['POST', '/api/shopify/product-set-with-collections', 'handlers/shopify/upsertProductWithCollections.js', 'handler'],
   ['POST', '/api/shopify/approval-listings/publish', 'handlers/shopify/publishApprovalListing.js', 'handler'],
