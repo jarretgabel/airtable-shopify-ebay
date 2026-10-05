@@ -6,12 +6,15 @@ import type {
   ShopifyApprovalPreviewResult as ShopifyApprovalPreview,
 } from '../../shared/contracts/shopifyApproval.js';
 import {
+  getColorPatternMetaobjectIdsByTaxonomyValueIds,
   getTaxonomyCategoryAttributes,
   resolveTaxonomyCategory,
 } from './client.js';
 import {
   buildShopifyTaxonomyChoiceMetafields,
+  getSelectedColorTaxonomyValueIds,
   parseShopifyTaxonomyAttributes,
+  resolveTaxonomyAttributeSearch,
 } from './taxonomyAttributes.js';
 
 export type {
@@ -100,13 +103,21 @@ export function buildShopifyApprovalPreviewFromFields(fields: ApprovalFieldMap):
     const taxonomyDocument = parseShopifyTaxonomyAttributes(resolveTaxonomyAttributes(fields).value);
     return Promise.all([
       resolvedCategoryId && taxonomyDocument
-        ? getTaxonomyCategoryAttributes(resolvedCategoryId, categoryResolution.match?.fullName ?? taxonomyDocument.categoryFullName)
+        ? getTaxonomyCategoryAttributes(
+          resolvedCategoryId,
+          resolveTaxonomyAttributeSearch(taxonomyDocument, categoryResolution.match?.fullName),
+        )
         : Promise.resolve([]),
-    ]).then(([taxonomyDefinitions]) => {
+      getColorPatternMetaobjectIdsByTaxonomyValueIds(getSelectedColorTaxonomyValueIds(taxonomyDocument)),
+    ]).then(([taxonomyDefinitions, metaobjectIdsByTaxonomyValueId]) => {
       const productSetRequest = buildShopifyUnifiedProductSetRequest(effectiveProduct, {
       categoryId: resolvedCategoryId || undefined,
       collectionIds: collectionPreview.collectionIds,
-      taxonomyMetafields: buildShopifyTaxonomyChoiceMetafields(taxonomyDocument, taxonomyDefinitions),
+      taxonomyMetafields: buildShopifyTaxonomyChoiceMetafields(
+        taxonomyDocument,
+        taxonomyDefinitions,
+        metaobjectIdsByTaxonomyValueId,
+      ),
       existingProductId: (() => {
         const parsed = Number(coerceToString(fields['Shopify REST Product ID']));
         return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;

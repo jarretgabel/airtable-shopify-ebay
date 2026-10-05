@@ -3,10 +3,41 @@ import assert from 'node:assert/strict';
 import {
   deleteWebhookSubscription,
   ensureRequiredWebhookSubscriptions,
+  getColorPatternMetaobjectIdsByTaxonomyValueIds,
   getRequiredShopifyWebhookCallbackUrl,
   listWebhookSubscriptions,
   resolveTaxonomyCategory,
 } from '../../../../../../aws/src/providers/shopify/client.js';
+
+test('getColorPatternMetaobjectIdsByTaxonomyValueIds maps taxonomy references to metaobjects', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalStoreDomain = process.env.SHOPIFY_STORE_DOMAIN;
+  const originalAccessToken = process.env.SHOPIFY_ACCESS_TOKEN;
+  process.env.SHOPIFY_STORE_DOMAIN = 'test-shop.myshopify.com';
+  process.env.SHOPIFY_ACCESS_TOKEN = 'token';
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    data: {
+      metaobjects: {
+        nodes: [{
+          id: 'gid://shopify/Metaobject/1',
+          fields: [{ key: 'color_taxonomy_reference', value: '["gid://shopify/TaxonomyValue/1"]' }],
+        }],
+      },
+    },
+  }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
+  try {
+    assert.deepEqual(await getColorPatternMetaobjectIdsByTaxonomyValueIds([
+      'gid://shopify/TaxonomyValue/1',
+    ]), {
+      'gid://shopify/TaxonomyValue/1': 'gid://shopify/Metaobject/1',
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.SHOPIFY_STORE_DOMAIN = originalStoreDomain;
+    process.env.SHOPIFY_ACCESS_TOKEN = originalAccessToken;
+  }
+});
 
 test('getRequiredShopifyWebhookCallbackUrl builds HTTPS callback URLs from env config', () => {
   const originalBaseUrl = process.env.SHOPIFY_WEBHOOK_BASE_URL;

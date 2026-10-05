@@ -52,6 +52,8 @@ STEP 1: Register Your App
   - read_inventory
   - write_inventory
   - read_locations
+  - read_metaobjects
+  - read_metaobject_definitions
   (add more as needed)
 7. Copy your:
    - CLIENT_ID
@@ -100,7 +102,15 @@ if (step === 'auth') {
     process.exit(1);
   }
 
-  const scopes = 'write_products,read_products,read_inventory,write_inventory,read_locations';
+  const scopes = [
+    'write_products',
+    'read_products',
+    'read_inventory',
+    'write_inventory',
+    'read_locations',
+    'read_metaobjects',
+    'read_metaobject_definitions',
+  ].join(',');
   const state = Math.random().toString(36).substring(7);
 
   const authUrl = `https://${storeDomain}/admin/oauth/authorize?client_id=${clientId}&scope=${scopes}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;

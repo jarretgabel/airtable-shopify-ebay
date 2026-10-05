@@ -10,7 +10,7 @@ interface TaxonomyChoiceSelection {
   id: string;
   name: string;
   type: 'choice';
-  values: Array<{ id: string; name: string }>;
+  values: Array<{ id: string; name: string; metaobjectId?: string }>;
 }
 
 interface TaxonomyMeasurementSelection {
@@ -58,13 +58,37 @@ export function parseShopifyTaxonomyAttributes(value: string): ShopifyTaxonomyAt
   }
 }
 
+export function resolveTaxonomyAttributeSearch(
+  document: ShopifyTaxonomyAttributesDocument,
+  resolvedCategoryFullName?: string,
+): string {
+  return document.categoryFullName.trim() || resolvedCategoryFullName?.trim() || '';
+}
+
+export function getSelectedColorTaxonomyValueIds(
+  document: ShopifyTaxonomyAttributesDocument | null,
+): string[] {
+  if (!document) return [];
+  return document.attributes.flatMap((attribute) => (
+    attribute.type === 'choice' && attribute.id === 'gid://shopify/TaxonomyAttribute/1'
+      ? attribute.values.map((value) => value.id)
+      : []
+  ));
+}
+
 function slugify(name: string): string {
   return name.trim().toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function getTaxonomyMetafieldKey(attribute: ShopifyTaxonomyCategoryAttribute): string {
+  if (attribute.id === 'gid://shopify/TaxonomyAttribute/1') return 'color-pattern';
+  return slugify(attribute.name);
 }
 
 export function buildShopifyTaxonomyChoiceMetafields(
   document: ShopifyTaxonomyAttributesDocument | null,
   definitions: ShopifyTaxonomyCategoryAttribute[],
+  metaobjectIdsByTaxonomyValueId: Record<string, string> = {},
 ): Array<{ namespace: string; key: string; type: string; value: string }> {
   if (!document) return [];
   const definitionsById = new Map(definitions.map((definition) => [definition.id, definition]));
@@ -73,8 +97,12 @@ export function buildShopifyTaxonomyChoiceMetafields(
     const definition = definitionsById.get(selection.id);
     if (!definition || definition.type !== 'choice') return [];
     const validIds = new Set(definition.values.map((value) => value.id));
-    const valueIds = selection.values.map((value) => value.id).filter((id) => validIds.has(id));
+    const valueIds = selection.values
+      .filter((value) => validIds.has(value.id))
+      .map((value) => value.metaobjectId || metaobjectIdsByTaxonomyValueId[value.id]
+        || (/^gid:\/\/shopify\/Metaobject\//i.test(value.id) ? value.id : ''))
+      .filter(Boolean);
     if (valueIds.length === 0) return [];
-    return [{ namespace: 'shopify', key: slugify(definition.name), type: 'list.metaobject_reference', value: JSON.stringify(valueIds) }];
+    return [{ namespace: 'shopify', key: getTaxonomyMetafieldKey(definition), type: 'list.metaobject_reference', value: JSON.stringify(valueIds) }];
   });
 }

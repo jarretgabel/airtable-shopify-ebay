@@ -4,6 +4,7 @@ import { logInfo } from '../../shared/logging.js';
 import {
   addProductToCollections,
   findLatestProductByTitleOrHandle,
+  getColorPatternMetaobjectIdsByTaxonomyValueIds,
   getProduct,
   getTaxonomyCategoryAttributes,
   resolveTaxonomyCategory,
@@ -19,7 +20,7 @@ import {
   buildShopifyUnifiedProductSetRequest,
 } from './approvalDraft.js';
 import { resolveCategoryId, resolveProductCategory } from './approvalPreviewFieldResolvers.js';
-import { buildShopifyTaxonomyChoiceMetafields, parseShopifyTaxonomyAttributes, findShopifyTaxonomyAttributesValue } from './taxonomyAttributes.js';
+import { buildShopifyTaxonomyChoiceMetafields, getSelectedColorTaxonomyValueIds, parseShopifyTaxonomyAttributes, findShopifyTaxonomyAttributesValue } from './taxonomyAttributes.js';
 
 interface PublishApprovalListingParams {
   source: AirtableConfiguredRecordsSource;
@@ -401,9 +402,15 @@ export async function publishApprovalListingToShopify({
   const taxonomyMetafields = preview?.productSetRequest?.input.metafields?.filter((metafield) => metafield.namespace === 'shopify')
     ?? await (async () => {
       if (!taxonomyDocument || !categoryId) return [];
-      const definitions = await getTaxonomyCategoryAttributes(categoryId, taxonomyDocument.categoryFullName);
-      return buildShopifyTaxonomyChoiceMetafields(taxonomyDocument, definitions);
+      const [definitions, metaobjectIdsByTaxonomyValueId] = await Promise.all([
+        getTaxonomyCategoryAttributes(categoryId, taxonomyDocument.categoryFullName),
+        getColorPatternMetaobjectIdsByTaxonomyValueIds(getSelectedColorTaxonomyValueIds(taxonomyDocument)),
+      ]);
+      return buildShopifyTaxonomyChoiceMetafields(taxonomyDocument, definitions, metaobjectIdsByTaxonomyValueId);
     })();
+  if (taxonomyDocument?.attributes.some((attribute) => attribute.type === 'choice') && taxonomyMetafields.length === 0) {
+    warnings.push('Shopify taxonomy choice attributes were retained in Airtable but were not written because their standard metaobject references could not be resolved.');
+  }
   const targetInventoryLevels = getTargetVariantInventoryLevels(product);
   const existingProductIdRaw = coerceToString(fields[productIdFieldName]);
   const parsedExistingProductId = Number(existingProductIdRaw);

@@ -1097,6 +1097,54 @@ export async function getTaxonomyCategoryAttributes(categoryId: string, category
   });
 }
 
+export async function getColorPatternMetaobjectIdsByTaxonomyValueIds(
+  taxonomyValueIds: string[],
+): Promise<Record<string, string>> {
+  const requestedIds = new Set(taxonomyValueIds.map((id) => id.trim()).filter(Boolean));
+  if (requestedIds.size === 0) return {};
+
+  const data = await graphQlRequest<{
+    metaobjects: {
+      nodes: Array<{
+        id: string;
+        fields: Array<{ key: string; value?: string | null }>;
+      }>;
+    };
+  }>(
+    `query GetColorPatternMetaobjects {
+      metaobjects(first: 250, type: "shopify--color-pattern") {
+        nodes {
+          id
+          fields {
+            key
+            value
+          }
+        }
+      }
+    }`,
+    {},
+  );
+
+  const resolved: Record<string, string> = {};
+  for (const metaobject of data.metaobjects.nodes) {
+    const rawReferences = metaobject.fields.find((field) => field.key === 'color_taxonomy_reference')?.value;
+    if (!rawReferences) continue;
+    try {
+      const references: unknown = JSON.parse(rawReferences);
+      if (!Array.isArray(references)) continue;
+      for (const reference of references) {
+        if (typeof reference === 'string' && requestedIds.has(reference)) {
+          resolved[reference] = metaobject.id;
+        }
+      }
+    } catch {
+      // Ignore malformed metadata from individual metaobjects.
+    }
+  }
+
+  return resolved;
+}
+
 function buildTaxonomySearchCandidates(raw: string): string[] {
   const normalized = raw.trim();
   if (!normalized) return [];
