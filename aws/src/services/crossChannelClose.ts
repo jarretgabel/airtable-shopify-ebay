@@ -36,8 +36,7 @@ function getFieldValue(fields: Record<string, unknown>, fieldNames: string[]): s
 function isAlreadyClosed(fields: Record<string, unknown>, channel: 'shopify' | 'ebay'): boolean {
   if (channel === 'ebay') {
     const status = getFieldValue(fields, ['eBay Listing Status', 'eBay Offer Status']);
-    // Treat as closed if status is ENDED or not present
-    return status === 'ENDED' || status === 'NOT_ACTIVE' || status === '';
+    return status === 'ENDED' || status === 'NOT_ACTIVE';
   }
   if (channel === 'shopify') {
     const closedAt = getFieldValue(fields, ['Shopify Closed At']);

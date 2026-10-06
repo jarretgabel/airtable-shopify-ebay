@@ -20,6 +20,50 @@ describe('Cross-Channel Close Service', () => {
       assert.equal(updateRecord.mock.callCount(), 0);
     });
 
+    it('withdraws an eBay offer when listing status is missing', async () => {
+      const originalFetch = globalThis.fetch;
+      const originalEnv = process.env.EBAY_ENV;
+      const originalClientId = process.env.EBAY_CLIENT_ID;
+      const originalClientSecret = process.env.EBAY_CLIENT_SECRET;
+      const originalRefreshToken = process.env.EBAY_REFRESH_TOKEN;
+      const updateRecord = mock.fn(async () => ({}));
+      const fetchMock = mock.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        if (url.endsWith('/identity/v1/oauth2/token')) {
+          return Response.json({ access_token: 'test-token' });
+        }
+        return new Response('', { status: 200 });
+      });
+      process.env.EBAY_ENV = 'production';
+      process.env.EBAY_CLIENT_ID = 'client-id';
+      process.env.EBAY_CLIENT_SECRET = 'client-secret';
+      process.env.EBAY_REFRESH_TOKEN = 'refresh-token';
+      globalThis.fetch = fetchMock as typeof fetch;
+
+      try {
+        const result = await closeEbayListingWhenSoldOnShopify('record-123', {
+          'eBay Offer ID': 'offer-123',
+          'eBay Listing ID': 'listing-123',
+        }, { updateRecord });
+
+        assert.equal(result.success, true);
+        assert.match(result.message, /withdrawn/);
+        assert.equal(fetchMock.mock.callCount(), 2);
+        assert.equal(fetchMock.mock.calls[1].arguments[0], 'https://api.ebay.com/sell/inventory/v1/offer/offer-123/withdraw');
+        assert.equal(updateRecord.mock.callCount(), 1);
+      } finally {
+        globalThis.fetch = originalFetch;
+        if (originalEnv === undefined) delete process.env.EBAY_ENV;
+        else process.env.EBAY_ENV = originalEnv;
+        if (originalClientId === undefined) delete process.env.EBAY_CLIENT_ID;
+        else process.env.EBAY_CLIENT_ID = originalClientId;
+        if (originalClientSecret === undefined) delete process.env.EBAY_CLIENT_SECRET;
+        else process.env.EBAY_CLIENT_SECRET = originalClientSecret;
+        if (originalRefreshToken === undefined) delete process.env.EBAY_REFRESH_TOKEN;
+        else process.env.EBAY_REFRESH_TOKEN = originalRefreshToken;
+      }
+    });
+
     it('records a validation failure when the eBay offer ID is missing', async () => {
       const updateRecord = mock.fn(async () => ({}));
       const result = await closeEbayListingWhenSoldOnShopify('record-123', {
