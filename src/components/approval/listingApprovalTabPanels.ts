@@ -88,6 +88,32 @@ function isPostPublishMarketplaceStatus(status: string | null): boolean {
     || status === 'Shipped';
 }
 
+const WORKFLOW_LIFECYCLE_FIELD_NAMES = [
+  'Workflow Status',
+  'Listed At',
+  'Shopify REST Product ID',
+  'Shopify REST Published At',
+  'Shopify REST Published Scope',
+  'eBay Offer ID',
+  'eBay Listing ID',
+  'eBay Published At',
+] as const;
+
+function mergeDerivedWorkflowLifecycleFields(
+  record: AirtableRecord,
+  formValues: Record<string, string>,
+): AirtableRecord {
+  const fields = { ...record.fields };
+
+  WORKFLOW_LIFECYCLE_FIELD_NAMES.forEach((fieldName) => {
+    if (Object.prototype.hasOwnProperty.call(formValues, fieldName)) {
+      fields[fieldName] = formValues[fieldName];
+    }
+  });
+
+  return { ...record, fields };
+}
+
 interface BuildListingApprovalTabPanelsParams {
   selectedRecord: AirtableRecord | null;
   approvalChannel: 'shopify' | 'ebay' | 'combined';
@@ -455,16 +481,19 @@ export function buildListingApprovalTabPanels({
     })
     : null;
 
-  const workflowDetails = selectedRecord && isCombinedApproval && workflowSummary && hasTableReference
+  const workflowDetailsRecord = selectedRecord
+    ? mergeDerivedWorkflowLifecycleFields(selectedRecord, formValues)
+    : null;
+  const workflowDetails = workflowDetailsRecord && isCombinedApproval && workflowSummary && hasTableReference
     ? workflowSummary.workflowStatus === 'Sold - Ready to Ship' || workflowSummary.workflowStatus === 'Shipped'
       ? createElement(ListingApprovalSoldReadyPanel, {
-        selectedRecord,
+        selectedRecord: workflowDetailsRecord,
         tableReference,
         tableName,
         loadRecords,
       })
       : createElement(ListingApprovalWorkflowOpsPanel, {
-        selectedRecord,
+        selectedRecord: workflowDetailsRecord,
         tableReference,
         tableName,
         loadRecords,

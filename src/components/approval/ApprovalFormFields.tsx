@@ -17,6 +17,7 @@ import {
 } from './approvalFormFieldsEbayHelpers';
 import { EbayTemplateCopyWysiwygEditor } from './EbayTemplateCopyWysiwygEditor';
 import { ApprovalFormFieldGrid } from './ApprovalFormFieldGrid';
+import { CONDITION_FIELD } from '@/stores/approvalStore';
 import type { ApprovalFormFieldsSupplementalEditorsProps } from './ApprovalFormFieldsSupplementalEditors';
 import { resolveListingApprovalTestingSectionFields } from './listingApprovalTestingSection';
 import { useApprovalFormFieldSetup } from './useApprovalFormFieldSetup';
@@ -119,8 +120,11 @@ export function ApprovalFormFields({
   onEbayTemplateIdChange,
 }: ApprovalFormFieldsProps) {
   const ebayAdvancedOptionFieldNames = useMemo(
-    () => allFieldNames.filter((fieldName: string) => isEbayAdvancedOptionField(fieldName)),
-    [allFieldNames],
+    () => Array.from(new Set([
+      ...(approvalChannel === 'ebay' ? [CONDITION_FIELD] : []),
+      ...allFieldNames.filter((fieldName: string) => isEbayAdvancedOptionField(fieldName)),
+    ])),
+    [allFieldNames, approvalChannel],
   );
   const workflowManagedListingContent = useMemo(
     () => hasWorkflowListingSourceContext(originalFieldValues),
@@ -231,6 +235,7 @@ export function ApprovalFormFields({
   const ebayListingFormat = ebayFormatFieldName ? (formValues[ebayFormatFieldName] ?? '') : '';
   const {
     isRequiredField,
+    isRequiredFieldMissing,
     optionalOrderedFieldNames,
     renderFieldLabel,
     renderSpecialLabel,
@@ -242,12 +247,13 @@ export function ApprovalFormFields({
     requiredFieldNames,
     shopifyRequiredFieldNames,
     ebayRequiredFieldNames,
+    formValues,
     isEbayListingForm,
     ebayListingFormat,
   });
 
   const getInputClassName = (fieldName: string, extra?: string): string => {
-    const requiredInputClass = isRequiredField(fieldName)
+    const requiredInputClass = isRequiredFieldMissing(fieldName)
       ? 'border-rose-400/45 bg-rose-500/5 focus:border-rose-300'
       : '';
 

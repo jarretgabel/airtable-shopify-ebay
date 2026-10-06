@@ -322,6 +322,7 @@ export function isItemZipCodeField(fieldName: string): boolean {
 
 export function getEbayAdvancedOptionDefaultValue(fieldName: string): string {
   const normalized = normalizeEbayAdvancedFieldName(fieldName);
+  if (normalized === '__condition__') return 'Used';
   if (normalized === 'excluded locations') return 'none';
   if (normalized === 'handling time' || normalized === 'handling time days') return '3 days';
   if (normalized === 'package type') return 'Package/Thick Envelope';
@@ -329,9 +330,35 @@ export function getEbayAdvancedOptionDefaultValue(fieldName: string): string {
   return '';
 }
 
+export function isEbayConditionField(fieldName: string): boolean {
+  const normalized = normalizeEbayAdvancedFieldName(fieldName);
+  return normalized === '__condition__'
+    || normalized === 'condition'
+    || normalized === 'item condition'
+    || normalized === 'ebay inventory condition';
+}
+
+export function getEbayConditionLabel(value: string): string {
+  const labels: Record<string, string> = {
+    Used: 'Used',
+    NEW: 'New',
+    LIKE_NEW: 'Like new',
+    NEW_OTHER: 'New (other)',
+    USED_EXCELLENT: 'Used - Excellent',
+    USED_VERY_GOOD: 'Used - Very good',
+    USED_GOOD: 'Used - Good',
+    CERTIFIED_REFURBISHED: 'Certified refurbished',
+    SELLER_REFURBISHED: 'Seller refurbished',
+    FOR_PARTS_OR_NOT_WORKING: 'For parts or not working',
+  };
+
+  return labels[value] ?? value;
+}
+
 export function isEbayAdvancedOptionField(fieldName: string): boolean {
   const normalized = normalizeEbayAdvancedFieldName(fieldName);
-  return normalized === 'excluded locations'
+  return normalized === '__condition__'
+    || normalized === 'excluded locations'
     || normalized === 'handling time'
     || normalized === 'handling time days'
     || isItemZipCodeField(fieldName)

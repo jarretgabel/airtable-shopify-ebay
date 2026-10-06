@@ -54,6 +54,19 @@ vi.mock('@/components/approval/TestingNotesTextareaEditor', () => ({
   },
 }));
 
+vi.mock('@/services/app-api/ebay', () => ({
+  getEbayRuntimeConfig: vi.fn().mockResolvedValue({
+    publishSetup: {
+      locationConfig: {
+        key: 'resolution-av-warehouse',
+        name: 'Resolution Audio Video',
+        country: 'US',
+        postalCode: '10001',
+      },
+    },
+  }),
+}));
+
 function buildRecord(): AirtableRecord {
   return {
     id: 'rec-combined-1',
@@ -64,6 +77,7 @@ function buildRecord(): AirtableRecord {
       'Component Type': 'Stereo Receiver',
       Category: 'Amplifiers > Integrated Amplifiers',
       Categories: '3276',
+      'Item Zip Code': '11205',
       Price: '3499.99',
       'Shopify Body HTML': '<p>Shopify body</p>',
       'eBay Body HTML': '<p>eBay body</p>',
@@ -217,7 +231,10 @@ function buildEbayProps(): ListingApprovalCombinedEbaySectionProps {
     combinedEbayBodyHtmlValue: '<p>eBay body</p>',
     bodyHtmlPreview: '<p>Preview body</p>',
     isEbayPayloadPreviewContext: true,
-    ebayDraftPayloadBundle: { inventoryItem: {}, offer: {} },
+    ebayDraftPayloadBundle: {
+      inventoryItem: {},
+      offer: { listingDescription: '<p>Rendered eBay body</p>' },
+    },
   };
 }
 
@@ -328,6 +345,27 @@ describe('combined approval sections', () => {
     expect(titleFields).toHaveTextContent('combined:Title');
     expect(priceFields).toHaveTextContent('combined:Price');
     expect(titleFields.compareDocumentPosition(descriptionLabel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('keeps the description requirement badge visible while only marking an empty value invalid', () => {
+    const props = buildSharedProps();
+    props.ebayRequiredFieldNames = [...props.ebayRequiredFieldNames, 'Description'];
+    props.combinedRequiredFieldNames = [...props.combinedRequiredFieldNames, 'Description'];
+    props.formValues = { ...props.formValues, Description: '   ' };
+
+    const { rerender } = render(<ListingApprovalCombinedSharedSection {...props} />);
+    const description = screen.getByRole('textbox', { name: /description/i });
+
+    expect(screen.getByText('eBay Required')).toBeInTheDocument();
+    expect(description).toHaveAttribute('aria-invalid', 'true');
+    expect(description).toHaveClass('border-rose-400/45');
+
+    props.formValues = { ...props.formValues, Description: 'Integrated amplifier in excellent condition.' };
+    rerender(<ListingApprovalCombinedSharedSection {...props} />);
+
+    expect(screen.getByText('eBay Required')).toBeInTheDocument();
+    expect(description).toHaveAttribute('aria-invalid', 'false');
+    expect(description).not.toHaveClass('border-rose-400/45');
   });
 
   it('prefers the generated Shopify body html in the body html and rendered panels', () => {
@@ -563,6 +601,10 @@ describe('combined approval sections', () => {
     }));
     await waitFor(() => {
       expect(screen.getByText('eBay Create Listing API Payload (Exact Request)')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/"effectivePostalCode": "11205"/)).toBeInTheDocument();
+      expect(screen.getByText(/"listingDescription": "<p>Rendered eBay body<\/p>"/)).toBeInTheDocument();
     });
   });
 

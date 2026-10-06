@@ -6,6 +6,7 @@ import {
   clearAirtableSourceCaches,
   getConfiguredRecords,
   getConfiguredRecordsSummary,
+  updateConfiguredRecord,
   uploadConfiguredAttachment,
 } from '../../../../../../aws/src/providers/airtable/sources.js';
 
@@ -230,6 +231,49 @@ test('getConfiguredRecords caches unknown field names to skip repeat retry calls
     ]);
   } finally {
     airtableSourceDependencies.getRecords = original;
+  }
+});
+
+test('updateConfiguredRecord drops unknown fields and retries inside the provider', async () => {
+  const original = airtableSourceDependencies.updateRecord;
+  const originalReference = process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF;
+  const originalTableName = process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME;
+  const calls: Array<Record<string, unknown>> = [];
+
+  process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF = 'appWorkflow/tblWorkflow';
+  process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME = 'Workflow Table';
+  airtableSourceDependencies.updateRecord = async (_baseId, _tableName, recordId, fields) => {
+    calls.push({ ...fields });
+    if ('Shopify REST Published Scope' in fields) {
+      throw new HttpError(422, 'Unknown field name: "Shopify REST Published Scope"', {
+        service: 'airtable',
+        code: 'AIRTABLE_HTTP_ERROR',
+      });
+    }
+
+    return { id: recordId, createdTime: 'now', fields };
+  };
+
+  try {
+    const record = await updateConfiguredRecord('approval-combined', 'rec123', {
+      'Workflow Status': 'Listed, Shopify',
+      'Shopify REST Published Scope': 'web',
+    }, { typecast: true });
+
+    assert.equal(record.fields['Workflow Status'], 'Listed, Shopify');
+    assert.deepEqual(calls, [
+      {
+        'Workflow Status': 'Listed, Shopify',
+        'Shopify REST Published Scope': 'web',
+      },
+      {
+        'Workflow Status': 'Listed, Shopify',
+      },
+    ]);
+  } finally {
+    airtableSourceDependencies.updateRecord = original;
+    restoreEnv('AIRTABLE_COMBINED_LISTINGS_TABLE_REF', originalReference);
+    restoreEnv('AIRTABLE_COMBINED_LISTINGS_TABLE_NAME', originalTableName);
   }
 });
 

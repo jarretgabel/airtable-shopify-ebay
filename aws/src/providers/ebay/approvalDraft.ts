@@ -72,7 +72,7 @@ function parseEbayAspects(raw: unknown): Record<string, string[]> | undefined {
 
 function normalizeEbayCondition(raw: string): string {
   const trimmed = raw.trim();
-  if (!trimmed) return 'USED_EXCELLENT';
+  if (!trimmed) return '';
   const upper = trimmed.toUpperCase();
   if (EBAY_CONDITION_ENUMS.has(upper)) return upper;
   const lower = trimmed.toLowerCase();
@@ -112,6 +112,19 @@ function normalizeTypeValue(type: string): string {
   if (!trimmed) return '';
   if (!trimmed.includes('>')) return trimmed;
   return trimmed.split('>').map((part) => part.trim()).filter(Boolean).at(-1) ?? trimmed;
+}
+
+function parsePositiveNumber(raw: string): number | undefined {
+  const match = raw.replace(/,/g, '').match(/\d+(?:\.\d+)?/);
+  if (!match) return undefined;
+  const value = Number(match[0]);
+  return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function parseShippingDimensions(raw: string): [number, number, number] | undefined {
+  const values = raw.replace(/,/g, '').match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  if (values.length < 3 || values.slice(0, 3).some((value) => !Number.isFinite(value) || value <= 0)) return undefined;
+  return [values[0], values[1], values[2]];
 }
 
 function ensureHtmlDescription(value: string): string {
@@ -254,8 +267,8 @@ export interface EbayDraftPayloadBundle {
 }
 
 export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFieldMap): EbayDraftPayloadBundle {
-  const sku = getField(fields, ['eBay Inventory SKU', 'SKU']) || 'SAMPLE-SKU';
-  const title = getField(fields, ['eBay Inventory Product Title', 'Item Title', 'Title']) || 'Untitled Listing';
+  const sku = getField(fields, ['eBay Inventory SKU', 'SKU']);
+  const title = getField(fields, ['eBay Inventory Product Title', 'Item Title', 'Title']);
   const listingRawDescription = getField(fields, ['Ebay Body (HTML)', 'Ebay Body HTML', 'eBay Body HTML', 'ebay_body_html', 'eBay Body (HTML)', 'Body HTML', 'Body (HTML)', 'body_html', 'eBay Inventory Product Description', 'Item Description', 'Description']);
   const listingDescription = ensureHtmlDescription(listingRawDescription);
   const inventoryRawDescription = getField(fields, ['Description', 'Item Description', 'eBay Inventory Product Description']);
@@ -298,24 +311,49 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
   const condition = normalizeEbayCondition(getField(fields, ['__Condition__', 'Item Condition', 'Condition', 'eBay Inventory Condition']));
   const conditionDescription = getField(fields, ['eBay Inventory Condition Description']);
   const quantity = parseInteger(getField(fields, ['eBay Inventory Ship To Location Quantity', 'Quantity', 'Qty']), 1);
+  const packageWeight = parsePositiveNumber(getField(fields, ['eBay Inventory Package Weight Value', 'Shipping Weight', 'Weight']));
+  const packageDimensions = parseShippingDimensions(getField(fields, ['Shipping Dims', 'Shipping Dimensions']));
+  const packageType = getField(fields, ['eBay Inventory Package Type', 'Ebay Package Type']);
+  const packageWeightAndSize = packageWeight || packageDimensions || packageType
+    ? {
+        ...(packageType ? { packageType } : {}),
+        ...(packageDimensions ? {
+          dimensions: {
+            length: packageDimensions[0],
+            width: packageDimensions[1],
+            height: packageDimensions[2],
+            unit: getField(fields, ['eBay Inventory Package Dimension Unit']) || 'INCH',
+          },
+        } : {}),
+        ...(packageWeight ? {
+          weight: {
+            value: packageWeight,
+            unit: getField(fields, ['eBay Inventory Package Weight Unit']) || 'POUND',
+          },
+        } : {}),
+      }
+    : undefined;
   const workflowImageUrls = getIncludedWorkflowImages(parseWorkflowImageMetadata(getRawField(fields, [
     'Workflow Image Metadata JSON',
     'Workflow Image Metadata',
     'workflow_image_metadata_json',
     'workflow_image_metadata',
   ]))).map((record) => record.url);
-  const imageUrls = parseImageUrls(getRawField(fields, ['eBay Inventory Product Image URLs JSON', 'eBay Inventory Product ImageURLs JSON', 'eBay Inventory Product Image URLs', 'eBay Inventory Product Image URL', 'eBay Inventory Product Image URL 1', 'eBay Inventory Product Image URL 2', 'eBay Inventory Product Image URL 3', 'ebay_inventory_product_imageurls_json', 'ebay_inventory_product_imageurls', 'ebay_inventory_product_imageurl', 'ebay_inventory_product_imageurl_1', 'ebay_inventory_product_imageurl_2', 'ebay_inventory_product_imageurl_3', 'Photo URLs (comma-separated)', 'Photo URLs', 'Images (comma-separated)', 'photo_urls', 'Shopify REST Images JSON', 'shopify_rest_images_json', 'Shopify Images JSON', 'shopify_images_json', 'Images', 'images', 'Image URL', 'Image URLs', 'image_url', 'image_urls']));
+  const preparedEbayImageUrls = parseImageUrls(getRawField(fields, ['eBay Inventory Product Image URLs JSON', 'eBay Inventory Product ImageURLs JSON', 'ebay_inventory_product_imageurls_json']));
+  const imageUrls = parseImageUrls(getRawField(fields, ['eBay Inventory Product Image URLs', 'eBay Inventory Product Image URL', 'eBay Inventory Product Image URL 1', 'eBay Inventory Product Image URL 2', 'eBay Inventory Product Image URL 3', 'ebay_inventory_product_imageurls', 'ebay_inventory_product_imageurl', 'ebay_inventory_product_imageurl_1', 'ebay_inventory_product_imageurl_2', 'ebay_inventory_product_imageurl_3', 'Photo URLs (comma-separated)', 'Photo URLs', 'Images (comma-separated)', 'photo_urls', 'Shopify REST Images JSON', 'shopify_rest_images_json', 'Shopify Images JSON', 'shopify_images_json', 'Images', 'images', 'Image URL', 'Image URLs', 'image_url', 'image_urls']));
   const fallbackImageUrls = collectImageUrlsFromFields(fields);
-  const resolvedImageUrls = workflowImageUrls.length > 0
-    ? dedupeCaseInsensitive(workflowImageUrls)
-    : dedupeCaseInsensitive([...imageUrls, ...fallbackImageUrls]);
+  const resolvedImageUrls = preparedEbayImageUrls.length > 0
+    ? dedupeCaseInsensitive(preparedEbayImageUrls)
+    : workflowImageUrls.length > 0
+      ? dedupeCaseInsensitive(workflowImageUrls)
+      : dedupeCaseInsensitive([...imageUrls, ...fallbackImageUrls]);
   const marketplaceId = getField(fields, ['eBay Offer Marketplace ID']) || 'EBAY_US';
   const format = getField(fields, ['eBay Offer Format']) || 'FIXED_PRICE';
   const categoryIdsFromCategoriesField = parseCategoryIds(getRawField(fields, ['Categories', 'categories']));
   const fallbackCategoryIds = categoryIdsFromCategoriesField.length === 0 ? dedupeCaseInsensitive(parseCategoryIdsFromFields(fields)) : [];
   const primaryCategoryFromField = parseCategoryIds(getRawField(fields, ['eBay Offer Primary Category ID', 'eBay Offer PrimaryCategoryID', 'Primary Category ID', 'Primary Category', 'Primary Category Airtable', 'primary_category', 'primary_category_airtable', 'eBay Offer Category ID', 'ebay_offer_category_id', 'ebay_offer_primary_category_id', 'ebay_offer_primarycategoryid', 'primary_category_id', 'category_id']))[0];
   const secondaryCategoryFromField = parseCategoryIds(getRawField(fields, ['eBay Offer SecondaryCategoryID', 'Secondary Category ID', 'Secondary Category', 'Secondary Category Airtable', 'secondary_category', 'secondary_category_airtable', 'eBay Offer Secondary Category ID', 'ebay_offer_secondary_category_id', 'ebay_offer_secondarycategoryid', 'secondary_category_id']))[0];
-  const categoryId = categoryIdsFromCategoriesField[0] || primaryCategoryFromField || fallbackCategoryIds[0] || '14990';
+  const categoryId = categoryIdsFromCategoriesField[0] || primaryCategoryFromField || fallbackCategoryIds[0] || '';
   const secondaryCategoryId = categoryIdsFromCategoriesField[1] || secondaryCategoryFromField || fallbackCategoryIds[1];
   const listingDuration = getField(fields, ['eBay Offer Listing Duration', 'eBay Listing Duration', 'Listing Duration', 'Duration', 'ebay_offer_listingDuration', 'ebay_offer_listing_duration']) || 'GTC';
   const priceValue = getField(fields, ['eBay Offer Price Value', 'eBay Offer Auction Start Price Value', 'Buy It Now/Starting Bid', 'Buy It Now USD', 'Starting Bid USD', 'eBay Price', 'Ebay Price', 'Price']) || '0.00';
@@ -341,6 +379,7 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
           quantity,
         },
       },
+      ...(packageWeightAndSize ? { packageWeightAndSize } : {}),
     },
     offer: {
       sku,

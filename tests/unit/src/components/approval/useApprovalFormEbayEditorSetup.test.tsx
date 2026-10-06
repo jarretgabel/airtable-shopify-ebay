@@ -11,6 +11,50 @@ vi.mock('@/services/app-api/ebay', () => ({
 }));
 
 describe('useApprovalFormEbayEditorSetup', () => {
+  it('defaults an empty eBay condition to Used', () => {
+    const setDerivedFormValue = vi.fn();
+
+    renderHook(() => useApprovalFormEbayEditorSetup({
+      recordId: 'rec-ebay-condition-default',
+      approvalChannel: 'ebay',
+      isCombinedApproval: false,
+      allFieldNames: ['Condition'],
+      writableFieldNames: ['Condition'],
+      formValues: {},
+      originalFieldValues: {},
+      setFormValue: vi.fn(),
+      setDerivedFormValue,
+      selectedEbayTemplateId: undefined,
+      onEbayTemplateIdChange: undefined,
+      ebayMarketplaceId: 'EBAY_US',
+      isEbayListingForm: true,
+    }));
+
+    expect(setDerivedFormValue).toHaveBeenCalledWith('__Condition__', 'Used');
+  });
+
+  it('preserves an existing eBay condition instead of applying the default', () => {
+    const setDerivedFormValue = vi.fn();
+
+    renderHook(() => useApprovalFormEbayEditorSetup({
+      recordId: 'rec-ebay-condition-existing',
+      approvalChannel: 'ebay',
+      isCombinedApproval: false,
+      allFieldNames: ['Condition'],
+      writableFieldNames: ['Condition'],
+      formValues: {},
+      originalFieldValues: { Condition: 'USED_GOOD' },
+      setFormValue: vi.fn(),
+      setDerivedFormValue,
+      selectedEbayTemplateId: undefined,
+      onEbayTemplateIdChange: undefined,
+      ebayMarketplaceId: 'EBAY_US',
+      isEbayListingForm: true,
+    }));
+
+    expect(setDerivedFormValue).not.toHaveBeenCalledWith('__Condition__', 'Used');
+  });
+
   it('keeps eBay aspects fields hidden without exposing an attributes editor', () => {
     const setFormValue = vi.fn();
     const setDerivedFormValue = vi.fn();
@@ -33,7 +77,7 @@ describe('useApprovalFormEbayEditorSetup', () => {
         Title: 'McIntosh MC2105',
         'eBay Inventory Product Aspects JSON': JSON.stringify([{ name: 'Brand', values: ['McIntosh'] }]),
       },
-      originalFieldValues: {},
+      originalFieldValues: { Condition: 'USED_GOOD' },
       setFormValue,
       setDerivedFormValue,
       selectedEbayTemplateId: undefined,
@@ -63,7 +107,7 @@ describe('useApprovalFormEbayEditorSetup', () => {
       formValues: {
         'eBay Body HTML Template': '',
       },
-      originalFieldValues: {},
+      originalFieldValues: { Condition: 'USED_GOOD' },
       setFormValue,
       setDerivedFormValue,
       selectedEbayTemplateId: 'impact-luxe',

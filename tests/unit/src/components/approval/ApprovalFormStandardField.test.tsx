@@ -1,8 +1,38 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ApprovalFormStandardField } from '@/components/approval/ApprovalFormStandardField';
+import { renderApprovalFormDropdownField } from '@/components/approval/approvalFormStandardFieldRenderers';
 
 describe('ApprovalFormStandardField', () => {
+  it('humanizes eBay condition enum labels without changing stored values', () => {
+    const setFormValue = vi.fn();
+
+    render(
+      renderApprovalFormDropdownField({
+        fieldName: 'Condition',
+        kind: 'text',
+        value: 'USED_VERY_GOOD',
+        formValues: { Condition: 'USED_VERY_GOOD' },
+        inputDisabled: false,
+        dropdownOptions: ['Used', 'NEW', 'USED_VERY_GOOD', 'FOR_PARTS_OR_NOT_WORKING'],
+        isRequiredField: () => false,
+        renderFieldLabel: (fieldName) => <span>{fieldName}</span>,
+        toFieldLabel: (fieldName) => fieldName,
+        getSelectClassName: () => 'select',
+        getInputClassName: () => 'input',
+        setFormValue,
+      }),
+    );
+
+    expect(screen.getByRole('combobox')).toHaveDisplayValue('Used - Very good');
+    expect(screen.getByRole('option', { name: 'New' })).toHaveValue('NEW');
+    expect(screen.getByRole('option', { name: 'For parts or not working' })).toHaveValue('FOR_PARTS_OR_NOT_WORKING');
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'FOR_PARTS_OR_NOT_WORKING' } });
+
+    expect(setFormValue).toHaveBeenCalledWith('Condition', 'FOR_PARTS_OR_NOT_WORKING');
+  });
+
   it('renders Allow Offers as a yes-no boolean select', () => {
     const setFormValue = vi.fn();
 

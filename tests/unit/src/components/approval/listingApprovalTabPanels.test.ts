@@ -1,3 +1,4 @@
+import { isValidElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -201,6 +202,39 @@ describe('buildListingApprovalTabPanels', () => {
       workflowStatus: 'Approved for Publish',
       workflowReadinessMissingRequirements: [],
     }));
+  });
+
+  it('threads derived post-publish fields into the lifecycle panel immediately', () => {
+    const selectedRecord: AirtableRecord = {
+      id: 'rec-workflow-1',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        Name: 'McIntosh MA6900',
+        'Workflow Status': 'Awaiting Pre-Listing Review',
+      },
+    };
+
+    const result = buildListingApprovalTabPanels({
+      ...createBaseParams(selectedRecord),
+      formValues: {
+        Name: 'McIntosh MA6900',
+        'Workflow Status': 'Listed, Shopify',
+        'Listed At': '2026-05-07T12:00:00.000Z',
+        'Shopify REST Product ID': '12345',
+      },
+    });
+
+    const workflowDetails = result.selectedRecordPanelProps?.workflowDetails;
+    expect(isValidElement(workflowDetails)).toBe(true);
+    if (!isValidElement<{ selectedRecord: AirtableRecord }>(workflowDetails)) {
+      throw new Error('Expected workflow lifecycle panel element.');
+    }
+
+    expect(workflowDetails.props.selectedRecord.fields).toMatchObject({
+      'Workflow Status': 'Listed, Shopify',
+      'Listed At': '2026-05-07T12:00:00.000Z',
+      'Shopify REST Product ID': '12345',
+    });
   });
 
   it('omits workflow summary when the selected row is not a workflow-backed combined record', () => {

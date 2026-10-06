@@ -61,6 +61,7 @@ export function createHandler(dependencies: PublishApprovalDependencies = { exec
         shopifyProductId: result.shopify?.productId,
         ebayOfferId: result.ebay?.offerId,
         failures: result.failures.length,
+        failureDetails: result.failures,
       });
       return jsonOk(result, { origin });
     } catch (error) {

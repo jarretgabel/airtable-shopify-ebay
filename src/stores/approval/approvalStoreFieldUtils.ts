@@ -1,5 +1,6 @@
 import {
   CURRENCY_CODE_OPTIONS,
+  EBAY_CONDITION_OPTIONS,
   EBAY_DIMENSION_UNIT_OPTIONS,
   EBAY_FORMAT_OPTIONS,
   EBAY_LISTING_DURATION_OPTIONS,
@@ -259,9 +260,12 @@ export function getDropdownOptions(fieldName: string): string[] | null {
     return SHIPPING_SERVICE_OPTIONS.slice(2);
   }
 
+  if (n === '__condition__') {
+    return ['Used', ...EBAY_CONDITION_OPTIONS];
+  }
+
   if (
-    n === '__condition__'
-    || n === 'item condition'
+    n === 'item condition'
     || n === 'condition'
     || n === 'shopify condition'
     || n === 'shopify rest condition'

@@ -7,6 +7,7 @@ import {
   toHumanReadableLabel,
 } from './approvalFormFieldsSharedHelpers';
 import { getEbayPriceFieldLabel } from './approvalFormFieldsEbayHelpersBasic';
+import { isMissingRequiredFieldValue } from './requiredFieldStatus';
 
 const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
 const requiredBadgeClass = 'inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]';
@@ -17,6 +18,7 @@ interface UseApprovalFormFieldRequirementsParams {
   requiredFieldNames: string[];
   shopifyRequiredFieldNames: string[];
   ebayRequiredFieldNames: string[];
+  formValues: Record<string, string>;
   isEbayListingForm: boolean;
   ebayListingFormat: string;
 }
@@ -27,6 +29,7 @@ export function useApprovalFormFieldRequirements({
   requiredFieldNames,
   shopifyRequiredFieldNames,
   ebayRequiredFieldNames,
+  formValues,
   isEbayListingForm,
   ebayListingFormat,
 }: UseApprovalFormFieldRequirementsParams) {
@@ -95,6 +98,9 @@ export function useApprovalFormFieldRequirements({
     matchesRequiredFieldGroup(fieldName, normalizedEbayRequiredFieldNames)
     || isForcedEbayPriceRequiredField(fieldName)
   ), [isForcedEbayPriceRequiredField, matchesRequiredFieldGroup, normalizedEbayRequiredFieldNames]);
+  const isRequiredFieldMissing = useCallback((fieldName: string): boolean => (
+    isRequiredField(fieldName) && isMissingRequiredFieldValue(fieldName, formValues[fieldName])
+  ), [formValues, isRequiredField]);
 
   const orderedFieldNames = useMemo(() => {
     const required = prioritizeTitleBeforePrice(
@@ -125,12 +131,12 @@ export function useApprovalFormFieldRequirements({
   }, [ebayListingFormat, isEbayListingForm]);
 
   const getLabelClassName = useCallback((fieldName?: string): string => {
-    if (fieldName && isRequiredField(fieldName)) {
+    if (fieldName && isRequiredFieldMissing(fieldName)) {
       return `${labelClass} text-[var(--required-label-ink)]`;
     }
 
     return labelClass;
-  }, [isRequiredField]);
+  }, [isRequiredFieldMissing]);
 
   const renderRequiredBadges = useCallback((fieldName: string): JSX.Element | null => {
     const isShopifyRequired = isShopifyRequiredField(fieldName);
@@ -166,6 +172,7 @@ export function useApprovalFormFieldRequirements({
 
   return {
     isRequiredField,
+    isRequiredFieldMissing,
     optionalOrderedFieldNames,
     renderFieldLabel,
     renderSpecialLabel,

@@ -42,6 +42,12 @@ export interface EbayOffer {
   };
 }
 
+interface EbayOfferResponse extends EbayOffer {
+  listing?: {
+    listingId?: string;
+  };
+}
+
 export interface EbayInventoryPage {
   inventoryItems: EbayInventoryItem[];
   total: number;
@@ -142,6 +148,31 @@ function isGoogleDriveUrl(url: string): boolean {
   }
 }
 
+function isEbayHostedImageUrl(value: string): boolean {
+  try {
+    return new URL(value).hostname.toLowerCase().endsWith('.ebayimg.com');
+  } catch {
+    return false;
+  }
+}
+
+function requirePreparedEbayImageUrls(inventoryItem: Record<string, unknown>): void {
+  const product = inventoryItem.product;
+  if (!product || typeof product !== 'object') return;
+
+  const imageUrls = (product as Record<string, unknown>).imageUrls;
+  if (!Array.isArray(imageUrls)) return;
+
+  const externalImageIndex = imageUrls.findIndex((url) => typeof url === 'string' && !isEbayHostedImageUrl(url));
+  if (externalImageIndex < 0) return;
+
+  throw new HttpError(400, `eBay image ${externalImageIndex + 1} was not prepared before publishing. Upload all approved images to eBay, then retry.`, {
+    service: 'ebay',
+    code: 'EBAY_IMAGE_NOT_PREPARED',
+    retryable: true,
+  });
+}
+
 function extractGoogleDriveFileId(url: string): string {
   try {
     const parsed = new URL(url);
@@ -172,52 +203,56 @@ function inferImageFileNameFromUrl(url: string, index: number): string {
   return `listing-image-${index + 1}.jpg`;
 }
 
-async function maybeConvertExternalImageUrlsToEbayHosted(
-  inventoryItem: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-  const product = inventoryItem.product;
-  if (!product || typeof product !== 'object') return inventoryItem;
+export async function uploadExternalImageUrlToEbayHostedPictures(
+  sourceUrl: string,
+  index = 0,
+): Promise<EbayUploadedImageResult> {
+  const normalizedUrl = sourceUrl.trim();
+  if (!normalizedUrl) {
+    throw new HttpError(400, 'sourceUrl is required', {
+      service: 'ebay',
+      code: 'INVALID_IMAGE_UPLOAD_URL',
+      retryable: false,
+    });
+  }
 
-  const productRecord = product as Record<string, unknown>;
-  const rawImageUrls = productRecord.imageUrls;
-  if (!Array.isArray(rawImageUrls) || rawImageUrls.length === 0) return inventoryItem;
-
-  const convertedUrls = await Promise.all(rawImageUrls.map(async (entry, index) => {
-    if (typeof entry !== 'string' || !entry.trim()) return entry;
-    const trimmed = entry.trim();
-    if (!isGoogleDriveUrl(trimmed)) return trimmed;
-
-    const fetchUrl = buildGoogleDriveDownloadUrl(trimmed);
-    try {
-      const response = await fetch(fetchUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; ResolutionAVBot/1.0)',
-        },
-      });
-      if (!response.ok) return trimmed;
-      const mimeType = response.headers.get('content-type')?.split(';')[0]?.trim() || 'image/jpeg';
-      if (!mimeType.startsWith('image/')) return trimmed;
-      const bytes = Buffer.from(await response.arrayBuffer());
-      if (bytes.length === 0) return trimmed;
-
-      const uploaded = await uploadImageToEbayHostedPictures(
-        inferImageFileNameFromUrl(trimmed, index),
-        mimeType,
-        bytes.toString('base64'),
-      );
-      return uploaded.url || trimmed;
-    } catch {
-      return trimmed;
-    }
-  }));
-
-  return {
-    ...inventoryItem,
-    product: {
-      ...productRecord,
-      imageUrls: convertedUrls,
+  const response = await fetch(buildGoogleDriveDownloadUrl(normalizedUrl), {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; ResolutionAVBot/1.0)',
     },
-  };
+    signal: AbortSignal.timeout(EBAY_EXTERNAL_IMAGE_DOWNLOAD_TIMEOUT_MS),
+  });
+  if (!response.ok) {
+    throw new HttpError(response.status, `Could not download listing image ${index + 1}.`, {
+      service: 'ebay',
+      code: 'EBAY_IMAGE_DOWNLOAD_FAILED',
+      retryable: response.status >= 500,
+    });
+  }
+
+  const mimeType = response.headers.get('content-type')?.split(';')[0]?.trim() || 'image/jpeg';
+  if (!mimeType.startsWith('image/')) {
+    throw new HttpError(400, `Listing image ${index + 1} did not return an image file.`, {
+      service: 'ebay',
+      code: 'EBAY_IMAGE_DOWNLOAD_INVALID_TYPE',
+      retryable: false,
+    });
+  }
+
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (bytes.length === 0) {
+    throw new HttpError(400, `Listing image ${index + 1} was empty.`, {
+      service: 'ebay',
+      code: 'EBAY_IMAGE_DOWNLOAD_EMPTY',
+      retryable: false,
+    });
+  }
+
+  return uploadImageToEbayHostedPictures(
+    inferImageFileNameFromUrl(normalizedUrl, index),
+    mimeType,
+    bytes.toString('base64'),
+  );
 }
 
 export interface EbayPublishedListing {
@@ -368,6 +403,28 @@ const DEFAULT_EBAY_WEBHOOK_EVENT_TYPES = [
 const EBAY_OFFERS_MAX_PAGE_SIZE = 25;
 const SAMPLE_SKU = 'RAVMCINTOSHMA8900DEMO';
 const DEFAULT_EBAY_CATEGORY_ID = '14990';
+
+const EBAY_REST_REQUEST_TIMEOUT_MS = 12_000;
+const EBAY_EXTERNAL_IMAGE_DOWNLOAD_TIMEOUT_MS = 15_000;
+
+async function ebayRestFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: init.signal ?? AbortSignal.timeout(EBAY_REST_REQUEST_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
+      throw new HttpError(504, `eBay request timed out after ${EBAY_REST_REQUEST_TIMEOUT_MS}ms.`, {
+        service: 'ebay',
+        code: 'EBAY_REQUEST_TIMEOUT',
+        retryable: true,
+      });
+    }
+
+    throw error;
+  }
+}
 const MAX_VISIBLE_LISTINGS = 20;
 const FALLBACK_PACKAGE_TYPES = [
   'Package/Thick Envelope',
@@ -657,7 +714,7 @@ async function readErrorPayload(response: Response): Promise<string> {
 }
 
 async function requestToken(body: URLSearchParams): Promise<EbayTokenResponse> {
-  const response = await fetch(`${getApiBaseUrl()}/identity/v1/oauth2/token`, {
+  const response = await ebayRestFetch(`${getApiBaseUrl()}/identity/v1/oauth2/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -733,7 +790,7 @@ async function getAppToken(): Promise<string> {
 }
 
 async function ebayJsonRequest<T>(pathOrUrl: string, token: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(resolveApiUrl(pathOrUrl), {
+  const response = await ebayRestFetch(resolveApiUrl(pathOrUrl), {
     ...init,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -988,6 +1045,56 @@ function buildLocationBody(config: EbayLocationConfig): Record<string, unknown> 
   };
 }
 
+function buildLocationUpdateBody(config: EbayLocationConfig): Record<string, unknown> {
+  const { merchantLocationStatus: _merchantLocationStatus, ...updateBody } = buildLocationBody(config);
+  return updateBody;
+}
+
+function warehouseLocationMatchesConfig(
+  location: { name?: string; locationTypes?: string[]; location?: { address?: Record<string, unknown> } },
+  config: EbayLocationConfig,
+): boolean {
+  const address = location.location?.address ?? {};
+  const expectedName = config.name || config.key;
+  return String(location.name ?? '').trim() === expectedName
+    && (location.locationTypes ?? []).includes('WAREHOUSE')
+    && String(address.country ?? '').trim().toUpperCase() === config.country
+    && String(address.postalCode ?? '').trim() === config.postalCode
+    && String(address.city ?? '').trim() === config.city
+    && String(address.stateOrProvince ?? '').trim() === config.stateOrProvince;
+}
+
+async function verifyWarehouseLocationPostalCode(
+  token: string,
+  locationUrl: string,
+  config: EbayLocationConfig,
+): Promise<void> {
+  if (!config.postalCode) return;
+
+  const response = await ebayRestFetch(locationUrl, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new HttpError(response.status, `getInventoryLocation ${response.status}: ${await readErrorPayload(response)}`, {
+      service: 'ebay',
+      code: 'EBAY_LOCATION_VERIFY_FAILED',
+      retryable: response.status >= 500,
+    });
+  }
+
+  const location = await response.json() as { location?: { address?: { postalCode?: string } } };
+  const actualPostalCode = String(location.location?.address?.postalCode ?? '').trim();
+  if (actualPostalCode !== config.postalCode) {
+    throw new HttpError(502, `eBay inventory location "${config.key}" reports postal code "${actualPostalCode || '<missing>'}" after synchronization; expected "${config.postalCode}".`, {
+      service: 'ebay',
+      code: 'EBAY_LOCATION_POSTAL_CODE_MISMATCH',
+      retryable: false,
+    });
+  }
+}
+
 function buildTradingSamplePayload(
   sku: string,
   locationConfig: EbayLocationConfig,
@@ -1170,6 +1277,79 @@ function readOfferPriceValue(offerPayload: Record<string, unknown>): { format: s
   return { format, value, numeric };
 }
 
+export function validateEbayApprovalBundle(bundle: EbayDraftPayloadBundle): string {
+  const sku = normalizeSku(bundle);
+  const product = bundle.inventoryItem.product && typeof bundle.inventoryItem.product === 'object'
+    ? bundle.inventoryItem.product as Record<string, unknown>
+    : {};
+  const title = cleanOptional(product.title);
+  const imageUrls = Array.isArray(product.imageUrls)
+    ? product.imageUrls.map((value) => cleanOptional(value)).filter(Boolean)
+    : [];
+  const availability = bundle.inventoryItem.availability && typeof bundle.inventoryItem.availability === 'object'
+    ? bundle.inventoryItem.availability as Record<string, unknown>
+    : {};
+  const shipToLocationAvailability = availability.shipToLocationAvailability
+    && typeof availability.shipToLocationAvailability === 'object'
+    ? availability.shipToLocationAvailability as Record<string, unknown>
+    : {};
+  const quantity = Number(shipToLocationAvailability.quantity ?? bundle.offer.availableQuantity);
+  const categoryId = cleanOptional(bundle.offer.categoryId);
+  const secondaryCategoryId = cleanOptional(bundle.offer.secondaryCategoryId);
+  const marketplaceId = cleanOptional(bundle.offer.marketplaceId);
+  const format = cleanOptional(bundle.offer.format).toUpperCase();
+  const listingDuration = cleanOptional(bundle.offer.listingDuration);
+  const listingDescription = cleanOptional(bundle.offer.listingDescription);
+  const offerPrice = readOfferPriceValue(bundle.offer);
+  const missing: string[] = [];
+
+  if (!title) missing.push('product title');
+  if (!cleanOptional(bundle.inventoryItem.condition)) missing.push('condition');
+  if (!Number.isInteger(quantity) || quantity < 1) missing.push('quantity');
+  if (imageUrls.length === 0) missing.push('at least one image URL');
+  if (!marketplaceId) missing.push('marketplace ID');
+  if (!format) missing.push('listing format');
+  if (!listingDuration) missing.push('listing duration');
+  if (!listingDescription) missing.push('listing description');
+
+  if (missing.length > 0) {
+    throw new HttpError(400, `eBay listing is not ready to publish. Missing or invalid: ${missing.join(', ')}.`, {
+      service: 'ebay',
+      code: 'EBAY_LISTING_DATA_REQUIRED',
+      retryable: false,
+    });
+  }
+
+  if (!/^\d{3,12}$/.test(categoryId)) {
+    throw new HttpError(400, `Invalid eBay Offer Category ID "${categoryId || '<empty>'}". Provide a numeric eBay category ID (for example: 14990).`, {
+      service: 'ebay',
+      code: 'EBAY_CATEGORY_ID_INVALID',
+      retryable: false,
+    });
+  }
+
+  if (secondaryCategoryId && !/^\d{3,12}$/.test(secondaryCategoryId)) {
+    throw new HttpError(400, `Invalid eBay Offer Secondary Category ID "${secondaryCategoryId}". Provide a numeric eBay category ID or leave it blank.`, {
+      service: 'ebay',
+      code: 'EBAY_SECONDARY_CATEGORY_ID_INVALID',
+      retryable: false,
+    });
+  }
+
+  if (!offerPrice.value || !Number.isFinite(offerPrice.numeric) || offerPrice.numeric <= 0) {
+    const fieldHint = offerPrice.format === 'AUCTION'
+      ? 'eBay Offer Auction Start Price Value'
+      : 'eBay Offer Price Value (or Price / Buy It Now fields)';
+    throw new HttpError(400, `Invalid eBay ${offerPrice.format} price "${offerPrice.value || '<empty>'}". Set a positive price in ${fieldHint} before publishing.`, {
+      service: 'ebay',
+      code: 'EBAY_PRICE_INVALID',
+      retryable: false,
+    });
+  }
+
+  return sku;
+}
+
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -1195,7 +1375,7 @@ async function validateFulfillmentPolicyForMarketplace(
   if (!normalizedPolicyId) return;
 
   const normalizedMarketplace = normalizeMarketplaceId(marketplaceId);
-  const response = await fetch(`${getApiBaseUrl()}/sell/account/v1/fulfillment_policy/${encodeURIComponent(normalizedPolicyId)}`, {
+  const response = await ebayRestFetch(`${getApiBaseUrl()}/sell/account/v1/fulfillment_policy/${encodeURIComponent(normalizedPolicyId)}`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -1271,6 +1451,7 @@ async function callTradingApi(token: string, callName: string, body: BodyInit, s
       'X-EBAY-API-IAF-TOKEN': token,
     },
     body,
+    signal: AbortSignal.timeout(20_000),
   });
 
   const text = await response.text();
@@ -1322,9 +1503,12 @@ async function getOffersPageWithToken(
   }
 
   try {
-    const response = await ebayJsonRequest<{ offers?: EbayOffer[]; total?: number; next?: string }>(requestPath, token);
+    const response = await ebayJsonRequest<{ offers?: EbayOfferResponse[]; total?: number; next?: string }>(requestPath, token);
     return {
-      offers: response.offers ?? [],
+      offers: (response.offers ?? []).map(({ listing, ...offer }) => ({
+        ...offer,
+        listingId: offer.listingId ?? listing?.listingId,
+      })),
       total: response.total ?? 0,
       next: response.next,
     };
@@ -1716,6 +1900,31 @@ export async function getEbayBusinessPolicies(marketplaceId = 'EBAY_US'): Promis
   return result;
 }
 
+export async function getEbayFulfillmentPolicyDetails(policyId: string): Promise<Record<string, unknown>> {
+  const normalizedPolicyId = cleanOptional(policyId);
+  if (!normalizedPolicyId) {
+    throw new HttpError(400, 'A fulfillment policy ID is required.', {
+      service: 'ebay',
+      code: 'EBAY_FULFILLMENT_POLICY_ID_REQUIRED',
+      retryable: false,
+    });
+  }
+
+  const token = await getValidUserToken();
+  const response = await ebayRestFetch(`${getApiBaseUrl()}/sell/account/v1/fulfillment_policy/${encodeURIComponent(normalizedPolicyId)}`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}`, 'Accept-Language': 'en-US' },
+  });
+  if (!response.ok) {
+    throw new HttpError(response.status, `Unable to load eBay fulfillment policy "${normalizedPolicyId}": ${await readErrorPayload(response)}`, {
+      service: 'ebay',
+      code: 'EBAY_FULFILLMENT_POLICY_LOOKUP_FAILED',
+      retryable: response.status >= 500,
+    });
+  }
+  return await response.json() as Record<string, unknown>;
+}
+
 export async function getEbayPackageTypes(marketplaceId = 'EBAY_US'): Promise<string[]> {
   const normalizedMarketplace = normalizeMarketplaceId(marketplaceId);
   const cached = packageTypesByMarketplace.get(normalizedMarketplace);
@@ -1763,13 +1972,60 @@ async function upsertWarehouseLocation(token: string, config: EbayLocationConfig
     });
   }
 
-  const response = await fetch(`${getApiBaseUrl()}/sell/inventory/v1/location/${encodeURIComponent(config.key)}`, {
+  const locationUrl = `${getApiBaseUrl()}/sell/inventory/v1/location/${encodeURIComponent(config.key)}`;
+  const existingResponse = await ebayRestFetch(locationUrl, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (existingResponse.ok) {
+    const existingLocation = await existingResponse.json() as {
+      name?: string;
+      locationTypes?: string[];
+      location?: { address?: Record<string, unknown> };
+    };
+    if (warehouseLocationMatchesConfig(existingLocation, config)) {
+      return;
+    }
+
+    const updateResponse = await ebayRestFetch(`${locationUrl}/update_location_details`, {
+      method: 'POST',
+      headers: inventoryJsonHeaders(token),
+      body: JSON.stringify(buildLocationUpdateBody(config)),
+    });
+
+    if (updateResponse.ok || updateResponse.status === 204) {
+      await verifyWarehouseLocationPostalCode(token, locationUrl, config);
+      return;
+    }
+
+    throw new HttpError(updateResponse.status, `updateInventoryLocation ${updateResponse.status}: ${await readErrorPayload(updateResponse)}`, {
+      service: 'ebay',
+      code: 'EBAY_LOCATION_UPDATE_FAILED',
+      retryable: updateResponse.status >= 500,
+    });
+  }
+
+  if (existingResponse.status !== 404) {
+    throw new HttpError(existingResponse.status, `getInventoryLocation ${existingResponse.status}: ${await readErrorPayload(existingResponse)}`, {
+      service: 'ebay',
+      code: 'EBAY_LOCATION_LOOKUP_FAILED',
+      retryable: existingResponse.status >= 500,
+    });
+  }
+
+  const createResponse = await ebayRestFetch(locationUrl, {
     method: 'POST',
     headers: inventoryJsonHeaders(token),
     body: JSON.stringify(buildLocationBody(config)),
   });
 
-  const errorText = await response.text();
+  if (createResponse.ok || createResponse.status === 204) {
+    await verifyWarehouseLocationPostalCode(token, locationUrl, config);
+    return;
+  }
+
+  const errorText = await createResponse.text();
   let errorBody: unknown = {};
   try {
     errorBody = errorText ? JSON.parse(errorText) : {};
@@ -1777,14 +2033,29 @@ async function upsertWarehouseLocation(token: string, config: EbayLocationConfig
     errorBody = {};
   }
 
-  if (response.ok || response.status === 204 || response.status === 409 || isExistingWarehouseLocationError(errorBody)) {
-    return;
+  if (createResponse.status === 409 || isExistingWarehouseLocationError(errorBody)) {
+    const updateResponse = await ebayRestFetch(`${locationUrl}/update_location_details`, {
+      method: 'POST',
+      headers: inventoryJsonHeaders(token),
+      body: JSON.stringify(buildLocationUpdateBody(config)),
+    });
+
+    if (updateResponse.ok || updateResponse.status === 204) {
+      await verifyWarehouseLocationPostalCode(token, locationUrl, config);
+      return;
+    }
+
+    throw new HttpError(updateResponse.status, `updateInventoryLocation ${updateResponse.status}: ${await readErrorPayload(updateResponse)}`, {
+      service: 'ebay',
+      code: 'EBAY_LOCATION_UPDATE_FAILED',
+      retryable: updateResponse.status >= 500,
+    });
   }
 
-  throw new HttpError(response.status, `createInventoryLocation ${response.status}: ${errorText || '{}'}`, {
+  throw new HttpError(createResponse.status, `createInventoryLocation ${createResponse.status}: ${errorText || '{}'}`, {
     service: 'ebay',
     code: 'EBAY_LOCATION_UPSERT_FAILED',
-    retryable: response.status >= 500,
+    retryable: createResponse.status >= 500,
   });
 }
 
@@ -1901,7 +2172,7 @@ async function publishOfferById(
   context: PublishOfferContext = {},
 ): Promise<{ listingId: string }> {
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const response = await fetch(`${getApiBaseUrl()}/sell/inventory/v1/offer/${encodeURIComponent(offerId)}/publish/`, {
+    const response = await ebayRestFetch(`${getApiBaseUrl()}/sell/inventory/v1/offer/${encodeURIComponent(offerId)}/publish/`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -1910,7 +2181,7 @@ async function publishOfferById(
     });
 
     const responseText = await response.text();
-    let publishData: { listingId?: string; errors?: Array<{ errorId?: number; message?: string; parameters?: Array<{ value?: string }> }> } = {};
+    let publishData: { listingId?: string; errors?: Array<{ errorId?: number; domain?: string; category?: string; message?: string; longMessage?: string; parameters?: Array<{ name?: string; value?: string }> }> } = {};
     try {
       publishData = responseText ? JSON.parse(responseText) as typeof publishData : {};
     } catch {
@@ -1934,9 +2205,18 @@ async function publishOfferById(
       }
 
       const firstError = publishData.errors?.[0];
-      const parameterValues = firstError?.parameters?.map((parameter) => parameter.value).filter(Boolean).join(', ');
-      const suffix = parameterValues ? ` (${parameterValues})` : '';
-      throw new HttpError(response.status, `publishOffer ${response.status}: ${firstError?.message ?? (responseText || '{}')}${suffix}`, {
+      const parameters = firstError?.parameters
+        ?.map((parameter) => [cleanOptional(parameter.name), cleanOptional(parameter.value)].filter(Boolean).join('='))
+        .filter(Boolean)
+        .join(', ');
+      const details = [
+        firstError?.longMessage,
+        parameters ? `parameters: ${parameters}` : '',
+        firstError?.domain ? `domain: ${firstError.domain}` : '',
+        firstError?.category ? `category: ${firstError.category}` : '',
+        firstError?.errorId ? `errorId: ${firstError.errorId}` : '',
+      ].filter(Boolean).join('; ');
+      throw new HttpError(response.status, `publishOffer ${response.status}: ${firstError?.message ?? (responseText || '{}')}${details ? ` (${details})` : ''}`, {
         service: 'ebay',
         code: 'EBAY_PUBLISH_OFFER_FAILED',
         retryable: response.status >= 500,
@@ -1963,7 +2243,7 @@ async function publishOfferById(
 
 async function upsertInventoryItem(token: string, sku: string, inventoryItem: Record<string, unknown>): Promise<void> {
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const response = await fetch(`${getApiBaseUrl()}/sell/inventory/v1/inventory_item/${encodeURIComponent(sku)}`, {
+    const response = await ebayRestFetch(`${getApiBaseUrl()}/sell/inventory/v1/inventory_item/${encodeURIComponent(sku)}`, {
       method: 'PUT',
       headers: inventoryJsonHeaders(token),
       body: JSON.stringify({
@@ -2011,7 +2291,7 @@ async function createOrUpdateOffer(
   const marketplaceContext = String(payload.marketplaceId ?? '').trim().toUpperCase() || 'EBAY_US';
 
   if (existingOfferId) {
-    const updateResponse = await fetch(`${getApiBaseUrl()}/sell/inventory/v1/offer/${encodeURIComponent(existingOfferId)}`, {
+    const updateResponse = await ebayRestFetch(`${getApiBaseUrl()}/sell/inventory/v1/offer/${encodeURIComponent(existingOfferId)}`, {
       method: 'PUT',
       headers: inventoryJsonHeaders(token),
       body: JSON.stringify(payload),
@@ -2028,7 +2308,7 @@ async function createOrUpdateOffer(
     return { offerId: existingOfferId, wasExistingOffer: true };
   }
 
-  const createResponse = await fetch(`${getApiBaseUrl()}/sell/inventory/v1/offer`, {
+  const createResponse = await ebayRestFetch(`${getApiBaseUrl()}/sell/inventory/v1/offer`, {
     method: 'POST',
     headers: inventoryJsonHeaders(token),
     body: JSON.stringify(payload),
@@ -2139,32 +2419,17 @@ export async function pushApprovalBundleToEbay(
     });
   }
 
+  const sku = validateEbayApprovalBundle(bundle);
+  requirePreparedEbayImageUrls(bundle.inventoryItem);
   const token = await getValidUserToken();
-  const sku = normalizeSku(bundle);
   await upsertWarehouseLocation(token, resolvedPublishSetup.locationConfig);
-  const inventoryItemPayload = await maybeConvertExternalImageUrlsToEbayHosted(bundle.inventoryItem);
-  await upsertInventoryItem(token, sku, inventoryItemPayload);
+  await upsertInventoryItem(token, sku, bundle.inventoryItem);
 
   const existingOffers = await getOffersWithToken(token, sku, 1);
   const existingOffer = existingOffers.offers[0];
   const categoryId = String(bundle.offer.categoryId ?? '').trim();
-  if (!/^\d{3,12}$/.test(categoryId)) {
-    throw new HttpError(400, `Invalid eBay Offer Category ID "${categoryId || '<empty>'}". Provide a numeric eBay category ID (for example: 14990).`, {
-      service: 'ebay',
-      code: 'EBAY_CATEGORY_ID_INVALID',
-      retryable: false,
-    });
-  }
 
   const secondaryCategoryId = String(bundle.offer.secondaryCategoryId ?? '').trim();
-  if (secondaryCategoryId && !/^\d{3,12}$/.test(secondaryCategoryId)) {
-    throw new HttpError(400, `Invalid eBay Offer Secondary Category ID "${secondaryCategoryId}". Provide a numeric eBay category ID or leave it blank.`, {
-      service: 'ebay',
-      code: 'EBAY_SECONDARY_CATEGORY_ID_INVALID',
-      retryable: false,
-    });
-  }
-
   const offerPayload: Record<string, unknown> = {
     ...bundle.offer,
     sku,
@@ -2178,18 +2443,6 @@ export async function pushApprovalBundleToEbay(
       returnPolicyId: resolvedPolicyConfig.returnPolicyId,
     },
   };
-
-  const offerPrice = readOfferPriceValue(offerPayload);
-  if (!offerPrice.value || !Number.isFinite(offerPrice.numeric) || offerPrice.numeric <= 0) {
-    const fieldHint = offerPrice.format === 'AUCTION'
-      ? 'eBay Offer Auction Start Price Value'
-      : 'eBay Offer Price Value (or Price / Buy It Now fields)';
-    throw new HttpError(400, `Invalid eBay ${offerPrice.format} price "${offerPrice.value || '<empty>'}". Set a positive price in ${fieldHint} before publishing.`, {
-      service: 'ebay',
-      code: 'EBAY_PRICE_INVALID',
-      retryable: false,
-    });
-  }
 
   await validateFulfillmentPolicyForMarketplace(
     token,

@@ -462,17 +462,18 @@ export async function submitTestingForm(
     const costValue = trimToUndefined(values.cost);
     const testingTimeMinutes = trimToUndefined(values.testingTimeMinutes);
     const serviceTimeMinutes = trimToUndefined(values.serviceTimeMinutes);
+    const existingItemTitle = extractInventoryScalarValue(workflowRecord.fields['Item Title']).trim();
     const baseFields = compactFields({
       SKU: trimToUndefined(values.sku),
-      'Item Title': buildUsedGearItemTitle({
-        make: values.make,
-        model: values.model,
-        componentType: values.componentType,
-        serialNumber: values.serialNumber,
-        jotFormSubmissionId: extractInventoryScalarValue(workflowRecord.fields['JotForm Submission ID']),
-        pickUpId: extractInventoryScalarValue(workflowRecord.fields['Pick Up ID']),
-        recordId,
-      }),
+      'Item Title': existingItemTitle || buildUsedGearItemTitle({
+          make: values.make,
+          model: values.model,
+          componentType: values.componentType,
+          serialNumber: values.serialNumber,
+          jotFormSubmissionId: extractInventoryScalarValue(workflowRecord.fields['JotForm Submission ID']),
+          pickUpId: extractInventoryScalarValue(workflowRecord.fields['Pick Up ID']),
+          recordId,
+        }),
       'Arrival Date': trimToUndefined(values.arrivalDate),
       'Acquired From': trimToUndefined(values.acquiredFrom),
       Make: trimToUndefined(values.make),

@@ -17,6 +17,7 @@ import {
   pushApprovalBundleToEbay,
   searchEbayCategorySuggestions,
   uploadImageToEbayHostedPictures,
+  uploadImageUrlToEbayHostedPictures,
 } from '@/services/app-api/ebay';
 
 describe('app-api ebay', () => {
@@ -251,6 +252,23 @@ describe('app-api ebay', () => {
         file: 'dGVzdA==',
       }),
     });
+  });
+
+  it('uploads an external image URL to eBay hosted pictures', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ url: 'https://i.ebayimg.com/example.jpg' }), { status: 200, headers: { 'content-type': 'application/json' } }),
+    );
+
+    const result = await uploadImageUrlToEbayHostedPictures('https://drive.google.com/file/d/example/view', 2);
+
+    expect(result).toEqual({ url: 'https://i.ebayimg.com/example.jpg' });
+    expect(fetchMock).toHaveBeenCalledWith(expectApiPath('/api/ebay/images'), expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({
+        sourceUrl: 'https://drive.google.com/file/d/example/view',
+        index: 2,
+      }),
+    }));
   });
 
   it('calls the Lambda eBay approval preview endpoint', async () => {

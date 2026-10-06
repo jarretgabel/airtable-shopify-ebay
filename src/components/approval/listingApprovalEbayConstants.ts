@@ -9,6 +9,18 @@ export const EBAY_TITLE_FIELD_CANDIDATES = [
   'Name',
 ] as const;
 
+export const EBAY_SKU_FIELD_CANDIDATES = [
+  'eBay Inventory SKU',
+  'SKU',
+] as const;
+
+export const EBAY_CONDITION_FIELD_CANDIDATES = [
+  '__Condition__',
+  'eBay Inventory Condition',
+  'Item Condition',
+  'Condition',
+] as const;
+
 export const EBAY_PRICE_FIELD_CANDIDATES = [
   'Buy It Now Price',
   'Buy It Now/Starting Bid Price',

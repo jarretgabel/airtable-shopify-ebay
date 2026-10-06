@@ -46,4 +46,23 @@ describe('useListingApprovalFieldNames', () => {
     expect(result.current.allFieldNames).toContain('Ebay Domestic Service 1');
     expect(result.current.allFieldNames).toContain('Ebay International Service 1');
   });
+
+  it('includes the canonical Description field when Airtable omits its blank value', () => {
+    const { result } = renderHook(() => useListingApprovalFieldNames({
+      records: [{ fields: { Title: 'MIT MITerminator 2' } }],
+      approvalChannel: 'combined',
+    }));
+
+    expect(result.current.allFieldNames).toContain('Description');
+  });
+
+  it('retains an existing description alias without adding a duplicate canonical field', () => {
+    const { result } = renderHook(() => useListingApprovalFieldNames({
+      records: [{ fields: { 'Item Description': 'Existing description' } }],
+      approvalChannel: 'combined',
+    }));
+
+    expect(result.current.allFieldNames).toContain('Item Description');
+    expect(result.current.allFieldNames).not.toContain('Description');
+  });
 });

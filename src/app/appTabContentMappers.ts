@@ -10,7 +10,9 @@ import type {
   UserManagementTabViewModel,
 } from '@/app/appTabViewModels';
 import { buildEbaySnapshotFromAirtable } from '@/services/ebaySnapshotFromAirtable';
-import { buildUsedGearWorkflowListingSkuSet } from '@/services/usedGearWorkflowListingVisibility';
+import {
+  buildUsedGearWorkflowListingSkuSet,
+} from '@/services/usedGearWorkflowListingVisibility';
 import type { EbayPublishedListing } from '@/services/ebay/types';
 import type { ShopifyProduct } from '@/types/shopify';
 
@@ -124,18 +126,17 @@ type UsersInput = Pick<
 >;
 
 export function buildEbayTabViewModel(input: EbayInput): EbayTabViewModel {
-  const eligibleListingSkus = buildUsedGearWorkflowListingSkuSet(input.nonEmptyListings);
   const airtableSnapshot = buildEbaySnapshotFromAirtable(input.nonEmptyListings);
   const useAirtableSnapshot = !input.runtimeFeatures.ebay.available;
   const filteredItems = useAirtableSnapshot
     ? airtableSnapshot.items
-    : input.ebayInventoryItems.filter((item) => eligibleListingSkus.has(item.sku));
+    : input.ebayInventoryItems;
   const filteredOffers = useAirtableSnapshot
     ? airtableSnapshot.offers
-    : input.ebayOffers.filter((offer) => eligibleListingSkus.has(offer.sku));
+    : input.ebayOffers;
   const filteredRecentListings = useAirtableSnapshot
     ? airtableSnapshot.recentListings
-    : input.ebayRecentListings.filter((listing) => eligibleListingSkus.has(listing.item.sku) || eligibleListingSkus.has(listing.offer.sku));
+    : input.ebayRecentListings;
   const filteredTotal = useAirtableSnapshot
     ? airtableSnapshot.total
     : countUniqueEbaySkus(filteredItems, filteredOffers, filteredRecentListings);

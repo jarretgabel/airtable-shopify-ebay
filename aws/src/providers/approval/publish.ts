@@ -2,7 +2,8 @@ import { getConfiguredRecord } from '../airtable/sources.js';
 import {
   buildEbayDraftPayloadBundleFromApprovalFields,
 } from '../ebay/approvalDraft.js';
-import { pushApprovalBundleToEbay } from '../ebay/client.js';
+import { getRuntimeConfig, pushApprovalBundleToEbay } from '../ebay/client.js';
+import { getField } from '../ebay/approvalShared.js';
 import type {
   ApprovalPublishExecutionResult,
   ApprovalPublishRequest as ExecuteApprovalPublishParams,
@@ -88,10 +89,26 @@ export async function executeApprovalPublish(
     try {
       const [resolvedFields, normalized] = await Promise.all([getResolvedFields(), getNormalizedResult()]);
       const bundle = normalized?.ebay?.draftPayloadBundle ?? dependencies.buildEbayDraftPayloadBundleFromApprovalFields(resolvedFields);
+      const itemPostalCode = getField(resolvedFields, [
+        'Item Zip Code',
+        'Item Postal Code',
+        'Location Zip Code',
+        'Location Postal Code',
+      ]);
+      const defaultPublishSetup = params.publishSetup ?? getRuntimeConfig().publishSetup;
+      const publishSetup = itemPostalCode
+        ? {
+            ...defaultPublishSetup,
+            locationConfig: {
+              ...defaultPublishSetup.locationConfig,
+              postalCode: itemPostalCode,
+            },
+          }
+        : defaultPublishSetup;
       const ebayResult = await dependencies.pushApprovalBundleToEbay({
         inventoryItem: bundle.inventoryItem,
         offer: bundle.offer,
-      }, params.publishSetup);
+      }, publishSetup);
       result.ebay = {
         ...ebayResult,
         mode: ebayResult.wasExistingOffer ? 'updated' : 'created',

@@ -14,6 +14,11 @@ interface InlineNoticeTimers {
   remove: number;
 }
 
+export interface PushInlineActionNoticeOptions {
+  id?: string;
+  persistent?: boolean;
+}
+
 function getNoticeLifetimeMs(tone: InlineActionNoticeTone): { fadeAfterMs: number; removeAfterMs: number } | null {
   if (tone === 'error') return null;
   if (tone === 'warning') {
@@ -57,9 +62,14 @@ export function useApprovalInlineNotices() {
     setFadingInlineNoticeIds([]);
   }, [clearAllInlineNoticeTimers]);
 
-  const pushInlineActionNotice = useCallback((tone: InlineActionNoticeTone, title: string, message: string) => {
+  const pushInlineActionNotice = useCallback((
+    tone: InlineActionNoticeTone,
+    title: string,
+    message: string,
+    options: PushInlineActionNoticeOptions = {},
+  ) => {
     const fallbackId = `inline-notice-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    let id = fallbackId;
+    let id = options.id ?? fallbackId;
     setInlineActionNotices((current) => {
       const duplicate = current.find((notice) => (
         notice.tone === tone
@@ -83,6 +93,11 @@ export function useApprovalInlineNotices() {
     });
 
     clearInlineNoticeTimer(id);
+    setFadingInlineNoticeIds((current) => current.filter((noticeId) => noticeId !== id));
+
+    if (options.persistent) {
+      return;
+    }
 
     const lifetime = getNoticeLifetimeMs(tone);
     if (!lifetime) {

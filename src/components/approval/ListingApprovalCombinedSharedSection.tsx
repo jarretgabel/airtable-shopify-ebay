@@ -10,6 +10,7 @@ import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
 import { resolveListingApprovalTestingSectionFields } from '@/components/approval/listingApprovalTestingSection';
 import { tabFormControlMultilineClass } from '@/components/tabs/uiClasses';
+import { isMissingRequiredFieldValue } from '@/components/approval/requiredFieldStatus';
 import { CONDITION_FIELD } from '@/stores/approvalStore';
 import type { ListingApprovalCombinedSharedSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
@@ -138,6 +139,16 @@ export function ListingApprovalCombinedSharedSection({
   ]));
   const postKeyFeaturesSharedFieldNames = editableSharedFieldNames.filter((fieldName) => !isListingImageSupportField(fieldName));
   const componentTypeValue = resolveComponentTypeValue(formValues, selectedRecord.fields);
+  const normalizedDescriptionFieldName = normalizeSharedFieldName(combinedDescriptionFieldName);
+  const descriptionIsShopifyRequired = shopifyRequiredFieldNames.some(
+    (fieldName) => normalizeSharedFieldName(fieldName) === normalizedDescriptionFieldName,
+  );
+  const descriptionIsEbayRequired = ebayRequiredFieldNames.some(
+    (fieldName) => normalizeSharedFieldName(fieldName) === normalizedDescriptionFieldName,
+  );
+  const descriptionIsRequired = descriptionIsShopifyRequired || descriptionIsEbayRequired;
+  const descriptionIsMissing = descriptionIsRequired
+    && isMissingRequiredFieldValue(combinedDescriptionFieldName, formValues[combinedDescriptionFieldName]);
 
   return (
     <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
@@ -174,11 +185,17 @@ export function ListingApprovalCombinedSharedSection({
 
         {combinedDescriptionFieldName && (
           <label className="flex flex-col gap-2">
-            <span className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Description</span>
+            <span className={`mb-1 flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] ${descriptionIsMissing ? 'text-[var(--required-label-ink)]' : 'text-[var(--muted)]'}`}>
+              <span>Description</span>
+              {descriptionIsShopifyRequired && <span className="inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]">Shopify Required</span>}
+              {descriptionIsEbayRequired && <span className="inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]">eBay Required</span>}
+            </span>
             <textarea
-              className={`${tabFormControlMultilineClass} min-h-[120px] bg-[var(--panel)] disabled:cursor-not-allowed disabled:opacity-70`}
+              className={`${tabFormControlMultilineClass} min-h-[120px] bg-[var(--panel)] disabled:cursor-not-allowed disabled:opacity-70 ${descriptionIsMissing ? 'border-rose-400/45 bg-rose-500/5 focus:border-rose-300' : ''}`}
               value={formValues[combinedDescriptionFieldName] ?? ''}
               onChange={(event) => setFormValue(combinedDescriptionFieldName, event.target.value)}
+              aria-required={descriptionIsRequired}
+              aria-invalid={descriptionIsMissing}
               disabled={saving}
             />
           </label>

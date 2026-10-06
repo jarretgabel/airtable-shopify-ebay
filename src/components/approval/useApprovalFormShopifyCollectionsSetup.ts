@@ -67,12 +67,14 @@ export function useApprovalFormShopifyCollectionsSetup({
     [shopifyCompoundCollectionFieldNames, shopifySingleCollectionFieldNames],
   );
   const shopifyCollectionIds = useMemo(() => {
-    if (normalizedShopifyCollectionIds) return normalizedShopifyCollectionIds;
-
     const collectionSourceFields = Object.fromEntries(
       shopifyCollectionSourceFieldNames.map((fieldName) => [fieldName, formValues[fieldName] ?? '']),
     );
-    return buildShopifyCollectionIdsFromApprovalFields(collectionSourceFields);
+    const hydratedCollectionIds = buildShopifyCollectionIdsFromApprovalFields(collectionSourceFields);
+
+    return normalizedShopifyCollectionIds && normalizedShopifyCollectionIds.length > 0
+      ? normalizedShopifyCollectionIds
+      : hydratedCollectionIds;
   }, [formValues, normalizedShopifyCollectionIds, shopifyCollectionSourceFieldNames]);
   const [collectionEditorFallbackIds, setCollectionEditorFallbackIds] = useState<string[]>([]);
   const [collectionEditorLabelsById, setCollectionEditorLabelsById] = useState<Record<string, string>>({});
@@ -92,7 +94,12 @@ export function useApprovalFormShopifyCollectionsSetup({
 
   useEffect(() => {
     if (shopifyCollectionIds.length > 0) {
-      setCollectionEditorFallbackIds(shopifyCollectionIds);
+      setCollectionEditorFallbackIds((currentIds) => (
+        currentIds.length === shopifyCollectionIds.length
+          && currentIds.every((collectionId, index) => collectionId === shopifyCollectionIds[index])
+          ? currentIds
+          : shopifyCollectionIds
+      ));
     }
   }, [shopifyCollectionIds]);
 

@@ -12,6 +12,27 @@ import type { ApprovalFieldMap } from './approvalShared.js';
 
 export type { EbayApprovalPreview };
 
+const EBAY_BODY_HTML_FIELD_ALIASES = [
+  'Ebay Body (HTML)',
+  'Ebay Body HTML',
+  'eBay Body HTML',
+  'ebay_body_html',
+  'eBay Body (HTML)',
+  'Body HTML',
+  'Body (HTML)',
+  'body_html',
+] as const;
+
+function applyGeneratedBodyHtml(fields: ApprovalFieldMap, fieldName: string, generatedBodyHtml: string): void {
+  const aliasKeys = new Set(EBAY_BODY_HTML_FIELD_ALIASES.map((alias) => alias.toLowerCase()));
+  Object.keys(fields).forEach((existingFieldName) => {
+    if (aliasKeys.has(existingFieldName.toLowerCase())) {
+      fields[existingFieldName] = generatedBodyHtml;
+    }
+  });
+  fields[fieldName] = generatedBodyHtml;
+}
+
 export function buildEbayApprovalPreviewFromFields(
   fields: ApprovalFieldMap,
   bodyPreview?: EbayBodyPreviewInput,
@@ -19,8 +40,9 @@ export function buildEbayApprovalPreviewFromFields(
 ): EbayApprovalPreview {
   const nextFields = { ...fields };
   const generatedBodyHtml = bodyPreview ? buildEbayBodyHtmlFromTemplate(bodyPreview) : '';
-  if (bodyPreview?.fieldName && generatedBodyHtml.trim()) {
-    nextFields[bodyPreview.fieldName] = generatedBodyHtml;
+  if (generatedBodyHtml.trim()) {
+    const bodyHtmlFieldName = bodyPreview?.fieldName?.trim() || 'Ebay Body (HTML)';
+    applyGeneratedBodyHtml(nextFields, bodyHtmlFieldName, generatedBodyHtml);
   }
 
   const selectedCategoryIds = resolveSelectedCategoryIds(nextFields);

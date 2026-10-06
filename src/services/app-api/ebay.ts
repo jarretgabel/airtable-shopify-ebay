@@ -294,6 +294,22 @@ export async function uploadImageToEbayHostedPictures(file: File): Promise<EbayU
   }
 }
 
+export async function uploadImageUrlToEbayHostedPictures(
+  sourceUrl: string,
+  index: number,
+): Promise<EbayUploadedImageResult> {
+  try {
+    return await postJson<EbayUploadedImageResult>('/api/ebay/images', {
+      sourceUrl,
+      index,
+    }, {
+      timeoutMs: 35_000,
+    });
+  } catch (error) {
+    throw toEbayError(error);
+  }
+}
+
 export async function getEbayRuntimeConfig(): Promise<EbayRuntimeConfig> {
   try {
     return await getJson<EbayRuntimeConfig>('/api/ebay/runtime-config');

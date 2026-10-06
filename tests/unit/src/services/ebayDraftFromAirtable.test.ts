@@ -1,6 +1,19 @@
 import { buildEbayDraftPayloadBundleFromApprovalFields } from '@/services/ebayDraftFromAirtable';
 
 describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
+  it('maps canonical shipping fields to eBay package weight and dimensions', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      SKU: 'SKU-PACKAGE',
+      'Shipping Weight': '5 lbs',
+      'Shipping Dims': '20x18x 8',
+    });
+
+    expect(payload.inventoryItem.packageWeightAndSize).toEqual({
+      dimensions: { length: 20, width: 18, height: 8, unit: 'INCH' },
+      weight: { value: 5, unit: 'POUND' },
+    });
+  });
+
   it('builds inventory item and offer payload from eBay approval fields', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-1',
@@ -459,6 +472,16 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     });
   });
 
+  it('leaves condition empty when the source does not provide one', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-NO-CONDITION',
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      condition: '',
+    });
+  });
+
   it('uses Categories field for eBay offer category id', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-4',
@@ -552,8 +575,21 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
 
     expect(payload.offer).toMatchObject({
       sku: 'EBAY-SKU-8C',
-      categoryId: '14990',
+      categoryId: '',
       secondaryCategoryId: undefined,
+    });
+  });
+
+  it('does not substitute sample identifiers when required publish data is missing', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({});
+
+    expect(payload.inventoryItem).toMatchObject({
+      sku: '',
+      product: { title: '' },
+    });
+    expect(payload.offer).toMatchObject({
+      sku: '',
+      categoryId: '',
     });
   });
 

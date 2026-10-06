@@ -22,4 +22,28 @@ describe('useListingApprovalPublishFieldState', () => {
 
     expect(result.current.formatFieldName).toBe('Ebay Listing Format');
   });
+
+  it('requires SKU, title, description, condition, price, and category before eBay publish', () => {
+    const { result } = renderHook(() => useListingApprovalPublishFieldState({
+      allFieldNames: [
+        'eBay Inventory SKU',
+        'Item Title',
+        'Description',
+        'Item Condition',
+        'Buy It Now USD',
+        'Categories',
+      ],
+      approvalChannel: 'ebay',
+      selectedRecord: null,
+    }));
+
+    expect(result.current.ebayRequiredFieldNames).toEqual([
+      'eBay Inventory SKU',
+      'Item Title',
+      'Description',
+      'Item Condition',
+      'Buy It Now USD',
+      'Categories',
+    ]);
+  });
 });

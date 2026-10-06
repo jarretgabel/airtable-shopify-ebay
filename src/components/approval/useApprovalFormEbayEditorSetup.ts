@@ -13,6 +13,7 @@ import {
   normalizeEbayListingTemplateId,
 } from './approvalFormFieldsEbayHelpersBasic';
 import { findEbayBodyHtmlFieldName } from './listingApprovalFieldHelpers';
+import { EBAY_CONDITION_FIELD_CANDIDATES } from './listingApprovalEbayConstants';
 import {
   SYNTHETIC_EBAY_DOMESTIC_SHIPPING_FLAT_FEE_FIELD,
   SYNTHETIC_EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD,
@@ -65,6 +66,17 @@ export function useApprovalFormEbayEditorSetup({
 }: UseApprovalFormEbayEditorSetupParams) {
   const isEbayApprovalForm = approvalChannel === 'ebay';
   const [ebayPackageTypeOptions, setEbayPackageTypeOptions] = useState<string[]>(['Package/Thick Envelope']);
+
+  useEffect(() => {
+    if (!(approvalChannel === 'ebay' || approvalChannel === 'combined')) return;
+
+    const conditionIsSet = EBAY_CONDITION_FIELD_CANDIDATES.some((fieldName) => (
+      (formValues[fieldName] ?? originalFieldValues[fieldName] ?? '').trim().length > 0
+    ));
+    if (!conditionIsSet) {
+      setDerivedFormValue('__Condition__', 'Used');
+    }
+  }, [approvalChannel, formValues, originalFieldValues, setDerivedFormValue]);
 
   useEffect(() => {
     if (!(approvalChannel === 'ebay' || approvalChannel === 'combined')) return;

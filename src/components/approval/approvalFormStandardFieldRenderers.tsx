@@ -9,6 +9,8 @@ import {
 import {
   getEbayListingDurationLabel,
   getEbayShippingTypeLabel,
+  getEbayConditionLabel,
+  isEbayConditionField,
 } from './approvalFormFieldsEbayHelpers';
 import { isImageUrlListField } from './approvalFormFieldsImageHelpers';
 import { ImageUrlListEditor } from './ImageUrlListEditor';
@@ -224,6 +226,7 @@ export function renderApprovalFormDropdownField({
   isListingDurationField = false,
 }: ApprovalFormStandardFieldRendererParams): JSX.Element {
   const availableOptions = dropdownOptions ?? [];
+  const isConditionDropdown = isEbayConditionField(fieldName);
   const optionSet = new Set(availableOptions);
   const hasMatchingDurationOption = isListingDurationField
     ? optionSet.has(getEbayListingDurationLabel(normalizeEbayListingDuration(value)))
@@ -239,7 +242,9 @@ export function renderApprovalFormDropdownField({
     ? getEbayListingDurationLabel(normalizedValue)
     : isShippingTypeDropdown
       ? getEbayShippingTypeLabel(normalizedValue)
-      : normalizedValue;
+      : isConditionDropdown
+        ? normalizedValue
+        : normalizedValue;
 
   return (
     <label className="flex flex-col gap-2">
@@ -264,10 +269,12 @@ export function renderApprovalFormDropdownField({
             ? getEbayListingDurationLabel(option)
             : isShippingTypeDropdown
               ? getEbayShippingTypeLabel(option)
+              : isConditionDropdown
+                ? getEbayConditionLabel(option)
               : option;
 
           return (
-            <option key={option} value={optionLabel}>
+            <option key={option} value={isConditionDropdown ? option : optionLabel}>
               {optionLabel}
             </option>
           );

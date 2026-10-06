@@ -123,6 +123,75 @@ describe('approvalStorePersistence', () => {
     );
   });
 
+  it('saves a changed canonical condition instead of the synthetic default', async () => {
+    const state = buildStoreState({
+      formValues: {
+        __Condition__: 'Used',
+        Condition: 'USED_VERY_GOOD',
+      },
+      initialFormValues: {
+        __Condition__: 'Used',
+        Condition: 'USED_GOOD',
+      },
+      fieldKinds: {
+        __Condition__: 'text',
+        Condition: 'text',
+      },
+    });
+    const saveRecord = createSaveRecordAction(vi.fn(), vi.fn(() => state));
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Condition: 'USED_GOOD' }),
+      'base/table',
+      'Approval',
+      ['Condition'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { Condition: 'USED_VERY_GOOD' },
+      undefined,
+    );
+  });
+
+  it('saves a synthetic condition when the empty canonical field is omitted from the record', async () => {
+    const state = buildStoreState({
+      formValues: { __Condition__: 'USED_VERY_GOOD' },
+      initialFormValues: { __Condition__: 'Used' },
+      fieldKinds: { __Condition__: 'text' },
+    });
+    const saveRecord = createSaveRecordAction(vi.fn(), vi.fn(() => state));
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({}),
+      'base/table',
+      'Approval',
+      ['Condition'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'eBay Inventory Condition': 'USED_VERY_GOOD' },
+      undefined,
+    );
+  });
+
   it('retries category saves with alternate value shapes after a 422 response', async () => {
     const setMock = vi.fn();
     const loadRecordsMock = vi.fn(async () => {});

@@ -494,10 +494,16 @@ export function isSystemManagedListingFieldName(fieldName: string): boolean {
 
   return normalized === 'e bay listing id'
     || normalized === 'e bay offer id'
+    || normalized === 'shopify close result'
+    || normalized === 'shopify closed at'
+    || normalized === 'shipment follow through updated at'
     || normalized === 'shopify rest product id'
     || normalized === 'shopify product id'
     || compact === 'ebaylistingid'
     || compact === 'ebayofferid'
+    || compact === 'shopifycloseresult'
+    || compact === 'shopifyclosedat'
+    || compact === 'shipmentfollowthroughupdatedat'
     || compact === 'shopifyrestproductid'
     || compact === 'shopifyproductid';
 }

@@ -1,8 +1,13 @@
 import { useMemo } from 'react';
 import {
+  EBAY_CATEGORIES_FIELD_CANDIDATES,
+  EBAY_CONDITION_FIELD_CANDIDATES,
+  EBAY_DESCRIPTION_FIELD_CANDIDATES,
   EBAY_FORMAT_FIELD_CANDIDATES,
+  EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES,
   EBAY_PRICE_FIELD_CANDIDATES,
   EBAY_QTY_FIELD_CANDIDATES,
+  EBAY_SKU_FIELD_CANDIDATES,
   EBAY_TITLE_FIELD_CANDIDATES,
   EBAY_VENDOR_FIELD_CANDIDATES,
 } from '@/components/approval/listingApprovalEbayConstants';
@@ -102,8 +107,15 @@ export function useListingApprovalPublishFieldState({
 
   const ebayRequiredFieldNames = useMemo(() => {
     const required = [
+      resolveFieldName([...EBAY_SKU_FIELD_CANDIDATES], ''),
       resolveFieldName([...EBAY_TITLE_FIELD_CANDIDATES], ''),
+      resolveFieldName([...EBAY_DESCRIPTION_FIELD_CANDIDATES], ''),
+      resolveFieldName([...EBAY_CONDITION_FIELD_CANDIDATES], ''),
       resolveFieldName([...EBAY_PRICE_FIELD_CANDIDATES], ''),
+      resolveFieldName([
+        ...EBAY_CATEGORIES_FIELD_CANDIDATES,
+        ...EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES,
+      ], ''),
     ].filter((fieldName): fieldName is string => fieldName.trim().length > 0);
 
     return Array.from(new Set(required));

@@ -289,7 +289,7 @@ describe('buildShopifyTabViewModel', () => {
 });
 
 describe('buildEbayTabViewModel', () => {
-  it('filters live eBay inventory to workflow-eligible listing SKUs', () => {
+  it('shows the authoritative live eBay inventory without Airtable workflow filtering', () => {
     const viewModel = buildEbayTabViewModel(buildInput({
       nonEmptyListings: [
         {
@@ -297,8 +297,6 @@ describe('buildEbayTabViewModel', () => {
           createdTime: '2026-05-08T00:00:00.000Z',
           fields: {
             SKU: 'READY-SKU',
-            'Workflow Status': 'Listed, eBay',
-            Price: '2499',
           },
         },
       ],
@@ -318,10 +316,10 @@ describe('buildEbayTabViewModel', () => {
       ebayTotal: 2,
     }));
 
-    expect(viewModel.inventory.items.map((item) => item.sku)).toEqual(['READY-SKU']);
-    expect(viewModel.inventory.offers.map((offer) => offer.sku)).toEqual(['READY-SKU']);
-    expect(viewModel.inventory.recentListings.map((listing) => listing.item.sku)).toEqual(['READY-SKU']);
-    expect(viewModel.inventory.total).toBe(1);
+    expect(viewModel.inventory.items.map((item) => item.sku)).toEqual(['READY-SKU', 'HIDDEN-SKU']);
+    expect(viewModel.inventory.offers.map((offer) => offer.sku)).toEqual(['READY-SKU', 'HIDDEN-SKU']);
+    expect(viewModel.inventory.recentListings.map((listing) => listing.item.sku)).toEqual(['READY-SKU', 'HIDDEN-SKU']);
+    expect(viewModel.inventory.total).toBe(2);
   });
 
   it('uses the same workflow eligibility rule for Airtable-backed snapshots', () => {

@@ -10,11 +10,13 @@ const {
   trackWorkflowEventMock,
   updateConfiguredRecordMock,
   loadRecordsMock,
+  uploadImageUrlToEbayHostedPicturesMock,
 } = vi.hoisted(() => ({
   publishApprovalRecordMock: vi.fn(),
   trackWorkflowEventMock: vi.fn(),
   updateConfiguredRecordMock: vi.fn(),
   loadRecordsMock: vi.fn(),
+  uploadImageUrlToEbayHostedPicturesMock: vi.fn(),
 }));
 
 vi.mock('@/services/app-api/approval', () => ({
@@ -27,6 +29,10 @@ vi.mock('@/services/workflowAnalytics', () => ({
 
 vi.mock('@/services/app-api/airtable', () => ({
   updateConfiguredRecord: updateConfiguredRecordMock,
+}));
+
+vi.mock('@/services/app-api/ebay', () => ({
+  uploadImageUrlToEbayHostedPictures: uploadImageUrlToEbayHostedPicturesMock,
 }));
 
 vi.mock('@/stores/approvalStore', () => ({
@@ -69,6 +75,7 @@ describe('approval action notifications', () => {
     trackWorkflowEventMock.mockReset();
     updateConfiguredRecordMock.mockReset();
     loadRecordsMock.mockReset();
+    uploadImageUrlToEbayHostedPicturesMock.mockReset();
     loadRecordsMock.mockResolvedValue(undefined);
   });
 
@@ -148,6 +155,7 @@ describe('approval action notifications', () => {
       tableReference: 'appApproval/viwApproval',
       tableName: 'Approval',
       mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
+      ebayGeneratedBodyHtml: '<p>Generated eBay description</p>',
       workflowPublishSummary: {
         workflowStatus: 'Approved for Publish',
         readiness: {
@@ -242,6 +250,7 @@ describe('approval action notifications', () => {
       tableReference: 'appApproval/viwApproval',
       tableName: 'Approval',
       mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
+      ebayGeneratedBodyHtml: '<p>Generated eBay description</p>',
       workflowPublishSummary: null,
       setFormValue,
       pushInlineActionNotice,
@@ -298,7 +307,18 @@ describe('approval action notifications', () => {
       approvalPublishSource: 'approval-shopify',
       tableReference: 'appApproval/viwApproval',
       tableName: 'Approval',
-      mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
+      mergedDraftSourceFields: {
+        Name: 'McIntosh MA6900',
+        'Workflow Image Metadata JSON': JSON.stringify([{
+          url: 'https://i.ebayimg.com/image-1.jpg',
+          filename: 'image-1.jpg',
+          alt: 'McIntosh MA6900',
+          sortOrder: 1,
+          sourceStage: 'photos',
+          includedInListing: true,
+        }]),
+      },
+      ebayGeneratedBodyHtml: '<p>Generated eBay description</p>',
       workflowPublishSummary: {
         workflowStatus: 'Approved for Publish',
         readiness: {
@@ -355,6 +375,7 @@ describe('approval action notifications', () => {
       'error',
       'eBay publish failed',
       'Offer creation failed',
+      { id: 'ebay-publish-progress' },
     );
 
     await waitFor(() => {
@@ -396,7 +417,18 @@ describe('approval action notifications', () => {
       approvalPublishSource: 'approval-shopify',
       tableReference: 'appApproval/viwApproval',
       tableName: 'Approval',
-      mergedDraftSourceFields: { Name: 'McIntosh MA6900' },
+      mergedDraftSourceFields: {
+        Name: 'McIntosh MA6900',
+        'Workflow Image Metadata JSON': JSON.stringify([{
+          url: 'https://i.ebayimg.com/image-1.jpg',
+          filename: 'image-1.jpg',
+          alt: 'McIntosh MA6900',
+          sortOrder: 1,
+          sourceStage: 'photos',
+          includedInListing: true,
+        }]),
+      },
+      ebayGeneratedBodyHtml: '<p>Generated eBay description</p>',
       workflowPublishSummary: null,
       setFormValue,
       pushInlineActionNotice,
@@ -427,6 +459,150 @@ describe('approval action notifications', () => {
       'success',
       'eBay listing published',
       'SKU MCINTOSH-MA6900 is live as listing listing-9 via offer offer-9.',
+      { id: 'ebay-publish-progress' },
+    );
+  });
+
+  it('advances image progress and retries a transient eBay upload failure', async () => {
+    const imageUrls = Array.from({ length: 5 }, (_, index) => `https://drive.google.com/uc?export=view&id=image-${index + 1}`);
+    imageUrls[4] = 'https://cdn.example.com/listing/image-5.jpg';
+    const attemptsByIndex = new Map<number, number>();
+    uploadImageUrlToEbayHostedPicturesMock.mockImplementation(async (_url: string, index: number) => {
+      const attempt = (attemptsByIndex.get(index) ?? 0) + 1;
+      attemptsByIndex.set(index, attempt);
+      if (index === 1 && attempt === 1) {
+        throw new Error('The operation was aborted due to timeout');
+      }
+      return { url: `https://i.ebayimg.com/image-${index + 1}.jpg` };
+    });
+    publishApprovalRecordMock.mockResolvedValue({
+      target: 'ebay',
+      ebay: {
+        sku: 'MCINTOSH-MA6900',
+        offerId: 'offer-9',
+        listingId: 'listing-9',
+        wasExistingOffer: true,
+        mode: 'updated',
+      },
+      failures: [],
+    });
+
+    const pushInlineActionNotice = vi.fn();
+    const { result } = renderHook(() => useListingApprovalPublishActions({
+      selectedRecord: record,
+      hasMissingShopifyRequiredFields: false,
+      hasMissingEbayRequiredFields: false,
+      isShopifyPublishBlockedByAuctionFormat: false,
+      missingShopifyRequiredFieldLabels: [],
+      missingEbayRequiredFieldLabels: [],
+      approvalPublishSource: 'approval-shopify',
+      tableReference: 'appApproval/viwApproval',
+      tableName: 'Approval',
+      mergedDraftSourceFields: {
+        SKU: 'MCINTOSH-MA6900',
+        Description: 'Integrated amplifier with recent bench verification.',
+        'Workflow Image Metadata JSON': JSON.stringify(imageUrls.map((url, index) => ({
+          url,
+          filename: `image-${index + 1}.jpg`,
+          alt: `McIntosh MA6900 image ${index + 1}`,
+          sortOrder: index + 1,
+          sourceStage: 'photos',
+          includedInListing: true,
+        }))),
+      },
+      ebayGeneratedBodyHtml: '<p>Generated eBay description</p>',
+      workflowPublishSummary: null,
+      setFormValue: vi.fn(),
+      pushInlineActionNotice,
+      requestConfirmation: vi.fn(async () => true),
+    }));
+
+    await act(async () => {
+      await result.current.runCombinedPush('ebay');
+    });
+
+    expect(uploadImageUrlToEbayHostedPicturesMock).toHaveBeenCalledTimes(6);
+    expect(attemptsByIndex.get(1)).toBe(2);
+    expect(pushInlineActionNotice).toHaveBeenCalledWith(
+      'info',
+      'Uploading eBay images',
+      'Uploading approved images to eBay (0/5).',
+      { id: 'ebay-publish-progress', persistent: true },
+    );
+    expect(pushInlineActionNotice).toHaveBeenCalledWith(
+      'info',
+      'Uploading eBay images',
+      'Uploading approved images to eBay (1/5).',
+      { id: 'ebay-publish-progress', persistent: true },
+    );
+    expect(pushInlineActionNotice).toHaveBeenCalledWith(
+      'info',
+      'Uploading eBay images',
+      'Uploading approved images to eBay (4/5).',
+      { id: 'ebay-publish-progress', persistent: true },
+    );
+    expect(pushInlineActionNotice).toHaveBeenCalledWith(
+      'info',
+      'Uploading eBay images',
+      'Uploading approved images to eBay (5/5).',
+      { id: 'ebay-publish-progress', persistent: true },
+    );
+    expect(pushInlineActionNotice).toHaveBeenCalledWith(
+      'info',
+      'Publishing eBay listing',
+      'Images are ready. Creating or updating the eBay offer and publishing the listing.',
+      { id: 'ebay-publish-progress', persistent: true },
+    );
+    expect(publishApprovalRecordMock).toHaveBeenCalledWith(
+      'approval-shopify',
+      'rec-notify-1',
+      'ebay',
+      expect.objectContaining({
+        fields: expect.objectContaining({
+          Description: 'Integrated amplifier with recent bench verification.',
+          'Ebay Body (HTML)': '<p>Generated eBay description</p>',
+          'eBay Inventory Product Image URLs JSON': JSON.stringify(
+            imageUrls.map((_, index) => `https://i.ebayimg.com/image-${index + 1}.jpg`),
+          ),
+        }),
+      }),
+    );
+  });
+
+  it('stops before eBay publish when the listing has no source images', async () => {
+    const pushInlineActionNotice = vi.fn();
+    const { result } = renderHook(() => useListingApprovalPublishActions({
+      selectedRecord: record,
+      hasMissingShopifyRequiredFields: false,
+      hasMissingEbayRequiredFields: false,
+      isShopifyPublishBlockedByAuctionFormat: false,
+      missingShopifyRequiredFieldLabels: [],
+      missingEbayRequiredFieldLabels: [],
+      approvalPublishSource: 'approval-shopify',
+      tableReference: 'appApproval/viwApproval',
+      tableName: 'Approval',
+      mergedDraftSourceFields: {
+        SKU: 'MCINTOSH-MA6900',
+        Description: 'Integrated amplifier with recent bench verification.',
+      },
+      ebayGeneratedBodyHtml: '<p>Generated eBay description</p>',
+      workflowPublishSummary: null,
+      setFormValue: vi.fn(),
+      pushInlineActionNotice,
+      requestConfirmation: vi.fn(async () => true),
+    }));
+
+    await act(async () => {
+      await result.current.runCombinedPush('ebay');
+    });
+
+    expect(uploadImageUrlToEbayHostedPicturesMock).not.toHaveBeenCalled();
+    expect(publishApprovalRecordMock).not.toHaveBeenCalled();
+    expect(pushInlineActionNotice).toHaveBeenCalledWith(
+      'error',
+      'Publish failed',
+      'No approved listing images were found. Restore or select listing images before publishing to eBay; eBay image upload did not run.',
+      { id: 'ebay-publish-progress' },
     );
   });
 

@@ -161,10 +161,10 @@ export function createHydrateFormAction(set: ApprovalStoreSet): ApprovalStore['h
 
     if (Object.prototype.hasOwnProperty.call(nextValues, CONDITION_FIELD) && !nextValues[CONDITION_FIELD]) {
       nextValues[CONDITION_FIELD] =
-        nextValues['Item Condition']
+        nextValues['eBay Inventory Condition']
+        || nextValues['Item Condition']
         || nextValues['Condition']
         || nextValues['Shopify Condition']
-        || nextValues['eBay Inventory Condition']
         || '';
       nextKinds[CONDITION_FIELD] = 'text';
     }

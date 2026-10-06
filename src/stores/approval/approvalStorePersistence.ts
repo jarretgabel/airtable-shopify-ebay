@@ -31,24 +31,6 @@ function resolveApprovedValue(rawValue: string, kind: ApprovalFieldKind): string
   return rawValue;
 }
 
-function resolveConditionMirrorField(fieldNames: string[]): string | null {
-  const preferredOrder = [
-    'Item Condition',
-    'Condition',
-    'Shopify Condition',
-    'Shopify REST Condition',
-    'eBay Inventory Condition',
-  ];
-
-  const byLower = new Map(fieldNames.map((name) => [name.toLowerCase(), name]));
-  for (const candidate of preferredOrder) {
-    const found = byLower.get(candidate.toLowerCase());
-    if (found) return found;
-  }
-
-  return null;
-}
-
 function isTagLikeFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   return normalized === 'tags'
@@ -418,6 +400,7 @@ function getPrimaryAliasFallbackFieldName(fieldName: string): string | null {
 function getKnownMissingWritableFieldName(fieldName: string): string | null {
   const normalized = fieldName.trim().toLowerCase();
   const canonicalFields: Record<string, string> = {
+    'ebay inventory condition': 'eBay Inventory Condition',
     'categories': 'Ebay Categories',
     'e bay categories': 'Ebay Categories',
     'ebay categories': 'Ebay Categories',
@@ -523,6 +506,7 @@ function isAllowedMissingWritableFieldName(fieldName: string): boolean {
   const normalized = fieldName.trim().toLowerCase();
   const compact = normalized.replace(/[^a-z0-9]/g, '');
   return isTagLikeFieldName(fieldName)
+    || normalized === 'ebay inventory condition'
     || normalized === 'ebay categories'
     || normalized === 'e bay categories'
     || normalized === 'shopify graphql collection ids'
@@ -696,6 +680,11 @@ function isUnknownFieldNameError(error: unknown): boolean {
 }
 
 function isRetryableAliasCandidateError(error: unknown): boolean {
+  const responseMessage = getAirtableErrorMessage(error)?.toLowerCase() ?? '';
+  if (responseMessage.includes('invalid attachment')) {
+    return false;
+  }
+
   const status = getAirtableErrorStatus(error);
   if (status === 400 || status === 404 || status === 422) {
     return true;
@@ -819,11 +808,9 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
       };
 
       const conditionValue = nextValues[CONDITION_FIELD]?.trim();
-      if (conditionValue) {
-        const mirrorField = resolveConditionMirrorField(Object.keys(selectedRecord.fields));
-        if (mirrorField) {
-          nextValues[mirrorField] = conditionValue;
-        }
+      const initialConditionValue = initialFormValues[CONDITION_FIELD]?.trim();
+      if (conditionValue && conditionValue !== initialConditionValue) {
+        nextValues['eBay Inventory Condition'] = conditionValue;
       }
 
       const mappedValues = mapShippingServiceToFields(nextValues);

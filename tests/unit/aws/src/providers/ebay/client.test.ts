@@ -2,10 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   getDashboardSnapshot,
+  getOffers,
   getRequiredEbayWebhookCallbackUrl,
   getRuntimeConfig,
   deleteWebhookSubscription,
   registerWebhookSubscription,
+  validateEbayApprovalBundle,
 } from '../../../../../../aws/src/providers/ebay/client.js';
 
 function withEnv(overrides: Record<string, string | undefined>, run: () => void): void {
@@ -136,6 +138,285 @@ test('getRuntimeConfig falls back to sandbox inventory mode and reports missing 
   );
 });
 
+test('validateEbayApprovalBundle accepts a complete Inventory API payload', () => {
+  const sku = validateEbayApprovalBundle({
+    inventoryItem: {
+      sku: 'MCINTOSH-MA8900',
+      condition: 'USED_EXCELLENT',
+      product: {
+        title: 'McIntosh MA8900 Integrated Amplifier',
+        imageUrls: ['https://i.ebayimg.com/images/g/example/s-l1600.jpg'],
+      },
+      availability: { shipToLocationAvailability: { quantity: 1 } },
+    },
+    offer: {
+      sku: 'MCINTOSH-MA8900',
+      marketplaceId: 'EBAY_US',
+      format: 'FIXED_PRICE',
+      categoryId: '14990',
+      listingDescription: '<p>Serviced and tested.</p>',
+      listingDuration: 'GTC',
+      pricingSummary: { price: { value: '4999.00', currency: 'USD' } },
+    },
+  });
+
+  assert.equal(sku, 'MCINTOSH-MA8900');
+});
+
+test('validateEbayApprovalBundle reports all missing publish data before an API call', () => {
+  assert.throws(
+    () => validateEbayApprovalBundle({
+      inventoryItem: { sku: 'INCOMPLETE-SKU' },
+      offer: { sku: 'INCOMPLETE-SKU' },
+    }),
+    /Missing or invalid: product title, condition, quantity, at least one image URL, marketplace ID, listing format, listing duration, listing description/,
+  );
+});
+
+test('validateEbayApprovalBundle rejects invalid category and price values', () => {
+  const baseBundle = {
+    inventoryItem: {
+      sku: 'MCINTOSH-MA8900',
+      condition: 'USED_EXCELLENT',
+      product: {
+        title: 'McIntosh MA8900 Integrated Amplifier',
+        imageUrls: ['https://i.ebayimg.com/images/g/example/s-l1600.jpg'],
+      },
+      availability: { shipToLocationAvailability: { quantity: 1 } },
+    },
+    offer: {
+      sku: 'MCINTOSH-MA8900',
+      marketplaceId: 'EBAY_US',
+      format: 'FIXED_PRICE',
+      categoryId: '',
+      listingDescription: '<p>Serviced and tested.</p>',
+      listingDuration: 'GTC',
+      pricingSummary: { price: { value: '0.00', currency: 'USD' } },
+    },
+  };
+
+  assert.throws(() => validateEbayApprovalBundle(baseBundle), /Invalid eBay Offer Category ID/);
+  assert.throws(
+    () => validateEbayApprovalBundle({
+      ...baseBundle,
+      offer: { ...baseBundle.offer, categoryId: '14990', secondaryCategoryId: 'not-a-category' },
+    }),
+    /Invalid eBay Offer Secondary Category ID/,
+  );
+  assert.throws(
+    () => validateEbayApprovalBundle({
+      ...baseBundle,
+      offer: { ...baseBundle.offer, categoryId: '14990' },
+    }),
+    /Invalid eBay FIXED_PRICE price/,
+  );
+});
+
+test('pushApprovalBundleToEbay updates an existing warehouse with the listing postal code', async () => {
+  const originalFetch = global.fetch;
+  let updatePayload: Record<string, unknown> | undefined;
+  let locationReadCount = 0;
+  const { pushApprovalBundleToEbay } = await import('../../../../../../aws/src/providers/ebay/client.js?location-update-test');
+
+  global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
+    const url = typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url;
+
+    if (url.includes('/identity/v1/oauth2/token')) {
+      return new Response(JSON.stringify({ access_token: 'test-access-token', expires_in: 7200 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (url.endsWith('/sell/inventory/v1/location/warehouse-1') && init?.method === 'GET') {
+      locationReadCount += 1;
+      return new Response(JSON.stringify({
+        location: {
+          address: locationReadCount === 1
+            ? { country: 'US', city: 'Brooklyn', stateOrProvince: 'NY' }
+            : { country: 'US', postalCode: '11205', city: 'Brooklyn', stateOrProvince: 'NY' },
+        },
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (url.endsWith('/sell/inventory/v1/location/warehouse-1/update_location_details')) {
+      updatePayload = JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>;
+      return new Response(null, { status: 204 });
+    }
+
+    if (url.includes('/sell/inventory/v1/inventory_item/TEST-SKU')) {
+      throw new Error('stop after location update');
+    }
+
+    throw new Error(`Unexpected fetch URL in test: ${url}`);
+  };
+
+  try {
+    await withEnvAsync({
+      EBAY_ENV: 'production',
+      EBAY_CLIENT_ID: 'test-client-id',
+      EBAY_CLIENT_SECRET: 'test-client-secret',
+      EBAY_REFRESH_TOKEN: 'test-refresh-token',
+    }, async () => {
+      await assert.rejects(
+        pushApprovalBundleToEbay({
+          inventoryItem: {
+            sku: 'TEST-SKU',
+            condition: 'USED_EXCELLENT',
+            product: {
+              title: 'Test listing',
+              imageUrls: ['https://i.ebayimg.com/images/g/example/s-l1600.jpg'],
+            },
+            availability: { shipToLocationAvailability: { quantity: 1 } },
+          },
+          offer: {
+            sku: 'TEST-SKU',
+            marketplaceId: 'EBAY_US',
+            format: 'FIXED_PRICE',
+            categoryId: '14990',
+            listingDescription: '<p>Test listing</p>',
+            listingDuration: 'GTC',
+            pricingSummary: { price: { value: '100.00', currency: 'USD' } },
+          },
+        }, {
+          locationConfig: {
+            key: 'warehouse-1',
+            name: 'Main Warehouse',
+            country: 'US',
+            postalCode: '11205',
+            city: 'Brooklyn',
+            stateOrProvince: 'NY',
+          },
+          policyConfig: {
+            fulfillmentPolicyId: 'fulfil-1',
+            paymentPolicyId: 'payment-1',
+            returnPolicyId: 'return-1',
+          },
+        }),
+        /stop after location update/,
+      );
+    });
+
+    assert.deepEqual(updatePayload, {
+      name: 'Main Warehouse',
+      locationTypes: ['WAREHOUSE'],
+      location: {
+        address: {
+          country: 'US',
+          postalCode: '11205',
+          city: 'Brooklyn',
+          stateOrProvince: 'NY',
+        },
+      },
+    });
+    assert.equal(locationReadCount, 2);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('pushApprovalBundleToEbay does not rewrite an already matching warehouse', async () => {
+  const originalFetch = global.fetch;
+  let locationUpdateCount = 0;
+  const { pushApprovalBundleToEbay } = await import('../../../../../../aws/src/providers/ebay/client.js?location-noop-test');
+
+  global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
+    const url = typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url;
+
+    if (url.includes('/identity/v1/oauth2/token')) {
+      return Response.json({ access_token: 'test-access-token', expires_in: 7200 });
+    }
+
+    if (url.endsWith('/sell/inventory/v1/location/warehouse-1') && init?.method === 'GET') {
+      return Response.json({
+        name: 'Main Warehouse',
+        locationTypes: ['WAREHOUSE'],
+        location: {
+          address: {
+            country: 'US',
+            postalCode: '11205',
+            city: 'Brooklyn',
+            stateOrProvince: 'NY',
+          },
+        },
+      });
+    }
+
+    if (url.endsWith('/sell/inventory/v1/location/warehouse-1/update_location_details')) {
+      locationUpdateCount += 1;
+      return new Response(null, { status: 204 });
+    }
+
+    if (url.includes('/sell/inventory/v1/inventory_item/TEST-SKU')) {
+      throw new Error('stop after matching location');
+    }
+
+    throw new Error(`Unexpected fetch URL in test: ${url}`);
+  };
+
+  try {
+    await withEnvAsync({
+      EBAY_ENV: 'production',
+      EBAY_CLIENT_ID: 'test-client-id',
+      EBAY_CLIENT_SECRET: 'test-client-secret',
+      EBAY_REFRESH_TOKEN: 'test-refresh-token',
+    }, async () => {
+      await assert.rejects(
+        pushApprovalBundleToEbay({
+          inventoryItem: {
+            sku: 'TEST-SKU',
+            condition: 'USED_EXCELLENT',
+            product: {
+              title: 'Test listing',
+              imageUrls: ['https://i.ebayimg.com/images/g/example/s-l1600.jpg'],
+            },
+            availability: { shipToLocationAvailability: { quantity: 1 } },
+          },
+          offer: {
+            sku: 'TEST-SKU',
+            marketplaceId: 'EBAY_US',
+            format: 'FIXED_PRICE',
+            categoryId: '14990',
+            listingDescription: '<p>Test listing</p>',
+            listingDuration: 'GTC',
+            pricingSummary: { price: { value: '100.00', currency: 'USD' } },
+          },
+        }, {
+          locationConfig: {
+            key: 'warehouse-1',
+            name: 'Main Warehouse',
+            country: 'US',
+            postalCode: '11205',
+            city: 'Brooklyn',
+            stateOrProvince: 'NY',
+          },
+          policyConfig: {
+            fulfillmentPolicyId: 'fulfil-1',
+            paymentPolicyId: 'payment-1',
+            returnPolicyId: 'return-1',
+          },
+        }),
+        /stop after matching location/,
+      );
+    });
+
+    assert.equal(locationUpdateCount, 0);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('getRequiredEbayWebhookCallbackUrl builds HTTPS callback URLs from env config', () => {
   const originalBaseUrl = process.env.EBAY_WEBHOOK_BASE_URL;
 
@@ -207,6 +488,59 @@ test('getDashboardSnapshot returns a warning-backed empty snapshot when eBay inv
       },
     );
     assert.equal(requestCount, 2);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('getOffers flattens the published listing id from the eBay response', async () => {
+  const originalFetch = global.fetch;
+
+  global.fetch = async (input: string | URL | Request) => {
+    const url = typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url;
+
+    if (url.includes('/identity/v1/oauth2/token')) {
+      return new Response(JSON.stringify({ access_token: 'test-access-token', expires_in: 7200 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (url.includes('/sell/inventory/v1/offer')) {
+      return new Response(JSON.stringify({
+        offers: [{
+          offerId: 'offer-1',
+          sku: '11760',
+          status: 'PUBLISHED',
+          listing: { listingId: '336830268528' },
+        }],
+        total: 1,
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    throw new Error(`Unexpected fetch URL in test: ${url}`);
+  };
+
+  try {
+    await withEnvAsync(
+      {
+        EBAY_ENV: 'production',
+        EBAY_CLIENT_ID: 'test-client-id',
+        EBAY_CLIENT_SECRET: 'test-client-secret',
+        EBAY_REFRESH_TOKEN: 'test-refresh-token',
+      },
+      async () => {
+        const page = await getOffers('11760', 1);
+        assert.equal(page.offers[0]?.listingId, '336830268528');
+      },
+    );
   } finally {
     global.fetch = originalFetch;
   }

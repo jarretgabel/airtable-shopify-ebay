@@ -6,6 +6,11 @@ import type { ShopifyProduct } from '@/types/shopify';
 
 export type InlineNoticeTone = 'success' | 'warning' | 'error' | 'info';
 
+export interface InlineNoticeOptions {
+  id?: string;
+  persistent?: boolean;
+}
+
 export interface ShopifyApprovalPreviewShape {
   effectiveProduct: ShopifyProduct;
   collectionIds: string[];
@@ -62,11 +67,12 @@ export interface UseListingApprovalRecordActionsParams {
   changedFieldNames: string[];
   approvalPublishSource: Parameters<typeof publishApprovalRecord>[0];
   mergedDraftSourceFields?: Record<string, unknown> | null;
+  ebayGeneratedBodyHtml?: string;
   workflowPublishSummary?: {
     workflowStatus: string;
     readiness: UsedGearWorkflowListingReadiness;
   } | null;
   onBackToList: () => void;
-  pushInlineActionNotice: (tone: InlineNoticeTone, title: string, message: string) => void;
+  pushInlineActionNotice: (tone: InlineNoticeTone, title: string, message: string, options?: InlineNoticeOptions) => void;
   requestConfirmation: (request: ConfirmationRequest) => Promise<boolean>;
 }

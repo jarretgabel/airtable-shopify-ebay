@@ -267,7 +267,9 @@ export function ShopifyTaxonomyTypeSelect({
           disabled={disabled}
           onFocus={openMenu}
           onChange={(event) => {
-            setQuery(event.target.value);
+            const nextValue = event.target.value;
+            setQuery(nextValue);
+            onChange(normalizeCategoryPath(nextValue));
             setIsOpen(true);
           }}
           onKeyDown={(event) => {

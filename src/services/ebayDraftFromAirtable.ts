@@ -178,7 +178,7 @@ function isGenericCategoryFieldName(fieldName: string): boolean {
 
 function normalizeEbayCondition(raw: string): string {
   const trimmed = raw.trim();
-  if (!trimmed) return 'USED_EXCELLENT';
+  if (!trimmed) return '';
 
   const upper = trimmed.toUpperCase();
   if (EBAY_CONDITION_ENUMS.has(upper)) return upper;
@@ -223,6 +223,19 @@ function normalizeTypeValue(type: string): string {
   if (!trimmed.includes('>')) return trimmed;
   const parts = trimmed.split('>').map((part) => part.trim()).filter(Boolean);
   return parts.length > 0 ? parts[parts.length - 1] : trimmed;
+}
+
+function parsePositiveNumber(raw: string): number | undefined {
+  const match = raw.replace(/,/g, '').match(/\d+(?:\.\d+)?/);
+  if (!match) return undefined;
+  const value = Number(match[0]);
+  return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function parseShippingDimensions(raw: string): [number, number, number] | undefined {
+  const values = raw.replace(/,/g, '').match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  if (values.length < 3 || values.slice(0, 3).some((value) => !Number.isFinite(value) || value <= 0)) return undefined;
+  return [values[0], values[1], values[2]];
 }
 
 function ensureHtmlDescription(value: string): string {
@@ -384,8 +397,8 @@ export interface EbayDraftPayloadBundle {
 }
 
 export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFieldMap): EbayDraftPayloadBundle {
-  const sku = getField(fields, ['eBay Inventory SKU', 'SKU']) || 'SAMPLE-SKU';
-  const title = getField(fields, ['eBay Inventory Product Title', 'Item Title', 'Title']) || 'Untitled Listing';
+  const sku = getField(fields, ['eBay Inventory SKU', 'SKU']);
+  const title = getField(fields, ['eBay Inventory Product Title', 'Item Title', 'Title']);
   const listingRawDescription = getField(fields, [
     'Ebay Body (HTML)',
     'Ebay Body HTML',
@@ -468,6 +481,28 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
   ]));
   const conditionDescription = getField(fields, ['eBay Inventory Condition Description']);
   const quantity = parseInteger(getField(fields, ['eBay Inventory Ship To Location Quantity', 'Quantity', 'Qty']), 1);
+  const packageWeight = parsePositiveNumber(getField(fields, ['eBay Inventory Package Weight Value', 'Shipping Weight', 'Weight']));
+  const packageDimensions = parseShippingDimensions(getField(fields, ['Shipping Dims', 'Shipping Dimensions']));
+  const packageType = getField(fields, ['eBay Inventory Package Type', 'Ebay Package Type']);
+  const packageWeightAndSize = packageWeight || packageDimensions || packageType
+    ? {
+        ...(packageType ? { packageType } : {}),
+        ...(packageDimensions ? {
+          dimensions: {
+            length: packageDimensions[0],
+            width: packageDimensions[1],
+            height: packageDimensions[2],
+            unit: getField(fields, ['eBay Inventory Package Dimension Unit']) || 'INCH',
+          },
+        } : {}),
+        ...(packageWeight ? {
+          weight: {
+            value: packageWeight,
+            unit: getField(fields, ['eBay Inventory Package Weight Unit']) || 'POUND',
+          },
+        } : {}),
+      }
+    : undefined;
   const workflowImageUrls = getIncludedWorkflowImageMetadata(parseWorkflowImageMetadata(getRawField(fields, [
     'Workflow Image Metadata JSON',
     'Workflow Image Metadata',
@@ -517,7 +552,7 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     'secondary_category_id',
   ]))[0];
 
-  const categoryId = categoryIdsFromCategoriesField[0] || primaryCategoryFromField || fallbackCategoryIds[0] || '14990';
+  const categoryId = categoryIdsFromCategoriesField[0] || primaryCategoryFromField || fallbackCategoryIds[0] || '';
   const secondaryCategoryId = categoryIdsFromCategoriesField[1] || secondaryCategoryFromField || fallbackCategoryIds[1];
   const listingDuration = getField(fields, [
     'eBay Offer Listing Duration',
@@ -586,6 +621,7 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
         quantity,
       },
     },
+    ...(packageWeightAndSize ? { packageWeightAndSize } : {}),
   };
 
   const offer: Record<string, unknown> = {

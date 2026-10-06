@@ -95,6 +95,9 @@ describe('useListingApprovalCombinedFieldState', () => {
       'Photographed By': 'Phoebe Photographer',
       'eBay Offer ID': 'offer-123',
       'eBay Listing ID': 'listing-123',
+      'Shopify Close Result': 'Cross-channel auto-close: Product deleted when sold on eBay',
+      'Shopify Closed At': '2026-10-05',
+      'Shipment Follow Through Updated At': '2026-10-05T18:52:51.000Z',
       'Shopify Price': '3499.99',
       Categories: '3276',
     });
@@ -121,8 +124,15 @@ describe('useListingApprovalCombinedFieldState', () => {
       'Photographed By',
       'eBay Offer ID',
       'eBay Listing ID',
+      'Shopify Close Result',
+      'Shopify Closed At',
+      'Shipment Follow Through Updated At',
     ]));
     expect(result.current.combinedEbayOnlyFieldNames).not.toEqual(expect.arrayContaining(['eBay Offer ID', 'eBay Listing ID']));
+    expect(result.current.combinedShopifyOnlyFieldNames).not.toEqual(expect.arrayContaining([
+      'Shopify Close Result',
+      'Shopify Closed At',
+    ]));
   });
 
   it('discovers hydrated make and model fields from form values even when the selected queue record is stale', () => {

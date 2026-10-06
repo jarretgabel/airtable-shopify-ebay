@@ -95,7 +95,9 @@ export function useListingApprovalFieldNames({
 
       const preferredDescriptionField = existingNames.find((name) =>
         SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      );
+      ) ?? (approvalChannel === 'combined'
+        ? 'Description'
+        : SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase())));
       if (preferredDescriptionField) names.add(preferredDescriptionField);
 
       const preferredKeyFeaturesField = existingNames.find((name) =>
@@ -119,7 +121,7 @@ export function useListingApprovalFieldNames({
 
       const preferredDescriptionField = existingNames.find((name) =>
         EBAY_DESCRIPTION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-      );
+      ) ?? EBAY_DESCRIPTION_FIELD_CANDIDATES.find((candidate) => !existingLower.has(candidate.toLowerCase()));
       if (preferredDescriptionField) names.add(preferredDescriptionField);
 
       const preferredBodyHtmlField = findEbayBodyHtmlFieldName(existingNames);

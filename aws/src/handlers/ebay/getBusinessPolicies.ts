@@ -3,12 +3,18 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, toApiErrorBody } from '../../shared/errors.js';
 import { getOptionalQueryParam, getRequestOrigin, jsonError, jsonOk } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
-import { getEbayBusinessPolicies } from '../../providers/ebay/client.js';
+import { getEbayBusinessPolicies, getEbayFulfillmentPolicyDetails } from '../../providers/ebay/client.js';
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   const origin = getRequestOrigin(event);
   try {
     await requireRouteAccess(event);
+    const fulfillmentPolicyId = getOptionalQueryParam(event, 'fulfillmentPolicyId');
+    if (fulfillmentPolicyId) {
+      const details = await getEbayFulfillmentPolicyDetails(fulfillmentPolicyId);
+      return jsonOk({ fulfillmentPolicyId, details }, { origin });
+    }
+
     const marketplaceId = getOptionalQueryParam(event, 'marketplaceId') ?? 'EBAY_US';
     const policies = await getEbayBusinessPolicies(marketplaceId);
     logInfo('Fetched eBay business policies', {

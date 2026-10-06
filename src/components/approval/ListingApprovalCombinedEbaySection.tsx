@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
@@ -18,6 +18,8 @@ import {
 } from '@/components/tabs/uiClasses';
 import { findEbayBodyHtmlFieldName } from '@/components/approval/listingApprovalFieldHelpers';
 import type { ListingApprovalCombinedEbaySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
+import { getEbayRuntimeConfig } from '@/services/app-api/ebay';
+import type { EbayRuntimeConfig } from '@/services/ebay/types';
 import { useAuthStore } from '@/stores/auth/authStore';
 
 const EbayApprovalPayloadDetails = lazy(async () => ({
@@ -74,6 +76,58 @@ export function ListingApprovalCombinedEbaySection({
     const currentUser = state.users.find((user) => user.id === state.currentUserId);
     return currentUser ? isDeveloperRole(currentUser.role) : false;
   });
+  const [ebayRuntimeConfig, setEbayRuntimeConfig] = useState<EbayRuntimeConfig | null>(null);
+
+  useEffect(() => {
+    if (!showDeveloperPayloadPanels) return;
+    let active = true;
+    void getEbayRuntimeConfig()
+      .then((config) => {
+        if (active) setEbayRuntimeConfig(config);
+      })
+      .catch(() => {
+        if (active) setEbayRuntimeConfig(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [showDeveloperPayloadPanels]);
+
+  const ebayLocationSyncPreview = useMemo(() => {
+    const location = ebayRuntimeConfig?.publishSetup.locationConfig;
+    if (!location) return null;
+
+    const rawItemPostalCode = selectedRecord.fields['Item Zip Code']
+      ?? selectedRecord.fields['Item Postal Code']
+      ?? selectedRecord.fields['Location Zip Code']
+      ?? selectedRecord.fields['Location Postal Code'];
+    const itemPostalCode = typeof rawItemPostalCode === 'string' || typeof rawItemPostalCode === 'number'
+      ? String(rawItemPostalCode).trim()
+      : '';
+    const postalCode = itemPostalCode || location.postalCode;
+    const address = {
+      country: location.country,
+      ...(postalCode ? { postalCode } : {}),
+      ...(location.city ? { city: location.city } : {}),
+      ...(location.stateOrProvince ? { stateOrProvince: location.stateOrProvince } : {}),
+    };
+    const createBody = {
+      name: location.name || location.key,
+      merchantLocationStatus: 'ENABLED',
+      locationTypes: ['WAREHOUSE'],
+      location: { address },
+    };
+    const { merchantLocationStatus: _status, ...updateBody } = createBody;
+    const locationPath = `/sell/inventory/v1/location/${encodeURIComponent(location.key)}`;
+
+    return {
+      postalCodeSource: itemPostalCode ? 'Item Zip Code' : 'eBay default location configuration',
+      effectivePostalCode: postalCode,
+      lookup: { method: 'GET', path: locationPath },
+      createIfMissing: { method: 'POST', path: locationPath, body: createBody },
+      updateIfDifferent: { method: 'POST', path: `${locationPath}/update_location_details`, body: updateBody },
+    };
+  }, [ebayRuntimeConfig, selectedRecord.fields]);
 
   return (
     <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
@@ -177,6 +231,7 @@ export function ListingApprovalCombinedEbaySection({
             <EbayApprovalPayloadDetails
               isEbayPayloadPreviewContext={isEbayPayloadPreviewContext}
               ebayDraftPayloadBundle={ebayDraftPayloadBundle}
+              ebayLocationSyncPreview={ebayLocationSyncPreview}
             />
           </Suspense>
         ) : null}

@@ -52,6 +52,10 @@ export interface EbayApprovalPayloadPreviewData {
   ebayDraftPayloadBundle: unknown | null;
 }
 
+export interface EbayApprovalPayloadDetailsProps extends EbayApprovalPayloadPreviewData {
+  ebayLocationSyncPreview?: unknown;
+}
+
 function stringifyJson(value: unknown, fallback: string) {
   try {
     return JSON.stringify(value, null, 2);
@@ -158,10 +162,20 @@ function buildShopifyCategorySyncPreviewJson({
   }, '{\n  "error": "Unable to serialize GraphQL preview"\n}');
 }
 
-function buildEbayDraftPayloadBundleJson(isEbayPayloadPreviewContext: boolean, ebayDraftPayloadBundle: unknown | null) {
+function buildEbayExactRequestJson(
+  isEbayPayloadPreviewContext: boolean,
+  ebayDraftPayloadBundle: unknown | null,
+  ebayLocationSyncPreview: unknown,
+): string {
   if (!isEbayPayloadPreviewContext || !ebayDraftPayloadBundle) return '';
 
-  return stringifyJson(ebayDraftPayloadBundle, '{\n  "error": "Unable to serialize payload"\n}');
+  const bundle = typeof ebayDraftPayloadBundle === 'object' && ebayDraftPayloadBundle !== null
+    ? ebayDraftPayloadBundle as Record<string, unknown>
+    : { payload: ebayDraftPayloadBundle };
+  return stringifyJson({
+    inventoryLocationSync: ebayLocationSyncPreview,
+    ...bundle,
+  }, '{\n  "error": "Unable to serialize payload"\n}');
 }
 
 const SHOPIFY_CREATE_PAYLOAD_DOCS_JSON = stringifyJson(SHOPIFY_UNIFIED_PRODUCT_SET_DOCS_EXAMPLE, '{\n  "input": {}\n}');
@@ -176,8 +190,6 @@ export interface ShopifyApprovalPayloadDetailsProps extends ShopifyApprovalPaylo
   shopifyCategoryLookupValue: string;
   shopifyCategoryResolution: ShopifyCategoryResolutionSummary;
 }
-
-export type EbayApprovalPayloadDetailsProps = EbayApprovalPayloadPreviewData;
 
 interface ListingApprovalRecordPayloadPanelsProps extends ShopifyApprovalPayloadDetailsProps, EbayApprovalPayloadDetailsProps {
   approvalChannel: 'shopify' | 'ebay' | 'combined';
@@ -276,8 +288,13 @@ export function ShopifyApprovalPayloadDetails({
 export function EbayApprovalPayloadDetails({
   isEbayPayloadPreviewContext,
   ebayDraftPayloadBundle,
+  ebayLocationSyncPreview,
 }: EbayApprovalPayloadDetailsProps) {
-  const ebayDraftPayloadBundleJson = buildEbayDraftPayloadBundleJson(isEbayPayloadPreviewContext, ebayDraftPayloadBundle);
+  const ebayDraftPayloadBundleJson = buildEbayExactRequestJson(
+    isEbayPayloadPreviewContext,
+    ebayDraftPayloadBundle,
+    ebayLocationSyncPreview,
+  );
 
   return (
     <>
@@ -287,7 +304,7 @@ export function EbayApprovalPayloadDetails({
         </summary>
         <div className={detailDisclosureBodyClass}>
           <p className="m-0 mb-2 text-xs text-[var(--muted)]">
-            Live payload preview for eBay Inventory Item and Offer requests using the current page values.
+            Live Inventory Location, Inventory Item, and Offer request bodies. eBay calls the HTML field <strong>listingDescription</strong>; postal code is sent in <strong>inventoryLocationSync</strong> before the offer is published.
           </p>
           {!ebayDraftPayloadBundleJson && (
             <div className={`${cautionInlineBannerClass} mb-2 px-2 py-2 text-xs text-rose-100/90`}>

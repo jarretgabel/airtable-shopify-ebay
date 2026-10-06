@@ -3,6 +3,8 @@ import { recordTitle } from '@/app/appNavigation';
 import { getPublishRequiredFieldValidationNotice } from '@/components/approval/listingApprovalActionValidation';
 import { publishApprovalRecord } from '@/services/app-api/approval';
 import { updateConfiguredRecord } from '@/services/app-api/airtable';
+import { uploadImageUrlToEbayHostedPictures } from '@/services/app-api/ebay';
+import { buildEbayDraftPayloadBundleFromApprovalFields } from '@/services/ebayDraftFromAirtable';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 import { resolveWorkflowStatusAfterPublish } from '@/services/usedGearWorkflowLifecycle';
 import { resolveShopifyBodyHtml } from '@/services/shopifyDraftFromAirtableBody';
@@ -26,12 +28,25 @@ type PublishActionsParams = Pick<UseListingApprovalRecordActionsParams,
   | 'tableReference'
   | 'tableName'
   | 'mergedDraftSourceFields'
+  | 'ebayGeneratedBodyHtml'
   | 'workflowPublishSummary'
   | 'setFormValue'
   | 'setDerivedFormValue'
   | 'pushInlineActionNotice'
   | 'requestConfirmation'
 >;
+
+const EBAY_PUBLISH_PROGRESS_NOTICE_ID = 'ebay-publish-progress';
+const EBAY_IMAGE_UPLOAD_CONCURRENCY = 2;
+const EBAY_IMAGE_UPLOAD_ATTEMPTS = 2;
+
+function isEbayHostedImageUrl(value: string): boolean {
+  try {
+    return new URL(value).hostname.toLowerCase().endsWith('.ebayimg.com');
+  } catch {
+    return false;
+  }
+}
 
 export function useListingApprovalPublishActions({
   selectedRecord,
@@ -44,6 +59,7 @@ export function useListingApprovalPublishActions({
   tableReference,
   tableName,
   mergedDraftSourceFields,
+  ebayGeneratedBodyHtml,
   workflowPublishSummary,
   setFormValue,
   setDerivedFormValue,
@@ -144,6 +160,9 @@ export function useListingApprovalPublishActions({
     }
 
     const nextFields: Record<string, unknown> = { ...sourceFields };
+    if (publishTarget !== 'shopify' && ebayGeneratedBodyHtml?.trim()) {
+      nextFields['Ebay Body (HTML)'] = ebayGeneratedBodyHtml.trim();
+    }
     if (publishTarget !== 'shopify' && publishTarget !== 'both') {
       return nextFields;
     }
@@ -185,6 +204,91 @@ export function useListingApprovalPublishActions({
     }
 
     return nextFields;
+  };
+
+  const prepareEbayHostedImages = async (
+    publishTarget: 'shopify' | 'ebay' | 'both',
+    fields: Record<string, unknown> | undefined,
+  ): Promise<Record<string, unknown> | undefined> => {
+    if (!fields || publishTarget === 'shopify') return fields;
+
+    const bundle = buildEbayDraftPayloadBundleFromApprovalFields(fields);
+    if (typeof bundle.offer.listingDescription !== 'string' || !bundle.offer.listingDescription.trim()) {
+      throw new Error('eBay listing is not ready to publish. Missing or invalid: listing description.');
+    }
+    const product = bundle.inventoryItem.product as Record<string, unknown> | undefined;
+    const imageUrls = Array.isArray(product?.imageUrls)
+      ? product.imageUrls.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      : [];
+    if (imageUrls.length === 0) {
+      throw new Error('No approved listing images were found. Restore or select listing images before publishing to eBay; eBay image upload did not run.');
+    }
+
+    const hostedUrls = [...imageUrls];
+    const pending = imageUrls
+      .map((url, index) => ({ url, index }))
+      .filter(({ url }) => !isEbayHostedImageUrl(url));
+
+    if (pending.length > 0) {
+      pushInlineActionNotice(
+        'info',
+        'Uploading eBay images',
+        `Uploading approved images to eBay (0/${pending.length}).`,
+        { id: EBAY_PUBLISH_PROGRESS_NOTICE_ID, persistent: true },
+      );
+    }
+
+    let nextPendingIndex = 0;
+    let completed = 0;
+    const failures: Array<{ imageNumber: number; error: unknown }> = [];
+
+    const uploadNextImage = async (): Promise<void> => {
+      while (nextPendingIndex < pending.length) {
+        const pendingImage = pending[nextPendingIndex];
+        nextPendingIndex += 1;
+
+        let lastError: unknown;
+        for (let attempt = 1; attempt <= EBAY_IMAGE_UPLOAD_ATTEMPTS; attempt += 1) {
+          try {
+            const uploaded = await uploadImageUrlToEbayHostedPictures(pendingImage.url, pendingImage.index);
+            hostedUrls[pendingImage.index] = uploaded.url;
+            completed += 1;
+            pushInlineActionNotice(
+              'info',
+              'Uploading eBay images',
+              `Uploading approved images to eBay (${completed}/${pending.length}).`,
+              { id: EBAY_PUBLISH_PROGRESS_NOTICE_ID, persistent: true },
+            );
+            lastError = undefined;
+            break;
+          } catch (error) {
+            lastError = error;
+          }
+        }
+
+        if (lastError !== undefined) {
+          failures.push({ imageNumber: pendingImage.index + 1, error: lastError });
+        }
+      }
+    };
+
+    await Promise.all(
+      Array.from(
+        { length: Math.min(EBAY_IMAGE_UPLOAD_CONCURRENCY, pending.length) },
+        () => uploadNextImage(),
+      ),
+    );
+
+    if (failures.length > 0) {
+      const firstFailure = failures[0];
+      const reason = firstFailure.error instanceof Error ? firstFailure.error.message : String(firstFailure.error);
+      throw new Error(`Could not upload eBay image ${firstFailure.imageNumber} after ${EBAY_IMAGE_UPLOAD_ATTEMPTS} attempts: ${reason}`);
+    }
+
+    return {
+      ...fields,
+      'eBay Inventory Product Image URLs JSON': JSON.stringify(hostedUrls),
+    };
   };
 
   const persistWorkflowLifecycleWriteback = async (
@@ -343,7 +447,18 @@ export function useListingApprovalPublishActions({
 
     setPushingTarget(target);
     try {
-      const publishFields = buildPublishFieldsForTarget(target, mergedDraftSourceFields ?? null);
+      const publishFields = await prepareEbayHostedImages(
+        target,
+        buildPublishFieldsForTarget(target, mergedDraftSourceFields ?? null),
+      );
+      if (target === 'ebay' || target === 'both') {
+        pushInlineActionNotice(
+          'info',
+          'Publishing eBay listing',
+          'Images are ready. Creating or updating the eBay offer and publishing the listing.',
+          { id: EBAY_PUBLISH_PROGRESS_NOTICE_ID, persistent: true },
+        );
+      }
       const executionResult = await publishApprovalRecord(approvalPublishSource, selectedRecord.id, target, {
         productIdFieldName: 'Shopify REST Product ID',
         fields: publishFields,
@@ -371,6 +486,7 @@ export function useListingApprovalPublishActions({
           'success',
           executionResult.ebay.mode === 'updated' ? 'eBay listing updated' : 'eBay listing published',
           `SKU ${executionResult.ebay.sku} is live as listing ${executionResult.ebay.listingId} via offer ${executionResult.ebay.offerId}.`,
+          { id: EBAY_PUBLISH_PROGRESS_NOTICE_ID },
         );
       }
 
@@ -379,6 +495,7 @@ export function useListingApprovalPublishActions({
           'error',
           failure.target === 'shopify' ? 'Shopify publish failed' : 'eBay publish failed',
           failure.message,
+          failure.target === 'ebay' ? { id: EBAY_PUBLISH_PROGRESS_NOTICE_ID } : undefined,
         );
       });
 
@@ -405,7 +522,11 @@ export function useListingApprovalPublishActions({
       );
     } catch (pushError) {
       const message = pushError instanceof Error ? pushError.message : 'Unable to push this listing.';
-      pushInlineActionNotice('error', 'Publish failed', message);
+      if (target === 'ebay' || target === 'both') {
+        pushInlineActionNotice('error', 'Publish failed', message, { id: EBAY_PUBLISH_PROGRESS_NOTICE_ID });
+      } else {
+        pushInlineActionNotice('error', 'Publish failed', message);
+      }
       pushResultNotification(
         `approval-publish-result:${selectedRecord.id}`,
         buildListingApprovalPublishErrorNotification(selectedRecord, target, message),

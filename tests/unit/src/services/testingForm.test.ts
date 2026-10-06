@@ -347,6 +347,37 @@ describe('testingForm', () => {
     );
   });
 
+  it('preserves an existing customized item title during testing updates', async () => {
+    const values: TestingFormValues = {
+      ...createTestingFormDefaults(),
+      sku: '11760',
+      make: 'MIT',
+      model: 'MITerminator 2',
+      componentType: 'Audio Cable',
+      testingNotes: 'Functions as intended.',
+      testingDate: '2026-09-30',
+    };
+
+    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
+      'Workflow Status': 'Testing In Progress',
+      'Item Title': 'MIT MITerminator 2 - Stereo Pair - 20 Ft - RCA',
+    }));
+    vi.mocked(updateConfiguredRecord).mockResolvedValue(buildRecord({}));
+
+    await submitTestingForm(values, 'rec80PvzDUjwvL79Q', {
+      recordSource: 'used-gear-workflow',
+    });
+
+    expect(updateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec80PvzDUjwvL79Q',
+      expect.objectContaining({
+        'Item Title': 'MIT MITerminator 2 - Stereo Pair - 20 Ft - RCA',
+      }),
+      { typecast: true },
+    );
+  });
+
   it('stores processed Drive URLs in workflow image metadata for archive-only testing uploads', async () => {
     const originalFile = new File(['original-image'], 'testing-original.jpg', { type: 'image/jpeg' });
     const processedFile = new File(['processed-image'], 'testing-processed.jpg', { type: 'image/jpeg' });

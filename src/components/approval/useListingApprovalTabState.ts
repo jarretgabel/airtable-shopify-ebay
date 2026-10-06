@@ -477,6 +477,7 @@ export function useListingApprovalTabState({
     changedFieldNames,
     approvalPublishSource,
     mergedDraftSourceFields,
+    ebayGeneratedBodyHtml: combinedEbayGeneratedBodyHtml,
     workflowPublishSummary,
     onBackToList,
     pushInlineActionNotice: interactionState.pushInlineActionNotice,

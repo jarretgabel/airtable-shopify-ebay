@@ -5,6 +5,7 @@ import { executeApprovalPublish } from '../../../../../../aws/src/providers/appr
 test('executeApprovalPublish passes merged field overrides to both shopify and ebay execution paths', async () => {
   const shopifyCalls: Array<Record<string, unknown>> = [];
   const normalizeCalls: Array<Record<string, unknown>> = [];
+  const ebayCalls: Array<Record<string, unknown>> = [];
 
   const result = await executeApprovalPublish({
     target: 'both',
@@ -32,6 +33,7 @@ test('executeApprovalPublish passes merged field overrides to both shopify and e
       fields: {
         Title: 'Original title',
         SKU: 'ABC123',
+        'Item Zip Code': 11205,
       },
     }),
     normalizeApprovalFields: async (input) => {
@@ -64,12 +66,15 @@ test('executeApprovalPublish passes merged field overrides to both shopify and e
     buildEbayDraftPayloadBundleFromApprovalFields: () => {
       throw new Error('should not build eBay bundle when normalized preview is available');
     },
-    pushApprovalBundleToEbay: async () => ({
-      sku: 'ABC123',
-      offerId: 'offer-1',
-      listingId: 'listing-1',
-      wasExistingOffer: false,
-    }),
+    pushApprovalBundleToEbay: async (bundle, publishSetup) => {
+      ebayCalls.push({ bundle, publishSetup });
+      return {
+        sku: 'ABC123',
+        offerId: 'offer-1',
+        listingId: 'listing-1',
+        wasExistingOffer: false,
+      };
+    },
   });
 
   assert.deepEqual(shopifyCalls, [{
@@ -79,6 +84,7 @@ test('executeApprovalPublish passes merged field overrides to both shopify and e
     fields: {
       Title: 'Edited title',
       SKU: 'ABC123',
+      'Item Zip Code': 11205,
       Price: '199.99',
     },
     preview: {
@@ -101,9 +107,14 @@ test('executeApprovalPublish passes merged field overrides to both shopify and e
     fields: {
       Title: 'Edited title',
       SKU: 'ABC123',
+      'Item Zip Code': 11205,
       Price: '199.99',
     },
   }]);
   assert.equal(result.shopify?.productId, '99');
   assert.equal(result.ebay?.listingId, 'listing-1');
+  assert.equal(
+    (ebayCalls[0]?.publishSetup as { locationConfig?: { postalCode?: string } })?.locationConfig?.postalCode,
+    '11205',
+  );
 });

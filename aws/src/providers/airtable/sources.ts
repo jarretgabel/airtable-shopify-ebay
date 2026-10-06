@@ -343,6 +343,19 @@ function stripUnknownFields(fields: string[] | undefined, unknownFields: Set<str
   return filtered.length > 0 ? filtered : undefined;
 }
 
+function stripUnknownFieldValues(
+  fields: Record<string, unknown>,
+  unknownFields: Set<string> | null,
+): Record<string, unknown> {
+  if (!unknownFields || unknownFields.size === 0) {
+    return { ...fields };
+  }
+
+  return Object.fromEntries(
+    Object.entries(fields).filter(([fieldName]) => !unknownFields.has(fieldName)),
+  );
+}
+
 function getUnknownFieldNames(error: unknown): string[] {
   if (!(error instanceof HttpError)) {
     return [];
@@ -375,6 +388,37 @@ function getUnknownFieldNames(error: unknown): string[] {
       .map((value) => value.trim().replace(/^['"]|['"]$/g, ''))
       .filter((value) => value.length > 0),
   ));
+}
+
+async function updateRecordWithUnknownFieldFallback(
+  baseId: string,
+  tableName: string,
+  recordId: string,
+  fields: Record<string, unknown>,
+  options: { typecast?: boolean },
+): Promise<AirtableRecord> {
+  const cacheKey = buildUnknownFieldCacheKey(baseId, tableName, undefined);
+  let writableFields = stripUnknownFieldValues(fields, getCachedUnknownFields(cacheKey));
+
+  while (Object.keys(writableFields).length > 0) {
+    try {
+      return await airtableSourceDependencies.updateRecord(baseId, tableName, recordId, writableFields, options);
+    } catch (error) {
+      const unknownFields = getUnknownFieldNames(error);
+      if (unknownFields.length === 0) {
+        throw error;
+      }
+
+      rememberUnknownFields(cacheKey, unknownFields);
+      const nextFields = stripUnknownFieldValues(writableFields, new Set(unknownFields));
+      if (Object.keys(nextFields).length === Object.keys(writableFields).length) {
+        throw error;
+      }
+      writableFields = nextFields;
+    }
+  }
+
+  return airtableSourceDependencies.updateRecord(baseId, tableName, recordId, fields, options);
 }
 
 async function getRecordsWithUnknownFieldFallback(
@@ -756,7 +800,13 @@ export async function updateConfiguredRecord(
   const definition = getWriteSourceDefinition(source);
 
   if (!definition.reference) {
-    const updatedRecord = await airtableSourceDependencies.updateRecord(process.env.AIRTABLE_BASE_ID?.trim() || '', definition.tableName, recordId, fields, options);
+    const updatedRecord = await updateRecordWithUnknownFieldFallback(
+      process.env.AIRTABLE_BASE_ID?.trim() || '',
+      definition.tableName,
+      recordId,
+      fields,
+      options,
+    );
     invalidateConfiguredRecordsCache();
     return updatedRecord;
   }
@@ -770,7 +820,13 @@ export async function updateConfiguredRecord(
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
-      const updatedRecord = await airtableSourceDependencies.updateRecord(candidate.baseId, candidate.tableName, recordId, fields, options);
+      const updatedRecord = await updateRecordWithUnknownFieldFallback(
+        candidate.baseId,
+        candidate.tableName,
+        recordId,
+        fields,
+        options,
+      );
       invalidateConfiguredRecordsCache();
       return updatedRecord;
     } catch (error) {
