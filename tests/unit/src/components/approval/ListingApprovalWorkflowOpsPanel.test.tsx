@@ -208,6 +208,38 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
     });
   });
 
+  it('runs both marketplace takedowns and moves the row back to ready', async () => {
+    const loadRecords = vi.fn(async () => {});
+    const listedRecord = buildRecord({
+      'Workflow Status': 'Listed, Shopify',
+      'Shopify REST Product ID': '12345',
+      'eBay Offer ID': 'offer-98765',
+      'eBay Listing ID': '98765',
+    });
+    const updatedRecord = buildRecord({ 'Workflow Status': 'Approved for Publish' });
+
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({
+      record: listedRecord,
+      group: null,
+    });
+    takeDownWorkflowMarketplaceListingAndMoveBackMock.mockResolvedValue(updatedRecord);
+
+    render(
+      <ListingApprovalWorkflowOpsPanel
+        selectedRecord={listedRecord}
+        tableReference="appApproval/table"
+        loadRecords={loadRecords}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Both + Back To Ready' }));
+
+    await waitFor(() => {
+      expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).toHaveBeenCalledWith('rec-workflow-1', 'both');
+      expect(loadRecords).toHaveBeenCalledWith('appApproval/table', undefined, true);
+    });
+  });
+
   it('does not run ebay takedown when confirm is cancelled', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false);
 

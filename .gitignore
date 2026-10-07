@@ -40,3 +40,5 @@ aws/.aws-sam/
 # Generated run artifacts
 tmp/
 downloads/
+
+aws/.local-api-build

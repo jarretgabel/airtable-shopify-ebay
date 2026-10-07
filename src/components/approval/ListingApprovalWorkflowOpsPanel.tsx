@@ -504,6 +504,27 @@ export function ListingApprovalWorkflowOpsPanel({
                   {saving ? 'Saving...' : 'Take Down eBay + Back To Ready'}
                 </button>
               ) : null}
+              {canTakeDownShopify && canTakeDownEbay ? (
+                <button
+                  type="button"
+                  className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => {
+                    const confirmed = window.confirm('Take down both the Shopify and eBay listings and move this record back to Ready?');
+                    if (!confirmed) {
+                      return;
+                    }
+                    void runAction(async () => {
+                      const updatedRecord = await takeDownWorkflowMarketplaceListingAndMoveBack(selectedRecord.id, 'both');
+                      await syncListingSourceMoveBackState();
+                      onMovedBackToReady?.(updatedRecord);
+                      return updatedRecord;
+                    });
+                  }}
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Take Down Both + Back To Ready'}
+                </button>
+              ) : null}
             </div>
             {postPublishSnapshot ? (
               <div className="flex flex-wrap gap-2 border-t border-[var(--line)]/70 pt-4">

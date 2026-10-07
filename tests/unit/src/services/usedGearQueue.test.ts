@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteConfiguredRecord, getConfiguredRecord, getConfiguredRecords, updateConfiguredRecord } from '@/services/app-api/airtable';
+import { takeDownApprovalRecord } from '@/services/app-api/approval';
 import {
   acceptPendingReviewRecord,
   acceptPendingReviewGroup,
@@ -48,6 +49,7 @@ import {
   savePendingReviewGroupReview,
   saveUsedGearWorkflowStageSignoff,
   summarizeUsedGearWorkflowPostPublishQueue,
+  takeDownWorkflowMarketplaceListingAndMoveBack,
 } from '@/services/usedGearQueue';
 
 vi.mock('@/services/app-api/airtable', () => ({
@@ -57,10 +59,15 @@ vi.mock('@/services/app-api/airtable', () => ({
   updateConfiguredRecord: vi.fn(),
 }));
 
+vi.mock('@/services/app-api/approval', () => ({
+  takeDownApprovalRecord: vi.fn(),
+}));
+
 const mockDeleteConfiguredRecord = vi.mocked(deleteConfiguredRecord);
 const mockGetConfiguredRecord = vi.mocked(getConfiguredRecord);
 const mockGetConfiguredRecords = vi.mocked(getConfiguredRecords);
 const mockUpdateConfiguredRecord = vi.mocked(updateConfiguredRecord);
+const mockTakeDownApprovalRecord = vi.mocked(takeDownApprovalRecord);
 
 describe('usedGearQueue', () => {
   beforeEach(() => {
@@ -68,6 +75,7 @@ describe('usedGearQueue', () => {
     mockGetConfiguredRecord.mockReset();
     mockGetConfiguredRecords.mockReset();
     mockUpdateConfiguredRecord.mockReset();
+    mockTakeDownApprovalRecord.mockReset();
     mockGetConfiguredRecord.mockImplementation(async (source, recordId) => {
       const records = await mockGetConfiguredRecords(source);
       const record = records.find((candidate) => candidate.id === recordId);
@@ -1161,6 +1169,75 @@ describe('usedGearQueue', () => {
       }),
       { typecast: true, timeoutMs: 45000 },
     );
+  });
+
+  it('takes down both channels separately and returns the record to ready after both succeed', async () => {
+    mockTakeDownApprovalRecord
+      .mockResolvedValueOnce({
+        target: 'ebay',
+        recordId: 'rec1',
+        success: true,
+        results: [{ channel: 'ebay', success: true, message: 'withdrawn', closedAt: 'now' }],
+      })
+      .mockResolvedValueOnce({
+        target: 'shopify',
+        recordId: 'rec1',
+        success: true,
+        results: [{ channel: 'shopify', success: true, message: 'deleted', closedAt: 'now' }],
+      });
+    mockGetConfiguredRecords.mockResolvedValue([
+      {
+        id: 'rec1',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Listed, Shopify',
+          'Listed At': '2026-03-01T00:00:00.000Z',
+        },
+      },
+    ]);
+    mockUpdateConfiguredRecord.mockResolvedValue({
+      id: 'rec1',
+      createdTime: 'now',
+      fields: { 'Workflow Status': 'Approved for Publish' },
+    });
+
+    await takeDownWorkflowMarketplaceListingAndMoveBack('rec1', 'both');
+
+    expect(mockTakeDownApprovalRecord.mock.calls).toEqual([
+      ['rec1', 'ebay'],
+      ['rec1', 'shopify'],
+    ]);
+    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
+      'used-gear-workflow',
+      'rec1',
+      expect.objectContaining({ 'Workflow Status': 'Approved for Publish' }),
+      { typecast: true, timeoutMs: 45000 },
+    );
+  });
+
+  it('attempts the second takedown and does not move back to ready when either channel fails', async () => {
+    mockTakeDownApprovalRecord
+      .mockResolvedValueOnce({
+        target: 'ebay',
+        recordId: 'rec1',
+        success: false,
+        results: [{ channel: 'ebay', success: false, message: 'withdraw failed', closedAt: 'now' }],
+      })
+      .mockResolvedValueOnce({
+        target: 'shopify',
+        recordId: 'rec1',
+        success: true,
+        results: [{ channel: 'shopify', success: true, message: 'deleted', closedAt: 'now' }],
+      });
+
+    await expect(takeDownWorkflowMarketplaceListingAndMoveBack('rec1', 'both'))
+      .rejects.toThrow('ebay: withdraw failed');
+
+    expect(mockTakeDownApprovalRecord.mock.calls).toEqual([
+      ['rec1', 'ebay'],
+      ['rec1', 'shopify'],
+    ]);
+    expect(mockUpdateConfiguredRecord).not.toHaveBeenCalled();
   });
 
   it('retries move-back write without unknown published fields when Airtable schema is missing them', async () => {

@@ -51,6 +51,55 @@ describe('Cross-Channel Close Service', () => {
         assert.equal(fetchMock.mock.callCount(), 2);
         assert.equal(fetchMock.mock.calls[1].arguments[0], 'https://api.ebay.com/sell/inventory/v1/offer/offer-123/withdraw');
         assert.equal(updateRecord.mock.callCount(), 1);
+        assert.equal(
+          updateRecord.mock.calls[0]?.arguments[2]['eBay Close Result'],
+          'eBay offer withdrawn',
+        );
+      } finally {
+        globalThis.fetch = originalFetch;
+        if (originalEnv === undefined) delete process.env.EBAY_ENV;
+        else process.env.EBAY_ENV = originalEnv;
+        if (originalClientId === undefined) delete process.env.EBAY_CLIENT_ID;
+        else process.env.EBAY_CLIENT_ID = originalClientId;
+        if (originalClientSecret === undefined) delete process.env.EBAY_CLIENT_SECRET;
+        else process.env.EBAY_CLIENT_SECRET = originalClientSecret;
+        if (originalRefreshToken === undefined) delete process.env.EBAY_REFRESH_TOKEN;
+        else process.env.EBAY_REFRESH_TOKEN = originalRefreshToken;
+      }
+    });
+
+    it('does not treat a missing eBay offer as a successful withdrawal', async () => {
+      const originalFetch = globalThis.fetch;
+      const originalEnv = process.env.EBAY_ENV;
+      const originalClientId = process.env.EBAY_CLIENT_ID;
+      const originalClientSecret = process.env.EBAY_CLIENT_SECRET;
+      const originalRefreshToken = process.env.EBAY_REFRESH_TOKEN;
+      const updateRecord = mock.fn(async () => ({}));
+      const fetchMock = mock.fn(async (input: string | URL | Request) => {
+        if (String(input).endsWith('/identity/v1/oauth2/token')) {
+          return Response.json({ access_token: 'test-token' });
+        }
+        return new Response('offer not found', { status: 404 });
+      });
+      process.env.EBAY_ENV = 'production';
+      process.env.EBAY_CLIENT_ID = 'client-id';
+      process.env.EBAY_CLIENT_SECRET = 'client-secret';
+      process.env.EBAY_REFRESH_TOKEN = 'refresh-token';
+      globalThis.fetch = fetchMock as typeof fetch;
+
+      try {
+        const result = await closeEbayListingWhenSoldOnShopify('record-123', {
+          'eBay Offer ID': 'missing-offer',
+          'eBay Listing ID': 'listing-123',
+        }, { updateRecord });
+
+        assert.equal(result.success, false);
+        assert.match(result.message, /404 offer not found/);
+        assert.equal(updateRecord.mock.callCount(), 1);
+        assert.match(
+          String(updateRecord.mock.calls[0]?.arguments[2]['eBay Close Result']),
+          /404 offer not found/,
+        );
       } finally {
         globalThis.fetch = originalFetch;
         if (originalEnv === undefined) delete process.env.EBAY_ENV;
@@ -132,6 +181,10 @@ describe('Cross-Channel Close Service', () => {
         assert.equal(fetchMock.mock.calls[0].arguments[0], 'https://example.myshopify.com/admin/api/2024-04/products/123456789.json');
         assert.equal((fetchMock.mock.calls[0].arguments[1] as RequestInit).method, 'DELETE');
         assert.equal(updateRecord.mock.callCount(), 1);
+        assert.equal(
+          updateRecord.mock.calls[0]?.arguments[2]['Shopify Close Result'],
+          'Shopify product deleted',
+        );
       } finally {
         globalThis.fetch = originalFetch;
         if (originalDomain === undefined) delete process.env.SHOPIFY_STORE_DOMAIN;

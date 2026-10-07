@@ -417,6 +417,135 @@ test('pushApprovalBundleToEbay does not rewrite an already matching warehouse', 
   }
 });
 
+test('pushApprovalBundleToEbay recreates an unpublished offer with invalid stale lot size', async () => {
+  const originalFetch = global.fetch;
+  const calls: Array<{ url: string; method: string; body?: Record<string, unknown> }> = [];
+  const { pushApprovalBundleToEbay } = await import('../../../../../../aws/src/providers/ebay/client.js?lot-size-recovery-test');
+
+  global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
+    const url = typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url;
+    const method = init?.method ?? 'GET';
+    const body = typeof init?.body === 'string' && init.body.trim().startsWith('{')
+      ? JSON.parse(init.body) as Record<string, unknown>
+      : undefined;
+    calls.push({ url, method, body });
+
+    if (url.includes('/identity/v1/oauth2/token')) {
+      return Response.json({ access_token: 'test-access-token', expires_in: 7200 });
+    }
+    if (url.endsWith('/sell/inventory/v1/location/warehouse-1') && method === 'GET') {
+      return Response.json({
+        name: 'Main Warehouse',
+        locationTypes: ['WAREHOUSE'],
+        location: { address: { country: 'US', postalCode: '11205', city: 'Brooklyn', stateOrProvince: 'NY' } },
+      });
+    }
+    if (url.includes('/sell/inventory/v1/inventory_item/TEST-SKU') && method === 'PUT') {
+      return new Response(null, { status: 204 });
+    }
+    if (url.includes('/sell/inventory/v1/offer?') && method === 'GET') {
+      return Response.json({
+        offers: [{ offerId: 'stale-offer', sku: 'TEST-SKU', status: 'UNPUBLISHED' }],
+        total: 1,
+      });
+    }
+    if (url.endsWith('/sell/account/v1/fulfillment_policy/fulfil-1')) {
+      return Response.json({
+        marketplaceId: 'EBAY_US',
+        shippingOptions: [{ shippingServices: [{ shippingServiceCode: 'UPSGround' }] }],
+      });
+    }
+    if (url.endsWith('/sell/inventory/v1/offer/stale-offer') && method === 'PUT') {
+      return new Response(null, { status: 204 });
+    }
+    if (url.endsWith('/sell/inventory/v1/offer/stale-offer/publish/') && method === 'POST') {
+      return Response.json({
+        errors: [{
+          errorId: 25006,
+          domain: 'API_INVENTORY',
+          category: 'Request',
+          message: 'The listing has an invalid listing option.',
+          longMessage: 'Lot Size is invalid, need to be greater than 1, and less than 450000.',
+          parameters: [{ name: '0', value: '450000' }, { name: '1', value: 'LOT_SIZE' }],
+        }],
+      }, { status: 400 });
+    }
+    if (url.endsWith('/sell/inventory/v1/offer/stale-offer') && method === 'DELETE') {
+      return new Response(null, { status: 204 });
+    }
+    if (url.endsWith('/sell/inventory/v1/offer') && method === 'POST') {
+      return Response.json({ offerId: 'replacement-offer' }, { status: 201 });
+    }
+    if (url.endsWith('/sell/inventory/v1/offer/replacement-offer/publish/') && method === 'POST') {
+      return Response.json({ listingId: 'listing-123' });
+    }
+
+    throw new Error(`Unexpected fetch URL in test: ${method} ${url}`);
+  };
+
+  try {
+    await withEnvAsync({
+      EBAY_ENV: 'production',
+      EBAY_CLIENT_ID: 'test-client-id',
+      EBAY_CLIENT_SECRET: 'test-client-secret',
+      EBAY_REFRESH_TOKEN: 'test-refresh-token',
+    }, async () => {
+      const result = await pushApprovalBundleToEbay({
+        inventoryItem: {
+          sku: 'TEST-SKU',
+          condition: 'USED_EXCELLENT',
+          product: {
+            title: 'Test listing',
+            imageUrls: ['https://i.ebayimg.com/images/g/example/s-l1600.jpg'],
+          },
+          availability: { shipToLocationAvailability: { quantity: 1 } },
+        },
+        offer: {
+          sku: 'TEST-SKU',
+          marketplaceId: 'EBAY_US',
+          format: 'FIXED_PRICE',
+          categoryId: '14990',
+          listingDescription: '<p>Test listing</p>',
+          listingDuration: 'GTC',
+          pricingSummary: { price: { value: '100.00', currency: 'USD' } },
+        },
+      }, {
+        locationConfig: {
+          key: 'warehouse-1',
+          name: 'Main Warehouse',
+          country: 'US',
+          postalCode: '11205',
+          city: 'Brooklyn',
+          stateOrProvince: 'NY',
+        },
+        policyConfig: {
+          fulfillmentPolicyId: 'fulfil-1',
+          paymentPolicyId: 'payment-1',
+          returnPolicyId: 'return-1',
+        },
+      });
+
+      assert.deepEqual(result, {
+        sku: 'TEST-SKU',
+        offerId: 'replacement-offer',
+        listingId: 'listing-123',
+        wasExistingOffer: false,
+      });
+    });
+
+    assert.ok(calls.some((call) => call.url.endsWith('/offer/stale-offer') && call.method === 'DELETE'));
+    const createCall = calls.find((call) => call.url.endsWith('/sell/inventory/v1/offer') && call.method === 'POST');
+    assert.ok(createCall);
+    assert.equal(createCall.body?.lotSize, undefined);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('getRequiredEbayWebhookCallbackUrl builds HTTPS callback URLs from env config', () => {
   const originalBaseUrl = process.env.EBAY_WEBHOOK_BASE_URL;
 

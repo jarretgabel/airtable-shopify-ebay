@@ -217,11 +217,31 @@ function buildAwsDist() {
   execFileSync('npx', ['tsc', '-p', 'tsconfig.json'], { cwd: awsDir, stdio: 'inherit' });
 }
 
+const LOCAL_BUILD_ROOT = path.join(awsDir, '.local-api-build');
+
+// Node caches transitively imported modules by URL, so a query-string bust on the handler
+// alone leaves stale services loaded. Serving each build from its own directory forces a
+// full module reload.
+function snapshotAwsDist(cacheKey) {
+  const snapshotDir = path.join(LOCAL_BUILD_ROOT, String(cacheKey));
+  fs.mkdirSync(LOCAL_BUILD_ROOT, { recursive: true });
+  fs.cpSync(path.join(awsDir, 'dist'), snapshotDir, { recursive: true });
+
+  for (const entry of fs.readdirSync(LOCAL_BUILD_ROOT)) {
+    if (entry !== String(cacheKey)) {
+      fs.rmSync(path.join(LOCAL_BUILD_ROOT, entry), { recursive: true, force: true });
+    }
+  }
+
+  return snapshotDir;
+}
+
 async function loadHandlers(cacheKey) {
   const loadedHandlers = [];
+  const buildDir = snapshotAwsDist(cacheKey);
 
   for (const route of ROUTES) {
-    const moduleUrl = `${pathToFileURL(path.join(awsDir, 'dist', route.modulePath)).href}?v=${cacheKey}`;
+    const moduleUrl = pathToFileURL(path.join(buildDir, route.modulePath)).href;
     const loadedModule = await import(moduleUrl);
     const handler = loadedModule[route.exportName];
 

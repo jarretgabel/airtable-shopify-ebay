@@ -232,6 +232,7 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
   - per-row lifecycle actions plus access into the operational record for post-sale fields
 - Use it for:
   - stale follow-up
+  - taking down eligible Shopify and eBay listings together from the operational record and returning the item to `Approved for Publish`
   - sold-ready handoff
   - shipment completion
   - recording `Cancelled`, `Refunded`, `Returned`, and manual restock disposition follow-through on the authoritative row

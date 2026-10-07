@@ -2241,6 +2241,28 @@ async function publishOfferById(
   });
 }
 
+function isInvalidLotSizePublishError(error: unknown): boolean {
+  return error instanceof HttpError
+    && error.code === 'EBAY_PUBLISH_OFFER_FAILED'
+    && /errorId:\s*25006/i.test(error.message)
+    && /LOT_SIZE/i.test(error.message);
+}
+
+async function deleteUnpublishedOffer(token: string, offerId: string): Promise<void> {
+  const response = await ebayRestFetch(`${getApiBaseUrl()}/sell/inventory/v1/offer/${encodeURIComponent(offerId)}`, {
+    method: 'DELETE',
+    headers: inventoryJsonHeaders(token),
+  });
+
+  if (!response.ok && response.status !== 404) {
+    throw new HttpError(response.status, `deleteOffer ${response.status}: ${await readErrorPayload(response)}`, {
+      service: 'ebay',
+      code: 'EBAY_DELETE_INVALID_OFFER_FAILED',
+      retryable: response.status >= 500,
+    });
+  }
+}
+
 async function upsertInventoryItem(token: string, sku: string, inventoryItem: Record<string, unknown>): Promise<void> {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const response = await ebayRestFetch(`${getApiBaseUrl()}/sell/inventory/v1/inventory_item/${encodeURIComponent(sku)}`, {
@@ -2461,11 +2483,29 @@ export async function pushApprovalBundleToEbay(
     };
   }
 
-  const { listingId } = await publishOfferById(token, offerId, {
+  const publishContext = {
     marketplaceId: String(offerPayload.marketplaceId ?? 'EBAY_US'),
     fulfillmentPolicyId: resolvedPolicyConfig.fulfillmentPolicyId,
-  });
-  return { sku, offerId, listingId, wasExistingOffer };
+  };
+
+  try {
+    const { listingId } = await publishOfferById(token, offerId, publishContext);
+    return { sku, offerId, listingId, wasExistingOffer };
+  } catch (error) {
+    if (!existingOffer || !isInvalidLotSizePublishError(error)) {
+      throw error;
+    }
+
+    await deleteUnpublishedOffer(token, offerId);
+    const replacement = await createOrUpdateOffer(token, sku, offerPayload);
+    const { listingId } = await publishOfferById(token, replacement.offerId, publishContext);
+    return {
+      sku,
+      offerId: replacement.offerId,
+      listingId,
+      wasExistingOffer: replacement.wasExistingOffer,
+    };
+  }
 }
 
 export async function uploadImageToEbayHostedPictures(

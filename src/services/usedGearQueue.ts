@@ -1511,12 +1511,27 @@ export async function takeDownWorkflowMarketplaceListingAndMoveBack(
   recordId: string,
   target: ApprovalTakeDownTarget,
 ): Promise<AirtableRecord> {
-  const result = await takeDownApprovalRecord(recordId, target);
-  if (!result.success) {
-    const failedMessages = result.results
-      .filter((channelResult) => !channelResult.success)
-      .map((channelResult) => `${channelResult.channel}: ${channelResult.message}`);
-    throw new Error(failedMessages[0] ?? 'Marketplace takedown failed.');
+  const targets: ApprovalTakeDownTarget[] = target === 'both' ? ['ebay', 'shopify'] : [target];
+  const failedMessages: string[] = [];
+
+  for (const channel of targets) {
+    try {
+      const result = await takeDownApprovalRecord(recordId, channel);
+      const channelFailures = result.results
+        .filter((channelResult) => !channelResult.success)
+        .map((channelResult) => `${channelResult.channel}: ${channelResult.message}`);
+      if (channelFailures.length > 0) {
+        failedMessages.push(...channelFailures);
+      } else if (!result.success) {
+        failedMessages.push(`${channel}: Marketplace takedown failed.`);
+      }
+    } catch (error) {
+      failedMessages.push(`${channel}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  if (failedMessages.length > 0) {
+    throw new Error(failedMessages.join('; '));
   }
 
   return await moveWorkflowBackToReadyForPublish(recordId);

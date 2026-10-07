@@ -164,7 +164,7 @@ async function withdrawEbayOffer(offerId: string): Promise<{ success: boolean; m
       },
     );
 
-    if (!withdrawResponse.ok && withdrawResponse.status !== 404) {
+    if (!withdrawResponse.ok) {
       const errorText = await withdrawResponse.text();
       throw new Error(`eBay withdraw failed: ${withdrawResponse.status} ${errorText.slice(0, 200)}`);
     }
@@ -264,7 +264,7 @@ export async function closeEbayListingWhenSoldOnShopify(
     // Write success to Airtable
     await updateRecord('used-gear-workflow', recordId, {
       'eBay Closed At': closedAtIso,
-      'eBay Close Result': 'Cross-channel auto-close: Withdrawn when sold on Shopify',
+      'eBay Close Result': 'eBay offer withdrawn',
     }, { typecast: true });
 
     logInfo('eBay listing closed (cross-channel auto-close from Shopify sale)', {
@@ -382,8 +382,8 @@ export async function closeShopifyProductWhenSoldOnEbay(
     await updateRecord('used-gear-workflow', recordId, {
       'Shopify Closed At': closedAtIso,
       'Shopify Close Result': result.message.includes('already deleted')
-        ? 'Cross-channel auto-close: Product already deleted'
-        : 'Cross-channel auto-close: Product deleted when sold on eBay',
+        ? 'Shopify product already deleted'
+        : 'Shopify product deleted',
     }, { typecast: true });
 
     logInfo('Shopify product closed (cross-channel auto-close from eBay sale)', {
