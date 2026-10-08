@@ -53,6 +53,22 @@ function normalizeStaleRecoveryStatus(value: unknown): UsedGearWorkflowStaleReco
     : '';
 }
 
+function formatLifecycleTimestamp(value: unknown): string {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return displayValue(value);
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return displayValue(value);
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+}
+
 function hasPostPublishStatus(status: unknown): boolean {
   return typeof status === 'string'
     && (
@@ -310,15 +326,15 @@ export function ListingApprovalWorkflowOpsPanel({
               </div>
               <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-3">
                 <div>Listed At</div>
-                <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayValue(workflowRecord.fields['Listed At'])}</div>
+                <div className="mt-1 text-base font-semibold text-[var(--ink)]">{formatLifecycleTimestamp(workflowRecord.fields['Listed At'])}</div>
               </div>
               <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-3">
                 <div>Sold Ready</div>
-                <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayValue(workflowRecord.fields['Sold Ready To Ship At'])}</div>
+                <div className="mt-1 text-base font-semibold text-[var(--ink)]">{formatLifecycleTimestamp(workflowRecord.fields['Sold Ready To Ship At'])}</div>
               </div>
               <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-3">
                 <div>Shipped</div>
-                <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayValue(workflowRecord.fields['Shipped At'])}</div>
+                <div className="mt-1 text-base font-semibold text-[var(--ink)]">{formatLifecycleTimestamp(workflowRecord.fields['Shipped At'])}</div>
               </div>
             </div>
 

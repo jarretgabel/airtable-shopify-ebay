@@ -100,6 +100,31 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
     expect(screen.queryByText('Workflow Source: JotForm')).not.toBeInTheDocument();
   });
 
+  it('shows lifecycle timestamps in a human-readable local date and time format', async () => {
+    const listedAt = '2026-10-07T23:48:13.449Z';
+    const record = buildRecord({ 'Listed At': listedAt });
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({
+      record,
+      group: null,
+    });
+
+    render(
+      <ListingApprovalWorkflowOpsPanel
+        selectedRecord={record}
+        tableReference="used-gear-workflow"
+        loadRecords={vi.fn(async () => {})}
+      />,
+    );
+
+    const expectedDisplay = new Intl.DateTimeFormat('en-US', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(listedAt));
+
+    expect(await screen.findByText(expectedDisplay)).toBeInTheDocument();
+    expect(screen.queryByText(listedAt)).not.toBeInTheDocument();
+  });
+
   it('runs post-publish stale actions and reloads the Listings table', async () => {
     const loadRecords = vi.fn(async () => {});
     const updatedRecord = buildRecord({ 'Workflow Status': 'Stale Listing, Shopify' });
