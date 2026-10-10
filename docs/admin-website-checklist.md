@@ -27,6 +27,9 @@ Tasks:
   - `write_files`
   - `write_images`
   - `write_themes`
+- For location-aware listing quantity updates, grant:
+  - `read_locations` (unless `SHOPIFY_INVENTORY_LOCATION_ID` is configured)
+  - `write_inventory`
 - Confirm the Shopify user who runs uploads has permission to create files.
 - Reinstall or reauthorize the app after changing scopes so the new token actually includes them.
 - Rerun `npm run probe:lambda:shopify` after the scope change.

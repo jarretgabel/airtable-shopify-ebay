@@ -9,6 +9,7 @@ import { SortableColumnLabel } from '@/components/app/SortableColumnLabel';
 import { EmptySurface } from '@/components/app/StateSurfaces';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
+import { displayReadableValue } from '@/utils/valueDisplay';
 import {
   markWorkflowCancelled,
   markWorkflowPartialRefund,
@@ -140,8 +141,8 @@ function recordSearchText(record: AirtableRecord): string {
     record.fields['Shipment Follow-Through Notes'],
     record.fields['Pick Up ID'],
   ]
-    .flatMap((value) => Array.isArray(value) ? value : [value])
-    .filter((value): value is string => typeof value === 'string')
+    .map((value) => displayReadableValue(value, ''))
+    .filter(Boolean)
     .join(' ')
     .toLowerCase();
 }

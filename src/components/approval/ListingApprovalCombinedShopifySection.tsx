@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useMemo } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
@@ -18,6 +18,7 @@ import {
 } from '@/components/tabs/uiClasses';
 import type { ListingApprovalCombinedShopifySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 import { useAuthStore } from '@/stores/auth/authStore';
+import { buildShopifyDraftProductFromApprovalFields } from '@/services/shopifyDraftFromAirtable';
 
 const ShopifyApprovalPayloadDetails = lazy(async () => ({
   default: (await import('@/components/approval/ListingApprovalRecordPayloadPanels')).ShopifyApprovalPayloadDetails,
@@ -76,6 +77,25 @@ export function ListingApprovalCombinedShopifySection({
     SHOPIFY_CONDITION_METAFIELD_VALUE_FIELD,
   ]));
   const displayedShopifyBodyHtml = currentPageShopifyBodyHtml || combinedShopifyBodyHtmlValue;
+  const inventorySyncTargets = useMemo(() => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      ...selectedRecord.fields,
+      ...formValues,
+    });
+
+    return (product.variants ?? []).flatMap((variant, index) => {
+      const quantity = Number.isFinite(variant.inventory_quantity)
+        ? Math.max(0, Math.trunc(Number(variant.inventory_quantity)))
+        : undefined;
+      if (quantity === undefined) return [];
+
+      return [{
+        sku: variant.sku?.trim() || undefined,
+        position: Number.isFinite(variant.position) ? Number(variant.position) : index + 1,
+        quantity,
+      }];
+    });
+  }, [formValues, selectedRecord.fields]);
   const showDeveloperPayloadPanels = useAuthStore((state) => {
     const currentUser = state.users.find((user) => user.id === state.currentUserId);
     return currentUser ? isDeveloperRole(currentUser.role) : false;
@@ -192,6 +212,7 @@ export function ListingApprovalCombinedShopifySection({
               shopifyCategoryResolution={shopifyCategoryResolution}
               isShopifyPayloadPreviewContext={isShopifyPayloadPreviewContext}
               shopifyProductSetRequest={shopifyProductSetRequest}
+              inventorySyncTargets={inventorySyncTargets}
             />
           </Suspense>
         ) : null}

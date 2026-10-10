@@ -840,7 +840,12 @@ describe('usedGearQueue', () => {
       {
         id: 'rec1',
         createdTime: 'now',
-        fields: { 'Workflow Status': 'Pending Review', 'Pick Up ID': 'SUB-42', SKU: 'SKU-1' },
+        fields: {
+          'Workflow Status': 'Pending Review',
+          'Pick Up ID': 'SUB-42',
+          SKU: 'SKU-1',
+          Images: [{ id: 'att-photo', url: 'https://example.com/current-photo.jpg', filename: 'photo.jpg' }],
+        },
       },
       {
         id: 'rec2',
@@ -854,6 +859,9 @@ describe('usedGearQueue', () => {
     expect(context.record.id).toBe('rec1');
     expect(context.group?.id).toBe('SUB-42');
     expect(context.group?.records).toHaveLength(2);
+    expect(context.record.fields.Images).toEqual([
+      { id: 'att-photo', url: 'https://example.com/current-photo.jpg', filename: 'photo.jpg' },
+    ]);
   });
 
   it('marks all rows in a pending-review group unqualified', async () => {

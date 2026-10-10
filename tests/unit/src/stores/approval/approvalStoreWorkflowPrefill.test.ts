@@ -246,16 +246,16 @@ describe('applyWorkflowListingPrefills', () => {
     applyWorkflowListingPrefills({
       'Workflow Status': 'Approved for Publish',
       Images: [
-        { id: 'att-1', url: 'https://cdn.example.com/workflow-a.jpg', filename: 'workflow-a.jpg' },
-        { id: 'att-2', url: 'https://cdn.example.com/workflow-b.jpg', filename: 'workflow-b.jpg' },
+        { id: 'att-1', url: 'https://drive.google.com/workflow-a.jpg', filename: 'workflow-a.jpg' },
+        { id: 'att-2', url: 'https://drive.google.com/workflow-b.jpg', filename: 'workflow-b.jpg' },
       ],
     }, values, { ...kinds });
 
-    expect(values.Images).toBe('https://cdn.example.com/workflow-a.jpg, https://cdn.example.com/workflow-b.jpg');
+    expect(values.Images).toBe('https://drive.google.com/workflow-a.jpg, https://drive.google.com/workflow-b.jpg');
     expect(values['Images Alt Text']).toBe('');
     expect(values['Shopify REST Images JSON']).toBe(JSON.stringify([
-      { src: 'https://cdn.example.com/workflow-a.jpg', alt: '', position: 1 },
-      { src: 'https://cdn.example.com/workflow-b.jpg', alt: '', position: 2 },
+      { src: 'https://drive.google.com/workflow-a.jpg', alt: '', position: 1 },
+      { src: 'https://drive.google.com/workflow-b.jpg', alt: '', position: 2 },
     ]));
   });
 
@@ -274,13 +274,13 @@ describe('applyWorkflowListingPrefills', () => {
     applyWorkflowListingPrefills({
       'Workflow Status': 'Approved for Publish',
       Images: [
-        { id: 'att-1', url: 'https://cdn.example.com/workflow-a.jpg', filename: 'workflow-a.jpg' },
-        { id: 'att-2', url: 'https://cdn.example.com/workflow-b.jpg', filename: 'workflow-b.jpg' },
+        { id: 'att-1', url: 'https://drive.google.com/workflow-a.jpg', filename: 'workflow-a.jpg' },
+        { id: 'att-2', url: 'https://drive.google.com/workflow-b.jpg', filename: 'workflow-b.jpg' },
       ],
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-2',
-          url: 'https://cdn.example.com/workflow-b.jpg',
+          url: 'https://drive.google.com/workflow-b.jpg',
           filename: 'workflow-b.jpg',
           alt: 'Rear panel',
           sortOrder: 1,
@@ -289,7 +289,7 @@ describe('applyWorkflowListingPrefills', () => {
         },
         {
           attachmentId: 'att-1',
-          url: 'https://cdn.example.com/workflow-a.jpg',
+          url: 'https://drive.google.com/workflow-a.jpg',
           filename: 'workflow-a.jpg',
           alt: 'Front panel',
           sortOrder: 2,
@@ -299,11 +299,11 @@ describe('applyWorkflowListingPrefills', () => {
       ]),
     }, values, { ...kinds });
 
-    expect(values.Images).toBe('https://cdn.example.com/workflow-b.jpg, https://cdn.example.com/workflow-a.jpg');
+    expect(values.Images).toBe('https://drive.google.com/workflow-b.jpg, https://drive.google.com/workflow-a.jpg');
     expect(values['Images Alt Text']).toBe('Rear panel, Front panel');
     expect(values['Shopify REST Images JSON']).toBe(JSON.stringify([
-      { src: 'https://cdn.example.com/workflow-b.jpg', alt: 'Rear panel', position: 1 },
-      { src: 'https://cdn.example.com/workflow-a.jpg', alt: 'Front panel', position: 2 },
+      { src: 'https://drive.google.com/workflow-b.jpg', alt: 'Rear panel', position: 1 },
+      { src: 'https://drive.google.com/workflow-a.jpg', alt: 'Front panel', position: 2 },
     ]));
   });
 

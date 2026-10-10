@@ -26,14 +26,14 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-1',
-          url: 'https://cdn.example.com/1.jpg',
+          url: 'https://drive.google.com/1.jpg',
           filename: '1.jpg',
           sourceStage: 'photos',
           includedInListing: true,
         },
         {
           attachmentId: 'att-2',
-          url: 'https://cdn.example.com/2.jpg',
+          url: 'https://drive.google.com/2.jpg',
           filename: '2.jpg',
           sourceStage: 'photos',
           includedInListing: true,
@@ -53,7 +53,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       product: {
         title: 'eBay Product Title',
         description: 'eBay description',
-        imageUrls: ['https://cdn.example.com/1.jpg', 'https://cdn.example.com/2.jpg'],
+        imageUrls: ['https://drive.google.com/1.jpg', 'https://drive.google.com/2.jpg'],
         brand: 'McIntosh',
         mpn: 'MA8900',
         aspects: { Brand: ['McIntosh'], Model: ['MA8900'], MPN: ['MA8900'] },
@@ -315,7 +315,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-2',
-          url: 'https://cdn.example.com/meta-b.jpg',
+          url: 'https://drive.google.com/meta-b.jpg',
           filename: 'meta-b.jpg',
           alt: 'Rear angle',
           sortOrder: 1,
@@ -324,7 +324,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
         },
         {
           attachmentId: 'att-1',
-          url: 'https://cdn.example.com/meta-a.jpg',
+          url: 'https://drive.google.com/meta-a.jpg',
           filename: 'meta-a.jpg',
           alt: 'Front angle',
           sortOrder: 2,
@@ -337,7 +337,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-WORKFLOW-META',
       product: {
-        imageUrls: ['https://cdn.example.com/meta-b.jpg', 'https://cdn.example.com/meta-a.jpg'],
+        imageUrls: ['https://drive.google.com/meta-b.jpg', 'https://drive.google.com/meta-a.jpg'],
       },
     });
   });
@@ -348,7 +348,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-photos',
-          url: 'https://cdn.example.com/meta-photos.jpg',
+          url: 'https://drive.google.com/meta-photos.jpg',
           filename: 'meta-photos.jpg',
           alt: 'Photos stage primary',
           sortOrder: 1,
@@ -357,7 +357,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
         },
         {
           attachmentId: 'att-testing',
-          url: 'https://cdn.example.com/meta-testing.jpg',
+          url: 'https://drive.google.com/meta-testing.jpg',
           filename: 'meta-testing.jpg',
           alt: 'Testing stage reference',
           sortOrder: 2,
@@ -370,7 +370,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-WORKFLOW-INCLUSION',
       product: {
-        imageUrls: ['https://cdn.example.com/meta-photos.jpg'],
+        imageUrls: ['https://drive.google.com/meta-photos.jpg'],
       },
     });
   });
@@ -527,9 +527,9 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
   it('collects image URLs from indexed image fields when JSON list is absent', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-7',
-      'eBay Inventory Product Image URL 1': 'https://cdn.example.com/e1.jpg',
-      'eBay Inventory Product Image URL 2': 'https://cdn.example.com/e2.jpg',
-      'Photo URLs (comma-separated)': 'https://cdn.example.com/e2.jpg, https://cdn.example.com/e3.jpg',
+      'eBay Inventory Product Image URL 1': 'https://drive.google.com/e1.jpg',
+      'eBay Inventory Product Image URL 2': 'https://drive.google.com/e2.jpg',
+      'Photo URLs (comma-separated)': 'https://drive.google.com/e2.jpg, https://drive.google.com/e3.jpg',
     });
 
     expect(payload.inventoryItem).toMatchObject({
@@ -668,7 +668,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-11',
       'eBay Inventory Product Image URLs JSON': '',
-      Images: 'https://cdn.example.com/fallback-a.jpg, https://cdn.example.com/fallback-b.jpg',
+      Images: 'https://drive.google.com/fallback-a.jpg, https://drive.google.com/fallback-b.jpg',
     });
 
     expect(payload.inventoryItem).toMatchObject({
@@ -681,7 +681,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-12',
       'eBay Inventory Product Image URLs JSON': {},
-      Images: 'https://cdn.example.com/obj-fallback-a.jpg, https://cdn.example.com/obj-fallback-b.jpg',
+      Images: 'https://drive.google.com/obj-fallback-a.jpg, https://drive.google.com/obj-fallback-b.jpg',
     });
 
     expect(payload.inventoryItem).toMatchObject({
@@ -693,7 +693,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
   it('maps Images (comma-separated) into eBay imageUrls', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-14',
-      'Images (comma-separated)': 'https://cdn.example.com/cs-a.jpg, https://cdn.example.com/cs-b.jpg',
+      'Images (comma-separated)': 'https://drive.google.com/cs-a.jpg, https://drive.google.com/cs-b.jpg',
     });
 
     expect(payload.inventoryItem).toMatchObject({

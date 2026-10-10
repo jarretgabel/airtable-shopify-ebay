@@ -1,6 +1,10 @@
 import { parseShopifyTagList, serializeShopifyTagsCsv } from '@/services/shopifyTags';
 import type { ShopifyProduct } from '@/types/shopify';
-import { getIncludedWorkflowImageMetadata, parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
+import {
+  getIncludedWorkflowImageMetadata,
+  isGoogleDriveImageUrl,
+  parseWorkflowImageMetadata,
+} from '@/services/workflowImageMetadata';
 import {
   ApprovalFieldMap,
   coerceStructuredToString,
@@ -24,7 +28,7 @@ export function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] 
   ]);
   const explicitShopifyImages = parseJsonArray<unknown>(rawShopifyImages);
   if (explicitShopifyImages && explicitShopifyImages.length > 0) {
-    return explicitShopifyImages
+    const images = explicitShopifyImages
       .map((item, index) => {
         if (typeof item === 'string') {
           const src = item.trim();
@@ -41,7 +45,11 @@ export function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] 
         const position = typeof rawPosition === 'number' && Number.isFinite(rawPosition) ? rawPosition : index + 1;
         return { src, alt, position };
       })
-      .filter((image): image is { src: string; alt: string; position: number } => image !== null);
+      .filter((image): image is { src: string; alt: string; position: number } => (
+        image !== null && isGoogleDriveImageUrl(image.src)
+      ));
+
+    if (images.length > 0) return images;
   }
 
   const workflowMetadata = getIncludedWorkflowImageMetadata(parseWorkflowImageMetadata(getRawField(fields, [

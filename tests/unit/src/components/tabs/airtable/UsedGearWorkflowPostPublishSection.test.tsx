@@ -136,6 +136,41 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     expect(screen.getByLabelText(/Sort Active Listings/i)).toBeInTheDocument();
   });
 
+  it('matches rich-text SKU values in active-listing search', async () => {
+    loadWorkflowPostPublishQueueMock.mockResolvedValue([
+      {
+        id: 'rec-active',
+        createdTime: '2026-10-09T00:00:00.000Z',
+        fields: {
+          SKU: { text: '11757' },
+          Make: 'Transparent',
+          Model: 'Premium Power Cord',
+          'Workflow Status': 'Listed, Shopify',
+          'Listed At': '2026-10-09T00:00:00.000Z',
+        },
+      },
+    ]);
+
+    render(
+      <UsedGearWorkflowPostPublishSection
+        currentUserName="Taylor Reviewer"
+        sectionSearchEnabled
+        onOpenOperationalRecord={vi.fn()}
+        onOpenListingsRecord={vi.fn()}
+        onOpenSoldReadyRecord={vi.fn()}
+        onOpenShipmentRecord={vi.fn()}
+      />,
+    );
+
+    const activeRow = await screen.findByRole('row', { name: /11757 Transparent/ });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search Active Listings' }), {
+      target: { value: '11757' },
+    });
+
+    expect(activeRow).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /11757 Transparent/ })).toBeInTheDocument();
+  });
+
   it('keeps post-publish rows visible without owner-scoped filtering', async () => {
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {

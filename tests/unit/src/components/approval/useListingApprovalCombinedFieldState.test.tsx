@@ -171,6 +171,35 @@ describe('useListingApprovalCombinedFieldState', () => {
     expect(result.current.combinedSharedFieldNames).not.toEqual(expect.arrayContaining(['Qty']));
   });
 
+  it('adds a shared Quantity field and defaults it to 1 when the record has no quantity column', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      Description: 'Integrated amp ready for listing.',
+    });
+    const setDerivedFormValue = vi.fn();
+
+    const { result } = renderHook(() => useListingApprovalCombinedFieldState({
+      records: [record],
+      selectedRecordId: record.id,
+      allFieldNames: Object.keys(record.fields),
+      approvalChannel: 'combined',
+      isCombinedApproval: true,
+      initialFormValues: { Quantity: '1' },
+      formValues: {
+        Title: 'Sansui AU-717',
+        Description: 'Integrated amp ready for listing.',
+      },
+      setFormValue: vi.fn(),
+      setDerivedFormValue,
+      selectedEbayTemplateId: 'classic',
+      setSelectedEbayTemplateId: vi.fn(),
+    }));
+
+    expect(result.current.combinedSharedFieldNames).toContain('Quantity');
+    expect(result.current.selectedRecord?.fields).not.toHaveProperty('Quantity');
+    expect(setDerivedFormValue).toHaveBeenCalledWith('Quantity', '1');
+  });
+
   it('routes Shopify tags into Shopify-only fields and keeps Testing Notes out of the combined eBay-only group', () => {
     const record = buildRecord({
       Title: 'Sansui AU-717',

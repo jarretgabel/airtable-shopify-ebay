@@ -15,7 +15,7 @@ import {
   parseWorkflowImageAttachments,
   parseWorkflowSelectedImageRows,
 } from './workflowListingImageHelpers';
-import { parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
+import { isGoogleDriveImageUrl, parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 import { useApprovalFormEbaySetup } from './useApprovalFormEbaySetup';
 import { useApprovalFormShopifySetup } from './useApprovalFormShopifySetup';
 
@@ -27,7 +27,7 @@ function isProcessedWorkflowImage(filename: string, url?: string): boolean {
 function getGoogleDriveFileId(url: string): string | null {
   try {
     const parsed = new URL(url);
-    if (!parsed.hostname.includes('drive.google.com')) return null;
+    if (parsed.hostname.toLowerCase() !== 'drive.google.com') return null;
 
     const queryId = parsed.searchParams.get('id')?.trim();
     if (queryId) return queryId;
@@ -40,14 +40,7 @@ function getGoogleDriveFileId(url: string): string | null {
 }
 
 function isGoogleDriveUrl(url: string): boolean {
-  if (getGoogleDriveFileId(url)) return true;
-
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname.includes('googleusercontent.com');
-  } catch {
-    return false;
-  }
+  return isGoogleDriveImageUrl(url);
 }
 
 function normalizeIdentityToken(value: string): string {
@@ -216,7 +209,8 @@ export function useApprovalFormFieldSetup({
           ?? ''
         );
 
-      return parseWorkflowImageMetadata(metadataRaw);
+      return parseWorkflowImageMetadata(metadataRaw)
+        .filter((record) => isGoogleDriveImageUrl(record.url));
     },
     [formValues, originalFieldValues, workflowImageMetadataFieldName],
   );
@@ -316,7 +310,7 @@ export function useApprovalFormFieldSetup({
       imageUrlValue,
       imageAltTextValue,
       payloadValue,
-    );
+    ).filter((row) => isGoogleDriveImageUrl(row.src));
     const explicitEmptySelection = payloadValue.trim() === '[]';
     const hasExplicitSelectionInput = explicitEmptySelection
       || imageUrlValue.trim().length > 0

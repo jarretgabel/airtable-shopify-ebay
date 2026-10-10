@@ -1,4 +1,4 @@
-import { useMemo, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
 import type { ApprovalTabViewModel } from '@/app/appTabViewModels';
 import {
   CONDITION_FIELD_CANDIDATES,
@@ -102,6 +102,15 @@ export function useListingApprovalCombinedFieldState({
         return false;
       }
 
+      if (
+        isCombinedApproval
+        && isSharedQuantityFieldName(fieldName)
+        && !allFieldNames.some(isSharedQuantityFieldName)
+        && !Object.keys(selectedRecordFromQueue.fields).some(isSharedQuantityFieldName)
+      ) {
+        return false;
+      }
+
       return value.trim().length > 0;
     });
 
@@ -116,7 +125,7 @@ export function useListingApprovalCombinedFieldState({
         ...Object.fromEntries(hydratedMissingFieldEntries),
       },
     };
-  }, [selectionInitialFormValues, selectedRecordFromQueue]);
+  }, [allFieldNames, isCombinedApproval, selectionInitialFormValues, selectedRecordFromQueue]);
 
   const selectedRecordFieldNames = useMemo(() => {
     const names = new Set<string>(allFieldNames);
@@ -124,6 +133,31 @@ export function useListingApprovalCombinedFieldState({
     Object.keys(formValues).forEach((fieldName) => names.add(fieldName));
     return Array.from(names).sort((left, right) => left.localeCompare(right));
   }, [allFieldNames, formValues, selectedRecord]);
+  const combinedSharedQuantityFieldName = useMemo(
+    () => selectedRecordFieldNames.find((fieldName) => normalizeListingFieldName(fieldName) === 'quantity')
+      ?? selectedRecordFieldNames.find((fieldName) => normalizeListingFieldName(fieldName) === 'qty')
+      ?? 'Quantity',
+    [selectedRecordFieldNames],
+  );
+  const defaultedQuantityRecordKey = useRef('');
+
+  useEffect(() => {
+    if (!isCombinedApproval || !selectedRecordFromQueue) return;
+
+    const recordKey = `${selectedRecordFromQueue.id}:${combinedSharedQuantityFieldName}`;
+    if (defaultedQuantityRecordKey.current === recordKey) return;
+    defaultedQuantityRecordKey.current = recordKey;
+
+    if (!(formValues[combinedSharedQuantityFieldName] ?? '').trim()) {
+      setDerivedFormValue(combinedSharedQuantityFieldName, '1');
+    }
+  }, [
+    combinedSharedQuantityFieldName,
+    formValues,
+    isCombinedApproval,
+    selectedRecordFromQueue,
+    setDerivedFormValue,
+  ]);
 
   const combinedDescriptionFieldName = useMemo(() => {
     if (!isCombinedApproval) return '';
@@ -300,11 +334,7 @@ export function useListingApprovalCombinedFieldState({
     const shopifyOnlySet = new Set(combinedShopifyOnlyFieldNames.map((fieldName) => fieldName.toLowerCase()));
     const ebayOnlySet = new Set(combinedEbayOnlyFieldNames.map((fieldName) => fieldName.toLowerCase()));
     const conditionCandidateSet = new Set(CONDITION_FIELD_CANDIDATES.map((fieldName) => fieldName.toLowerCase()));
-    const sharedQuantityFieldName = selectedRecordFieldNames.find((fieldName) => normalizeListingFieldName(fieldName) === 'quantity')
-      ?? selectedRecordFieldNames.find((fieldName) => normalizeListingFieldName(fieldName) === 'qty')
-      ?? '';
-
-    return selectedRecordFieldNames.filter((fieldName) => {
+    const sharedFieldNames = selectedRecordFieldNames.filter((fieldName) => {
       const normalized = fieldName.trim().toLowerCase();
       if (!shouldIncludeSharedListingRecordFieldName(fieldName)) return false;
       if (isRemovedCombinedEbayPriceFieldName(fieldName)) return false;
@@ -320,7 +350,7 @@ export function useListingApprovalCombinedFieldState({
       if (isSystemManagedListingFieldName(fieldName)) return false;
       if (isInternalReferenceListingFieldName(fieldName)) return false;
       if (shopifyOnlySet.has(normalized) || ebayOnlySet.has(normalized)) return false;
-      if (isSharedQuantityFieldName(fieldName) && sharedQuantityFieldName && fieldName !== sharedQuantityFieldName) return false;
+      if (isSharedQuantityFieldName(fieldName) && fieldName !== combinedSharedQuantityFieldName) return false;
       if (isItemZipCodeField(fieldName)) return false;
       if (normalized === 'weight' || normalized === 'shipping weight' || normalized === 'shipping dims') return false;
       if (isCombinedEbayPriceField) return false;
@@ -337,8 +367,12 @@ export function useListingApprovalCombinedFieldState({
       if (conditionCandidateSet.has(normalized) && allFieldNames.includes(CONDITION_FIELD) && fieldName !== CONDITION_FIELD) return false;
       return true;
     });
+    return selectedRecordFieldNames.some(isSharedQuantityFieldName)
+      ? sharedFieldNames
+      : [...sharedFieldNames, combinedSharedQuantityFieldName];
   }, [
     allFieldNames,
+    combinedSharedQuantityFieldName,
     combinedDescriptionFieldName,
     combinedEbayOnlyFieldNames,
     combinedSharedKeyFeaturesFieldName,

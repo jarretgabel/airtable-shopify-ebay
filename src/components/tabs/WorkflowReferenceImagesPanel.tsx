@@ -1,4 +1,5 @@
 import type { SyntheticEvent } from 'react';
+import { isGoogleDriveImageUrl } from '@/services/workflowImageMetadata';
 
 interface WorkflowReferenceImage {
   id?: string;
@@ -17,7 +18,7 @@ interface WorkflowReferenceImagesPanelProps {
 function getGoogleDriveFileId(url: string): string | null {
   try {
     const parsed = new URL(url);
-    if (!parsed.hostname.includes('drive.google.com')) {
+    if (parsed.hostname.toLowerCase() !== 'drive.google.com') {
       return null;
     }
 
@@ -61,7 +62,11 @@ export function WorkflowReferenceImagesPanel({
   collapsible = false,
   defaultCollapsed = false,
 }: WorkflowReferenceImagesPanelProps) {
-  if (images.length === 0) {
+  const googleDriveImages = images.filter((image) => (
+    Boolean(image.url && isGoogleDriveImageUrl(image.url))
+  ));
+
+  if (googleDriveImages.length === 0) {
     return null;
   }
 
@@ -69,7 +74,7 @@ export function WorkflowReferenceImagesPanel({
     <>
       <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{description}</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {images.map((image) => {
+        {googleDriveImages.map((image) => {
           const previewUrl = getReferencePreviewUrl(image.url);
 
           return (

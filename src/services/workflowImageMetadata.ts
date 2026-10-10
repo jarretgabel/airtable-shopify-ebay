@@ -43,13 +43,18 @@ interface WorkflowImageAttachmentRecord {
   filename: string;
 }
 
-function isGoogleDriveImageUrl(url: string): boolean {
+export function isGoogleDriveImageUrl(url: string): boolean {
   const trimmed = url.trim();
   if (!trimmed) return false;
 
   try {
     const parsed = new URL(trimmed);
-    return parsed.hostname.includes('drive.google.com') || parsed.hostname.includes('googleusercontent.com');
+    const hostname = parsed.hostname.toLowerCase();
+    return parsed.protocol === 'https:'
+      && (hostname === 'drive.google.com'
+        || hostname === 'drive.usercontent.google.com'
+        || hostname === 'googleusercontent.com'
+        || hostname.endsWith('.googleusercontent.com'));
   } catch {
     return false;
   }
@@ -406,14 +411,18 @@ export function getSortedWorkflowImageMetadata(records: WorkflowImageMetadataRec
 }
 
 export function getIncludedWorkflowImageMetadata(records: WorkflowImageMetadataRecord[]): WorkflowImageMetadataRecord[] {
-  return compactAndSortRecords(records).filter((record) => record.includedInListing);
+  return compactAndSortRecords(records).filter((record) => (
+    record.includedInListing && isGoogleDriveImageUrl(record.url)
+  ));
 }
 
 export function filterWorkflowImageMetadataByStage(
   records: WorkflowImageMetadataRecord[],
   stage: WorkflowImageSourceStage,
 ): WorkflowImageMetadataRecord[] {
-  return compactAndSortRecords(records).filter((record) => record.sourceStage === stage);
+  return compactAndSortRecords(records).filter((record) => (
+    record.sourceStage === stage && isGoogleDriveImageUrl(record.url)
+  ));
 }
 
 export function replaceWorkflowImageMetadataStage(
@@ -468,6 +477,8 @@ export function filterWorkflowAttachmentsByStage<T extends WorkflowImageAttachme
   const stageUrls = new Set(stageRecords.map((record) => record.url.trim().toLowerCase()));
 
   return attachments.filter((attachment) => {
+    if (!isGoogleDriveImageUrl(attachment.url ?? '')) return false;
+
     const attachmentId = attachment.id?.trim().toLowerCase();
     if (attachmentId && stageAttachmentIds.has(attachmentId)) {
       return true;
@@ -486,7 +497,10 @@ export function filterWorkflowAttachmentsByInferredStage<T extends WorkflowImage
   attachments: T[],
   stage: WorkflowImageSourceStage,
 ): T[] {
-  return attachments.filter((attachment) => inferWorkflowAttachmentStage(attachment) === stage);
+  return attachments.filter((attachment) => (
+    isGoogleDriveImageUrl(attachment.url ?? '')
+    && inferWorkflowAttachmentStage(attachment) === stage
+  ));
 }
 
 export function mergeWorkflowImageMetadata(params: {

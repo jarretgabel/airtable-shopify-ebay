@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   filterWorkflowAttachmentsByStage,
   filterWorkflowImageMetadataByStage,
+  getIncludedWorkflowImageMetadata,
   mergeWorkflowImageMetadata,
   parseWorkflowImageMetadata,
   replaceWorkflowImageMetadataStage,
@@ -58,6 +59,36 @@ describe('workflowImageMetadata', () => {
       },
     ]);
     expect(serializeWorkflowImageMetadata(parsed)).toBe(JSON.stringify(parsed));
+  });
+
+  it('only includes Google Drive URLs in workflow stages and listing images', () => {
+    const metadata = parseWorkflowImageMetadata(JSON.stringify([
+      {
+        attachmentId: 'att-drive',
+        url: 'https://drive.google.com/uc?export=view&id=drive-photo',
+        filename: 'photo-processed.jpg',
+        alt: 'Drive photo',
+        sortOrder: 1,
+        sourceStage: 'photos',
+        includedInListing: true,
+      },
+      {
+        attachmentId: 'att-airtable',
+        url: 'https://v5.airtableusercontent.com/current/photo-processed.jpg',
+        filename: 'airtable-photo-processed.jpg',
+        alt: 'Airtable photo',
+        sortOrder: 2,
+        sourceStage: 'photos',
+        includedInListing: true,
+      },
+    ]));
+
+    expect(filterWorkflowImageMetadataByStage(metadata, 'photos').map((record) => record.url)).toEqual([
+      'https://drive.google.com/uc?export=view&id=drive-photo',
+    ]);
+    expect(getIncludedWorkflowImageMetadata(metadata).map((record) => record.url)).toEqual([
+      'https://drive.google.com/uc?export=view&id=drive-photo',
+    ]);
   });
 
   it('merges attachments with existing metadata and appends newly uploaded images', () => {
@@ -152,7 +183,7 @@ describe('workflowImageMetadata', () => {
     const initial = parseWorkflowImageMetadata(JSON.stringify([
       {
         attachmentId: 'att-1',
-        url: 'https://cdn.example.com/testing-a.jpg',
+        url: 'https://drive.google.com/uc?export=view&id=testing-a',
         filename: 'testing-a.jpg',
         alt: 'Testing A',
         sortOrder: 1,
@@ -161,7 +192,7 @@ describe('workflowImageMetadata', () => {
       },
       {
         attachmentId: 'att-2',
-        url: 'https://cdn.example.com/photo-a.jpg',
+        url: 'https://drive.google.com/uc?export=view&id=photo-a',
         filename: 'photo-a.jpg',
         alt: 'Photo A',
         sortOrder: 2,
@@ -170,7 +201,7 @@ describe('workflowImageMetadata', () => {
       },
       {
         attachmentId: 'att-3',
-        url: 'https://cdn.example.com/testing-b.jpg',
+        url: 'https://drive.google.com/uc?export=view&id=testing-b',
         filename: 'testing-b.jpg',
         alt: 'Testing B',
         sortOrder: 3,
@@ -187,7 +218,7 @@ describe('workflowImageMetadata', () => {
     const replaced = replaceWorkflowImageMetadataStage(initial, 'testing', [
       {
         attachmentId: 'att-3',
-        url: 'https://cdn.example.com/testing-b.jpg',
+        url: 'https://drive.google.com/uc?export=view&id=testing-b',
         filename: 'testing-b.jpg',
         alt: 'Updated Testing B',
         sortOrder: 1,
@@ -196,7 +227,7 @@ describe('workflowImageMetadata', () => {
       },
       {
         attachmentId: 'att-1',
-        url: 'https://cdn.example.com/testing-a.jpg',
+        url: 'https://drive.google.com/uc?export=view&id=testing-a',
         filename: 'testing-a.jpg',
         alt: 'Updated Testing A',
         sortOrder: 2,
@@ -218,18 +249,18 @@ describe('workflowImageMetadata', () => {
     }));
 
     expect(filterWorkflowAttachmentsByStage([
-      { id: 'att-1', url: 'https://cdn.example.com/testing-a.jpg', filename: 'testing-a.jpg' },
-      { id: 'att-2', url: 'https://cdn.example.com/photo-a.jpg', filename: 'photo-a.jpg' },
-      { id: 'att-3', url: 'https://cdn.example.com/testing-b.jpg', filename: 'testing-b.jpg' },
+      { id: 'att-1', url: 'https://drive.google.com/uc?export=view&id=testing-a', filename: 'testing-a.jpg' },
+      { id: 'att-2', url: 'https://drive.google.com/uc?export=view&id=photo-a', filename: 'photo-a.jpg' },
+      { id: 'att-3', url: 'https://drive.google.com/uc?export=view&id=testing-b', filename: 'testing-b.jpg' },
     ], replaced, 'photos')).toEqual([
-      { id: 'att-2', url: 'https://cdn.example.com/photo-a.jpg', filename: 'photo-a.jpg' },
+      { id: 'att-2', url: 'https://drive.google.com/uc?export=view&id=photo-a', filename: 'photo-a.jpg' },
     ]);
   });
 
   it('filters stage attachments by url when attachment ids are missing', () => {
     const metadata = parseWorkflowImageMetadata(JSON.stringify([
       {
-        url: 'https://cdn.example.com/testing-no-id.jpg',
+        url: 'https://drive.google.com/uc?export=view&id=testing-no-id',
         filename: 'testing-no-id.jpg',
         alt: 'Testing without id',
         sortOrder: 1,
@@ -237,7 +268,7 @@ describe('workflowImageMetadata', () => {
         includedInListing: true,
       },
       {
-        url: 'https://cdn.example.com/photos-no-id.jpg',
+        url: 'https://drive.google.com/uc?export=view&id=photos-no-id',
         filename: 'photos-no-id.jpg',
         alt: 'Photos without id',
         sortOrder: 2,
@@ -247,10 +278,10 @@ describe('workflowImageMetadata', () => {
     ]));
 
     expect(filterWorkflowAttachmentsByStage([
-      { url: 'https://cdn.example.com/testing-no-id.jpg', filename: 'testing-no-id.jpg' },
-      { url: 'https://cdn.example.com/photos-no-id.jpg', filename: 'photos-no-id.jpg' },
+      { url: 'https://drive.google.com/uc?export=view&id=testing-no-id', filename: 'testing-no-id.jpg' },
+      { url: 'https://drive.google.com/uc?export=view&id=photos-no-id', filename: 'photos-no-id.jpg' },
     ], metadata, 'photos')).toEqual([
-      { url: 'https://cdn.example.com/photos-no-id.jpg', filename: 'photos-no-id.jpg' },
+      { url: 'https://drive.google.com/uc?export=view&id=photos-no-id', filename: 'photos-no-id.jpg' },
     ]);
   });
 

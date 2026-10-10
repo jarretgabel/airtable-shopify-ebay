@@ -117,7 +117,15 @@ export function ListingApprovalCombinedSharedSection({
     const normalizedFieldName = normalizeSharedFieldName(fieldName);
     return !sharedTestingFieldSet.has(normalizedFieldName) && normalizedFieldName !== normalizedTitleFieldName;
   });
-  const editableSharedFieldNames = standardSharedFieldNames.filter((fieldName) => !isSourceManagedCombinedField(fieldName));
+  const sharedQuantityFieldName = standardSharedFieldNames.find((fieldName) => normalizeSharedFieldName(fieldName) === 'quantity')
+    ?? standardSharedFieldNames.find((fieldName) => normalizeSharedFieldName(fieldName) === 'qty');
+  const sharedFieldKinds = sharedQuantityFieldName
+    ? { ...fieldKinds, [sharedQuantityFieldName]: 'number' as const }
+    : fieldKinds;
+  const regularSharedFieldNames = standardSharedFieldNames.filter(
+    (fieldName) => normalizeSharedFieldName(fieldName) !== normalizeSharedFieldName(sharedQuantityFieldName ?? ''),
+  );
+  const editableSharedFieldNames = regularSharedFieldNames.filter((fieldName) => !isSourceManagedCombinedField(fieldName));
   const imageSupportSharedFieldNames = editableSharedFieldNames.filter(isListingImageSupportField);
   const discoveredImageSupportFieldNames = Array.from(new Set([
     ...Object.keys(originalFieldValues),
@@ -172,7 +180,7 @@ export function ListingApprovalCombinedSharedSection({
             ebayRequiredFieldNames={ebayRequiredFieldNames}
             approvedFieldName={approvedFieldName}
             formValues={formValues}
-            fieldKinds={fieldKinds}
+            fieldKinds={sharedFieldKinds}
             listingFormatOptions={listingFormatOptions}
             listingDurationOptions={listingDurationOptions}
             saving={saving}
@@ -214,7 +222,7 @@ export function ListingApprovalCombinedSharedSection({
             ebayRequiredFieldNames={ebayRequiredFieldNames}
             approvedFieldName={approvedFieldName}
             formValues={formValues}
-            fieldKinds={fieldKinds}
+            fieldKinds={sharedFieldKinds}
             listingFormatOptions={listingFormatOptions}
             listingDurationOptions={listingDurationOptions}
             saving={saving}
@@ -259,7 +267,7 @@ export function ListingApprovalCombinedSharedSection({
             ebayRequiredFieldNames={ebayRequiredFieldNames}
             approvedFieldName={approvedFieldName}
             formValues={formValues}
-            fieldKinds={fieldKinds}
+            fieldKinds={sharedFieldKinds}
             listingFormatOptions={listingFormatOptions}
             listingDurationOptions={listingDurationOptions}
             saving={saving}
@@ -268,6 +276,38 @@ export function ListingApprovalCombinedSharedSection({
             suppressImageScalarFields
             originalFieldValues={originalFieldValues}
           />
+        )}
+
+        {sharedQuantityFieldName && (
+          <details className="rounded-xl border border-[var(--line)] bg-[var(--panel)]">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-[var(--ink)]">
+              Advanced Shared Fields
+            </summary>
+            <div className="border-t border-[var(--line)] px-4 py-4">
+              <ApprovalFormFields
+                recordId={selectedRecord.id}
+                approvalChannel="combined"
+                isCombinedApproval
+                showWorkflowImageSelector={false}
+                allFieldNames={[sharedQuantityFieldName]}
+                writableFieldNames={writableFieldNames}
+                readOnlyFieldNames={[]}
+                requiredFieldNames={combinedRequiredFieldNames}
+                shopifyRequiredFieldNames={shopifyRequiredFieldNames}
+                ebayRequiredFieldNames={ebayRequiredFieldNames}
+                approvedFieldName={approvedFieldName}
+                formValues={formValues}
+                fieldKinds={sharedFieldKinds}
+                listingFormatOptions={listingFormatOptions}
+                listingDurationOptions={listingDurationOptions}
+                saving={saving}
+                setFormValue={setFormValue}
+                setDerivedFormValue={setDerivedFormValue}
+                suppressImageScalarFields
+                originalFieldValues={originalFieldValues}
+              />
+            </div>
+          </details>
         )}
       </div>
     </AppPageSectionSurface>

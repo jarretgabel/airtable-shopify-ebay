@@ -5,13 +5,40 @@ import {
 import { buildShopifyUnifiedProductSetRequest } from '@/services/shopify';
 
 describe('buildShopifyDraftProductFromApprovalFields', () => {
+  it('ignores Airtable image URLs and falls back to Google Drive metadata images', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Google Drive Image Product',
+      'Shopify REST Images JSON': JSON.stringify([
+        { src: 'https://v5.airtableusercontent.com/image.jpg', alt: 'Airtable image' },
+      ]),
+      'Workflow Image Metadata JSON': JSON.stringify([
+        {
+          url: 'https://drive.google.com/uc?export=view&id=drive-image',
+          filename: 'drive-image.jpg',
+          alt: 'Drive image',
+          sortOrder: 1,
+          sourceStage: 'photos',
+          includedInListing: true,
+        },
+      ]),
+    });
+
+    expect(product.images).toEqual([
+      {
+        src: 'https://drive.google.com/uc?export=view&id=drive-image',
+        alt: 'Drive image',
+        position: 1,
+      },
+    ]);
+  });
+
   it('uses workflow image metadata for listing images', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify Title': 'Workflow Metadata Product',
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-2',
-          url: 'https://cdn.example.com/metadata-b.jpg',
+          url: 'https://drive.google.com/metadata-b.jpg',
           filename: 'metadata-b.jpg',
           alt: 'Rear angle',
           sortOrder: 1,
@@ -20,7 +47,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
         },
         {
           attachmentId: 'att-1',
-          url: 'https://cdn.example.com/metadata-a.jpg',
+          url: 'https://drive.google.com/metadata-a.jpg',
           filename: 'metadata-a.jpg',
           alt: 'Front angle',
           sortOrder: 2,
@@ -31,15 +58,15 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     });
 
     expect(product.images).toEqual([
-      { src: 'https://cdn.example.com/metadata-b.jpg', alt: 'Rear angle', position: 1 },
-      { src: 'https://cdn.example.com/metadata-a.jpg', alt: 'Front angle', position: 2 },
+      { src: 'https://drive.google.com/metadata-b.jpg', alt: 'Rear angle', position: 1 },
+      { src: 'https://drive.google.com/metadata-a.jpg', alt: 'Front angle', position: 2 },
     ]);
   });
 
   it('omits images when workflow metadata is missing', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify Title': 'No Metadata Product',
-      Images: 'https://cdn.example.com/a.jpg',
+      Images: 'https://drive.google.com/a.jpg',
     });
 
     expect(product.images).toBeUndefined();
@@ -48,11 +75,11 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
   it('uses only workflow metadata rows marked for listing inclusion', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Workflow Metadata Inclusion Product',
-      Images: 'https://cdn.example.com/fallback.jpg',
+      Images: 'https://drive.google.com/fallback.jpg',
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-photos',
-          url: 'https://cdn.example.com/photos-live.jpg',
+          url: 'https://drive.google.com/photos-live.jpg',
           filename: 'photos-live.jpg',
           alt: 'Photos stage primary',
           sortOrder: 1,
@@ -61,7 +88,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
         },
         {
           attachmentId: 'att-testing',
-          url: 'https://cdn.example.com/testing-hidden.jpg',
+          url: 'https://drive.google.com/testing-hidden.jpg',
           filename: 'testing-hidden.jpg',
           alt: 'Testing stage reference',
           sortOrder: 2,
@@ -72,7 +99,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     });
 
     expect(product.images).toEqual([
-      { src: 'https://cdn.example.com/photos-live.jpg', alt: 'Photos stage primary', position: 1 },
+      { src: 'https://drive.google.com/photos-live.jpg', alt: 'Photos stage primary', position: 1 },
     ]);
   });
 
@@ -80,7 +107,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify Title': 'Combined Preview Product',
       Images: JSON.stringify([
-        { src: 'https://cdn.example.com/combined-a.jpg', alt: 'Combined A' },
+        { src: 'https://drive.google.com/combined-a.jpg', alt: 'Combined A' },
       ]),
     });
 
@@ -95,7 +122,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-side',
-          url: 'https://cdn.example.com/mc225-left-side.jpg',
+          url: 'https://drive.google.com/mc225-left-side.jpg',
           filename: 'mc225-left-side.jpg',
           alt: 'McIntosh MC225 Stereo Tube Power Amplifier Left Side',
           sortOrder: 1,
@@ -109,7 +136,7 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
 
     expect(request.input.files).toEqual([
       {
-        originalSource: 'https://cdn.example.com/mc225-left-side.jpg',
+        originalSource: 'https://drive.google.com/mc225-left-side.jpg',
         alt: 'McIntosh MC225 Stereo Tube Power Amplifier Left Side',
         contentType: 'IMAGE',
       },
@@ -495,6 +522,15 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
 
     expect(product.variants?.[0]?.price).toBe('1599.00');
     expect(product.variants?.[0]?.inventory_quantity).toBe(3);
+  });
+
+  it('maps the shared Quantity field into Shopify variant inventory quantity', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Shared Quantity Product',
+      Quantity: '1',
+    });
+
+    expect(product.variants?.[0]?.inventory_quantity).toBe(1);
   });
 
   it('prefers canonical Shopify inventory quantity over legacy aliases in ProductSet payloads', () => {

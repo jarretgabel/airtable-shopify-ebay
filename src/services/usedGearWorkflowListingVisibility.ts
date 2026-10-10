@@ -1,6 +1,7 @@
 import { getUsedGearWorkflowListingReadiness } from '@/services/usedGearWorkflowListingReadiness';
 import { getUsedGearWorkflowStatus, type UsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 import type { AirtableRecord } from '@/types/airtable';
+import { extractReadableValue } from '@/utils/valueDisplay';
 
 export const USED_GEAR_WORKFLOW_LISTING_PHASE_STATUSES = new Set<UsedGearWorkflowStatus>([
   'Awaiting Pre-Listing Review',
@@ -19,21 +20,9 @@ const LISTING_SKU_FIELD_CANDIDATES = [
   'Variant SKU',
 ] as const;
 
-function getTrimmedString(value: unknown): string {
-  if (typeof value === 'string') {
-    return value.trim();
-  }
-
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return String(value);
-  }
-
-  return '';
-}
-
 export function getUsedGearWorkflowListingSku(record: AirtableRecord): string {
   for (const fieldName of LISTING_SKU_FIELD_CANDIDATES) {
-    const value = getTrimmedString(record.fields[fieldName]);
+    const value = extractReadableValue(record.fields[fieldName]);
     if (value) {
       return value;
     }

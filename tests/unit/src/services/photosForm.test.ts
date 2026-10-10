@@ -72,12 +72,12 @@ describe('photosForm', () => {
           'Inventory Notes': 'Keep reflection under control on the top cover.',
           'Testing Notes': 'Receiver passed tuner and phono checks.',
           Images: [
-            { id: 'att-1', url: 'https://example.com/hero.jpg', filename: 'hero.jpg' },
+            { id: 'att-1', url: 'https://drive.google.com/hero.jpg', filename: 'hero.jpg' },
           ],
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-1',
-              url: 'https://example.com/hero.jpg',
+              url: 'https://drive.google.com/hero.jpg',
               filename: 'hero.jpg',
               alt: 'Hero angle',
               sortOrder: 1,
@@ -106,14 +106,14 @@ describe('photosForm', () => {
         testingNotes: 'Receiver passed tuner and phono checks.',
         testingCosmeticNotes: 'Moderate test-stage wear.',
         existingAttachments: [
-          { id: 'att-1', url: 'https://example.com/hero.jpg', filename: 'hero.jpg' },
+          { id: 'att-1', url: 'https://drive.google.com/hero.jpg', filename: 'hero.jpg' },
         ],
         intakeReferenceAttachments: [],
         testingReferenceAttachments: [],
         imageMetadata: [
           {
             attachmentId: 'att-1',
-            url: 'https://example.com/hero.jpg',
+            url: 'https://drive.google.com/hero.jpg',
             filename: 'hero.jpg',
             alt: 'Hero angle',
             sortOrder: 1,
@@ -156,14 +156,14 @@ describe('photosForm', () => {
           'Component Type': ['Preamp'],
           Status: "Photo'd",
           Images: [
-            { id: 'att-intake', url: 'https://example.com/intake.jpg', filename: 'intake.jpg' },
-            { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
-            { id: 'att-photo', url: 'https://example.com/photo.jpg', filename: 'photo.jpg' },
+            { id: 'att-intake', url: 'https://drive.google.com/intake.jpg', filename: 'intake.jpg' },
+            { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
+            { id: 'att-photo', url: 'https://drive.google.com/photo.jpg', filename: 'photo.jpg' },
           ],
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-testing',
-              url: 'https://example.com/testing.jpg',
+              url: 'https://drive.google.com/testing.jpg',
               filename: 'testing.jpg',
               alt: 'Bench view',
               sortOrder: 1,
@@ -172,7 +172,7 @@ describe('photosForm', () => {
             },
             {
               attachmentId: 'att-photo',
-              url: 'https://example.com/photo.jpg',
+              url: 'https://drive.google.com/photo.jpg',
               filename: 'photo.jpg',
               alt: 'Final hero',
               sortOrder: 2,
@@ -191,12 +191,12 @@ describe('photosForm', () => {
     expect(result.values.cost).toBe('1499.99');
 
     expect(result.stageContext.existingAttachments).toEqual([
-      { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
-      { id: 'att-photo', url: 'https://example.com/photo.jpg', filename: 'photo.jpg' },
+      { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
+      { id: 'att-photo', url: 'https://drive.google.com/photo.jpg', filename: 'photo.jpg' },
     ]);
     expect(result.stageContext.intakeReferenceAttachments).toEqual([]);
     expect(result.stageContext.testingReferenceAttachments).toEqual([
-      { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
+      { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
     ]);
   });
 
@@ -439,7 +439,7 @@ describe('photosForm', () => {
       }))
       .mockResolvedValueOnce(buildRecord({
         Images: [
-          { id: 'att-9', url: 'https://example.com/detail.jpg', filename: 'detail.jpg' },
+          { id: 'att-9', url: 'https://drive.google.com/detail.jpg', filename: 'detail.jpg' },
         ],
       }));
 
@@ -449,7 +449,7 @@ describe('photosForm', () => {
       imageMetadata: [
         {
           attachmentId: 'att-9',
-          url: 'https://example.com/detail.jpg',
+          url: 'https://drive.google.com/detail.jpg',
           filename: 'detail.jpg',
           alt: 'Top cover detail',
           sortOrder: 1,
@@ -467,7 +467,7 @@ describe('photosForm', () => {
         'Workflow Image Metadata JSON': JSON.stringify([
           {
             attachmentId: 'att-9',
-            url: 'https://example.com/detail.jpg',
+            url: 'https://drive.google.com/detail.jpg',
             filename: 'detail.jpg',
             alt: 'Top cover detail',
             sortOrder: 1,
@@ -514,7 +514,7 @@ describe('photosForm', () => {
       imageMetadata: [
         {
           attachmentId: 'att-10',
-          url: 'https://example.com/detail.jpg',
+          url: 'https://drive.google.com/detail.jpg',
           filename: 'detail.jpg',
           alt: 'Top cover detail',
           sortOrder: 1,
@@ -663,13 +663,13 @@ describe('photosForm', () => {
           'Component Type': ['Amplifier'],
           Status: "Photo'd",
           Images: [
-            { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
-            { id: 'att-photo', url: 'https://example.com/photo.jpg', filename: 'photo.jpg' },
+            { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
+            { id: 'att-photo', url: 'https://drive.google.com/photo.jpg', filename: 'photo.jpg' },
           ],
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-testing',
-              url: 'https://example.com/testing.jpg',
+              url: 'https://drive.google.com/testing.jpg',
               filename: 'testing.jpg',
               alt: 'Bench view',
               sortOrder: 1,
@@ -678,7 +678,7 @@ describe('photosForm', () => {
             },
             {
               attachmentId: 'att-photo',
-              url: 'https://example.com/photo.jpg',
+              url: 'https://drive.google.com/photo.jpg',
               filename: 'photo.jpg',
               alt: 'Final hero',
               sortOrder: 2,
@@ -695,12 +695,12 @@ describe('photosForm', () => {
     const result = await loadPhotosFormValues('recPhotosStage');
 
     expect(result.stageContext.existingAttachments).toEqual([
-      { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
-      { id: 'att-photo', url: 'https://example.com/photo.jpg', filename: 'photo.jpg' },
+      { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
+      { id: 'att-photo', url: 'https://drive.google.com/photo.jpg', filename: 'photo.jpg' },
     ]);
     expect(result.stageContext.intakeReferenceAttachments).toEqual([]);
     expect(result.stageContext.testingReferenceAttachments).toEqual([
-      { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
+      { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
     ]);
     expect(result.stageContext.imageMetadata).toHaveLength(3);
     expect(result.stageContext.imageMetadata.map((record) => record.sourceStage)).toEqual(['testing', 'photos', 'photos']);

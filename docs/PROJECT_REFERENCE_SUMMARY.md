@@ -53,6 +53,7 @@
 ### Image Metadata
 - Images uploaded to the `Images` attachment field after record creation.
 - Shared image metadata in `Workflow Image Metadata JSON` (array of objects with attachmentId, url, filename, sourceStage, includedInListing, etc).
+- Workflow image previews and listing payloads must use Google Drive URLs only (`drive.google.com` or Google-hosted `googleusercontent.com`). Airtable attachment URLs may be used for record correlation, but never as image sources.
 - Intake images: `sourceStage: "intake"` (shown in intake snapshot, regardless of `includedInListing`).
 - Testing/Photography images: `sourceStage: "testing"` or `"photos"`, shown in main listing gallery only if `includedInListing: true`.
 - Attachments and metadata must be in sync for images to display everywhere.

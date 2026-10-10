@@ -505,18 +505,23 @@ describe('combined approval sections', () => {
     expect(sharedProps.onOpenPhotosForm).toHaveBeenCalledWith('rec-combined-1');
   });
 
-  it('keeps source-managed and testing snapshot fields out of the shared editor fields', () => {
+  it('keeps source-managed and testing snapshot fields out of the shared editor and tucks quantity under advanced fields', () => {
     const props = buildSharedProps();
-    props.combinedSharedFieldNames = ['Title', 'SKU', 'Make', 'Model', 'Serial Number', 'Component Type', '__Condition__', 'Price', 'Manual', 'Testing Notes', 'Voltage'];
+    props.combinedSharedFieldNames = ['Title', 'SKU', 'Make', 'Model', 'Serial Number', 'Component Type', '__Condition__', 'Price', 'Quantity', 'Manual', 'Testing Notes', 'Voltage'];
 
     render(<ListingApprovalCombinedSharedSection {...props} />);
 
-    expect(approvalFormFieldsSpy).toHaveBeenCalledTimes(2);
+    expect(approvalFormFieldsSpy).toHaveBeenCalledTimes(3);
     expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({
       allFieldNames: ['Title'],
     }));
     expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({
       allFieldNames: ['Price'],
+    }));
+    expect(screen.getByText('Advanced Shared Fields')).toBeInTheDocument();
+    expect(approvalFormFieldsSpy).toHaveBeenNthCalledWith(3, expect.objectContaining({
+      allFieldNames: ['Quantity'],
+      fieldKinds: { Quantity: 'number' },
     }));
   });
 
@@ -556,7 +561,9 @@ describe('combined approval sections', () => {
   });
 
   it('renders the Shopify drawer with collection editor wiring and preview panels', async () => {
-    render(<ListingApprovalCombinedShopifySection {...buildShopifyProps()} />);
+    const props = buildShopifyProps();
+    props.formValues = { ...props.formValues, Quantity: '4' };
+    render(<ListingApprovalCombinedShopifySection {...props} />);
 
     expect(screen.getByText('Shopify-Specific Fields')).toBeInTheDocument();
     expect(screen.getByText('Advanced Shopify Fields')).toBeInTheDocument();
@@ -577,6 +584,8 @@ describe('combined approval sections', () => {
     await waitFor(() => {
       expect(screen.getByText('Shopify Create Listing API Payload (Exact Request)')).toBeInTheDocument();
     });
+    expect(screen.getByText('Location inventory update plan (after ProductSet)')).toBeInTheDocument();
+    expect(screen.getByText(/"available": 4/)).toBeInTheDocument();
   });
 
   it('renders the eBay drawer with base and advanced field groups plus payload preview', async () => {

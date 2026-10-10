@@ -364,7 +364,10 @@ export function renderApprovalFormTextField({
   const inputType = kind === 'number' ? 'number' : 'text';
   const maxLength = inputType === 'text' && isTitleLikeFieldName(fieldName) ? TITLE_FIELD_MAX_LENGTH : undefined;
   const normalizedFieldName = fieldName.trim().toLowerCase();
-  const placeholder = normalizedFieldName === 'shopify condition metafield value'
+  const isQuantityField = normalizedFieldName === 'quantity' || normalizedFieldName === 'qty';
+  const placeholder = isQuantityField
+    ? '1'
+    : normalizedFieldName === 'shopify condition metafield value'
     || normalizedFieldName === 'shopify metafield condition value'
     || normalizedFieldName === 'condition'
     ? 'Pre-Owned'
@@ -408,6 +411,8 @@ export function renderApprovalFormTextField({
         <input
           className={getInputClassName(fieldName)}
           type={inputType}
+          min={isQuantityField ? 1 : undefined}
+          step={isQuantityField ? 1 : undefined}
           maxLength={maxLength}
           placeholder={placeholder}
           value={value}

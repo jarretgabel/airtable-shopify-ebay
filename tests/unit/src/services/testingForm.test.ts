@@ -82,12 +82,12 @@ describe('testingForm', () => {
           'Customer Functional Notes': 'Seller reports both channels are working.',
           'Customer Inclusion Notes': 'Original cage and manual included.',
           Images: [
-            { id: 'att-1', url: 'https://example.com/front.jpg', filename: 'front.jpg' },
+            { id: 'att-1', url: 'https://drive.google.com/front.jpg', filename: 'front.jpg' },
           ],
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-1',
-              url: 'https://example.com/front.jpg',
+              url: 'https://drive.google.com/front.jpg',
               filename: 'front.jpg',
               alt: 'Front panel straight-on',
               sortOrder: 1,
@@ -113,13 +113,13 @@ describe('testingForm', () => {
       },
       stageContext: {
         existingAttachments: [
-          { id: 'att-1', url: 'https://example.com/front.jpg', filename: 'front.jpg' },
+          { id: 'att-1', url: 'https://drive.google.com/front.jpg', filename: 'front.jpg' },
         ],
         referenceAttachments: [],
         imageMetadata: [
           {
             attachmentId: 'att-1',
-            url: 'https://example.com/front.jpg',
+            url: 'https://drive.google.com/front.jpg',
             filename: 'front.jpg',
             alt: 'Front panel straight-on',
             sortOrder: 1,
@@ -714,7 +714,7 @@ describe('testingForm', () => {
       }))
       .mockResolvedValueOnce(buildRecord({
         Images: [
-          { id: 'att-5', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
+          { id: 'att-5', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
         ],
       }));
 
@@ -723,7 +723,7 @@ describe('testingForm', () => {
       imageMetadata: [
         {
           attachmentId: 'att-5',
-          url: 'https://example.com/testing.jpg',
+          url: 'https://drive.google.com/testing.jpg',
           filename: 'testing.jpg',
           alt: 'Bench setup overview',
           sortOrder: 1,
@@ -741,7 +741,7 @@ describe('testingForm', () => {
         'Workflow Image Metadata JSON': JSON.stringify([
           {
             attachmentId: 'att-5',
-            url: 'https://example.com/testing.jpg',
+            url: 'https://drive.google.com/testing.jpg',
             filename: 'testing.jpg',
             alt: 'Bench setup overview',
             sortOrder: 1,
@@ -804,7 +804,7 @@ describe('testingForm', () => {
       imageMetadata: [
         {
           attachmentId: 'att-6',
-          url: 'https://example.com/testing.jpg',
+          url: 'https://drive.google.com/testing.jpg',
           filename: 'testing.jpg',
           alt: 'Bench setup overview',
           sortOrder: 1,
@@ -842,13 +842,13 @@ describe('testingForm', () => {
           'Component Type': ['Amplifier'],
           Status: 'Tested',
           Images: [
-            { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
-            { id: 'att-photo', url: 'https://example.com/photo.jpg', filename: 'photo.jpg' },
+            { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
+            { id: 'att-photo', url: 'https://drive.google.com/photo.jpg', filename: 'photo.jpg' },
           ],
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-intake',
-              url: 'https://example.com/intake.jpg',
+              url: 'https://drive.google.com/intake.jpg',
               filename: 'intake.jpg',
               alt: 'Customer intake overview',
               sortOrder: 0,
@@ -857,7 +857,7 @@ describe('testingForm', () => {
             },
             {
               attachmentId: 'att-testing',
-              url: 'https://example.com/testing.jpg',
+              url: 'https://drive.google.com/testing.jpg',
               filename: 'testing.jpg',
               alt: 'Bench view',
               sortOrder: 1,
@@ -866,7 +866,7 @@ describe('testingForm', () => {
             },
             {
               attachmentId: 'att-photo',
-              url: 'https://example.com/photo.jpg',
+              url: 'https://drive.google.com/photo.jpg',
               filename: 'photo.jpg',
               alt: 'Final hero',
               sortOrder: 2,
@@ -883,10 +883,10 @@ describe('testingForm', () => {
     const result = await loadTestingFormValues('recTestingStage');
 
     expect(result.stageContext.existingAttachments).toEqual([
-      { id: 'att-testing', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' },
+      { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
     ]);
     expect(result.stageContext.referenceAttachments).toEqual([
-      { id: 'att-intake', url: 'https://example.com/intake.jpg', filename: 'intake.jpg' },
+      { id: 'att-intake', url: 'https://drive.google.com/intake.jpg', filename: 'intake.jpg' },
     ]);
     expect(result.stageContext.imageMetadata).toHaveLength(3);
     expect([...new Set(result.stageContext.imageMetadata.map((record) => record.sourceStage))].sort()).toEqual(['intake', 'photos', 'testing']);

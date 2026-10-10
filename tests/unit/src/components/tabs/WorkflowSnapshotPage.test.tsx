@@ -52,13 +52,13 @@ describe('WorkflowSnapshotPage', () => {
           "Photo'd": '2026-05-21',
           'Additional Items': 'Tube cage',
           Images: [
-            { id: 'att-testing', url: 'https://example.com/testing-processed.jpg', filename: 'testing-processed.jpg' },
-            { id: 'att-photo', url: 'https://example.com/photo-processed.jpg', filename: 'photo-processed.jpg' },
+            { id: 'att-testing', url: 'https://v5.airtableusercontent.com/current/testing-processed.jpg', filename: 'testing-processed.jpg' },
+            { id: 'att-photo', url: 'https://v5.airtableusercontent.com/current/photo-processed.jpg', filename: 'photo-processed.jpg' },
           ],
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-testing',
-              url: 'https://example.com/testing-processed.jpg',
+              url: 'https://drive.google.com/uc?export=view&id=testing-file',
               filename: 'testing-processed.jpg',
               alt: 'Bench shot',
               sortOrder: 1,
@@ -67,12 +67,21 @@ describe('WorkflowSnapshotPage', () => {
             },
             {
               attachmentId: 'att-photo',
-              url: 'https://example.com/photo-processed.jpg',
+              url: 'https://drive.google.com/uc?export=view&id=photo-file',
               filename: 'photo-processed.jpg',
               alt: 'Hero angle',
               sortOrder: 2,
               sourceStage: 'photos',
               includedInListing: true,
+            },
+            {
+              attachmentId: 'att-airtable-only',
+              url: 'https://v5.airtableusercontent.com/image.jpg',
+              filename: 'airtable-only.jpg',
+              alt: 'Airtable attachment',
+              sortOrder: 3,
+              sourceStage: 'intake',
+              includedInListing: false,
             },
           ]),
         },
@@ -96,5 +105,12 @@ describe('WorkflowSnapshotPage', () => {
 
     expect(await screen.findByText('Workflow timeline')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'McIntosh MC240 - workflow-1' })).toBeInTheDocument();
+    screen.getAllByAltText('testing-processed.jpg').forEach((image) => {
+      expect(image).toHaveAttribute('src', 'https://drive.google.com/thumbnail?id=testing-file&sz=w1600');
+    });
+    screen.getAllByAltText('photo-processed.jpg').forEach((image) => {
+      expect(image).toHaveAttribute('src', 'https://drive.google.com/thumbnail?id=photo-file&sz=w1600');
+    });
+    expect(screen.queryByAltText('airtable-only.jpg')).not.toBeInTheDocument();
   });
 });

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { WorkflowImageMetadataRecord } from '@/services/workflowImageMetadata';
 import {
   getSortedWorkflowImageMetadata,
+  isGoogleDriveImageUrl,
   reorderWorkflowImageMetadata,
   updateWorkflowImageAltText,
   updateWorkflowImageInclusion,
@@ -162,12 +163,18 @@ export function WorkflowImageMetadataEditor({
                 className="grid gap-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4 lg:grid-cols-[180px_minmax(0,1fr)]"
               >
                 <div className="overflow-hidden rounded-xl border border-[var(--line)] bg-slate-950/20">
-                  <img
-                    src={record.url}
-                    alt={record.alt || record.filename}
-                    className="h-full min-h-[140px] w-full object-cover"
-                    loading="lazy"
-                  />
+                  {isGoogleDriveImageUrl(record.url) ? (
+                    <img
+                      src={record.url}
+                      alt={record.alt || record.filename}
+                      className="h-full min-h-[140px] w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex min-h-[140px] items-center justify-center px-3 text-center text-xs text-[var(--muted)]">
+                      Google Drive link required for image preview.
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-3">

@@ -260,8 +260,8 @@ describe('buildShopifyTabViewModel', () => {
           id: 'rec-ready',
           createdTime: '2026-05-08T00:00:00.000Z',
           fields: {
-            SKU: 'READY-SKU',
-            'Workflow Status': 'Approved for Publish',
+            SKU: { text: 'READY-SKU' },
+            'Workflow Status': 'Listed, Shopify',
             Price: '2499',
           },
         },

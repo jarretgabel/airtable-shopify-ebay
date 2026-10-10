@@ -183,6 +183,7 @@ const EBAY_PAYLOAD_DOCS_JSON = stringifyJson(EBAY_DRAFT_PAYLOAD_DOCS_EXAMPLE, '{
 
 export interface ShopifyApprovalPayloadDetailsProps extends ShopifyApprovalPayloadPreviewData {
   currentPageShopifyBodyHtml: string;
+  inventorySyncTargets?: Array<{ sku?: string; position: number; quantity: number }>;
   currentPageProductDescriptionResolution: ShopifyFieldResolutionSummary;
   currentPageProductDescription: string;
   currentPageProductCategoryResolution: ShopifyFieldResolutionSummary;
@@ -205,6 +206,7 @@ export function ShopifyApprovalPayloadDetails({
   shopifyCategoryResolution,
   isShopifyPayloadPreviewContext,
   shopifyProductSetRequest,
+  inventorySyncTargets = [],
 }: ShopifyApprovalPayloadDetailsProps) {
   const shopifyPayloadDebug = buildShopifyPayloadDebug(shopifyProductSetRequest);
   const shopifyDraftCreatePayloadJson = buildShopifyDraftCreatePayloadJson(shopifyProductSetRequest, currentPageShopifyBodyHtml);
@@ -223,7 +225,7 @@ export function ShopifyApprovalPayloadDetails({
         </summary>
         <div className={detailDisclosureBodyClass}>
           <p className="m-0 mb-2 text-xs text-[var(--muted)]">
-            This is the exact GraphQL request envelope used when you click Approve: one <code>productSet</code> mutation plus an optional taxonomy lookup query when the page still has a breadcrumb instead of a category GID.
+            This is the exact GraphQL ProductSet request. After it succeeds, the publish Lambda separately syncs available quantities to a Shopify location.
           </p>
           <div className={`${warningInlineBannerClass} mb-2 px-2 py-2 text-xs text-amber-200/90`}>
             <p className="m-0 font-semibold text-amber-200">Description Source Debug</p>
@@ -242,9 +244,9 @@ export function ShopifyApprovalPayloadDetails({
             <p className="m-0 mt-1">Resolved Category ID: <code>{currentPageCategoryIdResolution.value || shopifyCategoryResolution.match?.id || '(unresolved)'}</code></p>
             <p className="m-0 mt-1">Resolved Category Name: <code>{shopifyCategoryResolution.match?.fullName || shopifyCategoryResolution.error || '(unresolved)'}</code></p>
           </div>
-          <div className={`${cautionInlineBannerClass} mb-2 px-2 py-2 text-xs text-rose-100/90`}>
-            <p className="m-0 font-semibold text-rose-100">Inventory Quantity Note</p>
-            <p className="m-0 mt-1">This unified GraphQL path does not include <code>inventory_quantity</code> because Shopify requires a location ID for inventory quantities and the current token cannot read locations.</p>
+          <div className={`${infoInlineBannerClass} mb-2 px-2 py-2 text-xs text-sky-100/90`}>
+            <p className="m-0 font-semibold text-sky-100">Location-Aware Inventory Sync</p>
+            <p className="m-0 mt-1">After ProductSet succeeds, the publish Lambda sets each variant's available quantity with a separate Shopify inventory-level request. It uses <code>SHOPIFY_INVENTORY_LOCATION_ID</code> when configured; otherwise it selects the first active location using <code>read_locations</code>. Quantity updates require <code>write_inventory</code>. Sync failures are reported as publish warnings.</p>
           </div>
           <div className={`${successInlineBannerClass} mb-2 px-2 py-2 text-xs text-emerald-100/90`}>
             <p className="m-0 font-semibold text-emerald-100">Payload Field Debug</p>
@@ -261,6 +263,21 @@ export function ShopifyApprovalPayloadDetails({
           )}
           <p className="m-0 mb-2 text-xs text-[var(--muted)]">GraphQL <code>productSet</code> request</p>
           <pre className={detailPreBlockClass}>{shopifyDraftCreatePayloadJson || '{\n  "query": "",\n  "variables": {\n    "input": {}\n  }\n}'}</pre>
+          <p className="m-0 mb-2 mt-3 text-xs text-[var(--muted)]">Location inventory update plan (after ProductSet)</p>
+          <p className="m-0 mb-2 text-xs text-[var(--muted)]">
+            Inventory item IDs and the configured or first-active location are resolved by the Lambda during publish.
+          </p>
+          <pre className={detailPreBlockClass}>{stringifyJson({
+            method: 'POST',
+            path: '/admin/api/2024-04/inventory_levels/set.json',
+            location_id: 'resolved at publish',
+            updates: inventorySyncTargets.map((target) => ({
+              sku: target.sku,
+              position: target.position,
+              inventory_item_id: 'resolved from Shopify variant after ProductSet',
+              available: target.quantity,
+            })),
+          }, '{\n  "updates": []\n}')}</pre>
           {shopifyCategorySyncPreviewJson && (
             <>
               <p className="m-0 mb-2 mt-3 text-xs text-[var(--muted)]">Optional taxonomy lookup query</p>
@@ -342,6 +359,7 @@ export function ListingApprovalRecordPayloadPanels({
   shopifyCategoryResolution,
   isShopifyPayloadPreviewContext,
   shopifyProductSetRequest,
+  inventorySyncTargets = [],
   isEbayPayloadPreviewContext,
   ebayDraftPayloadBundle,
 }: ListingApprovalRecordPayloadPanelsProps) {
@@ -358,6 +376,7 @@ export function ListingApprovalRecordPayloadPanels({
           shopifyCategoryResolution={shopifyCategoryResolution}
           isShopifyPayloadPreviewContext={isShopifyPayloadPreviewContext}
           shopifyProductSetRequest={shopifyProductSetRequest}
+          inventorySyncTargets={inventorySyncTargets}
         />
       )}
 

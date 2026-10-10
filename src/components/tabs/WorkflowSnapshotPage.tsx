@@ -33,6 +33,7 @@ import { buildUsedGearWorkflowTimeline } from '@/services/usedGearWorkflowTimeli
 import {
   filterWorkflowImageMetadataByStage,
   parseWorkflowImageMetadata,
+  type WorkflowImageMetadataRecord,
 } from '@/services/workflowImageMetadata';
 
 interface WorkflowSnapshotPageProps {
@@ -114,28 +115,21 @@ function buildSnapshotStageImages(record: UsedGearOperationalRecordContext['reco
   photographyImages: SnapshotReferenceImage[];
 } {
   const parsedMetadata = parseWorkflowImageMetadata(record.fields['Workflow Image Metadata JSON']);
+  const toReferenceImage = (image: WorkflowImageMetadataRecord): SnapshotReferenceImage => ({
+    id: image.attachmentId,
+    url: image.url,
+    filename: image.filename,
+  });
 
   if (parsedMetadata.length > 0) {
     return {
-      intakeImages: filterWorkflowImageMetadataByStage(parsedMetadata, 'intake').map((image) => ({
-        id: image.attachmentId,
-        url: image.url,
-        filename: image.filename,
-      })),
+      intakeImages: filterWorkflowImageMetadataByStage(parsedMetadata, 'intake').map(toReferenceImage),
       testingImages: filterWorkflowImageMetadataByStage(parsedMetadata, 'testing')
         .filter((image) => image.includedInListing && isProcessedWorkflowImage(image.filename, image.url))
-        .map((image) => ({
-        id: image.attachmentId,
-        url: image.url,
-        filename: image.filename,
-      })),
+        .map(toReferenceImage),
       photographyImages: filterWorkflowImageMetadataByStage(parsedMetadata, 'photos')
         .filter((image) => image.includedInListing && isProcessedWorkflowImage(image.filename, image.url))
-        .map((image) => ({
-        id: image.attachmentId,
-        url: image.url,
-        filename: image.filename,
-      })),
+        .map(toReferenceImage),
     };
   }
   return {

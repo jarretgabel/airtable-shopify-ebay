@@ -1,9 +1,34 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ApprovalFormStandardField } from '@/components/approval/ApprovalFormStandardField';
-import { renderApprovalFormDropdownField } from '@/components/approval/approvalFormStandardFieldRenderers';
+import {
+  renderApprovalFormDropdownField,
+  renderApprovalFormTextField,
+} from '@/components/approval/approvalFormStandardFieldRenderers';
 
 describe('ApprovalFormStandardField', () => {
+  it('shows 1 as the placeholder for an empty quantity field', () => {
+    render(
+      renderApprovalFormTextField({
+        fieldName: 'Quantity',
+        kind: 'number',
+        value: '',
+        formValues: { Quantity: '' },
+        inputDisabled: false,
+        isRequiredField: () => false,
+        renderFieldLabel: (fieldName) => <span>{fieldName}</span>,
+        toFieldLabel: (fieldName) => fieldName,
+        getSelectClassName: () => 'select',
+        getInputClassName: () => 'input',
+        setFormValue: vi.fn(),
+      }),
+    );
+
+    expect(screen.getByPlaceholderText('1')).toHaveAttribute('type', 'number');
+    expect(screen.getByPlaceholderText('1')).toHaveAttribute('min', '1');
+    expect(screen.getByPlaceholderText('1')).toHaveAttribute('step', '1');
+  });
+
   it('humanizes eBay condition enum labels without changing stored values', () => {
     const setFormValue = vi.fn();
 

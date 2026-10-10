@@ -58,4 +58,10 @@ describe('usedGearWorkflowListingVisibility', () => {
       'eBay Inventory SKU': 'EBAY-SKU',
     }))).toBe('EBAY-SKU');
   });
+
+  it('resolves rich-text SKU values from workflow records', () => {
+    expect(getUsedGearWorkflowListingSku(buildRecord('rec-7', {
+      SKU: { text: '11757' },
+    }))).toBe('11757');
+  });
 });

@@ -2,7 +2,11 @@ import { useMemo } from 'react';
 import { IntakeSnapshotSection } from '@/components/tabs/IntakeSnapshotSection';
 import { WorkflowReferenceImagesPanel } from '@/components/tabs/WorkflowReferenceImagesPanel';
 import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
-import { filterWorkflowImageMetadataByStage, parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
+import {
+  filterWorkflowImageMetadataByStage,
+  isGoogleDriveImageUrl,
+  parseWorkflowImageMetadata,
+} from '@/services/workflowImageMetadata';
 import {
   ListingApprovalTestingSection,
   resolveListingApprovalTestingSectionFields,
@@ -187,14 +191,14 @@ export function ListingApprovalCombinedIntakeSection({
   onOpenPhotosForm,
 }: ListingApprovalCombinedIntakeSectionProps) {
   const allOriginalFieldNames = useMemo(() => Object.keys(originalFieldValues), [originalFieldValues]);
-  const workflowImageMetadata = useMemo(() => {
-    const metadataFieldName = findWorkflowImageMetadataFieldName(allOriginalFieldNames);
-    return parseWorkflowImageMetadata(metadataFieldName ? (originalFieldValues[metadataFieldName] ?? '') : '');
-  }, [allOriginalFieldNames, originalFieldValues]);
-
   const workflowImageAttachments = useMemo(() => {
     const attachmentFieldName = findWorkflowImageAttachmentFieldName(allOriginalFieldNames);
     return parseWorkflowImageAttachments(attachmentFieldName ? (originalFieldValues[attachmentFieldName] ?? '') : '');
+  }, [allOriginalFieldNames, originalFieldValues]);
+  const workflowImageMetadata = useMemo(() => {
+    const metadataFieldName = findWorkflowImageMetadataFieldName(allOriginalFieldNames);
+    return parseWorkflowImageMetadata(metadataFieldName ? (originalFieldValues[metadataFieldName] ?? '') : '')
+      .filter((record) => isGoogleDriveImageUrl(record.url));
   }, [allOriginalFieldNames, originalFieldValues]);
 
   const intakeImages = useMemo(() => {

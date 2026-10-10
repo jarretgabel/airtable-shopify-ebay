@@ -6,22 +6,22 @@ import { WorkflowListingImageSelector } from '@/components/approval/WorkflowList
 
 function SelectorHarness() {
   const [selectedUrls, setSelectedUrls] = useState([
-    'https://cdn.example.com/image-a.jpg',
-    'https://cdn.example.com/image-b.jpg',
+    'https://drive.google.com/image-a.jpg',
+    'https://drive.google.com/image-b.jpg',
   ]);
 
   return (
     <WorkflowListingImageSelector
       attachments={[
-        { id: 'att-1', url: 'https://cdn.example.com/image-a.jpg', filename: 'image-a.jpg' },
-        { id: 'att-2', url: 'https://cdn.example.com/image-b.jpg', filename: 'image-b.jpg' },
-        { id: 'att-3', url: 'https://cdn.example.com/image-c.jpg', filename: 'image-c.jpg' },
+        { id: 'att-1', url: 'https://drive.google.com/image-a.jpg', filename: 'image-a.jpg' },
+        { id: 'att-2', url: 'https://drive.google.com/image-b.jpg', filename: 'image-b.jpg' },
+        { id: 'att-3', url: 'https://drive.google.com/image-c.jpg', filename: 'image-c.jpg' },
       ]}
       selectedUrls={selectedUrls}
       imageAltByUrl={{
-        'https://cdn.example.com/image-a.jpg': 'Front view',
-        'https://cdn.example.com/image-b.jpg': 'Rear view',
-        'https://cdn.example.com/image-c.jpg': 'Detail view',
+        'https://drive.google.com/image-a.jpg': 'Front view',
+        'https://drive.google.com/image-b.jpg': 'Rear view',
+        'https://drive.google.com/image-c.jpg': 'Detail view',
       }}
       onSelectionChange={setSelectedUrls}
     />
@@ -29,6 +29,30 @@ function SelectorHarness() {
 }
 
 describe('WorkflowListingImageSelector', () => {
+  it('never renders Airtable attachment or selected image URLs', () => {
+    render(
+      <WorkflowListingImageSelector
+        attachments={[
+          { id: 'att-airtable', url: 'https://v5.airtableusercontent.com/image.jpg', filename: 'airtable.jpg' },
+          { id: 'att-drive', url: 'https://drive.google.com/uc?export=view&id=drive-image', filename: 'drive.jpg' },
+        ]}
+        selectedUrls={[
+          'https://v5.airtableusercontent.com/image.jpg',
+          'https://drive.google.com/uc?export=view&id=drive-image',
+        ]}
+        onSelectionChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByTestId('selected-listing-image-card')).toHaveLength(1);
+    expect(screen.getByAltText('drive.jpg')).toHaveAttribute(
+      'src',
+      'https://drive.google.com/thumbnail?id=drive-image&sz=w1600',
+    );
+    expect(screen.queryByAltText('airtable.jpg')).not.toBeInTheDocument();
+    expect(document.querySelector('img[src*="airtableusercontent"]')).not.toBeInTheDocument();
+  });
+
   it('reorders selected images with the move controls', () => {
     render(<SelectorHarness />);
 
@@ -220,21 +244,21 @@ describe('WorkflowListingImageSelector', () => {
         attachments={[
           {
             id: 'att-photo-1-primary',
-            url: 'https://images.example.com/proxy/abc123?asset=photo1',
+            url: 'https://drive.google.com/proxy/abc123?asset=photo1',
             filename: 'photos--photos--rec-example-photos-1-processed.jpg',
           },
           {
             id: 'att-photo-1-variant',
-            url: 'https://cdn.example.com/render/xyz789?variant=thumb',
+            url: 'https://drive.google.com/render/xyz789?variant=thumb',
             filename: 'photos--photos--rec-example-photos-1-processed.jpg',
           },
           {
             id: 'att-testing-1',
-            url: 'https://cdn.example.com/testing-1.jpg',
+            url: 'https://drive.google.com/testing-1.jpg',
             filename: 'testing--testing--rec-example-testing-1-processed.jpg',
           },
         ]}
-        selectedUrls={['https://images.example.com/proxy/abc123?asset=photo1']}
+        selectedUrls={['https://drive.google.com/proxy/abc123?asset=photo1']}
         onSelectionChange={() => {}}
       />,
     );
@@ -254,21 +278,21 @@ describe('WorkflowListingImageSelector', () => {
         attachments={[
           {
             id: 'att-photo-1-a',
-            url: 'https://cdn.example.com/images/photos--rec-example-photos-1-processed.jpg?token=abc',
+            url: 'https://drive.google.com/images/photos--rec-example-photos-1-processed.jpg?token=abc',
             filename: 'photos--rec-example-photos-1-processed.jpg',
           },
           {
             id: 'att-photo-1-b',
-            url: 'https://cdn.example.com/images/photos__rec_example_photos_1_processed.jpg?token=xyz',
+            url: 'https://drive.google.com/images/photos__rec_example_photos_1_processed.jpg?token=xyz',
             filename: 'photos__rec_example_photos_1_processed.jpg',
           },
           {
             id: 'att-testing-1',
-            url: 'https://cdn.example.com/images/testing-1-processed.jpg',
+            url: 'https://drive.google.com/images/testing-1-processed.jpg',
             filename: 'testing-1-processed.jpg',
           },
         ]}
-        selectedUrls={['https://cdn.example.com/images/photos--rec-example-photos-1-processed.jpg?token=abc']}
+        selectedUrls={['https://drive.google.com/images/photos--rec-example-photos-1-processed.jpg?token=abc']}
         onSelectionChange={() => {}}
       />,
     );
@@ -303,7 +327,7 @@ describe('WorkflowListingImageSelector', () => {
             },
             {
               id: 'att-testing-1',
-              url: 'https://cdn.example.com/testing-1-processed.jpg',
+              url: 'https://drive.google.com/testing-1-processed.jpg',
               filename: 'testing-1-processed.jpg',
             },
           ]}
@@ -330,7 +354,7 @@ describe('WorkflowListingImageSelector', () => {
     expect(availableFilenames).toContain('testing-1-processed.jpg');
   });
 
-  it('keeps unmatched persisted selected URLs visible in Included In Listing', () => {
+  it('ignores unmatched persisted Airtable URLs in Included In Listing', () => {
     render(
       <WorkflowListingImageSelector
         attachments={[
@@ -345,12 +369,11 @@ describe('WorkflowListingImageSelector', () => {
       />,
     );
 
-    const selectedCards = screen.getAllByTestId('selected-listing-image-card');
-    expect(selectedCards).toHaveLength(1);
-    expect(selectedCards[0]).toHaveTextContent('photo-1.jpg');
+    expect(screen.queryAllByTestId('selected-listing-image-card')).toHaveLength(0);
+    expect(document.querySelector('img[src*="airtableusercontent"]')).not.toBeInTheDocument();
   });
 
-  it('keeps unmatched explicit selected rows while deduping only confidently matched variants', () => {
+  it('ignores unmatched Airtable URLs while deduping selected Drive variants', () => {
     render(
       <WorkflowListingImageSelector
         attachments={[
@@ -361,13 +384,13 @@ describe('WorkflowListingImageSelector', () => {
           },
           {
             id: 'att-photo-2',
-            url: 'https://cdn.example.com/photo-2-processed.jpg',
+            url: 'https://drive.google.com/photo-2-processed.jpg',
             filename: 'photo-2-processed.jpg',
           },
         ]}
         selectedUrls={[
           'https://dl.airtableusercontent.com/.attachments/variant/photo-1-token',
-          'https://cdn.example.com/photo-2-processed.jpg',
+          'https://drive.google.com/photo-2-processed.jpg',
           'https://drive.google.com/uc?export=view&id=file-photo-1',
         ]}
         onSelectionChange={() => {}}
@@ -375,7 +398,8 @@ describe('WorkflowListingImageSelector', () => {
     );
 
     const selectedCards = screen.getAllByTestId('selected-listing-image-card');
-    expect(selectedCards).toHaveLength(3);
+    expect(selectedCards).toHaveLength(2);
+    expect(document.querySelector('img[src*="airtableusercontent"]')).not.toBeInTheDocument();
   });
 
   it('dedupes selected Google Drive URL variants for the same file id', () => {
@@ -403,7 +427,7 @@ describe('WorkflowListingImageSelector', () => {
   it('adds available query-id variants to selected images when checked', () => {
     function VariantReplacementHarness() {
       const [selectedUrls, setSelectedUrls] = useState([
-        'https://cdn.example.com/rendered/photo-1.jpg?token=old',
+        'https://drive.google.com/rendered/photo-1.jpg?token=old',
       ]);
 
       return (
@@ -411,12 +435,12 @@ describe('WorkflowListingImageSelector', () => {
           attachments={[
             {
               id: 'att-photo-1',
-              url: 'https://cdn.example.com/rendered/photo-1.jpg?token=new',
+              url: 'https://drive.google.com/rendered/photo-1.jpg?token=new',
               filename: 'photo-1-processed.jpg',
             },
             {
               id: 'att-photo-2',
-              url: 'https://cdn.example.com/rendered/photo-2.jpg?token=abc',
+              url: 'https://drive.google.com/rendered/photo-2.jpg?token=abc',
               filename: 'photo-2-processed.jpg',
             },
           ]}

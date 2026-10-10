@@ -881,13 +881,23 @@ export async function loadUsedGearOperationalRecord(recordId: string): Promise<A
 
 export async function loadUsedGearOperationalRecordContext(recordId: string): Promise<UsedGearOperationalRecordContext> {
   const records = (await loadUsedGearOperationalRecords({ includeOptionalReadFields: true })).map(withWorkflow);
-
-  const record = records.find((candidate) => candidate.id === recordId);
-  if (!record) {
+  const queueRecord = records.find((candidate) => candidate.id === recordId);
+  if (!queueRecord) {
     throw new Error('Unable to load the selected used-gear operational record.');
   }
 
-  const group = groupUsedGearWorkflowRecords(records).find((candidate) => candidate.id === groupKeyForRecord(record).key) ?? null;
+  const fullRecord = await getConfiguredRecord('used-gear-workflow', recordId);
+  const record = withWorkflow({
+    ...queueRecord,
+    ...fullRecord,
+    fields: {
+      ...queueRecord.fields,
+      ...fullRecord.fields,
+    },
+  });
+  const contextRecords = records.map((candidate) => candidate.id === recordId ? record : candidate);
+  const group = groupUsedGearWorkflowRecords(contextRecords)
+    .find((candidate) => candidate.id === groupKeyForRecord(record).key) ?? null;
 
   return {
     record,
