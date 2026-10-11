@@ -56,7 +56,12 @@
 - Workflow image previews and listing payloads must use Google Drive URLs only (`drive.google.com` or Google-hosted `googleusercontent.com`). Airtable attachment URLs may be used for record correlation, but never as image sources.
 - Intake images: `sourceStage: "intake"` (shown in intake snapshot, regardless of `includedInListing`).
 - Testing/Photography images: `sourceStage: "testing"` or `"photos"`, shown in main listing gallery only if `includedInListing: true`.
-- Attachments and metadata must be in sync for images to display everywhere.
+- Workflow metadata is the canonical image source for listings. Legacy Airtable `Images` attachments may remain for archival/reference purposes, but must not be used as listing image URLs.
+- `npm run workflow:sku-drive-images:audit` produces a read-only, newest-first reconciliation plan for exact-SKU Google Drive folders. It skips existing Drive-backed metadata and requires explicit approval for cleanly named images whose processed state cannot be inferred safely. Use `--only-skus sku1,sku2` for a bounded audit; when explicit file IDs are approved, only those selected images are planned, including for records that already have photos.
+- `npm run workflow:sku-drive-images:coverage -- --skip-skus 10800` compares every file in every exact-SKU Drive folder against included testing/photos-stage metadata, newest records first. It groups identical file content across duplicate folders, distinguishes explicitly processed files from unverified candidates/originals, and never writes to Airtable or Drive.
+- Apply only a reviewed plan with `npm run workflow:sku-drive-images:apply -- --plan <plan.json> --confirm SYNC_SKU_GOOGLE_DRIVE_PROCESSED_IMAGES`. If confirmed real photos replace workflow seed placeholders, also pass `--replace-seeded-photo-metadata`; that removes only the matching seed rows from `Workflow Image Metadata JSON`, never Drive files. The sync never modifies the legacy `Images` attachment field.
+- Do not use `npm run workflow:drive-backfill:all:apply` to import existing SKU-folder photos. That script generates sample/JotForm stage images under record-ID folders, replaces stage metadata, and updates the Airtable `Images` field.
+- Listing image filenames should use lowercase ASCII kebab-case with a stable brand-model prefix; hero images use `brand-model-product-type.jpg`, additional images use `brand-model-key-detail.jpg`. Use 4–10 words, with no camera names, company name, or version/processing suffixes.
 
 ### Sync & Mapping
 - Bi-directional sync between Airtable, Shopify, and eBay.

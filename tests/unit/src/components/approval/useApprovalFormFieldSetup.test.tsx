@@ -163,6 +163,62 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
     ]);
   });
 
+  it('includes untagged non-original photos-stage images alongside explicitly processed photos', () => {
+    const processedUrl = 'https://drive.google.com/uc?export=view&id=processed';
+    const legacyPhotoUrl = 'https://drive.google.com/uc?export=view&id=legacy-photo';
+    const originalUrl = 'https://drive.google.com/uc?export=view&id=original';
+    const { result } = renderHook(() => useApprovalFormFieldSetup({
+      recordId: 'rec-listing-images-legacy-processed',
+      approvalChannel: 'combined',
+      forceShowShopifyCollectionsEditor: false,
+      isCombinedApproval: true,
+      allFieldNames: ['Images', 'Workflow Image Metadata JSON'],
+      writableFieldNames: ['Images', 'Workflow Image Metadata JSON'],
+      formValues: {
+        Images: '',
+        'Workflow Image Metadata JSON': JSON.stringify([
+          {
+            url: processedUrl,
+            filename: 'receiver-processed.jpg',
+            sourceStage: 'photos',
+            includedInListing: true,
+            sortOrder: 1,
+          },
+          {
+            url: legacyPhotoUrl,
+            filename: 'photos--receiver-rear-panel.jpg',
+            sourceStage: 'photos',
+            includedInListing: true,
+            sortOrder: 2,
+          },
+          {
+            url: originalUrl,
+            filename: 'photos--receiver-rear-panel-original.jpg',
+            sourceStage: 'photos',
+            includedInListing: true,
+            sortOrder: 3,
+          },
+        ]),
+      },
+      fieldKinds: {},
+      originalFieldValues: {},
+      normalizedShopifyCollectionLabelsById: {},
+      setFormValue: vi.fn(),
+      setDerivedFormValue: vi.fn(),
+      selectedEbayTemplateId: 'classic',
+      onEbayTemplateIdChange: vi.fn(),
+    }));
+
+    expect(result.current.workflowImageAttachments.map((attachment) => attachment.url)).toEqual([
+      processedUrl,
+      legacyPhotoUrl,
+    ]);
+    expect(result.current.selectedWorkflowImageUrls).toEqual([
+      processedUrl,
+      legacyPhotoUrl,
+    ]);
+  });
+
   it('trusts explicit workflow stages when legacy filenames have no processed marker', () => {
     const imageUrls = [
       'https://drive.google.com/uc?export=view&id=example-one',
